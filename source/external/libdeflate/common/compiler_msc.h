@@ -7,9 +7,6 @@
 
 #define LIBEXPORT	__declspec(dllexport)
 
-// NOTE: mango compilation related
-#pragma warning(disable : 4018 4146 4244 4267)
-
 /*
  * Old versions (e.g. VS2010) of MSC don't have the C99 header stdbool.h.
  * Beware: the below replacement isn't fully standard, since normally any value

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -67,8 +67,5 @@ namespace mango
 
     u32 xxhash32(u32 seed, ConstMemory memory);
     u64 xxhash64(u64 seed, ConstMemory memory);
-
-    XX3HASH64 xx3hash64(u64 seed, ConstMemory memory);
-    XX3HASH128 xx3hash128(u64 seed, ConstMemory memory);
 
 } // namespace mango

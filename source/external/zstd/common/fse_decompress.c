@@ -1,6 +1,6 @@
 /* ******************************************************************
  * FSE : Finite State Entropy decoder
- * Copyright (c) 2013-2020, Yann Collet, Facebook, Inc.
+ * Copyright (c) Yann Collet, Facebook, Inc.
  *
  *  You can contact the author at :
  *  - FSE source repository : https://github.com/Cyan4973/FiniteStateEntropy
@@ -66,11 +66,6 @@ FSE_DTable* FSE_createDTable (unsigned tableLog)
 void FSE_freeDTable (FSE_DTable* dt)
 {
     ZSTD_free(dt);
-}
-
-size_t FSE_buildDTable(FSE_DTable* dt, const short* normalizedCounter, unsigned maxSymbolValue, unsigned tableLog) {
-    U32 wksp[FSE_BUILD_DTABLE_WKSP_SIZE_U32(FSE_TABLELOG_ABSOLUTE_MAX, FSE_MAX_SYMBOL_VALUE)];
-    return FSE_buildDTable_wksp(dt, normalizedCounter, maxSymbolValue, tableLog, wksp, sizeof(wksp));
 }
 
 static size_t FSE_buildDTable_internal(FSE_DTable* dt, const short* normalizedCounter, unsigned maxSymbolValue, unsigned tableLog, void* workSpace, size_t wkspSize)
@@ -315,6 +310,12 @@ size_t FSE_decompress_wksp(void* dst, size_t dstCapacity, const void* cSrc, size
     return FSE_decompress_wksp_bmi2(dst, dstCapacity, cSrc, cSrcSize, maxLog, workSpace, wkspSize, /* bmi2 */ 0);
 }
 
+typedef struct {
+    short ncount[FSE_MAX_SYMBOL_VALUE + 1];
+    FSE_DTable dtable[1]; /* Dynamically sized */
+} FSE_DecompressWksp;
+
+
 FORCE_INLINE_TEMPLATE size_t FSE_decompress_wksp_body(
         void* dst, size_t dstCapacity,
         const void* cSrc, size_t cSrcSize,
@@ -323,33 +324,37 @@ FORCE_INLINE_TEMPLATE size_t FSE_decompress_wksp_body(
 {
     const BYTE* const istart = (const BYTE*)cSrc;
     const BYTE* ip = istart;
-    short counting[FSE_MAX_SYMBOL_VALUE+1];
     unsigned tableLog;
     unsigned maxSymbolValue = FSE_MAX_SYMBOL_VALUE;
-    FSE_DTable* const dtable = (FSE_DTable*)workSpace;
+    FSE_DecompressWksp* const wksp = (FSE_DecompressWksp*)workSpace;
+
+    DEBUG_STATIC_ASSERT((FSE_MAX_SYMBOL_VALUE + 1) % 2 == 0);
+    if (wkspSize < sizeof(*wksp)) return ERROR(GENERIC);
 
     /* normal FSE decoding mode */
-    size_t const NCountLength = FSE_readNCount_bmi2(counting, &maxSymbolValue, &tableLog, istart, cSrcSize, bmi2);
-    if (FSE_isError(NCountLength)) return NCountLength;
-    if (tableLog > maxLog) return ERROR(tableLog_tooLarge);
-    assert(NCountLength <= cSrcSize);
-    ip += NCountLength;
-    cSrcSize -= NCountLength;
+    {
+        size_t const NCountLength = FSE_readNCount_bmi2(wksp->ncount, &maxSymbolValue, &tableLog, istart, cSrcSize, bmi2);
+        if (FSE_isError(NCountLength)) return NCountLength;
+        if (tableLog > maxLog) return ERROR(tableLog_tooLarge);
+        assert(NCountLength <= cSrcSize);
+        ip += NCountLength;
+        cSrcSize -= NCountLength;
+    }
 
     if (FSE_DECOMPRESS_WKSP_SIZE(tableLog, maxSymbolValue) > wkspSize) return ERROR(tableLog_tooLarge);
-    workSpace = dtable + FSE_DTABLE_SIZE_U32(tableLog);
-    wkspSize -= FSE_DTABLE_SIZE(tableLog);
+    workSpace = wksp->dtable + FSE_DTABLE_SIZE_U32(tableLog);
+    wkspSize -= sizeof(*wksp) + FSE_DTABLE_SIZE(tableLog);
 
-    CHECK_F( FSE_buildDTable_internal(dtable, counting, maxSymbolValue, tableLog, workSpace, wkspSize) );
+    CHECK_F( FSE_buildDTable_internal(wksp->dtable, wksp->ncount, maxSymbolValue, tableLog, workSpace, wkspSize) );
 
     {
-        const void* ptr = dtable;
+        const void* ptr = wksp->dtable;
         const FSE_DTableHeader* DTableH = (const FSE_DTableHeader*)ptr;
         const U32 fastMode = DTableH->fastMode;
 
         /* select fast mode (static) */
-        if (fastMode) return FSE_decompress_usingDTable_generic(dst, dstCapacity, ip, cSrcSize, dtable, 1);
-        return FSE_decompress_usingDTable_generic(dst, dstCapacity, ip, cSrcSize, dtable, 0);
+        if (fastMode) return FSE_decompress_usingDTable_generic(dst, dstCapacity, ip, cSrcSize, wksp->dtable, 1);
+        return FSE_decompress_usingDTable_generic(dst, dstCapacity, ip, cSrcSize, wksp->dtable, 0);
     }
 }
 
@@ -380,13 +385,19 @@ size_t FSE_decompress_wksp_bmi2(void* dst, size_t dstCapacity, const void* cSrc,
 
 typedef FSE_DTable DTable_max_t[FSE_DTABLE_SIZE_U32(FSE_MAX_TABLELOG)];
 
+#ifndef ZSTD_NO_UNUSED_FUNCTIONS
+size_t FSE_buildDTable(FSE_DTable* dt, const short* normalizedCounter, unsigned maxSymbolValue, unsigned tableLog) {
+    U32 wksp[FSE_BUILD_DTABLE_WKSP_SIZE_U32(FSE_TABLELOG_ABSOLUTE_MAX, FSE_MAX_SYMBOL_VALUE)];
+    return FSE_buildDTable_wksp(dt, normalizedCounter, maxSymbolValue, tableLog, wksp, sizeof(wksp));
+}
+
 size_t FSE_decompress(void* dst, size_t dstCapacity, const void* cSrc, size_t cSrcSize)
 {
     /* Static analyzer seems unable to understand this table will be properly initialized later */
     U32 wksp[FSE_DECOMPRESS_WKSP_SIZE_U32(FSE_MAX_TABLELOG, FSE_MAX_SYMBOL_VALUE)];
     return FSE_decompress_wksp(dst, dstCapacity, cSrc, cSrcSize, FSE_MAX_TABLELOG, wksp, sizeof(wksp));
 }
-
+#endif
 
 
 #endif   /* FSE_COMMONDEFS_ONLY */

@@ -180,15 +180,9 @@ typedef u32 (*crc32_func_t)(u32, const u8 *, size_t);
 #undef CRC32_SLICE8
 #undef DEFAULT_IMPL
 #undef DISPATCH
-
-// NOTE: these optimizations fail to compile with older Android NDK, so we just disable them since
-//       we don't use these functions in MANGO anyway.. I know, we could fix this.. so..
-// TODO: fix these and make a PR...
-
-//#if defined(__arm__) || defined(__aarch64__)
-//#  include "arm/crc32_impl.h"
-//#elif defined(__i386__) || defined(__x86_64__)
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__arm__) || defined(__aarch64__)
+#  include "arm/crc32_impl.h"
+#elif defined(__i386__) || defined(__x86_64__)
 #  include "x86/crc32_impl.h"
 #endif
 
