@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/endian.hpp>
 #include <mango/image/compression.hpp>
@@ -12,6 +12,9 @@ namespace
     // ------------------------------------------------------------
     // Based on NVIDIA DXT decoder
     // ------------------------------------------------------------
+
+    // Fixed based on Khronos specification:
+    // https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#s3tc_bc2
 
     struct DXTColBlock
     {
