@@ -23,6 +23,9 @@
 #include <stdint.h>
 #include "../../../include/mango/mango.hpp"
 
+// Reference:
+// https://microsoft.github.io/DirectX-Specs/d3d/archive/D3D11_3_FunctionalSpec.htm#19.5.9%20BC4U:%202(+6%20Derived)%20Single%20Component%20UNORM%20Values
+
 #ifndef ARRAYSIZE
 #define ARRAYSIZE(a) (sizeof(a) / sizeof(a[0]))
 #endif
