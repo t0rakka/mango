@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/core.hpp>
@@ -16,6 +16,7 @@ namespace mango::image
 {
 
     void decode_block_dxt1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC1
+    void decode_block_dxt1a           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC1A
     void decode_block_dxt3            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC2
     void decode_block_dxt5            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC3
     void decode_block_3dc_x           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC4U
@@ -200,7 +201,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_S3TC_DXT1_EXT,
             vulkan::FORMAT_BC1_RGBA_UNORM_BLOCK,
-            4, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_dxt1, encode_block_bc1a
+            4, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_dxt1a, encode_block_bc1a
         ),
 
         TextureCompressionInfo(
@@ -208,7 +209,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,
             vulkan::FORMAT_BC1_RGBA_SRGB_BLOCK,
-            4, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_dxt1, encode_block_bc1a
+            4, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_dxt1a, encode_block_bc1a
         ),
 
         TextureCompressionInfo(
