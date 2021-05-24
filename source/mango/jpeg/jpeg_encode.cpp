@@ -1194,7 +1194,7 @@ namespace
         __m128i zero3 = _mm_packs_epi16(_mm_cmpeq_epi16(row6, zero), _mm_cmpeq_epi16(row7, zero));
         u32 mask_lo = _mm_movemask_epi8(zero0) | ((_mm_movemask_epi8(zero1)) << 16);
         u32 mask_hi = _mm_movemask_epi8(zero2) | ((_mm_movemask_epi8(zero3)) << 16);
-        u64 zeromask = mask_lo;
+        u64 zeromask = (u64(mask_hi) << 32) | mask_lo;
 
         __m128i* dest = reinterpret_cast<__m128i *>(out);
 
@@ -1202,15 +1202,10 @@ namespace
         _mm_storeu_si128(dest + 1, row1);
         _mm_storeu_si128(dest + 2, row2);
         _mm_storeu_si128(dest + 3, row3);
-
-        if (mask_hi)
-        {
-            zeromask |= (u64(mask_hi) << 32);
-            _mm_storeu_si128(dest + 4, row4);
-            _mm_storeu_si128(dest + 5, row5);
-            _mm_storeu_si128(dest + 6, row6);
-            _mm_storeu_si128(dest + 7, row7);
-        }
+        _mm_storeu_si128(dest + 4, row4);
+        _mm_storeu_si128(dest + 5, row5);
+        _mm_storeu_si128(dest + 6, row6);
+        _mm_storeu_si128(dest + 7, row7);
 
         return ~zeromask;
     }
@@ -1403,19 +1398,14 @@ namespace
         zero1 = _mm256_permute4x64_epi64(zero1, 0xd8);
         u32 mask_lo = _mm256_movemask_epi8(zero0);
         u32 mask_hi = _mm256_movemask_epi8(zero1);
-        u64 zeromask = mask_lo;
+        u64 zeromask = (u64(mask_hi) << 32) | mask_lo;
 
         __m256i* dest = reinterpret_cast<__m256i *>(out);
 
         _mm256_storeu_si256(dest + 0, row01);
         _mm256_storeu_si256(dest + 1, row23);
-
-        if (mask_hi)
-        {
-            zeromask |= (u64(mask_hi) << 32);
-            _mm256_storeu_si256(dest + 2, row45);
-            _mm256_storeu_si256(dest + 3, row67);
-        }
+        _mm256_storeu_si256(dest + 2, row45);
+        _mm256_storeu_si256(dest + 3, row67);
 
         return ~zeromask;
     }
@@ -1554,17 +1544,12 @@ namespace
         const __m512i zero = _mm512_setzero_si512();
         __mmask32 mask_lo = _mm512_cmpneq_epu16_mask(v0, zero);
         __mmask32 mask_hi = _mm512_cmpneq_epu16_mask(v1, zero);
-        u64 zeromask = mask_lo;
+        u64 zeromask = (u64(mask_hi) << 32) | mask_lo;
 
         __m512i* dest = reinterpret_cast<__m512i *>(out);
 
         _mm512_storeu_si512(dest + 0, v0);
-
-        if (!mask_hi)
-        {
-            zeromask |= (u64(mask_hi) << 32);
-            _mm512_storeu_si512(dest + 1, v1);
-        }
+        _mm512_storeu_si512(dest + 1, v1);
 
         return zeromask;
     }
@@ -1747,14 +1732,10 @@ namespace
         vst1q_s16(out + 1 * 8, row1);
         vst1q_s16(out + 2 * 8, row2);
         vst1q_s16(out + 3 * 8, row3);
-
-        if (zeromask & 0xffffffff00000000ull)
-        {
-            vst1q_s16(out + 4 * 8, row4);
-            vst1q_s16(out + 5 * 8, row5);
-            vst1q_s16(out + 6 * 8, row6);
-            vst1q_s16(out + 7 * 8, row7);
-        }
+        vst1q_s16(out + 4 * 8, row4);
+        vst1q_s16(out + 5 * 8, row5);
+        vst1q_s16(out + 6 * 8, row6);
+        vst1q_s16(out + 7 * 8, row7);
 
         return zeromask;
     }
