@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -11,6 +11,7 @@ using namespace mango::image;
 #define TEST_LIBJPEG
 #define TEST_STB
 #define TEST_JPEG_COMPRESSOR
+#define TEST_JPEGDEC
 
 // ----------------------------------------------------------------------
 // warmup()
@@ -76,7 +77,6 @@ Surface load_jpeg(const char* filename)
     if (numChannels == 4)
         format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
-    // TODO: free data, format depends on numChannels
     return Surface(w, h, format, w * numChannels, data);
 }
 
@@ -174,6 +174,71 @@ Surface jpgd_load(const char* filename)
 void jpge_save(const char* filename, const Surface& surface)
 {
     jpge::compress_image_to_jpeg_file(filename, surface.width, surface.height, 4, surface.image);
+    free(surface.image);
+}
+
+#endif
+
+// ----------------------------------------------------------------------
+// jpegdec
+// ----------------------------------------------------------------------
+
+#ifdef TEST_JPEGDEC
+
+#include "jpegdec/JPEGDEC.h"
+
+Bitmap* jpegdec_bitmap = nullptr;
+
+int jpegdec_draw(JPEGDRAW *draw)
+{
+    u16* src = draw->pPixels;
+    u8* dest = jpegdec_bitmap->address(draw->x, draw->y);
+    size_t stride = jpegdec_bitmap->stride;
+
+    for (int y = 0; y < draw->iHeight; ++y)
+    {
+        std::memcpy(dest, src, draw->iWidth * 2);
+        src += draw->iWidth;
+        dest += stride;
+    }
+
+    return 1;
+}
+
+Surface jpegdec_load(const char* filename)
+{
+    File file(filename);
+    u8* data = const_cast<u8*>(file.data());
+    int size = int(file.size());
+
+    Surface s(0, 0, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), 0, nullptr);
+
+    JPEGDEC decoder;
+
+    if (!decoder.openRAM(data, size, jpegdec_draw))
+    {
+        printf("JPEGDEC::openRAM() failed.\n");
+        return s;
+    }
+
+    int width = decoder.getWidth();
+    int height = decoder.getHeight();
+    jpegdec_bitmap = new Bitmap(width, height, Format(16, Format::UNORM, Format::BGR, 5, 6, 5, 0));
+
+    if (!decoder.decode(0, 0, 0))
+    {
+        printf("JPEGDEC::decode() failed.\n");
+        return s;
+    }
+
+    decoder.close();
+    delete jpegdec_bitmap;
+
+    return s;
+}
+
+void jpegdec_save(const char* filename, const Surface& surface)
+{
 }
 
 #endif
@@ -267,6 +332,23 @@ int main(int argc, const char* argv[])
 
     time2 = Time::us();
     print("jpgd:    ", time1 - time0, time2 - time1);
+
+#endif
+
+    // ------------------------------------------------------------------
+
+#ifdef TEST_JPEGDEC
+
+    time0 = Time::us();
+
+    Surface s_jpegdec = jpegdec_load(filename);
+
+    time1 = Time::us();
+
+    jpegdec_save("output-jpegdec.jpg", s_jpegdec);
+
+    time2 = Time::us();
+    print("jpgdec:  ", time1 - time0, time2 - time1);
 
 #endif
 
