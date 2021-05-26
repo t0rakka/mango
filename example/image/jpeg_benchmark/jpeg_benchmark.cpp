@@ -208,37 +208,33 @@ int jpegdec_draw(JPEGDRAW *draw)
 Surface jpegdec_load(const char* filename)
 {
     File file(filename);
-    u8* data = const_cast<u8*>(file.data());
-    int size = int(file.size());
-
-    Surface s(0, 0, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), 0, nullptr);
 
     JPEGDEC decoder;
 
-    if (!decoder.openRAM(data, size, jpegdec_draw))
+    if (!decoder.openRAM(const_cast<u8*>(file.data()), int(file.size()), jpegdec_draw))
     {
         printf("JPEGDEC::openRAM() failed.\n");
-        return s;
+        return Surface();
     }
 
     int width = decoder.getWidth();
     int height = decoder.getHeight();
-    jpegdec_bitmap = new Bitmap(width, height, Format(16, Format::UNORM, Format::BGR, 5, 6, 5, 0));
+    Bitmap bitmap(width, height, Format(16, Format::UNORM, Format::BGR, 5, 6, 5, 0));
+
+    jpegdec_bitmap = &bitmap;
 
     if (!decoder.decode(0, 0, 0))
     {
         printf("JPEGDEC::decode() failed.\n");
-        return s;
+        return Surface();
     }
 
-    decoder.close();
-    delete jpegdec_bitmap;
-
-    return s;
+    return Surface();
 }
 
 void jpegdec_save(const char* filename, const Surface& surface)
 {
+    // NOT SUPPORTED
 }
 
 #endif
@@ -289,11 +285,9 @@ int main(int argc, const char* argv[])
 #ifdef TEST_LIBJPEG
 
     time0 = Time::us();
-
     Surface s = load_jpeg(filename);
 
     time1 = Time::us();
-
     save_jpeg("output-libjpeg.jpg", s);
 
     time2 = Time::us();
@@ -306,11 +300,9 @@ int main(int argc, const char* argv[])
 #ifdef TEST_STB
 
     time0 = Time::us();
-
     Surface s_stb = stb_load_jpeg(filename);
 
     time1 = Time::us();
-
     stb_save_jpeg("output-stb.jpg", s_stb);
 
     time2 = Time::us();
@@ -323,11 +315,9 @@ int main(int argc, const char* argv[])
 #ifdef TEST_JPEG_COMPRESSOR
 
     time0 = Time::us();
-
     Surface s_jpgd = jpgd_load(filename);
 
     time1 = Time::us();
-
     jpge_save("output-jpge.jpg", s_jpgd);
 
     time2 = Time::us();
@@ -340,11 +330,9 @@ int main(int argc, const char* argv[])
 #ifdef TEST_JPEGDEC
 
     time0 = Time::us();
-
     Surface s_jpegdec = jpegdec_load(filename);
 
     time1 = Time::us();
-
     jpegdec_save("output-jpegdec.jpg", s_jpegdec);
 
     time2 = Time::us();
@@ -355,11 +343,9 @@ int main(int argc, const char* argv[])
     // ------------------------------------------------------------------
 
     time0 = Time::us();
-
     Bitmap bitmap(filename);
 
     time1 = Time::us();
-
     ImageEncodeOptions options;
     options.quality = 0.70f;
     bitmap.save("output-mango.jpg", options);
