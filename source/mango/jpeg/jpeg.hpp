@@ -407,10 +407,8 @@ namespace mango::jpeg
 
         int width;  // Image width, does include alignment
         int height; // Image height, does include alignment
-        int xsize;  // Image width, does not include alignment
-        int ysize;  // Image height, does not include alignment
-        int xclip;
-        int yclip;
+        int xsize;  // Image width, does NOT include alignment
+        int ysize;  // Image height, does NOT include alignment
         int precision; // 8 or 12 bits
         int components; // 1..4
 
