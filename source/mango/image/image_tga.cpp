@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/core/pointer.hpp>
@@ -332,7 +332,7 @@ namespace
             return m_header;
         }
 
-        ImageDecodeStatus decode(const Surface& surface, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& surface, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);
@@ -466,9 +466,9 @@ namespace
                 case IMAGETYPE_PALETTE:
                 case IMAGETYPE_RLE_PALETTE:
                 {
-                    if (ptr_palette)
+                    if (options.palette)
                     {
-                        *ptr_palette = palette;
+                        *options.palette = palette;
                         dest.blit(0, 0, Surface(width, height, LuminanceFormat(8, Format::UNORM, 8, 0), width, data));
                     }
                     else

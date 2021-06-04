@@ -2608,7 +2608,7 @@ namespace
             return m_parser.icc();
         }
 
-        ImageDecodeStatus decode(const Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);
@@ -2626,7 +2626,7 @@ namespace
             bool direct = dest.format == header.format &&
                           dest.width >= header.width &&
                           dest.height >= header.height &&
-                          !ptr_palette;
+                          !options.palette;
 
             if (direct)
             {
@@ -2635,10 +2635,10 @@ namespace
             }
             else
             {
-                if (ptr_palette && header.palette)
+                if (options.palette && header.palette)
                 {
                     // direct decoding with palette
-                    status = m_parser.decode(dest, ptr_palette);
+                    status = m_parser.decode(dest, options.palette);
                     direct = true;
                 }
                 else

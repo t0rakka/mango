@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -158,6 +158,7 @@ namespace mango::jpeg
     using mango::image::ImageHeader;
     using mango::image::ImageDecodeStatus;
     using mango::image::ImageEncodeStatus;
+    using mango::image::ImageDecodeOptions;
     using mango::image::ImageEncodeOptions;
 
 #ifdef MANGO_CPU_64BIT
@@ -483,7 +484,7 @@ namespace mango::jpeg
         Parser(ConstMemory memory);
         ~Parser();
 
-        ImageDecodeStatus decode(const Surface& target);
+        ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
     };
 
     // ----------------------------------------------------------------------------

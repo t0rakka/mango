@@ -187,7 +187,7 @@ namespace mango::image
 
         if (m_interface)
         {
-            status = m_interface->decode(dest, options.palette, level, depth, face);
+            status = m_interface->decode(dest, options, level, depth, face);
         }
         else
         {

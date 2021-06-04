@@ -292,6 +292,8 @@ namespace
 
         std::string info;
 
+        using ReadFunc = void (*)(s16*, const u8*, size_t, int, int);
+
         void (*read_8x8) (s16* block, const u8* input, size_t stride, int rows, int cols);
         void (*read)     (s16* block, const u8* input, size_t stride, int rows, int cols);
         void (*fdct)     (s16* dest, const s16* data, const s16* qtable);
@@ -300,6 +302,7 @@ namespace
         jpegEncoder(const Surface& surface, SampleType sample, const ImageEncodeOptions& options);
         ~jpegEncoder();
 
+        void encodeInterval(EncodeBuffer& buffer, const u8* src, size_t stride, ReadFunc read_func, int rows);
         void writeMarkers(BigEndianStream& p);
         ImageEncodeStatus encodeImage(Stream& stream);
     };
@@ -2366,7 +2369,7 @@ namespace
         int bytes_per_pixel = 0;
         read_8x8 = nullptr;
 
-        u64 flags = getCPUFlags();
+        u64 flags = options.simd ? getCPUFlags() : 0;
         MANGO_UNREFERENCED(flags);
 
         // select sampler
@@ -2674,110 +2677,143 @@ namespace
         p.write8(0x00);
     }
 
-    ImageEncodeStatus jpegEncoder::encodeImage(Stream& stream)
+    void jpegEncoder::encodeInterval(EncodeBuffer& buffer, const u8* image, size_t stride, ReadFunc read_func, int rows)
     {
-        const u8* input = m_surface.image;
-        size_t stride = m_surface.stride;
+        HuffmanEncoder huffman;
+        huffman.fdct = fdct;
 
-        // bitstream for each MCU scan
-        std::vector<EncodeBuffer> buffers(vertical_mcus);
+        const int right_mcu = horizontal_mcus - 1;
 
-        ConcurrentQueue queue;
+        constexpr int buffer_size = 2048;
+        constexpr int flush_threshold = buffer_size - 512;
 
-        // encode MCUs
-        for (int y = 0; y < vertical_mcus; ++y)
+        u8 huff_temp[buffer_size]; // encoding buffer
+        u8* ptr = huff_temp;
+
+        int cols = mcu_width;
+        auto reader = read_func;
+
+        for (int x = 0; x < horizontal_mcus; ++x)
         {
-            int rows = mcu_height;
-            auto read_func = read_8x8; // default: optimized 8x8 reader
-
-            if (y >= vertical_mcus - 1)
+            if (x >= right_mcu)
             {
-                // vertical clipping
-                rows = rows_in_bottom_mcus;
-                read_func = read; // clipping reader
+                // horizontal clipping
+                cols = cols_in_right_mcus;
+                reader = read; // clipping reader
             }
 
-            queue.enqueue([this, y, &buffers, input, stride, rows, read_func]
+            // read MCU data
+            s16 block[BLOCK_SIZE * 3];
+            reader(block, image, stride, rows, cols);
+
+            // encode the data in MCU
+            for (int i = 0; i < components; ++i)
             {
-                const u8* image = input;
+                ptr = encode(huffman, ptr, block + i * BLOCK_SIZE, channel[i]);
+            }
 
-                HuffmanEncoder huffman;
-                huffman.fdct = fdct;
-
-                EncodeBuffer& buffer = buffers[y];
-
-                constexpr int buffer_size = 2048;
-                constexpr int flush_threshold = buffer_size - 512;
-
-                u8 huff_temp[buffer_size]; // encoding buffer
-                u8* ptr = huff_temp;
-
-                int cols = mcu_width;
-                auto reader = read_func;
-
-                const int right_mcu = horizontal_mcus - 1;
-
-                for (int x = 0; x < horizontal_mcus; ++x)
-                {
-                    if (x >= right_mcu)
-                    {
-                        // horizontal clipping
-                        cols = cols_in_right_mcus;
-                        reader = read; // clipping reader
-                    }
-
-                    // read MCU data
-                    s16 block[BLOCK_SIZE * 3];
-                    reader(block, image, stride, rows, cols);
-
-                    // encode the data in MCU
-                    for (int i = 0; i < components; ++i)
-                    {
-                        ptr = encode(huffman, ptr, block + i * BLOCK_SIZE, channel[i]);
-                    }
-
-                    // flush encoding buffer
-                    if (ptr - huff_temp > flush_threshold)
-                    {
-                        buffer.append(huff_temp, ptr - huff_temp);
-                        ptr = huff_temp;
-                    }
-
-                    image += mcu_stride;
-                }
-
-                // flush encoding buffer
-                ptr = huffman.flush(ptr);
+            // flush encoding buffer
+            if (ptr - huff_temp > flush_threshold)
+            {
                 buffer.append(huff_temp, ptr - huff_temp);
+                ptr = huff_temp;
+            }
 
-                // mark buffer ready for writing
-                buffer.ready = true;
-            });
-
-            input += m_surface.stride * mcu_height;
+            image += mcu_stride;
         }
+
+        // flush encoding buffer
+        ptr = huffman.flush(ptr);
+        buffer.append(huff_temp, ptr - huff_temp);
+
+        // mark buffer ready for writing
+        buffer.ready = true;
+    }
+
+    ImageEncodeStatus jpegEncoder::encodeImage(Stream& stream)
+    {
+        const u8* image = m_surface.image;
+        size_t stride = m_surface.stride;
 
         BigEndianStream s(stream);
 
         // writing marker data
         writeMarkers(s);
 
-        for (int y = 0; y < vertical_mcus; ++y)
-        {
-            EncodeBuffer& buffer = buffers[y];
+        // encode MCUs
 
-            for ( ; !buffer.ready; )
+        if (m_options.multithread)
+        {
+            ConcurrentQueue queue;
+
+            // bitstream for each MCU scan
+            std::vector<EncodeBuffer> buffers(vertical_mcus);
+
+            for (int y = 0; y < vertical_mcus; ++y)
             {
-                // buffer is not processed yet; help the thread pool while waiting
-                queue.steal();
+                int rows = mcu_height;
+                auto read_func = read_8x8; // default: optimized 8x8 reader
+
+                if (y >= vertical_mcus - 1)
+                {
+                    // vertical clipping
+                    rows = rows_in_bottom_mcus;
+                    read_func = read; // clipping reader
+                }
+
+                queue.enqueue([this, y, &buffers, image, stride, rows, read_func]
+                {
+                    EncodeBuffer& buffer = buffers[y];
+                    encodeInterval(buffer, image, stride, read_func, rows);
+                });
+
+                image += m_surface.stride * mcu_height;
             }
 
-            // write huffman bitstream
-            s.write(buffer, buffer.size());
+            for (int y = 0; y < vertical_mcus; ++y)
+            {
+                EncodeBuffer& buffer = buffers[y];
 
-            // write restart marker
-            int index = y & 7;
-            s.write16(MARKER_RST0 + index);
+                for ( ; !buffer.ready; )
+                {
+                    // buffer is not processed yet; help the thread pool while waiting
+                    queue.steal();
+                }
+
+                // write huffman bitstream
+                s.write(buffer, buffer.size());
+
+                // write restart marker
+                int index = y & 7;
+                s.write16(MARKER_RST0 + index);
+            }
+        }
+        else
+        {
+            for (int y = 0; y < vertical_mcus; ++y)
+            {
+                int rows = mcu_height;
+                auto read_func = read_8x8; // default: optimized 8x8 reader
+
+                if (y >= vertical_mcus - 1)
+                {
+                    // vertical clipping
+                    rows = rows_in_bottom_mcus;
+                    read_func = read; // clipping reader
+                }
+
+                EncodeBuffer buffer;
+                encodeInterval(buffer, image, stride, read_func, rows);
+
+                // write huffman bitstream
+                s.write(buffer, buffer.size());
+
+                // write restart marker
+                int index = y & 7;
+                s.write16(MARKER_RST0 + index);
+
+                image += m_surface.stride * mcu_height;
+            }
         }
 
         // EOI marker

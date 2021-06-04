@@ -50,6 +50,10 @@ namespace mango::image
         // - palette is resolved into the provided palette object
         // - decode() destination surface must be indexed
         Palette* palette = nullptr; // enable indexed decoding by pointing to a palette
+
+        // TODO: planned API features
+        //bool simd = true;
+        //bool multithread = true;
     };
 
     class ImageDecoderInterface : protected NonCopyable
@@ -59,7 +63,7 @@ namespace mango::image
         virtual ~ImageDecoderInterface() = default;
 
         virtual ImageHeader header() = 0;
-        virtual ImageDecodeStatus decode(const Surface& dest, Palette* palette, int level, int depth, int face) = 0;
+        virtual ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) = 0;
 
         // optional
         virtual ConstMemory memory(int level, int depth, int face); // get compressed data

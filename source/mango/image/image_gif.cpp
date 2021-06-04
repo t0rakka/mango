@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
 	The lzw_decode() function is based on Jean-Marc Lienher / STB decoder.
@@ -585,7 +585,7 @@ namespace
             return m_header;
         }
 
-        ImageDecodeStatus decode(const Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);
@@ -599,8 +599,8 @@ namespace
                 return status;
             }
 
-			Format format = ptr_palette ? LuminanceFormat(8, Format::UNORM, 8, 0)
-			                            : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+			Format format = options.palette ? LuminanceFormat(8, Format::UNORM, 8, 0)
+			                                : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
 			size_t stride = m_header.width * format.bytes();
 			Surface target(m_header.width, m_header.height, format, stride, m_image.get());
@@ -610,7 +610,7 @@ namespace
 			if (m_data)
 			{
 				m_state.first_frame = status.current_frame_index == 0;
-				m_data = read_chunks(m_data, m_end, m_state, target, ptr_palette);
+				m_data = read_chunks(m_data, m_end, m_state, target, options.palette);
 				m_frame_counter += (m_data != nullptr);
 			}
 

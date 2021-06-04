@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -321,7 +321,7 @@ namespace
             return m_header;
         }
 
-        ImageDecodeStatus decode(const Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);
@@ -342,6 +342,7 @@ namespace
             bool is_pbm = signature == SIGNATURE_PBM;
 
             Palette palette;
+            Palette* ptr_palette = options.palette; // palette request destination
 
             std::unique_ptr<u8[]> allocation;
             const u8* buffer = nullptr;

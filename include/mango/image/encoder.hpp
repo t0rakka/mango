@@ -24,12 +24,17 @@ namespace mango::image
     struct ImageEncodeOptions
     {
         Palette palette;
+
+        ConstMemory icc; // jpeg, png
+
         float quality = 0.90f; // jpeg: [0.0, 1.0]
         int compression = 5; // png: [0, 10]
         bool filtering = true; // png
         bool dithering = true; // gif
         bool lossless = false; // webp
-        ConstMemory icc; // jpeg, png
+
+        bool simd = true; // jpeg
+        bool multithread = true; // jpeg
     };
 
     class ImageEncoder : protected NonCopyable

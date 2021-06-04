@@ -1689,8 +1689,9 @@ namespace mango::jpeg
         debugPrint("  Decoder: %s\n", id.c_str());
     }
 
-    ImageDecodeStatus Parser::decode(const Surface& target)
+    ImageDecodeStatus Parser::decode(const Surface& target, const ImageDecodeOptions& options)
     {
+        MANGO_UNREFERENCED(options);
         ImageDecodeStatus status;
 
         if (!scan_memory.address || !header)

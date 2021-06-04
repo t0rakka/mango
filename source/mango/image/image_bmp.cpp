@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -1193,7 +1193,7 @@ namespace
             return m_image_header;
         }
 
-        ImageDecodeStatus decode(const Surface& dest, Palette* ptr_palette, int level, int depth, int face) override
+        ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);
@@ -1249,7 +1249,7 @@ namespace
             }
 
             ConstMemory block = m_memory.slice(14);
-            mango::Status result = decodeBitmap(dest, block, m_file_header.offset - 14, false, ptr_palette);
+            mango::Status result = decodeBitmap(dest, block, m_file_header.offset - 14, false, options.palette);
             if (!result)
             {
                 status.setError(result.info);
