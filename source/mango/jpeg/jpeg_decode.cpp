@@ -1819,6 +1819,9 @@ namespace mango::jpeg
 
     void Parser::decodeLossless()
     {
+        // NOTE: need more test files to make this more conformant
+        // NOTE: color sub-sampling is not supported (need test files)
+
         int predictor = decodeState.spectralStart;
         int pointTransform = decodeState.successiveLow;
 
@@ -1845,6 +1848,8 @@ namespace mango::jpeg
             scanLineCache[i] = std::vector<int>(width + 1, 0);
         }
 
+        bool first = true;
+
         for (int y = 0; y < height; ++y)
         {
             u8* image = m_surface->address<u8>(0, y);
@@ -1855,44 +1860,43 @@ namespace mango::jpeg
 
                 decodeFunction(data, &decodeState);
                 bool restarted = handleRestart();
+                bool init = restarted | first;
+                first = false;
 
                 for (int currentComponent = 0; currentComponent < components; ++currentComponent)
                 {
-                    // Predictors
+                    // predictors
                     int* cache = scanLineCache[currentComponent].data();
-                    int Ra = data[currentComponent];
-                    int Rb = cache[x + 1];
-                    int Rc = cache[x + 0];
+                    int a = data[currentComponent];
+                    int b = cache[x + 1];
+                    int c = cache[x + 0];
 
-                    int Px;
+                    int s;
 
-                    // NOTE: need more test files to make this more conformant
-                    // NOTE: color sub-sampling is not supported (need test files)
-
-                    if ((x == 0 && y == 0) || restarted)
-                        Px = initPredictor;
+                    if (init)
+                        s = initPredictor;
                     else if (predictor == 0) 
-                        Px = 0;
+                        s = 0;
                     else if (x == xlast)
-                        Px = cache[0];
+                        s = cache[0];
                     else if (predictor == 1 || y == 0 || restarted)
-                        Px = Ra;
+                        s = a;
                     else if (predictor == 2)
-                        Px = Rb;
+                        s = b;
                     else if (predictor == 3)
-                        Px = Rc;
+                        s = c;
                     else if (predictor == 4)
-                        Px = Ra + Rb - Rc;
+                        s = a + b - c;
                     else if (predictor == 5)
-                        Px = Ra + ((Rb - Rc) >> 1);
+                        s = a + ((b - c) >> 1);
                     else if (predictor == 6)
-                        Px = Rb + ((Ra - Rc) >> 1);
+                        s = b + ((a - c) >> 1);
                     else if (predictor == 7)
-                        Px = (Ra + Rb) >> 1;
+                        s = (a + b) >> 1;
                     else
-                        Px = 0;
+                        s = 0;
 
-                    previousDC[currentComponent] = Px;
+                    previousDC[currentComponent] = s;
 
                     cache[x] = data[currentComponent];
                     data[currentComponent] = data[currentComponent] >> (precision - 8);
