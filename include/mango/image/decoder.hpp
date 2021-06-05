@@ -51,8 +51,8 @@ namespace mango::image
         // - decode() destination surface must be indexed
         Palette* palette = nullptr; // enable indexed decoding by pointing to a palette
 
+        bool simd = true;
         // TODO: planned API features
-        //bool simd = true;
         //bool multithread = true;
     };
 

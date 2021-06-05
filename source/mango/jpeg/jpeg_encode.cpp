@@ -381,7 +381,7 @@ namespace
         }
     }
 
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(MANGO_ENABLE_SSE2)
 
     // ----------------------------------------------------------------------------
     // fdct sse2
@@ -601,7 +601,7 @@ namespace
         _mm_storeu_si128(d + 7, v7);
     }
 
-#if defined(JPEG_ENABLE_AVX2)
+#if defined(MANGO_ENABLE_AVX2)
 
     // ----------------------------------------------------------------------------
     // fdct_avx2
@@ -736,10 +736,10 @@ namespace
         _mm256_storeu_si256(d + 3, v67);
     }
 
-#endif // defined(JPEG_ENABLE_AVX2)
-#endif // defined(JPEG_ENABLE_SSE2)
+#endif // defined(MANGO_ENABLE_AVX2)
+#endif // defined(MANGO_ENABLE_SSE2)
 
-#if defined(JPEG_ENABLE_NEON)
+#if defined(MANGO_ENABLE_NEON)
 
     // ----------------------------------------------------------------------------
     // fdct_neon
@@ -926,7 +926,7 @@ namespace
         vst1q_s16(dest + 7 * 8, v7);
     }
 
-#endif // defined(JPEG_ENABLE_NEON)
+#endif // defined(MANGO_ENABLE_NEON)
 
     static inline
     u8* encode_dc(HuffmanEncoder& encoder, u8* p, s16 dc, const jpegEncoder::Channel& channel)
@@ -1012,7 +1012,7 @@ namespace
         return p;
     }
 
-#if defined(JPEG_ENABLE_SSE4)
+#if defined(MANGO_ENABLE_SSE4_1)
 
     // ----------------------------------------------------------------------------
     // encode_block_ssse3
@@ -1263,7 +1263,7 @@ namespace
         return p;
     }
 
-#if defined(JPEG_ENABLE_AVX2)
+#if defined(MANGO_ENABLE_AVX2)
 
     // ----------------------------------------------------------------------------
     // encode_block_avx2
@@ -1608,10 +1608,10 @@ namespace
     }
 
 #endif // defined(JPEG_ENABLE_AVX512)
-#endif // defined(JPEG_ENABLE_AVX2)
-#endif // defined(JPEG_ENABLE_SSE4)
+#endif // defined(MANGO_ENABLE_AVX2)
+#endif // defined(MANGO_ENABLE_SSE4_1)
 
-#if defined(JPEG_ENABLE_NEON64)
+#if defined(MANGO_ENABLE_NEON64)
 
     // ----------------------------------------------------------------------------
     // encode_block_neon
@@ -1793,7 +1793,7 @@ namespace
         return p;
     }
 
-#endif // defined(JPEG_ENABLE_NEON64)
+#endif // defined(MANGO_ENABLE_NEON64)
 
     // ----------------------------------------------------------------------------
     // read_xxx_format
@@ -2015,7 +2015,7 @@ namespace
         }
     }
 
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(MANGO_ENABLE_SSE2)
 
     static
     void read_y_format_sse2(s16* block, const u8* input, size_t stride, int rows, int cols)
@@ -2045,7 +2045,7 @@ namespace
         v7 = _mm_sub_epi8(v7, bias);
 
         // sign-extend
-#if defined(JPEG_ENABLE_SSE4)
+#if defined(MANGO_ENABLE_SSE4_1)
         v0 = _mm_cvtepi8_epi16(v0);
         v1 = _mm_cvtepi8_epi16(v1);
         v2 = _mm_cvtepi8_epi16(v2);
@@ -2204,9 +2204,9 @@ namespace
         }
     }
 
-#endif // JPEG_ENABLE_SSE2
+#endif // MANGO_ENABLE_SSE2
 
-#if defined(JPEG_ENABLE_SSE4)
+#if defined(MANGO_ENABLE_SSE4_1)
 
     static
     void read_bgr_format_ssse3(s16* block, const u8* input, size_t stride, int rows, int cols)
@@ -2330,7 +2330,7 @@ namespace
         }
     }
 
-#endif // JPEG_ENABLE_SSE4
+#endif // MANGO_ENABLE_SSE4_1
 
     // ----------------------------------------------------------------------------
     // jpegEncoder
@@ -2379,7 +2379,7 @@ namespace
         switch (sample)
         {
             case JPEG_U8_Y:
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(MANGO_ENABLE_SSE2)
                 if (flags & INTEL_SSE2)
                 {
                     read_8x8 = read_y_format_sse2;
@@ -2392,7 +2392,7 @@ namespace
                 break;
 
             case JPEG_U8_BGR:
-#if defined(JPEG_ENABLE_SSE4)
+#if defined(MANGO_ENABLE_SSE4_1)
 				if (flags & INTEL_SSSE3)
                 {
                     read_8x8 = read_bgr_format_ssse3;
@@ -2405,7 +2405,7 @@ namespace
                 break;
 
             case JPEG_U8_RGB:
-#if defined(JPEG_ENABLE_SSE4)
+#if defined(MANGO_ENABLE_SSE4_1)
                 if (flags & INTEL_SSSE3)
                 {
                     read_8x8 = read_rgb_format_ssse3;
@@ -2418,7 +2418,7 @@ namespace
                 break;
 
             case JPEG_U8_BGRA:
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(MANGO_ENABLE_SSE2)
                 if (flags & INTEL_SSE2)
                 {
                     read_8x8 = read_bgra_format_sse2;
@@ -2431,7 +2431,7 @@ namespace
                 break;
 
             case JPEG_U8_RGBA:
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(MANGO_ENABLE_SSE2)
                 if (flags & INTEL_SSE2)
                 {
                     read_8x8 = read_rgba_format_sse2;
@@ -2454,7 +2454,7 @@ namespace
         fdct = fdct_scalar;
         const char* fdct_name = "Scalar";
 
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(MANGO_ENABLE_SSE2)
         if (flags & INTEL_SSE2)
         {
             fdct = fdct_sse2;
@@ -2462,7 +2462,7 @@ namespace
         }
 #endif
 
-#if defined(JPEG_ENABLE_AVX2)
+#if defined(MANGO_ENABLE_AVX2)
         if (flags & INTEL_AVX2)
         {
             fdct = fdct_avx2;
@@ -2470,7 +2470,7 @@ namespace
         }
 #endif
 
-#if defined(JPEG_ENABLE_NEON)
+#if defined(MANGO_ENABLE_NEON)
         {
             fdct = fdct_neon;
             fdct_name = "NEON";
@@ -2482,7 +2482,7 @@ namespace
         encode = encode_block_scalar;
         const char* encode_name = "Scalar";
 
-#if defined(JPEG_ENABLE_SSE4)
+#if defined(MANGO_ENABLE_SSE4_1)
         if (flags & INTEL_SSSE3)
         {
             encode = encode_block_ssse3;
@@ -2490,7 +2490,7 @@ namespace
         }
 #endif
 
-#if defined(JPEG_ENABLE_AVX2)
+#if defined(MANGO_ENABLE_AVX2)
         if (flags & INTEL_AVX2)
         {
             encode = encode_block_avx2;
@@ -2506,7 +2506,7 @@ namespace
         }
 #endif
 
-#if defined(JPEG_ENABLE_NEON64)
+#if defined(MANGO_ENABLE_NEON64)
         {
             encode = encode_block_neon64;
             encode_name = "NEON64";

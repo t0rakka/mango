@@ -5,37 +5,12 @@
 #pragma once
 
 #define JPEG_ENABLE_THREAD
-#define JPEG_ENABLE_SIMD
 
 #include <vector>
 #include <string>
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
-
-#ifdef JPEG_ENABLE_SIMD
-
-    #if defined(MANGO_ENABLE_SSE2)
-        #define JPEG_ENABLE_SSE2
-    #endif
-
-    #if defined(MANGO_ENABLE_SSE4_1)
-        #define JPEG_ENABLE_SSE4
-    #endif
-
-    #if defined(MANGO_ENABLE_AVX2)
-        #define JPEG_ENABLE_AVX2
-    #endif
-
-    #if defined(MANGO_ENABLE_NEON)
-        #define JPEG_ENABLE_NEON
-    #endif
-
-    #if defined(MANGO_ENABLE_NEON64)
-        #define JPEG_ENABLE_NEON64
-    #endif
-
-#endif
 
 namespace mango::jpeg
 {
@@ -362,7 +337,7 @@ namespace mango::jpeg
 
         Frame frame[JPEG_MAX_COMPS_IN_SCAN];
         int frames;
-        ColorSpace colorspace;
+        ColorSpace colorspace = ColorSpace::CMYK; // default
 
 	    void (*idct) (u8* dest, const s16* data, const s16* qt);
 
@@ -472,7 +447,7 @@ namespace mango::jpeg
         void process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height);
 
         int getTaskSize(int count) const;
-        void configureCPU(SampleType sample);
+        void configureCPU(SampleType sample, const ImageDecodeOptions& options);
         std::string getInfo() const;
 
     public:
@@ -540,7 +515,7 @@ namespace mango::jpeg
     void process_ycbcr_rgba_16x8        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgba_16x16       (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-#if defined(JPEG_ENABLE_NEON)
+#if defined(MANGO_ENABLE_NEON)
 
     void idct_neon                      (u8* dest, const s16* data, const s16* qt);
 
@@ -564,9 +539,9 @@ namespace mango::jpeg
     void process_ycbcr_rgb_16x8_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgb_16x16_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-#endif
+#endif // MANGO_ENABLE_NEON
 
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(MANGO_ENABLE_SSE2)
 
     void idct_sse2                      (u8* dest, const s16* data, const s16* qt);
 
@@ -580,9 +555,9 @@ namespace mango::jpeg
     void process_ycbcr_rgba_16x8_sse2   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgba_16x16_sse2  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-#endif // JPEG_ENABLE_SSE2
+#endif // MANGO_ENABLE_SSE2
 
-#if defined(JPEG_ENABLE_SSE4)
+#if defined(MANGO_ENABLE_SSE4_1)
 
     void process_ycbcr_bgr_8x8_ssse3    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgr_8x16_ssse3   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
@@ -594,7 +569,7 @@ namespace mango::jpeg
     void process_ycbcr_rgb_16x8_ssse3   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_rgb_16x16_ssse3  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-#endif // JPEG_ENABLE_SSE4
+#endif // MANGO_ENABLE_SSE4_1
 
     SampleFormat getSampleFormat(const Format& format);
 	ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options);

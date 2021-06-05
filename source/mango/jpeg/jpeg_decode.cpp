@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/endian.hpp>
@@ -94,7 +94,7 @@ namespace mango::jpeg
 
     void BitBuffer::fill()
     {
-#if defined(MANGO_CPU_64BIT) && defined(JPEG_ENABLE_SSE2)
+#if defined(MANGO_CPU_64BIT) && defined(MANGO_ENABLE_SSE2)
         if (ptr + 8 <= end)
         {
             u64 x = uload64(ptr);
@@ -154,38 +154,9 @@ namespace mango::jpeg
 
         m_surface = nullptr;
 
-        u64 flags = getCPUFlags();
-        MANGO_UNREFERENCED(flags);
-
-        // configure default implementation
-        processState.idct = idct8;
-        processState.colorspace = ColorSpace::CMYK;
-
-#if defined(JPEG_ENABLE_NEON)
-        processState.idct = idct_neon;
-        m_idct_name = "NEON iDCT";
-#endif
-
-#if defined(JPEG_ENABLE_SSE2)
-        if (flags & INTEL_SSE2)
-        {
-            processState.idct = idct_sse2;
-            m_idct_name = "SSE2 iDCT";
-        }
-#endif
-
         if (isJPEG(memory))
         {
             parse(memory, false);
-
-            // precision is not known until parse() above is complete
-            if (precision == 12)
-            {
-                // Force 12 bit idct
-                // This will round down to 8 bit precision until we have a 12 bit capable color conversion
-                processState.idct = idct12;
-                m_idct_name = "12 bit iDCT";
-            }
         }
         else
         {
@@ -1466,14 +1437,43 @@ namespace mango::jpeg
         return false;
     }
 
-    void Parser::configureCPU(SampleType sample)
+    void Parser::configureCPU(SampleType sample, const ImageDecodeOptions& options)
     {
         const char* simd = "";
 
-        u64 flags = getCPUFlags();
+        u64 flags = options.simd ? getCPUFlags() : 0;
         MANGO_UNREFERENCED(flags);
 
-        // configure default implementation
+        // configure idct
+
+        processState.idct = idct8;
+
+#if defined(MANGO_ENABLE_NEON)
+        if (flags & ARM_NEON)
+        {
+            processState.idct = idct_neon;
+            m_idct_name = "NEON iDCT";
+        }
+#endif
+
+#if defined(MANGO_ENABLE_SSE2)
+        if (flags & INTEL_SSE2)
+        {
+            processState.idct = idct_sse2;
+            m_idct_name = "SSE2 iDCT";
+        }
+#endif
+
+        if (precision == 12)
+        {
+            // Force 12 bit idct
+            // This will round down to 8 bit precision until we have a 12 bit capable color conversion
+            processState.idct = idct12;
+            m_idct_name = "12 bit iDCT";
+        }
+
+        // configure block processing
+
         switch (sample)
         {
             case JPEG_U8_Y:
@@ -1521,7 +1521,7 @@ namespace mango::jpeg
         // CMYK / YCCK
         processState.process_cmyk = process_cmyk_bgra;
 
-#if defined(JPEG_ENABLE_NEON)
+#if defined(MANGO_ENABLE_NEON)
 
         if (flags & ARM_NEON)
         {
@@ -1562,7 +1562,7 @@ namespace mango::jpeg
 
 #endif
 
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(MANGO_ENABLE_SSE2)
 
         if (flags & INTEL_SSE2)
         {
@@ -1591,9 +1591,9 @@ namespace mango::jpeg
             }
         }
 
-#endif // JPEG_ENABLE_SSE2
+#endif // MANGO_ENABLE_SSE2
 
-#if defined(JPEG_ENABLE_SSE4)
+#if defined(MANGO_ENABLE_SSE4_1)
 
         if (flags & INTEL_SSSE3)
         {
@@ -1622,7 +1622,7 @@ namespace mango::jpeg
             }
         }
 
-#endif // JPEG_ENABLE_SSE4
+#endif // MANGO_ENABLE_SSE4_1
 
         std::string id;
 
@@ -1712,7 +1712,7 @@ namespace mango::jpeg
         SampleFormat sf = getSampleFormat(target.format);
 
         // configure innerloops based on CPU caps
-        configureCPU(sf.sample);
+        configureCPU(sf.sample, options);
 
         if (is_lossless)
         {

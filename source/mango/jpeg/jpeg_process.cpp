@@ -351,7 +351,7 @@ static inline void write_color_rgb(u8* dest, int y, int r, int g, int b)
 
 #undef COMPUTE_CBCR
 
-#if defined(JPEG_ENABLE_NEON)
+#if defined(MANGO_ENABLE_NEON)
 
 // ------------------------------------------------------------------------------------------------
 // NEON implementation
@@ -494,9 +494,9 @@ void convert_ycbcr_rgb_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t c
 #undef FUNCTION_YCBCR_16x8
 #undef FUNCTION_YCBCR_16x16
 
-#endif // JPEG_ENABLE_NEON
+#endif // MANGO_ENABLE_NEON
 
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(MANGO_ENABLE_SSE2)
 
 // ------------------------------------------------------------------------------------------------
 // SSE2 implementation
@@ -651,9 +651,9 @@ void convert_ycbcr_rgba_8x1_sse2(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 #undef FUNCTION_YCBCR_16x8
 #undef FUNCTION_YCBCR_16x16
 
-#endif // JPEG_ENABLE_SSE2
+#endif // MANGO_ENABLE_SSE2
 
-#if defined(JPEG_ENABLE_SSE4)
+#if defined(MANGO_ENABLE_SSE4_1)
 
 static inline
 void convert_ycbcr_bgr_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)
@@ -801,6 +801,6 @@ void convert_ycbcr_rgb_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 #undef FUNCTION_YCBCR_16x8
 #undef FUNCTION_YCBCR_16x16
 
-#endif // JPEG_ENABLE_SSE4
+#endif // MANGO_ENABLE_SSE4_1
 
 } // namespace mango::jpeg

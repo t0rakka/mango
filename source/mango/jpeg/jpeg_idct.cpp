@@ -142,7 +142,7 @@ namespace mango::jpeg
         idct<12>(dest, data, qt);
     }
 
-#if defined(JPEG_ENABLE_SSE2)
+#if defined(MANGO_ENABLE_SSE2)
 
     // ------------------------------------------------------------------------------------------------
     // SSE2 implementation
@@ -325,9 +325,9 @@ namespace mango::jpeg
         _mm_storeu_si128(d + 3, s3);
     }
 
-#endif // JPEG_ENABLE_SSE2
+#endif // MANGO_ENABLE_SSE2
 
-#if defined(JPEG_ENABLE_NEON)
+#if defined(MANGO_ENABLE_NEON)
 
     // ------------------------------------------------------------------------------------------------
     // NEON implementation
@@ -572,6 +572,6 @@ void idct_neon(u8* out, const s16* data, const s16* qt)
 #undef dct_bfly32o
 #undef dct_pass
 
-#endif // JPEG_ENABLE_NEON
+#endif // MANGO_ENABLE_NEON
 
 } // namespace mango::jpeg
