@@ -141,12 +141,6 @@ namespace mango::jpeg
         restartInterval = 0;
         restartCounter = 0;
 
-#ifdef JPEG_ENABLE_THREAD
-        m_hardware_concurrency = ThreadPool::getHardwareConcurrency();
-#else
-        m_hardware_concurrency = 1;
-#endif
-
         for (int i = 0; i < JPEG_MAX_COMPS_IN_SCAN; ++i)
         {
             quantTable[i].table = quantTableVector.data() + i * 64;
@@ -1691,7 +1685,6 @@ namespace mango::jpeg
 
     ImageDecodeStatus Parser::decode(const Surface& target, const ImageDecodeOptions& options)
     {
-        MANGO_UNREFERENCED(options);
         ImageDecodeStatus status;
 
         if (!scan_memory.address || !header)
@@ -1713,6 +1706,9 @@ namespace mango::jpeg
 
         // configure innerloops based on CPU caps
         configureCPU(sf.sample, options);
+
+        // configure multithreading
+        m_hardware_concurrency = options.multithread ? ThreadPool::getHardwareConcurrency() : 1;
 
         if (is_lossless)
         {

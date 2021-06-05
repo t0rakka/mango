@@ -4,8 +4,6 @@
 */
 #pragma once
 
-#define JPEG_ENABLE_THREAD
-
 #include <vector>
 #include <string>
 #include <mango/core/core.hpp>

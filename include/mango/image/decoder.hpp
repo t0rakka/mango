@@ -52,8 +52,7 @@ namespace mango::image
         Palette* palette = nullptr; // enable indexed decoding by pointing to a palette
 
         bool simd = true;
-        // TODO: planned API features
-        //bool multithread = true;
+        bool multithread = true;
     };
 
     class ImageDecoderInterface : protected NonCopyable
