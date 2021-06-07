@@ -11,7 +11,7 @@ using namespace mango::image;
 #define TEST_LIBJPEG
 #define TEST_STB
 #define TEST_JPEG_COMPRESSOR
-#define TEST_JPEGDEC
+//#define TEST_JPEGDEC
 
 // ----------------------------------------------------------------------
 // warmup()
@@ -38,22 +38,22 @@ void warmup(const char* filename)
 
 Surface load_jpeg(const char* filename)
 {
-    FILE *file = fopen(filename, "rb" );
-    if ( file == NULL )
+    FILE* file = fopen(filename, "rb" );
+    if (!file)
     {
-        return Surface(0, 0, Format(), 0, NULL);
+        return Surface();
     }
 
-    struct jpeg_decompress_struct info; //for our jpeg info
-    struct jpeg_error_mgr err; //the error handler
+    struct jpeg_decompress_struct info;
+    struct jpeg_error_mgr err;
 
-    info.err = jpeg_std_error( &err );
-    jpeg_create_decompress( &info ); //fills info structure
+    info.err = jpeg_std_error(&err);
+    jpeg_create_decompress(&info);
 
-    jpeg_stdio_src( &info, file );
-    jpeg_read_header( &info, TRUE );
+    jpeg_stdio_src(&info, file);
+    jpeg_read_header(&info, TRUE);
 
-    jpeg_start_decompress( &info );
+    jpeg_start_decompress(&info);
 
     int w = info.output_width;
     int h = info.output_height;
@@ -69,9 +69,9 @@ Surface load_jpeg(const char* filename)
         jpeg_read_scanlines( &info, rowptr, 1 );
     }
 
-    jpeg_finish_decompress( &info );
+    jpeg_finish_decompress(&info);
 
-    fclose( file );
+    fclose(file);
 
     Format format = Format(24, Format::UNORM, Format::RGB, 8, 8, 9);
     if (numChannels == 4)
