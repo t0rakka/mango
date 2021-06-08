@@ -310,7 +310,7 @@
 
     #define MANGO_CPU_NAME "PowerPC"
 
-#elif defined(__powerpc__) || defined(_M_PPC)
+#elif defined(__POWERPC__) || defined(__ppc__) || defined(__powerpc__) || defined(_M_PPC)
 
     // 32 bit PowerPC
     #define MANGO_CPU_PPC
