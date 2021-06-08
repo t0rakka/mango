@@ -178,7 +178,7 @@ namespace
             struct dirent** namelist = NULL;
             std::string fullname = m_basepath + pathname;
 
-            const int n = ::scandir(fullname.c_str(), &namelist, [] (const struct dirent* e)
+            const int n = ::scandir(fullname.c_str(), &namelist, [] (const struct dirent* e) -> int
             {
                 // filter out "." and ".."
                 if (!std::strcmp(e->d_name, ".") || !std::strcmp(e->d_name, ".."))
