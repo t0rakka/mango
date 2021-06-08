@@ -34,6 +34,9 @@ The cmake build script will compile everything into one (.a) library
 Pro tip! "cmake -DENABLE_AVX512=ON .." to enable Intel AVX-512 SIMD instructions.
          "cmake -DBUILD_SHARED_LIBS=ON .." to compile .so/.dll/.dylib instead of .a/.lib
 
+Select compiler:
+    "cmake .. -DCMAKE_C_COMPILER=gcc-mp-7 -DCMAKE_CXX_COMPILER=g++-mp-7" (example for gcc-7 mp)    
+
 ------------------------------------------------------------------------------------------------
 * MAKE!
 ------------------------------------------------------------------------------------------------

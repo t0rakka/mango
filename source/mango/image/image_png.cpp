@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <cstring>
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
@@ -59,6 +60,27 @@ namespace
         }
         return text;
     }
+
+    // ------------------------------------------------------------
+    // png_strnlen
+    // ------------------------------------------------------------
+
+    // Long story short; the strnlen() is not part of std and not available
+    // on all platforms or tool-chains so we have to wrap it like this. :(
+
+#if defined(__ppc__)
+    size_t png_strnlen(const char* s,size_t maxlen)
+    {
+        for (size_t i=0; i < maxlen ; i++ )
+        {
+            if (s[i] == 0)
+                return i;
+        }
+        return maxlen;
+    }
+#else
+    #define png_strnlen std::strnlen
+#endif
 
     // ------------------------------------------------------------
     // Filter
@@ -1753,7 +1775,7 @@ namespace
         Compressed profile: n bytes
         */
         const char* name = (const char*)&p[0];
-        size_t name_len = strnlen(name, size);
+        size_t name_len = png_strnlen(name, size);
         if(name_len == size)
         {
             debugPrint("iCCP: profile name not terminated\n");
