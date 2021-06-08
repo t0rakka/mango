@@ -79,7 +79,7 @@ namespace
         return maxlen;
     }
 #else
-    #define png_strnlen std::strnlen
+    #define png_strnlen strnlen
 #endif
 
     // ------------------------------------------------------------
