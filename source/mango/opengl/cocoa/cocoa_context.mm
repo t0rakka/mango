@@ -2,6 +2,8 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#if !defined(__ppc__)
+
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
 
@@ -359,3 +361,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif

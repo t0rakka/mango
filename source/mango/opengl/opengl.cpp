@@ -2,6 +2,8 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#if !defined(__ppc__)
+
 #include <mango/core/exception.hpp>
 #include <mango/opengl/opengl.hpp>
 
@@ -1043,3 +1045,5 @@ namespace {
 #endif // MANGO_OPENGL_FRAMEBUFFER
 
 } // namespace mango
+
+#endif

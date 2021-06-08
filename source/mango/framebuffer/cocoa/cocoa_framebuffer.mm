@@ -2,6 +2,8 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#if !defined(__ppc__)
+
 #include <mango/framebuffer/framebuffer.hpp>
 #include "../../window/cocoa/cocoa_window.h"
 
@@ -750,3 +752,5 @@ namespace mango::framebuffer
     }
 
 } // namespace mango::framebuffer
+
+#endif

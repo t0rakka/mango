@@ -8,6 +8,8 @@
 #include <string>
 #include <mango/core/configure.hpp>
 
+#if !defined(__ppc__)
+
 // -----------------------------------------------------------------------
 // OpenGL API
 // -----------------------------------------------------------------------
@@ -272,3 +274,5 @@ namespace mango
 #endif // MANGO_OPENGL_FRAMEBUFFER
 
 } // namespace mango
+
+#endif
