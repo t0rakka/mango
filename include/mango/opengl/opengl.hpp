@@ -4,11 +4,11 @@
 */
 #pragma once
 
+#if !defined(__ppc__)
+
+#include <set>
 #include <string>
 #include <mango/core/configure.hpp>
-#include <mango/core/container.hpp>
-
-#if !defined(__ppc__)
 
 // -----------------------------------------------------------------------
 // OpenGL API
@@ -121,7 +121,7 @@ namespace mango
     {
     protected:
         struct OpenGLContextHandle* m_context;
-        mango::set<std::string> m_extensions;
+        std::set<std::string> m_extensions;
 
         void initExtensionMask();
 

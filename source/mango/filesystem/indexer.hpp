@@ -5,7 +5,7 @@
 #pragma once
 
 #include <string>
-#include <mango/core/container.hpp>
+#include <map>
 
 namespace mango::filesystem
 {
@@ -16,12 +16,12 @@ namespace mango::filesystem
     public:
         struct Folder
         {
-            mango::map<std::string, Header *> headers;
+            std::map<std::string, Header *> headers;
         };
 
     protected:
-        mango::map<std::string, Folder> folders;
-        mango::map<std::string, Header> headers;
+        std::map<std::string, Folder> folders;
+        std::map<std::string, Header> headers;
 
     public:
         void insert(const std::string& foldername, const std::string& filename, const Header& header)

@@ -1,10 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <map>
 #include <mango/core/system.hpp>
 #include <mango/core/cpuinfo.hpp>
-#include <mango/core/container.hpp>
 #include <mango/core/half.hpp>
 #include <mango/image/blitter.hpp>
 #include <mango/math/vector.hpp>
@@ -1267,7 +1267,7 @@ namespace
         },
     };
 
-    using FastConversionMap = mango::map< std::pair<Format, Format>, Blitter::FastFunc >;
+    using FastConversionMap = std::map< std::pair<Format, Format>, Blitter::FastFunc >;
 
     // initialize map of custom conversion functions
     FastConversionMap g_custom_func_map = []

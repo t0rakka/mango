@@ -4,7 +4,6 @@
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
-#include <mango/core/container.hpp>
 #include <mango/opengl/opengl.hpp>
 #include "../../window/xlib/xlib_handle.hpp"
 
@@ -229,7 +228,7 @@ namespace mango
         const char* glxExts = glXQueryExtensionsString(m_handle->display, DefaultScreen(m_handle->display));
 
         // Create GLX extension set
-        mango::set<std::string> glxExtensions;
+        std::set<std::string> glxExtensions;
         if (glxExts)
         {
             parseExtensionString(glxExtensions, glxExts);
