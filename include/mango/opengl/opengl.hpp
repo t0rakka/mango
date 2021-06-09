@@ -4,9 +4,9 @@
 */
 #pragma once
 
-#include <set>
 #include <string>
 #include <mango/core/configure.hpp>
+#include <mango/core/container.hpp>
 
 #if !defined(__ppc__)
 
@@ -121,7 +121,7 @@ namespace mango
     {
     protected:
         struct OpenGLContextHandle* m_context;
-        std::set<std::string> m_extensions;
+        mango::set<std::string> m_extensions;
 
         void initExtensionMask();
 

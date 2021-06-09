@@ -1,8 +1,8 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include <map>
+#include <mango/core/container.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/image/image.hpp>
@@ -37,8 +37,8 @@ namespace mango::image
     class ImageServer
     {
     protected:
-        std::map<std::string, ImageDecoder::CreateDecoderFunc> m_decoders;
-        std::map<std::string, ImageEncoder::EncodeFunc> m_encoders;
+        mango::map<std::string, ImageDecoder::CreateDecoderFunc> m_decoders;
+        mango::map<std::string, ImageEncoder::EncodeFunc> m_encoders;
 
     public:
         ImageServer()

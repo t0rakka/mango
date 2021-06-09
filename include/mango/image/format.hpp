@@ -245,3 +245,18 @@ namespace mango::image
     */
 
 } // namespace mango::image
+
+namespace std
+{
+
+    template <>
+    struct hash<mango::image::Format>
+    {
+        std::size_t operator() (const mango::image::Format& format) const
+        {
+            const mango::u64* data = reinterpret_cast<const mango::u64*>(&format);
+            return std::size_t(std::hash<mango::u64>()(data[0]) ^ std::hash<mango::u64>()(data[1]));
+        }
+    };
+
+} // namespace std
