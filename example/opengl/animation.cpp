@@ -3,12 +3,11 @@
     Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
-#include <mango/framebuffer/framebuffer.hpp>
+#include <mango/opengl/opengl.hpp>
 
 using namespace mango;
 using namespace mango::image;
 using namespace mango::filesystem;
-using namespace mango::framebuffer;
 
 struct ImageAnimation
 {
@@ -35,7 +34,7 @@ struct ImageAnimation
     }
 };
 
-class DemoWindow : public Framebuffer
+class DemoWindow : public OpenGLFramebuffer
 {
 protected:
     ImageAnimation& m_animation;
@@ -44,7 +43,7 @@ protected:
 
 public:
     DemoWindow(ImageAnimation& animation)
-        : Framebuffer(animation.m_bitmap.width, animation.m_bitmap.height)
+        : OpenGLFramebuffer(animation.m_bitmap.width, animation.m_bitmap.height)
         , m_animation(animation)
     {
         setVisible(true);

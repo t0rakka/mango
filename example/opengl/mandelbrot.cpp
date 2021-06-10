@@ -3,13 +3,12 @@
     Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
-#include <mango/framebuffer/framebuffer.hpp>
+#include <mango/opengl/opengl.hpp>
 
 using namespace mango;
 using namespace mango::image;
-using namespace mango::framebuffer;
 
-class DemoWindow : public Framebuffer
+class DemoWindow : public OpenGLFramebuffer
 {
 protected:
     Timer timer;
@@ -19,7 +18,7 @@ protected:
 
 public:
     DemoWindow(int width, int height)
-        : Framebuffer(width, height)
+        : OpenGLFramebuffer(width, height)
     {
         setVisible(true);
         setTitle("[DemoWindow] Initializing...");
@@ -116,7 +115,7 @@ public:
                     double v = v0 + dxdv * x + dydv * y;
                     int n = compute(u, v);
                     n = 255 -n;
-                    scan[x] = makeBGRA(n, n & 0xf0, n & 0x0f, 0xff);
+                    scan[x] = makeRGBA(n & 0x0f, n, n & 0xf0, 0xff);
                 }
             });
         }
