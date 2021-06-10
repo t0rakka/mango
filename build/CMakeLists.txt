@@ -156,9 +156,6 @@ FILE(GLOB MATH
 FILE(GLOB SIMD
     "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/simd/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/simd/*.cpp")
-FILE(GLOB VULKAN
-    "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/vulkan/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/vulkan/*.cpp")
 
 SOURCE_GROUP("core" FILES ${CORE})
 SOURCE_GROUP("filesystem" FILES ${FILESYSTEM})
@@ -168,7 +165,6 @@ SOURCE_GROUP("math" FILES ${MATH})
 SOURCE_GROUP("simd" FILES ${SIMD})
 SOURCE_GROUP("window" FILES ${WINDOW})
 SOURCE_GROUP("opengl" FILES ${OPENGL})
-SOURCE_GROUP("vulkan" FILES ${VULKAN})
 SOURCE_GROUP("framebuffer" FILES ${FRAMEBUFFER})
 
 FILE(GLOB EXTERNAL_LZMA
@@ -277,20 +273,13 @@ ADD_LIBRARY(mango-opengl
     ${OPENGL}
 )
 
-ADD_LIBRARY(mango-vulkan
-    ${WINDOW}
-    ${VULKAN}
-)
-
 target_link_libraries(mango-framebuffer PUBLIC mango)
 target_link_libraries(mango-opengl PUBLIC mango)
-target_link_libraries(mango-vulkan PUBLIC mango)
 
 if (APPLE)
     if (BUILD_SHARED_LIBS)
         target_link_libraries(mango-framebuffer PUBLIC "-framework Cocoa")
         target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
-        target_link_libraries(mango-vulkan PUBLIC "-framework Cocoa")
     endif ()
 
     target_compile_options(mango PUBLIC "-mmacosx-version-min=10.13")
@@ -423,11 +412,6 @@ INSTALL(TARGETS mango-framebuffer
     RUNTIME DESTINATION "bin"
 )
 INSTALL(TARGETS mango-opengl
-    LIBRARY DESTINATION "lib"
-    ARCHIVE DESTINATION "lib"
-    RUNTIME DESTINATION "bin"
-)
-INSTALL(TARGETS mango-vulkan
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin"
