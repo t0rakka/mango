@@ -217,13 +217,10 @@
 		A645DD9421419C7F00EC714B /* hash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A645DD9321419C7F00EC714B /* hash.cpp */; };
 		A650BE8621F21C180066B9B5 /* CustomOpenGLView.h in Headers */ = {isa = PBXBuildFile; fileRef = A650BE8121F21C180066B9B5 /* CustomOpenGLView.h */; };
 		A650BE8721F21C180066B9B5 /* CustomOpenGLView.mm in Sources */ = {isa = PBXBuildFile; fileRef = A650BE8221F21C180066B9B5 /* CustomOpenGLView.mm */; };
-		A650BE8B21F8B3730066B9B5 /* framebuffer in Resources */ = {isa = PBXBuildFile; fileRef = A650BE8A21F8B3730066B9B5 /* framebuffer */; };
-		A650BE8E21F8B79E0066B9B5 /* cocoa_framebuffer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A650BE8D21F8B79E0066B9B5 /* cocoa_framebuffer.mm */; };
 		A650BE9021F8BB990066B9B5 /* window in Resources */ = {isa = PBXBuildFile; fileRef = A650BE8F21F8BB990066B9B5 /* window */; };
 		A650BE9421F8D4290066B9B5 /* cocoa_window.mm in Sources */ = {isa = PBXBuildFile; fileRef = A650BE9221F8D4290066B9B5 /* cocoa_window.mm */; };
 		A650BE9521F8D4290066B9B5 /* cocoa_window.h in Headers */ = {isa = PBXBuildFile; fileRef = A650BE9321F8D4290066B9B5 /* cocoa_window.h */; };
 		A650BE9621F8D4B40066B9B5 /* window in Headers */ = {isa = PBXBuildFile; fileRef = A650BE8F21F8BB990066B9B5 /* window */; settings = {ATTRIBUTES = (Public, ); }; };
-		A650BE9721F8D4B40066B9B5 /* framebuffer in Headers */ = {isa = PBXBuildFile; fileRef = A650BE8A21F8B3730066B9B5 /* framebuffer */; settings = {ATTRIBUTES = (Public, ); }; };
 		A66F158521C15CB400E1C8AA /* zstd_decompress_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F158021C15CB400E1C8AA /* zstd_decompress_internal.h */; };
 		A66F158621C15CB400E1C8AA /* zstd_ddict.c in Sources */ = {isa = PBXBuildFile; fileRef = A66F158121C15CB400E1C8AA /* zstd_ddict.c */; };
 		A66F158721C15CB400E1C8AA /* zstd_decompress_block.h in Headers */ = {isa = PBXBuildFile; fileRef = A66F158221C15CB400E1C8AA /* zstd_decompress_block.h */; };
@@ -686,8 +683,6 @@
 		A645DD9321419C7F00EC714B /* hash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hash.cpp; path = core/hash.cpp; sourceTree = "<group>"; };
 		A650BE8121F21C180066B9B5 /* CustomOpenGLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CustomOpenGLView.h; path = opengl/cocoa/CustomOpenGLView.h; sourceTree = "<group>"; };
 		A650BE8221F21C180066B9B5 /* CustomOpenGLView.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = CustomOpenGLView.mm; path = opengl/cocoa/CustomOpenGLView.mm; sourceTree = "<group>"; };
-		A650BE8A21F8B3730066B9B5 /* framebuffer */ = {isa = PBXFileReference; lastKnownFileType = folder; name = framebuffer; path = mango/framebuffer; sourceTree = "<group>"; };
-		A650BE8D21F8B79E0066B9B5 /* cocoa_framebuffer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = cocoa_framebuffer.mm; path = framebuffer/cocoa/cocoa_framebuffer.mm; sourceTree = "<group>"; };
 		A650BE8F21F8BB990066B9B5 /* window */ = {isa = PBXFileReference; lastKnownFileType = folder; name = window; path = mango/window; sourceTree = "<group>"; };
 		A650BE9221F8D4290066B9B5 /* cocoa_window.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = cocoa_window.mm; path = window/cocoa/cocoa_window.mm; sourceTree = "<group>"; };
 		A650BE9321F8D4290066B9B5 /* cocoa_window.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cocoa_window.h; path = window/cocoa/cocoa_window.h; sourceTree = "<group>"; };
@@ -958,7 +953,6 @@
 			isa = PBXGroup;
 			children = (
 				A650BE8F21F8BB990066B9B5 /* window */,
-				A650BE8A21F8B3730066B9B5 /* framebuffer */,
 				A00559D91C93337C00A6D963 /* core */,
 				A00559E11C93340600A6D963 /* image */,
 				A00559DD1C9333F100A6D963 /* filesystem */,
@@ -1071,7 +1065,6 @@
 			isa = PBXGroup;
 			children = (
 				A650BE9121F8D4130066B9B5 /* window */,
-				A650BE8C21F8B7730066B9B5 /* framebuffer */,
 				A005598A1C93323D00A6D963 /* core */,
 				A005599D1C93326000A6D963 /* filesystem */,
 				A00559AA1C93328800A6D963 /* image */,
@@ -1363,14 +1356,6 @@
 				A642435121852AEF0044B763 /* Sort.h */,
 			);
 			name = lzma;
-			sourceTree = "<group>";
-		};
-		A650BE8C21F8B7730066B9B5 /* framebuffer */ = {
-			isa = PBXGroup;
-			children = (
-				A650BE8D21F8B79E0066B9B5 /* cocoa_framebuffer.mm */,
-			);
-			name = framebuffer;
 			sourceTree = "<group>";
 		};
 		A650BE9121F8D4130066B9B5 /* window */ = {
@@ -1797,7 +1782,6 @@
 				A6EC3FA8230D7C6100B17F21 /* decode.h in Headers */,
 				A6DD28A724125F080085E6EE /* adler32_impl.h in Headers */,
 				A650BE9621F8D4B40066B9B5 /* window in Headers */,
-				A650BE9721F8D4B40066B9B5 /* framebuffer in Headers */,
 				A63DD74D1E706EB200D4D499 /* crc.hpp in Headers */,
 				A63DD78F1E706F3400D4D499 /* bzlib_private.h in Headers */,
 				A645DD28213D53C000EC714B /* jpeg.hpp in Headers */,
@@ -2027,7 +2011,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A650BE9021F8BB990066B9B5 /* window in Resources */,
-				A650BE8B21F8B3730066B9B5 /* framebuffer in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2231,7 +2214,6 @@
 				A0F21ED61CA05EE90084302D /* cocoa_context.mm in Sources */,
 				A63DD78B1E706F3400D4D499 /* bz_crctable.c in Sources */,
 				A6EC3F89230D7C4D00B17F21 /* color_cache_utils.c in Sources */,
-				A650BE8E21F8B79E0066B9B5 /* cocoa_framebuffer.mm in Sources */,
 				A6EC3F58230D7C2E00B17F21 /* alpha_enc.c in Sources */,
 				A6EC3E88230D7BB800B17F21 /* quant_dec.c in Sources */,
 				A642438321852AEF0044B763 /* LzmaLib.c in Sources */,
