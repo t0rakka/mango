@@ -22,9 +22,15 @@ public:
     {
         setTitle("OpenGLFramebuffer");
 
+        // compute window size
         int32x2 screen = getScreenSize();
         int scale = std::max(1, (screen.y / std::max(1, bitmap.height)) / 2);
         setWindowSize(bitmap.width * scale, bitmap.height * scale);
+
+        // upload image into the framebuffer
+        Surface s = lock();
+        s.blit(0, 0, m_bitmap);
+        unlock();
 
         printf("screen: %d x %d (scale: %dx)\n", screen.x, screen.y, scale);
     }
@@ -67,10 +73,6 @@ public:
 
     void onDraw() override
     {
-        Surface s = lock();
-        s.blit(0, 0, m_bitmap);
-
-        unlock();
         present(m_filter);
     }
 };
