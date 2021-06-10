@@ -10,9 +10,14 @@ project(
     default_options : [
         'c_std=c11',
         'cpp_std=c++17',
+        'objcpp_args=-std=c++17 -Wno-deprecated',
         'default_library=static'
     ]
 )
+
+if host_machine.system() == 'darwin'
+    add_languages('objcpp')
+endif
 
 enable_fast_math = get_option('enable_fast_math')
 enable_sse2      = get_option('enable_sse2')
@@ -191,10 +196,6 @@ mango_headers = files(
     '../include/mango/simd/sse2_double128.hpp',
     '../include/mango/simd/sse2_float128.hpp',
     '../include/mango/simd/sse2_int128.hpp',
-    '../include/mango/vulkan/func/vk_func.hpp',
-    '../include/mango/vulkan/khronos/vk_platform.h',
-    '../include/mango/vulkan/khronos/vulkan.h',
-    '../include/mango/vulkan/vulkan.hpp',
     '../include/mango/window/window.hpp',
 )
 
@@ -326,9 +327,6 @@ math_sources = files(
     '../source/mango/math/geometry.cpp',
     '../source/mango/math/math.cpp',
     '../source/mango/math/simd.cpp'
-)
-vulkan_sources = files(
-    '../source/mango/vulkan/vulkan.cpp'
 )
 
 external_headers = files(
@@ -837,7 +835,6 @@ mango_deps             = [ threads_dep ]
 mango_public_deps      = [ ]
 mango_framebuffer_deps = [ ]
 mango_opengl_deps      = [ ]
-mango_vulkan_deps      = [ ]
 
 opengl_dep = dependency('gl')
 mango_public_deps += opengl_dep
@@ -920,18 +917,6 @@ mango_opengl_dep = declare_dependency(
     compile_args        : mango_public_cpp_args + mango_interface_cpp_args
 )
 
-mango_vulkan = static_library('mango-vulkan',
-    sources             : window_sources + vulkan_sources,
-    link_with           : mango_framebuffer,
-    include_directories : mango_inc,
-    install             : true
-)
-
-mango_vulkan_dep = declare_dependency(
-    link_with           : mango_vulkan,
-    include_directories : mango_inc
-)
-
 install_subdir('../include/mango', install_dir : 'include')
 
 pkg = import('pkgconfig')
@@ -951,10 +936,4 @@ pkg.generate(mango_opengl,
     name: 'mango-opengl',
     libraries_private : [ mango_opengl_deps ],
     description : 'A multi-platform low-level development framework for graphics programmers - opengl'
-)
-
-pkg.generate(mango_vulkan,
-    name: 'mango-vulkan',
-    libraries_private : [ mango_vulkan_deps ],
-    description : 'A multi-platform low-level development framework for graphics programmers - vulkan'
 )

@@ -83,7 +83,7 @@ misc
 ---------------------------------------------------------------------------------------------
 
 [ ] Improve keyboard event handling on macOS
-[ ] cmake: configurable building of "framebuffer", "opengl" and "vulkan"
+[ ] cmake: configurable building of "framebuffer" and "opengl"
            -- perhaps completely separate repositories / libraries
 
 ---------------------------------------------------------------------------------------------

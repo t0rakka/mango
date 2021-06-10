@@ -51,9 +51,9 @@ for example when building with cross-compilation toolchains. Should work out of 
 The library will be compiled as shared object (.so) files: 
   - libmango.so
   - libmango-opengl.so
-  - libmango-vulkan.so
+  - libmango-framebuffer.so
 
-The separation is done so that when not using OpenGL or Vulkan don't have to pull in X11 libraries.
+The separation is done so that when not using OpenGL or Framebuffer don't have to pull in X11 libraries.
 
 Pro tip! "make simd=avx2" to enable Intel AVX2 SIMD instructions.
 
