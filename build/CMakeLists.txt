@@ -97,9 +97,6 @@ if (WIN32)
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/wgl/*.cpp")
-    FILE(GLOB FRAMEBUFFER
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/framebuffer/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/win32/*.cpp")
 
 elseif (APPLE)
 
@@ -118,9 +115,6 @@ elseif (APPLE)
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/cocoa/*.mm")
-    FILE(GLOB FRAMEBUFFER
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/framebuffer/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/cocoa/*.mm")
 
 else()
 
@@ -139,9 +133,6 @@ else()
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/glx/*.cpp")
-    FILE(GLOB FRAMEBUFFER
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/framebuffer/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/framebuffer/xlib/*.cpp")
 
 endif()
 
@@ -165,7 +156,6 @@ SOURCE_GROUP("math" FILES ${MATH})
 SOURCE_GROUP("simd" FILES ${SIMD})
 SOURCE_GROUP("window" FILES ${WINDOW})
 SOURCE_GROUP("opengl" FILES ${OPENGL})
-SOURCE_GROUP("framebuffer" FILES ${FRAMEBUFFER})
 
 FILE(GLOB EXTERNAL_LZMA
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzma/*.h"
@@ -263,27 +253,19 @@ ADD_LIBRARY(mango
     ${EXTERNAL_ZPNG}
 )
 
-ADD_LIBRARY(mango-framebuffer
-    ${WINDOW}
-    ${FRAMEBUFFER}
-)
-
 ADD_LIBRARY(mango-opengl
     ${WINDOW}
     ${OPENGL}
 )
 
-target_link_libraries(mango-framebuffer PUBLIC mango)
 target_link_libraries(mango-opengl PUBLIC mango)
 
 if (APPLE)
     if (BUILD_SHARED_LIBS)
-        target_link_libraries(mango-framebuffer PUBLIC "-framework Cocoa")
         target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
     endif ()
 
     target_compile_options(mango PUBLIC "-mmacosx-version-min=10.13")
-    target_compile_options(mango-framebuffer PUBLIC "-mmacosx-version-min=10.13")
     target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.13")
 endif ()
 
@@ -406,11 +388,6 @@ INSTALL(TARGETS mango
     RUNTIME DESTINATION "bin"
 )
 
-INSTALL(TARGETS mango-framebuffer
-    LIBRARY DESTINATION "lib"
-    ARCHIVE DESTINATION "lib"
-    RUNTIME DESTINATION "bin"
-)
 INSTALL(TARGETS mango-opengl
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
