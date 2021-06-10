@@ -5,7 +5,7 @@
 # ---------------------------------------------------------------------------
 
 project(
-    'mango', 'c', 'cpp', 'objcpp',
+    'mango', 'c', 'cpp',
     meson_version: '>= 0.48.0',
     default_options : [
         'c_std=c11',
@@ -14,6 +14,10 @@ project(
         'default_library=static'
     ]
 )
+
+if host_machine.system() == 'darwin'
+    add_languages('objcpp')
+endif
 
 enable_fast_math = get_option('enable_fast_math')
 enable_sse2      = get_option('enable_sse2')
