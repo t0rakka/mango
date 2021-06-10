@@ -9,7 +9,6 @@ project(mango-examples)
 
 # build options
 option(BUILD_OPENGL      "Enables build of OpenGL examples"      OFF)
-option(BUILD_FRAMEBUFFER "Enables build of framebuffer examples" OFF)
 
 add_compile_options(-Wall -O3 -g)
 
@@ -44,7 +43,7 @@ else ()
 endif ()
 
 # ----------------------------------------------------------------------
-# build
+# build examples
 # ----------------------------------------------------------------------
 
 add_subdirectory(test)
@@ -52,15 +51,7 @@ add_subdirectory(misc)
 add_subdirectory(image)
 
 # ----------------------------------------------------------------------
-# build framebuffer
-# ----------------------------------------------------------------------
-
-if (BUILD_FRAMEBUFFER)
-    add_subdirectory(framebuffer)
-endif ()
-
-# ----------------------------------------------------------------------
-# build opengl
+# build OpenGL examples
 # ----------------------------------------------------------------------
 
 if (BUILD_OPENGL)

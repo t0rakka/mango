@@ -115,12 +115,6 @@
     <Filter Include="mango\include\window">
       <UniqueIdentifier>{d47b8b9e-b8d4-4762-b837-d9bb62e89206}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mango\include\framebuffer">
-      <UniqueIdentifier>{7e14948f-7c60-4571-b053-78da3ada3f4e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="mango\source\framebuffer">
-      <UniqueIdentifier>{d6b05542-c0d1-4b84-bde5-2e4dfab4a5d8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="mango\include\opengl\khronos\GL">
       <UniqueIdentifier>{b2b0a627-4254-4606-95d9-6f6477d9ba73}</UniqueIdentifier>
     </Filter>
@@ -746,9 +740,6 @@
     </ClInclude>
     <ClInclude Include="..\..\include\mango\window\window.hpp">
       <Filter>mango\include\window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\framebuffer\framebuffer.hpp">
-      <Filter>mango\include\framebuffer</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\mango\opengl\khronos\KHR\khrplatform.h">
       <Filter>mango\include\opengl\khronos\KHR</Filter>
@@ -1513,9 +1504,6 @@
     </ClCompile>
     <ClCompile Include="..\..\source\mango\window\win32\win32_window.cpp">
       <Filter>mango\source\window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\mango\framebuffer\win32\d3d9_framebuffer.cpp">
-      <Filter>mango\source\framebuffer</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\mango\image\quantize.cpp">
       <Filter>mango\source\image</Filter>

@@ -53,7 +53,6 @@
     <ClInclude Include="..\..\include\mango\filesystem\filesystem.hpp" />
     <ClInclude Include="..\..\include\mango\filesystem\mapper.hpp" />
     <ClInclude Include="..\..\include\mango\filesystem\path.hpp" />
-    <ClInclude Include="..\..\include\mango\framebuffer\framebuffer.hpp" />
     <ClInclude Include="..\..\include\mango\image\blitter.hpp" />
     <ClInclude Include="..\..\include\mango\image\color.hpp" />
     <ClInclude Include="..\..\include\mango\image\compression.hpp" />
@@ -586,7 +585,6 @@
     <ClCompile Include="..\..\source\mango\filesystem\win32\file_observer.cpp" />
     <ClCompile Include="..\..\source\mango\filesystem\win32\file_stream.cpp" />
     <ClCompile Include="..\..\source\mango\filesystem\win32\mapper_file.cpp" />
-    <ClCompile Include="..\..\source\mango\framebuffer\win32\d3d9_framebuffer.cpp" />
     <ClCompile Include="..\..\source\mango\image\blitter.cpp" />
     <ClCompile Include="..\..\source\mango\image\block.cpp" />
     <ClCompile Include="..\..\source\mango\image\block_dxt.cpp" />

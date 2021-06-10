@@ -66,7 +66,6 @@ mango_headers = files(
     '../include/mango/filesystem/filesystem.hpp',
     '../include/mango/filesystem/mapper.hpp',
     '../include/mango/filesystem/path.hpp',
-    '../include/mango/framebuffer/framebuffer.hpp',
     '../include/mango/image/blitter.hpp',
     '../include/mango/image/color.hpp',
     '../include/mango/image/compression.hpp',
@@ -241,9 +240,6 @@ if host_machine.system() == 'windows'
     opengl_sources += files(
         '../source/mango/opengl/wgl/wgl_context.cpp'
     )
-    framebuffer_sources = files(
-        '../source/mango/framebuffer/win32/d3d9_framebuffer.cpp'
-    )
 elif host_machine.system() == 'darwin'
     core_sources += files(
         '../source/mango/core/unix/dynamic_library.cpp'
@@ -260,9 +256,6 @@ elif host_machine.system() == 'darwin'
         '../source/mango/opengl/cocoa/cocoa_context.mm',
         '../source/mango/opengl/cocoa/CustomOpenGLView.mm'
     )
-    framebuffer_sources = files(
-        '../source/mango/framebuffer/cocoa/cocoa_framebuffer.mm'
-    )
 else
     core_sources += files(
         '../source/mango/core/unix/dynamic_library.cpp'
@@ -277,9 +270,6 @@ else
     )
     opengl_sources += files(
         '../source/mango/opengl/glx/glx_context.cpp'
-    )
-    framebuffer_sources = files(
-        '../source/mango/framebuffer/xlib/xlib_framebuffer.cpp'
     )
 endif
 
@@ -833,7 +823,6 @@ threads_dep = dependency('threads')
 
 mango_deps             = [ threads_dep ]
 mango_public_deps      = [ ]
-mango_framebuffer_deps = [ ]
 mango_opengl_deps      = [ ]
 
 opengl_dep = dependency('gl')
@@ -893,18 +882,9 @@ mango_dep = declare_dependency(
     compile_args        : mango_public_cpp_args + mango_interface_cpp_args
 )
 
-mango_framebuffer_deps += [ mango_dep ]
-mango_framebuffer = static_library('mango-framebuffer',
-    sources             : window_sources + framebuffer_sources,
-    dependencies        : mango_framebuffer_deps,
-    include_directories : mango_inc,
-    cpp_args            : mango_public_cpp_args,
-    install             : true
-)
-
 mango_opengl = static_library('mango-opengl',
     sources             : window_sources + opengl_sources,
-    link_with           : mango_framebuffer,
+    link_with           : mango,
     dependencies        : mango_opengl_deps,
     include_directories : mango_inc,
     cpp_args            : mango_public_cpp_args,
@@ -923,17 +903,11 @@ pkg = import('pkgconfig')
 
 pkg.generate(mango,
     libraries_private : [ mango_deps ],
-    description : 'A multi-platform low-level development framework for graphics programmers - core'
-)
-
-pkg.generate(mango_framebuffer,
-    name: 'mango-framebuffer',
-    libraries_private : [ mango_framebuffer_deps ],
-    description : 'A multi-platform low-level development framework for graphics programmers - framebuffer'
+    description : 'A multi-platform low-level development framework for graphics programmers - Core'
 )
 
 pkg.generate(mango_opengl,
     name: 'mango-opengl',
     libraries_private : [ mango_opengl_deps ],
-    description : 'A multi-platform low-level development framework for graphics programmers - opengl'
+    description : 'A multi-platform low-level development framework for graphics programmers - OpenGL'
 )

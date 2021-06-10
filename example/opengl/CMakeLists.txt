@@ -1,7 +1,9 @@
 
 list(APPEND EXAMPLES
-    gltest
-    glfb
+    basic
+    imageview
+    animation
+    mandelbrot
 )
 
 foreach(example IN LISTS EXAMPLES)
@@ -13,4 +15,4 @@ foreach(example IN LISTS EXAMPLES)
     endif ()
 endforeach()
 
-file(COPY hanselun.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
