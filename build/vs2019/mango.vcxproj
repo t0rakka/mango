@@ -179,10 +179,6 @@
     <ClInclude Include="..\..\include\mango\simd\sse2_double128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\sse2_float128.hpp" />
     <ClInclude Include="..\..\include\mango\simd\sse2_int128.hpp" />
-    <ClInclude Include="..\..\include\mango\vulkan\func\vk_func.hpp" />
-    <ClInclude Include="..\..\include\mango\vulkan\khronos\vk_platform.h" />
-    <ClInclude Include="..\..\include\mango\vulkan\khronos\vulkan.h" />
-    <ClInclude Include="..\..\include\mango\vulkan\vulkan.hpp" />
     <ClInclude Include="..\..\include\mango\window\window.hpp" />
     <ClInclude Include="..\..\source\external\aes\bc_aes.h" />
     <ClInclude Include="..\..\source\external\bc\BC.h" />
@@ -632,7 +628,6 @@
     <ClCompile Include="..\..\source\mango\math\simd.cpp" />
     <ClCompile Include="..\..\source\mango\opengl\opengl.cpp" />
     <ClCompile Include="..\..\source\mango\opengl\wgl\wgl_context.cpp" />
-    <ClCompile Include="..\..\source\mango\vulkan\vulkan.cpp" />
     <ClCompile Include="..\..\source\mango\window\win32\win32_window.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

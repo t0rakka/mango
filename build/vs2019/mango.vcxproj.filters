@@ -22,9 +22,6 @@
     <Filter Include="mango\include\math">
       <UniqueIdentifier>{9c1470cf-2bd2-4986-9060-8e20fd51bded}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mango\include\vulkan">
-      <UniqueIdentifier>{4a9b1aa6-aad1-46db-987c-e0c197364fa4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="mango\source\core">
       <UniqueIdentifier>{12806bc2-b720-4408-8590-613f31ed9a36}</UniqueIdentifier>
     </Filter>
@@ -40,9 +37,6 @@
     <Filter Include="mango\source\opengl">
       <UniqueIdentifier>{c377affc-31fa-42bd-adfe-b0976e0ec25b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="mango\source\vulkan">
-      <UniqueIdentifier>{b8e8bbda-2e75-4d4a-be97-cce0710fe10e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="mango\include\opengl">
       <UniqueIdentifier>{1cc5e254-85c9-4fd6-a5ad-838c727cabdb}</UniqueIdentifier>
     </Filter>
@@ -51,12 +45,6 @@
     </Filter>
     <Filter Include="mango\include\opengl\khronos">
       <UniqueIdentifier>{0bc86ad1-df0e-4ad3-af7f-ede4216824f7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="mango\include\vulkan\func">
-      <UniqueIdentifier>{5fd4abfd-068e-4dca-99b0-4e80f50bb4be}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="mango\include\vulkan\khronos">
-      <UniqueIdentifier>{cacd1c70-4888-4e79-8871-c55ad620b739}</UniqueIdentifier>
     </Filter>
     <Filter Include="mango\include\simd">
       <UniqueIdentifier>{b65e137b-27e4-424b-93b7-709031a189b7}</UniqueIdentifier>
@@ -302,18 +290,6 @@
     </ClInclude>
     <ClInclude Include="..\..\include\mango\opengl\opengl.hpp">
       <Filter>mango\include\opengl</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\vulkan\vulkan.hpp">
-      <Filter>mango\include\vulkan</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\vulkan\khronos\vulkan.h">
-      <Filter>mango\include\vulkan\khronos</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\vulkan\khronos\vk_platform.h">
-      <Filter>mango\include\vulkan\khronos</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\mango\vulkan\func\vk_func.hpp">
-      <Filter>mango\include\vulkan\func</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\external\unrar\array.hpp">
       <Filter>external\unrar</Filter>
@@ -1297,9 +1273,6 @@
     </ClCompile>
     <ClCompile Include="..\..\source\mango\opengl\wgl\wgl_context.cpp">
       <Filter>mango\source\opengl\wgl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\mango\vulkan\vulkan.cpp">
-      <Filter>mango\source\vulkan</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\external\unrar\crc.cpp">
       <Filter>external\unrar</Filter>
