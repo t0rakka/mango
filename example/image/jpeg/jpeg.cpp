@@ -43,7 +43,10 @@ struct State
             options.multithread = false;
 
             ImageDecodeStatus status = decoder.decode(bitmap, options);
-            MANGO_UNREFERENCED(status);
+            if (!status)
+            {
+                printf("  ERROR: %s\n", status.info.c_str());
+            }
 
             input_bytes = memory.size;
             image_bytes = header.width * header.height * 4;
@@ -150,5 +153,6 @@ int main(int argc, const char* argv[])
         }
     }
 
+    //debugPrintEnable(true);
     test_jpeg(pathname, mmap);
 }
