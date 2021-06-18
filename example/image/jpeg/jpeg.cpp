@@ -92,13 +92,12 @@ struct State
                     {
                         // serialize file reading
                         InputFileStream file(filename);
-                        Buffer* buffer = new Buffer(file);
+                        std::shared_ptr<Buffer> buffer = std::make_shared<Buffer>(file);
 
                         queue.enqueue([this, buffer, filename]
                         {
                             // decode from a buffer
                             decode(*buffer, filename);
-                            delete buffer;
                         });
                     }
                 }
