@@ -15,6 +15,7 @@ using namespace mango::image;
 static
 inline bool isJPEG(const FileInfo& node)
 {
+    // NOTE: Lamecode - should convert extensiton to lowercase before checking
     return !node.isDirectory() && filesystem::getExtension(node.name) == ".jpg";
 }
 
@@ -25,6 +26,37 @@ struct State
     std::atomic<size_t> total_image_bytes { 0 };
 
     ConcurrentQueue queue;
+
+    void decode(ConstMemory memory, const std::string& filename)
+    {
+        size_t image_bytes = 0;
+        size_t input_bytes = 0;
+
+        ImageDecoder decoder(memory, filename);
+        if (decoder.isDecoder())
+        {
+            ImageHeader header = decoder.header();
+            Bitmap bitmap(header.width, header.height, header.format);
+
+            ImageDecodeOptions options;
+            options.simd = true;
+            options.multithread = false;
+
+            ImageDecodeStatus status = decoder.decode(bitmap, options);
+            MANGO_UNREFERENCED(status);
+
+            input_bytes = memory.size;
+            image_bytes = header.width * header.height * 4;
+        }
+
+        total_input_files ++;
+        total_input_bytes += input_bytes;
+        total_image_bytes += image_bytes;
+
+        printf("Decoded: \"%s\" (%zu KB -> %zu KB).\n", 
+            filename.c_str(), 
+            input_bytes >> 10, image_bytes >> 10);
+    }
 
     void process(const Path& path, bool mmap)
     {
@@ -44,37 +76,28 @@ struct State
                 {
                     std::string filename = path.pathname() + node.name;
 
-                    queue.enqueue([this, filename, mmap]
+                    if (mmap)
                     {
-                        size_t input_bytes = 0;
-                        size_t image_bytes = 0;
-
-                        if (mmap)
+                        queue.enqueue([this, filename]
                         {
+                            // decode directly from memory mapped file
                             File file(filename);
-                            Bitmap bitmap(file, filename);
+                            decode(file, filename);
+                        });
+                    }
+                    else
+                    {
+                        // serialize file reading
+                        InputFileStream file(filename);
+                        Buffer* buffer = new Buffer(file);
 
-                            input_bytes = file.size();
-                            image_bytes = bitmap.width * bitmap.height * 4; 
-                        }
-                        else
+                        queue.enqueue([this, buffer, filename]
                         {
-                            FileStream file(filename, Stream::READ);
-                            Buffer buffer(file);
-                            Bitmap bitmap(buffer, filename);
-
-                            input_bytes = file.size();
-                            image_bytes = bitmap.width * bitmap.height * 4; 
-                        }
-
-                        total_input_files ++;
-                        total_input_bytes += input_bytes;
-                        total_image_bytes += image_bytes;
-
-                        printf("Decoded: \"%s\" (%zu KB -> %zu KB).\n", 
-                            filename.c_str(), 
-                            input_bytes >> 10, image_bytes >> 10);
-                    });
+                            // decode from a buffer
+                            decode(*buffer, filename);
+                            delete buffer;
+                        });
+                    }
                 }
             }
         }

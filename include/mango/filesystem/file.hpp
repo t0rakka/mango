@@ -64,4 +64,22 @@ namespace mango::filesystem
         }
     };
 
+    class InputFileStream : public FileStream
+    {
+    public:
+        InputFileStream(const std::string& filename)
+            : FileStream(filename, Stream::READ)
+        {
+        }
+    };
+
+    class OutputFileStream : public FileStream
+    {
+    public:
+        OutputFileStream(const std::string& filename)
+            : FileStream(filename, Stream::WRITE)
+        {
+        }
+    };
+
 } // namespace mango::filesystem
