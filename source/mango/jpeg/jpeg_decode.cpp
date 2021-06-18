@@ -1018,7 +1018,7 @@ namespace mango::jpeg
         }
     }
 
-    void Parser::processDHT(const u8* p)
+    void Parser::processDHT(const u8* p, const u8* end)
     {
         debugPrint("[ DHT ]\n");
 
@@ -1054,6 +1054,12 @@ namespace mango::jpeg
             debugPrint("  Huffman table #%d table class: %d\n", Th, Tc);
             debugPrint("    codes: ");
 
+            if (p >= end - 17)
+            {
+                header.setError("Data overflow.");
+                return;
+            }
+
             int count = 0;
 
             for (int i = 1; i <= 16; ++i)
@@ -1072,6 +1078,12 @@ namespace mango::jpeg
             if (Lh < 0 || count > 256)
             {
                 header.setError("Incorrect huffman table data.");
+                return;
+            }
+
+            if (p >= end - count)
+            {
+                header.setError("Data overflow.");
                 return;
             }
 
@@ -1252,7 +1264,7 @@ namespace mango::jpeg
                     break;
 
                 case MARKER_DHT:
-                    processDHT(p);
+                    processDHT(p, end);
                     p = stepMarker(p, end);
                     break;
 

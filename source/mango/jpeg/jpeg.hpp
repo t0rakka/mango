@@ -421,7 +421,7 @@ namespace mango::jpeg
         void processDQT(const u8* p);
         void processDNL(const u8* p);
         void processDRI(const u8* p);
-        void processDHT(const u8* p);
+        void processDHT(const u8* p, const u8* end);
         void processDAC(const u8* p);
         void processDHP(const u8* p);
         void processEXP(const u8* p);
