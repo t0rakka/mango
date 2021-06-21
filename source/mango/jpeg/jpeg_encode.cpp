@@ -1034,7 +1034,7 @@ namespace
         return int16x8(_mm_shuffle_epi8(v, s));
     }
 
-    u64 zigzag_ssse3(const s16* in, s16* out)
+    u64 zigzag_ssse3(s16* out, const s16* in)
     {
         const __m128i* src = reinterpret_cast<const __m128i *>(in);
 
@@ -1220,7 +1220,7 @@ namespace
         encoder.fdct(block, input, channel.qtable);
 
         s16 temp[64];
-        u64 zeromask = zigzag_ssse3(block, temp);
+        u64 zeromask = zigzag_ssse3(temp, block);
 
         p = encode_dc(encoder, p, temp[0], channel);
         zeromask >>= 1;
@@ -1289,7 +1289,7 @@ namespace
     }
     */
 
-    u64 zigzag_avx2(const s16* in, s16* out)
+    u64 zigzag_avx2(s16* out, const s16* in)
     {
         const __m256i* src = reinterpret_cast<const __m256i *>(in);
 
@@ -1420,7 +1420,7 @@ namespace
         encoder.fdct(block, input, channel.qtable);
 
         s16 temp[64];
-        u64 zeromask = zigzag_avx2(block, temp);
+        u64 zeromask = zigzag_avx2(temp, block);
 
         p = encode_dc(encoder, p, temp[0], channel);
         zeromask >>= 1;
@@ -1519,7 +1519,7 @@ namespace
     }
     */
 
-    u64 zigzag_avx512bw(const s16* in, s16* out)
+    u64 zigzag_avx512bw(s16* out, const s16* in)
     {
         static const u16 zigzag_shuffle [] =
         {
@@ -1564,7 +1564,7 @@ namespace
         encoder.fdct(block, input, channel.qtable);
 
         s16 temp[64];
-        u64 zeromask = zigzag_avx512bw(block, temp);
+        u64 zeromask = zigzag_avx512bw(temp, block);
 
         p = encode_dc(encoder, p, temp[0], channel);
         zeromask >>= 1;
@@ -1657,27 +1657,26 @@ namespace
 
 #endif // MANGO_COMPILER_GCC
 
-    u64 zigzag_neon64(const s16* in, s16* out)
+    u64 zigzag_neon64(s16* out, const s16* in)
     {
+
+#define ID(x) x * 2 + 0, x * 2 + 1
+#define ID_255 255, 255
+
         const u8 zigzag_shuffle [] =
         {
-              0,   1,   2,   3,  16,  17,  32,  33,
-             18,  19,   4,   5,   6,   7,  20,  21,
-             34,  35,  48,  49, 255, 255,  50,  51,
-             36,  37,  22,  23,   8,   9,  10,  11,
-            255, 255,   6,   7,  20,  21,  34,  35,
-             48,  49, 255, 255,  50,  51,  36,  37,
-             54,  55,  40,  41,  26,  27,  12,  13,
-             14,  15,  28,  29,  42,  43,  56,  57,
-              6,   7,  20,  21,  34,  35,  48,  49,
-             50,  51,  36,  37,  22,  23,   8,   9,
-             26,  27,  12,  13, 255, 255,  14,  15,
-             28,  29,  42,  43,  56,  57, 255, 255,
-             52,  53,  54,  55,  40,  41,  26,  27,
-             12,  13, 255, 255,  14,  15,  28,  29,
-             26,  27,  40,  41,  42,  43,  28,  29,
-             14,  15,  30,  31,  44,  45,  46,  47
+            ID( 0), ID( 1), ID( 8), ID(16), ID(9),  ID( 2), ID( 3), ID(10),
+            ID(17), ID(24), ID_255, ID(25), ID(18), ID(11), ID( 4), ID( 5),
+            ID_255, ID( 3), ID(10), ID(17), ID(24), ID_255, ID(25), ID(18),
+            ID(27), ID(20), ID(13), ID( 6), ID( 7), ID(14), ID(21), ID(28),
+            ID( 3), ID(10), ID(17), ID(24), ID(25), ID(18), ID(11), ID( 4),
+            ID(13), ID( 6), ID_255, ID( 7), ID(14), ID(21), ID(28), ID_255,
+            ID(26), ID(27), ID(20), ID(13), ID( 6), ID_255, ID(7),  ID(14),
+            ID(13), ID(20), ID(21), ID(14), ID( 7), ID(15), ID(22), ID(23),
         };
+
+#undef ID
+#undef ID_255
 
         const uint8x16x4_t idx_rows_0123 = jpeg_vld1q_u8_x4(zigzag_shuffle + 0 * 8);
         const uint8x16x4_t idx_rows_4567 = jpeg_vld1q_u8_x4(zigzag_shuffle + 8 * 8);
@@ -1702,6 +1701,7 @@ namespace
         int16x8_t row6 = vreinterpretq_s16_s8(vqtbl4q_s8(tbl_rows_4567, idx_rows_4567.val[2]));
         int16x8_t row7 = vreinterpretq_s16_s8(vqtbl3q_s8(tbl_rows_567, idx_rows_4567.val[3]));
 
+        // patch "holes" left in the shuffle table (ID_255)
         row1 = vsetq_lane_s16(vgetq_lane_s16(vreinterpretq_s16_s8(tbl_rows_4567.val[0]), 0), row1, 2);
         row2 = vsetq_lane_s16(vgetq_lane_s16(vreinterpretq_s16_s8(tbl_rows_0123.val[1]), 4), row2, 0);
         row2 = vsetq_lane_s16(vgetq_lane_s16(vreinterpretq_s16_s8(tbl_rows_4567.val[2]), 0), row2, 5);
@@ -1750,7 +1750,7 @@ namespace
         encoder.fdct(block, input, channel.qtable);
 
         s16 temp[64];
-        u64 zeromask = zigzag_neon64(block, temp);
+        u64 zeromask = zigzag_neon64(temp, block);
 
         p = encode_dc(encoder, p, temp[0], channel);
         zeromask >>= 1;
