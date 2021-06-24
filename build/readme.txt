@@ -103,12 +103,22 @@ Solution:
   Install OpenGL headers. On Linux distributions you get these with "mesa":
   apt-get install mesa-common-dev
 
+-------------
 
 Error:
   /usr/bin/ld: cannot find -lGL
 
 Solution:
   apt install libgl1-mesa-dev
+
+-------------
+
+Problem:
+  Examples won't compile (or link) on Apple M1 hardware
+
+Solution:
+  export CPLUS_INCLUDE_PATH=/opt/homebrew/include
+  export LIBRARY_PATH=/opt/homebrew/lib
 
 ------------------------------------------------------------------------------------------------
 
