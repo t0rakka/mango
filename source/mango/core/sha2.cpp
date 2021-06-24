@@ -587,7 +587,7 @@ namespace mango
 
         auto transform = generic_sha2_transform;
 #if defined(__ARM_FEATURE_CRYPTO)
-        if ((getCPUFlags() & CPU_ARM_SHA2) != 0)
+        if ((getCPUFlags() & ARM_SHA2) != 0)
         {
             transform = arm_sha2_update;
         }

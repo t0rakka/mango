@@ -525,7 +525,7 @@ namespace mango
 
         auto transform = generic_sha1_update;
 #if defined(__ARM_FEATURE_CRYPTO)
-        if ((getCPUFlags() & CPU_ARM_SHA1) != 0)
+        if ((getCPUFlags() & ARM_SHA1) != 0)
         {
             transform = arm_sha1_update;
         }
