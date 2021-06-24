@@ -554,7 +554,6 @@ namespace {
         "uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0); \n"
         "in vec2 inPosition; \n"
         "out vec2 texcoord; \n"
-        " \n"
         "void main() { \n"
         "    texcoord = inPosition * vec2(0.5, -0.5) + vec2(0.5); \n"
         "    gl_Position = vec4((inPosition + uTransform.xy) * uTransform.zw, 0.0, 1.0); \n"
@@ -571,41 +570,32 @@ namespace {
         "    float w = 6.0 - x - y - z; \n"
         "    return vec4(x, y, z, w); \n"
         "} \n"
-        " \n"
         "vec4 texture_filter(sampler2D uTexture, vec2 texcoord, vec2 texscale) \n"
         "{ \n"
         "    // hack to bring unit texcoords to integer pixel coords \n"
         "    texcoord /= texscale; \n"
         "    texcoord -= vec2(0.5, 0.5f); \n"
-        " \n"
         "    float fx = fract(texcoord.x); \n"
         "    float fy = fract(texcoord.y); \n"
         "    texcoord.x -= fx; \n"
         "    texcoord.y -= fy; \n"
-        " \n"
         "    vec4 cx = cubic(fx); \n"
         "    vec4 cy = cubic(fy); \n"
-        " \n"
         "    vec4 c = vec4(texcoord.x - 0.5, texcoord.x + 1.5, texcoord.y - 0.5, texcoord.y + 1.5); \n"
         "    vec4 s = vec4(cx.x + cx.y, cx.z + cx.w, cy.x + cy.y, cy.z + cy.w); \n"
         "    vec4 offset = c + vec4(cx.y, cx.w, cy.y, cy.w) / s; \n"
-        " \n"
         "    vec4 sample0 = texture(uTexture, vec2(offset.x, offset.z) * texscale); \n"
         "    vec4 sample1 = texture(uTexture, vec2(offset.y, offset.z) * texscale); \n"
         "    vec4 sample2 = texture(uTexture, vec2(offset.x, offset.w) * texscale); \n"
         "    vec4 sample3 = texture(uTexture, vec2(offset.y, offset.w) * texscale); \n"
-        " \n"
         "    float sx = s.x / (s.x + s.y); \n"
         "    float sy = s.z / (s.z + s.w); \n"
-        " \n"
         "    return mix(mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy); \n"
         "} \n"
-        " \n"
         "uniform sampler2D uTexture; \n"
         "uniform vec2 uTexScale; \n"
         "in vec2 texcoord; \n"
         "out vec4 outFragment0; \n"
-        " \n"
         "void main() { \n"
         "    outFragment0 = texture_filter(uTexture, texcoord, uTexScale); \n"
         "} \n";
@@ -921,7 +911,6 @@ namespace {
 
     void OpenGLFramebuffer::present(Filter filter)
     {
-
         glDisable(GL_BLEND);
 
         // resolve palette
