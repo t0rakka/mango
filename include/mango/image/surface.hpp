@@ -10,6 +10,7 @@
 #include <mango/core/memory.hpp>
 #include <mango/filesystem/file.hpp>
 #include <mango/image/format.hpp>
+#include <mango/image/decoder.hpp>
 #include <mango/image/encoder.hpp>
 
 namespace mango::image
@@ -58,12 +59,12 @@ namespace mango::image
     public:
         Bitmap(int width, int height, const Format& format, size_t stride = 0);
         Bitmap(const Surface& source, const Format& format);
-        Bitmap(ConstMemory memory, const std::string& extension);
-        Bitmap(ConstMemory memory, const std::string& extension, const Format& format);
-        Bitmap(const std::string& filename);
-        Bitmap(const std::string& filename, const Format& format);
-        Bitmap(ConstMemory memory, const std::string& extension, Palette& palette);
-        Bitmap(const std::string& filename, Palette& palette);
+
+        Bitmap(ConstMemory memory, const std::string& extension, const ImageDecodeOptions& options = ImageDecodeOptions());
+        Bitmap(ConstMemory memory, const std::string& extension, const Format& format, const ImageDecodeOptions& options = ImageDecodeOptions());
+        Bitmap(const std::string& filename, const ImageDecodeOptions& options = ImageDecodeOptions());
+        Bitmap(const std::string& filename, const Format& format, const ImageDecodeOptions& options = ImageDecodeOptions());
+
         Bitmap(Bitmap&& bitmap);
         ~Bitmap();
 

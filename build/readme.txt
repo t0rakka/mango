@@ -118,7 +118,9 @@ Problem:
 
 Solution:
   export CPLUS_INCLUDE_PATH=/opt/homebrew/include
+  export CPLUS_INCLUDE_PATH=/opt/homebrew/opt/jpeg-turbo/include 
   export LIBRARY_PATH=/opt/homebrew/lib
+  export LIBRARY_PATH=/opt/homebrew/opt/jpeg-turbo/lib 
 
 ------------------------------------------------------------------------------------------------
 

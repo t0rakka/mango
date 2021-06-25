@@ -83,73 +83,41 @@ namespace
     // load_surface()
     // ----------------------------------------------------------------------------
 
-    void load_surface(Surface& surface, ConstMemory memory, const std::string& extension, const Format* ptr_format)
+    void load_surface(Surface& surface, ConstMemory memory, const std::string& extension, const Format* format, const ImageDecodeOptions& options)
     {
         ImageDecoder decoder(memory, extension);
         if (decoder.isDecoder())
         {
             ImageHeader header = decoder.header();
 
-            Format format = ptr_format ? *ptr_format : header.format;
-            size_t stride = header.width * format.bytes();
-            size_t bytes = stride * header.height;
+            surface.format = format ? *format : header.format;
 
-            // configure surface
+            if (options.palette)
+            {
+                // the decoder will set palette if present
+                options.palette->size = 0;
+
+                if (header.palette)
+                {
+                    surface.format = IndexedFormat(8);
+                }
+            }
+
             surface.width  = header.width;
             surface.height = header.height;
-            surface.format = format;
-            surface.stride = stride;
-            surface.image  = new u8[bytes];
+            surface.stride = header.width * surface.format.bytes();
+            surface.image  = new u8[header.height * surface.stride];
 
             // decode
-            ImageDecodeStatus status = decoder.decode(surface);
+            ImageDecodeStatus status = decoder.decode(surface, options, 0, 0, 0);
             MANGO_UNREFERENCED(status);
         }
     }
 
-    void load_surface(Surface& surface, const std::string& filename, const Format* format)
+    void load_surface(Surface& surface, const std::string& filename, const Format* format, const ImageDecodeOptions& options)
     {
         filesystem::File file(filename);
-        load_surface(surface, file, filesystem::getExtension(filename), format);
-    }
-
-    void load_palette_surface(Surface& surface, ConstMemory memory, const std::string& extension, Palette& palette)
-    {
-        palette.size = 0;
-
-        ImageDecoder decoder(memory, extension);
-        if (decoder.isDecoder())
-        {
-            ImageHeader header = decoder.header();
-            if (header.palette)
-            {
-                size_t stride = header.width;
-                size_t bytes = header.height * stride;
-
-                // configure surface
-                surface.width  = header.width;
-                surface.height = header.height;
-                surface.format = IndexedFormat(8);
-                surface.stride = stride;
-                surface.image  = new u8[bytes];
-
-                // decode
-                ImageDecodeOptions options;
-                options.palette = &palette;
-                decoder.decode(surface, options, 0, 0, 0);
-            }
-            else
-            {
-                // fallback: client requests a palette but image doesn't have one
-                load_surface(surface, memory, extension, nullptr);
-            }
-        }
-    }
-
-    void load_palette_surface(Surface& surface, const std::string& filename, Palette& palette)
-    {
-        filesystem::File file(filename);
-        load_palette_surface(surface, file, filesystem::getExtension(filename), palette);
+        load_surface(surface, file, filesystem::getExtension(filename), format, options);
     }
 
 } // namespace
@@ -228,7 +196,7 @@ namespace mango::image
         ImageEncoder encoder(filename);
         if (encoder.isEncoder())
         {
-            filesystem::FileStream file(filename, Stream::WRITE);
+            filesystem::OutputFileStream file(filename);
             encoder.encode(file, *this, options);
         }
     }
@@ -450,34 +418,24 @@ namespace mango::image
         blit(0, 0, source);
     }
 
-    Bitmap::Bitmap(ConstMemory memory, const std::string& extension)
+    Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const ImageDecodeOptions& options)
     {
-        load_surface(*this, memory, extension, nullptr);
+        load_surface(*this, memory, extension, nullptr, options);
     }
 
-    Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const Format& format)
+    Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const Format& format, const ImageDecodeOptions& options)
     {
-        load_surface(*this, memory, extension, &format);
+        load_surface(*this, memory, extension, &format, options);
     }
 
-    Bitmap::Bitmap(const std::string& filename)
+    Bitmap::Bitmap(const std::string& filename, const ImageDecodeOptions& options)
     {
-        load_surface(*this, filename, nullptr);
+        load_surface(*this, filename, nullptr, options);
     }
 
-    Bitmap::Bitmap(const std::string& filename, const Format& format)
+    Bitmap::Bitmap(const std::string& filename, const Format& format, const ImageDecodeOptions& options)
     {
-        load_surface(*this, filename, &format);
-    }
-
-    Bitmap::Bitmap(ConstMemory memory, const std::string& extension, Palette& palette)
-    {
-        load_palette_surface(*this, memory, extension, palette);
-    }
-
-    Bitmap::Bitmap(const std::string& filename, Palette& palette)
-    {
-        load_palette_surface(*this, filename, palette);
+        load_surface(*this, filename, &format, options);
     }
 
     Bitmap::Bitmap(Bitmap&& bitmap)
