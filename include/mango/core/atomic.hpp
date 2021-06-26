@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,36 +10,63 @@
 namespace mango
 {
 
-    /* WARNING!
-       Atomic locks are implemented as busy loops which consume significant
-       amounts of CPU time if the locks are congested and held for a long
-       period of time. The lock duration is non-deterministic to a highest degree.
-    */
+    // ----------------------------------------------------------------------------
+    // pause()
+    // ----------------------------------------------------------------------------
+
+    static inline
+    void pause()
+    {
+#if defined(MANGO_CPU_INTEL)
+    #if defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_MICROSOFT)
+        _mm_pause();
+    #else
+        __builtin_ia32_pause();
+    #endif
+#elif defined(MANGO_CPU_ARM)
+        asm volatile ("yield");
+#elif defined(MANGO_CPU_MIPS)
+        __asm__ __volatile__("pause");
+#else
+        // NOTE: Processor yield/pause is not supported :(
+#endif
+    }
 
     // ----------------------------------------------------------------------------
     // SpinLock
     // ----------------------------------------------------------------------------
 
+    /* WARNING!
+       Atomic locks are implemented as busy loops which potentially consume
+       significant amounts of CPU time.
+    */
+
     class SpinLock
     {
     private:
-        std::atomic_flag m_locked = ATOMIC_FLAG_INIT;
+        std::atomic<bool> m_locked = { false };
 
     public:
         bool tryLock()
         {
-            return m_locked.test_and_set(std::memory_order_acquire);
+            return !m_locked.load(std::memory_order_relaxed) &&
+                   !m_locked.exchange(true, std::memory_order_acquire);
         }
 
         void lock()
         {
-            while (m_locked.test_and_set(std::memory_order_acquire)) {
+            while(m_locked.exchange(true, std::memory_order_acquire))
+            {
+                while (m_locked.load(std::memory_order_relaxed))
+                {
+                    pause();
+                }
             }
         }
 
         void unlock()
         {
-            m_locked.clear(std::memory_order_release);
+            m_locked.store(false, std::memory_order_release);
         }
     };
 
