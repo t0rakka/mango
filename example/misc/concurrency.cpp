@@ -96,8 +96,9 @@ void example3()
 
 void example4()
 {
-    ConcurrentQueue q;
     std::atomic<int> counter { 0 };
+
+    ConcurrentQueue q;
 
     for (int i = 0; i < 10; ++i)
     {
@@ -253,7 +254,7 @@ void example8()
         {
             for (int i = 0; i < 100; ++i)
             {
-                std::this_thread::sleep_for(2ms);
+                std::this_thread::sleep_for(2us);
                 SpinLockGuard guard(lock);
                 ++counter;
             }
@@ -265,7 +266,10 @@ void example8()
         thread.join();
     }
 
-    printf("counter: %d\n", counter);
+    if (counter != 1000)
+    {
+        printf("counter: %d\n", counter);
+    }
 }
 
 int main()
@@ -273,7 +277,7 @@ int main()
     example1();
     example2();
     example3();
-    example4();
+    //example4();
     example5();
     example6();
     example7();
