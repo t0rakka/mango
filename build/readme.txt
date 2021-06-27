@@ -111,17 +111,6 @@ Error:
 Solution:
   apt install libgl1-mesa-dev
 
--------------
-
-Problem:
-  Examples won't compile (or link) on Apple M1 hardware
-
-Solution:
-  export CPLUS_INCLUDE_PATH=/opt/homebrew/include
-  export CPLUS_INCLUDE_PATH=/opt/homebrew/opt/jpeg-turbo/include 
-  export LIBRARY_PATH=/opt/homebrew/lib
-  export LIBRARY_PATH=/opt/homebrew/opt/jpeg-turbo/lib 
-
 ------------------------------------------------------------------------------------------------
 
 Apologies for poor quality build scripts and instructions. Typically you configure the library to be part of your build system
