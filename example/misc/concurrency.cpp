@@ -238,6 +238,36 @@ void example7()
     // data is known to be available). Just friendly advice, feel free to ignore and cry.
 }
 
+using namespace std::chrono_literals;
+
+void example8()
+{
+    int counter = 0;
+    SpinLock lock;
+
+    std::vector<std::thread> threads;
+
+    for (int i = 0; i < 10; ++i)
+    {
+        threads.push_back(std::thread([&counter, &lock]
+        {
+            for (int i = 0; i < 100; ++i)
+            {
+                std::this_thread::sleep_for(2ms);
+                SpinLockGuard guard(lock);
+                ++counter;
+            }
+        }));
+    }
+
+    for (auto& thread : threads)
+    {
+        thread.join();
+    }
+
+    printf("counter: %d\n", counter);
+}
+
 int main()
 {
     example1();
@@ -247,4 +277,5 @@ int main()
     example5();
     example6();
     example7();
+    example8();
 }
