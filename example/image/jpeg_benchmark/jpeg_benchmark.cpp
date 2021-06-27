@@ -343,12 +343,19 @@ int main(int argc, const char* argv[])
     // ------------------------------------------------------------------
 
     time0 = Time::us();
-    Bitmap bitmap(filename);
+
+    ImageDecodeOptions decode_options;
+    decode_options.simd = true;
+    decode_options.multithread = true;
+    Bitmap bitmap(filename, decode_options);
 
     time1 = Time::us();
-    ImageEncodeOptions options;
-    options.quality = 0.70f;
-    bitmap.save("output-mango.jpg", options);
+
+    ImageEncodeOptions encode_options;
+    encode_options.quality = 0.70f;
+    encode_options.simd = true;
+    encode_options.multithread = true;
+    bitmap.save("output-mango.jpg", encode_options);
 
     time2 = Time::us();
     print("mango:   ", time1 - time0, time2 - time1);
@@ -365,10 +372,10 @@ int main(int argc, const char* argv[])
         for (int i = 0; i < test_count; ++i)
         {
             time0 = Time::us();
-            Bitmap bitmap(filename);
+            Bitmap bitmap(filename, decode_options);
 
             time1 = Time::us();
-            bitmap.save("output-mango.jpg", options);
+            bitmap.save("output-mango.jpg", encode_options);
 
             time2 = Time::us();
 
