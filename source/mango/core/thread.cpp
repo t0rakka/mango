@@ -191,21 +191,20 @@ namespace mango
             }
             else
             {
-                // don't be too eager to sleep
                 auto time1 = high_resolution_clock::now();
                 auto elapsed = duration_cast<milliseconds>(time1 - time0).count();
                 if (elapsed >= microseconds(1200).count())
                 {
-                    // sleep but check what's happening after a while unless signaled
-                    ++m_sleep_count;
                     std::unique_lock<std::mutex> lock(m_queue_mutex);
-                    m_condition.wait_for(lock, milliseconds(120));
-                    --m_sleep_count;
+                    m_condition.wait_for(lock, milliseconds(12));
+                }
+                else if (elapsed >= microseconds(2).count())
+                {
+                    std::this_thread::yield();
                 }
                 else
                 {
-                    // no work; yield and try again soon
-                    std::this_thread::yield();
+                    pause();
                 }
             }
         }
@@ -220,10 +219,7 @@ namespace mango
         ++queue->task_counter;
         m_queues[queue->priority].tasks.enqueue(std::move(task));
 
-        if (m_sleep_count > 0)
-        {
-            m_condition.notify_one();
-        }
+        m_condition.notify_one();
     }
 
     bool ThreadPool::dequeue_and_process()

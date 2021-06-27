@@ -80,7 +80,6 @@ namespace mango
         alignas(64) TaskQueue* m_queues;
 
         alignas(64) std::atomic<bool> m_stop { false };
-        alignas(64) std::atomic<int> m_sleep_count { 0 };
         std::mutex m_queue_mutex;
         std::condition_variable m_condition;
 
