@@ -263,6 +263,8 @@ int main(int argc, const char* argv[])
         exit(1);
     }
 
+    printf("%s\n", getSystemInfo().c_str());
+
     const char* filename = argv[1];
     warmup(filename);
 

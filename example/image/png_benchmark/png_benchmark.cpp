@@ -458,6 +458,8 @@ int main(int argc, const char* argv[])
         exit(1);
     }
 
+    printf("%s\n", getSystemInfo().c_str());
+
     const char* filename = argv[1];
 
     Bitmap bitmap(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));

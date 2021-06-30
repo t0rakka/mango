@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <algorithm>
 #include <mango/core/cpuinfo.hpp>
@@ -268,6 +268,19 @@ namespace
     }
 
     #endif
+
+#elif defined(MANGO_CPU_ARM)
+
+    // generic ARM (most likely macOS / iOS)
+
+    u64 getCPUFlagsInternal()
+    {
+        u64 flags = 0;
+#ifdef MANGO_ENABLE_NEON
+        flags |= ARM_NEON;
+#endif
+        return flags;
+    }
 
 #else
 
