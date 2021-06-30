@@ -267,9 +267,18 @@ int main(int argc, const char* argv[])
     warmup(filename);
 
     int test_count = 0;
-    if (argc == 3)
+    bool multithread = true;
+
+    for (int i = 2; i < argc; ++i)
     {
-        test_count = std::atoi(argv[2]);
+        if (!strcmp(argv[i], "--nomt"))
+        {
+            multithread = false;
+        }
+        else
+        {
+            test_count = std::atoi(argv[2]);
+        }
     }
 
     printf("----------------------------------------------\n");
@@ -346,7 +355,7 @@ int main(int argc, const char* argv[])
 
     ImageDecodeOptions decode_options;
     decode_options.simd = true;
-    decode_options.multithread = true;
+    decode_options.multithread = multithread;
     Bitmap bitmap(filename, decode_options);
 
     time1 = Time::us();
@@ -354,7 +363,7 @@ int main(int argc, const char* argv[])
     ImageEncodeOptions encode_options;
     encode_options.quality = 0.70f;
     encode_options.simd = true;
-    encode_options.multithread = true;
+    encode_options.multithread = multithread;
     bitmap.save("output-mango.jpg", encode_options);
 
     time2 = Time::us();
