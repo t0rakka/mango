@@ -240,12 +240,8 @@ namespace
         return d;
     }
 
-    inline int16x8 nearest_sse2(u8* scan, const u8* prev, __m128i zero, int16x8 a, int16x8 b, int16x8 c, int16x8 d)
+    inline int16x8 nearest_sse2(int16x8 a, int16x8 b, int16x8 c, int16x8 d)
     {
-        MANGO_UNREFERENCED(scan);
-        MANGO_UNREFERENCED(prev);
-        MANGO_UNREFERENCED(zero);
-
         int16x8 pa = b - c;
         int16x8 pb = a - c;
         int16x8 pc = pa + pb;
@@ -365,7 +361,7 @@ namespace
             int16x8 a = d;
             b = _mm_unpacklo_epi8(load3(prev + x), zero);
             d = _mm_unpacklo_epi8(load3(scan + x), zero);
-            d = nearest_sse2(scan, prev, zero, a, b, c, d);
+            d = nearest_sse2(a, b, c, d);
             store3(scan + x, _mm_packus_epi16(d, d));
         }
     }
@@ -384,7 +380,7 @@ namespace
             int16x8 a = d;
             b = _mm_unpacklo_epi8(load4(prev + x), zero);
             d = _mm_unpacklo_epi8(load4(scan + x), zero);
-            d = nearest_sse2(scan, prev, zero, a, b, c, d);
+            d = nearest_sse2(a, b, c, d);
             store4(scan + x, _mm_packus_epi16(d, d));
         }
     }
