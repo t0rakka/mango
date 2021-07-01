@@ -483,6 +483,8 @@ namespace
     // NEON Filters
     // -----------------------------------------------------------------------------------
 
+    // helper functions
+
     static inline
     uint8x16_t load12(const u8* ptr)
     {
@@ -531,26 +533,20 @@ namespace
     }
 
     static inline
-    void sub16(u8* scan, uint8x8_t& last)
+    void sub16(u8* scan, uint8x16_t& last)
     {
-        uint32x2x4_t tmp;
-        tmp = vld4_lane_u32(reinterpret_cast<u32 *>(scan), tmp, 0);
-        uint8x8x4_t a = *(uint8x8x4_t *) &tmp; // !!!
+        const uint8x16_t zero = vdupq_n_u8(0);
 
-        uint8x8x4_t value;
-        value.val[0] = vadd_u8(        last, a.val[0]);
-        value.val[1] = vadd_u8(value.val[0], a.val[1]);
-        value.val[2] = vadd_u8(value.val[1], a.val[2]);
-        value.val[3] = vadd_u8(value.val[2], a.val[3]);
+        uint8x16_t a = vld1q_u8(scan);
 
-        last = value.val[3];
+        uint8x16_t d = vaddq_u8(a, last);
+        d = vaddq_u8(d, vextq_u8(zero, a, 12));
+        d = vaddq_u8(d, vextq_u8(zero, a, 8));
+        d = vaddq_u8(d, vextq_u8(zero, a, 4));
 
-        const uint8x8_t idx0 = { 0, 1, 2, 3, 8, 9, 10, 11 };
-        const uint8x8_t idx1 = { 16, 17, 18, 19, 24, 25, 26, 27 };
+        last = vreinterpretq_u8_u32(vdupq_laneq_u32(vreinterpretq_u32_u8(d), 3));
 
-        uint8x8_t v0 = vtbl4_u8(value, idx0);
-        uint8x8_t v1 = vtbl4_u8(value, idx1);
-        vst1q_u8(scan, vcombine_u8(v0, v1));
+        vst1q_u8(scan, d);
     }
 
     static inline
@@ -563,23 +559,26 @@ namespace
     void average12(u8* scan, const u8* prev, uint8x8_t& last)
     {
         // NOTE: 4 byte overflow guarded by PNG_SIMD_PADDING
-        uint8x8x2_t a = vld1_u8_x2(scan);
-        uint8x8x2_t b = vld1_u8_x2(prev);
+        uint8x16_t a = vld1q_u8(scan);
+        uint8x16_t b = vld1q_u8(prev);
 
-        uint8x8_t a0 = a.val[0];
-        uint8x8_t b0 = b.val[0];
-        uint8x8_t a1 = vext_u8(a.val[1], a.val[1], 1);
-        uint8x8_t b1 = vext_u8(b.val[1], b.val[1], 1);
-        uint8x8_t a3 = vext_u8(a.val[0], a.val[1], 3);
-        uint8x8_t b3 = vext_u8(b.val[0], b.val[1], 3);
-        uint8x8_t a6 = vext_u8(a.val[0], a.val[1], 6);
-        uint8x8_t b6 = vext_u8(b.val[0], b.val[1], 6);
+        uint8x8_t a0 = vget_low_u8(a);
+        uint8x8_t b0 = vget_low_u8(b);
+        uint8x8_t b1 = vget_high_u8(b);
+        uint8x8_t a1 = vget_high_u8(a);
+
+        uint8x8_t s1 = vext_u8(a1, a1, 1);
+        uint8x8_t t1 = vext_u8(b1, b1, 1);
+        uint8x8_t a3 = vext_u8(a0, a1, 3);
+        uint8x8_t b3 = vext_u8(b0, b1, 3);
+        uint8x8_t a6 = vext_u8(a0, a1, 6);
+        uint8x8_t b6 = vext_u8(b0, b1, 6);
 
         uint8x8x4_t value;
         value.val[0] = average(        last, a0, b0);
         value.val[1] = average(value.val[0], a3, b3);
         value.val[2] = average(value.val[1], a6, b6);
-        value.val[3] = average(value.val[2], a1, b1);
+        value.val[3] = average(value.val[2], s1, t1);
 
         last = value.val[3];
 
@@ -622,22 +621,18 @@ namespace
     static inline
     uint8x8_t paeth(uint8x8_t a, uint8x8_t b, uint8x8_t c, uint8x8_t delta)
     {
-        uint16x8_t p1, pa, pb, pc;
+        uint16x8_t pa = vabdl_u8(b, c);
+        uint16x8_t pb = vabdl_u8(a, c);
+        uint16x8_t pc = vabdq_u16(vaddl_u8(a, b), vaddl_u8(c, c));
 
-        p1 = vaddl_u8(a, b);
-        pc = vaddl_u8(c, c);
-        pa = vabdl_u8(b, c);
-        pb = vabdl_u8(a, c);
-        pc = vabdq_u16(p1, pc);
+        uint16x8_t ab = vcleq_u16(pa, pb);
+        uint16x8_t ac = vcleq_u16(pa, pc);
+        uint16x8_t bc = vcleq_u16(pb, pc);
 
-        p1 = vcleq_u16(pa, pb);
-        pa = vcleq_u16(pa, pc);
-        pb = vcleq_u16(pb, pc);
+        uint16x8_t abc = vandq_u16(ab, ac);
 
-        p1 = vandq_u16(p1, pa);
-
-        uint8x8_t d = vmovn_u16(pb);
-        uint8x8_t e = vmovn_u16(p1);
+        uint8x8_t d = vmovn_u16(bc);
+        uint8x8_t e = vmovn_u16(abc);
 
         d = vbsl_u8(d, b, c);
         e = vbsl_u8(e, a, d);
@@ -730,7 +725,7 @@ namespace
 
     void filter1_sub_32bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
     {
-        uint8x8_t last = vdup_n_u8(0);
+        uint8x16_t last = vdupq_n_u8(0);
 
         while (bytes >= 16)
         {
