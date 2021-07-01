@@ -483,53 +483,383 @@ namespace
     // NEON Filters
     // -----------------------------------------------------------------------------------
 
-    /*
+    static inline
+    uint8x16_t load12(const u8* ptr)
+    {
+        // NOTE: 4 byte overflow guarded by PNG_SIMD_PADDING
+        return vld1q_u8(ptr);
+    }
+
+    static inline
+    void store12(u8* dest, uint8x8_t v0, uint8x8_t v1)
+    {
+        vst1_u8(dest, v0);
+        vst1_lane_u32(reinterpret_cast<u32 *>(dest + 8), vreinterpret_u32_u8(v1), 0);
+    }
+
+    static inline
+    void sub12(u8* scan, uint8x8_t& last)
+    {
+        uint8x16_t a = load12(scan);
+        uint8x8_t a0 = vget_low_u8(a);
+        uint8x8_t a1 = vget_high_u8(a);
+
+        uint8x8_t s0 = a0;
+        uint8x8_t s1 = vext_u8(a0, a1, 3);
+        uint8x8_t s2 = vext_u8(a0, a1, 6);
+        uint8x8_t s3 = vext_u8(a1, a1, 1);
+
+        uint8x8_t v0 = vadd_u8(last, s0);
+        uint8x8_t v1 = vadd_u8(v0, s1);
+        uint8x8_t v2 = vadd_u8(v1, s2);
+        uint8x8_t v3 = vadd_u8(v2, s3);
+
+        last = v3;
+
+        const uint8x8x4_t table =
+        {
+            v0, v1, v2, v3
+        };
+
+        const uint8x8_t idx0 = { 0, 1, 2, 8, 9, 10, 16, 17 };
+        const uint8x8_t idx1 = { 18, 24, 25, 26, 255, 255, 255, 255 };
+
+        a0 = vtbl4_u8(table, idx0);
+        a1 = vtbl4_u8(table, idx1);
+
+        store12(scan, a0, a1);
+    }
+
+    static inline
+    void sub16(u8* scan, uint8x8_t& last)
+    {
+        uint32x2x4_t tmp;
+        tmp = vld4_lane_u32(reinterpret_cast<u32 *>(scan), tmp, 0);
+        uint8x8x4_t a = *(uint8x8x4_t *) &tmp; // !!!
+
+        uint8x8x4_t value;
+        value.val[0] = vadd_u8(        last, a.val[0]);
+        value.val[1] = vadd_u8(value.val[0], a.val[1]);
+        value.val[2] = vadd_u8(value.val[1], a.val[2]);
+        value.val[3] = vadd_u8(value.val[2], a.val[3]);
+
+        last = value.val[3];
+
+        const uint8x8_t idx0 = { 0, 1, 2, 3, 8, 9, 10, 11 };
+        const uint8x8_t idx1 = { 16, 17, 18, 19, 24, 25, 26, 27 };
+
+        uint8x8_t v0 = vtbl4_u8(value, idx0);
+        uint8x8_t v1 = vtbl4_u8(value, idx1);
+        vst1q_u8(scan, vcombine_u8(v0, v1));
+    }
+
+    static inline
+    uint8x8_t average(uint8x8_t v, uint8x8_t a, uint8x8_t b)
+    {
+        return vadd_u8(vhadd_u8(v, b), a);
+    }
+
+    static inline
+    void average12(u8* scan, const u8* prev, uint8x8_t& last)
+    {
+        // NOTE: 4 byte overflow guarded by PNG_SIMD_PADDING
+        uint8x8x2_t a = vld1_u8_x2(scan);
+        uint8x8x2_t b = vld1_u8_x2(prev);
+
+        uint8x8_t a0 = a.val[0];
+        uint8x8_t b0 = b.val[0];
+        uint8x8_t a1 = vext_u8(a.val[1], a.val[1], 1);
+        uint8x8_t b1 = vext_u8(b.val[1], b.val[1], 1);
+        uint8x8_t a3 = vext_u8(a.val[0], a.val[1], 3);
+        uint8x8_t b3 = vext_u8(b.val[0], b.val[1], 3);
+        uint8x8_t a6 = vext_u8(a.val[0], a.val[1], 6);
+        uint8x8_t b6 = vext_u8(b.val[0], b.val[1], 6);
+
+        uint8x8x4_t value;
+        value.val[0] = average(        last, a0, b0);
+        value.val[1] = average(value.val[0], a3, b3);
+        value.val[2] = average(value.val[1], a6, b6);
+        value.val[3] = average(value.val[2], a1, b1);
+
+        last = value.val[3];
+
+        const uint8x8_t idx0 = { 0, 1, 2, 8, 9, 10, 16, 17 };
+        const uint8x8_t idx1 = { 18, 24, 25, 26, 255, 255, 255, 255 };
+
+        uint8x8_t v0 = vtbl4_u8(value, idx0);
+        uint8x8_t v1 = vtbl4_u8(value, idx1);
+
+        store12(scan, v0, v1);
+    }
+
+    static inline
+    void average16(u8* scan, const u8* prev, uint8x8_t& last)
+    {
+        uint32x2x4_t tmp;
+
+        tmp = vld4_lane_u32(reinterpret_cast<u32 *>(scan), tmp, 0);
+        uint8x8x4_t a = *(uint8x8x4_t *) &tmp; // !!!
+
+        tmp = vld4_lane_u32(reinterpret_cast<const u32 *>(prev), tmp, 0);
+        uint8x8x4_t b = *(uint8x8x4_t *) &tmp; // !!!
+
+        uint8x8x4_t value;
+        value.val[0] = average(        last, a.val[0], b.val[0]);
+        value.val[1] = average(value.val[0], a.val[1], b.val[1]);
+        value.val[2] = average(value.val[1], a.val[2], b.val[2]);
+        value.val[3] = average(value.val[2], a.val[3], b.val[3]);
+
+        last = value.val[3];
+
+        const uint8x8_t idx0 = { 0, 1, 2, 3, 8, 9, 10, 11 };
+        const uint8x8_t idx1 = { 16, 17, 18, 19, 24, 25, 26, 27 };
+
+        uint8x8_t v0 = vtbl4_u8(value, idx0);
+        uint8x8_t v1 = vtbl4_u8(value, idx1);
+        vst1q_u8(scan, vcombine_u8(v0, v1));
+    }
+
+    static inline
+    uint8x8_t paeth(uint8x8_t a, uint8x8_t b, uint8x8_t c, uint8x8_t delta)
+    {
+        uint16x8_t p1, pa, pb, pc;
+
+        p1 = vaddl_u8(a, b);
+        pc = vaddl_u8(c, c);
+        pa = vabdl_u8(b, c);
+        pb = vabdl_u8(a, c);
+        pc = vabdq_u16(p1, pc);
+
+        p1 = vcleq_u16(pa, pb);
+        pa = vcleq_u16(pa, pc);
+        pb = vcleq_u16(pb, pc);
+
+        p1 = vandq_u16(p1, pa);
+
+        uint8x8_t d = vmovn_u16(pb);
+        uint8x8_t e = vmovn_u16(p1);
+
+        d = vbsl_u8(d, b, c);
+        e = vbsl_u8(e, a, d);
+
+        e = vadd_u8(e, delta);
+
+        return e;
+    }
+
+    static inline
+    void paeth12(u8* scan, const u8* prev, uint8x8x4_t& value, uint8x8_t& last)
+    {
+        // NOTE: 4 byte overflow guarded by PNG_SIMD_PADDING
+        uint8x8x2_t a = vld1_u8_x2(scan);
+        uint8x8x2_t b = vld1_u8_x2(prev);
+
+        uint8x8_t a0 = a.val[0];
+        uint8x8_t b0 = b.val[0];
+        uint8x8_t a1 = vext_u8(a.val[1], a.val[1], 1);
+        uint8x8_t b1 = vext_u8(b.val[1], b.val[1], 1);
+        uint8x8_t a3 = vext_u8(a.val[0], a.val[1], 3);
+        uint8x8_t b3 = vext_u8(b.val[0], b.val[1], 3);
+        uint8x8_t a6 = vext_u8(a.val[0], a.val[1], 6);
+        uint8x8_t b6 = vext_u8(b.val[0], b.val[1], 6);
+
+        value.val[0] = paeth(value.val[3], b0, last, a0);
+        value.val[1] = paeth(value.val[0], b3, b0, a3);
+        value.val[2] = paeth(value.val[1], b6, b3, a6);
+        value.val[3] = paeth(value.val[2], b1, b6, a1);
+
+        last = b1;
+
+        const uint8x8_t idx0 = { 0, 1, 2, 8, 9, 10, 16, 17 };
+        const uint8x8_t idx1 = { 18, 24, 25, 26, 255, 255, 255, 255 };
+
+        uint8x8_t v0 = vtbl4_u8(value, idx0);
+        uint8x8_t v1 = vtbl4_u8(value, idx1);
+
+        store12(scan, v0, v1);
+    }
+
+    static inline
+    void paeth16(u8* scan, const u8* prev, uint8x8x4_t& value, uint8x8_t& last)
+    {
+        uint32x2x4_t tmp;
+
+        tmp = vld4_lane_u32(reinterpret_cast<u32 *>(scan), tmp, 0);
+        uint8x8x4_t a = *(uint8x8x4_t*) &tmp; // !!!
+
+        tmp = vld4_lane_u32(reinterpret_cast<const u32 *>(prev), tmp, 0);
+        uint8x8x4_t b = *(uint8x8x4_t *) &tmp; // !!!
+
+        value.val[0] = paeth(value.val[3], b.val[0],     last, a.val[0]);
+        value.val[1] = paeth(value.val[0], b.val[1], b.val[0], a.val[1]);
+        value.val[2] = paeth(value.val[1], b.val[2], b.val[1], a.val[2]);
+        value.val[3] = paeth(value.val[2], b.val[3], b.val[2], a.val[3]);
+
+        last = b.val[3];
+
+        const uint8x8_t idx0 = { 0, 1, 2, 3, 8, 9, 10, 11 };
+        const uint8x8_t idx1 = { 16, 17, 18, 19, 24, 25, 26, 27 };
+
+        uint8x8_t v0 = vtbl4_u8(value, idx0);
+        uint8x8_t v1 = vtbl4_u8(value, idx1);
+        vst1q_u8(scan, vcombine_u8(v0, v1));
+    }
+
+    // filters
+
     void filter1_sub_24bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
     {
-        MANGO_UNREFERENCED(prev);
-        MANGO_UNREFERENCED(bpp);
+        uint8x8_t last = vdup_n_u8(0);
+
+        while (bytes >= 12)
+        {
+            sub12(scan, last);
+            scan += 12;
+            bytes -= 12;
+        }
+
+        if (bytes > 0)
+        {
+            u8 temp[16];
+            std::memcpy(temp, scan, bytes);
+
+            sub12(temp, last);
+            std::memcpy(scan, temp, bytes);
+        }
     }
 
     void filter1_sub_32bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
     {
-        MANGO_UNREFERENCED(prev);
-        MANGO_UNREFERENCED(bpp);
-    }
-    */
+        uint8x8_t last = vdup_n_u8(0);
 
-    void filter2_up_neon(u8* scan, const u8* prev, int bytes, int bpp)
-    {
-        MANGO_UNREFERENCED(bpp);
-
-        for (int x = 0; x < bytes; x += 16)
+        while (bytes >= 16)
         {
-            uint8x16_t a = vld1q_u8(scan + x);
-            uint8x16_t b = vld1q_u8(prev + x);
-            vst1q_u8(scan + x, vaddq_u8(a, b));
+            sub16(scan, last);
+            scan += 16;
+            bytes -= 16;
+        }
+
+        if (bytes > 0)
+        {
+            u8 temp[16];
+            std::memcpy(temp, scan, bytes);
+
+            sub16(temp, last);
+            std::memcpy(scan, temp, bytes);
         }
     }
 
-    /*
+    void filter2_up_neon(u8* scan, const u8* prev, int bytes, int bpp)
+    {
+        while (bytes >= 16)
+        {
+            uint8x16_t a = vld1q_u8(scan);
+            uint8x16_t b = vld1q_u8(prev);
+            vst1q_u8(scan, vaddq_u8(a, b));
+            scan += 16;
+            prev += 16;
+            bytes -= 16;
+        }
+
+        for (int x = 0; x < bytes; ++x)
+        {
+            scan[x] += prev[x];
+        }
+    }
+
     void filter3_average_24bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
     {
-        MANGO_UNREFERENCED(bpp);
+        uint8x8_t last = vdup_n_u8(0);
+
+        while (bytes >= 12)
+        {
+            average12(scan, prev, last);
+            scan += 12;
+            prev += 12;
+            bytes -= 12;
+        }
+
+        if (bytes > 0)
+        {
+            u8 temp[16];
+            std::memcpy(temp, scan, bytes);
+
+            average16(temp, prev, last);
+            std::memcpy(scan, temp, bytes);
+        }
     }
 
     void filter3_average_32bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
     {
-        MANGO_UNREFERENCED(bpp);
+        uint8x8_t last = vdup_n_u8(0);
+
+        while (bytes >= 16)
+        {
+            average16(scan, prev, last);
+            scan += 16;
+            prev += 16;
+            bytes -= 16;
+        }
+
+        if (bytes > 0)
+        {
+            u8 temp[16];
+            std::memcpy(temp, scan, bytes);
+
+            average16(temp, prev, last);
+            std::memcpy(scan, temp, bytes);
+        }
     }
 
     void filter4_paeth_24bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
     {
-        MANGO_UNREFERENCED(bpp);
+        uint8x8_t last = vdup_n_u8(0);
+
+        uint8x8x4_t value;
+        value.val[3] = vdup_n_u8(0);
+
+        while (bytes >= 12)
+        {
+            paeth12(scan, prev, value, last);
+            scan += 12;
+            prev += 12;
+            bytes -= 12;
+        }
+
+        if (bytes > 0)
+        {
+            u8 temp[16];
+            std::memcpy(temp, scan, bytes);
+
+            paeth12(scan, prev, value, last);
+            std::memcpy(scan, temp, bytes);
+        }
     }
 
     void filter4_paeth_32bit_neon(u8* scan, const u8* prev, int bytes, int bpp)
     {
-        MANGO_UNREFERENCED(bpp);
+        uint8x8_t last = vdup_n_u8(0);
+
+        uint8x8x4_t value;
+        value.val[3] = vdup_n_u8(0);
+
+        while (bytes >= 16)
+        {
+            paeth16(scan, prev, value, last);
+            scan += 16;
+            prev += 16;
+            bytes -= 16;
+        }
+
+        if (bytes > 0)
+        {
+            u8 temp[16];
+            std::memcpy(temp, scan, bytes);
+
+            paeth16(scan, prev, value, last);
+            std::memcpy(scan, temp, bytes);
+        }
     }
-    */
 
 #endif // MANGO_ENABLE_NEON
 
@@ -564,6 +894,12 @@ namespace
                     }
 #endif
 #if defined(MANGO_ENABLE_NEON)
+                    if (features & ARM_NEON)
+                    {
+                        sub = filter1_sub_24bit_neon;
+                        average = filter3_average_24bit_neon;
+                        paeth = filter4_paeth_24bit_neon;
+                    }
 #endif
                     break;
                 case 4:
@@ -573,6 +909,12 @@ namespace
                     paeth = filter4_paeth_32bit_sse2;
 #endif
 #if defined(MANGO_ENABLE_NEON)
+                    if (features & ARM_NEON)
+                    {
+                        sub = filter1_sub_32bit_neon;
+                        average = filter3_average_32bit_neon;
+                        paeth = filter4_paeth_32bit_neon;
+                    }
 #endif
                     break;
             }
