@@ -500,6 +500,16 @@ namespace
     }
 
     static inline
+    uint8x16_t splat(uint8x16_t v)
+    {
+#ifdef __aarch64__
+        return vreinterpretq_u8_u32(vdupq_laneq_u32(vreinterpretq_u32_u8(v), 3));
+#else
+        return vreinterpretq_u8_u32(vdupq_n_u32(vgetq_lane_u32(vreinterpretq_u32_u8(v), 3)));
+#endif
+    }
+
+    static inline
     void sub12(u8* scan, uint8x8_t& last)
     {
         uint8x16_t a = load12(scan);
@@ -544,7 +554,7 @@ namespace
         d = vaddq_u8(d, vextq_u8(zero, a, 8));
         d = vaddq_u8(d, vextq_u8(zero, a, 4));
 
-        last = vreinterpretq_u8_u32(vdupq_laneq_u32(vreinterpretq_u32_u8(d), 3));
+        last = splat(d);
 
         vst1q_u8(scan, d);
     }
