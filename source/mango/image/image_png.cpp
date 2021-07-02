@@ -1170,15 +1170,16 @@ namespace
 
     void process_rgb8(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        // SIMD: SSSE3
         MANGO_UNREFERENCED(state);
 
         u32* dest = reinterpret_cast<u32*>(dst);
 
         while (width >= 4)
         {
-            u32 v0 = uload32(src + 0); // r1 b0 g0 r0
-            u32 v1 = uload32(src + 4); // g2 r2 b1 g1
-            u32 v2 = uload32(src + 8); // b3 g3 r3 b2
+            u32 v0 = uload32(src + 0); // R0, G0, B0, R1
+            u32 v1 = uload32(src + 4); // G1, B1, R2, G2
+            u32 v2 = uload32(src + 8); // B2, R3, G3, B3
             dest[0] = 0xff000000 | v0;
             dest[1] = 0xff000000 | (v0 >> 24) | (v1 << 8);
             dest[2] = 0xff000000 | (v1 >> 16) | (v2 << 16);
@@ -1269,6 +1270,7 @@ namespace
 
     void process_rgba16(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        // SIMD: SSE2, SSSE3
         MANGO_UNREFERENCED(state);
 
         u16* dest = reinterpret_cast<u16*>(dst);
