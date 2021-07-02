@@ -2519,18 +2519,19 @@ namespace
 
         ColorState::Function convert = getColorFunction(m_color_state, m_color_type, m_color_state.bits);
 
-        Buffer temp;
-
         if (m_interlace)
         {
-            temp.resize(height * bytes_per_line);
-            std::memset(temp, 0, height * bytes_per_line);
+            Buffer temp(height * bytes_per_line, 0);
 
             // deinterlace does filter for each pass
             if (m_color_state.bits < 8)
+            {
                 deinterlace1to4(temp, width, height, bytes_per_line, buffer);
+            }
             else
+            {
                 deinterlace8(temp, width, height, bytes_per_line, buffer);
+            }
 
             // use de-interlaced temp buffer as processing source
             buffer = temp;
@@ -2552,7 +2553,7 @@ namespace
             FilterDispatcher filter(bpp);
 
             // zero scanline
-            std::vector<u8> zeros(bytes_per_line, 0);
+            Buffer zeros(bytes_per_line, 0);
             const u8* prev = zeros.data();
 
             for (int y = 0; y < height; ++y)
