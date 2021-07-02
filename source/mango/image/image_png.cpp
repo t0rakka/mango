@@ -1690,6 +1690,7 @@ namespace
         void deinterlace1to4(u8* output, int width, int height, size_t stride, u8* buffer);
         void deinterlace8(u8* output, int width, int height, size_t stride, u8* buffer);
         void filter(u8* buffer, int bytes, int height);
+        void process_range(u8* image, u8* buffer, size_t stride, int width, const FilterDispatcher& filter, int y0, int y1);
         void process(u8* dest, int width, int height, size_t stride, u8* buffer, bool multithread);
 
         void blend(Surface& d, Surface& s, Palette* palette);
@@ -2508,6 +2509,27 @@ namespace
         }
     }
 
+    void ParserPNG::process_range(u8* image, u8* buffer, size_t stride, int width, const FilterDispatcher& filter, int y0, int y1)
+    {
+        const int bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
+        ColorState::Function convert = getColorFunction(m_color_state, m_color_type, m_color_state.bits);
+
+        buffer += y0 * bytes_per_line;
+        image += y0 * stride;
+
+        for (int y = y0; y < y1; ++y)
+        {
+            // filtering
+            filter(buffer, buffer - bytes_per_line, bytes_per_line);
+
+            // color conversion
+            convert(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
+
+            buffer += bytes_per_line;
+            image += stride;
+        }
+    }
+
     void ParserPNG::process(u8* image, int width, int height, size_t stride, u8* buffer, bool multithread)
     {
         if (m_error)
@@ -2519,137 +2541,71 @@ namespace
 
         ColorState::Function convert = getColorFunction(m_color_state, m_color_type, m_color_state.bits);
 
-        if (multithread)
+        if (m_interlace)
         {
-            ConcurrentQueue q;
+            Buffer temp(height * bytes_per_line, 0);
 
-            if (m_interlace)
+            // deinterlace does filter for each pass
+            if (m_color_state.bits < 8)
             {
-                Buffer temp(height * bytes_per_line, 0);
-
-                // deinterlace does filter for each pass
-                if (m_color_state.bits < 8)
-                {
-                    deinterlace1to4(temp, width, height, bytes_per_line, buffer);
-                }
-                else
-                {
-                    deinterlace8(temp, width, height, bytes_per_line, buffer);
-                }
-
-                // use de-interlaced temp buffer as processing source
-                buffer = temp;
-
-                const int N = std::max(1, height / 16);
-
-                for (int y = 0; y < height; y += N)
-                {
-                    int ymax = std::min(height, y + N);
-
-                    q.enqueue([=] ()
-                    {
-                        for (int i = y; i < ymax; ++i)
-                        {
-                            convert(m_color_state, width, 
-                                image + i * stride, 
-                                buffer + i * bytes_per_line + 1);
-                        }
-                    });
-                }
+                deinterlace1to4(temp, width, height, bytes_per_line, buffer);
             }
             else
             {
-                const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
-                if (bpp > 8)
-                    return;
+                deinterlace8(temp, width, height, bytes_per_line, buffer);
+            }
 
-                FilterDispatcher filter(bpp);
+            // use de-interlaced temp buffer as processing source
+            buffer = temp;
 
-                const int ylast = height - 1;
-                int y0 = 0;
+            // color conversion
+            for (int y = 0; y < height; ++y)
+            {
+                convert(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
+                image += stride;
+                buffer += bytes_per_line;
+            }
+        }
+        else
+        {
+            const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
+            if (bpp > 8)
+                return;
+
+            FilterDispatcher filter(bpp);
+
+            int y0 = 0;
+
+            if (multithread)
+            {
+                ConcurrentQueue q;
 
                 for (int y = 0; y < height; ++y)
                 {
-                    u8 f = buffer[bytes_per_line * y];
+                    u8 f = buffer[bytes_per_line * y]; // extract filter byte
                     if (f <= 1)
                     {
-                        // does not use previous scanline -> may start a new segment
-                        if ((y - y0) > 16 || y == ylast)
+                        // does not use previous scanline -> may start a new range
+                        if ((y - y0) > 32)
                         {
-                            // enqueue current segment
+                            // enqueue current range
                             q.enqueue([=] ()
                             {
-                                for (int i = y0; i < y; ++i)
-                                {
-                                    u8* scan = buffer + bytes_per_line * i;
-                                    u8* dest = image + stride * i;
-
-                                    // filtering
-                                    filter(scan, scan - bytes_per_line, bytes_per_line);
-
-                                    // color conversion
-                                    convert(m_color_state, width, dest, scan + PNG_FILTER_BYTE);
-                                }
+                                process_range(image, buffer, stride, width, filter, y0, y);
                             });
 
-                            // start a new segment
+                            // start a new range
                             y0 = y;
                         }
                     }
                     else
                     {
-                        // uses previous scanline -> must continue current segment
+                        // uses previous scanline -> must continue current range
                     }
                 }
             }
-        }
-        else
-        {
-            if (m_interlace)
-            {
-                Buffer temp(height * bytes_per_line, 0);
 
-                // deinterlace does filter for each pass
-                if (m_color_state.bits < 8)
-                {
-                    deinterlace1to4(temp, width, height, bytes_per_line, buffer);
-                }
-                else
-                {
-                    deinterlace8(temp, width, height, bytes_per_line, buffer);
-                }
-
-                // use de-interlaced temp buffer as processing source
-                buffer = temp;
-
-                // color conversion
-                for (int y = 0; y < height; ++y)
-                {
-                    convert(m_color_state, width, image, buffer + 1);
-                    image += stride;
-                    buffer += bytes_per_line;
-                }
-            }
-            else
-            {
-                const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
-                if (bpp > 8)
-                    return;
-
-                FilterDispatcher filter(bpp);
-
-                for (int y = 0; y < height; ++y)
-                {
-                    // filtering
-                    filter(buffer, buffer - bytes_per_line, bytes_per_line);
-
-                    // color conversion
-                    convert(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
-
-                    buffer += bytes_per_line;
-                    image += stride;
-                }
-            }
+            process_range(image, buffer, stride, width, filter, y0, height);
         }
     }
 
