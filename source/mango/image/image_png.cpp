@@ -2497,7 +2497,7 @@ namespace
         FilterDispatcher filter(bpp);
 
         // zero scanline
-        std::vector<u8> zeros(bytes, 0);
+        Buffer zeros(bytes, 0);
         const u8* prev = zeros.data();
 
         for (int y = 0; y < height; ++y)
@@ -2515,9 +2515,14 @@ namespace
             return;
         }
 
-        int bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
+        const int bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
 
         ColorState::Function convert = getColorFunction(m_color_state, m_color_type, m_color_state.bits);
+
+        /*
+        ConcurrentQueue q;
+        bool multithread = true;
+        */
 
         if (m_interlace)
         {
@@ -2536,12 +2541,36 @@ namespace
             // use de-interlaced temp buffer as processing source
             buffer = temp;
 
-            // color conversion
-            for (int y = 0; y < height; ++y)
+            /*
+            if (multithread)
             {
-                convert(m_color_state, width, image, buffer + 1);
-                image += stride;
-                buffer += bytes_per_line;
+                const int N = std::max(1, height / 16);
+
+                for (int y = 0; y < height; y += N)
+                {
+                    int ymax = std::min(height, y + N);
+
+                    q.enqueue([=] ()
+                    {
+                        for (int i = y; i < ymax; ++i)
+                        {
+                            convert(m_color_state, width, 
+                                image + i * stride, 
+                                buffer + i * bytes_per_line + 1);
+                        }
+                    });
+                }
+            }
+            else
+            */
+            {
+                // color conversion
+                for (int y = 0; y < height; ++y)
+                {
+                    convert(m_color_state, width, image, buffer + 1);
+                    image += stride;
+                    buffer += bytes_per_line;
+                }
             }
         }
         else
@@ -2552,21 +2581,16 @@ namespace
 
             FilterDispatcher filter(bpp);
 
-            // zero scanline
-            Buffer zeros(bytes_per_line, 0);
-            const u8* prev = zeros.data();
-
             for (int y = 0; y < height; ++y)
             {
                 // filtering
-                filter(buffer, prev, bytes_per_line);
+                filter(buffer, buffer - bytes_per_line, bytes_per_line);
 
                 // color conversion
                 convert(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
-                image += stride;
 
-                prev = buffer;
                 buffer += bytes_per_line;
+                image += stride;
             }
         }
     }
@@ -2630,17 +2654,23 @@ namespace
             }
         }
 
-        int buffer_size = getImageBufferSize(width, height);
+        const int bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
+        const int buffer_size = getImageBufferSize(width, height);
 
         // allocate output buffer
-        Buffer buffer(buffer_size + PNG_SIMD_PADDING);
+        Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
         debugPrint("  buffer bytes: %d\n", buffer_size);
+
+        // zero scanline for filters at the beginning
+        std::memset(temp, 0, bytes_per_line);
+
+        Memory buffer(temp + bytes_per_line, buffer_size);
 
         try
         {
-            if(m_iphoneOptimized)
+            if (m_iphoneOptimized)
             {
-                // apple uses raw deflate format
+                // Apple uses raw deflate format
                 size_t bytes_out = deflate::decompress(buffer, m_compressed);
                 debugPrint("  # deflate total_out:  %d\n", int(bytes_out));
                 MANGO_UNREFERENCED(bytes_out);
@@ -2843,8 +2873,8 @@ namespace
         int bpp = surface.format.bytes();
         int bytes_per_scan = surface.width * bpp;
 
-        Buffer zero(bytes_per_scan, 0);
-        u8* prev = zero;
+        Buffer zeros(bytes_per_scan, 0);
+        u8* prev = zeros;
 
         if (filtering)
         {
