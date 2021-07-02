@@ -69,9 +69,9 @@ namespace
     // on all platforms or tool-chains so we have to wrap it like this. :(
 
 #if defined(__ppc__)
-    size_t png_strnlen(const char* s,size_t maxlen)
+    size_t png_strnlen(const char* s, size_t maxlen)
     {
-        for (size_t i=0; i < maxlen ; i++ )
+        for (size_t i = 0; i < maxlen ; ++i)
         {
             if (s[i] == 0)
                 return i;
@@ -933,7 +933,7 @@ namespace
             MANGO_UNREFERENCED(features);
         }
 
-        void operator () (u8* scan, const u8* prev, int bytes)
+        void operator () (u8* scan, const u8* prev, int bytes) const
         {
             FilterType method = FilterType(scan[0]);
             //printf("%d", method);
@@ -1690,7 +1690,7 @@ namespace
         void deinterlace1to4(u8* output, int width, int height, size_t stride, u8* buffer);
         void deinterlace8(u8* output, int width, int height, size_t stride, u8* buffer);
         void filter(u8* buffer, int bytes, int height);
-        void process(u8* dest, int width, int height, size_t stride, u8* buffer);
+        void process(u8* dest, int width, int height, size_t stride, u8* buffer, bool multithread);
 
         void blend(Surface& d, Surface& s, Palette* palette);
 
@@ -1713,7 +1713,7 @@ namespace
         ~ParserPNG();
 
         const ImageHeader& getHeader();
-        ImageDecodeStatus decode(const Surface& dest, Palette* palette);
+        ImageDecodeStatus decode(const Surface& dest, bool multithread, Palette* palette);
 
         ConstMemory icc()
         {
@@ -2508,7 +2508,7 @@ namespace
         }
     }
 
-    void ParserPNG::process(u8* image, int width, int height, size_t stride, u8* buffer)
+    void ParserPNG::process(u8* image, int width, int height, size_t stride, u8* buffer, bool multithread)
     {
         if (m_error)
         {
@@ -2519,31 +2519,27 @@ namespace
 
         ColorState::Function convert = getColorFunction(m_color_state, m_color_type, m_color_state.bits);
 
-        /*
-        ConcurrentQueue q;
-        bool multithread = true;
-        */
-
-        if (m_interlace)
+        if (multithread)
         {
-            Buffer temp(height * bytes_per_line, 0);
+            ConcurrentQueue q;
 
-            // deinterlace does filter for each pass
-            if (m_color_state.bits < 8)
+            if (m_interlace)
             {
-                deinterlace1to4(temp, width, height, bytes_per_line, buffer);
-            }
-            else
-            {
-                deinterlace8(temp, width, height, bytes_per_line, buffer);
-            }
+                Buffer temp(height * bytes_per_line, 0);
 
-            // use de-interlaced temp buffer as processing source
-            buffer = temp;
+                // deinterlace does filter for each pass
+                if (m_color_state.bits < 8)
+                {
+                    deinterlace1to4(temp, width, height, bytes_per_line, buffer);
+                }
+                else
+                {
+                    deinterlace8(temp, width, height, bytes_per_line, buffer);
+                }
 
-            /*
-            if (multithread)
-            {
+                // use de-interlaced temp buffer as processing source
+                buffer = temp;
+
                 const int N = std::max(1, height / 16);
 
                 for (int y = 0; y < height; y += N)
@@ -2562,8 +2558,70 @@ namespace
                 }
             }
             else
-            */
             {
+                const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
+                if (bpp > 8)
+                    return;
+
+                FilterDispatcher filter(bpp);
+
+                const int ylast = height - 1;
+                int y0 = 0;
+
+                for (int y = 0; y < height; ++y)
+                {
+                    u8 f = buffer[bytes_per_line * y];
+                    if (f <= 1)
+                    {
+                        // does not use previous scanline -> may start a new segment
+                        if ((y - y0) > 16 || y == ylast)
+                        {
+                            // enqueue current segment
+                            q.enqueue([=] ()
+                            {
+                                for (int i = y0; i < y; ++i)
+                                {
+                                    u8* scan = buffer + bytes_per_line * i;
+                                    u8* dest = image + stride * i;
+
+                                    // filtering
+                                    filter(scan, scan - bytes_per_line, bytes_per_line);
+
+                                    // color conversion
+                                    convert(m_color_state, width, dest, scan + PNG_FILTER_BYTE);
+                                }
+                            });
+
+                            // start a new segment
+                            y0 = y;
+                        }
+                    }
+                    else
+                    {
+                        // uses previous scanline -> must continue current segment
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (m_interlace)
+            {
+                Buffer temp(height * bytes_per_line, 0);
+
+                // deinterlace does filter for each pass
+                if (m_color_state.bits < 8)
+                {
+                    deinterlace1to4(temp, width, height, bytes_per_line, buffer);
+                }
+                else
+                {
+                    deinterlace8(temp, width, height, bytes_per_line, buffer);
+                }
+
+                // use de-interlaced temp buffer as processing source
+                buffer = temp;
+
                 // color conversion
                 for (int y = 0; y < height; ++y)
                 {
@@ -2572,30 +2630,30 @@ namespace
                     buffer += bytes_per_line;
                 }
             }
-        }
-        else
-        {
-            const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
-            if (bpp > 8)
-                return;
-
-            FilterDispatcher filter(bpp);
-
-            for (int y = 0; y < height; ++y)
+            else
             {
-                // filtering
-                filter(buffer, buffer - bytes_per_line, bytes_per_line);
+                const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
+                if (bpp > 8)
+                    return;
 
-                // color conversion
-                convert(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
+                FilterDispatcher filter(bpp);
 
-                buffer += bytes_per_line;
-                image += stride;
+                for (int y = 0; y < height; ++y)
+                {
+                    // filtering
+                    filter(buffer, buffer - bytes_per_line, bytes_per_line);
+
+                    // color conversion
+                    convert(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
+
+                    buffer += bytes_per_line;
+                    image += stride;
+                }
             }
         }
     }
 
-    ImageDecodeStatus ParserPNG::decode(const Surface& dest, Palette* ptr_palette)
+    ImageDecodeStatus ParserPNG::decode(const Surface& dest, bool multithread, Palette* ptr_palette)
     {
         ImageDecodeStatus status;
 
@@ -2690,7 +2748,7 @@ namespace
         }
 
         // process image
-        process(image, width, height, stride, buffer);
+        process(image, width, height, stride, buffer, multithread);
 
         if (m_number_of_frames > 0)
         {
@@ -3022,26 +3080,26 @@ namespace
             bool direct = dest.format == header.format &&
                           dest.width >= header.width &&
                           dest.height >= header.height &&
-                          !options.palette;
+                          options.palette == nullptr;
 
             if (direct)
             {
                 // direct decoding
-                status = m_parser.decode(dest, nullptr);
+                status = m_parser.decode(dest, options.multithread, nullptr);
             }
             else
             {
                 if (options.palette && header.palette)
                 {
                     // direct decoding with palette
-                    status = m_parser.decode(dest, options.palette);
+                    status = m_parser.decode(dest, options.multithread, options.palette);
                     direct = true;
                 }
                 else
                 {
                     // indirect
                     Bitmap temp(header.width, header.height, header.format);
-                    status = m_parser.decode(temp, nullptr);
+                    status = m_parser.decode(temp, options.multithread, nullptr);
                     dest.blit(0, 0, temp);
                 }
             }

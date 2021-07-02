@@ -400,23 +400,24 @@ void save_wuffs(const Bitmap& bitmap)
 // mango
 // ----------------------------------------------------------------------
 
+bool g_option_multithread = true;
+
 #if defined(ENABLE_MANGO)
 
 void load_mango(Memory memory)
 {
     // low-level decoding from memory
-    /*
     ImageDecoder decoder(memory, ".png");
 
     ImageHeader header = decoder.header();
     Bitmap bitmap(header.width, header.height, header.format);
 
     ImageDecodeOptions options;
+    options.multithread = g_option_multithread;
     decoder.decode(bitmap, options);
-    */
 
     // higher-level "easy way"
-    Bitmap bitmap(memory, ".png");
+    //Bitmap bitmap(memory, ".png");
 }
 
 void save_mango(const Bitmap& bitmap)
@@ -462,12 +463,21 @@ int main(int argc, const char* argv[])
 
     const char* filename = argv[1];
 
+    for (int i = 2; i < argc; ++i)
+    {
+        if (!strcmp(argv[i], "--nomt"))
+        {
+            g_option_multithread = false;
+        }
+    }
+
     Bitmap bitmap(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
     File file(filename);
     Buffer buffer(file);
 
     printf("image: %d x %d (%d KB)\n", bitmap.width, bitmap.height, int(file.size() / 1024));
+    printf("MT: %d\n", g_option_multithread);
     printf("----------------------------------------------\n");
     printf("                load         save             \n");
     printf("----------------------------------------------\n");
