@@ -276,9 +276,25 @@ namespace
     u64 getCPUFlagsInternal()
     {
         u64 flags = 0;
+
 #ifdef MANGO_ENABLE_NEON
         flags |= ARM_NEON;
 #endif
+
+#ifdef MANGO_ENABLE_FP16
+        flags |= ARM_FP16;
+#endif
+
+#if defined(__ARM_FEATURE_CRYPTO)
+        flags |= ARM_AES;
+        flags |= ARM_SHA1;
+        flags |= ARM_SHA2;
+#endif
+
+#ifdef __ARM_FEATURE_CRC32
+        flags |= ARM_CRC32;
+#endif
+
         return flags;
     }
 
