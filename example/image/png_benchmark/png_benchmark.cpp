@@ -481,7 +481,6 @@ int main(int argc, const char* argv[])
     Buffer buffer(file);
 
     printf("image: %d x %d (%d KB)\n", bitmap.width, bitmap.height, int(file.size() / 1024));
-    printf("MT: %d\n", g_option_multithread);
     printf("----------------------------------------------\n");
     printf("                load         save             \n");
     printf("----------------------------------------------\n");
