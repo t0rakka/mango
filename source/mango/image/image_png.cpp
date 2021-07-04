@@ -1270,7 +1270,7 @@ namespace
 
     void process_rgba16(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        // SIMD: SSE2, SSSE3
+        // SIMD: SSE2, SSSE3, NEON
         MANGO_UNREFERENCED(state);
 
         u16* dest = reinterpret_cast<u16*>(dst);
@@ -1429,6 +1429,31 @@ namespace
         }
     }
 
+    void process_rgba16_neon(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        MANGO_UNREFERENCED(state);
+
+        const u16* source = reinterpret_cast<const u16*>(src);
+        u16* dest = reinterpret_cast<u16*>(dst);
+
+        while (width >= 2)
+        {
+            uint16x8_t a = vld1q_u16(source);
+            a = vrev16q_u8(a);
+            vst1q_u16(dest, a);
+            source += 8;
+            dest += 8;
+            width -= 2;
+        }
+
+        if (width > 0)
+        {
+            uint16x4_t a = vld1_u16(source);
+            a = vrev16_u8(a);
+            vst1_u16(dest, a);
+        }
+    }
+
 #endif // MANGO_ENABLE_NEON
 
     ColorState::Function getColorFunction(const ColorState& state, int color_type, int bit_depth)
@@ -1557,6 +1582,12 @@ namespace
                 if (features & INTEL_SSSE3)
                 {
                     function = process_rgba16_ssse3;
+                }
+#endif
+#if defined(MANGO_ENABLE_NEON)
+                if (features & ARM_NEON)
+                {
+                    function = process_rgba16_neon;
                 }
 #endif
             }
@@ -2714,7 +2745,7 @@ namespace
 
         // allocate output buffer
         Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
-        debugPrint("  buffer bytes: %d\n", buffer_size);
+        debugPrint("  buffer bytes:   %d\n", buffer_size);
 
         // zero scanline for filters at the beginning
         std::memset(temp, 0, bytes_per_line);
@@ -2727,14 +2758,14 @@ namespace
             {
                 // Apple uses raw deflate format
                 size_t bytes_out = deflate::decompress(buffer, m_compressed);
-                debugPrint("  # deflate total_out:  %d\n", int(bytes_out));
+                debugPrint("  deflate bytes:  %d\n", int(bytes_out));
                 MANGO_UNREFERENCED(bytes_out);
             }
             else
             {
                 // png standard uses zlib frame format
                 size_t bytes_out = zlib::decompress(buffer, m_compressed);
-                debugPrint("  # zlib total_out:  %d\n", int(bytes_out));
+                debugPrint("  zlib bytes:     %d\n", int(bytes_out));
                 MANGO_UNREFERENCED(bytes_out);
             }
         }
