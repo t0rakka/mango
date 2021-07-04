@@ -1170,7 +1170,7 @@ namespace
 
     void process_rgb8(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        // SIMD: SSSE3
+        // SIMD: SSSE3, NEON
         MANGO_UNREFERENCED(state);
 
         u32* dest = reinterpret_cast<u32*>(dst);
@@ -1398,6 +1398,39 @@ namespace
 
 #endif // MANGO_ENABLE_SSSE3
 
+#if defined(MANGO_ENABLE_NEON)
+
+    void process_rgb8_neon(const ColorState& state, int width, u8* dest, const u8* src)
+    {
+        MANGO_UNREFERENCED(state);
+
+        while (width >= 4)
+        {
+            const uint8x8x3_t rgb = vld3_u8(src);
+            uint8x8x4_t rgba;
+            rgba.val[0] = rgb.val[0];
+            rgba.val[1] = rgb.val[1];
+            rgba.val[2] = rgb.val[2];
+            rgba.val[3] = vdup_n_u8(0xff);
+            vst4_u8(dest, rgba);
+            src += 12;
+            dest += 16;
+            width -= 4;
+        }
+
+        while (width-- > 0)
+        {
+            dest[0] = src[0];
+            dest[1] = src[1];
+            dest[2] = src[2];
+            dest[3] = 0xff;
+            src += 3;
+            dest += 4;
+        }
+    }
+
+#endif // MANGO_ENABLE_NEON
+
     ColorState::Function getColorFunction(const ColorState& state, int color_type, int bit_depth)
     {
         ColorState::Function function = nullptr;
@@ -1483,6 +1516,12 @@ namespace
                     if (features & INTEL_SSSE3)
                     {
                         function = process_rgb8_ssse3;
+                    }
+#endif
+#if defined(MANGO_ENABLE_NEON)
+                    if (features & ARM_NEON)
+                    {
+                        function = process_rgb8_neon;
                     }
 #endif
                 }
