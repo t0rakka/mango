@@ -525,6 +525,10 @@
         #define MANGO_ENABLE_FP16
     #endif
 
+    #ifdef __ARM_FEATURE_CRYPTO
+        #define MANGO_ENABLE_AES
+    #endif
+
     #ifdef __ARM_FEATURE_CRC32
         #include <arm_acle.h>
     #endif
