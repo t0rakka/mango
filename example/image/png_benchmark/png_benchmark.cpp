@@ -469,6 +469,10 @@ int main(int argc, const char* argv[])
         {
             g_option_multithread = false;
         }
+        else if (!strcmp(argv[i], "--debug"))
+        {
+            debugPrintEnable(true);
+        }
     }
 
     Bitmap bitmap(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));

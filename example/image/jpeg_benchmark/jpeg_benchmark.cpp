@@ -277,6 +277,10 @@ int main(int argc, const char* argv[])
         {
             multithread = false;
         }
+        else if (!strcmp(argv[i], "--debug"))
+        {
+            debugPrintEnable(true);
+        }
         else
         {
             test_count = std::atoi(argv[2]);

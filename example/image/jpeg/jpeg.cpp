@@ -150,6 +150,10 @@ int main(int argc, const char* argv[])
         {
             mmap = true;
         }
+        else if (!strcmp(argv[2], "--debug"))
+        {
+            debugPrintEnable(true);
+        }
     }
 
     //debugPrintEnable(true);
