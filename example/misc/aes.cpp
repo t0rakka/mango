@@ -6,9 +6,8 @@
 
 using namespace mango;
 
-void test_aes()
+void test_fips()
 {
-
     // FIPS 197, Appendix B input
     const uint8_t input[16] =
     {
@@ -34,58 +33,66 @@ void test_aes()
 
     if (!memcmp(result, expected, 16))
     {
-        printf("Status: OK\n");
+        printf("Status: OK\n\n");
     }
     else
     {
-        printf("Status: FAILED\n");
+        printf("Status: FAILED\n\n");
+    }
+}
+
+void test_aes(int bits)
+{
+    const uint8_t key[16] =
+    {
+        0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x9 , 0xcf, 0x4f, 0x3c
+    };
+
+    AES aes(key, bits);
+
+    constexpr u64 MB = 1 << 20;
+    constexpr u64 size = 128 * MB;
+
+    Buffer buffer(size);
+    Buffer output(size);
+    Buffer temp(size);
+
+    for (u64 i = 0; i < size; ++i)
+    {
+        buffer[i] = i;
     }
 
-    // performance
+    u64 time0 = Time::ms();
 
+    aes.ecb_encrypt(temp, buffer, size);
+
+    u64 time1 = Time::ms();
+
+    aes.ecb_decrypt(output, temp, size);
+
+    u64 time2 = Time::ms();
+
+    u64 delta1 = std::max(u64(1), time1 - time0);
+    u64 delta2 = std::max(u64(1), time2 - time1);
+
+    u64 x = buffer.size() * 1000;
+    printf("aes%d encrypt: %4d ms (%5d MB/s )\n", bits, u32(delta1), u32(x / (delta1 * MB)));
+    printf("aes%d decrypt: %4d ms (%5d MB/s )\n", bits, u32(delta2), u32(x / (delta2 * MB)));
+
+    if (!memcmp(output, buffer, size))
     {
-        constexpr u64 MB = 1 << 20;
-        constexpr u64 size = 256 * MB;
-
-        Buffer buffer(size);
-        Buffer output(size);
-        Buffer temp(size);
-
-        for (u64 i = 0; i < size; ++i)
-        {
-            buffer[i] = i;
-        }
-
-        u64 time0 = Time::ms();
-
-        aes.ecb_encrypt(temp, buffer, size);
-
-        u64 time1 = Time::ms();
-
-        aes.ecb_decrypt(output, temp, size);
-
-        u64 time2 = Time::ms();
-
-        u64 delta1 = std::max(u64(1), time1 - time0);
-        u64 delta2 = std::max(u64(1), time2 - time1);
-
-        u64 x = buffer.size() * 1000;
-        printf("aes encrypt: %4d ms (%6d MB/s)\n", u32(delta1), u32(x / (delta1 * MB)));
-        printf("aes decrypt: %4d ms (%6d MB/s)\n", u32(delta2), u32(x / (delta2 * MB)));
-
-        if (!memcmp(output, buffer, size))
-        {
-            printf("Buffer: PASSED\n");
-        }
-        else
-        {
-            printf("Buffer: FAILED\n");
-        }
-
+        printf("AES%d: PASSED\n\n", bits);
+    }
+    else
+    {
+        printf("AES%d: FAILED\n\n", bits);
     }
 }
 
 int main()
 {
-    test_aes();
+    test_fips();
+    test_aes(128);
+    test_aes(192);
+    test_aes(256);
 }
