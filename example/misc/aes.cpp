@@ -66,8 +66,8 @@ void test_aes()
 
         u64 time2 = Time::ms();
 
-        u64 delta1 = std::max(1ull, time1 - time0);
-        u64 delta2 = std::max(1ull, time2 - time1);
+        u64 delta1 = std::max(u64(1), time1 - time0);
+        u64 delta2 = std::max(u64(1), time2 - time1);
 
         u64 x = buffer.size() * 1000;
         printf("aes encrypt: %4d ms (%6d MB/s)\n", u32(delta1), u32(x / (delta1 * MB)));
