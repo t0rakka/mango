@@ -160,6 +160,32 @@ void save_lodepng(const Bitmap& bitmap)
 #endif
 
 // ----------------------------------------------------------------------
+// stb
+// ----------------------------------------------------------------------
+
+#if defined(ENABLE_STB)
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "../jpeg_benchmark/stb_image.h"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../jpeg_benchmark/stb_image_write.h"
+
+void load_stb(Memory memory)
+{
+    int width, height, bpp;
+    u8* image = stbi_load_from_memory(memory.address, memory.size, &width, &height, &bpp, 4);
+    free(image);
+}
+
+void save_stb(const Bitmap& bitmap)
+{
+    stbi_write_png("output-stb.png", bitmap.width, bitmap.height, 4, bitmap.image, bitmap.width * 4);
+}
+
+#endif
+
+// ----------------------------------------------------------------------
 // spng
 // ----------------------------------------------------------------------
 
@@ -283,32 +309,6 @@ void load_spng(Memory memory)
 void save_spng(const Bitmap& bitmap)
 {
     // TODO: not supported yet in libspng v0.5.0
-}
-
-#endif
-
-// ----------------------------------------------------------------------
-// stb
-// ----------------------------------------------------------------------
-
-#if defined(ENABLE_STB)
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "../jpeg_benchmark/stb_image.h"
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../jpeg_benchmark/stb_image_write.h"
-
-void load_stb(Memory memory)
-{
-    int width, height, bpp;
-    u8* image = stbi_load_from_memory(memory.address, memory.size, &width, &height, &bpp, 4);
-    free(image);
-}
-
-void save_stb(const Bitmap& bitmap)
-{
-    stbi_write_png("output-stb.png", bitmap.width, bitmap.height, 4, bitmap.image, bitmap.width * 4);
 }
 
 #endif
@@ -493,12 +493,12 @@ int main(int argc, const char* argv[])
     test("lodepng: ", load_lodepng, save_lodepng, buffer, bitmap);
 #endif
 
-#if defined(ENABLE_SPNG)
-    test("spng:    ", load_spng, save_spng, buffer, bitmap);
-#endif
-
 #if defined(ENABLE_STB)
     test("stb:     ", load_stb, save_stb, buffer, bitmap);
+#endif
+
+#if defined(ENABLE_SPNG)
+    test("spng:    ", load_spng, save_spng, buffer, bitmap);
 #endif
 
 #if defined(ENABLE_WUFFS)
