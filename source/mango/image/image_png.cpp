@@ -1218,6 +1218,7 @@ namespace
 
     void process_rgb16(const ColorState& state, int width, u8* dst, const u8* src)
     {
+        // SIMD: NEON
         MANGO_UNREFERENCED(state);
 
         u16* dest = reinterpret_cast<u16*>(dst);
@@ -1429,6 +1430,37 @@ namespace
         }
     }
 
+    void process_rgb16_neon(const ColorState& state, int width, u8* dst, const u8* src)
+    {
+        MANGO_UNREFERENCED(state);
+
+        u16* dest = reinterpret_cast<u16*>(dst);
+
+        while (width >= 4)
+        {
+            const uint16x4x3_t rgb = vld3_u16(reinterpret_cast<const u16*>(src));
+            uint16x4x4_t rgba;
+            rgba.val[0] = vrev16_u8(rgb.val[0]);
+            rgba.val[1] = vrev16_u8(rgb.val[1]);
+            rgba.val[2] = vrev16_u8(rgb.val[2]);
+            rgba.val[3] = vdup_n_u16(0xffff);
+            vst4_u16(dest, rgba);
+            src += 24;
+            dest += 16;
+            width -= 4;
+        }
+
+        while (width-- > 0)
+        {
+            dest[0] = uload16be(src + 0);
+            dest[1] = uload16be(src + 2);
+            dest[2] = uload16be(src + 4);
+            dest[3] = 0xffff;
+            src += 6;
+            dest += 4;
+        }
+    }
+
     void process_rgba16_neon(const ColorState& state, int width, u8* dst, const u8* src)
     {
         MANGO_UNREFERENCED(state);
@@ -1560,6 +1592,12 @@ namespace
                 else
                 {
                     function = process_rgb16;
+#if defined(MANGO_ENABLE_NEON)
+                    if (features & ARM_NEON)
+                    {
+                        function = process_rgb16_neon;
+                    }
+#endif
                 }
             }
         }
