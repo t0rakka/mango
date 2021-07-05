@@ -802,16 +802,119 @@ inline __m128i aesni_ecb_decrypt_block<14>(__m128i data, const __m128i* schedule
     return _mm_aesdeclast_si128(data, schedule[0]);
 }
 
-// ECB buffer
+// ECB encrypt
 
-template <int NR>
-void aesni_ecb_encrypt(u8* output, const u8* input, size_t blocks, const __m128i* schedule)
+void aesni_ecb128_encrypt(u8* output, const u8* input, size_t blocks, const __m128i* schedule)
 {
+    const __m128i k0 = schedule[0];
+    const __m128i k1 = schedule[1];
+    const __m128i k2 = schedule[2];
+    const __m128i k3 = schedule[3];
+    const __m128i k4 = schedule[4];
+    const __m128i k5 = schedule[5];
+    const __m128i k6 = schedule[6];
+    const __m128i k7 = schedule[7];
+    const __m128i k8 = schedule[8];
+    const __m128i k9 = schedule[9];
+    const __m128i k10 = schedule[10];
+
     for (size_t i = 0; i < blocks; ++i)
     {
-        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input) + i);
-        data = aesni_ecb_encrypt_block<NR>(data, schedule);
-        _mm_storeu_si128(reinterpret_cast<__m128i *>(output) + i, data);
+        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input));
+        data = _mm_xor_si128(data, k0);
+        data = _mm_aesenc_si128(data, k1);
+        data = _mm_aesenc_si128(data, k2);
+        data = _mm_aesenc_si128(data, k3);
+        data = _mm_aesenc_si128(data, k4);
+        data = _mm_aesenc_si128(data, k5);
+        data = _mm_aesenc_si128(data, k6);
+        data = _mm_aesenc_si128(data, k7);
+        data = _mm_aesenc_si128(data, k8);
+        data = _mm_aesenc_si128(data, k9);
+        data = _mm_aesenclast_si128(data, k10);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output), data);
+        output += 16;
+        input += 16;
+    }
+}
+
+void aesni_ecb192_encrypt(u8* output, const u8* input, size_t blocks, const __m128i* schedule)
+{
+    const __m128i k0 = schedule[0];
+    const __m128i k1 = schedule[1];
+    const __m128i k2 = schedule[2];
+    const __m128i k3 = schedule[3];
+    const __m128i k4 = schedule[4];
+    const __m128i k5 = schedule[5];
+    const __m128i k6 = schedule[6];
+    const __m128i k7 = schedule[7];
+    const __m128i k8 = schedule[8];
+    const __m128i k9 = schedule[9];
+    const __m128i k10 = schedule[10];
+    const __m128i k11 = schedule[11];
+    const __m128i k12 = schedule[12];
+
+    for (size_t i = 0; i < blocks; ++i)
+    {
+        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input));
+        data = _mm_xor_si128(data, k0);
+        data = _mm_aesenc_si128(data, k1);
+        data = _mm_aesenc_si128(data, k2);
+        data = _mm_aesenc_si128(data, k3);
+        data = _mm_aesenc_si128(data, k4);
+        data = _mm_aesenc_si128(data, k5);
+        data = _mm_aesenc_si128(data, k6);
+        data = _mm_aesenc_si128(data, k7);
+        data = _mm_aesenc_si128(data, k8);
+        data = _mm_aesenc_si128(data, k9);
+        data = _mm_aesenc_si128(data, k10);
+        data = _mm_aesenc_si128(data, k11);
+        data = _mm_aesenclast_si128(data, k12);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output), data);
+        output += 16;
+        input += 16;
+    }
+}
+
+void aesni_ecb256_encrypt(u8* output, const u8* input, size_t blocks, const __m128i* schedule)
+{
+    const __m128i k0 = schedule[0];
+    const __m128i k1 = schedule[1];
+    const __m128i k2 = schedule[2];
+    const __m128i k3 = schedule[3];
+    const __m128i k4 = schedule[4];
+    const __m128i k5 = schedule[5];
+    const __m128i k6 = schedule[6];
+    const __m128i k7 = schedule[7];
+    const __m128i k8 = schedule[8];
+    const __m128i k9 = schedule[9];
+    const __m128i k10 = schedule[10];
+    const __m128i k11 = schedule[11];
+    const __m128i k12 = schedule[12];
+    const __m128i k13 = schedule[13];
+    const __m128i k14 = schedule[14];
+
+    for (size_t i = 0; i < blocks; ++i)
+    {
+        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input));
+        data = _mm_xor_si128(data, k0);
+        data = _mm_aesenc_si128(data, k1);
+        data = _mm_aesenc_si128(data, k2);
+        data = _mm_aesenc_si128(data, k3);
+        data = _mm_aesenc_si128(data, k4);
+        data = _mm_aesenc_si128(data, k5);
+        data = _mm_aesenc_si128(data, k6);
+        data = _mm_aesenc_si128(data, k7);
+        data = _mm_aesenc_si128(data, k8);
+        data = _mm_aesenc_si128(data, k9);
+        data = _mm_aesenc_si128(data, k10);
+        data = _mm_aesenc_si128(data, k11);
+        data = _mm_aesenc_si128(data, k12);
+        data = _mm_aesenc_si128(data, k13);
+        data = _mm_aesenclast_si128(data, k14);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output), data);
+        output += 16;
+        input += 16;
     }
 }
 
@@ -821,27 +924,134 @@ void aesni_ecb_encrypt(u8* output, const u8* input, size_t length, const __m128i
     switch (keybits)
     {
         case 128:
-            aesni_ecb_encrypt<10>(output, input, blocks, schedule);
+            aesni_ecb128_encrypt(output, input, blocks, schedule);
             break;
         case 192:
-            aesni_ecb_encrypt<12>(output, input, blocks, schedule);
+            aesni_ecb192_encrypt(output, input, blocks, schedule);
             break;
         case 256:
-            aesni_ecb_encrypt<14>(output, input, blocks, schedule);
+            aesni_ecb256_encrypt(output, input, blocks, schedule);
             break;
         default:
             break;
     }
 }
 
-template <int NR>
-void aesni_ecb_decrypt(u8* output, const u8* input, size_t blocks, const __m128i* schedule)
+// ECB decrypt
+
+void aesni_ecb128_decrypt(u8* output, const u8* input, size_t blocks, const __m128i* schedule)
 {
+    const __m128i k0 = schedule[0];
+    const __m128i k10 = schedule[10];
+    const __m128i k11 = schedule[11];
+    const __m128i k12 = schedule[12];
+    const __m128i k13 = schedule[13];
+    const __m128i k14 = schedule[14];
+    const __m128i k15 = schedule[15];
+    const __m128i k16 = schedule[16];
+    const __m128i k17 = schedule[17];
+    const __m128i k18 = schedule[18];
+    const __m128i k19 = schedule[19];
+
     for (size_t i = 0; i < blocks; ++i)
     {
-        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input) + i);
-        data = aesni_ecb_decrypt_block<NR>(data, schedule);
-        _mm_storeu_si128(reinterpret_cast<__m128i *>(output) + i, data);
+        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input));
+        data = _mm_xor_si128(data, k10);
+        data = _mm_aesdec_si128(data, k11);
+        data = _mm_aesdec_si128(data, k12);
+        data = _mm_aesdec_si128(data, k13);
+        data = _mm_aesdec_si128(data, k14);
+        data = _mm_aesdec_si128(data, k15);
+        data = _mm_aesdec_si128(data, k16);
+        data = _mm_aesdec_si128(data, k17);
+        data = _mm_aesdec_si128(data, k18);
+        data = _mm_aesdec_si128(data, k19);
+        data = _mm_aesdeclast_si128(data, k0);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output), data);
+        output += 16;
+        input += 16;
+    }
+}
+
+void aesni_ecb192_decrypt(u8* output, const u8* input, size_t blocks, const __m128i* schedule)
+{
+    const __m128i k0 = schedule[0];
+    const __m128i k12 = schedule[12];
+    const __m128i k13 = schedule[13];
+    const __m128i k14 = schedule[14];
+    const __m128i k15 = schedule[15];
+    const __m128i k16 = schedule[16];
+    const __m128i k17 = schedule[17];
+    const __m128i k18 = schedule[18];
+    const __m128i k19 = schedule[19];
+    const __m128i k20 = schedule[20];
+    const __m128i k21 = schedule[21];
+    const __m128i k22 = schedule[22];
+    const __m128i k23 = schedule[23];
+
+    for (size_t i = 0; i < blocks; ++i)
+    {
+        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input));
+        data = _mm_xor_si128(data, k12);
+        data = _mm_aesdec_si128(data, k13);
+        data = _mm_aesdec_si128(data, k14);
+        data = _mm_aesdec_si128(data, k15);
+        data = _mm_aesdec_si128(data, k16);
+        data = _mm_aesdec_si128(data, k17);
+        data = _mm_aesdec_si128(data, k18);
+        data = _mm_aesdec_si128(data, k19);
+        data = _mm_aesdec_si128(data, k20);
+        data = _mm_aesdec_si128(data, k21);
+        data = _mm_aesdec_si128(data, k22);
+        data = _mm_aesdec_si128(data, k23);
+        data = _mm_aesdeclast_si128(data, k0);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output), data);
+        output += 16;
+        input += 16;
+    }
+}
+
+void aesni_ecb256_decrypt(u8* output, const u8* input, size_t blocks, const __m128i* schedule)
+{
+    const __m128i k0 = schedule[0];
+    const __m128i k14 = schedule[14];
+    const __m128i k15 = schedule[15];
+    const __m128i k16 = schedule[16];
+    const __m128i k17 = schedule[17];
+    const __m128i k18 = schedule[18];
+    const __m128i k19 = schedule[19];
+    const __m128i k20 = schedule[20];
+    const __m128i k21 = schedule[21];
+    const __m128i k22 = schedule[22];
+    const __m128i k23 = schedule[23];
+    const __m128i k24 = schedule[24];
+    const __m128i k25 = schedule[25];
+    const __m128i k26 = schedule[26];
+    const __m128i k27 = schedule[27];
+
+    for (size_t i = 0; i < blocks; ++i)
+    {
+        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input));
+
+        data = _mm_xor_si128(data, k14);
+        data = _mm_aesdec_si128(data, k15);
+        data = _mm_aesdec_si128(data, k16);
+        data = _mm_aesdec_si128(data, k17);
+        data = _mm_aesdec_si128(data, k18);
+        data = _mm_aesdec_si128(data, k19);
+        data = _mm_aesdec_si128(data, k20);
+        data = _mm_aesdec_si128(data, k21);
+        data = _mm_aesdec_si128(data, k22);
+        data = _mm_aesdec_si128(data, k23);
+        data = _mm_aesdec_si128(data, k24);
+        data = _mm_aesdec_si128(data, k25);
+        data = _mm_aesdec_si128(data, k26);
+        data = _mm_aesdec_si128(data, k27);
+        data = _mm_aesdeclast_si128(data, k0);
+
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output), data);
+        output += 16;
+        input += 16;
     }
 }
 
@@ -851,13 +1061,13 @@ void aesni_ecb_decrypt(u8* output, const u8* input, size_t length, const __m128i
     switch (keybits)
     {
         case 128:
-            aesni_ecb_decrypt<10>(output, input, blocks, schedule);
+            aesni_ecb128_decrypt(output, input, blocks, schedule);
             break;
         case 192:
-            aesni_ecb_decrypt<12>(output, input, blocks, schedule);
+            aesni_ecb192_decrypt(output, input, blocks, schedule);
             break;
         case 256:
-            aesni_ecb_decrypt<14>(output, input, blocks, schedule);
+            aesni_ecb256_decrypt(output, input, blocks, schedule);
             break;
         default:
             break;
