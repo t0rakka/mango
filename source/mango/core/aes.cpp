@@ -526,7 +526,7 @@ void arm_decrypt_blocks(u8* output, const u8* input, size_t length, const u32* k
     (__m128i) _mm_shuffle_pd((__m128d)a, (__m128d)b, s)
 
 template <int R>
-inline __m128i aesni128_key_expand(__m128i key)
+inline __m128i aesni_key128_expand(__m128i key)
 {
     __m128i temp = _mm_aeskeygenassist_si128(key, R);
 	key = _mm_xor_si128(key, _mm_slli_si128(key, 4));
@@ -536,7 +536,7 @@ inline __m128i aesni128_key_expand(__m128i key)
 }
 
 template <int R>
-inline void aesni192_key_expand(__m128i* temp1, __m128i* temp2)
+inline void aesni_key192_expand(__m128i* temp1, __m128i* temp2)
 {
     __m128i temp3 = *temp1;
     __m128i temp4 = _mm_aeskeygenassist_si128(*temp2, R);
@@ -549,7 +549,7 @@ inline void aesni192_key_expand(__m128i* temp1, __m128i* temp2)
 }
 
 template <int R, int S>
-inline __m128i aesni256_key_expand(__m128i temp1, __m128i temp2)
+inline __m128i aesni_key256_expand(__m128i temp1, __m128i temp2)
 {
     __m128i temp3 = temp1;
     __m128i temp4 = _mm_aeskeygenassist_si128(temp2, R);
@@ -560,20 +560,20 @@ inline __m128i aesni256_key_expand(__m128i temp1, __m128i temp2)
     return temp1;
 }
 
-void aesni128_key_expand(__m128i* schedule, const u8* key)
+void aesni_key128_expand(__m128i* schedule, const u8* key)
 {
     // encryption schedule
     schedule[0]  = _mm_loadu_si128(reinterpret_cast<const __m128i *> (key));
-	schedule[1]  = aesni128_key_expand<0x01>(schedule[0]);
-	schedule[2]  = aesni128_key_expand<0x02>(schedule[1]);
-	schedule[3]  = aesni128_key_expand<0x04>(schedule[2]);
-	schedule[4]  = aesni128_key_expand<0x08>(schedule[3]);
-	schedule[5]  = aesni128_key_expand<0x10>(schedule[4]);
-	schedule[6]  = aesni128_key_expand<0x20>(schedule[5]);
-	schedule[7]  = aesni128_key_expand<0x40>(schedule[6]);
-	schedule[8]  = aesni128_key_expand<0x80>(schedule[7]);
-	schedule[9]  = aesni128_key_expand<0x1b>(schedule[8]);
-	schedule[10] = aesni128_key_expand<0x36>(schedule[9]);
+	schedule[1]  = aesni_key128_expand<0x01>(schedule[0]);
+	schedule[2]  = aesni_key128_expand<0x02>(schedule[1]);
+	schedule[3]  = aesni_key128_expand<0x04>(schedule[2]);
+	schedule[4]  = aesni_key128_expand<0x08>(schedule[3]);
+	schedule[5]  = aesni_key128_expand<0x10>(schedule[4]);
+	schedule[6]  = aesni_key128_expand<0x20>(schedule[5]);
+	schedule[7]  = aesni_key128_expand<0x40>(schedule[6]);
+	schedule[8]  = aesni_key128_expand<0x80>(schedule[7]);
+	schedule[9]  = aesni_key128_expand<0x1b>(schedule[8]);
+	schedule[10] = aesni_key128_expand<0x36>(schedule[9]);
 
     // decryption schedule
     schedule[11] = _mm_aesimc_si128(schedule[9]);
@@ -587,7 +587,7 @@ void aesni128_key_expand(__m128i* schedule, const u8* key)
     schedule[19] = _mm_aesimc_si128(schedule[1]);
 }
 
-void aesni192_key_expand(__m128i* schedule, const u8* key)
+void aesni_key192_expand(__m128i* schedule, const u8* key)
 {
     // encryption schedule
     __m128i temp1 = _mm_loadu_si128(reinterpret_cast<const __m128i *> (key + 0));
@@ -595,28 +595,28 @@ void aesni192_key_expand(__m128i* schedule, const u8* key)
 
     schedule[0] = temp1;
     schedule[1] = temp2;
-    aesni192_key_expand<0x1>(&temp1, &temp2);
+    aesni_key192_expand<0x1>(&temp1, &temp2);
     schedule[1] = aesni_shuffle_epi64(schedule[1], temp1, 0);
     schedule[2] = aesni_shuffle_epi64(temp1, temp2, 1);
-    aesni192_key_expand<0x2>(&temp1, &temp2);
+    aesni_key192_expand<0x2>(&temp1, &temp2);
     schedule[3] = temp1;
     schedule[4] = temp2;
-    aesni192_key_expand<0x4>(&temp1, &temp2);
+    aesni_key192_expand<0x4>(&temp1, &temp2);
     schedule[4] = aesni_shuffle_epi64(schedule[4], temp1, 0);
     schedule[5] = aesni_shuffle_epi64(temp1, temp2, 1);
-    aesni192_key_expand<0x8>(&temp1, &temp2);
+    aesni_key192_expand<0x8>(&temp1, &temp2);
     schedule[6] = temp1;
     schedule[7] = temp2;
-    aesni192_key_expand<0x10>(&temp1, &temp2);
+    aesni_key192_expand<0x10>(&temp1, &temp2);
     schedule[7] = aesni_shuffle_epi64(schedule[7], temp1, 0);
     schedule[8] = aesni_shuffle_epi64(temp1, temp2, 1);
-    aesni192_key_expand<0x20>(&temp1, &temp2);
+    aesni_key192_expand<0x20>(&temp1, &temp2);
     schedule[9]  = temp1;
     schedule[10] = temp2;
-    aesni192_key_expand<0x40>(&temp1, &temp2);
+    aesni_key192_expand<0x40>(&temp1, &temp2);
     schedule[10] = aesni_shuffle_epi64(schedule[10], temp1, 0);
     schedule[11] = aesni_shuffle_epi64(temp1, temp2, 1);
-    aesni192_key_expand<0x80>(&temp1, &temp2);
+    aesni_key192_expand<0x80>(&temp1, &temp2);
     schedule[12] = temp1;
 
     // decryption schedule
@@ -633,24 +633,24 @@ void aesni192_key_expand(__m128i* schedule, const u8* key)
     schedule[23] = _mm_aesimc_si128(schedule[1]);
 }
 
-void aesni256_key_expand(__m128i* schedule, const u8* key)
+void aesni_key256_expand(__m128i* schedule, const u8* key)
 {
     // encryption schedule
     schedule[ 0] = _mm_loadu_si128(reinterpret_cast<const __m128i *>(key + 0));
     schedule[ 1] = _mm_loadu_si128(reinterpret_cast<const __m128i *>(key + 16));
-    schedule[ 2] = aesni256_key_expand<0x01, 0xff>(schedule[ 0], schedule[ 1]);
-    schedule[ 3] = aesni256_key_expand<0x00, 0xaa>(schedule[ 1], schedule[ 2]);
-    schedule[ 4] = aesni256_key_expand<0x02, 0xff>(schedule[ 2], schedule[ 3]);
-    schedule[ 5] = aesni256_key_expand<0x00, 0xaa>(schedule[ 3], schedule[ 4]);
-    schedule[ 6] = aesni256_key_expand<0x04, 0xff>(schedule[ 4], schedule[ 5]);
-    schedule[ 7] = aesni256_key_expand<0x00, 0xaa>(schedule[ 5], schedule[ 6]);
-    schedule[ 8] = aesni256_key_expand<0x08, 0xff>(schedule[ 6], schedule[ 7]);
-    schedule[ 9] = aesni256_key_expand<0x00, 0xaa>(schedule[ 7], schedule[ 8]);
-    schedule[10] = aesni256_key_expand<0x10, 0xff>(schedule[ 8], schedule[ 9]);
-    schedule[11] = aesni256_key_expand<0x00, 0xaa>(schedule[ 9], schedule[10]);
-    schedule[12] = aesni256_key_expand<0x20, 0xff>(schedule[10], schedule[11]);
-    schedule[13] = aesni256_key_expand<0x00, 0xaa>(schedule[11], schedule[12]);
-    schedule[14] = aesni256_key_expand<0x40, 0xff>(schedule[12], schedule[13]);
+    schedule[ 2] = aesni_key256_expand<0x01, 0xff>(schedule[ 0], schedule[ 1]);
+    schedule[ 3] = aesni_key256_expand<0x00, 0xaa>(schedule[ 1], schedule[ 2]);
+    schedule[ 4] = aesni_key256_expand<0x02, 0xff>(schedule[ 2], schedule[ 3]);
+    schedule[ 5] = aesni_key256_expand<0x00, 0xaa>(schedule[ 3], schedule[ 4]);
+    schedule[ 6] = aesni_key256_expand<0x04, 0xff>(schedule[ 4], schedule[ 5]);
+    schedule[ 7] = aesni_key256_expand<0x00, 0xaa>(schedule[ 5], schedule[ 6]);
+    schedule[ 8] = aesni_key256_expand<0x08, 0xff>(schedule[ 6], schedule[ 7]);
+    schedule[ 9] = aesni_key256_expand<0x00, 0xaa>(schedule[ 7], schedule[ 8]);
+    schedule[10] = aesni_key256_expand<0x10, 0xff>(schedule[ 8], schedule[ 9]);
+    schedule[11] = aesni_key256_expand<0x00, 0xaa>(schedule[ 9], schedule[10]);
+    schedule[12] = aesni_key256_expand<0x20, 0xff>(schedule[10], schedule[11]);
+    schedule[13] = aesni_key256_expand<0x00, 0xaa>(schedule[11], schedule[12]);
+    schedule[14] = aesni_key256_expand<0x40, 0xff>(schedule[12], schedule[13]);
 
     // decryption schedule
     schedule[15] = _mm_aesimc_si128(schedule[13]);
@@ -666,6 +666,24 @@ void aesni256_key_expand(__m128i* schedule, const u8* key)
     schedule[25] = _mm_aesimc_si128(schedule[3]);
     schedule[26] = _mm_aesimc_si128(schedule[2]);
     schedule[27] = _mm_aesimc_si128(schedule[1]);
+}
+
+void aesni_key_expand(__m128i* schedule, const u8* key, int bits)
+{
+    switch (bits)
+    {
+        case 128:
+            aesni_key128_expand(schedule, key);
+            break;
+        case 192:
+            aesni_key192_expand(schedule, key);
+            break;
+        case 256:
+            aesni_key256_expand(schedule, key);
+            break;
+        default:
+            break;
+    }
 }
 
 // ECB block
@@ -911,24 +929,6 @@ void aesni_cbc_decrypt(u8* output, const u8* input, size_t length, const u8* ive
             break;
         case 256:
             aesni_cbc_decrypt<14>(output, input, blocks, iv, schedule);
-            break;
-        default:
-            break;
-    }
-}
-
-void aesni_key_expand(__m128i* schedule, const u8* key, int bits)
-{
-    switch (bits)
-    {
-        case 128:
-            aesni128_key_expand(schedule, key);
-            break;
-        case 192:
-            aesni192_key_expand(schedule, key);
-            break;
-        case 256:
-            aesni256_key_expand(schedule, key);
             break;
         default:
             break;
