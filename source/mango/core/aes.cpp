@@ -751,27 +751,7 @@ inline __m128i aesni_ecb_decrypt_block<10>(__m128i data, const __m128i* schedule
 template <>
 inline __m128i aesni_ecb_decrypt_block<12>(__m128i data, const __m128i* schedule)
 {
-    data = _mm_xor_si128(data, schedule[10]);
-    data = _mm_aesdec_si128(data, schedule[11]);
-    data = _mm_aesdec_si128(data, schedule[12]);
-    data = _mm_aesdec_si128(data, schedule[13]);
-    data = _mm_aesdec_si128(data, schedule[14]);
-    data = _mm_aesdec_si128(data, schedule[15]);
-    data = _mm_aesdec_si128(data, schedule[16]);
-    data = _mm_aesdec_si128(data, schedule[17]);
-    data = _mm_aesdec_si128(data, schedule[18]);
-    data = _mm_aesdec_si128(data, schedule[19]);
-    data = _mm_aesdec_si128(data, schedule[20]);
-    data = _mm_aesdec_si128(data, schedule[21]);
-    return _mm_aesdeclast_si128(data, schedule[0]);
-}
-
-template <>
-inline __m128i aesni_ecb_decrypt_block<14>(__m128i data, const __m128i* schedule)
-{
-    data = _mm_xor_si128(data, schedule[10]);
-    data = _mm_aesdec_si128(data, schedule[11]);
-    data = _mm_aesdec_si128(data, schedule[12]);
+    data = _mm_xor_si128(data, schedule[12]);
     data = _mm_aesdec_si128(data, schedule[13]);
     data = _mm_aesdec_si128(data, schedule[14]);
     data = _mm_aesdec_si128(data, schedule[15]);
@@ -783,6 +763,26 @@ inline __m128i aesni_ecb_decrypt_block<14>(__m128i data, const __m128i* schedule
     data = _mm_aesdec_si128(data, schedule[21]);
     data = _mm_aesdec_si128(data, schedule[22]);
     data = _mm_aesdec_si128(data, schedule[23]);
+    return _mm_aesdeclast_si128(data, schedule[0]);
+}
+
+template <>
+inline __m128i aesni_ecb_decrypt_block<14>(__m128i data, const __m128i* schedule)
+{
+    data = _mm_xor_si128(data, schedule[14]);
+    data = _mm_aesdec_si128(data, schedule[15]);
+    data = _mm_aesdec_si128(data, schedule[16]);
+    data = _mm_aesdec_si128(data, schedule[17]);
+    data = _mm_aesdec_si128(data, schedule[18]);
+    data = _mm_aesdec_si128(data, schedule[19]);
+    data = _mm_aesdec_si128(data, schedule[20]);
+    data = _mm_aesdec_si128(data, schedule[21]);
+    data = _mm_aesdec_si128(data, schedule[22]);
+    data = _mm_aesdec_si128(data, schedule[23]);
+    data = _mm_aesdec_si128(data, schedule[24]);
+    data = _mm_aesdec_si128(data, schedule[25]);
+    data = _mm_aesdec_si128(data, schedule[26]);
+    data = _mm_aesdec_si128(data, schedule[27]);
     return _mm_aesdeclast_si128(data, schedule[0]);
 }
 
@@ -948,7 +948,7 @@ struct KeyScheduleAES
 {
 
 #if defined(MANGO_ENABLE_AES)
-    __m128i schedule[28];
+    __m128i aesni_schedule[28];
     bool aes_supported;
 #endif
 
@@ -980,7 +980,7 @@ AES::AES(const u8* key, int bits)
     m_schedule->aes_supported = (getCPUFlags() & INTEL_AES) != 0;
     if (m_schedule->aes_supported)
     {
-        aesni_key_expand(m_schedule->schedule, key, bits);
+        aesni_key_expand(m_schedule->aesni_schedule, key, bits);
     }
 #endif
 
@@ -989,7 +989,7 @@ AES::AES(const u8* key, int bits)
                    m_schedule->arm_decode_schedule, key, bits);
 #endif
 
-    // TODO: slow, perhaps lazy-initialize only when calling block encoder
+    // NOTE: should only be done when non-simd block functions are called
     aes_key_setup(key, m_schedule->w, bits);
 }
 
@@ -1008,7 +1008,7 @@ void AES::ecb_block_encrypt(u8* output, const u8* input, size_t length)
 #if defined(MANGO_ENABLE_AES)
     if (m_schedule->aes_supported)
     {
-        aesni_ecb_encrypt(output, input, length, m_schedule->schedule, m_bits);
+        aesni_ecb_encrypt(output, input, length, m_schedule->aesni_schedule, m_bits);
     }
     else
 #endif
@@ -1037,7 +1037,7 @@ void AES::ecb_block_decrypt(u8* output, const u8* input, size_t length)
 #if defined(MANGO_ENABLE_AES)
     if (m_schedule->aes_supported)
     {
-        aesni_ecb_decrypt(output, input, length, m_schedule->schedule, m_bits);
+        aesni_ecb_decrypt(output, input, length, m_schedule->aesni_schedule, m_bits);
     }
     else
 #endif
@@ -1066,7 +1066,7 @@ void AES::cbc_block_encrypt(u8* output, const u8* input, size_t length, const u8
 #if defined(MANGO_ENABLE_AES)
     if (m_schedule->aes_supported)
     {
-        aesni_cbc_encrypt(output, input, length, iv, m_schedule->schedule, m_bits);
+        aesni_cbc_encrypt(output, input, length, iv, m_schedule->aesni_schedule, m_bits);
     }
     else
 #endif
@@ -1085,7 +1085,7 @@ void AES::cbc_block_decrypt(u8* output, const u8* input, size_t length, const u8
 #if defined(MANGO_ENABLE_AES)
     if (m_schedule->aes_supported)
     {
-        aesni_cbc_decrypt(output, input, length, iv, m_schedule->schedule, m_bits);
+        aesni_cbc_decrypt(output, input, length, iv, m_schedule->aesni_schedule, m_bits);
     }
     else
 #endif
