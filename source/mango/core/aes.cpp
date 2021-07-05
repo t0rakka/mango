@@ -26,7 +26,7 @@ static const u32 RCON[10] =
 };
 
 // Forward S-box
-static const unsigned char FSb[256] =
+static const u8 FSb[256] =
 {
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5,
     0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -62,7 +62,7 @@ static const unsigned char FSb[256] =
     0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16
 };
 
-static const u32 RT0[] =
+static const u32 RT[] =
 {
     0x50A7F451, 0x5365417E, 0xC3A4171A, 0x965E273A,
     0xCB6BAB3B, 0xF1459D1F, 0xAB58FAAC, 0x9303E34B,
@@ -136,26 +136,26 @@ void arm_aes_setkey(u32* enc, u32* dec, const u8* key, int bits)
 
     // encoding schedule
 
-    int nr = (bits / 32) + 6;
+    const int words = bits / 32;
+    const int nr = words + 6;
 
     u32* RK = enc;
 
-    for (int i = 0; i < ( bits >> 5 ); i++ )
+    for (int i = 0; i < words; ++i)
     {
-        RK[i] = uload32(key + i * 4);
+        RK[i] = uload32le(key + i * 4);
     }
 
     switch (nr)
     {
         case 10:
-
             for (int i = 0; i < 10; i++, RK += 4 )
             {
                 RK[4]  = RK[0] ^ RCON[i] ^
-                ( (u32) FSb[ ( RK[3] >>  8 ) & 0xFF ]       ) ^
-                ( (u32) FSb[ ( RK[3] >> 16 ) & 0xFF ] <<  8 ) ^
-                ( (u32) FSb[ ( RK[3] >> 24 ) & 0xFF ] << 16 ) ^
-                ( (u32) FSb[ ( RK[3]       ) & 0xFF ] << 24 );
+                    ( (u32) FSb[ ( RK[3] >>  8 ) & 0xFF ]       ) ^
+                    ( (u32) FSb[ ( RK[3] >> 16 ) & 0xFF ] <<  8 ) ^
+                    ( (u32) FSb[ ( RK[3] >> 24 ) & 0xFF ] << 16 ) ^
+                    ( (u32) FSb[ ( RK[3]       ) & 0xFF ] << 24 );
 
                 RK[5]  = RK[1] ^ RK[4];
                 RK[6]  = RK[2] ^ RK[5];
@@ -164,14 +164,13 @@ void arm_aes_setkey(u32* enc, u32* dec, const u8* key, int bits)
             break;
 
         case 12:
-
             for (int i = 0; i < 8; i++, RK += 6 )
             {
                 RK[6]  = RK[0] ^ RCON[i] ^
-                ( (u32) FSb[ ( RK[5] >>  8 ) & 0xFF ]       ) ^
-                ( (u32) FSb[ ( RK[5] >> 16 ) & 0xFF ] <<  8 ) ^
-                ( (u32) FSb[ ( RK[5] >> 24 ) & 0xFF ] << 16 ) ^
-                ( (u32) FSb[ ( RK[5]       ) & 0xFF ] << 24 );
+                    ( (u32) FSb[ ( RK[5] >>  8 ) & 0xFF ]       ) ^
+                    ( (u32) FSb[ ( RK[5] >> 16 ) & 0xFF ] <<  8 ) ^
+                    ( (u32) FSb[ ( RK[5] >> 24 ) & 0xFF ] << 16 ) ^
+                    ( (u32) FSb[ ( RK[5]       ) & 0xFF ] << 24 );
 
                 RK[7]  = RK[1] ^ RK[6];
                 RK[8]  = RK[2] ^ RK[7];
@@ -182,24 +181,23 @@ void arm_aes_setkey(u32* enc, u32* dec, const u8* key, int bits)
             break;
 
         case 14:
-
             for (int i = 0; i < 7; i++, RK += 8 )
             {
                 RK[8]  = RK[0] ^ RCON[i] ^
-                ( (u32) FSb[ ( RK[7] >>  8 ) & 0xFF ]       ) ^
-                ( (u32) FSb[ ( RK[7] >> 16 ) & 0xFF ] <<  8 ) ^
-                ( (u32) FSb[ ( RK[7] >> 24 ) & 0xFF ] << 16 ) ^
-                ( (u32) FSb[ ( RK[7]       ) & 0xFF ] << 24 );
+                    ( (u32) FSb[ ( RK[7] >>  8 ) & 0xFF ]       ) ^
+                    ( (u32) FSb[ ( RK[7] >> 16 ) & 0xFF ] <<  8 ) ^
+                    ( (u32) FSb[ ( RK[7] >> 24 ) & 0xFF ] << 16 ) ^
+                    ( (u32) FSb[ ( RK[7]       ) & 0xFF ] << 24 );
 
                 RK[9]  = RK[1] ^ RK[8];
                 RK[10] = RK[2] ^ RK[9];
                 RK[11] = RK[3] ^ RK[10];
 
                 RK[12] = RK[4] ^
-                ( (u32) FSb[ ( RK[11]       ) & 0xFF ]       ) ^
-                ( (u32) FSb[ ( RK[11] >>  8 ) & 0xFF ] <<  8 ) ^
-                ( (u32) FSb[ ( RK[11] >> 16 ) & 0xFF ] << 16 ) ^
-                ( (u32) FSb[ ( RK[11] >> 24 ) & 0xFF ] << 24 );
+                    ( (u32) FSb[ ( RK[11]       ) & 0xFF ]       ) ^
+                    ( (u32) FSb[ ( RK[11] >>  8 ) & 0xFF ] <<  8 ) ^
+                    ( (u32) FSb[ ( RK[11] >> 16 ) & 0xFF ] << 16 ) ^
+                    ( (u32) FSb[ ( RK[11] >> 24 ) & 0xFF ] << 24 );
 
                 RK[13] = RK[5] ^ RK[12];
                 RK[14] = RK[6] ^ RK[13];
@@ -225,10 +223,10 @@ void arm_aes_setkey(u32* enc, u32* dec, const u8* key, int bits)
         const u8* s = reinterpret_cast<const u8*>(SK);
         for (int j = 0; j < 4; j++ )
         {
-            u32 s0 = RT0[FSb[s[0]]];
-            u32 s1 = RT0[FSb[s[1]]];
-            u32 s2 = RT0[FSb[s[2]]];
-            u32 s3 = RT0[FSb[s[3]]];
+            u32 s0 = RT[FSb[s[0]]];
+            u32 s1 = RT[FSb[s[1]]];
+            u32 s2 = RT[FSb[s[2]]];
+            u32 s3 = RT[FSb[s[3]]];
             s1 = (s1 <<  8) | (s1 >> 24);
             s2 = (s2 << 16) | (s2 >> 16);
             s3 = (s3 << 24) | (s3 >>  8);
