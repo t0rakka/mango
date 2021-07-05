@@ -2,7 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include <mango/mango.hpp>
+#include <mango/core/core.hpp>
 
 using namespace mango;
 
