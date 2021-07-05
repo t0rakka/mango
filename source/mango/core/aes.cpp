@@ -815,46 +815,6 @@ void aesni_ecb_encrypt(u8* output, const u8* input, size_t blocks, const __m128i
     }
 }
 
-template <int NR>
-void aesni_ecb_decrypt(u8* output, const u8* input, size_t blocks, const __m128i* schedule)
-{
-    for (size_t i = 0; i < blocks; ++i)
-    {
-        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input) + i);
-        data = aesni_ecb_decrypt_block<NR>(data, schedule);
-        _mm_storeu_si128(reinterpret_cast<__m128i *>(output) + i, data);
-    }
-}
-
-// CBC buffer
-
-template <int NR>
-void aesni_cbc_encrypt(u8* output, const u8* input, size_t blocks, __m128i iv, const __m128i* schedule)
-{
-    for (size_t i = 0; i < blocks; ++i)
-    {
-        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input) + i);
-        iv = _mm_xor_si128(data, iv);
-        iv = aesni_ecb_encrypt_block<NR>(iv, schedule);
-        _mm_storeu_si128(reinterpret_cast<__m128i *>(output) + i, iv);
-    }
-}
-
-template <int NR>
-void aesni_cbc_decrypt(u8* output, const u8* input, size_t blocks, __m128i iv, const __m128i* schedule)
-{
-    for (size_t i = 0; i < blocks; ++i)
-    {
-        __m128i temp = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input) + i);
-        __m128i data = aesni_ecb_decrypt_block<NR>(temp, schedule);
-        data = _mm_xor_si128(data, iv);
-        _mm_storeu_si128(reinterpret_cast<__m128i *>(output) + i, data);
-        iv = temp;
-    }
-}
-
-// EBC selector
-
 void aesni_ecb_encrypt(u8* output, const u8* input, size_t length, const __m128i* schedule, int keybits)
 {
     const size_t blocks = (length + 15) / 16;
@@ -871,6 +831,17 @@ void aesni_ecb_encrypt(u8* output, const u8* input, size_t length, const __m128i
             break;
         default:
             break;
+    }
+}
+
+template <int NR>
+void aesni_ecb_decrypt(u8* output, const u8* input, size_t blocks, const __m128i* schedule)
+{
+    for (size_t i = 0; i < blocks; ++i)
+    {
+        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input) + i);
+        data = aesni_ecb_decrypt_block<NR>(data, schedule);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output) + i, data);
     }
 }
 
@@ -893,7 +864,19 @@ void aesni_ecb_decrypt(u8* output, const u8* input, size_t length, const __m128i
     }
 }
 
-// CBC selector
+// CBC buffer
+
+template <int NR>
+void aesni_cbc_encrypt(u8* output, const u8* input, size_t blocks, __m128i iv, const __m128i* schedule)
+{
+    for (size_t i = 0; i < blocks; ++i)
+    {
+        __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input) + i);
+        iv = _mm_xor_si128(data, iv);
+        iv = aesni_ecb_encrypt_block<NR>(iv, schedule);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output) + i, iv);
+    }
+}
 
 void aesni_cbc_encrypt(u8* output, const u8* input, size_t length, const u8* ivec, const __m128i* schedule, int keybits)
 {
@@ -912,6 +895,19 @@ void aesni_cbc_encrypt(u8* output, const u8* input, size_t length, const u8* ive
             break;
         default:
             break;
+    }
+}
+
+template <int NR>
+void aesni_cbc_decrypt(u8* output, const u8* input, size_t blocks, __m128i iv, const __m128i* schedule)
+{
+    for (size_t i = 0; i < blocks; ++i)
+    {
+        __m128i temp = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input) + i);
+        __m128i data = aesni_ecb_decrypt_block<NR>(temp, schedule);
+        data = _mm_xor_si128(data, iv);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output) + i, data);
+        iv = temp;
     }
 }
 
