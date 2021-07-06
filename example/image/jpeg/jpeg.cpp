@@ -70,7 +70,7 @@ struct State
                 if (!node.isContainer())
                 {
                     Path child(path, node.name);
-                    process(child, mmap);
+                    process(child, mmap, multithread);
                 }
             }
             else
