@@ -81,7 +81,7 @@ struct State
 
                     if (mmap)
                     {
-                        queue.enqueue([this, filename]
+                        queue.enqueue([this, filename, multithread]
                         {
                             // decode directly from memory mapped file
                             File file(filename);
@@ -94,7 +94,7 @@ struct State
                         InputFileStream file(filename);
                         std::shared_ptr<Buffer> buffer = std::make_shared<Buffer>(file);
 
-                        queue.enqueue([this, buffer, filename]
+                        queue.enqueue([this, buffer, filename, multithread]
                         {
                             // decode from a buffer
                             decode(*buffer, filename, multithread);
