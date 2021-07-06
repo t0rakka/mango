@@ -153,7 +153,7 @@ int main(int argc, const char* argv[])
         }
         else if (!strcmp(argv[2], "--mt"))
         {
-            multithread = false;
+            multithread = true;
         }
         else if (!strcmp(argv[2], "--debug"))
         {
