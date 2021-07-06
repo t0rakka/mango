@@ -27,7 +27,7 @@ struct State
 
     ConcurrentQueue queue;
 
-    void decode(ConstMemory memory, const std::string& filename)
+    void decode(ConstMemory memory, const std::string& filename, bool multithread)
     {
         size_t image_bytes = 0;
         size_t input_bytes = 0;
@@ -40,7 +40,7 @@ struct State
 
             ImageDecodeOptions options;
             options.simd = true;
-            options.multithread = false;
+            options.multithread = multithread;
 
             ImageDecodeStatus status = decoder.decode(bitmap, options);
             if (!status)
@@ -61,7 +61,7 @@ struct State
             input_bytes >> 10, image_bytes >> 10);
     }
 
-    void process(const Path& path, bool mmap)
+    void process(const Path& path, bool mmap, bool multithread)
     {
         for (auto node : path)
         {
@@ -85,7 +85,7 @@ struct State
                         {
                             // decode directly from memory mapped file
                             File file(filename);
-                            decode(file, filename);
+                            decode(file, filename, multithread);
                         });
                     }
                     else
@@ -97,7 +97,7 @@ struct State
                         queue.enqueue([this, buffer, filename]
                         {
                             // decode from a buffer
-                            decode(*buffer, filename);
+                            decode(*buffer, filename, multithread);
                         });
                     }
                 }
@@ -106,7 +106,7 @@ struct State
     }
 };
 
-void test_jpeg(const std::string& folder, bool mmap)
+void test_jpeg(const std::string& folder, bool mmap, bool multithread)
 {
     State state;
 
@@ -114,7 +114,7 @@ void test_jpeg(const std::string& folder, bool mmap)
 
     Path path(folder);
 
-    state.process(path, mmap);
+    state.process(path, mmap, multithread);
     state.queue.wait();
 
     u64 time1 = Time::ms();
@@ -143,12 +143,17 @@ int main(int argc, const char* argv[])
     std::string pathname = argv[1];
 
     bool mmap = false;
+    bool multithread = true;
 
     if (argc > 2)
     {
         if (!strcmp(argv[2], "--mmap"))
         {
             mmap = true;
+        }
+        else if (!strcmp(argv[2], "--nomt"))
+        {
+            multithread = false;
         }
         else if (!strcmp(argv[2], "--debug"))
         {
@@ -157,5 +162,5 @@ int main(int argc, const char* argv[])
     }
 
     //debugPrintEnable(true);
-    test_jpeg(pathname, mmap);
+    test_jpeg(pathname, mmap, multithread);
 }
