@@ -242,7 +242,9 @@ void arm_aes_setkey(u32* enc, u32* dec, const u8* key, int bits)
     *RK++ = *SK++;
 }
 
-void arm_encrypt_aes128_blocks(u8* output, const u8* input, size_t length, const u8* keys)
+// ECB encrypt
+
+void arm_ecb128_encrypt(u8* output, const u8* input, size_t length, const u8* keys)
 {
     const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
     const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
@@ -270,14 +272,13 @@ void arm_encrypt_aes128_blocks(u8* output, const u8* input, size_t length, const
         v = vaesmcq_u8(vaeseq_u8(v, k8));
         v = veorq_u8(vaeseq_u8(v, k9), k10);
         vst1q_u8(output, v);
-
 		input += 16;
         output += 16;
 		length -= 16;
     }
 }
 
-void arm_encrypt_aes192_blocks(u8* output, const u8* input, size_t length, const u8* keys)
+void arm_ecb192_encrypt(u8* output, const u8* input, size_t length, const u8* keys)
 {
     const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
     const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
@@ -309,14 +310,13 @@ void arm_encrypt_aes192_blocks(u8* output, const u8* input, size_t length, const
         v = vaesmcq_u8(vaeseq_u8(v, k10));
         v = veorq_u8(vaeseq_u8(v, k11), k12);
         vst1q_u8(output, v);
-
 		input += 16;
         output += 16;
 		length -= 16;
     }
 }
 
-void arm_encrypt_aes256_blocks(u8* output, const u8* input, size_t length, const u8* keys)
+void arm_ecb256_encrypt(u8* output, const u8* input, size_t length, const u8* keys)
 {
     const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
     const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
@@ -352,14 +352,33 @@ void arm_encrypt_aes256_blocks(u8* output, const u8* input, size_t length, const
         v = vaesmcq_u8(vaeseq_u8(v, k12));
         v = veorq_u8(vaeseq_u8(v, k13), k14);
         vst1q_u8(output, v);
-
 		input += 16;
         output += 16;
 		length -= 16;
     }
 }
 
-void arm_decrypt_aes128_blocks(u8* output, const u8* input, size_t length, const u8* keys)
+void arm_ecb_encrypt(u8* output, const u8* input, size_t length, const u32* keys, int bits)
+{
+    switch (bits)
+    {
+        case 128:
+            arm_ecb128_encrypt(output, input, length, reinterpret_cast<const u8*>(keys));
+            break;
+        case 192:
+            arm_ecb192_encrypt(output, input, length, reinterpret_cast<const u8*>(keys));
+            break;
+        case 256:
+            arm_ecb256_encrypt(output, input, length, reinterpret_cast<const u8*>(keys));
+            break;
+        default:
+            break;
+    }
+}
+
+// ECB decrypt
+
+void arm_ecb128_decrypt(u8* output, const u8* input, size_t length, const u8* keys)
 {
     const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
     const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
@@ -387,14 +406,13 @@ void arm_decrypt_aes128_blocks(u8* output, const u8* input, size_t length, const
         v = vaesimcq_u8(vaesdq_u8(v, k8));
         v = veorq_u8(vaesdq_u8(v, k9), k10);
         vst1q_u8(output, v);
-
 		input += 16;
         output += 16;
 		length -= 16;
     }
 }
 
-void arm_decrypt_aes192_blocks(u8* output, const u8* input, size_t length, const u8* keys)
+void arm_ecb192_decrypt(u8* output, const u8* input, size_t length, const u8* keys)
 {
     const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
     const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
@@ -426,14 +444,13 @@ void arm_decrypt_aes192_blocks(u8* output, const u8* input, size_t length, const
         v = vaesimcq_u8(vaesdq_u8(v, k10));
         v = veorq_u8(vaesdq_u8(v, k11), k12);
         vst1q_u8(output, v);
-
 		input += 16;
         output += 16;
 		length -= 16;
     }
 }
 
-void arm_decrypt_aes256_blocks(u8* output, const u8* input, size_t length, const u8* keys)
+void arm_ecb256_decrypt(u8* output, const u8* input, size_t length, const u8* keys)
 {
     const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
     const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
@@ -469,45 +486,300 @@ void arm_decrypt_aes256_blocks(u8* output, const u8* input, size_t length, const
         v = vaesimcq_u8(vaesdq_u8(v, k12));
         v = veorq_u8(vaesdq_u8(v, k13), k14);
         vst1q_u8(output, v);
-
 		input += 16;
         output += 16;
 		length -= 16;
     }
 }
 
-void arm_encrypt_blocks(u8* output, const u8* input, size_t length, const u32* keys, int bits)
+void arm_ecb_decrypt(u8* output, const u8* input, size_t length, const u32* keys, int bits)
 {
-    // TODO: replace dispatcher with function pointer
     switch (bits)
     {
         case 128:
-            arm_encrypt_aes128_blocks(output, input, length, reinterpret_cast<const u8*>(keys));
+            arm_ecb128_decrypt(output, input, length, reinterpret_cast<const u8*>(keys));
             break;
         case 192:
-            arm_encrypt_aes192_blocks(output, input, length, reinterpret_cast<const u8*>(keys));
+            arm_ecb192_decrypt(output, input, length, reinterpret_cast<const u8*>(keys));
             break;
         case 256:
-            arm_encrypt_aes256_blocks(output, input, length, reinterpret_cast<const u8*>(keys));
+            arm_ecb256_decrypt(output, input, length, reinterpret_cast<const u8*>(keys));
             break;
         default:
             break;
     }
 }
 
-void arm_decrypt_blocks(u8* output, const u8* input, size_t length, const u32* keys, int bits)
+// CBC encrypt
+
+void arm_cbc128_encrypt(u8* output, const u8* input, size_t length, uint8x16_t iv, const u8* keys)
 {
-    // TODO: replace dispatcher with function pointer
+    const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
+    const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
+    const uint8x16_t k2 = vld1q_u8(keys + 16 * 2);
+    const uint8x16_t k3 = vld1q_u8(keys + 16 * 3);
+    const uint8x16_t k4 = vld1q_u8(keys + 16 * 4);
+    const uint8x16_t k5 = vld1q_u8(keys + 16 * 5);
+    const uint8x16_t k6 = vld1q_u8(keys + 16 * 6);
+    const uint8x16_t k7 = vld1q_u8(keys + 16 * 7);
+    const uint8x16_t k8 = vld1q_u8(keys + 16 * 8);
+    const uint8x16_t k9 = vld1q_u8(keys + 16 * 9);
+    const uint8x16_t k10 = vld1q_u8(keys + 16 * 10);
+
+    while (length >= 16)
+    {
+        uint8x16_t v = vld1q_u8(input);
+        v = veorq_u8(v, iv); // NOTE: could combine with k0
+        v = vaesmcq_u8(vaeseq_u8(v, k0));
+        v = vaesmcq_u8(vaeseq_u8(v, k1));
+        v = vaesmcq_u8(vaeseq_u8(v, k2));
+        v = vaesmcq_u8(vaeseq_u8(v, k3));
+        v = vaesmcq_u8(vaeseq_u8(v, k4));
+        v = vaesmcq_u8(vaeseq_u8(v, k5));
+        v = vaesmcq_u8(vaeseq_u8(v, k6));
+        v = vaesmcq_u8(vaeseq_u8(v, k7));
+        v = vaesmcq_u8(vaeseq_u8(v, k8));
+        v = veorq_u8(vaeseq_u8(v, k9), k10);
+        vst1q_u8(output, v);
+		input += 16;
+        output += 16;
+		length -= 16;
+    }
+}
+
+void arm_cbc192_encrypt(u8* output, const u8* input, size_t length, uint8x16_t iv, const u8* keys)
+{
+    const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
+    const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
+    const uint8x16_t k2 = vld1q_u8(keys + 16 * 2);
+    const uint8x16_t k3 = vld1q_u8(keys + 16 * 3);
+    const uint8x16_t k4 = vld1q_u8(keys + 16 * 4);
+    const uint8x16_t k5 = vld1q_u8(keys + 16 * 5);
+    const uint8x16_t k6 = vld1q_u8(keys + 16 * 6);
+    const uint8x16_t k7 = vld1q_u8(keys + 16 * 7);
+    const uint8x16_t k8 = vld1q_u8(keys + 16 * 8);
+    const uint8x16_t k9 = vld1q_u8(keys + 16 * 9);
+    const uint8x16_t k10 = vld1q_u8(keys + 16 * 10);
+    const uint8x16_t k11 = vld1q_u8(keys + 16 * 11);
+    const uint8x16_t k12 = vld1q_u8(keys + 16 * 12);
+
+    while (length >= 16)
+    {
+        uint8x16_t v = vld1q_u8(input);
+        v = veorq_u8(v, iv); // NOTE: could combine with k0
+        v = vaesmcq_u8(vaeseq_u8(v, k0));
+        v = vaesmcq_u8(vaeseq_u8(v, k1));
+        v = vaesmcq_u8(vaeseq_u8(v, k2));
+        v = vaesmcq_u8(vaeseq_u8(v, k3));
+        v = vaesmcq_u8(vaeseq_u8(v, k4));
+        v = vaesmcq_u8(vaeseq_u8(v, k5));
+        v = vaesmcq_u8(vaeseq_u8(v, k6));
+        v = vaesmcq_u8(vaeseq_u8(v, k7));
+        v = vaesmcq_u8(vaeseq_u8(v, k8));
+        v = vaesmcq_u8(vaeseq_u8(v, k9));
+        v = vaesmcq_u8(vaeseq_u8(v, k10));
+        v = veorq_u8(vaeseq_u8(v, k11), k12);
+        vst1q_u8(output, v);
+		input += 16;
+        output += 16;
+		length -= 16;
+    }
+}
+
+void arm_cbc256_encrypt(u8* output, const u8* input, size_t length, uint8x16_t iv, const u8* keys)
+{
+    const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
+    const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
+    const uint8x16_t k2 = vld1q_u8(keys + 16 * 2);
+    const uint8x16_t k3 = vld1q_u8(keys + 16 * 3);
+    const uint8x16_t k4 = vld1q_u8(keys + 16 * 4);
+    const uint8x16_t k5 = vld1q_u8(keys + 16 * 5);
+    const uint8x16_t k6 = vld1q_u8(keys + 16 * 6);
+    const uint8x16_t k7 = vld1q_u8(keys + 16 * 7);
+    const uint8x16_t k8 = vld1q_u8(keys + 16 * 8);
+    const uint8x16_t k9 = vld1q_u8(keys + 16 * 9);
+    const uint8x16_t k10 = vld1q_u8(keys + 16 * 10);
+    const uint8x16_t k11 = vld1q_u8(keys + 16 * 11);
+    const uint8x16_t k12 = vld1q_u8(keys + 16 * 12);
+    const uint8x16_t k13 = vld1q_u8(keys + 16 * 13);
+    const uint8x16_t k14 = vld1q_u8(keys + 16 * 14);
+
+    while (length >= 16)
+    {
+        uint8x16_t v = vld1q_u8(input);
+        v = veorq_u8(v, iv); // NOTE: could combine with k0
+        v = vaesmcq_u8(vaeseq_u8(v, k0));
+        v = vaesmcq_u8(vaeseq_u8(v, k1));
+        v = vaesmcq_u8(vaeseq_u8(v, k2));
+        v = vaesmcq_u8(vaeseq_u8(v, k3));
+        v = vaesmcq_u8(vaeseq_u8(v, k4));
+        v = vaesmcq_u8(vaeseq_u8(v, k5));
+        v = vaesmcq_u8(vaeseq_u8(v, k6));
+        v = vaesmcq_u8(vaeseq_u8(v, k7));
+        v = vaesmcq_u8(vaeseq_u8(v, k8));
+        v = vaesmcq_u8(vaeseq_u8(v, k9));
+        v = vaesmcq_u8(vaeseq_u8(v, k10));
+        v = vaesmcq_u8(vaeseq_u8(v, k11));
+        v = vaesmcq_u8(vaeseq_u8(v, k12));
+        v = veorq_u8(vaeseq_u8(v, k13), k14);
+        vst1q_u8(output, v);
+		input += 16;
+        output += 16;
+		length -= 16;
+    }
+}
+
+void arm_cbc_encrypt(u8* output, const u8* input, size_t length, const u8* ivec, const u32* keys, int bits)
+{
+    uint8x16_t iv = vld1q_u8(ivec);
     switch (bits)
     {
         case 128:
-            arm_decrypt_aes128_blocks(output, input, length, reinterpret_cast<const u8*>(keys));
+            arm_cbc128_encrypt(output, input, length, iv, reinterpret_cast<const u8*>(keys));
             break;
         case 192:
-            arm_decrypt_aes192_blocks(output, input, length, reinterpret_cast<const u8*>(keys));
+            arm_cbc192_encrypt(output, input, length, iv, reinterpret_cast<const u8*>(keys));
             break;
         case 256:
-            arm_decrypt_aes256_blocks(output, input, length, reinterpret_cast<const u8*>(keys));
+            arm_cbc256_encrypt(output, input, length, iv, reinterpret_cast<const u8*>(keys));
+            break;
+        default:
+            break;
+    }
+}
+
+// CBC decrypt
+
+void arm_cbc128_decrypt(u8* output, const u8* input, size_t length, uint8x16_t iv, const u8* keys)
+{
+    const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
+    const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
+    const uint8x16_t k2 = vld1q_u8(keys + 16 * 2);
+    const uint8x16_t k3 = vld1q_u8(keys + 16 * 3);
+    const uint8x16_t k4 = vld1q_u8(keys + 16 * 4);
+    const uint8x16_t k5 = vld1q_u8(keys + 16 * 5);
+    const uint8x16_t k6 = vld1q_u8(keys + 16 * 6);
+    const uint8x16_t k7 = vld1q_u8(keys + 16 * 7);
+    const uint8x16_t k8 = vld1q_u8(keys + 16 * 8);
+    const uint8x16_t k9 = vld1q_u8(keys + 16 * 9);
+    const uint8x16_t k10 = vld1q_u8(keys + 16 * 10);
+
+    while (length >= 16)
+    {
+        uint8x16_t v = vld1q_u8(input);
+        v = vaesimcq_u8(vaesdq_u8(v, k0));
+        v = vaesimcq_u8(vaesdq_u8(v, k1));
+        v = vaesimcq_u8(vaesdq_u8(v, k2));
+        v = vaesimcq_u8(vaesdq_u8(v, k3));
+        v = vaesimcq_u8(vaesdq_u8(v, k4));
+        v = vaesimcq_u8(vaesdq_u8(v, k5));
+        v = vaesimcq_u8(vaesdq_u8(v, k6));
+        v = vaesimcq_u8(vaesdq_u8(v, k7));
+        v = vaesimcq_u8(vaesdq_u8(v, k8));
+        v = veorq_u8(vaesdq_u8(v, k9), k10);
+        v = veorq_u8(v, iv);
+        vst1q_u8(output, v);
+		input += 16;
+        output += 16;
+		length -= 16;
+    }
+}
+
+void arm_cbc192_decrypt(u8* output, const u8* input, size_t length, uint8x16_t iv, const u8* keys)
+{
+    const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
+    const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
+    const uint8x16_t k2 = vld1q_u8(keys + 16 * 2);
+    const uint8x16_t k3 = vld1q_u8(keys + 16 * 3);
+    const uint8x16_t k4 = vld1q_u8(keys + 16 * 4);
+    const uint8x16_t k5 = vld1q_u8(keys + 16 * 5);
+    const uint8x16_t k6 = vld1q_u8(keys + 16 * 6);
+    const uint8x16_t k7 = vld1q_u8(keys + 16 * 7);
+    const uint8x16_t k8 = vld1q_u8(keys + 16 * 8);
+    const uint8x16_t k9 = vld1q_u8(keys + 16 * 9);
+    const uint8x16_t k10 = vld1q_u8(keys + 16 * 10);
+    const uint8x16_t k11 = vld1q_u8(keys + 16 * 11);
+    const uint8x16_t k12 = vld1q_u8(keys + 16 * 12);
+
+    while (length >= 16)
+    {
+        uint8x16_t v = vld1q_u8(input);
+        v = vaesimcq_u8(vaesdq_u8(v, k0));
+        v = vaesimcq_u8(vaesdq_u8(v, k1));
+        v = vaesimcq_u8(vaesdq_u8(v, k2));
+        v = vaesimcq_u8(vaesdq_u8(v, k3));
+        v = vaesimcq_u8(vaesdq_u8(v, k4));
+        v = vaesimcq_u8(vaesdq_u8(v, k5));
+        v = vaesimcq_u8(vaesdq_u8(v, k6));
+        v = vaesimcq_u8(vaesdq_u8(v, k7));
+        v = vaesimcq_u8(vaesdq_u8(v, k8));
+        v = vaesimcq_u8(vaesdq_u8(v, k9));
+        v = vaesimcq_u8(vaesdq_u8(v, k10));
+        v = veorq_u8(vaesdq_u8(v, k11), k12);
+        v = veorq_u8(v, iv);
+        vst1q_u8(output, v);
+		input += 16;
+        output += 16;
+		length -= 16;
+    }
+}
+
+void arm_cbc256_decrypt(u8* output, const u8* input, size_t length, uint8x16_t iv, const u8* keys)
+{
+    const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
+    const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
+    const uint8x16_t k2 = vld1q_u8(keys + 16 * 2);
+    const uint8x16_t k3 = vld1q_u8(keys + 16 * 3);
+    const uint8x16_t k4 = vld1q_u8(keys + 16 * 4);
+    const uint8x16_t k5 = vld1q_u8(keys + 16 * 5);
+    const uint8x16_t k6 = vld1q_u8(keys + 16 * 6);
+    const uint8x16_t k7 = vld1q_u8(keys + 16 * 7);
+    const uint8x16_t k8 = vld1q_u8(keys + 16 * 8);
+    const uint8x16_t k9 = vld1q_u8(keys + 16 * 9);
+    const uint8x16_t k10 = vld1q_u8(keys + 16 * 10);
+    const uint8x16_t k11 = vld1q_u8(keys + 16 * 11);
+    const uint8x16_t k12 = vld1q_u8(keys + 16 * 12);
+    const uint8x16_t k13 = vld1q_u8(keys + 16 * 13);
+    const uint8x16_t k14 = vld1q_u8(keys + 16 * 14);
+
+    while (length >= 16)
+    {
+        uint8x16_t v = vld1q_u8(input);
+        v = vaesimcq_u8(vaesdq_u8(v, k0));
+        v = vaesimcq_u8(vaesdq_u8(v, k1));
+        v = vaesimcq_u8(vaesdq_u8(v, k2));
+        v = vaesimcq_u8(vaesdq_u8(v, k3));
+        v = vaesimcq_u8(vaesdq_u8(v, k4));
+        v = vaesimcq_u8(vaesdq_u8(v, k5));
+        v = vaesimcq_u8(vaesdq_u8(v, k6));
+        v = vaesimcq_u8(vaesdq_u8(v, k7));
+        v = vaesimcq_u8(vaesdq_u8(v, k8));
+        v = vaesimcq_u8(vaesdq_u8(v, k9));
+        v = vaesimcq_u8(vaesdq_u8(v, k10));
+        v = vaesimcq_u8(vaesdq_u8(v, k11));
+        v = vaesimcq_u8(vaesdq_u8(v, k12));
+        v = veorq_u8(vaesdq_u8(v, k13), k14);
+        v = veorq_u8(v, iv);
+        vst1q_u8(output, v);
+		input += 16;
+        output += 16;
+		length -= 16;
+    }
+}
+
+void arm_cbc_decrypt(u8* output, const u8* input, size_t length, const u8* ivec, const u32* keys, int bits)
+{
+    uint8x16_t iv = vld1q_u8(ivec);
+    switch (bits)
+    {
+        case 128:
+            arm_cbc128_decrypt(output, input, length, iv, reinterpret_cast<const u8*>(keys));
+            break;
+        case 192:
+            arm_cbc192_decrypt(output, input, length, iv, reinterpret_cast<const u8*>(keys));
+            break;
+        case 256:
+            arm_cbc256_decrypt(output, input, length, iv, reinterpret_cast<const u8*>(keys));
             break;
         default:
             break;
@@ -1319,7 +1591,7 @@ void AES::ecb_block_encrypt(u8* output, const u8* input, size_t length)
 #if defined(__ARM_FEATURE_CRYPTO)
     if (true)
     {
-        arm_encrypt_blocks(output, input, length, m_schedule->arm_encode_schedule, m_bits);
+        arm_ecb_encrypt(output, input, length, m_schedule->arm_encode_schedule, m_bits);
     }
     else
 #endif
@@ -1348,7 +1620,7 @@ void AES::ecb_block_decrypt(u8* output, const u8* input, size_t length)
 #if defined(__ARM_FEATURE_CRYPTO)
     if (true)
     {
-        arm_decrypt_blocks(output, input, length, m_schedule->arm_decode_schedule, m_bits);
+        arm_ecb_decrypt(output, input, length, m_schedule->arm_decode_schedule, m_bits);
     }
     else
 #endif
@@ -1374,6 +1646,13 @@ void AES::cbc_block_encrypt(u8* output, const u8* input, size_t length, const u8
     }
     else
 #endif
+#if defined(__ARM_FEATURE_CRYPTO)
+    if (true)
+    {
+        arm_cbc_encrypt(output, input, length, iv, m_schedule->arm_encode_schedule, m_bits);
+    }
+    else
+#endif
     {
         aes_encrypt_cbc(input, length, output, m_schedule->schedule, m_bits, iv);
     }
@@ -1390,6 +1669,13 @@ void AES::cbc_block_decrypt(u8* output, const u8* input, size_t length, const u8
     if (m_schedule->aesni_supported)
     {
         aesni_cbc_decrypt(output, input, length, iv, m_schedule->aesni_schedule, m_bits);
+    }
+    else
+#endif
+#if defined(__ARM_FEATURE_CRYPTO)
+    if (true)
+    {
+        arm_cbc_decrypt(output, input, length, iv, m_schedule->arm_decode_schedule, m_bits);
     }
     else
 #endif
