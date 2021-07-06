@@ -1254,7 +1254,7 @@ struct KeyScheduleAES
 
 #if defined(MANGO_ENABLE_AES)
     __m128i aesni_schedule[28];
-    bool aes_supported;
+    bool aesni_supported;
 #endif
 
 #if defined(__ARM_FEATURE_CRYPTO)
@@ -1262,7 +1262,7 @@ struct KeyScheduleAES
     u32 arm_decode_schedule[60];
 #endif
 
-    u32 w[60];
+    u32 schedule[60];
 };
 
 AES::AES(const u8* key, int bits)
@@ -1282,8 +1282,8 @@ AES::AES(const u8* key, int bits)
     }
 
 #if defined(MANGO_ENABLE_AES)
-    m_schedule->aes_supported = (getCPUFlags() & INTEL_AES) != 0;
-    if (m_schedule->aes_supported)
+    m_schedule->aesni_supported = (getCPUFlags() & INTEL_AES) != 0;
+    if (m_schedule->aesni_supported)
     {
         aesni_key_expand(m_schedule->aesni_schedule, key, bits);
     }
@@ -1294,8 +1294,7 @@ AES::AES(const u8* key, int bits)
                    m_schedule->arm_decode_schedule, key, bits);
 #endif
 
-    // NOTE: should only be done when non-simd block functions are called
-    aes_key_setup(key, m_schedule->w, bits);
+    aes_key_setup(key, m_schedule->schedule, bits);
 }
 
 AES::~AES()
@@ -1311,7 +1310,7 @@ void AES::ecb_block_encrypt(u8* output, const u8* input, size_t length)
     }
 
 #if defined(MANGO_ENABLE_AES)
-    if (m_schedule->aes_supported)
+    if (m_schedule->aesni_supported)
     {
         aesni_ecb_encrypt(output, input, length, m_schedule->aesni_schedule, m_bits);
     }
@@ -1327,7 +1326,7 @@ void AES::ecb_block_encrypt(u8* output, const u8* input, size_t length)
     {
         for (size_t i = 0; i < length; i += 16)
         {
-            aes_encrypt(input + i, output + i, m_schedule->w, m_bits);
+            aes_encrypt(input + i, output + i, m_schedule->schedule, m_bits);
         }
     }
 }
@@ -1340,7 +1339,7 @@ void AES::ecb_block_decrypt(u8* output, const u8* input, size_t length)
     }
 
 #if defined(MANGO_ENABLE_AES)
-    if (m_schedule->aes_supported)
+    if (m_schedule->aesni_supported)
     {
         aesni_ecb_decrypt(output, input, length, m_schedule->aesni_schedule, m_bits);
     }
@@ -1356,7 +1355,7 @@ void AES::ecb_block_decrypt(u8* output, const u8* input, size_t length)
     {
         for (size_t i = 0; i < length; i += 16)
         {
-            aes_decrypt(input + i, output + i, m_schedule->w, m_bits);
+            aes_decrypt(input + i, output + i, m_schedule->schedule, m_bits);
         }
     }
 }
@@ -1369,14 +1368,14 @@ void AES::cbc_block_encrypt(u8* output, const u8* input, size_t length, const u8
     }
 
 #if defined(MANGO_ENABLE_AES)
-    if (m_schedule->aes_supported)
+    if (m_schedule->aesni_supported)
     {
         aesni_cbc_encrypt(output, input, length, iv, m_schedule->aesni_schedule, m_bits);
     }
     else
 #endif
     {
-        aes_encrypt_cbc(input, length, output, m_schedule->w, m_bits, iv);
+        aes_encrypt_cbc(input, length, output, m_schedule->schedule, m_bits, iv);
     }
 }
 
@@ -1388,14 +1387,14 @@ void AES::cbc_block_decrypt(u8* output, const u8* input, size_t length, const u8
     }
 
 #if defined(MANGO_ENABLE_AES)
-    if (m_schedule->aes_supported)
+    if (m_schedule->aesni_supported)
     {
         aesni_cbc_decrypt(output, input, length, iv, m_schedule->aesni_schedule, m_bits);
     }
     else
 #endif
     {
-        aes_decrypt_cbc(input, length, output, m_schedule->w, m_bits, iv);
+        aes_decrypt_cbc(input, length, output, m_schedule->schedule, m_bits, iv);
     }
 }
 
@@ -1405,7 +1404,8 @@ void AES::ctr_block_encrypt(u8* output, const u8* input, size_t length, const u8
     {
         MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
     }
-    aes_encrypt_ctr(input, length, output, m_schedule->w, m_bits, iv);
+
+    aes_encrypt_ctr(input, length, output, m_schedule->schedule, m_bits, iv);
 }
 
 void AES::ctr_block_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
@@ -1414,7 +1414,8 @@ void AES::ctr_block_decrypt(u8* output, const u8* input, size_t length, const u8
     {
         MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
     }
-    aes_decrypt_ctr(input, length, output, m_schedule->w, m_bits, iv);
+
+    aes_decrypt_ctr(input, length, output, m_schedule->schedule, m_bits, iv);
 }
 
 void AES::ccm_block_encrypt(Memory output, ConstMemory input, ConstMemory associated, ConstMemory nonce, int mac_length)
@@ -1429,7 +1430,7 @@ void AES::ccm_block_encrypt(Memory output, ConstMemory input, ConstMemory associ
                     associated.address, u16(associated.size),
                     nonce.address, u16(nonce.size),
                     output.address, &cipher_length, mac_length,
-                    m_schedule->w, m_bits);
+                    m_schedule->schedule, m_bits);
 }
 
 void AES::ccm_block_decrypt(Memory output, ConstMemory input, ConstMemory associated, ConstMemory nonce, int mac_length)
@@ -1446,7 +1447,7 @@ void AES::ccm_block_decrypt(Memory output, ConstMemory input, ConstMemory associ
                     nonce.address, u16(nonce.size),
                     output.address, &plaintext_length,
                     mac_length, &mac_authorized,
-                    m_schedule->w, m_bits);
+                    m_schedule->schedule, m_bits);
 }
 
 void AES::ecb_encrypt(u8* output, const u8* input, size_t length)
