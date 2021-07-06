@@ -143,7 +143,7 @@ int main(int argc, const char* argv[])
     std::string pathname = argv[1];
 
     bool mmap = false;
-    bool multithread = true;
+    bool multithread = false;
 
     if (argc > 2)
     {
@@ -151,7 +151,7 @@ int main(int argc, const char* argv[])
         {
             mmap = true;
         }
-        else if (!strcmp(argv[2], "--nomt"))
+        else if (!strcmp(argv[2], "--mt"))
         {
             multithread = false;
         }
