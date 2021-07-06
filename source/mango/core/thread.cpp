@@ -192,13 +192,13 @@ namespace mango
             else
             {
                 auto time1 = high_resolution_clock::now();
-                auto elapsed = duration_cast<milliseconds>(time1 - time0).count();
-                if (elapsed >= microseconds(1200).count())
+                auto elapsed = time1 - time0;
+                if (elapsed >= microseconds(1200))
                 {
                     std::unique_lock<std::mutex> lock(m_queue_mutex);
-                    m_condition.wait_for(lock, milliseconds(12));
+                    m_condition.wait_for(lock, milliseconds(120));
                 }
-                else if (elapsed >= microseconds(2).count())
+                else if (elapsed >= microseconds(2))
                 {
                     std::this_thread::yield();
                 }
