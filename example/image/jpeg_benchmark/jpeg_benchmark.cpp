@@ -283,7 +283,7 @@ int main(int argc, const char* argv[])
         }
         else
         {
-            test_count = std::atoi(argv[2]);
+            test_count = std::atoi(argv[i]);
         }
     }
 

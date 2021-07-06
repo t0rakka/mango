@@ -121,6 +121,8 @@ void test_jpeg(const std::string& folder, bool mmap, bool multithread)
 
     printf("\n%s\n", getSystemInfo().c_str());
     printf("MMAP: %s\n", mmap ? "ENABLED" : "DISABLED");
+    printf("MT: %s\n", multithread ? "ENABLED" : "DISABLED");
+    printf("\n");
     printf("Decoded %zu files in %d ms (%zu MB -> %zu MB).\n",
         size_t(state.total_input_files),
         u32(time1 - time0),
@@ -145,17 +147,17 @@ int main(int argc, const char* argv[])
     bool mmap = false;
     bool multithread = false;
 
-    if (argc > 2)
+    for (int i = 2; i < argc; ++i)
     {
-        if (!strcmp(argv[2], "--mmap"))
+        if (!strcmp(argv[i], "--mmap"))
         {
             mmap = true;
         }
-        else if (!strcmp(argv[2], "--mt"))
+        else if (!strcmp(argv[i], "--mt"))
         {
             multithread = true;
         }
-        else if (!strcmp(argv[2], "--debug"))
+        else if (!strcmp(argv[i], "--debug"))
         {
             debugPrintEnable(true);
         }
