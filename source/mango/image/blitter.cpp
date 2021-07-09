@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/system.hpp>
@@ -1121,6 +1121,101 @@ namespace
                 }
             } 
         },
+
+#if defined(MANGO_ENABLE_NEON)
+
+    // ----------------------------------------------------------------------------
+    // NEON
+    // ----------------------------------------------------------------------------
+
+        /*
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            ARM_NEON,
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+            }
+        },
+        */
+
+#endif // MANGO_ENABLE_NEON
+
+#if defined(MANGO_ENABLE_SSE2)
+
+    // ----------------------------------------------------------------------------
+    // SSE2
+    // ----------------------------------------------------------------------------
+
+        /*
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            INTEL_SSE2,
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+            }
+        },
+        */
+
+#endif // MANGO_ENABLE_SSE2
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    // ----------------------------------------------------------------------------
+    // SSE4.1
+    // ----------------------------------------------------------------------------
+
+        /*
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            INTEL_SSE4_1,
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+            }
+        },
+        */
+
+#endif // MANGO_ENABLE_SSE4_1
+
+#if defined(MANGO_ENABLE_AVX)
+
+    // ----------------------------------------------------------------------------
+    // AVX
+    // ----------------------------------------------------------------------------
+
+        /*
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            INTEL_AVX,
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+            }
+        },
+        */
+
+#endif // MANGO_ENABLE_AVX
+
+#if defined(MANGO_ENABLE_AVX2)
+
+    // ----------------------------------------------------------------------------
+    // AVX2
+    // ----------------------------------------------------------------------------
+
+        /*
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            INTEL_AVX2,
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+            }
+        },
+        */
+
+#endif // MANGO_ENABLE_AVX2
     };
 
     using FastConversionMap = std::map< std::pair<Format, Format>, Blitter::FastFunc >;
@@ -1134,7 +1229,8 @@ namespace
 
         for (auto& node : g_custom_func_table)
         {
-            if (!node.requireCpuFeature || (cpuFlags & node.requireCpuFeature) != 0)
+            u64 required = node.requireCpuFeature;
+            if ((cpuFlags & required) == required)
             {
                 map[std::make_pair(node.dest, node.source)] = node.func;
             }
