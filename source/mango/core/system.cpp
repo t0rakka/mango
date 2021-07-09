@@ -65,6 +65,7 @@ namespace mango
         if (flags & INTEL_BMI1) info << "BMI1 ";
         if (flags & INTEL_BMI2) info << "BMI2 ";
         if (flags & INTEL_SHA) info << "SHA ";
+        if (flags & INTEL_LZCNT) info << "LZCNT ";
         if (flags & INTEL_AVX512F) info << "AVX512F ";
         if (flags & INTEL_AVX512PFI) info << "AVX512PFI ";
         if (flags & INTEL_AVX512ERI) info << "AVX512ERI ";
@@ -74,7 +75,7 @@ namespace mango
         if (flags & INTEL_AVX512DQ) info << "AVX512DQ ";
         if (flags & INTEL_AVX512IFMA) info << "AVX512IFMA ";
         if (flags & INTEL_AVX512VBMI) info << "AVX512VBMI ";
-        if (flags & INTEL_LZCNT) info << "LZCNT ";
+        if (flags & INTEL_AVX512IFMA) info << "AVX512FP16 ";
         if (flags & ARM_NEON) info << "NEON ";
         if (flags & ARM_AES) info << "AES ";
         if (flags & ARM_SHA1) info << "SHA1 ";

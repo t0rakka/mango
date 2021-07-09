@@ -71,6 +71,7 @@ namespace
                     if ((cpuInfo[3] & 0x02000000) != 0) flags |= INTEL_SSE;
                     if ((cpuInfo[3] & 0x04000000) != 0) flags |= INTEL_SSE2;
                     if ((cpuInfo[3] & 0x00008000) != 0) flags |= INTEL_CMOV;
+                    if ((cpuInfo[3] & 0x00800000) != 0) flags |= INTEL_AVX512FP16;
                     // ecx
                     if ((cpuInfo[2] & 0x00000001) != 0) flags |= INTEL_SSE3;
                     if ((cpuInfo[2] & 0x00000200) != 0) flags |= INTEL_SSSE3;
@@ -205,7 +206,7 @@ namespace
 
     u64 getCPUFlagsInternal()
     {
-        u64 flags = ARM_FP16 | ARM_NEON; // default for ARM64
+        u64 flags = ARM_FP16 | ARM_NEON; // defaults for ARM64
 
         long hwcaps = getauxval(AT_HWCAP);
 
@@ -276,6 +277,10 @@ namespace
     u64 getCPUFlagsInternal()
     {
         u64 flags = 0;
+
+#if defined(MANGO_CPU_64BIT)
+        flags |= ARM_FP16 | ARM_NEON; // defaults for ARM64
+#endif
 
 #ifdef MANGO_ENABLE_NEON
         flags |= ARM_NEON;
