@@ -484,13 +484,10 @@ namespace
         std::memcpy(dest, src, count * bytes);
     }
 
-#define INIT_POINTERS(DEST, SRC) \
-    const SRC* s = reinterpret_cast<const SRC*>(src); \
-    DEST* d = reinterpret_cast<DEST*>(dest);
-
     void blit_32bit_generate_alpha(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(u32, u32);
+        u32* d = reinterpret_cast<u32*>(dest);
+        const u32* s = reinterpret_cast<const u32*>(src);
         for (int x = 0; x < count; ++x)
         {
             u32 v = s[x];
@@ -500,7 +497,8 @@ namespace
 
     void blit_32bit_swap_rg(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(u32, u32);
+        u32* d = reinterpret_cast<u32*>(dest);
+        const u32* s = reinterpret_cast<const u32*>(src);
         for (int x = 0; x < count; ++x)
         {
             u32 v = s[x];
@@ -510,7 +508,8 @@ namespace
 
     void blit_24bit_swap_rg(u8* dest, const u8* src, int count)
     {
-        INIT_POINTERS(u8, u8);
+        u8* d = reinterpret_cast<u8*>(dest);
+        const u8* s = reinterpret_cast<const u8*>(src);
         for (int x = 0; x < count; ++x)
         {
             d[0] = s[2];
@@ -609,7 +608,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u24);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u24* s = reinterpret_cast<const u24*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     u32 v = s[x];
@@ -623,7 +623,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u24, u32);
+                u24* d = reinterpret_cast<u24*>(dest);
+                const u32* s = reinterpret_cast<const u32*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     d[x] = s[x];
@@ -639,7 +640,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u8, u8);
+                u8* d = reinterpret_cast<u8*>(dest);
+                const u8* s = reinterpret_cast<const u8*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     d[0] = s[2];
@@ -657,7 +659,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u8, u8);
+                u8* d = reinterpret_cast<u8*>(dest);
+                const u8* s = reinterpret_cast<const u8*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     d[0] = s[2];
@@ -692,7 +695,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u16);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u16* s = reinterpret_cast<const u16*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     u32 v = s[x];
@@ -708,7 +712,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u16, u32);
+                u16* d = reinterpret_cast<u16*>(dest);
+                const u32* s = reinterpret_cast<const u32*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     u32 v = s[x];
@@ -726,7 +731,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u16);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u16* s = reinterpret_cast<const u16*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     u32 v = s[x];
@@ -742,7 +748,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u16, u32);
+                u16* d = reinterpret_cast<u16*>(dest);
+                const u32* s = reinterpret_cast<const u32*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     u32 v = s[x];
@@ -761,7 +768,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u16);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u16* s = reinterpret_cast<const u16*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     u32 v = s[x];
@@ -777,7 +785,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u16, u32);
+                u16* d = reinterpret_cast<u16*>(dest);
+                const u32* s = reinterpret_cast<const u32*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     u32 v = s[x];
@@ -796,7 +805,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u24, u8);
+                u24* d = reinterpret_cast<u24*>(dest);
+                const u8* s = reinterpret_cast<const u8*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     u32 v = s[x];
@@ -810,7 +820,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u24, u8);
+                u24* d = reinterpret_cast<u24*>(dest);
+                const u8* s = reinterpret_cast<const u8*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     u32 v = s[x];
@@ -827,7 +838,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u8);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u8* s = reinterpret_cast<const u8*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     u32 v = s[x];
@@ -841,7 +853,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u8);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u8* s = reinterpret_cast<const u8*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     u32 v = s[x];
@@ -858,7 +871,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u16);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u16* s = reinterpret_cast<const u16*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     const u32 i = s[x] >> 8;
@@ -872,7 +886,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u16);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u16* s = reinterpret_cast<const u16*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     const u32 i = s[x] >> 8;
@@ -889,7 +904,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u32);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u32* s = reinterpret_cast<const u32*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     const u32 a = s[x] & 0xff000000;
@@ -904,7 +920,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u32);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u32* s = reinterpret_cast<const u32*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     const u32 a = s[x] & 0xff000000;
@@ -922,7 +939,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u16);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u16* s = reinterpret_cast<const u16*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     const u32 r = s[0];
@@ -939,7 +957,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u16);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u16* s = reinterpret_cast<const u16*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     const u32 r = s[0] & 0x0000ff00;
@@ -959,7 +978,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u16);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u16* s = reinterpret_cast<const u16*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     const u32 r = s[0];
@@ -977,7 +997,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, u16);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const u16* s = reinterpret_cast<const u16*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     const u32 r = s[0] & 0x0000ff00;
@@ -998,7 +1019,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, float16x4);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const float16x4* s = reinterpret_cast<const float16x4*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     float32x4 f = convert<float32x4>(s[x]);
@@ -1015,7 +1037,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, float16x4);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const float16x4* s = reinterpret_cast<const float16x4*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     float32x4 f = convert<float32x4>(s[x]);
@@ -1036,7 +1059,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, float32x4);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const float32x4* s = reinterpret_cast<const float32x4*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     float32x4 f = s[x];
@@ -1053,7 +1077,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(u32, float32x4);
+                u32* d = reinterpret_cast<u32*>(dest);
+                const float32x4* s = reinterpret_cast<const float32x4*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     float32x4 f = s[x];
@@ -1074,7 +1099,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(float16x4, float32x4);
+                float16x4* d = reinterpret_cast<float16x4*>(dest);
+                const float32x4* s = reinterpret_cast<const float32x4*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     d[x] = convert<float16x4>(s[x]);
@@ -1087,7 +1113,8 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                INIT_POINTERS(float32x4, float16x4);
+                float32x4* d = reinterpret_cast<float32x4*>(dest);
+                const float16x4* s = reinterpret_cast<const float16x4*>(src);
                 for (int x = 0; x < count; ++x)
                 {
                     d[x] = convert<float32x4>(s[x]);
