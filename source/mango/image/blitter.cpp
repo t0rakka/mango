@@ -1011,7 +1011,7 @@ namespace
             }
         },
 
-        // rgba.u8 <- rgba.f16
+        // rgba.u8 <-> rgba.f16
 
         {
             Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
@@ -1051,7 +1051,27 @@ namespace
             } 
         },
 
-        // rgba.u8 <- rgba.f32
+        {
+            Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                float16x4* d = reinterpret_cast<float16x4*>(dest);
+                const u32* s = reinterpret_cast<const u32*>(src);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 color = s[x];
+                    float16 r = ((color >>  0) & 0xff) / 255.0f;
+                    float16 g = ((color >>  8) & 0xff) / 255.0f;
+                    float16 b = ((color >> 16) & 0xff) / 255.0f;
+                    float16 a = ((color >> 24) & 0xff) / 255.0f;
+                    d[x] = float16x4(r, g, b, a);
+                }
+            } 
+        },
+
+        // rgba.u8 <-> rgba.f32
 
         {
             Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
@@ -1087,6 +1107,26 @@ namespace
                     f = f * 255.0f + 0.5f;
                     int32x4 i = convert<int32x4>(f);
                     d[x] = i.pack();
+                }
+            } 
+        },
+
+        {
+            Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                float32x4* d = reinterpret_cast<float32x4*>(dest);
+                const u32* s = reinterpret_cast<const u32*>(src);
+                for (int x = 0; x < count; ++x)
+                {
+                    u32 color = s[x];
+                    float r = ((color >>  0) & 0xff) / 255.0f;
+                    float g = ((color >>  8) & 0xff) / 255.0f;
+                    float b = ((color >> 16) & 0xff) / 255.0f;
+                    float a = ((color >> 24) & 0xff) / 255.0f;
+                    d[x] = float32x4(r, g, b, a);
                 }
             } 
         },
