@@ -1117,16 +1117,46 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                float32x4* d = reinterpret_cast<float32x4*>(dest);
+                float* d = reinterpret_cast<float*>(dest);
                 const u32* s = reinterpret_cast<const u32*>(src);
-                for (int x = 0; x < count; ++x)
+
+                while (count >= 4)
                 {
-                    u32 color = s[x];
-                    float r = ((color >>  0) & 0xff) / 255.0f;
-                    float g = ((color >>  8) & 0xff) / 255.0f;
-                    float b = ((color >> 16) & 0xff) / 255.0f;
-                    float a = ((color >> 24) & 0xff) / 255.0f;
-                    d[x] = float32x4(r, g, b, a);
+                    uint32x4 color = simd::u32x4_uload(s);
+
+                    uint32x4 r = (color >>  0) & 0xff;
+                    uint32x4 g = (color >>  8) & 0xff;
+                    uint32x4 b = (color >> 16) & 0xff;
+                    uint32x4 a = (color >> 24) & 0xff;
+
+                    uint32x4 rb01 = unpacklo(r, b);
+                    uint32x4 ga01 = unpacklo(g, a);
+                    uint32x4 rb23 = unpackhi(r, b);
+                    uint32x4 ga23 = unpackhi(g, a);
+
+                    uint32x4 rgba0 = unpacklo(rb01, ga01);
+                    uint32x4 rgba1 = unpackhi(rb01, ga01);
+                    uint32x4 rgba2 = unpacklo(rb23, ga23);
+                    uint32x4 rgba3 = unpackhi(rb23, ga23);
+
+                    simd::f32x4_ustore(d + 4 * 0, convert<float32x4>(rgba0) / 255.0f);
+                    simd::f32x4_ustore(d + 4 * 1, convert<float32x4>(rgba1) / 255.0f);
+                    simd::f32x4_ustore(d + 4 * 2, convert<float32x4>(rgba2) / 255.0f);
+                    simd::f32x4_ustore(d + 4 * 3, convert<float32x4>(rgba3) / 255.0f);
+                    s += 4;
+                    d += 16;
+                    count -= 4;
+                }
+
+                while (count-- > 0)
+                {
+                    u32 color = s[0];
+                    d[0] = float((color >>  0) & 0xff) / 255.0f;
+                    d[1] = float((color >>  8) & 0xff) / 255.0f;
+                    d[2] = float((color >> 16) & 0xff) / 255.0f;
+                    d[3] = float((color >> 24) & 0xff) / 255.0f;
+                    s += 1;
+                    d += 4;
                 }
             } 
         },
