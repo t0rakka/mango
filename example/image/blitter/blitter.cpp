@@ -168,19 +168,19 @@ void profile(Surface surface)
 
     for (int i = 0; i < sizeof(tests) / sizeof(Test); ++i)
     {
-        Bitmap a(surface, tests[i].source);
-        Bitmap b(width, height, tests[i].dest);
+        Bitmap a(width, height, tests[i].dest);
+        Bitmap b(surface, tests[i].source);
 
         u64 time0 = Time::us();
 
-        b.blit(0, 0, a);
+        a.blit(0, 0, b);
         u64 time1 = Time::us();
 
         u64 s = width * height / ((time1 - time0) * 1);
         printf("  %6d us (%4d MP/s)  ", int(time1 - time0), int(s));
-        print(b.format);
-        printf("   <--   ");
         print(a.format);
+        printf("   <--   ");
+        print(b.format);
         printf("\n");
     }
 }

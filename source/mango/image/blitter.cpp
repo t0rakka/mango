@@ -528,14 +528,44 @@ namespace
     {
         Format dest;
         Format source;
-        u32 requireCpuFeature;
+        u64 requireCpuFeature;
         Blitter::FastFunc func;
     }
     const g_custom_func_table[] =
     {
 
-        // rgbx.u8 <- rgba.u8
+        // rgba.u8 <-> rgbx.u8
 
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                std::memcpy(dest, src, count * 4);
+            } 
+        },
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                std::memcpy(dest, src, count * 4);
+            } 
+        },
+
+        // bgra.u8 <-> bgrx.u8
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
+            0,
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                std::memcpy(dest, src, count * 4);
+            } 
+        },
         {
             Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
             Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
@@ -545,62 +575,124 @@ namespace
                 std::memcpy(dest, src, count * 4);
             } 
         },
-        {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-                std::memcpy(dest, src, count * 4);
-            } 
-        },
 
         // rgba.u8 <- rgbx.u8
+        // bgra.u8 <- bgrx.u8
 
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
+            0, 
+            blit_32bit_generate_alpha 
+        },
         {
             Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
             Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
             0, 
             blit_32bit_generate_alpha 
         },
+
+        // rgbx.u8 <-> bgrx.u8
+
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
             0, 
-            blit_32bit_generate_alpha 
+            blit_32bit_swap_rg 
         },
-
-        // bgrx.u8 <-> rgbx.u8
-
         {
             Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
             Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
             0, 
             blit_32bit_swap_rg
         },
+
+        // rgba.u8 <-> bgra.u8
+
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            0, 
+            blit_32bit_swap_rg 
+        },
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            0, 
+            blit_32bit_swap_rg 
+        },
+
+        // rgba.u8 <-> rgb.u8
+
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                while (count-- > 0)
+                {
+                    dest[0] = src[0];
+                    dest[1] = src[1];
+                    dest[2] = src[2];
+                    dest[3] = 0xff;
+                    src += 3;
+                    dest += 4;
+                }
+            }
+        },
+        {
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                u24* d = reinterpret_cast<u24*>(dest);
+                const u32* s = reinterpret_cast<const u32*>(src);
+                for (int x = 0; x < count; ++x)
+                {
+                    d[x] = s[x];
+                }
+            }
+        },
+
+        // bgrx.u8 <-> rgb.u8
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            0, 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                while (count-- > 0)
+                {
+                    dest[0] = src[2];
+                    dest[1] = src[1];
+                    dest[2] = src[0];
+                    dest[3] = 0xff;
+                    src += 3;
+                    dest += 4;
+                }
+            }
+        },
+        {
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
             Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
             0, 
-            blit_32bit_swap_rg 
+            [] (u8* dest, const u8* src, int count) -> void
+            {
+                while (count-- > 0)
+                {
+                    dest[0] = src[2];
+                    dest[1] = src[1];
+                    dest[2] = src[0];
+                    src += 4;
+                    dest += 3;
+                }
+            }
         },
 
-        // bgra.u8 <-> rgba.u8
-
-        {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            0, 
-            blit_32bit_swap_rg 
-        },
-        {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            0, 
-            blit_32bit_swap_rg 
-        },
-
-        // bgra.u8888 <-> bgr.u888
+        // bgra.u8 <-> bgr.u8
 
         {
             Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
@@ -640,16 +732,14 @@ namespace
             0, 
             [] (u8* dest, const u8* src, int count) -> void
             {
-                u8* d = reinterpret_cast<u8*>(dest);
-                const u8* s = reinterpret_cast<const u8*>(src);
-                for (int x = 0; x < count; ++x)
+                while (count-- > 0)
                 {
-                    d[0] = s[2];
-                    d[1] = s[1];
-                    d[2] = s[0];
-                    d[3] = 0xff;
-                    s += 3;
-                    d += 4;
+                    dest[0] = src[2];
+                    dest[1] = src[1];
+                    dest[2] = src[0];
+                    dest[3] = 0xff;
+                    src += 3;
+                    dest += 4;
                 }
             }
         },
@@ -1235,16 +1325,41 @@ namespace
     // NEON
     // ----------------------------------------------------------------------------
 
-        /*
+#if 0
+        // NOTE: clang compiles the scalar code into vld3/vst4 so this is just for testing
         {
             Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
             ARM_NEON,
             [] (u8* dest, const u8* src, int count) -> void
             {
+                constexpr int N = 4; // guard for vld/vst out-of-bounds access
+                while (count >= 8 + N)
+                {
+                    const uint8x16x3_t rgb = vld3q_u8(src);
+                    uint8x16x4_t rgba;
+                    rgba.val[0] = rgb.val[0];
+                    rgba.val[1] = rgb.val[1];
+                    rgba.val[2] = rgb.val[2];
+                    rgba.val[3] = vdupq_n_u8(0xff);
+                    vst4q_u8(dest, rgba);
+                    src += 24;
+                    dest += 32;
+                    count -= 8;
+                }
+
+                while (count-- > 0)
+                {
+                    dest[0] = src[0];
+                    dest[1] = src[1];
+                    dest[2] = src[2];
+                    dest[3] = 0xff;
+                    src += 3;
+                    dest += 4;
+                }
             }
         },
-        */
+#endif
 
 #endif // MANGO_ENABLE_NEON
 

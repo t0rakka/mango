@@ -172,9 +172,18 @@ namespace mango::image
             y = 0;
         }
 
-        image  = surface.address(x, y);
-        width  = std::max(0, std::min(surface.width, x + w) - x);
-        height = std::max(0, std::min(surface.height, y + h) - y);
+        if (x >= surface.width || y >= surface.height)
+        {
+            image = nullptr;
+            width = 0;
+            height = 0;
+        }
+        else
+        {
+            image  = surface.address(x, y);
+            width  = std::max(0, std::min(surface.width, x + w) - x);
+            height = std::max(0, std::min(surface.height, y + h) - y);
+        }
     }
 
     Surface::~Surface()
