@@ -1062,11 +1062,11 @@ namespace
                 for (int x = 0; x < count; ++x)
                 {
                     u32 color = s[x];
-                    float16 r = ((color >>  0) & 0xff) / 255.0f;
-                    float16 g = ((color >>  8) & 0xff) / 255.0f;
-                    float16 b = ((color >> 16) & 0xff) / 255.0f;
-                    float16 a = ((color >> 24) & 0xff) / 255.0f;
-                    d[x] = float16x4(r, g, b, a);
+                    float r = float((color >>  0) & 0xff) / 255.0f;
+                    float g = float((color >>  8) & 0xff) / 255.0f;
+                    float b = float((color >> 16) & 0xff) / 255.0f;
+                    float a = float((color >> 24) & 0xff) / 255.0f;
+                    d[x] = convert<float16x4>(float32x4(r, g, b, a));
                 }
             } 
         },
