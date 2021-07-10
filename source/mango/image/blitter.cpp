@@ -1059,14 +1059,51 @@ namespace
             {
                 float16x4* d = reinterpret_cast<float16x4*>(dest);
                 const u32* s = reinterpret_cast<const u32*>(src);
-                for (int x = 0; x < count; ++x)
+
+                while (count >= 4)
                 {
-                    u32 color = s[x];
+                    uint32x4 color = simd::u32x4_uload(s);
+
+                    uint32x4 r = (color >>  0) & 0xff;
+                    uint32x4 g = (color >>  8) & 0xff;
+                    uint32x4 b = (color >> 16) & 0xff;
+                    uint32x4 a = (color >> 24) & 0xff;
+
+                    uint32x4 rb01 = unpacklo(r, b);
+                    uint32x4 ga01 = unpacklo(g, a);
+                    uint32x4 rb23 = unpackhi(r, b);
+                    uint32x4 ga23 = unpackhi(g, a);
+
+                    uint32x4 rgba0 = unpacklo(rb01, ga01);
+                    uint32x4 rgba1 = unpackhi(rb01, ga01);
+                    uint32x4 rgba2 = unpacklo(rb23, ga23);
+                    uint32x4 rgba3 = unpackhi(rb23, ga23);
+
+                    float32x4 v0 = convert<float32x4>(rgba0) / 255.0f;
+                    float32x4 v1 = convert<float32x4>(rgba1) / 255.0f;
+                    float32x4 v2 = convert<float32x4>(rgba2) / 255.0f;
+                    float32x4 v3 = convert<float32x4>(rgba3) / 255.0f;
+
+                    d[0] = convert<float16x4>(v0);
+                    d[1] = convert<float16x4>(v1);
+                    d[2] = convert<float16x4>(v2);
+                    d[3] = convert<float16x4>(v3);
+                    s += 4;
+                    d += 4;
+                    count -= 4;
+                }
+
+                while (count-- > 0)
+                {
+                    u32 color = s[0];
                     float r = float((color >>  0) & 0xff) / 255.0f;
                     float g = float((color >>  8) & 0xff) / 255.0f;
                     float b = float((color >> 16) & 0xff) / 255.0f;
                     float a = float((color >> 24) & 0xff) / 255.0f;
-                    d[x] = convert<float16x4>(float32x4(r, g, b, a));
+                    float32x4 v(r, g, b, a);
+                    d[0] = convert<float16x4>(v);
+                    s += 1;
+                    d += 1;
                 }
             } 
         },
