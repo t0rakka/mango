@@ -499,10 +499,23 @@ namespace
     {
         u32* d = reinterpret_cast<u32*>(dest);
         const u32* s = reinterpret_cast<const u32*>(src);
-        for (int x = 0; x < count; ++x)
+
+#if 0
+        while (count >= 4)
         {
-            u32 v = s[x];
-            d[x] = (v & 0xff00ff00) | (v << 16) | ((v >> 16) & 0x00ff);
+            uint32x4 color = simd::u32x4_uload(s);
+            color = (color & 0xff00ff00) | (color << 16) | ((color >> 16) & 0x00ff);
+            simd::u32x4_ustore(d, color);
+            s += 4;
+            d += 4;
+            count -= 4;
+        }
+#endif
+
+        while (count-- > 0)
+        {
+            u32 color = *s++;
+            *d++ = (color & 0xff00ff00) | (color << 16) | ((color >> 16) & 0x00ff);
         }
     }
 
