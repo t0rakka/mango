@@ -737,7 +737,7 @@ namespace
             }
         },
 
-        // bgra.u8888 <-> rgb.u888
+        // bgra.u8 <-> rgb.u8
 
         {
             Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
@@ -775,7 +775,7 @@ namespace
             }
         },
 
-        // bgr.u888 <-> rgb.u888
+        // bgr.u8 <-> rgb.u8
 
         {
             Format(24, Format::UNORM, Format::RGB, 8, 8, 8),

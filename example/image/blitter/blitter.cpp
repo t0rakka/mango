@@ -12,52 +12,45 @@ struct Test
 {
     Format dest;
     Format source;
+    const char* note;
 };
 
 const Test tests [] =
 {
-    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
-    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
-    { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
-    { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
-
-    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0) },
-    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0) },
-    { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0) },
-    { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0) },
-
-    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) },
-    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) },
-    { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) },
-    { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) },
-
-    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0) },
-    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0) },
-    { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0) },
-    { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0) },
-
-    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0) },
-    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0) },
-    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0) },
-    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0), Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0) },
-    { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0) },
-
-    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0) },
-    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0) },
-    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0) },
-    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0), Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0) },
-    { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0) },
-
-    { Format(8, Format::UNORM, Format::RGBA, 2, 2, 2, 2), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
-    { Format(16, Format::UNORM, Format::RGBA, 4, 4, 4, 4), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
-    { Format(32, Format::UNORM, Format::RGBA, 6, 6, 6, 8), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
-    { Format(8, Format::UNORM, Format::R, 8, 0, 0, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
-
-    { Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
-    { Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
-
-    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32) },
-    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16) },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "memcpy" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), "memcpy" },
+    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "swap_rg" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), "swap_rg" },
+    { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), "swap_rg" },
+    { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), "swap_rg" },
+    { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "scalar" },
+    { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), "scalar" },
+    { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0), "scalar" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), "scalar" },
+    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), "scalar" },
+    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0), Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), "scalar" },
+    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), "scalar" },
+    { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "xx" },
+    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), "xx" },
+    { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), "xx" },
+    { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), "xx" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), "xx" },
+    { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), "xx" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0), "xx" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0), "xx" },
+    { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0), "xx" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), "xx" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), "xx" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), "xx" },
+    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0), Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), "xx" },
+    { Format(8, Format::UNORM, Format::RGBA, 2, 2, 2, 2), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "xx" },
+    { Format(16, Format::UNORM, Format::RGBA, 4, 4, 4, 4), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "xx" },
+    { Format(32, Format::UNORM, Format::RGBA, 6, 6, 6, 8), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "xx" },
+    { Format(8, Format::UNORM, Format::R, 8, 0, 0, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "xx" },
+    { Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "simd:4" },
+    { Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "simd:4" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), "simd:1" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), "simd:1" },
 
     // ...
 };
@@ -181,6 +174,7 @@ void profile(Surface surface)
         print(a.format);
         printf("   <--   ");
         print(b.format);
+        printf("  %s", tests[i].note);
         printf("\n");
     }
 }
