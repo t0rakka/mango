@@ -523,7 +523,29 @@ namespace
     {
         u8* d = reinterpret_cast<u8*>(dest);
         const u8* s = reinterpret_cast<const u8*>(src);
-        for (int x = 0; x < count; ++x)
+
+#if 0
+        while (count >= 4)
+        {
+            d[0] = s[2];
+            d[1] = s[1];
+            d[2] = s[0];
+            d[3] = s[5];
+            d[4] = s[4];
+            d[5] = s[3];
+            d[6] = s[8];
+            d[7] = s[7];
+            d[8] = s[6];
+            d[9] = s[11];
+            d[10] = s[10];
+            d[11] = s[9];
+            s += 12;
+            d += 12;
+            count -= 4;
+        }
+#endif
+
+        while (count-- > 0)
         {
             d[0] = s[2];
             d[1] = s[1];
