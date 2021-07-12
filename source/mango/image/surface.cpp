@@ -357,7 +357,7 @@ namespace mango::image
 
             for (int x = 0; x < half_width; ++x)
             {
-                // swap pixels using the slowest possible method
+                // swap pixels
                 for (int i = 0; i < bytes_per_pixel; ++i)
                 {
                     std::swap(a[i], b[i]);
