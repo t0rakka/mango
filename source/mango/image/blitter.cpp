@@ -561,6 +561,29 @@ namespace
     // SSE4.1
     // ----------------------------------------------------------------------------
 
+    void sse4_32bit_swap_rg(u8* d, const u8* s, int count)
+    {
+        while (count >= 4)
+        {
+            __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i *>(s + 0));
+            a = _mm_shuffle_epi8(a, _mm_setr_epi8(2, 1, 0, 3, 6, 5, 4, 7, 10, 9, 8, 11, 14, 13, 12, 15));
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(d +  0), a);
+            s += 16;
+            d += 16;
+            count -= 4;
+        }
+
+        while (count-- > 0)
+        {
+            d[0] = s[2];
+            d[1] = s[1];
+            d[2] = s[0];
+            d[3] = s[3];
+            s += 4;
+            d += 4;
+        }
+    }
+
     void sse4_24bit_swap_rg(u8* d, const u8* s, int count)
     {
         while (count >= 8)
@@ -1460,6 +1483,34 @@ namespace
     // ----------------------------------------------------------------------------
     // SSE4.1
     // ----------------------------------------------------------------------------
+
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
+            0, 
+            sse4_32bit_swap_rg 
+        },
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
+            0, 
+            sse4_32bit_swap_rg
+        },
+
+        {
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            0, 
+            sse4_32bit_swap_rg 
+        },
+
+        {
+            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            0, 
+            sse4_32bit_swap_rg 
+        },
 
         {
             Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
