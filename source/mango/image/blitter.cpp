@@ -555,6 +555,44 @@ namespace
         }
     }
 
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    // ----------------------------------------------------------------------------
+    // SSE4.1
+    // ----------------------------------------------------------------------------
+
+    void sse4_24bit_swap_rg(u8* d, const u8* s, int count)
+    {
+        while (count >= 8)
+        {
+            constexpr u8 n = 0x80;
+            __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i *>(s + 0));
+            __m128i b = _mm_loadu_si64(reinterpret_cast<const __m128i *>(s + 16));
+            __m128i v0 = _mm_shuffle_epi8(a, _mm_setr_epi8(2, 1, 0, 5, 4, 3, 8, 7, 6, 11, 10, 9, 14, 13, 12, n));
+            __m128i v1 = _mm_shuffle_epi8(b, _mm_setr_epi8(n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, 1));
+            __m128i v2 = _mm_shuffle_epi8(a, _mm_setr_epi8(n, 15, n, n, n, n, n, n, n, n, n, n, n, n, n, n));
+            __m128i v3 = _mm_shuffle_epi8(b, _mm_setr_epi8(0, n, 4, 3, 2, 7, 6, 5, n, n, n, n, n, n, n, n));
+            a = _mm_or_si128(v0, v1);
+            b = _mm_or_si128(v2, v3);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(d +  0), a);
+            _mm_storel_epi64(reinterpret_cast<__m128i *>(d + 16), b);
+            s += 24;
+            d += 24;
+            count -= 8;
+        }
+
+        while (count-- > 0)
+        {
+            d[0] = s[2];
+            d[1] = s[1];
+            d[2] = s[0];
+            s += 3;
+            d += 3;
+        }
+    }
+
+#endif // defined(MANGO_ENABLE_SSE4_1)
+
     // ----------------------------------------------------------------------------
     // custom conversion function lookup
     // ----------------------------------------------------------------------------
@@ -1422,6 +1460,20 @@ namespace
     // ----------------------------------------------------------------------------
     // SSE4.1
     // ----------------------------------------------------------------------------
+
+        {
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+            INTEL_SSE4_1, 
+            sse4_24bit_swap_rg
+        },
+
+        {
+            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+            INTEL_SSE4_1,
+            sse4_24bit_swap_rg
+        },
 
         /*
         {
