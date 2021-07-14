@@ -309,7 +309,7 @@ namespace mango::image
         Blitter blitter(dest.format, source.format);
 
 #if 0
-        const int slice = 96;
+        const int slice = 128;
 
         if (ThreadPool::getHardwareConcurrency() > 2 && rect.height >= slice * 2)
         {

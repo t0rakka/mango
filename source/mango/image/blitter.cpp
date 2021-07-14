@@ -630,790 +630,811 @@ namespace
     const g_custom_func_table[] =
     {
 
-        // rgba.u8 <-> rgbx.u8
+    // rgba.u8 <-> rgbx.u8
 
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            std::memcpy(dest, src, count * 4);
+        } 
+    },
+
+    {
+        Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
+        {
+            std::memcpy(dest, src, count * 4);
+        } 
+    },
+
+    // bgra.u8 <-> bgrx.u8
+
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        0,
+        [] (u8* dest, const u8* src, int count) -> void
+        {
+            std::memcpy(dest, src, count * 4);
+        } 
+    },
+
+    {
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        0,
+        [] (u8* dest, const u8* src, int count) -> void
+        {
+            std::memcpy(dest, src, count * 4);
+        } 
+    },
+
+    // rgba.u8 <- rgbx.u8
+    // bgra.u8 <- bgrx.u8
+
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
+        0, 
+        blit_32bit_generate_alpha 
+    },
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        0, 
+        blit_32bit_generate_alpha 
+    },
+
+    // rgbx.u8 <-> bgrx.u8
+
+    {
+        Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        0, 
+        blit_32bit_swap_rg 
+    },
+
+    {
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
+        0, 
+        blit_32bit_swap_rg
+    },
+
+    // rgba.u8 <-> bgra.u8
+
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        0, 
+        blit_32bit_swap_rg 
+    },
+
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        0, 
+        blit_32bit_swap_rg 
+    },
+
+    // rgba.u8 <-> rgb.u8
+
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
+        {
+            while (count-- > 0)
             {
-                std::memcpy(dest, src, count * 4);
-            } 
-        },
-        {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-                std::memcpy(dest, src, count * 4);
-            } 
-        },
-
-        // bgra.u8 <-> bgrx.u8
-
-        {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
-            0,
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-                std::memcpy(dest, src, count * 4);
-            } 
-        },
-        {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            0,
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-                std::memcpy(dest, src, count * 4);
-            } 
-        },
-
-        // rgba.u8 <- rgbx.u8
-        // bgra.u8 <- bgrx.u8
-
-        {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
-            0, 
-            blit_32bit_generate_alpha 
-        },
-        {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
-            0, 
-            blit_32bit_generate_alpha 
-        },
-
-        // rgbx.u8 <-> bgrx.u8
-
-        {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
-            0, 
-            blit_32bit_swap_rg 
-        },
-        {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
-            0, 
-            blit_32bit_swap_rg
-        },
-
-        // rgba.u8 <-> bgra.u8
-
-        {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            0, 
-            blit_32bit_swap_rg 
-        },
-        {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            0, 
-            blit_32bit_swap_rg 
-        },
-
-        // rgba.u8 <-> rgb.u8
-
-        {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-                while (count-- > 0)
-                {
-                    dest[0] = src[0];
-                    dest[1] = src[1];
-                    dest[2] = src[2];
-                    dest[3] = 0xff;
-                    src += 3;
-                    dest += 4;
-                }
+                dest[0] = src[0];
+                dest[1] = src[1];
+                dest[2] = src[2];
+                dest[3] = 0xff;
+                src += 3;
+                dest += 4;
             }
-        },
+        }
+    },
+
+    {
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u24* d = reinterpret_cast<u24*>(dest);
+            const u32* s = reinterpret_cast<const u32*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u24* d = reinterpret_cast<u24*>(dest);
-                const u32* s = reinterpret_cast<const u32*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    d[x] = s[x];
-                }
+                d[x] = s[x];
             }
-        },
+        }
+    },
 
-        // bgrx.u8 <-> rgb.u8
+    // bgrx.u8 <-> rgb.u8
 
+    {
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            while (count-- > 0)
             {
-                while (count-- > 0)
-                {
-                    dest[0] = src[2];
-                    dest[1] = src[1];
-                    dest[2] = src[0];
-                    dest[3] = 0xff;
-                    src += 3;
-                    dest += 4;
-                }
+                dest[0] = src[2];
+                dest[1] = src[1];
+                dest[2] = src[0];
+                dest[3] = 0xff;
+                src += 3;
+                dest += 4;
             }
-        },
+        }
+    },
+
+    {
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            while (count-- > 0)
             {
-                while (count-- > 0)
-                {
-                    dest[0] = src[2];
-                    dest[1] = src[1];
-                    dest[2] = src[0];
-                    src += 4;
-                    dest += 3;
-                }
+                dest[0] = src[2];
+                dest[1] = src[1];
+                dest[2] = src[0];
+                src += 4;
+                dest += 3;
             }
-        },
+        }
+    },
 
-        // bgra.u8 <-> bgr.u8
+    // bgra.u8 <-> bgr.u8
 
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u24* s = reinterpret_cast<const u24*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u24* s = reinterpret_cast<const u24*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    u32 v = s[x];
-                    d[x] = 0xff000000 | v;
-                }
+                u32 v = s[x];
+                d[x] = 0xff000000 | v;
             }
-        },
+        }
+    },
+
+    {
+        Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u24* d = reinterpret_cast<u24*>(dest);
+            const u32* s = reinterpret_cast<const u32*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u24* d = reinterpret_cast<u24*>(dest);
-                const u32* s = reinterpret_cast<const u32*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    d[x] = s[x];
-                }
+                d[x] = s[x];
             }
-        },
+        }
+    },
 
-        // bgra.u8 <-> rgb.u8
+    // bgra.u8 <-> rgb.u8
 
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            while (count-- > 0)
             {
-                while (count-- > 0)
-                {
-                    dest[0] = src[2];
-                    dest[1] = src[1];
-                    dest[2] = src[0];
-                    dest[3] = 0xff;
-                    src += 3;
-                    dest += 4;
-                }
+                dest[0] = src[2];
+                dest[1] = src[1];
+                dest[2] = src[0];
+                dest[3] = 0xff;
+                src += 3;
+                dest += 4;
             }
-        },
+        }
+    },
+
+    {
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u8* d = reinterpret_cast<u8*>(dest);
+            const u8* s = reinterpret_cast<const u8*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u8* d = reinterpret_cast<u8*>(dest);
-                const u8* s = reinterpret_cast<const u8*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    d[0] = s[2];
-                    d[1] = s[1];
-                    d[2] = s[0];
-                    s += 4;
-                    d += 3;
-                }
+                d[0] = s[2];
+                d[1] = s[1];
+                d[2] = s[0];
+                s += 4;
+                d += 3;
             }
-        },
+        }
+    },
 
-        // bgr.u8 <-> rgb.u8
+    // bgr.u8 <-> rgb.u8
 
+    {
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+        0, 
+        blit_24bit_swap_rg 
+    },
+
+    {
+        Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        0, 
+        blit_24bit_swap_rg 
+    },
+
+    // bgra.u8888 <-> bgr.u565
+
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(16, Format::UNORM, Format::BGR, 5, 6, 5),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
-            0, 
-            blit_24bit_swap_rg 
-        },
-        {
-            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            0, 
-            blit_24bit_swap_rg 
-        },
-
-        // bgra.u8888 <-> bgr.u565
-
-        {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(16, Format::UNORM, Format::BGR, 5, 6, 5),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u16* s = reinterpret_cast<const u16*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u16* s = reinterpret_cast<const u16*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    u32 v = s[x];
-                    u32 u = ((v & 0xf800) << 8) | ((v & 0x07e0) << 5) | ((v & 0x001f) << 3);
-                    u |= ((v & 0xe000) << 3) | ((v & 0x0600) >> 1) | ((v & 0x001c) >> 2);
-                    d[x] = 0xff000000 | u;
-                }
+                u32 v = s[x];
+                u32 u = ((v & 0xf800) << 8) | ((v & 0x07e0) << 5) | ((v & 0x001f) << 3);
+                u |= ((v & 0xe000) << 3) | ((v & 0x0600) >> 1) | ((v & 0x001c) >> 2);
+                d[x] = 0xff000000 | u;
             }
-        },
+        }
+    },
+
+    {
+        Format(16, Format::UNORM, Format::BGR, 5, 6, 5),
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(16, Format::UNORM, Format::BGR, 5, 6, 5),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u16* d = reinterpret_cast<u16*>(dest);
+            const u32* s = reinterpret_cast<const u32*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u16* d = reinterpret_cast<u16*>(dest);
-                const u32* s = reinterpret_cast<const u32*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    u32 v = s[x];
-                    u32 u = ((v >> 8) & 0xf800) | ((v >> 5) & 0x07e0) | ((v >> 3) & 0x001f);
-                    d[x] = u16(u);
-                }
+                u32 v = s[x];
+                u32 u = ((v >> 8) & 0xf800) | ((v >> 5) & 0x07e0) | ((v >> 3) & 0x001f);
+                d[x] = u16(u);
             }
-        },
+        }
+    },
 
-        // bgra.u8888 <-> bgra.u5551
+    // bgra.u8888 <-> bgra.u5551
 
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(16, Format::UNORM, Format::BGRA, 5, 5, 5, 1),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(16, Format::UNORM, Format::BGRA, 5, 5, 5, 1),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u16* s = reinterpret_cast<const u16*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u16* s = reinterpret_cast<const u16*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    u32 v = s[x];
-                    u32 u = v & 0x8000 ? 0xff000000 : 0;
-                    u |= ((v & 0x7c00) << 9) | ((v & 0x03e0) << 6) | ((v & 0x001f) << 3);
-                    d[x] = u | ((u & 0x00e0e0e0) >> 5);
-                }
-            } 
-        },
-        {
-            Format(16, Format::UNORM, Format::BGRA, 5, 5, 5, 1),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-                u16* d = reinterpret_cast<u16*>(dest);
-                const u32* s = reinterpret_cast<const u32*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    u32 v = s[x];
-                    u32 u = ((v >> 16) & 0x8000) | ((v >> 9) & 0x7c00) |
-                            ((v >> 6) & 0x03e0) | ((v >> 3) & 0x001f);
-                    d[x] = u16(u);
-                }
+                u32 v = s[x];
+                u32 u = v & 0x8000 ? 0xff000000 : 0;
+                u |= ((v & 0x7c00) << 9) | ((v & 0x03e0) << 6) | ((v & 0x001f) << 3);
+                d[x] = u | ((u & 0x00e0e0e0) >> 5);
             }
-        },
+        } 
+    },
 
-        // bgra.u8888 <-> bgra.u4444
-
+    {
+        Format(16, Format::UNORM, Format::BGRA, 5, 5, 5, 1),
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u16* d = reinterpret_cast<u16*>(dest);
+            const u32* s = reinterpret_cast<const u32*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u16* s = reinterpret_cast<const u16*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    u32 v = s[x];
-                    u32 u = ((v & 0xf000) << 16) | ((v & 0x0f00) << 12) |
-                            ((v & 0x00f0) <<  8) | ((v & 0x000f) << 4);
-                    d[x] = u | (u >> 4);
-                }
-            } 
-        },
-        {
-            Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-                u16* d = reinterpret_cast<u16*>(dest);
-                const u32* s = reinterpret_cast<const u32*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    u32 v = s[x];
-                    u32 u = ((v >> 16) & 0xf000) | ((v >> 12) & 0x0f00) |
-                            ((v >> 8) & 0x00f0) | ((v >> 4) & 0x000f);
-                    d[x] = u16(u);
-                }
+                u32 v = s[x];
+                u32 u = ((v >> 16) & 0x8000) | ((v >> 9) & 0x7c00) |
+                        ((v >> 6) & 0x03e0) | ((v >> 3) & 0x001f);
+                d[x] = u16(u);
             }
-        },
+        }
+    },
 
-        // rgb.u8 <- l.u8
+    // bgra.u8888 <-> bgra.u4444
 
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
-            LuminanceFormat(8, Format::UNORM, 8, 0),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u16* s = reinterpret_cast<const u16*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u24* d = reinterpret_cast<u24*>(dest);
-                const u8* s = reinterpret_cast<const u8*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    u32 v = s[x];
-                    d[x] = u24(v * 0x010101);
-                }
+                u32 v = s[x];
+                u32 u = ((v & 0xf000) << 16) | ((v & 0x0f00) << 12) |
+                        ((v & 0x00f0) <<  8) | ((v & 0x000f) << 4);
+                d[x] = u | (u >> 4);
             }
-        },
+        } 
+    },
+
+    {
+        Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            LuminanceFormat(8, Format::UNORM, 8, 0),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u16* d = reinterpret_cast<u16*>(dest);
+            const u32* s = reinterpret_cast<const u32*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u24* d = reinterpret_cast<u24*>(dest);
-                const u8* s = reinterpret_cast<const u8*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    u32 v = s[x];
-                    d[x] = u24(v * 0x010101);
-                }
+                u32 v = s[x];
+                u32 u = ((v >> 16) & 0xf000) | ((v >> 12) & 0x0f00) |
+                        ((v >> 8) & 0x00f0) | ((v >> 4) & 0x000f);
+                d[x] = u16(u);
             }
-        },
+        }
+    },
 
-        // rgba.u8 <- l.u8
+    // rgb.u8 <- l.u8
 
+    {
+        Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+        LuminanceFormat(8, Format::UNORM, 8, 0),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            LuminanceFormat(8, Format::UNORM, 8, 0),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u24* d = reinterpret_cast<u24*>(dest);
+            const u8* s = reinterpret_cast<const u8*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u8* s = reinterpret_cast<const u8*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    u32 v = s[x];
-                    d[x] = 0xff000000 | v * 0x010101;
-                }
+                u32 v = s[x];
+                d[x] = u24(v * 0x010101);
             }
-        },
+        }
+    },
+
+    {
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        LuminanceFormat(8, Format::UNORM, 8, 0),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            LuminanceFormat(8, Format::UNORM, 8, 0),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u24* d = reinterpret_cast<u24*>(dest);
+            const u8* s = reinterpret_cast<const u8*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u8* s = reinterpret_cast<const u8*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    u32 v = s[x];
-                    d[x] = 0xff000000 | v * 0x010101;
-                }
+                u32 v = s[x];
+                d[x] = u24(v * 0x010101);
             }
-        },
+        }
+    },
 
-        // rgba.u8 <- l.u16
+    // rgba.u8 <- l.u8
 
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        LuminanceFormat(8, Format::UNORM, 8, 0),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            LuminanceFormat(16, Format::UNORM, 16, 0),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u8* s = reinterpret_cast<const u8*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u16* s = reinterpret_cast<const u16*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    const u32 i = s[x] >> 8;
-                    d[x] = 0xff000000 | i * 0x010101;
-                }
+                u32 v = s[x];
+                d[x] = 0xff000000 | v * 0x010101;
             }
-        },
+        }
+    },
+
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        LuminanceFormat(8, Format::UNORM, 8, 0),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            LuminanceFormat(16, Format::UNORM, 16, 0),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u8* s = reinterpret_cast<const u8*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u16* s = reinterpret_cast<const u16*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    const u32 i = s[x] >> 8;
-                    d[x] = 0xff000000 | i * 0x010101;
-                }
+                u32 v = s[x];
+                d[x] = 0xff000000 | v * 0x010101;
             }
-        },
+        }
+    },
 
-        // rgba.u8 <- la.u16
+    // rgba.u8 <- l.u16
 
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        LuminanceFormat(16, Format::UNORM, 16, 0),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            LuminanceFormat(32, Format::UNORM, 16, 16),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u16* s = reinterpret_cast<const u16*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u32* s = reinterpret_cast<const u32*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    const u32 a = s[x] & 0xff000000;
-                    const u32 i = (s[x] & 0x0000ff00) >> 8;
-                    d[x] = a | i * 0x010101;
-                }
+                const u32 i = s[x] >> 8;
+                d[x] = 0xff000000 | i * 0x010101;
             }
-        },
+        }
+    },
+
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        LuminanceFormat(16, Format::UNORM, 16, 0),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            LuminanceFormat(32, Format::UNORM, 16, 16),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u16* s = reinterpret_cast<const u16*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u32* s = reinterpret_cast<const u32*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    const u32 a = s[x] & 0xff000000;
-                    const u32 i = (s[x] & 0x0000ff00) >> 8;
-                    d[x] = a | i * 0x010101;
-                }
+                const u32 i = s[x] >> 8;
+                d[x] = 0xff000000 | i * 0x010101;
             }
-        },
+        }
+    },
 
-        // rgba.u8 <- rgb.u16
+    // rgba.u8 <- la.u16
 
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        LuminanceFormat(32, Format::UNORM, 16, 16),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(48, Format::UNORM, Format::RGB, 16, 16, 16),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u32* s = reinterpret_cast<const u32*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u16* s = reinterpret_cast<const u16*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    const u32 r = s[0];
-                    const u32 g = s[1] & 0x0000ff00;
-                    const u32 b = s[2] & 0x0000ff00;
-                    d[x] = 0xff000000 | (b << 8) | g | (r >> 8);
-                    s += 3;
-                }
+                const u32 a = s[x] & 0xff000000;
+                const u32 i = (s[x] & 0x0000ff00) >> 8;
+                d[x] = a | i * 0x010101;
             }
-        },
+        }
+    },
+
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        LuminanceFormat(32, Format::UNORM, 16, 16),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(48, Format::UNORM, Format::RGB, 16, 16, 16),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u32* s = reinterpret_cast<const u32*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u16* s = reinterpret_cast<const u16*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    const u32 r = s[0] & 0x0000ff00;
-                    const u32 g = s[1] & 0x0000ff00;
-                    const u32 b = s[2];
-                    d[x] = 0xff000000 | (r << 8) | g | (b >> 8);
-                    s += 3;
-                }
+                const u32 a = s[x] & 0xff000000;
+                const u32 i = (s[x] & 0x0000ff00) >> 8;
+                d[x] = a | i * 0x010101;
             }
-        },
+        }
+    },
 
-        // rgba.u8 <- rgba.u16
+    // rgba.u8 <- rgb.u16
 
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(48, Format::UNORM, Format::RGB, 16, 16, 16),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u16* s = reinterpret_cast<const u16*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u16* s = reinterpret_cast<const u16*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    const u32 r = s[0];
-                    const u32 g = s[1] & 0x0000ff00;
-                    const u32 b = s[2] & 0x0000ff00;
-                    const u32 a = s[3] & 0x0000ff00;
-                    d[x] = (a << 16) | (b << 8) | g | (r >> 8);
-                    s += 4;
-                }
+                const u32 r = s[0];
+                const u32 g = s[1] & 0x0000ff00;
+                const u32 b = s[2] & 0x0000ff00;
+                d[x] = 0xff000000 | (b << 8) | g | (r >> 8);
+                s += 3;
             }
-        },
+        }
+    },
+
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(48, Format::UNORM, Format::RGB, 16, 16, 16),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u16* s = reinterpret_cast<const u16*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const u16* s = reinterpret_cast<const u16*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    const u32 r = s[0] & 0x0000ff00;
-                    const u32 g = s[1] & 0x0000ff00;
-                    const u32 b = s[2];
-                    const u32 a = s[3] & 0x0000ff00;
-                    d[x] = (a << 16) | (r << 8) | g | (b >> 8);
-                    s += 4;
-                }
+                const u32 r = s[0] & 0x0000ff00;
+                const u32 g = s[1] & 0x0000ff00;
+                const u32 b = s[2];
+                d[x] = 0xff000000 | (r << 8) | g | (b >> 8);
+                s += 3;
             }
-        },
+        }
+    },
 
-        // rgba.u8 <-> rgba.f16
+    // rgba.u8 <- rgba.u16
 
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u16* s = reinterpret_cast<const u16*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const float16x4* s = reinterpret_cast<const float16x4*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    float32x4 f = convert<float32x4>(s[x]);
-                    f = clamp(f, 0.0f, 1.0f);
-                    f = f * 255.0f + 0.5f;
-                    int32x4 i = convert<int32x4>(f);
-                    d[x] = i.pack();
-                }
-            } 
-        },
+                const u32 r = s[0];
+                const u32 g = s[1] & 0x0000ff00;
+                const u32 b = s[2] & 0x0000ff00;
+                const u32 a = s[3] & 0x0000ff00;
+                d[x] = (a << 16) | (b << 8) | g | (r >> 8);
+                s += 4;
+            }
+        }
+    },
+
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u16* s = reinterpret_cast<const u16*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const float16x4* s = reinterpret_cast<const float16x4*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    float32x4 f = convert<float32x4>(s[x]);
-                    f = f.zyxw;
-                    f = clamp(f, 0.0f, 1.0f);
-                    f = f * 255.0f + 0.5f;
-                    int32x4 i = convert<int32x4>(f);
-                    d[x] = i.pack();
-                }
-            } 
-        },
+                const u32 r = s[0] & 0x0000ff00;
+                const u32 g = s[1] & 0x0000ff00;
+                const u32 b = s[2];
+                const u32 a = s[3] & 0x0000ff00;
+                d[x] = (a << 16) | (r << 8) | g | (b >> 8);
+                s += 4;
+            }
+        }
+    },
 
+    // rgba.u8 <-> rgba.f16
+
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const float16x4* s = reinterpret_cast<const float16x4*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                float16x4* d = reinterpret_cast<float16x4*>(dest);
-                const u32* s = reinterpret_cast<const u32*>(src);
+                float32x4 f = convert<float32x4>(s[x]);
+                f = clamp(f, 0.0f, 1.0f);
+                f = f * 255.0f + 0.5f;
+                int32x4 i = convert<int32x4>(f);
+                d[x] = i.pack();
+            }
+        } 
+    },
 
-                while (count >= 4)
-                {
-                    uint32x4 color = simd::u32x4_uload(s);
-
-                    uint32x4 r = (color >>  0) & 0xff;
-                    uint32x4 g = (color >>  8) & 0xff;
-                    uint32x4 b = (color >> 16) & 0xff;
-                    uint32x4 a = (color >> 24) & 0xff;
-
-                    uint32x4 rb01 = unpacklo(r, b);
-                    uint32x4 ga01 = unpacklo(g, a);
-                    uint32x4 rb23 = unpackhi(r, b);
-                    uint32x4 ga23 = unpackhi(g, a);
-
-                    uint32x4 rgba0 = unpacklo(rb01, ga01);
-                    uint32x4 rgba1 = unpackhi(rb01, ga01);
-                    uint32x4 rgba2 = unpacklo(rb23, ga23);
-                    uint32x4 rgba3 = unpackhi(rb23, ga23);
-
-                    float32x4 v0 = convert<float32x4>(rgba0) / 255.0f;
-                    float32x4 v1 = convert<float32x4>(rgba1) / 255.0f;
-                    float32x4 v2 = convert<float32x4>(rgba2) / 255.0f;
-                    float32x4 v3 = convert<float32x4>(rgba3) / 255.0f;
-
-                    d[0] = convert<float16x4>(v0);
-                    d[1] = convert<float16x4>(v1);
-                    d[2] = convert<float16x4>(v2);
-                    d[3] = convert<float16x4>(v3);
-                    s += 4;
-                    d += 4;
-                    count -= 4;
-                }
-
-                while (count-- > 0)
-                {
-                    u32 color = s[0];
-                    float r = float((color >>  0) & 0xff) / 255.0f;
-                    float g = float((color >>  8) & 0xff) / 255.0f;
-                    float b = float((color >> 16) & 0xff) / 255.0f;
-                    float a = float((color >> 24) & 0xff) / 255.0f;
-                    float32x4 v(r, g, b, a);
-                    d[0] = convert<float16x4>(v);
-                    s += 1;
-                    d += 1;
-                }
-            } 
-        },
-
-        // rgba.u8 <-> rgba.f32
-
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const float16x4* s = reinterpret_cast<const float16x4*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const float32x4* s = reinterpret_cast<const float32x4*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    float32x4 f = s[x];
-                    f = clamp(f, 0.0f, 1.0f);
-                    f = f * 255.0f + 0.5f;
-                    int32x4 i = convert<int32x4>(f);
-                    d[x] = i.pack();
-                }
-            } 
-        },
+                float32x4 f = convert<float32x4>(s[x]);
+                f = f.zyxw;
+                f = clamp(f, 0.0f, 1.0f);
+                f = f * 255.0f + 0.5f;
+                int32x4 i = convert<int32x4>(f);
+                d[x] = i.pack();
+            }
+        } 
+    },
+
+    {
+        Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-                u32* d = reinterpret_cast<u32*>(dest);
-                const float32x4* s = reinterpret_cast<const float32x4*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    float32x4 f = s[x];
-                    f = f.zyxw;
-                    f = clamp(f, 0.0f, 1.0f);
-                    f = f * 255.0f + 0.5f;
-                    int32x4 i = convert<int32x4>(f);
-                    d[x] = i.pack();
-                }
-            } 
-        },
+            float16x4* d = reinterpret_cast<float16x4*>(dest);
+            const u32* s = reinterpret_cast<const u32*>(src);
 
+            while (count >= 4)
+            {
+                uint32x4 color = simd::u32x4_uload(s);
+
+                uint32x4 r = (color >>  0) & 0xff;
+                uint32x4 g = (color >>  8) & 0xff;
+                uint32x4 b = (color >> 16) & 0xff;
+                uint32x4 a = (color >> 24) & 0xff;
+
+                uint32x4 rb01 = unpacklo(r, b);
+                uint32x4 ga01 = unpacklo(g, a);
+                uint32x4 rb23 = unpackhi(r, b);
+                uint32x4 ga23 = unpackhi(g, a);
+
+                uint32x4 rgba0 = unpacklo(rb01, ga01);
+                uint32x4 rgba1 = unpackhi(rb01, ga01);
+                uint32x4 rgba2 = unpacklo(rb23, ga23);
+                uint32x4 rgba3 = unpackhi(rb23, ga23);
+
+                float32x4 v0 = convert<float32x4>(rgba0) / 255.0f;
+                float32x4 v1 = convert<float32x4>(rgba1) / 255.0f;
+                float32x4 v2 = convert<float32x4>(rgba2) / 255.0f;
+                float32x4 v3 = convert<float32x4>(rgba3) / 255.0f;
+
+                d[0] = convert<float16x4>(v0);
+                d[1] = convert<float16x4>(v1);
+                d[2] = convert<float16x4>(v2);
+                d[3] = convert<float16x4>(v3);
+                s += 4;
+                d += 4;
+                count -= 4;
+            }
+
+            while (count-- > 0)
+            {
+                u32 color = s[0];
+                float r = float((color >>  0) & 0xff) / 255.0f;
+                float g = float((color >>  8) & 0xff) / 255.0f;
+                float b = float((color >> 16) & 0xff) / 255.0f;
+                float a = float((color >> 24) & 0xff) / 255.0f;
+                float32x4 v(r, g, b, a);
+                d[0] = convert<float16x4>(v);
+                s += 1;
+                d += 1;
+            }
+        } 
+    },
+
+    // rgba.u8 <-> rgba.f32
+
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const float32x4* s = reinterpret_cast<const float32x4*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                float* d = reinterpret_cast<float*>(dest);
-                const u32* s = reinterpret_cast<const u32*>(src);
+                float32x4 f = s[x];
+                f = clamp(f, 0.0f, 1.0f);
+                f = f * 255.0f + 0.5f;
+                int32x4 i = convert<int32x4>(f);
+                d[x] = i.pack();
+            }
+        } 
+    },
 
-                while (count >= 4)
-                {
-                    uint32x4 color = simd::u32x4_uload(s);
-
-                    uint32x4 r = (color >>  0) & 0xff;
-                    uint32x4 g = (color >>  8) & 0xff;
-                    uint32x4 b = (color >> 16) & 0xff;
-                    uint32x4 a = (color >> 24) & 0xff;
-
-                    uint32x4 rb01 = unpacklo(r, b);
-                    uint32x4 ga01 = unpacklo(g, a);
-                    uint32x4 rb23 = unpackhi(r, b);
-                    uint32x4 ga23 = unpackhi(g, a);
-
-                    uint32x4 rgba0 = unpacklo(rb01, ga01);
-                    uint32x4 rgba1 = unpackhi(rb01, ga01);
-                    uint32x4 rgba2 = unpacklo(rb23, ga23);
-                    uint32x4 rgba3 = unpackhi(rb23, ga23);
-
-                    simd::f32x4_ustore(d + 4 * 0, convert<float32x4>(rgba0) / 255.0f);
-                    simd::f32x4_ustore(d + 4 * 1, convert<float32x4>(rgba1) / 255.0f);
-                    simd::f32x4_ustore(d + 4 * 2, convert<float32x4>(rgba2) / 255.0f);
-                    simd::f32x4_ustore(d + 4 * 3, convert<float32x4>(rgba3) / 255.0f);
-                    s += 4;
-                    d += 16;
-                    count -= 4;
-                }
-
-                while (count-- > 0)
-                {
-                    u32 color = s[0];
-                    d[0] = float((color >>  0) & 0xff) / 255.0f;
-                    d[1] = float((color >>  8) & 0xff) / 255.0f;
-                    d[2] = float((color >> 16) & 0xff) / 255.0f;
-                    d[3] = float((color >> 24) & 0xff) / 255.0f;
-                    s += 1;
-                    d += 4;
-                }
-            } 
-        },
-
-        // rgba.f16 <-> rgba.f32
-
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
-            Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            u32* d = reinterpret_cast<u32*>(dest);
+            const float32x4* s = reinterpret_cast<const float32x4*>(src);
+            for (int x = 0; x < count; ++x)
             {
-                float16x4* d = reinterpret_cast<float16x4*>(dest);
-                const float32x4* s = reinterpret_cast<const float32x4*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    d[x] = convert<float16x4>(s[x]);
-                }
-            } 
-        },
+                float32x4 f = s[x];
+                f = f.zyxw;
+                f = clamp(f, 0.0f, 1.0f);
+                f = f * 255.0f + 0.5f;
+                int32x4 i = convert<int32x4>(f);
+                d[x] = i.pack();
+            }
+        } 
+    },
+
+    {
+        Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
-            Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
-            0, 
-            [] (u8* dest, const u8* src, int count) -> void
+            float* d = reinterpret_cast<float*>(dest);
+            const u32* s = reinterpret_cast<const u32*>(src);
+
+            while (count >= 4)
             {
-                float32x4* d = reinterpret_cast<float32x4*>(dest);
-                const float16x4* s = reinterpret_cast<const float16x4*>(src);
-                for (int x = 0; x < count; ++x)
-                {
-                    d[x] = convert<float32x4>(s[x]);
-                }
-            } 
-        },
+                uint32x4 color = simd::u32x4_uload(s);
+
+                uint32x4 r = (color >>  0) & 0xff;
+                uint32x4 g = (color >>  8) & 0xff;
+                uint32x4 b = (color >> 16) & 0xff;
+                uint32x4 a = (color >> 24) & 0xff;
+
+                uint32x4 rb01 = unpacklo(r, b);
+                uint32x4 ga01 = unpacklo(g, a);
+                uint32x4 rb23 = unpackhi(r, b);
+                uint32x4 ga23 = unpackhi(g, a);
+
+                uint32x4 rgba0 = unpacklo(rb01, ga01);
+                uint32x4 rgba1 = unpackhi(rb01, ga01);
+                uint32x4 rgba2 = unpacklo(rb23, ga23);
+                uint32x4 rgba3 = unpackhi(rb23, ga23);
+
+                simd::f32x4_ustore(d + 4 * 0, convert<float32x4>(rgba0) / 255.0f);
+                simd::f32x4_ustore(d + 4 * 1, convert<float32x4>(rgba1) / 255.0f);
+                simd::f32x4_ustore(d + 4 * 2, convert<float32x4>(rgba2) / 255.0f);
+                simd::f32x4_ustore(d + 4 * 3, convert<float32x4>(rgba3) / 255.0f);
+                s += 4;
+                d += 16;
+                count -= 4;
+            }
+
+            while (count-- > 0)
+            {
+                u32 color = s[0];
+                d[0] = float((color >>  0) & 0xff) / 255.0f;
+                d[1] = float((color >>  8) & 0xff) / 255.0f;
+                d[2] = float((color >> 16) & 0xff) / 255.0f;
+                d[3] = float((color >> 24) & 0xff) / 255.0f;
+                s += 1;
+                d += 4;
+            }
+        } 
+    },
+
+    // rgba.f16 <-> rgba.f32
+
+    {
+        Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+        Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
+        {
+            float16x4* d = reinterpret_cast<float16x4*>(dest);
+            const float32x4* s = reinterpret_cast<const float32x4*>(src);
+            for (int x = 0; x < count; ++x)
+            {
+                d[x] = convert<float16x4>(s[x]);
+            }
+        } 
+    },
+
+    {
+        Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+        Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
+        {
+            float32x4* d = reinterpret_cast<float32x4*>(dest);
+            const float16x4* s = reinterpret_cast<const float16x4*>(src);
+            for (int x = 0; x < count; ++x)
+            {
+                d[x] = convert<float32x4>(s[x]);
+            }
+        } 
+    },
 
 #if defined(MANGO_ENABLE_NEON)
 
@@ -1422,40 +1443,42 @@ namespace
     // ----------------------------------------------------------------------------
 
 #if 0
-        // NOTE: clang compiles the scalar code into vld3/vst4 so this is just for testing
-        {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            ARM_NEON,
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-                constexpr int N = 4; // guard for vld/vst out-of-bounds access
-                while (count >= 8 + N)
-                {
-                    const uint8x16x3_t rgb = vld3q_u8(src);
-                    uint8x16x4_t rgba;
-                    rgba.val[0] = rgb.val[0];
-                    rgba.val[1] = rgb.val[1];
-                    rgba.val[2] = rgb.val[2];
-                    rgba.val[3] = vdupq_n_u8(0xff);
-                    vst4q_u8(dest, rgba);
-                    src += 24;
-                    dest += 32;
-                    count -= 8;
-                }
 
-                while (count-- > 0)
-                {
-                    dest[0] = src[0];
-                    dest[1] = src[1];
-                    dest[2] = src[2];
-                    dest[3] = 0xff;
-                    src += 3;
-                    dest += 4;
-                }
+    // NOTE: clang compiles the scalar code into vld3/vst4 so this is just for testing
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        ARM_NEON,
+        [] (u8* dest, const u8* src, int count) -> void
+        {
+            constexpr int N = 4; // guard for vld/vst out-of-bounds access
+            while (count >= 8 + N)
+            {
+                const uint8x16x3_t rgb = vld3q_u8(src);
+                uint8x16x4_t rgba;
+                rgba.val[0] = rgb.val[0];
+                rgba.val[1] = rgb.val[1];
+                rgba.val[2] = rgb.val[2];
+                rgba.val[3] = vdupq_n_u8(0xff);
+                vst4q_u8(dest, rgba);
+                src += 24;
+                dest += 32;
+                count -= 8;
             }
-        },
-#endif
+
+            while (count-- > 0)
+            {
+                dest[0] = src[0];
+                dest[1] = src[1];
+                dest[2] = src[2];
+                dest[3] = 0xff;
+                src += 3;
+                dest += 4;
+            }
+        }
+    },
+
+#endif // 0
 
 #endif // MANGO_ENABLE_NEON
 
@@ -1465,16 +1488,16 @@ namespace
     // SSE2
     // ----------------------------------------------------------------------------
 
-        /*
+    /*
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        INTEL_SSE2,
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            INTEL_SSE2,
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-            }
-        },
-        */
+        }
+    },
+    */
 
 #endif // MANGO_ENABLE_SSE2
 
@@ -1484,58 +1507,58 @@ namespace
     // SSE4.1
     // ----------------------------------------------------------------------------
 
-        {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
-            0, 
-            sse4_32bit_swap_rg 
-        },
+    {
+        Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        0, 
+        sse4_32bit_swap_rg 
+    },
 
-        {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0),
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0),
-            0, 
-            sse4_32bit_swap_rg
-        },
+    {
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
+        0, 
+        sse4_32bit_swap_rg
+    },
 
-        {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            0, 
-            sse4_32bit_swap_rg 
-        },
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        0, 
+        sse4_32bit_swap_rg 
+    },
 
-        {
-            Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            0, 
-            sse4_32bit_swap_rg 
-        },
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        0, 
+        sse4_32bit_swap_rg 
+    },
 
-        {
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
-            INTEL_SSE4_1, 
-            sse4_24bit_swap_rg
-        },
+    {
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+        INTEL_SSE4_1, 
+        sse4_24bit_swap_rg
+    },
 
-        {
-            Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            INTEL_SSE4_1,
-            sse4_24bit_swap_rg
-        },
+    {
+        Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        INTEL_SSE4_1,
+        sse4_24bit_swap_rg
+    },
 
-        /*
+    /*
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        INTEL_SSE4_1,
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            INTEL_SSE4_1,
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-            }
-        },
-        */
+        }
+    },
+    */
 
 #endif // MANGO_ENABLE_SSE4_1
 
@@ -1545,16 +1568,16 @@ namespace
     // AVX
     // ----------------------------------------------------------------------------
 
-        /*
+    /*
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        INTEL_AVX,
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            INTEL_AVX,
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-            }
-        },
-        */
+        }
+    },
+    */
 
 #endif // MANGO_ENABLE_AVX
 
@@ -1564,16 +1587,16 @@ namespace
     // AVX2
     // ----------------------------------------------------------------------------
 
-        /*
+    /*
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        INTEL_AVX2,
+        [] (u8* dest, const u8* src, int count) -> void
         {
-            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-            INTEL_AVX2,
-            [] (u8* dest, const u8* src, int count) -> void
-            {
-            }
-        },
-        */
+        }
+    },
+    */
 
 #endif // MANGO_ENABLE_AVX2
     };
