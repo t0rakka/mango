@@ -72,6 +72,7 @@ namespace
             descriptor       = p.read8();
 
             debugPrint("  image_type:    %d\n", image_type);
+            debugPrint("  pixel_size:    %d\n", pixel_size);
             debugPrint("  colormap_type: %d\n", colormap_type);
             debugPrint("  colormap_bits: %d\n", colormap_bits);
             debugPrint("  colormap:      [%d, %d]\n", colormap_origin, colormap_origin + colormap_length);
@@ -445,9 +446,10 @@ namespace
                 dest.stride = 0 - surface.stride;
             }
 
-		    std::unique_ptr<u8[]> temp;
             const u8* data = p;
             const u8* end = m_memory.address + m_memory.size;
+
+		    std::unique_ptr<u8[]> temp;
 
             if (m_targa_header.isRLE())
             {
