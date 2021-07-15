@@ -832,7 +832,7 @@ namespace
             u8 temp[16];
             std::memcpy(temp, scan, bytes);
 
-            paeth12(scan, prev, value, last);
+            paeth12(temp, prev, value, last);
             std::memcpy(scan, temp, bytes);
         }
     }
@@ -857,7 +857,7 @@ namespace
             u8 temp[16];
             std::memcpy(temp, scan, bytes);
 
-            paeth16(scan, prev, value, last);
+            paeth16(temp, prev, value, last);
             std::memcpy(scan, temp, bytes);
         }
     }
