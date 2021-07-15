@@ -1055,6 +1055,44 @@ namespace
         }
     },
 
+    // rgba.u8888 <-> bgra.u4444
+
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
+        {
+            u32* d = reinterpret_cast<u32*>(dest);
+            const u16* s = reinterpret_cast<const u16*>(src);
+            for (int x = 0; x < count; ++x)
+            {
+                u32 v = s[x];
+                u32 u = ((v & 0xf000) << 16) | ((v & 0x000f) << 20) |
+                        ((v & 0x00f0) <<  8) | ((v & 0x0f00) >> 4);
+                d[x] = u | (u >> 4);
+            }
+        } 
+    },
+
+    {
+        Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        0, 
+        [] (u8* dest, const u8* src, int count) -> void
+        {
+            u16* d = reinterpret_cast<u16*>(dest);
+            const u32* s = reinterpret_cast<const u32*>(src);
+            for (int x = 0; x < count; ++x)
+            {
+                u32 v = s[x];
+                u32 u = ((v >> 16) & 0xf000) | ((v << 4) & 0x0f00) |
+                        ((v >> 8) & 0x00f0) | ((v >> 20) & 0x000f);
+                d[x] = u16(u);
+            }
+        }
+    },
+
     // rgb.u8 <- l.u8
 
     {

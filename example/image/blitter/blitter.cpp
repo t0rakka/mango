@@ -44,8 +44,13 @@ const Test tests [] =
     { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 0), Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), "xx" },
     { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0), Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), "xx" },
     { Format(8, Format::UNORM, Format::RGBA, 2, 2, 2, 2), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "xx" },
-    { Format(16, Format::UNORM, Format::RGBA, 4, 4, 4, 4), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "xx" },
     { Format(32, Format::UNORM, Format::RGBA, 6, 6, 6, 8), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "xx" },
+    { Format(16, Format::UNORM, Format::RGBA, 4, 4, 4, 4), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "xx" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(16, Format::UNORM, Format::RGBA, 4, 4, 4, 4), "xx" },
+    { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4), "scalar" },
+    { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4), "scalar" },
+    { Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4), Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), "scalar" },
+    { Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "scalar" },
     { Format(8, Format::UNORM, Format::R, 8, 0, 0, 0), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "xx" },
     { Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "simd:4" },
     { Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "simd:4" },
@@ -62,7 +67,7 @@ void test(Surface dest, Surface source)
     int width = dest.width;
     int height = dest.height;
 
-    constexpr int s = 337;
+    constexpr int s = 297;
     int x = 0;
     int y = 0;
 
