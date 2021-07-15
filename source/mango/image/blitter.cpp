@@ -616,6 +616,66 @@ namespace
 
 #endif // defined(MANGO_ENABLE_SSE4_1)
 
+#if defined(MANGO_ENABLE_NEON)
+
+    // ----------------------------------------------------------------------------
+    // NEON
+    // ----------------------------------------------------------------------------
+
+    void neon_32bit_swap_rg(u8* d, const u8* s, int count)
+    {
+        while (count >= 16)
+        {
+            const uint8x16x4_t a = vld4q_u8(s);
+            uint8x16x4_t b;
+            b.val[0] = a.val[2];
+            b.val[1] = a.val[1];
+            b.val[2] = a.val[0];
+            b.val[3] = a.val[3];
+            vst4q_u8(d, b);
+            s += 64;
+            d += 64;
+            count -= 16;
+        }
+
+        while (count-- > 0)
+        {
+            d[0] = s[2];
+            d[1] = s[1];
+            d[2] = s[0];
+            d[3] = s[3];
+            s += 4;
+            d += 4;
+        }
+    }
+
+    void neon_24bit_swap_rg(u8* d, const u8* s, int count)
+    {
+        while (count >= 16)
+        {
+            const uint8x16x3_t a = vld3q_u8(s);
+            uint8x16x3_t b;
+            b.val[0] = a.val[2];
+            b.val[1] = a.val[1];
+            b.val[2] = a.val[0];
+            vst3q_u8(d, b);
+            s += 48;
+            d += 48;
+            count -= 16;
+        }
+
+        while (count-- > 0)
+        {
+            d[0] = s[2];
+            d[1] = s[1];
+            d[2] = s[0];
+            s += 3;
+            d += 3;
+        }
+    }
+
+#endif // defined(MANGO_ENABLE_NEON)
+
     // ----------------------------------------------------------------------------
     // custom conversion function lookup
     // ----------------------------------------------------------------------------
@@ -1436,52 +1496,6 @@ namespace
         } 
     },
 
-#if defined(MANGO_ENABLE_NEON)
-
-    // ----------------------------------------------------------------------------
-    // NEON
-    // ----------------------------------------------------------------------------
-
-#if 0
-
-    // NOTE: clang compiles the scalar code into vld3/vst4 so this is just for testing
-    {
-        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-        ARM_NEON,
-        [] (u8* dest, const u8* src, int count) -> void
-        {
-            constexpr int N = 4; // guard for vld/vst out-of-bounds access
-            while (count >= 8 + N)
-            {
-                const uint8x16x3_t rgb = vld3q_u8(src);
-                uint8x16x4_t rgba;
-                rgba.val[0] = rgb.val[0];
-                rgba.val[1] = rgb.val[1];
-                rgba.val[2] = rgb.val[2];
-                rgba.val[3] = vdupq_n_u8(0xff);
-                vst4q_u8(dest, rgba);
-                src += 24;
-                dest += 32;
-                count -= 8;
-            }
-
-            while (count-- > 0)
-            {
-                dest[0] = src[0];
-                dest[1] = src[1];
-                dest[2] = src[2];
-                dest[3] = 0xff;
-                src += 3;
-                dest += 4;
-            }
-        }
-    },
-
-#endif // 0
-
-#endif // MANGO_ENABLE_NEON
-
 #if defined(MANGO_ENABLE_SSE2)
 
     // ----------------------------------------------------------------------------
@@ -1510,28 +1524,28 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
-        0, 
+        INTEL_SSE4_1, 
         sse4_32bit_swap_rg 
     },
 
     {
         Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
-        0, 
+        INTEL_SSE4_1, 
         sse4_32bit_swap_rg
     },
 
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-        0, 
+        INTEL_SSE4_1, 
         sse4_32bit_swap_rg 
     },
 
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-        0, 
+        INTEL_SSE4_1, 
         sse4_32bit_swap_rg 
     },
 
@@ -1599,7 +1613,96 @@ namespace
     */
 
 #endif // MANGO_ENABLE_AVX2
-    };
+
+#if defined(MANGO_ENABLE_NEON)
+
+    // ----------------------------------------------------------------------------
+    // NEON
+    // ----------------------------------------------------------------------------
+
+    {
+        Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        ARM_NEON,
+        neon_32bit_swap_rg 
+    },
+
+    {
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
+        ARM_NEON,
+        neon_32bit_swap_rg
+    },
+
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        ARM_NEON,
+        neon_32bit_swap_rg 
+    },
+
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        ARM_NEON,
+        neon_32bit_swap_rg 
+    },
+
+    {
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+        ARM_NEON, 
+        neon_24bit_swap_rg
+    },
+
+    {
+        Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        ARM_NEON,
+        neon_24bit_swap_rg
+    },
+
+#if 0
+
+    // NOTE: clang compiles the scalar code into vld3/vst4 so this is just for testing
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
+        ARM_NEON,
+        [] (u8* dest, const u8* src, int count) -> void
+        {
+            constexpr int N = 4; // guard for vld/vst out-of-bounds access
+            while (count >= 8 + N)
+            {
+                const uint8x16x3_t rgb = vld3q_u8(src);
+                uint8x16x4_t rgba;
+                rgba.val[0] = rgb.val[0];
+                rgba.val[1] = rgb.val[1];
+                rgba.val[2] = rgb.val[2];
+                rgba.val[3] = vdupq_n_u8(0xff);
+                vst4q_u8(dest, rgba);
+                src += 24;
+                dest += 32;
+                count -= 8;
+            }
+
+            while (count-- > 0)
+            {
+                dest[0] = src[0];
+                dest[1] = src[1];
+                dest[2] = src[2];
+                dest[3] = 0xff;
+                src += 3;
+                dest += 4;
+            }
+        }
+    },
+
+#endif // 0
+
+#endif // MANGO_ENABLE_NEON
+
+    }; // end of custom blitter
 
     using FastConversionMap = std::map< std::pair<Format, Format>, Blitter::FastFunc >;
 
