@@ -1700,17 +1700,13 @@ namespace
         neon_24bit_swap_rg
     },
 
-#if 0
-
-    // NOTE: clang compiles the scalar code into vld3/vst4 so this is just for testing
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
         ARM_NEON,
         [] (u8* dest, const u8* src, int count) -> void
         {
-            constexpr int N = 4; // guard for vld/vst out-of-bounds access
-            while (count >= 8 + N)
+            while (count >= 16)
             {
                 const uint8x16x3_t rgb = vld3q_u8(src);
                 uint8x16x4_t rgba;
@@ -1719,9 +1715,9 @@ namespace
                 rgba.val[2] = rgb.val[2];
                 rgba.val[3] = vdupq_n_u8(0xff);
                 vst4q_u8(dest, rgba);
-                src += 24;
-                dest += 32;
-                count -= 8;
+                src += 48;
+                dest += 64;
+                count -= 16;
             }
 
             while (count-- > 0)
@@ -1735,8 +1731,6 @@ namespace
             }
         }
     },
-
-#endif // 0
 
 #endif // MANGO_ENABLE_NEON
 
