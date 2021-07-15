@@ -230,7 +230,9 @@ namespace
         for ( ; y < height; )
         {
             if (p >= end)
+            {
                 return false;
+            }
 
             u8 sample = *p++;
             int count = (sample & 0x7f) + 1;
@@ -246,12 +248,16 @@ namespace
                 // clip to right edge
                 const int size = std::min(count, width - x);
                 if (!size)
+                {
                     return false;
+                }
 
                 if (sample & 0x80)
                 {
-                    if (color + size * bpp >= end)
+                    if (color + bpp > end)
+                    {
                         return false;
+                    }
 
                     // repeat color
                     for (int i = 0; i < size; ++i)
@@ -266,8 +272,10 @@ namespace
                 else
                 {
                     int bytes = size * bpp;
-                    if (color + bytes >= end)
+                    if (color + bytes > end)
+                    {
                         return false;
+                    }
 
                     std::memcpy(scan, color, bytes);
                     p += bytes;
