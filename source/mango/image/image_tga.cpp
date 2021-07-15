@@ -483,7 +483,7 @@ namespace
                     }
                     else
                     {
-                        Bitmap bitmap(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
+                        Bitmap bitmap(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
                         for (int y = 0; y < height; ++y)
                         {
