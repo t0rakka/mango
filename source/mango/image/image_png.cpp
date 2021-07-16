@@ -1405,7 +1405,7 @@ namespace
     {
         MANGO_UNREFERENCED(state);
 
-        while (width >= 4)
+        while (width >= 8)
         {
             const uint8x8x3_t rgb = vld3_u8(src);
             uint8x8x4_t rgba;
@@ -1414,9 +1414,9 @@ namespace
             rgba.val[2] = rgb.val[2];
             rgba.val[3] = vdup_n_u8(0xff);
             vst4_u8(dest, rgba);
-            src += 12;
-            dest += 16;
-            width -= 4;
+            src += 24;
+            dest += 32;
+            width -= 8;
         }
 
         while (width-- > 0)
@@ -3268,6 +3268,7 @@ namespace mango::image
 
     void registerImageDecoderPNG()
     {
+        debugPrintEnable(true);
         registerImageDecoder(createInterface, ".png");
         registerImageEncoder(imageEncode, ".png");
     }
