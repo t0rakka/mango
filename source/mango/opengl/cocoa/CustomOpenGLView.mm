@@ -390,6 +390,12 @@ namespace
     [self dispatchMouseClick:event andMouseButton:button andClickCount:0];
 }
 
+- (void)scrollWheel:(NSEvent *)event
+{
+    [super scrollWheel:event];
+    [self dispatchMouseClick:event andMouseButton:MOUSEBUTTON_WHEEL andClickCount:[event deltaY] * 10.0];
+}
+
 - (void) mouseEntered:(NSEvent *)event
 {
 }
