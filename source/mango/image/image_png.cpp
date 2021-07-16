@@ -3268,7 +3268,6 @@ namespace mango::image
 
     void registerImageDecoderPNG()
     {
-        debugPrintEnable(true);
         registerImageDecoder(createInterface, ".png");
         registerImageEncoder(imageEncode, ".png");
     }
