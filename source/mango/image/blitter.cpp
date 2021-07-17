@@ -190,12 +190,6 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
     {
-        int width = rect.width;
-        int height = rect.height;
-
-        u8* source = rect.src_address;
-        u8* dest = rect.dest_address;
-
         const u32 srcMask [] =
         {
             blitter.component[0].srcMask,
@@ -232,13 +226,16 @@ namespace
         u32 copyMask = blitter.copyMask;
         int components = blitter.components;
 
+        int width = rect.width;
+        int height = rect.height;
+
         auto read = load<SourceType>;
         auto write = store<DestType>;
 
         for (int y = 0; y < height; ++y)
         {
-            const u8* s = source;
-            u8* d = dest;
+            const u8* s = rect.src_address + rect.src_stride * y;
+            u8* d = rect.dest_address + rect.dest_stride * y;;
 
             for (int x = 0; x < width; ++x)
             {
@@ -261,9 +258,6 @@ namespace
                 s += sizeof(SourceType);
                 d += sizeof(DestType);
             }
-
-            source += rect.src_stride;
-            dest += rect.dest_stride;
         }
     }
 
