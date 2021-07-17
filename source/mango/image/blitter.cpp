@@ -616,6 +616,39 @@ namespace
 
 #endif // defined(MANGO_ENABLE_SSE4_1)
 
+#if defined(MANGO_ENABLE_AVX2)
+
+    // ----------------------------------------------------------------------------
+    // AVX2
+    // ----------------------------------------------------------------------------
+
+    void avx2_32bit_swap_rg(u8* d, const u8* s, int count)
+    {
+        while (count >= 8)
+        {
+            __m256i a = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(s + 0));
+            a = _mm256_shuffle_epi8(a, _mm256_setr_epi8(
+                2, 1, 0, 3, 6, 5, 4, 7, 10, 9, 8, 11, 14, 13, 12, 15,
+                2, 1, 0, 3, 6, 5, 4, 7, 10, 9, 8, 11, 14, 13, 12, 15));
+            _mm256_storeu_si256(reinterpret_cast<__m256i *>(d +  0), a);
+            s += 32;
+            d += 32;
+            count -= 8;
+        }
+
+        while (count-- > 0)
+        {
+            d[0] = s[2];
+            d[1] = s[1];
+            d[2] = s[0];
+            d[3] = s[3];
+            s += 4;
+            d += 4;
+        }
+    }
+
+#endif // defined(MANGO_ENABLE_AVX2)
+
 #if defined(MANGO_ENABLE_NEON)
 
     // ----------------------------------------------------------------------------
@@ -1540,7 +1573,7 @@ namespace
     // SSE2
     // ----------------------------------------------------------------------------
 
-    /*
+    /* placeholder
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
@@ -1601,17 +1634,6 @@ namespace
         sse4_24bit_swap_rg
     },
 
-    /*
-    {
-        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-        INTEL_SSE4_1,
-        [] (u8* dest, const u8* src, int count) -> void
-        {
-        }
-    },
-    */
-
 #endif // MANGO_ENABLE_SSE4_1
 
 #if defined(MANGO_ENABLE_AVX)
@@ -1620,7 +1642,7 @@ namespace
     // AVX
     // ----------------------------------------------------------------------------
 
-    /*
+    /* placeholder
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
@@ -1639,16 +1661,33 @@ namespace
     // AVX2
     // ----------------------------------------------------------------------------
 
-    /*
+    {
+        Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        INTEL_AVX2, 
+        avx2_32bit_swap_rg 
+    },
+
+    {
+        Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
+        Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
+        INTEL_AVX2, 
+        avx2_32bit_swap_rg
+    },
+
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-        Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-        INTEL_AVX2,
-        [] (u8* dest, const u8* src, int count) -> void
-        {
-        }
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        INTEL_AVX2, 
+        avx2_32bit_swap_rg 
     },
-    */
+
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        INTEL_AVX2, 
+        avx2_32bit_swap_rg 
+    },
 
 #endif // MANGO_ENABLE_AVX2
 
