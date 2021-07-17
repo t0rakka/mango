@@ -446,8 +446,12 @@ namespace
         }
     }
 
-    Blitter::RectFunc convert_scalar(int modeMask)
+    Blitter::RectFunc get_rect_convert(const Format& dest, const Format& source)
     {
+        int destBits = modeBits(dest);
+        int sourceBits = modeBits(source);
+        int modeMask = MAKE_MODEMASK(destBits, sourceBits);
+
         Blitter::RectFunc func = nullptr;
 
         switch (modeMask)
@@ -1928,12 +1932,7 @@ namespace mango::image
                 }
             }
 
-            // select innerloop
-            int destBits = modeBits(dest);
-            int sourceBits = modeBits(source);
-            int modeMask = MAKE_MODEMASK(destBits, sourceBits);
-
-            rect_convert = convert_scalar(modeMask);
+            rect_convert = get_rect_convert(dest, source);
 
             return;
         }
@@ -1988,12 +1987,7 @@ namespace mango::image
             }
         }
 
-        // select innerloop
-        int destBits = modeBits(dest);
-        int sourceBits = modeBits(source);
-        int modeMask = MAKE_MODEMASK(destBits, sourceBits);
-
-        rect_convert = convert_scalar(modeMask);
+        rect_convert = get_rect_convert(dest, source);
     }
 
     Blitter::~Blitter()
