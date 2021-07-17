@@ -47,11 +47,11 @@ namespace mango::image
         u32 initMask;
         u32 copyMask;
 
-        using CustomFunc = void (*)(u8* dest, const u8* src, int count);
-        using ConvertFunc = void (*)(const Blitter& blitter, const BlitRect& rect);
+        using ScanFunc = void (*)(u8* dest, const u8* src, int count);
+        using RectFunc = void (*)(const Blitter& blitter, const BlitRect& rect);
 
-        CustomFunc custom;
-        ConvertFunc convertFunc;
+        ScanFunc scan_convert;
+        RectFunc rect_convert;
 
         Blitter(const Format& dest, const Format& source);
         ~Blitter();

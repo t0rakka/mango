@@ -446,9 +446,9 @@ namespace
         }
     }
 
-    Blitter::ConvertFunc convert_scalar(int modeMask)
+    Blitter::RectFunc convert_scalar(int modeMask)
     {
-        Blitter::ConvertFunc func = nullptr;
+        Blitter::RectFunc func = nullptr;
 
         switch (modeMask)
         {
@@ -498,6 +498,12 @@ namespace
         return func;
     }
 
+    void convert_none(const Blitter& blitter, const BlitRect& rect)
+    {
+        MANGO_UNREFERENCED(blitter);
+        MANGO_UNREFERENCED(rect);
+    }
+
     void convert_custom(const Blitter& blitter, const BlitRect& rect)
     {
         u8* src = rect.src_address;
@@ -505,7 +511,7 @@ namespace
 
         for (int y = 0; y < rect.height; ++y)
         {
-            blitter.custom(dest, src, rect.width);
+            blitter.scan_convert(dest, src, rect.width);
             src += rect.src_stride;
             dest += rect.dest_stride;
         }
@@ -755,9 +761,9 @@ namespace
         Format dest;
         Format source;
         u64 requireCpuFeature;
-        Blitter::CustomFunc func;
+        Blitter::ScanFunc func;
     }
-    const g_custom_func_table[] =
+    const g_scan_func_table[] =
     {
 
     // rgba.u8 <-> rgbx.u8
@@ -1812,16 +1818,16 @@ namespace
 
     }; // end of custom blitter
 
-    using CustomConversionMap = std::map< std::pair<Format, Format>, Blitter::CustomFunc >;
+    using ScanConversionMap = std::map< std::pair<Format, Format>, Blitter::ScanFunc >;
 
     // initialize map of custom conversion functions
-    CustomConversionMap g_custom_func_map = []
+    ScanConversionMap g_scan_func_map = []
     {
         const u64 cpuFlags = getCPUFlags();
 
-        CustomConversionMap map;
+        ScanConversionMap map;
 
-        for (auto& node : g_custom_func_table)
+        for (auto& node : g_scan_func_table)
         {
             u64 required = node.requireCpuFeature;
             if ((cpuFlags & required) == required)
@@ -1833,9 +1839,9 @@ namespace
         return map;
     } ();
 
-    Blitter::CustomFunc find_custom_blitter(const Format& dest, const Format& source)
+    Blitter::ScanFunc find_scan_blitter(const Format& dest, const Format& source)
     {
-        Blitter::CustomFunc func = nullptr; // default: no conversion function
+        Blitter::ScanFunc func = nullptr; // default: no conversion function
 
         if (dest == source)
         {
@@ -1857,8 +1863,8 @@ namespace
         else
         {
             // find custom conversion function
-            auto i = g_custom_func_map.find(std::make_pair(dest, source));
-            if (i != g_custom_func_map.end())
+            auto i = g_scan_func_map.find(std::make_pair(dest, source));
+            if (i != g_scan_func_map.end())
             {
                 func = i->second;
             }
@@ -1879,14 +1885,14 @@ namespace mango::image
     Blitter::Blitter(const Format& dest, const Format& source)
         : srcFormat(source)
         , destFormat(dest)
-        , custom(nullptr)
-        , convertFunc(nullptr)
+        , scan_convert(nullptr)
+        , rect_convert(convert_none)
     {
-        custom = find_custom_blitter(dest, source);
-        if (custom)
+        scan_convert = find_scan_blitter(dest, source);
+        if (scan_convert)
         {
             // found custom blitter
-            convertFunc = convert_custom;
+            rect_convert = convert_custom;
             return;
         }
 
@@ -1927,7 +1933,7 @@ namespace mango::image
             int sourceBits = modeBits(source);
             int modeMask = MAKE_MODEMASK(destBits, sourceBits);
 
-            convertFunc = convert_scalar(modeMask);
+            rect_convert = convert_scalar(modeMask);
 
             return;
         }
@@ -1987,7 +1993,7 @@ namespace mango::image
         int sourceBits = modeBits(source);
         int modeMask = MAKE_MODEMASK(destBits, sourceBits);
 
-        convertFunc = convert_scalar(modeMask);
+        rect_convert = convert_scalar(modeMask);
     }
 
     Blitter::~Blitter()
@@ -1996,10 +2002,7 @@ namespace mango::image
 
     void Blitter::convert(const BlitRect& rect) const
     {
-        if (convertFunc)
-        {
-            convertFunc(*this, rect);
-        }
+        rect_convert(*this, rect);
     }
 
 } // namespace mango::image
