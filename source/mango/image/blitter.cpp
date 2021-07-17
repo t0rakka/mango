@@ -1870,14 +1870,11 @@ namespace mango::image
                 {
                     if (src_mask)
                     {
-                        // isolate least significant bit of mask; this is used for correct rounding
-                        const u32 lsb = dest_mask ^ (dest_mask - 1);
-
                         // source and destination are different: add channel to component array
                         component[components].srcMask = src_mask;
                         component[components].destMask = dest_mask;
                         component[components].scale = float(dest_mask) / float(src_mask);
-                        component[components].bias = lsb * 0.5f;
+                        component[components].bias = 0;
 
                         component[components].constant = i == 3 ? 1.0f : 0.0f;
                         component[components].offset = source.offset[i] >> source_float_shift;
