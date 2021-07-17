@@ -123,10 +123,10 @@ namespace
     // unorm <- unorm
 
     template <typename DestType, typename SourceType>
-    void convert_template_unorm_unorm_fpu(const Blitter& blitter, const BlitRect& rect)
+    void convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
     {
-        u8* source = rect.src.address;
-        u8* dest = rect.dest.address;
+        u8* source = rect.src_address;
+        u8* dest = rect.dest_address;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -155,18 +155,18 @@ namespace
                 dst[x] = DestType(v);
             }
 
-            source += rect.src.stride;
-            dest += rect.dest.stride;
+            source += rect.src_stride;
+            dest += rect.dest_stride;
         }
     }
 
     // unorm <- fp
 
     template <typename DestType, typename SourceType>
-    void convert_template_unorm_fp_fpu(const Blitter& blitter, const BlitRect& rect)
+    void convert_template_unorm_fp(const Blitter& blitter, const BlitRect& rect)
     {
-        u8* source = rect.src.address;
-        u8* dest = rect.dest.address;
+        u8* source = rect.src_address;
+        u8* dest = rect.dest_address;
 
         const Format& sf = blitter.srcFormat;
         const Format& df = blitter.destFormat;
@@ -230,20 +230,20 @@ namespace
                 dst[x] = DestType(v);
             }
 
-            source += rect.src.stride;
-            dest += rect.dest.stride;
+            source += rect.src_stride;
+            dest += rect.dest_stride;
         }
     }
 
     // fp <- unorm
 
     template <typename DestType, typename SourceType>
-    void convert_template_fp_unorm_fpu(const Blitter& blitter, const BlitRect& rect)
+    void convert_template_fp_unorm(const Blitter& blitter, const BlitRect& rect)
     {
         MANGO_UNREFERENCED(blitter);
 
-        u8* source = rect.src.address;
-        u8* dest = rect.dest.address;
+        u8* source = rect.src_address;
+        u8* dest = rect.dest_address;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -257,18 +257,18 @@ namespace
                 MANGO_UNREFERENCED(dst);
             }
 
-            source += rect.src.stride;
-            dest += rect.dest.stride;
+            source += rect.src_stride;
+            dest += rect.dest_stride;
         }
     }
 
     // fp <- fp
 
     template <typename DestType, typename SourceType>
-    void convert_template_fp_fp_fpu(const Blitter& blitter, const BlitRect& rect)
+    void convert_template_fp_fp(const Blitter& blitter, const BlitRect& rect)
     {
-        u8* source = rect.src.address;
-        u8* dest = rect.dest.address;
+        u8* source = rect.src_address;
+        u8* dest = rect.dest_address;
 
         SourceType constant[4];
         const SourceType* input[4];
@@ -340,58 +340,58 @@ namespace
                 dst += components;
             }
 
-            source += rect.src.stride;
-            dest += rect.dest.stride;
+            source += rect.src_stride;
+            dest += rect.dest_stride;
         }
     }
 
-    Blitter::ConvertFunc convert_fpu(int modeMask)
+    Blitter::ConvertFunc convert_scalar(int modeMask)
     {
         Blitter::ConvertFunc func = nullptr;
 
         switch (modeMask)
         {
-            case MAKE_MODEMASK( 8,  8): func = convert_template_unorm_unorm_fpu<u8, u8>; break;
-            case MAKE_MODEMASK( 8, 16): func = convert_template_unorm_unorm_fpu<u8, u16>; break;
-            case MAKE_MODEMASK( 8, 24): func = convert_template_unorm_unorm_fpu<u8, u24>; break;
-            case MAKE_MODEMASK( 8, 32): func = convert_template_unorm_unorm_fpu<u8, u32>; break;
-            case MAKE_MODEMASK(16,  8): func = convert_template_unorm_unorm_fpu<u16, u8>; break;
-            case MAKE_MODEMASK(16, 16): func = convert_template_unorm_unorm_fpu<u16, u16>; break;
-            case MAKE_MODEMASK(16, 24): func = convert_template_unorm_unorm_fpu<u16, u24>; break;
-            case MAKE_MODEMASK(16, 32): func = convert_template_unorm_unorm_fpu<u16, u32>; break;
-            case MAKE_MODEMASK(24,  8): func = convert_template_unorm_unorm_fpu<u24, u8>; break;
-            case MAKE_MODEMASK(24, 16): func = convert_template_unorm_unorm_fpu<u24, u16>; break;
-            case MAKE_MODEMASK(24, 24): func = convert_template_unorm_unorm_fpu<u24, u24>; break;
-            case MAKE_MODEMASK(24, 32): func = convert_template_unorm_unorm_fpu<u24, u32>; break;
-            case MAKE_MODEMASK(32,  8): func = convert_template_unorm_unorm_fpu<u32, u8>; break;
-            case MAKE_MODEMASK(32, 16): func = convert_template_unorm_unorm_fpu<u32, u16>; break;
-            case MAKE_MODEMASK(32, 24): func = convert_template_unorm_unorm_fpu<u32, u24>; break;
-            case MAKE_MODEMASK(32, 32): func = convert_template_unorm_unorm_fpu<u32, u32>; break;
-            case MAKE_MODEMASK( 8, BITS_FP16): func = convert_template_unorm_fp_fpu<u8, float16>; break;
-            case MAKE_MODEMASK(16, BITS_FP16): func = convert_template_unorm_fp_fpu<u16, float16>; break;
-            case MAKE_MODEMASK(24, BITS_FP16): func = convert_template_unorm_fp_fpu<u24, float16>; break;
-            case MAKE_MODEMASK(32, BITS_FP16): func = convert_template_unorm_fp_fpu<u32, float16>; break;
-            case MAKE_MODEMASK( 8, BITS_FP32): func = convert_template_unorm_fp_fpu<u8, float>; break;
-            case MAKE_MODEMASK(16, BITS_FP32): func = convert_template_unorm_fp_fpu<u16, float>; break;
-            case MAKE_MODEMASK(24, BITS_FP32): func = convert_template_unorm_fp_fpu<u24, float>; break;
-            case MAKE_MODEMASK(32, BITS_FP32): func = convert_template_unorm_fp_fpu<u32, float>; break;
-            case MAKE_MODEMASK(BITS_FP16,  8): func = convert_template_fp_unorm_fpu<float16, u8>; break;
-            case MAKE_MODEMASK(BITS_FP16, 16): func = convert_template_fp_unorm_fpu<float16, u16>; break;
-            case MAKE_MODEMASK(BITS_FP16, 24): func = convert_template_fp_unorm_fpu<float16, u24>; break;
-            case MAKE_MODEMASK(BITS_FP16, 32): func = convert_template_fp_unorm_fpu<float16, u32>; break;
-            case MAKE_MODEMASK(BITS_FP32,  8): func = convert_template_fp_unorm_fpu<float, u8>; break;
-            case MAKE_MODEMASK(BITS_FP32, 16): func = convert_template_fp_unorm_fpu<float, u16>; break;
-            case MAKE_MODEMASK(BITS_FP32, 24): func = convert_template_fp_unorm_fpu<float, u24>; break;
-            case MAKE_MODEMASK(BITS_FP32, 32): func = convert_template_fp_unorm_fpu<float, u32>; break;
-            case MAKE_MODEMASK(BITS_FP16, BITS_FP16): func = convert_template_fp_fp_fpu<float16, float16>; break;
-            case MAKE_MODEMASK(BITS_FP16, BITS_FP32): func = convert_template_fp_fp_fpu<float16, float32>; break;
-            case MAKE_MODEMASK(BITS_FP16, BITS_FP64): func = convert_template_fp_fp_fpu<float16, float64>; break;
-            case MAKE_MODEMASK(BITS_FP32, BITS_FP16): func = convert_template_fp_fp_fpu<float32, float16>; break;
-            case MAKE_MODEMASK(BITS_FP32, BITS_FP32): func = convert_template_fp_fp_fpu<float32, float32>; break;
-            case MAKE_MODEMASK(BITS_FP32, BITS_FP64): func = convert_template_fp_fp_fpu<float32, float64>; break;
-            case MAKE_MODEMASK(BITS_FP64, BITS_FP16): func = convert_template_fp_fp_fpu<float64, float16>; break;
-            case MAKE_MODEMASK(BITS_FP64, BITS_FP32): func = convert_template_fp_fp_fpu<float64, float32>; break;
-            case MAKE_MODEMASK(BITS_FP64, BITS_FP64): func = convert_template_fp_fp_fpu<float64, float64>; break;
+            case MAKE_MODEMASK( 8,  8): func = convert_template_unorm_unorm<u8, u8>; break;
+            case MAKE_MODEMASK( 8, 16): func = convert_template_unorm_unorm<u8, u16>; break;
+            case MAKE_MODEMASK( 8, 24): func = convert_template_unorm_unorm<u8, u24>; break;
+            case MAKE_MODEMASK( 8, 32): func = convert_template_unorm_unorm<u8, u32>; break;
+            case MAKE_MODEMASK(16,  8): func = convert_template_unorm_unorm<u16, u8>; break;
+            case MAKE_MODEMASK(16, 16): func = convert_template_unorm_unorm<u16, u16>; break;
+            case MAKE_MODEMASK(16, 24): func = convert_template_unorm_unorm<u16, u24>; break;
+            case MAKE_MODEMASK(16, 32): func = convert_template_unorm_unorm<u16, u32>; break;
+            case MAKE_MODEMASK(24,  8): func = convert_template_unorm_unorm<u24, u8>; break;
+            case MAKE_MODEMASK(24, 16): func = convert_template_unorm_unorm<u24, u16>; break;
+            case MAKE_MODEMASK(24, 24): func = convert_template_unorm_unorm<u24, u24>; break;
+            case MAKE_MODEMASK(24, 32): func = convert_template_unorm_unorm<u24, u32>; break;
+            case MAKE_MODEMASK(32,  8): func = convert_template_unorm_unorm<u32, u8>; break;
+            case MAKE_MODEMASK(32, 16): func = convert_template_unorm_unorm<u32, u16>; break;
+            case MAKE_MODEMASK(32, 24): func = convert_template_unorm_unorm<u32, u24>; break;
+            case MAKE_MODEMASK(32, 32): func = convert_template_unorm_unorm<u32, u32>; break;
+            case MAKE_MODEMASK( 8, BITS_FP16): func = convert_template_unorm_fp<u8, float16>; break;
+            case MAKE_MODEMASK(16, BITS_FP16): func = convert_template_unorm_fp<u16, float16>; break;
+            case MAKE_MODEMASK(24, BITS_FP16): func = convert_template_unorm_fp<u24, float16>; break;
+            case MAKE_MODEMASK(32, BITS_FP16): func = convert_template_unorm_fp<u32, float16>; break;
+            case MAKE_MODEMASK( 8, BITS_FP32): func = convert_template_unorm_fp<u8, float>; break;
+            case MAKE_MODEMASK(16, BITS_FP32): func = convert_template_unorm_fp<u16, float>; break;
+            case MAKE_MODEMASK(24, BITS_FP32): func = convert_template_unorm_fp<u24, float>; break;
+            case MAKE_MODEMASK(32, BITS_FP32): func = convert_template_unorm_fp<u32, float>; break;
+            case MAKE_MODEMASK(BITS_FP16,  8): func = convert_template_fp_unorm<float16, u8>; break;
+            case MAKE_MODEMASK(BITS_FP16, 16): func = convert_template_fp_unorm<float16, u16>; break;
+            case MAKE_MODEMASK(BITS_FP16, 24): func = convert_template_fp_unorm<float16, u24>; break;
+            case MAKE_MODEMASK(BITS_FP16, 32): func = convert_template_fp_unorm<float16, u32>; break;
+            case MAKE_MODEMASK(BITS_FP32,  8): func = convert_template_fp_unorm<float, u8>; break;
+            case MAKE_MODEMASK(BITS_FP32, 16): func = convert_template_fp_unorm<float, u16>; break;
+            case MAKE_MODEMASK(BITS_FP32, 24): func = convert_template_fp_unorm<float, u24>; break;
+            case MAKE_MODEMASK(BITS_FP32, 32): func = convert_template_fp_unorm<float, u32>; break;
+            case MAKE_MODEMASK(BITS_FP16, BITS_FP16): func = convert_template_fp_fp<float16, float16>; break;
+            case MAKE_MODEMASK(BITS_FP16, BITS_FP32): func = convert_template_fp_fp<float16, float32>; break;
+            case MAKE_MODEMASK(BITS_FP16, BITS_FP64): func = convert_template_fp_fp<float16, float64>; break;
+            case MAKE_MODEMASK(BITS_FP32, BITS_FP16): func = convert_template_fp_fp<float32, float16>; break;
+            case MAKE_MODEMASK(BITS_FP32, BITS_FP32): func = convert_template_fp_fp<float32, float32>; break;
+            case MAKE_MODEMASK(BITS_FP32, BITS_FP64): func = convert_template_fp_fp<float32, float64>; break;
+            case MAKE_MODEMASK(BITS_FP64, BITS_FP16): func = convert_template_fp_fp<float64, float16>; break;
+            case MAKE_MODEMASK(BITS_FP64, BITS_FP32): func = convert_template_fp_fp<float64, float32>; break;
+            case MAKE_MODEMASK(BITS_FP64, BITS_FP64): func = convert_template_fp_fp<float64, float64>; break;
         }
 
         return func;
@@ -399,14 +399,14 @@ namespace
 
     void convert_custom(const Blitter& blitter, const BlitRect& rect)
     {
-        u8* src = rect.src.address;
-        u8* dest = rect.dest.address;
+        u8* src = rect.src_address;
+        u8* dest = rect.dest_address;
 
         for (int y = 0; y < rect.height; ++y)
         {
             blitter.custom(dest, src, rect.width);
-            src += rect.src.stride;
-            dest += rect.dest.stride;
+            src += rect.src_stride;
+            dest += rect.dest_stride;
         }
     }
 
@@ -1813,7 +1813,9 @@ namespace mango::image
                     component[components].offset = source.size[i] ? source.offset[i] >> source_float_shift : -1;
 
                     if (source.size[i])
+                    {
                         ++sampleSize;
+                    }
 
                     ++components;
                 }
@@ -1824,7 +1826,7 @@ namespace mango::image
             int sourceBits = modeBits(source);
             int modeMask = MAKE_MODEMASK(destBits, sourceBits);
 
-            convertFunc = convert_fpu(modeMask);
+            convertFunc = convert_scalar(modeMask);
 
             return;
         }
@@ -1887,7 +1889,7 @@ namespace mango::image
         int sourceBits = modeBits(source);
         int modeMask = MAKE_MODEMASK(destBits, sourceBits);
 
-        convertFunc = convert_fpu(modeMask);
+        convertFunc = convert_scalar(modeMask);
     }
 
     Blitter::~Blitter()

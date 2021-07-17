@@ -11,18 +11,16 @@
 namespace mango::image
 {
 
-    struct BlitScan
-    {
-        u8* address;
-        size_t stride;
-    };
-
     struct BlitRect
     {
-        BlitScan dest;
-        BlitScan src;
         int width;
         int height;
+
+        u8* src_address;
+        size_t src_stride;
+
+        u8* dest_address;
+        size_t dest_stride;
     };
 
     class Blitter : protected NonCopyable
@@ -54,7 +52,7 @@ namespace mango::image
         u32 initMask;
         u32 copyMask;
 
-        using CustomFunc = void (*)(u8 *, const u8 *, int);
+        using CustomFunc = void (*)(u8* dest, const u8* src, int count);
         using ConvertFunc = void (*)(const Blitter& blitter, const BlitRect& rect);
 
         CustomFunc custom;

@@ -289,21 +289,21 @@ namespace mango::image
 
         BlitRect rect;
 
-        rect.src.address = source.image;
-        rect.src.stride = source.stride;
-        rect.dest.address = dest.image;
-        rect.dest.stride = dest.stride;
         rect.width = dest.width;
         rect.height = dest.height;
+        rect.src_address = source.image;
+        rect.src_stride = source.stride;
+        rect.dest_address = dest.image;
+        rect.dest_stride = dest.stride;
 
         if (x < 0)
         {
-            rect.src.address -= x * source.format.bytes();
+            rect.src_address -= x * source.format.bytes();
         }
 
         if (y < 0)
         {
-            rect.src.address -= y * source.stride;
+            rect.src_address -= y * source.stride;
         }
 
         Blitter blitter(dest.format, source.format);
