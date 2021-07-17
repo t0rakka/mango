@@ -397,70 +397,6 @@ namespace
         return func;
     }
 
-#ifdef MANGO_ENABLE_SSE2
-    template <typename DestType, typename SourceType>
-    void convert_template_sse2(const Blitter& blitter, const BlitRect& rect)
-    {
-        u8* source = rect.src.address;
-        u8* dest = rect.dest.address;
-
-        __m128 scale = blitter.sseScale;
-        __m128i src_mask = blitter.sseSrcMask;
-        __m128i dest_mask = blitter.sseDestMask;
-        __m128i shift_mask = blitter.sseShiftMask;
-
-        for (int y = 0; y < rect.height; ++y)
-        {
-            SourceType* src = reinterpret_cast<SourceType*>(source);
-            DestType* dst = reinterpret_cast<DestType*>(dest);
-
-            for (int x = 0; x < rect.width; ++x)
-            {
-                u32 s = src[x];
-                __m128i r = _mm_set1_epi32(s);
-                __m128 m = _mm_cvtepi32_ps(_mm_and_si128(r, src_mask));
-                r = _mm_cvtps_epi32(_mm_mul_ps(m, scale));
-                r = _mm_and_si128(r, dest_mask);
-                r = _mm_add_epi32(r, _mm_and_si128(r, shift_mask));
-                r = _mm_or_si128(_mm_shuffle_epi32(r, 0x44), _mm_shuffle_epi32(r, 0xee));
-                r = _mm_or_si128(_mm_shuffle_epi32(r, 0x00), _mm_shuffle_epi32(r, 0x55));
-                u32 v = blitter.initMask | _mm_cvtsi128_si32(r);
-                dst[x] = DestType(v);
-            }
-
-            source += rect.src.stride;
-            dest += rect.dest.stride;
-        }
-    }
-
-    Blitter::ConvertFunc convert_sse2(int modeMask)
-    {
-        Blitter::ConvertFunc func = nullptr;
-
-        switch (modeMask)
-        {
-            case MAKE_MODEMASK( 8,  8): func = convert_template_sse2<u8, u8>; break;
-            case MAKE_MODEMASK( 8, 16): func = convert_template_sse2<u8, u16>; break;
-            case MAKE_MODEMASK( 8, 24): func = convert_template_sse2<u8, u24>; break;
-            case MAKE_MODEMASK( 8, 32): func = convert_template_sse2<u8, u32>; break;
-            case MAKE_MODEMASK(16,  8): func = convert_template_sse2<u16, u8>; break;
-            case MAKE_MODEMASK(16, 16): func = convert_template_sse2<u16, u16>; break;
-            case MAKE_MODEMASK(16, 24): func = convert_template_sse2<u16, u24>; break;
-            case MAKE_MODEMASK(16, 32): func = convert_template_sse2<u16, u32>; break;
-            case MAKE_MODEMASK(24,  8): func = convert_template_sse2<u24, u8>; break;
-            case MAKE_MODEMASK(24, 16): func = convert_template_sse2<u24, u16>; break;
-            case MAKE_MODEMASK(24, 24): func = convert_template_sse2<u24, u24>; break;
-            case MAKE_MODEMASK(24, 32): func = convert_template_sse2<u24, u32>; break;
-            case MAKE_MODEMASK(32,  8): func = convert_template_sse2<u32, u8>; break;
-            case MAKE_MODEMASK(32, 16): func = convert_template_sse2<u32, u16>; break;
-            case MAKE_MODEMASK(32, 24): func = convert_template_sse2<u32, u24>; break;
-            case MAKE_MODEMASK(32, 32): func = convert_template_sse2<u32, u32>; break;
-        }
-
-        return func;
-    }
-#endif
-
     void convert_custom(const Blitter& blitter, const BlitRect& rect)
     {
         u8* src = rect.src.address;
@@ -718,7 +654,7 @@ namespace
         Format dest;
         Format source;
         u64 requireCpuFeature;
-        Blitter::FastFunc func;
+        Blitter::CustomFunc func;
     }
     const g_custom_func_table[] =
     {
@@ -1775,14 +1711,14 @@ namespace
 
     }; // end of custom blitter
 
-    using FastConversionMap = std::map< std::pair<Format, Format>, Blitter::FastFunc >;
+    using CustomConversionMap = std::map< std::pair<Format, Format>, Blitter::CustomFunc >;
 
     // initialize map of custom conversion functions
-    FastConversionMap g_custom_func_map = []
+    CustomConversionMap g_custom_func_map = []
     {
         const u64 cpuFlags = getCPUFlags();
 
-        FastConversionMap map;
+        CustomConversionMap map;
 
         for (auto& node : g_custom_func_table)
         {
@@ -1796,9 +1732,9 @@ namespace
         return map;
     } ();
 
-    Blitter::FastFunc find_custom_blitter(const Format& dest, const Format& source)
+    Blitter::CustomFunc find_custom_blitter(const Format& dest, const Format& source)
     {
-        Blitter::FastFunc func = nullptr; // default: no conversion function
+        Blitter::CustomFunc func = nullptr; // default: no conversion function
 
         if (dest == source)
         {
@@ -1905,19 +1841,21 @@ namespace mango::image
                     if (src_mask)
                     {
                         // isolate least significant bit of mask; this is used for correct rounding
-                        //const u32 lsb = dest_mask ^ (dest_mask - 1);
+                        const u32 lsb = dest_mask ^ (dest_mask - 1);
 
                         // source and destination are different: add channel to component array
                         component[components].srcMask = src_mask;
                         component[components].destMask = dest_mask;
                         component[components].scale = float(dest_mask) / float(src_mask);
-                        component[components].bias = 0;//lsb * 0.5f;
+                        component[components].bias = lsb * 0.5f;
 
                         component[components].constant = i == 3 ? 1.0f : 0.0f;
                         component[components].offset = source.offset[i] >> source_float_shift;
 
                         if (source.size[i])
+                        {
                             ++sampleSize;
+                        }
 
                         ++components;
                     }
@@ -1944,80 +1882,12 @@ namespace mango::image
             }
         }
 
-        u64 cpuFlags = getCPUFlags();
-        bool sse2 = (cpuFlags & INTEL_SSE2) != 0;
-
-        if (components < 2)
-        {
-            // the fpu loop is faster when we process only single channel
-            // the fpu can handle mask 0xffffffff where SSE will corrupt LSB when using 32 bit mask
-            sse2 = false; // force fpu conversion
-        }
-
         // select innerloop
         int destBits = modeBits(dest);
         int sourceBits = modeBits(source);
         int modeMask = MAKE_MODEMASK(destBits, sourceBits);
 
         convertFunc = convert_fpu(modeMask);
-
-#ifdef MANGO_ENABLE_SSE2
-        if (sse2)
-        {
-            // select innerloop
-            ConvertFunc func = convert_sse2(modeMask);
-
-            // TODO: fixme
-            func = nullptr; // disabled until SSE converter is fixed
-
-            if (func)
-            {
-                convertFunc = func;
-
-                initMask = 0;
-
-                u32 shift_mask[4] = { 0, 0, 0, 0 };
-                u32 dest_mask[4];
-                u32 src_mask[4];
-                float scale[4];
-
-                for (int i = 0; i < 4; ++i)
-                {
-                    src_mask[i] = source.mask(i);
-                    dest_mask[i] = dest.mask(i);
-                    scale[i] = 0;
-
-                    if (dest_mask[i])
-                    {
-                        if (src_mask[i])
-                        {
-                            scale[i] = float(dest_mask[i]) / float(src_mask[i]);
-                        }
-                        else if (i == 3)
-                        {
-                            initMask |= dest_mask[i];
-                        }
-                    }
-
-                    // SSE floatToInt conversion is signed
-                    if (dest_mask[i] & 0x80000000)
-                    {
-                        dest_mask[i] >>= 1;
-                        shift_mask[i] = dest_mask[i];
-                        scale[i] *= 0.5f;
-                    }
-                }
-
-                // convert components into SSE registers
-                sseScale = _mm_set_ps(scale[0], scale[1], scale[2], scale[3]);
-                sseSrcMask = _mm_set_epi32(src_mask[0], src_mask[1], src_mask[2], src_mask[3]);
-                sseDestMask = _mm_set_epi32(dest_mask[0], dest_mask[1], dest_mask[2], dest_mask[3]);
-                sseShiftMask = _mm_set_epi32(shift_mask[0], shift_mask[1], shift_mask[2], shift_mask[3]);
-            }
-        }
-#else
-        MANGO_UNREFERENCED(sse2);
-#endif
     }
 
     Blitter::~Blitter()

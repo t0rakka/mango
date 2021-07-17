@@ -54,17 +54,10 @@ namespace mango::image
         u32 initMask;
         u32 copyMask;
 
-#ifdef MANGO_ENABLE_SSE2
-        __m128 sseScale;
-        __m128i sseSrcMask;
-        __m128i sseDestMask;
-        __m128i sseShiftMask;
-#endif
-
-        using FastFunc = void (*)(u8 *, const u8 *, int);
+        using CustomFunc = void (*)(u8 *, const u8 *, int);
         using ConvertFunc = void (*)(const Blitter& blitter, const BlitRect& rect);
 
-        FastFunc custom;
+        CustomFunc custom;
         ConvertFunc convertFunc;
 
         Blitter(const Format& dest, const Format& source);
