@@ -97,6 +97,7 @@ namespace
     // ----------------------------------------------------------------------------
     // debug print
     // ----------------------------------------------------------------------------
+
 #if 0
     void print(const Blitter& blitter)
     {
@@ -117,6 +118,70 @@ namespace
 #endif
 
     // ----------------------------------------------------------------------------
+    // memory access
+    // ----------------------------------------------------------------------------
+
+    // load
+
+    template <typename T>
+    u32 load(const u8* p);
+
+    template <>
+    u32 load<u8>(const u8* p)
+    {
+        return u32(*p);
+    }
+
+    template <>
+    u32 load<u16>(const u8* p)
+    {
+        return u32(uload16(p));
+    }
+
+    template <>
+    u32 load<u24>(const u8* p)
+    {
+        return u32((p[2] << 16) | (p[1] << 8) | p[0]);
+    }
+
+    template <>
+    u32 load<u32>(const u8* p)
+    {
+        return uload32(p);
+    }
+
+    // store
+
+    template <typename T>
+    void store(u8* p, u32 v);
+
+    template <>
+    void store<u8>(u8* p, u32 v)
+    {
+        *p = u8(v);
+    }
+
+    template <>
+    void store<u16>(u8* p, u32 v)
+    {
+        ustore16(p, u16(v));
+    }
+
+    template <>
+    void store<u24>(u8* p, u32 v)
+    {
+        p[0] = (v >> 0) & 0xff;
+        p[1] = (v >> 8) & 0xff;
+        p[2] = (v >> 16) & 0xff;
+    }
+
+    template <>
+    void store<u32>(u8* p, u32 v)
+    {
+        ustore32(p, v);
+    }
+
+    // ----------------------------------------------------------------------------
     // conversion templates
     // ----------------------------------------------------------------------------
 
@@ -125,6 +190,9 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
     {
+        int width = rect.width;
+        int height = rect.height;
+
         u8* source = rect.src_address;
         u8* dest = rect.dest_address;
 
@@ -160,27 +228,38 @@ namespace
             blitter.component[3].bias,
         };
 
-        for (int y = 0; y < rect.height; ++y)
-        {
-            const SourceType* src = reinterpret_cast<const SourceType*>(source);
-            DestType* dst = reinterpret_cast<DestType*>(dest);
+        u32 initMask = blitter.initMask;
+        u32 copyMask = blitter.copyMask;
+        int components = blitter.components;
 
-            for (int x = 0; x < rect.width; ++x)
+        auto read = load<SourceType>;
+        auto write = store<DestType>;
+
+        for (int y = 0; y < height; ++y)
+        {
+            const u8* s = source;
+            u8* d = dest;
+
+            for (int x = 0; x < width; ++x)
             {
-                u32 s = src[x];
-                u32 v = blitter.initMask | (s & blitter.copyMask);
-                switch (blitter.components)
+                u32 v = read(s);
+                u32 color = initMask | (v & copyMask);
+
+                switch (components)
                 {
                     case 4:
-                        v |= u32((s & srcMask[3]) * scale[3] + bias[3]) & destMask[3];
+                        color |= u32((v & srcMask[3]) * scale[3] + bias[3]) & destMask[3];
                     case 3:
-                        v |= u32((s & srcMask[2]) * scale[2] + bias[2]) & destMask[2];
+                        color |= u32((v & srcMask[2]) * scale[2] + bias[2]) & destMask[2];
                     case 2:
-                        v |= u32((s & srcMask[1]) * scale[1] + bias[1]) & destMask[1];
+                        color |= u32((v & srcMask[1]) * scale[1] + bias[1]) & destMask[1];
                     case 1:
-                        v |= u32((s & srcMask[0]) * scale[0] + bias[0]) & destMask[0];
+                        color |= u32((v & srcMask[0]) * scale[0] + bias[0]) & destMask[0];
                 }
-                dst[x] = DestType(v);
+
+                write(d, color);
+                s += sizeof(SourceType);
+                d += sizeof(DestType);
             }
 
             source += rect.src_stride;
