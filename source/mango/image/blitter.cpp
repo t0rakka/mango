@@ -128,6 +128,38 @@ namespace
         u8* source = rect.src_address;
         u8* dest = rect.dest_address;
 
+        const u32 srcMask [] =
+        {
+            blitter.component[0].srcMask,
+            blitter.component[1].srcMask,
+            blitter.component[2].srcMask,
+            blitter.component[3].srcMask,
+        };
+
+        const u32 destMask [] =
+        {
+            blitter.component[0].destMask,
+            blitter.component[1].destMask,
+            blitter.component[2].destMask,
+            blitter.component[3].destMask,
+        };
+
+        const float scale [] =
+        {
+            blitter.component[0].scale,
+            blitter.component[1].scale,
+            blitter.component[2].scale,
+            blitter.component[3].scale,
+        };
+
+        const float bias [] =
+        {
+            blitter.component[0].bias,
+            blitter.component[1].bias,
+            blitter.component[2].bias,
+            blitter.component[3].bias,
+        };
+
         for (int y = 0; y < rect.height; ++y)
         {
             const SourceType* src = reinterpret_cast<const SourceType*>(source);
@@ -140,17 +172,13 @@ namespace
                 switch (blitter.components)
                 {
                     case 4:
-                        v |= blitter.component[3].computePack(s);
-                        // fall-through
+                        v |= u32((s & srcMask[3]) * scale[3] + bias[3]) & destMask[3];
                     case 3:
-                        v |= blitter.component[2].computePack(s);
-                        // fall-through
+                        v |= u32((s & srcMask[2]) * scale[2] + bias[2]) & destMask[2];
                     case 2:
-                        v |= blitter.component[1].computePack(s);
-                        // fall-through
+                        v |= u32((s & srcMask[1]) * scale[1] + bias[1]) & destMask[1];
                     case 1:
-                        v |= blitter.component[0].computePack(s);
-                        // fall-through
+                        v |= u32((s & srcMask[0]) * scale[0] + bias[0]) & destMask[0];
                 }
                 dst[x] = DestType(v);
             }

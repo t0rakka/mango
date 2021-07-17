@@ -40,11 +40,6 @@ namespace mango::image
             // float components
             float constant;
             int offset;
-
-            u32 computePack(u32 s) const
-            {
-                return u32((s & srcMask) * scale + bias) & destMask;
-            }
         } component[4];
 
         int components;
