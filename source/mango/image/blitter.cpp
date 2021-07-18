@@ -315,16 +315,12 @@ namespace
                 {
                     case 4:
                         v |= u32(clamp(float(src[offset[3]]), 0.0f, 1.0f) * scale3 + bias3) & mask[3];
-                        // fall-through
                     case 3:
                         v |= u32(clamp(float(src[offset[2]]), 0.0f, 1.0f) * scale2 + bias2) & mask[2];
-                        // fall-through
                     case 2:
                         v |= u32(clamp(float(src[offset[1]]), 0.0f, 1.0f) * scale1 + bias1) & mask[1];
-                        // fall-through
                     case 1:
                         v |= u32(clamp(float(src[offset[0]]), 0.0f, 1.0f) * scale0 + bias0) & mask[0];
-                        // fall-through
                 }
 
                 src += components;
@@ -368,40 +364,38 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_fp_fp(const Blitter& blitter, const BlitRect& rect)
     {
-        u8* source = rect.src_address;
-        u8* dest = rect.dest_address;
+        const int source_float_shift = blitter.srcFormat.type - Format::FLOAT16 + 4;
+
+        int sample_size = blitter.srcFormat.bytes() / sizeof(SourceType);
+        int components = 0;
 
         SourceType constant[4];
         const SourceType* input[4];
         int stride[4];
+        int offset[4];
 
-        const int components = std::min(4, blitter.components);
-
-        for (int i = 0; i < components; ++i)
+        for (int i = 0; i < 4; ++i)
         {
-            int offset = blitter.component[i].offset;
-            if (offset < 0)
+            if (blitter.destFormat.size[i])
             {
-                constant[i] = SourceType(blitter.component[i].constant);
-                input[i] = &constant[i];
-                stride[i] = 0;
-            }
-            else
-            {
-                stride[i] = blitter.sampleSize;
+                offset[components] = blitter.srcFormat.size[i] ? blitter.srcFormat.offset[i] >> source_float_shift : -1;
+                if (offset[components] < 0)
+                {
+                    constant[components] = SourceType(i == 3 ? 1.0f : 0.0f);
+                    input[components] = &constant[components];
+                    stride[components] = 0;
+                }
+                else
+                {
+                    stride[components] = sample_size;
+                }
+
+                ++components;
             }
         }
 
-#if 0
-        printf("components: %d\n", components);
-        for (int i = 0; i < components; ++i)
-        {
-            printf("  component[%d]:  .offset: %d,  .stride: %d \n",
-                i,
-                blitter.component[i].offset,
-                stride[i]);
-        }
-#endif
+        u8* source = rect.src_address;
+        u8* dest = rect.dest_address;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -410,10 +404,9 @@ namespace
 
             for (int i = 0; i < components; ++i)
             {
-                int offset = blitter.component[i].offset;
-                if (offset >= 0)
+                if (offset[i] >= 0)
                 {
-                    input[i] = src + offset;
+                    input[i] = src + offset[i];
                 }
             }
 
@@ -424,19 +417,15 @@ namespace
                     case 4:
                         dst[3] = DestType(*input[3]);
                         input[3] += stride[3];
-                        // fall-through
                     case 3:
                         dst[2] = DestType(*input[2]);
                         input[2] += stride[2];
-                        // fall-through
                     case 2:
                         dst[1] = DestType(*input[1]);
                         input[1] += stride[1];
-                        // fall-through
                     case 1:
                         dst[0] = DestType(*input[0]);
                         input[0] += stride[0];
-                        // fall-through
                 }
                 dst += components;
             }
@@ -1904,39 +1893,6 @@ namespace mango::image
         initMask = 0;
         copyMask = 0;
 
-        sampleSize = 0;
-
-        const int source_float_shift = source.type - Format::FLOAT16 + 4;
-
-        if (dest.isFloat() && source.isFloat())
-        {
-            for (int i = 0; i < 4; ++i)
-            {
-                if (dest.size[i])
-                {
-                    // not used in float to float blitting
-                    component[components].srcMask = 0;
-                    component[components].destMask = 0;
-                    component[components].scale = 1.0f;
-                    component[components].bias = 0.0f;
-
-                    component[components].constant = i == 3 ? 1.0f : 0.0f;
-                    component[components].offset = source.size[i] ? source.offset[i] >> source_float_shift : -1;
-
-                    if (source.size[i])
-                    {
-                        ++sampleSize;
-                    }
-
-                    ++components;
-                }
-            }
-
-            rect_convert = get_rect_convert(dest, source);
-
-            return;
-        }
-
         for (int i = 0; i < 4; ++i)
         {
             u32 src_mask = source.mask(i);
@@ -1953,14 +1909,6 @@ namespace mango::image
                         component[components].destMask = dest_mask;
                         component[components].scale = float(dest_mask) / float(src_mask);
                         component[components].bias = 0;
-
-                        component[components].constant = i == 3 ? 1.0f : 0.0f;
-                        component[components].offset = source.offset[i] >> source_float_shift;
-
-                        if (source.size[i])
-                        {
-                            ++sampleSize;
-                        }
 
                         ++components;
                     }

@@ -36,14 +36,9 @@ namespace mango::image
             u32 destMask;
             float scale;
             float bias;
-
-            // float components
-            float constant;
-            int offset;
         } component[4];
 
         int components;
-        int sampleSize;
         u32 initMask;
         u32 copyMask;
 

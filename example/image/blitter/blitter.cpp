@@ -56,6 +56,8 @@ const Test tests [] =
     { Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), "simd:4" },
     { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), "simd:1" },
     { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), "simd:1" },
+    { Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), "xx" },
+    { Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), "xx" },
 
     // ...
 };
