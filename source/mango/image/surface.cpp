@@ -308,7 +308,7 @@ namespace mango::image
 
         Blitter blitter(dest.format, source.format);
 
-#if 0
+#if 1
         const int slice = 128;
 
         if (ThreadPool::getHardwareConcurrency() > 2 && rect.height >= slice * 2)
@@ -324,8 +324,8 @@ namespace mango::image
 
                     BlitRect temp = rect;
 
-                    temp.dest.address += y0 * rect.dest.stride;
-                    temp.src.address += y0 * rect.src.stride;
+                    temp.dest_address += y0 * rect.dest_stride;
+                    temp.src_address += y0 * rect.src_stride;
                     temp.height = y1 - y0;
 
                     blitter.convert(temp);
