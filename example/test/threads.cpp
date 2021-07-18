@@ -14,24 +14,38 @@ void print(const char* text)
     fflush(stdout);
 }
 
+struct Counter
+{
+    alignas(64) std::atomic<int> value = { 0 };
+};
+
 bool test0()
 {
-    ConcurrentQueue q;
-
-    std::atomic<int> counter { 0 };
+    constexpr int size = 32;
+    Counter counter[size];
 
     constexpr u64 icount = 7'500'000;
 
-    for (u64 i = 0; i < icount; ++i)
+    if (icount > 0)
     {
-        q.enqueue([&]
+        ConcurrentQueue q;
+
+        for (u64 i = 0; i < icount; ++i)
         {
-            ++counter;
-        });
+            q.enqueue([&, i]
+            {
+                ++counter[i % size].value;
+            });
+        }
     }
 
-    q.wait();
-    return counter.load() == icount;
+    u64 sum = 0;
+    for (int i = 0; i < size; ++i)
+    {
+        sum += counter[i].value.load();
+    }
+
+    return sum == icount;
 }
 
 bool test1()
