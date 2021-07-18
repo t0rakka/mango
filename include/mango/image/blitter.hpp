@@ -29,19 +29,6 @@ namespace mango::image
         Format srcFormat;
         Format destFormat;
 
-        struct Component
-        {
-            // integer components
-            u32 srcMask;
-            u32 destMask;
-            float scale;
-            float bias;
-        } component[4];
-
-        int components;
-        u32 initMask;
-        u32 copyMask;
-
         using ScanFunc = void (*)(u8* dest, const u8* src, int count);
         using RectFunc = void (*)(const Blitter& blitter, const BlitRect& rect);
 

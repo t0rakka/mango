@@ -190,41 +190,97 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
     {
-        const u32 srcMask [] =
+        struct Component
         {
-            blitter.component[0].srcMask,
-            blitter.component[1].srcMask,
-            blitter.component[2].srcMask,
-            blitter.component[3].srcMask,
+            u32 srcMask;
+            u32 srcOffset;
+            u32 destMask;
+            u32 destOffset;
+        } component[4];
+
+        int components = 0;
+        u32 initMask = 0;
+        u32 copyMask = 0;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            Component& c = component[components];
+
+            const Format& source = blitter.srcFormat;
+            const Format& dest = blitter.destFormat;
+
+            u32 src_mask = source.mask(i);
+            u32 dest_mask = dest.mask(i);
+
+            if (dest_mask)
+            {
+                if (src_mask != dest_mask)
+                {
+                    if (src_mask)
+                    {
+                        // source and destination are different: add channel to component array
+                        c.srcMask = (1 << source.size[i]) - 1;
+                        c.srcOffset = source.offset[i];
+
+                        c.destMask = (1 << dest.size[i]) - 1;
+                        c.destOffset = dest.offset[i];
+
+                        ++components;
+                    }
+                    else
+                    {
+                        // no source channel
+                        const bool is_alpha_channel = (i == 3);
+                        if (is_alpha_channel)
+                        {
+                            // alpha defaults to 1.0 (all bits of destination are set)
+                            initMask |= dest_mask;
+                        }
+                        else
+                        {
+                            // color defaults to 0.0
+                        }
+                    }
+                }
+                else
+                {
+                    // identical masks: pass-through w/o expensive processing
+                    copyMask |= src_mask;
+                }
+            }
+        }
+
+        const u32 mask [] =
+        {
+            component[0].srcMask,
+            component[1].srcMask,
+            component[2].srcMask,
+            component[3].srcMask,
         };
 
-        const u32 destMask [] =
+        const u32 right [] =
         {
-            blitter.component[0].destMask,
-            blitter.component[1].destMask,
-            blitter.component[2].destMask,
-            blitter.component[3].destMask,
+            component[0].srcOffset,
+            component[1].srcOffset,
+            component[2].srcOffset,
+            component[3].srcOffset,
+        };
+
+        const u32 left [] =
+        {
+            component[0].destOffset,
+            component[1].destOffset,
+            component[2].destOffset,
+            component[3].destOffset,
         };
 
         const float scale [] =
         {
-            blitter.component[0].scale,
-            blitter.component[1].scale,
-            blitter.component[2].scale,
-            blitter.component[3].scale,
+            float(component[0].destMask) / float(component[0].srcMask),
+            float(component[1].destMask) / float(component[1].srcMask),
+            float(component[2].destMask) / float(component[2].srcMask),
+            float(component[3].destMask) / float(component[3].srcMask),
         };
-
-        const float bias [] =
-        {
-            blitter.component[0].bias,
-            blitter.component[1].bias,
-            blitter.component[2].bias,
-            blitter.component[3].bias,
-        };
-
-        u32 initMask = blitter.initMask;
-        u32 copyMask = blitter.copyMask;
-        int components = blitter.components;
 
         int width = rect.width;
         int height = rect.height;
@@ -245,13 +301,13 @@ namespace
                 switch (components)
                 {
                     case 4:
-                        color |= u32((v & srcMask[3]) * scale[3] + bias[3]) & destMask[3];
+                        color |= (u32(((v >> right[3]) & mask[3]) * scale[3] + 0.5f)) << left[3];
                     case 3:
-                        color |= u32((v & srcMask[2]) * scale[2] + bias[2]) & destMask[2];
+                        color |= (u32(((v >> right[2]) & mask[2]) * scale[2] + 0.5f)) << left[2];
                     case 2:
-                        color |= u32((v & srcMask[1]) * scale[1] + bias[1]) & destMask[1];
+                        color |= (u32(((v >> right[1]) & mask[1]) * scale[1] + 0.5f)) << left[1];
                     case 1:
-                        color |= u32((v & srcMask[0]) * scale[0] + bias[0]) & destMask[0];
+                        color |= (u32(((v >> right[0]) & mask[0]) * scale[0] + 0.5f)) << left[0];
                 }
 
                 write(d, color);
@@ -435,13 +491,32 @@ namespace
         }
     }
 
+    void convert_none(const Blitter& blitter, const BlitRect& rect)
+    {
+        MANGO_UNREFERENCED(blitter);
+        MANGO_UNREFERENCED(rect);
+    }
+
+    void convert_custom(const Blitter& blitter, const BlitRect& rect)
+    {
+        u8* src = rect.src_address;
+        u8* dest = rect.dest_address;
+
+        for (int y = 0; y < rect.height; ++y)
+        {
+            blitter.scan_convert(dest, src, rect.width);
+            src += rect.src_stride;
+            dest += rect.dest_stride;
+        }
+    }
+
     Blitter::RectFunc get_rect_convert(const Format& dest, const Format& source)
     {
         int destBits = modeBits(dest);
         int sourceBits = modeBits(source);
         int modeMask = MAKE_MODEMASK(destBits, sourceBits);
 
-        Blitter::RectFunc func = nullptr;
+        Blitter::RectFunc func = convert_none;
 
         switch (modeMask)
         {
@@ -489,25 +564,6 @@ namespace
         }
 
         return func;
-    }
-
-    void convert_none(const Blitter& blitter, const BlitRect& rect)
-    {
-        MANGO_UNREFERENCED(blitter);
-        MANGO_UNREFERENCED(rect);
-    }
-
-    void convert_custom(const Blitter& blitter, const BlitRect& rect)
-    {
-        u8* src = rect.src_address;
-        u8* dest = rect.dest_address;
-
-        for (int y = 0; y < rect.height; ++y)
-        {
-            blitter.scan_convert(dest, src, rect.width);
-            src += rect.src_stride;
-            dest += rect.dest_stride;
-        }
     }
 
     // ----------------------------------------------------------------------------
@@ -1879,7 +1935,7 @@ namespace mango::image
         : srcFormat(source)
         , destFormat(dest)
         , scan_convert(nullptr)
-        , rect_convert(convert_none)
+        , rect_convert(nullptr)
     {
         scan_convert = find_scan_blitter(dest, source);
         if (scan_convert)
@@ -1887,52 +1943,6 @@ namespace mango::image
             // found custom blitter
             rect_convert = convert_custom;
             return;
-        }
-
-        components = 0;
-        initMask = 0;
-        copyMask = 0;
-
-        for (int i = 0; i < 4; ++i)
-        {
-            u32 src_mask = source.mask(i);
-            u32 dest_mask = dest.mask(i);
-
-            if (dest_mask)
-            {
-                if (src_mask != dest_mask)
-                {
-                    if (src_mask)
-                    {
-                        // source and destination are different: add channel to component array
-                        component[components].srcMask = src_mask;
-                        component[components].destMask = dest_mask;
-                        component[components].scale = float(dest_mask) / float(src_mask);
-                        component[components].bias = 0;
-
-                        ++components;
-                    }
-                    else
-                    {
-                        // no source channel
-                        const bool is_alpha_channel = (i == 3);
-                        if (is_alpha_channel)
-                        {
-                            // alpha defaults to 1.0 (all bits of destination are set)
-                            initMask |= dest_mask;
-                        }
-                        else
-                        {
-                            // color defaults to 0.0
-                        }
-                    }
-                }
-                else
-                {
-                    // identical masks: pass-through w/o expensive processing
-                    copyMask |= src_mask;
-                }
-            }
         }
 
         rect_convert = get_rect_convert(dest, source);
