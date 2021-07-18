@@ -174,7 +174,7 @@ void profile(Surface surface)
         a.blit(0, 0, b);
         u64 time1 = Time::us();
 
-        u64 s = width * height / ((time1 - time0) * 1);
+        u64 s = width * height / std::max(u64(1), ((time1 - time0) * 1));
         printf("  %6d us (%4d MP/s)  ", int(time1 - time0), int(s));
         print(a.format);
         printf("   <--   ");
