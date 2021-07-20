@@ -273,7 +273,7 @@ namespace
     static
     ConversionTable getConversionTable(int dst, int src)
     {
-        if (dst < 1 || dst > 16 || src < 1 || src > 16)
+        if (dst > 16 || src > 16)
         {
             return { 0, 0, 0 };
         }
@@ -334,6 +334,10 @@ namespace
                 }
                 else
                 {
+                    // disable component
+                    c.srcMask = 0;
+                    c.bias = 0;
+
                     const bool is_alpha_channel = (i == 3);
                     if (is_alpha_channel)
                     {
@@ -346,6 +350,7 @@ namespace
             {
                 // disable component
                 c.srcMask = 0;
+                c.bias = 0;
             }
         }
 
