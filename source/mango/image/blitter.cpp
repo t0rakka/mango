@@ -3,6 +3,7 @@
     Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
+#include <cassert>
 #include <mango/core/system.hpp>
 #include <mango/core/cpuinfo.hpp>
 #include <mango/core/half.hpp>
@@ -95,29 +96,6 @@ namespace
     }
 
     // ----------------------------------------------------------------------------
-    // debug print
-    // ----------------------------------------------------------------------------
-
-#if 0
-    void print(const Blitter& blitter)
-    {
-        printf("Blitter \n");
-        printf("  components: %d\n", blitter.components);
-        for (int i = 0; i < blitter.components; ++i)
-        {
-            printf("    srcMask: 0x%x\n", blitter.component[i].srcMask);
-            printf("    destMask: 0x%x\n", blitter.component[i].destMask);
-            printf("    scale: %f\n", blitter.component[i].scale);
-            printf("    constant: %f\n", blitter.component[i].constant);
-            printf("    offset: %d\n", blitter.component[i].offset);
-        }
-        printf("  sampleSize: %d\n", blitter.sampleSize);
-        printf("  initMask: 0x%x\n", blitter.initMask);
-        printf("  copyMask: 0x%x\n", blitter.copyMask);
-    }
-#endif
-
-    // ----------------------------------------------------------------------------
     // memory access
     // ----------------------------------------------------------------------------
 
@@ -179,6 +157,231 @@ namespace
     void store<u32>(u8* p, u32 v)
     {
         ustore32(p, v);
+    }
+
+    // ----------------------------------------------------------------------------
+    // conversion table
+    // ----------------------------------------------------------------------------
+
+    struct ConversionTable
+    {
+        u32 scale;
+        u32 bias;
+        u32 shift;
+    };
+
+    static
+    const ConversionTable g_conversion_table[] =
+    {
+        // 1 bit source
+        { 1, 0, 0 }, { 3, 0, 0 }, { 7, 0, 0 }, { 15, 0, 0 },
+        { 31, 0, 0 }, { 63, 0, 0 }, { 127, 0, 0 }, { 255, 0, 0 },
+        { 511, 0, 0 }, { 1023, 0, 0 }, { 2047, 0, 0 }, { 4095, 0, 0 },
+
+        // 2 bit source
+        { 1, 0, 1 }, { 1, 0, 0 }, { 9, 2, 2 }, { 5, 0, 0 },
+        { 41, 2, 2 }, { 21, 0, 0 }, { 169, 2, 2 }, { 85, 0, 0 },
+        { 681, 2, 2 }, { 341, 0, 0 }, { 2729, 2, 2 }, { 1365, 0, 0 },
+
+        // 3 bit source
+        { 1, 0, 2 }, { 2, 1, 2 }, { 1, 0, 0 }, { 17, 4, 3 },
+        { 18, 1, 2 }, { 9, 0, 0 }, { 145, 4, 3 }, { 146, 1, 2 },
+        { 73, 0, 0 }, { 1169, 4, 3 }, { 1170, 1, 2 }, { 585, 0, 0 },
+
+        // 4 bit source
+        { 1, 0, 3 }, { 3, 9, 4 }, { 2, 1, 2 }, { 1, 0, 0 },
+        { 33, 8, 4 }, { 67, 9, 4 }, { 34, 1, 2 }, { 17, 0, 0 },
+        { 545, 8, 4 }, { 1091, 9, 4 }, { 546, 1, 2 }, { 273, 0, 0 },
+
+        // 5 bit source
+        { 1, 0, 4 }, { 13, 56, 7 }, { 15, 23, 6 }, { 2, 1, 2 },
+        { 1, 0, 0 }, { 65, 16, 5 }, { 525, 56, 7 }, { 527, 23, 6 },
+        { 66, 1, 2 }, { 33, 0, 0 }, { 2113, 16, 5 }, { 16909, 56, 7 },
+
+        // 6 bit source
+        { 1, 0, 5 }, { 3, 33, 6 }, { 7, 35, 6 }, { 61, 128, 8 },
+        { 2, 1, 2 }, { 1, 0, 0 }, { 129, 32, 6 }, { 259, 33, 6 },
+        { 519, 35, 6 }, { 4157, 128, 8 }, { 130, 1, 2 }, { 65, 0, 0 },
+
+        // 7 bit source
+        { 1, 0, 6 }, { 49, 992, 11 }, { 57, 480, 10 }, { 121, 512, 10 },
+        { 125, 256, 9 }, { 2, 1, 2 }, { 1, 0, 0 }, { 257, 64, 7 },
+        { 8241, 992, 11 }, { 8249, 480, 10 }, { 16505, 512, 10 }, { 16509, 256, 9 },
+
+        // 8 bit source
+        { 1, 0, 7 }, { 3, 129, 8 }, { 225, 4096, 13 }, { 15, 135, 8 },
+        { 249, 1024, 11 }, { 253, 512, 10 }, { 2, 1, 2 }, { 1, 0, 0 },
+        { 513, 128, 8 }, { 1027, 129, 8 }, { 65761, 4096, 13 }, { 4111, 135, 8 },
+
+        // 9 bit source
+        { 1, 0, 8 }, { 193, 16256, 15 }, { 7, 259, 9 }, { 241, 3968, 13 },
+        { 497, 4096, 13 }, { 505, 2048, 12 }, { 509, 1024, 11 }, { 2, 1, 2 },
+        { 1, 0, 0 }, { 1025, 256, 9 }, { 131265, 16256, 15 }, { 4103, 259, 9 },
+
+        // 10 bit source
+        { 1, 0, 9 }, { 3, 513, 10 }, { 449, 32512, 16 }, { 961, 32768, 16 },
+        { 31, 527, 10 }, { 1009, 8192, 14 }, { 1017, 4096, 13 }, { 1021, 2048, 12 },
+        { 2, 1, 2 }, { 1, 0, 0 }, { 2049, 512, 10 }, { 4099, 513, 10 },
+
+        // 11 bit source
+        { 1, 0, 10 }, { 769, 261632, 19 }, { 1793, 262144, 19 }, { 1921, 131072, 18 },
+        { 993, 32256, 16 }, { 2017, 32768, 16 }, { 2033, 16384, 15 }, { 2041, 8192, 14 },
+        { 2045, 4096, 13 }, { 2, 1, 2 }, { 1, 0, 0 }, { 4097, 1024, 11 },
+
+        // 12 bit source
+        { 1, 0, 11 }, { 3, 2049, 12 }, { 7, 2051, 12 }, { 15, 2055, 12 },
+        { 3969, 262144, 19 }, { 63, 2079, 12 }, { 4065, 65536, 17 }, { 4081, 32768, 16 },
+        { 4089, 16384, 15 }, { 4093, 8192, 14 }, { 2, 1, 2 }, { 1, 0, 0 },
+    };
+
+    static inline
+    ConversionTable getConversionTable(int dst, int src)
+    {
+        assert(dst > 0 || dst <= 12);
+        assert(src > 0 || src <= 12);
+        const ConversionTable& table = g_conversion_table[(src - 1) * 12 + (dst - 1)];
+        return table;
+    }
+
+    // 1..12 bit integer table based conversion template
+
+    bool isConversionTableSupported(const Format& dest, const Format& source)
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            if (dest.size[i] > 12 || source.size[i] > 12)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    template <typename DestType, typename SourceType>
+    void convert_template_table_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
+    {
+        struct Component
+        {
+            u32 srcMask;
+            u32 srcOffset;
+            u32 destOffset;
+            u32 scale;
+            u32 bias;
+            u32 shift;
+        } component[4];
+
+        u32 alphaMask = 0;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            Component& c = component[i];
+
+            const Format& source = blitter.srcFormat;
+            const Format& dest = blitter.destFormat;
+
+            if (dest.size[i])
+            {
+                if (source.size[i])
+                {
+                    // source and destination are different: add channel to component array
+                    c.srcMask = (1 << source.size[i]) - 1;
+                    c.srcOffset = source.offset[i];
+                    c.destOffset = dest.offset[i];
+
+                    const ConversionTable& table = getConversionTable(dest.size[i], source.size[i]);
+                    c.scale = table.scale;
+                    c.bias = table.bias;
+                    c.shift = table.shift;
+                }
+                else
+                {
+                    const bool is_alpha_channel = (i == 3);
+                    if (is_alpha_channel)
+                    {
+                        // alpha defaults to 1.0 (all bits of destination are set)
+                        alphaMask |= dest.mask(i);
+                    }
+                }
+            }
+            else
+            {
+                // disable component
+                c.srcMask = 0;
+            }
+        }
+
+        const u32 mask [] =
+        {
+            component[0].srcMask,
+            component[1].srcMask,
+            component[2].srcMask,
+            component[3].srcMask,
+        };
+
+        const u32 right [] =
+        {
+            component[0].srcOffset,
+            component[1].srcOffset,
+            component[2].srcOffset,
+            component[3].srcOffset,
+        };
+
+        const u32 left [] =
+        {
+            component[0].destOffset,
+            component[1].destOffset,
+            component[2].destOffset,
+            component[3].destOffset,
+        };
+
+        const u32 scale [] =
+        {
+            component[0].scale,
+            component[1].scale,
+            component[2].scale,
+            component[3].scale
+        };
+
+        const u32 bias [] =
+        {
+            component[0].bias,
+            component[1].bias,
+            component[2].bias,
+            component[3].bias
+        };
+
+        const u32 shift [] =
+        {
+            component[0].shift,
+            component[1].shift,
+            component[2].shift,
+            component[3].shift
+        };
+
+        int width = rect.width;
+        int height = rect.height;
+
+        auto read = load<SourceType>;
+        auto write = store<DestType>;
+
+        for (int y = 0; y < height; ++y)
+        {
+            const u8* s = rect.src_address + rect.src_stride * y;
+            u8* d = rect.dest_address + rect.dest_stride * y;;
+
+            for (int x = 0; x < width; ++x)
+            {
+                u32 v = read(s);
+                u32 color = alphaMask;
+                color |= ((((v >> right[0]) & mask[0]) * scale[0] + bias[0]) >> shift[0]) << left[0];
+                color |= ((((v >> right[1]) & mask[1]) * scale[1] + bias[1]) >> shift[1]) << left[1];
+                color |= ((((v >> right[2]) & mask[2]) * scale[2] + bias[2]) >> shift[2]) << left[2];
+                color |= ((((v >> right[3]) & mask[3]) * scale[3] + bias[3]) >> shift[3]) << left[3];
+                write(d, color);
+                s += sizeof(SourceType);
+                d += sizeof(DestType);
+            }
+        }
     }
 
     // ----------------------------------------------------------------------------
@@ -518,49 +721,74 @@ namespace
 
         Blitter::RectFunc func = convert_none;
 
-        switch (modeMask)
+        if (isConversionTableSupported(dest, source))
         {
-            case MAKE_MODEMASK( 8,  8): func = convert_template_unorm_unorm<u8, u8>; break;
-            case MAKE_MODEMASK( 8, 16): func = convert_template_unorm_unorm<u8, u16>; break;
-            case MAKE_MODEMASK( 8, 24): func = convert_template_unorm_unorm<u8, u24>; break;
-            case MAKE_MODEMASK( 8, 32): func = convert_template_unorm_unorm<u8, u32>; break;
-            case MAKE_MODEMASK(16,  8): func = convert_template_unorm_unorm<u16, u8>; break;
-            case MAKE_MODEMASK(16, 16): func = convert_template_unorm_unorm<u16, u16>; break;
-            case MAKE_MODEMASK(16, 24): func = convert_template_unorm_unorm<u16, u24>; break;
-            case MAKE_MODEMASK(16, 32): func = convert_template_unorm_unorm<u16, u32>; break;
-            case MAKE_MODEMASK(24,  8): func = convert_template_unorm_unorm<u24, u8>; break;
-            case MAKE_MODEMASK(24, 16): func = convert_template_unorm_unorm<u24, u16>; break;
-            case MAKE_MODEMASK(24, 24): func = convert_template_unorm_unorm<u24, u24>; break;
-            case MAKE_MODEMASK(24, 32): func = convert_template_unorm_unorm<u24, u32>; break;
-            case MAKE_MODEMASK(32,  8): func = convert_template_unorm_unorm<u32, u8>; break;
-            case MAKE_MODEMASK(32, 16): func = convert_template_unorm_unorm<u32, u16>; break;
-            case MAKE_MODEMASK(32, 24): func = convert_template_unorm_unorm<u32, u24>; break;
-            case MAKE_MODEMASK(32, 32): func = convert_template_unorm_unorm<u32, u32>; break;
-            case MAKE_MODEMASK( 8, BITS_FP16): func = convert_template_unorm_fp<u8, float16>; break;
-            case MAKE_MODEMASK(16, BITS_FP16): func = convert_template_unorm_fp<u16, float16>; break;
-            case MAKE_MODEMASK(24, BITS_FP16): func = convert_template_unorm_fp<u24, float16>; break;
-            case MAKE_MODEMASK(32, BITS_FP16): func = convert_template_unorm_fp<u32, float16>; break;
-            case MAKE_MODEMASK( 8, BITS_FP32): func = convert_template_unorm_fp<u8, float>; break;
-            case MAKE_MODEMASK(16, BITS_FP32): func = convert_template_unorm_fp<u16, float>; break;
-            case MAKE_MODEMASK(24, BITS_FP32): func = convert_template_unorm_fp<u24, float>; break;
-            case MAKE_MODEMASK(32, BITS_FP32): func = convert_template_unorm_fp<u32, float>; break;
-            case MAKE_MODEMASK(BITS_FP16,  8): func = convert_template_fp_unorm<float16, u8>; break;
-            case MAKE_MODEMASK(BITS_FP16, 16): func = convert_template_fp_unorm<float16, u16>; break;
-            case MAKE_MODEMASK(BITS_FP16, 24): func = convert_template_fp_unorm<float16, u24>; break;
-            case MAKE_MODEMASK(BITS_FP16, 32): func = convert_template_fp_unorm<float16, u32>; break;
-            case MAKE_MODEMASK(BITS_FP32,  8): func = convert_template_fp_unorm<float, u8>; break;
-            case MAKE_MODEMASK(BITS_FP32, 16): func = convert_template_fp_unorm<float, u16>; break;
-            case MAKE_MODEMASK(BITS_FP32, 24): func = convert_template_fp_unorm<float, u24>; break;
-            case MAKE_MODEMASK(BITS_FP32, 32): func = convert_template_fp_unorm<float, u32>; break;
-            case MAKE_MODEMASK(BITS_FP16, BITS_FP16): func = convert_template_fp_fp<float16, float16>; break;
-            case MAKE_MODEMASK(BITS_FP16, BITS_FP32): func = convert_template_fp_fp<float16, float32>; break;
-            case MAKE_MODEMASK(BITS_FP16, BITS_FP64): func = convert_template_fp_fp<float16, float64>; break;
-            case MAKE_MODEMASK(BITS_FP32, BITS_FP16): func = convert_template_fp_fp<float32, float16>; break;
-            case MAKE_MODEMASK(BITS_FP32, BITS_FP32): func = convert_template_fp_fp<float32, float32>; break;
-            case MAKE_MODEMASK(BITS_FP32, BITS_FP64): func = convert_template_fp_fp<float32, float64>; break;
-            case MAKE_MODEMASK(BITS_FP64, BITS_FP16): func = convert_template_fp_fp<float64, float16>; break;
-            case MAKE_MODEMASK(BITS_FP64, BITS_FP32): func = convert_template_fp_fp<float64, float32>; break;
-            case MAKE_MODEMASK(BITS_FP64, BITS_FP64): func = convert_template_fp_fp<float64, float64>; break;
+            switch (modeMask)
+            {
+                case MAKE_MODEMASK( 8,  8): func = convert_template_table_unorm_unorm<u8, u8>; break;
+                case MAKE_MODEMASK( 8, 16): func = convert_template_table_unorm_unorm<u8, u16>; break;
+                case MAKE_MODEMASK( 8, 24): func = convert_template_table_unorm_unorm<u8, u24>; break;
+                case MAKE_MODEMASK( 8, 32): func = convert_template_table_unorm_unorm<u8, u32>; break;
+                case MAKE_MODEMASK(16,  8): func = convert_template_table_unorm_unorm<u16, u8>; break;
+                case MAKE_MODEMASK(16, 16): func = convert_template_table_unorm_unorm<u16, u16>; break;
+                case MAKE_MODEMASK(16, 24): func = convert_template_table_unorm_unorm<u16, u24>; break;
+                case MAKE_MODEMASK(16, 32): func = convert_template_table_unorm_unorm<u16, u32>; break;
+                case MAKE_MODEMASK(24,  8): func = convert_template_table_unorm_unorm<u24, u8>; break;
+                case MAKE_MODEMASK(24, 16): func = convert_template_table_unorm_unorm<u24, u16>; break;
+                case MAKE_MODEMASK(24, 24): func = convert_template_table_unorm_unorm<u24, u24>; break;
+                case MAKE_MODEMASK(24, 32): func = convert_template_table_unorm_unorm<u24, u32>; break;
+                case MAKE_MODEMASK(32,  8): func = convert_template_table_unorm_unorm<u32, u8>; break;
+                case MAKE_MODEMASK(32, 16): func = convert_template_table_unorm_unorm<u32, u16>; break;
+                case MAKE_MODEMASK(32, 24): func = convert_template_table_unorm_unorm<u32, u24>; break;
+                case MAKE_MODEMASK(32, 32): func = convert_template_table_unorm_unorm<u32, u32>; break;
+            }
+        }
+        else
+        {
+            switch (modeMask)
+            {
+                case MAKE_MODEMASK( 8,  8): func = convert_template_unorm_unorm<u8, u8>; break;
+                case MAKE_MODEMASK( 8, 16): func = convert_template_unorm_unorm<u8, u16>; break;
+                case MAKE_MODEMASK( 8, 24): func = convert_template_unorm_unorm<u8, u24>; break;
+                case MAKE_MODEMASK( 8, 32): func = convert_template_unorm_unorm<u8, u32>; break;
+                case MAKE_MODEMASK(16,  8): func = convert_template_unorm_unorm<u16, u8>; break;
+                case MAKE_MODEMASK(16, 16): func = convert_template_unorm_unorm<u16, u16>; break;
+                case MAKE_MODEMASK(16, 24): func = convert_template_unorm_unorm<u16, u24>; break;
+                case MAKE_MODEMASK(16, 32): func = convert_template_unorm_unorm<u16, u32>; break;
+                case MAKE_MODEMASK(24,  8): func = convert_template_unorm_unorm<u24, u8>; break;
+                case MAKE_MODEMASK(24, 16): func = convert_template_unorm_unorm<u24, u16>; break;
+                case MAKE_MODEMASK(24, 24): func = convert_template_unorm_unorm<u24, u24>; break;
+                case MAKE_MODEMASK(24, 32): func = convert_template_unorm_unorm<u24, u32>; break;
+                case MAKE_MODEMASK(32,  8): func = convert_template_unorm_unorm<u32, u8>; break;
+                case MAKE_MODEMASK(32, 16): func = convert_template_unorm_unorm<u32, u16>; break;
+                case MAKE_MODEMASK(32, 24): func = convert_template_unorm_unorm<u32, u24>; break;
+                case MAKE_MODEMASK(32, 32): func = convert_template_unorm_unorm<u32, u32>; break;
+                case MAKE_MODEMASK( 8, BITS_FP16): func = convert_template_unorm_fp<u8, float16>; break;
+                case MAKE_MODEMASK(16, BITS_FP16): func = convert_template_unorm_fp<u16, float16>; break;
+                case MAKE_MODEMASK(24, BITS_FP16): func = convert_template_unorm_fp<u24, float16>; break;
+                case MAKE_MODEMASK(32, BITS_FP16): func = convert_template_unorm_fp<u32, float16>; break;
+                case MAKE_MODEMASK( 8, BITS_FP32): func = convert_template_unorm_fp<u8, float>; break;
+                case MAKE_MODEMASK(16, BITS_FP32): func = convert_template_unorm_fp<u16, float>; break;
+                case MAKE_MODEMASK(24, BITS_FP32): func = convert_template_unorm_fp<u24, float>; break;
+                case MAKE_MODEMASK(32, BITS_FP32): func = convert_template_unorm_fp<u32, float>; break;
+                case MAKE_MODEMASK(BITS_FP16,  8): func = convert_template_fp_unorm<float16, u8>; break;
+                case MAKE_MODEMASK(BITS_FP16, 16): func = convert_template_fp_unorm<float16, u16>; break;
+                case MAKE_MODEMASK(BITS_FP16, 24): func = convert_template_fp_unorm<float16, u24>; break;
+                case MAKE_MODEMASK(BITS_FP16, 32): func = convert_template_fp_unorm<float16, u32>; break;
+                case MAKE_MODEMASK(BITS_FP32,  8): func = convert_template_fp_unorm<float, u8>; break;
+                case MAKE_MODEMASK(BITS_FP32, 16): func = convert_template_fp_unorm<float, u16>; break;
+                case MAKE_MODEMASK(BITS_FP32, 24): func = convert_template_fp_unorm<float, u24>; break;
+                case MAKE_MODEMASK(BITS_FP32, 32): func = convert_template_fp_unorm<float, u32>; break;
+                case MAKE_MODEMASK(BITS_FP16, BITS_FP16): func = convert_template_fp_fp<float16, float16>; break;
+                case MAKE_MODEMASK(BITS_FP16, BITS_FP32): func = convert_template_fp_fp<float16, float32>; break;
+                case MAKE_MODEMASK(BITS_FP16, BITS_FP64): func = convert_template_fp_fp<float16, float64>; break;
+                case MAKE_MODEMASK(BITS_FP32, BITS_FP16): func = convert_template_fp_fp<float32, float16>; break;
+                case MAKE_MODEMASK(BITS_FP32, BITS_FP32): func = convert_template_fp_fp<float32, float32>; break;
+                case MAKE_MODEMASK(BITS_FP32, BITS_FP64): func = convert_template_fp_fp<float32, float64>; break;
+                case MAKE_MODEMASK(BITS_FP64, BITS_FP16): func = convert_template_fp_fp<float64, float16>; break;
+                case MAKE_MODEMASK(BITS_FP64, BITS_FP32): func = convert_template_fp_fp<float64, float32>; break;
+                case MAKE_MODEMASK(BITS_FP64, BITS_FP64): func = convert_template_fp_fp<float64, float64>; break;
+            }
         }
 
         return func;
