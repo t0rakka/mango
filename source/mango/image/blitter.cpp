@@ -473,14 +473,16 @@ namespace
         u32 z = uload32(p + 8);
         __m128i value = _mm_loadu_si64(p);
         value = _mm_insert_epi32(value, z, 2);
-        __m128i mask = _mm_setr_epi8(0, 1, 2, 0x80, 3, 4, 5, 0x80, 6, 7, 8, 0x80, 9, 10, 11, 0x80);
+        constexpr u8 n = 0x80;
+        __m128i mask = _mm_setr_epi8(0, 1, 2, n, 3, 4, 5, n, 6, 7, 8, n, 9, 10, 11, n);
         return _mm_shuffle_epi8(value, mask);
     }
 
     template <>
     void sse4_store<u24>(u8* p, __m128i value)
     {
-        const __m128i mask = _mm_setr_epi8(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 0x80, 0x80, 0x80, 0x80);
+        constexpr u8 n = 0x80;
+        const __m128i mask = _mm_setr_epi8(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, n, n, n, n);
         value = _mm_shuffle_epi8(value, mask);
         _mm_storeu_si64(p + 0, value);
         u32 z = _mm_extract_epi32(value, 2);
