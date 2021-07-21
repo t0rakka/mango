@@ -315,6 +315,10 @@ namespace
         {
             Component& c = component[i];
 
+            // disable component
+            c.srcMask = 0;
+            c.bias = 0;
+
             const Format& source = blitter.srcFormat;
             const Format& dest = blitter.destFormat;
 
@@ -334,23 +338,12 @@ namespace
                 }
                 else
                 {
-                    // disable component
-                    c.srcMask = 0;
-                    c.bias = 0;
-
-                    const bool is_alpha_channel = (i == 3);
-                    if (is_alpha_channel)
+                    if (i == 3)
                     {
                         // alpha defaults to 1.0 (all bits of destination are set)
                         alphaMask |= dest.mask(i);
                     }
                 }
-            }
-            else
-            {
-                // disable component
-                c.srcMask = 0;
-                c.bias = 0;
             }
         }
 
@@ -672,56 +665,41 @@ namespace
             u32 srcOffset;
             u32 destMask;
             u32 destOffset;
+            float scale;
         } component[4];
 
-        int components = 0;
-        u32 initMask = 0;
-        u32 copyMask = 0;
+        u32 alphaMask = 0;
 
         for (int i = 0; i < 4; ++i)
         {
-            Component& c = component[components];
+            Component& c = component[i];
+
+            // disable component
+            c.srcMask = 0;
+            c.scale = 0.0f;
 
             const Format& source = blitter.srcFormat;
             const Format& dest = blitter.destFormat;
 
-            u32 src_mask = source.mask(i);
-            u32 dest_mask = dest.mask(i);
-
-            if (dest_mask)
+            if (dest.size[i])
             {
-                if (src_mask != dest_mask)
+                if (source.size[i])
                 {
-                    if (src_mask)
-                    {
-                        // source and destination are different: add channel to component array
-                        c.srcMask = (1 << source.size[i]) - 1;
-                        c.srcOffset = source.offset[i];
+                    c.srcMask = (1 << source.size[i]) - 1;
+                    c.srcOffset = source.offset[i];
 
-                        c.destMask = (1 << dest.size[i]) - 1;
-                        c.destOffset = dest.offset[i];
+                    c.destMask = (1 << dest.size[i]) - 1;
+                    c.destOffset = dest.offset[i];
 
-                        ++components;
-                    }
-                    else
-                    {
-                        // no source channel
-                        const bool is_alpha_channel = (i == 3);
-                        if (is_alpha_channel)
-                        {
-                            // alpha defaults to 1.0 (all bits of destination are set)
-                            initMask |= dest_mask;
-                        }
-                        else
-                        {
-                            // color defaults to 0.0
-                        }
-                    }
+                    c.scale = float(c.destMask) / float(c.srcMask);
                 }
                 else
                 {
-                    // identical masks: pass-through w/o expensive processing
-                    copyMask |= src_mask;
+                    if (i == 3)
+                    {
+                        // alpha defaults to 1.0 (all bits of destination are set)
+                        alphaMask |= dest.mask(i);
+                    }
                 }
             }
         }
@@ -752,10 +730,10 @@ namespace
 
         const float scale [] =
         {
-            float(component[0].destMask) / float(component[0].srcMask),
-            float(component[1].destMask) / float(component[1].srcMask),
-            float(component[2].destMask) / float(component[2].srcMask),
-            float(component[3].destMask) / float(component[3].srcMask),
+            component[0].scale,
+            component[1].scale,
+            component[2].scale,
+            component[3].scale,
         };
 
         int width = rect.width;
@@ -772,20 +750,11 @@ namespace
             for (int x = 0; x < width; ++x)
             {
                 u32 v = read(s);
-                u32 color = initMask | (v & copyMask);
-
-                switch (components)
-                {
-                    case 4:
-                        color |= (u32(((v >> right[3]) & mask[3]) * scale[3] + 0.5f)) << left[3];
-                    case 3:
-                        color |= (u32(((v >> right[2]) & mask[2]) * scale[2] + 0.5f)) << left[2];
-                    case 2:
-                        color |= (u32(((v >> right[1]) & mask[1]) * scale[1] + 0.5f)) << left[1];
-                    case 1:
-                        color |= (u32(((v >> right[0]) & mask[0]) * scale[0] + 0.5f)) << left[0];
-                }
-
+                u32 color = alphaMask;
+                color |= (u32(((v >> right[3]) & mask[3]) * scale[3] + 0.5f)) << left[3];
+                color |= (u32(((v >> right[2]) & mask[2]) * scale[2] + 0.5f)) << left[2];
+                color |= (u32(((v >> right[1]) & mask[1]) * scale[1] + 0.5f)) << left[1];
+                color |= (u32(((v >> right[0]) & mask[0]) * scale[0] + 0.5f)) << left[0];
                 write(d, color);
                 s += sizeof(SourceType);
                 d += sizeof(DestType);
