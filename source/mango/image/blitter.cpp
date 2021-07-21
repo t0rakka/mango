@@ -565,53 +565,31 @@ namespace
             }
         }
 
-        const __m128i mask [] =
-        {
-            _mm_set1_epi32(component[0].srcMask),
-            _mm_set1_epi32(component[1].srcMask),
-            _mm_set1_epi32(component[2].srcMask),
-            _mm_set1_epi32(component[3].srcMask),
-        };
+        const __m128i mask0 = _mm_set1_epi32(component[0].srcMask);
+        const __m128i mask1 = _mm_set1_epi32(component[1].srcMask);
+        const __m128i mask2 = _mm_set1_epi32(component[2].srcMask);
+        const __m128i mask3 = _mm_set1_epi32(component[3].srcMask);
 
-        const u32 right [] =
-        {
-            component[0].srcOffset,
-            component[1].srcOffset,
-            component[2].srcOffset,
-            component[3].srcOffset,
-        };
+        const __m128i scale0 = _mm_set1_epi32(component[0].scale);
+        const __m128i scale1 = _mm_set1_epi32(component[1].scale);
+        const __m128i scale2 = _mm_set1_epi32(component[2].scale);
+        const __m128i scale3 = _mm_set1_epi32(component[3].scale);
 
-        const u32 left [] =
-        {
-            component[0].destOffset,
-            component[1].destOffset,
-            component[2].destOffset,
-            component[3].destOffset,
-        };
+        const __m128i bias0 = _mm_set1_epi32(component[0].bias);
+        const __m128i bias1 = _mm_set1_epi32(component[1].bias);
+        const __m128i bias2 = _mm_set1_epi32(component[2].bias);
+        const __m128i bias3 = _mm_set1_epi32(component[3].bias);
 
-        const __m128i scale [] =
-        {
-            _mm_set1_epi32(component[0].scale),
-            _mm_set1_epi32(component[1].scale),
-            _mm_set1_epi32(component[2].scale),
-            _mm_set1_epi32(component[3].scale),
-        };
+        const __m128i right01 = _mm_set_epi64x(component[1].srcOffset, component[0].srcOffset);
+        const __m128i right23 = _mm_set_epi64x(component[3].srcOffset, component[2].srcOffset);
 
-        const __m128i bias [] =
-        {
-            _mm_set1_epi32(component[0].bias),
-            _mm_set1_epi32(component[1].bias),
-            _mm_set1_epi32(component[2].bias),
-            _mm_set1_epi32(component[3].bias),
-        };
+        const __m128i left01 = _mm_set_epi64x(component[1].destOffset, component[0].destOffset);
+        const __m128i left23 = _mm_set_epi64x(component[3].destOffset, component[2].destOffset);
 
-        const u32 shift [] =
-        {
-            component[0].shift,
-            component[1].shift,
-            component[2].shift,
-            component[3].shift,
-        };
+        const __m128i shift01 = _mm_set_epi64x(component[1].shift, component[0].shift);
+        const __m128i shift23 = _mm_set_epi64x(component[3].shift, component[2].shift);
+
+        const __m128i alpha = _mm_set1_epi32(alphaMask);
 
         int width = rect.width;
         int height = rect.height;
@@ -629,32 +607,32 @@ namespace
             while (xcount >= 4)
             {
                 __m128i v = read(s);
-                __m128i color = _mm_set1_epi32(alphaMask);
+                __m128i color = alpha;
 
-                __m128i c0 = _mm_srli_epi32(v, right[0]);
-                __m128i c1 = _mm_srli_epi32(v, right[1]);
-                __m128i c2 = _mm_srli_epi32(v, right[2]);
-                __m128i c3 = _mm_srli_epi32(v, right[3]);
+                __m128i c0 = _mm_srl_epi32(v, right01);
+                __m128i c1 = _mm_srl_epi32(v, _mm_unpackhi_epi64(right01, right01));
+                __m128i c2 = _mm_srl_epi32(v, right23);
+                __m128i c3 = _mm_srl_epi32(v, _mm_unpackhi_epi64(right23, right23));
 
-                c0 = _mm_and_si128(c0, mask[0]);
-                c1 = _mm_and_si128(c1, mask[1]);
-                c2 = _mm_and_si128(c2, mask[2]);
-                c3 = _mm_and_si128(c3, mask[3]);
+                c0 = _mm_and_si128(c0, mask0);
+                c1 = _mm_and_si128(c1, mask1);
+                c2 = _mm_and_si128(c2, mask2);
+                c3 = _mm_and_si128(c3, mask3);
 
-                c0 = _mm_mullo_epi32(c0, scale[0]);
-                c1 = _mm_mullo_epi32(c1, scale[1]);
-                c2 = _mm_mullo_epi32(c2, scale[2]);
-                c3 = _mm_mullo_epi32(c3, scale[3]);
+                c0 = _mm_mullo_epi32(c0, scale0);
+                c1 = _mm_mullo_epi32(c1, scale1);
+                c2 = _mm_mullo_epi32(c2, scale2);
+                c3 = _mm_mullo_epi32(c3, scale3);
 
-                c0 = _mm_srli_epi32(_mm_add_epi32(c0, bias[0]), shift[0]);
-                c1 = _mm_srli_epi32(_mm_add_epi32(c1, bias[1]), shift[1]);
-                c2 = _mm_srli_epi32(_mm_add_epi32(c2, bias[2]), shift[2]);
-                c3 = _mm_srli_epi32(_mm_add_epi32(c3, bias[3]), shift[3]);
+                c0 = _mm_srl_epi32(_mm_add_epi32(c0, bias0), shift01);
+                c1 = _mm_srl_epi32(_mm_add_epi32(c1, bias1), _mm_unpackhi_epi64(shift01, shift01));
+                c2 = _mm_srl_epi32(_mm_add_epi32(c2, bias2), shift23);
+                c3 = _mm_srl_epi32(_mm_add_epi32(c3, bias3), _mm_unpackhi_epi64(shift23, shift23));
 
-                color = _mm_or_si128(color, _mm_slli_epi32(c0, left[0]));
-                color = _mm_or_si128(color, _mm_slli_epi32(c1, left[1]));
-                color = _mm_or_si128(color, _mm_slli_epi32(c2, left[2]));
-                color = _mm_or_si128(color, _mm_slli_epi32(c3, left[3]));
+                color = _mm_or_si128(color, _mm_sll_epi32(c0, left01));
+                color = _mm_or_si128(color, _mm_sll_epi32(c1, _mm_unpackhi_epi64(left01, left01)));
+                color = _mm_or_si128(color, _mm_sll_epi32(c2, left23));
+                color = _mm_or_si128(color, _mm_sll_epi32(c3, _mm_unpackhi_epi64(left23, left23)));
 
                 write(d, color);
                 s += sizeof(SourceType) * 4;
