@@ -428,6 +428,257 @@ namespace
         }
     }
 
+    /*
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    // ----------------------------------------------------------------------------
+    // memory access
+    // ----------------------------------------------------------------------------
+
+    template <typename T>
+    __m128i sse4_load(const u8* p);
+
+    template <typename T>
+    void sse4_store(u8* p, __m128i value);
+
+    template <>
+    __m128i sse4_load<u8>(const u8* p)
+    {
+        u32 x = uload32(p + 0);
+        __m128i value = _mm_cvtsi32_si128(x);
+        //__m128i value = _mm_loadu_si32(p + 0); // broken in gcc-11
+        return _mm_cvtepu8_epi32(value);
+    }
+
+    template <>
+    void sse4_store<u8>(u8* p, __m128i value)
+    {
+        value = _mm_packus_epi32(value, value);
+        value = _mm_packus_epi16(value, value);
+        u32 x = _mm_extract_epi32(value, 0);
+        ustore32(p, x);
+    }
+
+    template <>
+    __m128i sse4_load<u16>(const u8* p)
+    {
+        __m128i value = _mm_loadu_si64(p);
+        return _mm_cvtepu16_epi32(value);
+    }
+
+    template <>
+    void sse4_store<u16>(u8* p, __m128i value)
+    {
+        value = _mm_packus_epi32(value, value);
+        u64 x = _mm_extract_epi64(value, 0);
+        ustore64(p, x);
+    }
+
+    template <>
+    __m128i sse4_load<u24>(const u8* p)
+    {
+        u32 z = uload32(p + 8);
+        __m128i value = _mm_loadu_si64(p);
+        value = _mm_insert_epi32(value, z, 2);
+        __m128i mask = _mm_setr_epi8(0, 1, 2, 0x80, 3, 4, 5, 0x80, 6, 7, 8, 0x80, 9, 10, 11, 0x80);
+        return _mm_shuffle_epi8(value, mask);
+    }
+
+    template <>
+    void sse4_store<u24>(u8* p, __m128i value)
+    {
+        const __m128i mask = _mm_setr_epi8(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 0x80, 0x80, 0x80, 0x80);
+        value = _mm_shuffle_epi8(value, mask);
+        _mm_storeu_si64(p + 0, value);
+        u32 z = _mm_extract_epi32(value, 2);
+        ustore32(p + 8, z);
+    }
+
+    template <>
+    __m128i sse4_load<u32>(const u8* p)
+    {
+        __m128i value = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
+        return value;
+    }
+
+    template <>
+    void sse4_store<u32>(u8* p, __m128i value)
+    {
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(p), value);
+    }
+
+    template <typename DestType, typename SourceType>
+    void sse4_convert_template_table_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
+    {
+        struct Component
+        {
+            u32 srcMask;
+            u32 srcOffset;
+            u32 destOffset;
+            u32 scale;
+            u32 bias;
+            u32 shift;
+        } component[4];
+
+        u32 alphaMask = 0;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            Component& c = component[i];
+
+            const Format& source = blitter.srcFormat;
+            const Format& dest = blitter.destFormat;
+
+            if (dest.size[i])
+            {
+                if (source.size[i])
+                {
+                    // source and destination are different: add channel to component array
+                    c.srcMask = (1 << source.size[i]) - 1;
+                    c.srcOffset = source.offset[i];
+                    c.destOffset = dest.offset[i];
+
+                    const ConversionTable& table = getConversionTable(dest.size[i], source.size[i]);
+                    c.scale = table.scale;
+                    c.bias = table.bias;
+                    c.shift = table.shift;
+                }
+                else
+                {
+                    // disable component
+                    c.srcMask = 0;
+                    c.bias = 0;
+
+                    const bool is_alpha_channel = (i == 3);
+                    if (is_alpha_channel)
+                    {
+                        // alpha defaults to 1.0 (all bits of destination are set)
+                        alphaMask |= dest.mask(i);
+                    }
+                }
+            }
+            else
+            {
+                // disable component
+                c.srcMask = 0;
+                c.bias = 0;
+            }
+        }
+
+        const __m128i mask [] =
+        {
+            _mm_set1_epi32(component[0].srcMask),
+            _mm_set1_epi32(component[1].srcMask),
+            _mm_set1_epi32(component[2].srcMask),
+            _mm_set1_epi32(component[3].srcMask),
+        };
+
+        const u32 right [] =
+        {
+            component[0].srcOffset,
+            component[1].srcOffset,
+            component[2].srcOffset,
+            component[3].srcOffset,
+        };
+
+        const u32 left [] =
+        {
+            component[0].destOffset,
+            component[1].destOffset,
+            component[2].destOffset,
+            component[3].destOffset,
+        };
+
+        const __m128i scale [] =
+        {
+            _mm_set1_epi32(component[0].scale),
+            _mm_set1_epi32(component[1].scale),
+            _mm_set1_epi32(component[2].scale),
+            _mm_set1_epi32(component[3].scale),
+        };
+
+        const __m128i bias [] =
+        {
+            _mm_set1_epi32(component[0].bias),
+            _mm_set1_epi32(component[1].bias),
+            _mm_set1_epi32(component[2].bias),
+            _mm_set1_epi32(component[3].bias),
+        };
+
+        const u32 shift [] =
+        {
+            component[0].shift,
+            component[1].shift,
+            component[2].shift,
+            component[3].shift,
+        };
+
+        int width = rect.width;
+        int height = rect.height;
+
+        auto read = sse4_load<SourceType>;
+        auto write = sse4_store<DestType>;
+
+        for (int y = 0; y < height; ++y)
+        {
+            const u8* s = rect.src_address + rect.src_stride * y;
+            u8* d = rect.dest_address + rect.dest_stride * y;;
+
+            int xcount = width;
+
+            while (xcount >= 4)
+            {
+                __m128i v = read(s);
+                __m128i color = _mm_set1_epi32(alphaMask);
+
+                __m128i c0 = _mm_srli_epi32(v, right[0]);
+                __m128i c1 = _mm_srli_epi32(v, right[1]);
+                __m128i c2 = _mm_srli_epi32(v, right[2]);
+                __m128i c3 = _mm_srli_epi32(v, right[3]);
+
+                c0 = _mm_and_si128(c0, mask[0]);
+                c1 = _mm_and_si128(c1, mask[1]);
+                c2 = _mm_and_si128(c2, mask[2]);
+                c3 = _mm_and_si128(c3, mask[3]);
+
+                c0 = _mm_mullo_epi32(c0, scale[0]);
+                c1 = _mm_mullo_epi32(c1, scale[1]);
+                c2 = _mm_mullo_epi32(c2, scale[2]);
+                c3 = _mm_mullo_epi32(c3, scale[3]);
+
+                c0 = _mm_srli_epi32(_mm_add_epi32(c0, bias[0]), shift[0]);
+                c1 = _mm_srli_epi32(_mm_add_epi32(c1, bias[1]), shift[1]);
+                c2 = _mm_srli_epi32(_mm_add_epi32(c2, bias[2]), shift[2]);
+                c3 = _mm_srli_epi32(_mm_add_epi32(c3, bias[3]), shift[3]);
+
+                color = _mm_or_si128(color, _mm_slli_epi32(c0, left[0]));
+                color = _mm_or_si128(color, _mm_slli_epi32(c1, left[1]));
+                color = _mm_or_si128(color, _mm_slli_epi32(c2, left[2]));
+                color = _mm_or_si128(color, _mm_slli_epi32(c3, left[3]));
+
+                write(d, color);
+                s += sizeof(SourceType) * 4;
+                d += sizeof(DestType) * 4;
+                xcount -= 4;
+            }
+        }
+
+        const int xremain = width % 4;
+        if (xremain)
+        {
+            BlitRect patch = rect;
+
+            patch.width = xremain;
+            patch.src_address += (width - xremain) * sizeof(SourceType);
+            patch.dest_address += (width - xremain) * sizeof(DestType);
+
+            convert_template_table_unorm_unorm<DestType, SourceType>(blitter, patch);
+        }
+    }
+
+#endif // defined(MANGO_ENABLE_SSE4_1)
+    */
+
     // ----------------------------------------------------------------------------
     // conversion templates
     // ----------------------------------------------------------------------------
@@ -786,6 +1037,29 @@ namespace
                 case MAKE_MODEMASK(32, 24): func = convert_template_table_unorm_unorm<u32, u24>; break;
                 case MAKE_MODEMASK(32, 32): func = convert_template_table_unorm_unorm<u32, u32>; break;
             }
+            /*
+#if defined(MANGO_ENABLE_SSE4_1)
+            switch (modeMask)
+            {
+                case MAKE_MODEMASK( 8,  8): func = sse4_convert_template_table_unorm_unorm<u8, u8>; break;
+                case MAKE_MODEMASK( 8, 16): func = sse4_convert_template_table_unorm_unorm<u8, u16>; break;
+                case MAKE_MODEMASK( 8, 24): func = sse4_convert_template_table_unorm_unorm<u8, u24>; break;
+                case MAKE_MODEMASK( 8, 32): func = sse4_convert_template_table_unorm_unorm<u8, u32>; break;
+                case MAKE_MODEMASK(16,  8): func = sse4_convert_template_table_unorm_unorm<u16, u8>; break;
+                case MAKE_MODEMASK(16, 16): func = sse4_convert_template_table_unorm_unorm<u16, u16>; break;
+                case MAKE_MODEMASK(16, 24): func = sse4_convert_template_table_unorm_unorm<u16, u24>; break;
+                case MAKE_MODEMASK(16, 32): func = sse4_convert_template_table_unorm_unorm<u16, u32>; break;
+                case MAKE_MODEMASK(24,  8): func = sse4_convert_template_table_unorm_unorm<u24, u8>; break;
+                case MAKE_MODEMASK(24, 16): func = sse4_convert_template_table_unorm_unorm<u24, u16>; break;
+                case MAKE_MODEMASK(24, 24): func = sse4_convert_template_table_unorm_unorm<u24, u24>; break;
+                case MAKE_MODEMASK(24, 32): func = sse4_convert_template_table_unorm_unorm<u24, u32>; break;
+                case MAKE_MODEMASK(32,  8): func = sse4_convert_template_table_unorm_unorm<u32, u8>; break;
+                case MAKE_MODEMASK(32, 16): func = sse4_convert_template_table_unorm_unorm<u32, u16>; break;
+                case MAKE_MODEMASK(32, 24): func = sse4_convert_template_table_unorm_unorm<u32, u24>; break;
+                case MAKE_MODEMASK(32, 32): func = sse4_convert_template_table_unorm_unorm<u32, u32>; break;
+            }
+#endif // defined(MANGO_ENABLE_SSE4_1)
+            */
         }
         else
         {
