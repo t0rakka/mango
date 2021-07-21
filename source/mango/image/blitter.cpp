@@ -428,11 +428,10 @@ namespace
     // memory access
     // ----------------------------------------------------------------------------
 
-    template <typename T>
-    __m128i sse4_load(const u8* p);
+    // load
 
     template <typename T>
-    void sse4_store(u8* p, __m128i value);
+    __m128i sse4_load(const u8* p);
 
     template <>
     __m128i sse4_load<u8>(const u8* p)
@@ -444,27 +443,10 @@ namespace
     }
 
     template <>
-    void sse4_store<u8>(u8* p, __m128i value)
-    {
-        value = _mm_packus_epi32(value, value);
-        value = _mm_packus_epi16(value, value);
-        u32 x = _mm_extract_epi32(value, 0);
-        ustore32(p, x);
-    }
-
-    template <>
     __m128i sse4_load<u16>(const u8* p)
     {
         __m128i value = _mm_loadu_si64(p);
         return _mm_cvtepu16_epi32(value);
-    }
-
-    template <>
-    void sse4_store<u16>(u8* p, __m128i value)
-    {
-        value = _mm_packus_epi32(value, value);
-        u64 x = _mm_extract_epi64(value, 0);
-        ustore64(p, x);
     }
 
     template <>
@@ -479,6 +461,35 @@ namespace
     }
 
     template <>
+    __m128i sse4_load<u32>(const u8* p)
+    {
+        __m128i value = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
+        return value;
+    }
+
+    // store
+
+    template <typename T>
+    void sse4_store(u8* p, __m128i value);
+
+    template <>
+    void sse4_store<u8>(u8* p, __m128i value)
+    {
+        value = _mm_packus_epi32(value, value);
+        value = _mm_packus_epi16(value, value);
+        u32 x = _mm_extract_epi32(value, 0);
+        ustore32(p, x);
+    }
+
+    template <>
+    void sse4_store<u16>(u8* p, __m128i value)
+    {
+        value = _mm_packus_epi32(value, value);
+        u64 x = _mm_extract_epi64(value, 0);
+        ustore64(p, x);
+    }
+
+    template <>
     void sse4_store<u24>(u8* p, __m128i value)
     {
         constexpr u8 n = 0x80;
@@ -490,17 +501,14 @@ namespace
     }
 
     template <>
-    __m128i sse4_load<u32>(const u8* p)
-    {
-        __m128i value = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
-        return value;
-    }
-
-    template <>
     void sse4_store<u32>(u8* p, __m128i value)
     {
         _mm_storeu_si128(reinterpret_cast<__m128i*>(p), value);
     }
+
+    // ----------------------------------------------------------------------------
+    // conversion templates
+    // ----------------------------------------------------------------------------
 
     template <typename DestType, typename SourceType>
     void sse4_convert_template_table_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
