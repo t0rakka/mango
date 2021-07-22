@@ -1753,7 +1753,7 @@ namespace
         while (count >= 4)
         {
             uint32x4 color = simd::u32x4_uload(s);
-            color = (color & 0xff00ff00) | (color << 16) | ((color >> 16) & 0x00ff);
+            color = (color & 0xff00ff00) | ((color & 0x00ff) << 16) | ((color >> 16) & 0x00ff);
             simd::u32x4_ustore(d, color);
             s += 4;
             d += 4;
@@ -1764,7 +1764,7 @@ namespace
         while (count-- > 0)
         {
             u32 color = *s++;
-            *d++ = (color & 0xff00ff00) | (color << 16) | ((color >> 16) & 0x00ff);
+            *d++ = (color & 0xff00ff00) | ((color & 0x00ff) << 16) | ((color >> 16) & 0x00ff);
         }
     }
 
