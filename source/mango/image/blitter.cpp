@@ -999,22 +999,22 @@ namespace
     template <>
     void avx512_store<u8>(u8* p, __m512i value)
     {
-        __m512i temp512 = _mm512_shuffle_i64x2(value, value, 0x0d);
-        value = _mm512_packus_epi32(value, temp512);
-        __m256i temp256 = _mm512_extracti32x8_epi32(value, 0);
-        __m128i value0 = _mm256_extracti128_si256(temp256, 0);
-        __m128i value1 = _mm256_extracti128_si256(temp256, 1);
-        __m128i temp128 = _mm_packus_epi16(value0, value1);
+        __m512i xz = _mm512_shuffle_i64x2(value, value, 0x08);
+        __m512i yw = _mm512_shuffle_i64x2(value, value, 0x0d);
+        value = _mm512_packus_epi32(xz, yw);
+        __m128i xy = _mm512_extracti32x4_epi32(value, 0);
+        __m128i zw = _mm512_extracti32x4_epi32(value, 1);
+        __m128i temp128 = _mm_packus_epi16(xy, zw);
         _mm_storeu_si128(reinterpret_cast<__m128i*>(p), temp128);
     }
 
     template <>
     void avx512_store<u16>(u8* p, __m512i value)
     {
-        __m512i temp512 = _mm512_shuffle_i64x2(value, value, 0x0d);
-        value = _mm512_packus_epi32(value, temp512);
-        __m256i temp256 = _mm512_extracti32x8_epi32(value, 0);
-        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p), temp256);
+        __m512i xz = _mm512_shuffle_i64x2(value, value, 0x08);
+        __m512i yw = _mm512_shuffle_i64x2(value, value, 0x0d);
+        value = _mm512_packus_epi32(xz, yw);
+        _mm512_mask_storeu_epi32(p, 0x00ff, value);
     }
 
 #if 0
