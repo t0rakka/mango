@@ -297,7 +297,7 @@ namespace
     }
 
     template <typename DestType, typename SourceType>
-    void convert_template_table_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
+    void table_convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
     {
         struct Component
         {
@@ -511,7 +511,7 @@ namespace
     // ----------------------------------------------------------------------------
 
     template <typename DestType, typename SourceType>
-    void sse4_convert_template_table_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
+    void sse4_table_convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
     {
         struct Component
         {
@@ -759,7 +759,7 @@ namespace
     // ----------------------------------------------------------------------------
 
     template <typename DestType, typename SourceType>
-    void avx2_convert_template_table_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
+    void avx2_table_convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
     {
         struct Component
         {
@@ -1225,43 +1225,43 @@ namespace
         {
             switch (modeMask)
             {
-                case MAKE_MODEMASK( 8,  8): func = convert_template_table_unorm_unorm<u8, u8>; break;
-                case MAKE_MODEMASK( 8, 16): func = convert_template_table_unorm_unorm<u8, u16>; break;
-                case MAKE_MODEMASK( 8, 24): func = convert_template_table_unorm_unorm<u8, u24>; break;
-                case MAKE_MODEMASK( 8, 32): func = convert_template_table_unorm_unorm<u8, u32>; break;
-                case MAKE_MODEMASK(16,  8): func = convert_template_table_unorm_unorm<u16, u8>; break;
-                case MAKE_MODEMASK(16, 16): func = convert_template_table_unorm_unorm<u16, u16>; break;
-                case MAKE_MODEMASK(16, 24): func = convert_template_table_unorm_unorm<u16, u24>; break;
-                case MAKE_MODEMASK(16, 32): func = convert_template_table_unorm_unorm<u16, u32>; break;
-                case MAKE_MODEMASK(24,  8): func = convert_template_table_unorm_unorm<u24, u8>; break;
-                case MAKE_MODEMASK(24, 16): func = convert_template_table_unorm_unorm<u24, u16>; break;
-                case MAKE_MODEMASK(24, 24): func = convert_template_table_unorm_unorm<u24, u24>; break;
-                case MAKE_MODEMASK(24, 32): func = convert_template_table_unorm_unorm<u24, u32>; break;
-                case MAKE_MODEMASK(32,  8): func = convert_template_table_unorm_unorm<u32, u8>; break;
-                case MAKE_MODEMASK(32, 16): func = convert_template_table_unorm_unorm<u32, u16>; break;
-                case MAKE_MODEMASK(32, 24): func = convert_template_table_unorm_unorm<u32, u24>; break;
-                case MAKE_MODEMASK(32, 32): func = convert_template_table_unorm_unorm<u32, u32>; break;
+                case MAKE_MODEMASK( 8,  8): func = table_convert_template_unorm_unorm<u8, u8>; break;
+                case MAKE_MODEMASK( 8, 16): func = table_convert_template_unorm_unorm<u8, u16>; break;
+                case MAKE_MODEMASK( 8, 24): func = table_convert_template_unorm_unorm<u8, u24>; break;
+                case MAKE_MODEMASK( 8, 32): func = table_convert_template_unorm_unorm<u8, u32>; break;
+                case MAKE_MODEMASK(16,  8): func = table_convert_template_unorm_unorm<u16, u8>; break;
+                case MAKE_MODEMASK(16, 16): func = table_convert_template_unorm_unorm<u16, u16>; break;
+                case MAKE_MODEMASK(16, 24): func = table_convert_template_unorm_unorm<u16, u24>; break;
+                case MAKE_MODEMASK(16, 32): func = table_convert_template_unorm_unorm<u16, u32>; break;
+                case MAKE_MODEMASK(24,  8): func = table_convert_template_unorm_unorm<u24, u8>; break;
+                case MAKE_MODEMASK(24, 16): func = table_convert_template_unorm_unorm<u24, u16>; break;
+                case MAKE_MODEMASK(24, 24): func = table_convert_template_unorm_unorm<u24, u24>; break;
+                case MAKE_MODEMASK(24, 32): func = table_convert_template_unorm_unorm<u24, u32>; break;
+                case MAKE_MODEMASK(32,  8): func = table_convert_template_unorm_unorm<u32, u8>; break;
+                case MAKE_MODEMASK(32, 16): func = table_convert_template_unorm_unorm<u32, u16>; break;
+                case MAKE_MODEMASK(32, 24): func = table_convert_template_unorm_unorm<u32, u24>; break;
+                case MAKE_MODEMASK(32, 32): func = table_convert_template_unorm_unorm<u32, u32>; break;
             }
             /*
 #if defined(MANGO_ENABLE_SSE4_1)
             switch (modeMask)
             {
-                case MAKE_MODEMASK( 8,  8): func = sse4_convert_template_table_unorm_unorm<u8, u8>; break;
-                case MAKE_MODEMASK( 8, 16): func = sse4_convert_template_table_unorm_unorm<u8, u16>; break;
-                case MAKE_MODEMASK( 8, 24): func = sse4_convert_template_table_unorm_unorm<u8, u24>; break;
-                case MAKE_MODEMASK( 8, 32): func = sse4_convert_template_table_unorm_unorm<u8, u32>; break;
-                case MAKE_MODEMASK(16,  8): func = sse4_convert_template_table_unorm_unorm<u16, u8>; break;
-                case MAKE_MODEMASK(16, 16): func = sse4_convert_template_table_unorm_unorm<u16, u16>; break;
-                case MAKE_MODEMASK(16, 24): func = sse4_convert_template_table_unorm_unorm<u16, u24>; break;
-                case MAKE_MODEMASK(16, 32): func = sse4_convert_template_table_unorm_unorm<u16, u32>; break;
-                case MAKE_MODEMASK(24,  8): func = sse4_convert_template_table_unorm_unorm<u24, u8>; break;
-                case MAKE_MODEMASK(24, 16): func = sse4_convert_template_table_unorm_unorm<u24, u16>; break;
-                case MAKE_MODEMASK(24, 24): func = sse4_convert_template_table_unorm_unorm<u24, u24>; break;
-                case MAKE_MODEMASK(24, 32): func = sse4_convert_template_table_unorm_unorm<u24, u32>; break;
-                case MAKE_MODEMASK(32,  8): func = sse4_convert_template_table_unorm_unorm<u32, u8>; break;
-                case MAKE_MODEMASK(32, 16): func = sse4_convert_template_table_unorm_unorm<u32, u16>; break;
-                case MAKE_MODEMASK(32, 24): func = sse4_convert_template_table_unorm_unorm<u32, u24>; break;
-                case MAKE_MODEMASK(32, 32): func = sse4_convert_template_table_unorm_unorm<u32, u32>; break;
+                case MAKE_MODEMASK( 8,  8): func = sse4_table_convert_template_unorm_unorm<u8, u8>; break;
+                case MAKE_MODEMASK( 8, 16): func = sse4_table_convert_template_unorm_unorm<u8, u16>; break;
+                case MAKE_MODEMASK( 8, 24): func = sse4_table_convert_template_unorm_unorm<u8, u24>; break;
+                case MAKE_MODEMASK( 8, 32): func = sse4_table_convert_template_unorm_unorm<u8, u32>; break;
+                case MAKE_MODEMASK(16,  8): func = sse4_table_convert_template_unorm_unorm<u16, u8>; break;
+                case MAKE_MODEMASK(16, 16): func = sse4_table_convert_template_unorm_unorm<u16, u16>; break;
+                case MAKE_MODEMASK(16, 24): func = sse4_table_convert_template_unorm_unorm<u16, u24>; break;
+                case MAKE_MODEMASK(16, 32): func = sse4_table_convert_template_unorm_unorm<u16, u32>; break;
+                case MAKE_MODEMASK(24,  8): func = sse4_table_convert_template_unorm_unorm<u24, u8>; break;
+                case MAKE_MODEMASK(24, 16): func = sse4_table_convert_template_unorm_unorm<u24, u16>; break;
+                case MAKE_MODEMASK(24, 24): func = sse4_table_convert_template_unorm_unorm<u24, u24>; break;
+                case MAKE_MODEMASK(24, 32): func = sse4_table_convert_template_unorm_unorm<u24, u32>; break;
+                case MAKE_MODEMASK(32,  8): func = sse4_table_convert_template_unorm_unorm<u32, u8>; break;
+                case MAKE_MODEMASK(32, 16): func = sse4_table_convert_template_unorm_unorm<u32, u16>; break;
+                case MAKE_MODEMASK(32, 24): func = sse4_table_convert_template_unorm_unorm<u32, u24>; break;
+                case MAKE_MODEMASK(32, 32): func = sse4_table_convert_template_unorm_unorm<u32, u32>; break;
             }
 #endif // defined(MANGO_ENABLE_SSE4_1)
             */
@@ -1269,22 +1269,22 @@ namespace
 #if defined(MANGO_ENABLE_AVX2)
             switch (modeMask)
             {
-                case MAKE_MODEMASK( 8,  8): func = avx2_convert_template_table_unorm_unorm<u8, u8>; break;
-                case MAKE_MODEMASK( 8, 16): func = avx2_convert_template_table_unorm_unorm<u8, u16>; break;
-                case MAKE_MODEMASK( 8, 24): func = avx2_convert_template_table_unorm_unorm<u8, u24>; break;
-                case MAKE_MODEMASK( 8, 32): func = avx2_convert_template_table_unorm_unorm<u8, u32>; break;
-                case MAKE_MODEMASK(16,  8): func = avx2_convert_template_table_unorm_unorm<u16, u8>; break;
-                case MAKE_MODEMASK(16, 16): func = avx2_convert_template_table_unorm_unorm<u16, u16>; break;
-                case MAKE_MODEMASK(16, 24): func = avx2_convert_template_table_unorm_unorm<u16, u24>; break;
-                case MAKE_MODEMASK(16, 32): func = avx2_convert_template_table_unorm_unorm<u16, u32>; break;
-                case MAKE_MODEMASK(24,  8): func = avx2_convert_template_table_unorm_unorm<u24, u8>; break;
-                case MAKE_MODEMASK(24, 16): func = avx2_convert_template_table_unorm_unorm<u24, u16>; break;
-                case MAKE_MODEMASK(24, 24): func = avx2_convert_template_table_unorm_unorm<u24, u24>; break;
-                case MAKE_MODEMASK(24, 32): func = avx2_convert_template_table_unorm_unorm<u24, u32>; break;
-                case MAKE_MODEMASK(32,  8): func = avx2_convert_template_table_unorm_unorm<u32, u8>; break;
-                case MAKE_MODEMASK(32, 16): func = avx2_convert_template_table_unorm_unorm<u32, u16>; break;
-                case MAKE_MODEMASK(32, 24): func = avx2_convert_template_table_unorm_unorm<u32, u24>; break;
-                case MAKE_MODEMASK(32, 32): func = avx2_convert_template_table_unorm_unorm<u32, u32>; break;
+                case MAKE_MODEMASK( 8,  8): func = avx2_table_convert_template_unorm_unorm<u8, u8>; break;
+                case MAKE_MODEMASK( 8, 16): func = avx2_table_convert_template_unorm_unorm<u8, u16>; break;
+                case MAKE_MODEMASK( 8, 24): func = avx2_table_convert_template_unorm_unorm<u8, u24>; break;
+                case MAKE_MODEMASK( 8, 32): func = avx2_table_convert_template_unorm_unorm<u8, u32>; break;
+                case MAKE_MODEMASK(16,  8): func = avx2_table_convert_template_unorm_unorm<u16, u8>; break;
+                case MAKE_MODEMASK(16, 16): func = avx2_table_convert_template_unorm_unorm<u16, u16>; break;
+                case MAKE_MODEMASK(16, 24): func = avx2_table_convert_template_unorm_unorm<u16, u24>; break;
+                case MAKE_MODEMASK(16, 32): func = avx2_table_convert_template_unorm_unorm<u16, u32>; break;
+                case MAKE_MODEMASK(24,  8): func = avx2_table_convert_template_unorm_unorm<u24, u8>; break;
+                case MAKE_MODEMASK(24, 16): func = avx2_table_convert_template_unorm_unorm<u24, u16>; break;
+                case MAKE_MODEMASK(24, 24): func = avx2_table_convert_template_unorm_unorm<u24, u24>; break;
+                case MAKE_MODEMASK(24, 32): func = avx2_table_convert_template_unorm_unorm<u24, u32>; break;
+                case MAKE_MODEMASK(32,  8): func = avx2_table_convert_template_unorm_unorm<u32, u8>; break;
+                case MAKE_MODEMASK(32, 16): func = avx2_table_convert_template_unorm_unorm<u32, u16>; break;
+                case MAKE_MODEMASK(32, 24): func = avx2_table_convert_template_unorm_unorm<u32, u24>; break;
+                case MAKE_MODEMASK(32, 32): func = avx2_table_convert_template_unorm_unorm<u32, u32>; break;
             }
 #endif // defined(MANGO_ENABLE_AVX2)
             */
