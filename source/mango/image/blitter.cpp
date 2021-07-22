@@ -96,70 +96,6 @@ namespace
     }
 
     // ----------------------------------------------------------------------------
-    // memory access
-    // ----------------------------------------------------------------------------
-
-    // load
-
-    template <typename T>
-    u32 load(const u8* p);
-
-    template <>
-    u32 load<u8>(const u8* p)
-    {
-        return u32(*p);
-    }
-
-    template <>
-    u32 load<u16>(const u8* p)
-    {
-        return u32(uload16(p));
-    }
-
-    template <>
-    u32 load<u24>(const u8* p)
-    {
-        return u32((p[2] << 16) | (p[1] << 8) | p[0]);
-    }
-
-    template <>
-    u32 load<u32>(const u8* p)
-    {
-        return uload32(p);
-    }
-
-    // store
-
-    template <typename T>
-    void store(u8* p, u32 v);
-
-    template <>
-    void store<u8>(u8* p, u32 v)
-    {
-        *p = u8(v);
-    }
-
-    template <>
-    void store<u16>(u8* p, u32 v)
-    {
-        ustore16(p, u16(v));
-    }
-
-    template <>
-    void store<u24>(u8* p, u32 v)
-    {
-        p[0] = (v >> 0) & 0xff;
-        p[1] = (v >> 8) & 0xff;
-        p[2] = (v >> 16) & 0xff;
-    }
-
-    template <>
-    void store<u32>(u8* p, u32 v)
-    {
-        ustore32(p, v);
-    }
-
-    // ----------------------------------------------------------------------------
     // conversion table
     // ----------------------------------------------------------------------------
 
@@ -294,6 +230,70 @@ namespace
             }
         }
         return true;
+    }
+
+    // ----------------------------------------------------------------------------
+    // memory access
+    // ----------------------------------------------------------------------------
+
+    // load
+
+    template <typename T>
+    u32 load(const u8* p);
+
+    template <>
+    u32 load<u8>(const u8* p)
+    {
+        return u32(*p);
+    }
+
+    template <>
+    u32 load<u16>(const u8* p)
+    {
+        return u32(uload16(p));
+    }
+
+    template <>
+    u32 load<u24>(const u8* p)
+    {
+        return u32((p[2] << 16) | (p[1] << 8) | p[0]);
+    }
+
+    template <>
+    u32 load<u32>(const u8* p)
+    {
+        return uload32(p);
+    }
+
+    // store
+
+    template <typename T>
+    void store(u8* p, u32 v);
+
+    template <>
+    void store<u8>(u8* p, u32 v)
+    {
+        *p = u8(v);
+    }
+
+    template <>
+    void store<u16>(u8* p, u32 v)
+    {
+        ustore16(p, u16(v));
+    }
+
+    template <>
+    void store<u24>(u8* p, u32 v)
+    {
+        p[0] = (v >> 0) & 0xff;
+        p[1] = (v >> 8) & 0xff;
+        p[2] = (v >> 16) & 0xff;
+    }
+
+    template <>
+    void store<u32>(u8* p, u32 v)
+    {
+        ustore32(p, v);
     }
 
     template <typename DestType, typename SourceType>
