@@ -659,6 +659,254 @@ namespace
 
 #endif // defined(MANGO_ENABLE_SSE4_1)
     */
+    /*
+#if defined(MANGO_ENABLE_AVX2)
+
+    // ----------------------------------------------------------------------------
+    // memory access
+    // ----------------------------------------------------------------------------
+
+    // load
+
+    template <typename T>
+    __m256i avx2_load(const u8* p);
+
+    template <>
+    __m256i avx2_load<u8>(const u8* p)
+    {
+        u64 x = uload64(p);
+        __m128i value = _mm_cvtsi64_si128(x);
+        return _mm256_cvtepu8_epi32(value);
+    }
+
+    template <>
+    __m256i avx2_load<u16>(const u8* p)
+    {
+        __m128i value = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
+        return _mm256_cvtepu16_epi32(value);
+    }
+
+    template <>
+    __m256i avx2_load<u24>(const u8* p)
+    {
+        __m128i value0 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 0));
+        __m128i value1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 8));
+        __m256i value = _mm256_setr_m128i(value0, value1);
+        constexpr u8 n = 0x80;
+        const __m256i mask = _mm256_setr_epi8(
+            0, 1, 2, n, 3, 4, 5, n, 6, 7, 8, n, 9, 10, 11, n,
+            4, 5, 6, n, 7, 8, 9, n, 10, 11, 12, n, 13, 14, 15, n);
+        value = _mm256_shuffle_epi8(value, mask);
+        return value;
+    }
+
+    template <>
+    __m256i avx2_load<u32>(const u8* p)
+    {
+        __m256i value = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(p));
+        return value;
+    }
+
+    // store
+
+    template <typename T>
+    void avx2_store(u8* p, __m256i value);
+
+    template <>
+    void avx2_store<u8>(u8* p, __m256i value)
+    {
+        __m128i value0 = _mm256_extracti128_si256(value, 0);
+        __m128i value1 = _mm256_extracti128_si256(value, 1);
+        __m128i temp = _mm_packus_epi32(value0, value1);
+        temp = _mm_packus_epi16(temp, temp);
+        _mm_storeu_si64(reinterpret_cast<__m128i*>(p), temp);
+    }
+
+    template <>
+    void avx2_store<u16>(u8* p, __m256i value)
+    {
+        __m128i value0 = _mm256_extracti128_si256(value, 0);
+        __m128i value1 = _mm256_extracti128_si256(value, 1);
+        __m128i temp = _mm_packus_epi32(value0, value1);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(p), temp);
+    }
+
+    template <>
+    void avx2_store<u24>(u8* p, __m256i value)
+    {
+        __m128i value0 = _mm256_extracti128_si256(value, 0);
+        __m128i value1 = _mm256_extracti128_si256(value, 1);
+        constexpr u8 n = 0x80;
+        const __m128i mask0 = _mm_setr_epi8(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, n, n, n, n);
+        const __m128i mask1 = _mm_setr_epi8(n, n, n, n, n, n, n, n, n, n, n, n, 0, 1, 2, 4);
+        const __m128i mask2 = _mm_setr_epi8(5, 6, 8, 9, 10, 12, 13, 14, n, n, n, n, n, n, n, n);
+        __m128i s0 = _mm_shuffle_epi8(value0, mask0);
+        __m128i s1 = _mm_shuffle_epi8(value1, mask1);
+        __m128i s2 = _mm_shuffle_epi8(value1, mask2);
+        s0 = _mm_or_si128(s0, s1);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(p + 0), s0);
+        _mm_storeu_si64(reinterpret_cast<__m128i*>(p + 16), s2);
+    }
+
+    template <>
+    void avx2_store<u32>(u8* p, __m256i value)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p), value);
+    }
+
+    // ----------------------------------------------------------------------------
+    // conversion templates
+    // ----------------------------------------------------------------------------
+
+    template <typename DestType, typename SourceType>
+    void avx2_convert_template_table_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
+    {
+        struct Component
+        {
+            u32 srcMask;
+            u32 srcOffset;
+            u32 destOffset;
+            u32 scale;
+            u32 bias;
+            u32 shift;
+        } component[4];
+
+        u32 alphaMask = 0;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            Component& c = component[i];
+
+            const Format& source = blitter.srcFormat;
+            const Format& dest = blitter.destFormat;
+
+            if (dest.size[i])
+            {
+                if (source.size[i])
+                {
+                    // source and destination are different: add channel to component array
+                    c.srcMask = (1 << source.size[i]) - 1;
+                    c.srcOffset = source.offset[i];
+                    c.destOffset = dest.offset[i];
+
+                    const ConversionTable& table = getConversionTable(dest.size[i], source.size[i]);
+                    c.scale = table.scale;
+                    c.bias = table.bias;
+                    c.shift = table.shift;
+                }
+                else
+                {
+                    // disable component
+                    c.srcMask = 0;
+                    c.bias = 0;
+
+                    const bool is_alpha_channel = (i == 3);
+                    if (is_alpha_channel)
+                    {
+                        // alpha defaults to 1.0 (all bits of destination are set)
+                        alphaMask |= dest.mask(i);
+                    }
+                }
+            }
+            else
+            {
+                // disable component
+                c.srcMask = 0;
+                c.bias = 0;
+            }
+        }
+
+        const __m256i mask0 = _mm256_set1_epi32(component[0].srcMask);
+        const __m256i mask1 = _mm256_set1_epi32(component[1].srcMask);
+        const __m256i mask2 = _mm256_set1_epi32(component[2].srcMask);
+        const __m256i mask3 = _mm256_set1_epi32(component[3].srcMask);
+
+        const __m256i scale0 = _mm256_set1_epi32(component[0].scale);
+        const __m256i scale1 = _mm256_set1_epi32(component[1].scale);
+        const __m256i scale2 = _mm256_set1_epi32(component[2].scale);
+        const __m256i scale3 = _mm256_set1_epi32(component[3].scale);
+
+        const __m256i bias0 = _mm256_set1_epi32(component[0].bias);
+        const __m256i bias1 = _mm256_set1_epi32(component[1].bias);
+        const __m256i bias2 = _mm256_set1_epi32(component[2].bias);
+        const __m256i bias3 = _mm256_set1_epi32(component[3].bias);
+
+        const __m128i right01 = _mm_set_epi64x(component[1].srcOffset, component[0].srcOffset);
+        const __m128i right23 = _mm_set_epi64x(component[3].srcOffset, component[2].srcOffset);
+
+        const __m128i left01 = _mm_set_epi64x(component[1].destOffset, component[0].destOffset);
+        const __m128i left23 = _mm_set_epi64x(component[3].destOffset, component[2].destOffset);
+
+        const __m128i shift01 = _mm_set_epi64x(component[1].shift, component[0].shift);
+        const __m128i shift23 = _mm_set_epi64x(component[3].shift, component[2].shift);
+
+        const __m256i alpha = _mm256_set1_epi32(alphaMask);
+
+        int width = rect.width;
+        int height = rect.height;
+
+        auto read = avx2_load<SourceType>;
+        auto write = avx2_store<DestType>;
+
+        for (int y = 0; y < height; ++y)
+        {
+            const u8* s = rect.src_address + rect.src_stride * y;
+            u8* d = rect.dest_address + rect.dest_stride * y;;
+
+            int xcount = width;
+
+            while (xcount >= 8)
+            {
+                __m256i v = read(s);
+                __m256i color = alpha;
+
+                __m256i c0 = _mm256_srl_epi32(v, right01);
+                __m256i c1 = _mm256_srl_epi32(v, _mm_unpackhi_epi64(right01, right01));
+                __m256i c2 = _mm256_srl_epi32(v, right23);
+                __m256i c3 = _mm256_srl_epi32(v, _mm_unpackhi_epi64(right23, right23));
+
+                c0 = _mm256_and_si256(c0, mask0);
+                c1 = _mm256_and_si256(c1, mask1);
+                c2 = _mm256_and_si256(c2, mask2);
+                c3 = _mm256_and_si256(c3, mask3);
+
+                c0 = _mm256_mullo_epi32(c0, scale0);
+                c1 = _mm256_mullo_epi32(c1, scale1);
+                c2 = _mm256_mullo_epi32(c2, scale2);
+                c3 = _mm256_mullo_epi32(c3, scale3);
+
+                c0 = _mm256_srl_epi32(_mm256_add_epi32(c0, bias0), shift01);
+                c1 = _mm256_srl_epi32(_mm256_add_epi32(c1, bias1), _mm_unpackhi_epi64(shift01, shift01));
+                c2 = _mm256_srl_epi32(_mm256_add_epi32(c2, bias2), shift23);
+                c3 = _mm256_srl_epi32(_mm256_add_epi32(c3, bias3), _mm_unpackhi_epi64(shift23, shift23));
+
+                color = _mm256_or_si256(color, _mm256_sll_epi32(c0, left01));
+                color = _mm256_or_si256(color, _mm256_sll_epi32(c1, _mm_unpackhi_epi64(left01, left01)));
+                color = _mm256_or_si256(color, _mm256_sll_epi32(c2, left23));
+                color = _mm256_or_si256(color, _mm256_sll_epi32(c3, _mm_unpackhi_epi64(left23, left23)));
+
+                write(d, color);
+                s += sizeof(SourceType) * 8;
+                d += sizeof(DestType) * 8;
+                xcount -= 8;
+            }
+        }
+
+        const int xremain = width % 8;
+        if (xremain)
+        {
+            BlitRect patch = rect;
+
+            patch.width = xremain;
+            patch.src_address += (width - xremain) * sizeof(SourceType);
+            patch.dest_address += (width - xremain) * sizeof(DestType);
+
+            convert_template_table_unorm_unorm<DestType, SourceType>(blitter, patch);
+        }
+    }
+
+#endif // defined(MANGO_ENABLE_AVX2)
+    */
 
     // ----------------------------------------------------------------------------
     // conversion templates
@@ -1016,6 +1264,29 @@ namespace
                 case MAKE_MODEMASK(32, 32): func = sse4_convert_template_table_unorm_unorm<u32, u32>; break;
             }
 #endif // defined(MANGO_ENABLE_SSE4_1)
+            */
+            /*
+#if defined(MANGO_ENABLE_AVX2)
+            switch (modeMask)
+            {
+                case MAKE_MODEMASK( 8,  8): func = avx2_convert_template_table_unorm_unorm<u8, u8>; break;
+                case MAKE_MODEMASK( 8, 16): func = avx2_convert_template_table_unorm_unorm<u8, u16>; break;
+                case MAKE_MODEMASK( 8, 24): func = avx2_convert_template_table_unorm_unorm<u8, u24>; break;
+                case MAKE_MODEMASK( 8, 32): func = avx2_convert_template_table_unorm_unorm<u8, u32>; break;
+                case MAKE_MODEMASK(16,  8): func = avx2_convert_template_table_unorm_unorm<u16, u8>; break;
+                case MAKE_MODEMASK(16, 16): func = avx2_convert_template_table_unorm_unorm<u16, u16>; break;
+                case MAKE_MODEMASK(16, 24): func = avx2_convert_template_table_unorm_unorm<u16, u24>; break;
+                case MAKE_MODEMASK(16, 32): func = avx2_convert_template_table_unorm_unorm<u16, u32>; break;
+                case MAKE_MODEMASK(24,  8): func = avx2_convert_template_table_unorm_unorm<u24, u8>; break;
+                case MAKE_MODEMASK(24, 16): func = avx2_convert_template_table_unorm_unorm<u24, u16>; break;
+                case MAKE_MODEMASK(24, 24): func = avx2_convert_template_table_unorm_unorm<u24, u24>; break;
+                case MAKE_MODEMASK(24, 32): func = avx2_convert_template_table_unorm_unorm<u24, u32>; break;
+                case MAKE_MODEMASK(32,  8): func = avx2_convert_template_table_unorm_unorm<u32, u8>; break;
+                case MAKE_MODEMASK(32, 16): func = avx2_convert_template_table_unorm_unorm<u32, u16>; break;
+                case MAKE_MODEMASK(32, 24): func = avx2_convert_template_table_unorm_unorm<u32, u24>; break;
+                case MAKE_MODEMASK(32, 32): func = avx2_convert_template_table_unorm_unorm<u32, u32>; break;
+            }
+#endif // defined(MANGO_ENABLE_AVX2)
             */
         }
         else
