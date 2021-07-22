@@ -653,7 +653,7 @@ namespace
             patch.src_address += (width - xremain) * sizeof(SourceType);
             patch.dest_address += (width - xremain) * sizeof(DestType);
 
-            convert_template_table_unorm_unorm<DestType, SourceType>(blitter, patch);
+            table_convert_template_unorm_unorm<DestType, SourceType>(blitter, patch);
         }
     }
 
@@ -901,11 +901,371 @@ namespace
             patch.src_address += (width - xremain) * sizeof(SourceType);
             patch.dest_address += (width - xremain) * sizeof(DestType);
 
-            convert_template_table_unorm_unorm<DestType, SourceType>(blitter, patch);
+            table_convert_template_unorm_unorm<DestType, SourceType>(blitter, patch);
         }
     }
 
 #endif // defined(MANGO_ENABLE_AVX2)
+    */
+    /*
+#if defined(MANGO_ENABLE_AVX512)
+
+    // ----------------------------------------------------------------------------
+    // memory access
+    // ----------------------------------------------------------------------------
+
+    // load
+
+    template <typename T>
+    __m512i avx512_load(const u8* p);
+
+    template <>
+    __m512i avx512_load<u8>(const u8* p)
+    {
+        __m128i value = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
+        return _mm512_cvtepu8_epi32(value);
+    }
+
+    template <>
+    __m512i avx512_load<u16>(const u8* p)
+    {
+        __m256i value = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(p));
+        return _mm512_cvtepu16_epi32(value);
+    }
+
+#if 0
+
+    // requires AVX512VBMI
+    template <>
+    __m512i avx512_load<u24>(const u8* p)
+    {
+        __m512i value = _mm512_setzero_si512();
+        value = _mm512_mask_loadu_epi32(value, 0x0fff, p);
+        constexpr u8 n = 0x80;
+        const __m512i idx = _mm512_set_epi8(
+            n, 47, 46, 45, n, 44, 43, 42, n, 41, 40 39, n, 38, 37, 36,
+            n, 35, 34, 33, n, 32, 31, 30, n, 29., 28, 27, n, 26, 25, 24,
+            n, 23, 22, 21, n, 20, 19, 18, n, 17, 16, 15, n, 14, 13, 12,
+            n, 11, 10, 9, n, 8, 7, 6, n, 5, 4, 3, n, 2, 1, 0);
+        value = _mm512_permutexvar_epi8(idx, value);
+        return value;
+    }
+
+#else
+
+    template <>
+    __m512i avx512_load<u24>(const u8* p)
+    {
+        // ++++++++ ++++----
+        // 00011122 23334445 55666777 888999aa abbbcccd ddeeefff
+        //          ----++++ ++++++++
+        // 00011122 23334445 55666777 888999aa abbbcccd ddeeefff
+        //                            ++++++++ ++++----
+        // 00011122 23334445 55666777 888999aa abbbcccd ddeeefff
+        //                                     ----++++ ++++++++
+        // 00011122 23334445 55666777 888999aa abbbcccd ddeeefff
+        __m128i value0 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 0));
+        __m128i value1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 8));
+        __m128i value2 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 24));
+        __m128i value3 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 32));
+        __m256i lo = _mm256_setr_m128i(value0, value1);
+        __m256i hi = _mm256_setr_m128i(value2, value3);
+        __m512i value = _mm512_castsi256_si512(lo);
+        value = _mm512_inserti32x8(value, hi, 1);
+        constexpr u8 n = 0x80;
+        const __m512i idx = _mm512_set_epi8(
+            n, 15, 14, 13, n, 12, 11, 10, n, 9, 8, 7, n, 6, 5, 4,
+            n, 11, 10, 9, n, 8, 7, 6, n, 5, 4, 3, n, 2, 1, 0,
+            n, 15, 14, 13, n, 12, 11, 10, n, 9, 8, 7, n, 6, 5, 4, 
+            n, 11, 10, 9, n, 8, 7, 6, n, 5, 4, 3, n, 2, 1, 0);
+        value = _mm512_shuffle_epi8(value, idx);
+        return value;
+    }
+
+#endif
+
+    template <>
+    __m512i avx512_load<u32>(const u8* p)
+    {
+        __m512i value = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(p));
+        return value;
+    }
+
+    // store
+
+    template <typename T>
+    void avx512_store(u8* p, __m512i value);
+
+    template <>
+    void avx512_store<u8>(u8* p, __m512i value)
+    {
+        __m512i temp512 = _mm512_shuffle_i64x2(value, value, 0x0d);
+        value = _mm512_packus_epi32(value, temp512);
+        __m256i temp256 = _mm512_extracti32x8_epi32(value, 0);
+        __m128i value0 = _mm256_extracti128_si256(temp256, 0);
+        __m128i value1 = _mm256_extracti128_si256(temp256, 1);
+        __m128i temp128 = _mm_packus_epi16(value0, value1);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(p), temp128);
+    }
+
+    template <>
+    void avx512_store<u16>(u8* p, __m512i value)
+    {
+        __m512i temp512 = _mm512_shuffle_i64x2(value, value, 0x0d);
+        value = _mm512_packus_epi32(value, temp512);
+        __m256i temp256 = _mm512_extracti32x8_epi32(value, 0);
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p), temp256);
+    }
+
+#if 0
+
+    // requires AVX512VBMI
+    template <>
+    void avx512_store<u24>(u8* p, __m512i value)
+    {
+        constexpr u8 n = 0x80;
+        const __m512i idx = _mm512_set_epi8(
+            n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n,
+            62, 61, 60, 58, 57, 56, 54, 53, 52, 50, 49, 48,
+            46, 45, 44, 42, 41, 40, 38, 37, 36, 34, 33, 32,
+            30, 29, 28, 26, 25, 24, 22, 21, 20, 18, 17, 16,
+            14, 13, 12, 10, 9, 8, 6, 5, 4, 2, 1, 0);
+        value = _mm512_permutexvar_epi8(idx, value);
+        _mm512_mask_storeu_epi32(p, 0x0fff, value);
+    }
+
+#else
+
+    template <>
+    void avx512_store<u24>(u8* p, __m512i value)
+    {
+        // input:  000x111x222x333x 444x555x666x777x 888x999xaaaxbbbx cccxdddxeeexfffx
+        // output: 0001112223334445 55666777888999aa abbbcccdddeeefff
+        //
+        //        0                1                2
+        // 000111222333---- 55666777-------- abbb------------
+        // ------------4445 --------888999aa ----cccdddeeefff
+        //        3                4                5
+
+        __m128i x = _mm512_extracti32x4_epi32(value, 0);
+        __m128i y = _mm512_extracti32x4_epi32(value, 1);
+        __m128i z = _mm512_extracti32x4_epi32(value, 2);
+        __m128i w = _mm512_extracti32x4_epi32(value, 3);
+
+        constexpr u8 n = 0x80;
+        const __m128i mask0 = _mm_setr_epi8(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, n, n, n, n);
+        const __m128i mask1 = _mm_setr_epi8(5, 6, 8, 9, 10, 12, 13, 14, n, n, n, n, n, n, n, n);
+        const __m128i mask2 = _mm_setr_epi8(10, 12, 13, 14, n, n, n, n, n, n, n, n, n, n, n, n);
+        const __m128i mask3 = _mm_setr_epi8(n, n, n, n, n, n, n, n, n, n, n, n, 0, 1, 2, 4);
+        const __m128i mask4 = _mm_setr_epi8(n, n, n, n, n, n, n, n, 0, 1, 2, 4, 5, 6, 8, 9);
+        const __m128i mask5 = _mm_setr_epi8(n, n, n, n, 0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14);
+
+        __m128i value0 = _mm_shuffle_epi8(x, mask0);
+        __m128i value1 = _mm_shuffle_epi8(y, mask1);
+        __m128i value2 = _mm_shuffle_epi8(z, mask2);
+        __m128i value3 = _mm_shuffle_epi8(y, mask3);
+        __m128i value4 = _mm_shuffle_epi8(z, mask4);
+        __m128i value5 = _mm_shuffle_epi8(w, mask5);
+
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(p +  0), _mm_or_si128(value0, value3));
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(p + 16), _mm_or_si128(value1, value4));
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(p + 32), _mm_or_si128(value2, value5));
+
+#if 0
+        // input:  000x111x222x333x 444x555x666x777x 888x999xaaaxbbbx cccxdddxeeexfffx
+        // output: 0001112223334445 55666777888999aa abbbcccdddeeefff
+        //
+        //        0                1                2
+        // 000111222333---- 55666777-------- abbb------------
+        // ------------4445 --------888999aa ----cccdddeeefff
+        //        1                2                3
+
+        __m128i y = _mm512_extracti32x4_epi32(value, 1);
+        __m128i z = _mm512_extracti32x4_epi32(value, 2);
+        __m128i w = _mm512_extracti32x4_epi32(value, 3);
+        __m256i value01 = _mm512_extracti32x8_epi32(value, 0);
+        __m256i value12 = _mm256_setr_m128i(y, z);
+        __m128i value2 = z;
+        __m128i value3 = w;
+
+        constexpr u8 n = 0x80;
+        const __m256i mask01 = _mm256_setr_epi8(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, n, n, n, n,
+                                                5, 6, 8, 9, 10, 12, 13, 14, n, n, n, n, n, n, n, n);
+        const __m256i mask12 = _mm256_setr_epi8(n, n, n, n, n, n, n, n, n, n, n, n, 0, 1, 2, 4,
+                                                n, n, n, n, n, n, n, n, 0, 1, 2, 4, 5, 6, 8, 9);
+        const __m128i mask2 = _mm_setr_epi8(10, 12, 13, 14, n, n, n, n, n, n, n, n, n, n, n, n);
+        const __m128i mask3 = _mm_setr_epi8(n, n, n, n, 0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14);
+
+        value01 = _mm256_shuffle_epi8(value01, mask01);
+        value12 = _mm256_shuffle_epi8(value12, mask12);
+        value2 = _mm_shuffle_epi8(value2, mask2);
+        value3 = _mm_shuffle_epi8(value3, mask3);
+
+        _mm256_storeu_si256(reinterpret_cast<__m256i*>(p + 0), _mm256_or_si256(value01, value12));
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(p + 32), _mm_or_si128(value2, value3));
+#endif
+    }
+
+#endif
+
+    template <>
+    void avx512_store<u32>(u8* p, __m512i value)
+    {
+        _mm512_storeu_si512(reinterpret_cast<__m512i*>(p), value);
+    }
+
+    // ----------------------------------------------------------------------------
+    // conversion templates
+    // ----------------------------------------------------------------------------
+
+    template <typename DestType, typename SourceType>
+    void avx512_table_convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
+    {
+        struct Component
+        {
+            u32 srcMask;
+            u32 srcOffset;
+            u32 destOffset;
+            u32 scale;
+            u32 bias;
+            u32 shift;
+        } component[4];
+
+        u32 alphaMask = 0;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            Component& c = component[i];
+
+            const Format& source = blitter.srcFormat;
+            const Format& dest = blitter.destFormat;
+
+            if (dest.size[i])
+            {
+                if (source.size[i])
+                {
+                    // source and destination are different: add channel to component array
+                    c.srcMask = (1 << source.size[i]) - 1;
+                    c.srcOffset = source.offset[i];
+                    c.destOffset = dest.offset[i];
+
+                    const ConversionTable& table = getConversionTable(dest.size[i], source.size[i]);
+                    c.scale = table.scale;
+                    c.bias = table.bias;
+                    c.shift = table.shift;
+                }
+                else
+                {
+                    // disable component
+                    c.srcMask = 0;
+                    c.bias = 0;
+
+                    const bool is_alpha_channel = (i == 3);
+                    if (is_alpha_channel)
+                    {
+                        // alpha defaults to 1.0 (all bits of destination are set)
+                        alphaMask |= dest.mask(i);
+                    }
+                }
+            }
+            else
+            {
+                // disable component
+                c.srcMask = 0;
+                c.bias = 0;
+            }
+        }
+
+        const __m512i mask0 = _mm512_set1_epi32(component[0].srcMask);
+        const __m512i mask1 = _mm512_set1_epi32(component[1].srcMask);
+        const __m512i mask2 = _mm512_set1_epi32(component[2].srcMask);
+        const __m512i mask3 = _mm512_set1_epi32(component[3].srcMask);
+
+        const __m512i scale0 = _mm512_set1_epi32(component[0].scale);
+        const __m512i scale1 = _mm512_set1_epi32(component[1].scale);
+        const __m512i scale2 = _mm512_set1_epi32(component[2].scale);
+        const __m512i scale3 = _mm512_set1_epi32(component[3].scale);
+
+        const __m512i bias0 = _mm512_set1_epi32(component[0].bias);
+        const __m512i bias1 = _mm512_set1_epi32(component[1].bias);
+        const __m512i bias2 = _mm512_set1_epi32(component[2].bias);
+        const __m512i bias3 = _mm512_set1_epi32(component[3].bias);
+
+        const __m128i right01 = _mm_set_epi64x(component[1].srcOffset, component[0].srcOffset);
+        const __m128i right23 = _mm_set_epi64x(component[3].srcOffset, component[2].srcOffset);
+
+        const __m128i left01 = _mm_set_epi64x(component[1].destOffset, component[0].destOffset);
+        const __m128i left23 = _mm_set_epi64x(component[3].destOffset, component[2].destOffset);
+
+        const __m128i shift01 = _mm_set_epi64x(component[1].shift, component[0].shift);
+        const __m128i shift23 = _mm_set_epi64x(component[3].shift, component[2].shift);
+
+        const __m512i alpha = _mm512_set1_epi32(alphaMask);
+
+        int width = rect.width;
+        int height = rect.height;
+
+        auto read = avx512_load<SourceType>;
+        auto write = avx512_store<DestType>;
+
+        for (int y = 0; y < height; ++y)
+        {
+            const u8* s = rect.src_address + rect.src_stride * y;
+            u8* d = rect.dest_address + rect.dest_stride * y;;
+
+            int xcount = width;
+
+            while (xcount >= 16)
+            {
+                __m512i v = read(s);
+                __m512i color = alpha;
+
+                __m512i c0 = _mm512_srl_epi32(v, right01);
+                __m512i c1 = _mm512_srl_epi32(v, _mm_unpackhi_epi64(right01, right01));
+                __m512i c2 = _mm512_srl_epi32(v, right23);
+                __m512i c3 = _mm512_srl_epi32(v, _mm_unpackhi_epi64(right23, right23));
+
+                c0 = _mm512_and_si512(c0, mask0);
+                c1 = _mm512_and_si512(c1, mask1);
+                c2 = _mm512_and_si512(c2, mask2);
+                c3 = _mm512_and_si512(c3, mask3);
+
+                c0 = _mm512_mullo_epi32(c0, scale0);
+                c1 = _mm512_mullo_epi32(c1, scale1);
+                c2 = _mm512_mullo_epi32(c2, scale2);
+                c3 = _mm512_mullo_epi32(c3, scale3);
+
+                c0 = _mm512_srl_epi32(_mm512_add_epi32(c0, bias0), shift01);
+                c1 = _mm512_srl_epi32(_mm512_add_epi32(c1, bias1), _mm_unpackhi_epi64(shift01, shift01));
+                c2 = _mm512_srl_epi32(_mm512_add_epi32(c2, bias2), shift23);
+                c3 = _mm512_srl_epi32(_mm512_add_epi32(c3, bias3), _mm_unpackhi_epi64(shift23, shift23));
+
+                color = _mm512_or_si512(color, _mm512_sll_epi32(c0, left01));
+                color = _mm512_or_si512(color, _mm512_sll_epi32(c1, _mm_unpackhi_epi64(left01, left01)));
+                color = _mm512_or_si512(color, _mm512_sll_epi32(c2, left23));
+                color = _mm512_or_si512(color, _mm512_sll_epi32(c3, _mm_unpackhi_epi64(left23, left23)));
+
+                write(d, color);
+                s += sizeof(SourceType) * 16;
+                d += sizeof(DestType) * 16;
+                xcount -= 16;
+            }
+        }
+
+        const int xremain = width % 16;
+        if (xremain)
+        {
+            BlitRect patch = rect;
+
+            patch.width = xremain;
+            patch.src_address += (width - xremain) * sizeof(SourceType);
+            patch.dest_address += (width - xremain) * sizeof(DestType);
+
+            table_convert_template_unorm_unorm<DestType, SourceType>(blitter, patch);
+        }
+    }
+
+#endif // defined(MANGO_ENABLE_AVX512)
     */
 
     // ----------------------------------------------------------------------------
@@ -1287,6 +1647,29 @@ namespace
                 case MAKE_MODEMASK(32, 32): func = avx2_table_convert_template_unorm_unorm<u32, u32>; break;
             }
 #endif // defined(MANGO_ENABLE_AVX2)
+            */
+            /*
+#if defined(MANGO_ENABLE_AVX512)
+            switch (modeMask)
+            {
+                case MAKE_MODEMASK( 8,  8): func = avx512_table_convert_template_unorm_unorm<u8, u8>; break;
+                case MAKE_MODEMASK( 8, 16): func = avx512_table_convert_template_unorm_unorm<u8, u16>; break;
+                case MAKE_MODEMASK( 8, 24): func = avx512_table_convert_template_unorm_unorm<u8, u24>; break;
+                case MAKE_MODEMASK( 8, 32): func = avx512_table_convert_template_unorm_unorm<u8, u32>; break;
+                case MAKE_MODEMASK(16,  8): func = avx512_table_convert_template_unorm_unorm<u16, u8>; break;
+                case MAKE_MODEMASK(16, 16): func = avx512_table_convert_template_unorm_unorm<u16, u16>; break;
+                case MAKE_MODEMASK(16, 24): func = avx512_table_convert_template_unorm_unorm<u16, u24>; break;
+                case MAKE_MODEMASK(16, 32): func = avx512_table_convert_template_unorm_unorm<u16, u32>; break;
+                case MAKE_MODEMASK(24,  8): func = avx512_table_convert_template_unorm_unorm<u24, u8>; break;
+                case MAKE_MODEMASK(24, 16): func = avx512_table_convert_template_unorm_unorm<u24, u16>; break;
+                case MAKE_MODEMASK(24, 24): func = avx512_table_convert_template_unorm_unorm<u24, u24>; break;
+                case MAKE_MODEMASK(24, 32): func = avx512_table_convert_template_unorm_unorm<u24, u32>; break;
+                case MAKE_MODEMASK(32,  8): func = avx512_table_convert_template_unorm_unorm<u32, u8>; break;
+                case MAKE_MODEMASK(32, 16): func = avx512_table_convert_template_unorm_unorm<u32, u16>; break;
+                case MAKE_MODEMASK(32, 24): func = avx512_table_convert_template_unorm_unorm<u32, u24>; break;
+                case MAKE_MODEMASK(32, 32): func = avx512_table_convert_template_unorm_unorm<u32, u32>; break;
+            }
+#endif // defined(MANGO_ENABLE_AVX512)
             */
         }
         else
