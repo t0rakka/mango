@@ -4,12 +4,10 @@
 */
 #include <map>
 #include <cassert>
-#include <mango/core/system.hpp>
 #include <mango/core/cpuinfo.hpp>
 #include <mango/core/half.hpp>
 #include <mango/image/blitter.hpp>
 #include <mango/math/vector.hpp>
-#include <mango/math/srgb.hpp>
 
 namespace
 {
@@ -211,7 +209,14 @@ namespace
     {
         if (dst > 16 || src > 16)
         {
+            // Conversion is not supported
             return { 0, 0, 0 };
+        }
+
+        if (dst < 1 || src < 1)
+        {
+            // Conversion is disabled
+            return { 1, 0, 0 };
         }
 
         const ConversionTable& table = g_conversion_table[(src - 1) * 16 + (dst - 1)];
