@@ -241,31 +241,31 @@ namespace
     // memory access
     // ----------------------------------------------------------------------------
 
-    // load
+    // scalar_load
 
     template <typename T>
-    u32 load(const u8* p);
+    u32 scalar_load(const u8* p);
 
     template <>
-    u32 load<u8>(const u8* p)
+    u32 scalar_load<u8>(const u8* p)
     {
         return u32(*p);
     }
 
     template <>
-    u32 load<u16>(const u8* p)
+    u32 scalar_load<u16>(const u8* p)
     {
         return u32(uload16(p));
     }
 
     template <>
-    u32 load<u24>(const u8* p)
+    u32 scalar_load<u24>(const u8* p)
     {
         return u32((p[2] << 16) | (p[1] << 8) | p[0]);
     }
 
     template <>
-    u32 load<u32>(const u8* p)
+    u32 scalar_load<u32>(const u8* p)
     {
         return uload32(p);
     }
@@ -273,22 +273,22 @@ namespace
     // store
 
     template <typename T>
-    void store(u8* p, u32 v);
+    void scalar_store(u8* p, u32 v);
 
     template <>
-    void store<u8>(u8* p, u32 v)
+    void scalar_store<u8>(u8* p, u32 v)
     {
         *p = u8(v);
     }
 
     template <>
-    void store<u16>(u8* p, u32 v)
+    void scalar_store<u16>(u8* p, u32 v)
     {
         ustore16(p, u16(v));
     }
 
     template <>
-    void store<u24>(u8* p, u32 v)
+    void scalar_store<u24>(u8* p, u32 v)
     {
         p[0] = (v >> 0) & 0xff;
         p[1] = (v >> 8) & 0xff;
@@ -296,10 +296,14 @@ namespace
     }
 
     template <>
-    void store<u32>(u8* p, u32 v)
+    void scalar_store<u32>(u8* p, u32 v)
     {
         ustore32(p, v);
     }
+
+    // ----------------------------------------------------------------------------
+    // conversion template
+    // ----------------------------------------------------------------------------
 
     template <typename DestType, typename SourceType>
     void table_convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
@@ -352,59 +356,41 @@ namespace
             }
         }
 
-        const u32 mask [] =
-        {
-            component[0].srcMask,
-            component[1].srcMask,
-            component[2].srcMask,
-            component[3].srcMask,
-        };
+        const u32 mask0 = component[0].srcMask;
+        const u32 mask1 = component[1].srcMask;
+        const u32 mask2 = component[2].srcMask;
+        const u32 mask3 = component[3].srcMask;
 
-        const u32 right [] =
-        {
-            component[0].srcOffset,
-            component[1].srcOffset,
-            component[2].srcOffset,
-            component[3].srcOffset,
-        };
+        const u32 right0 = component[0].srcOffset;
+        const u32 right1 = component[1].srcOffset;
+        const u32 right2 = component[2].srcOffset;
+        const u32 right3 = component[3].srcOffset;
 
-        const u32 left [] =
-        {
-            component[0].destOffset,
-            component[1].destOffset,
-            component[2].destOffset,
-            component[3].destOffset,
-        };
+        const u32 left0 = component[0].destOffset;
+        const u32 left1 = component[1].destOffset;
+        const u32 left2 = component[2].destOffset;
+        const u32 left3 = component[3].destOffset;
 
-        const u32 scale [] =
-        {
-            component[0].scale,
-            component[1].scale,
-            component[2].scale,
-            component[3].scale
-        };
+        const u32 scale0 = component[0].scale;
+        const u32 scale1 = component[1].scale;
+        const u32 scale2 = component[2].scale;
+        const u32 scale3 = component[3].scale;
 
-        const u32 bias [] =
-        {
-            component[0].bias,
-            component[1].bias,
-            component[2].bias,
-            component[3].bias
-        };
+        const u32 bias0 = component[0].bias;
+        const u32 bias1 = component[1].bias;
+        const u32 bias2 = component[2].bias;
+        const u32 bias3 = component[3].bias;
 
-        const u32 shift [] =
-        {
-            component[0].shift,
-            component[1].shift,
-            component[2].shift,
-            component[3].shift
-        };
+        const u32 shift0 = component[0].shift;
+        const u32 shift1 = component[1].shift;
+        const u32 shift2 = component[2].shift;
+        const u32 shift3 = component[3].shift;
 
         int width = rect.width;
         int height = rect.height;
 
-        auto read = load<SourceType>;
-        auto write = store<DestType>;
+        auto load = scalar_load<SourceType>;
+        auto store = scalar_store<DestType>;
 
         for (int y = 0; y < height; ++y)
         {
@@ -413,13 +399,13 @@ namespace
 
             for (int x = 0; x < width; ++x)
             {
-                u32 v = read(s);
+                u32 v = load(s);
                 u32 color = alphaMask;
-                color |= ((((v >> right[0]) & mask[0]) * scale[0] + bias[0]) >> shift[0]) << left[0];
-                color |= ((((v >> right[1]) & mask[1]) * scale[1] + bias[1]) >> shift[1]) << left[1];
-                color |= ((((v >> right[2]) & mask[2]) * scale[2] + bias[2]) >> shift[2]) << left[2];
-                color |= ((((v >> right[3]) & mask[3]) * scale[3] + bias[3]) >> shift[3]) << left[3];
-                write(d, color);
+                color |= ((((v >> right0) & mask0) * scale0 + bias0) >> shift0) << left0;
+                color |= ((((v >> right1) & mask1) * scale1 + bias1) >> shift1) << left1;
+                color |= ((((v >> right2) & mask2) * scale2 + bias2) >> shift2) << left2;
+                color |= ((((v >> right3) & mask3) * scale3 + bias3) >> shift3) << left3;
+                store(d, color);
                 s += sizeof(SourceType);
                 d += sizeof(DestType);
             }
@@ -512,7 +498,7 @@ namespace
     }
 
     // ----------------------------------------------------------------------------
-    // conversion templates
+    // conversion template
     // ----------------------------------------------------------------------------
 
     template <typename DestType, typename SourceType>
@@ -602,8 +588,8 @@ namespace
         int width = rect.width;
         int height = rect.height;
 
-        auto read = sse4_load<SourceType>;
-        auto write = sse4_store<DestType>;
+        auto load = sse4_load<SourceType>;
+        auto store = sse4_store<DestType>;
 
         for (int y = 0; y < height; ++y)
         {
@@ -614,7 +600,7 @@ namespace
 
             while (xcount >= 4)
             {
-                __m128i v = read(s);
+                __m128i v = load(s);
                 __m128i color = alpha;
 
                 __m128i c0 = _mm_srl_epi32(v, right01);
@@ -642,7 +628,7 @@ namespace
                 color = _mm_or_si128(color, _mm_sll_epi32(c2, left23));
                 color = _mm_or_si128(color, _mm_sll_epi32(c3, _mm_unpackhi_epi64(left23, left23)));
 
-                write(d, color);
+                store(d, color);
                 s += sizeof(SourceType) * 4;
                 d += sizeof(DestType) * 4;
                 xcount -= 4;
@@ -760,7 +746,7 @@ namespace
     }
 
     // ----------------------------------------------------------------------------
-    // conversion templates
+    // conversion template
     // ----------------------------------------------------------------------------
 
     template <typename DestType, typename SourceType>
@@ -850,8 +836,8 @@ namespace
         int width = rect.width;
         int height = rect.height;
 
-        auto read = avx2_load<SourceType>;
-        auto write = avx2_store<DestType>;
+        auto load = avx2_load<SourceType>;
+        auto store = avx2_store<DestType>;
 
         for (int y = 0; y < height; ++y)
         {
@@ -862,7 +848,7 @@ namespace
 
             while (xcount >= 8)
             {
-                __m256i v = read(s);
+                __m256i v = load(s);
                 __m256i color = alpha;
 
                 __m256i c0 = _mm256_srl_epi32(v, right01);
@@ -890,7 +876,7 @@ namespace
                 color = _mm256_or_si256(color, _mm256_sll_epi32(c2, left23));
                 color = _mm256_or_si256(color, _mm256_sll_epi32(c3, _mm_unpackhi_epi64(left23, left23)));
 
-                write(d, color);
+                store(d, color);
                 s += sizeof(SourceType) * 8;
                 d += sizeof(DestType) * 8;
                 xcount -= 8;
@@ -1120,7 +1106,7 @@ namespace
     }
 
     // ----------------------------------------------------------------------------
-    // conversion templates
+    // conversion template
     // ----------------------------------------------------------------------------
 
     template <typename DestType, typename SourceType>
@@ -1210,8 +1196,8 @@ namespace
         int width = rect.width;
         int height = rect.height;
 
-        auto read = avx512_load<SourceType>;
-        auto write = avx512_store<DestType>;
+        auto load = avx512_load<SourceType>;
+        auto store = avx512_store<DestType>;
 
         for (int y = 0; y < height; ++y)
         {
@@ -1222,7 +1208,7 @@ namespace
 
             while (xcount >= 16)
             {
-                __m512i v = read(s);
+                __m512i v = load(s);
                 __m512i color = alpha;
 
                 __m512i c0 = _mm512_srl_epi32(v, right01);
@@ -1250,7 +1236,7 @@ namespace
                 color = _mm512_or_si512(color, _mm512_sll_epi32(c2, left23));
                 color = _mm512_or_si512(color, _mm512_sll_epi32(c3, _mm_unpackhi_epi64(left23, left23)));
 
-                write(d, color);
+                store(d, color);
                 s += sizeof(SourceType) * 16;
                 d += sizeof(DestType) * 16;
                 xcount -= 16;
@@ -1327,43 +1313,31 @@ namespace
             }
         }
 
-        const u32 mask [] =
-        {
-            component[0].srcMask,
-            component[1].srcMask,
-            component[2].srcMask,
-            component[3].srcMask,
-        };
+        const u32 mask0 = component[0].srcMask;
+        const u32 mask1 = component[1].srcMask;
+        const u32 mask2 = component[2].srcMask;
+        const u32 mask3 = component[3].srcMask;
 
-        const u32 right [] =
-        {
-            component[0].srcOffset,
-            component[1].srcOffset,
-            component[2].srcOffset,
-            component[3].srcOffset,
-        };
+        const u32 right0 = component[0].srcOffset;
+        const u32 right1 = component[1].srcOffset;
+        const u32 right2 = component[2].srcOffset;
+        const u32 right3 = component[3].srcOffset;
 
-        const u32 left [] =
-        {
-            component[0].destOffset,
-            component[1].destOffset,
-            component[2].destOffset,
-            component[3].destOffset,
-        };
+        const u32 left0 = component[0].destOffset;
+        const u32 left1 = component[1].destOffset;
+        const u32 left2 = component[2].destOffset;
+        const u32 left3 = component[3].destOffset;
 
-        const float scale [] =
-        {
-            component[0].scale,
-            component[1].scale,
-            component[2].scale,
-            component[3].scale,
-        };
+        const float scale0 = component[0].scale;
+        const float scale1 = component[1].scale;
+        const float scale2 = component[2].scale;
+        const float scale3 = component[3].scale;
 
         int width = rect.width;
         int height = rect.height;
 
-        auto read = load<SourceType>;
-        auto write = store<DestType>;
+        auto load = scalar_load<SourceType>;
+        auto store = scalar_store<DestType>;
 
         for (int y = 0; y < height; ++y)
         {
@@ -1372,13 +1346,13 @@ namespace
 
             for (int x = 0; x < width; ++x)
             {
-                u32 v = read(s);
+                u32 v = load(s);
                 u32 color = alphaMask;
-                color |= (u32(((v >> right[3]) & mask[3]) * scale[3] + 0.5f)) << left[3];
-                color |= (u32(((v >> right[2]) & mask[2]) * scale[2] + 0.5f)) << left[2];
-                color |= (u32(((v >> right[1]) & mask[1]) * scale[1] + 0.5f)) << left[1];
-                color |= (u32(((v >> right[0]) & mask[0]) * scale[0] + 0.5f)) << left[0];
-                write(d, color);
+                color |= (u32(((v >> right3) & mask3) * scale3 + 0.5f)) << left3;
+                color |= (u32(((v >> right2) & mask2) * scale2 + 0.5f)) << left2;
+                color |= (u32(((v >> right1) & mask1) * scale1 + 0.5f)) << left1;
+                color |= (u32(((v >> right0) & mask0) * scale0 + 0.5f)) << left0;
+                store(d, color);
                 s += sizeof(SourceType);
                 d += sizeof(DestType);
             }
@@ -1410,17 +1384,13 @@ namespace
             }
         }
 
-        // default alpha is 1.0 (if destination does not have alpha the mask is 0)
-        u32 alphaMask = df.mask(3);
-
-        // if source format has alpha channel use computed alpha instead of the default
-        if (sf.isAlpha())
-            alphaMask = 0;
+        const u32 alphaMask = sf.isAlpha() ? 0 : df.mask(3);
 
         const float scale0 = float(mask[0]);
         const float scale1 = float(mask[1]);
         const float scale2 = float(mask[2]);
         const float scale3 = float(mask[3]);
+
         const float bias0 = float(mask[0] ^ (mask[0] - 1)) * 0.5f; // least-significant-bit * 0.5
         const float bias1 = float(mask[1] ^ (mask[1] - 1)) * 0.5f;
         const float bias2 = float(mask[2] ^ (mask[2] - 1)) * 0.5f;
@@ -1462,25 +1432,8 @@ namespace
     void convert_template_fp_unorm(const Blitter& blitter, const BlitRect& rect)
     {
         MANGO_UNREFERENCED(blitter);
-
-        u8* source = rect.src_address;
-        u8* dest = rect.dest_address;
-
-        for (int y = 0; y < rect.height; ++y)
-        {
-            const SourceType* src = reinterpret_cast<const SourceType*>(source);
-            DestType* dst = reinterpret_cast<DestType*>(dest);
-
-            for (int x = 0; x < rect.width; ++x)
-            {
-                // TODO
-                MANGO_UNREFERENCED(src);
-                MANGO_UNREFERENCED(dst);
-            }
-
-            source += rect.src_stride;
-            dest += rect.dest_stride;
-        }
+        MANGO_UNREFERENCED(rect);
+        // TODO
     }
 
     // fp <- fp
