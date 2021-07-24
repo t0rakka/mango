@@ -1012,11 +1012,7 @@ namespace
         return p;
     }
 
-#if defined(MANGO_ENABLE_SSE4_1)
-
-    // ----------------------------------------------------------------------------
-    // encode_block_ssse3
-    // ----------------------------------------------------------------------------
+#if defined(MANGO_ENABLE_SSE4_1) || defined(MANGO_ENABLE_AVX2)
 
     constexpr s8 lane(s8 v, s8 offset)
     {
@@ -1033,6 +1029,14 @@ namespace
             lane(c6, 0), lane(c6, 1), lane(c7, 0), lane(c7, 1));
         return int16x8(_mm_shuffle_epi8(v, s));
     }
+
+#endif
+
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    // ----------------------------------------------------------------------------
+    // encode_block_ssse3
+    // ----------------------------------------------------------------------------
 
     u64 zigzag_ssse3(s16* out, const s16* in)
     {
@@ -1263,6 +1267,8 @@ namespace
         return p;
     }
 
+#endif // defined(MANGO_ENABLE_SSE4_1)
+
 #if defined(MANGO_ENABLE_AVX2)
 
     // ----------------------------------------------------------------------------
@@ -1463,6 +1469,8 @@ namespace
         return p;
     }
 
+#endif // defined(MANGO_ENABLE_AVX2)
+
 #if defined(JPEG_ENABLE_AVX512)
 
     // ----------------------------------------------------------------------------
@@ -1608,8 +1616,6 @@ namespace
     }
 
 #endif // defined(JPEG_ENABLE_AVX512)
-#endif // defined(MANGO_ENABLE_AVX2)
-#endif // defined(MANGO_ENABLE_SSE4_1)
 
 #if defined(MANGO_ENABLE_NEON64)
 
@@ -2493,7 +2499,7 @@ namespace
 #if defined(MANGO_ENABLE_AVX2)
         if (flags & INTEL_AVX2)
         {
-            encode = encode_block_avx2;
+            //encode = encode_block_avx2;
             encode_name = "AVX2";
         }
 #endif
