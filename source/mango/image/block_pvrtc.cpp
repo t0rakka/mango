@@ -102,29 +102,33 @@ namespace
         Pixel128S SminusR = { hS.r - hR.r, hS.g - hR.g, hS.b - hR.b, hS.a - hR.a };
 
         //Multiply colors.
-        hP.r *=	ui32WordWidth;
-        hP.g *=	ui32WordWidth;
-        hP.b *=	ui32WordWidth;
-        hP.a *=	ui32WordWidth;
-        hR.r *=	ui32WordWidth;
-        hR.g *=	ui32WordWidth;
-        hR.b *=	ui32WordWidth;
-        hR.a *=	ui32WordWidth;
+        hP.r *= ui32WordWidth;
+        hP.g *= ui32WordWidth;
+        hP.b *= ui32WordWidth;
+        hP.a *= ui32WordWidth;
+        hR.r *= ui32WordWidth;
+        hR.g *= ui32WordWidth;
+        hR.b *= ui32WordWidth;
+        hR.a *= ui32WordWidth;
 
         if (ui8Bpp == 2)
         {
             //Loop through pixels to achieve results.
-            for (unsigned int x = 0; x < ui32WordWidth; x++)
+            for (u32 x = 0; x < ui32WordWidth; x++)
             {
                 Pixel128S result = { 4 * hP.r, 4 * hP.g, 4 * hP.b, 4 * hP.a };
                 Pixel128S dY = { hR.r - hP.r, hR.g - hP.g, hR.b - hP.b, hR.a - hP.a };
 
-                for (unsigned int y = 0; y < ui32WordHeight; y++)
+                u32 offset = x;
+
+                for (u32 y = 0; y < ui32WordHeight; y++)
                 {
-                    pPixel[y * ui32WordWidth + x].r = s32((result.r >> 7) + (result.r >> 2));
-                    pPixel[y * ui32WordWidth + x].g = s32((result.g >> 7) + (result.g >> 2));
-                    pPixel[y * ui32WordWidth + x].b = s32((result.b >> 7) + (result.b >> 2));
-                    pPixel[y * ui32WordWidth + x].a = s32((result.a >> 5) + (result.a >> 1));
+                    pPixel[offset].r = s32((result.r >> 7) + (result.r >> 2));
+                    pPixel[offset].g = s32((result.g >> 7) + (result.g >> 2));
+                    pPixel[offset].b = s32((result.b >> 7) + (result.b >> 2));
+                    pPixel[offset].a = s32((result.a >> 5) + (result.a >> 1));
+
+                    offset += ui32WordWidth;
 
                     result.r += dY.r;
                     result.g += dY.g;
@@ -146,17 +150,21 @@ namespace
         else
         {
             //Loop through pixels to achieve results.
-            for (unsigned int y = 0; y < ui32WordHeight; y++)
+            for (u32 y = 0; y < ui32WordHeight; y++)
             {
                 Pixel128S result = { 4 * hP.r, 4 * hP.g, 4 * hP.b, 4 * hP.a };
                 Pixel128S dY = { hR.r - hP.r, hR.g - hP.g, hR.b - hP.b, hR.a - hP.a };
 
-                for (unsigned int x = 0; x < ui32WordWidth; x++)
+                u32 offset = y;
+
+                for (u32 x = 0; x < ui32WordWidth; x++)
                 {
-                    pPixel[x * ui32WordWidth + y].r = s32((result.r >> 6) + (result.r >> 1));
-                    pPixel[x * ui32WordWidth + y].g = s32((result.g >> 6) + (result.g >> 1));
-                    pPixel[x * ui32WordWidth + y].b = s32((result.b >> 6) + (result.b >> 1));
-                    pPixel[x * ui32WordWidth + y].a = s32((result.a >> 4) + (result.a));
+                    pPixel[offset].r = s32((result.r >> 6) + (result.r >> 1));
+                    pPixel[offset].g = s32((result.g >> 6) + (result.g >> 1));
+                    pPixel[offset].b = s32((result.b >> 6) + (result.b >> 1));
+                    pPixel[offset].a = s32((result.a >> 4) + (result.a));
+
+                    offset += ui32WordWidth;
 
                     result.r += dY.r;
                     result.g += dY.g;
@@ -211,8 +219,8 @@ namespace
                     const int s = y & 1;
                     for (int x = 0; x < 4; x++)
                     {
-                        dest[1-s] = WordModMode;
-                        dest[0+s] = modulation_table[ModulationBits & 3];
+                        dest[1 - s] = WordModMode;
+                        dest[0 + s] = modulation_table[ModulationBits & 3];
                         dest += 2;
                         ModulationBits >>= 2;
                     }
@@ -247,22 +255,17 @@ namespace
         }
     }
 
-    static s32 getModulationValues(u8 i32ModulationValues[8][16], u32 xPos, u32 yPos, u8 ui8Bpp)
+    static s32 getModulationValues(u8 i32ModulationValues[8][16], u32 xPos, u32 yPos, u8 bpp)
     {
         int value = i32ModulationValues[yPos][xPos];
-        if (ui8Bpp == 2)
+        if (bpp == 2)
         {
             const int mode = value >> 6;
-            if (mode == 0)
-            {
-                value &= 0x0f;
-            }
-            else
+            if (mode != 0)
             {
                 if (((xPos ^ yPos) & 1) == 0)
                 {
-                    // if this is a stored value
-                    value &= 0x0f;
+                    // stored value
                 }
                 else if (mode == 3)
                 {
@@ -287,7 +290,7 @@ namespace
             }
         }
 
-        return value;
+        return value & 0xf;
     }
 
     constexpr int lerp(int a, int b, int mod)
@@ -300,17 +303,17 @@ namespace
                                            Pixel128S upscaledColorB[32],
                                            u8* pColorData, size_t stride,
                                            int xoffset, int yoffset, int width, int height,
-                                           u8 ui8Bpp)
+                                           u8 bpp)
     {
-        const u32 ui32WordWidth = (ui8Bpp == 2) ? 8 : 4;
+        const u32 ui32WordWidth = (bpp == 2) ? 8 : 4;
         const u32 ui32WordHeight = 4;
-        
+
         xoffset = xoffset * ui32WordWidth - ui32WordWidth / 2;
         yoffset = yoffset * ui32WordHeight - ui32WordHeight / 2;
         const int xmask = width - 1;
         const int ymask = height - 1;
 
-        for (unsigned int y = 0; y < ui32WordHeight; y++)
+        for (u32 y = 0; y < ui32WordHeight; ++y)
         {
             const Pixel128S* colorA = upscaledColorA + y * ui32WordWidth;
             const Pixel128S* colorB = upscaledColorB + y * ui32WordWidth;
@@ -318,22 +321,20 @@ namespace
             const size_t sy = ((yoffset + y) & ymask) * stride;
             Pixel32* dest = reinterpret_cast<Pixel32 *>(pColorData + sy);
 
-            for (unsigned int x = 0; x < ui32WordWidth; x++)
+            for (u32 x = 0; x < ui32WordWidth; ++x)
             {
-                s32 mod = getModulationValues(i32ModulationValues, x + ui32WordWidth / 2, y + ui32WordHeight / 2, ui8Bpp);
-                mod &= 0xf;
+                s32 mod = getModulationValues(i32ModulationValues, x + ui32WordWidth / 2, y + ui32WordHeight / 2, bpp);
 
-                Pixel128S result;
-                result.r = lerp(colorA[x].r, colorB[x].r, mod);
-                result.g = lerp(colorA[x].g, colorB[x].g, mod);
-                result.b = lerp(colorA[x].b, colorB[x].b, mod);
-                result.a = mod & PUNCHTHROUGH_ALPHA ? 0 : lerp(colorA[x].a, colorB[x].a, mod);
+                s32 r = lerp(colorA[x].r, colorB[x].r, mod);
+                s32 g = lerp(colorA[x].g, colorB[x].g, mod);
+                s32 b = lerp(colorA[x].b, colorB[x].b, mod);
+                s32 a = mod & PUNCHTHROUGH_ALPHA ? 0 : lerp(colorA[x].a, colorB[x].a, mod);
 
                 const int offset = (xoffset + x) & xmask;
-                dest[offset].r = u8(result.r);
-                dest[offset].g = u8(result.g);
-                dest[offset].b = u8(result.b);
-                dest[offset].a = u8(result.a);
+                dest[offset].r = u8(r);
+                dest[offset].g = u8(g);
+                dest[offset].b = u8(b);
+                dest[offset].a = u8(a);
             }
         }
     }
@@ -389,9 +390,9 @@ namespace
 
             u8 i32ModulationValues[8][16];
 
-            unpackModulations(*P, 0, 0,                          i32ModulationValues, ui8Bpp);
+            unpackModulations(*P, 0,             0,              i32ModulationValues, ui8Bpp);
             unpackModulations(*Q, ui32WordWidth, 0,              i32ModulationValues, ui8Bpp);
-            unpackModulations(*R, 0, ui32WordHeight,             i32ModulationValues, ui8Bpp);
+            unpackModulations(*R, 0,             ui32WordHeight, i32ModulationValues, ui8Bpp);
             unpackModulations(*S, ui32WordWidth, ui32WordHeight, i32ModulationValues, ui8Bpp);
 
             Pixel32 colorA[4];
