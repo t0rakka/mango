@@ -226,6 +226,11 @@ namespace
     static
     bool isConversionTableSupported(const Format& dest, const Format& source)
     {
+        if (dest.type != Format::UNORM || source.type != Format::UNORM)
+        {
+            return false;
+        }
+
         for (int i = 0; i < 4; ++i)
         {
             ConversionTable table = getConversionTable(dest.size[i], source.size[i]);
@@ -234,6 +239,7 @@ namespace
                 return false;
             }
         }
+
         return true;
     }
 
@@ -1364,9 +1370,6 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_unorm_fp(const Blitter& blitter, const BlitRect& rect)
     {
-        u8* source = rect.src_address;
-        u8* dest = rect.dest_address;
-
         const Format& sf = blitter.srcFormat;
         const Format& df = blitter.destFormat;
 
@@ -1391,10 +1394,8 @@ namespace
         const float scale2 = float(mask[2]);
         const float scale3 = float(mask[3]);
 
-        const float bias0 = float(mask[0] ^ (mask[0] - 1)) * 0.5f; // least-significant-bit * 0.5
-        const float bias1 = float(mask[1] ^ (mask[1] - 1)) * 0.5f;
-        const float bias2 = float(mask[2] ^ (mask[2] - 1)) * 0.5f;
-        const float bias3 = float(mask[3] ^ (mask[3] - 1)) * 0.5f;
+        u8* source = rect.src_address;
+        u8* dest = rect.dest_address;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -1408,17 +1409,17 @@ namespace
                 switch (components)
                 {
                     case 4:
-                        v |= u32(clamp(float(src[offset[3]]), 0.0f, 1.0f) * scale3 + bias3) & mask[3];
+                        v |= u32(clamp(float(src[offset[3]]), 0.0f, 1.0f) * scale3) & mask[3];
                     case 3:
-                        v |= u32(clamp(float(src[offset[2]]), 0.0f, 1.0f) * scale2 + bias2) & mask[2];
+                        v |= u32(clamp(float(src[offset[2]]), 0.0f, 1.0f) * scale2) & mask[2];
                     case 2:
-                        v |= u32(clamp(float(src[offset[1]]), 0.0f, 1.0f) * scale1 + bias1) & mask[1];
+                        v |= u32(clamp(float(src[offset[1]]), 0.0f, 1.0f) * scale1) & mask[1];
                     case 1:
-                        v |= u32(clamp(float(src[offset[0]]), 0.0f, 1.0f) * scale0 + bias0) & mask[0];
+                        v |= u32(clamp(float(src[offset[0]]), 0.0f, 1.0f) * scale0) & mask[0];
                 }
 
-                src += components;
                 dst[x] = DestType(v);
+                src += components;
             }
 
             source += rect.src_stride;
@@ -1431,9 +1432,78 @@ namespace
     template <typename DestType, typename SourceType>
     void convert_template_fp_unorm(const Blitter& blitter, const BlitRect& rect)
     {
-        MANGO_UNREFERENCED(blitter);
-        MANGO_UNREFERENCED(rect);
-        // TODO
+        const Format& sf = blitter.srcFormat;
+        const Format& df = blitter.destFormat;
+
+        u32 mask[4] = { 0, 0, 0, 0 };
+        float scale[4] = { 0, 0, 0, 0 };
+        float alpha[4] = { 0, 0, 0, 0 };
+        int components = 0;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            if (df.size[i])
+            {
+                if (sf.size[i])
+                {
+                    mask[components] = sf.mask(i);
+                    scale[components] = 1.0f / float(mask[components]);
+                    alpha[components] = 0.0f;
+                }
+                else
+                {
+                    mask[components] = 0;
+                    scale[components] = 0.0f;
+                    alpha[components] = 1.0f;
+                }
+
+                ++components;
+            }
+        }
+
+        const u32 mask0 = mask[0];
+        const u32 mask1 = mask[1];
+        const u32 mask2 = mask[2];
+        const u32 mask3 = mask[3];
+
+        const float scale0 = scale[0];
+        const float scale1 = scale[1];
+        const float scale2 = scale[2];
+        const float scale3 = scale[3];
+
+        const float alpha0 = alpha[0];
+        const float alpha1 = alpha[1];
+        const float alpha2 = alpha[2];
+        const float alpha3 = alpha[3];
+
+        u8* source = rect.src_address;
+        u8* dest = rect.dest_address;
+
+        for (int y = 0; y < rect.height; ++y)
+        {
+            const SourceType* src = reinterpret_cast<const SourceType*>(source);
+            DestType* dst = reinterpret_cast<DestType*>(dest);
+
+            for (int x = 0; x < rect.width; ++x)
+            {
+                u32 v = src[x];
+                switch (components)
+                {
+                    case 4:
+                        dst[3] = DestType((v & mask3) * scale3 + alpha3);
+                    case 3:
+                        dst[2] = DestType((v & mask2) * scale2 + alpha2);
+                    case 2:
+                        dst[1] = DestType((v & mask1) * scale1 + alpha1);
+                    case 1:
+                        dst[0] = DestType((v & mask0) * scale0 + alpha0);
+                }
+                dst += components;
+            }
+
+            source += rect.src_stride;
+            dest += rect.dest_stride;
+        }
     }
 
     // fp <- fp
@@ -1487,22 +1557,32 @@ namespace
                 }
             }
 
+            const SourceType* input0 = input[0];
+            const SourceType* input1 = input[1];
+            const SourceType* input2 = input[2];
+            const SourceType* input3 = input[3];
+
+            const int stride0 = stride[0];
+            const int stride1 = stride[1];
+            const int stride2 = stride[2];
+            const int stride3 = stride[3];
+
             for (int x = 0; x < rect.width; ++x)
             {
                 switch (components)
                 {
                     case 4:
-                        dst[3] = DestType(*input[3]);
-                        input[3] += stride[3];
+                        dst[3] = DestType(*input3);
+                        input3 += stride3;
                     case 3:
-                        dst[2] = DestType(*input[2]);
-                        input[2] += stride[2];
+                        dst[2] = DestType(*input2);
+                        input2 += stride2;
                     case 2:
-                        dst[1] = DestType(*input[1]);
-                        input[1] += stride[1];
+                        dst[1] = DestType(*input1);
+                        input1 += stride1;
                     case 1:
-                        dst[0] = DestType(*input[0]);
-                        input[0] += stride[0];
+                        dst[0] = DestType(*input0);
+                        input0 += stride0;
                 }
                 dst += components;
             }
