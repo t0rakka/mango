@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/image/compression.hpp>
 
@@ -22,12 +22,12 @@ namespace
 
     struct Pixel32
     {
-        u8 red, green, blue, alpha;
+        u8 r, g, b, a;
     };
 
     struct Pixel128S
     {
-        s32 red, green, blue, alpha;
+        s32 r, g, b, a;
     };
 
     struct PVRTCWord
@@ -45,18 +45,18 @@ namespace
         if ((u32ColorData & 0x8000) != 0)
         {
             // Opaque Color Mode - RGB 554
-            color.red   = (u8)((u32ColorData & 0x7c00) >> 10); // 5->5 bits
-            color.green = (u8)((u32ColorData & 0x3e0)  >> 5); // 5->5 bits
-            color.blue  = (u8)(u32ColorData  & 0x1e) | ((u32ColorData & 0x1e) >> 4); // 4->5 bits
-            color.alpha = (u8)0xf;// 0->4 bits
+            color.r = u8((u32ColorData & 0x7c00) >> 10); // 5->5 bits
+            color.g = u8((u32ColorData & 0x3e0)  >> 5); // 5->5 bits
+            color.b = u8(u32ColorData  & 0x1e) | ((u32ColorData & 0x1e) >> 4); // 4->5 bits
+            color.a = u8(0xf);// 0->4 bits
         }
         else
         {
             // Transparent Color Mode - ARGB 3443
-            color.red   = (u8)((u32ColorData & 0xf00)  >> 7) | ((u32ColorData & 0xf00) >> 11); // 4->5 bits
-            color.green = (u8)((u32ColorData & 0xf0)   >> 3) | ((u32ColorData & 0xf0)  >> 7); // 4->5 bits
-            color.blue  = (u8)((u32ColorData & 0xe)    << 1) | ((u32ColorData & 0xe)   >> 2); // 3->5 bits
-            color.alpha = (u8)((u32ColorData & 0x7000) >> 11);// 3->4 bits - note 0 at right
+            color.r = u8((u32ColorData & 0xf00)  >> 7) | ((u32ColorData & 0xf00) >> 11); // 4->5 bits
+            color.g = u8((u32ColorData & 0xf0)   >> 3) | ((u32ColorData & 0xf0)  >> 7); // 4->5 bits
+            color.b = u8((u32ColorData & 0xe)    << 1) | ((u32ColorData & 0xe)   >> 2); // 3->5 bits
+            color.a = u8((u32ColorData & 0x7000) >> 11);// 3->4 bits - note 0 at right
         }
         
         return color;
@@ -69,18 +69,18 @@ namespace
         if (u32ColorData & 0x80000000)
         {
             // Opaque Color Mode - RGB 555
-            color.red   = (u8)((u32ColorData & 0x7c000000) >> 26); // 5->5 bits
-            color.green = (u8)((u32ColorData & 0x3e00000)  >> 21); // 5->5 bits
-            color.blue  = (u8)((u32ColorData & 0x1f0000)   >> 16); // 5->5 bits
-            color.alpha = (u8)0xf;// 0 bits
+            color.r = u8((u32ColorData & 0x7c000000) >> 26); // 5->5 bits
+            color.g = u8((u32ColorData & 0x3e00000)  >> 21); // 5->5 bits
+            color.b = u8((u32ColorData & 0x1f0000)   >> 16); // 5->5 bits
+            color.a = u8(0xf);// 0 bits
         }
         else
         {
             // Transparent Color Mode - ARGB 3444
-            color.red   = (u8)(((u32ColorData & 0xf000000)  >> 23) | ((u32ColorData & 0xf000000) >> 27)); // 4->5 bits
-            color.green = (u8)(((u32ColorData & 0xf00000)   >> 19) | ((u32ColorData & 0xf00000)  >> 23)); // 4->5 bits
-            color.blue  = (u8)(((u32ColorData & 0xf0000)    >> 15) | ((u32ColorData & 0xf0000)   >> 19)); // 4->5 bits
-            color.alpha = (u8)((u32ColorData & 0x70000000) >> 27);// 3->4 bits - note 0 at right
+            color.r = u8(((u32ColorData & 0xf000000) >> 23) | ((u32ColorData & 0xf000000) >> 27)); // 4->5 bits
+            color.g = u8(((u32ColorData & 0xf00000)  >> 19) | ((u32ColorData & 0xf00000)  >> 23)); // 4->5 bits
+            color.b = u8(((u32ColorData & 0xf0000)   >> 15) | ((u32ColorData & 0xf0000)   >> 19)); // 4->5 bits
+            color.a = u8((u32ColorData & 0x70000000) >> 27);// 3->4 bits - note 0 at right
         }
 
         return color;
@@ -92,55 +92,55 @@ namespace
         const u32 ui32WordHeight = 4;
 
         //Convert to int 32.
-        Pixel128S hP = { (s32)color[0].red, (s32)color[0].green, (s32)color[0].blue, (s32)color[0].alpha };
-        Pixel128S hQ = { (s32)color[1].red, (s32)color[1].green, (s32)color[1].blue, (s32)color[1].alpha };
-        Pixel128S hR = { (s32)color[2].red, (s32)color[2].green, (s32)color[2].blue, (s32)color[2].alpha };
-        Pixel128S hS = { (s32)color[3].red, (s32)color[3].green, (s32)color[3].blue, (s32)color[3].alpha };
+        Pixel128S hP = { (s32)color[0].r, (s32)color[0].g, (s32)color[0].b, (s32)color[0].a };
+        Pixel128S hQ = { (s32)color[1].r, (s32)color[1].g, (s32)color[1].b, (s32)color[1].a };
+        Pixel128S hR = { (s32)color[2].r, (s32)color[2].g, (s32)color[2].b, (s32)color[2].a };
+        Pixel128S hS = { (s32)color[3].r, (s32)color[3].g, (s32)color[3].b, (s32)color[3].a };
 
         //Get vectors.
-        Pixel128S QminusP = {hQ.red - hP.red, hQ.green - hP.green, hQ.blue - hP.blue, hQ.alpha - hP.alpha};
-        Pixel128S SminusR = {hS.red - hR.red, hS.green - hR.green, hS.blue - hR.blue, hS.alpha - hR.alpha};
+        Pixel128S QminusP = { hQ.r - hP.r, hQ.g - hP.g, hQ.b - hP.b, hQ.a - hP.a };
+        Pixel128S SminusR = { hS.r - hR.r, hS.g - hR.g, hS.b - hR.b, hS.a - hR.a };
 
         //Multiply colors.
-        hP.red		*=	ui32WordWidth;
-        hP.green	*=	ui32WordWidth;
-        hP.blue		*=	ui32WordWidth;
-        hP.alpha	*=	ui32WordWidth;
-        hR.red		*=	ui32WordWidth;
-        hR.green	*=	ui32WordWidth;
-        hR.blue		*=	ui32WordWidth;
-        hR.alpha	*=	ui32WordWidth;
+        hP.r *=	ui32WordWidth;
+        hP.g *=	ui32WordWidth;
+        hP.b *=	ui32WordWidth;
+        hP.a *=	ui32WordWidth;
+        hR.r *=	ui32WordWidth;
+        hR.g *=	ui32WordWidth;
+        hR.b *=	ui32WordWidth;
+        hR.a *=	ui32WordWidth;
 
         if (ui8Bpp == 2)
         {
             //Loop through pixels to achieve results.
             for (unsigned int x = 0; x < ui32WordWidth; x++)
             {
-                Pixel128S result = {4 * hP.red, 4 * hP.green, 4 * hP.blue, 4 * hP.alpha};
-                Pixel128S dY = {hR.red - hP.red, hR.green - hP.green, hR.blue - hP.blue, hR.alpha - hP.alpha};
+                Pixel128S result = { 4 * hP.r, 4 * hP.g, 4 * hP.b, 4 * hP.a };
+                Pixel128S dY = { hR.r - hP.r, hR.g - hP.g, hR.b - hP.b, hR.a - hP.a };
 
                 for (unsigned int y = 0; y < ui32WordHeight; y++)
                 {
-                    pPixel[y * ui32WordWidth + x].red   = (s32)((result.red   >> 7) + (result.red   >> 2));
-                    pPixel[y * ui32WordWidth + x].green = (s32)((result.green >> 7) + (result.green >> 2));
-                    pPixel[y * ui32WordWidth + x].blue  = (s32)((result.blue  >> 7) + (result.blue  >> 2));
-                    pPixel[y * ui32WordWidth + x].alpha = (s32)((result.alpha >> 5) + (result.alpha >> 1));
+                    pPixel[y * ui32WordWidth + x].r = s32((result.r >> 7) + (result.r >> 2));
+                    pPixel[y * ui32WordWidth + x].g = s32((result.g >> 7) + (result.g >> 2));
+                    pPixel[y * ui32WordWidth + x].b = s32((result.b >> 7) + (result.b >> 2));
+                    pPixel[y * ui32WordWidth + x].a = s32((result.a >> 5) + (result.a >> 1));
 
-                    result.red   += dY.red;
-                    result.green += dY.green;
-                    result.blue  += dY.blue;
-                    result.alpha += dY.alpha;
+                    result.r += dY.r;
+                    result.g += dY.g;
+                    result.b += dY.b;
+                    result.a += dY.a;
                 }
 
-                hP.red		+= QminusP.red;
-                hP.green	+= QminusP.green;
-                hP.blue		+= QminusP.blue;
-                hP.alpha	+= QminusP.alpha;
+                hP.r += QminusP.r;
+                hP.g += QminusP.g;
+                hP.b += QminusP.b;
+                hP.a += QminusP.a;
 
-                hR.red		+= SminusR.red;
-                hR.green	+= SminusR.green;
-                hR.blue		+= SminusR.blue;
-                hR.alpha	+= SminusR.alpha;
+                hR.r += SminusR.r;
+                hR.g += SminusR.g;
+                hR.b += SminusR.b;
+                hR.a += SminusR.a;
             }
         }
         else
@@ -148,31 +148,31 @@ namespace
             //Loop through pixels to achieve results.
             for (unsigned int y = 0; y < ui32WordHeight; y++)
             {
-                Pixel128S result = {4 * hP.red, 4 * hP.green, 4 * hP.blue, 4 * hP.alpha};
-                Pixel128S dY = {hR.red - hP.red, hR.green - hP.green, hR.blue - hP.blue, hR.alpha - hP.alpha};
+                Pixel128S result = { 4 * hP.r, 4 * hP.g, 4 * hP.b, 4 * hP.a };
+                Pixel128S dY = { hR.r - hP.r, hR.g - hP.g, hR.b - hP.b, hR.a - hP.a };
 
                 for (unsigned int x = 0; x < ui32WordWidth; x++)
                 {
-                    pPixel[x * ui32WordWidth + y].red   = (s32)((result.red   >> 6) + (result.red   >> 1));
-                    pPixel[x * ui32WordWidth + y].green = (s32)((result.green >> 6) + (result.green >> 1));
-                    pPixel[x * ui32WordWidth + y].blue  = (s32)((result.blue  >> 6) + (result.blue  >> 1));
-                    pPixel[x * ui32WordWidth + y].alpha = (s32)((result.alpha >> 4) + (result.alpha));
+                    pPixel[x * ui32WordWidth + y].r = s32((result.r >> 6) + (result.r >> 1));
+                    pPixel[x * ui32WordWidth + y].g = s32((result.g >> 6) + (result.g >> 1));
+                    pPixel[x * ui32WordWidth + y].b = s32((result.b >> 6) + (result.b >> 1));
+                    pPixel[x * ui32WordWidth + y].a = s32((result.a >> 4) + (result.a));
 
-                    result.red   += dY.red;
-                    result.green += dY.green;
-                    result.blue  += dY.blue;
-                    result.alpha += dY.alpha;
+                    result.r += dY.r;
+                    result.g += dY.g;
+                    result.b += dY.b;
+                    result.a += dY.a;
                 }
 
-                hP.red   += QminusP.red;
-                hP.green += QminusP.green;
-                hP.blue  += QminusP.blue;
-                hP.alpha += QminusP.alpha;
+                hP.r += QminusP.r;
+                hP.g += QminusP.g;
+                hP.b += QminusP.b;
+                hP.a += QminusP.a;
 
-                hR.red   += SminusR.red;
-                hR.green += SminusR.green;
-                hR.blue  += SminusR.blue;
-                hR.alpha += SminusR.alpha;
+                hR.r += SminusR.r;
+                hR.g += SminusR.g;
+                hR.b += SminusR.b;
+                hR.a += SminusR.a;
             }
         }
     }
@@ -324,16 +324,16 @@ namespace
                 mod &= 0xf;
 
                 Pixel128S result;
-                result.red   = lerp(colorA[x].red,   colorB[x].red,   mod);
-                result.green = lerp(colorA[x].green, colorB[x].green, mod);
-                result.blue  = lerp(colorA[x].blue,  colorB[x].blue,  mod);
-                result.alpha = mod & PUNCHTHROUGH_ALPHA ? 0 : lerp(colorA[x].alpha, colorB[x].alpha, mod);
+                result.r = lerp(colorA[x].r, colorB[x].r, mod);
+                result.g = lerp(colorA[x].g, colorB[x].g, mod);
+                result.b = lerp(colorA[x].b, colorB[x].b, mod);
+                result.a = mod & PUNCHTHROUGH_ALPHA ? 0 : lerp(colorA[x].a, colorB[x].a, mod);
 
                 const int offset = (xoffset + x) & xmask;
-                dest[offset].red   = (u8)result.red;
-                dest[offset].green = (u8)result.green;
-                dest[offset].blue  = (u8)result.blue;
-                dest[offset].alpha = (u8)result.alpha;
+                dest[offset].r = u8(result.r);
+                dest[offset].g = u8(result.g);
+                dest[offset].b = u8(result.b);
+                dest[offset].a = u8(result.a);
             }
         }
     }
