@@ -1379,20 +1379,39 @@ namespace
 
         for (int i = 0; i < 4; ++i)
         {
-            if (df.size[i] && sf.size[i])
+            if (sf.size[i])
             {
-                mask[components] = df.mask(i);
-                offset[components] = sf.offset[i] / (sizeof(SourceType) * 8);
+                if (df.size[i])
+                {
+                    mask[i] = df.mask(i);
+                    offset[i] = sf.offset[i] / (sizeof(SourceType) * 8);
+                }
+                else
+                {
+                    mask[i] = 0;
+                    offset[i] = 0;
+                }
+
                 ++components;
             }
         }
 
         const u32 alphaMask = sf.isAlpha() ? 0 : df.mask(3);
 
+        const u32 mask0 = mask[0];
+        const u32 mask1 = mask[1];
+        const u32 mask2 = mask[2];
+        const u32 mask3 = mask[3];
+
         const float scale0 = float(mask[0]);
         const float scale1 = float(mask[1]);
         const float scale2 = float(mask[2]);
         const float scale3 = float(mask[3]);
+
+        const int offset0 = offset[0];
+        const int offset1 = offset[1];
+        const int offset2 = offset[2];
+        const int offset3 = offset[3];
 
         u8* source = rect.src_address;
         u8* dest = rect.dest_address;
@@ -1405,19 +1424,10 @@ namespace
             for (int x = 0; x < rect.width; ++x)
             {
                 u32 v = alphaMask;
-
-                switch (components)
-                {
-                    case 4:
-                        v |= u32(clamp(float(src[offset[3]]), 0.0f, 1.0f) * scale3) & mask[3];
-                    case 3:
-                        v |= u32(clamp(float(src[offset[2]]), 0.0f, 1.0f) * scale2) & mask[2];
-                    case 2:
-                        v |= u32(clamp(float(src[offset[1]]), 0.0f, 1.0f) * scale1) & mask[1];
-                    case 1:
-                        v |= u32(clamp(float(src[offset[0]]), 0.0f, 1.0f) * scale0) & mask[0];
-                }
-
+                v |= u32(clamp(float(src[offset0]), 0.0f, 1.0f) * scale0) & mask0;
+                v |= u32(clamp(float(src[offset1]), 0.0f, 1.0f) * scale1) & mask1;
+                v |= u32(clamp(float(src[offset2]), 0.0f, 1.0f) * scale2) & mask2;
+                v |= u32(clamp(float(src[offset3]), 0.0f, 1.0f) * scale3) & mask3;
                 dst[x] = DestType(v);
                 src += components;
             }
