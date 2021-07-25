@@ -2499,7 +2499,7 @@ namespace
 #if defined(MANGO_ENABLE_AVX2)
         if (flags & INTEL_AVX2)
         {
-            //encode = encode_block_avx2;
+            encode = encode_block_avx2;
             encode_name = "AVX2";
         }
 #endif
