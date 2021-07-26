@@ -6,15 +6,16 @@ mango::core
 [x] Improve SIMD compile-time feature detection
 [x] Improve CPU feature runtime detection (esp. Android)
 [x] Configurable alignment for aligned_malloc/free (currently defaults to 16 bytes)
-[ ] Unify stream offset type (size_t vs. u64)
+[x] Unify stream offset type (size_t vs. u64)
 [x] should the seek offset by signed? u64 -> s64
-[-] Improved string builder: variadic template variant of a + b + c + d.. -> makeString(a,b,c,d, ...)
+[x] Improved string builder: variadic template variant of a + b + c + d.. -> makeString(a,b,c,d, ...)
+[ ] ThreadPool groups (4 threads, create-on-demand, ..)
 
 ---------------------------------------------------------------------------------------------
 mango::image
 ---------------------------------------------------------------------------------------------
 
-[ ] make diagnostic prints runtime configurable (JPEG, PNG, ..)
+[x] make diagnostic prints runtime configurable (JPEG, PNG, ..)
 [x] struct LuminanceFormat for initializing luminance formats
 [x] LUMINANCE -flag to format instead of inspecting the RGB(A) masks
 [x] INDEXED -flag to format (limits bit depth to 1..8 bits, used by palette blitter)
@@ -24,14 +25,14 @@ mango::image
     - was decoding direct? color converting? scaling? dithering? paletted.. source bitplanes..
 [x] struct EncodeOptions, used by ImageEncoder::encode()
 [ ] 1, 2 and 4 bit formats / blitting support
-[ ] namespace mango::image
-[ ] Palette blitters (palette + index -> RGBA)
+[x] namespace mango::image
+[x] Palette blitters (palette + index -> RGBA)
 [x] Color quantizer / dithering for RGBA -> Palette + Index generation (supports 1..8 bits)
 [ ] GIF decoder: preservation mode support for animation decoder
 [x] GIF decoder should only support RGB decoding (because of the local palette)
 [x] GIF encoder
-[-] GIF encoder + animation
-[ ] Blitter Engine v2.0
+[ ] GIF encoder + animation
+[x] Blitter Engine v2.0
 [x] mango::ConstMemory for read-only or read-only intent memory regions
 [ ] fix image_ktx.cpp to use GL_* macros correctly; nicer place for the macros?
 [ ] expose 1,2,4 bit png file as "block compressed" format
@@ -39,6 +40,7 @@ mango::image
       2 bit -> 4x1 block size (group 4 pixels into 1 byte)
       4 bit -> 2x1 block size (group 2 pixels into 1 byte)
     possibly also extend the "block compressed" to cover GIF and other formats
+[ ] PNG ImageEncodeOptions.multithread support
 
 ---------------------------------------------------------------------------------------------
 mango::math

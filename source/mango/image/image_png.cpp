@@ -2938,7 +2938,7 @@ namespace
         return sum;
     }
 
-    void writeChunk(Stream& stream, u32 chunkid, Memory memory)
+    void writeChunk(Stream& stream, u32 chunkid, ConstMemory memory)
     {
         BigEndianStream s(stream);
 
@@ -3081,7 +3081,7 @@ namespace
         size_t bytes_out = zlib::compress(compressed, buffer, level);
 
         // write chunkdID + compressed data
-        writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), Memory(compressed, bytes_out));
+        writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
     }
 
     void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type, const ImageEncodeOptions& options)
