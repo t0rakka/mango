@@ -2969,9 +2969,13 @@ namespace
         writeChunk(stream, u32_mask_rev('I', 'H', 'D', 'R'), buffer);
     }
 
-    void write_iCCP(Stream& stream, const ConstMemory& icc, int level)
+    void write_iCCP(Stream& stream, const ImageEncodeOptions& options)
     {
-        if(icc.size == 0) return; // omit empty profile chunk
+        if (options.icc.size == 0)
+        {
+            // omit empty profile chunk
+            return;
+        }
 
         BufferStream buffer;
         BigEndianStream s(buffer);
@@ -2980,15 +2984,15 @@ namespace
         s.write8(0); // profile name null separator
         s.write8(0); // compression method, 0=deflate
 
-        size_t bound = zlib::bound(icc.size);
+        size_t bound = zlib::bound(options.icc.size);
         Buffer compressed(bound);
-        size_t bytes_out = zlib::compress(compressed, icc, level);
+        size_t bytes_out = zlib::compress(compressed, options.icc, options.compression);
         buffer.write(compressed, bytes_out); // rest of chunk is compressed profile
 
         writeChunk(stream, u32_mask_rev('i', 'C', 'C', 'P'), buffer);
     }
 
-    void write_IDAT(Stream& stream, const Surface& surface, int level, bool filtering)
+    void write_IDAT(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
         // data to compress
         Buffer buffer;
@@ -3000,7 +3004,7 @@ namespace
         Buffer zeros(bytes_per_scan, 0);
         u8* prev = zeros;
 
-        if (filtering)
+        if (options.filtering)
         {
             Buffer temp_none(bytes_per_scan + PNG_FILTER_BYTE);
             Buffer temp_sub(bytes_per_scan + PNG_FILTER_BYTE);
@@ -3078,7 +3082,7 @@ namespace
         // compress
         size_t bound = zlib::bound(buffer.size());
         Buffer compressed(bound);
-        size_t bytes_out = zlib::compress(compressed, buffer, level);
+        size_t bytes_out = zlib::compress(compressed, buffer, options.compression);
 
         // write chunkdID + compressed data
         writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
@@ -3092,8 +3096,8 @@ namespace
         s.write64(PNG_HEADER_MAGIC);
 
         write_IHDR(stream, surface, color_bits, color_type);
-        write_iCCP(stream, options.icc, options.compression);
-        write_IDAT(stream, surface, options.compression, options.filtering);
+        write_iCCP(stream, options);
+        write_IDAT(stream, surface, options);
 
         // write IEND
         s.write32(0);
