@@ -29,6 +29,7 @@ namespace mango::image
     void decode_block_r11f_g11f_b10f  (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_r10f_g11f_b11f  (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_pvrtc           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_pvrtc2          (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_atc             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_atc_e           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_atc_i           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
@@ -353,7 +354,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,
             vulkan::FORMAT_PVRTC2_2BPP_UNORM_BLOCK_IMG,
-            8, 4, 1, 8, Format(), nullptr, nullptr
+            8, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc2, nullptr
         ),
 
         TextureCompressionInfo(
@@ -361,7 +362,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,
             vulkan::FORMAT_PVRTC2_4BPP_UNORM_BLOCK_IMG,
-            4, 4, 1, 8, Format(), nullptr, nullptr
+            4, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc2, nullptr
         ),
 
         // EXT_pvrtc_sRGB

@@ -3,10 +3,12 @@
     Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/image/compression.hpp>
+#include <mango/image/color.hpp>
 
 namespace
 {
     using namespace mango;
+    using namespace mango::image;
 
     /******************************************************************************
      @File         PVRTDecompress.cpp
@@ -445,6 +447,707 @@ namespace
         }
     }
 
+	// ----------------------------------------------------------------------------
+    // pvrtc2
+    // ----------------------------------------------------------------------------
+
+    // References:
+    // https://s3.amazonaws.com/pvr-sdk-live/sdk-documentation/PVRTC%20Specification%20and%20User%20Guide.pdf
+    // http://sv-journal.org/2014-1/06/en/index.php?lang=en#7-3
+
+    constexpr u32 pvrtc2_extend(u32 value, int from, int to)
+    {
+        return value * ((1 << to) - 1) / ((1 << from) - 1);
+    }
+
+#if 0 // TODO: should use these (specification conforming)
+    constexpr u32 pvrtc2_alpha0(u32 alpha)
+    {
+        alpha = (alpha << 1) | 0;
+        return (alpha << 4) | alpha;
+    }
+
+    constexpr u32 pvrtc2_alpha1(u32 alpha)
+    {
+        alpha = (alpha << 1) | 1;
+        return (alpha << 4) | alpha;
+    }
+#endif
+
+    static inline
+    Color pvrtc2_1bit_lerp(Color a, Color b, int mod)
+    {
+        return mod ? b : a;
+    }
+
+    static inline
+    Color pvrtc2_2bit_lerp(Color a, Color b, int mod)
+    {
+        // TODO: specification
+        // mod(0): a
+        // mod(1): (a*5 + b*3) / 8
+        // mod(2): (a*3 + b*5) / 8
+        // mod(3): b
+        Color c;
+
+        switch (mod)
+        {
+            case 0:
+                c = a;
+                break;
+            case 1:
+                c.r = (a.r * 5 + b.r * 3) / 8;
+                c.g = (a.g * 5 + b.g * 3) / 8;
+                c.b = (a.b * 5 + b.b * 3) / 8;
+                c.a = (a.a * 5 + b.a * 3) / 8;
+                break;
+            case 2:
+                c.r = (a.r * 3 + b.r * 5) / 8;
+                c.g = (a.g * 3 + b.g * 5) / 8;
+                c.b = (a.b * 3 + b.b * 5) / 8;
+                c.a = (a.a * 3 + b.a * 5) / 8;
+                break;
+            case 3:
+                c = b;
+                break;
+        }
+
+        return c;
+    }
+
+    static inline
+    Color pvrtc2_punch(Color a, Color b, int mod)
+    {
+        Color c;
+        switch (mod)
+        {
+            case 0:
+                c = a;
+                break;
+            case 1:
+                c.r = (a.r + b.r) / 2;
+                c.g = (a.g + b.g) / 2;
+                c.b = (a.b + b.b) / 2;
+                c.a = (a.a + b.a) / 2;
+                break;
+            case 2:
+                // punch-through
+                c = Color(0, 0, 0, 0);
+                break;
+            case 3:
+                c = b;
+                break;
+        }
+        return c;
+    }
+
+    struct BlockPVRTC2
+    {
+        Color a;
+        Color b;
+
+        // --------------------------------------------
+        // hard   mode    decoder
+        // --------------------------------------------
+        //   0      0     bilinear
+        //   0      1     punch-through alpha
+        //   1      0     non-interpolated
+        //   1      1     local palette
+
+        u32 mode;
+        u32 hard;
+        u32 modulation;
+        
+        BlockPVRTC2()
+        {
+        }
+
+        BlockPVRTC2(const u8* data)
+        {
+            modulation = uload32le(data + 0);
+            u32 packed = uload32le(data + 4);
+
+            mode = packed & 0x0001;
+            hard = packed & 0x8000;
+
+            u32 opacity = packed & 0x80000000;
+
+            if (opacity)
+            {
+                a.b = pvrtc2_extend((packed >>  1) & 0x0f, 4, 8);
+                a.g = pvrtc2_extend((packed >>  5) & 0x1f, 5, 8);
+                a.r = pvrtc2_extend((packed >> 10) & 0x1f, 5, 8);
+                a.a = 0xff;
+
+                b.b = pvrtc2_extend((packed >> 16) & 0x1f, 5, 8);
+                b.g = pvrtc2_extend((packed >> 21) & 0x1f, 5, 8);
+                b.r = pvrtc2_extend((packed >> 26) & 0x1f, 5, 8);
+                b.a = 0xff;
+            }
+            else
+            {
+                a.b = pvrtc2_extend((packed >>  1) & 0x07, 3, 8);
+                a.g = pvrtc2_extend((packed >>  4) & 0x0f, 4, 8);
+                a.r = pvrtc2_extend((packed >>  8) & 0x0f, 4, 8);
+                //a.a = pvrtc2_alpha1((packed >> 12) & 0x07);
+                a.a = pvrtc2_extend((packed >> 12) & 0x07, 3, 8);
+
+                b.b = pvrtc2_extend((packed >> 16) & 0xf, 4, 8);
+                b.g = pvrtc2_extend((packed >> 20) & 0xf, 4, 8);
+                b.r = pvrtc2_extend((packed >> 24) & 0xf, 4, 8);
+                //b.a = pvrtc2_alpha0((packed >> 28) & 0x7);
+                b.a = pvrtc2_extend((packed >> 28) & 0x7, 3, 8);
+            }
+        }
+
+        BlockPVRTC2(const BlockPVRTC2& block)
+        {
+            a = block.a;
+            b = block.b;
+            mode = block.mode;
+            hard = block.hard;
+            modulation = block.modulation;
+        }
+    };
+
+    template <int width, int scale>
+    void pvrtc2_bilinear(Color* a, Color* b, int u, int v, const BlockPVRTC2* blocks)
+    {
+        for (int y = 0; y < 2; ++y)
+        {
+            int w0 = (width * 2 - u) * (4 - v);
+            int w1 = u * (4 - v);
+            int w2 = (width * 2 - u) * v;
+            int w3 = u * v;
+
+            for (int x = 0; x < width; ++x)
+            {
+                a->r = (blocks[0].a.r * w0 + blocks[1].a.r * w1 + blocks[2].a.r * w2 + blocks[3].a.r * w3) >> scale;
+                a->g = (blocks[0].a.g * w0 + blocks[1].a.g * w1 + blocks[2].a.g * w2 + blocks[3].a.g * w3) >> scale;
+                a->b = (blocks[0].a.b * w0 + blocks[1].a.b * w1 + blocks[2].a.b * w2 + blocks[3].a.b * w3) >> scale;
+                a->a = (blocks[0].a.a * w0 + blocks[1].a.a * w1 + blocks[2].a.a * w2 + blocks[3].a.a * w3) >> scale;
+                ++a;
+
+                b->r = (blocks[0].b.r * w0 + blocks[1].b.r * w1 + blocks[2].b.r * w2 + blocks[3].b.r * w3) >> scale;
+                b->g = (blocks[0].b.g * w0 + blocks[1].b.g * w1 + blocks[2].b.g * w2 + blocks[3].b.g * w3) >> scale;
+                b->b = (blocks[0].b.b * w0 + blocks[1].b.b * w1 + blocks[2].b.b * w2 + blocks[3].b.b * w3) >> scale;
+                b->a = (blocks[0].b.a * w0 + blocks[1].b.a * w1 + blocks[2].b.a * w2 + blocks[3].b.a * w3) >> scale;
+                ++b;
+
+                w0 -= (4 - v);
+                w1 += (4 - v);
+                w2 -= v;
+                w3 += v;
+            }
+
+            ++v;
+        }
+    }
+
+    void pvrtc2_2bit_bilinear(u8* image, int stride, int u, int v, const BlockPVRTC2* blocks, u32 modulation)
+    {
+        Color a[8];
+        Color b[8];
+        pvrtc2_bilinear<4, 5>(a, b, u, v, blocks);
+
+        u32* scan = reinterpret_cast<u32*>(image);
+
+        scan[0] = pvrtc2_1bit_lerp(a[0], b[0], (modulation >>  0) & 1);
+        scan[1] = pvrtc2_1bit_lerp(a[1], b[1], (modulation >>  1) & 1);
+        scan[2] = pvrtc2_1bit_lerp(a[2], b[2], (modulation >>  2) & 1);
+        scan[3] = pvrtc2_1bit_lerp(a[3], b[3], (modulation >>  3) & 1);
+
+        scan = reinterpret_cast<u32*>(image + stride);
+
+        scan[0] = pvrtc2_1bit_lerp(a[4], b[4], (modulation >>  8) & 1);
+        scan[1] = pvrtc2_1bit_lerp(a[5], b[5], (modulation >>  9) & 1);
+        scan[2] = pvrtc2_1bit_lerp(a[6], b[6], (modulation >> 10) & 1);
+        scan[3] = pvrtc2_1bit_lerp(a[7], b[7], (modulation >> 11) & 1);
+    }
+
+    void pvrtc2_2bit_bilinear(u8* image, int stride, int u, int v, const BlockPVRTC2* blocks, const u8* modulation)
+    {
+        Color a[8];
+        Color b[8];
+        pvrtc2_bilinear<4, 5>(a, b, u, v, blocks);
+
+        u32* scan = reinterpret_cast<u32*>(image);
+
+        scan[0] = pvrtc2_2bit_lerp(a[0], b[0], modulation[0]);
+        scan[1] = pvrtc2_2bit_lerp(a[1], b[1], modulation[1]);
+        scan[2] = pvrtc2_2bit_lerp(a[2], b[2], modulation[2]);
+        scan[3] = pvrtc2_2bit_lerp(a[3], b[3], modulation[3]);
+
+        scan = reinterpret_cast<u32*>(image + stride);
+
+        scan[0] = pvrtc2_2bit_lerp(a[4], b[4], modulation[4]);
+        scan[1] = pvrtc2_2bit_lerp(a[5], b[5], modulation[5]);
+        scan[2] = pvrtc2_2bit_lerp(a[6], b[6], modulation[6]);
+        scan[3] = pvrtc2_2bit_lerp(a[7], b[7], modulation[7]);
+    }
+
+    void pvrtc2_2bit_nearest(u8* image, int stride, Color a, Color b, u32 modulation)
+    {
+        u32* scan = reinterpret_cast<u32*>(image);
+
+        scan[0] = pvrtc2_1bit_lerp(a, b, (modulation >>  0) & 1);
+        scan[1] = pvrtc2_1bit_lerp(a, b, (modulation >>  1) & 1);
+        scan[2] = pvrtc2_1bit_lerp(a, b, (modulation >>  2) & 1);
+        scan[3] = pvrtc2_1bit_lerp(a, b, (modulation >>  3) & 1);
+
+        scan = reinterpret_cast<u32*>(image + stride);
+
+        scan[0] = pvrtc2_1bit_lerp(a, b, (modulation >>  8) & 1);
+        scan[1] = pvrtc2_1bit_lerp(a, b, (modulation >>  9) & 1);
+        scan[2] = pvrtc2_1bit_lerp(a, b, (modulation >> 10) & 1);
+        scan[3] = pvrtc2_1bit_lerp(a, b, (modulation >> 11) & 1);
+    }
+
+    void pvrtc2_2bit_nearest(u8* image, int stride, Color a, Color b, const u8* modulation)
+    {
+        u32* scan = reinterpret_cast<u32*>(image);
+
+        scan[0] = pvrtc2_2bit_lerp(a, b, modulation[0]);
+        scan[1] = pvrtc2_2bit_lerp(a, b, modulation[1]);
+        scan[2] = pvrtc2_2bit_lerp(a, b, modulation[2]);
+        scan[3] = pvrtc2_2bit_lerp(a, b, modulation[3]);
+
+        scan = reinterpret_cast<u32*>(image + stride);
+
+        scan[0] = pvrtc2_2bit_lerp(a, b, modulation[4]);
+        scan[1] = pvrtc2_2bit_lerp(a, b, modulation[5]);
+        scan[2] = pvrtc2_2bit_lerp(a, b, modulation[6]);
+        scan[3] = pvrtc2_2bit_lerp(a, b, modulation[7]);
+    }
+
+    void pvrtc2_4bit_bilinear(u8* image, int stride, int u, int v, const BlockPVRTC2* blocks, u32 modulation)
+    {
+        Color a[4];
+        Color b[4];
+        pvrtc2_bilinear<2, 4>(a, b, u, v, blocks);
+
+        u32* scan = reinterpret_cast<u32*>(image);
+
+        scan[0] = pvrtc2_2bit_lerp(a[0], b[0], (modulation >>  0) & 3);
+        scan[1] = pvrtc2_2bit_lerp(a[1], b[1], (modulation >>  2) & 3);
+
+        scan = reinterpret_cast<u32*>(image + stride);
+
+        scan[0] = pvrtc2_2bit_lerp(a[2], b[2], (modulation >>  8) & 3);
+        scan[1] = pvrtc2_2bit_lerp(a[3], b[3], (modulation >> 10) & 3);
+    }
+
+    void pvrtc2_4bit_punchthrough(u8* image, int stride, int u, int v, const BlockPVRTC2* blocks, u32 modulation)
+    {
+        Color a[4];
+        Color b[4];
+        pvrtc2_bilinear<2, 4>(a, b, u, v, blocks);
+
+        u32* scan = reinterpret_cast<u32*>(image);
+
+        scan[0] = pvrtc2_punch(a[0], b[0], (modulation >>  0) & 3);
+        scan[1] = pvrtc2_punch(a[1], b[1], (modulation >>  2) & 3);
+
+        scan = reinterpret_cast<u32*>(image + stride);
+
+        scan[0] = pvrtc2_punch(a[2], b[2], (modulation >>  8) & 3);
+        scan[1] = pvrtc2_punch(a[3], b[3], (modulation >> 10) & 3);
+    }
+
+    void pvrtc2_4bit_nearest(u8* image, int stride, Color a, Color b, u32 modulation)
+    {
+        u32* scan = reinterpret_cast<u32*>(image);
+
+        scan[0] = pvrtc2_2bit_lerp(a, b, (modulation >>  0) & 3);
+        scan[1] = pvrtc2_2bit_lerp(a, b, (modulation >>  2) & 3);
+
+        scan = reinterpret_cast<u32*>(image + stride);
+
+        scan[0] = pvrtc2_2bit_lerp(a, b, (modulation >>  8) & 3);
+        scan[1] = pvrtc2_2bit_lerp(a, b, (modulation >> 10) & 3);
+    }
+
+    void pvrtc2_4bit_palette(u8* image, int stride, int index, const BlockPVRTC2* blocks, u32 modulation)
+    {
+        Color palette[16];
+
+        switch (index)
+        {
+            case 0:
+                palette[ 0] = blocks[0].a;
+                palette[ 1].r = (blocks[0].a.r * 5 + blocks[0].b.r * 3) / 8;
+                palette[ 1].g = (blocks[0].a.g * 5 + blocks[0].b.g * 3) / 8;
+                palette[ 1].b = (blocks[0].a.b * 5 + blocks[0].b.b * 3) / 8;
+                palette[ 1].a = (blocks[0].a.a * 5 + blocks[0].b.a * 3) / 8;
+                palette[ 2].r = (blocks[0].a.r * 3 + blocks[0].b.r * 5) / 8;
+                palette[ 2].g = (blocks[0].a.g * 3 + blocks[0].b.g * 5) / 8;
+                palette[ 2].b = (blocks[0].a.b * 3 + blocks[0].b.b * 5) / 8;
+                palette[ 2].a = (blocks[0].a.a * 3 + blocks[0].b.a * 5) / 8;
+                palette[ 3] = blocks[0].b;
+
+                palette[ 4] = blocks[0].a;
+                palette[ 5] = blocks[0].b;
+                palette[ 6] = blocks[1].a;
+                palette[ 7] = blocks[1].b;
+
+                palette[ 8] = blocks[0].a;
+                palette[ 9] = blocks[0].b;
+                palette[10] = blocks[2].a;
+                palette[11] = blocks[2].b;
+
+                palette[12] = blocks[0].a;
+                palette[13] = blocks[0].b;
+                palette[14] = blocks[1].a;
+                palette[15] = blocks[2].b;
+                break;
+            case 1:
+                palette[ 0] = blocks[0].a;
+                palette[ 1] = blocks[0].b;
+                palette[ 2] = blocks[1].a;
+                palette[ 3] = blocks[1].b;
+
+                palette[ 4] = blocks[0].a;
+                palette[ 5] = blocks[0].b;
+                palette[ 6] = blocks[1].a;
+                palette[ 7] = blocks[1].b;
+
+                palette[ 8] = blocks[0].a;
+                palette[ 9] = blocks[0].b;
+                palette[10] = blocks[1].a;
+                palette[11] = blocks[1].b;
+
+                palette[12] = blocks[3].a;
+                palette[13] = blocks[0].b;
+                palette[14] = blocks[1].a;
+                palette[15] = blocks[1].b;
+                break;
+            case 2:
+                palette[ 0] = blocks[0].a;
+                palette[ 1] = blocks[0].b;
+                palette[ 2] = blocks[2].a;
+                palette[ 3] = blocks[2].b;
+
+                palette[ 4] = blocks[0].a;
+                palette[ 5] = blocks[0].b;
+                palette[ 6] = blocks[2].a;
+                palette[ 7] = blocks[2].b;
+
+                palette[ 8] = blocks[0].a;
+                palette[ 9] = blocks[0].b;
+                palette[10] = blocks[2].a;
+                palette[11] = blocks[2].b;
+
+                palette[12] = blocks[0].a;
+                palette[13] = blocks[3].b;
+                palette[14] = blocks[2].a;
+                palette[15] = blocks[2].b;
+                break;
+            case 3:
+                palette[ 0] = blocks[0].a;
+                palette[ 1] = blocks[3].b;
+                palette[ 2] = blocks[2].a;
+                palette[ 3] = blocks[1].b;
+
+                palette[ 4] = blocks[3].a;
+                palette[ 5] = blocks[3].b;
+                palette[ 6] = blocks[1].a;
+                palette[ 7] = blocks[1].b;
+
+                palette[ 8] = blocks[3].a;
+                palette[ 9] = blocks[3].b;
+                palette[10] = blocks[2].a;
+                palette[11] = blocks[2].b;
+
+                palette[12] = blocks[3].a;
+                palette[13] = blocks[3].b;
+                palette[14] = blocks[2].a;
+                palette[15] = blocks[1].b;
+                break;
+        }
+
+        u32* scan = reinterpret_cast<u32*>(image);
+
+        scan[0] = palette[((modulation >>  0) & 3) + 0];
+        scan[1] = palette[((modulation >>  2) & 3) + 4];
+
+        scan = reinterpret_cast<u32*>(image + stride);
+
+        scan[0] = palette[((modulation >>  8) & 3) + 8];
+        scan[1] = palette[((modulation >> 10) & 3) + 12];
+    }
+
+    static
+    u32 unpackModulation(const BlockPVRTC2& block, u8* values)
+    {
+        u32 mode = block.mode;
+        u32 modulation = block.modulation;
+
+        if (mode)
+        {
+            if (modulation & 0x1)
+            {
+                if (modulation & 0x00100000)
+                {
+                    // V
+                    mode = 3;
+                }
+                else
+                {
+                    // H
+                    mode = 2;
+                }
+
+                modulation = (modulation & 0xffefffff) | ((modulation & 0x00200000) >> 1);
+            }
+
+            modulation = (modulation & 0xfffffffe) | ((modulation & 0x00000002) >> 1);
+
+            // x-x-x-x-     x  2 bit modulation value
+            // -x-x-x-x     -  filled later with interpolation
+            // x-x-x-x-
+            // -x-x-x-x
+
+            // fill the checkerboard pattern
+            for (int y = 0; y < 4; ++y)
+            {
+                for (int x = y & 1; x < 8; x += 2)
+                {
+                    values[x] = modulation & 3;
+                    modulation >>= 2;
+                }
+
+                values += 16;
+            }
+        }
+        else
+        {
+            // simple encoding (1 bit modulation values)
+            for (int y = 0; y < 4; ++y)
+            {
+                for (int x = 0; x < 8; ++x)
+                {
+                    values[x] = (modulation & 1) * 3;
+                    modulation >>= 1;
+                }
+
+                values += 16;
+            }
+        }
+
+        return mode;
+    }
+
+    static
+    void resolveModulation(u8* modulation, const u8* values, u32 mode)
+    {
+        constexpr int width = 4;
+        constexpr int height = 2;
+
+        for (int y = 0; y < height; ++y)
+        {
+            // fill the checkerboard pattern
+            for (int x = y & 1; x < width; x += 2)
+            {
+                // stored value
+                modulation[x] = values[x];
+            }
+
+            // fill the gaps in the checkerboard pattern
+            for (int x = (y + 1) & 1; x < width; x += 2)
+            {
+                switch (mode)
+                {
+                    case 0:
+                        // simple encoding (1 bit modulation values)
+                        modulation[x] = values[x];
+                        break;
+                    case 1:
+                        // HV
+                        modulation[x] = (values[x - 1] + values[x + 1] + values[x - 16] + values[x + 16] + 2) / 4;
+                        break;
+                    case 2:
+                        // H
+                        modulation[x] = (values[x - 1] + values[x + 1] + 1) / 2;
+                        break;
+                    case 3:
+                        // V
+                        modulation[x] = (values[x - 16] + values[x + 16] + 1) / 2;
+                        break;
+                }
+            }
+
+            values += 16;
+            modulation += 4;
+        }
+    }
+
+    void pvrtc2_2bit_decompress(const u8* data, u8* image, int stride, u32 width, u32 height)
+    {
+        constexpr int block_width = 8;
+        constexpr int block_height = 4;
+        constexpr int quad_width = block_width / 2;
+        constexpr int quad_height = block_height / 2;
+        const u32 xblocks = ceil_div(width, block_width);
+        const u32 yblocks = ceil_div(height, block_height);
+
+        for (int y0 = 0; y0 < yblocks; ++y0)
+        {
+            int y1 = (y0 + 1) % yblocks;
+
+            BlockPVRTC2 blocks[4];
+
+            blocks[0] = BlockPVRTC2(data + (y0 * xblocks + 0) * 8);
+            blocks[2] = BlockPVRTC2(data + (y1 * xblocks + 0) * 8);
+
+            u8 values[128];
+            u32 modes[4];
+
+            modes[0] = unpackModulation(blocks[0], values);
+            modes[2] = unpackModulation(blocks[2], values + block_height * 16);
+
+            for (int x0 = 0; x0 < xblocks; ++x0)
+            {
+                int x1 = (x0 + 1) % xblocks;
+
+                blocks[1] = BlockPVRTC2(data + (y0 * xblocks + x1) * 8);
+                blocks[3] = BlockPVRTC2(data + (y1 * xblocks + x1) * 8);
+
+                modes[1] = unpackModulation(blocks[1], values + block_width);
+                modes[3] = unpackModulation(blocks[3], values + block_width + block_height * 16);
+
+                const u8* block_values = values + quad_height * 16 + quad_width;
+
+                for (int y = 0; y < 2; ++y)
+                {
+                    for (int x = 0; x < 2; ++x)
+                    {
+                        int index = y * 2 + x;
+                        const BlockPVRTC2& block = blocks[index];
+
+                        u8* scan = image + ((y0 * block_height + (y + 1) * quad_height) % height) * stride + 
+                                           ((x0 * block_width  + (x + 1) * quad_width) % width) * 4;
+
+                        if (block.mode)
+                        {
+                            u8 modulation[8];
+                            resolveModulation(modulation, block_values + y * 32 + x * 4, modes[index]);
+
+                            if (blocks[0].hard)
+                            {
+                                pvrtc2_2bit_nearest(scan, stride, block.a, block.b, modulation);
+                            }
+                            else
+                            {
+                                pvrtc2_2bit_bilinear(scan, stride, x * 4, y * 2, blocks, modulation);
+                            }
+                        }
+                        else
+                        {
+                            constexpr int mods[] =
+                            {
+                                20, 16, 4, 0
+                            };
+
+                            u32 modulation = block.modulation >> mods[index];
+
+                            if (blocks[0].hard)
+                            {
+                                pvrtc2_2bit_nearest(scan, stride, block.a, block.b, modulation);
+                            }
+                            else
+                            {
+                                pvrtc2_2bit_bilinear(scan, stride, x * 4, y * 2, blocks, modulation);
+                            }
+                        }
+                    }
+                }
+
+                blocks[0] = blocks[1];
+                blocks[2] = blocks[3];
+
+                modes[0] = modes[1];
+                modes[2] = modes[3];
+
+                for (int y = 0; y < 8; ++y)
+                {
+                    std::memcpy(values + y * 16, values + y * 16 + 8, 8);
+                }
+            }
+        }
+    }
+
+    void pvrtc2_4bit_decompress(const u8* data, u8* image, int stride, u32 width, u32 height)
+    {
+        const u32 block_width = 4;
+        const u32 block_height = 4;
+        const u32 quad_width = block_width / 2;
+        const u32 quad_height = block_height / 2;
+        const u32 xblocks = ceil_div(width, block_width);
+        const u32 yblocks = ceil_div(height, block_height);
+
+        for (int y0 = 0; y0 < yblocks; ++y0)
+        {
+            int y1 = (y0 + 1) % yblocks;
+
+            BlockPVRTC2 blocks[4];
+
+            blocks[0] = BlockPVRTC2(data + (y0 * xblocks + 0) * 8);
+            blocks[2] = BlockPVRTC2(data + (y1 * xblocks + 0) * 8);
+
+            for (int x0 = 0; x0 < xblocks; ++x0)
+            {
+                int x1 = (x0 + 1) % xblocks;
+
+                blocks[1] = BlockPVRTC2(data + (y0 * xblocks + x1) * 8);
+                blocks[3] = BlockPVRTC2(data + (y1 * xblocks + x1) * 8);
+
+                for (int y = 0; y < 2; ++y)
+                {
+                    for (int x = 0; x < 2; ++x)
+                    {
+                        int index = y * 2 + x;
+                        const BlockPVRTC2& block = blocks[index];
+
+                        constexpr int mods[] =
+                        {
+                            20, 16, 4, 0
+                        };
+                        u32 modulation = block.modulation >> mods[index];
+
+                        u8* scan = image + ((y0 * block_height + (y + 1) * quad_height) % height) * stride + 
+                                           ((x0 * block_width  + (x + 1) * quad_width) % width) * 4;
+
+                        if (blocks[0].hard)
+                        {
+                            if (block.mode)
+                            {
+                                pvrtc2_4bit_palette(scan, stride, index, blocks, modulation);
+                            }
+                            else
+                            {
+                                pvrtc2_4bit_nearest(scan, stride, block.a, block.b, modulation);
+                            }
+                        }
+                        else
+                        {
+                            if (block.mode)
+                            {
+                                pvrtc2_4bit_punchthrough(scan, stride, x * 2, y * 2, blocks, modulation);
+                            }
+                            else
+                            {
+                                pvrtc2_4bit_bilinear(scan, stride, x * 2, y * 2, blocks, modulation);
+                            }
+                        }
+                    }
+                }
+
+                blocks[0] = blocks[1];
+                blocks[2] = blocks[3];
+            }
+        }
+    }
+
 } // namespace
 
 namespace mango::image
@@ -462,16 +1165,14 @@ namespace mango::image
             case TextureCompression::PVRTC_SRGB_ALPHA_2BPP:
                 bpp = 2;
                 break;
-
             case TextureCompression::PVRTC_RGB_4BPP:
             case TextureCompression::PVRTC_RGBA_4BPP:
             case TextureCompression::PVRTC_SRGB_4BPP:
             case TextureCompression::PVRTC_SRGB_ALPHA_4BPP:
                 bpp = 4;
                 break;
-
             default:
-                // incorrect compression
+                // Incorrect compression
                 return;
         }
 
@@ -491,7 +1192,25 @@ namespace mango::image
             return;
         }
 #endif
+
         pvrtcDecompress(in, out, stride, info.width, info.height, bpp);
+    }
+
+    void decode_block_pvrtc2(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    {
+        switch (info.compression)
+        {
+            case TextureCompression::PVRTC2_RGBA_2BPP:
+                // TODO: The 2bit decoder still has a bit of a glitch..
+                pvrtc2_2bit_decompress(in, out, stride, info.width, info.height);
+                break;
+            case TextureCompression::PVRTC2_RGBA_4BPP:
+                pvrtc2_4bit_decompress(in, out, stride, info.width, info.height);
+                break;
+            default:
+                // Incorrect compression
+                return;
+        }
     }
 
 } // namespace mango::image
