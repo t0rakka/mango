@@ -28,13 +28,14 @@ namespace mango::image
     void decode_block_rgb9e5          (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_r11f_g11f_b10f  (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_r10f_g11f_b11f  (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_pvrtc           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_pvrtc2          (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_atc             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_atc_e           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_atc_i           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_fxt1_rgb        (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_fxt1_rgba       (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+
+    void decode_surface_pvrtc         (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_surface_pvrtc2        (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
 
     void decode_block_etc1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_etc2            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
@@ -320,7 +321,7 @@ namespace
             0,
             opengl::COMPRESSED_RGB_PVRTC_4BPPV1_IMG,
             0,
-            4, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr
+            4, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_surface_pvrtc, nullptr
         ),
 
         TextureCompressionInfo(
@@ -328,7 +329,7 @@ namespace
             0,
             opengl::COMPRESSED_RGB_PVRTC_2BPPV1_IMG,
             0,
-            8, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr
+            8, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_surface_pvrtc, nullptr
         ),
 
         TextureCompressionInfo(
@@ -336,7 +337,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,
             vulkan::FORMAT_PVRTC1_4BPP_UNORM_BLOCK_IMG,
-            4, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr
+            4, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_surface_pvrtc, nullptr
         ),
 
         TextureCompressionInfo(
@@ -344,7 +345,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,
             vulkan::FORMAT_PVRTC1_2BPP_UNORM_BLOCK_IMG,
-            8, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr
+            8, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_surface_pvrtc, nullptr
         ),
 
         // IMG_texture_compression_pvrtc2
@@ -354,7 +355,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,
             vulkan::FORMAT_PVRTC2_2BPP_UNORM_BLOCK_IMG,
-            8, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc2, nullptr
+            8, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_surface_pvrtc2, nullptr
         ),
 
         TextureCompressionInfo(
@@ -362,7 +363,7 @@ namespace
             0,
             opengl::COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,
             vulkan::FORMAT_PVRTC2_4BPP_UNORM_BLOCK_IMG,
-            4, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc2, nullptr
+            4, 4, 1, 8, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_surface_pvrtc2, nullptr
         ),
 
         // EXT_pvrtc_sRGB
@@ -372,7 +373,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB_PVRTC_2BPPV1_EXT,
             0,
-            8, 8, 1, 16, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr
+            8, 8, 1, 16, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_surface_pvrtc, nullptr
         ),
 
         TextureCompressionInfo(
@@ -380,7 +381,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB_PVRTC_4BPPV1_EXT,
             0,
-            8, 8, 1, 32, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr
+            8, 8, 1, 32, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_surface_pvrtc, nullptr
         ),
 
         TextureCompressionInfo(
@@ -388,7 +389,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV1_EXT,
             vulkan::FORMAT_PVRTC1_2BPP_SRGB_BLOCK_IMG,
-            8, 8, 1, 16, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr
+            8, 8, 1, 16, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_surface_pvrtc, nullptr
         ),
 
         TextureCompressionInfo(
@@ -396,7 +397,7 @@ namespace
             0,
             opengl::COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT,
             vulkan::FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG,
-            8, 8, 1, 32, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_block_pvrtc, nullptr
+            8, 8, 1, 32, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), decode_surface_pvrtc, nullptr
         ),
 
         // OES_compressed_ETC1_RGB8_texture

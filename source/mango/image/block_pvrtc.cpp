@@ -88,7 +88,8 @@ namespace
         return color;
     }
 
-    static void interpolateColors(Pixel32 color[4], Pixel128S* pPixel, u8 ui8Bpp)
+    static
+    void interpolateColors(Pixel32 color[4], Pixel128S* pPixel, u8 ui8Bpp)
     {
         const u32 ui32WordWidth = (ui8Bpp == 2) ? 8 : 4;
         const u32 ui32WordHeight = 4;
@@ -187,7 +188,8 @@ namespace
         }
     }
 
-    static void unpackModulations(const PVRTCWord& word, int offsetX, int offsetY, u8 i32ModulationValues[8][16], u8 ui8Bpp)
+    static
+    void unpackModulations(const PVRTCWord& word, int offsetX, int offsetY, u8 i32ModulationValues[8][16], u8 ui8Bpp)
     {
         u32 WordModMode = word.u32ColorData & 0x1;
         u32 ModulationBits = word.u32ModulationData;
@@ -257,7 +259,8 @@ namespace
         }
     }
 
-    static s32 getModulationValues(u8 i32ModulationValues[8][16], u32 xPos, u32 yPos, u8 bpp)
+    static
+    s32 getModulationValues(u8 i32ModulationValues[8][16], u32 xPos, u32 yPos, u8 bpp)
     {
         int value = i32ModulationValues[yPos][xPos];
         if (bpp == 2)
@@ -300,12 +303,12 @@ namespace
         return a + ((b - a) * mod) / 8;
     }
 
-    static void pvrtcGetDecompressedPixels(u8 i32ModulationValues[8][16],
-                                           Pixel128S upscaledColorA[32],
-                                           Pixel128S upscaledColorB[32],
-                                           u8* pColorData, size_t stride,
-                                           int xoffset, int yoffset, int width, int height,
-                                           u8 bpp)
+    static
+    void pvrtcGetDecompressedPixels(u8 i32ModulationValues[8][16],
+                                    Pixel128S upscaledColorA[32],
+                                    Pixel128S upscaledColorB[32],
+                                    u8* pColorData, size_t stride,
+                                    int xoffset, int yoffset, int width, int height, u8 bpp)
     {
         const u32 ui32WordWidth = (bpp == 2) ? 8 : 4;
         const u32 ui32WordHeight = 4;
@@ -347,7 +350,8 @@ namespace
         return word & (numWords - 1); // numWords must be power of two
     }
 
-    static void moveModulationValues(u8 i32ModulationValues[8][16], u32 ui32WordWidth, u8 ui8bpp)
+    static
+    void moveModulationValues(u8 i32ModulationValues[8][16], u32 ui32WordWidth, u8 ui8bpp)
     {
         u32* d = (u32*) &i32ModulationValues[0][0];
         u32* s = (u32*) &i32ModulationValues[0][ui32WordWidth];
@@ -361,12 +365,9 @@ namespace
         }
     }
 
-    static void pvrtcDecompress(const u8* pCompressedData,
-                                u8* pDecompressedData,
-                                size_t stride,
-                                u32 ui32Width,
-                                u32 ui32Height,
-                                u8 ui8Bpp)
+    static
+    void pvrtc_decompress(const u8* pCompressedData, u8* pDecompressedData, size_t stride,
+                          u32 ui32Width, u32 ui32Height, u8 ui8Bpp)
     {
         const u32 ui32WordWidth = (ui8Bpp == 2) ? 8 : 4;
         const u32 ui32WordHeight = 4;
@@ -1153,8 +1154,25 @@ namespace
 namespace mango::image
 {
 
-    void decode_block_pvrtc(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_surface_pvrtc(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
+#if 0
+        if (info.width < 8 || info.heigbt < 8)
+        {
+            return;
+        }
+
+        if (info.width != info.height)
+        {
+            return;
+        }
+
+        if (!u32_is_power_of_two(info.width))
+        {
+            return;
+        }
+#endif
+
         u8 bpp = 0;
 
         switch (info.compression)
@@ -1176,32 +1194,14 @@ namespace mango::image
                 return;
         }
 
-#if 0
-        if (info.width < 8 || info.heigbt < 8)
-        {
-            return;
-        }
-
-        if (info.width != info.height)
-        {
-            return;
-        }
-
-        if (!u32_is_power_of_two(info.width))
-        {
-            return;
-        }
-#endif
-
-        pvrtcDecompress(in, out, stride, info.width, info.height, bpp);
+        pvrtc_decompress(in, out, stride, info.width, info.height, bpp);
     }
 
-    void decode_block_pvrtc2(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_surface_pvrtc2(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
     {
         switch (info.compression)
         {
             case TextureCompression::PVRTC2_RGBA_2BPP:
-                // TODO: The 2bit decoder still has a bit of a glitch..
                 pvrtc2_2bit_decompress(in, out, stride, info.width, info.height);
                 break;
             case TextureCompression::PVRTC2_RGBA_4BPP:
