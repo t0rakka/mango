@@ -644,7 +644,7 @@ namespace
         }
     }
 
-    void pvrtc2_2bit_bilinear(u8* image, int stride, int u, int v, const BlockPVRTC2* blocks, u32 modulation)
+    void pvrtc2_2bit_bilinear(u8* image, size_t stride, int u, int v, const BlockPVRTC2* blocks, u32 modulation)
     {
         Color a[8];
         Color b[8];
@@ -665,7 +665,7 @@ namespace
         scan[3] = pvrtc2_1bit_lerp(a[7], b[7], (modulation >> 11) & 1);
     }
 
-    void pvrtc2_2bit_bilinear(u8* image, int stride, int u, int v, const BlockPVRTC2* blocks, const u8* modulation)
+    void pvrtc2_2bit_bilinear(u8* image, size_t stride, int u, int v, const BlockPVRTC2* blocks, const u8* modulation)
     {
         Color a[8];
         Color b[8];
@@ -686,7 +686,7 @@ namespace
         scan[3] = pvrtc2_2bit_lerp(a[7], b[7], modulation[7]);
     }
 
-    void pvrtc2_2bit_nearest(u8* image, int stride, Color a, Color b, u32 modulation)
+    void pvrtc2_2bit_nearest(u8* image, size_t stride, Color a, Color b, u32 modulation)
     {
         u32* scan = reinterpret_cast<u32*>(image);
 
@@ -703,7 +703,7 @@ namespace
         scan[3] = pvrtc2_1bit_lerp(a, b, (modulation >> 11) & 1);
     }
 
-    void pvrtc2_2bit_nearest(u8* image, int stride, Color a, Color b, const u8* modulation)
+    void pvrtc2_2bit_nearest(u8* image, size_t stride, Color a, Color b, const u8* modulation)
     {
         u32* scan = reinterpret_cast<u32*>(image);
 
@@ -720,7 +720,7 @@ namespace
         scan[3] = pvrtc2_2bit_lerp(a, b, modulation[7]);
     }
 
-    void pvrtc2_4bit_bilinear(u8* image, int stride, int u, int v, const BlockPVRTC2* blocks, u32 modulation)
+    void pvrtc2_4bit_bilinear(u8* image, size_t stride, int u, int v, const BlockPVRTC2* blocks, u32 modulation)
     {
         Color a[4];
         Color b[4];
@@ -737,7 +737,7 @@ namespace
         scan[1] = pvrtc2_2bit_lerp(a[3], b[3], (modulation >> 10) & 3);
     }
 
-    void pvrtc2_4bit_punchthrough(u8* image, int stride, int u, int v, const BlockPVRTC2* blocks, u32 modulation)
+    void pvrtc2_4bit_punchthrough(u8* image, size_t stride, int u, int v, const BlockPVRTC2* blocks, u32 modulation)
     {
         Color a[4];
         Color b[4];
@@ -754,7 +754,7 @@ namespace
         scan[1] = pvrtc2_punch(a[3], b[3], (modulation >> 10) & 3);
     }
 
-    void pvrtc2_4bit_nearest(u8* image, int stride, Color a, Color b, u32 modulation)
+    void pvrtc2_4bit_nearest(u8* image, size_t stride, Color a, Color b, u32 modulation)
     {
         u32* scan = reinterpret_cast<u32*>(image);
 
@@ -767,7 +767,7 @@ namespace
         scan[1] = pvrtc2_2bit_lerp(a, b, (modulation >> 10) & 3);
     }
 
-    void pvrtc2_4bit_palette(u8* image, int stride, int index, const BlockPVRTC2* blocks, u32 modulation)
+    void pvrtc2_4bit_palette(u8* image, size_t stride, int index, const BlockPVRTC2* blocks, u32 modulation)
     {
         Color palette[16];
 
@@ -981,7 +981,7 @@ namespace
         }
     }
 
-    void pvrtc2_2bit_decompress(const u8* data, u8* image, int stride, u32 width, u32 height)
+    void pvrtc2_2bit_decompress(const u8* data, u8* image, size_t stride, u32 width, u32 height)
     {
         constexpr int block_width = 8;
         constexpr int block_height = 4;
@@ -990,9 +990,9 @@ namespace
         const u32 xblocks = ceil_div(width, block_width);
         const u32 yblocks = ceil_div(height, block_height);
 
-        for (int y0 = 0; y0 < yblocks; ++y0)
+        for (u32 y0 = 0; y0 < yblocks; ++y0)
         {
-            int y1 = (y0 + 1) % yblocks;
+            u32 y1 = (y0 + 1) % yblocks;
 
             BlockPVRTC2 blocks[4];
 
@@ -1005,9 +1005,9 @@ namespace
             modes[0] = unpackModulation(blocks[0], values);
             modes[2] = unpackModulation(blocks[2], values + block_height * 16);
 
-            for (int x0 = 0; x0 < xblocks; ++x0)
+            for (u32 x0 = 0; x0 < xblocks; ++x0)
             {
-                int x1 = (x0 + 1) % xblocks;
+                u32 x1 = (x0 + 1) % xblocks;
 
                 blocks[1] = BlockPVRTC2(data + (y0 * xblocks + x1) * 8);
                 blocks[3] = BlockPVRTC2(data + (y1 * xblocks + x1) * 8);
@@ -1076,7 +1076,7 @@ namespace
         }
     }
 
-    void pvrtc2_4bit_decompress(const u8* data, u8* image, int stride, u32 width, u32 height)
+    void pvrtc2_4bit_decompress(const u8* data, u8* image, size_t stride, u32 width, u32 height)
     {
         const u32 block_width = 4;
         const u32 block_height = 4;
@@ -1085,18 +1085,18 @@ namespace
         const u32 xblocks = ceil_div(width, block_width);
         const u32 yblocks = ceil_div(height, block_height);
 
-        for (int y0 = 0; y0 < yblocks; ++y0)
+        for (u32 y0 = 0; y0 < yblocks; ++y0)
         {
-            int y1 = (y0 + 1) % yblocks;
+            u32 y1 = (y0 + 1) % yblocks;
 
             BlockPVRTC2 blocks[4];
 
             blocks[0] = BlockPVRTC2(data + (y0 * xblocks + 0) * 8);
             blocks[2] = BlockPVRTC2(data + (y1 * xblocks + 0) * 8);
 
-            for (int x0 = 0; x0 < xblocks; ++x0)
+            for (u32 x0 = 0; x0 < xblocks; ++x0)
             {
-                int x1 = (x0 + 1) % xblocks;
+                u32 x1 = (x0 + 1) % xblocks;
 
                 blocks[1] = BlockPVRTC2(data + (y0 * xblocks + x1) * 8);
                 blocks[3] = BlockPVRTC2(data + (y1 * xblocks + x1) * 8);
