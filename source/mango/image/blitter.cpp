@@ -16,6 +16,32 @@ namespace
     using namespace mango::image;
 
     // ----------------------------------------------------------------------------
+    // configure
+    // ----------------------------------------------------------------------------
+
+#if defined(MANGO_COMPILER_MICROSOFT)
+
+    // The compiler optimizes the scalar loops really well with ICC/CLANG/GCC so these custom
+    // conversions are only enabled for MSVC, where the speed up varies between 2x and 4x.
+
+    // TODO: fine-tune the detection if some combination is found that improves the performance. :)
+
+    #if defined(MANGO_ENABLE_SSE4_1)
+        #define BLITTER_ENABLE_SSE4
+    #endif
+
+    #if defined(MANGO_ENABLE_AVX2)
+        #define BLITTER_ENABLE_AVX2
+    #endif
+
+    // NOTE: this one is questionable, very little pay-off for requiring a rare ISA extension
+    #if defined(MANGO_ENABLE_AVX512)
+        #define BLITTER_ENABLE_AVX512
+    #endif
+
+#endif
+
+    // ----------------------------------------------------------------------------
     // macros
     // ----------------------------------------------------------------------------
 
@@ -418,8 +444,7 @@ namespace
         }
     }
 
-    /*
-#if defined(MANGO_ENABLE_SSE4_1)
+#if defined(BLITTER_ENABLE_SSE4)
 
     // ----------------------------------------------------------------------------
     // memory access
@@ -654,10 +679,9 @@ namespace
         }
     }
 
-#endif // defined(MANGO_ENABLE_SSE4_1)
-    */
-    /*
-#if defined(MANGO_ENABLE_AVX2)
+#endif // defined(BLITTER_ENABLE_SSE4)
+
+#if defined(BLITTER_ENABLE_AVX2)
 
     // ----------------------------------------------------------------------------
     // memory access
@@ -902,10 +926,9 @@ namespace
         }
     }
 
-#endif // defined(MANGO_ENABLE_AVX2)
-    */
-    /*
-#if defined(MANGO_ENABLE_AVX512)
+#endif // defined(BLITTER_ENABLE_AVX2)
+
+#if defined(BLITTER_ENABLE_AVX512)
 
     // ----------------------------------------------------------------------------
     // memory access
@@ -1262,8 +1285,7 @@ namespace
         }
     }
 
-#endif // defined(MANGO_ENABLE_AVX512)
-    */
+#endif // defined(BLITTER_ENABLE_AVX512)
 
     // ----------------------------------------------------------------------------
     // conversion templates
@@ -1650,8 +1672,8 @@ namespace
                 case MAKE_MODEMASK(32, 24): func = table_convert_template_unorm_unorm<u32, u24>; break;
                 case MAKE_MODEMASK(32, 32): func = table_convert_template_unorm_unorm<u32, u32>; break;
             }
-            /*
-#if defined(MANGO_ENABLE_SSE4_1)
+
+#if defined(BLITTER_ENABLE_SSE4)
             switch (modeMask)
             {
                 case MAKE_MODEMASK( 8,  8): func = sse4_table_convert_template_unorm_unorm<u8, u8>; break;
@@ -1671,10 +1693,9 @@ namespace
                 case MAKE_MODEMASK(32, 24): func = sse4_table_convert_template_unorm_unorm<u32, u24>; break;
                 case MAKE_MODEMASK(32, 32): func = sse4_table_convert_template_unorm_unorm<u32, u32>; break;
             }
-#endif // defined(MANGO_ENABLE_SSE4_1)
-            */
-            /*
-#if defined(MANGO_ENABLE_AVX2)
+#endif // defined(BLITTER_ENABLE_SSE4)
+
+#if defined(BLITTER_ENABLE_AVX2)
             switch (modeMask)
             {
                 case MAKE_MODEMASK( 8,  8): func = avx2_table_convert_template_unorm_unorm<u8, u8>; break;
@@ -1694,10 +1715,9 @@ namespace
                 case MAKE_MODEMASK(32, 24): func = avx2_table_convert_template_unorm_unorm<u32, u24>; break;
                 case MAKE_MODEMASK(32, 32): func = avx2_table_convert_template_unorm_unorm<u32, u32>; break;
             }
-#endif // defined(MANGO_ENABLE_AVX2)
-            */
-            /*
-#if defined(MANGO_ENABLE_AVX512)
+#endif // defined(BLITTER_ENABLE_AVX2)
+
+#if defined(BLITTER_ENABLE_AVX512)
             switch (modeMask)
             {
                 case MAKE_MODEMASK( 8,  8): func = avx512_table_convert_template_unorm_unorm<u8, u8>; break;
@@ -1717,8 +1737,8 @@ namespace
                 case MAKE_MODEMASK(32, 24): func = avx512_table_convert_template_unorm_unorm<u32, u24>; break;
                 case MAKE_MODEMASK(32, 32): func = avx512_table_convert_template_unorm_unorm<u32, u32>; break;
             }
-#endif // defined(MANGO_ENABLE_AVX512)
-            */
+#endif // defined(BLITTER_ENABLE_AVX512)
+
         }
         else
         {
