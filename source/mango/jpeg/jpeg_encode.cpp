@@ -1199,9 +1199,9 @@ namespace
         __m128i zero1 = _mm_packs_epi16(_mm_cmpeq_epi16(row2, zero), _mm_cmpeq_epi16(row3, zero));
         __m128i zero2 = _mm_packs_epi16(_mm_cmpeq_epi16(row4, zero), _mm_cmpeq_epi16(row5, zero));
         __m128i zero3 = _mm_packs_epi16(_mm_cmpeq_epi16(row6, zero), _mm_cmpeq_epi16(row7, zero));
-        u32 mask_lo = _mm_movemask_epi8(zero0) | ((_mm_movemask_epi8(zero1)) << 16);
-        u32 mask_hi = _mm_movemask_epi8(zero2) | ((_mm_movemask_epi8(zero3)) << 16);
-        u64 zeromask = (u64(mask_hi) << 32) | mask_lo;
+        u64 mask_lo = _mm_movemask_epi8(zero0) | ((_mm_movemask_epi8(zero1)) << 16);
+        u64 mask_hi = _mm_movemask_epi8(zero2) | ((_mm_movemask_epi8(zero3)) << 16);
+        u64 zeromask = ~((mask_hi << 32) | mask_lo);
 
         __m128i* dest = reinterpret_cast<__m128i *>(out);
 
@@ -1214,7 +1214,7 @@ namespace
         _mm_storeu_si128(dest + 6, row6);
         _mm_storeu_si128(dest + 7, row7);
 
-        return ~zeromask;
+        return zeromask;
     }
 
     static
@@ -1405,9 +1405,9 @@ namespace
         __m256i zero1 = _mm256_packs_epi16(_mm256_cmpeq_epi16(row45, zero), _mm256_cmpeq_epi16(row67, zero));
         zero0 = _mm256_permute4x64_epi64(zero0, 0xd8);
         zero1 = _mm256_permute4x64_epi64(zero1, 0xd8);
-        u32 mask_lo = _mm256_movemask_epi8(zero0);
-        u32 mask_hi = _mm256_movemask_epi8(zero1);
-        u64 zeromask = (u64(mask_hi) << 32) | mask_lo;
+        u64 mask_lo = _mm256_movemask_epi8(zero0);
+        u64 mask_hi = _mm256_movemask_epi8(zero1);
+        u64 zeromask = ~((mask_hi << 32) | mask_lo);
 
         __m256i* dest = reinterpret_cast<__m256i *>(out);
 
@@ -1416,7 +1416,7 @@ namespace
         _mm256_storeu_si256(dest + 2, row45);
         _mm256_storeu_si256(dest + 3, row67);
 
-        return ~zeromask;
+        return zeromask;
     }
 
     static
@@ -1775,7 +1775,7 @@ namespace
                 break;
             }
 
-            int counter = u64_tzcnt(zeromask); // BMI
+            int counter = u64_tzcnt(zeromask);
             zeromask >>= (counter + 1);
             i += counter;
 
