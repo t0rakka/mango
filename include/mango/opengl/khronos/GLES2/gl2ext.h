@@ -19,7 +19,7 @@ extern "C" {
 #define GL_APIENTRYP GL_APIENTRY*
 #endif
 
-/* Generated on date 20200814 */
+/* Generated on date 20210512 */
 
 /* Generated C header for:
  * API: gles2
@@ -2444,6 +2444,11 @@ GL_APICALL void GL_APIENTRY glGetPerfQueryInfoINTEL (GLuint queryId, GLuint quer
 #endif
 #endif /* GL_INTEL_performance_query */
 
+#ifndef GL_MESA_bgra
+#define GL_MESA_bgra 1
+#define GL_BGR_EXT                        0x80E0
+#endif /* GL_MESA_bgra */
+
 #ifndef GL_MESA_framebuffer_flip_x
 #define GL_MESA_framebuffer_flip_x 1
 #define GL_FRAMEBUFFER_FLIP_X_MESA        0x8BBC
@@ -3311,7 +3316,7 @@ typedef void (GL_APIENTRYP PFNGLSTENCILTHENCOVERFILLPATHNVPROC) (GLuint path, GL
 typedef void (GL_APIENTRYP PFNGLSTENCILTHENCOVERSTROKEPATHNVPROC) (GLuint path, GLint reference, GLuint mask, GLenum coverMode);
 typedef void (GL_APIENTRYP PFNGLSTENCILTHENCOVERFILLPATHINSTANCEDNVPROC) (GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum fillMode, GLuint mask, GLenum coverMode, GLenum transformType, const GLfloat *transformValues);
 typedef void (GL_APIENTRYP PFNGLSTENCILTHENCOVERSTROKEPATHINSTANCEDNVPROC) (GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLint reference, GLuint mask, GLenum coverMode, GLenum transformType, const GLfloat *transformValues);
-typedef GLenum (GL_APIENTRYP PFNGLPATHGLYPHINDEXRANGENVPROC) (GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint pathParameterTemplate, GLfloat emScale, GLuint baseAndCount[2]);
+typedef GLenum (GL_APIENTRYP PFNGLPATHGLYPHINDEXRANGENVPROC) (GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint pathParameterTemplate, GLfloat emScale, GLuint *baseAndCount);
 typedef GLenum (GL_APIENTRYP PFNGLPATHGLYPHINDEXARRAYNVPROC) (GLuint firstPathName, GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint firstGlyphIndex, GLsizei numGlyphs, GLuint pathParameterTemplate, GLfloat emScale);
 typedef GLenum (GL_APIENTRYP PFNGLPATHMEMORYGLYPHINDEXARRAYNVPROC) (GLuint firstPathName, GLenum fontTarget, GLsizeiptr fontSize, const void *fontData, GLsizei faceIndex, GLuint firstGlyphIndex, GLsizei numGlyphs, GLuint pathParameterTemplate, GLfloat emScale);
 typedef void (GL_APIENTRYP PFNGLPROGRAMPATHFRAGMENTINPUTGENNVPROC) (GLuint program, GLint location, GLenum genMode, GLint components, const GLfloat *coeffs);
@@ -3388,7 +3393,7 @@ GL_APICALL void GL_APIENTRY glStencilThenCoverFillPathNV (GLuint path, GLenum fi
 GL_APICALL void GL_APIENTRY glStencilThenCoverStrokePathNV (GLuint path, GLint reference, GLuint mask, GLenum coverMode);
 GL_APICALL void GL_APIENTRY glStencilThenCoverFillPathInstancedNV (GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum fillMode, GLuint mask, GLenum coverMode, GLenum transformType, const GLfloat *transformValues);
 GL_APICALL void GL_APIENTRY glStencilThenCoverStrokePathInstancedNV (GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLint reference, GLuint mask, GLenum coverMode, GLenum transformType, const GLfloat *transformValues);
-GL_APICALL GLenum GL_APIENTRY glPathGlyphIndexRangeNV (GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint pathParameterTemplate, GLfloat emScale, GLuint baseAndCount[2]);
+GL_APICALL GLenum GL_APIENTRY glPathGlyphIndexRangeNV (GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint pathParameterTemplate, GLfloat emScale, GLuint *baseAndCount);
 GL_APICALL GLenum GL_APIENTRY glPathGlyphIndexArrayNV (GLuint firstPathName, GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint firstGlyphIndex, GLsizei numGlyphs, GLuint pathParameterTemplate, GLfloat emScale);
 GL_APICALL GLenum GL_APIENTRY glPathMemoryGlyphIndexArrayNV (GLuint firstPathName, GLenum fontTarget, GLsizeiptr fontSize, const void *fontData, GLsizei faceIndex, GLuint firstGlyphIndex, GLsizei numGlyphs, GLuint pathParameterTemplate, GLfloat emScale);
 GL_APICALL void GL_APIENTRY glProgramPathFragmentInputGenNV (GLuint program, GLint location, GLenum genMode, GLint components, const GLfloat *coeffs);
@@ -3441,6 +3446,12 @@ typedef void (GL_APIENTRYP PFNGLPOLYGONMODENVPROC) (GLenum face, GLenum mode);
 GL_APICALL void GL_APIENTRY glPolygonModeNV (GLenum face, GLenum mode);
 #endif
 #endif /* GL_NV_polygon_mode */
+
+#ifndef GL_NV_primitive_shading_rate
+#define GL_NV_primitive_shading_rate 1
+#define GL_SHADING_RATE_IMAGE_PER_PRIMITIVE_NV 0x95B1
+#define GL_SHADING_RATE_IMAGE_PALETTE_COUNT_NV 0x95B2
+#endif /* GL_NV_primitive_shading_rate */
 
 #ifndef GL_NV_read_buffer
 #define GL_NV_read_buffer 1
@@ -3791,6 +3802,14 @@ GL_APICALL void GL_APIENTRY glExtGetProgramBinarySourceQCOM (GLuint program, GLe
 #endif
 #endif /* GL_QCOM_extended_get2 */
 
+#ifndef GL_QCOM_frame_extrapolation
+#define GL_QCOM_frame_extrapolation 1
+typedef void (GL_APIENTRYP PFNGLEXTRAPOLATETEX2DQCOMPROC) (GLuint src1, GLuint src2, GLuint output, GLfloat scaleFactor);
+#ifdef GL_GLEXT_PROTOTYPES
+GL_APICALL void GL_APIENTRY glExtrapolateTex2DQCOM (GLuint src1, GLuint src2, GLuint output, GLfloat scaleFactor);
+#endif
+#endif /* GL_QCOM_frame_extrapolation */
+
 #ifndef GL_QCOM_framebuffer_foveated
 #define GL_QCOM_framebuffer_foveated 1
 #define GL_FOVEATION_ENABLE_BIT_QCOM      0x00000001
@@ -3819,6 +3838,10 @@ GL_APICALL void GL_APIENTRY glTexEstimateMotionRegionsQCOM (GLuint ref, GLuint t
 #define GL_QCOM_perfmon_global_mode 1
 #define GL_PERFMON_GLOBAL_MODE_QCOM       0x8FA0
 #endif /* GL_QCOM_perfmon_global_mode */
+
+#ifndef GL_QCOM_render_shared_exponent
+#define GL_QCOM_render_shared_exponent 1
+#endif /* GL_QCOM_render_shared_exponent */
 
 #ifndef GL_QCOM_shader_framebuffer_fetch_noncoherent
 #define GL_QCOM_shader_framebuffer_fetch_noncoherent 1
@@ -3861,6 +3884,11 @@ typedef void (GL_APIENTRYP PFNGLTEXTUREFOVEATIONPARAMETERSQCOMPROC) (GLuint text
 GL_APICALL void GL_APIENTRY glTextureFoveationParametersQCOM (GLuint texture, GLuint layer, GLuint focalPoint, GLfloat focalX, GLfloat focalY, GLfloat gainX, GLfloat gainY, GLfloat foveaArea);
 #endif
 #endif /* GL_QCOM_texture_foveated */
+
+#ifndef GL_QCOM_texture_foveated2
+#define GL_QCOM_texture_foveated2 1
+#define GL_TEXTURE_FOVEATED_CUTOFF_DENSITY_QCOM 0x96A0
+#endif /* GL_QCOM_texture_foveated2 */
 
 #ifndef GL_QCOM_texture_foveated_subsampled_layout
 #define GL_QCOM_texture_foveated_subsampled_layout 1
