@@ -9,6 +9,7 @@ list(APPEND EXAMPLES
     math
     memory
     aes
+    hash
 )
 
 foreach(example IN LISTS EXAMPLES)

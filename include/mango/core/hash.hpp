@@ -58,8 +58,6 @@ namespace mango
     using MD5 = Hash<u32, 4>;
     using SHA1 = Hash<u32, 5>;
     using SHA2 = Hash<u32, 8>;
-    using XX3HASH64 = u64;
-    using XX3HASH128 = Hash<u64, 2>;
 
     MD5 md5(ConstMemory memory);
     SHA1 sha1(ConstMemory memory);
