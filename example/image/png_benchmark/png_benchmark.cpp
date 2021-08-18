@@ -209,10 +209,6 @@ int read_fn(struct spng_ctx *ctx, void *user, void *data, size_t n)
     unsigned char *dst = (u8*)data;
     unsigned char *src = state->data;
 
-#if defined(TEST_SPNG_STREAM_READ_INFO)
-    printf("libspng bytes read: %lu\n", n);
-#endif
-
     memcpy(dst, src, n);
 
     state->bytes_left -= n;
@@ -235,17 +231,6 @@ unsigned char *getimage_libspng(unsigned char *buf, size_t size, size_t *out_siz
         printf("spng_ctx_new() failed\n");
         return NULL;
     }
-
-    /*struct read_fn_state state;
-    state.data = buf;
-    state.bytes_left = size;
-    r = spng_set_png_stream(ctx, read_fn, &state);
-    if(r)
-    {
-        printf("spng_set_png_stream() error: %s\n", spng_strerror(r));
-        goto err;
-    }*/
-
 
     spng_set_crc_action(ctx, SPNG_CRC_USE, SPNG_CRC_USE);
 
@@ -308,7 +293,44 @@ void load_spng(Memory memory)
 
 void save_spng(const Bitmap& bitmap)
 {
-    // TODO: not supported yet in libspng v0.5.0
+    struct spng_ihdr ihdr;
+
+    ihdr.width = bitmap.width;
+    ihdr.height = bitmap.height;
+    ihdr.bit_depth = 8;
+    ihdr.color_type = SPNG_COLOR_TYPE_TRUECOLOR_ALPHA;
+    ihdr.compression_method = 0;
+    ihdr.filter_method = SPNG_DISABLE_FILTERING;
+    ihdr.interlace_method = SPNG_INTERLACE_NONE;
+
+    unsigned char *image = bitmap.image;
+    size_t image_size = bitmap.width * bitmap.height * 4;
+
+    spng_ctx *enc = spng_ctx_new(SPNG_CTX_ENCODER);
+
+    spng_set_ihdr(enc, &ihdr);
+    int r = spng_encode_image(enc, image, image_size, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
+    if(r)
+    {
+        printf("spng_encode_image() error: %s\n", spng_strerror(r));
+        spng_ctx_free(enc);
+        return;
+    }
+
+    size_t png_size;
+    void *png_buf = NULL;
+
+    png_buf = spng_get_png_buffer(enc, &png_size, &r);
+    if(png_buf == NULL)
+    {
+        printf("spng_get_png_buffer() error: %s\n", spng_strerror(r));
+    }
+
+    OutputFileStream file("output-spng.png");
+    file.write(png_buf, png_size);
+
+    free(png_buf);
+    spng_ctx_free(enc);
 }
 
 #endif
