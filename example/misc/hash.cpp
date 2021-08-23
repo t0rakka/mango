@@ -12,7 +12,7 @@ void print(const Buffer& buffer, const char* name, u64 time0, u64 time1, u32 val
 {
     u64 x = buffer.size() * 1000000; // buffer size in bytes * microseconds_in_second
     u32 delta = time1 - time0;
-    printf("%s 0x%x %5d.%1d ms (%6d MB/s )\n", name, value, u32(delta/1000), u32(((delta+50)/100)%10), u32(x / ((time1 - time0) * MB)));
+    printf("%s 0x%x %5d.%1d ms (%6d MB/s )\n", name, value, u32(delta/1000), u32(((delta+50)/100)%10), u32(x / (delta * MB)));
 }
 
 void test_md5(const Buffer& buffer)

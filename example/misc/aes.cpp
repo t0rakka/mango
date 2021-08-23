@@ -6,6 +6,15 @@
 
 using namespace mango;
 
+constexpr u64 MB = 1 << 20;
+
+void print(const Buffer& buffer, u64 time0, u64 time1)
+{
+    u64 x = buffer.size() * 1000000; // buffer size in bytes * microseconds_in_second
+    u32 delta = time1 - time0;
+    printf("%5d.%1d ms (%6d MB/s )\n", u32(delta/1000), u32(((delta+50)/100)%10), u32(x / (delta * MB)));
+}
+
 void test_fips()
 {
     // FIPS 197, Appendix B input
@@ -51,7 +60,6 @@ void test_aes(int bits)
 
     AES aes(key, bits);
 
-    constexpr u64 MB = 1 << 20;
     constexpr u64 size = 128 * MB;
 
     Buffer buffer(size);
@@ -63,22 +71,21 @@ void test_aes(int bits)
         buffer[i] = i;
     }
 
-    u64 time0 = Time::ms();
+    u64 time0 = Time::us();
 
     aes.ecb_encrypt(temp, buffer, size);
 
-    u64 time1 = Time::ms();
+    u64 time1 = Time::us();
 
     aes.ecb_decrypt(output, temp, size);
 
-    u64 time2 = Time::ms();
+    u64 time2 = Time::us();
 
-    u64 delta1 = std::max(u64(1), time1 - time0);
-    u64 delta2 = std::max(u64(1), time2 - time1);
+    printf("aes%d encrypt: ", bits);
+    print(buffer, time0, time1);
 
-    u64 x = buffer.size() * 1000;
-    printf("aes%d encrypt: %4d ms (%5d MB/s )\n", bits, u32(delta1), u32(x / (delta1 * MB)));
-    printf("aes%d decrypt: %4d ms (%5d MB/s )\n", bits, u32(delta2), u32(x / (delta2 * MB)));
+    printf("aes%d decrypt: ", bits);
+    print(buffer, time1, time2);
 
     if (!memcmp(output, buffer, size))
     {
@@ -92,6 +99,7 @@ void test_aes(int bits)
 
 int main()
 {
+    printf("%s\n", getPlatformInfo().c_str());
     test_fips();
     test_aes(128);
     test_aes(192);

@@ -1,17 +1,25 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
 using namespace mango;
+
+constexpr u64 MB = 1 << 20;
+
+void print(const Buffer& buffer, const char* name, u64 time0, u64 time1, u32 value)
+{
+    u64 x = buffer.size() * 1000000; // buffer size in bytes * microseconds_in_second
+    u32 delta = time1 - time0;
+    printf("%s 0x%x %5d.%1d ms (%6d MB/s )\n", name, value, u32(delta/1000), u32(((delta+50)/100)%10), u32(x / (delta * MB)));
+}
 
 void test_crc()
 {
 
     // ... crc32 ...
 
-    printf("\n");
     printf("CRC32 test vectors: \n");
     printf("\n");
 
@@ -23,11 +31,12 @@ void test_crc()
         printf("    0x%x : %s\n", v0, v0 == 0xcbf43926 ? "OK" : "FAILED");
     }
 
+    printf("\n");
+
     // ... crc32c ...
 
     // RFC 3720 / iSCSI
 
-    printf("\n");
     printf("CRC32C test vectors: \n");
     printf("\n");
 
@@ -60,7 +69,6 @@ void test_crc()
     // performance
 
     {
-        constexpr u64 MB = 1 << 20;
         constexpr u64 size = 256 * MB;
 
         Buffer buffer(size);
@@ -70,23 +78,22 @@ void test_crc()
             buffer[i] = i;
         }
 
-        u64 time0 = Time::ms();
+        u64 time0 = Time::us();
         
         u32 v0 = mango::crc32(0, buffer);
-        u64 time1 = Time::ms();
+        u64 time1 = Time::us();
 
         u32 v1 = mango::crc32c(0, buffer);
-        u64 time2 = Time::ms();
+        u64 time2 = Time::us();
 
-        u64 x = buffer.size() * 1000; // buffer size in bytes * milliseconds_in_second
-        printf("crc32:     0x%x %4d ms (%6d MB/s )\n", v0, u32(time1 - time0), u32(x / ((time1 - time0) * MB)));
-        printf("crc32c:    0x%x %4d ms (%6d MB/s )\n", v1, u32(time2 - time1), u32(x / ((time2 - time1) * MB)));
+        print(buffer, "crc32:  ", time0, time1, v0);
+        print(buffer, "crc32c: ", time1, time2, v1);
     }
 
 }
 
 int main()
 {
-    printf("%s", getPlatformInfo().c_str());
+    printf("%s\n", getPlatformInfo().c_str());
     test_crc();
 }
