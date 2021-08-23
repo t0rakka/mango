@@ -66,6 +66,28 @@ void test_xxhash64(const Buffer& buffer)
     print(buffer, "xxhash64: ", time0, time1, u32(v));
 }
 
+void test_xx3hash64(const Buffer& buffer)
+{
+    u64 time0 = Time::ms();
+
+    u64 seed = 0;
+    u64 v = mango::xx3hash64(seed, buffer);
+    u64 time1 = Time::ms();
+
+    print(buffer, "xxh3_64:  ", time0, time1, u32(v));
+}
+
+void test_xx3hash128(const Buffer& buffer)
+{
+    u64 time0 = Time::ms();
+
+    u64 seed = 0;
+    mango::XX3H128 v = mango::xx3hash128(seed, buffer);
+    u64 time1 = Time::ms();
+
+    print(buffer, "xxh3_128: ", time0, time1, u32(v[0]));
+}
+
 int main()
 {
     constexpr u64 size = 256 * MB;
@@ -81,4 +103,6 @@ int main()
     test_sha2(buffer);
     test_xxhash32(buffer);
     test_xxhash64(buffer);
+    test_xx3hash64(buffer);
+    test_xx3hash128(buffer);
 }
