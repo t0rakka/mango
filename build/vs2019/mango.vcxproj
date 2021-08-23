@@ -306,6 +306,7 @@
     <ClInclude Include="..\..\source\external\unrar\rijndael.hpp" />
     <ClInclude Include="..\..\source\external\unrar\suballoc.hpp" />
     <ClInclude Include="..\..\source\external\unrar\unpack.hpp" />
+    <ClInclude Include="..\..\source\external\xxhash\xxhash.h" />
     <ClInclude Include="..\..\source\external\zpng\zpng.h" />
     <ClInclude Include="..\..\source\external\zstd\common\bitstream.h" />
     <ClInclude Include="..\..\source\external\zstd\common\compiler.h" />

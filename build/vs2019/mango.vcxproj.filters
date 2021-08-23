@@ -169,6 +169,9 @@
     <Filter Include="external\libdeflate\lib\arm">
       <UniqueIdentifier>{f3bd0bfd-f8dd-473e-a35a-7b356f6bb0d8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\xxhash">
+      <UniqueIdentifier>{623cddbc-7e64-4762-ae3d-396ee953da21}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\mango\core\bits.hpp">
@@ -1124,6 +1127,9 @@
     </ClInclude>
     <ClInclude Include="..\..\source\external\zstd\decompress\zstd_decompress_internal.h">
       <Filter>external\zstd\decompress</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\xxhash\xxhash.h">
+      <Filter>external\xxhash</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
