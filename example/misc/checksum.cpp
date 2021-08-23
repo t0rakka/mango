@@ -79,13 +79,14 @@ void test_crc()
         u64 time2 = Time::ms();
 
         u64 x = buffer.size() * 1000; // buffer size in bytes * milliseconds_in_second
-        printf("crc32:     0x%x %4d ms (%6d MB/s)\n", v0, u32(time1 - time0), u32(x / ((time1 - time0) * MB)));
-        printf("crc32c:    0x%x %4d ms (%6d MB/s)\n", v1, u32(time2 - time1), u32(x / ((time2 - time1) * MB)));
+        printf("crc32:     0x%x %4d ms (%6d MB/s )\n", v0, u32(time1 - time0), u32(x / ((time1 - time0) * MB)));
+        printf("crc32c:    0x%x %4d ms (%6d MB/s )\n", v1, u32(time2 - time1), u32(x / ((time2 - time1) * MB)));
     }
 
 }
 
 int main()
 {
+    printf("%s", getPlatformInfo().c_str());
     test_crc();
 }

@@ -10,6 +10,7 @@
 namespace mango
 {
 
+    std::string getPlatformInfo();
     std::string getSystemInfo();
 
     bool debugPrintIsEnable();

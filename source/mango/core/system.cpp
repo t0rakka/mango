@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/system.hpp>
 #include <mango/core/cpuinfo.hpp>
@@ -15,7 +15,7 @@ namespace mango
 	// getSystemInfo()
 	// ----------------------------------------------------------------------------
 
-    std::string getSystemInfo()
+    std::string getPlatformInfo()
     {
         std::stringstream info;
 
@@ -33,6 +33,14 @@ namespace mango
         info << "Endian: BIG ";
 #endif
         info << std::endl;
+
+        return info.str();
+    }
+
+    std::string getSystemInfo()
+    {
+        std::stringstream info;
+        info << getPlatformInfo();
 
         u64 flags = getCPUFlags();
 
