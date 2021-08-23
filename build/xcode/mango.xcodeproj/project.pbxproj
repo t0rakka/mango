@@ -279,6 +279,7 @@
 		A6DD28E124129F8E0085E6EE /* libd_adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DD28DF24129F8E0085E6EE /* libd_adler32.c */; };
 		A6DD28E324129FA10085E6EE /* cpu_x86_features.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DD28E224129FA10085E6EE /* cpu_x86_features.c */; };
 		A6DD28E524129FAE0085E6EE /* cpu_arm_features.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DD28E424129FAE0085E6EE /* cpu_arm_features.c */; };
+		A6E123FA26D3EC4A00B91946 /* xxhash.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E123F926D3EC4A00B91946 /* xxhash.h */; };
 		A6E2F47C254662B300A26178 /* cpu_features_common.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E2F47B254662B300A26178 /* cpu_features_common.h */; };
 		A6E7DF1E2651D04E006A912E /* zstd_errors.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7DF1D2651D04E006A912E /* zstd_errors.h */; };
 		A6E7DF352651D07E006A912E /* error_private.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7DF1F2651D07D006A912E /* error_private.h */; };
@@ -744,6 +745,7 @@
 		A6DD28DF24129F8E0085E6EE /* libd_adler32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = libd_adler32.c; path = external/libdeflate/lib/libd_adler32.c; sourceTree = "<group>"; };
 		A6DD28E224129FA10085E6EE /* cpu_x86_features.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpu_x86_features.c; path = external/libdeflate/lib/x86/cpu_x86_features.c; sourceTree = "<group>"; };
 		A6DD28E424129FAE0085E6EE /* cpu_arm_features.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpu_arm_features.c; path = external/libdeflate/lib/arm/cpu_arm_features.c; sourceTree = "<group>"; };
+		A6E123F926D3EC4A00B91946 /* xxhash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = xxhash.h; path = external/xxhash/xxhash.h; sourceTree = "<group>"; };
 		A6E2F47B254662B300A26178 /* cpu_features_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpu_features_common.h; path = external/libdeflate/lib/cpu_features_common.h; sourceTree = "<group>"; };
 		A6E7DF1D2651D04E006A912E /* zstd_errors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_errors.h; path = external/zstd/zstd_errors.h; sourceTree = "<group>"; };
 		A6E7DF1F2651D07D006A912E /* error_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = error_private.h; path = external/zstd/common/error_private.h; sourceTree = "<group>"; };
@@ -1171,6 +1173,7 @@
 		A63DD7011E706DAA00D4D499 /* external */ = {
 			isa = PBXGroup;
 			children = (
+				A6E123F826D3EC2800B91946 /* xxhash */,
 				A6DD288B24125E900085E6EE /* libdeflate */,
 				A6EC3E67230D7B5200B17F21 /* libwebp */,
 				A60B0761229D21A700BD520D /* stb */,
@@ -1461,6 +1464,14 @@
 				A6DD289E24125F080085E6EE /* matchfinder_impl.h */,
 			);
 			name = arm;
+			sourceTree = "<group>";
+		};
+		A6E123F826D3EC2800B91946 /* xxhash */ = {
+			isa = PBXGroup;
+			children = (
+				A6E123F926D3EC4A00B91946 /* xxhash.h */,
+			);
+			name = xxhash;
 			sourceTree = "<group>";
 		};
 		A6EC3E67230D7B5200B17F21 /* libwebp */ = {
@@ -1820,6 +1831,7 @@
 				A6EC3F88230D7C4D00B17F21 /* random_utils.h in Headers */,
 				A63DD7A41E706F8800D4D499 /* BC.h in Headers */,
 				A6EC3EF0230D7C1500B17F21 /* mips_macro.h in Headers */,
+				A6E123FA26D3EC4A00B91946 /* xxhash.h in Headers */,
 				A642438C21852AEF0044B763 /* Blake2.h in Headers */,
 				A6DD28DB24125F280085E6EE /* compiler_msc.h in Headers */,
 				A00559E21C93340600A6D963 /* image in Headers */,
