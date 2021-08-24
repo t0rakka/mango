@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -29,9 +29,11 @@ namespace mango
     // - the mac_length must be 4, 6, 8, 10, 12, 14, or 16
     // - output.size must be input.size + mac_length
     //
+
     // Hardware acceleration support:
-    // ECB: Intel AES-NI
-    // CBC: Intel AES-NI
+    //
+    // ECB: Intel AES-NI, ARM Crypto
+    // CBC: Intel AES-NI, ARM Crypto
     // CTR: none
     // CCM: none
 

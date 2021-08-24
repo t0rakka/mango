@@ -10,6 +10,11 @@
 namespace mango
 {
 
+    // Hardware acceleration support:
+    //
+    // - ARM SHA (SHA1, SHA2)
+    // - Intel SHA (SHA1, SHA2)
+
     // -----------------------------------------------------------------------
     // Hash - generic hashing function return type
     // -----------------------------------------------------------------------
