@@ -9,9 +9,9 @@ list(APPEND EXAMPLES
 foreach(example IN LISTS EXAMPLES)
     add_executable(${example} ${example}.cpp)
     if (APPLE)
-        target_link_libraries(${example} mango-opengl "-framework OpenGL -framework Cocoa")
+        target_link_libraries(${example} mango-opengl mango "-framework OpenGL -framework Cocoa")
     elseif (UNIX)
-        target_link_libraries(${example} mango-opengl X11 GL)
+        target_link_libraries(${example} mango-opengl mango X11 GL)
     endif ()
 endforeach()
 
