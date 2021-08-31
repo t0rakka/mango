@@ -147,8 +147,10 @@ namespace mango::jpeg
             }
 
             DataType offset = (x >> (JPEG_REGISTER_BITS - size)) + valueOffset[size];
+#if 0
             if (offset > 255)
                 return 0; // decoding error
+#endif
             symbol = value[offset];
         }
 
