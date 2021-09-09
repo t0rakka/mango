@@ -1012,7 +1012,11 @@ namespace
         return p;
     }
 
-#if defined(MANGO_ENABLE_SSE4_1) || defined(MANGO_ENABLE_AVX2)
+#if defined(MANGO_ENABLE_SSE4_1)
+
+    // ----------------------------------------------------------------------------
+    // encode_block_ssse3
+    // ----------------------------------------------------------------------------
 
     constexpr s8 lane(s8 v, s8 offset)
     {
@@ -1029,14 +1033,6 @@ namespace
             lane(c6, 0), lane(c6, 1), lane(c7, 0), lane(c7, 1));
         return int16x8(_mm_shuffle_epi8(v, s));
     }
-
-#endif
-
-#if defined(MANGO_ENABLE_SSE4_1)
-
-    // ----------------------------------------------------------------------------
-    // encode_block_ssse3
-    // ----------------------------------------------------------------------------
 
     u64 zigzag_ssse3(s16* out, const s16* in)
     {
@@ -1199,12 +1195,11 @@ namespace
         __m128i zero1 = _mm_packs_epi16(_mm_cmpeq_epi16(row2, zero), _mm_cmpeq_epi16(row3, zero));
         __m128i zero2 = _mm_packs_epi16(_mm_cmpeq_epi16(row4, zero), _mm_cmpeq_epi16(row5, zero));
         __m128i zero3 = _mm_packs_epi16(_mm_cmpeq_epi16(row6, zero), _mm_cmpeq_epi16(row7, zero));
-        u64 mask_lo = _mm_movemask_epi8(zero0) | ((_mm_movemask_epi8(zero1)) << 16);
-        u64 mask_hi = _mm_movemask_epi8(zero2) | ((_mm_movemask_epi8(zero3)) << 16);
+        u64 mask_lo = u64(_mm_movemask_epi8(zero0)) | ((u64(_mm_movemask_epi8(zero1))) << 16);
+        u64 mask_hi = u64(_mm_movemask_epi8(zero2)) | ((u64(_mm_movemask_epi8(zero3))) << 16);
         u64 zeromask = ~((mask_hi << 32) | mask_lo);
 
         __m128i* dest = reinterpret_cast<__m128i *>(out);
-
         _mm_storeu_si128(dest + 0, row0);
         _mm_storeu_si128(dest + 1, row1);
         _mm_storeu_si128(dest + 2, row2);
@@ -1268,208 +1263,6 @@ namespace
     }
 
 #endif // defined(MANGO_ENABLE_SSE4_1)
-
-#if defined(MANGO_ENABLE_AVX2)
-
-    // ----------------------------------------------------------------------------
-    // encode_block_avx2
-    // ----------------------------------------------------------------------------
-
-    // NOTE: The zigzag is still 128 bit wide only because of the retarded 128+128 way the AVX2 works
-    // TODO: re-arrange (if possible) so that 256 bit shuffle can be used, in this form this is useless
-
-    /*
-    inline int16x16 shuffle(__m256i v, s8 c0, s8 c1, s8 c2, s8 c3, s8 c4, s8 c5, s8 c6, s8 c7,
-                                       s8 c8, s8 c9, s8 ca, s8 cb, s8 cc, s8 cd, s8 ce, s8 cf)
-    {
-        const __m256i s = _mm256_setr_epi8(
-            lane(c0, 0), lane(c0, 1), lane(c1, 0), lane(c1, 1),
-            lane(c2, 0), lane(c2, 1), lane(c3, 0), lane(c3, 1),
-            lane(c4, 0), lane(c4, 1), lane(c5, 0), lane(c5, 1),
-            lane(c6, 0), lane(c6, 1), lane(c7, 0), lane(c7, 1),
-            lane(c8, 0), lane(c8, 1), lane(c9, 0), lane(c9, 1),
-            lane(ca, 0), lane(ca, 1), lane(cb, 0), lane(cb, 1),
-            lane(cc, 0), lane(cc, 1), lane(cd, 0), lane(cd, 1),
-            lane(ce, 0), lane(ce, 1), lane(cf, 0), lane(cf, 1));
-        return int16x16(_mm256_shuffle_epi8(v, s));
-    }
-    */
-
-    u64 zigzag_avx2(s16* out, const s16* in)
-    {
-        const __m256i* src = reinterpret_cast<const __m256i *>(in);
-
-        const __m256i AB = _mm256_loadu_si256(src + 0); //  0 .. 15
-        const __m256i CD = _mm256_loadu_si256(src + 1); // 16 .. 31
-        const __m256i EF = _mm256_loadu_si256(src + 2); // 32 .. 47
-        const __m256i GH = _mm256_loadu_si256(src + 3); // 48 .. 63
-
-        const __m128i A = _mm256_extracti128_si256(AB, 0);
-        const __m128i B = _mm256_extracti128_si256(AB, 1);
-        const __m128i C = _mm256_extracti128_si256(CD, 0);
-        const __m128i D = _mm256_extracti128_si256(CD, 1);
-        const __m128i E = _mm256_extracti128_si256(EF, 0);
-        const __m128i F = _mm256_extracti128_si256(EF, 1);
-        const __m128i G = _mm256_extracti128_si256(GH, 0);
-        const __m128i H = _mm256_extracti128_si256(GH, 1);
-
-        constexpr s8 z = -1;
-
-        // ------------------------------------------------------------------------
-        //     0,  1,  8, 16,  9,  2,  3, 10, 17, 24, 32, 25, 18, 11,  4,  5,
-        // ------------------------------------------------------------------------
-        // A:  x   x   x   -   x   x   x   x   -   -   -   -   -   x   x   x
-        // B:  -   -   -   x   -   -   -   -   x   x   -   x   x   -   -   -
-        // C:  -   -   -   -   -   -   -   -   -   -   x   -   -   -   -   -
-        // D:  -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-
-        __m128i row0 = shuffle(A, 0, 1, z,  z, z, 2, 3,  z) |
-                       shuffle(B, z, z, 8,  z, 9, z, z, 10) |
-                       shuffle(C, z, z, z, 16, z, z, z,  z);
-
-        __m128i row1 = shuffle(A,  z,  z, z,  z,  z,  z, 4, 5) |
-                       shuffle(B,  z,  z, z,  z,  z, 11, z, z) |
-                       shuffle(C, 17,  z, z,  z, 18,  z, z, z) |
-                       shuffle(D,  z, 24, z, 25,  z,  z, z, z) |
-                       shuffle(E,  z, z, 32,  z,  z,  z, z, z);
-
-        const __m256i row01 = _mm256_setr_m128i(row0, row1);
-
-        // ------------------------------------------------------------------------
-        //    12, 19, 26, 33, 40, 48, 41, 34, 27, 20, 13,  6,  7, 14, 21, 28,
-        // ------------------------------------------------------------------------
-        // A:  x   -   -   -   -   -   -   -   -   -   x   x   x   x   -   -
-        // B:  -   x   x   -   -   -   -   -   x   x   -   -   -   -   x   x
-        // C:  -   -   -   x   x   -   x   x   -   -   -   -   -   -   -   -
-        // D:  -   -   -   -   -   x   -   -   -   -   -   -   -   -   -   -
-
-        __m128i row2 = shuffle(B, 12,  z,  z,  z,  z,  z,  z,  z) |
-                       shuffle(C,  z, 19,  z,  z,  z,  z,  z,  z) |
-                       shuffle(D,  z,  z, 26,  z,  z,  z,  z,  z) |
-                       shuffle(E,  z,  z,  z, 33,  z,  z,  z, 34) |
-                       shuffle(F,  z,  z,  z,  z, 40,  z, 41,  z) |
-                       shuffle(G,  z,  z,  z,  z,  z, 48,  z,  z);
-
-        __m128i row3 = shuffle(A,  z,  z,  z, 6, 7,  z,  z,  z) |
-                       shuffle(B,  z,  z, 13, z, z, 14,  z,  z) |
-                       shuffle(C,  z, 20,  z, z, z,  z, 21,  z) |
-                       shuffle(D, 27,  z,  z, z, z,  z,  z, 28);
-
-        const __m256i row23 = _mm256_setr_m128i(row2, row3);
-
-        // ------------------------------------------------------------------------
-        //    35, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51,
-        // ------------------------------------------------------------------------
-        // A:  -   -   -   -   -   -   -   -   -   -   x   -   -   -   -   -
-        // B:  -   -   -   -   -   -   -   -   x   x   -   x   x   -   -   -
-        // C:  x   x   -   -   -   -   x   x   -   -   -   -   -   x   x   -
-        // D:  -   -   x   x   x   x   -   -   -   -   -   -   -   -   -   x
-
-        __m128i row4 = shuffle(E, 35,  z,  z,  z,  z,  z,  z, 36) |
-                       shuffle(F,  z, 42,  z,  z,  z,  z, 43,  z) |
-                       shuffle(G,  z,  z, 49,  z,  z, 50,  z,  z) |
-                       shuffle(H,  z,  z,  z, 56, 57,  z,  z,  z);
-
-        __m128i row5 = shuffle(B,  z,  z, 15,  z,  z,  z,  z,  z) |
-                       shuffle(C,  z, 22,  z, 23,  z,  z,  z,  z) |
-                       shuffle(D, 29,  z,  z,  z, 30,  z,  z,  z) |
-                       shuffle(E,  z,  z,  z,  z,  z, 37,  z,  z) |
-                       shuffle(F,  z,  z,  z,  z,  z,  z, 44,  z) |
-                       shuffle(G,  z,  z,  z,  z,  z,  z,  z, 51);
-
-        const __m256i row45 = _mm256_setr_m128i(row4, row5);
-
-        // ------------------------------------------------------------------------
-        //    58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63
-        // ------------------------------------------------------------------------
-        // A:  -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -
-        // B:  -   -   -   -   -   x   -   -   -   -   -   -   -   -   -   -
-        // C:  -   -   -   x   x   -   x   x   -   -   -   -   x   -   -   -
-        // D:  x   x   x   -   -   -   -   -   x   x   x   x   -   x   x   x
-
-        __m128i row6 = shuffle(D,  z,  z,  z,  z,  z, 31,  z,  z) |
-                       shuffle(E,  z,  z,  z,  z, 38,  z, 39,  z) |
-                       shuffle(F,  z,  z,  z, 45,  z,  z,  z, 46) |
-                       shuffle(G,  z,  z, 52,  z,  z,  z,  z,  z) |
-                       shuffle(H, 58, 59,  z,  z,  z,  z,  z,  z);
-
-        __m128i row7 = shuffle(F,  z,  z,  z,  z, 47,  z,  z,  z) |
-                       shuffle(G, 53,  z,  z, 54,  z, 55,  z,  z) |
-                       shuffle(H,  z, 60, 61,  z,  z,  z, 62, 63);
-
-        const __m256i row67 = _mm256_setr_m128i(row6, row7);
-
-        // compute zeromask
-        const __m256i zero = _mm256_setzero_si256();
-        __m256i zero0 = _mm256_packs_epi16(_mm256_cmpeq_epi16(row01, zero), _mm256_cmpeq_epi16(row23, zero));
-        __m256i zero1 = _mm256_packs_epi16(_mm256_cmpeq_epi16(row45, zero), _mm256_cmpeq_epi16(row67, zero));
-        zero0 = _mm256_permute4x64_epi64(zero0, 0xd8);
-        zero1 = _mm256_permute4x64_epi64(zero1, 0xd8);
-        u64 mask_lo = _mm256_movemask_epi8(zero0);
-        u64 mask_hi = _mm256_movemask_epi8(zero1);
-        u64 zeromask = ~((mask_hi << 32) | mask_lo);
-
-        __m256i* dest = reinterpret_cast<__m256i *>(out);
-
-        _mm256_storeu_si256(dest + 0, row01);
-        _mm256_storeu_si256(dest + 1, row23);
-        _mm256_storeu_si256(dest + 2, row45);
-        _mm256_storeu_si256(dest + 3, row67);
-
-        return zeromask;
-    }
-
-    static
-    u8* encode_block_avx2(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
-    {
-        s16 block[64];
-        encoder.fdct(block, input, channel.qtable);
-
-        s16 temp[64];
-        u64 zeromask = zigzag_avx2(temp, block);
-
-        p = encode_dc(encoder, p, temp[0], channel);
-        zeromask >>= 1;
-
-        const u32* ac_code = channel.ac_code;
-        const u16* ac_size = channel.ac_size;
-        const u32 zero16_code = ac_code[1];
-        const u32 zero16_size = ac_size[1];
-
-        for (int i = 1; i < 64; ++i)
-        {
-            if (!zeromask)
-            {
-                // only zeros left
-                p = encoder.putBits(p, ac_code[0], ac_size[0]);
-                break;
-            }
-
-            int counter = u64_tzcnt(zeromask); // BMI
-            zeromask >>= (counter + 1);
-            i += counter;
-
-            while (counter > 15)
-            {
-                counter -= 16;
-                p = encoder.putBits(p, zero16_code, zero16_size);
-            }
-
-            int coeff = temp[i];
-            int absCoeff = std::abs(coeff);
-            coeff -= (absCoeff != coeff);
-
-            u32 size = u32_log2(absCoeff) + 1;
-            u32 mask = (1 << size) - 1;
-
-            int index = counter + size * 16;
-            p = encoder.putBits(p, ac_code[index] | (coeff & mask), ac_size[index]);
-        }
-
-        return p;
-    }
-
-#endif // defined(MANGO_ENABLE_AVX2)
 
 #if defined(JPEG_ENABLE_AVX512)
 
@@ -2493,14 +2286,6 @@ namespace
         {
             encode = encode_block_ssse3;
             encode_name = "SSSE3";
-        }
-#endif
-
-#if defined(MANGO_ENABLE_AVX2)
-        if (flags & INTEL_AVX2)
-        {
-            encode = encode_block_avx2;
-            encode_name = "AVX2";
         }
 #endif
 
