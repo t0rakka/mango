@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -15,8 +15,8 @@ using namespace mango::image;
 static
 inline bool isJPEG(const FileInfo& node)
 {
-    // NOTE: Lamecode - should convert extensiton to lowercase before checking
-    return !node.isDirectory() && filesystem::getExtension(node.name) == ".jpg";
+    std::string ext = mango::toLower(filesystem::getExtension(node.name));
+    return !node.isDirectory() && (ext == ".jpg" || ext == ".jpeg");
 }
 
 struct State
