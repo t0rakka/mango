@@ -1814,6 +1814,45 @@ namespace
         }
     }
 
+#if defined(MANGO_ENABLE_SSE2) || defined(MANGO_ENABLE_SSE4_1)
+
+    static
+    void compute_ycbcr(s16* dest, __m128i r, __m128i g, __m128i b)
+    {
+        const __m128i c076 = _mm_set1_epi16(76);
+        const __m128i c151 = _mm_set1_epi16(151);
+        const __m128i c029 = _mm_set1_epi16(29);
+        const __m128i c128 = _mm_set1_epi16(128);
+        const __m128i c182 = _mm_set1_epi16(182);
+        const __m128i c144 = _mm_set1_epi16(144);
+
+        // compute luminance
+        __m128i s0 = _mm_mullo_epi16(r, c076);
+        __m128i s1 = _mm_mullo_epi16(g, c151);
+        __m128i s2 = _mm_mullo_epi16(b, c029);
+        __m128i s = _mm_add_epi16(s0, _mm_add_epi16(s1, s2));
+        s = _mm_srli_epi16(s, 8);
+
+        // compute chroma
+        __m128i cr = _mm_sub_epi16(r, s);
+        __m128i cb = _mm_sub_epi16(b, s);
+        cr = _mm_mullo_epi16(cr, c182);
+        cb = _mm_mullo_epi16(cb, c144);
+        cr = _mm_srai_epi16(cr, 8);
+        cb = _mm_srai_epi16(cb, 8);
+
+        // adjust bias
+        s = _mm_sub_epi16(s, c128);
+
+        // store
+        __m128i* ptr = reinterpret_cast<__m128i*>(dest);
+        _mm_storeu_si128(ptr +  0, s);
+        _mm_storeu_si128(ptr +  8, cb);
+        _mm_storeu_si128(ptr + 16, cr);
+    }
+
+#endif // defined(MANGO_ENABLE_SSE2) || defined(MANGO_ENABLE_SSE4_1)
+
 #if defined(MANGO_ENABLE_SSE2)
 
     static
@@ -1883,22 +1922,12 @@ namespace
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
 
-        __m128i* dest = reinterpret_cast<__m128i*>(block);
-
         const __m128i mask = _mm_set1_epi32(0xff);
-        const __m128i c76 = _mm_set1_epi16(76);
-        const __m128i c151 = _mm_set1_epi16(151);
-        const __m128i c29 = _mm_set1_epi16(29);
-        const __m128i c128 = _mm_set1_epi16(128);
-        const __m128i c182 = _mm_set1_epi16(182);
-        const __m128i c144 = _mm_set1_epi16(144);
 
         for (int y = 0; y < 8; ++y)
         {
             const __m128i* ptr = reinterpret_cast<const __m128i*>(input);
-            input += stride;
 
-            // load, unpack
             __m128i b0 = _mm_loadu_si128(ptr + 0);
             __m128i b1 = _mm_loadu_si128(ptr + 1);
             __m128i g0 = _mm_srli_epi32(b0, 8);
@@ -1915,28 +1944,10 @@ namespace
             __m128i g = _mm_packs_epi32(g0, g1);
             __m128i r = _mm_packs_epi32(r0, r1);
 
-            // compute luminance
-            __m128i s0 = _mm_mullo_epi16(r, c76);
-            __m128i s1 = _mm_mullo_epi16(g, c151);
-            __m128i s2 = _mm_mullo_epi16(b, c29);
-            __m128i s = _mm_add_epi16(s0, _mm_add_epi16(s1, s2));
-            s = _mm_srli_epi16(s, 8);
+            compute_ycbcr(block, r, g, b);
 
-            // compute chroma
-            __m128i cr = _mm_sub_epi16(r, s);
-            __m128i cb = _mm_sub_epi16(b, s);
-            cr = _mm_mullo_epi16(cr, c182);
-            cb = _mm_mullo_epi16(cb, c144);
-            cr = _mm_srai_epi16(cr, 8);
-            cb = _mm_srai_epi16(cb, 8);
-
-            // adjust bias
-            s = _mm_sub_epi16(s, c128);
-
-            // store
-            _mm_storeu_si128(dest + y + 0, s);
-            _mm_storeu_si128(dest + y + 8, cb);
-            _mm_storeu_si128(dest + y + 16, cr);
+            block += 8;
+            input += stride;
         }
     }
 
@@ -1946,22 +1957,12 @@ namespace
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
 
-        __m128i* dest = reinterpret_cast<__m128i*>(block);
-
         const __m128i mask = _mm_set1_epi32(0xff);
-        const __m128i c76 = _mm_set1_epi16(76);
-        const __m128i c151 = _mm_set1_epi16(151);
-        const __m128i c29 = _mm_set1_epi16(29);
-        const __m128i c128 = _mm_set1_epi16(128);
-        const __m128i c182 = _mm_set1_epi16(182);
-        const __m128i c144 = _mm_set1_epi16(144);
 
         for (int y = 0; y < 8; ++y)
         {
             const __m128i* ptr = reinterpret_cast<const __m128i*>(input);
-            input += stride;
 
-            // load, unpack
             __m128i r0 = _mm_loadu_si128(ptr + 0);
             __m128i r1 = _mm_loadu_si128(ptr + 1);
             __m128i g0 = _mm_srli_epi32(r0, 8);
@@ -1978,28 +1979,10 @@ namespace
             __m128i g = _mm_packs_epi32(g0, g1);
             __m128i r = _mm_packs_epi32(r0, r1);
 
-            // compute luminance
-            __m128i s0 = _mm_mullo_epi16(r, c76);
-            __m128i s1 = _mm_mullo_epi16(g, c151);
-            __m128i s2 = _mm_mullo_epi16(b, c29);
-            __m128i s = _mm_add_epi16(s0, _mm_add_epi16(s1, s2));
-            s = _mm_srli_epi16(s, 8);
+            compute_ycbcr(block, r, g, b);
 
-            // compute chroma
-            __m128i cr = _mm_sub_epi16(r, s);
-            __m128i cb = _mm_sub_epi16(b, s);
-            cr = _mm_mullo_epi16(cr, c182);
-            cb = _mm_mullo_epi16(cb, c144);
-            cr = _mm_srai_epi16(cr, 8);
-            cb = _mm_srai_epi16(cb, 8);
-
-            // adjust bias
-            s = _mm_sub_epi16(s, c128);
-
-            // store
-            _mm_storeu_si128(dest + y + 0, s);
-            _mm_storeu_si128(dest + y + 8, cb);
-            _mm_storeu_si128(dest + y + 16, cr);
+            block += 8;
+            input += stride;
         }
     }
 
@@ -2013,19 +1996,9 @@ namespace
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
 
-        __m128i* dest = reinterpret_cast<__m128i*>(block);
-
-        const __m128i c76 = _mm_set1_epi16(76);
-        const __m128i c151 = _mm_set1_epi16(151);
-        const __m128i c29 = _mm_set1_epi16(29);
-        const __m128i c128 = _mm_set1_epi16(128);
-        const __m128i c182 = _mm_set1_epi16(182);
-        const __m128i c144 = _mm_set1_epi16(144);
-
         for (int y = 0; y < 8; ++y)
         {
             const __m128i* ptr = reinterpret_cast<const __m128i*>(input);
-            input += stride;
 
             // load
             __m128i v0 = _mm_loadu_si128(ptr + 0);
@@ -2043,28 +2016,10 @@ namespace
            __m128i g = _mm_or_si128(g0, g1);
            __m128i r = _mm_or_si128(r0, r1);
 
-            // compute luminance
-            __m128i s0 = _mm_mullo_epi16(r, c76);
-            __m128i s1 = _mm_mullo_epi16(g, c151);
-            __m128i s2 = _mm_mullo_epi16(b, c29);
-            __m128i s = _mm_add_epi16(s0, _mm_add_epi16(s1, s2));
-            s = _mm_srli_epi16(s, 8);
+            compute_ycbcr(block, r, g, b);
 
-            // compute chroma
-            __m128i cr = _mm_sub_epi16(r, s);
-            __m128i cb = _mm_sub_epi16(b, s);
-            cr = _mm_mullo_epi16(cr, c182);
-            cb = _mm_mullo_epi16(cb, c144);
-            cr = _mm_srai_epi16(cr, 8);
-            cb = _mm_srai_epi16(cb, 8);
-
-            // adjust bias
-            s = _mm_sub_epi16(s, c128);
-
-            // store
-            _mm_storeu_si128(dest + y + 0, s);
-            _mm_storeu_si128(dest + y + 8, cb);
-            _mm_storeu_si128(dest + y + 16, cr);
+            block += 8;
+            input += stride;
         }
     }
 
@@ -2074,19 +2029,9 @@ namespace
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
 
-        __m128i* dest = reinterpret_cast<__m128i*>(block);
-
-        const __m128i c76 = _mm_set1_epi16(76);
-        const __m128i c151 = _mm_set1_epi16(151);
-        const __m128i c29 = _mm_set1_epi16(29);
-        const __m128i c128 = _mm_set1_epi16(128);
-        const __m128i c182 = _mm_set1_epi16(182);
-        const __m128i c144 = _mm_set1_epi16(144);
-
         for (int y = 0; y < 8; ++y)
         {
             const __m128i* ptr = reinterpret_cast<const __m128i*>(input);
-            input += stride;
 
             // load
             __m128i v0 = _mm_loadu_si128(ptr + 0);
@@ -2104,28 +2049,10 @@ namespace
            __m128i g = _mm_or_si128(g0, g1);
            __m128i r = _mm_or_si128(r0, r1);
 
-            // compute luminance
-            __m128i s0 = _mm_mullo_epi16(r, c76);
-            __m128i s1 = _mm_mullo_epi16(g, c151);
-            __m128i s2 = _mm_mullo_epi16(b, c29);
-            __m128i s = _mm_add_epi16(s0, _mm_add_epi16(s1, s2));
-            s = _mm_srli_epi16(s, 8);
+            compute_ycbcr(block, r, g, b);
 
-            // compute chroma
-            __m128i cr = _mm_sub_epi16(r, s);
-            __m128i cb = _mm_sub_epi16(b, s);
-            cr = _mm_mullo_epi16(cr, c182);
-            cb = _mm_mullo_epi16(cb, c144);
-            cr = _mm_srai_epi16(cr, 8);
-            cb = _mm_srai_epi16(cb, 8);
-
-            // adjust bias
-            s = _mm_sub_epi16(s, c128);
-
-            // store
-            _mm_storeu_si128(dest + y + 0, s);
-            _mm_storeu_si128(dest + y + 8, cb);
-            _mm_storeu_si128(dest + y + 16, cr);
+            block += 8;
+            input += stride;
         }
     }
 
