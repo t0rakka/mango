@@ -2134,6 +2134,37 @@ namespace
 #if defined(MANGO_ENABLE_NEON)
 
     static
+    void compute_ycbcr(s16* dest, int16x8_t r, int16x8_t g, int16x8_t b)
+    {
+        const int16x8_t c076 = vdupq_n_s16(76);
+        const int16x8_t c151 = vdupq_n_s16(151);
+        const int16x8_t c029 = vdupq_n_s16(29);
+        const int16x8_t c182 = vdupq_n_s16(182);
+        const int16x8_t c144 = vdupq_n_s16(144);
+        const int16x8_t c128 = vdupq_n_s16(128);
+
+        // compute luminance
+        int16x8_t s = vmulq_s16(r, c076);
+        s = vmlaq_s16(s, g, c151);
+        s = vmlaq_s16(s, b, c029);
+        s = vreinterpretq_s16_u16(vshrq_n_u16(vreinterpretq_u16_s16(s), 8));
+
+        // compute chroma
+        int16x8_t cr = vmulq_s16(vsubq_s16(r, s), c182);
+        int16x8_t cb = vmulq_s16(vsubq_s16(b, s), c144);
+        cr = vshrq_n_s16(cr, 8);
+        cb = vshrq_n_s16(cb, 8);
+
+        // adjust bias
+        s = vsubq_s16(s, c128);
+
+        // store
+        vst1q_s16(dest +   0, s);
+        vst1q_s16(dest +  64, cb);
+        vst1q_s16(dest + 128, cr);
+    }
+
+    static
     void read_y_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         // TODO
@@ -2143,29 +2174,81 @@ namespace
     static
     void read_bgra_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
-        // TODO
-        read_bgra_format(block, input, stride, rows, cols);
+        MANGO_UNREFERENCED(rows);
+        MANGO_UNREFERENCED(cols);
+
+        for (int y = 0; y < 8; ++y)
+        {
+            const uint8x8x4_t temp = vld4_u8(input);
+            int16x8_t r = vreinterpretq_s16_u16(vmovl_u8(temp.val[2]));
+            int16x8_t g = vreinterpretq_s16_u16(vmovl_u8(temp.val[1]));
+            int16x8_t b = vreinterpretq_s16_u16(vmovl_u8(temp.val[0]));
+
+            compute_ycbcr(block, r, g, b);
+
+            input += stride;
+            block += 8;
+        }
     }
 
     static
     void read_rgba_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
-        // TODO
-        read_rgba_format(block, input, stride, rows, cols);
+        MANGO_UNREFERENCED(rows);
+        MANGO_UNREFERENCED(cols);
+
+        for (int y = 0; y < 8; ++y)
+        {
+            const uint8x8x4_t temp = vld4_u8(input);
+            int16x8_t r = vreinterpretq_s16_u16(vmovl_u8(temp.val[0]));
+            int16x8_t g = vreinterpretq_s16_u16(vmovl_u8(temp.val[1]));
+            int16x8_t b = vreinterpretq_s16_u16(vmovl_u8(temp.val[2]));
+
+            compute_ycbcr(block, r, g, b);
+
+            input += stride;
+            block += 8;
+        }
     }
 
     static
     void read_bgr_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
-        // TODO
-        read_bgr_format(block, input, stride, rows, cols);
+        MANGO_UNREFERENCED(rows);
+        MANGO_UNREFERENCED(cols);
+
+        for (int y = 0; y < 8; ++y)
+        {
+            const uint8x8x3_t temp = vld3_u8(input);
+            int16x8_t r = vreinterpretq_s16_u16(vmovl_u8(temp.val[2]));
+            int16x8_t g = vreinterpretq_s16_u16(vmovl_u8(temp.val[1]));
+            int16x8_t b = vreinterpretq_s16_u16(vmovl_u8(temp.val[0]));
+
+            compute_ycbcr(block, r, g, b);
+
+            input += stride;
+            block += 8;
+        }
     }
 
     static
     void read_rgb_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
-        // TODO
-        read_rgb_format(block, input, stride, rows, cols);
+        MANGO_UNREFERENCED(rows);
+        MANGO_UNREFERENCED(cols);
+
+        for (int y = 0; y < 8; ++y)
+        {
+            const uint8x8x3_t temp = vld3_u8(input);
+            int16x8_t r = vreinterpretq_s16_u16(vmovl_u8(temp.val[0]));
+            int16x8_t g = vreinterpretq_s16_u16(vmovl_u8(temp.val[1]));
+            int16x8_t b = vreinterpretq_s16_u16(vmovl_u8(temp.val[2]));
+
+            compute_ycbcr(block, r, g, b);
+
+            input += stride;
+            block += 8;
+        }
     }
 
 #endif // MANGO_ENABLE_NEON
