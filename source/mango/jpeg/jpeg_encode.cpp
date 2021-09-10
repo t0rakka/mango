@@ -2389,13 +2389,13 @@ namespace
 #endif
 
         // build encoder info string
-        info = "[JPEG Encoder] FDCT: ";
+        info = "fDCT: ";
         info += fdct_name;
 
-        info += ", Sampler: ";
+        info += ", ";
         info += sampler_name;
 
-        info += ", Encoder: ";
+        info += ", ";
         info += encode_name;
 
         mcu_width = 8;

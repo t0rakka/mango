@@ -13,9 +13,11 @@ using namespace mango::image;
 // TODO: encode: Y, RGB, BGR, RGBA, BGRA
 // TODO: decode: Y, RGB, BGR, RGBA, BGRA
 
-void decode(ConstMemory memory, const std::string& filename)
+void warmup(ConstMemory memory)
 {
-    ImageDecoder decoder(memory, filename);
+    debugPrintEnable(true);
+
+    ImageDecoder decoder(memory, ".jpg");
     if (decoder.isDecoder())
     {
         ImageHeader header = decoder.header();
@@ -26,21 +28,71 @@ void decode(ConstMemory memory, const std::string& filename)
         options.multithread = true;
 
         ImageDecodeStatus status = decoder.decode(bitmap, options);
-
-        printf("Status: %s\n", status.info.c_str());
+        MANGO_UNREFERENCED(status);
     }
+
+    debugPrintEnable(false);
+}
+
+void decode(ConstMemory memory, const std::string& name, const Format& format)
+{
+    u64 decode_time = 0;
+    u64 encode_time = 0;
+
+    std::string decode_info;
+    std::string encode_info;
+
+    ImageDecoder decoder(memory, ".jpg");
+    if (decoder.isDecoder())
+    {
+        ImageHeader header = decoder.header();
+        Bitmap bitmap(header.width, header.height, format);
+
+        ImageDecodeOptions options;
+        options.simd = true;
+        options.multithread = true;
+
+        u64 time0 = Time::us();
+
+        ImageDecodeStatus status = decoder.decode(bitmap, options);
+        u64 time1 = Time::us();
+
+        decode_time = time1 - time0;
+        decode_info = status.info;
+
+        ImageEncoder encoder(".jpg");
+        if (encoder.isEncoder())
+        {
+            std::string filename = name + ".jpg";
+            filesystem::OutputFileStream file(filename);
+
+            ImageEncodeOptions options;
+
+            u64 time0 = Time::us();
+
+            ImageEncodeStatus status = encoder.encode(file, bitmap, options);
+            u64 time1 = Time::us();
+
+            encode_time = time1 - time0;
+            encode_info = status.info;
+        }
+    }
+
+    printf("Decode: %7d us  [%s]\n", int(decode_time), decode_info.c_str());
+    printf("Encode: %7d us  [%s]\n", int(encode_time), encode_info.c_str());
+    printf("\n");
 }
 
 void jpeg_analyze(const std::string& filename)
 {
     File file(filename);
 
-    u64 time0 = Time::ms();
+    warmup(file);
 
-    decode(file, filename);
-
-    u64 time1 = Time::ms();
-    printf("Decode: %d ms\n", int(time1 - time0));
+    decode(file, "RGBA", Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+    decode(file, "BGRA", Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
+    decode(file, "RGB ", Format(24, Format::UNORM, Format::RGB, 8, 8, 8));
+    decode(file, "BGR ", Format(24, Format::UNORM, Format::BGR, 8, 8, 8));
 }
 
 int main(int argc, const char* argv[])
@@ -50,8 +102,6 @@ int main(int argc, const char* argv[])
         printf("Too few arguments. Usage: %s <filename.jpg>\n", argv[0]);
         return 1;
     }
-
-    //debugPrintEnable(true);
 
     std::string filename = argv[1];
     jpeg_analyze(filename);
