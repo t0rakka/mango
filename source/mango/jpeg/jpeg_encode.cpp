@@ -2131,6 +2131,45 @@ namespace
 
 #endif // MANGO_ENABLE_SSE4_1
 
+#if defined(MANGO_ENABLE_NEON)
+
+    static
+    void read_y_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
+    {
+        // TODO
+        read_y_format(block, input, stride, rows, cols);
+    }
+
+    static
+    void read_bgra_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
+    {
+        // TODO
+        read_bgra_format(block, input, stride, rows, cols);
+    }
+
+    static
+    void read_rgba_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
+    {
+        // TODO
+        read_rgba_format(block, input, stride, rows, cols);
+    }
+
+    static
+    void read_bgr_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
+    {
+        // TODO
+        read_bgr_format(block, input, stride, rows, cols);
+    }
+
+    static
+    void read_rgb_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
+    {
+        // TODO
+        read_rgb_format(block, input, stride, rows, cols);
+    }
+
+#endif // MANGO_ENABLE_NEON
+
     // ----------------------------------------------------------------------------
     // jpegEncoder
     // ----------------------------------------------------------------------------
@@ -2185,6 +2224,13 @@ namespace
                     sampler_name = "SSE2 Y 8x8";
                 }
 #endif
+#if defined(MANGO_ENABLE_NEON)
+                if (flags & ARM_NEON)
+                {
+                    read_8x8 = read_y_format_neon;
+                    sampler_name = "NEON Y 8x8";
+                }
+#endif
                 read = read_y_format;
                 bytes_per_pixel = 1;
                 components = 1;
@@ -2196,6 +2242,13 @@ namespace
                 {
                     read_8x8 = read_bgr_format_ssse3;
                     sampler_name = "SSSE3 BGR 8x8";
+                }
+#endif
+#if defined(MANGO_ENABLE_NEON)
+				if (flags & ARM_NEON)
+                {
+                    read_8x8 = read_bgr_format_neon;
+                    sampler_name = "NEON BGR 8x8";
                 }
 #endif
                 read = read_bgr_format;
@@ -2211,6 +2264,13 @@ namespace
                     sampler_name = "SSSE3 RGB 8x8";
                 }
 #endif
+#if defined(MANGO_ENABLE_NEON)
+                if (flags & ARM_NEON)
+                {
+                    read_8x8 = read_rgb_format_neon;
+                    sampler_name = "NEON RGB 8x8";
+                }
+#endif
                 read = read_rgb_format;
                 bytes_per_pixel = 3;
                 components = 3;
@@ -2224,6 +2284,13 @@ namespace
                     sampler_name = "SSE2 BGRA 8x8";
                 }
 #endif
+#if defined(MANGO_ENABLE_NEON)
+                if (flags & ARM_NEON)
+                {
+                    read_8x8 = read_bgra_format_neon;
+                    sampler_name = "NEON BGRA 8x8";
+                }
+#endif
                 read = read_bgra_format;
                 bytes_per_pixel = 4;
                 components = 3;
@@ -2235,6 +2302,13 @@ namespace
                 {
                     read_8x8 = read_rgba_format_sse2;
                     sampler_name = "SSE2 RGBA 8x8";
+                }
+#endif
+#if defined(MANGO_ENABLE_NEON)
+                if (flags & ARM_NEON)
+                {
+                    read_8x8 = read_rgba_format_neon;
+                    sampler_name = "NEON RGBA 8x8";
                 }
 #endif
                 read = read_rgba_format;
