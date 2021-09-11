@@ -608,24 +608,30 @@ namespace
     // fdct_avx2
     // ----------------------------------------------------------------------------
 
-    /*
-    static inline 
+//#define PROTOTYPE_TRANSPOSE
+
+#ifdef PROTOTYPE_TRANSPOSE
+    static inline
     void transpose_8x8_avx2(__m256i& v0, __m256i& v1, __m256i& v2, __m256i& v3)
     {
-        __m256i v4 = _mm256_unpacklo_epi16(v0, v1);
-        __m256i v5 = _mm256_unpackhi_epi16(v0, v1);
-        __m256i v6 = _mm256_unpacklo_epi16(v2, v3);
-        __m256i v7 = _mm256_unpackhi_epi16(v2, v3);
-        v0 = _mm256_unpacklo_epi32(v4, v6);
-        v1 = _mm256_unpackhi_epi32(v4, v6);
-        v2 = _mm256_unpacklo_epi32(v5, v7);
-        v3 = _mm256_unpackhi_epi32(v5, v7);
-        v0 = _mm256_permute4x64_epi64(v0, 0x8d);
-        v1 = _mm256_permute4x64_epi64(v1, 0x8d);
-        v2 = _mm256_permute4x64_epi64(v2, 0xd8);
-        v3 = _mm256_permute4x64_epi64(v3, 0xd8);
+        __m256i x0 = _mm256_permute2x128_si256(v0, v2, 0x20);
+        __m256i x1 = _mm256_permute2x128_si256(v0, v2, 0x31);
+        __m256i x2 = _mm256_permute2x128_si256(v1, v3, 0x20);
+        __m256i x3 = _mm256_permute2x128_si256(v1, v3, 0x31);
+        __m256i v4 = _mm256_unpacklo_epi16(x0, x1);
+        __m256i v5 = _mm256_unpackhi_epi16(x0, x1);
+        __m256i v6 = _mm256_unpacklo_epi16(x2, x3);
+        __m256i v7 = _mm256_unpackhi_epi16(x2, x3);
+        x0 = _mm256_unpacklo_epi32(v4, v6);
+        x1 = _mm256_unpackhi_epi32(v4, v6);
+        x2 = _mm256_unpacklo_epi32(v5, v7);
+        x3 = _mm256_unpackhi_epi32(v5, v7);
+        v0 = _mm256_permute4x64_epi64(x0, 0xd8);
+        v1 = _mm256_permute4x64_epi64(x1, 0xd8);
+        v2 = _mm256_permute4x64_epi64(x2, 0xd8);
+        v3 = _mm256_permute4x64_epi64(x3, 0xd8);
     }
-    */
+#endif
 
     static inline
     __m256i quantize(__m256i v, __m256i q, __m256i one, __m256i bias)
@@ -661,6 +667,26 @@ namespace
 
         // load
 
+#ifdef PROTOTYPE_TRANSPOSE
+        const __m256i* s = reinterpret_cast<const __m256i *>(data);
+        __m256i s0 = _mm256_loadu_si256(s + 0);
+        __m256i s1 = _mm256_loadu_si256(s + 1);
+        __m256i s2 = _mm256_loadu_si256(s + 2);
+        __m256i s3 = _mm256_loadu_si256(s + 3);
+
+        transpose_8x8_avx2(s0, s1, s2, s3);
+
+        // NOTE: the transpose doesn't make much sense if we have this crap to ruin it
+        // TODO: refactor the fDCT to work more with 256 wide vectors
+        __m128i v0 = _mm256_extracti128_si256(s0, 0);
+        __m128i v1 = _mm256_extracti128_si256(s0, 1);
+        __m128i v2 = _mm256_extracti128_si256(s1, 0);
+        __m128i v3 = _mm256_extracti128_si256(s1, 1);
+        __m128i v4 = _mm256_extracti128_si256(s2, 0);
+        __m128i v5 = _mm256_extracti128_si256(s2, 1);
+        __m128i v6 = _mm256_extracti128_si256(s3, 0);
+        __m128i v7 = _mm256_extracti128_si256(s3, 1);
+#else
         const __m128i* s = reinterpret_cast<const __m128i *>(data);
         __m128i v0 = _mm_loadu_si128(s + 0);
         __m128i v1 = _mm_loadu_si128(s + 1);
@@ -671,9 +697,10 @@ namespace
         __m128i v6 = _mm_loadu_si128(s + 6);
         __m128i v7 = _mm_loadu_si128(s + 7);
 
-        // pass 1
-
         JPEG_TRANSPOSE16();
+#endif
+
+        // pass 1
 
         __m128i x8 = _mm_add_epi16(v0, v7);
         __m128i x7 = _mm_add_epi16(v1, v6);
