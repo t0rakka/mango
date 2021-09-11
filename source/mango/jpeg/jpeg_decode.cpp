@@ -1820,7 +1820,8 @@ namespace mango::jpeg
 
     int Parser::getTaskSize(int tasks) const
     {
-        const int threads = m_hardware_concurrency;
+        constexpr int max_threads = 64;
+        const int threads = std::min(m_hardware_concurrency, max_threads);
         const int tasks_per_thread = threads > 1 ? std::max(tasks / threads, 1) : 0;
         //printf("Scheduling %d tasks in %d threads (%d tasks/thread)\n", tasks, threads, tasks_per_thread);
         return tasks_per_thread;
