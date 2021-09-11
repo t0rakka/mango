@@ -1270,16 +1270,16 @@ namespace
     // encode_block_avx512
     // ----------------------------------------------------------------------------
 
-    /*
-    // NOTE: parallel symbol size computation prototype
-    // NOTE: try this with AVX512 - 128 bit wide is +- same performance as scalar (sparse input)
+//#define PROTOTYPE_PARALLEL_COEFFICIENTS
+#ifdef PROTOTYPE_PARALLEL_COEFFICIENTS
 
-    inline __m128i getSymbolSize(__m128i absCoeff)
+    static
+    inline __m512i getSymbolSize(__m512i absCoeff)
     {
-        int16x8 value(absCoeff);
-        int16x8 base(0);
-        int16x8 temp;
-        mask16x8 mask;
+        int16x32 value(absCoeff);
+        int16x32 base(0);
+        int16x32 temp;
+        mask16x32 mask;
 
         temp = value & 0xff00;
         mask = temp != 0;
@@ -1306,19 +1306,22 @@ namespace
         return base;
     }
 
-    inline __m128i absSymbolSize(__m128i* ptr_sz, __m128i coeff)
+    static
+    inline __m512i absSymbolSize(__m512i* ptr_sz, __m512i coeff)
     {
-        __m128i absCoeff = _mm_abs_epi16(coeff);
-        __m128i mask = _mm_cmpeq_epi16(absCoeff, coeff);
-        mask = _mm_xor_si128(mask, _mm_cmpeq_epi8(mask, mask)); // not
-        coeff = _mm_add_epi16(coeff, mask);
+        __m512i absCoeff = _mm512_abs_epi16(coeff);
 
-        __m128 sz = getSymbolSize(absCoeff);
-        _mm_storeu_si128(ptr_sz, sz);
+        __m512i one = _mm512_set1_epi16(1);
+        __mmask32 mask = ~_mm512_cmpeq_epi16_mask(absCoeff, coeff);
+        coeff = _mm512_mask_sub_epi16(coeff, mask, coeff, one);
+
+        __m512i sz = getSymbolSize(absCoeff);
+        _mm512_storeu_si512(ptr_sz, sz);
 
         return coeff;
     }
-    */
+
+#endif // PROTOTYPE_PARALLEL_COEFFICIENTS
 
     u64 zigzag_avx512bw(s16* out, const s16* in)
     {
@@ -1375,6 +1378,17 @@ namespace
         const u32 zero16_code = ac_code[1];
         const u32 zero16_size = ac_size[1];
 
+#ifdef PROTOTYPE_PARALLEL_COEFFICIENTS
+        s16 s_coeff[64];
+        s16 s_size[64];
+        __m512i c0 = *(__m512i*)(temp + 0);
+        __m512i c1 = *(__m512i*)(temp + 32);
+        c0 = absSymbolSize( (__m512i*)(s_size + 0), c0);
+        c1 = absSymbolSize( (__m512i*)(s_size + 32), c1);
+        *(__m512i*)(s_coeff + 0) = c0;
+        *(__m512i*)(s_coeff + 32) = c1;
+#endif
+
         for (int i = 1; i < 64; ++i)
         {
             if (!zeromask)
@@ -1394,12 +1408,18 @@ namespace
                 p = encoder.putBits(p, zero16_code, zero16_size);
             }
 
+#ifdef PROTOTYPE_PARALLEL_COEFFICIENTS
+            int coeff = s_coeff[i];
+            u32 size = s_size[i];
+            u32 mask = (1 << size) - 1;
+#else
             int coeff = temp[i];
             int absCoeff = std::abs(coeff);
             coeff -= (absCoeff != coeff);
 
             u32 size = u32_log2(absCoeff) + 1;
             u32 mask = (1 << size) - 1;
+#endif
 
             int index = counter + size * 16;
             p = encoder.putBits(p, ac_code[index] | (coeff & mask), ac_size[index]);
