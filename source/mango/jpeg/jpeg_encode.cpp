@@ -408,10 +408,10 @@ namespace
         interleave16(v4, v5); \
         interleave16(v6, v7)
 
-    #define JPEG_CONST16(x, y) \
+    #define JPEG_CONST16_SSE2(x, y) \
         _mm_setr_epi16(x, y, x, y, x, y, x, y)
 
-    #define JPEG_TRANSFORM(n) { \
+    #define JPEG_TRANSFORM_SSE2(n) { \
         __m128i a_lo; \
         __m128i a_hi; \
         __m128i b_lo; \
@@ -490,16 +490,16 @@ namespace
         constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
         constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
 
-        const __m128i c26p = JPEG_CONST16(c2, c6);
-        const __m128i c62n = JPEG_CONST16(c6,-c2);
-        const __m128i c75n = JPEG_CONST16(c7,-c5);
-        const __m128i c31n = JPEG_CONST16(c3,-c1);
-        const __m128i c51n = JPEG_CONST16(c5,-c1);
-        const __m128i c73p = JPEG_CONST16(c7, c3);
-        const __m128i c37n = JPEG_CONST16(c3,-c7);
-        const __m128i c15p = JPEG_CONST16(c1, c5);
-        const __m128i c13p = JPEG_CONST16(c1, c3);
-        const __m128i c57p = JPEG_CONST16(c5, c7);
+        const __m128i c26p = JPEG_CONST16_SSE2(c2, c6);
+        const __m128i c62n = JPEG_CONST16_SSE2(c6,-c2);
+        const __m128i c75n = JPEG_CONST16_SSE2(c7,-c5);
+        const __m128i c31n = JPEG_CONST16_SSE2(c3,-c1);
+        const __m128i c51n = JPEG_CONST16_SSE2(c5,-c1);
+        const __m128i c73p = JPEG_CONST16_SSE2(c7, c3);
+        const __m128i c37n = JPEG_CONST16_SSE2(c3,-c7);
+        const __m128i c15p = JPEG_CONST16_SSE2(c1, c5);
+        const __m128i c13p = JPEG_CONST16_SSE2(c1, c3);
+        const __m128i c57p = JPEG_CONST16_SSE2(c5, c7);
 
         // load
 
@@ -542,19 +542,19 @@ namespace
         v0 = _mm_add_epi16(x4, x5);
         v4 = _mm_sub_epi16(x4, x5);
 
-        JPEG_TRANSFORM(10);
+        JPEG_TRANSFORM_SSE2(10);
 
         // pass 2
 
         JPEG_TRANSPOSE16();
 
         x8 = _mm_add_epi16(v0, v7);
-        x0 = _mm_sub_epi16(v0, v7);
         x7 = _mm_add_epi16(v1, v6);
-        x1 = _mm_sub_epi16(v1, v6);
         x6 = _mm_add_epi16(v2, v5);
-        x2 = _mm_sub_epi16(v2, v5);
         x5 = _mm_add_epi16(v3, v4);
+        x0 = _mm_sub_epi16(v0, v7);
+        x1 = _mm_sub_epi16(v1, v6);
+        x2 = _mm_sub_epi16(v2, v5);
         x3 = _mm_sub_epi16(v3, v4);
 
         x4 = _mm_add_epi16(x8, x5);
@@ -572,7 +572,7 @@ namespace
         v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
         v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
 
-        JPEG_TRANSFORM(13);
+        JPEG_TRANSFORM_SSE2(13);
 
         // quantize
 
@@ -644,6 +644,46 @@ namespace
         return v;
     }
 
+    #define JPEG_CONST16_AVX2(x, y) \
+        _mm256_setr_epi16(x, y, x, y, x, y, x, y, x, y, x, y, x, y, x, y)
+
+    #define JPEG_TRANSFORM_AVX2(n) { \
+        __m256i a; \
+        __m256i b; \
+        \
+        a = _mm256_madd_epi16(x87_256, c26p); \
+        a = _mm256_srai_epi32(a, n); \
+        v2 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1)); \
+        \
+        a = _mm256_madd_epi16(x87_256, c62n); \
+        a = _mm256_srai_epi32(a, n); \
+        v6 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1)); \
+        \
+        a = _mm256_madd_epi16(x01_256, c75n); \
+        b = _mm256_madd_epi16(x23_256, c31n); \
+        a = _mm256_add_epi32(a, b); \
+        a = _mm256_srai_epi32(a, n); \
+        v7 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1)); \
+        \
+        a = _mm256_madd_epi16(x01_256, c51n); \
+        b = _mm256_madd_epi16(x23_256, c73p); \
+        a = _mm256_add_epi32(a, b); \
+        a = _mm256_srai_epi32(a, n); \
+        v5 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1)); \
+        \
+        a = _mm256_madd_epi16(x01_256, c37n); \
+        b = _mm256_madd_epi16(x23_256, c15p); \
+        a = _mm256_sub_epi32(a, b); \
+        a = _mm256_srai_epi32(a, n); \
+        v3 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1)); \
+        \
+        a = _mm256_madd_epi16(x01_256, c13p); \
+        b = _mm256_madd_epi16(x23_256, c57p); \
+        a = _mm256_add_epi32(a, b); \
+        a = _mm256_srai_epi32(a, n); \
+        v1 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1)); \
+        }
+
     static
     void fdct_avx2(s16* dest, const s16* data, const s16* qtable)
     {
@@ -654,20 +694,21 @@ namespace
         constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
         constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
 
-        const __m128i c26p = JPEG_CONST16(c2, c6);
-        const __m128i c62n = JPEG_CONST16(c6,-c2);
-        const __m128i c75n = JPEG_CONST16(c7,-c5);
-        const __m128i c31n = JPEG_CONST16(c3,-c1);
-        const __m128i c51n = JPEG_CONST16(c5,-c1);
-        const __m128i c73p = JPEG_CONST16(c7, c3);
-        const __m128i c37n = JPEG_CONST16(c3,-c7);
-        const __m128i c15p = JPEG_CONST16(c1, c5);
-        const __m128i c13p = JPEG_CONST16(c1, c3);
-        __m128i c57p = JPEG_CONST16(c5, c7);
+        const __m256i c26p = JPEG_CONST16_AVX2(c2, c6);
+        const __m256i c62n = JPEG_CONST16_AVX2(c6,-c2);
+        const __m256i c75n = JPEG_CONST16_AVX2(c7,-c5);
+        const __m256i c31n = JPEG_CONST16_AVX2(c3,-c1);
+        const __m256i c51n = JPEG_CONST16_AVX2(c5,-c1);
+        const __m256i c73p = JPEG_CONST16_AVX2(c7, c3);
+        const __m256i c37n = JPEG_CONST16_AVX2(c3,-c7);
+        const __m256i c15p = JPEG_CONST16_AVX2(c1, c5);
+        const __m256i c13p = JPEG_CONST16_AVX2(c1, c3);
+        const __m256i c57p = JPEG_CONST16_AVX2(c5, c7);
 
         // load
 
 #ifdef PROTOTYPE_TRANSPOSE
+
         const __m256i* s = reinterpret_cast<const __m256i *>(data);
         __m256i s0 = _mm256_loadu_si256(s + 0);
         __m256i s1 = _mm256_loadu_si256(s + 1);
@@ -686,7 +727,9 @@ namespace
         __m128i v5 = _mm256_extracti128_si256(s2, 1);
         __m128i v6 = _mm256_extracti128_si256(s3, 0);
         __m128i v7 = _mm256_extracti128_si256(s3, 1);
+
 #else
+
         const __m128i* s = reinterpret_cast<const __m128i *>(data);
         __m128i v0 = _mm_loadu_si128(s + 0);
         __m128i v1 = _mm_loadu_si128(s + 1);
@@ -698,6 +741,7 @@ namespace
         __m128i v7 = _mm_loadu_si128(s + 7);
 
         JPEG_TRANSPOSE16();
+
 #endif
 
         // pass 1
@@ -717,6 +761,9 @@ namespace
         x5 = _mm_add_epi16(x7, x6);
         x7 = _mm_sub_epi16(x7, x6);
 
+        v0 = _mm_add_epi16(x4, x5);
+        v4 = _mm_sub_epi16(x4, x5);
+
         __m128i x87_lo = _mm_unpacklo_epi16(x8, x7);
         __m128i x87_hi = _mm_unpackhi_epi16(x8, x7);
         __m128i x01_lo = _mm_unpacklo_epi16(x0, x1);
@@ -724,28 +771,54 @@ namespace
         __m128i x23_lo = _mm_unpacklo_epi16(x2, x3);
         __m128i x23_hi = _mm_unpackhi_epi16(x2, x3);
 
-        v0 = _mm_add_epi16(x4, x5);
-        v4 = _mm_sub_epi16(x4, x5);
+        __m256i x87_256 = _mm256_setr_m128i(x87_lo, x87_hi);
+        __m256i x01_256 = _mm256_setr_m128i(x01_lo, x01_hi);
+        __m256i x23_256 = _mm256_setr_m128i(x23_lo, x23_hi);
 
-        JPEG_TRANSFORM(10);
+        JPEG_TRANSFORM_AVX2(10);
 
         // pass 2
 
+#ifdef PROTOTYPE_TRANSPOSE
+
+        s0 = _mm256_setr_m128i(v0, v1);
+        s1 = _mm256_setr_m128i(v2, v3);
+        s2 = _mm256_setr_m128i(v4, v5);
+        s3 = _mm256_setr_m128i(v6, v7);
+
+        transpose_8x8_avx2(s0, s1, s2, s3);
+
+        v0 = _mm256_extracti128_si256(s0, 0);
+        v1 = _mm256_extracti128_si256(s0, 1);
+        v2 = _mm256_extracti128_si256(s1, 0);
+        v3 = _mm256_extracti128_si256(s1, 1);
+        v4 = _mm256_extracti128_si256(s2, 0);
+        v5 = _mm256_extracti128_si256(s2, 1);
+        v6 = _mm256_extracti128_si256(s3, 0);
+        v7 = _mm256_extracti128_si256(s3, 1);
+
+#else
+
         JPEG_TRANSPOSE16();
 
+#endif
+
         x8 = _mm_add_epi16(v0, v7);
-        x0 = _mm_sub_epi16(v0, v7);
         x7 = _mm_add_epi16(v1, v6);
-        x1 = _mm_sub_epi16(v1, v6);
         x6 = _mm_add_epi16(v2, v5);
-        x2 = _mm_sub_epi16(v2, v5);
         x5 = _mm_add_epi16(v3, v4);
+        x0 = _mm_sub_epi16(v0, v7);
+        x1 = _mm_sub_epi16(v1, v6);
+        x2 = _mm_sub_epi16(v2, v5);
         x3 = _mm_sub_epi16(v3, v4);
 
         x4 = _mm_add_epi16(x8, x5);
         x8 = _mm_sub_epi16(x8, x5);
         x5 = _mm_add_epi16(x7, x6);
         x7 = _mm_sub_epi16(x7, x6);
+
+        v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
+        v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
 
         x87_lo = _mm_unpacklo_epi16(x8, x7);
         x87_hi = _mm_unpackhi_epi16(x8, x7);
@@ -754,10 +827,11 @@ namespace
         x23_lo = _mm_unpacklo_epi16(x2, x3);
         x23_hi = _mm_unpackhi_epi16(x2, x3);
 
-        v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
-        v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
+        x87_256 = _mm256_setr_m128i(x87_lo, x87_hi);
+        x01_256 = _mm256_setr_m128i(x01_lo, x01_hi);
+        x23_256 = _mm256_setr_m128i(x23_lo, x23_hi);
 
-        JPEG_TRANSFORM(13);
+        JPEG_TRANSFORM_AVX2(13);
 
         __m256i v01 = _mm256_setr_m128i(v0, v1);
         __m256i v23 = _mm256_setr_m128i(v2, v3);
