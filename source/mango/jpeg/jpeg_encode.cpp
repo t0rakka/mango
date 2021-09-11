@@ -2094,8 +2094,21 @@ namespace
     static
     void read_y_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
-        // TODO
-        read_y_format(block, input, stride, rows, cols);
+        MANGO_UNREFERENCED(rows);
+        MANGO_UNREFERENCED(cols);
+
+        const int16x8_t c128 = vdupq_n_s16(128);
+
+        for (int y = 0; y < 8; ++y)
+        {
+            uint8x8_t v = vld1_u8(input);
+            int16x8_t s = vreinterpretq_s16_u16(vmovl_u8(v));
+            s = vsubq_s16(s, c128);
+            vst1q_s16(block, s);
+
+            input += stride;
+            block += 8;
+        }
     }
 
     static
