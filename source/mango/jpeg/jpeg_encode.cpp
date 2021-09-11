@@ -1264,7 +1264,7 @@ namespace
 
 #endif // defined(MANGO_ENABLE_SSE4_1)
 
-#if defined(JPEG_ENABLE_AVX512)
+#if defined(MANGO_ENABLE_AVX512)
 
     // ----------------------------------------------------------------------------
     // encode_block_avx512
@@ -1408,7 +1408,7 @@ namespace
         return p;
     }
 
-#endif // defined(JPEG_ENABLE_AVX512)
+#endif // defined(MANGO_ENABLE_AVX512)
 
 #if defined(MANGO_ENABLE_NEON64)
 
@@ -2386,7 +2386,7 @@ namespace
         }
 #endif
 
-#if defined(JPEG_ENABLE_AVX512)
+#if defined(MANGO_ENABLE_AVX512)
         if (flags & INTEL_AVX512BW)
         {
             encode = encode_block_avx512bw;
@@ -2405,10 +2405,10 @@ namespace
         info = "fDCT: ";
         info += fdct_name;
 
-        info += ", ";
+        info += ", Color: ";
         info += sampler_name;
 
-        info += ", ";
+        info += ", Encoder: ";
         info += encode_name;
 
         mcu_width = 8;

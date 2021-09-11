@@ -1458,7 +1458,7 @@ namespace mango::jpeg
         if (flags & ARM_NEON)
         {
             processState.idct = idct_neon;
-            m_idct_name = "NEON iDCT";
+            m_idct_name = "iDCT: NEON";
         }
 #endif
 
@@ -1466,7 +1466,7 @@ namespace mango::jpeg
         if (flags & INTEL_SSE2)
         {
             processState.idct = idct_sse2;
-            m_idct_name = "SSE2 iDCT";
+            m_idct_name = "iDCT: SSE2";
         }
 #endif
 
@@ -1475,7 +1475,7 @@ namespace mango::jpeg
             // Force 12 bit idct
             // This will round down to 8 bit precision until we have a 12 bit capable color conversion
             processState.idct = idct12;
-            m_idct_name = "12 bit iDCT";
+            m_idct_name = "iDCT: 12 bit";
         }
 
         // configure block processing
@@ -1637,12 +1637,12 @@ namespace mango::jpeg
         {
             case 1:
                 processState.process = processState.process_y;
-                id = "Y";
+                id = "Color: Y";
                 break;
 
             case 3:
                 processState.process = processState.process_ycbcr;
-                id = "YCbCr";
+                id = "Color: YCbCr";
 
                 // detect optimized cases
                 if (blocks_in_mcu <= 6)
@@ -1652,7 +1652,7 @@ namespace mango::jpeg
                         if (processState.process_ycbcr_8x8)
                         {
                             processState.process = processState.process_ycbcr_8x8;
-                            id = makeString("%s YCbCr 8x8", simd);
+                            id = makeString("Color: %s YCbCr 8x8", simd);
                         }
                     }
 
@@ -1661,7 +1661,7 @@ namespace mango::jpeg
                         if (processState.process_ycbcr_8x16)
                         {
                             processState.process = processState.process_ycbcr_8x16;
-                            id = makeString("%s YCbCr 8x16", simd);
+                            id = makeString("Color: %s YCbCr 8x16", simd);
                         }
                     }
 
@@ -1670,7 +1670,7 @@ namespace mango::jpeg
                         if (processState.process_ycbcr_16x8)
                         {
                             processState.process = processState.process_ycbcr_16x8;
-                            id = makeString("%s YCbCr 16x8", simd);
+                            id = makeString("Color: %s YCbCr 16x8", simd);
                         }
                     }
 
@@ -1679,7 +1679,7 @@ namespace mango::jpeg
                         if (processState.process_ycbcr_16x16)
                         {
                             processState.process = processState.process_ycbcr_16x16;
-                            id = makeString("%s YCbCr 16x16", simd);
+                            id = makeString("Color: %s YCbCr 16x16", simd);
                         }
                     }
                 }
@@ -1687,7 +1687,7 @@ namespace mango::jpeg
 
             case 4:
                 processState.process = processState.process_cmyk;
-                id = "CMYK";
+                id = "Color: CMYK";
                 break;
         }
 
