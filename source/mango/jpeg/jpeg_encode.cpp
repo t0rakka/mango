@@ -394,9 +394,6 @@ namespace
         b = _mm_unpackhi_epi16(c, b);
     }
 
-    #define JPEG_CONST16(x, y) \
-        _mm_setr_epi16(x, y, x, y, x, y, x, y)
-
     #define JPEG_TRANSPOSE16() \
         interleave16(v0, v4); \
         interleave16(v2, v6); \
@@ -410,6 +407,9 @@ namespace
         interleave16(v2, v3); \
         interleave16(v4, v5); \
         interleave16(v6, v7)
+
+    #define JPEG_CONST16(x, y) \
+        _mm_setr_epi16(x, y, x, y, x, y, x, y)
 
     #define JPEG_TRANSFORM(n) { \
         __m128i a_lo; \
@@ -490,16 +490,16 @@ namespace
         constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
         constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
 
-        __m128i c26p = JPEG_CONST16(c2, c6);
-        __m128i c62n = JPEG_CONST16(c6,-c2);
-        __m128i c75n = JPEG_CONST16(c7,-c5);
-        __m128i c31n = JPEG_CONST16(c3,-c1);
-        __m128i c51n = JPEG_CONST16(c5,-c1);
-        __m128i c73p = JPEG_CONST16(c7, c3);
-        __m128i c37n = JPEG_CONST16(c3,-c7);
-        __m128i c15p = JPEG_CONST16(c1, c5);
-        __m128i c13p = JPEG_CONST16(c1, c3);
-        __m128i c57p = JPEG_CONST16(c5, c7);
+        const __m128i c26p = JPEG_CONST16(c2, c6);
+        const __m128i c62n = JPEG_CONST16(c6,-c2);
+        const __m128i c75n = JPEG_CONST16(c7,-c5);
+        const __m128i c31n = JPEG_CONST16(c3,-c1);
+        const __m128i c51n = JPEG_CONST16(c5,-c1);
+        const __m128i c73p = JPEG_CONST16(c7, c3);
+        const __m128i c37n = JPEG_CONST16(c3,-c7);
+        const __m128i c15p = JPEG_CONST16(c1, c5);
+        const __m128i c13p = JPEG_CONST16(c1, c3);
+        const __m128i c57p = JPEG_CONST16(c5, c7);
 
         // load
 
@@ -525,8 +525,9 @@ namespace
         __m128i x1 = _mm_sub_epi16(v1, v6);
         __m128i x2 = _mm_sub_epi16(v2, v5);
         __m128i x3 = _mm_sub_epi16(v3, v4);
-        __m128i x4 = _mm_add_epi16(x8, x5);
 
+        __m128i x4;
+        x4 = _mm_add_epi16(x8, x5);
         x8 = _mm_sub_epi16(x8, x5);
         x5 = _mm_add_epi16(x7, x6);
         x7 = _mm_sub_epi16(x7, x6);
@@ -555,8 +556,8 @@ namespace
         x2 = _mm_sub_epi16(v2, v5);
         x5 = _mm_add_epi16(v3, v4);
         x3 = _mm_sub_epi16(v3, v4);
-        x4 = _mm_add_epi16(x8, x5);
 
+        x4 = _mm_add_epi16(x8, x5);
         x8 = _mm_sub_epi16(x8, x5);
         x5 = _mm_add_epi16(x7, x6);
         x7 = _mm_sub_epi16(x7, x6);
@@ -607,6 +608,25 @@ namespace
     // fdct_avx2
     // ----------------------------------------------------------------------------
 
+    /*
+    static inline 
+    void transpose_8x8_avx2(__m256i& v0, __m256i& v1, __m256i& v2, __m256i& v3)
+    {
+        __m256i v4 = _mm256_unpacklo_epi16(v0, v1);
+        __m256i v5 = _mm256_unpackhi_epi16(v0, v1);
+        __m256i v6 = _mm256_unpacklo_epi16(v2, v3);
+        __m256i v7 = _mm256_unpackhi_epi16(v2, v3);
+        v0 = _mm256_unpacklo_epi32(v4, v6);
+        v1 = _mm256_unpackhi_epi32(v4, v6);
+        v2 = _mm256_unpacklo_epi32(v5, v7);
+        v3 = _mm256_unpackhi_epi32(v5, v7);
+        v0 = _mm256_permute4x64_epi64(v0, 0x8d);
+        v1 = _mm256_permute4x64_epi64(v1, 0x8d);
+        v2 = _mm256_permute4x64_epi64(v2, 0xd8);
+        v3 = _mm256_permute4x64_epi64(v3, 0xd8);
+    }
+    */
+
     static inline
     __m256i quantize(__m256i v, __m256i q, __m256i one, __m256i bias)
     {
@@ -628,15 +648,15 @@ namespace
         constexpr s16 c6 = 554;  // cos 6PI/16 * root(2)
         constexpr s16 c7 = 283;  // cos 7PI/16 * root(2)
 
-        __m128i c26p = JPEG_CONST16(c2, c6);
-        __m128i c62n = JPEG_CONST16(c6,-c2);
-        __m128i c75n = JPEG_CONST16(c7,-c5);
-        __m128i c31n = JPEG_CONST16(c3,-c1);
-        __m128i c51n = JPEG_CONST16(c5,-c1);
-        __m128i c73p = JPEG_CONST16(c7, c3);
-        __m128i c37n = JPEG_CONST16(c3,-c7);
-        __m128i c15p = JPEG_CONST16(c1, c5);
-        __m128i c13p = JPEG_CONST16(c1, c3);
+        const __m128i c26p = JPEG_CONST16(c2, c6);
+        const __m128i c62n = JPEG_CONST16(c6,-c2);
+        const __m128i c75n = JPEG_CONST16(c7,-c5);
+        const __m128i c31n = JPEG_CONST16(c3,-c1);
+        const __m128i c51n = JPEG_CONST16(c5,-c1);
+        const __m128i c73p = JPEG_CONST16(c7, c3);
+        const __m128i c37n = JPEG_CONST16(c3,-c7);
+        const __m128i c15p = JPEG_CONST16(c1, c5);
+        const __m128i c13p = JPEG_CONST16(c1, c3);
         __m128i c57p = JPEG_CONST16(c5, c7);
 
         // load
@@ -663,8 +683,9 @@ namespace
         __m128i x1 = _mm_sub_epi16(v1, v6);
         __m128i x2 = _mm_sub_epi16(v2, v5);
         __m128i x3 = _mm_sub_epi16(v3, v4);
-        __m128i x4 = _mm_add_epi16(x8, x5);
 
+        __m128i x4;
+        x4 = _mm_add_epi16(x8, x5);
         x8 = _mm_sub_epi16(x8, x5);
         x5 = _mm_add_epi16(x7, x6);
         x7 = _mm_sub_epi16(x7, x6);
@@ -693,8 +714,8 @@ namespace
         x2 = _mm_sub_epi16(v2, v5);
         x5 = _mm_add_epi16(v3, v4);
         x3 = _mm_sub_epi16(v3, v4);
-        x4 = _mm_add_epi16(x8, x5);
 
+        x4 = _mm_add_epi16(x8, x5);
         x8 = _mm_sub_epi16(x8, x5);
         x5 = _mm_add_epi16(x7, x6);
         x7 = _mm_sub_epi16(x7, x6);
