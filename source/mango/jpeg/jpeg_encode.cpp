@@ -604,7 +604,7 @@ namespace
 
 #endif // defined(MANGO_ENABLE_SSE2)
 
-#if defined(MANGO_ENABLE_AVX2)
+#if defined(MANGO_ENABLE_AVX2__disabled)
 
     // ----------------------------------------------------------------------------
     // fdct_avx2
@@ -2464,7 +2464,7 @@ namespace
         }
 #endif
 
-#if defined(MANGO_ENABLE_AVX2)
+#if defined(MANGO_ENABLE_AVX2__disabled)
         if (flags & INTEL_AVX2)
         {
             fdct = fdct_avx2;
