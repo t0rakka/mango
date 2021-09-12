@@ -602,15 +602,15 @@ namespace
         _mm_storeu_si128(d + 7, v7);
     }
 
+#endif // defined(MANGO_ENABLE_SSE2)
+
 #if defined(MANGO_ENABLE_AVX2)
 
     // ----------------------------------------------------------------------------
     // fdct_avx2
     // ----------------------------------------------------------------------------
 
-//#define PROTOTYPE_TRANSPOSE
 
-#ifdef PROTOTYPE_TRANSPOSE
     static inline
     void transpose_8x8_avx2(__m256i& v0, __m256i& v1, __m256i& v2, __m256i& v3)
     {
@@ -631,7 +631,6 @@ namespace
         v2 = _mm256_permute4x64_epi64(x2, 0xd8);
         v3 = _mm256_permute4x64_epi64(x3, 0xd8);
     }
-#endif
 
     static inline
     __m256i quantize(__m256i v, __m256i q, __m256i one, __m256i bias)
@@ -647,42 +646,57 @@ namespace
     #define JPEG_CONST16_AVX2(x, y) \
         _mm256_setr_epi16(x, y, x, y, x, y, x, y, x, y, x, y, x, y, x, y)
 
-    #define JPEG_TRANSFORM_AVX2(n) { \
-        __m256i a; \
-        __m256i b; \
-        \
-        a = _mm256_madd_epi16(x87_256, c26p); \
-        a = _mm256_srai_epi32(a, n); \
-        v2 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1)); \
-        \
-        a = _mm256_madd_epi16(x87_256, c62n); \
-        a = _mm256_srai_epi32(a, n); \
-        v6 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1)); \
-        \
-        a = _mm256_madd_epi16(x01_256, c75n); \
-        b = _mm256_madd_epi16(x23_256, c31n); \
-        a = _mm256_add_epi32(a, b); \
-        a = _mm256_srai_epi32(a, n); \
-        v7 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1)); \
-        \
-        a = _mm256_madd_epi16(x01_256, c51n); \
-        b = _mm256_madd_epi16(x23_256, c73p); \
-        a = _mm256_add_epi32(a, b); \
-        a = _mm256_srai_epi32(a, n); \
-        v5 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1)); \
-        \
-        a = _mm256_madd_epi16(x01_256, c37n); \
-        b = _mm256_madd_epi16(x23_256, c15p); \
-        a = _mm256_sub_epi32(a, b); \
-        a = _mm256_srai_epi32(a, n); \
-        v3 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1)); \
-        \
-        a = _mm256_madd_epi16(x01_256, c13p); \
-        b = _mm256_madd_epi16(x23_256, c57p); \
-        a = _mm256_add_epi32(a, b); \
-        a = _mm256_srai_epi32(a, n); \
-        v1 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1)); \
-        }
+    template <int nbits>
+    __m256i transform_sub_term(__m256i c0, __m256i c1, __m256i c2, __m256i c3, __m256i c4, __m256i c5)
+    {
+        __m256i a;
+        __m256i b;
+
+        a = _mm256_madd_epi16(c0, c1);
+        a = _mm256_srai_epi32(a, nbits);
+        __m128i v2 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1));
+
+        a = _mm256_madd_epi16(c2, c3);
+        b = _mm256_madd_epi16(c4, c5);
+        a = _mm256_sub_epi32(a, b); // <-- sub
+        a = _mm256_srai_epi32(a, nbits);
+        __m128i v3 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1));
+
+        return _mm256_setr_m128i(v2, v3);
+    }
+
+    template <int nbits>
+    __m256i transform_add_term(__m256i c0, __m256i c1, __m256i c2, __m256i c3, __m256i c4, __m256i c5)
+    {
+        __m256i a;
+        __m256i b;
+
+        a = _mm256_madd_epi16(c0, c1);
+        a = _mm256_srai_epi32(a, nbits);
+        __m128i v2 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1));
+
+        a = _mm256_madd_epi16(c2, c3);
+        b = _mm256_madd_epi16(c4, c5);
+        a = _mm256_add_epi32(a, b); // <-- add
+        a = _mm256_srai_epi32(a, nbits);
+        __m128i v3 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1));
+
+        return _mm256_setr_m128i(v2, v3);
+    }
+
+    template <int nbits>
+    __m256i transform_term(__m128i v, __m256i c0, __m256i c1, __m256i c2, __m256i c3)
+    {
+        __m256i a;
+        __m256i b;
+
+        a = _mm256_madd_epi16(c0, c1);
+        b = _mm256_madd_epi16(c2, c3);
+        a = _mm256_add_epi32(a, b);
+        a = _mm256_srai_epi32(a, nbits);
+        __m128i v5 = _mm_packs_epi32(_mm256_extracti128_si256(a, 0), _mm256_extracti128_si256(a, 1));
+        return _mm256_setr_m128i(v, v5);
+    }
 
     static
     void fdct_avx2(s16* dest, const s16* data, const s16* qtable)
@@ -707,8 +721,6 @@ namespace
 
         // load
 
-#ifdef PROTOTYPE_TRANSPOSE
-
         const __m256i* s = reinterpret_cast<const __m256i *>(data);
         __m256i s0 = _mm256_loadu_si256(s + 0);
         __m256i s1 = _mm256_loadu_si256(s + 1);
@@ -727,22 +739,6 @@ namespace
         __m128i v5 = _mm256_extracti128_si256(s2, 1);
         __m128i v6 = _mm256_extracti128_si256(s3, 0);
         __m128i v7 = _mm256_extracti128_si256(s3, 1);
-
-#else
-
-        const __m128i* s = reinterpret_cast<const __m128i *>(data);
-        __m128i v0 = _mm_loadu_si128(s + 0);
-        __m128i v1 = _mm_loadu_si128(s + 1);
-        __m128i v2 = _mm_loadu_si128(s + 2);
-        __m128i v3 = _mm_loadu_si128(s + 3);
-        __m128i v4 = _mm_loadu_si128(s + 4);
-        __m128i v5 = _mm_loadu_si128(s + 5);
-        __m128i v6 = _mm_loadu_si128(s + 6);
-        __m128i v7 = _mm_loadu_si128(s + 7);
-
-        JPEG_TRANSPOSE16();
-
-#endif
 
         // pass 1
 
@@ -771,20 +767,18 @@ namespace
         __m128i x23_lo = _mm_unpacklo_epi16(x2, x3);
         __m128i x23_hi = _mm_unpackhi_epi16(x2, x3);
 
-        __m256i x87_256 = _mm256_setr_m128i(x87_lo, x87_hi);
-        __m256i x01_256 = _mm256_setr_m128i(x01_lo, x01_hi);
-        __m256i x23_256 = _mm256_setr_m128i(x23_lo, x23_hi);
+        // transform
 
-        JPEG_TRANSFORM_AVX2(10);
+        __m256i x87 = _mm256_setr_m128i(x87_lo, x87_hi);
+        __m256i x01 = _mm256_setr_m128i(x01_lo, x01_hi);
+        __m256i x23 = _mm256_setr_m128i(x23_lo, x23_hi);
+
+        s0 = transform_term<10>(v0, x01, c13p, x23, c57p);
+        s2 = transform_term<10>(v4, x01, c51n, x23, c73p);
+        s1 = transform_sub_term<10>(x87, c26p, x01, c37n, x23, c15p);
+        s3 = transform_add_term<10>(x87, c62n, x01, c75n, x23, c31n);
 
         // pass 2
-
-#ifdef PROTOTYPE_TRANSPOSE
-
-        s0 = _mm256_setr_m128i(v0, v1);
-        s1 = _mm256_setr_m128i(v2, v3);
-        s2 = _mm256_setr_m128i(v4, v5);
-        s3 = _mm256_setr_m128i(v6, v7);
 
         transpose_8x8_avx2(s0, s1, s2, s3);
 
@@ -796,12 +790,6 @@ namespace
         v5 = _mm256_extracti128_si256(s2, 1);
         v6 = _mm256_extracti128_si256(s3, 0);
         v7 = _mm256_extracti128_si256(s3, 1);
-
-#else
-
-        JPEG_TRANSPOSE16();
-
-#endif
 
         x8 = _mm_add_epi16(v0, v7);
         x7 = _mm_add_epi16(v1, v6);
@@ -827,16 +815,16 @@ namespace
         x23_lo = _mm_unpacklo_epi16(x2, x3);
         x23_hi = _mm_unpackhi_epi16(x2, x3);
 
-        x87_256 = _mm256_setr_m128i(x87_lo, x87_hi);
-        x01_256 = _mm256_setr_m128i(x01_lo, x01_hi);
-        x23_256 = _mm256_setr_m128i(x23_lo, x23_hi);
+        // transform
 
-        JPEG_TRANSFORM_AVX2(13);
+        x87 = _mm256_setr_m128i(x87_lo, x87_hi);
+        x01 = _mm256_setr_m128i(x01_lo, x01_hi);
+        x23 = _mm256_setr_m128i(x23_lo, x23_hi);
 
-        __m256i v01 = _mm256_setr_m128i(v0, v1);
-        __m256i v23 = _mm256_setr_m128i(v2, v3);
-        __m256i v45 = _mm256_setr_m128i(v4, v5);
-        __m256i v67 = _mm256_setr_m128i(v6, v7);
+        s0 = transform_term<13>(v0, x01, c13p, x23, c57p);
+        s2 = transform_term<13>(v4, x01, c51n, x23, c73p);
+        s1 = transform_sub_term<13>(x87, c26p, x01, c37n, x23, c15p);
+        s3 = transform_add_term<13>(x87, c62n, x01, c75n, x23, c31n);
 
         // quantize
 
@@ -844,22 +832,21 @@ namespace
         const __m256i bias = _mm256_set1_epi16(0x4000);
         const __m256i* q = reinterpret_cast<const __m256i*>(qtable);
 
-        v01 = quantize(v01, q[0], one, bias);
-        v23 = quantize(v23, q[1], one, bias);
-        v45 = quantize(v45, q[2], one, bias);
-        v67 = quantize(v67, q[3], one, bias);
+        s0 = quantize(s0, q[0], one, bias);
+        s1 = quantize(s1, q[1], one, bias);
+        s2 = quantize(s2, q[2], one, bias);
+        s3 = quantize(s3, q[3], one, bias);
 
         // store
 
         __m256i* d = reinterpret_cast<__m256i *>(dest);
-        _mm256_storeu_si256(d + 0, v01);
-        _mm256_storeu_si256(d + 1, v23);
-        _mm256_storeu_si256(d + 2, v45);
-        _mm256_storeu_si256(d + 3, v67);
+        _mm256_storeu_si256(d + 0, s0);
+        _mm256_storeu_si256(d + 1, s1);
+        _mm256_storeu_si256(d + 2, s2);
+        _mm256_storeu_si256(d + 3, s3);
     }
 
 #endif // defined(MANGO_ENABLE_AVX2)
-#endif // defined(MANGO_ENABLE_SSE2)
 
 #if defined(MANGO_ENABLE_NEON)
 
