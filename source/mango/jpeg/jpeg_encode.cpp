@@ -747,24 +747,20 @@ namespace
         __m256i x65 = _mm256_add_epi16(s1, v54);
         __m256i x01 = _mm256_sub_epi16(s0, v76);
         __m256i x23 = _mm256_sub_epi16(s1, v54);
+        __m256i x56 = _mm256_permute4x64_epi64(x65, 0x4e);
 
-        __m128i x8 = _mm256_extracti128_si256(x87, 0);
-        __m128i x7 = _mm256_extracti128_si256(x87, 1);
-        __m128i x6 = _mm256_extracti128_si256(x65, 0);
-        __m128i x5 = _mm256_extracti128_si256(x65, 1);
+        __m256i x45;
+        x45 = _mm256_add_epi16(x87, x56);
+        x87 = _mm256_sub_epi16(x87, x56);
 
-        __m128i x4;
-        x4 = _mm_add_epi16(x8, x5);
-        x8 = _mm_sub_epi16(x8, x5);
-        x5 = _mm_add_epi16(x7, x6);
-        x7 = _mm_sub_epi16(x7, x6);
-
+        __m128i x4 = _mm256_extracti128_si256(x45, 0);
+        __m128i x5 = _mm256_extracti128_si256(x45, 1);
         __m128i v0 = _mm_add_epi16(x4, x5);
         __m128i v4 = _mm_sub_epi16(x4, x5);
 
         // transform
 
-        x87 = _mm256_setr_m128i(_mm_unpacklo_epi16(x8, x7), _mm_unpackhi_epi16(x8, x7));
+        x87 = unpack(x87);
         x01 = unpack(x01);
         x23 = unpack(x23);
 
@@ -784,23 +780,21 @@ namespace
         x65 = _mm256_add_epi16(s1, v54);
         x01 = _mm256_sub_epi16(s0, v76);
         x23 = _mm256_sub_epi16(s1, v54);
+        x56 = _mm256_permute4x64_epi64(x65, 0x4e);
 
-        x8 = _mm256_extracti128_si256(x87, 0);
-        x7 = _mm256_extracti128_si256(x87, 1);
-        x6 = _mm256_extracti128_si256(x65, 0);
-        x5 = _mm256_extracti128_si256(x65, 1);
+        x45 = _mm256_add_epi16(x87, x56);
+        x87 = _mm256_sub_epi16(x87, x56);
 
-        x4 = _mm_add_epi16(x8, x5);
-        x8 = _mm_sub_epi16(x8, x5);
-        x5 = _mm_add_epi16(x7, x6);
-        x7 = _mm_sub_epi16(x7, x6);
-
-        v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
-        v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
+        x4 = _mm256_extracti128_si256(x45, 0);
+        x5 = _mm256_extracti128_si256(x45, 1);
+        v0 = _mm_add_epi16(x4, x5);
+        v4 = _mm_sub_epi16(x4, x5);
+        v0 = _mm_srai_epi16(v0, 3);
+        v4 = _mm_srai_epi16(v4, 3);
 
         // transform
 
-        x87 = _mm256_setr_m128i(_mm_unpacklo_epi16(x8, x7), _mm_unpackhi_epi16(x8, x7));
+        x87 = unpack(x87);
         x01 = unpack(x01);
         x23 = unpack(x23);
 
