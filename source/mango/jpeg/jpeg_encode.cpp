@@ -1769,6 +1769,7 @@ namespace
             input += stride;
 
         }
+
         // replicate last row
         for (int i = 8 - rows; i > 0; --i)
         {
