@@ -1705,219 +1705,199 @@ namespace
     // ----------------------------------------------------------------------------
 
     static
+    void compute_ycbcr(s16* dest, int r, int g, int b)
+    {
+        int y = (76 * r + 151 * g + 29 * b) >> 8;
+        int cr = ((r - y) * 182) >> 8;
+        int cb = ((b - y) * 144) >> 8;
+        dest[0 * 64] = s16(y - 128);
+        dest[1 * 64] = s16(cb);
+        dest[2 * 64] = s16(cr);
+    }
+
+    static
     void read_y_format(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
-        for (int i = 0; i < rows; ++i)
+        for (int y = 0; y < rows; ++y)
         {
-            const u8* scan = input;
-            for (int j = cols; j > 0; --j)
+            for (int x = 0; x < cols; ++x)
             {
-                *block++ = (*scan++) - 128;
+                *block++ = input[x] - 128;
             }
 
             // replicate last column
-            for (int j = 8 - cols; j > 0; --j)
+            if (cols < 8)
             {
-                *block = *(block - 1);
-                ++block;
+                const int count = 8 - cols;
+                std::fill_n(block, count, block[-1]);
+                block += count;
             }
 
             input += stride;
         }
 
         // replicate last row
-        for (int i = 8 - rows; i > 0; --i)
+        for (int y = rows; y < 8; ++y)
         {
-            for (int j = 8; j > 0; --j)
-            {
-                *block = *(block - 8);
-                ++block;
-            }
+            std::memcpy(block, block - 8, 16);
+            block += 8;
         }
     }
 
     static
     void read_bgr_format(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
-        for (int i = 0; i < rows; ++i)
+        for (int y = 0; y < rows; ++y)
         {
             const u8* scan = input;
-            for (int j = 0; j < cols; ++j)
+
+            for (int x = 0; x < cols; ++x)
             {
                 int r = scan[2];
                 int g = scan[1];
                 int b = scan[0];
-                int y = (76 * r + 151 * g + 29 * b) >> 8;
-                int cr = ((r - y) * 182) >> 8;
-                int cb = ((b - y) * 144) >> 8;
-                block[0 * 64] = s16(y - 128);
-                block[1 * 64] = s16(cb);
-                block[2 * 64] = s16(cr);
+                compute_ycbcr(block, r, g, b);
                 ++block;
                 scan += 3;
             }
 
             // replicate last column
-            for (int j = 8 - cols; j > 0; --j)
+            if (cols < 8)
             {
-                block[0 * 64] = block[0 * 64 - 1];
-                block[1 * 64] = block[1 * 64 - 1];
-                block[2 * 64] = block[2 * 64 - 1];
-                ++block;
+                const int count = 8 - cols;
+                std::fill_n(block + 0 * 64, count, block[0 * 64 - 1]);
+                std::fill_n(block + 1 * 64, count, block[1 * 64 - 1]);
+                std::fill_n(block + 2 * 64, count, block[2 * 64 - 1]);
+                block += count;
             }
 
             input += stride;
-
         }
 
         // replicate last row
-        for (int i = 8 - rows; i > 0; --i)
+        for (int y = rows; y < 8; ++y)
         {
-            for (int j = 8; j > 0; --j)
-            {
-                block[0 * 64] = block[0 * 64 - 8];
-                block[1 * 64] = block[1 * 64 - 8];
-                block[2 * 64] = block[2 * 64 - 8];
-                ++block;
-            }
+            std::memcpy(block + 0 * 64, block + 0 * 64 - 8, 16);
+            std::memcpy(block + 1 * 64, block + 1 * 64 - 8, 16);
+            std::memcpy(block + 2 * 64, block + 2 * 64 - 8, 16);
+            block += 8;
         }
     }
 
     static
     void read_rgb_format(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
-        for (int i = 0; i < rows; ++i)
+        for (int y = 0; y < rows; ++y)
         {
             const u8* scan = input;
-            for (int j = 0; j < cols; ++j)
+            for (int x = 0; x < cols; ++x)
             {
                 int r = scan[0];
                 int g = scan[1];
                 int b = scan[2];
-                int y = (76 * r + 151 * g + 29 * b) >> 8;
-                int cr = ((r - y) * 182) >> 8;
-                int cb = ((b - y) * 144) >> 8;
-                block[0 * 64] = s16(y - 128);
-                block[1 * 64] = s16(cb);
-                block[2 * 64] = s16(cr);
+                compute_ycbcr(block, r, g, b);
                 ++block;
                 scan += 3;
             }
 
             // replicate last column
-            for (int j = 8 - cols; j > 0; --j)
+            if (cols < 8)
             {
-                block[0 * 64] = block[0 * 64 - 1];
-                block[1 * 64] = block[1 * 64 - 1];
-                block[2 * 64] = block[2 * 64 - 1];
-                ++block;
+                const int count = 8 - cols;
+                std::fill_n(block + 0 * 64, count, block[0 * 64 - 1]);
+                std::fill_n(block + 1 * 64, count, block[1 * 64 - 1]);
+                std::fill_n(block + 2 * 64, count, block[2 * 64 - 1]);
+                block += count;
             }
 
             input += stride;
         }
 
         // replicate last row
-        for (int i = 8 - rows; i > 0; --i)
+        for (int y = rows; y < 8; ++y)
         {
-            for (int j = 8; j > 0; --j)
-            {
-                block[0 * 64] = block[0 * 64 - 8];
-                block[1 * 64] = block[1 * 64 - 8];
-                block[2 * 64] = block[2 * 64 - 8];
-                ++block;
-            }
+            std::memcpy(block + 0 * 64, block + 0 * 64 - 8, 16);
+            std::memcpy(block + 1 * 64, block + 1 * 64 - 8, 16);
+            std::memcpy(block + 2 * 64, block + 2 * 64 - 8, 16);
+            block += 8;
         }
     }
 
     static
     void read_bgra_format(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
-        for (int i = 0; i < rows; ++i)
+        for (int y = 0; y < rows; ++y)
         {
             const u8* scan = input;
-            for (int j = 0; j < cols; ++j)
+            for (int x = 0; x < cols; ++x)
             {
                 s16 r = scan[2];
                 s16 g = scan[1];
                 s16 b = scan[0];
-                s16 y = (76 * r + 151 * g + 29 * b) >> 8;
-                s16 cr = ((r - y) * 182) >> 8;
-                s16 cb = ((b - y) * 144) >> 8;
-                block[0 * 64] = s16(y - 128);
-                block[1 * 64] = s16(cb);
-                block[2 * 64] = s16(cr);
+                compute_ycbcr(block, r, g, b);
                 ++block;
                 scan += 4;
             }
 
             // replicate last column
-            for (int j = 8 - cols; j > 0; --j)
+            if (cols < 8)
             {
-                block[0 * 64] = block[0 * 64 - 1];
-                block[1 * 64] = block[1 * 64 - 1];
-                block[2 * 64] = block[2 * 64 - 1];
-                ++block;
+                const int count = 8 - cols;
+                std::fill_n(block + 0 * 64, count, block[0 * 64 - 1]);
+                std::fill_n(block + 1 * 64, count, block[1 * 64 - 1]);
+                std::fill_n(block + 2 * 64, count, block[2 * 64 - 1]);
+                block += count;
             }
 
             input += stride;
         }
 
         // replicate last row
-        for (int i = 8 - rows; i > 0; --i)
+        for (int y = rows; y < 8; ++y)
         {
-            for (int j = 8; j > 0; --j)
-            {
-                block[0 * 64] = block[0 * 64 - 8];
-                block[1 * 64] = block[1 * 64 - 8];
-                block[2 * 64] = block[2 * 64 - 8];
-                ++block;
-            }
+            std::memcpy(block + 0 * 64, block + 0 * 64 - 8, 16);
+            std::memcpy(block + 1 * 64, block + 1 * 64 - 8, 16);
+            std::memcpy(block + 2 * 64, block + 2 * 64 - 8, 16);
+            block += 8;
         }
     }
 
     static
     void read_rgba_format(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
-        for (int i = 0; i < rows; ++i)
+        for (int y = 0; y < rows; ++y)
         {
             const u8* scan = input;
-            for (int j = 0; j < cols; ++j)
+            for (int x = 0; x < cols; ++x)
             {
                 int r = scan[0];
                 int g = scan[1];
                 int b = scan[2];
-                int y = (76 * r + 151 * g + 29 * b) >> 8;
-                int cr = ((r - y) * 182) >> 8;
-                int cb = ((b - y) * 144) >> 8;
-                block[0 * 64] = s16(y - 128);
-                block[1 * 64] = s16(cb);
-                block[2 * 64] = s16(cr);
+                compute_ycbcr(block, r, g, b);
                 ++block;
                 scan += 4;
             }
 
             // replicate last column
-            for (int j = 8 - cols; j > 0; --j)
+            if (cols < 8)
             {
-                block[0 * 64] = block[0 * 64 - 1];
-                block[1 * 64] = block[1 * 64 - 1];
-                block[2 * 64] = block[2 * 64 - 1];
-                ++block;
+                const int count = 8 - cols;
+                std::fill_n(block + 0 * 64, count, block[0 * 64 - 1]);
+                std::fill_n(block + 1 * 64, count, block[1 * 64 - 1]);
+                std::fill_n(block + 2 * 64, count, block[2 * 64 - 1]);
+                block += count;
             }
 
             input += stride;
         }
 
         // replicate last row
-        for (int i = 8 - rows; i > 0; --i)
+        for (int y = rows; y < 8; ++y)
         {
-            for (int j = 8; j > 0; --j)
-            {
-                block[0 * 64] = block[0 * 64 - 8];
-                block[1 * 64] = block[1 * 64 - 8];
-                block[2 * 64] = block[2 * 64 - 8];
-                ++block;
-            }
+            std::memcpy(block + 0 * 64, block + 0 * 64 - 8, 16);
+            std::memcpy(block + 1 * 64, block + 1 * 64 - 8, 16);
+            std::memcpy(block + 2 * 64, block + 2 * 64 - 8, 16);
+            block += 8;
         }
     }
 
@@ -2449,6 +2429,7 @@ namespace
 
         if (!read_8x8)
         {
+            // no accelerated 8x8 sampler found; use the default
             read_8x8 = read;
         }
 
