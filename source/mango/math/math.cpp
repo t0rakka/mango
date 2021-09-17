@@ -39,18 +39,20 @@ namespace mango::math
         return *this;
     }
 
-    const float4x4& float4x4::operator = (const quat& q)
+    const float4x4& float4x4::operator = (const Quaternion& q)
     {
-        const float32x3 s = q.xyz * 2.0f;
-        const float32x3 w = s * q.w;
-        const float32x3 x = s * q.xyz.x;
-        const float yy = q.xyz.y * s.y;
-        const float yz = q.xyz.y * s.z;
-        const float zz = q.xyz.z * s.z;
+        float x = q.x * 2.0f;
+        float y = q.y * 2.0f;
+        float z = q.z * 2.0f;
+        const float32x3 vw = float32x3(x, y, z) * q.w;
+        const float32x3 vx = float32x3(x, y, z) * q.x;
+        const float yy = q.y * y;
+        const float yz = q.y * z;
+        const float zz = q.z * z;
 
-        m[0] = float32x4(1.0f - yy - zz, x.y + w.z, x.z - w.y, 0.0f);
-        m[1] = float32x4(x.y - w.z, 1.0f - x.x - zz, yz + w.x, 0.0f);
-        m[2] = float32x4(x.z + w.y, yz - w.x, 1.0f - x.x - yy, 0.0f);
+        m[0] = float32x4(1.0f - yy - zz, vx.y + vw.z, vx.z - vw.y, 0.0f);
+        m[1] = float32x4(vx.y - vw.z, 1.0f - vx.x - zz, yz + vw.x, 0.0f);
+        m[2] = float32x4(vx.z + vw.y, yz - vw.x, 1.0f - vx.x - yy, 0.0f);
         m[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f);
 
         return *this;
@@ -850,7 +852,7 @@ namespace directx
     AngleAxis::AngleAxis(const Quaternion& q)
     {
         angle = std::acos(q.w) * 2.0f;
-        axis = q.xyz / std::sqrt(1.0f - q.w * q.w);
+        axis = float32x3(q.x, q.y, q.z) / std::sqrt(1.0f - q.w * q.w);
     }
 
     // ------------------------------------------------------------------------
@@ -859,7 +861,6 @@ namespace directx
 
     const Quaternion& Quaternion::operator = (const Matrix<float, 4, 4>& m)
     {
-#if 1
         const float m00 = m(0, 0);
         const float m11 = m(1, 1);
         const float m22 = m(2, 2);
@@ -901,51 +902,8 @@ namespace directx
             }
         }
 
-        *this = q * (0.5f / std::sqrt(t));
+        *this = q * float(0.5f / std::sqrt(t));
         return *this;
-#endif
-#if 0
-        Quaternion q;
-
-        const float det = m(0,0) + m(1,1) + m(2,2);
-        if (det > 0)
-        {
-            float s = std::sqrt(det + 1.0f);
-            q.w = s * 0.5f;
-            s = 0.5f / s;
-            q[0] = (m(1,2) - m(2,1)) * s;
-            q[1] = (m(2,0) - m(0,2)) * s;
-            q[2] = (m(0,1) - m(1,0)) * s;
-        }
-        else
-        {
-            int i = 0;
-            if (m(1,1) > m(0,0)) i = 1;
-            if (m(2,2) > m(i,i)) i = 2;
-
-            int j = i + 1; if (j > 2) j = 0;
-            int k = j + 1; if (k > 2) k = 0;
-
-            float s = std::sqrt(m(i,i) - m(j,j) - m(k,k) + 1.0f);
-            if (s < epsilon)
-            {
-				q.xyz = float3(0.0f, 0.0f, 0.0f);
-                q.w = 1.0f;
-            }
-            else
-            {
-                float* v = q;
-                v[i] = s * 0.5f;
-                s = 0.5f / s;
-                v[3] = (m(j,k) - m(k,j)) * s;
-                v[j] = (m(i,j) + m(j,i)) * s;
-                v[k] = (m(i,k) + m(k,i)) * s;
-            }
-        }
-
-        *this = q;
-        return *this;
-#endif
     }
 
     const Quaternion& Quaternion::operator = (const AngleAxis& a)
@@ -953,7 +911,9 @@ namespace directx
         const float theta = a.angle * 0.5f;
         const float s = std::sin(theta) / length(a.axis);
         const float c = std::cos(theta);
-        xyz = a.axis * s;
+        x = a.axis.x * s;
+        y = a.axis.y * s;
+        z = a.axis.z * s;
         w = c;
         return *this;
     }
@@ -963,25 +923,39 @@ namespace directx
         return Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
+    Quaternion Quaternion::rotateX(float angle)
+    {
+        float s = sinf(angle * 0.5f);
+        float c = cosf(angle * 0.5f);
+        return Quaternion(s, 0, 0, c);
+    }
+
+    Quaternion Quaternion::rotateY(float angle)
+    {
+        float s = sinf(angle * 0.5f);
+        float c = cosf(angle * 0.5f);
+        return Quaternion(0, s, 0, c);
+    }
+
+    Quaternion Quaternion::rotateZ(float angle)
+    {
+        float s = sinf(angle * 0.5f);
+        float c = cosf(angle * 0.5f);
+        return Quaternion(0, 0, s, c);
+    }
+
     Quaternion Quaternion::rotateXYZ(float xangle, float yangle, float zangle)
     {
-        const float32x4 v = float32x4(xangle, yangle, zangle, 0.0f) * 0.5f;
-        const float32x4 s = sin(v);
-        const float32x4 c = cos(v);
-        const float sx = s.x;
-        const float sy = s.y;
-        const float sz = s.z;
-        const float cx = c.x;
-        const float cy = c.y;
-        const float cz = c.z;
-		const float cycz = cy * cz;
-		const float sysz = sy * sz;
-		const float sycz = sy * cz;
-		const float cysz = cy * sz;
-        const float x = cycz * cx - sysz * sx;
-        const float y = sysz * cx + cycz * sx;
-        const float z = sycz * cx + cysz * sx;
-        const float w = cysz * cx - sycz * sx;
+        float xc = cos(xangle * 0.5f);
+        float xs = sin(xangle * 0.5f);
+        float yc = cos(yangle * 0.5f);
+        float ys = sin(yangle * 0.5f);
+        float zc = cos(zangle * 0.5f);
+        float zs = sin(zangle * 0.5f);
+        float x = xs * yc * zc - xc * ys * zs;
+        float y = xc * ys * zc + xs * yc * zs;
+        float z = xc * yc * zs - xs * ys * zc;
+        float w = xc * yc * zc + xs * ys * zs;
         return Quaternion(x, y, z, w);
     }
 
@@ -996,7 +970,7 @@ namespace directx
     Quaternion log(const Quaternion& q)
     {
         float s = q.w ? std::atan2(std::sqrt(square(q)), q.w) : float(pi) * 2.0f;
-        return Quaternion(q.xyz * s, 0.0f);
+        return Quaternion(q.x * s, q.y * s, q.z * s, 0.0f);
     }
 
     Quaternion exp(const Quaternion& q)
@@ -1004,7 +978,7 @@ namespace directx
         float s = std::sqrt(square(q));
         const float c = std::cos(s);
         s = (s > epsilon * 100.0f) ? std::sin(s) / s : 1.0f;
-        return Quaternion(q.xyz * s, c);
+        return Quaternion(q.x * s, q.y * s, q.z * s, c);
     }
 
     Quaternion pow(const Quaternion& q, float p)
@@ -1012,7 +986,7 @@ namespace directx
         float s = square(q);
         const float c = std::cos(s * p);
         s = s ? std::sin(s * p) / s : 1.0f;
-        return Quaternion(q.xyz * s, c);
+        return Quaternion(q.x * s, q.y * s, q.z * s, c);
     }
 
     Quaternion normalize(const Quaternion& q)
@@ -1033,14 +1007,16 @@ namespace directx
         float s = scale ? std::atan2(length, scale) : float(pi) * 2.0f;
         if (length) s /= length;
 
-        return Quaternion(p.xyz * s, 0.0f);
+        return Quaternion(p.x * s, p.y * s, p.z * s, 0.0f);
     }
 
     Quaternion lerp(const Quaternion& a, const Quaternion& b, float time)
     {
-		const float32x3 xyz = lerp(a.xyz, b.xyz, time);
-		const float w = a.w + (b.w - a.w) * time;
-		return Quaternion(xyz, w);
+        float x = lerp(a.x, b.x, time);
+        float y = lerp(a.y, b.y, time);
+        float z = lerp(a.z, b.z, time);
+		float w = a.w + (b.w - a.w) * time;
+		return Quaternion(x, y, z, w);
     }
 
     Quaternion slerp(const Quaternion& a, const Quaternion& b, float time)
@@ -1075,10 +1051,10 @@ namespace directx
             const float sq = std::sin(time * halfpi);
 
 			// TODO: check the return value
-            return Quaternion(a.xyz.x * sp - a.xyz.y * sq,
-                              a.xyz.y * sp + a.xyz.x * sq,
-                              a.xyz.z * sp - a.w * sq,
-                              a.xyz.z);
+            return Quaternion(a.x * sp - a.y * sq,
+                              a.y * sp + a.x * sq,
+                              a.z * sp - a.w * sq,
+                              a.z);
         }
     }
 

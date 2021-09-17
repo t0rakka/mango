@@ -18,44 +18,54 @@ namespace mango::math
 
     struct Quaternion
     {
-        Vector<float, 3> xyz;
-        float w;
+        union
+        {
+            struct { float x, y, z, w; };
+            float data[4];
+        };
 
         explicit Quaternion()
-            : w(0.0f)
         {
         }
 
         explicit Quaternion(float x, float y, float z, float w)
-            : xyz(x, y, z)
+            : x(x)
+            , y(y)
+            , z(z)
             , w(w)
         {
         }
 
         Quaternion(const Quaternion& q)
-            : xyz(q.xyz)
+            : x(q.x)
+            , y(q.y)
+            , z(q.z)
             , w(q.w)
         {
         }
 
         Quaternion(const Vector<float, 3>& v, float w)
-            : xyz(v)
+            : x(v.x)
+            , y(v.y)
+            , z(v.z)
             , w(w)
         {
         }
 
         Quaternion(const Vector<float, 4>& v)
         {
-            xyz = v.xyz;
+            x = v.x;
+            y = v.y;
+            z = v.z;
             w = v.w;
         }
 
-        explicit Quaternion(const Matrix<float, 4, 4>& m)
+        Quaternion(const Matrix<float, 4, 4>& m)
         {
             *this = m;
         }
 
-        explicit Quaternion(const AngleAxis& a)
+        Quaternion(const AngleAxis& a)
         {
             *this = a;
         }
@@ -66,7 +76,9 @@ namespace mango::math
 
         const Quaternion& operator = (const Quaternion& q)
         {
-            xyz = q.xyz;
+            x = q.x;
+            y = q.y;
+            z = q.z;
             w = q.w;
             return *this;
         }
@@ -76,28 +88,36 @@ namespace mango::math
 
         const Quaternion& operator += (const Quaternion& q)
         {
-            xyz += q.xyz;
+            x += q.x;
+            y += q.y;
+            z += q.z;
             w += q.w;
             return *this;
         }
 
         const Quaternion& operator -= (const Quaternion& q)
         {
-            xyz -= q.xyz;
+            x -= q.x;
+            y -= q.y;
+            z -= q.z;
             w -= q.w;
             return *this;
         }
 
         const Quaternion& operator *= (const Quaternion& q)
         {
-            float s = w * q.w - dot(xyz, q.xyz);
-            *this = Quaternion(w * q.xyz + xyz * q.w + cross(xyz, q.xyz), s);
+            float s = w * q.w - (x * q.x + y * q.y + z * q.z);
+            *this = Quaternion(q.x * w + x * q.w + y * q.z - z * q.y,
+                               q.y * w + y * q.w + z * q.x - x * q.z,
+                               q.z * w + z * q.w + x * q.y - y * q.x, s);
             return *this;
         }
 
         const Quaternion& operator *= (float s)
         {
-            xyz *= s;
+            x *= s;
+            y *= s;
+            z *= s;
             w *= s;
             return *this;
         }
@@ -109,15 +129,28 @@ namespace mango::math
 
         Quaternion operator - () const
         {
-    		return Quaternion(-xyz, -w);
+    		return Quaternion(-x, -y, -z, -w);
         }
 
         operator Vector<float, 4> () const
         {
-            return Vector<float, 4>(xyz, w);
+            return Vector<float, 4>(x, y, z, w);
+        }
+
+        float operator [] (int index) const
+        {
+            return data[index];
+        }
+
+        float& operator [] (int index)
+        {
+            return data[index];
         }
 
         static Quaternion identity();
+        static Quaternion rotateX(float angle);
+        static Quaternion rotateY(float angle);
+        static Quaternion rotateZ(float angle);
         static Quaternion rotateXYZ(float xangle, float yangle, float zangle);
         static Quaternion rotate(const Vector<float, 3>& from, const Vector<float, 3>& to);
     };
@@ -150,35 +183,54 @@ namespace mango::math
 
     static inline Quaternion operator + (const Quaternion& a, const Quaternion& b)
     {
-		return Quaternion(a.xyz + b.xyz, a.w + b.w);
+		return Quaternion(a.x + b.x,
+                          a.y + b.y,
+                          a.z + b.z,
+                          a.w + b.w);
     }
 
     static inline Quaternion operator - (const Quaternion& a, const Quaternion& b)
     {
-		return Quaternion(a.xyz - b.xyz, a.w - b.w);
+		return Quaternion(a.x - b.x,
+                          a.y - b.y,
+                          a.z - b.z,
+                          a.w - b.w);
     }
 
     static inline Quaternion operator * (const Quaternion& q, float s)
     {
-		return Quaternion(q.xyz * s, q.w * s);
+		return Quaternion(q.x * s,
+                          q.y * s,
+                          q.z * s,
+                          q.w * s);
     }
 
     static inline Quaternion operator * (float s, const Quaternion& q)
     {
-		return Quaternion(q.xyz * s, q.w * s);
+		return Quaternion(q.x * s,
+                          q.y * s,
+                          q.z * s,
+                          q.w * s);
     }
 
     static inline Quaternion operator * (const Quaternion& a, const Quaternion& b)
     {
-		const Vector<float, 3> xyz = a.w * b.xyz + b.w * a.xyz + cross(a.xyz, b.xyz);
-		const float w = a.w * b.w - dot(a.xyz, b.xyz);
-        return Quaternion(xyz, w);
+        float x = a.y * b.z - a.z * b.y + a.x * b.w + b.x * a.w;
+        float y = a.z * b.x - a.x * b.z + a.y * b.w + b.y * a.w;
+        float z = a.x * b.y - a.y * b.x + a.z * b.w + b.z * a.w;
+        float w = a.w * b.w - (a.x * b.x + a.y * b.y + a.z * b.z);
+        return Quaternion(x, y, z, w);
     }
 
-    static inline Vector<float, 3> operator * (const Vector<float, 3>& v3, const Quaternion& q)
+    static inline Vector<float, 3> operator * (const Vector<float, 3>& v, const Quaternion& q)
     {
-        const Vector<float, 3> n = cross(q.xyz, v3);
-        return v3 + 2.0f * (q.w * n + cross(q.xyz, n));
+        float nx = q.y * v.z - q.z * v.y;
+        float ny = q.z * v.x - q.x * v.z;
+        float nz = q.x * v.y - q.y * v.x;
+        float x = v.x + (q.y * nz - q.z * ny + q.w * nx) * 2.0f;
+        float y = v.y + (q.z * nx - q.x * nz + q.w * ny) * 2.0f;
+        float z = v.z + (q.x * ny - q.y * nx + q.w * nz) * 2.0f;
+        return Vector<float, 3>(x, y, z);
     }
 
     // ------------------------------------------------------------------
@@ -187,17 +239,17 @@ namespace mango::math
 
     static inline float dot(const Quaternion& a, const Quaternion& b)
     {
-		return dot(a.xyz, b.xyz) + a.w * b.w;
+        return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
     }
 
     static inline float norm(const Quaternion& q)
     {
-        return square(q.xyz) + q.w * q.w;
+        return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
     }
 
     static inline float square(const Quaternion& q)
     {
-        return square(q.xyz) + q.w * q.w;
+        return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
     }
 
     static inline float mod(const Quaternion& q)
@@ -208,18 +260,24 @@ namespace mango::math
     static inline Quaternion negate(const Quaternion& q)
     {
         const float s = -1.0f / mod(q);
-        return Quaternion(q.xyz * s, q.w * -s);
+        return Quaternion(q.x * s,
+                          q.y * s,
+                          q.z * s,
+                          q.w * -s);
     }
 
     static inline Quaternion inverse(const Quaternion& q)
     {
         const float s = -1.0f / norm(q);
-        return Quaternion(q.xyz * s, q.w * -s);
+        return Quaternion(q.x * s,
+                          q.y * s,
+                          q.z * s,
+                          q.w * -s);
     }
 
     static inline Quaternion conjugate(const Quaternion& q)
     {
-        return Quaternion(-q.xyz, q.w);
+        return Quaternion(-q.x, -q.y, -q.z, q.w);
     }
 
     Quaternion log(const Quaternion& q);
@@ -231,11 +289,5 @@ namespace mango::math
     Quaternion slerp(const Quaternion& a, const Quaternion& b, float time);
     Quaternion slerp(const Quaternion& a, const Quaternion& b, int spin, float time);
     Quaternion squad(const Quaternion& p, const Quaternion& a, const Quaternion& b, const Quaternion& q, float time);
-
-    // ------------------------------------------------------------------
-    // types
-    // ------------------------------------------------------------------
-
-    using quat = Quaternion;
 
 } // namespace mango::math
