@@ -41,18 +41,25 @@ namespace mango::math
 
     const float4x4& float4x4::operator = (const Quaternion& q)
     {
-        float x = q.x * 2.0f;
-        float y = q.y * 2.0f;
-        float z = q.z * 2.0f;
-        const float32x3 vw = float32x3(x, y, z) * q.w;
-        const float32x3 vx = float32x3(x, y, z) * q.x;
-        const float yy = q.y * y;
-        const float yz = q.y * z;
-        const float zz = q.z * z;
+        const float x2 = q.x * 2.0f;
+        const float y2 = q.y * 2.0f;
+        const float z2 = q.z * 2.0f;
 
-        m[0] = float32x4(1.0f - yy - zz, vx.y + vw.z, vx.z - vw.y, 0.0f);
-        m[1] = float32x4(vx.y - vw.z, 1.0f - vx.x - zz, yz + vw.x, 0.0f);
-        m[2] = float32x4(vx.z + vw.y, yz - vw.x, 1.0f - vx.x - yy, 0.0f);
+        const float wx = q.w * x2;
+        const float wy = q.w * y2;
+        const float wz = q.w * z2;
+
+        const float xx = q.x * x2;
+        const float xy = q.x * y2;
+        const float xz = q.x * z2;
+
+        const float yy = q.y * y2;
+        const float yz = q.y * z2;
+        const float zz = q.z * z2;
+
+        m[0] = float32x4(1.0f - yy - zz, xy + wz, xz - wy, 0.0f);
+        m[1] = float32x4(xy - wz, 1.0f - xx - zz, yz + wx, 0.0f);
+        m[2] = float32x4(xz + wy, yz - wx, 1.0f - xx - yy, 0.0f);
         m[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f);
 
         return *this;
@@ -862,47 +869,46 @@ namespace directx
     const Quaternion& Quaternion::operator = (const Matrix<float, 4, 4>& m)
     {
         const float m00 = m(0, 0);
-        const float m11 = m(1, 1);
-        const float m22 = m(2, 2);
-
         const float m01 = m(0, 1);
         const float m02 = m(0, 2);
         const float m10 = m(1, 0);
+        const float m11 = m(1, 1);
         const float m12 = m(1, 2);
         const float m20 = m(2, 0);
         const float m21 = m(2, 1);
+        const float m22 = m(2, 2);
 
-        float t;
+        float s;
         Quaternion q;
 
         if (m22 < 0)
         {
             if (m00 > m11)
             {
-                t = 1.0f + m00 - m11 - m22;
-                q = Quaternion(t, m01 + m10, m20 + m02, m12 - m21);
+                s = 1.0f + m00 - m11 - m22;
+                q = Quaternion(s, m01 + m10, m20 + m02, m12 - m21);
             }
             else
             {
-                t = 1.0f - m00 + m11 - m22;
-                q = Quaternion(m01 + m10, t, m12 + m21, m20 - m02);
+                s = 1.0f - m00 + m11 - m22;
+                q = Quaternion(m01 + m10, s, m12 + m21, m20 - m02);
             }
         }
         else
         {
             if (m00 < -m11)
             {
-                t = 1.0f - m00 - m11 + m22;
-                q = Quaternion(m20 + m02, m12 + m21, t, m01 - m10);
+                s = 1.0f - m00 - m11 + m22;
+                q = Quaternion(m20 + m02, m12 + m21, s, m01 - m10);
             }
             else
             {
-                t = 1.0f + m00 + m11 + m22;
-                q = Quaternion(m12 - m21, m20 - m02, m01 - m10, t);
+                s = 1.0f + m00 + m11 + m22;
+                q = Quaternion(m12 - m21, m20 - m02, m01 - m10, s);
             }
         }
 
-        *this = q * float(0.5f / std::sqrt(t));
+        *this = q * float(0.5f / std::sqrt(s));
         return *this;
     }
 
