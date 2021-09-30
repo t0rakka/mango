@@ -528,45 +528,44 @@ namespace mango
 
 #ifdef MANGO_ENABLE_BMI2
 
-    static inline u32 u32_deinterleave_bits(u32 value)
+    static inline
+    u32 u32_interleave_bits(u32 x, u32 y)
     {
-        return _pext_u32(value, 0x55555555);
+        x = _pdep_u32(x, 0x55555555);
+        y = _pdep_u32(y, 0xaaaaaaaa);
+        return x | y;
     }
 
-    static inline u32 u32_interleave_bits(u32 value)
+    static inline
+    void u32_deinterleave_bits(u32& x, u32& y, u32 value)
     {
-        return _pdep_u32(value, 0x55555555);
-    }
-
-    static inline u32 u32_interleave_bits(u32 x, u32 y)
-    {
-        return _pdep_u32(x, 0x55555555) | _pdep_u32(y, 0xaaaaaaaa);
+        x = _pext_u32(value, 0x55555555);
+        y = _pext_u32(value, 0xaaaaaaaa);
     }
 
 #else
 
-    static inline u32 u32_deinterleave_bits(u32 value)
+    static inline
+    u32 u32_interleave_bits(u32 x, u32 y)
     {
-        value &= 0x55555555;
-        value = (value ^ (value >> 1 )) & 0x33333333;
-        value = (value ^ (value >> 2 )) & 0x0f0f0f0f;
-        value = (value ^ (value >> 4 )) & 0x00ff00ff;
-        value = (value ^ (value >> 8 )) & 0x0000ffff;
-        return value;
+        u64 value = ((u64(y) << 32) | x) & 0x0000ffff0000ffff;
+        value = (value | (value << 8)) & 0x00ff00ff00ff00ff;
+        value = (value | (value << 4)) & 0x0f0f0f0f0f0f0f0f;
+        value = (value | (value << 2)) & 0x3333333333333333;
+        value = (value | (value << 1)) & 0x5555555555555555;
+        return u32((value >> 31) | value);
     }
 
-    static inline u32 u32_interleave_bits(u32 value)
+    static inline
+    void u32_deinterleave_bits(u32& x, u32& y, u32 value)
     {
-        value = (value | (value << 8)) & 0x00ff00ff;
-        value = (value | (value << 4)) & 0x0f0f0f0f;
-        value = (value | (value << 2)) & 0x33333333;
-        value = (value | (value << 1)) & 0x55555555;
-        return value;
-    }
-
-    static inline u32 u32_interleave_bits(u32 x, u32 y)
-    {
-        return u32_interleave_bits(x) | (u32_interleave_bits(y) << 1);
+        u64 v = ((u64(value) << 31) | value) & 0x5555555555555555;
+        v = (v ^ (v >> 1)) & 0x3333333333333333;
+        v = (v ^ (v >> 2)) & 0x0f0f0f0f0f0f0f0f;
+        v = (v ^ (v >> 4)) & 0x00ff00ff00ff00ff;
+        v = (v ^ (v >> 8)) & 0x0000ffff0000ffff;
+        x = u32(v);
+        y = u32(v >> 32);
     }
 
 #endif
@@ -863,47 +862,57 @@ namespace mango
 
 #ifdef MANGO_ENABLE_BMI2
 
-    static inline u32 u64_deinterleave_bits(u64 value)
+    static inline
+    u64 u64_interleave_bits(u64 x, u64 y)
     {
-        return u32(_pext_u64(value, 0x5555555555555555));
+        x = _pdep_u64(x, 0x5555555555555555);
+        y = _pdep_u64(y, 0xaaaaaaaaaaaaaaaa);
+        return x | y;
     }
 
-    static inline u64 u64_interleave_bits(u64 value)
+    static inline
+    void u64_deinterleave_bits(u64& x, u64& y, u64 value)
     {
-        return _pdep_u64(value, 0x5555555555555555);
-    }
-
-    static inline u64 u64_interleave_bits(u64 x, u64 y)
-    {
-        return _pdep_u64(x, 0x5555555555555555) | _pdep_u64(y, 0xaaaaaaaaaaaaaaaa);
+        x = _pext_u64(value, 0x5555555555555555);
+        y = _pext_u64(value, 0xaaaaaaaaaaaaaaaa);
     }
 
 #else
 
-    static inline u32 u64_deinterleave_bits(u64 value)
+    static inline
+    u64 u64_interleave_bits(u64 x, u64 y)
     {
-        value &= 0x5555555555555555;
-        value = (value ^ (value >> 1 )) & 0x3333333333333333;
-        value = (value ^ (value >> 2 )) & 0x0f0f0f0f0f0f0f0f;
-        value = (value ^ (value >> 4 )) & 0x00ff00ff00ff00ff;
-        value = (value ^ (value >> 8 )) & 0x0000ffff0000ffff;
-        value = (value ^ (value >> 16)) & 0x00000000ffffffff;
-        return u32(value);
+        x = (x | (x << 16)) & 0x0000ffff0000ffff;
+        x = (x | (x <<  8)) & 0x00ff00ff00ff00ff;
+        x = (x | (x <<  4)) & 0x0f0f0f0f0f0f0f0f;
+        x = (x | (x <<  2)) & 0x3333333333333333;
+        x = (x | (x <<  1)) & 0x5555555555555555;
+
+        y = (y | (y << 16)) & 0x0000ffff0000ffff;
+        y = (y | (y <<  8)) & 0x00ff00ff00ff00ff;
+        y = (y | (y <<  4)) & 0x0f0f0f0f0f0f0f0f;
+        y = (y | (y <<  2)) & 0x3333333333333333;
+        y = (y | (y <<  1)) & 0x5555555555555555;
+
+        return (y << 1) | x;
     }
 
-    static inline u64 u64_interleave_bits(u64 value)
+    static inline
+    void u64_deinterleave_bits(u64& x, u64& y, u64 value)
     {
-        value = (value | (value << 16)) & 0x0000ffff0000ffff;
-        value = (value | (value <<  8)) & 0x00ff00ff00ff00ff;
-        value = (value | (value <<  4)) & 0x0f0f0f0f0f0f0f0f;
-        value = (value | (value <<  2)) & 0x3333333333333333;
-        value = (value | (value <<  1)) & 0x5555555555555555;
-        return value;
-    }
+        x = value & 0x5555555555555555;
+        x = (x ^ (x >> 1 )) & 0x3333333333333333;
+        x = (x ^ (x >> 2 )) & 0x0f0f0f0f0f0f0f0f;
+        x = (x ^ (x >> 4 )) & 0x00ff00ff00ff00ff;
+        x = (x ^ (x >> 8 )) & 0x0000ffff0000ffff;
+        x = (x ^ (x >> 16)) & 0x00000000ffffffff;
 
-    static inline u64 u64_interleave_bits(u64 x, u64 y)
-    {
-        return u64_interleave_bits(x) | (u64_interleave_bits(y) << 1);
+        y = (value >> 1) & 0x5555555555555555;
+        y = (y ^ (y >> 1 )) & 0x3333333333333333;
+        y = (y ^ (y >> 2 )) & 0x0f0f0f0f0f0f0f0f;
+        y = (y ^ (y >> 4 )) & 0x00ff00ff00ff00ff;
+        y = (y ^ (y >> 8 )) & 0x0000ffff0000ffff;
+        y = (y ^ (y >> 16)) & 0x00000000ffffffff;
     }
 
 #endif
