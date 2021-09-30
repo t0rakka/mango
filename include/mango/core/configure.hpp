@@ -23,25 +23,25 @@
 
 #elif (defined(_XBOX_VER) && (_XBOX_VER >= 200)) || defined(_XENON)
 
-	// Microsoft XBOX 360
+    // Microsoft XBOX 360
     #define MANGO_PLATFORM_XBOX360
     #define MANGO_PLATFORM_NAME "Xbox 360"
 
 #elif defined(_DURANGO)
 
-	// Microsoft XBOX ONE
+    // Microsoft XBOX ONE
     #define MANGO_PLATFORM_XBOXONE
     #define MANGO_PLATFORM_NAME "Xbox One"
 
 #elif defined(__CELLOS_LV2__)
 
-	// SONY Playstation 3
+    // SONY Playstation 3
     #define MANGO_PLATFORM_PS3
     #define MANGO_PLATFORM_NAME "Playstation 3"
 
 #elif defined(__ORBIS__)
 
-	// SONY Playstation 4
+    // SONY Playstation 4
     #define MANGO_PLATFORM_PS4
     #define MANGO_PLATFORM_NAME "Playstation 4"
 
@@ -179,10 +179,10 @@
     // Microsoft Visual C++
     #define MANGO_COMPILER_MICROSOFT
 
-	// noexcept specifier support was added in Visual Studio 2015
-	#if _MSC_VER < 1900
-		#define noexcept
-	#endif
+    // noexcept specifier support was added in Visual Studio 2015
+    #if _MSC_VER < 1900
+        #define noexcept
+    #endif
 
     // Fix <cmath> macros
     #ifndef _USE_MATH_DEFINES
@@ -198,7 +198,7 @@
 
     // AVX and AVX2 include support for these
     #if defined(__AVX__) || defined(__AVX2__)
-		#ifndef __SSE2__
+        #ifndef __SSE2__
         #define __SSE2__
         #endif
 
@@ -464,11 +464,13 @@
     #endif
 
     #ifdef __BMI__
+        // NOTE: slow on AMD Zen architecture (emulated in microcode)
         #define MANGO_ENABLE_BMI
         #include <immintrin.h>
     #endif
 
     #ifdef __BMI2__
+        // NOTE: slow on AMD Zen architecture (emulated in microcode)
         #define MANGO_ENABLE_BMI2
         #include <immintrin.h>
     #endif
