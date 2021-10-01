@@ -531,14 +531,20 @@ namespace mango
     static inline
     u32 u32_interleave_bits(u32 x, u32 y)
     {
-        x = _pdep_u32(x, 0x55555555);
-        y = _pdep_u32(y, 0xaaaaaaaa);
-        return x | y;
+        //     x: ----------------xxxxxxxxxxxxxxxx
+        //     y: ----------------yyyyyyyyyyyyyyyy
+        // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
+        u32 value = _pdep_u32(y, 0xaaaaaaaa) |
+                    _pdep_u32(x, 0x55555555);
+        return value;
     }
 
     static inline
     void u32_deinterleave_bits(u32& x, u32& y, u32 value)
     {
+        // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
+        //     x: 0000000000000000xxxxxxxxxxxxxxxx
+        //     y: 0000000000000000yyyyyyyyyyyyyyyy
         x = _pext_u32(value, 0x55555555);
         y = _pext_u32(value, 0xaaaaaaaa);
     }
@@ -548,6 +554,9 @@ namespace mango
     static inline
     u32 u32_interleave_bits(u32 x, u32 y)
     {
+        //     x: ----------------xxxxxxxxxxxxxxxx
+        //     y: ----------------yyyyyyyyyyyyyyyy
+        // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
         u64 value = ((u64(y) << 32) | x) & 0x0000ffff0000ffff;
         value = (value | (value << 8)) & 0x00ff00ff00ff00ff;
         value = (value | (value << 4)) & 0x0f0f0f0f0f0f0f0f;
@@ -559,6 +568,9 @@ namespace mango
     static inline
     void u32_deinterleave_bits(u32& x, u32& y, u32 value)
     {
+        // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
+        //     x: 0000000000000000xxxxxxxxxxxxxxxx
+        //     y: 0000000000000000yyyyyyyyyyyyyyyy
         u64 v = ((u64(value) << 31) | value) & 0x5555555555555555;
         v = (v ^ (v >> 1)) & 0x3333333333333333;
         v = (v ^ (v >> 2)) & 0x0f0f0f0f0f0f0f0f;
@@ -865,14 +877,20 @@ namespace mango
     static inline
     u64 u64_interleave_bits(u64 x, u64 y)
     {
-        x = _pdep_u64(x, 0x5555555555555555);
-        y = _pdep_u64(y, 0xaaaaaaaaaaaaaaaa);
-        return x | y;
+        //     x: --------------------------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        //     y: --------------------------------yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+        // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
+        u64 value = _pdep_u64(y, 0xaaaaaaaaaaaaaaaa) |
+                    _pdep_u64(x, 0x5555555555555555);
+        return value;
     }
 
     static inline
     void u64_deinterleave_bits(u64& x, u64& y, u64 value)
     {
+        // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
+        //     x: 00000000000000000000000000000000xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        //     y: 00000000000000000000000000000000yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
         x = _pext_u64(value, 0x5555555555555555);
         y = _pext_u64(value, 0xaaaaaaaaaaaaaaaa);
     }
@@ -882,6 +900,10 @@ namespace mango
     static inline
     u64 u64_interleave_bits(u64 x, u64 y)
     {
+        //     x: --------------------------------xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        //     y: --------------------------------yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+        // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
+
         x = (x | (x << 16)) & 0x0000ffff0000ffff;
         x = (x | (x <<  8)) & 0x00ff00ff00ff00ff;
         x = (x | (x <<  4)) & 0x0f0f0f0f0f0f0f0f;
@@ -894,12 +916,17 @@ namespace mango
         y = (y | (y <<  2)) & 0x3333333333333333;
         y = (y | (y <<  1)) & 0x5555555555555555;
 
-        return (y << 1) | x;
+        u64 value = (y << 1) | x;
+        return value;
     }
 
     static inline
     void u64_deinterleave_bits(u64& x, u64& y, u64 value)
     {
+        // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
+        //     x: 00000000000000000000000000000000xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        //     y: 00000000000000000000000000000000yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+
         x = value & 0x5555555555555555;
         x = (x ^ (x >> 1 )) & 0x3333333333333333;
         x = (x ^ (x >> 2 )) & 0x0f0f0f0f0f0f0f0f;
