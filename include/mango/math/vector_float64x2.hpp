@@ -118,7 +118,7 @@ namespace mango::math
             return m;
         }
 
-#ifdef float128_is_hardware_vector
+#ifdef simd_float128_is_hardware_vector
         operator simd::f64x2::vector () const
         {
             return m.data;

@@ -89,7 +89,7 @@ namespace mango::math
             return m;
         }
 
-#ifdef int256_is_hardware_vector
+#ifdef simd_int256_is_hardware_vector
         operator simd::u32x8::vector () const
         {
             return m.data;

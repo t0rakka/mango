@@ -172,12 +172,12 @@ namespace mango::simd
 
     #define MANGO_ENABLE_SIMD
 
-    #define int128_is_hardware_vector
-    #define int256_is_hardware_vector
-    #define int512_is_hardware_vector
-    #define float128_is_hardware_vector
-    #define float256_is_hardware_vector
-    #define float512_is_hardware_vector
+    #define simd_int128_is_hardware_vector
+    #define simd_int256_is_hardware_vector
+    #define simd_int512_is_hardware_vector
+    #define simd_float128_is_hardware_vector
+    #define simd_float256_is_hardware_vector
+    #define simd_float512_is_hardware_vector
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -266,10 +266,10 @@ namespace mango::simd
 
     #define MANGO_ENABLE_SIMD
 
-    #define int128_is_hardware_vector
-    #define int256_is_hardware_vector
-    #define float128_is_hardware_vector
-    #define float256_is_hardware_vector
+    #define simd_int128_is_hardware_vector
+    #define simd_int256_is_hardware_vector
+    #define simd_float128_is_hardware_vector
+    #define simd_float256_is_hardware_vector
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -358,9 +358,9 @@ namespace mango::simd
 
     #define MANGO_ENABLE_SIMD
 
-    #define int128_is_hardware_vector
-    #define float128_is_hardware_vector
-    #define float256_is_hardware_vector
+    #define simd_int128_is_hardware_vector
+    #define simd_float128_is_hardware_vector
+    #define simd_float256_is_hardware_vector
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -449,8 +449,8 @@ namespace mango::simd
 
     #define MANGO_ENABLE_SIMD
 
-    #define int128_is_hardware_vector
-    #define float128_is_hardware_vector
+    #define simd_int128_is_hardware_vector
+    #define simd_float128_is_hardware_vector
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -543,8 +543,8 @@ namespace mango::simd
 
     #define MANGO_ENABLE_SIMD
 
-    #define int128_is_hardware_vector
-    #define float128_is_hardware_vector
+    #define simd_int128_is_hardware_vector
+    #define simd_float128_is_hardware_vector
 
 #ifndef __aarch64__
 
@@ -658,8 +658,8 @@ namespace mango::simd
 
     #define MANGO_ENABLE_SIMD
 
-    #define int128_is_hardware_vector
-    #define float128_is_hardware_vector
+    #define simd_int128_is_hardware_vector
+    #define simd_float128_is_hardware_vector
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -756,8 +756,8 @@ namespace mango::simd
 
     #define MANGO_ENABLE_SIMD
 
-    #define int128_is_hardware_vector
-    #define float128_is_hardware_vector
+    #define simd_int128_is_hardware_vector
+    #define simd_float128_is_hardware_vector
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
