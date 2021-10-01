@@ -560,9 +560,9 @@ namespace mango::simd
 #endif
 
     // 64 bit vector
-    using s32x2   = scalar_vector<s32, 2>;
-    using u32x2   = scalar_vector<u32, 2>;
-    using f32x2   = scalar_vector<f32, 2>;
+    using s32x2   = hardware_vector<s32, 2, int32x2_t>;
+    using u32x2   = hardware_vector<u32, 2, uint32x2_t>;
+    using f32x2   = hardware_vector<f32, 2, float32x2_t>;
 
 #ifdef MANGO_ENABLE_FP16
     using f16x4   = hardware_vector<f16, 4, float16x4_t>;
@@ -626,8 +626,8 @@ namespace mango::simd
 
 } // namespace mango::simd
 
-#include <mango/simd/scalar_int64.hpp>
-#include <mango/simd/scalar_float64.hpp>
+#include <mango/simd/neon_int64.hpp>
+#include <mango/simd/neon_float64.hpp>
 #include <mango/simd/neon_int128.hpp>
 #include <mango/simd/neon_float128.hpp>
 #include <mango/simd/neon_double128.hpp>
