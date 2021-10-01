@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 #include <algorithm>
@@ -20,12 +20,12 @@ namespace
     std::mt19937 mt(rd());
     std::uniform_real_distribution<float> dist(-1.0, 1.0);
 
-    inline float4 random_float4(float w)
+    inline float32x4 random_float32x4(float w)
     {
         float x = dist(mt);
         float y = dist(mt);
         float z = dist(mt);
-        return float4(x, y, z, w);
+        return float32x4(x, y, z, w);
     }
 
 } // namespace
@@ -44,8 +44,8 @@ namespace method1
 
     struct Particle
     {
-        float4 position; // this is the only mutable data in the transform() method
-        float4 velocity;
+        float32x4 position; // this is the only mutable data in the transform() method
+        float32x4 velocity;
         u32 color;
         float radius;
         float rotation;
@@ -60,8 +60,8 @@ namespace method1
         {
             for (auto &particle : particles)
             {
-                particle.position = random_float4(1.0f);
-                particle.velocity = random_float4(0.0f);
+                particle.position = random_float32x4(1.0f);
+                particle.velocity = random_float32x4(0.0f);
             }
         }
 
@@ -89,8 +89,8 @@ namespace method2
 
     struct Scene
     {
-        AlignedStorage<float4> positions;
-        AlignedStorage<float4> velocities;
+        AlignedStorage<float32x4> positions;
+        AlignedStorage<float32x4> velocities;
         std::vector<u32> colors;
         std::vector<float> radiuses;
         std::vector<float> rotations;
@@ -104,12 +104,12 @@ namespace method2
         {
             for (auto &position : positions)
             {
-                position = random_float4(1.0f);
+                position = random_float32x4(1.0f);
             }
 
             for (auto &velocity : velocities)
             {
-                velocity = random_float4(1.0f);
+                velocity = random_float32x4(1.0f);
             }
         }
 
@@ -139,12 +139,12 @@ namespace method3
 
     struct Scene
     {
-        AlignedStorage<float4> xpositions;
-        AlignedStorage<float4> ypositions;
-        AlignedStorage<float4> zpositions;
-        AlignedStorage<float4> xvelocities;
-        AlignedStorage<float4> yvelocities;
-        AlignedStorage<float4> zvelocities;
+        AlignedStorage<float32x4> xpositions;
+        AlignedStorage<float32x4> ypositions;
+        AlignedStorage<float32x4> zpositions;
+        AlignedStorage<float32x4> xvelocities;
+        AlignedStorage<float32x4> yvelocities;
+        AlignedStorage<float32x4> zvelocities;
 
         std::vector<u32> colors;
         std::vector<float> radiuses;
@@ -164,12 +164,12 @@ namespace method3
             count /= 4;
             for (int i = 0; i < count; ++i)
             {
-                xpositions[i] = random_float4(1.0f);
-                ypositions[i] = random_float4(1.0f);
-                zpositions[i] = random_float4(2.0f);
-                xvelocities[i] = random_float4(1.0f);
-                yvelocities[i] = random_float4(2.0f);
-                zvelocities[i] = random_float4(5.0f);
+                xpositions[i] = random_float32x4(1.0f);
+                ypositions[i] = random_float32x4(1.0f);
+                zpositions[i] = random_float32x4(2.0f);
+                xvelocities[i] = random_float32x4(1.0f);
+                yvelocities[i] = random_float32x4(2.0f);
+                zvelocities[i] = random_float32x4(5.0f);
             }
         }
 
