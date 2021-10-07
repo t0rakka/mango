@@ -54,12 +54,13 @@ else ()
 endif ()
 
 # ----------------------------------------------------------------------
-# build examples
+# build examples + utilities
 # ----------------------------------------------------------------------
 
 add_subdirectory(test)
 add_subdirectory(misc)
 add_subdirectory(image)
+add_subdirectory(utils)
 
 # ----------------------------------------------------------------------
 # build OpenGL examples
