@@ -41,7 +41,6 @@ void enumerate(const Path& path, State& state, std::string destination, std::str
         printf("Folder: %s\n", current.c_str());
 
         // create folder
-
         bool status = std::filesystem::create_directory(current);
         MANGO_UNREFERENCED(status);
     }
