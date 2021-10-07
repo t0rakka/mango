@@ -1,6 +1,8 @@
 /*
+    MANGO Multimedia Development Platform
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include <sys/types.h>
+#include <sys/types.h> // TODO: use c++17 std::filesystem
 #include <sys/stat.h>
 #include <mango/mango.hpp>
 
