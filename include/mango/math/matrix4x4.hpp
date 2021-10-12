@@ -151,7 +151,7 @@ namespace mango::math
     // operators
     // ------------------------------------------------------------------
 
-    static inline Vector<float, 3> operator * (const Vector<float, 3>& v, const Matrix<float, 4, 4>& m)
+    static inline Vector<float, 3> operator * (const Vector<float, 3>& v, const Matrix4x4& m)
     {
         float x = v[0] * m(0, 0) + v[1] * m(1, 0) + v[2] * m(2, 0) + m(3, 0);
         float y = v[0] * m(0, 1) + v[1] * m(1, 1) + v[2] * m(2, 1) + m(3, 1);
@@ -159,7 +159,7 @@ namespace mango::math
         return Vector<float, 3>(x, y, z);
     }
 
-    static inline Vector<float, 4> operator * (const Vector<float, 4>& v, const Matrix<float, 4, 4>& m)
+    static inline Vector<float, 4> operator * (const Vector<float, 4>& v, const Matrix4x4& m)
     {
         float32x4 temp = m[0] * v.xxxx;
         temp = madd(temp, m[1], v.yyyy);
@@ -168,9 +168,9 @@ namespace mango::math
         return temp;
     }
 
-    static inline Matrix<float, 4, 4> operator * (const Matrix<float, 4, 4>& a, const Matrix<float, 4, 4>& b)
+    static inline Matrix4x4 operator * (const Matrix4x4& a, const Matrix4x4& b)
     {
-        Matrix<float, 4, 4> result;
+        Matrix4x4 result;
         result[0] = a[0] * b;
         result[1] = a[1] * b;
         result[2] = a[2] * b;
