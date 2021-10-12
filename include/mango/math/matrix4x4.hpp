@@ -182,13 +182,13 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline float4x4 transpose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    static inline Matrix4x4 transpose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         float32x4 temp0 = simd::unpacklo(m0, m1);
         float32x4 temp1 = simd::unpacklo(m2, m3);
         float32x4 temp2 = simd::unpackhi(m0, m1);
         float32x4 temp3 = simd::unpackhi(m2, m3);
-        float4x4 result;
+        Matrix4x4 result;
         result[0] = simd::movelh(temp0, temp1);
         result[1] = simd::movehl(temp1, temp0);
         result[2] = simd::movelh(temp2, temp3);
@@ -196,7 +196,7 @@ namespace mango::math
         return result;
     }
 
-    static inline float4x4 inverse(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    static inline Matrix4x4 inverse(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         // Original Intel SSE code (C) Rune Stubbe. All rights reserved.
         // Modified to use our SIMD abstraction so that compiles for more architectures.
@@ -243,7 +243,7 @@ namespace mango::math
         float32x4 minors2 = r0_wzyx * inner13 - r1_wzyx * inner30 - r3_wzyx * inner01;
         float32x4 minors3 = r1_wzyx * inner02 - r0_wzyx * inner12 + r2_wzyx * inner01;
 
-        float4x4 result;
+        Matrix4x4 result;
         result[0] = minors0 * rcp_denom_ppnn;
         result[1] = minors1 * rcp_denom_ppnn;
         result[2] = minors2 * rcp_denom_ppnn;
@@ -251,7 +251,7 @@ namespace mango::math
         return result;
     }
 
-    static inline float4x4 inverseTranspose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    static inline Matrix4x4 inverseTranspose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         const float32x4 m0zwyz = m0.zwyz;
         const float32x4 m0wzwy = m0.wzwy;
@@ -288,7 +288,7 @@ namespace mango::math
         d =  madd(d, m2yxxx, v0);
 
         float32x4 det = 1.0f / dot(m0, a);
-        return float4x4(a * det, b * det, c * det, d * det);
+        return Matrix4x4(a * det, b * det, c * det, d * det);
     }
 
     /*
@@ -300,9 +300,9 @@ namespace mango::math
     //     - last column is [0 0 0 1]
     //     - matrix may contain: translation, rotation and scaling
 
-    static inline float4x4 inverseTRS(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    static inline Matrix4x4 inverseTRS(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
-        float4x4 r;
+        Matrix4x4 r;
 
         // 3x3 transpose
         float32x4 t0 = shuffle<0, 1, 0, 1>(m0, m1);
@@ -329,9 +329,9 @@ namespace mango::math
     //     - matrix may contain: translation and rotation
     //     - no scaling (scale must be 1.0)
 
-    static inline float4x4 inverseTR(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    static inline Matrix4x4 inverseTR(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
-        float4x4 r;
+        Matrix4x4 r;
 
         // 3x3 transpose
         float32x4 t0 = shuffle<0, 1, 0, 1>(m0, m1);
@@ -356,77 +356,77 @@ namespace mango::math
     // inverseTranspose:  67,000,000 / sec  (44 clocks)
     // inverse:           59,000,000 / sec  (50 clocks)
 
-    static inline float4x4 transpose(const float4x4& m)
+    static inline Matrix4x4 transpose(const Matrix4x4& m)
     {
         return transpose(m[0], m[1], m[2], m[3]);
     }
 
-    static inline float4x4 inverse(const float4x4& m)
+    static inline Matrix4x4 inverse(const Matrix4x4& m)
     {
         return inverse(m[0], m[1], m[2], m[3]);
     }
 
-    static inline float4x4 inverseTranspose(const float4x4& m)
+    static inline Matrix4x4 inverseTranspose(const Matrix4x4& m)
     {
         return inverseTranspose(m[0], m[1], m[2], m[3]);
     }
 
-    static inline float4x4 inverseTRS(const float4x4& m)
+    static inline Matrix4x4 inverseTRS(const Matrix4x4& m)
     {
         return inverseTRS(m[0], m[1], m[2], m[3]);
     }
 
-    static inline float4x4 inverseTR(const float4x4& m)
+    static inline Matrix4x4 inverseTR(const Matrix4x4& m)
     {
         return inverseTR(m[0], m[1], m[2], m[3]);
     }
 
-    float4x4 normalize(const float4x4& m);
-    float4x4 mirror(const float4x4& m, const float32x4& plane);
-    float4x4 affineInverse(const float4x4& m);
-    float4x4 adjoint(const float4x4& m);
+    Matrix4x4 normalize(const Matrix4x4& m);
+    Matrix4x4 mirror(const Matrix4x4& m, const float32x4& plane);
+    Matrix4x4 affineInverse(const Matrix4x4& m);
+    Matrix4x4 adjoint(const Matrix4x4& m);
 
     namespace matrix
     {
-        float4x4 identity();
-        float4x4 translate(float xtrans, float ytrans, float ztrans);
-        float4x4 translate(const float32x3& trans);
-        float4x4 scale(float scale);
-        float4x4 scale(float xscale, float yscale, float zscale);
-        float4x4 scale(const float32x3& scale);
-        float4x4 rotate(float angle, const float32x3& axis);
-        float4x4 rotateX(float angle);
-        float4x4 rotateY(float angle);
-        float4x4 rotateZ(float angle);
-        float4x4 rotateXYZ(float xangle, float yangle, float zangle);
-        float4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up);
+        Matrix4x4 identity();
+        Matrix4x4 translate(float xtrans, float ytrans, float ztrans);
+        Matrix4x4 translate(const float32x3& trans);
+        Matrix4x4 scale(float scale);
+        Matrix4x4 scale(float xscale, float yscale, float zscale);
+        Matrix4x4 scale(const float32x3& scale);
+        Matrix4x4 rotate(float angle, const float32x3& axis);
+        Matrix4x4 rotateX(float angle);
+        Matrix4x4 rotateY(float angle);
+        Matrix4x4 rotateZ(float angle);
+        Matrix4x4 rotateXYZ(float xangle, float yangle, float zangle);
+        Matrix4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up);
     } // namespace matrix
 
     namespace opengl
     {
         // right-handed
-        float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
-        float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
-        float4x4 perspective(float xfov, float yfov, float znear, float zfar);
-        float4x4 oblique(const float4x4& proj, const float32x4& nearclip);
+        Matrix4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
+        Matrix4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
+        Matrix4x4 perspective(float xfov, float yfov, float znear, float zfar);
+        Matrix4x4 oblique(const Matrix4x4& proj, const float32x4& nearclip);
     } // namespace opengl
 
     namespace vulkan
     {
         // right-handed
-        float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
-        float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
-        float4x4 perspective(float xfov, float yfov, float znear, float zfar);
-        float4x4 oblique(const float4x4& proj, const float32x4& nearclip);
+        Matrix4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
+        Matrix4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
+        Matrix4x4 perspective(float xfov, float yfov, float znear, float zfar);
+        Matrix4x4 oblique(const Matrix4x4& proj, const float32x4& nearclip);
     } // namespace
 
     namespace directx
     {
         // left-handed
-        float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
-        float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
-        float4x4 perspective(float xfov, float yfov, float znear, float zfar);
-        float4x4 oblique(const float4x4& proj, const float32x4& nearclip);
+        Matrix4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar);
+        Matrix4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar);
+        Matrix4x4 perspective(float xfov, float yfov, float znear, float zfar);
+        Matrix4x4 oblique(const Matrix4x4& proj, const float32x4& nearclip);
     } // namespace directx
 
 } // namespace mango::math

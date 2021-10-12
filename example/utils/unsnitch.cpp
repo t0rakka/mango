@@ -8,10 +8,6 @@
 using namespace mango;
 using namespace mango::filesystem;
 
-constexpr u64 KB = 1 << 10;
-constexpr u64 MB = 1 << 20;
-constexpr u64 GB = 1 << 30;
-
 // TODO: file validation with checksum
 // TODO: file permissions (the ultimate goal -> rsync will not "do" anything)
 
@@ -156,6 +152,11 @@ int main(int argc, char* argv[])
     MANGO_UNREFERENCED(time1);
 
 #if 0
+
+    constexpr u64 KB = 1 << 10;
+    constexpr u64 MB = 1 << 20;
+    constexpr u64 GB = 1 << 30;
+
     printf("\n");
     printf("------------------------------------------------------------------\n");
     printf("uncompressed   compressed   ratio      time    status \n");
@@ -172,5 +173,6 @@ int main(int argc, char* argv[])
         state.total_bytes_in ? state.total_bytes_out * 100 / state.total_bytes_in : 0,
         total_time, rate);
     printf("Number of failures: %d\n", failures);
+
 #endif
 }
