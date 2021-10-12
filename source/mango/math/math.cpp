@@ -105,10 +105,7 @@ namespace mango::math
     bool Matrix4x4::isAffine() const
     {
         const float* p = *this;
-        return p[ 3] == 0.0f &&
-               p[ 7] == 0.0f &&
-               p[11] == 0.0f &&
-               p[15] == 1.0f;
+        return p[3] == 0.0f && p[7] == 0.0f && p[11] == 0.0f && p[15] == 1.0f;
     }
 
     float Matrix4x4::determinant() const
@@ -119,176 +116,117 @@ namespace mango::math
         return a - b;
     }
 
-    void Matrix4x4::setIdentity()
+    Matrix4x4 Matrix4x4::identity()
     {
+        return Matrix4x4(1.0f);
+    }
+
+    Matrix4x4 Matrix4x4::translate(float x, float y, float z)
+    {
+        Matrix4x4 m;
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, 1.0f);
         m[1] = simd::set_component<1>(zero, 1.0f);
         m[2] = simd::set_component<2>(zero, 1.0f);
-        m[3] = simd::set_component<3>(zero, 1.0f);
+        m[3] = float32x4(x, y, z, 1.0f);
+        return m;
     }
 
-    void Matrix4x4::translate(float x, float y, float z)
+    Matrix4x4 Matrix4x4::translate(const float32x3& translation)
     {
-        const float32x4 v = float32x4(x, y, z, 0.0f);
-        m[0] = madd(m[0], m[0].wwww, v);
-        m[1] = madd(m[1], m[1].wwww, v);
-        m[2] = madd(m[2], m[2].wwww, v);
-        m[3] = madd(m[3], m[3].wwww, v);
+        Matrix4x4 m;
+        const float32x4 zero(0);
+        m[0] = simd::set_component<0>(zero, 1.0f);
+        m[1] = simd::set_component<1>(zero, 1.0f);
+        m[2] = simd::set_component<2>(zero, 1.0f);
+        m[3] = float32x4(translation.x, translation.y, translation.z, 1.0f);
+        return m;
     }
 
-    void Matrix4x4::translate(const float32x3& t)
+    Matrix4x4 Matrix4x4::scale(float s)
     {
-        const float32x4 v = float32x4(t.x, t.y, t.z, 0.0f);
-        m[0] = madd(m[0], m[0].wwww, v);
-        m[1] = madd(m[1], m[1].wwww, v);
-        m[2] = madd(m[2], m[2].wwww, v);
-        m[3] = madd(m[3], m[3].wwww, v);
-    }
-
-    void Matrix4x4::scale(float s)
-    {
+        Matrix4x4 m;
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, s);
         m[1] = simd::set_component<1>(zero, s);
         m[2] = simd::set_component<2>(zero, s);
         m[3] = simd::set_component<3>(zero, 1.0f);
+        return m;
     }
 
-    void Matrix4x4::scale(float x, float y, float z)
+    Matrix4x4 Matrix4x4::scale(float x, float y, float z)
     {
+        Matrix4x4 m;
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, x);
         m[1] = simd::set_component<1>(zero, y);
         m[2] = simd::set_component<2>(zero, z);
         m[3] = simd::set_component<3>(zero, 1.0f);
+        return m;
     }
 
-    void Matrix4x4::scale(const float32x3& s)
+    Matrix4x4 Matrix4x4::scale(const float32x3& s)
     {
-        const float32x4 v = float32x4(s.x, s.y, s.z, 1.0f);
-        m[0] = m[0] * v;
-        m[1] = m[1] * v;
-        m[2] = m[2] * v;
-        m[3] = m[3] * v;
+        Matrix4x4 m;
+        const float32x4 zero(0);
+        m[0] = simd::set_component<0>(zero, s.x);
+        m[1] = simd::set_component<1>(zero, s.y);
+        m[2] = simd::set_component<2>(zero, s.z);
+        m[3] = simd::set_component<3>(zero, 1.0f);
+        return m;
     }
 
-#if defined(MANGO_ENABLE_SIMD)
-
-    void Matrix4x4::rotate(float angle, const float32x3& axis)
-    {
-        const Matrix4x4 temp = AngleAxis(angle, axis);
-        *this = *this * temp;
-    }
-
-#else
-
-    void Matrix4x4::rotate(float angle, const float32x3& axis)
+    Matrix4x4 Matrix4x4::rotate(float angle, const float32x3& axis)
     {
         const Matrix4x4 temp = AngleAxis(angle, axis);
-
-        const float m00 = temp(0, 0);
-        const float m01 = temp(0, 1);
-        const float m02 = temp(0, 2);
-        const float m10 = temp(1, 0);
-        const float m11 = temp(1, 1);
-        const float m12 = temp(1, 2);
-        const float m20 = temp(2, 0);
-        const float m21 = temp(2, 1);
-        const float m22 = temp(2, 2);
-
-        float* p = *this;
-
-        // 3x3 multiply
-        for (int i = 0; i < 4; ++i)
-        {
-            const float x = p[0];
-            const float y = p[1];
-            const float z = p[2];
-            p[0] = x * m00 + y * m10 + z * m20;
-            p[1] = x * m01 + y * m11 + z * m21;
-            p[2] = x * m02 + y * m12 + z * m22;
-            p += 4;
-        }
+        return temp;
     }
 
-#endif
-
-    void Matrix4x4::rotateX(float angle)
+    Matrix4x4 Matrix4x4::rotateX(float angle)
     {
         const float s = std::sin(angle);
         const float c = std::cos(angle);
 
-        float* p = *this;
-        
-        for (int i = 0; i < 4; ++i)
+        return Matrix4x4
         {
-            const float y = p[1];
-            const float z = p[2];
-            p[1] = y * c - z * s;
-            p[2] = z * c + y * s;
-            p += 4;
-        }
+            float32x4(1, 0, 0, 0),
+            float32x4(0, c, s, 0),
+            float32x4(0,-s, c, 0),
+            float32x4(0, 0, 0, 1)
+        };
     }
 
-    void Matrix4x4::rotateY(float angle)
+    Matrix4x4 Matrix4x4::rotateY(float angle)
     {
         const float s = std::sin(angle);
         const float c = std::cos(angle);
 
-        float* p = *this;
-        
-        for (int i = 0; i < 4; ++i)
+        return Matrix4x4
         {
-            const float x = p[0];
-            const float z = p[2];
-            p[0] = x * c + z * s;
-            p[2] = z * c - x * s;
-            p += 4;
-        }
-    }
+            float32x4(c, 0,-s, 0),
+            float32x4(0, 1, 0, 0),
+            float32x4(s, 0, c, 0),
+            float32x4(0, 0, 0, 1)
+        };
+     }
 
-    void Matrix4x4::rotateZ(float angle)
+    Matrix4x4 Matrix4x4::rotateZ(float angle)
     {
         const float s = std::sin(angle);
         const float c = std::cos(angle);
 
-        float* p = *this;
-
-        for (int i = 0; i < 4; ++i)
+        return Matrix4x4
         {
-            const float x = p[0];
-            const float y = p[1];
-            p[0] = x * c - y * s;
-            p[1] = y * c + x * s;
-            p += 4;
-        }
+            float32x4( c, s, 0, 0),
+            float32x4(-s, c, 0, 0),
+            float32x4( 0, 0, 1, 0),
+            float32x4( 0, 0, 0, 1)
+        };
     }
 
-#if defined(MANGO_ENABLE_SIMD)
-
-    void Matrix4x4::rotateXYZ(float xangle, float yangle, float zangle)
+    Matrix4x4 Matrix4x4::rotateXYZ(float x, float y, float z)
     {
-        const Matrix4x4 temp = matrix::rotateXYZ(xangle, yangle, zangle);
-        *this = *this * temp;
-    }
-
-    Matrix4x4 normalize(const Matrix4x4& m)
-    {
-        float32x4 x = m[0];
-        float32x4 y = m[1];
-        float32x4 z = m[2];
-        x = normalize(x);
-        y = normalize(y - x * dot(x, y));
-        z = cross(x, y);
-        return Matrix4x4(x, y, z, m[3]);
-    }
-
-#else
-
-    void Matrix4x4::rotateXYZ(float xangle, float yangle, float zangle)
-    {
-        const float32x4 v = float4(xangle, yangle, zangle, 0.0f);
+        const float32x4 v = float32x4(x, y, z, 0.0f);
         const float32x4 s = sin(v);
         const float32x4 c = cos(v);
 
@@ -311,44 +249,173 @@ namespace mango::math
         const float m21 = sz * sycx - cz * sx;
         const float m22 = cy * cx;
 
-        float* p = *this;
-
-        // 3x3 multiply
-        for (int i = 0; i < 4; ++i)
+        return Matrix4x4
         {
-            const float x = p[0];
-            const float y = p[1];
-            const float z = p[2];
-            p[0] = x * m00 + y * m10 + z * m20;
-            p[1] = x * m01 + y * m11 + z * m21;
-            p[2] = x * m02 + y * m12 + z * m22;
-            p += 4;
-        }
+            float32x4(m00, m01, m02, 0),
+            float32x4(m10, m11, m12, 0),
+            float32x4(m20, m21, m22, 0),
+            float32x4(0, 0, 0, 1)
+        };
     }
 
-    Matrix4x4 normalize(const Matrix4x4& _m)
+    Matrix4x4 Matrix4x4::lookat(const float32x3& target, const float32x3& viewer, const float32x3& up)
     {
-        const float* m = _m;
+        const float32x3 zaxis = normalize(target - viewer);
+        const float32x3 xaxis = normalize(cross(up, zaxis));
+        const float32x3 yaxis = cross(zaxis, xaxis);
 
-        float32x3 x(m[0], m[1], m[2]);
-        float32x3 y(m[4], m[5], m[6]);
-        float32x3 z(m[8], m[9], m[10]);
+        return Matrix4x4
+        {
+            float32x4(xaxis.x, yaxis.x, zaxis.x, 0),
+            float32x4(xaxis.y, yaxis.y, zaxis.y, 0),
+            float32x4(xaxis.z, yaxis.z, zaxis.z, 0),
+            float32x4(-dot(xaxis, viewer), -dot(yaxis, viewer), -dot(zaxis, viewer), 1.0f)
+        };
+    }
 
+    Matrix4x4 translate(const Matrix4x4& input, float x, float y, float z)
+    {
+        const float32x4 v = float32x4(x, y, z, 0.0f);
+        Matrix4x4 m;
+        m[0] = madd(input[0], input[0].wwww, v);
+        m[1] = madd(input[1], input[1].wwww, v);
+        m[2] = madd(input[2], input[2].wwww, v);
+        m[3] = madd(input[3], input[3].wwww, v);
+        return m;
+    }
+
+    Matrix4x4 translate(const Matrix4x4& input, const float32x3& t)
+    {
+        const float32x4 v = float32x4(t.x, t.y, t.z, 0.0f);
+        Matrix4x4 m;
+        m[0] = madd(input[0], input[0].wwww, v);
+        m[1] = madd(input[1], input[1].wwww, v);
+        m[2] = madd(input[2], input[2].wwww, v);
+        m[3] = madd(input[3], input[3].wwww, v);
+        return m;
+    }
+
+    Matrix4x4 scale(const Matrix4x4& input, float s)
+    {
+        const float32x4 v = float32x4(s, s, s, 1.0f);
+        Matrix4x4 m;
+        m[0] = input[0] * v;
+        m[1] = input[1] * v;
+        m[2] = input[2] * v;
+        m[3] = input[3] * v;
+        return m;
+    }
+
+    Matrix4x4 scale(const Matrix4x4& input, float x, float y, float z)
+    {
+        const float32x4 v = float32x4(x, y, z, 1.0f);
+        Matrix4x4 m;
+        m[0] = input[0] * v;
+        m[1] = input[1] * v;
+        m[2] = input[2] * v;
+        m[3] = input[3] * v;
+        return m;
+    }
+
+    Matrix4x4 scale(const Matrix4x4& input, const float32x3& scale)
+    {
+        const float32x4 v = float32x4(scale.x, scale.y, scale.z, 1.0f);
+        Matrix4x4 m;
+        m[0] = input[0] * v;
+        m[1] = input[1] * v;
+        m[2] = input[2] * v;
+        m[3] = input[3] * v;
+        return m;
+    }
+
+    Matrix4x4 rotate(const Matrix4x4& input, float angle, const float32x3& axis)
+    {
+        const Matrix4x4 temp = AngleAxis(angle, axis);
+        return input * temp;
+    }
+
+    Matrix4x4 rotateX(const Matrix4x4& input, float angle)
+    {
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
+
+        Matrix4x4 m;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            const float x = input[i][0];
+            const float y = input[i][1];
+            const float z = input[i][2];
+            const float w = input[i][3];
+            m[i][0] = x;
+            m[i][1] = y * c - z * s;
+            m[i][2] = z * c + y * s;
+            m[i][3] = w;
+        }
+
+        return m;
+    }
+
+    Matrix4x4 rotateY(const Matrix4x4& input, float angle)
+    {
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
+
+        Matrix4x4 m;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            const float x = input[i][0];
+            const float y = input[i][1];
+            const float z = input[i][2];
+            const float w = input[i][3];
+            m[i][0] = x * c + z * s;
+            m[i][1] = y;
+            m[i][2] = z * c - x * s;
+            m[i][3] = w;
+        }
+
+        return m;
+    }
+
+    Matrix4x4 rotateZ(const Matrix4x4& input, float angle)
+    {
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
+
+        Matrix4x4 m;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            const float x = input[i][0];
+            const float y = input[i][1];
+            const float z = input[i][2];
+            const float w = input[i][3];
+            m[i][0] = x * c - y * s;
+            m[i][1] = y * c + x * s;
+            m[i][2] = z;
+            m[i][3] = w;
+        }
+
+        return m;
+    }
+
+    Matrix4x4 rotateXYZ(const Matrix4x4& input, float xangle, float yangle, float zangle)
+    {
+        const Matrix4x4 temp = Matrix4x4::rotateXYZ(xangle, yangle, zangle);
+        return input * temp;
+    }
+
+    Matrix4x4 normalize(const Matrix4x4& input)
+    {
+        float32x4 x = input[0];
+        float32x4 y = input[1];
+        float32x4 z = input[2];
         x = normalize(x);
         y = normalize(y - x * dot(x, y));
         z = cross(x, y);
-
-        Matrix4x4 result;
-
-        result[0] = float4(x, 0.0f);
-        result[1] = float4(y, 0.0f);
-        result[2] = float4(z, 0.0f);
-        result[3] = float4(m[12], m[13], m[14], 1.0f);
-
-        return result;
+        return Matrix4x4(x, y, z, input[3]);
     }
-
-#endif
 
     Matrix4x4 mirror(const Matrix4x4& M, const float32x4& plane)
     {
@@ -447,168 +514,6 @@ namespace mango::math
 
         return result;
     }
-
-namespace matrix
-{
-
-    Matrix4x4 identity()
-    {
-        return Matrix4x4(1.0f);
-    }
-
-    Matrix4x4 translate(float x, float y, float z)
-    {
-        Matrix4x4 m;
-        const float32x4 zero(0);
-        m[0] = simd::set_component<0>(zero, 1.0f);
-        m[1] = simd::set_component<1>(zero, 1.0f);
-        m[2] = simd::set_component<2>(zero, 1.0f);
-        m[3] = float32x4(x, y, z, 1.0f);
-        return m;
-    }
-
-    Matrix4x4 translate(const float32x3& translation)
-    {
-        Matrix4x4 m;
-        const float32x4 zero(0);
-        m[0] = simd::set_component<0>(zero, 1.0f);
-        m[1] = simd::set_component<1>(zero, 1.0f);
-        m[2] = simd::set_component<2>(zero, 1.0f);
-        m[3] = float32x4(translation.x, translation.y, translation.z, 1.0f);
-        return m;
-    }
-
-    Matrix4x4 scale(float s)
-    {
-        Matrix4x4 m;
-        const float32x4 zero(0);
-        m[0] = simd::set_component<0>(zero, s);
-        m[1] = simd::set_component<1>(zero, s);
-        m[2] = simd::set_component<2>(zero, s);
-        m[3] = simd::set_component<3>(zero, 1.0f);
-        return m;
-    }
-
-    Matrix4x4 scale(float x, float y, float z)
-    {
-        Matrix4x4 m;
-        const float32x4 zero(0);
-        m[0] = simd::set_component<0>(zero, x);
-        m[1] = simd::set_component<1>(zero, y);
-        m[2] = simd::set_component<2>(zero, z);
-        m[3] = simd::set_component<3>(zero, 1.0f);
-        return m;
-    }
-
-    Matrix4x4 scale(const float32x3& s)
-    {
-        Matrix4x4 m;
-        const float32x4 zero(0);
-        m[0] = simd::set_component<0>(zero, s.x);
-        m[1] = simd::set_component<1>(zero, s.y);
-        m[2] = simd::set_component<2>(zero, s.z);
-        m[3] = simd::set_component<3>(zero, 1.0f);
-        return m;
-    }
-
-    Matrix4x4 rotate(float angle, const float32x3& axis)
-    {
-        const Matrix4x4 temp = AngleAxis(angle, axis);
-        return temp;
-    }
-
-    Matrix4x4 rotateX(float angle)
-    {
-        const float s = std::sin(angle);
-        const float c = std::cos(angle);
-
-        return Matrix4x4
-        {
-            float32x4(1, 0, 0, 0),
-            float32x4(0, c, s, 0),
-            float32x4(0,-s, c, 0),
-            float32x4(0, 0, 0, 1)
-        };
-    }
-
-    Matrix4x4 rotateY(float angle)
-    {
-        const float s = std::sin(angle);
-        const float c = std::cos(angle);
-
-        return Matrix4x4
-        {
-            float32x4(c, 0,-s, 0),
-            float32x4(0, 1, 0, 0),
-            float32x4(s, 0, c, 0),
-            float32x4(0, 0, 0, 1)
-        };
-     }
-
-    Matrix4x4 rotateZ(float angle)
-    {
-        const float s = std::sin(angle);
-        const float c = std::cos(angle);
-
-        return Matrix4x4
-        {
-            float32x4( c, s, 0, 0),
-            float32x4(-s, c, 0, 0),
-            float32x4( 0, 0, 1, 0),
-            float32x4( 0, 0, 0, 1)
-        };
-    }
-
-    Matrix4x4 rotateXYZ(float x, float y, float z)
-    {
-        const float32x4 v = float32x4(x, y, z, 0.0f);
-        const float32x4 s = sin(v);
-        const float32x4 c = cos(v);
-
-        const float sx = s.x;
-        const float sy = s.y;
-        const float sz = s.z;
-        const float cx = c.x;
-        const float cy = c.y;
-        const float cz = c.z;
-        const float sysx = sy * sx;
-        const float sycx = sy * cx;
-
-        const float m00 = cz * cy;
-        const float m01 = sz * cy;
-        const float m02 = -sy;
-        const float m10 = cz * sysx - sz * cx;
-        const float m11 = sz * sysx + cz * cx;
-        const float m12 = cy * sx;
-        const float m20 = cz * sycx + sz * sx;
-        const float m21 = sz * sycx - cz * sx;
-        const float m22 = cy * cx;
-
-        return Matrix4x4
-        {
-            float32x4(m00, m01, m02, 0),
-            float32x4(m10, m11, m12, 0),
-            float32x4(m20, m21, m22, 0),
-            float32x4(0, 0, 0, 1)
-        };
-    }
-
-    Matrix4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up)
-    {
-        const float32x3 zaxis = normalize(target - viewer);
-        const float32x3 xaxis = normalize(cross(up, zaxis));
-        const float32x3 yaxis = cross(zaxis, xaxis);
-
-        return Matrix4x4
-        {
-            float32x4(xaxis.x, yaxis.x, zaxis.x, 0),
-            float32x4(xaxis.y, yaxis.y, zaxis.y, 0),
-            float32x4(xaxis.z, yaxis.z, zaxis.z, 0),
-            float32x4(-dot(xaxis, viewer), -dot(yaxis, viewer), -dot(zaxis, viewer), 1.0f)
-        };
-    }
-
-} // namespace matrix
 
 namespace opengl
 {

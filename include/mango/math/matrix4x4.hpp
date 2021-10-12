@@ -106,7 +106,7 @@ namespace mango::math
         {
         }
 
-        const Matrix& operator = (const Matrix& v)
+        const Matrix4x4& operator = (const Matrix4x4& v)
         {
             m[0] = v.m[0];
             m[1] = v.m[1];
@@ -115,10 +115,10 @@ namespace mango::math
             return *this;
         }
 
-        const Matrix& operator = (float scale);
-        const Matrix& operator = (const float* v);
-        const Matrix& operator = (const Quaternion& rotation);
-        const Matrix& operator = (const AngleAxis& rotation);
+        const Matrix4x4& operator = (float scale);
+        const Matrix4x4& operator = (const float* v);
+        const Matrix4x4& operator = (const Quaternion& rotation);
+        const Matrix4x4& operator = (const AngleAxis& rotation);
 
         operator float32x4* ()
         {
@@ -133,18 +133,18 @@ namespace mango::math
         bool isAffine() const;
         float determinant() const;
 
-        // modify the current matrix
-        void setIdentity();
-        void translate(float xtrans, float ytrans, float ztrans);
-        void translate(const float32x3& trans);
-        void scale(float scale);
-        void scale(float xscale, float yscale, float zscale);
-        void scale(const float32x3& scale);
-        void rotate(float angle, const float32x3& axis);
-        void rotateX(float angle);
-        void rotateY(float angle);
-        void rotateZ(float angle);
-        void rotateXYZ(float xangle, float yangle, float zangle);
+        static Matrix4x4 identity();
+        static Matrix4x4 translate(float x, float y, float z);
+        static Matrix4x4 translate(const float32x3& translation);
+        static Matrix4x4 scale(float scale);
+        static Matrix4x4 scale(float xscale, float yscale, float zscale);
+        static Matrix4x4 scale(const float32x3& scale);
+        static Matrix4x4 rotate(float angle, const float32x3& axis);
+        static Matrix4x4 rotateX(float angle);
+        static Matrix4x4 rotateY(float angle);
+        static Matrix4x4 rotateZ(float angle);
+        static Matrix4x4 rotateXYZ(float xangle, float yangle, float zangle);
+        static Matrix4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up);
     };
 
     // ------------------------------------------------------------------
@@ -181,6 +181,21 @@ namespace mango::math
     // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
+
+    Matrix4x4 translate(const Matrix4x4& matrix, float x, float y, float z);
+    Matrix4x4 translate(const Matrix4x4& matrix, const float32x3& translation);
+    Matrix4x4 scale(const Matrix4x4& matrix, float scale);
+    Matrix4x4 scale(const Matrix4x4& matrix, float xscale, float yscale, float zscale);
+    Matrix4x4 scale(const Matrix4x4& matrix, const float32x3& scale);
+    Matrix4x4 rotate(const Matrix4x4& matrix, float angle, const float32x3& axis);
+    Matrix4x4 rotateX(const Matrix4x4& matrix, float angle);
+    Matrix4x4 rotateY(const Matrix4x4& matrix, float angle);
+    Matrix4x4 rotateZ(const Matrix4x4& matrix, float angle);
+    Matrix4x4 rotateXYZ(const Matrix4x4& matrix, float xangle, float yangle, float zangle);
+    Matrix4x4 normalize(const Matrix4x4& m);
+    Matrix4x4 mirror(const Matrix4x4& m, const float32x4& plane);
+    Matrix4x4 affineInverse(const Matrix4x4& m);
+    Matrix4x4 adjoint(const Matrix4x4& m);
 
     static inline Matrix4x4 transpose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
@@ -380,27 +395,6 @@ namespace mango::math
     {
         return inverseTR(m[0], m[1], m[2], m[3]);
     }
-
-    Matrix4x4 normalize(const Matrix4x4& m);
-    Matrix4x4 mirror(const Matrix4x4& m, const float32x4& plane);
-    Matrix4x4 affineInverse(const Matrix4x4& m);
-    Matrix4x4 adjoint(const Matrix4x4& m);
-
-    namespace matrix
-    {
-        Matrix4x4 identity();
-        Matrix4x4 translate(float xtrans, float ytrans, float ztrans);
-        Matrix4x4 translate(const float32x3& trans);
-        Matrix4x4 scale(float scale);
-        Matrix4x4 scale(float xscale, float yscale, float zscale);
-        Matrix4x4 scale(const float32x3& scale);
-        Matrix4x4 rotate(float angle, const float32x3& axis);
-        Matrix4x4 rotateX(float angle);
-        Matrix4x4 rotateY(float angle);
-        Matrix4x4 rotateZ(float angle);
-        Matrix4x4 rotateXYZ(float xangle, float yangle, float zangle);
-        Matrix4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up);
-    } // namespace matrix
 
     namespace opengl
     {
