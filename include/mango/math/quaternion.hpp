@@ -172,7 +172,7 @@ namespace mango::math
         {
         }
 
-        AngleAxis(const float4x4& m);
+        AngleAxis(const Matrix4x4& m);
         AngleAxis(const Quaternion& q);
         ~AngleAxis() = default;
     };

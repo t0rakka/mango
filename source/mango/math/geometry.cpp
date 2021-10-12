@@ -218,7 +218,7 @@ namespace mango::math
     // TexTriangle
     // ------------------------------------------------------------------
 
-    float3x3 TexTriangle::tbn() const
+    Matrix3x3 TexTriangle::tbn() const
     {
         const float32x3 a = position[1] - position[0];
         const float32x3 b = position[2] - position[0];
@@ -230,7 +230,7 @@ namespace mango::math
 			s = 1.0f / s;
 		}
 
-        float3x3 tbn;
+        Matrix3x3 tbn;
 
         tbn[0] = normalize((a * float(d.y) - b * float(c.y)) * s); // tangent
         tbn[1] = normalize((a * float(d.x) + b * float(c.x)) * -s); // binormal
@@ -243,9 +243,9 @@ namespace mango::math
     // Frustum
     // ------------------------------------------------------------------
 
-    Frustum::Frustum(const float4x4& tm)
+    Frustum::Frustum(const Matrix4x4& tm)
     {
-        const float4x4 m = transpose(tm);
+        const Matrix4x4 m = transpose(tm);
 
         const float32x3 nx = float32x4(m[3] + m[0]).xyz;
         const float32x3 px = float32x4(m[3] - m[0]).xyz;

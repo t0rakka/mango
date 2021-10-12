@@ -331,7 +331,7 @@ namespace mango::math
         {
         }
 
-        float3x3 tbn() const;
+        Matrix3x3 tbn() const;
     };
 
     // ------------------------------------------------------------------
@@ -344,7 +344,7 @@ namespace mango::math
         float32x3 origin;
 
         Frustum() = default;
-        Frustum(const float4x4& m);
+        Frustum(const Matrix4x4& m);
         ~Frustum() = default;
 
         Ray ray(float x, float y) const;

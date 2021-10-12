@@ -17,10 +17,10 @@ namespace mango::math
     constexpr float epsilon = std::numeric_limits<float>::epsilon();
 
     // ------------------------------------------------------------------------
-    // float4x4
+    // Matrix4x4
     // ------------------------------------------------------------------------
 
-    const float4x4& float4x4::operator = (float s)
+    const Matrix4x4& Matrix4x4::operator = (float s)
     {
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, s);
@@ -30,7 +30,7 @@ namespace mango::math
         return *this;
     }
 
-    const float4x4& float4x4::operator = (const float* v)
+    const Matrix4x4& Matrix4x4::operator = (const float* v)
     {
         m[0] = float32x4(v[0], v[1], v[2], v[3]);
         m[1] = float32x4(v[4], v[5], v[6], v[7]);
@@ -39,7 +39,7 @@ namespace mango::math
         return *this;
     }
 
-    const float4x4& float4x4::operator = (const Quaternion& q)
+    const Matrix4x4& Matrix4x4::operator = (const Quaternion& q)
     {
         const float x2 = q.x * 2.0f;
         const float y2 = q.y * 2.0f;
@@ -65,7 +65,7 @@ namespace mango::math
         return *this;
     }
 
-    const float4x4& float4x4::operator = (const AngleAxis& a)
+    const Matrix4x4& Matrix4x4::operator = (const AngleAxis& a)
     {
         const float length2 = square(a.axis);
         if (length2 < epsilon)
@@ -102,7 +102,7 @@ namespace mango::math
         return *this;
     }
 
-    bool float4x4::isAffine() const
+    bool Matrix4x4::isAffine() const
     {
         const float* p = *this;
         return p[ 3] == 0.0f &&
@@ -111,7 +111,7 @@ namespace mango::math
                p[15] == 1.0f;
     }
 
-    float float4x4::determinant() const
+    float Matrix4x4::determinant() const
     {
         const float* p = *this;
         const float a = p[0] * p[5] * p[10] + p[1] * p[6] * p[ 8] + p[2] * p[4] * p[9];
@@ -119,7 +119,7 @@ namespace mango::math
         return a - b;
     }
 
-    void float4x4::setIdentity()
+    void Matrix4x4::setIdentity()
     {
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, 1.0f);
@@ -128,7 +128,7 @@ namespace mango::math
         m[3] = simd::set_component<3>(zero, 1.0f);
     }
 
-    void float4x4::translate(float x, float y, float z)
+    void Matrix4x4::translate(float x, float y, float z)
     {
         const float32x4 v = float32x4(x, y, z, 0.0f);
         m[0] = madd(m[0], m[0].wwww, v);
@@ -137,7 +137,7 @@ namespace mango::math
         m[3] = madd(m[3], m[3].wwww, v);
     }
 
-    void float4x4::translate(const float32x3& t)
+    void Matrix4x4::translate(const float32x3& t)
     {
         const float32x4 v = float32x4(t.x, t.y, t.z, 0.0f);
         m[0] = madd(m[0], m[0].wwww, v);
@@ -146,7 +146,7 @@ namespace mango::math
         m[3] = madd(m[3], m[3].wwww, v);
     }
 
-    void float4x4::scale(float s)
+    void Matrix4x4::scale(float s)
     {
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, s);
@@ -155,7 +155,7 @@ namespace mango::math
         m[3] = simd::set_component<3>(zero, 1.0f);
     }
 
-    void float4x4::scale(float x, float y, float z)
+    void Matrix4x4::scale(float x, float y, float z)
     {
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, x);
@@ -164,7 +164,7 @@ namespace mango::math
         m[3] = simd::set_component<3>(zero, 1.0f);
     }
 
-    void float4x4::scale(const float32x3& s)
+    void Matrix4x4::scale(const float32x3& s)
     {
         const float32x4 v = float32x4(s.x, s.y, s.z, 1.0f);
         m[0] = m[0] * v;
@@ -175,17 +175,17 @@ namespace mango::math
 
 #if defined(MANGO_ENABLE_SIMD)
 
-    void float4x4::rotate(float angle, const float32x3& axis)
+    void Matrix4x4::rotate(float angle, const float32x3& axis)
     {
-        const float4x4 temp = AngleAxis(angle, axis);
+        const Matrix4x4 temp = AngleAxis(angle, axis);
         *this = *this * temp;
     }
 
 #else
 
-    void float4x4::rotate(float angle, const float32x3& axis)
+    void Matrix4x4::rotate(float angle, const float32x3& axis)
     {
-        const float4x4 temp = AngleAxis(angle, axis);
+        const Matrix4x4 temp = AngleAxis(angle, axis);
 
         const float m00 = temp(0, 0);
         const float m01 = temp(0, 1);
@@ -214,7 +214,7 @@ namespace mango::math
 
 #endif
 
-    void float4x4::rotateX(float angle)
+    void Matrix4x4::rotateX(float angle)
     {
         const float s = std::sin(angle);
         const float c = std::cos(angle);
@@ -231,7 +231,7 @@ namespace mango::math
         }
     }
 
-    void float4x4::rotateY(float angle)
+    void Matrix4x4::rotateY(float angle)
     {
         const float s = std::sin(angle);
         const float c = std::cos(angle);
@@ -248,7 +248,7 @@ namespace mango::math
         }
     }
 
-    void float4x4::rotateZ(float angle)
+    void Matrix4x4::rotateZ(float angle)
     {
         const float s = std::sin(angle);
         const float c = std::cos(angle);
@@ -267,13 +267,13 @@ namespace mango::math
 
 #if defined(MANGO_ENABLE_SIMD)
 
-    void float4x4::rotateXYZ(float xangle, float yangle, float zangle)
+    void Matrix4x4::rotateXYZ(float xangle, float yangle, float zangle)
     {
-        const float4x4 temp = matrix::rotateXYZ(xangle, yangle, zangle);
+        const Matrix4x4 temp = matrix::rotateXYZ(xangle, yangle, zangle);
         *this = *this * temp;
     }
 
-    float4x4 normalize(const float4x4& m)
+    Matrix4x4 normalize(const Matrix4x4& m)
     {
         float32x4 x = m[0];
         float32x4 y = m[1];
@@ -281,12 +281,12 @@ namespace mango::math
         x = normalize(x);
         y = normalize(y - x * dot(x, y));
         z = cross(x, y);
-        return float4x4(x, y, z, m[3]);
+        return Matrix4x4(x, y, z, m[3]);
     }
 
 #else
 
-    void float4x4::rotateXYZ(float xangle, float yangle, float zangle)
+    void Matrix4x4::rotateXYZ(float xangle, float yangle, float zangle)
     {
         const float32x4 v = float4(xangle, yangle, zangle, 0.0f);
         const float32x4 s = sin(v);
@@ -326,7 +326,7 @@ namespace mango::math
         }
     }
 
-    float4x4 normalize(const float4x4& _m)
+    Matrix4x4 normalize(const Matrix4x4& _m)
     {
         const float* m = _m;
 
@@ -338,7 +338,7 @@ namespace mango::math
         y = normalize(y - x * dot(x, y));
         z = cross(x, y);
 
-        float4x4 result;
+        Matrix4x4 result;
 
         result[0] = float4(x, 0.0f);
         result[1] = float4(y, 0.0f);
@@ -350,7 +350,7 @@ namespace mango::math
 
 #endif
 
-    float4x4 mirror(const float4x4& M, const float32x4& plane)
+    Matrix4x4 mirror(const Matrix4x4& M, const float32x4& plane)
     {
         const float* m = M;
 
@@ -382,7 +382,7 @@ namespace mango::math
         zaxis += normal2 * (dot(zaxis, normal) - dist);
         zaxis -= pos;
         
-        float4x4 result;
+        Matrix4x4 result;
         
         result[0] = float32x4(xaxis.x, xaxis.y, xaxis.z, 0.0f);
         result[1] = float32x4(yaxis.x, yaxis.y, yaxis.z, 0.0f);
@@ -392,7 +392,7 @@ namespace mango::math
         return result;
     }
 
-    float4x4 affineInverse(const float4x4& M)
+    Matrix4x4 affineInverse(const Matrix4x4& M)
     {
         const float* m = M;
         
@@ -411,7 +411,7 @@ namespace mango::math
         float m31 = -(m01 * m[12] + m11 * m[13] + m21 * m[14]);
         float m32 = -(m02 * m[12] + m12 * m[13] + m22 * m[14]);
 
-        float4x4 result;
+        Matrix4x4 result;
 
         result[0] = float32x4(m00, m01, m02, m[ 3]);
         result[1] = float32x4(m10, m11, m12, m[ 7]);
@@ -421,7 +421,7 @@ namespace mango::math
         return result;
     }
 
-    float4x4 adjoint(const float4x4& M)
+    Matrix4x4 adjoint(const Matrix4x4& M)
     {
         const float* m = M;
 
@@ -438,7 +438,7 @@ namespace mango::math
         float m31 = -(m[1] * m[12] + m[5] * m[13] + m[9] * m[14]);
         float m32 = -(m[2] * m[12] + m[6] * m[13] + m[10] * m[14]);
 
-        float4x4 result;
+        Matrix4x4 result;
 
         result[0] = float32x4(m00, m01, m02, m[3]);
         result[1] = float32x4(m10, m11, m12, m[7]);
@@ -451,14 +451,14 @@ namespace mango::math
 namespace matrix
 {
 
-    float4x4 identity()
+    Matrix4x4 identity()
     {
-        return float4x4(1.0f);
+        return Matrix4x4(1.0f);
     }
 
-    float4x4 translate(float x, float y, float z)
+    Matrix4x4 translate(float x, float y, float z)
     {
-        float4x4 m;
+        Matrix4x4 m;
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, 1.0f);
         m[1] = simd::set_component<1>(zero, 1.0f);
@@ -467,9 +467,9 @@ namespace matrix
         return m;
     }
 
-    float4x4 translate(const float32x3& translation)
+    Matrix4x4 translate(const float32x3& translation)
     {
-        float4x4 m;
+        Matrix4x4 m;
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, 1.0f);
         m[1] = simd::set_component<1>(zero, 1.0f);
@@ -478,9 +478,9 @@ namespace matrix
         return m;
     }
 
-    float4x4 scale(float s)
+    Matrix4x4 scale(float s)
     {
-        float4x4 m;
+        Matrix4x4 m;
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, s);
         m[1] = simd::set_component<1>(zero, s);
@@ -489,9 +489,9 @@ namespace matrix
         return m;
     }
 
-    float4x4 scale(float x, float y, float z)
+    Matrix4x4 scale(float x, float y, float z)
     {
-        float4x4 m;
+        Matrix4x4 m;
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, x);
         m[1] = simd::set_component<1>(zero, y);
@@ -500,9 +500,9 @@ namespace matrix
         return m;
     }
 
-    float4x4 scale(const float32x3& s)
+    Matrix4x4 scale(const float32x3& s)
     {
-        float4x4 m;
+        Matrix4x4 m;
         const float32x4 zero(0);
         m[0] = simd::set_component<0>(zero, s.x);
         m[1] = simd::set_component<1>(zero, s.y);
@@ -511,18 +511,18 @@ namespace matrix
         return m;
     }
 
-    float4x4 rotate(float angle, const float32x3& axis)
+    Matrix4x4 rotate(float angle, const float32x3& axis)
     {
-        const float4x4 temp = AngleAxis(angle, axis);
+        const Matrix4x4 temp = AngleAxis(angle, axis);
         return temp;
     }
 
-    float4x4 rotateX(float angle)
+    Matrix4x4 rotateX(float angle)
     {
         const float s = std::sin(angle);
         const float c = std::cos(angle);
 
-        return float4x4
+        return Matrix4x4
         {
             float32x4(1, 0, 0, 0),
             float32x4(0, c, s, 0),
@@ -531,12 +531,12 @@ namespace matrix
         };
     }
 
-    float4x4 rotateY(float angle)
+    Matrix4x4 rotateY(float angle)
     {
         const float s = std::sin(angle);
         const float c = std::cos(angle);
 
-        return float4x4
+        return Matrix4x4
         {
             float32x4(c, 0,-s, 0),
             float32x4(0, 1, 0, 0),
@@ -545,12 +545,12 @@ namespace matrix
         };
      }
 
-    float4x4 rotateZ(float angle)
+    Matrix4x4 rotateZ(float angle)
     {
         const float s = std::sin(angle);
         const float c = std::cos(angle);
 
-        return float4x4
+        return Matrix4x4
         {
             float32x4( c, s, 0, 0),
             float32x4(-s, c, 0, 0),
@@ -559,7 +559,7 @@ namespace matrix
         };
     }
 
-    float4x4 rotateXYZ(float x, float y, float z)
+    Matrix4x4 rotateXYZ(float x, float y, float z)
     {
         const float32x4 v = float32x4(x, y, z, 0.0f);
         const float32x4 s = sin(v);
@@ -584,7 +584,7 @@ namespace matrix
         const float m21 = sz * sycx - cz * sx;
         const float m22 = cy * cx;
 
-        return float4x4
+        return Matrix4x4
         {
             float32x4(m00, m01, m02, 0),
             float32x4(m10, m11, m12, 0),
@@ -593,13 +593,13 @@ namespace matrix
         };
     }
 
-    float4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up)
+    Matrix4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up)
     {
         const float32x3 zaxis = normalize(target - viewer);
         const float32x3 xaxis = normalize(cross(up, zaxis));
         const float32x3 yaxis = cross(zaxis, xaxis);
 
-        return float4x4
+        return Matrix4x4
         {
             float32x4(xaxis.x, yaxis.x, zaxis.x, 0),
             float32x4(xaxis.y, yaxis.y, zaxis.y, 0),
@@ -613,7 +613,7 @@ namespace matrix
 namespace opengl
 {
 
-    float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
+    Matrix4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
     {
         float x = 2.0f / (right - left);
         float y = 2.0f / (top - bottom);
@@ -622,7 +622,7 @@ namespace opengl
         float b = -(bottom + top) / (top - bottom);
         float c = -(znear + zfar) / (zfar - znear);
 
-        return float4x4
+        return Matrix4x4
         {
             float32x4(x, 0, 0, 0),
             float32x4(0, y, 0, 0),
@@ -631,7 +631,7 @@ namespace opengl
         };
     }
 
-    float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar)
+    Matrix4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar)
     {
         float a = (right + left) / (right - left);
         float b = (top + bottom) / (top - bottom);
@@ -641,7 +641,7 @@ namespace opengl
         float y = (2.0f * znear) / (top - bottom);
         float z = -1.0f;
 
-        return float4x4
+        return Matrix4x4
         {
             float32x4(x, 0, 0, 0),
             float32x4(0, y, 0, 0),
@@ -650,14 +650,14 @@ namespace opengl
         };
     }
 
-    float4x4 perspective(float xfov, float yfov, float znear, float zfar)
+    Matrix4x4 perspective(float xfov, float yfov, float znear, float zfar)
     {
         float x = znear * std::tan(xfov * 0.5f);
         float y = znear * std::tan(yfov * 0.5f);
         return frustum(-x, x, -y, y, znear, zfar);
     }
 
-    float4x4 oblique(const float4x4& proj, const float32x4& nearclip)
+    Matrix4x4 oblique(const Matrix4x4& proj, const float32x4& nearclip)
     {
         float32x4 s = sign(nearclip);
         float xsign = s.x;
@@ -670,7 +670,7 @@ namespace opengl
         float32x4 c = nearclip * (float32x4(2.0f) / dot(nearclip, q));
         c += float32x4(0.0f, 0.0f, 1.0f, 0.0f);
 
-        float4x4 p = proj;
+        Matrix4x4 p = proj;
 
         p(0, 2) = c.x;
         p(1, 2) = c.y;
@@ -685,7 +685,7 @@ namespace opengl
 namespace vulkan
 {
 
-    float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
+    Matrix4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
     {
         float x = 2.0f / (right - left);
         float y = 2.0f / (bottom - top);
@@ -694,7 +694,7 @@ namespace vulkan
         float b = (top + bottom) / (top - bottom);
         float c = (zfar + znear) / (zfar - znear) * -0.5f;
 
-        return float4x4
+        return Matrix4x4
         {
             float32x4(x, 0, 0, 0),
             float32x4(0, y, 0, 0),
@@ -703,7 +703,7 @@ namespace vulkan
         };
     }
 
-    float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar)
+    Matrix4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar)
     {
         float a = (right + left) / (right - left);
         float b = (top + bottom) / (bottom - top);
@@ -712,7 +712,7 @@ namespace vulkan
         float x = (2.0f * znear) / (right - left);
         float y = (2.0f * znear) / (bottom - top);
 
-        return float4x4
+        return Matrix4x4
         {
             float32x4(x, 0, 0, 0),
             float32x4(0, y, 0, 0),
@@ -721,17 +721,17 @@ namespace vulkan
         };
     }
 
-    float4x4 perspective(float xfov, float yfov, float znear, float zfar)
+    Matrix4x4 perspective(float xfov, float yfov, float znear, float zfar)
     {
         float x = znear * std::tan(xfov * 0.5f);
         float y = znear * std::tan(yfov * 0.5f);
         return frustum(-x, x, -y, y, znear, zfar);
     }
 
-    float4x4 oblique(const float4x4& proj, const float32x4& nearclip)
+    Matrix4x4 oblique(const Matrix4x4& proj, const float32x4& nearclip)
     {
         // conversion from GL to VK matrix format
-        const float4x4 to_vk
+        const Matrix4x4 to_vk
         {
             float32x4(1.0f, 0.0f, 0.0f, 0.0f),
             float32x4(0.0f,-1.0f, 0.0f, 0.0f),
@@ -740,7 +740,7 @@ namespace vulkan
         };
 
         // inverse of to_vk matrix
-        const float4x4 from_vk
+        const Matrix4x4 from_vk
         {
             float32x4(1.0f, 0.0f, 0.0f, 0.0f),
             float32x4(0.0f,-1.0f, 0.0f, 0.0f),
@@ -749,7 +749,7 @@ namespace vulkan
         };
 
         // NOTE: using the existing OpenGL function requires a round-trip to it's matrix format. :(
-        float4x4 p = opengl::oblique(proj * from_vk, nearclip);
+        Matrix4x4 p = opengl::oblique(proj * from_vk, nearclip);
         return p * to_vk;
     }
 
@@ -760,7 +760,7 @@ namespace directx
 
     // left-handed
 
-    float4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
+    Matrix4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
     {
         const float x = 1.0f / (right - left);
         const float y = 1.0f / (top - bottom);
@@ -772,7 +772,7 @@ namespace directx
         const float b = -y * (bottom + top);
         const float c = -z * znear;
 
-        return float4x4
+        return Matrix4x4
         {
             float32x4(w, 0, 0, 0),
             float32x4(0, h, 0, 0),
@@ -781,7 +781,7 @@ namespace directx
         };
     }
 
-    float4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar)
+    Matrix4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar)
     {
         const float x = 1.0f / (right - left);
         const float y = 1.0f / (top - bottom);
@@ -794,7 +794,7 @@ namespace directx
         const float c = z * zfar;
         const float d = z * zfar * -znear;
 
-        return float4x4
+        return Matrix4x4
         {
             float32x4(w, 0, 0, 0),
             float32x4(0, h, 0, 0),
@@ -803,14 +803,14 @@ namespace directx
         };
     }
 
-    float4x4 perspective(float xfov, float yfov, float znear, float zfar)
+    Matrix4x4 perspective(float xfov, float yfov, float znear, float zfar)
     {
         const float w = 1.0f / std::tan(xfov * 0.5f);
         const float h = 1.0f / std::tan(yfov * 0.5f);
         const float a = zfar / (zfar - znear);
         const float b = -a * znear;
 
-        return float4x4
+        return Matrix4x4
         {
             float32x4(w, 0, 0, 0),
             float32x4(0, h, 0, 0),
@@ -819,7 +819,7 @@ namespace directx
         };
     }
 
-    float4x4 oblique(const float4x4& proj, const float32x4& nearclip)
+    Matrix4x4 oblique(const Matrix4x4& proj, const float32x4& nearclip)
     {
         float32x4 clip = nearclip;
         float32x4 s = sign(clip);
@@ -832,7 +832,7 @@ namespace directx
                     (1.0f - proj(2,2)) / proj(3,2));
         float32x4 c = clip / dot(clip, q);
 
-        float4x4 p = proj;
+        Matrix4x4 p = proj;
 
         p(0, 2) = c.x;
         p(1, 2) = c.y;
@@ -848,7 +848,7 @@ namespace directx
     // AngleAxis
     // ------------------------------------------------------------------------
 
-    AngleAxis::AngleAxis(const float4x4& m)
+    AngleAxis::AngleAxis(const Matrix4x4& m)
     {
         axis = float32x3(m[1][2] - m[2][1], m[2][0] - m[0][2], m[0][1] - m[1][0]);
         const float s = square(axis) * 0.5f;

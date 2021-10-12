@@ -196,10 +196,10 @@ namespace mango::math
     // types
     // ------------------------------------------------------------------
 
-    using float2x2 = Matrix<float, 2, 2>;
-    using float3x3 = Matrix<float, 3, 3>;
-    using float4x4 = Matrix<float, 4, 4>;
+    using Matrix2x2 = Matrix<float, 2, 2>;
+    using Matrix3x3 = Matrix<float, 3, 3>;
+    using Matrix4x4 = Matrix<float, 4, 4>;
 
 } // namespace mango::math
 
-#include <mango/math/matrix_float4x4.hpp>
+#include <mango/math/matrix4x4.hpp>

@@ -474,7 +474,7 @@
     <ClInclude Include="..\..\include\mango\math\matrix.hpp">
       <Filter>mango\include\math</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\mango\math\matrix_float4x4.hpp">
+    <ClInclude Include="..\..\include\mango\math\matrix4x4.hpp">
       <Filter>mango\include\math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\mango\math\quaternion.hpp">

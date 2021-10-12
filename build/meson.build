@@ -80,7 +80,7 @@ mango_headers = files(
     '../include/mango/math/accessor.hpp',
     '../include/mango/math/geometry.hpp',
     '../include/mango/math/math.hpp',
-    '../include/mango/math/matrix_float4x4.hpp',
+    '../include/mango/math/matrix4x4.hpp',
     '../include/mango/math/matrix.hpp',
     '../include/mango/math/quaternion.hpp',
     '../include/mango/math/spline.hpp',
