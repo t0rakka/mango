@@ -308,6 +308,8 @@ void save_spng(const Bitmap& bitmap)
 
     spng_ctx *enc = spng_ctx_new(SPNG_CTX_ENCODER);
 
+    spng_set_option(enc, SPNG_ENCODE_TO_BUFFER, 1);
+
     spng_set_ihdr(enc, &ihdr);
     int r = spng_encode_image(enc, image, image_size, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
     if(r)
