@@ -286,7 +286,7 @@ namespace
         flags |= ARM_NEON;
 #endif
 
-#ifdef MANGO_ENABLE_FP16
+#ifdef MANGO_ENABLE_ARM_FP16
         flags |= ARM_FP16;
 #endif
 

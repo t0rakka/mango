@@ -524,7 +524,7 @@
 
     // ARM FP feature bits
     #if ((__ARM_FP & 0x2) != 0)
-        #define MANGO_ENABLE_FP16
+        #define MANGO_ENABLE_ARM_FP16
     #endif
 
     #ifdef __ARM_FEATURE_CRC32

@@ -1124,7 +1124,7 @@ namespace mango::simd
     // f16
     // -----------------------------------------------------------------
 
-#ifdef MANGO_ENABLE_FP16
+#ifdef MANGO_ENABLE_ARM_FP16
 
     template <>
     inline f32x4 convert<f32x4>(f16x4 s)
@@ -1161,6 +1161,6 @@ namespace mango::simd
         return v;
     }
 
-#endif // MANGO_ENABLE_FP16
+#endif // MANGO_ENABLE_ARM_FP16
 
 } // namespace mango::simd

@@ -68,12 +68,8 @@ namespace mango::math
         }
 
         explicit Vector(float x, float y, float z, float w)
+            : m(simd::convert<simd::f16x4>(simd::f32x4_set(x, y, z, w)))
         {
-            float16* v = data();
-            v[0] = x;
-            v[1] = y;
-            v[2] = z;
-            v[3] = w;
         }
 
         Vector& operator = (const Vector<float, 4>& v)
