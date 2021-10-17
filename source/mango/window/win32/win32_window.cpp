@@ -693,7 +693,7 @@ namespace mango
     {
         RECT rect;
         ::GetClientRect(m_handle->hwnd, &rect);
-        return int2(rect.right - rect.left, rect.bottom - rect.top);
+        return int32x2(rect.right - rect.left, rect.bottom - rect.top);
     }
 
 	int32x2 Window::getCursorPosition() const
@@ -701,7 +701,7 @@ namespace mango
 		POINT p;
 		GetCursorPos(&p);
 		ScreenToClient(m_handle->hwnd, &p);
-		return int2(int(p.x), int(p.y));
+		return int32x2(int(p.x), int(p.y));
 	}
 
     bool Window::isKeyPressed(Keycode code) const
