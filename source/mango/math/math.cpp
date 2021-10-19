@@ -31,7 +31,10 @@ namespace mango::math
 
     const Matrix4x4& Matrix4x4::operator = (const float* ptr)
     {
-        std::memcpy(this, ptr, 64);
+        m[0] = simd::f32x4_uload(ptr + 0 * 16);
+        m[1] = simd::f32x4_uload(ptr + 1 * 16);
+        m[2] = simd::f32x4_uload(ptr + 2 * 16);
+        m[3] = simd::f32x4_uload(ptr + 3 * 16);
         return *this;
     }
 
