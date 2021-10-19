@@ -3,6 +3,7 @@ list(APPEND EXAMPLES
     threads
     pathtest
     particle
+    mathtest
 )
 
 foreach(example IN LISTS EXAMPLES)
