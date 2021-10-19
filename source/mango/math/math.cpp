@@ -22,11 +22,10 @@ namespace mango::math
 
     const Matrix4x4& Matrix4x4::operator = (float s)
     {
-        const float32x4 zero(0.0f);
-        m[0] = simd::set_component<0>(zero, s);
-        m[1] = simd::set_component<1>(zero, s);
-        m[2] = simd::set_component<2>(zero, s);
-        m[3] = simd::set_component<3>(zero, 1.0f);
+        m[0] = float32x4(s, 0, 0, 0);
+        m[1] = float32x4(0, s, 0, 0);
+        m[2] = float32x4(0, 0, s, 0);
+        m[3] = float32x4(0, 0, 0, 1);
         return *this;
     }
 
@@ -101,15 +100,18 @@ namespace mango::math
 
     bool Matrix4x4::isAffine() const
     {
-        const float* p = *this;
-        return p[3] == 0.0f && p[7] == 0.0f && p[11] == 0.0f && p[15] == 1.0f;
+        float32x4 column3 = column<3>(*this);
+        return all_of(column3 == float32x4(0, 0, 0, 1));
     }
 
     float Matrix4x4::determinant() const
     {
-        const float* p = *this;
-        const float a = p[0] * p[5] * p[10] + p[1] * p[6] * p[ 8] + p[2] * p[4] * p[9];
-        const float b = p[2] * p[5] * p[ 8] + p[1] * p[4] * p[10] + p[0] * p[6] * p[9];
+        const float a = m[0][0] * m[1][1] * m[2][2] +
+                        m[0][1] * m[1][2] * m[2][0] +
+                        m[0][2] * m[1][0] * m[2][1];
+        const float b = m[0][2] * m[1][1] * m[2][0] +
+                        m[0][1] * m[1][0] * m[2][2] +
+                        m[0][0] * m[1][2] * m[2][1];
         return a - b;
     }
 
@@ -121,55 +123,30 @@ namespace mango::math
     Matrix4x4 Matrix4x4::translate(float x, float y, float z)
     {
         Matrix4x4 m;
-        const float32x4 zero(0.0f);
-        m[0] = simd::set_component<0>(zero, 1.0f);
-        m[1] = simd::set_component<1>(zero, 1.0f);
-        m[2] = simd::set_component<2>(zero, 1.0f);
-        m[3] = float32x4(x, y, z, 1.0f);
-        return m;
-    }
-
-    Matrix4x4 Matrix4x4::translate(const float32x3& translation)
-    {
-        Matrix4x4 m;
-        const float32x4 zero(0.0f);
-        m[0] = simd::set_component<0>(zero, 1.0f);
-        m[1] = simd::set_component<1>(zero, 1.0f);
-        m[2] = simd::set_component<2>(zero, 1.0f);
-        m[3] = float32x4(translation.x, translation.y, translation.z, 1.0f);
+        m[0] = float32x4(1, 0, 0, 0);
+        m[1] = float32x4(0, 1, 0, 0);
+        m[2] = float32x4(0, 0, 1, 0);
+        m[3] = float32x4(x, y, z, 1);
         return m;
     }
 
     Matrix4x4 Matrix4x4::scale(float s)
     {
         Matrix4x4 m;
-        const float32x4 zero(0.0f);
-        m[0] = simd::set_component<0>(zero, s);
-        m[1] = simd::set_component<1>(zero, s);
-        m[2] = simd::set_component<2>(zero, s);
-        m[3] = simd::set_component<3>(zero, 1.0f);
+        m[0] = float32x4(s, 0, 0, 0);
+        m[1] = float32x4(0, s, 0, 0);
+        m[2] = float32x4(0, 0, s, 0);
+        m[3] = float32x4(0, 0, 0, 1);
         return m;
     }
 
     Matrix4x4 Matrix4x4::scale(float x, float y, float z)
     {
         Matrix4x4 m;
-        const float32x4 zero(0.0f);
-        m[0] = simd::set_component<0>(zero, x);
-        m[1] = simd::set_component<1>(zero, y);
-        m[2] = simd::set_component<2>(zero, z);
-        m[3] = simd::set_component<3>(zero, 1.0f);
-        return m;
-    }
-
-    Matrix4x4 Matrix4x4::scale(const float32x3& s)
-    {
-        Matrix4x4 m;
-        const float32x4 zero(0.0f);
-        m[0] = simd::set_component<0>(zero, s.x);
-        m[1] = simd::set_component<1>(zero, s.y);
-        m[2] = simd::set_component<2>(zero, s.z);
-        m[3] = simd::set_component<3>(zero, 1.0f);
+        m[0] = float32x4(x, 0, 0, 0);
+        m[1] = float32x4(0, y, 0, 0);
+        m[2] = float32x4(0, 0, z, 0);
+        m[3] = float32x4(0, 0, 0, 1);
         return m;
     }
 

@@ -135,15 +135,13 @@ namespace mango::math
 
         static Matrix4x4 identity();
         static Matrix4x4 translate(float x, float y, float z);
-        static Matrix4x4 translate(const float32x3& translation);
-        static Matrix4x4 scale(float scale);
-        static Matrix4x4 scale(float xscale, float yscale, float zscale);
-        static Matrix4x4 scale(const float32x3& scale);
+        static Matrix4x4 scale(float s);
+        static Matrix4x4 scale(float x, float y, float z);
         static Matrix4x4 rotate(float angle, const float32x3& axis);
         static Matrix4x4 rotateX(float angle);
         static Matrix4x4 rotateY(float angle);
         static Matrix4x4 rotateZ(float angle);
-        static Matrix4x4 rotateXYZ(float xangle, float yangle, float zangle);
+        static Matrix4x4 rotateXYZ(float x, float y, float z);
         static Matrix4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up);
     };
 
@@ -199,15 +197,15 @@ namespace mango::math
 
     static inline Matrix4x4 transpose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
-        float32x4 temp0 = simd::unpacklo(m0, m1);
-        float32x4 temp1 = simd::unpacklo(m2, m3);
-        float32x4 temp2 = simd::unpackhi(m0, m1);
-        float32x4 temp3 = simd::unpackhi(m2, m3);
+        float32x4 temp0 = unpacklo(m0, m1);
+        float32x4 temp1 = unpacklo(m2, m3);
+        float32x4 temp2 = unpackhi(m0, m1);
+        float32x4 temp3 = unpackhi(m2, m3);
         Matrix4x4 result;
-        result[0] = simd::movelh(temp0, temp1);
-        result[1] = simd::movehl(temp1, temp0);
-        result[2] = simd::movelh(temp2, temp3);
-        result[3] = simd::movehl(temp3, temp2);
+        result[0] = movelh(temp0, temp1);
+        result[1] = movehl(temp1, temp0);
+        result[2] = movelh(temp2, temp3);
+        result[3] = movehl(temp3, temp2);
         return result;
     }
 
@@ -394,6 +392,15 @@ namespace mango::math
     static inline Matrix4x4 inverseTR(const Matrix4x4& m)
     {
         return inverseTR(m[0], m[1], m[2], m[3]);
+    }
+
+    template <u32 index>
+    float32x4 column(const Matrix4x4& m)
+    {
+        static_assert(index <= 3, "Index out of range.");
+        float32x4 temp0 = index & 2 ? unpackhi(m[0], m[1]) : unpacklo(m[0], m[1]);
+        float32x4 temp1 = index & 2 ? unpackhi(m[2], m[3]) : unpacklo(m[2], m[3]);
+        return index & 1 ? movehl(temp1, temp0) : movelh(temp0, temp1);
     }
 
     namespace opengl
