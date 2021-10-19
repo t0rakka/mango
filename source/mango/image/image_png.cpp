@@ -1957,12 +1957,6 @@ namespace
             return;
         }
 
-        if (m_width > 0x8000 || m_height > 0x8000)
-        {
-            setError(makeString("Too large image (%d x %d).", m_width, m_height));
-            return;
-        }
-
         if (!u32_is_power_of_two(m_color_state.bits))
         {
             setError(makeString("Incorrect bit depth (%d).", m_color_state.bits));
