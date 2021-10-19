@@ -116,7 +116,7 @@ namespace mango::math
         }
 
         const Matrix4x4& operator = (float scale);
-        const Matrix4x4& operator = (const float* v);
+        const Matrix4x4& operator = (const float* ptr);
         const Matrix4x4& operator = (const Quaternion& rotation);
         const Matrix4x4& operator = (const AngleAxis& rotation);
 

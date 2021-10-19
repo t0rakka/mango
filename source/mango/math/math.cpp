@@ -30,12 +30,9 @@ namespace mango::math
         return *this;
     }
 
-    const Matrix4x4& Matrix4x4::operator = (const float* v)
+    const Matrix4x4& Matrix4x4::operator = (const float* ptr)
     {
-        m[0] = float32x4(v[0], v[1], v[2], v[3]);
-        m[1] = float32x4(v[4], v[5], v[6], v[7]);
-        m[2] = float32x4(v[8], v[9], v[10], v[11]);
-        m[3] = float32x4(v[12], v[13], v[14], v[15]);
+        std::memcpy(this, ptr, 64);
         return *this;
     }
 
