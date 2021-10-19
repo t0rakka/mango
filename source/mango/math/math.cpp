@@ -22,7 +22,7 @@ namespace mango::math
 
     const Matrix4x4& Matrix4x4::operator = (float s)
     {
-        const float32x4 zero(0);
+        const float32x4 zero(0.0f);
         m[0] = simd::set_component<0>(zero, s);
         m[1] = simd::set_component<1>(zero, s);
         m[2] = simd::set_component<2>(zero, s);
@@ -124,7 +124,7 @@ namespace mango::math
     Matrix4x4 Matrix4x4::translate(float x, float y, float z)
     {
         Matrix4x4 m;
-        const float32x4 zero(0);
+        const float32x4 zero(0.0f);
         m[0] = simd::set_component<0>(zero, 1.0f);
         m[1] = simd::set_component<1>(zero, 1.0f);
         m[2] = simd::set_component<2>(zero, 1.0f);
@@ -135,7 +135,7 @@ namespace mango::math
     Matrix4x4 Matrix4x4::translate(const float32x3& translation)
     {
         Matrix4x4 m;
-        const float32x4 zero(0);
+        const float32x4 zero(0.0f);
         m[0] = simd::set_component<0>(zero, 1.0f);
         m[1] = simd::set_component<1>(zero, 1.0f);
         m[2] = simd::set_component<2>(zero, 1.0f);
@@ -146,7 +146,7 @@ namespace mango::math
     Matrix4x4 Matrix4x4::scale(float s)
     {
         Matrix4x4 m;
-        const float32x4 zero(0);
+        const float32x4 zero(0.0f);
         m[0] = simd::set_component<0>(zero, s);
         m[1] = simd::set_component<1>(zero, s);
         m[2] = simd::set_component<2>(zero, s);
@@ -157,7 +157,7 @@ namespace mango::math
     Matrix4x4 Matrix4x4::scale(float x, float y, float z)
     {
         Matrix4x4 m;
-        const float32x4 zero(0);
+        const float32x4 zero(0.0f);
         m[0] = simd::set_component<0>(zero, x);
         m[1] = simd::set_component<1>(zero, y);
         m[2] = simd::set_component<2>(zero, z);
@@ -168,7 +168,7 @@ namespace mango::math
     Matrix4x4 Matrix4x4::scale(const float32x3& s)
     {
         Matrix4x4 m;
-        const float32x4 zero(0);
+        const float32x4 zero(0.0f);
         m[0] = simd::set_component<0>(zero, s.x);
         m[1] = simd::set_component<1>(zero, s.y);
         m[2] = simd::set_component<2>(zero, s.z);
