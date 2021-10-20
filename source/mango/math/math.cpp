@@ -103,8 +103,8 @@ namespace mango::math
 
     bool Matrix4x4::isAffine() const
     {
-        float32x4 column3 = column<3>(*this);
-        return all_of(column3 == float32x4(0, 0, 0, 1));
+        float32x4 c = column<3>();
+        return all_of(c == float32x4(0, 0, 0, 1));
     }
 
     float Matrix4x4::determinant2x2() const

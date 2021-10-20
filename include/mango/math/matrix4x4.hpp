@@ -130,6 +130,15 @@ namespace mango::math
             return m;
         }
 
+        template <u32 index>
+        float32x4 column() const
+        {
+            static_assert(index <= 3, "Index out of range.");
+            float32x4 temp0 = index & 2 ? unpackhi(m[0], m[1]) : unpacklo(m[0], m[1]);
+            float32x4 temp1 = index & 2 ? unpackhi(m[2], m[3]) : unpacklo(m[2], m[3]);
+            return index & 1 ? movehl(temp1, temp0) : movelh(temp0, temp1);
+        }
+
         bool isAffine() const;
         float determinant2x2() const;
         float determinant3x3() const;
@@ -408,15 +417,6 @@ namespace mango::math
     static inline Matrix4x4 inverseTR(const Matrix4x4& m)
     {
         return inverseTR(m[0], m[1], m[2], m[3]);
-    }
-
-    template <u32 index>
-    float32x4 column(const Matrix4x4& m)
-    {
-        static_assert(index <= 3, "Index out of range.");
-        float32x4 temp0 = index & 2 ? unpackhi(m[0], m[1]) : unpacklo(m[0], m[1]);
-        float32x4 temp1 = index & 2 ? unpackhi(m[2], m[3]) : unpacklo(m[2], m[3]);
-        return index & 1 ? movehl(temp1, temp0) : movelh(temp0, temp1);
     }
 
 } // namespace mango::math
