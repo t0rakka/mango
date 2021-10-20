@@ -107,12 +107,33 @@ namespace mango::math
         return all_of(column3 == float32x4(0, 0, 0, 1));
     }
 
-    float Matrix4x4::determinant() const
+    float Matrix4x4::determinant2x2() const
     {
-        // 3x3 determinant
+        return m[0][0] * m[1][1] - m[1][0] * m[0][1];
+    }
+
+    float Matrix4x4::determinant3x3() const
+    {
         return m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
                m[0][1] * (m[1][0] * m[2][2] - m[2][0] * m[1][2]) +
                m[0][2] * (m[1][0] * m[2][1] - m[2][0] * m[1][1]);
+    }
+
+    float Matrix4x4::determinant4x4() const
+    {
+        float s0 = m[1][1] * (m[2][2] * m[3][3] - m[3][2] * m[2][3]) -
+                   m[1][2] * (m[2][1] * m[3][3] - m[3][1] * m[2][3]) +
+                   m[1][3] * (m[2][1] * m[3][2] - m[3][1] * m[2][2]);
+        float s1 = m[1][0] * (m[2][2] * m[3][3] - m[3][2] * m[2][3]) -
+                   m[1][2] * (m[2][0] * m[3][3] - m[3][0] * m[2][3]) +
+                   m[1][3] * (m[2][0] * m[3][2] - m[3][0] * m[2][2]);
+        float s2 = m[1][0] * (m[2][1] * m[3][3] - m[3][1] * m[2][3]) -
+                   m[1][1] * (m[2][0] * m[3][3] - m[3][0] * m[2][3]) +
+                   m[1][3] * (m[2][0] * m[3][1] - m[3][0] * m[2][1]);
+        float s3 = m[1][0] * (m[2][1] * m[3][2] - m[3][1] * m[2][2]) -
+                   m[1][1] * (m[2][0] * m[3][2] - m[3][0] * m[2][2]) +
+                   m[1][1] * (m[2][0] * m[3][1] - m[3][0] * m[2][1]);
+        return m[0][0] * s0 - m[0][1] * s1 + m[0][2] * s2 - m[0][3] * s3;
     }
 
     Matrix4x4 Matrix4x4::identity()
@@ -540,7 +561,11 @@ namespace mango::math
     {
         const float* m = input;
 
-        float s = 1.0f / input.determinant();
+        float s = input.determinant3x3();
+        if (s)
+        {
+            s = 1.0f / s;
+        }
 
         float m00 = (m[ 5] * m[10] - m[ 6] * m[ 9]) * s;
         float m01 = (m[ 9] * m[ 2] - m[10] * m[ 1]) * s;

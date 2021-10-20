@@ -131,7 +131,9 @@ namespace mango::math
         }
 
         bool isAffine() const;
-        float determinant() const;
+        float determinant2x2() const;
+        float determinant3x3() const;
+        float determinant4x4() const;
 
         static Matrix4x4 identity();
         static Matrix4x4 translate(float x, float y, float z);
