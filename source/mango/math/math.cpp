@@ -232,6 +232,145 @@ namespace mango::math
         return m;
     }
 
+    Matrix4x4 Matrix4x4::orthoGL(float left, float right, float bottom, float top, float znear, float zfar)
+    {
+        float x = 2.0f / (right - left);
+        float y = 2.0f / (top - bottom);
+        float z = -2.0f / (zfar - znear);
+        float a = -(left + right) / (right - left);
+        float b = -(bottom + top) / (top - bottom);
+        float c = -(znear + zfar) / (zfar - znear);
+
+        Matrix4x4 m;
+        m[0] = float32x4(x, 0, 0, 0);
+        m[1] = float32x4(0, y, 0, 0);
+        m[2] = float32x4(0, 0, z, 0);
+        m[3] = float32x4(a, b, c, 1);
+        return m;
+    }
+
+    Matrix4x4 Matrix4x4::frustumGL(float left, float right, float bottom, float top, float znear, float zfar)
+    {
+        float a = (right + left) / (right - left);
+        float b = (top + bottom) / (top - bottom);
+        float c = -(zfar + znear) / (zfar - znear);
+        float d = -(2.0f * znear * zfar) / (zfar - znear);
+        float x = (2.0f * znear) / (right - left);
+        float y = (2.0f * znear) / (top - bottom);
+        float z = -1.0f;
+
+        Matrix4x4 m;
+        m[0] = float32x4(x, 0, 0, 0);
+        m[1] = float32x4(0, y, 0, 0);
+        m[2] = float32x4(a, b, c, z);
+        m[3] = float32x4(0, 0, d, 0);
+        return m;
+    }
+
+    Matrix4x4 Matrix4x4::perspectiveGL(float xfov, float yfov, float znear, float zfar)
+    {
+        float x = znear * std::tan(xfov * 0.5f);
+        float y = znear * std::tan(yfov * 0.5f);
+        return frustumGL(-x, x, -y, y, znear, zfar);
+    }
+
+    Matrix4x4 Matrix4x4::orthoVK(float left, float right, float bottom, float top, float znear, float zfar)
+    {
+        float x = 2.0f / (right - left);
+        float y = 2.0f / (bottom - top);
+        float z = 1.0f / (znear - zfar);
+        float a = (right + left) / (left - right);
+        float b = (top + bottom) / (top - bottom);
+        float c = (zfar + znear) / (zfar - znear) * -0.5f;
+
+        Matrix4x4 m;
+        m[0] = float32x4(x, 0, 0, 0);
+        m[1] = float32x4(0, y, 0, 0);
+        m[2] = float32x4(0, 0, z, z);
+        m[3] = float32x4(a, b, c, c + 1.0f);
+        return m;
+    }
+
+    Matrix4x4 Matrix4x4::frustumVK(float left, float right, float bottom, float top, float znear, float zfar)
+    {
+        float a = (right + left) / (right - left);
+        float b = (top + bottom) / (bottom - top);
+        float c = (zfar + znear) / (znear - zfar) * 0.5f;
+        float d = (2.0f * znear * zfar) / (znear - zfar) * 0.5f;
+        float x = (2.0f * znear) / (right - left);
+        float y = (2.0f * znear) / (bottom - top);
+
+        Matrix4x4 m;
+        m[0] = float32x4(x, 0, 0, 0);
+        m[1] = float32x4(0, y, 0, 0);
+        m[2] = float32x4(a, b, c, c - 1.0f);
+        m[3] = float32x4(0, 0, d, d);
+        return m;
+    }
+
+    Matrix4x4 Matrix4x4::perspectiveVK(float xfov, float yfov, float znear, float zfar)
+    {
+        float x = znear * std::tan(xfov * 0.5f);
+        float y = znear * std::tan(yfov * 0.5f);
+        return frustumVK(-x, x, -y, y, znear, zfar);
+    }
+
+    Matrix4x4 Matrix4x4::orthoD3D(float left, float right, float bottom, float top, float znear, float zfar)
+    {
+        const float x = 1.0f / (right - left);
+        const float y = 1.0f / (top - bottom);
+        const float z = 1.0f / (zfar - znear);
+
+        const float w = 2.0f * x;
+        const float h = 2.0f * y;
+        const float a = -x * (left + right);
+        const float b = -y * (bottom + top);
+        const float c = -z * znear;
+
+        Matrix4x4 m;
+        m[0] = float32x4(w, 0, 0, 0);
+        m[1] = float32x4(0, h, 0, 0);
+        m[2] = float32x4(0, 0, z, 0);
+        m[3] = float32x4(a, b, c, 1);
+        return m;
+    }
+
+    Matrix4x4 Matrix4x4::frustumD3D(float left, float right, float bottom, float top, float znear, float zfar)
+    {
+        const float x = 1.0f / (right - left);
+        const float y = 1.0f / (top - bottom);
+        const float z = 1.0f / (zfar - znear);
+
+        const float w = x * znear * 2.0f;
+        const float h = y * znear * 2.0f;
+        const float a = -x * (left + right);
+        const float b = -y * (bottom + top);
+        const float c = z * zfar;
+        const float d = z * zfar * -znear;
+
+        Matrix4x4 m;
+        m[0] = float32x4(w, 0, 0, 0);
+        m[1] = float32x4(0, h, 0, 0);
+        m[2] = float32x4(a, b, c, 1);
+        m[3] = float32x4(0, 0, d, 0);
+        return m;
+    }
+
+    Matrix4x4 Matrix4x4::perspectiveD3D(float xfov, float yfov, float znear, float zfar)
+    {
+        const float w = 1.0f / std::tan(xfov * 0.5f);
+        const float h = 1.0f / std::tan(yfov * 0.5f);
+        const float a = zfar / (zfar - znear);
+        const float b = -a * znear;
+
+        Matrix4x4 m;
+        m[0] = float32x4(w, 0, 0, 0);
+        m[1] = float32x4(0, h, 0, 0);
+        m[2] = float32x4(0, 0, a, 1);
+        m[3] = float32x4(0, 0, b, 0);
+        return m;
+    }
+
     Matrix4x4 translate(const Matrix4x4& input, float x, float y, float z)
     {
         const float32x4 v = float32x4(x, y, z, 0.0f);
@@ -340,9 +479,9 @@ namespace mango::math
         return m;
     }
 
-    Matrix4x4 rotateXYZ(const Matrix4x4& input, float xangle, float yangle, float zangle)
+    Matrix4x4 rotateXYZ(const Matrix4x4& input, float x, float y, float z)
     {
-        const Matrix4x4 temp = Matrix4x4::rotateXYZ(xangle, yangle, zangle);
+        const Matrix4x4 temp = Matrix4x4::rotateXYZ(x, y, z);
         return input * temp;
     }
 
@@ -357,9 +496,9 @@ namespace mango::math
         return Matrix4x4(x, y, z, input[3]);
     }
 
-    Matrix4x4 mirror(const Matrix4x4& M, const float32x4& plane)
+    Matrix4x4 mirror(const Matrix4x4& input, const float32x4& plane)
     {
-        const float* m = M;
+        const float* m = input;
 
         // components
         float32x3 xaxis(m[0], m[1], m[2]);
@@ -397,12 +536,12 @@ namespace mango::math
         return result;
     }
 
-    Matrix4x4 affineInverse(const Matrix4x4& M)
+    Matrix4x4 affineInverse(const Matrix4x4& input)
     {
-        const float* m = M;
-        
-        float s = 1.0f / M.determinant();
-        
+        const float* m = input;
+
+        float s = 1.0f / input.determinant();
+
         float m00 = (m[ 5] * m[10] - m[ 6] * m[ 9]) * s;
         float m01 = (m[ 9] * m[ 2] - m[10] * m[ 1]) * s;
         float m02 = (m[ 1] * m[ 6] - m[ 2] * m[ 5]) * s;
@@ -424,9 +563,9 @@ namespace mango::math
         return result;
     }
 
-    Matrix4x4 adjoint(const Matrix4x4& M)
+    Matrix4x4 adjoint(const Matrix4x4& input)
     {
-        const float* m = M;
+        const float* m = input;
 
         float m00 = m[5] * m[10] - m[6] * m[9];
         float m01 = m[9] * m[2] - m[10] * m[1];
@@ -449,54 +588,7 @@ namespace mango::math
         return result;
     }
 
-namespace opengl
-{
-
-    Matrix4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
-    {
-        float x = 2.0f / (right - left);
-        float y = 2.0f / (top - bottom);
-        float z = -2.0f / (zfar - znear);
-        float a = -(left + right) / (right - left);
-        float b = -(bottom + top) / (top - bottom);
-        float c = -(znear + zfar) / (zfar - znear);
-
-        return Matrix4x4
-        {
-            float32x4(x, 0, 0, 0),
-            float32x4(0, y, 0, 0),
-            float32x4(0, 0, z, 0),
-            float32x4(a, b, c, 1)
-        };
-    }
-
-    Matrix4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar)
-    {
-        float a = (right + left) / (right - left);
-        float b = (top + bottom) / (top - bottom);
-        float c = -(zfar + znear) / (zfar - znear);
-        float d = -(2.0f * znear * zfar) / (zfar - znear);
-        float x = (2.0f * znear) / (right - left);
-        float y = (2.0f * znear) / (top - bottom);
-        float z = -1.0f;
-
-        return Matrix4x4
-        {
-            float32x4(x, 0, 0, 0),
-            float32x4(0, y, 0, 0),
-            float32x4(a, b, c, z),
-            float32x4(0, 0, d, 0)
-        };
-    }
-
-    Matrix4x4 perspective(float xfov, float yfov, float znear, float zfar)
-    {
-        float x = znear * std::tan(xfov * 0.5f);
-        float y = znear * std::tan(yfov * 0.5f);
-        return frustum(-x, x, -y, y, znear, zfar);
-    }
-
-    Matrix4x4 oblique(const Matrix4x4& proj, const float32x4& nearclip)
+    Matrix4x4 obliqueGL(const Matrix4x4& proj, const float32x4& nearclip)
     {
         float32x4 s = sign(nearclip);
         float xsign = s.x;
@@ -506,68 +598,18 @@ namespace opengl
                     (ysign - proj(2,1)) / proj(1,1),
                     -1.0f, (1.0f + proj(2,2)) / proj(3,2));
 
-        float32x4 c = nearclip * (float32x4(2.0f) / dot(nearclip, q));
+        float32x4 c = nearclip * (2.0f / dot(nearclip, q));
         c += float32x4(0.0f, 0.0f, 1.0f, 0.0f);
 
         Matrix4x4 p = proj;
-
-        p(0, 2) = c.x;
-        p(1, 2) = c.y;
-        p(2, 2) = c.z;
-        p(3, 2) = c.w;
-
+        p[0][2] = c.x;
+        p[1][2] = c.y;
+        p[2][2] = c.z;
+        p[3][2] = c.w;
         return p;
     }
 
-} // namespace opengl
-
-namespace vulkan
-{
-
-    Matrix4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
-    {
-        float x = 2.0f / (right - left);
-        float y = 2.0f / (bottom - top);
-        float z = 1.0f / (znear - zfar);
-        float a = (right + left) / (left - right);
-        float b = (top + bottom) / (top - bottom);
-        float c = (zfar + znear) / (zfar - znear) * -0.5f;
-
-        return Matrix4x4
-        {
-            float32x4(x, 0, 0, 0),
-            float32x4(0, y, 0, 0),
-            float32x4(0, 0, z, z),
-            float32x4(a, b, c, c + 1.0f)
-        };
-    }
-
-    Matrix4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar)
-    {
-        float a = (right + left) / (right - left);
-        float b = (top + bottom) / (bottom - top);
-        float c = (zfar + znear) / (znear - zfar) * 0.5f;
-        float d = (2.0f * znear * zfar) / (znear - zfar) * 0.5f;
-        float x = (2.0f * znear) / (right - left);
-        float y = (2.0f * znear) / (bottom - top);
-
-        return Matrix4x4
-        {
-            float32x4(x, 0, 0, 0),
-            float32x4(0, y, 0, 0),
-            float32x4(a, b, c, c - 1.0f),
-            float32x4(0, 0, d, d)
-        };
-    }
-
-    Matrix4x4 perspective(float xfov, float yfov, float znear, float zfar)
-    {
-        float x = znear * std::tan(xfov * 0.5f);
-        float y = znear * std::tan(yfov * 0.5f);
-        return frustum(-x, x, -y, y, znear, zfar);
-    }
-
-    Matrix4x4 oblique(const Matrix4x4& proj, const float32x4& nearclip)
+    Matrix4x4 obliqueVK(const Matrix4x4& proj, const float32x4& nearclip)
     {
         // conversion from GL to VK matrix format
         const Matrix4x4 to_vk
@@ -588,77 +630,11 @@ namespace vulkan
         };
 
         // NOTE: using the existing OpenGL function requires a round-trip to it's matrix format. :(
-        Matrix4x4 p = opengl::oblique(proj * from_vk, nearclip);
+        Matrix4x4 p = obliqueGL(proj * from_vk, nearclip);
         return p * to_vk;
     }
 
-} // namespace vulkan
-
-namespace directx
-{
-
-    // left-handed
-
-    Matrix4x4 ortho(float left, float right, float bottom, float top, float znear, float zfar)
-    {
-        const float x = 1.0f / (right - left);
-        const float y = 1.0f / (top - bottom);
-        const float z = 1.0f / (zfar - znear);
-
-        const float w = 2.0f * x;
-        const float h = 2.0f * y;
-        const float a = -x * (left + right);
-        const float b = -y * (bottom + top);
-        const float c = -z * znear;
-
-        return Matrix4x4
-        {
-            float32x4(w, 0, 0, 0),
-            float32x4(0, h, 0, 0),
-            float32x4(0, 0, z, 0),
-            float32x4(a, b, c, 1)
-        };
-    }
-
-    Matrix4x4 frustum(float left, float right, float bottom, float top, float znear, float zfar)
-    {
-        const float x = 1.0f / (right - left);
-        const float y = 1.0f / (top - bottom);
-        const float z = 1.0f / (zfar - znear);
-
-        const float w = x * znear * 2.0f;
-        const float h = y * znear * 2.0f;
-        const float a = -x * (left + right);
-        const float b = -y * (bottom + top);
-        const float c = z * zfar;
-        const float d = z * zfar * -znear;
-
-        return Matrix4x4
-        {
-            float32x4(w, 0, 0, 0),
-            float32x4(0, h, 0, 0),
-            float32x4(a, b, c, 1),
-            float32x4(0, 0, d, 0)
-        };
-    }
-
-    Matrix4x4 perspective(float xfov, float yfov, float znear, float zfar)
-    {
-        const float w = 1.0f / std::tan(xfov * 0.5f);
-        const float h = 1.0f / std::tan(yfov * 0.5f);
-        const float a = zfar / (zfar - znear);
-        const float b = -a * znear;
-
-        return Matrix4x4
-        {
-            float32x4(w, 0, 0, 0),
-            float32x4(0, h, 0, 0),
-            float32x4(0, 0, a, 1),
-            float32x4(0, 0, b, 0)
-        };
-    }
-
-    Matrix4x4 oblique(const Matrix4x4& proj, const float32x4& nearclip)
+    Matrix4x4 obliqueD3D(const Matrix4x4& proj, const float32x4& nearclip)
     {
         float32x4 clip = nearclip;
         float32x4 s = sign(clip);
@@ -672,16 +648,12 @@ namespace directx
         float32x4 c = clip / dot(clip, q);
 
         Matrix4x4 p = proj;
-
-        p(0, 2) = c.x;
-        p(1, 2) = c.y;
-        p(2, 2) = c.z;
-        p(3, 2) = c.w;
-
+        p[0][2] = c.x;
+        p[1][2] = c.y;
+        p[2][2] = c.z;
+        p[3][2] = c.w;
         return p;
     }
-
-} // namespace directx
 
     // ------------------------------------------------------------------------
     // AngleAxis
