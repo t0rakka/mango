@@ -109,13 +109,10 @@ namespace mango::math
 
     float Matrix4x4::determinant() const
     {
-        const float a = m[0][0] * m[1][1] * m[2][2] +
-                        m[0][1] * m[1][2] * m[2][0] +
-                        m[0][2] * m[1][0] * m[2][1];
-        const float b = m[0][2] * m[1][1] * m[2][0] +
-                        m[0][1] * m[1][0] * m[2][2] +
-                        m[0][0] * m[1][2] * m[2][1];
-        return a - b;
+        // 3x3 determinant
+        return m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
+               m[0][1] * (m[1][0] * m[2][2] - m[2][0] * m[1][2]) +
+               m[0][2] * (m[1][0] * m[2][1] - m[2][0] * m[1][1]);
     }
 
     Matrix4x4 Matrix4x4::identity()
@@ -155,8 +152,8 @@ namespace mango::math
 
     Matrix4x4 Matrix4x4::rotate(float angle, const float32x3& axis)
     {
-        const Matrix4x4 temp = AngleAxis(angle, axis);
-        return temp;
+        const Matrix4x4 m = AngleAxis(angle, axis);
+        return m;
     }
 
     Matrix4x4 Matrix4x4::rotateX(float angle)
@@ -164,13 +161,12 @@ namespace mango::math
         const float s = std::sin(angle);
         const float c = std::cos(angle);
 
-        return Matrix4x4
-        {
-            float32x4(1, 0, 0, 0),
-            float32x4(0, c, s, 0),
-            float32x4(0,-s, c, 0),
-            float32x4(0, 0, 0, 1)
-        };
+        Matrix4x4 m;
+        m[0] = float32x4(1, 0, 0, 0);
+        m[1] = float32x4(0, c, s, 0);
+        m[2] = float32x4(0,-s, c, 0);
+        m[3] = float32x4(0, 0, 0, 1);
+        return m;
     }
 
     Matrix4x4 Matrix4x4::rotateY(float angle)
@@ -178,13 +174,12 @@ namespace mango::math
         const float s = std::sin(angle);
         const float c = std::cos(angle);
 
-        return Matrix4x4
-        {
-            float32x4(c, 0,-s, 0),
-            float32x4(0, 1, 0, 0),
-            float32x4(s, 0, c, 0),
-            float32x4(0, 0, 0, 1)
-        };
+        Matrix4x4 m;
+        m[0] = float32x4(c, 0,-s, 0);
+        m[1] = float32x4(0, 1, 0, 0);
+        m[2] = float32x4(s, 0, c, 0);
+        m[3] = float32x4(0, 0, 0, 1);
+        return m;
      }
 
     Matrix4x4 Matrix4x4::rotateZ(float angle)
@@ -192,13 +187,12 @@ namespace mango::math
         const float s = std::sin(angle);
         const float c = std::cos(angle);
 
-        return Matrix4x4
-        {
-            float32x4( c, s, 0, 0),
-            float32x4(-s, c, 0, 0),
-            float32x4( 0, 0, 1, 0),
-            float32x4( 0, 0, 0, 1)
-        };
+        Matrix4x4 m;
+        m[0] = float32x4( c, s, 0, 0);
+        m[1] = float32x4(-s, c, 0, 0);
+        m[2] = float32x4( 0, 0, 1, 0);
+        m[3] = float32x4( 0, 0, 0, 1);
+        return m;
     }
 
     Matrix4x4 Matrix4x4::rotateXYZ(float x, float y, float z)
@@ -216,23 +210,12 @@ namespace mango::math
         const float sysx = sy * sx;
         const float sycx = sy * cx;
 
-        const float m00 = cz * cy;
-        const float m01 = sz * cy;
-        const float m02 = -sy;
-        const float m10 = cz * sysx - sz * cx;
-        const float m11 = sz * sysx + cz * cx;
-        const float m12 = cy * sx;
-        const float m20 = cz * sycx + sz * sx;
-        const float m21 = sz * sycx - cz * sx;
-        const float m22 = cy * cx;
-
-        return Matrix4x4
-        {
-            float32x4(m00, m01, m02, 0),
-            float32x4(m10, m11, m12, 0),
-            float32x4(m20, m21, m22, 0),
-            float32x4(0, 0, 0, 1)
-        };
+        Matrix4x4 m;
+        m[0] = float32x4(cz * cy, sz * cy, -sy, 0);
+        m[1] = float32x4(cz * sysx - sz * cx, sz * sysx + cz * cx, cy * sx, 0);
+        m[2] = float32x4(cz * sycx + sz * sx, sz * sycx - cz * sx, cy * cx, 0);
+        m[3] = float32x4(0, 0, 0, 1);
+        return m;
     }
 
     Matrix4x4 Matrix4x4::lookat(const float32x3& target, const float32x3& viewer, const float32x3& up)
@@ -241,29 +224,18 @@ namespace mango::math
         const float32x3 xaxis = normalize(cross(up, zaxis));
         const float32x3 yaxis = cross(zaxis, xaxis);
 
-        return Matrix4x4
-        {
-            float32x4(xaxis.x, yaxis.x, zaxis.x, 0),
-            float32x4(xaxis.y, yaxis.y, zaxis.y, 0),
-            float32x4(xaxis.z, yaxis.z, zaxis.z, 0),
-            float32x4(-dot(xaxis, viewer), -dot(yaxis, viewer), -dot(zaxis, viewer), 1.0f)
-        };
+        Matrix4x4 m;
+        m[0] = float32x4(xaxis.x, yaxis.x, zaxis.x, 0);
+        m[1] = float32x4(xaxis.y, yaxis.y, zaxis.y, 0);
+        m[2] = float32x4(xaxis.z, yaxis.z, zaxis.z, 0);
+        m[3] = float32x4(-dot(xaxis, viewer), -dot(yaxis, viewer), -dot(zaxis, viewer), 1.0f);
+        return m;
     }
 
     Matrix4x4 translate(const Matrix4x4& input, float x, float y, float z)
     {
         const float32x4 v = float32x4(x, y, z, 0.0f);
-        Matrix4x4 m;
-        m[0] = madd(input[0], input[0].wwww, v);
-        m[1] = madd(input[1], input[1].wwww, v);
-        m[2] = madd(input[2], input[2].wwww, v);
-        m[3] = madd(input[3], input[3].wwww, v);
-        return m;
-    }
 
-    Matrix4x4 translate(const Matrix4x4& input, const float32x3& t)
-    {
-        const float32x4 v = float32x4(t.x, t.y, t.z, 0.0f);
         Matrix4x4 m;
         m[0] = madd(input[0], input[0].wwww, v);
         m[1] = madd(input[1], input[1].wwww, v);
@@ -275,6 +247,7 @@ namespace mango::math
     Matrix4x4 scale(const Matrix4x4& input, float s)
     {
         const float32x4 v = float32x4(s, s, s, 1.0f);
+
         Matrix4x4 m;
         m[0] = input[0] * v;
         m[1] = input[1] * v;
@@ -286,17 +259,7 @@ namespace mango::math
     Matrix4x4 scale(const Matrix4x4& input, float x, float y, float z)
     {
         const float32x4 v = float32x4(x, y, z, 1.0f);
-        Matrix4x4 m;
-        m[0] = input[0] * v;
-        m[1] = input[1] * v;
-        m[2] = input[2] * v;
-        m[3] = input[3] * v;
-        return m;
-    }
 
-    Matrix4x4 scale(const Matrix4x4& input, const float32x3& scale)
-    {
-        const float32x4 v = float32x4(scale.x, scale.y, scale.z, 1.0f);
         Matrix4x4 m;
         m[0] = input[0] * v;
         m[1] = input[1] * v;
@@ -427,12 +390,10 @@ namespace mango::math
         zaxis -= pos;
         
         Matrix4x4 result;
-        
         result[0] = float32x4(xaxis.x, xaxis.y, xaxis.z, 0.0f);
         result[1] = float32x4(yaxis.x, yaxis.y, yaxis.z, 0.0f);
         result[2] = float32x4(zaxis.x, zaxis.y, zaxis.z, 0.0f);
         result[3] = float32x4(pos.x, pos.y, pos.z, 1.0f);
-        
         return result;
     }
 
@@ -456,12 +417,10 @@ namespace mango::math
         float m32 = -(m02 * m[12] + m12 * m[13] + m22 * m[14]);
 
         Matrix4x4 result;
-
         result[0] = float32x4(m00, m01, m02, m[ 3]);
         result[1] = float32x4(m10, m11, m12, m[ 7]);
         result[2] = float32x4(m20, m21, m22, m[11]);
         result[3] = float32x4(m30, m31, m32, m[15]);
-
         return result;
     }
 
@@ -483,12 +442,10 @@ namespace mango::math
         float m32 = -(m[2] * m[12] + m[6] * m[13] + m[10] * m[14]);
 
         Matrix4x4 result;
-
         result[0] = float32x4(m00, m01, m02, m[3]);
         result[1] = float32x4(m10, m11, m12, m[7]);
         result[2] = float32x4(m20, m21, m22, m[11]);
         result[3] = float32x4(m30, m31, m32, m[15]);
-
         return result;
     }
 

@@ -181,15 +181,13 @@ namespace mango::math
     // ------------------------------------------------------------------
 
     Matrix4x4 translate(const Matrix4x4& matrix, float x, float y, float z);
-    Matrix4x4 translate(const Matrix4x4& matrix, const float32x3& translation);
-    Matrix4x4 scale(const Matrix4x4& matrix, float scale);
-    Matrix4x4 scale(const Matrix4x4& matrix, float xscale, float yscale, float zscale);
-    Matrix4x4 scale(const Matrix4x4& matrix, const float32x3& scale);
+    Matrix4x4 scale(const Matrix4x4& matrix, float s);
+    Matrix4x4 scale(const Matrix4x4& matrix, float x, float y, float z);
     Matrix4x4 rotate(const Matrix4x4& matrix, float angle, const float32x3& axis);
     Matrix4x4 rotateX(const Matrix4x4& matrix, float angle);
     Matrix4x4 rotateY(const Matrix4x4& matrix, float angle);
     Matrix4x4 rotateZ(const Matrix4x4& matrix, float angle);
-    Matrix4x4 rotateXYZ(const Matrix4x4& matrix, float xangle, float yangle, float zangle);
+    Matrix4x4 rotateXYZ(const Matrix4x4& matrix, float x, float y, float z);
     Matrix4x4 normalize(const Matrix4x4& m);
     Matrix4x4 mirror(const Matrix4x4& m, const float32x4& plane);
     Matrix4x4 affineInverse(const Matrix4x4& m);
