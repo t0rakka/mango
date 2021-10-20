@@ -942,6 +942,54 @@ namespace
         return ~crc;
     }
 
+    template<typename Compute, typename Combine>
+    u32 checksum(Compute compute, Combine combine, u32 crc, ConstMemory memory)
+    {
+        constexpr size_t KB = 1 << 10;
+        constexpr size_t MIN_BLOCK = 32 * KB;
+
+        if (memory.size < MIN_BLOCK * 2)
+        {
+            // don't bother multi-threading if we don't have plenty of input
+            return compute(crc, memory.address, memory.size);
+        }
+
+        size_t block = std::max(MIN_BLOCK, memory.size / (ThreadPool::getHardwareConcurrency() * 2));
+        int threads = int(memory.size / block);
+
+        std::vector<u32> temp(threads);
+
+        ConcurrentQueue q;
+
+        for (int i = 1; i < threads; ++i)
+        {
+            size_t left = memory.size - block * i;
+            size_t bytes = (i == threads - 1) ? left : std::min(block, left);
+
+            const u8* address = memory.address + block * i;
+
+            q.enqueue([compute, &temp, i, address, bytes]
+            {
+                temp[i] = compute(0, address, bytes);
+            });
+        }
+
+        // process the first block in the current thread
+        crc = compute(crc, memory.address, std::min(block, memory.size));
+
+        q.wait();
+
+        for (int i = 1; i < threads; ++i)
+        {
+            size_t left = memory.size - block * i;
+            size_t bytes = (i == threads - 1) ? left : std::min(block, left);
+
+            crc = combine(crc, temp[i], bytes);
+        }
+
+        return crc;
+    }
+
 } // namespace
 
 namespace mango
@@ -961,100 +1009,12 @@ namespace mango
 
     u32 crc32(u32 crc, ConstMemory memory)
     {
-        constexpr size_t KB = 1 << 10;
-        constexpr size_t MIN_BLOCK = 32 * KB;
-
-        if (memory.size < MIN_BLOCK * 2)
-        {
-            // don't bother multi-threading if we don't have plenty of input
-            return ::crc32(crc, memory.address, memory.size);
-        }
-
-        size_t block = std::max(MIN_BLOCK, memory.size / (ThreadPool::getHardwareConcurrency() * 2));
-        int threads = int(memory.size / block);
-
-        std::vector<u32> temp(threads);
-
-        ConcurrentQueue q;
-
-        for (int i = 1; i < threads; ++i)
-        {
-            q.enqueue([i, memory, &temp, block]
-            {
-                size_t left = memory.size - i * block;
-                size_t bytes = std::min(block, left);
-                temp[i] = ::crc32(0, memory.address + i * block, bytes);
-            });
-        }
-
-        // process the first block in the current thread
-        crc = ::crc32(crc, memory.address, block);
-
-        q.wait();
-
-        for (int i = 1; i < threads; ++i)
-        {
-            size_t left = memory.size - i * block;
-            size_t bytes = std::min(block, left);
-            crc = ::crc32_combine(crc, temp[i], bytes);
-        }
-
-        size_t leftover = memory.size - block * threads;
-        if (leftover > 0)
-        {
-            crc = ::crc32(crc, memory.address + block * threads, leftover);
-        }
-
-        return crc;
+        return checksum(::crc32, ::crc32_combine, crc, memory);
     }
 
     u32 crc32c(u32 crc, ConstMemory memory)
     {
-        constexpr size_t KB = 1 << 10;
-        constexpr size_t MIN_BLOCK = 32 * KB;
-
-        if (memory.size < MIN_BLOCK * 2)
-        {
-            // don't bother multi-threading if we don't have plenty of input
-            return ::crc32c(crc, memory.address, memory.size);
-        }
-
-        size_t block = std::max(MIN_BLOCK, memory.size / (ThreadPool::getHardwareConcurrency() * 2));
-        int threads = int(memory.size / block);
-
-        std::vector<u32> temp(threads);
-
-        ConcurrentQueue q;
-
-        for (int i = 1; i < threads; ++i)
-        {
-            q.enqueue([i, memory, &temp, block]
-            {
-                size_t left = memory.size - i * block;
-                size_t bytes = std::min(block, left);
-                temp[i] = ::crc32c(0, memory.address + i * block, bytes);
-            });
-        }
-
-        // process the first block in the current thread
-        crc = ::crc32c(crc, memory.address, block);
-
-        q.wait();
-
-        for (int i = 1; i < threads; ++i)
-        {
-            size_t left = memory.size - i * block;
-            size_t bytes = std::min(block, left);
-            crc = ::crc32c_combine(crc, temp[i], bytes);
-        }
-
-        size_t leftover = memory.size - block * threads;
-        if (leftover > 0)
-        {
-            crc = ::crc32c(crc, memory.address + block * threads, leftover);
-        }
-
-        return crc;
+        return checksum(::crc32c, ::crc32c_combine, crc, memory);
     }
 
 } // namespace mango
