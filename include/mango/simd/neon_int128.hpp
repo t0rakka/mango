@@ -2257,7 +2257,7 @@ namespace mango::simd
         uint32x4_t c = vreinterpretq_u32_u64(vsraq_n_u64(b, b, 31));
         return vgetq_lane_u32(c, 0) | (vgetq_lane_u32(c, 2) << 2);
 #else
-        const uint32x4_t weights ={ 1, 2, 4, 8 };
+        const uint32x4_t weights = { 1, 2, 4, 8 };
         a = vandq_u32(a, weights);
         return vaddvq_u32(a);
 #endif
