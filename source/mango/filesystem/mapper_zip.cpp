@@ -790,17 +790,7 @@ namespace mango::filesystem
                 size = header.uncompressedSize;
             }
 
-            VirtualMemory* memory;
-
-            if (buffer)
-            {
-                memory = new VirtualMemoryZIP(buffer, buffer, size_t(size));
-            }
-            else
-            {
-                memory = new VirtualMemoryZIP(address, nullptr, size_t(size));
-            }
-
+            VirtualMemory* memory = new VirtualMemoryZIP(address, buffer, size_t(size));
             return memory;
         }
 
