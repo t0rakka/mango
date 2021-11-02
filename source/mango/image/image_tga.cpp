@@ -42,7 +42,7 @@ namespace
     struct HeaderTGA
     {
         u8   id_length;
-        u8   colormap_type;
+        u8   colormap_type; // 0 - no palette, 1 - palette
         u8   image_type;
         u16  colormap_origin;
         u16  colormap_length;
@@ -107,17 +107,15 @@ namespace
 
             if (!colormap_type)
             {
+                // no colormap
+            }
+            else
+            {
                 if (colormap_origin || colormap_length || colormap_bits)
                 {
                     error = makeString("[ImageDecoder.TGA] Incorrect colormap.");
                     return nullptr;
                 }
-            }
-            else if (colormap_type > 1)
-            {
-                // NOTE: This is allowed to be > 1 but we don't know how to read such custom type anyway
-                error = makeString("[ImageDecoder.TGA] Invalid colormap type (%d).", colormap_type);
-                return nullptr;
             }
 
             if (isPalette())
