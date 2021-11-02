@@ -169,7 +169,7 @@ namespace
             {
                 for (int y = 0; y < height; ++y)
                 {
-                    int scanline = (height - 1) - y; // mirror y-axis
+                    int scanline = (height - 1) - y; // mirror vertically
                     u8* dest = s.address<u8>(0, scanline) + channel;
 
                     int index = y + channel * height;

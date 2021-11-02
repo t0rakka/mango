@@ -80,11 +80,13 @@ namespace
     }
 
     // ----------------------------------------------------------------------------
-    // load_surface()
+    // create_surface()
     // ----------------------------------------------------------------------------
 
-    void load_surface(Surface& surface, ConstMemory memory, const std::string& extension, const Format* format, const ImageDecodeOptions& options)
+    Surface create_surface(ConstMemory memory, const std::string& extension, const Format* format, const ImageDecodeOptions& options)
     {
+        Surface surface;
+
         ImageDecoder decoder(memory, extension);
         if (decoder.isDecoder())
         {
@@ -112,12 +114,8 @@ namespace
             ImageDecodeStatus status = decoder.decode(surface, options, 0, 0, 0);
             MANGO_UNREFERENCED(status);
         }
-    }
 
-    void load_surface(Surface& surface, const std::string& filename, const Format* format, const ImageDecodeOptions& options)
-    {
-        filesystem::File file(filename);
-        load_surface(surface, file, filesystem::getExtension(filename), format, options);
+        return surface;
     }
 
 } // namespace
@@ -428,29 +426,28 @@ namespace mango::image
     }
 
     Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const ImageDecodeOptions& options)
+        : Surface(create_surface(memory, extension, nullptr, options))
     {
-        load_surface(*this, memory, extension, nullptr, options);
     }
 
     Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const Format& format, const ImageDecodeOptions& options)
+        : Surface(create_surface(memory, extension, &format, options))
     {
-        load_surface(*this, memory, extension, &format, options);
     }
 
     Bitmap::Bitmap(const std::string& filename, const ImageDecodeOptions& options)
+        : Surface(create_surface(filesystem::File(filename), filesystem::getExtension(filename), nullptr, options))
     {
-        load_surface(*this, filename, nullptr, options);
     }
 
     Bitmap::Bitmap(const std::string& filename, const Format& format, const ImageDecodeOptions& options)
+        : Surface(create_surface(filesystem::File(filename), filesystem::getExtension(filename), &format, options))
     {
-        load_surface(*this, filename, &format, options);
     }
 
     Bitmap::Bitmap(Bitmap&& bitmap)
         : Surface(bitmap)
     {
-        // move image ownership
         bitmap.image = nullptr;
     }
 
