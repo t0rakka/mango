@@ -328,14 +328,14 @@ void test28()
 
 void test29()
 {
-    // bad.xxx is a folder - NOT a file
+    // bad.xxx is not a file; it is a folder
     File file("data/bad.xxx/dummy.txt");
     print(file);
 }
 
 void test30()
 {
-    // bad.zip is a folder - NOT a file
+    // bad.zip is not a file; it is a folder
     File file("data/bad.zip/dummy.txt");
     print(file);
 }
