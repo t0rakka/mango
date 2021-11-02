@@ -128,7 +128,7 @@ namespace mango::filesystem
         std::string temp = pathname.empty() ? "./" : pathname;
         m_pathname = temp;
         m_basepath = parse(temp, password);
-        m_basepath = temp;
+        m_basepath = temp; // overwrite parse return value
 
 #if 0
         printf("# m_basepath: %s\n", m_basepath.c_str());
@@ -217,6 +217,12 @@ namespace mango::filesystem
 
                     filename = postfix;
                     pathname = postfix;
+                }
+                else
+                {
+                    // "container" was just a folder
+                    pathname = container + "/";
+                    filename = pathname;
                 }
 
                 return mapper;

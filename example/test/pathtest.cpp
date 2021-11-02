@@ -322,10 +322,22 @@ void test27()
 
 void test28()
 {
-#if 1
     File file(Path("data/case.snitch/"), "bench/IMG_2177.JPG");
     print(file);
-#endif
+}
+
+void test29()
+{
+    // bad.xxx is a folder - NOT a file
+    File file("data/bad.xxx/dummy.txt");
+    print(file);
+}
+
+void test30()
+{
+    // bad.zip is a folder - NOT a file
+    File file("data/bad.zip/dummy.txt");
+    print(file);
 }
 
 // -----------------------------------------------------------------------------------
@@ -367,6 +379,8 @@ int main(int argc, char *argv[])
     MAKE_TEST(26);
     MAKE_TEST(27);
     MAKE_TEST(28);
+    MAKE_TEST(29);
+    MAKE_TEST(30);
 
     printf("---------------------------------- done\n\n");
 }
