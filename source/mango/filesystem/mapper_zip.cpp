@@ -44,7 +44,7 @@ namespace
         ENCRYPTION_AES256  = 4,
     };
 
-    enum Compression : u8
+    enum Compression : u16
     {
         COMPRESSION_NONE      = 0,  // stored (no compression)
         COMPRESSION_SHRUNK    = 1,  // Shrunk
@@ -69,6 +69,23 @@ namespace
         COMPRESSION_PPMD      = 98, // PPMd version I, Rev 1
         COMPRESSION_AES       = 99, // AE-x encryption marker
     };
+
+    bool isCompressionSupported(u16 compression)
+    {
+        switch (compression)
+        {
+            case COMPRESSION_NONE:
+            case COMPRESSION_DEFLATE:
+            case COMPRESSION_LZMA:
+            case COMPRESSION_PPMD:
+            case COMPRESSION_BZIP2:
+            case COMPRESSION_ZSTD:
+                return true;
+
+            default:
+                return false;
+        }
+    }
 
     u32 getSaltLength(Encryption encryption)
     {
@@ -163,35 +180,35 @@ namespace
         {
             return signature == 0x04034b50;
         }
-	};
+    };
 
-	struct FileHeader
-	{
-		u32	signature;         // 0x02014b50
-		u16	versionUsed;       //
-		u16	versionNeeded;     //
-		u16	flags;             //
-		u16	compression;       // compression method
-		u16	lastModTime;       //
-		u16	lastModDate;       //
-		u32	crc;               //
-		u64	compressedSize;    // ZIP64: 0xffffffff
-		u64	uncompressedSize;  // ZIP64: 0xffffffff
-		u16	filenameLen;       // length of the filename field following this structure
-		u16	extraFieldLen;     // length of the extra field following the filename field
-		u16	commentLen;        // length of the file comment field following the extra field
-		u16	diskStart;         // the number of the disk on which this file begins, ZIP64: 0xffff
-		u16	internal;          // internal file attributes
-		u32	external;          // external file attributes
-		u64	localOffset;       // relative offset of the local file header, ZIP64: 0xffffffff
+    struct FileHeader
+    {
+        u32	signature;         // 0x02014b50
+        u16	versionUsed;       //
+        u16	versionNeeded;     //
+        u16	flags;             //
+        u16	compression;       // compression method
+        u16	lastModTime;       //
+        u16	lastModDate;       //
+        u32	crc;               //
+        u64	compressedSize;    // ZIP64: 0xffffffff
+        u64	uncompressedSize;  // ZIP64: 0xffffffff
+        u16	filenameLen;       // length of the filename field following this structure
+        u16	extraFieldLen;     // length of the extra field following the filename field
+        u16	commentLen;        // length of the file comment field following the extra field
+        u16	diskStart;         // the number of the disk on which this file begins, ZIP64: 0xffff
+        u16	internal;          // internal file attributes
+        u32	external;          // external file attributes
+        u64	localOffset;       // relative offset of the local file header, ZIP64: 0xffffffff
 
         std::string filename;      // filename is stored after the header
         bool        is_folder;     // if the last character of filename is "/", it is a folder
         Encryption  encryption;
 
-		bool read(LittleEndianConstPointer& p)
-		{
-			signature = p.read32();
+        bool read(LittleEndianConstPointer& p)
+        {
+            signature = p.read32();
             if (signature != 0x02014b50)
             {
                 return false;
@@ -590,15 +607,19 @@ namespace mango::filesystem
                         FileHeader header;
                         if (header.read(p))
                         {
-                            std::string filename = header.filename;
-                            while (!filename.empty())
+                            // NOTE: Don't index files that can't be decompressed
+                            if (isCompressionSupported(header.compression))
                             {
-                                std::string folder = getPath(filename.substr(0, filename.length() - 1));
+                                std::string filename = header.filename;
+                                while (!filename.empty())
+                                {
+                                    std::string folder = getPath(filename.substr(0, filename.length() - 1));
 
-                                header.filename = filename.substr(folder.length());
-                                m_folders.insert(folder, filename, header);
-                                header.is_folder = true;
-                                filename = folder;
+                                    header.filename = filename.substr(folder.length());
+                                    m_folders.insert(folder, filename, header);
+                                    header.is_folder = true;
+                                    filename = folder;
+                                }
                             }
                         }
                     }
