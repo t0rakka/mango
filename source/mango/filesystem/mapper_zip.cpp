@@ -76,10 +76,10 @@ namespace
         {
             case COMPRESSION_NONE:
             case COMPRESSION_DEFLATE:
-            case COMPRESSION_LZMA:
-            case COMPRESSION_PPMD:
             case COMPRESSION_BZIP2:
+            case COMPRESSION_LZMA:
             case COMPRESSION_ZSTD:
+            case COMPRESSION_PPMD:
                 return true;
 
             default:
