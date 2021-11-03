@@ -139,12 +139,15 @@ namespace
 
     std::string decodeUnicodeFilename(const char* data, int filename_size)
     {
-        if (filename_size >= 1024)
+        constexpr size_t UNICODE_FILENAME_MAX_LENGTH = 1024;
+
+        if (filename_size >= UNICODE_FILENAME_MAX_LENGTH)
         {
-            MANGO_EXCEPTION("[mapper.rar] Too long unicode filename.");
+            // empty filename is used later to signify file is not present
+            return "";
         }
 
-        char buffer[1024];
+        char buffer[UNICODE_FILENAME_MAX_LENGTH];
         std::memcpy(buffer, data, filename_size);
 
         int length;
@@ -159,9 +162,9 @@ namespace
 
         if (length <= filename_size)
         {
-            wchar_t temp[1024];
+            wchar_t temp[UNICODE_FILENAME_MAX_LENGTH];
             const u8* u = reinterpret_cast<const u8*>(buffer);
-            decodeUnicode(u, u + length, filename_size - length, temp, 1024);
+            decodeUnicode(u, u + length, filename_size - length, temp, UNICODE_FILENAME_MAX_LENGTH);
             s = mango::u16_toBytes(temp);
         }
         else
@@ -235,7 +238,7 @@ namespace
         u8   version;
         u8   method;
         std::string filename;
-        bool    is_encrypted { false };
+        bool is_encrypted { false };
 
         Header(const u8* address)
         {
@@ -344,7 +347,7 @@ namespace
 
         bool isSupportedVersion() const
         {
-            return method >= 0x30 && method <= 0x35 && version <= 36;
+            return method >= 0x30 && method <= 0x35 && version <= 36 && !filename.empty();
         }
     };
 
@@ -355,7 +358,7 @@ namespace
         u32  crc;
         u8   version;
         u8   method;
-        bool    is_rar5;
+        bool is_rar5;
         std::string filename;
 
         bool folder;
@@ -414,6 +417,7 @@ namespace mango::filesystem
         std::vector<FileHeader> m_files;
         Indexer<FileHeader> m_folders;
         bool is_encrypted { false };
+        bool is_broken_archive { false };
 
         MapperRAR(ConstMemory parent, const std::string& password)
             : m_password(password)
@@ -450,7 +454,8 @@ namespace mango::filesystem
             }
             else
             {
-                MANGO_EXCEPTION("[mapper.rar] Incorrect signature.");
+                // Incorrect signature
+                is_broken_archive = true;
             }
 
             for (auto& header : m_files)
@@ -504,11 +509,12 @@ namespace mango::filesystem
                             {
                                 file.filename += "/";
                             }
+
                             m_files.push_back(file);
                         }
                         else
                         {
-                            // ignore file (unsupported compression)
+                            // ignore file (unsupported compression -or- incorrect filename)
                         }
 
                         // skip compressed data
@@ -687,16 +693,27 @@ namespace mango::filesystem
 
         bool isFile(const std::string& filename) const override
         {
+            if (is_broken_archive)
+            {
+                return false;
+            }
+
             const FileHeader* ptrHeader = m_folders.getHeader(filename);
             if (ptrHeader)
             {
                 return !ptrHeader->folder;
             }
+
             return false;
         }
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
+            if (is_broken_archive)
+            {
+                return;
+            }
+
             const Indexer<FileHeader>::Folder* ptrFolder = m_folders.getFolder(pathname);
             if (ptrFolder)
             {
