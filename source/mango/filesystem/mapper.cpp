@@ -24,35 +24,29 @@ namespace mango::filesystem
     struct MapperExtension
     {
         std::string extension;
-        std::string decorated_extension;
-        CreateMapperFunc createMapperFunc;
+        CreateMapperFunc create;
 
         MapperExtension(const std::string& extension, CreateMapperFunc func)
             : extension(extension)
+            , create(func)
         {
-            decorated_extension = extension + "/";
-            createMapperFunc = func;
         }
 
         ~MapperExtension()
         {
         }
-
-        AbstractMapper* createMapper(ConstMemory memory, const std::string& password) const
-        {
-            AbstractMapper* mapper = createMapperFunc(memory, password);
-            return mapper;
-        }
     };
 
-    static std::vector<MapperExtension> g_extensions =
+    static std::vector<MapperExtension> g_mapper_extensions =
     {
         MapperExtension(".zip", createMapperZIP),
         MapperExtension(".cbz", createMapperZIP),
         MapperExtension(".apk", createMapperZIP),
         MapperExtension(".zipx", createMapperZIP),
+
         MapperExtension(".mgx", createMapperMGX),
         MapperExtension(".snitch", createMapperMGX),
+
         MapperExtension(".rar", createMapperRAR),
         MapperExtension(".cbr", createMapperRAR),
     };
@@ -184,15 +178,17 @@ namespace mango::filesystem
 
     AbstractMapper* Mapper::createCustomMapper(std::string& pathname, std::string& filename, const std::string& password)
     {
-        std::string f = toLower(filename);
+        std::string str = toLower(filename);
 
-        for (auto &extension : g_extensions)
+        for (const auto& node : g_mapper_extensions)
         {
-            size_t n = f.find(extension.decorated_extension);
+            std::string decorated = node.extension + "/";
+
+            size_t n = str.find(decorated);
             if (n != std::string::npos)
             {
                 // update string position to skip decorated extension (example: ".zip/")
-                n += extension.decorated_extension.length();
+                n += decorated.length();
 
                 // resolve container filename (example: "foo/bar/data.zip")
                 std::string container = filename.substr(0, n - 1);
@@ -211,7 +207,7 @@ namespace mango::filesystem
                 if (m_mapper->isFile(container))
                 {
                     m_parent_memory = m_mapper->mmap(container);
-                    mapper = extension.createMapper(*m_parent_memory, password);
+                    mapper = node.create(*m_parent_memory, password);
                     m_mappers.emplace_back(mapper);
                     m_mapper = mapper;
 
@@ -239,21 +235,15 @@ namespace mango::filesystem
 
     AbstractMapper* Mapper::createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password)
     {
-        std::string f = toLower(extension);
+        std::string str = toLower(extension);
 
-        for (auto &extension : g_extensions)
+        for (const auto& node : g_mapper_extensions)
         {
-            size_t n = f.find(extension.decorated_extension);
-            if (n == std::string::npos)
-            {
-                // try again with a non-decorated extension
-                n = f.find(extension.extension);
-            }
-
+            size_t n = str.find(node.extension);
             if (n != std::string::npos)
             {
                 // found a container interface; let's create it
-                AbstractMapper* mapper = extension.createMapper(memory, password);
+                AbstractMapper* mapper = node.create(memory, password);
                 m_mappers.emplace_back(mapper);
                 return mapper;
             }
@@ -281,7 +271,7 @@ namespace mango::filesystem
     {
         const std::string extension = toLower(getExtension(filename));
 
-        for (auto &node : g_extensions)
+        for (const auto& node : g_mapper_extensions)
         {
             if (extension == node.extension)
             {
