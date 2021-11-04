@@ -131,8 +131,8 @@ namespace mango::filesystem
         m_basepath = temp; // overwrite parse return value
 
 #if 0
-        printf("# m_basepath: %s\n", m_basepath.c_str());
-        printf("# m_pathname: %s\n", m_pathname.c_str());
+        printf("# 1 m_basepath: %s\n", m_basepath.c_str());
+        printf("# 1 m_pathname: %s\n", m_pathname.c_str());
         printf("\n");
 #endif
     }
@@ -149,8 +149,8 @@ namespace mango::filesystem
         m_pathname = mapper->m_pathname + pathname;
 
 #if 0
-        printf("# m_basepath: %s\n", m_basepath.c_str());
-        printf("# m_pathname: %s\n", m_pathname.c_str());
+        printf("# 2 m_basepath: %s\n", m_basepath.c_str());
+        printf("# 2 m_pathname: %s\n", m_pathname.c_str());
         printf("\n");
 #endif
     }
@@ -220,9 +220,8 @@ namespace mango::filesystem
                 }
                 else
                 {
-                    // "container" was just a folder
+                    filename = "";
                     pathname = container + "/";
-                    filename = pathname;
                 }
 
                 return mapper;
