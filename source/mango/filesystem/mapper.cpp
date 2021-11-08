@@ -119,7 +119,7 @@ namespace mango::filesystem
 
     Mapper::Mapper(const std::string& pathname, const std::string& password)
     {
-		// parse and create mappers
+        // parse and create mappers
         m_basepath = parse(pathname, password);
     }
 
@@ -129,10 +129,9 @@ namespace mango::filesystem
         m_parent_mapper = mapper;
         m_current_mapper = *mapper;
 
-		// parse and create mappers
-        std::string temp = mapper->m_basepath + pathname;
-        m_pathname = mapper->m_pathname;
-        m_basepath = parse(temp, password);
+        // parse and create mappers
+        m_pathname = m_parent_mapper->m_pathname;
+        m_basepath = parse(pathname, password);
     }
 
     Mapper::Mapper(ConstMemory memory, const std::string& extension, const std::string& password)
@@ -144,7 +143,7 @@ namespace mango::filesystem
 
     Mapper::~Mapper()
     {
-		delete m_parent_memory;
+        delete m_parent_memory;
     }
 
     std::string Mapper::parse(const std::string& pathname, const std::string& password)
@@ -153,9 +152,10 @@ namespace mango::filesystem
         {
             m_current_mapper = createFileMapper();
         }
- 
-        m_pathname = m_pathname + pathname;
-        std::string filename = pathname;
+
+printf("# parse | m_pathname: %s, pathname: %s \n", m_pathname.c_str(), pathname.c_str());
+
+        std::string filename = m_basepath + pathname;
 
         for ( ; !filename.empty(); )
         {
@@ -173,18 +173,22 @@ namespace mango::filesystem
                     // update string position to skip decorated extension (example: ".zip/")
                     n += decorated.length();
 
+printf("# found: %s \n", filename.c_str());
                     // resolve container filename (example: "foo/bar/data.zip")
                     std::string container = filename.substr(0, n - 1);
                     std::string postfix = filename.substr(n, std::string::npos);
+printf("# container: %s \n", container.c_str());
 
                     if (m_current_mapper->isFile(container))
                     {
+printf("# isFile: %s \n", container.c_str());
                         m_parent_memory = m_current_mapper->mmap(container);
                         x = node.create(*m_parent_memory, password);
                         m_mappers.emplace_back(x);
                         m_current_mapper = x;
 
                         filename = postfix;
+printf("# create | postfix: %s \n", postfix.c_str());
                     }
                 }
             }
@@ -195,6 +199,9 @@ namespace mango::filesystem
             }
         }
 
+        m_pathname = m_pathname + pathname;
+
+printf("# ~parse | m_pathname: %s, pathname: %s \n", m_pathname.c_str(), pathname.c_str());
         return filename;
     }
 

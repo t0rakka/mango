@@ -26,13 +26,7 @@ namespace mango::filesystem
         m_path = std::make_unique<Path>(filepath);
 
         Mapper& mapper = m_path->getMapper();
-
-        FileMapper* x = mapper;
-        if (x)
-        {
-            VirtualMemory* ptr = x->mmap(mapper.basepath() + m_filename);
-            m_memory = std::unique_ptr<VirtualMemory>(ptr);
-        }
+        initMemory(mapper);
     }
 
     File::File(const Path& path, const std::string& s)
@@ -48,13 +42,7 @@ namespace mango::filesystem
         m_path = std::make_unique<Path>(path, filepath);
 
         Mapper& mapper = m_path->getMapper();
-
-        FileMapper* x = mapper;
-        if (x)
-        {
-            VirtualMemory* ptr = x->mmap(mapper.basepath() + m_filename);
-            m_memory = std::unique_ptr<VirtualMemory>(ptr);
-        }
+        initMemory(mapper);
     }
 
     File::File(ConstMemory memory, const std::string& extension, const std::string& filename)
@@ -69,17 +57,25 @@ namespace mango::filesystem
         // parse and create mappers
         m_filename = mapper.parse(filename, "");
 
-        // memory map the file
-        FileMapper* x = mapper;
-        if (x)
-        {
-            VirtualMemory* ptr = x->mmap(m_filename);
-            m_memory = std::unique_ptr<VirtualMemory>(ptr);
-        }
+        initMemory(mapper);
     }
 
     File::~File()
     {
+    }
+
+    void File::initMemory(Mapper& mapper)
+    {
+        FileMapper* x = mapper;
+        if (x)
+        {
+            VirtualMemory* ptr = x->mmap(m_filename);
+            if (ptr)
+            {
+                m_virtual_memory = std::unique_ptr<VirtualMemory>(ptr);
+                m_memory = *m_virtual_memory;
+            }
+        }
     }
 
     const Path& File::path() const
@@ -99,27 +95,22 @@ namespace mango::filesystem
 
     File::operator ConstMemory () const
     {
-        return getMemory();
+        return m_memory;
     }
 
 	File::operator const u8* () const
 	{
-        return getMemory().address;
+        return m_memory.address;
 	}
 
     const u8* File::data() const
     {
-        return getMemory().address;
+        return m_memory.address;
     }
 
     u64 File::size() const
     {
-        return getMemory().size;
-    }
-
-    ConstMemory File::getMemory() const
-    {
-        return m_memory ? *m_memory : ConstMemory();
+        return m_memory.size;
     }
 
 } // namespace mango::filesystem
