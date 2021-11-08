@@ -121,15 +121,7 @@ namespace mango::filesystem
     {
 		// parse and create mappers
         std::string temp = pathname.empty() ? "./" : pathname;
-        m_pathname = temp;
         m_basepath = parse(temp, password);
-        m_basepath = temp; // overwrite parse return value
-
-#if 0
-        printf("# 1 m_basepath: %s\n", m_basepath.c_str());
-        printf("# 1 m_pathname: %s\n", m_pathname.c_str());
-        printf("\n");
-#endif
     }
 
     Mapper::Mapper(std::shared_ptr<Mapper> mapper, const std::string& pathname, const std::string& password)
@@ -140,20 +132,15 @@ namespace mango::filesystem
 
 		// parse and create mappers
         std::string temp = mapper->m_basepath + pathname;
+        m_pathname = mapper->m_pathname;
         m_basepath = parse(temp, password);
-        m_pathname = mapper->m_pathname + pathname;
-
-#if 0
-        printf("# 2 m_basepath: %s\n", m_basepath.c_str());
-        printf("# 2 m_pathname: %s\n", m_pathname.c_str());
-        printf("\n");
-#endif
     }
 
     Mapper::Mapper(ConstMemory memory, const std::string& extension, const std::string& password)
     {
         // create mapper to raw memory
         m_mapper = createMemoryMapper(memory, extension, password);
+        m_pathname = "@memory" + extension + "/";
     }
 
     Mapper::~Mapper()
@@ -161,16 +148,14 @@ namespace mango::filesystem
 		delete m_parent_memory;
     }
 
-    std::string Mapper::parse(std::string& pathname, const std::string& password)
+    std::string Mapper::parse(const std::string& pathname, const std::string& password)
     {
         if (!m_mapper)
         {
             m_mapper = createFileMapper();
         }
-
-//printf("# parse \n");
-//printf("#   pathname: %s \n", pathname.c_str());
-
+ 
+        m_pathname = m_pathname + pathname;
         std::string filename = pathname;
 
         for ( ; !filename.empty(); )
@@ -192,7 +177,6 @@ namespace mango::filesystem
                     // resolve container filename (example: "foo/bar/data.zip")
                     std::string container = filename.substr(0, n - 1);
                     std::string postfix = filename.substr(n, std::string::npos);
-//printf("#     container: %s, postfix: %s \n", filename.c_str(), postfix.c_str());
 
                     if (m_mapper->isFile(container))
                     {
@@ -202,14 +186,7 @@ namespace mango::filesystem
                         m_mapper = x;
 
                         filename = postfix;
-                        pathname = postfix;
                     }
-                    else
-                    {
-                        filename = "";
-                        pathname = container + "/";
-                    }
-//printf("#     filename: %s, pathname: %s \n", filename.c_str(), pathname.c_str());
                 }
             }
 
@@ -219,7 +196,6 @@ namespace mango::filesystem
             }
         }
 
-//printf("#   filename: %s \n", filename.c_str());
         return filename;
     }
 

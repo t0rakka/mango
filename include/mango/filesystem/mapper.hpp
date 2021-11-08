@@ -118,7 +118,7 @@ namespace mango::filesystem
         Mapper(ConstMemory memory, const std::string& extension, const std::string& password);
         ~Mapper();
 
-        std::string parse(std::string& pathname, const std::string& password);
+        std::string parse(const std::string& pathname, const std::string& password);
 
         const std::string& basepath() const;
         const std::string& pathname() const;
