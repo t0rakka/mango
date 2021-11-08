@@ -15,11 +15,11 @@ namespace mango::filesystem
     // extension registry
     // -----------------------------------------------------------------
 
-    AbstractMapper* createMapperZIP(ConstMemory parent, const std::string& password);
-    AbstractMapper* createMapperRAR(ConstMemory parent, const std::string& password);
-    AbstractMapper* createMapperMGX(ConstMemory parent, const std::string& password);
+    FileMapper* createMapperZIP(ConstMemory parent, const std::string& password);
+    FileMapper* createMapperRAR(ConstMemory parent, const std::string& password);
+    FileMapper* createMapperMGX(ConstMemory parent, const std::string& password);
 
-    using CreateMapperFunc = AbstractMapper* (*)(ConstMemory, const std::string&);
+    using CreateMapperFunc = FileMapper* (*)(ConstMemory, const std::string&);
 
     struct MapperExtension
     {
@@ -166,8 +166,8 @@ namespace mango::filesystem
 
         for ( ; !filename.empty(); )
         {
-            AbstractMapper* mapper = createCustomMapper(pathname, filename, password);
-            if (!mapper)
+            FileMapper* x = createCustomMapper(pathname, filename, password);
+            if (!x)
             {
                 break;
             }
@@ -176,7 +176,7 @@ namespace mango::filesystem
         return filename;
     }
 
-    AbstractMapper* Mapper::createCustomMapper(std::string& pathname, std::string& filename, const std::string& password)
+    FileMapper* Mapper::createCustomMapper(std::string& pathname, std::string& filename, const std::string& password)
     {
         std::string str = toLower(filename);
 
@@ -194,7 +194,7 @@ namespace mango::filesystem
                 std::string container = filename.substr(0, n - 1);
                 std::string postfix = filename.substr(n, std::string::npos);
 
-                AbstractMapper* mapper = nullptr;
+                FileMapper* x = nullptr;
 
                 if (!m_mapper)
                 {
@@ -207,9 +207,9 @@ namespace mango::filesystem
                 if (m_mapper->isFile(container))
                 {
                     m_parent_memory = m_mapper->mmap(container);
-                    mapper = node.create(*m_parent_memory, password);
-                    m_mappers.emplace_back(mapper);
-                    m_mapper = mapper;
+                    x = node.create(*m_parent_memory, password);
+                    m_mappers.emplace_back(x);
+                    m_mapper = x;
 
                     filename = postfix;
                     pathname = postfix;
@@ -220,7 +220,7 @@ namespace mango::filesystem
                     pathname = container + "/";
                 }
 
-                return mapper;
+                return x;
             }
         }
 
@@ -233,7 +233,7 @@ namespace mango::filesystem
         return nullptr;
     }
 
-    AbstractMapper* Mapper::createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password)
+    FileMapper* Mapper::createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password)
     {
         std::string str = toLower(extension);
 
@@ -243,9 +243,9 @@ namespace mango::filesystem
             if (n != std::string::npos)
             {
                 // found a container interface; let's create it
-                AbstractMapper* mapper = node.create(memory, password);
-                m_mappers.emplace_back(mapper);
-                return mapper;
+                FileMapper* x = node.create(memory, password);
+                m_mappers.emplace_back(x);
+                return x;
             }
         }
 
@@ -262,7 +262,7 @@ namespace mango::filesystem
         return m_pathname;
     }
 
-    Mapper::operator AbstractMapper* () const
+    Mapper::operator FileMapper* () const
     {
         return m_mapper;
     }

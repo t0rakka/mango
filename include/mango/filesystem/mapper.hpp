@@ -88,11 +88,11 @@ namespace mango::filesystem
         }
     };
 
-    class AbstractMapper : protected NonCopyable
+    class FileMapper : protected NonCopyable
     {
     public:
-        AbstractMapper() = default;
-        virtual ~AbstractMapper() = default;
+        FileMapper() = default;
+        virtual ~FileMapper() = default;
 
         virtual bool isFile(const std::string& filename) const = 0;
         virtual void getIndex(FileIndex& index, const std::string& pathname) = 0;
@@ -102,16 +102,16 @@ namespace mango::filesystem
     class Mapper : protected NonCopyable
     {
     protected:
-        AbstractMapper* m_mapper { nullptr };
+        FileMapper* m_mapper { nullptr };
         std::shared_ptr<Mapper> m_parent_mapper;
         VirtualMemory* m_parent_memory { nullptr };
-        std::vector<std::unique_ptr<AbstractMapper>> m_mappers;
+        std::vector<std::unique_ptr<FileMapper>> m_mappers;
         std::string m_basepath;
         std::string m_pathname;
 
-        AbstractMapper* createCustomMapper(std::string& pathname, std::string& filename, const std::string& password);
-        AbstractMapper* createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password);
-        AbstractMapper* createFileMapper(const std::string& basepath);
+        FileMapper* createCustomMapper(std::string& pathname, std::string& filename, const std::string& password);
+        FileMapper* createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password);
+        FileMapper* createFileMapper(const std::string& basepath);
 
     public:
         Mapper(const std::string& pathname, const std::string& password);
@@ -124,7 +124,7 @@ namespace mango::filesystem
         const std::string& basepath() const;
         const std::string& pathname() const;
 
-        operator AbstractMapper* () const;
+        operator FileMapper* () const;
         static bool isCustomMapper(const std::string& filename);
     };
 

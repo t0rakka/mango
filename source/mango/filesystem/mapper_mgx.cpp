@@ -206,7 +206,7 @@ namespace mango::filesystem
     // MapperMGX
     // -----------------------------------------------------------------
 
-    class MapperMGX : public AbstractMapper
+    class MapperMGX : public FileMapper
     {
     public:
         HeaderMGX m_header;
@@ -364,10 +364,10 @@ namespace mango::filesystem
     // functions
     // -----------------------------------------------------------------
 
-    AbstractMapper* createMapperMGX(ConstMemory parent, const std::string& password)
+    FileMapper* createMapperMGX(ConstMemory parent, const std::string& password)
     {
-        AbstractMapper* mapper = new MapperMGX(parent, password);
-        return mapper;
+        FileMapper* x = new MapperMGX(parent, password);
+        return x;
     }
 
 } // namespace mango::filesystem

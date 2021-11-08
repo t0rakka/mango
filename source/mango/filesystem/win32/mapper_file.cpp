@@ -120,21 +120,21 @@ namespace
     };
 
     // -----------------------------------------------------------------
-    // FileMapper
+    // SystemFileMapper
     // -----------------------------------------------------------------
 
-    class FileMapper : public AbstractMapper
+    class SystemFileMapper : public FileMapper
     {
     protected:
         std::string m_basepath;
 
     public:
-        FileMapper(const std::string& basepath)
+        SystemFileMapper(const std::string& basepath)
             : m_basepath(basepath)
         {
         }
 
-        ~FileMapper()
+        ~SystemFileMapper()
         {
         }
 
@@ -208,11 +208,11 @@ namespace mango::filesystem
     // Mapper::createFileMapper()
     // -----------------------------------------------------------------
 
-    AbstractMapper* Mapper::createFileMapper(const std::string& basepath)
+    FileMapper* Mapper::createFileMapper(const std::string& basepath)
     {
-        AbstractMapper* mapper = new FileMapper(basepath);
-        m_mappers.emplace_back(mapper);
-        return mapper;
+        FileMapper* x = new SystemFileMapper(basepath);
+        m_mappers.emplace_back(x);
+        return x;
     }
 
 } // namespace mango::filesystem
