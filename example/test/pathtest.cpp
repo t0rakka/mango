@@ -327,15 +327,29 @@ void test28()
 void test29()
 {
     // bad.xxx is not a file; it is a folder
-    File file("data/bad.xxx/dummy.txt");
-    print(file, 0xc96fd51e);
+
+    Path path("data/bad.xxx/");
+    print(path);
+
+    File file1(path, "dummy.txt");
+    print(file1, 0xc96fd51e);
+
+    File file2("data/bad.xxx/dummy.txt");
+    print(file2, 0xc96fd51e);
 }
 
 void test30()
 {
     // bad.zip is not a file; it is a folder
-    File file("data/bad.zip/dummy.txt");
-    print(file, 0xfd887d87);
+
+    Path path("data/bad.zip/");
+    print(path);
+
+    File file1(path, "dummy.txt");
+    print(file1, 0xfd887d87);
+
+    File file2("data/bad.zip/dummy.txt");
+    print(file2, 0xfd887d87);
 }
 
 // -----------------------------------------------------------------------------------
