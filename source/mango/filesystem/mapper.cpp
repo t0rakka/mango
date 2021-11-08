@@ -98,17 +98,18 @@ namespace mango::filesystem
 
     void FileIndex::emplace(const std::string& name, u64 size, u32 flags)
     {
-        files.emplace_back(name, size, flags);
-
-        const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
-        if (isFile && Mapper::isCustomMapper(name))
+        if (!name.empty())
         {
-            // TODO: check that
-            // - filename doesn't already end with "/"
-            // - flags don't contain FileInfo::CONTAINER
+            files.emplace_back(name, size, flags);
 
-            // file is a container; add it into the index again
-            files.emplace_back(name + "/", 0, flags | FileInfo::DIRECTORY | FileInfo::CONTAINER);
+            const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
+            const bool isContainer = (flags & FileInfo::CONTAINER) != 0;
+
+            if (isFile && !isContainer && name.back() != '/' && Mapper::isCustomMapper(name))
+            {
+                // file is a container; add it into the index again
+                files.emplace_back(name + "/", 0, flags | FileInfo::DIRECTORY | FileInfo::CONTAINER);
+            }
         }
     }
 
