@@ -127,7 +127,7 @@ namespace mango::filesystem
     {
         // use parent's mapper
         m_parent_mapper = mapper;
-        m_mapper = *mapper;
+        m_current_mapper = *mapper;
 
 		// parse and create mappers
         std::string temp = mapper->m_basepath + pathname;
@@ -138,7 +138,7 @@ namespace mango::filesystem
     Mapper::Mapper(ConstMemory memory, const std::string& extension, const std::string& password)
     {
         // create mapper to raw memory
-        m_mapper = createMemoryMapper(memory, extension, password);
+        m_current_mapper = createMemoryMapper(memory, extension, password);
         m_pathname = "@memory" + extension + "/";
     }
 
@@ -149,9 +149,9 @@ namespace mango::filesystem
 
     std::string Mapper::parse(const std::string& pathname, const std::string& password)
     {
-        if (!m_mapper)
+        if (!m_current_mapper)
         {
-            m_mapper = createFileMapper();
+            m_current_mapper = createFileMapper();
         }
  
         m_pathname = m_pathname + pathname;
@@ -177,12 +177,12 @@ namespace mango::filesystem
                     std::string container = filename.substr(0, n - 1);
                     std::string postfix = filename.substr(n, std::string::npos);
 
-                    if (m_mapper->isFile(container))
+                    if (m_current_mapper->isFile(container))
                     {
-                        m_parent_memory = m_mapper->mmap(container);
+                        m_parent_memory = m_current_mapper->mmap(container);
                         x = node.create(*m_parent_memory, password);
                         m_mappers.emplace_back(x);
-                        m_mapper = x;
+                        m_current_mapper = x;
 
                         filename = postfix;
                     }
@@ -229,7 +229,7 @@ namespace mango::filesystem
 
     Mapper::operator FileMapper* () const
     {
-        return m_mapper;
+        return m_current_mapper;
     }
 
     bool Mapper::isCustomMapper(const std::string& filename)

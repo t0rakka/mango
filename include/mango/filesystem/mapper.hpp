@@ -102,10 +102,10 @@ namespace mango::filesystem
     class Mapper : protected NonCopyable
     {
     protected:
-        FileMapper* m_mapper { nullptr };
+        std::vector<std::unique_ptr<FileMapper>> m_mappers;
         std::shared_ptr<Mapper> m_parent_mapper;
         VirtualMemory* m_parent_memory { nullptr };
-        std::vector<std::unique_ptr<FileMapper>> m_mappers;
+        FileMapper* m_current_mapper { nullptr };
         std::string m_basepath;
         std::string m_pathname;
 
