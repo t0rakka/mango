@@ -137,7 +137,7 @@ namespace
         unicodeName[decPos < maxDecSize ? decPos : maxDecSize - 1] = 0;
     }
 
-    std::string decodeUnicodeFilename(const char* data, int filename_size)
+    std::string decodeUnicodeFilename(const char* data, size_t filename_size)
     {
         constexpr size_t UNICODE_FILENAME_MAX_LENGTH = 1024;
 
@@ -150,7 +150,7 @@ namespace
         char buffer[UNICODE_FILENAME_MAX_LENGTH];
         std::memcpy(buffer, data, filename_size);
 
-        int length;
+        size_t length;
         for (length = 0; length < filename_size; ++length)
         {
             if (!buffer[length])
