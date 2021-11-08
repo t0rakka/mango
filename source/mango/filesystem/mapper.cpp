@@ -202,7 +202,6 @@ namespace mango::filesystem
                     std::string head = container.substr(0, n + 1);
                     container = container.substr(n + 1, std::string::npos);
                     m_mapper = createFileMapper(head);
-                    m_mappers.emplace_back(m_mapper);
                 }
 
                 if (m_mapper->isFile(container))
@@ -228,7 +227,6 @@ namespace mango::filesystem
         if (!m_mapper)
         {
             m_mapper = createFileMapper(pathname);
-            m_mappers.emplace_back(m_mapper);
             pathname = "";
         }
 
