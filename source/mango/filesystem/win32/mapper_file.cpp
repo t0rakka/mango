@@ -125,12 +125,8 @@ namespace
 
     class SystemFileMapper : public FileMapper
     {
-    protected:
-        std::string m_basepath;
-
     public:
-        SystemFileMapper(const std::string& basepath)
-            : m_basepath(basepath)
+        SystemFileMapper()
         {
         }
 
@@ -144,7 +140,7 @@ namespace
 
             struct __stat64 s;
 
-            if (_wstat64(u16_fromBytes(m_basepath + filename).c_str(), &s) == 0)
+            if (_wstat64(u16_fromBytes(filename).c_str(), &s) == 0)
             {
                 is = (s.st_mode & _S_IFDIR) == 0;
             }
@@ -154,7 +150,7 @@ namespace
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            std::wstring filespec = u16_fromBytes(m_basepath + pathname + "*");
+            std::wstring filespec = u16_fromBytes(pathname + "*");
 
             _wfinddata64_t cfile;
 
@@ -166,7 +162,6 @@ namespace
                 for (;;)
                 {
                     std::string filename = u16_toBytes(cfile.name);
-                    filename = removePrefix(filename, m_basepath);
 
                     // skip "." and ".."
                     if (filename != "." && filename != "..")
@@ -194,7 +189,7 @@ namespace
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            VirtualMemory* memory = new FileMemory(m_basepath + filename, 0, 0);
+            VirtualMemory* memory = new FileMemory(filename, 0, 0);
             return memory;
         }
     };
@@ -208,9 +203,9 @@ namespace mango::filesystem
     // Mapper::createFileMapper()
     // -----------------------------------------------------------------
 
-    FileMapper* Mapper::createFileMapper(const std::string& basepath)
+    FileMapper* Mapper::createFileMapper()
     {
-        FileMapper* x = new SystemFileMapper(basepath);
+        FileMapper* x = new SystemFileMapper();
         m_mappers.emplace_back(x);
         return x;
     }

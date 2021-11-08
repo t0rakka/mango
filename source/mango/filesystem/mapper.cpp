@@ -163,75 +163,64 @@ namespace mango::filesystem
 
     std::string Mapper::parse(std::string& pathname, const std::string& password)
     {
+        if (!m_mapper)
+        {
+            m_mapper = createFileMapper();
+        }
+
+//printf("# parse \n");
+//printf("#   pathname: %s \n", pathname.c_str());
+
         std::string filename = pathname;
 
         for ( ; !filename.empty(); )
         {
-            FileMapper* x = createCustomMapper(pathname, filename, password);
+            FileMapper* x = nullptr;
+
+            std::string str = toLower(filename);
+
+            for (const auto& node : g_mapper_extensions)
+            {
+                std::string decorated = node.extension + "/";
+
+                size_t n = str.find(decorated);
+                if (n != std::string::npos)
+                {
+                    // update string position to skip decorated extension (example: ".zip/")
+                    n += decorated.length();
+
+                    // resolve container filename (example: "foo/bar/data.zip")
+                    std::string container = filename.substr(0, n - 1);
+                    std::string postfix = filename.substr(n, std::string::npos);
+//printf("#     container: %s, postfix: %s \n", filename.c_str(), postfix.c_str());
+
+                    if (m_mapper->isFile(container))
+                    {
+                        m_parent_memory = m_mapper->mmap(container);
+                        x = node.create(*m_parent_memory, password);
+                        m_mappers.emplace_back(x);
+                        m_mapper = x;
+
+                        filename = postfix;
+                        pathname = postfix;
+                    }
+                    else
+                    {
+                        filename = "";
+                        pathname = container + "/";
+                    }
+//printf("#     filename: %s, pathname: %s \n", filename.c_str(), pathname.c_str());
+                }
+            }
+
             if (!x)
             {
                 break;
             }
         }
 
+//printf("#   filename: %s \n", filename.c_str());
         return filename;
-    }
-
-    FileMapper* Mapper::createCustomMapper(std::string& pathname, std::string& filename, const std::string& password)
-    {
-        std::string str = toLower(filename);
-
-        for (const auto& node : g_mapper_extensions)
-        {
-            std::string decorated = node.extension + "/";
-
-            size_t n = str.find(decorated);
-            if (n != std::string::npos)
-            {
-                // update string position to skip decorated extension (example: ".zip/")
-                n += decorated.length();
-
-                // resolve container filename (example: "foo/bar/data.zip")
-                std::string container = filename.substr(0, n - 1);
-                std::string postfix = filename.substr(n, std::string::npos);
-
-                FileMapper* x = nullptr;
-
-                if (!m_mapper)
-                {
-                    size_t n = container.find_last_of("/\\:");
-                    std::string head = container.substr(0, n + 1);
-                    container = container.substr(n + 1, std::string::npos);
-                    m_mapper = createFileMapper(head);
-                }
-
-                if (m_mapper->isFile(container))
-                {
-                    m_parent_memory = m_mapper->mmap(container);
-                    x = node.create(*m_parent_memory, password);
-                    m_mappers.emplace_back(x);
-                    m_mapper = x;
-
-                    filename = postfix;
-                    pathname = postfix;
-                }
-                else
-                {
-                    filename = "";
-                    pathname = container + "/";
-                }
-
-                return x;
-            }
-        }
-
-        if (!m_mapper)
-        {
-            m_mapper = createFileMapper(pathname);
-            pathname = "";
-        }
-
-        return nullptr;
     }
 
     FileMapper* Mapper::createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password)

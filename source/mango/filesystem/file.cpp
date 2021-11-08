@@ -67,8 +67,8 @@ namespace mango::filesystem
         Mapper& mapper = m_path->getMapper();
 
         // parse and create mappers
-        std::string temp_filename = filename; // parse modifies the filename; discard the unwanted changes
-        m_filename = mapper.parse(temp_filename, "");
+        std::string temp = filename; // parse modifies the filename; discard the unwanted changes
+        m_filename = mapper.parse(temp, "");
 
         // memory map the file
         FileMapper* x = mapper;
