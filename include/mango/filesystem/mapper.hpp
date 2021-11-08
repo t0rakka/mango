@@ -88,11 +88,11 @@ namespace mango::filesystem
         }
     };
 
-    class FileMapper : protected NonCopyable
+    class AbstractMapper : protected NonCopyable
     {
     public:
-        FileMapper() = default;
-        virtual ~FileMapper() = default;
+        AbstractMapper() = default;
+        virtual ~AbstractMapper() = default;
 
         virtual bool isFile(const std::string& filename) const = 0;
         virtual void getIndex(FileIndex& index, const std::string& pathname) = 0;
@@ -102,15 +102,16 @@ namespace mango::filesystem
     class Mapper : protected NonCopyable
     {
     protected:
-        std::vector<std::unique_ptr<FileMapper>> m_mappers;
+        AbstractMapper* m_mapper { nullptr };
         std::shared_ptr<Mapper> m_parent_mapper;
         VirtualMemory* m_parent_memory { nullptr };
-        FileMapper* m_current_mapper { nullptr };
+        std::vector<std::unique_ptr<AbstractMapper>> m_mappers;
         std::string m_basepath;
         std::string m_pathname;
 
-        FileMapper* createFileMapper();
-        FileMapper* createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password);
+        AbstractMapper* createCustomMapper(std::string& pathname, std::string& filename, const std::string& password);
+        AbstractMapper* createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password);
+        AbstractMapper* createFileMapper(const std::string& basepath);
 
     public:
         Mapper(const std::string& pathname, const std::string& password);
@@ -118,12 +119,12 @@ namespace mango::filesystem
         Mapper(ConstMemory memory, const std::string& extension, const std::string& password);
         ~Mapper();
 
-        std::string parse(const std::string& pathname, const std::string& password);
+        std::string parse(std::string& pathname, const std::string& password);
 
         const std::string& basepath() const;
         const std::string& pathname() const;
 
-        operator FileMapper* () const;
+        operator AbstractMapper* () const;
         static bool isCustomMapper(const std::string& filename);
     };
 

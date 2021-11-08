@@ -26,7 +26,13 @@ namespace mango::filesystem
         m_path = std::make_unique<Path>(filepath);
 
         Mapper& mapper = m_path->getMapper();
-        initMemory(mapper);
+
+        AbstractMapper* abstract_mapper = mapper;
+        if (abstract_mapper)
+        {
+            VirtualMemory* ptr = abstract_mapper->mmap(mapper.basepath() + m_filename);
+            m_memory = std::unique_ptr<VirtualMemory>(ptr);
+        }
     }
 
     File::File(const Path& path, const std::string& s)
@@ -42,7 +48,13 @@ namespace mango::filesystem
         m_path = std::make_unique<Path>(path, filepath);
 
         Mapper& mapper = m_path->getMapper();
-        initMemory(mapper);
+
+        AbstractMapper* abstract_mapper = mapper;
+        if (abstract_mapper)
+        {
+            VirtualMemory* ptr = abstract_mapper->mmap(mapper.basepath() + m_filename);
+            m_memory = std::unique_ptr<VirtualMemory>(ptr);
+        }
     }
 
     File::File(ConstMemory memory, const std::string& extension, const std::string& filename)
@@ -55,27 +67,20 @@ namespace mango::filesystem
         Mapper& mapper = m_path->getMapper();
 
         // parse and create mappers
-        m_filename = mapper.parse(filename, "");
+        std::string temp = filename; // parse modifies the filename; discard the changes
+        m_filename = mapper.parse(temp, "");
 
-        initMemory(mapper);
+        // memory map the file
+        AbstractMapper* abstract_mapper = mapper;
+        if (abstract_mapper)
+        {
+            VirtualMemory* ptr = abstract_mapper->mmap(m_filename);
+            m_memory = std::unique_ptr<VirtualMemory>(ptr);
+        }
     }
 
     File::~File()
     {
-    }
-
-    void File::initMemory(Mapper& mapper)
-    {
-        FileMapper* x = mapper;
-        if (x)
-        {
-            VirtualMemory* ptr = x->mmap(m_filename);
-            if (ptr)
-            {
-                m_virtual_memory = std::unique_ptr<VirtualMemory>(ptr);
-                m_memory = *m_virtual_memory;
-            }
-        }
     }
 
     const Path& File::path() const
@@ -95,22 +100,27 @@ namespace mango::filesystem
 
     File::operator ConstMemory () const
     {
-        return m_memory;
+        return getMemory();
     }
 
 	File::operator const u8* () const
 	{
-        return m_memory.address;
+        return getMemory().address;
 	}
 
     const u8* File::data() const
     {
-        return m_memory.address;
+        return getMemory().address;
     }
 
     u64 File::size() const
     {
-        return m_memory.size;
+        return getMemory().size;
+    }
+
+    ConstMemory File::getMemory() const
+    {
+        return m_memory ? *m_memory : ConstMemory();
     }
 
 } // namespace mango::filesystem

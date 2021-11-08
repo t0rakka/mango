@@ -20,15 +20,15 @@ namespace
     using namespace mango::filesystem;
 
     // -----------------------------------------------------------------
-	// get_pagesize()
+    // get_pagesize()
     // -----------------------------------------------------------------
 
-	inline long get_pagesize()
-	{
-		// NOTE: could be _SC_PAGE_SIZE for some platforms according to Linux Programmer's Manual
-		static long x = ::sysconf(_SC_PAGESIZE);
-		return x;
-	}
+    inline long get_pagesize()
+    {
+        // NOTE: could be _SC_PAGE_SIZE for some platforms according to Linux Programmer's Manual
+        static long x = ::sysconf(_SC_PAGESIZE);
+        return x;
+    }
 
     // -----------------------------------------------------------------
     // FileMemory
@@ -38,8 +38,8 @@ namespace
     {
     protected:
         int m_file;
-		size_t m_size;
-		void* m_address;
+        size_t m_size;
+        void* m_address;
 
     public:
         FileMemory(const std::string& filename, u64 x_offset, u64 x_size)
@@ -57,26 +57,26 @@ namespace
                 {
                     ::close(m_file);
                     m_file = -1;
-	                MANGO_EXCEPTION("[mapper.file] Cannot fstat \"%s\".", filename.c_str());
+                    MANGO_EXCEPTION("[mapper.file] Cannot fstat \"%s\".", filename.c_str());
                 }
                 else
                 {
-					const size_t file_size = size_t(sb.st_size);
-					const size_t file_offset = size_t(x_offset);
+                    const size_t file_size = size_t(sb.st_size);
+                    const size_t file_offset = size_t(x_offset);
 
-					size_t page_offset = 0;
-					if (file_offset > 0)
-					{
-						const long page_size = get_pagesize();
-						const long page_number = file_offset / page_size;
-						page_offset = page_number * page_size;
-					}
+                    size_t page_offset = 0;
+                    if (file_offset > 0)
+                    {
+                        const long page_size = get_pagesize();
+                        const long page_number = file_offset / page_size;
+                        page_offset = page_number * page_size;
+                    }
 
-					m_size = file_size - file_offset;
-					if (x_size > 0)
-					{
-						m_size = std::min(size_t(x_size), m_size);
-					}
+                    m_size = file_size - file_offset;
+                    if (x_size > 0)
+                    {
+                        m_size = std::min(size_t(x_size), m_size);
+                    }
 
                     if (m_size > 0)
                     {
@@ -118,12 +118,14 @@ namespace
     };
 
     // -----------------------------------------------------------------
-    // SystemFileMapper
+    // FileMapper
     // -----------------------------------------------------------------
 
-    class SystemFileMapper : public FileMapper
+    class FileMapper : public AbstractMapper
     {
     protected:
+        std::string m_basepath;
+
         void emplace_helper(FileIndex& index, const std::string& pathname, std::string filename)
         {
             const std::string testname = pathname + filename;
@@ -131,6 +133,8 @@ namespace
             struct stat s;
             if (::stat(testname.c_str(), &s) != -1)
             {
+                filename = removePrefix(filename, m_basepath);
+
                 if ((s.st_mode & S_IFDIR) == 0)
                 {
                     size_t size = size_t(s.st_size);
@@ -144,20 +148,22 @@ namespace
         }
 
     public:
-        SystemFileMapper()
+        FileMapper(const std::string& basepath)
+            : m_basepath(basepath)
         {
         }
 
-        ~SystemFileMapper()
+        ~FileMapper()
         {
         }
 
         bool isFile(const std::string& filename) const override
         {
             bool is = false;
+            std::string testname = m_basepath + filename;
 
             struct stat s;
-            if (::stat(filename.c_str(), &s) == 0)
+            if (::stat(testname.c_str(), &s) == 0)
             {
                 is = (s.st_mode & S_IFDIR) == 0;
             }
@@ -170,11 +176,12 @@ namespace
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
             struct dirent** namelist = NULL;
+            std::string fullname = m_basepath + pathname;
 
 #if defined(__ppc__)
-            const int n = ::scandir(pathname.c_str(), &namelist, [] (      struct dirent* e) -> int
+            const int n = ::scandir(fullname.c_str(), &namelist, [] (      struct dirent* e) -> int
 #else
-            const int n = ::scandir(pathname.c_str(), &namelist, [] (const struct dirent* e) -> int
+            const int n = ::scandir(fullname.c_str(), &namelist, [] (const struct dirent* e) -> int
 #endif
             {
                 // filter out "." and ".."
@@ -193,7 +200,7 @@ namespace
             {
                 const std::string filename(namelist[i]->d_name);
                 ::free(namelist[i]);
-                emplace_helper(index, pathname, filename);
+                emplace_helper(index, fullname, filename);
             }
 
             ::free(namelist);
@@ -203,7 +210,8 @@ namespace
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            DIR* dirp = ::opendir(pathname.c_str());
+            std::string fullname = m_basepath + pathname;
+            DIR* dirp = ::opendir(fullname.c_str());
             if (!dirp)
             {
                 // Unable to open directory.
@@ -219,7 +227,7 @@ namespace
                 // skip "." and ".."
                 if (filename != "." && filename != "..")
                 {
-                    emplace_helper(index, pathname, filename);
+                    emplace_helper(index, fullname, filename);
                 }
             }
 
@@ -230,7 +238,7 @@ namespace
 
         VirtualMemory* mmap(const std::string& filename) override
         {
-            VirtualMemory* memory = new FileMemory(filename, 0, 0);
+            VirtualMemory* memory = new FileMemory(m_basepath + filename, 0, 0);
             return memory;
         }
     };
@@ -244,11 +252,11 @@ namespace mango::filesystem
     // Mapper::createFileMapper()
     // -----------------------------------------------------------------
 
-    FileMapper* Mapper::createFileMapper()
+    AbstractMapper* Mapper::createFileMapper(const std::string& basepath)
     {
-        FileMapper* x = new SystemFileMapper();
-        m_mappers.emplace_back(x);
-        return x;
+        AbstractMapper* mapper = new FileMapper(basepath);
+        m_mappers.emplace_back(mapper);
+        return mapper;
     }
 
 } // namespace mango::filesystem

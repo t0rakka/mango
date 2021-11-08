@@ -15,38 +15,44 @@ namespace mango::filesystem
     // extension registry
     // -----------------------------------------------------------------
 
-    FileMapper* createMapperZIP(ConstMemory parent, const std::string& password);
-    FileMapper* createMapperRAR(ConstMemory parent, const std::string& password);
-    FileMapper* createMapperMGX(ConstMemory parent, const std::string& password);
+    AbstractMapper* createMapperZIP(ConstMemory parent, const std::string& password);
+    AbstractMapper* createMapperRAR(ConstMemory parent, const std::string& password);
+    AbstractMapper* createMapperMGX(ConstMemory parent, const std::string& password);
 
-    using CreateMapperFunc = FileMapper* (*)(ConstMemory, const std::string&);
+    using CreateMapperFunc = AbstractMapper* (*)(ConstMemory, const std::string&);
 
     struct MapperExtension
     {
         std::string extension;
-        CreateMapperFunc create;
+        std::string decorated_extension;
+        CreateMapperFunc createMapperFunc;
 
         MapperExtension(const std::string& extension, CreateMapperFunc func)
             : extension(extension)
-            , create(func)
         {
+            decorated_extension = extension + "/";
+            createMapperFunc = func;
         }
 
         ~MapperExtension()
         {
         }
+
+        AbstractMapper* createMapper(ConstMemory memory, const std::string& password) const
+        {
+            AbstractMapper* mapper = createMapperFunc(memory, password);
+            return mapper;
+        }
     };
 
-    static std::vector<MapperExtension> g_mapper_extensions =
+    static std::vector<MapperExtension> g_extensions =
     {
         MapperExtension(".zip", createMapperZIP),
         MapperExtension(".cbz", createMapperZIP),
         MapperExtension(".apk", createMapperZIP),
         MapperExtension(".zipx", createMapperZIP),
-
         MapperExtension(".mgx", createMapperMGX),
         MapperExtension(".snitch", createMapperMGX),
-
         MapperExtension(".rar", createMapperRAR),
         MapperExtension(".cbr", createMapperRAR),
     };
@@ -101,10 +107,10 @@ namespace mango::filesystem
         if (!name.empty())
         {
             files.emplace_back(name, size, flags);
-
+ 
             const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
             const bool isContainer = (flags & FileInfo::CONTAINER) != 0;
-
+ 
             if (isFile && !isContainer && name.back() != '/' && Mapper::isCustomMapper(name))
             {
                 // file is a container; add it into the index again
@@ -120,24 +126,28 @@ namespace mango::filesystem
     Mapper::Mapper(const std::string& pathname, const std::string& password)
     {
         // parse and create mappers
-        m_basepath = parse(pathname, password);
+        std::string temp = pathname.empty() ? "./" : pathname;
+        m_pathname = temp;
+        m_basepath = parse(temp, password);
+        m_basepath = temp; // overwrite parse return value
     }
 
     Mapper::Mapper(std::shared_ptr<Mapper> mapper, const std::string& pathname, const std::string& password)
     {
         // use parent's mapper
         m_parent_mapper = mapper;
-        m_current_mapper = *mapper;
+        m_mapper = *mapper;
 
         // parse and create mappers
-        m_pathname = m_parent_mapper->m_pathname;
-        m_basepath = parse(pathname, password);
+        std::string temp = mapper->m_basepath + pathname;
+        m_basepath = parse(temp, password);
+        m_pathname = mapper->m_pathname + pathname;
     }
 
     Mapper::Mapper(ConstMemory memory, const std::string& extension, const std::string& password)
     {
         // create mapper to raw memory
-        m_current_mapper = createMemoryMapper(memory, extension, password);
+        m_mapper = createMemoryMapper(memory, extension, password);
         m_pathname = "@memory" + extension + "/";
     }
 
@@ -146,78 +156,97 @@ namespace mango::filesystem
         delete m_parent_memory;
     }
 
-    std::string Mapper::parse(const std::string& pathname, const std::string& password)
+    std::string Mapper::parse(std::string& pathname, const std::string& password)
     {
-        if (!m_current_mapper)
-        {
-            m_current_mapper = createFileMapper();
-        }
-
-printf("# parse | m_pathname: %s, pathname: %s \n", m_pathname.c_str(), pathname.c_str());
-
-        std::string filename = m_basepath + pathname;
+        std::string filename = pathname;
 
         for ( ; !filename.empty(); )
         {
-            FileMapper* x = nullptr;
-
-            std::string str = toLower(filename);
-
-            for (const auto& node : g_mapper_extensions)
-            {
-                std::string decorated = node.extension + "/";
-
-                size_t n = str.find(decorated);
-                if (n != std::string::npos)
-                {
-                    // update string position to skip decorated extension (example: ".zip/")
-                    n += decorated.length();
-
-printf("# found: %s \n", filename.c_str());
-                    // resolve container filename (example: "foo/bar/data.zip")
-                    std::string container = filename.substr(0, n - 1);
-                    std::string postfix = filename.substr(n, std::string::npos);
-printf("# container: %s \n", container.c_str());
-
-                    if (m_current_mapper->isFile(container))
-                    {
-printf("# isFile: %s \n", container.c_str());
-                        m_parent_memory = m_current_mapper->mmap(container);
-                        x = node.create(*m_parent_memory, password);
-                        m_mappers.emplace_back(x);
-                        m_current_mapper = x;
-
-                        filename = postfix;
-printf("# create | postfix: %s \n", postfix.c_str());
-                    }
-                }
-            }
-
-            if (!x)
+            AbstractMapper* mapper = createCustomMapper(pathname, filename, password);
+            if (!mapper)
             {
                 break;
             }
         }
 
-        m_pathname = m_pathname + pathname;
-
-printf("# ~parse | m_pathname: %s, pathname: %s \n", m_pathname.c_str(), pathname.c_str());
         return filename;
     }
 
-    FileMapper* Mapper::createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password)
+    AbstractMapper* Mapper::createCustomMapper(std::string& pathname, std::string& filename, const std::string& password)
     {
-        std::string str = toLower(extension);
+        std::string f = toLower(filename);
 
-        for (const auto& node : g_mapper_extensions)
+        for (auto &extension : g_extensions)
         {
-            size_t n = str.find(node.extension);
+            size_t n = f.find(extension.decorated_extension);
+            if (n != std::string::npos)
+            {
+                // update string position to skip decorated extension (example: ".zip/")
+                n += extension.decorated_extension.length();
+
+                // resolve container filename (example: "foo/bar/data.zip")
+                std::string container = filename.substr(0, n - 1);
+                std::string postfix = filename.substr(n, std::string::npos);
+
+                AbstractMapper* mapper = nullptr;
+
+                if (!m_mapper)
+                {
+                    size_t n = container.find_last_of("/\\:");
+                    std::string head = container.substr(0, n + 1);
+                    container = container.substr(n + 1, std::string::npos);
+                    m_mapper = createFileMapper(head);
+                }
+
+                if (m_mapper->isFile(container))
+                {
+                    m_parent_memory = m_mapper->mmap(container);
+                    mapper = extension.createMapper(*m_parent_memory, password);
+                    m_mappers.emplace_back(mapper);
+                    m_mapper = mapper;
+
+                    filename = postfix;
+                    pathname = postfix;
+                }
+                else
+                {
+                    // "container" was just a folder
+                    pathname = container + "/";
+                    filename = pathname;
+                }
+
+                return mapper;
+            }
+        }
+
+        if (!m_mapper)
+        {
+            m_mapper = createFileMapper(pathname);
+            pathname = "";
+        }
+
+        return nullptr;
+    }
+
+    AbstractMapper* Mapper::createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password)
+    {
+        std::string f = toLower(extension);
+
+        for (auto &extension : g_extensions)
+        {
+            size_t n = f.find(extension.decorated_extension);
+            if (n == std::string::npos)
+            {
+                // try again with a non-decorated extension
+                n = f.find(extension.extension);
+            }
+
             if (n != std::string::npos)
             {
                 // found a container interface; let's create it
-                FileMapper* x = node.create(memory, password);
-                m_mappers.emplace_back(x);
-                return x;
+                AbstractMapper* mapper = extension.createMapper(memory, password);
+                m_mappers.emplace_back(mapper);
+                return mapper;
             }
         }
 
@@ -234,16 +263,16 @@ printf("# ~parse | m_pathname: %s, pathname: %s \n", m_pathname.c_str(), pathnam
         return m_pathname;
     }
 
-    Mapper::operator FileMapper* () const
+    Mapper::operator AbstractMapper* () const
     {
-        return m_current_mapper;
+        return m_mapper;
     }
 
     bool Mapper::isCustomMapper(const std::string& filename)
     {
         const std::string extension = toLower(getExtension(filename));
 
-        for (const auto& node : g_mapper_extensions)
+        for (auto &node : g_extensions)
         {
             if (extension == node.extension)
             {

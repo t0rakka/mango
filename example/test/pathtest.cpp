@@ -9,9 +9,9 @@ using namespace mango::filesystem;
 
 static int g_count_failed = 0;
 
-void printLine(int i)
+void printLine()
 {
-    printf("---------------------------------- %d\n\n", i);
+    printf("------------------------------------------------------------------ \n");
 }
 
 void print(const Path& path, const std::string& correct_path)
@@ -60,13 +60,10 @@ void print(const File& file, const std::string& correct_filename, u32 correct_ch
 void test0()
 {
     Path path1("");
-    print(path1, "");
+    print(path1, "./");
 
     Path path2("data/");
     print(path2, "data/");
-
-    File file("pathtest.cpp");
-    print(file, "pathtest.cpp", 0x4849c84a);
 }
 
 void test1()
@@ -368,7 +365,10 @@ void test30()
 // -----------------------------------------------------------------------------------
 
 #define MAKE_TEST(i) \
-    printLine(i); \
+    printLine(); \
+    printf("Test: %d\n", i); \
+    printLine(); \
+    printf("\n"); \
     test##i()
 
 int main(int argc, char *argv[])
@@ -386,7 +386,6 @@ int main(int argc, char *argv[])
     MAKE_TEST(10);
     MAKE_TEST(11);
     MAKE_TEST(12);
-    /*
     MAKE_TEST(13);
     MAKE_TEST(14);
     MAKE_TEST(15);
@@ -405,12 +404,11 @@ int main(int argc, char *argv[])
     MAKE_TEST(28);
     MAKE_TEST(29);
     MAKE_TEST(30);
-    */
 
-    printf("-------------------------------------- \n");
+    printLine();
     if (g_count_failed)
         printf("  %d tests FAILED.                     \n", g_count_failed);
     else
         printf("  All tests PASSED.                    \n");
-    printf("-------------------------------------- \n\n");
+    printLine();
 }

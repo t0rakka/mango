@@ -410,7 +410,7 @@ namespace mango::filesystem
     // MapperRAR
     // -----------------------------------------------------------------
 
-    class MapperRAR : public FileMapper
+    class MapperRAR : public AbstractMapper
     {
     public:
         std::string m_password;
@@ -762,10 +762,10 @@ namespace mango::filesystem
     // functions
     // -----------------------------------------------------------------
 
-    FileMapper* createMapperRAR(ConstMemory parent, const std::string& password)
+    AbstractMapper* createMapperRAR(ConstMemory parent, const std::string& password)
     {
-        FileMapper* x = new MapperRAR(parent, password);
-        return x;
+        AbstractMapper* mapper = new MapperRAR(parent, password);
+        return mapper;
     }
 
 } // namespace mango::filesystem

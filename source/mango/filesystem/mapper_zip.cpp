@@ -581,7 +581,7 @@ namespace mango::filesystem
     // MapperZIP
     // -----------------------------------------------------------------
 
-    class MapperZIP : public FileMapper
+    class MapperZIP : public AbstractMapper
     {
     public:
         ConstMemory m_parent_memory;
@@ -875,10 +875,10 @@ namespace mango::filesystem
     // functions
     // -----------------------------------------------------------------
 
-    FileMapper* createMapperZIP(ConstMemory parent, const std::string& password)
+    AbstractMapper* createMapperZIP(ConstMemory parent, const std::string& password)
     {
-        FileMapper* x = new MapperZIP(parent, password);
-        return x;
+        AbstractMapper* mapper = new MapperZIP(parent, password);
+        return mapper;
     }
 
 } // namespace mango::filesystem
