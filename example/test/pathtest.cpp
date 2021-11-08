@@ -29,23 +29,21 @@ void print(const Path& path)
     printf("\n");
 }
 
-void print(const File& file)
+void print(const File& file, u32 correct)
 {
     printf("[file] %s + %s, size: %" PRIu64 " bytes \n", 
         file.pathname().c_str(), 
         file.filename().c_str(), 
         file.size());
 
-    // sum of every byte in the file to validate the memory mapping
-    u64 sum = 0;
-    ConstMemory memory = file;
-    for (u64 i = 0; i < memory.size; ++i)
-    {
-        sum += memory.address[i];
-    }
-    printf("    checksum: %d\n", u32(sum));
-
+    u32 checksum = crc32c(0, file);
+    bool status = checksum == correct;
+    printf("    checksum: 0x%8x [%s]\n", checksum, status ? "PASSED" : "FAILED");
     printf("\n");
+    if (!status)
+    {
+        exit(0);
+    }
 }
 
 void test0()
@@ -57,7 +55,7 @@ void test0()
     print(path2);
 
     File file("pathtest.cpp");
-    print(file);
+    print(file, 0x4849c84a);
 }
 
 void test1()
@@ -104,13 +102,13 @@ void test6()
 void test7()
 {
     File file("data/kokopaska.zip/test/flower1.jpg");
-    print(file);
+    print(file, 0xbb8abc19);
 }
 
 void test8()
 {
     File file("data/outer.zip/data/inner.zip/test/flower1.jpg");
-    print(file);
+    print(file, 0xbb8abc19);
 }
 
 // opening a file with pathing
@@ -121,7 +119,7 @@ void test9()
     print(path);
 
     File file(path, "test/flower1.jpg");
-    print(file);
+    print(file, 0xbb8abc19);
 }
 
 void test10()
@@ -130,7 +128,7 @@ void test10()
     print(path);
 
     File file(path, "test/flower1.jpg");
-    print(file);
+    print(file, 0xbb8abc19);
 }
 
 void test11()
@@ -142,7 +140,7 @@ void test11()
     print(path2);
 
     File file(path2, "test/flower1.jpg");
-    print(file);
+    print(file, 0xbb8abc19);
 }
 
 // pathing with fs folder
@@ -156,7 +154,7 @@ void test12()
     print(path2);
 
     File file(path2, "test/flower1.jpg");
-    print(file);
+    print(file, 0xbb8abc19);
 }
 
 void test13()
@@ -168,7 +166,7 @@ void test13()
     print(path2);
 
     File file(path2, "test/flower1.jpg");
-    print(file);
+    print(file, 0xbb8abc19);
 }
 
 void test14()
@@ -183,7 +181,7 @@ void test14()
     print(path3);
 
     File file(path3, "test/flower1.jpg");
-    print(file);
+    print(file, 0xbb8abc19);
 }
 
 void test15()
@@ -207,7 +205,7 @@ void test17()
     print(path);
 
     File file(path, "foo/test.txt");
-    print(file);
+    print(file, 0x569510f1);
 }
 
 void test18()
@@ -216,13 +214,13 @@ void test18()
     print(path);
 
     File file(path, "test/flower1.jpg");
-    print(file);
+    print(file, 0xbb8abc19);
 }
 
 void test19()
 {
     File file("data/kokopaska.zip");
-    print(file);
+    print(file, 0x5d61ea66);
 
     ConstMemory memory = file;
     Path path(memory, ".zip");
@@ -236,7 +234,7 @@ void test20()
 {
     // bullshit container; will not "contain" anything :)
     File file("data/foo/test.txt");
-    print(file);
+    print(file, 0x569510f1);
 
     ConstMemory memory = file;
     Path path(memory, ".txt");
@@ -254,7 +252,7 @@ void test21()
 void test22()
 {
     File file("data/case.snitch/bench/IMG_2177.JPG");
-    print(file);
+    print(file, 0x472da743);
 }
 
 void test23()
@@ -263,7 +261,7 @@ void test23()
     print(path);
 
     File file(path, "bench/IMG_2177.JPG");
-    print(file);
+    print(file, 0x472da743);
 }
 
 void test24()
@@ -272,7 +270,7 @@ void test24()
     print(path);
 
     File file(path, "IMG_2177.JPG");
-    print(file);
+    print(file, 0x472da743);
 }
 
 void test25()
@@ -284,7 +282,7 @@ void test25()
     print(path2);
 
     File file(path2, "IMG_2177.JPG");
-    print(file);
+    print(file, 0x472da743);
 }
 
 void test26()
@@ -299,7 +297,7 @@ void test26()
     print(path3);
 
     File file(path3, "IMG_2177.JPG");
-    print(file);
+    print(file, 0x472da743);
 }
 
 // memory mapped container
@@ -307,7 +305,7 @@ void test26()
 void test27()
 {
     File file1("data/outer.zip");
-    print(file1);
+    print(file1, 0x12ea02f3);
 
     ConstMemory memory = file1;
     Path path1(memory, ".zip");
@@ -317,27 +315,27 @@ void test27()
     print(path2);
 
     File file2(path2, "test/flower1.jpg");    
-    print(file2);
+    print(file2, 0xbb8abc19);
 }
 
 void test28()
 {
     File file(Path("data/case.snitch/"), "bench/IMG_2177.JPG");
-    print(file);
+    print(file, 0x472da743);
 }
 
 void test29()
 {
     // bad.xxx is not a file; it is a folder
     File file("data/bad.xxx/dummy.txt");
-    print(file);
+    print(file, 0xc96fd51e);
 }
 
 void test30()
 {
     // bad.zip is not a file; it is a folder
     File file("data/bad.zip/dummy.txt");
-    print(file);
+    print(file, 0xfd887d87);
 }
 
 // -----------------------------------------------------------------------------------
@@ -382,5 +380,7 @@ int main(int argc, char *argv[])
     MAKE_TEST(29);
     MAKE_TEST(30);
 
-    printf("---------------------------------- done\n\n");
+    printf("-------------------------------------- \n");
+    printf("  All tests PASSED.                    \n");
+    printf("-------------------------------------- \n\n");
 }
