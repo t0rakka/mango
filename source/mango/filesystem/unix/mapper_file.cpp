@@ -255,7 +255,6 @@ namespace mango::filesystem
     FileMapper* Mapper::createFileMapper(const std::string& basepath)
     {
         FileMapper* x = new SystemFileMapper(basepath);
-        m_mappers.emplace_back(x);
         return x;
     }
 
