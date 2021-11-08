@@ -59,8 +59,8 @@ void print(const File& file, const std::string& correct_filename, u32 correct_ch
 
 void test0()
 {
-    Path path1("./");
-    print(path1, "./");
+    Path path1("");
+    print(path1, "");
 
     Path path2("data/");
     print(path2, "data/");
