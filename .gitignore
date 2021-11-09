@@ -37,7 +37,6 @@
 *.db
 *.ipch
 *.opendb
-*.user
 *.FileListAbsolute.txt
 *.recipe
 *.VC.db-shm
