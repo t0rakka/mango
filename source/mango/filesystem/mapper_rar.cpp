@@ -80,7 +80,7 @@ namespace
     // RAR unicode filename conversion code
     // -----------------------------------------------------------------
 
-    void decodeUnicode(const u8* name, const u8* encName, size_t encSize, wchar_t* unicodeName, int maxDecSize)
+    void decodeUnicode(const u8* name, const u8* encName, size_t encSize, wchar_t* unicodeName, size_t maxDecSize)
     {
         size_t encPos = 0;
         size_t decPos = 0;
