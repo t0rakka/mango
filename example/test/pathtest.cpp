@@ -241,13 +241,12 @@ void test19()
 
 void test20()
 {
-    // bullshit container; will not "contain" anything :)
     File file("data/foo/test.txt");
     print(file, "data/foo/test.txt", 0x569510f1);
 
     ConstMemory memory = file;
     Path path(memory, ".txt");
-    print(path, "@memory.txt/");
+    print(path, ""); // the mapping should fail as ".txt" is not a container
 }
 
 void test21()

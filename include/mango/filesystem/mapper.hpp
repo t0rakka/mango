@@ -109,8 +109,6 @@ namespace mango::filesystem
         std::string m_basepath;
         std::string m_pathname;
 
-        AbstractMapper* createCustomMapper(std::string& pathname, std::string& filename, const std::string& password);
-        AbstractMapper* createMemoryMapper(ConstMemory memory, const std::string& extension, const std::string& password);
         AbstractMapper* createFileMapper(const std::string& basepath);
 
     public:
