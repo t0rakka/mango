@@ -134,7 +134,7 @@ namespace mango::filesystem
     Mapper::Mapper(const std::string& pathname, const std::string& password)
     {
         // parse and create mappers
-        std::string temp = pathname.empty() ? "./" : pathname;
+        std::string temp = pathname;
         m_pathname = temp;
         m_basepath = parse(temp, password);
         m_basepath = temp; // overwrite parse return value

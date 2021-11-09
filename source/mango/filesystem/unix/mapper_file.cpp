@@ -185,6 +185,12 @@ namespace
             struct dirent** namelist = nullptr;
             std::string fullname = m_basepath + pathname;
 
+            if (fullname.empty())
+            {
+                // scandir() doesn't enumerate files in empty pathname
+                fullname = "./";
+            }
+
             const int n = ::scandir(fullname.c_str(), &namelist, [] (DirentType* e) -> int
             {
                 // filter out "." and ".."
