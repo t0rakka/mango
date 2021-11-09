@@ -154,7 +154,14 @@ namespace
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            std::wstring filespec = u16_fromBytes(m_basepath + pathname + "*");
+            std::string fullname = m_basepath + pathname;
+            if (fullname.empty())
+            {
+                // does _wfindfirst64() supports empty fullname?
+                fullname = "./";
+            }
+
+            std::wstring filespec = u16_fromBytes(fullname + "*");
 
             _wfinddata64_t cfile;
 
