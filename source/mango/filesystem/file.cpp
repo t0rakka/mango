@@ -26,18 +26,7 @@ namespace mango::filesystem
         m_path = std::make_unique<Path>(filepath);
 
         Mapper& mapper = m_path->getMapper();
-
-        // memory map the file
-        AbstractMapper* abstract_mapper = mapper;
-        if (abstract_mapper)
-        {
-            VirtualMemory* ptr = abstract_mapper->mmap(mapper.basepath() + m_filename);
-            if (ptr)
-            {
-                m_virtual_memory = std::unique_ptr<VirtualMemory>(ptr);
-                m_memory = *m_virtual_memory;
-            }
-        }
+        initMemory(mapper);
     }
 
     File::File(const Path& path, const std::string& s)
@@ -53,8 +42,33 @@ namespace mango::filesystem
         m_path = std::make_unique<Path>(path, filepath);
 
         Mapper& mapper = m_path->getMapper();
+        initMemory(mapper);
+    }
 
-        // memory map the file
+    File::File(ConstMemory memory, const std::string& extension, const std::string& s)
+    {
+        Path path(memory, extension);
+
+        // split s into pathname + filename
+        size_t n = s.find_last_of("/\\:");
+        std::string filename = s.substr(n + 1);
+        std::string filepath = s.substr(0, n + 1);
+
+        m_filename = filename;
+
+        // create a internal path
+        m_path = std::make_unique<Path>(path, filepath);
+
+        Mapper& mapper = m_path->getMapper();
+        initMemory(mapper);
+    }
+
+    File::~File()
+    {
+    }
+
+    void File::initMemory(Mapper& mapper)
+    {
         AbstractMapper* abstract_mapper = mapper;
         if (abstract_mapper)
         {
@@ -65,36 +79,6 @@ namespace mango::filesystem
                 m_memory = *m_virtual_memory;
             }
         }
-    }
-
-    File::File(ConstMemory memory, const std::string& extension, const std::string& filename)
-    {
-        std::string password;
-
-        // create a internal path
-        m_path = std::make_unique<Path>(memory, extension, password);
-
-        Mapper& mapper = m_path->getMapper();
-
-        // parse and create mappers
-        std::string temp = filename; // parse modifies the filename; discard the changes
-        m_filename = mapper.parse(temp, "");
-
-        // memory map the file
-        AbstractMapper* abstract_mapper = mapper;
-        if (abstract_mapper)
-        {
-            VirtualMemory* ptr = abstract_mapper->mmap(m_filename);
-            if (ptr)
-            {
-                m_virtual_memory = std::unique_ptr<VirtualMemory>(ptr);
-                m_memory = *m_virtual_memory;
-            }
-        }
-    }
-
-    File::~File()
-    {
     }
 
     const Path& File::path() const

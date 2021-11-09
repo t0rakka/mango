@@ -48,8 +48,9 @@ void print(const File& file, const std::string& correct_filename, u32 correct_ch
     bool status_checksum = checksum == correct_checksum;
     bool status_pathname = file.pathname() == getPath(correct_filename);
     bool status_filename = file.filename() == removePath(correct_filename);
-    bool status = status_checksum && status_pathname && status_filename;
-    g_count_failed += !status;
+    g_count_failed += !status_checksum;
+    g_count_failed += !status_pathname;
+    g_count_failed += !status_filename;
 
     printf("    pathname: %s [%s]\n", file.pathname().c_str(), status_pathname ? "PASSED" : "FAILED");
     printf("    filename: %s [%s]\n", file.filename().c_str(), status_filename ? "PASSED" : "FAILED");
@@ -360,6 +361,16 @@ void test30()
     print(file2, "data/bad.zip/dummy.txt", 0xfd887d87);
 }
 
+void test31()
+{
+    File file1("data/outer.zip");
+    print(file1, "data/outer.zip", 0x12ea02f3);
+
+    ConstMemory memory = file1;
+    File file2(memory, ".zip", "data/inner.zip/test/flower1.jpg");
+    print(file2, "@memory.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
+}
+
 // -----------------------------------------------------------------------------------
 // main()
 // -----------------------------------------------------------------------------------
@@ -404,6 +415,7 @@ int main(int argc, char *argv[])
     MAKE_TEST(28);
     MAKE_TEST(29);
     MAKE_TEST(30);
+    MAKE_TEST(31);
 
     printLine();
     if (g_count_failed)

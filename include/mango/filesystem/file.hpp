@@ -23,6 +23,8 @@ namespace mango::filesystem
         std::unique_ptr<VirtualMemory> m_virtual_memory;
         ConstMemory m_memory;
 
+        void initMemory(Mapper& mapper);
+
     public:
         File(const std::string& filename);
         File(const Path& path, const std::string& filename);
