@@ -1,0 +1,854 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release AVX512|Win32">
+      <Configuration>Release AVX512</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release AVX512|x64">
+      <Configuration>Release AVX512</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\mango\core\aes.hpp" />
+    <ClInclude Include="..\..\include\mango\core\atomic.hpp" />
+    <ClInclude Include="..\..\include\mango\core\bits.hpp" />
+    <ClInclude Include="..\..\include\mango\core\buffer.hpp" />
+    <ClInclude Include="..\..\include\mango\core\compress.hpp" />
+    <ClInclude Include="..\..\include\mango\core\configure.hpp" />
+    <ClInclude Include="..\..\include\mango\core\core.hpp" />
+    <ClInclude Include="..\..\include\mango\core\cpuinfo.hpp" />
+    <ClInclude Include="..\..\include\mango\core\crc32.hpp" />
+    <ClInclude Include="..\..\include\mango\core\dynamic_library.hpp" />
+    <ClInclude Include="..\..\include\mango\core\endian.hpp" />
+    <ClInclude Include="..\..\include\mango\core\exception.hpp" />
+    <ClInclude Include="..\..\include\mango\core\half.hpp" />
+    <ClInclude Include="..\..\include\mango\core\hash.hpp" />
+    <ClInclude Include="..\..\include\mango\core\memory.hpp" />
+    <ClInclude Include="..\..\include\mango\core\pointer.hpp" />
+    <ClInclude Include="..\..\include\mango\core\stream.hpp" />
+    <ClInclude Include="..\..\include\mango\core\string.hpp" />
+    <ClInclude Include="..\..\include\mango\core\system.hpp" />
+    <ClInclude Include="..\..\include\mango\core\thread.hpp" />
+    <ClInclude Include="..\..\include\mango\core\timer.hpp" />
+    <ClInclude Include="..\..\include\mango\filesystem\file.hpp" />
+    <ClInclude Include="..\..\include\mango\filesystem\fileobserver.hpp" />
+    <ClInclude Include="..\..\include\mango\filesystem\filesystem.hpp" />
+    <ClInclude Include="..\..\include\mango\filesystem\mapper.hpp" />
+    <ClInclude Include="..\..\include\mango\filesystem\path.hpp" />
+    <ClInclude Include="..\..\include\mango\image\blitter.hpp" />
+    <ClInclude Include="..\..\include\mango\image\color.hpp" />
+    <ClInclude Include="..\..\include\mango\image\compression.hpp" />
+    <ClInclude Include="..\..\include\mango\image\decoder.hpp" />
+    <ClInclude Include="..\..\include\mango\image\encoder.hpp" />
+    <ClInclude Include="..\..\include\mango\image\exif.hpp" />
+    <ClInclude Include="..\..\include\mango\image\format.hpp" />
+    <ClInclude Include="..\..\include\mango\image\fourcc.hpp" />
+    <ClInclude Include="..\..\include\mango\image\image.hpp" />
+    <ClInclude Include="..\..\include\mango\image\quantize.hpp" />
+    <ClInclude Include="..\..\include\mango\image\surface.hpp" />
+    <ClInclude Include="..\..\include\mango\math\accessor.hpp" />
+    <ClInclude Include="..\..\include\mango\math\geometry.hpp" />
+    <ClInclude Include="..\..\include\mango\math\math.hpp" />
+    <ClInclude Include="..\..\include\mango\math\matrix.hpp" />
+    <ClInclude Include="..\..\include\mango\math\matrix4x4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\quaternion.hpp" />
+    <ClInclude Include="..\..\include\mango\math\srgb.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector128_int16x8.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector128_int32x4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector128_int64x2.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector128_int8x16.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector128_uint16x8.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector128_uint32x4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector128_uint64x2.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector128_uint8x16.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector256_int16x16.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector256_int32x8.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector256_int64x4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector256_int8x32.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector256_uint16x16.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector256_uint32x8.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector256_uint64x4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector256_uint8x32.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector512_int16x32.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector512_int32x16.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector512_int64x8.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector512_int8x64.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector512_uint16x32.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector512_uint32x16.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector512_uint64x8.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector512_uint8x64.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float16x4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float32x16.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float32x2.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float32x3.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float32x4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float32x8.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float64x2.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float64x4.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_float64x8.hpp" />
+    <ClInclude Include="..\..\include\mango\math\vector_gather.hpp" />
+    <ClInclude Include="..\..\include\mango\opengl\func\glcorearb.hpp" />
+    <ClInclude Include="..\..\include\mango\opengl\func\glext.hpp" />
+    <ClInclude Include="..\..\include\mango\opengl\func\glxext.hpp" />
+    <ClInclude Include="..\..\include\mango\opengl\func\wglext.hpp" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES2\gl2.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES2\gl2ext.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES2\gl2platform.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES3\gl3.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES3\gl31.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES3\gl32.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES3\gl3platform.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES\egl.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES\gl.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES\glext.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GLES\glplatform.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GL\glcorearb.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GL\glext.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GL\glxext.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GL\wgl.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\GL\wglext.h" />
+    <ClInclude Include="..\..\include\mango\opengl\khronos\KHR\khrplatform.h" />
+    <ClInclude Include="..\..\include\mango\opengl\opengl.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\altivec_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\altivec_double128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\altivec_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\altivec_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx2_gather.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx2_int256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx512_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx512_double128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx512_double256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx512_double512.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx512_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx512_float256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx512_float512.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx512_gather.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx512_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx512_int256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx512_int512.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx_double256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx_float256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\avx_int256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\common.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\common_gather.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\common_mask.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\composite_double256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\composite_double512.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\composite_float256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\composite_float512.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\composite_int256.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\composite_int512.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\msa_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\msa_double128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\msa_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\msa_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\neon_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\neon_double128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\neon_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\neon_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_detail.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_double128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_float64.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\scalar_int64.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\simd.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse2_convert.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse2_double128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse2_float128.hpp" />
+    <ClInclude Include="..\..\include\mango\simd\sse2_int128.hpp" />
+    <ClInclude Include="..\..\include\mango\window\window.hpp" />
+    <ClInclude Include="..\..\source\external\aes\bc_aes.h" />
+    <ClInclude Include="..\..\source\external\bc\BC.h" />
+    <ClInclude Include="..\..\source\external\bzip2\bzlib.h" />
+    <ClInclude Include="..\..\source\external\bzip2\bzlib_private.h" />
+    <ClInclude Include="..\..\source\external\concurrentqueue\concurrentqueue.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\common\common_defs.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\common\compiler_gcc.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\common\compiler_msc.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\libdeflate.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\adler32_vec_template.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\arm\adler32_impl.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\arm\cpu_features.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\arm\crc32_impl.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\arm\matchfinder_impl.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\bt_matchfinder.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\crc32_table.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\crc32_vec_template.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\decompress_template.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\deflate_compress.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\deflate_constants.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\gzip_constants.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\hc_matchfinder.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\lib_common.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\matchfinder_common.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\unaligned.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\x86\adler32_impl.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\x86\cpu_features.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\x86\crc32_impl.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\x86\crc32_pclmul_template.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\x86\decompress_impl.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\x86\matchfinder_impl.h" />
+    <ClInclude Include="..\..\source\external\libdeflate\lib\zlib_constants.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\alphai_dec.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\common_dec.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\vp8i_dec.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\vp8li_dec.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\vp8_dec.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dec\webpi_dec.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\common_sse2.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\common_sse41.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\dsp.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\lossless.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\lossless_common.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\mips_macro.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\msa_macro.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\neon.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\quant.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\dsp\yuv.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\backward_references_enc.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\cost_enc.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\histogram_enc.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\vp8i_enc.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\enc\vp8li_enc.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\mux\animi.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\mux\muxi.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\bit_reader_inl_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\bit_reader_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\bit_writer_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\color_cache_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\endian_inl_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\filters_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\huffman_encode_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\huffman_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\quant_levels_dec_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\quant_levels_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\random_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\rescaler_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\thread_utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\utils\utils.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\decode.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\demux.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\encode.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\format_constants.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\mux.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\mux_types.h" />
+    <ClInclude Include="..\..\source\external\libwebp\src\webp\types.h" />
+    <ClInclude Include="..\..\source\external\lz4\lz4.h" />
+    <ClInclude Include="..\..\source\external\lz4\lz4hc.h" />
+    <ClInclude Include="..\..\source\external\lzfse\lzfse.h" />
+    <ClInclude Include="..\..\source\external\lzfse\lzfse_encode_tables.h" />
+    <ClInclude Include="..\..\source\external\lzfse\lzfse_fse.h" />
+    <ClInclude Include="..\..\source\external\lzfse\lzfse_internal.h" />
+    <ClInclude Include="..\..\source\external\lzfse\lzfse_tunables.h" />
+    <ClInclude Include="..\..\source\external\lzfse\lzvn_decode_base.h" />
+    <ClInclude Include="..\..\source\external\lzfse\lzvn_encode_base.h" />
+    <ClInclude Include="..\..\source\external\lzma\7z.h" />
+    <ClInclude Include="..\..\source\external\lzma\7zAlloc.h" />
+    <ClInclude Include="..\..\source\external\lzma\7zBuf.h" />
+    <ClInclude Include="..\..\source\external\lzma\7zCrc.h" />
+    <ClInclude Include="..\..\source\external\lzma\7zTypes.h" />
+    <ClInclude Include="..\..\source\external\lzma\7zVersion.h" />
+    <ClInclude Include="..\..\source\external\lzma\Alloc.h" />
+    <ClInclude Include="..\..\source\external\lzma\Bcj2.h" />
+    <ClInclude Include="..\..\source\external\lzma\Blake2.h" />
+    <ClInclude Include="..\..\source\external\lzma\Bra.h" />
+    <ClInclude Include="..\..\source\external\lzma\BwtSort.h" />
+    <ClInclude Include="..\..\source\external\lzma\Compiler.h" />
+    <ClInclude Include="..\..\source\external\lzma\CpuArch.h" />
+    <ClInclude Include="..\..\source\external\lzma\Delta.h" />
+    <ClInclude Include="..\..\source\external\lzma\LzFind.h" />
+    <ClInclude Include="..\..\source\external\lzma\LzHash.h" />
+    <ClInclude Include="..\..\source\external\lzma\Lzma2Dec.h" />
+    <ClInclude Include="..\..\source\external\lzma\Lzma2Enc.h" />
+    <ClInclude Include="..\..\source\external\lzma\LzmaDec.h" />
+    <ClInclude Include="..\..\source\external\lzma\LzmaEnc.h" />
+    <ClInclude Include="..\..\source\external\lzma\LzmaLib.h" />
+    <ClInclude Include="..\..\source\external\lzma\Ppmd.h" />
+    <ClInclude Include="..\..\source\external\lzma\Ppmd7.h" />
+    <ClInclude Include="..\..\source\external\lzma\Ppmd8.h" />
+    <ClInclude Include="..\..\source\external\lzma\Precomp.h" />
+    <ClInclude Include="..\..\source\external\lzma\RotateDefs.h" />
+    <ClInclude Include="..\..\source\external\lzma\Sort.h" />
+    <ClInclude Include="..\..\source\external\lzo\lzoconf.h" />
+    <ClInclude Include="..\..\source\external\lzo\lzodefs.h" />
+    <ClInclude Include="..\..\source\external\lzo\minilzo.h" />
+    <ClInclude Include="..\..\source\external\unrar\array.hpp" />
+    <ClInclude Include="..\..\source\external\unrar\compress.hpp" />
+    <ClInclude Include="..\..\source\external\unrar\crc.hpp" />
+    <ClInclude Include="..\..\source\external\unrar\crypt.hpp" />
+    <ClInclude Include="..\..\source\external\unrar\getbits.hpp" />
+    <ClInclude Include="..\..\source\external\unrar\model.hpp" />
+    <ClInclude Include="..\..\source\external\unrar\rar.hpp" />
+    <ClInclude Include="..\..\source\external\unrar\rarvm.hpp" />
+    <ClInclude Include="..\..\source\external\unrar\rdwrfn.hpp" />
+    <ClInclude Include="..\..\source\external\unrar\rijndael.hpp" />
+    <ClInclude Include="..\..\source\external\unrar\suballoc.hpp" />
+    <ClInclude Include="..\..\source\external\unrar\unpack.hpp" />
+    <ClInclude Include="..\..\source\external\xxhash\xxhash.h" />
+    <ClInclude Include="..\..\source\external\zpng\zpng.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\bitstream.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\compiler.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\cpu.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\debug.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\error_private.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\fse.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\huf.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\mem.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\pool.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\threading.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\xxhash.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\zstd_deps.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\zstd_internal.h" />
+    <ClInclude Include="..\..\source\external\zstd\common\zstd_trace.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\hist.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstdmt_compress.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress_internal.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress_literals.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress_sequences.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_compress_superblock.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_cwksp.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_double_fast.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_fast.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_lazy.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_ldm.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_ldm_geartab.h" />
+    <ClInclude Include="..\..\source\external\zstd\compress\zstd_opt.h" />
+    <ClInclude Include="..\..\source\external\zstd\decompress\zstd_ddict.h" />
+    <ClInclude Include="..\..\source\external\zstd\decompress\zstd_decompress_block.h" />
+    <ClInclude Include="..\..\source\external\zstd\decompress\zstd_decompress_internal.h" />
+    <ClInclude Include="..\..\source\external\zstd\zstd.h" />
+    <ClInclude Include="..\..\source\external\zstd\zstd_errors.h" />
+    <ClInclude Include="..\..\source\mango\filesystem\indexer.hpp" />
+    <ClInclude Include="..\..\source\mango\jpeg\jpeg.hpp" />
+    <ClInclude Include="..\..\source\mango\jpeg\jpeg_process_func.hpp" />
+    <ClInclude Include="..\..\source\mango\jpeg\jpeg_process_neon.hpp" />
+    <ClInclude Include="..\..\source\mango\jpeg\jpeg_process_sse2.hpp" />
+    <ClInclude Include="..\..\source\mango\window\win32\win32_handle.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\source\external\aes\bc_aes.cpp" />
+    <ClCompile Include="..\..\source\external\bc\BC.cpp" />
+    <ClCompile Include="..\..\source\external\bc\BC4BC5.cpp" />
+    <ClCompile Include="..\..\source\external\bc\BC6HBC7.cpp" />
+    <ClCompile Include="..\..\source\external\bzip2\bzlib.c" />
+    <ClCompile Include="..\..\source\external\bzip2\bz_blocksort.c" />
+    <ClCompile Include="..\..\source\external\bzip2\bz_compress.c" />
+    <ClCompile Include="..\..\source\external\bzip2\bz_crctable.c" />
+    <ClCompile Include="..\..\source\external\bzip2\bz_decompress.c" />
+    <ClCompile Include="..\..\source\external\bzip2\bz_huffman.c" />
+    <ClCompile Include="..\..\source\external\bzip2\bz_randtable.c" />
+    <ClCompile Include="..\..\source\external\google\astc.cpp" />
+    <ClCompile Include="..\..\source\external\google\etc.cpp" />
+    <ClCompile Include="..\..\source\external\google\etc1.cpp" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\arm\cpu_arm_features.c" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\deflate_compress.c" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\deflate_decompress.c" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\gzip_compress.c" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\gzip_decompress.c" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\libd_adler32.c" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\libd_crc32.c" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\libd_utils.c" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\x86\cpu_x86_features.c" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\zlib_compress.c" />
+    <ClCompile Include="..\..\source\external\libdeflate\lib\zlib_decompress.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\alpha_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\buffer_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\frame_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\idec_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\io_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\quant_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\tree_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\vp8l_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\vp8_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dec\webp_dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\demux\anim_decode.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\demux\demux.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\alpha_processing_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost_mips32.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cost_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\cpu.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_clip_tables.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_mips32.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\dec_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_mips32.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\enc_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\filters_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_mips32.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_enc_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\lossless_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_mips32.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\rescaler_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\ssim.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\ssim_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_msa.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\upsampling_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_mips32.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_mips_dsp_r2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_neon.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_sse2.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\dsp\yuv_sse41.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\alpha_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\analysis_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\backward_references_cost_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\backward_references_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\config_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\cost_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\filter_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\frame_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\histogram_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\iterator_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\near_lossless_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_csp_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_psnr_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_rescale_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\picture_tools_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\predictor_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\quant_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\syntax_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\token_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\tree_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\vp8l_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\enc\webp_enc.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\mux\anim_encode.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\mux\muxedit.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\mux\muxinternal.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\mux\muxread.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\bit_reader_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\bit_writer_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\color_cache_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\filters_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\huffman_encode_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\huffman_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\quant_levels_dec_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\quant_levels_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\random_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\rescaler_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\thread_utils.c" />
+    <ClCompile Include="..\..\source\external\libwebp\src\utils\utils.c" />
+    <ClCompile Include="..\..\source\external\lz4\lz4.c" />
+    <ClCompile Include="..\..\source\external\lz4\lz4hc.c" />
+    <ClCompile Include="..\..\source\external\lzfse\lzfse_decode.c" />
+    <ClCompile Include="..\..\source\external\lzfse\lzfse_decode_base.c" />
+    <ClCompile Include="..\..\source\external\lzfse\lzfse_encode.c" />
+    <ClCompile Include="..\..\source\external\lzfse\lzfse_encode_base.c" />
+    <ClCompile Include="..\..\source\external\lzfse\lzfse_fse.c" />
+    <ClCompile Include="..\..\source\external\lzfse\lzvn_decode_base.c" />
+    <ClCompile Include="..\..\source\external\lzfse\lzvn_encode_base.c" />
+    <ClCompile Include="..\..\source\external\lzma\7zAlloc.c" />
+    <ClCompile Include="..\..\source\external\lzma\7zArcIn.c" />
+    <ClCompile Include="..\..\source\external\lzma\7zBuf.c" />
+    <ClCompile Include="..\..\source\external\lzma\7zBuf2.c" />
+    <ClCompile Include="..\..\source\external\lzma\7zCrc.c" />
+    <ClCompile Include="..\..\source\external\lzma\7zCrcOpt.c" />
+    <ClCompile Include="..\..\source\external\lzma\7zDec.c" />
+    <ClCompile Include="..\..\source\external\lzma\7zStream.c" />
+    <ClCompile Include="..\..\source\external\lzma\Alloc.c" />
+    <ClCompile Include="..\..\source\external\lzma\Bcj2.c" />
+    <ClCompile Include="..\..\source\external\lzma\Bcj2Enc.c" />
+    <ClCompile Include="..\..\source\external\lzma\Blake2s.c" />
+    <ClCompile Include="..\..\source\external\lzma\Bra.c" />
+    <ClCompile Include="..\..\source\external\lzma\Bra86.c" />
+    <ClCompile Include="..\..\source\external\lzma\BraIA64.c" />
+    <ClCompile Include="..\..\source\external\lzma\BwtSort.c" />
+    <ClCompile Include="..\..\source\external\lzma\CpuArch.c" />
+    <ClCompile Include="..\..\source\external\lzma\Delta.c" />
+    <ClCompile Include="..\..\source\external\lzma\LzFind.c" />
+    <ClCompile Include="..\..\source\external\lzma\Lzma2Dec.c" />
+    <ClCompile Include="..\..\source\external\lzma\Lzma2Enc.c" />
+    <ClCompile Include="..\..\source\external\lzma\LzmaDec.c" />
+    <ClCompile Include="..\..\source\external\lzma\LzmaEnc.c" />
+    <ClCompile Include="..\..\source\external\lzma\LzmaLib.c" />
+    <ClCompile Include="..\..\source\external\lzma\Ppmd7.c" />
+    <ClCompile Include="..\..\source\external\lzma\Ppmd7Dec.c" />
+    <ClCompile Include="..\..\source\external\lzma\Ppmd7Enc.c" />
+    <ClCompile Include="..\..\source\external\lzma\Ppmd8.c" />
+    <ClCompile Include="..\..\source\external\lzma\Ppmd8Dec.c" />
+    <ClCompile Include="..\..\source\external\lzma\Ppmd8Enc.c" />
+    <ClCompile Include="..\..\source\external\lzma\Sort.c" />
+    <ClCompile Include="..\..\source\external\lzo\minilzo.c" />
+    <ClCompile Include="..\..\source\external\unrar\crc.cpp" />
+    <ClCompile Include="..\..\source\external\unrar\crypt.cpp" />
+    <ClCompile Include="..\..\source\external\unrar\getbits.cpp" />
+    <ClCompile Include="..\..\source\external\unrar\rarvm.cpp" />
+    <ClCompile Include="..\..\source\external\unrar\rdwrfn.cpp" />
+    <ClCompile Include="..\..\source\external\unrar\rijndael.cpp" />
+    <ClCompile Include="..\..\source\external\unrar\unpack.cpp" />
+    <ClCompile Include="..\..\source\external\zpng\zpng.cpp" />
+    <ClCompile Include="..\..\source\external\zstd\common\debug.c" />
+    <ClCompile Include="..\..\source\external\zstd\common\entropy_common.c" />
+    <ClCompile Include="..\..\source\external\zstd\common\error_private.c" />
+    <ClCompile Include="..\..\source\external\zstd\common\fse_decompress.c" />
+    <ClCompile Include="..\..\source\external\zstd\common\pool.c" />
+    <ClCompile Include="..\..\source\external\zstd\common\threading.c" />
+    <ClCompile Include="..\..\source\external\zstd\common\xxhash.c" />
+    <ClCompile Include="..\..\source\external\zstd\common\zstd_common.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\fse_compress.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\hist.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\huf_compress.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstdmt_compress.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress_literals.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress_sequences.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_compress_superblock.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_double_fast.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_fast.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_lazy.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_ldm.c" />
+    <ClCompile Include="..\..\source\external\zstd\compress\zstd_opt.c" />
+    <ClCompile Include="..\..\source\external\zstd\decompress\huf_decompress.c" />
+    <ClCompile Include="..\..\source\external\zstd\decompress\zstd_ddict.c" />
+    <ClCompile Include="..\..\source\external\zstd\decompress\zstd_decompress.c" />
+    <ClCompile Include="..\..\source\external\zstd\decompress\zstd_decompress_block.c" />
+    <ClCompile Include="..\..\source\mango\core\aes.cpp" />
+    <ClCompile Include="..\..\source\mango\core\buffer.cpp" />
+    <ClCompile Include="..\..\source\mango\core\compress.cpp" />
+    <ClCompile Include="..\..\source\mango\core\cpuinfo.cpp" />
+    <ClCompile Include="..\..\source\mango\core\crc32.cpp" />
+    <ClCompile Include="..\..\source\mango\core\hash.cpp" />
+    <ClCompile Include="..\..\source\mango\core\md5.cpp" />
+    <ClCompile Include="..\..\source\mango\core\memory.cpp" />
+    <ClCompile Include="..\..\source\mango\core\sha1.cpp" />
+    <ClCompile Include="..\..\source\mango\core\sha2.cpp" />
+    <ClCompile Include="..\..\source\mango\core\string.cpp" />
+    <ClCompile Include="..\..\source\mango\core\system.cpp" />
+    <ClCompile Include="..\..\source\mango\core\thread.cpp" />
+    <ClCompile Include="..\..\source\mango\core\timer.cpp" />
+    <ClCompile Include="..\..\source\mango\core\win32\dynamic_library.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\file.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\mapper.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\mapper_mgx.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\mapper_rar.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\mapper_zip.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\path.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\win32\file_observer.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\win32\file_stream.cpp" />
+    <ClCompile Include="..\..\source\mango\filesystem\win32\mapper_file.cpp" />
+    <ClCompile Include="..\..\source\mango\image\blitter.cpp" />
+    <ClCompile Include="..\..\source\mango\image\block.cpp" />
+    <ClCompile Include="..\..\source\mango\image\block_dxt.cpp" />
+    <ClCompile Include="..\..\source\mango\image\block_fxt1.cpp" />
+    <ClCompile Include="..\..\source\mango\image\block_pvrtc.cpp" />
+    <ClCompile Include="..\..\source\mango\image\block_yuv.cpp" />
+    <ClCompile Include="..\..\source\mango\image\exif.cpp" />
+    <ClCompile Include="..\..\source\mango\image\format.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_astc.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_atari.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_bmp.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_c64.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_dds.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_gif.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_hdr.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_iff.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_jpg.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_ktx.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_pcx.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_pkm.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_png.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_pnm.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_pvr.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_sgi.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_tga.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_webp.cpp" />
+    <ClCompile Include="..\..\source\mango\image\image_zpng.cpp" />
+    <ClCompile Include="..\..\source\mango\image\quantize.cpp" />
+    <ClCompile Include="..\..\source\mango\image\surface.cpp" />
+    <ClCompile Include="..\..\source\mango\jpeg\jpeg_arithmetic.cpp" />
+    <ClCompile Include="..\..\source\mango\jpeg\jpeg_decode.cpp" />
+    <ClCompile Include="..\..\source\mango\jpeg\jpeg_encode.cpp" />
+    <ClCompile Include="..\..\source\mango\jpeg\jpeg_huffman.cpp" />
+    <ClCompile Include="..\..\source\mango\jpeg\jpeg_idct.cpp" />
+    <ClCompile Include="..\..\source\mango\jpeg\jpeg_process.cpp" />
+    <ClCompile Include="..\..\source\mango\math\geometry.cpp" />
+    <ClCompile Include="..\..\source\mango\math\math.cpp" />
+    <ClCompile Include="..\..\source\mango\math\simd.cpp" />
+    <ClCompile Include="..\..\source\mango\opengl\opengl.cpp" />
+    <ClCompile Include="..\..\source\mango\opengl\wgl\wgl_context.cpp" />
+    <ClCompile Include="..\..\source\mango\window\win32\win32_window.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{375AE88F-BDF7-4923-AFEA-BB5345ABF375}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>mango</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release AVX512|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release AVX512|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">
+    <IncludePath>..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release AVX512|Win32'">
+    <IncludePath>..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MinimalRebuild>false</MinimalRebuild>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MinimalRebuild>false</MinimalRebuild>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MinimalRebuild>false</MinimalRebuild>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release AVX512|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>__AVX512F__;__AVX512DQ__;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <MinimalRebuild>false</MinimalRebuild>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <MinimalRebuild>false</MinimalRebuild>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>__AVX512F__;__AVX512DQ__;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <MinimalRebuild>false</MinimalRebuild>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
