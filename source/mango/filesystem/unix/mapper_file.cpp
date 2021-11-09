@@ -173,22 +173,26 @@ namespace
 
 #if defined(MANGO_PLATFORM_OSX) || defined(MANGO_PLATFORM_IOS) || defined(MANGO_PLATFORM_BSD)
 
+    #if defined(__ppc__)
+        // PPC system headers have this subtle difference that fails to compile
+        using DirentType = struct dirent;
+    #else
+        using DirentType = const struct dirent;
+    #endif
+
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            struct dirent** namelist = NULL;
+            struct dirent** namelist = nullptr;
             std::string fullname = m_basepath + pathname;
 
-#if defined(__ppc__)
-            const int n = ::scandir(fullname.c_str(), &namelist, [] (      struct dirent* e) -> int
-#else
-            const int n = ::scandir(fullname.c_str(), &namelist, [] (const struct dirent* e) -> int
-#endif
+            const int n = ::scandir(fullname.c_str(), &namelist, [] (DirentType* e) -> int
             {
                 // filter out "." and ".."
                 if (!std::strcmp(e->d_name, ".") || !std::strcmp(e->d_name, ".."))
                     return 0;
                 return 1;
             }, 0);
+
             if (n < 0)
             {
                 // Unable to open directory.
