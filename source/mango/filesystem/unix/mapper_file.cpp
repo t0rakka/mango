@@ -221,6 +221,13 @@ namespace
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
             std::string fullname = m_basepath + pathname;
+
+            if (fullname.empty())
+            {
+                // opendir() doesn't enumerate files in empty pathname
+                fullname = "./";
+            }
+
             DIR* dirp = ::opendir(fullname.c_str());
             if (!dirp)
             {
