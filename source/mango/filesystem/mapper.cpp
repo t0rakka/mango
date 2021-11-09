@@ -172,6 +172,11 @@ namespace mango::filesystem
 
     std::string Mapper::parse(std::string& pathname, const std::string& password)
     {
+        if (!m_mapper)
+        {
+            m_mapper = createFileMapper("");
+        }
+
         std::string filename = pathname;
 
         for ( ; !filename.empty(); )
@@ -192,14 +197,6 @@ namespace mango::filesystem
                     std::string container = filename.substr(0, n - 1);
                     std::string postfix = filename.substr(n, std::string::npos);
 
-                    if (!m_mapper)
-                    {
-                        size_t n = container.find_last_of("/\\:");
-                        std::string head = container.substr(0, n + 1);
-                        container = container.substr(n + 1, std::string::npos);
-                        m_mapper = createFileMapper(head);
-                    }
-
                     if (m_mapper->isFile(container))
                     {
                         m_parent_memory = m_mapper->mmap(container);
@@ -210,21 +207,9 @@ namespace mango::filesystem
                         filename = postfix;
                         pathname = postfix;
                     }
-                    else
-                    {
-                        // "container" was just a folder
-                        pathname = container + "/";
-                        filename = pathname;
-                    }
 
                     break;
                 }
-            }
-
-            if (!m_mapper)
-            {
-                m_mapper = createFileMapper(pathname);
-                pathname = "";
             }
 
             if (!mapper)
