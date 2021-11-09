@@ -27,11 +27,16 @@ namespace mango::filesystem
 
         Mapper& mapper = m_path->getMapper();
 
+        // memory map the file
         AbstractMapper* abstract_mapper = mapper;
         if (abstract_mapper)
         {
             VirtualMemory* ptr = abstract_mapper->mmap(mapper.basepath() + m_filename);
-            m_memory = std::unique_ptr<VirtualMemory>(ptr);
+            if (ptr)
+            {
+                m_virtual_memory = std::unique_ptr<VirtualMemory>(ptr);
+                m_memory = *m_virtual_memory;
+            }
         }
     }
 
@@ -49,11 +54,16 @@ namespace mango::filesystem
 
         Mapper& mapper = m_path->getMapper();
 
+        // memory map the file
         AbstractMapper* abstract_mapper = mapper;
         if (abstract_mapper)
         {
             VirtualMemory* ptr = abstract_mapper->mmap(mapper.basepath() + m_filename);
-            m_memory = std::unique_ptr<VirtualMemory>(ptr);
+            if (ptr)
+            {
+                m_virtual_memory = std::unique_ptr<VirtualMemory>(ptr);
+                m_memory = *m_virtual_memory;
+            }
         }
     }
 
@@ -75,7 +85,11 @@ namespace mango::filesystem
         if (abstract_mapper)
         {
             VirtualMemory* ptr = abstract_mapper->mmap(m_filename);
-            m_memory = std::unique_ptr<VirtualMemory>(ptr);
+            if (ptr)
+            {
+                m_virtual_memory = std::unique_ptr<VirtualMemory>(ptr);
+                m_memory = *m_virtual_memory;
+            }
         }
     }
 
@@ -100,27 +114,22 @@ namespace mango::filesystem
 
     File::operator ConstMemory () const
     {
-        return getMemory();
+        return m_memory;
     }
 
 	File::operator const u8* () const
 	{
-        return getMemory().address;
+        return m_memory.address;
 	}
 
     const u8* File::data() const
     {
-        return getMemory().address;
+        return m_memory.address;
     }
 
     u64 File::size() const
     {
-        return getMemory().size;
-    }
-
-    ConstMemory File::getMemory() const
-    {
-        return m_memory ? *m_memory : ConstMemory();
+        return m_memory.size;
     }
 
 } // namespace mango::filesystem

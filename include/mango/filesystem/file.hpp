@@ -20,9 +20,8 @@ namespace mango::filesystem
     protected:
         std::string m_filename;
         std::unique_ptr<Path> m_path;
-        std::unique_ptr<VirtualMemory> m_memory;
-
-        ConstMemory getMemory() const;
+        std::unique_ptr<VirtualMemory> m_virtual_memory;
+        ConstMemory m_memory;
 
     public:
         File(const std::string& filename);
