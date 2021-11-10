@@ -111,32 +111,27 @@ namespace
             }
             else
             {
-                if (colormap_origin || colormap_length || colormap_bits)
+                if (isPalette())
                 {
-                    error = makeString("[ImageDecoder.TGA] Incorrect colormap.");
-                    return nullptr;
+                    // palette
+                    if (colormap_origin + colormap_length > 256)
+                    {
+                        error = makeString("[ImageDecoder.TGA] Invalid colormap (origin: %d, length: %d).", colormap_origin, colormap_length);
+                        return nullptr;
+                    }
+
+                    if (colormap_bits != 15 &&
+                        colormap_bits != 16 &&
+                        colormap_bits != 24 &&
+                        colormap_bits != 32)
+                    {
+                        error = makeString("[ImageDecoder.TGA] Invalid colormap bits (%d).", colormap_bits);
+                        return nullptr;
+                    }
                 }
             }
 
-            if (isPalette())
-            {
-                // palette
-                if (colormap_origin + colormap_length > 256)
-                {
-                    error = makeString("[ImageDecoder.TGA] Invalid colormap (origin: %d, length: %d).", colormap_origin, colormap_length);
-                    return nullptr;
-                }
-
-                if (colormap_bits != 16 && 
-                    colormap_bits != 24 &&
-                    colormap_bits != 32)
-                {
-                    error = makeString("[ImageDecoder.TGA] Invalid colormap bits (%d).", colormap_bits);
-                    return nullptr;
-                }
-            }
-
-            /* This is one part of specification we will not enforce
+            /*
             if (width > 512 || height > 482)
             {
                 error = makeString("[ImageDecoder.TGA] Incorrect image dimensions: %d x %d (maximum: 512 x 482).", width, height);
