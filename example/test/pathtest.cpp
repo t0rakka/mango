@@ -370,6 +370,18 @@ void test31()
     print(file2, "@memory.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
 }
 
+void test32()
+{
+    Path path1("data/fake/random.zip/");
+    print(path1, "data/fake/random.zip/");
+
+    Path path2("data/fake/random.rar/");
+    print(path2, "data/fake/random.rar/");
+
+    Path path3("data/fake/random.snitch/");
+    print(path3, "data/fake/random.snitch/");
+}
+
 // -----------------------------------------------------------------------------------
 // main()
 // -----------------------------------------------------------------------------------
@@ -415,6 +427,7 @@ int main(int argc, char *argv[])
     MAKE_TEST(29);
     MAKE_TEST(30);
     MAKE_TEST(31);
+    MAKE_TEST(32);
 
     printLine();
     if (g_count_failed)

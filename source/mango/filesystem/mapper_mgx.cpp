@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/filesystem/filesystem.hpp>
@@ -64,14 +64,16 @@ namespace
         {
             if (!memory.address)
             {
-                MANGO_EXCEPTION("[mapper.mgx] Parent container doesn't have memory");
+                //MANGO_EXCEPTION("[mapper.mgx] Parent container doesn't have memory");
+                return;
             }
 
             LittleEndianConstPointer p = memory.address;
             u32 magic0 = p.read32();
             if (magic0 != u32_mask('m', 'g', 'x', '0'))
             {
-                MANGO_EXCEPTION("[mapper.mgx] Incorrect file identifier (%x)", magic0);
+                //MANGO_EXCEPTION("[mapper.mgx] Incorrect file identifier (%x)", magic0);
+                return;
             }
 
             u64 header_offset = memory.size - mgx_header_size;
@@ -80,20 +82,21 @@ namespace
             u32 magic3 = p.read32();
             if (magic3 != u32_mask('m', 'g', 'x', '3'))
             {
-                MANGO_EXCEPTION("[mapper.mgx] Incorrect header identifier (%x)", magic3);
+                //MANGO_EXCEPTION("[mapper.mgx] Incorrect header identifier (%x)", magic3);
+                return;
             }
 
             u32 version = p.read32();
             u64 block_offset = p.read64();
             u64 file_offset = p.read64();
 
-            read_blocks(memory.address + block_offset);
-            read_files(memory.address + file_offset);
+            parseBlocks(memory.address + block_offset);
+            parseFiles(memory.address + file_offset);
 
             MANGO_UNREFERENCED(version);
         }
 
-        void read_blocks(LittleEndianConstPointer p)
+        void parseBlocks(LittleEndianConstPointer p)
         {
             u32 magic1 = p.read32();
             if (magic1 != u32_mask('m', 'g', 'x', '1'))
@@ -109,6 +112,7 @@ namespace
                 block.compressed = p.read64();
                 block.uncompressed = p.read64();
                 block.method = p.read32();
+
                 m_blocks.push_back(block);
             }
 
@@ -119,7 +123,7 @@ namespace
             }
         }
 
-        void read_files(LittleEndianConstPointer p)
+        void parseFiles(LittleEndianConstPointer p)
         {
             u32 magic2 = p.read32();
             if (magic2 != u32_mask('m', 'g', 'x', '2'))

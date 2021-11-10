@@ -417,60 +417,51 @@ namespace mango::filesystem
         std::vector<FileHeader> m_files;
         Indexer<FileHeader> m_folders;
         bool is_encrypted { false };
-        bool is_broken_archive { false };
 
         MapperRAR(ConstMemory parent, const std::string& password)
             : m_password(password)
         {
-            const u8* start = parent.address;
-            const u8* end = parent.address + parent.size;
-
-            if (start)
+            if (parent.address)
             {
-                parse(start, end);
+                const u8* ptr = parent.address;
+                const u8* end = parent.address + parent.size;
+
+                const u8 rar4_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x00 };
+                const u8 rar5_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x01, 0x00 };
+
+                if (!std::memcmp(ptr, rar4_signature, 7))
+                {
+                    // RAR 4.x
+                    parse_rar4(ptr + 7, end);
+                }
+                else if (!std::memcmp(ptr, rar5_signature, 8))
+                {
+                    // RAR 5.0
+                    parse_rar5(ptr + 8, end);
+                }
+                else
+                {
+                    // Incorrect signature
+                }
+
+                for (auto& header : m_files)
+                {
+                    std::string filename = header.filename;
+                    while (!filename.empty())
+                    {
+                        std::string folder = getPath(filename.substr(0, filename.length() - 1));
+
+                        header.filename = filename.substr(folder.length());
+                        m_folders.insert(folder, filename, header);
+                        header.folder = true;
+                        filename = folder;
+                    }
+                }
             }
         }
 
         ~MapperRAR()
         {
-        }
-
-        void parse(const u8* start, const u8* end)
-        {
-            const u8* p = start;
-
-            const u8 rar4_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x00 };
-            const u8 rar5_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x01, 0x00 };
-
-            if (!std::memcmp(p, rar4_signature, 7))
-            {
-                // RAR 4.x
-                parse_rar4(start + 7, end);
-            }
-            else if (!std::memcmp(p, rar5_signature, 8))
-            {
-                // RAR 5.0
-                parse_rar5(start + 8, end);
-            }
-            else
-            {
-                // Incorrect signature
-                is_broken_archive = true;
-            }
-
-            for (auto& header : m_files)
-            {
-                std::string filename = header.filename;
-                while (!filename.empty())
-                {
-                    std::string folder = getPath(filename.substr(0, filename.length() - 1));
-
-                    header.filename = filename.substr(folder.length());
-                    m_folders.insert(folder, filename, header);
-                    header.folder = true;
-                    filename = folder;
-                }
-            }
         }
 
         void parse_rar4(const u8* start, const u8* end)
@@ -633,7 +624,7 @@ namespace mango::filesystem
         {
             mango::LittleEndianConstPointer p = start;
 
-            for ( ; p < end;)
+            for ( ; p < end; )
             {
                 u32 crc = p.read32();
                 u64 header_size = vint(p);
@@ -693,11 +684,6 @@ namespace mango::filesystem
 
         bool isFile(const std::string& filename) const override
         {
-            if (is_broken_archive)
-            {
-                return false;
-            }
-
             const FileHeader* ptrHeader = m_folders.getHeader(filename);
             if (ptrHeader)
             {
@@ -709,11 +695,6 @@ namespace mango::filesystem
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            if (is_broken_archive)
-            {
-                return;
-            }
-
             const Indexer<FileHeader>::Folder* ptrFolder = m_folders.getFolder(pathname);
             if (ptrFolder)
             {
