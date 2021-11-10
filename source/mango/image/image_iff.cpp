@@ -237,19 +237,19 @@ namespace
 
     struct ChunkBMHD
     {
-        u16 xsize;
-        u16 ysize;
-        s16 xorigin;
-        s16 yorigin;
-        u8 nplanes;
-        u8 masking; // 0: None, 1: HasMask, 2: TransparentColor, 3: Lasso
-        u8 compression; // 0: None, 1: ByteRun1
-        u8 unused;
-        u16 transparent;
-        u8 xaspect;
-        u8 yaspect;
-        s16 xscreen;
-        s16 yscreen;
+        u16 xsize = 0;
+        u16 ysize = 0;
+        s16 xorigin = 0;
+        s16 yorigin = 0;
+        u8 nplanes = 0;
+        u8 masking = 0; // 0: None, 1: HasMask, 2: TransparentColor, 3: Lasso
+        u8 compression = 0; // 0: None, 1: ByteRun1
+        u8 unused = 0;
+        u16 transparent = 0;
+        u8 xaspect = 0;
+        u8 yaspect = 0;
+        s16 xscreen = 0;
+        s16 yscreen = 0;
 
         void parse(BigEndianConstPointer p)
         {
