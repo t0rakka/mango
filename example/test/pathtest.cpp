@@ -372,6 +372,9 @@ void test31()
 
 void test32()
 {
+    // These are corrupted / not container files
+    // We still should be able to index them and get nothing
+
     Path path1("data/fake/random.zip/");
     print(path1, "data/fake/random.zip/");
 
