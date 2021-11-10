@@ -4,6 +4,7 @@
 */
 #include <vector>
 #include <algorithm>
+#include <string_view>
 #include <mango/core/string.hpp>
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
@@ -174,24 +175,25 @@ namespace mango::filesystem
             m_current_mapper = createFileMapper("");
         }
 
-        // TODO: rewrite using string_view
-        std::string mixedcase_pathname = pathname;
-        std::string lowercase_pathname = toLower(pathname);
+        std::string lowercase = toLower(pathname);
+        std::string_view remain = lowercase;
 
-        for ( ; !mixedcase_pathname.empty(); )
+        size_t offset = 0;
+
+        for ( ; offset < pathname.length(); )
         {
             AbstractMapper* mapper = nullptr;
 
             for (const auto& node : g_extensions)
             {
-                size_t n = lowercase_pathname.find(node.decorated);
+                size_t n = remain.find(node.decorated);
                 if (n != std::string::npos)
                 {
                     // update string position to skip extension (example: ".zip/")
                     n += node.decorated.length();
 
                     // resolve container filename (example: "foo/bar/data.zip")
-                    std::string container = mixedcase_pathname.substr(0, n - 1);
+                    std::string container = pathname.substr(offset, n - 1);
 
                     if (m_current_mapper->isFile(container))
                     {
@@ -201,8 +203,8 @@ namespace mango::filesystem
                         m_mappers.emplace_back(mapper);
                         m_current_mapper = mapper;
 
-                        mixedcase_pathname = mixedcase_pathname.substr(n, std::string::npos);
-                        lowercase_pathname = lowercase_pathname.substr(n, std::string::npos);
+                        offset += n;
+                        remain = remain.substr(n, std::string::npos);
                         break;
                     }
                 }
@@ -215,7 +217,7 @@ namespace mango::filesystem
             }
         }
 
-        return mixedcase_pathname;
+        return pathname.substr(offset);
     }
 
     bool Mapper::isCustomMapper(const std::string& filename)
