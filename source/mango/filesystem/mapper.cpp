@@ -25,12 +25,12 @@ namespace mango::filesystem
     {
         CreateMapperFunc create;
         std::string extension;
-        std::string decorated_extension;
+        std::string decorated;
 
         MapperExtension(CreateMapperFunc func, const std::string& extension)
             : create(func)
             , extension(extension)
-            , decorated_extension(extension + "/")
+            , decorated(extension + "/")
         {
         }
 
@@ -184,11 +184,11 @@ namespace mango::filesystem
 
             for (const auto& node : g_extensions)
             {
-                size_t n = lowercase_pathname.find(node.decorated_extension);
+                size_t n = lowercase_pathname.find(node.decorated);
                 if (n != std::string::npos)
                 {
-                    // update string position to skip decorated extension (example: ".zip/")
-                    n += node.decorated_extension.length();
+                    // update string position to skip extension (example: ".zip/")
+                    n += node.decorated.length();
 
                     // resolve container filename (example: "foo/bar/data.zip")
                     std::string container = mixedcase_pathname.substr(0, n - 1);
