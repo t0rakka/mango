@@ -204,7 +204,7 @@ namespace mango::filesystem
                         m_current_mapper = mapper;
 
                         offset += n;
-                        remain = remain.substr(n, std::string::npos);
+                        remain.remove_prefix(n);
                         break;
                     }
                 }
