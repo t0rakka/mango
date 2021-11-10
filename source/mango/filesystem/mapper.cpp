@@ -142,7 +142,7 @@ namespace mango::filesystem
     {
         // use parent's mapper
         m_parent_mapper = mapper;
-        m_mapper = *mapper;
+        m_current_mapper = mapper->m_current_mapper;
 
         // parse and create mappers
         m_pathname = mapper->m_pathname + pathname;
@@ -157,7 +157,7 @@ namespace mango::filesystem
         {
             AbstractMapper* mapper = node->create(memory, password);
             m_mappers.emplace_back(mapper);
-            m_mapper = mapper;
+            m_current_mapper = mapper;
             m_pathname = "@memory" + extension + "/";
         }
     }
@@ -169,9 +169,9 @@ namespace mango::filesystem
 
     std::string Mapper::parse(const std::string& pathname, const std::string& password)
     {
-        if (!m_mapper)
+        if (!m_current_mapper)
         {
-            m_mapper = createFileMapper("");
+            m_current_mapper = createFileMapper("");
         }
 
         // TODO: rewrite using string_view
@@ -193,13 +193,13 @@ namespace mango::filesystem
                     // resolve container filename (example: "foo/bar/data.zip")
                     std::string container = mixedcase_pathname.substr(0, n - 1);
 
-                    if (m_mapper->isFile(container))
+                    if (m_current_mapper->isFile(container))
                     {
-                        m_parent_memory = m_mapper->mmap(container);
+                        m_parent_memory = m_current_mapper->mmap(container);
 
                         mapper = node.create(*m_parent_memory, password);
                         m_mappers.emplace_back(mapper);
-                        m_mapper = mapper;
+                        m_current_mapper = mapper;
 
                         mixedcase_pathname = mixedcase_pathname.substr(n, std::string::npos);
                         lowercase_pathname = lowercase_pathname.substr(n, std::string::npos);
@@ -218,6 +218,13 @@ namespace mango::filesystem
         return mixedcase_pathname;
     }
 
+    bool Mapper::isCustomMapper(const std::string& filename)
+    {
+        const std::string extension = toLower(getExtension(filename));
+        const MapperExtension* node = findMapperExtension(extension);
+        return node != nullptr;
+    }
+
     const std::string& Mapper::basepath() const
     {
         return m_basepath;
@@ -228,16 +235,25 @@ namespace mango::filesystem
         return m_pathname;
     }
 
-    Mapper::operator AbstractMapper* () const
+    bool Mapper::isFile(const std::string& filename) const
     {
-        return m_mapper;
+        if (!m_current_mapper)
+            return false;
+        return m_current_mapper->isFile(filename);
     }
 
-    bool Mapper::isCustomMapper(const std::string& filename)
+    void Mapper::getIndex(FileIndex& index, const std::string& pathname)
     {
-        const std::string extension = toLower(getExtension(filename));
-        const MapperExtension* node = findMapperExtension(extension);
-        return node != nullptr;
+        if (!m_current_mapper)
+            return;
+        m_current_mapper->getIndex(index, pathname);
+    }
+
+    VirtualMemory* Mapper::mmap(const std::string& filename)
+    {
+        if (!m_current_mapper)
+            return nullptr;
+        return m_current_mapper->mmap(m_basepath + filename);
     }
 
 } // namespace mango::filesystem

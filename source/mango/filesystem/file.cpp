@@ -47,6 +47,8 @@ namespace mango::filesystem
 
     File::File(ConstMemory memory, const std::string& extension, const std::string& s)
     {
+        // use memory mapped path as parent
+        // NOTE: the path goes out of scope but the mapper object is shared_ptr so it remains alive :)
         Path path(memory, extension);
 
         // split s into pathname + filename
@@ -69,15 +71,11 @@ namespace mango::filesystem
 
     void File::initMemory(Mapper& mapper)
     {
-        AbstractMapper* abstract_mapper = mapper;
-        if (abstract_mapper)
+        VirtualMemory* ptr = mapper.mmap(m_filename);
+        if (ptr)
         {
-            VirtualMemory* ptr = abstract_mapper->mmap(mapper.basepath() + m_filename);
-            if (ptr)
-            {
-                m_virtual_memory = std::unique_ptr<VirtualMemory>(ptr);
-                m_memory = *m_virtual_memory;
-            }
+            m_virtual_memory = std::unique_ptr<VirtualMemory>(ptr);
+            m_memory = *m_virtual_memory;
         }
     }
 

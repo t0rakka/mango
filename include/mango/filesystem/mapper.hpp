@@ -99,17 +99,19 @@ namespace mango::filesystem
         virtual VirtualMemory* mmap(const std::string& filename) = 0;
     };
 
-    class Mapper : protected NonCopyable
+    class Mapper : public AbstractMapper
     {
     protected:
-        AbstractMapper* m_mapper { nullptr };
         std::shared_ptr<Mapper> m_parent_mapper;
-        VirtualMemory* m_parent_memory { nullptr };
         std::vector<std::unique_ptr<AbstractMapper>> m_mappers;
+        AbstractMapper* m_current_mapper { nullptr };
+        VirtualMemory* m_parent_memory { nullptr };
+
         std::string m_basepath;
         std::string m_pathname;
 
         AbstractMapper* createFileMapper(const std::string& basepath);
+        std::string parse(const std::string& pathname, const std::string& password);
 
     public:
         Mapper(const std::string& pathname, const std::string& password);
@@ -117,13 +119,14 @@ namespace mango::filesystem
         Mapper(ConstMemory memory, const std::string& extension, const std::string& password);
         ~Mapper();
 
-        std::string parse(const std::string& pathname, const std::string& password);
+        static bool isCustomMapper(const std::string& filename);
 
         const std::string& basepath() const;
         const std::string& pathname() const;
 
-        operator AbstractMapper* () const;
-        static bool isCustomMapper(const std::string& filename);
+        bool isFile(const std::string& filename) const override;
+        void getIndex(FileIndex& index, const std::string& pathname) override;
+        VirtualMemory* mmap(const std::string& filename) override;
     };
 
 } // namespace mango::filesystem

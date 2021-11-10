@@ -35,12 +35,7 @@ namespace mango::filesystem
     {
         if (m_index_is_dirty)
         {
-            AbstractMapper* mapper = *m_mapper;
-            if (mapper)
-            {
-                mapper->getIndex(m_index, m_mapper->basepath());
-            }
-
+            m_mapper->getIndex(m_index, m_mapper->basepath());
             m_index_is_dirty = false;
         }
     }
