@@ -134,10 +134,8 @@ namespace mango::filesystem
     Mapper::Mapper(const std::string& pathname, const std::string& password)
     {
         // parse and create mappers
-        std::string temp = pathname;
-        m_pathname = temp;
-        m_basepath = parse(temp, password);
-        m_basepath = temp; // overwrite parse return value
+        m_pathname = pathname;
+        m_basepath = parse(pathname, password);
     }
 
     Mapper::Mapper(std::shared_ptr<Mapper> mapper, const std::string& pathname, const std::string& password)
@@ -147,9 +145,8 @@ namespace mango::filesystem
         m_mapper = *mapper;
 
         // parse and create mappers
-        std::string temp = mapper->m_basepath + pathname;
-        m_basepath = parse(temp, password);
         m_pathname = mapper->m_pathname + pathname;
+        m_basepath = parse(mapper->m_basepath + pathname, password);
     }
 
     Mapper::Mapper(ConstMemory memory, const std::string& extension, const std::string& password)
@@ -170,55 +167,55 @@ namespace mango::filesystem
         delete m_parent_memory;
     }
 
-    std::string Mapper::parse(std::string& pathname, const std::string& password)
+    std::string Mapper::parse(const std::string& pathname, const std::string& password)
     {
         if (!m_mapper)
         {
             m_mapper = createFileMapper("");
         }
 
-        std::string filename = pathname;
+        // TODO: rewrite using string_view
+        std::string mixedcase_pathname = pathname;
+        std::string lowercase_pathname = toLower(pathname);
 
-        for ( ; !filename.empty(); )
+        for ( ; !mixedcase_pathname.empty(); )
         {
-            std::string f = toLower(filename);
-
             AbstractMapper* mapper = nullptr;
 
             for (const auto& node : g_extensions)
             {
-                size_t n = f.find(node.decorated_extension);
+                size_t n = lowercase_pathname.find(node.decorated_extension);
                 if (n != std::string::npos)
                 {
                     // update string position to skip decorated extension (example: ".zip/")
                     n += node.decorated_extension.length();
 
                     // resolve container filename (example: "foo/bar/data.zip")
-                    std::string container = filename.substr(0, n - 1);
-                    std::string postfix = filename.substr(n, std::string::npos);
+                    std::string container = mixedcase_pathname.substr(0, n - 1);
 
                     if (m_mapper->isFile(container))
                     {
                         m_parent_memory = m_mapper->mmap(container);
+
                         mapper = node.create(*m_parent_memory, password);
                         m_mappers.emplace_back(mapper);
                         m_mapper = mapper;
 
-                        filename = postfix;
-                        pathname = postfix;
+                        mixedcase_pathname = mixedcase_pathname.substr(n, std::string::npos);
+                        lowercase_pathname = lowercase_pathname.substr(n, std::string::npos);
+                        break;
                     }
-
-                    break;
                 }
             }
 
             if (!mapper)
             {
+                // no containers detected in remaining pathname
                 break;
             }
         }
 
-        return filename;
+        return mixedcase_pathname;
     }
 
     const std::string& Mapper::basepath() const

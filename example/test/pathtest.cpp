@@ -370,18 +370,6 @@ void test31()
     print(file2, "@memory.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
 }
 
-void test32()
-{
-    Path path2("/Users/jukka/data/");
-    print(path2, "/Users/jukka/data/");
-
-    Path path("kokopaska.zip/");
-    print(path, "kokopaska.zip/");
-
-    File file("kokopaska.zip/test/flower1.jpg");
-    print(file, "kokopaska.zip/test/flower1.jpg", 0xbb8abc19);
-}
-
 // -----------------------------------------------------------------------------------
 // main()
 // -----------------------------------------------------------------------------------
@@ -427,7 +415,6 @@ int main(int argc, char *argv[])
     MAKE_TEST(29);
     MAKE_TEST(30);
     MAKE_TEST(31);
-    MAKE_TEST(32);
 
     printLine();
     if (g_count_failed)
