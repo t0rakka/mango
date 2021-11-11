@@ -19,11 +19,9 @@ namespace mango
 
 #if defined(MANGO_COMPILER_GCC) || defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_INTEL)
 
-#if defined(MANGO_CPU_ARM)
-    // enable built-ins for bitmanipulation only for ARM/ARM64 ..
-    // .. because on x86(_64) they would require a runtime CPU feature check
-    #define MANGO_BITS_GCC_BUILTINS
-#endif
+    #if defined(MANGO_CPU_ARM)
+        #define MANGO_BITS_GCC_BUILTINS
+    #endif
 
 #endif
 
@@ -277,26 +275,6 @@ namespace mango
     // 32 bits
     // ----------------------------------------------------------------------------
 
-    static inline u32 u32_mask_msb(u32 value)
-    {
-        // value:  0001xxxxxxxx
-        // result: 000111111111
-        value |= value >> 1;
-        value |= value >> 2;
-        value |= value >> 4;
-        value |= value >> 8;
-        value |= value >> 16;
-        return value;
-    }
-
-    static inline u32 u32_extract_msb(u32 value)
-    {
-        // value:  0001xxxxxxxx
-        // result: 000100000000
-        value = u32_mask_msb(value);
-        return value ^ (value >> 1);
-    }
-
 #ifdef MANGO_ENABLE_BMI
 
     static inline u32 u32_extract_lsb(u32 value)
@@ -405,10 +383,12 @@ namespace mango
 
 #ifdef MANGO_ENABLE_LZCNT
 
-    static inline int u32_lzcnt(u32 value)
+    static inline u32 u32_mask_msb(u32 value)
     {
-        // NOTE: value 0 is undefined
-        return _lzcnt_u32(value);
+        // value:  0001xxxxxxxx
+        // result: 000111111111
+        u32 mask = 1u << _lzcnt_u32(value);
+        return mask | (mask - 1);
     }
 
     static inline int u32_index_of_msb(u32 value)
@@ -417,12 +397,20 @@ namespace mango
         return 31 - _lzcnt_u32(value);
     }
 
-#elif defined(MANGO_BITS_GCC_BUILTINS)
-
     static inline int u32_lzcnt(u32 value)
     {
         // NOTE: value 0 is undefined
-        return __builtin_clz(value);
+        return _lzcnt_u32(value);
+    }
+
+#elif defined(MANGO_BITS_GCC_BUILTINS)
+
+    static inline u32 u32_mask_msb(u32 value)
+    {
+        // value:  0001xxxxxxxx
+        // result: 000111111111
+        u32 mask = 1u << __builtin_clz(value);
+        return mask | (mask - 1);
     }
 
     static inline int u32_index_of_msb(u32 value)
@@ -431,7 +419,47 @@ namespace mango
         return 31 - __builtin_clz(value);
     }
 
+    static inline int u32_lzcnt(u32 value)
+    {
+        // NOTE: value 0 is undefined
+        return __builtin_clz(value);
+    }
+
 #else
+
+    static inline u32 u32_mask_msb(u32 value)
+    {
+        // value:  0001xxxxxxxx
+        // result: 000111111111
+        value |= value >> 1;
+        value |= value >> 2;
+        value |= value >> 4;
+        value |= value >> 8;
+        value |= value >> 16;
+        return value;
+    }
+
+    static inline int u32_index_of_msb(u32 value)
+    {
+        // NOTE: value 0 is undefined
+        const u32 mask = u32_mask_msb(value);
+        static const u8 table [] =
+        {
+            0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30,
+            8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
+        };
+        return table[(mask * 0x07c4acdd) >> 27];
+        /* NOTE: This generates branchless code
+        int base = 0;
+        u32 temp;
+        temp = value & 0xffff0000; if (temp) { base |= 16; value = temp; }
+        temp = value & 0xff00ff00; if (temp) { base |= 8;  value = temp; }
+        temp = value & 0xf0f0f0f0; if (temp) { base |= 4;  value = temp; }
+        temp = value & 0xcccccccc; if (temp) { base |= 2;  value = temp; }
+        temp = value & 0xaaaaaaaa; if (temp) { base |= 1; }
+        return base;
+        */
+    }
 
     static inline int u32_lzcnt(u32 value)
     {
@@ -445,20 +473,15 @@ namespace mango
         return table[(mask * 0x07c4acdd) >> 27];
     }
 
-    static inline int u32_index_of_msb(u32 value)
-    {
-        // NOTE: value 0 is undefined
-        int base = 0;
-        u32 temp;
-        temp = value & 0xffff0000; if (temp) { base |= 16; value = temp; }
-        temp = value & 0xff00ff00; if (temp) { base |= 8;  value = temp; }
-        temp = value & 0xf0f0f0f0; if (temp) { base |= 4;  value = temp; }
-        temp = value & 0xcccccccc; if (temp) { base |= 2;  value = temp; }
-        temp = value & 0xaaaaaaaa; if (temp) { base |= 1; }
-        return base;
-    }
-
 #endif
+
+    static inline u32 u32_extract_msb(u32 value)
+    {
+        // value:  0001xxxxxxxx
+        // result: 000100000000
+        value = u32_mask_msb(value);
+        return value ^ (value >> 1);
+    }
 
     static inline int u32_log2(u32 value)
     {
@@ -618,23 +641,6 @@ namespace mango
     // 64 bits
     // ----------------------------------------------------------------------------
 
-    static inline u64 u64_mask_msb(u64 value)
-    {
-        value |= value >> 1;
-        value |= value >> 2;
-        value |= value >> 4;
-        value |= value >> 8;
-        value |= value >> 16;
-        value |= value >> 32;
-        return value;
-    }
-
-    static inline u64 u64_extract_msb(u64 value)
-    {
-        value = u64_mask_msb(value);
-        return value ^ (value >> 1);
-    }
-
 #ifdef MANGO_ENABLE_BMI
 
     static inline u64 u64_extract_lsb(u64 value)
@@ -731,10 +737,12 @@ namespace mango
 
 #ifdef MANGO_ENABLE_LZCNT
 
-    static inline int u64_lzcnt(u64 value)
+    static inline u64 u64_mask_msb(u64 value)
     {
-        // NOTE: value 0 is undefined
-        return int(_lzcnt_u64(value));
+        // value:  0001xxxxxxxx
+        // result: 000111111111
+        u64 mask = 1u << _lzcnt_u64(value);
+        return mask | (mask - 1);
     }
 
     static inline int u64_index_of_msb(u64 value)
@@ -743,7 +751,27 @@ namespace mango
         return int(63 - _lzcnt_u64(value));
     }
 
+    static inline int u64_lzcnt(u64 value)
+    {
+        // NOTE: value 0 is undefined
+        return int(_lzcnt_u64(value));
+    }
+
 #elif defined(MANGO_BITS_GCC_BUILTINS)
+
+    static inline u64 u64_mask_msb(u64 value)
+    {
+        // value:  0001xxxxxxxx
+        // result: 000111111111
+        u64 mask = 1u << __builtin_clzll(value);
+        return mask | (mask - 1);
+    }
+
+    static inline int u64_index_of_msb(u64 value)
+    {
+        // NOTE: value 0 is undefined
+        return 63 - __builtin_clzll(value);
+    }
 
     static inline int u64_lzcnt(u64 value)
     {
@@ -751,26 +779,17 @@ namespace mango
         return __builtin_clzll(value);
     }
 
-    static inline int u64_index_of_msb(u64 value)
-    {
-        // NOTE: value 0 is undefined
-        return 31 - __builtin_clzll(value);
-    }
-
 #else
 
-    static inline int u64_lzcnt(u64 value)
+    static inline u64 u64_mask_msb(u64 value)
     {
-        // NOTE: value 0 is undefined
-        const u64 mask = u64_mask_msb(value);
-        static const u8 table [] =
-        {
-            63, 16, 62, 7, 15, 36, 61, 3, 6, 14, 22, 26, 35, 47, 60, 2,
-            9, 5, 28, 11, 13, 21, 42, 19, 25, 31, 34, 40, 46, 52, 59, 1,
-            17, 8, 37, 4, 23, 27, 48, 10, 29, 12, 43, 20, 32, 41, 53, 18,
-            38, 24, 49, 30, 44, 33, 54, 39, 50, 45, 55, 51, 56, 57, 58, 0
-        };
-        return table[(mask * 0x03f79d71b4cb0a89u) >> 58];
+        value |= value >> 1;
+        value |= value >> 2;
+        value |= value >> 4;
+        value |= value >> 8;
+        value |= value >> 16;
+        value |= value >> 32;
+        return value;
     }
 
     static inline int u64_index_of_msb(u64 value)
@@ -787,7 +806,27 @@ namespace mango
         return table[(mask * 0x03f79d71b4cb0a89u) >> 58];
     }
 
+    static inline int u64_lzcnt(u64 value)
+    {
+        // NOTE: value 0 is undefined
+        const u64 mask = u64_mask_msb(value);
+        static const u8 table [] =
+        {
+            63, 16, 62, 7, 15, 36, 61, 3, 6, 14, 22, 26, 35, 47, 60, 2,
+            9, 5, 28, 11, 13, 21, 42, 19, 25, 31, 34, 40, 46, 52, 59, 1,
+            17, 8, 37, 4, 23, 27, 48, 10, 29, 12, 43, 20, 32, 41, 53, 18,
+            38, 24, 49, 30, 44, 33, 54, 39, 50, 45, 55, 51, 56, 57, 58, 0
+        };
+        return table[(mask * 0x03f79d71b4cb0a89u) >> 58];
+    }
+
 #endif
+
+    static inline u64 u64_extract_msb(u64 value)
+    {
+        value = u64_mask_msb(value);
+        return value ^ (value >> 1);
+    }
 
     static inline int u64_log2(u64 value)
     {
