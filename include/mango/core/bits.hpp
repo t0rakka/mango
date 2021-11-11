@@ -387,20 +387,20 @@ namespace mango
     {
         // value:  0001xxxxxxxx
         // result: 000111111111
-        u32 mask = 1u << _lzcnt_u32(value);
+        u32 mask = 1u << (31 - _lzcnt_u32(value));
         return mask | (mask - 1);
     }
 
     static inline int u32_index_of_msb(u32 value)
     {
         // NOTE: value 0 is undefined
-        return 31 - _lzcnt_u32(value);
+        return int(31 - _lzcnt_u32(value));
     }
 
     static inline int u32_lzcnt(u32 value)
     {
         // NOTE: value 0 is undefined
-        return _lzcnt_u32(value);
+        return int(_lzcnt_u32(value));
     }
 
 #elif defined(MANGO_BITS_GCC_BUILTINS)
@@ -409,20 +409,20 @@ namespace mango
     {
         // value:  0001xxxxxxxx
         // result: 000111111111
-        u32 mask = 1u << __builtin_clz(value);
+        u32 mask = 1u << (31 - __builtin_clz(value));
         return mask | (mask - 1);
     }
 
     static inline int u32_index_of_msb(u32 value)
     {
         // NOTE: value 0 is undefined
-        return 31 - __builtin_clz(value);
+        return int(31 - __builtin_clz(value));
     }
 
     static inline int u32_lzcnt(u32 value)
     {
         // NOTE: value 0 is undefined
-        return __builtin_clz(value);
+        return int(__builtin_clz(value));
     }
 
 #else
@@ -741,7 +741,7 @@ namespace mango
     {
         // value:  0001xxxxxxxx
         // result: 000111111111
-        u64 mask = 1u << _lzcnt_u64(value);
+        u64 mask = 1u << (63 - _lzcnt_u64(value));
         return mask | (mask - 1);
     }
 
@@ -763,20 +763,20 @@ namespace mango
     {
         // value:  0001xxxxxxxx
         // result: 000111111111
-        u64 mask = 1u << __builtin_clzll(value);
+        u64 mask = 1u << (63 - __builtin_clzll(value));
         return mask | (mask - 1);
     }
 
     static inline int u64_index_of_msb(u64 value)
     {
         // NOTE: value 0 is undefined
-        return 63 - __builtin_clzll(value);
+        return int(63 - __builtin_clzll(value));
     }
 
     static inline int u64_lzcnt(u64 value)
     {
         // NOTE: value 0 is undefined
-        return __builtin_clzll(value);
+        return int(__builtin_clzll(value));
     }
 
 #else
