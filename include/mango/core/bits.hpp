@@ -19,9 +19,7 @@ namespace mango
 
 #if defined(MANGO_COMPILER_GCC) || defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_INTEL)
 
-    #if defined(MANGO_CPU_ARM)
-        #define MANGO_BITS_GCC_BUILTINS
-    #endif
+    #define MANGO_BITS_GCC_BUILTINS
 
 #endif
 
@@ -279,16 +277,23 @@ namespace mango
 
     static inline u32 u32_extract_lsb(u32 value)
     {
+        // value:  xxxxxx100000
+        // result: 000000100000
         return _blsi_u32(value);
     }
 
     static inline u32 u32_clear_lsb(u32 value)
     {
+        // value:  xxxxxx100000
+        // result: xxxxxx000000
         return _blsr_u32(value);
     }
 
     static inline u32 u32_mask_lsb(u32 value)
     {
+        // value:  xxxxxx100000
+        // result: 000000111111
+
         // NOTE: 0 expands to 0xffffffff
         return _blsmsk_u32(value);
     }
@@ -304,15 +309,15 @@ namespace mango
 
     constexpr u32 u32_clear_lsb(u32 value)
     {
-        // value:     xxxxxx100000
-        // result:    xxxxxx000000
+        // value:  xxxxxx100000
+        // result: xxxxxx000000
         return value & (value - 1);
     }
 
     constexpr u32 u32_mask_lsb(u32 value)
     {
-        // value:     xxxxxx100000
-        // result:    000000111111
+        // value:  xxxxxx100000
+        // result: 000000111111
 
         // NOTE: 0 expands to 0xffffffff
         return value ^ (value - 1);
@@ -322,8 +327,8 @@ namespace mango
 
     constexpr u32 u32_mask_without_lsb(u32 value)
     {
-        // value:     xxxxxx100000
-        // result:    000000011111
+        // value:  xxxxxx100000
+        // result: 000000011111
 
         // NOTE: 0 expands to 0xffffffff
         return ~(value | (0 - value));
