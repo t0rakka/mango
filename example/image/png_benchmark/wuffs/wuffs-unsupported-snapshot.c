@@ -54,13 +54,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Note that Clang also defines __GNUC__.
 #ifdef __cplusplus
 #if (__cplusplus >= 201103L) || defined(_MSC_VER)
 #include <memory>
 #define WUFFS_BASE__HAVE_EQ_DELETE
 #define WUFFS_BASE__HAVE_UNIQUE_PTR
-#elif defined(__GNUC__)
+// The "defined(__clang__)" isn't redundant. While vanilla clang defines
+// __GNUC__, clang-cl (which mimics MSVC's cl.exe) does not.
+#elif defined(__GNUC__) || defined(__clang__)
 #warning "Wuffs' C++ code expects -std=c++11 or later"
 #endif
 
@@ -329,8 +330,9 @@ wuffs_base__cpu_arch__have_x86_sse42() {
 #endif
 #endif
 
-// Clang also defines "__GNUC__".
-#if defined(__GNUC__)
+// The "defined(__clang__)" isn't redundant. While vanilla clang defines
+// __GNUC__, clang-cl (which mimics MSVC's cl.exe) does not.
+#if defined(__GNUC__) || defined(__clang__)
 #define WUFFS_BASE__POTENTIALLY_UNUSED __attribute__((unused))
 #define WUFFS_BASE__WARN_UNUSED_RESULT __attribute__((warn_unused_result))
 #else
@@ -558,7 +560,20 @@ typedef struct wuffs_base__transform__output__struct {
 
 // --------
 
-// FourCC constants.
+// FourCC constants. Four Character Codes are literally four ASCII characters
+// (sometimes padded with ' ' spaces) that pack neatly into a signed or
+// unsigned 32-bit integer. ASCII letters are conventionally upper case.
+//
+// They are often used to identify video codecs (e.g. "H265") and pixel formats
+// (e.g. "YV12"). Wuffs uses them for that but also generally for naming
+// various things: compression formats (e.g. "BZ2 "), image metadata (e.g.
+// "EXIF"), file formats (e.g. "HTML"), etc.
+//
+// Wuffs' u32 values are big-endian ("JPEG" is 0x4A504547 not 0x4745504A) to
+// preserve ordering: "JPEG" < "MP3 " and 0x4A504547 < 0x4D503320.
+
+// Background Color.
+#define WUFFS_BASE__FOURCC__BGCL 0x4247434C
 
 // Bitmap.
 #define WUFFS_BASE__FOURCC__BMP 0x424D5020
@@ -632,17 +647,26 @@ typedef struct wuffs_base__transform__output__struct {
 // Markdown.
 #define WUFFS_BASE__FOURCC__MD 0x4D442020
 
+// Modification Time.
+#define WUFFS_BASE__FOURCC__MTIM 0x4D54494D
+
 // MPEG-1 Audio Layer III.
 #define WUFFS_BASE__FOURCC__MP3 0x4D503320
 
 // Naive Image.
 #define WUFFS_BASE__FOURCC__NIE 0x4E494520
 
+// Offset (2-Dimensional).
+#define WUFFS_BASE__FOURCC__OFS2 0x4F465332
+
 // Open Type Format.
 #define WUFFS_BASE__FOURCC__OTF 0x4F544620
 
 // Portable Document Format.
 #define WUFFS_BASE__FOURCC__PDF 0x50444620
+
+// Physical Dimensions.
+#define WUFFS_BASE__FOURCC__PHYD 0x50485944
 
 // Portable Network Graphics.
 #define WUFFS_BASE__FOURCC__PNG 0x504E4720
@@ -676,6 +700,9 @@ typedef struct wuffs_base__transform__output__struct {
 
 // Tape Archive.
 #define WUFFS_BASE__FOURCC__TAR 0x54415220
+
+// Text.
+#define WUFFS_BASE__FOURCC__TEXT 0x54455854
 
 // Tagged Image File Format.
 #define WUFFS_BASE__FOURCC__TIFF 0x54494646
@@ -975,7 +1002,9 @@ wuffs_base__multiply_u64(uint64_t x, uint64_t y) {
 
 // --------
 
-#if defined(__GNUC__) && (__SIZEOF_LONG__ == 8)
+// The "defined(__clang__)" isn't redundant. While vanilla clang defines
+// __GNUC__, clang-cl (which mimics MSVC's cl.exe) does not.
+#if (defined(__GNUC__) || defined(__clang__)) && (__SIZEOF_LONG__ == 8)
 
 static inline uint32_t  //
 wuffs_base__count_leading_zeroes_u64(uint64_t u) {
@@ -1019,7 +1048,7 @@ wuffs_base__count_leading_zeroes_u64(uint64_t u) {
   return n;
 }
 
-#endif  // defined(__GNUC__) && (__SIZEOF_LONG__ == 8)
+#endif  // (defined(__GNUC__) || defined(__clang__)) && (__SIZEOF_LONG__ == 8)
 
 // --------
 
@@ -2465,9 +2494,9 @@ typedef struct wuffs_base__more_information__struct {
   inline wuffs_base__range_ie_u64 io_redirect__range() const;
   inline uint64_t io_seek__position() const;
   inline uint32_t metadata__fourcc() const;
-  // Deprecated: use metadata_raw__range.
+  // Deprecated: use metadata_raw_passthrough__range.
   inline wuffs_base__range_ie_u64 metadata__range() const;
-  inline wuffs_base__range_ie_u64 metadata_raw__range() const;
+  inline wuffs_base__range_ie_u64 metadata_raw_passthrough__range() const;
   inline int32_t metadata_parsed__chrm(uint32_t component) const;
   inline uint32_t metadata_parsed__gama() const;
   inline uint32_t metadata_parsed__srgb() const;
@@ -2477,10 +2506,12 @@ typedef struct wuffs_base__more_information__struct {
 
 #define WUFFS_BASE__MORE_INFORMATION__FLAVOR__IO_REDIRECT 1
 #define WUFFS_BASE__MORE_INFORMATION__FLAVOR__IO_SEEK 2
-// Deprecated: use WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA_RAW.
+// Deprecated: use
+// WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA_RAW_PASSTHROUGH.
 #define WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA 3
-#define WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA_RAW 3
-#define WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA_PARSED 4
+#define WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA_RAW_PASSTHROUGH 3
+#define WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA_RAW_TRANSFORM 4
+#define WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA_PARSED 5
 
 static inline wuffs_base__more_information  //
 wuffs_base__empty_more_information() {
@@ -2537,7 +2568,8 @@ wuffs_base__more_information__metadata__fourcc(
   return m->w;
 }
 
-// Deprecated: use wuffs_base__more_information__metadata_raw__range.
+// Deprecated: use
+// wuffs_base__more_information__metadata_raw_passthrough__range.
 static inline wuffs_base__range_ie_u64  //
 wuffs_base__more_information__metadata__range(
     const wuffs_base__more_information* m) {
@@ -2548,7 +2580,7 @@ wuffs_base__more_information__metadata__range(
 }
 
 static inline wuffs_base__range_ie_u64  //
-wuffs_base__more_information__metadata_raw__range(
+wuffs_base__more_information__metadata_raw_passthrough__range(
     const wuffs_base__more_information* m) {
   wuffs_base__range_ie_u64 ret;
   ret.min_incl = m->y;
@@ -2682,8 +2714,8 @@ wuffs_base__more_information::metadata__range() const {
 }
 
 inline wuffs_base__range_ie_u64  //
-wuffs_base__more_information::metadata_raw__range() const {
-  return wuffs_base__more_information__metadata_raw__range(this);
+wuffs_base__more_information::metadata_raw_passthrough__range() const {
+  return wuffs_base__more_information__metadata_raw_passthrough__range(this);
 }
 
 inline int32_t  //
@@ -5207,9 +5239,9 @@ wuffs_base__pixel_swizzler::swizzle_interleaved_from_slice(
 
 // wuffs_base__ieee_754_bit_representation__etc converts between a double
 // precision numerical value and its IEEE 754 representations:
-//   - 16-bit: 1 sign bit,  5 exponent bits, 10 explicit significand bits.
-//   - 32-bit: 1 sign bit,  8 exponent bits, 23 explicit significand bits.
-//   - 64-bit: 1 sign bit, 11 exponent bits, 52 explicit significand bits.
+//  - 16-bit: 1 sign bit,  5 exponent bits, 10 explicit significand bits.
+//  - 32-bit: 1 sign bit,  8 exponent bits, 23 explicit significand bits.
+//  - 64-bit: 1 sign bit, 11 exponent bits, 52 explicit significand bits.
 //
 // For example, it converts between:
 //  - +1.0 and 0x3C00, 0x3F80_0000 or 0x3FF0_0000_0000_0000.
@@ -9267,6 +9299,7 @@ struct wuffs_png__decoder__struct {
     bool f_report_metadata_chrm;
     bool f_report_metadata_gama;
     bool f_report_metadata_iccp;
+    bool f_report_metadata_srgb;
     bool f_ignore_checksum;
     uint8_t f_depth;
     uint8_t f_color_type;
@@ -9276,7 +9309,10 @@ struct wuffs_png__decoder__struct {
     bool f_seen_gama;
     bool f_seen_iccp;
     bool f_seen_plte;
+    bool f_seen_srgb;
     bool f_seen_trns;
+    bool f_zlib_is_dirty;
+    uint64_t f_remap_transparency;
     uint32_t f_dst_pixfmt;
     uint32_t f_src_pixfmt;
     uint32_t f_chunk_type;
@@ -9306,11 +9342,14 @@ struct wuffs_png__decoder__struct {
     uint32_t p_decode_other_chunk[1];
     uint32_t p_decode_chrm[1];
     uint32_t p_decode_gama[1];
+    uint32_t p_decode_iccp[1];
     uint32_t p_decode_plte[1];
+    uint32_t p_decode_srgb[1];
     uint32_t p_decode_trns[1];
     uint32_t p_decode_frame_config[1];
     uint32_t p_decode_frame[1];
     uint32_t p_decode_pass[1];
+    uint32_t p_tell_me_more[1];
     wuffs_base__status (*choosy_filter_and_swizzle)(
         wuffs_png__decoder* self,
         wuffs_base__pixel_buffer* a_dst,
@@ -9345,13 +9384,17 @@ struct wuffs_png__decoder__struct {
       uint64_t scratch;
     } s_decode_plte[1];
     struct {
-      uint32_t v_num_entries;
       uint32_t v_i;
+      uint32_t v_n;
+      uint64_t scratch;
     } s_decode_trns[1];
     struct {
       uint32_t v_checksum_have;
       uint64_t scratch;
     } s_decode_pass[1];
+    struct {
+      uint64_t scratch;
+    } s_tell_me_more[1];
   } private_data;
 
 #ifdef __cplusplus
@@ -9848,6 +9891,59 @@ namespace sync_io {
 
 // --------
 
+// DynIOBuffer is an IOBuffer that is backed by a dynamically sized byte array.
+// It owns that backing array and will free it in its destructor.
+//
+// The array size can be explicitly extended (by calling the grow method) but,
+// unlike a C++ std::vector, there is no implicit extension (e.g. by calling
+// std::vector::insert) and its maximum size is capped by the max_incl
+// constructor argument.
+//
+// It contains an IOBuffer-typed field whose reader side provides access to
+// previously written bytes and whose writer side provides access to the
+// allocated but not-yet-written-to slack space. For Go programmers, this slack
+// space is roughly analogous to the s[len(s):cap(s)] space of a slice s.
+class DynIOBuffer {
+ public:
+  enum GrowResult {
+    OK = 0,
+    FailedMaxInclExceeded = 1,
+    FailedOutOfMemory = 2,
+  };
+
+  // m_buf holds the dynamically sized byte array and its read/write indexes:
+  //  - m_buf.meta.wi  is roughly analogous to a Go slice's length.
+  //  - m_buf.data.len is roughly analogous to a Go slice's capacity. It is
+  //    also equal to the m_buf.data.ptr malloc/realloc size.
+  //
+  // Users should not modify the m_buf.data.ptr or m_buf.data.len fields (as
+  // they are conceptually private to this class), but they can modify the
+  // bytes referenced by that pointer-length pair (e.g. compactions).
+  IOBuffer m_buf;
+
+  // Constructor and destructor.
+  explicit DynIOBuffer(uint64_t max_incl);
+  ~DynIOBuffer();
+
+  // grow ensures that the byte array size is at least min_incl and at most
+  // max_incl. It returns FailedMaxInclExceeded if that would require
+  // allocating more than max_incl bytes, including the case where (min_incl >
+  // max_incl). It returns FailedOutOfMemory if memory allocation failed.
+  GrowResult grow(uint64_t min_incl);
+
+ private:
+  // m_max_incl is an inclusive upper bound on the backing array size.
+  const uint64_t m_max_incl;
+
+  // Delete the copy and assign constructors.
+  DynIOBuffer(const DynIOBuffer&) = delete;
+  DynIOBuffer& operator=(const DynIOBuffer&) = delete;
+
+  static uint64_t round_up(uint64_t min_incl, uint64_t max_incl);
+};
+
+// --------
+
 class Input {
  public:
   virtual ~Input();
@@ -9958,6 +10054,26 @@ class DecodeCborCallbacks {
   Done(DecodeCborResult& result, sync_io::Input& input, IOBuffer& buffer);
 };
 
+// The FooArgBar types add structure to Foo's optional arguments. They wrap
+// inner representations for several reasons:
+//  - It provides a home for the DefaultValue static method, for Foo callers
+//    that want to override some but not all optional arguments.
+//  - It provides the "Bar" name at Foo call sites, which can help self-
+//    document Foo calls with many arguemnts.
+//  - It provides some type safety against accidentally transposing or omitting
+//    adjacent fundamentally-numeric-typed optional arguments.
+
+// DecodeCborArgQuirks wraps an optional argument to DecodeCbor.
+struct DecodeCborArgQuirks {
+  explicit DecodeCborArgQuirks(wuffs_base__slice_u32 repr0);
+  explicit DecodeCborArgQuirks(uint32_t* ptr, size_t len);
+
+  // DefaultValue returns an empty slice.
+  static DecodeCborArgQuirks DefaultValue();
+
+  wuffs_base__slice_u32 repr;
+};
+
 // DecodeCbor calls callbacks based on the CBOR-formatted data in input.
 //
 // On success, the returned error_message is empty and cursor_position counts
@@ -9967,7 +10083,7 @@ class DecodeCborCallbacks {
 DecodeCborResult  //
 DecodeCbor(DecodeCborCallbacks& callbacks,
            sync_io::Input& input,
-           wuffs_base__slice_u32 quirks = wuffs_base__empty_slice_u32());
+           DecodeCborArgQuirks quirks = DecodeCborArgQuirks::DefaultValue());
 
 }  // namespace wuffs_aux
 
@@ -9989,10 +10105,11 @@ struct DecodeImageResult {
 // DecodeImageCallbacks are the callbacks given to DecodeImage. They are always
 // called in this order:
 //  1. SelectDecoder
-//  2. SelectPixfmt
-//  3. AllocPixbuf
-//  4. AllocWorkbuf
-//  5. Done
+//  2. HandleMetadata
+//  3. SelectPixfmt
+//  4. AllocPixbuf
+//  5. AllocWorkbuf
+//  6. Done
 //
 // It may return early - the third callback might not be invoked if the second
 // one fails - but the final callback (Done) is always invoked.
@@ -10048,6 +10165,22 @@ class DecodeImageCallbacks {
   //  - WUFFS_BASE__FOURCC__WBMP
   virtual wuffs_base__image_decoder::unique_ptr  //
   SelectDecoder(uint32_t fourcc, wuffs_base__slice_u8 prefix);
+
+  // HandleMetadata acknowledges image metadata. minfo.flavor will be one of:
+  //  - WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA_RAW_PASSTHROUGH
+  //  - WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA_PARSED
+  // If it is ETC__METADATA_RAW_ETC then raw contains the metadata bytes. Those
+  // bytes should not be retained beyond the the HandleMetadata call.
+  //
+  // minfo.metadata__fourcc() will typically match one of the
+  // DecodeImageArgFlags bits. For example, if (REPORT_METADATA_CHRM |
+  // REPORT_METADATA_GAMA) was passed to DecodeImage then the metadata FourCC
+  // will be either WUFFS_BASE__FOURCC__CHRM or WUFFS_BASE__FOURCC__GAMA.
+  //
+  // It returns an error message, or an empty string on success.
+  virtual std::string  //
+  HandleMetadata(const wuffs_base__more_information& minfo,
+                 wuffs_base__slice_u8 raw);
 
   // SelectPixfmt returns the destination pixel format for AllocPixbuf. It
   // should return wuffs_base__make_pixel_format(etc) called with one of:
@@ -10115,12 +10248,112 @@ class DecodeImageCallbacks {
 
 extern const char DecodeImage_BufferIsTooShort[];
 extern const char DecodeImage_MaxInclDimensionExceeded[];
+extern const char DecodeImage_MaxInclMetadataLengthExceeded[];
 extern const char DecodeImage_OutOfMemory[];
 extern const char DecodeImage_UnexpectedEndOfFile[];
 extern const char DecodeImage_UnsupportedImageFormat[];
+extern const char DecodeImage_UnsupportedMetadata[];
 extern const char DecodeImage_UnsupportedPixelBlend[];
 extern const char DecodeImage_UnsupportedPixelConfiguration[];
 extern const char DecodeImage_UnsupportedPixelFormat[];
+
+// The FooArgBar types add structure to Foo's optional arguments. They wrap
+// inner representations for several reasons:
+//  - It provides a home for the DefaultValue static method, for Foo callers
+//    that want to override some but not all optional arguments.
+//  - It provides the "Bar" name at Foo call sites, which can help self-
+//    document Foo calls with many arguemnts.
+//  - It provides some type safety against accidentally transposing or omitting
+//    adjacent fundamentally-numeric-typed optional arguments.
+
+// DecodeImageArgQuirks wraps an optional argument to DecodeImage.
+struct DecodeImageArgQuirks {
+  explicit DecodeImageArgQuirks(wuffs_base__slice_u32 repr0);
+  explicit DecodeImageArgQuirks(uint32_t* ptr, size_t len);
+
+  // DefaultValue returns an empty slice.
+  static DecodeImageArgQuirks DefaultValue();
+
+  wuffs_base__slice_u32 repr;
+};
+
+// DecodeImageArgFlags wraps an optional argument to DecodeImage.
+struct DecodeImageArgFlags {
+  explicit DecodeImageArgFlags(uint64_t repr0);
+
+  // DefaultValue returns 0.
+  static DecodeImageArgFlags DefaultValue();
+
+  // TODO: support all of the REPORT_METADATA_ETC flags, not just CHRM, GAMA
+  // and SRGB.
+
+  // Background Color.
+  static constexpr uint64_t REPORT_METADATA_BGCL = 0x0001;
+  // Primary Chromaticities and White Point.
+  static constexpr uint64_t REPORT_METADATA_CHRM = 0x0002;
+  // Exchangeable Image File Format.
+  static constexpr uint64_t REPORT_METADATA_EXIF = 0x0004;
+  // Gamma Correction.
+  static constexpr uint64_t REPORT_METADATA_GAMA = 0x0008;
+  // International Color Consortium Profile.
+  static constexpr uint64_t REPORT_METADATA_ICCP = 0x0010;
+  // Modification Time.
+  static constexpr uint64_t REPORT_METADATA_MTIM = 0x0020;
+  // Offset (2-Dimensional).
+  static constexpr uint64_t REPORT_METADATA_OFS2 = 0x0040;
+  // Physical Dimensions.
+  static constexpr uint64_t REPORT_METADATA_PHYD = 0x0080;
+  // Standard Red Green Blue (Rendering Intent).
+  static constexpr uint64_t REPORT_METADATA_SRGB = 0x0100;
+  // Text.
+  static constexpr uint64_t REPORT_METADATA_TEXT = 0x0200;
+  // Extensible Metadata Platform.
+  static constexpr uint64_t REPORT_METADATA_XMP = 0x0400;
+
+  uint64_t repr;
+};
+
+// DecodeImageArgPixelBlend wraps an optional argument to DecodeImage.
+struct DecodeImageArgPixelBlend {
+  explicit DecodeImageArgPixelBlend(wuffs_base__pixel_blend repr0);
+
+  // DefaultValue returns WUFFS_BASE__PIXEL_BLEND__SRC.
+  static DecodeImageArgPixelBlend DefaultValue();
+
+  wuffs_base__pixel_blend repr;
+};
+
+// DecodeImageArgBackgroundColor wraps an optional argument to DecodeImage.
+struct DecodeImageArgBackgroundColor {
+  explicit DecodeImageArgBackgroundColor(
+      wuffs_base__color_u32_argb_premul repr0);
+
+  // DefaultValue returns 1, an invalid wuffs_base__color_u32_argb_premul.
+  static DecodeImageArgBackgroundColor DefaultValue();
+
+  wuffs_base__color_u32_argb_premul repr;
+};
+
+// DecodeImageArgMaxInclDimension wraps an optional argument to DecodeImage.
+struct DecodeImageArgMaxInclDimension {
+  explicit DecodeImageArgMaxInclDimension(uint32_t repr0);
+
+  // DefaultValue returns 1048575 = 0x000F_FFFF, more than 1 million pixels.
+  static DecodeImageArgMaxInclDimension DefaultValue();
+
+  uint32_t repr;
+};
+
+// DecodeImageArgMaxInclMetadataLength wraps an optional argument to
+// DecodeImage.
+struct DecodeImageArgMaxInclMetadataLength {
+  explicit DecodeImageArgMaxInclMetadataLength(uint64_t repr0);
+
+  // DefaultValue returns 16777215 = 0x00FF_FFFF, one less than 16 MiB.
+  static DecodeImageArgMaxInclMetadataLength DefaultValue();
+
+  uint64_t repr;
+};
 
 // DecodeImage decodes the image data in input. A variety of image file formats
 // can be decoded, depending on what callbacks.SelectDecoder returns.
@@ -10164,13 +10397,21 @@ extern const char DecodeImage_UnsupportedPixelFormat[];
 // WUFFS_BASE__PIXEL_BLEND__SRC_OVER and the decoded image is not fully opaque.
 //
 // Decoding fails (with DecodeImage_MaxInclDimensionExceeded) if the image's
-// width or height is greater than max_incl_dimension.
+// width or height is greater than max_incl_dimension or if any opted-in (via
+// flags bits) metadata is longer than max_incl_metadata_length.
 DecodeImageResult  //
 DecodeImage(DecodeImageCallbacks& callbacks,
             sync_io::Input& input,
-            wuffs_base__pixel_blend pixel_blend = WUFFS_BASE__PIXEL_BLEND__SRC,
-            wuffs_base__color_u32_argb_premul background_color = 1,  // Invalid.
-            uint32_t max_incl_dimension = 1048575);  // 0x000F_FFFF
+            DecodeImageArgQuirks quirks = DecodeImageArgQuirks::DefaultValue(),
+            DecodeImageArgFlags flags = DecodeImageArgFlags::DefaultValue(),
+            DecodeImageArgPixelBlend pixel_blend =
+                DecodeImageArgPixelBlend::DefaultValue(),
+            DecodeImageArgBackgroundColor background_color =
+                DecodeImageArgBackgroundColor::DefaultValue(),
+            DecodeImageArgMaxInclDimension max_incl_dimension =
+                DecodeImageArgMaxInclDimension::DefaultValue(),
+            DecodeImageArgMaxInclMetadataLength max_incl_metadata_length =
+                DecodeImageArgMaxInclMetadataLength::DefaultValue());
 
 }  // namespace wuffs_aux
 
@@ -10231,6 +10472,36 @@ class DecodeJsonCallbacks {
 extern const char DecodeJson_BadJsonPointer[];
 extern const char DecodeJson_NoMatch[];
 
+// The FooArgBar types add structure to Foo's optional arguments. They wrap
+// inner representations for several reasons:
+//  - It provides a home for the DefaultValue static method, for Foo callers
+//    that want to override some but not all optional arguments.
+//  - It provides the "Bar" name at Foo call sites, which can help self-
+//    document Foo calls with many arguemnts.
+//  - It provides some type safety against accidentally transposing or omitting
+//    adjacent fundamentally-numeric-typed optional arguments.
+
+// DecodeJsonArgQuirks wraps an optional argument to DecodeJson.
+struct DecodeJsonArgQuirks {
+  explicit DecodeJsonArgQuirks(wuffs_base__slice_u32 repr0);
+  explicit DecodeJsonArgQuirks(uint32_t* ptr, size_t len);
+
+  // DefaultValue returns an empty slice.
+  static DecodeJsonArgQuirks DefaultValue();
+
+  wuffs_base__slice_u32 repr;
+};
+
+// DecodeJsonArgJsonPointer wraps an optional argument to DecodeJson.
+struct DecodeJsonArgJsonPointer {
+  explicit DecodeJsonArgJsonPointer(std::string repr0);
+
+  // DefaultValue returns an empty string.
+  static DecodeJsonArgJsonPointer DefaultValue();
+
+  std::string repr;
+};
+
 // DecodeJson calls callbacks based on the JSON-formatted data in input.
 //
 // On success, the returned error_message is empty and cursor_position counts
@@ -10248,8 +10519,9 @@ extern const char DecodeJson_NoMatch[];
 DecodeJsonResult  //
 DecodeJson(DecodeJsonCallbacks& callbacks,
            sync_io::Input& input,
-           wuffs_base__slice_u32 quirks = wuffs_base__empty_slice_u32(),
-           std::string json_pointer = std::string());
+           DecodeJsonArgQuirks quirks = DecodeJsonArgQuirks::DefaultValue(),
+           DecodeJsonArgJsonPointer json_pointer =
+               DecodeJsonArgJsonPointer::DefaultValue());
 
 }  // namespace wuffs_aux
 
@@ -10299,8 +10571,9 @@ extern "C" {
   goto suspend;                                                 \
   case n:;
 
-// Clang also defines "__GNUC__".
-#if defined(__GNUC__)
+// The "defined(__clang__)" isn't redundant. While vanilla clang defines
+// __GNUC__, clang-cl (which mimics MSVC's cl.exe) does not.
+#if defined(__GNUC__) || defined(__clang__)
 #define WUFFS_BASE__LIKELY(expr) (__builtin_expect(!!(expr), 1))
 #define WUFFS_BASE__UNLIKELY(expr) (__builtin_expect(!!(expr), 0))
 #else
@@ -12526,14 +12799,14 @@ wuffs_base__ieee_754_bit_representation__from_f64_to_u32_truncate(double f) {
 // padded with implicit zeroes.
 //
 // For example, if num_digits is 3 and digits is "\x07\x08\x09":
-//   - A decimal_point of -2 means ".00789"
-//   - A decimal_point of -1 means ".0789"
-//   - A decimal_point of +0 means ".789"
-//   - A decimal_point of +1 means "7.89"
-//   - A decimal_point of +2 means "78.9"
-//   - A decimal_point of +3 means "789."
-//   - A decimal_point of +4 means "7890."
-//   - A decimal_point of +5 means "78900."
+//  - A decimal_point of -2 means ".00789"
+//  - A decimal_point of -1 means ".0789"
+//  - A decimal_point of +0 means ".789"
+//  - A decimal_point of +1 means "7.89"
+//  - A decimal_point of +2 means "78.9"
+//  - A decimal_point of +3 means "789."
+//  - A decimal_point of +4 means "7890."
+//  - A decimal_point of +5 means "78900."
 //
 // As above, a decimal_point higher than +2047 means that the overall value is
 // infinity, lower than -2047 means zero.
@@ -12878,10 +13151,10 @@ wuffs_base__private_implementation__high_prec_dec__lshift_num_new_digits(
 // wuffs_base__private_implementation__high_prec_dec__rounded_integer returns
 // the integral (non-fractional) part of h, provided that it is 18 or fewer
 // decimal digits. For 19 or more digits, it returns UINT64_MAX. Note that:
-//   - (1 << 53) is    9007199254740992, which has 16 decimal digits.
-//   - (1 << 56) is   72057594037927936, which has 17 decimal digits.
-//   - (1 << 59) is  576460752303423488, which has 18 decimal digits.
-//   - (1 << 63) is 9223372036854775808, which has 19 decimal digits.
+//  - (1 << 53) is    9007199254740992, which has 16 decimal digits.
+//  - (1 << 56) is   72057594037927936, which has 17 decimal digits.
+//  - (1 << 59) is  576460752303423488, which has 18 decimal digits.
+//  - (1 << 63) is 9223372036854775808, which has 19 decimal digits.
 // and that IEEE 754 double precision has 52 mantissa bits.
 //
 // That integral part is rounded-to-even: rounding 7.5 or 8.5 both give 8.
@@ -15214,19 +15487,22 @@ wuffs_base__magic_number_guess_fourcc(wuffs_base__slice_u8 prefix) {
   //
   // Keep it sorted by magic[1], then magic[0] descending and finally by
   // magic[2:]. When multiple entries match, the longest one wins.
+  //
+  // The fourcc field might be negated, in which case there's further
+  // specialization (see § below).
   static struct {
     int32_t fourcc;
     const char* magic;
   } table[] = {
-      {0x57424D50, "\x01\x00\x00"},          // WBMP
-      {0x424D5020, "\x01\x42\x4D"},          // BMP
-      {0x47494620, "\x03\x47\x49\x46\x38"},  // GIF
-      {0x54494646, "\x03\x49\x49\x2A\x00"},  // TIFF (little-endian)
-      {0x54494646, "\x03\x4D\x4D\x00\x2A"},  // TIFF (big-endian)
-      {0x52494646, "\x03\x52\x49\x46\x46"},  // RIFF (see § below)
-      {0x4E494520, "\x02\x6E\xC3\xAF"},      // NIE
-      {0x504E4720, "\x03\x89\x50\x4E\x47"},  // PNG
-      {0x4A504547, "\x01\xFF\xD8"},          // JPEG
+      {-0x30302020, "\x01\x00\x00"},          // '00  'be
+      {+0x424D5020, "\x01\x42\x4D"},          // BMP
+      {+0x47494620, "\x03\x47\x49\x46\x38"},  // GIF
+      {+0x54494646, "\x03\x49\x49\x2A\x00"},  // TIFF (little-endian)
+      {+0x54494646, "\x03\x4D\x4D\x00\x2A"},  // TIFF (big-endian)
+      {-0x52494646, "\x03\x52\x49\x46\x46"},  // RIFF
+      {+0x4E494520, "\x02\x6E\xC3\xAF"},      // NIE
+      {+0x504E4720, "\x03\x89\x50\x4E\x47"},  // PNG
+      {+0x4A504547, "\x01\xFF\xD8"},          // JPEG
   };
   static const size_t table_len = sizeof(table) / sizeof(table[0]);
 
@@ -15267,19 +15543,38 @@ wuffs_base__magic_number_guess_fourcc(wuffs_base__slice_u8 prefix) {
   return 0;
 
 match:
-  // Some FourCC values (see § above) are further specialized.
-  if (fourcc == 0x52494646) {  // 'RIFF'be
-    if (prefix.len < 16) {
-      return -1;
-    }
-    uint32_t x = wuffs_base__peek_u32be__no_bounds_check(prefix.ptr + 8);
-    if (x == 0x57454250) {  // 'WEBP'be
-      uint32_t y = wuffs_base__peek_u32be__no_bounds_check(prefix.ptr + 12);
-      if (y == 0x56503820) {         // 'VP8 'be
-        return 0x57503820;           // 'WP8 'be
-      } else if (y == 0x5650384C) {  // 'VP8L'be
-        return 0x5750384C;           // 'WP8L'be
+  // Negative FourCC values (see § above) are further specialized.
+  if (fourcc < 0) {
+    fourcc = -fourcc;
+
+    if (fourcc == 0x52494646) {  // 'RIFF'be
+      if (prefix.len < 16) {
+        return -1;
       }
+      uint32_t x = wuffs_base__peek_u32be__no_bounds_check(prefix.ptr + 8);
+      if (x == 0x57454250) {  // 'WEBP'be
+        uint32_t y = wuffs_base__peek_u32be__no_bounds_check(prefix.ptr + 12);
+        if (y == 0x56503820) {         // 'VP8 'be
+          return 0x57503820;           // 'WP8 'be
+        } else if (y == 0x5650384C) {  // 'VP8L'be
+          return 0x5750384C;           // 'WP8L'be
+        }
+      }
+
+    } else if (fourcc == 0x30302020) {  // '00  'be
+      // Binary data starting with multiple 0x00 NUL bytes is quite common.
+      if (prefix.len < 4) {
+        return -1;
+      } else if ((prefix.ptr[2] != 0x00) &&
+                 ((prefix.ptr[2] >= 0x80) || (prefix.ptr[3] != 0x00))) {
+        // Roughly speaking, this could be a non-degenerate (non-0-width and
+        // non-0-height) WBMP image.
+        return 0x57424D50;  // 'WBMP'be
+      } else if (((prefix.ptr[2] == 0x01) || (prefix.ptr[2] == 0x02)) &&
+                 (prefix.ptr[3] == 0x00)) {
+        return 0x49434F20;  // 'ICO 'be
+      }
+      return 0;
     }
   }
   return fourcc;
@@ -35162,7 +35457,17 @@ wuffs_png__decoder__decode_gama(
     wuffs_base__io_buffer* a_src);
 
 static wuffs_base__status
+wuffs_png__decoder__decode_iccp(
+    wuffs_png__decoder* self,
+    wuffs_base__io_buffer* a_src);
+
+static wuffs_base__status
 wuffs_png__decoder__decode_plte(
+    wuffs_png__decoder* self,
+    wuffs_base__io_buffer* a_src);
+
+static wuffs_base__status
+wuffs_png__decoder__decode_srgb(
     wuffs_png__decoder* self,
     wuffs_base__io_buffer* a_src);
 
@@ -37020,6 +37325,11 @@ wuffs_png__decoder__decode_image_config(
         WUFFS_BASE__COROUTINE_SUSPENSION_POINT_MAYBE_SUSPEND(12);
       }
       label__2__break:;
+      if (self->private_impl.f_metadata_fourcc != 0) {
+        self->private_impl.f_call_sequence = 1;
+        status = wuffs_base__make_status(wuffs_base__note__metadata_reported);
+        goto ok;
+      }
       {
         WUFFS_BASE__COROUTINE_SUSPENSION_POINT(13);
         uint32_t t_7;
@@ -37052,11 +37362,6 @@ wuffs_png__decoder__decode_image_config(
       if ( ! self->private_impl.f_ignore_checksum && (self->private_impl.f_chunk_type == 1163152464) && (v_checksum_have != v_checksum_want)) {
         status = wuffs_base__make_status(wuffs_png__error__bad_checksum);
         goto exit;
-      }
-      if (self->private_impl.f_metadata_fourcc != 0) {
-        self->private_impl.f_call_sequence = 1;
-        status = wuffs_base__make_status(wuffs_base__note__metadata_reported);
-        goto ok;
       }
     }
     label__1__break:;
@@ -37276,7 +37581,7 @@ wuffs_png__decoder__decode_ihdr(
     self->private_impl.f_filter_distance = 0;
     wuffs_png__decoder__assign_filter_distance(self);
     if (self->private_impl.f_filter_distance == 0) {
-      status = wuffs_base__make_status(wuffs_png__error__unsupported_png_file);
+      status = wuffs_base__make_status(wuffs_png__error__bad_header);
       goto exit;
     }
     self->private_impl.f_overall_workbuf_length = (((uint64_t)(self->private_impl.f_height)) * (1 + wuffs_png__decoder__calculate_bytes_per_row(self, self->private_impl.f_width)));
@@ -37307,7 +37612,9 @@ static wuffs_base__empty_struct
 wuffs_png__decoder__assign_filter_distance(
     wuffs_png__decoder* self) {
   if (self->private_impl.f_depth < 8) {
-    if (self->private_impl.f_color_type == 0) {
+    if ((self->private_impl.f_depth != 1) && (self->private_impl.f_depth != 2) && (self->private_impl.f_depth != 4)) {
+      return wuffs_base__make_empty_struct();
+    } else if (self->private_impl.f_color_type == 0) {
       self->private_impl.f_dst_pixfmt = 536870920;
       self->private_impl.f_src_pixfmt = 536870920;
     } else if (self->private_impl.f_color_type == 3) {
@@ -37517,6 +37824,40 @@ wuffs_png__decoder__decode_other_chunk(
         goto suspend;
       }
       self->private_impl.f_seen_gama = true;
+    } else if ((self->private_impl.f_chunk_type == 1346585449) && self->private_impl.f_report_metadata_iccp) {
+      if (self->private_impl.f_seen_iccp) {
+        status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
+        goto exit;
+      }
+      if (a_src) {
+        a_src->meta.ri = ((size_t)(iop_a_src - a_src->data.ptr));
+      }
+      WUFFS_BASE__COROUTINE_SUSPENSION_POINT(4);
+      status = wuffs_png__decoder__decode_iccp(self, a_src);
+      if (a_src) {
+        iop_a_src = a_src->data.ptr + a_src->meta.ri;
+      }
+      if (status.repr) {
+        goto suspend;
+      }
+      self->private_impl.f_seen_iccp = true;
+    } else if ((self->private_impl.f_chunk_type == 1111970419) && self->private_impl.f_report_metadata_srgb) {
+      if (self->private_impl.f_seen_srgb) {
+        status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
+        goto exit;
+      }
+      if (a_src) {
+        a_src->meta.ri = ((size_t)(iop_a_src - a_src->data.ptr));
+      }
+      WUFFS_BASE__COROUTINE_SUSPENSION_POINT(5);
+      status = wuffs_png__decoder__decode_srgb(self, a_src);
+      if (a_src) {
+        iop_a_src = a_src->data.ptr + a_src->meta.ri;
+      }
+      if (status.repr) {
+        goto suspend;
+      }
+      self->private_impl.f_seen_srgb = true;
     } else if (self->private_impl.f_chunk_type == 1397641844) {
       if (self->private_impl.f_seen_trns || (self->private_impl.f_color_type > 3) || ((self->private_impl.f_color_type == 3) &&  ! self->private_impl.f_seen_plte)) {
         status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
@@ -37525,7 +37866,7 @@ wuffs_png__decoder__decode_other_chunk(
       if (a_src) {
         a_src->meta.ri = ((size_t)(iop_a_src - a_src->data.ptr));
       }
-      WUFFS_BASE__COROUTINE_SUSPENSION_POINT(4);
+      WUFFS_BASE__COROUTINE_SUSPENSION_POINT(6);
       status = wuffs_png__decoder__decode_trns(self, a_src);
       if (a_src) {
         iop_a_src = a_src->data.ptr + a_src->meta.ri;
@@ -37536,7 +37877,7 @@ wuffs_png__decoder__decode_other_chunk(
       self->private_impl.f_seen_trns = true;
     } else {
       self->private_data.s_decode_other_chunk[0].scratch = self->private_impl.f_chunk_length;
-      WUFFS_BASE__COROUTINE_SUSPENSION_POINT(5);
+      WUFFS_BASE__COROUTINE_SUSPENSION_POINT(7);
       if (self->private_data.s_decode_other_chunk[0].scratch > ((uint64_t)(io2_a_src - iop_a_src))) {
         self->private_data.s_decode_other_chunk[0].scratch -= ((uint64_t)(io2_a_src - iop_a_src));
         iop_a_src = io2_a_src;
@@ -37594,7 +37935,8 @@ wuffs_png__decoder__decode_chrm(
       status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
       goto exit;
     }
-    self->private_impl.f_metadata_flavor = 4;
+    self->private_impl.f_chunk_length = 0;
+    self->private_impl.f_metadata_flavor = 5;
     self->private_impl.f_metadata_fourcc = 1128813133;
     self->private_impl.f_metadata_x = 0;
     self->private_impl.f_metadata_y = 0;
@@ -37888,7 +38230,8 @@ wuffs_png__decoder__decode_gama(
       status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
       goto exit;
     }
-    self->private_impl.f_metadata_flavor = 4;
+    self->private_impl.f_chunk_length = 0;
+    self->private_impl.f_metadata_flavor = 5;
     self->private_impl.f_metadata_fourcc = 1195461953;
     {
       WUFFS_BASE__COROUTINE_SUSPENSION_POINT(1);
@@ -37931,6 +38274,94 @@ wuffs_png__decoder__decode_gama(
   goto suspend;
   suspend:
   self->private_impl.p_decode_gama[0] = wuffs_base__status__is_suspension(&status) ? coro_susp_point : 0;
+
+  goto exit;
+  exit:
+  if (a_src) {
+    a_src->meta.ri = ((size_t)(iop_a_src - a_src->data.ptr));
+  }
+
+  return status;
+}
+
+// -------- func png.decoder.decode_iccp
+
+static wuffs_base__status
+wuffs_png__decoder__decode_iccp(
+    wuffs_png__decoder* self,
+    wuffs_base__io_buffer* a_src) {
+  wuffs_base__status status = wuffs_base__make_status(NULL);
+
+  uint8_t v_c = 0;
+
+  const uint8_t* iop_a_src = NULL;
+  const uint8_t* io0_a_src WUFFS_BASE__POTENTIALLY_UNUSED = NULL;
+  const uint8_t* io1_a_src WUFFS_BASE__POTENTIALLY_UNUSED = NULL;
+  const uint8_t* io2_a_src WUFFS_BASE__POTENTIALLY_UNUSED = NULL;
+  if (a_src) {
+    io0_a_src = a_src->data.ptr;
+    io1_a_src = io0_a_src + a_src->meta.ri;
+    iop_a_src = io1_a_src;
+    io2_a_src = io0_a_src + a_src->meta.wi;
+  }
+
+  uint32_t coro_susp_point = self->private_impl.p_decode_iccp[0];
+  switch (coro_susp_point) {
+    WUFFS_BASE__COROUTINE_SUSPENSION_POINT_0;
+
+    while (true) {
+      if (self->private_impl.f_chunk_length <= 0) {
+        status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
+        goto exit;
+      }
+      self->private_impl.f_chunk_length -= 1;
+      {
+        WUFFS_BASE__COROUTINE_SUSPENSION_POINT(1);
+        if (WUFFS_BASE__UNLIKELY(iop_a_src == io2_a_src)) {
+          status = wuffs_base__make_status(wuffs_base__suspension__short_read);
+          goto suspend;
+        }
+        uint8_t t_0 = *iop_a_src++;
+        v_c = t_0;
+      }
+      if (v_c == 0) {
+        goto label__0__break;
+      }
+    }
+    label__0__break:;
+    if (self->private_impl.f_chunk_length <= 0) {
+      status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
+      goto exit;
+    }
+    self->private_impl.f_chunk_length -= 1;
+    {
+      WUFFS_BASE__COROUTINE_SUSPENSION_POINT(2);
+      if (WUFFS_BASE__UNLIKELY(iop_a_src == io2_a_src)) {
+        status = wuffs_base__make_status(wuffs_base__suspension__short_read);
+        goto suspend;
+      }
+      uint8_t t_1 = *iop_a_src++;
+      v_c = t_1;
+    }
+    if (v_c != 0) {
+      status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
+      goto exit;
+    }
+    self->private_impl.f_metadata_flavor = 4;
+    self->private_impl.f_metadata_fourcc = 1229144912;
+    self->private_impl.f_metadata_x = 0;
+    self->private_impl.f_metadata_y = 0;
+    self->private_impl.f_metadata_z = 0;
+
+    goto ok;
+    ok:
+    self->private_impl.p_decode_iccp[0] = 0;
+    goto exit;
+  }
+
+  goto suspend;
+  suspend:
+  self->private_impl.p_decode_iccp[0] = wuffs_base__status__is_suspension(&status) ? coro_susp_point : 0;
 
   goto exit;
   exit:
@@ -38043,6 +38474,67 @@ wuffs_png__decoder__decode_plte(
   return status;
 }
 
+// -------- func png.decoder.decode_srgb
+
+static wuffs_base__status
+wuffs_png__decoder__decode_srgb(
+    wuffs_png__decoder* self,
+    wuffs_base__io_buffer* a_src) {
+  wuffs_base__status status = wuffs_base__make_status(NULL);
+
+  const uint8_t* iop_a_src = NULL;
+  const uint8_t* io0_a_src WUFFS_BASE__POTENTIALLY_UNUSED = NULL;
+  const uint8_t* io1_a_src WUFFS_BASE__POTENTIALLY_UNUSED = NULL;
+  const uint8_t* io2_a_src WUFFS_BASE__POTENTIALLY_UNUSED = NULL;
+  if (a_src) {
+    io0_a_src = a_src->data.ptr;
+    io1_a_src = io0_a_src + a_src->meta.ri;
+    iop_a_src = io1_a_src;
+    io2_a_src = io0_a_src + a_src->meta.wi;
+  }
+
+  uint32_t coro_susp_point = self->private_impl.p_decode_srgb[0];
+  switch (coro_susp_point) {
+    WUFFS_BASE__COROUTINE_SUSPENSION_POINT_0;
+
+    if (self->private_impl.f_chunk_length != 1) {
+      status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
+      goto exit;
+    }
+    self->private_impl.f_chunk_length = 0;
+    self->private_impl.f_metadata_flavor = 5;
+    self->private_impl.f_metadata_fourcc = 1397901122;
+    {
+      WUFFS_BASE__COROUTINE_SUSPENSION_POINT(1);
+      if (WUFFS_BASE__UNLIKELY(iop_a_src == io2_a_src)) {
+        status = wuffs_base__make_status(wuffs_base__suspension__short_read);
+        goto suspend;
+      }
+      uint64_t t_0 = *iop_a_src++;
+      self->private_impl.f_metadata_x = t_0;
+    }
+    self->private_impl.f_metadata_y = 0;
+    self->private_impl.f_metadata_z = 0;
+
+    goto ok;
+    ok:
+    self->private_impl.p_decode_srgb[0] = 0;
+    goto exit;
+  }
+
+  goto suspend;
+  suspend:
+  self->private_impl.p_decode_srgb[0] = wuffs_base__status__is_suspension(&status) ? coro_susp_point : 0;
+
+  goto exit;
+  exit:
+  if (a_src) {
+    a_src->meta.ri = ((size_t)(iop_a_src - a_src->data.ptr));
+  }
+
+  return status;
+}
+
 // -------- func png.decoder.decode_trns
 
 static wuffs_base__status
@@ -38051,8 +38543,9 @@ wuffs_png__decoder__decode_trns(
     wuffs_base__io_buffer* a_src) {
   wuffs_base__status status = wuffs_base__make_status(NULL);
 
-  uint32_t v_num_entries = 0;
   uint32_t v_i = 0;
+  uint32_t v_n = 0;
+  uint64_t v_u = 0;
 
   const uint8_t* iop_a_src = NULL;
   const uint8_t* io0_a_src WUFFS_BASE__POTENTIALLY_UNUSED = NULL;
@@ -38067,42 +38560,143 @@ wuffs_png__decoder__decode_trns(
 
   uint32_t coro_susp_point = self->private_impl.p_decode_trns[0];
   if (coro_susp_point) {
-    v_num_entries = self->private_data.s_decode_trns[0].v_num_entries;
     v_i = self->private_data.s_decode_trns[0].v_i;
+    v_n = self->private_data.s_decode_trns[0].v_n;
   }
   switch (coro_susp_point) {
     WUFFS_BASE__COROUTINE_SUSPENSION_POINT_0;
 
-    if (self->private_impl.f_chunk_length > 256) {
-      status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
-      goto exit;
-    }
-    v_num_entries = ((uint32_t)(self->private_impl.f_chunk_length));
-    while (v_i < v_num_entries) {
-      {
-        WUFFS_BASE__COROUTINE_SUSPENSION_POINT(1);
-        if (WUFFS_BASE__UNLIKELY(iop_a_src == io2_a_src)) {
-          status = wuffs_base__make_status(wuffs_base__suspension__short_read);
-          goto suspend;
-        }
-        uint8_t t_0 = *iop_a_src++;
-        self->private_data.f_src_palette[((4 * v_i) + 3)] = t_0;
-      }
-      v_i += 1;
-    }
-    if (self->private_impl.f_color_type == 3) {
-      self->private_impl.f_dst_pixfmt = 2164523016;
-      self->private_impl.f_src_pixfmt = 2164523016;
-    } else {
+    if (self->private_impl.f_color_type == 0) {
       self->private_impl.choosy_filter_and_swizzle = (
           &wuffs_png__decoder__filter_and_swizzle_tricky);
-      if (self->private_impl.f_color_type == 0) {
+      if (self->private_impl.f_depth <= 8) {
         self->private_impl.f_dst_pixfmt = 2164295816;
-        self->private_impl.f_src_pixfmt = 2164308923;
-      } else if (self->private_impl.f_color_type == 2) {
-        self->private_impl.f_dst_pixfmt = 2164295816;
+        self->private_impl.f_src_pixfmt = 2164295816;
+      } else {
+        self->private_impl.f_dst_pixfmt = 2164308923;
         self->private_impl.f_src_pixfmt = 2164308923;
       }
+      if (self->private_impl.f_chunk_length != 2) {
+        status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
+        goto exit;
+      }
+      self->private_impl.f_chunk_length = 0;
+      {
+        WUFFS_BASE__COROUTINE_SUSPENSION_POINT(1);
+        uint64_t t_0;
+        if (WUFFS_BASE__LIKELY(io2_a_src - iop_a_src >= 2)) {
+          t_0 = ((uint64_t)(wuffs_base__peek_u16be__no_bounds_check(iop_a_src)));
+          iop_a_src += 2;
+        } else {
+          self->private_data.s_decode_trns[0].scratch = 0;
+          WUFFS_BASE__COROUTINE_SUSPENSION_POINT(2);
+          while (true) {
+            if (WUFFS_BASE__UNLIKELY(iop_a_src == io2_a_src)) {
+              status = wuffs_base__make_status(wuffs_base__suspension__short_read);
+              goto suspend;
+            }
+            uint64_t* scratch = &self->private_data.s_decode_trns[0].scratch;
+            uint32_t num_bits_0 = ((uint32_t)(*scratch & 0xFF));
+            *scratch >>= 8;
+            *scratch <<= 8;
+            *scratch |= ((uint64_t)(*iop_a_src++)) << (56 - num_bits_0);
+            if (num_bits_0 == 8) {
+              t_0 = ((uint64_t)(*scratch >> 48));
+              break;
+            }
+            num_bits_0 += 8;
+            *scratch |= ((uint64_t)(num_bits_0));
+          }
+        }
+        v_u = t_0;
+      }
+      if (self->private_impl.f_depth <= 1) {
+        self->private_impl.f_remap_transparency = (((v_u & 1) * 16777215) | 4278190080);
+      } else if (self->private_impl.f_depth <= 2) {
+        self->private_impl.f_remap_transparency = (((v_u & 3) * 5592405) | 4278190080);
+      } else if (self->private_impl.f_depth <= 4) {
+        self->private_impl.f_remap_transparency = (((v_u & 15) * 1118481) | 4278190080);
+      } else if (self->private_impl.f_depth <= 8) {
+        self->private_impl.f_remap_transparency = (((v_u & 255) * 65793) | 4278190080);
+      } else {
+        self->private_impl.f_remap_transparency = ((v_u * 4295032833) | 18446462598732840960u);
+      }
+    } else if (self->private_impl.f_color_type == 2) {
+      self->private_impl.choosy_filter_and_swizzle = (
+          &wuffs_png__decoder__filter_and_swizzle_tricky);
+      if (self->private_impl.f_depth <= 8) {
+        self->private_impl.f_dst_pixfmt = 2164295816;
+        self->private_impl.f_src_pixfmt = 2164295816;
+      } else {
+        self->private_impl.f_dst_pixfmt = 2164308923;
+        self->private_impl.f_src_pixfmt = 2164308923;
+      }
+      if (self->private_impl.f_chunk_length != 6) {
+        status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
+        goto exit;
+      }
+      self->private_impl.f_chunk_length = 0;
+      {
+        WUFFS_BASE__COROUTINE_SUSPENSION_POINT(3);
+        uint64_t t_1;
+        if (WUFFS_BASE__LIKELY(io2_a_src - iop_a_src >= 6)) {
+          t_1 = ((uint64_t)(wuffs_base__peek_u48be__no_bounds_check(iop_a_src)));
+          iop_a_src += 6;
+        } else {
+          self->private_data.s_decode_trns[0].scratch = 0;
+          WUFFS_BASE__COROUTINE_SUSPENSION_POINT(4);
+          while (true) {
+            if (WUFFS_BASE__UNLIKELY(iop_a_src == io2_a_src)) {
+              status = wuffs_base__make_status(wuffs_base__suspension__short_read);
+              goto suspend;
+            }
+            uint64_t* scratch = &self->private_data.s_decode_trns[0].scratch;
+            uint32_t num_bits_1 = ((uint32_t)(*scratch & 0xFF));
+            *scratch >>= 8;
+            *scratch <<= 8;
+            *scratch |= ((uint64_t)(*iop_a_src++)) << (56 - num_bits_1);
+            if (num_bits_1 == 40) {
+              t_1 = ((uint64_t)(*scratch >> 16));
+              break;
+            }
+            num_bits_1 += 8;
+            *scratch |= ((uint64_t)(num_bits_1));
+          }
+        }
+        v_u = t_1;
+      }
+      if (self->private_impl.f_depth <= 8) {
+        self->private_impl.f_remap_transparency = ((255 & (v_u >> 0)) |
+            (65280 & (v_u >> 8)) |
+            (16711680 & (v_u >> 16)) |
+            4278190080);
+      } else {
+        self->private_impl.f_remap_transparency = (v_u | 18446462598732840960u);
+      }
+    } else if (self->private_impl.f_color_type == 3) {
+      self->private_impl.f_dst_pixfmt = 2164523016;
+      self->private_impl.f_src_pixfmt = 2164523016;
+      if (self->private_impl.f_chunk_length > 256) {
+        status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
+        goto exit;
+      }
+      v_n = ((uint32_t)(self->private_impl.f_chunk_length));
+      self->private_impl.f_chunk_length = 0;
+      while (v_i < v_n) {
+        {
+          WUFFS_BASE__COROUTINE_SUSPENSION_POINT(5);
+          if (WUFFS_BASE__UNLIKELY(iop_a_src == io2_a_src)) {
+            status = wuffs_base__make_status(wuffs_base__suspension__short_read);
+            goto suspend;
+          }
+          uint8_t t_2 = *iop_a_src++;
+          self->private_data.f_src_palette[((4 * v_i) + 3)] = t_2;
+        }
+        v_i += 1;
+      }
+    } else {
+      status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
+      goto exit;
     }
 
     goto ok;
@@ -38114,8 +38708,8 @@ wuffs_png__decoder__decode_trns(
   goto suspend;
   suspend:
   self->private_impl.p_decode_trns[0] = wuffs_base__status__is_suspension(&status) ? coro_susp_point : 0;
-  self->private_data.s_decode_trns[0].v_num_entries = v_num_entries;
   self->private_data.s_decode_trns[0].v_i = v_i;
+  self->private_data.s_decode_trns[0].v_n = v_n;
 
   goto exit;
   exit:
@@ -38284,6 +38878,13 @@ wuffs_png__decoder__decode_frame(
       status = wuffs_base__make_status(wuffs_base__note__end_of_data);
       goto ok;
     }
+    if (self->private_impl.f_zlib_is_dirty) {
+      wuffs_base__ignore_status(wuffs_zlib__decoder__initialize(&self->private_data.f_zlib, sizeof (wuffs_zlib__decoder), WUFFS_VERSION, 0));
+      if (self->private_impl.f_ignore_checksum) {
+        wuffs_zlib__decoder__set_quirk_enabled(&self->private_data.f_zlib, 1, true);
+      }
+    }
+    self->private_impl.f_zlib_is_dirty = true;
     v_status = wuffs_base__pixel_swizzler__prepare(&self->private_impl.f_swizzler,
         wuffs_base__pixel_buffer__pixel_format(a_dst),
         wuffs_base__pixel_buffer__palette_or_else(a_dst, wuffs_base__make_slice_u8(self->private_data.f_dst_palette, 1024)),
@@ -38783,6 +39384,8 @@ wuffs_png__decoder__set_report_metadata(
     self->private_impl.f_report_metadata_gama = a_report;
   } else if (a_fourcc == 1229144912) {
     self->private_impl.f_report_metadata_iccp = a_report;
+  } else if (a_fourcc == 1397901122) {
+    self->private_impl.f_report_metadata_srgb = a_report;
   }
   return wuffs_base__make_empty_struct();
 }
@@ -38816,34 +39419,131 @@ wuffs_png__decoder__tell_me_more(
   self->private_impl.active_coroutine = 0;
   wuffs_base__status status = wuffs_base__make_status(NULL);
 
-  if (self->private_impl.f_call_sequence != 1) {
-    status = wuffs_base__make_status(wuffs_base__error__bad_call_sequence);
-    goto exit;
-  }
-  if (self->private_impl.f_metadata_fourcc == 0) {
-    status = wuffs_base__make_status(wuffs_base__error__no_more_information);
-    goto exit;
-  }
-  if (a_minfo != NULL) {
-    wuffs_base__more_information__set(a_minfo,
-        self->private_impl.f_metadata_flavor,
-        self->private_impl.f_metadata_fourcc,
-        self->private_impl.f_metadata_x,
-        self->private_impl.f_metadata_y,
-        self->private_impl.f_metadata_z);
-  }
-  self->private_impl.f_call_sequence = 2;
-  self->private_impl.f_metadata_flavor = 0;
-  self->private_impl.f_metadata_fourcc = 0;
-  self->private_impl.f_metadata_x = 0;
-  self->private_impl.f_metadata_y = 0;
-  self->private_impl.f_metadata_z = 0;
-  status = wuffs_base__make_status(NULL);
-  goto ok;
+  uint64_t v_r_mark = 0;
+  wuffs_base__status v_zlib_status = wuffs_base__make_status(NULL);
 
-  ok:
+  const uint8_t* iop_a_src = NULL;
+  const uint8_t* io0_a_src WUFFS_BASE__POTENTIALLY_UNUSED = NULL;
+  const uint8_t* io1_a_src WUFFS_BASE__POTENTIALLY_UNUSED = NULL;
+  const uint8_t* io2_a_src WUFFS_BASE__POTENTIALLY_UNUSED = NULL;
+  if (a_src) {
+    io0_a_src = a_src->data.ptr;
+    io1_a_src = io0_a_src + a_src->meta.ri;
+    iop_a_src = io1_a_src;
+    io2_a_src = io0_a_src + a_src->meta.wi;
+  }
+
+  uint32_t coro_susp_point = self->private_impl.p_tell_me_more[0];
+  switch (coro_susp_point) {
+    WUFFS_BASE__COROUTINE_SUSPENSION_POINT_0;
+
+    if (self->private_impl.f_call_sequence != 1) {
+      status = wuffs_base__make_status(wuffs_base__error__bad_call_sequence);
+      goto exit;
+    }
+    if (self->private_impl.f_metadata_fourcc == 0) {
+      status = wuffs_base__make_status(wuffs_base__error__no_more_information);
+      goto exit;
+    }
+    if (self->private_impl.f_metadata_flavor == 4) {
+      if (self->private_impl.f_zlib_is_dirty) {
+        wuffs_base__ignore_status(wuffs_zlib__decoder__initialize(&self->private_data.f_zlib, sizeof (wuffs_zlib__decoder), WUFFS_VERSION, 0));
+        if (self->private_impl.f_ignore_checksum) {
+          wuffs_zlib__decoder__set_quirk_enabled(&self->private_data.f_zlib, 1, true);
+        }
+      }
+      self->private_impl.f_zlib_is_dirty = true;
+    }
+    while (true) {
+      if (a_minfo != NULL) {
+        wuffs_base__more_information__set(a_minfo,
+            self->private_impl.f_metadata_flavor,
+            self->private_impl.f_metadata_fourcc,
+            self->private_impl.f_metadata_x,
+            self->private_impl.f_metadata_y,
+            self->private_impl.f_metadata_z);
+      }
+      if (self->private_impl.f_metadata_flavor != 4) {
+        goto label__0__break;
+      }
+      {
+        const uint8_t *o_0_io2_a_src = io2_a_src;
+        wuffs_base__io_reader__limit(&io2_a_src, iop_a_src,
+            self->private_impl.f_chunk_length);
+        if (a_src) {
+          a_src->meta.wi = ((size_t)(io2_a_src - a_src->data.ptr));
+        }
+        v_r_mark = ((uint64_t)(iop_a_src - io0_a_src));
+        {
+          if (a_src) {
+            a_src->meta.ri = ((size_t)(iop_a_src - a_src->data.ptr));
+          }
+          wuffs_base__status t_0 = wuffs_zlib__decoder__transform_io(&self->private_data.f_zlib, a_dst, a_src, wuffs_base__utility__empty_slice_u8());
+          v_zlib_status = t_0;
+          if (a_src) {
+            iop_a_src = a_src->data.ptr + a_src->meta.ri;
+          }
+        }
+        wuffs_base__u64__sat_sub_indirect(&self->private_impl.f_chunk_length, wuffs_base__io__count_since(v_r_mark, ((uint64_t)(iop_a_src - io0_a_src))));
+        io2_a_src = o_0_io2_a_src;
+        if (a_src) {
+          a_src->meta.wi = ((size_t)(io2_a_src - a_src->data.ptr));
+        }
+      }
+      if (wuffs_base__status__is_ok(&v_zlib_status)) {
+        goto label__0__break;
+      } else if ( ! wuffs_base__status__is_suspension(&v_zlib_status)) {
+        status = v_zlib_status;
+        if (wuffs_base__status__is_error(&status)) {
+          goto exit;
+        } else if (wuffs_base__status__is_suspension(&status)) {
+          status = wuffs_base__make_status(wuffs_base__error__cannot_return_a_suspension);
+          goto exit;
+        }
+        goto ok;
+      }
+      status = v_zlib_status;
+      WUFFS_BASE__COROUTINE_SUSPENSION_POINT_MAYBE_SUSPEND(1);
+    }
+    label__0__break:;
+    if (self->private_impl.f_chunk_length != 0) {
+      status = wuffs_base__make_status(wuffs_png__error__bad_chunk);
+      goto exit;
+    }
+    self->private_data.s_tell_me_more[0].scratch = 4;
+    WUFFS_BASE__COROUTINE_SUSPENSION_POINT(2);
+    if (self->private_data.s_tell_me_more[0].scratch > ((uint64_t)(io2_a_src - iop_a_src))) {
+      self->private_data.s_tell_me_more[0].scratch -= ((uint64_t)(io2_a_src - iop_a_src));
+      iop_a_src = io2_a_src;
+      status = wuffs_base__make_status(wuffs_base__suspension__short_read);
+      goto suspend;
+    }
+    iop_a_src += self->private_data.s_tell_me_more[0].scratch;
+    self->private_impl.f_call_sequence = 2;
+    self->private_impl.f_metadata_flavor = 0;
+    self->private_impl.f_metadata_fourcc = 0;
+    self->private_impl.f_metadata_x = 0;
+    self->private_impl.f_metadata_y = 0;
+    self->private_impl.f_metadata_z = 0;
+    status = wuffs_base__make_status(NULL);
+    goto ok;
+
+    ok:
+    self->private_impl.p_tell_me_more[0] = 0;
+    goto exit;
+  }
+
+  goto suspend;
+  suspend:
+  self->private_impl.p_tell_me_more[0] = wuffs_base__status__is_suspension(&status) ? coro_susp_point : 0;
+  self->private_impl.active_coroutine = wuffs_base__status__is_suspension(&status) ? 4 : 0;
+
   goto exit;
   exit:
+  if (a_src) {
+    a_src->meta.ri = ((size_t)(iop_a_src - a_src->data.ptr));
+  }
+
   if (wuffs_base__status__is_error(&status)) {
     self->private_impl.magic = WUFFS_BASE__DISABLED;
   }
@@ -38977,14 +39677,6 @@ wuffs_png__decoder__filter_and_swizzle_tricky(
   if (self->private_impl.f_depth >= 8) {
     v_src_bytes_per_pixel = (((uint64_t)(WUFFS_PNG__NUM_CHANNELS[self->private_impl.f_color_type])) * ((uint64_t)((self->private_impl.f_depth >> 3))));
   }
-  v_bits_unpacked[0] = 255;
-  v_bits_unpacked[1] = 255;
-  v_bits_unpacked[2] = 255;
-  v_bits_unpacked[3] = 255;
-  v_bits_unpacked[4] = 255;
-  v_bits_unpacked[5] = 255;
-  v_bits_unpacked[6] = 255;
-  v_bits_unpacked[7] = 255;
   v_y = ((uint32_t)(WUFFS_PNG__INTERLACING[self->private_impl.f_interlace_pass][5]));
   while (v_y < self->private_impl.f_height) {
     v_dst = wuffs_base__table_u8__row(v_tab, v_y);
@@ -39028,6 +39720,44 @@ wuffs_png__decoder__filter_and_swizzle_tricky(
               v_s = wuffs_base__slice_u8__subslice_i(v_s, 2);
               wuffs_base__pixel_swizzler__swizzle_interleaved_from_slice(&self->private_impl.f_swizzler, wuffs_base__slice_u8__subslice_i(v_dst, v_i), v_dst_palette, wuffs_base__make_slice_u8(v_bits_unpacked, 4));
             }
+          } else if (((uint32_t)((self->private_impl.f_remap_transparency & 4294967295))) != 0) {
+            if (self->private_impl.f_color_type == 0) {
+              if (1 <= ((uint64_t)(v_s.len))) {
+                v_bits_unpacked[0] = v_s.ptr[0];
+                v_bits_unpacked[1] = v_s.ptr[0];
+                v_bits_unpacked[2] = v_s.ptr[0];
+                v_bits_unpacked[3] = 255;
+                v_s = wuffs_base__slice_u8__subslice_i(v_s, 1);
+                if (((uint32_t)((self->private_impl.f_remap_transparency & 4294967295))) == ((((uint32_t)(v_bits_unpacked[0])) << 0) |
+                    (((uint32_t)(v_bits_unpacked[1])) << 8) |
+                    (((uint32_t)(v_bits_unpacked[2])) << 16) |
+                    (((uint32_t)(v_bits_unpacked[3])) << 24))) {
+                  v_bits_unpacked[0] = 0;
+                  v_bits_unpacked[1] = 0;
+                  v_bits_unpacked[2] = 0;
+                  v_bits_unpacked[3] = 0;
+                }
+                wuffs_base__pixel_swizzler__swizzle_interleaved_from_slice(&self->private_impl.f_swizzler, wuffs_base__slice_u8__subslice_i(v_dst, v_i), v_dst_palette, wuffs_base__make_slice_u8(v_bits_unpacked, 4));
+              }
+            } else {
+              if (3 <= ((uint64_t)(v_s.len))) {
+                v_bits_unpacked[0] = v_s.ptr[2];
+                v_bits_unpacked[1] = v_s.ptr[1];
+                v_bits_unpacked[2] = v_s.ptr[0];
+                v_bits_unpacked[3] = 255;
+                v_s = wuffs_base__slice_u8__subslice_i(v_s, 3);
+                if (((uint32_t)((self->private_impl.f_remap_transparency & 4294967295))) == ((((uint32_t)(v_bits_unpacked[0])) << 0) |
+                    (((uint32_t)(v_bits_unpacked[1])) << 8) |
+                    (((uint32_t)(v_bits_unpacked[2])) << 16) |
+                    (((uint32_t)(v_bits_unpacked[3])) << 24))) {
+                  v_bits_unpacked[0] = 0;
+                  v_bits_unpacked[1] = 0;
+                  v_bits_unpacked[2] = 0;
+                  v_bits_unpacked[3] = 0;
+                }
+                wuffs_base__pixel_swizzler__swizzle_interleaved_from_slice(&self->private_impl.f_swizzler, wuffs_base__slice_u8__subslice_i(v_dst, v_i), v_dst_palette, wuffs_base__make_slice_u8(v_bits_unpacked, 4));
+              }
+            }
           } else if (v_src_bytes_per_pixel <= ((uint64_t)(v_s.len))) {
             wuffs_base__pixel_swizzler__swizzle_interleaved_from_slice(&self->private_impl.f_swizzler, wuffs_base__slice_u8__subslice_i(v_dst, v_i), v_dst_palette, wuffs_base__slice_u8__subslice_j(v_s, v_src_bytes_per_pixel));
             v_s = wuffs_base__slice_u8__subslice_i(v_s, v_src_bytes_per_pixel);
@@ -39053,7 +39783,23 @@ wuffs_png__decoder__filter_and_swizzle_tricky(
           v_bits_unpacked[0] = ((uint8_t)((v_bits_packed >> v_shift) * v_multiplier));
           v_bits_packed = ((uint8_t)(v_bits_packed << self->private_impl.f_depth));
           v_packs_remaining = ((uint8_t)(v_packs_remaining - 1));
-          wuffs_base__pixel_swizzler__swizzle_interleaved_from_slice(&self->private_impl.f_swizzler, wuffs_base__slice_u8__subslice_i(v_dst, v_i), v_dst_palette, wuffs_base__make_slice_u8(v_bits_unpacked, 1));
+          if (((uint32_t)((self->private_impl.f_remap_transparency & 4294967295))) != 0) {
+            v_bits_unpacked[1] = v_bits_unpacked[0];
+            v_bits_unpacked[2] = v_bits_unpacked[0];
+            v_bits_unpacked[3] = 255;
+            if (((uint32_t)((self->private_impl.f_remap_transparency & 4294967295))) == ((((uint32_t)(v_bits_unpacked[0])) << 0) |
+                (((uint32_t)(v_bits_unpacked[1])) << 8) |
+                (((uint32_t)(v_bits_unpacked[2])) << 16) |
+                (((uint32_t)(v_bits_unpacked[3])) << 24))) {
+              v_bits_unpacked[0] = 0;
+              v_bits_unpacked[1] = 0;
+              v_bits_unpacked[2] = 0;
+              v_bits_unpacked[3] = 0;
+            }
+            wuffs_base__pixel_swizzler__swizzle_interleaved_from_slice(&self->private_impl.f_swizzler, wuffs_base__slice_u8__subslice_i(v_dst, v_i), v_dst_palette, wuffs_base__make_slice_u8(v_bits_unpacked, 4));
+          } else {
+            wuffs_base__pixel_swizzler__swizzle_interleaved_from_slice(&self->private_impl.f_swizzler, wuffs_base__slice_u8__subslice_i(v_dst, v_i), v_dst_palette, wuffs_base__make_slice_u8(v_bits_unpacked, 1));
+          }
         }
         v_x += (((uint32_t)(1)) << WUFFS_PNG__INTERLACING[self->private_impl.f_interlace_pass][0]);
       }
@@ -39069,7 +39815,26 @@ wuffs_png__decoder__filter_and_swizzle_tricky(
               v_bits_unpacked[3] = v_s.ptr[0];
               v_bits_unpacked[4] = v_s.ptr[1];
               v_bits_unpacked[5] = v_s.ptr[0];
+              v_bits_unpacked[6] = 255;
+              v_bits_unpacked[7] = 255;
               v_s = wuffs_base__slice_u8__subslice_i(v_s, 2);
+              if (self->private_impl.f_remap_transparency == ((((uint64_t)(v_bits_unpacked[0])) << 0) |
+                  (((uint64_t)(v_bits_unpacked[1])) << 8) |
+                  (((uint64_t)(v_bits_unpacked[2])) << 16) |
+                  (((uint64_t)(v_bits_unpacked[3])) << 24) |
+                  (((uint64_t)(v_bits_unpacked[4])) << 32) |
+                  (((uint64_t)(v_bits_unpacked[5])) << 40) |
+                  (((uint64_t)(v_bits_unpacked[6])) << 48) |
+                  (((uint64_t)(v_bits_unpacked[7])) << 56))) {
+                v_bits_unpacked[0] = 0;
+                v_bits_unpacked[1] = 0;
+                v_bits_unpacked[2] = 0;
+                v_bits_unpacked[3] = 0;
+                v_bits_unpacked[4] = 0;
+                v_bits_unpacked[5] = 0;
+                v_bits_unpacked[6] = 0;
+                v_bits_unpacked[7] = 0;
+              }
             }
           } else if (self->private_impl.f_color_type == 2) {
             if (6 <= ((uint64_t)(v_s.len))) {
@@ -39079,7 +39844,26 @@ wuffs_png__decoder__filter_and_swizzle_tricky(
               v_bits_unpacked[3] = v_s.ptr[2];
               v_bits_unpacked[4] = v_s.ptr[1];
               v_bits_unpacked[5] = v_s.ptr[0];
+              v_bits_unpacked[6] = 255;
+              v_bits_unpacked[7] = 255;
               v_s = wuffs_base__slice_u8__subslice_i(v_s, 6);
+              if (self->private_impl.f_remap_transparency == ((((uint64_t)(v_bits_unpacked[0])) << 0) |
+                  (((uint64_t)(v_bits_unpacked[1])) << 8) |
+                  (((uint64_t)(v_bits_unpacked[2])) << 16) |
+                  (((uint64_t)(v_bits_unpacked[3])) << 24) |
+                  (((uint64_t)(v_bits_unpacked[4])) << 32) |
+                  (((uint64_t)(v_bits_unpacked[5])) << 40) |
+                  (((uint64_t)(v_bits_unpacked[6])) << 48) |
+                  (((uint64_t)(v_bits_unpacked[7])) << 56))) {
+                v_bits_unpacked[0] = 0;
+                v_bits_unpacked[1] = 0;
+                v_bits_unpacked[2] = 0;
+                v_bits_unpacked[3] = 0;
+                v_bits_unpacked[4] = 0;
+                v_bits_unpacked[5] = 0;
+                v_bits_unpacked[6] = 0;
+                v_bits_unpacked[7] = 0;
+              }
             }
           } else if (self->private_impl.f_color_type == 4) {
             if (4 <= ((uint64_t)(v_s.len))) {
@@ -39855,6 +40639,63 @@ namespace sync_io {
 
 // --------
 
+DynIOBuffer::DynIOBuffer(uint64_t max_incl)
+    : m_buf(wuffs_base__empty_io_buffer()), m_max_incl(max_incl) {}
+
+DynIOBuffer::~DynIOBuffer() {
+  if (m_buf.data.ptr) {
+    free(m_buf.data.ptr);
+  }
+}
+
+DynIOBuffer::GrowResult  //
+DynIOBuffer::grow(uint64_t min_incl) {
+  uint64_t n = round_up(min_incl, m_max_incl);
+  if (n == 0) {
+    return ((min_incl == 0) && (m_max_incl == 0))
+               ? DynIOBuffer::GrowResult::OK
+               : DynIOBuffer::GrowResult::FailedMaxInclExceeded;
+  } else if (n > m_buf.data.len) {
+    uint8_t* ptr = static_cast<uint8_t*>(realloc(m_buf.data.ptr, n));
+    if (!ptr) {
+      return DynIOBuffer::GrowResult::FailedOutOfMemory;
+    }
+    m_buf.data.ptr = ptr;
+    m_buf.data.len = n;
+  }
+  return DynIOBuffer::GrowResult::OK;
+}
+
+// round_up rounds min_incl up, returning the smallest value x satisfying
+// (min_incl <= x) and (x <= max_incl) and some other constraints. It returns 0
+// if there is no such x.
+//
+// When max_incl <= 4096, the other constraints are:
+//  - (x == max_incl)
+//
+// When max_incl >  4096, the other constraints are:
+//  - (x == max_incl) or (x is a power of 2)
+//  - (x >= 4096)
+uint64_t  //
+DynIOBuffer::round_up(uint64_t min_incl, uint64_t max_incl) {
+  if (min_incl > max_incl) {
+    return 0;
+  }
+  uint64_t n = 4096;
+  if (n >= max_incl) {
+    return max_incl;
+  }
+  while (n < min_incl) {
+    if (n >= (max_incl / 2)) {
+      return max_incl;
+    }
+    n *= 2;
+  }
+  return n;
+}
+
+// --------
+
 Input::~Input() {}
 
 IOBuffer*  //
@@ -39929,6 +40770,151 @@ MemoryInput::CopyIn(IOBuffer* dst) {
 
 }  // namespace sync_io
 
+namespace private_impl {
+
+const char ErrMsg_MaxInclMetadataLengthExceeded[] =  //
+    "wuffs_aux::private_impl: max_incl_metadata_length exceeded";
+const char ErrMsg_OutOfMemory[] =  //
+    "wuffs_aux::private_impl: out of memory";
+const char ErrMsg_UnexpectedEndOfFile[] =  //
+    "wuffs_aux::private_impl: unexpected end of file";
+const char ErrMsg_UnsupportedMetadata[] =  //
+    "wuffs_aux::private_impl: unsupported metadata";
+const char ErrMsg_UnsupportedNegativeAdvance[] =  //
+    "wuffs_aux::private_impl: unsupported negative advance";
+
+std::string  //
+AdvanceIOBufferTo(sync_io::Input& input,
+                  IOBuffer& io_buf,
+                  uint64_t absolute_position) {
+  if (absolute_position < io_buf.reader_position()) {
+    return ErrMsg_UnsupportedNegativeAdvance;
+  }
+  while (true) {
+    uint64_t relative_position = absolute_position - io_buf.reader_position();
+    if (relative_position <= io_buf.reader_length()) {
+      io_buf.meta.ri += (size_t)relative_position;
+      break;
+    } else if (io_buf.meta.closed) {
+      return ErrMsg_UnexpectedEndOfFile;
+    }
+    io_buf.meta.ri = io_buf.meta.wi;
+    if (!input.BringsItsOwnIOBuffer()) {
+      io_buf.compact();
+    }
+    std::string error_message = input.CopyIn(&io_buf);
+    if (!error_message.empty()) {
+      return error_message;
+    }
+  }
+  return "";
+}
+
+std::string  //
+HandleMetadata(
+    sync_io::Input& input,
+    wuffs_base__io_buffer& io_buf,
+    uint64_t max_incl_metadata_length,
+    wuffs_base__status (*tell_me_more_func)(void*,
+                                            wuffs_base__io_buffer*,
+                                            wuffs_base__more_information*,
+                                            wuffs_base__io_buffer*),
+    void* tell_me_more_receiver,
+    std::string (*handle_metadata_func)(void*,
+                                        const wuffs_base__more_information*,
+                                        wuffs_base__slice_u8),
+    void* handle_metadata_receiver) {
+  wuffs_base__more_information minfo = wuffs_base__empty_more_information();
+  sync_io::DynIOBuffer raw(max_incl_metadata_length);
+
+  while (true) {
+    minfo = wuffs_base__empty_more_information();
+    wuffs_base__status status = (*tell_me_more_func)(
+        tell_me_more_receiver, &raw.m_buf, &minfo, &io_buf);
+    switch (minfo.flavor) {
+      case 0:
+      case WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA_RAW_TRANSFORM:
+      case WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA_PARSED:
+        break;
+
+      case WUFFS_BASE__MORE_INFORMATION__FLAVOR__METADATA_RAW_PASSTHROUGH: {
+        wuffs_base__range_ie_u64 r = minfo.metadata_raw_passthrough__range();
+        if (r.is_empty()) {
+          break;
+        }
+        uint64_t num_to_copy = r.length();
+        if (num_to_copy > (max_incl_metadata_length - raw.m_buf.meta.wi)) {
+          return ErrMsg_MaxInclMetadataLengthExceeded;
+        } else if (num_to_copy > (raw.m_buf.data.len - raw.m_buf.meta.wi)) {
+          switch (raw.grow(num_to_copy + raw.m_buf.meta.wi)) {
+            case sync_io::DynIOBuffer::GrowResult::OK:
+              break;
+            case sync_io::DynIOBuffer::GrowResult::FailedMaxInclExceeded:
+              return ErrMsg_MaxInclMetadataLengthExceeded;
+            case sync_io::DynIOBuffer::GrowResult::FailedOutOfMemory:
+              return ErrMsg_OutOfMemory;
+          }
+        }
+
+        if (io_buf.reader_position() > r.min_incl) {
+          return ErrMsg_UnsupportedMetadata;
+        } else {
+          std::string error_message =
+              AdvanceIOBufferTo(input, io_buf, r.min_incl);
+          if (!error_message.empty()) {
+            return error_message;
+          }
+        }
+
+        while (true) {
+          uint64_t n =
+              wuffs_base__u64__min(num_to_copy, io_buf.reader_length());
+          memcpy(raw.m_buf.writer_pointer(), io_buf.reader_pointer(), n);
+          raw.m_buf.meta.wi += n;
+          io_buf.meta.ri += n;
+          num_to_copy -= n;
+          if (num_to_copy == 0) {
+            break;
+          } else if (io_buf.meta.closed) {
+            return ErrMsg_UnexpectedEndOfFile;
+          } else if (!input.BringsItsOwnIOBuffer()) {
+            io_buf.compact();
+          }
+          std::string error_message = input.CopyIn(&io_buf);
+          if (!error_message.empty()) {
+            return error_message;
+          }
+        }
+        break;
+      }
+
+      default:
+        return ErrMsg_UnsupportedMetadata;
+    }
+
+    if (status.repr == nullptr) {
+      break;
+    } else if (status.repr != wuffs_base__suspension__even_more_information) {
+      if (status.repr != wuffs_base__suspension__short_write) {
+        return status.message();
+      }
+      switch (raw.grow(wuffs_base__u64__sat_add(raw.m_buf.data.len, 1))) {
+        case sync_io::DynIOBuffer::GrowResult::OK:
+          break;
+        case sync_io::DynIOBuffer::GrowResult::FailedMaxInclExceeded:
+          return ErrMsg_MaxInclMetadataLengthExceeded;
+        case sync_io::DynIOBuffer::GrowResult::FailedOutOfMemory:
+          return ErrMsg_OutOfMemory;
+      }
+    }
+  }
+
+  return (*handle_metadata_func)(handle_metadata_receiver, &minfo,
+                                 raw.m_buf.reader_slice());
+}
+
+}  // namespace private_impl
+
 }  // namespace wuffs_aux
 
 #endif  // !defined(WUFFS_CONFIG__MODULES) ||
@@ -39954,10 +40940,21 @@ DecodeCborCallbacks::Done(DecodeCborResult& result,
                           sync_io::Input& input,
                           IOBuffer& buffer) {}
 
+DecodeCborArgQuirks::DecodeCborArgQuirks(wuffs_base__slice_u32 repr0)
+    : repr(repr0) {}
+
+DecodeCborArgQuirks::DecodeCborArgQuirks(uint32_t* ptr0, size_t len0)
+    : repr(wuffs_base__make_slice_u32(ptr0, len0)) {}
+
+DecodeCborArgQuirks  //
+DecodeCborArgQuirks::DefaultValue() {
+  return DecodeCborArgQuirks(wuffs_base__empty_slice_u32());
+}
+
 DecodeCborResult  //
 DecodeCbor(DecodeCborCallbacks& callbacks,
            sync_io::Input& input,
-           wuffs_base__slice_u32 quirks) {
+           DecodeCborArgQuirks quirks) {
   // Prepare the wuffs_base__io_buffer and the resultant error_message.
   wuffs_base__io_buffer* io_buf = input.BringsItsOwnIOBuffer();
   wuffs_base__io_buffer fallback_io_buf = wuffs_base__empty_io_buffer();
@@ -39980,8 +40977,8 @@ DecodeCbor(DecodeCborCallbacks& callbacks,
       ret_error_message = "wuffs_aux::DecodeCbor: out of memory";
       goto done;
     }
-    for (size_t i = 0; i < quirks.len; i++) {
-      dec->set_quirk_enabled(quirks.ptr[i], true);
+    for (size_t i = 0; i < quirks.repr.len; i++) {
+      dec->set_quirk_enabled(quirks.repr.ptr[i], true);
     }
 
     // Prepare the wuffs_base__tok_buffer. 256 tokens is 2KiB.
@@ -40366,6 +41363,12 @@ DecodeImageCallbacks::SelectDecoder(uint32_t fourcc,
   return wuffs_base__image_decoder::unique_ptr(nullptr, &free);
 }
 
+std::string  //
+DecodeImageCallbacks::HandleMetadata(const wuffs_base__more_information& minfo,
+                                     wuffs_base__slice_u8 raw) {
+  return "";
+}
+
 wuffs_base__pixel_format  //
 DecodeImageCallbacks::SelectPixfmt(
     const wuffs_base__image_config& image_config) {
@@ -40430,12 +41433,16 @@ const char DecodeImage_BufferIsTooShort[] =  //
     "wuffs_aux::DecodeImage: buffer is too short";
 const char DecodeImage_MaxInclDimensionExceeded[] =  //
     "wuffs_aux::DecodeImage: max_incl_dimension exceeded";
+const char DecodeImage_MaxInclMetadataLengthExceeded[] =  //
+    "wuffs_aux::DecodeImage: max_incl_metadata_length exceeded";
 const char DecodeImage_OutOfMemory[] =  //
     "wuffs_aux::DecodeImage: out of memory";
 const char DecodeImage_UnexpectedEndOfFile[] =  //
     "wuffs_aux::DecodeImage: unexpected end of file";
 const char DecodeImage_UnsupportedImageFormat[] =  //
     "wuffs_aux::DecodeImage: unsupported image format";
+const char DecodeImage_UnsupportedMetadata[] =  //
+    "wuffs_aux::DecodeImage: unsupported metadata";
 const char DecodeImage_UnsupportedPixelBlend[] =  //
     "wuffs_aux::DecodeImage: unsupported pixel blend";
 const char DecodeImage_UnsupportedPixelConfiguration[] =  //
@@ -40443,38 +41450,115 @@ const char DecodeImage_UnsupportedPixelConfiguration[] =  //
 const char DecodeImage_UnsupportedPixelFormat[] =  //
     "wuffs_aux::DecodeImage: unsupported pixel format";
 
+DecodeImageArgQuirks::DecodeImageArgQuirks(wuffs_base__slice_u32 repr0)
+    : repr(repr0) {}
+
+DecodeImageArgQuirks::DecodeImageArgQuirks(uint32_t* ptr0, size_t len0)
+    : repr(wuffs_base__make_slice_u32(ptr0, len0)) {}
+
+DecodeImageArgQuirks  //
+DecodeImageArgQuirks::DefaultValue() {
+  return DecodeImageArgQuirks(wuffs_base__empty_slice_u32());
+}
+
+DecodeImageArgFlags::DecodeImageArgFlags(uint64_t repr0) : repr(repr0) {}
+
+DecodeImageArgFlags  //
+DecodeImageArgFlags::DefaultValue() {
+  return DecodeImageArgFlags(0);
+}
+
+DecodeImageArgPixelBlend::DecodeImageArgPixelBlend(
+    wuffs_base__pixel_blend repr0)
+    : repr(repr0) {}
+
+DecodeImageArgPixelBlend  //
+DecodeImageArgPixelBlend::DefaultValue() {
+  return DecodeImageArgPixelBlend(WUFFS_BASE__PIXEL_BLEND__SRC);
+}
+
+DecodeImageArgBackgroundColor::DecodeImageArgBackgroundColor(
+    wuffs_base__color_u32_argb_premul repr0)
+    : repr(repr0) {}
+
+DecodeImageArgBackgroundColor  //
+DecodeImageArgBackgroundColor::DefaultValue() {
+  return DecodeImageArgBackgroundColor(1);
+}
+
+DecodeImageArgMaxInclDimension::DecodeImageArgMaxInclDimension(uint32_t repr0)
+    : repr(repr0) {}
+
+DecodeImageArgMaxInclDimension  //
+DecodeImageArgMaxInclDimension::DefaultValue() {
+  return DecodeImageArgMaxInclDimension(1048575);
+}
+
+DecodeImageArgMaxInclMetadataLength::DecodeImageArgMaxInclMetadataLength(
+    uint64_t repr0)
+    : repr(repr0) {}
+
+DecodeImageArgMaxInclMetadataLength  //
+DecodeImageArgMaxInclMetadataLength::DefaultValue() {
+  return DecodeImageArgMaxInclMetadataLength(16777215);
+}
+
 // --------
 
 namespace {
 
 std::string  //
-DecodeImageAdvanceIOBuf(sync_io::Input& input,
-                        wuffs_base__io_buffer& io_buf,
-                        bool compactable,
-                        uint64_t min_excl_pos,
-                        uint64_t pos) {
-  if ((pos <= min_excl_pos) || (pos < io_buf.reader_position())) {
-    // Redirects must go forward.
-    return DecodeImage_UnsupportedImageFormat;
-  }
-  while (true) {
-    uint64_t relative_pos = pos - io_buf.reader_position();
-    if (relative_pos <= io_buf.reader_length()) {
-      io_buf.meta.ri += (size_t)relative_pos;
-      break;
-    } else if (io_buf.meta.closed) {
+DecodeImageErrorMessage(std::string s) {
+  if (!s.empty()) {
+    if (s == private_impl::ErrMsg_MaxInclMetadataLengthExceeded) {
+      return DecodeImage_MaxInclMetadataLengthExceeded;
+    } else if (s == private_impl::ErrMsg_OutOfMemory) {
+      return DecodeImage_OutOfMemory;
+    } else if (s == private_impl::ErrMsg_UnexpectedEndOfFile) {
       return DecodeImage_UnexpectedEndOfFile;
-    }
-    io_buf.meta.ri = io_buf.meta.wi;
-    if (compactable) {
-      io_buf.compact();
-    }
-    std::string error_message = input.CopyIn(&io_buf);
-    if (!error_message.empty()) {
-      return error_message;
+    } else if (s == private_impl::ErrMsg_UnsupportedMetadata) {
+      return DecodeImage_UnsupportedMetadata;
+    } else if (s == private_impl::ErrMsg_UnsupportedNegativeAdvance) {
+      return DecodeImage_UnsupportedImageFormat;
     }
   }
-  return "";
+  return s;
+}
+
+std::string  //
+DecodeImageAdvanceIOBufferTo(sync_io::Input& input,
+                             wuffs_base__io_buffer& io_buf,
+                             uint64_t absolute_position) {
+  return DecodeImageErrorMessage(
+      private_impl::AdvanceIOBufferTo(input, io_buf, absolute_position));
+}
+
+wuffs_base__status  //
+DIHM0(void* self,
+      wuffs_base__io_buffer* a_dst,
+      wuffs_base__more_information* a_minfo,
+      wuffs_base__io_buffer* a_src) {
+  return wuffs_base__image_decoder__tell_me_more(
+      static_cast<wuffs_base__image_decoder*>(self), a_dst, a_minfo, a_src);
+}
+
+std::string  //
+DIHM1(void* self,
+      const wuffs_base__more_information* minfo,
+      wuffs_base__slice_u8 raw) {
+  return static_cast<DecodeImageCallbacks*>(self)->HandleMetadata(*minfo, raw);
+}
+
+std::string  //
+DecodeImageHandleMetadata(wuffs_base__image_decoder::unique_ptr& image_decoder,
+                          DecodeImageCallbacks& callbacks,
+                          sync_io::Input& input,
+                          wuffs_base__io_buffer& io_buf,
+                          uint64_t max_incl_metadata_length) {
+  return DecodeImageErrorMessage(private_impl::HandleMetadata(
+      input, io_buf, max_incl_metadata_length, DIHM0,
+      static_cast<void*>(image_decoder.get()), DIHM1,
+      static_cast<void*>(&callbacks)));
 }
 
 DecodeImageResult  //
@@ -40482,9 +41566,12 @@ DecodeImage0(wuffs_base__image_decoder::unique_ptr& image_decoder,
              DecodeImageCallbacks& callbacks,
              sync_io::Input& input,
              wuffs_base__io_buffer& io_buf,
+             wuffs_base__slice_u32 quirks,
+             uint64_t flags,
              wuffs_base__pixel_blend pixel_blend,
              wuffs_base__color_u32_argb_premul background_color,
-             uint32_t max_incl_dimension) {
+             uint32_t max_incl_dimension,
+             uint64_t max_incl_metadata_length) {
   // Check args.
   switch (pixel_blend) {
     case WUFFS_BASE__PIXEL_BLEND__SRC:
@@ -40529,8 +41616,12 @@ redirect:
         return DecodeImageResult(DecodeImage_UnsupportedImageFormat);
       }
       uint64_t pos = minfo.io_redirect__range().min_incl;
-      std::string error_message = DecodeImageAdvanceIOBuf(
-          input, io_buf, !input.BringsItsOwnIOBuffer(), start_pos, pos);
+      if (pos <= start_pos) {
+        // Redirects must go forward.
+        return DecodeImageResult(DecodeImage_UnsupportedImageFormat);
+      }
+      std::string error_message =
+          DecodeImageAdvanceIOBufferTo(input, io_buf, pos);
       if (!error_message.empty()) {
         return DecodeImageResult(std::move(error_message));
       }
@@ -40549,6 +41640,30 @@ redirect:
       return DecodeImageResult(DecodeImage_UnsupportedImageFormat);
     }
 
+    // Apply quirks.
+    for (size_t i = 0; i < quirks.len; i++) {
+      image_decoder->set_quirk_enabled(quirks.ptr[i], true);
+    }
+
+    // Apply flags.
+    if (flags != 0) {
+      if (flags & DecodeImageArgFlags::REPORT_METADATA_CHRM) {
+        image_decoder->set_report_metadata(WUFFS_BASE__FOURCC__CHRM, true);
+      }
+      if (flags & DecodeImageArgFlags::REPORT_METADATA_GAMA) {
+        image_decoder->set_report_metadata(WUFFS_BASE__FOURCC__GAMA, true);
+      }
+      if (flags & DecodeImageArgFlags::REPORT_METADATA_ICCP) {
+        image_decoder->set_report_metadata(WUFFS_BASE__FOURCC__ICCP, true);
+      }
+      if (flags & DecodeImageArgFlags::REPORT_METADATA_SRGB) {
+        image_decoder->set_report_metadata(WUFFS_BASE__FOURCC__SRGB, true);
+      }
+      if (flags & DecodeImageArgFlags::REPORT_METADATA_XMP) {
+        image_decoder->set_report_metadata(WUFFS_BASE__FOURCC__XMP, true);
+      }
+    }
+
     // Decode the image config.
     while (true) {
       wuffs_base__status id_dic_status =
@@ -40561,6 +41676,12 @@ redirect:
         }
         redirected = true;
         goto redirect;
+      } else if (id_dic_status.repr == wuffs_base__note__metadata_reported) {
+        std::string error_message = DecodeImageHandleMetadata(
+            image_decoder, callbacks, input, io_buf, max_incl_metadata_length);
+        if (!error_message.empty()) {
+          return DecodeImageResult(std::move(error_message));
+        }
       } else if (id_dic_status.repr != wuffs_base__suspension__short_read) {
         return DecodeImageResult(id_dic_status.message());
       } else if (io_buf.meta.closed) {
@@ -40683,9 +41804,12 @@ redirect:
 DecodeImageResult  //
 DecodeImage(DecodeImageCallbacks& callbacks,
             sync_io::Input& input,
-            wuffs_base__pixel_blend pixel_blend,
-            wuffs_base__color_u32_argb_premul background_color,
-            uint32_t max_incl_dimension) {
+            DecodeImageArgQuirks quirks,
+            DecodeImageArgFlags flags,
+            DecodeImageArgPixelBlend pixel_blend,
+            DecodeImageArgBackgroundColor background_color,
+            DecodeImageArgMaxInclDimension max_incl_dimension,
+            DecodeImageArgMaxInclMetadataLength max_incl_metadata_length) {
   wuffs_base__io_buffer* io_buf = input.BringsItsOwnIOBuffer();
   wuffs_base__io_buffer fallback_io_buf = wuffs_base__empty_io_buffer();
   std::unique_ptr<uint8_t[]> fallback_io_array(nullptr);
@@ -40698,8 +41822,9 @@ DecodeImage(DecodeImageCallbacks& callbacks,
 
   wuffs_base__image_decoder::unique_ptr image_decoder(nullptr, &free);
   DecodeImageResult result =
-      DecodeImage0(image_decoder, callbacks, input, *io_buf, pixel_blend,
-                   background_color, max_incl_dimension);
+      DecodeImage0(image_decoder, callbacks, input, *io_buf, quirks.repr,
+                   flags.repr, pixel_blend.repr, background_color.repr,
+                   max_incl_dimension.repr, max_incl_metadata_length.repr);
   callbacks.Done(result, input, *io_buf, std::move(image_decoder));
   return result;
 }
@@ -40733,6 +41858,25 @@ const char DecodeJson_BadJsonPointer[] =  //
     "wuffs_aux::DecodeJson: bad JSON Pointer";
 const char DecodeJson_NoMatch[] =  //
     "wuffs_aux::DecodeJson: no match";
+
+DecodeJsonArgQuirks::DecodeJsonArgQuirks(wuffs_base__slice_u32 repr0)
+    : repr(repr0) {}
+
+DecodeJsonArgQuirks::DecodeJsonArgQuirks(uint32_t* ptr0, size_t len0)
+    : repr(wuffs_base__make_slice_u32(ptr0, len0)) {}
+
+DecodeJsonArgQuirks  //
+DecodeJsonArgQuirks::DefaultValue() {
+  return DecodeJsonArgQuirks(wuffs_base__empty_slice_u32());
+}
+
+DecodeJsonArgJsonPointer::DecodeJsonArgJsonPointer(std::string repr0)
+    : repr(repr0) {}
+
+DecodeJsonArgJsonPointer  //
+DecodeJsonArgJsonPointer::DefaultValue() {
+  return DecodeJsonArgJsonPointer(std::string());
+}
 
 // --------
 
@@ -41039,8 +42183,8 @@ done:
 DecodeJsonResult  //
 DecodeJson(DecodeJsonCallbacks& callbacks,
            sync_io::Input& input,
-           wuffs_base__slice_u32 quirks,
-           std::string json_pointer) {
+           DecodeJsonArgQuirks quirks,
+           DecodeJsonArgJsonPointer json_pointer) {
   // Prepare the wuffs_base__io_buffer and the resultant error_message.
   wuffs_base__io_buffer* io_buf = input.BringsItsOwnIOBuffer();
   wuffs_base__io_buffer fallback_io_buf = wuffs_base__empty_io_buffer();
@@ -41068,9 +42212,9 @@ DecodeJson(DecodeJsonCallbacks& callbacks,
       goto done;
     }
     bool allow_tilde_n_tilde_r_tilde_t = false;
-    for (size_t i = 0; i < quirks.len; i++) {
-      dec->set_quirk_enabled(quirks.ptr[i], true);
-      if (quirks.ptr[i] ==
+    for (size_t i = 0; i < quirks.repr.len; i++) {
+      dec->set_quirk_enabled(quirks.repr.ptr[i], true);
+      if (quirks.repr.ptr[i] ==
           WUFFS_JSON__QUIRK_JSON_POINTER_ALLOW_TILDE_N_TILDE_R_TILDE_T) {
         allow_tilde_n_tilde_r_tilde_t = true;
       }
@@ -41089,13 +42233,13 @@ DecodeJson(DecodeJsonCallbacks& callbacks,
     std::string str;
 
     // Walk the (optional) JSON Pointer.
-    for (size_t i = 0; i < json_pointer.size();) {
-      if (json_pointer[i] != '/') {
+    for (size_t i = 0; i < json_pointer.repr.size();) {
+      if (json_pointer.repr[i] != '/') {
         ret_error_message = DecodeJson_BadJsonPointer;
         goto done;
       }
       std::pair<std::string, size_t> split = DecodeJson_SplitJsonPointer(
-          json_pointer, i + 1, allow_tilde_n_tilde_r_tilde_t);
+          json_pointer.repr, i + 1, allow_tilde_n_tilde_r_tilde_t);
       i = split.second;
       if (i == 0) {
         ret_error_message = DecodeJson_BadJsonPointer;
@@ -41256,7 +42400,7 @@ DecodeJson(DecodeJsonCallbacks& callbacks,
       // loop running until WUFFS_AUX__DECODE_JSON__GET_THE_NEXT_TOKEN's
       // decode_tokens returns an ok status.
       if (!ret_error_message.empty() ||
-          ((depth == 0) && !json_pointer.empty())) {
+          ((depth == 0) && !json_pointer.repr.empty())) {
         goto done;
       }
     }
