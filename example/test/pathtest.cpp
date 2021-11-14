@@ -25,13 +25,19 @@ void print(const Path& path, const std::string& correct_path)
     for (auto node : path)
     {
         if (node.isDirectory())
-            printf("      > %s \n", node.name.c_str());
+            printf("      > %s : (directory)\n", node.name.c_str());
+    }
+
+    for (auto node : path)
+    {
+        if (node.isContainer())
+            printf("      > %s : (container)\n", node.name.c_str());
     }
 
     for (auto node : path)
     {
         if (!node.isDirectory())
-            printf("      > %s \n", node.name.c_str());
+            printf("      > %s (file: %d KB)\n", node.name.c_str(), int(node.size / 1024));
     }
     printf("\n");
 }
