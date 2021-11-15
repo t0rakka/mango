@@ -19,55 +19,28 @@ namespace
 
     void unpack(Memory dest, ConstMemory source)
     {
-        size_t output = 0;
-        size_t input = 0;
+        const u8* s = source.address;
+        const u8* s_end = source.address + source.size;
 
-        for ( ; output < dest.size && input < source.size; )
+        u8* d = dest.address;
+        u8* d_end = dest.address + dest.size;
+
+        for ( ; d < d_end && s < s_end; )
         {
-            s8 n = source.address[input++];
-            if (n >= 0)
+            u8 n = *s++;
+            if (n > 128)
+            {
+                int count = 257 - n;
+                s8 value = *s++;
+                std::memset(d, value, count);
+                d += count;
+            }
+            else if (n < 128)
             {
                 int count = n + 1;
-
-                /*
-                if (input + count > source.size)
-                {
-                    return;
-                }
-
-                if (output + count > dest.size)
-                {
-                    return;
-                }
-                */
-
-                std::memcpy(dest.address + output, source.address + input, count);
-                input += count;
-                output += count;
-            }
-            else if (n == -128)
-            {
-                // NOP
-            }
-            else
-            {
-                int count = 1 - n;
-
-                /*
-                if (input + 1 > source.size)
-                {
-                    return;
-                }
-
-                if (output + count > dest.size)
-                {
-                    return;
-                }
-                */
-
-                s8 value = source.address[input++];
-                std::memset(dest.address + output, value, count);
-                output += count;
+                std::memcpy(d, s, count);
+                s += count;
+                d += count;
             }
         }
     }
@@ -292,7 +265,7 @@ namespace
                     format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5);
                     break;
                 case 3:
-                    format = Format(24, Format::UNORM, Format::BGR, 8, 8, 8);
+                    format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8);
                     break;
                 case 4:
                     format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
