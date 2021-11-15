@@ -43,7 +43,12 @@ void print(const Path& path, const std::string& correct_path)
         for (auto node : path)
         {
             if (!node.isDirectory())
-                printf("      > %s    (file: %d KB)\n", node.name.c_str(), int(node.size / 1024));
+            {
+                const char* str_compressed = node.isCompressed() ? "+Compressed " : "";
+                const char* str_encrypted = node.isEncrypted() ? "+Encrypted " : "";
+                printf("      > %s    (file: %d KB) %s%s\n", node.name.c_str(), int(node.size / 1024),
+                    str_compressed, str_encrypted);
+            }
         }
     }
 
