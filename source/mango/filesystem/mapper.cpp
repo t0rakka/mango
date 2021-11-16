@@ -87,6 +87,11 @@ namespace mango::filesystem
     {
     }
 
+    bool FileInfo::isFile() const
+    {
+        return (flags & DIRECTORY) == 0;
+    }
+
     bool FileInfo::isDirectory() const
     {
         return (flags & DIRECTORY) != 0;

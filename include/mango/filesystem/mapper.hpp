@@ -30,6 +30,7 @@ namespace mango::filesystem
         FileInfo(const std::string& name, u64 size, u32 flags = 0);
         ~FileInfo();
 
+        bool isFile() const;
         bool isDirectory() const;
         bool isContainer() const;
         bool isCompressed() const;
