@@ -26,12 +26,10 @@ namespace mango::filesystem
     {
         CreateMapperFunc create;
         std::string extension;
-        std::string decorated;
 
         MapperExtension(CreateMapperFunc func, const std::string& extension)
             : create(func)
-            , extension(extension)
-            , decorated(extension + "/")
+            , extension(extension + "/")
         {
         }
 
@@ -57,7 +55,10 @@ namespace mango::filesystem
     {
         for (const auto& node : g_extensions)
         {
-            if (extension == node.extension)
+            std::string_view node_extension(node.extension);
+            node_extension.remove_suffix(1); // remove trailing '/'
+
+            if (extension == node_extension)
             {
                 return &node;
             }
@@ -191,11 +192,11 @@ namespace mango::filesystem
 
             for (const auto& node : g_extensions)
             {
-                size_t n = remain.find(node.decorated);
+                size_t n = remain.find(node.extension);
                 if (n != std::string::npos)
                 {
                     // update string position to skip extension (example: ".zip/")
-                    n += node.decorated.length();
+                    n += node.extension.length();
 
                     // resolve container filename (example: "foo/bar/data.zip")
                     std::string container = pathname.substr(offset, n - 1);
