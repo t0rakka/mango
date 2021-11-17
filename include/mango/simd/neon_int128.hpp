@@ -2077,30 +2077,15 @@ namespace mango::simd
         return bitwise_not(u8x16(a)).data;
     }
 
+#ifdef __aarch64__
+
     static inline u32 get_mask(mask8x16 a)
     {
-        // NOTE: The first variant doesn't work but would be in-register so fixing it should be looked into
-#if 0
-        // a: 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111
-        // b: 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001 00000001
-        // c: 00000000 00000011 00000000 00000011 00000000 00000011 00000000 00000011 00000000 00000011 00000000 00000011 00000000 00000011 00000000 00000011
-        // d: 00000000 00000000 00000000 00001111 00000000 00000000 00000000 00001111 00000000 00000000 00000000 00001111 00000000 00000000 00000000 00001111
-        // e: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 11111111 00000000 00000000 00000000 00000000 00000000 00000000 00000000 11111111
-        uint16x8_t b = vreinterpretq_u16_u8(vshrq_n_u8(a, 7));
-        uint32x4_t c = vreinterpretq_u32_u16(vsraq_n_u16(b, b, 7));
-        uint64x2_t d = vreinterpretq_u64_u32(vsraq_n_u32(c, c, 14));
-        uint32x4_t e = vreinterpretq_u32_u64(vsraq_n_u64(d, d, 28));
-        u32 mask = vgetq_lane_u32(e, 0) | (vgetq_lane_u32(e, 2) << 8);
-        return mask;
-#else
         const uint8x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
         uint8x8_t a0 = vand_u8(vget_low_u8(a), weights);
         uint8x8_t a1 = vand_u8(vget_high_u8(a), weights);
-        return vaddv_u8(a0) + (vaddv_u8(a1) << 8);
-#endif
+        return vaddv_u8(a0) | (vaddv_u8(a1) << 8);
     }
-
-#ifdef __aarch64__
 
     static inline bool none_of(mask8x16 a)
     {
@@ -2118,6 +2103,21 @@ namespace mango::simd
     }
 
 #else
+
+    static inline u32 get_mask(mask8x16 a)
+    {
+        // NOTE: vaddv_u8 is missing from NDK r23 headers for 32 bit ARM
+        const uint8x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
+        uint8x8_t a0 = vand_u8(vget_low_u8(a), weights);
+        uint8x8_t a1 = vand_u8(vget_high_u8(a), weights);
+        uint16x4_t b0 = vpaddl_u8(a0);
+        uint16x4_t b1 = vpaddl_u8(a1);
+        uint32x2_t c0 = vpaddl_u16(b0);
+        uint32x2_t c1 = vpaddl_u16(b1);
+        u32 mask0 = vget_lane_u32(c0, 0) | vget_lane_u32(c0, 1);
+        u32 mask1 = vget_lane_u32(c1, 0) | vget_lane_u32(c1, 1);
+        return mask0 | (mask1 << 8);
+    }
 
     static inline bool none_of(mask8x16 a)
     {
@@ -2163,27 +2163,14 @@ namespace mango::simd
         return bitwise_not(u16x8(a)).data;
     }
 
+#ifdef __aarch64__
+
     static inline u32 get_mask(mask16x8 a)
     {
-        // NOTE: The first variant doesn't work but would be in-register so fixing it should be looked into
-#if 0
-        // a: 1111111111111111 1111111111111111 1111111111111111 1111111111111111 1111111111111111 1111111111111111 1111111111111111 1111111111111111
-        // b: 0000000000000001 0000000000000001 0000000000000001 0000000000000001 0000000000000001 0000000000000001 0000000000000001 0000000000000001
-        // c: 0000000000000000 0000000000000011 0000000000000000 0000000000000011 0000000000000000 0000000000000011 0000000000000000 0000000000000011
-        // d: 0000000000000000 0000000000000000 0000000000000000 0000000000001111 0000000000000000 0000000000000000 0000000000000000 0000000000001111
-        uint32x4_t b = vreinterpretq_u32_u16(vshrq_n_u16(a, 15));
-        uint64x2_t c = vreinterpretq_u64_u32(vsraq_n_u32(b, b, 15));
-        uint32x4_t d = vreinterpretq_u32_u64(vsraq_n_u64(c, c, 30));
-        u32 mask = vgetq_lane_u32(d, 0) | (vgetq_lane_u32(d, 2) << 4);
-        return mask;
-#else
         const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
         a = vandq_u16(a, weights);
         return vaddvq_u16(a);
-#endif
     }
-
-#ifdef __aarch64__
 
     static inline bool none_of(mask16x8 a)
     {
@@ -2201,6 +2188,17 @@ namespace mango::simd
     }
 
 #else
+
+    static inline u32 get_mask(mask16x8 a)
+    {
+        // NOTE: vaddvq_u16 is missing from NDK r23 headers for 32 bit ARM
+        const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
+        a = vandq_u16(a, weights);
+        uint32x4_t b = vpaddlq_u16(a);
+        u32 mask = vgetq_lane_u32(b, 0) | vgetq_lane_u32(b, 1) |
+                   vgetq_lane_u32(b, 2) | vgetq_lane_u32(b, 3);
+        return mask;
+    }
 
     static inline bool none_of(mask16x8 a)
     {
