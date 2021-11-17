@@ -31,6 +31,9 @@ enable_bmi       = get_option('enable_bmi')
 enable_bmi2      = get_option('enable_bmi2')
 enable_fma       = get_option('enable_fma')
 
+is_arm = host_machine.cpu_family() == 'arm' or host_machine.cpu_family() == 'aarch64'
+is_x86 = host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
+
 mango_public_cpp_args = []
 mango_interface_cpp_args = []
 
@@ -553,6 +556,7 @@ external_lzfse_sources = files(
 external_lzo_sources = files(
     '../source/external/lzo/minilzo.c'
 )
+
 external_deflate_sources = files(
     '../source/external/libdeflate/lib/deflate_compress.c',
     '../source/external/libdeflate/lib/deflate_decompress.c',
@@ -563,9 +567,20 @@ external_deflate_sources = files(
     '../source/external/libdeflate/lib/libd_utils.c',
     '../source/external/libdeflate/lib/zlib_compress.c',
     '../source/external/libdeflate/lib/zlib_decompress.c',
-    '../source/external/libdeflate/lib/x86/cpu_x86_features.c',
-    '../source/external/libdeflate/lib/arm/cpu_arm_features.c'
 )
+
+if is_arm
+    external_deflate_sources += files(
+        '../source/external/libdeflate/lib/arm/cpu_arm_features.c'
+    )
+endif
+
+if is_x86
+    external_deflate_sources += files(
+        '../source/external/libdeflate/lib/x86/cpu_x86_features.c',
+    )
+endif
+
 external_unrar_sources = files(
     '../source/external/unrar/crc.cpp',
     '../source/external/unrar/crypt.cpp',
@@ -763,7 +778,7 @@ else
         endif
     endif
 
-    if host_machine.cpu_family() == 'x86'  or host_machine.cpu_family() == 'x86'
+    if host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
         # enable AES (2008) by default
         add_project_arguments('-maes', language: ['c', 'cpp'])
 
