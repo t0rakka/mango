@@ -34,6 +34,9 @@ enable_fma       = get_option('enable_fma')
 is_arm = host_machine.cpu_family() == 'arm' or host_machine.cpu_family() == 'aarch64'
 is_x86 = host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
 
+is_windows = host_machine.system() == 'windows'
+is_darwin = host_machine.system() == 'darwin'
+
 mango_public_cpp_args = []
 mango_interface_cpp_args = []
 
@@ -217,6 +220,17 @@ core_sources = files(
     '../source/mango/core/thread.cpp',
     '../source/mango/core/timer.cpp'
 )
+
+if is_windows
+    core_sources += files(
+        '../source/mango/core/win32/dynamic_library.cpp'
+    )
+else
+    core_sources += files(
+        '../source/mango/core/unix/dynamic_library.cpp'
+    )
+endif
+
 filesystem_sources = files(
     '../source/mango/filesystem/file.cpp',
     '../source/mango/filesystem/mapper.cpp',
@@ -225,33 +239,33 @@ filesystem_sources = files(
     '../source/mango/filesystem/mapper_zip.cpp',
     '../source/mango/filesystem/path.cpp'
 )
-opengl_sources = files(
-    '../source/mango/opengl/opengl.cpp'
-)
-if host_machine.system() == 'windows'
-    core_sources += files(
-        '../source/mango/core/win32/dynamic_library.cpp'
-    )
+
+if is_windows
     filesystem_sources += files(
         '../source/mango/filesystem/win32/file_observer.cpp',
         '../source/mango/filesystem/win32/file_stream.cpp',
         '../source/mango/filesystem/win32/mapper_file.cpp'
     )
+else
+    filesystem_sources += files(
+        '../source/mango/filesystem/unix/file_observer.cpp',
+        '../source/mango/filesystem/unix/file_stream.cpp',
+        '../source/mango/filesystem/unix/mapper_file.cpp'
+    )
+endif
+
+opengl_sources = files(
+    '../source/mango/opengl/opengl.cpp'
+)
+
+if is_windows
     window_sources = files(
         '../source/mango/window/win32/win32_window.cpp'
     )
     opengl_sources += files(
         '../source/mango/opengl/wgl/wgl_context.cpp'
     )
-elif host_machine.system() == 'darwin'
-    core_sources += files(
-        '../source/mango/core/unix/dynamic_library.cpp'
-    )
-    filesystem_sources += files(
-        '../source/mango/filesystem/unix/file_observer.cpp',
-        '../source/mango/filesystem/unix/file_stream.cpp',
-        '../source/mango/filesystem/unix/mapper_file.cpp'
-    )
+elif is_darwin
     window_sources = files(
         '../source/mango/window/cocoa/cocoa_window.mm'
     )
@@ -260,14 +274,6 @@ elif host_machine.system() == 'darwin'
         '../source/mango/opengl/cocoa/CustomOpenGLView.mm'
     )
 else
-    core_sources += files(
-        '../source/mango/core/unix/dynamic_library.cpp'
-    )
-    filesystem_sources += files(
-        '../source/mango/filesystem/unix/file_observer.cpp',
-        '../source/mango/filesystem/unix/file_stream.cpp',
-        '../source/mango/filesystem/unix/mapper_file.cpp'
-    )
     window_sources = files(
         '../source/mango/window/xlib/xlib_window.cpp'
     )
@@ -308,6 +314,7 @@ image_sources = files(
     '../source/mango/image/quantize.cpp',
     '../source/mango/image/surface.cpp'
 )
+
 jpeg_sources = files(
     '../source/mango/jpeg/jpeg_arithmetic.cpp',
     '../source/mango/jpeg/jpeg_decode.cpp',
@@ -316,6 +323,7 @@ jpeg_sources = files(
     '../source/mango/jpeg/jpeg_idct.cpp',
     '../source/mango/jpeg/jpeg_process.cpp'
 )
+
 math_sources = files(
     '../source/mango/math/geometry.cpp',
     '../source/mango/math/math.cpp',
@@ -517,14 +525,17 @@ external_lzma_sources = files(
     '../source/external/lzma/Ppmd8Enc.c',
     '../source/external/lzma/Sort.c'
 )
+
 external_aes_sources = files(
     '../source/external/aes/bc_aes.cpp'
 )
+
 external_bc_sources = files(
     '../source/external/bc/BC4BC5.cpp',
     '../source/external/bc/BC6HBC7.cpp',
     '../source/external/bc/BC.cpp'
 )
+
 external_bzip2_sources = files(
     '../source/external/bzip2/bz_blocksort.c',
     '../source/external/bzip2/bz_compress.c',
@@ -534,6 +545,7 @@ external_bzip2_sources = files(
     '../source/external/bzip2/bzlib.c',
     '../source/external/bzip2/bz_randtable.c'
 )
+
 external_google_sources = files(
     '../source/external/google/astc.cpp',
     '../source/external/google/etc1.cpp',
@@ -544,6 +556,7 @@ external_lz4_sources = files(
     '../source/external/lz4/lz4.c',
     '../source/external/lz4/lz4hc.c'
 )
+
 external_lzfse_sources = files(
     '../source/external/lzfse/lzfse_decode_base.c',
     '../source/external/lzfse/lzfse_decode.c',
@@ -553,6 +566,7 @@ external_lzfse_sources = files(
     '../source/external/lzfse/lzvn_decode_base.c',
     '../source/external/lzfse/lzvn_encode_base.c',
 )
+
 external_lzo_sources = files(
     '../source/external/lzo/minilzo.c'
 )
@@ -573,9 +587,7 @@ if is_arm
     external_deflate_sources += files(
         '../source/external/libdeflate/lib/arm/cpu_arm_features.c'
     )
-endif
-
-if is_x86
+elif is_x86
     external_deflate_sources += files(
         '../source/external/libdeflate/lib/x86/cpu_x86_features.c',
     )
@@ -590,6 +602,7 @@ external_unrar_sources = files(
     '../source/external/unrar/rijndael.cpp',
     '../source/external/unrar/unpack.cpp'
 )
+
 external_zstd_sources = files(
     '../source/external/zstd/common/zstd_common.c',
     '../source/external/zstd/common/fse_decompress.c',
@@ -617,6 +630,7 @@ external_zstd_sources = files(
     '../source/external/zstd/decompress/zstd_decompress_block.c',
     '../source/external/zstd/decompress/zstd_ddict.c'
 )
+
 external_webp_sources = files(
     '../source/external/libwebp/src/demux/demux.c',
     '../source/external/libwebp/src/demux/anim_decode.c',
@@ -734,6 +748,7 @@ external_webp_sources = files(
     '../source/external/libwebp/src/utils/bit_reader_utils.c',
     '../source/external/libwebp/src/utils/random_utils.c'
 )
+
 external_zpng_sources = files(
     '../source/external/zpng/zpng.cpp'
 )
