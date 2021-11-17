@@ -785,12 +785,12 @@ else
         add_project_arguments('-ffast-math', language: ['c', 'cpp'])
     endif
 
-    if (host_machine.cpu_family() == 'arm' and enable_neon) or host_machine.cpu_family() == 'aarch64'
+    if host_machine.cpu_family() == 'arm' and enable_neon
         message('SIMD: NEON')
-        if (host_machine.cpu_family() == 'arm')
-            add_project_arguments('-mfpu=neon', '-mfloat-abi=hard', language: ['c', 'cpp'])
-            add_project_arguments('-fpermissive', '-Wno-psabi', language: ['c', 'cpp'])
-        endif
+        add_project_arguments('-mfpu=neon', '-mfloat-abi=hard', language: ['c', 'cpp'])
+        add_project_arguments('-fpermissive', '-Wno-psabi', language: ['c', 'cpp'])
+    elif host_machine.cpu_family() == 'aarch64'
+        message('SIMD: NEON64')
     endif
 
     if host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
