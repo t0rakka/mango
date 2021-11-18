@@ -2077,23 +2077,16 @@ namespace mango::simd
         return bitwise_not(u8x16(a)).data;
     }
 
-#ifdef __aarch64__
-
     static inline u32 get_mask(mask8x16 a)
     {
-        /*
-        const uint8x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
-        uint8x8_t a0 = vand_u8(vget_low_u8(a), weights);
-        uint8x8_t a1 = vand_u8(vget_high_u8(a), weights);
-        return vaddv_u8(a0) | (vaddv_u8(a1) << 8);
-        */
-
         uint16x8_t b = vreinterpretq_u16_u8(vshrq_n_u8(a, 7));
-        uint32x4_t p16 = vreinterpretq_u32_u16(vsraq_n_u16(b, b, 7));
-        uint64x2_t p32 = vreinterpretq_u64_u32(vsraq_n_u32(p16, p16, 14));
-        uint8x16_t p64 = vreinterpretq_u8_u64(vsraq_n_u64(p32, p32, 28));
-        return vgetq_lane_u8(p64, 0) | (vgetq_lane_u8(p64, 8) << 8);
+        uint32x4_t c = vreinterpretq_u32_u16(vsraq_n_u16(b, b, 7));
+        uint64x2_t d = vreinterpretq_u64_u32(vsraq_n_u32(c, c, 14));
+        uint8x16_t e = vreinterpretq_u8_u64(vsraq_n_u64(d, d, 28));
+        return vgetq_lane_u8(e, 0) | (vgetq_lane_u8(e, 8) << 8);
     }
+
+#ifdef __aarch64__
 
     static inline bool none_of(mask8x16 a)
     {
@@ -2111,21 +2104,6 @@ namespace mango::simd
     }
 
 #else
-
-    static inline u32 get_mask(mask8x16 a)
-    {
-        // NOTE: vaddv_u8 is missing from NDK r23 headers for 32 bit ARM
-        const uint8x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
-        uint8x8_t a0 = vand_u8(vget_low_u8(a), weights);
-        uint8x8_t a1 = vand_u8(vget_high_u8(a), weights);
-        uint16x4_t b0 = vpaddl_u8(a0);
-        uint16x4_t b1 = vpaddl_u8(a1);
-        uint32x2_t c0 = vpaddl_u16(b0);
-        uint32x2_t c1 = vpaddl_u16(b1);
-        u32 mask0 = vget_lane_u32(c0, 0) | vget_lane_u32(c0, 1);
-        u32 mask1 = vget_lane_u32(c1, 0) | vget_lane_u32(c1, 1);
-        return mask0 | (mask1 << 8);
-    }
 
     static inline bool none_of(mask8x16 a)
     {
@@ -2326,7 +2304,6 @@ namespace mango::simd
 
     static inline u32 get_mask(mask64x2 a)
     {
-        // TODO: Which one is faster in practise (first variant runs in registers)
 #if 1
         // a:  1111111111111111111111111111111111111111111111111111111111111111 1111111111111111111111111111111111111111111111111111111111111111
         // b:  0000000000000000000000000000000000000000000000000000000000000001 0000000000000000000000000000000000000000000000000000000000000001
