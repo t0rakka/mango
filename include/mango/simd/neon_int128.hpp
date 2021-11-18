@@ -2163,7 +2163,7 @@ namespace mango::simd
         return bitwise_not(u16x8(a)).data;
     }
 
-#ifdef __aarch64__
+#ifdef __aarch64__xxx
 
     static inline u32 get_mask(mask16x8 a)
     {
@@ -2195,9 +2195,27 @@ namespace mango::simd
         const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
         a = vandq_u16(a, weights);
         uint32x4_t b = vpaddlq_u16(a);
+
+        // 0000000010000000
+        // 0000000001000000
+        // 0000000000100000
+        // 0000000000010000
+        // 0000000000001000
+        // 0000000000000100
+        // 0000000000000010
+        // 0000000000000001
+
+        // 00000000000000000000000011000000
+        // 00000000000000000000000000110000
+        // 00000000000000000000000000001100
+        // 00000000000000000000000000000011
+#if 1
+        return vaddvq_u32(b);
+#else
         u32 mask = vgetq_lane_u32(b, 0) | vgetq_lane_u32(b, 1) |
                    vgetq_lane_u32(b, 2) | vgetq_lane_u32(b, 3);
         return mask;
+#endif
     }
 
     static inline bool none_of(mask16x8 a)
