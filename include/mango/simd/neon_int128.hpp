@@ -2088,7 +2088,7 @@ namespace mango::simd
         return vaddv_u8(a0) | (vaddv_u8(a1) << 8);
         */
         const uint8x16_t shift = { 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff, 0, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff, 0 };
-        a = vshlq_u8(a, vshift);
+        a = vshlq_u8(a, shift);
         return vaddv_u8(vget_low_u8(a)) | (vaddv_u8(vget_high_u8(a)) << 8);
     }
 
