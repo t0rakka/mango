@@ -2149,14 +2149,15 @@ namespace mango::simd
         return bitwise_not(u16x8(a)).data;
     }
 
-#ifdef __aarch64__
-
     static inline u32 get_mask(mask16x8 a)
     {
-        const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
-        a = vandq_u16(a, weights);
-        return vaddvq_u16(a);
+        uint32x4_t b = vreinterpretq_u32_u16(vshrq_n_u16(a, 15));
+        uint64x2_t c = vreinterpretq_u64_u32(vsraq_n_u32(b, b, 15));
+        uint8x16_t d = vreinterpretq_u8_u64(vsraq_n_u64(c, c, 30));
+        return vgetq_lane_u8(d, 0) | vgetq_lane_u8(d, 8) << 4;
     }
+
+#ifdef __aarch64__
 
     static inline bool none_of(mask16x8 a)
     {
@@ -2174,23 +2175,6 @@ namespace mango::simd
     }
 
 #else
-
-    static inline u32 get_mask(mask16x8 a)
-    {
-#if 0
-        const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
-        a = vandq_u16(a, weights);
-        uint32x4_t b = vpaddlq_u16(a);
-        uint64x2_t c = vpaddlq_u32(b);
-        return vgetq_lane_u64(c, 0) | vgetq_lane_u64(c, 1);
-#else
-        uint32x4_t b = vreinterpretq_u32_u16(vshrq_n_u16(a, 15));
-        uint64x2_t c = vreinterpretq_u64_u32(vsraq_n_u32(b, b, 15));
-        uint64x2_t d = vsraq_n_u64(c, c, 30);
-        uint8x16_t e = vreinterpretq_u8_u64(d);
-        return vgetq_lane_u8(e, 0) | vgetq_lane_u8(e, 8) << 4;
-#endif
-    }
 
     static inline bool none_of(mask16x8 a)
     {
@@ -2311,16 +2295,10 @@ namespace mango::simd
 
     static inline u32 get_mask(mask64x2 a)
     {
-#if 1
         // a:  1111111111111111111111111111111111111111111111111111111111111111 1111111111111111111111111111111111111111111111111111111111111111
         // b:  0000000000000000000000000000000000000000000000000000000000000001 0000000000000000000000000000000000000000000000000000000000000001
         uint32x4_t b = vreinterpretq_u32_u64(vshrq_n_u64(a, 63));
         return vgetq_lane_u32(b, 0) | (vgetq_lane_u32(b, 2) << 1);
-#else
-    const uint64x2_t weights = { 1, 2 };
-    a = vandq_u64(mask, weights);
-    return vaddvq_u64(a);
-#endif
     }
 
     static inline bool none_of(mask64x2 a)
