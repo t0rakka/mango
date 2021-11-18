@@ -2177,12 +2177,19 @@ namespace mango::simd
 
     static inline u32 get_mask(mask16x8 a)
     {
-        // NOTE: vaddvq_u16 is missing from NDK r23 headers for 32 bit ARM
+#if 0
         const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
         a = vandq_u16(a, weights);
         uint32x4_t b = vpaddlq_u16(a);
         uint64x2_t c = vpaddlq_u32(b);
         return vgetq_lane_u64(c, 0) | vgetq_lane_u64(c, 1);
+#else
+        uint32x4_t b = vreinterpretq_u32_u16(vshrq_n_u16(a, 15));
+        uint64x2_t c = vreinterpretq_u64_u32(vsraq_n_u32(b, b, 15));
+        uint64x2_t d = vsraq_n_u64(c, c, 30);
+        uint8x16_t e = vreinterpretq_u8_u64(d);
+        return vgetq_lane_u8(e, 0) | vgetq_lane_u8(e, 8) << 4;
+#endif
     }
 
     static inline bool none_of(mask16x8 a)
