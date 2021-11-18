@@ -2081,10 +2081,18 @@ namespace mango::simd
 
     static inline u32 get_mask(mask8x16 a)
     {
+        /*
         const uint8x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
         uint8x8_t a0 = vand_u8(vget_low_u8(a), weights);
         uint8x8_t a1 = vand_u8(vget_high_u8(a), weights);
         return vaddv_u8(a0) | (vaddv_u8(a1) << 8);
+        */
+
+        uint16x8_t b = vreinterpretq_u16_u8(vshrq_n_u8(a, 7));
+        uint32x4_t p16 = vreinterpretq_u32_u16(vsraq_n_u16(b, b, 7));
+        uint64x2_t p32 = vreinterpretq_u64_u32(vsraq_n_u32(p16, p16, 14));
+        uint8x16_t p64 = vreinterpretq_u8_u64(vsraq_n_u64(p32, p32, 28));
+        return vgetq_lane_u8(p64, 0) | (vgetq_lane_u8(p64, 8) << 8);
     }
 
     static inline bool none_of(mask8x16 a)
@@ -2195,7 +2203,8 @@ namespace mango::simd
         const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
         a = vandq_u16(a, weights);
         uint32x4_t b = vpaddlq_u16(a);
-        return vaddvq_u32(b);
+        uint64x2_t c = vpaddlq_u32(b);
+        return vgetq_lane_u64(c, 0) | vgetq_lane_u64(c, 1);
     }
 
     static inline bool none_of(mask16x8 a)
