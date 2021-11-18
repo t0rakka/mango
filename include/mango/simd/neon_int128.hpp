@@ -2081,10 +2081,15 @@ namespace mango::simd
 
     static inline u32 get_mask(mask8x16 a)
     {
+        /*
         const uint8x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
         uint8x8_t a0 = vand_u8(vget_low_u8(a), weights);
         uint8x8_t a1 = vand_u8(vget_high_u8(a), weights);
         return vaddv_u8(a0) | (vaddv_u8(a1) << 8);
+        */
+        const uint8x16_t shift = { -7, -6, -5, -4, -3, -2, -1, 0, -7, -6, -5, -4, -3, -2, -1, 0 };
+        a = vshlq_u8(a, vshift);
+        return vaddv_u8(vget_low_u8(a)) | (vaddv_u8(vget_high_u8(a)) << 8);
     }
 
     static inline bool none_of(mask8x16 a)
