@@ -2163,7 +2163,7 @@ namespace mango::simd
         return bitwise_not(u16x8(a)).data;
     }
 
-#ifdef __aarch64__xxx
+#ifdef __aarch64__
 
     static inline u32 get_mask(mask16x8 a)
     {
@@ -2195,27 +2195,7 @@ namespace mango::simd
         const uint16x8_t weights = { 1, 2, 4, 8, 16, 32, 64, 128 };
         a = vandq_u16(a, weights);
         uint32x4_t b = vpaddlq_u16(a);
-
-        // 0000000010000000
-        // 0000000001000000
-        // 0000000000100000
-        // 0000000000010000
-        // 0000000000001000
-        // 0000000000000100
-        // 0000000000000010
-        // 0000000000000001
-
-        // 00000000000000000000000011000000
-        // 00000000000000000000000000110000
-        // 00000000000000000000000000001100
-        // 00000000000000000000000000000011
-#if 1
         return vaddvq_u32(b);
-#else
-        u32 mask = vgetq_lane_u32(b, 0) | vgetq_lane_u32(b, 1) |
-                   vgetq_lane_u32(b, 2) | vgetq_lane_u32(b, 3);
-        return mask;
-#endif
     }
 
     static inline bool none_of(mask16x8 a)
@@ -2264,19 +2244,12 @@ namespace mango::simd
 
     static inline u32 get_mask(mask32x4 a)
     {
-        // TODO: Which one is faster in practise (first variant runs in registers)
-#if 1
         // a: 11111111111111111111111111111111 11111111111111111111111111111111 11111111111111111111111111111111 11111111111111111111111111111111
         // b: 00000000000000000000000000000001 00000000000000000000000000000001 00000000000000000000000000000001 00000000000000000000000000000001
         // c: 00000000000000000000000000000000 00000000000000000000000000000011 00000000000000000000000000000000 00000000000000000000000000000011
         uint64x2_t b = vreinterpretq_u64_u32(vshrq_n_u32(a, 31));
         uint32x4_t c = vreinterpretq_u32_u64(vsraq_n_u64(b, b, 31));
         return vgetq_lane_u32(c, 0) | (vgetq_lane_u32(c, 2) << 2);
-#else
-        const uint32x4_t weights = { 1, 2, 4, 8 };
-        a = vandq_u32(a, weights);
-        return vaddvq_u32(a);
-#endif
     }
 
 #ifdef __aarch64__
