@@ -36,9 +36,15 @@ namespace
     // tables and constants
     // ----------------------------------------------------------------------------------------
 
-    // NOTE: these are in little-endian
+#if 1
+    // little-endian polynomials
     constexpr u32 crc32_polynomial = 0xedb88320;
     constexpr u32 crc32c_polynomial = 0x82f63b78;
+#else
+    // big-endian polynomials
+    constexpr u32 crc32_polynomial = 0x04c11db7;
+    constexpr u32 crc32c_polynomial = 0x1edc6f41;
+#endif
 
 #if !defined(HARDWARE_U8_CRC32) || !defined(HARDWARE_U64_CRC32)
 
