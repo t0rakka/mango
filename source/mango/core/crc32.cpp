@@ -601,13 +601,11 @@ namespace
 
 #if !defined(HARDWARE_U64_CRC32) || !defined(HARDWARE_U64_CRC32C)
 
-#ifdef MANGO_CPU_64BIT
-
-	inline
-	u32 u64_crc(u32 crc, const u8* ptr, const u32* table)
+    inline
+    u32 u64_crc(u32 crc, u64 data, const u32* table)
     {
-        u64 data = uload64le(ptr);
-        data = data ^ u64(crc);
+        // TODO: big-endian
+        data ^= u64(crc);
         crc = table[((data >> 56) & 0xff) + 0x000] ^
               table[((data >> 48) & 0xff) + 0x100] ^
               table[((data >> 40) & 0xff) + 0x200] ^
@@ -619,31 +617,6 @@ namespace
         return crc;
     }
 
-#else
-
-	inline
-    u32 u64_crc(u32 crc, const u8* ptr, const u32* table)
-    {
-    #ifdef MANGO_LITTLE_ENDIAN
-        u32 one = uload32le(ptr + 0) ^ crc;
-        u32 two = uload32le(ptr + 4);
-    #else
-        u32 one = uload32le(ptr + 4) ^ crc;
-        u32 two = uload32le(ptr + 0);
-    #endif
-        crc = table[((two >> 24) & 0xff) + 0x000] ^
-              table[((two >> 16) & 0xff) + 0x100] ^
-              table[((two >>  8) & 0xff) + 0x200] ^
-              table[((two >>  0) & 0xff) + 0x300] ^
-              table[((one >> 24) & 0xff) + 0x400] ^
-              table[((one >> 16) & 0xff) + 0x500] ^
-              table[((one >>  8) & 0xff) + 0x600] ^
-              table[((one >>  0) & 0xff) + 0x700];
-        return crc;
-    }
-
-#endif // MANGO_CPU_64BIT
-
 #endif // !defined(HARDWARE_U64_CRC32) || !defined(HARDWARE_U64_CRC32C)
 
     // ----------------------------------------------------------------------------------------
@@ -654,17 +627,18 @@ namespace
 
     inline u32 u8_crc32(u32 crc, u8 data)
     {
-		crc = (crc >> 8) ^ g_crc32_table[(crc & 0xff) ^ data];
-		return crc;
+        // TODO: big-endian
+        crc = (crc >> 8) ^ g_crc32_table[(crc & 0xff) ^ data];
+        return crc;
     }
 
 #endif
 
 #if !defined(HARDWARE_U64_CRC32)
 
-    inline u32 u64_crc32(u32 crc, const u8* data)
+    inline u32 u64_crc32(u32 crc, u64 data)
     {
-		return u64_crc(crc, data, g_crc32_table);
+        return u64_crc(crc, data, g_crc32_table);
     }
 
 #endif
@@ -673,9 +647,9 @@ namespace
 
     inline u32 u8_crc32c(u32 crc, u8 data)
     {
-		crc = (crc >> 8) ^ g_crc32c_table[(crc & 0xff) ^ data];
-		return crc;
-	}
+        crc = (crc >> 8) ^ g_crc32c_table[(crc & 0xff) ^ data];
+        return crc;
+    }
 
 #endif
 
@@ -699,9 +673,9 @@ namespace
         return __crc32b(crc, data);
     }
 
-    inline u32 u64_crc32(u32 crc, const u8* data)
+    inline u32 u64_crc32(u32 crc, u64 data)
     {
-        return __crc32d(crc, uload64(data));
+        return __crc32d(crc, data);
     }
 
     inline u32 u8_crc32c(u32 crc, u8 data)
@@ -709,9 +683,9 @@ namespace
         return __crc32cb(crc, data);
     }
 
-    inline u32 u64_crc32c(u32 crc, const u8* data)
+    inline u32 u64_crc32c(u32 crc, u64 data)
     {
-        return __crc32cd(crc, uload64(data));
+        return __crc32cd(crc, data);
     }
 
 #endif // defined(__ARM_FEATURE_CRC32)
@@ -722,19 +696,17 @@ namespace
 
 #if defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
 
-    inline u32 u64_crc32(u32 crc, const u8* data)
+    inline u32 u64_crc32(u32 crc, u64 data)
     {
-        u64 value = uload64(data);
-
         // https://merrymage.com/lab/crc32/
         // Enabled with -mpclmul compiler switch (clang, gcc)
 
         __m128i xmm_const = _mm_set_epi64x(0x00000001DB710641, 0xB4E5B025F7011641);
-        __m128i xmm_value = _mm_set_epi64x(0, value ^ crc);
+        __m128i xmm_value = _mm_set_epi64x(0, data ^ crc);
 
         xmm_value = _mm_clmulepi64_si128(xmm_value, xmm_const, 0x00);
         xmm_value = _mm_clmulepi64_si128(xmm_value, xmm_const, 0x10);
-        return _mm_extract_epi32(xmm_value, 2); // requires SSE4.1
+        return _mm_extract_epi32(xmm_value, 2);
     }
 
 #endif // defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
@@ -752,22 +724,18 @@ namespace
 
 #ifdef MANGO_CPU_64BIT
 
-    // 64 bit crc32c (SSE4.2)
-
-    inline u32 u64_crc32c(u32 crc, const u8* data)
+    inline u32 u64_crc32c(u32 crc, u64 data)
     {
-        return u32(_mm_crc32_u64(crc, uload64(data)));
+        return u32(_mm_crc32_u64(crc, data));
     }
 
 #else
 
-    // 32 bit crc32c (SSE4.2)
-    // (_mm_crc32_u64 is not available in 32 bit x86)
-
-    inline u32 u64_crc32c(u32 crc, const u8* data)
+    inline u32 u64_crc32c(u32 crc, u64 data)
     {
-        crc = _mm_crc32_u32(crc, uload32(data + 0));
-        crc = _mm_crc32_u32(crc, uload32(data + 4));
+        // _mm_crc32_u64 is not available in 32 bit x86
+        crc = _mm_crc32_u32(crc, u32(data & 0xffffffff));
+        crc = _mm_crc32_u32(crc, u32(data >> 32));
         return crc;
     }
 
@@ -860,6 +828,7 @@ namespace
 
     u32 crc32(u32 crc, const u8* address, size_t size)
     {
+        // TODO: big-endian
         crc = ~crc;
 
         uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(address)) & 7;
@@ -874,14 +843,22 @@ namespace
 #ifdef HARDWARE_U64_CRC32
             while (size >= 64)
             {
-                crc = u64_crc32(crc, address + 8 * 0);
-                crc = u64_crc32(crc, address + 8 * 1);
-                crc = u64_crc32(crc, address + 8 * 2);
-                crc = u64_crc32(crc, address + 8 * 3);
-                crc = u64_crc32(crc, address + 8 * 4);
-                crc = u64_crc32(crc, address + 8 * 5);
-                crc = u64_crc32(crc, address + 8 * 6);
-                crc = u64_crc32(crc, address + 8 * 7);
+                u64 data0 = uload64(address + 8 * 0);
+                u64 data1 = uload64(address + 8 * 1);
+                u64 data2 = uload64(address + 8 * 2);
+                u64 data3 = uload64(address + 8 * 3);
+                u64 data4 = uload64(address + 8 * 4);
+                u64 data5 = uload64(address + 8 * 5);
+                u64 data6 = uload64(address + 8 * 6);
+                u64 data7 = uload64(address + 8 * 7);
+                crc = u64_crc32(crc, data0);
+                crc = u64_crc32(crc, data1);
+                crc = u64_crc32(crc, data2);
+                crc = u64_crc32(crc, data3);
+                crc = u64_crc32(crc, data4);
+                crc = u64_crc32(crc, data5);
+                crc = u64_crc32(crc, data6);
+                crc = u64_crc32(crc, data7);
                 address += 64;
                 size -= 64;
             }
@@ -889,7 +866,8 @@ namespace
 
             while (size >= 8)
             {
-                crc = u64_crc32(crc, address);
+                u64 data = uload64(address);
+                crc = u64_crc32(crc, data);
                 address += 8;
                 size -= 8;
             }
@@ -905,6 +883,7 @@ namespace
 
     u32 crc32c(u32 crc, const u8* address, size_t size)
     {
+        // TODO: big-endian
         crc = ~crc;
 
         uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(address)) & 7;
@@ -919,14 +898,22 @@ namespace
 #ifdef HARDWARE_U64_CRC32C
             while (size >= 64)
             {
-                crc = u64_crc32c(crc, address + 8 * 0);
-                crc = u64_crc32c(crc, address + 8 * 1);
-                crc = u64_crc32c(crc, address + 8 * 2);
-                crc = u64_crc32c(crc, address + 8 * 3);
-                crc = u64_crc32c(crc, address + 8 * 4);
-                crc = u64_crc32c(crc, address + 8 * 5);
-                crc = u64_crc32c(crc, address + 8 * 6);
-                crc = u64_crc32c(crc, address + 8 * 7);
+                u64 data0 = uload64(address + 8 * 0);
+                u64 data1 = uload64(address + 8 * 1);
+                u64 data2 = uload64(address + 8 * 2);
+                u64 data3 = uload64(address + 8 * 3);
+                u64 data4 = uload64(address + 8 * 4);
+                u64 data5 = uload64(address + 8 * 5);
+                u64 data6 = uload64(address + 8 * 6);
+                u64 data7 = uload64(address + 8 * 7);
+                crc = u64_crc32c(crc, data0);
+                crc = u64_crc32c(crc, data1);
+                crc = u64_crc32c(crc, data2);
+                crc = u64_crc32c(crc, data3);
+                crc = u64_crc32c(crc, data4);
+                crc = u64_crc32c(crc, data5);
+                crc = u64_crc32c(crc, data6);
+                crc = u64_crc32c(crc, data7);
                 address += 64;
                 size -= 64;
             }
@@ -934,7 +921,8 @@ namespace
 
             while (size >= 8)
             {
-                crc = u64_crc32c(crc, address);
+                u64 data = uload64(address);
+                crc = u64_crc32c(crc, data);
                 address += 8;
                 size -= 8;
             }
@@ -949,7 +937,7 @@ namespace
     }
 
     template<typename Compute, typename Combine>
-    u32 checksum(Compute compute, Combine combine, u32 crc, ConstMemory memory)
+    u32 parallel_crc(Compute compute, Combine combine, u32 crc, ConstMemory memory)
     {
         constexpr size_t KB = 1 << 10;
         constexpr size_t MIN_BLOCK = 32 * KB;
@@ -1003,24 +991,24 @@ namespace mango
 
     u32 crc32_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = crc_combine(crc0, u64(length1), crc32_polynomial);
+        crc0 = ::crc_combine(crc0, length1, crc32_polynomial);
         return crc0 ^ crc1;
     }
 
     u32 crc32c_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = crc_combine(crc0, u64(length1), crc32c_polynomial);
+        crc0 = ::crc_combine(crc0, length1, crc32c_polynomial);
         return crc0 ^ crc1;
     }
 
     u32 crc32(u32 crc, ConstMemory memory)
     {
-        return checksum(::crc32, ::crc32_combine, crc, memory);
+        return parallel_crc(::crc32, ::crc32_combine, crc, memory);
     }
 
     u32 crc32c(u32 crc, ConstMemory memory)
     {
-        return checksum(::crc32c, ::crc32c_combine, crc, memory);
+        return parallel_crc(::crc32c, ::crc32c_combine, crc, memory);
     }
 
 } // namespace mango
