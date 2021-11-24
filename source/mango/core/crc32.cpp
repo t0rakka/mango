@@ -36,15 +36,31 @@ namespace
     // tables and constants
     // ----------------------------------------------------------------------------------------
 
-#if 1
-    // little-endian polynomials
-    constexpr u32 crc32_polynomial = 0xedb88320;
-    constexpr u32 crc32c_polynomial = 0x82f63b78;
-#else
-    // big-endian polynomials
-    constexpr u32 crc32_polynomial = 0x04c11db7;
-    constexpr u32 crc32c_polynomial = 0x1edc6f41;
-#endif
+    /*
+
+    constexpr u32 crc32_polynomial_little_endian = 0xedb88320;
+    constexpr u32 crc32c_polynomial_little_endian = 0x82f63b78;
+
+    constexpr u32 crc32_polynomial_big_endian = 0x04c11db7;
+    constexpr u32 crc32c_polynomial_big_endian = 0x1edc6f41;
+
+    */
+
+    constexpr u32 crc32_combine_table [] =
+    {
+        0x1db71064,
+        0x3b6e20c8,
+        0x76dc4190,
+        0xedb88320, // <-- little-endian crc32 polynomial
+    };
+
+    constexpr u32 crc32c_combine_table [] =
+    {
+        0x105ec76f,
+        0x20bd8ede,
+        0x417b1dbc,
+        0x82f63b78, // <-- little-endian crc32c polynomial
+    };
 
 #if !defined(HARDWARE_U8_CRC32) || !defined(HARDWARE_U64_CRC32)
 
@@ -737,56 +753,69 @@ namespace
         crc = _mm_crc32_u32(crc, u32(data & 0xffffffff));
         crc = _mm_crc32_u32(crc, u32(data >> 32));
         return crc;
-    }
+    }(
 
 #endif // MANGO_CPU_64BIT
 
 #endif // MANGO_ENABLE_SSE4_2
 
+    static inline
+    u32 combine(u32 value, const u32* table)
+    {
+        u32 sum = 0;
+#if 0
+        // NOTE: Requires fast tzcnt instruction
+        //       The emulated tzcnt uses multiplication and high bit-density values will
+        //       result in dramatic performance decrease. :(
+        int index = 0;
+        while (value)
+        {
+            int count = u32_tzcnt(value) + 1;
+            index += count;
+            value >>= count;
+            sum ^= table[index - 1];
+        }
+#else
+        for (int i = 0; value != 0; i++, value >>= 1)
+        {
+            if (value & 1)
+            {
+                sum ^= table[i];
+            }
+        }
+#endif
+        return sum;
+    }
+
     // Original implementation (C) Stephan Brumme
-    u32 crc_combine(u32 crc, size_t length, u32 polynomial)
+    u32 crc_combine(u32 crc, size_t length, const u32* table)
     {
         if (!length)
+        {
             return crc;
+        }
 
         constexpr int BITS = 32;
 
-        u32 odd[BITS]; // odd-power-of-two zeros operator
-        u32 even[BITS]; // even-power-of-two zeros operator
+        u32 odd[BITS];
+        u32 even[BITS];
 
-        // put operator for one zero bit in odd
-        odd[0] = polynomial;
-        for (int i = 1; i < BITS; ++i)
+        odd[0] = table[0];
+        odd[1] = table[1];
+        odd[2] = table[2];
+        odd[3] = table[3];
+
+        for (int i = 0; i < 28; ++i)
         {
-            odd[i] = 1 << (i - 1);
+            odd[i + 4] = 1 << i;
         }
 
-        // put operator for two zero bits in even
-        for (int i = 0; i < BITS; ++i)
-        {
-            u32 v = odd[i];
-            even[i] = 0;
-            for (int j = 0; v != 0; ++j, v >>= 1)
-            {
-                if (v & 1)
-                {
-                    even[i] ^= odd[j];
-                }
-            }
-        }
+        even[0] = table[2];
+        even[1] = table[3];
 
-        // put operator for four zero bits in odd
-        for (int i = 0; i < BITS; i++)
+        for (int i = 0; i < 30; ++i)
         {
-            uint32_t vec = even[i];
-            odd[i] = 0;
-            for (int j = 0; vec != 0; j++, vec >>= 1)
-            {
-                if (vec & 1)
-                {
-                    odd[i] ^= even[j];
-                }
-            }
+            even[i + 2] = 1 << i;
         }
 
         u32* a = even;
@@ -797,27 +826,13 @@ namespace
         {
             for (int i = 0; i < BITS; ++i)
             {
-                u32 vec = b[i];
-                a[i] = 0;
-                for (int j = 0; vec != 0; ++j, vec >>= 1)
-                {
-                    if (vec & 1)
-                        a[i] ^= b[j];
-                }
+                a[i] = combine(b[i], b);
             }
 
             // apply zeros operator for this bit
             if (length & 1)
             {
-                u32 sum = 0;
-                for (int i = 0; crc != 0; i++, crc >>= 1)
-                {
-                    if (crc & 1)
-                    {
-                        sum ^= a[i];
-                    }
-                }
-                crc = sum;
+                crc = combine(crc, a);
             }
 
             std::swap(a, b);
@@ -989,13 +1004,13 @@ namespace mango
 
     u32 crc32_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = ::crc_combine(crc0, length1, crc32_polynomial);
+        crc0 = ::crc_combine(crc0, length1, crc32_combine_table);
         return crc0 ^ crc1;
     }
 
     u32 crc32c_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = ::crc_combine(crc0, length1, crc32c_polynomial);
+        crc0 = ::crc_combine(crc0, length1, crc32c_combine_table);
         return crc0 ^ crc1;
     }
 
