@@ -716,12 +716,12 @@ namespace
         // https://merrymage.com/lab/crc32/
         // Enabled with -mpclmul compiler switch (clang, gcc)
 
-        __m128i xmm_const = _mm_set_epi64x(0x00000001DB710641, 0xB4E5B025F7011641);
-        __m128i xmm_value = _mm_set_epi64x(0, data ^ crc);
+        __m128i magic = _mm_set_epi64x(0x00000001DB710641, 0xB4E5B025F7011641);
+        __m128i value = _mm_set_epi64x(0, data ^ crc);
 
-        xmm_value = _mm_clmulepi64_si128(xmm_value, xmm_const, 0x00);
-        xmm_value = _mm_clmulepi64_si128(xmm_value, xmm_const, 0x10);
-        return _mm_extract_epi32(xmm_value, 2);
+        value = _mm_clmulepi64_si128(value, magic, 0x00);
+        value = _mm_clmulepi64_si128(value, magic, 0x10);
+        return _mm_extract_epi32(value, 2);
     }
 
 #endif // defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
@@ -1115,7 +1115,7 @@ namespace
         constexpr size_t KB = 1 << 10;
         constexpr size_t MIN_BLOCK = 32 * KB;
 
-        if (memory.size < MIN_BLOCK * 2)
+        //if (memory.size < MIN_BLOCK * 2)
         {
             // don't bother multi-threading if we don't have plenty of input
             return compute(crc, memory.address, memory.size);
