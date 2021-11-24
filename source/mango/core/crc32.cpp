@@ -763,7 +763,7 @@ namespace
     u32 combine(u32 value, const u32* table)
     {
         u32 sum = 0;
-#if 0
+#if 1
         // NOTE: Requires fast tzcnt instruction
         //       The emulated tzcnt uses multiplication and high bit-density values will
         //       result in dramatic performance decrease. :(
