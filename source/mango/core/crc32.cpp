@@ -1115,7 +1115,7 @@ namespace
         constexpr size_t KB = 1 << 10;
         constexpr size_t MIN_BLOCK = 32 * KB;
 
-        //if (memory.size < MIN_BLOCK * 2)
+        if (memory.size < MIN_BLOCK * 2)
         {
             // don't bother multi-threading if we don't have plenty of input
             return compute(crc, memory.address, memory.size);
