@@ -828,7 +828,6 @@ namespace
 
     u32 crc32(u32 crc, const u8* address, size_t size)
     {
-        // TODO: big-endian
         crc = ~crc;
 
         uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(address)) & 7;
@@ -843,14 +842,14 @@ namespace
 #ifdef HARDWARE_U64_CRC32
             while (size >= 64)
             {
-                u64 data0 = uload64(address + 8 * 0);
-                u64 data1 = uload64(address + 8 * 1);
-                u64 data2 = uload64(address + 8 * 2);
-                u64 data3 = uload64(address + 8 * 3);
-                u64 data4 = uload64(address + 8 * 4);
-                u64 data5 = uload64(address + 8 * 5);
-                u64 data6 = uload64(address + 8 * 6);
-                u64 data7 = uload64(address + 8 * 7);
+                u64 data0 = uload64le(address + 8 * 0);
+                u64 data1 = uload64le(address + 8 * 1);
+                u64 data2 = uload64le(address + 8 * 2);
+                u64 data3 = uload64le(address + 8 * 3);
+                u64 data4 = uload64le(address + 8 * 4);
+                u64 data5 = uload64le(address + 8 * 5);
+                u64 data6 = uload64le(address + 8 * 6);
+                u64 data7 = uload64le(address + 8 * 7);
                 crc = u64_crc32(crc, data0);
                 crc = u64_crc32(crc, data1);
                 crc = u64_crc32(crc, data2);
@@ -866,7 +865,7 @@ namespace
 
             while (size >= 8)
             {
-                u64 data = uload64(address);
+                u64 data = uload64le(address);
                 crc = u64_crc32(crc, data);
                 address += 8;
                 size -= 8;
@@ -883,7 +882,6 @@ namespace
 
     u32 crc32c(u32 crc, const u8* address, size_t size)
     {
-        // TODO: big-endian
         crc = ~crc;
 
         uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(address)) & 7;
@@ -898,14 +896,14 @@ namespace
 #ifdef HARDWARE_U64_CRC32C
             while (size >= 64)
             {
-                u64 data0 = uload64(address + 8 * 0);
-                u64 data1 = uload64(address + 8 * 1);
-                u64 data2 = uload64(address + 8 * 2);
-                u64 data3 = uload64(address + 8 * 3);
-                u64 data4 = uload64(address + 8 * 4);
-                u64 data5 = uload64(address + 8 * 5);
-                u64 data6 = uload64(address + 8 * 6);
-                u64 data7 = uload64(address + 8 * 7);
+                u64 data0 = uload64le(address + 8 * 0);
+                u64 data1 = uload64le(address + 8 * 1);
+                u64 data2 = uload64le(address + 8 * 2);
+                u64 data3 = uload64le(address + 8 * 3);
+                u64 data4 = uload64le(address + 8 * 4);
+                u64 data5 = uload64le(address + 8 * 5);
+                u64 data6 = uload64le(address + 8 * 6);
+                u64 data7 = uload64le(address + 8 * 7);
                 crc = u64_crc32c(crc, data0);
                 crc = u64_crc32c(crc, data1);
                 crc = u64_crc32c(crc, data2);
@@ -921,7 +919,7 @@ namespace
 
             while (size >= 8)
             {
-                u64 data = uload64(address);
+                u64 data = uload64le(address);
                 crc = u64_crc32c(crc, data);
                 address += 8;
                 size -= 8;
