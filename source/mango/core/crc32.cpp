@@ -917,7 +917,7 @@ namespace
     };
 
     static inline
-    u64 skip_block(u64 crc, const u32* table)
+    u32 skip_block(u32 crc, const u32* table)
     {
         crc = table[0 * 16 + ((crc >>  0) & 0xf)] ^
               table[1 * 16 + ((crc >>  4) & 0xf)] ^
@@ -1011,7 +1011,7 @@ namespace
 
 #ifdef HARDWARE_U64_CRC32C
 
-            u64 c0 = crc;
+            u32 c0 = crc;
 
             constexpr size_t block0_size = g_skip_blocks * g_skip_block0_size;
             constexpr size_t block1_size = g_skip_blocks * g_skip_block1_size;
@@ -1019,8 +1019,8 @@ namespace
 
             while (size >= block0_size)
             {
-                u64 c1 = 0;
-                u64 c2 = 0;
+                u32 c1 = 0;
+                u32 c2 = 0;
                 for (int i = 0; i < g_skip_block0_size; i += 32)
                 {
                     c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block0_size + 0 * 8));
@@ -1050,8 +1050,8 @@ namespace
 
             while (size >= block1_size)
             {
-                u64 c1 = 0;
-                u64 c2 = 0;
+                u32 c1 = 0;
+                u32 c2 = 0;
                 for (int i = 0; i < g_skip_block1_size; i += 8)
                 {
                     c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block1_size));
@@ -1068,8 +1068,8 @@ namespace
 
             while (size >= block2_size)
             {
-                u64 c1 = 0;
-                u64 c2 = 0;
+                u32 c1 = 0;
+                u32 c2 = 0;
                 for (int i = 0; i < g_skip_block2_size; i += 8)
                 {
                     c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block2_size));
@@ -1084,7 +1084,7 @@ namespace
                 size -= block2_size;
             }
 
-            crc = u32(c0);
+            crc = c0;
 
 #endif // HARDWARE_U64_CRC32C
 
