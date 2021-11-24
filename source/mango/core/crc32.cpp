@@ -851,10 +851,10 @@ namespace
 
 #if defined(HARDWARE_U64_CRC32C)
 
-    constexpr int g_skip_groups = 3;
-    constexpr int g_skip_group0_size = 5440; // must be multiple of 32
-    constexpr int g_skip_group1_size = 1360; // must be multiple of 8
-    constexpr int g_skip_group2_size = 336;  // must be multiple of 8
+    constexpr int g_skip_blocks = 3;
+    constexpr int g_skip_block0_size = 5440; // must be multiple of 32
+    constexpr int g_skip_block1_size = 1360; // must be multiple of 8
+    constexpr int g_skip_block2_size = 336;  // must be multiple of 8
 
     const u32 g_crc32c_block0_skip_table [] =
     {
@@ -1013,38 +1013,38 @@ namespace
 
             u64 c0 = crc;
 
-            constexpr size_t block0_size = g_skip_groups * g_skip_group0_size;
-            constexpr size_t block1_size = g_skip_groups * g_skip_group1_size;
-            constexpr size_t block2_size = g_skip_groups * g_skip_group2_size;
+            constexpr size_t block0_size = g_skip_blocks * g_skip_block0_size;
+            constexpr size_t block1_size = g_skip_blocks * g_skip_block1_size;
+            constexpr size_t block2_size = g_skip_blocks * g_skip_block2_size;
 
             while (size >= block0_size)
             {
                 u64 c1 = 0;
                 u64 c2 = 0;
-                for (int i = 0; i < g_skip_group0_size; i += 32)
+                for (int i = 0; i < g_skip_block0_size; i += 32)
                 {
-                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_group0_size + 0 * 8));
-                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_group0_size + 0 * 8));
-                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_group0_size + 0 * 8));
+                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block0_size + 0 * 8));
+                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_block0_size + 0 * 8));
+                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_block0_size + 0 * 8));
 
-                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_group0_size + 1 * 8));
-                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_group0_size + 1 * 8));
-                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_group0_size + 1 * 8));
+                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block0_size + 1 * 8));
+                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_block0_size + 1 * 8));
+                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_block0_size + 1 * 8));
 
-                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_group0_size + 2 * 8));
-                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_group0_size + 2 * 8));
-                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_group0_size + 2 * 8));
+                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block0_size + 2 * 8));
+                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_block0_size + 2 * 8));
+                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_block0_size + 2 * 8));
 
-                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_group0_size + 3 * 8));
-                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_group0_size + 3 * 8));
-                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_group0_size + 3 * 8));
+                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block0_size + 3 * 8));
+                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_block0_size + 3 * 8));
+                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_block0_size + 3 * 8));
 
                     address += 32;
                 }
 
                 c0 = skip_block(c0, g_crc32c_block0_skip_table) ^ c1;
                 c0 = skip_block(c0, g_crc32c_block0_skip_table) ^ c2;
-                address += (g_skip_groups - 1) * g_skip_group0_size;
+                address += (g_skip_blocks - 1) * g_skip_block0_size;
                 size -= block0_size;
             }
 
@@ -1052,17 +1052,17 @@ namespace
             {
                 u64 c1 = 0;
                 u64 c2 = 0;
-                for (int i = 0; i < g_skip_group1_size; i += 8)
+                for (int i = 0; i < g_skip_block1_size; i += 8)
                 {
-                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_group1_size));
-                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_group1_size));
-                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_group1_size));
+                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block1_size));
+                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_block1_size));
+                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_block1_size));
                     address += 8;
                 }
 
                 c0 = skip_block(c0, g_crc32c_block1_skip_table) ^ c1;
                 c0 = skip_block(c0, g_crc32c_block1_skip_table) ^ c2;
-                address += (g_skip_groups - 1) * g_skip_group1_size;
+                address += (g_skip_blocks - 1) * g_skip_block1_size;
                 size -= block1_size;
             }
 
@@ -1070,17 +1070,17 @@ namespace
             {
                 u64 c1 = 0;
                 u64 c2 = 0;
-                for (int i = 0; i < g_skip_group2_size; i += 8)
+                for (int i = 0; i < g_skip_block2_size; i += 8)
                 {
-                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_group2_size));
-                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_group2_size));
-                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_group2_size));
+                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block2_size));
+                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_block2_size));
+                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_block2_size));
                     address += 8;
                 }
 
                 c0 = skip_block(c0, g_crc32c_block2_skip_table) ^ c1;
                 c0 = skip_block(c0, g_crc32c_block2_skip_table) ^ c2;
-                address += (g_skip_groups - 1) * g_skip_group2_size;
+                address += (g_skip_blocks - 1) * g_skip_block2_size;
                 size -= block2_size;
             }
 
