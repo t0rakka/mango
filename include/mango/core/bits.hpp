@@ -352,8 +352,17 @@ namespace mango
 
     static inline int u32_tzcnt(u32 value)
     {
-		// NOTE: value 0 is undefined
+        // NOTE: value 0 is undefined
         return _tzcnt_u32(value);
+    }
+
+#elif defined(__aarch64__)
+
+    static inline int u32_tzcnt(u32 value)
+    {
+        // NOTE: value 0 is undefined
+        value = __rbit(value);
+        return __clz(value);
     }
 
 #elif defined(MANGO_BITS_GCC_BUILTINS)
@@ -413,6 +422,35 @@ namespace mango
     {
         // NOTE: value 0 is undefined
         return int(_lzcnt_u32(value));
+    }
+
+#elif defined(__ARM_FEATURE_CLZ)
+
+    static inline u32 u32_mask_msb(u32 value)
+    {
+        // value:  0001xxxxxxxx
+        // result: 000111111111
+        u32 mask = 1u << (31 - __clz(value));
+        return mask | (mask - 1);
+    }
+
+    static inline u32 u32_extract_msb(u32 value)
+    {
+        // value:  0001xxxxxxxx
+        // result: 000100000000
+        return 1u << (31 - __clz(value));
+    }
+
+    static inline int u32_index_of_msb(u32 value)
+    {
+        // NOTE: value 0 is undefined
+        return int(31 - __clz(value));
+    }
+
+    static inline int u32_lzcnt(u32 value)
+    {
+        // NOTE: value 0 is undefined
+        return int(__clz(value));
     }
 
 #elif defined(MANGO_BITS_GCC_BUILTINS)
@@ -508,6 +546,15 @@ namespace mango
         return u32_index_of_msb(value);
     }
 
+#if defined(__aarch64__)
+
+    static inline u32 u32_reverse_bits(u32 value)
+    {
+        return __rbit(value);
+    }
+
+#else
+
     static inline u32 u32_reverse_bits(u32 value)
     {
         value = ((value >> 1) & 0x55555555) | ((value << 1) & 0xaaaaaaaa);
@@ -517,6 +564,8 @@ namespace mango
         value = (value >> 16) | (value << 16);
         return value;
     }
+
+#endif
 
 #if defined(MANGO_ENABLE_POPCNT)
 
@@ -722,6 +771,15 @@ namespace mango
         return int(_tzcnt_u64(value));
     }
 
+#elif defined(__aarch64__)
+
+    static inline int u64_tzcnt(u64 value)
+    {
+        // NOTE: value 0 is undefined
+        value = __rbitll(value);
+        return __clzll(value);
+    }
+
 #elif defined(MANGO_BITS_GCC_BUILTINS)
 
     static inline int u64_tzcnt(u64 value)
@@ -781,6 +839,35 @@ namespace mango
     {
         // NOTE: value 0 is undefined
         return int(_lzcnt_u64(value));
+    }
+
+#elif defined(__ARM_FEATURE_CLZ)
+
+    static inline u64 u64_mask_msb(u64 value)
+    {
+        // value:  0001xxxxxxxx
+        // result: 000111111111
+        u64 mask = u64(1) << (63 - __clzll(value));
+        return mask | (mask - 1);
+    }
+
+    static inline u64 u64_extract_msb(u64 value)
+    {
+        // value:  0001xxxxxxxx
+        // result: 000100000000
+        return u64(1) << (63 - __clzll(value));
+    }
+
+    static inline int u64_index_of_msb(u64 value)
+    {
+        // NOTE: value 0 is undefined
+        return int(63 - __clzll(value));
+    }
+
+    static inline int u64_lzcnt(u64 value)
+    {
+        // NOTE: value 0 is undefined
+        return int(__clzll(value));
     }
 
 #elif defined(MANGO_BITS_GCC_BUILTINS)
@@ -869,6 +956,15 @@ namespace mango
         return u64_index_of_msb(value);
     }
 
+#if defined(__aarch64__)
+
+    static inline u64 u64_reverse_bits(u64 value)
+    {
+        return __rbitll(value);
+    }
+
+#else
+
     static inline u64 u64_reverse_bits(u64 value)
     {
 #if defined(MANGO_CPU_64BIT)
@@ -887,6 +983,8 @@ namespace mango
         return (u64(low) << 32) | high;
 #endif
     }
+
+#endif
 
 #if defined(MANGO_ENABLE_POPCNT)
 
