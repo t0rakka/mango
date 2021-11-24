@@ -8,11 +8,13 @@ using namespace mango;
 
 constexpr u64 MB = 1 << 20;
 
-void print(const Buffer& buffer, const char* name, u64 time0, u64 time1, u32 value)
+void print(const Buffer& buffer, const char* name, u64 time0, u64 time1, u32 value, u32 reference)
 {
     u64 x = buffer.size() * 1000000; // buffer size in bytes * microseconds_in_second
     u32 delta = time1 - time0;
-    printf("%s 0x%x %5d.%1d ms (%6d MB/s )\n", name, value, u32(delta/1000), u32(((delta+50)/100)%10), u32(x / (delta * MB)));
+    printf("%s 0x%x %5d.%1d ms (%6d MB/s ) : %s\n", name, value,
+        u32(delta/1000), u32(((delta+50)/100)%10), u32(x / (delta * MB)),
+        value == reference ? "OK" : "FAILED");
 }
 
 void test_crc()
@@ -86,8 +88,8 @@ void test_crc()
         u32 v1 = mango::crc32c(0, buffer);
         u64 time2 = Time::us();
 
-        print(buffer, "crc32:  ", time0, time1, v0);
-        print(buffer, "crc32c: ", time1, time2, v1);
+        print(buffer, "crc32:  ", time0, time1, v0, 0x9fb22d1f);
+        print(buffer, "crc32c: ", time1, time2, v1, 0x1fd9c660);
     }
 
 }
