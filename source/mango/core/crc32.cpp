@@ -1149,20 +1149,17 @@ namespace
  
                 #undef CRC32C_32BYTES
 
-                address += 1024;
-
-                u64 t3 = uload64le(address);
-                address += 8;
+                crc = u64_crc32c(crc3, uload64le(address + 1024));
 
                 u64 t2 = u64(vmull_p64(crc2, k2));
                 u64 t1 = u64(vmull_p64(crc1, k1));
                 u64 t0 = u64(vmull_p64(crc0, k0));
 
-                crc = u64_crc32c(crc3, t3);
                 crc ^= u64_crc32c(0, t2);
                 crc ^= u64_crc32c(0, t1);
                 crc ^= u64_crc32c(0, t0);
 
+                address += BLOCK_BYTES;
                 size -= BLOCK_BYTES;
             }
 
