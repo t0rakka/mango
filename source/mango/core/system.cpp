@@ -89,6 +89,7 @@ namespace mango
         if (flags & ARM_SHA1) info << "SHA1 ";
         if (flags & ARM_SHA2) info << "SHA2 ";
         if (flags & ARM_CRC32) info << "CRC32 ";
+        if (flags & ARM_PMULL) info << "PMULL ";
         info << std::endl;
 
         // NOTE: These are flags used to compile the mango library and have no relevance to
