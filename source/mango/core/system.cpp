@@ -85,10 +85,10 @@ namespace mango
         if (flags & INTEL_AVX512VBMI) info << "AVX512VBMI ";
         if (flags & INTEL_AVX512IFMA) info << "AVX512FP16 ";
         if (flags & ARM_NEON) info << "NEON ";
+        if (flags & ARM_CRC32) info << "CRC32 ";
         if (flags & ARM_AES) info << "AES ";
         if (flags & ARM_SHA1) info << "SHA1 ";
         if (flags & ARM_SHA2) info << "SHA2 ";
-        if (flags & ARM_CRC32) info << "CRC32 ";
         if (flags & ARM_PMULL) info << "PMULL ";
         info << std::endl;
 
@@ -174,12 +174,12 @@ namespace mango
         info << "NEON ";
     #endif
 
-    #if defined(__ARM_FEATURE_CRYPTO)
-        info << "CRYPTO ";
-    #endif
-
     #if defined(__ARM_FEATURE_CRC32)
         info << "CRC32 ";
+    #endif
+
+    #if defined(__ARM_FEATURE_CRYPTO)
+        info << "CRYPTO ";
     #endif
 
 #else
