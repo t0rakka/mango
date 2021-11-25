@@ -1091,9 +1091,6 @@ namespace
             constexpr size_t SEGMENT_BYTES = 256;
             constexpr size_t BLOCK_BYTES = 256 * 4 + 8;
 
-            // k0 = CRC(x^(3*SEGMENT_BYTES*8)) 
-            // k1 = CRC(x^(2*SEGMENT_BYTES*8))
-            // k2 = CRC(x^(1*SEGMENT_BYTES*8))
             const poly64_t k0 = 0x8d96551c;
             const poly64_t k1 = 0xbd6f81f8;
             const poly64_t k2 = 0xdcb17aa4;
@@ -1146,7 +1143,7 @@ namespace
                 CRC32C_32BYTES(3 * 8 + 5);
                 CRC32C_32BYTES(3 * 8 + 6);
                 CRC32C_32BYTES(3 * 8 + 7);
- 
+
                 #undef CRC32C_32BYTES
 
                 crc = u64_crc32c(crc3, uload64le(address + 1024));
