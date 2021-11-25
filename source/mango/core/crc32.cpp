@@ -949,7 +949,7 @@ namespace
                 crc = u8_crc32(crc, *address++);
             }
 
-#ifdef HARDWARE_U64_CRC32
+#if defined(HARDWARE_U64_CRC32)
 
             while (size >= 64)
             {
@@ -1086,7 +1086,87 @@ namespace
                 crc = u8_crc32c(crc, *address++);
             }
 
-#ifdef HARDWARE_U64_CRC32C
+#if defined(__ARM_FEATURE_CRC32)
+
+            constexpr size_t SEGMENT_BYTES = 256;
+            constexpr size_t BLOCK_BYTES = 256 * 4 + 8;
+
+            // k0 = CRC(x^(3*SEGMENT_BYTES*8)) 
+            // k1 = CRC(x^(2*SEGMENT_BYTES*8))
+            // k2 = CRC(x^(1*SEGMENT_BYTES*8))
+            const poly64_t k0 = 0x8d96551c;
+            const poly64_t k1 = 0xbd6f81f8;
+            const poly64_t k2 = 0xdcb17aa4;
+
+            while (size >= BLOCK_BYTES)
+            {
+                u32 crc0 = crc;
+                u32 crc1 = 0;
+                u32 crc2 = 0;
+                u32 crc3 = 0;
+
+                #define CRC32C_32BYTES(idx) \
+                    crc1 = u64_crc32c(crc1, uload64(address + SEGMENT_BYTES * 1 + (idx) * 8)); \
+                    crc2 = u64_crc32c(crc2, uload64(address + SEGMENT_BYTES * 2 + (idx) * 8)); \
+                    crc3 = u64_crc32c(crc3, uload64(address + SEGMENT_BYTES * 3 + (idx) * 8)); \
+                    crc0 = u64_crc32c(crc0, uload64(address + SEGMENT_BYTES * 0 + (idx) * 8));
+
+                CRC32C_32BYTES(0 * 8 + 0);
+                CRC32C_32BYTES(0 * 8 + 1);
+                CRC32C_32BYTES(0 * 8 + 2);
+                CRC32C_32BYTES(0 * 8 + 3);
+                CRC32C_32BYTES(0 * 8 + 4);
+                CRC32C_32BYTES(0 * 8 + 5);
+                CRC32C_32BYTES(0 * 8 + 6);
+                CRC32C_32BYTES(0 * 8 + 7);
+
+                CRC32C_32BYTES(1 * 8 + 0);
+                CRC32C_32BYTES(1 * 8 + 1);
+                CRC32C_32BYTES(1 * 8 + 2);
+                CRC32C_32BYTES(1 * 8 + 3);
+                CRC32C_32BYTES(1 * 8 + 4);
+                CRC32C_32BYTES(1 * 8 + 5);
+                CRC32C_32BYTES(1 * 8 + 6);
+                CRC32C_32BYTES(1 * 8 + 7);
+
+                CRC32C_32BYTES(2 * 8 + 0);
+                CRC32C_32BYTES(2 * 8 + 1);
+                CRC32C_32BYTES(2 * 8 + 2);
+                CRC32C_32BYTES(2 * 8 + 3);
+                CRC32C_32BYTES(2 * 8 + 4);
+                CRC32C_32BYTES(2 * 8 + 5);
+                CRC32C_32BYTES(2 * 8 + 6);
+                CRC32C_32BYTES(2 * 8 + 7);
+
+                CRC32C_32BYTES(3 * 8 + 0);
+                CRC32C_32BYTES(3 * 8 + 1);
+                CRC32C_32BYTES(3 * 8 + 2);
+                CRC32C_32BYTES(3 * 8 + 3);
+                CRC32C_32BYTES(3 * 8 + 4);
+                CRC32C_32BYTES(3 * 8 + 5);
+                CRC32C_32BYTES(3 * 8 + 6);
+                CRC32C_32BYTES(3 * 8 + 7);
+ 
+                #undef CRC32C_32BYTES
+
+                address += 1024;
+
+                u64 t3 = uload64le(address);
+                address += 8;
+
+                u64 t2 = u64(vmull_p64(crc2, k2));
+                u64 t1 = u64(vmull_p64(crc1, k1));
+                u64 t0 = u64(vmull_p64(crc0, k0));
+
+                crc = u64_crc32c(crc3, t3);
+                crc ^= u64_crc32c(0, t2);
+                crc ^= u64_crc32c(0, t1);
+                crc ^= u64_crc32c(0, t0);
+
+                size -= BLOCK_BYTES;
+            }
+
+#elif defined(HARDWARE_U64_CRC32C)
 
             u32 c0 = crc;
 
