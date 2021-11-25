@@ -169,7 +169,7 @@ namespace
 #include <sys/auxv.h>
 #include <asm/hwcap.h>
 
-    #if defined(MANGO_CPU_64BIT)
+#if defined(MANGO_CPU_64BIT)
 
     #define AARCH64_HWCAP_FP (1UL << 0)
     #define AARCH64_HWCAP_ASIMD (1UL << 1)
@@ -214,11 +214,12 @@ namespace
         if (hwcaps & AARCH64_HWCAP_CRC32) flags |= ARM_CRC32;
         if (hwcaps & AARCH64_HWCAP_SHA1) flags |= ARM_SHA1;
         if (hwcaps & AARCH64_HWCAP_SHA2) flags |= ARM_SHA2;
+        if (hwcaps & AARCH64_HWCAP_PMULL) flags |= ARM_PMULL;
 
         return flags;
     }
 
-    #else
+#else // MANGO_CPU_64BIT
 
     #define ARM_HWCAP_SWP (1UL << 0)
     #define ARM_HWCAP_HALF (1UL << 1)
@@ -264,11 +265,12 @@ namespace
         if (hwcaps2 & ARM_HWCAP2_CRC32) flags |= ARM_CRC32;
         if (hwcaps2 & ARM_HWCAP2_SHA1) flags |= ARM_SHA1;
         if (hwcaps2 & ARM_HWCAP2_SHA2) flags |= ARM_SHA2;
+        if (hwcaps2 & ARM_HWCAP2_PMULL) flags |= ARM_PMULL;
 
         return flags;
     }
 
-    #endif
+#endif // MANGO_CPU_64BIT
 
 #elif defined(MANGO_CPU_ARM)
 
@@ -294,6 +296,7 @@ namespace
         flags |= ARM_AES;
         flags |= ARM_SHA1;
         flags |= ARM_SHA2;
+        flags |= ARM_PMULL;
 #endif
 
 #ifdef __ARM_FEATURE_CRC32
