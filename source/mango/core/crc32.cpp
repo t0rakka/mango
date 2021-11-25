@@ -919,14 +919,14 @@ namespace
     static inline
     u32 skip_block(u32 crc, const u32* table)
     {
-        crc = table[0 * 16 + ((crc >>  0) & 0xf)] ^
-              table[1 * 16 + ((crc >>  4) & 0xf)] ^
-              table[2 * 16 + ((crc >>  8) & 0xf)] ^
-              table[3 * 16 + ((crc >> 12) & 0xf)] ^
-              table[4 * 16 + ((crc >> 16) & 0xf)] ^
-              table[5 * 16 + ((crc >> 20) & 0xf)] ^
-              table[6 * 16 + ((crc >> 24) & 0xf)] ^
-              table[7 * 16 + ((crc >> 28) & 0xf)];
+        crc = table[((crc >>  0) & 0xf) + 0x00] ^
+              table[((crc >>  4) & 0xf) + 0x10] ^
+              table[((crc >>  8) & 0xf) + 0x20] ^
+              table[((crc >> 12) & 0xf) + 0x30] ^
+              table[((crc >> 16) & 0xf) + 0x40] ^
+              table[((crc >> 20) & 0xf) + 0x50] ^
+              table[((crc >> 24) & 0xf) + 0x60] ^
+              table[((crc >> 28) & 0xf) + 0x70];
         return crc;
     }
 
@@ -972,6 +972,83 @@ namespace
                 address += 64;
                 size -= 64;
             }
+
+            /*
+            u32 c0 = crc;
+
+            constexpr size_t block0_size = g_skip_blocks * g_skip_block0_size;
+            constexpr size_t block1_size = g_skip_blocks * g_skip_block1_size;
+            constexpr size_t block2_size = g_skip_blocks * g_skip_block2_size;
+
+            while (size >= block0_size)
+            {
+                u32 c1 = 0;
+                u32 c2 = 0;
+                for (int i = 0; i < g_skip_block0_size; i += 32)
+                {
+                    c0 = u64_crc32(c0, uload64le(address + 0 * g_skip_block0_size + 0 * 8));
+                    c1 = u64_crc32(c1, uload64le(address + 1 * g_skip_block0_size + 0 * 8));
+                    c2 = u64_crc32(c2, uload64le(address + 2 * g_skip_block0_size + 0 * 8));
+
+                    c0 = u64_crc32(c0, uload64le(address + 0 * g_skip_block0_size + 1 * 8));
+                    c1 = u64_crc32(c1, uload64le(address + 1 * g_skip_block0_size + 1 * 8));
+                    c2 = u64_crc32(c2, uload64le(address + 2 * g_skip_block0_size + 1 * 8));
+
+                    c0 = u64_crc32(c0, uload64le(address + 0 * g_skip_block0_size + 2 * 8));
+                    c1 = u64_crc32(c1, uload64le(address + 1 * g_skip_block0_size + 2 * 8));
+                    c2 = u64_crc32(c2, uload64le(address + 2 * g_skip_block0_size + 2 * 8));
+
+                    c0 = u64_crc32(c0, uload64le(address + 0 * g_skip_block0_size + 3 * 8));
+                    c1 = u64_crc32(c1, uload64le(address + 1 * g_skip_block0_size + 3 * 8));
+                    c2 = u64_crc32(c2, uload64le(address + 2 * g_skip_block0_size + 3 * 8));
+
+                    address += 32;
+                }
+
+                c0 = skip_block(c0, g_crc32_block0_skip_table) ^ c1;
+                c0 = skip_block(c0, g_crc32_block0_skip_table) ^ c2;
+                address += (g_skip_blocks - 1) * g_skip_block0_size;
+                size -= block0_size;
+            }
+
+            while (size >= block1_size)
+            {
+                u32 c1 = 0;
+                u32 c2 = 0;
+                for (int i = 0; i < g_skip_block1_size; i += 8)
+                {
+                    c0 = u64_crc32(c0, uload64le(address + 0 * g_skip_block1_size));
+                    c1 = u64_crc32(c1, uload64le(address + 1 * g_skip_block1_size));
+                    c2 = u64_crc32(c2, uload64le(address + 2 * g_skip_block1_size));
+                    address += 8;
+                }
+
+                c0 = skip_block(c0, g_crc32_block1_skip_table) ^ c1;
+                c0 = skip_block(c0, g_crc32_block1_skip_table) ^ c2;
+                address += (g_skip_blocks - 1) * g_skip_block1_size;
+                size -= block1_size;
+            }
+
+            while (size >= block2_size)
+            {
+                u32 c1 = 0;
+                u32 c2 = 0;
+                for (int i = 0; i < g_skip_block2_size; i += 8)
+                {
+                    c0 = u64_crc32(c0, uload64le(address + 0 * g_skip_block2_size));
+                    c1 = u64_crc32(c1, uload64le(address + 1 * g_skip_block2_size));
+                    c2 = u64_crc32(c2, uload64le(address + 2 * g_skip_block2_size));
+                    address += 8;
+                }
+
+                c0 = skip_block(c0, g_crc32_block2_skip_table) ^ c1;
+                c0 = skip_block(c0, g_crc32_block2_skip_table) ^ c2;
+                address += (g_skip_blocks - 1) * g_skip_block2_size;
+                size -= block2_size;
+            }
+
+            crc = c0;
+            */
 
 #endif // HARDWARE_U64_CRC32
 
