@@ -175,7 +175,7 @@ namespace mango
     #endif
 
     #if defined(__ARM_FEATURE_CRYPTO)
-        info << "AES SHA1 SHA2 ";
+        info << "CRYPTO ";
     #endif
 
     #if defined(__ARM_FEATURE_CRC32)
