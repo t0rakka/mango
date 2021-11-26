@@ -1086,7 +1086,7 @@ namespace
                 crc = u8_crc32c(crc, *address++);
             }
 
-#if defined(__ARM_FEATURE_CRC32)
+#if defined(__ARM_FEATURE_CRC32) && defined(__ARM_FEATURE_CRYPTO)
 
             constexpr size_t SEGMENT_BYTES = 256;
             constexpr size_t BLOCK_BYTES = 256 * 4 + 8;

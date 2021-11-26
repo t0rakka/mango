@@ -645,7 +645,19 @@ namespace mango
 
 #else
 
-#if defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
+#if defined(__ARM_FEATURE_CRYPTO)
+
+    static inline
+    u32 u32_interleave_bits(u32 x, u32 y)
+    {
+        poly64_t a = x;
+        poly64_t b = y;
+        a = vmull_p64(a, a);
+        b = vmull_p64(b, b);
+        return u32(a | (b << 1));
+    }
+
+#elif defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
 
     static inline
     u32 u32_interleave_bits(u32 x, u32 y)
@@ -1090,7 +1102,19 @@ namespace mango
 
 #else
 
-#if defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
+#if defined(__ARM_FEATURE_CRYPTO)
+
+    static inline
+    u64 u64_interleave_bits(u64 x, u64 y)
+    {
+        poly64_t a = x;
+        poly64_t b = y;
+        a = vmull_p64(a, a);
+        b = vmull_p64(b, b);
+        return u64(a | (b << 1));
+    }
+
+#elif defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
 
     static inline
     u64 u64_interleave_bits(u64 x, u64 y)
