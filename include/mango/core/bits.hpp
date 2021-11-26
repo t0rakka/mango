@@ -619,6 +619,9 @@ namespace mango
 
 #ifdef MANGO_ENABLE_BMI2
 
+    // The BMI2 bit interleaving is FAST on Intel CPUs, but emulated in microcode on AMD Zen
+    // and should be avoided at ANY cost.
+
     static inline
     u32 u32_interleave_bits(u32 x, u32 y)
     {
@@ -642,6 +645,19 @@ namespace mango
 
 #else
 
+#if defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
+
+    static inline
+    u32 u32_interleave_bits(u32 x, u32 y)
+    {
+        __m128i value = _mm_set_epi64x(x, y);
+        __m128i a = _mm_clmulepi64_si128(value, value, 0x11);
+        __m128i b = _mm_clmulepi64_si128(value, value, 0x00);
+        return u32(_mm_extract_epi64(a, 0) | (_mm_extract_epi64(b, 0) << 1));
+    }
+
+#else
+
     static inline
     u32 u32_interleave_bits(u32 x, u32 y)
     {
@@ -655,6 +671,8 @@ namespace mango
         value = (value | (value << 1)) & 0x5555555555555555;
         return u32((value >> 31) | value);
     }
+
+#endif // defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
 
     static inline
     void u32_deinterleave_bits(u32& x, u32& y, u32 value)
@@ -671,7 +689,7 @@ namespace mango
         y = u32(v >> 32);
     }
 
-#endif
+#endif // MANGO_ENABLE_BMI2
 
     constexpr u32 u32_select(u32 mask, u32 a, u32 b)
     {
@@ -1046,6 +1064,9 @@ namespace mango
 
 #ifdef MANGO_ENABLE_BMI2
 
+    // The BMI2 bit interleaving is FAST on Intel CPUs, but emulated in microcode on AMD Zen
+    // and should be avoided at ANY cost.
+
     static inline
     u64 u64_interleave_bits(u64 x, u64 y)
     {
@@ -1065,6 +1086,19 @@ namespace mango
         //     y: 00000000000000000000000000000000yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
         x = _pext_u64(value, 0x5555555555555555);
         y = _pext_u64(value, 0xaaaaaaaaaaaaaaaa);
+    }
+
+#else
+
+#if defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
+
+    static inline
+    u64 u64_interleave_bits(u64 x, u64 y)
+    {
+        __m128i value = _mm_set_epi64x(x, y);
+        __m128i a = _mm_clmulepi64_si128(value, value, 0x11);
+        __m128i b = _mm_clmulepi64_si128(value, value, 0x00);
+        return _mm_extract_epi64(a, 0) | (_mm_extract_epi64(b, 0) << 1);
     }
 
 #else
@@ -1092,6 +1126,8 @@ namespace mango
         return value;
     }
 
+#endif // defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
+
     static inline
     void u64_deinterleave_bits(u64& x, u64& y, u64 value)
     {
@@ -1114,7 +1150,7 @@ namespace mango
         y = (y ^ (y >> 16)) & 0x00000000ffffffff;
     }
 
-#endif
+#endif // MANGO_ENABLE_BMI2
 
     constexpr u64 u64_select(u64 mask, u64 a, u64 b)
     {
