@@ -21,7 +21,9 @@ namespace
     // Commodore 64 utilities
     // ------------------------------------------------------------
 
-    const Color c64_palette[16] =
+    constexpr int g_c64_palette_size = 16;
+
+    const Color g_c64_palette[] =
     { 
         0xFF000000,
         0xFFFFFFFF,
@@ -45,15 +47,15 @@ namespace
     {
         PaletteC64()
         {
-            size = 16;
-            for (int i = 0; i < 16; ++i)
+            size = g_c64_palette_size;
+            for (int i = 0; i < g_c64_palette_size; ++i)
             {
-                color[i] = c64_palette[i];
+                color[i] = g_c64_palette[i];
             }
         }
     };
 
-    void resolve_palette(const Surface& s, u8* data, int width, int height, const Palette& palette)
+    void resolve_palette(const Surface& s, u8* image, int width, int height, const Palette& palette)
     {
         for (int y = 0; y < height; ++y)
         {
@@ -61,7 +63,7 @@ namespace
 
             for (int x = 0; x < width; ++x)
             {
-                u8 index = *data++;
+                u8 index = *image++;
                 scan[x] = palette[index];
             }
         }
@@ -200,14 +202,14 @@ namespace
                                int background_mode, bool fli)
     {
         PaletteC64 palette;
-        std::vector<u8> temp(width * height, 0);
+        Buffer temp(width * height, 0);
 
-        convert_multicolor_bitmap(width, height, temp.data(), 
+        convert_multicolor_bitmap(width, height, temp, 
                                   data + bitmap_offset, data + video_ram_offset, 
                                   data + color_ram_offset, data + background_offset, data + opcode_colors_offset,
                                   background_mode, fli);
 
-        resolve_palette(s, temp.data(), width, height, palette);
+        resolve_palette(s, temp, width, height, palette);
     }
 
     void multicolor_interlace_to_surface(const Surface& s, const u8 *data, int width, int height,
@@ -221,11 +223,11 @@ namespace
     {
         PaletteC64 palette;
 
-        std::vector<u8> bitmap1(width * height);
-        std::vector<u8> bitmap2(width * height);
+        Buffer bitmap1(width * height);
+        Buffer bitmap2(width * height);
 
-        convert_multicolor_bitmap(width, height, bitmap1.data(), data + bitmap_offset_1, data + video_ram_offset_1, data + color_ram_offset, background_colors, opcode_colors, background_mode, fli);
-        convert_multicolor_bitmap(width, height, bitmap2.data(), data + bitmap_offset_2, data + video_ram_offset_2, data + color_ram_offset, background_colors, opcode_colors, background_mode, fli);
+        convert_multicolor_bitmap(width, height, bitmap1, data + bitmap_offset_1, data + video_ram_offset_1, data + color_ram_offset, background_colors, opcode_colors, background_mode, fli);
+        convert_multicolor_bitmap(width, height, bitmap2, data + bitmap_offset_2, data + video_ram_offset_2, data + color_ram_offset, background_colors, opcode_colors, background_mode, fli);
 
         for (int y = 0; y < height; ++y)
         {
@@ -349,11 +351,11 @@ namespace
                           u8 fli_bug_color = 0)
     {
         PaletteC64 palette;
-        std::vector<u8> temp(width * height, 0);
+        Buffer temp(width * height, 0);
 
-        convert_hires_bitmap(width, height, temp.data(), data + bitmap_offset, data + video_ram_offset, fli, show_fli_bug, fli_bug_color);
+        convert_hires_bitmap(width, height, temp, data + bitmap_offset, data + video_ram_offset, fli, show_fli_bug, fli_bug_color);
 
-        resolve_palette(s, temp.data(), width, height, palette);
+        resolve_palette(s, temp, width, height, palette);
     }
 
     void hires_interlace_to_surface(const Surface& s, const u8* data, int width, int height,
@@ -365,11 +367,11 @@ namespace
     {
         PaletteC64 palette;
 
-        std::vector<u8> bitmap1(width * height);
-        std::vector<u8> bitmap2(width * height);
+        Buffer bitmap1(width * height);
+        Buffer bitmap2(width * height);
 
-        convert_hires_bitmap(width, height, bitmap1.data(), data + bitmap_offset_1, data + video_ram_offset_1, fli, show_fli_bug, fli_bug_color);
-        convert_hires_bitmap(width, height, bitmap2.data(), data + bitmap_offset_2, data + video_ram_offset_2, fli, show_fli_bug, fli_bug_color);
+        convert_hires_bitmap(width, height, bitmap1, data + bitmap_offset_1, data + video_ram_offset_1, fli, show_fli_bug, fli_bug_color);
+        convert_hires_bitmap(width, height, bitmap2, data + bitmap_offset_2, data + video_ram_offset_2, fli, show_fli_bug, fli_bug_color);
 
         for (int y = 0; y < height; ++y)
         {
@@ -597,14 +599,14 @@ namespace
 
             const u8* end = m_memory.address + m_memory.size;
 
-            std::vector<u8> temp;
+            Buffer temp;
             const u8* buffer = m_data;
 
             if (m_generic_header.compressed)
             {
-                temp = std::vector<u8>(10513);
-                rle_ecb(temp.data(), m_data, 10513, end, m_generic_header.escape_char);
-                buffer = temp.data();
+                temp.reset(10513);
+                rle_ecb(temp, m_data, 10513, end, m_generic_header.escape_char);
+                buffer = temp;
             }
 
             multicolor_to_surface(s, buffer, m_header.width, m_header.height, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, false, false);
@@ -829,19 +831,18 @@ namespace
 
             const u8* end = m_memory.address + m_memory.size;
 
-            std::vector<u8> temp;
+            Buffer temp;
             const u8* buffer = m_data;
 
             if (m_compressed)
             {
-                temp = std::vector<u8>(18240);
-                rle_ecb(temp.data(), m_data, 18240, end, m_escape_char);
-                buffer = temp.data();
+                temp.reset(18240);
+                rle_ecb(temp, m_data, 18240, end, m_escape_char);
+                buffer = temp;
             }
 
-            std::vector<u8> background(200, *(buffer + 0x2740));
-
-            multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x800, 0x2800, 0x400, 0x400, 0x0, background.data(), 0x0, 2, false, 2);
+            Buffer background(200, *(buffer + 0x2740));
+            multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x800, 0x2800, 0x400, 0x400, 0x0, background, 0x0, 2, false, 2);
         }
     };
 
@@ -904,14 +905,14 @@ namespace
 
             const u8* end = m_memory.address + m_memory.size;
 
-            std::vector<u8> temp;
+            Buffer temp;
             const u8* buffer = m_data;
 
             if (m_compressed)
             {
-                temp = std::vector<u8>(10049);
-                rle_ecb(temp.data(), m_data, 10049, end, m_escape_char);
-                buffer = temp.data();
+                temp.reset(10049);
+                rle_ecb(temp, m_data, 10049, end, m_escape_char);
+                buffer = temp;
             }
 
             multicolor_to_surface(s, buffer, m_header.width, m_header.height, 0x800, 0x400, 0x0, 0x2740, 0x0, false, false);
@@ -972,14 +973,14 @@ namespace
 
             const u8* end = m_memory.address + m_memory.size;
 
-            std::vector<u8> temp;
+            Buffer temp;
             const u8* buffer = m_data;
 
             if (m_compressed)
             {
-                temp = std::vector<u8>(32768);
-                rle_ecb(temp.data(), m_data, 32768, end, m_escape_char);
-                buffer = temp.data();
+                temp.reset(32768);
+                rle_ecb(temp, m_data, 32768, end, m_escape_char);
+                buffer = temp;
             }
 
             hires_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x0, 0x4000, 0x2000, 0x6000, true, false, 0);
@@ -1066,8 +1067,8 @@ namespace
 
             PaletteC64 palette;
 
-            std::vector<u8> temp(m_header.width * m_header.height, 0);
-            u8* image = temp.data();
+            Buffer temp(m_header.width * m_header.height, 0);
+            u8* image = temp;
 
             convert_multicolor_bitmap(m_header.width, m_header.height, image, m_data + 0x2880, m_data + 0x880, m_data + 0x480, NULL, m_data + 0x380, 0, true);
 
@@ -1112,7 +1113,7 @@ namespace
                 }
             }
 
-            resolve_palette(s, temp.data(), m_header.width, m_header.height, palette);
+            resolve_palette(s, temp, m_header.width, m_header.height, palette);
         }
     };
 
@@ -1202,17 +1203,17 @@ namespace
 
             const u8* end = m_memory.address + m_memory.size;
 
-            std::vector<u8> temp;
+            Buffer temp;
             const u8* buffer = m_data;
 
             if (m_compressed)
             {
-                temp = std::vector<u8>(33678);
-                depack_fun(temp.data(), m_data, 33678, end, m_escape_char);
-                buffer = temp.data();
+                temp.reset(33678);
+                depack_fun(temp, m_data, 33678, end, m_escape_char);
+                buffer = temp;
             }
 
-            std::vector<u8> background(200);
+            Buffer background(200);
             std::memcpy(background.data() +   0, buffer + 0x3f48, 100);
             std::memcpy(background.data() + 100, buffer + 0x8328, 100);
 
@@ -1260,7 +1261,7 @@ namespace
             if (!m_data)
                 return;
 
-            std::vector<u8> background(200);
+            Buffer background(200);
             std::memcpy(background.data() +   0, m_data + 0x3f4f, 177);
             std::memcpy(background.data() + 177, m_data + 0x47e8, 20);
             background[197] = background[198] = background[199] = background[196];  // replicate the last color four times
@@ -1298,8 +1299,8 @@ namespace
 
             PaletteC64 palette;
 
-            std::vector<u8> temp(m_header.width * m_header.height, 0);
-            u8* image = temp.data();
+            Buffer temp(m_header.width * m_header.height, 0);
+            u8* image = temp;
 
             for (int y = 0; y < m_header.height; ++y)
             {
@@ -1362,7 +1363,7 @@ namespace
                 }
             }
 
-            resolve_palette(s, temp.data(), m_header.width, m_header.height, palette);
+            resolve_palette(s, temp, m_header.width, m_header.height, palette);
         }
     };
 
@@ -1490,14 +1491,14 @@ namespace
             if (!m_data)
                 return;
 
-            std::vector<u8> temp;
+            Buffer temp;
             const u8* buffer = m_data;
 
             if (m_compressed)
             {
-                temp = std::vector<u8>(16383);
-                depack_him(temp.data(), m_data, 16383, int(m_memory.size - 2), 0);
-                buffer = temp.data();
+                temp.reset(16383);
+                depack_him(temp, m_data, 16383, int(m_memory.size - 2), 0);
+                buffer = temp;
             }
 
             hires_to_surface(s, buffer, m_header.width, m_header.height, 0x140, 0x2028, true, false, 0);
@@ -1566,16 +1567,16 @@ namespace
                 return;
 
             PaletteC64 palette;
-            std::vector<u8> temp(m_header.width * m_header.height, 0);
+            Buffer temp(m_header.width * m_header.height, 0);
 
-            std::vector<u8> color_ram(1000, *(m_data + 0x1fb5));
+            Buffer color_ram(1000, *(m_data + 0x1fb5));
 
             convert_multicolor_bitmap(m_header.width, m_header.height, temp.data(), 
                                       m_data + 0x72, m_data + 0x2072, 
-                                      color_ram.data(), m_data + 0x1fb2, NULL,
+                                      color_ram, m_data + 0x1fb2, NULL,
                                       1, false);
 
-            resolve_palette(s, temp.data(), m_header.width, m_header.height, palette);
+            resolve_palette(s, temp, m_header.width, m_header.height, palette);
         }
     };
 
@@ -1669,18 +1670,18 @@ namespace
 
             const u8* end = m_memory.address + m_memory.size;
 
-            std::vector<u8> temp;
+            Buffer temp;
             const u8* buffer = m_data;
 
             if (m_generic_header.compressed)
             {
-                temp = std::vector<u8>(33600);
-                depack_ppp(temp.data(), m_data, 33600, end, m_generic_header.escape_char);
-                buffer = temp.data();
+                temp.reset(33600);
+                depack_ppp(temp, m_data, 33600, end, m_generic_header.escape_char);
+                buffer = temp;
             }
 
-            std::vector<u8> background(200, *(buffer + 0x437f));
-            multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x2400, 0x6400, 0x400, 0x4400, 0x0, background.data(), NULL, 1, true, 2);
+            Buffer background(200, *(buffer + 0x437f));
+            multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x2400, 0x6400, 0x400, 0x4400, 0x0, background, nullptr, 1, true, 2);
         }
     };
 
@@ -1785,22 +1786,7 @@ namespace
             if (!m_data)
                 return;
 
-            std::vector<u8> temp;
             const u8* buffer = m_data;
-
-            /*
-            if (m_compressed)
-            {
-                temp = std::vector<u8>(15874);
-                const u8* end = m_memory.address + m_memory.size;
-                rle_ecb(temp.data(), m_data, 15874, end, m_escape_char);
-                buffer = temp.data();
-
-                //FILE *f = fopen("unpacked.shf", "wb");
-                //fwrite(buffer, 1, 15874, f);
-                //fclose(f);
-            }
-            */
 
             const u8* bitmap_c64 = buffer + 0x2000;
             const u8* video_ram = buffer;
@@ -1809,8 +1795,8 @@ namespace
 
             PaletteC64 palette;
 
-            std::vector<u8> tempImage(m_header.width * m_header.height, 0);
-            u8* image = tempImage.data();
+            Buffer tempImage(m_header.width * m_header.height, 0);
+            u8* image = tempImage;
 
             for (int y = 0; y < m_header.height; ++y)
             {
@@ -1884,7 +1870,7 @@ namespace
                 }
             }
 
-            resolve_palette(s, tempImage.data(), m_header.width, m_header.height, palette);
+            resolve_palette(s, tempImage, m_header.width, m_header.height, palette);
         }
     };
 
@@ -1921,8 +1907,8 @@ namespace
 
             PaletteC64 palette;
 
-            std::vector<u8> tempImage(m_header.width * m_header.height, 0);
-            u8* image = tempImage.data();
+            Buffer tempImage(m_header.width * m_header.height, 0);
+            u8* image = tempImage;
 
             for (int y = 0; y < m_header.height; ++y)
             {
@@ -1976,7 +1962,7 @@ namespace
                 }
             }
 
-            resolve_palette(s, tempImage.data(), m_header.width, m_header.height, palette);
+            resolve_palette(s, tempImage, m_header.width, m_header.height, palette);
         }
     };
 
@@ -2155,18 +2141,18 @@ namespace
             if (!m_data)
                 return;
 
-            std::vector<u8> temp;
+            Buffer temp;
             const u8* buffer = m_data;
 
             if (m_compressed)
             {
-                temp = std::vector<u8>(19432);
-                depack_mci(temp.data(), m_data, 19432, int(m_memory.size - 2));
-                buffer = temp.data();
+                temp.reset(19432);
+                depack_mci(temp, m_data, 19432, int(m_memory.size - 2));
+                buffer = temp;
             }
 
-            std::vector<u8> background(200, *(buffer + 0x3e8));
-            multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x400, 0x2400, 0x0, 0x4400, 0x4800, background.data(), 0x0, 2, false, 2);
+            Buffer background(200, *(buffer + 0x3e8));
+            multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x400, 0x2400, 0x0, 0x4400, 0x4800, background, 0x0, 2, false, 2);
         }
     };
 
@@ -2219,15 +2205,15 @@ namespace
             if (!m_data)
                 return;
 
-            std::vector<u8> temp;
+            Buffer temp;
             const u8* buffer = m_data;
 
             if (m_compressed)
             {
-                temp = std::vector<u8>(16192);
+                temp.reset(16192);
                 const u8* end = m_memory.address + m_memory.size;
-                rle_ecb(temp.data(), m_data, 16192, end, m_escape_char);
-                buffer = temp.data();
+                rle_ecb(temp, m_data, 16192, end, m_escape_char);
+                buffer = temp;
             }
 
             const u8* bitmap_c64 = buffer + 0x2000;
@@ -2238,8 +2224,8 @@ namespace
 
             PaletteC64 palette;
 
-            std::vector<u8> tempImage(m_header.width * m_header.height, 0);
-            u8* image = tempImage.data();
+            Buffer tempImage(m_header.width * m_header.height, 0);
+            u8* image = tempImage;
 
             for (int y = 0; y < m_header.height; ++y)
             {
@@ -2309,7 +2295,7 @@ namespace
                 }
             }
 
-            resolve_palette(s, tempImage.data(), m_header.width, m_header.height, palette);
+            resolve_palette(s, tempImage, m_header.width, m_header.height, palette);
         }
     };
 
@@ -2386,14 +2372,14 @@ namespace
             if (!m_data)
                 return;
 
-            std::vector<u8> temp;
+            Buffer temp;
             const u8* buffer = m_data;
 
             if (m_compressed)
             {
-                temp = std::vector<u8>(32897);
-                depack_uifli(temp.data(), m_data, 32897, int(m_memory.size - 3), m_escape_char);
-                buffer = temp.data();
+                temp.reset(32897);
+                depack_uifli(temp, m_data, 32897, int(m_memory.size - 3), m_escape_char);
+                buffer = temp;
             }
 
             const u8* bitmap_c64[2] = { buffer + 0x2000, buffer + 0x6000 };
@@ -2488,9 +2474,12 @@ namespace
                         }
                     }
 
-                    image[x].r = (c64_palette[index[0]].r >> 1) + (c64_palette[index[1]].r >> 1);
-                    image[x].g = (c64_palette[index[0]].g >> 1) + (c64_palette[index[1]].g >> 1);
-                    image[x].b = (c64_palette[index[0]].b >> 1) + (c64_palette[index[1]].b >> 1);
+                    Color color0 = g_c64_palette[index[0]]; 
+                    Color color1 = g_c64_palette[index[1]]; 
+
+                    image[x].r = (color0.r >> 1) + (color1.r >> 1);
+                    image[x].g = (color0.g >> 1) + (color1.g >> 1);
+                    image[x].b = (color0.b >> 1) + (color1.b >> 1);
                     image[x].a = 0xff;
                 }
             }

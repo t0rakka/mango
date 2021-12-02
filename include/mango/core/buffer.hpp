@@ -37,6 +37,8 @@ namespace mango
         size_t capacity() const;
 
         void reset();
+        void reset(size_t bytes);
+        void reset(size_t bytes, u8 value);
         void resize(size_t bytes);
         void reserve(size_t bytes);
         void append(const void* source, size_t bytes);

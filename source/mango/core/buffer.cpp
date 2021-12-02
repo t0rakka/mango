@@ -101,6 +101,19 @@ namespace mango
         m_capacity = 0;
     }
 
+    void Buffer::reset(size_t bytes)
+    {
+        free(m_memory.address);
+        m_memory = Memory(allocate(bytes, m_alignment), bytes);
+        m_capacity = bytes;
+    }
+
+    void Buffer::reset(size_t bytes, u8 value)
+    {
+        reset(bytes);
+        std::memset(m_memory.address, value, bytes);
+    }
+
     void Buffer::resize(size_t bytes)
     {
         reserve(bytes);

@@ -194,20 +194,20 @@ namespace
 
         void decode(const Surface& s, Palette& palette, const u8* data, const u8* end)
         {
-            std::vector<u8> tempImage(width * height, 0);
+            Buffer tempImage(width * height, 0);
 
             const int words_per_scan = bitplanes == 1 ? 40 : 80;
 
             if (compressed)
             {
-                std::vector<u8> buffer(32000);
-			    degas_decompress(buffer.data(), data, end, 32000);
+                Buffer buffer(32000);
+			    degas_decompress(buffer, data, end, 32000);
 
                 BigEndianConstPointer p = buffer.data();
 
                 for (int y = 0; y < height; ++y)
                 {
-					u8* image = tempImage.data() + y * width;
+					u8* image = tempImage + y * width;
 
 					for (int j = 0; j < bitplanes; ++j)
                     {
@@ -256,7 +256,7 @@ namespace
                 }
 			}
 
-            resolve_palette(s, width, height, tempImage.data(), palette);
+            resolve_palette(s, width, height, tempImage, palette);
         }
 	};
 
@@ -396,7 +396,7 @@ namespace
             p += 12 + 2 + 2 + 2 + 2 + 2 + 2 + 2 + 66;
 
             const int num_words = 16000;
-            std::vector<u8> buffer(width * height);
+            Buffer buffer(width * height);
 
             for (int i = 0; i < (num_words / bitplanes); ++i)
             {
@@ -425,7 +425,7 @@ namespace
                 }
             }
 
-            resolve_palette(s, width, height, buffer.data(), palette);
+            resolve_palette(s, width, height, buffer, palette);
         }
 	};
 
@@ -574,7 +574,7 @@ namespace
         {
             BigEndianConstPointer p = data;
 
-            std::vector<u8> bitmap(width * height, 0);
+            Buffer bitmap(width * height, 0);
             std::vector<Color> palette(16 * 3 * (height - 1), Color(0, 0, 0, 0xff));
 
             int num_words = 16000;
@@ -582,7 +582,7 @@ namespace
 
             if (compressed)
             {
-                std::vector<u8> buffer(31840);
+                Buffer buffer(31840);
                 spu_decompress(buffer.data(), p, 31840, length_of_data_bit_map);
 
                 p = buffer.data();
@@ -973,7 +973,7 @@ namespace
                 palette[i] = convert_atari_color(palette_color);
             }
 
-            std::vector<u8> temp;
+            Buffer temp;
             const u8* buffer = p;
 
             if (compressed)
@@ -982,7 +982,7 @@ namespace
                 const u8 initial_value = p.read8();
                 const u16 offset = p.read16() & 0x7fff;
 
-                temp = std::vector<u8>(32000, initial_value);
+                temp.reset(32000, initial_value);
 			    ca_decompress(temp.data(), p, 32000, escape_char, offset);
 
                 buffer = temp.data();
@@ -992,7 +992,7 @@ namespace
             p = buffer;
 
             const int num_words = 16000;
-            std::vector<u8> image(width * height);
+            Buffer image(width * height);
 
             for (int i = 0; i < (num_words / bitplanes); ++i)
             {
@@ -1021,7 +1021,7 @@ namespace
                 }
             }
 
-            resolve_palette(s, width, height, image.data(), palette);
+            resolve_palette(s, width, height, image, palette);
         }
 	};
 
