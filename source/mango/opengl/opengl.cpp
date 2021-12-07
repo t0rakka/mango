@@ -527,7 +527,8 @@ namespace mango
 
 #ifdef MANGO_OPENGL_FRAMEBUFFER
 
-namespace {
+namespace
+{
 
     // -------------------------------------------------------------------
     // built-in shader sources
@@ -614,7 +615,7 @@ namespace {
         "    outFragment0 = vec4(r, g, b, a); \n"
         "} \n";
 
-    std::string getShadingLanguageVersionString()
+    std::string get_shading_language_version_string()
     {
         std::string s = "#version 110\n"; // default for OpenGL 2.0
 
@@ -632,11 +633,11 @@ namespace {
         return s;
     }
 
-    GLuint createShader(GLenum type, const char* source)
+    GLuint create_shader(GLenum type, const char* source)
     {
         GLuint shader = glCreateShader(type);
 
-        std::string header = getShadingLanguageVersionString();
+        std::string header = get_shading_language_version_string();
 
         const GLchar* string[] =
         {
@@ -668,10 +669,10 @@ namespace {
         return shader;
     }
 
-    GLuint createProgram(const char* vertex_source, const char* fragment_source)
+    GLuint create_program(const char* vertex_source, const char* fragment_source)
     {
-        GLuint vs = createShader(GL_VERTEX_SHADER, vertex_source);
-        GLuint fs = createShader(GL_FRAGMENT_SHADER, fragment_source);
+        GLuint vs = create_shader(GL_VERTEX_SHADER, vertex_source);
+        GLuint fs = create_shader(GL_FRAGMENT_SHADER, fragment_source);
 
         GLuint program = glCreateProgram();
         glAttachShader(program, vs);
@@ -772,7 +773,7 @@ namespace {
             glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
             glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_texture, 0);
 
-            m_index_program = createProgram(vertex_shader_source, fragment_shader_source_index);
+            m_index_program = create_program(vertex_shader_source, fragment_shader_source_index);
         }
 
         // create pixelbuffer
@@ -810,14 +811,14 @@ namespace {
 
         // create bilinear program
 
-        m_bilinear.program = createProgram(vertex_shader_source, fragment_shader_source);
+        m_bilinear.program = create_program(vertex_shader_source, fragment_shader_source);
         m_bilinear.transform = glGetUniformLocation(m_bilinear.program, "uTransform");
         m_bilinear.texture = glGetUniformLocation(m_bilinear.program, "uTexture");
         m_bilinear.position = glGetAttribLocation(m_bilinear.program, "inPosition");
 
         // create bicubic program
 
-        m_bicubic.program = createProgram(vertex_shader_source_bicubic, fragment_shader_source_bicubic);
+        m_bicubic.program = create_program(vertex_shader_source_bicubic, fragment_shader_source_bicubic);
         m_bicubic.transform = glGetUniformLocation(m_bicubic.program, "uTransform");
         m_bicubic.texture = glGetUniformLocation(m_bicubic.program, "uTexture");
         m_bicubic.scale = glGetUniformLocation(m_bicubic.program, "uTexScale");
