@@ -261,6 +261,10 @@ ifeq (Darwin, $(OS))
   INSTALL  = $(LOCAL) ; cp *.dylib /usr/local/lib ; cp -r $(INCLUDE_BASE)/mango/ /usr/local/include/mango/
   CLEAN    = rm -fr $(OBJECTS_PATH) *.dylib so_locations
 
+  # Apple strikes again.. -lSystem is needed with latest command line tools but it is NOT
+  #                       in search path by default.. 
+  LINK_POST += -L /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib -lSystem
+
 endif
 
 # ---------------------------------------------------------------------------
