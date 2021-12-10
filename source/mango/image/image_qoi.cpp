@@ -644,7 +644,7 @@ namespace
 
         for (auto memory : encode_memory)
         {
-            s.write32(memory.size);
+            s.write32(u32(memory.size));
             s.write(memory.address, memory.size);
             delete[] memory.address;
         }

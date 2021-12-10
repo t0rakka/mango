@@ -1973,5 +1973,8 @@
     <ClCompile Include="..\..\source\external\zstd\decompress\zstd_decompress_block.c">
       <Filter>external\zstd\decompress</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_qoi.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
