@@ -311,6 +311,7 @@ image_sources = files(
     '../source/mango/image/image_tga.cpp',
     '../source/mango/image/image_webp.cpp',
     '../source/mango/image/image_zpng.cpp',
+    '../source/mango/image/image_qoi.cpp',
     '../source/mango/image/quantize.cpp',
     '../source/mango/image/surface.cpp'
 )

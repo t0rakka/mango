@@ -33,6 +33,7 @@ namespace mango::image
     void registerImageDecoderATARI();
     void registerImageDecoderC64();
     void registerImageDecoderWEBP();
+    void registerImageDecoderQOI();
 
     class ImageServer
     {
@@ -62,6 +63,7 @@ namespace mango::image
             registerImageDecoderATARI();
             registerImageDecoderC64();
             registerImageDecoderWEBP();
+            registerImageDecoderQOI();
         }
 
         ~ImageServer()
