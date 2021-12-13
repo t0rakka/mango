@@ -7,12 +7,16 @@
 using namespace mango;
 
 constexpr u64 MB = 1 << 20;
+constexpr int N = 10;
 
 void print(const Buffer& buffer, u64 time0, u64 time1)
 {
-    u64 x = buffer.size() * 1000000; // buffer size in bytes * microseconds_in_second
+    u64 x = N * buffer.size() * 1000000; // buffer size in bytes * microseconds_in_second
     u32 delta = time1 - time0;
-    printf("%5d.%1d ms (%6d MB/s )\n", u32(delta/1000), u32(((delta+50)/100)%10), u32(x / (delta * MB)));
+    printf("%5d.%1d ms (%6d MB/s )\n",
+        u32(delta / 1000),
+        u32(((delta + 50) / 100)%10),
+        u32(x / (delta * MB)));
 }
 
 void test_fips()
@@ -73,11 +77,17 @@ void test_aes(int bits)
 
     u64 time0 = Time::us();
 
-    aes.ecb_encrypt(temp, buffer, size);
+    for (int i = 0; i < N; ++i)
+    {
+        aes.ecb_encrypt(temp, buffer, size);
+    }
 
     u64 time1 = Time::us();
 
-    aes.ecb_decrypt(output, temp, size);
+    for (int i = 0; i < N; ++i)
+    {
+        aes.ecb_decrypt(output, temp, size);
+    }
 
     u64 time2 = Time::us();
 
