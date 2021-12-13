@@ -16,15 +16,25 @@ void print(const char* text)
 
 struct Counter
 {
-    alignas(64) std::atomic<int> value = { 0 };
+    // The counters should have their own cache line to avoid false sharing
+    alignas(64)
+    std::atomic<int> value = { 0 };
 };
 
 bool test0()
 {
-    constexpr int size = 32;
-    Counter counter[size];
+    // NOTE: This test chokes with CPUs with large number of cores (n > 20)
+    //       UNLESS we feed the work in a worker thread ; without the inner
+    //       enqueue() call the test takes 10x longer because enqueue is a
+    //       bottleneck. This test is in place to monitor the improvements
+    //       on the front-end.
 
-    constexpr u64 icount = 7'500'000;
+    constexpr int N = 10;
+
+    constexpr int size = 32;
+    constexpr u64 icount = 7'500'000 / N;
+
+    Counter counter[size];
 
     if (icount > 0)
     {
@@ -34,7 +44,15 @@ bool test0()
         {
             q.enqueue([&, i]
             {
-                ++counter[i % size].value;
+                // a task that enqueues N tasks
+                for (int j = 0; j < N; ++j)
+                {
+                    const int idx = (i * N + j) % size;
+                    q.enqueue([&, idx]
+                    {
+                        ++counter[idx].value;
+                    });
+                }
             });
         }
     }
@@ -45,7 +63,7 @@ bool test0()
         sum += counter[i].value.load();
     }
 
-    return sum == icount;
+    return sum == icount * N;
 }
 
 bool test1()
@@ -384,6 +402,7 @@ int main(int argc, char* argv[])
 
             if (!success)
             {
+                printf("Failed.\n");
                 return 0;
             }
         }
