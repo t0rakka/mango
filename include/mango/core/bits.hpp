@@ -14,16 +14,6 @@ namespace mango
 {
 
     // ----------------------------------------------------------------------------
-    // configure built-ins
-    // ----------------------------------------------------------------------------
-
-#if defined(MANGO_COMPILER_GCC) || defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_INTEL)
-
-    #define MANGO_BITS_GCC_BUILTINS
-
-#endif
-
-    // ----------------------------------------------------------------------------
     // byteswap
     // ----------------------------------------------------------------------------
 
@@ -365,7 +355,7 @@ namespace mango
         return __clz(value);
     }
 
-#elif defined(MANGO_BITS_GCC_BUILTINS)
+#elif defined(MANGO_GCC_BUILTINS)
 
     static inline int u32_tzcnt(u32 value)
     {
@@ -453,7 +443,7 @@ namespace mango
         return int(__clz(value));
     }
 
-#elif defined(MANGO_BITS_GCC_BUILTINS)
+#elif defined(MANGO_GCC_BUILTINS)
 
     static inline u32 u32_mask_msb(u32 value)
     {
@@ -574,7 +564,7 @@ namespace mango
         return _mm_popcnt_u32(value);
     }
 
-#elif defined(MANGO_BITS_GCC_BUILTINS)
+#elif defined(MANGO_GCC_BUILTINS)
 
     static inline int u32_count_bits(u32 value)
     {
@@ -817,7 +807,7 @@ namespace mango
         return __clzll(value);
     }
 
-#elif defined(MANGO_BITS_GCC_BUILTINS)
+#elif defined(MANGO_GCC_BUILTINS)
 
     static inline int u64_tzcnt(u64 value)
     {
@@ -907,7 +897,7 @@ namespace mango
         return int(__clzll(value));
     }
 
-#elif defined(MANGO_BITS_GCC_BUILTINS)
+#elif defined(MANGO_GCC_BUILTINS)
 
     static inline u64 u64_mask_msb(u64 value)
     {
@@ -1037,7 +1027,7 @@ namespace mango
     #endif
     }
 
-#elif defined(MANGO_BITS_GCC_BUILTINS)
+#elif defined(MANGO_GCC_BUILTINS)
 
     static inline int u64_count_bits(u64 value)
     {
