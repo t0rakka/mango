@@ -626,38 +626,18 @@ namespace mango
     // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
     //                       32
 
-    // ----------------------------------------------------------------------------
-    // u32_deinterleave_bits
-    // ----------------------------------------------------------------------------
-    //                       32
-    // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
-    //     x: 0000000000000000xxxxxxxxxxxxxxxx
-    //     y: 0000000000000000yyyyyyyyyyyyyyyy
-    //               16              16
-
 #ifdef MANGO_ENABLE_BMI2
-
-    // The BMI2 bit interleaving is FAST on Intel CPUs but emulated in microcode on AMD Zen
-    // and a lot slower than the generic ALU implementation which follows later.
 
     static inline
     u32 u32_interleave_bits(u32 x, u32 y)
     {
+        // NOTE: Emulated in microcode on ARM Zen
         u32 value = _pdep_u32(y, 0xaaaaaaaa) |
                     _pdep_u32(x, 0x55555555);
         return value;
     }
 
-    static inline
-    void u32_deinterleave_bits(u32& x, u32& y, u32 value)
-    {
-        x = _pext_u32(value, 0x55555555);
-        y = _pext_u32(value, 0xaaaaaaaa);
-    }
-
-#else
-
-#if defined(__ARM_FEATURE_CRYPTO)
+#elif defined(__ARM_FEATURE_CRYPTO)
 
     static inline
     u32 u32_interleave_bits(u32 x, u32 y)
@@ -693,7 +673,28 @@ namespace mango
         return u32((value >> 31) | value);
     }
 
-#endif // defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
+#endif
+
+    // ----------------------------------------------------------------------------
+    // u32_deinterleave_bits
+    // ----------------------------------------------------------------------------
+    //                       32
+    // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
+    //     x: 0000000000000000xxxxxxxxxxxxxxxx
+    //     y: 0000000000000000yyyyyyyyyyyyyyyy
+    //               16              16
+
+#ifdef MANGO_ENABLE_BMI2
+
+    static inline
+    void u32_deinterleave_bits(u32& x, u32& y, u32 value)
+    {
+        // NOTE: Emulated in microcode on ARM Zen
+        x = _pext_u32(value, 0x55555555);
+        y = _pext_u32(value, 0xaaaaaaaa);
+    }
+
+#else
 
     static inline
     void u32_deinterleave_bits(u32& x, u32& y, u32 value)
@@ -707,7 +708,7 @@ namespace mango
         y = u32(v >> 32);
     }
 
-#endif // MANGO_ENABLE_BMI2
+#endif
 
     constexpr u32 u32_select(u32 mask, u32 a, u32 b)
     {
@@ -1089,38 +1090,18 @@ namespace mango
     // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
     //                                       64
 
-    // ----------------------------------------------------------------------------
-    // u64_deinterleave_bits
-    // ----------------------------------------------------------------------------
-    //                                       64
-    // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
-    //     x: 00000000000000000000000000000000xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    //     y: 00000000000000000000000000000000yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
-    //                       32                              32
-
 #ifdef MANGO_ENABLE_BMI2
-
-    // The BMI2 bit interleaving is FAST on Intel CPUs but emulated in microcode on AMD Zen
-    // and a lot slower than the generic ALU implementation which follows later.
 
     static inline
     u64 u64_interleave_bits(u64 x, u64 y)
     {
+        // NOTE: Emulated in microcode on ARM Zen
         u64 value = _pdep_u64(y, 0xaaaaaaaaaaaaaaaa) |
                     _pdep_u64(x, 0x5555555555555555);
         return value;
     }
 
-    static inline
-    void u64_deinterleave_bits(u64& x, u64& y, u64 value)
-    {
-        x = _pext_u64(value, 0x5555555555555555);
-        y = _pext_u64(value, 0xaaaaaaaaaaaaaaaa);
-    }
-
-#else
-
-#if defined(__ARM_FEATURE_CRYPTO)
+#elif defined(__ARM_FEATURE_CRYPTO)
 
     static inline
     u64 u64_interleave_bits(u64 x, u64 y)
@@ -1164,7 +1145,28 @@ namespace mango
         return value;
     }
 
-#endif // defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
+#endif
+
+    // ----------------------------------------------------------------------------
+    // u64_deinterleave_bits
+    // ----------------------------------------------------------------------------
+    //                                       64
+    // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
+    //     x: 00000000000000000000000000000000xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    //     y: 00000000000000000000000000000000yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+    //                       32                              32
+
+#ifdef MANGO_ENABLE_BMI2
+
+    static inline
+    void u64_deinterleave_bits(u64& x, u64& y, u64 value)
+    {
+        // NOTE: Emulated in microcode on ARM Zen
+        x = _pext_u64(value, 0x5555555555555555);
+        y = _pext_u64(value, 0xaaaaaaaaaaaaaaaa);
+    }
+
+#else
 
     static inline
     void u64_deinterleave_bits(u64& x, u64& y, u64 value)
@@ -1184,7 +1186,7 @@ namespace mango
         y = (y ^ (y >> 16)) & 0x00000000ffffffff;
     }
 
-#endif // MANGO_ENABLE_BMI2
+#endif
 
     constexpr u64 u64_select(u64 mask, u64 a, u64 b)
     {
