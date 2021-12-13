@@ -1,5 +1,9 @@
 
 list(APPEND EXAMPLES
+    aes
+    checksum
+    hash
+    compress
     threads
     pathtest
     particle
