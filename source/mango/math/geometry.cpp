@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <cmath>
@@ -225,10 +225,10 @@ namespace mango::math
         const float32x2 c = texcoord[1] - texcoord[0];
         const float32x2 d = texcoord[2] - texcoord[0];
         float s = c.x * d.y - c.y * d.x;
-		if (s)
-		{
-			s = 1.0f / s;
-		}
+        if (s)
+        {
+            s = 1.0f / s;
+        }
 
         Matrix3x3 tbn;
 
@@ -342,8 +342,8 @@ namespace mango::math
         if (dot(point, normal) < dot(ray.origin, normal))
             return false;
 
-		t0 = is.t0;
-		return true;
+        t0 = is.t0;
+        return true;
     }
 
     // ------------------------------------------------------------------
@@ -352,23 +352,18 @@ namespace mango::math
 
     bool IntersectRange::intersect(const Ray& ray, const Box& box)
     {
-        float id = 1.0f / ray.direction[0];
-        float s1 = (box.corner[0][0] - ray.origin[0]) * id;
-        float s2 = (box.corner[1][0] - ray.origin[0]) * id;
-        float tmin = std::min(s1, s2);
-        float tmax = std::max(s1, s2);
+        float32x3 s0 = (box.corner[0] - ray.origin) / ray.direction;
+        float32x3 s1 = (box.corner[1] - ray.origin) / ray.direction;
 
-        for (int i = 1; i < 3; ++i)
-        {
-            id = 1.0f / ray.direction[i];
-            s1 = (box.corner[0][i] - ray.origin[i]) * id;
-            s2 = (box.corner[1][i] - ray.origin[i]) * id;
-            tmin = std::max(tmin, std::min(std::min(s1, s2), tmax));
-            tmax = std::min(tmax, std::max(std::max(s1, s2), tmin));
-        }
+        float tmin = std::min(s0.x, s1.x);
+        float tmax = std::max(s0.x, s1.x);
 
-		t0 = tmin;
-		t1 = tmax;
+        tmin = std::max(tmin, std::min({ s0.y, s1.y, tmax }));
+        tmax = std::min(tmax, std::max({ s0.y, s1.y, tmin }));
+
+        t0 = std::max(tmin, std::min({ s0.z, s1.z, tmax }));
+        t1 = std::min(tmax, std::max({ s0.z, s1.z, tmin }));
+
         return t1 > std::max(t0, 0.0f);
     }
 
@@ -401,8 +396,8 @@ namespace mango::math
         tmin = std::max(tmin, zmin);
         tmax = std::min(tmax, zmax);
 
-		t0 = tmin;
-		t1 = tmax;
+        t0 = tmin;
+        t1 = tmax;
         return t1 > std::max(t0, 0.0f);
     }
 
