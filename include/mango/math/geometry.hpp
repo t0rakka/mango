@@ -93,8 +93,8 @@ namespace mango::math
 
     struct FastRay : Ray
     {
-        float dotod;
-        float dotoo;
+        float dot_od;
+        float dot_oo;
         float32x3 invdir;
         int32x3 sign;
 

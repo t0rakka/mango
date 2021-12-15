@@ -63,16 +63,13 @@ namespace mango::math
     FastRay::FastRay(const Ray& ray)
         : Ray(ray.origin, ray.direction)
     {
-        dotod = dot(origin, direction);
-        dotoo = dot(origin, origin);
+        dot_od = dot(origin, direction);
+        dot_oo = dot(origin, origin);
+        invdir = 1.0f / direction;
 
-        for (int i = 0; i < 3; ++i)
-        {
-            // division by zero is OK here; 
-            // all code that uses FastRay must correctly handle +inf and -inf
-            invdir[i] = 1.0f / direction[i];
-            sign[i] = invdir[i] < 0;
-        }
+        sign.x = invdir.x < 0;
+        sign.y = invdir.y < 0;
+        sign.z = invdir.z < 0;
     }
 
     // ------------------------------------------------------------------
@@ -372,24 +369,24 @@ namespace mango::math
         // Implementation based on a paper by:
         // Amy Williams, Steve Barrus, R. Keith Morley and Peter Shirley
 
-        float tmin = (box.corner[0 + ray.sign[0]].x - ray.origin.x) * ray.invdir.x;
-        float ymax = (box.corner[1 - ray.sign[1]].y - ray.origin.y) * ray.invdir.y;
+        float tmin = (box.corner[0 + ray.sign.x].x - ray.origin.x) * ray.invdir.x;
+        float ymax = (box.corner[1 - ray.sign.y].y - ray.origin.y) * ray.invdir.y;
         if (tmin > ymax)
             return false;
 
-        float tmax = (box.corner[1 - ray.sign[0]].x - ray.origin.x) * ray.invdir.x;
-        float ymin = (box.corner[0 + ray.sign[1]].y - ray.origin.y) * ray.invdir.y;
+        float tmax = (box.corner[1 - ray.sign.x].x - ray.origin.x) * ray.invdir.x;
+        float ymin = (box.corner[0 + ray.sign.y].y - ray.origin.y) * ray.invdir.y;
         if (tmax < ymin)
             return false;
 
         tmin = std::max(tmin, ymin);
         tmax = std::min(tmax, ymax);
 
-        float zmin = (box.corner[0 + ray.sign[2]].z - ray.origin.z) * ray.invdir.z;
+        float zmin = (box.corner[0 + ray.sign.z].z - ray.origin.z) * ray.invdir.z;
         if (tmax < zmin)
             return false;
 
-        float zmax = (box.corner[1 - ray.sign[2]].z - ray.origin.z) * ray.invdir.z;
+        float zmax = (box.corner[1 - ray.sign.z].z - ray.origin.z) * ray.invdir.z;
         if (tmin > zmax)
             return false;
 
@@ -403,8 +400,8 @@ namespace mango::math
 
     bool IntersectRange::intersect(const FastRay& ray, const Sphere& sphere)
     {
-        float b = -(ray.dotod - dot(sphere.center, ray.direction));
-        float c = ray.dotoo + dot(sphere.center, sphere.center) - 2.0f * dot(ray.origin, sphere.center) - sphere.radius * sphere.radius;
+        float b = -(ray.dot_od - dot(sphere.center, ray.direction));
+        float c = ray.dot_oo + dot(sphere.center, sphere.center) - 2.0f * dot(ray.origin, sphere.center) - sphere.radius * sphere.radius;
 
         const float det = b * b - c;
 
@@ -524,7 +521,7 @@ namespace mango::math
             return false;
 
         t0 = dot(edge2, qvec) * det;
-        u = 1.0f - w - v;
+        u = 1.0f - (v + w);
 
         return true;
     }
