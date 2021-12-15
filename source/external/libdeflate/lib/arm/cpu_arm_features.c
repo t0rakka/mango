@@ -130,4 +130,12 @@ void setup_cpu_features(void)
 	_cpu_features = features | ARM_CPU_FEATURES_KNOWN;
 }
 
+#else
+
+int clang_arm_features_suppress_warning_about_no_symbols()
+{
+	// suppress toolchain warning: "ranlib: file: libmango.a(cpu_arm_features.c.o) has no symbols"
+	return 7;
+}
+
 #endif /* ARM_CPU_FEATURES_ENABLED */
