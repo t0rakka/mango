@@ -2840,7 +2840,7 @@ namespace
 
         Memory buffer(temp + bytes_per_line, buffer_size);
 
-        if (!m_idot_address)
+        if (!m_idot_address || !multithread)
         {
             try
             {
