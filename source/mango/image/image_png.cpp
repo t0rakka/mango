@@ -1777,7 +1777,7 @@ namespace
         Buffer m_icc;
 
         // iDOT
-        u32 m_idat_offset = 0;
+        const u8* m_idot_address = nullptr;
         u32 m_first_half_height = 0;
         u32 m_second_half_height = 0;
 
@@ -2284,11 +2284,21 @@ namespace
 
         m_first_half_height = p.read32();
         m_second_half_height = p.read32();
-        m_idat_offset = p.read32();
+        u32 idat_offset = p.read32();
 
-        debugPrint("  First:  %d\n", m_first_half_height);
-        debugPrint("  Second: %d\n", m_second_half_height);
-        debugPrint("  Offset: %d\n", m_idat_offset);
+        // Compute IDAT address (the offset is relative to iDOT chunk)
+        BigEndianConstPointer x = p + idat_offset - 36;
+
+        x += 4; // skip size field
+        u32 id = x.read32();
+        if (id == u32_mask_rev('I', 'D', 'A', 'T'))
+        {
+            m_idot_address = x - 8;
+
+            debugPrint("  First:  %d\n", m_first_half_height);
+            debugPrint("  Second: %d\n", m_second_half_height);
+            debugPrint("  Offset: %d\n", idat_offset);
+        }
 
         MANGO_UNREFERENCED(divided_height);
     }
