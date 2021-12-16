@@ -1776,6 +1776,11 @@ namespace
         // iCCP
         Buffer m_icc;
 
+        // iDOT
+        u32 m_idat_offset = 0;
+        u32 m_first_half_height = 0;
+        u32 m_second_half_height = 0;
+
         void read_IHDR(BigEndianConstPointer p, u32 size);
         void read_IDAT(BigEndianConstPointer p, u32 size);
         void read_PLTE(BigEndianConstPointer p, u32 size);
@@ -1788,6 +1793,7 @@ namespace
         void read_fcTL(BigEndianConstPointer p, u32 size);
         void read_fdAT(BigEndianConstPointer p, u32 size);
         void read_iCCP(BigEndianConstPointer p, u32 size);
+        void read_iDOT(BigEndianConstPointer p, u32 size);
 
         void parse();
 
@@ -2224,7 +2230,7 @@ namespace
         */
         const char* name = (const char*)&p[0];
         size_t name_len = png_strnlen(name, size);
-        if(name_len == size)
+        if (name_len == size)
         {
             debugPrint("iCCP: profile name not terminated\n");
             return;
@@ -2255,6 +2261,36 @@ namespace
         }
 
         debugPrint("  icc profile %d bytes\n", int(m_icc.size()));
+    }
+
+    void ParserPNG::read_iDOT(BigEndianConstPointer p, u32 size)
+    {
+        if (size != 28)
+        {
+            setError("Incorrect iDOT chunk size.");
+            return;
+        }
+
+        u32 height_divisor = p.read32();
+        p += 4;
+        u32 divided_height = p.read32();
+        p += 4;
+
+        if (height_divisor != 2)
+        {
+            setError("Unsupported height divisor.");
+            return;
+        }
+
+        m_first_half_height = p.read32();
+        m_second_half_height = p.read32();
+        m_idat_offset = p.read32();
+
+        debugPrint("  First:  %d\n", m_first_half_height);
+        debugPrint("  Second: %d\n", m_second_half_height);
+        debugPrint("  Offset: %d\n", m_idat_offset);
+
+        MANGO_UNREFERENCED(divided_height);
     }
 
     void ParserPNG::parse()
@@ -2332,6 +2368,10 @@ namespace
 
                 case u32_mask_rev('i', 'C', 'C', 'P'):
                     read_iCCP(p, size);
+                    break;
+
+                case u32_mask_rev('i', 'D', 'O', 'T'):
+                    read_iDOT(p, size);
                     break;
 
                 case u32_mask_rev('p', 'H', 'Y', 's'):
@@ -2777,7 +2817,7 @@ namespace
 
         // allocate output buffer
         Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
-        debugPrint("  buffer bytes:   %d\n", buffer_size);
+        debugPrint("  buffer bytes:  %d\n", buffer_size);
 
         // zero scanline for filters at the beginning
         std::memset(temp, 0, bytes_per_line);
@@ -2786,23 +2826,25 @@ namespace
 
         try
         {
+            size_t bytes_out = 0;
+
             if (m_iphoneOptimized)
             {
                 // Apple uses raw deflate format
-                size_t bytes_out = deflate::decompress(buffer, m_compressed);
-                debugPrint("  deflate bytes:  %d\n", int(bytes_out));
-                MANGO_UNREFERENCED(bytes_out);
+                bytes_out = deflate::decompress(buffer, m_compressed);
             }
             else
             {
                 // png standard uses zlib frame format
-                size_t bytes_out = zlib::decompress(buffer, m_compressed);
-                debugPrint("  zlib bytes:     %d\n", int(bytes_out));
-                MANGO_UNREFERENCED(bytes_out);
+                bytes_out = zlib::decompress(buffer, m_compressed);
             }
+
+            debugPrint("  output bytes:  %d\n", int(bytes_out));
+            MANGO_UNREFERENCED(bytes_out);
         }
         catch (const Exception& exception)
         {
+            debugPrint("  decoding error: %s\n", exception.what());
             status.setError(exception.what());
             return status;
         }
