@@ -1778,6 +1778,7 @@ namespace
 
         // iDOT
         const u8* m_idot_address = nullptr;
+        size_t m_idot_offset = 0;
         u32 m_first_half_height = 0;
         u32 m_second_half_height = 0;
 
@@ -2044,6 +2045,11 @@ namespace
 
     void ParserPNG::read_IDAT(BigEndianConstPointer p, u32 size)
     {
+        if (p == m_idot_address)
+        {
+            m_idot_offset = m_compressed.size();
+        }
+
         m_compressed.append(p, size);
     }
 
@@ -2293,7 +2299,7 @@ namespace
         u32 id = x.read32();
         if (id == u32_mask_rev('I', 'D', 'A', 'T'))
         {
-            m_idot_address = x - 8;
+            m_idot_address = x;
 
             debugPrint("  First:  %d\n", m_first_half_height);
             debugPrint("  Second: %d\n", m_second_half_height);
@@ -2834,29 +2840,96 @@ namespace
 
         Memory buffer(temp + bytes_per_line, buffer_size);
 
-        try
+        if (!m_idot_address)
         {
-            size_t bytes_out = 0;
-
-            if (m_iphoneOptimized)
+            try
             {
-                // Apple uses raw deflate format
-                bytes_out = deflate::decompress(buffer, m_compressed);
-            }
-            else
-            {
-                // png standard uses zlib frame format
-                bytes_out = zlib::decompress(buffer, m_compressed);
-            }
+                size_t bytes_out = 0;
 
-            debugPrint("  output bytes:  %d\n", int(bytes_out));
-            MANGO_UNREFERENCED(bytes_out);
+                if (m_iphoneOptimized)
+                {
+                    // Apple uses raw deflate format
+                    bytes_out = deflate::decompress(buffer, m_compressed);
+                }
+                else
+                {
+                    // png standard uses zlib frame format
+                    bytes_out = zlib::decompress(buffer, m_compressed);
+                }
+
+                debugPrint("  output bytes:  %d\n", int(bytes_out));
+                MANGO_UNREFERENCED(bytes_out);
+            }
+            catch (const Exception& exception)
+            {
+                debugPrint("  decoding error: %s\n", exception.what());
+                status.setError(exception.what());
+                return status;
+            }
         }
-        catch (const Exception& exception)
+        else
         {
-            debugPrint("  decoding error: %s\n", exception.what());
-            status.setError(exception.what());
-            return status;
+            size_t top_size = bytes_per_line * m_first_half_height;
+
+            Memory top_buffer;
+            top_buffer.address = buffer.address;
+            top_buffer.size = top_size;
+
+            ConstMemory top_memory;
+            top_memory.address = m_compressed.data();
+            top_memory.size = m_idot_offset;
+
+            Memory bottom_buffer;
+            bottom_buffer.address = buffer.address + top_size;
+            bottom_buffer.size = buffer.size - top_size;
+
+            ConstMemory bottom_memory;
+            bottom_memory.address = m_compressed.data() + m_idot_offset;
+            bottom_memory.size = m_compressed.size() - m_idot_offset;
+
+            FutureTask<size_t> task([=] () -> size_t
+            {
+                size_t bytes_out = 0;
+
+                try
+                {
+                    // Apple uses raw deflate format for iDOT extended IDAT chunks
+                    bytes_out = deflate::decompress(bottom_buffer, bottom_memory);
+                }
+                catch (const Exception& exception)
+                {
+                    debugPrint("  decoding error: %s\n", exception.what());
+                }
+
+                return bytes_out;
+            });
+
+            size_t bytes_out_top = 0;
+
+            try
+            {
+                if (m_iphoneOptimized)
+                {
+                    // Apple uses raw deflate format
+                    bytes_out_top = deflate::decompress(top_buffer, top_memory);
+                }
+                else
+                {
+                    // png standard uses zlib frame format
+                    bytes_out_top = zlib::decompress(top_buffer, top_memory);
+                }
+            }
+            catch (const Exception& exception)
+            {
+                debugPrint("  decoding error: %s\n", exception.what());
+            }
+
+            size_t bytes_out_bottom = task.get();
+
+            debugPrint("  output top bytes:     %d\n", int(bytes_out_top));
+            debugPrint("  output bottom bytes:  %d\n", int(bytes_out_bottom));
+            MANGO_UNREFERENCED(bytes_out_top);
+            MANGO_UNREFERENCED(bytes_out_bottom);
         }
 
         // process image
