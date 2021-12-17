@@ -3171,10 +3171,12 @@ namespace
 
         size_t bound = zlib::bound(options.icc.size);
         Buffer compressed(bound);
-        size_t bytes_out = zlib::compress(compressed, options.icc, options.compression);
-        buffer.write(compressed, bytes_out); // rest of chunk is compressed profile
-
-        writeChunk(stream, u32_mask_rev('i', 'C', 'C', 'P'), buffer);
+        CompressionStatus cs = zlib::compress(compressed, options.icc, options.compression);
+        if (cs)
+        {
+            buffer.write(compressed, cs.size); // rest of chunk is compressed profile
+            writeChunk(stream, u32_mask_rev('i', 'C', 'C', 'P'), buffer);
+        }
     }
 
     void write_pLLD(Stream& stream, u32 segment_height)
