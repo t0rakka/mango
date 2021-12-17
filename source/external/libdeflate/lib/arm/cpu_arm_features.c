@@ -132,7 +132,7 @@ void setup_cpu_features(void)
 
 #else
 
-int clang_arm_features_suppress_warning_about_no_symbols()
+int clang_arm_features_suppress_warning_about_no_symbols(void)
 {
 	// suppress toolchain warning: "ranlib: file: libmango.a(cpu_arm_features.c.o) has no symbols"
 	return 7;
