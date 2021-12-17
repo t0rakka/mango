@@ -2262,21 +2262,16 @@ namespace
 
         m_icc.reset();
 
-        try
-        {
-            debugPrint("  decompressing icc profile %d bytes\n", int(icc_bytes));
+        debugPrint("  decompressing icc profile %d bytes\n", int(icc_bytes));
 
-            Buffer buffer(2*1024*1024); // max profile size supported
-            size_t bytes_out = zlib::decompress(buffer, ConstMemory(profile, icc_bytes));
+        constexpr size_t max_profile_size = 1024 * 1024 * 2;
+        Buffer buffer(max_profile_size);
 
-            debugPrint("  unpacked icc profile %d bytes\n", int(bytes_out));
-            
-            m_icc.append(buffer, bytes_out);
-        }
-        catch (const Exception& exception)
+        CompressionStatus status = zlib::decompress(buffer, ConstMemory(profile, icc_bytes));
+        if (status)
         {
-            // could not unpack icc profile
-            debugPrint("  threw %s\n", exception.what());
+            debugPrint("  unpacked icc profile %d bytes\n", int(status.size));
+            m_icc.append(buffer, status.size);
         }
 
         debugPrint("  icc profile %d bytes\n", int(m_icc.size()));
@@ -2903,15 +2898,10 @@ namespace
                 {
                     q.enqueue([=]
                     {
-                        try
+                        CompressionStatus cs = deflate::decompress(output, memory);
+                        if (!cs)
                         {
-                            size_t bytes_out = 0;
-                            bytes_out = deflate::decompress(output, memory);
-                            MANGO_UNREFERENCED(bytes_out);
-                        }
-                        catch (const Exception& exception)
-                        {
-                            debugPrint("  decoding error: %s\n", exception.what());
+                            debugPrint("  %s\n", cs.info.c_str());
                         }
                     });
                 }
@@ -2919,15 +2909,10 @@ namespace
                 y += m_parallel_height;
             }
 
-            try
+            CompressionStatus cs = zlib::decompress(output_first, memory_first);
+            if (!cs)
             {
-                size_t bytes_out = 0;
-                bytes_out = zlib::decompress(output_first, memory_first);
-                MANGO_UNREFERENCED(bytes_out);
-            }
-            catch (const Exception& exception)
-            {
-                debugPrint("  decoding error: %s\n", exception.what());
+                debugPrint("  %s\n", cs.info.c_str());
             }
 
             q.wait();
@@ -2958,41 +2943,25 @@ namespace
 
             FutureTask<size_t> task([=] () -> size_t
             {
-                size_t bytes_out = 0;
-
-                try
-                {
-                    // Apple uses raw deflate format for iDOT extended IDAT chunks
-                    bytes_out = deflate::decompress(bottom_buffer, bottom_memory);
-                }
-                catch (const Exception& exception)
-                {
-                    debugPrint("  decoding error: %s\n", exception.what());
-                }
-
-                return bytes_out;
+                // Apple uses raw deflate format for iDOT extended IDAT chunks
+                CompressionStatus cs = deflate::decompress(bottom_buffer, bottom_memory);
+                return cs.size;
             });
 
-            size_t bytes_out_top = 0;
+            CompressionStatus cs;
 
-            try
+            if (m_iphoneOptimized)
             {
-                if (m_iphoneOptimized)
-                {
-                    // Apple uses raw deflate format
-                    bytes_out_top = deflate::decompress(top_buffer, top_memory);
-                }
-                else
-                {
-                    // png standard uses zlib frame format
-                    bytes_out_top = zlib::decompress(top_buffer, top_memory);
-                }
+                // Apple uses raw deflate format
+                cs = deflate::decompress(top_buffer, top_memory);
             }
-            catch (const Exception& exception)
+            else
             {
-                debugPrint("  decoding error: %s\n", exception.what());
+                // png standard uses zlib frame format
+                cs = zlib::decompress(top_buffer, top_memory);
             }
 
+            size_t bytes_out_top = cs.size;
             size_t bytes_out_bottom = task.get();
 
             debugPrint("  output top bytes:     %d\n", int(bytes_out_top));
@@ -3006,28 +2975,25 @@ namespace
             // Default decoding
             // ----------------------------------------------------------------------
 
-            try
+            CompressionStatus cs;
+
+            if (m_iphoneOptimized)
             {
-                size_t bytes_out = 0;
-
-                if (m_iphoneOptimized)
-                {
-                    // Apple uses raw deflate format
-                    bytes_out = deflate::decompress(buffer, m_compressed);
-                }
-                else
-                {
-                    // png standard uses zlib frame format
-                    bytes_out = zlib::decompress(buffer, m_compressed);
-                }
-
-                debugPrint("  output bytes:  %d\n", int(bytes_out));
-                MANGO_UNREFERENCED(bytes_out);
+                // Apple uses raw deflate format
+                cs = deflate::decompress(buffer, m_compressed);
             }
-            catch (const Exception& exception)
+            else
             {
-                debugPrint("  decoding error: %s\n", exception.what());
-                status.setError(exception.what());
+                // png standard uses zlib frame format
+                cs = zlib::decompress(buffer, m_compressed);
+            }
+
+            debugPrint("  output bytes:  %d\n", int(cs.size));
+
+            if (!cs)
+            {
+                debugPrint("  %s\n", cs.info.c_str());
+                status.setError(cs.info);
                 return status;
             }
         }

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <vector>
@@ -45,17 +45,24 @@ namespace nocompress
         return size;
     }
 
-    size_t compress(Memory dest, ConstMemory source, int level)
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
         MANGO_UNREFERENCED(level);
+
         std::memcpy(dest.address, source.address, source.size);
-        return source.size;
+
+        CompressionStatus status;
+        status.size = source.size;
+        return status;
     }
 
-    size_t decompress(Memory dest, ConstMemory source)
+    CompressionStatus decompress(Memory dest, ConstMemory source)
     {
         std::memcpy(dest.address, source.address, source.size);
-        return source.size;
+
+        CompressionStatus status;
+        status.size = source.size;
+        return status;
     }
 
 } // namespace nocompress
@@ -73,43 +80,46 @@ namespace lz4
 		return LZ4_compressBound(s);
     }
 
-    size_t compress(Memory dest, ConstMemory source, int level)
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
         const int source_size = int(source.size);
         const int dest_size = int(dest.size);
 
-        size_t written = 0;
+        CompressionStatus status;
 
         level = math::clamp(level, 0, 10);
 
         if (level > 6)
         {
             const int compression_level = 1 + (level - 7) * 5;
-            written = LZ4_compress_HC(source.cast<const char>(), dest.cast<char>(), source_size, dest_size, compression_level);
+            status.size = LZ4_compress_HC(source.cast<const char>(), dest.cast<char>(), source_size, dest_size, compression_level);
         }
         else
         {
             const int acceleration = 19 - level * 3;
-            written = LZ4_compress_fast(source.cast<const char>(), dest.cast<char>(), source_size, dest_size, acceleration);
+            status.size = LZ4_compress_fast(source.cast<const char>(), dest.cast<char>(), source_size, dest_size, acceleration);
         }
 
-	    if (written <= 0 || written > dest.size)
+	    if (status.size > dest.size)
         {
-			MANGO_EXCEPTION("[lz4] compression failed.");
+            status.setError("[lz4] compression failed.");
 		}
 
-        return written;
+        return status;
 	}
 
-    size_t decompress(Memory dest, ConstMemory source)
+    CompressionStatus decompress(Memory dest, ConstMemory source)
     {
-        int status = LZ4_decompress_safe(source.cast<const char>(), dest.cast<char>(), int(source.size), int(dest.size));
-        if (status < 0)
+        CompressionStatus status;
+
+        int result = LZ4_decompress_safe(source.cast<const char>(), dest.cast<char>(), int(source.size), int(dest.size));
+        if (result < 0)
         {
-            MANGO_EXCEPTION("[lz4] decompression failed.");
+            status.setError("[lz4] decompression failed.");
         }
 
-        return dest.size;
+        status.size = dest.size;
+        return status;
     }
 
     // stream
@@ -250,7 +260,7 @@ namespace lzo
         return size + (size / 16) + 128;
     }
 
-    size_t compress(Memory dest, ConstMemory source, int level)
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
         MANGO_UNREFERENCED(level);
 
@@ -261,25 +271,33 @@ namespace lzo
             dest.address, &dst_len, workmem);
 
         aligned_free(workmem);
+
+        CompressionStatus status;
+
         if (x != LZO_E_OK)
         {
-            MANGO_EXCEPTION("[lzo] compression failed.");
+            status.setError("[lzo] compression failed.");
         }
 
-        return size_t(dst_len);
+        status.size = size_t(dst_len);
+        return status;
 	}
 
-    size_t decompress(Memory dest, ConstMemory source)
+    CompressionStatus decompress(Memory dest, ConstMemory source)
     {
         lzo_uint dst_len = (lzo_uint)dest.size;
         int x = lzo1x_decompress(source.address, lzo_uint(source.size),
             dest.address, &dst_len, nullptr);
+
+        CompressionStatus status;
+
         if (x != LZO_E_OK)
         {
-            MANGO_EXCEPTION("[lzo] decompression failed.");
+            status.setError("[lzo] decompression failed.");
         }
 
-        return dest.size;
+        status.size = dest.size;
+        return status;
     }
 
 } // namespace lzo
@@ -298,34 +316,43 @@ namespace zstd
 		return ZSTD_compressBound(size) + turbo;
     }
 
-    size_t compress(Memory dest, ConstMemory source, int level)
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
+        CompressionStatus status;
+
         // zstd compress does not support encoding of empty source
-        if (!source.size)
-            return 0;
-
-        level = math::clamp(level * 2, 1, 20);
-
-        const size_t x = ZSTD_compress(dest.address, dest.size,
-                                       source.address, source.size, level);
-        if (ZSTD_isError(x))
+        if (source.size)
         {
-            MANGO_EXCEPTION("[zstd] %s", ZSTD_getErrorName(x));
+            level = math::clamp(level * 2, 1, 20);
+
+            const size_t x = ZSTD_compress(dest.address, dest.size,
+                                        source.address, source.size, level);
+
+            if (ZSTD_isError(x))
+            {
+                status.setError("[zstd] %s", ZSTD_getErrorName(x));
+            }
+
+            status.size = x;
         }
 
-        return x;
+        return status;
 	}
 
-    size_t decompress(Memory dest, ConstMemory source)
+    CompressionStatus decompress(Memory dest, ConstMemory source)
     {
         size_t x = ZSTD_decompress((void*)dest.address, dest.size,
                                    source.address, source.size);
+
+        CompressionStatus status;
+
         if (ZSTD_isError(x))
         {
-            MANGO_EXCEPTION("[zstd] %s", ZSTD_getErrorName(x));
+            status.setError("[zstd] %s", ZSTD_getErrorName(x));
         }
 
-        return dest.size;
+        status.size = dest.size;
+        return status;
     }
 
     // stream
@@ -444,7 +471,7 @@ namespace bzip2
         return size + (size / 100) + 600;
     }
 
-    size_t compress(Memory dest, ConstMemory source, int level)
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
         const int blockSize100k = math::clamp(level, 1, 9);
 
@@ -457,10 +484,13 @@ namespace bzip2
         strm.bzfree = nullptr;
         strm.opaque = nullptr;
 
+        CompressionStatus status;
+
         int x = BZ2_bzCompressInit(&strm, blockSize100k, verbosity, workFactor);
         if (x != BZ_OK)
         {
-            MANGO_EXCEPTION("[bzip2] compression failed.");
+            status.setError("[bzip2] compression failed.");
+            return status;
         }
 
         unsigned int destLength = static_cast<unsigned int>(dest.size);
@@ -474,21 +504,22 @@ namespace bzip2
         if (x == BZ_FINISH_OK)
         {
             BZ2_bzCompressEnd(&strm);
-            MANGO_EXCEPTION("[bzip2] compression failed.");
+            status.setError("[bzip2] compression failed.");
         }
         else if (x != BZ_STREAM_END)
         {
             BZ2_bzCompressEnd(&strm);
-            MANGO_EXCEPTION("[bzip2] compression failed.");
+            status.setError("[bzip2] compression failed.");
         }
 
         destLength -= strm.avail_out;
         BZ2_bzCompressEnd(&strm);
 
-        return size_t(destLength);
+        status.size = size_t(destLength);
+        return status;
     }
 
-    size_t decompress(Memory dest, ConstMemory source)
+    CompressionStatus decompress(Memory dest, ConstMemory source)
     {
         bz_stream strm;
 
@@ -496,10 +527,13 @@ namespace bzip2
         strm.bzfree = nullptr;
         strm.opaque = nullptr;
 
+        CompressionStatus status;
+
         int x = BZ2_bzDecompressInit(&strm, 0, 0);
         if (x != BZ_OK)
         {
-            MANGO_EXCEPTION("[bzip2] decompression failed.");
+            status.setError("[bzip2] decompression failed.");
+            return status;
         }
 
         strm.next_in = const_cast<char*>(source.cast<const char>());
@@ -511,16 +545,18 @@ namespace bzip2
         if (x == BZ_OK)
         {
             BZ2_bzDecompressEnd(&strm);
-            MANGO_EXCEPTION("[bzip2] decompression failed.");
+            status.setError("[bzip2] decompression failed.");
         }
         else if (x != BZ_STREAM_END)
         {
             BZ2_bzDecompressEnd(&strm);
-            MANGO_EXCEPTION("[bzip2] decompression failed.");
+            status.setError("[bzip2] decompression failed.");
         }
 
         BZ2_bzDecompressEnd(&strm);
-        return size_t(strm.next_out - dest.cast<char>());
+
+        status.size = size_t(strm.next_out - dest.cast<char>());
+        return status;
     }
 
 } // namespace bzip2
@@ -538,22 +574,28 @@ namespace lzfse
         return 1024 + size;
     }
 
-    size_t compress(Memory dest, ConstMemory source, int level)
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
         MANGO_UNREFERENCED(level);
 
         const size_t scratch_size = lzfse_encode_scratch_size();
         Buffer scratch(scratch_size);
         size_t written = lzfse_encode_buffer(dest.address, dest.size, source, source.size, scratch);
-        return written;
+
+        CompressionStatus status;
+        status.size = written;
+        return status;
     }
 
-    size_t decompress(Memory dest, ConstMemory source)
+    CompressionStatus decompress(Memory dest, ConstMemory source)
     {
         const size_t scratch_size = lzfse_decode_scratch_size();
         Buffer scratch(scratch_size);
         size_t written = lzfse_decode_buffer(dest.address, dest.size, source, source.size, scratch);
-        return written;
+
+        CompressionStatus status;
+        status.size = written;
+        return status;
     }
 
 } // namespace lzfse
@@ -589,7 +631,7 @@ namespace lzma
         return (size * 3) / 2 + 1024 * 16;
     }
 
-    size_t compress(Memory dest, ConstMemory source, int level)
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
         CLzmaEncProps props;
         LzmaEncProps_Init(&props);
@@ -620,17 +662,19 @@ namespace lzma
             &props, props_output, &props_output_size, 0,
             nullptr, &g_Alloc, &g_Alloc);
 
+        CompressionStatus status;
+
         const char* error = get_error_string(result);
         if (error)
         {
-            MANGO_EXCEPTION("[lzma] %s", error);
+            status.setError("[lzma] %s", error);
         }
 
-        size_t bytes_written = dest.address + dest_length - start;
-        return bytes_written;
+        status.size = dest.address + dest_length - start;
+        return status;
     }
 
-    size_t decompress(Memory dest, ConstMemory source)
+    CompressionStatus decompress(Memory dest, ConstMemory source)
     {
         // read props header
         const u8* prop = source.address;
@@ -640,17 +684,20 @@ namespace lzma
         SizeT destLen = dest.size;
         SizeT srcLen = source.size;
 
-        ELzmaStatus status;
+        ELzmaStatus st;
         SRes result = LzmaDecode(dest.address, &destLen, source.address, &srcLen,
-            prop, LZMA_PROPS_SIZE, LZMA_FINISH_ANY, &status, &g_Alloc);
+            prop, LZMA_PROPS_SIZE, LZMA_FINISH_ANY, &st, &g_Alloc);
+
+        CompressionStatus status;
 
         const char* error = get_error_string(result);
         if (error)
         {
-            MANGO_EXCEPTION("[lzma] %s", error);
+            status.setError("[lzma] %s", error);
         }
 
-        return dest.size;
+        status.size = dest.size;
+        return status;
     }
 
 } // namespace lzma
@@ -667,7 +714,7 @@ namespace lzma2
         return lzma::bound(size);
     }
 
-    size_t compress(Memory dest, ConstMemory source, int level)
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
         CLzma2EncProps props;
         Lzma2EncProps_Init(&props);
@@ -699,17 +746,19 @@ namespace lzma2
 
         Lzma2Enc_Destroy(encoder);
 
+        CompressionStatus status;
+
         const char* error = lzma::get_error_string(result);
         if (error)
         {
-            MANGO_EXCEPTION("[lzma2] %s", error);
+            status.setError("[lzma2] %s", error);
         }
 
-        size_t bytes_written = dest.address + outBufSize - start;
-        return bytes_written;
+        status.size = dest.address + outBufSize - start;
+        return status;
     }
 
-    size_t decompress(Memory dest, ConstMemory source)
+    CompressionStatus decompress(Memory dest, ConstMemory source)
     {
         // read props header
         Byte prop = source.address[0];
@@ -719,17 +768,20 @@ namespace lzma2
         SizeT destLen = dest.size;
         SizeT srcLen = source.size;
 
-        ELzmaStatus status;
+        ELzmaStatus st;
         SRes result = Lzma2Decode(dest.address, &destLen, source.address, &srcLen,
-            prop, LZMA_FINISH_ANY, &status, &g_Alloc);
+            prop, LZMA_FINISH_ANY, &st, &g_Alloc);
+
+        CompressionStatus status;
 
         const char* error = lzma::get_error_string(result);
         if (error)
         {
-            MANGO_EXCEPTION("[lzma2] %s", error);
+            status.setError("[lzma2] %s", error);
         }
 
-        return dest.size;
+        status.size = dest.size;
+        return status;
     }
 
 } // namespace lzma2
@@ -792,7 +844,7 @@ namespace ppmd8
         return lzma::bound(size);
     }
 
-    size_t compress(Memory dest, ConstMemory source, int level)
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
         u8* start = dest.address;
 
@@ -831,11 +883,12 @@ namespace ppmd8
         Ppmd8_RangeEnc_FlushData(&ppmd);
         Ppmd8_Free(&ppmd, &g_Alloc);
 
-        size_t bytes_written = stream.memory.address + stream.offset - start;
-        return bytes_written;
+        CompressionStatus status;
+        status.size = stream.memory.address + stream.offset - start;
+        return status;
     }
 
-    size_t decompress(Memory dest, ConstMemory source)
+    CompressionStatus decompress(Memory dest, ConstMemory source)
     {
         // read 2 byte header
         LittleEndianConstPointer p = source.address;
@@ -859,7 +912,7 @@ namespace ppmd8
         Ppmd8_Init(&ppmd, opt_order, opt_restore);
 
         size_t offset = 0;
-        for (;;)
+        for ( ;; )
         {
             int c = Ppmd8_DecodeSymbol(&ppmd);
             if (c < 0 || offset >= dest.size)
@@ -867,12 +920,15 @@ namespace ppmd8
             dest.address[offset++] = c;
         }
 
+        CompressionStatus status;
+
         if (!Ppmd8_RangeDec_IsFinishedOK(&ppmd))
         {
-            MANGO_EXCEPTION("[PPMd] decoding error.");
+            status.setError("[PPMd] decoding error.");
         }
 
-        return dest.size;
+        status.size = dest.size;
+        return status;
     }
 
 } // namespace ppmd
@@ -910,7 +966,7 @@ namespace deflate
         return libdeflate_deflate_compress_bound(nullptr, size);
     }
 
-    size_t compress(Memory dest, ConstMemory source, int level)
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
         level = math::clamp(level, 1, 10);
         if (level >= 8) level = (level * 12) / 10;
@@ -919,10 +975,12 @@ namespace deflate
         size_t bytes_out = libdeflate_deflate_compress(compressor, source, source.size, dest, dest.size);
         libdeflate_free_compressor(compressor);
 
-        return bytes_out;
+        CompressionStatus status;
+        status.size = bytes_out;
+        return status;
     }
 
-    size_t decompress(Memory dest, ConstMemory source)
+    CompressionStatus decompress(Memory dest, ConstMemory source)
     {
         libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
 
@@ -930,13 +988,16 @@ namespace deflate
         libdeflate_result result = libdeflate_deflate_decompress(decompressor, source, source.size, dest, dest.size, &bytes_out);
         libdeflate_free_decompressor(decompressor);
 
+        CompressionStatus status;
+
         const char* error = deflate::get_error_string(result);
         if (error)
         {
-            MANGO_EXCEPTION("[deflate] %s.", error);
+            status.setError("[deflate] %s.", error);
         }
 
-        return bytes_out;
+        status.size = bytes_out;
+        return status;
     }
 
 } // namespace deflate
@@ -953,7 +1014,7 @@ namespace zlib
         return libdeflate_zlib_compress_bound(nullptr, size);
     }
 
-    size_t compress(Memory dest, ConstMemory source, int level)
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
         level = math::clamp(level, 1, 10);
         if (level >= 8) level = (level * 12) / 10;
@@ -962,10 +1023,12 @@ namespace zlib
         size_t bytes_out = libdeflate_zlib_compress(compressor, source, source.size, dest, dest.size);
         libdeflate_free_compressor(compressor);
 
-        return bytes_out;
+        CompressionStatus status;
+        status.size = bytes_out;
+        return status;
     }
 
-    size_t decompress(Memory dest, ConstMemory source)
+    CompressionStatus decompress(Memory dest, ConstMemory source)
     {
         libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
 
@@ -973,13 +1036,16 @@ namespace zlib
         libdeflate_result result = libdeflate_zlib_decompress(decompressor, source, source.size, dest, dest.size, &bytes_out);
         libdeflate_free_decompressor(decompressor);
 
+        CompressionStatus status;
+
         const char* error = deflate::get_error_string(result);
         if (error)
         {
-            MANGO_EXCEPTION("[zlib] %s.", error);
+            status.setError("[zlib] %s.", error);
         }
 
-        return bytes_out;
+        status.size = bytes_out;
+        return status;
     }
 
 } // namespace zlib
@@ -996,7 +1062,7 @@ namespace gzip
         return libdeflate_gzip_compress_bound(nullptr, size);
     }
 
-    size_t compress(Memory dest, ConstMemory source, int level)
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
         level = math::clamp(level, 1, 10);
         if (level >= 8) level = (level * 12) / 10;
@@ -1005,10 +1071,12 @@ namespace gzip
         size_t bytes_out = libdeflate_gzip_compress(compressor, source, source.size, dest, dest.size);
         libdeflate_free_compressor(compressor);
 
-        return bytes_out;
+        CompressionStatus status;
+        status.size = bytes_out;
+        return status;
     }
 
-    size_t decompress(Memory dest, ConstMemory source)
+    CompressionStatus decompress(Memory dest, ConstMemory source)
     {
         libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
 
@@ -1016,13 +1084,16 @@ namespace gzip
         libdeflate_result result = libdeflate_gzip_decompress(decompressor, source, source.size, dest, dest.size, &bytes_out);
         libdeflate_free_decompressor(decompressor);
 
+        CompressionStatus status;
+
         const char* error = deflate::get_error_string(result);
         if (error)
         {
-            MANGO_EXCEPTION("[gzip] %s.", error);
+            status.setError("[gzip] %s.", error);
         }
 
-        return bytes_out;
+        status.size = bytes_out;
+        return status;
     }
 
 } // namespace gzip
