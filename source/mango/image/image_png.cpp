@@ -1782,6 +1782,11 @@ namespace
         u32 m_first_half_height = 0;
         u32 m_second_half_height = 0;
 
+        // pLLD
+        u32 m_parallel_height = 0;
+        u8 m_parallel_flags = 0;
+        std::vector<ConstMemory> m_parallel_segments;
+
         void read_IHDR(BigEndianConstPointer p, u32 size);
         void read_IDAT(BigEndianConstPointer p, u32 size);
         void read_PLTE(BigEndianConstPointer p, u32 size);
@@ -1795,6 +1800,7 @@ namespace
         void read_fdAT(BigEndianConstPointer p, u32 size);
         void read_iCCP(BigEndianConstPointer p, u32 size);
         void read_iDOT(BigEndianConstPointer p, u32 size);
+        void read_pLLD(BigEndianConstPointer p, u32 size);
 
         void parse();
 
@@ -2045,12 +2051,19 @@ namespace
 
     void ParserPNG::read_IDAT(BigEndianConstPointer p, u32 size)
     {
-        if (p == m_idot_address)
+        if (m_parallel_height)
         {
-            m_idot_offset = m_compressed.size();
+            m_parallel_segments.emplace_back(p, size);
         }
+        else
+        {
+            if (p == m_idot_address)
+            {
+                m_idot_offset = m_compressed.size();
+            }
 
-        m_compressed.append(p, size);
+            m_compressed.append(p, size);
+        }
     }
 
     void ParserPNG::read_PLTE(BigEndianConstPointer p, u32 size)
@@ -2309,6 +2322,21 @@ namespace
         MANGO_UNREFERENCED(divided_height);
     }
 
+    void ParserPNG::read_pLLD(BigEndianConstPointer p, u32 size)
+    {
+        if (size != 5)
+        {
+            setError("Incorrect pLLD chunk size.");
+            return;
+        }
+
+        m_parallel_height = p.read32();
+        m_parallel_flags = p.read8();
+
+        debugPrint("  Segment height: %d\n", m_parallel_height);
+        debugPrint("  Flags: %x\n", m_parallel_flags);
+    }
+
     void ParserPNG::parse()
     {
         BigEndianConstPointer p = m_pointer;
@@ -2388,6 +2416,10 @@ namespace
 
                 case u32_mask_rev('i', 'D', 'O', 'T'):
                     read_iDOT(p, size);
+                    break;
+
+                case u32_mask_rev('p', 'L', 'L', 'D'):
+                    read_pLLD(p, size);
                     break;
 
                 case u32_mask_rev('p', 'H', 'Y', 's'):
@@ -2777,7 +2809,7 @@ namespace
 
         parse();
 
-        if (!m_compressed.size())
+        if (!m_compressed.size() && m_parallel_segments.empty())
         {
             status.setError("No compressed data.");
             return status;
@@ -2840,35 +2872,72 @@ namespace
 
         Memory buffer(temp + bytes_per_line, buffer_size);
 
-        if (!m_idot_address || !multithread)
+        if (m_parallel_height)
         {
-            try
-            {
-                size_t bytes_out = 0;
+            // ----------------------------------------------------------------------
+            // pLLD decoding
+            // ----------------------------------------------------------------------
 
-                if (m_iphoneOptimized)
+            ConcurrentQueue q;
+
+            u32 y = 0;
+
+            ConstMemory memory_first;
+            Memory output_first;
+
+            for (ConstMemory memory : m_parallel_segments)
+            {
+                int h = std::min(m_parallel_height, m_height - y);
+
+                Memory output;
+                output.address = buffer.address + bytes_per_line * y;
+                output.size = bytes_per_line * h;
+
+                if (!y)
                 {
-                    // Apple uses raw deflate format
-                    bytes_out = deflate::decompress(buffer, m_compressed);
+                    // remember first segment so that it can be decoded in the current thread
+                    memory_first = memory;
+                    output_first = output;
                 }
                 else
                 {
-                    // png standard uses zlib frame format
-                    bytes_out = zlib::decompress(buffer, m_compressed);
+                    q.enqueue([=]
+                    {
+                        try
+                        {
+                            size_t bytes_out = 0;
+                            bytes_out = deflate::decompress(output, memory);
+                            MANGO_UNREFERENCED(bytes_out);
+                        }
+                        catch (const Exception& exception)
+                        {
+                            debugPrint("  decoding error: %s\n", exception.what());
+                        }
+                    });
                 }
 
-                debugPrint("  output bytes:  %d\n", int(bytes_out));
+                y += m_parallel_height;
+            }
+
+            try
+            {
+                size_t bytes_out = 0;
+                bytes_out = zlib::decompress(output_first, memory_first);
                 MANGO_UNREFERENCED(bytes_out);
             }
             catch (const Exception& exception)
             {
                 debugPrint("  decoding error: %s\n", exception.what());
-                status.setError(exception.what());
-                return status;
             }
+
+            q.wait();
         }
-        else
+        else if (m_idot_address && multithread)
         {
+            // ----------------------------------------------------------------------
+            // Apple iDOT decoding
+            // ----------------------------------------------------------------------
+
             size_t top_size = bytes_per_line * m_first_half_height;
 
             Memory top_buffer;
@@ -2930,6 +2999,37 @@ namespace
             debugPrint("  output bottom bytes:  %d\n", int(bytes_out_bottom));
             MANGO_UNREFERENCED(bytes_out_top);
             MANGO_UNREFERENCED(bytes_out_bottom);
+        }
+        else
+        {
+            // ----------------------------------------------------------------------
+            // Default decoding
+            // ----------------------------------------------------------------------
+
+            try
+            {
+                size_t bytes_out = 0;
+
+                if (m_iphoneOptimized)
+                {
+                    // Apple uses raw deflate format
+                    bytes_out = deflate::decompress(buffer, m_compressed);
+                }
+                else
+                {
+                    // png standard uses zlib frame format
+                    bytes_out = zlib::decompress(buffer, m_compressed);
+                }
+
+                debugPrint("  output bytes:  %d\n", int(bytes_out));
+                MANGO_UNREFERENCED(bytes_out);
+            }
+            catch (const Exception& exception)
+            {
+                debugPrint("  decoding error: %s\n", exception.what());
+                status.setError(exception.what());
+                return status;
+            }
         }
 
         // process image
