@@ -3211,7 +3211,18 @@ namespace
         writeChunk(stream, u32_mask_rev('i', 'C', 'C', 'P'), buffer);
     }
 
-    void write_IDAT(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    void write_pLLD(Stream& stream, u32 segment_height)
+    {
+        BufferStream buffer;
+        BigEndianStream s(buffer);
+
+        s.write32(segment_height);
+        s.write8(0);
+
+        writeChunk(stream, u32_mask_rev('p', 'L', 'L', 'D'), buffer);
+    }
+
+    void write_IDAT(Stream& stream, const Surface& surface, u32 segment_height, const ImageEncodeOptions& options)
     {
         // data to compress
         Buffer buffer;
@@ -3298,25 +3309,75 @@ namespace
             }
         }
 
-        // compress
-        size_t bound = zlib::bound(buffer.size());
-        Buffer compressed(bound);
-        size_t bytes_out = zlib::compress(compressed, buffer, options.compression);
+        if (segment_height)
+        {
+            for (u32 y = 0; y < surface.height; y += segment_height)
+            {
+                int h = std::min(segment_height, surface.height - y);
 
-        // write chunkdID + compressed data
-        writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
+                ConstMemory source;
+                source.address = buffer.data() + y * (bytes_per_scan + 1);
+                source.size = h * (bytes_per_scan + 1);
+
+                size_t bytes_out = 0;
+
+                if (!y)
+                {
+                    // compress
+                    size_t bound = zlib::bound(source.size);
+                    Buffer compressed(bound);
+                    bytes_out = zlib::compress(compressed, source, options.compression);
+
+                    // write chunkdID + compressed data
+                    writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
+                }
+                else
+                {
+                    // compress
+                    size_t bound = deflate::bound(source.size);
+                    Buffer compressed(bound);
+                    bytes_out = deflate::compress(compressed, source, options.compression);
+
+                    // write chunkdID + compressed data
+                    writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
+                }
+            }
+        }
+        else
+        {
+            // compress
+            size_t bound = zlib::bound(buffer.size());
+            Buffer compressed(bound);
+            size_t bytes_out = zlib::compress(compressed, buffer, options.compression);
+
+            // write chunkdID + compressed data
+            writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
+        }
     }
 
     void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type, const ImageEncodeOptions& options)
     {
         BigEndianStream s(stream);
 
+        u32 segment_height = 240;
+        if (surface.height <= segment_height * 2)
+        {
+            segment_height = 0;
+        }
+
+        // TODO: enable segmented writer after the compressor is compatible (zlib)
+        segment_height = 0;
+
         // write magic
         s.write64(PNG_HEADER_MAGIC);
 
         write_IHDR(stream, surface, color_bits, color_type);
         write_iCCP(stream, options);
-        write_IDAT(stream, surface, options);
+        if (segment_height)
+        {
+            write_pLLD(stream, segment_height);
+        }
+        write_IDAT(stream, surface, segment_height, options);
 
         // write IEND
         s.write32(0);
