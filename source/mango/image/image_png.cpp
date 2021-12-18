@@ -3125,7 +3125,7 @@ namespace
         return sum;
     }
 
-    void writeChunk(Stream& stream, u32 chunkid, ConstMemory memory)
+    void write_chunk(Stream& stream, u32 chunkid, ConstMemory memory)
     {
         BigEndianStream s(stream);
 
@@ -3153,7 +3153,7 @@ namespace
         s.write8(0); // filter
         s.write8(0); // interlace
 
-        writeChunk(stream, u32_mask_rev('I', 'H', 'D', 'R'), buffer);
+        write_chunk(stream, u32_mask_rev('I', 'H', 'D', 'R'), buffer);
     }
 
     void write_iCCP(Stream& stream, const ImageEncodeOptions& options)
@@ -3177,7 +3177,7 @@ namespace
         if (cs)
         {
             buffer.write(compressed, cs.size); // rest of chunk is compressed profile
-            writeChunk(stream, u32_mask_rev('i', 'C', 'C', 'P'), buffer);
+            write_chunk(stream, u32_mask_rev('i', 'C', 'C', 'P'), buffer);
         }
     }
 
@@ -3189,7 +3189,7 @@ namespace
         s.write32(segment_height);
         s.write8(0);
 
-        writeChunk(stream, u32_mask_rev('p', 'L', 'L', 'D'), buffer);
+        write_chunk(stream, u32_mask_rev('p', 'L', 'L', 'D'), buffer);
     }
 
     void write_IDAT(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
@@ -3381,7 +3381,7 @@ namespace
                 }
 
                 // write chunkdID + compressed data
-                writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), c);
+                write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), c);
             }
         }
         else
@@ -3392,28 +3392,36 @@ namespace
             size_t bytes_out = deflate_zlib::compress(compressed, buffer, options.compression);
 
             // write chunkdID + compressed data
-            writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
+            write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
         }
     }
 
-    void writePNG(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type, const ImageEncodeOptions& options)
+    int configure_segment(const Surface& surface, const ImageEncodeOptions& options)
+    {
+        int height = 0;
+
+        if (options.parallel)
+        {
+            size_t scan_bytes = surface.width * surface.format.bytes();
+            size_t image_bytes = surface.height * scan_bytes;
+
+            constexpr size_t block_size = 512 * 1024;
+            size_t N = image_bytes / block_size;
+
+            if (N > 1)
+            {
+                height = surface.height / N;
+            }
+        }
+
+        return height;
+    }
+
+    void write_png(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type, const ImageEncodeOptions& options)
     {
         BigEndianStream s(stream);
 
-        // TODO: configure this based off data in each segment (also consider width)
-        int segment_height = 240;
-
-        if (surface.height <= segment_height * 2)
-        {
-            // not enough segments
-            segment_height = 0;
-        }
-
-        if (!options.parallel)
-        {
-            // disabled by encoder options
-            segment_height = 0;
-        }
+        int segment_height = configure_segment(surface, options);
 
         // write magic
         s.write64(PNG_HEADER_MAGIC);
@@ -3581,12 +3589,12 @@ namespace
 
         if (surface.format == format)
         {
-            writePNG(stream, surface, color_bits, color_type, options);
+            write_png(stream, surface, color_bits, color_type, options);
         }
         else
         {
             Bitmap temp(surface, format);
-            writePNG(stream, temp, color_bits, color_type, options);
+            write_png(stream, temp, color_bits, color_type, options);
         }
 
         return status;
