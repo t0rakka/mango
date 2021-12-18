@@ -12,6 +12,7 @@ using namespace mango::image;
 #define ENABLE_LODEPNG
 #define ENABLE_STB
 #define ENABLE_SPNG
+#define ENABLE_FPNG
 #define ENABLE_WUFFS
 #define ENABLE_MANGO
 
@@ -338,6 +339,26 @@ void save_spng(const Bitmap& bitmap)
 #endif
 
 // ----------------------------------------------------------------------
+// FPNG
+// ----------------------------------------------------------------------
+
+#if defined(ENABLE_FPNG)
+
+#include "fpng/fpng.h"
+
+void load_fpng(Memory memory)
+{
+    // TODO: not supported.
+}
+
+void save_fpng(const Bitmap& bitmap)
+{
+    fpng::fpng_encode_image_to_file("output-fpng.png", bitmap.image, bitmap.width, bitmap.height, 4, false);
+}
+
+#endif
+
+// ----------------------------------------------------------------------
 // wuffs
 // ----------------------------------------------------------------------
 
@@ -534,6 +555,10 @@ int main(int argc, const char* argv[])
 
 #if defined(ENABLE_SPNG)
     test("spng:    ", load_spng, save_spng, buffer, bitmap);
+#endif
+
+#if defined(ENABLE_FPNG)
+    test("fpng:    ", load_fpng, save_fpng, buffer, bitmap);
 #endif
 
 #if defined(ENABLE_WUFFS)

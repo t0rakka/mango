@@ -14,6 +14,8 @@ add_executable(png_benchmark
     png_benchmark/png_benchmark.cpp
     png_benchmark/lodepng/lodepng.cpp
     png_benchmark/spng/spng.c
+    png_benchmark/fpng/fpng.cpp
+    png_benchmark/fpng/Crc32.cpp
 )
 target_link_libraries(png_benchmark png z)
 
