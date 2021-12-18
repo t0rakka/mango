@@ -446,7 +446,6 @@ void save_wuffs(const Bitmap& bitmap)
 // ----------------------------------------------------------------------
 
 bool g_option_multithread = true;
-bool g_option_filtering = false;
 int g_option_compression = 4;
 
 #if defined(ENABLE_MANGO)
@@ -471,7 +470,6 @@ void save_mango(const Bitmap& bitmap)
 {
     ImageEncodeOptions options;
     options.compression = g_option_compression;
-    options.filtering = g_option_filtering;
     bitmap.save("output-mango.png", options);
 }
 
@@ -516,10 +514,6 @@ int main(int argc, const char* argv[])
         if (!strcmp(argv[i], "--nomt"))
         {
             g_option_multithread = false;
-        }
-        else if (!strcmp(argv[i], "--filter"))
-        {
-            g_option_filtering = true;
         }
         else if (!strcmp(argv[i], "-compression") && i <= (argc - 2))
         {
