@@ -595,14 +595,14 @@ external_deflate_sources = files(
 )
 
 external_zlib_sources = files(
-    '../source/external/zlib/adler32.c',
-    '../source/external/zlib/crc32.c',
+    '../source/external/zlib/z_adler32.c',
+    '../source/external/zlib/z_crc32.c',
     '../source/external/zlib/infback.c',
-    '../source/external/zlib/inflate.c',
+    '../source/external/zlib/z_inflate.c',
     '../source/external/zlib/trees.c',
     '../source/external/zlib/zutil.c',
-    '../source/external/zlib/compress.c',
-    '../source/external/zlib/deflate.c',
+    '../source/external/zlib/z_compress.c',
+    '../source/external/zlib/z_deflate.c',
     '../source/external/zlib/inffast.c',
     '../source/external/zlib/inftrees.c',
     '../source/external/zlib/uncompr.c',

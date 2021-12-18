@@ -172,6 +172,9 @@
     <Filter Include="external\xxhash">
       <UniqueIdentifier>{623cddbc-7e64-4762-ae3d-396ee953da21}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\zlib">
+      <UniqueIdentifier>{7a1458bb-284c-4883-be38-1dba52565d5a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\mango\core\bits.hpp">
@@ -1131,6 +1134,36 @@
     <ClInclude Include="..\..\source\external\xxhash\xxhash.h">
       <Filter>external\xxhash</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\external\zlib\crc32.h">
+      <Filter>external\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zlib\deflate.h">
+      <Filter>external\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zlib\inffast.h">
+      <Filter>external\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zlib\inffixed.h">
+      <Filter>external\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zlib\inflate.h">
+      <Filter>external\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zlib\inftrees.h">
+      <Filter>external\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zlib\trees.h">
+      <Filter>external\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zlib\zconf.h">
+      <Filter>external\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zlib\zlib.h">
+      <Filter>external\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\zlib\zutil.h">
+      <Filter>external\zlib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -1975,6 +2008,39 @@
     </ClCompile>
     <ClCompile Include="..\..\source\mango\image\image_qoi.cpp">
       <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zlib\infback.c">
+      <Filter>external\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zlib\inffast.c">
+      <Filter>external\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zlib\inftrees.c">
+      <Filter>external\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zlib\trees.c">
+      <Filter>external\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zlib\uncompr.c">
+      <Filter>external\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zlib\z_adler32.c">
+      <Filter>external\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zlib\z_compress.c">
+      <Filter>external\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zlib\z_crc32.c">
+      <Filter>external\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zlib\z_deflate.c">
+      <Filter>external\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zlib\z_inflate.c">
+      <Filter>external\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\external\zlib\zutil.c">
+      <Filter>external\zlib</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
