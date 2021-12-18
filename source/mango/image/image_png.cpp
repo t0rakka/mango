@@ -3165,26 +3165,28 @@ namespace
         write_chunk(stream, u32_mask_rev('p', 'L', 'L', 'D'), buffer);
     }
 
+    void filter_range(u8* buffer, const Surface& surface, int y0, int y1)
+    {
+        const int bpp = surface.format.bytes();
+        const int bytes_per_scan = surface.width * bpp;
+
+        u8* image = surface.address(0, y0);
+
+        for (int y = y0; y < y1; ++y)
+        {
+            *buffer++ = FILTER_SUB;
+            write_filter_sub(buffer, image, bpp, bytes_per_scan);
+            buffer += bytes_per_scan;
+            image += surface.stride;
+        }
+    }
+
     void write_IDAT(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
     {
         const int bpp = surface.format.bytes();
         const int bytes_per_scan = surface.width * bpp;
 
-        // filtered buffer
-        Buffer buffer;
-
-        // temporary scanline buffer
-        Buffer temp(PNG_FILTER_BYTE + bytes_per_scan);
-        temp[0] = FILTER_SUB;
-
-        u8* image = surface.image;
-
-        for (int y = 0; y < surface.height; ++y)
-        {
-            write_filter_sub(temp + 1, image, bpp, bytes_per_scan);
-            buffer.append(temp, bytes_per_scan + PNG_FILTER_BYTE);
-            image += surface.stride;
-        }
+        Buffer buffer((bytes_per_scan + 1) * surface.height);
 
         if (segment_height)
         {
@@ -3214,8 +3216,10 @@ namespace
 
                 Segment& segment = segments[i];
 
-                q.enqueue([=, &segment]
+                q.enqueue([=, &segment, &surface]
                 {
+                    filter_range(source.address, surface, y, y + h);
+
                     constexpr size_t SIZE = 128 * 1024;
                     u8 temp[SIZE];
 
@@ -3293,6 +3297,9 @@ namespace
         }
         else
         {
+            // filtering
+            filter_range(buffer, surface, 0, surface.height);
+
             // compress
             size_t bound = deflate_zlib::bound(buffer.size());
             Buffer compressed(bound);
