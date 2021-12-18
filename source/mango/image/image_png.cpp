@@ -3181,7 +3181,7 @@ namespace
         }
     }
 
-    void write_pLLD(Stream& stream, u32 segment_height)
+    void write_pLLD(Stream& stream, int segment_height)
     {
         BufferStream buffer;
         BigEndianStream s(buffer);
@@ -3192,7 +3192,7 @@ namespace
         writeChunk(stream, u32_mask_rev('p', 'L', 'L', 'D'), buffer);
     }
 
-    void write_IDAT(Stream& stream, const Surface& surface, u32 segment_height, const ImageEncodeOptions& options)
+    void write_IDAT(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
     {
         // data to compress
         Buffer buffer;
@@ -3281,8 +3281,8 @@ namespace
 
         if (segment_height)
         {
-            const u32 N = ceil_div(surface.height, segment_height);
-            int level = clamp(options.compression, 0, 9);
+            const int N = ceil_div(surface.height, segment_height);
+            const int level = clamp(options.compression, 0, 9);
 
             struct Segment
             {
@@ -3294,10 +3294,10 @@ namespace
 
             ConcurrentQueue q;
 
-            for (u32 i = 0; i < N; ++i)
+            for (int i = 0; i < N; ++i)
             {
-                u32 y = i * segment_height;
-                u32 h = std::min(segment_height, surface.height - y);
+                int y = i * segment_height;
+                int h = std::min(segment_height, surface.height - y);
 
                 Memory source;
                 source.address = buffer.data() + y * (bytes_per_scan + 1);
@@ -3356,7 +3356,7 @@ namespace
 
             u32 adler = 1;
 
-            for (u32 i = 0; i < N; ++i)
+            for (int i = 0; i < N; ++i)
             {
                 bool is_first = (i == 0);
                 bool is_last = (i == N - 1);
@@ -3401,7 +3401,7 @@ namespace
         BigEndianStream s(stream);
 
         // TODO: configure this based off data in each segment (also consider width)
-        u32 segment_height = 240;
+        int segment_height = 240;
 
         if (surface.height <= segment_height * 2)
         {
