@@ -8,9 +8,13 @@
 
 #include <mango/core/configure.hpp>
 #ifdef MANGO_LITTLE_ENDIAN
+    #ifndef __BYTE_ORDER
     #define __BYTE_ORDER 1234
+    #endif
 #else
+    #ifndef __BYTE_ORDER
     #define __BYTE_ORDER 4321
+    #endif
 #endif
 
 // if running on an embedded system, you might consider shrinking the
