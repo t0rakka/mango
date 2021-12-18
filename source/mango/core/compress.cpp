@@ -1003,10 +1003,10 @@ namespace deflate
 } // namespace deflate
 
 // ----------------------------------------------------------------------------
-// zlib
+// deflate_zlib
 // ----------------------------------------------------------------------------
 
-namespace zlib
+namespace deflate_zlib
 {
 
     size_t bound(size_t size)
@@ -1048,13 +1048,13 @@ namespace zlib
         return status;
     }
 
-} // namespace zlib
+} // namespace deflate_zlib
 
 // ----------------------------------------------------------------------------
-// gzip
+// deflate_gzip
 // ----------------------------------------------------------------------------
 
-namespace gzip
+namespace deflate_gzip
 {
 
     size_t bound(size_t size)
@@ -1096,7 +1096,7 @@ namespace gzip
         return status;
     }
 
-} // namespace gzip
+} // namespace deflate_gzip
 
     const std::vector<Compressor> g_compressors =
     {
@@ -1110,8 +1110,8 @@ namespace gzip
         { Compressor::LZMA2, "lzma2", lzma2::bound, lzma2::compress, lzma2::decompress },
         { Compressor::PPMD8, "ppmd8", ppmd8::bound, ppmd8::compress, ppmd8::decompress },
         { Compressor::DEFLATE, "deflate", deflate::bound, deflate::compress, deflate::decompress },
-        { Compressor::ZLIB, "zlib", zlib::bound, zlib::compress, zlib::decompress },
-        { Compressor::GZIP, "gzip", gzip::bound, gzip::compress, gzip::decompress },
+        { Compressor::DEFLATE_ZLIB, "deflate_zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },
+        { Compressor::DEFLATE_GZIP, "deflate_gzip", deflate_gzip::bound, deflate_gzip::compress, deflate_gzip::decompress },
     };
 
     std::vector<Compressor> getCompressors()

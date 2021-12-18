@@ -107,6 +107,7 @@ SOURCE_DIRS_MANGO  = mango/core \
                      external/libdeflate/lib \
                      external/libdeflate/lib/x86 \
                      external/libdeflate/lib/arm \
+                     external/zlib \
                      external/lz4 \
                      external/lzo \
                      external/bzip2 \

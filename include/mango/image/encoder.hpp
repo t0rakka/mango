@@ -29,6 +29,7 @@ namespace mango::image
 
         float quality = 0.90f; // jpeg: [0.0, 1.0]
         int compression = 5; // png: [0, 10]
+        bool parallel = true; // png
         bool filtering = false; // png
         bool dithering = true; // gif
         bool lossless = false; // webp

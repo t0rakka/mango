@@ -7,6 +7,8 @@
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
 
+#include "../../external/zlib/zlib.h"
+
 // https://www.w3.org/TR/2003/REC-PNG-20031110/
 // https://wiki.mozilla.org/APNG_Specification
 
@@ -2267,7 +2269,7 @@ namespace
         constexpr size_t max_profile_size = 1024 * 1024 * 2;
         Buffer buffer(max_profile_size);
 
-        CompressionStatus status = zlib::decompress(buffer, ConstMemory(profile, icc_bytes));
+        CompressionStatus status = deflate_zlib::decompress(buffer, ConstMemory(profile, icc_bytes));
         if (status)
         {
             debugPrint("  unpacked icc profile %d bytes\n", int(status.size));
@@ -2909,7 +2911,7 @@ namespace
                 y += m_parallel_height;
             }
 
-            CompressionStatus cs = zlib::decompress(output_first, memory_first);
+            CompressionStatus cs = deflate_zlib::decompress(output_first, memory_first);
             if (!cs)
             {
                 debugPrint("  %s\n", cs.info.c_str());
@@ -2958,7 +2960,7 @@ namespace
             else
             {
                 // png standard uses zlib frame format
-                cs = zlib::decompress(top_buffer, top_memory);
+                cs = deflate_zlib::decompress(top_buffer, top_memory);
             }
 
             size_t bytes_out_top = cs.size;
@@ -2985,7 +2987,7 @@ namespace
             else
             {
                 // png standard uses zlib frame format
-                cs = zlib::decompress(buffer, m_compressed);
+                cs = deflate_zlib::decompress(buffer, m_compressed);
             }
 
             debugPrint("  output bytes:  %d\n", int(cs.size));
@@ -3169,9 +3171,9 @@ namespace
         s.write8(0); // profile name null separator
         s.write8(0); // compression method, 0=deflate
 
-        size_t bound = zlib::bound(options.icc.size);
+        size_t bound = deflate_zlib::bound(options.icc.size);
         Buffer compressed(bound);
-        CompressionStatus cs = zlib::compress(compressed, options.icc, options.compression);
+        CompressionStatus cs = deflate_zlib::compress(compressed, options.icc, options.compression);
         if (cs)
         {
             buffer.write(compressed, cs.size); // rest of chunk is compressed profile
@@ -3279,44 +3281,115 @@ namespace
 
         if (segment_height)
         {
-            for (u32 y = 0; y < surface.height; y += segment_height)
-            {
-                int h = std::min(segment_height, surface.height - y);
+            const u32 N = ceil_div(surface.height, segment_height);
+            int level = clamp(options.compression, 0, 9);
 
-                ConstMemory source;
+            struct Segment
+            {
+                Buffer compressed;
+                u32 adler;
+                u32 length;
+            };
+            std::vector<Segment> segments(N);
+
+            ConcurrentQueue q;
+
+            for (u32 i = 0; i < N; ++i)
+            {
+                u32 y = i * segment_height;
+                u32 h = std::min(segment_height, surface.height - y);
+
+                Memory source;
                 source.address = buffer.data() + y * (bytes_per_scan + 1);
                 source.size = h * (bytes_per_scan + 1);
 
-                size_t bytes_out = 0;
+                bool is_last = (i == N - 1);
 
-                if (!y)
+                Segment& segment = segments[i];
+
+                q.enqueue([=, &segment]
                 {
-                    // compress
-                    size_t bound = zlib::bound(source.size);
-                    Buffer compressed(bound);
-                    bytes_out = zlib::compress(compressed, source, options.compression);
+                    constexpr size_t SIZE = 128 * 1024;
+                    u8 temp[SIZE];
 
-                    // write chunkdID + compressed data
-                    writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
-                }
-                else
+                    z_stream strm;
+
+                    strm.zalloc = 0;
+                    strm.zfree = 0;
+                    strm.next_in = source.address;
+                    strm.avail_in = source.size;
+                    strm.next_out = temp;
+                    strm.avail_out = SIZE;
+
+                    ::deflateInit(&strm, level);
+
+                    while (strm.avail_in != 0)
+                    {
+                        int res = ::deflate(&strm, Z_NO_FLUSH);
+                        MANGO_UNREFERENCED(res); // should be Z_OK
+
+                        if (strm.avail_out == 0)
+                        {
+                            segment.compressed.append(temp, SIZE);
+                            strm.next_out = temp;
+                            strm.avail_out = SIZE;
+                        }
+                    }
+
+                    segment.compressed.append(temp, SIZE - strm.avail_out);
+                    strm.next_out = temp;
+                    strm.avail_out = SIZE;
+
+                    int flush = is_last ? Z_FINISH : Z_FULL_FLUSH;
+                    int res = ::deflate(&strm, flush);
+                    MANGO_UNREFERENCED(res); // should be Z_STREAM_END
+
+                    segment.compressed.append(temp, SIZE - strm.avail_out);
+                    segment.adler = strm.adler;
+                    segment.length = source.size;
+
+                    ::deflateEnd(&strm);
+                });
+            }
+
+            q.wait();
+
+            u32 adler = 1;
+
+            for (u32 i = 0; i < N; ++i)
+            {
+                bool is_first = (i == 0);
+                bool is_last = (i == N - 1);
+
+                Segment& segment = segments[i];
+
+                Memory c = segment.compressed;
+                adler = ::adler32_combine(adler, segment.adler, segment.length);
+
+                if (is_last)
                 {
-                    // compress
-                    size_t bound = deflate::bound(source.size);
-                    Buffer compressed(bound);
-                    bytes_out = deflate::compress(compressed, source, options.compression);
-
-                    // write chunkdID + compressed data
-                    writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
+                    // 4 last bytes is adler, overwrite it with cumulative adler
+                    BigEndianPointer p = c.address + c.size - 4;
+                    p.write32(adler);
                 }
+
+                if (!is_first)
+                {
+                    // trim zlib header
+                    c.address += 2;
+                    c.size -= 2;
+                }
+
+                // write chunkdID + compressed data
+                writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), c);
             }
         }
         else
         {
             // compress
-            size_t bound = zlib::bound(buffer.size());
+            size_t bound = deflate_zlib::bound(buffer.size());
             Buffer compressed(bound);
-            size_t bytes_out = zlib::compress(compressed, buffer, options.compression);
+            size_t bytes_out = deflate_zlib::compress(compressed, buffer, options.compression);
 
             // write chunkdID + compressed data
             writeChunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
@@ -3327,14 +3400,20 @@ namespace
     {
         BigEndianStream s(stream);
 
+        // TODO: configure this based off data in each segment (also consider width)
         u32 segment_height = 240;
+
         if (surface.height <= segment_height * 2)
         {
+            // not enough segments
             segment_height = 0;
         }
 
-        // TODO: enable segmented writer after the compressor is compatible (zlib)
-        segment_height = 0;
+        if (!options.parallel)
+        {
+            // disabled by encoder options
+            segment_height = 0;
+        }
 
         // write magic
         s.write64(PNG_HEADER_MAGIC);

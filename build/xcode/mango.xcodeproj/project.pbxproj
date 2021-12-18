@@ -235,6 +235,27 @@
 		A68CD3F02651D9A200725A7C /* lossless_sse41.c in Sources */ = {isa = PBXBuildFile; fileRef = A68CD3EF2651D9A200725A7C /* lossless_sse41.c */; };
 		A690037C2008FF790080E5FA /* sha2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A690037B2008FF790080E5FA /* sha2.cpp */; };
 		A6966E032457D863000C1970 /* libd_utils.c in Sources */ = {isa = PBXBuildFile; fileRef = A6966E022457D863000C1970 /* libd_utils.c */; };
+		A6B5F01F276CEAB10014CD33 /* zconf.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5F00A276CEAB00014CD33 /* zconf.h */; };
+		A6B5F020276CEAB10014CD33 /* crc32.c in Sources */ = {isa = PBXBuildFile; fileRef = A6B5F00B276CEAB00014CD33 /* crc32.c */; };
+		A6B5F021276CEAB10014CD33 /* compress.c in Sources */ = {isa = PBXBuildFile; fileRef = A6B5F00C276CEAB00014CD33 /* compress.c */; };
+		A6B5F022276CEAB10014CD33 /* inffixed.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5F00D276CEAB00014CD33 /* inffixed.h */; };
+		A6B5F023276CEAB10014CD33 /* zutil.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5F00E276CEAB00014CD33 /* zutil.h */; };
+		A6B5F024276CEAB10014CD33 /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = A6B5F00F276CEAB00014CD33 /* trees.c */; };
+		A6B5F025276CEAB10014CD33 /* inflate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5F010276CEAB10014CD33 /* inflate.h */; };
+		A6B5F026276CEAB10014CD33 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = A6B5F011276CEAB10014CD33 /* inflate.c */; };
+		A6B5F027276CEAB10014CD33 /* inffast.c in Sources */ = {isa = PBXBuildFile; fileRef = A6B5F012276CEAB10014CD33 /* inffast.c */; };
+		A6B5F028276CEAB10014CD33 /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = A6B5F013276CEAB10014CD33 /* adler32.c */; };
+		A6B5F029276CEAB10014CD33 /* deflate.c in Sources */ = {isa = PBXBuildFile; fileRef = A6B5F014276CEAB10014CD33 /* deflate.c */; };
+		A6B5F02A276CEAB10014CD33 /* zlib.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5F015276CEAB10014CD33 /* zlib.h */; };
+		A6B5F02B276CEAB10014CD33 /* inffast.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5F016276CEAB10014CD33 /* inffast.h */; };
+		A6B5F02C276CEAB10014CD33 /* trees.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5F017276CEAB10014CD33 /* trees.h */; };
+		A6B5F02D276CEAB10014CD33 /* infback.c in Sources */ = {isa = PBXBuildFile; fileRef = A6B5F018276CEAB10014CD33 /* infback.c */; };
+		A6B5F02E276CEAB10014CD33 /* inftrees.c in Sources */ = {isa = PBXBuildFile; fileRef = A6B5F019276CEAB10014CD33 /* inftrees.c */; };
+		A6B5F02F276CEAB10014CD33 /* deflate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5F01A276CEAB10014CD33 /* deflate.h */; };
+		A6B5F030276CEAB10014CD33 /* inftrees.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5F01B276CEAB10014CD33 /* inftrees.h */; };
+		A6B5F031276CEAB10014CD33 /* uncompr.c in Sources */ = {isa = PBXBuildFile; fileRef = A6B5F01C276CEAB10014CD33 /* uncompr.c */; };
+		A6B5F032276CEAB10014CD33 /* crc32.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5F01D276CEAB10014CD33 /* crc32.h */; };
+		A6B5F033276CEAB10014CD33 /* zutil.c in Sources */ = {isa = PBXBuildFile; fileRef = A6B5F01E276CEAB10014CD33 /* zutil.c */; };
 		A6C8F4F7200612E900A25756 /* md5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F5200612E900A25756 /* md5.cpp */; };
 		A6C8F4F8200612E900A25756 /* sha1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F6200612E900A25756 /* sha1.cpp */; };
 		A6CD2BD5209B3958000B0EF8 /* zpng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6CD2BD3209B3957000B0EF8 /* zpng.cpp */; };
@@ -702,6 +723,27 @@
 		A68CD3EF2651D9A200725A7C /* lossless_sse41.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lossless_sse41.c; path = external/libwebp/src/dsp/lossless_sse41.c; sourceTree = "<group>"; };
 		A690037B2008FF790080E5FA /* sha2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha2.cpp; path = core/sha2.cpp; sourceTree = "<group>"; };
 		A6966E022457D863000C1970 /* libd_utils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = libd_utils.c; path = external/libdeflate/lib/libd_utils.c; sourceTree = "<group>"; };
+		A6B5F00A276CEAB00014CD33 /* zconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zconf.h; path = external/zlib/zconf.h; sourceTree = "<group>"; };
+		A6B5F00B276CEAB00014CD33 /* crc32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = crc32.c; path = external/zlib/crc32.c; sourceTree = "<group>"; };
+		A6B5F00C276CEAB00014CD33 /* compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = compress.c; path = external/zlib/compress.c; sourceTree = "<group>"; };
+		A6B5F00D276CEAB00014CD33 /* inffixed.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = inffixed.h; path = external/zlib/inffixed.h; sourceTree = "<group>"; };
+		A6B5F00E276CEAB00014CD33 /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zutil.h; path = external/zlib/zutil.h; sourceTree = "<group>"; };
+		A6B5F00F276CEAB00014CD33 /* trees.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = trees.c; path = external/zlib/trees.c; sourceTree = "<group>"; };
+		A6B5F010276CEAB10014CD33 /* inflate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = inflate.h; path = external/zlib/inflate.h; sourceTree = "<group>"; };
+		A6B5F011276CEAB10014CD33 /* inflate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = inflate.c; path = external/zlib/inflate.c; sourceTree = "<group>"; };
+		A6B5F012276CEAB10014CD33 /* inffast.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = inffast.c; path = external/zlib/inffast.c; sourceTree = "<group>"; };
+		A6B5F013276CEAB10014CD33 /* adler32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = adler32.c; path = external/zlib/adler32.c; sourceTree = "<group>"; };
+		A6B5F014276CEAB10014CD33 /* deflate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = deflate.c; path = external/zlib/deflate.c; sourceTree = "<group>"; };
+		A6B5F015276CEAB10014CD33 /* zlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zlib.h; path = external/zlib/zlib.h; sourceTree = "<group>"; };
+		A6B5F016276CEAB10014CD33 /* inffast.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = inffast.h; path = external/zlib/inffast.h; sourceTree = "<group>"; };
+		A6B5F017276CEAB10014CD33 /* trees.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = trees.h; path = external/zlib/trees.h; sourceTree = "<group>"; };
+		A6B5F018276CEAB10014CD33 /* infback.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = infback.c; path = external/zlib/infback.c; sourceTree = "<group>"; };
+		A6B5F019276CEAB10014CD33 /* inftrees.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = inftrees.c; path = external/zlib/inftrees.c; sourceTree = "<group>"; };
+		A6B5F01A276CEAB10014CD33 /* deflate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = deflate.h; path = external/zlib/deflate.h; sourceTree = "<group>"; };
+		A6B5F01B276CEAB10014CD33 /* inftrees.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = inftrees.h; path = external/zlib/inftrees.h; sourceTree = "<group>"; };
+		A6B5F01C276CEAB10014CD33 /* uncompr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uncompr.c; path = external/zlib/uncompr.c; sourceTree = "<group>"; };
+		A6B5F01D276CEAB10014CD33 /* crc32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = crc32.h; path = external/zlib/crc32.h; sourceTree = "<group>"; };
+		A6B5F01E276CEAB10014CD33 /* zutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zutil.c; path = external/zlib/zutil.c; sourceTree = "<group>"; };
 		A6C8F4F5200612E900A25756 /* md5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = md5.cpp; path = core/md5.cpp; sourceTree = "<group>"; };
 		A6C8F4F6200612E900A25756 /* sha1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha1.cpp; path = core/sha1.cpp; sourceTree = "<group>"; };
 		A6CD2BD3209B3957000B0EF8 /* zpng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zpng.cpp; path = external/zpng/zpng.cpp; sourceTree = "<group>"; };
@@ -1176,6 +1218,7 @@
 		A63DD7011E706DAA00D4D499 /* external */ = {
 			isa = PBXGroup;
 			children = (
+				A6B5F009276CEA8D0014CD33 /* zlib */,
 				A6E123F826D3EC2800B91946 /* xxhash */,
 				A6DD288B24125E900085E6EE /* libdeflate */,
 				A6EC3E67230D7B5200B17F21 /* libwebp */,
@@ -1380,6 +1423,34 @@
 				A672D9112026633600947D7E /* bc_aes.h */,
 			);
 			name = aes;
+			sourceTree = "<group>";
+		};
+		A6B5F009276CEA8D0014CD33 /* zlib */ = {
+			isa = PBXGroup;
+			children = (
+				A6B5F013276CEAB10014CD33 /* adler32.c */,
+				A6B5F00C276CEAB00014CD33 /* compress.c */,
+				A6B5F00B276CEAB00014CD33 /* crc32.c */,
+				A6B5F01D276CEAB10014CD33 /* crc32.h */,
+				A6B5F014276CEAB10014CD33 /* deflate.c */,
+				A6B5F01A276CEAB10014CD33 /* deflate.h */,
+				A6B5F018276CEAB10014CD33 /* infback.c */,
+				A6B5F012276CEAB10014CD33 /* inffast.c */,
+				A6B5F016276CEAB10014CD33 /* inffast.h */,
+				A6B5F00D276CEAB00014CD33 /* inffixed.h */,
+				A6B5F011276CEAB10014CD33 /* inflate.c */,
+				A6B5F010276CEAB10014CD33 /* inflate.h */,
+				A6B5F019276CEAB10014CD33 /* inftrees.c */,
+				A6B5F01B276CEAB10014CD33 /* inftrees.h */,
+				A6B5F00F276CEAB00014CD33 /* trees.c */,
+				A6B5F017276CEAB10014CD33 /* trees.h */,
+				A6B5F01C276CEAB10014CD33 /* uncompr.c */,
+				A6B5F00A276CEAB00014CD33 /* zconf.h */,
+				A6B5F015276CEAB10014CD33 /* zlib.h */,
+				A6B5F01E276CEAB10014CD33 /* zutil.c */,
+				A6B5F00E276CEAB00014CD33 /* zutil.h */,
+			);
+			name = zlib;
 			sourceTree = "<group>";
 		};
 		A6CD2BCE209B3817000B0EF8 /* zpng */ = {
@@ -1793,6 +1864,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6B5F02C276CEAB10014CD33 /* trees.h in Headers */,
 				A6EC3FA8230D7C6100B17F21 /* decode.h in Headers */,
 				A6DD28A724125F080085E6EE /* adler32_impl.h in Headers */,
 				A650BE9621F8D4B40066B9B5 /* window in Headers */,
@@ -1805,6 +1877,7 @@
 				A6EC3F8F230D7C4D00B17F21 /* bit_reader_inl_utils.h in Headers */,
 				A642439C21852AEF0044B763 /* BwtSort.h in Headers */,
 				A642437121852AEF0044B763 /* Compiler.h in Headers */,
+				A6B5F032276CEAB10014CD33 /* crc32.h in Headers */,
 				A645DD722141551200EC714B /* zstd_opt.h in Headers */,
 				A6EC3FA7230D7C6100B17F21 /* types.h in Headers */,
 				A63DD7911E706F3400D4D499 /* bzlib.h in Headers */,
@@ -1831,6 +1904,7 @@
 				A63BA3D8225EA6B6008BFB8C /* jpeg_process_sse2.hpp in Headers */,
 				A642438B21852AEF0044B763 /* 7z.h in Headers */,
 				A642435F21852AEF0044B763 /* Lzma2Dec.h in Headers */,
+				A6B5F02B276CEAB10014CD33 /* inffast.h in Headers */,
 				A6EC3F88230D7C4D00B17F21 /* random_utils.h in Headers */,
 				A63DD7A41E706F8800D4D499 /* BC.h in Headers */,
 				A6EC3EF0230D7C1500B17F21 /* mips_macro.h in Headers */,
@@ -1855,6 +1929,7 @@
 				A6EC3F5B230D7C2E00B17F21 /* cost_enc.h in Headers */,
 				A6DD28C724125F1A0085E6EE /* decompress_template.h in Headers */,
 				A0FF42CE1BBEDC9D0036141B /* simd in Headers */,
+				A6B5F030276CEAB10014CD33 /* inftrees.h in Headers */,
 				A63DD7751E706EF100D4D499 /* lzfse_internal.h in Headers */,
 				A6EC3F95230D7C4D00B17F21 /* rescaler_utils.h in Headers */,
 				A003D308192B9998009FED25 /* math in Headers */,
@@ -1862,10 +1937,12 @@
 				A642439521852AEF0044B763 /* LzHash.h in Headers */,
 				A6EC3EDE230D7C1500B17F21 /* common_sse2.h in Headers */,
 				A650BE8621F21C180066B9B5 /* CustomOpenGLView.h in Headers */,
+				A6B5F023276CEAB10014CD33 /* zutil.h in Headers */,
 				A6E7DF362651D07E006A912E /* fse.h in Headers */,
 				A642436921852AEF0044B763 /* 7zAlloc.h in Headers */,
 				A6872D092270546C008F0D1A /* jpeg_process_func.hpp in Headers */,
 				A6EC3E7D230D7BB800B17F21 /* webpi_dec.h in Headers */,
+				A6B5F01F276CEAB10014CD33 /* zconf.h in Headers */,
 				A6EC3F9B230D7C4D00B17F21 /* bit_writer_utils.h in Headers */,
 				A6E7DF432651D07E006A912E /* bitstream.h in Headers */,
 				A6EC3F48230D7C2E00B17F21 /* vp8li_enc.h in Headers */,
@@ -1882,12 +1959,14 @@
 				A60B0763229D21C900BD520D /* stb_image.h in Headers */,
 				A6DD28A424125F080085E6EE /* crc32_impl.h in Headers */,
 				A6EC3E632308589900B17F21 /* zstd_compress_literals.h in Headers */,
+				A6B5F02A276CEAB10014CD33 /* zlib.h in Headers */,
 				A6DD28DD24125F330085E6EE /* libdeflate.h in Headers */,
 				A6DD289B24125EFB0085E6EE /* crc32_pclmul_template.h in Headers */,
 				A003D309192B9998009FED25 /* opengl in Headers */,
 				A642438E21852AEF0044B763 /* 7zVersion.h in Headers */,
 				A6E7DF392651D07E006A912E /* zstd_deps.h in Headers */,
 				A6DD288A23FF09680085E6EE /* zstd_compress_superblock.h in Headers */,
+				A6B5F025276CEAB10014CD33 /* inflate.h in Headers */,
 				A6EC3FA9230D7C6100B17F21 /* format_constants.h in Headers */,
 				A6DD28D324125F1A0085E6EE /* matchfinder_common.h in Headers */,
 				A6EC3F98230D7C4D00B17F21 /* endian_inl_utils.h in Headers */,
@@ -1895,12 +1974,14 @@
 				A6EC3F64230D7C3D00B17F21 /* animi.h in Headers */,
 				A63DD74F1E706EB200D4D499 /* crypt.hpp in Headers */,
 				A64243A421852AEF0044B763 /* Sort.h in Headers */,
+				A6B5F022276CEAB10014CD33 /* inffixed.h in Headers */,
 				A645DD7E2141551200EC714B /* zstdmt_compress.h in Headers */,
 				A6DD28C924125F1A0085E6EE /* gzip_constants.h in Headers */,
 				A6EC3F5A230D7C2E00B17F21 /* histogram_enc.h in Headers */,
 				A672D9132026633600947D7E /* bc_aes.h in Headers */,
 				A63DD7571E706EB200D4D499 /* rdwrfn.hpp in Headers */,
 				A63DD7531E706EB200D4D499 /* rar.hpp in Headers */,
+				A6B5F02F276CEAB10014CD33 /* deflate.h in Headers */,
 				A645DD732141551200EC714B /* zstd_compress_internal.h in Headers */,
 				A6DD289C24125EFB0085E6EE /* decompress_impl.h in Headers */,
 				A6E7DF492651D07E006A912E /* huf.h in Headers */,
@@ -2053,6 +2134,7 @@
 				A63DD76E1E706EF100D4D499 /* lzfse_decode_base.c in Sources */,
 				A642436D21852AEF0044B763 /* Alloc.c in Sources */,
 				A645DD752141551200EC714B /* fse_compress.c in Sources */,
+				A6B5F026276CEAB10014CD33 /* inflate.c in Sources */,
 				A6EC3E91230D7C0200B17F21 /* anim_decode.c in Sources */,
 				A642438721852AEF0044B763 /* 7zCrc.c in Sources */,
 				A6EC3EFB230D7C1500B17F21 /* filters_msa.c in Sources */,
@@ -2091,6 +2173,7 @@
 				A6EC3F8A230D7C4D00B17F21 /* huffman_encode_utils.c in Sources */,
 				A645DD7C2141551200EC714B /* zstdmt_compress.c in Sources */,
 				A645DD7A2141551200EC714B /* hist.c in Sources */,
+				A6B5F033276CEAB10014CD33 /* zutil.c in Sources */,
 				A645DD27213D53C000EC714B /* jpeg_decode.cpp in Sources */,
 				A6EC3F24230D7C1500B17F21 /* upsampling_sse41.c in Sources */,
 				A6EC3F96230D7C4D00B17F21 /* random_utils.c in Sources */,
@@ -2129,6 +2212,7 @@
 				A6EC3F06230D7C1500B17F21 /* upsampling_sse2.c in Sources */,
 				A00559D01C93329A00A6D963 /* image_png.cpp in Sources */,
 				A642439421852AEF0044B763 /* Bcj2Enc.c in Sources */,
+				A6B5F024276CEAB10014CD33 /* trees.c in Sources */,
 				A6C8F4F8200612E900A25756 /* sha1.cpp in Sources */,
 				A63DD7901E706F3400D4D499 /* bzlib.c in Sources */,
 				A642435421852AEF0044B763 /* Bcj2.c in Sources */,
@@ -2142,11 +2226,13 @@
 				A6EC3E7F230D7BB800B17F21 /* buffer_dec.c in Sources */,
 				A642437721852AEF0044B763 /* BwtSort.c in Sources */,
 				A642436E21852AEF0044B763 /* LzFind.c in Sources */,
+				A6B5F02D276CEAB10014CD33 /* infback.c in Sources */,
 				A6EC3F8B230D7C4D00B17F21 /* bit_reader_utils.c in Sources */,
 				A645DD7B2141551200EC714B /* zstd_ldm.c in Sources */,
 				A6E7DF3F2651D07E006A912E /* threading.c in Sources */,
 				A64243A021852AEF0044B763 /* 7zBuf2.c in Sources */,
 				A6EC3EE0230D7C1500B17F21 /* dec_clip_tables.c in Sources */,
+				A6B5F031276CEAB10014CD33 /* uncompr.c in Sources */,
 				A6EC3F18230D7C1500B17F21 /* lossless_enc_mips32.c in Sources */,
 				A6EC3EFA230D7C1500B17F21 /* ssim_sse2.c in Sources */,
 				A63DD76F1E706EF100D4D499 /* lzfse_decode.c in Sources */,
@@ -2164,6 +2250,7 @@
 				A642435721852AEF0044B763 /* Ppmd8Enc.c in Sources */,
 				A642439021852AEF0044B763 /* Delta.c in Sources */,
 				A6EC3EE7230D7C1500B17F21 /* dec_sse41.c in Sources */,
+				A6B5F029276CEAB10014CD33 /* deflate.c in Sources */,
 				A6EC3EED230D7C1500B17F21 /* upsampling.c in Sources */,
 				A6DD28C824125F1A0085E6EE /* gzip_compress.c in Sources */,
 				A645DD742141551200EC714B /* huf_compress.c in Sources */,
@@ -2178,9 +2265,11 @@
 				A6EC3F11230D7C1500B17F21 /* rescaler_mips_dsp_r2.c in Sources */,
 				A6E7DF462651D07E006A912E /* debug.c in Sources */,
 				A642436621852AEF0044B763 /* Sort.c in Sources */,
+				A6B5F027276CEAB10014CD33 /* inffast.c in Sources */,
 				A6EC3FAC230D7FF800B17F21 /* image_webp.cpp in Sources */,
 				A63DD74E1E706EB200D4D499 /* crypt.cpp in Sources */,
 				A6EC3F41230D7C2E00B17F21 /* histogram_enc.c in Sources */,
+				A6B5F02E276CEAB10014CD33 /* inftrees.c in Sources */,
 				A63DD74C1E706EB200D4D499 /* crc.cpp in Sources */,
 				A6DD28E324129FA10085E6EE /* cpu_x86_features.c in Sources */,
 				A6EC3F04230D7C1500B17F21 /* enc_msa.c in Sources */,
@@ -2259,6 +2348,7 @@
 				A6EC3F56230D7C2E00B17F21 /* cost_enc.c in Sources */,
 				A6EC3F1A230D7C1500B17F21 /* rescaler_msa.c in Sources */,
 				A6EC3F1F230D7C1500B17F21 /* filters_sse2.c in Sources */,
+				A6B5F021276CEAB10014CD33 /* compress.c in Sources */,
 				A6EC3F8C230D7C4D00B17F21 /* utils.c in Sources */,
 				A650BE9421F8D4290066B9B5 /* cocoa_window.mm in Sources */,
 				A0F21EDB1CA062EA0084302D /* file_stream.cpp in Sources */,
@@ -2295,6 +2385,7 @@
 				A63DD7B01E706FA000D4D499 /* etc.cpp in Sources */,
 				A6EC3F5C230D7C2E00B17F21 /* picture_tools_enc.c in Sources */,
 				A00559C41C93329A00A6D963 /* exif.cpp in Sources */,
+				A6B5F028276CEAB10014CD33 /* adler32.c in Sources */,
 				A00559961C93324E00A6D963 /* cpuinfo.cpp in Sources */,
 				A0F241D319D5E30D00218F92 /* math.cpp in Sources */,
 				A6EC3F4D230D7C2E00B17F21 /* backward_references_enc.c in Sources */,
@@ -2318,6 +2409,7 @@
 				A00559CB1C93329A00A6D963 /* image_iff.cpp in Sources */,
 				A645DD30213ED71100EC714B /* image_c64.cpp in Sources */,
 				A00559CC1C93329A00A6D963 /* image_jpg.cpp in Sources */,
+				A6B5F020276CEAB10014CD33 /* crc32.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

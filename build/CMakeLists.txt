@@ -193,6 +193,9 @@ FILE(GLOB EXTERNAL_DEFLATE
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/x86/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/arm/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/arm/*.c")
+FILE(GLOB EXTERNAL_ZLIB
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zlib/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zlib/*.c")
 FILE(GLOB EXTERNAL_UNRAR
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp")
@@ -217,6 +220,7 @@ SOURCE_GROUP("external" FILES
     ${EXTERNAL_LZFSE}
     ${EXTERNAL_LZO}
     ${EXTERNAL_DEFLATE}
+    ${EXTERNAL_ZLIB}
     ${EXTERNAL_UNRAR}
     ${EXTERNAL_ZSTD}
     ${EXTERNAL_WEBP}
@@ -247,6 +251,7 @@ ADD_LIBRARY(mango
     ${EXTERNAL_LZFSE}
     ${EXTERNAL_LZO}
     ${EXTERNAL_DEFLATE}
+    ${EXTERNAL_ZLIB}
     ${EXTERNAL_UNRAR}
     ${EXTERNAL_ZSTD}
     ${EXTERNAL_WEBP}
