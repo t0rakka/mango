@@ -3017,59 +3017,44 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // writePNG()
+    // write_png()
     // ------------------------------------------------------------
 
-    static size_t
-    write_filter_sub(u8* dest, const u8* scan, size_t bpp, size_t bytes, size_t best)
+    static
+    void write_filter_sub(u8* dest, const u8* scan, size_t bpp, size_t bytes)
     {
-        size_t sum = 0;
-
-        for (size_t i = 0; i < bpp; ++i)
-        {
-            s32 v = dest[i] = scan[i];
-            sum += 128 - abs(v - 128);
-        }
-
+        std::memcpy(dest, scan, bpp);
         bytes -= bpp;
         dest += bpp;
 
         for (size_t i = 0; i < bytes; ++i)
         {
-            s32 v = dest[i] = u8(scan[i + bpp] - scan[i]);
-            sum += 128 - abs(v - 128);
-            if (sum > best)
-                break;
+            dest[i] = u8(scan[i + bpp] - scan[i]);
         }
-
-        return sum;
     }
 
-    static size_t
-    write_filter_up(u8* dest, const u8* scan, const u8* prev, size_t bytes, size_t best)
-    {
-        size_t sum = 0;
+#if 0
+    // NOTE: This is what the UP/AVERAGE/PAETH filters would look like if we wanted to use them.
+    //       We don't want to use them because these depend on previous scanline so don't work
+    //       with parallel decoder unless each segment starts with NONE or SUB filter which do not
+    //       require the previous scanline. Selecting which filter is the best one is too slow so
+    //       we go with the SUB filter every time. :)
 
+    static
+    void write_filter_up(u8* dest, const u8* scan, const u8* prev, size_t bytes)
+    {
         for (size_t i = 0; i < bytes; ++i)
         {
-            s32 v = dest[i] = u8(scan[i] - prev[i]);
-            sum += 128 - abs(v - 128);
-            if (sum > best)
-                break;
+            dest[i] = u8(scan[i] - prev[i]);
         }
-
-        return sum;
     }
 
-    static size_t
-    write_filter_average(u8* dest, const u8* scan, const u8* prev, size_t bpp, size_t bytes, size_t best)
+    static
+    void write_filter_average(u8* dest, const u8* scan, const u8* prev, size_t bpp, size_t bytes)
     {
-        size_t sum = 0;
-
         for (size_t i = 0; i < bpp; ++i)
         {
-            s32 v = dest[i] = u8(scan[i] - (prev[i] / 2));
-            sum += 128 - abs(v - 128);
+            dest[i] = u8(scan[i] - (prev[i] / 2));
         }
 
         bytes -= bpp;
@@ -3078,24 +3063,16 @@ namespace
 
         for (size_t i = 0; i < bytes; ++i)
         {
-            s32 v = dest[i] = u8(scan[i + bpp] - ((prev[i] + scan[i]) / 2));
-            sum += 128 - abs(v - 128);
-            if (sum > best)
-                break;
+            dest[i] = u8(scan[i + bpp] - ((prev[i] + scan[i]) / 2));
         }
-
-        return sum;
     }
 
-    static size_t
-    write_filter_paeth(u8* dest, const u8* scan, const u8* prev, size_t bpp, size_t bytes, size_t best)
+    static
+    void write_filter_paeth(u8* dest, const u8* scan, const u8* prev, size_t bpp, size_t bytes)
     {
-        size_t sum = 0;
-
         for (size_t i = 0; i < bpp; ++i)
         {
-            s32 v = dest[i] = u8(scan[i] - prev[i]);
-            sum += 128 - abs(v - 128);
+            dest[i] = u8(scan[i] - prev[i]);
         }
 
         bytes -= bpp;
@@ -3116,14 +3093,10 @@ namespace
 
             p = (pa <= pb && pa <=pc) ? a : (pb <= pc) ? b : c;
 
-            s32 v = dest[i] = u8(scan[i + bpp] - p);
-            sum += 128 - abs(v - 128);
-            if (sum > best)
-                break;
+            dest[i] = u8(scan[i + bpp] - p);
         }
-
-        return sum;
     }
+#endif
 
     void write_chunk(Stream& stream, u32 chunkid, ConstMemory memory)
     {
@@ -3187,96 +3160,30 @@ namespace
         BigEndianStream s(buffer);
 
         s.write32(segment_height);
-        s.write8(0);
+        s.write8(0x01); // parallel filtering is supported (because we always use SUB filter)
 
         write_chunk(stream, u32_mask_rev('p', 'L', 'L', 'D'), buffer);
     }
 
     void write_IDAT(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
     {
-        // data to compress
+        const int bpp = surface.format.bytes();
+        const int bytes_per_scan = surface.width * bpp;
+
+        // filtered buffer
         Buffer buffer;
 
+        // temporary scanline buffer
+        Buffer temp(PNG_FILTER_BYTE + bytes_per_scan);
+        temp[0] = FILTER_SUB;
+
         u8* image = surface.image;
-        int bpp = surface.format.bytes();
-        int bytes_per_scan = surface.width * bpp;
 
-        Buffer zeros(bytes_per_scan, 0);
-        u8* prev = zeros;
-
-        if (options.filtering)
+        for (int y = 0; y < surface.height; ++y)
         {
-            Buffer temp_none(bytes_per_scan + PNG_FILTER_BYTE);
-            Buffer temp_sub(bytes_per_scan + PNG_FILTER_BYTE);
-            Buffer temp_up(bytes_per_scan + PNG_FILTER_BYTE);
-            Buffer temp_average(bytes_per_scan + PNG_FILTER_BYTE);
-            Buffer temp_paeth(bytes_per_scan + PNG_FILTER_BYTE);
-
-            for (int y = 0; y < surface.height; ++y)
-            {
-                // start with default (no filtering)
-                temp_none[0] = FILTER_NONE;
-                std::memcpy(temp_none + 1, image, bytes_per_scan);
-                size_t best = ~0;
-                Buffer* best_buffer = &temp_none;
-
-                //const char* s = "0"; // selected filter debug string
-
-                size_t score;
-
-                temp_sub[0] = FILTER_SUB;
-                score = write_filter_sub(temp_sub + 1, image, bpp, bytes_per_scan, best);
-                if (score < best)
-                {
-                    best = score;
-                    best_buffer = &temp_sub;
-                    //s = "1";
-                }
-
-                temp_up[0] = FILTER_UP;
-                score = write_filter_up(temp_up + 1, image, prev, bytes_per_scan, best);
-                if (score < best)
-                {
-                    best = score;
-                    best_buffer = &temp_up;
-                    //s = "2";
-                }
-
-                temp_average[0] = FILTER_AVERAGE;
-                score = write_filter_average(temp_average + 1, image, prev, bpp, bytes_per_scan, best);
-                if (score < best)
-                {
-                    best = score;
-                    best_buffer = &temp_average;
-                    //s = "3";
-                }
-
-                temp_paeth[0] = FILTER_PAETH;
-                score = write_filter_paeth(temp_paeth + 1, image, prev, bpp, bytes_per_scan, best);
-                if (score < best)
-                {
-                    best = score;
-                    best_buffer = &temp_paeth;
-                }
-
-                buffer.append(*best_buffer, bytes_per_scan + PNG_FILTER_BYTE);
-
-                //printf("%s", s);
-                //MANGO_UNREFERENCED(s);
-
-                prev = image;
-                image += surface.stride;
-            }
-        }
-        else
-        {
-            for (int y = 0; y < surface.height; ++y)
-            {
-                u8 filter = FILTER_NONE;
-                buffer.append(&filter, PNG_FILTER_BYTE);
-                buffer.append(image, bytes_per_scan);
-                image += surface.stride;
-            }
+            write_filter_sub(temp + 1, image, bpp, bytes_per_scan);
+            buffer.append(temp, bytes_per_scan + PNG_FILTER_BYTE);
+            image += surface.stride;
         }
 
         if (segment_height)
