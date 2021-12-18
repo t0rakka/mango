@@ -3317,7 +3317,7 @@ namespace
                     strm.zalloc = 0;
                     strm.zfree = 0;
                     strm.next_in = source.address;
-                    strm.avail_in = source.size;
+                    strm.avail_in = uInt(source.size);
                     strm.next_out = temp;
                     strm.avail_out = SIZE;
 
@@ -3346,7 +3346,7 @@ namespace
 
                     segment.compressed.append(temp, SIZE - strm.avail_out);
                     segment.adler = strm.adler;
-                    segment.length = source.size;
+                    segment.length = u32(source.size);
 
                     ::deflateEnd(&strm);
                 });
