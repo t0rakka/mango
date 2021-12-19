@@ -3178,7 +3178,10 @@ namespace
             };
             std::vector<Segment> segments(N);
 
+            u32 adler = 1;
+
             ConcurrentQueue q;
+            TicketQueue tk;
 
             for (int i = 0; i < N; ++i)
             {
@@ -3189,11 +3192,14 @@ namespace
                 source.address = buffer.data() + y * (bytes_per_scan + 1);
                 source.size = h * (bytes_per_scan + 1);
 
+                bool is_first = (i == 0);
                 bool is_last = (i == N - 1);
 
                 Segment& segment = segments[i];
 
-                q.enqueue([=, &segment, &surface]
+                auto ticket = tk.acquire();
+
+                q.enqueue([=, &segment, &surface, &stream, &adler]
                 {
                     filter_range(source.address, surface, y, y + h);
 
@@ -3237,40 +3243,34 @@ namespace
                     segment.length = u32(source.size);
 
                     ::deflateEnd(&strm);
+
+                    ticket.consume([=, &segment, &adler, &stream]
+                    {
+                        Memory c = segment.compressed;
+                        adler = ::adler32_combine(adler, segment.adler, segment.length);
+
+                        if (is_last)
+                        {
+                            // 4 last bytes is adler, overwrite it with cumulative adler
+                            BigEndianPointer p = c.address + c.size - 4;
+                            p.write32(adler);
+                        }
+
+                        if (!is_first)
+                        {
+                            // trim zlib header
+                            c.address += 2;
+                            c.size -= 2;
+                        }
+
+                        // write chunkdID + compressed data
+                        write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), c);
+                    });
                 });
             }
 
             q.wait();
-
-            u32 adler = 1;
-
-            for (int i = 0; i < N; ++i)
-            {
-                bool is_first = (i == 0);
-                bool is_last = (i == N - 1);
-
-                Segment& segment = segments[i];
-
-                Memory c = segment.compressed;
-                adler = ::adler32_combine(adler, segment.adler, segment.length);
-
-                if (is_last)
-                {
-                    // 4 last bytes is adler, overwrite it with cumulative adler
-                    BigEndianPointer p = c.address + c.size - 4;
-                    p.write32(adler);
-                }
-
-                if (!is_first)
-                {
-                    // trim zlib header
-                    c.address += 2;
-                    c.size -= 2;
-                }
-
-                // write chunkdID + compressed data
-                write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), c);
-            }
+            tk.wait();
         }
         else
         {
