@@ -3098,17 +3098,20 @@ namespace
     }
 #endif
 
-    void write_chunk(Stream& stream, u32 chunkid, ConstMemory memory)
+    void write_chunk(Stream& stream, u32 chunk_id, ConstMemory memory)
     {
         BigEndianStream s(stream);
 
         u8 temp[4];
-        ustore32be(temp, chunkid);
+        ustore32be(temp, chunk_id);
+
         u32 crc = crc32(0, Memory(temp, 4));
         crc = crc32(crc, memory);
 
-        s.write32(u32(memory.size));
-        s.write32(chunkid);
+        u32 chunk_size = u32(memory.size);
+
+        s.write32(chunk_size);
+        s.write32(chunk_id);
         s.write(memory);
         s.write32(crc);
     }
