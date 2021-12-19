@@ -3301,7 +3301,7 @@ namespace
 
             if (N > 1)
             {
-                height = surface.height / N;
+                height = int(surface.height / N);
             }
         }
 
