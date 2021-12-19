@@ -2878,9 +2878,7 @@ namespace
             ConcurrentQueue q;
 
             u32 y = 0;
-
-            ConstMemory memory_first;
-            Memory output_first;
+            auto decompress = deflate_zlib::decompress;
 
             for (ConstMemory memory : m_parallel_segments)
             {
@@ -2890,31 +2888,17 @@ namespace
                 output.address = buffer.address + bytes_per_line * y;
                 output.size = bytes_per_line * h;
 
-                if (!y)
+                q.enqueue([=]
                 {
-                    // remember first segment so that it can be decoded in the current thread
-                    memory_first = memory;
-                    output_first = output;
-                }
-                else
-                {
-                    q.enqueue([=]
+                    CompressionStatus result = decompress(output, memory);
+                    if (!result)
                     {
-                        CompressionStatus cs = deflate::decompress(output, memory);
-                        if (!cs)
-                        {
-                            debugPrint("  %s\n", cs.info.c_str());
-                        }
-                    });
-                }
+                        debugPrint("  %s\n", result.info.c_str());
+                    }
+                });
 
+                decompress = deflate::decompress;
                 y += m_parallel_height;
-            }
-
-            CompressionStatus cs = deflate_zlib::decompress(output_first, memory_first);
-            if (!cs)
-            {
-                debugPrint("  %s\n", cs.info.c_str());
             }
 
             q.wait();
@@ -2943,28 +2927,24 @@ namespace
             bottom_memory.address = m_compressed.data() + m_idot_offset;
             bottom_memory.size = m_compressed.size() - m_idot_offset;
 
+            // enqueue task into the threadpool
             FutureTask<size_t> task([=] () -> size_t
             {
                 // Apple uses raw deflate format for iDOT extended IDAT chunks
-                CompressionStatus cs = deflate::decompress(bottom_buffer, bottom_memory);
-                return cs.size;
+                CompressionStatus result = deflate::decompress(bottom_buffer, bottom_memory);
+                return result.size;
             });
 
-            CompressionStatus cs;
+            // Apple uses raw deflate format
+            // png standard uses zlib frame format
+            auto decompress = m_iphoneOptimized ?
+                deflate::decompress :
+                deflate_zlib::decompress;
 
-            if (m_iphoneOptimized)
-            {
-                // Apple uses raw deflate format
-                cs = deflate::decompress(top_buffer, top_memory);
-            }
-            else
-            {
-                // png standard uses zlib frame format
-                cs = deflate_zlib::decompress(top_buffer, top_memory);
-            }
+            CompressionStatus result = decompress(top_buffer, top_memory);
 
-            size_t bytes_out_top = cs.size;
-            size_t bytes_out_bottom = task.get();
+            size_t bytes_out_top = result.size;
+            size_t bytes_out_bottom = task.get(); // synchronize
 
             debugPrint("  output top bytes:     %d\n", int(bytes_out_top));
             debugPrint("  output bottom bytes:  %d\n", int(bytes_out_bottom));
@@ -2977,27 +2957,21 @@ namespace
             // Default decoding
             // ----------------------------------------------------------------------
 
-            CompressionStatus cs;
+            // Apple uses raw deflate format
+            // png standard uses zlib frame format
+            auto decompress = m_iphoneOptimized ?
+                deflate::decompress :
+                deflate_zlib::decompress;
 
-            if (m_iphoneOptimized)
+            CompressionStatus result = decompress(buffer, m_compressed);
+            if (!result)
             {
-                // Apple uses raw deflate format
-                cs = deflate::decompress(buffer, m_compressed);
-            }
-            else
-            {
-                // png standard uses zlib frame format
-                cs = deflate_zlib::decompress(buffer, m_compressed);
-            }
-
-            debugPrint("  output bytes:  %d\n", int(cs.size));
-
-            if (!cs)
-            {
-                debugPrint("  %s\n", cs.info.c_str());
-                status.setError(cs.info);
+                debugPrint("  %s\n", result.info.c_str());
+                status.setError(result.info);
                 return status;
             }
+
+            debugPrint("  output bytes:  %d\n", int(result.size));
         }
 
         // process image
@@ -3149,10 +3123,10 @@ namespace
 
         size_t bound = deflate_zlib::bound(options.icc.size);
         Buffer compressed(bound);
-        CompressionStatus cs = deflate_zlib::compress(compressed, options.icc, options.compression);
-        if (cs)
+        CompressionStatus result = deflate_zlib::compress(compressed, options.icc, options.compression);
+        if (result)
         {
-            buffer.write(compressed, cs.size); // rest of chunk is compressed profile
+            buffer.write(compressed, result.size); // rest of chunk is compressed profile
             write_chunk(stream, u32_mask_rev('i', 'C', 'C', 'P'), buffer);
         }
     }
