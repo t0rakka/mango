@@ -3246,8 +3246,9 @@ namespace
 
                     ticket.consume([=, &segment, &adler, &stream]
                     {
-                        Memory c = segment.compressed;
                         adler = ::adler32_combine(adler, segment.adler, segment.length);
+
+                        Memory c = segment.compressed;
 
                         if (is_last)
                         {
