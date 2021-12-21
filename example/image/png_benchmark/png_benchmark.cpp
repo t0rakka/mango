@@ -17,6 +17,16 @@ using namespace mango::image;
 #define ENABLE_MANGO
 
 // ----------------------------------------------------------------------
+// get_file_size()
+// ----------------------------------------------------------------------
+
+size_t get_file_size(const char* filename)
+{
+    File file(filename);
+    return file.size();
+}
+
+// ----------------------------------------------------------------------
 // libpng
 // ----------------------------------------------------------------------
 
@@ -76,9 +86,8 @@ void load_libpng(Memory memory)
     free(image);
 }
 
-void save_libpng(const Bitmap& bitmap)
+size_t save_libpng(const Bitmap& bitmap)
 {
-
     const char* filename = "output-libpng.png";
 
     int width = bitmap.width;
@@ -131,6 +140,8 @@ void save_libpng(const Bitmap& bitmap)
     fclose(fp);
 
     png_destroy_write_struct(&png, &info);
+
+    return get_file_size(filename);
 }
 
 #endif
@@ -152,13 +163,16 @@ void load_lodepng(Memory memory)
     free(image);
 }
 
-void save_lodepng(const Bitmap& bitmap)
+size_t save_lodepng(const Bitmap& bitmap)
 {
+    const char* filename = "output-libpng.png";
+
     LodePNGEncoderSettings settings;
     settings.filter_strategy = LFS_ZERO;
     lodepng_encoder_settings_init(&settings);
 
-    lodepng_encode32_file("output-lodepng.png", bitmap.image, bitmap.width, bitmap.height);
+    lodepng_encode32_file(filename, bitmap.image, bitmap.width, bitmap.height);
+    return get_file_size(filename);
 }
 
 #endif
@@ -182,9 +196,11 @@ void load_stb(Memory memory)
     free(image);
 }
 
-void save_stb(const Bitmap& bitmap)
+size_t save_stb(const Bitmap& bitmap)
 {
-    stbi_write_png("output-stb.png", bitmap.width, bitmap.height, 4, bitmap.image, bitmap.width * 4);
+    const char* filename = "output-stb.png";
+    stbi_write_png(filename, bitmap.width, bitmap.height, 4, bitmap.image, bitmap.width * 4);
+    return get_file_size(filename);
 }
 
 #endif
@@ -295,8 +311,10 @@ void load_spng(Memory memory)
     free(image);
 }
 
-void save_spng(const Bitmap& bitmap)
+size_t save_spng(const Bitmap& bitmap)
 {
+    const char* filename = "output-spng.png";
+
     struct spng_ihdr ihdr;
 
     ihdr.width = bitmap.width;
@@ -322,7 +340,7 @@ void save_spng(const Bitmap& bitmap)
     {
         printf("spng_encode_image() error: %s\n", spng_strerror(r));
         spng_ctx_free(enc);
-        return;
+        return 0;
     }
 
     size_t png_size;
@@ -334,11 +352,12 @@ void save_spng(const Bitmap& bitmap)
         printf("spng_get_png_buffer() error: %s\n", spng_strerror(r));
     }
 
-    OutputFileStream file("output-spng.png");
+    OutputFileStream file(filename);
     file.write(png_buf, png_size);
 
     free(png_buf);
     spng_ctx_free(enc);
+    return get_file_size(filename);
 }
 
 #endif
@@ -356,9 +375,11 @@ void load_fpng(Memory memory)
     // TODO: not supported.
 }
 
-void save_fpng(const Bitmap& bitmap)
+size_t save_fpng(const Bitmap& bitmap)
 {
-    fpng::fpng_encode_image_to_file("output-fpng.png", bitmap.image, bitmap.width, bitmap.height, 4, false);
+    const char* filename = "output-fpng.png";
+    fpng::fpng_encode_image_to_file(filename, bitmap.image, bitmap.width, bitmap.height, 4, false);
+    return get_file_size(filename);
 }
 
 #endif
@@ -439,9 +460,10 @@ void load_wuffs(Memory memory)
     }
 }
 
-void save_wuffs(const Bitmap& bitmap)
+size_t save_wuffs(const Bitmap& bitmap)
 {
-    // TODO: not supported.
+    // TODO: not supported
+    return 0;
 }
 
 #endif
@@ -471,11 +493,16 @@ void load_mango(Memory memory)
     //Bitmap bitmap(memory, ".png");
 }
 
-void save_mango(const Bitmap& bitmap)
+size_t save_mango(const Bitmap& bitmap)
 {
+    const char* filename = "output-mango.png";
+
     ImageEncodeOptions options;
     options.compression = g_option_compression;
-    bitmap.save("output-mango.png", options);
+    bitmap.save(filename, options);
+
+    return get_file_size(filename);
+
 }
 
 #endif
@@ -494,11 +521,12 @@ void test(const char* name, Load load, Save save, Memory memory, const Bitmap& b
 
     u64 time1 = Time::us();
 
-    save(bitmap);
+    size_t size = save(bitmap);
 
     u64 time2 = Time::us();
-    printf("%7d.%d ms ", int((time1 - time0) / 1000), int((time1 - time0) % 10));
-    printf("%7d.%d ms ", int((time2 - time1) / 1000), int((time2 - time1) % 10));
+    printf("  %7d.%d ", int((time1 - time0) / 1000), int((time1 - time0) % 10));
+    printf("  %7d.%d ", int((time2 - time1) / 1000), int((time2 - time1) % 10));
+    printf("  %8d", int(size / 1024));
     printf("\n");
 }
 
@@ -535,10 +563,10 @@ int main(int argc, const char* argv[])
     File file(filename);
     Buffer buffer(file);
 
-    printf("image: %d x %d (file: %d KB)\n", bitmap.width, bitmap.height, int(file.size() / 1024));
-    printf("----------------------------------------------\n");
-    printf("                load         save             \n");
-    printf("----------------------------------------------\n");
+    printf("image: %d x %d (%d KB)\n", bitmap.width, bitmap.height, int(file.size() / 1024));
+    printf("---------------------------------------------------\n");
+    printf("            decode(ms)  encode(ms)   size(KB)      \n");
+    printf("---------------------------------------------------\n");
 
 #if defined ENABLE_LIBPNG
     test("libpng:  ", load_libpng, save_libpng, buffer, bitmap);
