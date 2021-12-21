@@ -66,7 +66,7 @@
 
         #if defined(SPNG_ARM)
         static uint32_t expand_palette_rgba8_neon(unsigned char *row, const unsigned char *scanline, const unsigned char *plte, uint32_t width);
-        static uint32_t expand_palette_rgb8_neon(unsigned char *row, const unsigned char *scanline, const unsigned char *plte, uint32_t width);
+        /*static uint32_t expand_palette_rgb8_neon(unsigned char *row, const unsigned char *scanline, const unsigned char *plte, uint32_t width);*/
         #endif
     #endif
 #endif
@@ -1883,7 +1883,7 @@ static void expand_row(unsigned char *row,
     if(fmt == SPNG_FMT_RGBA8) i = expand_palette_rgba8_neon(row, scanline, decode_plte->raw, width);
     else if(fmt == SPNG_FMT_RGB8)
     {
-        i = expand_palette_rgb8_neon(row, scanline, decode_plte->raw, width);
+        /*i = expand_palette_rgb8_neon(row, scanline, decode_plte->raw, width);*/
 
         for(; i < width; i++)
         {/* In this case the LUT is 3 bytes packed */
@@ -5057,36 +5057,21 @@ int spng_set_png_file(spng_ctx *ctx, FILE *file)
 
 void *spng_get_png_buffer(spng_ctx *ctx, size_t *len, int *error)
 {
-    if(ctx == NULL || !len)
-    {
-        if(error) *error = SPNG_EINVAL;
-        return NULL;
-    }
-
     int tmp = 0;
     error = error ? error : &tmp;
-
-    if(!ctx->encode_only)
-    {
-        *error = SPNG_ECTXTYPE;
-        return NULL;
-    }
-
-    if(!ctx->state)
-    {
-        *error = SPNG_EBADSTATE;
-        return NULL;
-    }
-
-    if(ctx->state != SPNG_STATE_IEND)
-    {
-        if(ctx->state >= SPNG_STATE_ENCODE_INIT) *error = SPNG_ENOTFINAL;
-        else *error = SPNG_EOPSTATE;
-
-        return NULL;
-    }
-
     *error = 0;
+
+    if(ctx == NULL || !len) *error = SPNG_EINVAL;
+
+    if(*error) return NULL;
+
+    if(!ctx->encode_only) *error = SPNG_ECTXTYPE;
+    else if(!ctx->state) *error = SPNG_EBADSTATE;
+    else if(!ctx->internal_buffer) *error = SPNG_EOPSTATE;
+    else if(ctx->state < SPNG_STATE_EOI) *error = SPNG_EOPSTATE;
+    else if(ctx->state != SPNG_STATE_IEND) *error = SPNG_ENOTFINAL;
+
+    if(*error) return NULL;
 
     ctx->user_owns_out_png = 1;
 
@@ -5216,7 +5201,7 @@ int spng_set_option(spng_ctx *ctx, enum spng_option option, int value)
         case SPNG_CHUNK_COUNT_LIMIT:
         {
             if(value < 0) return 1;
-            if(value > ctx->chunk_count_total) return 1;
+            if(value > (int)ctx->chunk_count_total) return 1;
             ctx->chunk_count_limit = value;
             break;
         }
@@ -5580,7 +5565,9 @@ int spng_set_plte(spng_ctx *ctx, struct spng_plte *plte)
 
     if(check_plte(plte, &ctx->ihdr)) return 1;
 
-    ctx->plte = *plte;
+    ctx->plte.n_entries = plte->n_entries;
+
+    memcpy(ctx->plte.entries, plte->entries, plte->n_entries * sizeof(struct spng_plte_entry));
 
     ctx->stored.plte = 1;
     ctx->user.plte = 1;
@@ -6061,7 +6048,7 @@ const char *spng_strerror(int err)
         case SPNG_EIDAT_STREAM: return "IDAT stream error";
         case SPNG_EZLIB: return "zlib error";
         case SPNG_EFILTER: return "invalid scanline filter";
-        case SPNG_EBUFSIZ: return "output buffer too small";
+        case SPNG_EBUFSIZ: return "invalid buffer size";
         case SPNG_EIO: return "i/o error";
         case SPNG_EOF: return "end of file";
         case SPNG_EBUF_SET: return "buffer already set";
@@ -6901,7 +6888,7 @@ static uint32_t expand_palette_rgba8_neon(unsigned char *row, const unsigned cha
 
     return i;
 }
-
+#if 0 /* Disabled pending a fix in the next version */
 /* Expands a palettized row into RGB8. */
 static uint32_t expand_palette_rgb8_neon(unsigned char *row, const unsigned char *scanline, const unsigned char *plte, uint32_t width)
 {
@@ -6929,5 +6916,5 @@ static uint32_t expand_palette_rgb8_neon(unsigned char *row, const unsigned char
 
     return i;
 }
-
+#endif
 #endif /* SPNG_ARM */
