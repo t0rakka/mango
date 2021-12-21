@@ -331,7 +331,7 @@ size_t save_spng(const Bitmap& bitmap)
     spng_ctx *enc = spng_ctx_new(SPNG_CTX_ENCODER);
 
     spng_set_option(enc, SPNG_ENCODE_TO_BUFFER, 1);
-    spng_set_option(enc, SPNG_FILTER_CHOICE, SPNG_FILTER_CHOICE_SUB);
+    spng_set_option(enc, SPNG_FILTER_CHOICE, SPNG_FILTER_CHOICE_UP); // same as fpng uses
     spng_set_option(enc, SPNG_IMG_COMPRESSION_LEVEL, 3);
 
     spng_set_ihdr(enc, &ihdr);
