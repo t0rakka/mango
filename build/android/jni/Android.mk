@@ -47,7 +47,11 @@ SOURCE_DIRS := mango/core \
                external/lzma \
                $(SOURCE_WEBP)
 
-SOURCES := $(foreach dir,$(SOURCE_DIRS),$(wildcard $(MANGO_SOURCE)/$(dir)/*.cpp) $(wildcard $(MANGO_SOURCE)/$(dir)/*.c))
+SOURCES := $(foreach dir,$(SOURCE_DIRS), \
+                         $(wildcard $(MANGO_SOURCE)/$(dir)/*.cpp) \
+                         $(wildcard $(MANGO_SOURCE)/$(dir)/*.c) \
+                         $(wildcard $(MANGO_SOURCE)/$(dir)/*.S) \
+)
 mango_sources := $(SOURCES:$(LOCAL_PATH)/%=%)
 
 # -------------------------------------------------------------

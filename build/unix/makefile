@@ -283,6 +283,9 @@ OBJECTS_MANGO += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.c,%.o, \
 OBJECTS_MANGO += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.mm,%.o, \
     $(abspath $(foreach dir, $(SOURCE_DIRS_MANGO), $(wildcard $(SOURCE_BASE)/$(dir)/*.mm)))))
 
+OBJECTS_MANGO += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.S,%.o, \
+    $(abspath $(foreach dir, $(SOURCE_DIRS_MANGO), $(wildcard $(SOURCE_BASE)/$(dir)/*.S)))))
+
 # opengl
 
 OBJECTS_OPENGL += $(addprefix $(OBJECTS_PATH)/, $(patsubst %.cpp,%.o, \
@@ -309,6 +312,11 @@ $(OBJECTS_PATH)/%.o: %.cpp
 	@echo [Compile C++] $<
 	@-mkdir -p $(@D)
 	@$(CPP) -I$(INCLUDE_BASE) $< -o $@
+
+$(OBJECTS_PATH)/%.o: %.S
+	@echo [Compile ASM] $<
+	@-mkdir -p $(@D)
+	@$(CC) -I$(INCLUDE_BASE) $< -o $@
 
 $(OBJECTS_PATH)/%.o: %.c
 	@echo [Compile C] $<

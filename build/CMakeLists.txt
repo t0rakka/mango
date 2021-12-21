@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
-PROJECT(mango CXX C)
+PROJECT(mango CXX C ASM)
 
 # ------------------------------------------------------------------------------
 # compiler
@@ -201,7 +201,8 @@ FILE(GLOB EXTERNAL_UNRAR
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp")
 FILE(GLOB_RECURSE EXTERNAL_ZSTD
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.S")
 FILE(GLOB_RECURSE EXTERNAL_WEBP
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.c")

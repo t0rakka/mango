@@ -650,6 +650,7 @@ external_zstd_sources = files(
     '../source/external/zstd/compress/zstd_double_fast.c',
     '../source/external/zstd/compress/zstdmt_compress.c',
     '../source/external/zstd/compress/zstd_lazy.c',
+    '../source/external/zstd/decompress/huf_decompress_amd64.S',
     '../source/external/zstd/decompress/huf_decompress.c',
     '../source/external/zstd/decompress/zstd_decompress.c',
     '../source/external/zstd/decompress/zstd_decompress_block.c',
@@ -780,7 +781,7 @@ external_zpng_sources = files(
 
 cpp = meson.get_compiler('cpp')
 
-message('cpp = @0@'.format(cpp.get_id()))
+message('cpp: @0@'.format(cpp.get_id()))
 
 if host_machine.system() == 'windows'
     add_project_arguments('-DUNICODE', '-D_UNICODE', language: ['c', 'cpp'])
@@ -893,12 +894,12 @@ if host_machine.system() == 'linux'
     x11_dep = cpp.find_library('X11', required : true)
     mango_deps += [ m_dep ]
     mango_public_deps += [ m_dep ]
-    mango_opengl_deps += [ x11_dep ]
+    mango_opengl_deps += [ x11_dep, opengl_dep ]
 endif
 
 mango_inc = include_directories('../include')
 
-mango = static_library('mango',
+mango = shared_library('mango',
     extra_files : [
         mango_headers,
         external_headers
@@ -938,7 +939,7 @@ mango_dep = declare_dependency(
     compile_args        : mango_public_cpp_args + mango_interface_cpp_args
 )
 
-mango_opengl = static_library('mango-opengl',
+mango_opengl = shared_library('mango-opengl',
     sources             : window_sources + opengl_sources,
     link_with           : mango,
     dependencies        : mango_opengl_deps,
