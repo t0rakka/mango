@@ -252,6 +252,8 @@
 		A672D9132026633600947D7E /* bc_aes.h in Headers */ = {isa = PBXBuildFile; fileRef = A672D9112026633600947D7E /* bc_aes.h */; };
 		A672D9152026634B00947D7E /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9142026634B00947D7E /* aes.cpp */; };
 		A6734C7A2763C82E00FE6A20 /* image_qoi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6734C792763C82E00FE6A20 /* image_qoi.cpp */; };
+		A6835B3A27724BDE004CAC9C /* adler32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6835B3927724BDE004CAC9C /* adler32.cpp */; };
+		A6835B3C27724C1F004CAC9C /* huf_decompress_amd64.S in Sources */ = {isa = PBXBuildFile; fileRef = A6835B3B27724C1F004CAC9C /* huf_decompress_amd64.S */; };
 		A6872D092270546C008F0D1A /* jpeg_process_func.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A6872D082270546C008F0D1A /* jpeg_process_func.hpp */; };
 		A68CD3F02651D9A200725A7C /* lossless_sse41.c in Sources */ = {isa = PBXBuildFile; fileRef = A68CD3EF2651D9A200725A7C /* lossless_sse41.c */; };
 		A690037C2008FF790080E5FA /* sha2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A690037B2008FF790080E5FA /* sha2.cpp */; };
@@ -740,6 +742,8 @@
 		A672D9112026633600947D7E /* bc_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bc_aes.h; path = external/aes/bc_aes.h; sourceTree = "<group>"; };
 		A672D9142026634B00947D7E /* aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = aes.cpp; path = core/aes.cpp; sourceTree = "<group>"; };
 		A6734C792763C82E00FE6A20 /* image_qoi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_qoi.cpp; path = image/image_qoi.cpp; sourceTree = "<group>"; };
+		A6835B3927724BDE004CAC9C /* adler32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = adler32.cpp; path = core/adler32.cpp; sourceTree = "<group>"; };
+		A6835B3B27724C1F004CAC9C /* huf_decompress_amd64.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = huf_decompress_amd64.S; path = external/zstd/decompress/huf_decompress_amd64.S; sourceTree = "<group>"; };
 		A6872D082270546C008F0D1A /* jpeg_process_func.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jpeg_process_func.hpp; path = jpeg/jpeg_process_func.hpp; sourceTree = "<group>"; };
 		A68CD3EF2651D9A200725A7C /* lossless_sse41.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lossless_sse41.c; path = external/libwebp/src/dsp/lossless_sse41.c; sourceTree = "<group>"; };
 		A690037B2008FF790080E5FA /* sha2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha2.cpp; path = core/sha2.cpp; sourceTree = "<group>"; };
@@ -1013,6 +1017,7 @@
 		A005598A1C93323D00A6D963 /* core */ = {
 			isa = PBXGroup;
 			children = (
+				A6835B3927724BDE004CAC9C /* adler32.cpp */,
 				A672D9142026634B00947D7E /* aes.cpp */,
 				A6C8F4F5200612E900A25756 /* md5.cpp */,
 				A6C8F4F6200612E900A25756 /* sha1.cpp */,
@@ -1846,6 +1851,7 @@
 		A6FCC3AD1E8123070037C15F /* decompress */ = {
 			isa = PBXGroup;
 			children = (
+				A6835B3B27724C1F004CAC9C /* huf_decompress_amd64.S */,
 				A66F158121C15CB400E1C8AA /* zstd_ddict.c */,
 				A66F158421C15CB400E1C8AA /* zstd_ddict.h */,
 				A66F158321C15CB400E1C8AA /* zstd_decompress_block.c */,
@@ -2266,6 +2272,7 @@
 				A6EC3F11230D7C1500B17F21 /* rescaler_mips_dsp_r2.c in Sources */,
 				A6E7DF462651D07E006A912E /* debug.c in Sources */,
 				A642436621852AEF0044B763 /* Sort.c in Sources */,
+				A6835B3A27724BDE004CAC9C /* adler32.cpp in Sources */,
 				A6EC3FAC230D7FF800B17F21 /* image_webp.cpp in Sources */,
 				A63DD74E1E706EB200D4D499 /* crypt.cpp in Sources */,
 				A6EC3F41230D7C2E00B17F21 /* histogram_enc.c in Sources */,
@@ -2381,6 +2388,7 @@
 				A6EC3F44230D7C2E00B17F21 /* token_enc.c in Sources */,
 				A6EC3E7B230D7BB800B17F21 /* alpha_dec.c in Sources */,
 				A6EC3F93230D7C4D00B17F21 /* rescaler_utils.c in Sources */,
+				A6835B3C27724C1F004CAC9C /* huf_decompress_amd64.S in Sources */,
 				A6EC3F0D230D7C1500B17F21 /* upsampling_mips_dsp_r2.c in Sources */,
 				A645DD812141551D00EC714B /* zstd_decompress.c in Sources */,
 				A63DD7B01E706FA000D4D499 /* etc.cpp in Sources */,
