@@ -41,7 +41,6 @@ static void png_read_callback(png_structp png_ptr, png_bytep data, png_size_t le
 void load_libpng(Memory memory)
 {
     png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-
     png_infop info_ptr = png_create_info_struct(png_ptr);
 
     png_source source;
@@ -155,6 +154,10 @@ void load_lodepng(Memory memory)
 
 void save_lodepng(const Bitmap& bitmap)
 {
+    LodePNGEncoderSettings settings;
+    settings.filter_strategy = LFS_ZERO;
+    lodepng_encoder_settings_init(&settings);
+
     lodepng_encode32_file("output-lodepng.png", bitmap.image, bitmap.width, bitmap.height);
 }
 
@@ -310,6 +313,8 @@ void save_spng(const Bitmap& bitmap)
     spng_ctx *enc = spng_ctx_new(SPNG_CTX_ENCODER);
 
     spng_set_option(enc, SPNG_ENCODE_TO_BUFFER, 1);
+    spng_set_option(enc, SPNG_FILTER_CHOICE, SPNG_FILTER_CHOICE_SUB);
+    spng_set_option(enc, SPNG_IMG_COMPRESSION_LEVEL, 3);
 
     spng_set_ihdr(enc, &ihdr);
     int r = spng_encode_image(enc, image, image_size, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
@@ -530,7 +535,7 @@ int main(int argc, const char* argv[])
     File file(filename);
     Buffer buffer(file);
 
-    printf("image: %d x %d (%d KB)\n", bitmap.width, bitmap.height, int(file.size() / 1024));
+    printf("image: %d x %d (file: %d KB)\n", bitmap.width, bitmap.height, int(file.size() / 1024));
     printf("----------------------------------------------\n");
     printf("                load         save             \n");
     printf("----------------------------------------------\n");
