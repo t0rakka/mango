@@ -151,6 +151,13 @@ namespace mango
         CompressionStatus decompress(Memory dest, ConstMemory source);
     }
 
+    namespace zlib
+    {
+        size_t bound(size_t size);
+        CompressionStatus compress(Memory dest, ConstMemory source, int level = 6);
+        CompressionStatus decompress(Memory dest, ConstMemory source);
+    }
+
     namespace deflate
     {
         size_t bound(size_t size);
@@ -192,6 +199,7 @@ namespace mango
             LZMA,
             LZMA2,
             PPMD8,
+            ZLIB,
             DEFLATE,
             DEFLATE_ZLIB,
             DEFLATE_GZIP,

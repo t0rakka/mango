@@ -934,6 +934,35 @@ namespace ppmd8
 } // namespace ppmd
 
 // ----------------------------------------------------------------------------
+// zlib
+// ----------------------------------------------------------------------------
+
+namespace zlib
+{
+
+    size_t bound(size_t size)
+    {
+        // TODO
+        return 0;
+    }
+
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
+    {
+        // TODO
+        CompressionStatus status;
+        return status;
+    }
+
+    CompressionStatus decompress(Memory dest, ConstMemory source)
+    {
+        // TODO
+        CompressionStatus status;
+        return status;
+    }
+
+} // namespace zlib
+
+// ----------------------------------------------------------------------------
 // deflate
 // ----------------------------------------------------------------------------
 
@@ -1100,16 +1129,17 @@ namespace deflate_gzip
 
     const std::vector<Compressor> g_compressors =
     {
-        { Compressor::NONE,  "none",  nocompress::bound, nocompress::compress, nocompress::decompress },
-        { Compressor::BZIP2, "bzip2", bzip2::bound, bzip2::compress, bzip2::decompress },
-        { Compressor::LZ4,   "lz4",   lz4::bound,   lz4::compress,   lz4::decompress },
-        { Compressor::LZO,   "lzo",   lzo::bound,   lzo::compress,   lzo::decompress },
-        { Compressor::ZSTD,  "zstd",  zstd::bound,  zstd::compress,  zstd::decompress },
-        { Compressor::LZFSE, "lzfse", lzfse::bound, lzfse::compress, lzfse::decompress },
-        { Compressor::LZMA,  "lzma",  lzma::bound,  lzma::compress,  lzma::decompress },
-        { Compressor::LZMA2, "lzma2", lzma2::bound, lzma2::compress, lzma2::decompress },
-        { Compressor::PPMD8, "ppmd8", ppmd8::bound, ppmd8::compress, ppmd8::decompress },
-        { Compressor::DEFLATE, "deflate", deflate::bound, deflate::compress, deflate::decompress },
+        { Compressor::NONE,    "none",  nocompress::bound, nocompress::compress, nocompress::decompress },
+        { Compressor::BZIP2,   "bzip2", bzip2::bound, bzip2::compress, bzip2::decompress },
+        { Compressor::LZ4,     "lz4",   lz4::bound,   lz4::compress,   lz4::decompress },
+        { Compressor::LZO,     "lzo",   lzo::bound,   lzo::compress,   lzo::decompress },
+        { Compressor::ZSTD,    "zstd",  zstd::bound,  zstd::compress,  zstd::decompress },
+        { Compressor::LZFSE,   "lzfse", lzfse::bound, lzfse::compress, lzfse::decompress },
+        { Compressor::LZMA,    "lzma",  lzma::bound,  lzma::compress,  lzma::decompress },
+        { Compressor::LZMA2,   "lzma2", lzma2::bound, lzma2::compress, lzma2::decompress },
+        { Compressor::PPMD8,   "ppmd8", ppmd8::bound, ppmd8::compress, ppmd8::decompress },
+        { Compressor::ZLIB,    "zlib",  zlib::bound,  zlib::compress,  zlib::decompress },
+        { Compressor::DEFLATE, "deflate",      deflate::bound,      deflate::compress,      deflate::decompress },
         { Compressor::DEFLATE_ZLIB, "deflate_zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },
         { Compressor::DEFLATE_GZIP, "deflate_gzip", deflate_gzip::bound, deflate_gzip::compress, deflate_gzip::decompress },
     };
