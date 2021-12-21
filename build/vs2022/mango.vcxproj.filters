@@ -1164,6 +1164,9 @@
     <ClInclude Include="..\..\source\external\zlib\zutil.h">
       <Filter>external\zlib</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\mango\core\adler32.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -2041,6 +2044,9 @@
     </ClCompile>
     <ClCompile Include="..\..\source\external\zlib\zutil.c">
       <Filter>external\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\core\adler32.cpp">
+      <Filter>mango\source\core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

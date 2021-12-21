@@ -11,12 +11,14 @@ namespace mango
 
     u32 adler32(u32 adler, ConstMemory memory)
     {
-        return ::adler32(adler, memory.address, memory.size);
+        // TODO: split into uInt sized chunks and use combine
+        return ::adler32(adler, memory.address, (uInt)memory.size);
     }
 
     u32 adler32_combine(u32 adler0, u32 adler1, size_t length1)
     {
-        return ::adler32_combine(adler0, adler1, length1);
+        // TODO: split into uInt sized chunks and use combine
+        return ::adler32_combine(adler0, adler1, (uInt)length1);
     }
 
 } // namespace mango

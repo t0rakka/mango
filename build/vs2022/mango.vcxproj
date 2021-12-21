@@ -27,6 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\mango\core\adler32.hpp" />
     <ClInclude Include="..\..\include\mango\core\aes.hpp" />
     <ClInclude Include="..\..\include\mango\core\atomic.hpp" />
     <ClInclude Include="..\..\include\mango\core\bits.hpp" />
@@ -583,6 +584,7 @@
     <ClCompile Include="..\..\source\external\zstd\decompress\zstd_ddict.c" />
     <ClCompile Include="..\..\source\external\zstd\decompress\zstd_decompress.c" />
     <ClCompile Include="..\..\source\external\zstd\decompress\zstd_decompress_block.c" />
+    <ClCompile Include="..\..\source\mango\core\adler32.cpp" />
     <ClCompile Include="..\..\source\mango\core\aes.cpp" />
     <ClCompile Include="..\..\source\mango\core\buffer.cpp" />
     <ClCompile Include="..\..\source\mango\core\compress.cpp" />
