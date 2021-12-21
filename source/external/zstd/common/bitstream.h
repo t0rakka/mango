@@ -143,10 +143,16 @@ MEM_STATIC unsigned BIT_highbit32 (U32 val)
     {
 #   if defined(_MSC_VER)   /* Visual */
 #       if STATIC_BMI2 == 1
-		return _lzcnt_u32(val) ^ 31;
+            return _lzcnt_u32(val) ^ 31;
 #       else
-		unsigned long r = 0;
-		return _BitScanReverse(&r, val) ? (unsigned)r : 0;
+            if (val != 0) {
+                unsigned long r;
+                _BitScanReverse(&r, val);
+                return (unsigned)r;
+            } else {
+                /* Should not reach this code path */
+                __assume(0);
+            }
 #       endif
 #   elif defined(__GNUC__) && (__GNUC__ >= 3)   /* Use GCC Intrinsic */
         return __builtin_clz (val) ^ 31;
@@ -293,22 +299,22 @@ MEM_STATIC size_t BIT_initDStream(BIT_DStream_t* bitD, const void* srcBuffer, si
         switch(srcSize)
         {
         case 7: bitD->bitContainer += (size_t)(((const BYTE*)(srcBuffer))[6]) << (sizeof(bitD->bitContainer)*8 - 16);
-                /* fall-through */
+                ZSTD_FALLTHROUGH;
 
         case 6: bitD->bitContainer += (size_t)(((const BYTE*)(srcBuffer))[5]) << (sizeof(bitD->bitContainer)*8 - 24);
-                /* fall-through */
+                ZSTD_FALLTHROUGH;
 
         case 5: bitD->bitContainer += (size_t)(((const BYTE*)(srcBuffer))[4]) << (sizeof(bitD->bitContainer)*8 - 32);
-                /* fall-through */
+                ZSTD_FALLTHROUGH;
 
         case 4: bitD->bitContainer += (size_t)(((const BYTE*)(srcBuffer))[3]) << 24;
-                /* fall-through */
+                ZSTD_FALLTHROUGH;
 
         case 3: bitD->bitContainer += (size_t)(((const BYTE*)(srcBuffer))[2]) << 16;
-                /* fall-through */
+                ZSTD_FALLTHROUGH;
 
         case 2: bitD->bitContainer += (size_t)(((const BYTE*)(srcBuffer))[1]) <<  8;
-                /* fall-through */
+                ZSTD_FALLTHROUGH;
 
         default: break;
         }

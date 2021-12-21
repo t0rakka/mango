@@ -97,7 +97,7 @@ static size_t HUF_compressWeights(void* dst, size_t dstSize, const void* weightT
 
     unsigned maxSymbolValue = HUF_TABLELOG_MAX;
     U32 tableLog = MAX_FSE_TABLELOG_FOR_HUFF_HEADER;
-    HUF_CompressWeightsWksp* wksp = (HUF_CompressWeightsWksp*)HUF_alignUpWorkspace(workspace, &workspaceSize, sizeof(U32));
+    HUF_CompressWeightsWksp* wksp = (HUF_CompressWeightsWksp*)HUF_alignUpWorkspace(workspace, &workspaceSize, ZSTD_ALIGNOF(U32));
 
     if (workspaceSize < sizeof(HUF_CompressWeightsWksp)) return ERROR(GENERIC);
 
@@ -176,7 +176,7 @@ size_t HUF_writeCTable_wksp(void* dst, size_t maxDstSize,
     HUF_CElt const* const ct = CTable + 1;
     BYTE* op = (BYTE*)dst;
     U32 n;
-    HUF_WriteCTableWksp* wksp = (HUF_WriteCTableWksp*)HUF_alignUpWorkspace(workspace, &workspaceSize, sizeof(U32));
+    HUF_WriteCTableWksp* wksp = (HUF_WriteCTableWksp*)HUF_alignUpWorkspace(workspace, &workspaceSize, ZSTD_ALIGNOF(U32));
 
     /* check conditions */
     if (workspaceSize < sizeof(HUF_WriteCTableWksp)) return ERROR(GENERIC);
@@ -435,7 +435,7 @@ typedef struct {
 typedef nodeElt huffNodeTable[HUF_CTABLE_WORKSPACE_SIZE_U32];
 
 /* Number of buckets available for HUF_sort() */
-#define RANK_POSITION_TABLE_SIZE 128
+#define RANK_POSITION_TABLE_SIZE 192
 
 typedef struct {
   huffNodeTable huffNodeTbl;
@@ -444,18 +444,15 @@ typedef struct {
 
 /* RANK_POSITION_DISTINCT_COUNT_CUTOFF == Cutoff point in HUF_sort() buckets for which we use log2 bucketing.
  * Strategy is to use as many buckets as possible for representing distinct
- * counts while using the remainder to represent all counts up to HUF_BLOCKSIZE_MAX
- * using log2 bucketing.
- * 
- * To satisfy this requirement for 128 buckets, we can do the following:
- * Let buckets 0-114 represent distinct counts of [0, 114]
- * Let buckets 115 to 126 represent counts of [115, HUF_BLOCKSIZE_MAX]. (the final bucket 127 must remain empty)
- * 
- * Note that we don't actually need 17 buckets (assuming 2^17 maxcount) for log2 bucketing since
- * the first few buckets in the log2 bucketing representation are already covered by the distinct count bucketing.
+ * counts while using the remainder to represent all "large" counts.
+ *
+ * To satisfy this requirement for 192 buckets, we can do the following:
+ * Let buckets 0-166 represent distinct counts of [0, 166]
+ * Let buckets 166 to 192 represent all remaining counts up to RANK_POSITION_MAX_COUNT_LOG using log2 bucketing.
  */
-#define RANK_POSITION_LOG_BUCKETS_BEGIN (RANK_POSITION_TABLE_SIZE - 1) - BIT_highbit32(HUF_BLOCKSIZE_MAX) - 1
-#define RANK_POSITION_DISTINCT_COUNT_CUTOFF RANK_POSITION_LOG_BUCKETS_BEGIN + BIT_highbit32(RANK_POSITION_LOG_BUCKETS_BEGIN)
+#define RANK_POSITION_MAX_COUNT_LOG 32
+#define RANK_POSITION_LOG_BUCKETS_BEGIN (RANK_POSITION_TABLE_SIZE - 1) - RANK_POSITION_MAX_COUNT_LOG - 1 /* == 158 */
+#define RANK_POSITION_DISTINCT_COUNT_CUTOFF RANK_POSITION_LOG_BUCKETS_BEGIN + BIT_highbit32(RANK_POSITION_LOG_BUCKETS_BEGIN) /* == 166 */
 
 /* Return the appropriate bucket index for a given count. See definition of
  * RANK_POSITION_DISTINCT_COUNT_CUTOFF for explanation of bucketing strategy.
@@ -474,8 +471,7 @@ static void HUF_swapNodes(nodeElt* a, nodeElt* b) {
 }
 
 /* Returns 0 if the huffNode array is not sorted by descending count */
-UNUSED_ATTR
-static int HUF_isSorted(nodeElt huffNode[], U32 const maxSymbolValue1) {
+MEM_STATIC int HUF_isSorted(nodeElt huffNode[], U32 const maxSymbolValue1) {
     U32 i;
     for (i = 1; i < maxSymbolValue1; ++i) {
         if (huffNode[i].count > huffNode[i-1].count) {
@@ -520,7 +516,7 @@ static int HUF_quickSortPartition(nodeElt arr[], int const low, int const high) 
 }
 
 /* Classic quicksort by descending with partially iterative calls
- * to reduce worst case callstack size. 
+ * to reduce worst case callstack size.
  */
 static void HUF_simpleQuickSort(nodeElt arr[], int low, int high) {
     int const kInsertionSortThreshold = 8;
@@ -683,7 +679,7 @@ static void HUF_buildCTableFromTree(HUF_CElt* CTable, nodeElt const* huffNode, i
 
 size_t HUF_buildCTable_wksp (HUF_CElt* CTable, const unsigned* count, U32 maxSymbolValue, U32 maxNbBits, void* workSpace, size_t wkspSize)
 {
-    HUF_buildCTable_wksp_tables* const wksp_tables = (HUF_buildCTable_wksp_tables*)HUF_alignUpWorkspace(workSpace, &wkspSize, sizeof(U32));
+    HUF_buildCTable_wksp_tables* const wksp_tables = (HUF_buildCTable_wksp_tables*)HUF_alignUpWorkspace(workSpace, &wkspSize, ZSTD_ALIGNOF(U32));
     nodeElt* const huffNode0 = wksp_tables->huffNodeTbl;
     nodeElt* const huffNode = huffNode0+1;
     int nonNullRank;
@@ -764,7 +760,7 @@ typedef struct {
 } HUF_CStream_t;
 
 /**! HUF_initCStream():
- * Initializes the bistream.
+ * Initializes the bitstream.
  * @returns 0 or an error code.
  */
 static size_t HUF_initCStream(HUF_CStream_t* bitC,
@@ -783,7 +779,7 @@ static size_t HUF_initCStream(HUF_CStream_t* bitC,
  *
  * @param elt   The element we're adding. This is a (nbBits, value) pair.
  *              See the HUF_CStream_t docs for the format.
- * @param idx   Insert into the bistream at this idx.
+ * @param idx   Insert into the bitstream at this idx.
  * @param kFast This is a template parameter. If the bitstream is guaranteed
  *              to have at least 4 unused bits after this call it may be 1,
  *              otherwise it must be 0. HUF_addBits() is faster when fast is set.
@@ -812,10 +808,12 @@ FORCE_INLINE_TEMPLATE void HUF_addBits(HUF_CStream_t* bitC, HUF_CElt elt, int id
     {
         size_t const nbBits = HUF_getNbBits(elt);
         size_t const dirtyBits = nbBits == 0 ? 0 : BIT_highbit32((U32)nbBits) + 1;
+        (void)dirtyBits;
         /* Middle bits are 0. */
         assert(((elt >> dirtyBits) << (dirtyBits + nbBits)) == 0);
         /* We didn't overwrite any bits in the bit container. */
         assert(!kFast || (bitC->bitPos[idx] & 0xFF) <= HUF_BITS_IN_CONTAINER);
+        (void)dirtyBits;
     }
 #endif
 }
@@ -990,12 +988,12 @@ HUF_compress1X_usingCTable_internal_body(void* dst, size_t dstSize,
             case 11:
                 HUF_compress1X_usingCTable_internal_body_loop(&bitC, ip, srcSize, ct, /* kUnroll */ 2, /* kFastFlush */ 1, /* kLastFast */ 0);
                 break;
-            case 10:
-            case 9:
+            case 10: ZSTD_FALLTHROUGH;
+            case 9: ZSTD_FALLTHROUGH;
             case 8:
                 HUF_compress1X_usingCTable_internal_body_loop(&bitC, ip, srcSize, ct, /* kUnroll */ 2, /* kFastFlush */ 1, /* kLastFast */ 1);
                 break;
-            case 7:
+            case 7: ZSTD_FALLTHROUGH;
             default:
                 HUF_compress1X_usingCTable_internal_body_loop(&bitC, ip, srcSize, ct, /* kUnroll */ 3, /* kFastFlush */ 1, /* kLastFast */ 1);
                 break;
@@ -1017,7 +1015,7 @@ HUF_compress1X_usingCTable_internal_body(void* dst, size_t dstSize,
             case 7:
                 HUF_compress1X_usingCTable_internal_body_loop(&bitC, ip, srcSize, ct, /* kUnroll */ 8, /* kFastFlush */ 1, /* kLastFast */ 0);
                 break;
-            case 6:
+            case 6: ZSTD_FALLTHROUGH;
             default:
                 HUF_compress1X_usingCTable_internal_body_loop(&bitC, ip, srcSize, ct, /* kUnroll */ 9, /* kFastFlush */ 1, /* kLastFast */ 1);
                 break;
@@ -1031,7 +1029,7 @@ HUF_compress1X_usingCTable_internal_body(void* dst, size_t dstSize,
 
 #if DYNAMIC_BMI2
 
-static TARGET_ATTRIBUTE("bmi2") size_t
+static BMI2_TARGET_ATTRIBUTE size_t
 HUF_compress1X_usingCTable_internal_bmi2(void* dst, size_t dstSize,
                                    const void* src, size_t srcSize,
                                    const HUF_CElt* CTable)
@@ -1185,7 +1183,7 @@ HUF_compress_internal (void* dst, size_t dstSize,
                        HUF_CElt* oldHufTable, HUF_repeat* repeat, int preferRepeat,
                  const int bmi2, unsigned suspectUncompressible)
 {
-    HUF_compress_tables_t* const table = (HUF_compress_tables_t*)HUF_alignUpWorkspace(workSpace, &wkspSize, sizeof(size_t));
+    HUF_compress_tables_t* const table = (HUF_compress_tables_t*)HUF_alignUpWorkspace(workSpace, &wkspSize, ZSTD_ALIGNOF(size_t));
     BYTE* const ostart = (BYTE*)dst;
     BYTE* const oend = ostart + dstSize;
     BYTE* op = ostart;
