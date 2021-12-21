@@ -3168,7 +3168,7 @@ namespace
         if (segment_height)
         {
             const int N = ceil_div(surface.height, segment_height);
-            const int level = clamp(options.compression, 0, 9);
+            const int level = math::clamp(options.compression, 0, 9);
 
             struct Segment
             {

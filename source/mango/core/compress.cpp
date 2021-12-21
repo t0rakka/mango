@@ -28,6 +28,8 @@
 #include "../../external/lzma/Lzma2Enc.h"
 #include "../../external/lzma/Ppmd8.h"
 
+#include "../../external/zlib/zlib.h"
+
 #include "../../external/libdeflate/libdeflate.h"
 
 namespace mango
@@ -940,23 +942,75 @@ namespace ppmd8
 namespace zlib
 {
 
+    static
+    const char* get_error_string(int result)
+    {
+        const char* error = nullptr;
+        switch (result)
+        {
+            default:
+            case Z_OK:
+                break;
+            case Z_MEM_ERROR:
+                error = "Z_MEM_ERROR";
+                break;
+            case Z_BUF_ERROR:
+                error = "Z_BUF_ERROR";
+                break;
+            case Z_STREAM_ERROR:
+                error = "Z_STREAM_ERROR";
+                break;
+        }
+        return error;
+    }
+
     size_t bound(size_t size)
     {
-        // TODO
-        return 0;
+        return uLong(::compressBound(uLong(size)));
     }
 
     CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
-        // TODO
+        level = math::clamp(level, 0, 9);
+
+        uLongf destLen = uLongf(dest.size);
+
+        int result = ::compress2(dest.address, &destLen, source.address, uLong(source.size), level);
+        const char* error = get_error_string(result);
+
         CompressionStatus status;
+
+        if (error)
+        {
+            status.setError("[zlib] %s.", error);
+        }
+        else
+        {
+            status.size = size_t(destLen);
+        }
+
         return status;
     }
 
     CompressionStatus decompress(Memory dest, ConstMemory source)
     {
-        // TODO
+        uLongf sourceLen = uLongf(source.size);
+        uLongf destLen = uLongf(dest.size);
+
+        int result = uncompress2(dest.address, &destLen, source.address, &sourceLen);
+        const char* error = get_error_string(result);
+
         CompressionStatus status;
+
+        if (error)
+        {
+            status.setError("[zlib] %s.", error);
+        }
+        else
+        {
+            status.size = size_t(destLen);
+        }
+
         return status;
     }
 
@@ -969,6 +1023,7 @@ namespace zlib
 namespace deflate
 {
 
+    static
     const char* get_error_string(libdeflate_result result)
     {
         const char* error = nullptr; // default: no error
