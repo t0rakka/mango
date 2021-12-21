@@ -6,17 +6,6 @@
 // see http://create.stephan-brumme.com/disclaimer.html
 //
 
-#include <mango/core/configure.hpp>
-#ifdef MANGO_LITTLE_ENDIAN
-    #ifndef __BYTE_ORDER
-    #define __BYTE_ORDER 1234
-    #endif
-#else
-    #ifndef __BYTE_ORDER
-    #define __BYTE_ORDER 4321
-    #endif
-#endif
-
 // if running on an embedded system, you might consider shrinking the
 // big Crc32Lookup table by undefining these lines:
 //#define CRC32_USE_LOOKUP_TABLE_BYTE
@@ -37,6 +26,17 @@
 #include <stdint.h>
 // size_t
 #include <cstddef>
+
+#include <mango/core/configure.hpp>
+#ifdef MANGO_LITTLE_ENDIAN
+    #ifndef __BYTE_ORDER
+    #define __BYTE_ORDER 1234
+    #endif
+#else
+    #ifndef __BYTE_ORDER
+    #define __BYTE_ORDER 4321
+    #endif
+#endif
 
 // crc32_fast selects the fastest algorithm depending on flags (CRC32_USE_LOOKUP_...)
 /// compute CRC32 using the fastest algorithm for large datasets on modern CPUs

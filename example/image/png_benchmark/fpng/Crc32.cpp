@@ -16,6 +16,7 @@
 // - crc32_4x8bytes needs only Crc32Lookup[0..7]
 // - crc32_16bytes  needs all of Crc32Lookup
 
+
 #include "Crc32.h"
 
 #ifndef __LITTLE_ENDIAN
