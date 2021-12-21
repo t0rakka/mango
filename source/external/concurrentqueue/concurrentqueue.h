@@ -1314,7 +1314,7 @@ public:
 	// Returns true if the underlying atomic variables used by
 	// the queue are lock-free (they should be on most platforms).
 	// Thread-safe.
-	static bool is_lock_free()
+	static constexpr bool is_lock_free()
 	{
 		return
 			details::static_is_lock_free<bool>::value == 2 &&
@@ -2906,13 +2906,15 @@ private:
 			else if (!new_block_index()) {
 				return false;
 			}
-			localBlockIndex = blockIndex.load(std::memory_order_relaxed);
-			newTail = (localBlockIndex->tail.load(std::memory_order_relaxed) + 1) & (localBlockIndex->capacity - 1);
-			idxEntry = localBlockIndex->index[newTail];
-			assert(idxEntry->key.load(std::memory_order_relaxed) == INVALID_BLOCK_BASE);
-			idxEntry->key.store(blockStartIndex, std::memory_order_relaxed);
-			localBlockIndex->tail.store(newTail, std::memory_order_release);
-			return true;
+			else {
+				localBlockIndex = blockIndex.load(std::memory_order_relaxed);
+				newTail = (localBlockIndex->tail.load(std::memory_order_relaxed) + 1) & (localBlockIndex->capacity - 1);
+				idxEntry = localBlockIndex->index[newTail];
+				assert(idxEntry->key.load(std::memory_order_relaxed) == INVALID_BLOCK_BASE);
+				idxEntry->key.store(blockStartIndex, std::memory_order_relaxed);
+				localBlockIndex->tail.store(newTail, std::memory_order_release);
+				return true;
+			}
 		}
 		
 		inline void rewind_block_index_tail()
