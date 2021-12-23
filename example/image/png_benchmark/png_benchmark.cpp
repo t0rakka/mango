@@ -409,6 +409,21 @@ size_t save_spng(const Bitmap& bitmap)
 
 #include "fpng/fpng.h"
 
+#if 0
+// NOTE: disabled as can only decode fpng encoded files
+
+void load_fpng(Memory memory)
+{
+    u32 width;
+    u32 height;
+    u32 channels;
+    std::vector<u8> data;
+    int x = fpng::fpng_decode_memory(memory.address, memory.size, data, width, height, channels, 4);
+    MANGO_UNREFERENCED(x); // TODO: handle the status code
+}
+
+#endif // 0
+
 size_t save_fpng(const Bitmap& bitmap)
 {
     const char* filename = "output-fpng.png";
