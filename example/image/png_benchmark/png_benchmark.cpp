@@ -479,7 +479,6 @@ int g_option_compression = 4;
 
 void load_mango(Memory memory)
 {
-    // low-level decoding from memory
     ImageDecoder decoder(memory, ".png");
 
     ImageHeader header = decoder.header();
@@ -487,10 +486,8 @@ void load_mango(Memory memory)
 
     ImageDecodeOptions options;
     options.multithread = g_option_multithread;
-    decoder.decode(bitmap, options);
 
-    // higher-level "easy way"
-    //Bitmap bitmap(memory, ".png");
+    decoder.decode(bitmap, options);
 }
 
 size_t save_mango(const Bitmap& bitmap)
@@ -502,7 +499,6 @@ size_t save_mango(const Bitmap& bitmap)
     bitmap.save(filename, options);
 
     return get_file_size(filename);
-
 }
 
 #endif
