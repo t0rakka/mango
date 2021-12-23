@@ -589,8 +589,8 @@ namespace
 
         ImageEncodeStatus status;
 
-        const int xtile = 64;
-        const int ytile = 64;
+        const int xtile = 128;
+        const int ytile = 128;
 
         const int width = surface.width;
         const int height = surface.height;
@@ -611,28 +611,6 @@ namespace
             source.blit(0, 0, surface);
         }
 
-        std::vector<Memory> encode_memory(xs * ys);
-
-        ConcurrentQueue q;
-
-        for (int y = 0; y < ys; ++y)
-        {
-            for (int x = 0; x < xs; ++x)
-            {
-                Surface rect(source, x * xtile, y * ytile, xtile, ytile);
-                int idx = y * xs + x;
-
-                q.enqueue([rect, idx, &encode_memory]
-                {
-                    size_t length;
-                    u8* encode_ptr = qoi_encode(rect.image, rect.stride, rect.width, rect.height, &length);
-                    encode_memory[idx] = Memory(encode_ptr, length);
-                });
-            }
-        }
-
-        q.wait();
-
         LittleEndianStream s = stream;
 
         // write header
@@ -642,12 +620,34 @@ namespace
         s.write16(xtile);
         s.write16(ytile);
 
-        for (auto memory : encode_memory)
+        ConcurrentQueue q;
+        TicketQueue tk;
+
+        for (int y = 0; y < ys; ++y)
         {
-            s.write32(u32(memory.size));
-            s.write(memory.address, memory.size);
-            delete[] memory.address;
+            for (int x = 0; x < xs; ++x)
+            {
+                Surface rect(source, x * xtile, y * ytile, xtile, ytile);
+
+                auto ticket = tk.acquire();
+
+                q.enqueue([ticket, rect, &s]
+                {
+                    size_t length;
+                    u8* encode_ptr = qoi_encode(rect.image, rect.stride, rect.width, rect.height, &length);
+
+                    ticket.consume([=, &s]
+                    {
+                        s.write32(u32(length));
+                        s.write(encode_ptr, length);
+                        delete[] encode_ptr;
+                    });
+                });
+            }
         }
+
+        q.wait();
+        tk.wait();
 
         return status;
     }
