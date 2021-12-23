@@ -17,13 +17,52 @@ using namespace mango::image;
 #define ENABLE_MANGO
 
 // ----------------------------------------------------------------------
-// get_file_size()
+// utils
 // ----------------------------------------------------------------------
 
 size_t get_file_size(const char* filename)
 {
     File file(filename);
     return file.size();
+}
+
+void load_none(Memory memory)
+{
+    MANGO_UNREFERENCED(memory);
+}
+
+size_t save_none(const Bitmap& bitmap)
+{
+    MANGO_UNREFERENCED(bitmap);
+    return 0;
+}
+
+template <typename Load, typename Save>
+void test(const char* name, Load load, Save save, Memory memory, const Bitmap& bitmap)
+{
+    printf("%s", name);
+    u64 time0 = Time::us();
+
+    load(memory);
+
+    u64 time1 = Time::us();
+
+    size_t size = save(bitmap);
+
+    u64 time2 = Time::us();
+
+    if (load != load_none)
+        printf("  %7d.%d ", int((time1 - time0) / 1000), int((time1 - time0) % 10));
+    else
+        printf("        N/A ");
+
+    if (save != save_none)
+        printf("  %7d.%d ", int((time2 - time1) / 1000), int((time2 - time1) % 10));
+    else
+        printf("        N/A ");
+
+    printf("  %8d", int(size / 1024));
+    printf("\n");
 }
 
 // ----------------------------------------------------------------------
@@ -370,11 +409,6 @@ size_t save_spng(const Bitmap& bitmap)
 
 #include "fpng/fpng.h"
 
-void load_fpng(Memory memory)
-{
-    // TODO: not supported.
-}
-
 size_t save_fpng(const Bitmap& bitmap)
 {
     const char* filename = "output-fpng.png";
@@ -460,12 +494,6 @@ void load_wuffs(Memory memory)
     }
 }
 
-size_t save_wuffs(const Bitmap& bitmap)
-{
-    // TODO: not supported
-    return 0;
-}
-
 #endif
 
 // ----------------------------------------------------------------------
@@ -506,25 +534,6 @@ size_t save_mango(const Bitmap& bitmap)
 // ----------------------------------------------------------------------
 // main()
 // ----------------------------------------------------------------------
-
-template <typename Load, typename Save>
-void test(const char* name, Load load, Save save, Memory memory, const Bitmap& bitmap)
-{
-    printf("%s", name);
-    u64 time0 = Time::us();
-
-    load(memory);
-
-    u64 time1 = Time::us();
-
-    size_t size = save(bitmap);
-
-    u64 time2 = Time::us();
-    printf("  %7d.%d ", int((time1 - time0) / 1000), int((time1 - time0) % 10));
-    printf("  %7d.%d ", int((time2 - time1) / 1000), int((time2 - time1) % 10));
-    printf("  %8d", int(size / 1024));
-    printf("\n");
-}
 
 int main(int argc, const char* argv[])
 {
@@ -581,11 +590,11 @@ int main(int argc, const char* argv[])
 #endif
 
 #if defined(ENABLE_FPNG)
-    test("fpng:    ", load_fpng, save_fpng, buffer, bitmap);
+    test("fpng:    ", load_none, save_fpng, buffer, bitmap);
 #endif
 
 #if defined(ENABLE_WUFFS)
-    test("wuffs:   ", load_wuffs, save_wuffs, buffer, bitmap);
+    test("wuffs:   ", load_wuffs, save_none, buffer, bitmap);
 #endif
 
 #if defined(ENABLE_MANGO)
