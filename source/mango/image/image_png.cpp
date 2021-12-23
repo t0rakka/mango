@@ -3170,6 +3170,8 @@ namespace
             const int N = ceil_div(surface.height, segment_height);
             const int level = math::clamp(options.compression, 0, 9);
 
+            // TODO: This isn't needed anymore now that we switched to ticket queue
+            //       for serialization. We could just capture the compressed buffer.
             struct Segment
             {
                 Buffer compressed;
@@ -3266,6 +3268,9 @@ namespace
 
                         // write chunkdID + compressed data
                         write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), c);
+
+                        // free compressed memory as soon as it is consumed
+                        segment.compressed.reset();
                     });
                 });
             }
@@ -3297,7 +3302,7 @@ namespace
             size_t scan_bytes = surface.width * surface.format.bytes();
             size_t image_bytes = surface.height * scan_bytes;
 
-            constexpr size_t block_size = 512 * 1024;
+            constexpr size_t block_size = 256 * 1024;
             size_t N = image_bytes / block_size;
 
             if (N > 1)
