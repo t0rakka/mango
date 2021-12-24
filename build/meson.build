@@ -6,6 +6,7 @@
 
 project(
     'mango', 'c', 'cpp',
+    version: '0.9.1',
     meson_version: '>= 0.48.0',
     default_options : [
         'c_std=c11',
