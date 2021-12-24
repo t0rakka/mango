@@ -585,7 +585,7 @@ int main(int argc, const char* argv[])
 
     printf("image: %d x %d (%d KB)\n", bitmap.width, bitmap.height, int(file.size() / 1024));
     printf("---------------------------------------------------\n");
-    printf("            decode(ms)  encode(ms)   size(KB)      \n");
+    printf("          decode(ms)  encode(ms)   size(KB)        \n");
     printf("---------------------------------------------------\n");
 
 #if defined ENABLE_LIBPNG
