@@ -14,9 +14,27 @@ using namespace mango::image;
 //#define TEST_JPEGDEC
 
 // ----------------------------------------------------------------------
-// warmup()
+// utils
 // ----------------------------------------------------------------------
 
+static
+size_t get_file_size(const char* filename)
+{
+    File file(filename);
+    return file.size();
+}
+
+static
+void print(const char* name, u64 load, u64 save, u64 size)
+{
+    printf("%s", name);
+    printf("%7d.%d ms ", int(load / 1000), int(load % 1000) / 100);
+    printf("%7d.%d ms ", int(save / 1000), int(save % 1000) / 100);
+    printf("  %8d", int(size / 1024));
+    printf("\n");
+}
+
+static
 void warmup(const char* filename)
 {
     File file(filename);
@@ -80,7 +98,7 @@ Surface load_jpeg(const char* filename)
     return Surface(w, h, format, w * numChannels, data);
 }
 
-void save_jpeg(const char* filename, const Surface& surface)
+size_t save_jpeg(const char* filename, const Surface& surface)
 {
     struct jpeg_compress_struct cinfo;
     jpeg_create_compress(&cinfo);
@@ -127,6 +145,8 @@ void save_jpeg(const char* filename, const Surface& surface)
     fclose(outfile);
 
     delete[] surface.image;
+
+    return get_file_size(filename);
 }
 
 // ----------------------------------------------------------------------
@@ -147,10 +167,11 @@ Surface stb_load_jpeg(const char* filename)
     return Surface(width, height, Format(24, Format::UNORM, Format::RGB, 8, 8, 8), width * 3, rgb);
 }
 
-void stb_save_jpeg(const char* filename, const Surface& surface)
+size_t stb_save_jpeg(const char* filename, const Surface& surface)
 {
     stbi_write_jpg(filename, surface.width, surface.height, 3, surface.image, surface.width*3);
     stbi_image_free(surface.image);
+    return get_file_size(filename);
 }
 
 // ----------------------------------------------------------------------
@@ -171,10 +192,11 @@ Surface jpgd_load(const char* filename)
     return Surface(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), width * 4, image);
 }
 
-void jpge_save(const char* filename, const Surface& surface)
+size_t jpge_save(const char* filename, const Surface& surface)
 {
     jpge::compress_image_to_jpeg_file(filename, surface.width, surface.height, 4, surface.image);
     free(surface.image);
+    return get_file_size(filename);
 }
 
 #endif
@@ -232,24 +254,13 @@ Surface jpegdec_load(const char* filename)
     return Surface();
 }
 
-void jpegdec_save(const char* filename, const Surface& surface)
+size_t jpegdec_save(const char* filename, const Surface& surface)
 {
     // NOT SUPPORTED
+    return 0;
 }
 
 #endif
-
-// ----------------------------------------------------------------------
-// print
-// ----------------------------------------------------------------------
-
-void print(const char* name, u64 load, u64 save)
-{
-    printf("%s", name);
-    printf("%7d.%d ms ", int(load / 1000), int(load % 1000) / 100);
-    printf("%7d.%d ms ", int(save / 1000), int(save % 1000) / 100);
-    printf("\n");
-}
 
 // ----------------------------------------------------------------------
 // main()
@@ -287,13 +298,14 @@ int main(int argc, const char* argv[])
         }
     }
 
-    printf("----------------------------------------------\n");
-    printf("                load         save             \n");
-    printf("----------------------------------------------\n");
+    printf("-----------------------------------------------------\n");
+    printf("           decode(ms)   encode(ms)   size(KB)        \n");
+    printf("-----------------------------------------------------\n");
 
     u64 time0;
     u64 time1;
     u64 time2;
+    size_t size;
 
     // ------------------------------------------------------------------
 
@@ -303,10 +315,10 @@ int main(int argc, const char* argv[])
     Surface s = load_jpeg(filename);
 
     time1 = Time::us();
-    save_jpeg("output-libjpeg.jpg", s);
+    size = save_jpeg("output-libjpeg.jpg", s);
 
     time2 = Time::us();
-    print("libjpeg: ", time1 - time0, time2 - time1);
+    print("libjpeg: ", time1 - time0, time2 - time1, size);
 
 #endif
 
@@ -318,10 +330,10 @@ int main(int argc, const char* argv[])
     Surface s_stb = stb_load_jpeg(filename);
 
     time1 = Time::us();
-    stb_save_jpeg("output-stb.jpg", s_stb);
+    size = stb_save_jpeg("output-stb.jpg", s_stb);
 
     time2 = Time::us();
-    print("stb:     ", time1 - time0, time2 - time1);
+    print("stb:     ", time1 - time0, time2 - time1, size);
 
 #endif
 
@@ -333,10 +345,10 @@ int main(int argc, const char* argv[])
     Surface s_jpgd = jpgd_load(filename);
 
     time1 = Time::us();
-    jpge_save("output-jpge.jpg", s_jpgd);
+    size = jpge_save("output-jpge.jpg", s_jpgd);
 
     time2 = Time::us();
-    print("jpgd:    ", time1 - time0, time2 - time1);
+    print("jpgd:    ", time1 - time0, time2 - time1, size);
 
 #endif
 
@@ -348,10 +360,10 @@ int main(int argc, const char* argv[])
     Surface s_jpegdec = jpegdec_load(filename);
 
     time1 = Time::us();
-    jpegdec_save("output-jpegdec.jpg", s_jpegdec);
+    size = jpegdec_save("output-jpegdec.jpg", s_jpegdec);
 
     time2 = Time::us();
-    print("jpgdec:  ", time1 - time0, time2 - time1);
+    print("jpgdec:  ", time1 - time0, time2 - time1, size);
 
 #endif
 
@@ -370,10 +382,12 @@ int main(int argc, const char* argv[])
     encode_options.quality = 0.70f;
     encode_options.simd = true;
     encode_options.multithread = multithread;
+
     bitmap.save("output-mango.jpg", encode_options);
+    size = get_file_size("output-mango.jpg");
 
     time2 = Time::us();
-    print("mango:   ", time1 - time0, time2 - time1);
+    print("mango:   ", time1 - time0, time2 - time1, size);
 
     // ------------------------------------------------------------------
 
@@ -400,12 +414,12 @@ int main(int argc, const char* argv[])
             save_total += save;
             load_lowest = std::min(load_lowest, load);
             save_lowest = std::min(save_lowest, save);
-            print("         ", load, save);
+            print("         ", load, save, size);
         }
 
         printf("----------------------------------------------\n");
-        print("average: ", load_total / (test_count + 1), save_total / (test_count + 1));
-        print("lowest : ", load_lowest, save_lowest);
+        print("average: ", load_total / (test_count + 1), save_total / (test_count + 1), size);
+        print("lowest : ", load_lowest, save_lowest, size);
         printf("----------------------------------------------\n");
     }
 
