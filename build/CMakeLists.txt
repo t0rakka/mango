@@ -2,6 +2,15 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 PROJECT(mango CXX C ASM)
 
 # ------------------------------------------------------------------------------
+# version
+# ------------------------------------------------------------------------------
+
+set(MANGO_VERSION_MAJOR 0)
+set(MANGO_VERSION_MINOR 9)
+set(MANGO_VERSION_PATCH 1)
+set(MANGO_VERSION_STRING ${MANGO_VERSION_MAJOR}.${MANGO_VERSION_MINOR}.${MANGO_VERSION_PATCH})
+
+# ------------------------------------------------------------------------------
 # compiler
 # ------------------------------------------------------------------------------
 
@@ -55,7 +64,7 @@ message(STATUS "Build: ${CMAKE_BUILD_TYPE}")
 # options
 # ------------------------------------------------------------------------------
 
-OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    OFF)
+OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    ON)
 
 OPTION(ENABLE_FAST_MATH     "Use relaxed-precision floating point"      ON)
 OPTION(ENABLE_SSE2          "Enable SSE2 instructions"                  OFF)
@@ -259,9 +268,17 @@ ADD_LIBRARY(mango
     ${EXTERNAL_ZPNG}
 )
 
+set_target_properties(mango PROPERTIES VERSION ${MANGO_VERSION_STRING}
+    SOVERSION ${MANGO_VERSION_MAJOR}
+)
+
 ADD_LIBRARY(mango-opengl
     ${WINDOW}
     ${OPENGL}
+)
+
+set_target_properties(mango-opengl PROPERTIES VERSION ${MANGO_VERSION_STRING}
+    SOVERSION ${MANGO_VERSION_MAJOR}
 )
 
 target_link_libraries(mango-opengl PUBLIC mango)
