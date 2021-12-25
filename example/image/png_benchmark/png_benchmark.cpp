@@ -204,7 +204,7 @@ void load_lodepng(Memory memory)
 
 size_t save_lodepng(const Bitmap& bitmap)
 {
-    const char* filename = "output-libpng.png";
+    const char* filename = "output-lodepng.png";
 
     LodePNGEncoderSettings settings;
     settings.filter_strategy = LFS_ZERO;
