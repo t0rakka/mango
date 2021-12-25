@@ -6,7 +6,6 @@
 
 project(
     'mango', 'c', 'cpp',
-    version: '0.9.1',
     meson_version: '>= 0.48.0',
     default_options : [
         'c_std=c11',
@@ -15,6 +14,8 @@ project(
         'default_library=static'
     ]
 )
+
+mango_version = '0.9.1'
 
 if host_machine.system() == 'darwin'
     add_languages('objcpp')
@@ -37,6 +38,7 @@ is_x86 = host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86
 
 is_windows = host_machine.system() == 'windows'
 is_darwin = host_machine.system() == 'darwin'
+is_linux = host_machine.system() == 'linux'
 
 mango_public_cpp_args = []
 mango_interface_cpp_args = []
@@ -786,7 +788,7 @@ cpp = meson.get_compiler('cpp')
 
 message('cpp: @0@'.format(cpp.get_id()))
 
-if host_machine.system() == 'windows'
+if is_windows
     add_project_arguments('-DUNICODE', '-D_UNICODE', language: ['c', 'cpp'])
 endif
 
@@ -887,12 +889,17 @@ mango_opengl_deps      = [ ]
 opengl_dep = dependency('gl')
 mango_public_deps += opengl_dep
 
-if host_machine.system() != 'windows'
+if not is_windows
     dl_dep = cpp.find_library('dl', required : false)
     mango_deps += [ dl_dep ]
 endif
 
-if host_machine.system() == 'linux'
+if is_darwin
+    apple_frameworks = dependency('appleframeworks', modules : ['OpenGL','Cocoa'], required : false)
+    mango_opengl_deps += [ apple_frameworks ]
+endif
+
+if is_linux
     m_dep = cpp.find_library('m', required : true)
     x11_dep = cpp.find_library('X11', required : true)
     mango_deps += [ m_dep ]
@@ -903,11 +910,11 @@ endif
 mango_inc = include_directories('../include')
 
 mango = shared_library('mango',
+    version: mango_version,
     extra_files : [
         mango_headers,
         external_headers
     ],
-
     sources : [
         core_sources,
         filesystem_sources,
@@ -943,6 +950,7 @@ mango_dep = declare_dependency(
 )
 
 mango_opengl = shared_library('mango-opengl',
+    version             : mango_version,
     sources             : window_sources + opengl_sources,
     link_with           : mango,
     dependencies        : mango_opengl_deps,
