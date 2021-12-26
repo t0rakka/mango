@@ -23,57 +23,40 @@ namespace
     enum : u8
     {
         QOI_SRGB = 0x00,
-        QOI_SRGB_LINEAR_ALPHA = 0x01,
-        QOI_LINEAR = 0x0f
+        QOI_LINEAR = 0x01
     };
 
-    #define QOI_INDEX   0x00 // 00xxxxxx
-    #define QOI_RUN_8   0x40 // 010xxxxx
-    #define QOI_RUN_16  0x60 // 011xxxxx
-    #define QOI_DIFF_8  0x80 // 10xxxxxx
-    #define QOI_DIFF_16 0xc0 // 110xxxxx
-    #define QOI_DIFF_24 0xe0 // 1110xxxx
-    #define QOI_COLOR   0xf0 // 1111xxxx
+    #define QOI_OP_INDEX  0x00 // 00xxxxxx
+    #define QOI_OP_DIFF   0x40 // 01xxxxxx
+    #define QOI_OP_LUMA   0x80 // 10xxxxxx
+    #define QOI_OP_RUN    0xc0 // 11xxxxxx
+    #define QOI_OP_RGB    0xfe // 11111110
+    #define QOI_OP_RGBA   0xff // 11111111
 
-    #define QOI_UPDATE  0x80 // 1xxxxxxx
+    #define QOI_MASK_2    0xc0 // 11000000
 
-    #define QOI_MASK_2  0xc0 // 11000000
-    #define QOI_MASK_3  0xe0 // 11100000
-    #define QOI_MASK_4  0xf0 // 11110000
-
-    #define QOI_COLOR_HASH(C) (C.r ^ C.g ^ C.b ^ C.a)
-    #define QOI_PADDING 4
+    #define QOI_COLOR_HASH(C) (C.r * 3 + C.g * 5 + C.b * 7 + C.a * 11)
+    #define QOI_PADDING 8
 
     static inline
-    bool is_diff(int r, int g, int b, int a)
+    bool is_diff(int r, int g, int b)
     {
-        return r > -16 && r < 17 &&
-            g > -16 && g < 17 && 
-            b > -16 && b < 17 && 
-            a > -16 && a < 17;
+        return r > -3 && r < 2 &&
+               g > -3 && g < 2 && 
+               b > -3 && b < 2;
     }
 
     static inline
-    bool is_diff8(int r, int g, int b, int a)
+    bool is_luma(int r, int g, int b)
     {
-        return a == 0 &&
-            r > -2 && r < 3 &&
-            g > -2 && g < 3 && 
-            b > -2 && b < 3;
-    }
-
-    static inline
-    bool is_diff16(int r, int g, int b, int a)
-    {
-        return a == 0 &&
-            r > -16 && r < 17 && 
-            g >  -8 && g <  9 && 
-            b >  -8 && b <  9;
+        return r > -9  && r <  8 &&
+               g > -33 && g < 32 && 
+               b > -9  && b <  8;
     }
 
     u8* qoi_encode(const u8* image, size_t stride, int width, int height, size_t* out_len)
     {
-        if (image == NULL || out_len == NULL ||
+        if (image == nullptr || out_len == nullptr ||
             width <= 0 || width >= (1 << 16) ||
             height <= 0 || height >= (1 << 16))
         {
@@ -90,8 +73,9 @@ namespace
         }
 
         int p = 0;
+        int p_end = (width * height - 1) * channels;
 
-        Color index[64] = { 0 };
+        Color cache[64] = { 0 };
 
         int run = 0;
         Color prev(0, 0, 0, 255);
@@ -99,9 +83,6 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            bool is_last_scanline = (y == height - 1);
-            int xend = is_last_scanline ? (width - 1) : (1 << 30);
-
             const Color* src = reinterpret_cast<const Color*>(image);
 
             for (int x = 0; x < width; ++x)
@@ -111,89 +92,66 @@ namespace
                 if (color == prev)
                 {
                     run++;
-                }
-
-                bool is_last_pixel = (x == xend);
-
-                if (run > 0 && (run == 0x2020 || color != prev || is_last_pixel))
-                {
-                    if (run < 33)
+                    if (run == 62 || p == p_end)
                     {
-                        run -= 1;
-                        bytes[p++] = QOI_RUN_8 | run;
+                        bytes[p++] = QOI_OP_RUN | (run - 1);
+                        run = 0;
+                    }
+                }
+                else
+                {
+                    if (run > 0)
+                    {
+                        bytes[p++] = QOI_OP_RUN | (run - 1);
+                        run = 0;
+                    }
+
+                    int index = QOI_COLOR_HASH(color) % 64;
+
+                    if (cache[index] == color)
+                    {
+                        bytes[p++] = QOI_OP_INDEX | index;
                     }
                     else
                     {
-                        run -= 33;
-                        bytes[p++] = QOI_RUN_16 | run >> 8;
-                        bytes[p++] = run;
-                    }
-                    run = 0;
-                }
+                        cache[index] = color;
 
-                if (color != prev)
-                {
-                    int index_pos = QOI_COLOR_HASH(color) % 64;
-
-                    if (index[index_pos] == color)
-                    {
-                        bytes[p++] = QOI_INDEX | index_pos;
-                    }
-                    else
-                    {
-                        index[index_pos] = color;
-
-                        int r = color.r - prev.r;
-                        int g = color.g - prev.g;
-                        int b = color.b - prev.b;
-                        int a = color.a - prev.a;
-
-                        if (is_diff(r, g, b, a))
+                        if (color.a == prev.a)
                         {
-                            if (is_diff8(r, g, b, a))
+                            s8 vr = color.r - prev.r;
+                            s8 vg = color.g - prev.g;
+                            s8 vb = color.b - prev.b;
+
+                            s8 vg_r = vr - vg;
+                            s8 vg_b = vb - vg;
+
+                            if (is_diff(vr, vg, vb))
                             {
-                                bytes[p++] = QOI_DIFF_8 | ((r + 1) << 4) | (g + 1) << 2 | (b + 1);
+                                bytes[p++] = QOI_OP_DIFF | (vr + 2) << 4 | (vg + 2) << 2 | (vb + 2);
                             }
-                            else if (is_diff16(r, g, b, a))
+                            else if (is_luma(vg_r, vg, vg_b))
                             {
-                                bytes[p++] = QOI_DIFF_16 | (r + 15);
-                                bytes[p++] = ((g + 7) << 4) | (b + 7);
+                                bytes[p + 0] = QOI_OP_LUMA     | (vg   + 32);
+                                bytes[p + 1] = (vg_r + 8) << 4 | (vg_b +  8);
+                                p += 2;
                             }
                             else
                             {
-                                bytes[p++] = QOI_DIFF_24 | ((r + 15) >> 1);
-                                bytes[p++] = ((r + 15) << 7) | ((g + 15) << 2) | ((b + 15) >> 3);
-                                bytes[p++] = ((b + 15) << 5) | (a + 15);
+                                bytes[p + 0] = QOI_OP_RGB;
+                                bytes[p + 1] = color.r;
+                                bytes[p + 2] = color.g;
+                                bytes[p + 3] = color.b;
+                                p += 4;
                             }
                         }
                         else
                         {
-                            int p0 = p;
-                            bytes[p++] = QOI_COLOR;
-
-                            int mask = 0;
-                            if (r)
-                            {
-                                mask |= 8;
-                                bytes[p++] = color.r;
-                            }
-                            if (g)
-                            {
-                                mask |= 4;
-                                bytes[p++] = color.g;
-                            }
-                            if (b)
-                            {
-                                mask |= 2;
-                                bytes[p++] = color.b;
-                            }
-                            if (a)
-                            {
-                                mask |= 1;
-                                bytes[p++] = color.a;
-                            }
-
-                            bytes[p0] |= mask;
+                            bytes[p + 0] = QOI_OP_RGBA;
+                            bytes[p + 1] = color.r;
+                            bytes[p + 2] = color.g;
+                            bytes[p + 3] = color.b;
+                            bytes[p + 4] = color.a;
+                            p += 5;
                         }
                     }
                 }
@@ -204,10 +162,16 @@ namespace
             image += stride;
         }
 
-        for (int i = 0; i < QOI_PADDING; i++)
-        {
-            bytes[p++] = 0;
-        }
+        // padding
+        bytes[p + 0] = 0;
+        bytes[p + 1] = 0;
+        bytes[p + 2] = 0;
+        bytes[p + 3] = 0;
+        bytes[p + 4] = 0;
+        bytes[p + 5] = 0;
+        bytes[p + 6] = 0;
+        bytes[p + 7] = 1;
+        p += 8;
 
         *out_len = p;
         return bytes;
@@ -216,9 +180,9 @@ namespace
     void qoi_decode(u8* image, const u8* data, size_t size, int width, int height, size_t stride)
     {
         Color color(0, 0, 0, 255);
-        Color index[64] = { 0 };
+        Color cache[64] = { 0 };
 
-        //const u8* end = data + size;
+        const u8* end = data + size;
         int run = 0;
 
         for (int y = 0; y < height; ++y)
@@ -230,63 +194,54 @@ namespace
             {
                 if (run > 0)
                 {
-                    --run;
-                    *dest++ = color;
+                    run--;
                 }
-                else
+                else if (data < end)
                 {
-                    u32 b1 = *data++;
+                    int b1 = *data++;
 
-                    if ((b1 & QOI_MASK_2) == QOI_INDEX)
+                    if (b1 == QOI_OP_RGB)
                     {
-                        color = index[b1 ^ QOI_INDEX];
+                        color.r = data[0];
+                        color.g = data[1];
+                        color.b = data[2];
+                        data += 3;
                     }
-                    else if ((b1 & QOI_MASK_3) == QOI_RUN_8)
+                    else if (b1 == QOI_OP_RGBA)
                     {
-                        run = (b1 & 0x1f);
+                        color.r = data[0];
+                        color.g = data[1];
+                        color.b = data[2];
+                        color.a = data[3];
+                        data += 4;
                     }
-                    else if ((b1 & QOI_MASK_3) == QOI_RUN_16)
+                    else if ((b1 & QOI_MASK_2) == QOI_OP_INDEX)
                     {
-                        u32 b2 = *data++;
-                        run = (((b1 & 0x1f) << 8) | (b2)) + 32;
+                        color = cache[b1];
                     }
-                    else if ((b1 & QOI_MASK_2) == QOI_DIFF_8)
+                    else if ((b1 & QOI_MASK_2) == QOI_OP_DIFF)
                     {
-                        color.r += ((b1 >> 4) & 0x03) - 1;
-                        color.g += ((b1 >> 2) & 0x03) - 1;
-                        color.b += ((b1 >> 0) & 0x03) - 1;
+                        color.r += ((b1 >> 4) & 0x03) - 2;
+                        color.g += ((b1 >> 2) & 0x03) - 2;
+                        color.b += ( b1       & 0x03) - 2;
                     }
-                    else if ((b1 & QOI_MASK_3) == QOI_DIFF_16)
+                    else if ((b1 & QOI_MASK_2) == QOI_OP_LUMA)
                     {
-                        u32 b2 = *data++;
-                        color.r += (b1 & 0x1f) - 15;
-                        color.g += (b2 >> 4) - 7;
-                        color.b += (b2 & 0x0f) - 7;
+                        int b2 = *data++;
+                        int vg = (b1 & 0x3f) - 32;
+                        color.r += vg - 8 + ((b2 >> 4) & 0x0f);
+                        color.g += vg;
+                        color.b += vg - 8 +  (b2       & 0x0f);
                     }
-                    else if ((b1 & QOI_MASK_4) == QOI_DIFF_24)
+                    else if ((b1 & QOI_MASK_2) == QOI_OP_RUN)
                     {
-                        u32 b = (b1 << 16) | (data[0] << 8) | data[1];
-                        data += 2;
-                        color.r += ((b >> 15) & 0x1f) - 15;
-                        color.g += ((b >> 10) & 0x1f) - 15;
-                        color.b += ((b >>  5) & 0x1f) - 15;
-                        color.a += ((b >>  0) & 0x1f) - 15;
-                    }
-                    else if ((b1 & QOI_MASK_4) == QOI_COLOR)
-                    {
-                        if (b1 & 8) { color.r = *data++; }
-                        if (b1 & 4) { color.g = *data++; }
-                        if (b1 & 2) { color.b = *data++; }
-                        if (b1 & 1) { color.a = *data++; }
+                        run = (b1 & 0x3f);
                     }
 
-                    if (b1 & QOI_UPDATE)
-                    {
-                        index[QOI_COLOR_HASH(color) % 64] = color;
-                    }
-
-                    *dest++ = color;
+                    cache[QOI_COLOR_HASH(color) % 64] = color;
                 }
+
+                *dest++ = color;
             }
 
             image += stride;
@@ -336,7 +291,6 @@ namespace
             switch (colorspace)
             {
                 case QOI_SRGB:
-                case QOI_SRGB_LINEAR_ALPHA:
                 case QOI_LINEAR:
                     break;
                 default:
@@ -442,7 +396,7 @@ namespace
         s.write32(surface.width);
         s.write32(surface.height);
         s.write8(4);
-        s.write8(QOI_SRGB_LINEAR_ALPHA);
+        s.write8(QOI_SRGB);
 
         // write encoded image
         s.write(buffer, u64(size));
