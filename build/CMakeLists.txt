@@ -268,7 +268,8 @@ ADD_LIBRARY(mango
     ${EXTERNAL_ZPNG}
 )
 
-set_target_properties(mango PROPERTIES VERSION ${MANGO_VERSION_STRING}
+set_target_properties(mango PROPERTIES
+    VERSION ${MANGO_VERSION_STRING}
     SOVERSION ${MANGO_VERSION_MAJOR}
 )
 
@@ -277,7 +278,8 @@ ADD_LIBRARY(mango-opengl
     ${OPENGL}
 )
 
-set_target_properties(mango-opengl PROPERTIES VERSION ${MANGO_VERSION_STRING}
+set_target_properties(mango-opengl PROPERTIES
+    VERSION ${MANGO_VERSION_STRING}
     SOVERSION ${MANGO_VERSION_MAJOR}
 )
 
