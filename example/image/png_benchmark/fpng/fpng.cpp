@@ -32,16 +32,14 @@
 	#define FPNG_X86_OR_X64_CPU (0)
 #endif
 
-#if FPNG_X86_OR_X64_CPU && !FPNG_NO_SSE
+#if FPNG_X86_OR_X64_CPU && !FPNG_NO_SSE && defined(__PCLMUL__)
 	#ifdef _MSC_VER
 		#include <intrin.h>
 	#endif
 	#include <xmmintrin.h>		// SSE
 	#include <emmintrin.h>		// SSE2
 	#include <smmintrin.h>		// SSE4.1
-	#if defined(__PCLMUL__)
-		#include <wmmintrin.h>		// pclmul
-	#endif
+	#include <wmmintrin.h>		// pclmul
 #endif
 
 #ifndef FPNG_NO_STDIO
