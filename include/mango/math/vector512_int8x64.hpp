@@ -130,21 +130,7 @@ namespace mango::math
 
     MATH_SIMD_INTEGER_FUNCTIONS(s8, 64, mask8x64);
     MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(s8, 64, mask8x64);
-
-    static inline Vector<s8, 64> abs(Vector<s8, 64> a)
-    {
-        return simd::abs(a);
-    }
-
-    static inline Vector<s8, 64> abs(Vector<s8, 64> a, mask8x64 mask)
-    {
-        return simd::abs(a, mask);
-    }
-
-    static inline Vector<s8, 64> abs(Vector<s8, 64> a, mask8x64 mask, Vector<s8, 64> value)
-    {
-        return simd::abs(a, mask, value);
-    }
+    MATH_SIMD_ABS_INTEGER_FUNCTIONS(s8, 64, mask8x64);
 
     // ------------------------------------------------------------------
     // bitwise operators

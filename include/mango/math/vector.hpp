@@ -2179,6 +2179,23 @@ namespace mango::math
         return simd::subs(a, b, mask, value); \
     }
 
+#define MATH_SIMD_ABS_INTEGER_FUNCTIONS(T, N, MASK) \
+    \
+    static inline Vector<T, N> abs(Vector<T, N> a) \
+    { \
+        return simd::abs(a); \
+    } \
+    \
+    static inline Vector<T, N> abs(Vector<T, N> a, MASK mask) \
+    { \
+        return simd::abs(a, mask); \
+    } \
+    \
+    static inline Vector<T, N> abs(Vector<T, N> a, MASK mask, Vector<T, N> value) \
+    { \
+        return simd::abs(a, mask, value); \
+    }
+
     // ------------------------------------------------------------------
     // named vector types
     // ------------------------------------------------------------------
