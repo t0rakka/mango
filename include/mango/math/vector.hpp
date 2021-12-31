@@ -568,18 +568,18 @@ namespace mango::math
     // ------------------------------------------------------------------
 
     template <typename ScalarType, int VectorSize>
-    static inline const Vector<ScalarType, VectorSize>& operator + (const Vector<ScalarType, VectorSize>& v)
+    static inline const Vector<ScalarType, VectorSize>& operator + (const Vector<ScalarType, VectorSize>& a)
     {
-        return v;
+        return a;
     }
 
     template <typename ScalarType, int VectorSize>
-    static inline Vector<ScalarType, VectorSize> operator - (const Vector<ScalarType, VectorSize>& v)
+    static inline Vector<ScalarType, VectorSize> operator - (const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
-            temp[i] = -v[i];
+            temp[i] = -a[i];
         }
         return temp;
     }
@@ -595,11 +595,31 @@ namespace mango::math
     }
 
     template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize>& operator += (Vector<ScalarType, VectorSize>& a, ScalarType b)
+    {
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            a[i] += b;
+        }
+        return a;
+    }
+
+    template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator -= (Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
         for (int i = 0; i < VectorSize; ++i)
         {
             a[i] -= b[i];
+        }
+        return a;
+    }
+
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize>& operator -= (Vector<ScalarType, VectorSize>& a, ScalarType b)
+    {
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            a[i] -= b;
         }
         return a;
     }
@@ -656,12 +676,56 @@ namespace mango::math
     }
 
     template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator + (const Vector<ScalarType, VectorSize>& a, ScalarType b)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = a[i] + b;
+        }
+        return temp;
+    }
+
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator + (ScalarType a, const Vector<ScalarType, VectorSize>& b)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = a + b[i];
+        }
+        return temp;
+    }
+
+    template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize> operator - (const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] - b[i];
+        }
+        return temp;
+    }
+
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator - (const Vector<ScalarType, VectorSize>& a, ScalarType b)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = a[i] - b;
+        }
+        return temp;
+    }
+
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator - (ScalarType a, const Vector<ScalarType, VectorSize>& b)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = a - b[i];
         }
         return temp;
     }
@@ -717,6 +781,17 @@ namespace mango::math
         for (int i = 0; i < VectorSize; ++i)
         {
             temp[i] = a[i] / b;
+        }
+        return temp;
+    }
+
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> operator / (ScalarType a, const Vector<ScalarType, VectorSize>& b)
+    {
+        Vector<ScalarType, VectorSize> temp;
+        for (int i = 0; i < VectorSize; ++i)
+        {
+            temp[i] = a / b[i];
         }
         return temp;
     }
