@@ -148,39 +148,6 @@ namespace mango::math
     // compare / select
     // ------------------------------------------------------------------
 
-    static inline mask32x16 operator > (Vector<float, 16> a, Vector<float, 16> b)
-    {
-        return simd::compare_gt(a, b);
-    }
-
-    static inline mask32x16 operator >= (Vector<float, 16> a, Vector<float, 16> b)
-    {
-        return simd::compare_ge(a, b);
-    }
-
-    static inline mask32x16 operator < (Vector<float, 16> a, Vector<float, 16> b)
-    {
-        return simd::compare_lt(a, b);
-    }
-
-    static inline mask32x16 operator <= (Vector<float, 16> a, Vector<float, 16> b)
-    {
-        return simd::compare_le(a, b);
-    }
-
-    static inline mask32x16 operator == (Vector<float, 16> a, Vector<float, 16> b)
-    {
-        return simd::compare_eq(a, b);
-    }
-
-    static inline mask32x16 operator != (Vector<float, 16> a, Vector<float, 16> b)
-    {
-        return simd::compare_neq(a, b);
-    }
-
-    static inline Vector<float, 16> select(mask32x16 mask, Vector<float, 16> a, Vector<float, 16> b)
-    {
-        return simd::select(mask, a, b);
-    }
+    MATH_SIMD_COMPARE_FUNCTIONS(float, 16, mask32x16);
 
 } // namespace mango::math

@@ -2223,6 +2223,43 @@ namespace mango::math
         return simd::bitwise_not(a); \
     }
 
+#define MATH_SIMD_COMPARE_FUNCTIONS(T, N, MASK) \
+    \
+    static inline MASK operator > (Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::compare_gt(a, b); \
+    } \
+    \
+    static inline MASK operator >= (Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::compare_ge(a, b); \
+    } \
+    \
+    static inline MASK operator < (Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::compare_lt(a, b); \
+    } \
+    \
+    static inline MASK operator <= (Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::compare_le(a, b); \
+    } \
+    \
+    static inline MASK operator == (Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::compare_eq(a, b); \
+    } \
+    \
+    static inline MASK operator != (Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::compare_neq(a, b); \
+    } \
+    \
+    static inline Vector<T, N> select(MASK mask, Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::select(mask, a, b); \
+    }
+
     // ------------------------------------------------------------------
     // named vector types
     // ------------------------------------------------------------------
