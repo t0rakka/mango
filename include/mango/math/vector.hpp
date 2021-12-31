@@ -2196,6 +2196,33 @@ namespace mango::math
         return simd::abs(a, mask, value); \
     }
 
+#define MATH_SIMD_BITWISE_FUNCTIONS(T, N) \
+    \
+    static inline Vector<T, N> nand(Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::bitwise_nand(a, b); \
+    } \
+    \
+    static inline Vector<T, N> operator & (Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::bitwise_and(a, b); \
+    } \
+    \
+    static inline Vector<T, N> operator | (Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::bitwise_or(a, b); \
+    } \
+    \
+    static inline Vector<T, N> operator ^ (Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::bitwise_xor(a, b); \
+    } \
+    \
+    static inline Vector<T, N> operator ~ (Vector<T, N> a) \
+    { \
+        return simd::bitwise_not(a); \
+    }
+
     // ------------------------------------------------------------------
     // named vector types
     // ------------------------------------------------------------------

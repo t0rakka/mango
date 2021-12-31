@@ -119,30 +119,7 @@ namespace mango::math
     // bitwise operators
     // ------------------------------------------------------------------
 
-    static inline Vector<s64, 8> nand(Vector<s64, 8> a, Vector<s64, 8> b)
-    {
-        return simd::bitwise_nand(a, b);
-    }
-
-    static inline Vector<s64, 8> operator & (Vector<s64, 8> a, Vector<s64, 8> b)
-    {
-        return simd::bitwise_and(a, b);
-    }
-
-    static inline Vector<s64, 8> operator | (Vector<s64, 8> a, Vector<s64, 8> b)
-    {
-        return simd::bitwise_or(a, b);
-    }
-
-    static inline Vector<s64, 8> operator ^ (Vector<s64, 8> a, Vector<s64, 8> b)
-    {
-        return simd::bitwise_xor(a, b);
-    }
-
-    static inline Vector<s64, 8> operator ~ (Vector<s64, 8> a)
-    {
-        return simd::bitwise_not(a);
-    }
+    MATH_SIMD_BITWISE_FUNCTIONS(s64, 8);
 
     // ------------------------------------------------------------------
     // compare / select
