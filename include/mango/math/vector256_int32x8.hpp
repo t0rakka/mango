@@ -102,37 +102,16 @@ namespace mango::math
         }
     };
 
-    static inline const Vector<s32, 8> operator + (Vector<s32, 8> v)
-    {
-        return v;
-    }
+    // ------------------------------------------------------------------
+    // operators
+    // ------------------------------------------------------------------
 
-    static inline Vector<s32, 8> operator - (Vector<s32, 8> v)
-    {
-        return simd::neg(v);
-    }
+    MAKE_VECTOR_UNSIGNED_INTEGER_OPERATORS(s32, 8);
+    MAKE_VECTOR_SIGNED_INTEGER_OPERATORS(s32, 8);
 
-    static inline Vector<s32, 8>& operator += (Vector<s32, 8>& a, Vector<s32, 8> b)
-    {
-        a = simd::add(a, b);
-        return a;
-    }
-
-    static inline Vector<s32, 8>& operator -= (Vector<s32, 8>& a, Vector<s32, 8> b)
-    {
-        a = simd::sub(a, b);
-        return a;
-    }
-
-    static inline Vector<s32, 8> operator + (Vector<s32, 8> a, Vector<s32, 8> b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline Vector<s32, 8> operator - (Vector<s32, 8> a, Vector<s32, 8> b)
-    {
-        return simd::sub(a, b);
-    }
+    // ------------------------------------------------------------------
+    // functions
+    // ------------------------------------------------------------------
 
     static inline Vector<s32, 8> unpacklo(Vector<s32, 8> a, Vector<s32, 8> b)
     {

@@ -173,9 +173,29 @@ namespace mango::math
         return simd::add(a, b);
     }
 
+    static inline Vector<float, 8> operator + (Vector<float, 8> a, float b)
+    {
+        return simd::add(a, simd::f32x8_set(b));
+    }
+
+    static inline Vector<float, 8> operator + (float a, Vector<float, 8> b)
+    {
+        return simd::add(simd::f32x8_set(a), b);
+    }
+
     static inline Vector<float, 8> operator - (Vector<float, 8> a, Vector<float, 8> b)
     {
         return simd::sub(a, b);
+    }
+
+    static inline Vector<float, 8> operator - (Vector<float, 8> a, float b)
+    {
+        return simd::sub(a, simd::f32x8_set(b));
+    }
+
+    static inline Vector<float, 8> operator - (float a, Vector<float, 8> b)
+    {
+        return simd::sub(simd::f32x8_set(a), b);
     }
 
     static inline Vector<float, 8> operator * (Vector<float, 8> a, Vector<float, 8> b)

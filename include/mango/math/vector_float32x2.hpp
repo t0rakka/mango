@@ -196,10 +196,38 @@ namespace mango::math
         return Vector<float, 2>(x, y);
     }
 
+    static inline Vector<float, 2> operator + (Vector<float, 2> a, float b)
+    {
+        float x = a.x + b;
+        float y = a.y + b;
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> operator + (float a, Vector<float, 2> b)
+    {
+        float x = a + b.x;
+        float y = a + b.y;
+        return Vector<float, 2>(x, y);
+    }
+
     static inline Vector<float, 2> operator - (Vector<float, 2> a, Vector<float, 2> b)
     {
         float x = a.x - b.x;
         float y = a.y - b.y;
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> operator - (Vector<float, 2> a, float b)
+    {
+        float x = a.x - b;
+        float y = a.y - b;
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> operator - (float a, Vector<float, 2> b)
+    {
+        float x = a - b.x;
+        float y = a - b.y;
         return Vector<float, 2>(x, y);
     }
 

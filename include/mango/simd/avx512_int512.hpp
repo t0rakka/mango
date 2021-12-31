@@ -1970,6 +1970,11 @@ namespace mango::simd
         return temp;
     }
 
+    static inline s64x8 neg(s64x8 a)
+    {
+        return _mm512_sub_epi64(_mm512_setzero_si512(), a);
+    }
+
     // bitwise
 
     static inline s64x8 bitwise_nand(s64x8 a, s64x8 b)

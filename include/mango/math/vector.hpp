@@ -594,6 +594,7 @@ namespace mango::math
         return a;
     }
 
+    /*
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator += (Vector<ScalarType, VectorSize>& a, ScalarType b)
     {
@@ -603,6 +604,7 @@ namespace mango::math
         }
         return a;
     }
+    */
 
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator -= (Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
@@ -614,6 +616,7 @@ namespace mango::math
         return a;
     }
 
+    /*
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator -= (Vector<ScalarType, VectorSize>& a, ScalarType b)
     {
@@ -623,6 +626,7 @@ namespace mango::math
         }
         return a;
     }
+    */
 
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator *= (Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
@@ -634,6 +638,7 @@ namespace mango::math
         return a;
     }
 
+    /*
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator *= (Vector<ScalarType, VectorSize>& a, ScalarType b)
     {
@@ -643,6 +648,7 @@ namespace mango::math
         }
         return a;
     }
+    */
 
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator /= (Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
@@ -785,6 +791,7 @@ namespace mango::math
         return temp;
     }
 
+    /*
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize> operator / (ScalarType a, const Vector<ScalarType, VectorSize>& b)
     {
@@ -795,6 +802,7 @@ namespace mango::math
         }
         return temp;
     }
+    */
 
     // ------------------------------------------------------------------
     // Vector functions
@@ -1395,18 +1403,35 @@ namespace mango::math
     ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b)
     {
+        // a + a
         return ScalarType(a) + ScalarType(b);
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b)
     {
+        // a + s
         return ScalarType(a) + b;
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     ScalarType operator + (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
     {
+        // s + a
+        return a + ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b)
+    {
+        // a + v
+        return ScalarType(a) + b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator + (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        // v + a
         return a + ScalarType(b);
     }
 
@@ -1414,18 +1439,35 @@ namespace mango::math
     ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b)
     {
+        // a - a
         return ScalarType(a) - ScalarType(b);
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b)
     {
+        // a - s
         return ScalarType(a) - b;
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     ScalarType operator - (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
     {
+        // s - a
+        return a - ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b)
+    {
+        // a - v
+        return ScalarType(a) - b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator - (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        // v - a
         return a - ScalarType(b);
     }
 
@@ -1433,18 +1475,35 @@ namespace mango::math
     ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b)
     {
+        // a * a
         return ScalarType(a) * ScalarType(b);
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b)
     {
+        // a * s
         return ScalarType(a) * b;
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     ScalarType operator * (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
     {
+        // s * a
+        return a * ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator * (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b)
+    {
+        // a * v
+        return ScalarType(a) * b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator * (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        // v * a
         return a * ScalarType(b);
     }
 
@@ -1452,18 +1511,35 @@ namespace mango::math
     ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b)
     {
+        // a / a
         return ScalarType(a) / ScalarType(b);
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b)
     {
+        // a / s
         return ScalarType(a) / b;
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     ScalarType operator / (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
     {
+        // s / a
+        return a / ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator / (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b)
+    {
+        // a / v
+        return ScalarType(a) / b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator / (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        // v / a
         return a / ScalarType(b);
     }
 
@@ -1633,6 +1709,66 @@ namespace mango::math
         }
 #endif
     };
+
+    // ------------------------------------------------------------------
+    // simd integer vector operators
+    // ------------------------------------------------------------------
+
+#define MAKE_VECTOR_SIGNED_INTEGER_OPERATORS(T, N) \
+    \
+    static inline Vector<T, N> operator - (Vector<T, N> a) \
+    { \
+        return simd::neg(a); \
+    }
+
+#define MAKE_VECTOR_UNSIGNED_INTEGER_OPERATORS(T, N) \
+    \
+    static inline Vector<T, N> operator + (Vector<T, N> a) \
+    { \
+        return a; \
+    } \
+    \
+    static inline Vector<T, N>& operator += (Vector<T, N>& a, Vector<T, N> b) \
+    { \
+        a = simd::add(a, b); \
+        return a; \
+    } \
+    \
+    static inline Vector<T, N>& operator -= (Vector<T, N>& a, Vector<T, N> b) \
+    { \
+        a = simd::sub(a, b); \
+        return a; \
+    } \
+    \
+    static inline Vector<T, N> operator + (Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::add(a, b); \
+    } \
+    \
+    static inline Vector<T, N> operator + (Vector<T, N> a, T b) \
+    { \
+        return simd::add(a, simd::T##x##N##_set(b)); \
+    } \
+    \
+    static inline Vector<T, N> operator + (T a, Vector<T, N> b) \
+    { \
+        return simd::add(simd::T##x##N##_set(a), b); \
+    } \
+    \
+    static inline Vector<T, N> operator - (Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::sub(a, b); \
+    } \
+    \
+    static inline Vector<T, N> operator - (Vector<T, N> a, T b) \
+    { \
+        return simd::sub(a, simd::T##x##N##_set(b)); \
+    } \
+    \
+    static inline Vector<T, N> operator - (T a, Vector<T, N> b) \
+    { \
+        return simd::sub(simd::T##x##N##_set(a), b); \
+    }
 
     // ------------------------------------------------------------------
     // named vector types

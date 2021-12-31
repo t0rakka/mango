@@ -113,37 +113,15 @@ namespace mango::math
         simd::u16x8_store_low(dest, v);
     }
 
-    static inline const Vector<u16, 8> operator + (Vector<u16, 8> v)
-    {
-        return v;
-    }
+    // ------------------------------------------------------------------
+    // operators
+    // ------------------------------------------------------------------
 
-    static inline Vector<u16, 8> operator - (Vector<u16, 8> v)
-    {
-        return simd::sub(simd::u16x8_zero(), v);
-    }
+    MAKE_VECTOR_UNSIGNED_INTEGER_OPERATORS(u16, 8);
 
-    static inline Vector<u16, 8>& operator += (Vector<u16, 8>& a, Vector<u16, 8> b)
-    {
-        a = simd::add(a, b);
-        return a;
-    }
-
-    static inline Vector<u16, 8>& operator -= (Vector<u16, 8>& a, Vector<u16, 8> b)
-    {
-        a = simd::sub(a, b);
-        return a;
-    }
-
-    static inline Vector<u16, 8> operator + (Vector<u16, 8> a, Vector<u16, 8> b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline Vector<u16, 8> operator - (Vector<u16, 8> a, Vector<u16, 8> b)
-    {
-        return simd::sub(a, b);
-    }
+    // ------------------------------------------------------------------
+    // functions
+    // ------------------------------------------------------------------
 
     static inline Vector<u16, 8> unpacklo(Vector<u16, 8> a, Vector<u16, 8> b)
     {

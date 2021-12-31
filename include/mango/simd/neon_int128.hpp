@@ -1904,6 +1904,11 @@ namespace mango::simd
         return vreinterpretq_s64_u64(temp);
     }
 
+    static inline s64x2 neg(s64x2 a)
+    {
+        return vnegq_s64(a);
+    }
+
     // bitwise
 
     static inline s64x2 bitwise_nand(s64x2 a, s64x2 b)

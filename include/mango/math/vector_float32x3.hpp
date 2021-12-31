@@ -243,11 +243,43 @@ namespace mango::math
         return Vector<float, 3>(x, y, z);
     }
 
+    static inline Vector<float, 3> operator + (Vector<float, 3> a, float b)
+    {
+        float x = a.x + b;
+        float y = a.y + b;
+        float z = a.z + b;
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> operator + (float a, Vector<float, 3> b)
+    {
+        float x = a + b.x;
+        float y = a + b.y;
+        float z = a + b.z;
+        return Vector<float, 3>(x, y, z);
+    }
+
     static inline Vector<float, 3> operator - (Vector<float, 3> a, Vector<float, 3> b)
     {
         float x = a.x - b.x;
         float y = a.y - b.y;
         float z = a.z - b.z;
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> operator - (Vector<float, 3> a, float b)
+    {
+        float x = a.x - b;
+        float y = a.y - b;
+        float z = a.z - b;
+        return Vector<float, 3>(x, y, z);
+    }
+
+    static inline Vector<float, 3> operator - (float a, Vector<float, 3> b)
+    {
+        float x = a - b.x;
+        float y = a - b.y;
+        float z = a - b.z;
         return Vector<float, 3>(x, y, z);
     }
 
