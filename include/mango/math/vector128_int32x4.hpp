@@ -168,16 +168,6 @@ namespace mango::math
 
     MATH_SIMD_INTEGER_FUNCTIONS(s32, 4, mask32x4);
 
-    static inline Vector<s32, 4> unpacklo(Vector<s32, 4> a, Vector<s32, 4> b)
-    {
-        return simd::unpacklo(a, b);
-    }
-
-    static inline Vector<s32, 4> unpackhi(Vector<s32, 4> a, Vector<s32, 4> b)
-    {
-        return simd::unpackhi(a, b);
-    }
-
     static inline Vector<s32, 4> abs(Vector<s32, 4> a)
     {
         return simd::abs(a);
@@ -191,26 +181,6 @@ namespace mango::math
     static inline Vector<s32, 4> abs(Vector<s32, 4> a, mask32x4 mask, Vector<s32, 4> value)
     {
         return simd::abs(a, mask, value);
-    }
-
-    static inline Vector<s32, 4> add(Vector<s32, 4> a, Vector<s32, 4> b, mask32x4 mask)
-    {
-        return simd::add(a, b, mask);
-    }
-
-    static inline Vector<s32, 4> add(Vector<s32, 4> a, Vector<s32, 4> b, mask32x4 mask, Vector<s32, 4> value)
-    {
-        return simd::add(a, b, mask, value);
-    }
-
-    static inline Vector<s32, 4> sub(Vector<s32, 4> a, Vector<s32, 4> b, mask32x4 mask)
-    {
-        return simd::sub(a, b, mask);
-    }
-
-    static inline Vector<s32, 4> sub(Vector<s32, 4> a, Vector<s32, 4> b, mask32x4 mask, Vector<s32, 4> value)
-    {
-        return simd::sub(a, b, mask, value);
     }
 
     static inline Vector<s32, 4> adds(Vector<s32, 4> a, Vector<s32, 4> b)

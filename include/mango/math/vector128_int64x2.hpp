@@ -140,36 +140,6 @@ namespace mango::math
 
     MATH_SIMD_INTEGER_FUNCTIONS(s64, 2, mask64x2);
 
-    static inline Vector<s64, 2> unpacklo(Vector<s64, 2> a, Vector<s64, 2> b)
-    {
-        return simd::unpacklo(a, b);
-    }
-
-    static inline Vector<s64, 2> unpackhi(Vector<s64, 2> a, Vector<s64, 2> b)
-    {
-        return simd::unpackhi(a, b);
-    }
-
-    static inline Vector<s64, 2> add(Vector<s64, 2> a, Vector<s64, 2> b, mask64x2 mask)
-    {
-        return simd::add(a, b, mask);
-    }
-
-    static inline Vector<s64, 2> add(Vector<s64, 2> a, Vector<s64, 2> b, mask64x2 mask, Vector<s64, 2> value)
-    {
-        return simd::add(a, b, mask, value);
-    }
-
-    static inline Vector<s64, 2> sub(Vector<s64, 2> a, Vector<s64, 2> b, mask64x2 mask)
-    {
-        return simd::sub(a, b, mask);
-    }
-
-    static inline Vector<s64, 2> sub(Vector<s64, 2> a, Vector<s64, 2> b, mask64x2 mask, Vector<s64, 2> value)
-    {
-        return simd::sub(a, b, mask, value);
-    }
-
     // ------------------------------------------------------------------
     // bitwise operators
     // ------------------------------------------------------------------

@@ -2082,6 +2082,36 @@ namespace mango::math
 
 #define MATH_SIMD_INTEGER_FUNCTIONS(T, N, MASK) \
     \
+    static inline Vector<T, N> unpacklo(Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::unpacklo(a, b); \
+    } \
+    \
+    static inline Vector<T, N> unpackhi(Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::unpackhi(a, b); \
+    } \
+    \
+    static inline Vector<T, N> add(Vector<T, N> a, Vector<T, N> b, MASK mask) \
+    { \
+        return simd::add(a, b, mask); \
+    } \
+    \
+    static inline Vector<T, N> add(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
+    { \
+        return simd::add(a, b, mask, value); \
+    } \
+    \
+    static inline Vector<T, N> sub(Vector<T, N> a, Vector<T, N> b, MASK mask) \
+    { \
+        return simd::sub(a, b, mask); \
+    } \
+    \
+    static inline Vector<T, N> sub(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
+    { \
+        return simd::sub(a, b, mask, value); \
+    } \
+    \
     static inline Vector<T, N> min(Vector<T, N> a, Vector<T, N> b) \
     { \
         return simd::min(a, b); \

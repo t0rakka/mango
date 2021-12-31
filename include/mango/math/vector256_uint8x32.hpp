@@ -119,36 +119,6 @@ namespace mango::math
 
     MATH_SIMD_INTEGER_FUNCTIONS(u8, 32, mask8x32);
 
-    static inline Vector<u8, 32> unpacklo(Vector<u8, 32> a, Vector<u8, 32> b)
-    {
-        return simd::unpacklo(a, b);
-    }
-
-    static inline Vector<u8, 32> unpackhi(Vector<u8, 32> a, Vector<u8, 32> b)
-    {
-        return simd::unpackhi(a, b);
-    }
-
-    static inline Vector<u8, 32> add(Vector<u8, 32> a, Vector<u8, 32> b, mask8x32 mask)
-    {
-        return simd::add(a, b, mask);
-    }
-
-    static inline Vector<u8, 32> add(Vector<u8, 32> a, Vector<u8, 32> b, mask8x32 mask, Vector<u8, 32> value)
-    {
-        return simd::add(a, b, mask, value);
-    }
-
-    static inline Vector<u8, 32> sub(Vector<u8, 32> a, Vector<u8, 32> b, mask8x32 mask)
-    {
-        return simd::sub(a, b, mask);
-    }
-
-    static inline Vector<u8, 32> sub(Vector<u8, 32> a, Vector<u8, 32> b, mask8x32 mask, Vector<u8, 32> value)
-    {
-        return simd::sub(a, b, mask, value);
-    }
-
     static inline Vector<u8, 32> adds(Vector<u8, 32> a, Vector<u8, 32> b)
     {
         return simd::adds(a, b);
