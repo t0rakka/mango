@@ -12,6 +12,9 @@
 // With gcc/clang on x86, compile with -msse4.1 -mpclmul -fno-strict-aliasing
 // Only tested with -fno-strict-aliasing (which the Linux kernel uses, and MSVC's default).
 //
+
+#if !defined(__arm__) && !defined(__aarch64__)
+
 #include "fpng.h"
 #include <assert.h>
 #include <string.h>
@@ -3124,3 +3127,5 @@ do_literals:
 	Richard Geldreich, Jr.
 	12/30/2021
 */
+
+#endif // __arm__

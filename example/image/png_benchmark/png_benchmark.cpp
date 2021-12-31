@@ -12,7 +12,10 @@ using namespace mango::image;
 #define ENABLE_LODEPNG
 #define ENABLE_STB
 #define ENABLE_SPNG
-#define ENABLE_FPNG
+#ifndef MANGO_CPU_ARM
+    // disable until fpng compiles on ARM
+    #define ENABLE_FPNG
+#endif
 #define ENABLE_WUFFS
 #define ENABLE_MANGO
 
