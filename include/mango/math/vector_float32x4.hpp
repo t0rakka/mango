@@ -183,67 +183,7 @@ namespace mango::math
     // operators
     // ------------------------------------------------------------------
 
-    MAKE_VECTOR_FLOAT_OPERATORS(float, 4, f32x4);
-
-    template <typename T, int I>
-    static inline Vector<float, 4>& operator /= (Vector<float, 4>& a, ScalarAccessor<float, T, I> b)
-    {
-        a = simd::div(a, float(b));
-        return a;
-    }
-
-    static inline Vector<float, 4>& operator /= (Vector<float, 4>& a, Vector<float, 4> b)
-    {
-        a = simd::div(a, b);
-        return a;
-    }
-
-    static inline Vector<float, 4>& operator /= (Vector<float, 4>& a, float b)
-    {
-        a = simd::div(a, b);
-        return a;
-    }
-
-    static inline Vector<float, 4> operator + (Vector<float, 4> a, Vector<float, 4> b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline Vector<float, 4> operator - (Vector<float, 4> a, Vector<float, 4> b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline Vector<float, 4> operator - (Vector<float, 4> a, float b)
-    {
-        return simd::sub(a, simd::f32x4_set(b));
-    }
-
-    static inline Vector<float, 4> operator - (float a, Vector<float, 4> b)
-    {
-        return simd::sub(simd::f32x4_set(a), b);
-    }
-
-    static inline Vector<float, 4> operator * (Vector<float, 4> a, Vector<float, 4> b)
-    {
-        return simd::mul(a, b);
-    }
-
-    template <typename VT, int I>
-    static inline Vector<float, 4> operator / (Vector<float, 4> a, ScalarAccessor<float, VT, I> b)
-    {
-        return simd::div(a, b);
-    }
-
-    static inline Vector<float, 4> operator / (Vector<float, 4> a, Vector<float, 4> b)
-    {
-        return simd::div(a, b);
-    }
-
-    static inline Vector<float, 4> operator / (Vector<float, 4> a, float b)
-    {
-        return simd::div(a, b);
-    }
+    MATH_SIMD_FLOAT_OPERATORS(float, 4, f32x4);
 
     // ------------------------------------------------------------------
     // functions

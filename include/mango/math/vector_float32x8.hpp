@@ -121,77 +121,7 @@ namespace mango::math
     // operators
     // ------------------------------------------------------------------
 
-    MAKE_VECTOR_FLOAT_OPERATORS(float, 8, f32x8);
-
-    template <typename VT, int I>
-    static inline Vector<float, 8>& operator /= (Vector<float, 8>& a, ScalarAccessor<float, VT, I> b)
-    {
-        a = simd::div(a, b);
-        return a;
-    }
-
-    static inline Vector<float, 8>& operator /= (Vector<float, 8>& a, Vector<float, 8> b)
-    {
-        a = simd::div(a, b);
-        return a;
-    }
-
-    static inline Vector<float, 8>& operator /= (Vector<float, 8>& a, float b)
-    {
-        a = simd::div(a, b);
-        return a;
-    }
-
-    static inline Vector<float, 8> operator + (Vector<float, 8> a, Vector<float, 8> b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline Vector<float, 8> operator + (Vector<float, 8> a, float b)
-    {
-        return simd::add(a, simd::f32x8_set(b));
-    }
-
-    static inline Vector<float, 8> operator + (float a, Vector<float, 8> b)
-    {
-        return simd::add(simd::f32x8_set(a), b);
-    }
-
-    static inline Vector<float, 8> operator - (Vector<float, 8> a, Vector<float, 8> b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline Vector<float, 8> operator - (Vector<float, 8> a, float b)
-    {
-        return simd::sub(a, simd::f32x8_set(b));
-    }
-
-    static inline Vector<float, 8> operator - (float a, Vector<float, 8> b)
-    {
-        return simd::sub(simd::f32x8_set(a), b);
-    }
-
-    static inline Vector<float, 8> operator * (Vector<float, 8> a, Vector<float, 8> b)
-    {
-        return simd::mul(a, b);
-    }
-
-    template <typename VT, int I>
-    static inline Vector<float, 8> operator / (Vector<float, 8> a, ScalarAccessor<float, VT, I> b)
-    {
-        return simd::div(a, b);
-    }
-
-    static inline Vector<float, 8> operator / (Vector<float, 8> a, Vector<float, 8> b)
-    {
-        return simd::div(a, b);
-    }
-
-    static inline Vector<float, 8> operator / (Vector<float, 8> a, float b)
-    {
-        return simd::div(a, b);
-    }
+    MATH_SIMD_FLOAT_OPERATORS(float, 8, f32x8);
 
     // ------------------------------------------------------------------
     // functions

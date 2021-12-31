@@ -30,6 +30,13 @@ void test_float32x4()
     print(a * 5.0f);
     print(a * b.x);
     print(b.x * a.xyzw);
+
+    a /= b.x;
+    print(a);
+
+    a = a / b.x;
+    print(a);
+
 }
 
 /*

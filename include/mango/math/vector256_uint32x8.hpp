@@ -106,7 +106,7 @@ namespace mango::math
     // operators
     // ------------------------------------------------------------------
 
-    MAKE_VECTOR_UNSIGNED_INTEGER_OPERATORS(u32, 8);
+    MATH_SIMD_UNSIGNED_INTEGER_OPERATORS(u32, 8);
 
     // ------------------------------------------------------------------
     // functions

@@ -117,8 +117,8 @@ namespace mango::math
     // operators
     // ------------------------------------------------------------------
 
-    MAKE_VECTOR_UNSIGNED_INTEGER_OPERATORS(s16, 8);
-    MAKE_VECTOR_SIGNED_INTEGER_OPERATORS(s16, 8);
+    MATH_SIMD_UNSIGNED_INTEGER_OPERATORS(s16, 8);
+    MATH_SIMD_SIGNED_INTEGER_OPERATORS(s16, 8);
 
     // ------------------------------------------------------------------
     // functions

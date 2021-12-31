@@ -112,77 +112,7 @@ namespace mango::math
     // operators
     // ------------------------------------------------------------------
 
-    MAKE_VECTOR_FLOAT_OPERATORS(double, 8, f64x8);
-
-    template <typename VT, int I>
-    static inline Vector<double, 8>& operator /= (Vector<double, 8>& a, ScalarAccessor<double, VT, I> b)
-    {
-        a = simd::div(a, b);
-        return a;
-    }
-
-    static inline Vector<double, 8>& operator /= (Vector<double, 8>& a, Vector<double, 8> b)
-    {
-        a = simd::div(a, b);
-        return a;
-    }
-
-    static inline Vector<double, 8>& operator /= (Vector<double, 8>& a, double b)
-    {
-        a = simd::div(a, b);
-        return a;
-    }
-
-    static inline Vector<double, 8> operator + (Vector<double, 8> a, Vector<double, 8> b)
-    {
-        return simd::add(a, b);
-    }
-
-    static inline Vector<double, 8> operator + (Vector<double, 8> a, double b)
-    {
-        return simd::add(a, simd::f64x8_set(b));
-    }
-
-    static inline Vector<double, 8> operator + (double a, Vector<double, 8> b)
-    {
-        return simd::add(simd::f64x8_set(a), b);
-    }
-
-    static inline Vector<double, 8> operator - (Vector<double, 8> a, Vector<double, 8> b)
-    {
-        return simd::sub(a, b);
-    }
-
-    static inline Vector<double, 8> operator - (Vector<double, 8> a, double b)
-    {
-        return simd::sub(a, simd::f64x8_set(b));
-    }
-
-    static inline Vector<double, 8> operator - (double a, Vector<double, 8> b)
-    {
-        return simd::sub(simd::f64x8_set(a), b);
-    }
-
-    static inline Vector<double, 8> operator * (Vector<double, 8> a, Vector<double, 8> b)
-    {
-        return simd::mul(a, b);
-    }
-
-    template <typename VT, int I>
-    static inline Vector<double, 8> operator / (Vector<double, 8> a, ScalarAccessor<double, VT, I> b)
-    {
-        return simd::div(a, b);
-    }
-
-    static inline Vector<double, 8> operator / (Vector<double, 8> a, Vector<double, 8> b)
-    {
-        return simd::div(a, b);
-    }
-
-    static inline Vector<double, 8> operator / (Vector<double, 8> a, double b)
-    {
-        return simd::div(a, b);
-    }
+    MATH_SIMD_FLOAT_OPERATORS(double, 8, f64x8);
 
     // ------------------------------------------------------------------
     // functions
