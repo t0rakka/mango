@@ -135,33 +135,7 @@ namespace mango::math
     // operators
     // ------------------------------------------------------------------
 
-    static inline const Vector<double, 2> operator + (Vector<double, 2> a)
-    {
-        return a;
-    }
-
-    static inline Vector<double, 2> operator - (Vector<double, 2> a)
-    {
-        return simd::neg(a);
-    }
-
-    static inline Vector<double, 2>& operator += (Vector<double, 2>& a, Vector<double, 2> b)
-    {
-        a = simd::add(a, b);
-        return a;
-    }
-
-    static inline Vector<double, 2>& operator -= (Vector<double, 2>& a, Vector<double, 2> b)
-    {
-        a = simd::sub(a, b);
-        return a;
-    }
-
-    static inline Vector<double, 2>& operator *= (Vector<double, 2>& a, Vector<double, 2> b)
-    {
-        a = simd::mul(a, b);
-        return a;
-    }
+    MAKE_VECTOR_FLOAT_OPERATORS(double, 2, f64x2);
 
     template <typename VT, int I>
     static inline Vector<double, 2>& operator /= (Vector<double, 2>& a, ScalarAccessor<double, VT, I> b)

@@ -184,11 +184,27 @@ namespace mango::math
         return a;
     }
 
+    static inline Vector<float, 3>& operator += (Vector<float, 3>& a, float b)
+    {
+        a.x += b;
+        a.y += b;
+        a.z += b;
+        return a;
+    }
+
     static inline Vector<float, 3>& operator -= (Vector<float, 3>& a, const Vector<float, 3>& b)
     {
         a.x -= b.x;
         a.y -= b.y;
         a.z -= b.z;
+        return a;
+    }
+
+    static inline Vector<float, 3>& operator -= (Vector<float, 3>& a, float b)
+    {
+        a.x -= b;
+        a.y -= b;
+        a.z -= b;
         return a;
     }
 

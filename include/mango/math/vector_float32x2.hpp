@@ -144,10 +144,24 @@ namespace mango::math
         return a;
     }
 
+    static inline Vector<float, 2>& operator += (Vector<float, 2>& a, float b)
+    {
+        a.x += b;
+        a.y += b;
+        return a;
+    }
+
     static inline Vector<float, 2>& operator -= (Vector<float, 2>& a, const Vector<float, 2>& b)
     {
         a.x -= b.x;
         a.y -= b.y;
+        return a;
+    }
+
+    static inline Vector<float, 2>& operator -= (Vector<float, 2>& a, float b)
+    {
+        a.x -= b;
+        a.y -= b;
         return a;
     }
 

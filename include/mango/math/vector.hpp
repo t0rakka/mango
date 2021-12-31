@@ -594,7 +594,6 @@ namespace mango::math
         return a;
     }
 
-    /*
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator += (Vector<ScalarType, VectorSize>& a, ScalarType b)
     {
@@ -604,7 +603,6 @@ namespace mango::math
         }
         return a;
     }
-    */
 
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator -= (Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
@@ -616,7 +614,6 @@ namespace mango::math
         return a;
     }
 
-    /*
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator -= (Vector<ScalarType, VectorSize>& a, ScalarType b)
     {
@@ -626,7 +623,6 @@ namespace mango::math
         }
         return a;
     }
-    */
 
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator *= (Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
@@ -638,7 +634,6 @@ namespace mango::math
         return a;
     }
 
-    /*
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator *= (Vector<ScalarType, VectorSize>& a, ScalarType b)
     {
@@ -648,7 +643,6 @@ namespace mango::math
         }
         return a;
     }
-    */
 
     template <typename ScalarType, int VectorSize>
     static inline Vector<ScalarType, VectorSize>& operator /= (Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
@@ -1711,8 +1705,57 @@ namespace mango::math
     };
 
     // ------------------------------------------------------------------
-    // simd integer vector operators
+    // common operators
     // ------------------------------------------------------------------
+
+#define MAKE_VECTOR_FLOAT_OPERATORS(T, N, SIMD) \
+    \
+    static inline Vector<T, N> operator + (Vector<T, N> a) \
+    { \
+        return a; \
+    } \
+    \
+    static inline Vector<T, N> operator - (Vector<T, N> a) \
+    { \
+        return simd::neg(a); \
+    } \
+    \
+    static inline Vector<T, N>& operator += (Vector<T, N>& a, Vector<T, N> b) \
+    { \
+        a = simd::add(a, b); \
+        return a; \
+    } \
+    \
+    static inline Vector<T, N>& operator += (Vector<T, N>& a, T b) \
+    { \
+        a = simd::add(a, simd::SIMD##_set(b)); \
+        return a; \
+    } \
+    \
+    static inline Vector<T, N>& operator -= (Vector<T, N>& a, Vector<T, N> b) \
+    { \
+        a = simd::sub(a, b); \
+        return a; \
+    } \
+    \
+    static inline Vector<T, N>& operator -= (Vector<T, N>& a, T b) \
+    { \
+        a = simd::sub(a, simd::SIMD##_set(b)); \
+        return a; \
+    } \
+    \
+    static inline Vector<T, N>& operator *= (Vector<T, N>& a, Vector<T, N> b) \
+    { \
+        a = simd::mul(a, b); \
+        return a; \
+    } \
+    \
+    static inline Vector<T, N>& operator *= (Vector<T, N>& a, T b) \
+    { \
+        a = simd::mul(a, simd::SIMD##_set(b)); \
+        return a; \
+    }
+
 
 #define MAKE_VECTOR_SIGNED_INTEGER_OPERATORS(T, N) \
     \
