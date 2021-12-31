@@ -141,185 +141,26 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<double, 2> add(Vector<double, 2> a, Vector<double, 2> b, mask64x2 mask)
-    {
-        return simd::add(a, b, mask);
-    }
-
-    static inline Vector<double, 2> add(Vector<double, 2> a, Vector<double, 2> b, mask64x2 mask, Vector<double, 2> value)
-    {
-        return simd::add(a, b, mask, value);
-    }
-
-    static inline Vector<double, 2> sub(Vector<double, 2> a, Vector<double, 2> b, mask64x2 mask)
-    {
-        return simd::sub(a, b, mask);
-    }
-
-    static inline Vector<double, 2> sub(Vector<double, 2> a, Vector<double, 2> b, mask64x2 mask, Vector<double, 2> value)
-    {
-        return simd::sub(a, b, mask, value);
-    }
-
-    static inline Vector<double, 2> mul(Vector<double, 2> a, Vector<double, 2> b, mask64x2 mask)
-    {
-        return simd::mul(a, b, mask);
-    }
-
-    static inline Vector<double, 2> mul(Vector<double, 2> a, Vector<double, 2> b, mask64x2 mask, Vector<double, 2> value)
-    {
-        return simd::mul(a, b, mask, value);
-    }
-
-    static inline Vector<double, 2> div(Vector<double, 2> a, Vector<double, 2> b, mask64x2 mask)
-    {
-        return simd::div(a, b, mask);
-    }
-
-    static inline Vector<double, 2> div(Vector<double, 2> a, Vector<double, 2> b, mask64x2 mask, Vector<double, 2> value)
-    {
-        return simd::div(a, b, mask, value);
-    }
-
-    static inline Vector<double, 2> abs(Vector<double, 2> a)
-    {
-        return simd::abs(a);
-    }
+    MATH_SIMD_FLOAT_FUNCTIONS(double, 2, f64x2, mask64x2);
 
     static inline double square(Vector<double, 2> a)
     {
-        return simd::square(a);
+        return simd::dot2(a, a);
     }
 
     static inline double length(Vector<double, 2> a)
     {
-        return simd::length(a);
+        return std::sqrt(simd::dot2(a, a));
     }
 
     static inline Vector<double, 2> normalize(Vector<double, 2> a)
     {
-        return simd::normalize(a);
-    }
-
-    static inline Vector<double, 2> sqrt(Vector<double, 2> a)
-    {
-        return simd::sqrt(a);
-    }
-
-    static inline Vector<double, 2> rsqrt(Vector<double, 2> a)
-    {
-        return simd::rsqrt(a);
-    }
-
-    static inline Vector<double, 2> rcp(Vector<double, 2> a)
-    {
-        return simd::rcp(a);
-    }
-
-    static inline Vector<double, 2> round(Vector<double, 2> a)
-    {
-        return simd::round(a);
-    }
-
-    static inline Vector<double, 2> trunc(Vector<double, 2> a)
-    {
-        return simd::trunc(a);
-    }
-
-    static inline Vector<double, 2> floor(Vector<double, 2> a)
-    {
-        return simd::floor(a);
-    }
-
-    static inline Vector<double, 2> ceil(Vector<double, 2> a)
-    {
-        return simd::ceil(a);
-    }
-
-    static inline Vector<double, 2> fract(Vector<double, 2> a)
-    {
-        return simd::fract(a);
+        return simd::mul(a, simd::rsqrt(simd::f64x2_set(simd::dot2(a, a))));
     }
 
     static inline double dot(Vector<double, 2> a, Vector<double, 2> b)
     {
         return simd::dot2(a, b);
-    }
-
-    static inline Vector<double, 2> unpacklo(Vector<double, 2> a, Vector<double, 2> b)
-    {
-        return simd::unpacklo(a, b);
-    }
-
-    static inline Vector<double, 2> unpackhi(Vector<double, 2> a, Vector<double, 2> b)
-    {
-        return simd::unpackhi(a, b);
-    }
-
-    static inline Vector<double, 2> min(Vector<double, 2> a, Vector<double, 2> b)
-    {
-        return simd::min(a, b);
-    }
-
-    static inline Vector<double, 2> min(Vector<double, 2> a, Vector<double, 2> b, mask64x2 mask)
-    {
-        return simd::min(a, b, mask);
-    }
-
-    static inline Vector<double, 2> min(Vector<double, 2> a, Vector<double, 2> b, mask64x2 mask, Vector<double, 2> value)
-    {
-        return simd::min(a, b, mask, value);
-    }
-
-    static inline Vector<double, 2> max(Vector<double, 2> a, Vector<double, 2> b)
-    {
-        return simd::min(a, b);
-    }
-
-    static inline Vector<double, 2> max(Vector<double, 2> a, Vector<double, 2> b, mask64x2 mask)
-    {
-        return simd::max(a, b, mask);
-    }
-
-    static inline Vector<double, 2> max(Vector<double, 2> a, Vector<double, 2> b, mask64x2 mask, Vector<double, 2> value)
-    {
-        return simd::max(a, b, mask, value);
-    }
-
-    static inline Vector<double, 2> clamp(Vector<double, 2> a, Vector<double, 2> low, Vector<double, 2> high)
-    {
-        return simd::clamp(a, low, high);
-    }
-
-    static inline Vector<double, 2> madd(Vector<double, 2> a, Vector<double, 2> b, Vector<double, 2> c)
-    {
-        return simd::madd(a, b, c);
-    }
-
-    static inline Vector<double, 2> msub(Vector<double, 2> a, Vector<double, 2> b, Vector<double, 2> c)
-    {
-        return simd::msub(a, b, c);
-    }
-
-    static inline Vector<double, 2> nmadd(Vector<double, 2> a, Vector<double, 2> b, Vector<double, 2> c)
-    {
-        return simd::nmadd(a, b, c);
-    }
-
-    static inline Vector<double, 2> nmsub(Vector<double, 2> a, Vector<double, 2> b, Vector<double, 2> c)
-    {
-        return simd::nmsub(a, b, c);
-    }
-
-    static inline Vector<double, 2> lerp(Vector<double, 2> a, Vector<double, 2> b, double factor)
-    {
-        Vector<double, 2> s(factor);
-        return simd::lerp(a, b, s);
-    }
-
-    static inline Vector<double, 2> lerp(Vector<double, 2> a, Vector<double, 2> b, Vector<double, 2> factor)
-    {
-        return simd::lerp(a, b, factor);
     }
 
     template <int x, int y>

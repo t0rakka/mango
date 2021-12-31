@@ -138,6 +138,8 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
+    MATH_SIMD_INTEGER_FUNCTIONS(u64, 4);
+
     static inline Vector<u64, 4> unpacklo(Vector<u64, 4> a, Vector<u64, 4> b)
     {
         return simd::unpacklo(a, b);

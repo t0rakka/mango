@@ -118,172 +118,14 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<double, 8> add(Vector<double, 8> a, Vector<double, 8> b, mask64x8 mask)
-    {
-        return simd::add(a, b, mask);
-    }
-
-    static inline Vector<double, 8> add(Vector<double, 8> a, Vector<double, 8> b, mask64x8 mask, Vector<double, 8> value)
-    {
-        return simd::add(a, b, mask, value);
-    }
-
-    static inline Vector<double, 8> sub(Vector<double, 8> a, Vector<double, 8> b, mask64x8 mask)
-    {
-        return simd::sub(a, b, mask);
-    }
-
-    static inline Vector<double, 8> sub(Vector<double, 8> a, Vector<double, 8> b, mask64x8 mask, Vector<double, 8> value)
-    {
-        return simd::sub(a, b, mask, value);
-    }
-
-    static inline Vector<double, 8> mul(Vector<double, 8> a, Vector<double, 8> b, mask64x8 mask)
-    {
-        return simd::mul(a, b, mask);
-    }
-
-    static inline Vector<double, 8> mul(Vector<double, 8> a, Vector<double, 8> b, mask64x8 mask, Vector<double, 8> value)
-    {
-        return simd::mul(a, b, mask, value);
-    }
-
-    static inline Vector<double, 8> div(Vector<double, 8> a, Vector<double, 8> b, mask64x8 mask)
-    {
-        return simd::div(a, b, mask);
-    }
-
-    static inline Vector<double, 8> div(Vector<double, 8> a, Vector<double, 8> b, mask64x8 mask, Vector<double, 8> value)
-    {
-        return simd::div(a, b, mask, value);
-    }
-
-    static inline Vector<double, 8> abs(Vector<double, 8> a)
-    {
-        return simd::abs(a);
-    }
-
-    static inline Vector<double, 8> round(Vector<double, 8> a)
-    {
-        return simd::round(a);
-    }
-
-    static inline Vector<double, 8> floor(Vector<double, 8> a)
-    {
-        return simd::floor(a);
-    }
-
-    static inline Vector<double, 8> ceil(Vector<double, 8> a)
-    {
-        return simd::ceil(a);
-    }
-
-    static inline Vector<double, 8> trunc(Vector<double, 8> a)
-    {
-        return simd::trunc(a);
-    }
-
-    static inline Vector<double, 8> fract(Vector<double, 8> a)
-    {
-        return simd::fract(a);
-    }
-
-    static inline Vector<double, 8> sqrt(Vector<double, 8> a)
-    {
-        return simd::sqrt(a);
-    }
-
-    static inline Vector<double, 8> rsqrt(Vector<double, 8> a)
-    {
-        return simd::rsqrt(a);
-    }
-
-    static inline Vector<double, 8> rcp(Vector<double, 8> a)
-    {
-        return simd::rcp(a);
-    }
-
-    static inline Vector<double, 8> unpacklo(Vector<double, 8> a, Vector<double, 8> b)
-    {
-        return simd::unpacklo(a, b);
-    }
-
-    static inline Vector<double, 8> unpackhi(Vector<double, 8> a, Vector<double, 8> b)
-    {
-        return simd::unpackhi(a, b);
-    }
-
-    static inline Vector<double, 8> min(Vector<double, 8> a, Vector<double, 8> b)
-    {
-        return simd::min(a, b);
-    }
-
-    static inline Vector<double, 8> min(Vector<double, 8> a, Vector<double, 8> b, mask64x8 mask)
-    {
-        return simd::min(a, b, mask);
-    }
-
-    static inline Vector<double, 8> min(Vector<double, 8> a, Vector<double, 8> b, mask64x8 mask, Vector<double, 8> value)
-    {
-        return simd::min(a, b, mask, value);
-    }
-
-    static inline Vector<double, 8> max(Vector<double, 8> a, Vector<double, 8> b)
-    {
-        return simd::max(a, b);
-    }
-
-    static inline Vector<double, 8> max(Vector<double, 8> a, Vector<double, 8> b, mask64x8 mask)
-    {
-        return simd::max(a, b, mask);
-    }
-
-    static inline Vector<double, 8> max(Vector<double, 8> a, Vector<double, 8> b, mask64x8 mask, Vector<double, 8> value)
-    {
-        return simd::max(a, b, mask, value);
-    }
-
-    static inline Vector<double, 8> clamp(Vector<double, 8> a, Vector<double, 8> low, Vector<double, 8> high)
-    {
-        return simd::max(low, simd::min(high, a));
-    }
-
-    static inline Vector<double, 8> madd(Vector<double, 8> a, Vector<double, 8> b, Vector<double, 8> c)
-    {
-        return simd::madd(a, b, c);
-    }
-
-    static inline Vector<double, 8> msub(Vector<double, 8> a, Vector<double, 8> b, Vector<double, 8> c)
-    {
-        return simd::msub(a, b, c);
-    }
-
-    static inline Vector<double, 8> nmadd(Vector<double, 8> a, Vector<double, 8> b, Vector<double, 8> c)
-    {
-        return simd::nmadd(a, b, c);
-    }
-
-    static inline Vector<double, 8> nmsub(Vector<double, 8> a, Vector<double, 8> b, Vector<double, 8> c)
-    {
-        return simd::nmsub(a, b, c);
-    }
-
-    static inline Vector<double, 8> lerp(Vector<double, 8> a, Vector<double, 8> b, double factor)
-    {
-        Vector<double, 8> s(factor);
-        return simd::lerp(a, b, s);
-    }
-
-    static inline Vector<double, 8> lerp(Vector<double, 8> a, Vector<double, 8> b, Vector<double, 8> factor)
-    {
-        return simd::lerp(a, b, factor);
-    }
+    MATH_SIMD_FLOAT_FUNCTIONS(double, 8, f64x8, mask64x8);
 
     // ------------------------------------------------------------------
     // trigonometric functions
     // ------------------------------------------------------------------
 
-    /* These come from default implementation
+    /* These come from the default implementation:
+
     Vector<double, 8> sin(Vector<double, 8> a);
     Vector<double, 8> cos(Vector<double, 8> a);
     Vector<double, 8> tan(Vector<double, 8> a);
@@ -296,6 +138,7 @@ namespace mango::math
     Vector<double, 8> atan(Vector<double, 8> a);
     Vector<double, 8> atan2(Vector<double, 8> a, Vector<double, 8> b);
     Vector<double, 8> pow(Vector<double, 8> a, Vector<double, 8> b);
+
     */
 
     // ------------------------------------------------------------------

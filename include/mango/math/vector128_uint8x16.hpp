@@ -123,6 +123,8 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
+    MATH_SIMD_INTEGER_FUNCTIONS(u8, 16);
+
     static inline Vector<u8, 16> unpacklo(Vector<u8, 16> a, Vector<u8, 16> b)
     {
         return simd::unpacklo(a, b);
@@ -211,11 +213,6 @@ namespace mango::math
     static inline Vector<u8, 16> max(Vector<u8, 16> a, Vector<u8, 16> b, mask8x16 mask, Vector<u8, 16> value)
     {
         return simd::max(a, b, mask, value);
-    }
-
-    static inline Vector<u8, 16> clamp(Vector<u8, 16> a, Vector<u8, 16> low, Vector<u8, 16> high)
-    {
-        return simd::clamp(a, low, high);
     }
 
     // ------------------------------------------------------------------
