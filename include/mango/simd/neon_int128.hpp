@@ -1904,10 +1904,21 @@ namespace mango::simd
         return vreinterpretq_s64_u64(temp);
     }
 
+#if defined(__aarch64__)
+
     static inline s64x2 neg(s64x2 a)
     {
         return vnegq_s64(a);
     }
+
+#else
+
+    static inline s64x2 neg(s64x2 a)
+    {
+        return vsubq_s64(veorq_s64(a, a), a);
+    }
+
+#endif
 
     // bitwise
 
