@@ -166,14 +166,14 @@ namespace mango::math
     // operators
     // ------------------------------------------------------------------
 
-    static inline const Vector<float, 3>& operator + (const Vector<float, 3>& v)
+    static inline const Vector<float, 3>& operator + (const Vector<float, 3>& a)
     {
-        return v;
+        return a;
     }
 
-    static inline Vector<float, 3> operator - (const Vector<float, 3>& v)
+    static inline Vector<float, 3> operator - (const Vector<float, 3>& a)
     {
-        return Vector<float, 3>(-v.x, -v.y, -v.z);
+        return Vector<float, 3>(-a.x, -a.y, -a.z);
     }
 
     static inline Vector<float, 3>& operator += (Vector<float, 3>& a, const Vector<float, 3>& b)

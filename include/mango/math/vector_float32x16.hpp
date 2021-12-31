@@ -113,14 +113,14 @@ namespace mango::math
     // operators
     // ------------------------------------------------------------------
 
-    static inline Vector<float, 16> operator + (Vector<float, 16> v)
+    static inline Vector<float, 16> operator + (Vector<float, 16> a)
     {
-        return v;
+        return a;
     }
 
-    static inline Vector<float, 16> operator - (Vector<float, 16> v)
+    static inline Vector<float, 16> operator - (Vector<float, 16> a)
     {
-        return simd::neg(v);
+        return simd::neg(a);
     }
 
     static inline Vector<float, 16>& operator += (Vector<float, 16>& a, Vector<float, 16> b)
