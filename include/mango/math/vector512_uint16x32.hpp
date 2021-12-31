@@ -120,36 +120,7 @@ namespace mango::math
     // ------------------------------------------------------------------
 
     MATH_SIMD_INTEGER_FUNCTIONS(u16, 32, mask16x32);
-
-    static inline Vector<u16, 32> adds(Vector<u16, 32> a, Vector<u16, 32> b)
-    {
-        return simd::adds(a, b);
-    }
-
-    static inline Vector<u16, 32> adds(Vector<u16, 32> a, Vector<u16, 32> b, mask16x32 mask)
-    {
-        return simd::adds(a, b, mask);
-    }
-
-    static inline Vector<u16, 32> adds(Vector<u16, 32> a, Vector<u16, 32> b, mask16x32 mask, Vector<u16, 32> value)
-    {
-        return simd::adds(a, b, mask, value);
-    }
-
-    static inline Vector<u16, 32> subs(Vector<u16, 32> a, Vector<u16, 32> b)
-    {
-        return simd::subs(a, b);
-    }
-
-    static inline Vector<u16, 32> subs(Vector<u16, 32> a, Vector<u16, 32> b, mask16x32 mask)
-    {
-        return simd::subs(a, b, mask);
-    }
-
-    static inline Vector<u16, 32> subs(Vector<u16, 32> a, Vector<u16, 32> b, mask16x32 mask, Vector<u16, 32> value)
-    {
-        return simd::subs(a, b, mask, value);
-    }
+    MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(u16, 32, mask16x32);
 
     // ------------------------------------------------------------------
     // bitwise operators

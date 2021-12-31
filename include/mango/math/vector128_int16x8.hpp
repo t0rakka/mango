@@ -125,6 +125,7 @@ namespace mango::math
     // ------------------------------------------------------------------
 
     MATH_SIMD_INTEGER_FUNCTIONS(s16, 8, mask16x8);
+    MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(s16, 8, mask16x8);
 
     static inline Vector<s16, 8> abs(Vector<s16, 8> a)
     {
@@ -139,36 +140,6 @@ namespace mango::math
     static inline Vector<s16, 8> abs(Vector<s16, 8> a, mask16x8 mask, Vector<s16, 8> value)
     {
         return simd::abs(a, mask, value);
-    }
-
-    static inline Vector<s16, 8> adds(Vector<s16, 8> a, Vector<s16, 8> b)
-    {
-        return simd::adds(a, b);
-    }
-
-    static inline Vector<s16, 8> adds(Vector<s16, 8> a, Vector<s16, 8> b, mask16x8 mask)
-    {
-        return simd::adds(a, b, mask);
-    }
-
-    static inline Vector<s16, 8> adds(Vector<s16, 8> a, Vector<s16, 8> b, mask16x8 mask, Vector<s16, 8> value)
-    {
-        return simd::adds(a, b, mask, value);
-    }
-
-    static inline Vector<s16, 8> subs(Vector<s16, 8> a, Vector<s16, 8> b)
-    {
-        return simd::subs(a, b);
-    }
-
-    static inline Vector<s16, 8> subs(Vector<s16, 8> a, Vector<s16, 8> b, mask16x8 mask)
-    {
-        return simd::subs(a, b, mask);
-    }
-
-    static inline Vector<s16, 8> subs(Vector<s16, 8> a, Vector<s16, 8> b, mask16x8 mask, Vector<s16, 8> value)
-    {
-        return simd::subs(a, b, mask, value);
     }
 
     static inline Vector<s16, 8> hadd(Vector<s16, 8> a, Vector<s16, 8> b)

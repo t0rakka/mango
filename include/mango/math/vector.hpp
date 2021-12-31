@@ -2147,6 +2147,38 @@ namespace mango::math
         return simd::min(high, simd::max(low, a)); \
     }
 
+#define MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(T, N, MASK) \
+    \
+    static inline Vector<T, N> adds(Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::adds(a, b); \
+    } \
+    \
+    static inline Vector<T, N> adds(Vector<T, N> a, Vector<T, N> b, MASK mask) \
+    { \
+        return simd::adds(a, b, mask); \
+    } \
+    \
+    static inline Vector<T, N> adds(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
+    { \
+        return simd::adds(a, b, mask, value); \
+    } \
+    \
+    static inline Vector<T, N> subs(Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::subs(a, b); \
+    } \
+    \
+    static inline Vector<T, N> subs(Vector<T, N> a, Vector<T, N> b, MASK mask) \
+    { \
+        return simd::subs(a, b, mask); \
+    } \
+    \
+    static inline Vector<T, N> subs(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
+    { \
+        return simd::subs(a, b, mask, value); \
+    }
+
     // ------------------------------------------------------------------
     // named vector types
     // ------------------------------------------------------------------

@@ -114,6 +114,7 @@ namespace mango::math
     // ------------------------------------------------------------------
 
     MATH_SIMD_INTEGER_FUNCTIONS(u32, 16, mask32x16);
+    MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(u32, 16, mask32x16);
 
     // ------------------------------------------------------------------
     // bitwise operators

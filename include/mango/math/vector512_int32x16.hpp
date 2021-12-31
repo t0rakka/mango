@@ -115,6 +115,7 @@ namespace mango::math
     // ------------------------------------------------------------------
 
     MATH_SIMD_INTEGER_FUNCTIONS(s32, 16, mask32x16);
+    MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(s32, 16, mask32x16);
 
     static inline Vector<s32, 16> abs(Vector<s32, 16> a)
     {
