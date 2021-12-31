@@ -2080,7 +2080,37 @@ namespace mango::math
         return simd::sub(simd::T##x##N##_set(a), b); \
     }
 
-#define MATH_SIMD_INTEGER_FUNCTIONS(T, N) \
+#define MATH_SIMD_INTEGER_FUNCTIONS(T, N, MASK) \
+    \
+    static inline Vector<T, N> min(Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::min(a, b); \
+    } \
+    \
+    static inline Vector<T, N> min(Vector<T, N> a, Vector<T, N> b, MASK mask) \
+    { \
+        return simd::min(a, b, mask); \
+    } \
+    \
+    static inline Vector<T, N> min(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
+    { \
+        return simd::min(a, b, mask, value); \
+    } \
+    \
+    static inline Vector<T, N> max(Vector<T, N> a, Vector<T, N> b) \
+    { \
+        return simd::max(a, b); \
+    } \
+    \
+    static inline Vector<T, N> max(Vector<T, N> a, Vector<T, N> b, MASK mask) \
+    { \
+        return simd::max(a, b, mask); \
+    } \
+    \
+    static inline Vector<T, N> max(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
+    { \
+        return simd::max(a, b, mask, value); \
+    } \
     \
     static inline Vector<T, N> clamp(Vector<T, N> a, Vector<T, N> low, Vector<T, N> high) \
     { \

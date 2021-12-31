@@ -113,7 +113,7 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    MATH_SIMD_INTEGER_FUNCTIONS(s32, 8);
+    MATH_SIMD_INTEGER_FUNCTIONS(s32, 8, mask32x8);
 
     static inline Vector<s32, 8> unpacklo(Vector<s32, 8> a, Vector<s32, 8> b)
     {
@@ -198,36 +198,6 @@ namespace mango::math
     static inline Vector<s32, 8> hsub(Vector<s32, 8> a, Vector<s32, 8> b)
     {
         return simd::hsub(a, b);
-    }
-
-    static inline Vector<s32, 8> min(Vector<s32, 8> a, Vector<s32, 8> b)
-    {
-        return simd::min(a, b);
-    }
-
-    static inline Vector<s32, 8> min(Vector<s32, 8> a, Vector<s32, 8> b, mask32x8 mask)
-    {
-        return simd::min(a, b, mask);
-    }
-
-    static inline Vector<s32, 8> min(Vector<s32, 8> a, Vector<s32, 8> b, mask32x8 mask, Vector<s32, 8> value)
-    {
-        return simd::min(a, b, mask, value);
-    }
-
-    static inline Vector<s32, 8> max(Vector<s32, 8> a, Vector<s32, 8> b)
-    {
-        return simd::max(a, b);
-    }
-
-    static inline Vector<s32, 8> max(Vector<s32, 8> a, Vector<s32, 8> b, mask32x8 mask)
-    {
-        return simd::max(a, b, mask);
-    }
-
-    static inline Vector<s32, 8> max(Vector<s32, 8> a, Vector<s32, 8> b, mask32x8 mask, Vector<s32, 8> value)
-    {
-        return simd::max(a, b, mask, value);
     }
 
     // ------------------------------------------------------------------
