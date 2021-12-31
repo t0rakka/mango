@@ -32,14 +32,16 @@
 	#define FPNG_X86_OR_X64_CPU (0)
 #endif
 
-#if FPNG_X86_OR_X64_CPU && !FPNG_NO_SSE && defined(__PCLMUL__)
+#if FPNG_X86_OR_X64_CPU && !FPNG_NO_SSE
 	#ifdef _MSC_VER
 		#include <intrin.h>
 	#endif
 	#include <xmmintrin.h>		// SSE
 	#include <emmintrin.h>		// SSE2
 	#include <smmintrin.h>		// SSE4.1
-	#include <wmmintrin.h>		// pclmul
+	#if defined(__PCLMUL__)
+		#include <wmmintrin.h>		// pclmul
+	#endif
 #endif
 
 #ifndef FPNG_NO_STDIO
@@ -108,8 +110,12 @@ namespace fpng
 	template <typename S> static inline S maximum(S a, S b) { return (a > b) ? a : b; }
 	template <typename S> static inline S minimum(S a, S b) { return (a < b) ? a : b; }
 
+#if __BYTE_ORDER == __BIG_ENDIAN
+#if !defined(__GNUC__) && !defined(__clang__)
 	static inline uint32_t simple_swap32(uint32_t x) { return (x >> 24) | ((x >> 8) & 0x0000FF00) | ((x << 8) & 0x00FF0000) | (x << 24); }
+#endif
 	static inline uint64_t simple_swap64(uint64_t x) { return (((uint64_t)simple_swap32((uint32_t)x)) << 32U) | simple_swap32((uint32_t)(x >> 32U)); }
+#endif
 
 	static inline uint32_t swap32(uint32_t x)
 	{
@@ -120,6 +126,7 @@ namespace fpng
 #endif
 	}
 
+#if __BYTE_ORDER == __BIG_ENDIAN
 	static inline uint64_t swap64(uint64_t x)
 	{
 #if defined(__GNUC__) || defined(__clang__)
@@ -128,6 +135,7 @@ namespace fpng
 		return simple_swap64(x);
 #endif
 	}
+#endif
 
 #if FPNG_USE_UNALIGNED_LOADS
 	#if __BYTE_ORDER == __BIG_ENDIAN
@@ -1743,7 +1751,7 @@ do_literals:
 		memset(num_codes, 0, sizeof(num_codes));
 		for (uint32_t i = 0; i < num_syms; i++)
 		{
-			assert(pCode_sizes[i] <= FPNG_DECODER_TABLE_SIZE);
+			//assert(pCode_sizes[i] <= FPNG_DECODER_TABLE_SIZE);
 			num_codes[pCode_sizes[i]]++;
 		}
 
