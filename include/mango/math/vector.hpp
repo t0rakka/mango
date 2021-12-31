@@ -1733,7 +1733,7 @@ namespace mango::math
     };
 
     // ------------------------------------------------------------------
-    // common operators
+    // simd operators
     // ------------------------------------------------------------------
 
 #define MATH_SIMD_FLOAT_OPERATORS(T, N, SIMD) \
