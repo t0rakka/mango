@@ -23,12 +23,12 @@ namespace mango::math
         template <int X, int Y>
         struct ShuffleAccessor2
         {
-			float v[2];
+            float v[2];
 
-			operator Vector<float, 2> () const
-			{
-				return Vector<float, 2>(v[X], v[Y]);
-			}
+            operator Vector<float, 2> () const
+            {
+                return Vector<float, 2>(v[X], v[Y]);
+            }
         };
 
         union
@@ -68,52 +68,52 @@ namespace mango::math
 
         Vector(float s)
         {
-			x = s;
-			y = s;
+            x = s;
+            y = s;
         }
 
         explicit Vector(float s0, float s1)
         {
-			x = s0;
-			y = s1;
+            x = s0;
+            y = s1;
         }
 
         Vector(const Vector& v)
         {
-			x = v.x;
-			y = v.y;
+            x = v.x;
+            y = v.y;
         }
 
 #if 0
         template <int X, int Y>
         Vector(const ShuffleAccessor2<X, Y>& p)
         {
-			const float* v = p.v;
-			x = v[X];
-			y = v[Y];
+            const float* v = p.v;
+            x = v[X];
+            y = v[Y];
         }
 
         template <int X, int Y>
         Vector& operator = (const ShuffleAccessor2<X, Y>& p)
         {
-			const float* v = p.v;
-			x = v[X];
-			y = v[Y];
+            const float* v = p.v;
+            x = v[X];
+            y = v[Y];
             return *this;
         }
 #endif
 
         Vector& operator = (float s)
         {
-			x = s;
-			y = s;
+            x = s;
+            y = s;
             return *this;
         }
 
         Vector& operator = (const Vector& v)
         {
-			x = v.x;
-			y = v.y;
+            x = v.x;
+            y = v.y;
             return *this;
         }
 

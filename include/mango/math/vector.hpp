@@ -183,24 +183,24 @@ namespace mango::math
     }
 
     template <typename T>
-	static inline T sign(T a)
-	{
-		if (a < 0) a = -T(1.0);
-		else if (a > 0) a = T(1.0);
-		return a;
-	}
+    static inline T sign(T a)
+    {
+        if (a < 0) a = -T(1.0);
+        else if (a > 0) a = T(1.0);
+        return a;
+    }
 
     template <typename T>
-	static inline T radians(T a)
-	{
+    static inline T radians(T a)
+    {
         return a * T(0.01745329251);
-	}
+    }
 
     template <typename T>
-	static inline T degrees(T a)
-	{
+    static inline T degrees(T a)
+    {
         return a * T(57.2957795131);
-	}
+    }
 
     // ------------------------------------------------------------------
     // Vector
@@ -831,8 +831,8 @@ namespace mango::math
         return a + (b - a) * factor;
     }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> sign(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> sign(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -840,10 +840,10 @@ namespace mango::math
             temp[i] = sign(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> radians(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> radians(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -851,10 +851,10 @@ namespace mango::math
             temp[i] = radians(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> degrees(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> degrees(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -862,10 +862,10 @@ namespace mango::math
             temp[i] = degrees(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> sin(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> sin(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -873,10 +873,10 @@ namespace mango::math
             temp[i] = sin(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> cos(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> cos(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -884,10 +884,10 @@ namespace mango::math
             temp[i] = cos(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> tan(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> tan(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -895,10 +895,10 @@ namespace mango::math
             temp[i] = tan(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> asin(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> asin(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -906,10 +906,10 @@ namespace mango::math
             temp[i] = asin(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> acos(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> acos(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -917,10 +917,10 @@ namespace mango::math
             temp[i] = acos(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> atan(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> atan(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -928,10 +928,10 @@ namespace mango::math
             temp[i] = atan(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> exp(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> exp(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -939,10 +939,10 @@ namespace mango::math
             temp[i] = exp(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> log(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> log(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -950,10 +950,10 @@ namespace mango::math
             temp[i] = log(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> exp2(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> exp2(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -961,10 +961,10 @@ namespace mango::math
             temp[i] = exp2(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> log2(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> log2(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -972,10 +972,10 @@ namespace mango::math
             temp[i] = log2(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> sqrt(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> sqrt(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -983,10 +983,10 @@ namespace mango::math
             temp[i] = sqrt(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> rsqrt(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> rsqrt(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -994,10 +994,10 @@ namespace mango::math
             temp[i] = ScalarType(1.0f) / sqrt(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> round(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> round(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -1005,10 +1005,10 @@ namespace mango::math
             temp[i] = round(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> floor(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> floor(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -1016,10 +1016,10 @@ namespace mango::math
             temp[i] = floor(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> ceil(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> ceil(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -1027,10 +1027,10 @@ namespace mango::math
             temp[i] = ceil(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> fract(const Vector<ScalarType, VectorSize>& a)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> fract(const Vector<ScalarType, VectorSize>& a)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -1038,10 +1038,10 @@ namespace mango::math
             temp[i] = a[i] - floor(a[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> pow(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> pow(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -1049,10 +1049,10 @@ namespace mango::math
             temp[i] = pow(a[i], b[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> mod(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> mod(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -1060,10 +1060,10 @@ namespace mango::math
             temp[i] = a[i] - b[i] * floor(a[i] / b[i]);
         }
         return temp;
-	}
+    }
 
-	template <typename ScalarType, int VectorSize>
-	static inline const Vector<ScalarType, VectorSize> atan2(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
+    template <typename ScalarType, int VectorSize>
+    static inline const Vector<ScalarType, VectorSize> atan2(const Vector<ScalarType, VectorSize>& a, const Vector<ScalarType, VectorSize>& b)
     {
         Vector<ScalarType, VectorSize> temp;
         for (int i = 0; i < VectorSize; ++i)
@@ -1071,7 +1071,7 @@ namespace mango::math
             temp[i] = atan2(a[i], b[i]);
         }
         return temp;
-	}
+    }
 
     // ------------------------------------------------------------------
     // Vector2 functions
@@ -1254,7 +1254,7 @@ namespace mango::math
         MANGO_UNREFERENCED(source);
 
         // load_low() is not available by default
-		Vector<ScalarType, VectorSize>::undefined_operation();
+        Vector<ScalarType, VectorSize>::undefined_operation();
     }
 
     // ------------------------------------------------------------------

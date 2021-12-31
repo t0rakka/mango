@@ -374,7 +374,7 @@ namespace mango::math
     Vector<float, 16> pow(Vector<float, 16> a, Vector<float, 16> b);
 
     // ------------------------------------------------------------------
-	// bitwise operators
+    // bitwise operators
     // ------------------------------------------------------------------
 
     static inline Vector<float, 16> nand(Vector<float, 16> a, Vector<float, 16> b)

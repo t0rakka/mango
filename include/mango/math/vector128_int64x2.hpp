@@ -220,7 +220,7 @@ namespace mango::math
     }
 
     // ------------------------------------------------------------------
-	// bitwise operators
+    // bitwise operators
     // ------------------------------------------------------------------
 
     static inline Vector<s64, 2> nand(Vector<s64, 2> a, Vector<s64, 2> b)
@@ -249,7 +249,7 @@ namespace mango::math
     }
 
     // ------------------------------------------------------------------
-	// compare / select
+    // compare / select
     // ------------------------------------------------------------------
 
     static inline mask64x2 operator > (Vector<s64, 2> a, Vector<s64, 2> b)
@@ -288,7 +288,7 @@ namespace mango::math
     }
 
     // ------------------------------------------------------------------
-	// shift
+    // shift
     // ------------------------------------------------------------------
 
     static inline Vector<s64, 2> operator << (Vector<s64, 2> a, int b)

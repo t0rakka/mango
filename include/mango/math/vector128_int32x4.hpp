@@ -308,7 +308,7 @@ namespace mango::math
     }
 
     // ------------------------------------------------------------------
-	// bitwise operators
+    // bitwise operators
     // ------------------------------------------------------------------
 
     static inline Vector<s32, 4> nand(Vector<s32, 4> a, Vector<s32, 4> b)
@@ -337,7 +337,7 @@ namespace mango::math
     }
 
     // ------------------------------------------------------------------
-	// compare / select
+    // compare / select
     // ------------------------------------------------------------------
 
     static inline mask32x4 operator > (Vector<s32, 4> a, Vector<s32, 4> b)
@@ -376,7 +376,7 @@ namespace mango::math
     }
 
     // ------------------------------------------------------------------
-	// shift
+    // shift
     // ------------------------------------------------------------------
 
     static inline Vector<s32, 4> operator << (Vector<s32, 4> a, int b)

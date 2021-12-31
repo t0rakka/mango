@@ -424,7 +424,7 @@ namespace mango::math
     */
 
     // ------------------------------------------------------------------
-	// bitwise operators
+    // bitwise operators
     // ------------------------------------------------------------------
 
     static inline Vector<double, 2> nand(Vector<double, 2> a, Vector<double, 2> b)
