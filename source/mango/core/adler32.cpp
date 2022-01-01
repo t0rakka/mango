@@ -142,7 +142,7 @@ namespace mango
         u32 s2 = adler >> 16;
 
         // The NEON loop requires alignment to 16 bytes
-        size_t alignment = size_t((0 - reinterpret_cast<uintptr_t>(address)) & 15);
+        size_t alignment = size_t((0 - reinterpret_cast<uintptr_t>(buffer)) & 15);
 
         alignment = std::min(alignment, length);
         if (alignment)
@@ -172,7 +172,7 @@ namespace mango
 
             // Process n blocks of data. 
             // At most NMAX data bytes can be processed before s2 must be reduced modulo BASE.
-            uint32x4_t v_s2 = (uint32x4_t) { 0, 0, 0, s1 * n };
+            uint32x4_t v_s2 = (uint32x4_t) { 0, 0, 0, s1 * u32(n) };
             uint32x4_t v_s1 = (uint32x4_t) { 0, 0, 0, 0 };
             uint16x8_t v_column_sum_1 = vdupq_n_u16(0);
             uint16x8_t v_column_sum_2 = vdupq_n_u16(0);
