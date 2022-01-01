@@ -33,9 +33,11 @@ void test_crc()
 
     u64 time0 = 0;
     u64 time1 = 0;
+    u64 time2 = 0;
 
     u32 value0 = 0;
     u32 value1 = 0;
+    u32 value2 = 0;
 
     // --------------------------------------------------------------
     // crc32
@@ -101,9 +103,24 @@ void test_crc()
 
     print(value1, 0x1fd9c660);
 
+    // --------------------------------------------------------------
+    // adler32
+    // --------------------------------------------------------------
+
+    {
+        u64 time = Time::us();
+        value2 = mango::adler32(1, buffer);
+        time2 = Time::us() - time;
+    }
+
+    // --------------------------------------------------------------
+    // results
+    // --------------------------------------------------------------
+
     printf("\n");
-    print(buffer, "crc32:  ", time0);
-    print(buffer, "crc32c: ", time1);
+    print(buffer, "crc32:   ", time0);
+    print(buffer, "crc32c:  ", time1);
+    print(buffer, "adler32: ", time2);
 
     printf("\n");
 
