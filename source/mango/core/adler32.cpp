@@ -17,6 +17,10 @@ namespace mango
     static
     u32 adler32_serial(u32 s1, u32 s2, const u8* buffer, size_t length)
     {
+        // WARNING: 
+        // Do not use this to compute long adler sequences as we don't handle modulo.
+        // Good for handling remainder of block loops.
+
         if (length >= 16)
         {
             s2 += (s1 += buffer[0]);
@@ -229,9 +233,7 @@ namespace mango
 
     u32 adler32(u32 adler, ConstMemory memory)
     {
-        u32 s1 = adler & 0xffff;
-        u32 s2 = adler >> 16;
-        return adler32_serial(s1, s2, memory.address, memory.size);
+        return ::adler32_z(adler, memory.address, memory.size);
     }
 
 #endif
