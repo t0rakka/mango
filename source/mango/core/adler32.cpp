@@ -24,12 +24,12 @@ namespace
         constexpr size_t NMAX = 5552; // largest n such that 255n(n+1)/2 + (n+1)(BASE-1) <= 2^32-1
 
         // Split Adler-32 into component sums.
-        uint32_t s1 = adler & 0xffff;
-        uint32_t s2 = adler >> 16;
+        u32 s1 = adler & 0xffff;
+        u32 s2 = adler >> 16;
 
         // Process the data in blocks. 
         const unsigned BLOCK_SIZE = 1 << 5;
-        z_size_t blocks = len / BLOCK_SIZE;
+        size_t blocks = len / BLOCK_SIZE;
         len -= blocks * BLOCK_SIZE;
         while (blocks)
         {
@@ -147,7 +147,7 @@ namespace
 
         // Process the data in blocks.
         const unsigned BLOCK_SIZE = 1 << 5;
-        z_size_t blocks = len / BLOCK_SIZE;
+        size_t blocks = len / BLOCK_SIZE;
         len -= blocks * BLOCK_SIZE;
         while (blocks)
         {
@@ -167,8 +167,8 @@ namespace
             do
             {
                 // Load 32 input bytes.
-                const uint8x16_t bytes1 = vld1q_u8((uint8_t*)(buf));
-                const uint8x16_t bytes2 = vld1q_u8((uint8_t*)(buf + 16));
+                const uint8x16_t bytes1 = vld1q_u8((u8*)(buf));
+                const uint8x16_t bytes2 = vld1q_u8((u8*)(buf + 16));
 
                 // Add previous block byte sum to v_s2.
                 v_s2 = vaddq_u32(v_s2, v_s1);
