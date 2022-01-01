@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -10,7 +10,7 @@ constexpr u64 MB = 1 << 20;
 
 void print(u32 value, u32 reference)
 {
-    printf("    0x%x : %s\n", value, value == reference ? "OK" : "FAILED");
+    printf("    0x%.8x : %s\n", value, value == reference ? "OK" : "FAILED");
 }
 
 void print(const Buffer& buffer, const char* name, u64 time)
@@ -106,6 +106,33 @@ void test_crc()
     // --------------------------------------------------------------
     // adler32
     // --------------------------------------------------------------
+
+    printf("\n");
+    printf("ADLER32 test vectors: \n");
+    printf("\n");
+
+    {
+        const u8 vec0 [] =
+        {
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0,
+        };
+
+        const u8 vec1 [] =
+        {
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+            0x80, 0xff, 0x80, 0xff, 0x80, 0xff, 0x80, 0xff,
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        };
+
+        u32 v0 = mango::adler32(1, ConstMemory(vec0, 32));
+        u32 v1 = mango::adler32(1, ConstMemory(vec1, 32));
+        print(v0, 0x00200001);
+        print(v1, 0xf4531de5);
+    }
 
     {
         u64 time = Time::us();
