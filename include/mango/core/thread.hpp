@@ -74,8 +74,6 @@ namespace mango
         void wait(Queue* queue);
 
     private:
-        static ThreadPool m_static_instance;
-
         struct TaskQueue;
         alignas(64) TaskQueue* m_queues;
 
