@@ -214,6 +214,9 @@ namespace mango::math
         return simd::shuffle<x, y, z, w>(v);
     }
 
+    MATH_SIMD_BITWISE_FUNCTIONS(double, 4);
+    MATH_SIMD_COMPARE_FUNCTIONS(double, 4, mask64x4);
+
     // ------------------------------------------------------------------
     // trigonometric functions
     // ------------------------------------------------------------------
@@ -232,17 +235,5 @@ namespace mango::math
     Vector<double, 4> atan2(Vector<double, 4> a, Vector<double, 4> b);
     Vector<double, 4> pow(Vector<double, 4> a, Vector<double, 4> b);
     */
-
-    // ------------------------------------------------------------------
-    // bitwise operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_BITWISE_FUNCTIONS(double, 4);
-
-    // ------------------------------------------------------------------
-    // compare / select
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_COMPARE_FUNCTIONS(double, 4, mask64x4);
 
 } // namespace mango::math

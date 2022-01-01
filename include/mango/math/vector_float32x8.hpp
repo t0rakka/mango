@@ -129,6 +129,9 @@ namespace mango::math
 
     MATH_SIMD_FLOAT_FUNCTIONS(float, 8, f32x8, mask32x8);
 
+    MATH_SIMD_BITWISE_FUNCTIONS(float, 8);
+    MATH_SIMD_COMPARE_FUNCTIONS(float, 8, mask32x8);
+
     // ------------------------------------------------------------------
     // trigonometric functions
     // ------------------------------------------------------------------
@@ -145,17 +148,5 @@ namespace mango::math
     Vector<float, 8> atan(Vector<float, 8> a);
     Vector<float, 8> atan2(Vector<float, 8> a, Vector<float, 8> b);
     Vector<float, 8> pow(Vector<float, 8> a, Vector<float, 8> b);
-
-    // ------------------------------------------------------------------
-    // bitwise operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_BITWISE_FUNCTIONS(float, 8);
-
-    // ------------------------------------------------------------------
-    // compare / select
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_COMPARE_FUNCTIONS(float, 8, mask32x8);
 
 } // namespace mango::math

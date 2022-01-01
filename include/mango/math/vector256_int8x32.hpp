@@ -122,16 +122,7 @@ namespace mango::math
     MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(s8, 32, mask8x32);
     MATH_SIMD_ABS_INTEGER_FUNCTIONS(s8, 32, mask8x32);
 
-    // ------------------------------------------------------------------
-    // bitwise operators
-    // ------------------------------------------------------------------
-
     MATH_SIMD_BITWISE_FUNCTIONS(s8, 32);
-
-    // ------------------------------------------------------------------
-    // compare / select
-    // ------------------------------------------------------------------
-
     MATH_SIMD_COMPARE_FUNCTIONS(s8, 32, mask8x32);
 
 } // namespace mango::math
