@@ -15,7 +15,7 @@ project(
     ]
 )
 
-mango_version = '0.9.1'
+mango_version = '0.9.2'
 
 if host_machine.system() == 'darwin'
     add_languages('objcpp')
