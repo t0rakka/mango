@@ -11,32 +11,74 @@
 
 #include "../../external/zlib/zlib.h"
 
-namespace
+namespace mango
 {
-    using namespace mango;
+
+    static
+    u32 adler32_serial(u32 s1, u32 s2, const u8* buffer, size_t length)
+    {
+        if (length >= 16)
+        {
+            s2 += (s1 += buffer[0]);
+            s2 += (s1 += buffer[1]);
+            s2 += (s1 += buffer[2]);
+            s2 += (s1 += buffer[3]);
+            s2 += (s1 += buffer[4]);
+            s2 += (s1 += buffer[5]);
+            s2 += (s1 += buffer[6]);
+            s2 += (s1 += buffer[7]);
+            s2 += (s1 += buffer[8]);
+            s2 += (s1 += buffer[9]);
+            s2 += (s1 += buffer[10]);
+            s2 += (s1 += buffer[11]);
+            s2 += (s1 += buffer[12]);
+            s2 += (s1 += buffer[13]);
+            s2 += (s1 += buffer[14]);
+            s2 += (s1 += buffer[15]);
+            length -= 16;
+            buffer += 16;
+        }
+
+        while (length-- > 0)
+        {
+            s2 += (s1 += *buffer++);
+        }
+
+        constexpr size_t BASE = 65521; // largest prime smaller than 65536
+
+        if (s1 >= BASE)
+            s1 -= BASE;
+        s2 %= BASE;
+
+        return s1 | (s2 << 16);
+    }
 
 #if defined(MANGO_ENABLE_SSSE3)
 
-    static inline
-    u32 adler32_ssse3(u32 adler, const u8* buf, size_t len)
+    u32 adler32(u32 adler, ConstMemory memory)
     {
+        const u8* buffer = memory.address;
+        size_t length = memory.size;
+
         constexpr size_t BASE = 65521; // largest prime smaller than 65536
-        constexpr size_t NMAX = 5552; // largest n such that 255n(n+1)/2 + (n+1)(BASE-1) <= 2^32-1
+        constexpr size_t NMAX = 5552;
+        constexpr size_t BLOCK_SIZE = 32;
 
         // Split Adler-32 into component sums.
         u32 s1 = adler & 0xffff;
         u32 s2 = adler >> 16;
 
         // Process the data in blocks. 
-        const unsigned BLOCK_SIZE = 1 << 5;
-        size_t blocks = len / BLOCK_SIZE;
-        len -= blocks * BLOCK_SIZE;
+        size_t blocks = length / BLOCK_SIZE;
+        length -= blocks * BLOCK_SIZE;
+
         while (blocks)
         {
-            unsigned n = NMAX / BLOCK_SIZE;  // The NMAX constraint.
+            size_t n = NMAX / BLOCK_SIZE;  // The NMAX constraint.
             if (n > blocks)
-                n = (unsigned) blocks;
+                n = blocks;
             blocks -= n;
+
             const __m128i tap1 = _mm_setr_epi8(32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17);
             const __m128i tap2 = _mm_setr_epi8(16,15,14,13,12,11,10, 9, 8, 7, 6, 5, 4, 3, 2, 1);
             const __m128i zero = _mm_setr_epi8( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -50,8 +92,8 @@ namespace
             do
             {
                 // Load 32 input bytes. 
-                const __m128i bytes1 = _mm_loadu_si128((__m128i*)(buf));
-                const __m128i bytes2 = _mm_loadu_si128((__m128i*)(buf + 16));
+                const __m128i bytes1 = _mm_loadu_si128((__m128i*)(buffer + 0));
+                const __m128i bytes2 = _mm_loadu_si128((__m128i*)(buffer + 16));
 
                 // Add previous block byte sum to v_ps.
                 v_ps = _mm_add_epi32(v_ps, v_s1);
@@ -64,7 +106,7 @@ namespace
                 v_s1 = _mm_add_epi32(v_s1, _mm_sad_epu8(bytes2, zero));
                 const __m128i mad2 = _mm_maddubs_epi16(bytes2, tap2);
                 v_s2 = _mm_add_epi32(v_s2, _mm_madd_epi16(mad2, ones));
-                buf += BLOCK_SIZE;
+                buffer += BLOCK_SIZE;
             } while (--n);
             v_s2 = _mm_add_epi32(v_s2, _mm_slli_epi32(v_ps, 5));
 
@@ -82,62 +124,34 @@ namespace
         }
 
         // Handle leftover data.
-        if (len)
-        {
-            if (len >= 16)
-            {
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                len -= 16;
-            }
-
-            while (len--)
-            {
-                s2 += (s1 += *buf++);
-            }
-
-            if (s1 >= BASE)
-                s1 -= BASE;
-            s2 %= BASE;
-        }
-
-        // Return the recombined sums.
-        return s1 | (s2 << 16);
+        return adler32_serial(s1, s2, buffer, length);
     }
 
 #elif defined(MANGO_ENABLE_NEON)
 
-    static inline
-    u32 adler32_neon(u32 adler, const u8* buf, size_t len)
+    u32 adler32(u32 adler, ConstMemory memory)
     {
-        constexpr size_t BASE = 65521; // largest prime smaller than 65536
-        constexpr size_t NMAX = 5552; // largest n such that 255n(n+1)/2 + (n+1)(BASE-1) <= 2^32-1
+        const u8* buffer = memory.address;
+        size_t length = memory.size;
 
-        // Split Adler-32 into component sums.
+        constexpr size_t BASE = 65521; // largest prime smaller than 65536
+        constexpr size_t NMAX = 5552;
+        constexpr size_t BLOCK_SIZE = 32;
+
         u32 s1 = adler & 0xffff;
         u32 s2 = adler >> 16;
 
-        // Serially compute s1 & s2, until the data is 16-byte aligned.
-        if ((uintptr_t)buf & 15)
+        // The NEON loop requires alignment to 16 bytes
+        size_t alignment = size_t((0 - reinterpret_cast<uintptr_t>(address)) & 15);
+
+        alignment = std::min(alignment, length);
+        if (alignment)
         {
-            while ((uintptr_t)buf & 15)
+            length -= alignment;
+
+            while (alignment-- > 0)
             {
-                s2 += (s1 += *buf++);
-                --len;
+                s2 += (s1 += *buffer++);
             }
 
             if (s1 >= BASE)
@@ -146,14 +160,14 @@ namespace
         }
 
         // Process the data in blocks.
-        const unsigned BLOCK_SIZE = 1 << 5;
-        size_t blocks = len / BLOCK_SIZE;
-        len -= blocks * BLOCK_SIZE;
+        size_t blocks = length / BLOCK_SIZE;
+        length -= blocks * BLOCK_SIZE;
+
         while (blocks)
         {
-            unsigned n = NMAX / BLOCK_SIZE;  // The NMAX constraint.
+            size_t n = NMAX / BLOCK_SIZE;  // The NMAX constraint.
             if (n > blocks)
-                n = (unsigned) blocks;
+                n = blocks;
             blocks -= n;
 
             // Process n blocks of data. 
@@ -167,8 +181,8 @@ namespace
             do
             {
                 // Load 32 input bytes.
-                const uint8x16_t bytes1 = vld1q_u8((u8*)(buf));
-                const uint8x16_t bytes2 = vld1q_u8((u8*)(buf + 16));
+                const uint8x16_t bytes1 = vld1q_u8((u8*)(buffer + 0));
+                const uint8x16_t bytes2 = vld1q_u8((u8*)(buffer + 16));
 
                 // Add previous block byte sum to v_s2.
                 v_s2 = vaddq_u32(v_s2, v_s1);
@@ -181,7 +195,7 @@ namespace
                 v_column_sum_2 = vaddw_u8(v_column_sum_2, vget_high_u8(bytes1));
                 v_column_sum_3 = vaddw_u8(v_column_sum_3, vget_low_u8 (bytes2));
                 v_column_sum_4 = vaddw_u8(v_column_sum_4, vget_high_u8(bytes2));
-                buf += BLOCK_SIZE;
+                buffer += BLOCK_SIZE;
             } while (--n);
             v_s2 = vshlq_n_u32(v_s2, 5);
 
@@ -208,60 +222,19 @@ namespace
         }
 
         // Handle leftover data.
-        if (len)
-        {
-            if (len >= 16)
-            {
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                s2 += (s1 += *buf++);
-                len -= 16;
-            }
-
-            while (len--)
-            {
-                s2 += (s1 += *buf++);
-            }
-
-            if (s1 >= BASE)
-                s1 -= BASE;
-            s2 %= BASE;
-        }
-
-        // Return the recombined sums.
-        return s1 | (s2 << 16);
+        return adler32_serial(s1, s2, buffer, length);
     }
 
-#endif
-
-} // namespace
-
-namespace mango
-{
+#else
 
     u32 adler32(u32 adler, ConstMemory memory)
     {
-#if defined(MANGO_ENABLE_SSSE3)
-        return adler32_ssse3(adler, memory.address, memory.size);
-#elif defined(MANGO_ENABLE_NEON)
-        return adler32_neon(adler, memory.address, memory.size);
-#else
-        return ::adler32_z(adler, memory.address, memory.size);
-#endif
+        u32 s1 = adler & 0xffff;
+        u32 s2 = adler >> 16;
+        return adler32_serial(s1, s2, memory.address, memory.size);
     }
+
+#endif
 
     u32 adler32_combine(u32 adler0, u32 adler1, size_t length1)
     {
