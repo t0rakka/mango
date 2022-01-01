@@ -5,15 +5,38 @@
 #include <mango/core/system.hpp>
 #include <mango/core/cpuinfo.hpp>
 #include <mango/core/thread.hpp>
+#include <mango/core/timer.hpp>
 #include <mango/simd/simd.hpp>
 #include <sstream>
 
 namespace mango
 {
 
-	// ----------------------------------------------------------------------------
-	// getSystemInfo()
-	// ----------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
+    // getSystemContext()
+    // ----------------------------------------------------------------------------
+
+    Context::Context()
+        : thread_pool(ThreadPool::getHardwareConcurrency())
+        , timer()
+        , debug_print_enable(false)
+    {
+    }
+
+    Context::~Context()
+    {
+    }
+
+    static Context g_context;
+
+    const Context& getSystemContext()
+    {
+        return g_context;
+    }
+
+    // ----------------------------------------------------------------------------
+    // getPlatformInfo()
+    // ----------------------------------------------------------------------------
 
     std::string getPlatformInfo()
     {
@@ -36,6 +59,10 @@ namespace mango
 
         return info.str();
     }
+
+    // ----------------------------------------------------------------------------
+    // getSystemInfo()
+    // ----------------------------------------------------------------------------
 
     std::string getSystemInfo()
     {
@@ -196,25 +223,23 @@ namespace mango
         return info.str();
     }
 
-	// ----------------------------------------------------------------------------
-	// debugPrint()
-	// ----------------------------------------------------------------------------
-
-    static bool g_debug_print_enable = false;
+    // ----------------------------------------------------------------------------
+    // debugPrint()
+    // ----------------------------------------------------------------------------
 
     bool debugPrintIsEnable()
     {
-        return g_debug_print_enable;
+        return g_context.debug_print_enable;
     }
 
     void debugPrintEnable(bool enable)
     {
-        g_debug_print_enable = enable;
+        g_context.debug_print_enable = enable;
     }
 
     void debugPrint(const char* format, ...)
     {
-        if (g_debug_print_enable)
+        if (g_context.debug_print_enable)
         {
             va_list args;
             va_start(args, format);
@@ -224,9 +249,9 @@ namespace mango
         }
     }
 
-	// ----------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     // Status
-	// ----------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
 
     Status::operator bool () const
     {
@@ -253,9 +278,9 @@ namespace mango
         success = false;
     }
 
-	// ----------------------------------------------------------------------------
-	// Exception
-	// ----------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
+    // Exception
+    // ----------------------------------------------------------------------------
 
     Exception::Exception(const std::string message, const std::string func, const std::string file, int line)
         : m_message(message)

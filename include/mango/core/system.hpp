@@ -6,9 +6,23 @@
 
 #include <string>
 #include <mango/core/configure.hpp>
+#include <mango/core/thread.hpp>
+#include <mango/core/timer.hpp>
 
 namespace mango
 {
+
+    struct Context
+    {
+        mutable ThreadPool thread_pool;
+        Timer timer;
+        bool debug_print_enable;
+
+        Context();
+        ~Context();
+    };
+
+    const Context& getSystemContext();
 
     std::string getPlatformInfo();
     std::string getSystemInfo();
