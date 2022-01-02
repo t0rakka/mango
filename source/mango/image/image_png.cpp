@@ -3170,17 +3170,7 @@ namespace
             const int N = ceil_div(surface.height, segment_height);
             const int level = math::clamp(options.compression, 0, 9);
 
-            // TODO: This isn't needed anymore now that we switched to ticket queue
-            //       for serialization. We could just capture the compressed buffer.
-            struct Segment
-            {
-                Buffer compressed;
-                u32 adler;
-                u32 length;
-            };
-            std::vector<Segment> segments(N);
-
-            u32 adler = 1;
+            u32 cumulative_adler = 1;
 
             ConcurrentQueue q;
             TicketQueue tk;
@@ -3197,11 +3187,9 @@ namespace
                 bool is_first = (i == 0);
                 bool is_last = (i == N - 1);
 
-                Segment& segment = segments[i];
-
                 auto ticket = tk.acquire();
 
-                q.enqueue([=, &segment, &surface, &stream, &adler]
+                q.enqueue([=, &surface, &stream, &cumulative_adler]
                 {
                     filter_range(source.address, surface, y, y + h);
 
@@ -3219,6 +3207,8 @@ namespace
 
                     ::deflateInit(&strm, level);
 
+                    Buffer compressed;
+
                     while (strm.avail_in != 0)
                     {
                         int res = ::deflate(&strm, Z_NO_FLUSH);
@@ -3226,13 +3216,13 @@ namespace
 
                         if (strm.avail_out == 0)
                         {
-                            segment.compressed.append(temp, SIZE);
+                            compressed.append(temp, SIZE);
                             strm.next_out = temp;
                             strm.avail_out = SIZE;
                         }
                     }
 
-                    segment.compressed.append(temp, SIZE - strm.avail_out);
+                    compressed.append(temp, SIZE - strm.avail_out);
                     strm.next_out = temp;
                     strm.avail_out = SIZE;
 
@@ -3240,23 +3230,27 @@ namespace
                     int res = ::deflate(&strm, flush);
                     MANGO_UNREFERENCED(res); // should be Z_STREAM_END
 
-                    segment.compressed.append(temp, SIZE - strm.avail_out);
-                    segment.adler = strm.adler;
-                    segment.length = u32(source.size);
-
                     ::deflateEnd(&strm);
 
-                    ticket.consume([=, &segment, &adler, &stream]
-                    {
-                        adler = ::adler32_combine(adler, segment.adler, segment.length);
+                    compressed.append(temp, SIZE - strm.avail_out);
 
-                        Memory c = segment.compressed;
+                    // capture compressed memory
+                    Memory segment_memory = compressed.release();
+
+                    u32 segment_adler = strm.adler;
+                    u32 segment_length = u32(source.size);
+
+                    ticket.consume([=, &cumulative_adler, &stream]
+                    {
+                        cumulative_adler = ::adler32_combine(cumulative_adler, segment_adler, segment_length);
+
+                        Memory c = segment_memory;
 
                         if (is_last)
                         {
                             // 4 last bytes is adler, overwrite it with cumulative adler
                             BigEndianPointer p = c.address + c.size - 4;
-                            p.write32(adler);
+                            p.write32(cumulative_adler);
                         }
 
                         if (!is_first)
@@ -3269,8 +3263,8 @@ namespace
                         // write chunkdID + compressed data
                         write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), c);
 
-                        // free compressed memory as soon as it is consumed
-                        segment.compressed.reset();
+                        // free compressed memory
+                        Buffer::free(segment_memory);
                     });
                 });
             }

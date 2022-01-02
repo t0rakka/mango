@@ -148,6 +148,21 @@ namespace mango
         m_memory.size += bytes;
     }
 
+    Memory Buffer::release()
+    {
+        Memory memory = m_memory;
+
+        m_memory = Memory();
+        m_capacity = 0;
+
+        return memory;
+    }
+
+    void Buffer::free(Memory memory)
+    {
+        aligned_free(memory.address);
+    }
+
     u8* Buffer::allocate(size_t bytes, Alignment alignment) const
     {
         void* ptr = aligned_malloc(bytes, alignment);
