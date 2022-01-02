@@ -21,43 +21,50 @@ namespace mango
         // Do not use this to compute long adler sequences as we don't handle modulo.
         // Good for handling remainder of block loops.
 
-        if (length >= 16)
+        if (length)
         {
-            s2 += (s1 += buffer[0]);
-            s2 += (s1 += buffer[1]);
-            s2 += (s1 += buffer[2]);
-            s2 += (s1 += buffer[3]);
-            s2 += (s1 += buffer[4]);
-            s2 += (s1 += buffer[5]);
-            s2 += (s1 += buffer[6]);
-            s2 += (s1 += buffer[7]);
-            s2 += (s1 += buffer[8]);
-            s2 += (s1 += buffer[9]);
-            s2 += (s1 += buffer[10]);
-            s2 += (s1 += buffer[11]);
-            s2 += (s1 += buffer[12]);
-            s2 += (s1 += buffer[13]);
-            s2 += (s1 += buffer[14]);
-            s2 += (s1 += buffer[15]);
-            length -= 16;
-            buffer += 16;
+            if (length >= 16)
+            {
+                s2 += (s1 += buffer[0]);
+                s2 += (s1 += buffer[1]);
+                s2 += (s1 += buffer[2]);
+                s2 += (s1 += buffer[3]);
+                s2 += (s1 += buffer[4]);
+                s2 += (s1 += buffer[5]);
+                s2 += (s1 += buffer[6]);
+                s2 += (s1 += buffer[7]);
+                s2 += (s1 += buffer[8]);
+                s2 += (s1 += buffer[9]);
+                s2 += (s1 += buffer[10]);
+                s2 += (s1 += buffer[11]);
+                s2 += (s1 += buffer[12]);
+                s2 += (s1 += buffer[13]);
+                s2 += (s1 += buffer[14]);
+                s2 += (s1 += buffer[15]);
+                length -= 16;
+                buffer += 16;
+            }
+
+            while (length-- > 0)
+            {
+                s2 += (s1 += *buffer++);
+            }
+
+            constexpr size_t BASE = 65521; // largest prime smaller than 65536
+
+            if (s1 >= BASE)
+                s1 -= BASE;
+            s2 %= BASE;
         }
-
-        while (length-- > 0)
-        {
-            s2 += (s1 += *buffer++);
-        }
-
-        constexpr size_t BASE = 65521; // largest prime smaller than 65536
-
-        if (s1 >= BASE)
-            s1 -= BASE;
-        s2 %= BASE;
 
         return s1 | (s2 << 16);
     }
 
 #if defined(MANGO_ENABLE_SSSE3)
+
+    // ----------------------------------------------------------------------------------------
+    // Intel SSSE3 adler32
+    // ----------------------------------------------------------------------------------------
 
     u32 adler32(u32 adler, ConstMemory memory)
     {
@@ -90,7 +97,7 @@ namespace mango
 
             // Process n blocks of data. 
             // At most NMAX data bytes can be processed before s2 must be reduced modulo BASE.
-            __m128i v_ps = _mm_set_epi32(0, 0, 0, s1 * n);
+            __m128i v_ps = _mm_set_epi32(0, 0, 0, s1 * u32(n));
             __m128i v_s2 = _mm_set_epi32(0, 0, 0, s2);
             __m128i v_s1 = _mm_set_epi32(0, 0, 0, 0);
             do
@@ -132,6 +139,10 @@ namespace mango
     }
 
 #elif defined(MANGO_ENABLE_NEON)
+
+    // ----------------------------------------------------------------------------------------
+    // ARM NEON adler32
+    // ----------------------------------------------------------------------------------------
 
     u32 adler32(u32 adler, ConstMemory memory)
     {
