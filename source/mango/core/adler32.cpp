@@ -21,7 +21,7 @@ namespace mango
 
         if (length)
         {
-            if (length >= 16)
+            while (length >= 16)
             {
                 s2 += (s1 += buffer[0]);
                 s2 += (s1 += buffer[1]);
