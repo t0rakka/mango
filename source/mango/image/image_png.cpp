@@ -3235,7 +3235,7 @@ namespace
                     compressed.append(temp, SIZE - strm.avail_out);
 
                     // capture compressed memory
-                    Memory segment_memory = compressed.release();
+                    Memory segment_memory = compressed.acquire();
 
                     u32 segment_adler = strm.adler;
                     u32 segment_length = u32(source.size);
@@ -3264,7 +3264,7 @@ namespace
                         write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), c);
 
                         // free compressed memory
-                        Buffer::free(segment_memory);
+                        Buffer::release(segment_memory);
                     });
                 });
             }

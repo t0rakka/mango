@@ -43,8 +43,8 @@ namespace mango
         void reserve(size_t bytes);
         void append(const void* source, size_t bytes);
 
-        [[nodiscard]] Memory release();
-        static void free(Memory memory);
+        [[nodiscard]] Memory acquire();
+        static void release(Memory memory);
 
     private:
         u8* allocate(size_t bytes, Alignment alignment) const;

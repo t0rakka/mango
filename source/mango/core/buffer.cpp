@@ -148,7 +148,7 @@ namespace mango
         m_memory.size += bytes;
     }
 
-    Memory Buffer::release()
+    Memory Buffer::acquire()
     {
         Memory memory = m_memory;
 
@@ -158,7 +158,7 @@ namespace mango
         return memory;
     }
 
-    void Buffer::free(Memory memory)
+    void Buffer::release(Memory memory)
     {
         aligned_free(memory.address);
     }
