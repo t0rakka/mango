@@ -98,7 +98,8 @@ namespace mango
             __m128i v_ps = _mm_set_epi32(0, 0, 0, s1 * u32(n));
             __m128i v_s2 = _mm_set_epi32(0, 0, 0, s2);
             __m128i v_s1 = _mm_set_epi32(0, 0, 0, 0);
-            do
+
+            while (n-- > 0)
             {
                 // Load 32 input bytes. 
                 const __m128i bytes1 = _mm_loadu_si128((__m128i*)(buffer + 0));
@@ -116,7 +117,7 @@ namespace mango
                 const __m128i mad2 = _mm_maddubs_epi16(bytes2, tap2);
                 v_s2 = _mm_add_epi32(v_s2, _mm_madd_epi16(mad2, ones));
                 buffer += BLOCK_SIZE;
-            } while (--n);
+            }
             v_s2 = _mm_add_epi32(v_s2, _mm_slli_epi32(v_ps, 5));
 
             // Sum epi32 ints v_s1(s2) and accumulate in s1(s2).
@@ -191,7 +192,8 @@ namespace mango
             uint16x8_t v_column_sum_2 = vdupq_n_u16(0);
             uint16x8_t v_column_sum_3 = vdupq_n_u16(0);
             uint16x8_t v_column_sum_4 = vdupq_n_u16(0);
-            do
+
+            while (n-- > 0)
             {
                 // Load 32 input bytes.
                 const uint8x16_t bytes1 = vld1q_u8((u8*)(buffer + 0));
@@ -209,7 +211,7 @@ namespace mango
                 v_column_sum_3 = vaddw_u8(v_column_sum_3, vget_low_u8 (bytes2));
                 v_column_sum_4 = vaddw_u8(v_column_sum_4, vget_high_u8(bytes2));
                 buffer += BLOCK_SIZE;
-            } while (--n);
+            }
             v_s2 = vshlq_n_u32(v_s2, 5);
 
             // Multiply-add bytes by [ 32, 31, 30, ... ] for s2.
