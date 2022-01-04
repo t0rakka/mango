@@ -3161,9 +3161,9 @@ namespace
     void write_IDAT(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
     {
         const int bpp = surface.format.bytes();
-        const int bytes_per_scan = surface.width * bpp;
+        const int bytes_per_scan = surface.width * bpp + 1;
 
-        Buffer buffer((bytes_per_scan + 1) * surface.height);
+        Buffer buffer(bytes_per_scan * surface.height);
 
         if (segment_height)
         {
@@ -3181,8 +3181,8 @@ namespace
                 int h = std::min(segment_height, surface.height - y);
 
                 Memory source;
-                source.address = buffer.data() + y * (bytes_per_scan + 1);
-                source.size = h * (bytes_per_scan + 1);
+                source.address = buffer.data() + y * bytes_per_scan;
+                source.size = h * bytes_per_scan;
 
                 bool is_first = (i == 0);
                 bool is_last = (i == N - 1);
