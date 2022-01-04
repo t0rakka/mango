@@ -422,7 +422,42 @@ void load_fpng(Memory memory)
     u32 channels;
     std::vector<u8> data;
     int x = fpng::fpng_decode_memory(memory.address, memory.size, data, width, height, channels, 4);
-    MANGO_UNREFERENCED(x); // TODO: handle the status code
+
+    const char* error = nullptr;
+    switch (x)
+    {
+        case fpng::FPNG_DECODE_SUCCESS:
+            break;
+        case fpng::FPNG_DECODE_NOT_FPNG:
+            error = "FPNG_DECODE_NOT_FPNG";
+            break;
+        case fpng::FPNG_DECODE_INVALID_ARG:
+            error = "FPNG_DECODE_INVALID_ARG";
+            break;
+        case fpng::FPNG_DECODE_FAILED_NOT_PNG:
+            error = "FPNG_DECODE_FAILED_NOT_PNG";
+            break;
+        case fpng::FPNG_DECODE_FAILED_HEADER_CRC32:
+            error = "FPNG_DECODE_FAILED_HEADER_CRC32";
+            break;
+        case fpng::FPNG_DECODE_FAILED_INVALID_DIMENSIONS:
+            error = "FPNG_DECODE_FAILED_INVALID_DIMENSIONS";
+            break;
+        case fpng::FPNG_DECODE_FAILED_DIMENSIONS_TOO_LARGE:
+            error = "FPNG_DECODE_FAILED_DIMENSIONS_TOO_LARGE";
+            break;
+        case fpng::FPNG_DECODE_FAILED_CHUNK_PARSING:
+            error = "FPNG_DECODE_FAILED_CHUNK_PARSING";
+            break;
+        case fpng::FPNG_DECODE_FAILED_INVALID_IDAT:
+            error = "FPNG_DECODE_FAILED_INVALID_IDAT";
+            break;
+    }
+
+    if (error)
+    {
+        printf("%s\n", error);
+    }
 }
 
 #endif // 0
