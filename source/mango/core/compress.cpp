@@ -1125,7 +1125,7 @@ namespace deflate_zlib
         const char* error = deflate::get_error_string(result);
         if (error)
         {
-            status.setError("[zlib] %s.", error);
+            status.setError("[deflate_zlib] %s.", error);
         }
 
         status.size = bytes_out;
@@ -1173,7 +1173,7 @@ namespace deflate_gzip
         const char* error = deflate::get_error_string(result);
         if (error)
         {
-            status.setError("[gzip] %s.", error);
+            status.setError("[deflate_gzip] %s.", error);
         }
 
         status.size = bytes_out;
