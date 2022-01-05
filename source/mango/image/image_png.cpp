@@ -3158,133 +3158,136 @@ namespace
         }
     }
 
-    void write_IDAT(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
+    void compress_serial_libdeflate(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
     {
         const int bpp = surface.format.bytes();
         const int bytes_per_scan = surface.width * bpp + 1;
 
         Buffer buffer(bytes_per_scan * surface.height);
 
-        if (segment_height)
+        // filtering
+        filter_range(buffer, surface, 0, surface.height);
+
+        // compress
+        size_t bound = deflate_zlib::bound(buffer.size());
+        Buffer compressed(bound);
+        size_t bytes_out = deflate_zlib::compress(compressed, buffer, options.compression);
+
+        // write chunkdID + compressed data
+        write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
+    }
+
+    void compress_parallel_zlib(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
+    {
+        const int bpp = surface.format.bytes();
+        const int bytes_per_scan = surface.width * bpp + 1;
+
+        Buffer buffer(bytes_per_scan * surface.height);
+
+        const int N = ceil_div(surface.height, segment_height);
+        const int level = math::clamp(options.compression, 0, 9);
+
+        u32 cumulative_adler = 1;
+
+        ConcurrentQueue q;
+        TicketQueue tk;
+
+        for (int i = 0; i < N; ++i)
         {
-            const int N = ceil_div(surface.height, segment_height);
-            const int level = math::clamp(options.compression, 0, 9);
+            int y = i * segment_height;
+            int h = std::min(segment_height, surface.height - y);
 
-            u32 cumulative_adler = 1;
+            Memory source;
+            source.address = buffer.data() + y * bytes_per_scan;
+            source.size = h * bytes_per_scan;
 
-            ConcurrentQueue q;
-            TicketQueue tk;
+            bool is_first = (i == 0);
+            bool is_last = (i == N - 1);
 
-            for (int i = 0; i < N; ++i)
+            auto ticket = tk.acquire();
+
+            q.enqueue([=, &surface, &stream, &cumulative_adler]
             {
-                int y = i * segment_height;
-                int h = std::min(segment_height, surface.height - y);
+                filter_range(source.address, surface, y, y + h);
 
-                Memory source;
-                source.address = buffer.data() + y * bytes_per_scan;
-                source.size = h * bytes_per_scan;
+                constexpr size_t SIZE = 128 * 1024;
+                u8 temp[SIZE];
 
-                bool is_first = (i == 0);
-                bool is_last = (i == N - 1);
+                z_stream strm;
 
-                auto ticket = tk.acquire();
+                strm.zalloc = 0;
+                strm.zfree = 0;
+                strm.next_in = source.address;
+                strm.avail_in = uInt(source.size);
+                strm.next_out = temp;
+                strm.avail_out = SIZE;
 
-                q.enqueue([=, &surface, &stream, &cumulative_adler]
+                ::deflateInit(&strm, level);
+
+                Buffer compressed;
+
+                while (strm.avail_in != 0)
                 {
-                    filter_range(source.address, surface, y, y + h);
+                    int res = ::deflate(&strm, Z_NO_FLUSH);
+                    MANGO_UNREFERENCED(res); // should be Z_OK
 
-                    constexpr size_t SIZE = 128 * 1024;
-                    u8 temp[SIZE];
-
-                    z_stream strm;
-
-                    strm.zalloc = 0;
-                    strm.zfree = 0;
-                    strm.next_in = source.address;
-                    strm.avail_in = uInt(source.size);
-                    strm.next_out = temp;
-                    strm.avail_out = SIZE;
-
-                    ::deflateInit(&strm, level);
-
-                    Buffer compressed;
-
-                    while (strm.avail_in != 0)
+                    if (strm.avail_out == 0)
                     {
-                        int res = ::deflate(&strm, Z_NO_FLUSH);
-                        MANGO_UNREFERENCED(res); // should be Z_OK
+                        compressed.append(temp, SIZE);
+                        strm.next_out = temp;
+                        strm.avail_out = SIZE;
+                    }
+                }
 
-                        if (strm.avail_out == 0)
-                        {
-                            compressed.append(temp, SIZE);
-                            strm.next_out = temp;
-                            strm.avail_out = SIZE;
-                        }
+                compressed.append(temp, SIZE - strm.avail_out);
+                strm.next_out = temp;
+                strm.avail_out = SIZE;
+
+                int flush = is_last ? Z_FINISH : Z_FULL_FLUSH;
+                int res = ::deflate(&strm, flush);
+                MANGO_UNREFERENCED(res); // should be Z_STREAM_END
+
+                ::deflateEnd(&strm);
+
+                compressed.append(temp, SIZE - strm.avail_out);
+
+                // capture compressed memory
+                Memory segment_memory = compressed.acquire();
+
+                u32 segment_adler = strm.adler;
+                u32 segment_length = u32(source.size);
+
+                ticket.consume([=, &cumulative_adler, &stream]
+                {
+                    cumulative_adler = ::adler32_combine(cumulative_adler, segment_adler, segment_length);
+
+                    Memory c = segment_memory;
+
+                    if (!is_first)
+                    {
+                        // trim zlib header
+                        c.address += 2;
+                        c.size -= 2;
                     }
 
-                    compressed.append(temp, SIZE - strm.avail_out);
-                    strm.next_out = temp;
-                    strm.avail_out = SIZE;
-
-                    int flush = is_last ? Z_FINISH : Z_FULL_FLUSH;
-                    int res = ::deflate(&strm, flush);
-                    MANGO_UNREFERENCED(res); // should be Z_STREAM_END
-
-                    ::deflateEnd(&strm);
-
-                    compressed.append(temp, SIZE - strm.avail_out);
-
-                    // capture compressed memory
-                    Memory segment_memory = compressed.acquire();
-
-                    u32 segment_adler = strm.adler;
-                    u32 segment_length = u32(source.size);
-
-                    ticket.consume([=, &cumulative_adler, &stream]
+                    if (is_last)
                     {
-                        cumulative_adler = ::adler32_combine(cumulative_adler, segment_adler, segment_length);
+                        // 4 last bytes is adler, overwrite it with cumulative adler
+                        BigEndianPointer p = c.address + c.size - 4;
+                        p.write32(cumulative_adler);
+                    }
 
-                        Memory c = segment_memory;
+                    // write chunkdID + compressed data
+                    write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), c);
 
-                        if (is_last)
-                        {
-                            // 4 last bytes is adler, overwrite it with cumulative adler
-                            BigEndianPointer p = c.address + c.size - 4;
-                            p.write32(cumulative_adler);
-                        }
-
-                        if (!is_first)
-                        {
-                            // trim zlib header
-                            c.address += 2;
-                            c.size -= 2;
-                        }
-
-                        // write chunkdID + compressed data
-                        write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), c);
-
-                        // free compressed memory
-                        Buffer::release(segment_memory);
-                    });
+                    // free compressed memory
+                    Buffer::release(segment_memory);
                 });
-            }
-
-            q.wait();
-            tk.wait();
+            });
         }
-        else
-        {
-            // filtering
-            filter_range(buffer, surface, 0, surface.height);
 
-            // compress
-            size_t bound = deflate_zlib::bound(buffer.size());
-            Buffer compressed(bound);
-            size_t bytes_out = deflate_zlib::compress(compressed, buffer, options.compression);
-
-            // write chunkdID + compressed data
-            write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
-        }
+        q.wait();
+        tk.wait();
     }
 
     int configure_segment(const Surface& surface, const ImageEncodeOptions& options)
@@ -3322,8 +3325,12 @@ namespace
         if (segment_height)
         {
             write_pLLD(stream, segment_height);
+            compress_parallel_zlib(stream, surface, segment_height, options);
         }
-        write_IDAT(stream, surface, segment_height, options);
+        else
+        {
+            compress_serial_libdeflate(stream, surface, segment_height, options);
+        }
 
         // write IEND
         s.write32(0);
