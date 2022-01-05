@@ -5,9 +5,14 @@
 #include <stdint.h>
 #include <vector>
 
+#ifndef FPNG_TRAIN_HUFFMAN_TABLES
+	// Set to 1 when using the -t (training) option in fpng_test to generate new opaque/alpha Huffman tables for the single pass encoder.
+	#define FPNG_TRAIN_HUFFMAN_TABLES (0)
+#endif
+
 namespace fpng
 {
-	// ---- Library initialization - call once to identify if the process supports SSE.
+	// ---- Library initialization - call once to identify if the processor supports SSE.
 	// Otherwise you'll only get scalar fallbacks.
 	void fpng_init();
 
@@ -23,7 +28,7 @@ namespace fpng
 
 	// Fast Adler32 SSE4.1 Adler-32 with a scalar fallback.
 	const uint32_t FPNG_ADLER32_INIT = 1;
-	uint32_t fpng_adler32(const uint8_t* ptr, size_t buf_len, uint32_t adler = FPNG_ADLER32_INIT);
+	uint32_t fpng_adler32(const void* pData, size_t size, uint32_t adler = FPNG_ADLER32_INIT);
 
 	// ---- Compression
 	enum
@@ -104,6 +109,14 @@ namespace fpng
 
 #ifndef FPNG_NO_STDIO
 	int fpng_decode_file(const char* pFilename, std::vector<uint8_t>& out, uint32_t& width, uint32_t& height, uint32_t& channels_in_file, uint32_t desired_channels);
+#endif
+
+	// ---- Internal API used for Huffman table training purposes
+
+#if FPNG_TRAIN_HUFFMAN_TABLES
+	const uint32_t HUFF_COUNTS_SIZE = 288;
+	extern uint64_t g_huff_counts[HUFF_COUNTS_SIZE];
+	bool create_dynamic_block_prefix(uint64_t* pFreq, uint32_t num_chans, std::vector<uint8_t>& prefix, uint64_t& bit_buf, int& bit_buf_size, uint32_t *pCodes, uint8_t *pCodesizes);
 #endif
 
 } // namespace fpng
