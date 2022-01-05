@@ -9,16 +9,15 @@
 */
 #include <mango/core/adler32.hpp>
 
-#include "../../external/zlib/zlib.h"
-
 namespace mango
 {
 
-    static
-    u32 adler32_serial(u32 s1, u32 s2, const u8* buffer, size_t length)
-    {
-        // WARNING: Do not use this to compute long adler sequences as we don't handle modulo.
+    constexpr size_t BASE = 65521; // largest prime smaller than 65536
+    constexpr size_t NMAX = 5552;
 
+    static
+    u32 adler32_remainder(u32 s1, u32 s2, const u8* buffer, size_t length)
+    {
         if (length)
         {
             while (length >= 16)
@@ -48,10 +47,7 @@ namespace mango
                 s2 += (s1 += *buffer++);
             }
 
-            constexpr size_t BASE = 65521; // largest prime smaller than 65536
-
-            if (s1 >= BASE)
-                s1 -= BASE;
+            s1 %= BASE;
             s2 %= BASE;
         }
 
@@ -69,8 +65,6 @@ namespace mango
         const u8* buffer = memory.address;
         size_t length = memory.size;
 
-        constexpr size_t BASE = 65521; // largest prime smaller than 65536
-        constexpr size_t NMAX = 5552;
         constexpr size_t BLOCK_SIZE = 32;
 
         // Split Adler-32 into component sums.
@@ -134,7 +128,7 @@ namespace mango
         }
 
         // Handle leftover data.
-        return adler32_serial(s1, s2, buffer, length);
+        return adler32_remainder(s1, s2, buffer, length);
     }
 
 #elif defined(MANGO_ENABLE_NEON)
@@ -148,8 +142,6 @@ namespace mango
         const u8* buffer = memory.address;
         size_t length = memory.size;
 
-        constexpr size_t BASE = 65521; // largest prime smaller than 65536
-        constexpr size_t NMAX = 5552;
         constexpr size_t BLOCK_SIZE = 32;
 
         u32 s1 = adler & 0xffff;
@@ -179,7 +171,7 @@ namespace mango
 
         while (blocks)
         {
-            size_t n = NMAX / BLOCK_SIZE;  // The NMAX constraint.
+            size_t n = NMAX / BLOCK_SIZE;
             if (n > blocks)
                 n = blocks;
             blocks -= n;
@@ -237,21 +229,72 @@ namespace mango
         }
 
         // Handle leftover data.
-        return adler32_serial(s1, s2, buffer, length);
+        return adler32_remainder(s1, s2, buffer, length);
     }
 
 #else
 
     u32 adler32(u32 adler, ConstMemory memory)
     {
-        return ::adler32_z(adler, memory.address, memory.size);
+        u32 s1 = adler & 0xffff;
+        u32 s2 = adler >> 16;
+
+        const u8* buffer = memory.address;
+        size_t length = memory.size;
+
+        while (length >= NMAX)
+        {
+            length -= NMAX;
+            size_t n = NMAX / 16;
+
+            while (n-- > 0)
+            {
+                s2 += (s1 += buffer[0]);
+                s2 += (s1 += buffer[1]);
+                s2 += (s1 += buffer[2]);
+                s2 += (s1 += buffer[3]);
+                s2 += (s1 += buffer[4]);
+                s2 += (s1 += buffer[5]);
+                s2 += (s1 += buffer[6]);
+                s2 += (s1 += buffer[7]);
+                s2 += (s1 += buffer[8]);
+                s2 += (s1 += buffer[9]);
+                s2 += (s1 += buffer[10]);
+                s2 += (s1 += buffer[11]);
+                s2 += (s1 += buffer[12]);
+                s2 += (s1 += buffer[13]);
+                s2 += (s1 += buffer[14]);
+                s2 += (s1 += buffer[15]);
+                buffer += 16;
+            }
+
+            s1 %= BASE;
+            s2 %= BASE;
+        }
+
+        return adler32_remainder(s1, s2, buffer, length);
     }
 
 #endif
 
     u32 adler32_combine(u32 adler0, u32 adler1, size_t length1)
     {
-        return ::adler32_combine(adler0, adler1, z_off_t(length1));
+        length1 %= BASE;
+
+        u32 rem = u32(length1);
+        u32 sum1 = adler0 & 0xffff;
+        u32 sum2 = rem * sum1;
+
+        sum2 %= BASE;
+        sum1 += (adler1 & 0xffff) + BASE - 1;
+        sum2 += ((adler0 >> 16) & 0xffff) + ((adler1 >> 16) & 0xffff) + BASE - rem;
+
+        if (sum1 >= BASE) sum1 -= BASE;
+        if (sum1 >= BASE) sum1 -= BASE;
+        if (sum2 >= (BASE << 1)) sum2 -= (BASE << 1);
+        if (sum2 >= BASE) sum2 -= BASE;
+
+        return sum1 | (sum2 << 16);
     }
 
 } // namespace mango
