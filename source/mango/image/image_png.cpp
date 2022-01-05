@@ -55,58 +55,37 @@ namespace fpng
     static const uint32_t g_bitmasks[17] = { 0x0000, 0x0001, 0x0003, 0x0007, 0x000F, 0x001F, 0x003F, 0x007F, 0x00FF, 0x01FF, 0x03FF, 0x07FF, 0x0FFF, 0x1FFF, 0x3FFF, 0x7FFF, 0xFFFF };
 
     /*
-    static const uint8_t g_dyn_huff_3[] = { 120, 1, 229, 194, 3, 176, 37, 75, 148, 5, 208, 189, 79, 102, 86, 213, 197, 99, 187, 231, 143, 109, 219, 182, 109, 219, 182, 109, 219, 182, 109, 219,
-        198, 31, 207, 159, 118, 63, 94, 84, 85, 102, 158, 61, 21, 241, 34, 58, 38, 198, 102, 196 };
-    const uint32_t DYN_HUFF_3_BITBUF = 0x2, DYN_HUFF_3_BITBUF_SIZE = 3;
-    */
-    /*
-    static const struct { uint8_t m_code_size; uint16_t m_code; } g_dyn_huff_3_codes[288] =
-    {
-        {3,0x0},{3,0x4},{4,0x6},{5,0x1},{5,0x11},{5,0x9},{6,0xD},{6,0x2D},{6,0x1D},{7,0x33},{7,0x73},{7,0xB},{7,0x4B},{8,0x3B},{8,0xBB},{8,0x7B},
-        {8,0xFB},{8,0x7},{8,0x87},{9,0x97},{9,0x197},{9,0x57},{9,0x157},{9,0xD7},{9,0x1D7},{9,0x37},{9,0x137},{12,0x24F},{10,0x18F},{12,0xA4F},{12,0x64F},{12,0xE4F},
-        {12,0x14F},{12,0x94F},{12,0x54F},{12,0xD4F},{12,0x34F},{12,0xB4F},{12,0x74F},{12,0xF4F},{12,0xCF},{12,0x8CF},{12,0x4CF},{12,0xCCF},{12,0x2CF},{12,0xACF},{12,0x6CF},{12,0xECF},
-        {12,0x1CF},{12,0x9CF},{12,0x5CF},{12,0xDCF},{12,0x3CF},{12,0xBCF},{12,0x7CF},{12,0xFCF},{12,0x2F},{12,0x82F},{12,0x42F},{12,0xC2F},{12,0x22F},{12,0xA2F},{12,0x62F},{12,0xE2F},
-        {12,0x12F},{12,0x92F},{12,0x52F},{12,0xD2F},{12,0x32F},{12,0xB2F},{12,0x72F},{12,0xF2F},{12,0xAF},{12,0x8AF},{12,0x4AF},{12,0xCAF},{12,0x2AF},{12,0xAAF},{12,0x6AF},{12,0xEAF},
-        {12,0x1AF},{12,0x9AF},{12,0x5AF},{12,0xDAF},{12,0x3AF},{12,0xBAF},{12,0x7AF},{12,0xFAF},{12,0x6F},{12,0x86F},{12,0x46F},{12,0xC6F},{12,0x26F},{12,0xA6F},{12,0x66F},{12,0xE6F},
-        {12,0x16F},{12,0x96F},{12,0x56F},{12,0xD6F},{12,0x36F},{12,0xB6F},{12,0x76F},{12,0xF6F},{12,0xEF},{12,0x8EF},{12,0x4EF},{12,0xCEF},{12,0x2EF},{12,0xAEF},{12,0x6EF},{12,0xEEF},
-        {12,0x1EF},{12,0x9EF},{12,0x5EF},{12,0xDEF},{12,0x3EF},{12,0xBEF},{12,0x7EF},{12,0xFEF},{12,0x1F},{12,0x81F},{12,0x41F},{12,0xC1F},{12,0x21F},{12,0xA1F},{12,0x61F},{12,0xE1F},
-        {12,0x11F},{12,0x91F},{12,0x51F},{12,0xD1F},{12,0x31F},{12,0xB1F},{12,0x71F},{12,0xF1F},{12,0x9F},{12,0x89F},{12,0x49F},{12,0xC9F},{12,0x29F},{12,0xA9F},{12,0x69F},{12,0xE9F},
-        {12,0x19F},{12,0x99F},{12,0x59F},{12,0xD9F},{12,0x39F},{12,0xB9F},{12,0x79F},{12,0xF9F},{12,0x5F},{12,0x85F},{12,0x45F},{12,0xC5F},{12,0x25F},{12,0xA5F},{12,0x65F},{12,0xE5F},
-        {12,0x15F},{12,0x95F},{12,0x55F},{12,0xD5F},{12,0x35F},{12,0xB5F},{12,0x75F},{12,0xF5F},{12,0xDF},{12,0x8DF},{12,0x4DF},{12,0xCDF},{12,0x2DF},{12,0xADF},{12,0x6DF},{12,0xEDF},
-        {12,0x1DF},{12,0x9DF},{12,0x5DF},{12,0xDDF},{12,0x3DF},{12,0xBDF},{12,0x7DF},{12,0xFDF},{12,0x3F},{12,0x83F},{12,0x43F},{12,0xC3F},{12,0x23F},{12,0xA3F},{12,0x63F},{12,0xE3F},
-        {12,0x13F},{12,0x93F},{12,0x53F},{12,0xD3F},{12,0x33F},{12,0xB3F},{12,0x73F},{12,0xF3F},{12,0xBF},{12,0x8BF},{12,0x4BF},{12,0xCBF},{12,0x2BF},{12,0xABF},{12,0x6BF},{12,0xEBF},
-        {12,0x1BF},{12,0x9BF},{12,0x5BF},{12,0xDBF},{12,0x3BF},{12,0xBBF},{12,0x7BF},{12,0xFBF},{12,0x7F},{12,0x87F},{12,0x47F},{10,0x38F},{12,0xC7F},{12,0x27F},{12,0xA7F},{12,0x67F},
-        {12,0xE7F},{12,0x17F},{12,0x97F},{12,0x57F},{10,0x4F},{12,0xD7F},{9,0xB7},{9,0x1B7},{9,0x77},{9,0x177},{9,0xF7},{9,0x1F7},{9,0xF},{9,0x10F},{8,0x47},{8,0xC7},
-        {8,0x27},{8,0xA7},{8,0x67},{8,0xE7},{7,0x2B},{7,0x6B},{7,0x1B},{7,0x5B},{6,0x3D},{6,0x3},{6,0x23},{5,0x19},{5,0x5},{5,0x15},{4,0xE},{3,0x2},
-        {12,0x37F},{6,0x13},{0,0x0},{0,0x0},{8,0x17},{0,0x0},{0,0x0},{9,0x8F},{0,0x0},{12,0xB7F},{0,0x0},{12,0x77F},{12,0xF7F},{12,0xFF},{12,0x8FF},{12,0x4FF},
-        {12,0xCFF},{12,0x2FF},{12,0xAFF},{12,0x6FF},{12,0xEFF},{12,0x1FF},{12,0x9FF},{12,0x5FF},{12,0xDFF},{12,0x3FF},{12,0xBFF},{12,0x7FF},{12,0xFFF},{0,0x0},{0,0x0},{0,0x0}
+    static const uint8_t g_dyn_huff_3[] = {
+    120, 1, 237, 195, 3, 176, 110, 89, 122, 128, 225, 247, 251, 214, 218, 248, 113, 124, 173, 190, 109, 12, 50, 201, 196, 182, 109, 219, 182, 109, 219, 182,
+    109, 219, 201, 36, 147, 153, 105, 235, 246, 53, 142, 207, 143, 141, 181, 214, 151, 93, 117, 170, 78, 117, 117, 58, 206, 77, 210, 217, 169, 122 };
+    const uint32_t DYN_HUFF_3_BITBUF = 30, DYN_HUFF_3_BITBUF_SIZE = 7;
+    static const struct { uint8_t m_code_size; uint16_t m_code; } g_dyn_huff_3_codes[288] = {
+    {2,0},{4,2},{4,10},{5,14},{5,30},{6,25},{6,57},{6,5},{6,37},{7,3},{7,67},{7,35},{7,99},{8,11},{8,139},{8,75},{8,203},{8,43},{8,171},{8,107},{9,135},{9,391},{9,71},{9,327},{9,199},{9,455},{9,39},{9,295},{9,167},{9,423},{9,103},{10,183},
+    {9,359},{10,695},{10,439},{10,951},{10,119},{10,631},{10,375},{10,887},{10,247},{10,759},{10,503},{11,975},{11,1999},{11,47},{11,1071},{12,1199},{11,559},{12,3247},{12,687},{11,1583},{12,2735},{12,1711},{12,3759},{12,431},{12,2479},{12,1455},{12,3503},{12,943},{12,2991},{12,1967},{12,4015},{12,111},
+    {12,2159},{12,1135},{12,3183},{12,623},{12,2671},{12,1647},{12,3695},{12,367},{12,2415},{12,1391},{12,3439},{12,879},{12,2927},{12,1903},{12,3951},{12,239},{12,2287},{12,1263},{12,3311},{12,751},{12,2799},{12,1775},{12,3823},{12,495},{12,2543},{12,1519},{12,3567},{12,1007},{12,3055},{12,2031},{12,4079},{12,31},
+    {12,2079},{12,1055},{12,3103},{12,543},{12,2591},{12,1567},{12,3615},{12,287},{12,2335},{12,1311},{12,3359},{12,799},{12,2847},{12,1823},{12,3871},{12,159},{12,2207},{12,1183},{12,3231},{12,671},{12,2719},{12,1695},{12,3743},{12,415},{12,2463},{12,1439},{12,3487},{12,927},{12,2975},{12,1951},{12,3999},{12,95},
+    {12,2143},{12,1119},{12,3167},{12,607},{12,2655},{12,1631},{12,3679},{12,351},{12,2399},{12,1375},{12,3423},{12,863},{12,2911},{12,1887},{12,3935},{12,223},{12,2271},{12,1247},{12,3295},{12,735},{12,2783},{12,1759},{12,3807},{12,479},{12,2527},{12,1503},{12,3551},{12,991},{12,3039},{12,2015},{12,4063},{12,63},
+    {12,2111},{12,1087},{12,3135},{12,575},{12,2623},{12,1599},{12,3647},{12,319},{12,2367},{12,1343},{12,3391},{12,831},{12,2879},{12,1855},{12,3903},{12,191},{12,2239},{12,1215},{12,3263},{12,703},{12,2751},{12,1727},{12,3775},{12,447},{12,2495},{12,1471},{12,3519},{12,959},{12,3007},{12,1983},{12,4031},{12,127},
+    {12,2175},{12,1151},{12,3199},{12,639},{12,2687},{12,1663},{12,3711},{12,383},{12,2431},{12,1407},{12,3455},{12,895},{12,2943},{11,303},{12,1919},{12,3967},{11,1327},{12,255},{11,815},{11,1839},{11,175},{10,1015},{10,15},{10,527},{10,271},{10,783},{10,143},{10,655},{10,399},{10,911},{10,79},{10,591},
+    {9,231},{10,335},{9,487},{9,23},{9,279},{9,151},{9,407},{9,87},{9,343},{9,215},{9,471},{9,55},{8,235},{8,27},{8,155},{8,91},{8,219},{8,59},{8,187},{8,123},{7,19},{7,83},{7,51},{7,115},{6,21},{6,53},{6,13},{6,45},{5,1},{5,17},{5,9},{4,6},
+    {12,2303},{6,29},{0,0},{0,0},{8,251},{0,0},{0,0},{8,7},{0,0},{10,847},{0,0},{10,207},{12,1279},{10,719},{12,3327},{12,767},{12,2815},{12,1791},{12,3839},{12,511},{12,2559},{12,1535},{9,311},{12,3583},{12,1023},{12,3071},{10,463},{12,2047},{6,61},{12,4095},{0,0},{0,0}
     };
     */
 
-    static const uint8_t g_dyn_huff_4[] = { 120,1,229,195,83,144,37,219,182,0,208,49,87,230,70,177,171,121,204,171,103,219,182,109,219,182,109,219,182,109,219,214,
-        197,177,154,213,197,141,204,53,95,228,71,69,116,156,56,207,126,251,99 };
-    const uint32_t DYN_HUFF_4_BITBUF = 0x0, DYN_HUFF_4_BITBUF_SIZE = 2;
-
-    static const struct { uint8_t m_code_size; uint16_t m_code; } g_dyn_huff_4_codes[288] =
-    {
-        {1,0x0},{4,0x1},{5,0x5},{6,0xD},{6,0x2D},{7,0x23},{7,0x63},{7,0x13},{7,0x53},{8,0x6B},{8,0xEB},{8,0x1B},{8,0x9B},{8,0x5B},{8,0xDB},{9,0xA7},
-        {8,0x3B},{9,0x1A7},{9,0x67},{9,0x167},{9,0xE7},{9,0x1E7},{9,0x17},{10,0x137},{10,0x337},{10,0xB7},{10,0x2B7},{10,0x1B7},{10,0x3B7},{10,0x77},{10,0x277},{10,0x177},
-        {10,0x377},{10,0xF7},{10,0x2F7},{11,0x34F},{11,0x74F},{11,0xCF},{11,0x4CF},{11,0x2CF},{12,0x7CF},{12,0xFCF},{12,0x2F},{12,0x82F},{12,0x42F},{12,0xC2F},{12,0x22F},{12,0xA2F},
-        {12,0x62F},{12,0xE2F},{12,0x12F},{12,0x92F},{12,0x52F},{12,0xD2F},{12,0x32F},{12,0xB2F},{12,0x72F},{12,0xF2F},{12,0xAF},{12,0x8AF},{12,0x4AF},{12,0xCAF},{12,0x2AF},{12,0xAAF},
-        {12,0x6AF},{12,0xEAF},{12,0x1AF},{12,0x9AF},{12,0x5AF},{12,0xDAF},{12,0x3AF},{12,0xBAF},{12,0x7AF},{12,0xFAF},{12,0x6F},{12,0x86F},{12,0x46F},{12,0xC6F},{12,0x26F},{12,0xA6F},
-        {12,0x66F},{12,0xE6F},{12,0x16F},{12,0x96F},{12,0x56F},{12,0xD6F},{12,0x36F},{12,0xB6F},{12,0x76F},{12,0xF6F},{12,0xEF},{12,0x8EF},{12,0x4EF},{12,0xCEF},{12,0x2EF},{12,0xAEF},
-        {12,0x6EF},{12,0xEEF},{12,0x1EF},{12,0x9EF},{12,0x5EF},{12,0xDEF},{12,0x3EF},{12,0xBEF},{12,0x7EF},{12,0xFEF},{12,0x1F},{12,0x81F},{12,0x41F},{12,0xC1F},{12,0x21F},{12,0xA1F},
-        {12,0x61F},{12,0xE1F},{12,0x11F},{12,0x91F},{12,0x51F},{12,0xD1F},{12,0x31F},{12,0xB1F},{12,0x71F},{12,0xF1F},{12,0x9F},{12,0x89F},{12,0x49F},{12,0xC9F},{12,0x29F},{12,0xA9F},
-        {12,0x69F},{12,0xE9F},{12,0x19F},{12,0x99F},{12,0x59F},{12,0xD9F},{12,0x39F},{12,0xB9F},{12,0x79F},{12,0xF9F},{12,0x5F},{12,0x85F},{12,0x45F},{12,0xC5F},{12,0x25F},{12,0xA5F},
-        {12,0x65F},{12,0xE5F},{12,0x15F},{12,0x95F},{12,0x55F},{12,0xD5F},{12,0x35F},{12,0xB5F},{12,0x75F},{12,0xF5F},{12,0xDF},{12,0x8DF},{12,0x4DF},{12,0xCDF},{12,0x2DF},{12,0xADF},
-        {12,0x6DF},{12,0xEDF},{12,0x1DF},{12,0x9DF},{12,0x5DF},{12,0xDDF},{12,0x3DF},{12,0xBDF},{12,0x7DF},{12,0xFDF},{12,0x3F},{12,0x83F},{12,0x43F},{12,0xC3F},{12,0x23F},{12,0xA3F},
-        {12,0x63F},{12,0xE3F},{12,0x13F},{12,0x93F},{12,0x53F},{12,0xD3F},{12,0x33F},{12,0xB3F},{12,0x73F},{12,0xF3F},{12,0xBF},{12,0x8BF},{12,0x4BF},{12,0xCBF},{12,0x2BF},{12,0xABF},
-        {12,0x6BF},{12,0xEBF},{12,0x1BF},{12,0x9BF},{12,0x5BF},{12,0xDBF},{12,0x3BF},{12,0xBBF},{12,0x7BF},{12,0xFBF},{12,0x7F},{12,0x87F},{12,0x47F},{12,0xC7F},{12,0x27F},{12,0xA7F},
-        {12,0x67F},{12,0xE7F},{12,0x17F},{12,0x97F},{12,0x57F},{12,0xD7F},{12,0x37F},{12,0xB7F},{12,0x77F},{12,0xF7F},{12,0xFF},{11,0x6CF},{11,0x1CF},{11,0x5CF},{11,0x3CF},{10,0x1F7},
-        {10,0x3F7},{10,0xF},{10,0x20F},{10,0x10F},{10,0x30F},{10,0x8F},{10,0x28F},{10,0x18F},{10,0x38F},{10,0x4F},{9,0x117},{9,0x97},{9,0x197},{9,0x57},{9,0x157},{9,0xD7},
-        {8,0xBB},{9,0x1D7},{8,0x7B},{8,0xFB},{8,0x7},{8,0x87},{8,0x47},{8,0xC7},{7,0x33},{7,0x73},{7,0xB},{7,0x4B},{6,0x1D},{6,0x3D},{5,0x15},{4,0x9},
-        {12,0x8FF},{0,0x0},{6,0x3},{0,0x0},{0,0x0},{0,0x0},{8,0x27},{0,0x0},{0,0x0},{9,0x37},{0,0x0},{10,0x24F},{0,0x0},{10,0x14F},{12,0x4FF},{12,0xCFF},
-        {12,0x2FF},{12,0xAFF},{12,0x6FF},{12,0xEFF},{12,0x1FF},{12,0x9FF},{12,0x5FF},{12,0xDFF},{12,0x3FF},{12,0xBFF},{12,0x7FF},{12,0xFFF},{7,0x2B},{0,0x0},{0,0x0},{0,0x0},
+    static const uint8_t g_dyn_huff_4[] = {
+    120, 1, 229, 196, 99, 180, 37, 103, 218, 128, 225, 251, 121, 171, 106, 243, 216, 231, 180, 109, 196, 182, 51, 51, 73, 6, 201, 216, 182, 109, 219, 182,
+    17, 140, 98, 219, 102, 219, 60, 125, 172, 205, 170, 122, 159, 111, 213, 143, 179, 214, 94, 189, 58, 153, 104, 166, 103, 190, 247, 199, 117 };
+    const uint32_t DYN_HUFF_4_BITBUF = 1, DYN_HUFF_4_BITBUF_SIZE = 2;
+    static const struct { uint8_t m_code_size; uint16_t m_code; } g_dyn_huff_4_codes[288] = {
+    {2,0},{4,2},{5,6},{6,30},{6,62},{6,1},{7,41},{7,105},{7,25},{7,89},{7,57},{7,121},{8,117},{8,245},{8,13},{8,141},{8,77},{8,205},{8,45},{8,173},{8,109},{8,237},{8,29},{8,157},{8,93},{8,221},{8,61},{9,83},{9,339},{9,211},{9,467},{9,51},
+    {9,307},{9,179},{9,435},{9,115},{9,371},{9,243},{9,499},{9,11},{9,267},{9,139},{9,395},{9,75},{9,331},{9,203},{9,459},{9,43},{9,299},{10,7},{10,519},{10,263},{10,775},{10,135},{10,647},{10,391},{10,903},{10,71},{10,583},{10,327},{10,839},{10,199},{10,711},{10,455},
+    {10,967},{10,39},{10,551},{10,295},{10,807},{10,167},{10,679},{10,423},{10,935},{10,103},{10,615},{11,463},{11,1487},{11,975},{10,359},{10,871},{10,231},{11,1999},{11,47},{11,1071},{11,559},{10,743},{10,487},{11,1583},{11,303},{11,1327},{11,815},{11,1839},{11,175},{11,1199},{11,687},{11,1711},
+    {11,431},{11,1455},{11,943},{11,1967},{11,111},{11,1135},{11,623},{11,1647},{11,367},{11,1391},{11,879},{11,1903},{11,239},{11,1263},{11,751},{11,1775},{11,495},{11,1519},{11,1007},{11,2031},{11,31},{11,1055},{11,543},{11,1567},{11,287},{11,1311},{11,799},{11,1823},{11,159},{11,1183},{11,671},{11,1695},
+    {11,415},{11,1439},{11,927},{11,1951},{11,95},{11,1119},{11,607},{11,1631},{11,351},{11,1375},{11,863},{11,1887},{11,223},{11,1247},{11,735},{11,1759},{11,479},{11,1503},{11,991},{11,2015},{11,63},{11,1087},{11,575},{11,1599},{11,319},{11,1343},{11,831},{11,1855},{11,191},{11,1215},{11,703},{11,1727},
+    {11,447},{11,1471},{11,959},{11,1983},{11,127},{11,1151},{11,639},{11,1663},{11,383},{10,999},{10,23},{10,535},{10,279},{11,1407},{11,895},{11,1919},{11,255},{11,1279},{10,791},{10,151},{10,663},{10,407},{10,919},{10,87},{10,599},{10,343},{10,855},{10,215},{10,727},{10,471},{10,983},{10,55},
+    {10,567},{10,311},{10,823},{10,183},{10,695},{10,439},{10,951},{10,119},{10,631},{10,375},{10,887},{10,247},{10,759},{10,503},{10,1015},{10,15},{10,527},{10,271},{10,783},{10,143},{10,655},{10,399},{9,171},{9,427},{9,107},{9,363},{9,235},{9,491},{9,27},{9,283},{9,155},{9,411},
+    {9,91},{9,347},{9,219},{9,475},{9,59},{9,315},{9,187},{9,443},{8,189},{9,123},{8,125},{8,253},{8,3},{8,131},{8,67},{8,195},{8,35},{8,163},{8,99},{8,227},{8,19},{7,5},{7,69},{7,37},{7,101},{7,21},{7,85},{6,33},{6,17},{6,49},{5,22},{4,10},
+    {12,2047},{0,0},{6,9},{0,0},{0,0},{0,0},{8,147},{0,0},{0,0},{7,53},{0,0},{9,379},{0,0},{9,251},{10,911},{10,79},{11,767},{10,591},{10,335},{10,847},{10,207},{10,719},{11,1791},{11,511},{9,507},{11,1535},{11,1023},{12,4095},{5,14},{0,0},{0,0},{0,0}
     };
 
     constexpr int FPNG_FALSE = 0;
@@ -456,239 +435,6 @@ do { \
         }
     }
 
-    /*
-    static uint32_t pixel_deflate_dyn_3_rle_one_pass(
-        const uint8_t* pImg, uint32_t w, uint32_t h,
-        uint8_t* pDst, uint32_t dst_buf_size)
-    {
-        const uint32_t bpl = 1 + w * 3;
-
-        if (dst_buf_size < sizeof(g_dyn_huff_3))
-            return false;
-        memcpy(pDst, g_dyn_huff_3, sizeof(g_dyn_huff_3));
-        uint32_t dst_ofs = sizeof(g_dyn_huff_3);
-
-        uint64_t bit_buf = DYN_HUFF_3_BITBUF;
-        int bit_buf_size = DYN_HUFF_3_BITBUF_SIZE;
-
-        const uint8_t* pSrc = pImg;
-        uint32_t src_ofs = 0;
-
-        for (uint32_t y = 0; y < h; y++)
-        {
-            const uint32_t end_src_ofs = src_ofs + bpl;
-
-            const uint32_t filter_lit = pSrc[src_ofs++];
-            PUT_BITS_CZ(g_dyn_huff_3_codes[filter_lit].m_code, g_dyn_huff_3_codes[filter_lit].m_code_size);
-
-            uint32_t prev_lits;
-
-            {
-                uint32_t lits = READ_RGB_PIXEL(pSrc + src_ofs);
-
-                PUT_BITS_CZ(g_dyn_huff_3_codes[lits & 0xFF].m_code, g_dyn_huff_3_codes[lits & 0xFF].m_code_size);
-                PUT_BITS_CZ(g_dyn_huff_3_codes[(lits >> 8) & 0xFF].m_code, g_dyn_huff_3_codes[(lits >> 8) & 0xFF].m_code_size);
-                PUT_BITS_CZ(g_dyn_huff_3_codes[(lits >> 16)].m_code, g_dyn_huff_3_codes[(lits >> 16)].m_code_size);
-
-                src_ofs += 3;
-            
-                prev_lits = lits;
-            }
-
-            PUT_BITS_FLUSH;
-
-            while (src_ofs < end_src_ofs)
-            {
-                uint32_t lits = READ_RGB_PIXEL(pSrc + src_ofs);
-
-                if (lits == prev_lits)
-                {
-                    uint32_t match_len = 3;
-                    uint32_t max_match_len = std::min<int>(255, (int)(end_src_ofs - src_ofs));
-
-                    while (match_len < max_match_len)
-                    {
-                        if (READ_RGB_PIXEL(pSrc + src_ofs + match_len) != lits)
-                            break;
-                        match_len += 3;
-                    }
-                                        
-                    uint32_t adj_match_len = match_len - 3;
-
-                    PUT_BITS_CZ(g_dyn_huff_3_codes[g_defl_len_sym[adj_match_len]].m_code, g_dyn_huff_3_codes[g_defl_len_sym[adj_match_len]].m_code_size);
-                    PUT_BITS(adj_match_len & g_bitmasks[g_defl_len_extra[adj_match_len]], g_defl_len_extra[adj_match_len] + 1); // up to 6 bits, +1 for the match distance Huff code which is always 0
-
-                    src_ofs += match_len;
-                }
-                else
-                {
-                    PUT_BITS_CZ(g_dyn_huff_3_codes[lits & 0xFF].m_code, g_dyn_huff_3_codes[lits & 0xFF].m_code_size);
-                    PUT_BITS_CZ(g_dyn_huff_3_codes[(lits >> 8) & 0xFF].m_code, g_dyn_huff_3_codes[(lits >> 8) & 0xFF].m_code_size);
-                    PUT_BITS_CZ(g_dyn_huff_3_codes[(lits >> 16)].m_code, g_dyn_huff_3_codes[(lits >> 16)].m_code_size);
-                    
-                    prev_lits = lits;
-
-                    src_ofs += 3;
-                }
-
-                PUT_BITS_FLUSH;
-
-            } // while (src_ofs < end_src_ofs)
-
-        } // y
-
-        assert(src_ofs == h * bpl);
-        
-        assert(bit_buf_size <= 7);
-
-        PUT_BITS_CZ(g_dyn_huff_3_codes[256].m_code, g_dyn_huff_3_codes[256].m_code_size);
-
-        PUT_BITS_FORCE_FLUSH;
-
-        // Write zlib adler32 placeholder
-        for (uint32_t i = 0; i < 4; i++)
-        {
-            if ((dst_ofs + 1) > dst_buf_size)
-                return 0;
-            *(uint8_t*)(pDst + dst_ofs) = 0;
-            dst_ofs++;
-        }
-
-        return dst_ofs;
-    }
-    */
-
-    /*
-    static uint32_t pixel_deflate_dyn_4_rle_one_pass(
-        const uint8_t* pImg, uint32_t w, uint32_t h,
-        uint8_t* pDst, uint32_t dst_buf_size)
-    {
-        const uint32_t bpl = 1 + w * 4;
-
-        if (dst_buf_size < sizeof(g_dyn_huff_4))
-            return false;
-        memcpy(pDst, g_dyn_huff_4, sizeof(g_dyn_huff_4));
-        uint32_t dst_ofs = sizeof(g_dyn_huff_4);
-
-        uint64_t bit_buf = DYN_HUFF_4_BITBUF;
-        int bit_buf_size = DYN_HUFF_4_BITBUF_SIZE;
-
-        const uint8_t* pSrc = pImg;
-        uint32_t src_ofs = 0;
-
-        for (uint32_t y = 0; y < h; y++)
-        {
-            const uint32_t end_src_ofs = src_ofs + bpl;
-
-            const uint32_t filter_lit = pSrc[src_ofs++];
-            PUT_BITS_CZ(g_dyn_huff_4_codes[filter_lit].m_code, g_dyn_huff_4_codes[filter_lit].m_code_size);
-
-            PUT_BITS_FLUSH;
-
-            uint32_t prev_lits;
-            {
-                uint32_t lits = uload32le(pSrc + src_ofs);
-
-                PUT_BITS_CZ(g_dyn_huff_4_codes[lits & 0xFF].m_code, g_dyn_huff_4_codes[lits & 0xFF].m_code_size);
-                PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code, g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code_size);
-                PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 16) & 0xFF].m_code, g_dyn_huff_4_codes[(lits >> 16) & 0xFF].m_code_size);
-
-                if (bit_buf_size >= 49)
-                {
-                    PUT_BITS_FLUSH;
-                }
-                
-                PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 24)].m_code, g_dyn_huff_4_codes[(lits >> 24)].m_code_size);
-
-                src_ofs += 4;
-                
-                prev_lits = lits;
-            }
-
-            PUT_BITS_FLUSH;
-
-            while (src_ofs < end_src_ofs)
-            {
-                uint32_t lits = uload32le(pSrc + src_ofs);
-                                
-                if (lits == prev_lits)
-                {
-                    uint32_t match_len = 4;
-                    uint32_t max_match_len = std::min<int>(252, (int)(end_src_ofs - src_ofs));
-
-                    while (match_len < max_match_len)
-                    {
-                        if (uload32le(pSrc + src_ofs + match_len) != lits)
-                            break;
-                        match_len += 4;
-                    }
-
-                    uint32_t adj_match_len = match_len - 3;
-
-                    const uint32_t match_code_bits = g_dyn_huff_4_codes[g_defl_len_sym[adj_match_len]].m_code_size;
-                    const uint32_t len_extra_bits = g_defl_len_extra[adj_match_len];
-
-                    if (match_len == 4)
-                    {
-                        // This check is optional - see if just encoding 4 literals would be cheaper than using a short match.
-                        uint32_t lit_bits = g_dyn_huff_4_codes[lits & 0xFF].m_code_size + g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code_size + 
-                            g_dyn_huff_4_codes[(lits >> 16) & 0xFF].m_code_size + g_dyn_huff_4_codes[(lits >> 24)].m_code_size;
-                        
-                        if ((match_code_bits + len_extra_bits + 1) > lit_bits)
-                            goto do_literals;
-                    }
-
-                    PUT_BITS_CZ(g_dyn_huff_4_codes[g_defl_len_sym[adj_match_len]].m_code, match_code_bits);
-                    PUT_BITS(adj_match_len & g_bitmasks[g_defl_len_extra[adj_match_len]], len_extra_bits + 1); // up to 6 bits, +1 for the match distance Huff code which is always 0
-
-                    src_ofs += match_len;
-                }
-                else
-                {
-do_literals:
-                    PUT_BITS_CZ(g_dyn_huff_4_codes[lits & 0xFF].m_code, g_dyn_huff_4_codes[lits & 0xFF].m_code_size);
-                    PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code, g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code_size);
-                    PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 16) & 0xFF].m_code, g_dyn_huff_4_codes[(lits >> 16) & 0xFF].m_code_size);
-
-                    if (bit_buf_size >= 49)
-                    {
-                        PUT_BITS_FLUSH;
-                    }
-
-                    PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 24)].m_code, g_dyn_huff_4_codes[(lits >> 24)].m_code_size);
-
-                    src_ofs += 4;
-                    
-                    prev_lits = lits;
-                }
-
-                PUT_BITS_FLUSH;
-
-            } // while (src_ofs < end_src_ofs)
-
-        } // y
-
-        assert(src_ofs == h * bpl);
-
-        assert(bit_buf_size <= 7);
-
-        PUT_BITS_CZ(g_dyn_huff_4_codes[256].m_code, g_dyn_huff_4_codes[256].m_code_size);
-
-        PUT_BITS_FORCE_FLUSH;
-
-        // Write zlib adler32 placeholder
-        for (uint32_t i = 0; i < 4; i++)
-        {
-            if ((dst_ofs + 1) > dst_buf_size)
-                return 0;
-            *(uint8_t*)(pDst + dst_ofs) = 0;
-            dst_ofs++;
-        }
-
-        return dst_ofs;
-    }
-    */
-
     static uint32_t pixel_deflate_dyn_4_rle(
         const uint8_t* pImg, uint32_t w, uint32_t h,
         uint8_t* pDst, uint32_t dst_buf_size, bool is_first, bool is_last)
@@ -807,6 +553,7 @@ do_literals:
         
         memset(&dh.m_huff_count[1][0], 0, sizeof(dh.m_huff_count[1][0]) * DEFL_MAX_HUFF_SYMBOLS_1);
         dh.m_huff_count[1][dist_sym] = 1;
+        dh.m_huff_count[1][dist_sym + 1] = 1; // to workaround a bug in wuffs decoder
 
         if (!defl_start_dynamic_block(&dh, pDst, dst_ofs, dst_buf_size, bit_buf, bit_buf_size))
             return 0;
@@ -4262,8 +4009,8 @@ namespace
     {
         BigEndianStream s(stream);
 
-        int segment_height = configure_segment(surface, options);
-        //int segment_height = surface.height;
+        //int segment_height = configure_segment(surface, options);
+        int segment_height = surface.height;
 
         // write magic
         s.write64(PNG_HEADER_MAGIC);
@@ -4272,7 +4019,7 @@ namespace
         write_iCCP(stream, options);
         if (segment_height)
         {
-            write_pLLD(stream, segment_height);
+            //write_pLLD(stream, segment_height);
             //compress_parallel_zlib(stream, surface, segment_height, options);
             compress_parallel_fpng(stream, surface, segment_height, options);
         }
