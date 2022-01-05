@@ -11,6 +11,7 @@
 
 // https://www.w3.org/TR/2003/REC-PNG-20031110/
 // https://wiki.mozilla.org/APNG_Specification
+// https://datatracker.ietf.org/doc/html/rfc1951
 
 // TODO: discard modes (requires us to keep a copy of main image)
 // TODO: check that animations starting with "IDAT" and "fdAT" work correctly
