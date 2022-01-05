@@ -106,9 +106,9 @@ namespace fpng
     };
 
     constexpr int FPNG_FALSE = 0;
-    constexpr uint8_t FPNG_FDEC_VERSION = 0;
-    constexpr uint32_t FPNG_MAX_SUPPORTED_DIM = 1 << 24;
-    constexpr uint32_t FPNG_ADLER32_INIT = 1;
+    //constexpr uint8_t FPNG_FDEC_VERSION = 0;
+    //constexpr uint32_t FPNG_MAX_SUPPORTED_DIM = 1 << 24;
+    //constexpr uint32_t FPNG_ADLER32_INIT = 1;
 
     // Customized the very common case of reading a 24bpp pixel from memory
     static inline uint32_t READ_RGB_PIXEL(const void* p)
@@ -394,17 +394,14 @@ do { \
             dst_ofs += 5 + block_size;
         }
 
-        uint32_t src_adler32 = mango::adler32(FPNG_ADLER32_INIT, ConstMemory(pSrc, src_len));
-
+        // reserve space for adler
         for (uint32_t i = 0; i < 4; i++)
         {
             if (dst_ofs + 1 > dst_buf_size)
                 return 0;
 
-            pDst[dst_ofs] = (uint8_t)(src_adler32 >> 24);
+            pDst[dst_ofs] = 0;
             dst_ofs++;
-
-            src_adler32 <<= 8;
         }
 
         return dst_ofs;
@@ -467,8 +464,6 @@ do { \
 
         const uint8_t* pSrc = pImg;
         uint32_t src_ofs = 0;
-
-        uint32_t src_adler32 = mango::adler32(FPNG_ADLER32_INIT, ConstMemory(pImg, bpl * h));
 
         for (uint32_t y = 0; y < h; y++)
         {
@@ -541,15 +536,13 @@ do { \
 
         PUT_BITS_FORCE_FLUSH;
 
-        // Write zlib adler32
+        // Write zlib adler32 placeholder
         for (uint32_t i = 0; i < 4; i++)
         {
             if ((dst_ofs + 1) > dst_buf_size)
                 return 0;
-            *(uint8_t*)(pDst + dst_ofs) = (uint8_t)(src_adler32 >> 24);
+            *(uint8_t*)(pDst + dst_ofs) = 0;
             dst_ofs++;
-
-            src_adler32 <<= 8;
         }
 
         return dst_ofs;
@@ -571,8 +564,6 @@ do { \
 
         const uint8_t* pSrc = pImg;
         uint32_t src_ofs = 0;
-
-        uint32_t src_adler32 = mango::adler32(FPNG_ADLER32_INIT, ConstMemory(pImg, bpl * h));
 
         for (uint32_t y = 0; y < h; y++)
         {
@@ -674,15 +665,13 @@ do_literals:
 
         PUT_BITS_FORCE_FLUSH;
 
-        // Write zlib adler32
+        // Write zlib adler32 placeholder
         for (uint32_t i = 0; i < 4; i++)
         {
             if ((dst_ofs + 1) > dst_buf_size)
                 return 0;
-            *(uint8_t*)(pDst + dst_ofs) = (uint8_t)(src_adler32 >> 24);
+            *(uint8_t*)(pDst + dst_ofs) = 0;
             dst_ofs++;
-
-            src_adler32 <<= 8;
         }
 
         return dst_ofs;
@@ -4003,7 +3992,7 @@ namespace
                 Memory segment_memory = compressed.acquire();
                 segment_memory.size = defl_size;
 
-                u32 segment_adler = uload32be(segment_memory.address + segment_memory.size - 4);
+                u32 segment_adler = adler32(1, source);
                 u32 segment_length = u32(source.size);
 
                 ticket.consume([=, &cumulative_adler, &stream]
@@ -4069,6 +4058,7 @@ namespace
         BigEndianStream s(stream);
 
         int segment_height = configure_segment(surface, options);
+        //int segment_height = surface.height;
 
         // write magic
         s.write64(PNG_HEADER_MAGIC);
@@ -4078,8 +4068,8 @@ namespace
         if (segment_height)
         {
             write_pLLD(stream, segment_height);
-            compress_parallel_zlib(stream, surface, segment_height, options);
-            //compress_parallel_fpng(stream, surface, segment_height, options);
+            //compress_parallel_zlib(stream, surface, segment_height, options);
+            compress_parallel_fpng(stream, surface, segment_height, options);
         }
         else
         {
