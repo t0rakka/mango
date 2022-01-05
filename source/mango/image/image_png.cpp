@@ -50,13 +50,15 @@ namespace fpng
       17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,
       17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,
       17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17 };
-        
+
     static const uint32_t g_bitmasks[17] = { 0x0000, 0x0001, 0x0003, 0x0007, 0x000F, 0x001F, 0x003F, 0x007F, 0x00FF, 0x01FF, 0x03FF, 0x07FF, 0x0FFF, 0x1FFF, 0x3FFF, 0x7FFF, 0xFFFF };
 
+    /*
     static const uint8_t g_dyn_huff_3[] = { 120, 1, 229, 194, 3, 176, 37, 75, 148, 5, 208, 189, 79, 102, 86, 213, 197, 99, 187, 231, 143, 109, 219, 182, 109, 219, 182, 109, 219, 182, 109, 219,
         198, 31, 207, 159, 118, 63, 94, 84, 85, 102, 158, 61, 21, 241, 34, 58, 38, 198, 102, 196 };
     const uint32_t DYN_HUFF_3_BITBUF = 0x2, DYN_HUFF_3_BITBUF_SIZE = 3;
-        
+    */
+    /*
     static const struct { uint8_t m_code_size; uint16_t m_code; } g_dyn_huff_3_codes[288] =
     {
         {3,0x0},{3,0x4},{4,0x6},{5,0x1},{5,0x11},{5,0x9},{6,0xD},{6,0x2D},{6,0x1D},{7,0x33},{7,0x73},{7,0xB},{7,0x4B},{8,0x3B},{8,0xBB},{8,0x7B},
@@ -78,6 +80,7 @@ namespace fpng
         {12,0x37F},{6,0x13},{0,0x0},{0,0x0},{8,0x17},{0,0x0},{0,0x0},{9,0x8F},{0,0x0},{12,0xB7F},{0,0x0},{12,0x77F},{12,0xF7F},{12,0xFF},{12,0x8FF},{12,0x4FF},
         {12,0xCFF},{12,0x2FF},{12,0xAFF},{12,0x6FF},{12,0xEFF},{12,0x1FF},{12,0x9FF},{12,0x5FF},{12,0xDFF},{12,0x3FF},{12,0xBFF},{12,0x7FF},{12,0xFFF},{0,0x0},{0,0x0},{0,0x0}
     };
+    */
 
     static const uint8_t g_dyn_huff_4[] = { 120,1,229,195,83,144,37,219,182,0,208,49,87,230,70,177,171,121,204,171,103,219,182,109,219,182,109,219,182,109,219,214,
         197,177,154,213,197,141,204,53,95,228,71,69,116,156,56,207,126,251,99 };
@@ -110,11 +113,13 @@ namespace fpng
     //constexpr uint32_t FPNG_MAX_SUPPORTED_DIM = 1 << 24;
     //constexpr uint32_t FPNG_ADLER32_INIT = 1;
 
+    /*
     // Customized the very common case of reading a 24bpp pixel from memory
     static inline uint32_t READ_RGB_PIXEL(const void* p)
     {
         return uload32le(p) & 0xffffff;
     }
+    */
 
 #define PUT_BITS(bb, ll) do { uint32_t b = bb, l = ll; assert((l) >= 0 && (l) <= 16); assert((b) < (1ULL << (l))); bit_buf |= (((uint64_t)(b)) << bit_buf_size); bit_buf_size += (l); assert(bit_buf_size <= 64); } while(0)
 #define PUT_BITS_CZ(bb, ll) do { uint32_t b = bb, l = ll; assert((l) >= 1 && (l) <= 16); assert((b) < (1ULL << (l))); bit_buf |= (((uint64_t)(b)) << bit_buf_size); bit_buf_size += (l); assert(bit_buf_size <= 64); } while(0)
@@ -360,6 +365,7 @@ do { \
         return true;
     }
 
+    /*
     static uint32_t write_raw_block(const uint8_t* pSrc, uint32_t src_len, uint8_t* pDst, uint32_t dst_buf_size)
     {
         if (dst_buf_size < 2)
@@ -406,6 +412,7 @@ do { \
 
         return dst_ofs;
     }
+    */
 
     static void adjust_freq32(uint32_t num_freq, uint32_t* pFreq, uint16_t* pFreq16)
     {
@@ -448,6 +455,7 @@ do { \
         }
     }
 
+    /*
     static uint32_t pixel_deflate_dyn_3_rle_one_pass(
         const uint8_t* pImg, uint32_t w, uint32_t h,
         uint8_t* pDst, uint32_t dst_buf_size)
@@ -547,7 +555,9 @@ do { \
 
         return dst_ofs;
     }
+    */
 
+    /*
     static uint32_t pixel_deflate_dyn_4_rle_one_pass(
         const uint8_t* pImg, uint32_t w, uint32_t h,
         uint8_t* pDst, uint32_t dst_buf_size)
@@ -672,6 +682,197 @@ do_literals:
                 return 0;
             *(uint8_t*)(pDst + dst_ofs) = 0;
             dst_ofs++;
+        }
+
+        return dst_ofs;
+    }
+    */
+
+    static uint32_t pixel_deflate_dyn_4_rle(
+        const uint8_t* pImg, uint32_t w, uint32_t h,
+        uint8_t* pDst, uint32_t dst_buf_size, bool is_first, bool is_last)
+    {
+        const uint32_t bpl = 1 + w * 4;
+
+        uint64_t bit_buf = 0;
+        int bit_buf_size = 0;
+
+        uint32_t dst_ofs = 0;
+
+        if (is_first)
+        {
+            // zlib header
+            PUT_BITS(0x78, 8);
+            PUT_BITS(0x01, 8);
+        }
+
+        // write BFINAL bit
+        if (!is_last)
+        {
+            PUT_BITS(0, 1);
+        }
+        else
+        {
+            PUT_BITS(1, 1);
+        }
+
+        std::vector<uint64_t> codes;
+        codes.resize((w + 1) * h);
+        uint64_t* pDst_codes = codes.data();
+
+        uint32_t lit_freq[DEFL_MAX_HUFF_SYMBOLS_0];
+        memset(lit_freq, 0, sizeof(lit_freq));
+
+        const uint8_t* pSrc = pImg;
+        uint32_t src_ofs = 0;
+
+        const uint32_t dist_sym = g_defl_small_dist_sym[4 - 1];
+
+        for (uint32_t y = 0; y < h; y++)
+        {
+            const uint32_t end_src_ofs = src_ofs + bpl;
+
+            const uint32_t filter_lit = pSrc[src_ofs++];
+            *pDst_codes++ = 1 | (filter_lit << 8);
+            lit_freq[filter_lit]++;
+
+            uint32_t prev_lits;
+            {
+                uint32_t lits = uload32le(pSrc + src_ofs);
+
+                *pDst_codes++ = (uint64_t)lits << 8;
+
+                lit_freq[lits & 0xFF]++;
+                lit_freq[(lits >> 8) & 0xFF]++;
+                lit_freq[(lits >> 16) & 0xFF]++;
+                lit_freq[lits >> 24]++;
+
+                src_ofs += 4;
+                
+                prev_lits = lits;
+            }
+
+            while (src_ofs < end_src_ofs)
+            {
+                uint32_t lits = uload32le(pSrc + src_ofs);
+
+                if (lits == prev_lits)
+                {
+                    uint32_t match_len = 4;
+                    uint32_t max_match_len = std::min<int>(252, (int)(end_src_ofs - src_ofs));
+
+                    while (match_len < max_match_len)
+                    {
+                        if (uload32le(pSrc + src_ofs + match_len) != lits)
+                            break;
+                        match_len += 4;
+                    }
+                                        
+                    *pDst_codes++ = match_len - 1;
+
+                    uint32_t adj_match_len = match_len - 3;
+
+                    lit_freq[g_defl_len_sym[adj_match_len]]++;
+                    
+                    src_ofs += match_len;
+                }
+                else
+                {
+                    *pDst_codes++ = (uint64_t)lits << 8;
+
+                    lit_freq[lits & 0xFF]++;
+                    lit_freq[(lits >> 8) & 0xFF]++;
+                    lit_freq[(lits >> 16) & 0xFF]++;
+                    lit_freq[lits >> 24]++;
+                    
+                    prev_lits = lits;
+
+                    src_ofs += 4;
+                }
+
+            } // while (src_ofs < end_src_ofs)
+
+        } // y
+
+        assert(src_ofs == h * bpl);
+        const uint32_t total_codes = (uint32_t)(pDst_codes - codes.data());
+        assert(total_codes <= codes.size());
+                        
+        defl_huff dh;
+        
+        lit_freq[256] = 1;
+
+        adjust_freq32(DEFL_MAX_HUFF_SYMBOLS_0, lit_freq, &dh.m_huff_count[0][0]);
+        
+        memset(&dh.m_huff_count[1][0], 0, sizeof(dh.m_huff_count[1][0]) * DEFL_MAX_HUFF_SYMBOLS_1);
+        dh.m_huff_count[1][dist_sym] = 1;
+
+        if (!defl_start_dynamic_block(&dh, pDst, dst_ofs, dst_buf_size, bit_buf, bit_buf_size))
+            return 0;
+
+        assert(bit_buf_size <= 7);
+        assert(dh.m_huff_codes[1][dist_sym] == 0 && dh.m_huff_code_sizes[1][dist_sym] == 1);
+
+        for (uint32_t i = 0; i < total_codes; i++)
+        {
+            uint64_t c = codes[i];
+
+            uint32_t c_type = (uint32_t)(c & 0xFF);
+            if (c_type == 0)
+            {
+                uint32_t lits = (uint32_t)(c >> 8);
+
+                PUT_BITS_CZ(dh.m_huff_codes[0][lits & 0xFF], dh.m_huff_code_sizes[0][lits & 0xFF]);
+                lits >>= 8;
+
+                PUT_BITS_CZ(dh.m_huff_codes[0][lits & 0xFF], dh.m_huff_code_sizes[0][lits & 0xFF]);
+                lits >>= 8;
+
+                PUT_BITS_CZ(dh.m_huff_codes[0][lits & 0xFF], dh.m_huff_code_sizes[0][lits & 0xFF]);
+                lits >>= 8;
+
+                if (bit_buf_size >= 49)
+                {
+                    PUT_BITS_FLUSH;
+                }
+
+                PUT_BITS_CZ(dh.m_huff_codes[0][lits], dh.m_huff_code_sizes[0][lits]);
+            }
+            else if (c_type == 1)
+            {
+                uint32_t lit = (uint32_t)(c >> 8);
+                PUT_BITS_CZ(dh.m_huff_codes[0][lit], dh.m_huff_code_sizes[0][lit]);
+            }
+            else
+            {
+                uint32_t match_len = c_type + 1;
+
+                uint32_t adj_match_len = match_len - 3;
+                
+                PUT_BITS_CZ(dh.m_huff_codes[0][g_defl_len_sym[adj_match_len]], dh.m_huff_code_sizes[0][g_defl_len_sym[adj_match_len]]);
+                PUT_BITS(adj_match_len & g_bitmasks[g_defl_len_extra[adj_match_len]], g_defl_len_extra[adj_match_len] + 1); // up to 6 bits, +1 for the match distance Huff code which is always 0
+
+                // no need to write the distance code, it's always 0
+            }
+
+            // up to 55 bits
+            PUT_BITS_FLUSH;
+        }
+
+        PUT_BITS_CZ(dh.m_huff_codes[0][256], dh.m_huff_code_sizes[0][256]);
+
+        PUT_BITS_FORCE_FLUSH;
+
+        if (is_last)
+        {
+            // reserve space for adler32
+            for (uint32_t i = 0; i < 4; i++)
+            {
+                if ((dst_ofs + 1) > dst_buf_size)
+                    return 0;
+                *(uint8_t*)(pDst + dst_ofs) = 0;
+                dst_ofs++;
+            }
         }
 
         return dst_ofs;
@@ -3839,6 +4040,7 @@ namespace
         write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
     }
 
+    /*
     void compress_parallel_zlib(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
     {
         const int bpp = surface.format.bytes();
@@ -3950,6 +4152,7 @@ namespace
         q.wait();
         tk.wait();
     }
+    */
 
     void compress_parallel_fpng(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
     {
@@ -3959,7 +4162,8 @@ namespace
         Buffer buffer(bytes_per_scan * surface.height);
 
         const int N = ceil_div(surface.height, segment_height);
-        const int level = math::clamp(options.compression, 0, 9);
+        //const int level = math::clamp(options.compression, 0, 9);
+        (void) options;
 
         u32 cumulative_adler = 1;
 
@@ -3985,8 +4189,8 @@ namespace
                 filter_range(source.address, surface, y, y + h);
 
                 Buffer compressed(bytes_per_scan * h + 4094); // 4K "gimme a break" -factor
-                u32 defl_size = fpng::pixel_deflate_dyn_4_rle_one_pass(source.address, 
-                    surface.width, h, compressed.data(), compressed.size());
+                u32 defl_size = fpng::pixel_deflate_dyn_4_rle(source.address, 
+                    surface.width, h, compressed.data(), compressed.size(), is_first, is_last);
 
                 // capture compressed memory
                 Memory segment_memory = compressed.acquire();
