@@ -3273,8 +3273,7 @@ namespace
                     if (is_last)
                     {
                         // 4 last bytes is adler, overwrite it with cumulative adler
-                        BigEndianPointer p = c.address + c.size - 4;
-                        p.write32(cumulative_adler);
+                        ustore32be(c.address + c.size - 4, cumulative_adler);
                     }
 
                     // write chunkdID + compressed data
