@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -12,6 +12,7 @@ using namespace mango::image;
 #define TEST_STB
 #define TEST_JPEG_COMPRESSOR
 //#define TEST_JPEGDEC
+#define TEST_TOOJPEG
 
 // ----------------------------------------------------------------------
 // utils
@@ -263,6 +264,57 @@ size_t jpegdec_save(const char* filename, const Surface& surface)
 #endif
 
 // ----------------------------------------------------------------------
+// toojpeg
+// ----------------------------------------------------------------------
+
+#ifdef TEST_TOOJPEG
+
+#include "toojpeg/toojpeg.h"
+
+OutputFileStream* toojpeg_stream = nullptr;
+u8 toojpeg_temp[4096];
+u32 toojpeg_temp_offset = 0;
+
+void toojpeg_write_byte(u8 value)
+{
+    toojpeg_temp[toojpeg_temp_offset++] = value;
+
+    if (toojpeg_temp_offset == 4096)
+    {
+        toojpeg_stream->write(toojpeg_temp, 4096);
+        toojpeg_temp_offset = 0;
+    }
+}
+
+Surface toojpeg_load(const char* filename)
+{
+    // NOT SUPPORTED
+    MANGO_UNREFERENCED(filename);
+    return Surface();
+}
+
+size_t toojpeg_save(const char* filename, const Surface& surface)
+{
+    OutputFileStream file(filename);
+
+    toojpeg_stream = &file;
+    toojpeg_temp_offset = 0;
+
+    bool status = TooJpeg::writeJpeg(toojpeg_write_byte, surface.image, surface.width, surface.height);
+    if (!status)
+    {
+        printf("Encode failed.\n");
+    }
+
+    // flush temp buffer
+    toojpeg_stream->write(toojpeg_temp, toojpeg_temp_offset);
+
+    return file.size();
+}
+
+#endif
+
+// ----------------------------------------------------------------------
 // main()
 // ----------------------------------------------------------------------
 
@@ -364,6 +416,24 @@ int main(int argc, const char* argv[])
 
     time2 = Time::us();
     print("jpgdec:  ", time1 - time0, time2 - time1, size);
+
+#endif
+
+    // ------------------------------------------------------------------
+
+#ifdef TEST_TOOJPEG
+
+    // toojpeg is encoder-only so we'll provide the input for it
+    Bitmap toojpeg_bitmap(filename, Format(24, Format::UNORM, Format::RGB, 8, 8, 8));
+
+    time0 = Time::us();
+    Surface s_toojpeg = toojpeg_load(filename);
+
+    time1 = Time::us();
+    size = toojpeg_save("output-toojpeg.jpg", toojpeg_bitmap);
+
+    time2 = Time::us();
+    print("toojpeg: ", time1 - time0, time2 - time1, size);
 
 #endif
 

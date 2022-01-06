@@ -92,6 +92,7 @@ executable('image_jpeg_benchmark',
     'image/jpeg_benchmark/jpeg-compressor/jpgd.cpp', 
     'image/jpeg_benchmark/jpeg-compressor/jpge.cpp', 
     'image/jpeg_benchmark/jpegdec/JPEGDEC.cpp', 
+    'image/jpeg_benchmark/toojpeg/toojpeg.cpp', 
     dependencies : [mango_dep, jpeg_dep])
 
 # --------------------------------------------------------------------------------
