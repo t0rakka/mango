@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cstring>
 #include <mango/core/core.hpp>
@@ -13,14 +13,42 @@
 // https://wiki.mozilla.org/APNG_Specification
 // https://datatracker.ietf.org/doc/html/rfc1951
 
-// TODO: discard modes (requires us to keep a copy of main image)
-// TODO: check that animations starting with "IDAT" and "fdAT" work correctly
-// TODO: SIMD blending (not critical)
-// TODO: SIMD color conversions
-
 namespace fpng
 {
-    using namespace mango;
+    /*
+        This is free and unencumbered software released into the public domain.
+
+        Anyone is free to copy, modify, publish, use, compile, sell, or
+        distribute this software, either in source code form or as a compiled
+        binary, for any purpose, commercial or non-commercial, and by any
+        means.
+
+        In jurisdictions that recognize copyright laws, the author or authors
+        of this software dedicate any and all copyright interest in the
+        software to the public domain. We make this dedication for the benefit
+        of the public at large and to the detriment of our heirs and
+        successors. We intend this dedication to be an overt act of
+        relinquishment in perpetuity of all present and future rights to this
+        software under copyright law.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+        IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+        OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+        OTHER DEALINGS IN THE SOFTWARE.
+
+        For more information, please refer to <http://unlicense.org/>
+
+        Richard Geldreich, Jr.
+        12/30/2021
+    */
+    /*
+        Integration with mango includes some modifications:
+        - use the existing architecture neutral load/store
+        - defer Adler32 checksum computation to the caller
+    */
 
     static const uint16_t g_defl_len_sym[256] = {
       257,258,259,260,261,262,263,264,265,265,266,266,267,267,268,268,269,269,269,269,270,270,270,270,271,271,271,271,272,272,272,272,
@@ -38,39 +66,7 @@ namespace fpng
       5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
       5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0 };
 
-    static const uint8_t g_defl_small_dist_sym[512] = {
-      0,1,2,3,4,4,5,5,6,6,6,6,7,7,7,7,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,11,11,11,11,11,11,
-      11,11,11,11,11,11,11,11,11,11,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,13,
-      13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,13,14,14,14,14,14,14,14,14,14,14,14,14,
-      14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,
-      14,14,14,14,14,14,14,14,14,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,
-      15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,16,16,16,16,16,16,16,16,16,16,16,16,16,
-      16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
-      16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,
-      16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,17,17,17,17,17,17,17,17,17,17,17,17,17,17,
-      17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,
-      17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,
-      17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17,17 };
-
     static const uint32_t g_bitmasks[17] = { 0x0000, 0x0001, 0x0003, 0x0007, 0x000F, 0x001F, 0x003F, 0x007F, 0x00FF, 0x01FF, 0x03FF, 0x07FF, 0x0FFF, 0x1FFF, 0x3FFF, 0x7FFF, 0xFFFF };
-
-    /*
-    static const uint8_t g_dyn_huff_3[] = {
-    120, 1, 237, 195, 3, 176, 110, 89, 122, 128, 225, 247, 251, 214, 218, 248, 113, 124, 173, 190, 109, 12, 50, 201, 196, 182, 109, 219, 182, 109, 219, 182,
-    109, 219, 201, 36, 147, 153, 105, 235, 246, 53, 142, 207, 143, 141, 181, 214, 151, 93, 117, 170, 78, 117, 117, 58, 206, 77, 210, 217, 169, 122 };
-    const uint32_t DYN_HUFF_3_BITBUF = 30, DYN_HUFF_3_BITBUF_SIZE = 7;
-    static const struct { uint8_t m_code_size; uint16_t m_code; } g_dyn_huff_3_codes[288] = {
-    {2,0},{4,2},{4,10},{5,14},{5,30},{6,25},{6,57},{6,5},{6,37},{7,3},{7,67},{7,35},{7,99},{8,11},{8,139},{8,75},{8,203},{8,43},{8,171},{8,107},{9,135},{9,391},{9,71},{9,327},{9,199},{9,455},{9,39},{9,295},{9,167},{9,423},{9,103},{10,183},
-    {9,359},{10,695},{10,439},{10,951},{10,119},{10,631},{10,375},{10,887},{10,247},{10,759},{10,503},{11,975},{11,1999},{11,47},{11,1071},{12,1199},{11,559},{12,3247},{12,687},{11,1583},{12,2735},{12,1711},{12,3759},{12,431},{12,2479},{12,1455},{12,3503},{12,943},{12,2991},{12,1967},{12,4015},{12,111},
-    {12,2159},{12,1135},{12,3183},{12,623},{12,2671},{12,1647},{12,3695},{12,367},{12,2415},{12,1391},{12,3439},{12,879},{12,2927},{12,1903},{12,3951},{12,239},{12,2287},{12,1263},{12,3311},{12,751},{12,2799},{12,1775},{12,3823},{12,495},{12,2543},{12,1519},{12,3567},{12,1007},{12,3055},{12,2031},{12,4079},{12,31},
-    {12,2079},{12,1055},{12,3103},{12,543},{12,2591},{12,1567},{12,3615},{12,287},{12,2335},{12,1311},{12,3359},{12,799},{12,2847},{12,1823},{12,3871},{12,159},{12,2207},{12,1183},{12,3231},{12,671},{12,2719},{12,1695},{12,3743},{12,415},{12,2463},{12,1439},{12,3487},{12,927},{12,2975},{12,1951},{12,3999},{12,95},
-    {12,2143},{12,1119},{12,3167},{12,607},{12,2655},{12,1631},{12,3679},{12,351},{12,2399},{12,1375},{12,3423},{12,863},{12,2911},{12,1887},{12,3935},{12,223},{12,2271},{12,1247},{12,3295},{12,735},{12,2783},{12,1759},{12,3807},{12,479},{12,2527},{12,1503},{12,3551},{12,991},{12,3039},{12,2015},{12,4063},{12,63},
-    {12,2111},{12,1087},{12,3135},{12,575},{12,2623},{12,1599},{12,3647},{12,319},{12,2367},{12,1343},{12,3391},{12,831},{12,2879},{12,1855},{12,3903},{12,191},{12,2239},{12,1215},{12,3263},{12,703},{12,2751},{12,1727},{12,3775},{12,447},{12,2495},{12,1471},{12,3519},{12,959},{12,3007},{12,1983},{12,4031},{12,127},
-    {12,2175},{12,1151},{12,3199},{12,639},{12,2687},{12,1663},{12,3711},{12,383},{12,2431},{12,1407},{12,3455},{12,895},{12,2943},{11,303},{12,1919},{12,3967},{11,1327},{12,255},{11,815},{11,1839},{11,175},{10,1015},{10,15},{10,527},{10,271},{10,783},{10,143},{10,655},{10,399},{10,911},{10,79},{10,591},
-    {9,231},{10,335},{9,487},{9,23},{9,279},{9,151},{9,407},{9,87},{9,343},{9,215},{9,471},{9,55},{8,235},{8,27},{8,155},{8,91},{8,219},{8,59},{8,187},{8,123},{7,19},{7,83},{7,51},{7,115},{6,21},{6,53},{6,13},{6,45},{5,1},{5,17},{5,9},{4,6},
-    {12,2303},{6,29},{0,0},{0,0},{8,251},{0,0},{0,0},{8,7},{0,0},{10,847},{0,0},{10,207},{12,1279},{10,719},{12,3327},{12,767},{12,2815},{12,1791},{12,3839},{12,511},{12,2559},{12,1535},{9,311},{12,3583},{12,1023},{12,3071},{10,463},{12,2047},{6,61},{12,4095},{0,0},{0,0}
-    };
-    */
 
     static const uint8_t g_dyn_huff_4[] = {
     120, 1, 229, 196, 99, 180, 37, 103, 218, 128, 225, 251, 121, 171, 106, 243, 216, 231, 180, 109, 196, 182, 51, 51, 73, 6, 201, 216, 182, 109, 219, 182,
@@ -88,26 +84,13 @@ namespace fpng
     {12,2047},{0,0},{6,9},{0,0},{0,0},{0,0},{8,147},{0,0},{0,0},{7,53},{0,0},{9,379},{0,0},{9,251},{10,911},{10,79},{11,767},{10,591},{10,335},{10,847},{10,207},{10,719},{11,1791},{11,511},{9,507},{11,1535},{11,1023},{12,4095},{5,14},{0,0},{0,0},{0,0}
     };
 
-    constexpr int FPNG_FALSE = 0;
-    //constexpr uint8_t FPNG_FDEC_VERSION = 0;
-    //constexpr uint32_t FPNG_MAX_SUPPORTED_DIM = 1 << 24;
-    //constexpr uint32_t FPNG_ADLER32_INIT = 1;
-
-    /*
-    // Customized the very common case of reading a 24bpp pixel from memory
-    static inline uint32_t READ_RGB_PIXEL(const void* p)
-    {
-        return uload32le(p) & 0xffffff;
-    }
-    */
-
 #define PUT_BITS(bb, ll) do { uint32_t b = bb, l = ll; assert((l) >= 0 && (l) <= 16); assert((b) < (1ULL << (l))); bit_buf |= (((uint64_t)(b)) << bit_buf_size); bit_buf_size += (l); assert(bit_buf_size <= 64); } while(0)
 #define PUT_BITS_CZ(bb, ll) do { uint32_t b = bb, l = ll; assert((l) >= 1 && (l) <= 16); assert((b) < (1ULL << (l))); bit_buf |= (((uint64_t)(b)) << bit_buf_size); bit_buf_size += (l); assert(bit_buf_size <= 64); } while(0)
 
 #define PUT_BITS_FLUSH do { \
     if ((dst_ofs + 8) > dst_buf_size) \
         return 0; \
-    ustore64le(pDst + dst_ofs, bit_buf); \
+    mango::ustore64le(pDst + dst_ofs, bit_buf); \
     uint32_t bits_to_shift = bit_buf_size & ~7; \
     dst_ofs += (bits_to_shift >> 3); \
     assert(bits_to_shift < 64); \
@@ -127,382 +110,58 @@ namespace fpng
     } \
 } while(0)
 
-    enum
-    {
-        DEFL_MAX_HUFF_TABLES = 3,
-        DEFL_MAX_HUFF_SYMBOLS = 288,
-        DEFL_MAX_HUFF_SYMBOLS_0 = 288,
-        DEFL_MAX_HUFF_SYMBOLS_1 = 32,
-        DEFL_MAX_HUFF_SYMBOLS_2 = 19,
-        DEFL_LZ_DICT_SIZE = 32768,
-        DEFL_LZ_DICT_SIZE_MASK = DEFL_LZ_DICT_SIZE - 1,
-        DEFL_MIN_MATCH_LEN = 3,
-        DEFL_MAX_MATCH_LEN = 258
-    };
-
-    struct defl_huff
-    {
-        uint16_t m_huff_count[DEFL_MAX_HUFF_TABLES][DEFL_MAX_HUFF_SYMBOLS];
-        uint16_t m_huff_codes[DEFL_MAX_HUFF_TABLES][DEFL_MAX_HUFF_SYMBOLS];
-        uint8_t m_huff_code_sizes[DEFL_MAX_HUFF_TABLES][DEFL_MAX_HUFF_SYMBOLS];
-    };
-
-    struct defl_sym_freq
-    {
-        uint16_t m_key;
-        uint16_t m_sym_index;
-    };
-
-#define DEFL_CLEAR_OBJ(obj) memset(&(obj), 0, sizeof(obj))
-
-    static defl_sym_freq* defl_radix_sort_syms(uint32_t num_syms, defl_sym_freq* pSyms0, defl_sym_freq* pSyms1)
-    {
-        uint32_t total_passes = 2, pass_shift, pass, i, hist[256 * 2]; defl_sym_freq* pCur_syms = pSyms0, * pNew_syms = pSyms1; DEFL_CLEAR_OBJ(hist);
-        for (i = 0; i < num_syms; i++) { uint32_t freq = pSyms0[i].m_key; hist[freq & 0xFF]++; hist[256 + ((freq >> 8) & 0xFF)]++; }
-        while ((total_passes > 1) && (num_syms == hist[(total_passes - 1) * 256])) total_passes--;
-        for (pass_shift = 0, pass = 0; pass < total_passes; pass++, pass_shift += 8)
-        {
-            const uint32_t* pHist = &hist[pass << 8];
-            uint32_t offsets[256], cur_ofs = 0;
-            for (i = 0; i < 256; i++) { offsets[i] = cur_ofs; cur_ofs += pHist[i]; }
-            for (i = 0; i < num_syms; i++) pNew_syms[offsets[(pCur_syms[i].m_key >> pass_shift) & 0xFF]++] = pCur_syms[i];
-            { defl_sym_freq* t = pCur_syms; pCur_syms = pNew_syms; pNew_syms = t; }
-        }
-        return pCur_syms;
-    }
-
-    // defl_calculate_minimum_redundancy() originally written by: Alistair Moffat, alistair@cs.mu.oz.au, Jyrki Katajainen, jyrki@diku.dk, November 1996.
-    static void defl_calculate_minimum_redundancy(defl_sym_freq* A, int n)
-    {
-        int root, leaf, next, avbl, used, dpth;
-        if (n == 0) return; else if (n == 1) { A[0].m_key = 1; return; }
-        A[0].m_key += A[1].m_key; root = 0; leaf = 2;
-        for (next = 1; next < n - 1; next++)
-        {
-            if (leaf >= n || A[root].m_key < A[leaf].m_key) { A[next].m_key = A[root].m_key; A[root++].m_key = (uint16_t)next; }
-            else A[next].m_key = A[leaf++].m_key;
-            if (leaf >= n || (root < next && A[root].m_key < A[leaf].m_key)) { A[next].m_key = (uint16_t)(A[next].m_key + A[root].m_key); A[root++].m_key = (uint16_t)next; }
-            else A[next].m_key = (uint16_t)(A[next].m_key + A[leaf++].m_key);
-        }
-        A[n - 2].m_key = 0; for (next = n - 3; next >= 0; next--) A[next].m_key = A[A[next].m_key].m_key + 1;
-        avbl = 1; used = dpth = 0; root = n - 2; next = n - 1;
-        while (avbl > 0)
-        {
-            while (root >= 0 && (int)A[root].m_key == dpth) { used++; root--; }
-            while (avbl > used) { A[next--].m_key = (uint16_t)(dpth); avbl--; }
-            avbl = 2 * used; dpth++; used = 0;
-        }
-    }
-
-    // Limits canonical Huffman code table's max code size.
-    enum { DEFL_MAX_SUPPORTED_HUFF_CODESIZE = 32 };
-    static void defl_huffman_enforce_max_code_size(int* pNum_codes, int code_list_len, int max_code_size)
-    {
-        int i; uint32_t total = 0; if (code_list_len <= 1) return;
-        for (i = max_code_size + 1; i <= DEFL_MAX_SUPPORTED_HUFF_CODESIZE; i++) pNum_codes[max_code_size] += pNum_codes[i];
-        for (i = max_code_size; i > 0; i--) total += (((uint32_t)pNum_codes[i]) << (max_code_size - i));
-        while (total != (1UL << max_code_size))
-        {
-            pNum_codes[max_code_size]--;
-            for (i = max_code_size - 1; i > 0; i--) if (pNum_codes[i]) { pNum_codes[i]--; pNum_codes[i + 1] += 2; break; }
-            total--;
-        }
-    }
-
-    static void defl_optimize_huffman_table(defl_huff* d, int table_num, int table_len, int code_size_limit, int static_table)
-    {
-        int i, j, l, num_codes[1 + DEFL_MAX_SUPPORTED_HUFF_CODESIZE]; uint32_t next_code[DEFL_MAX_SUPPORTED_HUFF_CODESIZE + 1]; DEFL_CLEAR_OBJ(num_codes);
-        if (static_table)
-        {
-            for (i = 0; i < table_len; i++) num_codes[d->m_huff_code_sizes[table_num][i]]++;
-        }
-        else
-        {
-            defl_sym_freq syms0[DEFL_MAX_HUFF_SYMBOLS], syms1[DEFL_MAX_HUFF_SYMBOLS], * pSyms;
-            int num_used_syms = 0;
-            const uint16_t* pSym_count = &d->m_huff_count[table_num][0];
-            for (i = 0; i < table_len; i++) if (pSym_count[i]) { syms0[num_used_syms].m_key = (uint16_t)pSym_count[i]; syms0[num_used_syms++].m_sym_index = (uint16_t)i; }
-
-            pSyms = defl_radix_sort_syms(num_used_syms, syms0, syms1); defl_calculate_minimum_redundancy(pSyms, num_used_syms);
-
-            for (i = 0; i < num_used_syms; i++) num_codes[pSyms[i].m_key]++;
-
-            defl_huffman_enforce_max_code_size(num_codes, num_used_syms, code_size_limit);
-
-            DEFL_CLEAR_OBJ(d->m_huff_code_sizes[table_num]); DEFL_CLEAR_OBJ(d->m_huff_codes[table_num]);
-            for (i = 1, j = num_used_syms; i <= code_size_limit; i++)
-                for (l = num_codes[i]; l > 0; l--) d->m_huff_code_sizes[table_num][pSyms[--j].m_sym_index] = (uint8_t)(i);
-        }
-
-        next_code[1] = 0; for (j = 0, i = 2; i <= code_size_limit; i++) next_code[i] = j = ((j + num_codes[i - 1]) << 1);
-
-        for (i = 0; i < table_len; i++)
-        {
-            uint32_t rev_code = 0, code, code_size; if ((code_size = d->m_huff_code_sizes[table_num][i]) == 0) continue;
-            code = next_code[code_size]++; for (l = code_size; l > 0; l--, code >>= 1) rev_code = (rev_code << 1) | (code & 1);
-            d->m_huff_codes[table_num][i] = (uint16_t)rev_code;
-        }
-    }
-
-#define DEFL_RLE_PREV_CODE_SIZE() { if (rle_repeat_count) { \
-  if (rle_repeat_count < 3) { \
-    d->m_huff_count[2][prev_code_size] = (uint16_t)(d->m_huff_count[2][prev_code_size] + rle_repeat_count); \
-    while (rle_repeat_count--) packed_code_sizes[num_packed_code_sizes++] = prev_code_size; \
-  } else { \
-    d->m_huff_count[2][16] = (uint16_t)(d->m_huff_count[2][16] + 1); packed_code_sizes[num_packed_code_sizes++] = 16; packed_code_sizes[num_packed_code_sizes++] = (uint8_t)(rle_repeat_count - 3); \
-} rle_repeat_count = 0; } }
-
-#define DEFL_RLE_ZERO_CODE_SIZE() { if (rle_z_count) { \
-  if (rle_z_count < 3) { \
-    d->m_huff_count[2][0] = (uint16_t)(d->m_huff_count[2][0] + rle_z_count); while (rle_z_count--) packed_code_sizes[num_packed_code_sizes++] = 0; \
-  } else if (rle_z_count <= 10) { \
-    d->m_huff_count[2][17] = (uint16_t)(d->m_huff_count[2][17] + 1); packed_code_sizes[num_packed_code_sizes++] = 17; packed_code_sizes[num_packed_code_sizes++] = (uint8_t)(rle_z_count - 3); \
-  } else { \
-    d->m_huff_count[2][18] = (uint16_t)(d->m_huff_count[2][18] + 1); packed_code_sizes[num_packed_code_sizes++] = 18; packed_code_sizes[num_packed_code_sizes++] = (uint8_t)(rle_z_count - 11); \
-} rle_z_count = 0; } }
-
-    static uint8_t g_defl_packed_code_size_syms_swizzle[] = { 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 };
-
-#define DEFL_DYN_PUT_BITS(bb, ll) \
-do { \
-    uint32_t b = (bb), l = (ll); \
-    assert((l) >= 1 && (l) <= 16); assert((b) < (1ULL << (l))); \
-    bit_buf |= (((uint64_t)(b)) << bit_buf_size); bit_buf_size += (l); assert(bit_buf_size <= 64); \
-    while (bit_buf_size >= 8) \
-    { \
-        if ((dst_ofs + 1) > dst_buf_size) \
-            return false; \
-        *(uint8_t*)(pDst + dst_ofs) = (uint8_t)bit_buf; \
-        dst_ofs++; \
-        bit_buf >>= 8; \
-        bit_buf_size -= 8; \
-    } \
-} while(0)
-
-    static bool defl_start_dynamic_block(defl_huff* d, uint8_t* pDst, uint32_t& dst_ofs, uint32_t dst_buf_size, uint64_t& bit_buf, int& bit_buf_size)
-    {
-        int num_lit_codes, num_dist_codes, num_bit_lengths; uint32_t i, total_code_sizes_to_pack, num_packed_code_sizes, rle_z_count, rle_repeat_count, packed_code_sizes_index;
-        uint8_t code_sizes_to_pack[DEFL_MAX_HUFF_SYMBOLS_0 + DEFL_MAX_HUFF_SYMBOLS_1], packed_code_sizes[DEFL_MAX_HUFF_SYMBOLS_0 + DEFL_MAX_HUFF_SYMBOLS_1], prev_code_size = 0xFF;
-
-        d->m_huff_count[0][256] = 1;
-
-        defl_optimize_huffman_table(d, 0, DEFL_MAX_HUFF_SYMBOLS_0, 12, FPNG_FALSE);
-        defl_optimize_huffman_table(d, 1, DEFL_MAX_HUFF_SYMBOLS_1, 12, FPNG_FALSE);
-
-        for (num_lit_codes = 286; num_lit_codes > 257; num_lit_codes--) if (d->m_huff_code_sizes[0][num_lit_codes - 1]) break;
-        for (num_dist_codes = 30; num_dist_codes > 1; num_dist_codes--) if (d->m_huff_code_sizes[1][num_dist_codes - 1]) break;
-
-        memcpy(code_sizes_to_pack, &d->m_huff_code_sizes[0][0], num_lit_codes);
-        memcpy(code_sizes_to_pack + num_lit_codes, &d->m_huff_code_sizes[1][0], num_dist_codes);
-        total_code_sizes_to_pack = num_lit_codes + num_dist_codes; num_packed_code_sizes = 0; rle_z_count = 0; rle_repeat_count = 0;
-
-        memset(&d->m_huff_count[2][0], 0, sizeof(d->m_huff_count[2][0]) * DEFL_MAX_HUFF_SYMBOLS_2);
-        for (i = 0; i < total_code_sizes_to_pack; i++)
-        {
-            uint8_t code_size = code_sizes_to_pack[i];
-            if (!code_size)
-            {
-                DEFL_RLE_PREV_CODE_SIZE();
-                if (++rle_z_count == 138) { DEFL_RLE_ZERO_CODE_SIZE(); }
-            }
-            else
-            {
-                DEFL_RLE_ZERO_CODE_SIZE();
-                if (code_size != prev_code_size)
-                {
-                    DEFL_RLE_PREV_CODE_SIZE();
-                    d->m_huff_count[2][code_size] = (uint16_t)(d->m_huff_count[2][code_size] + 1); packed_code_sizes[num_packed_code_sizes++] = code_size;
-                }
-                else if (++rle_repeat_count == 6)
-                {
-                    DEFL_RLE_PREV_CODE_SIZE();
-                }
-            }
-            prev_code_size = code_size;
-        }
-        if (rle_repeat_count) { DEFL_RLE_PREV_CODE_SIZE(); }
-        else { DEFL_RLE_ZERO_CODE_SIZE(); }
-
-        defl_optimize_huffman_table(d, 2, DEFL_MAX_HUFF_SYMBOLS_2, 7, FPNG_FALSE);
-
-        // max of 2+5+5+4+18*3+(288+32)*7=2310 bits
-        DEFL_DYN_PUT_BITS(2, 2);
-
-        DEFL_DYN_PUT_BITS(num_lit_codes - 257, 5);
-        DEFL_DYN_PUT_BITS(num_dist_codes - 1, 5);
-
-        for (num_bit_lengths = 18; num_bit_lengths >= 0; num_bit_lengths--) if (d->m_huff_code_sizes[2][g_defl_packed_code_size_syms_swizzle[num_bit_lengths]]) break;
-        num_bit_lengths = std::max<int>(4, (num_bit_lengths + 1)); DEFL_DYN_PUT_BITS(num_bit_lengths - 4, 4);
-        for (i = 0; (int)i < num_bit_lengths; i++) DEFL_DYN_PUT_BITS(d->m_huff_code_sizes[2][g_defl_packed_code_size_syms_swizzle[i]], 3);
-
-        for (packed_code_sizes_index = 0; packed_code_sizes_index < num_packed_code_sizes; )
-        {
-            uint32_t code = packed_code_sizes[packed_code_sizes_index++]; assert(code < DEFL_MAX_HUFF_SYMBOLS_2);
-            DEFL_DYN_PUT_BITS(d->m_huff_codes[2][code], d->m_huff_code_sizes[2][code]);
-            if (code >= 16) DEFL_DYN_PUT_BITS(packed_code_sizes[packed_code_sizes_index++], "\02\03\07"[code - 16]);
-        }
-
-        return true;
-    }
-
-    /*
-    static uint32_t write_raw_block(const uint8_t* pSrc, uint32_t src_len, uint8_t* pDst, uint32_t dst_buf_size)
-    {
-        if (dst_buf_size < 2)
-            return 0;
-
-        pDst[0] = 0x78;
-        pDst[1] = 0x01;
-
-        uint32_t dst_ofs = 2;
-
-        uint32_t src_ofs = 0;
-        while (src_ofs < src_len)
-        {
-            const uint32_t src_remaining = src_len - src_ofs;
-            const uint32_t block_size = std::min<uint32_t>(UINT16_MAX, src_remaining);
-            const bool final_block = (block_size == src_remaining);
-
-            if ((dst_ofs + 5 + block_size) > dst_buf_size)
-                return 0;
-
-            pDst[dst_ofs + 0] = final_block ? 1 : 0;
-
-            pDst[dst_ofs + 1] = block_size & 0xFF;
-            pDst[dst_ofs + 2] = (block_size >> 8) & 0xFF;
-
-            pDst[dst_ofs + 3] = (~block_size) & 0xFF;
-            pDst[dst_ofs + 4] = ((~block_size) >> 8) & 0xFF;
-
-            memcpy(pDst + dst_ofs + 5, pSrc + src_ofs, block_size);
-
-            src_ofs += block_size;
-            dst_ofs += 5 + block_size;
-        }
-
-        // reserve space for adler
-        for (uint32_t i = 0; i < 4; i++)
-        {
-            if (dst_ofs + 1 > dst_buf_size)
-                return 0;
-
-            pDst[dst_ofs] = 0;
-            dst_ofs++;
-        }
-
-        return dst_ofs;
-    }
-    */
-
-    static void adjust_freq32(uint32_t num_freq, uint32_t* pFreq, uint16_t* pFreq16)
-    {
-        uint32_t total_freq = 0;
-        for (uint32_t i = 0; i < num_freq; i++)
-            total_freq += pFreq[i];
-
-        if (!total_freq)
-        {
-            memset(pFreq16, 0, num_freq * sizeof(uint16_t));
-            return;
-        }
-
-        uint32_t total_freq16 = 0;
-        for (uint32_t i = 0; i < num_freq; i++)
-        {
-            uint64_t f = pFreq[i];
-            if (!f)
-            {
-                pFreq16[i] = 0;
-                continue;
-            }
-
-            pFreq16[i] = (uint16_t)std::max<uint32_t>(1, (uint32_t)((f * UINT16_MAX) / total_freq));
-
-            total_freq16 += pFreq16[i];
-        }
-
-        while (total_freq16 > UINT16_MAX)
-        {
-            total_freq16 = 0;
-            for (uint32_t i = 0; i < num_freq; i++)
-            {
-                if (pFreq[i])
-                {
-                    pFreq[i] = std::max<uint32_t>(1, pFreq[i] >> 1);
-                    total_freq16 += pFreq[i];
-                }
-            }
-        }
-    }
-
-    static uint32_t pixel_deflate_dyn_4_rle(
+    static uint32_t pixel_deflate_dyn_4_rle_one_pass(
         const uint8_t* pImg, uint32_t w, uint32_t h,
-        uint8_t* pDst, uint32_t dst_buf_size, bool is_first, bool is_last)
+        uint8_t* pDst, uint32_t dst_buf_size)
     {
         const uint32_t bpl = 1 + w * 4;
 
-        uint64_t bit_buf = 0;
-        int bit_buf_size = 0;
+        if (dst_buf_size < sizeof(g_dyn_huff_4))
+            return false;
+        memcpy(pDst, g_dyn_huff_4, sizeof(g_dyn_huff_4));
+        uint32_t dst_ofs = sizeof(g_dyn_huff_4);
 
-        uint32_t dst_ofs = 0;
-
-        if (is_first)
-        {
-            // zlib header
-            PUT_BITS(0x78, 8);
-            PUT_BITS(0x01, 8);
-        }
-
-        // write BFINAL bit
-        if (!is_last)
-        {
-            PUT_BITS(0, 1);
-        }
-        else
-        {
-            PUT_BITS(1, 1);
-        }
-
-        std::vector<uint64_t> codes;
-        codes.resize((w + 1) * h);
-        uint64_t* pDst_codes = codes.data();
-
-        uint32_t lit_freq[DEFL_MAX_HUFF_SYMBOLS_0];
-        memset(lit_freq, 0, sizeof(lit_freq));
+        uint64_t bit_buf = DYN_HUFF_4_BITBUF;
+        int bit_buf_size = DYN_HUFF_4_BITBUF_SIZE;
 
         const uint8_t* pSrc = pImg;
         uint32_t src_ofs = 0;
-
-        const uint32_t dist_sym = g_defl_small_dist_sym[4 - 1];
 
         for (uint32_t y = 0; y < h; y++)
         {
             const uint32_t end_src_ofs = src_ofs + bpl;
 
             const uint32_t filter_lit = pSrc[src_ofs++];
-            *pDst_codes++ = 1 | (filter_lit << 8);
-            lit_freq[filter_lit]++;
+            PUT_BITS_CZ(g_dyn_huff_4_codes[filter_lit].m_code, g_dyn_huff_4_codes[filter_lit].m_code_size);
+
+            PUT_BITS_FLUSH;
 
             uint32_t prev_lits;
             {
-                uint32_t lits = uload32le(pSrc + src_ofs);
+                uint32_t lits = mango::uload32le(pSrc + src_ofs);
 
-                *pDst_codes++ = (uint64_t)lits << 8;
+                PUT_BITS_CZ(g_dyn_huff_4_codes[lits & 0xFF].m_code, g_dyn_huff_4_codes[lits & 0xFF].m_code_size);
+                PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code, g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code_size);
+                PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 16) & 0xFF].m_code, g_dyn_huff_4_codes[(lits >> 16) & 0xFF].m_code_size);
 
-                lit_freq[lits & 0xFF]++;
-                lit_freq[(lits >> 8) & 0xFF]++;
-                lit_freq[(lits >> 16) & 0xFF]++;
-                lit_freq[lits >> 24]++;
+                if (bit_buf_size >= 49)
+                {
+                    PUT_BITS_FLUSH;
+                }
+                
+                PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 24)].m_code, g_dyn_huff_4_codes[(lits >> 24)].m_code_size);
 
                 src_ofs += 4;
                 
                 prev_lits = lits;
             }
 
+            PUT_BITS_FLUSH;
+
             while (src_ofs < end_src_ofs)
             {
-                uint32_t lits = uload32le(pSrc + src_ofs);
-
+                uint32_t lits = mango::uload32le(pSrc + src_ofs);
+                                
                 if (lits == prev_lits)
                 {
                     uint32_t match_len = 4;
@@ -510,117 +169,71 @@ do { \
 
                     while (match_len < max_match_len)
                     {
-                        if (uload32le(pSrc + src_ofs + match_len) != lits)
+                        if (mango::uload32le(pSrc + src_ofs + match_len) != lits)
                             break;
                         match_len += 4;
                     }
-                                        
-                    *pDst_codes++ = match_len - 1;
 
                     uint32_t adj_match_len = match_len - 3;
 
-                    lit_freq[g_defl_len_sym[adj_match_len]]++;
-                    
+                    const uint32_t match_code_bits = g_dyn_huff_4_codes[g_defl_len_sym[adj_match_len]].m_code_size;
+                    const uint32_t len_extra_bits = g_defl_len_extra[adj_match_len];
+
+                    if (match_len == 4)
+                    {
+                        // This check is optional - see if just encoding 4 literals would be cheaper than using a short match.
+                        uint32_t lit_bits = g_dyn_huff_4_codes[lits & 0xFF].m_code_size + g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code_size + 
+                            g_dyn_huff_4_codes[(lits >> 16) & 0xFF].m_code_size + g_dyn_huff_4_codes[(lits >> 24)].m_code_size;
+                        
+                        if ((match_code_bits + len_extra_bits + 1) > lit_bits)
+                            goto do_literals;
+                    }
+
+                    PUT_BITS_CZ(g_dyn_huff_4_codes[g_defl_len_sym[adj_match_len]].m_code, match_code_bits);
+                    PUT_BITS(adj_match_len & g_bitmasks[g_defl_len_extra[adj_match_len]], len_extra_bits + 1); // up to 6 bits, +1 for the match distance Huff code which is always 0
+
                     src_ofs += match_len;
                 }
                 else
                 {
-                    *pDst_codes++ = (uint64_t)lits << 8;
+do_literals:
+                    PUT_BITS_CZ(g_dyn_huff_4_codes[lits & 0xFF].m_code, g_dyn_huff_4_codes[lits & 0xFF].m_code_size);
+                    PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code, g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code_size);
+                    PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 16) & 0xFF].m_code, g_dyn_huff_4_codes[(lits >> 16) & 0xFF].m_code_size);
 
-                    lit_freq[lits & 0xFF]++;
-                    lit_freq[(lits >> 8) & 0xFF]++;
-                    lit_freq[(lits >> 16) & 0xFF]++;
-                    lit_freq[lits >> 24]++;
-                    
-                    prev_lits = lits;
+                    if (bit_buf_size >= 49)
+                    {
+                        PUT_BITS_FLUSH;
+                    }
+
+                    PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 24)].m_code, g_dyn_huff_4_codes[(lits >> 24)].m_code_size);
 
                     src_ofs += 4;
+                    
+                    prev_lits = lits;
                 }
+
+                PUT_BITS_FLUSH;
 
             } // while (src_ofs < end_src_ofs)
 
         } // y
 
         assert(src_ofs == h * bpl);
-        const uint32_t total_codes = (uint32_t)(pDst_codes - codes.data());
-        assert(total_codes <= codes.size());
-                        
-        defl_huff dh;
-        
-        lit_freq[256] = 1;
-
-        adjust_freq32(DEFL_MAX_HUFF_SYMBOLS_0, lit_freq, &dh.m_huff_count[0][0]);
-        
-        memset(&dh.m_huff_count[1][0], 0, sizeof(dh.m_huff_count[1][0]) * DEFL_MAX_HUFF_SYMBOLS_1);
-        dh.m_huff_count[1][dist_sym] = 1;
-        dh.m_huff_count[1][dist_sym + 1] = 1; // to workaround a bug in wuffs decoder
-
-        if (!defl_start_dynamic_block(&dh, pDst, dst_ofs, dst_buf_size, bit_buf, bit_buf_size))
-            return 0;
 
         assert(bit_buf_size <= 7);
-        assert(dh.m_huff_codes[1][dist_sym] == 0 && dh.m_huff_code_sizes[1][dist_sym] == 1);
 
-        for (uint32_t i = 0; i < total_codes; i++)
-        {
-            uint64_t c = codes[i];
-
-            uint32_t c_type = (uint32_t)(c & 0xFF);
-            if (c_type == 0)
-            {
-                uint32_t lits = (uint32_t)(c >> 8);
-
-                PUT_BITS_CZ(dh.m_huff_codes[0][lits & 0xFF], dh.m_huff_code_sizes[0][lits & 0xFF]);
-                lits >>= 8;
-
-                PUT_BITS_CZ(dh.m_huff_codes[0][lits & 0xFF], dh.m_huff_code_sizes[0][lits & 0xFF]);
-                lits >>= 8;
-
-                PUT_BITS_CZ(dh.m_huff_codes[0][lits & 0xFF], dh.m_huff_code_sizes[0][lits & 0xFF]);
-                lits >>= 8;
-
-                if (bit_buf_size >= 49)
-                {
-                    PUT_BITS_FLUSH;
-                }
-
-                PUT_BITS_CZ(dh.m_huff_codes[0][lits], dh.m_huff_code_sizes[0][lits]);
-            }
-            else if (c_type == 1)
-            {
-                uint32_t lit = (uint32_t)(c >> 8);
-                PUT_BITS_CZ(dh.m_huff_codes[0][lit], dh.m_huff_code_sizes[0][lit]);
-            }
-            else
-            {
-                uint32_t match_len = c_type + 1;
-
-                uint32_t adj_match_len = match_len - 3;
-                
-                PUT_BITS_CZ(dh.m_huff_codes[0][g_defl_len_sym[adj_match_len]], dh.m_huff_code_sizes[0][g_defl_len_sym[adj_match_len]]);
-                PUT_BITS(adj_match_len & g_bitmasks[g_defl_len_extra[adj_match_len]], g_defl_len_extra[adj_match_len] + 1); // up to 6 bits, +1 for the match distance Huff code which is always 0
-
-                // no need to write the distance code, it's always 0
-            }
-
-            // up to 55 bits
-            PUT_BITS_FLUSH;
-        }
-
-        PUT_BITS_CZ(dh.m_huff_codes[0][256], dh.m_huff_code_sizes[0][256]);
+        PUT_BITS_CZ(g_dyn_huff_4_codes[256].m_code, g_dyn_huff_4_codes[256].m_code_size);
 
         PUT_BITS_FORCE_FLUSH;
 
-        if (is_last)
+        // reserve space for adler32
+        for (uint32_t i = 0; i < 4; i++)
         {
-            // reserve space for adler32
-            for (uint32_t i = 0; i < 4; i++)
-            {
-                if ((dst_ofs + 1) > dst_buf_size)
-                    return 0;
-                *(uint8_t*)(pDst + dst_ofs) = 0;
-                dst_ofs++;
-            }
+            if ((dst_ofs + 1) > dst_buf_size)
+                return 0;
+            *(uint8_t*)(pDst + dst_ofs) = 0;
+            dst_ofs++;
         }
 
         return dst_ofs;
@@ -3683,6 +3296,7 @@ namespace
     }
 #endif
 
+    static
     void write_chunk(Stream& stream, u32 chunk_id, ConstMemory memory)
     {
         BigEndianStream s(stream);
@@ -3701,6 +3315,7 @@ namespace
         s.write32(crc);
     }
 
+    static
     void write_IHDR(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type)
     {
         BufferStream buffer;
@@ -3717,6 +3332,7 @@ namespace
         write_chunk(stream, u32_mask_rev('I', 'H', 'D', 'R'), buffer);
     }
 
+    static
     void write_iCCP(Stream& stream, const ImageEncodeOptions& options)
     {
         if (options.icc.size == 0)
@@ -3742,6 +3358,7 @@ namespace
         }
     }
 
+    static
     void write_pLLD(Stream& stream, int segment_height)
     {
         BufferStream buffer;
@@ -3753,6 +3370,7 @@ namespace
         write_chunk(stream, u32_mask_rev('p', 'L', 'L', 'D'), buffer);
     }
 
+    static
     void filter_range(u8* buffer, const Surface& surface, int y0, int y1)
     {
         const int bpp = surface.format.bytes();
@@ -3769,7 +3387,8 @@ namespace
         }
     }
 
-    void compress_serial_libdeflate(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
+    static
+    void compress_serial(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
     {
         const int bpp = surface.format.bytes();
         const int bytes_per_scan = surface.width * bpp + 1;
@@ -3779,17 +3398,53 @@ namespace
         // filtering
         filter_range(buffer, surface, 0, surface.height);
 
-        // compress
-        size_t bound = deflate_zlib::bound(buffer.size());
-        Buffer compressed(bound);
-        size_t bytes_out = deflate_zlib::compress(compressed, buffer, options.compression);
+        // compute fpng scaling factor
+        int factor = 0; // default: not supported
+        switch (surface.format.bits)
+        {
+            case 32:
+                factor = 1;
+                break;
+            case 64:
+                factor = 2;
+                break;
+        }
 
-        // write chunkdID + compressed data
-        write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
+        if (factor)
+        {
+            // use fpng for compression; it is always best choice for serial writes which are small
+            // because it has very low intertia (and is also very high performance). The performance
+            // comes with a string attached: it can only compress 3 and 4 byte size symbols (pixels).
+
+            // compress
+            Buffer compressed(bytes_per_scan * surface.height + 4094); // 4K "gimme a break" -guardband
+            size_t bytes_out = fpng::pixel_deflate_dyn_4_rle_one_pass(buffer.data(), 
+                surface.width, surface.height, compressed.data(), compressed.size());
+            if (!bytes_out)
+            {
+                // compression result is larger than provided buffer; we should do a fallback here
+                // and then return error if even that fails.
+            }
+
+            // write chunkdID + compressed data
+            write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed.data(), bytes_out));
+        }
+        else
+        {
+            // use libdeflate for compression
+
+            // compress
+            size_t bound = deflate_zlib::bound(buffer.size());
+            Buffer compressed(bound);
+            size_t bytes_out = deflate_zlib::compress(compressed, buffer, options.compression);
+
+            // write chunkdID + compressed data
+            write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed, bytes_out));
+        }
     }
 
-    /*
-    void compress_parallel_zlib(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
+    static
+    void compress_parallel(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
     {
         const int bpp = surface.format.bytes();
         const int bytes_per_scan = surface.width * bpp + 1;
@@ -3842,6 +3497,7 @@ namespace
                 {
                     int res = ::deflate(&strm, Z_NO_FLUSH);
                     MANGO_UNREFERENCED(res); // should be Z_OK
+                    // TODO: handle error
 
                     if (strm.avail_out == 0)
                     {
@@ -3858,6 +3514,7 @@ namespace
                 int flush = is_last ? Z_FINISH : Z_FULL_FLUSH;
                 int res = ::deflate(&strm, flush);
                 MANGO_UNREFERENCED(res); // should be Z_STREAM_END
+                // TODO: handle error
 
                 ::deflateEnd(&strm);
 
@@ -3900,90 +3557,8 @@ namespace
         q.wait();
         tk.wait();
     }
-    */
 
-    void compress_parallel_fpng(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
-    {
-        const int bpp = surface.format.bytes();
-        const int bytes_per_scan = surface.width * bpp + 1;
-
-        Buffer buffer(bytes_per_scan * surface.height);
-
-        const int N = ceil_div(surface.height, segment_height);
-        //const int level = math::clamp(options.compression, 0, 9);
-        (void) options;
-
-        u32 cumulative_adler = 1;
-
-        ConcurrentQueue q;
-        TicketQueue tk;
-
-        for (int i = 0; i < N; ++i)
-        {
-            int y = i * segment_height;
-            int h = std::min(segment_height, surface.height - y);
-
-            Memory source;
-            source.address = buffer.data() + y * bytes_per_scan;
-            source.size = h * bytes_per_scan;
-
-            bool is_first = (i == 0);
-            bool is_last = (i == N - 1);
-
-            auto ticket = tk.acquire();
-
-            q.enqueue([=, &surface, &stream, &cumulative_adler]
-            {
-                filter_range(source.address, surface, y, y + h);
-
-                Buffer compressed(bytes_per_scan * h + 4094); // 4K "gimme a break" -factor
-                u32 defl_size = fpng::pixel_deflate_dyn_4_rle(source.address, 
-                    surface.width, h, compressed.data(), compressed.size(), is_first, is_last);
-
-                // capture compressed memory
-                Memory segment_memory = compressed.acquire();
-                segment_memory.size = defl_size;
-
-                u32 segment_adler = adler32(1, source);
-                u32 segment_length = u32(source.size);
-
-                ticket.consume([=, &cumulative_adler, &stream]
-                {
-                    cumulative_adler = ::adler32_combine(cumulative_adler, segment_adler, segment_length);
-
-                    Memory c = segment_memory;
-
-                    if (!is_first)
-                    {
-                        // trim zlib header
-                        c.address += 2;
-                        c.size -= 2;
-                    }
-
-                    if (is_last)
-                    {
-                        // 4 last bytes is adler, overwrite it with cumulative adler
-                        ustore32be(c.address + c.size - 4, cumulative_adler);
-                    }
-                    else
-                    {
-                        // trim adler
-                        c.size -= 4;
-                    }
-
-                    // write chunkdID + compressed data
-                    write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), c);
-
-                    // free compressed memory
-                    Buffer::release(segment_memory);
-                });
-            });
-        }
-
-        q.wait();
-        tk.wait();
-    }
-
+    static
     int configure_segment(const Surface& surface, const ImageEncodeOptions& options)
     {
         int height = 0;
@@ -4005,12 +3580,12 @@ namespace
         return height;
     }
 
+    static
     void write_png(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type, const ImageEncodeOptions& options)
     {
         BigEndianStream s(stream);
 
-        //int segment_height = configure_segment(surface, options);
-        int segment_height = surface.height;
+        int segment_height = configure_segment(surface, options);
 
         // write magic
         s.write64(PNG_HEADER_MAGIC);
@@ -4019,13 +3594,12 @@ namespace
         write_iCCP(stream, options);
         if (segment_height)
         {
-            //write_pLLD(stream, segment_height);
-            //compress_parallel_zlib(stream, surface, segment_height, options);
-            compress_parallel_fpng(stream, surface, segment_height, options);
+            write_pLLD(stream, segment_height);
+            compress_parallel(stream, surface, segment_height, options);
         }
         else
         {
-            compress_serial_libdeflate(stream, surface, segment_height, options);
+            compress_serial(stream, surface, segment_height, options);
         }
 
         // write IEND
