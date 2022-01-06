@@ -3467,7 +3467,7 @@ namespace
             size_t guardband = 4096; // 4K "gimme a break" -guardband
             size_t bytes_in = bytes_per_scan * surface.height;
             Buffer compressed(bytes_in + guardband);
-            size_t bytes_out = fpng::pixel_deflate_dyn_4_rle_one_pass(buffer.data(), surface.width, surface.height, compressed.data(), u32(compressed.size()));
+            size_t bytes_out = fpng::pixel_deflate_dyn_4_rle_one_pass(buffer.data(), surface.width * factor, surface.height, compressed.data(), u32(compressed.size()));
 
             if (!bytes_out)
             {
