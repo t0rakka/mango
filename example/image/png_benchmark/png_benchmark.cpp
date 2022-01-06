@@ -20,6 +20,14 @@ using namespace mango::image;
 #define ENABLE_MANGO
 
 // ----------------------------------------------------------------------
+// options
+// ----------------------------------------------------------------------
+
+bool g_option_multithread = true;
+int g_option_compression = 4;
+int g_option_count = 1;
+
+// ----------------------------------------------------------------------
 // utils
 // ----------------------------------------------------------------------
 
@@ -46,11 +54,19 @@ void test(const char* name, Load load, Save save, Memory memory, const Bitmap& b
     printf("%s", name);
     u64 time0 = Time::us();
 
-    load(memory);
+    for (int i = 0; i < g_option_count; ++i)
+    {
+        load(memory);
+    }
 
     u64 time1 = Time::us();
 
-    size_t size = save(bitmap);
+    size_t size = 0;
+
+    for (int i = 0; i < g_option_count; ++i)
+    {
+        size = save(bitmap);
+    }
 
     u64 time2 = Time::us();
 
@@ -109,7 +125,8 @@ void load_libpng(Memory memory)
     //png_byte color_type = png_get_color_type(png_ptr, info_ptr);
     //png_byte bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
-    //int number_of_passes = png_set_interlace_handling(png_ptr);
+    int number_of_passes = png_set_interlace_handling(png_ptr);
+    (void) number_of_passes;
     png_read_update_info(png_ptr, info_ptr);
 
     int stride = png_get_rowbytes(png_ptr, info_ptr);
@@ -553,9 +570,6 @@ void load_wuffs(Memory memory)
 // mango
 // ----------------------------------------------------------------------
 
-bool g_option_multithread = true;
-int g_option_compression = 4;
-
 #if defined(ENABLE_MANGO)
 
 void load_mango(Memory memory)
@@ -613,6 +627,10 @@ int main(int argc, const char* argv[])
         else if (!strcmp(argv[i], "--debug"))
         {
             debugPrintEnable(true);
+        }
+        else
+        {
+            g_option_count = std::atoi(argv[i]);
         }
     }
 
