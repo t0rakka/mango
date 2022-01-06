@@ -239,6 +239,53 @@ do_literals:
         return dst_ofs;
     }
 
+    static uint32_t write_raw_block(const uint8_t* pSrc, uint32_t src_len, uint8_t* pDst, uint32_t dst_buf_size)
+    {
+        if (dst_buf_size < 2)
+            return 0;
+
+        pDst[0] = 0x78;
+        pDst[1] = 0x01;
+
+        uint32_t dst_ofs = 2;
+
+        uint32_t src_ofs = 0;
+        while (src_ofs < src_len)
+        {
+            const uint32_t src_remaining = src_len - src_ofs;
+            const uint32_t block_size = std::min<uint32_t>(UINT16_MAX, src_remaining);
+            const bool final_block = (block_size == src_remaining);
+
+            if ((dst_ofs + 5 + block_size) > dst_buf_size)
+                return 0;
+
+            pDst[dst_ofs + 0] = final_block ? 1 : 0;
+
+            pDst[dst_ofs + 1] = block_size & 0xFF;
+            pDst[dst_ofs + 2] = (block_size >> 8) & 0xFF;
+
+            pDst[dst_ofs + 3] = (~block_size) & 0xFF;
+            pDst[dst_ofs + 4] = ((~block_size) >> 8) & 0xFF;
+
+            memcpy(pDst + dst_ofs + 5, pSrc + src_ofs, block_size);
+
+            src_ofs += block_size;
+            dst_ofs += 5 + block_size;
+        }
+
+        // reserve space for adler32
+        for (uint32_t i = 0; i < 4; i++)
+        {
+            if (dst_ofs + 1 > dst_buf_size)
+                return 0;
+
+            pDst[dst_ofs] = 0;
+            dst_ofs++;
+        }
+
+        return dst_ofs;
+    }
+
 } // namespace fpng
 
 namespace
@@ -3417,13 +3464,31 @@ namespace
             // comes with a string attached: it can only compress 3 and 4 byte size symbols (pixels).
 
             // compress
-            Buffer compressed(bytes_per_scan * surface.height + 4094); // 4K "gimme a break" -guardband
-            size_t bytes_out = fpng::pixel_deflate_dyn_4_rle_one_pass(buffer.data(), 
-                surface.width, surface.height, compressed.data(), u32(compressed.size()));
+            size_t guardband = 4096; // 4K "gimme a break" -guardband
+            size_t bytes_in = bytes_per_scan * surface.height;
+            Buffer compressed(bytes_in + guardband);
+            size_t bytes_out = fpng::pixel_deflate_dyn_4_rle_one_pass(buffer.data(), surface.width, surface.height, compressed.data(), u32(compressed.size()));
+
             if (!bytes_out)
             {
-                // compression result is larger than provided buffer; we should do a fallback here
-                // and then return error if even that fails.
+                // compression failed because the output buffer was too small; as it already was
+                // guardband bytes larger than the input we want to change strategy and store the
+                // data without compression.
+
+                // The compression algorithm stores data in 65535 byte chunks which have 5 bytes
+                // of overhead in form of a header. We compute number of block headers needed on top of
+                // the stored data. THEN we still add the guardband.
+
+                u32 block_overhead = ((bytes_in + 65534) / 65535) * 5;
+                u32 header_and_adler = 6; // 2 byte header, 4 bytes for adler checksum
+
+                compressed.resize(bytes_in + block_overhead + header_and_adler + guardband);
+                bytes_out = fpng::write_raw_block(buffer.data(), bytes_in, compressed.data(), u32(compressed.size()));
+            }
+
+            if (!bytes_out)
+            {
+                // TODO: report error
                 return;
             }
 
