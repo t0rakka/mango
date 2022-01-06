@@ -30,7 +30,8 @@ namespace
         #define BLITTER_ENABLE_SSE4
     #endif
 
-    #if defined(MANGO_ENABLE_AVX2)
+    // MSVC doesn't implement all of the AVX2 intrindics in 32 bit target mode
+#if defined(MANGO_ENABLE_AVX2) && defined(MANGO_CPU_64BIT)
         #define BLITTER_ENABLE_AVX2
     #endif
 
@@ -1395,8 +1396,8 @@ namespace
         const Format& sf = blitter.srcFormat;
         const Format& df = blitter.destFormat;
 
-        u32 mask[4];
-        int offset[4];
+        u32 mask[4] = { 0 };
+        int offset[4] = { 0 };
         int components = 0;
 
         for (int i = 0; i < 4; ++i)
@@ -1523,10 +1524,13 @@ namespace
                 {
                     case 4:
                         dst[3] = DestType((v & mask3) * scale3 + alpha3);
+                        [[fallthrough]];
                     case 3:
                         dst[2] = DestType((v & mask2) * scale2 + alpha2);
+                        [[fallthrough]];
                     case 2:
                         dst[1] = DestType((v & mask1) * scale1 + alpha1);
+                        [[fallthrough]];
                     case 1:
                         dst[0] = DestType((v & mask0) * scale0 + alpha0);
                 }
@@ -1549,9 +1553,9 @@ namespace
         int components = 0;
 
         SourceType constant[4];
-        const SourceType* input[4];
-        int stride[4];
-        int offset[4];
+        const SourceType* input[4] = { nullptr };
+        int stride[4] = { 0 };
+        int offset[4] = { 0 };
 
         for (int i = 0; i < 4; ++i)
         {
@@ -1606,12 +1610,15 @@ namespace
                     case 4:
                         dst[3] = DestType(*input3);
                         input3 += stride3;
+                        [[fallthrough]];
                     case 3:
                         dst[2] = DestType(*input2);
                         input2 += stride2;
+                        [[fallthrough]];
                     case 2:
                         dst[1] = DestType(*input1);
                         input1 += stride1;
+                        [[fallthrough]];
                     case 1:
                         dst[0] = DestType(*input0);
                         input0 += stride0;

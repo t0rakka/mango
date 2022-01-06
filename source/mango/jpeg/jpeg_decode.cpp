@@ -1720,7 +1720,7 @@ namespace mango::jpeg
         configureCPU(sf.sample, options);
 
         // configure multithreading
-        m_hardware_concurrency = options.multithread ? ThreadPool::getHardwareConcurrency() : 1;
+        m_hardware_concurrency = int(options.multithread ? ThreadPool::getHardwareConcurrency() : 1);
 
         if (is_lossless)
         {

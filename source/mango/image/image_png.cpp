@@ -3419,7 +3419,7 @@ namespace
             // compress
             Buffer compressed(bytes_per_scan * surface.height + 4094); // 4K "gimme a break" -guardband
             size_t bytes_out = fpng::pixel_deflate_dyn_4_rle_one_pass(buffer.data(), 
-                surface.width, surface.height, compressed.data(), compressed.size());
+                surface.width, surface.height, compressed.data(), u32(compressed.size()));
             if (!bytes_out)
             {
                 // compression result is larger than provided buffer; we should do a fallback here
