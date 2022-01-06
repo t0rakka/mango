@@ -3424,7 +3424,14 @@ namespace
             {
                 // compression result is larger than provided buffer; we should do a fallback here
                 // and then return error if even that fails.
+                return;
             }
+
+            // compute checksum
+            u32 adler = adler32(1, buffer);
+
+            // patch the compressed stream
+            ustore32be(compressed.data() + bytes_out - 4, adler);
 
             // write chunkdID + compressed data
             write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed.data(), bytes_out));
