@@ -3479,11 +3479,11 @@ namespace
                 // of overhead in form of a header. We compute number of block headers needed on top of
                 // the stored data. THEN we still add the guardband.
 
-                u32 block_overhead = ((bytes_in + 65534) / 65535) * 5;
+                u32 block_overhead = u32(((bytes_in + 65534) / 65535) * 5);
                 u32 header_and_adler = 6; // 2 byte header, 4 bytes for adler checksum
 
                 compressed.resize(bytes_in + block_overhead + header_and_adler + guardband);
-                bytes_out = fpng::write_raw_block(buffer.data(), bytes_in, compressed.data(), u32(compressed.size()));
+                bytes_out = fpng::write_raw_block(buffer.data(), u32(bytes_in), compressed.data(), u32(compressed.size()));
             }
 
             if (!bytes_out)
