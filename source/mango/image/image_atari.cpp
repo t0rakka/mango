@@ -400,7 +400,7 @@ namespace
 
             for (int i = 0; i < (num_words / bitplanes); ++i)
             {
-                u16 word[4];
+                u16 word[4] = { 0 };
 
                 for (int j = 0; j < bitplanes; ++j)
                 {

@@ -1914,7 +1914,8 @@ namespace
         {
             constexpr u8 n = 0x80;
             __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i *>(s + 0));
-            __m128i b = _mm_loadu_si64(reinterpret_cast<const __m128i *>(s + 16));
+            //__m128i b = _mm_loadu_si64(reinterpret_cast<const __m128i *>(s + 16));
+            __m128i b = _mm_loadl_epi64(reinterpret_cast<const __m128i *>(s + 16));
             __m128i v0 = _mm_shuffle_epi8(a, _mm_setr_epi8(2, 1, 0, 5, 4, 3, 8, 7, 6, 11, 10, 9, 14, 13, 12, n));
             __m128i v1 = _mm_shuffle_epi8(b, _mm_setr_epi8(n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, 1));
             __m128i v2 = _mm_shuffle_epi8(a, _mm_setr_epi8(n, 15, n, n, n, n, n, n, n, n, n, n, n, n, n, n));

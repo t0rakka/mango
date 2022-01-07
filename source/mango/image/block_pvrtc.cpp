@@ -1025,12 +1025,12 @@ namespace
                         int index = y * 2 + x;
                         const BlockPVRTC2& block = blocks[index];
 
-                        u8* scan = image + ((y0 * block_height + (y + 1) * quad_height) % height) * stride + 
+                        u8* scan = image + ((y0 * block_height + (y + 1) * quad_height) % height) * stride +
                                            ((x0 * block_width  + (x + 1) * quad_width) % width) * 4;
 
                         if (block.mode)
                         {
-                            u8 modulation[8];
+                            u8 modulation[8] = { 0 };
                             resolveModulation(modulation, block_values + y * 32 + x * 4, modes[index]);
 
                             if (blocks[0].hard)
