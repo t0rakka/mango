@@ -304,6 +304,8 @@ endif ()
 # configuration
 # ------------------------------------------------------------------------------
 
+set(CMAKE_CXX_FLAGS "-Wmaybe-uninitialized")
+
 if (COMPILER_MSVC)
     target_compile_options(mango PUBLIC "/DUNICODE")
 
