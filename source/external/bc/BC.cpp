@@ -282,7 +282,6 @@ static void OptimizeRGB(HDRColorA *pX, HDRColorA *pY,
             dY.b += fD * Diff.b;
         }
 
-
         // Move endpoints
         if(d2X > 0.0f)
         {
@@ -311,52 +310,6 @@ static void OptimizeRGB(HDRColorA *pX, HDRColorA *pY,
 
     pX->r = X.r; pX->g = X.g; pX->b = X.b;
     pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
-}
-
-
-//-------------------------------------------------------------------------------------
-
-static inline float32x4 XMLoadU565(u16 data)
-{
-    static const float32x4 scale(1.f / (65535-2047), 1.f / (2047-31), 1.f / 31, 1.f);
-    int32x4 c = int32x4(data) & int32x4(0x1f << 11, 0x3f << 5, 0x1f, 0);
-    c = c | int32x4(0, 0, 0, 1);
-    float32x4 v = convert<float32x4>(c);
-    return v * scale;
-}
-
-static inline void DecodeBC1(u8* pColor, size_t stride, const D3DX_BC1 *pBC, bool isbc1)
-{
-    assert( pColor && pBC );
-    static_assert( sizeof(D3DX_BC1) == 8, "D3DX_BC1 should be 8 bytes" );
-
-    float32x4 color[4];
-    color[0] = XMLoadU565(pBC->rgb[0]);
-    color[1] = XMLoadU565(pBC->rgb[1]);
-
-    if (isbc1 && (pBC->rgb[0] <= pBC->rgb[1]))
-    {
-        color[2] = lerp(color[0], color[1], 0.5f);
-        color[3] = float32x4(0.0f);  // Alpha of 0
-    }
-    else
-    {
-        color[2] = lerp(color[0], color[1], 1.f/3.f);
-        color[3] = lerp(color[0], color[1], 2.f/3.f);
-    }
-
-    uint32_t dw = pBC->bitmap;
-
-    for (int y = 0; y < 4; ++y)
-    {
-        float* dest = reinterpret_cast<float*>(pColor);
-        simd::f32x4_ustore(dest +  0, color[(dw >> 0) & 3]);
-        simd::f32x4_ustore(dest +  4, color[(dw >> 2) & 3]);
-        simd::f32x4_ustore(dest +  8, color[(dw >> 4) & 3]);
-        simd::f32x4_ustore(dest + 12, color[(dw >> 6) & 3]);
-        dw >>= 8;
-        pColor += stride;
-    }
 }
 
 //-------------------------------------------------------------------------------------
@@ -710,11 +663,6 @@ static void EncodeSolidBC1(D3DX_BC1 *pBC, const HDRColorA *pColor)
 }
 #endif // COLOR_WEIGHTS
 
-
-//=====================================================================================
-// Entry points
-//=====================================================================================
-
 //-------------------------------------------------------------------------------------
 // BC1 Compression
 //-------------------------------------------------------------------------------------
@@ -781,48 +729,6 @@ static void D3DXEncodeBC1(uint8_t *pBC, const float32x4 *pColor, float alphaRef,
 //-------------------------------------------------------------------------------------
 // BC2 Compression
 //-------------------------------------------------------------------------------------
-
-static void D3DXDecodeBC2(u8 *output, size_t stride, const uint8_t *pBC)
-{
-    assert( output && pBC );
-    static_assert( sizeof(D3DX_BC2) == 16, "D3DX_BC2 should be 16 bytes" );
-
-    const D3DX_BC2 *pBC2 = reinterpret_cast<const D3DX_BC2 *>(pBC);
-
-    // RGB part
-    DecodeBC1(output, stride, &pBC2->bc1, false);
-
-    // 4-bit alpha part
-    u32 dw = pBC2->bitmap[0];
-	const float s = 1.0f / 15.0f;
-	float32x4* pColor;
-
-	pColor = reinterpret_cast<float32x4*>(output + stride * 0);
-    for(size_t i = 0; i < 4; ++i, dw >>= 4)
-    {
-        pColor[i].w = float(dw & 0xf) * s;
-    }
-
-	pColor = reinterpret_cast<float32x4*>(output + stride * 1);
-    for(size_t i = 0; i < 4; ++i, dw >>= 4)
-    {
-        pColor[i].w = float(dw & 0xf) * s;
-    }
-
-    dw = pBC2->bitmap[1];
-
-	pColor = reinterpret_cast<float32x4*>(output + stride * 2);
-    for(size_t i = 0; i < 4; ++i, dw >>= 4)
-    {
-        pColor[i].w = float(dw & 0xf) * s;
-    }
-
-	pColor = reinterpret_cast<float32x4*>(output + stride * 3);
-    for(size_t i = 0; i < 4; ++i, dw >>= 4)
-    {
-        pColor[i].w = float(dw & 0xf) * s;
-    }
-}
 
 static void D3DXEncodeBC2(uint8_t *pBC, const float32x4 *pColor, u32 flags)
 {
@@ -897,65 +803,6 @@ static void D3DXEncodeBC2(uint8_t *pBC, const float32x4 *pColor, u32 flags)
 //-------------------------------------------------------------------------------------
 // BC3 Compression
 //-------------------------------------------------------------------------------------
-
-static void D3DXDecodeBC3(u8 *output, size_t stride, const uint8_t *pBC)
-{
-    assert( output && pBC );
-    static_assert( sizeof(D3DX_BC3) == 16, "D3DX_BC3 should be 16 bytes" );
-
-    const D3DX_BC3 *pBC3 = reinterpret_cast<const D3DX_BC3 *>(pBC);
-
-    // RGB part
-    DecodeBC1(output, stride, &pBC3->bc1, false);
-
-    // Adaptive 3-bit alpha part
-    float fAlpha[8];
-
-    fAlpha[0] = ((float) pBC3->alpha[0]) * (1.0f / 255.0f);
-    fAlpha[1] = ((float) pBC3->alpha[1]) * (1.0f / 255.0f);
-
-    if(pBC3->alpha[0] > pBC3->alpha[1])
-    {
-        for(size_t i = 1; i < 7; ++i) {
-            fAlpha[i + 1] = (fAlpha[0] * (7 - i) + fAlpha[1] * i) * (1.0f / 7.0f);
-        }
-    }
-    else
-    {
-        for(size_t i = 1; i < 5; ++i) {
-            fAlpha[i + 1] = (fAlpha[0] * (5 - i) + fAlpha[1] * i) * (1.0f / 5.0f);
-        }
-
-        fAlpha[6] = 0.0f;
-        fAlpha[7] = 1.0f;
-    }
-
-	float32x4 *pColor = reinterpret_cast<float32x4*>(output);
-
-    u32 dw = pBC3->bitmap[0] | (pBC3->bitmap[1] << 8) | (pBC3->bitmap[2] << 16);
-
-	pColor = reinterpret_cast<float32x4*>(output + stride * 0);
-    for(size_t i = 0; i < 4; ++i, dw >>= 3) {
-        pColor[i].w = fAlpha[dw & 0x7];
-    }
-
-	pColor = reinterpret_cast<float32x4*>(output + stride * 1);
-    for(size_t i = 0; i < 4; ++i, dw >>= 3) {
-        pColor[i].w = fAlpha[dw & 0x7];
-    }
-
-    dw = pBC3->bitmap[3] | (pBC3->bitmap[4] << 8) | (pBC3->bitmap[5] << 16);
-
-	pColor = reinterpret_cast<float32x4*>(output + stride * 2);
-    for(size_t i = 0; i < 4; ++i, dw >>= 3) {
-        pColor[i].w = fAlpha[dw & 0x7];
-    }
-
-	pColor = reinterpret_cast<float32x4*>(output + stride * 3);
-    for(size_t i = 0; i < 4; ++i, dw >>= 3) {
-        pColor[i].w = fAlpha[dw & 0x7];
-    }
-}
 
 static void D3DXEncodeBC3(uint8_t *pBC, const float32x4 *pColor, u32 flags)
 {
@@ -1185,25 +1032,6 @@ namespace
 
 namespace mango::image
 {
-
-    void decode_block_bc1(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
-    {
-        MANGO_UNREFERENCED(info);
-        const DirectX::D3DX_BC1* data = reinterpret_cast<const DirectX::D3DX_BC1*>(input);
-        DirectX::DecodeBC1(output, stride, data, true);
-    }
-
-    void decode_block_bc2(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
-    {
-        MANGO_UNREFERENCED(info);
-        DirectX::D3DXDecodeBC2(output, stride, input);
-    }
-
-    void decode_block_bc3(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
-    {
-        MANGO_UNREFERENCED(info);
-        DirectX::D3DXDecodeBC3(output, stride, input);
-    }
 
     void encode_block_bc1(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {

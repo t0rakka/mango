@@ -15,6 +15,8 @@
 namespace mango::image
 {
 
+    // decode
+
     void decode_block_dxt1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC1
     void decode_block_dxt1a           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC1A
     void decode_block_dxt3            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC2
@@ -45,9 +47,6 @@ namespace mango::image
     void decode_block_astc_fp16       (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_astc_srgb       (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
 
-    void decode_block_bc1             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_bc2             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_bc3             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_bc4u            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_bc4s            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_bc5u            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
@@ -55,6 +54,8 @@ namespace mango::image
     void decode_block_bc6hu           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_bc6hs           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void decode_block_bc7             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+
+    // encode
 
     void encode_block_bc1             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
     void encode_block_bc1a            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
