@@ -1,6 +1,10 @@
 
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
+    add_compile_options(-mavx2 -mpclmul)
+endif()
+
 add_executable(webp_test webp/webp.cpp)
 add_executable(jpeg_reader jpeg_reader/jpeg_reader.cpp)
 add_executable(jpeg_debugger jpeg_debugger/jpeg_debugger.cpp)
@@ -15,6 +19,7 @@ add_executable(png_benchmark
     png_benchmark/lodepng/lodepng.cpp
     png_benchmark/spng/spng.c
     png_benchmark/fpng/fpng.cpp
+    png_benchmark/fpnge/fpnge.cpp
 )
 target_link_libraries(png_benchmark png z)
 

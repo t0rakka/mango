@@ -85,7 +85,7 @@ executable('image_png_benchmark',
     'image/png_benchmark/lodepng/lodepng.cpp',
     'image/png_benchmark/spng/spng.c',
     'image/png_benchmark/fpng/fpng.cpp',
-    'image/png_benchmark/fpng/Crc32.cpp',
+    'image/png_benchmark/fpnge/fpnge.cpp',
     dependencies : [mango_dep, png_dep])
 executable('image_jpeg_benchmark',
     'image/jpeg_benchmark/jpeg_benchmark.cpp', 

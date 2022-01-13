@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -12,12 +12,17 @@ using namespace mango::image;
 #define ENABLE_LODEPNG
 #define ENABLE_STB
 #define ENABLE_SPNG
-#ifndef MANGO_CPU_ARM
-    // disable until fpng compiles on ARM
-    #define ENABLE_FPNG
-#endif
 #define ENABLE_WUFFS
 #define ENABLE_MANGO
+
+#include "fpnge/fpnge.h"
+#ifdef CAN_COMPILE_FPNGE
+#define ENABLE_FPNGE
+#endif
+
+#ifdef MANGO_CPU_INTEL
+#define ENABLE_FPNG
+#endif
 
 // ----------------------------------------------------------------------
 // options
@@ -489,6 +494,28 @@ size_t save_fpng(const Bitmap& bitmap)
 #endif
 
 // ----------------------------------------------------------------------
+// fpnge
+// ----------------------------------------------------------------------
+
+#if defined(ENABLE_FPNGE)
+
+size_t save_fpnge(const Bitmap& bitmap)
+{
+    const char* filename = "output-fpnge.png";
+
+    u8* output = nullptr;
+    size_t size = FPNGEEncode(1, 4, bitmap.image, bitmap.width, bitmap.stride, bitmap.height, &output);
+
+    OutputFileStream file(filename);
+    file.write(output, size);
+    free(output);
+
+    return size;
+}
+
+#endif
+
+// ----------------------------------------------------------------------
 // wuffs
 // ----------------------------------------------------------------------
 
@@ -662,6 +689,10 @@ int main(int argc, const char* argv[])
 
 #if defined(ENABLE_FPNG)
     test("fpng:    ", load_none, save_fpng, buffer, bitmap);
+#endif
+
+#if defined(ENABLE_FPNGE)
+    test("fpnge:   ", load_none, save_fpnge, buffer, bitmap);
 #endif
 
 #if defined(ENABLE_WUFFS)
