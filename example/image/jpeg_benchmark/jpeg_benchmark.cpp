@@ -10,7 +10,7 @@ using namespace mango::image;
 
 #define TEST_LIBJPEG
 #define TEST_STB
-#define TEST_JPEG_COMPRESSOR
+//#define TEST_JPEG_COMPRESSOR
 //#define TEST_JPEGDEC
 #define TEST_TOOJPEG
 
