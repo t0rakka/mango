@@ -227,15 +227,6 @@ do_literals:
 
         PUT_BITS_FORCE_FLUSH;
 
-        // reserve space for adler32
-        for (uint32_t i = 0; i < 4; i++)
-        {
-            if ((dst_ofs + 1) > dst_buf_size)
-                return 0;
-            *(uint8_t*)(pDst + dst_ofs) = 0;
-            dst_ofs++;
-        }
-
         return dst_ofs;
     }
 
@@ -271,16 +262,6 @@ do_literals:
 
             src_ofs += block_size;
             dst_ofs += 5 + block_size;
-        }
-
-        // reserve space for adler32
-        for (uint32_t i = 0; i < 4; i++)
-        {
-            if (dst_ofs + 1 > dst_buf_size)
-                return 0;
-
-            pDst[dst_ofs] = 0;
-            dst_ofs++;
         }
 
         return dst_ofs;
@@ -3495,8 +3476,9 @@ namespace
             // compute checksum
             u32 adler = adler32(1, buffer);
 
-            // patch the compressed stream
-            ustore32be(compressed.data() + bytes_out - 4, adler);
+            // append adler checksum
+            ustore32be(compressed.data() + bytes_out, adler);
+            bytes_out += 4;
 
             // write chunkdID + compressed data
             write_chunk(stream, u32_mask_rev('I', 'D', 'A', 'T'), ConstMemory(compressed.data(), bytes_out));
