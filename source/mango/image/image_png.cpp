@@ -3749,8 +3749,6 @@ namespace
 
     ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        MANGO_UNREFERENCED(options);
-
         ImageEncodeStatus status;
 
         // defaults
@@ -3797,8 +3795,11 @@ namespace
             // always encode alpha in non-luminance formats
             color_type = COLOR_TYPE_RGBA;
 
-            if (surface.format.size[0] > 8)
+            if (surface.format.size[0] > 8 &&
+                surface.format.type == Format::UNORM)
             {
+                // the UNORM is required above because we don't have color conversion
+                // from FLOAT/HALF to 16 bit UNORM
                 color_bits = 16;
                 format = Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16);
             }
