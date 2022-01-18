@@ -17,7 +17,7 @@
 
 // -mavx2 -mpclmul
 #if defined(__AVX2__) && defined(__PCLMUL__)
-#define CAN_COMPILE_FPNGE
+//#define CAN_COMPILE_FPNGE /* disabled anyway; g++ 10.3 won't compile this */
 
 // bytes_per_channel = 1/2 for 8-bit and 16-bit. num_channels: 1/2/3/4
 // (G/GA/RGB/RGBA)
