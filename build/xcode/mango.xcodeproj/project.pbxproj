@@ -263,6 +263,8 @@
 		A6CD2BD5209B3958000B0EF8 /* zpng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6CD2BD3209B3957000B0EF8 /* zpng.cpp */; };
 		A6CD2BD6209B3958000B0EF8 /* zpng.h in Headers */ = {isa = PBXBuildFile; fileRef = A6CD2BD4209B3958000B0EF8 /* zpng.h */; };
 		A6CD2BD8209B3BA7000B0EF8 /* image_zpng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6CD2BD7209B3BA6000B0EF8 /* image_zpng.cpp */; };
+		A6D4807427985DC600F7E98D /* image_ktx2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6D4807327985DC600F7E98D /* image_ktx2.cpp */; };
+		A6D4807627985DE000F7E98D /* image_exr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6D4807527985DE000F7E98D /* image_exr.cpp */; };
 		A6DB667724EAD42800BA9E1A /* block_fxt1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6DB667624EAD42800BA9E1A /* block_fxt1.cpp */; };
 		A6DD288923FF09680085E6EE /* zstd_compress_superblock.c in Sources */ = {isa = PBXBuildFile; fileRef = A6DD288723FF09680085E6EE /* zstd_compress_superblock.c */; };
 		A6DD288A23FF09680085E6EE /* zstd_compress_superblock.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DD288823FF09680085E6EE /* zstd_compress_superblock.h */; };
@@ -753,6 +755,8 @@
 		A6CD2BD3209B3957000B0EF8 /* zpng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zpng.cpp; path = external/zpng/zpng.cpp; sourceTree = "<group>"; };
 		A6CD2BD4209B3958000B0EF8 /* zpng.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zpng.h; path = external/zpng/zpng.h; sourceTree = "<group>"; };
 		A6CD2BD7209B3BA6000B0EF8 /* image_zpng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_zpng.cpp; path = image/image_zpng.cpp; sourceTree = "<group>"; };
+		A6D4807327985DC600F7E98D /* image_ktx2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_ktx2.cpp; path = image/image_ktx2.cpp; sourceTree = "<group>"; };
+		A6D4807527985DE000F7E98D /* image_exr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_exr.cpp; path = image/image_exr.cpp; sourceTree = "<group>"; };
 		A6DB667624EAD42800BA9E1A /* block_fxt1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = block_fxt1.cpp; path = image/block_fxt1.cpp; sourceTree = "<group>"; };
 		A6DD288723FF09680085E6EE /* zstd_compress_superblock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zstd_compress_superblock.c; path = external/zstd/compress/zstd_compress_superblock.c; sourceTree = "<group>"; };
 		A6DD288823FF09680085E6EE /* zstd_compress_superblock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_compress_superblock.h; path = external/zstd/compress/zstd_compress_superblock.h; sourceTree = "<group>"; };
@@ -1074,6 +1078,7 @@
 				A00559B61C93329A00A6D963 /* image_iff.cpp */,
 				A00559B71C93329A00A6D963 /* image_jpg.cpp */,
 				A00559B81C93329A00A6D963 /* image_ktx.cpp */,
+				A6D4807327985DC600F7E98D /* image_ktx2.cpp */,
 				A00559B91C93329A00A6D963 /* image_pcx.cpp */,
 				A00559BA1C93329A00A6D963 /* image_pkm.cpp */,
 				A00559BB1C93329A00A6D963 /* image_png.cpp */,
@@ -1085,6 +1090,7 @@
 				A645DD2D213ED71100EC714B /* image_atari.cpp */,
 				A645DD2E213ED71100EC714B /* image_c64.cpp */,
 				A6EC3FAB230D7FF700B17F21 /* image_webp.cpp */,
+				A6D4807527985DE000F7E98D /* image_exr.cpp */,
 				A6734C792763C82E00FE6A20 /* image_qoi.cpp */,
 				A00559BE1C93329A00A6D963 /* image.cpp */,
 				A00559BF1C93329A00A6D963 /* surface.cpp */,
@@ -2341,6 +2347,7 @@
 				A6EC3EF2230D7C1500B17F21 /* enc_neon.c in Sources */,
 				A6DD28CB24125F1A0085E6EE /* zlib_compress.c in Sources */,
 				A6EC3F0E230D7C1500B17F21 /* dec_mips_dsp_r2.c in Sources */,
+				A6D4807427985DC600F7E98D /* image_ktx2.cpp in Sources */,
 				A6EC3EE4230D7C1500B17F21 /* cost.c in Sources */,
 				A6EC3F23230D7C1500B17F21 /* yuv_neon.c in Sources */,
 				A6EC3EFC230D7C1500B17F21 /* filters_mips_dsp_r2.c in Sources */,
@@ -2415,6 +2422,7 @@
 				A00559C51C93329A00A6D963 /* format.cpp in Sources */,
 				A6EC3F01230D7C1500B17F21 /* rescaler_mips32.c in Sources */,
 				A6EC3F84230D7C4D00B17F21 /* bit_writer_utils.c in Sources */,
+				A6D4807627985DE000F7E98D /* image_exr.cpp in Sources */,
 				A00559CB1C93329A00A6D963 /* image_iff.cpp in Sources */,
 				A645DD30213ED71100EC714B /* image_c64.cpp in Sources */,
 				A00559CC1C93329A00A6D963 /* image_jpg.cpp in Sources */,

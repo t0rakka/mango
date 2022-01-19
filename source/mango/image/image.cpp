@@ -25,6 +25,7 @@ namespace mango::image
     void registerImageDecoderHDR();
     void registerImageDecoderGIF();
     void registerImageDecoderKTX();
+    void registerImageDecoderKTX2();
     void registerImageDecoderPVR();
     void registerImageDecoderASTC();
     void registerImageDecoderZPNG();
@@ -33,6 +34,7 @@ namespace mango::image
     void registerImageDecoderATARI();
     void registerImageDecoderC64();
     void registerImageDecoderWEBP();
+    void registerImageDecoderEXR();
     void registerImageDecoderQOI();
 
     class ImageServer
@@ -55,6 +57,7 @@ namespace mango::image
             registerImageDecoderHDR();
             registerImageDecoderGIF();
             registerImageDecoderKTX();
+            registerImageDecoderKTX2();
             registerImageDecoderPVR();
             registerImageDecoderASTC();
             registerImageDecoderZPNG();
@@ -63,6 +66,7 @@ namespace mango::image
             registerImageDecoderATARI();
             registerImageDecoderC64();
             registerImageDecoderWEBP();
+            registerImageDecoderEXR();
             registerImageDecoderQOI();
         }
 
