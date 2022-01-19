@@ -2048,5 +2048,11 @@
     <ClCompile Include="..\..\source\mango\core\adler32.cpp">
       <Filter>mango\source\core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_exr.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\mango\image\image_ktx2.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
