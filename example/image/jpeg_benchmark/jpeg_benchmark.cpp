@@ -92,9 +92,9 @@ Surface load_jpeg(const char* filename)
 
     fclose(file);
 
-    Format format = Format(24, Format::UNORM, Format::RGB, 8, 8, 9);
+    Format format = Format(24, Format::SRGB, Format::RGB, 8, 8, 9);
     if (numChannels == 4)
-        format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        format = Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8);
 
     return Surface(w, h, format, w * numChannels, data);
 }
@@ -165,7 +165,7 @@ Surface stb_load_jpeg(const char* filename)
     int width, height, bpp;
     u8* rgb = stbi_load(filename, &width, &height, &bpp, 3);
 
-    return Surface(width, height, Format(24, Format::UNORM, Format::RGB, 8, 8, 8), width * 3, rgb);
+    return Surface(width, height, Format(24, Format::SRGB, Format::RGB, 8, 8, 8), width * 3, rgb);
 }
 
 size_t stb_save_jpeg(const char* filename, const Surface& surface)
@@ -190,7 +190,7 @@ Surface jpgd_load(const char* filename)
     int height;
     int comps;
     u8* image = jpgd::decompress_jpeg_image_from_file(filename, &width, &height, &comps, 4);
-    return Surface(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), width * 4, image);
+    return Surface(width, height, Format(32, Format::SRGB, Format::BGRA, 8, 8, 8, 8), width * 4, image);
 }
 
 size_t jpge_save(const char* filename, const Surface& surface)
@@ -242,7 +242,7 @@ Surface jpegdec_load(const char* filename)
 
     int width = decoder.getWidth();
     int height = decoder.getHeight();
-    Bitmap bitmap(width, height, Format(16, Format::UNORM, Format::BGR, 5, 6, 5, 0));
+    Bitmap bitmap(width, height, Format(16, Format::SRGB, Format::BGR, 5, 6, 5, 0));
 
     jpegdec_bitmap = &bitmap;
 
@@ -424,7 +424,7 @@ int main(int argc, const char* argv[])
 #ifdef TEST_TOOJPEG
 
     // toojpeg is encoder-only so we'll provide the input for it
-    Bitmap toojpeg_bitmap(filename, Format(24, Format::UNORM, Format::RGB, 8, 8, 8));
+    Bitmap toojpeg_bitmap(filename, Format(24, Format::SRGB, Format::RGB, 8, 8, 8));
 
     time0 = Time::us();
     Surface s_toojpeg = toojpeg_load(filename);

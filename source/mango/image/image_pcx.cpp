@@ -86,7 +86,7 @@ namespace
             header.levels  = 0;
             header.faces   = 0;
 			header.palette = isPaletteMarker || (BitsPerPixel == 1 && NPlanes == 4);
-            header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            header.format  = Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8);
             header.compression = TextureCompression::NONE;
         }
 

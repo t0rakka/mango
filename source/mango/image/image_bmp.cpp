@@ -421,7 +421,7 @@ namespace
                 }
 
                 // Convert indexed bmp files to bgra
-                format = Format(32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+                format = Format(32, Format::SRGB, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
                 palette = memory.address + headerSize;
             }
             else
@@ -437,7 +437,7 @@ namespace
                     alphaMask &= pixelSizeMask;
 
                     // WinBitmapHeader2 or later store the component masks
-                    format = Format(bitsPerPixel, redMask, greenMask, blueMask, alphaMask);
+                    format = Format(bitsPerPixel, Format::SRGB, redMask, greenMask, blueMask, alphaMask);
                 }
                 else
                 {
@@ -445,13 +445,13 @@ namespace
                     switch (bitsPerPixel)
                     {
                         case 16:
-                            format = Format(16, Format::UNORM, Format::BGR, 5, 5, 5, 0);
+                            format = Format(16, Format::SRGB, Format::BGR, 5, 5, 5, 0);
                             break;
                         case 24:
-                            format = Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0);
+                            format = Format(24, Format::SRGB, Format::BGR, 8, 8, 8, 0);
                             break;
                         case 32:
-                            format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0);
+                            format = Format(32, Format::SRGB, Format::BGRA, 8, 8, 8, 0);
                             break;
                         default:
                             setError("[ImageDecoder.BMP] Incorrect number of color bits (%d).", bitsPerPixel);

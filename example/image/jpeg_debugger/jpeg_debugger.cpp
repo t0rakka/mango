@@ -92,10 +92,10 @@ void jpeg_analyze(const std::string& filename)
     warmup(file);
 
     decode(file, "L   ", LuminanceFormat(8, Format::UNORM, 8, 0));
-    decode(file, "RGBA", Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-    decode(file, "BGRA", Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
-    decode(file, "RGB ", Format(24, Format::UNORM, Format::RGB, 8, 8, 8));
-    decode(file, "BGR ", Format(24, Format::UNORM, Format::BGR, 8, 8, 8));
+    decode(file, "RGBA", Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8));
+    decode(file, "BGRA", Format(32, Format::SRGB, Format::BGRA, 8, 8, 8, 8));
+    decode(file, "RGB ", Format(24, Format::SRGB, Format::RGB, 8, 8, 8));
+    decode(file, "BGR ", Format(24, Format::SRGB, Format::BGR, 8, 8, 8));
 }
 
 int main(int argc, const char* argv[])

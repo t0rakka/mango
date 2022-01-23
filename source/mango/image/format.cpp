@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/bits.hpp>
@@ -23,13 +23,19 @@ namespace mango::image
     {
     }
 
-    Format::Format(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask)
+    Format::Format(int bits, Type type, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask)
         : bits(bits)
-        , type(UNORM)
+        , type(type)
         , flags(0)
     {
         assert(!(bits & 7));
         assert(bits >= 8 && bits <= 32);
+
+        if (type == Format::SRGB)
+        {
+            type = Format::UNORM;
+            flags = Format::FLAG_SRGB;
+        }
 
         size[0] = u8(u32_count_bits(redMask));
         size[1] = u8(u32_count_bits(greenMask));
@@ -48,6 +54,11 @@ namespace mango::image
         , size(size)
         , offset(offset)
     {
+        if (type == Format::SRGB)
+        {
+            type = Format::UNORM;
+            flags = Format::FLAG_SRGB;
+        }
     }
 
     Format::Format(int bits, Type type, Order order, int s0, int s1, int s2, int s3)
@@ -58,19 +69,25 @@ namespace mango::image
         assert(!(bits & 7));
         assert(bits >= 8 && bits <= 128);
 
-        // compute component indices from order mask
-		const int c0 = (order >> 0) & 3;
-		const int c1 = (order >> 2) & 3;
-		const int c2 = (order >> 4) & 3;
-		const int c3 = (order >> 6) & 3;
+        if (type == Format::SRGB)
+        {
+            type = Format::UNORM;
+            flags = Format::FLAG_SRGB;
+        }
 
-		// compute component offset
+        // compute component indices from order mask
+        const int c0 = (order >> 0) & 3;
+        const int c1 = (order >> 2) & 3;
+        const int c2 = (order >> 4) & 3;
+        const int c3 = (order >> 6) & 3;
+
+        // compute component offset
         offset[c0] = u8(0);
         offset[c1] = u8(s0);
         offset[c2] = u8(s0 + s1);
         offset[c3] = u8(s0 + s1 + s2);
 
-		// compute component size
+        // compute component size
         size[c0] = u8(s0);
         size[c1] = u8(s1);
         size[c2] = u8(s2);
@@ -109,8 +126,12 @@ namespace mango::image
 
     bool Format::isAlpha() const
     {
-        // check alpha channel size
         return size[ALPHA] > 0;
+    }
+
+    bool Format::isSRGB() const
+    {
+        return (flags & FLAG_SRGB) != 0;
     }
 
     bool Format::isLuminance() const
@@ -147,10 +168,11 @@ namespace mango::image
 
         switch (type)
         {
+            case SRGB:
             case UNORM:
                 for (int i = 0; i < 4; ++i)
                 {
-					const u32 mask = (1 << size[i]) - 1;
+                    const u32 mask = (1 << size[i]) - 1;
                     u32 component = u32(mask * scale[i] + 0.5f) << offset[i];
                     color |= component;
                 }
@@ -161,9 +183,9 @@ namespace mango::image
             case UINT:
             case SINT:
             case FLOAT16:
-			case FLOAT32:
-			case FLOAT64:
-				// not supported
+            case FLOAT32:
+            case FLOAT64:
+                // not supported
                 break;
         }
 
@@ -175,7 +197,7 @@ namespace mango::image
     // ----------------------------------------------------------------------------
 
     LuminanceFormat::LuminanceFormat(int bits, u32 luminanceMask, u32 alphaMask)
-        : Format(bits, luminanceMask, luminanceMask, luminanceMask, alphaMask)
+        : Format(bits, Format::UNORM, luminanceMask, luminanceMask, luminanceMask, alphaMask)
     {
         flags = FLAG_LUMINANCE;
     }

@@ -569,7 +569,7 @@ namespace
                 m_header.levels  = 0;
                 m_header.faces   = 0;
                 m_header.palette = true;
-                m_header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                m_header.format  = Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8);
                 m_header.compression = TextureCompression::NONE;
 
                 m_image.reset(new u8[m_header.width * m_header.height * 4]);
@@ -600,7 +600,7 @@ namespace
             }
 
             Format format = options.palette ? LuminanceFormat(8, Format::UNORM, 8, 0)
-                                            : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                                            : Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8);
 
             size_t stride = m_header.width * format.bytes();
             Surface target(m_header.width, m_header.height, format, stride, m_image.get());

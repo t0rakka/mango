@@ -79,7 +79,7 @@ public:
 
 int main(int argc, const char* argv[])
 {
-    Bitmap bitmap("data/hanselun.png", Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+    Bitmap bitmap("data/hanselun.png", Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8));
     TestWindow window(bitmap);
     window.enterEventLoop();
 }

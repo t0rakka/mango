@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/system.hpp>
 #include <mango/core/pointer.hpp>
@@ -11,9 +11,9 @@ namespace
     using namespace mango;
     using namespace mango::image;
 
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
     // .dds information
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
 
     // Format information:
     // http://msdn.microsoft.com/en-us/library/windows/apps/jj651550.aspx
@@ -25,9 +25,9 @@ namespace
     // BC6H compression:
     // http://msdn.microsoft.com/en-us/library/windows/desktop/hh308952(v=vs.85).aspx
 
-	// ------------------------------------------------------------
-	// FOURCC
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
+    // FOURCC
+    // ------------------------------------------------------------
 
     enum
     {
@@ -68,9 +68,9 @@ namespace
         FOURCC_ABGR32F      = 116,
     };
 
-	// ------------------------------------------------------------
-	// DXGI / DX10
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
+    // DXGI / DX10
+    // ------------------------------------------------------------
 
     enum : u32
     {
@@ -466,20 +466,20 @@ namespace
             case FOURCC_DXT5:
                 compression = TextureCompression::DXT5;
                 break;
-			case FOURCC_ATI1:
-			case FOURCC_AT1N:
+            case FOURCC_ATI1:
+            case FOURCC_AT1N:
             case FOURCC_3DC1:
             case FOURCC_BC4U:
-				compression = TextureCompression::RGTC1_RED;
+                compression = TextureCompression::RGTC1_RED;
                 break;
             case FOURCC_BC4S:
                 compression = TextureCompression::RGTC1_SIGNED_RED;
                 break;
-			case FOURCC_ATI2:
-			case FOURCC_AT2N:
+            case FOURCC_ATI2:
+            case FOURCC_AT2N:
             case FOURCC_3DC2:
             case FOURCC_BC5U:
-				compression = TextureCompression::RGTC2_RG;
+                compression = TextureCompression::RGTC2_RG;
                 break;
             case FOURCC_BC5S:
                 compression = TextureCompression::RGTC2_SIGNED_RG;
@@ -519,9 +519,9 @@ namespace
         return compression;
     }
 
-	// ------------------------------------------------------------
-	// DDS
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
+    // DDS
+    // ------------------------------------------------------------
 
     enum
     {
@@ -593,10 +593,10 @@ namespace
             switch (fourCC)
             {
                 case FOURCC_DX10:
-					format = Format();
-					compression = TextureCompression::NONE;
+                    format = Format();
+                    compression = TextureCompression::NONE;
                     preserve_fourcc = true;
-					break;
+                    break;
 
                 case FOURCC_R8G8B8:
                     format = Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0);
@@ -692,14 +692,14 @@ namespace
 
                 case FOURCC_DXT1:
                     format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-					if (flags & DDPF_ALPHAPIXELS)
-					{
-	                    compression = TextureCompression::DXT1_ALPHA1;
-					}
-					else
-					{
+                    if (flags & DDPF_ALPHAPIXELS)
+                    {
+                        compression = TextureCompression::DXT1_ALPHA1;
+                    }
+                    else
+                    {
                         compression = TextureCompression::DXT1;
-					}
+                    }
                     break;
 
                 case FOURCC_DXT2:
@@ -771,7 +771,7 @@ namespace
 
                 if (flags & DDPF_RGB)
                 {
-                    format = Format(rgbBitCount, rBitMask, gBitMask, bBitMask, alphaMask);
+                    format = Format(rgbBitCount, Format::SRGB, rBitMask, gBitMask, bBitMask, alphaMask);
                 }
                 else if (flags & DDPF_LUMINANCE)
                 {
@@ -799,8 +799,8 @@ namespace
         }
     };
 
-	struct HeaderDDS
-	{
+    struct HeaderDDS
+    {
         u32 size;
         u32 flags;
         u32 height;
@@ -879,7 +879,7 @@ namespace
             header.depth   = 0; // TODO: support volume images
             header.levels  = getMipmapCount();
             header.faces   = getFaceCount();
-			header.palette = false;
+            header.palette = false;
             header.format  = pixelFormat.format;
             header.compression = pixelFormat.compression;
         }
@@ -896,7 +896,7 @@ namespace
             else if (!header10.dxgiFormat)
             {
                 // Unknown DXGI format
-				return;
+                return;
             }
 
             if (header10.arraySize > 1)
@@ -959,6 +959,7 @@ namespace
                 {
                     case Format::FLOAT16:
                     case Format::FLOAT32:
+                    case Format::SRGB:
                     case Format::UNORM:
                         pixelFormat.format = dxgi.format;
                         break;
@@ -967,8 +968,8 @@ namespace
                     case Format::UINT:
                     case Format::SINT:
                     case Format::SNORM:
-					case Format::FLOAT64:
-						// TODO: these WILL be supported in custom "DXGI Blitter"
+                    case Format::FLOAT64:
+                        // TODO: these WILL be supported in custom "DXGI Blitter"
                         header.setError("[ImageDecoder.DDS] DXGI format type not supported.");
                         return;
                 }
@@ -1055,7 +1056,7 @@ namespace
 
             return selected;
         }
-	};
+    };
 
     // ------------------------------------------------------------
     // ImageDecoder
@@ -1091,7 +1092,7 @@ namespace
 
             ImageDecodeStatus status;
 
-			const ImageHeader& header = m_header.header;
+            const ImageHeader& header = m_header.header;
             if (!header.success)
             {
                 status.setError(header.info);
