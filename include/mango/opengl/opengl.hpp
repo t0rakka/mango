@@ -142,7 +142,6 @@ namespace mango
         {
             GLenum iformat;
             image::Format format;
-            bool srgb;
             const char* name;
         };
 
