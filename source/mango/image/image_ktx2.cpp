@@ -719,15 +719,15 @@ namespace
 
     struct HeaderKTX2
     {
-        u32 vkFormat;
-        u32 typeSize;
-        u32 pixelWidth;
-        u32 pixelHeight;
-        u32 pixelDepth;
-        u32 layerCount;
-        u32 faceCount;
-        u32 levelCount;
-        u32 supercompressionScheme;
+        u32 vkFormat = 0;
+        u32 typeSize = 0;
+        u32 pixelWidth = 0;
+        u32 pixelHeight = 0;
+        u32 pixelDepth = 0;
+        u32 layerCount = 0;
+        u32 faceCount = 0;
+        u32 levelCount = 0;
+        u32 supercompressionScheme = 0;
 
         bool read(LittleEndianConstPointer& p)
         {
