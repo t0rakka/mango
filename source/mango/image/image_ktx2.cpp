@@ -30,10 +30,10 @@ namespace
     };
 
     static
-    bool isFormatProhibited(u32 format)
+    bool isFormatProhibited(u32 vkformat)
     {
         bool prohibited = false;
-        switch (format)
+        switch (vkformat)
         {
             case FORMAT_A8B8G8R8_UNORM_PACK32:
             case FORMAT_A8B8G8R8_SNORM_PACK32:
@@ -105,6 +105,246 @@ namespace
         }
         return prohibited;
     }
+
+#if 0
+
+    TextureCompression getCompressionFormat(Format& format, VkFormat vk_format)
+    {
+        struct FormatDesc
+        {
+            Format format;
+            TextureCompression compression;
+        };
+
+        const FormatDesc table[] =
+        {
+            { FORMAT_NONE, TextureCompression::NONE },
+
+            { Format(8, Format::UNORM, Format::RG, 4, 4, 0, 0), TextureCompression::NONE },
+
+            { Format(16, Format::UNORM, Format::RGBA, 4, 4, 4, 4), TextureCompression::NONE },
+            { Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4), TextureCompression::NONE },
+            { Format(16, Format::UNORM, Format::RGB, 5, 6, 5, 0), TextureCompression::NONE },
+            { Format(16, Format::UNORM, Format::BGR, 5, 6, 5, 0), TextureCompression::NONE },
+            { Format(16, Format::UNORM, Format::RGBA, 5, 5, 5, 1), TextureCompression::NONE },
+            { Format(16, Format::UNORM, Format::BGRA, 5, 5, 5, 1), TextureCompression::NONE },
+            { Format(16, Format::UNORM, Format::ARGB, 1, 5, 5, 5), TextureCompression::NONE },
+
+            { Format(8, Format::UNORM, Format::R, 8, 0, 0, 0), TextureCompression::NONE },
+            { Format(8, Format::SNORM, Format::R, 8, 0, 0, 0), TextureCompression::NONE },
+            { Format(8, Format::UNORM, Format::R, 8, 0, 0, 0), TextureCompression::NONE },
+            { Format(8, Format::SNORM, Format::R, 8, 0, 0, 0), TextureCompression::NONE },
+            { Format(8, Format::UINT, Format::R, 8, 0, 0, 0), TextureCompression::NONE },
+            { Format(8, Format::SINT, Format::R, 8, 0, 0, 0), TextureCompression::NONE },
+            { Format(8, Format::UNORM, Format::R, 8, 0, 0, 0), TextureCompression::NONE }, // srgb
+
+            { Format(16, Format::UNORM, Format::RG, 8, 8, 0, 0), TextureCompression::NONE },
+            { Format(16, Format::SNORM, Format::RG, 8, 8, 0, 0), TextureCompression::NONE },
+            { Format(16, Format::UNORM, Format::RG, 8, 8, 0, 0), TextureCompression::NONE },
+            { Format(16, Format::SNORM, Format::RG, 8, 8, 0, 0), TextureCompression::NONE },
+            { Format(16, Format::UINT, Format::RG, 8, 8, 0, 0), TextureCompression::NONE },
+            { Format(16, Format::SINT, Format::RG, 8, 8, 0, 0), TextureCompression::NONE },
+            { Format(16, Format::UNORM, Format::RG, 8, 8, 0, 0), TextureCompression::NONE }, // srgb
+
+            { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE },
+            { Format(24, Format::SNORM, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE },
+            { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE },
+            { Format(24, Format::SNORM, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE },
+            { Format(24, Format::UINT, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE },
+            { Format(24, Format::SINT, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE },
+            { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE }, // srgb
+
+            { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE },
+            { Format(24, Format::SNORM, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE },
+            { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE },
+            { Format(24, Format::SNORM, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE },
+            { Format(24, Format::UINT, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE },
+            { Format(24, Format::SINT, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE },
+            { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE }, // srgb
+
+            { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::SNORM, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::SNORM, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::UINT, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::SINT, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE }, // srgb
+
+            { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::SNORM, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::SNORM, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::UINT, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::SINT, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE }, // srgb
+
+            { Format(32, Format::UNORM, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::SNORM, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::UNORM, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::SNORM, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::UINT, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::SINT, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE },
+            { Format(32, Format::UNORM, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE }, // srgb
+
+            { Format(32, Format::UNORM, Format::ARGB, 2, 10, 10, 10), TextureCompression::NONE },
+            { Format(32, Format::SNORM, Format::ARGB, 2, 10, 10, 10), TextureCompression::NONE },
+            { Format(32, Format::UNORM, Format::ARGB, 2, 10, 10, 10), TextureCompression::NONE },
+            { Format(32, Format::SNORM, Format::ARGB, 2, 10, 10, 10), TextureCompression::NONE },
+            { Format(32, Format::UINT, Format::ARGB, 2, 10, 10, 10), TextureCompression::NONE },
+            { Format(32, Format::SINT, Format::ARGB, 2, 10, 10, 10), TextureCompression::NONE },
+
+            { Format(32, Format::UNORM, Format::ABGR, 2, 10, 10, 10), TextureCompression::NONE },
+            { Format(32, Format::SNORM, Format::ABGR, 2, 10, 10, 10), TextureCompression::NONE },
+            { Format(32, Format::UNORM, Format::ABGR, 2, 10, 10, 10), TextureCompression::NONE },
+            { Format(32, Format::SNORM, Format::ABGR, 2, 10, 10, 10), TextureCompression::NONE },
+            { Format(32, Format::UINT, Format::ABGR, 2, 10, 10, 10), TextureCompression::NONE },
+            { Format(32, Format::SINT, Format::ABGR, 2, 10, 10, 10), TextureCompression::NONE },
+
+            { Format(16, Format::UNORM, Format::R, 16, 0, 0, 0), TextureCompression::NONE },
+            { Format(16, Format::SNORM, Format::R, 16, 0, 0, 0), TextureCompression::NONE },
+            { Format(16, Format::UNORM, Format::R, 16, 0, 0, 0), TextureCompression::NONE },
+            { Format(16, Format::SNORM, Format::R, 16, 0, 0, 0), TextureCompression::NONE },
+            { Format(16, Format::UINT, Format::R, 16, 0, 0, 0), TextureCompression::NONE },
+            { Format(16, Format::SINT, Format::R, 16, 0, 0, 0), TextureCompression::NONE },
+            { Format(16, Format::FLOAT16, Format::R, 16, 0, 0, 0), TextureCompression::NONE },
+
+            { Format(32, Format::UNORM, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
+            { Format(32, Format::SNORM, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
+            { Format(32, Format::UNORM, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
+            { Format(32, Format::SNORM, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
+            { Format(32, Format::UINT, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
+            { Format(32, Format::SINT, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
+            { Format(32, Format::FLOAT16, Format::RG, 16, 16, 0, 0), TextureCompression::NONE },
+
+            { Format(48, Format::UNORM, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
+            { Format(48, Format::SNORM, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
+            { Format(48, Format::UNORM, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
+            { Format(48, Format::SNORM, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
+            { Format(48, Format::UINT, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
+            { Format(48, Format::SINT, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
+            { Format(48, Format::FLOAT16, Format::RGB, 16, 16, 16, 0), TextureCompression::NONE },
+
+            { Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
+            { Format(64, Format::SNORM, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
+            { Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
+            { Format(64, Format::SNORM, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
+            { Format(64, Format::UINT, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
+            { Format(64, Format::SINT, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
+            { Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), TextureCompression::NONE },
+
+            { Format(32, Format::UINT, Format::R, 32, 0, 0, 0), TextureCompression::NONE },
+            { Format(32, Format::SINT, Format::R, 32, 0, 0, 0), TextureCompression::NONE },
+            { Format(32, Format::FLOAT32, Format::R, 32, 0, 0, 0), TextureCompression::NONE },
+
+            { Format(64, Format::UINT, Format::RG, 32, 32, 0, 0), TextureCompression::NONE },
+            { Format(64, Format::SINT, Format::RG, 32, 32, 0, 0), TextureCompression::NONE },
+            { Format(64, Format::FLOAT32, Format::RG, 32, 32, 0, 0), TextureCompression::NONE },
+
+            { Format(96, Format::UINT, Format::RGB, 32, 32, 32, 0), TextureCompression::NONE },
+            { Format(96, Format::SINT, Format::RGB, 32, 32, 32, 0), TextureCompression::NONE },
+            { Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32, 0), TextureCompression::NONE },
+
+            { Format(128, Format::UINT, Format::RGBA, 32, 32, 32, 32), TextureCompression::NONE },
+            { Format(128, Format::SINT, Format::RGBA, 32, 32, 32, 32), TextureCompression::NONE },
+            { Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), TextureCompression::NONE },
+
+            { Format(64, Format::UINT, Format::R, 64, 0, 0, 0), TextureCompression::NONE },
+            { Format(64, Format::SINT, Format::R, 64, 0, 0, 0), TextureCompression::NONE },
+            { Format(64, Format::FLOAT64, Format::R, 64, 0, 0, 0), TextureCompression::NONE },
+
+            { Format(128, Format::UINT, Format::RG, 64, 64, 0, 0), TextureCompression::NONE },
+            { Format(128, Format::SINT, Format::RG, 64, 64, 0, 0), TextureCompression::NONE },
+            { Format(128, Format::FLOAT64, Format::RG, 64, 64, 0, 0), TextureCompression::NONE },
+
+            { Format(192, Format::UINT, Format::RGB, 64, 64, 64, 0), TextureCompression::NONE },
+            { Format(192, Format::SINT, Format::RGB, 64, 64, 64, 0), TextureCompression::NONE },
+            { Format(192, Format::FLOAT64, Format::RGB, 64, 64, 64, 0), TextureCompression::NONE },
+
+            { Format(256, Format::UINT, Format::RGBA, 64, 64, 64, 64), TextureCompression::NONE },
+            { Format(256, Format::SINT, Format::RGBA, 64, 64, 64, 64), TextureCompression::NONE },
+            { Format(256, Format::FLOAT64, Format::RGBA, 64, 64, 64, 64), TextureCompression::NONE },
+
+            { FORMAT_NONE, TextureCompression::R11F_G11F_B10F },
+            { FORMAT_NONE, TextureCompression::RGB9_E5 },
+
+            { FORMAT_NONE, TextureCompression::NONE }, // VK_FORMAT_D16_UNORM
+            { FORMAT_NONE, TextureCompression::NONE }, // VK_FORMAT_X8_D24_UNORM_PACK32
+            { FORMAT_NONE, TextureCompression::NONE }, // VK_FORMAT_D32_SFLOAT
+            { FORMAT_NONE, TextureCompression::NONE }, // VK_FORMAT_S8_UINT
+            { FORMAT_NONE, TextureCompression::NONE }, // VK_FORMAT_D16_UNORM_S8_UINT
+            { FORMAT_NONE, TextureCompression::NONE }, // VK_FORMAT_D24_UNORM_S8_UINT
+            { FORMAT_NONE, TextureCompression::NONE }, // VK_FORMAT_D32_SFLOAT_S8_UINT
+
+            { FORMAT_NONE, TextureCompression::BC1_UNORM },
+            { FORMAT_NONE, TextureCompression::BC1_UNORM_SRGB },
+            { FORMAT_NONE, TextureCompression::BC1_UNORM_ALPHA },
+            { FORMAT_NONE, TextureCompression::BC1_UNORM_ALPHA_SRGB },
+            { FORMAT_NONE, TextureCompression::BC2_UNORM },
+            { FORMAT_NONE, TextureCompression::BC2_UNORM_SRGB },
+            { FORMAT_NONE, TextureCompression::BC3_UNORM },
+            { FORMAT_NONE, TextureCompression::BC3_UNORM_SRGB },
+            { FORMAT_NONE, TextureCompression::BC4_UNORM },
+            { FORMAT_NONE, TextureCompression::BC4_SNORM },
+            { FORMAT_NONE, TextureCompression::BC5_UNORM },
+            { FORMAT_NONE, TextureCompression::BC5_SNORM },
+            { FORMAT_NONE, TextureCompression::BC6H_UF16 },
+            { FORMAT_NONE, TextureCompression::BC6H_SF16 },
+            { FORMAT_NONE, TextureCompression::BC7_UNORM },
+            { FORMAT_NONE, TextureCompression::BC7_UNORM_SRGB },
+            { FORMAT_NONE, TextureCompression::ETC2_RGB },
+            { FORMAT_NONE, TextureCompression::ETC2_SRGB },
+            { FORMAT_NONE, TextureCompression::ETC2_RGB_ALPHA1 },
+            { FORMAT_NONE, TextureCompression::ETC2_SRGB_ALPHA1 },
+            { FORMAT_NONE, TextureCompression::ETC2_RGBA },
+            { FORMAT_NONE, TextureCompression::ETC2_SRGB_ALPHA8 },
+            { FORMAT_NONE, TextureCompression::EAC_R11 },
+            { FORMAT_NONE, TextureCompression::EAC_SIGNED_R11 },
+            { FORMAT_NONE, TextureCompression::EAC_RG11 },
+            { FORMAT_NONE, TextureCompression::EAC_SIGNED_RG11 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_4x4 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_4x4 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_5x4 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_5x4 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_5x5 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_5x5 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_6x5 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_6x5 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_6x6 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_6x6 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_8x5 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_8x5 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_8x6 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_8x6 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_8x8 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_8x8 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_10x5 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_10x5 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_10x6 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_10x6 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_10x8 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_10x8 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_10x10 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_10x10 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_12x10 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_12x10 },
+            { FORMAT_NONE, TextureCompression::ASTC_RGBA_12x12 },
+            { FORMAT_NONE, TextureCompression::ASTC_SRGB_ALPHA_12x12 },
+        };
+
+        const int maxTableIndex = int((sizeof(table) / sizeof(table[0])) - 1);
+
+        int index = int(vk_format);
+        if (index < 0 || index > maxTableIndex)
+        {
+            // select undefined format
+            index = 0;
+        }
+
+        format = table[index].format;
+        return table[index].compression;
+    }
+
+#endif
 
     /*
         FORMAT_UNDEFINED = 0,
