@@ -4,6 +4,8 @@
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
+#include <mango/core/buffer.hpp>
+#include <mango/core/compress.hpp>
 #include <mango/image/image.hpp>
 #include <mango/image/fourcc.hpp>
 
@@ -299,97 +301,65 @@ namespace
 
     /*
 
-        "G8B8G8R8_422_UNORM = 1000156000,
-        "B8G8R8G8_422_UNORM = 1000156001,
-        "G8_B8_R8_3PLANE_420_UNORM = 1000156002,
-        "G8_B8R8_2PLANE_420_UNORM = 1000156003,
-        "G8_B8_R8_3PLANE_422_UNORM = 1000156004,
-        "G8_B8R8_2PLANE_422_UNORM = 1000156005,
-        "G8_B8_R8_3PLANE_444_UNORM = 1000156006,
-        "R10X6_UNORM_PACK16 = 1000156007,
-        "R10X6G10X6_UNORM_2PACK16 = 1000156008,
-        "R10X6G10X6B10X6A10X6_UNORM_4PACK16 = 1000156009,
-        "G10X6B10X6G10X6R10X6_422_UNORM_4PACK16 = 1000156010,
-        "B10X6G10X6R10X6G10X6_422_UNORM_4PACK16 = 1000156011,
-        "G10X6_B10X6_R10X6_3PLANE_420_UNORM_3PACK16 = 1000156012,
-        "G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16 = 1000156013,
-        "G10X6_B10X6_R10X6_3PLANE_422_UNORM_3PACK16 = 1000156014,
-        "G10X6_B10X6R10X6_2PLANE_422_UNORM_3PACK16 = 1000156015,
-        "G10X6_B10X6_R10X6_3PLANE_444_UNORM_3PACK16 = 1000156016,
-        "R12X4_UNORM_PACK16 = 1000156017,
-        "R12X4G12X4_UNORM_2PACK16 = 1000156018,
-        "R12X4G12X4B12X4A12X4_UNORM_4PACK16 = 1000156019,
-        "G12X4B12X4G12X4R12X4_422_UNORM_4PACK16 = 1000156020,
-        "B12X4G12X4R12X4G12X4_422_UNORM_4PACK16 = 1000156021,
-        "G12X4_B12X4_R12X4_3PLANE_420_UNORM_3PACK16 = 1000156022,
-        "G12X4_B12X4R12X4_2PLANE_420_UNORM_3PACK16 = 1000156023,
-        "G12X4_B12X4_R12X4_3PLANE_422_UNORM_3PACK16 = 1000156024,
-        "G12X4_B12X4R12X4_2PLANE_422_UNORM_3PACK16 = 1000156025,
-        "G12X4_B12X4_R12X4_3PLANE_444_UNORM_3PACK16 = 1000156026,
-        "G16B16G16R16_422_UNORM = 1000156027,
-        "B16G16R16G16_422_UNORM = 1000156028,
-        "G16_B16_R16_3PLANE_420_UNORM = 1000156029,
-        "G16_B16R16_2PLANE_420_UNORM = 1000156030,
-        "G16_B16_R16_3PLANE_422_UNORM = 1000156031,
-        "G16_B16R16_2PLANE_422_UNORM = 1000156032,
-        "G16_B16_R16_3PLANE_444_UNORM = 1000156033,
-        "PVRTC1_2BPP_UNORM_BLOCK_IMG = 1000054000,
-        "PVRTC1_4BPP_UNORM_BLOCK_IMG = 1000054001,
-        "PVRTC2_2BPP_UNORM_BLOCK_IMG = 1000054002,
-        "PVRTC2_4BPP_UNORM_BLOCK_IMG = 1000054003,
-        "PVRTC1_2BPP_SRGB_BLOCK_IMG = 1000054004,
-        "PVRTC1_4BPP_SRGB_BLOCK_IMG = 1000054005,
-        "PVRTC2_2BPP_SRGB_BLOCK_IMG = 1000054006,
-        "PVRTC2_4BPP_SRGB_BLOCK_IMG = 1000054007,
-        "ASTC_4x4_SFLOAT_BLOCK_EXT = 1000066000,
-        "ASTC_5x4_SFLOAT_BLOCK_EXT = 1000066001,
-        "ASTC_5x5_SFLOAT_BLOCK_EXT = 1000066002,
-        "ASTC_6x5_SFLOAT_BLOCK_EXT = 1000066003,
-        "ASTC_6x6_SFLOAT_BLOCK_EXT = 1000066004,
-        "ASTC_8x5_SFLOAT_BLOCK_EXT = 1000066005,
-        "ASTC_8x6_SFLOAT_BLOCK_EXT = 1000066006,
-        "ASTC_8x8_SFLOAT_BLOCK_EXT = 1000066007,
-        "ASTC_10x5_SFLOAT_BLOCK_EXT = 1000066008,
-        "ASTC_10x6_SFLOAT_BLOCK_EXT = 1000066009,
-        "ASTC_10x8_SFLOAT_BLOCK_EXT = 1000066010,
-        "ASTC_10x10_SFLOAT_BLOCK_EXT = 1000066011,
-        "ASTC_12x10_SFLOAT_BLOCK_EXT = 1000066012,
-        "ASTC_12x12_SFLOAT_BLOCK_EXT = 1000066013,
+    "G8B8G8R8_422_UNORM = 1000156000,
+    "B8G8R8G8_422_UNORM = 1000156001,
+    "G8_B8_R8_3PLANE_420_UNORM = 1000156002,
+    "G8_B8R8_2PLANE_420_UNORM = 1000156003,
+    "G8_B8_R8_3PLANE_422_UNORM = 1000156004,
+    "G8_B8R8_2PLANE_422_UNORM = 1000156005,
+    "G8_B8_R8_3PLANE_444_UNORM = 1000156006,
+    "R10X6_UNORM_PACK16 = 1000156007,
+    "R10X6G10X6_UNORM_2PACK16 = 1000156008,
+    "R10X6G10X6B10X6A10X6_UNORM_4PACK16 = 1000156009,
+    "G10X6B10X6G10X6R10X6_422_UNORM_4PACK16 = 1000156010,
+    "B10X6G10X6R10X6G10X6_422_UNORM_4PACK16 = 1000156011,
+    "G10X6_B10X6_R10X6_3PLANE_420_UNORM_3PACK16 = 1000156012,
+    "G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16 = 1000156013,
+    "G10X6_B10X6_R10X6_3PLANE_422_UNORM_3PACK16 = 1000156014,
+    "G10X6_B10X6R10X6_2PLANE_422_UNORM_3PACK16 = 1000156015,
+    "G10X6_B10X6_R10X6_3PLANE_444_UNORM_3PACK16 = 1000156016,
+    "R12X4_UNORM_PACK16 = 1000156017,
+    "R12X4G12X4_UNORM_2PACK16 = 1000156018,
+    "R12X4G12X4B12X4A12X4_UNORM_4PACK16 = 1000156019,
+    "G12X4B12X4G12X4R12X4_422_UNORM_4PACK16 = 1000156020,
+    "B12X4G12X4R12X4G12X4_422_UNORM_4PACK16 = 1000156021,
+    "G12X4_B12X4_R12X4_3PLANE_420_UNORM_3PACK16 = 1000156022,
+    "G12X4_B12X4R12X4_2PLANE_420_UNORM_3PACK16 = 1000156023,
+    "G12X4_B12X4_R12X4_3PLANE_422_UNORM_3PACK16 = 1000156024,
+    "G12X4_B12X4R12X4_2PLANE_422_UNORM_3PACK16 = 1000156025,
+    "G12X4_B12X4_R12X4_3PLANE_444_UNORM_3PACK16 = 1000156026,
+    "G16B16G16R16_422_UNORM = 1000156027,
+    "B16G16R16G16_422_UNORM = 1000156028,
+    "G16_B16_R16_3PLANE_420_UNORM = 1000156029,
+    "G16_B16R16_2PLANE_420_UNORM = 1000156030,
+    "G16_B16_R16_3PLANE_422_UNORM = 1000156031,
+    "G16_B16R16_2PLANE_422_UNORM = 1000156032,
+    "G16_B16_R16_3PLANE_444_UNORM = 1000156033,
 
-        FORMAT_G8B8G8R8_422_UNORM_KHR = FORMAT_G8B8G8R8_422_UNORM,
-        FORMAT_B8G8R8G8_422_UNORM_KHR = FORMAT_B8G8R8G8_422_UNORM,
-        FORMAT_G8_B8_R8_3PLANE_420_UNORM_KHR = FORMAT_G8_B8_R8_3PLANE_420_UNORM,
-        FORMAT_G8_B8R8_2PLANE_420_UNORM_KHR = FORMAT_G8_B8R8_2PLANE_420_UNORM,
-        FORMAT_G8_B8_R8_3PLANE_422_UNORM_KHR = FORMAT_G8_B8_R8_3PLANE_422_UNORM,
-        FORMAT_G8_B8R8_2PLANE_422_UNORM_KHR = FORMAT_G8_B8R8_2PLANE_422_UNORM,
-        FORMAT_G8_B8_R8_3PLANE_444_UNORM_KHR = FORMAT_G8_B8_R8_3PLANE_444_UNORM,
-        FORMAT_R10X6_UNORM_PACK16_KHR = FORMAT_R10X6_UNORM_PACK16,
-        FORMAT_R10X6G10X6_UNORM_2PACK16_KHR = FORMAT_R10X6G10X6_UNORM_2PACK16,
-        FORMAT_R10X6G10X6B10X6A10X6_UNORM_4PACK16_KHR = FORMAT_R10X6G10X6B10X6A10X6_UNORM_4PACK16,
-        FORMAT_G10X6B10X6G10X6R10X6_422_UNORM_4PACK16_KHR = FORMAT_G10X6B10X6G10X6R10X6_422_UNORM_4PACK16,
-        FORMAT_B10X6G10X6R10X6G10X6_422_UNORM_4PACK16_KHR = FORMAT_B10X6G10X6R10X6G10X6_422_UNORM_4PACK16,
-        FORMAT_G10X6_B10X6_R10X6_3PLANE_420_UNORM_3PACK16_KHR = FORMAT_G10X6_B10X6_R10X6_3PLANE_420_UNORM_3PACK16,
-        FORMAT_G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16_KHR = FORMAT_G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16,
-        FORMAT_G10X6_B10X6_R10X6_3PLANE_422_UNORM_3PACK16_KHR = FORMAT_G10X6_B10X6_R10X6_3PLANE_422_UNORM_3PACK16,
-        FORMAT_G10X6_B10X6R10X6_2PLANE_422_UNORM_3PACK16_KHR = FORMAT_G10X6_B10X6R10X6_2PLANE_422_UNORM_3PACK16,
-        FORMAT_G10X6_B10X6_R10X6_3PLANE_444_UNORM_3PACK16_KHR = FORMAT_G10X6_B10X6_R10X6_3PLANE_444_UNORM_3PACK16,
-        FORMAT_R12X4_UNORM_PACK16_KHR = FORMAT_R12X4_UNORM_PACK16,
-        FORMAT_R12X4G12X4_UNORM_2PACK16_KHR = FORMAT_R12X4G12X4_UNORM_2PACK16,
-        FORMAT_R12X4G12X4B12X4A12X4_UNORM_4PACK16_KHR = FORMAT_R12X4G12X4B12X4A12X4_UNORM_4PACK16,
-        FORMAT_G12X4B12X4G12X4R12X4_422_UNORM_4PACK16_KHR = FORMAT_G12X4B12X4G12X4R12X4_422_UNORM_4PACK16,
-        FORMAT_B12X4G12X4R12X4G12X4_422_UNORM_4PACK16_KHR = FORMAT_B12X4G12X4R12X4G12X4_422_UNORM_4PACK16,
-        FORMAT_G12X4_B12X4_R12X4_3PLANE_420_UNORM_3PACK16_KHR = FORMAT_G12X4_B12X4_R12X4_3PLANE_420_UNORM_3PACK16,
-        FORMAT_G12X4_B12X4R12X4_2PLANE_420_UNORM_3PACK16_KHR = FORMAT_G12X4_B12X4R12X4_2PLANE_420_UNORM_3PACK16,
-        FORMAT_G12X4_B12X4_R12X4_3PLANE_422_UNORM_3PACK16_KHR = FORMAT_G12X4_B12X4_R12X4_3PLANE_422_UNORM_3PACK16,
-        FORMAT_G12X4_B12X4R12X4_2PLANE_422_UNORM_3PACK16_KHR = FORMAT_G12X4_B12X4R12X4_2PLANE_422_UNORM_3PACK16,
-        FORMAT_G12X4_B12X4_R12X4_3PLANE_444_UNORM_3PACK16_KHR = FORMAT_G12X4_B12X4_R12X4_3PLANE_444_UNORM_3PACK16,
-        FORMAT_G16B16G16R16_422_UNORM_KHR = FORMAT_G16B16G16R16_422_UNORM,
-        FORMAT_B16G16R16G16_422_UNORM_KHR = FORMAT_B16G16R16G16_422_UNORM,
-        FORMAT_G16_B16_R16_3PLANE_420_UNORM_KHR = FORMAT_G16_B16_R16_3PLANE_420_UNORM,
-        FORMAT_G16_B16R16_2PLANE_420_UNORM_KHR = FORMAT_G16_B16R16_2PLANE_420_UNORM,
-        FORMAT_G16_B16_R16_3PLANE_422_UNORM_KHR = FORMAT_G16_B16_R16_3PLANE_422_UNORM,
-        FORMAT_G16_B16R16_2PLANE_422_UNORM_KHR = FORMAT_G16_B16R16_2PLANE_422_UNORM,
-        FORMAT_G16_B16_R16_3PLANE_444_UNORM_KHR = FORMAT_G16_B16_R16_3PLANE_444_UNORM,
+    "PVRTC1_2BPP_UNORM_BLOCK_IMG = 1000054000,
+    "PVRTC1_4BPP_UNORM_BLOCK_IMG = 1000054001,
+    "PVRTC2_2BPP_UNORM_BLOCK_IMG = 1000054002,
+    "PVRTC2_4BPP_UNORM_BLOCK_IMG = 1000054003,
+    "PVRTC1_2BPP_SRGB_BLOCK_IMG  = 1000054004,
+    "PVRTC1_4BPP_SRGB_BLOCK_IMG  = 1000054005,
+    "PVRTC2_2BPP_SRGB_BLOCK_IMG  = 1000054006,
+    "PVRTC2_4BPP_SRGB_BLOCK_IMG  = 1000054007,
+
+    "ASTC_4x4_SFLOAT_BLOCK_EXT   = 1000066000,
+    "ASTC_5x4_SFLOAT_BLOCK_EXT   = 1000066001,
+    "ASTC_5x5_SFLOAT_BLOCK_EXT   = 1000066002,
+    "ASTC_6x5_SFLOAT_BLOCK_EXT   = 1000066003,
+    "ASTC_6x6_SFLOAT_BLOCK_EXT   = 1000066004,
+    "ASTC_8x5_SFLOAT_BLOCK_EXT   = 1000066005,
+    "ASTC_8x6_SFLOAT_BLOCK_EXT   = 1000066006,
+    "ASTC_8x8_SFLOAT_BLOCK_EXT   = 1000066007,
+    "ASTC_10x5_SFLOAT_BLOCK_EXT  = 1000066008,
+    "ASTC_10x6_SFLOAT_BLOCK_EXT  = 1000066009,
+    "ASTC_10x8_SFLOAT_BLOCK_EXT  = 1000066010,
+    "ASTC_10x10_SFLOAT_BLOCK_EXT = 1000066011,
+    "ASTC_12x10_SFLOAT_BLOCK_EXT = 1000066012,
+    "ASTC_12x12_SFLOAT_BLOCK_EXT = 1000066013,
+
     */
 
     static
@@ -516,6 +486,7 @@ namespace
         u64 offset;
         u64 length;
         u64 uncompressed_length;
+        ConstMemory memory;
     };
 
     // ------------------------------------------------------------
@@ -526,7 +497,11 @@ namespace
     {
         ConstMemory m_memory;
         ImageHeader m_header;
+
         std::vector<LevelKTX2> m_levels;
+
+        u32 m_supercompression = 0;
+        Buffer m_buffer;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
@@ -546,21 +521,23 @@ namespace
                 printf("*** Prohibited format.\n");
             }
 
+            VulkanFormatDesc desc = getFormatDesc(header.vkFormat);
+
             m_header.width = header.pixelWidth;
             m_header.height = header.pixelHeight;
             m_header.depth = header.pixelDepth;
             m_header.levels = header.levelCount;
             m_header.faces = header.faceCount;
-            //m_header.format = ;
-            //m_header.compression = ;
-
-            VulkanFormatDesc desc = getFormatDesc(header.vkFormat);
+            m_header.format = desc.format;
+            m_header.compression = desc.compression;
 
             printf("vkFormat: %d \"%s\"\n", header.vkFormat, desc.name);
             printf("typeSize: %d\n", header.typeSize);
             printf("supercompressionScheme: %d\n", header.supercompressionScheme);
 
-            switch (header.supercompressionScheme)
+            m_supercompression = header.supercompressionScheme;
+
+            switch (m_supercompression)
             {
                 case SUPERCOMPRESSION_NONE:
                     break;
@@ -583,9 +560,16 @@ namespace
             u64 sgdByteOffset = p.read64();
             u64 sgdByteLength = p.read64();
 
-            printf("dfdByteOffset: %d, dfdByteLength: %d\n", dfdByteOffset, dfdByteLength);
-            printf("kvdByteOffset: %d, kvdByteLength: %d\n", kvdByteOffset, kvdByteLength);
-            printf("sgdByteOffset: %d, sgdByteLength: %d\n", (int)sgdByteOffset, (int)sgdByteLength);
+            MANGO_UNREFERENCED(dfdByteOffset);
+            MANGO_UNREFERENCED(dfdByteLength);
+            MANGO_UNREFERENCED(kvdByteOffset);
+            MANGO_UNREFERENCED(kvdByteLength);
+            MANGO_UNREFERENCED(sgdByteOffset);
+            MANGO_UNREFERENCED(sgdByteLength);
+
+            //printf("dfdByteOffset: %d, dfdByteLength: %d\n", dfdByteOffset, dfdByteLength);
+            //printf("kvdByteOffset: %d, kvdByteLength: %d\n", kvdByteOffset, kvdByteLength);
+            //printf("sgdByteOffset: %d, sgdByteLength: %d\n", (int)sgdByteOffset, (int)sgdByteLength);
 
             int levels = std::max(1, m_header.levels);
             printf("levels: %d\n", levels);
@@ -597,9 +581,10 @@ namespace
                 level.offset = p.read64();
                 level.length = p.read64();
                 level.uncompressed_length = p.read64();
+                level.memory = ConstMemory(m_memory.address + level.offset, level.length);
 
                 m_levels.push_back(level);
-                printf("  offset: %10d, length: %10d, uncompressed: %10d\n",  (int)level.offset, (int)level.length, (int)level.uncompressed_length);
+                printf("  offset: %d, length: %d, uncompressed: %d\n",  (int)level.offset, (int)level.length, (int)level.uncompressed_length);
             }
 
             // Data Format Descriptor
@@ -634,6 +619,8 @@ namespace
             MANGO_UNREFERENCED(depth);
             MANGO_UNREFERENCED(face);
 
+            decompress();
+
             // TODO
             return ConstMemory();
         }
@@ -646,9 +633,65 @@ namespace
             MANGO_UNREFERENCED(depth);
             MANGO_UNREFERENCED(face);
 
+            decompress();
+
             // TODO
             ImageDecodeStatus status;
             return status;
+        }
+
+        void decompress()
+        {
+            if (m_supercompression)
+            {
+                if (!m_buffer.size())
+                {
+                    // compute storage requirements
+                    u64 uncompressed_size = 0;
+
+                    for (auto level : m_levels)
+                    {
+                        uncompressed_size += level.uncompressed_length;
+                    }
+
+                    // allocate storage
+                    m_buffer.resize(uncompressed_size);
+
+                    u8* dest = m_buffer.data();
+
+                    // decompress
+                    for (auto level : m_levels)
+                    {
+                        CompressionStatus status;
+                        u64 bytes = level.uncompressed_length;
+
+                        switch (m_supercompression)
+                        {
+                            case SUPERCOMPRESSION_BASIS_LZ:
+                                status.setError("TODO");
+                                break;
+                            case SUPERCOMPRESSION_ZSTANDARD:
+                                status = zstd::decompress(Memory(dest, bytes), level.memory);
+                                break;
+                            case SUPERCOMPRESSION_ZLIB:
+                                status = zlib::decompress(Memory(dest, bytes), level.memory);
+                                break;
+                        }
+
+                        if (status)
+                        {
+                            printf("* decompressed: %d bytes\n", int(status.size));
+                        }
+                        else
+                        {
+                            printf("* decompress status: %s\n", status.info.c_str());
+                        }
+
+                        level.memory = ConstMemory(dest, bytes);
+                        dest += level.uncompressed_length;
+                    }
+                }
+            }
         }
     };
 
