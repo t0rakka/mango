@@ -67,7 +67,7 @@ namespace mango::image
         , flags(0)
     {
         assert(!(bits & 7));
-        assert(bits >= 8 && bits <= 128);
+        assert(bits >= 8 && bits <= 256);
 
         if (type == Format::SRGB)
         {

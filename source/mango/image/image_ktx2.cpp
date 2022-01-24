@@ -283,6 +283,20 @@ namespace
         { Format(), TextureCompression::ASTC_SRGB_ALPHA_12x12, "ASTC_12x12_SRGB_BLOCK" },
     };
 
+    static
+    VulkanFormatDesc getFormatDesc(u32 vkformat)
+    {
+        const u32 maxIndex = u32((sizeof(g_vulkan_format_array) / sizeof(g_vulkan_format_array[0])) - 1);
+
+        if (vkformat > maxIndex)
+        {
+            // select undefined format
+            vkformat = 0;
+        }
+
+        return g_vulkan_format_array[vkformat];
+    }
+
     /*
 
         "G8B8G8R8_422_UNORM = 1000156000,
@@ -376,30 +390,6 @@ namespace
         FORMAT_G16_B16_R16_3PLANE_422_UNORM_KHR = FORMAT_G16_B16_R16_3PLANE_422_UNORM,
         FORMAT_G16_B16R16_2PLANE_422_UNORM_KHR = FORMAT_G16_B16R16_2PLANE_422_UNORM,
         FORMAT_G16_B16_R16_3PLANE_444_UNORM_KHR = FORMAT_G16_B16_R16_3PLANE_444_UNORM,
-    */
-
-    /*
-
-    TextureCompression getCompressionFormat(Format& format, VkFormat vk_format)
-    {
-
-        const FormatDesc table[] =
-        {
-        };
-
-        const int maxTableIndex = int((sizeof(table) / sizeof(table[0])) - 1);
-
-        int index = int(vk_format);
-        if (index < 0 || index > maxTableIndex)
-        {
-            // select undefined format
-            index = 0;
-        }
-
-        format = table[index].format;
-        return table[index].compression;
-    }
-
     */
 
     static
@@ -564,7 +554,9 @@ namespace
             //m_header.format = ;
             //m_header.compression = ;
 
-            printf("vkFormat: %d\n", header.vkFormat);
+            VulkanFormatDesc desc = getFormatDesc(header.vkFormat);
+
+            printf("vkFormat: %d \"%s\"\n", header.vkFormat, desc.name);
             printf("typeSize: %d\n", header.typeSize);
             printf("supercompressionScheme: %d\n", header.supercompressionScheme);
 
