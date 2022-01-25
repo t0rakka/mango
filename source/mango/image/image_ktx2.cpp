@@ -651,6 +651,7 @@ namespace
             // TODO: level
             // TODO: depth
             // TODO: face
+            // TODO: typesize dictates endianness swap on big-endian
 
             ImageDecodeStatus status;
 
