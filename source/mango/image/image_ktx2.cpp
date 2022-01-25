@@ -61,7 +61,7 @@ namespace
         { Format(8, Format::SNORM, Format::R, 8, 0, 0, 0), TextureCompression::NONE, "R8_SSCALED" },
         { Format(8, Format::UINT, Format::R, 8, 0, 0, 0), TextureCompression::NONE, "R8_UINT" },
         { Format(8, Format::SINT, Format::R, 8, 0, 0, 0), TextureCompression::NONE, "R8_SINT" },
-        { Format(8, Format::SRGB, Format::R, 8, 0, 0, 0), TextureCompression::NONE,"R8_SRGB" },
+        { Format(8, Format::UNORM, Format::R, 8, 0, 0, 0), TextureCompression::NONE,"R8_SRGB" },
 
         // 16 .. 22
         { Format(16, Format::UNORM, Format::RG, 8, 8, 0, 0), TextureCompression::NONE, "R8G8_UNORM" },
@@ -70,7 +70,7 @@ namespace
         { Format(16, Format::SNORM, Format::RG, 8, 8, 0, 0), TextureCompression::NONE, "R8G8_SSCALED" },
         { Format(16, Format::UINT, Format::RG, 8, 8, 0, 0), TextureCompression::NONE, "R8G8_UINT" },
         { Format(16, Format::SINT, Format::RG, 8, 8, 0, 0), TextureCompression::NONE, "R8G8_SINT" },
-        { Format(16, Format::SRGB, Format::RG, 8, 8, 0, 0), TextureCompression::NONE, "R8G8_SRGB" },
+        { Format(16, Format::UNORM, Format::RG, 8, 8, 0, 0), TextureCompression::NONE, "R8G8_SRGB" },
 
         // 23 .. 29
         { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE, "R8G8B8_UNORM" },
@@ -79,7 +79,7 @@ namespace
         { Format(24, Format::SNORM, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE, "R8G8B8_SSCALED" },
         { Format(24, Format::UINT, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE, "R8G8B8_UINT" },
         { Format(24, Format::SINT, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE, "R8G8B8_SINT" },
-        { Format(24, Format::SRGB, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE, "R8G8B8_SRGB" },
+        { Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0), TextureCompression::NONE, "R8G8B8_SRGB" },
 
         // 30 .. 36
         { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE, "B8G8R8_UNORM" },
@@ -88,7 +88,7 @@ namespace
         { Format(24, Format::SNORM, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE, "B8G8R8_SSCALED" },
         { Format(24, Format::UINT, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE, "B8G8R8_UINT" },
         { Format(24, Format::SINT, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE, "B8G8R8_SINT" },
-        { Format(24, Format::SRGB, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE, "B8G8R8_SRGB" },
+        { Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0), TextureCompression::NONE, "B8G8R8_SRGB" },
 
         // 37 .. 43
         { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE, "R8G8B8A8_UNORM" },
@@ -97,7 +97,7 @@ namespace
         { Format(32, Format::SNORM, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE, "R8G8B8A8_SSCALED" },
         { Format(32, Format::UINT, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE, "R8G8B8A8_UINT" },
         { Format(32, Format::SINT, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE, "R8G8B8A8_SINT" },
-        { Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE, "R8G8B8A8_SRGB" },
+        { Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), TextureCompression::NONE, "R8G8B8A8_SRGB" },
 
         // 44 .. 50
         { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE, "B8G8R8A8_UNORM" },
@@ -106,7 +106,7 @@ namespace
         { Format(32, Format::SNORM, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE, "B8G8R8A8_SSCALED" },
         { Format(32, Format::UINT, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE, "B8G8R8A8_UINT" },
         { Format(32, Format::SINT, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE, "B8G8R8A8_SINT" },
-        { Format(32, Format::SRGB, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE,"B8G8R8A8_SRGB" },
+        { Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), TextureCompression::NONE,"B8G8R8A8_SRGB" },
 
         // 51 .. 57
         { Format(32, Format::UNORM, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE, "A8B8G8R8_UNORM_PACK32" },
@@ -115,7 +115,7 @@ namespace
         { Format(32, Format::SNORM, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE, "A8B8G8R8_SSCALED_PACK32" },
         { Format(32, Format::UINT, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE, "A8B8G8R8_UINT_PACK32" },
         { Format(32, Format::SINT, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE, "A8B8G8R8_SINT_PACK32" },
-        { Format(32, Format::SRGB, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE, "A8B8G8R8_SRGB_PACK32" },
+        { Format(32, Format::UNORM, Format::ABGR, 8, 8, 8, 8), TextureCompression::NONE, "A8B8G8R8_SRGB_PACK32" },
 
         // 58 .. 63
         { Format(32, Format::UNORM, Format::ARGB, 2, 10, 10, 10), TextureCompression::NONE, "A2R10G10B10_UNORM_PACK32" },
@@ -637,6 +637,25 @@ namespace
 
             // TODO
             ImageDecodeStatus status;
+
+            ConstMemory memory = m_levels[0].memory;
+
+            int width = m_header.width;
+            int height = m_header.height;
+            const Format& format = m_header.format;
+
+            // TODO: level
+            // TODO: depth
+            // TODO: face
+
+            // TODO: compressed surface -> decode -> blit
+
+            printf("surface: %d x %d (%d bits)\n", width, height, format.bits);
+            printf("memory: %d bytes\n", (int)memory.size);
+
+            Surface temp(width, height, format, width * format.bytes(), memory.address);
+            dest.blit(0, 0, temp);
+
             return status;
         }
 
@@ -657,13 +676,14 @@ namespace
                     // allocate storage
                     m_buffer.resize(uncompressed_size);
 
-                    u8* dest = m_buffer.data();
+                    u8* data = m_buffer.data();
 
                     // decompress
-                    for (auto level : m_levels)
+                    for (auto& level : m_levels)
                     {
                         CompressionStatus status;
                         u64 bytes = level.uncompressed_length;
+                        Memory dest(data, bytes);
 
                         switch (m_supercompression)
                         {
@@ -671,10 +691,10 @@ namespace
                                 status.setError("TODO");
                                 break;
                             case SUPERCOMPRESSION_ZSTANDARD:
-                                status = zstd::decompress(Memory(dest, bytes), level.memory);
+                                status = zstd::decompress(dest, level.memory);
                                 break;
                             case SUPERCOMPRESSION_ZLIB:
-                                status = zlib::decompress(Memory(dest, bytes), level.memory);
+                                status = zlib::decompress(dest, level.memory);
                                 break;
                         }
 
@@ -687,8 +707,8 @@ namespace
                             printf("* decompress status: %s\n", status.info.c_str());
                         }
 
-                        level.memory = ConstMemory(dest, bytes);
-                        dest += level.uncompressed_length;
+                        level.memory = dest;
+                        data += level.uncompressed_length;
                     }
                 }
             }
