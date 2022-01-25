@@ -533,7 +533,7 @@ namespace
 
             m_header.width = header.pixelWidth;
             m_header.height = header.pixelHeight;
-            m_header.depth = header.pixelDepth;
+            m_header.depth = std::max(1u, header.pixelDepth);
             m_header.levels = header.levelCount;
             m_header.faces = header.faceCount;
             m_header.format = desc.format;
@@ -623,14 +623,37 @@ namespace
 
         ConstMemory memory(int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED(level);
-            MANGO_UNREFERENCED(depth);
-            MANGO_UNREFERENCED(face);
+            if (level < 0 || level >= m_levels.size())
+            {
+                return ConstMemory();
+            }
+
+            if (depth < 0 || depth >= m_header.depth)
+            {
+                return ConstMemory();
+            }
+
+            if (face < 0 || face >= m_header.faces)
+            {
+                return ConstMemory();
+            }
 
             decompress();
 
-            // TODO
-            return ConstMemory();
+            ConstMemory memory = m_levels[level].memory;
+
+            if (depth > 0)
+            {
+                memory.size /= m_header.depth;
+                memory.address += depth * memory.size;
+            }
+            else if (face > 0)
+            {
+                memory.size /= m_header.faces;
+                memory.address += face * memory.size;
+            }
+
+            return memory;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -659,7 +682,7 @@ namespace
                 return status;
             }
 
-            ConstMemory memory = m_levels[level].memory;
+            ConstMemory memory = this->memory(level, depth, face);
 
             int width = std::max(1, m_header.width >> level);
             int height = std::max(1, m_header.height >> level);
