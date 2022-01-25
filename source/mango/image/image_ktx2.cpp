@@ -490,6 +490,10 @@ namespace
         u32 m_supercompression = 0;
         Buffer m_buffer;
 
+        bool m_orientation_x = false;
+        bool m_orientation_y = false;
+        bool m_orientation_z = false;
+
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
@@ -575,20 +579,56 @@ namespace
             }
 
             // Data Format Descriptor
-            u32 dfdTotalSize = p.read32();
-            p += (dfdByteLength - 4);
-            MANGO_UNREFERENCED(dfdTotalSize);
-
-            // Key/Value Data
-            p += kvdByteLength;
-
-            // Supercompression Global Data
-            if (sgdByteLength > 0)
+            if (dfdByteLength)
             {
-                p = align_pointer<8>(p);
+                p = memory.address + dfdByteOffset;
             }
 
-            p += sgdByteLength;
+            // Key/Value Data
+            if (kvdByteLength)
+            {
+                p = memory.address + kvdByteOffset;
+                const u8* end = p + kvdByteLength;
+
+                while (p < end)
+                {
+                    u32 length = p.read32();
+                    u32 padding = (0 - length) & 3;
+
+                    const char* key = p.cast<const char>();
+                    const u8* value = p + std::strlen(key) + 1;
+
+                    if (!strcmp(key, "KTXorientation"))
+                    {
+                        for ( ; *value; value++)
+                        {
+                            switch (*value)
+                            {
+                                case 'l':
+                                    m_orientation_x = true;
+                                    break;
+                                case 'u':
+                                    m_orientation_y = true;
+                                    break;
+                                case 'o':
+                                    m_orientation_z = true;
+                                    break;
+                            }
+                        }
+                    }
+
+                    printf("key: %s\n", key);
+
+                    p += length;
+                    p += padding;
+                }
+            }
+
+            // Supercompression Global Data
+            if (sgdByteLength)
+            {
+                p = memory.address + sgdByteOffset;
+            }
         }
 
         ~Interface()
@@ -684,6 +724,12 @@ namespace
                 printf("memory: %d bytes\n", (int)memory.size);
 
                 Surface temp(width, height, format, width * format.bytes(), memory.address);
+                if (m_orientation_y)
+                {
+                    temp.image += temp.stride * (height - 1);
+                    temp.stride = 0 - temp.stride;
+                }
+
                 dest.blit(0, 0, temp);
             }
 
