@@ -296,7 +296,15 @@ namespace
             vkformat = 0;
         }
 
-        return g_vulkan_format_array[vkformat];
+        VulkanFormatDesc desc = g_vulkan_format_array[vkformat];
+
+        if (desc.compression != TextureCompression::NONE)
+        {
+            TextureCompressionInfo info(desc.compression);
+            desc.format = info.format;
+        }
+
+        return desc;
     }
 
     /*
@@ -627,34 +635,54 @@ namespace
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED(dest);
+            //MANGO_UNREFERENCED(dest);
             MANGO_UNREFERENCED(options);
-            MANGO_UNREFERENCED(level);
+            //MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);
             MANGO_UNREFERENCED(face);
 
             decompress();
 
-            // TODO
-            ImageDecodeStatus status;
-
-            ConstMemory memory = m_levels[0].memory;
-
-            int width = m_header.width;
-            int height = m_header.height;
-            const Format& format = m_header.format;
+            //TextureCompressionStatus TextureCompressionInfo::decompress(
+            //    const Surface& surface, ConstMemory memory) const
 
             // TODO: level
             // TODO: depth
             // TODO: face
 
-            // TODO: compressed surface -> decode -> blit
+            ImageDecodeStatus status;
 
-            printf("surface: %d x %d (%d bits)\n", width, height, format.bits);
-            printf("memory: %d bytes\n", (int)memory.size);
+            const int maxLevel = int(m_levels.size() - 1);
+            if (level < 0 || level > maxLevel)
+            {
+                status.setError("Incorrect level (%d) [%d .. %d]", level, 0, maxLevel);
+                return status;
+            }
 
-            Surface temp(width, height, format, width * format.bytes(), memory.address);
-            dest.blit(0, 0, temp);
+            ConstMemory memory = m_levels[level].memory;
+
+            int width = std::max(1, m_header.width >> level);
+            int height = std::max(1, m_header.height >> level);
+            const Format& format = m_header.format;
+
+            if (m_header.compression != TextureCompression::NONE)
+            {
+                // TODO: compressed surface -> decode -> blit
+                TextureCompressionInfo info(m_header.compression);
+                TextureCompressionStatus ts = info.decompress(dest, memory);
+                if (!ts)
+                {
+                    status.setError(ts.info);
+                }
+            }
+            else
+            {
+                printf("surface: %d x %d (%d bits)\n", width, height, format.bits);
+                printf("memory: %d bytes\n", (int)memory.size);
+
+                Surface temp(width, height, format, width * format.bytes(), memory.address);
+                dest.blit(0, 0, temp);
+            }
 
             return status;
         }

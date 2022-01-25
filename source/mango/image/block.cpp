@@ -1102,8 +1102,8 @@ namespace mango::image
     TextureCompressionInfo::TextureCompressionInfo()
         : compression(TextureCompression::NONE)
         , dxgi(0)
-        , gl(0)
-        , vk(0)
+        , opengl(0)
+        , vulkan(0)
         , width(1)
         , height(1)
         , depth(1)
@@ -1114,12 +1114,12 @@ namespace mango::image
     {
     }
 
-    TextureCompressionInfo::TextureCompressionInfo(TextureCompression compression, u32 dxgi, u32 gl, u32 vk,
+    TextureCompressionInfo::TextureCompressionInfo(TextureCompression compression, u32 dxgi, u32 opengl, u32 vulkan,
         int width, int height, int depth, int bytes, const Format& format, DecodeFunc decode, EncodeFunc encode)
         : compression(compression)
         , dxgi(dxgi)
-        , gl(gl)
-        , vk(vk)
+        , opengl(opengl)
+        , vulkan(vulkan)
         , width(width)
         , height(height)
         , depth(depth)
@@ -1133,8 +1133,8 @@ namespace mango::image
     TextureCompressionInfo::TextureCompressionInfo(const TextureCompressionInfo& info, int width, int height)
         : compression(info.compression)
         , dxgi(info.dxgi)
-        , gl(info.gl)
-        , vk(info.vk)
+        , opengl(info.opengl)
+        , vulkan(info.vulkan)
         , width(width)
         , height(height)
         , depth(info.depth)
@@ -1183,7 +1183,7 @@ namespace mango::image
 
         for (const auto& node : g_blockTable)
         {
-            if (node.gl == format)
+            if (node.opengl == format)
             {
                 info = &node;
                 break;
@@ -1199,7 +1199,7 @@ namespace mango::image
 
         for (const auto& node : g_blockTable)
         {
-            if (node.vk == format)
+            if (node.vulkan == format)
             {
                 info = &node;
                 break;

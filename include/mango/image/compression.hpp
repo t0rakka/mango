@@ -220,8 +220,8 @@ namespace mango::image
 
         TextureCompression compression; // block format (including flags)
         u32 dxgi;           // DXGI format
-        u32 gl;             // OpenGL format
-        u32 vk;             // Vulkan format
+        u32 opengl;         // OpenGL format
+        u32 vulkan;         // Vulkan format
 
         int width;          // block width (surface width when SURFACE flag is set)
         int height;         // block height (surface height when SURFACE flag is set)
@@ -276,7 +276,7 @@ namespace mango
         static inline
         u32 getTextureFormat(image::TextureCompression compression)
         {
-            return image::TextureCompressionInfo(compression).gl;
+            return image::TextureCompressionInfo(compression).opengl;
         }
     }
 
@@ -291,7 +291,7 @@ namespace mango
         static inline
         u32 getTextureFormat(image::TextureCompression compression)
         {
-            return image::TextureCompressionInfo(compression).vk;
+            return image::TextureCompressionInfo(compression).vulkan;
         }
     }
 
