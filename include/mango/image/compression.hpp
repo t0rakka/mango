@@ -134,6 +134,16 @@ namespace mango::image
             PVRTC_SRGB_ALPHA_2BPP         = makeTextureCompression(PVRTC_EXT, 8, PVR | SURFACE | ALPHA | SRGB),
             PVRTC_SRGB_ALPHA_4BPP         = makeTextureCompression(PVRTC_EXT, 9, PVR | SURFACE | ALPHA | SRGB),
 
+            // VK_IMG_format_pvrtc
+            PVRTC1_2BPP_SRGB_BLOCK_IMG    = PVRTC_SRGB_ALPHA_2BPP,
+            PVRTC1_2BPP_UNORM_BLOCK_IMG   = PVRTC_RGBA_2BPP,
+            PVRTC1_4BPP_SRGB_BLOCK_IMG    = PVRTC_SRGB_ALPHA_4BPP,
+            PVRTC1_4BPP_UNORM_BLOCK_IMG   = PVRTC_RGBA_4BPP,
+            PVRTC2_2BPP_SRGB_BLOCK_IMG    = makeTextureCompression(PVRTC2, 4, PVR | SURFACE | ALPHA | SRGB),
+            PVRTC2_2BPP_UNORM_BLOCK_IMG   = PVRTC2_RGBA_2BPP,
+            PVRTC2_4BPP_SRGB_BLOCK_IMG    = makeTextureCompression(PVRTC2, 5, PVR | SURFACE | ALPHA | SRGB),
+            PVRTC2_4BPP_UNORM_BLOCK_IMG   = PVRTC2_RGBA_4BPP,
+
             // KHR_texture_compression_astc_ldr
             // KHR_texture_compression_astc_hdr
             ASTC_RGBA_4x4                 = makeTextureCompression(ASTC, 0, ORIGIN | ALPHA),

@@ -400,6 +400,26 @@ namespace
             decode_surface_pvrtc2, nullptr
         ),
 
+        // VK_IMG_format_pvrtc
+
+        TextureCompressionInfo(
+            TextureCompression::PVRTC2_2BPP_SRGB_BLOCK_IMG,
+            0, // not supported in DirectX
+            0, // not supported in OpenGL
+            vulkan::FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG,
+            8, 4, 1, 8, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_pvrtc2, nullptr
+        ),
+
+        TextureCompressionInfo(
+            TextureCompression::PVRTC2_4BPP_SRGB_BLOCK_IMG,
+            0, // not supported in DirectX
+            0, // not supported in OpenGL
+            vulkan::FORMAT_PVRTC2_4BPP_SRGB_BLOCK_IMG,
+            4, 4, 1, 8, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_pvrtc2, nullptr
+        ),
+
         // EXT_pvrtc_sRGB
 
         TextureCompressionInfo(
