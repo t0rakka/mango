@@ -58,16 +58,16 @@ namespace mango::jpeg
     const SampleFormat g_format_table [] =
     {
         { JPEG_U8_Y,    LuminanceFormat(8, Format::UNORM, 8, 0) },
-        { JPEG_U8_BGR,  Format(24, Format::SRGB, Format::BGR, 8, 8, 8) },
-        { JPEG_U8_RGB,  Format(24, Format::SRGB, Format::RGB, 8, 8, 8) },
-        { JPEG_U8_BGRA, Format(32, Format::SRGB, Format::BGRA, 8, 8, 8, 8) },
-        { JPEG_U8_RGBA, Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8) },
+        { JPEG_U8_BGR,  Format(24, Format::UNORM, Format::BGR, 8, 8, 8) },
+        { JPEG_U8_RGB,  Format(24, Format::UNORM, Format::RGB, 8, 8, 8) },
+        { JPEG_U8_BGRA, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) },
+        { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
     };
 
     SampleFormat getSampleFormat(const Format& format)
     {
         // set default format
-        SampleFormat result { JPEG_U8_RGBA, Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8) };
+        SampleFormat result { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) };
 
         // find better match
         for (auto sf : g_format_table)
@@ -648,7 +648,7 @@ namespace mango::jpeg
         // configure header
         header.width = xsize;
         header.height = ysize;
-        header.format = components > 1 ? Format(32, Format::SRGB, Format::BGRA, 8, 8, 8, 8)
+        header.format = components > 1 ? Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8)
                                        : LuminanceFormat(8, Format::UNORM, 8, 0);
 
         MANGO_UNREFERENCED(length);
@@ -1733,14 +1733,14 @@ namespace mango::jpeg
             else
             {
                 sf.sample = JPEG_U8_BGRA;
-                sf.format = Format(32, Format::SRGB, Format::BGRA, 8, 8, 8, 8);
+                sf.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
             }
         }
         else if (components == 4)
         {
             // CMYK / YCCK is in the slow-path anyway so force BGRA
             sf.sample = JPEG_U8_BGRA;
-            sf.format = Format(32, Format::SRGB, Format::BGRA, 8, 8, 8, 8);
+            sf.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
         }
 
         status.direct = true;

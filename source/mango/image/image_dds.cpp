@@ -771,7 +771,7 @@ namespace
 
                 if (flags & DDPF_RGB)
                 {
-                    format = Format(rgbBitCount, Format::SRGB, rBitMask, gBitMask, bBitMask, alphaMask);
+                    format = Format(rgbBitCount, rBitMask, gBitMask, bBitMask, alphaMask);
                 }
                 else if (flags & DDPF_LUMINANCE)
                 {
@@ -959,7 +959,6 @@ namespace
                 {
                     case Format::FLOAT16:
                     case Format::FLOAT32:
-                    case Format::SRGB:
                     case Format::UNORM:
                         pixelFormat.format = dxgi.format;
                         break;

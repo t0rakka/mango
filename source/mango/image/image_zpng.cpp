@@ -38,10 +38,10 @@ namespace
                 format = LuminanceFormat(8, Format::UNORM, 8, 0);
                 break;
             case 3:
-                format = Format(24, Format::SRGB, Format::RGB, 8, 8, 8, 0);
+                format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0);
                 break;
             case 4:
-                format = Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8);
+                format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                 break;
             case 2:
                 format = LuminanceFormat(16, Format::UNORM, 16, 0);

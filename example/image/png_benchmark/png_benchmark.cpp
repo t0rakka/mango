@@ -564,7 +564,7 @@ private:
         u32 height = image_config.pixcfg.height();
         buffer.resize(width * height * 4);
 
-        surface = Surface(width, height, Format(32, Format::SRGB, Format::BGRA, 8, 8, 8, 8), width * 4, buffer);
+        surface = Surface(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), width * 4, buffer);
 
         wuffs_base__pixel_buffer pixbuf;
         wuffs_base__status status = pixbuf.set_interleaved(
@@ -661,7 +661,7 @@ int main(int argc, const char* argv[])
         }
     }
 
-    Bitmap bitmap(filename, Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8));
+    Bitmap bitmap(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
     File file(filename);
     Buffer buffer(file);

@@ -72,10 +72,10 @@ namespace
         { 0x80E1, Format( 32, Format::UNORM, Format::BGRA,  8, 8, 8, 8), "BGRA" },
 
         // 2.1
-        { 0x8C40, Format( 24, Format::SRGB, Format::RGB,   8,  8,  8,  0), "SRGB" },
-        { 0x8C41, Format( 24, Format::SRGB, Format::RGB,   8,  8,  8,  0), "SRGB8" },
-        { 0x8C42, Format( 32, Format::SRGB, Format::RGBA,  8,  8,  8,  8), "SRGB_ALPHA" },
-        { 0x8C43, Format( 32, Format::SRGB, Format::RGBA,  8,  8,  8,  8), "SRGB8_ALPHA8" },
+        { 0x8C40, Format( 24, Format::UNORM, Format::RGB,   8,  8,  8,  0), "SRGB" },
+        { 0x8C41, Format( 24, Format::UNORM, Format::RGB,   8,  8,  8,  0), "SRGB8" },
+        { 0x8C42, Format( 32, Format::UNORM, Format::RGBA,  8,  8,  8,  8), "SRGB_ALPHA" },
+        { 0x8C43, Format( 32, Format::UNORM, Format::RGBA,  8,  8,  8,  8), "SRGB8_ALPHA8" },
 
         // 3.0
         { 0x8814, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), "RGBA32F" },

@@ -23,19 +23,13 @@ namespace mango::image
     {
     }
 
-    Format::Format(int bits, Type type, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask)
+    Format::Format(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask)
         : bits(bits)
-        , type(type)
+        , type(UNORM)
         , flags(0)
     {
         assert(!(bits & 7));
         assert(bits >= 8 && bits <= 32);
-
-        if (type == Format::SRGB)
-        {
-            type = Format::UNORM;
-            flags = Format::FLAG_SRGB;
-        }
 
         size[0] = u8(u32_count_bits(redMask));
         size[1] = u8(u32_count_bits(greenMask));
@@ -54,11 +48,6 @@ namespace mango::image
         , size(size)
         , offset(offset)
     {
-        if (type == Format::SRGB)
-        {
-            type = Format::UNORM;
-            flags = Format::FLAG_SRGB;
-        }
     }
 
     Format::Format(int bits, Type type, Order order, int s0, int s1, int s2, int s3)
@@ -68,12 +57,6 @@ namespace mango::image
     {
         assert(!(bits & 7));
         assert(bits >= 8 && bits <= 256);
-
-        if (type == Format::SRGB)
-        {
-            type = Format::UNORM;
-            flags = Format::FLAG_SRGB;
-        }
 
         // compute component indices from order mask
         const int c0 = (order >> 0) & 3;
@@ -129,11 +112,6 @@ namespace mango::image
         return size[ALPHA] > 0;
     }
 
-    bool Format::isSRGB() const
-    {
-        return (flags & FLAG_SRGB) != 0;
-    }
-
     bool Format::isLuminance() const
     {
         return (flags & FLAG_LUMINANCE) != 0;
@@ -168,7 +146,6 @@ namespace mango::image
 
         switch (type)
         {
-            case SRGB:
             case UNORM:
                 for (int i = 0; i < 4; ++i)
                 {
@@ -197,7 +174,7 @@ namespace mango::image
     // ----------------------------------------------------------------------------
 
     LuminanceFormat::LuminanceFormat(int bits, u32 luminanceMask, u32 alphaMask)
-        : Format(bits, Format::UNORM, luminanceMask, luminanceMask, luminanceMask, alphaMask)
+        : Format(bits, luminanceMask, luminanceMask, luminanceMask, alphaMask)
     {
         flags = FLAG_LUMINANCE;
     }

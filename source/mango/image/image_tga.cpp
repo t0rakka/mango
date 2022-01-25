@@ -188,7 +188,7 @@ namespace
                     if (isPalette())
                     {
                         // expand palette to 32 bits
-                        format = Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8);
+                        format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     }
                     else
                     {
@@ -203,11 +203,11 @@ namespace
                     break;
 
                 case 24:
-                    format = Format(24, Format::SRGB, Format::BGR, 8, 8, 8);
+                    format = Format(24, Format::UNORM, Format::BGR, 8, 8, 8);
                     break;
 
                 case 32:
-                    format = Format(32, Format::SRGB, Format::BGRA, 8, 8, 8, 8);
+                    format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
                     break;
             }
 

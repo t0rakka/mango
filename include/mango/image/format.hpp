@@ -23,7 +23,6 @@ namespace mango::image
 
             FLAG_LUMINANCE  = 0x0001,
             FLAG_INDEXED    = 0x0002,
-            FLAG_SRGB       = 0x0004,
         };
 
     public:
@@ -109,14 +108,13 @@ namespace mango::image
         enum Type : u16
         {
             NONE    = 0,
-            SRGB    = 1,
-            UNORM   = 2 | TYPE_NORM,
-            SNORM   = 3 | TYPE_NORM | TYPE_SIGNED,
-            UINT    = 4 | TYPE_INT,
-            SINT    = 5 | TYPE_INT   | TYPE_SIGNED,
-            FLOAT16 = 6 | TYPE_FLOAT | TYPE_SIGNED,
-            FLOAT32 = 7 | TYPE_FLOAT | TYPE_SIGNED,
-            FLOAT64 = 8 | TYPE_FLOAT | TYPE_SIGNED,
+            UNORM   = 1 | TYPE_NORM,
+            SNORM   = 2 | TYPE_NORM | TYPE_SIGNED,
+            UINT    = 3 | TYPE_INT,
+            SINT    = 4 | TYPE_INT   | TYPE_SIGNED,
+            FLOAT16 = 5 | TYPE_FLOAT | TYPE_SIGNED,
+            FLOAT32 = 6 | TYPE_FLOAT | TYPE_SIGNED,
+            FLOAT64 = 7 | TYPE_FLOAT | TYPE_SIGNED,
         };
 
         u32 bits;
@@ -126,7 +124,7 @@ namespace mango::image
         Color offset;
 
         Format();
-        explicit Format(int bits, Type type, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask);
+        explicit Format(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask);
         explicit Format(int bits, Type type, Color size, Color offset);
         explicit Format(int bits, Type type, Order order, int s0, int s1 = 0, int s2 = 0, int s3 = 0);
         Format(const Format& format) = default;
@@ -140,7 +138,6 @@ namespace mango::image
 
         int bytes() const;
         bool isAlpha() const;
-        bool isSRGB() const;
         bool isLuminance() const;
         bool isIndexed() const;
         bool isFloat() const;

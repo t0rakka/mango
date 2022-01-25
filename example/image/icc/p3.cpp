@@ -25,7 +25,7 @@ int main(int argc, const char* argv[])
 
     printSize(icc);
 
-    Bitmap bitmap(512, 512, Format(32, Format::SRGB, Format::RGBA, 8, 8, 8, 8));
+    Bitmap bitmap(512, 512, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
     // clear left half with srgb full red in display p3 colorspace
     Surface(bitmap, 0, 0, 256, 512).clear(Color(0xff2333ec));

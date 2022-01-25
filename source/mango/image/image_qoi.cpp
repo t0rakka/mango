@@ -288,15 +288,11 @@ namespace
                 return;
             }
 
-            Format::Type type = Format::UNORM;
-
             switch (colorspace)
             {
                 case QOI_SRGB:
-                    type = Format::SRGB;
                     break;
                 case QOI_LINEAR:
-                    type = Format::UNORM;
                     break;
                 default:
                     m_header.setError("[ImageDecoder.QOI] Incorrect colorspace.");
@@ -309,7 +305,7 @@ namespace
             m_header.levels  = 0;
             m_header.faces   = 0;
             m_header.palette = false;
-            m_header.format  = Format(32, type, Format::RGBA, 8, 8, 8, 8);
+            m_header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             m_header.compression = TextureCompression::NONE;
         }
 
