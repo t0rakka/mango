@@ -8,6 +8,7 @@
 #include <mango/core/compress.hpp>
 #include <mango/image/image.hpp>
 #include <mango/image/fourcc.hpp>
+#include <map>
 
 namespace
 {
@@ -286,89 +287,67 @@ namespace
     };
 
     static
+    std::map<u32, VulkanFormatDesc> g_vulkan_format_map =
+    {
+        { 1000054000, { Format(), TextureCompression::PVRTC1_2BPP_UNORM_BLOCK_IMG, "PVRTC1_2BPP_UNORM_BLOCK_IMG" } },
+        { 1000054001, { Format(), TextureCompression::PVRTC1_4BPP_UNORM_BLOCK_IMG, "PVRTC1_4BPP_UNORM_BLOCK_IMG" } },
+        { 1000054002, { Format(), TextureCompression::PVRTC2_2BPP_UNORM_BLOCK_IMG, "PVRTC2_2BPP_UNORM_BLOCK_IMG" } },
+        { 1000054003, { Format(), TextureCompression::PVRTC2_4BPP_UNORM_BLOCK_IMG, "PVRTC2_4BPP_UNORM_BLOCK_IMG" } },
+        { 1000054004, { Format(), TextureCompression::PVRTC1_2BPP_SRGB_BLOCK_IMG, "PVRTC1_2BPP_SRGB_BLOCK_IMG" } },
+        { 1000054005, { Format(), TextureCompression::PVRTC1_4BPP_SRGB_BLOCK_IMG, "PVRTC1_4BPP_SRGB_BLOCK_IMG" } },
+        { 1000054006, { Format(), TextureCompression::PVRTC2_2BPP_SRGB_BLOCK_IMG, "PVRTC2_2BPP_SRGB_BLOCK_IMG" } },
+        { 1000054007, { Format(), TextureCompression::PVRTC2_4BPP_SRGB_BLOCK_IMG, "PVRTC2_4BPP_SRGB_BLOCK_IMG" } },
+        { 1000066000, { Format(), TextureCompression::ASTC_RGBA_4x4, "ASTC_4x4_SFLOAT_BLOCK_EXT" } },
+        { 1000066001, { Format(), TextureCompression::ASTC_RGBA_5x4, "ASTC_5x4_SFLOAT_BLOCK_EXT" } },
+        { 1000066002, { Format(), TextureCompression::ASTC_RGBA_5x5, "ASTC_5x5_SFLOAT_BLOCK_EXT" } },
+        { 1000066003, { Format(), TextureCompression::ASTC_RGBA_6x5, "ASTC_6x5_SFLOAT_BLOCK_EXT" } },
+        { 1000066004, { Format(), TextureCompression::ASTC_RGBA_6x6, "ASTC_6x6_SFLOAT_BLOCK_EXT" } },
+        { 1000066005, { Format(), TextureCompression::ASTC_RGBA_8x5, "ASTC_8x5_SFLOAT_BLOCK_EXT" } },
+        { 1000066006, { Format(), TextureCompression::ASTC_RGBA_8x6, "ASTC_8x6_SFLOAT_BLOCK_EXT" } },
+        { 1000066007, { Format(), TextureCompression::ASTC_RGBA_8x8, "ASTC_8x8_SFLOAT_BLOCK_EXT" } },
+        { 1000066008, { Format(), TextureCompression::ASTC_RGBA_10x5, "ASTC_10x5_SFLOAT_BLOCK_EXT" } },
+        { 1000066009, { Format(), TextureCompression::ASTC_RGBA_10x6, "ASTC_10x6_SFLOAT_BLOCK_EXT" } },
+        { 1000066010, { Format(), TextureCompression::ASTC_RGBA_10x8, "ASTC_10x8_SFLOAT_BLOCK_EXT" } },
+        { 1000066011, { Format(), TextureCompression::ASTC_RGBA_10x10, "ASTC_10x10_SFLOAT_BLOCK_EXT" } },
+        { 1000066012, { Format(), TextureCompression::ASTC_RGBA_12x10, "ASTC_12x10_SFLOAT_BLOCK_EXT" } },
+        { 1000066013, { Format(), TextureCompression::ASTC_RGBA_12x12, "ASTC_12x12_SFLOAT_BLOCK_EXT" } },
+    };
+
+    static
     VulkanFormatDesc getFormatDesc(u32 vkformat)
     {
-        const u32 maxIndex = u32((sizeof(g_vulkan_format_array) / sizeof(g_vulkan_format_array[0])) - 1);
+        VulkanFormatDesc desc;
 
-        if (vkformat > maxIndex)
+        const u32 maxIndex = u32((sizeof(g_vulkan_format_array) / sizeof(g_vulkan_format_array[0])));
+
+        if (vkformat < maxIndex)
         {
-            // select undefined format
-            vkformat = 0;
+            desc = g_vulkan_format_array[vkformat];
         }
-
-        VulkanFormatDesc desc = g_vulkan_format_array[vkformat];
+        else
+        {
+            // not in the array -> check the map
+            auto it = g_vulkan_format_map.find(vkformat);
+            if (it != g_vulkan_format_map.end())
+            {
+                desc = it->second;
+            }
+            else
+            {
+                // not found -> select undefined format
+                desc = g_vulkan_format_array[0];
+            }
+        }
 
         if (desc.compression != TextureCompression::NONE)
         {
+            // patch preferred decoding format
             TextureCompressionInfo info(desc.compression);
             desc.format = info.format;
         }
 
         return desc;
     }
-
-    /*
-
-    "G8B8G8R8_422_UNORM = 1000156000,
-    "B8G8R8G8_422_UNORM = 1000156001,
-    "G8_B8_R8_3PLANE_420_UNORM = 1000156002,
-    "G8_B8R8_2PLANE_420_UNORM = 1000156003,
-    "G8_B8_R8_3PLANE_422_UNORM = 1000156004,
-    "G8_B8R8_2PLANE_422_UNORM = 1000156005,
-    "G8_B8_R8_3PLANE_444_UNORM = 1000156006,
-    "R10X6_UNORM_PACK16 = 1000156007,
-    "R10X6G10X6_UNORM_2PACK16 = 1000156008,
-    "R10X6G10X6B10X6A10X6_UNORM_4PACK16 = 1000156009,
-    "G10X6B10X6G10X6R10X6_422_UNORM_4PACK16 = 1000156010,
-    "B10X6G10X6R10X6G10X6_422_UNORM_4PACK16 = 1000156011,
-    "G10X6_B10X6_R10X6_3PLANE_420_UNORM_3PACK16 = 1000156012,
-    "G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16 = 1000156013,
-    "G10X6_B10X6_R10X6_3PLANE_422_UNORM_3PACK16 = 1000156014,
-    "G10X6_B10X6R10X6_2PLANE_422_UNORM_3PACK16 = 1000156015,
-    "G10X6_B10X6_R10X6_3PLANE_444_UNORM_3PACK16 = 1000156016,
-    "R12X4_UNORM_PACK16 = 1000156017,
-    "R12X4G12X4_UNORM_2PACK16 = 1000156018,
-    "R12X4G12X4B12X4A12X4_UNORM_4PACK16 = 1000156019,
-    "G12X4B12X4G12X4R12X4_422_UNORM_4PACK16 = 1000156020,
-    "B12X4G12X4R12X4G12X4_422_UNORM_4PACK16 = 1000156021,
-    "G12X4_B12X4_R12X4_3PLANE_420_UNORM_3PACK16 = 1000156022,
-    "G12X4_B12X4R12X4_2PLANE_420_UNORM_3PACK16 = 1000156023,
-    "G12X4_B12X4_R12X4_3PLANE_422_UNORM_3PACK16 = 1000156024,
-    "G12X4_B12X4R12X4_2PLANE_422_UNORM_3PACK16 = 1000156025,
-    "G12X4_B12X4_R12X4_3PLANE_444_UNORM_3PACK16 = 1000156026,
-    "G16B16G16R16_422_UNORM = 1000156027,
-    "B16G16R16G16_422_UNORM = 1000156028,
-    "G16_B16_R16_3PLANE_420_UNORM = 1000156029,
-    "G16_B16R16_2PLANE_420_UNORM = 1000156030,
-    "G16_B16_R16_3PLANE_422_UNORM = 1000156031,
-    "G16_B16R16_2PLANE_422_UNORM = 1000156032,
-    "G16_B16_R16_3PLANE_444_UNORM = 1000156033,
-
-    "PVRTC1_2BPP_UNORM_BLOCK_IMG = 1000054000,
-    "PVRTC1_4BPP_UNORM_BLOCK_IMG = 1000054001,
-    "PVRTC2_2BPP_UNORM_BLOCK_IMG = 1000054002,
-    "PVRTC2_4BPP_UNORM_BLOCK_IMG = 1000054003,
-    "PVRTC1_2BPP_SRGB_BLOCK_IMG  = 1000054004,
-    "PVRTC1_4BPP_SRGB_BLOCK_IMG  = 1000054005,
-    "PVRTC2_2BPP_SRGB_BLOCK_IMG  = 1000054006,
-    "PVRTC2_4BPP_SRGB_BLOCK_IMG  = 1000054007,
-
-    "ASTC_4x4_SFLOAT_BLOCK_EXT   = 1000066000,
-    "ASTC_5x4_SFLOAT_BLOCK_EXT   = 1000066001,
-    "ASTC_5x5_SFLOAT_BLOCK_EXT   = 1000066002,
-    "ASTC_6x5_SFLOAT_BLOCK_EXT   = 1000066003,
-    "ASTC_6x6_SFLOAT_BLOCK_EXT   = 1000066004,
-    "ASTC_8x5_SFLOAT_BLOCK_EXT   = 1000066005,
-    "ASTC_8x6_SFLOAT_BLOCK_EXT   = 1000066006,
-    "ASTC_8x8_SFLOAT_BLOCK_EXT   = 1000066007,
-    "ASTC_10x5_SFLOAT_BLOCK_EXT  = 1000066008,
-    "ASTC_10x6_SFLOAT_BLOCK_EXT  = 1000066009,
-    "ASTC_10x8_SFLOAT_BLOCK_EXT  = 1000066010,
-    "ASTC_10x10_SFLOAT_BLOCK_EXT = 1000066011,
-    "ASTC_12x10_SFLOAT_BLOCK_EXT = 1000066012,
-    "ASTC_12x12_SFLOAT_BLOCK_EXT = 1000066013,
-
-    */
 
     static
     bool isFormatProhibited(u32 vkformat)
