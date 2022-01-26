@@ -616,6 +616,10 @@ namespace
                             }
                         }
                     }
+                    else if (!strcmp(key, "KTXswizzle"))
+                    {
+                        // TODO: this modifies m_header.format
+                    }
 
                     printf("key: %s\n", key);
 
@@ -660,6 +664,11 @@ namespace
             decompress();
 
             ConstMemory memory = m_levels[level].memory;
+
+            if (m_orientation_z)
+            {
+                depth = m_header.depth - (depth + 1);
+            }
 
             if (depth > 0)
             {
