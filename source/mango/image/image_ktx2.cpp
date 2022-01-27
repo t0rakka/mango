@@ -17,6 +17,323 @@ namespace
     using namespace mango::vulkan;
 
     // ------------------------------------------------------------
+    // Khronos Basic Data Format Descriptor Block
+    // ------------------------------------------------------------
+
+    // https://www.khronos.org/registry/DataFormat/specs/1.3/dataformat.1.3.html#_anchor_id_basicdescriptor_xreflabel_basicdescriptor_khronos_basic_data_format_descriptor_block
+
+    // Vendor ids
+    enum : u32
+    {
+        KHR_DF_VENDORID_KHRONOS = 0U,
+    };
+
+    // Descriptor types
+    enum : u32
+    {
+        KHR_DF_KHR_DESCRIPTORTYPE_BASICFORMAT = 0U,
+    };
+
+    enum : u8
+    {
+        KHR_DF_MODEL_UNSPECIFIED  = 0U, // No interpretation of color channels defined
+        KHR_DF_MODEL_RGBSDA       = 1U, // Color primaries (red, green, blue) + alpha, depth and stencil 
+        KHR_DF_MODEL_YUVSDA       = 2U, // Color differences (Y', Cb, Cr) + alpha, depth and stencil 
+        KHR_DF_MODEL_YIQSDA       = 3U, // Color differences (Y', I, Q) + alpha, depth and stencil         
+        KHR_DF_MODEL_LABSDA       = 4U, // Perceptual color (CIE L*a*b*) + alpha, depth and stencil 
+        KHR_DF_MODEL_CMYKA        = 5U, // Subtractive colors (cyan, magenta, yellow, black) + alpha 
+        KHR_DF_MODEL_XYZW         = 6U, // Non-color coordinate data (X, Y, Z, W) 
+        KHR_DF_MODEL_HSVA_ANG     = 7U, // Hue, saturation, value, hue angle on color circle, plus alpha 
+        KHR_DF_MODEL_HSLA_ANG     = 8U, // Hue, saturation, lightness, hue angle on color circle, plus alpha 
+        KHR_DF_MODEL_HSVA_HEX     = 7U, // Hue, saturation, value, hue on color hexagon, plus alpha 
+        KHR_DF_MODEL_HSLA_HEX     = 8U, // Hue, saturation, lightness, hue on color hexagon, plus alpha 
+        KHR_DF_MODEL_YCGCOA       = 9U, // Lightweight approximate color difference (luma, orange, green) 
+
+        // Compressed formats start at 128
+        KHR_DF_MODEL_DXT1A         = 128U,
+        KHR_DF_MODEL_BC1A          = 128U,
+
+        // DXT2/DXT3/BC2, with explicit 4-bit alpha 
+        KHR_DF_MODEL_DXT2          = 129U,
+        KHR_DF_MODEL_DXT3          = 129U,
+        KHR_DF_MODEL_BC2           = 129U,
+
+        // DXT4/DXT5/BC3, with interpolated alpha 
+        KHR_DF_MODEL_DXT4          = 130U,
+        KHR_DF_MODEL_DXT5          = 130U,
+        KHR_DF_MODEL_BC3           = 130U,
+
+        // BC4 - single channel interpolated 8-bit data 
+        KHR_DF_MODEL_BC4           = 131U,
+
+        // BC5 - two channel interpolated 8-bit data 
+        KHR_DF_MODEL_BC5           = 132U,
+
+        // BC6H - DX11 format for 16-bit float channels 
+        KHR_DF_MODEL_BC6H          = 133U,
+
+        // BC7 - DX11 format 
+        KHR_DF_MODEL_BC7           = 134U,
+
+        // Mobile compressed formats
+        KHR_DF_MODEL_ETC1          = 160U,
+        KHR_DF_MODEL_ETC2          = 161U,
+        KHR_DF_MODEL_ASTC          = 162U,
+        KHR_DF_MODEL_ETC1S         = 163U, // Basis Universal ETC1S Format
+        KHR_DF_MODEL_PVRTC         = 164U,
+        KHR_DF_MODEL_PVRTC2        = 165U,
+        KDF_DF_MODEL_UASTC         = 166U, // Basis Universal UASTC Format
+    };
+
+    enum : u8
+    {
+        // Unspecified format with nominal channel numbering
+        KHR_DF_CHANNEL_UNSPECIFIED_0  = 0U,
+        KHR_DF_CHANNEL_UNSPECIFIED_1  = 1U,
+        KHR_DF_CHANNEL_UNSPECIFIED_2  = 2U,
+        KHR_DF_CHANNEL_UNSPECIFIED_3  = 3U,
+        KHR_DF_CHANNEL_UNSPECIFIED_4  = 4U,
+        KHR_DF_CHANNEL_UNSPECIFIED_5  = 5U,
+        KHR_DF_CHANNEL_UNSPECIFIED_6  = 6U,
+        KHR_DF_CHANNEL_UNSPECIFIED_7  = 7U,
+        KHR_DF_CHANNEL_UNSPECIFIED_8  = 8U,
+        KHR_DF_CHANNEL_UNSPECIFIED_9  = 9U,
+        KHR_DF_CHANNEL_UNSPECIFIED_10 = 10U,
+        KHR_DF_CHANNEL_UNSPECIFIED_11 = 11U,
+        KHR_DF_CHANNEL_UNSPECIFIED_12 = 12U,
+        KHR_DF_CHANNEL_UNSPECIFIED_13 = 13U,
+        KHR_DF_CHANNEL_UNSPECIFIED_14 = 14U,
+        KHR_DF_CHANNEL_UNSPECIFIED_15 = 15U,
+
+        // MODEL_RGBSDA - red, green, blue, stencil, depth, alpha
+        KHR_DF_CHANNEL_RGBSDA_RED     =  0U,
+        KHR_DF_CHANNEL_RGBSDA_R       =  0U,
+        KHR_DF_CHANNEL_RGBSDA_GREEN   =  1U,
+        KHR_DF_CHANNEL_RGBSDA_G       =  1U,
+        KHR_DF_CHANNEL_RGBSDA_BLUE    =  2U,
+        KHR_DF_CHANNEL_RGBSDA_B       =  2U,
+        KHR_DF_CHANNEL_RGBSDA_STENCIL = 13U,
+        KHR_DF_CHANNEL_RGBSDA_S       = 13U,
+        KHR_DF_CHANNEL_RGBSDA_DEPTH   = 14U,
+        KHR_DF_CHANNEL_RGBSDA_D       = 14U,
+        KHR_DF_CHANNEL_RGBSDA_ALPHA   = 15U,
+        KHR_DF_CHANNEL_RGBSDA_A       = 15U,
+
+        // MODEL_YUVSDA - luma, Cb, Cr, stencil, depth, alpha
+        KHR_DF_CHANNEL_YUVSDA_Y       =  0U,
+        KHR_DF_CHANNEL_YUVSDA_CB      =  1U,
+        KHR_DF_CHANNEL_YUVSDA_U       =  1U,
+        KHR_DF_CHANNEL_YUVSDA_CR      =  2U,
+        KHR_DF_CHANNEL_YUVSDA_V       =  2U,
+        KHR_DF_CHANNEL_YUVSDA_STENCIL = 13U,
+        KHR_DF_CHANNEL_YUVSDA_S       = 13U,
+        KHR_DF_CHANNEL_YUVSDA_DEPTH   = 14U,
+        KHR_DF_CHANNEL_YUVSDA_D       = 14U,
+        KHR_DF_CHANNEL_YUVSDA_ALPHA   = 15U,
+        KHR_DF_CHANNEL_YUVSDA_A       = 15U,
+
+        // MODEL_YIQSDA - luma, in-phase, quadrature, stencil, depth, alpha
+        KHR_DF_CHANNEL_YIQSDA_Y       =  0U,
+        KHR_DF_CHANNEL_YIQSDA_I       =  1U,
+        KHR_DF_CHANNEL_YIQSDA_Q       =  2U,
+        KHR_DF_CHANNEL_YIQSDA_STENCIL = 13U,
+        KHR_DF_CHANNEL_YIQSDA_S       = 13U,
+        KHR_DF_CHANNEL_YIQSDA_DEPTH   = 14U,
+        KHR_DF_CHANNEL_YIQSDA_D       = 14U,
+        KHR_DF_CHANNEL_YIQSDA_ALPHA   = 15U,
+        KHR_DF_CHANNEL_YIQSDA_A       = 15U,
+
+        // MODEL_LABSDA - CIELAB/L*a*b* luma, red-green, blue-yellow, stencil, depth, alpha
+        KHR_DF_CHANNEL_LABSDA_L       =  0U,
+        KHR_DF_CHANNEL_LABSDA_A       =  1U,
+        KHR_DF_CHANNEL_LABSDA_B       =  2U,
+        KHR_DF_CHANNEL_LABSDA_STENCIL = 13U,
+        KHR_DF_CHANNEL_LABSDA_S       = 13U,
+        KHR_DF_CHANNEL_LABSDA_DEPTH   = 14U,
+        KHR_DF_CHANNEL_LABSDA_D       = 14U,
+        KHR_DF_CHANNEL_LABSDA_ALPHA   = 15U,
+
+        // MODEL_CMYKA - cyan, magenta, yellow, key/blacK, alpha
+        KHR_DF_CHANNEL_CMYKSDA_CYAN    =  0U,
+        KHR_DF_CHANNEL_CMYKSDA_C       =  0U,
+        KHR_DF_CHANNEL_CMYKSDA_MAGENTA =  1U,
+        KHR_DF_CHANNEL_CMYKSDA_M       =  1U,
+        KHR_DF_CHANNEL_CMYKSDA_YELLOW  =  2U,
+        KHR_DF_CHANNEL_CMYKSDA_Y       =  2U,
+        KHR_DF_CHANNEL_CMYKSDA_KEY     =  3U,
+        KHR_DF_CHANNEL_CMYKSDA_BLACK   =  3U,
+        KHR_DF_CHANNEL_CMYKSDA_K       =  3U,
+        KHR_DF_CHANNEL_CMYKSDA_ALPHA   = 15U,
+        KHR_DF_CHANNEL_CMYKSDA_A       = 15U,
+
+        // MODEL_XYZW - coordinates x, y, z, w
+        KHR_DF_CHANNEL_XYZW_X          = 0U,
+        KHR_DF_CHANNEL_XYZW_Y          = 1U,
+        KHR_DF_CHANNEL_XYZW_Z          = 2U,
+        KHR_DF_CHANNEL_XYZW_W          = 3U,
+
+        // MODEL_HSVA_ANG - value (luma), saturation, hue, alpha, angular projection, conical space
+        KHR_DF_CHANNEL_HSVA_ANG_VALUE      = 0U,
+        KHR_DF_CHANNEL_HSVA_ANG_V          = 0U,
+        KHR_DF_CHANNEL_HSVA_ANG_SATURATION = 1U,
+        KHR_DF_CHANNEL_HSVA_ANG_S          = 1U,
+        KHR_DF_CHANNEL_HSVA_ANG_HUE        = 2U,
+        KHR_DF_CHANNEL_HSVA_ANG_H          = 2U,
+        KHR_DF_CHANNEL_HSVA_ANG_ALPHA      = 15U,
+        KHR_DF_CHANNEL_HSVA_ANG_A          = 15U,
+
+        // MODEL_HSLA_ANG - lightness (luma), saturation, hue, alpha, angular projection, double conical space
+        KHR_DF_CHANNEL_HSLA_ANG_LIGHTNESS  = 0U,
+        KHR_DF_CHANNEL_HSLA_ANG_L          = 0U,
+        KHR_DF_CHANNEL_HSLA_ANG_SATURATION = 1U,
+        KHR_DF_CHANNEL_HSLA_ANG_S          = 1U,
+        KHR_DF_CHANNEL_HSLA_ANG_HUE        = 2U,
+        KHR_DF_CHANNEL_HSLA_ANG_H          = 2U,
+        KHR_DF_CHANNEL_HSLA_ANG_ALPHA      = 15U,
+        KHR_DF_CHANNEL_HSLA_ANG_A          = 15U,
+
+        // MODEL_HSVA_HEX - value (luma), saturation, hue, alpha, hexagonal projection, conical space
+        KHR_DF_CHANNEL_HSVA_HEX_VALUE      = 0U,
+        KHR_DF_CHANNEL_HSVA_HEX_V          = 0U,
+        KHR_DF_CHANNEL_HSVA_HEX_SATURATION = 1U,
+        KHR_DF_CHANNEL_HSVA_HEX_S          = 1U,
+        KHR_DF_CHANNEL_HSVA_HEX_HUE        = 2U,
+        KHR_DF_CHANNEL_HSVA_HEX_H          = 2U,
+        KHR_DF_CHANNEL_HSVA_HEX_ALPHA      = 15U,
+        KHR_DF_CHANNEL_HSVA_HEX_A          = 15U,
+
+        // MODEL_HSLA_HEX - lightness (luma), saturation, hue, alpha, hexagonal projection, double conical space
+        KHR_DF_CHANNEL_HSLA_HEX_LIGHTNESS  = 0U,
+        KHR_DF_CHANNEL_HSLA_HEX_L          = 0U,
+        KHR_DF_CHANNEL_HSLA_HEX_SATURATION = 1U,
+        KHR_DF_CHANNEL_HSLA_HEX_S          = 1U,
+        KHR_DF_CHANNEL_HSLA_HEX_HUE        = 2U,
+        KHR_DF_CHANNEL_HSLA_HEX_H          = 2U,
+        KHR_DF_CHANNEL_HSLA_HEX_ALPHA      = 15U,
+        KHR_DF_CHANNEL_HSLA_HEX_A          = 15U,
+
+        // MODEL_YCGCOA - luma, green delta, orange delta, alpha
+        KHR_DF_CHANNEL_YCGCOA_Y       =  0U,
+        KHR_DF_CHANNEL_YCGCOA_CG      =  1U,
+        KHR_DF_CHANNEL_YCGCOA_CO      =  2U,
+        KHR_DF_CHANNEL_YCGCOA_ALPHA   = 15U,
+        KHR_DF_CHANNEL_YCGCOA_A       = 15U,
+
+        // MODEL_DXT1A/MODEL_BC1A
+        KHR_DF_CHANNEL_DXT1A_COLOR = 0U,
+        KHR_DF_CHANNEL_BC1A_COLOR  = 0U,
+        KHR_DF_CHANNEL_DXT1A_ALPHAPRESENT = 1U,
+        KHR_DF_CHANNEL_BC1A_ALPHAPRESENT  = 1U,
+
+        // MODEL_DXT2/3/MODEL_BC2
+        KHR_DF_CHANNEL_DXT2_COLOR =  0U,
+        KHR_DF_CHANNEL_DXT3_COLOR =  0U,
+        KHR_DF_CHANNEL_BC2_COLOR  =  0U,
+        KHR_DF_CHANNEL_DXT2_ALPHA = 15U,
+        KHR_DF_CHANNEL_DXT3_ALPHA = 15U,
+        KHR_DF_CHANNEL_BC2_ALPHA  = 15U,
+
+        // MODEL_DXT4/5/MODEL_BC3
+        KHR_DF_CHANNEL_DXT4_COLOR =  0U,
+        KHR_DF_CHANNEL_DXT5_COLOR =  0U,
+        KHR_DF_CHANNEL_BC3_COLOR  =  0U,
+        KHR_DF_CHANNEL_DXT4_ALPHA = 15U,
+        KHR_DF_CHANNEL_DXT5_ALPHA = 15U,
+        KHR_DF_CHANNEL_BC3_ALPHA  = 15U,
+
+        // MODEL_BC4
+        KHR_DF_CHANNEL_BC4_DATA   = 0U,
+
+        // MODEL_BC5
+        KHR_DF_CHANNEL_BC5_RED    = 0U,
+        KHR_DF_CHANNEL_BC5_R      = 0U,
+        KHR_DF_CHANNEL_BC5_GREEN  = 1U,
+        KHR_DF_CHANNEL_BC5_G      = 1U,
+
+        // MODEL_BC6H
+        KHR_DF_CHANNEL_BC6H_COLOR = 0U,
+
+        // MODEL_BC7
+        KHR_DF_CHANNEL_BC7_DATA   = 0U,
+
+        // MODEL_ETC1
+        KHR_DF_CHANNEL_ETC1_DATA  = 0U,
+        KHR_DF_CHANNEL_ETC1_COLOR = 0U,
+
+        // MODEL_ETC2
+        KHR_DF_CHANNEL_ETC2_RED   = 0U,
+        KHR_DF_CHANNEL_ETC2_R     = 0U,
+        KHR_DF_CHANNEL_ETC2_GREEN = 1U,
+        KHR_DF_CHANNEL_ETC2_G     = 1U,
+        KHR_DF_CHANNEL_ETC2_COLOR = 2U,
+        KHR_DF_CHANNEL_ETC2_ALPHA = 15U,
+        KHR_DF_CHANNEL_ETC2_A     = 15U,
+
+        // MODEL_ASTC
+        KHR_DF_CHANNEL_ASTC_DATA  = 0U,
+
+        // Common channel names shared by multiple formats
+        KHR_DF_CHANNEL_COMMON_LUMA    =  0U,
+        KHR_DF_CHANNEL_COMMON_L       =  0U,
+        KHR_DF_CHANNEL_COMMON_STENCIL = 13U,
+        KHR_DF_CHANNEL_COMMON_S       = 13U,
+        KHR_DF_CHANNEL_COMMON_DEPTH   = 14U,
+        KHR_DF_CHANNEL_COMMON_D       = 14U,
+        KHR_DF_CHANNEL_COMMON_ALPHA   = 15U,
+        KHR_DF_CHANNEL_COMMON_A       = 15U,
+
+        // Basis Universal ETC1S Format
+        KHR_DF_CHANNEL_ETC1S_RGB      = 0,
+        KHR_DF_CHANNEL_ETC1S_RRR      = 3,
+        KHR_DF_CHANNEL_ETC1S_GGG      = 4,
+        KHR_DF_CHANNEL_ETC1S_AAA      = 15,
+
+        // Basis Universal UASTC Format
+        KHR_DF_CHANNEL_UASTC_RGB      = 0,
+        KHR_DF_CHANNEL_UASTC_RGBA     = 3,
+        KHR_DF_CHANNEL_UASTC_RRR      = 4,
+        KHR_DF_CHANNEL_UASTC_RRRG     = 5,
+        KHR_DF_CHANNEL_UASTC_RG       = 6,
+    };
+
+    enum : u8
+    {
+        KHR_DF_PRIMARIES_UNSPECIFIED = 0U, // No color primaries defined
+        KHR_DF_PRIMARIES_BT709       = 1U, // Color primaries of ITU-R BT.709 and sRGB
+        KHR_DF_PRIMARIES_SRGB        = 1U, // Synonym for KHR_DF_PRIMARIES_BT709
+        KHR_DF_PRIMARIES_BT601_EBU   = 2U, // Color primaries of ITU-R BT.601 (625-line EBU variant)
+        KHR_DF_PRIMARIES_BT601_SMPTE = 3U, // Color primaries of ITU-R BT.601 (525-line SMPTE C variant)
+        KHR_DF_PRIMARIES_BT2020      = 4U, // Color primaries of ITU-R BT.2020
+        KHR_DF_PRIMARIES_CIEXYZ      = 5U, // CIE theoretical color coordinate space
+        KHR_DF_PRIMARIES_ACES        = 6U, // Academy Color Encoding System primaries
+    };
+
+    enum : u8
+    {
+        KHR_DF_TRANSFER_UNSPECIFIED = 0U, // No transfer function defined
+        KHR_DF_TRANSFER_LINEAR      = 1U, // Linear transfer function (value proportional to intensity)
+        KHR_DF_TRANSFER_SRGB        = 2U, // Perceptually-linear transfer function of sRGH (~2.4)
+        KHR_DF_TRANSFER_ITU         = 3U, // Perceptually-linear transfer function of ITU specifications (~1/.45)
+        KHR_DF_TRANSFER_NTSC        = 4U, // Perceptually-linear gamma function of NTSC (simple 2.2 gamma)
+        KHR_DF_TRANSFER_SLOG        = 5U, // Sony S-log used by Sony video cameras
+        KHR_DF_TRANSFER_SLOG2       = 6U, // Sony S-log 2 used by Sony video cameras
+    };
+
+    enum : u32
+    {
+        KHR_DF_FLAG_ALPHA_STRAIGHT      = 0U,
+        KHR_DF_FLAG_ALPHA_PREMULTIPLIED = 1U
+    };
+
+    enum : u8
+    {
+        KHR_DF_SAMPLE_DATATYPE_LINEAR   = 1U << 4U,
+        KHR_DF_SAMPLE_DATATYPE_EXPONENT = 1U << 5U,
+        KHR_DF_SAMPLE_DATATYPE_SIGNED   = 1U << 6U,
+        KHR_DF_SAMPLE_DATATYPE_FLOAT    = 1U << 7U
+    };
+
+    // ------------------------------------------------------------
     // KTX2
     // ------------------------------------------------------------
 
@@ -558,12 +875,12 @@ namespace
             MANGO_UNREFERENCED(sgdByteOffset);
             MANGO_UNREFERENCED(sgdByteLength);
 
-            //printf("dfdByteOffset: %d, dfdByteLength: %d\n", dfdByteOffset, dfdByteLength);
-            //printf("kvdByteOffset: %d, kvdByteLength: %d\n", kvdByteOffset, kvdByteLength);
-            //printf("sgdByteOffset: %d, sgdByteLength: %d\n", (int)sgdByteOffset, (int)sgdByteLength);
+            printf("dfdByteOffset: %d, dfdByteLength: %d\n", dfdByteOffset, dfdByteLength);
+            printf("kvdByteOffset: %d, kvdByteLength: %d\n", kvdByteOffset, kvdByteLength);
+            printf("sgdByteOffset: %d, sgdByteLength: %d\n", (int)sgdByteOffset, (int)sgdByteLength);
 
             int levels = std::max(1, m_header.levels);
-            printf("levels: %d\n", levels);
+            printf("[levels: %d]\n", levels);
 
             for (int i = 0; i < levels; ++i)
             {
@@ -582,6 +899,73 @@ namespace
             if (dfdByteLength)
             {
                 p = memory.address + dfdByteOffset;
+                const u8* end = p + dfdByteLength;
+
+                p += 4; // skip totalSize
+
+                while (p < end)
+                {
+                    u32 v0 = p.read32();
+                    u32 v1 = p.read32();
+
+                    u32 vendor_id = v0 & 0x1ffff;
+                    u32 descriptor_type = v0 >> 17;
+                    u32 version_number = v1 & 0xffff;
+                    u32 descriptor_block_size = v1 >> 16;
+
+                    printf("[DataFormatDescriptor]\n");
+                    printf("  vendor: %d, version: %d\n", vendor_id, version_number);
+                    printf("  type: %d, size: %d\n", descriptor_type, descriptor_block_size);
+
+                    u8 colorModel           = p[0];
+                    u8 colorPrimaries       = p[1];
+                    u8 transferFunction     = p[2];
+                    u8 flags                = p[3];
+                    u8 texelBlockDimension0 = p[4];
+                    u8 texelBlockDimension1 = p[5];
+                    u8 texelBlockDimension2 = p[6];
+                    u8 texelBlockDimension3 = p[7];
+                    p += 8;
+
+                    texelBlockDimension0 += !!texelBlockDimension0;
+                    texelBlockDimension1 += !!texelBlockDimension1;
+                    texelBlockDimension2 += !!texelBlockDimension2;
+                    texelBlockDimension3 += !!texelBlockDimension3;
+
+                    printf("  colorModel: %d\n", colorModel);
+                    printf("  colorPrimaries: %d\n", colorPrimaries);
+                    printf("  transferFunction: %d\n", transferFunction);
+                    printf("  flags: %d\n", flags);
+                    printf("  dimensions: %d %d %d %d\n",
+                        texelBlockDimension0, texelBlockDimension1,
+                        texelBlockDimension2, texelBlockDimension3);
+
+                    u8 bytesPlane0 = p[0];
+                    u8 bytesPlane1 = p[1];
+                    u8 bytesPlane2 = p[2];
+                    u8 bytesPlane3 = p[3];
+                    u8 bytesPlane4 = p[4];
+                    u8 bytesPlane5 = p[5];
+                    u8 bytesPlane6 = p[6];
+                    u8 bytesPlane7 = p[7];
+                    p += 8;
+
+                    printf("  planes: %d %d %d %d %d %d %d %d\n",
+                        bytesPlane0, bytesPlane1, bytesPlane2, bytesPlane3, 
+                        bytesPlane4, bytesPlane5, bytesPlane6, bytesPlane7);
+
+                    u32 sample_count = (descriptor_block_size - 24) / 16;
+
+                    for (u32 i = 0; i < sample_count; ++i)
+                    {
+                        // TODO
+                        p += 16;
+                    }
+
+                    //m_header.format = Format(8, Format::UNORM, Format::R, 8);
+                    //m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    //m_header.compression = TextureCompression::PVRTC2_2BPP_UNORM_BLOCK_IMG;
+                }
             }
 
             // Key/Value Data
@@ -686,20 +1070,10 @@ namespace
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
-            //MANGO_UNREFERENCED(dest);
             MANGO_UNREFERENCED(options);
-            //MANGO_UNREFERENCED(level);
-            MANGO_UNREFERENCED(depth);
-            MANGO_UNREFERENCED(face);
 
             decompress();
 
-            //TextureCompressionStatus TextureCompressionInfo::decompress(
-            //    const Surface& surface, ConstMemory memory) const
-
-            // TODO: level
-            // TODO: depth
-            // TODO: face
             // TODO: typesize dictates endianness swap on big-endian
 
             ImageDecodeStatus status;
@@ -719,7 +1093,6 @@ namespace
 
             if (m_header.compression != TextureCompression::NONE)
             {
-                // TODO: compressed surface -> decode -> blit
                 TextureCompressionInfo info(m_header.compression);
                 TextureCompressionStatus ts = info.decompress(dest, memory);
                 if (!ts)
