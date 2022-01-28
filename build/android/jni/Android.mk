@@ -1,7 +1,7 @@
 # -------------------------------------------------------------
 # mango Android.mk
 #
-# Copyright (C) 2012-2021 Twilight 3D Finland Oy Ltd.
+# Copyright (C) 2012-2022 Twilight 3D Finland Oy Ltd.
 # -------------------------------------------------------------
 
 # -------------------------------------------------------------
@@ -45,6 +45,7 @@ SOURCE_DIRS := mango/core \
                external/bzip2 \
                external/aes \
                external/lzma \
+               external/basisu/transcoder \
                $(SOURCE_WEBP)
 
 SOURCES := $(foreach dir,$(SOURCE_DIRS), \

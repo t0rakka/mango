@@ -218,6 +218,10 @@ FILE(GLOB_RECURSE EXTERNAL_WEBP
 FILE(GLOB EXTERNAL_ZPNG
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.cpp")
+FILE(GLOB EXTERNAL_BASISU
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/basisu/transcoder/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/basisu/transcoder/*.cpp")
+
 
 SOURCE_GROUP("external" FILES
     ${EXTERNAL_LZMA}
@@ -235,6 +239,7 @@ SOURCE_GROUP("external" FILES
     ${EXTERNAL_ZSTD}
     ${EXTERNAL_WEBP}
     ${EXTERNAL_ZPNG}
+    ${EXTERNAL_BASISU}
 )
 
 # ------------------------------------------------------------------------------
@@ -266,6 +271,7 @@ ADD_LIBRARY(mango
     ${EXTERNAL_ZSTD}
     ${EXTERNAL_WEBP}
     ${EXTERNAL_ZPNG}
+    ${EXTERNAL_BASISU}
 )
 
 set_target_properties(mango PROPERTIES

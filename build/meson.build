@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------
 # mango meson.build
 #
-# Copyright (C) 2012-2021 Twilight 3D Finland Oy Ltd.
+# Copyright (C) 2012-2022 Twilight 3D Finland Oy Ltd.
 # ---------------------------------------------------------------------------
 
 project(
@@ -507,7 +507,16 @@ external_headers = files(
     '../source/external/lzma/LzmaEnc.h',
     '../source/external/lzma/Ppmd8.h',
     '../source/external/lzma/Ppmd.h',
-    '../source/external/lzma/7zVersion.h'
+    '../source/external/lzma/7zVersion.h',
+    '../source/external/basisu/transcoder/basisu.h',
+    '../source/external/basisu/transcoder/basisu_containers.h',
+    '../source/external/basisu/transcoder/basisu_containers_impl.h',
+    '../source/external/basisu/transcoder/basisu_file_headers.h',
+    '../source/external/basisu/transcoder/basisu_global_selector_cb.h',
+    '../source/external/basisu/transcoder/basisu_global_selector_palette.h',
+    '../source/external/basisu/transcoder/basisu_transcoder.h',
+    '../source/external/basisu/transcoder/basisu_transcoder_internal.h',
+    '../source/external/basisu/transcoder/basisu_transcoder_uastc.h'
 )
 
 external_lzma_sources = files(
@@ -786,6 +795,10 @@ external_zpng_sources = files(
     '../source/external/zpng/zpng.cpp'
 )
 
+external_basisu_sources = files(
+    '../source/external/basisu/transcoder/basisu_transcoder.cpp'
+)
+
 cpp = meson.get_compiler('cpp')
 
 message('cpp: @0@'.format(cpp.get_id()))
@@ -936,7 +949,8 @@ mango = shared_library('mango',
         external_unrar_sources,
         external_zstd_sources,
         external_webp_sources,
-        external_zpng_sources
+        external_zpng_sources,
+        external_basisu_sources,
     ],
     include_directories : [ mango_inc, '../source/external/libwebp' ],
     dependencies        : mango_deps,
