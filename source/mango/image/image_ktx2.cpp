@@ -1030,7 +1030,7 @@ namespace
 
         ConstMemory memory(int level, int depth, int face) override
         {
-            if (level < 0 || level >= m_levels.size())
+            if (level < 0 || level >= int(m_levels.size()))
             {
                 return ConstMemory();
             }
