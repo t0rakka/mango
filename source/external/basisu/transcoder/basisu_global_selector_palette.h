@@ -70,7 +70,19 @@ namespace basist
 
 		void clear()
 		{
-			basisu::clear_obj(*this);
+			m_contrast = 0;
+			m_rand = false;
+			m_median = false;
+			m_div = false;
+			m_shift = false;
+			m_inv = false;
+			m_flip = false;
+			m_dilate = false;
+			m_shift_x = false;
+			m_shift_y = false;
+			m_erode = false;
+			m_high_pass = false;
+			m_rot = 0;
 		}
 
 		uint8_t m_contrast;
@@ -116,7 +128,7 @@ namespace basist
 
 		void clear()
 		{
-			basisu::clear_obj(*this);
+			memset(m_selectors, 0, sizeof(m_selectors));
 		}
 
 		uint8_t operator[] (uint32_t i) const { assert(i < 16); return m_selectors[i]; }

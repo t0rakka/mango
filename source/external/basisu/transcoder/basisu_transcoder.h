@@ -19,12 +19,12 @@
 // Set BASISD_SUPPORT_KTX2 to 0 to completely disable KTX2 support as well as Zstd/miniz usage which is only required for UASTC supercompression in KTX2 files.
 // Also see BASISD_SUPPORT_KTX2_ZSTD in basisu_transcoder.cpp, which individually disables Zstd usage.
 #ifndef BASISD_SUPPORT_KTX2
-	#define BASISD_SUPPORT_KTX2 1
+	#define BASISD_SUPPORT_KTX2 0
 #endif
 
 // Set BASISD_SUPPORT_KTX2_ZSTD to 0 to disable Zstd usage and KTX2 UASTC Zstd supercompression support 
 #ifndef BASISD_SUPPORT_KTX2_ZSTD
-	#define BASISD_SUPPORT_KTX2_ZSTD 1
+	#define BASISD_SUPPORT_KTX2_ZSTD 0
 #endif
 
 // Set BASISU_FORCE_DEVEL_MESSAGES to 1 to enable debug printf()'s whenever an error occurs, for easier debugging during development.
