@@ -175,6 +175,9 @@
     <Filter Include="external\zlib">
       <UniqueIdentifier>{7a1458bb-284c-4883-be38-1dba52565d5a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\basisu">
+      <UniqueIdentifier>{dd5e16f9-ff55-4408-bbce-2277e2ffe8d0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\mango\core\bits.hpp">
@@ -1167,6 +1170,33 @@
     <ClInclude Include="..\..\include\mango\core\adler32.hpp">
       <Filter>mango\include\core</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu.h">
+      <Filter>external\basisu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_containers.h">
+      <Filter>external\basisu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_containers_impl.h">
+      <Filter>external\basisu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_file_headers.h">
+      <Filter>external\basisu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_global_selector_cb.h">
+      <Filter>external\basisu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_global_selector_palette.h">
+      <Filter>external\basisu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_transcoder.h">
+      <Filter>external\basisu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_transcoder_internal.h">
+      <Filter>external\basisu</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_transcoder_uastc.h">
+      <Filter>external\basisu</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\mango\math\simd.cpp">
@@ -2054,5 +2084,40 @@
     <ClCompile Include="..\..\source\mango\image\image_ktx2.cpp">
       <Filter>mango\source\image</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\external\basisu\transcoder\basisu_transcoder.cpp">
+      <Filter>external\basisu</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_astc.inc">
+      <Filter>external\basisu</Filter>
+    </None>
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_astc_0_255.inc">
+      <Filter>external\basisu</Filter>
+    </None>
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_atc_55.inc">
+      <Filter>external\basisu</Filter>
+    </None>
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_atc_56.inc">
+      <Filter>external\basisu</Filter>
+    </None>
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_bc7_m5_alpha.inc">
+      <Filter>external\basisu</Filter>
+    </None>
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_bc7_m5_color.inc">
+      <Filter>external\basisu</Filter>
+    </None>
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_dxt1_5.inc">
+      <Filter>external\basisu</Filter>
+    </None>
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_dxt1_6.inc">
+      <Filter>external\basisu</Filter>
+    </None>
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_pvrtc2_45.inc">
+      <Filter>external\basisu</Filter>
+    </None>
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_pvrtc2_alpha_33.inc">
+      <Filter>external\basisu</Filter>
+    </None>
   </ItemGroup>
 </Project>

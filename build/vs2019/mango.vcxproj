@@ -181,6 +181,15 @@
     <ClInclude Include="..\..\include\mango\simd\sse2_int128.hpp" />
     <ClInclude Include="..\..\include\mango\window\window.hpp" />
     <ClInclude Include="..\..\source\external\aes\bc_aes.h" />
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu.h" />
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_containers.h" />
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_containers_impl.h" />
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_file_headers.h" />
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_global_selector_cb.h" />
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_global_selector_palette.h" />
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_transcoder.h" />
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_transcoder_internal.h" />
+    <ClInclude Include="..\..\source\external\basisu\transcoder\basisu_transcoder_uastc.h" />
     <ClInclude Include="..\..\source\external\bc\BC.h" />
     <ClInclude Include="..\..\source\external\bzip2\bzlib.h" />
     <ClInclude Include="..\..\source\external\bzip2\bzlib_private.h" />
@@ -360,6 +369,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\external\aes\bc_aes.cpp" />
+    <ClCompile Include="..\..\source\external\basisu\transcoder\basisu_transcoder.cpp" />
     <ClCompile Include="..\..\source\external\bc\BC.cpp" />
     <ClCompile Include="..\..\source\external\bc\BC4BC5.cpp" />
     <ClCompile Include="..\..\source\external\bc\BC6HBC7.cpp" />
@@ -654,6 +664,18 @@
     <ClCompile Include="..\..\source\mango\opengl\opengl.cpp" />
     <ClCompile Include="..\..\source\mango\opengl\wgl\wgl_context.cpp" />
     <ClCompile Include="..\..\source\mango\window\win32\win32_window.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_astc.inc" />
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_astc_0_255.inc" />
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_atc_55.inc" />
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_atc_56.inc" />
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_bc7_m5_alpha.inc" />
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_bc7_m5_color.inc" />
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_dxt1_5.inc" />
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_dxt1_6.inc" />
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_pvrtc2_45.inc" />
+    <None Include="..\..\source\external\basisu\transcoder\basisu_transcoder_tables_pvrtc2_alpha_33.inc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
