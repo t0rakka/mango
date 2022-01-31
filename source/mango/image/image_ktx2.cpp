@@ -8,6 +8,7 @@
 #include <mango/core/compress.hpp>
 #include <mango/image/image.hpp>
 #include <mango/image/fourcc.hpp>
+#include "../../external/basisu/transcoder/basisu_transcoder.h"
 #include <map>
 
 namespace
@@ -755,6 +756,8 @@ namespace
         u32 levelCount = 0;
         u32 supercompressionScheme = 0;
 
+        int imageCount = 0;
+
         bool read(LittleEndianConstPointer& p)
         {
             constexpr u8 identifier[] =
@@ -781,6 +784,16 @@ namespace
             levelCount = p.read32();
             supercompressionScheme = p.read32();
 
+            // compute imageCount
+            int layerPixelDepth = std::max(1u, pixelDepth);
+
+            for (int i = 1; i < levelCount; ++i)
+            {
+                layerPixelDepth += std::max(1u, pixelDepth >> i);
+            }
+
+            imageCount = std::max(1u, layerCount) * faceCount * layerPixelDepth;
+
             return true;
         }
     };
@@ -793,6 +806,62 @@ namespace
         ConstMemory memory;
     };
 
+    struct BasisLZ
+    {
+        u16 endpointCount;
+        u16 selectorCount;
+        u32 endpointsByteLength;
+        u32 selectorsByteLength;
+        u32 tablesByteLength;
+        u32 extendedByteLength;
+
+        ConstMemory endpointsData;
+        ConstMemory selectorsData;
+        ConstMemory tablesData;
+        ConstMemory extendedData;
+
+        void read(ConstMemory memory, int imageCount)
+        {
+            LittleEndianConstPointer p = memory.address;
+
+            endpointCount = p.read16();
+            selectorCount = p.read16();
+            endpointsByteLength = p.read32();
+            selectorsByteLength = p.read32();
+            tablesByteLength = p.read32();
+            extendedByteLength = p.read32();
+
+            printf("[BasisLZ]\n");
+            printf("  endpointCount: %d\n", endpointCount);
+            printf("  selectorCount: %d\n", selectorCount);
+            printf("  endpointsByteLength: %d\n", endpointsByteLength);
+            printf("  selectorsByteLength: %d\n", selectorsByteLength);
+            printf("  tablesByteLength:    %d\n", tablesByteLength);
+            printf("  extendedByteLength:  %d\n", extendedByteLength);
+
+            for (int i = 0; i < imageCount; ++i)
+            {
+                u32 imageFlags = p.read32();
+                u32 rgbSliceByteOffset = p.read32();
+                u32 rgbSliceByteLength = p.read32();
+                u32 alphaSliceByteOffset = p.read32();
+                u32 alphaSliceByteLength = p.read32();
+
+                // TODO: store
+                MANGO_UNREFERENCED(imageFlags);
+                MANGO_UNREFERENCED(rgbSliceByteOffset);
+                MANGO_UNREFERENCED(rgbSliceByteLength);
+                MANGO_UNREFERENCED(alphaSliceByteOffset);
+                MANGO_UNREFERENCED(alphaSliceByteLength);
+            }
+
+            endpointsData = ConstMemory(p += endpointsByteLength, endpointsByteLength);
+            selectorsData = ConstMemory(p += selectorsByteLength, selectorsByteLength);
+            tablesData = ConstMemory(p += tablesByteLength, tablesByteLength);
+            extendedData = ConstMemory(p += extendedByteLength, extendedByteLength);
+        }
+    };
+
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
@@ -803,6 +872,7 @@ namespace
         ImageHeader m_header;
 
         std::vector<LevelKTX2> m_levels;
+        BasisLZ m_basis;
 
         u32 m_supercompression = 0;
         Buffer m_buffer;
@@ -1015,7 +1085,10 @@ namespace
             // Supercompression Global Data
             if (sgdByteLength)
             {
-                p = memory.address + sgdByteOffset;
+                if (m_supercompression == SUPERCOMPRESSION_BASIS_LZ)
+                {
+                    m_basis.read(ConstMemory(memory.address + sgdByteOffset, sgdByteLength), header.imageCount);
+                }
             }
         }
 
@@ -1091,6 +1164,54 @@ namespace
             int height = std::max(1, m_header.height >> level);
             const Format& format = m_header.format;
 
+#if 1
+            // etc1s decoder
+            {
+                Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+                printf("memory: %d bytes\n", (int)memory.size);
+
+                basist::basisu_transcoder_init(); // TODO: only once!
+
+                basist::basisu_lowlevel_etc1s_transcoder tr;
+
+                tr.decode_palettes(
+                    m_basis.endpointCount, m_basis.endpointsData.address, m_basis.endpointsData.size,
+                    m_basis.selectorCount, m_basis.selectorsData.address, m_basis.selectorsData.size);
+                tr.decode_tables(m_basis.tablesData, m_basis.tablesByteLength);
+
+                bool x = tr.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
+                    temp.image, width * height * 1,
+                    memory.address, u32(memory.size),
+                    width / 4, height / 4, width, height, 0,
+                    0, u32(memory.size),
+                    0, width * height * 0);
+
+                printf("x: %d\n", x);
+                temp.save("xx.png");
+            }
+            return status;
+#endif
+
+#if 0
+            // basisu decoder
+            {
+                Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+
+                basist::basisu_transcoder_init(); // TODO: only once!
+
+                basist::basisu_lowlevel_uastc_transcoder tr;
+                bool x = tr.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
+                    temp.image, width * height * 1,
+                    memory.address, u32(memory.size),
+                    width / 4, height / 4, width, height, 0,
+                    0, u32(memory.size));
+
+                printf("x: %d\n", x);
+                temp.save("xx.png");
+            }
+            return status;
+#endif
+
             if (m_header.compression != TextureCompression::NONE)
             {
                 TextureCompressionInfo info(m_header.compression);
@@ -1120,7 +1241,7 @@ namespace
 
         void decompress()
         {
-            if (m_supercompression)
+            if (m_supercompression > SUPERCOMPRESSION_BASIS_LZ)
             {
                 if (!m_buffer.size())
                 {
@@ -1146,9 +1267,6 @@ namespace
 
                         switch (m_supercompression)
                         {
-                            case SUPERCOMPRESSION_BASIS_LZ:
-                                status.setError("TODO");
-                                break;
                             case SUPERCOMPRESSION_ZSTANDARD:
                                 status = zstd::decompress(dest, level.memory);
                                 break;

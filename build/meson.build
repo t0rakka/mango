@@ -512,8 +512,6 @@ external_headers = files(
     '../source/external/basisu/transcoder/basisu_containers.h',
     '../source/external/basisu/transcoder/basisu_containers_impl.h',
     '../source/external/basisu/transcoder/basisu_file_headers.h',
-    '../source/external/basisu/transcoder/basisu_global_selector_cb.h',
-    '../source/external/basisu/transcoder/basisu_global_selector_palette.h',
     '../source/external/basisu/transcoder/basisu_transcoder.h',
     '../source/external/basisu/transcoder/basisu_transcoder_internal.h',
     '../source/external/basisu/transcoder/basisu_transcoder_uastc.h'
