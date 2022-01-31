@@ -756,8 +756,6 @@ namespace
         u32 levelCount = 0;
         u32 supercompressionScheme = 0;
 
-        int imageCount = 0;
-
         bool read(LittleEndianConstPointer& p)
         {
             constexpr u8 identifier[] =
@@ -784,16 +782,6 @@ namespace
             levelCount = p.read32();
             supercompressionScheme = p.read32();
 
-            // compute imageCount
-            int layerPixelDepth = std::max(1u, pixelDepth);
-
-            for (int i = 1; i < levelCount; ++i)
-            {
-                layerPixelDepth += std::max(1u, pixelDepth >> i);
-            }
-
-            imageCount = std::max(1u, layerCount) * faceCount * layerPixelDepth;
-
             return true;
         }
     };
@@ -806,6 +794,15 @@ namespace
         ConstMemory memory;
     };
 
+    struct BasisImageDesc
+    {
+        u32 imageFlags;
+        u32 rgbSliceByteOffset;
+        u32 rgbSliceByteLength;
+        u32 alphaSliceByteOffset;
+        u32 alphaSliceByteLength;
+    };
+
     struct BasisLZ
     {
         u16 endpointCount;
@@ -814,6 +811,8 @@ namespace
         u32 selectorsByteLength;
         u32 tablesByteLength;
         u32 extendedByteLength;
+
+        const u8* imageDescData;
 
         const u8* endpointsData;
         const u8* selectorsData;
@@ -831,6 +830,7 @@ namespace
             tablesByteLength = p.read32();
             extendedByteLength = p.read32();
 
+            printf("\n");
             printf("[BasisLZ]\n");
             printf("  endpointCount: %d\n", endpointCount);
             printf("  selectorCount: %d\n", selectorCount);
@@ -839,33 +839,28 @@ namespace
             printf("  tablesByteLength:    %d\n", tablesByteLength);
             printf("  extendedByteLength:  %d\n", extendedByteLength);
 
-            for (int i = 0; i < imageCount; ++i)
-            {
-                u32 imageFlags = p.read32();
-                u32 rgbSliceByteOffset = p.read32();
-                u32 rgbSliceByteLength = p.read32();
-                u32 alphaSliceByteOffset = p.read32();
-                u32 alphaSliceByteLength = p.read32();
-
-                printf("    rgb: (%d, %d)  alpha: (%d, %d)\n",
-                    rgbSliceByteOffset, rgbSliceByteLength, alphaSliceByteOffset, alphaSliceByteLength);
-
-                // TODO: store
-                MANGO_UNREFERENCED(imageFlags);
-                MANGO_UNREFERENCED(rgbSliceByteOffset);
-                MANGO_UNREFERENCED(rgbSliceByteLength);
-                MANGO_UNREFERENCED(alphaSliceByteOffset);
-                MANGO_UNREFERENCED(alphaSliceByteLength);
-            }
+            imageDescData = p;
+            p += imageCount * 20;
 
             endpointsData = p; p += endpointsByteLength;
             selectorsData = p; p += selectorsByteLength;
             tablesData    = p; p += tablesByteLength;
             extendedData  = p;
+        }
 
-            const u8* end = memory.address + memory.size;
-            printf("left: %d\n", int(end - p));
-            printf("size: %d\n", int(memory.size));
+        BasisImageDesc readImageDesc(int imageIndex) const
+        {
+            LittleEndianConstPointer p = imageDescData + imageIndex * 20;
+
+            BasisImageDesc desc;
+
+            desc.imageFlags = p.read32();
+            desc.rgbSliceByteOffset = p.read32();
+            desc.rgbSliceByteLength = p.read32();
+            desc.alphaSliceByteOffset = p.read32();
+            desc.alphaSliceByteLength = p.read32();
+
+            return desc;
         }
     };
 
@@ -916,9 +911,11 @@ namespace
             m_header.format = desc.format;
             m_header.compression = desc.compression;
 
-            printf("vkFormat: %d \"%s\"\n", header.vkFormat, desc.name);
-            printf("typeSize: %d\n", header.typeSize);
-            printf("supercompressionScheme: %d\n", header.supercompressionScheme);
+            printf("\n");
+            printf("[HeaderKTX2]\n");
+            printf("  vkFormat: %d \"%s\"\n", header.vkFormat, desc.name);
+            printf("  typeSize: %d\n", header.typeSize);
+            printf("  supercompressionScheme: %d\n", header.supercompressionScheme);
 
             m_supercompression = header.supercompressionScheme;
 
@@ -927,6 +924,7 @@ namespace
                 case SUPERCOMPRESSION_NONE:
                     break;
                 case SUPERCOMPRESSION_BASIS_LZ:
+                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     break;
                 case SUPERCOMPRESSION_ZSTANDARD:
                     break;
@@ -952,11 +950,12 @@ namespace
             MANGO_UNREFERENCED(sgdByteOffset);
             MANGO_UNREFERENCED(sgdByteLength);
 
-            printf("dfdByteOffset: %d, dfdByteLength: %d\n", dfdByteOffset, dfdByteLength);
-            printf("kvdByteOffset: %d, kvdByteLength: %d\n", kvdByteOffset, kvdByteLength);
-            printf("sgdByteOffset: %d, sgdByteLength: %d\n", (int)sgdByteOffset, (int)sgdByteLength);
+            printf("  dfdByteOffset: %d, dfdByteLength: %d\n", dfdByteOffset, dfdByteLength);
+            printf("  kvdByteOffset: %d, kvdByteLength: %d\n", kvdByteOffset, kvdByteLength);
+            printf("  sgdByteOffset: %d, sgdByteLength: %d\n", (int)sgdByteOffset, (int)sgdByteLength);
 
             int levels = std::max(1, m_header.levels);
+            printf("\n");
             printf("[levels: %d]\n", levels);
 
             for (int i = 0; i < levels; ++i)
@@ -990,6 +989,7 @@ namespace
                     u32 version_number = v1 & 0xffff;
                     u32 descriptor_block_size = v1 >> 16;
 
+                    printf("\n");
                     printf("[DataFormatDescriptor]\n");
                     printf("  vendor: %d, version: %d\n", vendor_id, version_number);
                     printf("  type: %d, size: %d\n", descriptor_type, descriptor_block_size);
@@ -1051,6 +1051,9 @@ namespace
                 p = memory.address + kvdByteOffset;
                 const u8* end = p + kvdByteLength;
 
+                printf("\n");
+                printf("[Key/Value Data]\n");
+
                 while (p < end)
                 {
                     u32 length = p.read32();
@@ -1082,7 +1085,7 @@ namespace
                         // TODO: this modifies m_header.format
                     }
 
-                    printf("key: %s\n", key);
+                    printf("  %s\n", key);
 
                     p += length;
                     p += padding;
@@ -1094,7 +1097,8 @@ namespace
             {
                 if (m_supercompression == SUPERCOMPRESSION_BASIS_LZ)
                 {
-                    m_basis.read(ConstMemory(memory.address + sgdByteOffset, sgdByteLength), header.imageCount);
+                    int imageCount = std::max(1u, header.levelCount) * header.faceCount;
+                    m_basis.read(ConstMemory(memory.address + sgdByteOffset, sgdByteLength), imageCount);
                 }
             }
         }
@@ -1165,8 +1169,6 @@ namespace
                 return status;
             }
 
-            ConstMemory memory = this->memory(level, depth, face);
-
             int width = std::max(1, m_header.width >> level);
             int height = std::max(1, m_header.height >> level);
             const Format& format = m_header.format;
@@ -1174,28 +1176,35 @@ namespace
 #if 1
             // etc1s decoder
             {
+                ConstMemory memory = this->memory(level, depth, 0);
+
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-                printf("memory: %d bytes\n", (int)memory.size);
+                //printf("memory: %d bytes\n", (int)memory.size);
 
                 basist::basisu_transcoder_init(); // TODO: only once!
 
-                basist::basisu_lowlevel_etc1s_transcoder tr;
+                basist::basisu_lowlevel_etc1s_transcoder transcoder;
 
-                tr.decode_palettes(
+                transcoder.decode_palettes(
                     m_basis.endpointCount, m_basis.endpointsData, m_basis.endpointsByteLength,
                     m_basis.selectorCount, m_basis.selectorsData, m_basis.selectorsByteLength);
-                tr.decode_tables(m_basis.tablesData, m_basis.tablesByteLength);
+                transcoder.decode_tables(m_basis.tablesData, m_basis.tablesByteLength);
 
-                bool x = tr.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
-                    temp.image, width * height * 1,
+                int xblocks = std::max(1, width / 4);
+                int yblocks = std::max(1, height / 4);
+
+                const int imageIndex = level * m_header.faces + face;
+                BasisImageDesc desc = m_basis.readImageDesc(imageIndex);
+
+                bool x = transcoder.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
+                    temp.image, width * height,
                     memory.address, u32(memory.size),
-                    width / 4, height / 4, width, height,
-                    0, // levelIndex
-                    0, u32(memory.size), // TODO: rgb slice
-                    0, 0); // TODO: alpha slice
+                    xblocks, yblocks, width, height,
+                    level,
+                    desc.rgbSliceByteOffset, desc.rgbSliceByteLength,
+                    desc.alphaSliceByteOffset, desc.alphaSliceByteLength);
 
-                printf("x: %d\n", x);
-                temp.save("xx.png");
+                dest.blit(0, 0, temp);
             }
             return status;
 #endif
@@ -1203,13 +1212,15 @@ namespace
 #if 0
             // basisu decoder
             {
+                ConstMemory memory = this->memory(level, depth, face);
+
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
                 basist::basisu_transcoder_init(); // TODO: only once!
 
-                basist::basisu_lowlevel_uastc_transcoder tr;
-                bool x = tr.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
-                    temp.image, width * height * 1,
+                basist::basisu_lowlevel_uastc_transcoder transcoder;
+                bool x = transcoder.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
+                    temp.image, width * height,
                     memory.address, u32(memory.size),
                     width / 4, height / 4, width, height, 0,
                     0, u32(memory.size));
@@ -1219,6 +1230,8 @@ namespace
             }
             return status;
 #endif
+
+            ConstMemory memory = this->memory(level, depth, face);
 
             if (m_header.compression != TextureCompression::NONE)
             {
