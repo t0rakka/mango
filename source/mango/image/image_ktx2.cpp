@@ -815,10 +815,10 @@ namespace
         u32 tablesByteLength;
         u32 extendedByteLength;
 
-        ConstMemory endpointsData;
-        ConstMemory selectorsData;
-        ConstMemory tablesData;
-        ConstMemory extendedData;
+        const u8* endpointsData;
+        const u8* selectorsData;
+        const u8* tablesData;
+        const u8* extendedData;
 
         void read(ConstMemory memory, int imageCount)
         {
@@ -847,6 +847,9 @@ namespace
                 u32 alphaSliceByteOffset = p.read32();
                 u32 alphaSliceByteLength = p.read32();
 
+                printf("    rgb: (%d, %d)  alpha: (%d, %d)\n",
+                    rgbSliceByteOffset, rgbSliceByteLength, alphaSliceByteOffset, alphaSliceByteLength);
+
                 // TODO: store
                 MANGO_UNREFERENCED(imageFlags);
                 MANGO_UNREFERENCED(rgbSliceByteOffset);
@@ -855,10 +858,14 @@ namespace
                 MANGO_UNREFERENCED(alphaSliceByteLength);
             }
 
-            endpointsData = ConstMemory(p += endpointsByteLength, endpointsByteLength);
-            selectorsData = ConstMemory(p += selectorsByteLength, selectorsByteLength);
-            tablesData = ConstMemory(p += tablesByteLength, tablesByteLength);
-            extendedData = ConstMemory(p += extendedByteLength, extendedByteLength);
+            endpointsData = p; p += endpointsByteLength;
+            selectorsData = p; p += selectorsByteLength;
+            tablesData    = p; p += tablesByteLength;
+            extendedData  = p;
+
+            const u8* end = memory.address + memory.size;
+            printf("left: %d\n", int(end - p));
+            printf("size: %d\n", int(memory.size));
         }
     };
 
@@ -1175,16 +1182,17 @@ namespace
                 basist::basisu_lowlevel_etc1s_transcoder tr;
 
                 tr.decode_palettes(
-                    m_basis.endpointCount, m_basis.endpointsData.address, m_basis.endpointsData.size,
-                    m_basis.selectorCount, m_basis.selectorsData.address, m_basis.selectorsData.size);
+                    m_basis.endpointCount, m_basis.endpointsData, m_basis.endpointsByteLength,
+                    m_basis.selectorCount, m_basis.selectorsData, m_basis.selectorsByteLength);
                 tr.decode_tables(m_basis.tablesData, m_basis.tablesByteLength);
 
                 bool x = tr.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
                     temp.image, width * height * 1,
                     memory.address, u32(memory.size),
-                    width / 4, height / 4, width, height, 0,
-                    0, u32(memory.size),
-                    0, width * height * 0);
+                    width / 4, height / 4, width, height,
+                    0, // levelIndex
+                    0, u32(memory.size), // TODO: rgb slice
+                    0, 0); // TODO: alpha slice
 
                 printf("x: %d\n", x);
                 temp.save("xx.png");
