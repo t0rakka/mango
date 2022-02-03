@@ -11,6 +11,7 @@
 #include "../../external/basisu/transcoder/basisu_transcoder.h"
 #include <map>
 
+// TODO: more input validation so that fuzzing tests pass :)
 // TODO: supercompression transcoding API to ImageDecoder interface.
 /*
     Implementation note: The BASIS_LZ and UASTC supercompression schemes are
