@@ -11,6 +11,16 @@
 #include "../../external/basisu/transcoder/basisu_transcoder.h"
 #include <map>
 
+// TODO: supercompression transcoding API to ImageDecoder interface.
+/*
+    Implementation note: The BASIS_LZ and UASTC supercompression schemes are
+    meant as transcoders so that other (supported) block compression-formatted
+    data can be extracted from the supercompressed data. We don't yet have
+    API for this so we only support the decode-to-surface and can only get
+    uncompressed rgba data out. Apologies for the inconvenience, the API
+    will be available eventually. :)
+*/
+
 namespace
 {
     using namespace mango;
@@ -794,6 +804,10 @@ namespace
         ConstMemory memory;
     };
 
+    // ------------------------------------------------------------
+    // Basis Universal Helper Classes
+    // ------------------------------------------------------------
+
     struct BasisImageDesc
     {
         u32 imageFlags;
@@ -830,14 +844,14 @@ namespace
             tablesByteLength = p.read32();
             extendedByteLength = p.read32();
 
-            printf("\n");
-            printf("[BasisLZ]\n");
-            printf("  endpointCount: %d\n", endpointCount);
-            printf("  selectorCount: %d\n", selectorCount);
-            printf("  endpointsByteLength: %d\n", endpointsByteLength);
-            printf("  selectorsByteLength: %d\n", selectorsByteLength);
-            printf("  tablesByteLength:    %d\n", tablesByteLength);
-            printf("  extendedByteLength:  %d\n", extendedByteLength);
+            debugPrint("\n");
+            debugPrint("[BasisLZ]\n");
+            debugPrint("  endpointCount: %d\n", endpointCount);
+            debugPrint("  selectorCount: %d\n", selectorCount);
+            debugPrint("  endpointsByteLength: %d\n", endpointsByteLength);
+            debugPrint("  selectorsByteLength: %d\n", selectorsByteLength);
+            debugPrint("  tablesByteLength:    %d\n", tablesByteLength);
+            debugPrint("  extendedByteLength:  %d\n", extendedByteLength);
 
             imageDescData = p;
             p += imageCount * 20;
@@ -860,9 +874,31 @@ namespace
             desc.alphaSliceByteOffset = p.read32();
             desc.alphaSliceByteLength = p.read32();
 
+            debugPrint("\n");
+            debugPrint("[BasisImageDesc]\n");
+            debugPrint("  rgb offset: %d, length: %d\n", desc.rgbSliceByteOffset, desc.rgbSliceByteLength);
+            debugPrint("  alpha offset: %d, length: %d\n", desc.alphaSliceByteOffset, desc.alphaSliceByteLength);
+
             return desc;
         }
     };
+
+    static
+    std::mutex g_basis_mutex;
+
+    static
+    void initialize_basis()
+    {
+        g_basis_mutex.lock();
+
+        // This should only be called once but it does have initialization
+        // flag internally so we just want to make sure there are no concurrent
+        // callers entering the initialization while it may be running.
+        basist::basisu_transcoder_init();
+
+        g_basis_mutex.unlock();
+    }
+
 
     // ------------------------------------------------------------
     // ImageDecoder
@@ -875,6 +911,9 @@ namespace
 
         std::vector<LevelKTX2> m_levels;
         BasisLZ m_basis;
+
+        bool m_is_etc1s = false;
+        bool m_is_uastc = false;
 
         u32 m_supercompression = 0;
         Buffer m_buffer;
@@ -891,14 +930,14 @@ namespace
             HeaderKTX2 header;
             if (!header.read(p))
             {
-                // TODO: incorrect header
-                printf("*** Incorrect identifier.\n");
+                debugPrint("[KTX2] Incorrect identifier.\n");
+                return;
             }
 
             if (isFormatProhibited(header.vkFormat))
             {
-                // TODO: prohibited format
-                printf("*** Prohibited format.\n");
+                debugPrint("[KTX2] Prohibited format.\n");
+                return;
             }
 
             VulkanFormatDesc desc = getFormatDesc(header.vkFormat);
@@ -911,11 +950,11 @@ namespace
             m_header.format = desc.format;
             m_header.compression = desc.compression;
 
-            printf("\n");
-            printf("[HeaderKTX2]\n");
-            printf("  vkFormat: %d \"%s\"\n", header.vkFormat, desc.name);
-            printf("  typeSize: %d\n", header.typeSize);
-            printf("  supercompressionScheme: %d\n", header.supercompressionScheme);
+            debugPrint("\n");
+            debugPrint("[HeaderKTX2]\n");
+            debugPrint("  vkFormat: %d \"%s\"\n", header.vkFormat, desc.name);
+            debugPrint("  typeSize: %d\n", header.typeSize);
+            debugPrint("  supercompressionScheme: %d\n", header.supercompressionScheme);
 
             m_supercompression = header.supercompressionScheme;
 
@@ -924,6 +963,7 @@ namespace
                 case SUPERCOMPRESSION_NONE:
                     break;
                 case SUPERCOMPRESSION_BASIS_LZ:
+                    m_is_etc1s = true;
                     m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     break;
                 case SUPERCOMPRESSION_ZSTANDARD:
@@ -931,8 +971,9 @@ namespace
                 case SUPERCOMPRESSION_ZLIB:
                     break;
                 default:
-                    // TODO: unsupported supercompression scheme
-                    break;
+                    // Unsupported / Incorrect compression scheme
+                    m_header = ImageHeader();
+                    return;
             }
 
             // Index
@@ -950,13 +991,13 @@ namespace
             MANGO_UNREFERENCED(sgdByteOffset);
             MANGO_UNREFERENCED(sgdByteLength);
 
-            printf("  dfdByteOffset: %d, dfdByteLength: %d\n", dfdByteOffset, dfdByteLength);
-            printf("  kvdByteOffset: %d, kvdByteLength: %d\n", kvdByteOffset, kvdByteLength);
-            printf("  sgdByteOffset: %d, sgdByteLength: %d\n", (int)sgdByteOffset, (int)sgdByteLength);
+            debugPrint("  dfdByteOffset: %d, dfdByteLength: %d\n", dfdByteOffset, dfdByteLength);
+            debugPrint("  kvdByteOffset: %d, kvdByteLength: %d\n", kvdByteOffset, kvdByteLength);
+            debugPrint("  sgdByteOffset: %d, sgdByteLength: %d\n", (int)sgdByteOffset, (int)sgdByteLength);
 
             int levels = std::max(1, m_header.levels);
-            printf("\n");
-            printf("[levels: %d]\n", levels);
+            debugPrint("\n");
+            debugPrint("[levels: %d]\n", levels);
 
             for (int i = 0; i < levels; ++i)
             {
@@ -968,7 +1009,7 @@ namespace
                 level.memory = ConstMemory(m_memory.address + level.offset, level.length);
 
                 m_levels.push_back(level);
-                printf("  offset: %d, length: %d, uncompressed: %d\n",  (int)level.offset, (int)level.length, (int)level.uncompressed_length);
+                debugPrint("  offset: %d, length: %d, uncompressed: %d\n",  (int)level.offset, (int)level.length, (int)level.uncompressed_length);
             }
 
             // Data Format Descriptor
@@ -989,10 +1030,10 @@ namespace
                     u32 version_number = v1 & 0xffff;
                     u32 descriptor_block_size = v1 >> 16;
 
-                    printf("\n");
-                    printf("[DataFormatDescriptor]\n");
-                    printf("  vendor: %d, version: %d\n", vendor_id, version_number);
-                    printf("  type: %d, size: %d\n", descriptor_type, descriptor_block_size);
+                    debugPrint("\n");
+                    debugPrint("[DataFormatDescriptor]\n");
+                    debugPrint("  vendor: %d, version: %d\n", vendor_id, version_number);
+                    debugPrint("  type: %d, size: %d\n", descriptor_type, descriptor_block_size);
 
                     u8 colorModel           = p[0];
                     u8 colorPrimaries       = p[1];
@@ -1004,16 +1045,27 @@ namespace
                     u8 texelBlockDimension3 = p[7];
                     p += 8;
 
+                    switch (colorModel)
+                    {
+                        case KHR_DF_MODEL_ETC1S:
+                            // NOTE: This should be already be detected as supercompression
+                            break;
+                        case KDF_DF_MODEL_UASTC:
+                            m_is_uastc = true;
+                            m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                            break;
+                    }
+
                     texelBlockDimension0 += !!texelBlockDimension0;
                     texelBlockDimension1 += !!texelBlockDimension1;
                     texelBlockDimension2 += !!texelBlockDimension2;
                     texelBlockDimension3 += !!texelBlockDimension3;
 
-                    printf("  colorModel: %d\n", colorModel);
-                    printf("  colorPrimaries: %d\n", colorPrimaries);
-                    printf("  transferFunction: %d\n", transferFunction);
-                    printf("  flags: %d\n", flags);
-                    printf("  dimensions: %d %d %d %d\n",
+                    debugPrint("  colorModel: %d\n", colorModel);
+                    debugPrint("  colorPrimaries: %d\n", colorPrimaries);
+                    debugPrint("  transferFunction: %d\n", transferFunction);
+                    debugPrint("  flags: %d\n", flags);
+                    debugPrint("  dimensions: %d %d %d %d\n",
                         texelBlockDimension0, texelBlockDimension1,
                         texelBlockDimension2, texelBlockDimension3);
 
@@ -1027,7 +1079,7 @@ namespace
                     u8 bytesPlane7 = p[7];
                     p += 8;
 
-                    printf("  planes: %d %d %d %d %d %d %d %d\n",
+                    debugPrint("  planes: %d %d %d %d %d %d %d %d\n",
                         bytesPlane0, bytesPlane1, bytesPlane2, bytesPlane3, 
                         bytesPlane4, bytesPlane5, bytesPlane6, bytesPlane7);
 
@@ -1035,13 +1087,8 @@ namespace
 
                     for (u32 i = 0; i < sample_count; ++i)
                     {
-                        // TODO
-                        p += 16;
+                        p += 16; // skip
                     }
-
-                    //m_header.format = Format(8, Format::UNORM, Format::R, 8);
-                    //m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    //m_header.compression = TextureCompression::PVRTC2_2BPP_UNORM_BLOCK_IMG;
                 }
             }
 
@@ -1051,8 +1098,8 @@ namespace
                 p = memory.address + kvdByteOffset;
                 const u8* end = p + kvdByteLength;
 
-                printf("\n");
-                printf("[Key/Value Data]\n");
+                debugPrint("\n");
+                debugPrint("[Key/Value Data]\n");
 
                 while (p < end)
                 {
@@ -1085,7 +1132,7 @@ namespace
                         // TODO: this modifies m_header.format
                     }
 
-                    printf("  %s\n", key);
+                    debugPrint("  %s\n", key);
 
                     p += length;
                     p += padding;
@@ -1173,16 +1220,14 @@ namespace
             int height = std::max(1, m_header.height >> level);
             const Format& format = m_header.format;
 
-#if 1
-            // etc1s decoder
+            if (m_is_etc1s)
             {
                 ConstMemory memory = this->memory(level, depth, 0);
 
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-                //printf("memory: %d bytes\n", (int)memory.size);
+                //debugPrint("memory: %d bytes\n", (int)memory.size);
 
-                basist::basisu_transcoder_init(); // TODO: only once!
-
+                initialize_basis();
                 basist::basisu_lowlevel_etc1s_transcoder transcoder;
 
                 transcoder.decode_palettes(
@@ -1204,57 +1249,65 @@ namespace
                     desc.rgbSliceByteOffset, desc.rgbSliceByteLength,
                     desc.alphaSliceByteOffset, desc.alphaSliceByteLength);
 
+                MANGO_UNREFERENCED(x);
+
                 dest.blit(0, 0, temp);
             }
-            return status;
-#endif
-
-#if 0
-            // basisu decoder
+            else if (m_is_uastc)
             {
                 ConstMemory memory = this->memory(level, depth, face);
 
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
-                basist::basisu_transcoder_init(); // TODO: only once!
-
+                initialize_basis();
                 basist::basisu_lowlevel_uastc_transcoder transcoder;
+
+                int xblocks = std::max(1, width / 4);
+                int yblocks = std::max(1, height / 4);
+
+                u32 slice_offset = 0;
+                u32 slice_length = u32(memory.size);
+
                 bool x = transcoder.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
                     temp.image, width * height,
                     memory.address, u32(memory.size),
-                    width / 4, height / 4, width, height, 0,
-                    0, u32(memory.size));
+                    xblocks, yblocks, width, height, level,
+                    slice_offset, slice_length);
 
-                printf("x: %d\n", x);
-                temp.save("xx.png");
-            }
-            return status;
-#endif
+                MANGO_UNREFERENCED(x);
 
-            ConstMemory memory = this->memory(level, depth, face);
-
-            if (m_header.compression != TextureCompression::NONE)
-            {
-                TextureCompressionInfo info(m_header.compression);
-                TextureCompressionStatus ts = info.decompress(dest, memory);
-                if (!ts)
-                {
-                    status.setError(ts.info);
-                }
+                dest.blit(0, 0, temp);
             }
             else
             {
-                printf("surface: %d x %d (%d bits)\n", width, height, format.bits);
-                printf("memory: %d bytes\n", (int)memory.size);
+                ConstMemory memory = this->memory(level, depth, face);
 
-                Surface temp(width, height, format, width * format.bytes(), memory.address);
-                if (m_orientation_y)
+                if (m_header.compression != TextureCompression::NONE)
                 {
-                    temp.image += temp.stride * (height - 1);
-                    temp.stride = 0 - temp.stride;
+                    TextureCompressionInfo info(m_header.compression);
+                    TextureCompressionStatus ts = info.decompress(dest, memory);
+                    if (!ts)
+                    {
+                        status.setError(ts.info);
+                    }
                 }
+                else
+                {
+                    debugPrint("surface: %d x %d (%d bits)\n", width, height, format.bits);
+                    debugPrint("memory: %d bytes\n", (int)memory.size);
 
-                dest.blit(0, 0, temp);
+                    // The image data is uncompressed in the file
+                    Surface temp(width, height, format, width * format.bytes(), memory.address);
+
+                    // Mirror the image when required
+                    if (m_orientation_y)
+                    {
+                        temp.image += temp.stride * (height - 1);
+                        temp.stride = 0 - temp.stride;
+                    }
+
+                    dest.blit(0, 0, temp);
+                }
             }
 
             return status;
@@ -1298,11 +1351,11 @@ namespace
 
                         if (status)
                         {
-                            printf("* decompressed: %d bytes\n", int(status.size));
+                            debugPrint("* decompressed: %d bytes\n", int(status.size));
                         }
                         else
                         {
-                            printf("* decompress status: %s\n", status.info.c_str());
+                            debugPrint("* decompress status: %s\n", status.info.c_str());
                         }
 
                         level.memory = dest;
