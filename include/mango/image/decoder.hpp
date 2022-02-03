@@ -26,6 +26,7 @@ namespace mango::image
         bool    premultiplied = false; // alpha is premultiplied
         Format  format; // preferred format (fastest available "direct" decoding is possible)
         TextureCompression compression = TextureCompression::NONE;
+        u32     supercompression = 0; // mask of supported compression formats
     };
 
     struct ImageDecodeStatus : Status

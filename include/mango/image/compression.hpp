@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -78,7 +78,7 @@ namespace mango::image
             // LATC
             LATC1_LUMINANCE               = makeTextureCompression(LATC, 0, 0),
             LATC1_SIGNED_LUMINANCE        = makeTextureCompression(LATC, 1, SIGNED),
-            LATC2_LUMINANCE_ALPHA         = makeTextureCompression(LATC, 2, ALPHA),
+            LATC2_LUMINANCE_ALPHA         = makeTextureCompression(LATC, 2,          ALPHA),
             LATC2_SIGNED_LUMINANCE_ALPHA  = makeTextureCompression(LATC, 3, SIGNED | ALPHA),
 
             // DXT
@@ -86,10 +86,10 @@ namespace mango::image
             DXT1_ALPHA1                   = makeTextureCompression(DXT, 1, BC | ALPHA),
             DXT3                          = makeTextureCompression(DXT, 2, BC | ALPHA),
             DXT5                          = makeTextureCompression(DXT, 3, BC | ALPHA),
-            DXT1_SRGB                     = makeTextureCompression(DXT, 4, BC | SRGB),
-            DXT1_ALPHA1_SRGB              = makeTextureCompression(DXT, 5, BC | SRGB | ALPHA),
-            DXT3_SRGB                     = makeTextureCompression(DXT, 6, BC | SRGB | ALPHA),
-            DXT5_SRGB                     = makeTextureCompression(DXT, 7, BC | SRGB | ALPHA),
+            DXT1_SRGB                     = makeTextureCompression(DXT, 4, BC |         SRGB),
+            DXT1_ALPHA1_SRGB              = makeTextureCompression(DXT, 5, BC | ALPHA | SRGB),
+            DXT3_SRGB                     = makeTextureCompression(DXT, 6, BC | ALPHA | SRGB),
+            DXT5_SRGB                     = makeTextureCompression(DXT, 7, BC | ALPHA | SRGB),
 
             // RGTC
             RGTC1_RED                     = makeTextureCompression(RGTC, 0, BC),
@@ -112,7 +112,7 @@ namespace mango::image
             EAC_RG11                      = makeTextureCompression(ETC2_EAC, 2, 0),
             EAC_SIGNED_RG11               = makeTextureCompression(ETC2_EAC, 3, SIGNED),
             ETC2_RGB                      = makeTextureCompression(ETC2_EAC, 4, 0),
-            ETC2_SRGB                     = makeTextureCompression(ETC2_EAC, 5, SRGB),
+            ETC2_SRGB                     = makeTextureCompression(ETC2_EAC, 5,         SRGB),
             ETC2_RGB_ALPHA1               = makeTextureCompression(ETC2_EAC, 6, ALPHA),
             ETC2_SRGB_ALPHA1              = makeTextureCompression(ETC2_EAC, 7, ALPHA | SRGB),
             ETC2_RGBA                     = makeTextureCompression(ETC2_EAC, 8, ALPHA),
@@ -129,8 +129,8 @@ namespace mango::image
             PVRTC2_RGBA_4BPP              = makeTextureCompression(PVRTC2, 5, PVR | SURFACE | ALPHA),
 
             // EXT_pvrtc_sRGB
-            PVRTC_SRGB_2BPP               = makeTextureCompression(PVRTC_EXT, 6, PVR | SURFACE | SRGB),
-            PVRTC_SRGB_4BPP               = makeTextureCompression(PVRTC_EXT, 7, PVR | SURFACE | SRGB),
+            PVRTC_SRGB_2BPP               = makeTextureCompression(PVRTC_EXT, 6, PVR | SURFACE |         SRGB),
+            PVRTC_SRGB_4BPP               = makeTextureCompression(PVRTC_EXT, 7, PVR | SURFACE |         SRGB),
             PVRTC_SRGB_ALPHA_2BPP         = makeTextureCompression(PVRTC_EXT, 8, PVR | SURFACE | ALPHA | SRGB),
             PVRTC_SRGB_ALPHA_4BPP         = makeTextureCompression(PVRTC_EXT, 9, PVR | SURFACE | ALPHA | SRGB),
 
@@ -269,6 +269,26 @@ namespace mango::image
     using TextureCompressionFormat = TextureCompressionInfo::CompressionFormat;
     using TextureCompressionFlags = TextureCompressionInfo::CompressionFlags;
     using TextureCompression = TextureCompressionInfo::TextureCompression;
+
+    enum : u32
+    {
+        SUPERCOMPRESS_ETC1_RGB         = 0x00000001,
+        SUPERCOMPRESS_BC1_UNORM        = 0x00000002,
+        SUPERCOMPRESS_BC4_UNORM        = 0x00000004,
+        SUPERCOMPRESS_BC7_UNORM        = 0x00000008,
+        SUPERCOMPRESS_PVRTC_RGB_4BPP   = 0x00000010,
+        SUPERCOMPRESS_PVRTC_RGBA_4BPP  = 0x00000020,
+        SUPERCOMPRESS_ASTC_RGBA_4x4    = 0x00000030,
+        SUPERCOMPRESS_ATC_RGB          = 0x00000040,
+        SUPERCOMPRESS_ATC_RGBA         = 0x00000100,
+        SUPERCOMPRESS_FXT1_RGB         = 0x00000200,
+        SUPERCOMPRESS_PVRTC2_RGBA_4BPP = 0x00000300,
+        SUPERCOMPRESS_EAC_R11          = 0x00000400,
+        SUPERCOMPRESS_EAC_RG11         = 0x00001000,
+
+        SUPERCOMPRESS_BASISU_ETC1S     = 0x00001fff,
+        SUPERCOMPRESS_BASISU_UASTC     = 0x00001fff,
+    };
 
 } // namespace mango::image
 

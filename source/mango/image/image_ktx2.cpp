@@ -7,7 +7,7 @@
 #include <mango/core/buffer.hpp>
 #include <mango/core/compress.hpp>
 #include <mango/image/image.hpp>
-#include <mango/image/fourcc.hpp>
+#include <mango/image/compression.hpp>
 #include "../../external/basisu/transcoder/basisu_transcoder.h"
 #include <map>
 
@@ -966,6 +966,7 @@ namespace
                 case SUPERCOMPRESSION_BASIS_LZ:
                     m_is_etc1s = true;
                     m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    m_header.supercompression = SUPERCOMPRESS_BASISU_ETC1S;
                     break;
                 case SUPERCOMPRESSION_ZSTANDARD:
                     break;
@@ -1054,6 +1055,7 @@ namespace
                         case KDF_DF_MODEL_UASTC:
                             m_is_uastc = true;
                             m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                            m_header.supercompression = SUPERCOMPRESS_BASISU_UASTC;
                             break;
                     }
 
