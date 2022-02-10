@@ -23,7 +23,7 @@ namespace mango::image
 
     union Color
     {
-        u8 component[4];
+        u8 component[4] {};
         struct
         {
             u8 r, g, b, a;

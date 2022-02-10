@@ -16,7 +16,7 @@ namespace mango::math
         using ScalarType = u16;
         enum { VectorSize = 8 };
 
-        VectorType m;
+        VectorType m {};
 
         ScalarType& operator [] (size_t index)
         {

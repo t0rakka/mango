@@ -21,7 +21,7 @@ namespace mango::math
         union
         {
             struct { float x, y, z, w; };
-            float data[4];
+            float data[4] {};
         };
 
         explicit Quaternion()

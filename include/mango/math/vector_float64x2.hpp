@@ -22,7 +22,7 @@ namespace mango::math
 
         union
         {
-            simd::f64x2 m;
+            simd::f64x2 m {};
 
             ScalarAccessor<double, simd::f64x2, 0> x;
             ScalarAccessor<double, simd::f64x2, 1> y;

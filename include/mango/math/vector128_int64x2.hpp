@@ -18,7 +18,7 @@ namespace mango::math
 
         union
         {
-            simd::s64x2 m;
+            simd::s64x2 m {};
 
             ScalarAccessor<s64, simd::s64x2, 0> x;
             ScalarAccessor<s64, simd::s64x2, 1> y;

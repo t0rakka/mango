@@ -199,7 +199,7 @@ namespace mango::math
 
         Box()
         {
-            const float s = std::numeric_limits<float>::max();
+            constexpr float s = std::numeric_limits<float>::max();
             corner[0] = float32x3(s, s, s);
             corner[1] = float32x3(-s, -s, -s);
         }

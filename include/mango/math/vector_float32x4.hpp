@@ -24,7 +24,7 @@ namespace mango::math
 
         union
         {
-            simd::f32x4 m;
+            simd::f32x4 m {};
 
             LowAccessor<Vector<float, 2>, simd::f32x4> low;
             HighAccessor<Vector<float, 2>, simd::f32x4> high;

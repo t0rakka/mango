@@ -23,7 +23,7 @@ namespace mango::math
 
         union
         {
-            simd::f64x4 m;
+            simd::f64x4 m {};
 
             LowAccessor<Vector<double, 2>, simd::f64x4> low;
             HighAccessor<Vector<double, 2>, simd::f64x4> high;
