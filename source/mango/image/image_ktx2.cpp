@@ -18,8 +18,7 @@
     meant as transcoders so that other (supported) block compression-formatted
     data can be extracted from the supercompressed data. We don't yet have
     API for this so we only support the decode-to-surface and can only get
-    uncompressed rgba data out. Apologies for the inconvenience, the API
-    will be available eventually. :)
+    uncompressed rgba data out.
 */
 
 namespace
