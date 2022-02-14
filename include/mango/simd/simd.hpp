@@ -111,7 +111,7 @@ namespace mango::simd
             is_composite = 0
         };
 
-        ScalarType data[VectorSize];
+        vector data;
 
         ScalarType & operator [] (int index)
         {
