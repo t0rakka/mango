@@ -489,26 +489,29 @@ namespace mango::filesystem
                     {
                         if (header.isSupportedVersion())
                         {
-                            FileHeader file;
-
-                            file.packed_size = header.packed_size;
-                            file.unpacked_size = header.unpacked_size;
-                            file.crc = header.file_crc;
-                            file.version = header.version;
-                            file.method  = header.method;
-                            file.is_rar5 = false;
-
-                            int dict_flags = (header.flags >> 5) & 7;
-                            file.folder = (dict_flags == 7);
-                            file.data = p;
-
-                            file.filename = header.filename;
-                            if (file.folder)
+                            if (!header.filename.empty())
                             {
-                                file.filename += "/";
-                            }
+                                FileHeader file;
 
-                            m_files.push_back(file);
+                                file.packed_size = header.packed_size;
+                                file.unpacked_size = header.unpacked_size;
+                                file.crc = header.file_crc;
+                                file.version = header.version;
+                                file.method  = header.method;
+                                file.is_rar5 = false;
+
+                                int dict_flags = (header.flags >> 5) & 7;
+                                file.folder = (dict_flags == 7);
+                                file.data = p;
+
+                                file.filename = header.filename;
+                                if (file.folder)
+                                {
+                                    file.filename += "/";
+                                }
+
+                                m_files.push_back(file);
+                            }
                         }
                         else
                         {
