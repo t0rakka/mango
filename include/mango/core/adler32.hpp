@@ -10,6 +10,8 @@
 namespace mango
 {
 
+    // NOTE: Initial adler default value is 0xffffffff
+
     u32 adler32(u32 adler, ConstMemory memory);
     u32 adler32_combine(u32 adler0, u32 adler1, size_t length1);
 
