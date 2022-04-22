@@ -180,7 +180,7 @@ namespace
     static inline
     u8* flushStuffedBytes(u8* output, DataType code)
     {
-        if (code & 0x8080808080808080ull & ~(code + 0x0101010101010101ull))
+        if (u64_has_zero_byte(code))
         {
             output = writeStuffedBytes(output, code, 8);
         }
@@ -197,7 +197,7 @@ namespace
     static inline
     u8* flushStuffedBytes(u8* output, DataType code)
     {
-        if (code & 0x80808080 & ~(code + 0x01010101))
+        if (u32_has_zero_byte(code))
         {
             output = writeStuffedBytes(output, code, 4);
         }
