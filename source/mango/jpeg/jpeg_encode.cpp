@@ -1092,6 +1092,7 @@ namespace
 
         if (counter)
         {
+            // only zeros left
             p = encoder.putBits(p, ac_code[0], ac_size[0]);
         }
 
