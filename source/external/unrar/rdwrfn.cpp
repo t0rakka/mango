@@ -22,7 +22,7 @@ void ComprDataIO::Init()
 int ComprDataIO::UnpRead(byte *Addr,size_t Count)
 {
     int RetCode=0;
-    int TotalRead=0;
+    //int TotalRead=0;
     byte *ReadAddr = Addr;
 
     if (Count > 0)
@@ -35,7 +35,7 @@ int ComprDataIO::UnpRead(byte *Addr,size_t Count)
         UnpackFromMemoryAddr += ReadSize;
 
         CurUnpRead+=RetCode;
-        TotalRead+=RetCode;
+        //TotalRead+=RetCode;
 
         ReadAddr += RetCode;
         Count -= RetCode;
