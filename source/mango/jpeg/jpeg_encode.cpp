@@ -162,15 +162,12 @@ namespace
         code = byteswap(code);
         for (int i = 0; i < count; ++i)
         {
-            u8 value = u8(code);
+            u32 value = code & 0xff;
+            u32 is_stuff_byte = value == 0xff;
             code >>= 8;
-            *output++ = value;
-
-            // always write the stuff byte
-            *output = 0;
-
-            // .. but advance ptr only when it actually was one
-            output += (value == 0xff);
+            output[0] = value;
+            output[1] = 0;
+            output += is_stuff_byte + 1;
         }
         return output;
     }
