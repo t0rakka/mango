@@ -254,7 +254,6 @@
 		A6734C7A2763C82E00FE6A20 /* image_qoi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6734C792763C82E00FE6A20 /* image_qoi.cpp */; };
 		A6835B3A27724BDE004CAC9C /* adler32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6835B3927724BDE004CAC9C /* adler32.cpp */; };
 		A6835B3C27724C1F004CAC9C /* huf_decompress_amd64.S in Sources */ = {isa = PBXBuildFile; fileRef = A6835B3B27724C1F004CAC9C /* huf_decompress_amd64.S */; };
-		A686FD1C27A37E3C00EDC399 /* basisu_global_selector_palette.h in Headers */ = {isa = PBXBuildFile; fileRef = A686FD0827A37E3B00EDC399 /* basisu_global_selector_palette.h */; };
 		A686FD1D27A37E3C00EDC399 /* basisu_transcoder_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = A686FD0927A37E3B00EDC399 /* basisu_transcoder_internal.h */; };
 		A686FD1E27A37E3C00EDC399 /* basisu_transcoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A686FD0A27A37E3B00EDC399 /* basisu_transcoder.cpp */; };
 		A686FD2027A37E3C00EDC399 /* basisu_containers.h in Headers */ = {isa = PBXBuildFile; fileRef = A686FD0C27A37E3C00EDC399 /* basisu_containers.h */; };
@@ -262,7 +261,6 @@
 		A686FD2327A37E3C00EDC399 /* basisu_transcoder_uastc.h in Headers */ = {isa = PBXBuildFile; fileRef = A686FD0F27A37E3C00EDC399 /* basisu_transcoder_uastc.h */; };
 		A686FD2427A37E3C00EDC399 /* basisu_transcoder.h in Headers */ = {isa = PBXBuildFile; fileRef = A686FD1027A37E3C00EDC399 /* basisu_transcoder.h */; };
 		A686FD2527A37E3C00EDC399 /* basisu.h in Headers */ = {isa = PBXBuildFile; fileRef = A686FD1127A37E3C00EDC399 /* basisu.h */; };
-		A686FD2827A37E3C00EDC399 /* basisu_global_selector_cb.h in Headers */ = {isa = PBXBuildFile; fileRef = A686FD1427A37E3C00EDC399 /* basisu_global_selector_cb.h */; };
 		A686FD2927A37E3C00EDC399 /* basisu_containers_impl.h in Headers */ = {isa = PBXBuildFile; fileRef = A686FD1527A37E3C00EDC399 /* basisu_containers_impl.h */; };
 		A6872D092270546C008F0D1A /* jpeg_process_func.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A6872D082270546C008F0D1A /* jpeg_process_func.hpp */; };
 		A68CD3F02651D9A200725A7C /* lossless_sse41.c in Sources */ = {isa = PBXBuildFile; fileRef = A68CD3EF2651D9A200725A7C /* lossless_sse41.c */; };
@@ -756,7 +754,6 @@
 		A6734C792763C82E00FE6A20 /* image_qoi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_qoi.cpp; path = image/image_qoi.cpp; sourceTree = "<group>"; };
 		A6835B3927724BDE004CAC9C /* adler32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = adler32.cpp; path = core/adler32.cpp; sourceTree = "<group>"; };
 		A6835B3B27724C1F004CAC9C /* huf_decompress_amd64.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = huf_decompress_amd64.S; path = external/zstd/decompress/huf_decompress_amd64.S; sourceTree = "<group>"; };
-		A686FD0827A37E3B00EDC399 /* basisu_global_selector_palette.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = basisu_global_selector_palette.h; path = external/basisu/transcoder/basisu_global_selector_palette.h; sourceTree = "<group>"; };
 		A686FD0927A37E3B00EDC399 /* basisu_transcoder_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = basisu_transcoder_internal.h; path = external/basisu/transcoder/basisu_transcoder_internal.h; sourceTree = "<group>"; };
 		A686FD0A27A37E3B00EDC399 /* basisu_transcoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = basisu_transcoder.cpp; path = external/basisu/transcoder/basisu_transcoder.cpp; sourceTree = "<group>"; };
 		A686FD0C27A37E3C00EDC399 /* basisu_containers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = basisu_containers.h; path = external/basisu/transcoder/basisu_containers.h; sourceTree = "<group>"; };
@@ -764,7 +761,6 @@
 		A686FD0F27A37E3C00EDC399 /* basisu_transcoder_uastc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = basisu_transcoder_uastc.h; path = external/basisu/transcoder/basisu_transcoder_uastc.h; sourceTree = "<group>"; };
 		A686FD1027A37E3C00EDC399 /* basisu_transcoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = basisu_transcoder.h; path = external/basisu/transcoder/basisu_transcoder.h; sourceTree = "<group>"; };
 		A686FD1127A37E3C00EDC399 /* basisu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = basisu.h; path = external/basisu/transcoder/basisu.h; sourceTree = "<group>"; };
-		A686FD1427A37E3C00EDC399 /* basisu_global_selector_cb.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = basisu_global_selector_cb.h; path = external/basisu/transcoder/basisu_global_selector_cb.h; sourceTree = "<group>"; };
 		A686FD1527A37E3C00EDC399 /* basisu_containers_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = basisu_containers_impl.h; path = external/basisu/transcoder/basisu_containers_impl.h; sourceTree = "<group>"; };
 		A6872D082270546C008F0D1A /* jpeg_process_func.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jpeg_process_func.hpp; path = jpeg/jpeg_process_func.hpp; sourceTree = "<group>"; };
 		A68CD3EF2651D9A200725A7C /* lossless_sse41.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lossless_sse41.c; path = external/libwebp/src/dsp/lossless_sse41.c; sourceTree = "<group>"; };
@@ -1463,8 +1459,6 @@
 				A686FD1527A37E3C00EDC399 /* basisu_containers_impl.h */,
 				A686FD0C27A37E3C00EDC399 /* basisu_containers.h */,
 				A686FD0D27A37E3C00EDC399 /* basisu_file_headers.h */,
-				A686FD1427A37E3C00EDC399 /* basisu_global_selector_cb.h */,
-				A686FD0827A37E3B00EDC399 /* basisu_global_selector_palette.h */,
 				A686FD0927A37E3B00EDC399 /* basisu_transcoder_internal.h */,
 				A686FD0F27A37E3C00EDC399 /* basisu_transcoder_uastc.h */,
 				A686FD0A27A37E3B00EDC399 /* basisu_transcoder.cpp */,
@@ -2066,7 +2060,6 @@
 				A63DD77E1E706F1200D4D499 /* concurrentqueue.h in Headers */,
 				A6EC3E82230D7BB800B17F21 /* vp8_dec.h in Headers */,
 				A63DD7091E706DFA00D4D499 /* lz4hc.h in Headers */,
-				A686FD1C27A37E3C00EDC399 /* basisu_global_selector_palette.h in Headers */,
 				A6EC3EF9230D7C1500B17F21 /* lossless_common.h in Headers */,
 				A6DD28C124125F1A0085E6EE /* adler32_vec_template.h in Headers */,
 				A6FCC37A1E8122D40037C15F /* zstd.h in Headers */,
@@ -2084,7 +2077,6 @@
 				A601B0B0276E1B9D003B3A28 /* zlib.h in Headers */,
 				A6E7DF402651D07E006A912E /* threading.h in Headers */,
 				A642438021852AEF0044B763 /* CpuArch.h in Headers */,
-				A686FD2827A37E3C00EDC399 /* basisu_global_selector_cb.h in Headers */,
 				A6EC3F87230D7C4D00B17F21 /* quant_levels_dec_utils.h in Headers */,
 				A6DD28C624125F1A0085E6EE /* deflate_constants.h in Headers */,
 				A6DD289924125EFB0085E6EE /* adler32_impl.h in Headers */,
