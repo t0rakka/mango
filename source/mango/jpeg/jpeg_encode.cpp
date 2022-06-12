@@ -1594,7 +1594,10 @@ namespace
             tbl_rows_0123.val[2], tbl_rows_0123.val[3],
             tbl_rows_4567.val[0], tbl_rows_4567.val[1]
         }};
-        const int8x16x3_t tbl_rows_567 = {{ tbl_rows_4567.val[1], tbl_rows_4567.val[2], tbl_rows_4567.val[3] }};
+        const int8x16x3_t tbl_rows_567 =
+        {{
+            tbl_rows_4567.val[1], tbl_rows_4567.val[2], tbl_rows_4567.val[3]
+        }};
 
         // shuffle coefficients
         int16x8_t row0 = vreinterpretq_s16_s8(vqtbl4q_s8(tbl_rows_0123, idx_rows_0123.val[0]));
