@@ -100,7 +100,7 @@ extern "C" {
 /*------   Version   ------*/
 #define LZ4_VERSION_MAJOR    1    /* for breaking interface changes  */
 #define LZ4_VERSION_MINOR    9    /* for new (non-breaking) interface capabilities */
-#define LZ4_VERSION_RELEASE  3    /* for tweaks, bug-fixes, or development */
+#define LZ4_VERSION_RELEASE  4    /* for tweaks, bug-fixes, or development */
 
 #define LZ4_VERSION_NUMBER (LZ4_VERSION_MAJOR *100*100 + LZ4_VERSION_MINOR *100 + LZ4_VERSION_RELEASE)
 
@@ -430,6 +430,7 @@ LZ4LIB_API int LZ4_decompress_safe_continue (LZ4_streamDecode_t* LZ4_streamDecod
  */
 LZ4LIB_API int LZ4_decompress_safe_usingDict (const char* src, char* dst, int srcSize, int dstCapcity, const char* dictStart, int dictSize);
 
+LZ4LIB_API int LZ4_decompress_safe_partial_usingDict(const char* source, char* dest, int compressedSize, int targetOutputSize, int maxOutputSize, const char* dictStart, int dictSize);
 #endif /* LZ4_H_2983827168210 */
 
 

@@ -77,6 +77,7 @@
 #include <climits>		// for CHAR_BIT
 #include <array>
 #include <thread>		// partly for __WINPTHREADS_VERSION if on MinGW-w64 w/ POSIX threading
+#include <mutex>        // used for thread exit synchronization
 
 // Platform-specific definitions of a numeric thread ID type and an invalid value
 namespace moodycamel { namespace details {
@@ -475,15 +476,10 @@ namespace details
 	template<typename T>
 	static inline bool circular_less_than(T a, T b)
 	{
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable: 4554)
-#endif
 		static_assert(std::is_integral<T>::value && !std::numeric_limits<T>::is_signed, "circular_less_than is intended to be used only with unsigned integer types");
-		return static_cast<T>(a - b) > static_cast<T>(static_cast<T>(1) << static_cast<T>(sizeof(T) * CHAR_BIT - 1));
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
+		return static_cast<T>(a - b) > static_cast<T>(static_cast<T>(1) << (static_cast<T>(sizeof(T) * CHAR_BIT - 1)));
+		// Note: extra parens around rhs of operator<< is MSVC bug: https://developercommunity2.visualstudio.com/t/C4554-triggers-when-both-lhs-and-rhs-is/10034931
+		//       silencing the bug requires #pragma warning(disable: 4554) around the calling code and has no effect when done here.
 	}
 	
 	template<typename U>
@@ -562,6 +558,8 @@ namespace details
 	typedef RelacyThreadExitListener ThreadExitListener;
 	typedef RelacyThreadExitNotifier ThreadExitNotifier;
 #else
+	class ThreadExitNotifier;
+
 	struct ThreadExitListener
 	{
 		typedef void (*callback_t)(void*);
@@ -569,22 +567,29 @@ namespace details
 		void* userData;
 		
 		ThreadExitListener* next;		// reserved for use by the ThreadExitNotifier
+		ThreadExitNotifier* chain;		// reserved for use by the ThreadExitNotifier
 	};
-	
-	
+
 	class ThreadExitNotifier
 	{
 	public:
 		static void subscribe(ThreadExitListener* listener)
 		{
 			auto& tlsInst = instance();
+			std::lock_guard<std::mutex> guard(mutex());
 			listener->next = tlsInst.tail;
+			listener->chain = &tlsInst;
 			tlsInst.tail = listener;
 		}
 		
 		static void unsubscribe(ThreadExitListener* listener)
 		{
-			auto& tlsInst = instance();
+			std::lock_guard<std::mutex> guard(mutex());
+			if (!listener->chain) {
+				return;  // race with ~ThreadExitNotifier
+			}
+			auto& tlsInst = *listener->chain;
+			listener->chain = nullptr;
 			ThreadExitListener** prev = &tlsInst.tail;
 			for (auto ptr = tlsInst.tail; ptr != nullptr; ptr = ptr->next) {
 				if (ptr == listener) {
@@ -604,7 +609,9 @@ namespace details
 		{
 			// This thread is about to exit, let everyone know!
 			assert(this == &instance() && "If this assert fails, you likely have a buggy compiler! Change the preprocessor conditions such that MOODYCAMEL_CPP11_THREAD_LOCAL_SUPPORTED is no longer defined.");
+			std::lock_guard<std::mutex> guard(mutex());
 			for (auto ptr = tail; ptr != nullptr; ptr = ptr->next) {
+				ptr->chain = nullptr;
 				ptr->callback(ptr->userData);
 			}
 		}
@@ -614,6 +621,13 @@ namespace details
 		{
 			static thread_local ThreadExitNotifier notifier;
 			return notifier;
+		}
+
+		static inline std::mutex& mutex()
+		{
+			// Must be static because the ThreadExitNotifier could be destroyed while unsubscribe is called
+			static std::mutex mutex;
+			return mutex;
 		}
 		
 	private:
@@ -1999,7 +2013,7 @@ private:
 					// block size (in order to get a correct signed block count offset in all cases):
 					auto headBase = localBlockIndex->entries[localBlockIndexHead].base;
 					auto blockBaseIndex = index & ~static_cast<index_t>(BLOCK_SIZE - 1);
-					auto offset = static_cast<size_t>(static_cast<typename std::make_signed<index_t>::type>(blockBaseIndex - headBase) / BLOCK_SIZE);
+					auto offset = static_cast<size_t>(static_cast<typename std::make_signed<index_t>::type>(blockBaseIndex - headBase) / static_cast<typename std::make_signed<index_t>::type>(BLOCK_SIZE));
 					auto block = localBlockIndex->entries[(localBlockIndexHead + offset) & (localBlockIndex->size - 1)].block;
 					
 					// Dequeue
@@ -2260,7 +2274,7 @@ private:
 					
 					auto headBase = localBlockIndex->entries[localBlockIndexHead].base;
 					auto firstBlockBaseIndex = firstIndex & ~static_cast<index_t>(BLOCK_SIZE - 1);
-					auto offset = static_cast<size_t>(static_cast<typename std::make_signed<index_t>::type>(firstBlockBaseIndex - headBase) / BLOCK_SIZE);
+					auto offset = static_cast<size_t>(static_cast<typename std::make_signed<index_t>::type>(firstBlockBaseIndex - headBase) / static_cast<typename std::make_signed<index_t>::type>(BLOCK_SIZE));
 					auto indexIndex = (localBlockIndexHead + offset) & (localBlockIndex->size - 1);
 					
 					// Iterate the blocks and dequeue
@@ -2943,7 +2957,7 @@ private:
 			assert(tailBase != INVALID_BLOCK_BASE);
 			// Note: Must use division instead of shift because the index may wrap around, causing a negative
 			// offset, whose negativity we want to preserve
-			auto offset = static_cast<size_t>(static_cast<typename std::make_signed<index_t>::type>(index - tailBase) / BLOCK_SIZE);
+			auto offset = static_cast<size_t>(static_cast<typename std::make_signed<index_t>::type>(index - tailBase) / static_cast<typename std::make_signed<index_t>::type>(BLOCK_SIZE));
 			size_t idx = (tail + offset) & (localBlockIndex->capacity - 1);
 			assert(localBlockIndex->index[idx]->key.load(std::memory_order_relaxed) == index && localBlockIndex->index[idx]->value.load(std::memory_order_relaxed) != nullptr);
 			return idx;
@@ -3212,12 +3226,6 @@ private:
 	
 	ProducerBase* recycle_or_create_producer(bool isExplicit)
 	{
-		bool recycled;
-		return recycle_or_create_producer(isExplicit, recycled);
-	}
-	
-	ProducerBase* recycle_or_create_producer(bool isExplicit, bool& recycled)
-	{
 #ifdef MCDBGQ_NOLOCKFREE_IMPLICITPRODHASH
 		debug::DebugLock lock(implicitProdMutex);
 #endif
@@ -3227,13 +3235,11 @@ private:
 				bool expected = true;
 				if (ptr->inactive.compare_exchange_strong(expected, /* desired */ false, std::memory_order_acquire, std::memory_order_relaxed)) {
 					// We caught one! It's been marked as activated, the caller can have it
-					recycled = true;
 					return ptr;
 				}
 			}
 		}
-		
-		recycled = false;
+
 		return add_producer(isExplicit ? static_cast<ProducerBase*>(create<ExplicitProducer>(this)) : create<ImplicitProducer>(this));
 	}
 	
@@ -3404,7 +3410,7 @@ private:
 			// Look for the id in this hash
 			auto index = hashedId;
 			while (true) {		// Not an infinite loop because at least one slot is free in the hash table
-				index &= hash->capacity - 1;
+				index &= hash->capacity - 1u;
 				
 				auto probedKey = hash->entries[index].key.load(std::memory_order_relaxed);
 				if (probedKey == id) {
@@ -3417,15 +3423,14 @@ private:
 					if (hash != mainHash) {
 						index = hashedId;
 						while (true) {
-							index &= mainHash->capacity - 1;
-							probedKey = mainHash->entries[index].key.load(std::memory_order_relaxed);
+							index &= mainHash->capacity - 1u;
 							auto empty = details::invalid_thread_id;
 #ifdef MOODYCAMEL_CPP11_THREAD_LOCAL_SUPPORTED
 							auto reusable = details::invalid_thread_id2;
-							if ((probedKey == empty    && mainHash->entries[index].key.compare_exchange_strong(empty,    id, std::memory_order_relaxed, std::memory_order_relaxed)) ||
-								(probedKey == reusable && mainHash->entries[index].key.compare_exchange_strong(reusable, id, std::memory_order_acquire, std::memory_order_acquire))) {
+							if (mainHash->entries[index].key.compare_exchange_strong(empty,    id, std::memory_order_seq_cst, std::memory_order_relaxed) ||
+								mainHash->entries[index].key.compare_exchange_strong(reusable, id, std::memory_order_seq_cst, std::memory_order_relaxed)) {
 #else
-							if ((probedKey == empty    && mainHash->entries[index].key.compare_exchange_strong(empty,    id, std::memory_order_relaxed, std::memory_order_relaxed))) {
+							if (mainHash->entries[index].key.compare_exchange_strong(empty,    id, std::memory_order_seq_cst, std::memory_order_relaxed)) {
 #endif
 								mainHash->entries[index].value = value;
 								break;
@@ -3454,7 +3459,7 @@ private:
 				// locked block).
 				mainHash = implicitProducerHash.load(std::memory_order_acquire);
 				if (newCount >= (mainHash->capacity >> 1)) {
-					auto newCapacity = mainHash->capacity << 1;
+					size_t newCapacity = mainHash->capacity << 1;
 					while (newCount >= (newCapacity >> 1)) {
 						newCapacity <<= 1;
 					}
@@ -3487,14 +3492,10 @@ private:
 			// to finish being allocated by another thread (and if we just finished allocating above, the condition will
 			// always be true)
 			if (newCount < (mainHash->capacity >> 1) + (mainHash->capacity >> 2)) {
-				bool recycled;
-				auto producer = static_cast<ImplicitProducer*>(recycle_or_create_producer(false, recycled));
+				auto producer = static_cast<ImplicitProducer*>(recycle_or_create_producer(false));
 				if (producer == nullptr) {
 					implicitProducerHashCount.fetch_sub(1, std::memory_order_relaxed);
 					return nullptr;
-				}
-				if (recycled) {
-					implicitProducerHashCount.fetch_sub(1, std::memory_order_relaxed);
 				}
 				
 #ifdef MOODYCAMEL_CPP11_THREAD_LOCAL_SUPPORTED
@@ -3505,17 +3506,17 @@ private:
 				
 				auto index = hashedId;
 				while (true) {
-					index &= mainHash->capacity - 1;
-					auto probedKey = mainHash->entries[index].key.load(std::memory_order_relaxed);
-					
+					index &= mainHash->capacity - 1u;
 					auto empty = details::invalid_thread_id;
 #ifdef MOODYCAMEL_CPP11_THREAD_LOCAL_SUPPORTED
 					auto reusable = details::invalid_thread_id2;
-					if ((probedKey == empty    && mainHash->entries[index].key.compare_exchange_strong(empty,    id, std::memory_order_relaxed, std::memory_order_relaxed)) ||
-						(probedKey == reusable && mainHash->entries[index].key.compare_exchange_strong(reusable, id, std::memory_order_acquire, std::memory_order_acquire))) {
-#else
-					if ((probedKey == empty    && mainHash->entries[index].key.compare_exchange_strong(empty,    id, std::memory_order_relaxed, std::memory_order_relaxed))) {
+					if (mainHash->entries[index].key.compare_exchange_strong(reusable, id, std::memory_order_seq_cst, std::memory_order_relaxed)) {
+						implicitProducerHashCount.fetch_sub(1, std::memory_order_relaxed);  // already counted as a used slot
+						mainHash->entries[index].value = producer;
+						break;
+					}
 #endif
+					if (mainHash->entries[index].key.compare_exchange_strong(empty,    id, std::memory_order_seq_cst, std::memory_order_relaxed)) {
 						mainHash->entries[index].value = producer;
 						break;
 					}
@@ -3534,9 +3535,6 @@ private:
 #ifdef MOODYCAMEL_CPP11_THREAD_LOCAL_SUPPORTED
 	void implicit_producer_thread_exited(ImplicitProducer* producer)
 	{
-		// Remove from thread exit listeners
-		details::ThreadExitNotifier::unsubscribe(&producer->threadExitListener);
-		
 		// Remove from hash
 #ifdef MCDBGQ_NOLOCKFREE_IMPLICITPRODHASH
 		debug::DebugLock lock(implicitProdMutex);
@@ -3552,10 +3550,9 @@ private:
 		for (; hash != nullptr; hash = hash->prev) {
 			auto index = hashedId;
 			do {
-				index &= hash->capacity - 1;
-				probedKey = hash->entries[index].key.load(std::memory_order_relaxed);
-				if (probedKey == id) {
-					hash->entries[index].key.store(details::invalid_thread_id2, std::memory_order_release);
+				index &= hash->capacity - 1u;
+				probedKey = id;
+				if (hash->entries[index].key.compare_exchange_strong(probedKey, details::invalid_thread_id2, std::memory_order_seq_cst, std::memory_order_relaxed)) {
 					break;
 				}
 				++index;
