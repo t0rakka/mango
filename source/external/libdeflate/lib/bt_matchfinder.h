@@ -151,7 +151,7 @@ bt_matchfinder_advance_one_byte(struct bt_matchfinder * const mf,
 {
 	const u8 *in_next = in_base + cur_pos;
 	u32 depth_remaining = max_search_depth;
-	const s32 cutoff = cur_pos - MATCHFINDER_WINDOW_SIZE;
+	const s32 cutoff = (const s32)(cur_pos - MATCHFINDER_WINDOW_SIZE);
 	u32 next_hashseq;
 	u32 hash3;
 	u32 hash4;
@@ -179,7 +179,7 @@ bt_matchfinder_advance_one_byte(struct bt_matchfinder * const mf,
 	prefetchw(&mf->hash4_tab[next_hashes[1]]);
 
 	cur_node = mf->hash3_tab[hash3][0];
-	mf->hash3_tab[hash3][0] = cur_pos;
+	mf->hash3_tab[hash3][0] = (mf_pos_t)cur_pos;
 #if BT_MATCHFINDER_HASH3_WAYS >= 2
 	cur_node_2 = mf->hash3_tab[hash3][1];
 	mf->hash3_tab[hash3][1] = cur_node;
@@ -188,7 +188,7 @@ bt_matchfinder_advance_one_byte(struct bt_matchfinder * const mf,
 		u32 seq3 = load_u24_unaligned(in_next);
 		if (seq3 == load_u24_unaligned(&in_base[cur_node])) {
 			lz_matchptr->length = 3;
-			lz_matchptr->offset = in_next - &in_base[cur_node];
+			lz_matchptr->offset = (u16)(in_next - &in_base[cur_node]);
 			lz_matchptr++;
 		}
 	#if BT_MATCHFINDER_HASH3_WAYS >= 2
@@ -196,17 +196,17 @@ bt_matchfinder_advance_one_byte(struct bt_matchfinder * const mf,
 			seq3 == load_u24_unaligned(&in_base[cur_node_2]))
 		{
 			lz_matchptr->length = 3;
-			lz_matchptr->offset = in_next - &in_base[cur_node_2];
+			lz_matchptr->offset = (u16)(in_next - &in_base[cur_node_2]);
 			lz_matchptr++;
 		}
 	#endif
 	}
 
 	cur_node = mf->hash4_tab[hash4];
-	mf->hash4_tab[hash4] = cur_pos;
+	mf->hash4_tab[hash4] = (mf_pos_t)cur_pos;
 
-	pending_lt_ptr = bt_left_child(mf, cur_pos);
-	pending_gt_ptr = bt_right_child(mf, cur_pos);
+	pending_lt_ptr = bt_left_child(mf, (s32)cur_pos);
+	pending_gt_ptr = bt_right_child(mf, (s32)cur_pos);
 
 	if (cur_node <= cutoff) {
 		*pending_lt_ptr = MATCHFINDER_INITVAL;
@@ -227,7 +227,7 @@ bt_matchfinder_advance_one_byte(struct bt_matchfinder * const mf,
 				if (record_matches) {
 					best_len = len;
 					lz_matchptr->length = len;
-					lz_matchptr->offset = in_next - matchptr;
+					lz_matchptr->offset = (u16)(in_next - matchptr);
 					lz_matchptr++;
 				}
 				if (len >= nice_len) {

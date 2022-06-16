@@ -199,7 +199,7 @@ hc_matchfinder_longest_match(struct hc_matchfinder * const mf,
 	u32 seq4;
 	const u8 *matchptr;
 	u32 len;
-	u32 cur_pos = in_next - *in_base_p;
+	u32 cur_pos = (u32)(in_next - *in_base_p);
 	const u8 *in_base;
 	mf_pos_t cutoff;
 
@@ -210,7 +210,7 @@ hc_matchfinder_longest_match(struct hc_matchfinder * const mf,
 	}
 
 	in_base = *in_base_p;
-	cutoff = cur_pos - MATCHFINDER_WINDOW_SIZE;
+	cutoff = (mf_pos_t)(cur_pos - MATCHFINDER_WINDOW_SIZE);
 
 	if (unlikely(max_len < 5)) /* can we read 4 bytes from 'in_next + 1'? */
 		goto out;
@@ -334,7 +334,7 @@ hc_matchfinder_longest_match(struct hc_matchfinder * const mf,
 			goto out;
 	}
 out:
-	*offset_ret = in_next - best_matchptr;
+	*offset_ret = (u32)(in_next - best_matchptr);
 	return best_len;
 }
 
@@ -374,7 +374,7 @@ hc_matchfinder_skip_bytes(struct hc_matchfinder * const mf,
 	if (unlikely(count + 5 > in_end - in_next))
 		return;
 
-	cur_pos = in_next - *in_base_p;
+	cur_pos = (u32)(in_next - *in_base_p);
 	hash3 = next_hashes[0];
 	hash4 = next_hashes[1];
 	do {

@@ -193,27 +193,31 @@
     <ClInclude Include="..\..\..\source\external\bc\BC.h" />
     <ClInclude Include="..\..\..\source\external\bzip2\bzlib.h" />
     <ClInclude Include="..\..\..\source\external\bzip2\bzlib_private.h" />
+    <ClInclude Include="..\..\..\source\external\concurrentqueue\atomicops.h" />
     <ClInclude Include="..\..\..\source\external\concurrentqueue\concurrentqueue.h" />
-    <ClInclude Include="..\..\..\source\external\libdeflate\common\common_defs.h" />
-    <ClInclude Include="..\..\..\source\external\libdeflate\common\compiler_gcc.h" />
-    <ClInclude Include="..\..\..\source\external\libdeflate\common\compiler_msc.h" />
+    <ClInclude Include="..\..\..\source\external\concurrentqueue\lightweightsemaphore.h" />
+    <ClInclude Include="..\..\..\source\external\concurrentqueue\readerwriterqueue.h" />
+    <ClInclude Include="..\..\..\source\external\libdeflate\common_defs.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\libdeflate.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\adler32_vec_template.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\adler32_impl.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\cpu_features.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\crc32_impl.h" />
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\crc32_pmull_helpers.h" />
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\crc32_pmull_wide.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\matchfinder_impl.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\bt_matchfinder.h" />
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\crc32_table.h" />
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\crc32_vec_template.h" />
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\cpu_features_common.h" />
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\crc32_multipliers.h" />
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\crc32_tables.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\decompress_template.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\deflate_compress.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\deflate_constants.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\gzip_constants.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\hc_matchfinder.h" />
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\ht_matchfinder.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\lib_common.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\matchfinder_common.h" />
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\unaligned.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\adler32_impl.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\cpu_features.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\crc32_impl.h" />
@@ -328,6 +332,7 @@
     <ClInclude Include="..\..\..\source\external\zlib\zlib.h" />
     <ClInclude Include="..\..\..\source\external\zlib\zutil.h" />
     <ClInclude Include="..\..\..\source\external\zpng\zpng.h" />
+    <ClInclude Include="..\..\..\source\external\zstd\common\bits.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\bitstream.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\compiler.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\cpu.h" />
@@ -337,11 +342,13 @@
     <ClInclude Include="..\..\..\source\external\zstd\common\huf.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\mem.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\pool.h" />
+    <ClInclude Include="..\..\..\source\external\zstd\common\portability_macros.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\threading.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\xxhash.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\zstd_deps.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\zstd_internal.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\zstd_trace.h" />
+    <ClInclude Include="..\..\..\source\external\zstd\compress\clevels.h" />
     <ClInclude Include="..\..\..\source\external\zstd\compress\hist.h" />
     <ClInclude Include="..\..\..\source\external\zstd\compress\zstdmt_compress.h" />
     <ClInclude Include="..\..\..\source\external\zstd\compress\zstd_compress_internal.h" />
@@ -676,6 +683,7 @@
     <None Include="..\..\..\source\external\basisu\transcoder\basisu_transcoder_tables_dxt1_6.inc" />
     <None Include="..\..\..\source\external\basisu\transcoder\basisu_transcoder_tables_pvrtc2_45.inc" />
     <None Include="..\..\..\source\external\basisu\transcoder\basisu_transcoder_tables_pvrtc2_alpha_33.inc" />
+    <None Include="..\..\..\source\external\zstd\decompress\huf_decompress_amd64.S" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

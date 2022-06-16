@@ -85,7 +85,7 @@ ht_matchfinder_longest_match(struct ht_matchfinder * const mf,
 {
 	u32 best_len = 0;
 	const u8 *best_matchptr = in_next;
-	u32 cur_pos = in_next - *in_base_p;
+	u32 cur_pos = (u32)(in_next - *in_base_p);
 	const u8 *in_base;
 	mf_pos_t cutoff;
 	u32 hash;
@@ -109,7 +109,7 @@ ht_matchfinder_longest_match(struct ht_matchfinder * const mf,
 		cur_pos = 0;
 	}
 	in_base = *in_base_p;
-	cutoff = cur_pos - MATCHFINDER_WINDOW_SIZE;
+	cutoff = (mf_pos_t)(cur_pos - MATCHFINDER_WINDOW_SIZE);
 
 	hash = *next_hash;
 	STATIC_ASSERT(HT_MATCHFINDER_REQUIRED_NBYTES == 5);
@@ -190,7 +190,7 @@ ht_matchfinder_longest_match(struct ht_matchfinder * const mf,
 	}
 #endif
 out:
-	*offset_ret = in_next - best_matchptr;
+	*offset_ret = (u32)(in_next - best_matchptr);
 	return best_len;
 }
 
@@ -202,7 +202,7 @@ ht_matchfinder_skip_bytes(struct ht_matchfinder * const mf,
 			  const u32 count,
 			  u32 * const next_hash)
 {
-	s32 cur_pos = in_next - *in_base_p;
+	s32 cur_pos = (u32)(in_next - *in_base_p);
 	u32 hash;
 	u32 remaining = count;
 	int i;

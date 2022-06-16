@@ -719,7 +719,7 @@ do {									\
 	} else {							\
 		/* Flush a byte at a time. */				\
 		while (bitcount >= 8) {					\
-			*out_next = bitbuf;				\
+			*out_next = (u8)bitbuf;				\
 			if (out_next != out_end)			\
 				out_next++;				\
 			bitcount -= 8;					\
@@ -1520,7 +1520,7 @@ deflate_compute_precode_items(const u8 lens[], const unsigned num_lens,
 		}
 	} while (run_start != num_lens);
 
-	return itemptr - precode_items;
+	return (unsigned)(itemptr - precode_items);
 }
 
 /*
@@ -1759,7 +1759,7 @@ deflate_flush_block(struct libdeflate_compressor *c,
 	}
 
 	/* Compute the cost of using uncompressed blocks. */
-	uncompressed_cost += (-(bitcount + 3) & 7) + 32 +
+	uncompressed_cost += ((0 - (bitcount + 3)) & 7) + 32 +
 			     (40 * (DIV_ROUND_UP(block_length,
 						 UINT16_MAX) - 1)) +
 			     (8 * block_length);
@@ -1848,7 +1848,7 @@ deflate_flush_block(struct libdeflate_compressor *c,
 				len = in_end - in_next;
 			}
 			if (out_end - out_next <
-			    (bitcount + 3 + 7) / 8 + 4 + len) {
+			    (ssize_t)((bitcount + 3 + 7) / 8 + 4 + len)) {
 				/* Not enough output space remaining. */
 				out_next = out_end;
 				goto out;
@@ -1858,15 +1858,15 @@ deflate_flush_block(struct libdeflate_compressor *c,
 			 * to a byte boundary.
 			 */
 			STATIC_ASSERT(DEFLATE_BLOCKTYPE_UNCOMPRESSED == 0);
-			*out_next++ = (bfinal << bitcount) | bitbuf;
+			*out_next++ = (u8)((bfinal << bitcount) | bitbuf);
 			if (bitcount > 5)
 				*out_next++ = 0;
 			bitbuf = 0;
 			bitcount = 0;
 			/* Output LEN and NLEN, then the data itself. */
-			put_unaligned_le16(len, out_next);
+			put_unaligned_le16((u16)(len), out_next);
 			out_next += 2;
-			put_unaligned_le16(~len, out_next);
+			put_unaligned_le16((u16)(~len), out_next);
 			out_next += 2;
 			memcpy(out_next, in_next, len);
 			out_next += len;
@@ -2153,7 +2153,7 @@ should_end_block(struct block_split_stats *stats,
 	if (!ready_to_check_block(stats, in_block_begin, in_next, in_end))
 		return false;
 
-	return do_end_block_check(stats, in_next - in_block_begin);
+	return do_end_block_check(stats, (u32)(in_next - in_block_begin));
 }
 
 /******************************************************************************/
@@ -2210,7 +2210,7 @@ static forceinline void
 adjust_max_and_nice_len(unsigned *max_len, unsigned *nice_len, size_t remaining)
 {
 	if (unlikely(remaining < DEFLATE_MAX_MATCH_LEN)) {
-		*max_len = remaining;
+		*max_len = (unsigned)(remaining);
 		*nice_len = MIN(*nice_len, *max_len);
 	}
 }
@@ -2314,7 +2314,7 @@ static forceinline const u8 *
 choose_max_block_end(const u8 *in_block_begin, const u8 *in_end,
 		     size_t soft_max_len)
 {
-	if (in_end - in_block_begin < soft_max_len + MIN_BLOCK_LENGTH)
+	if (in_end - in_block_begin < (ssize_t)(soft_max_len + MIN_BLOCK_LENGTH))
 		return in_end;
 	return in_block_begin + soft_max_len;
 }
@@ -2354,7 +2354,7 @@ deflate_compress_none(const u8 *in, size_t in_nbytes,
 			bfinal = 1;
 			len = in_end - in_next;
 		}
-		if (out_end - out_next < 5 + len)
+		if (out_end - out_next < (ssize_t)(5 + len))
 			return 0;
 		/*
 		 * Output BFINAL and BTYPE.  The stream is already byte-aligned
@@ -2363,9 +2363,9 @@ deflate_compress_none(const u8 *in, size_t in_nbytes,
 		*out_next++ = bfinal | (DEFLATE_BLOCKTYPE_UNCOMPRESSED << 1);
 
 		/* Output LEN and NLEN, then the data itself. */
-		put_unaligned_le16(len, out_next);
+		put_unaligned_le16((u16)len, out_next);
 		out_next += 2;
-		put_unaligned_le16(~len, out_next);
+		put_unaligned_le16((u16)~len, out_next);
 		out_next += 2;
 		memcpy(out_next, in_next, len);
 		out_next += len;
@@ -2411,7 +2411,7 @@ deflate_compress_fastest(struct libdeflate_compressor * restrict c,
 			size_t remaining = in_end - in_next;
 
 			if (unlikely(remaining < DEFLATE_MAX_MATCH_LEN)) {
-				max_len = remaining;
+				max_len = (unsigned)remaining;
 				if (max_len < HT_MATCHFINDER_REQUIRED_NBYTES) {
 					do {
 						deflate_choose_literal(c,
@@ -2450,7 +2450,7 @@ deflate_compress_fastest(struct libdeflate_compressor * restrict c,
 			 seq < &c->p.f.sequences[FAST_SEQ_STORE_LENGTH]);
 
 		deflate_flush_block(c, os, in_block_begin,
-				    in_next - in_block_begin,
+			(u32)(in_next - in_block_begin),
 				    c->p.f.sequences, in_next == in_end);
 	} while (in_next != in_end);
 }
@@ -2529,7 +2529,7 @@ deflate_compress_greedy(struct libdeflate_compressor * restrict c,
 					   in_block_begin, in_next, in_end));
 
 		deflate_flush_block(c, os, in_block_begin,
-				    in_next - in_block_begin,
+			(u32)(in_next - in_block_begin),
 				    c->p.g.sequences, in_next == in_end);
 	} while (in_next != in_end);
 }
@@ -2735,7 +2735,7 @@ have_cur_match:
 					   in_block_begin, in_next, in_end));
 
 		deflate_flush_block(c, os, in_block_begin,
-				    in_next - in_block_begin,
+			(u32)(in_next - in_block_begin),
 				    c->p.g.sequences, in_next == in_end);
 	} while (in_next != in_end);
 }
@@ -3480,7 +3480,7 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 				}
 			}
 
-			cache_ptr->length = cache_ptr - matches;
+			cache_ptr->length = (u32)(cache_ptr - matches);
 			cache_ptr->offset = *in_next;
 			in_next++;
 			cache_ptr++;
@@ -3543,7 +3543,7 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 				continue;
 			/* Check if it would be worthwhile to end the block. */
 			if (do_end_block_check(&c->split_stats,
-					       in_next - in_block_begin)) {
+				(u32)(in_next - in_block_begin))) {
 				change_detected = true;
 				break;
 			}
@@ -3573,10 +3573,10 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 			 */
 			struct lz_match *orig_cache_ptr = cache_ptr;
 			const u8 *in_block_end = prev_end_block_check;
-			u32 block_length = in_block_end - in_block_begin;
+			u32 block_length = (u32)(in_block_end - in_block_begin);
 			bool is_first = (in_block_begin == in);
 			bool is_final = false;
-			u32 num_bytes_to_rewind = in_next - in_block_end;
+			u32 num_bytes_to_rewind = (u32)(in_next - in_block_end);
 			size_t cache_len_rewound;
 
 			/* Rewind the match cache. */
@@ -3606,7 +3606,7 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 			 * differing data chunk being detected.  Don't rewind at
 			 * all; just end the block at the current position.
 			 */
-			u32 block_length = in_next - in_block_begin;
+			u32 block_length = (u32)(in_next - in_block_begin);
 			bool is_first = (in_block_begin == in);
 			bool is_final = (in_next == in_end);
 
@@ -3802,7 +3802,7 @@ libdeflate_deflate_compress(struct libdeflate_compressor *c,
 		return 0;
 	ASSERT(os.bitcount <= 7);
 	if (os.bitcount)
-		*os.next++ = os.bitbuf;
+		*os.next++ = (u8)os.bitbuf;
 	return os.next - (u8 *)out;
 }
 

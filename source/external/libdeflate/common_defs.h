@@ -52,6 +52,10 @@ typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
+#if defined(__linux__)
+	#include <sys/types.h>
+#endif
+
 /* ssize_t, if not available in <sys/types.h> */
 #ifdef _MSC_VER
 #  ifdef _WIN64
@@ -492,7 +496,7 @@ put_unaligned_leword(machine_word_t v, u8 *p)
 {
 	STATIC_ASSERT(WORDBITS == 32 || WORDBITS == 64);
 	if (WORDBITS == 32)
-		put_unaligned_le32(v, p);
+		put_unaligned_le32((u32)v, p);
 	else
 		put_unaligned_le64(v, p);
 }
@@ -531,7 +535,7 @@ bsr64(u64 v)
 	return 63 - __builtin_clzll(v);
 #elif defined(_MSC_VER) && defined(_M_X64)
 	_BitScanReverse64(&v, v);
-	return v;
+	return (unsigned)v;
 #else
 	unsigned i = 0;
 
@@ -546,7 +550,7 @@ bsrw(machine_word_t v)
 {
 	STATIC_ASSERT(WORDBITS == 32 || WORDBITS == 64);
 	if (WORDBITS == 32)
-		return bsr32(v);
+		return bsr32((u32)v);
 	else
 		return bsr64(v);
 }
@@ -581,7 +585,7 @@ bsf64(u64 v)
 	return __builtin_ctzll(v);
 #elif defined(_MSC_VER) && defined(_M_X64)
 	_BitScanForward64(&v, v);
-	return v;
+	return (unsigned)v;
 #else
 	unsigned i = 0;
 
@@ -596,7 +600,7 @@ bsfw(machine_word_t v)
 {
 	STATIC_ASSERT(WORDBITS == 32 || WORDBITS == 64);
 	if (WORDBITS == 32)
-		return bsf32(v);
+		return bsf32((u32)v);
 	else
 		return bsf64(v);
 }

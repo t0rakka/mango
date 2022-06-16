@@ -51,7 +51,7 @@ load_u24_unaligned(const u8 *p)
 
 typedef s16 mf_pos_t;
 
-#define MATCHFINDER_INITVAL ((mf_pos_t)-MATCHFINDER_WINDOW_SIZE)
+#define MATCHFINDER_INITVAL ((mf_pos_t)(0-MATCHFINDER_WINDOW_SIZE))
 
 /*
  * Required alignment of the matchfinder buffer pointer and size.  The values
@@ -128,9 +128,9 @@ matchfinder_rebase(mf_pos_t *data, size_t size)
 	} else {
 		for (i = 0; i < num_entries; i++) {
 			if (data[i] >= 0)
-				data[i] -= (mf_pos_t)-MATCHFINDER_WINDOW_SIZE;
+				data[i] -= (mf_pos_t)(0-MATCHFINDER_WINDOW_SIZE);
 			else
-				data[i] = (mf_pos_t)-MATCHFINDER_WINDOW_SIZE;
+				data[i] = (mf_pos_t)(0-MATCHFINDER_WINDOW_SIZE);
 		}
 	}
 }
