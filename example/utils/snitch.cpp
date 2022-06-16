@@ -292,7 +292,7 @@ void compress(const std::string& folder, const std::string& archive, const std::
                 ptr += segment.size;
 #else
                 File file(path, segment.filename);
-                Memory memory = Memory(file).slice(segment.offset, segment.size);
+                ConstMemory memory = ConstMemory(file).slice(segment.offset, segment.size);
                 std::memcpy(ptr, memory.address, memory.size);
                 ptr += memory.size;
 #endif
