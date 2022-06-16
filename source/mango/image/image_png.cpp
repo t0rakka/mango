@@ -3416,7 +3416,7 @@ namespace
     }
 
     static
-    void compress_serial(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
+    void compress_serial(Stream& stream, ImageEncodeStatus& status, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
     {
         const int bpp = surface.format.bytes();
         const int bytes_per_scan = surface.width * bpp + 1;
@@ -3469,7 +3469,7 @@ namespace
 
             if (!bytes_out)
             {
-                // TODO: report error
+                status.setError("fpng deflate failed.");
                 return;
             }
 
@@ -3498,7 +3498,7 @@ namespace
     }
 
     static
-    void compress_parallel(Stream& stream, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
+    void compress_parallel(Stream& stream, ImageEncodeStatus& status, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
     {
         const int bpp = surface.format.bytes();
         const int bytes_per_scan = surface.width * bpp + 1;
@@ -3512,6 +3512,8 @@ namespace
 
         ConcurrentQueue q;
         TicketQueue tk;
+
+        std::atomic<bool> encoding_failure { false };
 
         for (int i = 0; i < N; ++i)
         {
@@ -3527,12 +3529,12 @@ namespace
 
             auto ticket = tk.acquire();
 
-            q.enqueue([=, &surface, &stream, &cumulative_adler]
+            q.enqueue([=, &encoding_failure, &surface, &stream, &cumulative_adler]
             {
                 filter_range(source.address, surface, y, y + h);
 
-                constexpr size_t SIZE = 128 * 1024;
-                u8 temp[SIZE];
+                constexpr size_t TEMP_SIZE = 128 * 1024;
+                u8 temp[TEMP_SIZE];
 
                 z_stream strm;
 
@@ -3541,7 +3543,7 @@ namespace
                 strm.next_in = source.address;
                 strm.avail_in = uInt(source.size);
                 strm.next_out = temp;
-                strm.avail_out = SIZE;
+                strm.avail_out = TEMP_SIZE;
 
                 ::deflateInit(&strm, level);
 
@@ -3550,29 +3552,35 @@ namespace
                 while (strm.avail_in != 0)
                 {
                     int res = ::deflate(&strm, Z_NO_FLUSH);
-                    MANGO_UNREFERENCED(res); // should be Z_OK
-                    // TODO: handle error
+                    if (res != Z_OK)
+                    {
+                        encoding_failure = true;
+                        return;
+                    }
 
                     if (strm.avail_out == 0)
                     {
-                        compressed.append(temp, SIZE);
+                        compressed.append(temp, TEMP_SIZE);
                         strm.next_out = temp;
-                        strm.avail_out = SIZE;
+                        strm.avail_out = TEMP_SIZE;
                     }
                 }
 
-                compressed.append(temp, SIZE - strm.avail_out);
+                compressed.append(temp, TEMP_SIZE - strm.avail_out);
                 strm.next_out = temp;
-                strm.avail_out = SIZE;
+                strm.avail_out = TEMP_SIZE;
 
                 int flush = is_last ? Z_FINISH : Z_FULL_FLUSH;
                 int res = ::deflate(&strm, flush);
-                MANGO_UNREFERENCED(res); // should be Z_STREAM_END
-                // TODO: handle error
+                if (res != Z_STREAM_END && res != Z_OK)
+                {
+                    encoding_failure = true;
+                    return;
+                }
 
                 ::deflateEnd(&strm);
 
-                compressed.append(temp, SIZE - strm.avail_out);
+                compressed.append(temp, TEMP_SIZE - strm.avail_out);
 
                 // capture compressed memory
                 Memory segment_memory = compressed.acquire();
@@ -3610,6 +3618,11 @@ namespace
 
         q.wait();
         tk.wait();
+
+        if (encoding_failure)
+        {
+            status.setError("ZLib encoding failure.");
+        }
     }
 
     static
@@ -3635,7 +3648,7 @@ namespace
     }
 
     static
-    void write_png(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type, const ImageEncodeOptions& options)
+    void write_png(Stream& stream, ImageEncodeStatus& status, const Surface& surface, u8 color_bits, ColorType color_type, const ImageEncodeOptions& options)
     {
         BigEndianStream s(stream);
 
@@ -3649,11 +3662,11 @@ namespace
         if (segment_height)
         {
             write_pLLD(stream, segment_height);
-            compress_parallel(stream, surface, segment_height, options);
+            compress_parallel(stream, status, surface, segment_height, options);
         }
         else
         {
-            compress_serial(stream, surface, segment_height, options);
+            compress_serial(stream, status, surface, segment_height, options);
         }
 
         // write IEND
@@ -3749,8 +3762,6 @@ namespace
 
     ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        ImageEncodeStatus status;
-
         // defaults
         u8 color_bits = 8;
         ColorType color_type = COLOR_TYPE_RGBA;
@@ -3810,14 +3821,16 @@ namespace
             }
         }
 
+        ImageEncodeStatus status;
+
         if (surface.format == format)
         {
-            write_png(stream, surface, color_bits, color_type, options);
+            write_png(stream, status, surface, color_bits, color_type, options);
         }
         else
         {
             Bitmap temp(surface, format);
-            write_png(stream, temp, color_bits, color_type, options);
+            write_png(stream, status, temp, color_bits, color_type, options);
         }
 
         return status;
