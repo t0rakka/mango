@@ -514,42 +514,6 @@ namespace
         return true;
     }
 
-    u64 zip_decompress(const u8* compressed, u8* uncompressed, u64 compressedLen, u64 uncompressedLen)
-    {
-        libdeflate_decompressor* decompressor = libdeflate_alloc_decompressor();
-
-        size_t bytes_out = 0;
-        libdeflate_result result = libdeflate_deflate_decompress(decompressor,
-            compressed, size_t(compressedLen),
-            uncompressed, size_t(uncompressedLen), &bytes_out);
-
-        libdeflate_free_decompressor(decompressor);
-
-        const char* error = nullptr;
-        switch (result)
-        {
-            default:
-            case LIBDEFLATE_SUCCESS:
-                break;
-            case LIBDEFLATE_BAD_DATA:
-                error = "Bad data";
-                break;
-            case LIBDEFLATE_SHORT_OUTPUT:
-                error = "Short output";
-                break;
-            case LIBDEFLATE_INSUFFICIENT_SPACE:
-                error = "Insufficient space";
-                break;
-        }
-
-        if (error)
-        {
-            MANGO_EXCEPTION("[mapper.zip] %s.", error);
-        }
-
-        return bytes_out;
-    }
-
 } // namespace
 
 namespace mango::filesystem
@@ -710,29 +674,32 @@ namespace mango::filesystem
             switch (header.compression)
             {
                 case COMPRESSION_NONE:
+                {
                     size = header.uncompressedSize;
                     break;
+                }
 
                 case COMPRESSION_DEFLATE:
                 {
-                    const size_t uncompressed_size = size_t(header.uncompressedSize);
-                    u8* uncompressed_buffer = new u8[uncompressed_size];
+                    compressor = getCompressor(Compressor::DEFLATE);
+                    break;
+                }
 
-                    u64 outsize = zip_decompress(address, uncompressed_buffer, header.compressedSize, header.uncompressedSize);
+                case COMPRESSION_PPMD:
+                {
+                    compressor = getCompressor(Compressor::PPMD8);
+                    break;
+                }
 
-                    delete[] buffer;
-                    buffer = uncompressed_buffer;
+                case COMPRESSION_BZIP2:
+                {
+                    compressor = getCompressor(Compressor::BZIP2);
+                    break;
+                }
 
-                    if (outsize != header.uncompressedSize)
-                    {
-                        // incorrect output size
-                        delete[] buffer;
-                        MANGO_EXCEPTION("[mapper.zip] Incorrect decompressed size.");
-                    }
-
-                    // use decode_buffer as memory map
-                    address = buffer;
-                    size = header.uncompressedSize;
+                case COMPRESSION_ZSTD:
+                {
+                    compressor = getCompressor(Compressor::ZSTD);
                     break;
                 }
 
@@ -753,24 +720,6 @@ namespace mango::filesystem
                     header.compressedSize -= 4;
 
                     compressor = getCompressor(Compressor::LZMA);
-                    break;
-                }
-
-                case COMPRESSION_PPMD:
-                {
-                    compressor = getCompressor(Compressor::PPMD8);
-                    break;
-                }
-
-                case COMPRESSION_BZIP2:
-                {
-                    compressor = getCompressor(Compressor::BZIP2);
-                    break;
-                }
-
-                case COMPRESSION_ZSTD:
-                {
-                    compressor = getCompressor(Compressor::ZSTD);
                     break;
                 }
 
@@ -801,10 +750,17 @@ namespace mango::filesystem
 
                 ConstMemory input(address, size_t(header.compressedSize));
                 Memory output(uncompressed_buffer, size_t(header.uncompressedSize));
-                compressor.decompress(output, input);
+
+                CompressionStatus status = compressor.decompress(output, input);
 
                 delete[] buffer;
                 buffer = uncompressed_buffer;
+
+                if (!status)
+                {
+                    delete[] buffer;
+                    MANGO_EXCEPTION("[mapper.zip] %s", status.info.c_str());
+                }
 
                 // use decode_buffer as memory map
                 address = buffer;
