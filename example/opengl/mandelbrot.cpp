@@ -150,19 +150,15 @@ public:
                 double u = u0 + dydu * y;
                 double v = v0 + dydv * y;
 
+                const math::float64x4 ascend = math::float64x4::ascend(); // [0, 1, 2, 3]
+                math::float64x4 cr = ascend * dxdu + u;
+                math::float64x4 ci = ascend * dxdv + v;
+
+                const math::float64x4 ustep = dxdu * 4.0;
+                const math::float64x4 vstep = dxdv * 4.0;
+
                 for (int x = 0; x < width; x += 4)
                 {
-                    math::float64x4 cr(
-                        u + dxdu * (x + 0),
-                        u + dxdu * (x + 1),
-                        u + dxdu * (x + 2),
-                        u + dxdu * (x + 3));
-                    math::float64x4 ci(
-                        v + dxdv * (x + 0),
-                        v + dxdv * (x + 1),
-                        v + dxdv * (x + 2),
-                        v + dxdv * (x + 3));
-
                     math::float64x4 zr = cr;
                     math::float64x4 zi = ci;
 
@@ -185,6 +181,9 @@ public:
                         if (math::none_of(mask))
                             break;
                     }
+
+                    cr += ustep;
+                    ci += vstep;
 
                     scan[x + 0] = nColor(count[0]);
                     scan[x + 1] = nColor(count[1]);
