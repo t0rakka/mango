@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -64,8 +64,10 @@ public:
     {
         double x0 = x;
         double y0 = y;
-        int n = 0;
+
         const int nmax = 255;
+        int n = 0;
+
         while (x * x + y * y <= 4.0 && n < nmax)
         {
             double temp = x * x - y * y + x0;
@@ -73,6 +75,7 @@ public:
             x = temp;
             ++n;
         }
+
         return n;
     }
 
@@ -105,7 +108,7 @@ public:
 
         for (int y = 0; y < height; ++y)
         {
-            q.enqueue([this,&s,width,y,u0,v0,dxdu,dxdv,dydu,dydv]
+            q.enqueue([this, &s, width, y, u0, v0, dxdu, dxdv, dydu, dydv]
             {
                 u32* scan = s.address<u32>(0, y);
 
@@ -113,6 +116,7 @@ public:
                 {
                     double u = u0 + dxdu * x + dydu * y;
                     double v = v0 + dxdv * x + dydv * y;
+
                     int n = compute(u, v);
                     n = 255 -n;
                     scan[x] = makeRGBA(n & 0x0f, n, n & 0xf0, 0xff);
