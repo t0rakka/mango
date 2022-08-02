@@ -8,6 +8,13 @@
 using namespace mango;
 using namespace mango::image;
 
+static inline u32 nColor(int n)
+{
+    // TODO: nicer function to map iteration to color
+    n = 255 - n;
+    return makeRGBA(n & 0x0f, n & 0xf0, n, 0xff);
+}
+
 class DemoWindow : public OpenGLFramebuffer
 {
 protected:
@@ -106,6 +113,10 @@ public:
 
         ConcurrentQueue q;
 
+#if 0
+
+        // scalar mandelbrot
+
         for (int y = 0; y < height; ++y)
         {
             q.enqueue([this, &s, width, y, u0, v0, dxdu, dxdv, dydu, dydv]
@@ -118,11 +129,72 @@ public:
                     double v = v0 + dxdv * x + dydv * y;
 
                     int n = compute(u, v);
-                    n = 255 -n;
-                    scan[x] = makeRGBA(n & 0x0f, n, n & 0xf0, 0xff);
+                    scan[x] = nColor(n);
                 }
             });
         }
+
+#else
+
+        // simd mandelbrot
+
+        for (int y = 0; y < height; ++y)
+        {
+            q.enqueue([&s, width, y, u0, v0, dxdu, dxdv, dydu, dydv]
+            {
+                u32* scan = s.address<u32>(0, y);
+
+                const math::float64x4 four(4);
+                const math::int64x4 one(1);
+
+                double u = u0 + dydu * y;
+                double v = v0 + dydv * y;
+
+                for (int x = 0; x < width; x += 4)
+                {
+                    math::float64x4 cr(
+                        u + dxdu * (x + 0),
+                        u + dxdu * (x + 1),
+                        u + dxdu * (x + 2),
+                        u + dxdu * (x + 3));
+                    math::float64x4 ci(
+                        v + dxdv * (x + 0),
+                        v + dxdv * (x + 1),
+                        v + dxdv * (x + 2),
+                        v + dxdv * (x + 3));
+
+                    math::float64x4 zr = cr;
+                    math::float64x4 zi = ci;
+
+                    const int nmax = 255;
+                    int n = 1;
+
+                    math::int64x4 count(n);
+
+                    while (++n < nmax)
+                    {
+                        math::float64x4 zr2 = zr * zr;
+                        math::float64x4 zi2 = zi * zi;
+                        math::float64x4 zrzi = zr * zi;
+                        zr = cr + zr2 - zi2;
+                        zi = ci + zrzi + zrzi;
+
+                        math::mask64x4 mask = (zr2 + zi2) < four;
+                        count = math::select(mask, count + one, count);
+
+                        if (math::none_of(mask))
+                            break;
+                    }
+
+                    scan[x + 0] = nColor(count[0]);
+                    scan[x + 1] = nColor(count[1]);
+                    scan[x + 2] = nColor(count[2]);
+                    scan[x + 3] = nColor(count[3]);
+                }
+            });
+        }
+
+#endif
 
         q.wait();
     }
