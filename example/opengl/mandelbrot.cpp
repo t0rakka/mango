@@ -94,7 +94,7 @@ public:
 
         ConcurrentQueue q;
 
-#if 1
+#if 0
 
         // scalar mandelbrot
 
