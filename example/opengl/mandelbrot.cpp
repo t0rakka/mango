@@ -67,25 +67,6 @@ public:
         present();
     }
 
-    int compute(double x, double y) const
-    {
-        double x0 = x;
-        double y0 = y;
-
-        const int nmax = 255;
-        int n = 0;
-
-        while (x * x + y * y <= 4.0 && n < nmax)
-        {
-            double temp = x * x - y * y + x0;
-            y = 2.0 * x * y + y0;
-            x = temp;
-            ++n;
-        }
-
-        return n;
-    }
-
     void mandelbrot(Surface s)
     {
         int width = s.width;
@@ -113,7 +94,7 @@ public:
 
         ConcurrentQueue q;
 
-#if 0
+#if 1
 
         // scalar mandelbrot
 
@@ -125,10 +106,25 @@ public:
 
                 for (int x = 0; x < width; ++x)
                 {
-                    double u = u0 + dxdu * x + dydu * y;
-                    double v = v0 + dxdv * x + dydv * y;
+                    const int nmax = 255;
+                    int n = 0;
 
-                    int n = compute(u, v);
+                    double zr = u0 + dxdu * x + dydu * y;
+                    double zi = v0 + dxdv * x + dydv * y;
+
+                    double zr0 = zr;
+                    double zi0 = zi;
+
+                    while (++n < nmax)
+                    {
+                        double temp = zr * zr - zi * zi + zr0;
+                        zi = (zr + zr) * zi + zi0;
+                        zr = temp;
+
+                        if (zr *zr + zi * zr >= 4.0)
+                            break;
+                    }
+
                     scan[x] = nColor(n);
                 }
             });
@@ -159,11 +155,11 @@ public:
 
                 for (int x = 0; x < width; x += 4)
                 {
+                    const int nmax = 255;
+                    int n = 0;
+
                     math::float64x4 zr = cr;
                     math::float64x4 zi = ci;
-
-                    const int nmax = 255;
-                    int n = 1;
 
                     math::int64x4 count(n);
 
