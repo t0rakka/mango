@@ -28,7 +28,7 @@ u64 test_crc32(ConstMemory buffer)
     printf("\n");
 
     const u8 name [] = "123456789";
-        
+
     u32 value0 = mango::crc32(0, ConstMemory(name, 9));
     print(value0, 0xcbf43926);
 

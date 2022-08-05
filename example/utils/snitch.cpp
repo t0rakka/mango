@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cinttypes>
 #include <algorithm>
@@ -542,7 +542,10 @@ int main(int argc, char* argv[])
     // TODO: configure archive name (-output result.snitch)
     // TODO: compression: "--store" (no compression to any of the files)
     // TODO: compression: "--extreme" (try ALL compressors to find the best, use compression even if file shrinks just 0.1%)
-    // TODO: compress the index?
+    // TODO: compress the index
+    //       - example case: index size 500 KB, compresses into 80 KB
+    //       - caveat: random accessing files slower as index needs to be decompressed
+    //       - fix: the decompressed index may be cached in the mapper
 
     std::string folder = argv[1];
     std::string archive = "result.snitch";//argv[2];

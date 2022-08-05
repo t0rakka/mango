@@ -80,4 +80,6 @@ namespace mango
         }
     };
 
+    using MemoryStream = BufferStream;
+
 } // namespace mango
