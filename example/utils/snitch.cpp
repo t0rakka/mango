@@ -448,7 +448,9 @@ void compress(const std::string& folder, const std::string& archive, const std::
 
     File Info Array:
         u32         magic: mgx2
-        File[]      files
+        u64         compressed size (file array)
+        u64         uncmpressed size (file array)
+        File[]      files (compressed with zstd)
 
     Header:
         u32         magic: mgx3
@@ -478,7 +480,13 @@ void compress(const std::string& folder, const std::string& archive, const std::
     u64 file_data_offset = output.offset();
 
     str.write32(u32_mask('m', 'g', 'x', '2'));
-    str.write32(u32(manager.files.size()));
+
+    // write file data into temporary buffer
+
+    MemoryStream temp;
+    LittleEndianStream tstr = temp;
+
+    tstr.write32(u32(manager.files.size()));
 
     for (auto &file : manager.files)
     {
@@ -486,23 +494,33 @@ void compress(const std::string& folder, const std::string& archive, const std::
         u32 length = filename.length();
         u32 checksum = 0; // TODO
 
-        str.write32(length);
-        str.write(filename.c_str(), length);
+        tstr.write32(length);
+        tstr.write(filename.c_str(), length);
 
-        str.write64(file.size);
-        str.write32(checksum);
-        str.write32(u32(file.segments.size()));
+        tstr.write64(file.size);
+        tstr.write32(checksum);
+        tstr.write32(u32(file.segments.size()));
 
         for (auto &segment : file.segments)
         {
-            str.write32(segment.block);
-            str.write32(segment.offset);
-            str.write32(segment.size);
+            tstr.write32(segment.block);
+            tstr.write32(segment.offset);
+            tstr.write32(segment.size);
         }
     }
 
-    u64 header_offset = output.offset();
-    printf("Index: %" PRIu64 " KB\n", (header_offset - block_data_offset) / KB);
+    // compress the temporary buffer
+
+    size_t bound = compressor.bound(temp.size());
+    Buffer compressed(bound);
+
+    CompressionStatus status = zstd::compress(compressed, temp, 10);
+
+    // write compressed buffer
+
+    str.write64(u64(status.size)); // compressed size
+    str.write64(u64(temp.size())); // uncompressed size
+    str.write(compressed, status.size);
 
     // write header
 
@@ -520,7 +538,7 @@ int main(int argc, char* argv[])
 
         printf("\n");
         printf("MGX/SNITCH Compression Tool version 0.5 \n");
-        printf("Copyright (C) 2018 Fapware, inc. All rights reserved.\n");
+        printf("Copyright (C) 2018-2022 Fapware, inc. All rights reserved.\n");
         printf("Usage: %s [input folder] [compression] [level:0..10]\n", program_name.c_str());
         printf("\n");
 
@@ -532,9 +550,7 @@ int main(int argc, char* argv[])
             printf("%s%s", separator, compressor.name.c_str());
             separator = ", ";
         }
-        printf("\n");
-
-        printf("\n");
+        printf("\n\n");
 
         return 0;
     }
@@ -542,10 +558,6 @@ int main(int argc, char* argv[])
     // TODO: configure archive name (-output result.snitch)
     // TODO: compression: "--store" (no compression to any of the files)
     // TODO: compression: "--extreme" (try ALL compressors to find the best, use compression even if file shrinks just 0.1%)
-    // TODO: compress the index
-    //       - example case: index size 500 KB, compresses into 80 KB
-    //       - caveat: random accessing files slower as index needs to be decompressed
-    //       - fix: the decompressed index may be cached in the mapper
 
     std::string folder = argv[1];
     std::string archive = "result.snitch";//argv[2];
