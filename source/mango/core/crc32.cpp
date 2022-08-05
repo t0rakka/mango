@@ -1264,7 +1264,7 @@ namespace
     u32 parallel_crc(Compute compute, Combine combine, u32 crc, ConstMemory memory)
     {
         constexpr size_t KB = 1 << 10;
-        constexpr size_t MIN_BLOCK = 32 * KB;
+        constexpr size_t MIN_BLOCK = 256 * KB;
 
         if (memory.size < MIN_BLOCK * 2)
         {
