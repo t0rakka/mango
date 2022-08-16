@@ -135,7 +135,7 @@ size_t ZSTD_decodeLiteralsBlock(ZSTD_DCtx* dctx,
             ZSTD_FALLTHROUGH;
 
         case set_compressed:
-            RETURN_ERROR_IF(srcSize < 5, corruption_detected, "srcSize >= MIN_CBLOCK_SIZE == 3; here we need up to 5 for case 3");
+            RETURN_ERROR_IF(srcSize < 5, corruption_detected, "srcSize >= MIN_CBLOCK_SIZE == 2; here we need up to 5 for case 3");
             {   size_t lhSize, litSize, litCSize;
                 U32 singleStream=0;
                 U32 const lhlCode = (istart[0] >> 2) & 3;
@@ -238,6 +238,7 @@ size_t ZSTD_decodeLiteralsBlock(ZSTD_DCtx* dctx,
                     break;
                 case 3:
                     lhSize = 3;
+                    RETURN_ERROR_IF(srcSize<3, corruption_detected, "srcSize >= MIN_CBLOCK_SIZE == 2; here we need lhSize = 3");
                     litSize = MEM_readLE24(istart) >> 4;
                     break;
                 }
@@ -280,12 +281,13 @@ size_t ZSTD_decodeLiteralsBlock(ZSTD_DCtx* dctx,
                     break;
                 case 1:
                     lhSize = 2;
+                    RETURN_ERROR_IF(srcSize<3, corruption_detected, "srcSize >= MIN_CBLOCK_SIZE == 2; here we need lhSize+1 = 3");
                     litSize = MEM_readLE16(istart) >> 4;
                     break;
                 case 3:
                     lhSize = 3;
+                    RETURN_ERROR_IF(srcSize<4, corruption_detected, "srcSize >= MIN_CBLOCK_SIZE == 2; here we need lhSize+1 = 4");
                     litSize = MEM_readLE24(istart) >> 4;
-                    RETURN_ERROR_IF(srcSize<4, corruption_detected, "srcSize >= MIN_CBLOCK_SIZE == 3; here we need lhSize+1 = 4");
                     break;
                 }
                 RETURN_ERROR_IF(litSize > 0 && dst == NULL, dstSize_tooSmall, "NULL not handled");
@@ -541,7 +543,7 @@ void ZSTD_buildFSETable_body(ZSTD_seqSymbol* dt,
             for (i=0; i<n; i++) {
                 tableDecode[position].baseValue = s;
                 position = (position + step) & tableMask;
-                while (position > highThreshold) position = (position + step) & tableMask;   /* lowprob area */
+                while (UNLIKELY(position > highThreshold)) position = (position + step) & tableMask;   /* lowprob area */
         }   }
         assert(position == 0); /* position must reach all cells once, otherwise normalizedCounter is incorrect */
     }
@@ -965,6 +967,11 @@ size_t ZSTD_execSequence(BYTE* op,
 
     assert(op != NULL /* Precondition */);
     assert(oend_w < oend /* No underflow */);
+
+#if defined(__aarch64__)
+    /* prefetch sequence starting from match that will be used for copy later */
+    PREFETCH_L1(match);
+#endif
     /* Handle edge cases in a slow path:
      *   - Read beyond end of literals
      *   - Match end is within WILDCOPY_OVERLIMIT of oend
@@ -1571,7 +1578,7 @@ ZSTD_decompressSequences_body(ZSTD_DCtx* dctx,
     const BYTE* const prefixStart = (const BYTE*)(dctx->prefixStart);
     const BYTE* const vBase = (const BYTE*)(dctx->virtualStart);
     const BYTE* const dictEnd = (const BYTE*)(dctx->dictEnd);
-    DEBUGLOG(5, "ZSTD_decompressSequences_body");
+    DEBUGLOG(5, "ZSTD_decompressSequences_body: nbSeq = %d", nbSeq);
     (void)frame;
 
     /* Regen sequences */

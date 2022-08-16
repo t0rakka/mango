@@ -29,6 +29,7 @@
 
 #include "zpng.h"
 
+#define ZSTD_DISABLE_DEPRECATE_WARNINGS
 #include "../zstd/zstd.h"
 
 #include <stdlib.h> // calloc
