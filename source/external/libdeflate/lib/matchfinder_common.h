@@ -27,19 +27,16 @@ loaded_u32_to_u24(u32 v)
 }
 
 /*
- * Load the next 3 bytes from the memory location @p into the 24 low-order bits
- * of a 32-bit value.  The order in which the 3 bytes will be arranged as octets
- * in the 24 bits is platform-dependent.  At least LOAD_U24_REQUIRED_NBYTES
- * bytes must be available at @p; note that this may be more than 3.
+ * Load the next 3 bytes from @p into the 24 low-order bits of a 32-bit value.
+ * The order in which the 3 bytes will be arranged as octets in the 24 bits is
+ * platform-dependent.  At least 4 bytes (not 3) must be available at @p.
  */
 static forceinline u32
 load_u24_unaligned(const u8 *p)
 {
 #if UNALIGNED_ACCESS_IS_FAST
-#  define LOAD_U24_REQUIRED_NBYTES 4
 	return loaded_u32_to_u24(load_u32_unaligned(p));
 #else
-#  define LOAD_U24_REQUIRED_NBYTES 3
 	if (CPU_IS_LITTLE_ENDIAN())
 		return ((u32)p[0] << 0) | ((u32)p[1] << 8) | ((u32)p[2] << 16);
 	else
@@ -51,7 +48,7 @@ load_u24_unaligned(const u8 *p)
 
 typedef s16 mf_pos_t;
 
-#define MATCHFINDER_INITVAL ((mf_pos_t)(0-MATCHFINDER_WINDOW_SIZE))
+#define MATCHFINDER_INITVAL ((mf_pos_t)-MATCHFINDER_WINDOW_SIZE)
 
 /*
  * Required alignment of the matchfinder buffer pointer and size.  The values
@@ -128,9 +125,9 @@ matchfinder_rebase(mf_pos_t *data, size_t size)
 	} else {
 		for (i = 0; i < num_entries; i++) {
 			if (data[i] >= 0)
-				data[i] -= (mf_pos_t)(0-MATCHFINDER_WINDOW_SIZE);
+				data[i] -= (mf_pos_t)-MATCHFINDER_WINDOW_SIZE;
 			else
-				data[i] = (mf_pos_t)(0-MATCHFINDER_WINDOW_SIZE);
+				data[i] = (mf_pos_t)-MATCHFINDER_WINDOW_SIZE;
 		}
 	}
 }
