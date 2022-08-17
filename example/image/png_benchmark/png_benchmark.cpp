@@ -12,6 +12,7 @@ using namespace mango::image;
 #define ENABLE_LODEPNG
 #define ENABLE_STB
 #define ENABLE_SPNG
+//#define ENABLE_RPNG
 #define ENABLE_WUFFS
 #define ENABLE_MANGO
 
@@ -427,6 +428,41 @@ size_t save_spng(const Bitmap& bitmap)
 #endif
 
 // ----------------------------------------------------------------------
+// rpng
+// ----------------------------------------------------------------------
+
+#if defined(ENABLE_FPNG)
+
+#define RPNG_IMPLEMENTATION
+#define RPNG_DEFLATE_IMPLEMENTATION
+#include "rpng/rpng.h"
+
+void load_rpng(Memory memory)
+{
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+    int depth = 0;
+
+    const char* buffer = reinterpret_cast<const char*>(memory.address);
+    char* image = rpng_load_image_from_memory(buffer, &width, &height, &channels, &depth);
+    if (image)
+    {
+        free(image);
+    }
+}
+
+size_t save_rpng(const Bitmap& bitmap)
+{
+    const char* filename = "output-rpng.png";
+    const char* image = reinterpret_cast<const char*>(bitmap.image);
+    rpng_save_image(filename, image, bitmap.width, bitmap.height, 4, 8);
+    return get_file_size(filename);
+}
+
+#endif
+
+// ----------------------------------------------------------------------
 // FPNG
 // ----------------------------------------------------------------------
 
@@ -685,6 +721,10 @@ int main(int argc, const char* argv[])
 
 #if defined(ENABLE_SPNG)
     test("spng:    ", load_spng, save_spng, buffer, bitmap);
+#endif
+
+#if defined(ENABLE_RPNG)
+    test("rpng:    ", load_rpng, save_rpng, buffer, bitmap);
 #endif
 
 #if defined(ENABLE_FPNG)
