@@ -38,6 +38,10 @@
 #  include <string.h>	/* for memcpy() */
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(disable : 4018 4244) /* mango compiler warnings (32 bit compilation) */
+#endif
+
 /* ========================================================================== */
 /*                              Type definitions                              */
 /* ========================================================================== */
