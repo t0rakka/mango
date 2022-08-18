@@ -752,7 +752,7 @@ namespace
         crc = _mm_crc32_u32(crc, u32(data & 0xffffffff));
         crc = _mm_crc32_u32(crc, u32(data >> 32));
         return crc;
-    }(
+    }
 
 #endif // MANGO_CPU_64BIT
 
