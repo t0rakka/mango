@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/crc32.hpp>
 #include <mango/core/exception.hpp>
@@ -20,7 +20,10 @@
 #endif
 
 #if defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
+    /* NOTE: Disabled because slice-8 software lookup table is faster
+    #define ENABLE_PCLMUL_CRC32
     #define HARDWARE_U64_CRC32
+    */
 #endif
 
 #if defined(MANGO_ENABLE_SSE4_2)
@@ -709,7 +712,7 @@ namespace
     // Intel CLMUL implementation
     // ----------------------------------------------------------------------------------------
 
-#if defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
+#if defined(ENABLE_PCLMUL_CRC32)
 
     inline u32 u64_crc32(u32 crc, u64 data)
     {
@@ -724,7 +727,7 @@ namespace
         return _mm_extract_epi32(value, 2);
     }
 
-#endif // defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
+#endif // defined(ENABLE_PCLMUL_CRC32)
 
     // ----------------------------------------------------------------------------------------
     // Intel SSE4.2 implementation
@@ -759,7 +762,7 @@ namespace
 #endif // MANGO_ENABLE_SSE4_2
 
     // ----------------------------------------------------------------------------------------
-    // crc_combine
+    // mango_crc_combine
     // ----------------------------------------------------------------------------------------
 
     // Original implementation (C) Stephan Brumme
@@ -792,7 +795,7 @@ namespace
         return sum;
     }
 
-    u32 crc_combine(u32 crc, size_t length, const u32* table)
+    u32 mango_crc_combine(u32 crc, size_t length, const u32* table)
     {
         if (!length)
         {
@@ -933,10 +936,10 @@ namespace
 #endif
 
     // ----------------------------------------------------------------------------------------
-    // crc32
+    // mango_crc32
     // ----------------------------------------------------------------------------------------
 
-    u32 crc32(u32 crc, const u8* address, size_t size)
+    u32 mango_crc32(u32 crc, const u8* address, size_t size)
     {
         crc = ~crc;
 
@@ -973,83 +976,6 @@ namespace
                 size -= 64;
             }
 
-            /*
-            u32 c0 = crc;
-
-            constexpr size_t block0_size = g_skip_blocks * g_skip_block0_size;
-            constexpr size_t block1_size = g_skip_blocks * g_skip_block1_size;
-            constexpr size_t block2_size = g_skip_blocks * g_skip_block2_size;
-
-            while (size >= block0_size)
-            {
-                u32 c1 = 0;
-                u32 c2 = 0;
-                for (int i = 0; i < g_skip_block0_size; i += 32)
-                {
-                    c0 = u64_crc32(c0, uload64le(address + 0 * g_skip_block0_size + 0 * 8));
-                    c1 = u64_crc32(c1, uload64le(address + 1 * g_skip_block0_size + 0 * 8));
-                    c2 = u64_crc32(c2, uload64le(address + 2 * g_skip_block0_size + 0 * 8));
-
-                    c0 = u64_crc32(c0, uload64le(address + 0 * g_skip_block0_size + 1 * 8));
-                    c1 = u64_crc32(c1, uload64le(address + 1 * g_skip_block0_size + 1 * 8));
-                    c2 = u64_crc32(c2, uload64le(address + 2 * g_skip_block0_size + 1 * 8));
-
-                    c0 = u64_crc32(c0, uload64le(address + 0 * g_skip_block0_size + 2 * 8));
-                    c1 = u64_crc32(c1, uload64le(address + 1 * g_skip_block0_size + 2 * 8));
-                    c2 = u64_crc32(c2, uload64le(address + 2 * g_skip_block0_size + 2 * 8));
-
-                    c0 = u64_crc32(c0, uload64le(address + 0 * g_skip_block0_size + 3 * 8));
-                    c1 = u64_crc32(c1, uload64le(address + 1 * g_skip_block0_size + 3 * 8));
-                    c2 = u64_crc32(c2, uload64le(address + 2 * g_skip_block0_size + 3 * 8));
-
-                    address += 32;
-                }
-
-                c0 = skip_block(c0, g_crc32_block0_skip_table) ^ c1;
-                c0 = skip_block(c0, g_crc32_block0_skip_table) ^ c2;
-                address += (g_skip_blocks - 1) * g_skip_block0_size;
-                size -= block0_size;
-            }
-
-            while (size >= block1_size)
-            {
-                u32 c1 = 0;
-                u32 c2 = 0;
-                for (int i = 0; i < g_skip_block1_size; i += 8)
-                {
-                    c0 = u64_crc32(c0, uload64le(address + 0 * g_skip_block1_size));
-                    c1 = u64_crc32(c1, uload64le(address + 1 * g_skip_block1_size));
-                    c2 = u64_crc32(c2, uload64le(address + 2 * g_skip_block1_size));
-                    address += 8;
-                }
-
-                c0 = skip_block(c0, g_crc32_block1_skip_table) ^ c1;
-                c0 = skip_block(c0, g_crc32_block1_skip_table) ^ c2;
-                address += (g_skip_blocks - 1) * g_skip_block1_size;
-                size -= block1_size;
-            }
-
-            while (size >= block2_size)
-            {
-                u32 c1 = 0;
-                u32 c2 = 0;
-                for (int i = 0; i < g_skip_block2_size; i += 8)
-                {
-                    c0 = u64_crc32(c0, uload64le(address + 0 * g_skip_block2_size));
-                    c1 = u64_crc32(c1, uload64le(address + 1 * g_skip_block2_size));
-                    c2 = u64_crc32(c2, uload64le(address + 2 * g_skip_block2_size));
-                    address += 8;
-                }
-
-                c0 = skip_block(c0, g_crc32_block2_skip_table) ^ c1;
-                c0 = skip_block(c0, g_crc32_block2_skip_table) ^ c2;
-                address += (g_skip_blocks - 1) * g_skip_block2_size;
-                size -= block2_size;
-            }
-
-            crc = c0;
-            */
-
 #endif // HARDWARE_U64_CRC32
 
             while (size >= 8)
@@ -1070,10 +996,10 @@ namespace
     }
 
     // ----------------------------------------------------------------------------------------
-    // crc32c
+    // mango_crc32c
     // ----------------------------------------------------------------------------------------
 
-    u32 crc32c(u32 crc, const u8* address, size_t size)
+    u32 mango_crc32c(u32 crc, const u8* address, size_t size)
     {
         crc = ~crc;
 
@@ -1315,24 +1241,24 @@ namespace mango
 
     u32 crc32_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = ::crc_combine(crc0, length1, crc32_combine_table);
+        crc0 = mango_crc_combine(crc0, length1, crc32_combine_table);
         return crc0 ^ crc1;
     }
 
     u32 crc32c_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = ::crc_combine(crc0, length1, crc32c_combine_table);
+        crc0 = mango_crc_combine(crc0, length1, crc32c_combine_table);
         return crc0 ^ crc1;
     }
 
     u32 crc32(u32 crc, ConstMemory memory)
     {
-        return parallel_crc(::crc32, ::crc32_combine, crc, memory);
+        return parallel_crc(mango_crc32, mango::crc32_combine, crc, memory);
     }
 
     u32 crc32c(u32 crc, ConstMemory memory)
     {
-        return parallel_crc(::crc32c, ::crc32c_combine, crc, memory);
+        return parallel_crc(mango_crc32c, mango::crc32c_combine, crc, memory);
     }
 
 } // namespace mango
