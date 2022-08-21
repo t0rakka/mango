@@ -426,79 +426,161 @@ namespace
     // Intel CLMUL implementation
     // ----------------------------------------------------------------------------------------
 
-    /* NOTE: disabled because table lookup variant is faster
 #if defined(MANGO_ENABLE_SSE4_2) && defined(__PCLMUL__)
 
-    // https://merrymage.com/lab/crc32/
+    // * Copyright 2017 The Chromium Authors. All rights reserved.
+    // * Use of this source code is governed by a BSD-style license that can be
+    // * found in the Chromium source repository LICENSE file.
+
     // Enabled with -mpclmul compiler switch (clang, gcc)
 
     #define HARDWARE_CRC32
 
     inline
-    u32 u64_crc32(u32 crc, u64 data)
+    u32 crc32_bitwise(u32 crc, const u8* data, size_t length)
     {
-        __m128i magic = _mm_set_epi64x(0x00000001DB710641, 0xB4E5B025F7011641);
-        __m128i value = _mm_set_epi64x(0, data ^ crc);
+        constexpr u32 polynomial = 0xedB88320;
 
-        value = _mm_clmulepi64_si128(value, magic, 0x00);
-        value = _mm_clmulepi64_si128(value, magic, 0x10);
-        return _mm_extract_epi32(value, 2);
+        while (length--)
+        {
+            crc ^= *data++;
+            for (int i = 0; i < 8; ++i)
+            {
+                crc = (crc >> 1) ^ ((0 - (crc & 1)) & polynomial);
+            }
+        }
+
+        return crc;
+    }
+
+    u32 crc32_simd(u32 crc, const u8* data, size_t length)
+    {
+        const __m128i* buffer = reinterpret_cast<const __m128i*>(data);
+
+        __m128i x5, x6, x7, x8;
+        __m128i y5, y6, y7, y8;
+
+        // There's at least one block of 64
+        __m128i x1 = _mm_loadu_si128(buffer + 0);
+        __m128i x2 = _mm_loadu_si128(buffer + 1);
+        __m128i x3 = _mm_loadu_si128(buffer + 2);
+        __m128i x4 = _mm_loadu_si128(buffer + 3);
+
+        buffer += 4;
+        length -= 64;
+
+        x1 = _mm_xor_si128(x1, _mm_cvtsi32_si128(crc));
+        __m128i x0 = _mm_set_epi64x(0x00000001c6e41596, 0x0000000154442bd4);
+
+
+        // Parallel fold blocks of 64
+        while (length >= 64)
+        {
+            x5 = _mm_clmulepi64_si128(x1, x0, 0x00);
+            x6 = _mm_clmulepi64_si128(x2, x0, 0x00);
+            x7 = _mm_clmulepi64_si128(x3, x0, 0x00);
+            x8 = _mm_clmulepi64_si128(x4, x0, 0x00);
+
+            x1 = _mm_clmulepi64_si128(x1, x0, 0x11);
+            x2 = _mm_clmulepi64_si128(x2, x0, 0x11);
+            x3 = _mm_clmulepi64_si128(x3, x0, 0x11);
+            x4 = _mm_clmulepi64_si128(x4, x0, 0x11);
+
+            y5 = _mm_loadu_si128(buffer + 0);
+            y6 = _mm_loadu_si128(buffer + 1);
+            y7 = _mm_loadu_si128(buffer + 2);
+            y8 = _mm_loadu_si128(buffer + 3);
+
+            x1 = _mm_xor_si128(x1, x5);
+            x2 = _mm_xor_si128(x2, x6);
+            x3 = _mm_xor_si128(x3, x7);
+            x4 = _mm_xor_si128(x4, x8);
+
+            x1 = _mm_xor_si128(x1, y5);
+            x2 = _mm_xor_si128(x2, y6);
+            x3 = _mm_xor_si128(x3, y7);
+            x4 = _mm_xor_si128(x4, y8);
+
+            buffer += 4;
+            length -= 64;
+        }
+
+        // Fold into 128-bits
+        x0 = _mm_set_epi64x(0x00000000ccaa009e, 0x00000001751997d0);
+        x5 = _mm_clmulepi64_si128(x1, x0, 0x00);
+        x1 = _mm_clmulepi64_si128(x1, x0, 0x11);
+        x1 = _mm_xor_si128(x1, x2);
+        x1 = _mm_xor_si128(x1, x5);
+
+        x5 = _mm_clmulepi64_si128(x1, x0, 0x00);
+        x1 = _mm_clmulepi64_si128(x1, x0, 0x11);
+        x1 = _mm_xor_si128(x1, x3);
+        x1 = _mm_xor_si128(x1, x5);
+
+        x5 = _mm_clmulepi64_si128(x1, x0, 0x00);
+        x1 = _mm_clmulepi64_si128(x1, x0, 0x11);
+        x1 = _mm_xor_si128(x1, x4);
+        x1 = _mm_xor_si128(x1, x5);
+
+        // Single fold blocks of 16
+        while (length >= 16)
+        {
+            x2 = _mm_loadu_si128(buffer);
+            x5 = _mm_clmulepi64_si128(x1, x0, 0x00);
+            x1 = _mm_clmulepi64_si128(x1, x0, 0x11);
+            x1 = _mm_xor_si128(x1, x2);
+            x1 = _mm_xor_si128(x1, x5);
+
+            ++buffer;
+            length -= 16;
+        }
+
+        // Fold 128-bits to 64-bits
+        x2 = _mm_clmulepi64_si128(x1, x0, 0x10);
+        x3 = _mm_setr_epi32(~0, 0, ~0, 0);
+        x1 = _mm_srli_si128(x1, 8);
+        x1 = _mm_xor_si128(x1, x2);
+
+        x0 = _mm_set_epi64x(0x0000000000000000, 0x0000000163cd6124);
+        x2 = _mm_srli_si128(x1, 4);
+        x1 = _mm_and_si128(x1, x3);
+        x1 = _mm_clmulepi64_si128(x1, x0, 0x00);
+        x1 = _mm_xor_si128(x1, x2);
+
+        // Barret reduce to 32-bits
+        x0 = _mm_set_epi64x(0x00000001f7011641, 0x00000001db710641);
+        x2 = _mm_and_si128(x1, x3);
+        x2 = _mm_clmulepi64_si128(x2, x0, 0x10);
+        x2 = _mm_and_si128(x2, x3);
+        x2 = _mm_clmulepi64_si128(x2, x0, 0x00);
+        x1 = _mm_xor_si128(x1, x2);
+
+        return _mm_extract_epi32(x1, 1);
     }
 
     u32 mango_crc32(u32 crc, const u8* address, size_t size)
     {
         crc = ~crc;
 
-        uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(address)) & 7;
-        if (alignment + 8 < size)
+        // The simd code can only handle blocks of 64 bytes
+        size_t chunk_size = size & ~63;
+
+        if (chunk_size > 0)
         {
-            size -= alignment;
-            while (alignment-- > 0)
-            {
-                //crc = u8_crc32(crc, *address++);
-            }
-
-            while (size >= 64)
-            {
-                u64 data0 = uload64le(address + 8 * 0);
-                u64 data1 = uload64le(address + 8 * 1);
-                u64 data2 = uload64le(address + 8 * 2);
-                u64 data3 = uload64le(address + 8 * 3);
-                u64 data4 = uload64le(address + 8 * 4);
-                u64 data5 = uload64le(address + 8 * 5);
-                u64 data6 = uload64le(address + 8 * 6);
-                u64 data7 = uload64le(address + 8 * 7);
-                crc = u64_crc32(crc, data0);
-                crc = u64_crc32(crc, data1);
-                crc = u64_crc32(crc, data2);
-                crc = u64_crc32(crc, data3);
-                crc = u64_crc32(crc, data4);
-                crc = u64_crc32(crc, data5);
-                crc = u64_crc32(crc, data6);
-                crc = u64_crc32(crc, data7);
-                address += 64;
-                size -= 64;
-            }
-
-            while (size >= 8)
-            {
-                u64 data = uload64le(address);
-                crc = u64_crc32(crc, data);
-                address += 8;
-                size -= 8;
-            }
+            crc = crc32_simd(crc, address, chunk_size);
+            size -= chunk_size;
+            address += chunk_size;
         }
 
-        while (size-- > 0)
+        if (size > 0)
         {
-            //crc = u8_crc32(crc, *address++);
+            crc = crc32_bitwise(crc, address, size);
         }
 
         return ~crc;
     }
 
 #endif
-    */
 
     // ----------------------------------------------------------------------------------------
     // slice-by-8 table implementation
