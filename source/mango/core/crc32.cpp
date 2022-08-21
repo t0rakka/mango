@@ -472,7 +472,6 @@ namespace
         x1 = _mm_xor_si128(x1, _mm_cvtsi32_si128(crc));
         __m128i x0 = _mm_set_epi64x(0x00000001c6e41596, 0x0000000154442bd4);
 
-
         // Parallel fold blocks of 64
         while (length >= 64)
         {
@@ -562,10 +561,11 @@ namespace
     {
         crc = ~crc;
 
-        // The simd code can only handle blocks of 64 bytes
-        size_t chunk_size = size & ~63;
+        // The simd code can only handle blocks of 16 bytes
+        size_t chunk_size = size & ~15;
 
-        if (chunk_size > 0)
+        // The simd code can handle minimum of 64 bytes
+        if (chunk_size >= 64)
         {
             crc = crc32_simd(crc, address, chunk_size);
             size -= chunk_size;
