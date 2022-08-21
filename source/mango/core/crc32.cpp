@@ -45,7 +45,7 @@ namespace
         return __crc32cd(crc, data);
     }
 
-    u32 mango_crc32(u32 crc, const u8* address, size_t size)
+    u32 crc32(u32 crc, const u8* address, size_t size)
     {
         crc = ~crc;
 
@@ -97,7 +97,7 @@ namespace
         return ~crc;
     }
 
-    u32 mango_crc32c(u32 crc, const u8* address, size_t size)
+    u32 crc32c(u32 crc, const u8* address, size_t size)
     {
         crc = ~crc;
 
@@ -315,7 +315,7 @@ namespace
 
 #endif // MANGO_CPU_64BIT
 
-    u32 mango_crc32c(u32 crc, const u8* address, size_t size)
+    u32 crc32c(u32 crc, const u8* address, size_t size)
     {
         crc = ~crc;
 
@@ -557,7 +557,7 @@ namespace
         return _mm_extract_epi32(x1, 1);
     }
 
-    u32 mango_crc32(u32 crc, const u8* address, size_t size)
+    u32 crc32(u32 crc, const u8* address, size_t size)
     {
         crc = ~crc;
 
@@ -580,7 +580,7 @@ namespace
         return ~crc;
     }
 
-#endif
+#endif // defined(MANGO_ENABLE_SSE4_2) && defined(__PCLMUL__)
 
     // ----------------------------------------------------------------------------------------
     // slice-by-8 table implementation
@@ -891,7 +891,7 @@ namespace
         return u64_crc(crc, data, g_crc32_table);
     }
 
-    u32 mango_crc32(u32 crc, const u8* address, size_t size)
+    u32 crc32(u32 crc, const u8* address, size_t size)
     {
         crc = ~crc;
 
@@ -1205,7 +1205,7 @@ namespace
         return u64_crc(crc, data, g_crc32c_table);
     }
 
-    u32 mango_crc32c(u32 crc, const u8* address, size_t size)
+    u32 crc32c(u32 crc, const u8* address, size_t size)
     {
         crc = ~crc;
 
@@ -1238,7 +1238,7 @@ namespace
 #endif // !defined(HARDWARE_CRC32)
 
     // ----------------------------------------------------------------------------------------
-    // mango_crc_combine
+    // crc_combine
     // ----------------------------------------------------------------------------------------
 
     constexpr u32 crc32_polynomial_little_endian  = 0xedb88320;
@@ -1292,35 +1292,37 @@ namespace
         return sum;
     }
 
-    u32 mango_crc_combine(u32 crc, size_t length, const u32* table)
+    u32 crc_combine(u32 crc, size_t length, const u32* table)
     {
         if (!length)
         {
             return crc;
         }
 
-        constexpr int BITS = 32;
-
-        u32 odd[BITS];
-        u32 even[BITS];
-
-        odd[0] = table[0];
-        odd[1] = table[1];
-        odd[2] = table[2];
-        odd[3] = table[3];
-
-        for (int i = 0; i < 28; ++i)
+        u32 odd [] =
         {
-            odd[i + 4] = 1 << i;
-        }
+            table[0], table[1], table[2], table[3],
+            0x00000001, 0x00000002, 0x00000004, 0x00000008,
+            0x00000010, 0x00000020, 0x00000040, 0x00000080,
+            0x00000100, 0x00000200, 0x00000400, 0x00000800,
+            0x00001000, 0x00002000, 0x00004000, 0x00008000,
+            0x00010000, 0x00020000, 0x00040000, 0x00080000,
+            0x00100000, 0x00200000, 0x00400000, 0x00800000,
+            0x01000000, 0x02000000, 0x04000000, 0x08000000,
+        };
 
-        even[0] = table[2];
-        even[1] = table[3];
-
-        for (int i = 0; i < 30; ++i)
+        u32 even [] =
         {
-            even[i + 2] = 1 << i;
-        }
+            table[2], table[3],
+            0x00000001, 0x00000002, 0x00000004, 0x00000008,
+            0x00000010, 0x00000020, 0x00000040, 0x00000080,
+            0x00000100, 0x00000200, 0x00000400, 0x00000800,
+            0x00001000, 0x00002000, 0x00004000, 0x00008000,
+            0x00010000, 0x00020000, 0x00040000, 0x00080000,
+            0x00100000, 0x00200000, 0x00400000, 0x00800000,
+            0x01000000, 0x02000000, 0x04000000, 0x08000000,
+            0x10000000, 0x20000000,
+        };
 
         u32* a = even;
         u32* b = odd;
@@ -1328,7 +1330,7 @@ namespace
         // apply length zeros to crc
         for ( ; length > 0; length >>= 1)
         {
-            for (int i = 0; i < BITS; ++i)
+            for (int i = 0; i < 32; ++i)
             {
                 a[i] = combine(b[i], b);
             }
@@ -1364,7 +1366,12 @@ namespace
         size_t block = std::max(MIN_BLOCK, memory.size / (ThreadPool::getHardwareConcurrency() * 2));
         int threads = int(memory.size / block);
 
-        std::vector<u32> temp(threads);
+        struct Block
+        {
+            size_t bytes;
+            u32 crc;
+        };
+        std::vector<Block> temp(threads);
 
         ConcurrentQueue q;
 
@@ -1377,7 +1384,8 @@ namespace
 
             q.enqueue([compute, &temp, i, address, bytes]
             {
-                temp[i] = compute(0, address, bytes);
+                temp[i].bytes = bytes;
+                temp[i].crc = compute(0, address, bytes);
             });
         }
 
@@ -1388,10 +1396,7 @@ namespace
 
         for (int i = 1; i < threads; ++i)
         {
-            size_t left = memory.size - block * i;
-            size_t bytes = (i == threads - 1) ? left : std::min(block, left);
-
-            crc = combine(crc, temp[i], bytes);
+            crc = combine(crc, temp[i].crc, temp[i].bytes);
         }
 
         return crc;
@@ -1404,24 +1409,24 @@ namespace mango
 
     u32 crc32_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = mango_crc_combine(crc0, length1, crc32_combine_table);
+        crc0 = ::crc_combine(crc0, length1, crc32_combine_table);
         return crc0 ^ crc1;
     }
 
     u32 crc32c_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = mango_crc_combine(crc0, length1, crc32c_combine_table);
+        crc0 = ::crc_combine(crc0, length1, crc32c_combine_table);
         return crc0 ^ crc1;
     }
 
     u32 crc32(u32 crc, ConstMemory memory)
     {
-        return parallel_crc(mango_crc32, mango::crc32_combine, crc, memory);
+        return parallel_crc(::crc32, mango::crc32_combine, crc, memory);
     }
 
     u32 crc32c(u32 crc, ConstMemory memory)
     {
-        return parallel_crc(mango_crc32c, mango::crc32c_combine, crc, memory);
+        return parallel_crc(::crc32c, mango::crc32c_combine, crc, memory);
     }
 
 } // namespace mango
