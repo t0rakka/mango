@@ -607,6 +607,37 @@ namespace
         return crc;
     }
 
+    template <typename C8, typename C64>
+    u32 ComputeCRC(C8 compute8, C64 compute64, u32 crc, const u8* address, size_t size)
+    {
+        crc = ~crc;
+
+        uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(address)) & 7;
+        if (alignment + 8 < size)
+        {
+            size -= alignment;
+            while (alignment-- > 0)
+            {
+                crc = compute8(crc, *address++);
+            }
+
+            while (size >= 8)
+            {
+                u64 data = uload64le(address);
+                crc = compute64(crc, data);
+                address += 8;
+                size -= 8;
+            }
+        }
+
+        while (size-- > 0)
+        {
+            crc = compute8(crc, *address++);
+        }
+
+        return ~crc;
+    }
+
 #endif // !defined(HARDWARE_CRC32) || !defined(HARDWARE_CRC32C)
 
 #if !defined(HARDWARE_CRC32)
@@ -891,34 +922,10 @@ namespace
         return u64_crc(crc, data, g_crc32_table);
     }
 
+    inline
     u32 crc32(u32 crc, const u8* address, size_t size)
     {
-        crc = ~crc;
-
-        uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(address)) & 7;
-        if (alignment + 8 < size)
-        {
-            size -= alignment;
-            while (alignment-- > 0)
-            {
-                crc = u8_crc32(crc, *address++);
-            }
-
-            while (size >= 8)
-            {
-                u64 data = uload64le(address);
-                crc = u64_crc32(crc, data);
-                address += 8;
-                size -= 8;
-            }
-        }
-
-        while (size-- > 0)
-        {
-            crc = u8_crc32(crc, *address++);
-        }
-
-        return ~crc;
+        return ComputeCRC(u8_crc32, u64_crc32, crc, address, size);
     }
 
 #endif // !defined(HARDWARE_CRC32)
@@ -1205,40 +1212,16 @@ namespace
         return u64_crc(crc, data, g_crc32c_table);
     }
 
+    inline
     u32 crc32c(u32 crc, const u8* address, size_t size)
     {
-        crc = ~crc;
-
-        uintptr_t alignment = (0 - reinterpret_cast<uintptr_t>(address)) & 7;
-        if (alignment + 8 < size)
-        {
-            size -= alignment;
-            while (alignment-- > 0)
-            {
-                crc = u8_crc32c(crc, *address++);
-            }
-
-            while (size >= 8)
-            {
-                u64 data = uload64le(address);
-                crc = u64_crc32c(crc, data);
-                address += 8;
-                size -= 8;
-            }
-        }
-
-        while (size-- > 0)
-        {
-            crc = u8_crc32c(crc, *address++);
-        }
-
-        return ~crc;
+        return ComputeCRC(u8_crc32c, u64_crc32c, crc, address, size);
     }
 
 #endif // !defined(HARDWARE_CRC32)
 
     // ----------------------------------------------------------------------------------------
-    // crc_combine
+    // CombineCRC
     // ----------------------------------------------------------------------------------------
 
     constexpr u32 crc32_polynomial_little_endian  = 0xedb88320;
@@ -1292,7 +1275,7 @@ namespace
         return sum;
     }
 
-    u32 crc_combine(u32 crc, size_t length, const u32* table)
+    u32 CombineCRC(u32 crc, size_t length, const u32* table)
     {
         if (!length)
         {
@@ -1348,11 +1331,11 @@ namespace
     }
 
     // ----------------------------------------------------------------------------------------
-    // parallel_crc
+    // ParallelCRC
     // ----------------------------------------------------------------------------------------
 
-    template<typename Compute, typename Combine>
-    u32 parallel_crc(Compute compute, Combine combine, u32 crc, ConstMemory memory)
+    template <typename Compute, typename Combine>
+    u32 ParallelCRC(Compute compute, Combine combine, u32 crc, ConstMemory memory)
     {
         constexpr size_t KB = 1 << 10;
         constexpr size_t MIN_BLOCK = 256 * KB;
@@ -1409,24 +1392,24 @@ namespace mango
 
     u32 crc32_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = ::crc_combine(crc0, length1, crc32_combine_table);
+        crc0 = CombineCRC(crc0, length1, crc32_combine_table);
         return crc0 ^ crc1;
     }
 
     u32 crc32c_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = ::crc_combine(crc0, length1, crc32c_combine_table);
+        crc0 = CombineCRC(crc0, length1, crc32c_combine_table);
         return crc0 ^ crc1;
     }
 
     u32 crc32(u32 crc, ConstMemory memory)
     {
-        return parallel_crc(::crc32, mango::crc32_combine, crc, memory);
+        return ParallelCRC(::crc32, mango::crc32_combine, crc, memory);
     }
 
     u32 crc32c(u32 crc, ConstMemory memory)
     {
-        return parallel_crc(::crc32c, mango::crc32c_combine, crc, memory);
+        return ParallelCRC(::crc32c, mango::crc32c_combine, crc, memory);
     }
 
 } // namespace mango
