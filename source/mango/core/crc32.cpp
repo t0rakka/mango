@@ -439,7 +439,7 @@ namespace
     inline
     u32 crc32_bitwise(u32 crc, const u8* data, size_t length)
     {
-        constexpr u32 polynomial = 0xedB88320;
+        constexpr u32 polynomial = 0xedb88320;
 
         while (length--)
         {
