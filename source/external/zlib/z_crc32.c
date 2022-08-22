@@ -1090,8 +1090,7 @@ uLong ZEXPORT crc32_combine(crc1, crc2, len2)
 }
 
 /* ========================================================================= */
-uLong ZEXPORT crc32_combine_gen64(len2)
-    z_off64_t len2;
+uLong ZEXPORT crc32_combine_gen64(z_off64_t len2)
 {
 #ifdef DYNAMIC_CRC_TABLE
     once(&made, make_crc_table);
