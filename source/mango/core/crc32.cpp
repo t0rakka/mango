@@ -3,7 +3,6 @@
     Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/crc32.hpp>
-#include <mango/core/exception.hpp>
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
 #include <mango/core/thread.hpp>
@@ -1224,110 +1223,82 @@ namespace
     // CombineCRC
     // ----------------------------------------------------------------------------------------
 
+    /*
     constexpr u32 crc32_polynomial_little_endian  = 0xedb88320;
     constexpr u32 crc32c_polynomial_little_endian = 0x82f63b78;
-    /*
     constexpr u32 crc32_polynomial_big_endian     = 0x04c11db7;
     constexpr u32 crc32c_polynomial_big_endian    = 0x1edc6f41;
     */
 
-    constexpr u32 crc32_combine_table [] =
+    constexpr u32 g_crc32_combine_table [] =
     {
-        0x1db71064,
-        0x3b6e20c8,
-        0x76dc4190,
-        crc32_polynomial_little_endian,
+        0x40000000, 0x20000000, 0x08000000, 0x00800000,
+        0x00008000, 0xedb88320, 0xb1e6b092, 0xa06a2517,
+        0xed627dae, 0x88d14467, 0xd7bbfe6a, 0xec447f11,
+        0x8e7ea170, 0x6427800e, 0x4d47bae0, 0x09fe548f,
+        0x83852d0f, 0x30362f1a, 0x7b5a9cc3, 0x31fec169,
+        0x9fec022a, 0x6c8dedc4, 0x15d6874d, 0x5fde7a4e,
+        0xbad90e37, 0x2e4e5eef, 0x4eaba214, 0xa8a472c0,
+        0x429a969e, 0x148d302a, 0xc40ba6d0, 0xc4e22c3c,
     };
 
-    constexpr u32 crc32c_combine_table [] =
+    constexpr u32 g_crc32c_combine_table [] =
     {
-        0x105ec76f,
-        0x20bd8ede,
-        0x417b1dbc,
-        crc32c_polynomial_little_endian,
+        0x40000000, 0x20000000, 0x08000000, 0x00800000,
+        0x00008000, 0x82f63b78, 0x6ea2d55c, 0x18b8ea18,
+        0x510ac59a, 0xb82be955, 0xb8fdb1e7, 0x88e56f72,
+        0x74c360a4, 0xe4172b16, 0x0d65762a, 0x35d73a62,
+        0x28461564, 0xbf455269, 0xe2ea32dc, 0xfe7740e6,
+        0xf946610b, 0x3c204f8f, 0x538586e3, 0x59726915,
+        0x734d5309, 0xbc1ac763, 0x7d0722cc, 0xd289cabe,
+        0xe94ca9bc, 0x05b74f3f, 0xa51e1f42, 0x40000000,
     };
 
-    static inline
-    u32 combine(u32 value, const u32* table)
+    inline
+    u32 multmodp(u32 a, u32 b, u32 poly)
     {
-        u32 sum = 0;
-#if 1
-        // NOTE: Requires fast tzcnt instruction
-        //       The emulated tzcnt uses multiplication and high bit-density values will
-        //       result in dramatic performance decrease. :(
-        int index = 0;
-        while (value)
+        u32 m = 1 << 31;
+        u32 p = 0;
+
+        for ( ;; )
         {
-            int count = u32_tzcnt(value) + 1;
-            index += count;
-            value >>= count;
-            sum ^= table[index - 1];
-        }
-#else
-        for (int i = 0; value != 0; i++, value >>= 1)
-        {
-            if (value & 1)
+            if (a & m)
             {
-                sum ^= table[i];
+                p ^= b;
+                if ((a & (m - 1)) == 0)
+                    break;
             }
+            m >>= 1;
+            b = b & 1 ? (b >> 1) ^ poly : b >> 1;
         }
-#endif
-        return sum;
+
+        return p;
     }
 
-    u32 CombineCRC(u32 crc, size_t length, const u32* table)
+    inline
+    u32 x2nmodp(size_t length, u32 k, const u32* table)
     {
-        if (!length)
+        const u32 polynomial = table[5];
+
+        u32 p = 1 << 31;
+
+        while (length)
         {
-            return crc;
-        }
-
-        u32 odd [] =
-        {
-            table[0], table[1], table[2], table[3],
-            0x00000001, 0x00000002, 0x00000004, 0x00000008,
-            0x00000010, 0x00000020, 0x00000040, 0x00000080,
-            0x00000100, 0x00000200, 0x00000400, 0x00000800,
-            0x00001000, 0x00002000, 0x00004000, 0x00008000,
-            0x00010000, 0x00020000, 0x00040000, 0x00080000,
-            0x00100000, 0x00200000, 0x00400000, 0x00800000,
-            0x01000000, 0x02000000, 0x04000000, 0x08000000,
-        };
-
-        u32 even [] =
-        {
-            table[2], table[3],
-            0x00000001, 0x00000002, 0x00000004, 0x00000008,
-            0x00000010, 0x00000020, 0x00000040, 0x00000080,
-            0x00000100, 0x00000200, 0x00000400, 0x00000800,
-            0x00001000, 0x00002000, 0x00004000, 0x00008000,
-            0x00010000, 0x00020000, 0x00040000, 0x00080000,
-            0x00100000, 0x00200000, 0x00400000, 0x00800000,
-            0x01000000, 0x02000000, 0x04000000, 0x08000000,
-            0x10000000, 0x20000000,
-        };
-
-        u32* a = even;
-        u32* b = odd;
-
-        // apply length zeros to crc
-        for ( ; length > 0; length >>= 1)
-        {
-            for (int i = 0; i < 32; ++i)
-            {
-                a[i] = combine(b[i], b);
-            }
-
-            // apply zeros operator for this bit
             if (length & 1)
-            {
-                crc = combine(crc, a);
-            }
-
-            std::swap(a, b);
+                p = multmodp(table[k & 31], p, polynomial);
+            length >>= 1;
+            ++k;
         }
 
-        return crc;
+        return p;
+    }
+
+    inline
+    u32 CombineCRC(u32 crc0, u32 crc1, size_t length1, const u32* table)
+    {
+        const u32 polynomial = table[5];
+        u32 p = x2nmodp(length1, 3, table);
+        return multmodp(p, crc0, polynomial) ^ crc1;
     }
 
     // ----------------------------------------------------------------------------------------
@@ -1392,14 +1363,12 @@ namespace mango
 
     u32 crc32_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = CombineCRC(crc0, length1, crc32_combine_table);
-        return crc0 ^ crc1;
+        return CombineCRC(crc0, crc1, length1, g_crc32_combine_table);
     }
 
     u32 crc32c_combine(u32 crc0, u32 crc1, size_t length1)
     {
-        crc0 = CombineCRC(crc0, length1, crc32c_combine_table);
-        return crc0 ^ crc1;
+        return CombineCRC(crc0, crc1, length1, g_crc32c_combine_table);
     }
 
     u32 crc32(u32 crc, ConstMemory memory)
