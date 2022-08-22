@@ -1255,7 +1255,7 @@ namespace
     };
 
     inline
-    u32 multmodp(u32 a, u32 b, u32 poly)
+    u32 multmodp(u32 a, u32 b, u32 polynomial)
     {
         u32 m = 1 << 31;
         u32 p = 0;
@@ -1269,20 +1269,21 @@ namespace
                     break;
             }
             m >>= 1;
-            b = b & 1 ? (b >> 1) ^ poly : b >> 1;
+            b = b & 1 ? (b >> 1) ^ polynomial : b >> 1;
         }
 
         return p;
     }
 
     inline
-    u32 x2nmodp(size_t length, u32 k, const u32* table)
+    u32 CombineCRC(u32 crc0, u32 crc1, size_t length, const u32* table)
     {
         const u32 polynomial = table[5];
 
+        u32 k = 3;
         u32 p = 1 << 31;
 
-        while (length)
+        while (length > 0)
         {
             if (length & 1)
                 p = multmodp(table[k & 31], p, polynomial);
@@ -1290,14 +1291,6 @@ namespace
             ++k;
         }
 
-        return p;
-    }
-
-    inline
-    u32 CombineCRC(u32 crc0, u32 crc1, size_t length1, const u32* table)
-    {
-        const u32 polynomial = table[5];
-        u32 p = x2nmodp(length1, 3, table);
         return multmodp(p, crc0, polynomial) ^ crc1;
     }
 
