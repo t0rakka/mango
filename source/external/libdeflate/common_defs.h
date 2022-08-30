@@ -56,6 +56,7 @@ typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
+// mango fix: ssize_t visibility (GCC / Linux)
 #if defined(__linux__)
 	#include <sys/types.h>
 #endif
@@ -152,7 +153,8 @@ typedef size_t machine_word_t;
 /* restrict - hint that writes only occur through the given pointer */
 #ifdef __GNUC__
 #  define restrict		__restrict__
-#else
+#elif defined(_MSC_VER) && (!defined(__STDC_VERSION__) || \
+			    __STDC_VERSION__ < 201112L)
 /* Don't use MSVC's __restrict; it has nonstandard behavior. */
 #  define restrict
 #endif
@@ -500,7 +502,7 @@ put_unaligned_leword(machine_word_t v, u8 *p)
 {
 	STATIC_ASSERT(WORDBITS == 32 || WORDBITS == 64);
 	if (WORDBITS == 32)
-		put_unaligned_le32((u32)v, p);
+		put_unaligned_le32(v, p);
 	else
 		put_unaligned_le64(v, p);
 }
@@ -521,8 +523,10 @@ bsr32(u32 v)
 #ifdef __GNUC__
 	return 31 - __builtin_clz(v);
 #elif defined(_MSC_VER)
-	_BitScanReverse(&v, v);
-	return v;
+	unsigned long i;
+
+	_BitScanReverse(&i, v);
+	return i;
 #else
 	unsigned i = 0;
 
@@ -537,9 +541,11 @@ bsr64(u64 v)
 {
 #ifdef __GNUC__
 	return 63 - __builtin_clzll(v);
-#elif defined(_MSC_VER) && defined(_M_X64)
-	_BitScanReverse64(&v, v);
-	return (unsigned)v;
+#elif defined(_MSC_VER) && defined(_WIN64)
+	unsigned long i;
+
+	_BitScanReverse64(&i, v);
+	return i;
 #else
 	unsigned i = 0;
 
@@ -554,7 +560,7 @@ bsrw(machine_word_t v)
 {
 	STATIC_ASSERT(WORDBITS == 32 || WORDBITS == 64);
 	if (WORDBITS == 32)
-		return bsr32((u32)v);
+		return bsr32(v);
 	else
 		return bsr64(v);
 }
@@ -571,8 +577,10 @@ bsf32(u32 v)
 #ifdef __GNUC__
 	return __builtin_ctz(v);
 #elif defined(_MSC_VER)
-	_BitScanForward(&v, v);
-	return v;
+	unsigned long i;
+
+	_BitScanForward(&i, v);
+	return i;
 #else
 	unsigned i = 0;
 
@@ -587,9 +595,11 @@ bsf64(u64 v)
 {
 #ifdef __GNUC__
 	return __builtin_ctzll(v);
-#elif defined(_MSC_VER) && defined(_M_X64)
-	_BitScanForward64(&v, v);
-	return (unsigned)v;
+#elif defined(_MSC_VER) && defined(_WIN64)
+	unsigned long i;
+
+	_BitScanForward64(&i, v);
+	return i;
 #else
 	unsigned i = 0;
 
@@ -604,7 +614,7 @@ bsfw(machine_word_t v)
 {
 	STATIC_ASSERT(WORDBITS == 32 || WORDBITS == 64);
 	if (WORDBITS == 32)
-		return bsf32((u32)v);
+		return bsf32(v);
 	else
 		return bsf64(v);
 }
