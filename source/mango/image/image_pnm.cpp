@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <cctype>
@@ -85,13 +85,13 @@ namespace
 
     struct HeaderPNM
     {
-		int width;
-		int height;
-		int channels;
-		int maxvalue;
+        int width;
+        int height;
+        int channels;
+        int maxvalue;
         int endian;
 
-		bool is_ascii;
+        bool is_ascii;
         bool is_float;
         const char* data;
         u8 invert;
@@ -538,6 +538,42 @@ namespace
         return x;
     }
 
+    // ------------------------------------------------------------
+    // ImageEncoder
+    // ------------------------------------------------------------
+
+    ImageEncodeStatus imageEncodePFM(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    {
+        MANGO_UNREFERENCED(options);
+
+        u32 width = surface.width;
+        u32 height = surface.height;
+
+        LittleEndianStream s(stream);
+
+        std::string header = makeString("PF\n%d %d\n-1.0\n", width, height);
+        s.write(header.c_str(), header.length());
+
+        Bitmap temp(width, height, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32));
+        temp.blit(0, 0, surface);
+
+        for (int y = height - 1; y >= 0; --y)
+        {
+            float* scan = temp.address<float>(0, y);
+
+            for (int x = 0; x < width; ++x)
+            {
+                s.write32f(scan[0]);
+                s.write32f(scan[1]);
+                s.write32f(scan[2]);
+                scan += 4;
+            }
+        }
+
+        ImageEncodeStatus status;
+        return status;
+    }
+
 } // namespace
 
 namespace mango::image
@@ -550,6 +586,8 @@ namespace mango::image
         registerImageDecoder(createInterface, ".ppm");
         registerImageDecoder(createInterface, ".pam");
         registerImageDecoder(createInterface, ".pfm");
+
+        registerImageEncoder(imageEncodePFM, ".pfm");
     }
 
 } // namespace mango::image
