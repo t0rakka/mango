@@ -546,8 +546,8 @@ namespace
     {
         MANGO_UNREFERENCED(options);
 
-        u32 width = surface.width;
-        u32 height = surface.height;
+        int width = surface.width;
+        int height = surface.height;
 
         LittleEndianStream s(stream);
 
