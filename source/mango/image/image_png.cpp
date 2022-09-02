@@ -278,9 +278,9 @@ namespace
     using namespace mango::image;
     using namespace mango::math;
 
-    constexpr int PNG_SIMD_PADDING = 16;
-    constexpr int PNG_FILTER_BYTE = 1;
-    constexpr u64 PNG_HEADER_MAGIC = 0x89504e470d0a1a0a;
+    static constexpr int PNG_SIMD_PADDING = 16;
+    static constexpr int PNG_FILTER_BYTE = 1;
+    static constexpr u64 PNG_HEADER_MAGIC = 0x89504e470d0a1a0a;
 
     enum ColorType
     {

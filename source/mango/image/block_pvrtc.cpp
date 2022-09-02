@@ -38,7 +38,7 @@ namespace
         u32 u32ColorData;
     };
 
-    constexpr u32 PUNCHTHROUGH_ALPHA = 0x10;
+    static constexpr u32 PUNCHTHROUGH_ALPHA = 0x10;
 
     static Pixel32 getColorA(u32 u32ColorData)
     {
@@ -298,7 +298,8 @@ namespace
         return value & 0xf;
     }
 
-    constexpr int lerp(int a, int b, int mod)
+    static constexpr
+    int lerp(int a, int b, int mod)
     {
         return a + ((b - a) * mod) / 8;
     }
@@ -344,7 +345,8 @@ namespace
         }
     }
 
-    constexpr unsigned int wrapWordIndex(unsigned int numWords, int word)
+    static constexpr
+    unsigned int wrapWordIndex(unsigned int numWords, int word)
     {
         //return ((word + numWords) % numWords);
         return word & (numWords - 1); // numWords must be power of two
@@ -456,19 +458,22 @@ namespace
     // https://s3.amazonaws.com/pvr-sdk-live/sdk-documentation/PVRTC%20Specification%20and%20User%20Guide.pdf
     // http://sv-journal.org/2014-1/06/en/index.php?lang=en#7-3
 
-    constexpr u32 pvrtc2_extend(u32 value, int from, int to)
+    static constexpr
+    u32 pvrtc2_extend(u32 value, int from, int to)
     {
         return value * ((1 << to) - 1) / ((1 << from) - 1);
     }
 
 #if 0 // TODO: should use these (specification conforming)
-    constexpr u32 pvrtc2_alpha0(u32 alpha)
+    static constexpr
+    u32 pvrtc2_alpha0(u32 alpha)
     {
         alpha = (alpha << 1) | 0;
         return (alpha << 4) | alpha;
     }
 
-    constexpr u32 pvrtc2_alpha1(u32 alpha)
+    static constexpr
+    u32 pvrtc2_alpha1(u32 alpha)
     {
         alpha = (alpha << 1) | 1;
         return (alpha << 4) | alpha;

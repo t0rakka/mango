@@ -78,13 +78,14 @@ namespace
 
     */
 
-    constexpr u32 BITS_FP16 = (8 * 5);
-    constexpr u32 BITS_FP32 = (8 * 6);
-    constexpr u32 BITS_FP64 = (8 * 7);
-    //constexpr u32 BITS_UI16 = (8 * 8);
-    //constexpr u32 BITS_UI32 = (8 * 9);
+    static constexpr u32 BITS_FP16 = (8 * 5);
+    static constexpr u32 BITS_FP32 = (8 * 6);
+    static constexpr u32 BITS_FP64 = (8 * 7);
+    //static constexpr u32 BITS_UI16 = (8 * 8);
+    //static constexpr u32 BITS_UI32 = (8 * 9);
 
-    constexpr u32 MAKE_MODEMASK(u32 destBits, u32 sourceBits)
+    static constexpr
+    u32 MAKE_MODEMASK(u32 destBits, u32 sourceBits)
     {
         u32 destIndex = (destBits / 8) - 1;
         u32 sourceIndex = (sourceBits / 8) - 1;
@@ -97,21 +98,21 @@ namespace
 
         switch (format.type)
         {
-			case Format::UNORM:
-				bits = format.bits; // 8, 16, 24, 32
-				break;
+            case Format::UNORM:
+                bits = format.bits; // 8, 16, 24, 32
+                break;
 
-			case Format::FLOAT16:
-				bits = BITS_FP16;
-				break;
+            case Format::FLOAT16:
+                bits = BITS_FP16;
+                break;
 
-			case Format::FLOAT32:
-				bits = BITS_FP32;
-				break;
+            case Format::FLOAT32:
+                bits = BITS_FP32;
+                break;
 
-			case Format::FLOAT64:
+            case Format::FLOAT64:
                 bits = BITS_FP64;
-				break;
+                break;
 
             default:
                 break;

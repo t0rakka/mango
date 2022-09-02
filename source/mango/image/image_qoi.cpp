@@ -17,8 +17,8 @@ namespace
     // QOI codec
     // ------------------------------------------------------------
 
-    constexpr u32 QOI_HEADER_MAGIC = u32_mask('q', 'o', 'i', 'f');
-    constexpr u32 QOI_HEADER_SIZE = 14;
+    static constexpr u32 QOI_HEADER_MAGIC = u32_mask('q', 'o', 'i', 'f');
+    static constexpr u32 QOI_HEADER_SIZE = 14;
 
     enum : u8
     {
@@ -411,8 +411,8 @@ namespace
     // ImageDecoderTOI
     // ------------------------------------------------------------
 
-    constexpr u32 TOI_HEADER_MAGIC = u32_mask('t', 'o', 'i', 'f');
-    constexpr u32 TOI_HEADER_SIZE = 16;
+    static constexpr u32 TOI_HEADER_MAGIC = u32_mask('t', 'o', 'i', 'f');
+    static constexpr u32 TOI_HEADER_SIZE = 16;
 
     struct ImageDecoderTOI : ImageDecoderInterface
     {

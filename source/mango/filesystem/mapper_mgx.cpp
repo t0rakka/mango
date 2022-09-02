@@ -12,7 +12,7 @@ namespace
     using namespace mango;
     namespace fs = mango::filesystem;
 
-    constexpr u64 mgx_header_size = 24;
+    static constexpr u64 mgx_header_size = 24;
 
     struct Block
     {

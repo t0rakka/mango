@@ -21,7 +21,7 @@ namespace
     // Commodore 64 utilities
     // ------------------------------------------------------------
 
-    constexpr int g_c64_palette_size = 16;
+    static constexpr int g_c64_palette_size = 16;
 
     const Color g_c64_palette[] =
     { 

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include "jpeg.hpp"
@@ -12,7 +12,7 @@ namespace
     using namespace mango::math;
     using namespace jpeg;
 
-    constexpr int BLOCK_SIZE = 64;
+    static constexpr int BLOCK_SIZE = 64;
 
     // Table K.1 – Luminance quantization table
 

@@ -446,7 +446,7 @@ namespace
     // header
     // ----------------------------------------------------------------------------
 
-    constexpr int KTX_HEADER_SIZE = 64;
+    static constexpr int KTX_HEADER_SIZE = 64;
 
     struct HeaderKTX
     {

@@ -12,8 +12,8 @@
 namespace mango
 {
 
-    constexpr size_t BASE = 65521; // largest prime smaller than 65536
-    constexpr size_t NMAX = 5552;
+    static constexpr size_t BASE = 65521; // largest prime smaller than 65536
+    static constexpr size_t NMAX = 5552;
 
     static
     u32 adler32_remainder(u32 s1, u32 s2, const u8* buffer, size_t length)

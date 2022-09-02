@@ -208,10 +208,10 @@ namespace
 
     #define HARDWARE_CRC32C
 
-    constexpr int g_skip_blocks = 3;
-    constexpr int g_skip_block0_size = 5440; // must be multiple of 32
-    constexpr int g_skip_block1_size = 1360; // must be multiple of 8
-    constexpr int g_skip_block2_size = 336;  // must be multiple of 8
+    static constexpr int g_skip_blocks = 3;
+    static constexpr int g_skip_block0_size = 5440; // must be multiple of 32
+    static constexpr int g_skip_block1_size = 1360; // must be multiple of 8
+    static constexpr int g_skip_block2_size = 336;  // must be multiple of 8
 
     const u32 g_crc32c_block0_skip_table [] =
     {
@@ -1224,13 +1224,14 @@ namespace
     // ----------------------------------------------------------------------------------------
 
     /*
-    constexpr u32 crc32_polynomial_little_endian  = 0xedb88320;
-    constexpr u32 crc32c_polynomial_little_endian = 0x82f63b78;
-    constexpr u32 crc32_polynomial_big_endian     = 0x04c11db7;
-    constexpr u32 crc32c_polynomial_big_endian    = 0x1edc6f41;
+    static constexpr u32 crc32_polynomial_little_endian  = 0xedb88320;
+    static constexpr u32 crc32c_polynomial_little_endian = 0x82f63b78;
+    static constexpr u32 crc32_polynomial_big_endian     = 0x04c11db7;
+    static constexpr u32 crc32c_polynomial_big_endian    = 0x1edc6f41;
     */
 
-    constexpr u32 g_crc32_combine_table [] =
+    static constexpr
+    u32 g_crc32_combine_table [] =
     {
         0x40000000, 0x20000000, 0x08000000, 0x00800000,
         0x00008000, 0xedb88320, 0xb1e6b092, 0xa06a2517,
@@ -1242,7 +1243,8 @@ namespace
         0x429a969e, 0x148d302a, 0xc40ba6d0, 0xc4e22c3c,
     };
 
-    constexpr u32 g_crc32c_combine_table [] =
+    static constexpr
+    u32 g_crc32c_combine_table [] =
     {
         0x40000000, 0x20000000, 0x08000000, 0x00800000,
         0x00008000, 0x82f63b78, 0x6ea2d55c, 0x18b8ea18,

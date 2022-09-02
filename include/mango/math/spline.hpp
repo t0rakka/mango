@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,7 +10,7 @@
 namespace mango::math
 {
 
-    constexpr double pi = 3.14159265358979323846264338327;
+    static constexpr double pi = 3.14159265358979323846264338327;
 
     // ------------------------------------------------------------------
     // easing functions

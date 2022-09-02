@@ -14,7 +14,8 @@ namespace mango::image
 {
     class Surface;
 
-    constexpr u32 makeTextureCompression(u32 format, u32 index, u32 flags) noexcept
+    static constexpr
+    u32 makeTextureCompression(u32 format, u32 index, u32 flags) noexcept
     {
         return flags | (index << 8) | format;
     }

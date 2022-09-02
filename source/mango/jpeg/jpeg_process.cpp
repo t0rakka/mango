@@ -357,8 +357,8 @@ static inline void write_color_rgb(u8* dest, int y, int r, int g, int b)
 // NEON implementation
 // ------------------------------------------------------------------------------------------------
 
-constexpr s16 JPEG_PREC = 12;
-constexpr s16 JPEG_FIXED(double x) { return s16((x * double(1 << JPEG_PREC) + 0.5)); }
+static constexpr s16 JPEG_PREC = 12;
+static constexpr s16 JPEG_FIXED(double x) { return s16((x * double(1 << JPEG_PREC) + 0.5)); }
 
 static inline
 void convert_ycbcr_bgra_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t cr, int16x8_t s0, int16x8_t s1, int16x8_t s2, int16x8_t s3)
@@ -507,9 +507,9 @@ void convert_ycbcr_rgb_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t c
 // [License]
 // Public Domain <unlicense.org>
 
-constexpr int JPEG_PREC = 12;
-constexpr int JPEG_SCALE(int x) { return x << JPEG_PREC; }
-constexpr int JPEG_FIXED(double x) { return int((x * double(1 << JPEG_PREC) + 0.5)); }
+static constexpr int JPEG_PREC = 12;
+//static constexpr int JPEG_SCALE(int x) { return x << JPEG_PREC; }
+static constexpr int JPEG_FIXED(double x) { return int((x * double(1 << JPEG_PREC) + 0.5)); }
 
 #define JPEG_CONST_SSE2(x, y)  _mm_setr_epi16(x, y, x, y, x, y, x, y)
 

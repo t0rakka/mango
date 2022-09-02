@@ -156,14 +156,14 @@ namespace mango::jpeg
 
 #endif
 
-    constexpr int JPEG_MAX_BLOCKS_IN_MCU  = 10;  // Maximum # of blocks per MCU in the JPEG specification
-    constexpr int JPEG_MAX_SAMPLES_IN_MCU = 64 * JPEG_MAX_BLOCKS_IN_MCU;
-    constexpr int JPEG_MAX_COMPS_IN_SCAN  = 4;   // JPEG limit on # of components in one scan
-    constexpr int JPEG_NUM_ARITH_TBLS     = 16;  // Arith-coding tables are numbered 0..15
-    constexpr int JPEG_DC_STAT_BINS       = 64;  // ...
-    constexpr int JPEG_AC_STAT_BINS       = 256; // ...
-    constexpr int JPEG_HUFF_LOOKUP_BITS   = 8;   // Huffman look-ahead table log2 size
-    constexpr int JPEG_HUFF_LOOKUP_SIZE   = (1 << JPEG_HUFF_LOOKUP_BITS);
+    static constexpr int JPEG_MAX_BLOCKS_IN_MCU  = 10;  // Maximum # of blocks per MCU in the JPEG specification
+    static constexpr int JPEG_MAX_SAMPLES_IN_MCU = 64 * JPEG_MAX_BLOCKS_IN_MCU;
+    static constexpr int JPEG_MAX_COMPS_IN_SCAN  = 4;   // JPEG limit on # of components in one scan
+    static constexpr int JPEG_NUM_ARITH_TBLS     = 16;  // Arith-coding tables are numbered 0..15
+    static constexpr int JPEG_DC_STAT_BINS       = 64;  // ...
+    static constexpr int JPEG_AC_STAT_BINS       = 256; // ...
+    static constexpr int JPEG_HUFF_LOOKUP_BITS   = 8;   // Huffman look-ahead table log2 size
+    static constexpr int JPEG_HUFF_LOOKUP_SIZE   = (1 << JPEG_HUFF_LOOKUP_BITS);
 
     // supported external data formats (encode from, decode to)
     enum SampleType
