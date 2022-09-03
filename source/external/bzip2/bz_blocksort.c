@@ -1005,6 +1005,8 @@ void mainSort ( UInt32* ptr,
 
    }
 
+   (void) numQSorted; // silence compiler warning
+
    if (verb >= 4)
       VPrintf3 ( "        %d pointers, %d sorted, %d scanned\n",
                  nblock, numQSorted, nblock - numQSorted );
