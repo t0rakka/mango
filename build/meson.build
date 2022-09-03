@@ -926,6 +926,7 @@ mango_inc = include_directories('../include')
 
 mango = shared_library('mango',
     version: mango_version,
+    soversion: mango_version,
     extra_files : [
         mango_headers,
         external_headers
@@ -967,6 +968,7 @@ mango_dep = declare_dependency(
 
 mango_opengl = shared_library('mango-opengl',
     version             : mango_version,
+    soversion           : mango_version,
     sources             : window_sources + opengl_sources,
     link_with           : mango,
     dependencies        : mango_opengl_deps,
