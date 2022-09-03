@@ -45,6 +45,19 @@ mango_public_cpp_args = []
 mango_interface_cpp_args = []
 
 # ------------------------------------------------------------------------------
+# external libraries
+# ------------------------------------------------------------------------------
+
+libjxl_dep = dependency('libjxl', version: '>=0.6', required: false)
+libjxl_threads_dep = dependency('libjxl_threads', version: '>=0.6', required: false)
+enable_jxl = libjxl_dep.found() and libjxl_threads_dep.found()
+
+if enable_jxl
+    message('JPEG-XL Support enabled.')
+    add_project_arguments('-DMANGO_ENABLE_JXL', language: ['cpp'])
+endif
+
+# ------------------------------------------------------------------------------
 # source directories
 # ------------------------------------------------------------------------------
 
@@ -307,6 +320,7 @@ image_sources = files(
     '../source/mango/image/image_hdr.cpp',
     '../source/mango/image/image_iff.cpp',
     '../source/mango/image/image_jpg.cpp',
+    '../source/mango/image/image_jxl.cpp',
     '../source/mango/image/image_ktx.cpp',
     '../source/mango/image/image_ktx2.cpp',
     '../source/mango/image/image_pcx.cpp',

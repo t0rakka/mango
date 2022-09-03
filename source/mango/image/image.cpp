@@ -37,6 +37,10 @@ namespace mango::image
     void registerImageDecoderEXR();
     void registerImageDecoderQOI();
 
+#if defined(MANGO_ENABLE_JXL)
+    void registerImageDecoderJXL();
+#endif
+
     class ImageServer
     {
     protected:
@@ -68,6 +72,10 @@ namespace mango::image
             registerImageDecoderWEBP();
             registerImageDecoderEXR();
             registerImageDecoderQOI();
+
+#if defined(MANGO_ENABLE_JXL)
+            registerImageDecoderJXL();
+#endif
         }
 
         ~ImageServer()
