@@ -7,6 +7,7 @@
 project(
     'mango', 'c', 'cpp',
     meson_version: '>= 0.48.0',
+    version: '0.9.2',
     default_options : [
         'c_std=c11',
         'cpp_std=c++17',
@@ -15,7 +16,7 @@ project(
     ]
 )
 
-mango_version = '0.9.2'
+mango_version = meson.project_version()
 
 if host_machine.system() == 'darwin'
     add_languages('objcpp')
