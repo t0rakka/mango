@@ -302,10 +302,12 @@ namespace
 
         JxlEncoderCloseInput(enc.get());
 
-        Buffer compressed(image_pixels);
+        Buffer compressed(1024 + image_pixels / 16);
 
         u8* next_out = compressed.data();
         size_t avail_out = compressed.size();
+
+        size_t total = 0;
 
         JxlEncoderStatus result = JXL_ENC_NEED_MORE_OUTPUT;
         while (result == JXL_ENC_NEED_MORE_OUTPUT)
@@ -313,6 +315,7 @@ namespace
             result = JxlEncoderProcessOutput(enc.get(), &next_out, &avail_out);
             if (result == JXL_ENC_NEED_MORE_OUTPUT)
             {
+                total += (compressed.size() - avail_out);
                 stream.write(compressed.data(), compressed.size() - avail_out);
                 next_out = compressed.data();
                 avail_out = compressed.size();
@@ -325,7 +328,10 @@ namespace
             return status;
         }
 
+        total += (compressed.size() - avail_out);
         stream.write(compressed.data(), compressed.size() - avail_out);
+
+        printf("buffer: %d KB, total: %d KB\n", int(compressed.size()/1024), int(total/1024));
 
         return status;
     }
