@@ -343,4 +343,4 @@ namespace mango::image
 
 } // namespace mango::image
 
-#endif
+#endif // defined(MANGO_ENABLE_JXL)
