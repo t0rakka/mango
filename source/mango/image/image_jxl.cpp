@@ -9,6 +9,8 @@
 
 #include "jxl/decode.h"
 #include "jxl/decode_cxx.h"
+#include "jxl/encode.h"
+#include "jxl/encode_cxx.h"
 #include "jxl/resizable_parallel_runner.h"
 #include "jxl/resizable_parallel_runner_cxx.h"
 
@@ -42,14 +44,13 @@ namespace
                                                    JXL_DEC_COLOR_ENCODING |
                                                    JXL_DEC_FULL_IMAGE) != JXL_DEC_SUCCESS)
             {
-                m_header.setError("JxlDecoderSubscribeEvents : FAILED.");
+                m_header.setError("JxlDecoderSubscribeEvents : FAILED");
                 return;
             }
 
-            if (JxlDecoderSetParallelRunner(decoder, 
-                JxlResizableParallelRunner, m_runner.get()) != JXL_DEC_SUCCESS)
+            if (JxlDecoderSetParallelRunner(decoder, JxlResizableParallelRunner, m_runner.get()) != JXL_DEC_SUCCESS)
             {
-                m_header.setError("JxlDecoderSetParallelRunner : FAILED.");
+                m_header.setError("JxlDecoderSetParallelRunner : FAILED");
                 return;
             }
 
@@ -74,7 +75,7 @@ namespace
                     {
                         if (JxlDecoderGetBasicInfo(decoder, &info) != JXL_DEC_SUCCESS)
                         {
-                            m_header.setError("JxlDecoderGetBasicInfo : FAILED.");
+                            m_header.setError("JxlDecoderGetBasicInfo : FAILED");
                             return;
                         }
 
@@ -89,7 +90,7 @@ namespace
                     }
 
                     default:
-                        m_header.setError("JxlDecoderProcessInput : ERROR.");
+                        m_header.setError("JxlDecoderProcessInput : ERROR");
                         return;
                 }
             }
@@ -219,7 +220,7 @@ namespace
                     }
 
                     default:
-                        status.setError("JxlDecoderProcessInput : ERROR.");
+                        status.setError("JxlDecoderProcessInput : ERROR");
                         return status;
                 }
             }
@@ -236,14 +237,114 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    /*
     ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        // TODO
+        MANGO_UNREFERENCED(options);
+
         ImageEncodeStatus status;
+
+        auto enc = JxlEncoderMake(nullptr);
+        auto runner = JxlResizableParallelRunnerMake(nullptr);
+
+        if (JxlEncoderSetParallelRunner(enc.get(), JxlResizableParallelRunner, runner.get()) != JXL_ENC_SUCCESS)
+        {
+            status.setError("JxlEncoderSetParallelRunner : FAILED");
+            return status;
+        }
+
+        //Bitmap temp(surface, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32));
+        Bitmap temp(surface, Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32));
+
+        //JxlPixelFormat pixel_format = { 4, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
+        JxlPixelFormat pixel_format = { 3, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
+
+        JxlBasicInfo basic_info;
+        JxlEncoderInitBasicInfo(&basic_info);
+
+        basic_info.xsize = surface.width;
+        basic_info.ysize = surface.height;
+        basic_info.bits_per_sample = 32;
+        basic_info.exponent_bits_per_sample = 8;
+        basic_info.uses_original_profile = JXL_FALSE;
+
+        if (JxlEncoderSetBasicInfo(enc.get(), &basic_info) != JXL_ENC_SUCCESS)
+        {
+            status.setError("JxlEncoderSetBasicInfo : FAILED");
+            return status;
+        }
+
+        JxlColorEncoding color_encoding = {};
+        //JxlColorEncodingSetToSRGB(&color_encoding, pixel_format.num_channels < 3);
+        //JxlColorEncodingSetToSRGB(&color_encoding, true);
+        JxlColorEncodingSetToSRGB(&color_encoding, false);
+        if (JxlEncoderSetColorEncoding(enc.get(), &color_encoding) != JXL_ENC_SUCCESS)
+        {
+            status.setError("JxlEncoderSetColorEncoding : FAILED");
+            return status;
+        }
+
+        size_t image_pixels = temp.width * temp.height;
+        size_t image_bytes = image_pixels * temp.format.bytes();
+
+#if 1
+
+        // 0.6
+
+        JxlEncoderOptions* encoder_options = JxlEncoderOptionsCreate(enc.get(), nullptr);
+
+        if (JxlEncoderAddImageFrame(encoder_options, &pixel_format,
+                                    reinterpret_cast<void*>(temp.image),
+                                    image_bytes) != JXL_ENC_SUCCESS)
+        {
+            status.setError("JxlEncoderAddImageFrame : FAILED");
+            return status;
+        }
+
+#else
+
+        // 0.7
+
+        JxlEncoderFrameSettings* frame_settings = JxlEncoderFrameSettingsCreate(enc.get(), nullptr);
+
+        if (JxlEncoderAddImageFrame(frame_settings, &pixel_format,
+                                    reinterpret_cast<void*> (temp.image),
+                                    image_bytes) != JXL_ENC_SUCCESS)
+        {
+            status.setError("JxlEncoderAddImageFrame : FAILED");
+            return status;
+        }
+
+#endif
+
+        JxlEncoderCloseInput(enc.get());
+
+        Buffer compressed(image_pixels);
+
+        u8* next_out = compressed.data();
+        size_t avail_out = compressed.size();
+
+        JxlEncoderStatus result = JXL_ENC_NEED_MORE_OUTPUT;
+        while (result == JXL_ENC_NEED_MORE_OUTPUT)
+        {
+            result = JxlEncoderProcessOutput(enc.get(), &next_out, &avail_out);
+            if (result == JXL_ENC_NEED_MORE_OUTPUT)
+            {
+                stream.write(compressed.data(), compressed.size() - avail_out);
+                next_out = compressed.data();
+                avail_out = compressed.size();
+            }
+        }
+
+        if (result != JXL_ENC_SUCCESS)
+        {
+            status.setError("JxlEncoderProcessOutput : FAILED");
+            return status;
+        }
+
+        stream.write(compressed.data(), compressed.size() - avail_out);
+
         return status;
     }
-    */
 
 } // namespace
 
@@ -253,6 +354,7 @@ namespace mango::image
     void registerImageDecoderJXL()
     {
         registerImageDecoder(createInterface, ".jxl");
+        //registerImageEncoder(imageEncode, ".jxl");
     }
 
 } // namespace mango::image
