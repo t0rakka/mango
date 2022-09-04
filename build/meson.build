@@ -927,8 +927,8 @@ endif
 # external libraries
 # ------------------------------------------------------------------------------
 
-libjxl_dep = dependency('libjxl', version: '>=0.6', required: false)
-libjxl_threads_dep = dependency('libjxl_threads', version: '>=0.6', required: false)
+libjxl_dep = dependency('libjxl', version: '>=0.7', required: false)
+libjxl_threads_dep = dependency('libjxl_threads', version: '>=0.7', required: false)
 enable_jxl = libjxl_dep.found() and libjxl_threads_dep.found()
 
 if enable_jxl

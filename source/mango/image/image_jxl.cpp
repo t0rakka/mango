@@ -252,11 +252,14 @@ namespace
             return status;
         }
 
-        //Bitmap temp(surface, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32));
+#if 1
         Bitmap temp(surface, Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32));
-
-        //JxlPixelFormat pixel_format = { 4, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
         JxlPixelFormat pixel_format = { 3, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
+#else
+        // TODO: doesn't work, fix
+        Bitmap temp(surface, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32));
+        JxlPixelFormat pixel_format = { 4, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
+#endif
 
         JxlBasicInfo basic_info;
         JxlEncoderInitBasicInfo(&basic_info);
@@ -277,6 +280,7 @@ namespace
         //JxlColorEncodingSetToSRGB(&color_encoding, pixel_format.num_channels < 3);
         //JxlColorEncodingSetToSRGB(&color_encoding, true);
         JxlColorEncodingSetToSRGB(&color_encoding, false);
+
         if (JxlEncoderSetColorEncoding(enc.get(), &color_encoding) != JXL_ENC_SUCCESS)
         {
             status.setError("JxlEncoderSetColorEncoding : FAILED");
@@ -285,24 +289,6 @@ namespace
 
         size_t image_pixels = temp.width * temp.height;
         size_t image_bytes = image_pixels * temp.format.bytes();
-
-#if 1
-
-        // 0.6
-
-        JxlEncoderOptions* encoder_options = JxlEncoderOptionsCreate(enc.get(), nullptr);
-
-        if (JxlEncoderAddImageFrame(encoder_options, &pixel_format,
-                                    reinterpret_cast<void*>(temp.image),
-                                    image_bytes) != JXL_ENC_SUCCESS)
-        {
-            status.setError("JxlEncoderAddImageFrame : FAILED");
-            return status;
-        }
-
-#else
-
-        // 0.7
 
         JxlEncoderFrameSettings* frame_settings = JxlEncoderFrameSettingsCreate(enc.get(), nullptr);
 
@@ -313,8 +299,6 @@ namespace
             status.setError("JxlEncoderAddImageFrame : FAILED");
             return status;
         }
-
-#endif
 
         JxlEncoderCloseInput(enc.get());
 
@@ -354,7 +338,7 @@ namespace mango::image
     void registerImageDecoderJXL()
     {
         registerImageDecoder(createInterface, ".jxl");
-        //registerImageEncoder(imageEncode, ".jxl");
+        registerImageEncoder(imageEncode, ".jxl");
     }
 
 } // namespace mango::image
