@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
@@ -36,7 +36,7 @@ namespace
 
         ConstMemory icc() override
         {
-            return Memory(m_parser.icc_buffer);
+            return m_parser.icc_buffer;
         }
 
         ConstMemory exif() override

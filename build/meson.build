@@ -45,19 +45,6 @@ mango_public_cpp_args = []
 mango_interface_cpp_args = []
 
 # ------------------------------------------------------------------------------
-# external libraries
-# ------------------------------------------------------------------------------
-
-libjxl_dep = dependency('libjxl', version: '>=0.6', required: false)
-libjxl_threads_dep = dependency('libjxl_threads', version: '>=0.6', required: false)
-enable_jxl = libjxl_dep.found() and libjxl_threads_dep.found()
-
-if enable_jxl
-    message('JPEG-XL Support enabled.')
-    add_project_arguments('-DMANGO_ENABLE_JXL', language: ['cpp'])
-endif
-
-# ------------------------------------------------------------------------------
 # source directories
 # ------------------------------------------------------------------------------
 
@@ -935,6 +922,25 @@ if is_linux
     mango_public_deps += [ m_dep ]
     mango_opengl_deps += [ x11_dep, opengl_dep ]
 endif
+
+# ------------------------------------------------------------------------------
+# external libraries
+# ------------------------------------------------------------------------------
+
+libjxl_dep = dependency('libjxl', version: '>=0.6', required: false)
+libjxl_threads_dep = dependency('libjxl_threads', version: '>=0.6', required: false)
+enable_jxl = libjxl_dep.found() and libjxl_threads_dep.found()
+
+if enable_jxl
+    message('JPEG-XL support enabled')
+    add_project_arguments('-DMANGO_ENABLE_JXL', language: ['cpp'])
+    mango_deps += libjxl_dep
+    mango_deps += libjxl_threads_dep
+endif
+
+# ------------------------------------------------------------------------------
+# sources
+# ------------------------------------------------------------------------------
 
 mango_inc = include_directories('../include')
 
