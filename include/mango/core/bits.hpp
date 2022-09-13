@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -14,22 +14,36 @@ namespace mango
 {
 
     // ----------------------------------------------------------------------------
+    // compiler specific
+    // ----------------------------------------------------------------------------
+
+#if !defined(MANGO_COMPILER_GCC)
+
+    // This is required because some intrinsic functions are not implemented
+    #define MANGO_BITS_NOGCC
+
+#endif
+
+    // ----------------------------------------------------------------------------
     // byteswap
     // ----------------------------------------------------------------------------
 
 #if defined(MANGO_COMPILER_MICROSOFT)
 
-    static inline u16 byteswap(u16 v)
+    static inline
+    u16 byteswap(u16 v)
     {
         return _byteswap_ushort(v);
     }
 
-    static inline u32 byteswap(u32 v)
+    static inline
+    u32 byteswap(u32 v)
     {
         return _byteswap_ulong(v);
     }
 
-    static inline u64 byteswap(u64 v)
+    static inline
+    u64 byteswap(u64 v)
     {
         return _byteswap_uint64(v);
     }
@@ -38,17 +52,20 @@ namespace mango
 
     // GCC / CLANG intrinsics
 
-    static inline u16 byteswap(u16 v)
+    static inline
+    u16 byteswap(u16 v)
     {
         return __builtin_bswap32(v << 16);
     }
 
-    static inline u32 byteswap(u32 v)
+    static inline
+    u32 byteswap(u32 v)
     {
         return __builtin_bswap32(v);
     }
 
-    static inline u64 byteswap(u64 v)
+    static inline
+    u64 byteswap(u64 v)
     {
         return __builtin_bswap64(v);
     }
@@ -60,17 +77,20 @@ namespace mango
     // These idioms are often recognized by compilers and result in bswap instruction being generated
     // but cannot be guaranteed so compiler intrinsics above are preferred when available.
 
-    static inline u16 byteswap(u16 v)
+    static inline
+    u16 byteswap(u16 v)
     {
         return u16((v << 8) | (v >> 8));
     }
 
-    static inline u32 byteswap(u32 v)
+    static inline
+    u32 byteswap(u32 v)
     {
         return (v >> 24) | ((v >> 8) & 0x0000ff00) | ((v << 8) & 0x00ff0000) | (v << 24);
     }
 
-    static inline u64 byteswap(u64 v)
+    static inline
+    u64 byteswap(u64 v)
     {
         v = (v >> 32) | (v << 32);
         v = ((v & 0xffff0000ffff0000ull) >> 16) | ((v << 16) & 0xffff0000ffff0000ull);
@@ -80,19 +100,22 @@ namespace mango
 
 #endif
 
-    static inline Half byteswap(Half v)
+    static inline
+    Half byteswap(Half v)
     {
         v.u = byteswap(v.u);
         return v;
     }
 
-    static inline Float byteswap(Float v)
+    static inline
+    Float byteswap(Float v)
     {
         v.u = byteswap(v.u);
         return v;
     }
 
-    static inline Double byteswap(Double v)
+    static inline
+    Double byteswap(Double v)
     {
         v.u = byteswap(v.u);
         return v;
@@ -375,7 +398,7 @@ namespace mango
         return _tzcnt_u32(value);
     }
 
-#elif defined(__aarch64__)
+#elif defined(__aarch64__) && defined(MANGO_BITS_NOGCC)
 
     static inline
     int u32_tzcnt(u32 value)
@@ -451,7 +474,7 @@ namespace mango
         return int(_lzcnt_u32(value));
     }
 
-#elif defined(__ARM_FEATURE_CLZ)
+#elif defined(__ARM_FEATURE_CLZ) && defined(MANGO_BITS_NOGCC)
 
     static inline
     u32 u32_mask_msb(u32 value)
@@ -586,7 +609,7 @@ namespace mango
         return u32_index_of_msb(value);
     }
 
-#if defined(__aarch64__)
+#if defined(__aarch64__) && defined(MANGO_BITS_NOGCC)
 
     static inline
     u32 u32_reverse_bits(u32 value)
@@ -872,7 +895,7 @@ namespace mango
         return int(_tzcnt_u64(value));
     }
 
-#elif defined(__aarch64__)
+#elif defined(__aarch64__) && defined(MANGO_BITS_NOGCC)
 
     static inline
     int u64_tzcnt(u64 value)
@@ -950,7 +973,7 @@ namespace mango
         return int(_lzcnt_u64(value));
     }
 
-#elif defined(__ARM_FEATURE_CLZ)
+#elif defined(__ARM_FEATURE_CLZ) && defined(MANGO_BITS_NOGCC)
 
     static inline
     u64 u64_mask_msb(u64 value)
@@ -1078,7 +1101,7 @@ namespace mango
         return u64_index_of_msb(value);
     }
 
-#if defined(__aarch64__)
+#if defined(__aarch64__) && defined(MANGO_BITS_NOGCC)
 
     static inline
     u64 u64_reverse_bits(u64 value)
@@ -1291,7 +1314,7 @@ namespace mango
     static constexpr
     bool u64_has_zero_byte(u64 value)
     {
-	    return (~value & (value - 0x0101010101010101) & 0x8080808080808080) != 0;
+        return (~value & (value - 0x0101010101010101) & 0x8080808080808080) != 0;
     }
 
     static inline
