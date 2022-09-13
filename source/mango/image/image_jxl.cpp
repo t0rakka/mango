@@ -33,6 +33,9 @@ namespace
         Buffer m_buffer;
         Buffer m_icc;
 
+        bool m_is_parsed = false;
+        ImageDecodeStatus m_status;
+
         Interface(ConstMemory memory)
             : m_decoder(JxlDecoderMake(nullptr))
             , m_runner(JxlResizableParallelRunnerMake(nullptr))
@@ -121,11 +124,10 @@ namespace
             MANGO_UNREFERENCED(depth);
             MANGO_UNREFERENCED(face);
 
-            ImageDecodeStatus status;
-
-            if (!m_surface.image)
+            if (!m_is_parsed)
             {
-                status = parse();
+                m_is_parsed = true;
+                parse();
             }
 
             if (m_surface.image)
@@ -133,17 +135,15 @@ namespace
                 dest.blit(0, 0, m_surface);
             }
 
-            return status;
+            return m_status;
         }
 
-        ImageDecodeStatus parse()
+        void parse()
         {
             JxlDecoder* decoder = m_decoder.get();
 
             JxlPixelFormat format = { 4, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
             size_t bpp = 16;
-
-            ImageDecodeStatus status;
 
             for (;;)
             {
@@ -151,12 +151,12 @@ namespace
                 switch (jxstat)
                 {
                     case JXL_DEC_ERROR:
-                        status.setError("JxlDecoderProcessInput : JXL_DEC_ERROR");
-                        return status;
+                        m_status.setError("JxlDecoderProcessInput : JXL_DEC_ERROR");
+                        return;
 
                     case JXL_DEC_NEED_MORE_INPUT:
-                        status.setError("JxlDecoderProcessInput : JXL_DEC_NEED_MORE_INPUT");
-                        return status;
+                        m_status.setError("JxlDecoderProcessInput : JXL_DEC_NEED_MORE_INPUT");
+                        return;
 
                     case JXL_DEC_BASIC_INFO:
                         break;
@@ -189,22 +189,22 @@ namespace
 
                         if (JxlDecoderImageOutBufferSize(decoder, &format, &bytes) != JXL_DEC_SUCCESS)
                         {
-                            status.setError("JxlDecoderImageOutBufferSize : FAILED");
-                            return status;
+                            m_status.setError("JxlDecoderImageOutBufferSize : FAILED");
+                            return;
                         }
 
                         if (bytes != m_header.width * m_header.height * bpp)
                         {
-                            status.setError("Incorrect buffer size request.");
-                            return status;
+                            m_status.setError("Incorrect buffer size request.");
+                            return;
                         }
 
                         m_buffer.resize(bytes);
 
                         if (JxlDecoderSetImageOutBuffer(decoder, &format, m_buffer.data(), m_buffer.size()) != JXL_DEC_SUCCESS)
                         {
-                            status.setError("JxlDecoderSetImageOutBuffer : FAILED");
-                            return status;
+                            m_status.setError("JxlDecoderSetImageOutBuffer : FAILED");
+                            return;
                         }
 
                         break;
@@ -216,12 +216,12 @@ namespace
                     case JXL_DEC_SUCCESS:
                     {
                         m_surface = Surface(m_header.width, m_header.height, m_header.format, m_header.width * 16, m_buffer.data());
-                        return status;
+                        return;
                     }
 
                     default:
-                        status.setError("JxlDecoderProcessInput : ERROR");
-                        return status;
+                        m_status.setError("JxlDecoderProcessInput : ERROR");
+                        return;
                 }
             }
         }
