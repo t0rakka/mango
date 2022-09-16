@@ -18,6 +18,8 @@ using namespace mango::image;
 // utils
 // ----------------------------------------------------------------------
 
+static constexpr u64 NOT_AVAILABLE = ~0;
+
 static
 size_t get_file_size(const char* filename)
 {
@@ -29,7 +31,12 @@ static
 void print(const char* name, u64 load, u64 save, u64 size)
 {
     printf("%s", name);
-    printf("%7d.%d ms ", int(load / 1000), int(load % 1000) / 100);
+
+    if (load != NOT_AVAILABLE)
+        printf("%7d.%d ms ", int(load / 1000), int(load % 1000) / 100);
+    else
+        printf("         N/A ");
+
     printf("%7d.%d ms ", int(save / 1000), int(save % 1000) / 100);
     printf("  %8d", int(size / 1024));
     printf("\n");
@@ -433,7 +440,7 @@ int main(int argc, const char* argv[])
     size = toojpeg_save("output-toojpeg.jpg", toojpeg_bitmap);
 
     time2 = Time::us();
-    print("toojpeg: ", time1 - time0, time2 - time1, size);
+    print("toojpeg: ", NOT_AVAILABLE, time2 - time1, size);
 
 #endif
 
