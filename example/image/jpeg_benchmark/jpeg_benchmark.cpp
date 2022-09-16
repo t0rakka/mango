@@ -37,7 +37,11 @@ void print(const char* name, u64 load, u64 save, u64 size)
     else
         printf("         N/A ");
 
-    printf("%7d.%d ms ", int(save / 1000), int(save % 1000) / 100);
+    if (save != NOT_AVAILABLE)
+        printf("%7d.%d ms ", int(save / 1000), int(save % 1000) / 100);
+    else
+        printf("         N/A ");
+
     printf("  %8d", int(size / 1024));
     printf("\n");
 }
@@ -422,7 +426,7 @@ int main(int argc, const char* argv[])
     size = jpegdec_save("output-jpegdec.jpg", s_jpegdec);
 
     time2 = Time::us();
-    print("jpgdec:  ", time1 - time0, time2 - time1, size);
+    print("jpgdec:  ", time1 - time0, NOT_AVAILABLE, size);
 
 #endif
 
