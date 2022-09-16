@@ -28,20 +28,20 @@ size_t get_file_size(const char* filename)
 }
 
 static
+void print(u64 time)
+{
+    if (time != NOT_AVAILABLE)
+        printf("%7d.%d ms ", int(time / 1000), int(time % 1000) / 100);
+    else
+        printf("         N/A ");
+}
+
+static
 void print(const char* name, u64 load, u64 save, u64 size)
 {
     printf("%s", name);
-
-    if (load != NOT_AVAILABLE)
-        printf("%7d.%d ms ", int(load / 1000), int(load % 1000) / 100);
-    else
-        printf("         N/A ");
-
-    if (save != NOT_AVAILABLE)
-        printf("%7d.%d ms ", int(save / 1000), int(save % 1000) / 100);
-    else
-        printf("         N/A ");
-
+    print(load);
+    print(save);
     printf("  %8d", int(size / 1024));
     printf("\n");
 }
