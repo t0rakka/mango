@@ -236,6 +236,7 @@ int aes_encrypt_cbc(const aes_u8 in[], size_t in_len, aes_u8 out[], const aes_u3
 
 	blocks = int(in_len / AES_BLOCK_SIZE);
 
+	memset(buf_out, 0, AES_BLOCK_SIZE); // MANGO: silence compiler warning (expensive fix)
 	memcpy(iv_buf, iv, AES_BLOCK_SIZE);
 
 	for (idx = 0; idx < blocks; idx++) {
@@ -259,6 +260,7 @@ int aes_encrypt_cbc_mac(const aes_u8 in[], size_t in_len, aes_u8 out[], const ae
 
 	blocks = int(in_len / AES_BLOCK_SIZE);
 
+	memset(buf_out, 0, AES_BLOCK_SIZE); // MANGO: silence compiler warning (expensive fix)
 	memcpy(iv_buf, iv, AES_BLOCK_SIZE);
 
 	for (idx = 0; idx < blocks; idx++) {
