@@ -2969,13 +2969,14 @@ const Byte *LzmaEnc_GetCurBuf(CLzmaEncHandle pp)
   return p->matchFinder.GetPointerToCurrentPos(p->matchFinderObj) - p->additionalOffset;
 }
 
-// MANGO: suppress compiler warning
+// MANGO: hack to suppress compiler warning
 #if defined(__clang__)
   //#pragma clang diagnostic push
   //#pragma clang diagnostic ignored "-Wdangling-pointer="
 #elif defined(__GNUC__)
   #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wdangling-pointer="
+  #pragma GCC diagnostic ignored "-Wpragmas" /* GCC < 12.1 does not know dangling-pointer warning */
+  #pragma GCC diagnostic ignored "-Wdangling-pointer=" /* GCC >= 12.1 fails to compile this function */
 #endif
 
 SRes LzmaEnc_CodeOneMemBlock(CLzmaEncHandle pp, BoolInt reInit,
@@ -3016,7 +3017,7 @@ SRes LzmaEnc_CodeOneMemBlock(CLzmaEncHandle pp, BoolInt reInit,
   return res;
 }
 
-// MANGO: suppress compiler warning
+// MANGO: hack to suppress compiler warning
 #if defined(__clang__)
   //#pragma clang diagnostic pop
 #elif defined(__GNUC__)
