@@ -1188,25 +1188,10 @@
     <ClInclude Include="..\..\..\source\external\lzma\Alloc.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\Bcj2.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\Blake2.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\Bra.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\BwtSort.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\source\external\lzma\Compiler.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\source\external\lzma\CpuArch.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\Delta.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\source\external\lzma\LzFind.h">
@@ -2075,31 +2060,7 @@
     <ClCompile Include="..\..\..\source\external\lzma\Alloc.c">
       <Filter>external\lzma</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\Bcj2.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\Bcj2Enc.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\Blake2s.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\Bra.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\Bra86.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\BraIA64.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\BwtSort.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\source\external\lzma\CpuArch.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\Delta.c">
       <Filter>external\lzma</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\source\external\lzma\LzFind.c">
