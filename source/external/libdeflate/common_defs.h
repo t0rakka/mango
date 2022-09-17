@@ -39,7 +39,7 @@
 #endif
 
 #ifdef _MSC_VER
-#pragma warning(disable : 4018 4244) /* mango compiler warnings (32 bit compilation) */
+#pragma warning(disable : 4018 4244 4267 4146) /* mango compiler warnings (32 bit compilation) */
 #endif
 
 /* ========================================================================== */
