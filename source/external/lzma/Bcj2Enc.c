@@ -1,5 +1,5 @@
 /* Bcj2Enc.c -- BCJ2 Encoder (Converter for x86 code)
-2017-04-28 : Igor Pavlov : Public domain */
+2021-02-09 : Igor Pavlov : Public domain */
 
 #include "Precomp.h"
 
@@ -52,7 +52,7 @@ void Bcj2Enc_Init(CBcj2Enc *p)
     p->probs[i] = kBitModelTotal >> 1;
 }
 
-static Bool MY_FAST_CALL RangeEnc_ShiftLow(CBcj2Enc *p)
+static BoolInt MY_FAST_CALL RangeEnc_ShiftLow(CBcj2Enc *p)
 {
   if ((UInt32)p->low < (UInt32)0xFF000000 || (UInt32)(p->low >> 32) != 0)
   {
@@ -104,7 +104,7 @@ static void Bcj2Enc_Encode_2(CBcj2Enc *p)
         const Byte *src = p->src;
         const Byte *srcLim;
         Byte *dest;
-        SizeT num = p->srcLim - src;
+        SizeT num = (SizeT)(p->srcLim - src);
 
         if (p->finishMode == BCJ2_ENC_FINISH_MODE_CONTINUE)
         {
@@ -118,7 +118,7 @@ static void Bcj2Enc_Encode_2(CBcj2Enc *p)
         dest = p->bufs[BCJ2_STREAM_MAIN];
         if (num > (SizeT)(p->lims[BCJ2_STREAM_MAIN] - dest))
         {
-          num = p->lims[BCJ2_STREAM_MAIN] - dest;
+          num = (SizeT)(p->lims[BCJ2_STREAM_MAIN] - dest);
           if (num == 0)
           {
             p->state = BCJ2_STREAM_MAIN;
@@ -152,7 +152,7 @@ static void Bcj2Enc_Encode_2(CBcj2Enc *p)
           break;
         }
         
-        num = src - p->src;
+        num = (SizeT)(src - p->src);
         
         if (src == srcLim)
         {
@@ -165,7 +165,7 @@ static void Bcj2Enc_Encode_2(CBcj2Enc *p)
  
         {
           Byte context = (Byte)(num == 0 ? p->prevByte : src[-1]);
-          Bool needConvert;
+          BoolInt needConvert;
 
           p->bufs[BCJ2_STREAM_MAIN] = dest + 1;
           p->ip += (UInt32)num + 1;
@@ -253,7 +253,7 @@ void Bcj2Enc_Encode(CBcj2Enc *p)
     {
       const Byte *src = p->src;
       const Byte *srcLim = p->srcLim;
-      unsigned finishMode = p->finishMode;
+      EBcj2Enc_FinishMode finishMode = p->finishMode;
       
       p->src = p->temp;
       p->srcLim = p->temp + p->tempPos;
@@ -303,15 +303,6 @@ void Bcj2Enc_Encode(CBcj2Enc *p)
     const Byte *src = p->src;
     unsigned rem = (unsigned)(p->srcLim - src);
     unsigned i;
-
-    // mango compiler warning fix
-    // gcc-11: "warning: writing 1 byte into a region of size 0 [-Wstringop-overflow=]"
-    //    A) check for code update
-    //    B) signal error to the caller
-    //    C) Not Our Code -> Ignore
-    //    PICK ONE!
-    if (rem > 7) rem = 7;
-
     for (i = 0; i < rem; i++)
       p->temp[i] = src[i];
     p->tempPos = rem;

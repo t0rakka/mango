@@ -486,7 +486,6 @@ external_headers = files(
     '../source/external/concurrentqueue/readerwriterqueue.h',
     '../source/external/lzma/CpuArch.h',
     '../source/external/lzma/Bra.h',
-    '../source/external/lzma/7zCrc.h',
     '../source/external/lzma/LzmaLib.h',
     '../source/external/lzma/Ppmd7.h',
     '../source/external/lzma/BwtSort.h',
@@ -511,6 +510,10 @@ external_headers = files(
     '../source/external/lzma/Ppmd8.h',
     '../source/external/lzma/Ppmd.h',
     '../source/external/lzma/7zVersion.h',
+	'../source/external/lzma/LzFindMt.h',
+	'../source/external/lzma/MtCoder.h',
+	'../source/external/lzma/MtDec.h',
+	'../source/external/lzma/Threads.h',
     '../source/external/basisu/transcoder/basisu.h',
     '../source/external/basisu/transcoder/basisu_containers.h',
     '../source/external/basisu/transcoder/basisu_containers_impl.h',
@@ -522,12 +525,8 @@ external_headers = files(
 
 external_lzma_sources = files(
     '../source/external/lzma/7zAlloc.c',
-    '../source/external/lzma/7zArcIn.c',
     '../source/external/lzma/7zBuf2.c',
     '../source/external/lzma/7zBuf.c',
-    '../source/external/lzma/7zCrc.c',
-    '../source/external/lzma/7zCrcOpt.c',
-    '../source/external/lzma/7zDec.c',
     '../source/external/lzma/7zStream.c',
     '../source/external/lzma/Alloc.c',
     '../source/external/lzma/Bcj2.c',
@@ -551,7 +550,12 @@ external_lzma_sources = files(
     '../source/external/lzma/Ppmd8.c',
     '../source/external/lzma/Ppmd8Dec.c',
     '../source/external/lzma/Ppmd8Enc.c',
-    '../source/external/lzma/Sort.c'
+    '../source/external/lzma/Sort.c',
+	'../source/external/lzma/LzFindMt.c',
+	'../source/external/lzma/MtCoder.c',
+	'../source/external/lzma/MtDec.c',
+    '../source/external/lzma/LzFindOpt.c',
+	'../source/external/lzma/Threads.c'
 )
 
 external_aes_sources = files(
