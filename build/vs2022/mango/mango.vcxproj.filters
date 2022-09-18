@@ -1143,12 +1143,6 @@
     <ClInclude Include="..\..\..\source\external\lzma\LzmaLib.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\MtCoder.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\MtDec.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\source\external\lzma\Ppmd.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
@@ -1161,28 +1155,10 @@
     <ClInclude Include="..\..\..\source\external\lzma\Precomp.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\RotateDefs.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\Sort.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\source\external\lzma\Threads.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\7z.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\7zAlloc.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\7zBuf.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\source\external\lzma\7zTypes.h">
-      <Filter>external\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\lzma\7zVersion.h">
       <Filter>external\lzma</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\source\external\lzma\Alloc.h">
@@ -2015,12 +1991,6 @@
     <ClCompile Include="..\..\..\source\external\lzma\LzmaLib.c">
       <Filter>external\lzma</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\MtCoder.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\MtDec.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\source\external\lzma\Ppmd7.c">
       <Filter>external\lzma</Filter>
     </ClCompile>
@@ -2039,22 +2009,7 @@
     <ClCompile Include="..\..\..\source\external\lzma\Ppmd8Enc.c">
       <Filter>external\lzma</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\Sort.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\source\external\lzma\Threads.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\7zAlloc.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\7zBuf.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\7zBuf2.c">
-      <Filter>external\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\lzma\7zStream.c">
       <Filter>external\lzma</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\source\external\lzma\Alloc.c">
