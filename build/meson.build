@@ -45,11 +45,15 @@ mango_public_cpp_args = []
 mango_interface_cpp_args = []
 
 # ------------------------------------------------------------------------------
-# source directories
+# mango headers
 # ------------------------------------------------------------------------------
 
 mango_headers = files(
     '../include/mango/mango.hpp',
+    '../include/mango/window/window.hpp',
+)
+
+mango_core_headers = files(
     '../include/mango/core/aes.hpp',
     '../include/mango/core/atomic.hpp',
     '../include/mango/core/bits.hpp',
@@ -72,11 +76,17 @@ mango_headers = files(
     '../include/mango/core/system.hpp',
     '../include/mango/core/thread.hpp',
     '../include/mango/core/timer.hpp',
+)
+
+mango_filesystem_headers = files(
     '../include/mango/filesystem/file.hpp',
     '../include/mango/filesystem/fileobserver.hpp',
     '../include/mango/filesystem/filesystem.hpp',
     '../include/mango/filesystem/mapper.hpp',
     '../include/mango/filesystem/path.hpp',
+)
+
+mango_image_headers = files(
     '../include/mango/image/blitter.hpp',
     '../include/mango/image/color.hpp',
     '../include/mango/image/compression.hpp',
@@ -88,6 +98,9 @@ mango_headers = files(
     '../include/mango/image/image.hpp',
     '../include/mango/image/quantize.hpp',
     '../include/mango/image/surface.hpp',
+)
+
+mango_math_headers = files(
     '../include/mango/math/accessor.hpp',
     '../include/mango/math/geometry.hpp',
     '../include/mango/math/math.hpp',
@@ -131,31 +144,9 @@ mango_headers = files(
     '../include/mango/math/vector512_uint32x16.hpp',
     '../include/mango/math/vector512_uint64x8.hpp',
     '../include/mango/math/vector512_uint8x64.hpp',
-    '../include/mango/opengl/func/glcorearb.hpp',
-    '../include/mango/opengl/func/glext.hpp',
-    '../include/mango/opengl/func/glxext.hpp',
-    '../include/mango/opengl/func/wglext.hpp',
-    '../include/mango/opengl/khronos/EGL/egl.h',
-    '../include/mango/opengl/khronos/EGL/eglext.h',
-    '../include/mango/opengl/khronos/EGL/eglplatform.h',
-    '../include/mango/opengl/khronos/GL/glcorearb.h',
-    '../include/mango/opengl/khronos/GL/glext.h',
-    '../include/mango/opengl/khronos/GL/glxext.h',
-    '../include/mango/opengl/khronos/GL/wgl.h',
-    '../include/mango/opengl/khronos/GL/wglext.h',
-    '../include/mango/opengl/khronos/GLES/egl.h',
-    '../include/mango/opengl/khronos/GLES/gl.h',
-    '../include/mango/opengl/khronos/GLES/glext.h',
-    '../include/mango/opengl/khronos/GLES/glplatform.h',
-    '../include/mango/opengl/khronos/GLES2/gl2.h',
-    '../include/mango/opengl/khronos/GLES2/gl2ext.h',
-    '../include/mango/opengl/khronos/GLES2/gl2platform.h',
-    '../include/mango/opengl/khronos/GLES3/gl3.h',
-    '../include/mango/opengl/khronos/GLES3/gl31.h',
-    '../include/mango/opengl/khronos/GLES3/gl32.h',
-    '../include/mango/opengl/khronos/GLES3/gl3platform.h',
-    '../include/mango/opengl/khronos/KHR/khrplatform.h',
-    '../include/mango/opengl/opengl.hpp',
+)
+
+mango_simd_headers = files(
     '../include/mango/simd/altivec_convert.hpp',
     '../include/mango/simd/altivec_double128.hpp',
     '../include/mango/simd/altivec_float128.hpp',
@@ -206,10 +197,41 @@ mango_headers = files(
     '../include/mango/simd/sse2_double128.hpp',
     '../include/mango/simd/sse2_float128.hpp',
     '../include/mango/simd/sse2_int128.hpp',
-    '../include/mango/window/window.hpp',
 )
 
-core_sources = files(
+mango_opengl_headers = files(
+    '../include/mango/opengl/opengl.hpp',
+    '../include/mango/opengl/func/glcorearb.hpp',
+    '../include/mango/opengl/func/glext.hpp',
+    '../include/mango/opengl/func/glxext.hpp',
+    '../include/mango/opengl/func/wglext.hpp',
+    '../include/mango/opengl/khronos/EGL/egl.h',
+    '../include/mango/opengl/khronos/EGL/eglext.h',
+    '../include/mango/opengl/khronos/EGL/eglplatform.h',
+    '../include/mango/opengl/khronos/GL/glcorearb.h',
+    '../include/mango/opengl/khronos/GL/glext.h',
+    '../include/mango/opengl/khronos/GL/glxext.h',
+    '../include/mango/opengl/khronos/GL/wgl.h',
+    '../include/mango/opengl/khronos/GL/wglext.h',
+    '../include/mango/opengl/khronos/GLES/egl.h',
+    '../include/mango/opengl/khronos/GLES/gl.h',
+    '../include/mango/opengl/khronos/GLES/glext.h',
+    '../include/mango/opengl/khronos/GLES/glplatform.h',
+    '../include/mango/opengl/khronos/GLES2/gl2.h',
+    '../include/mango/opengl/khronos/GLES2/gl2ext.h',
+    '../include/mango/opengl/khronos/GLES2/gl2platform.h',
+    '../include/mango/opengl/khronos/GLES3/gl3.h',
+    '../include/mango/opengl/khronos/GLES3/gl31.h',
+    '../include/mango/opengl/khronos/GLES3/gl32.h',
+    '../include/mango/opengl/khronos/GLES3/gl3platform.h',
+    '../include/mango/opengl/khronos/KHR/khrplatform.h',
+)
+
+# ------------------------------------------------------------------------------
+# mango sources
+# ------------------------------------------------------------------------------
+
+mango_core_sources = files(
     '../source/mango/core/aes.cpp',
     '../source/mango/core/buffer.cpp',
     '../source/mango/core/compress.cpp',
@@ -227,68 +249,7 @@ core_sources = files(
     '../source/mango/core/timer.cpp'
 )
 
-if is_windows
-    core_sources += files(
-        '../source/mango/core/win32/dynamic_library.cpp'
-    )
-else
-    core_sources += files(
-        '../source/mango/core/unix/dynamic_library.cpp'
-    )
-endif
-
-filesystem_sources = files(
-    '../source/mango/filesystem/file.cpp',
-    '../source/mango/filesystem/mapper.cpp',
-    '../source/mango/filesystem/mapper_mgx.cpp',
-    '../source/mango/filesystem/mapper_rar.cpp',
-    '../source/mango/filesystem/mapper_zip.cpp',
-    '../source/mango/filesystem/path.cpp'
-)
-
-if is_windows
-    filesystem_sources += files(
-        '../source/mango/filesystem/win32/file_observer.cpp',
-        '../source/mango/filesystem/win32/file_stream.cpp',
-        '../source/mango/filesystem/win32/mapper_file.cpp'
-    )
-else
-    filesystem_sources += files(
-        '../source/mango/filesystem/unix/file_observer.cpp',
-        '../source/mango/filesystem/unix/file_stream.cpp',
-        '../source/mango/filesystem/unix/mapper_file.cpp'
-    )
-endif
-
-opengl_sources = files(
-    '../source/mango/opengl/opengl.cpp'
-)
-
-if is_windows
-    window_sources = files(
-        '../source/mango/window/win32/win32_window.cpp'
-    )
-    opengl_sources += files(
-        '../source/mango/opengl/wgl/wgl_context.cpp'
-    )
-elif is_darwin
-    window_sources = files(
-        '../source/mango/window/cocoa/cocoa_window.mm'
-    )
-    opengl_sources += files(
-        '../source/mango/opengl/cocoa/cocoa_context.mm',
-        '../source/mango/opengl/cocoa/CustomOpenGLView.mm'
-    )
-else
-    window_sources = files(
-        '../source/mango/window/xlib/xlib_window.cpp'
-    )
-    opengl_sources += files(
-        '../source/mango/opengl/glx/glx_context.cpp'
-    )
-endif
-
-image_sources = files(
+mango_image_sources = files(
     '../source/mango/image/blitter.cpp',
     '../source/mango/image/block.cpp',
     '../source/mango/image/block_dxt.cpp',
@@ -325,7 +286,7 @@ image_sources = files(
     '../source/mango/image/surface.cpp'
 )
 
-jpeg_sources = files(
+mango_jpeg_sources = files(
     '../source/mango/jpeg/jpeg_arithmetic.cpp',
     '../source/mango/jpeg/jpeg_decode.cpp',
     '../source/mango/jpeg/jpeg_encode.cpp',
@@ -334,156 +295,94 @@ jpeg_sources = files(
     '../source/mango/jpeg/jpeg_process.cpp'
 )
 
-math_sources = files(
+mango_math_sources = files(
     '../source/mango/math/geometry.cpp',
     '../source/mango/math/math.cpp',
     '../source/mango/math/simd.cpp'
 )
 
+if is_windows
+    mango_core_sources += files(
+        '../source/mango/core/win32/dynamic_library.cpp'
+    )
+else
+    mango_core_sources += files(
+        '../source/mango/core/unix/dynamic_library.cpp'
+    )
+endif
+
+mango_filesystem_sources = files(
+    '../source/mango/filesystem/file.cpp',
+    '../source/mango/filesystem/mapper.cpp',
+    '../source/mango/filesystem/mapper_mgx.cpp',
+    '../source/mango/filesystem/mapper_rar.cpp',
+    '../source/mango/filesystem/mapper_zip.cpp',
+    '../source/mango/filesystem/path.cpp'
+)
+
+if is_windows
+    mango_filesystem_sources += files(
+        '../source/mango/filesystem/win32/file_observer.cpp',
+        '../source/mango/filesystem/win32/file_stream.cpp',
+        '../source/mango/filesystem/win32/mapper_file.cpp'
+    )
+else
+    mango_filesystem_sources += files(
+        '../source/mango/filesystem/unix/file_observer.cpp',
+        '../source/mango/filesystem/unix/file_stream.cpp',
+        '../source/mango/filesystem/unix/mapper_file.cpp'
+    )
+endif
+
+mango_opengl_sources = files(
+    '../source/mango/opengl/opengl.cpp'
+)
+
+if is_windows
+    mango_window_sources = files(
+        '../source/mango/window/win32/win32_window.cpp'
+    )
+    mango_opengl_sources += files(
+        '../source/mango/opengl/wgl/wgl_context.cpp'
+    )
+elif is_darwin
+    mango_window_sources = files(
+        '../source/mango/window/cocoa/cocoa_window.mm'
+    )
+    mango_opengl_sources += files(
+        '../source/mango/opengl/cocoa/cocoa_context.mm',
+        '../source/mango/opengl/cocoa/CustomOpenGLView.mm'
+    )
+else
+    mango_window_sources = files(
+        '../source/mango/window/xlib/xlib_window.cpp'
+    )
+    mango_opengl_sources += files(
+        '../source/mango/opengl/glx/glx_context.cpp'
+    )
+endif
+
+# ------------------------------------------------------------------------------
+# external sources + headers
+# ------------------------------------------------------------------------------
+
 external_headers = files(
-    '../source/external/lzfse/lzfse_fse.h',
-    '../source/external/lzfse/lzfse.h',
-    '../source/external/lzfse/lzfse_internal.h',
-    '../source/external/lzfse/lzvn_encode_base.h',
-    '../source/external/lzfse/lzvn_decode_base.h',
-    '../source/external/lzfse/lzfse_tunables.h',
-    '../source/external/lzfse/lzfse_encode_tables.h',
-    '../source/external/libdeflate/libdeflate.h',
-    '../source/external/libdeflate/common_defs.h',
-    '../source/external/libdeflate/lib/arm/adler32_impl.h',
-    '../source/external/libdeflate/lib/arm/cpu_features.h',
-    '../source/external/libdeflate/lib/arm/crc32_impl.h',
-    '../source/external/libdeflate/lib/arm/crc32_pmull_helpers.h',
-    '../source/external/libdeflate/lib/arm/crc32_pmull_wide.h',
-    '../source/external/libdeflate/lib/arm/matchfinder_impl.h',
-    '../source/external/libdeflate/lib/x86/adler32_impl.h',
-    '../source/external/libdeflate/lib/x86/cpu_features.h',
-    '../source/external/libdeflate/lib/x86/crc32_impl.h',
-    '../source/external/libdeflate/lib/x86/crc32_pclmul_template.h',
-    '../source/external/libdeflate/lib/x86/decompress_impl.h',
-    '../source/external/libdeflate/lib/x86/matchfinder_impl.h',
-    '../source/external/libdeflate/lib/adler32_vec_template.h',
-    '../source/external/libdeflate/lib/bt_matchfinder.h',
-    '../source/external/libdeflate/lib/cpu_features_common.h',
-    '../source/external/libdeflate/lib/crc32_multipliers.h',
-    '../source/external/libdeflate/lib/crc32_tables.h',
-    '../source/external/libdeflate/lib/decompress_template.h',
-    '../source/external/libdeflate/lib/deflate_compress.h',
-    '../source/external/libdeflate/lib/deflate_constants.h',
-    '../source/external/libdeflate/lib/gzip_constants.h',
-    '../source/external/libdeflate/lib/hc_matchfinder.h',
-    '../source/external/libdeflate/lib/ht_matchfinder.h',
-    '../source/external/libdeflate/lib/lib_common.h',
-    '../source/external/libdeflate/lib/matchfinder_common.h',
-    '../source/external/libdeflate/lib/zlib_constants.h',
-    '../source/external/zlib/crc32.h',
-    '../source/external/zlib/inffast.h',
-    '../source/external/zlib/inflate.h',
-    '../source/external/zlib/trees.h',
-    '../source/external/zlib/zlib.h',
-    '../source/external/zlib/deflate.h',
-    '../source/external/zlib/inffixed.h',
-    '../source/external/zlib/inftrees.h',
-    '../source/external/zlib/zconf.h',
-    '../source/external/zlib/zutil.h',
-    '../source/external/zstd/common/huf.h',
-    '../source/external/zstd/common/fse.h',
-    '../source/external/zstd/common/pool.h',
-    '../source/external/zstd/common/xxhash.h',
-    '../source/external/zstd/common/zstd_internal.h',
-    '../source/external/zstd/common/bitstream.h',
-    '../source/external/zstd/common/mem.h',
-    '../source/external/zstd/common/threading.h',
-    '../source/external/zstd/common/error_private.h',
-    '../source/external/zstd/common/cpu.h',
-    '../source/external/zstd/common/debug.h',
-    '../source/external/zstd/common/compiler.h',
-    '../source/external/zstd/compress/zstd_double_fast.h',
-    '../source/external/zstd/compress/zstd_lazy.h',
-    '../source/external/zstd/compress/hist.h',
-    '../source/external/zstd/compress/zstd_compress_literals.h',
-    '../source/external/zstd/compress/zstd_fast.h',
-    '../source/external/zstd/compress/zstd_compress_internal.h',
-    '../source/external/zstd/compress/zstd_ldm.h',
-    '../source/external/zstd/compress/zstd_compress_sequences.h',
-    '../source/external/zstd/compress/zstd_compress_superblock.h',
-    '../source/external/zstd/compress/zstd_opt.h',
-    '../source/external/zstd/compress/zstdmt_compress.h',
-    '../source/external/zstd/compress/zstd_cwksp.h',
-    '../source/external/zstd/zstd.h',
-    '../source/external/zstd/zstd_errors.h',
-    '../source/external/zstd/decompress/zstd_ddict.h',
-    '../source/external/zstd/decompress/zstd_decompress_block.h',
-    '../source/external/zstd/decompress/zstd_decompress_internal.h',
     '../source/external/aes/bc_aes.h',
-    '../source/external/unrar/rarvm.hpp',
-    '../source/external/unrar/suballoc.hpp',
-    '../source/external/unrar/array.hpp',
-    '../source/external/unrar/crypt.hpp',
-    '../source/external/unrar/compress.hpp',
-    '../source/external/unrar/rdwrfn.hpp',
-    '../source/external/unrar/model.hpp',
-    '../source/external/unrar/unpack.hpp',
-    '../source/external/unrar/crc.hpp',
-    '../source/external/unrar/rar.hpp',
-    '../source/external/unrar/getbits.hpp',
-    '../source/external/unrar/rijndael.hpp',
     '../source/external/bc/BC.h',
     '../source/external/zpng/zpng.h',
     '../source/external/bzip2/bzlib_private.h',
     '../source/external/bzip2/bzlib.h',
     '../source/external/lz4/lz4hc.h',
     '../source/external/lz4/lz4.h',
-    '../source/external/libwebp/src/enc/cost_enc.h',
-    '../source/external/libwebp/src/enc/histogram_enc.h',
-    '../source/external/libwebp/src/enc/backward_references_enc.h',
-    '../source/external/libwebp/src/enc/vp8i_enc.h',
-    '../source/external/libwebp/src/enc/vp8li_enc.h',
-    '../source/external/libwebp/src/mux/animi.h',
-    '../source/external/libwebp/src/mux/muxi.h',
-    '../source/external/libwebp/src/dsp/mips_macro.h',
-    '../source/external/libwebp/src/dsp/quant.h',
-    '../source/external/libwebp/src/dsp/lossless.h',
-    '../source/external/libwebp/src/dsp/lossless_common.h',
-    '../source/external/libwebp/src/dsp/common_sse41.h',
-    '../source/external/libwebp/src/dsp/dsp.h',
-    '../source/external/libwebp/src/dsp/common_sse2.h',
-    '../source/external/libwebp/src/dsp/neon.h',
-    '../source/external/libwebp/src/dsp/yuv.h',
-    '../source/external/libwebp/src/dsp/msa_macro.h',
-    '../source/external/libwebp/src/webp/mux_types.h',
-    '../source/external/libwebp/src/webp/demux.h',
-    '../source/external/libwebp/src/webp/encode.h',
-    '../source/external/libwebp/src/webp/format_constants.h',
-    '../source/external/libwebp/src/webp/decode.h',
-    '../source/external/libwebp/src/webp/types.h',
-    '../source/external/libwebp/src/webp/mux.h',
-    '../source/external/libwebp/src/dec/webpi_dec.h',
-    '../source/external/libwebp/src/dec/alphai_dec.h',
-    '../source/external/libwebp/src/dec/vp8i_dec.h',
-    '../source/external/libwebp/src/dec/vp8li_dec.h',
-    '../source/external/libwebp/src/dec/vp8_dec.h',
-    '../source/external/libwebp/src/dec/common_dec.h',
-    '../source/external/libwebp/src/utils/quant_levels_dec_utils.h',
-    '../source/external/libwebp/src/utils/random_utils.h',
-    '../source/external/libwebp/src/utils/color_cache_utils.h',
-    '../source/external/libwebp/src/utils/endian_inl_utils.h',
-    '../source/external/libwebp/src/utils/utils.h',
-    '../source/external/libwebp/src/utils/quant_levels_utils.h',
-    '../source/external/libwebp/src/utils/bit_writer_utils.h',
-    '../source/external/libwebp/src/utils/huffman_utils.h',
-    '../source/external/libwebp/src/utils/bit_reader_inl_utils.h',
-    '../source/external/libwebp/src/utils/bit_reader_utils.h',
-    '../source/external/libwebp/src/utils/huffman_encode_utils.h',
-    '../source/external/libwebp/src/utils/thread_utils.h',
-    '../source/external/libwebp/src/utils/rescaler_utils.h',
-    '../source/external/libwebp/src/utils/filters_utils.h',
     '../source/external/lzo/lzoconf.h',
     '../source/external/lzo/minilzo.h',
     '../source/external/lzo/lzodefs.h',
     '../source/external/concurrentqueue/atomicops.h',
     '../source/external/concurrentqueue/concurrentqueue.h',
-    '../source/external/concurrentqueue/readerwriterqueue.h',
+    '../source/external/concurrentqueue/readerwriterqueue.h'
+)
+
+external_lzma_headers = files(
     '../source/external/lzma/7zTypes.h',
     '../source/external/lzma/Alloc.h',
     '../source/external/lzma/Compiler.h',
@@ -500,14 +399,7 @@ external_headers = files(
     '../source/external/lzma/Ppmd7.h',
     '../source/external/lzma/Ppmd8.h',
     '../source/external/lzma/Precomp.h',
-	'../source/external/lzma/Threads.h',
-    '../source/external/basisu/transcoder/basisu.h',
-    '../source/external/basisu/transcoder/basisu_containers.h',
-    '../source/external/basisu/transcoder/basisu_containers_impl.h',
-    '../source/external/basisu/transcoder/basisu_file_headers.h',
-    '../source/external/basisu/transcoder/basisu_transcoder.h',
-    '../source/external/basisu/transcoder/basisu_transcoder_internal.h',
-    '../source/external/basisu/transcoder/basisu_transcoder_uastc.h'
+	'../source/external/lzma/Threads.h'
 )
 
 external_lzma_sources = files(
@@ -561,6 +453,16 @@ external_lz4_sources = files(
     '../source/external/lz4/lz4hc.c'
 )
 
+external_lzfse_headers = files(
+    '../source/external/lzfse/lzfse_fse.h',
+    '../source/external/lzfse/lzfse.h',
+    '../source/external/lzfse/lzfse_internal.h',
+    '../source/external/lzfse/lzvn_encode_base.h',
+    '../source/external/lzfse/lzvn_decode_base.h',
+    '../source/external/lzfse/lzfse_tunables.h',
+    '../source/external/lzfse/lzfse_encode_tables.h'
+)
+
 external_lzfse_sources = files(
     '../source/external/lzfse/lzfse_decode_base.c',
     '../source/external/lzfse/lzfse_decode.c',
@@ -575,6 +477,37 @@ external_lzo_sources = files(
     '../source/external/lzo/minilzo.c'
 )
 
+external_deflate_headers = files(
+    '../source/external/libdeflate/libdeflate.h',
+    '../source/external/libdeflate/common_defs.h',
+    '../source/external/libdeflate/lib/arm/adler32_impl.h',
+    '../source/external/libdeflate/lib/arm/cpu_features.h',
+    '../source/external/libdeflate/lib/arm/crc32_impl.h',
+    '../source/external/libdeflate/lib/arm/crc32_pmull_helpers.h',
+    '../source/external/libdeflate/lib/arm/crc32_pmull_wide.h',
+    '../source/external/libdeflate/lib/arm/matchfinder_impl.h',
+    '../source/external/libdeflate/lib/x86/adler32_impl.h',
+    '../source/external/libdeflate/lib/x86/cpu_features.h',
+    '../source/external/libdeflate/lib/x86/crc32_impl.h',
+    '../source/external/libdeflate/lib/x86/crc32_pclmul_template.h',
+    '../source/external/libdeflate/lib/x86/decompress_impl.h',
+    '../source/external/libdeflate/lib/x86/matchfinder_impl.h',
+    '../source/external/libdeflate/lib/adler32_vec_template.h',
+    '../source/external/libdeflate/lib/bt_matchfinder.h',
+    '../source/external/libdeflate/lib/cpu_features_common.h',
+    '../source/external/libdeflate/lib/crc32_multipliers.h',
+    '../source/external/libdeflate/lib/crc32_tables.h',
+    '../source/external/libdeflate/lib/decompress_template.h',
+    '../source/external/libdeflate/lib/deflate_compress.h',
+    '../source/external/libdeflate/lib/deflate_constants.h',
+    '../source/external/libdeflate/lib/gzip_constants.h',
+    '../source/external/libdeflate/lib/hc_matchfinder.h',
+    '../source/external/libdeflate/lib/ht_matchfinder.h',
+    '../source/external/libdeflate/lib/lib_common.h',
+    '../source/external/libdeflate/lib/matchfinder_common.h',
+    '../source/external/libdeflate/lib/zlib_constants.h'
+)
+
 external_deflate_sources = files(
     '../source/external/libdeflate/lib/deflate_compress.c',
     '../source/external/libdeflate/lib/deflate_decompress.c',
@@ -585,6 +518,19 @@ external_deflate_sources = files(
     '../source/external/libdeflate/lib/libd_utils.c',
     '../source/external/libdeflate/lib/zlib_compress.c',
     '../source/external/libdeflate/lib/zlib_decompress.c',
+)
+
+external_zlib_headers = files(
+    '../source/external/zlib/crc32.h',
+    '../source/external/zlib/inffast.h',
+    '../source/external/zlib/inflate.h',
+    '../source/external/zlib/trees.h',
+    '../source/external/zlib/zlib.h',
+    '../source/external/zlib/deflate.h',
+    '../source/external/zlib/inffixed.h',
+    '../source/external/zlib/inftrees.h',
+    '../source/external/zlib/zconf.h',
+    '../source/external/zlib/zutil.h'
 )
 
 external_zlib_sources = files(
@@ -611,6 +557,21 @@ elif is_x86
     )
 endif
 
+external_unrar_headers = files(
+    '../source/external/unrar/rarvm.hpp',
+    '../source/external/unrar/suballoc.hpp',
+    '../source/external/unrar/array.hpp',
+    '../source/external/unrar/crypt.hpp',
+    '../source/external/unrar/compress.hpp',
+    '../source/external/unrar/rdwrfn.hpp',
+    '../source/external/unrar/model.hpp',
+    '../source/external/unrar/unpack.hpp',
+    '../source/external/unrar/crc.hpp',
+    '../source/external/unrar/rar.hpp',
+    '../source/external/unrar/getbits.hpp',
+    '../source/external/unrar/rijndael.hpp'
+)
+
 external_unrar_sources = files(
     '../source/external/unrar/crc.cpp',
     '../source/external/unrar/crypt.cpp',
@@ -619,6 +580,38 @@ external_unrar_sources = files(
     '../source/external/unrar/rdwrfn.cpp',
     '../source/external/unrar/rijndael.cpp',
     '../source/external/unrar/unpack.cpp'
+)
+
+external_zstd_headers = files(
+    '../source/external/zstd/common/huf.h',
+    '../source/external/zstd/common/fse.h',
+    '../source/external/zstd/common/pool.h',
+    '../source/external/zstd/common/xxhash.h',
+    '../source/external/zstd/common/zstd_internal.h',
+    '../source/external/zstd/common/bitstream.h',
+    '../source/external/zstd/common/mem.h',
+    '../source/external/zstd/common/threading.h',
+    '../source/external/zstd/common/error_private.h',
+    '../source/external/zstd/common/cpu.h',
+    '../source/external/zstd/common/debug.h',
+    '../source/external/zstd/common/compiler.h',
+    '../source/external/zstd/compress/zstd_double_fast.h',
+    '../source/external/zstd/compress/zstd_lazy.h',
+    '../source/external/zstd/compress/hist.h',
+    '../source/external/zstd/compress/zstd_compress_literals.h',
+    '../source/external/zstd/compress/zstd_fast.h',
+    '../source/external/zstd/compress/zstd_compress_internal.h',
+    '../source/external/zstd/compress/zstd_ldm.h',
+    '../source/external/zstd/compress/zstd_compress_sequences.h',
+    '../source/external/zstd/compress/zstd_compress_superblock.h',
+    '../source/external/zstd/compress/zstd_opt.h',
+    '../source/external/zstd/compress/zstdmt_compress.h',
+    '../source/external/zstd/compress/zstd_cwksp.h',
+    '../source/external/zstd/zstd.h',
+    '../source/external/zstd/zstd_errors.h',
+    '../source/external/zstd/decompress/zstd_ddict.h',
+    '../source/external/zstd/decompress/zstd_decompress_block.h',
+    '../source/external/zstd/decompress/zstd_decompress_internal.h'
 )
 
 external_zstd_sources = files(
@@ -648,6 +641,53 @@ external_zstd_sources = files(
     '../source/external/zstd/decompress/zstd_decompress.c',
     '../source/external/zstd/decompress/zstd_decompress_block.c',
     '../source/external/zstd/decompress/zstd_ddict.c'
+)
+
+external_webp_headers = files(
+    '../source/external/libwebp/src/enc/cost_enc.h',
+    '../source/external/libwebp/src/enc/histogram_enc.h',
+    '../source/external/libwebp/src/enc/backward_references_enc.h',
+    '../source/external/libwebp/src/enc/vp8i_enc.h',
+    '../source/external/libwebp/src/enc/vp8li_enc.h',
+    '../source/external/libwebp/src/mux/animi.h',
+    '../source/external/libwebp/src/mux/muxi.h',
+    '../source/external/libwebp/src/dsp/mips_macro.h',
+    '../source/external/libwebp/src/dsp/quant.h',
+    '../source/external/libwebp/src/dsp/lossless.h',
+    '../source/external/libwebp/src/dsp/lossless_common.h',
+    '../source/external/libwebp/src/dsp/common_sse41.h',
+    '../source/external/libwebp/src/dsp/dsp.h',
+    '../source/external/libwebp/src/dsp/common_sse2.h',
+    '../source/external/libwebp/src/dsp/neon.h',
+    '../source/external/libwebp/src/dsp/yuv.h',
+    '../source/external/libwebp/src/dsp/msa_macro.h',
+    '../source/external/libwebp/src/webp/mux_types.h',
+    '../source/external/libwebp/src/webp/demux.h',
+    '../source/external/libwebp/src/webp/encode.h',
+    '../source/external/libwebp/src/webp/format_constants.h',
+    '../source/external/libwebp/src/webp/decode.h',
+    '../source/external/libwebp/src/webp/types.h',
+    '../source/external/libwebp/src/webp/mux.h',
+    '../source/external/libwebp/src/dec/webpi_dec.h',
+    '../source/external/libwebp/src/dec/alphai_dec.h',
+    '../source/external/libwebp/src/dec/vp8i_dec.h',
+    '../source/external/libwebp/src/dec/vp8li_dec.h',
+    '../source/external/libwebp/src/dec/vp8_dec.h',
+    '../source/external/libwebp/src/dec/common_dec.h',
+    '../source/external/libwebp/src/utils/quant_levels_dec_utils.h',
+    '../source/external/libwebp/src/utils/random_utils.h',
+    '../source/external/libwebp/src/utils/color_cache_utils.h',
+    '../source/external/libwebp/src/utils/endian_inl_utils.h',
+    '../source/external/libwebp/src/utils/utils.h',
+    '../source/external/libwebp/src/utils/quant_levels_utils.h',
+    '../source/external/libwebp/src/utils/bit_writer_utils.h',
+    '../source/external/libwebp/src/utils/huffman_utils.h',
+    '../source/external/libwebp/src/utils/bit_reader_inl_utils.h',
+    '../source/external/libwebp/src/utils/bit_reader_utils.h',
+    '../source/external/libwebp/src/utils/huffman_encode_utils.h',
+    '../source/external/libwebp/src/utils/thread_utils.h',
+    '../source/external/libwebp/src/utils/rescaler_utils.h',
+    '../source/external/libwebp/src/utils/filters_utils.h'
 )
 
 external_webp_sources = files(
@@ -772,9 +812,23 @@ external_zpng_sources = files(
     '../source/external/zpng/zpng.cpp'
 )
 
+external_basisu_headers = files(
+    '../source/external/basisu/transcoder/basisu.h',
+    '../source/external/basisu/transcoder/basisu_containers.h',
+    '../source/external/basisu/transcoder/basisu_containers_impl.h',
+    '../source/external/basisu/transcoder/basisu_file_headers.h',
+    '../source/external/basisu/transcoder/basisu_transcoder.h',
+    '../source/external/basisu/transcoder/basisu_transcoder_internal.h',
+    '../source/external/basisu/transcoder/basisu_transcoder_uastc.h'
+)
+
 external_basisu_sources = files(
     '../source/external/basisu/transcoder/basisu_transcoder.cpp'
 )
+
+# ------------------------------------------------------------------------------
+# compiler settings
+# ------------------------------------------------------------------------------
 
 cpp = meson.get_compiler('cpp')
 
@@ -925,14 +979,28 @@ mango = shared_library('mango',
     soversion: mango_version,
     extra_files : [
         mango_headers,
+        mango_core_headers,
+        mango_filesystem_headers,
+        mango_image_headers,
+        mango_math_headers,
+        mango_simd_headers,
+        mango_opengl_headers,
+        external_lzma_headers,
+        external_lzfse_headers,
+        external_deflate_headers,
+        external_zlib_headers,
+        external_zstd_headers,
+        external_unrar_headers,
+        external_webp_headers,
+        external_basisu_headers,
         external_headers
     ],
     sources : [
-        core_sources,
-        filesystem_sources,
-        image_sources,
-        jpeg_sources,
-        math_sources,
+        mango_core_sources,
+        mango_filesystem_sources,
+        mango_image_sources,
+        mango_jpeg_sources,
+        mango_math_sources,
         external_lzma_sources,
         external_aes_sources,
         external_bc_sources,
@@ -965,7 +1033,7 @@ mango_dep = declare_dependency(
 mango_opengl = shared_library('mango-opengl',
     version             : mango_version,
     soversion           : mango_version,
-    sources             : window_sources + opengl_sources,
+    sources             : mango_window_sources + mango_opengl_sources,
     link_with           : mango,
     dependencies        : mango_opengl_deps,
     include_directories : mango_inc,
