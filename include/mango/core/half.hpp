@@ -332,14 +332,16 @@ namespace mango
     // conversions
     // -----------------------------------------------------------------------
 
-    static inline double unsignedIntToDouble(u32 i)
+    static inline
+    double unsignedIntToDouble(u32 i)
     {
         const double bias = (1ll << 52) * 1.5;
         Double x(u64(0x4338000000000000UL | i));
         return x.f - bias;
     }
 
-    static inline u32 doubleToUnsignedInt(double d)
+    static inline
+    u32 doubleToUnsignedInt(double d)
     {
         const double bias = (1ll << 52) * 1.5;
         Double x = d + bias;

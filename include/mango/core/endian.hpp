@@ -15,38 +15,44 @@ namespace mango
     // unaligned load/store
     // --------------------------------------------------------------
 
-    static inline u16 uload16(const void* p)
+    static inline
+    u16 uload16(const void* p)
     {
         u16 value;
         std::memcpy(&value, p, sizeof(u16));
         return value;
     }
 
-    static inline u32 uload32(const void* p)
+    static inline
+    u32 uload32(const void* p)
     {
         u32 value;
         std::memcpy(&value, p, sizeof(u32));
         return value;
     }
 
-    static inline u64 uload64(const void* p)
+    static inline
+    u64 uload64(const void* p)
     {
         u64 value;
         std::memcpy(&value, p, sizeof(u64));
         return value;
     }
 
-    static inline void ustore16(void* p, u16 value)
+    static inline
+    void ustore16(void* p, u16 value)
     {
         std::memcpy(p, &value, sizeof(u16));
     }
 
-    static inline void ustore32(void* p, u32 value)
+    static inline
+    void ustore32(void* p, u32 value)
     {
         std::memcpy(p, &value, sizeof(u32));
     }
 
-    static inline void ustore64(void* p, u64 value)
+    static inline
+    void ustore64(void* p, u64 value)
     {
         std::memcpy(p, &value, sizeof(u64));
     }
@@ -55,32 +61,38 @@ namespace mango
     // unaligned load/store + byteswap
     // --------------------------------------------------------------
 
-    static inline u16 uload16swap(const void* p)
+    static inline
+    u16 uload16swap(const void* p)
     {
         return byteswap(uload16(p));
     }
 
-    static inline u32 uload32swap(const void* p)
+    static inline
+    u32 uload32swap(const void* p)
     {
         return byteswap(uload32(p));
     }
 
-    static inline u64 uload64swap(const void* p)
+    static inline
+    u64 uload64swap(const void* p)
     {
         return byteswap(uload64(p));
     }
 
-    static inline void ustore16swap(void* p, u16 value)
+    static inline
+    void ustore16swap(void* p, u16 value)
     {
         ustore16(p, byteswap(value));
     }
 
-    static inline void ustore32swap(void* p, u32 value)
+    static inline
+    void ustore32swap(void* p, u32 value)
     {
         ustore32(p, byteswap(value));
     }
 
-    static inline void ustore64swap(void* p, u64 value)
+    static inline
+    void ustore64swap(void* p, u64 value)
     {
         ustore64(p, byteswap(value));
     }
@@ -140,6 +152,7 @@ namespace mango
     // architecture of MANGO API; client can read/write struct that "just works"
 
     /* Code example:
+
     struct Foo
     {
         u32be a;

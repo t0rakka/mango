@@ -202,7 +202,7 @@
         #define __SSE2__
         #endif
 
-        // 32 it x86 target has limited / broken SSE3..SSE4 support :(
+        // 32 bit x86 target has limited / broken SSE3..SSE4 support :(
         #if !defined(_M_IX86) && !defined(__i386__)
 
             #ifndef __SSE3__
@@ -225,7 +225,7 @@
     #endif
 
     #if !defined(__AES__) && (_MSC_VER >= 1920)
-        // Visual Studio 2019 (14.20)
+        // 1920: Visual Studio 2019 (14.20)
         #define __AES__
     #endif
 
