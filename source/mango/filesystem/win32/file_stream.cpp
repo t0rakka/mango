@@ -102,11 +102,10 @@ namespace mango::filesystem
                 break;
         }
 
-        // TODO: mode parameter
-        HANDLE handle = CreateFileW(u16_fromBytes(filename).c_str(), access, 0, NULL, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
+        HANDLE handle = CreateFileW(u16_fromBytes(filename).c_str(), access, FILE_SHARE_READ, NULL, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
         if (handle == INVALID_HANDLE_VALUE)
         {
-            MANGO_EXCEPTION("[FileStream] CreateFileW() failed.");
+            MANGO_EXCEPTION("[FileStream] CreateFileW(\"%s\") failed.", filename.c_str());
         }
 
 		m_handle = new FileHandle(filename, handle);
