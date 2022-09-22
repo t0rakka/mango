@@ -682,6 +682,35 @@ namespace mango::math
     }
 
     // ------------------------------------------------------------------------
+    // EulerAngles
+    // ------------------------------------------------------------------------
+
+    EulerAngles::EulerAngles(const Quaternion& q)
+    {
+        // x-axis
+        float sr_cp = 2.0f * (q.w * q.x + q.y * q.z);
+        float cr_cp = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
+        x = std::atan2(sr_cp, cr_cp);
+
+        // y-axis
+        float sp = 2.0f * (q.w * q.y - q.z * q.x);
+        if (std::abs(sp) >= 1.0f)
+        {
+            // use 90 degrees if out of range
+            y = std::copysign(float(pi) / 2.0f, sp);
+        }
+        else
+        {
+            y = std::asin(sp);
+        }
+
+        // z-axis
+        float sy_cp = 2.0f * (q.w * q.z + q.x * q.y);
+        float cy_cp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
+        z = std::atan2(sy_cp, cy_cp);
+    }
+
+    // ------------------------------------------------------------------------
     // AngleAxis
     // ------------------------------------------------------------------------
 
@@ -754,10 +783,27 @@ namespace mango::math
         const float theta = a.angle * 0.5f;
         const float s = std::sin(theta) / length(a.axis);
         const float c = std::cos(theta);
+
         x = a.axis.x * s;
         y = a.axis.y * s;
         z = a.axis.z * s;
         w = c;
+        return *this;
+    }
+
+    const Quaternion& Quaternion::operator = (const EulerAngles& euler)
+    {
+        const float sx = std::sin(euler.x * 0.5f);
+        const float cx = std::cos(euler.x * 0.5f);
+        const float sy = std::sin(euler.y * 0.5f);
+        const float cy = std::cos(euler.y * 0.5f);
+        const float sz = std::sin(euler.z * 0.5f);
+        const float cz = std::cos(euler.z * 0.5f);
+
+        x = cz * sx * cy - sz * cx * sy;
+        y = cz * cx * sy + sz * sx * cy;
+        z = sz * cx * cy - cz * sx * sy;
+        w = cz * cx * cy + sz * sx * sy;
         return *this;
     }
 
@@ -789,26 +835,21 @@ namespace mango::math
 
     Quaternion Quaternion::rotateXYZ(float xangle, float yangle, float zangle)
     {
-        float xc = cos(xangle * 0.5f);
-        float xs = sin(xangle * 0.5f);
-        float yc = cos(yangle * 0.5f);
-        float ys = sin(yangle * 0.5f);
-        float zc = cos(zangle * 0.5f);
-        float zs = sin(zangle * 0.5f);
-        float x = xs * yc * zc - xc * ys * zs;
-        float y = xc * ys * zc + xs * yc * zs;
-        float z = xc * yc * zs - xs * ys * zc;
-        float w = xc * yc * zc + xs * ys * zs;
-        return Quaternion(x, y, z, w);
+        return Quaternion(EulerAngles(xangle, yangle, zangle));
     }
 
-	Quaternion Quaternion::rotate(const float32x3& from, const float32x3& to)
-	{
-		const float32x3 h = normalize(from + to);
-		const float32x3 xyz = cross(from, h);
-		const float w = dot(from, h);
-		return Quaternion(xyz, w);
-	}
+    Quaternion Quaternion::rotate(const EulerAngles& euler)
+    {
+        return Quaternion(euler);
+    }
+
+    Quaternion Quaternion::rotate(const float32x3& from, const float32x3& to)
+    {
+        const float32x3 h = normalize(from + to);
+        const float32x3 xyz = cross(from, h);
+        const float w = dot(from, h);
+        return Quaternion(xyz, w);
+    }
 
     Quaternion log(const Quaternion& q)
     {
@@ -893,7 +934,7 @@ namespace mango::math
             const float sp = std::sin((1.0f - time) * halfpi);
             const float sq = std::sin(time * halfpi);
 
-			// TODO: check the return value
+            // TODO: check the return value
             return Quaternion(a.x * sp - a.y * sq,
                               a.y * sp + a.x * sq,
                               a.z * sp - a.w * sq,

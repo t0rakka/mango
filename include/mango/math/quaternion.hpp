@@ -1,16 +1,18 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/math/vector.hpp>
 #include <mango/math/matrix.hpp>
+#include <mango/math/spline.hpp>
 
 namespace mango::math
 {
 
     struct AngleAxis;
+    struct EulerAngles;
 
     // ------------------------------------------------------------------
     // Quaternion
@@ -70,6 +72,11 @@ namespace mango::math
             *this = a;
         }
 
+        Quaternion(const EulerAngles& a)
+        {
+            *this = a;
+        }
+
         ~Quaternion()
         {
         }
@@ -85,6 +92,7 @@ namespace mango::math
 
         const Quaternion& operator = (const Matrix<float, 4, 4>& m);
         const Quaternion& operator = (const AngleAxis& a);
+        const Quaternion& operator = (const EulerAngles& euler);
 
         const Quaternion& operator += (const Quaternion& q)
         {
@@ -152,6 +160,7 @@ namespace mango::math
         static Quaternion rotateY(float angle);
         static Quaternion rotateZ(float angle);
         static Quaternion rotateXYZ(float xangle, float yangle, float zangle);
+        static Quaternion rotate(const EulerAngles& euler);
         static Quaternion rotate(const Vector<float, 3>& from, const Vector<float, 3>& to);
     };
 
@@ -178,10 +187,32 @@ namespace mango::math
     };
 
     // ------------------------------------------------------------------
+    // EulerAngles
+    // ------------------------------------------------------------------
+
+    struct EulerAngles
+    {
+        float x, y, z;
+
+        EulerAngles() = default;
+
+        EulerAngles(float x, float y, float z)
+            : x(x)
+            , y(y)
+            , z(z)
+        {
+        }
+
+        EulerAngles(const Quaternion& q);
+        ~EulerAngles() = default;
+    };
+
+    // ------------------------------------------------------------------
     // Quaternion operators
     // ------------------------------------------------------------------
 
-    static inline Quaternion operator + (const Quaternion& a, const Quaternion& b)
+    static inline
+    Quaternion operator + (const Quaternion& a, const Quaternion& b)
     {
         return Quaternion(a.x + b.x,
                           a.y + b.y,
@@ -189,7 +220,8 @@ namespace mango::math
                           a.w + b.w);
     }
 
-    static inline Quaternion operator - (const Quaternion& a, const Quaternion& b)
+    static inline
+    Quaternion operator - (const Quaternion& a, const Quaternion& b)
     {
         return Quaternion(a.x - b.x,
                           a.y - b.y,
@@ -197,7 +229,8 @@ namespace mango::math
                           a.w - b.w);
     }
 
-    static inline Quaternion operator * (const Quaternion& q, float s)
+    static inline
+    Quaternion operator * (const Quaternion& q, float s)
     {
         return Quaternion(q.x * s,
                           q.y * s,
@@ -205,7 +238,8 @@ namespace mango::math
                           q.w * s);
     }
 
-    static inline Quaternion operator * (float s, const Quaternion& q)
+    static inline
+    Quaternion operator * (float s, const Quaternion& q)
     {
         return Quaternion(q.x * s,
                           q.y * s,
@@ -213,7 +247,8 @@ namespace mango::math
                           q.w * s);
     }
 
-    static inline Quaternion operator * (const Quaternion& a, const Quaternion& b)
+    static inline
+    Quaternion operator * (const Quaternion& a, const Quaternion& b)
     {
         float x = a.y * b.z - a.z * b.y + a.x * b.w + b.x * a.w;
         float y = a.z * b.x - a.x * b.z + a.y * b.w + b.y * a.w;
@@ -222,7 +257,8 @@ namespace mango::math
         return Quaternion(x, y, z, w);
     }
 
-    static inline Vector<float, 3> operator * (const Vector<float, 3>& v, const Quaternion& q)
+    static inline
+    Vector<float, 3> operator * (const Vector<float, 3>& v, const Quaternion& q)
     {
         float nx = q.y * v.z - q.z * v.y;
         float ny = q.z * v.x - q.x * v.z;
@@ -237,27 +273,32 @@ namespace mango::math
     // Quaternion functions
     // ------------------------------------------------------------------
 
-    static inline float dot(const Quaternion& a, const Quaternion& b)
+    static inline
+    float dot(const Quaternion& a, const Quaternion& b)
     {
         return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
     }
 
-    static inline float norm(const Quaternion& q)
+    static inline
+    float norm(const Quaternion& q)
     {
         return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
     }
 
-    static inline float square(const Quaternion& q)
+    static inline
+    float square(const Quaternion& q)
     {
         return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
     }
 
-    static inline float mod(const Quaternion& q)
+    static inline
+    float mod(const Quaternion& q)
     {
         return float(std::sqrt(norm(q)));
     }
 
-    static inline Quaternion negate(const Quaternion& q)
+    static inline
+    Quaternion negate(const Quaternion& q)
     {
         const float s = -1.0f / mod(q);
         return Quaternion(q.x * s,
@@ -266,7 +307,8 @@ namespace mango::math
                           q.w * -s);
     }
 
-    static inline Quaternion inverse(const Quaternion& q)
+    static inline
+    Quaternion inverse(const Quaternion& q)
     {
         const float s = -1.0f / norm(q);
         return Quaternion(q.x * s,
@@ -275,7 +317,8 @@ namespace mango::math
                           q.w * -s);
     }
 
-    static inline Quaternion conjugate(const Quaternion& q)
+    static inline
+    Quaternion conjugate(const Quaternion& q)
     {
         return Quaternion(-q.x, -q.y, -q.z, q.w);
     }
