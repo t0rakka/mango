@@ -795,7 +795,7 @@ void arm_cbc_decrypt(u8* output, const u8* input, size_t length, const u8* ivec,
 // ----------------------------------------------------------------------------------------
 
 #define aesni_shuffle_epi64(a, b, s) \
-    (__m128i) _mm_shuffle_pd((__m128d)a, (__m128d)b, s)
+    _mm_castpd_si128(_mm_shuffle_pd(_mm_castsi128_pd(a), _mm_castsi128_pd(b), s))
 
 template <int R>
 inline __m128i aesni_key128_expand(__m128i key)

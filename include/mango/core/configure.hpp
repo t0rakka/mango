@@ -224,6 +224,11 @@
         #endif
     #endif
 
+    #if !defined(__AES__) && (_MSC_VER >= 1920)
+        // Visual Studio 2019 (14.20)
+        #define __AES__
+    #endif
+
     #pragma warning(disable : 4146 4996 4201 4244 26812)
 
 #elif defined(__llvm__) || defined(__clang__)
