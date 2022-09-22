@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -11,6 +11,7 @@ namespace mango::math
 
     struct Quaternion;
     struct AngleAxis;
+    struct EulerAngles;
 
     // ------------------------------------------------------------------
     // Matrix<float, 4, 4>
@@ -102,6 +103,11 @@ namespace mango::math
             *this = rotation;
         }
 
+        Matrix(const EulerAngles& rotation)
+        {
+            *this = rotation;
+        }
+
         ~Matrix()
         {
         }
@@ -119,6 +125,7 @@ namespace mango::math
         const Matrix4x4& operator = (const float* ptr);
         const Matrix4x4& operator = (const Quaternion& rotation);
         const Matrix4x4& operator = (const AngleAxis& rotation);
+        const Matrix4x4& operator = (const EulerAngles& rotation);
 
         operator float32x4* ()
         {

@@ -102,6 +102,29 @@ namespace mango::math
         return *this;
     }
 
+    const Matrix4x4& Matrix4x4::operator = (const EulerAngles& euler)
+    {
+        const float32x4 v = float32x4(euler.x, euler.y, euler.z, 0.0f);
+        const float32x4 s = sin(v);
+        const float32x4 c = cos(v);
+
+        const float sx = s.x;
+        const float sy = s.y;
+        const float sz = s.z;
+        const float cx = c.x;
+        const float cy = c.y;
+        const float cz = c.z;
+        const float sysx = sy * sx;
+        const float sycx = sy * cx;
+
+        m[0] = float32x4(cz * cy, sz * cy, -sy, 0);
+        m[1] = float32x4(cz * sysx - sz * cx, sz * sysx + cz * cx, cy * sx, 0);
+        m[2] = float32x4(cz * sycx + sz * sx, sz * sycx - cz * sx, cy * cx, 0);
+        m[3] = float32x4(0, 0, 0, 1);
+
+        return *this;
+    }
+
     bool Matrix4x4::isAffine() const
     {
         float32x4 c = column<3>();
@@ -219,25 +242,7 @@ namespace mango::math
 
     Matrix4x4 Matrix4x4::rotateXYZ(float x, float y, float z)
     {
-        const float32x4 v = float32x4(x, y, z, 0.0f);
-        const float32x4 s = sin(v);
-        const float32x4 c = cos(v);
-
-        const float sx = s.x;
-        const float sy = s.y;
-        const float sz = s.z;
-        const float cx = c.x;
-        const float cy = c.y;
-        const float cz = c.z;
-        const float sysx = sy * sx;
-        const float sycx = sy * cx;
-
-        Matrix4x4 m;
-        m[0] = float32x4(cz * cy, sz * cy, -sy, 0);
-        m[1] = float32x4(cz * sysx - sz * cx, sz * sysx + cz * cx, cy * sx, 0);
-        m[2] = float32x4(cz * sycx + sz * sx, sz * sycx - cz * sx, cy * cx, 0);
-        m[3] = float32x4(0, 0, 0, 1);
-        return m;
+        return Matrix4x4(EulerAngles(x, y, z));
     }
 
     Matrix4x4 Matrix4x4::lookat(const float32x3& target, const float32x3& viewer, const float32x3& up)
