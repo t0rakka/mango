@@ -819,22 +819,22 @@ namespace mango::math
 
     Quaternion Quaternion::rotateX(float angle)
     {
-        float s = sinf(angle * 0.5f);
-        float c = cosf(angle * 0.5f);
+        float s = std::sin(angle * 0.5f);
+        float c = std::cos(angle * 0.5f);
         return Quaternion(s, 0, 0, c);
     }
 
     Quaternion Quaternion::rotateY(float angle)
     {
-        float s = sinf(angle * 0.5f);
-        float c = cosf(angle * 0.5f);
+        float s = std::sin(angle * 0.5f);
+        float c = std::cos(angle * 0.5f);
         return Quaternion(0, s, 0, c);
     }
 
     Quaternion Quaternion::rotateZ(float angle)
     {
-        float s = sinf(angle * 0.5f);
-        float c = cosf(angle * 0.5f);
+        float s = std::sin(angle * 0.5f);
+        float c = std::cos(angle * 0.5f);
         return Quaternion(0, 0, s, c);
     }
 
