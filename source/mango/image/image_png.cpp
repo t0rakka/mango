@@ -3364,6 +3364,22 @@ namespace
     }
 
     static
+    void write_PLTE(Stream& stream, const Palette& palette)
+    {
+        BufferStream buffer;
+        BigEndianStream s(buffer);
+
+        for (int i = 0; i < 256; ++i)
+        {
+            s.write8(palette[i].r);
+            s.write8(palette[i].g);
+            s.write8(palette[i].b);
+        }
+
+        write_chunk(stream, u32_mask_rev('P', 'L', 'T', 'E'), buffer);
+    }
+
+    static
     void write_iCCP(Stream& stream, const ImageEncodeOptions& options)
     {
         if (options.icc.size == 0)
@@ -3633,7 +3649,10 @@ namespace
     {
         int height = 0;
 
-        if (options.parallel)
+        // fpng encoder only supports 24 and 32 bit color
+        bool indexed_encoder = options.palette.size > 0;
+
+        if (options.parallel || indexed_encoder)
         {
             size_t scan_bytes = surface.width * surface.format.bytes();
             size_t image_bytes = surface.height * scan_bytes;
@@ -3662,6 +3681,12 @@ namespace
 
         write_IHDR(stream, surface, color_bits, color_type);
         write_iCCP(stream, options);
+
+        if (options.palette.size > 0)
+        {
+            write_PLTE(stream, options.palette);
+        }
+
         if (segment_height)
         {
             write_pLLD(stream, segment_height);
@@ -3763,7 +3788,8 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    static
+    ImageEncodeStatus encode_png_rgba(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
         // defaults
         u8 color_bits = 8;
@@ -3839,6 +3865,34 @@ namespace
         return status;
     }
 
+    ImageEncodeStatus encode_png(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    {
+        ImageEncodeStatus status;
+
+        if (options.palette.size > 0)
+        {
+            if (options.palette.size != 256)
+            {
+                status.setError("[ImageEncoder.PNG] Incorrect palette size - must be 0 or 256 (size: %d).", options.palette.size);
+                return status;
+            }
+
+            if (!surface.format.isIndexed() || surface.format.bits != 8)
+            {
+                status.setError("[ImageEncoder.PNG] Incorrect format - must be 8 bit INDEXED (bits: %d).", surface.format.bits);
+                return status;
+            }
+
+            write_png(stream, status, surface, 8, COLOR_TYPE_PALETTE, options);
+        }
+        else
+        {
+            status = encode_png_rgba(stream, surface, options);
+        }
+
+        return status;
+    }
+
 } // namespace
 
 namespace mango::image
@@ -3847,7 +3901,7 @@ namespace mango::image
     void registerImageDecoderPNG()
     {
         registerImageDecoder(createInterface, ".png");
-        registerImageEncoder(imageEncode, ".png");
+        registerImageEncoder(encode_png, ".png");
     }
 
 } // namespace mango::image

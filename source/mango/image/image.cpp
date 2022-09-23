@@ -17,7 +17,8 @@ namespace
         std::string extension = filesystem::getExtension(filename);
         return toLower(extension.empty() ? filename : extension);
     }
-}
+
+} // namespace
 
 namespace mango::image
 {
