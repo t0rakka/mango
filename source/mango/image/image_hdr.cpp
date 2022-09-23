@@ -431,7 +431,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderHDR()
+    void registerImageCodecHDR()
     {
         registerImageDecoder(createInterface, ".hdr");
     }

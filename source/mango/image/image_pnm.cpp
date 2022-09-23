@@ -579,7 +579,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderPNM()
+    void registerImageCodecPNM()
     {
         registerImageDecoder(createInterface, ".pbm");
         registerImageDecoder(createInterface, ".pgm");

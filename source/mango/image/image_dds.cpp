@@ -1145,7 +1145,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderDDS()
+    void registerImageCodecDDS()
     {
         registerImageDecoder(createInterface, ".dds");
     }

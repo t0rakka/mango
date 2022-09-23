@@ -172,7 +172,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderASTC()
+    void registerImageCodecASTC()
     {
         registerImageDecoder(createInterface, ".astc");
     }

@@ -612,7 +612,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderQOI()
+    void registerImageCodecQOI()
     {
         registerImageDecoder(create_decoder_qoi, ".qoi");
         registerImageDecoder(create_decoder_toi, ".toi");

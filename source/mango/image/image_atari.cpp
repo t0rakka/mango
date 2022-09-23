@@ -1068,7 +1068,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderATARI()
+    void registerImageCodecATARI()
     {
         // Degas/Degas Elite
         registerImageDecoder(createInterfaceDEGAS, ".pi1");

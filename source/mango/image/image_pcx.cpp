@@ -412,7 +412,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderPCX()
+    void registerImageCodecPCX()
     {
         registerImageDecoder(createInterface, ".pcx");
     }

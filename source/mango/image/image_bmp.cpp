@@ -1325,7 +1325,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderBMP()
+    void registerImageCodecBMP()
     {
         registerImageDecoder(createInterface, ".bmp");
         registerImageDecoder(createInterface, ".ico");

@@ -722,7 +722,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderKTX()
+    void registerImageCodecKTX()
     {
         registerImageDecoder(createInterface, ".ktx");
     }

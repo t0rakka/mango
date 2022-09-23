@@ -555,7 +555,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderIFF()
+    void registerImageCodecIFF()
     {
         registerImageDecoder(createInterface, ".iff");
         registerImageDecoder(createInterface, ".lbm");

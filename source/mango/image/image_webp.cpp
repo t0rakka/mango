@@ -220,7 +220,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderWEBP()
+    void registerImageCodecWEBP()
     {
         registerImageDecoder(createInterface, ".webp");
         registerImageEncoder(imageEncode, ".webp");

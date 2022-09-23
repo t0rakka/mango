@@ -868,7 +868,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderGIF()
+    void registerImageCodecGIF()
     {
         registerImageDecoder(createInterface, ".gif");
         registerImageEncoder(imageEncode, ".gif");

@@ -76,7 +76,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderJPG()
+    void registerImageCodecJPG()
     {
         registerImageDecoder(createInterface, ".jpg");
         registerImageDecoder(createInterface, ".jpeg");

@@ -27,31 +27,31 @@ namespace mango::image
     // ImageServer
     // ----------------------------------------------------------------------------
 
-    void registerImageDecoderTGA();
-    void registerImageDecoderPKM();
-    void registerImageDecoderDDS();
-    void registerImageDecoderPNG();
-    void registerImageDecoderJPG();
-    void registerImageDecoderBMP();
-    void registerImageDecoderPCX();
-    void registerImageDecoderIFF();
-    void registerImageDecoderHDR();
-    void registerImageDecoderGIF();
-    void registerImageDecoderKTX();
-    void registerImageDecoderKTX2();
-    void registerImageDecoderPVR();
-    void registerImageDecoderASTC();
-    void registerImageDecoderZPNG();
-    void registerImageDecoderSGI();
-    void registerImageDecoderPNM();
-    void registerImageDecoderATARI();
-    void registerImageDecoderC64();
-    void registerImageDecoderWEBP();
-    void registerImageDecoderEXR();
-    void registerImageDecoderQOI();
+    void registerImageCodecTGA();
+    void registerImageCodecPKM();
+    void registerImageCodecDDS();
+    void registerImageCodecPNG();
+    void registerImageCodecJPG();
+    void registerImageCodecBMP();
+    void registerImageCodecPCX();
+    void registerImageCodecIFF();
+    void registerImageCodecHDR();
+    void registerImageCodecGIF();
+    void registerImageCodecKTX();
+    void registerImageCodecKTX2();
+    void registerImageCodecPVR();
+    void registerImageCodecASTC();
+    void registerImageCodecZPNG();
+    void registerImageCodecSGI();
+    void registerImageCodecPNM();
+    void registerImageCodecATARI();
+    void registerImageCodecC64();
+    void registerImageCodecWEBP();
+    void registerImageCodecEXR();
+    void registerImageCodecQOI();
 
 #if defined(MANGO_ENABLE_JXL)
-    void registerImageDecoderJXL();
+    void registerImageCodecJXL();
 #endif
 
     class ImageServer
@@ -63,31 +63,31 @@ namespace mango::image
     public:
         ImageServer()
         {
-            registerImageDecoderTGA();
-            registerImageDecoderPKM();
-            registerImageDecoderDDS();
-            registerImageDecoderPNG();
-            registerImageDecoderJPG();
-            registerImageDecoderBMP();
-            registerImageDecoderPCX();
-            registerImageDecoderIFF();
-            registerImageDecoderHDR();
-            registerImageDecoderGIF();
-            registerImageDecoderKTX();
-            registerImageDecoderKTX2();
-            registerImageDecoderPVR();
-            registerImageDecoderASTC();
-            registerImageDecoderZPNG();
-            registerImageDecoderSGI();
-            registerImageDecoderPNM();
-            registerImageDecoderATARI();
-            registerImageDecoderC64();
-            registerImageDecoderWEBP();
-            registerImageDecoderEXR();
-            registerImageDecoderQOI();
+            registerImageCodecTGA();
+            registerImageCodecPKM();
+            registerImageCodecDDS();
+            registerImageCodecPNG();
+            registerImageCodecJPG();
+            registerImageCodecBMP();
+            registerImageCodecPCX();
+            registerImageCodecIFF();
+            registerImageCodecHDR();
+            registerImageCodecGIF();
+            registerImageCodecKTX();
+            registerImageCodecKTX2();
+            registerImageCodecPVR();
+            registerImageCodecASTC();
+            registerImageCodecZPNG();
+            registerImageCodecSGI();
+            registerImageCodecPNM();
+            registerImageCodecATARI();
+            registerImageCodecC64();
+            registerImageCodecWEBP();
+            registerImageCodecEXR();
+            registerImageCodecQOI();
 
 #if defined(MANGO_ENABLE_JXL)
-            registerImageDecoderJXL();
+            registerImageCodecJXL();
 #endif
         }
 

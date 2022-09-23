@@ -3887,7 +3887,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderPNG()
+    void registerImageCodecPNG()
     {
         registerImageDecoder(createInterface, ".png");
         registerImageEncoder(imageEncode, ".png");

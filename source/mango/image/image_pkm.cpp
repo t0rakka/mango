@@ -233,7 +233,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderPKM()
+    void registerImageCodecPKM()
     {
         registerImageDecoder(createInterface, ".pkm");
         registerImageEncoder(imageEncode, ".pkm");

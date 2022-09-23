@@ -51,7 +51,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderEXR()
+    void registerImageCodecEXR()
     {
         // TODO
         //registerImageDecoder(createInterface, ".exr");

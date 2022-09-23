@@ -335,7 +335,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderJXL()
+    void registerImageCodecJXL()
     {
         registerImageDecoder(createInterface, ".jxl");
         registerImageEncoder(imageEncode, ".jxl");

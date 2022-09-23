@@ -2523,7 +2523,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderC64()
+    void registerImageCodecC64()
     {
         // Advanced Art Studio
         registerImageDecoder(createInterfaceMPIC, ".mpic"); // TODO: test

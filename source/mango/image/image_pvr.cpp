@@ -684,7 +684,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderPVR()
+    void registerImageCodecPVR()
     {
         registerImageDecoder(createInterface, ".pvr");
     }

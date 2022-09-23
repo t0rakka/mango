@@ -268,7 +268,7 @@ namespace
 namespace mango::image
 {
 
-    void registerImageDecoderSGI()
+    void registerImageCodecSGI()
     {
         registerImageDecoder(createInterface, ".rgb");
         registerImageDecoder(createInterface, ".rgba");
