@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -46,7 +46,7 @@ namespace mango::image
             return scan + x;
         }
 
-        void save(const std::string& filename, const ImageEncodeOptions& options = ImageEncodeOptions()) const;
+        ImageEncodeStatus save(const std::string& filename, const ImageEncodeOptions& options = ImageEncodeOptions()) const;
         void clear(float red, float green, float blue, float alpha) const;
         void clear(Color color) const;
         void blit(int x, int y, const Surface& source) const;

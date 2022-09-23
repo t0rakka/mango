@@ -842,7 +842,7 @@ namespace
                 return status;
             }
 
-            if (surface.format.isIndexed() || surface.format.bits != 8)
+            if (!surface.format.isIndexed() || surface.format.bits != 8)
             {
                 status.setError("[ImageEncoder.GIF] Incorrect format - must be 8 bit INDEXED (bits: %d).", surface.format.bits);
                 return status;

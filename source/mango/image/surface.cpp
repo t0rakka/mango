@@ -198,14 +198,21 @@ namespace mango::image
         return *this;
     }
 
-    void Surface::save(const std::string& filename, const ImageEncodeOptions& options) const
+    ImageEncodeStatus Surface::save(const std::string& filename, const ImageEncodeOptions& options) const
     {
+        ImageEncodeStatus status;
         ImageEncoder encoder(filename);
         if (encoder.isEncoder())
         {
             filesystem::OutputFileStream file(filename);
-            encoder.encode(file, *this, options);
+            status = encoder.encode(file, *this, options);
         }
+        else
+        {
+            status.setError("Incorrect encoder: %s", filename.c_str());
+        }
+
+        return status;
     }
 
     void Surface::clear(float red, float green, float blue, float alpha) const

@@ -1,11 +1,23 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/string.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/image/image.hpp>
+
+namespace
+{
+    using namespace mango;
+
+    std::string getLowerCaseExtension(const std::string& filename)
+    {
+        // strip the filename away and make the extension (.ext) lower-case only
+        std::string extension = filesystem::getExtension(filename);
+        return toLower(extension.empty() ? filename : extension);
+    }
+}
 
 namespace mango::image
 {
@@ -82,13 +94,6 @@ namespace mango::image
         {
         }
 
-        std::string getLowerCaseExtension(const std::string& filename) const
-        {
-            // strip the filename away and make the extension (.ext) lower-case only
-            std::string extension = filesystem::getExtension(filename);
-            return toLower(extension.empty() ? filename : extension);
-        }
-
         void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension)
         {
             m_decoders[toLower(extension)] = func;
@@ -101,13 +106,13 @@ namespace mango::image
 
         ImageDecoder::CreateDecoderFunc getImageDecoder(const std::string& extension) const
         {
-            auto i = m_decoders.find(getLowerCaseExtension(extension));
+            auto i = m_decoders.find(extension);
             return i != m_decoders.end() ? i->second : nullptr;
         }
 
         ImageEncoder::EncodeFunc getImageEncoder(const std::string& extension) const
         {
-            auto i = m_encoders.find(getLowerCaseExtension(extension));
+            auto i = m_encoders.find(extension);
             return i != m_encoders.end() ? i->second : nullptr;
         }
     } g_imageServer;
@@ -122,14 +127,16 @@ namespace mango::image
         g_imageServer.registerImageEncoder(func, extension);
     }
 
-    bool isImageDecoder(const std::string& extension)
+    bool isImageDecoder(const std::string& filename)
     {
+        std::string extension = getLowerCaseExtension(filename);
         auto func = g_imageServer.getImageDecoder(extension);
         return func != nullptr;
     }
 
-    bool isImageEncoder(const std::string& extension)
+    bool isImageEncoder(const std::string& filename)
     {
+        std::string extension = getLowerCaseExtension(filename);
         auto func = g_imageServer.getImageEncoder(extension);
         return func != nullptr;
     }
@@ -162,7 +169,8 @@ namespace mango::image
 
     ImageDecoder::ImageDecoder(ConstMemory memory, const std::string& filename)
     {
-        ImageDecoder::CreateDecoderFunc create = g_imageServer.getImageDecoder(filename);
+        std::string extension = getLowerCaseExtension(filename);
+        ImageDecoder::CreateDecoderFunc create = g_imageServer.getImageDecoder(extension);
         if (create)
         {
             ImageDecoderInterface* x = create(memory);
@@ -251,8 +259,9 @@ namespace mango::image
     // ImageEncoder
     // ----------------------------------------------------------------------------
 
-    ImageEncoder::ImageEncoder(const std::string& extension)
+    ImageEncoder::ImageEncoder(const std::string& filename)
     {
+        std::string extension = getLowerCaseExtension(filename);
         m_encode_func = g_imageServer.getImageEncoder(extension);
     }
 

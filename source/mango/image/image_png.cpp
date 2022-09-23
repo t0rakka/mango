@@ -3368,7 +3368,7 @@ namespace
     {
         if (options.icc.size == 0)
         {
-            // omit empty profile chunk
+            // empty profile chunk
             return;
         }
 
