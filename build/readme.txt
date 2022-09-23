@@ -14,6 +14,11 @@ The library does come with many ways to compile itself; hopefully one of them wo
 3. ninja -j20
 4. sudo ninja install
 
+NOTE! On some distributions it seems libdir might get unwanted decorations, if this
+      occurs and want, for example /usr/local/lib replace step 1 with this:
+
+1. meson temp --buildtype=release --libdir=lib
+
 ------------------------------------------------------------------------------------------------
 * CMAKE!
 ------------------------------------------------------------------------------------------------
@@ -29,10 +34,10 @@ This is probably the most generic build script we have; it has been tested on Li
 5. sudo make install
 
 The library will be installed typically in /usr/local/include and /usr/local/lib 
-The cmake build script will compile everything into one (.a) library
+The cmake build script will compile everything into one (.so) library
 
 Pro tip! "cmake -DENABLE_AVX512=ON .." to enable Intel AVX-512 SIMD instructions.
-         "cmake -DBUILD_SHARED_LIBS=ON .." to compile .so/.dll/.dylib instead of .a/.lib
+         "cmake -DBUILD_SHARED_LIBS=OFF .." to compile .a/.lib instead of .so/.dll/.dylib
 
 Select compiler:
     "cmake .. -DCMAKE_C_COMPILER=gcc-mp-7 -DCMAKE_CXX_COMPILER=g++-mp-7" (example for gcc-7 mp)    
@@ -55,6 +60,8 @@ The library will be compiled as shared object (.so) files:
 The separation is done so that when not using OpenGL don't have to pull in X11 libraries.
 
 Pro tip! "make simd=avx2" to enable Intel AVX2 SIMD instructions.
+
+NOTE! The "plain" make compiler libraries will not be versioned
 
 ------------------------------------------------------------------------------------------------
 * XCODE!!!
