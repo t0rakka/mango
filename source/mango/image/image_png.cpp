@@ -3435,7 +3435,7 @@ namespace
     }
 
     static
-    void compress_serial(Stream& stream, ImageEncodeStatus& status, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
+    void compress_serial(Stream& stream, ImageEncodeStatus& status, const Surface& surface, const ImageEncodeOptions& options)
     {
         const int bpp = surface.format.bytes();
         const int bytes_per_scan = surface.width * bpp + 1;
@@ -3649,10 +3649,7 @@ namespace
     {
         int height = 0;
 
-        // fpng encoder only supports 24 and 32 bit color
-        bool indexed_encoder = options.palette.size > 0;
-
-        if (options.parallel || indexed_encoder)
+        if (options.parallel)
         {
             size_t scan_bytes = surface.width * surface.format.bytes();
             size_t image_bytes = surface.height * scan_bytes;
@@ -3674,17 +3671,18 @@ namespace
     {
         BigEndianStream s(stream);
 
-        int segment_height = configure_segment(surface, options);
-
         // write magic
         s.write64(PNG_HEADER_MAGIC);
 
         write_IHDR(stream, surface, color_bits, color_type);
         write_iCCP(stream, options);
 
+        int segment_height = configure_segment(surface, options);
+
         if (options.palette.size > 0)
         {
             write_PLTE(stream, options.palette);
+            segment_height = 0; // parallel encoder only supports 24 and 32 bit color
         }
 
         if (segment_height)
@@ -3694,7 +3692,7 @@ namespace
         }
         else
         {
-            compress_serial(stream, status, surface, segment_height, options);
+            compress_serial(stream, status, surface, options);
         }
 
         // write IEND
@@ -3788,15 +3786,36 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    static
-    ImageEncodeStatus encode_png_rgba(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        // defaults
+        ImageEncodeStatus status;
+
+        if (options.palette.size > 0)
+        {
+            if (options.palette.size != 256)
+            {
+                status.setError("[ImageEncoder.PNG] Incorrect palette size - must be 0 or 256 (size: %d).", options.palette.size);
+                return status;
+            }
+
+            if (!surface.format.isIndexed() || surface.format.bits != 8)
+            {
+                status.setError("[ImageEncoder.PNG] Incorrect format - must be 8 bit INDEXED (bits: %d).", surface.format.bits);
+                return status;
+            }
+
+            // encode indexed color image
+
+            write_png(stream, status, surface, 8, COLOR_TYPE_PALETTE, options);
+            return status;
+        }
+
+        // configure encoding parameters
+
         u8 color_bits = 8;
         ColorType color_type = COLOR_TYPE_RGBA;
         Format format;
 
-        // select png format
         if (surface.format.isLuminance())
         {
             if (surface.format.isAlpha())
@@ -3850,8 +3869,6 @@ namespace
             }
         }
 
-        ImageEncodeStatus status;
-
         if (surface.format == format)
         {
             write_png(stream, status, surface, color_bits, color_type, options);
@@ -3865,34 +3882,6 @@ namespace
         return status;
     }
 
-    ImageEncodeStatus encode_png(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
-    {
-        ImageEncodeStatus status;
-
-        if (options.palette.size > 0)
-        {
-            if (options.palette.size != 256)
-            {
-                status.setError("[ImageEncoder.PNG] Incorrect palette size - must be 0 or 256 (size: %d).", options.palette.size);
-                return status;
-            }
-
-            if (!surface.format.isIndexed() || surface.format.bits != 8)
-            {
-                status.setError("[ImageEncoder.PNG] Incorrect format - must be 8 bit INDEXED (bits: %d).", surface.format.bits);
-                return status;
-            }
-
-            write_png(stream, status, surface, 8, COLOR_TYPE_PALETTE, options);
-        }
-        else
-        {
-            status = encode_png_rgba(stream, surface, options);
-        }
-
-        return status;
-    }
-
 } // namespace
 
 namespace mango::image
@@ -3901,7 +3890,7 @@ namespace mango::image
     void registerImageDecoderPNG()
     {
         registerImageDecoder(createInterface, ".png");
-        registerImageEncoder(encode_png, ".png");
+        registerImageEncoder(imageEncode, ".png");
     }
 
 } // namespace mango::image
