@@ -449,7 +449,7 @@ namespace mango
         // value:  0001xxxxxxxx
         // result: 000111111111
         u32 mask = 1u << (31 - _lzcnt_u32(value));
-        return mask | (mask - 1);
+        return value ? mask | (mask - 1) : 0;
     }
 
     static inline
@@ -457,7 +457,7 @@ namespace mango
     {
         // value:  0001xxxxxxxx
         // result: 000100000000
-        return 1u << (31 - _lzcnt_u32(value));
+        return value ? 1u << (31 - _lzcnt_u32(value)) : 0;
     }
 
     static inline
@@ -482,7 +482,7 @@ namespace mango
         // value:  0001xxxxxxxx
         // result: 000111111111
         u32 mask = 1u << (31 - __clz(value));
-        return mask | (mask - 1);
+        return value ? mask | (mask - 1) : 0;
     }
 
     static inline
@@ -490,7 +490,7 @@ namespace mango
     {
         // value:  0001xxxxxxxx
         // result: 000100000000
-        return 1u << (31 - __clz(value));
+        return value ? 1u << (31 - __clz(value)) : 0;
     }
 
     static inline
@@ -515,7 +515,7 @@ namespace mango
         // value:  0001xxxxxxxx
         // result: 000111111111
         u32 mask = 1u << (31 - __builtin_clz(value));
-        return mask | (mask - 1);
+        return value ? mask | (mask - 1) : 0;
     }
 
     static inline
@@ -523,7 +523,7 @@ namespace mango
     {
         // value:  0001xxxxxxxx
         // result: 000100000000
-        return 1u << (31 - __builtin_clz(value));
+        return value ? 1u << (31 - __builtin_clz(value)) : 0;
     }
 
     static inline
@@ -948,7 +948,7 @@ namespace mango
         // value:  0001xxxxxxxx
         // result: 000111111111
         u64 mask = u64(1) << (63 - _lzcnt_u64(value));
-        return mask | (mask - 1);
+        return value ? mask | (mask - 1) : 0;
     }
 
     static inline
@@ -956,7 +956,7 @@ namespace mango
     {
         // value:  0001xxxxxxxx
         // result: 000100000000
-        return u64(1) << (63 - _lzcnt_u64(value));
+        return value ? u64(1) << (63 - _lzcnt_u64(value)) : 0;
     }
 
     static inline
@@ -981,7 +981,7 @@ namespace mango
         // value:  0001xxxxxxxx
         // result: 000111111111
         u64 mask = u64(1) << (63 - __clzll(value));
-        return mask | (mask - 1);
+        return value ? mask | (mask - 1) : 0;
     }
 
     static inline
@@ -989,7 +989,7 @@ namespace mango
     {
         // value:  0001xxxxxxxx
         // result: 000100000000
-        return u64(1) << (63 - __clzll(value));
+        return value ? u64(1) << (63 - __clzll(value)) : 0;
     }
 
     static inline
@@ -1014,7 +1014,7 @@ namespace mango
         // value:  0001xxxxxxxx
         // result: 000111111111
         u64 mask = u64(1) << (63 - __builtin_clzll(value));
-        return mask | (mask - 1);
+        return value ? mask | (mask - 1) : 0;
     }
 
     static inline
@@ -1022,7 +1022,7 @@ namespace mango
     {
         // value:  0001xxxxxxxx
         // result: 000100000000
-        return u64(1) << (63 - __builtin_clzll(value));
+        return value ? u64(1) << (63 - __builtin_clzll(value)) : 0;
     }
 
     static inline
