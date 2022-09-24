@@ -610,12 +610,25 @@ namespace mango
 
 #endif
 
+#if __cplusplus >= 202002L
+
+    static inline
+    int u32_log2(u32 value)
+    {
+        // NOTE: value 0 is undefined
+        return std::bit_width(value) - 1;
+    }
+
+#else
+
     static inline
     int u32_log2(u32 value)
     {
         // NOTE: value 0 is undefined
         return 31 - u32_lzcnt(value);
     }
+
+#endif
 
 #if defined(__aarch64__) && defined(MANGO_BITS_NOGCC)
 
@@ -1102,12 +1115,25 @@ namespace mango
 
 #endif
 
+#if __cplusplus >= 202002L
+
+    static inline
+    int u64_log2(u64 value)
+    {
+        // NOTE: value 0 is undefined
+        return std::bit_width(value) - 1;
+    }
+
+#else
+
     static inline
     int u64_log2(u64 value)
     {
         // NOTE: value 0 is undefined
         return 63 - u64_lzcnt(value);
     }
+
+#endif
 
 #if defined(__aarch64__) && defined(MANGO_BITS_NOGCC)
 
