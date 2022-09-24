@@ -467,13 +467,6 @@ namespace mango
     }
 
     static inline
-    int u32_index_of_msb(u32 value)
-    {
-        // NOTE: value 0 is undefined
-        return int(31 - std::countl_zero(value));
-    }
-
-    static inline
     int u32_lzcnt(u32 value)
     {
         // NOTE: value 0 is undefined
@@ -497,13 +490,6 @@ namespace mango
         // value:  0001xxxxxxxx
         // result: 000100000000
         return value ? 1u << (31 - _lzcnt_u32(value)) : 0;
-    }
-
-    static inline
-    int u32_index_of_msb(u32 value)
-    {
-        // NOTE: value 0 is undefined
-        return int(31 - _lzcnt_u32(value));
     }
 
     static inline
@@ -533,13 +519,6 @@ namespace mango
     }
 
     static inline
-    int u32_index_of_msb(u32 value)
-    {
-        // NOTE: value 0 is undefined
-        return int(31 - __clz(value));
-    }
-
-    static inline
     int u32_lzcnt(u32 value)
     {
         // NOTE: value 0 is undefined
@@ -563,13 +542,6 @@ namespace mango
         // value:  0001xxxxxxxx
         // result: 000100000000
         return value ? 1u << (31 - __builtin_clz(value)) : 0;
-    }
-
-    static inline
-    int u32_index_of_msb(u32 value)
-    {
-        // NOTE: value 0 is undefined
-        return int(31 - __builtin_clz(value));
     }
 
     static inline
@@ -604,29 +576,6 @@ namespace mango
     }
 
     static inline
-    int u32_index_of_msb(u32 value)
-    {
-        // NOTE: value 0 is undefined
-        /* NOTE: This generates branchless code
-        int base = 0;
-        u32 temp;
-        temp = value & 0xffff0000; if (temp) { base |= 16; value = temp; }
-        temp = value & 0xff00ff00; if (temp) { base |= 8;  value = temp; }
-        temp = value & 0xf0f0f0f0; if (temp) { base |= 4;  value = temp; }
-        temp = value & 0xcccccccc; if (temp) { base |= 2;  value = temp; }
-        temp = value & 0xaaaaaaaa; if (temp) { base |= 1; }
-        return base;
-        */
-        const u32 mask = u32_mask_msb(value);
-        static const u8 table [] =
-        {
-            0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30,
-            8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
-        };
-        return table[(mask * 0x07c4acdd) >> 27];
-    }
-
-    static inline
     int u32_lzcnt(u32 value)
     {
         // NOTE: value 0 is undefined
@@ -645,7 +594,7 @@ namespace mango
     int u32_log2(u32 value)
     {
         // NOTE: value 0 is undefined
-        return u32_index_of_msb(value);
+        return 31 - u32_lzcnt(value);
     }
 
 #if defined(__aarch64__) && defined(MANGO_BITS_NOGCC)
@@ -1009,13 +958,6 @@ namespace mango
     }
 
     static inline
-    int u64_index_of_msb(u64 value)
-    {
-        // NOTE: value 0 is undefined
-        return int(63 - std::countl_zero(value));
-    }
-
-    static inline
     int u64_lzcnt(u64 value)
     {
         // NOTE: value 0 is undefined
@@ -1039,13 +981,6 @@ namespace mango
         // value:  0001xxxxxxxx
         // result: 000100000000
         return value ? u64(1) << (63 - _lzcnt_u64(value)) : 0;
-    }
-
-    static inline
-    int u64_index_of_msb(u64 value)
-    {
-        // NOTE: value 0 is undefined
-        return int(63 - _lzcnt_u64(value));
     }
 
     static inline
@@ -1075,13 +1010,6 @@ namespace mango
     }
 
     static inline
-    int u64_index_of_msb(u64 value)
-    {
-        // NOTE: value 0 is undefined
-        return int(63 - __clzll(value));
-    }
-
-    static inline
     int u64_lzcnt(u64 value)
     {
         // NOTE: value 0 is undefined
@@ -1105,13 +1033,6 @@ namespace mango
         // value:  0001xxxxxxxx
         // result: 000100000000
         return value ? u64(1) << (63 - __builtin_clzll(value)) : 0;
-    }
-
-    static inline
-    int u64_index_of_msb(u64 value)
-    {
-        // NOTE: value 0 is undefined
-        return int(63 - __builtin_clzll(value));
     }
 
     static inline
@@ -1145,21 +1066,6 @@ namespace mango
     }
 
     static inline
-    int u64_index_of_msb(u64 value)
-    {
-        // NOTE: value 0 is undefined
-        const u64 mask = u64_mask_msb(value);
-        static const u8 table [] =
-        {
-            0, 47, 1, 56, 48, 27, 2, 60, 57, 49, 41, 37, 28, 16, 3, 61,
-            54, 58, 35, 52, 50, 42, 21, 44, 38, 32, 29, 23, 17, 11, 4, 62,
-            46, 55, 26, 59, 40, 36, 15, 53, 34, 51, 20, 43, 31, 22, 10, 45,
-            25, 39, 14, 33, 19, 30, 9, 24, 13, 18, 8, 12, 7, 6, 5, 63
-        };
-        return table[(mask * 0x03f79d71b4cb0a89u) >> 58];
-    }
-
-    static inline
     int u64_lzcnt(u64 value)
     {
         // NOTE: value 0 is undefined
@@ -1180,7 +1086,7 @@ namespace mango
     int u64_log2(u64 value)
     {
         // NOTE: value 0 is undefined
-        return u64_index_of_msb(value);
+        return 63 - u64_lzcnt(value);
     }
 
 #if defined(__aarch64__) && defined(MANGO_BITS_NOGCC)
