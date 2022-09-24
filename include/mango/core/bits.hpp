@@ -305,7 +305,7 @@ namespace mango
     // 32 bits
     // ----------------------------------------------------------------------------
 
-#ifdef MANGO_ENABLE_BMI
+#if defined(MANGO_ENABLE_BMI_32BIT)
 
     static inline
     u32 u32_extract_lsb(u32 value)
@@ -389,7 +389,7 @@ namespace mango
         return value ^ (0 - value);
     }
 
-#ifdef MANGO_ENABLE_BMI
+#if defined(MANGO_ENABLE_BMI_32BIT)
 
     static inline
     int u32_tzcnt(u32 value)
@@ -441,7 +441,7 @@ namespace mango
         return u32_tzcnt(value);
     }
 
-#ifdef MANGO_ENABLE_LZCNT
+#if defined(MANGO_ENABLE_LZCNT_32BIT)
 
     static inline
     u32 u32_mask_msb(u32 value)
@@ -670,7 +670,7 @@ namespace mango
 
 #endif
 
-#ifdef MANGO_ENABLE_BMI
+#if defined(MANGO_ENABLE_BMI_32BIT)
 
     static inline
     u32 u32_extract_bits(u32 value, int offset, int size)
@@ -697,7 +697,7 @@ namespace mango
     // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
     //                       32
 
-#ifdef MANGO_ENABLE_BMI2
+#if defined(MANGO_ENABLE_BMI2_32BIT)
 
     static inline
     u32 u32_interleave_bits(u32 x, u32 y)
@@ -755,7 +755,7 @@ namespace mango
     //     y: 0000000000000000yyyyyyyyyyyyyyyy
     //               16              16
 
-#ifdef MANGO_ENABLE_BMI2
+#if defined(MANGO_ENABLE_BMI2_32BIT)
 
     static inline
     void u32_deinterleave_bits(u32& x, u32& y, u32 value)
@@ -823,7 +823,7 @@ namespace mango
     // 64 bits
     // ----------------------------------------------------------------------------
 
-#ifdef MANGO_ENABLE_BMI
+#if defined(MANGO_ENABLE_BMI_64BIT)
 
     static inline
     u64 u64_extract_lsb(u64 value)
@@ -886,7 +886,7 @@ namespace mango
         return value ^ (0 - value);
     }
 
-#ifdef MANGO_ENABLE_BMI
+#if defined(MANGO_ENABLE_BMI_64BIT)
 
     static inline
     int u64_tzcnt(u64 value)
@@ -940,7 +940,7 @@ namespace mango
         return u64_tzcnt(value);
     }
 
-#ifdef MANGO_ENABLE_LZCNT
+#if defined(MANGO_ENABLE_LZCNT_64BIT)
 
     static inline
     u64 u64_mask_msb(u64 value)
@@ -1179,7 +1179,7 @@ namespace mango
 
 #endif
 
-#ifdef MANGO_ENABLE_BMI
+#if defined(MANGO_ENABLE_BMI_64BIT)
 
     static inline
     u64 u64_extract_bits(u64 value, int offset, int size)
@@ -1206,7 +1206,7 @@ namespace mango
     // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
     //                                       64
 
-#ifdef MANGO_ENABLE_BMI2
+#if defined(MANGO_ENABLE_BMI2_64BIT)
 
     static inline
     u64 u64_interleave_bits(u64 x, u64 y)
@@ -1272,7 +1272,7 @@ namespace mango
     //     y: 00000000000000000000000000000000yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
     //                       32                              32
 
-#ifdef MANGO_ENABLE_BMI2
+#if defined(MANGO_ENABLE_BMI2_64BIT)
 
     static inline
     void u64_deinterleave_bits(u64& x, u64& y, u64 value)

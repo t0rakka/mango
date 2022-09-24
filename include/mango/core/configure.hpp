@@ -166,100 +166,6 @@
 #endif
 
 // -----------------------------------------------------------------------
-// compiler
-// -----------------------------------------------------------------------
-
-#if defined(__INTEL_COMPILER) || defined(__ICL) || defined(__ICC)
-
-    // Intel C/C++ Compiler
-    #define MANGO_COMPILER_INTEL
-
-#elif defined(_MSC_VER)
-
-    // Microsoft Visual C++
-    #define MANGO_COMPILER_MICROSOFT
-
-    // noexcept specifier support was added in Visual Studio 2015
-    #if _MSC_VER < 1900
-        #define noexcept
-    #endif
-
-    // Fix <cmath> macros
-    #ifndef _USE_MATH_DEFINES
-        #define _USE_MATH_DEFINES
-    #endif
-
-    // SSE2 is always supported on x64
-    #if defined(_M_X64) || defined(_M_AMD64)
-        #ifndef __SSE2__
-        #define __SSE2__
-        #endif
-    #endif
-
-    // AVX and AVX2 include support for these
-    #if defined(__AVX__) || defined(__AVX2__)
-        #ifndef __SSE2__
-        #define __SSE2__
-        #endif
-
-        // 32 bit x86 target has limited / broken SSE3..SSE4 support :(
-        #if !defined(_M_IX86) && !defined(__i386__)
-
-            #ifndef __SSE3__
-            #define __SSE3__
-            #endif
-
-            #ifndef __SSSE3__
-            #define __SSSE3__
-            #endif
-
-            #ifndef __SSE4_1__
-            #define __SSE4_1__
-            #endif
-
-            #ifndef __SSE4_2__
-            #define __SSE4_2__
-            #endif
-
-        #endif
-    #endif
-
-    #if !defined(__AES__) && (_MSC_VER >= 1920)
-        // 1920: Visual Studio 2019 (14.20)
-        #define __AES__
-    #endif
-
-    #pragma warning(disable : 4146 4996 4201 4244 26812)
-
-#elif defined(__llvm__) || defined(__clang__)
-
-    // LLVM / Clang
-    #define MANGO_COMPILER_CLANG
-
-#elif defined(__GNUC__)
-
-    // GNU C/C++ Compiler
-    #define MANGO_COMPILER_GCC
-
-    #if __GNUC__ >= 6
-        #pragma GCC diagnostic ignored "-Wignored-attributes"
-    #endif
-
-#elif defined(__MWERKS__)
-
-    // Metrowerks CodeWarrior
-
-#elif defined(__COMO__)
-
-    // Comeau C++
-
-#else
-
-    // generic
-
-#endif
-
-// -----------------------------------------------------------------------
 // CPU
 // -----------------------------------------------------------------------
 
@@ -281,7 +187,7 @@
 #elif defined(__ia64__) || defined(__itanium__) || defined(_M_IA64)
 
     // Intel Itanium (IA-64)
-    #define MANGO_CPU_INTEL
+    //#define MANGO_CPU_INTEL /* NOTE: INTEL means x86 family in MANGO */
     #define MANGO_CPU_64BIT
     #define MANGO_LITTLE_ENDIAN /* bi-endian; depends on OS */
     #define MANGO_CPU_NAME "Itanium"
@@ -397,6 +303,117 @@
 #endif
 
 // -----------------------------------------------------------------------
+// compiler
+// -----------------------------------------------------------------------
+
+#if defined(__INTEL_COMPILER) || defined(__ICL) || defined(__ICC)
+
+    // Intel C/C++ Compiler
+    #define MANGO_COMPILER_INTEL
+
+#elif defined(_MSC_VER)
+
+    // Microsoft Visual C++
+    #define MANGO_COMPILER_MICROSOFT
+
+    // noexcept specifier support was added in Visual Studio 2015
+    #if _MSC_VER < 1900
+        #define noexcept
+    #endif
+
+    // Fix <cmath> macros
+    #ifndef _USE_MATH_DEFINES
+        #define _USE_MATH_DEFINES
+    #endif
+
+    // SSE2 is always supported on x64
+    #if defined(_M_X64) || defined(_M_AMD64)
+        #ifndef __SSE2__
+        #define __SSE2__
+        #endif
+    #endif
+
+    // AVX and AVX2 include support for these
+    #if defined(__AVX__) || defined(__AVX2__)
+
+        #ifndef __SSE2__
+        #define __SSE2__
+        #endif
+
+        // 32 bit x86 target has limited / broken SSE3..SSE4 support :(
+        #if defined(MANGO_CPU_64BIT)
+
+            #ifndef __SSE3__
+            #define __SSE3__
+            #endif
+
+            #ifndef __SSSE3__
+            #define __SSSE3__
+            #endif
+
+            #ifndef __SSE4_1__
+            #define __SSE4_1__
+            #endif
+
+            #ifndef __SSE4_2__
+            #define __SSE4_2__
+            #endif
+
+        #endif
+
+    #endif
+
+    #if defined(MANGO_CPU_INTEL) && (_MSC_VER >= 1920)
+        // 1920: Visual Studio 2019 (14.20)
+
+        #define MANGO_ENABLE_AES
+        #define MANGO_ENABLE_POPCNT
+        #define MANGO_ENABLE_LZCNT_32BIT
+        #define MANGO_ENABLE_BMI_32BIT
+        #define MANGO_ENABLE_BMI2_32BIT
+
+        #if defined(MANGO_CPU_64BIT)
+            #define MANGO_ENABLE_LZCNT_64BIT
+            #define MANGO_ENABLE_BMI_64BIT
+            #define MANGO_ENABLE_BMI2_64BIT
+        #endif
+
+        #include <immintrin.h>
+        #include <wmmintrin.h>
+
+    #endif
+
+    #pragma warning(disable : 4146 4996 4201 4244 26812)
+
+#elif defined(__llvm__) || defined(__clang__)
+
+    // LLVM / Clang
+    #define MANGO_COMPILER_CLANG
+
+#elif defined(__GNUC__)
+
+    // GNU C/C++ Compiler
+    #define MANGO_COMPILER_GCC
+
+    #if __GNUC__ >= 6
+        #pragma GCC diagnostic ignored "-Wignored-attributes"
+    #endif
+
+#elif defined(__MWERKS__)
+
+    // Metrowerks CodeWarrior
+
+#elif defined(__COMO__)
+
+    // Comeau C++
+
+#else
+
+    // generic
+
+#endif
+
+// -----------------------------------------------------------------------
 // SIMD
 // -----------------------------------------------------------------------
 
@@ -481,7 +498,8 @@
     #endif
 
     #ifdef __LZCNT__
-        #define MANGO_ENABLE_LZCNT
+        #define MANGO_ENABLE_LZCNT_32BIT
+        #define MANGO_ENABLE_LZCNT_64BIT
         #include <immintrin.h>
     #endif
 

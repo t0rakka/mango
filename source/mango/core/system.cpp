@@ -177,15 +177,15 @@ namespace mango
         info << "F16C ";
     #endif
 
-    #if defined(MANGO_ENABLE_BMI)
+    #if defined(MANGO_ENABLE_BMI_32BIT) || defined(MANGO_ENABLE_BMI_64BIT)
         info << "BMI ";
     #endif
 
-    #if defined(MANGO_ENABLE_BMI2)
+    #if defined(MANGO_ENABLE_BMI2_32BIT) || defined(MANGO_ENABLE_BMI2_64BIT)
         info << "BMI2 ";
     #endif
 
-    #if defined(MANGO_ENABLE_LZCNT)
+    #if defined(MANGO_ENABLE_LZCNT_32BIT) || defined(MANGO_ENABLE_LZCNT_64BIT)
         info << "LZCNT ";
     #endif
 
