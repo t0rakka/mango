@@ -32,7 +32,27 @@ namespace mango
     // byteswap
     // ----------------------------------------------------------------------------
 
-#if defined(MANGO_COMPILER_MICROSOFT)
+#if __cplusplus >= 202110L
+
+    static inline
+    u16 byteswap(u16 v)
+    {
+        return std::byteswap(v);
+    }
+
+    static inline
+    u32 byteswap(u32 v)
+    {
+        return std::byteswap(v);
+    }
+
+    static inline
+    u64 byteswap(u64 v)
+    {
+        return std::byteswap(v);
+    }
+
+#elif defined(MANGO_COMPILER_MICROSOFT)
 
     static inline
     u16 byteswap(u16 v)

@@ -637,6 +637,10 @@
     // C++20
 #endif
 
+#if __cplusplus >= 202110L
+    // C++23
+#endif
+
 #if defined(__FAST_MATH__) || defined(_M_FP_FAST)
     #define MANGO_FAST_MATH
 #endif
