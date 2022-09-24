@@ -9,6 +9,10 @@
 #include <algorithm>
 #include <mango/core/configure.hpp>
 
+#if __cplusplus >= 202002L
+    #include <span>
+#endif
+
 namespace mango
 {
 
@@ -32,6 +36,28 @@ namespace mango
                 , size(bytes)
             {
             }
+
+#if __cplusplus >= 202002L
+
+            Memory(std::span<T> s)
+                : address(s.data())
+                , size(s.size())
+            {
+            }
+
+            const Memory& operator = (std::span<T> s)
+            {
+                address = s.data();
+                size = s.size();
+                return *this;
+            }
+
+            operator std::span<T> () const
+            {
+                return std::span<T>(address, address + size);
+            }
+
+#endif
 
             operator T* () const
             {
