@@ -754,10 +754,10 @@ namespace
 
             debugPrint(".dds format: [bits: %d, red: %d, green: %d, blue: %d, alpha: %d]\n",
                 rgbBitCount,
-                u32_count_bits(rBitMask),
-                u32_count_bits(gBitMask),
-                u32_count_bits(bBitMask),
-                u32_count_bits(aBitMask));
+                u32_popcnt(rBitMask),
+                u32_popcnt(gBitMask),
+                u32_popcnt(bBitMask),
+                u32_popcnt(aBitMask));
 
             if (flags & DDPF_FOURCC)
             {
@@ -998,7 +998,7 @@ namespace
             if (caps2 & DDSCAPS2_CUBEMAP)
             {
                 u32 mask = (caps2 & DDSCAPS2_CUBEMAP_ALLFACES) >> 10;
-                value = u32_count_bits(mask);
+                value = u32_popcnt(mask);
             }
 
             return value;

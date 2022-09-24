@@ -31,14 +31,14 @@ namespace mango::image
         assert(!(bits & 7));
         assert(bits >= 8 && bits <= 32);
 
-        size[0] = u8(u32_count_bits(redMask));
-        size[1] = u8(u32_count_bits(greenMask));
-        size[2] = u8(u32_count_bits(blueMask));
-        size[3] = u8(u32_count_bits(alphaMask));
-        offset[0] = u8(u32_index_of_lsb(redMask));
-        offset[1] = u8(u32_index_of_lsb(greenMask));
-        offset[2] = u8(u32_index_of_lsb(blueMask));
-        offset[3] = u8(u32_index_of_lsb(alphaMask));
+        size[0] = u8(u32_popcnt(redMask));
+        size[1] = u8(u32_popcnt(greenMask));
+        size[2] = u8(u32_popcnt(blueMask));
+        size[3] = u8(u32_popcnt(alphaMask));
+        offset[0] = u8(u32_tzcnt(redMask));
+        offset[1] = u8(u32_tzcnt(greenMask));
+        offset[2] = u8(u32_tzcnt(blueMask));
+        offset[3] = u8(u32_tzcnt(alphaMask));
     }
 
     Format::Format(int bits, Type type, Color size, Color offset)

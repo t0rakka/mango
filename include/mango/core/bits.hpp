@@ -10,6 +10,10 @@
 #include <mango/core/configure.hpp>
 #include <mango/core/half.hpp>
 
+#if __cplusplus >= 202002L
+    #include <bit>
+#endif
+
 namespace mango
 {
 
@@ -389,7 +393,16 @@ namespace mango
         return value ^ (0 - value);
     }
 
-#if defined(MANGO_ENABLE_BMI_32BIT)
+#if __cplusplus >= 202002L
+
+    static inline
+    int u32_tzcnt(u32 value)
+    {
+        // NOTE: value 0 is undefined
+        return std::countr_zero(value);
+    }
+
+#elif defined(MANGO_ENABLE_BMI_32BIT)
 
     static inline
     int u32_tzcnt(u32 value)
@@ -434,14 +447,40 @@ namespace mango
 
 #endif
 
+#if __cplusplus >= 202002L
+
     static inline
-    int u32_index_of_lsb(u32 value)
+    u32 u32_mask_msb(u32 value)
     {
-        // NOTE: value 0 is undefined
-        return u32_tzcnt(value);
+        // value:  0001xxxxxxxx
+        // result: 000111111111
+        u32 mask = 1u << (31 - std::countl_zero(value));
+        return value ? mask | (mask - 1) : 0;
     }
 
-#if defined(MANGO_ENABLE_LZCNT_32BIT)
+    static inline
+    u32 u32_extract_msb(u32 value)
+    {
+        // value:  0001xxxxxxxx
+        // result: 000100000000
+        return value ? 1u << (31 - std::countl_zero(value)) : 0;
+    }
+
+    static inline
+    int u32_index_of_msb(u32 value)
+    {
+        // NOTE: value 0 is undefined
+        return int(31 - std::countl_zero(value));
+    }
+
+    static inline
+    int u32_lzcnt(u32 value)
+    {
+        // NOTE: value 0 is undefined
+        return int(std::countl_zero(value));
+    }
+
+#elif defined(MANGO_ENABLE_LZCNT_32BIT)
 
     static inline
     u32 u32_mask_msb(u32 value)
@@ -632,10 +671,18 @@ namespace mango
 
 #endif
 
-#if defined(MANGO_ENABLE_POPCNT)
+#if __cplusplus >= 202002L
 
     static inline
-    int u32_count_bits(u32 value)
+    int u32_popcnt(u32 value)
+    {
+        return std::popcount(value);
+    }
+
+#elif defined(MANGO_ENABLE_POPCNT)
+
+    static inline
+    int u32_popcnt(u32 value)
     {
         return _mm_popcnt_u32(value);
     }
@@ -643,7 +690,7 @@ namespace mango
 #elif defined(MANGO_GCC_BUILTINS)
 
     static inline
-    int u32_count_bits(u32 value)
+    int u32_popcnt(u32 value)
     {
         return __builtin_popcountl(value);
     }
@@ -651,16 +698,16 @@ namespace mango
 #elif defined(__aarch64__)
 
     static inline
-    int u32_count_bits(u32 value)
+    int u32_popcnt(u32 value)
     {
-        uint8x8_t count8x8 = vcnt_u8(vcreate_u8(u64(value)));
-        return int(vaddlv_u8(count8x8));
+        uint8x8_t count = vcnt_u8(vcreate_u8(u64(value)));
+        return int(vaddlv_u8(count));
     }
 
 #else
 
     static inline
-    int u32_count_bits(u32 value)
+    int u32_popcnt(u32 value)
     {
         value -= (value >> 1) & 0x55555555;
         value = (value & 0x33333333) + ((value >> 2) & 0x33333333);
@@ -886,7 +933,16 @@ namespace mango
         return value ^ (0 - value);
     }
 
-#if defined(MANGO_ENABLE_BMI_64BIT)
+#if __cplusplus >= 202002L
+
+    static inline
+    int u64_tzcnt(u64 value)
+    {
+        // NOTE: value 0 is undefined
+        return std::countr_zero(value);
+    }
+
+#elif defined(MANGO_ENABLE_BMI_64BIT)
 
     static inline
     int u64_tzcnt(u64 value)
@@ -933,14 +989,40 @@ namespace mango
 
 #endif
 
+#if __cplusplus >= 202002L
+
     static inline
-    int u64_index_of_lsb(u64 value)
+    u64 u64_mask_msb(u64 value)
     {
-        // NOTE: value 0 is undefined
-        return u64_tzcnt(value);
+        // value:  0001xxxxxxxx
+        // result: 000111111111
+        u64 mask = u64(1) << (63 - std::countl_zero(value));
+        return value ? mask | (mask - 1) : 0;
     }
 
-#if defined(MANGO_ENABLE_LZCNT_64BIT)
+    static inline
+    u64 u64_extract_msb(u64 value)
+    {
+        // value:  0001xxxxxxxx
+        // result: 000100000000
+        return value ? u64(1) << (63 - std::countl_zero(value)) : 0;
+    }
+
+    static inline
+    int u64_index_of_msb(u64 value)
+    {
+        // NOTE: value 0 is undefined
+        return int(63 - std::countl_zero(value));
+    }
+
+    static inline
+    int u64_lzcnt(u64 value)
+    {
+        // NOTE: value 0 is undefined
+        return int(std::countl_zero(value));
+    }
+
+#elif defined(MANGO_ENABLE_LZCNT_64BIT)
 
     static inline
     u64 u64_mask_msb(u64 value)
@@ -1133,10 +1215,18 @@ namespace mango
 
 #endif
 
-#if defined(MANGO_ENABLE_POPCNT)
+#if __cplusplus >= 202002L
 
     static inline
-    int u64_count_bits(u64 value)
+    int u64_popcnt(u64 value)
+    {
+        return std::popcount(value);
+    }
+
+#elif defined(MANGO_ENABLE_POPCNT)
+
+    static inline
+    int u64_popcnt(u64 value)
     {
     #if defined(MANGO_CPU_64BIT)
         return int(_mm_popcnt_u64(value));
@@ -1151,7 +1241,7 @@ namespace mango
 #elif defined(MANGO_GCC_BUILTINS)
 
     static inline
-    int u64_count_bits(u64 value)
+    int u64_popcnt(u64 value)
     {
         return __builtin_popcountll(value);
     }
@@ -1159,16 +1249,16 @@ namespace mango
 #elif defined(__aarch64__)
 
     static inline
-    int u64_count_bits(u64 value)
+    int u64_popcnt(u64 value)
     {
-        uint8x8_t count8x8 = vcnt_u8(vcreate_u8(value));
-        return int(vaddlv_u8(count8x8));
+        uint8x8_t count = vcnt_u8(vcreate_u8(value));
+        return int(vaddlv_u8(count));
     }
 
 #else
 
     static inline
-    int u64_count_bits(u64 value)
+    int u64_popcnt(u64 value)
     {
         const u64 c = 0x3333333333333333u;
         value -= (value >> 1) & 0x5555555555555555u;
