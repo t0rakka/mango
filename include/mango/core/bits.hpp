@@ -145,6 +145,68 @@ namespace mango
         return v;
     }
 
+    // ----------------------------------------------------------------------------
+    // rotate
+    // ----------------------------------------------------------------------------
+
+#if __cplusplus >= 202002L
+
+    static constexpr
+    u32 u32_ror(u32 value, int count)
+    {
+        return std::rotr(value, count);
+    }
+
+    static constexpr
+    u32 u32_rol(u32 value, int count)
+    {
+        return std::rotl(value, count);
+    }
+
+    static constexpr
+    u64 u64_ror(u64 value, int count)
+    {
+        return std::rotr(value, count);
+    }
+
+    static constexpr
+    u64 u64_rol(u64 value, int count)
+    {
+        return std::rotl(value, count);
+    }
+
+#else
+
+    static constexpr
+    u32 u32_rol(u32 value, int count)
+    {
+        count &= 31;
+        return (value << count) | (value >> (32 - count));
+    }
+
+    static constexpr
+    u32 u32_ror(u32 value, int count)
+    {
+        count &= 31;
+        return (value >> count) | (value << (32 - count));
+    }
+
+    static constexpr
+    u64 u64_rol(u64 value, int count)
+    {
+        count &= 63;
+        return (value << count) | (value >> (64 - count));
+    }
+
+    static constexpr
+    u64 u64_ror(u64 value, int count)
+    {
+        count &= 63;
+        return (value >> count) | (value << (64 - count));
+    }
+
+#endif
+
     // --------------------------------------------------------------
     // unsigned mask builders
     // --------------------------------------------------------------
