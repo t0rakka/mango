@@ -998,7 +998,7 @@ namespace
         const __m512i idx = _mm512_set_epi8(
             n, 15, 14, 13, n, 12, 11, 10, n, 9, 8, 7, n, 6, 5, 4,
             n, 11, 10, 9, n, 8, 7, 6, n, 5, 4, 3, n, 2, 1, 0,
-            n, 15, 14, 13, n, 12, 11, 10, n, 9, 8, 7, n, 6, 5, 4, 
+            n, 15, 14, 13, n, 12, 11, 10, n, 9, 8, 7, n, 6, 5, 4,
             n, 11, 10, 9, n, 8, 7, 6, n, 5, 4, 3, n, 2, 1, 0);
         value = _mm512_shuffle_epi8(value, idx);
         return value;
@@ -2057,21 +2057,21 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             std::memcpy(dest, src, count * 4);
-        } 
+        }
     },
 
     {
         Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             std::memcpy(dest, src, count * 4);
-        } 
+        }
     },
 
     // bgra.u8 <-> bgrx.u8
@@ -2083,7 +2083,7 @@ namespace
         [] (u8* dest, const u8* src, int count) -> void
         {
             std::memcpy(dest, src, count * 4);
-        } 
+        }
     },
 
     {
@@ -2093,7 +2093,7 @@ namespace
         [] (u8* dest, const u8* src, int count) -> void
         {
             std::memcpy(dest, src, count * 4);
-        } 
+        }
     },
 
     // rgba.u8 <- rgbx.u8
@@ -2102,14 +2102,14 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
-        0, 
-        blit_32bit_generate_alpha 
+        0,
+        blit_32bit_generate_alpha
     },
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
-        0, 
-        blit_32bit_generate_alpha 
+        0,
+        blit_32bit_generate_alpha
     },
 
     // rgbx.u8 <-> bgrx.u8
@@ -2117,14 +2117,14 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
-        0, 
-        blit_32bit_swap_rg 
+        0,
+        blit_32bit_swap_rg
     },
 
     {
         Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
-        0, 
+        0,
         blit_32bit_swap_rg
     },
 
@@ -2133,15 +2133,15 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-        0, 
-        blit_32bit_swap_rg 
+        0,
+        blit_32bit_swap_rg
     },
 
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-        0, 
-        blit_32bit_swap_rg 
+        0,
+        blit_32bit_swap_rg
     },
 
     // rgba.u8 <-> rgb.u8
@@ -2149,7 +2149,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             while (count-- > 0)
@@ -2167,7 +2167,7 @@ namespace
     {
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u24* d = reinterpret_cast<u24*>(dest);
@@ -2184,7 +2184,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             while (count-- > 0)
@@ -2202,7 +2202,7 @@ namespace
     {
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             while (count-- > 0)
@@ -2221,7 +2221,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2237,7 +2237,7 @@ namespace
     {
         Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u24* d = reinterpret_cast<u24*>(dest);
@@ -2254,7 +2254,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             while (count-- > 0)
@@ -2272,7 +2272,7 @@ namespace
     {
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u8* d = reinterpret_cast<u8*>(dest);
@@ -2293,15 +2293,15 @@ namespace
     {
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
         Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
-        0, 
-        blit_24bit_swap_rg 
+        0,
+        blit_24bit_swap_rg
     },
 
     {
         Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
-        0, 
-        blit_24bit_swap_rg 
+        0,
+        blit_24bit_swap_rg
     },
 
     // bgra.u8888 <-> bgr.u565
@@ -2309,7 +2309,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(16, Format::UNORM, Format::BGR, 5, 6, 5),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2327,7 +2327,7 @@ namespace
     {
         Format(16, Format::UNORM, Format::BGR, 5, 6, 5),
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u16* d = reinterpret_cast<u16*>(dest);
@@ -2358,13 +2358,13 @@ namespace
                 u |= ((v & 0x7c00) << 9) | ((v & 0x03e0) << 6) | ((v & 0x001f) << 3);
                 d[x] = u | ((u & 0x00e0e0e0) >> 5);
             }
-        } 
+        }
     },
 
     {
         Format(16, Format::UNORM, Format::BGRA, 5, 5, 5, 1),
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u16* d = reinterpret_cast<u16*>(dest);
@@ -2384,7 +2384,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2396,13 +2396,13 @@ namespace
                         ((v & 0x00f0) <<  8) | ((v & 0x000f) << 4);
                 d[x] = u | (u >> 4);
             }
-        } 
+        }
     },
 
     {
         Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u16* d = reinterpret_cast<u16*>(dest);
@@ -2422,7 +2422,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2434,13 +2434,13 @@ namespace
                         ((v & 0x00f0) <<  8) | ((v & 0x0f00) >> 4);
                 d[x] = u | (u >> 4);
             }
-        } 
+        }
     },
 
     {
         Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u16* d = reinterpret_cast<u16*>(dest);
@@ -2460,7 +2460,7 @@ namespace
     {
         Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
         LuminanceFormat(8, Format::UNORM, 8, 0),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u24* d = reinterpret_cast<u24*>(dest);
@@ -2476,7 +2476,7 @@ namespace
     {
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
         LuminanceFormat(8, Format::UNORM, 8, 0),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u24* d = reinterpret_cast<u24*>(dest);
@@ -2494,7 +2494,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         LuminanceFormat(8, Format::UNORM, 8, 0),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2510,7 +2510,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         LuminanceFormat(8, Format::UNORM, 8, 0),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2528,7 +2528,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         LuminanceFormat(16, Format::UNORM, 16, 0),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2544,7 +2544,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         LuminanceFormat(16, Format::UNORM, 16, 0),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2562,7 +2562,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         LuminanceFormat(32, Format::UNORM, 16, 16),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2579,7 +2579,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         LuminanceFormat(32, Format::UNORM, 16, 16),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2598,7 +2598,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(48, Format::UNORM, Format::RGB, 16, 16, 16),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2617,7 +2617,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(48, Format::UNORM, Format::RGB, 16, 16, 16),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2638,7 +2638,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2658,7 +2658,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2680,7 +2680,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2693,13 +2693,13 @@ namespace
                 int32x4 i = convert<int32x4>(f);
                 d[x] = i.pack();
             }
-        } 
+        }
     },
 
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2713,13 +2713,13 @@ namespace
                 int32x4 i = convert<int32x4>(f);
                 d[x] = i.pack();
             }
-        } 
+        }
     },
 
     {
         Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             float16x4* d = reinterpret_cast<float16x4*>(dest);
@@ -2770,7 +2770,7 @@ namespace
                 s += 1;
                 d += 1;
             }
-        } 
+        }
     },
 
     // rgba.u8 <-> rgba.f32
@@ -2778,7 +2778,7 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2791,13 +2791,13 @@ namespace
                 int32x4 i = convert<int32x4>(f);
                 d[x] = i.pack();
             }
-        } 
+        }
     },
 
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             u32* d = reinterpret_cast<u32*>(dest);
@@ -2811,13 +2811,13 @@ namespace
                 int32x4 i = convert<int32x4>(f);
                 d[x] = i.pack();
             }
-        } 
+        }
     },
 
     {
         Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             float* d = reinterpret_cast<float*>(dest);
@@ -2861,7 +2861,7 @@ namespace
                 s += 1;
                 d += 4;
             }
-        } 
+        }
     },
 
     // rgba.f16 <-> rgba.f32
@@ -2869,7 +2869,7 @@ namespace
     {
         Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
         Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             float16x4* d = reinterpret_cast<float16x4*>(dest);
@@ -2878,13 +2878,13 @@ namespace
             {
                 d[x] = convert<float16x4>(s[x]);
             }
-        } 
+        }
     },
 
     {
         Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
         Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
-        0, 
+        0,
         [] (u8* dest, const u8* src, int count) -> void
         {
             float32x4* d = reinterpret_cast<float32x4*>(dest);
@@ -2893,7 +2893,7 @@ namespace
             {
                 d[x] = convert<float32x4>(s[x]);
             }
-        } 
+        }
     },
 
 #if defined(MANGO_ENABLE_SSE2)
@@ -2924,35 +2924,35 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
-        INTEL_SSE4_1, 
-        sse4_32bit_swap_rg 
+        INTEL_SSE4_1,
+        sse4_32bit_swap_rg
     },
 
     {
         Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
-        INTEL_SSE4_1, 
+        INTEL_SSE4_1,
         sse4_32bit_swap_rg
     },
 
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-        INTEL_SSE4_1, 
-        sse4_32bit_swap_rg 
+        INTEL_SSE4_1,
+        sse4_32bit_swap_rg
     },
 
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-        INTEL_SSE4_1, 
-        sse4_32bit_swap_rg 
+        INTEL_SSE4_1,
+        sse4_32bit_swap_rg
     },
 
     {
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
         Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
-        INTEL_SSE4_1, 
+        INTEL_SSE4_1,
         sse4_24bit_swap_rg
     },
 
@@ -2993,29 +2993,29 @@ namespace
     {
         Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
-        INTEL_AVX2, 
-        avx2_32bit_swap_rg 
+        INTEL_AVX2,
+        avx2_32bit_swap_rg
     },
 
     {
         Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
-        INTEL_AVX2, 
+        INTEL_AVX2,
         avx2_32bit_swap_rg
     },
 
     {
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
-        INTEL_AVX2, 
-        avx2_32bit_swap_rg 
+        INTEL_AVX2,
+        avx2_32bit_swap_rg
     },
 
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-        INTEL_AVX2, 
-        avx2_32bit_swap_rg 
+        INTEL_AVX2,
+        avx2_32bit_swap_rg
     },
 
 #endif // MANGO_ENABLE_AVX2
@@ -3030,7 +3030,7 @@ namespace
         Format(32, Format::UNORM, Format::RGB, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGR, 8, 8, 8),
         ARM_NEON,
-        neon_32bit_swap_rg 
+        neon_32bit_swap_rg
     },
 
     {
@@ -3044,20 +3044,20 @@ namespace
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         ARM_NEON,
-        neon_32bit_swap_rg 
+        neon_32bit_swap_rg
     },
 
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
         ARM_NEON,
-        neon_32bit_swap_rg 
+        neon_32bit_swap_rg
     },
 
     {
         Format(24, Format::UNORM, Format::RGB, 8, 8, 8),
         Format(24, Format::UNORM, Format::BGR, 8, 8, 8),
-        ARM_NEON, 
+        ARM_NEON,
         neon_24bit_swap_rg
     },
 
