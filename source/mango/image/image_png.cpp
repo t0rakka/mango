@@ -860,10 +860,20 @@ namespace
         uint32x2x4_t tmp;
 
         tmp = vld4_lane_u32(reinterpret_cast<u32 *>(scan), tmp, 0);
-        uint8x8x4_t a = *(uint8x8x4_t *) &tmp; // !!!
+
+        uint8x8x4_t a;
+        a.val[0] = vreinterpret_u8_u32(tmp.val[0]);
+        a.val[1] = vreinterpret_u8_u32(tmp.val[1]);
+        a.val[2] = vreinterpret_u8_u32(tmp.val[2]);
+        a.val[3] = vreinterpret_u8_u32(tmp.val[3]);
 
         tmp = vld4_lane_u32(reinterpret_cast<const u32 *>(prev), tmp, 0);
-        uint8x8x4_t b = *(uint8x8x4_t *) &tmp; // !!!
+
+        uint8x8x4_t b;
+        b.val[0] = vreinterpret_u8_u32(tmp.val[0]);
+        b.val[1] = vreinterpret_u8_u32(tmp.val[1]);
+        b.val[2] = vreinterpret_u8_u32(tmp.val[2]);
+        b.val[3] = vreinterpret_u8_u32(tmp.val[3]);
 
         uint8x8x4_t value;
         value.val[0] = average(        last, a.val[0], b.val[0]);
@@ -1697,9 +1707,9 @@ namespace
         {
             const uint16x4x3_t rgb = vld3_u16(reinterpret_cast<const u16*>(src));
             uint16x4x4_t rgba;
-            rgba.val[0] = vrev16_u8(rgb.val[0]);
-            rgba.val[1] = vrev16_u8(rgb.val[1]);
-            rgba.val[2] = vrev16_u8(rgb.val[2]);
+            rgba.val[0] = vreinterpret_u16_u8(vreinterpret_u8_u16(vrev16_u8(rgb.val[0])));
+            rgba.val[1] = vreinterpret_u16_u8(vreinterpret_u8_u16(vrev16_u8(rgb.val[1])));
+            rgba.val[2] = vreinterpret_u16_u8(vreinterpret_u8_u16(vrev16_u8(rgb.val[2])));
             rgba.val[3] = vdup_n_u16(0xffff);
             vst4_u16(dest, rgba);
             src += 24;
@@ -1728,7 +1738,7 @@ namespace
         while (width >= 2)
         {
             uint16x8_t a = vld1q_u16(source);
-            a = vrev16q_u8(a);
+            a = vreinterpretq_u16_u8(vrev16q_u8(vreinterpretq_u8_u16(a)));
             vst1q_u16(dest, a);
             source += 8;
             dest += 8;
@@ -1738,7 +1748,7 @@ namespace
         if (width > 0)
         {
             uint16x4_t a = vld1_u16(source);
-            a = vrev16_u8(a);
+            a = vreinterpret_u16_u8(vrev16_u8(vreinterpret_u8_u16(a)));
             vst1_u16(dest, a);
         }
     }
