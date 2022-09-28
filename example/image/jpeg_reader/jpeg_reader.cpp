@@ -56,8 +56,8 @@ struct State
         total_input_bytes += input_bytes;
         total_image_bytes += image_bytes;
 
-        printf("Decoded: \"%s\" (%zu KB -> %zu KB).\n", 
-            filename.c_str(), 
+        printf("Decoded: \"%s\" (%zu KB -> %zu KB).\n",
+            filename.c_str(),
             input_bytes >> 10, image_bytes >> 10);
     }
 
