@@ -2334,14 +2334,14 @@ namespace
                 if (flags & INTEL_SSE2)
                 {
                     read_8x8 = read_y_format_sse2;
-                    sampler_name = "SSE2 Y 8x8";
+                    sampler_name = "Y 8x8 SSE2";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
                 if (flags & ARM_NEON)
                 {
                     read_8x8 = read_y_format_neon;
-                    sampler_name = "NEON Y 8x8";
+                    sampler_name = "Y 8x8 NEON";
                 }
 #endif
                 read = read_y_format;
@@ -2354,14 +2354,14 @@ namespace
 				if (flags & INTEL_SSSE3)
                 {
                     read_8x8 = read_bgr_format_ssse3;
-                    sampler_name = "SSSE3 BGR 8x8";
+                    sampler_name = "BGR 8x8 SSSE3";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
 				if (flags & ARM_NEON)
                 {
                     read_8x8 = read_bgr_format_neon;
-                    sampler_name = "NEON BGR 8x8";
+                    sampler_name = "BGR 8x8 NEON";
                 }
 #endif
                 read = read_bgr_format;
@@ -2374,14 +2374,14 @@ namespace
                 if (flags & INTEL_SSSE3)
                 {
                     read_8x8 = read_rgb_format_ssse3;
-                    sampler_name = "SSSE3 RGB 8x8";
+                    sampler_name = "RGB 8x8 SSSE3";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
                 if (flags & ARM_NEON)
                 {
                     read_8x8 = read_rgb_format_neon;
-                    sampler_name = "NEON RGB 8x8";
+                    sampler_name = "RGB 8x8 NEON";
                 }
 #endif
                 read = read_rgb_format;
@@ -2394,14 +2394,14 @@ namespace
                 if (flags & INTEL_SSE2)
                 {
                     read_8x8 = read_bgra_format_sse2;
-                    sampler_name = "SSE2 BGRA 8x8";
+                    sampler_name = "BGRA 8x8 SSE2";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
                 if (flags & ARM_NEON)
                 {
                     read_8x8 = read_bgra_format_neon;
-                    sampler_name = "NEON BGRA 8x8";
+                    sampler_name = "BGRA 8x8 NEON";
                 }
 #endif
                 read = read_bgra_format;
@@ -2414,14 +2414,14 @@ namespace
                 if (flags & INTEL_SSE2)
                 {
                     read_8x8 = read_rgba_format_sse2;
-                    sampler_name = "SSE2 RGBA 8x8";
+                    sampler_name = "RGBA 8x8 SSE2";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
                 if (flags & ARM_NEON)
                 {
                     read_8x8 = read_rgba_format_neon;
-                    sampler_name = "NEON RGBA 8x8";
+                    sampler_name = "RGBA 8x8 NEON";
                 }
 #endif
                 read = read_rgba_format;
