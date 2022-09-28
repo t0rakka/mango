@@ -1,10 +1,11 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include <cstdarg>
 #include <mango/core/configure.hpp>
@@ -32,6 +33,7 @@ namespace mango
     std::vector<std::string> split(const std::string& s, char delimiter);
     std::vector<std::string> split(const std::string& s, const char* delimiter);
     std::vector<std::string> split(const std::string& s, const std::string& delimiter);
+    std::vector<std::string_view> split(std::string_view s, std::string_view delimiter);
     std::string makeString(const char* format, ...);
     const u8* memchr(const u8* p, u8 value, size_t count);
 

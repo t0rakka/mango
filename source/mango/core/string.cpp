@@ -59,22 +59,22 @@ namespace
         }
     };
 
-    template <typename T>
-    inline std::vector<std::string> splitTemplate(const std::string& s, T delimiter)
+    template <typename S, typename T>
+    inline std::vector<S> splitTemplate(const S& s, T delimiter)
     {
-        std::vector<std::string> result;
+        std::vector<S> result;
 
         std::size_t current = 0;
         std::size_t p = s.find_first_of(delimiter, 0);
 
-        while (p != std::string::npos)
+        while (p != S::npos)
         {
-            result.emplace_back(s, current, p - current);
+            result.emplace_back(s.substr(current, p - current));
             current = p + 1;
             p = s.find_first_of(delimiter, current);
         }
 
-        result.emplace_back(s, current);
+        result.emplace_back(s.substr(current));
 
         return result;
     }
@@ -207,7 +207,7 @@ namespace mango
         }
 
         sb.ensure();
-        for (; i < source.length(); ++i)
+        for ( ; i < source.length(); ++i)
         {
             sb.ptr = utf8_encode(sb.ptr, source[i]);
         }
@@ -464,7 +464,7 @@ namespace mango
     {
         std::string temp = s;
         size_t pos = temp.find(prefix);
-    
+
         if (pos != std::string::npos)
         {
             temp.erase(pos, prefix.length());
@@ -502,6 +502,11 @@ namespace mango
     }
 
     std::vector<std::string> split(const std::string& s, const std::string& delimiter)
+    {
+        return splitTemplate(s, delimiter);
+    }
+
+    std::vector<std::string_view> split(std::string_view s, std::string_view delimiter)
     {
         return splitTemplate(s, delimiter);
     }
