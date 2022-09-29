@@ -166,6 +166,7 @@
     <ClInclude Include="..\..\..\include\mango\simd\neon_convert.hpp" />
     <ClInclude Include="..\..\..\include\mango\simd\neon_double128.hpp" />
     <ClInclude Include="..\..\..\include\mango\simd\neon_float128.hpp" />
+    <ClInclude Include="..\..\..\include\mango\simd\neon_float64.hpp" />
     <ClInclude Include="..\..\..\include\mango\simd\neon_int128.hpp" />
     <ClInclude Include="..\..\..\include\mango\simd\scalar_convert.hpp" />
     <ClInclude Include="..\..\..\include\mango\simd\scalar_detail.hpp" />
