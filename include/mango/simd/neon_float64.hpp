@@ -43,9 +43,8 @@ namespace mango::simd
     static inline f16x4 set_component(f16x4 a, f16 s)
     {
         static_assert(Index < 4, "Index out of range.");
-        u16 value = s;
         u64 mask = u64(0xffff) << (Index * 16);
-        a.data = (a.data & ~mask) | (u64(value) << (Index * 16));
+        a.data = (a.data & ~mask) | (u64(s.u) << (Index * 16));
         return a;
     }
 

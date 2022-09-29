@@ -272,6 +272,66 @@ namespace mango
         {
         }
 
+#if defined(MANGO_ENABLE_ARM_FP16)
+
+        Half(float16_t s)
+        {
+            std::memcpy(this, &s, 2);
+        }
+
+        Half& operator = (float16_t s)
+        {
+            std::memcpy(this, &s, 2);
+            return *this;
+        }
+
+        operator float16_t () const
+        {
+            float16_t temp;
+            std::memcpy(&temp, this, 2);
+            return temp;
+        }
+
+#endif
+
+        Half& operator = (u16 s)
+        {
+            u = s;
+            return *this;
+        }
+
+#if defined(MANGO_ENABLE_ARM_FP16)
+
+        Half& operator = (float s)
+        {
+            float16_t temp = s;
+            std::memcpy(this, &temp, 2);
+            return *this;
+        }
+
+        Half& operator = (double s)
+        {
+            float16_t temp = float(s);
+            std::memcpy(this, &temp, 2);
+            return *this;
+        }
+
+        operator float () const
+        {
+            float16_t temp;
+            std::memcpy(&temp, this, 2);
+            return temp;
+        }
+
+        operator double () const
+        {
+            float16_t temp;
+            std::memcpy(&temp, this, 2);
+            return double(float(temp));
+        }
+
+#else
+
         Half& operator = (float s)
         {
             u = u16(Float::pack<SIGN, EXPONENT, MANTISSA>(s));
@@ -293,6 +353,8 @@ namespace mango
         {
             return double(Float::unpack<SIGN, EXPONENT, MANTISSA>(sign, exponent, mantissa));
         }
+
+#endif
     };
 
     // ----------------------------------------------------------------------------
