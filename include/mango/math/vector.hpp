@@ -1301,21 +1301,21 @@ namespace mango::math
     // This is enforced by requiring "VectorType" declaration in the Vector specialization.
 
     template <typename D, typename S>
-    static inline  D reinterpret(S s)
+    static inline D reinterpret(S s)
     {
         typename S::VectorType temp = s;
         return simd::reinterpret<typename D::VectorType>(temp);
     }
 
     template <typename D, typename S>
-    static inline  D convert(S s)
+    static inline D convert(S s)
     {
         typename S::VectorType temp = s;
         return simd::convert<typename D::VectorType>(temp);
     }
 
     template <typename D, typename S>
-    static inline  D truncate(S s)
+    static inline D truncate(S s)
     {
         typename S::VectorType temp = s;
         return simd::truncate<typename D::VectorType>(temp);
