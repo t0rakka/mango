@@ -183,7 +183,7 @@ namespace mango::simd
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
     using f32x2   = scalar_vector<f32, 2>;
-    using f16x4   = scalar_vector<f16, 4>;
+    using f16x4   = hardware_vector<f16, 4, u64>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __m128i>;
@@ -275,7 +275,7 @@ namespace mango::simd
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
     using f32x2   = scalar_vector<f32, 2>;
-    using f16x4   = scalar_vector<f16, 4>;
+    using f16x4   = hardware_vector<f16, 4, u64>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __m128i>;
@@ -366,7 +366,7 @@ namespace mango::simd
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
     using f32x2   = scalar_vector<f32, 2>;
-    using f16x4   = scalar_vector<f16, 4>;
+    using f16x4   = hardware_vector<f16, 4, u64>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __m128i>;
@@ -456,7 +456,7 @@ namespace mango::simd
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
     using f32x2   = scalar_vector<f32, 2>;
-    using f16x4   = scalar_vector<f16, 4>;
+    using f16x4   = hardware_vector<f16, 4, u64>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __m128i>;
@@ -567,7 +567,7 @@ namespace mango::simd
 #ifdef MANGO_ENABLE_ARM_FP16
     using f16x4   = hardware_vector<f16, 4, float16x4_t>;
 #else
-    using f16x4   = scalar_vector<f16, 4>;
+    using f16x4   = hardware_vector<f16, 4, u64>;
 #endif
 
     // 128 bit vector
@@ -665,7 +665,7 @@ namespace mango::simd
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
     using f32x2   = scalar_vector<f32, 2>;
-    using f16x4   = scalar_vector<f16, 4>;
+    using f16x4   = hardware_vector<f16, 4, u64>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, __vector signed char>;
@@ -763,7 +763,7 @@ namespace mango::simd
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
     using f32x2   = scalar_vector<f32, 2>;
-    using f16x4   = scalar_vector<f16, 4>;
+    using f16x4   = hardware_vector<f16, 4, u64>;
 
     // 128 bit vector
     using s8x16   = hardware_vector<s8, 16, v16i8>;
@@ -848,7 +848,7 @@ namespace mango::simd
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
     using f32x2   = scalar_vector<f32, 2>;
-    using f16x4   = scalar_vector<f16, 4>;
+    using f16x4   = hardware_vector<f16, 4, u64>;
 
     // 128 bit vector
     using s8x16   = scalar_vector<s8, 16>;

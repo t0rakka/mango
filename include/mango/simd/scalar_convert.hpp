@@ -803,23 +803,21 @@ namespace mango::simd
     template <>
     inline f32x4 convert<f32x4>(f16x4 s)
     {
-        f32x4 v;
-        v[0] = s[0];
-        v[1] = s[1];
-        v[2] = s[2];
-        v[3] = s[3];
-        return v;
+        f16 x = u16(s.data >>  0) & 0xffff;
+        f16 y = u16(s.data >> 16) & 0xffff;
+        f16 z = u16(s.data >> 32) & 0xffff;
+        f16 w = u16(s.data >> 48) & 0xffff;
+        return f32x4_set(x, y, z, w);
     }
 
     template <>
     inline f16x4 convert<f16x4>(f32x4 s)
     {
-        f16x4 v;
-        v[0] = s[0];
-        v[1] = s[1];
-        v[2] = s[2];
-        v[3] = s[3];
-        return v;
+        f16 x = s[0];
+        f16 y = s[1];
+        f16 z = s[2];
+        f16 w = s[3];
+        return f16x4_set(x, y, z, w);
     }
 
 } // namespace mango::simd

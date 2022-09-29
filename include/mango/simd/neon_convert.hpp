@@ -1143,22 +1143,21 @@ namespace mango::simd
     template <>
     inline f32x4 convert<f32x4>(f16x4 s)
     {
-        f32 x = s[0];
-        f32 y = s[1];
-        f32 z = s[2];
-        f32 w = s[3];
+        f16 x = u16(s.data >> 0) & 0xffff;
+        f16 y = u16(s.data >> 16) & 0xffff;
+        f16 z = u16(s.data >> 32) & 0xffff;
+        f16 w = u16(s.data >> 48) & 0xffff;
         return f32x4_set(x, y, z, w);
     }
 
     template <>
     inline f16x4 convert<f16x4>(f32x4 s)
     {
-        f16x4 v;
-        v[0] = get_component<0>(s);
-        v[1] = get_component<1>(s);
-        v[2] = get_component<2>(s);
-        v[3] = get_component<3>(s);
-        return v;
+        f16 x = s[0];
+        f16 y = s[1];
+        f16 z = s[2];
+        f16 w = s[3];
+        return f16x4_set(x, y, z, w);
     }
 
 #endif // MANGO_ENABLE_ARM_FP16

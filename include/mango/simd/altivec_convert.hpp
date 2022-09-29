@@ -929,23 +929,23 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
     template <>
-    inline f32x4 convert<f32x4>(f16x4 h)
+    inline f32x4 convert<f32x4>(f16x4 s)
     {
-        f32 x = f32(h[0]);
-        f32 y = f32(h[1]);
-        f32 z = f32(h[2]);
-        f32 w = f32(h[3]);
+        f16 x = u16(s.data >> 0) & 0xffff;
+        f16 y = u16(s.data >> 16) & 0xffff;
+        f16 z = u16(s.data >> 32) & 0xffff;
+        f16 w = u16(s.data >> 48) & 0xffff;
         return f32x4_set(x, y, z, w);
     }
 
     template <>
-    inline f16x4 convert<f16x4>(f32x4 f)
+    inline f16x4 convert<f16x4>(f32x4 s)
     {
-        f16 x = f16(get_component<0>(f));
-        f16 y = f16(get_component<1>(f));
-        f16 z = f16(get_component<2>(f));
-        f16 w = f16(get_component<3>(f));
-        return {{ x, y, z, w }};
+        f16 x = s[0];
+        f16 y = s[1];
+        f16 z = s[2];
+        f16 w = s[3];
+        return f16x4_set(x, y, z, w);
     }
 
 } // namespace mango::simd

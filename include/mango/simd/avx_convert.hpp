@@ -1053,7 +1053,7 @@ namespace mango::simd
     // f16
     // -----------------------------------------------------------------
 
-#ifdef MANGO_ENABLE_F16C
+#ifdef MANGO_ENABLE_F16C__
 
     template <>
     inline f32x4 convert<f32x4>(f16x4 h)

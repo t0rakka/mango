@@ -10,6 +10,62 @@ namespace mango::simd
 {
 
     // -----------------------------------------------------------------
+    // f16x4
+    // -----------------------------------------------------------------
+
+    // indexed access
+
+#ifdef MANGO_ENABLE_ARM_FP16
+
+    template <unsigned int Index>
+    static inline f16x4 set_component(f16x4 a, f16 s)
+    {
+        static_assert(Index < 4, "Index out of range.");
+        return vset_lane_f16(s, a, Index);
+    }
+
+    template <unsigned int Index>
+    static inline f16 get_component(f16x4 a)
+    {
+        static_assert(Index < 4, "Index out of range.");
+        return vget_lane_f16(a, Index);
+    }
+
+    static inline f16x4 f16x4_set(f16 x, f16 y, f16 z, f16 w)
+    {
+        float16x4_t temp = { x, y, z, w };
+        return temp;
+    }
+
+#else
+
+    template <unsigned int Index>
+    static inline f16x4 set_component(f16x4 a, f16 s)
+    {
+        static_assert(Index < 4, "Index out of range.");
+        u16 value = s;
+        u64 mask = u64(0xffff) << (Index * 16);
+        a.data = (a.data & ~mask) | (u64(value) << (Index * 16));
+        return a;
+    }
+
+    template <unsigned int Index>
+    static inline f16 get_component(f16x4 a)
+    {
+        static_assert(Index < 4, "Index out of range.");
+        u16 value = (a.data >> (Index * 16)) & 0xffff;
+        return f16(value);
+    }
+
+    static inline f16x4 f16x4_set(f16 x, f16 y, f16 z, f16 w)
+    {
+        u64 data = (u64(w.u) << 48) | (u64(z.u) << 32) | (u64(y.u) << 16) | u64(x.u);
+        return f16x4(data);
+    }
+
+#endif
+
+    // -----------------------------------------------------------------
     // f32x2
     // -----------------------------------------------------------------
 

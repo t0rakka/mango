@@ -59,12 +59,8 @@ namespace mango::math
         }
 
         explicit Vector(float16 x, float16 y, float16 z, float16 w)
+            : m(simd::f16x4_set(x, y, z, w))
         {
-            float16* v = data();
-            v[0] = x;
-            v[1] = y;
-            v[2] = z;
-            v[3] = w;
         }
 
         explicit Vector(float x, float y, float z, float w)
