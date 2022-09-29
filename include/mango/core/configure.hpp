@@ -340,6 +340,10 @@
         #define __SSE2__
         #endif
 
+        #ifndef __F16C__
+        #define __F16C__
+        #endif
+
         // 32 bit x86 target has limited / broken SSE3..SSE4 support :(
         #if defined(MANGO_CPU_64BIT)
 

@@ -1023,7 +1023,7 @@ namespace mango::simd
     {
         f16x4 h;
         __m128i* p = reinterpret_cast<__m128i *>(&h);
-        _mm_storel_epi64(p, _mm_cvtps_ph(f, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC));
+        _mm_storel_epi64(p, _mm_cvtps_ph(f, _MM_FROUND_TO_NEAREST_INT));
         return h;
     }
 

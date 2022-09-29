@@ -2877,6 +2877,8 @@ namespace
             for (int x = 0; x < count; ++x)
             {
                 d[x] = convert<float16x4>(s[x]);
+                // NOTE: 4x faster - need different abstraction for the conversion
+                //_mm_storel_epi64(reinterpret_cast<__m128i*>(d + x), _mm_cvtps_ph(s[x], _MM_FROUND_TO_NEAREST_INT));
             }
         }
     },
