@@ -746,17 +746,14 @@ namespace mango::simd
     template <>
     inline f32x4 convert<f32x4>(f16x4 h)
     {
-        const __m128i* p = reinterpret_cast<const __m128i *>(&h);
-        return _mm_cvtph_ps(_mm_loadl_epi64(p));
+        return _mm_cvtph_ps(_mm_set1_epi64x(h.data));
     }
 
     template <>
     inline f16x4 convert<f16x4>(f32x4 f)
     {
-        f16x4 h;
-        __m128i* p = reinterpret_cast<__m128i *>(&h);
-        _mm_storel_epi64(p, _mm_cvtps_ph(f, _MM_FROUND_TO_NEAREST_INT));
-        return h;
+        __m128i temp = _mm_cvtps_ph(f, _MM_FROUND_TO_NEAREST_INT);
+        return _mm_extract_epi64(temp, 0);
     }
 
 #else
