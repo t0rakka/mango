@@ -1020,10 +1020,14 @@ namespace mango::simd
     template <>
     inline f16x4 convert<f16x4>(f32x4 f)
     {
+        __m128i temp = _mm_cvtps_ph(f, _MM_FROUND_TO_NEAREST_INT);
+#if defined(MANGO_ENABLE_SSE4_1)
+        return _mm_extract_epi64(temp, 0);
+#else
         f16x4 h;
-        __m128 temp = _mm_cvtps_ph(f, _MM_FROUND_TO_NEAREST_INT);
         _mm_storel_epi64(reinterpret_cast<__m128i *>(&h), temp);
         return h;
+#endif // defined(MANGO_ENABLE_SSE4_1)
     }
 
 #else
@@ -1031,8 +1035,7 @@ namespace mango::simd
     template <>
     inline f32x4 convert<f32x4>(f16x4 h)
     {
-        const __m128i* p = reinterpret_cast<const __m128i *>(&h);
-        const s32x4 u = _mm_unpacklo_epi16(_mm_loadl_epi64(p), _mm_setzero_si128());
+        const s32x4 u = _mm_unpacklo_epi16(_mm_set1_epi64x(h.data), _mm_setzero_si128());
 
         s32x4 no_sign  = bitwise_and(u, s32x4_set(0x7fff));
         s32x4 sign     = bitwise_and(u, s32x4_set(0x8000));
@@ -1096,6 +1099,8 @@ namespace mango::simd
         s32x4 v = select(s0, v0, v1);
         v = bitwise_or(v, sign);
         v = _mm_packus_epi32(v, v);
+
+        return _mm_extract_epi64(v, 0);
 #else
         v1 = select(compare_gt(v1, vinf), vinf, v1);
         v1 = srai(v1, 13);
@@ -1105,11 +1110,11 @@ namespace mango::simd
         v = _mm_slli_epi32 (v, 16);
         v = _mm_srai_epi32 (v, 16);
         v = _mm_packs_epi32 (v, v);
-#endif
 
         f16x4 h;
         _mm_storel_epi64(reinterpret_cast<__m128i *>(&h), v);
         return h;
+#endif // defined(MANGO_ENABLE_SSE4_1)
     }
 
 #endif // MANGO_ENABLE_F16C

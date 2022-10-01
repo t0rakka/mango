@@ -1073,8 +1073,7 @@ namespace mango::simd
     template <>
     inline f32x4 convert<f32x4>(f16x4 h)
     {
-        const __m128i* p = reinterpret_cast<const __m128i *>(&h);
-        const s32x4 u = _mm_unpacklo_epi16(_mm_loadl_epi64(p), _mm_setzero_si128());
+        const s32x4 u = _mm_unpacklo_epi16(_mm_set1_epi64x(h.data), _mm_setzero_si128());
 
         s32x4 no_sign  = bitwise_and(u, s32x4_set(0x7fff));
         s32x4 sign     = bitwise_and(u, s32x4_set(0x8000));
@@ -1138,9 +1137,7 @@ namespace mango::simd
         v = bitwise_or(v, sign);
         v = _mm_packus_epi32(v, v);
 
-        f16x4 h;
-        _mm_storel_epi64(reinterpret_cast<__m128i *>(&h), v);
-        return h;
+        return _mm_extract_epi64(v, 0);
     }
 
 #endif // MANGO_ENABLE_F16C
