@@ -309,24 +309,11 @@ namespace mango
             return *this;
         }
 
-        Half& operator = (double s)
-        {
-            float16_t temp = float(s);
-            std::memcpy(this, &temp, 2);
-            return *this;
-        }
-
         operator float () const
         {
             float16_t temp;
             std::memcpy(&temp, this, 2);
             return temp;
-        }
-
-        operator double () const
-        {
-            float temp = *this;
-            return double(temp);
         }
 
 #elif defined(MANGO_ENABLE_INTEL_F16C) && defined(MANGO_ENABLE_SSE4_1)
@@ -340,23 +327,10 @@ namespace mango
             return *this;
         }
 
-        Half& operator = (double s)
-        {
-            __m128i temp = _mm_cvtps_ph(_mm_set1_ps(float(s)), _MM_FROUND_TO_NEAREST_INT);
-            u = _mm_extract_epi64(temp, 0) & 0xffff;
-            return *this;
-        }
-
         operator float () const
         {
             __m128 temp = _mm_cvtph_ps(_mm_set1_epi64x(u64(u)));
             return _mm_cvtss_f32(temp);
-        }
-
-        operator double () const
-        {
-            float temp = *this;
-            return double(temp);
         }
 
 #else
@@ -367,23 +341,24 @@ namespace mango
             return *this;
         }
 
-        Half& operator = (double s)
-        {
-            u = u16(Float::pack<SIGN, EXPONENT, MANTISSA>(float(s)));
-            return *this;
-        }
-
         operator float () const
         {
             return Float::unpack<SIGN, EXPONENT, MANTISSA>(sign, exponent, mantissa);
         }
 
-        operator double () const
+#endif
+
+        Half& operator = (double s)
         {
-            return double(Float::unpack<SIGN, EXPONENT, MANTISSA>(sign, exponent, mantissa));
+            *this = float(s);
+            return *this;
         }
 
-#endif
+        operator double () const
+        {
+            float temp = *this;
+            return double(temp);
+        }
     };
 
     // ----------------------------------------------------------------------------
