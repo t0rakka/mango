@@ -325,9 +325,38 @@ namespace mango
 
         operator double () const
         {
-            float16_t temp;
-            std::memcpy(&temp, this, 2);
-            return double(float(temp));
+            float temp = *this;
+            return double(temp);
+        }
+
+#elif defined(MANGO_ENABLE_INTEL_F16C) && defined(MANGO_ENABLE_SSE4_1)
+
+        // NOTE: wasting 3/4 of conversions here but still faster than emulation
+
+        Half& operator = (float s)
+        {
+            __m128i temp = _mm_cvtps_ph(_mm_set1_ps(s), _MM_FROUND_TO_NEAREST_INT);
+            u = _mm_extract_epi64(temp, 0) & 0xffff;
+            return *this;
+        }
+
+        Half& operator = (double s)
+        {
+            __m128i temp = _mm_cvtps_ph(_mm_set1_ps(float(s)), _MM_FROUND_TO_NEAREST_INT);
+            u = _mm_extract_epi64(temp, 0) & 0xffff;
+            return *this;
+        }
+
+        operator float () const
+        {
+            __m128 temp = _mm_cvtph_ps(_mm_set1_epi64x(u64(u)));
+            return _mm_cvtss_f32(temp);
+        }
+
+        operator double () const
+        {
+            float temp = *this;
+            return double(temp);
         }
 
 #else

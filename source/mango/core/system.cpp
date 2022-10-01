@@ -173,7 +173,7 @@ namespace mango
         info << "FMA3 ";
     #endif
 
-    #if defined(MANGO_ENABLE_F16C)
+    #if defined(MANGO_ENABLE_INTEL_F16C)
         info << "F16C ";
     #endif
 

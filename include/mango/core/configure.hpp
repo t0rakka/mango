@@ -480,7 +480,7 @@
     #endif
 
     #ifdef __F16C__
-        #define MANGO_ENABLE_F16C
+        #define MANGO_ENABLE_INTEL_F16C
         #include <immintrin.h>
     #endif
 
