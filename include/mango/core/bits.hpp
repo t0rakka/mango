@@ -10,7 +10,7 @@
 #include <mango/core/configure.hpp>
 #include <mango/core/half.hpp>
 
-#if __cplusplus >= 202002L
+#if MANGO_CPP_VERSION >= 20
     #include <bit>
 #endif
 
@@ -32,7 +32,7 @@ namespace mango
     // byteswap
     // ----------------------------------------------------------------------------
 
-#if __cplusplus >= 202110L
+#if MANGO_CPP_VERSION >= 23
 
     static inline
     u16 byteswap(u16 v)
@@ -149,7 +149,7 @@ namespace mango
     // rotate
     // ----------------------------------------------------------------------------
 
-#if __cplusplus >= 202002L
+#if MANGO_CPP_VERSION >= 20
 
     static constexpr
     u32 u32_ror(u32 value, int count)
@@ -475,7 +475,7 @@ namespace mango
         return value ^ (0 - value);
     }
 
-#if __cplusplus >= 202002L
+#if MANGO_CPP_VERSION >= 20
 
     static inline
     int u32_tzcnt(u32 value)
@@ -529,7 +529,7 @@ namespace mango
 
 #endif
 
-#if __cplusplus >= 202002L
+#if MANGO_CPP_VERSION >= 20
 
     static inline
     u32 u32_mask_msb(u32 value)
@@ -672,7 +672,7 @@ namespace mango
 
 #endif
 
-#if __cplusplus >= 202002L
+#if MANGO_CPP_VERSION >= 20
 
     static inline
     int u32_log2(u32 value)
@@ -715,7 +715,7 @@ namespace mango
 
 #endif
 
-#if __cplusplus >= 202002L
+#if MANGO_CPP_VERSION >= 20
 
     static inline
     int u32_popcnt(u32 value)
@@ -977,7 +977,7 @@ namespace mango
         return value ^ (0 - value);
     }
 
-#if __cplusplus >= 202002L
+#if MANGO_CPP_VERSION >= 20
 
     static inline
     int u64_tzcnt(u64 value)
@@ -1033,7 +1033,7 @@ namespace mango
 
 #endif
 
-#if __cplusplus >= 202002L
+#if MANGO_CPP_VERSION >= 20
 
     static inline
     u64 u64_mask_msb(u64 value)
@@ -1177,7 +1177,7 @@ namespace mango
 
 #endif
 
-#if __cplusplus >= 202002L
+#if MANGO_CPP_VERSION >= 20
 
     static inline
     int u64_log2(u64 value)
@@ -1229,7 +1229,7 @@ namespace mango
 
 #endif
 
-#if __cplusplus >= 202002L
+#if MANGO_CPP_VERSION >= 20
 
     static inline
     int u64_popcnt(u64 value)

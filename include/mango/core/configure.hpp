@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -626,24 +626,39 @@
 #endif
 
 // -----------------------------------------------------------------------
-// macros
+// C++ standard version
 // -----------------------------------------------------------------------
 
-#if __cplusplus >= 201402L
-    // C++14
-#endif
-
-#if __cplusplus >= 201703L
-    // C++17
-#endif
-
-#if __cplusplus >= 202002L
-    // C++20
-#endif
-
 #if __cplusplus >= 202110L
+
     // C++23
+    #define MANGO_CPP_VERSION 23
+
+#elif __cplusplus >= 202002L
+
+    // C++20
+    #define MANGO_CPP_VERSION 20
+
+#elif __cplusplus >= 201703L
+
+    // C++17
+    #define MANGO_CPP_VERSION 17
+
+#elif __cplusplus >= 201402L
+
+    // C++14
+    #define MANGO_CPP_VERSION 14
+
+#else
+
+    // Not supported
+    #define MANGO_CPP_VERSION 0
+
 #endif
+
+// -----------------------------------------------------------------------
+// macros
+// -----------------------------------------------------------------------
 
 #if defined(__FAST_MATH__) || defined(_M_FP_FAST)
     #define MANGO_FAST_MATH

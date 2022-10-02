@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <mango/core/configure.hpp>
 
-#if __cplusplus >= 202002L
+#if MANGO_CPP_VERSION >= 20
     #include <span>
 #endif
 
@@ -37,7 +37,7 @@ namespace mango
             {
             }
 
-#if __cplusplus >= 202002L
+#if MANGO_CPP_VERSION >= 20
 
             Memory(std::span<T> s)
                 : address(s.data())
