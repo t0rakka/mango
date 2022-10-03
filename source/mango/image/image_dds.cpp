@@ -523,7 +523,7 @@ namespace
     // DDS
     // ------------------------------------------------------------
 
-    enum
+    enum : u32
     {
         DDSD_CAPS           = 0x00000001,
         DDSD_HEIGHT         = 0x00000002,
@@ -535,25 +535,26 @@ namespace
         DDSD_DEPTH          = 0x00800000
     };
 
-    enum
+    enum : u32
     {
-        DDPF_ALPHAPIXELS    = 0x00000001,
-        DDPF_ALPHA          = 0x00000002,
+        DDPF_ALPHA          = 0x00000001,
+        DDPF_ALPHAONLY      = 0x00000002,
         DDPF_FOURCC         = 0x00000004,
         DDPF_PALETTE        = 0x00000020,
         DDPF_RGB            = 0x00000040,
         DDPF_YUV            = 0x00000200,
-        DDPF_LUMINANCE      = 0x00020000
+        DDPF_LUMINANCE      = 0x00020000,
+        DDPF_NORMAL         = 0x80000000
     };
 
-    enum
+    enum : u32
     {
         DDSCAPS_COMPLEX     = 0x00000008,
         DDSCAPS_TEXTURE     = 0x00001000,
         DDSCAPS_MIPMAP      = 0x00400000
     };
 
-    enum
+    enum : u32
     {
         DDSCAPS2_CUBEMAP            = 0x00000200,
         DDSCAPS2_CUBEMAP_POSITIVEX  = 0x00000400,
@@ -692,7 +693,7 @@ namespace
 
                 case FOURCC_DXT1:
                     format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    if (flags & DDPF_ALPHAPIXELS)
+                    if (flags & DDPF_ALPHA)
                     {
                         compression = TextureCompression::DXT1_ALPHA1;
                     }
@@ -765,7 +766,7 @@ namespace
             }
             else
             {
-                const u32 alphaMask = flags & DDPF_ALPHAPIXELS ? aBitMask : 0;
+                const u32 alphaMask = flags & DDPF_ALPHA ? aBitMask : 0;
 
                 compression = TextureCompression::NONE;
 
@@ -777,7 +778,7 @@ namespace
                 {
                     format = LuminanceFormat(rgbBitCount, rBitMask, alphaMask);
                 }
-                else if (flags & DDPF_ALPHA)
+                else if (flags & DDPF_ALPHAONLY)
                 {
                     format = LuminanceFormat(rgbBitCount, 0, aBitMask);
                 }
@@ -947,7 +948,7 @@ namespace
             {
                 if (!dxgi.format.bits)
                 {
-                    // TODO: which format (id = header.dxgiFormat)
+                    // TODO: Which format (id = header.dxgiFormat)
                     header.setError("[ImageDecoder.DDS] DXGI format not supported.");
                     return;
                 }
@@ -968,7 +969,7 @@ namespace
                     case Format::SINT:
                     case Format::SNORM:
                     case Format::FLOAT64:
-                        // TODO: these WILL be supported in custom "DXGI Blitter"
+                        // TODO: These could be supported in a custom "DXGI Blitter"
                         header.setError("[ImageDecoder.DDS] DXGI format type not supported.");
                         return;
                 }
@@ -1021,13 +1022,13 @@ namespace
                 pitch = xsize * bytesPerPixel;
             }
 
-            // TODO: should the pitch be aligned to 32 bits?
+            // TODO: Should the pitch be aligned to 32 bits?
             return ysize * pitch;
         }
 
         ConstMemory getMemory(int level, int depth, int face) const
         {
-            MANGO_UNREFERENCED(depth); // TODO: support depth parameter for volume textures
+            MANGO_UNREFERENCED(depth); // TODO: Support depth parameter for volume textures
 
             const int maxFace = getFaceCount();
             const int maxLevel = getMipmapCount();
