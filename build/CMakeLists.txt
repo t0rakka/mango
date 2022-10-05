@@ -249,7 +249,7 @@ SOURCE_GROUP("external" FILES
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-ADD_LIBRARY(mango
+add_library(mango
     ${CORE}
     ${FILESYSTEM}
     ${IMAGE}
@@ -279,7 +279,7 @@ set_target_properties(mango PROPERTIES
     SOVERSION ${MANGO_VERSION_MAJOR}
 )
 
-ADD_LIBRARY(mango-opengl
+add_library(mango-opengl
     ${WINDOW}
     ${OPENGL}
 )
@@ -411,25 +411,31 @@ endif ()
 # install
 # ------------------------------------------------------------------------------
 
-TARGET_INCLUDE_DIRECTORIES(mango PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/mango>
+target_include_directories(mango INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/mango>
+    $<INSTALL_INTERFACE:include/mango>
 )
 
-INSTALL(TARGETS mango
+install(TARGETS mango
+    EXPORT "mango-config"
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin"
 )
 
-INSTALL(TARGETS mango-opengl
+install(TARGETS mango-opengl
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin"
 )
 
-INSTALL(
+install(
     DIRECTORY ${CMAKE_SOURCE_DIR}/../include/
     DESTINATION include
     FILES_MATCHING PATTERN "*.h*"
+)
+
+install(
+    EXPORT "mango-config"
+    DESTINATION "lib/cmake/mango"
 )
