@@ -120,15 +120,6 @@ typedef size_t machine_word_t;
 #  define __has_builtin(builtin)	0
 #endif
 
-/* LIBEXPORT - export a function from a shared library */
-#ifdef _WIN32
-#  define LIBEXPORT		__declspec(dllexport)
-#elif defined(__GNUC__)
-#  define LIBEXPORT		__attribute__((visibility("default")))
-#else
-#  define LIBEXPORT
-#endif
-
 /* inline - suggest that a function be inlined */
 #ifdef _MSC_VER
 #  define inline		__inline
@@ -153,9 +144,17 @@ typedef size_t machine_word_t;
 /* restrict - hint that writes only occur through the given pointer */
 #ifdef __GNUC__
 #  define restrict		__restrict__
-#elif defined(_MSC_VER) && (!defined(__STDC_VERSION__) || \
-			    __STDC_VERSION__ < 201112L)
-/* Don't use MSVC's __restrict; it has nonstandard behavior. */
+#elif defined(_MSC_VER)
+    /*
+     * Don't use MSVC's __restrict; it has nonstandard behavior.
+     * Standard restrict is okay, if it is supported.
+     */
+#  if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#    define restrict		restrict
+#  else
+#    define restrict
+#  endif
+#else
 #  define restrict
 #endif
 
@@ -210,6 +209,7 @@ typedef size_t machine_word_t;
 #define DIV_ROUND_UP(n, d)	(((n) + (d) - 1) / (d))
 #define STATIC_ASSERT(expr)	((void)sizeof(char[1 - 2 * !(expr)]))
 #define ALIGN(n, a)		(((n) + (a) - 1) & ~((a) - 1))
+#define ROUND_UP(n, d)		((d) * DIV_ROUND_UP((n), (d)))
 
 /* ========================================================================== */
 /*                           Endianness handling                              */
