@@ -269,6 +269,7 @@ mango_image_sources = files(
     '../source/mango/image/image_iff.cpp',
     '../source/mango/image/image_jpg.cpp',
     '../source/mango/image/image_jxl.cpp',
+    '../source/mango/image/image_jp2.cpp',
     '../source/mango/image/image_ktx.cpp',
     '../source/mango/image/image_ktx2.cpp',
     '../source/mango/image/image_pcx.cpp',
@@ -957,15 +958,25 @@ endif
 # external libraries
 # ------------------------------------------------------------------------------
 
+# jpeg-xl
+
 libjxl_dep = dependency('libjxl', version: '>=0.7', required: false)
 libjxl_threads_dep = dependency('libjxl_threads', version: '>=0.7', required: false)
 enable_jxl = libjxl_dep.found() and libjxl_threads_dep.found()
 
 if enable_jxl
-    message('JPEG-XL support enabled')
     add_project_arguments('-DMANGO_ENABLE_JXL', language: ['cpp'])
     mango_deps += libjxl_dep
     mango_deps += libjxl_threads_dep
+endif
+
+# openjp2
+
+libopenjp2_dep = dependency('libopenjp2', version: '>=2.4.0', required: false)
+
+if libopenjp2_dep.found()
+    add_project_arguments('-DMANGO_ENABLE_JP2', language: ['cpp'])
+    mango_deps += libopenjp2_dep
 endif
 
 # ------------------------------------------------------------------------------

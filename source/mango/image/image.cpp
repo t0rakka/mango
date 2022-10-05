@@ -54,6 +54,10 @@ namespace mango::image
     void registerImageCodecJXL();
 #endif
 
+#if defined(MANGO_ENABLE_JP2)
+    void registerImageCodecJP2();
+#endif
+
     class ImageServer
     {
     protected:
@@ -88,6 +92,10 @@ namespace mango::image
 
 #if defined(MANGO_ENABLE_JXL)
             registerImageCodecJXL();
+#endif
+
+#if defined(MANGO_ENABLE_JP2)
+            registerImageCodecJP2();
 #endif
         }
 
