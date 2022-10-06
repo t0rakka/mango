@@ -957,84 +957,6 @@
     <ClInclude Include="..\..\..\source\external\libdeflate\common_defs.h">
       <Filter>external\libdeflate</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\adler32_impl.h">
-      <Filter>external\libdeflate\lib\arm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\cpu_features.h">
-      <Filter>external\libdeflate\lib\arm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\crc32_impl.h">
-      <Filter>external\libdeflate\lib\arm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\crc32_pmull_helpers.h">
-      <Filter>external\libdeflate\lib\arm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\crc32_pmull_wide.h">
-      <Filter>external\libdeflate\lib\arm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\matchfinder_impl.h">
-      <Filter>external\libdeflate\lib\arm</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\adler32_impl.h">
-      <Filter>external\libdeflate\lib\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\cpu_features.h">
-      <Filter>external\libdeflate\lib\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\crc32_impl.h">
-      <Filter>external\libdeflate\lib\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\crc32_pclmul_template.h">
-      <Filter>external\libdeflate\lib\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\decompress_impl.h">
-      <Filter>external\libdeflate\lib\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\matchfinder_impl.h">
-      <Filter>external\libdeflate\lib\x86</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\adler32_vec_template.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\bt_matchfinder.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\cpu_features_common.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\crc32_multipliers.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\crc32_tables.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\decompress_template.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\deflate_compress.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\deflate_constants.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\gzip_constants.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\hc_matchfinder.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\ht_matchfinder.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\lib_common.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\matchfinder_common.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\zlib_constants.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\source\external\zstd\common\bits.h">
       <Filter>external\zstd\common</Filter>
     </ClInclude>
@@ -1187,6 +1109,84 @@
     </ClInclude>
     <ClInclude Include="..\..\..\include\mango\simd\neon_float64.hpp">
       <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\adler32_impl.h">
+      <Filter>external\libdeflate\lib\arm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\cpu_features.h">
+      <Filter>external\libdeflate\lib\arm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\crc32_impl.h">
+      <Filter>external\libdeflate\lib\arm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\crc32_pmull_helpers.h">
+      <Filter>external\libdeflate\lib\arm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\crc32_pmull_wide.h">
+      <Filter>external\libdeflate\lib\arm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\matchfinder_impl.h">
+      <Filter>external\libdeflate\lib\arm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\adler32_impl.h">
+      <Filter>external\libdeflate\lib\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\cpu_features.h">
+      <Filter>external\libdeflate\lib\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\crc32_impl.h">
+      <Filter>external\libdeflate\lib\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\crc32_pclmul_template.h">
+      <Filter>external\libdeflate\lib\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\decompress_impl.h">
+      <Filter>external\libdeflate\lib\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\matchfinder_impl.h">
+      <Filter>external\libdeflate\lib\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\zlib_constants.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\adler32_vec_template.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\bt_matchfinder.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\cpu_features_common.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\crc32_multipliers.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\crc32_tables.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\decompress_template.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\deflate_compress.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\deflate_constants.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\gzip_constants.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\hc_matchfinder.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\ht_matchfinder.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\lib_common.h">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\matchfinder_common.h">
+      <Filter>external\libdeflate\lib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1877,39 +1877,6 @@
     <ClCompile Include="..\..\..\source\external\basisu\transcoder\basisu_transcoder.cpp">
       <Filter>external\basisu</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\arm\cpu_arm_features.c">
-      <Filter>external\libdeflate\lib\arm</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\x86\cpu_x86_features.c">
-      <Filter>external\libdeflate\lib\x86</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\deflate_compress.c">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\deflate_decompress.c">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\gzip_compress.c">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\gzip_decompress.c">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\libd_adler32.c">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\libd_crc32.c">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\libd_utils.c">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\zlib_compress.c">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\zlib_decompress.c">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\source\external\zstd\common\debug.c">
       <Filter>external\zstd\common</Filter>
     </ClCompile>
@@ -2035,6 +2002,39 @@
     </ClCompile>
     <ClCompile Include="..\..\..\source\external\lzma\Lzma2Enc.c">
       <Filter>external\lzma</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\arm\cpu_arm_features.c">
+      <Filter>external\libdeflate\lib\arm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\x86\cpu_x86_features.c">
+      <Filter>external\libdeflate\lib\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\deflate_compress.c">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\deflate_decompress.c">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\gzip_compress.c">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\gzip_decompress.c">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\libd_adler32.c">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\libd_crc32.c">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\libd_utils.c">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\zlib_compress.c">
+      <Filter>external\libdeflate\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\zlib_decompress.c">
+      <Filter>external\libdeflate\lib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -16,6 +16,8 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
+#define LIBDEFLATE_STATIC /* mango linking fix */
+
 /*
  * On Windows, you must define LIBDEFLATE_STATIC if you are linking to the
  * static library version of libdeflate instead of the DLL.  On other platforms,
