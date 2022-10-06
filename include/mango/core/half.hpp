@@ -276,19 +276,19 @@ namespace mango
 
         Half(float16_t s)
         {
-            std::memcpy(this, &s, 2);
+            std::memcpy(&u, &s, 2);
         }
 
         Half& operator = (float16_t s)
         {
-            std::memcpy(this, &s, 2);
+            std::memcpy(&u, &s, 2);
             return *this;
         }
 
         operator float16_t () const
         {
             float16_t temp;
-            std::memcpy(&temp, this, 2);
+            std::memcpy(&temp, &u, 2);
             return temp;
         }
 
@@ -305,14 +305,14 @@ namespace mango
         Half& operator = (float s)
         {
             float16_t temp = s;
-            std::memcpy(this, &temp, 2);
+            std::memcpy(&u, &temp, 2);
             return *this;
         }
 
         operator float () const
         {
             float16_t temp;
-            std::memcpy(&temp, this, 2);
+            std::memcpy(&temp, &u, 2);
             return temp;
         }
 
