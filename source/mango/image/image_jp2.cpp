@@ -15,6 +15,109 @@ namespace
     using namespace mango::image;
 
     // ------------------------------------------------------------
+    // OpenJPEG interface
+    // ------------------------------------------------------------
+
+#if 0
+
+    struct opj_memory_stream
+    {
+        OPJ_UINT8* data;
+        OPJ_SIZE_T size;
+        OPJ_SIZE_T offset;
+    };
+
+    static
+    OPJ_SIZE_T opj_memory_stream_read(void* buffer, OPJ_SIZE_T bytes, void* user_data)
+    {
+        opj_memory_stream* memory = (opj_memory_stream*)user_data;
+
+        if (memory->offset >= memory->size)
+            return (OPJ_SIZE_T) -1;
+
+        if (bytes > (memory->size - memory->offset))
+            bytes = memory->size - memory->offset;
+
+        std::memcpy(buffer, memory->data + memory->offset, bytes);
+        memory->offset += bytes;
+
+        return bytes;
+    }
+
+    static
+    OPJ_SIZE_T opj_memory_stream_write(void* buffer, OPJ_SIZE_T bytes, void* user_data)
+    {
+        opj_memory_stream* memory = (opj_memory_stream*)user_data;
+
+        if (memory->offset >= memory->size)
+            return (OPJ_SIZE_T) -1;
+
+        if (bytes > (memory->size - memory->offset))
+            bytes = memory->size - memory->offset;
+
+        std::memcpy(memory->data + memory->offset, buffer, bytes);
+        memory->offset += bytes;
+
+        return bytes;
+    }
+
+    static
+    OPJ_OFF_T opj_memory_stream_skip(OPJ_OFF_T bytes, void* user_data)
+    {
+        opj_memory_stream* memory = (opj_memory_stream*)user_data;
+
+        if (bytes < 0)
+            return -1;
+
+        if (bytes > memory->size - memory->offset)
+            bytes = memory->size - memory->offset;
+
+        memory->offset += bytes;
+
+        return bytes;
+    }
+
+    static
+    OPJ_BOOL opj_memory_stream_seek(OPJ_OFF_T bytes, void* user_data)
+    {
+        opj_memory_stream* memory = (opj_memory_stream*)user_data;
+
+        if (bytes < 0 || bytes > (OPJ_OFF_T)memory->size)
+            return OPJ_FALSE;
+
+        memory->offset = (OPJ_SIZE_T)bytes;
+
+        return OPJ_TRUE;
+    }
+
+    static
+    void opj_memory_stream_do_nothing(void* user_data)
+    {
+        OPJ_ARG_NOT_USED(user_data);
+    }
+
+    opj_stream_t* opj_stream_create_default_memory_stream(opj_memory_stream* memory, OPJ_BOOL is_read_stream)
+    {
+        opj_stream_t* stream = opj_stream_default_create(is_read_stream);
+        if (stream)
+        {
+            if (is_read_stream)
+                opj_stream_set_read_function(stream, opj_memory_stream_read);
+            else
+                opj_stream_set_write_function(stream, opj_memory_stream_write);
+
+            opj_stream_set_seek_function(stream, opj_memory_stream_seek);
+            opj_stream_set_skip_function(stream, opj_memory_stream_skip);
+            opj_stream_set_user_data(stream, memory, opj_memory_stream_do_nothing);
+            opj_stream_set_user_data_length(stream, memory->size);
+        }
+
+        return stream;
+    }
+
+#endif
+
+    // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
 
