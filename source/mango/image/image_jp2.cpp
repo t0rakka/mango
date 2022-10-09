@@ -200,12 +200,235 @@ namespace
 
     using ImageProcessFunc = void (*)(const Surface& surface, const opj_image_t& image);
 
-    /*
     static
-    void process_none(const Surface& surface, const opj_image_t& image)
+    void process_generic_1_comp(const Surface& surface, const opj_image_t& image)
     {
+        int width = surface.width;
+        int height = surface.height;
+        size_t stride = surface.stride;
+
+        for (int y = 0; y < height; ++y)
+        {
+            u8* dest = surface.image + y * stride;
+
+            s32* src0 = image.comps[0].data + (y / image.comps[0].dy) * image.comps[0].w;
+            u32 prec0 = image.comps[0].prec;
+            u32 bias0 = image.comps[0].sgnd ? 1 << (prec0 - 1) : 0;
+
+            for (int x = 0; x < width; ++x)
+            {
+                u32 s = src0[x / image.comps[0].dx];
+                s = u32_scale(s + bias0, prec0, 8);
+                dest[x] = u8(s);
+            }
+
+            dest += stride;
+        }
     }
-    */
+
+    static
+    void process_generic_2_comp(const Surface& surface, const opj_image_t& image)
+    {
+        int width = surface.width;
+        int height = surface.height;
+        size_t stride = surface.stride;
+
+        for (int y = 0; y < height; ++y)
+        {
+            u16* dest = reinterpret_cast<u16*>(surface.image + y * stride);
+
+            s32* src0 = image.comps[0].data + (y / image.comps[0].dy) * image.comps[0].w;
+            s32* src1 = image.comps[1].data + (y / image.comps[1].dy) * image.comps[1].w;
+
+            u32 prec0 = image.comps[0].prec;
+            u32 prec1 = image.comps[1].prec;
+
+            u32 bias0 = image.comps[0].sgnd ? 1 << (prec0 - 1) : 0;
+            u32 bias1 = image.comps[1].sgnd ? 1 << (prec1 - 1) : 0;
+
+            for (int x = 0; x < width; ++x)
+            {
+                u32 s = src0[x / image.comps[0].dx];
+                u32 a = src1[x / image.comps[1].dx];
+                s = u32_scale(s + bias0, prec0, 8);
+                a = u32_scale(a + bias1, prec1, 8);
+                dest[x] = u16((a << 8) | s);
+            }
+
+            dest += stride;
+        }
+    }
+
+    static
+    void process_generic_3_comp(const Surface& surface, const opj_image_t& image)
+    {
+        int width = surface.width;
+        int height = surface.height;
+        size_t stride = surface.stride;
+
+        bool is_yuv = (image.comps[0].dx == 1 && image.comps[0].dy == 1) &&
+                       image.comps[1].dx != 1;
+
+        for (int y = 0; y < height; ++y)
+        {
+            u32* dest = reinterpret_cast<u32*>(surface.image + y * stride);
+
+            s32* src0 = image.comps[0].data + (y / image.comps[0].dy) * image.comps[0].w;
+            s32* src1 = image.comps[1].data + (y / image.comps[1].dy) * image.comps[1].w;
+            s32* src2 = image.comps[2].data + (y / image.comps[2].dy) * image.comps[2].w;
+
+            u32 prec0 = image.comps[0].prec;
+            u32 prec1 = image.comps[1].prec;
+            u32 prec2 = image.comps[2].prec;
+
+            u32 bias0 = image.comps[0].sgnd ? 1 << (prec0 - 1) : 0;
+            u32 bias1 = image.comps[1].sgnd ? 1 << (prec1 - 1) : 0;
+            u32 bias2 = image.comps[2].sgnd ? 1 << (prec2 - 1) : 0;
+
+            for (int x = 0; x < width; ++x)
+            {
+                u32 s0 = src0[x / image.comps[0].dx];
+                u32 s1 = src1[x / image.comps[1].dx];
+                u32 s2 = src2[x / image.comps[2].dx];
+
+                s0 = u32_scale(s0 + bias0, prec0, 8);
+                s1 = u32_scale(s1 + bias1, prec1, 8);
+                s2 = u32_scale(s2 + bias2, prec2, 8);
+
+                u32 r = s0;
+                u32 g = s1;
+                u32 b = s2;
+                u32 a = 0xff;
+
+                if (is_yuv)
+                {
+                    s32 cb = s1;
+                    s32 cr = s2;
+                    r = s0 + ((cr * 91750 - 11711232) >> 16);
+                    g = s0 + ((cb * -22479 + cr * -46596 + 8874368) >> 16);
+                    b = s0 + ((cb * 115671 - 14773120) >> 16);
+                    r = byteclamp(r);
+                    g = byteclamp(g);
+                    b = byteclamp(b);
+                }
+
+                dest[x] = makeRGBA(r, g, b, a);
+            }
+
+            dest += stride;
+        }
+    }
+
+    static
+    void process_generic_4_comp(const Surface& surface, const opj_image_t& image)
+    {
+        int width = surface.width;
+        int height = surface.height;
+        size_t stride = surface.stride;
+
+        bool is_yuv = (image.comps[0].dx == 1 && image.comps[0].dy == 1) &&
+                       image.comps[1].dx != 1;
+
+        for (int y = 0; y < height; ++y)
+        {
+            u32* dest = reinterpret_cast<u32*>(surface.image + y * stride);
+
+            s32* src0 = image.comps[0].data + (y / image.comps[0].dy) * image.comps[0].w;
+            s32* src1 = image.comps[1].data + (y / image.comps[1].dy) * image.comps[1].w;
+            s32* src2 = image.comps[2].data + (y / image.comps[2].dy) * image.comps[2].w;
+            s32* src3 = image.comps[3].data + (y / image.comps[3].dy) * image.comps[3].w;
+
+            u32 prec0 = image.comps[0].prec;
+            u32 prec1 = image.comps[1].prec;
+            u32 prec2 = image.comps[2].prec;
+            u32 prec3 = image.comps[3].prec;
+
+            u32 bias0 = image.comps[0].sgnd ? 1 << (prec0 - 1) : 0;
+            u32 bias1 = image.comps[1].sgnd ? 1 << (prec1 - 1) : 0;
+            u32 bias2 = image.comps[2].sgnd ? 1 << (prec2 - 1) : 0;
+            u32 bias3 = image.comps[3].sgnd ? 1 << (prec3 - 1) : 0;
+
+            for (int x = 0; x < width; ++x)
+            {
+                u32 s0 = src0[x / image.comps[0].dx];
+                u32 s1 = src1[x / image.comps[1].dx];
+                u32 s2 = src2[x / image.comps[2].dx];
+                u32 s3 = src3[x / image.comps[3].dx];
+
+                s0 = u32_scale(s0 + bias0, prec0, 8);
+                s1 = u32_scale(s1 + bias1, prec1, 8);
+                s2 = u32_scale(s2 + bias2, prec2, 8);
+                s3 = u32_scale(s3 + bias3, prec3, 8);
+
+                u32 r = s0;
+                u32 g = s1;
+                u32 b = s2;
+                u32 a = s3;
+
+                if (is_yuv)
+                {
+                    s32 cb = s1;
+                    s32 cr = s2;
+                    r = s0 + ((cr * 91750 - 11711232) >> 16);
+                    g = s0 + ((cb * -22479 + cr * -46596 + 8874368) >> 16);
+                    b = s0 + ((cb * 115671 - 14773120) >> 16);
+                    r = byteclamp(r);
+                    g = byteclamp(g);
+                    b = byteclamp(b);
+                }
+
+                dest[x] = makeRGBA(r, g, b, a);
+            }
+
+            dest += stride;
+        }
+    }
+
+    static
+    void process_unorm_8bit_y(const Surface& surface, const opj_image_t& image)
+    {
+        int width = surface.width;
+        int height = surface.height;
+        size_t stride = surface.stride;
+
+        for (int y = 0; y < height; ++y)
+        {
+            u8* dest = surface.image + y * stride;
+            s32* src0 = image.comps[0].data + y * image.comps[0].w;
+
+            for (int x = 0; x < width; ++x)
+            {
+                u32 s = src0[x];
+                dest[x] = u8(s);
+            }
+
+            dest += stride;
+        }
+    }
+
+    static
+    void process_unorm_8bit_ya(const Surface& surface, const opj_image_t& image)
+    {
+        int width = surface.width;
+        int height = surface.height;
+        size_t stride = surface.stride;
+
+        for (int y = 0; y < height; ++y)
+        {
+            u16* dest = reinterpret_cast<u16*>(surface.image + y * stride);
+            s32* src0 = image.comps[0].data + y * image.comps[0].w;
+            s32* src1 = image.comps[1].data + y * image.comps[1].w;
+
+            for (int x = 0; x < width; ++x)
+            {
+                u32 s = src0[x];
+                u32 a = src1[x];
+                dest[x] = u16((a << 8) | s);
+            }
+
+            dest += stride;
+        }
+    }
 
     static
     void process_unorm_8bit_rgb(const Surface& surface, const opj_image_t& image)
@@ -216,10 +439,11 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
+            u32* dest = reinterpret_cast<u32*>(surface.image + y * stride);
+
             s32* src0 = image.comps[0].data + y * image.comps[0].w;
             s32* src1 = image.comps[1].data + y * image.comps[1].w;
             s32* src2 = image.comps[2].data + y * image.comps[2].w;
-            Color* dest = reinterpret_cast<Color*>(surface.image + y * stride);
 
             for (int x = 0; x < width; ++x)
             {
@@ -227,96 +451,41 @@ namespace
                 s32 g = src1[x];
                 s32 b = src2[x];
                 s32 a = 0xff;
-                dest[x] = Color(r, g, b, a);
+                dest[x] = makeRGBA(r, g, b, a);
             }
 
             dest += stride;
         }
     }
 
-#if 0
-
-    void color_conversion(const Surface& dest)
+    static
+    void process_unorm_8bit_rgba(const Surface& surface, const opj_image_t& image)
     {
-        // TODO: support different component resolutions
-        // TODO: support image offset (x, y)
-        // TODO: support different color spaces
-        // TODO: support different channel precisions
-        // TODO: support sgnd flag
-        // TODO: support sRGB flag (add into header)
-        // TODO: support direct decoding
-
-        // channel decoder
-        const opj_image_comp_t& comp0 = m_image->comps[0];
-        const opj_image_comp_t& comp1 = m_image->comps[1];
-        const opj_image_comp_t& comp2 = m_image->comps[2];
-        //const opj_image_comp_t& comp3 = m_image->comps[3];
-
-        // TODO: should be image->x1 x image->y1
-        int width = m_header.width;
-        int height = m_header.height;
-
-        Bitmap bitmap(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+        int width = surface.width;
+        int height = surface.height;
+        size_t stride = surface.stride;
 
         for (int y = 0; y < height; ++y)
         {
-            s32* src0 = comp0.data + y * comp0.w;
-            s32* src1 = comp1.data + y/2 * comp1.w;
-            s32* src2 = comp2.data + y/2 * comp2.w;
-            //s32* src3 = comp3.data + y * comp3.w;
+            u32* dest = reinterpret_cast<u32*>(surface.image + y * stride);
 
-            Color* dest = bitmap.address<Color>(0, y);
+            s32* src0 = image.comps[0].data + y * image.comps[0].w;
+            s32* src1 = image.comps[1].data + y * image.comps[1].w;
+            s32* src2 = image.comps[2].data + y * image.comps[2].w;
+            s32* src3 = image.comps[3].data + y * image.comps[3].w;
 
             for (int x = 0; x < width; ++x)
             {
-                /*
-                // SNORM Y 16
-                s32 s = src0[x];
-                s += 32768;
-                s = (s * 255) / 65535;
-                s32 r = s;
-                s32 g = s;
-                s32 b = s;
-                s32 a = 0xff;
-                */
-
-                /*
-                // UNORM YA 8 8
-                s32 r = src0[x];
-                s32 g = r;
-                s32 b = r;
-                s32 a = src1[x];
-                */
-
-                /*
-                // UNORM RGBA 8 8 8 8
                 s32 r = src0[x];
                 s32 g = src1[x];
                 s32 b = src2[x];
                 s32 a = src3[x];
-                */
-
-                //* YUV:
-                s32 y0 = src0[x/1];
-                s32 cb = src1[x/2];
-                s32 cr = src2[x/2];
-                s32 r = y0 + ((cr * 91750 - 11711232) >> 16);
-                s32 g = y0 + ((cb * -22479 + cr * -46596 + 8874368) >> 16);
-                s32 b = y0 + ((cb * 115671 - 14773120) >> 16);
-                r = byteclamp(r);
-                g = byteclamp(g);
-                b = byteclamp(b);
-                s32 a = 0xff;
-                //*/
-
-                dest[x] = Color(r, g, b, a);
+                dest[x] = makeRGBA(r, g, b, a);
             }
+
+            dest += stride;
         }
-
-        dest.blit(0, 0, bitmap);
     }
-
-#endif
 
     // ------------------------------------------------------------
     // ImageDecoder
@@ -393,21 +562,44 @@ namespace
             int height = m_image->y1; // - m_image->y0;
             int components = m_image->numcomps;
 
-            if (components < 1 || components > 4)
+            Format format;
+
+            switch (components)
             {
-                m_header.setError("[ImageDecoder.JP2] Incorrect number of components (%d).", components);
-                return;
+                case 1:
+                    format = LuminanceFormat(8, Format::UNORM, 8, 0);
+                    m_process_func = process_generic_1_comp;
+                    break;
+
+                case 2:
+                    format = LuminanceFormat(16, Format::UNORM, 8, 8);
+                    m_process_func = process_generic_2_comp;
+                    break;
+
+                case 3:
+                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    m_process_func = process_generic_3_comp;
+                    break;
+
+                case 4:
+                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    m_process_func = process_generic_4_comp;
+                    break;
+
+                default:
+                    m_header.setError("[ImageDecoder.JP2] Incorrect number of components (%d).", components);
+                    return;
             }
 
             debugPrint("[image]\n");
             debugPrint("  dimensions: %d x %d\n", width, height);
             debugPrint("  color space: %d\n", m_image->color_space);
 
+            debugPrint("[components]\n");
+
             bool is_signed = false;
             bool is_subsampled = false;
             bool is_8bit = true;
-
-            debugPrint("[components]\n");
 
             for (int i = 0; i < components; ++i)
             {
@@ -432,6 +624,8 @@ namespace
                 }
             }
 
+            bool is_standard = is_8bit && !is_signed && !is_subsampled;
+
             switch (m_image->color_space)
             {
                 case OPJ_CLRSPC_UNKNOWN:
@@ -440,6 +634,33 @@ namespace
 
                 case OPJ_CLRSPC_UNSPECIFIED:
                     // Determine heuristically
+                    switch (components)
+                    {
+                        case 1:
+                            if (is_standard)
+                            {
+                                m_process_func = process_unorm_8bit_y;
+                            }
+                            break;
+                        case 2:
+                            if (is_standard)
+                            {
+                                m_process_func = process_unorm_8bit_ya;
+                            }
+                            break;
+                        case 3:
+                            if (is_standard)
+                            {
+                                m_process_func = process_unorm_8bit_rgb;
+                            }
+                            break;
+                        case 4:
+                            if (is_standard)
+                            {
+                                m_process_func = process_unorm_8bit_rgba;
+                            }
+                            break;
+                    }
                     break;
 
                 case OPJ_CLRSPC_SRGB:
@@ -448,6 +669,13 @@ namespace
                         m_header.setError("[ImageDecoder.JP2] Incorrect number of components (%d).", components);
                         return;
                     }
+                    if (is_standard)
+                    {
+                        if (components == 3)
+                            m_process_func = process_unorm_8bit_rgb;
+                        else
+                            m_process_func = process_unorm_8bit_rgba;
+                    }
                     break;
 
                 case OPJ_CLRSPC_GRAY:
@@ -455,6 +683,17 @@ namespace
                     {
                         m_header.setError("[ImageDecoder.JP2] Incorrect number of components (%d).", components);
                         return;
+                    }
+                    if (is_standard)
+                    {
+                        if (components == 1)
+                        {
+                            m_process_func = process_unorm_8bit_y;
+                        }
+                        else
+                        {
+                            m_process_func = process_unorm_8bit_ya;
+                        }
                     }
                     break;
 
@@ -467,36 +706,6 @@ namespace
                 default:
                     m_header.setError("[ImageDecoder.JP2] Incorrect color space (%d).", m_image->color_space);
                     return;
-            }
-
-            /*
-            switch (m_image->comps)
-            {
-                case 1:
-                    break;
-                case 2:
-                    break;
-                case 3:
-                    break;
-                case 4:
-                    break;
-                default:
-                    break;
-            }
-
-            */
-
-            m_process_func = process_unorm_8bit_rgb;
-
-            Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-
-            switch (m_image->color_space)
-            {
-                case OPJ_CLRSPC_GRAY:
-                    format = LuminanceFormat(8, Format::UNORM, 8, 0);
-                    break;
-                default:
-                    break;
             }
 
             m_header.width   = width;
@@ -512,10 +721,14 @@ namespace
         ~Interface()
         {
             if (m_image)
+            {
                 opj_image_destroy(m_image);
+            }
 
             if (m_codec)
+            {
                 opj_destroy_codec(m_codec);
+            }
         }
 
         ImageHeader header() override
@@ -535,10 +748,15 @@ namespace
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
-            MANGO_UNREFERENCED(options); // TODO: MT decoding option
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);
             MANGO_UNREFERENCED(face);
+
+            if (options.multithread)
+            {
+                // NOTE: It is too late to configure the number of threads here;
+                //       it has to be done before opj_read_header is called.
+            }
 
             ImageDecodeStatus status;
 
@@ -564,7 +782,7 @@ namespace
             {
                 int width = m_header.width;
                 int height = m_header.height;
-                Bitmap bitmap(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+                Bitmap bitmap(width, height, m_header.format);
 
                 m_process_func(bitmap, *m_image);
                 dest.blit(0, 0, bitmap);
@@ -603,7 +821,6 @@ namespace mango::image
 
     void registerImageCodecJP2()
     {
-        /*
         // TODO
         registerImageDecoder(createInterface, ".jp2");
 
@@ -611,7 +828,6 @@ namespace mango::image
         registerImageDecoder(createInterface, ".j2k");
         registerImageDecoder(createInterface, ".j2c");
         registerImageDecoder(createInterface, ".jpc");
-        */
 
         // TODO
         //registerImageEncoder(imageEncode, ".jp2");
