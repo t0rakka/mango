@@ -249,6 +249,14 @@ namespace mango
         }
     }
 
+    void debugPrint(const std::string& text)
+    {
+        if (g_context.debug_print_enable)
+        {
+            std::printf("%s\n", text.c_str());
+        }
+    }
+
     // ----------------------------------------------------------------------------
     // Status
     // ----------------------------------------------------------------------------
