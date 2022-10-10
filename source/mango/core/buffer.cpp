@@ -258,14 +258,14 @@ namespace mango
 
             while (count >= 8)
             {
-                const u32 zero[2] = { 0, 0 };
+                const u32 zero [] = { 0, 0 };
                 write(zero, 8);
                 count -= 8;
             }
 
             while (count > 0)
             {
-                const u8 zero[] = { 0 };
+                const u8 zero [] = { 0 };
                 write(zero, 1);
                 --count;
             }
