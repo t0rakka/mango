@@ -140,11 +140,19 @@ namespace mango
         size_t required = m_memory.size + bytes;
         if (required > m_capacity)
         {
-            // grow 1.4x the required capacity
+            // grow 1.4x times the required capacity
             reserve((required * 7) / 5);
         }
 
-        std::memcpy(m_memory.address + m_memory.size, source, bytes);
+        if (source)
+        {
+            std::memcpy(m_memory.address + m_memory.size, source, bytes);
+        }
+        else
+        {
+            std::memset(m_memory.address + m_memory.size, 0, bytes);
+        }
+
         m_memory.size += bytes;
     }
 
@@ -250,32 +258,12 @@ namespace mango
         }
 
         m_offset = std::max(u64(0), m_offset);
-
-        if (m_offset > size)
-        {
-            // offset is past end of the stream ; write as many zeroes as needed
-            u64 count = m_offset - size;
-
-            while (count >= 8)
-            {
-                const u32 zero [] = { 0, 0 };
-                write(zero, 8);
-                count -= 8;
-            }
-
-            while (count > 0)
-            {
-                const u8 zero [] = { 0 };
-                write(zero, 1);
-                --count;
-            }
-        }
     }
 
     void BufferStream::read(void* dest, u64 bytes)
     {
-        const u64 left = m_buffer.size() - m_offset;
-        if (left < bytes)
+        const u64 size = m_buffer.size();
+        if (m_offset > size || (size - m_offset) < bytes)
         {
             MANGO_EXCEPTION("[BufferStream] Reading past end of buffer.");
         }
@@ -286,6 +274,13 @@ namespace mango
 
     void BufferStream::write(const void* source, u64 bytes)
     {
+        const u64 size = m_buffer.size();
+        if (m_offset > size)
+        {
+            // offset is past end of the stream ; write as many zeroes as needed
+            m_buffer.append(nullptr, m_offset - size);
+        }
+
         const u64 left = std::min(bytes, m_buffer.size() - m_offset);
         const u64 right = bytes - left;
         std::memcpy(m_buffer.data() + m_offset, source, size_t(left));
