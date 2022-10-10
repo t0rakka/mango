@@ -113,14 +113,13 @@ namespace
         {
             constexpr bool is_reader = false;
 
-            opj_stream_t* stream = opj_stream_default_create(is_reader);
+            stream = opj_stream_default_create(is_reader);
             if (stream)
             {
                 opj_stream_set_write_function(stream, stream_write);
                 opj_stream_set_seek_function(stream, stream_seek);
                 opj_stream_set_skip_function(stream, stream_skip);
                 opj_stream_set_user_data(stream, this, stream_free_user_data);
-                //opj_stream_set_user_data_length(stream, 0);
             }
         }
 
@@ -144,7 +143,38 @@ namespace
         OPJ_OFF_T stream_skip(OPJ_OFF_T bytes, void* data)
         {
             MemoryStreamWriter& writer = *reinterpret_cast<MemoryStreamWriter*>(data);
-            writer.memory.seek(bytes, Stream::CURRENT);
+            MemoryStream& memory = writer.memory;
+
+            // TODO: implement the zero-padding in the stream interface
+
+            u64 count = bytes;
+
+            u64 offset = memory.offset();
+            u64 size = memory.size();
+
+            if (offset < size)
+            {
+                u64 x = std::min(size - offset, count);
+                memory.seek(x, Stream::CURRENT);
+                count -= x;
+            }
+
+            // we are now past end of the stream ; write as many zeroes as needed
+
+            while (count >= 8)
+            {
+                const u32 zero[2] = { 0, 0 };
+                memory.write(zero, 8);
+                count -= 8;
+            }
+
+            while (count > 0)
+            {
+                const u8 zero[] = { 0 };
+                memory.write(zero, 1);
+                --count;
+            }
+
             return bytes;
         }
 
@@ -210,6 +240,134 @@ namespace
         }
 
         return codec;
+    }
+
+    static
+    opj_image_t *to_opj_image(const u8* buf, int width, int height, int nr_comp, int sub_dx, int sub_dy)
+    {
+        opj_image_cmptparm_t cmptparm[4];
+        std::memset(cmptparm, 0, nr_comp * sizeof(opj_image_cmptparm_t));
+
+        for (int comp = 0; comp < nr_comp; ++comp)
+        {
+            cmptparm[comp].prec = 8;
+            cmptparm[comp].sgnd = 0;
+            cmptparm[comp].dx = sub_dx;
+            cmptparm[comp].dy = sub_dy;
+            cmptparm[comp].w = width;
+            cmptparm[comp].h = height;
+        }
+
+        OPJ_COLOR_SPACE csp = nr_comp > 2 ? OPJ_CLRSPC_SRGB : OPJ_CLRSPC_GRAY;
+
+        opj_image_t* image = opj_image_create(nr_comp, &cmptparm[0], csp);
+        if (!image)
+        {
+            return nullptr;
+        }
+
+        image->x0 = 0;
+        image->y0 = 0;
+        image->x1 = (width - 1) * sub_dx + 1;
+        image->y1 = (height - 1) * sub_dy + 1;
+
+        int* r = nullptr;
+        int* g = nullptr;
+        int* b = nullptr;
+        int* a = nullptr;
+
+        int has_rgba = 0;
+        int has_graya = 0;
+        int has_rgb = 0;
+
+        if (nr_comp == 4)
+        {
+            // RGBA
+            has_rgba = 1;
+            r = image->comps[0].data;
+            g = image->comps[1].data;
+            b = image->comps[2].data;
+            a = image->comps[3].data;
+        }
+        else if (nr_comp == 2)
+        {
+            // GA
+            has_graya = 1;
+            r = image->comps[0].data;
+            a = image->comps[1].data;
+        }
+        else if (nr_comp == 3)
+        {
+            // RGB
+            has_rgb = 1;
+            r = image->comps[0].data;
+            g = image->comps[1].data;
+            b = image->comps[2].data;
+        }
+        else
+        {
+            // G
+            r = image->comps[0].data;
+        }
+
+        const u8* cs = buf;
+        u32 count = height * width;
+
+        for (int i = 0; i < count; ++i)
+        {
+            if (has_rgba) 
+            {
+                // RGBA
+            #ifdef OPJ_BIG_ENDIAN
+                *r++ = (int)*cs++;
+                *g++ = (int)*cs++;
+                *b++ = (int)*cs++;
+                *a++ = (int)*cs++;
+                continue;
+            #else
+                *r++ = (int)*cs++;
+                *g++ = (int)*cs++;
+                *b++ = (int)*cs++;
+                *a++ = (int)*cs++;
+                continue;
+            #endif
+            }
+
+            if (has_rgb)
+            {
+                // RGB
+            #ifdef OPJ_BIG_ENDIAN
+                *r++ = (int)*cs++;
+                *g++ = (int)*cs++;
+                *b++ = (int)*cs++;
+                continue;
+            #else
+                *r++ = (int)*cs++;
+                *g++ = (int)*cs++;
+                *b++ = (int)*cs++;
+                continue;
+            #endif
+            }
+
+            if (has_graya)
+            {
+                // RA
+            #ifdef OPJ_BIG_ENDIAN
+                *r++ = (int)*cs++;
+                *a++ = (int)*cs++;
+                continue;
+            #else
+                *r++ = (int)*cs++;
+                *a++ = (int)*cs++;
+                continue;
+            #endif
+            }
+
+            // G
+            *r++ = (int)*cs++;
+        }
+
+        return image;
     }
 
     using ImageProcessFunc = void (*)(const Surface& surface, const opj_image_t& image);
@@ -816,17 +974,107 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    /*
-    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    ImageEncodeStatus imageEncode(Stream& outstream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        MANGO_UNREFERENCED(options);
+        Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        Bitmap bitmap(surface, format);
+
+        int width = surface.width;
+        int height = surface.height;
+        int numcomps = 4;
+
+        const u8* buf = bitmap.image;
+
+        opj_cparameters_t parameters;
+        opj_set_default_encoder_parameters(&parameters);
+
+        //parameters.subsampling_dx = 2;
+        //parameters.subsampling_dy = 2;
+
+        char comment[] = "Created by MANGO OpenJPEG encoder.";
+
+        if (!parameters.cp_comment)
+        {
+            parameters.cp_comment = comment;
+        }
+
+        if (!parameters.tcp_numlayers)
+        {
+            parameters.tcp_rates[0] = 0;
+            parameters.tcp_numlayers++;
+            parameters.cp_disto_alloc = 1;
+        }
+
+        int sub_dx = parameters.subsampling_dx;
+        int sub_dy = parameters.subsampling_dy;
 
         ImageEncodeStatus status;
-        // TODO
+
+        opj_image_t* image = to_opj_image(buf, width, height, numcomps, sub_dx, sub_dy);
+        if (!image)
+        {
+            status.setError("[ImageEncoder.JP2] to_opj_image FAILED.");
+            return status;
+        }
+
+        parameters.tcp_mct = image->numcomps == 3 ? 1 : 0;
+
+        OPJ_CODEC_FORMAT codec_format = OPJ_CODEC_JP2;
+
+        opj_codec_t* codec = opj_create_compress(codec_format);
+        if (!codec)
+        {
+            opj_image_destroy(image);
+            status.setError("[ImageEncoder.JP2] opj_create_compress FAILED.");
+            return status;
+        }
+
+        if (options.multithread)
+        {
+            size_t num_thread = std::max(std::thread::hardware_concurrency(), 1u);
+            opj_codec_set_threads(codec, num_thread);
+        }
+
+        opj_setup_encoder(codec, &parameters, image);
+
+        MemoryStreamWriter writer;
+        opj_stream_t* stream = writer.stream;
+        if (!stream)
+        {
+            opj_image_destroy(image);
+            opj_destroy_codec(codec);
+            status.setError("[ImageEncoder.JP2] opj_stream_default_create FAILED.");
+            return status;
+        }
+
+        if (!opj_start_compress(codec, image, stream))
+        {
+            opj_image_destroy(image);
+            opj_destroy_codec(codec);
+            status.setError("[ImageEncoder.JP2] opj_start_compress FAILED.");
+            return status;
+        }
+
+        if (!opj_encode(codec, stream))
+        {
+            opj_image_destroy(image);
+            opj_destroy_codec(codec);
+            status.setError("[ImageEncoder.JP2] opj_encode FAILED.");
+            return status;
+        }
+
+        opj_end_compress(codec, stream);
+
+        opj_image_destroy(image);
+        opj_destroy_codec(codec);
+
+        debugPrint("Encoded: %d bytes\n", (int)writer.memory.size());
+
+        // TODO: write directly into the stream
+        outstream.write(writer.memory);
 
         return status;
     }
-    */
 
 } // namespace
 
@@ -835,16 +1083,12 @@ namespace mango::image
 
     void registerImageCodecJP2()
     {
-        // TODO
         registerImageDecoder(createInterface, ".jp2");
-
-        // TODO: seperate register call
         registerImageDecoder(createInterface, ".j2k");
         registerImageDecoder(createInterface, ".j2c");
         registerImageDecoder(createInterface, ".jpc");
 
-        // TODO
-        //registerImageEncoder(imageEncode, ".jp2");
+        registerImageEncoder(imageEncode, ".jp2");
     }
 
 } // namespace mango::image

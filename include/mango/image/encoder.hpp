@@ -34,7 +34,7 @@ namespace mango::image
         bool lossless = false; // webp
 
         bool simd = true; // jpg
-        bool multithread = true; // jpg
+        bool multithread = true; // jpg, jp2
     };
 
     class ImageEncoder : protected NonCopyable
