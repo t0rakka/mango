@@ -54,14 +54,15 @@ namespace
         OPJ_SIZE_T stream_read(void* buffer, OPJ_SIZE_T bytes, void* data)
         {
             MemoryStreamReader& reader = *reinterpret_cast<MemoryStreamReader*>(data);
+            ConstMemory& memory = reader.memory;
 
-            if (reader.offset >= reader.memory.size)
+            if (reader.offset >= memory.size)
                 return (OPJ_SIZE_T) -1;
 
-            if (bytes > (reader.memory.size - reader.offset))
-                bytes = reader.memory.size - reader.offset;
+            if (bytes > (memory.size - reader.offset))
+                bytes = memory.size - reader.offset;
 
-            std::memcpy(buffer, reader.memory + reader.offset, bytes);
+            std::memcpy(buffer, memory + reader.offset, bytes);
             reader.offset += bytes;
 
             return bytes;
@@ -71,12 +72,14 @@ namespace
         OPJ_OFF_T stream_skip(OPJ_OFF_T bytes, void* data)
         {
             MemoryStreamReader& reader = *reinterpret_cast<MemoryStreamReader*>(data);
+            ConstMemory& memory = reader.memory;
 
             if (bytes < 0)
                 return -1;
 
-            if (bytes > reader.memory.size - reader.offset)
-                bytes = reader.memory.size - reader.offset;
+            OPJ_OFF_T left = memory.size - reader.offset;
+            if (bytes > left)
+                bytes = left;
 
             reader.offset += bytes;
 
@@ -87,8 +90,9 @@ namespace
         OPJ_BOOL stream_seek(OPJ_OFF_T bytes, void* data)
         {
             MemoryStreamReader& reader = *reinterpret_cast<MemoryStreamReader*>(data);
+            ConstMemory& memory = reader.memory;
 
-            if (bytes < 0 || bytes > (OPJ_OFF_T)reader.memory.size)
+            if (bytes < 0 || bytes > (OPJ_OFF_T)memory.size)
                 return OPJ_FALSE;
 
             reader.offset = (OPJ_SIZE_T)bytes;
@@ -99,7 +103,7 @@ namespace
         static
         void stream_free_user_data(void* data)
         {
-            OPJ_ARG_NOT_USED(data);
+            MANGO_UNREFERENCED(data);
         }
     };
 
@@ -659,9 +663,9 @@ namespace
             m_icc.address = m_image->icc_profile_buf;
             m_icc.size = m_image->icc_profile_len;
 
-            int width = m_image->x1; // - m_image->x0;
-            int height = m_image->y1; // - m_image->y0;
-            int components = m_image->numcomps;
+            u32 width = m_image->x1; // - m_image->x0;
+            u32 height = m_image->y1; // - m_image->y0;
+            u32 components = m_image->numcomps;
 
             Format format;
 
@@ -702,7 +706,7 @@ namespace
             bool is_subsampled = false;
             bool is_8bit = true;
 
-            for (int i = 0; i < components; ++i)
+            for (u32 i = 0; i < components; ++i)
             {
                 const opj_image_comp_t& comp = m_image->comps[i];
 

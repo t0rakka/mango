@@ -249,7 +249,7 @@ namespace mango
                 break;
         }
 
-        m_offset = std::max(0ull, m_offset);
+        m_offset = std::max(u64(0), m_offset);
 
         if (m_offset > size)
         {
