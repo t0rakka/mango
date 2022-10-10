@@ -228,9 +228,9 @@ namespace
             cmptparm[comp].h = height;
         }
 
-        OPJ_COLOR_SPACE csp = nr_comp > 2 ? OPJ_CLRSPC_SRGB : OPJ_CLRSPC_GRAY;
+        OPJ_COLOR_SPACE color_space = nr_comp <= 2 ? OPJ_CLRSPC_GRAY : OPJ_CLRSPC_SRGB;
 
-        opj_image_t* image = opj_image_create(nr_comp, &cmptparm[0], csp);
+        opj_image_t* image = opj_image_create(nr_comp, &cmptparm[0], color_space);
         if (!image)
         {
             return nullptr;
@@ -241,100 +241,16 @@ namespace
         image->x1 = (width - 1) * sub_dx + 1;
         image->y1 = (height - 1) * sub_dy + 1;
 
-        int* r = nullptr;
-        int* g = nullptr;
-        int* b = nullptr;
-        int* a = nullptr;
-
-        int has_rgba = 0;
-        int has_graya = 0;
-        int has_rgb = 0;
-
-        if (nr_comp == 4)
-        {
-            // RGBA
-            has_rgba = 1;
-            r = image->comps[0].data;
-            g = image->comps[1].data;
-            b = image->comps[2].data;
-            a = image->comps[3].data;
-        }
-        else if (nr_comp == 2)
-        {
-            // GA
-            has_graya = 1;
-            r = image->comps[0].data;
-            a = image->comps[1].data;
-        }
-        else if (nr_comp == 3)
-        {
-            // RGB
-            has_rgb = 1;
-            r = image->comps[0].data;
-            g = image->comps[1].data;
-            b = image->comps[2].data;
-        }
-        else
-        {
-            // G
-            r = image->comps[0].data;
-        }
-
-        const u8* cs = buf;
-        u32 count = height * width;
+        u32 count = width * height;
 
         for (int i = 0; i < count; ++i)
         {
-            if (has_rgba) 
+            for (int ch = 0; ch < nr_comp; ++ch)
             {
-                // RGBA
-            #ifdef OPJ_BIG_ENDIAN
-                *r++ = (int)*cs++;
-                *g++ = (int)*cs++;
-                *b++ = (int)*cs++;
-                *a++ = (int)*cs++;
-                continue;
-            #else
-                *r++ = (int)*cs++;
-                *g++ = (int)*cs++;
-                *b++ = (int)*cs++;
-                *a++ = (int)*cs++;
-                continue;
-            #endif
+                image->comps[ch].data[i] = buf[ch];
             }
 
-            if (has_rgb)
-            {
-                // RGB
-            #ifdef OPJ_BIG_ENDIAN
-                *r++ = (int)*cs++;
-                *g++ = (int)*cs++;
-                *b++ = (int)*cs++;
-                continue;
-            #else
-                *r++ = (int)*cs++;
-                *g++ = (int)*cs++;
-                *b++ = (int)*cs++;
-                continue;
-            #endif
-            }
-
-            if (has_graya)
-            {
-                // RA
-            #ifdef OPJ_BIG_ENDIAN
-                *r++ = (int)*cs++;
-                *a++ = (int)*cs++;
-                continue;
-            #else
-                *r++ = (int)*cs++;
-                *a++ = (int)*cs++;
-                continue;
-            #endif
-            }
-
-            // G
-            *r++ = (int)*cs++;
+            buf += nr_comp;
         }
 
         return image;
