@@ -105,6 +105,7 @@ namespace
 
     struct MemoryStreamWriter
     {
+        MemoryStream memory;
         opj_stream_t* stream;
 
         MemoryStreamWriter()
@@ -116,7 +117,10 @@ namespace
             if (stream)
             {
                 opj_stream_set_write_function(stream, stream_write);
-                // TODO: other callbacks
+                opj_stream_set_seek_function(stream, stream_seek);
+                opj_stream_set_skip_function(stream, stream_skip);
+                opj_stream_set_user_data(stream, this, stream_free_user_data);
+                //opj_stream_set_user_data_length(stream, 0);
             }
         }
 
@@ -131,21 +135,31 @@ namespace
         static
         OPJ_SIZE_T stream_write(void* buffer, OPJ_SIZE_T bytes, void* data)
         {
-            /* TODO
-            opj_memory_stream* memory = (opj_memory_stream*)user_data;
-
-            if (memory->offset >= memory->size)
-                return (OPJ_SIZE_T) -1;
-
-            if (bytes > (memory->size - memory->offset))
-                bytes = memory->size - memory->offset;
-
-            std::memcpy(memory->data + memory->offset, buffer, bytes);
-            memory->offset += bytes;
-
+            MemoryStreamWriter& writer = *reinterpret_cast<MemoryStreamWriter*>(data);
+            writer.memory.write(buffer, bytes);
             return bytes;
-            */
-            return 0;
+        }
+
+        static
+        OPJ_OFF_T stream_skip(OPJ_OFF_T bytes, void* data)
+        {
+            MemoryStreamWriter& writer = *reinterpret_cast<MemoryStreamWriter*>(data);
+            writer.memory.seek(bytes, Stream::CURRENT);
+            return bytes;
+        }
+
+        static
+        OPJ_BOOL stream_seek(OPJ_OFF_T bytes, void* data)
+        {
+            MemoryStreamWriter& writer = *reinterpret_cast<MemoryStreamWriter*>(data);
+            writer.memory.seek(bytes, Stream::BEGIN);
+            return true;
+        }
+
+        static
+        void stream_free_user_data(void* data)
+        {
+            OPJ_ARG_NOT_USED(data);
         }
     };
 
