@@ -46,7 +46,9 @@ namespace mango::image
             return scan + x;
         }
 
+        ImageEncodeStatus save(Stream& stream, const std::string& extension, const ImageEncodeOptions& options = ImageEncodeOptions()) const;
         ImageEncodeStatus save(const std::string& filename, const ImageEncodeOptions& options = ImageEncodeOptions()) const;
+
         void clear(float red, float green, float blue, float alpha) const;
         void clear(Color color) const;
         void blit(int x, int y, const Surface& source) const;

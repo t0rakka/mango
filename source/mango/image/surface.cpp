@@ -8,6 +8,7 @@
 #include <mango/core/thread.hpp>
 #include <mango/core/system.hpp>
 #include <mango/core/string.hpp>
+#include <mango/core/buffer.hpp>
 #include <mango/core/bits.hpp>
 #include <mango/core/half.hpp>
 #include <mango/math/vector.hpp>
@@ -208,20 +209,26 @@ namespace mango::image
         return *this;
     }
 
-    ImageEncodeStatus Surface::save(const std::string& filename, const ImageEncodeOptions& options) const
+    ImageEncodeStatus Surface::save(Stream& stream, const std::string& extension, const ImageEncodeOptions& options) const
     {
         ImageEncodeStatus status;
-        ImageEncoder encoder(filename);
+        ImageEncoder encoder(extension);
         if (encoder.isEncoder())
         {
-            filesystem::OutputFileStream file(filename);
-            status = encoder.encode(file, *this, options);
+            status = encoder.encode(stream, *this, options);
         }
         else
         {
-            status.setError("Incorrect encoder: %s", filename.c_str());
+            status.setError("Incorrect encoder: %s", extension.c_str());
         }
 
+        return status;
+    }
+
+    ImageEncodeStatus Surface::save(const std::string& filename, const ImageEncodeOptions& options) const
+    {
+        filesystem::OutputFileStream file(filename);
+        ImageEncodeStatus status = save(file, filesystem::getExtension(filename), options);
         return status;
     }
 
