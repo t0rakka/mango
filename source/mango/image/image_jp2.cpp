@@ -159,7 +159,38 @@ namespace
         static
         void stream_free_user_data(void* data)
         {
-            OPJ_ARG_NOT_USED(data);
+            MANGO_UNREFERENCED(data);
+        }
+    };
+
+    struct CallbackManager
+    {
+        CallbackManager(opj_codec_t* codec)
+        {
+            opj_set_info_handler(codec, info_callback, nullptr);
+            opj_set_warning_handler(codec, warning_callback, nullptr);
+            opj_set_error_handler(codec, error_callback, nullptr);
+        }
+
+        static
+        void error_callback(const char *msg, void* data)
+        {
+            MANGO_UNREFERENCED(data);
+            //fprintf(stdout, "[ERROR] %s", msg);
+        }
+
+        static
+        void warning_callback(const char *msg, void *data)
+        {
+            MANGO_UNREFERENCED(data);
+            //fprintf(stdout, "[WARNING] %s", msg);
+        }
+
+        static
+        void info_callback(const char *msg, void *data)
+        {
+            MANGO_UNREFERENCED(data);
+            //fprintf(stdout, "[INFO] %s", msg);
         }
     };
 
@@ -213,8 +244,11 @@ namespace
     }
 
     static
-    opj_image_t *to_opj_image(const u8* buf, int width, int height, int nr_comp, int sub_dx, int sub_dy)
+    opj_image_t* to_opj_image(const Surface& surface, int nr_comp, int sub_dx, int sub_dy)
     {
+        int width = surface.width;
+        int height = surface.height;
+
         opj_image_cmptparm_t cmptparm[4];
         std::memset(cmptparm, 0, nr_comp * sizeof(opj_image_cmptparm_t));
 
@@ -241,16 +275,27 @@ namespace
         image->x1 = (width - 1) * sub_dx + 1;
         image->y1 = (height - 1) * sub_dy + 1;
 
-        u32 count = width * height;
+        const u8* buffer = surface.image;
+        size_t stride = surface.stride;
 
-        for (int i = 0; i < count; ++i)
+        size_t offset = 0;
+
+        for (int y = 0; y < height; ++y)
         {
-            for (int ch = 0; ch < nr_comp; ++ch)
+            const u8* src = buffer;
+
+            for (int x = 0; x < width; ++x)
             {
-                image->comps[ch].data[i] = buf[ch];
+                for (int ch = 0; ch < nr_comp; ++ch)
+                {
+                    image->comps[ch].data[offset] = src[ch];
+                }
+
+                ++offset;
+                src += nr_comp;
             }
 
-            buf += nr_comp;
+            buffer += stride;
         }
 
         return image;
@@ -587,9 +632,7 @@ namespace
                 return;
             }
 
-            //opj_set_info_handler(m_codec, info_callback, nullptr);
-            //opj_set_warning_handler(m_codec, warning_callback, nullptr);
-            //opj_set_error_handler(m_codec, error_callback, nullptr);
+            CallbackManager callback(m_codec);
 
             size_t num_thread = std::max(std::thread::hardware_concurrency(), 1u);
             opj_codec_set_threads(m_codec, num_thread);
@@ -865,15 +908,12 @@ namespace
         Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
         Bitmap bitmap(surface, format);
 
-        int width = surface.width;
-        int height = surface.height;
         int numcomps = 4;
-
-        const u8* buf = bitmap.image;
 
         opj_cparameters_t parameters;
         opj_set_default_encoder_parameters(&parameters);
 
+        // TODO
         //parameters.subsampling_dx = 2;
         //parameters.subsampling_dy = 2;
 
@@ -896,11 +936,18 @@ namespace
 
         ImageEncodeStatus status;
 
-        opj_image_t* image = to_opj_image(buf, width, height, numcomps, sub_dx, sub_dy);
+        opj_image_t* image = to_opj_image(surface, numcomps, sub_dx, sub_dy);
         if (!image)
         {
             status.setError("[ImageEncoder.JP2] to_opj_image FAILED.");
             return status;
+        }
+
+        // ICC color profile
+        if (options.icc.size > 0)
+        {
+            image->icc_profile_len = options.icc.size;
+            image->icc_profile_buf = const_cast<u8*>(options.icc.address);
         }
 
         parameters.tcp_mct = image->numcomps == 3 ? 1 : 0;
@@ -914,6 +961,8 @@ namespace
             status.setError("[ImageEncoder.JP2] opj_create_compress FAILED.");
             return status;
         }
+
+        CallbackManager callback(codec);
 
         if (options.multithread)
         {

@@ -25,7 +25,7 @@ namespace mango::image
     {
         Palette palette; // gif
 
-        ConstMemory icc; // jpg, png
+        ConstMemory icc; // jpg, png, jp2
 
         float quality = 0.90f; // jpg: [0.0, 1.0]
         int compression = 5; // png: [0, 10]
