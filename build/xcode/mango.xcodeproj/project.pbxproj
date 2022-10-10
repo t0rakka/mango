@@ -273,6 +273,8 @@
 		A69B9E0D285ABFA200E7BEDC /* cpu_features.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9E06285ABFA200E7BEDC /* cpu_features.h */; };
 		A69B9E0E285ABFA200E7BEDC /* adler32_impl.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9E07285ABFA200E7BEDC /* adler32_impl.h */; };
 		A6A1313A285ABA5F00DB6BDA /* bits.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13139285ABA5F00DB6BDA /* bits.h */; };
+		A6B2A54428F4E06200DC24CF /* image_jp2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6B2A54328F4E06200DC24CF /* image_jp2.cpp */; };
+		A6B2A54628F4E07400DC24CF /* image_jxl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6B2A54528F4E07400DC24CF /* image_jxl.cpp */; };
 		A6C8F4F7200612E900A25756 /* md5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F5200612E900A25756 /* md5.cpp */; };
 		A6C8F4F8200612E900A25756 /* sha1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6C8F4F6200612E900A25756 /* sha1.cpp */; };
 		A6CD2BD5209B3958000B0EF8 /* zpng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6CD2BD3209B3957000B0EF8 /* zpng.cpp */; };
@@ -750,6 +752,8 @@
 		A69B9E06285ABFA200E7BEDC /* cpu_features.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpu_features.h; path = external/libdeflate/lib/x86/cpu_features.h; sourceTree = "<group>"; };
 		A69B9E07285ABFA200E7BEDC /* adler32_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = adler32_impl.h; path = external/libdeflate/lib/x86/adler32_impl.h; sourceTree = "<group>"; };
 		A6A13139285ABA5F00DB6BDA /* bits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bits.h; path = external/zstd/common/bits.h; sourceTree = "<group>"; };
+		A6B2A54328F4E06200DC24CF /* image_jp2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_jp2.cpp; path = image/image_jp2.cpp; sourceTree = "<group>"; };
+		A6B2A54528F4E07400DC24CF /* image_jxl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_jxl.cpp; path = image/image_jxl.cpp; sourceTree = "<group>"; };
 		A6C8F4F5200612E900A25756 /* md5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = md5.cpp; path = core/md5.cpp; sourceTree = "<group>"; };
 		A6C8F4F6200612E900A25756 /* sha1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha1.cpp; path = core/sha1.cpp; sourceTree = "<group>"; };
 		A6CD2BD3209B3957000B0EF8 /* zpng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zpng.cpp; path = external/zpng/zpng.cpp; sourceTree = "<group>"; };
@@ -1044,9 +1048,12 @@
 				A00559B21C93329A00A6D963 /* image_bmp.cpp */,
 				A00559B31C93329A00A6D963 /* image_dds.cpp */,
 				A00559B41C93329A00A6D963 /* image_gif.cpp */,
+				A6D4807527985DE000F7E98D /* image_exr.cpp */,
 				A00559B51C93329A00A6D963 /* image_hdr.cpp */,
 				A00559B61C93329A00A6D963 /* image_iff.cpp */,
+				A6B2A54328F4E06200DC24CF /* image_jp2.cpp */,
 				A00559B71C93329A00A6D963 /* image_jpg.cpp */,
+				A6B2A54528F4E07400DC24CF /* image_jxl.cpp */,
 				A00559B81C93329A00A6D963 /* image_ktx.cpp */,
 				A6D4807327985DC600F7E98D /* image_ktx2.cpp */,
 				A00559B91C93329A00A6D963 /* image_pcx.cpp */,
@@ -1060,7 +1067,6 @@
 				A645DD2D213ED71100EC714B /* image_atari.cpp */,
 				A645DD2E213ED71100EC714B /* image_c64.cpp */,
 				A6EC3FAB230D7FF700B17F21 /* image_webp.cpp */,
-				A6D4807527985DE000F7E98D /* image_exr.cpp */,
 				A6734C792763C82E00FE6A20 /* image_qoi.cpp */,
 				A00559BE1C93329A00A6D963 /* image.cpp */,
 				A00559BF1C93329A00A6D963 /* surface.cpp */,
@@ -2252,6 +2258,7 @@
 				A6EC3F05230D7C1500B17F21 /* rescaler_neon.c in Sources */,
 				A645DD26213D53C000EC714B /* jpeg_arithmetic.cpp in Sources */,
 				A6EC3F14230D7C1500B17F21 /* upsampling_neon.c in Sources */,
+				A6B2A54628F4E07400DC24CF /* image_jxl.cpp in Sources */,
 				A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */,
 				A6EC3F0B230D7C1500B17F21 /* yuv_sse41.c in Sources */,
 				A00559A91C93327800A6D963 /* path.cpp in Sources */,
@@ -2360,6 +2367,7 @@
 				A6EC3F43230D7C2E00B17F21 /* frame_enc.c in Sources */,
 				A601B0A2276E1B9D003B3A28 /* inffast.c in Sources */,
 				A00559C51C93329A00A6D963 /* format.cpp in Sources */,
+				A6B2A54428F4E06200DC24CF /* image_jp2.cpp in Sources */,
 				A6EC3F01230D7C1500B17F21 /* rescaler_mips32.c in Sources */,
 				A6EC3F84230D7C4D00B17F21 /* bit_writer_utils.c in Sources */,
 				A6D4807627985DE000F7E98D /* image_exr.cpp in Sources */,
