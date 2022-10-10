@@ -103,13 +103,14 @@ namespace
         }
     };
 
-    struct MemoryStreamWriter
+    struct StreamWriter
     {
-        MemoryStream memory;
+        Stream& output;
         opj_stream_t* stream;
 
-        MemoryStreamWriter()
-            : stream(nullptr)
+        StreamWriter(Stream& output)
+            : output(output)
+            , stream(nullptr)
         {
             constexpr bool is_reader = false;
 
@@ -119,11 +120,11 @@ namespace
                 opj_stream_set_write_function(stream, stream_write);
                 opj_stream_set_seek_function(stream, stream_seek);
                 opj_stream_set_skip_function(stream, stream_skip);
-                opj_stream_set_user_data(stream, this, stream_free_user_data);
+                opj_stream_set_user_data(stream, &output, stream_free_user_data);
             }
         }
 
-        ~MemoryStreamWriter()
+        ~StreamWriter()
         {
             if (stream)
             {
@@ -134,28 +135,27 @@ namespace
         static
         OPJ_SIZE_T stream_write(void* buffer, OPJ_SIZE_T bytes, void* data)
         {
-            MemoryStreamWriter& writer = *reinterpret_cast<MemoryStreamWriter*>(data);
-            writer.memory.write(buffer, bytes);
+            Stream& output = *reinterpret_cast<Stream*>(data);
+            output.write(buffer, bytes);
             return bytes;
         }
 
         static
         OPJ_OFF_T stream_skip(OPJ_OFF_T bytes, void* data)
         {
-            MemoryStreamWriter& writer = *reinterpret_cast<MemoryStreamWriter*>(data);
-            MemoryStream& memory = writer.memory;
+            Stream& output = *reinterpret_cast<Stream*>(data);
 
             // TODO: implement the zero-padding in the stream interface
 
             u64 count = bytes;
 
-            u64 offset = memory.offset();
-            u64 size = memory.size();
+            u64 offset = output.offset();
+            u64 size = output.size();
 
             if (offset < size)
             {
                 u64 x = std::min(size - offset, count);
-                memory.seek(x, Stream::CURRENT);
+                output.seek(x, Stream::CURRENT);
                 count -= x;
             }
 
@@ -164,14 +164,14 @@ namespace
             while (count >= 8)
             {
                 const u32 zero[2] = { 0, 0 };
-                memory.write(zero, 8);
+                output.write(zero, 8);
                 count -= 8;
             }
 
             while (count > 0)
             {
                 const u8 zero[] = { 0 };
-                memory.write(zero, 1);
+                output.write(zero, 1);
                 --count;
             }
 
@@ -181,8 +181,8 @@ namespace
         static
         OPJ_BOOL stream_seek(OPJ_OFF_T bytes, void* data)
         {
-            MemoryStreamWriter& writer = *reinterpret_cast<MemoryStreamWriter*>(data);
-            writer.memory.seek(bytes, Stream::BEGIN);
+            Stream& output = *reinterpret_cast<Stream*>(data);
+            output.seek(bytes, Stream::BEGIN);
             return true;
         }
 
@@ -974,7 +974,7 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    ImageEncodeStatus imageEncode(Stream& outstream, const Surface& surface, const ImageEncodeOptions& options)
+    ImageEncodeStatus imageEncode(Stream& output, const Surface& surface, const ImageEncodeOptions& options)
     {
         Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
         Bitmap bitmap(surface, format);
@@ -1037,7 +1037,7 @@ namespace
 
         opj_setup_encoder(codec, &parameters, image);
 
-        MemoryStreamWriter writer;
+        StreamWriter writer(output);
         opj_stream_t* stream = writer.stream;
         if (!stream)
         {
@@ -1068,10 +1068,7 @@ namespace
         opj_image_destroy(image);
         opj_destroy_codec(codec);
 
-        debugPrint("Encoded: %d bytes\n", (int)writer.memory.size());
-
-        // TODO: write directly into the stream
-        outstream.write(writer.memory);
+        debugPrint("Encoded: %d bytes\n", (int)writer.output.size());
 
         return status;
     }
