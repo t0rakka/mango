@@ -234,31 +234,27 @@ namespace mango
     {
         const u64 size = m_buffer.size();
 
-        s64 offset = m_offset;
-
         switch (mode)
         {
             case BEGIN:
-                offset = distance;
+                m_offset = distance;
                 break;
 
             case CURRENT:
-                offset = m_offset + distance;
+                m_offset += distance;
                 break;
 
             case END:
-                distance = std::min(s64(0), distance);
-                offset = size + distance;
+                m_offset = size + distance;
                 break;
         }
 
-        // target offset
-        offset = std::max(s64(0), offset);
+        m_offset = std::max(0ull, m_offset);
 
-        if (offset > size)
+        if (m_offset > size)
         {
-            // target offset is past end of the stream ; write as many zeroes as needed
-            u64 count = offset - size;
+            // offset is past end of the stream ; write as many zeroes as needed
+            u64 count = m_offset - size;
 
             while (count >= 8)
             {
@@ -274,8 +270,6 @@ namespace mango
                 --count;
             }
         }
-
-        m_offset = offset;
     }
 
     void BufferStream::read(void* dest, u64 bytes)
