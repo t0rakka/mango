@@ -2036,6 +2036,12 @@
     <ClCompile Include="..\..\..\source\external\libdeflate\lib\zlib_decompress.c">
       <Filter>external\libdeflate\lib</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\image\image_jp2.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\image\image_jxl.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\source\external\basisu\transcoder\basisu_transcoder_tables_astc.inc">

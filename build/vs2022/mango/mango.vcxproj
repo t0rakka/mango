@@ -621,7 +621,9 @@
     <ClCompile Include="..\..\..\source\mango\image\image_gif.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\image_hdr.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\image_iff.cpp" />
+    <ClCompile Include="..\..\..\source\mango\image\image_jp2.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\image_jpg.cpp" />
+    <ClCompile Include="..\..\..\source\mango\image\image_jxl.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\image_ktx.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\image_ktx2.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\image_pcx.cpp" />
