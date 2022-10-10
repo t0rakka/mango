@@ -144,37 +144,7 @@ namespace
         OPJ_OFF_T stream_skip(OPJ_OFF_T bytes, void* data)
         {
             Stream& output = *reinterpret_cast<Stream*>(data);
-
-            // TODO: implement the zero-padding in the stream interface
-
-            u64 count = bytes;
-
-            u64 offset = output.offset();
-            u64 size = output.size();
-
-            if (offset < size)
-            {
-                u64 x = std::min(size - offset, count);
-                output.seek(x, Stream::CURRENT);
-                count -= x;
-            }
-
-            // we are now past end of the stream ; write as many zeroes as needed
-
-            while (count >= 8)
-            {
-                const u32 zero[2] = { 0, 0 };
-                output.write(zero, 8);
-                count -= 8;
-            }
-
-            while (count > 0)
-            {
-                const u8 zero[] = { 0 };
-                output.write(zero, 1);
-                --count;
-            }
-
+            output.seek(bytes, Stream::CURRENT);
             return bytes;
         }
 

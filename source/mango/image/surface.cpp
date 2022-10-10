@@ -12,6 +12,7 @@
 #include <mango/core/half.hpp>
 #include <mango/math/vector.hpp>
 #include <mango/image/image.hpp>
+#include <mango/filesystem/file.hpp>
 
 namespace
 {

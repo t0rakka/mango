@@ -233,22 +233,49 @@ namespace mango
     void BufferStream::seek(s64 distance, SeekMode mode)
     {
         const u64 size = m_buffer.size();
+
+        s64 offset = m_offset;
+
         switch (mode)
         {
             case BEGIN:
-                distance = std::max(s64(0), distance);
-                m_offset = std::min(size, u64(distance));
+                offset = distance;
                 break;
 
             case CURRENT:
-                m_offset = std::min(size, m_offset + distance);
+                offset = m_offset + distance;
                 break;
 
             case END:
                 distance = std::min(s64(0), distance);
-                m_offset = u64(std::max(s64(0), s64(size + distance)));
+                offset = size + distance;
                 break;
         }
+
+        // target offset
+        offset = std::max(s64(0), offset);
+
+        if (offset > size)
+        {
+            // target offset is past end of the stream ; write as many zeroes as needed
+            u64 count = offset - size;
+
+            while (count >= 8)
+            {
+                const u32 zero[2] = { 0, 0 };
+                write(zero, 8);
+                count -= 8;
+            }
+
+            while (count > 0)
+            {
+                const u8 zero[] = { 0 };
+                write(zero, 1);
+                --count;
+            }
+        }
+
+        m_offset = offset;
     }
 
     void BufferStream::read(void* dest, u64 bytes)
