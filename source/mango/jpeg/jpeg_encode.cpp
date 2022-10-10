@@ -2528,7 +2528,7 @@ namespace
         };
 
         // configure quality
-        u32 quality = u32(std::pow(1.0f + clamp(1.0f - options.quality, 0.0f, 1.0f), 11.0f) * 8.0f);
+        u32 quality = u32(std::pow(1.0f + std::clamp(1.0f - options.quality, 0.0f, 1.0f), 11.0f) * 8.0f);
 
         for (int i = 0; i < 64; ++i)
         {

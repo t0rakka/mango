@@ -27,11 +27,11 @@ namespace mango::image
 
         ConstMemory icc; // jpg, png, jp2
 
-        float quality = 0.90f; // jpg: [0.0, 1.0]
+        float quality = 0.90f; // jpg, jp2: [0.0, 1.0]
         int compression = 5; // png: [0, 10]
         bool parallel = true; // png
         bool dithering = true; // gif
-        bool lossless = false; // webp
+        bool lossless = false; // webp, jp2
 
         bool simd = true; // jpg
         bool multithread = true; // jpg, jp2

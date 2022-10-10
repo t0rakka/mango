@@ -917,10 +917,6 @@ namespace
         opj_cparameters_t parameters;
         opj_set_default_encoder_parameters(&parameters);
 
-        // TODO
-        //parameters.subsampling_dx = 2;
-        //parameters.subsampling_dy = 2;
-
         char comment[] = "Created by MANGO OpenJPEG encoder.";
 
         if (!parameters.cp_comment)
@@ -935,10 +931,22 @@ namespace
             parameters.cp_disto_alloc = 1;
         }
 
-        int sub_dx = parameters.subsampling_dx;
-        int sub_dy = parameters.subsampling_dy;
+        if (options.lossless)
+        {
+            parameters.irreversible = 0;
+        }
+        else
+        {
+            parameters.irreversible = 1;
+            parameters.tcp_numlayers = 1;
+            parameters.cp_fixed_quality = 1;
+            parameters.tcp_distoratio[0] = u32(std::clamp(options.quality, 0.0f, 1.0f) * 100.0f);
+        }
 
         ImageEncodeStatus status;
+
+        int sub_dx = parameters.subsampling_dx;
+        int sub_dy = parameters.subsampling_dy;
 
         opj_image_t* image = to_opj_image(surface, numcomps, sub_dx, sub_dy);
         if (!image)
