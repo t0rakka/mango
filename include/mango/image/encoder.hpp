@@ -23,7 +23,7 @@ namespace mango::image
 
     struct ImageEncodeOptions
     {
-        Palette palette; // gif
+        Palette palette; // gif, png
 
         ConstMemory icc; // jpg, png, jp2
 
