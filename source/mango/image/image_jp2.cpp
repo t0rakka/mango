@@ -606,6 +606,47 @@ namespace
         }
     }
 
+#if 0
+
+    static
+    void process_unorm_8bit_yuv(const Surface& surface, const opj_image_t& image)
+    {
+        int width = surface.width;
+        int height = surface.height;
+        size_t stride = surface.stride;
+
+        for (int y = 0; y < height; ++y)
+        {
+            u32* dest = reinterpret_cast<u32*>(surface.image + y * stride);
+
+            s32* src0 = image.comps[0].data + y * image.comps[0].w;
+            s32* src1 = image.comps[1].data + y * image.comps[1].w;
+            s32* src2 = image.comps[2].data + y * image.comps[2].w;
+
+            for (int x = 0; x < width; ++x)
+            {
+                s32 s0 = src0[x];
+                s32 cb = src1[x];
+                s32 cr = src2[x];
+
+                s32 r = s0 + ((cr * 91750 - 11711232) >> 16);
+                s32 g = s0 + ((cb * -22479 + cr * -46596 + 8874368) >> 16);
+                s32 b = s0 + ((cb * 115671 - 14773120) >> 16);
+                r = byteclamp(r);
+                g = byteclamp(g);
+                b = byteclamp(b);
+
+                s32 a = 0xff;
+
+                dest[x] = makeRGBA(r, g, b, a);
+            }
+
+            dest += stride;
+        }
+    }
+
+#endif
+
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
