@@ -942,7 +942,7 @@ namespace
         int sub_dx = parameters.subsampling_dx;
         int sub_dy = parameters.subsampling_dy;
 
-        opj_image_t* image = to_opj_image(surface, numcomps, sub_dx, sub_dy);
+        opj_image_t* image = to_opj_image(bitmap, numcomps, sub_dx, sub_dy);
         if (!image)
         {
             status.setError("[ImageEncoder.JP2] to_opj_image FAILED.");
@@ -1025,6 +1025,7 @@ namespace mango::image
         registerImageDecoder(createInterface, ".j2k");
         registerImageDecoder(createInterface, ".j2c");
         registerImageDecoder(createInterface, ".jpc");
+        registerImageDecoder(createInterface, ".jph");
 
         registerImageEncoder(imageEncode, ".jp2");
     }

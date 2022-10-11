@@ -216,6 +216,10 @@ namespace mango::image
         if (encoder.isEncoder())
         {
             status = encoder.encode(stream, *this, options);
+            if (!status)
+            {
+                debugPrint(status.info);
+            }
         }
         else
         {
