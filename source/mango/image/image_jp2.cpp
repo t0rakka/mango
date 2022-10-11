@@ -653,18 +653,12 @@ namespace
                 return;
             }
 
-            if (m_image->x0 || m_image->y0)
-            {
-                debugPrint("WARNING: unsupported offset (%d, %d)\n", m_image->x0, m_image->y0);
-                return;
-            }
-
             // ICC color profile
             m_icc.address = m_image->icc_profile_buf;
             m_icc.size = m_image->icc_profile_len;
 
-            u32 width = m_image->x1; // - m_image->x0;
-            u32 height = m_image->y1; // - m_image->y0;
+            u32 width = m_image->x1 - m_image->x0;
+            u32 height = m_image->y1 - m_image->y0;
             u32 components = m_image->numcomps;
 
             Format format;
