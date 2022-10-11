@@ -340,8 +340,6 @@ namespace
                 s = u32_scale(s + bias0, prec0, 8);
                 dest[x] = u8(s);
             }
-
-            dest += stride;
         }
     }
 
@@ -373,8 +371,6 @@ namespace
                 a = u32_scale(a + bias1, prec1, 8);
                 dest[x] = u16((a << 8) | s);
             }
-
-            dest += stride;
         }
     }
 
@@ -433,8 +429,6 @@ namespace
 
                 dest[x] = makeRGBA(r, g, b, a);
             }
-
-            dest += stride;
         }
     }
 
@@ -498,8 +492,6 @@ namespace
 
                 dest[x] = makeRGBA(r, g, b, a);
             }
-
-            dest += stride;
         }
     }
 
@@ -520,8 +512,6 @@ namespace
                 u32 s = src0[x];
                 dest[x] = u8(s);
             }
-
-            dest += stride;
         }
     }
 
@@ -544,8 +534,6 @@ namespace
                 u32 a = src1[x];
                 dest[x] = u16((a << 8) | s);
             }
-
-            dest += stride;
         }
     }
 
@@ -572,8 +560,6 @@ namespace
                 s32 a = 0xff;
                 dest[x] = makeRGBA(r, g, b, a);
             }
-
-            dest += stride;
         }
     }
 
@@ -601,8 +587,6 @@ namespace
                 s32 a = src3[x];
                 dest[x] = makeRGBA(r, g, b, a);
             }
-
-            dest += stride;
         }
     }
 
@@ -640,8 +624,6 @@ namespace
 
                 dest[x] = makeRGBA(r, g, b, a);
             }
-
-            dest += stride;
         }
     }
 
