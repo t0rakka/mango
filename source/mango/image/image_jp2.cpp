@@ -169,32 +169,44 @@ namespace
 
     struct CallbackManager
     {
-        CallbackManager(opj_codec_t* codec)
+        int level; // 0: none, 1: error, 2: error + warning, 3: everything
+
+        CallbackManager(opj_codec_t* codec, int level)
+            : level(level)
         {
-            opj_set_info_handler(codec, info_callback, nullptr);
-            opj_set_warning_handler(codec, warning_callback, nullptr);
-            opj_set_error_handler(codec, error_callback, nullptr);
+            opj_set_info_handler(codec, info_callback, this);
+            opj_set_warning_handler(codec, warning_callback, this);
+            opj_set_error_handler(codec, error_callback, this);
         }
 
         static
         void error_callback(const char *msg, void* data)
         {
-            MANGO_UNREFERENCED(data);
-            //fprintf(stdout, "[ERROR] %s", msg);
+            CallbackManager& manager = *reinterpret_cast<CallbackManager*>(data);
+            if (manager.level >= 1)
+            {
+                fprintf(stdout, "[ERROR] %s", msg);
+            }
         }
 
         static
         void warning_callback(const char *msg, void *data)
         {
-            MANGO_UNREFERENCED(data);
-            //fprintf(stdout, "[WARNING] %s", msg);
+            CallbackManager& manager = *reinterpret_cast<CallbackManager*>(data);
+            if (manager.level >= 2)
+            {
+                fprintf(stdout, "[WARNING] %s", msg);
+            }
         }
 
         static
         void info_callback(const char *msg, void *data)
         {
-            MANGO_UNREFERENCED(data);
-            //fprintf(stdout, "[INFO] %s", msg);
+            CallbackManager& manager = *reinterpret_cast<CallbackManager*>(data);
+            if (manager.level >= 3)
+            {
+                fprintf(stdout, "[INFO] %s", msg);
+            }
         }
     };
 
@@ -636,7 +648,7 @@ namespace
                 return;
             }
 
-            CallbackManager callback(m_codec);
+            CallbackManager callback(m_codec, 0);
 
             size_t num_thread = std::max(std::thread::hardware_concurrency(), 1u);
             opj_codec_set_threads(m_codec, num_thread);
@@ -958,6 +970,10 @@ namespace
 
         parameters.tcp_mct = image->numcomps == 3 ? 1 : 0;
 
+        u32 s0 = std::clamp(u32_log2(bitmap.width) / 2 - 1, 1, 8);
+        u32 s1 = std::clamp(u32_log2(bitmap.height) / 2 - 1, 1, 8);
+        parameters.numresolution = std::max(s0, s1);
+
         OPJ_CODEC_FORMAT codec_format = OPJ_CODEC_JP2;
 
         opj_codec_t* codec = opj_create_compress(codec_format);
@@ -968,7 +984,7 @@ namespace
             return status;
         }
 
-        CallbackManager callback(codec);
+        CallbackManager callback(codec, 0);
 
         if (options.multithread)
         {
@@ -1026,6 +1042,7 @@ namespace mango::image
         registerImageDecoder(createInterface, ".j2c");
         registerImageDecoder(createInterface, ".jpc");
         registerImageDecoder(createInterface, ".jph");
+        registerImageDecoder(createInterface, ".jhc");
 
         registerImageEncoder(imageEncode, ".jp2");
     }
