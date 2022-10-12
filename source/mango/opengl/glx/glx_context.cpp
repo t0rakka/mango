@@ -8,36 +8,6 @@
 #include <mango/opengl/opengl.hpp>
 #include "../../window/xlib/xlib_handle.hpp"
 
-namespace
-{
-    using namespace mango;
-
-    template <typename ContainerType>
-    void parseExtensionString(ContainerType& container, const char* ext)
-    {
-        for (const char* s = ext; *s; ++s)
-        {
-            if (*s == ' ')
-            {
-                const std::ptrdiff_t length = s - ext;
-                if (length > 0)
-                {
-                    container.insert(std::string(ext, length));
-                }
-                ext = s + 1;
-            }
-        }
-    }
-
-    int contextErrorHandler(Display* display, XErrorEvent* event)
-    {
-        MANGO_UNREFERENCED(display);
-        MANGO_UNREFERENCED(event);
-        return 0;
-    }
-
-} // namespace
-
 namespace mango
 {
     using namespace math;
@@ -67,6 +37,14 @@ namespace mango
         }
 
         delete context_handle;
+    }
+
+    static
+    int contextErrorHandler(Display* display, XErrorEvent* event)
+    {
+        MANGO_UNREFERENCED(display);
+        MANGO_UNREFERENCED(event);
+        return 0;
     }
 
     // -----------------------------------------------------------------------

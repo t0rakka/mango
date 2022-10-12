@@ -9,29 +9,6 @@
 
 #include "CustomOpenGLView.h"
 
-namespace
-{
-    using namespace mango;
-
-    template <typename ContainerType>
-    void parseExtensionString(ContainerType& container, const char* ext)
-    {
-        for (const char* s = ext; *s; ++s)
-        {
-            if (*s == ' ')
-            {
-                const std::ptrdiff_t length = s - ext;
-                if (length > 0)
-                {
-                    container.emplace(ext, length);
-                }
-                ext = s + 1;
-            }
-        }
-    }
-
-} // namespace
-
 // -----------------------------------------------------------------------
 // CustomNSWindowDelegate
 // -----------------------------------------------------------------------

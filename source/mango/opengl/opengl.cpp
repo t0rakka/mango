@@ -167,7 +167,8 @@ namespace mango
     // extension masks
     // -----------------------------------------------------------------------
 
-    static void init_ext(OpenGLContext& context)
+    static
+    void init_ext(OpenGLContext& context)
     {
         const char* names[] =
         {
@@ -189,7 +190,8 @@ namespace mango
         }
     }
 
-    static void init_core(OpenGLContext& context, int version)
+    static
+    void init_core(OpenGLContext& context, int version)
     {
         int versions[] =
         {
@@ -213,7 +215,8 @@ namespace mango
 
 #if defined(MANGO_OPENGL_CONTEXT_WGL)
 
-    static void init_wgl(OpenGLContext& context)
+    static
+    void init_wgl(OpenGLContext& context)
     {
         const char* names[] =
         {
@@ -239,7 +242,8 @@ namespace mango
 
 #if defined(MANGO_OPENGL_CONTEXT_GLX)
 
-    static void init_glx(OpenGLContext& context)
+    static
+    void init_glx(OpenGLContext& context)
     {
         const char* names[] =
         {
@@ -266,6 +270,22 @@ namespace mango
     // -----------------------------------------------------------------------
     // OpenGLContext
     // -----------------------------------------------------------------------
+
+    void OpenGLContext::parseExtensionString(std::set<std::string>& container, const char* ext)
+    {
+        for (const char* s = ext; *s; ++s)
+        {
+            if (*s == ' ')
+            {
+                const std::ptrdiff_t length = s - ext;
+                if (length > 0)
+                {
+                    container.emplace(ext, length);
+                }
+                ext = s + 1;
+            }
+        }
+    }
 
     void OpenGLContext::initExtensionMask()
     {

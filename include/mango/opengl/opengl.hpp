@@ -123,6 +123,7 @@ namespace mango
         struct OpenGLContextHandle* m_context;
         std::set<std::string> m_extensions;
 
+        void parseExtensionString(std::set<std::string>& container, const char* ext);
         void initExtensionMask();
 
     public:

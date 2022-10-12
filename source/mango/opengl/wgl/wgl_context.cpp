@@ -7,34 +7,6 @@
 #include <mango/opengl/opengl.hpp>
 #include "../../window/win32/win32_handle.hpp"
 
-namespace
-{
-
-    using namespace mango;
-
-    // -----------------------------------------------------------------------
-	// parseExtensionString()
-    // -----------------------------------------------------------------------
-
-    template <typename ContainerType>
-    void parseExtensionString(ContainerType& container, const char* ext)
-    {
-        for (const char* s = ext; *s; ++s)
-        {
-            if (*s == ' ')
-            {
-                const std::ptrdiff_t length = s - ext;
-                if (length > 0)
-                {
-                    container.emplace(ext, length);
-                }
-                ext = s + 1;
-            }
-        }
-    }
-
-} // namespace
-
 // -----------------------------------------------------------------------
 // Extensions
 // -----------------------------------------------------------------------
@@ -74,17 +46,17 @@ namespace mango
 	{
 		HDC hdc { NULL };
 		HGLRC hrc { NULL };
-        RECT rect;
+		RECT rect;
 		bool fullscreen { false };
-    };
+	};
 
     // -----------------------------------------------------------------------
     // OpenGLContext
     // -----------------------------------------------------------------------
 
-    OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
+	OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
 		: Window(width, height, flags)
-    {
+	{
 		m_context = new OpenGLContextHandle();
 
 		// TODO
@@ -331,14 +303,14 @@ namespace mango
         m_context->fullscreen = !m_context->fullscreen;
     }
 
-    bool OpenGLContext::isFullscreen() const
+	bool OpenGLContext::isFullscreen() const
 	{
 		return m_context->fullscreen;
 	}
 
-    int32x2 OpenGLContext::getWindowSize() const
-    {
+	int32x2 OpenGLContext::getWindowSize() const
+	{
 		return Window::getWindowSize();
-    }
+	}
 
 } // namespace mango
