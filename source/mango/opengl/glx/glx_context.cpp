@@ -1,8 +1,9 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
+#include <mango/core/system.hpp>
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
 #include "../../window/xlib/xlib_handle.hpp"
@@ -30,8 +31,8 @@ namespace
 
     int contextErrorHandler(Display* display, XErrorEvent* event)
     {
-        (void) display;
-        (void) event;
+        MANGO_UNREFERENCED(display);
+        MANGO_UNREFERENCED(event);
         return 0;
     }
 
@@ -148,7 +149,7 @@ namespace mango
             MANGO_EXCEPTION("[GLX Context] glXQueryVersion() failed.");
         }
 
-        printf("GLX version: %d.%d\n", glx_major, glx_minor);
+        debugPrint("GLX version: %d.%d\n", glx_major, glx_minor);
 
         if ((glx_major == 1 && glx_minor < 3) || glx_major < 1)
         {
@@ -166,8 +167,6 @@ namespace mango
             MANGO_EXCEPTION("[GLX Context] glXChooseFBConfig() failed.");
         }
 
-        //printf("Found %d matching FB configs.\n", fbcount);
-
         // Pick the FB config/visual with the samples closest to attrib.samples
         int best_fbc = 0;
         int best_dist = 1024;
@@ -184,7 +183,7 @@ namespace mango
                 glXGetFBConfigAttrib(m_handle->display, fbc[i], GLX_SAMPLES, &samples);
 
 #if 0
-                printf("  Matching fbconfig %d, visual ID 0x%2x: SAMPLE_BUFFERS = %d, SAMPLES = %d\n",
+                debugPrint("  Matching fbconfig %d, visual ID 0x%2x: SAMPLE_BUFFERS = %d, SAMPLES = %d\n",
                     i, (unsigned int)vi -> visualid, sample_buffers, samples);
 #endif
 
@@ -193,12 +192,7 @@ namespace mango
                     samples = 1;
                 }
 
-                int dist = config.samples - samples;
-                if (dist < 0)
-                {
-                    dist = -dist;
-                }
-
+                int dist = std::abs(int(config.samples) - samples);
                 if (dist < best_dist)
                 {
                     best_dist = dist;
@@ -268,17 +262,17 @@ namespace mango
 
             if (m_context->context)
             {
-                //printf("Created GL 3.0 context\n");
+                //debugPrint("Created GL 3.0 context\n");
             }
             else
             {
-                //printf("Failed to create GL 3.0 context ... using old-style GLX context\n");
+                //debugPrint("Failed to create GL 3.0 context ... using old-style GLX context\n");
                 m_context->context = glXCreateContextAttribsARB(m_handle->display, bestFbc, 0, True, NULL);
             }
         }
         else
         {
-            //printf("glXCreateContextAttribsARB() not found ... using old-style GLX context\n");
+            //debugPrint("glXCreateContextAttribsARB() not found ... using old-style GLX context\n");
             m_context->context = glXCreateNewContext(m_handle->display, bestFbc, GLX_RGBA_TYPE, 0, True);
         }
 
@@ -298,11 +292,11 @@ namespace mango
         // Verifying that context is a direct context
         if (!glXIsDirect(m_handle->display, m_context->context))
         {
-            printf("Indirect GLX rendering context obtained.\n");
+            debugPrint("Indirect GLX rendering context obtained.\n");
         }
         else
         {
-            printf("Direct GLX rendering context obtained.\n");
+            debugPrint("Direct GLX rendering context obtained.\n");
         }
 
         // TODO: configuration selection API
@@ -314,9 +308,9 @@ namespace mango
         const GLubyte* s1 = glGetString(GL_RENDERER);
         const GLubyte* s2 = glGetString(GL_VERSION);
 
-        printf("Vendor:   \"%s\"\n", reinterpret_cast<const char *>(s0));
-        printf("Renderer: \"%s\"\n", reinterpret_cast<const char *>(s1));
-        printf("Version:  \"%s\"\n", reinterpret_cast<const char *>(s2));
+        debugPrint("Vendor:   \"%s\"\n", reinterpret_cast<const char *>(s0));
+        debugPrint("Renderer: \"%s\"\n", reinterpret_cast<const char *>(s1));
+        debugPrint("Version:  \"%s\"\n", reinterpret_cast<const char *>(s2));
 
 #if 0
             PFNGLGETSTRINGIPROC glGetStringi = (PFNGLGETSTRINGIPROC)glXGetProcAddress((const GLubyte*)"glGetStringi");
