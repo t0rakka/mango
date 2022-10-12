@@ -52,7 +52,8 @@ namespace mango
         bool fullscreen { false };
     };
 
-    static void deleteContext(WindowHandle* window_handle, OpenGLContextHandle* context_handle)
+    static
+    void deleteContext(WindowHandle* window_handle, OpenGLContextHandle* context_handle)
     {
         if (window_handle->display)
         {
@@ -364,7 +365,6 @@ namespace mango
     void OpenGLContext::swapInterval(int interval)
     {
         glXSwapIntervalEXT(m_handle->display, m_handle->window, interval);
-
     }
 
     void OpenGLContext::toggleFullscreen()
