@@ -18,7 +18,7 @@ namespace mango
 
     struct OpenGLContextHandle
     {
-		GLXContext context { 0 };
+        GLXContext context { 0 };
         bool fullscreen { false };
     };
 
@@ -52,7 +52,7 @@ namespace mango
     // -----------------------------------------------------------------------
 
     OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
-	    : Window(width, height, flags)
+        : Window(width, height, flags)
     {
         m_context = new OpenGLContextHandle();
 
@@ -383,13 +383,13 @@ namespace mango
     }
 
     bool OpenGLContext::isFullscreen() const
-	{
-		return m_context->fullscreen;
-	}
+    {
+        return m_context->fullscreen;
+    }
 
     int32x2 OpenGLContext::getWindowSize() const
     {
-		return Window::getWindowSize();
+        return Window::getWindowSize();
     }
 
 } // namespace mango
