@@ -15,12 +15,12 @@
 
 @interface CustomNSWindowDelegate : NSObject {
     mango::OpenGLContext *context;
-    mango::OpenGLContextHandle *context_handle;
+    id view;
     mango::WindowHandle *window_handle;
 }
 
 - (id)initWithCustomWindow:(mango::OpenGLContext *)theContext 
-      andContextHandle:(mango::OpenGLContextHandle *)theContextHandle
+      andView:(id)theView
       andWindowHandle:(mango::WindowHandle *)theWindowHandle;
 @end
 
@@ -29,14 +29,14 @@
 @implementation CustomNSWindowDelegate
 
 - (id)initWithCustomWindow:(mango::OpenGLContext *)theContext 
-      andContextHandle:(mango::OpenGLContextHandle *)theContextHandle
+      andView:(id)theView
       andWindowHandle:(mango::WindowHandle *)theWindowHandle;
 {
     if ((self = [super init]))
     {
         context = theContext;
         window_handle = theWindowHandle;
-        context_handle = theContextHandle;
+        view = theView;
     }
 
     return self;
@@ -65,7 +65,7 @@
 {
     //[handle->ctx update];
     NSRect frame = [[notification object] contentRectForFrameRect: [[notification object] frame]];
-    [context_handle->view dispatchResize:frame];
+    [view dispatchResize:frame];
 }
 
 - (void)windowDidMove:(NSNotification *)notification
@@ -95,15 +95,56 @@ namespace mango
 {
 
     // -----------------------------------------------------------------------
+    // OpenGLContextCocoa
+    // -----------------------------------------------------------------------
+
+    struct OpenGLContextCocoa : OpenGLContextHandle
+    {
+        id delegate;
+        id view;
+        id ctx = nil;
+        id window;
+        u32 modifiers;
+
+        OpenGLContextCocoa()
+        {
+        }
+
+        ~OpenGLContextCocoa()
+        {
+            [NSOpenGLContext clearCurrentContext];
+
+            if (ctx)
+            {
+                [ctx release];
+                ctx = nil;
+            }
+
+            if (window)
+            {
+                [window setDelegate:nil];
+                [delegate release];
+                [window setContentView:nil];
+                [view release];
+                [window close];
+            }
+
+            [NSApp stop:nil];
+        }
+    };
+
+    // -----------------------------------------------------------------------
     // OpenGLContext
     // -----------------------------------------------------------------------
 
     OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
-	    : Window(width, height, flags)
+        : Window(width, height, flags)
         , m_context(nullptr)
     {
+        OpenGLContextCocoa* context = new OpenGLContextCocoa();
+        m_context = context;
+
         [NSApplication sharedApplication];
-        //xxx.autorelease_pool = [[NSAutoreleasePool alloc] init];
 
         ProcessSerialNumber psn = { 0, kCurrentProcess };
         TransformProcessType(&psn, kProcessTransformToForegroundApplication);
@@ -112,10 +153,7 @@ namespace mango
         [NSEvent setMouseCoalescingEnabled:NO];
         [NSApp finishLaunching];
 
-        // "createContext"
-
-        m_context = new OpenGLContextHandle();
-        m_context->view = nil;
+        context->view = nil;
 
         unsigned int styleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
             NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
@@ -133,29 +171,27 @@ namespace mango
             return;
         }
 
+        context->window = m_handle->window;
+
         ((CustomNSWindow *)m_handle->window).window = this;
         [ (NSWindow*) m_handle->window center];
-        m_context->delegate = [[CustomNSWindowDelegate alloc] initWithCustomWindow:this andContextHandle:m_context andWindowHandle:m_handle];
-        [m_handle->window setDelegate:[m_context->delegate retain]];
+        context->delegate = [[CustomNSWindowDelegate alloc] initWithCustomWindow:this andView:context->view andWindowHandle:m_handle];
+        [m_handle->window setDelegate:[context->delegate retain]];
         [m_handle->window setAcceptsMouseMovedEvents:YES];
         [m_handle->window setTitle:@"OpenGL"];
         [m_handle->window setReleasedWhenClosed:NO];
 
-        m_context->view = [[CustomView alloc] initWithFrame:[m_handle->window frame] andCustomWindow:this];
-        if (!m_context->view)
+        context->view = [[CustomView alloc] initWithFrame:[m_handle->window frame] andCustomWindow:this];
+        if (!context->view)
         {
             printf("NSView initWithFrame failed.\n");
             // TODO: delete window
             return;
         }
 
-        m_context->view = [m_context->view retain];
-#if 0
-        [m_handle->window setContentView:m_view];
-#else
-        [[m_handle->window contentView] addSubview:m_context->view];
-        [m_context->view trackContentView:m_handle->window];
-#endif
+        context->view = [context->view retain];
+        [[m_handle->window contentView] addSubview:context->view];
+        [context->view trackContentView:m_handle->window];
 
         // Configure the smallest allowed window size
         [m_handle->window setMinSize:NSMakeSize(32, 32)];
@@ -200,11 +236,7 @@ namespace mango
             attribs.push_back(1);
             attribs.push_back(NSOpenGLPFASamples);
             attribs.push_back(config.samples);
-#if 0
-            attribs.push_back(NSOpenGLPFASupersample);
-#else
             attribs.push_back(NSOpenGLPFAMultisample);
-#endif
         }
 
         // terminate attribs vector
@@ -218,27 +250,27 @@ namespace mango
             return;
         }
 
-        m_context->ctx = [[NSOpenGLContext alloc]
+        context->ctx = [[NSOpenGLContext alloc]
                   initWithFormat:pixelFormat
-                  shareContext: shared ? shared->m_context->ctx : nil];
+                  shareContext: shared ? reinterpret_cast<OpenGLContextCocoa*>(shared->m_context)->ctx : nil];
         [pixelFormat release];
 
-        if (!m_context->ctx)
+        if (!context->ctx)
         {
             printf("Failed to create NSOpenGL Context.\n");
             // TODO: delete window
             return;
         }
 
-        [m_context->view setOpenGLContext:m_context->ctx];
-        [m_context->ctx makeCurrentContext];
+        [context->view setOpenGLContext:context->ctx];
+        [context->ctx makeCurrentContext];
 
         if ([m_handle->window respondsToSelector:@selector(setRestorable:)])
         {
             [m_handle->window setRestorable:NO];
         }
 
-        m_context->modifiers = [NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
+        context->modifiers = [NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
 
         // parse extension string
         const GLubyte* extensions = glGetString(GL_EXTENSIONS);
@@ -249,61 +281,40 @@ namespace mango
 
         initExtensionMask();
 
-        [m_context->ctx update];
-        [m_context->view dispatchResize:frame];
+        [context->ctx update];
+        [context->view dispatchResize:frame];
         setVisible(true);
     }
 
     OpenGLContext::~OpenGLContext()
     {
-        [NSOpenGLContext clearCurrentContext];
-
-        if (m_context->ctx)
-        {
-            [m_context->ctx release];
-            m_context->ctx = nil;
-        }
-
-        if (m_handle->window)
-        {
-            [m_handle->window setDelegate:nil];
-            [m_context->delegate release];
-            [m_handle->window setContentView:nil];
-            [m_context->view release];
-            [m_handle->window close];
-        }
-
-        [NSApp stop:nil];
-
-#if 0
-        if (xxx.autorelease_pool)
-        {
-            [xxx.autorelease_pool drain];
-            xxx.autorelease_pool = nil;
-        }
-#endif
         delete m_context;
     }
 
     void OpenGLContext::makeCurrent()
     {
-        [m_context->ctx makeCurrentContext];
+        OpenGLContextCocoa* context = reinterpret_cast<OpenGLContextCocoa*>(m_context);
+        [context->ctx makeCurrentContext];
     }
 
     void OpenGLContext::swapBuffers()
     {
-        [m_context->ctx flushBuffer];
+        OpenGLContextCocoa* context = reinterpret_cast<OpenGLContextCocoa*>(m_context);
+        [context->ctx flushBuffer];
     }
 
     void OpenGLContext::swapInterval(int interval)
     {
+        OpenGLContextCocoa* context = reinterpret_cast<OpenGLContextCocoa*>(m_context);
         GLint sync = interval;
-        [m_context->ctx setValues:&sync forParameter:NSOpenGLContextParameterSwapInterval];
+        [context->ctx setValues:&sync forParameter:NSOpenGLContextParameterSwapInterval];
     }
 
     void OpenGLContext::toggleFullscreen()
     {
-        CustomView* view = m_context->view;
+        OpenGLContextCocoa* context = reinterpret_cast<OpenGLContextCocoa*>(m_context);
+
+        CustomView* view = context->view;
         CustomNSWindow* window = m_handle->window;
 
         [view setHidden:YES];
@@ -325,13 +336,16 @@ namespace mango
     }
 
     bool OpenGLContext::isFullscreen() const
-	{
-        return [m_context->view isInFullScreenMode];
-	}
+    {
+        OpenGLContextCocoa* context = reinterpret_cast<OpenGLContextCocoa*>(m_context);
+        return [context->view isInFullScreenMode];
+    }
 
     math::int32x2 OpenGLContext::getWindowSize() const
     {
-        CustomView* view = m_context->view;
+        OpenGLContextCocoa* context = reinterpret_cast<OpenGLContextCocoa*>(m_context);
+
+        CustomView* view = context->view;
         NSRect rect = [view frame];
         rect = [[m_handle->window contentView] convertRectToBacking:rect]; // NOTE: Retina conversion
         return math::int32x2(rect.size.width, rect.size.height);

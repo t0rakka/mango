@@ -114,13 +114,23 @@ namespace mango
 {
 
     // -------------------------------------------------------------------
+    // OpenGLContextHandle
+    // -------------------------------------------------------------------
+
+    struct OpenGLContextHandle
+    {
+        OpenGLContextHandle() {}
+        virtual ~OpenGLContextHandle() {}
+    };
+
+    // -------------------------------------------------------------------
     // OpenGLContext
     // -------------------------------------------------------------------
 
     class OpenGLContext : public Window
     {
     protected:
-        struct OpenGLContextHandle* m_context;
+        OpenGLContextHandle* m_context;
         std::set<std::string> m_extensions;
 
         void parseExtensionString(std::set<std::string>& container, const char* ext);
