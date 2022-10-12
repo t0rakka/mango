@@ -339,4 +339,4 @@ namespace mango
 
 } // namespace mango
 
-#endif
+#endif // !defined(__ppc__)

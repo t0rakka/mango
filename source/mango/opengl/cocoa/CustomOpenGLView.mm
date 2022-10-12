@@ -480,4 +480,4 @@ namespace
 
 @end
 
-#endif
+#endif // !defined(__ppc__)

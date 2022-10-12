@@ -77,7 +77,7 @@ namespace mango
         //       use the window constructor for anything else except creating the internal state (m_handle).
         MANGO_UNREFERENCED(width);
         MANGO_UNREFERENCED(height);
-		MANGO_UNREFERENCED(flags);
+        MANGO_UNREFERENCED(flags);
 
         m_handle = new WindowHandle();
     }
@@ -147,12 +147,12 @@ namespace mango
         return math::int32x2(rect.size.width, rect.size.height);
     }
 
-	math::int32x2 Window::getCursorPosition() const
-	{
+    math::int32x2 Window::getCursorPosition() const
+    {
         NSRect rect = [[m_handle->window contentView] frame];
-		NSPoint point = [m_handle->window mouseLocationOutsideOfEventStream];
-		return math::int32x2(point.x, rect.size.height - point.y - 1);
-	}
+        NSPoint point = [m_handle->window mouseLocationOutsideOfEventStream];
+        return math::int32x2(point.x, rect.size.height - point.y - 1);
+    }
 
     bool Window::isKeyPressed(Keycode code) const
     {
