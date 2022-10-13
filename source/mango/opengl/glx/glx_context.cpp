@@ -116,6 +116,7 @@ namespace mango
             if (!glXQueryVersion(window->display, &glx_major, &glx_minor))
             {
                 deleteContext(window->display, context);
+                context = 0;
                 MANGO_EXCEPTION("[GLX Context] glXQueryVersion() failed.");
             }
 
@@ -124,6 +125,7 @@ namespace mango
             if ((glx_major == 1 && glx_minor < 3) || glx_major < 1)
             {
                 deleteContext(window->display, context);
+                context = 0;
                 MANGO_EXCEPTION("[GLX Context] Invalid GLX version.");
             }
 
@@ -132,6 +134,7 @@ namespace mango
             if (!fbc)
             {
                 deleteContext(window->display, context);
+                context = 0;
                 MANGO_EXCEPTION("[GLX Context] glXChooseFBConfig() failed.");
             }
 
@@ -180,6 +183,7 @@ namespace mango
             if (!window->createWindow(vi->screen, vi->depth, vi->visual, width, height, "OpenGL"))
             {
                 deleteContext(window->display, context);
+                context = 0;
                 MANGO_EXCEPTION("[GLX Context] createWindow() failed.");
             }
 
@@ -250,6 +254,7 @@ namespace mango
             if (!context)
             {
                 deleteContext(window->display, context);
+                context = 0;
                 MANGO_EXCEPTION("[GLX Context] OpenGL Context creation failed.");
             }
 
@@ -302,7 +307,10 @@ namespace mango
 
         ~OpenGLContextGLX()
         {
-            deleteContext(window->display, context);
+            if (context)
+            {
+                deleteContext(window->display, context);
+            }
         }
 
         void makeCurrent() override

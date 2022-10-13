@@ -551,8 +551,13 @@ namespace mango
         if (!display)
             return false;
 
-        ::Window root = RootWindow(display, screen);
-        colormap = XCreateColormap(display, root, visual, AllocNone);
+        ::Window root = screen ? RootWindow(display, screen)
+                               : DefaultRootWindow(display);
+
+        if (visual)
+        {
+            colormap = XCreateColormap(display, root, visual, AllocNone);
+        }
 
         XSetWindowAttributes wa;
 
@@ -567,9 +572,23 @@ namespace mango
                                PointerMotionMask |
                                StructureNotifyMask;
 
-        window = XCreateWindow(display, root,
-            0, 0, width, height, 0, depth, InputOutput,
-            visual, CWBorderPixel | CWColormap | CWEventMask, &wa);
+        if (visual)
+        {
+            window = XCreateWindow(display, root,
+                0, 0, width, height,
+                0,
+                depth, InputOutput, visual,
+                CWBorderPixel | CWColormap | CWEventMask, &wa);
+        }
+        else
+        {
+            window = XCreateWindow(display, root,
+                0, 0, width, height, 
+                0,
+                CopyFromParent, InputOutput, CopyFromParent,
+                CWBorderPixel | CWColormap | CWEventMask, &wa);
+        }
+
         if (!window)
             return false;
 

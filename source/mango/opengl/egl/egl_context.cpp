@@ -6,12 +6,247 @@
 #include <mango/core/system.hpp>
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
-//#include "../../window/xlib/xlib_handle.hpp"
+#include "../../window/xlib/xlib_handle.hpp"
+#include <EGL/egl.h>
 
 namespace mango
 {
     using namespace math;
 
-    // TODO
+    // -----------------------------------------------------------------------
+    // OpenGLContextEGL
+    // -----------------------------------------------------------------------
+
+    struct OpenGLContextEGL : OpenGLContextHandle
+    {
+        EGLDisplay  egl_display = EGL_NO_DISPLAY;
+        EGLContext  egl_context = EGL_NO_CONTEXT;
+        EGLSurface  egl_surface = EGL_NO_SURFACE;
+
+        bool fullscreen { false };
+
+        WindowHandle* window;
+
+        OpenGLContextEGL(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
+            : window(*theContext)
+        {
+
+            //egl_display = eglGetDisplay((EGLNativeDisplayType)window->display);
+            egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+            if (egl_display == EGL_NO_DISPLAY)
+            {
+                // TODO
+                return;
+            }
+
+            if (!eglInitialize(egl_display, NULL, NULL)) 
+            {
+                // TODO
+                return;
+            }
+
+            // override defaults
+            OpenGLContext::Config config;
+            if (configPtr)
+            {
+                // Override defaults
+                config = *configPtr;
+            }
+
+            /*
+            // Configure attributes
+
+            std::vector<int> visualAttribs;
+
+            visualAttribs.push_back(config.red);
+            visualAttribs.push_back(config.green);
+            visualAttribs.push_back(config.blue);
+            visualAttribs.push_back(config.alpha);
+            visualAttribs.push_back(config.depth);
+            visualAttribs.push_back(config.stencil);
+
+            if (config.samples > 1)
+            {
+            }
+            */
+
+            const EGLint configAttribs [] =
+            {
+                EGL_BUFFER_SIZE,     8,
+                EGL_DEPTH_SIZE,      24,
+                EGL_STENCIL_SIZE,    8,
+                EGL_SURFACE_TYPE,    EGL_WINDOW_BIT,
+                EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+                EGL_NONE
+            };
+
+            EGLint numConfig;
+            EGLConfig eglConfig[1];
+
+            if (!eglChooseConfig(egl_display, configAttribs, eglConfig, 1, &numConfig))
+            {
+                // TODO
+                return;
+            }
+
+            OpenGLContextEGL* shared = reinterpret_cast<OpenGLContextEGL*>(theShared);
+            EGLContext shared_context = shared ? shared->egl_context : EGL_NO_CONTEXT;
+
+            const EGLint contextAttribs[] =
+            {
+                EGL_CONTEXT_CLIENT_VERSION, 2,
+                EGL_NONE
+            };
+
+            egl_context = eglCreateContext(egl_display, eglConfig[0], shared_context, contextAttribs);
+
+            if (egl_context == EGL_NO_CONTEXT)
+            {
+                // TODO
+                return;
+            }
+
+            if (!window->createWindow(0, 0, nullptr, width, height, "OpenGL"))
+            {
+                // TODO
+                return;
+            }
+
+            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], window->window, NULL);
+            if (egl_surface == EGL_NO_SURFACE)
+            {
+                eglDestroyContext(egl_display, egl_context);
+                egl_context = EGL_NO_CONTEXT;
+                return;
+            }
+
+            if (!eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context))
+            {
+                eglDestroyContext(egl_display, egl_context);
+                eglDestroySurface(egl_display, egl_surface);
+                egl_context = EGL_NO_CONTEXT;
+                egl_surface = EGL_NO_SURFACE;
+                return;
+            }
+
+            const GLubyte* s0 = glGetString(GL_VENDOR);
+            const GLubyte* s1 = glGetString(GL_RENDERER);
+            const GLubyte* s2 = glGetString(GL_VERSION);
+
+            printf("Vendor:   \"%s\"\n", reinterpret_cast<const char *>(s0));
+            printf("Renderer: \"%s\"\n", reinterpret_cast<const char *>(s1));
+            printf("Version:  \"%s\"\n", reinterpret_cast<const char *>(s2));
+        }
+
+        ~OpenGLContextEGL()
+        {
+            if (egl_display != EGL_NO_DISPLAY)
+            {
+                if (egl_context == EGL_NO_CONTEXT)
+                {
+                    eglDestroyContext(egl_display, egl_context);
+                }
+
+                if (egl_surface == EGL_NO_SURFACE)
+                {
+                    eglDestroySurface(egl_display, egl_surface);
+                }
+
+                eglTerminate(egl_display);
+            }
+        }
+
+        void makeCurrent() override
+        {
+            eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
+        }
+
+        void swapBuffers() override
+        {
+            eglSwapBuffers(egl_display, egl_surface);
+        }
+
+        void swapInterval(int interval) override
+        {
+            // TODO
+        }
+
+        void toggleFullscreen() override
+        {
+            // Disable rendering while switching fullscreen mode
+            window->busy = true;
+            eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+
+            XEvent xevent;
+            std::memset(&xevent, 0, sizeof(xevent));
+
+            xevent.type = ClientMessage;
+            xevent.xclient.window = window->window;
+            xevent.xclient.message_type = window->atom_state;
+            xevent.xclient.format = 32;
+            xevent.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
+            xevent.xclient.data.l[1] = window->atom_fullscreen;
+            xevent.xclient.data.l[2] = 0; // no second property to toggle
+            xevent.xclient.data.l[3] = 1; // source indication: application
+            xevent.xclient.data.l[4] = 0; // unused
+
+            XMapWindow(window->display, window->window);
+
+            // send the event to the root window
+            if (!XSendEvent(window->display, DefaultRootWindow(window->display), False,
+                SubstructureRedirectMask | SubstructureNotifyMask, &xevent))
+            {
+                // TODO: failed
+            }
+
+            XFlush(window->display);
+
+            // Enable rendering now that all the tricks are done
+            window->busy = false;
+            eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
+
+            fullscreen = !fullscreen;
+        }
+
+        bool isFullscreen() const override
+        {
+            return fullscreen;
+        }
+
+        int32x2 getWindowSize() const override
+        {
+            XWindowAttributes attributes;
+            XGetWindowAttributes(window->display, window->window, &attributes);
+            return int32x2(attributes.width, attributes.height);
+        }
+    };
+
+    // -----------------------------------------------------------------------
+    // OpenGLContext
+    // -----------------------------------------------------------------------
+
+    OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
+        : Window(width, height, flags)
+        , m_context(nullptr)
+    {
+        m_context = new OpenGLContextEGL(this, width, height, flags, configPtr, shared);
+
+        setVisible(true);
+
+        // parse extension string
+        const GLubyte* extensions = glGetString(GL_EXTENSIONS);
+        if (extensions)
+        {
+            parseExtensionString(m_extensions, reinterpret_cast<const char*>(extensions));
+        }
+
+        // initialize extension mask
+        initExtensionMask();
+    }
+
+    OpenGLContext::~OpenGLContext()
+    {
+        delete m_context;
+    }
 
 } // namespace mango
