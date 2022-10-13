@@ -61,7 +61,7 @@ namespace mango
             if (shared)
             {
                 // TODO
-                MANGO_EXCEPTION("[WGL Context] Shared context is not implemented.");
+                MANGO_EXCEPTION("[OpenGLContextWGL] Shared context is not implemented.");
             }
 
             theContext->setWindowSize(width, height);

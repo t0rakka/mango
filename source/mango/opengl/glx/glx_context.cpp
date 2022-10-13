@@ -41,17 +41,17 @@ namespace mango
     struct OpenGLContextGLX : OpenGLContextHandle
     {
         GLXContext context { 0 };
-        WindowHandle* window;
         bool fullscreen { false };
 
-        OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
-        {
-            window = *theContext;
+        WindowHandle* window;
 
+        OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
+            : window(*theContext)
+        {
             if (theShared)
             {
                 // TODO
-                MANGO_EXCEPTION("[GLX OpenGLContext] Shared context is not implemented yet.");
+                MANGO_EXCEPTION("[OpenGLContextGLX] Shared context is not implemented.");
             }
 
             // override defaults
