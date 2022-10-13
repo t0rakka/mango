@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -121,6 +121,13 @@ namespace mango
     {
         OpenGLContextHandle() {}
         virtual ~OpenGLContextHandle() {}
+
+        virtual void makeCurrent() = 0;
+        virtual void swapBuffers() = 0;
+        virtual void swapInterval(int interval) = 0;
+        virtual void toggleFullscreen() = 0;
+        virtual bool isFullscreen() const = 0;
+        virtual math::int32x2 getWindowSize() const = 0;
     };
 
     // -------------------------------------------------------------------
