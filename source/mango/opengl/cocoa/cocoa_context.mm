@@ -103,13 +103,14 @@ namespace mango
         id delegate;
         id view = nil;
         id ctx = nil;
-        id window;
+        id win;
         u32 modifiers;
 
-        OpenGLContextCocoa(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
-        {
-            WindowHandle* theHandle = *theContext;
+        WindowHandle* window;
 
+        OpenGLContextCocoa(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
+            : window(*theContext)
+        {
             [NSApplication sharedApplication];
 
             ProcessSerialNumber psn = { 0, kCurrentProcess };
@@ -124,28 +125,28 @@ namespace mango
 
             NSRect frame = NSMakeRect(0, 0, width, height);
 
-            theHandle->window = [[CustomNSWindow alloc]
+            win = [[CustomNSWindow alloc]
                 initWithContentRect:frame
                 styleMask:styleMask
                 backing:NSBackingStoreBuffered
                 defer:NO];
-            if (!theHandle->window)
+            if (!win)
             {
                 printf("NSWindow initWithContentRect failed.\n");
                 return;
             }
 
-            window = theHandle->window;
+            window->window = win;
 
-            ((CustomNSWindow *)theHandle->window).window = theContext;
-            [ (NSWindow*) window center];
-            delegate = [[CustomNSWindowDelegate alloc] initWithCustomWindow:theContext andView:view andWindowHandle:theHandle];
-            [window setDelegate:[delegate retain]];
-            [window setAcceptsMouseMovedEvents:YES];
-            [window setTitle:@"OpenGL"];
-            [window setReleasedWhenClosed:NO];
+            ((CustomNSWindow *)window->window).window = theContext;
+            [ (NSWindow*) win center];
+            delegate = [[CustomNSWindowDelegate alloc] initWithCustomWindow:theContext andView:view andWindowHandle:window];
+            [win setDelegate:[delegate retain]];
+            [win setAcceptsMouseMovedEvents:YES];
+            [win setTitle:@"OpenGL"];
+            [win setReleasedWhenClosed:NO];
 
-            view = [[CustomView alloc] initWithFrame:[window frame] andCustomWindow:theContext];
+            view = [[CustomView alloc] initWithFrame:[win frame] andCustomWindow:theContext];
             if (!view)
             {
                 printf("NSView initWithFrame failed.\n");
@@ -154,14 +155,14 @@ namespace mango
             }
 
             view = [view retain];
-            [[window contentView] addSubview:view];
-            [view trackContentView:window];
+            [[win contentView] addSubview:view];
+            [view trackContentView:win];
 
             // Configure the smallest allowed window size
-            [window setMinSize:NSMakeSize(32, 32)];
+            [win setMinSize:NSMakeSize(32, 32)];
 
             // Create menu
-            [window createMenu];
+            [win createMenu];
 
             // configure attributes
             OpenGLContext::Config config;
@@ -231,9 +232,9 @@ namespace mango
             [view setOpenGLContext:ctx];
             [ctx makeCurrentContext];
 
-            if ([window respondsToSelector:@selector(setRestorable:)])
+            if ([win respondsToSelector:@selector(setRestorable:)])
             {
-                [window setRestorable:NO];
+                [win setRestorable:NO];
             }
 
             modifiers = [NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
@@ -252,13 +253,13 @@ namespace mango
                 ctx = nil;
             }
 
-            if (window)
+            if (win)
             {
-                [window setDelegate:nil];
+                [win setDelegate:nil];
                 [delegate release];
-                [window setContentView:nil];
+                [win setContentView:nil];
                 [view release];
-                [window close];
+                [win close];
             }
 
             [NSApp stop:nil];
@@ -287,13 +288,13 @@ namespace mango
             if ([view isInFullScreenMode])
             {
                 [view exitFullScreenModeWithOptions:nil];
-                [window makeFirstResponder:view];
-                [window makeKeyAndOrderFront:view];
-                [view trackContentView:window];
+                [win makeFirstResponder:view];
+                [win makeKeyAndOrderFront:view];
+                [view trackContentView:win];
             }
             else
             {
-                [view enterFullScreenMode:[window screen] withOptions:nil];
+                [view enterFullScreenMode:[win screen] withOptions:nil];
             }
 
             [view dispatchResize:[view frame]];
@@ -308,7 +309,7 @@ namespace mango
         math::int32x2 getWindowSize() const override
         {
             NSRect rect = [view frame];
-            rect = [[window contentView] convertRectToBacking:rect]; // NOTE: Retina conversion
+            rect = [[win contentView] convertRectToBacking:rect]; // NOTE: Retina conversion
             return math::int32x2(rect.size.width, rect.size.height);
         }
     };
