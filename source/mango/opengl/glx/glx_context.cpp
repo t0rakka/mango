@@ -13,7 +13,7 @@ namespace mango
     using namespace math;
 
     // -----------------------------------------------------------------------
-    // OpenGLContextHandle
+    // OpenGLContextGLX
     // -----------------------------------------------------------------------
 
     static
@@ -36,8 +36,6 @@ namespace mango
                 glXDestroyContext(display, context);
             }
         }
-
-        //delete context_handle;
     }
 
     struct OpenGLContextGLX : OpenGLContextHandle
