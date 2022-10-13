@@ -106,8 +106,10 @@ namespace mango
         id window;
         u32 modifiers;
 
-        OpenGLContextCocoa(OpenGLContext* theContext, WindowHandle* theHandle, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
+        OpenGLContextCocoa(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
         {
+            WindowHandle* theHandle = *theContext;
+
             [NSApplication sharedApplication];
 
             ProcessSerialNumber psn = { 0, kCurrentProcess };
@@ -319,7 +321,7 @@ namespace mango
         : Window(width, height, flags)
         , m_context(nullptr)
     {
-        m_context = new OpenGLContextCocoa(this, m_handle, width, height, flags, configPtr, shared);
+        m_context = new OpenGLContextCocoa(this, width, height, flags, configPtr, shared);
 
         setVisible(true);
 
@@ -336,36 +338,6 @@ namespace mango
     OpenGLContext::~OpenGLContext()
     {
         delete m_context;
-    }
-
-    void OpenGLContext::makeCurrent()
-    {
-        m_context->makeCurrent();
-    }
-
-    void OpenGLContext::swapBuffers()
-    {
-        m_context->swapBuffers();
-    }
-
-    void OpenGLContext::swapInterval(int interval)
-    {
-        m_context->swapInterval(interval);
-    }
-
-    void OpenGLContext::toggleFullscreen()
-    {
-        m_context->toggleFullscreen();
-    }
-
-    bool OpenGLContext::isFullscreen() const
-    {
-        return m_context->isFullscreen();
-    }
-
-    math::int32x2 OpenGLContext::getWindowSize() const
-    {
-        return m_context->getWindowSize();
     }
 
 } // namespace mango

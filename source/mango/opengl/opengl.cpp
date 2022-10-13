@@ -271,6 +271,36 @@ namespace mango
     // OpenGLContext
     // -----------------------------------------------------------------------
 
+    void OpenGLContext::makeCurrent()
+    {
+        m_context->makeCurrent();
+    }
+
+    void OpenGLContext::swapBuffers()
+    {
+        m_context->swapBuffers();
+    }
+
+    void OpenGLContext::swapInterval(int interval)
+    {
+        m_context->swapInterval(interval);
+    }
+
+    void OpenGLContext::toggleFullscreen()
+    {
+        m_context->toggleFullscreen();
+    }
+
+    bool OpenGLContext::isFullscreen() const
+    {
+        return m_context->isFullscreen();
+    }
+
+    math::int32x2 OpenGLContext::getWindowSize() const
+    {
+        return m_context->getWindowSize();
+    }
+
     void OpenGLContext::parseExtensionString(std::set<std::string>& container, const char* ext)
     {
         for (const char* s = ext; *s; ++s)

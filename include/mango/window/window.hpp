@@ -159,6 +159,11 @@ namespace mango
 		operator HWND () const;
 #endif
 
+        operator struct WindowHandle* () const
+        {
+            return m_handle;
+        }
+
         void enterEventLoop();
         void breakEventLoop();
 
