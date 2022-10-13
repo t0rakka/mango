@@ -301,18 +301,19 @@ namespace mango
         return m_context->getWindowSize();
     }
 
-    void OpenGLContext::parseExtensionString(std::set<std::string>& container, const char* ext)
+    void OpenGLContext::parseExtensionString(std::set<std::string>& container, const char* extensions)
     {
-        for (const char* s = ext; *s; ++s)
+        for (const char* s = extensions; *s; ++s)
         {
             if (*s == ' ')
             {
-                const std::ptrdiff_t length = s - ext;
+                const std::ptrdiff_t length = s - extensions;
                 if (length > 0)
                 {
-                    container.emplace(ext, length);
+                    container.emplace(extensions, length);
                 }
-                ext = s + 1;
+
+                extensions = s + 1;
             }
         }
     }

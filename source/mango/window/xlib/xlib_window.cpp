@@ -1081,7 +1081,8 @@ namespace mango
                 } // switch
             }
 
-            if (!m_handle->busy) {
+            if (!m_handle->busy)
+            {
                 onIdle();
             }
 

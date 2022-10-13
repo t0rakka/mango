@@ -140,7 +140,6 @@ namespace mango
         OpenGLContextHandle* m_context;
         std::set<std::string> m_extensions;
 
-        void parseExtensionString(std::set<std::string>& container, const char* ext);
         void initExtensionMask();
 
     public:
@@ -221,6 +220,8 @@ namespace mango
             #undef GLX_EXTENSION
         } glx;
 #endif
+
+        static void parseExtensionString(std::set<std::string>& container, const char* extensions);
     };
 
 #ifdef MANGO_OPENGL_FRAMEBUFFER
