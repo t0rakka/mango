@@ -446,7 +446,7 @@ private:
         }
         else
         {
-            assert(input >= 0 && input <= F16MAX);
+            //assert(input >= 0 && input <= F16MAX);
             out = (uint16_t) input;
         }
 
