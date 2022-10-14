@@ -152,7 +152,7 @@ namespace
     {
         constexpr uint32_t dwMostNeg = (1 << (8 * sizeof(int8_t) - 1));
 
-        if (isnan(fVal))
+        if (std::isnan(fVal))
             fVal = 0;
         else
             if (fVal > 1)
