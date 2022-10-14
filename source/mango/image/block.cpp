@@ -1066,6 +1066,16 @@ namespace
 
     // block decode
 
+    void scanBlockDecode(const TextureCompressionInfo& info, u8* image, const u8* data, size_t stride, int xblocks, size_t xstride)
+    {
+        for (int x = 0; x < xblocks; ++x)
+        {
+            info.decode(info, image, data, stride);
+            image += xstride;
+            data += info.bytes;
+        }
+    }
+
     void directBlockDecode(const TextureCompressionInfo& info, const Surface& surface, ConstMemory memory, int xblocks, int yblocks)
     {
         const u8* data = memory.address;
@@ -1085,22 +1095,31 @@ namespace
             ystride = -ystride;
         }
 
-        ConcurrentQueue queue;
+        bool multithread = true;
 
-        for (int y = 0; y < yblocks; ++y)
+        if (multithread)
         {
-            queue.enqueue([&] (u8* image, const u8* data)
-            {
-                for (int x = 0; x < xblocks; ++x)
-                {
-                    info.decode(info, image, data, stride);
-                    image += xstride;
-                    data += info.bytes;
-                }
-            }, image, data);
+            ConcurrentQueue queue;
 
-            image += ystride;
-            data += info.bytes * xblocks;
+            for (int y = 0; y < yblocks; ++y)
+            {
+                queue.enqueue([=,&info] ()
+                {
+                    scanBlockDecode(info, image, data, stride, xblocks, xstride);
+                });
+
+                image += ystride;
+                data += info.bytes * xblocks;
+            }
+        }
+        else
+        {
+            for (int y = 0; y < yblocks; ++y)
+            {
+                scanBlockDecode(info, image, data, stride, xblocks, xstride);
+                image += ystride;
+                data += info.bytes * xblocks;
+            }
         }
     }
 
