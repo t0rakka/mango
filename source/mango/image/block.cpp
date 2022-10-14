@@ -1327,20 +1327,28 @@ namespace mango::image
         {
             queue.enqueue([this, y, xblocks, &surface, address]
             {
-                Bitmap temp(width, height, format);
+                Bitmap temp(xblocks * width, height, format);
+
+                Surface source(surface, 0, y * height, xblocks * width, height);
+                temp.blit(0, 0, source);
+
                 u8* data = address + y * xblocks * bytes;
+                u8* image = temp.image;
+                size_t step = width * format.bytes();
+
+                //debugPrint(".");
 
                 for (int x = 0; x < xblocks; ++x)
                 {
-                    Surface source(surface, x * width, y * height, width, height);
-                    temp.blit(0, 0, source);
-
-                    u8* image = temp.address<u8>();
                     encode(*this, data, image, temp.stride);
                     data += bytes;
+                    image += step;
                 }
             });
         }
+
+        //queue.wait();
+        //debugPrint("\n");
 
         return status;
     }
