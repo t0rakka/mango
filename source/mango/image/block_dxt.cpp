@@ -155,7 +155,7 @@ namespace
             data >>= 12;
             dest += stride;
         }
-	}
+    }
 
 #else
 
@@ -207,7 +207,7 @@ namespace
 
         u8 color[16];
 
-		if (a & 0x8000)
+        if (a & 0x8000)
         {
             color[ 0] = 0;
             color[ 1] = 0;
