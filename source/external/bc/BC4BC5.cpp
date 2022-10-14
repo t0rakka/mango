@@ -337,16 +337,16 @@ namespace mango::image
 
         const BC4_UNORM * pBC4 = reinterpret_cast<const BC4_UNORM*>(input);
 
-    	for (int y = 0; y < 4; ++y)
-    	{
-	    	float32x4* pColor = reinterpret_cast<float32x4*>(output);
-    		const int blockIndex = y * 4;
+        for (int y = 0; y < 4; ++y)
+        {
+            float32x4* pColor = reinterpret_cast<float32x4*>(output);
+            const int blockIndex = y * 4;
 
-    		for (int x = 0; x < 4; ++x)
-    			pColor[x] = float32x4(pBC4->R(blockIndex + x), 0.0f, 0.0f, 1.0f);
+            for (int x = 0; x < 4; ++x)
+                pColor[x] = float32x4(pBC4->R(blockIndex + x), 0.0f, 0.0f, 1.0f);
 
-    		output += stride;
-    	}
+            output += stride;
+        }
     }
 
     void decode_block_bc4s(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
@@ -357,16 +357,16 @@ namespace mango::image
 
         const BC4_SNORM * pBC4 = reinterpret_cast<const BC4_SNORM*>(input);
 
-    	for (int y = 0; y < 4; ++y)
-    	{
-	    	float32x4* pColor = reinterpret_cast<float32x4*>(output);
-    		const int blockIndex = y * 4;
+        for (int y = 0; y < 4; ++y)
+        {
+            float32x4* pColor = reinterpret_cast<float32x4*>(output);
+            const int blockIndex = y * 4;
 
-    		for (int x = 0; x < 4; ++x)
-    			pColor[x] = float32x4(pBC4->R(blockIndex + x), 0.0f, 0.0f, 1.0f);
+            for (int x = 0; x < 4; ++x)
+                pColor[x] = float32x4(pBC4->R(blockIndex + x), 0.0f, 0.0f, 1.0f);
 
-    		output += stride;
-    	}
+            output += stride;
+        }
     }
 
     void decode_block_bc5u(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
@@ -378,20 +378,20 @@ namespace mango::image
         const BC4_UNORM * pBCR = reinterpret_cast<const BC4_UNORM*>(input);
         const BC4_UNORM * pBCG = reinterpret_cast<const BC4_UNORM*>(input+sizeof(BC4_UNORM));
 
-    	for (int y = 0; y < 4; ++y)
-    	{
-	    	float32x4* pColor = reinterpret_cast<float32x4*>(output);
-    		const int blockIndex = y * 4;
+        for (int y = 0; y < 4; ++y)
+        {
+            float32x4* pColor = reinterpret_cast<float32x4*>(output);
+            const int blockIndex = y * 4;
 
-    		for (int x = 0; x < 4; ++x)
-    		{
-	    		float red = pBCR->R(blockIndex + x);
-    			float green = pBCG->R(blockIndex + x);
-    			pColor[x] = float32x4(red, green, 0.0f, 1.0f);
-    		}
+            for (int x = 0; x < 4; ++x)
+            {
+                float red = pBCR->R(blockIndex + x);
+                float green = pBCG->R(blockIndex + x);
+                pColor[x] = float32x4(red, green, 0.0f, 1.0f);
+            }
 
-    		output += stride;
-    	}
+            output += stride;
+        }
     }
 
     void decode_block_bc5s(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
@@ -403,20 +403,20 @@ namespace mango::image
         const BC4_SNORM * pBCR = reinterpret_cast<const BC4_SNORM*>(input);
         const BC4_SNORM * pBCG = reinterpret_cast<const BC4_SNORM*>(input+sizeof(BC4_SNORM));
 
-    	for (int y = 0; y < 4; ++y)
-    	{
-    		float32x4* pColor = reinterpret_cast<float32x4*>(output);
-    		const int blockIndex = y * 4;
+        for (int y = 0; y < 4; ++y)
+        {
+            float32x4* pColor = reinterpret_cast<float32x4*>(output);
+            const int blockIndex = y * 4;
 
-    		for (int x = 0; x < 4; ++x)
-    		{
-	    		float red = pBCR->R(blockIndex + x);
-    			float green = pBCG->R(blockIndex + x);
-    			pColor[x] = float32x4(red, green, 0.0f, 1.0f);
-    		}
+            for (int x = 0; x < 4; ++x)
+            {
+                float red = pBCR->R(blockIndex + x);
+                float green = pBCG->R(blockIndex + x);
+                pColor[x] = float32x4(red, green, 0.0f, 1.0f);
+            }
 
-    		output += stride;
-    	}
+            output += stride;
+        }
     }
 
     void encode_block_bc4u(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)

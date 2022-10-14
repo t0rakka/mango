@@ -1074,15 +1074,15 @@ static float ComputeError(const LDRColorA& pixel, const LDRColorA aPalette[],
 // NOTE: where this is used it might be more efficient to use a tiling loop
 static inline HDRColorA* ComputeAddress(u8* output, size_t stride, size_t index)
 {
-	HDRColorA* scan = reinterpret_cast<HDRColorA*>(output + stride * (index >> 2));
-	return scan + (index & 3);
+    HDRColorA* scan = reinterpret_cast<HDRColorA*>(output + stride * (index >> 2));
+    return scan + (index & 3);
 }
 
 static inline void FillWithErrorColors(u8* output, size_t stride)
 {
     for(size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
-		HDRColorA* pOut = ComputeAddress(output, stride, i);;
+        HDRColorA* pOut = ComputeAddress(output, stride, i);;
 
 #ifdef _DEBUG
         // Use Magenta in debug as a highly-visible error color
@@ -1225,7 +1225,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const
             float16 rgb[3];
             fc.ToF16(rgb, bSigned);
 
-			HDRColorA* pOut = ComputeAddress(output, stride, i);
+            HDRColorA* pOut = ComputeAddress(output, stride, i);
             pOut->r = ( rgb[0] );
             pOut->g = ( rgb[1] );
             pOut->b = ( rgb[2] );
@@ -2082,7 +2082,7 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const
             case 3: Swap(outPixel.b, outPixel.a); break;
             }
 
-			HDRColorA* pOut = ComputeAddress(output, stride, i);
+            HDRColorA* pOut = ComputeAddress(output, stride, i);
             pOut[0] = HDRColorA(outPixel);
         }
     }
