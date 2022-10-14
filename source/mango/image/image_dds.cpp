@@ -464,6 +464,7 @@ namespace
                 compression = TextureCompression::DXT3;
                 break;
             case FOURCC_DXT5:
+            case FOURCC_RXGB:
                 compression = TextureCompression::DXT5;
                 break;
             case FOURCC_ATI1:
@@ -717,6 +718,7 @@ namespace
                 case FOURCC_AT2N:
                 case FOURCC_UYVY:
                 case FOURCC_YUY2:
+                case FOURCC_RXGB:
                 case FOURCC_G8R8G8B8:
                 case FOURCC_R8G8B8G8:
                     format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);

@@ -59,6 +59,7 @@ namespace mango::image
         FOURCC_YUY2       = u32_mask('Y', 'U', 'Y', '2'),
         FOURCC_G8R8G8B8   = u32_mask('G', 'R', 'G', 'B'),
         FOURCC_R8G8B8G8   = u32_mask('R', 'G', 'B', 'G'),
+        FOURCC_RXGB       = u32_mask('R', 'X', 'G', 'B'),
     };
 
 } // namespace mango::image
