@@ -1065,7 +1065,13 @@ namespace mango::simd
     inline f16x4 convert<f16x4>(f32x4 f)
     {
         __m128i temp = _mm_cvtps_ph(f, _MM_FROUND_TO_NEAREST_INT);
+#if defined(MANGO_ENABLE_SSE4_1) && defined(MANGO_CPU_64BIT)
         return _mm_extract_epi64(temp, 0);
+#else
+        f16x4 h;
+        _mm_storel_epi64(reinterpret_cast<__m128i*>(&h), temp);
+        return h;
+#endif
     }
 
 #else
@@ -1137,7 +1143,13 @@ namespace mango::simd
         v = bitwise_or(v, sign);
         v = _mm_packus_epi32(v, v);
 
+#if defined(MANGO_CPU_64BIT)
         return _mm_extract_epi64(v, 0);
+#else
+        f16x4 h;
+        _mm_storel_epi64(reinterpret_cast<__m128i*>(&h), v);
+        return h;
+#endif
     }
 
 #endif // MANGO_ENABLE_INTEL_F16C

@@ -1021,13 +1021,13 @@ namespace mango::simd
     inline f16x4 convert<f16x4>(f32x4 f)
     {
         __m128i temp = _mm_cvtps_ph(f, _MM_FROUND_TO_NEAREST_INT);
-#if defined(MANGO_ENABLE_SSE4_1)
+#if defined(MANGO_ENABLE_SSE4_1) && defined(MANGO_CPU_64BIT)
         return _mm_extract_epi64(temp, 0);
 #else
         f16x4 h;
         _mm_storel_epi64(reinterpret_cast<__m128i *>(&h), temp);
         return h;
-#endif // defined(MANGO_ENABLE_SSE4_1)
+#endif
     }
 
 #else
@@ -1092,7 +1092,7 @@ namespace mango::simd
         v1 = reinterpret<s32x4>(mul(reinterpret<f32x4>(v1), magic));
         v1 = add(v1, s32x4_set(0x1000));
 
-#if defined(MANGO_ENABLE_SSE4_1)
+#if defined(MANGO_ENABLE_SSE4_1) && defined(MANGO_CPU_64BIT)
         v1 = _mm_min_epi32(v1, vinf);
         v1 = srai(v1, 13);
 
