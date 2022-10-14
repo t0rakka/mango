@@ -154,7 +154,7 @@ namespace
             decode_block_3dc_xy, nullptr
         ),
 
-		// LATC
+        // LATC
 
         TextureCompressionInfo(
             TextureCompression::LATC1_LUMINANCE,
@@ -1134,7 +1134,7 @@ namespace
 namespace mango::image
 {
 
-	// ----------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     // TextureCompressionInfo
     // ----------------------------------------------------------------------------
 
