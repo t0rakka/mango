@@ -16,9 +16,9 @@ namespace
     using namespace mango;
     using namespace mango::image;
 
-	// ------------------------------------------------------------
-	// header
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
+    // header
+    // ------------------------------------------------------------
 
     enum : u8
     {
@@ -71,12 +71,14 @@ namespace
             pixel_size       = p.read8();
             descriptor       = p.read8();
 
+            debugPrint("  dimensions:    %d x %d\n", width, height);
             debugPrint("  image_type:    %d\n", image_type);
             debugPrint("  pixel_size:    %d\n", pixel_size);
             debugPrint("  colormap_type: %d\n", colormap_type);
             debugPrint("  colormap_bits: %d\n", colormap_bits);
             debugPrint("  colormap:      [%d, %d]\n", colormap_origin, colormap_origin + colormap_length);
             debugPrint("  descriptor:    %x\n", descriptor);
+            debugPrint("  id_length:     %d\n", id_length);
 
             switch (image_type)
             {
@@ -442,7 +444,7 @@ namespace
             const u8* data = p;
             const u8* end = m_memory.address + m_memory.size;
 
-		    std::unique_ptr<u8[]> temp;
+            std::unique_ptr<u8[]> temp;
 
             if (m_targa_header.isRLE())
             {
