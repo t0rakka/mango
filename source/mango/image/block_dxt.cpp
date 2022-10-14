@@ -121,11 +121,6 @@ namespace
         }
     }
 
-    inline u8 ExtendAlpha(u32 alpha)
-    {
-        return u8(alpha |= (alpha << 4));
-    }
-
 #ifdef MANGO_CPU_64BIT
     
     void DecodeAlpha(u8* dest, size_t stride, const AlphaBlockExplicit* alphaBlock)
@@ -134,10 +129,10 @@ namespace
 
         for (int y = 0; y < 4; ++y)
         {
-            dest[0] = ExtendAlpha((data >> 0) & 0xf);
-            dest[4] = ExtendAlpha((data >> 4) & 0xf);
-            dest[8] = ExtendAlpha((data >> 8) & 0xf);
-            dest[12] = ExtendAlpha((data >> 12) & 0xf);
+            dest[0]  = u32_extend((data >>  0) & 0xf, 4, 8);
+            dest[4]  = u32_extend((data >>  4) & 0xf, 4, 8);
+            dest[8]  = u32_extend((data >>  8) & 0xf, 4, 8);
+            dest[12] = u32_extend((data >> 12) & 0xf, 4, 8);
             data >>= 16;
             dest += stride;
         }
@@ -169,10 +164,10 @@ namespace
         for (int y = 0; y < 4; ++y)
         {
             u32 data = uload16le(&alphaBlock->data[y]);
-            dest[0] = ExtendAlpha((data >> 0) & 0xf);
-            dest[4] = ExtendAlpha((data >> 4) & 0xf);
-            dest[8] = ExtendAlpha((data >> 8) & 0xf);
-            dest[12] = ExtendAlpha((data >> 12) & 0xf);
+            dest[0]  = u32_extend((data >>  0) & 0xf, 4, 8);
+            dest[4]  = u32_extend((data >>  4) & 0xf, 4, 8);
+            dest[8]  = u32_extend((data >>  8) & 0xf, 4, 8);
+            dest[12] = u32_extend((data >> 12) & 0xf, 4, 8);
             dest += stride;
         }
     }
