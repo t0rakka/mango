@@ -330,7 +330,7 @@ if (COMPILER_MSVC)
 else ()
     set(CMAKE_CXX_FLAGS "-Wall")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+    #set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
     target_compile_definitions(mango PUBLIC $<$<PLATFORM_ID:Windows>:UNICODE>)
 
