@@ -832,8 +832,13 @@ external_basisu_sources = files(
 # ------------------------------------------------------------------------------
 
 cpp = meson.get_compiler('cpp')
+buildtype = get_option('buildtype')
 
 message('cpp: @0@'.format(cpp.get_id()))
+
+if buildtype == 'release'
+    mango_public_cpp_args += ['-DNDEBUG']
+endif
 
 if is_windows
     add_project_arguments('-DUNICODE', '-D_UNICODE', language: ['c', 'cpp'])
