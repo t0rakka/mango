@@ -3520,7 +3520,11 @@ namespace mango::image
         MANGO_UNREFERENCED(info);
 
         HDRColorA temp[16];
-        unpack_block(temp, input, stride);
+
+        for (int y = 0; y < 4; ++y)
+        {
+            std::memcpy(temp + y * 4, input + y * stride, 64);
+        }
 
         static_assert(sizeof(D3DX_BC6H) == 16, "D3DX_BC6H should be 16 bytes");
         reinterpret_cast<D3DX_BC6H*>(output)->Encode(true, temp);
