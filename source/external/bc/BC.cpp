@@ -1014,9 +1014,6 @@ namespace
     using namespace mango;
     using namespace mango::math;
 
-    // NOTE: calls to this routine can be reduced when the DX encoder supports stride.
-    // TODO: support rgba8888 input in the encoder to completely eliminate this.
-
     void convert_block(float32x4* temp, const u8* input, size_t stride)
     {
         for (int y = 0; y < 4; ++y)
@@ -1025,8 +1022,9 @@ namespace
             for (int x = 0; x < 4; ++x)
             {
                 const int32x4 v = simd::unpack(image[x]);
-                temp[y * 4 + x] = convert<float32x4>(v);
+                temp[x] = convert<float32x4>(v) / 255.0f;
             }
+            temp += 4;
         }
     }
 
