@@ -482,9 +482,9 @@ namespace
 
         void Set(const HDRColorA& c, bool bSigned) noexcept
         {
-            XMHALF4 aF16;
+            float16x4 aF16;
 
-            const XMVECTOR v = simd::f32x4_uload(reinterpret_cast<const float*>(&c)); //XMLoadFloat4();
+            const float32x4 v = simd::f32x4_uload(reinterpret_cast<const float*>(&c));
             aF16 = v; //XMStoreHalf4(&aF16, v);
 
             r = F16ToINT(aF16[0], bSigned);
@@ -508,7 +508,7 @@ namespace
             return *this;
         }
 
-        void ToF16(HALF aF16[3], bool bSigned) const noexcept
+        void ToF16(float16 aF16[3], bool bSigned) const noexcept
         {
             aF16[0] = INT2F16(r, bSigned);
             aF16[1] = INT2F16(g, bSigned);
@@ -516,7 +516,7 @@ namespace
         }
 
     private:
-        static int F16ToINT(const HALF& f, bool bSigned) noexcept
+        static int F16ToINT(const float16& f, bool bSigned) noexcept
         {
             uint16_t input = *reinterpret_cast<const uint16_t*>(&f);
             int out, s;
@@ -536,9 +536,9 @@ namespace
             return out;
         }
 
-        static HALF INT2F16(int input, bool bSigned) noexcept
+        static float16 INT2F16(int input, bool bSigned) noexcept
         {
-            HALF h;
+            float16 h;
             uint16_t out;
             if (bSigned)
             {
@@ -1555,13 +1555,13 @@ namespace
         if (pBestIndex2)
             *pBestIndex2 = 0;
 
-        const XMVECTOR vpixel = XMLoadUByte4(reinterpret_cast<const XMUBYTE4*>(&pixel));
+        const float32x4 vpixel = XMLoadUByte4(reinterpret_cast<const u32*>(&pixel));
 
         if (uIndexPrec2 == 0)
         {
             for (size_t i = 0; i < uNumIndices && fBestErr > 0; i++)
             {
-                XMVECTOR tpixel = XMLoadUByte4(reinterpret_cast<const XMUBYTE4*>(&aPalette[i]));
+                float32x4 tpixel = XMLoadUByte4(reinterpret_cast<const u32*>(&aPalette[i]));
                 // Compute ErrorMetric
                 tpixel = vpixel - tpixel;
                 const float fErr = dot(tpixel, tpixel);
@@ -1580,7 +1580,7 @@ namespace
         {
             for (size_t i = 0; i < uNumIndices && fBestErr > 0; i++)
             {
-                XMVECTOR tpixel = XMLoadUByte4(reinterpret_cast<const XMUBYTE4*>(&aPalette[i]));
+                float32x4 tpixel = XMLoadUByte4(reinterpret_cast<const u32*>(&aPalette[i]));
                 // Compute ErrorMetricRGB
                 tpixel = vpixel - tpixel;
                 const float fErr = dot(tpixel, tpixel);
@@ -1769,7 +1769,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
                 fc.g = FinishUnquantize((g1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + g2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
                 fc.b = FinishUnquantize((b1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + b2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
 
-                HALF rgb[3];
+                float16 rgb[3];
                 fc.ToF16(rgb, bSigned);
 
                 dest[x].r = rgb[0];
@@ -2022,17 +2022,17 @@ float D3DX_BC6H::MapColorsQuantized(const EncodeParams* pEP, const INTColor aCol
     float fTotErr = 0;
     for (size_t i = 0; i < np; ++i)
     {
-        const XMVECTOR vcolors = XMLoadSInt4(reinterpret_cast<const XMINT4*>(&aColors[i]));
+        const float32x4 vcolors = XMLoadSInt4(reinterpret_cast<const int32x4*>(&aColors[i]));
 
         // Compute ErrorMetricRGB
-        XMVECTOR tpal = XMLoadSInt4(reinterpret_cast<const XMINT4*>(&aPalette[0]));
+        float32x4 tpal = XMLoadSInt4(reinterpret_cast<const int32x4*>(&aPalette[0]));
         tpal = vcolors - tpal;
         float fBestErr = dot(tpal, tpal);
 
         for (int j = 1; j < uNumIndices && fBestErr > 0; ++j)
         {
             // Compute ErrorMetricRGB
-            tpal = XMLoadSInt4(reinterpret_cast<const XMINT4*>(&aPalette[j]));
+            tpal = XMLoadSInt4(reinterpret_cast<const int32x4*>(&aPalette[j]));
             tpal = vcolors - tpal;
             const float fErr = dot(tpal, tpal);
             if (fErr > fBestErr) break;     // error increased, so we're done searching

@@ -23,26 +23,17 @@ namespace DirectX
     using namespace mango;
     using namespace mango::math;
 
-    using HALF = float16;
-    using XMHALF4 = float16x4;
-    using XMVECTOR = float32x4;
-    using XMFLOAT4 = float32x4;
-
-    using XMUBYTE4 = u8[4];
-    using XMINT4 = s32[4];
-
     static inline
-    XMVECTOR XMLoadUByte4(const XMUBYTE4* p)
+    float32x4 XMLoadUByte4(const u32* p)
     {
-        const u8* v = (const u8*)p;
-        return XMVECTOR(v[0], v[1], v[2], v[3]);
+        int32x4 v = simd::unpack(*p);
+        return convert<float32x4>(v);
     }
 
     static inline
-    XMVECTOR XMLoadSInt4(const XMINT4* p)
+    float32x4 XMLoadSInt4(const int32x4* p)
     {
-        const s32* v = (const s32*)p;
-        return XMVECTOR(v[0], v[1], v[2], v[3]);
+        return convert<float32x4>(*p);
     }
 
 //-------------------------------------------------------------------------------------
