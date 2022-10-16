@@ -330,25 +330,4 @@ namespace DirectX
         *pY = (fY < MIN_VALUE) ? MIN_VALUE : (fY > MAX_VALUE) ? MAX_VALUE : fY;
     }
 
-//-------------------------------------------------------------------------------------
-// Functions
-//-------------------------------------------------------------------------------------
-
-    typedef void (*BC_DECODE)(XMVECTOR *pColor, const uint8_t *pBC);
-    typedef void (*BC_ENCODE)(uint8_t *pDXT, const XMVECTOR *pColor, uint32_t flags);
-
-    void D3DXDecodeBC4U(XMVECTOR *pColor, const uint8_t *pBC) noexcept;
-    void D3DXDecodeBC4S(XMVECTOR *pColor, const uint8_t *pBC) noexcept;
-    void D3DXDecodeBC5U(XMVECTOR *pColor, const uint8_t *pBC) noexcept;
-    void D3DXDecodeBC5S(XMVECTOR *pColor, const uint8_t *pBC) noexcept;
-
-    void D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshold, uint32_t flags) noexcept;
-    void D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept;
-    void D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept;
-
-    void D3DXEncodeBC4U(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept;
-    void D3DXEncodeBC4S(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept;
-    void D3DXEncodeBC5U(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept;
-    void D3DXEncodeBC5S(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept;
-
 } // namespace DirectX

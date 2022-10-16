@@ -310,11 +310,8 @@ namespace
         pY->r = Y.r; pY->g = Y.g; pY->b = Y.b; pY->a = 1.0f;
     }
 
-
     //-------------------------------------------------------------------------------------
 
-
-    //-------------------------------------------------------------------------------------
     void EncodeBC1(
         D3DX_BC1 *pBC,
         const HDRColorA *pColor,
@@ -631,6 +628,7 @@ namespace
     }
 
     //-------------------------------------------------------------------------------------
+
 #ifdef COLOR_WEIGHTS
     void EncodeSolidBC1(D3DX_BC1 *pBC, const HDRColorA *pColor)
     {
@@ -664,18 +662,11 @@ namespace
     }
 #endif // COLOR_WEIGHTS
 
-} // namespace
-
-
-//=====================================================================================
-// Entry points
-//=====================================================================================
-
 //-------------------------------------------------------------------------------------
 // BC1 Compression
 //-------------------------------------------------------------------------------------
 
-void DirectX::D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshold, uint32_t flags) noexcept
+void D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshold, uint32_t flags) noexcept
 {
     assert(pBC && pColor);
 
@@ -723,11 +714,14 @@ void DirectX::D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshol
     }
     else
     {
+        /*
         for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
             std::memcpy(Color + i, pColor + i, sizeof(XMVECTOR));
             //XMStoreFloat4(reinterpret_cast<XMFLOAT4*>(&Color[i]), pColor[i]);
         }
+        */
+        std::memcpy(Color + 0, pColor + 0, NUM_PIXELS_PER_BLOCK * sizeof(XMVECTOR));
     }
 
     auto pBC1 = reinterpret_cast<D3DX_BC1 *>(pBC);
@@ -738,7 +732,7 @@ void DirectX::D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshol
 // BC2 Compression
 //-------------------------------------------------------------------------------------
 
-void DirectX::D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
+void D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
 {
     assert(pBC && pColor);
     static_assert(sizeof(D3DX_BC2) == 16, "D3DX_BC2 should be 16 bytes");
@@ -806,12 +800,11 @@ void DirectX::D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
     EncodeBC1(&pBC2->bc1, Color, false, 0.f, flags);
 }
 
-
 //-------------------------------------------------------------------------------------
 // BC3 Compression
 //-------------------------------------------------------------------------------------
 
-void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
+void D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
 {
     assert(pBC && pColor);
     static_assert(sizeof(D3DX_BC3) == 16, "D3DX_BC3 should be 16 bytes");
@@ -1009,10 +1002,19 @@ void DirectX::D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags
     }
 }
 
+} // namespace
+
 namespace
 {
     using namespace mango;
     using namespace mango::math;
+
+    static inline
+    float32x4 unpack(u32 color)
+    {
+        int32x4 v = simd::unpack(color);
+        return convert<float32x4>(v) / 255.0f;
+    }
 
     void convert_block(float32x4* temp, const u8* input, size_t stride)
     {
@@ -1021,8 +1023,7 @@ namespace
             const u32* image = reinterpret_cast<const u32*>(input + y * stride);
             for (int x = 0; x < 4; ++x)
             {
-                const int32x4 v = simd::unpack(image[x]);
-                temp[x] = convert<float32x4>(v) / 255.0f;
+                temp[x] = unpack(image[x]);
             }
             temp += 4;
         }
@@ -1038,7 +1039,7 @@ namespace mango::image
         MANGO_UNREFERENCED(info);
         float32x4 temp[16];
         convert_block(temp, input, stride);
-        DirectX::D3DXEncodeBC1(output, temp, 0.0f, DirectX::BC_FLAGS_NONE);
+        D3DXEncodeBC1(output, temp, 0.0f, DirectX::BC_FLAGS_NONE);
     }
 
     void encode_block_bc1a(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
@@ -1046,7 +1047,7 @@ namespace mango::image
         MANGO_UNREFERENCED(info);
         float32x4 temp[16];
         convert_block(temp, input, stride);
-        DirectX::D3DXEncodeBC1(output, temp, 1.0f, DirectX::BC_FLAGS_NONE);
+        D3DXEncodeBC1(output, temp, 1.0f, DirectX::BC_FLAGS_NONE);
     }
 
     void encode_block_bc2(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
@@ -1054,7 +1055,7 @@ namespace mango::image
         MANGO_UNREFERENCED(info);
         float32x4 temp[16];
         convert_block(temp, input, stride);
-        DirectX::D3DXEncodeBC2(output, temp, DirectX::BC_FLAGS_NONE);
+        D3DXEncodeBC2(output, temp, DirectX::BC_FLAGS_NONE);
     }
 
     void encode_block_bc3(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
@@ -1062,7 +1063,7 @@ namespace mango::image
         MANGO_UNREFERENCED(info);
         float32x4 temp[16];
         convert_block(temp, input, stride);
-        DirectX::D3DXEncodeBC3(output, temp, DirectX::BC_FLAGS_NONE);
+        D3DXEncodeBC3(output, temp, DirectX::BC_FLAGS_NONE);
     }
 
 } // namespace mango::image
