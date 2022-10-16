@@ -338,7 +338,7 @@ namespace
             dxgi::FORMAT_BC7_UNORM_SRGB,
             opengl::COMPRESSED_SRGB_ALPHA_BPTC_UNORM,
             vulkan::FORMAT_BC7_SRGB_BLOCK,
-            4, 4, 1, 16, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+            4, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             decode_block_bc7, encode_block_bc7
         ),
 
