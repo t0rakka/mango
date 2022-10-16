@@ -19,6 +19,9 @@ using namespace DirectX;
 
 namespace
 {
+    using namespace mango;
+    using namespace mango::math;
+
     //-------------------------------------------------------------------------------------
     // Constants
     //-------------------------------------------------------------------------------------
@@ -30,6 +33,7 @@ namespace
     //-------------------------------------------------------------------------------------
     // Decode/Encode RGB 5/6/5 colors
     //-------------------------------------------------------------------------------------
+
     inline void Decode565(HDRColorA *pColor, const uint16_t w565) noexcept
     {
         pColor->r = static_cast<float>((w565 >> 11) & 31) * (1.0f / 31.0f);
@@ -57,6 +61,27 @@ namespace
         return w;
     }
 
+    static inline
+    float32x4 unpack_color(u32 color)
+    {
+        int32x4 v = simd::unpack(color);
+        return convert<float32x4>(v) / 255.0f;
+    }
+
+    void unpack_block(HDRColorA* output, const u8* input, size_t stride)
+    {
+        float32x4* dest = reinterpret_cast<float32x4*>(output);
+
+        for (int y = 0; y < 4; ++y)
+        {
+            const u32* image = reinterpret_cast<const u32*>(input + y * stride);
+            for (int x = 0; x < 4; ++x)
+            {
+                dest[x] = unpack_color(image[x]);
+            }
+            dest += 4;
+        }
+    }
 
     //-------------------------------------------------------------------------------------
     void OptimizeRGB(
@@ -350,7 +375,7 @@ namespace
             uSteps = 4u;
         }
 
-        // Quantize block to R56B5, using Floyd Stienberg error diffusion.  This
+        // Quantize block to R56B5, using Floyd-Steinberg error diffusion.  This
         // increases the chance that colors will map directly to the quantized
         // axis endpoints.
         HDRColorA Color[NUM_PIXELS_PER_BLOCK];
@@ -666,11 +691,13 @@ namespace
 // BC1 Compression
 //-------------------------------------------------------------------------------------
 
-void D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshold, uint32_t flags) noexcept
+void D3DXEncodeBC1(u8* pBC, const u8* input, size_t stride, float threshold, u32 flags) noexcept
 {
-    assert(pBC && pColor);
+    assert(pBC && input);
 
     HDRColorA Color[NUM_PIXELS_PER_BLOCK];
+
+    unpack_block(Color, input, stride);
 
     if (flags & BC_FLAGS_DITHER_A)
     {
@@ -678,16 +705,10 @@ void D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshold, uint32
 
         for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
-            HDRColorA clr;
-            std::memcpy(&clr, pColor + i, sizeof(XMVECTOR));
-            //XMStoreFloat4(reinterpret_cast<XMFLOAT4*>(&clr), pColor[i]);
+            const float alpha = Color[i].a;
+            const float fAlph = alpha + fError[i];
 
-            const float fAlph = clr.a + fError[i];
-
-            Color[i].r = clr.r;
-            Color[i].g = clr.g;
-            Color[i].b = clr.b;
-            Color[i].a = static_cast<float>(static_cast<int32_t>(clr.a + fError[i] + 0.5f));
+            Color[i].a = float(s32(fAlph + 0.5f));
 
             const float fDiff = fAlph - Color[i].a;
 
@@ -712,17 +733,6 @@ void D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshold, uint32
             }
         }
     }
-    else
-    {
-        /*
-        for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
-        {
-            std::memcpy(Color + i, pColor + i, sizeof(XMVECTOR));
-            //XMStoreFloat4(reinterpret_cast<XMFLOAT4*>(&Color[i]), pColor[i]);
-        }
-        */
-        std::memcpy(Color + 0, pColor + 0, NUM_PIXELS_PER_BLOCK * sizeof(XMVECTOR));
-    }
 
     auto pBC1 = reinterpret_cast<D3DX_BC1 *>(pBC);
     EncodeBC1(pBC1, Color, true, threshold, flags);
@@ -732,21 +742,18 @@ void D3DXEncodeBC1(uint8_t *pBC, const XMVECTOR *pColor, float threshold, uint32
 // BC2 Compression
 //-------------------------------------------------------------------------------------
 
-void D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
+void D3DXEncodeBC2(u8* pBC, const u8* input, size_t stride, u32 flags) noexcept
 {
-    assert(pBC && pColor);
+    assert(pBC && input);
     static_assert(sizeof(D3DX_BC2) == 16, "D3DX_BC2 should be 16 bytes");
 
     HDRColorA Color[NUM_PIXELS_PER_BLOCK];
-    for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
-    {
-        std::memcpy(Color + i, pColor + i, sizeof(XMVECTOR));
-        //XMStoreFloat4(reinterpret_cast<XMFLOAT4*>(&Color[i]), pColor[i]);
-    }
+
+    unpack_block(Color, input, stride);
 
     auto pBC2 = reinterpret_cast<D3DX_BC2 *>(pBC);
 
-    // 4-bit alpha part.  Dithered using Floyd Stienberg error diffusion.
+    // 4-bit alpha part.  Dithered using Floyd-Steinberg error diffusion.
     pBC2->bitmap[0] = 0;
     pBC2->bitmap[1] = 0;
 
@@ -804,21 +811,18 @@ void D3DXEncodeBC2(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcep
 // BC3 Compression
 //-------------------------------------------------------------------------------------
 
-void D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcept
+void D3DXEncodeBC3(u8* pBC, const u8* input, size_t stride, u32 flags) noexcept
 {
     assert(pBC && pColor);
     static_assert(sizeof(D3DX_BC3) == 16, "D3DX_BC3 should be 16 bytes");
 
     HDRColorA Color[NUM_PIXELS_PER_BLOCK];
-    for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
-    {
-        std::memcpy(Color + i, pColor + i, sizeof(XMVECTOR));
-        //Color[i] = pColor[i];
-    }
+
+    unpack_block(Color, input, stride);
 
     auto pBC3 = reinterpret_cast<D3DX_BC3 *>(pBC);
 
-    // Quantize block to A8, using Floyd Stienberg error diffusion.  This
+    // Quantize block to A8, using Floyd-Steinberg error diffusion.  This
     // increases the chance that colors will map directly to the quantized
     // axis endpoints.
     float fAlpha[NUM_PIXELS_PER_BLOCK] = {};
@@ -1004,66 +1008,31 @@ void D3DXEncodeBC3(uint8_t *pBC, const XMVECTOR *pColor, uint32_t flags) noexcep
 
 } // namespace
 
-namespace
-{
-    using namespace mango;
-    using namespace mango::math;
-
-    static inline
-    float32x4 unpack(u32 color)
-    {
-        int32x4 v = simd::unpack(color);
-        return convert<float32x4>(v) / 255.0f;
-    }
-
-    void convert_block(float32x4* temp, const u8* input, size_t stride)
-    {
-        for (int y = 0; y < 4; ++y)
-        {
-            const u32* image = reinterpret_cast<const u32*>(input + y * stride);
-            for (int x = 0; x < 4; ++x)
-            {
-                temp[x] = unpack(image[x]);
-            }
-            temp += 4;
-        }
-    }
-
-} // namespace
-
 namespace mango::image
 {
 
     void encode_block_bc1(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
-        float32x4 temp[16];
-        convert_block(temp, input, stride);
-        D3DXEncodeBC1(output, temp, 0.0f, DirectX::BC_FLAGS_NONE);
+        D3DXEncodeBC1(output, input, stride, 0.0f, DirectX::BC_FLAGS_NONE);
     }
 
     void encode_block_bc1a(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
-        float32x4 temp[16];
-        convert_block(temp, input, stride);
-        D3DXEncodeBC1(output, temp, 1.0f, DirectX::BC_FLAGS_NONE);
+        D3DXEncodeBC1(output, input, stride, 1.0f, DirectX::BC_FLAGS_NONE);
     }
 
     void encode_block_bc2(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
-        float32x4 temp[16];
-        convert_block(temp, input, stride);
-        D3DXEncodeBC2(output, temp, DirectX::BC_FLAGS_NONE);
+        D3DXEncodeBC2(output, input, stride, DirectX::BC_FLAGS_NONE);
     }
 
     void encode_block_bc3(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
-        float32x4 temp[16];
-        convert_block(temp, input, stride);
-        D3DXEncodeBC3(output, temp, DirectX::BC_FLAGS_NONE);
+        D3DXEncodeBC3(output, input, stride, DirectX::BC_FLAGS_NONE);
     }
 
 } // namespace mango::image
