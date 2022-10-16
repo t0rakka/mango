@@ -777,7 +777,13 @@ namespace
             LDRColorA aLDRPixels[NUM_PIXELS_PER_BLOCK];
             const HDRColorA* const aHDRPixels;
 
-            EncodeParams(const HDRColorA* const aOriginal) noexcept : uMode(0), aEndPts{}, aLDRPixels{}, aHDRPixels(aOriginal) {}
+            EncodeParams(const HDRColorA* const aOriginal) noexcept
+                : uMode(0)
+                , aEndPts{}
+                , aLDRPixels{}
+                , aHDRPixels(aOriginal)
+            {
+            }
         };
 
         static uint8_t Quantize(uint8_t comp, uint8_t uPrec) noexcept
@@ -3288,8 +3294,15 @@ float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation,
 
     for (size_t p = 0; p <= uPartitions; p++)
     {
-        aOrgEndPts[p].A = Quantize(aEndPts[p].A, ms_aInfo[pEP->uMode].RGBAPrecWithP);
-        aOrgEndPts[p].B = Quantize(aEndPts[p].B, ms_aInfo[pEP->uMode].RGBAPrecWithP);
+        if (p < BC7_MAX_REGIONS)
+        {
+            aOrgEndPts[p].A = Quantize(aEndPts[p].A, ms_aInfo[pEP->uMode].RGBAPrecWithP);
+            aOrgEndPts[p].B = Quantize(aEndPts[p].B, ms_aInfo[pEP->uMode].RGBAPrecWithP);
+        }
+        else
+        {
+            debugPrint("PANIC!\n");
+        }
     }
 
     LDREndPntPair newEndPts1[BC7_MAX_REGIONS];
