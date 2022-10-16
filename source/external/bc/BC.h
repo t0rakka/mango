@@ -330,4 +330,37 @@ namespace DirectX
         *pY = (fY < MIN_VALUE) ? MIN_VALUE : (fY > MAX_VALUE) ? MAX_VALUE : fY;
     }
 
+    static inline
+    void unpack_block(HDRColorA* output, const u8* input, size_t stride)
+    {
+        float32x4* dest = reinterpret_cast<float32x4*>(output);
+
+        for (int y = 0; y < 4; ++y)
+        {
+            const u32* image = reinterpret_cast<const u32*>(input + y * stride);
+            for (int x = 0; x < 4; ++x)
+            {
+                int32x4 v = simd::unpack(image[x]);
+                dest[x] = convert<float32x4>(v) / 255.0f;
+            }
+            dest += 4;
+        }
+    }
+
+    static inline
+    void pack_block(u8* output, const HDRColorA* input, size_t stride)
+    {
+        for (int y = 0; y < 4; ++y)
+        {
+            const float32x4* src = reinterpret_cast<const float32x4*>(input + y * 4);
+            u32* dest = reinterpret_cast<u32*>(output + y * stride);
+
+            for (int x = 0; x < 4; ++x)
+            {
+                int32x4 v = convert<int32x4>(src[x] * 255.0f);
+                dest[x] = simd::pack(v);
+            }
+        }
+    }
+
 } // namespace DirectX

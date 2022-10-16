@@ -244,7 +244,7 @@ namespace
             dxgi::FORMAT_BC2_UNORM_SRGB,
             opengl::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT,
             vulkan::FORMAT_BC2_SRGB_BLOCK,
-            4, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            4, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             decode_block_dxt3, encode_block_bc2
         ),
 
@@ -253,7 +253,7 @@ namespace
             dxgi::FORMAT_BC3_UNORM,
             opengl::COMPRESSED_RGBA_S3TC_DXT5_EXT,
             vulkan::FORMAT_BC3_UNORM_BLOCK,
-            4, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            4, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             decode_block_dxt5, encode_block_bc3
         ),
 
@@ -262,7 +262,7 @@ namespace
             dxgi::FORMAT_BC3_UNORM_SRGB,
             opengl::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT,
             vulkan::FORMAT_BC3_SRGB_BLOCK,
-            4, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            4, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             decode_block_dxt5, encode_block_bc3
         ),
 
@@ -311,7 +311,7 @@ namespace
             dxgi::FORMAT_BC6H_UF16,
             opengl::COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT,
             vulkan::FORMAT_BC6H_UFLOAT_BLOCK,
-            4, 4, 1, 16, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), 
+            4, 4, 1, 16, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
             decode_block_bc6hu, encode_block_bc6hu
         ),
 
@@ -320,7 +320,7 @@ namespace
             dxgi::FORMAT_BC6H_SF16,
             opengl::COMPRESSED_RGB_BPTC_SIGNED_FLOAT,
             vulkan::FORMAT_BC6H_SFLOAT_BLOCK,
-            4, 4, 1, 16, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), 
+            4, 4, 1, 16, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
             decode_block_bc6hs, encode_block_bc6hs
         ),
 
@@ -329,7 +329,7 @@ namespace
             dxgi::FORMAT_BC7_UNORM,
             opengl::COMPRESSED_RGBA_BPTC_UNORM,
             vulkan::FORMAT_BC7_UNORM_BLOCK,
-            4, 4, 1, 16, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), 
+            4, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             decode_block_bc7, encode_block_bc7
         ),
 
@@ -338,7 +338,7 @@ namespace
             dxgi::FORMAT_BC7_UNORM_SRGB,
             opengl::COMPRESSED_SRGB_ALPHA_BPTC_UNORM,
             vulkan::FORMAT_BC7_SRGB_BLOCK,
-            4, 4, 1, 16, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32), 
+            4, 4, 1, 16, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
             decode_block_bc7, encode_block_bc7
         ),
 

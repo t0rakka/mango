@@ -3497,10 +3497,7 @@ namespace mango::image
         static_assert(sizeof(D3DX_BC7) == 16, "D3DX_BC7 should be 16 bytes");
         reinterpret_cast<const D3DX_BC7*>(input)->Decode(temp);
 
-        for (int y = 0; y < 4; ++y)
-        {
-            std::memcpy(output + y * stride, temp + y * 4, 64);
-        }
+        pack_block(output, temp, stride);
     }
 
     void encode_block_bc6hu(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
@@ -3523,11 +3520,7 @@ namespace mango::image
         MANGO_UNREFERENCED(info);
 
         HDRColorA temp[16];
-
-        for (int y = 0; y < 4; ++y)
-        {
-            std::memcpy(temp + y * 4, input + y * stride, 64);
-        }
+        unpack_block(temp, input, stride);
 
         static_assert(sizeof(D3DX_BC6H) == 16, "D3DX_BC6H should be 16 bytes");
         reinterpret_cast<D3DX_BC6H*>(output)->Encode(true, temp);
@@ -3538,11 +3531,7 @@ namespace mango::image
         MANGO_UNREFERENCED(info);
 
         HDRColorA temp[16];
-
-        for (int y = 0; y < 4; ++y)
-        {
-            std::memcpy(temp + y * 4, input + y * stride, 64);
-        }
+        unpack_block(temp, input, stride);
 
         static_assert(sizeof(D3DX_BC7) == 16, "D3DX_BC7 should be 16 bytes");
         reinterpret_cast<D3DX_BC7*>(output)->Encode(0, temp);

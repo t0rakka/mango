@@ -61,28 +61,6 @@ namespace
         return w;
     }
 
-    static inline
-    float32x4 unpack_color(u32 color)
-    {
-        int32x4 v = simd::unpack(color);
-        return convert<float32x4>(v) / 255.0f;
-    }
-
-    void unpack_block(HDRColorA* output, const u8* input, size_t stride)
-    {
-        float32x4* dest = reinterpret_cast<float32x4*>(output);
-
-        for (int y = 0; y < 4; ++y)
-        {
-            const u32* image = reinterpret_cast<const u32*>(input + y * stride);
-            for (int x = 0; x < 4; ++x)
-            {
-                dest[x] = unpack_color(image[x]);
-            }
-            dest += 4;
-        }
-    }
-
     //-------------------------------------------------------------------------------------
     void OptimizeRGB(
         HDRColorA *pX,
@@ -696,7 +674,6 @@ void D3DXEncodeBC1(u8* pBC, const u8* input, size_t stride, float threshold, u32
     assert(pBC && input);
 
     HDRColorA Color[NUM_PIXELS_PER_BLOCK];
-
     unpack_block(Color, input, stride);
 
     if (flags & BC_FLAGS_DITHER_A)
@@ -748,7 +725,6 @@ void D3DXEncodeBC2(u8* pBC, const u8* input, size_t stride, u32 flags) noexcept
     static_assert(sizeof(D3DX_BC2) == 16, "D3DX_BC2 should be 16 bytes");
 
     HDRColorA Color[NUM_PIXELS_PER_BLOCK];
-
     unpack_block(Color, input, stride);
 
     auto pBC2 = reinterpret_cast<D3DX_BC2 *>(pBC);
@@ -817,7 +793,6 @@ void D3DXEncodeBC3(u8* pBC, const u8* input, size_t stride, u32 flags) noexcept
     static_assert(sizeof(D3DX_BC3) == 16, "D3DX_BC3 should be 16 bytes");
 
     HDRColorA Color[NUM_PIXELS_PER_BLOCK];
-
     unpack_block(Color, input, stride);
 
     auto pBC3 = reinterpret_cast<D3DX_BC3 *>(pBC);
