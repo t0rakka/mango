@@ -1611,15 +1611,17 @@ namespace
 
     void FillWithErrorColors(HDRColorA* pOut) noexcept
     {
+    #ifdef _DEBUG
+        // Use Magenta in debug as a highly-visible error color
+        HDRColorA color = HDRColorA(1.0f, 0.0f, 1.0f, 1.0f);
+    #else
+        // In production use, default to black
+        HDRColorA color = HDRColorA(0.0f, 0.0f, 0.0f, 1.0f);
+    #endif
+
         for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {
-        #ifdef _DEBUG
-            // Use Magenta in debug as a highly-visible error color
-            pOut[i] = HDRColorA(1.0f, 0.0f, 1.0f, 1.0f);
-        #else
-            // In production use, default to black
-            pOut[i] = HDRColorA(0.0f, 0.0f, 0.0f, 1.0f);
-        #endif
+            pOut[i] = color;
         }
     }
 
