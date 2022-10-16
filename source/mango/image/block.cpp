@@ -1103,7 +1103,7 @@ namespace
 
             for (int y = 0; y < yblocks; ++y)
             {
-                queue.enqueue([=,&info] ()
+                queue.enqueue([=]
                 {
                     scanBlockDecode(info, image, data, stride, xblocks, xstride);
                 });
