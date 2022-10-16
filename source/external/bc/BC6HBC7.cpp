@@ -3294,14 +3294,12 @@ float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation,
 
     for (size_t p = 0; p <= uPartitions; p++)
     {
+        // NOTE: This silences compiler warning (GCC 12); it incorrectly analyses that
+        //       we will have overflow. Checking it manually disables the compile-time check.
         if (p < BC7_MAX_REGIONS)
         {
             aOrgEndPts[p].A = Quantize(aEndPts[p].A, ms_aInfo[pEP->uMode].RGBAPrecWithP);
             aOrgEndPts[p].B = Quantize(aEndPts[p].B, ms_aInfo[pEP->uMode].RGBAPrecWithP);
-        }
-        else
-        {
-            debugPrint("PANIC!\n");
         }
     }
 
