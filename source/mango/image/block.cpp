@@ -6,23 +6,20 @@
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 
-#define MAKE_FORMAT(bits, type, order, s0, s1, s2, s3) \
-    Format(bits, Format::type, Format::order, s0, s1, s2, s3)
-
-#define FORMAT_ASTC_SRGB MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8)
-#define FORMAT_ASTC_FP16 MAKE_FORMAT(64, FLOAT16, RGBA, 16, 16, 16, 16)
+#define FORMAT_ASTC_SRGB Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
+#define FORMAT_ASTC_FP16 Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16)
 
 namespace mango::image
 {
 
     // decode
 
-    void decode_block_dxt1            (const TextureCompression& info, u8* output, const u8* input, size_t stride); // BC1
-    void decode_block_dxt1a           (const TextureCompression& info, u8* output, const u8* input, size_t stride); // BC1A
-    void decode_block_dxt3            (const TextureCompression& info, u8* output, const u8* input, size_t stride); // BC2
-    void decode_block_dxt5            (const TextureCompression& info, u8* output, const u8* input, size_t stride); // BC3
-    void decode_block_3dc_x           (const TextureCompression& info, u8* output, const u8* input, size_t stride); // BC4U
-    void decode_block_3dc_xy          (const TextureCompression& info, u8* output, const u8* input, size_t stride); // BC5U
+    void decode_block_dxt1            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_dxt1a           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_dxt3            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_dxt5            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_3dc_x           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_3dc_xy          (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_uyvy            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_yuy2            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_grgb8           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
