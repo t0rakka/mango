@@ -360,6 +360,13 @@ namespace DirectX
             }
         }
 
+        operator u32 () const
+        {
+            u32 temp;
+            std::memcpy(&temp, this, 4);
+            return temp;
+        }
+
         LDRColorA operator = (const HDRColorA& c) noexcept
         {
             LDRColorA ret;
@@ -753,7 +760,7 @@ namespace
     class D3DX_BC7 : private CBits< 16 >
     {
     public:
-        void Decode(HDRColorA* pOut) const noexcept;
+        void Decode(u8* output, size_t stride) const noexcept;
         void Encode(uint32_t flags, const HDRColorA* const pIn) noexcept;
 
     private:
@@ -1646,6 +1653,31 @@ namespace
         Fill(output, stride, color);
     }
 
+    void FillColorU32(u8* output, size_t stride, u32 color) noexcept
+    {
+        for (int y = 0; y < 4; ++y)
+        {
+            u32* dest = reinterpret_cast<u32*>(output + y * stride);
+            for (int x = 0; x < 4; ++x)
+            {
+                dest[x] = color;
+            }
+        }
+    }
+
+    void FillWithErrorColorU32(u8* output, size_t stride) noexcept
+    {
+    #ifdef _DEBUG
+        // Use Magenta in debug as a highly-visible error color
+        u32 color = 0xffff00ff;
+    #else
+        // In production use, default to black
+        u32 color = 0xff000000;
+    #endif
+
+        FillColorU32(output, stride, color);
+    }
+
 } // namespace
 
 //-------------------------------------------------------------------------------------
@@ -2497,9 +2529,9 @@ float D3DX_BC6H::RoughMSE(EncodeParams* pEP) const noexcept
 // BC7 Compression
 //-------------------------------------------------------------------------------------
 
-void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
+void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
 {
-    assert(pOut);
+    assert(output);
 
     size_t uFirst = 0;
     while (uFirst < 128 && !GetBit(uFirst)) {}
@@ -2513,7 +2545,6 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         auto const uNumEndPts = static_cast<const uint8_t>((unsigned(uPartitions) + 1u) << 1);
         const uint8_t uIndexPrec = ms_aInfo[uMode].uIndexPrec;
         const uint8_t uIndexPrec2 = ms_aInfo[uMode].uIndexPrec2;
-        size_t i;
         size_t uStartBit = size_t(uMode) + 1;
         uint8_t P[6];
         const uint8_t uShape = GetBits(uStartBit, ms_aInfo[uMode].uPartitionBits);
@@ -2532,12 +2563,12 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         assert(uNumEndPts <= (BC7_MAX_REGIONS << 1));
 
         // Red channel
-        for (i = 0; i < uNumEndPts; i++)
+        for (size_t i = 0; i < uNumEndPts; i++)
         {
             if (uStartBit + RGBAPrec.r > 128)
             {
                 debugPrint("BC7: Invalid block encountered during decoding\n");
-                FillWithErrorColors(reinterpret_cast<u8*>(pOut), 64);
+                FillWithErrorColorU32(output, stride);
                 return;
             }
 
@@ -2545,12 +2576,12 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         }
 
         // Green channel
-        for (i = 0; i < uNumEndPts; i++)
+        for (size_t i = 0; i < uNumEndPts; i++)
         {
             if (uStartBit + RGBAPrec.g > 128)
             {
                 debugPrint("BC7: Invalid block encountered during decoding\n");
-                FillWithErrorColors(reinterpret_cast<u8*>(pOut), 64);
+                FillWithErrorColorU32(output, stride);
                 return;
             }
 
@@ -2558,12 +2589,12 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         }
 
         // Blue channel
-        for (i = 0; i < uNumEndPts; i++)
+        for (size_t i = 0; i < uNumEndPts; i++)
         {
             if (uStartBit + RGBAPrec.b > 128)
             {
                 debugPrint("BC7: Invalid block encountered during decoding\n");
-                FillWithErrorColors(reinterpret_cast<u8*>(pOut), 64);
+                FillWithErrorColorU32(output, stride);
                 return;
             }
 
@@ -2571,12 +2602,12 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         }
 
         // Alpha channel
-        for (i = 0; i < uNumEndPts; i++)
+        for (size_t i = 0; i < uNumEndPts; i++)
         {
             if (uStartBit + RGBAPrec.a > 128)
             {
                 debugPrint("BC7: Invalid block encountered during decoding\n");
-                FillWithErrorColors(reinterpret_cast<u8*>(pOut), 64);
+                FillWithErrorColorU32(output, stride);
                 return;
             }
 
@@ -2585,12 +2616,12 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
 
         // P-bits
         assert(ms_aInfo[uMode].uPBits <= 6);
-        for (i = 0; i < ms_aInfo[uMode].uPBits; i++)
+        for (size_t i = 0; i < ms_aInfo[uMode].uPBits; i++)
         {
             if (uStartBit > 127)
             {
                 debugPrint("BC7: Invalid block encountered during decoding\n");
-                FillWithErrorColors(reinterpret_cast<u8*>(pOut), 64);
+                FillWithErrorColorU32(output, stride);
                 return;
             }
 
@@ -2599,7 +2630,7 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
 
         if (ms_aInfo[uMode].uPBits)
         {
-            for (i = 0; i < uNumEndPts; i++)
+            for (size_t i = 0; i < uNumEndPts; i++)
             {
                 size_t pi = i * ms_aInfo[uMode].uPBits / uNumEndPts;
                 for (uint8_t ch = 0; ch < BC7_NUM_CHANNELS; ch++)
@@ -2612,21 +2643,22 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
             }
         }
 
-        for (i = 0; i < uNumEndPts; i++)
+        for (size_t i = 0; i < uNumEndPts; i++)
         {
             c[i] = Unquantize(c[i], RGBAPrecWithP);
         }
 
-        uint8_t w1[NUM_PIXELS_PER_BLOCK], w2[NUM_PIXELS_PER_BLOCK];
+        u8 w1[NUM_PIXELS_PER_BLOCK];
+        u8 w2[NUM_PIXELS_PER_BLOCK];
 
         // read color indices
-        for (i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
+        for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
         {
             const size_t uNumBits = IsFixUpOffset(ms_aInfo[uMode].uPartitions, uShape, i) ? uIndexPrec - 1u : uIndexPrec;
             if (uStartBit + uNumBits > 128)
             {
                 debugPrint("BC7: Invalid block encountered during decoding\n");
-                FillWithErrorColors(reinterpret_cast<u8*>(pOut), 64);
+                FillWithErrorColorU32(output, stride);
                 return;
             }
             w1[i] = GetBits(uStartBit, uNumBits);
@@ -2635,54 +2667,61 @@ void D3DX_BC7::Decode(HDRColorA* pOut) const noexcept
         // read alpha indices
         if (uIndexPrec2)
         {
-            for (i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
+            for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; i++)
             {
                 const size_t uNumBits = i ? uIndexPrec2 : uIndexPrec2 - 1u;
                 if (uStartBit + uNumBits > 128)
                 {
                     debugPrint("BC7: Invalid block encountered during decoding\n");
-                    FillWithErrorColors(reinterpret_cast<u8*>(pOut), 64);
+                    FillWithErrorColorU32(output, stride);
                     return;
                 }
                 w2[i] = GetBits(uStartBit, uNumBits);
             }
         }
 
-        for (i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
+        for (int y = 0; y < 4; ++y)
         {
-            const uint8_t uRegion = g_aPartitionTable[uPartitions][uShape][i];
-            LDRColorA outPixel;
-            if (uIndexPrec2 == 0)
+            u32* dest = reinterpret_cast<u32*>(output + y * stride);
+
+            for (int x = 0; x < 4; ++x)
             {
-                LDRColorA::Interpolate(c[uRegion << 1], c[(uRegion << 1) + 1], w1[i], w1[i], uIndexPrec, uIndexPrec, outPixel);
-            }
-            else
-            {
-                if (uIndexMode == 0)
+                const int idx = y * 4 + x;
+
+                const uint8_t uRegion = g_aPartitionTable[uPartitions][uShape][idx];
+                LDRColorA outPixel;
+                if (uIndexPrec2 == 0)
                 {
-                    LDRColorA::Interpolate(c[uRegion << 1], c[(uRegion << 1) + 1], w1[i], w2[i], uIndexPrec, uIndexPrec2, outPixel);
+                    LDRColorA::Interpolate(c[uRegion << 1], c[(uRegion << 1) + 1], w1[idx], w1[idx], uIndexPrec, uIndexPrec, outPixel);
                 }
                 else
                 {
-                    LDRColorA::Interpolate(c[uRegion << 1], c[(uRegion << 1) + 1], w2[i], w1[i], uIndexPrec2, uIndexPrec, outPixel);
+                    if (uIndexMode == 0)
+                    {
+                        LDRColorA::Interpolate(c[uRegion << 1], c[(uRegion << 1) + 1], w1[idx], w2[idx], uIndexPrec, uIndexPrec2, outPixel);
+                    }
+                    else
+                    {
+                        LDRColorA::Interpolate(c[uRegion << 1], c[(uRegion << 1) + 1], w2[idx], w1[idx], uIndexPrec2, uIndexPrec, outPixel);
+                    }
                 }
-            }
 
-            switch (uRotation)
-            {
-            case 1: std::swap(outPixel.r, outPixel.a); break;
-            case 2: std::swap(outPixel.g, outPixel.a); break;
-            case 3: std::swap(outPixel.b, outPixel.a); break;
-            }
+                switch (uRotation)
+                {
+                case 1: std::swap(outPixel.r, outPixel.a); break;
+                case 2: std::swap(outPixel.g, outPixel.a); break;
+                case 3: std::swap(outPixel.b, outPixel.a); break;
+                }
 
-            pOut[i] = HDRColorA(outPixel);
+                dest[x] = outPixel;
+            }
         }
     }
     else
     {
         debugPrint("BC7: Reserved mode 8 encountered during decoding\n");
         // Per the BC7 format spec, we must return transparent black
-        Fill(reinterpret_cast<u8*>(pOut), 64, HDRColorA(0.0f, 0.0f, 0.0f, 1.0f));
+        FillColorU32(output, stride, 0xff000000);
     }
 }
 
@@ -3505,12 +3544,8 @@ namespace mango::image
     {
         MANGO_UNREFERENCED(info);
 
-        HDRColorA temp[16];
-
         static_assert(sizeof(D3DX_BC7) == 16, "D3DX_BC7 should be 16 bytes");
-        reinterpret_cast<const D3DX_BC7*>(input)->Decode(temp);
-
-        pack_block(output, temp, stride);
+        reinterpret_cast<const D3DX_BC7*>(input)->Decode(output, stride);
     }
 
     void encode_block_bc7(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)

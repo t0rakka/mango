@@ -1329,7 +1329,10 @@ namespace mango::image
             {
                 Bitmap temp(xblocks * width, height, format);
 
-                Surface source(surface, 0, y * height, xblocks * width, height);
+                int w = std::min(surface.width, xblocks * width);
+                int h = std::min(height, surface.height - y * height);
+
+                Surface source(surface, 0, y * height, w, h);
                 temp.blit(0, 0, source);
 
                 u8* data = address + y * xblocks * bytes;
