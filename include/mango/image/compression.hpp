@@ -257,30 +257,18 @@ namespace mango::image
         Status compress(Memory memory, const Surface& surface) const;
 
         u32 getFlags() const;
+
+        // number of blocks horizontally required to compress the surface
         int getBlocksX(const Surface& surface) const;
+
+        // number of blocks vertically required to compress the surface
         int getBlocksY(const Surface& surface) const;
+
+        // number of blocks required to compress the surface
         int getBlockCount(const Surface& surface) const;
+
+        // amount of memory required to store compressed blocks
         u64 getBlockBytes(const Surface& surface) const;
-    };
-
-    enum : u32
-    {
-        SUPERCOMPRESS_ETC1_RGB         = 0x00000001,
-        SUPERCOMPRESS_BC1_UNORM        = 0x00000002,
-        SUPERCOMPRESS_BC4_UNORM        = 0x00000004,
-        SUPERCOMPRESS_BC7_UNORM        = 0x00000008,
-        SUPERCOMPRESS_PVRTC_RGB_4BPP   = 0x00000010,
-        SUPERCOMPRESS_PVRTC_RGBA_4BPP  = 0x00000020,
-        SUPERCOMPRESS_ASTC_RGBA_4x4    = 0x00000030,
-        SUPERCOMPRESS_ATC_RGB          = 0x00000040,
-        SUPERCOMPRESS_ATC_RGBA         = 0x00000100,
-        SUPERCOMPRESS_FXT1_RGB         = 0x00000200,
-        SUPERCOMPRESS_PVRTC2_RGBA_4BPP = 0x00000300,
-        SUPERCOMPRESS_EAC_R11          = 0x00000400,
-        SUPERCOMPRESS_EAC_RG11         = 0x00001000,
-
-        SUPERCOMPRESS_BASISU_ETC1S     = 0x00001fff,
-        SUPERCOMPRESS_BASISU_UASTC     = 0x00001fff,
     };
 
 } // namespace mango::image

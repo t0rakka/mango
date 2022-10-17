@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -14,6 +14,34 @@
 namespace mango::image
 {
     class Surface;
+
+    /*
+        These flags indicate when supercompressed blocks are stored in the image file.
+        This kind of data can be extracted from the file by two mechanisms:
+
+        1. decoded into Surface
+        2. the compressed memory block and TextureCompression format can be queried (TODO)
+
+    */
+    enum : u32
+    {
+        SUPERCOMPRESS_ETC1_RGB         = 0x00000001,
+        SUPERCOMPRESS_BC1_UNORM        = 0x00000002,
+        SUPERCOMPRESS_BC4_UNORM        = 0x00000004,
+        SUPERCOMPRESS_BC7_UNORM        = 0x00000008,
+        SUPERCOMPRESS_PVRTC_RGB_4BPP   = 0x00000010,
+        SUPERCOMPRESS_PVRTC_RGBA_4BPP  = 0x00000020,
+        SUPERCOMPRESS_ASTC_RGBA_4x4    = 0x00000030,
+        SUPERCOMPRESS_ATC_RGB          = 0x00000040,
+        SUPERCOMPRESS_ATC_RGBA         = 0x00000100,
+        SUPERCOMPRESS_FXT1_RGB         = 0x00000200,
+        SUPERCOMPRESS_PVRTC2_RGBA_4BPP = 0x00000300,
+        SUPERCOMPRESS_EAC_R11          = 0x00000400,
+        SUPERCOMPRESS_EAC_RG11         = 0x00001000,
+
+        SUPERCOMPRESS_BASISU_ETC1S     = 0x00001fff,
+        SUPERCOMPRESS_BASISU_UASTC     = 0x00001fff,
+    };
 
     struct ImageHeader : Status
     {
