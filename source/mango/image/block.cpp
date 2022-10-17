@@ -311,7 +311,7 @@ namespace
             dxgi::FORMAT_BC6H_UF16,
             opengl::COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT,
             vulkan::FORMAT_BC6H_UFLOAT_BLOCK,
-            4, 4, 1, 16, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+            4, 4, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             decode_block_bc6hu, encode_block_bc6hu
         ),
 
@@ -320,7 +320,7 @@ namespace
             dxgi::FORMAT_BC6H_SF16,
             opengl::COMPRESSED_RGB_BPTC_SIGNED_FLOAT,
             vulkan::FORMAT_BC6H_SFLOAT_BLOCK,
-            4, 4, 1, 16, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+            4, 4, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             decode_block_bc6hs, encode_block_bc6hs
         ),
 

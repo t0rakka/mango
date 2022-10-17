@@ -458,6 +458,29 @@ namespace DirectX
 
 namespace
 {
+    static
+    float16 INT2F16(int input, bool bSigned) noexcept
+    {
+        float16 h;
+        if (bSigned)
+        {
+            int s = 0;
+            if (input < 0)
+            {
+                s = F16S_MASK;
+                input = -input;
+            }
+            h.u = u16(s | input);
+        }
+        else
+        {
+            assert(input >= 0 && input <= F16MAX);
+            h.u = u16(input);
+        }
+
+        return h;
+    }
+
     class INTColor
     {
     public:
@@ -538,13 +561,6 @@ namespace
             return *this;
         }
 
-        void ToF16(float16 aF16[3], bool bSigned) const noexcept
-        {
-            aF16[0] = INT2F16(r, bSigned);
-            aF16[1] = INT2F16(g, bSigned);
-            aF16[2] = INT2F16(b, bSigned);
-        }
-
     private:
         static int F16ToINT(const float16& f, bool bSigned) noexcept
         {
@@ -564,30 +580,6 @@ namespace
                 else out = input;
             }
             return out;
-        }
-
-        static float16 INT2F16(int input, bool bSigned) noexcept
-        {
-            float16 h;
-            uint16_t out;
-            if (bSigned)
-            {
-                int s = 0;
-                if (input < 0)
-                {
-                    s = F16S_MASK;
-                    input = -input;
-                }
-                out = uint16_t(s | input);
-            }
-            else
-            {
-                assert(input >= 0 && input <= F16MAX);
-                out = static_cast<uint16_t>(input);
-            }
-
-            *reinterpret_cast<uint16_t*>(&h) = out;
-            return h;
         }
     };
 
@@ -735,7 +727,13 @@ namespace
             {
                 for (int y = 0; y < 4; ++y)
                 {
-                    std::memcpy(aHDRPixels + y * 4, input + y * stride, 64);
+                    const float16x4* src = reinterpret_cast<const float16x4*>(input + y * stride);
+                    float32x4* dest = reinterpret_cast<float32x4*>(aHDRPixels + y * 4);
+
+                    for (int x = 0; x < 4; ++x)
+                    {
+                        dest[x] = src[x];
+                    }
                 }
 
                 for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
@@ -1656,11 +1654,11 @@ namespace
         return fTotalErr;
     }
 
-    void FillColorF128(u8* output, size_t stride, HDRColorA color) noexcept
+    void FillColorF64(u8* output, size_t stride, float16x4 color) noexcept
     {
         for (int y = 0; y < 4; ++y)
         {
-            HDRColorA* dest = reinterpret_cast<HDRColorA*>(output + y * stride);
+            float16x4* dest = reinterpret_cast<float16x4*>(output + y * stride);
             for (int x = 0; x < 4; ++x)
             {
                 dest[x] = color;
@@ -1668,17 +1666,17 @@ namespace
         }
     }
 
-    void FillWithErrorColorF128(u8* output, size_t stride) noexcept
+    void FillWithErrorColorF64(u8* output, size_t stride) noexcept
     {
     #ifdef _DEBUG
         // Use Magenta in debug as a highly-visible error color
-        HDRColorA color = HDRColorA(1.0f, 0.0f, 1.0f, 1.0f);
+        float16x4 color = float16x4(1.0f, 0.0f, 1.0f, 1.0f);
     #else
         // In production use, default to black
-        HDRColorA color = HDRColorA(0.0f, 0.0f, 0.0f, 1.0f);
+        float16x4 color = float16x4(0.0f, 0.0f, 0.0f, 1.0f);
     #endif
 
-        FillColorF128(output, stride, color);
+        FillColorF64(output, stride, color);
     }
 
     void FillColorU32(u8* output, size_t stride, u32 color) noexcept
@@ -1760,7 +1758,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
                 default:
                     {
                         debugPrint("BC6H: Invalid header bits encountered during decoding\n");
-                        FillWithErrorColorF128(output, stride);
+                        FillWithErrorColorF64(output, stride);
                         return;
                     }
                 }
@@ -1797,7 +1795,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
         // Read indices
         for (int y = 0; y < 4; ++y)
         {
-            HDRColorA* dest = reinterpret_cast<HDRColorA*>(output + y * stride);
+            float16x4* dest = reinterpret_cast<float16x4*>(output + y * stride);
 
             for (int x = 0; x < 4; ++x)
             {
@@ -1807,7 +1805,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
                 if (uStartBit + uNumBits > 128)
                 {
                     debugPrint("BC6H: Invalid block encountered during decoding\n");
-                    FillWithErrorColorF128(output, stride);
+                    FillWithErrorColorF64(output, stride);
                     return;
                 }
                 const uint8_t uIndex = GetBits(uStartBit, uNumBits);
@@ -1815,7 +1813,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
                 if (uIndex >= ((info.uPartitions > 0) ? 8 : 16))
                 {
                     debugPrint("BC6H: Invalid index encountered during decoding\n");
-                    FillWithErrorColorF128(output, stride);
+                    FillWithErrorColorF64(output, stride);
                     return;
                 }
 
@@ -1830,18 +1828,16 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
                 const int g2 = Unquantize(aEndPts[uRegion].B.g, info.RGBAPrec[0][0].g, bSigned);
                 const int b2 = Unquantize(aEndPts[uRegion].B.b, info.RGBAPrec[0][0].b, bSigned);
                 const int* aWeights = info.uPartitions > 0 ? g_aWeights3 : g_aWeights4;
-                INTColor fc;
-                fc.r = FinishUnquantize((r1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + r2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
-                fc.g = FinishUnquantize((g1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + g2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
-                fc.b = FinishUnquantize((b1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + b2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
 
-                float16 rgb[3];
-                fc.ToF16(rgb, bSigned);
+                int c0 = FinishUnquantize((r1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + r2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
+                int c1 = FinishUnquantize((g1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + g2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
+                int c2 = FinishUnquantize((b1 * (BC67_WEIGHT_MAX - aWeights[uIndex]) + b2 * aWeights[uIndex] + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT, bSigned);
 
-                dest[x].r = rgb[0];
-                dest[x].g = rgb[1];
-                dest[x].b = rgb[2];
-                dest[x].a = 1.0f;
+                float16 r = INT2F16(c0, bSigned);
+                float16 g = INT2F16(c1, bSigned);
+                float16 b = INT2F16(c2, bSigned);
+
+                dest[x] = float16x4(r, g, b, float16(1.0f));
             }
         }
     }
@@ -1858,7 +1854,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
         debugPrint(warnstr);
 
         // Per the BC6H format spec, we must return opaque black
-        FillColorF128(output, stride, HDRColorA(0.0f, 0.0f, 0.0f, 1.0f));
+        FillColorF64(output, stride, float16x4(0.0f, 0.0f, 0.0f, 1.0f));
     }
 }
 
