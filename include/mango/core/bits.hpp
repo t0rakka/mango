@@ -281,22 +281,39 @@ namespace mango
 #endif
 
     static constexpr
-    int modulo(int value, int range)
+    int mul8bit(int a, int b)
     {
-        const int remainder = value % range;
-        return remainder < 0 ? remainder + range : remainder;
+        // (a * b) / 255
+        int temp = a * b + 128;
+        return (temp + (temp >> 8)) >> 8;
+    }
+
+    static constexpr
+    int div255(int value)
+    {
+        // value / 255
+        return (value + 128 + (value >> 8)) >> 8;
     }
 
     static constexpr
     int floor_div(int value, int multiple)
     {
+        // plain division
         return value / multiple;
     }
 
     static constexpr
     int ceil_div(int value, int multiple)
     {
+        // round to next multiple
         return (value + multiple - 1) / multiple;
+    }
+
+    static constexpr
+    int modulo(int value, int range)
+    {
+        const int remainder = value % range;
+        return remainder < 0 ? remainder + range : remainder;
     }
 
     static inline
