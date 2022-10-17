@@ -4,6 +4,7 @@
 */
 #pragma once
 
+#include <mango/core/bits.hpp>
 #include <mango/core/memory.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
@@ -255,16 +256,13 @@ namespace mango::image
         TextureCompressionStatus decompress(const Surface& surface, ConstMemory memory) const;
         TextureCompressionStatus compress(Memory memory, const Surface& surface) const;
 
-        CompressionFormat getCompressionFormat() const
-        {
-            const u32 formatValue = u32(compression) & 0x000000ff;
-            return CompressionFormat(formatValue);
-        }
+        CompressionFormat getCompressionFormat() const;
+        u32 getCompressionFlags() const;
 
-        u32 getCompressionFlags() const
-        {
-            return u32(compression) & 0xffff0000;
-        }
+        int getBlocksX(const Surface& surface) const;
+        int getBlocksY(const Surface& surface) const;
+        int getBlockCount(const Surface& surface) const;
+        u64 getBlockBytes(const Surface& surface) const;
     };
 
     using TextureCompressionFormat = TextureCompressionInfo::CompressionFormat;

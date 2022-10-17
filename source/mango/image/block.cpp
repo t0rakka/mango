@@ -1258,8 +1258,8 @@ namespace mango::image
             return status;
         }
 
-        const int xblocks = ceil_div(surface.width, width);
-        const int yblocks = ceil_div(surface.height, height);
+        const int xblocks = getBlocksX(surface);
+        const int yblocks = getBlocksY(surface);
 
         const bool noclip = surface.width == (xblocks * width) &&
                             surface.height == (yblocks * height);
@@ -1320,8 +1320,8 @@ namespace mango::image
 
         u8* address = memory.address;
 
-        const int xblocks = ceil_div(surface.width, width);
-        const int yblocks = ceil_div(surface.height, height);
+        const int xblocks = getBlocksX(surface);
+        const int yblocks = getBlocksY(surface);
 
         for (int y = 0; y < yblocks; ++y)
         {
@@ -1354,6 +1354,43 @@ namespace mango::image
         //debugPrint("\n");
 
         return status;
+    }
+
+    TextureCompressionInfo::CompressionFormat TextureCompressionInfo::getCompressionFormat() const
+    {
+        const u32 formatValue = u32(compression) & 0x000000ff;
+        return CompressionFormat(formatValue);
+    }
+
+    u32 TextureCompressionInfo::getCompressionFlags() const
+    {
+        return u32(compression) & 0xffff0000;
+    }
+
+    int TextureCompressionInfo::getBlocksX(const Surface& surface) const
+    {
+        // number of blocks horizontally required to copress the surface
+        return ceil_div(surface.width, width);
+    }
+
+    int TextureCompressionInfo::getBlocksY(const Surface& surface) const
+    {
+        // number of blocks vertically required to copress the surface
+        return ceil_div(surface.height, height);
+    }
+
+    int TextureCompressionInfo::getBlockCount(const Surface& surface) const
+    {
+        // number of blocks required to compress the surface
+        int xblocks = getBlocksX(surface);
+        int yblocks = getBlocksY(surface);
+        return xblocks * yblocks;
+    }
+
+    u64 TextureCompressionInfo::getBlockBytes(const Surface& surface) const
+    {
+        // amount of memory required to store compressed blocks
+        return getBlockCount(surface) * bytes;
     }
 
 } // namespace mango::image
