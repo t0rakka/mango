@@ -1369,13 +1369,13 @@ namespace mango::image
 
     int TextureCompressionInfo::getBlocksX(const Surface& surface) const
     {
-        // number of blocks horizontally required to copress the surface
+        // number of blocks horizontally required to compress the surface
         return ceil_div(surface.width, width);
     }
 
     int TextureCompressionInfo::getBlocksY(const Surface& surface) const
     {
-        // number of blocks vertically required to copress the surface
+        // number of blocks vertically required to compress the surface
         return ceil_div(surface.height, height);
     }
 
