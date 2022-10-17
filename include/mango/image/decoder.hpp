@@ -25,7 +25,7 @@ namespace mango::image
         bool    palette = false; // palette is available
         bool    premultiplied = false; // alpha is premultiplied
         Format  format; // preferred format (fastest available "direct" decoding is possible)
-        TextureCompression compression = TextureCompression::NONE;
+        u32     compression = TextureCompression::NONE;
         u32     supercompression = 0; // mask of supported compression formats
     };
 

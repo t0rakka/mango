@@ -209,7 +209,7 @@ namespace
     };
 #endif
 
-    bool resolve_format(Format& format, TextureCompression& compression, u32 gltype, u32 glformat)
+    bool resolve_format(Format& format, u32 compression, u32 gltype, u32 glformat)
     {
         Format::Type type = Format::NONE;
         Format::Order order = Format::RGBA;
@@ -560,11 +560,11 @@ namespace
             numberOfMipmapLevels = std::max(1U, numberOfMipmapLevels);
 
             Format format;
-            TextureCompression compression = opengl::getTextureCompression(glInternalFormat);
+            u32 compression = opengl::getTextureCompression(glInternalFormat);
 
             if (compression != TextureCompression::NONE)
             {
-                TextureCompressionInfo info(compression);
+                TextureCompression info(compression);
                 format = info.format;
             }
             else
@@ -680,11 +680,11 @@ namespace
             ConstMemory data = m_ktx_header.getMemory(m_memory, level, depth, face);
 
             Format format = header.format;
-            TextureCompressionInfo info = header.compression;
+            TextureCompression info = header.compression;
 
             if (info.compression != TextureCompression::NONE)
             {
-                TextureCompressionStatus cs = info.decompress(dest, data);
+                TextureCompression::Status cs = info.decompress(dest, data);
 
                 status.info = cs.info;
                 status.success = cs.success;

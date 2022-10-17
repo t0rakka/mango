@@ -1159,7 +1159,7 @@ namespace
 namespace mango::image
 {
 
-    void decode_surface_pvrtc(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_surface_pvrtc(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
 #if 0
         if (info.width < 8 || info.heigbt < 8)
@@ -1202,7 +1202,7 @@ namespace mango::image
         pvrtc_decompress(in, out, stride, info.width, info.height, bpp);
     }
 
-    void decode_surface_pvrtc2(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_surface_pvrtc2(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
         switch (info.compression)
         {

@@ -272,21 +272,21 @@ namespace
 namespace mango::image
 {
 
-    void decode_block_dxt1(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_block_dxt1(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const ColorBlock* blockColor = reinterpret_cast<const ColorBlock*>(in + 0);
         DecodeColor(out, stride, blockColor, 0xff, false);
     }
 
-    void decode_block_dxt1a(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_block_dxt1a(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const ColorBlock* blockColor = reinterpret_cast<const ColorBlock*>(in + 0);
         DecodeColor(out, stride, blockColor, 0, false);
     }
 
-    void decode_block_dxt3(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_block_dxt3(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const AlphaBlockExplicit* alphaBlock = reinterpret_cast<const AlphaBlockExplicit *>(in + 0);
@@ -295,7 +295,7 @@ namespace mango::image
         DecodeAlpha(out + 3, stride, alphaBlock);
     }
 
-    void decode_block_dxt5(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_block_dxt5(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const AlphaBlockLinear* alphaBlock = reinterpret_cast<const AlphaBlockLinear*>(in + 0);
@@ -304,14 +304,14 @@ namespace mango::image
         DecodeAlpha(out + 3, 4, stride, alphaBlock);
     }
 
-    void decode_block_3dc_x(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_block_3dc_x(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const AlphaBlockLinear* redBlock = reinterpret_cast<const AlphaBlockLinear*>(in + 0);
         DecodeAlpha(out + 0, 1, stride, redBlock);
     }
 
-    void decode_block_3dc_xy(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_block_3dc_xy(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const AlphaBlockLinear* redBlock = reinterpret_cast<const AlphaBlockLinear*>(in + 0);
@@ -320,13 +320,13 @@ namespace mango::image
         DecodeAlpha(out + 1, 2, stride, greenBlock);
     }
 
-    void decode_block_atc(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_block_atc(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         DecodeATC(out + 0, stride, in + 0);
     }
 
-    void decode_block_atc_e(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_block_atc_e(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const AlphaBlockExplicit* alphaBlock = reinterpret_cast<const AlphaBlockExplicit*>(in + 0);
@@ -334,7 +334,7 @@ namespace mango::image
         DecodeAlpha(out + 3, stride, alphaBlock);
     }
 
-    void decode_block_atc_i(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_block_atc_i(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const AlphaBlockLinear* alphaBlock = reinterpret_cast<const AlphaBlockLinear*>(in + 0);

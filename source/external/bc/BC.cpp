@@ -986,25 +986,25 @@ void D3DXEncodeBC3(u8* pBC, const u8* input, size_t stride, u32 flags) noexcept
 namespace mango::image
 {
 
-    void encode_block_bc1(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void encode_block_bc1(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         D3DXEncodeBC1(output, input, stride, 0.0f, DirectX::BC_FLAGS_NONE);
     }
 
-    void encode_block_bc1a(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void encode_block_bc1a(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         D3DXEncodeBC1(output, input, stride, 1.0f, DirectX::BC_FLAGS_NONE);
     }
 
-    void encode_block_bc2(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void encode_block_bc2(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         D3DXEncodeBC2(output, input, stride, DirectX::BC_FLAGS_NONE);
     }
 
-    void encode_block_bc3(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void encode_block_bc3(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         D3DXEncodeBC3(output, input, stride, DirectX::BC_FLAGS_NONE);

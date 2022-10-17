@@ -392,14 +392,14 @@ namespace
 namespace mango::image
 {
 
-    void decode_block_fxt1_rgb(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_block_fxt1_rgb(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const BlockFXT& block = *reinterpret_cast<const BlockFXT *>(in);
         decode_fxt1(out, stride, block, 0xff);
     }
 
-    void decode_block_fxt1_rgba(const TextureCompressionInfo& info, u8* out, const u8* in, size_t stride)
+    void decode_block_fxt1_rgba(const TextureCompression& info, u8* out, const u8* in, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const BlockFXT& block = *reinterpret_cast<const BlockFXT *>(in);

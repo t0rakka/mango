@@ -21,14 +21,17 @@ namespace mango::image
         return flags | (index << 8) | format;
     }
 
-    struct TextureCompressionStatus : Status
+    struct TextureCompression
     {
-        bool direct = false;
-    };
+        struct Status : mango::Status
+        {
+            bool direct = false;
+        };
 
-    struct TextureCompressionInfo
-    {
-        enum CompressionFormat : u32
+        using DecodeFunc = void (*)(const TextureCompression& info, u8* output, const u8* input, size_t stride);
+        using EncodeFunc = void (*)(const TextureCompression& info, u8* output, const u8* input, size_t stride);
+
+        enum BaseFormat : u32
         {
             FXT1        = 1,
             ATC         = 2, 
@@ -47,7 +50,7 @@ namespace mango::image
             PACKED      = 15,
         };
 
-        enum CompressionFlags : u32
+        enum Flags : u32
         {
             PVR      = 0x00010000, // Imagination PVR compressed texture
             BC       = 0x00020000, // DirectX Block Compression
@@ -60,7 +63,7 @@ namespace mango::image
             SRGB     = 0x80000000  // sRGB colorspace
         };
 
-        enum class TextureCompression : u32
+        enum : u32
         {
             NONE                          = makeTextureCompression(0, 0, 0),
 
@@ -227,10 +230,7 @@ namespace mango::image
             BC7_UNORM_SRGB                = BPTC_SRGB_ALPHA_UNORM
         };
 
-        using DecodeFunc = void (*)(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-        using EncodeFunc = void (*)(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-
-        TextureCompression compression; // block format (including flags)
+        u32 compression;    // block format (including flags)
         u32 dxgi;           // DXGI format
         u32 opengl;         // OpenGL format
         u32 vulkan;         // Vulkan format
@@ -240,34 +240,28 @@ namespace mango::image
         int depth;          // block depth
         int bytes;          // block size in bytes
         Format format;      // pixel format for encode/decode
+
         DecodeFunc decode;  // decoding function
         EncodeFunc encode;  // encoding function
 
-        TextureCompressionInfo();
-        TextureCompressionInfo(TextureCompression compression, u32 dxgi, u32 gl, u32 vk,
-                               int width, int height, int depth, int bytes,
-                               const Format& format, DecodeFunc decode, EncodeFunc encode);
-        TextureCompressionInfo(const TextureCompressionInfo& info, int width, int height);
-        TextureCompressionInfo(TextureCompression compression);
-        TextureCompressionInfo(dxgi::TextureFormat format);
-        TextureCompressionInfo(opengl::TextureFormat format);
-        TextureCompressionInfo(vulkan::TextureFormat format);
+        TextureCompression();
+        TextureCompression(u32 compression, u32 dxgi, u32 gl, u32 vk,
+                           int width, int height, int depth, int bytes,
+                           const Format& format, DecodeFunc decode, EncodeFunc encode);
+        TextureCompression(u32 compression);
+        TextureCompression(dxgi::TextureFormat format);
+        TextureCompression(opengl::TextureFormat format);
+        TextureCompression(vulkan::TextureFormat format);
 
-        TextureCompressionStatus decompress(const Surface& surface, ConstMemory memory) const;
-        TextureCompressionStatus compress(Memory memory, const Surface& surface) const;
+        Status decompress(const Surface& surface, ConstMemory memory) const;
+        Status compress(Memory memory, const Surface& surface) const;
 
-        CompressionFormat getCompressionFormat() const;
-        u32 getCompressionFlags() const;
-
+        u32 getFlags() const;
         int getBlocksX(const Surface& surface) const;
         int getBlocksY(const Surface& surface) const;
         int getBlockCount(const Surface& surface) const;
         u64 getBlockBytes(const Surface& surface) const;
     };
-
-    using TextureCompressionFormat = TextureCompressionInfo::CompressionFormat;
-    using TextureCompressionFlags = TextureCompressionInfo::CompressionFlags;
-    using TextureCompression = TextureCompressionInfo::TextureCompression;
 
     enum : u32
     {
@@ -297,45 +291,45 @@ namespace mango
     namespace opengl
     {
         static inline
-        image::TextureCompression getTextureCompression(u32 format)
+        u32 getTextureCompression(u32 format)
         {
-            return image::TextureCompressionInfo(opengl::TextureFormat(format)).compression;
+            return image::TextureCompression(opengl::TextureFormat(format)).compression;
         }
 
         static inline
-        u32 getTextureFormat(image::TextureCompression compression)
+        u32 getTextureFormat(u32 compression)
         {
-            return image::TextureCompressionInfo(compression).opengl;
+            return image::TextureCompression(compression).opengl;
         }
     }
 
     namespace vulkan
     {
         static inline
-        image::TextureCompression getTextureCompression(u32 format)
+        u32 getTextureCompression(u32 format)
         {
-            return image::TextureCompressionInfo(vulkan::TextureFormat(format)).compression;
+            return image::TextureCompression(vulkan::TextureFormat(format)).compression;
         }
 
         static inline
-        u32 getTextureFormat(image::TextureCompression compression)
+        u32 getTextureFormat(u32 compression)
         {
-            return image::TextureCompressionInfo(compression).vulkan;
+            return image::TextureCompression(compression).vulkan;
         }
     }
 
     namespace dxgi
     {
         static inline
-        image::TextureCompression getTextureCompression(u32 format)
+        u32 getTextureCompression(u32 format)
         {
-            return image::TextureCompressionInfo(dxgi::TextureFormat(format)).compression;
+            return image::TextureCompression(dxgi::TextureFormat(format)).compression;
         }
 
         static inline
-        u32 getTextureFormat(image::TextureCompression compression)
+        u32 getTextureFormat(u32 compression)
         {
-            return image::TextureCompressionInfo(compression).dxgi;
+            return image::TextureCompression(compression).dxgi;
         }
     }
 

@@ -625,14 +625,14 @@ namespace
 namespace mango::image
 {
 
-    void decode_block_etc1(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_etc1(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const u64 color = uload64be(input);
         decompress_block_etc1(output, stride, color);
     }
 
-    void decode_block_etc2(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_etc2(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         const bool alphaMode = info.compression == TextureCompression::ETC2_RGB_ALPHA1 ||
                                info.compression == TextureCompression::ETC2_SRGB_ALPHA1;
@@ -640,7 +640,7 @@ namespace mango::image
         decompress_block_etc2(output, stride, color, alphaMode);
     }
 
-    void decode_block_etc2_eac(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_etc2_eac(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         const u64 alpha = uload64be(input + 0);
@@ -649,14 +649,14 @@ namespace mango::image
         decompress_block_eac8(output, stride, alpha);
     }
 
-    void decode_block_eac_r11(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_eac_r11(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         const bool signedMode = info.compression == TextureCompression::EAC_SIGNED_R11;
         const u64 red = uload64be(input);
         decompress_block_eac11(output, 1, stride, red, signedMode);
     }
 
-    void decode_block_eac_rg11(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_eac_rg11(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         const bool signedMode = info.compression == TextureCompression::EAC_SIGNED_RG11;
         const u64 red = uload64be(input + 0);

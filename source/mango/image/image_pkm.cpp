@@ -49,7 +49,7 @@ namespace
 
             // preferred decode format
             Format format;
-            TextureCompression compression;
+            u32 compression;
 
             type = p.read16();
             switch (type)
@@ -162,8 +162,8 @@ namespace
                 return status;
             }
 
-            TextureCompressionInfo info = header.compression;
-            TextureCompressionStatus cs = info.decompress(dest, m_data);
+            TextureCompression info = header.compression;
+            TextureCompression::Status cs = info.decompress(dest, m_data);
 
             status.info = cs.info;
             status.success = cs.success;
@@ -207,7 +207,7 @@ namespace
         s.write16(surface.height);
 
         // select block compressor
-        TextureCompressionInfo info(TextureCompression::ETC1_RGB);
+        TextureCompression info(TextureCompression::ETC1_RGB);
         if (!info.encode)
         {
             status.setError("[ImageEncoder.PKM] No ETC1 compressor.");

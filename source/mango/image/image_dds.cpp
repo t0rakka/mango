@@ -449,9 +449,9 @@ namespace
         }
     };
 
-    TextureCompression fourcc_to_compression(u32 fourcc)
+    u32 fourcc_to_compression(u32 fourcc)
     {
-        TextureCompression compression = TextureCompression::NONE;
+        u32 compression = TextureCompression::NONE;
 
         switch (fourcc)
         {
@@ -580,7 +580,7 @@ namespace
         u32 aBitMask;
 
         Format format;
-        TextureCompression compression;
+        u32 compression;
 
         const char* error = nullptr;
 
@@ -818,7 +818,7 @@ namespace
         u32 caps4;
 
         ImageHeader header;
-        TextureCompressionInfo info;
+        TextureCompression info;
 
         const u8* data;
 
@@ -1102,12 +1102,12 @@ namespace
             }
 
             ConstMemory imageMemory = m_header.getMemory(level, depth, face);
-            TextureCompression compression = header.compression;
+            u32 compression = header.compression;
 
             if (m_header.pixelFormat.fourCC)
             {
-                TextureCompressionInfo info = fourcc_to_compression(m_header.pixelFormat.fourCC);
-                TextureCompressionStatus cs = info.decompress(dest, imageMemory);
+                TextureCompression info = fourcc_to_compression(m_header.pixelFormat.fourCC);
+                TextureCompression::Status cs = info.decompress(dest, imageMemory);
 
                 status.info = cs.info;
                 status.success = cs.success;
@@ -1115,8 +1115,8 @@ namespace
             }
             else if (compression != TextureCompression::NONE)
             {
-                TextureCompressionInfo info = compression;
-                TextureCompressionStatus cs = info.decompress(dest, imageMemory);
+                TextureCompression info = compression;
+                TextureCompression::Status cs = info.decompress(dest, imageMemory);
 
                 status.info = cs.info;
                 status.success = cs.success;

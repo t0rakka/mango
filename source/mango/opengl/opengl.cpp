@@ -415,7 +415,7 @@ namespace mango
         return version;
     }
 
-    bool OpenGLContext::isCompressedTextureSupported(TextureCompression compression) const
+    bool OpenGLContext::isCompressedTextureSupported(u32 compression) const
     {
         bool supported = false;
 

@@ -363,7 +363,7 @@ namespace
     struct VulkanFormatDesc
     {
         Format format;
-        TextureCompression compression;
+        u32 compression;
         const char* name;
     };
 
@@ -670,7 +670,7 @@ namespace
         if (desc.compression != TextureCompression::NONE)
         {
             // patch preferred decoding format
-            TextureCompressionInfo info(desc.compression);
+            TextureCompression info(desc.compression);
             desc.format = info.format;
         }
 
@@ -1286,8 +1286,8 @@ namespace
 
                 if (m_header.compression != TextureCompression::NONE)
                 {
-                    TextureCompressionInfo info(m_header.compression);
-                    TextureCompressionStatus ts = info.decompress(dest, memory);
+                    TextureCompression info(m_header.compression);
+                    TextureCompression::Status ts = info.decompress(dest, memory);
                     if (!ts)
                     {
                         status.setError(ts.info);

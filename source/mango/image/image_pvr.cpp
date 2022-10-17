@@ -195,7 +195,7 @@ namespace
         int m_faces;
         int m_mipmaps;
         int m_data_offset;
-        TextureCompressionInfo m_info;
+        TextureCompression m_info;
         ImageHeader header;
 
         void read(ConstMemory memory)
@@ -465,7 +465,7 @@ namespace
             m_faces = 1;
             m_data_offset = header_size;
 
-            m_info = TextureCompressionInfo(compression);
+            m_info = TextureCompression(compression);
             m_info.format = format;
         }
 
@@ -484,7 +484,7 @@ namespace
             }
 
             // compressed block default values
-            m_info = TextureCompressionInfo(TextureCompression::NONE);
+            m_info = TextureCompression(TextureCompression::NONE);
 
             if (int(pvr.channeltype) < typeTableSize)
             {
@@ -516,7 +516,7 @@ namespace
                     // TODO: support for COMPRESSED_NONE entries in the table (packed pixel formats, yuv, shared exponent, 1-bit b/w)
                     TextureCompression compression = formatTable[formatIndex];
 
-                    TextureCompressionInfo info(compression);
+                    TextureCompression info(compression);
 
                     if (info.compression != TextureCompression::NONE)
                     {
@@ -656,7 +656,7 @@ namespace
 
             if (m_pvr_header.m_info.compression != TextureCompression::NONE)
             {
-                TextureCompressionStatus cs = m_pvr_header.m_info.decompress(dest, data);
+                TextureCompression::Status cs = m_pvr_header.m_info.decompress(dest, data);
 
                 status.info = cs.info;
                 status.success = cs.success;

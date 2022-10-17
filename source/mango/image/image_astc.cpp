@@ -18,7 +18,7 @@ namespace
     {
         int xblock;
         int yblock;
-        TextureCompression compression;
+        u32 compression;
     }
     const g_astc_table[] =
     {
@@ -38,7 +38,7 @@ namespace
         { 12, 12, TextureCompression::ASTC_RGBA_12x12 }
     };
 
-    TextureCompression select_astc_format(int width, int height)
+    u32 select_astc_format(int width, int height)
     {
         for (const auto& astc : g_astc_table)
         {
@@ -92,7 +92,7 @@ namespace
                 return;
             }
 
-            TextureCompressionInfo info(header.compression);
+            TextureCompression info(header.compression);
             header.format = info.format;
         }
     };
@@ -146,11 +146,11 @@ namespace
                 return status;
             }
 
-            TextureCompressionInfo info(m_header.header.compression);
+            TextureCompression info(m_header.header.compression);
 
             if (info.compression != TextureCompression::NONE)
             {
-                TextureCompressionStatus cs = info.decompress(dest, m_data);
+                TextureCompression::Status cs = info.decompress(dest, m_data);
 
                 status.info = cs.info;
                 status.success = cs.success;

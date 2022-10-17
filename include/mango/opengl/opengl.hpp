@@ -168,7 +168,7 @@ namespace mango
         bool isExtension(const std::string& name) const;
         bool isGLES() const;
         int getVersion() const;
-        bool isCompressedTextureSupported(image::TextureCompression compression) const;
+        bool isCompressedTextureSupported(u32 compression) const;
         const InternalFormat* getInternalFormat(GLenum internalFormat) const;
 
         void makeCurrent();

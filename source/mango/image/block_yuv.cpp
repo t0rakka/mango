@@ -62,7 +62,7 @@ namespace
 namespace mango::image
 {
 
-    void decode_block_uyvy(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_uyvy(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         MANGO_UNREFERENCED(stride);
@@ -81,7 +81,7 @@ namespace mango::image
         dest[1] = pack_yrgb(y1, r, g, b);
     }
 
-    void decode_block_yuy2(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_yuy2(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         MANGO_UNREFERENCED(stride);
@@ -100,7 +100,7 @@ namespace mango::image
         dest[1] = pack_yrgb(y1, r, g, b);
     }
 
-    void decode_block_grgb8(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_grgb8(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         MANGO_UNREFERENCED(stride);
@@ -116,7 +116,7 @@ namespace mango::image
         output[7] = 0xff;
     }
 
-    void decode_block_rgbg8(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_rgbg8(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         MANGO_UNREFERENCED(stride);
@@ -132,7 +132,7 @@ namespace mango::image
         output[7] = 0xff;
     }
 
-    void decode_block_rgb9e5(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_rgb9e5(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         MANGO_UNREFERENCED(stride);
@@ -151,7 +151,7 @@ namespace mango::image
     }
 
     /*
-    void encode_block_r11f_g11f_b10f(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void encode_block_r11f_g11f_b10f(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         const float* source = reinterpret_cast<const float*>(input);
         u32* dest = reinterpret_cast<u32*>(output);
@@ -163,7 +163,7 @@ namespace mango::image
     }
     */
 
-    void decode_block_r11f_g11f_b10f(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_r11f_g11f_b10f(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         MANGO_UNREFERENCED(stride);
@@ -185,7 +185,7 @@ namespace mango::image
         dest[3] = 1.0f;
     }
 
-    void decode_block_r10f_g11f_b11f(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_r10f_g11f_b11f(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
         MANGO_UNREFERENCED(stride);

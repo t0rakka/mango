@@ -385,7 +385,7 @@ void etc_encode_block_helper(const etc1_byte* pIn, size_t stride,
 namespace mango::image
 {
 
-    void encode_block_etc1(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void encode_block_etc1(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
 

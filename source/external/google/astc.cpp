@@ -1486,7 +1486,7 @@ namespace mango::image
     // The isLDR is redundant and should reflect the value of isSRGB and exists only because the decoder
     // has flexibility our front-end doesn't require. Don't be confused about this. :D
 
-    void decode_block_astc_srgb(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_astc_srgb(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         const bool isSRGB = true;
         const bool isLDR = true;
@@ -1516,7 +1516,7 @@ namespace mango::image
         }
     }
 
-    void decode_block_astc_fp16(const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride)
+    void decode_block_astc_fp16(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         const bool isSRGB = false;
         const bool isLDR = false;

@@ -17,59 +17,59 @@ namespace mango::image
 
     // decode
 
-    void decode_block_dxt1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC1
-    void decode_block_dxt1a           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC1A
-    void decode_block_dxt3            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC2
-    void decode_block_dxt5            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC3
-    void decode_block_3dc_x           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC4U
-    void decode_block_3dc_xy          (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride); // BC5U
-    void decode_block_uyvy            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_yuy2            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_grgb8           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_rgbg8           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_rgb9e5          (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_r11f_g11f_b10f  (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_r10f_g11f_b11f  (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_atc             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_atc_e           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_atc_i           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_fxt1_rgb        (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_fxt1_rgba       (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_dxt1            (const TextureCompression& info, u8* output, const u8* input, size_t stride); // BC1
+    void decode_block_dxt1a           (const TextureCompression& info, u8* output, const u8* input, size_t stride); // BC1A
+    void decode_block_dxt3            (const TextureCompression& info, u8* output, const u8* input, size_t stride); // BC2
+    void decode_block_dxt5            (const TextureCompression& info, u8* output, const u8* input, size_t stride); // BC3
+    void decode_block_3dc_x           (const TextureCompression& info, u8* output, const u8* input, size_t stride); // BC4U
+    void decode_block_3dc_xy          (const TextureCompression& info, u8* output, const u8* input, size_t stride); // BC5U
+    void decode_block_uyvy            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_yuy2            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_grgb8           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_rgbg8           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_rgb9e5          (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_r11f_g11f_b10f  (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_r10f_g11f_b11f  (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_atc             (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_atc_e           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_atc_i           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_fxt1_rgb        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_fxt1_rgba       (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
-    void decode_surface_pvrtc         (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_surface_pvrtc2        (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_surface_pvrtc         (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_surface_pvrtc2        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
-    void decode_block_etc1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_etc2            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_etc2_eac        (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_eac_r11         (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_eac_rg11        (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_astc_fp16       (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_astc_srgb       (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_etc1            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_etc2            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_etc2_eac        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_eac_r11         (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_eac_rg11        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_astc_fp16       (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_astc_srgb       (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
-    void decode_block_bc4u            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_bc4s            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_bc5u            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_bc5s            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_bc6hu           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_bc6hs           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void decode_block_bc7             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc4u            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc4s            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc5u            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc5s            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc6hu           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc6hs           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bc7             (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
     // encode
 
-    void encode_block_bc1             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void encode_block_bc1a            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void encode_block_bc2             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void encode_block_bc3             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void encode_block_bc4u            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void encode_block_bc4s            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void encode_block_bc5u            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void encode_block_bc5s            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void encode_block_bc6hu           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void encode_block_bc6hs           (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
-    void encode_block_bc7             (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc1             (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc1a            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc2             (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc3             (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc4u            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc4s            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc5u            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc5s            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc6hu           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc6hs           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void encode_block_bc7             (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
-    void encode_block_etc1            (const TextureCompressionInfo& info, u8* output, const u8* input, size_t stride);
+    void encode_block_etc1            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
 } // namespace mango::image
 
@@ -78,16 +78,16 @@ namespace
     using namespace mango;
     using namespace mango::image;
 
-    const TextureCompressionInfo g_blockTable[] =
+    const TextureCompression g_blockTable[] =
     {
 
         // NONE
 
-        TextureCompressionInfo(),
+        TextureCompression(),
 
         // 3DFX_texture_compression_FXT1
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::FXT1_RGB,
             0,
             opengl::COMPRESSED_RGB_FXT1_3DFX,
@@ -96,7 +96,7 @@ namespace
             decode_block_fxt1_rgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::FXT1_RGBA,
             0,
             opengl::COMPRESSED_RGBA_FXT1_3DFX,
@@ -107,7 +107,7 @@ namespace
 
         // AMD_compressed_ATC_texture
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ATC_RGB,
             0,
             opengl::ATC_RGB_AMD,
@@ -116,7 +116,7 @@ namespace
             decode_block_atc, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ATC_RGBA_EXPLICIT_ALPHA,
             0,
             opengl::ATC_RGBA_EXPLICIT_ALPHA_AMD,
@@ -125,7 +125,7 @@ namespace
             decode_block_atc_e, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ATC_RGBA_INTERPOLATED_ALPHA,
             0,
             opengl::ATC_RGBA_INTERPOLATED_ALPHA_AMD,
@@ -136,7 +136,7 @@ namespace
 
         // AMD_compressed_3DC_texture
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::AMD_3DC_X,
             dxgi::FORMAT_BC4_UNORM,
             opengl::AMD_3DC_X,
@@ -145,7 +145,7 @@ namespace
             decode_block_3dc_x, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::AMD_3DC_XY,
             dxgi::FORMAT_BC5_UNORM,
             opengl::AMD_3DC_XY,
@@ -156,7 +156,7 @@ namespace
 
         // LATC
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::LATC1_LUMINANCE,
             0,
             opengl::COMPRESSED_LUMINANCE_LATC1_EXT,
@@ -165,7 +165,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::LATC1_SIGNED_LUMINANCE,
             0,
             opengl::COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT,
@@ -174,7 +174,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::LATC2_LUMINANCE_ALPHA,
             0,
             opengl::COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT,
@@ -183,7 +183,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::LATC2_SIGNED_LUMINANCE_ALPHA,
             0,
             opengl::COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT,
@@ -194,7 +194,7 @@ namespace
 
         // DXT
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::DXT1,
             dxgi::FORMAT_BC1_UNORM,
             opengl::COMPRESSED_RGB_S3TC_DXT1_EXT,
@@ -203,7 +203,7 @@ namespace
             decode_block_dxt1, encode_block_bc1
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::DXT1_SRGB,
             dxgi::FORMAT_BC1_UNORM_SRGB,
             opengl::COMPRESSED_SRGB_S3TC_DXT1_EXT,
@@ -212,7 +212,7 @@ namespace
             decode_block_dxt1, encode_block_bc1
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::DXT1_ALPHA1,
             0,
             opengl::COMPRESSED_RGBA_S3TC_DXT1_EXT,
@@ -221,7 +221,7 @@ namespace
             decode_block_dxt1a, encode_block_bc1a
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::DXT1_ALPHA1_SRGB,
             0,
             opengl::COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT,
@@ -230,7 +230,7 @@ namespace
             decode_block_dxt1a, encode_block_bc1a
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::DXT3,
             dxgi::FORMAT_BC2_UNORM,
             opengl::COMPRESSED_RGBA_S3TC_DXT3_EXT,
@@ -239,7 +239,7 @@ namespace
             decode_block_dxt3, encode_block_bc2
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::DXT3_SRGB,
             dxgi::FORMAT_BC2_UNORM_SRGB,
             opengl::COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT,
@@ -248,7 +248,7 @@ namespace
             decode_block_dxt3, encode_block_bc2
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::DXT5,
             dxgi::FORMAT_BC3_UNORM,
             opengl::COMPRESSED_RGBA_S3TC_DXT5_EXT,
@@ -257,7 +257,7 @@ namespace
             decode_block_dxt5, encode_block_bc3
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::DXT5_SRGB,
             dxgi::FORMAT_BC3_UNORM_SRGB,
             opengl::COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT,
@@ -268,7 +268,7 @@ namespace
 
         // RGTC
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::RGTC1_RED,
             dxgi::FORMAT_BC4_UNORM,
             opengl::COMPRESSED_RED_RGTC1,
@@ -277,7 +277,7 @@ namespace
             decode_block_bc4u, encode_block_bc4u
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::RGTC1_SIGNED_RED,
             dxgi::FORMAT_BC4_SNORM,
             opengl::COMPRESSED_SIGNED_RED_RGTC1,
@@ -286,7 +286,7 @@ namespace
             decode_block_bc4s, encode_block_bc4s
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::RGTC2_RG,
             dxgi::FORMAT_BC5_UNORM,
             opengl::COMPRESSED_RG_RGTC2,
@@ -295,7 +295,7 @@ namespace
             decode_block_bc5u, encode_block_bc5u
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::RGTC2_SIGNED_RG,
             dxgi::FORMAT_BC5_SNORM,
             opengl::COMPRESSED_SIGNED_RG_RGTC2,
@@ -306,7 +306,7 @@ namespace
 
         // BPTC
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::BPTC_RGB_UNSIGNED_FLOAT,
             dxgi::FORMAT_BC6H_UF16,
             opengl::COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT,
@@ -315,7 +315,7 @@ namespace
             decode_block_bc6hu, encode_block_bc6hu
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::BPTC_RGB_SIGNED_FLOAT,
             dxgi::FORMAT_BC6H_SF16,
             opengl::COMPRESSED_RGB_BPTC_SIGNED_FLOAT,
@@ -324,7 +324,7 @@ namespace
             decode_block_bc6hs, encode_block_bc6hs
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::BPTC_RGBA_UNORM,
             dxgi::FORMAT_BC7_UNORM,
             opengl::COMPRESSED_RGBA_BPTC_UNORM,
@@ -333,7 +333,7 @@ namespace
             decode_block_bc7, encode_block_bc7
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::BPTC_SRGB_ALPHA_UNORM,
             dxgi::FORMAT_BC7_UNORM_SRGB,
             opengl::COMPRESSED_SRGB_ALPHA_BPTC_UNORM,
@@ -344,7 +344,7 @@ namespace
 
         // IMG_texture_compression_pvrtc
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::PVRTC_RGB_4BPP,
             0,
             opengl::COMPRESSED_RGB_PVRTC_4BPPV1_IMG,
@@ -353,7 +353,7 @@ namespace
             decode_surface_pvrtc, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::PVRTC_RGB_2BPP,
             0,
             opengl::COMPRESSED_RGB_PVRTC_2BPPV1_IMG,
@@ -362,7 +362,7 @@ namespace
             decode_surface_pvrtc, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::PVRTC_RGBA_4BPP,
             0,
             opengl::COMPRESSED_RGBA_PVRTC_4BPPV1_IMG,
@@ -371,7 +371,7 @@ namespace
             decode_surface_pvrtc, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::PVRTC_RGBA_2BPP,
             0,
             opengl::COMPRESSED_RGBA_PVRTC_2BPPV1_IMG,
@@ -382,7 +382,7 @@ namespace
 
         // IMG_texture_compression_pvrtc2
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::PVRTC2_RGBA_2BPP,
             0,
             opengl::COMPRESSED_RGBA_PVRTC_2BPPV2_IMG,
@@ -391,7 +391,7 @@ namespace
             decode_surface_pvrtc2, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::PVRTC2_RGBA_4BPP,
             0,
             opengl::COMPRESSED_RGBA_PVRTC_4BPPV2_IMG,
@@ -402,7 +402,7 @@ namespace
 
         // VK_IMG_format_pvrtc
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::PVRTC2_2BPP_SRGB_BLOCK_IMG,
             0, // not supported in DirectX
             0, // not supported in OpenGL
@@ -411,7 +411,7 @@ namespace
             decode_surface_pvrtc2, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::PVRTC2_4BPP_SRGB_BLOCK_IMG,
             0, // not supported in DirectX
             0, // not supported in OpenGL
@@ -422,7 +422,7 @@ namespace
 
         // EXT_pvrtc_sRGB
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::PVRTC_SRGB_2BPP,
             0,
             opengl::COMPRESSED_SRGB_PVRTC_2BPPV1_EXT,
@@ -431,7 +431,7 @@ namespace
             decode_surface_pvrtc, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::PVRTC_SRGB_4BPP,
             0,
             opengl::COMPRESSED_SRGB_PVRTC_4BPPV1_EXT,
@@ -440,7 +440,7 @@ namespace
             decode_surface_pvrtc, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::PVRTC_SRGB_ALPHA_2BPP,
             0,
             opengl::COMPRESSED_SRGB_ALPHA_PVRTC_2BPPV1_EXT,
@@ -449,7 +449,7 @@ namespace
             decode_surface_pvrtc, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::PVRTC_SRGB_ALPHA_4BPP,
             0,
             opengl::COMPRESSED_SRGB_ALPHA_PVRTC_4BPPV1_EXT,
@@ -460,7 +460,7 @@ namespace
 
         // OES_compressed_ETC1_RGB8_texture
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ETC1_RGB,
             0,
             opengl::ETC1_RGB8_OES,
@@ -471,7 +471,7 @@ namespace
 
         // ETC2 / EAC
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::EAC_R11,
             0,
             opengl::COMPRESSED_R11_EAC,
@@ -480,7 +480,7 @@ namespace
             decode_block_eac_r11, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::EAC_SIGNED_R11,
             0,
             opengl::COMPRESSED_SIGNED_R11_EAC,
@@ -489,7 +489,7 @@ namespace
             decode_block_eac_r11, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::EAC_RG11,
             0,
             opengl::COMPRESSED_RG11_EAC,
@@ -498,7 +498,7 @@ namespace
             decode_block_eac_rg11, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::EAC_SIGNED_RG11,
             0,
             opengl::COMPRESSED_SIGNED_RG11_EAC,
@@ -507,7 +507,7 @@ namespace
             decode_block_eac_rg11, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ETC2_RGB,
             0,
             opengl::COMPRESSED_RGB8_ETC2,
@@ -516,7 +516,7 @@ namespace
             decode_block_etc2, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ETC2_SRGB,
             0,
             opengl::COMPRESSED_SRGB8_ETC2,
@@ -525,7 +525,7 @@ namespace
             decode_block_etc2, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ETC2_RGB_ALPHA1,
             0,
             opengl::COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2,
@@ -534,7 +534,7 @@ namespace
             decode_block_etc2, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ETC2_SRGB_ALPHA1,
             0,
             opengl::COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2,
@@ -543,7 +543,7 @@ namespace
             decode_block_etc2, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ETC2_RGBA,
             0,
             opengl::COMPRESSED_RGBA8_ETC2_EAC,
@@ -552,7 +552,7 @@ namespace
             decode_block_etc2_eac, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ETC2_SRGB_ALPHA8,
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ETC2_EAC,
@@ -564,7 +564,7 @@ namespace
         // KHR_texture_compression_astc_ldr
         // KHR_texture_compression_astc_hdr
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_4x4,
             dxgi::FORMAT_ASTC_4X4_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_4x4_KHR,
@@ -573,7 +573,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_5x4,
             dxgi::FORMAT_ASTC_5X4_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_5x4_KHR,
@@ -582,7 +582,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_5x5,
             dxgi::FORMAT_ASTC_5X5_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_5x5_KHR,
@@ -591,7 +591,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_6x5,
             dxgi::FORMAT_ASTC_6X5_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_6x5_KHR,
@@ -600,7 +600,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_6x6,
             dxgi::FORMAT_ASTC_6X6_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_6x6_KHR,
@@ -609,7 +609,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_8x5,
             dxgi::FORMAT_ASTC_8X5_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_8x5_KHR,
@@ -618,7 +618,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_8x6,
             dxgi::FORMAT_ASTC_8X6_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_8x6_KHR,
@@ -627,7 +627,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_8x8,
             dxgi::FORMAT_ASTC_8X8_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_8x8_KHR,
@@ -636,7 +636,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_10x5,
             dxgi::FORMAT_ASTC_10X5_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_10x5_KHR,
@@ -645,7 +645,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_10x6,
             dxgi::FORMAT_ASTC_10X6_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_10x6_KHR,
@@ -654,7 +654,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_10x8,
             dxgi::FORMAT_ASTC_10X8_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_10x8_KHR,
@@ -663,7 +663,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_10x10,
             dxgi::FORMAT_ASTC_10X10_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_10x10_KHR,
@@ -672,7 +672,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_12x10,
             dxgi::FORMAT_ASTC_12X10_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_12x10_KHR,
@@ -681,7 +681,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_12x12,
             dxgi::FORMAT_ASTC_12X12_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_12x12_KHR,
@@ -690,7 +690,7 @@ namespace
             decode_block_astc_fp16, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_4x4,
             dxgi::FORMAT_ASTC_4X4_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR,
@@ -699,7 +699,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_5x4,
             dxgi::FORMAT_ASTC_5X4_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR,
@@ -708,7 +708,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_5x5,
             dxgi::FORMAT_ASTC_5X5_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR,
@@ -717,7 +717,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_6x5,
             dxgi::FORMAT_ASTC_6X5_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR,
@@ -726,7 +726,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_6x6,
             dxgi::FORMAT_ASTC_6X6_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR,
@@ -735,7 +735,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_8x5,
             dxgi::FORMAT_ASTC_8X5_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR,
@@ -744,7 +744,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_8x6,
             dxgi::FORMAT_ASTC_8X6_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR,
@@ -753,7 +753,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_8x8,
             dxgi::FORMAT_ASTC_8X8_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR,
@@ -762,7 +762,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_10x5,
             dxgi::FORMAT_ASTC_10X5_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR,
@@ -771,7 +771,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_10x6,
             dxgi::FORMAT_ASTC_10X6_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR,
@@ -780,7 +780,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_10x8,
             dxgi::FORMAT_ASTC_10X8_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR,
@@ -789,7 +789,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_10x10,
             dxgi::FORMAT_ASTC_10X10_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR,
@@ -798,7 +798,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_12x10,
             dxgi::FORMAT_ASTC_12X10_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR,
@@ -807,7 +807,7 @@ namespace
             decode_block_astc_srgb, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_12x12,
             dxgi::FORMAT_ASTC_12X12_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR,
@@ -818,7 +818,7 @@ namespace
 
         // OES_texture_compression_astc
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_3x3x3,
             0,
             opengl::COMPRESSED_RGBA_ASTC_3x3x3_OES,
@@ -827,7 +827,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_4x3x3,
             0,
             opengl::COMPRESSED_RGBA_ASTC_4x3x3_OES,
@@ -836,7 +836,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_4x4x3,
             0,
             opengl::COMPRESSED_RGBA_ASTC_4x4x3_OES,
@@ -845,7 +845,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_4x4x4,
             0,
             opengl::COMPRESSED_RGBA_ASTC_4x4x4_OES,
@@ -854,7 +854,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_5x4x4,
             0,
             opengl::COMPRESSED_RGBA_ASTC_5x4x4_OES,
@@ -863,7 +863,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_5x5x4,
             0,
             opengl::COMPRESSED_RGBA_ASTC_5x5x4_OES,
@@ -872,7 +872,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_5x5x5,
             0,
             opengl::COMPRESSED_RGBA_ASTC_5x5x5_OES,
@@ -881,7 +881,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_6x5x5,
             0,
             opengl::COMPRESSED_RGBA_ASTC_6x5x5_OES,
@@ -890,7 +890,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_6x6x5,
             0,
             opengl::COMPRESSED_RGBA_ASTC_6x6x5_OES,
@@ -899,7 +899,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_RGBA_6x6x6,
             0,
             opengl::COMPRESSED_RGBA_ASTC_6x6x6_OES,
@@ -908,7 +908,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_3x3x3,
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_3x3x3_OES,
@@ -917,7 +917,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_4x3x3,
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_4x3x3_OES,
@@ -926,7 +926,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_4x4x3,
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x3_OES,
@@ -935,7 +935,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_4x4x4,
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_4x4x4_OES,
@@ -944,7 +944,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_5x4x4,
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_5x4x4_OES,
@@ -953,7 +953,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_5x5x4,
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x4_OES,
@@ -962,7 +962,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_5x5x5,
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_5x5x5_OES,
@@ -971,7 +971,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_6x5x5,
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_6x5x5_OES,
@@ -980,7 +980,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_6x6x5,
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x5_OES,
@@ -989,7 +989,7 @@ namespace
             nullptr, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::ASTC_SRGB_ALPHA_6x6x6,
             0,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_6x6x6_OES,
@@ -1000,7 +1000,7 @@ namespace
 
         // Packed Pixel
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::RGB9_E5,
             dxgi::FORMAT_R9G9B9E5_SHAREDEXP,
             0x8C3D,
@@ -1009,7 +1009,7 @@ namespace
             decode_block_rgb9e5, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::R11F_G11F_B10F,
             0,
             0x8C3A,
@@ -1018,7 +1018,7 @@ namespace
             decode_block_r11f_g11f_b10f, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::R10F_G11F_B11F,
             0,
             0,
@@ -1027,7 +1027,7 @@ namespace
             decode_block_r10f_g11f_b11f, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::G8R8G8B8,
             dxgi::FORMAT_G8R8_G8B8_UNORM,
             0,
@@ -1036,7 +1036,7 @@ namespace
             decode_block_grgb8, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::R8G8B8G8,
             dxgi::FORMAT_R8G8_B8G8_UNORM,
             0,
@@ -1045,7 +1045,7 @@ namespace
             decode_block_rgbg8, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::UYVY,
             0,
             0,
@@ -1054,7 +1054,7 @@ namespace
             decode_block_uyvy, nullptr
         ),
 
-        TextureCompressionInfo(
+        TextureCompression(
             TextureCompression::YUY2,
             0,
             0,
@@ -1066,7 +1066,7 @@ namespace
 
     // block decode
 
-    void scanBlockDecode(const TextureCompressionInfo& info, u8* image, const u8* data, size_t stride, int xblocks, size_t xstride)
+    void scanBlockDecode(const TextureCompression& info, u8* image, const u8* data, size_t stride, int xblocks, size_t xstride)
     {
         for (int x = 0; x < xblocks; ++x)
         {
@@ -1076,7 +1076,7 @@ namespace
         }
     }
 
-    void directBlockDecode(const TextureCompressionInfo& info, const Surface& surface, ConstMemory memory, int xblocks, int yblocks)
+    void directBlockDecode(const TextureCompression& info, const Surface& surface, ConstMemory memory, int xblocks, int yblocks)
     {
         const u8* data = memory.address;
 
@@ -1086,7 +1086,7 @@ namespace
         size_t xstride = info.width * surface.format.bytes();
         size_t ystride = info.height * surface.stride;
 
-        const bool origin = (info.getCompressionFlags() & TextureCompressionInfo::ORIGIN) != 0;
+        const bool origin = (info.getFlags() & TextureCompression::ORIGIN) != 0;
         if (origin)
         {
             image += yblocks * ystride;
@@ -1123,9 +1123,11 @@ namespace
         }
     }
 
-    void directSurfaceDecode(const TextureCompressionInfo& info, const Surface& surface, ConstMemory memory)
+    void directSurfaceDecode(const TextureCompression& info, const Surface& surface, ConstMemory memory)
     {
-        TextureCompressionInfo temp(info, surface.width, surface.height);
+        TextureCompression temp(info);
+        temp.width = surface.width;
+        temp.height = surface.height;
         temp.decode(temp, surface.image, memory.address, surface.stride);
     }
 
@@ -1135,10 +1137,10 @@ namespace mango::image
 {
 
     // ----------------------------------------------------------------------------
-    // TextureCompressionInfo
+    // TextureCompression
     // ----------------------------------------------------------------------------
 
-    TextureCompressionInfo::TextureCompressionInfo()
+    TextureCompression::TextureCompression()
         : compression(TextureCompression::NONE)
         , dxgi(0)
         , opengl(0)
@@ -1153,8 +1155,10 @@ namespace mango::image
     {
     }
 
-    TextureCompressionInfo::TextureCompressionInfo(TextureCompression compression, u32 dxgi, u32 opengl, u32 vulkan,
-        int width, int height, int depth, int bytes, const Format& format, DecodeFunc decode, EncodeFunc encode)
+    TextureCompression::TextureCompression(
+        u32 compression, u32 dxgi, u32 opengl, u32 vulkan,
+        int width, int height, int depth, int bytes,
+        const Format& format, DecodeFunc decode, EncodeFunc encode)
         : compression(compression)
         , dxgi(dxgi)
         , opengl(opengl)
@@ -1169,28 +1173,14 @@ namespace mango::image
     {
     }
 
-    TextureCompressionInfo::TextureCompressionInfo(const TextureCompressionInfo& info, int width, int height)
-        : compression(info.compression)
-        , dxgi(info.dxgi)
-        , opengl(info.opengl)
-        , vulkan(info.vulkan)
-        , width(width)
-        , height(height)
-        , depth(info.depth)
-        , bytes(info.bytes)
-        , format(info.format)
-        , decode(info.decode)
-        , encode(info.encode)
+    TextureCompression::TextureCompression(u32 compression)
+        : compression(compression)
     {
-    }
-
-    TextureCompressionInfo::TextureCompressionInfo(TextureCompression comp)
-    {
-        const TextureCompressionInfo* info = &g_blockTable[0];
+        const TextureCompression* info = &g_blockTable[0];
 
         for (const auto& node : g_blockTable)
         {
-            if (node.compression == comp)
+            if (node.compression == compression)
             {
                 info = &node;
                 break;
@@ -1200,9 +1190,9 @@ namespace mango::image
         *this = *info;
     }
 
-    TextureCompressionInfo::TextureCompressionInfo(dxgi::TextureFormat format)
+    TextureCompression::TextureCompression(dxgi::TextureFormat format)
     {
-        const TextureCompressionInfo* info = &g_blockTable[0];
+        const TextureCompression* info = &g_blockTable[0];
 
         for (const auto& node : g_blockTable)
         {
@@ -1216,9 +1206,9 @@ namespace mango::image
         *this = *info;
     }
 
-    TextureCompressionInfo::TextureCompressionInfo(opengl::TextureFormat format)
+    TextureCompression::TextureCompression(opengl::TextureFormat format)
     {
-        const TextureCompressionInfo* info = &g_blockTable[0];
+        const TextureCompression* info = &g_blockTable[0];
 
         for (const auto& node : g_blockTable)
         {
@@ -1232,9 +1222,9 @@ namespace mango::image
         *this = *info;
     }
 
-    TextureCompressionInfo::TextureCompressionInfo(vulkan::TextureFormat format)
+    TextureCompression::TextureCompression(vulkan::TextureFormat format)
     {
-        const TextureCompressionInfo* info = &g_blockTable[0];
+        const TextureCompression* info = &g_blockTable[0];
 
         for (const auto& node : g_blockTable)
         {
@@ -1248,9 +1238,9 @@ namespace mango::image
         *this = *info;
     }
 
-    TextureCompressionStatus TextureCompressionInfo::decompress(const Surface& surface, ConstMemory memory) const
+    TextureCompression::Status TextureCompression::decompress(const Surface& surface, ConstMemory memory) const
     {
-        TextureCompressionStatus status;
+        TextureCompression::Status status;
 
         if (!decode)
         {
@@ -1266,7 +1256,7 @@ namespace mango::image
         const bool noconvert = surface.format == format;
         const bool direct = noclip && noconvert;
 
-        if (getCompressionFlags() & TextureCompressionInfo::SURFACE)
+        if (getFlags() & TextureCompression::SURFACE)
         {
             // mode: surface
             if (direct)
@@ -1295,7 +1285,7 @@ namespace mango::image
                 // NOTE: The compressed image is always rounded to the block size. When the image
                 //       origin is at bottom, mirroring will leave padding pixels on the top.
                 //       We shift the image "up" by yoffset pixels to crop the padding.
-                bool origin = (getCompressionFlags() & TextureCompressionInfo::ORIGIN) != 0;
+                bool origin = (getFlags() & TextureCompression::ORIGIN) != 0;
                 int yoffset = origin ? surface.height - yblocks * height : 0;
                 surface.blit(0, yoffset, bitmap);
             }
@@ -1306,9 +1296,9 @@ namespace mango::image
         return status;
     }
 
-    TextureCompressionStatus TextureCompressionInfo::compress(Memory memory, const Surface& surface) const
+    TextureCompression::Status TextureCompression::compress(Memory memory, const Surface& surface) const
     {
-        TextureCompressionStatus status;
+        TextureCompression::Status status;
 
         if (!encode)
         {
@@ -1356,30 +1346,24 @@ namespace mango::image
         return status;
     }
 
-    TextureCompressionInfo::CompressionFormat TextureCompressionInfo::getCompressionFormat() const
-    {
-        const u32 formatValue = u32(compression) & 0x000000ff;
-        return CompressionFormat(formatValue);
-    }
-
-    u32 TextureCompressionInfo::getCompressionFlags() const
+    u32 TextureCompression::getFlags() const
     {
         return u32(compression) & 0xffff0000;
     }
 
-    int TextureCompressionInfo::getBlocksX(const Surface& surface) const
+    int TextureCompression::getBlocksX(const Surface& surface) const
     {
         // number of blocks horizontally required to compress the surface
         return ceil_div(surface.width, width);
     }
 
-    int TextureCompressionInfo::getBlocksY(const Surface& surface) const
+    int TextureCompression::getBlocksY(const Surface& surface) const
     {
         // number of blocks vertically required to compress the surface
         return ceil_div(surface.height, height);
     }
 
-    int TextureCompressionInfo::getBlockCount(const Surface& surface) const
+    int TextureCompression::getBlockCount(const Surface& surface) const
     {
         // number of blocks required to compress the surface
         int xblocks = getBlocksX(surface);
@@ -1387,7 +1371,7 @@ namespace mango::image
         return xblocks * yblocks;
     }
 
-    u64 TextureCompressionInfo::getBlockBytes(const Surface& surface) const
+    u64 TextureCompression::getBlockBytes(const Surface& surface) const
     {
         // amount of memory required to store compressed blocks
         return getBlockCount(surface) * bytes;
