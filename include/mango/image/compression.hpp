@@ -259,16 +259,16 @@ namespace mango::image
         u32 getFlags() const;
 
         // number of blocks horizontally required to compress the surface
-        int getBlocksX(const Surface& surface) const;
+        int getBlocksX(int width) const;
 
         // number of blocks vertically required to compress the surface
-        int getBlocksY(const Surface& surface) const;
+        int getBlocksY(int height) const;
 
         // number of blocks required to compress the surface
-        int getBlockCount(const Surface& surface) const;
+        int getBlockCount(int width, int height) const;
 
         // amount of memory required to store compressed blocks
-        u64 getBlockBytes(const Surface& surface) const;
+        u64 getBlockBytes(int width, int height) const;
     };
 
 } // namespace mango::image

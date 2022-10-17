@@ -1245,8 +1245,8 @@ namespace mango::image
             return status;
         }
 
-        const int xblocks = getBlocksX(surface);
-        const int yblocks = getBlocksY(surface);
+        const int xblocks = getBlocksX(surface.width);
+        const int yblocks = getBlocksY(surface.height);
 
         const bool noclip = surface.width == (xblocks * width) &&
                             surface.height == (yblocks * height);
@@ -1307,8 +1307,8 @@ namespace mango::image
 
         u8* address = memory.address;
 
-        const int xblocks = getBlocksX(surface);
-        const int yblocks = getBlocksY(surface);
+        const int xblocks = getBlocksX(surface.width);
+        const int yblocks = getBlocksY(surface.height);
 
         for (int y = 0; y < yblocks; ++y)
         {
@@ -1348,30 +1348,26 @@ namespace mango::image
         return u32(compression) & 0xffff0000;
     }
 
-    int TextureCompression::getBlocksX(const Surface& surface) const
+    int TextureCompression::getBlocksX(int width) const
     {
-        // number of blocks horizontally required to compress the surface
-        return ceil_div(surface.width, width);
+        return ceil_div(width, this->width);
     }
 
-    int TextureCompression::getBlocksY(const Surface& surface) const
+    int TextureCompression::getBlocksY(int height) const
     {
-        // number of blocks vertically required to compress the surface
-        return ceil_div(surface.height, height);
+        return ceil_div(height, this->height);
     }
 
-    int TextureCompression::getBlockCount(const Surface& surface) const
+    int TextureCompression::getBlockCount(int width, int height) const
     {
-        // number of blocks required to compress the surface
-        int xblocks = getBlocksX(surface);
-        int yblocks = getBlocksY(surface);
+        int xblocks = getBlocksX(width);
+        int yblocks = getBlocksY(height);
         return xblocks * yblocks;
     }
 
-    u64 TextureCompression::getBlockBytes(const Surface& surface) const
+    u64 TextureCompression::getBlockBytes(int width, int height) const
     {
-        // amount of memory required to store compressed blocks
-        return getBlockCount(surface) * bytes;
+        return getBlockCount(width, height) * bytes;
     }
 
 } // namespace mango::image

@@ -197,42 +197,55 @@ namespace
         DXGI_FORMAT_ASTC_4X4_TYPELESS           = 133,
         DXGI_FORMAT_ASTC_4X4_UNORM              = 134,
         DXGI_FORMAT_ASTC_4X4_UNORM_SRGB         = 135,
+
         DXGI_FORMAT_ASTC_5X4_TYPELESS           = 137,
         DXGI_FORMAT_ASTC_5X4_UNORM              = 138,
         DXGI_FORMAT_ASTC_5X4_UNORM_SRGB         = 139,
+
         DXGI_FORMAT_ASTC_5X5_TYPELESS           = 141,
         DXGI_FORMAT_ASTC_5X5_UNORM              = 142,
         DXGI_FORMAT_ASTC_5X5_UNORM_SRGB         = 143,
+
         DXGI_FORMAT_ASTC_6X5_TYPELESS           = 145,
         DXGI_FORMAT_ASTC_6X5_UNORM              = 146,
         DXGI_FORMAT_ASTC_6X5_UNORM_SRGB         = 147,
+
         DXGI_FORMAT_ASTC_6X6_TYPELESS           = 149,
         DXGI_FORMAT_ASTC_6X6_UNORM              = 150,
         DXGI_FORMAT_ASTC_6X6_UNORM_SRGB         = 151,
+
         DXGI_FORMAT_ASTC_8X5_TYPELESS           = 153,
         DXGI_FORMAT_ASTC_8X5_UNORM              = 154,
         DXGI_FORMAT_ASTC_8X5_UNORM_SRGB         = 155,
+
         DXGI_FORMAT_ASTC_8X6_TYPELESS           = 157,
         DXGI_FORMAT_ASTC_8X6_UNORM              = 158,
         DXGI_FORMAT_ASTC_8X6_UNORM_SRGB         = 159,
+
         DXGI_FORMAT_ASTC_8X8_TYPELESS           = 161,
         DXGI_FORMAT_ASTC_8X8_UNORM              = 162,
         DXGI_FORMAT_ASTC_8X8_UNORM_SRGB         = 163,
+
         DXGI_FORMAT_ASTC_10X5_TYPELESS          = 165,
         DXGI_FORMAT_ASTC_10X5_UNORM             = 166,
         DXGI_FORMAT_ASTC_10X5_UNORM_SRGB        = 167,
+
         DXGI_FORMAT_ASTC_10X6_TYPELESS          = 169,
         DXGI_FORMAT_ASTC_10X6_UNORM             = 170,
         DXGI_FORMAT_ASTC_10X6_UNORM_SRGB        = 171,
+
         DXGI_FORMAT_ASTC_10X8_TYPELESS          = 173,
         DXGI_FORMAT_ASTC_10X8_UNORM             = 174,
         DXGI_FORMAT_ASTC_10X8_UNORM_SRGB        = 175,
+
         DXGI_FORMAT_ASTC_10X10_TYPELESS         = 177,
         DXGI_FORMAT_ASTC_10X10_UNORM            = 178,
         DXGI_FORMAT_ASTC_10X10_UNORM_SRGB       = 179,
+
         DXGI_FORMAT_ASTC_12X10_TYPELESS         = 181,
         DXGI_FORMAT_ASTC_12X10_UNORM            = 182,
         DXGI_FORMAT_ASTC_12X10_UNORM_SRGB       = 183,
+
         DXGI_FORMAT_ASTC_12X12_TYPELESS         = 185,
         DXGI_FORMAT_ASTC_12X12_UNORM            = 186,
         DXGI_FORMAT_ASTC_12X12_UNORM_SRGB       = 187,
@@ -241,6 +254,7 @@ namespace
     struct FormatDXGI
     {
         u32 fourcc;
+        u32 compression;
         Format format;
         bool srgb; // NOTE: this is not used anywhere yet
         const char* name;
@@ -251,181 +265,223 @@ namespace
 
     const FormatDXGI g_dxgi_table[] =
     {
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, MAKE_FORMAT(128, NONE, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_TYPELESS" },
-        { 0, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_FLOAT" },
-        { 0, MAKE_FORMAT(128, UINT, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_UINT" },
-        { 0, MAKE_FORMAT(128, SINT, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_SINT" },
-        { 0, MAKE_FORMAT(96, NONE, RGB, 32, 32, 32, 0), false, "R32G32B32_TYPELESS" },
-        { 0, MAKE_FORMAT(96, FLOAT32, RGB, 32, 32, 32, 0), false, "R32G32B32_FLOAT" },
-        { 0, MAKE_FORMAT(96, UINT, RGB, 32, 32, 32, 0), false, "R32G32B32_UINT" },
-        { 0, MAKE_FORMAT(96, SINT, RGB, 32, 32, 32, 0), false, "R32G32B32_SINT" },
-        { 0, MAKE_FORMAT(64, NONE, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_TYPELESS" },
-        { 0, MAKE_FORMAT(64, FLOAT16, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_FLOAT" },
-        { 0, MAKE_FORMAT(64, UNORM, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_UNORM" },
-        { 0, MAKE_FORMAT(64, UINT, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_UINT" },
-        { 0, MAKE_FORMAT(64, SNORM, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_SNORM" },
-        { 0, MAKE_FORMAT(64, SINT, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_SINT" },
-        { 0, MAKE_FORMAT(64, NONE, RG, 32, 32, 0, 0), false, "R32G32_TYPELESS" },
-        { 0, MAKE_FORMAT(64, FLOAT32, RG, 32, 32, 0, 0), false, "R32G32_FLOAT" },
-        { 0, MAKE_FORMAT(64, UINT, RG, 32, 32, 0, 0), false, "R32G32_UINT" },
-        { 0, MAKE_FORMAT(64, SINT, RG, 32, 32, 0, 0), false, "R32G32_SINT" },
-        { 0, Format(), false, "R32G8X24_TYPELESS" }, // not supported
-        { 0, Format(), false, "D32_FLOAT_S8X24_UINT" }, // not supported
-        { 0, Format(), false, "R32_FLOAT_X8X24_TYPELESS" }, // not supported
-        { 0, Format(), false, "X32_TYPELESS_G8X24_UINT" }, // not supported
-        { 0, MAKE_FORMAT(32, NONE, RGBA, 10, 10, 10, 2), false, "R10G10B10A2_TYPELESS" },
-        { 0, MAKE_FORMAT(32, UNORM, RGBA, 10, 10, 10, 2), false, "R10G10B10A2_UNORM" },
-        { 0, MAKE_FORMAT(32, UINT, RGBA, 10, 10, 10, 2), false, "R10G10B10A2_UINT" },
-        { 0, Format(), false, "R11G11B10_FLOAT" }, // not supported
-        { 0, MAKE_FORMAT(32, NONE, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_TYPELESS" },
-        { 0, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_UNORM" },
-        { 0, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), true, "R8G8B8A8_UNORM_SRGB" },
-        { 0, MAKE_FORMAT(32, UINT, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_UINT" },
-        { 0, MAKE_FORMAT(32, SNORM, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_SNORM" },
-        { 0, MAKE_FORMAT(32, SINT, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_SINT" },
-        { 0, MAKE_FORMAT(32, NONE, RG, 16, 16, 0, 0), false, "R16G16_TYPELESS" },
-        { 0, MAKE_FORMAT(32, FLOAT16, RG, 16, 16, 0, 0), false, "R16G16_FLOAT" },
-        { 0, MAKE_FORMAT(32, UNORM, RG, 16, 16, 0, 0), false, "R16G16_UNORM" },
-        { 0, MAKE_FORMAT(32, UINT, RG, 16, 16, 0, 0), false, "R16G16_UINT" },
-        { 0, MAKE_FORMAT(32, SNORM, RG, 16, 16, 0, 0), false, "R16G16_SNORM" },
-        { 0, MAKE_FORMAT(32, SINT, RG, 16, 16, 0, 0), false, "R16G16_SINT" },
-        { 0, MAKE_FORMAT(32, NONE, R, 32, 0, 0, 0), false, "R32_TYPELESS" },
-        { 0, Format(), false, "D32_FLOAT" }, // not supported
-        { 0, MAKE_FORMAT(32, FLOAT32, R, 32, 0, 0, 0), false, "R32_FLOAT" },
-        { 0, MAKE_FORMAT(32, UINT, R, 32, 0, 0, 0), false, "R32_UINT" },
-        { 0, MAKE_FORMAT(32, SINT, R, 32, 0, 0, 0), false, "R32_SINT" },
-        { 0, MAKE_FORMAT(32, NONE, RG, 24, 8, 0, 0), false, "R24G8_TYPELESS" },
-        { 0, Format(), false, "D24_UNORM_S8_UINT" }, // not supported
-        { 0, Format(), false, "R24_UNORM_X8_TYPELESS" }, // not supported
-        { 0, Format(), false, "X24_TYPELESS_G8_UINT" }, // not supported
-        { 0, MAKE_FORMAT(16, NONE, RG, 8, 8, 0, 0), false, "R8G8_TYPELESS" },
-        { 0, MAKE_FORMAT(16, UNORM, RG, 8, 8, 0, 0), false, "R8G8_UNORM" },
-        { 0, MAKE_FORMAT(16, UINT, RG, 8, 8, 0, 0), false, "R8G8_UINT" },
-        { 0, MAKE_FORMAT(16, SNORM, RG, 8, 8, 0, 0), false, "R8G8_SNORM" },
-        { 0, MAKE_FORMAT(16, SINT, RG, 8, 8, 0, 0), false, "R8G8_SINT" },
-        { 0, MAKE_FORMAT(16, NONE, R, 16, 0, 0, 0), false, "R16_TYPELESS" },
-        { 0, MAKE_FORMAT(16, FLOAT16, R, 16, 0, 0, 0), false, "R16_FLOAT" },
-        { 0, Format(), false, "D16_UNORM" }, // not supported
-        { 0, MAKE_FORMAT(16, UNORM, R, 16, 0, 0, 0), false, "R16_UNORM" },
-        { 0, MAKE_FORMAT(16, UINT, R, 16, 0, 0, 0), false, "R16_UINT" },
-        { 0, MAKE_FORMAT(16, SNORM, R, 16, 0, 0, 0), false, "R16_SNORM" },
-        { 0, MAKE_FORMAT(16, SINT, R, 16, 0, 0, 0), false, "R16_SINT" },
-        { 0, MAKE_FORMAT(8, NONE, R, 8, 0, 0, 0), false, "R8_TYPELESS" },
-        { 0, MAKE_FORMAT(8, UNORM, R, 8, 0, 0, 0), false, "R8_UNORM" },
-        { 0, MAKE_FORMAT(8, UINT, R, 8, 0, 0, 0), false, "R8_UINT" },
-        { 0, MAKE_FORMAT(8, SNORM, R, 8, 0, 0, 0), false, "R8_SNORM" },
-        { 0, MAKE_FORMAT(8, SINT, R, 8, 0, 0, 0), false, "R8_SINT" },
-        { 0, MAKE_FORMAT(8, UNORM, A, 8, 0, 0, 0), false, "A8_UNORM" },
-        { 0, Format(), false, "R1_UNORM" }, // not supported
-        { 0, Format(), false, "R9G9B9E5_SHAREDEXP" }, // not supported
-        { 0, Format(), false, "R8G8_B8G8_UNORM" },  // not supported: could be handled by FOURCC
-        { 0, Format(), false, "G8R8_G8B8_UNORM" },  // not supported: could be handled by FOURCC
-        { FOURCC_DXT1, Format(), false, "BC1_TYPELESS" },
-        { FOURCC_DXT1, Format(), false, "BC1_UNORM" },
-        { FOURCC_DXT1, Format(), true, "BC1_UNORM_SRGB" },
-        { FOURCC_DXT3, Format(), false, "BC2_TYPELESS" },
-        { FOURCC_DXT3, Format(), false, "BC2_UNORM" },
-        { FOURCC_DXT3, Format(), true, "BC2_UNORM_SRGB" },
-        { FOURCC_DXT5, Format(), false, "BC3_TYPELESS" },
-        { FOURCC_DXT5, Format(), false, "BC3_UNORM" },
-        { FOURCC_DXT5, Format(), true, "BC3_UNORM_SRGB" },
-        { FOURCC_BC4U, Format(), false, "BC4_TYPELESS" },
-        { FOURCC_BC4U, Format(), false, "BC4_UNORM" },
-        { FOURCC_BC4S, Format(), false, "BC4_SNORM" },
-        { FOURCC_BC5U, Format(), false, "BC5_TYPELESS" },
-        { FOURCC_BC5U, Format(), false, "BC5_UNORM" },
-        { FOURCC_BC5S, Format(), false, "BC5_SNORM" },
-        { 0, MAKE_FORMAT(16, UNORM, BGR, 5, 6, 5, 0), false, "B5G6R5_UNORM" },
-        { 0, MAKE_FORMAT(16, UNORM, BGRA, 5, 5, 5, 1), false, "B5G5R5A1_UNORM" },
-        { 0, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), false, "B8G8R8A8_UNORM" },
-        { 0, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 0), false, "B8G8R8X8_UNORM" },
-        { 0, Format(), false, "R10G10B10_XR_BIAS_A2_UNORM" }, // not supported
-        { 0, MAKE_FORMAT(32, NONE, BGRA, 8, 8, 8, 8), false, "B8G8R8A8_TYPELESS" },
-        { 0, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), true, "B8G8R8A8_UNORM_SRGB" },
-        { 0, MAKE_FORMAT(32, NONE, BGRA, 8, 8, 8, 0), false, "B8G8R8X8_TYPELESS" },
-        { 0, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 0), true, "B8G8R8X8_UNORM_SRGB" },
-        { 0, Format(), false, "BC6H_TYPELESS" }, // not supported
-        { 0, Format(), false, "BC6H_UF16" }, // not supported
-        { 0, Format(), false, "BC6H_SF16" }, // not supported
-        { 0, Format(), false, "BC7_TYPELESS" }, // not supported
-        { 0, Format(), false, "BC7_UNORM" }, // not supported
-        { 0, Format(), true, "BC7_UNORM_SRGB" }, // not supported
-        { 0, Format(), false, "AYUV" }, // not supported
-        { 0, Format(), false, "Y410" }, // not supported
-        { 0, Format(), false, "Y416" }, // not supported
-        { 0, Format(), false, "NV12" }, // not supported
-        { 0, Format(), false, "P010" }, // not supported
-        { 0, Format(), false, "P016" }, // not supported
-        { 0, Format(), false, "420_OPAQUE" }, // not supported
-        { FOURCC_YUY2, Format(), false, "YUY2" },
-        { 0, Format(), false, "Y210" }, // not supported
-        { 0, Format(), false, "Y216" }, // not supported
-        { 0, Format(), false, "NV11" }, // not supported
-        { 0, Format(), false, "AI44" }, // not supported
-        { 0, Format(), false, "IA44" }, // not supported
-        { 0, Format(), false, "P8" }, // not supported
-        { 0, Format(), false, "A8P8" }, // not supported
-        { 0, MAKE_FORMAT(16, UNORM, BGRA, 4, 4, 4, 4), false, "B4G4R4A4_UNORM" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "UNKNOWN" },
-        { 0, Format(), false, "P208" }, // not supported
-        { 0, Format(), false, "V208" }, // not supported
-        { 0, Format(), false, "V408" }, // not supported
-        { FOURCC_ASTC4x4, Format(), false, "ASTC_4X4_TYPELESS" },
-        { FOURCC_ASTC4x4, Format(), false, "ASTC_4X4_UNORM" },
-        { FOURCC_ASTC4x4, Format(), true,  "ASTC_4X4_UNORM_SRGB" },
-        { 0, Format(), false, "ASTC_5X4_TYPELESS" },
-        { 0, Format(), false, "ASTC_5X4_UNORM" },
-        { 0, Format(), true,  "ASTC_5X4_UNORM_SRGB" },
-        { FOURCC_ASTC5x5, Format(), false, "ASTC_5X5_TYPELESS" },
-        { FOURCC_ASTC5x5, Format(), false, "ASTC_5X5_UNORM" },
-        { FOURCC_ASTC5x5, Format(), true,  "ASTC_5X5_UNORM_SRGB" },
-        { 0, Format(), false, "ASTC_6X5_TYPELESS" },
-        { 0, Format(), false, "ASTC_6X5_UNORM" },
-        { 0, Format(), true,  "ASTC_6X5_UNORM_SRGB" },
-        { FOURCC_ASTC6x6, Format(), false, "ASTC_6X6_TYPELESS" },
-        { FOURCC_ASTC6x6, Format(), false, "ASTC_6X6_UNORM" },
-        { FOURCC_ASTC6x6, Format(), true,  "ASTC_6X6_UNORM_SRGB" },
-        { FOURCC_ASTC8x5, Format(), false, "ASTC_8X5_TYPELESS" },
-        { FOURCC_ASTC8x5, Format(), false, "ASTC_8X5_UNORM" },
-        { FOURCC_ASTC8x5, Format(), true,  "ASTC_8X5_UNORM_SRGB" },
-        { FOURCC_ASTC8x6, Format(), false, "ASTC_8X6_TYPELESS" },
-        { FOURCC_ASTC8x6, Format(), false, "ASTC_8X6_UNORM" },
-        { FOURCC_ASTC8x6, Format(), true,  "ASTC_8X6_UNORM_SRGB" },
-        { 0, Format(), false, "ASTC_8X8_TYPELESS" },
-        { 0, Format(), false, "ASTC_8X8_UNORM" },
-        { 0, Format(), true,  "ASTC_8X8_UNORM_SRGB" },
-        { FOURCC_ASTC10x5, Format(), false, "ASTC_10X5_TYPELESS" },
-        { FOURCC_ASTC10x5, Format(), false, "ASTC_10X5_UNORM" },
-        { FOURCC_ASTC10x5, Format(), true,  "ASTC_10X5_UNORM_SRGB" },
-        { 0, Format(), false, "ASTC_10X6_TYPELESS" },
-        { 0, Format(), false, "ASTC_10X6_UNORM" },
-        { 0, Format(), true,  "ASTC_10X6_UNORM_SRGB" },
-        { 0, Format(), false, "ASTC_10X8_TYPELESS" },
-        { 0, Format(), false, "ASTC_10X8_UNORM" },
-        { 0, Format(), true,  "ASTC_10X8_UNORM_SRGB" },
-        { 0, Format(), false, "ASTC_10X10_TYPELESS" },
-        { 0, Format(), false, "ASTC_10X10_UNORM" },
-        { 0, Format(), true,  "ASTC_10X10_UNORM_SRGB" },
-        { 0, Format(), false, "ASTC_12X10_TYPELESS" },
-        { 0, Format(), false, "ASTC_12X10_UNORM" },
-        { 0, Format(), true,  "ASTC_12X10_UNORM_SRGB" },
-        { 0, Format(), false, "ASTC_12X12_TYPELESS" },
-        { 0, Format(), false, "ASTC_12X12_UNORM" },
-        { 0, Format(), true,  "ASTC_12X12_UNORM_SRGB" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, MAKE_FORMAT(128, NONE, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_TYPELESS" },
+        { 0, 0, MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_FLOAT" },
+        { 0, 0, MAKE_FORMAT(128, UINT, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_UINT" },
+        { 0, 0, MAKE_FORMAT(128, SINT, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_SINT" },
+        { 0, 0, MAKE_FORMAT(96, NONE, RGB, 32, 32, 32, 0), false, "R32G32B32_TYPELESS" },
+        { 0, 0, MAKE_FORMAT(96, FLOAT32, RGB, 32, 32, 32, 0), false, "R32G32B32_FLOAT" },
+        { 0, 0, MAKE_FORMAT(96, UINT, RGB, 32, 32, 32, 0), false, "R32G32B32_UINT" },
+        { 0, 0, MAKE_FORMAT(96, SINT, RGB, 32, 32, 32, 0), false, "R32G32B32_SINT" },
+        { 0, 0, MAKE_FORMAT(64, NONE, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_TYPELESS" },
+        { 0, 0, MAKE_FORMAT(64, FLOAT16, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_FLOAT" },
+        { 0, 0, MAKE_FORMAT(64, UNORM, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_UNORM" },
+        { 0, 0, MAKE_FORMAT(64, UINT, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_UINT" },
+        { 0, 0, MAKE_FORMAT(64, SNORM, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_SNORM" },
+        { 0, 0, MAKE_FORMAT(64, SINT, RGBA, 16, 16, 16, 16), false, "R16G16B16A16_SINT" },
+        { 0, 0, MAKE_FORMAT(64, NONE, RG, 32, 32, 0, 0), false, "R32G32_TYPELESS" },
+        { 0, 0, MAKE_FORMAT(64, FLOAT32, RG, 32, 32, 0, 0), false, "R32G32_FLOAT" },
+        { 0, 0, MAKE_FORMAT(64, UINT, RG, 32, 32, 0, 0), false, "R32G32_UINT" },
+        { 0, 0, MAKE_FORMAT(64, SINT, RG, 32, 32, 0, 0), false, "R32G32_SINT" },
+        { 0, 0, Format(), false, "R32G8X24_TYPELESS" }, // not supported
+        { 0, 0, Format(), false, "D32_FLOAT_S8X24_UINT" }, // not supported
+        { 0, 0, Format(), false, "R32_FLOAT_X8X24_TYPELESS" }, // not supported
+        { 0, 0, Format(), false, "X32_TYPELESS_G8X24_UINT" }, // not supported
+        { 0, 0, MAKE_FORMAT(32, NONE, RGBA, 10, 10, 10, 2), false, "R10G10B10A2_TYPELESS" },
+        { 0, 0, MAKE_FORMAT(32, UNORM, RGBA, 10, 10, 10, 2), false, "R10G10B10A2_UNORM" },
+        { 0, 0, MAKE_FORMAT(32, UINT, RGBA, 10, 10, 10, 2), false, "R10G10B10A2_UINT" },
+        { 0, 0, Format(), false, "R11G11B10_FLOAT" }, // not supported
+        { 0, 0, MAKE_FORMAT(32, NONE, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_TYPELESS" },
+        { 0, 0, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_UNORM" },
+        { 0, 0, MAKE_FORMAT(32, UNORM, RGBA, 8, 8, 8, 8), true, "R8G8B8A8_UNORM_SRGB" },
+        { 0, 0, MAKE_FORMAT(32, UINT, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_UINT" },
+        { 0, 0, MAKE_FORMAT(32, SNORM, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_SNORM" },
+        { 0, 0, MAKE_FORMAT(32, SINT, RGBA, 8, 8, 8, 8), false, "R8G8B8A8_SINT" },
+        { 0, 0, MAKE_FORMAT(32, NONE, RG, 16, 16, 0, 0), false, "R16G16_TYPELESS" },
+        { 0, 0, MAKE_FORMAT(32, FLOAT16, RG, 16, 16, 0, 0), false, "R16G16_FLOAT" },
+        { 0, 0, MAKE_FORMAT(32, UNORM, RG, 16, 16, 0, 0), false, "R16G16_UNORM" },
+        { 0, 0, MAKE_FORMAT(32, UINT, RG, 16, 16, 0, 0), false, "R16G16_UINT" },
+        { 0, 0, MAKE_FORMAT(32, SNORM, RG, 16, 16, 0, 0), false, "R16G16_SNORM" },
+        { 0, 0, MAKE_FORMAT(32, SINT, RG, 16, 16, 0, 0), false, "R16G16_SINT" },
+        { 0, 0, MAKE_FORMAT(32, NONE, R, 32, 0, 0, 0), false, "R32_TYPELESS" },
+        { 0, 0, Format(), false, "D32_FLOAT" }, // not supported
+        { 0, 0, MAKE_FORMAT(32, FLOAT32, R, 32, 0, 0, 0), false, "R32_FLOAT" },
+        { 0, 0, MAKE_FORMAT(32, UINT, R, 32, 0, 0, 0), false, "R32_UINT" },
+        { 0, 0, MAKE_FORMAT(32, SINT, R, 32, 0, 0, 0), false, "R32_SINT" },
+        { 0, 0, MAKE_FORMAT(32, NONE, RG, 24, 8, 0, 0), false, "R24G8_TYPELESS" },
+        { 0, 0, Format(), false, "D24_UNORM_S8_UINT" }, // not supported
+        { 0, 0, Format(), false, "R24_UNORM_X8_TYPELESS" }, // not supported
+        { 0, 0, Format(), false, "X24_TYPELESS_G8_UINT" }, // not supported
+        { 0, 0, MAKE_FORMAT(16, NONE, RG, 8, 8, 0, 0), false, "R8G8_TYPELESS" },
+        { 0, 0, MAKE_FORMAT(16, UNORM, RG, 8, 8, 0, 0), false, "R8G8_UNORM" },
+        { 0, 0, MAKE_FORMAT(16, UINT, RG, 8, 8, 0, 0), false, "R8G8_UINT" },
+        { 0, 0, MAKE_FORMAT(16, SNORM, RG, 8, 8, 0, 0), false, "R8G8_SNORM" },
+        { 0, 0, MAKE_FORMAT(16, SINT, RG, 8, 8, 0, 0), false, "R8G8_SINT" },
+        { 0, 0, MAKE_FORMAT(16, NONE, R, 16, 0, 0, 0), false, "R16_TYPELESS" },
+        { 0, 0, MAKE_FORMAT(16, FLOAT16, R, 16, 0, 0, 0), false, "R16_FLOAT" },
+        { 0, 0, Format(), false, "D16_UNORM" }, // not supported
+        { 0, 0, MAKE_FORMAT(16, UNORM, R, 16, 0, 0, 0), false, "R16_UNORM" },
+        { 0, 0, MAKE_FORMAT(16, UINT, R, 16, 0, 0, 0), false, "R16_UINT" },
+        { 0, 0, MAKE_FORMAT(16, SNORM, R, 16, 0, 0, 0), false, "R16_SNORM" },
+        { 0, 0, MAKE_FORMAT(16, SINT, R, 16, 0, 0, 0), false, "R16_SINT" },
+        { 0, 0, MAKE_FORMAT(8, NONE, R, 8, 0, 0, 0), false, "R8_TYPELESS" },
+        { 0, 0, MAKE_FORMAT(8, UNORM, R, 8, 0, 0, 0), false, "R8_UNORM" },
+        { 0, 0, MAKE_FORMAT(8, UINT, R, 8, 0, 0, 0), false, "R8_UINT" },
+        { 0, 0, MAKE_FORMAT(8, SNORM, R, 8, 0, 0, 0), false, "R8_SNORM" },
+        { 0, 0, MAKE_FORMAT(8, SINT, R, 8, 0, 0, 0), false, "R8_SINT" },
+        { 0, 0, MAKE_FORMAT(8, UNORM, A, 8, 0, 0, 0), false, "A8_UNORM" },
+        { 0, 0, Format(), false, "R1_UNORM" }, // not supported
+        { 0, 0, Format(), false, "R9G9B9E5_SHAREDEXP" }, // not supported
+        { 0, 0, Format(), false, "R8G8_B8G8_UNORM" },  // not supported: could be handled by FOURCC
+        { 0, 0, Format(), false, "G8R8_G8B8_UNORM" },  // not supported: could be handled by FOURCC
+        { FOURCC_DXT1, TextureCompression::BC1_UNORM, Format(), false, "BC1_TYPELESS" },
+        { FOURCC_DXT1, TextureCompression::BC1_UNORM, Format(), false, "BC1_UNORM" },
+        { FOURCC_DXT1, TextureCompression::BC1_UNORM_SRGB, Format(), true, "BC1_UNORM_SRGB" },
+        { FOURCC_DXT3, TextureCompression::BC2_UNORM, Format(), false, "BC2_TYPELESS" },
+        { FOURCC_DXT3, TextureCompression::BC2_UNORM, Format(), false, "BC2_UNORM" },
+        { FOURCC_DXT3, TextureCompression::BC2_UNORM_SRGB, Format(), true, "BC2_UNORM_SRGB" },
+        { FOURCC_DXT5, TextureCompression::BC3_UNORM, Format(), false, "BC3_TYPELESS" },
+        { FOURCC_DXT5, TextureCompression::BC3_UNORM, Format(), false, "BC3_UNORM" },
+        { FOURCC_DXT5, TextureCompression::BC3_UNORM_SRGB, Format(), true, "BC3_UNORM_SRGB" },
+        { FOURCC_BC4U, TextureCompression::BC4_UNORM, Format(), false, "BC4_TYPELESS" },
+        { FOURCC_BC4U, TextureCompression::BC4_UNORM, Format(), false, "BC4_UNORM" },
+        { FOURCC_BC4S, TextureCompression::BC4_SNORM, Format(), false, "BC4_SNORM" },
+        { FOURCC_BC5U, TextureCompression::BC5_UNORM, Format(), false, "BC5_TYPELESS" },
+        { FOURCC_BC5U, TextureCompression::BC5_UNORM, Format(), false, "BC5_UNORM" },
+        { FOURCC_BC5S, TextureCompression::BC5_SNORM, Format(), false, "BC5_SNORM" },
+        { 0, 0, MAKE_FORMAT(16, UNORM, BGR, 5, 6, 5, 0), false, "B5G6R5_UNORM" },
+        { 0, 0, MAKE_FORMAT(16, UNORM, BGRA, 5, 5, 5, 1), false, "B5G5R5A1_UNORM" },
+        { 0, 0, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), false, "B8G8R8A8_UNORM" },
+        { 0, 0, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 0), false, "B8G8R8X8_UNORM" },
+        { 0, 0, Format(), false, "R10G10B10_XR_BIAS_A2_UNORM" }, // not supported
+        { 0, 0, MAKE_FORMAT(32, NONE, BGRA, 8, 8, 8, 8), false, "B8G8R8A8_TYPELESS" },
+        { 0, 0, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 8), true, "B8G8R8A8_UNORM_SRGB" },
+        { 0, 0, MAKE_FORMAT(32, NONE, BGRA, 8, 8, 8, 0), false, "B8G8R8X8_TYPELESS" },
+        { 0, 0, MAKE_FORMAT(32, UNORM, BGRA, 8, 8, 8, 0), true, "B8G8R8X8_UNORM_SRGB" },
+        { 0, TextureCompression::BC6H_UF16, Format(), false, "BC6H_TYPELESS" }, // not supported
+        { 0, TextureCompression::BC6H_UF16, Format(), false, "BC6H_UF16" }, // not supported
+        { 0, TextureCompression::BC6H_SF16, Format(), false, "BC6H_SF16" }, // not supported
+        { 0, TextureCompression::BC7_UNORM, Format(), false, "BC7_TYPELESS" }, // not supported
+        { 0, TextureCompression::BC7_UNORM, Format(), false, "BC7_UNORM" }, // not supported
+        { 0, TextureCompression::BC7_UNORM_SRGB, Format(), true, "BC7_UNORM_SRGB" }, // not supported
+        { 0, 0, Format(), false, "AYUV" }, // not supported
+        { 0, 0, Format(), false, "Y410" }, // not supported
+        { 0, 0, Format(), false, "Y416" }, // not supported
+        { 0, 0, Format(), false, "NV12" }, // not supported
+        { 0, 0, Format(), false, "P010" }, // not supported
+        { 0, 0, Format(), false, "P016" }, // not supported
+        { 0, 0, Format(), false, "420_OPAQUE" }, // not supported
+        { FOURCC_YUY2, 0, Format(), false, "YUY2" },
+        { 0, 0, Format(), false, "Y210" }, // not supported
+        { 0, 0, Format(), false, "Y216" }, // not supported
+        { 0, 0, Format(), false, "NV11" }, // not supported
+        { 0, 0, Format(), false, "AI44" }, // not supported
+        { 0, 0, Format(), false, "IA44" }, // not supported
+        { 0, 0, Format(), false, "P8" }, // not supported
+        { 0, 0, Format(), false, "A8P8" }, // not supported
+        { 0, 0, MAKE_FORMAT(16, UNORM, BGRA, 4, 4, 4, 4), false, "B4G4R4A4_UNORM" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { 0, 0, Format(), false, "P208" }, // not supported
+        { 0, 0, Format(), false, "V208" }, // not supported
+        { 0, 0, Format(), false, "V408" }, // not supported
+
+        { FOURCC_ASTC4x4, TextureCompression::ASTC_RGBA_4x4, Format(), false, "ASTC_4X4_TYPELESS" },
+        { FOURCC_ASTC4x4, TextureCompression::ASTC_RGBA_4x4, Format(), false, "ASTC_4X4_UNORM" },
+        { FOURCC_ASTC4x4, TextureCompression::ASTC_SRGB_ALPHA_4x4, Format(), true,  "ASTC_4X4_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { 0, TextureCompression::ASTC_RGBA_5x4, Format(), false, "ASTC_5X4_TYPELESS" }, // 137
+        { 0, TextureCompression::ASTC_RGBA_5x4, Format(), false, "ASTC_5X4_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_ALPHA_5x4, Format(), true,  "ASTC_5X4_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { FOURCC_ASTC5x5, TextureCompression::ASTC_RGBA_5x5, Format(), false, "ASTC_5X5_TYPELESS" }, // 141
+        { FOURCC_ASTC5x5, TextureCompression::ASTC_RGBA_5x5, Format(), false, "ASTC_5X5_UNORM" },
+        { FOURCC_ASTC5x5, TextureCompression::ASTC_SRGB_ALPHA_5x5, Format(), true,  "ASTC_5X5_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { 0, TextureCompression::ASTC_RGBA_6x5, Format(), false, "ASTC_6X5_TYPELESS" }, // 145
+        { 0, TextureCompression::ASTC_RGBA_6x5, Format(), false, "ASTC_6X5_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_ALPHA_6x5, Format(), true,  "ASTC_6X5_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { FOURCC_ASTC6x6, TextureCompression::ASTC_RGBA_6x6, Format(), false, "ASTC_6X6_TYPELESS" }, // 149
+        { FOURCC_ASTC6x6, TextureCompression::ASTC_RGBA_6x6, Format(), false, "ASTC_6X6_UNORM" },
+        { FOURCC_ASTC6x6, TextureCompression::ASTC_SRGB_ALPHA_6x6, Format(), true,  "ASTC_6X6_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { FOURCC_ASTC8x5, TextureCompression::ASTC_RGBA_8x5, Format(), false, "ASTC_8X5_TYPELESS" }, // 153
+        { FOURCC_ASTC8x5, TextureCompression::ASTC_RGBA_8x5, Format(), false, "ASTC_8X5_UNORM" },
+        { FOURCC_ASTC8x5, TextureCompression::ASTC_SRGB_ALPHA_8x5, Format(), true,  "ASTC_8X5_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { FOURCC_ASTC8x6, TextureCompression::ASTC_RGBA_8x6, Format(), false, "ASTC_8X6_TYPELESS" }, // 157
+        { FOURCC_ASTC8x6, TextureCompression::ASTC_RGBA_8x6, Format(), false, "ASTC_8X6_UNORM" },
+        { FOURCC_ASTC8x6, TextureCompression::ASTC_SRGB_ALPHA_8x6, Format(), true,  "ASTC_8X6_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { 0, TextureCompression::ASTC_RGBA_8x8, Format(), false, "ASTC_8X8_TYPELESS" }, // 161
+        { 0, TextureCompression::ASTC_RGBA_8x8, Format(), false, "ASTC_8X8_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_ALPHA_8x8, Format(), true,  "ASTC_8X8_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { FOURCC_ASTC10x5, TextureCompression::ASTC_RGBA_10x5, Format(), false, "ASTC_10X5_TYPELESS" }, // 165
+        { FOURCC_ASTC10x5, TextureCompression::ASTC_RGBA_10x5, Format(), false, "ASTC_10X5_UNORM" },
+        { FOURCC_ASTC10x5, TextureCompression::ASTC_SRGB_ALPHA_10x5, Format(), true,  "ASTC_10X5_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { 0, TextureCompression::ASTC_RGBA_10x6, Format(), false, "ASTC_10X6_TYPELESS" }, // 169
+        { 0, TextureCompression::ASTC_RGBA_10x6, Format(), false, "ASTC_10X6_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_ALPHA_10x6, Format(), true,  "ASTC_10X6_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { 0, TextureCompression::ASTC_RGBA_10x8, Format(), false, "ASTC_10X8_TYPELESS" }, // 173
+        { 0, TextureCompression::ASTC_RGBA_10x8, Format(), false, "ASTC_10X8_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_ALPHA_10x8, Format(), true,  "ASTC_10X8_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { 0, TextureCompression::ASTC_RGBA_10x10, Format(), false, "ASTC_10X10_TYPELESS" }, // 177
+        { 0, TextureCompression::ASTC_RGBA_10x10, Format(), false, "ASTC_10X10_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_ALPHA_10x10, Format(), true,  "ASTC_10X10_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { 0, TextureCompression::ASTC_RGBA_12x10, Format(), false, "ASTC_12X10_TYPELESS" }, // 181
+        { 0, TextureCompression::ASTC_RGBA_12x10, Format(), false, "ASTC_12X10_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_ALPHA_12x10, Format(), true,  "ASTC_12X10_UNORM_SRGB" },
+
+        { 0, 0, Format(), false, "UNKNOWN" },
+
+        { 0, TextureCompression::ASTC_RGBA_12x12, Format(), false, "ASTC_12X12_TYPELESS" }, // 185
+        { 0, TextureCompression::ASTC_RGBA_12x12, Format(), false, "ASTC_12X12_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_ALPHA_12x12, Format(), true,  "ASTC_12X12_UNORM_SRGB" },
     };
 
     const int g_dxgi_table_size = sizeof(g_dxgi_table) / sizeof(g_dxgi_table[0]);
@@ -515,6 +571,34 @@ namespace
             case FOURCC_R8G8B8G8:
                 compression = TextureCompression::R8G8B8G8;
                 break;
+
+            case FOURCC_ASTC4x4:
+                compression = TextureCompression::ASTC_SRGB_ALPHA_4x4;
+                break;
+            case FOURCC_ASTC5x5:
+                compression = TextureCompression::ASTC_SRGB_ALPHA_5x5;
+                break;
+            case FOURCC_ASTC6x6:
+                compression = TextureCompression::ASTC_SRGB_ALPHA_6x6;
+                break;
+            case FOURCC_ASTC8x5:
+                compression = TextureCompression::ASTC_SRGB_ALPHA_8x5;
+                break;
+            case FOURCC_ASTC8x6:
+                compression = TextureCompression::ASTC_SRGB_ALPHA_8x6;
+                break;
+            case FOURCC_ASTC10x5:
+                compression = TextureCompression::ASTC_SRGB_ALPHA_10x5;
+                break;
+            case FOURCC_ATC:
+            case FOURCC_ATCE:
+            case FOURCC_ATCI:
+            case FOURCC_ETC:
+            case FOURCC_ETC1:
+            case FOURCC_ETC2:
+            case FOURCC_ET2A:
+                // TODO
+                break;
         }
 
         return compression;
@@ -580,7 +664,7 @@ namespace
         u32 aBitMask;
 
         Format format;
-        u32 compression;
+        u32 compression = TextureCompression::NONE;
 
         const char* error = nullptr;
 
@@ -663,37 +747,29 @@ namespace
 
                 case FOURCC_R16F:
                     format = MAKE_FORMAT(16, FLOAT16, R, 16, 0, 0, 0);
-                    compression = TextureCompression::NONE;
                     break;
                 case FOURCC_GR16F:
                     format = MAKE_FORMAT(32, FLOAT16, RG, 16, 16, 0, 0);
-                    compression = TextureCompression::NONE;
                     break;
                 case FOURCC_ABGR16F:
                     format = MAKE_FORMAT(64, FLOAT16, RGBA, 16, 16, 16, 16);
-                    compression = TextureCompression::NONE;
                     break;
 
                 case FOURCC_R32F:
                     format = MAKE_FORMAT(32, FLOAT32, R, 32, 0, 0, 0);
-                    compression = TextureCompression::NONE;
                     break;
                 case FOURCC_GR32F:
                     format = MAKE_FORMAT(64, FLOAT32, RG, 32, 32, 0, 0);
-                    compression = TextureCompression::NONE;
                     break;
                 case FOURCC_ABGR32F:
                     format = MAKE_FORMAT(128, FLOAT32, RGBA, 32, 32, 32, 32);
-                    compression = TextureCompression::NONE;
                     break;
 
                 case FOURCC_PTC2:
-                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     compression = TextureCompression::PVRTC_RGB_2BPP;
                     break;
 
                 case FOURCC_DXT1:
-                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     if (flags & DDPF_ALPHA)
                     {
                         compression = TextureCompression::DXT1_ALPHA1;
@@ -721,7 +797,12 @@ namespace
                 case FOURCC_RXGB:
                 case FOURCC_G8R8G8B8:
                 case FOURCC_R8G8B8G8:
-                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                case FOURCC_ASTC4x4:
+                case FOURCC_ASTC5x5:
+                case FOURCC_ASTC6x6:
+                case FOURCC_ASTC8x5:
+                case FOURCC_ASTC8x6:
+                case FOURCC_ASTC10x5:
                     compression = fourcc_to_compression(fourCC);
                     break;
 
@@ -822,6 +903,72 @@ namespace
 
         const u8* data;
 
+        void processDX10(const HeaderDX10& header10)
+        {
+            debugPrint("DXGI format: %d\n", header10.dxgiFormat);
+
+            if (header10.dxgiFormat >= u32(g_dxgi_table_size))
+            {
+                header.setError("[ImageDecoder.DDS] DXGI index out of range.");
+                return;
+            }
+            else if (!header10.dxgiFormat)
+            {
+                // Unknown DXGI format
+                return;
+            }
+
+            if (header10.arraySize > 1)
+            {
+                // TODO
+                header.setError("[ImageDecoder.DDS] Arrays are not supported.");
+                return;
+            }
+
+            const FormatDXGI& dxgi = g_dxgi_table[header10.dxgiFormat];
+
+            if (dxgi.compression)
+            {
+                pixelFormat.fourCC = 0;
+                pixelFormat.compression = dxgi.compression;
+                return;
+            }
+
+            if (dxgi.fourcc)
+            {
+                pixelFormat.fourCC = dxgi.fourcc;
+                pixelFormat.processFourCC();
+                return;
+            }
+
+            if (!dxgi.format.bits)
+            {
+                header.setError("[ImageDecoder.DDS] DXGI format (%d) not supported.", header10.dxgiFormat);
+                return;
+            }
+
+            pixelFormat.fourCC = 0;
+            pixelFormat.compression = TextureCompression::NONE;
+
+            switch (dxgi.format.type)
+            {
+                case Format::FLOAT16:
+                case Format::FLOAT32:
+                case Format::UNORM:
+                    pixelFormat.format = dxgi.format;
+                    break;
+
+                case Format::NONE:
+                case Format::UINT:
+                case Format::SINT:
+                case Format::SNORM:
+                case Format::FLOAT64:
+                    // TODO: These could be supported in a custom "DXGI Blitter"
+                    header.setError("[ImageDecoder.DDS] DXGI format type not supported.");
+                    return;
+            }
+        }
+
         void read(LittleEndianConstPointer p)
         {
             u32 magic = p.read32();
@@ -872,10 +1019,9 @@ namespace
                 }
             }
 
-            // The header parsing is complete; compute compressed block format
-            info = pixelFormat.compression;
-
             data = p;
+
+            // Configure header
 
             header.width   = width;
             header.height  = height;
@@ -883,98 +1029,18 @@ namespace
             header.levels  = getMipmapCount();
             header.faces   = getFaceCount();
             header.palette = false;
-            header.format  = pixelFormat.format;
-            header.compression = pixelFormat.compression;
-        }
 
-        void processDX10(const HeaderDX10& header10)
-        {
-            debugPrint("DXGI format: %d\n", header10.dxgiFormat);
-
-            if (header10.dxgiFormat >= u32(g_dxgi_table_size))
+            u32 compression = pixelFormat.compression;
+            if (compression)
             {
-                header.setError("[ImageDecoder.DDS] DXGI index out of range.");
-                return;
-            }
-            else if (!header10.dxgiFormat)
-            {
-                // Unknown DXGI format
-                return;
-            }
-
-            if (header10.arraySize > 1)
-            {
-                // TODO
-                header.setError("[ImageDecoder.DDS] Arrays are not supported.");
-                return;
-            }
-
-            // handle special cases
-            switch (header10.dxgiFormat)
-            {
-                case DXGI_FORMAT_BC6H_TYPELESS:
-                case DXGI_FORMAT_BC6H_UF16:
-                    pixelFormat.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    pixelFormat.compression = TextureCompression::BPTC_RGB_UNSIGNED_FLOAT;
-                    pixelFormat.fourCC = 0;
-                    return;
-
-                case DXGI_FORMAT_BC6H_SF16:
-                    pixelFormat.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    pixelFormat.compression = TextureCompression::BPTC_RGB_SIGNED_FLOAT;
-                    pixelFormat.fourCC = 0;
-                    return;
-
-                case DXGI_FORMAT_BC7_TYPELESS:
-                case DXGI_FORMAT_BC7_UNORM:
-                    pixelFormat.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    pixelFormat.compression = TextureCompression::BPTC_RGBA_UNORM;
-                    pixelFormat.fourCC = 0;
-                    return;
-
-                case DXGI_FORMAT_BC7_UNORM_SRGB:
-                    pixelFormat.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    pixelFormat.compression = TextureCompression::BPTC_SRGB_ALPHA_UNORM;
-                    pixelFormat.fourCC = 0;
-                    return;
-            }
-
-            const FormatDXGI& dxgi = g_dxgi_table[header10.dxgiFormat];
-
-            if (dxgi.fourcc)
-            {
-                pixelFormat.fourCC = dxgi.fourcc;
-                pixelFormat.processFourCC();
+                info = compression;
+                header.format  = info.format;
+                header.compression = compression;
             }
             else
             {
-                if (!dxgi.format.bits)
-                {
-                    // TODO: Which format (id = header.dxgiFormat)
-                    header.setError("[ImageDecoder.DDS] DXGI format not supported.");
-                    return;
-                }
-
-                pixelFormat.fourCC = 0;
-                pixelFormat.compression = TextureCompression::NONE;
-
-                switch (dxgi.format.type)
-                {
-                    case Format::FLOAT16:
-                    case Format::FLOAT32:
-                    case Format::UNORM:
-                        pixelFormat.format = dxgi.format;
-                        break;
-
-                    case Format::NONE:
-                    case Format::UINT:
-                    case Format::SINT:
-                    case Format::SNORM:
-                    case Format::FLOAT64:
-                        // TODO: These could be supported in a custom "DXGI Blitter"
-                        header.setError("[ImageDecoder.DDS] DXGI format type not supported.");
-                        return;
-                }
+                header.format  = pixelFormat.format;
+                header.compression = TextureCompression::NONE;
             }
         }
 
@@ -1013,8 +1079,8 @@ namespace
 
             if (info.compression != TextureCompression::NONE)
             {
-                const int xblocks = ceil_div(xsize, info.width);
-                const int yblocks = ceil_div(ysize, info.height);
+                const int xblocks = info.getBlocksX(xsize);
+                const int yblocks = info.getBlocksY(ysize);
                 pitch = xblocks * info.bytes;
                 ysize = yblocks;
             }
@@ -1024,7 +1090,6 @@ namespace
                 pitch = xsize * bytesPerPixel;
             }
 
-            // TODO: Should the pitch be aligned to 32 bits?
             return ysize * pitch;
         }
 
