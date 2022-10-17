@@ -19,22 +19,8 @@
 
 namespace DirectX
 {
-
     using namespace mango;
     using namespace mango::math;
-
-    static inline
-    float32x4 XMLoadUByte4(const u32* p)
-    {
-        int32x4 v = simd::unpack(*p);
-        return convert<float32x4>(v);
-    }
-
-    static inline
-    float32x4 XMLoadSInt4(const int32x4* p)
-    {
-        return convert<float32x4>(*p);
-    }
 
 //-------------------------------------------------------------------------------------
 // Macros
@@ -79,7 +65,13 @@ namespace DirectX
 
     public:
         HDRColorA() = default;
-        HDRColorA(float _r, float _g, float _b, float _a) noexcept : r(_r), g(_g), b(_b), a(_a) {}
+        HDRColorA(float _r, float _g, float _b, float _a) noexcept
+            : r(_r)
+            , g(_g)
+            , b(_b)
+            , a(_a)
+        {
+        }
 
         // binary operators
         HDRColorA operator + (const HDRColorA& c) const noexcept
@@ -169,7 +161,7 @@ namespace DirectX
         return pOut;
     }
 
-// BC1/DXT1 compression (4 bits per texel)
+    // BC1/DXT1 compression (4 bits per texel)
     struct D3DX_BC1
     {
         uint16_t    rgb[2]; // 565 colors
@@ -195,7 +187,8 @@ namespace DirectX
 // Templates
 //-------------------------------------------------------------------------------------
 
-    template <bool bRange> void OptimizeAlpha(float *pX, float *pY, const float *pPoints, uint32_t cSteps) noexcept
+    template <bool bRange>
+    void OptimizeAlpha(float *pX, float *pY, const float *pPoints, uint32_t cSteps) noexcept
     {
         static const float pC6[] = { 5.0f / 5.0f, 4.0f / 5.0f, 3.0f / 5.0f, 2.0f / 5.0f, 1.0f / 5.0f, 0.0f / 5.0f };
         static const float pD6[] = { 0.0f / 5.0f, 1.0f / 5.0f, 2.0f / 5.0f, 3.0f / 5.0f, 4.0f / 5.0f, 5.0f / 5.0f };

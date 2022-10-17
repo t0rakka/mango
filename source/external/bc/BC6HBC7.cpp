@@ -367,6 +367,13 @@ namespace DirectX
             return temp;
         }
 
+        operator float32x4 () const
+        {
+            int32x4 value;
+            value.unpack(*this);
+            return convert<float32x4>(value);
+        }
+
         LDRColorA operator = (const HDRColorA& c) noexcept
         {
             LDRColorA ret;
@@ -441,7 +448,11 @@ namespace DirectX
 
     inline LDRColorA HDRColorA::ToLDRColorA() const noexcept
     {
-        return LDRColorA(static_cast<uint8_t>(r + 0.01f), static_cast<uint8_t>(g + 0.01f), static_cast<uint8_t>(b + 0.01f), static_cast<uint8_t>(a + 0.01f));
+        return LDRColorA(
+            static_cast<uint8_t>(r + 0.01f), 
+            static_cast<uint8_t>(g + 0.01f), 
+            static_cast<uint8_t>(b + 0.01f), 
+            static_cast<uint8_t>(a + 0.01f));
     }
 }
 
@@ -455,7 +466,13 @@ namespace
 
     public:
         INTColor() = default;
-        INTColor(int nr, int ng, int nb) noexcept : r(nr), g(ng), b(nb), pad(0) {}
+        INTColor(int nr, int ng, int nb) noexcept
+            : r(nr)
+            , g(ng)
+            , b(nb)
+            , pad(0)
+        {
+        }
 
         INTColor& operator += (const INTColor& c) noexcept
         {
@@ -485,6 +502,12 @@ namespace
         {
             assert(i < sizeof(INTColor) / sizeof(int));
             return reinterpret_cast<int*>(this)[i];
+        }
+
+        operator float32x4 () const
+        {
+            const int32x4* p = reinterpret_cast<const int32x4*>(this);
+            return convert<float32x4>(*p);
         }
 
         void Set(const HDRColorA& c, bool bSigned) noexcept
@@ -1573,13 +1596,13 @@ namespace
         if (pBestIndex2)
             *pBestIndex2 = 0;
 
-        const float32x4 vpixel = XMLoadUByte4(reinterpret_cast<const u32*>(&pixel));
+        const float32x4 vpixel = pixel; // conversion
 
         if (uIndexPrec2 == 0)
         {
             for (size_t i = 0; i < uNumIndices && fBestErr > 0; i++)
             {
-                float32x4 tpixel = XMLoadUByte4(reinterpret_cast<const u32*>(&aPalette[i]));
+                float32x4 tpixel = aPalette[i]; // conversion
                 // Compute ErrorMetric
                 tpixel = vpixel - tpixel;
                 const float fErr = dot(tpixel, tpixel);
@@ -1598,7 +1621,7 @@ namespace
         {
             for (size_t i = 0; i < uNumIndices && fBestErr > 0; i++)
             {
-                float32x4 tpixel = XMLoadUByte4(reinterpret_cast<const u32*>(&aPalette[i]));
+                float32x4 tpixel = aPalette[i]; // conversion
                 // Compute ErrorMetricRGB
                 tpixel = vpixel - tpixel;
                 const float fErr = dot(tpixel, tpixel);
@@ -1633,7 +1656,7 @@ namespace
         return fTotalErr;
     }
 
-    void Fill(u8* output, size_t stride, HDRColorA color) noexcept
+    void FillColorF128(u8* output, size_t stride, HDRColorA color) noexcept
     {
         for (int y = 0; y < 4; ++y)
         {
@@ -1645,7 +1668,7 @@ namespace
         }
     }
 
-    void FillWithErrorColors(u8* output, size_t stride) noexcept
+    void FillWithErrorColorF128(u8* output, size_t stride) noexcept
     {
     #ifdef _DEBUG
         // Use Magenta in debug as a highly-visible error color
@@ -1655,7 +1678,7 @@ namespace
         HDRColorA color = HDRColorA(0.0f, 0.0f, 0.0f, 1.0f);
     #endif
 
-        Fill(output, stride, color);
+        FillColorF128(output, stride, color);
     }
 
     void FillColorU32(u8* output, size_t stride, u32 color) noexcept
@@ -1737,7 +1760,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
                 default:
                     {
                         debugPrint("BC6H: Invalid header bits encountered during decoding\n");
-                        FillWithErrorColors(output, stride);
+                        FillWithErrorColorF128(output, stride);
                         return;
                     }
                 }
@@ -1784,7 +1807,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
                 if (uStartBit + uNumBits > 128)
                 {
                     debugPrint("BC6H: Invalid block encountered during decoding\n");
-                    FillWithErrorColors(output, stride);
+                    FillWithErrorColorF128(output, stride);
                     return;
                 }
                 const uint8_t uIndex = GetBits(uStartBit, uNumBits);
@@ -1792,7 +1815,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
                 if (uIndex >= ((info.uPartitions > 0) ? 8 : 16))
                 {
                     debugPrint("BC6H: Invalid index encountered during decoding\n");
-                    FillWithErrorColors(output, stride);
+                    FillWithErrorColorF128(output, stride);
                     return;
                 }
 
@@ -1835,7 +1858,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
         debugPrint(warnstr);
 
         // Per the BC6H format spec, we must return opaque black
-        Fill(output, stride, HDRColorA(0.0f, 0.0f, 0.0f, 1.0f));
+        FillColorF128(output, stride, HDRColorA(0.0f, 0.0f, 0.0f, 1.0f));
     }
 }
 
@@ -2065,17 +2088,17 @@ float D3DX_BC6H::MapColorsQuantized(const EncodeParams* pEP, const INTColor aCol
     float fTotErr = 0;
     for (size_t i = 0; i < np; ++i)
     {
-        const float32x4 vcolors = XMLoadSInt4(reinterpret_cast<const int32x4*>(&aColors[i]));
+        const float32x4 vcolors = aColors[i]; // conversion
 
         // Compute ErrorMetricRGB
-        float32x4 tpal = XMLoadSInt4(reinterpret_cast<const int32x4*>(&aPalette[0]));
+        float32x4 tpal = aPalette[0]; // conversion
         tpal = vcolors - tpal;
         float fBestErr = dot(tpal, tpal);
 
         for (int j = 1; j < uNumIndices && fBestErr > 0; ++j)
         {
             // Compute ErrorMetricRGB
-            tpal = XMLoadSInt4(reinterpret_cast<const int32x4*>(&aPalette[j]));
+            tpal = aPalette[j]; // conversion
             tpal = vcolors - tpal;
             const float fErr = dot(tpal, tpal);
             if (fErr > fBestErr) break;     // error increased, so we're done searching
