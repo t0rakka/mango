@@ -702,8 +702,13 @@ namespace
             INTEndPntPair aUnqEndPts[BC6H_MAX_SHAPES][BC6H_MAX_REGIONS];
             INTColor aIPixels[NUM_PIXELS_PER_BLOCK];
 
-            EncodeParams(const u8* input, size_t stride, bool bSignedFormat) noexcept :
-                fBestErr(FLT_MAX), bSigned(bSignedFormat), uMode(0), uShape(0), aUnqEndPts{}, aIPixels{}
+            EncodeParams(const u8* input, size_t stride, bool bSignedFormat) noexcept
+                : fBestErr(FLT_MAX)
+                , bSigned(bSignedFormat)
+                , uMode(0)
+                , uShape(0)
+                , aUnqEndPts{}
+                , aIPixels{}
             {
                 for (int y = 0; y < 4; ++y)
                 {
@@ -2732,21 +2737,23 @@ void D3DX_BC7::Encode(uint32_t flags, const u8* input, size_t stride) noexcept
     HDRColorA temp[16];
     unpack_block(temp, input, stride);
 
-    D3DX_BC7 final = *this;
     EncodeParams EP(temp);
-    float fMSEBest = FLT_MAX;
-    uint32_t alphaMask = 0xFF;
 
-    for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
+    for (int y = 0; y < 4; ++y)
     {
-        EP.aLDRPixels[i].r = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, temp[i].r * 255.0f + 0.01f)));
-        EP.aLDRPixels[i].g = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, temp[i].g * 255.0f + 0.01f)));
-        EP.aLDRPixels[i].b = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, temp[i].b * 255.0f + 0.01f)));
-        EP.aLDRPixels[i].a = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, temp[i].a * 255.0f + 0.01f)));
+        std::memcpy(EP.aLDRPixels + y * 4, input + y * stride, 16);
+    }
+
+    u32 alphaMask = 0xFF;
+    for (int i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
+    {
         alphaMask &= EP.aLDRPixels[i].a;
     }
 
     const bool bHasAlpha = (alphaMask != 0xFF);
+
+    D3DX_BC7 final = *this;
+    float fMSEBest = FLT_MAX;
 
     for (EP.uMode = 0; EP.uMode < 8 && fMSEBest > 0; ++EP.uMode)
     {
