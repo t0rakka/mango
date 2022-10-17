@@ -761,7 +761,7 @@ namespace
     {
     public:
         void Decode(u8* output, size_t stride) const noexcept;
-        void Encode(uint32_t flags, const HDRColorA* const pIn) noexcept;
+        void Encode(uint32_t flags, const u8* input, size_t stride) noexcept;
 
     private:
         struct ModeInfo
@@ -2725,21 +2725,24 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
     }
 }
 
-void D3DX_BC7::Encode(uint32_t flags, const HDRColorA* const pIn) noexcept
+void D3DX_BC7::Encode(uint32_t flags, const u8* input, size_t stride) noexcept
 {
-    assert(pIn);
+    assert(input);
+
+    HDRColorA temp[16];
+    unpack_block(temp, input, stride);
 
     D3DX_BC7 final = *this;
-    EncodeParams EP(pIn);
+    EncodeParams EP(temp);
     float fMSEBest = FLT_MAX;
     uint32_t alphaMask = 0xFF;
 
     for (size_t i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
     {
-        EP.aLDRPixels[i].r = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].r * 255.0f + 0.01f)));
-        EP.aLDRPixels[i].g = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].g * 255.0f + 0.01f)));
-        EP.aLDRPixels[i].b = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].b * 255.0f + 0.01f)));
-        EP.aLDRPixels[i].a = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, pIn[i].a * 255.0f + 0.01f)));
+        EP.aLDRPixels[i].r = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, temp[i].r * 255.0f + 0.01f)));
+        EP.aLDRPixels[i].g = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, temp[i].g * 255.0f + 0.01f)));
+        EP.aLDRPixels[i].b = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, temp[i].b * 255.0f + 0.01f)));
+        EP.aLDRPixels[i].a = uint8_t(std::max<float>(0.0f, std::min<float>(255.0f, temp[i].a * 255.0f + 0.01f)));
         alphaMask &= EP.aLDRPixels[i].a;
     }
 
@@ -3552,11 +3555,8 @@ namespace mango::image
     {
         MANGO_UNREFERENCED(info);
 
-        HDRColorA temp[16];
-        unpack_block(temp, input, stride);
-
         static_assert(sizeof(D3DX_BC7) == 16, "D3DX_BC7 should be 16 bytes");
-        reinterpret_cast<D3DX_BC7*>(output)->Encode(0, temp);
+        reinterpret_cast<D3DX_BC7*>(output)->Encode(0, input, stride);
     }
 
 } // namespace mango::image
