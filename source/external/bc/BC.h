@@ -338,20 +338,4 @@ namespace DirectX
         }
     }
 
-    static inline
-    void pack_block(u8* output, const HDRColorA* input, size_t stride)
-    {
-        for (int y = 0; y < 4; ++y)
-        {
-            const float32x4* src = reinterpret_cast<const float32x4*>(input + y * 4);
-            u32* dest = reinterpret_cast<u32*>(output + y * stride);
-
-            for (int x = 0; x < 4; ++x)
-            {
-                int32x4 v = convert<int32x4>(src[x] * 255.0f);
-                dest[x] = simd::pack(v);
-            }
-        }
-    }
-
 } // namespace DirectX
