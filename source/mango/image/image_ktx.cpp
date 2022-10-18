@@ -584,14 +584,6 @@ namespace
             header.palette = false;
             header.format  = format;
             header.compression = compression;
-
-#if 0
-            // NOTE: implement this when get KTX file with ASTC blocks inside it
-            if (isASTC)
-            {
-                header.compression |= TextureCompression::YFLIP;
-            }
-#endif
         }
 
         ~HeaderKTX()
