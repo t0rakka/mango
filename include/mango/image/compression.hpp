@@ -57,10 +57,11 @@ namespace mango::image
             YUV      = 0x02000000, // YUV colorspace
             FLOAT    = 0x04000000, // 16 or 32 bit floating point color
             SURFACE  = 0x08000000, // Surface (not block) compression
-            ORIGIN   = 0x10000000, // OpenGL bottom-left image origin
+            YFLIP    = 0x10000000, // Origin is at bottom left
             SIGNED   = 0x20000000, // Signed normalized color
             ALPHA    = 0x40000000, // Color has alpha bits
-            SRGB     = 0x80000000  // sRGB colorspace
+            SRGB     = 0x80000000, // sRGB colorspace
+            MASK     = 0xffff0000
         };
 
         enum : u32
@@ -151,56 +152,56 @@ namespace mango::image
 
             // KHR_texture_compression_astc_ldr
             // KHR_texture_compression_astc_hdr
-            ASTC_RGBA_4x4                 = makeTextureCompression(ASTC, 0, ORIGIN | ALPHA),
-            ASTC_RGBA_5x4                 = makeTextureCompression(ASTC, 1, ORIGIN | ALPHA),
-            ASTC_RGBA_5x5                 = makeTextureCompression(ASTC, 2, ORIGIN | ALPHA),
-            ASTC_RGBA_6x5                 = makeTextureCompression(ASTC, 3, ORIGIN | ALPHA),
-            ASTC_RGBA_6x6                 = makeTextureCompression(ASTC, 4, ORIGIN | ALPHA),
-            ASTC_RGBA_8x5                 = makeTextureCompression(ASTC, 5, ORIGIN | ALPHA),
-            ASTC_RGBA_8x6                 = makeTextureCompression(ASTC, 6, ORIGIN | ALPHA),
-            ASTC_RGBA_8x8                 = makeTextureCompression(ASTC, 7, ORIGIN | ALPHA),
-            ASTC_RGBA_10x5                = makeTextureCompression(ASTC, 8, ORIGIN | ALPHA),
-            ASTC_RGBA_10x6                = makeTextureCompression(ASTC, 9, ORIGIN | ALPHA),
-            ASTC_RGBA_10x8                = makeTextureCompression(ASTC, 10, ORIGIN | ALPHA),
-            ASTC_RGBA_10x10               = makeTextureCompression(ASTC, 11, ORIGIN | ALPHA),
-            ASTC_RGBA_12x10               = makeTextureCompression(ASTC, 12, ORIGIN | ALPHA),
-            ASTC_RGBA_12x12               = makeTextureCompression(ASTC, 13, ORIGIN | ALPHA),
-            ASTC_SRGB_ALPHA_4x4           = makeTextureCompression(ASTC, 14, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_5x4           = makeTextureCompression(ASTC, 15, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_5x5           = makeTextureCompression(ASTC, 16, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_6x5           = makeTextureCompression(ASTC, 17, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_6x6           = makeTextureCompression(ASTC, 18, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_8x5           = makeTextureCompression(ASTC, 19, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_8x6           = makeTextureCompression(ASTC, 20, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_8x8           = makeTextureCompression(ASTC, 21, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_10x5          = makeTextureCompression(ASTC, 22, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_10x6          = makeTextureCompression(ASTC, 23, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_10x8          = makeTextureCompression(ASTC, 24, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_10x10         = makeTextureCompression(ASTC, 25, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_12x10         = makeTextureCompression(ASTC, 26, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_12x12         = makeTextureCompression(ASTC, 27, ORIGIN | ALPHA | SRGB),
+            ASTC_RGBA_4x4                 = makeTextureCompression(ASTC, 0, ALPHA),
+            ASTC_RGBA_5x4                 = makeTextureCompression(ASTC, 1, ALPHA),
+            ASTC_RGBA_5x5                 = makeTextureCompression(ASTC, 2, ALPHA),
+            ASTC_RGBA_6x5                 = makeTextureCompression(ASTC, 3, ALPHA),
+            ASTC_RGBA_6x6                 = makeTextureCompression(ASTC, 4, ALPHA),
+            ASTC_RGBA_8x5                 = makeTextureCompression(ASTC, 5, ALPHA),
+            ASTC_RGBA_8x6                 = makeTextureCompression(ASTC, 6, ALPHA),
+            ASTC_RGBA_8x8                 = makeTextureCompression(ASTC, 7, ALPHA),
+            ASTC_RGBA_10x5                = makeTextureCompression(ASTC, 8, ALPHA),
+            ASTC_RGBA_10x6                = makeTextureCompression(ASTC, 9, ALPHA),
+            ASTC_RGBA_10x8                = makeTextureCompression(ASTC, 10, ALPHA),
+            ASTC_RGBA_10x10               = makeTextureCompression(ASTC, 11, ALPHA),
+            ASTC_RGBA_12x10               = makeTextureCompression(ASTC, 12, ALPHA),
+            ASTC_RGBA_12x12               = makeTextureCompression(ASTC, 13, ALPHA),
+            ASTC_SRGB_ALPHA_4x4           = makeTextureCompression(ASTC, 14, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_5x4           = makeTextureCompression(ASTC, 15, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_5x5           = makeTextureCompression(ASTC, 16, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_6x5           = makeTextureCompression(ASTC, 17, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_6x6           = makeTextureCompression(ASTC, 18, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_8x5           = makeTextureCompression(ASTC, 19, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_8x6           = makeTextureCompression(ASTC, 20, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_8x8           = makeTextureCompression(ASTC, 21, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_10x5          = makeTextureCompression(ASTC, 22, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_10x6          = makeTextureCompression(ASTC, 23, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_10x8          = makeTextureCompression(ASTC, 24, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_10x10         = makeTextureCompression(ASTC, 25, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_12x10         = makeTextureCompression(ASTC, 26, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_12x12         = makeTextureCompression(ASTC, 27, ALPHA | SRGB),
 
             // OES_texture_compression_astc
-            ASTC_RGBA_3x3x3               = makeTextureCompression(ASTC_HDR, 0, ORIGIN | ALPHA),
-            ASTC_RGBA_4x3x3               = makeTextureCompression(ASTC_HDR, 1, ORIGIN | ALPHA),
-            ASTC_RGBA_4x4x3               = makeTextureCompression(ASTC_HDR, 2, ORIGIN | ALPHA),
-            ASTC_RGBA_4x4x4               = makeTextureCompression(ASTC_HDR, 3, ORIGIN | ALPHA),
-            ASTC_RGBA_5x4x4               = makeTextureCompression(ASTC_HDR, 4, ORIGIN | ALPHA),
-            ASTC_RGBA_5x5x4               = makeTextureCompression(ASTC_HDR, 5, ORIGIN | ALPHA),
-            ASTC_RGBA_5x5x5               = makeTextureCompression(ASTC_HDR, 6, ORIGIN | ALPHA),
-            ASTC_RGBA_6x5x5               = makeTextureCompression(ASTC_HDR, 7, ORIGIN | ALPHA),
-            ASTC_RGBA_6x6x5               = makeTextureCompression(ASTC_HDR, 8, ORIGIN | ALPHA),
-            ASTC_RGBA_6x6x6               = makeTextureCompression(ASTC_HDR, 9, ORIGIN | ALPHA),
-            ASTC_SRGB_ALPHA_3x3x3         = makeTextureCompression(ASTC_HDR, 10, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_4x3x3         = makeTextureCompression(ASTC_HDR, 11, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_4x4x3         = makeTextureCompression(ASTC_HDR, 12, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_4x4x4         = makeTextureCompression(ASTC_HDR, 13, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_5x4x4         = makeTextureCompression(ASTC_HDR, 14, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_5x5x4         = makeTextureCompression(ASTC_HDR, 15, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_5x5x5         = makeTextureCompression(ASTC_HDR, 16, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_6x5x5         = makeTextureCompression(ASTC_HDR, 17, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_6x6x5         = makeTextureCompression(ASTC_HDR, 18, ORIGIN | ALPHA | SRGB),
-            ASTC_SRGB_ALPHA_6x6x6         = makeTextureCompression(ASTC_HDR, 19, ORIGIN | ALPHA | SRGB),
+            ASTC_RGBA_3x3x3               = makeTextureCompression(ASTC_HDR, 0, ALPHA),
+            ASTC_RGBA_4x3x3               = makeTextureCompression(ASTC_HDR, 1, ALPHA),
+            ASTC_RGBA_4x4x3               = makeTextureCompression(ASTC_HDR, 2, ALPHA),
+            ASTC_RGBA_4x4x4               = makeTextureCompression(ASTC_HDR, 3, ALPHA),
+            ASTC_RGBA_5x4x4               = makeTextureCompression(ASTC_HDR, 4, ALPHA),
+            ASTC_RGBA_5x5x4               = makeTextureCompression(ASTC_HDR, 5, ALPHA),
+            ASTC_RGBA_5x5x5               = makeTextureCompression(ASTC_HDR, 6, ALPHA),
+            ASTC_RGBA_6x5x5               = makeTextureCompression(ASTC_HDR, 7, ALPHA),
+            ASTC_RGBA_6x6x5               = makeTextureCompression(ASTC_HDR, 8, ALPHA),
+            ASTC_RGBA_6x6x6               = makeTextureCompression(ASTC_HDR, 9, ALPHA),
+            ASTC_SRGB_ALPHA_3x3x3         = makeTextureCompression(ASTC_HDR, 10, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_4x3x3         = makeTextureCompression(ASTC_HDR, 11, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_4x4x3         = makeTextureCompression(ASTC_HDR, 12, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_4x4x4         = makeTextureCompression(ASTC_HDR, 13, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_5x4x4         = makeTextureCompression(ASTC_HDR, 14, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_5x5x4         = makeTextureCompression(ASTC_HDR, 15, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_5x5x5         = makeTextureCompression(ASTC_HDR, 16, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_6x5x5         = makeTextureCompression(ASTC_HDR, 17, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_6x6x5         = makeTextureCompression(ASTC_HDR, 18, ALPHA | SRGB),
+            ASTC_SRGB_ALPHA_6x6x6         = makeTextureCompression(ASTC_HDR, 19, ALPHA | SRGB),
 
             // Packed Pixels
             RGB9_E5                       = makeTextureCompression(PACKED, 0, FLOAT),
@@ -255,8 +256,6 @@ namespace mango::image
 
         Status decompress(const Surface& surface, ConstMemory memory) const;
         Status compress(Memory memory, const Surface& surface) const;
-
-        u32 getFlags() const;
 
         // number of blocks horizontally required to compress the surface
         int getBlocksX(int width) const;

@@ -85,15 +85,17 @@ namespace
             header.height = read24(p);
             header.depth = read24(p);
 
-            header.compression = select_astc_format(xblock, yblock);
-            if (header.compression == TextureCompression::NONE)
+            u32 compression = select_astc_format(xblock, yblock);
+
+            if (compression == TextureCompression::NONE)
             {
                 header.setError("[ImageDecoder.ASTC] Incorrect block size.");
                 return;
             }
 
-            TextureCompression info(header.compression);
+            TextureCompression info(compression);
             header.format = info.format;
+            header.compression = compression | TextureCompression::YFLIP;
         }
     };
 

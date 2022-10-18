@@ -948,7 +948,7 @@ namespace
             m_header.levels = header.levelCount;
             m_header.faces = header.faceCount;
             m_header.format = desc.format;
-            m_header.compression = desc.compression;
+            m_header.compression = desc.compression; // TODO: YFLIP if ASTC
 
             debugPrint("\n");
             debugPrint("[HeaderKTX2]\n");

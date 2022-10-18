@@ -1083,11 +1083,9 @@ namespace
         size_t xstride = info.width * surface.format.bytes();
         size_t ystride = info.height * surface.stride;
 
-        const bool origin = (info.getFlags() & TextureCompression::ORIGIN) != 0;
-        if (origin)
+        if (info.compression & TextureCompression::YFLIP)
         {
-            image += yblocks * ystride;
-            image -= stride;
+            image += yblocks * ystride - stride;
             stride = -stride;
             ystride = -ystride;
         }
@@ -1177,7 +1175,8 @@ namespace mango::image
 
         for (const auto& node : g_blockTable)
         {
-            if (node.compression == compression)
+            // ignore flags when comparing
+            if ((node.compression & ~MASK) == (compression & ~MASK))
             {
                 info = &node;
                 break;
@@ -1185,6 +1184,7 @@ namespace mango::image
         }
 
         *this = *info;
+        this->compression = compression;
     }
 
     TextureCompression::TextureCompression(dxgi::TextureFormat format)
@@ -1253,7 +1253,7 @@ namespace mango::image
         const bool noconvert = surface.format == format;
         const bool direct = noclip && noconvert;
 
-        if (getFlags() & TextureCompression::SURFACE)
+        if (compression & TextureCompression::SURFACE)
         {
             // mode: surface
             if (direct)
@@ -1279,11 +1279,8 @@ namespace mango::image
                 Bitmap bitmap(xblocks * width, yblocks * height, format);
                 directBlockDecode(*this, bitmap, memory, xblocks, yblocks);
 
-                // NOTE: The compressed image is always rounded to the block size. When the image
-                //       origin is at bottom, mirroring will leave padding pixels on the top.
-                //       We shift the image "up" by yoffset pixels to crop the padding.
-                bool origin = (getFlags() & TextureCompression::ORIGIN) != 0;
-                int yoffset = origin ? surface.height - yblocks * height : 0;
+                // compute y offset to skip padding pixels, if any
+                int yoffset = (compression & YFLIP) ? surface.height - yblocks * height : 0;
                 surface.blit(0, yoffset, bitmap);
             }
         }
@@ -1341,11 +1338,6 @@ namespace mango::image
         //debugPrint("\n");
 
         return status;
-    }
-
-    u32 TextureCompression::getFlags() const
-    {
-        return compression & 0xffff0000;
     }
 
     int TextureCompression::getBlocksX(int width) const

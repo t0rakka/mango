@@ -583,7 +583,7 @@ namespace
             header.faces   = numberOfFaces;
             header.palette = false;
             header.format  = format;
-            header.compression = compression;
+            header.compression = compression; // TODO: YFLIP if ASTC
         }
 
         ~HeaderKTX()
