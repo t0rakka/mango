@@ -1345,7 +1345,7 @@ namespace mango::image
 
     u32 TextureCompression::getFlags() const
     {
-        return u32(compression) & 0xffff0000;
+        return compression & 0xffff0000;
     }
 
     int TextureCompression::getBlocksX(int width) const
