@@ -209,7 +209,7 @@ namespace
     };
 #endif
 
-    bool resolve_format(Format& format, u32 compression, u32 gltype, u32 glformat)
+    bool resolve_format(Format& format, u32& compression, u32 gltype, u32 glformat)
     {
         Format::Type type = Format::NONE;
         Format::Order order = Format::RGBA;
@@ -562,18 +562,18 @@ namespace
             Format format;
             u32 compression = opengl::getTextureCompression(glInternalFormat);
 
-            if (compression != TextureCompression::NONE)
-            {
-                TextureCompression info(compression);
-                format = info.format;
-            }
-            else
+            if (!compression)
             {
                 bool valid = resolve_format(format, compression, glType, glFormat);
                 if (!valid)
                 {
-                    format = Format();
                 }
+            }
+
+            if (compression)
+            {
+                TextureCompression info(compression);
+                format = info.format;
             }
 
             header.width   = pixelWidth;
@@ -583,7 +583,15 @@ namespace
             header.faces   = numberOfFaces;
             header.palette = false;
             header.format  = format;
-            header.compression = compression; // TODO: YFLIP if ASTC
+            header.compression = compression;
+
+#if 0
+            // NOTE: implement this when get KTX file with ASTC blocks inside it
+            if (isASTC)
+            {
+                header.compression |= TextureCompression::YFLIP;
+            }
+#endif
         }
 
         ~HeaderKTX()
