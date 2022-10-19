@@ -4,6 +4,7 @@
 */
 #ifndef MANGO_OPENGL_CONTEXT_NONE
 
+#include <mango/core/system.hpp>
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
 
