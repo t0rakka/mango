@@ -1,8 +1,8 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#if !defined(__ppc__)
+#ifndef MANGO_OPENGL_CONTEXT_NONE
 
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -132,7 +132,7 @@ namespace mango
                 defer:NO];
             if (!win)
             {
-                printf("NSWindow initWithContentRect failed.\n");
+                debugPrint("NSWindow initWithContentRect failed.\n");
                 return;
             }
 
@@ -149,7 +149,7 @@ namespace mango
             view = [[CustomView alloc] initWithFrame:[win frame] andCustomWindow:theContext];
             if (!view)
             {
-                printf("NSView initWithFrame failed.\n");
+                debugPrint("NSView initWithFrame failed.\n");
                 // TODO: delete window
                 return;
             }
@@ -210,7 +210,7 @@ namespace mango
             id pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attribs.data()];
             if (pixelFormat == nil)
             {
-                printf("NSOpenGLPixelFormat initWithAttributes failed.\n");
+                debugPrint("NSOpenGLPixelFormat initWithAttributes failed.\n");
                 // TODO: delete window
                 return;
             }
@@ -224,7 +224,7 @@ namespace mango
 
             if (!ctx)
             {
-                printf("Failed to create NSOpenGL Context.\n");
+                debugPrint("Failed to create NSOpenGL Context.\n");
                 // TODO: delete window
                 return;
             }
@@ -343,4 +343,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // !defined(__ppc__)
+#endif // MANGO_OPENGL_CONTEXT_NONE

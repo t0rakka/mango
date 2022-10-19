@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
@@ -226,7 +226,7 @@ namespace mango
 
             if (glGetString == nullptr)
             {
-                MANGO_EXCEPTION("[WGL Context] Context creation failed, no GL functions.");
+                MANGO_EXCEPTION("[OpenGLContextWGL] Context creation failed, no GL functions.");
             }
         }
 

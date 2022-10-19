@@ -19,9 +19,9 @@ namespace mango
 
     struct OpenGLContextEGL : OpenGLContextHandle
     {
-        EGLDisplay  egl_display = EGL_NO_DISPLAY;
-        EGLContext  egl_context = EGL_NO_CONTEXT;
-        EGLSurface  egl_surface = EGL_NO_SURFACE;
+        EGLDisplay egl_display = EGL_NO_DISPLAY;
+        EGLContext egl_context = EGL_NO_CONTEXT;
+        EGLSurface egl_surface = EGL_NO_SURFACE;
 
         bool fullscreen { false };
 
@@ -35,14 +35,14 @@ namespace mango
             egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
             if (egl_display == EGL_NO_DISPLAY)
             {
-                // TODO
-                return;
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglGetDisplay() failed.");
             }
 
             if (!eglInitialize(egl_display, NULL, NULL)) 
             {
-                // TODO
-                return;
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglInitialize() failed.");
             }
 
             // override defaults
@@ -85,8 +85,8 @@ namespace mango
 
             if (!eglChooseConfig(egl_display, configAttribs, eglConfig, 1, &numConfig))
             {
-                // TODO
-                return;
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglChooseConfig() failed.");
             }
 
             OpenGLContextEGL* shared = reinterpret_cast<OpenGLContextEGL*>(theShared);
@@ -99,57 +99,49 @@ namespace mango
             };
 
             egl_context = eglCreateContext(egl_display, eglConfig[0], shared_context, contextAttribs);
-
             if (egl_context == EGL_NO_CONTEXT)
             {
-                // TODO
-                return;
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateContext() failed.");
             }
 
             if (!window->createWindow(0, 0, nullptr, width, height, "OpenGL"))
             {
-                // TODO
-                return;
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
             }
 
             egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], window->window, NULL);
             if (egl_surface == EGL_NO_SURFACE)
             {
-                eglDestroyContext(egl_display, egl_context);
-                egl_context = EGL_NO_CONTEXT;
-                return;
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
             }
 
             if (!eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context))
             {
-                eglDestroyContext(egl_display, egl_context);
-                eglDestroySurface(egl_display, egl_surface);
-                egl_context = EGL_NO_CONTEXT;
-                egl_surface = EGL_NO_SURFACE;
-                return;
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglMakeCurrent() failed.");
             }
-
-            const GLubyte* s0 = glGetString(GL_VENDOR);
-            const GLubyte* s1 = glGetString(GL_RENDERER);
-            const GLubyte* s2 = glGetString(GL_VERSION);
-
-            printf("Vendor:   \"%s\"\n", reinterpret_cast<const char *>(s0));
-            printf("Renderer: \"%s\"\n", reinterpret_cast<const char *>(s1));
-            printf("Version:  \"%s\"\n", reinterpret_cast<const char *>(s2));
         }
 
         ~OpenGLContextEGL()
         {
+            shutdown();
+        }
+
+        void shutdown()
+        {
             if (egl_display != EGL_NO_DISPLAY)
             {
-                if (egl_context == EGL_NO_CONTEXT)
-                {
-                    eglDestroyContext(egl_display, egl_context);
-                }
-
-                if (egl_surface == EGL_NO_SURFACE)
+                if (egl_surface != EGL_NO_SURFACE)
                 {
                     eglDestroySurface(egl_display, egl_surface);
+                }
+
+                if (egl_context != EGL_NO_CONTEXT)
+                {
+                    eglDestroyContext(egl_display, egl_context);
                 }
 
                 eglTerminate(egl_display);
@@ -168,7 +160,7 @@ namespace mango
 
         void swapInterval(int interval) override
         {
-            // TODO
+            eglSwapInterval(interval);
         }
 
         void toggleFullscreen() override
@@ -242,6 +234,14 @@ namespace mango
 
         // initialize extension mask
         initExtensionMask();
+
+        const GLubyte* s0 = glGetString(GL_VENDOR);
+        const GLubyte* s1 = glGetString(GL_RENDERER);
+        const GLubyte* s2 = glGetString(GL_VERSION);
+
+        debugPrint("Vendor:   \"%s\"\n", reinterpret_cast<const char *>(s0));
+        debugPrint("Renderer: \"%s\"\n", reinterpret_cast<const char *>(s1));
+        debugPrint("Version:  \"%s\"\n", reinterpret_cast<const char *>(s2));
     }
 
     OpenGLContext::~OpenGLContext()

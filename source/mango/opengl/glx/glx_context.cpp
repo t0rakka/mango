@@ -24,20 +24,6 @@ namespace mango
         return 0;
     }
 
-    static
-    void deleteContext(Display* display, GLXContext context)
-    {
-        if (display)
-        {
-            glXMakeCurrent(display, 0, 0);
-
-            if (context)
-            {
-                glXDestroyContext(display, context);
-            }
-        }
-    }
-
     struct OpenGLContextGLX : OpenGLContextHandle
     {
         GLXContext context { 0 };
@@ -115,27 +101,24 @@ namespace mango
 
             if (!glXQueryVersion(window->display, &glx_major, &glx_minor))
             {
-                deleteContext(window->display, context);
-                context = 0;
-                MANGO_EXCEPTION("[GLX Context] glXQueryVersion() failed.");
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextGLX] glXQueryVersion() failed.");
             }
 
             debugPrint("GLX version: %d.%d\n", glx_major, glx_minor);
 
             if ((glx_major == 1 && glx_minor < 3) || glx_major < 1)
             {
-                deleteContext(window->display, context);
-                context = 0;
-                MANGO_EXCEPTION("[GLX Context] Invalid GLX version.");
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextGLX] Invalid GLX version.");
             }
 
             int fbcount;
             GLXFBConfig* fbc = glXChooseFBConfig(window->display, DefaultScreen(window->display), visualAttribs.data(), &fbcount);
             if (!fbc)
             {
-                deleteContext(window->display, context);
-                context = 0;
-                MANGO_EXCEPTION("[GLX Context] glXChooseFBConfig() failed.");
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextGLX] glXChooseFBConfig() failed.");
             }
 
             // Pick the FB config/visual with the samples closest to attrib.samples
@@ -182,9 +165,8 @@ namespace mango
             // create window
             if (!window->createWindow(vi->screen, vi->depth, vi->visual, width, height, "OpenGL"))
             {
-                deleteContext(window->display, context);
-                context = 0;
-                MANGO_EXCEPTION("[GLX Context] createWindow() failed.");
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextGLX] createWindow() failed.");
             }
 
             XFree(vi);
@@ -253,9 +235,8 @@ namespace mango
 
             if (!context)
             {
-                deleteContext(window->display, context);
-                context = 0;
-                MANGO_EXCEPTION("[GLX Context] OpenGL Context creation failed.");
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextGLX] OpenGL Context creation failed.");
             }
 
             // Verifying that context is a direct context
@@ -272,14 +253,6 @@ namespace mango
             // TODO: context version selection: 4.3, 3.2, etc.
             // TODO: initialize GLX extensions using GLEXT headers
             glXMakeCurrent(window->display, window->window, context);
-
-            const GLubyte* s0 = glGetString(GL_VENDOR);
-            const GLubyte* s1 = glGetString(GL_RENDERER);
-            const GLubyte* s2 = glGetString(GL_VERSION);
-
-            debugPrint("Vendor:   \"%s\"\n", reinterpret_cast<const char *>(s0));
-            debugPrint("Renderer: \"%s\"\n", reinterpret_cast<const char *>(s1));
-            debugPrint("Version:  \"%s\"\n", reinterpret_cast<const char *>(s2));
 
 #if 0
             PFNGLGETSTRINGIPROC glGetStringi = (PFNGLGETSTRINGIPROC)glXGetProcAddress((const GLubyte*)"glGetStringi");
@@ -307,9 +280,20 @@ namespace mango
 
         ~OpenGLContextGLX()
         {
-            if (context)
+            shutdown();
+        }
+
+        void shutdown()
+        {
+            Display* display = window->display;
+            if (display)
             {
-                deleteContext(window->display, context);
+                glXMakeCurrent(display, 0, 0);
+
+                if (context)
+                {
+                    glXDestroyContext(display, context);
+                }
             }
         }
 
@@ -399,6 +383,14 @@ namespace mango
 
         // initialize extension mask
         initExtensionMask();
+
+        const GLubyte* s0 = glGetString(GL_VENDOR);
+        const GLubyte* s1 = glGetString(GL_RENDERER);
+        const GLubyte* s2 = glGetString(GL_VERSION);
+
+        debugPrint("Vendor:   \"%s\"\n", reinterpret_cast<const char *>(s0));
+        debugPrint("Renderer: \"%s\"\n", reinterpret_cast<const char *>(s1));
+        debugPrint("Version:  \"%s\"\n", reinterpret_cast<const char *>(s2));
     }
 
     OpenGLContext::~OpenGLContext()

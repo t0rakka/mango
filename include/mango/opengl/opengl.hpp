@@ -4,8 +4,6 @@
 */
 #pragma once
 
-#if !defined(__ppc__)
-
 #include <set>
 #include <string>
 #include <mango/core/configure.hpp>
@@ -37,6 +35,10 @@
 
 #elif defined(MANGO_PLATFORM_OSX)
 
+    #if defined(__ppc__)
+    #define MANGO_OPENGL_CONTEXT_NONE
+    #else
+
     // -----------------------------------------------------------------------
     // Cocoa
     // -----------------------------------------------------------------------
@@ -51,6 +53,8 @@
 
     #define GL_GLEXT_PROTOTYPES
     #include <mango/opengl/khronos/GL/glext.h>
+
+    #endif
 
 #elif defined(MANGO_PLATFORM_IOS)
 
@@ -103,9 +107,11 @@
 
 #else
 
-    //#error "Unsupported OpenGL implementation."
+    #define MANGO_OPENGL_CONTEXT_NONE
 
 #endif
+
+#ifndef MANGO_OPENGL_CONTEXT_NONE
 
 #include <mango/image/compression.hpp>
 #include <mango/window/window.hpp>
@@ -293,4 +299,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // !defined(__ppc__)
+#endif // MANGO_OPENGL_CONTEXT_NONE
