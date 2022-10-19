@@ -789,7 +789,7 @@ void D3DXEncodeBC2(u8* pBC, const u8* input, size_t stride, u32 flags) noexcept
 
 void D3DXEncodeBC3(u8* pBC, const u8* input, size_t stride, u32 flags) noexcept
 {
-    assert(pBC && pColor);
+    assert(pBC && input);
     static_assert(sizeof(D3DX_BC3) == 16, "D3DX_BC3 should be 16 bytes");
 
     HDRColorA Color[NUM_PIXELS_PER_BLOCK];
