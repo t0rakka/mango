@@ -318,27 +318,9 @@ namespace mango
     // OpenGLContext
     // -----------------------------------------------------------------------
 
-    OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
-        : Window(width, height, flags)
-        , m_context(nullptr)
+    void OpenGLContext::initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
     {
         m_context = new OpenGLContextCocoa(this, width, height, flags, configPtr, shared);
-
-        setVisible(true);
-
-        // parse extension string
-        const GLubyte* extensions = glGetString(GL_EXTENSIONS);
-        if (extensions)
-        {
-            parseExtensionString(m_extensions, reinterpret_cast<const char*>(extensions));
-        }
-
-        initExtensionMask();
-    }
-
-    OpenGLContext::~OpenGLContext()
-    {
-        delete m_context;
     }
 
 } // namespace mango

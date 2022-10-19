@@ -2,7 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#if !defined(__ppc__)
+#ifndef MANGO_OPENGL_CONTEXT_NONE
 
 #include "CustomOpenGLView.h"
 
@@ -480,4 +480,4 @@ namespace
 
 @end
 
-#endif // !defined(__ppc__)
+#endif // MANGO_OPENGL_CONTEXT_NONE

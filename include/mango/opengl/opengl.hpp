@@ -36,7 +36,7 @@
 #elif defined(MANGO_PLATFORM_OSX)
 
     #if defined(__ppc__)
-    #define MANGO_OPENGL_CONTEXT_NONE
+        #define MANGO_OPENGL_CONTEXT_NONE
     #else
 
     // -----------------------------------------------------------------------
@@ -142,12 +142,6 @@ namespace mango
 
     class OpenGLContext : public Window
     {
-    protected:
-        OpenGLContextHandle* m_context;
-        std::set<std::string> m_extensions;
-
-        void initExtensionMask();
-
     public:
         struct Config
         {
@@ -167,6 +161,15 @@ namespace mango
             image::Format format;
             const char* name;
         };
+
+    protected:
+        OpenGLContextHandle* m_context;
+        std::set<std::string> m_extensions;
+
+        void initExtensionMask();
+        void initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared);
+
+    public:
 
         OpenGLContext(int width, int height, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr);
         ~OpenGLContext();
