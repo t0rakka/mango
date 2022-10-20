@@ -11,6 +11,7 @@ mango::core
 [x] Improved string builder: variadic template variant of a + b + c + d.. -> makeString(a,b,c,d, ...)
 [ ] ThreadPool groups (4 threads, create-on-demand, ..)
 [ ] libdeflate / zlib benchmarking
+[ ] testing
 
 ---------------------------------------------------------------------------------------------
 mango::image
