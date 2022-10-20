@@ -10,6 +10,7 @@ mango::core
 [x] should the seek offset by signed? u64 -> s64
 [x] Improved string builder: variadic template variant of a + b + c + d.. -> makeString(a,b,c,d, ...)
 [ ] ThreadPool groups (4 threads, create-on-demand, ..)
+[ ] libdeflate / zlib benchmarking
 
 ---------------------------------------------------------------------------------------------
 mango::image
@@ -41,6 +42,9 @@ mango::image
       4 bit -> 2x1 block size (group 2 pixels into 1 byte)
     possibly also extend the "block compressed" to cover GIF and other formats
 [x] PNG ImageEncodeOptions.multithread support
+[ ] fpng encoder supporting IDAT splitting / multithreading
+[ ] astcenc benchmarking + integration
+[ ] improve png segment computation
 
 ---------------------------------------------------------------------------------------------
 mango::math
@@ -69,6 +73,8 @@ mango::opengl
 
 [ ] EGL + X11
 [ ] EGL + WAYLAND
+[ ] GL / GLES selection
+[ ] GLES shader compatible OpenGLFramebuffer
 [ ] shared context support
 [ ] helper functions for shader creation
 [ ] integration to mango::math for most common OpenGL API

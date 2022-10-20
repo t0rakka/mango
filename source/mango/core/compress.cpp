@@ -1127,7 +1127,7 @@ namespace deflate_zlib
         const char* error = deflate::get_error_string(result);
         if (error)
         {
-            status.setError("[deflate_zlib] %s.", error);
+            status.setError("[deflate.zlib] %s.", error);
         }
 
         status.size = bytes_out;
@@ -1175,7 +1175,7 @@ namespace deflate_gzip
         const char* error = deflate::get_error_string(result);
         if (error)
         {
-            status.setError("[deflate_gzip] %s.", error);
+            status.setError("[deflate.gzip] %s.", error);
         }
 
         status.size = bytes_out;
@@ -1197,8 +1197,8 @@ namespace deflate_gzip
         { Compressor::PPMD8,   "ppmd8", ppmd8::bound, ppmd8::compress, ppmd8::decompress },
         { Compressor::ZLIB,    "zlib",  zlib::bound,  zlib::compress,  zlib::decompress },
         { Compressor::DEFLATE, "deflate",      deflate::bound,      deflate::compress,      deflate::decompress },
-        { Compressor::DEFLATE_ZLIB, "deflate_zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },
-        { Compressor::DEFLATE_GZIP, "deflate_gzip", deflate_gzip::bound, deflate_gzip::compress, deflate_gzip::decompress },
+        { Compressor::DEFLATE_ZLIB, "deflate.zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },
+        { Compressor::DEFLATE_GZIP, "deflate.gzip", deflate_gzip::bound, deflate_gzip::compress, deflate_gzip::decompress },
     };
 
     std::vector<Compressor> getCompressors()
