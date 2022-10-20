@@ -34,21 +34,21 @@ mango::image
 [ ] GIF encoder + animation
 [x] Blitter Engine v2.0
 [x] mango::ConstMemory for read-only or read-only intent memory regions
-[ ] fix image_ktx.cpp to use GL_* macros correctly; nicer place for the macros?
+[x] fix image_ktx.cpp to use GL_* macros correctly; nicer place for the macros?
 [ ] expose 1,2,4 bit png file as "block compressed" format
       1 bit -> 8x1 block size (group 8 pixels into 1 byte)
       2 bit -> 4x1 block size (group 4 pixels into 1 byte)
       4 bit -> 2x1 block size (group 2 pixels into 1 byte)
     possibly also extend the "block compressed" to cover GIF and other formats
-[ ] PNG ImageEncodeOptions.multithread support
+[x] PNG ImageEncodeOptions.multithread support
 
 ---------------------------------------------------------------------------------------------
 mango::math
 ---------------------------------------------------------------------------------------------
 
-[ ] expose ALL mango::simd functionality in mango::math::Vector
-[ ] complete the 64 bit simd types (u32x2, s32x2, f32x2) and use them in mango::Vector front-end
-[ ] implement NEON 64 bit simd types (see above)
+[x] expose ALL mango::simd functionality in mango::math::Vector
+[x] complete the 64 bit simd types (u32x2, s32x2, f32x2) and use them in mango::Vector front-end
+[x] implement NEON 64 bit simd types (see above)
 [ ] clean up the gather() to use the simd 64 bit types as offsets directly (currently wrapped with *_set())
 [ ] clean the simd *_is_hardware_vector macros and their usage
 [ ] expose all of the masked simd functions in mango::Vector
@@ -67,6 +67,8 @@ mango::window
 mango::opengl
 ---------------------------------------------------------------------------------------------
 
+[ ] EGL + X11
+[ ] EGL + WAYLAND
 [ ] shared context support
 [ ] helper functions for shader creation
 [ ] integration to mango::math for most common OpenGL API
@@ -90,7 +92,7 @@ misc
 compressed formats
 ---------------------------------------------------------------------------------------------
 
-[ ] Unified compressed format handling / identifying systen
+[x] Unified compressed format handling / identifying systen
 [x] ALL DXGI enumerations
 [x] ALL GL enumerations (KTX parser has some already)
 [ ] NO magic numbers in block.cpp format table.. use the DXGI and GL enumerations
