@@ -62,12 +62,10 @@
     // EGL
     // -----------------------------------------------------------------------
 
-    #define MANGO_OPENGL_CONTEXT_EGL
+    #define MANGO_OPENGL_CONTEXT_NONE
 
     //#include <OpenGLES/ES1/gl.h>
     //#include <OpenGLES/ES1/glext.h>
-
-    // TODO: EGL context
 
 #elif defined(MANGO_PLATFORM_ANDROID)
 
@@ -75,14 +73,15 @@
     // EGL
     // -----------------------------------------------------------------------
 
+    #define MANGO_OPENGL_CONTEXT_NONE
+    /*
     #define MANGO_OPENGL_CONTEXT_EGL
 
     //#include <GLES/gl.h>
     //#include <GLES/glext.h>
     //#include <GLES2/gl2.h>
     #include <GLES3/gl32.h>
-
-    // TODO: EGL context
+    */
 
 #elif defined(MANGO_PLATFORM_UNIX)
 
