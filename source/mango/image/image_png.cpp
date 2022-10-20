@@ -151,11 +151,11 @@ namespace fpng
                 {
                     PUT_BITS_FLUSH;
                 }
-                
+
                 PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 24)].m_code, g_dyn_huff_4_codes[(lits >> 24)].m_code_size);
 
                 src_ofs += 4;
-                
+
                 prev_lits = lits;
             }
 
@@ -164,7 +164,7 @@ namespace fpng
             while (src_ofs < end_src_ofs)
             {
                 uint32_t lits = mango::uload32le(pSrc + src_ofs);
-                                
+
                 if (lits == prev_lits)
                 {
                     uint32_t match_len = 4;
@@ -187,7 +187,7 @@ namespace fpng
                         // This check is optional - see if just encoding 4 literals would be cheaper than using a short match.
                         uint32_t lit_bits = g_dyn_huff_4_codes[lits & 0xFF].m_code_size + g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code_size + 
                             g_dyn_huff_4_codes[(lits >> 16) & 0xFF].m_code_size + g_dyn_huff_4_codes[(lits >> 24)].m_code_size;
-                        
+
                         if ((match_code_bits + len_extra_bits + 1) > lit_bits)
                             goto do_literals;
                     }
@@ -212,7 +212,7 @@ do_literals:
                     PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 24)].m_code, g_dyn_huff_4_codes[(lits >> 24)].m_code_size);
 
                     src_ofs += 4;
-                    
+
                     prev_lits = lits;
                 }
 
