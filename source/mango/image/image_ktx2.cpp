@@ -646,7 +646,7 @@ namespace
     {
         VulkanFormatDesc desc;
 
-        const u32 maxIndex = u32((sizeof(g_vulkan_format_array) / sizeof(g_vulkan_format_array[0])));
+        const u32 maxIndex = u32(std::size(g_vulkan_format_array));
 
         if (vkformat < maxIndex)
         {

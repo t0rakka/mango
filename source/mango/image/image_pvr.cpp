@@ -126,8 +126,6 @@ namespace
         TextureCompression::ASTC_RGBA_6x6x6,
     };
 
-    const int formatTableSize = sizeof(formatTable) / sizeof(formatTable[0]);
-
     struct pvr_type_t
     {
         int size : 8;
@@ -152,8 +150,6 @@ namespace
         { 4, 1, 1, 0 }, // s32
         { 4, 1, 0, 0 }  // float32
     };
-
-    const int typeTableSize = sizeof(typeTable) / sizeof(typeTable[0]);
 
     struct pvr_header3_t
     {
@@ -486,7 +482,7 @@ namespace
             // compressed block default values
             m_info = TextureCompression(TextureCompression::NONE);
 
-            if (int(pvr.channeltype) < typeTableSize)
+            if (int(pvr.channeltype) < int(std::size(typeTable)))
             {
                 // configure bytes per pixel
                 m_info.bytes = typeTable[pvr.channeltype].size;
@@ -509,7 +505,8 @@ namespace
             else
             {
                 const int formatIndex = int(pvr.pixelformat);
-                if (formatIndex < formatTableSize)
+
+                if (formatIndex < int(std::size(formatTable)))
                 {
                     debugPrint("pvr.pixelformat: %d \n", formatIndex);
 

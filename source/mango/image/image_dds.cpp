@@ -484,8 +484,6 @@ namespace
         { 0, TextureCompression::ASTC_SRGB_ALPHA_12x12, Format(), true,  "ASTC_12X12_UNORM_SRGB" },
     };
 
-    const int g_dxgi_table_size = sizeof(g_dxgi_table) / sizeof(g_dxgi_table[0]);
-
     struct HeaderDX10
     {
         u32 dxgiFormat;
@@ -907,7 +905,7 @@ namespace
         {
             debugPrint("DXGI format: %d\n", header10.dxgiFormat);
 
-            if (header10.dxgiFormat >= u32(g_dxgi_table_size))
+            if (header10.dxgiFormat >= u32(std::size(g_dxgi_table)))
             {
                 header.setError("[ImageDecoder.DDS] DXGI index out of range.");
                 return;

@@ -178,12 +178,11 @@ namespace mango
 #include <mango/opengl/func/glext.hpp>
 #undef GL_EXTENSION
         };
-        const int size = sizeof(names) / sizeof(names[0]);
 
         u32* mask = reinterpret_cast<u32*>(&context.ext);
         std::memset(mask, 0, sizeof(context.ext));
 
-        for (int i = 0; i < size; ++i)
+        for (size_t i = 0; i < std::size(names); ++i)
         {
             if (context.isExtension(names[i]))
             {
@@ -201,12 +200,11 @@ namespace mango
 #include <mango/opengl/func/glcorearb.hpp>
 #undef CORE_EXTENSION
         };
-        const int size = sizeof(versions) / sizeof(versions[0]);
 
         u32* mask = reinterpret_cast<u32*>(&context.core);
         std::memset(mask, 0, sizeof(context.core));
 
-        for (int i = 0; i < size; ++i)
+        for (size_t i = 0; i < std::size(versions); ++i)
         {
             if (version >= versions[i])
             {
@@ -226,12 +224,11 @@ namespace mango
 #include <mango/opengl/func/wglext.hpp>
 #undef WGL_EXTENSION
         };
-        const int size = sizeof(names) / sizeof(names[0]);
 
         u32* mask = reinterpret_cast<u32*>(&context.wgl);
         std::memset(mask, 0, sizeof(context.wgl));
 
-        for (int i = 0; i < size; ++i)
+        for (size_t i = 0; i < std::size(names); ++i)
         {
             if (context.isExtension(names[i]))
             {
@@ -253,12 +250,11 @@ namespace mango
 #include <mango/opengl/func/glxext.hpp>
 #undef GLX_EXTENSION
         };
-        const int size = sizeof(names) / sizeof(names[0]);
 
         u32* mask = reinterpret_cast<u32*>(&context.glx);
         std::memset(mask, 0, sizeof(context.glx));
 
-        for (int i = 0; i < size; ++i)
+        for (size_t i = 0; i < std::size(names); ++i)
         {
             if (context.isExtension(names[i]))
             {

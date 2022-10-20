@@ -73,7 +73,7 @@ void test(Surface dest, Surface source)
     int x = 0;
     int y = 0;
 
-    for (size_t i = 0; i < sizeof(tests) / sizeof(Test); ++i)
+    for (size_t i = 0; i < std::size(tests); ++i)
     {
         Bitmap a(width, height, tests[i].source);
         Bitmap b(width, height, tests[i].dest);
@@ -166,7 +166,7 @@ void profile(Surface surface)
     int width = surface.width;
     int height = surface.height;
 
-    for (size_t i = 0; i < sizeof(tests) / sizeof(Test); ++i)
+    for (size_t i = 0; i < std::size(tests); ++i)
     {
         Bitmap a(width, height, tests[i].dest);
         Bitmap b(surface, tests[i].source);
