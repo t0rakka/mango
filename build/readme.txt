@@ -79,7 +79,7 @@ Load the solution file. Select configuration (the Release / x64 is very nice one
 When using the library; add the include/ into your projects INCLUDE path and
 link with the appropriate library. Each configuration generates own static .lib file to it's own folder.
 
-We only support the latest Visual Studio (2017 at the time of writing this); apologies for the inconvenience.
+We only support the latest Visual Studio (2022 at the time of writing this); apologies for the inconvenience.
 
 ------------------------------------------------------------------------------------------------
 * ANDROID!!?
