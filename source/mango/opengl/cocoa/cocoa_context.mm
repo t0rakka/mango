@@ -316,13 +316,10 @@ namespace mango
         }
     };
 
-    // -----------------------------------------------------------------------
-    // OpenGLContext
-    // -----------------------------------------------------------------------
-
-    void OpenGLContext::initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
+    OpenGLContextHandle* createOpenGLContextCocoa(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
     {
-        m_context = new OpenGLContextCocoa(this, width, height, flags, configPtr, shared);
+        auto* context = new OpenGLContextCocoa(parent, width, height, flags, configPtr, shared);
+        return context;
     }
 
 } // namespace mango

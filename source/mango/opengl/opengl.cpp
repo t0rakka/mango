@@ -266,6 +266,50 @@ namespace mango
 #endif
 
     // -----------------------------------------------------------------------
+    // context creation
+    // -----------------------------------------------------------------------
+
+    OpenGLContextHandle* createOpenGLContextWGL(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
+    OpenGLContextHandle* createOpenGLContextCocoa(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
+    OpenGLContextHandle* createOpenGLContextGLX(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
+    OpenGLContextHandle* createOpenGLContextEGL(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
+
+    using CreateContext = OpenGLContextHandle* (*)(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
+
+    static
+    OpenGLContextHandle* createOpenGLContext(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
+    {
+        CreateContext create = nullptr;
+
+#if defined(MANGO_OPENGL_CONTEXT_WGL)
+        create = createOpenGLContextWGL;
+#endif
+
+#if defined(MANGO_OPENGL_CONTEXT_COCOA)
+        create = createOpenGLContextCocoa;
+#endif
+
+#if defined(MANGO_OPENGL_CONTEXT_GLX)
+        create = createOpenGLContextGLX;
+#endif
+
+#if defined(MANGO_OPENGL_CONTEXT_EGL)
+        if ((flags & OpenGLContext::EGL) || !create)
+        {
+            create = createOpenGLContextEGL;
+        }
+#endif
+
+        OpenGLContextHandle* context = nullptr;
+        if (create)
+        {
+            context = create(parent, width, height, flags, configPtr, shared);
+        }
+
+        return context;
+    }
+
+    // -----------------------------------------------------------------------
     // OpenGLContext
     // -----------------------------------------------------------------------
 
@@ -273,7 +317,11 @@ namespace mango
         : Window(width, height, flags)
         , m_context(nullptr)
     {
-        initContext(width, height, flags, configPtr, shared);
+        m_context = createOpenGLContext(this, width, height, flags, configPtr, shared);
+        if (!m_context)
+        {
+            MANGO_EXCEPTION("[OpenGLContext] context creation failed.");
+        }
 
         setVisible(true);
 

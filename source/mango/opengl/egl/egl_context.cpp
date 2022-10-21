@@ -76,7 +76,8 @@ namespace mango
                 EGL_DEPTH_SIZE,      24,
                 EGL_STENCIL_SIZE,    8,
                 EGL_SURFACE_TYPE,    EGL_WINDOW_BIT,
-                EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+                //EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+                EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
                 EGL_NONE
             };
 
@@ -94,9 +95,13 @@ namespace mango
 
             const EGLint contextAttribs[] =
             {
-                EGL_CONTEXT_CLIENT_VERSION, 2,
+                //EGL_CONTEXT_MAJOR_VERSION, 4,
+                //EGL_CONTEXT_MINOR_VERSION, 6,
+                //EGL_CONTEXT_OPENGL_PROFILE_MASK,  EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT,
                 EGL_NONE
             };
+
+            eglBindAPI(EGL_OPENGL_API);
 
             egl_context = eglCreateContext(egl_display, eglConfig[0], shared_context, contextAttribs);
             if (egl_context == EGL_NO_CONTEXT)
@@ -160,7 +165,7 @@ namespace mango
 
         void swapInterval(int interval) override
         {
-            eglSwapInterval(interval);
+            eglSwapInterval(egl_display, interval);
         }
 
         void toggleFullscreen() override
@@ -213,13 +218,10 @@ namespace mango
         }
     };
 
-    // -----------------------------------------------------------------------
-    // OpenGLContext
-    // -----------------------------------------------------------------------
-
-    void OpenGLContext::initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
+    OpenGLContextHandle* createOpenGLContextEGL(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
     {
-        m_context = new OpenGLContextEGL(this, width, height, flags, configPtr, shared);
+        auto* context = new OpenGLContextEGL(parent, width, height, flags, configPtr, shared);
+        return context;
     }
 
 } // namespace mango

@@ -359,7 +359,8 @@ else
         '../source/mango/window/xlib/xlib_window.cpp'
     )
     mango_opengl_sources += files(
-        '../source/mango/opengl/glx/glx_context.cpp'
+        '../source/mango/opengl/glx/glx_context.cpp',
+        '../source/mango/opengl/egl/egl_context.cpp'
     )
 endif
 
@@ -930,7 +931,9 @@ else
     endif
 endif
 
-libtype = get_option('default_library')
+# ------------------------------------------------------------------------------
+# dependencies
+# ------------------------------------------------------------------------------
 
 threads_dep = dependency('threads')
 
@@ -939,6 +942,13 @@ mango_public_deps      = [ ]
 mango_opengl_deps      = [ ]
 
 opengl_dep = dependency('gl')
+
+egl_dep = dependency('egl', version: '>=1.4', required: false)
+if egl_dep.found()
+    add_project_arguments('-DMANGO_ENABLE_EGL', language: ['cpp'])
+    mango_opengl_deps += dependency('egl')
+endif
+
 mango_public_deps += opengl_dep
 
 if not is_windows

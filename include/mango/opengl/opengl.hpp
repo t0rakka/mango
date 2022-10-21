@@ -86,8 +86,12 @@
 #elif defined(MANGO_PLATFORM_UNIX)
 
     // -----------------------------------------------------------------------
-    // GLX
+    // GLX | EGL
     // -----------------------------------------------------------------------
+
+    #if defined(MANGO_ENABLE_EGL)
+        #define MANGO_OPENGL_CONTEXT_EGL
+    #endif
 
     #define MANGO_OPENGL_CONTEXT_GLX
     #define MANGO_OPENGL_FRAMEBUFFER
@@ -142,6 +146,11 @@ namespace mango
     class OpenGLContext : public Window
     {
     public:
+        enum Flags : u32
+        {
+            EGL     = 0x00010000,
+        };
+
         struct Config
         {
             u32 version  = 0;
