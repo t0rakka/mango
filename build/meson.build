@@ -946,7 +946,7 @@ opengl_dep = dependency('gl')
 egl_dep = dependency('egl', version: '>=1.4', required: false)
 if egl_dep.found()
     add_project_arguments('-DMANGO_ENABLE_EGL', language: ['cpp'])
-    mango_opengl_deps += dependency('egl')
+    mango_opengl_deps += egl_dep
 endif
 
 mango_public_deps += opengl_dep
