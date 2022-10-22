@@ -52,6 +52,7 @@ namespace fpng
         - use the existing architecture neutral load/store
         - defer Adler32 checksum computation to the caller
     */
+    using namespace mango;
 
     static const uint16_t g_defl_len_sym[256] = {
       257,258,259,260,261,262,263,264,265,265,266,266,267,267,268,268,269,269,269,269,270,270,270,270,271,271,271,271,272,272,272,272,
@@ -93,7 +94,7 @@ namespace fpng
 #define PUT_BITS_FLUSH do { \
     if ((dst_ofs + 8) > dst_buf_size) \
         return 0; \
-    mango::ustore64le(pDst + dst_ofs, bit_buf); \
+    ustore64le(pDst + dst_ofs, bit_buf); \
     uint32_t bits_to_shift = bit_buf_size & ~7; \
     dst_ofs += (bits_to_shift >> 3); \
     assert(bits_to_shift < 64); \
@@ -113,35 +114,34 @@ namespace fpng
     } \
 } while(0)
 
-    static uint32_t pixel_deflate_dyn_4_rle_one_pass(
-        const uint8_t* pImg, uint32_t w, uint32_t h,
-        uint8_t* pDst, uint32_t dst_buf_size)
+    static
+    u32 pixel_deflate_dyn_4_rle_one_pass(const u8* pImg, u32 w, u32 h, u8* pDst, u32 dst_buf_size)
     {
-        const uint32_t bpl = 1 + w * 4;
+        const u32 bpl = 1 + w * 4;
 
         if (dst_buf_size < sizeof(g_dyn_huff_4))
             return false;
         memcpy(pDst, g_dyn_huff_4, sizeof(g_dyn_huff_4));
-        uint32_t dst_ofs = sizeof(g_dyn_huff_4);
+        u32 dst_ofs = sizeof(g_dyn_huff_4);
 
-        uint64_t bit_buf = DYN_HUFF_4_BITBUF;
+        u64 bit_buf = DYN_HUFF_4_BITBUF;
         int bit_buf_size = DYN_HUFF_4_BITBUF_SIZE;
 
-        const uint8_t* pSrc = pImg;
-        uint32_t src_ofs = 0;
+        const u8* pSrc = pImg;
+        u32 src_ofs = 0;
 
-        for (uint32_t y = 0; y < h; y++)
+        for (u32 y = 0; y < h; y++)
         {
-            const uint32_t end_src_ofs = src_ofs + bpl;
+            const u32 end_src_ofs = src_ofs + bpl;
 
-            const uint32_t filter_lit = pSrc[src_ofs++];
+            const u32 filter_lit = pSrc[src_ofs++];
             PUT_BITS_CZ(g_dyn_huff_4_codes[filter_lit].m_code, g_dyn_huff_4_codes[filter_lit].m_code_size);
 
             PUT_BITS_FLUSH;
 
-            uint32_t prev_lits;
+            u32 prev_lits;
             {
-                uint32_t lits = mango::uload32le(pSrc + src_ofs);
+                u32 lits = uload32le(pSrc + src_ofs);
 
                 PUT_BITS_CZ(g_dyn_huff_4_codes[lits & 0xFF].m_code, g_dyn_huff_4_codes[lits & 0xFF].m_code_size);
                 PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code, g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code_size);
@@ -163,29 +163,29 @@ namespace fpng
 
             while (src_ofs < end_src_ofs)
             {
-                uint32_t lits = mango::uload32le(pSrc + src_ofs);
+                u32 lits = uload32le(pSrc + src_ofs);
 
                 if (lits == prev_lits)
                 {
-                    uint32_t match_len = 4;
-                    uint32_t max_match_len = std::min<int>(252, (int)(end_src_ofs - src_ofs));
+                    u32 match_len = 4;
+                    u32 max_match_len = std::min<int>(252, (int)(end_src_ofs - src_ofs));
 
                     while (match_len < max_match_len)
                     {
-                        if (mango::uload32le(pSrc + src_ofs + match_len) != lits)
+                        if (uload32le(pSrc + src_ofs + match_len) != lits)
                             break;
                         match_len += 4;
                     }
 
-                    uint32_t adj_match_len = match_len - 3;
+                    u32 adj_match_len = match_len - 3;
 
-                    const uint32_t match_code_bits = g_dyn_huff_4_codes[g_defl_len_sym[adj_match_len]].m_code_size;
-                    const uint32_t len_extra_bits = g_defl_len_extra[adj_match_len];
+                    const u32 match_code_bits = g_dyn_huff_4_codes[g_defl_len_sym[adj_match_len]].m_code_size;
+                    const u32 len_extra_bits = g_defl_len_extra[adj_match_len];
 
                     if (match_len == 4)
                     {
                         // This check is optional - see if just encoding 4 literals would be cheaper than using a short match.
-                        uint32_t lit_bits = g_dyn_huff_4_codes[lits & 0xFF].m_code_size + g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code_size + 
+                        u32 lit_bits = g_dyn_huff_4_codes[lits & 0xFF].m_code_size + g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code_size + 
                             g_dyn_huff_4_codes[(lits >> 16) & 0xFF].m_code_size + g_dyn_huff_4_codes[(lits >> 24)].m_code_size;
 
                         if ((match_code_bits + len_extra_bits + 1) > lit_bits)
@@ -233,7 +233,8 @@ do_literals:
         return dst_ofs;
     }
 
-    static uint32_t write_raw_block(const uint8_t* pSrc, uint32_t src_len, uint8_t* pDst, uint32_t dst_buf_size)
+    static
+    u32 write_raw_block(const u8* pSrc, u32 src_len, u8* pDst, u32 dst_buf_size)
     {
         if (dst_buf_size < 2)
             return 0;
@@ -241,13 +242,13 @@ do_literals:
         pDst[0] = 0x78;
         pDst[1] = 0x01;
 
-        uint32_t dst_ofs = 2;
+        u32 dst_ofs = 2;
 
-        uint32_t src_ofs = 0;
+        u32 src_ofs = 0;
         while (src_ofs < src_len)
         {
-            const uint32_t src_remaining = src_len - src_ofs;
-            const uint32_t block_size = std::min<uint32_t>(UINT16_MAX, src_remaining);
+            const u32 src_remaining = src_len - src_ofs;
+            const u32 block_size = std::min<u32>(UINT16_MAX, src_remaining);
             const bool final_block = (block_size == src_remaining);
 
             if ((dst_ofs + 5 + block_size) > dst_buf_size)
@@ -3698,6 +3699,7 @@ namespace
         write_iCCP(stream, options);
 
         int segment_height = configure_segment(surface, options);
+        segment_height = 0; // xxx
 
         if (options.palette.size > 0)
         {
