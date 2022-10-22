@@ -3699,7 +3699,6 @@ namespace
         write_iCCP(stream, options);
 
         int segment_height = configure_segment(surface, options);
-        segment_height = 0; // xxx
 
         if (options.palette.size > 0)
         {
