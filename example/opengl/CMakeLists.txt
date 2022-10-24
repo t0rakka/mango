@@ -4,6 +4,7 @@ list(APPEND EXAMPLES
     imageview
     animation
     mandelbrot
+    srgb
 )
 
 foreach(example IN LISTS EXAMPLES)
