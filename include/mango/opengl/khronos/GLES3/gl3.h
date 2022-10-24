@@ -15,7 +15,7 @@ extern "C" {
 **   https://github.com/KhronosGroup/OpenGL-Registry
 */
 
-#include "gl3platform.h"
+#include "../GLES3/gl3platform.h"
 
 #ifndef GL_APIENTRYP
 #define GL_APIENTRYP GL_APIENTRY*
@@ -25,7 +25,7 @@ extern "C" {
 #define GL_GLES_PROTOTYPES 1
 #endif
 
-/* Generated on date 20200814 */
+/* Generated on date 20220530 */
 
 /* Generated C header for:
  * API: gles2
