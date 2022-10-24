@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #ifdef GLEXT_PROC
 
@@ -1191,6 +1191,11 @@ GLEXT_PROC(PFNGLVERTEXARRAYVERTEXATTRIBDIVISOREXTPROC, glVertexArrayVertexAttrib
 
 // GL_EXT_shader_framebuffer_fetch_non_coherent
 GLEXT_PROC(PFNGLFRAMEBUFFERFETCHBARRIEREXTPROC, glFramebufferFetchBarrierEXT);
+
+// GL_EXT_texture_storage
+GLEXT_PROC(PFNGLTEXSTORAGE1DEXTPROC, glTexStorage1DEXT);
+GLEXT_PROC(PFNGLTEXSTORAGE2DEXTPROC, glTexStorage2DEXT);
+GLEXT_PROC(PFNGLTEXSTORAGE3DEXTPROC, glTexStorage3DEXT);
 
 // ---------------------------------------------------------------------------------
 // INTEL

@@ -2362,6 +2362,11 @@ GLEXT_PROC(PFNGLFRAMEBUFFERFETCHBARRIEREXTPROC, glFramebufferFetchBarrierEXT);
 GLEXT_PROC(PFNGLACQUIREKEYEDMUTEXWIN32EXTPROC, glAcquireKeyedMutexWin32EXT);
 GLEXT_PROC(PFNGLRELEASEKEYEDMUTEXWIN32EXTPROC, glReleaseKeyedMutexWin32EXT);
 
+// GL_EXT_texture_storage
+GLEXT_PROC(PFNGLTEXSTORAGE1DEXTPROC, glTexStorage1DEXT);
+GLEXT_PROC(PFNGLTEXSTORAGE2DEXTPROC, glTexStorage2DEXT);
+GLEXT_PROC(PFNGLTEXSTORAGE3DEXTPROC, glTexStorage3DEXT);
+
 // ---------------------------------------------------------------------------------
 // GREMEDY
 // ---------------------------------------------------------------------------------
