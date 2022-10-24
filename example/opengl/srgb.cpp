@@ -36,6 +36,13 @@ public:
         unlock();
 
         printf("screen: %d x %d (scale: %dx)\n", screen.x, screen.y, scale);
+
+        GLint encoding = -1;
+        glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_FRONT, GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING, &encoding);
+        if (encoding == GL_LINEAR)
+            printf("Framebuffer attachment color encoding is linear.\n");
+        if (encoding == GL_SRGB)
+            printf("Framebuffer attachment color encoding is sRGB.\n");
     }
 
     void onKeyPress(Keycode code, u32 mask) override
