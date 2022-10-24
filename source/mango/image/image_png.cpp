@@ -3675,12 +3675,19 @@ namespace
             size_t scan_bytes = surface.width * surface.format.bytes();
             size_t image_bytes = surface.height * scan_bytes;
 
-            constexpr size_t block_size = 256 * 1024;
-            size_t N = image_bytes / block_size;
+            constexpr size_t block_size = 1024 * 1024;
+            size_t N = std::min<size_t>(128, image_bytes / block_size);
 
             if (N > 1)
             {
                 height = int(surface.height / N);
+                debugPrint("[image]\n");
+                debugPrint("    %d x %d\n", surface.width, surface.height);
+                debugPrint("    size: %d KB\n", image_bytes / 1024);
+                debugPrint("[segment]\n");
+                debugPrint("    N:     %d\n", int(N));
+                debugPrint("    height: %d\n", height);
+                debugPrint("    size:   %d KB\n", block_size/1024);
             }
         }
 
