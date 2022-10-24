@@ -12,23 +12,23 @@ using namespace mango::image;
 class TestWindow : public OpenGLFramebuffer
 {
 protected:
-    const Bitmap& m_bitmap;
+    Bitmap m_bitmap;
     Filter m_filter = OpenGLFramebuffer::FILTER_NEAREST;
 
 public:
-    TestWindow(const Bitmap& bitmap)
-        : OpenGLFramebuffer(bitmap.width, bitmap.height)
-        , m_bitmap(bitmap)
+    TestWindow()
+        : OpenGLFramebuffer(256, 128)
+        , m_bitmap(256, 128, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8))
     {
         setTitle("OpenGLFramebuffer");
 
         // compute window size
         int32x2 screen = getScreenSize();
-        int scale = std::max(1, (screen.y / std::max(1, bitmap.height)) / 2);
-        setWindowSize(bitmap.width * scale, bitmap.height * scale);
+        int scale = std::max(1, (screen.y / std::max(1, m_bitmap.height)) / 2);
+        setWindowSize(m_bitmap.width * scale, m_bitmap.height * scale);
 
         // generate test pattern
-        gradient(bitmap);
+        gradient(m_bitmap);
 
         // upload image into the framebuffer
         Surface s = lock();
@@ -109,7 +109,6 @@ public:
 
 int main(int argc, const char* argv[])
 {
-    Bitmap bitmap(256, 128, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-    TestWindow window(bitmap);
+    TestWindow window;
     window.enterEventLoop();
 }
