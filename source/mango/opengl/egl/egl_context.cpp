@@ -53,38 +53,41 @@ namespace mango
                 config = *configPtr;
             }
 
-            /*
             // Configure attributes
 
-            std::vector<int> visualAttribs;
+            std::vector<EGLint> configAttribs;
 
-            visualAttribs.push_back(config.red);
-            visualAttribs.push_back(config.green);
-            visualAttribs.push_back(config.blue);
-            visualAttribs.push_back(config.alpha);
-            visualAttribs.push_back(config.depth);
-            visualAttribs.push_back(config.stencil);
+            //config.red
+            //config.green
+            //config.blue
+            //config.alpha
+
+            configAttribs.push_back(EGL_BUFFER_SIZE);
+            configAttribs.push_back(8);
+
+            configAttribs.push_back(EGL_DEPTH_SIZE);
+            configAttribs.push_back(config.depth);
+
+            configAttribs.push_back(EGL_STENCIL_SIZE);
+            configAttribs.push_back(config.stencil);
+
+            configAttribs.push_back(EGL_SURFACE_TYPE);
+            configAttribs.push_back(EGL_WINDOW_BIT);
+
+            configAttribs.push_back(EGL_RENDERABLE_TYPE);
+            configAttribs.push_back(EGL_OPENGL_BIT);
+            //configAttribs.push_back(EGL_OPENGL_ES2_BIT);
 
             if (config.samples > 1)
             {
             }
-            */
 
-            const EGLint configAttribs [] =
-            {
-                EGL_BUFFER_SIZE,     8,
-                EGL_DEPTH_SIZE,      24,
-                EGL_STENCIL_SIZE,    8,
-                EGL_SURFACE_TYPE,    EGL_WINDOW_BIT,
-                //EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-                EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-                EGL_NONE
-            };
+            configAttribs.push_back(EGL_NONE);
 
             EGLint numConfig;
             EGLConfig eglConfig[1];
 
-            if (!eglChooseConfig(egl_display, configAttribs, eglConfig, 1, &numConfig))
+            if (!eglChooseConfig(egl_display, configAttribs.data(), eglConfig, 1, &numConfig))
             {
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContextEGL] eglChooseConfig() failed.");
