@@ -33,10 +33,6 @@ namespace mango::image
     void decode_block_fxt1_rgb        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_fxt1_rgba       (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
-    void decode_surface_astc          (const TextureCompression& info, u8* output, const u8* input, size_t stride);
-    void decode_surface_pvrtc         (const TextureCompression& info, u8* output, const u8* input, size_t stride);
-    void decode_surface_pvrtc2        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
-
     void decode_block_etc1            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_etc2            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_etc2_eac        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
@@ -50,6 +46,10 @@ namespace mango::image
     void decode_block_bc6hu           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_bc6hs           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_bc7             (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+
+    void decode_surface_astc          (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_surface_pvrtc         (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_surface_pvrtc2        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
     // encode
 

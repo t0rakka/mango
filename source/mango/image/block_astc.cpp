@@ -65,6 +65,8 @@ namespace mango::image
         astcenc_image image;
 
         // TODO: stride
+        // - when supported, rewrite the yflip logic in block.cpp
+
         image.dim_x = info.width;
         image.dim_y = info.height;
         image.dim_z = 1;
