@@ -161,6 +161,7 @@ namespace mango
             u32 depth    = 24;
             u32 stencil  = 8;
             u32 samples  = 1;
+            bool srgb    = false;
         };
 
         struct InternalFormat
