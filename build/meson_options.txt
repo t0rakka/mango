@@ -14,6 +14,3 @@ option('enable_f16c',               type : 'boolean', value : true,  description
 option('enable_bmi',                type : 'boolean', value : false, description : 'Enable BMI'                           )
 option('enable_bmi2',               type : 'boolean', value : false, description : 'Enable BMI2'                          )
 option('enable_fma',                type : 'boolean', value : false, description : 'Enable FMA'                           )
-
-# Generic
-option('enable_fast_math',          type : 'boolean', value : true,  description : 'Use relaxed-precision floating point' )

@@ -22,7 +22,6 @@ if host_machine.system() == 'darwin'
     add_languages('objcpp')
 endif
 
-enable_fast_math = get_option('enable_fast_math')
 enable_sse2      = get_option('enable_sse2')
 enable_sse4      = get_option('enable_sse4')
 enable_avx       = get_option('enable_avx')
@@ -252,6 +251,7 @@ mango_core_sources = files(
 mango_image_sources = files(
     '../source/mango/image/blitter.cpp',
     '../source/mango/image/block.cpp',
+    '../source/mango/image/block_astc.cpp',
     '../source/mango/image/block_dxt.cpp',
     '../source/mango/image/block_fxt1.cpp',
     '../source/mango/image/block_pvrtc.cpp',
@@ -445,7 +445,6 @@ external_bzip2_sources = files(
 )
 
 external_google_sources = files(
-    '../source/external/google/astc.cpp',
     '../source/external/google/etc1.cpp',
     '../source/external/google/etc.cpp'
 )
@@ -828,6 +827,46 @@ external_basisu_sources = files(
     '../source/external/basisu/transcoder/basisu_transcoder.cpp'
 )
 
+external_astc_headers = files(
+    '../source/external/astc/astcenc.h',
+    '../source/external/astc/astcenc_diagnostic_trace.h',
+    '../source/external/astc/astcenc_internal.h',
+    '../source/external/astc/astcenc_internal_entry.h',
+    '../source/external/astc/astcenc_mathlib.h',
+    '../source/external/astc/astcenc_vecmathlib.h',
+    '../source/external/astc/astcenc_vecmathlib_avx2_8.h',
+    '../source/external/astc/astcenc_vecmathlib_common_4.h',
+    '../source/external/astc/astcenc_vecmathlib_neon_4.h',
+    '../source/external/astc/astcenc_vecmathlib_none_4.h',
+    '../source/external/astc/astcenc_vecmathlib_sse_4.h'
+)
+
+external_astc_sources = files(
+    '../source/external/astc/astcenc_averages_and_directions.cpp',
+    '../source/external/astc/astcenc_block_sizes.cpp',
+    '../source/external/astc/astcenc_color_quantize.cpp',
+    '../source/external/astc/astcenc_color_unquantize.cpp',
+    '../source/external/astc/astcenc_compress_symbolic.cpp',
+    '../source/external/astc/astcenc_compute_variance.cpp',
+    '../source/external/astc/astcenc_decompress_symbolic.cpp',
+    '../source/external/astc/astcenc_diagnostic_trace.cpp',
+    '../source/external/astc/astcenc_entry.cpp',
+    '../source/external/astc/astcenc_find_best_partitioning.cpp',
+    '../source/external/astc/astcenc_ideal_endpoints_and_weights.cpp',
+    '../source/external/astc/astcenc_image.cpp',
+    '../source/external/astc/astcenc_integer_sequence.cpp',
+    '../source/external/astc/astcenc_mathlib.cpp',
+    '../source/external/astc/astcenc_mathlib_softfloat.cpp',
+    '../source/external/astc/astcenc_partition_tables.cpp',
+    '../source/external/astc/astcenc_percentile_tables.cpp',
+    '../source/external/astc/astcenc_pick_best_endpoint_format.cpp',
+    '../source/external/astc/astcenc_platform_isa_detection.cpp',
+    '../source/external/astc/astcenc_quantization.cpp',
+    '../source/external/astc/astcenc_symbolic_physical.cpp',
+    '../source/external/astc/astcenc_weight_align.cpp',
+    '../source/external/astc/astcenc_weight_quant_xfer_tables.cpp'
+)
+
 # ------------------------------------------------------------------------------
 # compiler settings
 # ------------------------------------------------------------------------------
@@ -846,9 +885,6 @@ if is_windows
 endif
 
 if cpp.get_id() == 'msvc'
-    if enable_fast_math
-        add_project_arguments('/fp:fast', language: ['c', 'cpp'])
-    endif
 
     if enable_avx512
         message('SIMD: AVX-512 (2015)')
@@ -863,10 +899,6 @@ if cpp.get_id() == 'msvc'
 else
     if cpp.get_id() == 'gcc'
         add_project_arguments('-ftree-vectorize', language: ['c', 'cpp'])
-    endif
-
-    if enable_fast_math
-        add_project_arguments('-ffast-math', language: ['c', 'cpp'])
     endif
 
     if host_machine.cpu_family() == 'arm' and enable_neon
@@ -1019,6 +1051,7 @@ mango = shared_library('mango',
         external_unrar_headers,
         external_webp_headers,
         external_basisu_headers,
+        external_astc_headers,
         external_headers
     ],
     sources : [
@@ -1042,6 +1075,7 @@ mango = shared_library('mango',
         external_webp_sources,
         external_zpng_sources,
         external_basisu_sources,
+        external_astc_sources,
     ],
     include_directories : [ mango_inc, '../source/external/libwebp' ],
     dependencies        : mango_deps,

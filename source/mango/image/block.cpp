@@ -33,6 +33,7 @@ namespace mango::image
     void decode_block_fxt1_rgb        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_fxt1_rgba       (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
+    void decode_surface_astc          (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_surface_pvrtc         (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_surface_pvrtc2        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
@@ -41,8 +42,6 @@ namespace mango::image
     void decode_block_etc2_eac        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_eac_r11         (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_eac_rg11        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
-    void decode_block_astc_fp16       (const TextureCompression& info, u8* output, const u8* input, size_t stride);
-    void decode_block_astc_srgb       (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
     void decode_block_bc4u            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_bc4s            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
@@ -567,7 +566,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_4x4_KHR,
             vulkan::FORMAT_ASTC_4x4_UNORM_BLOCK,
             4, 4, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -576,7 +575,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_5x4_KHR,
             vulkan::FORMAT_ASTC_5x4_UNORM_BLOCK,
             5, 4, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -585,7 +584,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_5x5_KHR,
             vulkan::FORMAT_ASTC_5x5_UNORM_BLOCK,
             5, 5, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -594,7 +593,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_6x5_KHR,
             vulkan::FORMAT_ASTC_6x5_UNORM_BLOCK,
             6, 5, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -603,7 +602,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_6x6_KHR,
             vulkan::FORMAT_ASTC_6x6_UNORM_BLOCK,
             6, 6, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -612,7 +611,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_8x5_KHR,
             vulkan::FORMAT_ASTC_8x5_UNORM_BLOCK,
             8, 5, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -621,7 +620,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_8x6_KHR,
             vulkan::FORMAT_ASTC_8x6_UNORM_BLOCK,
             8, 6, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -630,7 +629,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_8x8_KHR,
             vulkan::FORMAT_ASTC_8x8_UNORM_BLOCK,
             8, 8, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -639,7 +638,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_10x5_KHR,
             vulkan::FORMAT_ASTC_10x5_UNORM_BLOCK,
             10, 5, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -648,7 +647,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_10x6_KHR,
             vulkan::FORMAT_ASTC_10x6_UNORM_BLOCK,
             10, 6, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -657,7 +656,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_10x8_KHR,
             vulkan::FORMAT_ASTC_10x8_UNORM_BLOCK,
             10, 8, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -666,7 +665,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_10x10_KHR,
             vulkan::FORMAT_ASTC_10x10_UNORM_BLOCK,
             10, 10, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -675,7 +674,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_12x10_KHR,
             vulkan::FORMAT_ASTC_12x10_UNORM_BLOCK,
             12, 10, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -684,7 +683,7 @@ namespace
             opengl::COMPRESSED_RGBA_ASTC_12x12_KHR,
             vulkan::FORMAT_ASTC_12x12_UNORM_BLOCK,
             12, 12, 1, 16, FORMAT_ASTC_FP16, 
-            decode_block_astc_fp16, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -693,7 +692,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR,
             vulkan::FORMAT_ASTC_4x4_SRGB_BLOCK,
             4, 4, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -702,7 +701,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR,
             vulkan::FORMAT_ASTC_5x4_SRGB_BLOCK,
             5, 4, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -711,7 +710,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR,
             vulkan::FORMAT_ASTC_5x5_SRGB_BLOCK,
             5, 5, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -720,7 +719,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR,
             vulkan::FORMAT_ASTC_6x5_SRGB_BLOCK,
             6, 5, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -729,7 +728,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR,
             vulkan::FORMAT_ASTC_6x6_SRGB_BLOCK,
             6, 6, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -738,7 +737,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR,
             vulkan::FORMAT_ASTC_8x5_SRGB_BLOCK,
             8, 5, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -747,7 +746,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR,
             vulkan::FORMAT_ASTC_8x6_SRGB_BLOCK,
             8, 6, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -756,7 +755,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR,
             vulkan::FORMAT_ASTC_8x8_SRGB_BLOCK,
             8, 8, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -765,7 +764,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR,
             vulkan::FORMAT_ASTC_10x5_SRGB_BLOCK,
             10, 5, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -774,7 +773,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR,
             vulkan::FORMAT_ASTC_10x6_SRGB_BLOCK,
             10, 6, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -783,7 +782,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR,
             vulkan::FORMAT_ASTC_10x8_SRGB_BLOCK,
             10, 8, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -792,7 +791,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR,
             vulkan::FORMAT_ASTC_10x10_SRGB_BLOCK,
             10, 10, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -801,7 +800,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR,
             vulkan::FORMAT_ASTC_12x10_SRGB_BLOCK,
             12, 10, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         TextureCompression(
@@ -810,7 +809,7 @@ namespace
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR,
             vulkan::FORMAT_ASTC_12x12_SRGB_BLOCK,
             12, 12, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_block_astc_srgb, nullptr
+            decode_surface_astc, nullptr
         ),
 
         // OES_texture_compression_astc
