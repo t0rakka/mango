@@ -36,14 +36,14 @@ namespace mango::image
         u8* address(int x = 0, int y = 0) const
         {
             u8* scan = image + y * stride;
-            return scan + x * format.bytes();
+            return scan + size_t(x) * format.bytes();
         }
 
         template <typename SampleType>
         SampleType* address(int x = 0, int y = 0) const
         {
             SampleType* scan = reinterpret_cast<SampleType*>(image + y * stride);
-            return scan + x;
+            return scan + size_t(x);
         }
 
         ImageEncodeStatus save(Stream& stream, const std::string& extension, const ImageEncodeOptions& options = ImageEncodeOptions()) const;
