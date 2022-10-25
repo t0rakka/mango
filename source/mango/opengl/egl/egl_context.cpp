@@ -6,6 +6,9 @@
 #include <mango/core/system.hpp>
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
+
+#if defined(MANGO_OPENGL_CONTEXT_EGL)
+
 #include "../../window/xlib/xlib_handle.hpp"
 #include <EGL/egl.h>
 
@@ -228,3 +231,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif // defined(MANGO_OPENGL_CONTEXT_EGL)
