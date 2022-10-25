@@ -24,7 +24,7 @@ namespace mango::image
     {
         TextureCompression temp(info.compression);
 
-        //bool isFloat = (info.compression & TextureCompression::FLOAT) != 0;
+        bool isFloat = (info.compression & TextureCompression::FLOAT) != 0;
 
         // Block size
         const u32 block_x = temp.width;
@@ -68,7 +68,7 @@ namespace mango::image
         image.dim_x = info.width;
         image.dim_y = info.height;
         image.dim_z = 1;
-        image.data_type = ASTCENC_TYPE_U8;
+        image.data_type = isFloat ? ASTCENC_TYPE_F16 : ASTCENC_TYPE_U8;
         image.data = reinterpret_cast<void**>(&output);
 
         ConcurrentQueue q;

@@ -1120,9 +1120,13 @@ namespace
     void directSurfaceDecode(const TextureCompression& info, const Surface& surface, ConstMemory memory)
     {
         TextureCompression temp(info);
+
+        u8* image = surface.image;
+        size_t stride = surface.stride;
+
         temp.width = surface.width;
         temp.height = surface.height;
-        temp.decode(temp, surface.image, memory.address, surface.stride);
+        temp.decode(temp, image, memory.address, stride);
     }
 
 } // namespace
@@ -1250,7 +1254,8 @@ namespace mango::image
         const bool noclip = surface.width == (xblocks * width) &&
                             surface.height == (yblocks * height);
         const bool noconvert = surface.format == format;
-        const bool direct = noclip && noconvert;
+        const bool yflip = (compression & TextureCompression::YFLIP) != 0;
+        const bool direct = noclip && noconvert && !yflip;
 
         if (compression & TextureCompression::SURFACE)
         {
@@ -1263,7 +1268,16 @@ namespace mango::image
             {
                 Bitmap bitmap(xblocks * width, yblocks * height, format);
                 directSurfaceDecode(*this, bitmap, memory);
-                surface.blit(0, 0, bitmap);
+
+                Surface temp = surface;
+
+                if (yflip)
+                {
+                    temp.image += (temp.height - 1) * temp.stride;
+                    temp.stride = -temp.stride;
+                }
+
+                temp.blit(0, 0, bitmap);
             }
         }
         else
@@ -1279,7 +1293,7 @@ namespace mango::image
                 directBlockDecode(*this, bitmap, memory, xblocks, yblocks);
 
                 // compute y offset to skip padding pixels, if any
-                int yoffset = (compression & YFLIP) ? surface.height - yblocks * height : 0;
+                int yoffset = yflip ? surface.height - yblocks * height : 0;
                 surface.blit(0, yoffset, bitmap);
             }
         }
