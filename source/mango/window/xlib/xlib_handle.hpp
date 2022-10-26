@@ -26,10 +26,10 @@ namespace mango
     struct WindowHandle
     {
 		// window data
-        ::Display*  display { NULL };
-        ::Window    window { 0 };
-        ::Colormap  colormap { 0 };
-        ::XImage*   icon { NULL };
+        ::Display*  x11_display { NULL };
+        ::Window    x11_window { 0 };
+        ::Colormap  x11_colormap { 0 };
+        ::XImage*   x11_icon { NULL };
 
         // window close event atoms
         ::Atom      atom_protocols;

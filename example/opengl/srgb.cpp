@@ -14,6 +14,7 @@ class TestWindow : public OpenGLFramebuffer
 protected:
     Bitmap m_bitmap;
     Filter m_filter = OpenGLFramebuffer::FILTER_NEAREST;
+    bool m_srgb = false;
 
 public:
     TestWindow()
@@ -36,13 +37,6 @@ public:
         unlock();
 
         printf("screen: %d x %d (scale: %dx)\n", screen.x, screen.y, scale);
-
-        GLint encoding = -1;
-        glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_FRONT, GL_FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING, &encoding);
-        if (encoding == GL_LINEAR)
-            printf("Framebuffer attachment color encoding is linear.\n");
-        if (encoding == GL_SRGB)
-            printf("Framebuffer attachment color encoding is sRGB.\n");
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -69,6 +63,15 @@ public:
 
         case KEYCODE_3:
             m_filter = OpenGLFramebuffer::FILTER_BICUBIC;
+            onDraw();
+            break;
+
+        case KEYCODE_S:
+            m_srgb = !m_srgb;
+            if (m_srgb)
+                glEnable(GL_FRAMEBUFFER_SRGB_EXT);
+            else
+                glDisable(GL_FRAMEBUFFER_SRGB_EXT);
             onDraw();
             break;
 

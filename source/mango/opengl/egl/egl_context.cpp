@@ -6,6 +6,9 @@
 #include <mango/core/system.hpp>
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
+
+#if defined(MANGO_OPENGL_CONTEXT_EGL)
+
 #include "../../window/xlib/xlib_handle.hpp"
 #include <EGL/egl.h>
 
@@ -31,7 +34,7 @@ namespace mango
             : window(*theContext)
         {
 
-            //egl_display = eglGetDisplay((EGLNativeDisplayType)window->display);
+            //egl_display = eglGetDisplay((EGLNativeDisplayType)window->x11_display);
             egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
             if (egl_display == EGL_NO_DISPLAY)
             {
@@ -119,7 +122,7 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
             }
 
-            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], window->window, NULL);
+            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], window->x11_window, NULL);
             if (egl_surface == EGL_NO_SURFACE)
             {
                 shutdown();
@@ -181,7 +184,7 @@ namespace mango
             std::memset(&xevent, 0, sizeof(xevent));
 
             xevent.type = ClientMessage;
-            xevent.xclient.window = window->window;
+            xevent.xclient.window = window->x11_window;
             xevent.xclient.message_type = window->atom_state;
             xevent.xclient.format = 32;
             xevent.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
@@ -190,16 +193,16 @@ namespace mango
             xevent.xclient.data.l[3] = 1; // source indication: application
             xevent.xclient.data.l[4] = 0; // unused
 
-            XMapWindow(window->display, window->window);
+            XMapWindow(window->x11_display, window->x11_window);
 
             // send the event to the root window
-            if (!XSendEvent(window->display, DefaultRootWindow(window->display), False,
+            if (!XSendEvent(window->x11_display, DefaultRootWindow(window->x11_display), False,
                 SubstructureRedirectMask | SubstructureNotifyMask, &xevent))
             {
                 // TODO: failed
             }
 
-            XFlush(window->display);
+            XFlush(window->x11_display);
 
             // Enable rendering now that all the tricks are done
             window->busy = false;
@@ -216,7 +219,7 @@ namespace mango
         int32x2 getWindowSize() const override
         {
             XWindowAttributes attributes;
-            XGetWindowAttributes(window->display, window->window, &attributes);
+            XGetWindowAttributes(window->x11_display, window->x11_window, &attributes);
             return int32x2(attributes.width, attributes.height);
         }
     };
@@ -228,3 +231,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif // defined(MANGO_OPENGL_CONTEXT_EGL)

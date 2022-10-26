@@ -173,8 +173,10 @@ namespace mango
 
                     if (wglExtensions.find("WGL_ARB_framebuffer_sRGB") != std::string::npos)
                     {
-                        // TODO
-                        // WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB
+                        if (config.srgb)
+                        {
+                            formatAttribs.push_back(WGL_FRAMEBUFFER_SRGB_CAPABLE_EXT);
+                        }
                     }
 
                     formatAttribs.push_back(0);
