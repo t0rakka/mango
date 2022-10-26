@@ -6,9 +6,9 @@
 #include <mango/image/compression.hpp>
 #include <mango/image/color.hpp>
 
-#include "../../source/external/astc/astcenc.h"
-#include "../../source/external/astc/astcenc_internal_entry.h"
-#include "../../source/external/astc/astcenc_diagnostic_trace.h"
+#include "../../external/astc/astcenc.h"
+#include "../../external/astc/astcenc_internal_entry.h"
+#include "../../external/astc/astcenc_diagnostic_trace.h"
 
 namespace
 {
