@@ -1234,33 +1234,30 @@ namespace mango::image
         const int xblocks = getBlocksX(surface.width);
         const int yblocks = getBlocksY(surface.height);
 
-        const bool noclip = surface.width == (xblocks * width) &&
-                            surface.height == (yblocks * height);
+        const int w = xblocks * width;
+        const int h = yblocks * height;
+
+        const bool noclip = surface.width == w &&
+                            surface.height == h;
         const bool noconvert = surface.format == format;
         const bool yflip = (compression & TextureCompression::YFLIP) != 0;
         const bool direct = noclip && noconvert && !yflip;
 
+        // surface decoders get size from block information
+        TextureCompression info = *this;
+        info.width = w;
+        info.height = h;
+
         if (compression & TextureCompression::SURFACE)
         {
-            TextureCompression info = *this;
-
             // mode: surface
             if (direct)
             {
-                // surface decoders get size from block information
-                info.width = surface.width;
-                info.height = surface.height;
-
                 info.decode(info, surface.image, memory.address, surface.stride);
             }
             else
             {
-                Bitmap bitmap(xblocks * width, yblocks * height, format);
-
-                // surface decoders get size from block information
-                info.width = bitmap.width;
-                info.height = bitmap.height;
-
+                Bitmap bitmap(w, h, format);
                 info.decode(info, bitmap.image, memory.address, bitmap.stride);
 
                 Surface target = surface;
