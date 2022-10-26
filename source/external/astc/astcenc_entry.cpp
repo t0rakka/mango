@@ -164,6 +164,7 @@ static astcenc_error validate_cpu_float()
 static astcenc_error validate_cpu_isa()
 {
 	mango::u64 flags = mango::getCPUFlags();
+	MANGO_UNREFERENCED(flags);
 
 	#if ASTCENC_SSE >= 41
 		if (!(flags & mango::INTEL_SSE4_1))
