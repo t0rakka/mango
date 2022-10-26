@@ -171,7 +171,6 @@ namespace mango::image
         ConcurrentQueue q;
 
         int n = 8;
-        const int block_step = n * xblocks * 16;
 
         for (u32 y = 0; y < yblocks; y += n)
         {
@@ -184,7 +183,7 @@ namespace mango::image
 
             height -= segment_height;
             input += segment_height * stride;
-            output += block_step;
+            output += n * xblocks * 16;
         }
     }
 
@@ -203,7 +202,6 @@ namespace mango::image
         ConcurrentQueue q;
 
         constexpr int n = 16;
-        const int block_step = n * xblocks * 16;
 
         for (u32 y = 0; y < yblocks; y += n)
         {
@@ -216,7 +214,7 @@ namespace mango::image
 
             height -= segment_height;
             output += segment_height * stride;
-            input += block_step;
+            input += n * xblocks * 16;
         }
     }
 
