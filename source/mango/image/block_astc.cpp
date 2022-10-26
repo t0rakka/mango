@@ -10,10 +10,12 @@
 #include "../../source/external/astc/astcenc_internal_entry.h"
 #include "../../source/external/astc/astcenc_diagnostic_trace.h"
 
-namespace mango::image
+namespace
 {
+    using namespace mango;
+    using namespace mango::image;
 
-    void encode_surface_astc(const TextureCompression& info, u8* output, const u8* input, size_t stride)
+    void encode_row(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         TextureCompression temp(info.compression);
 
@@ -71,7 +73,7 @@ namespace mango::image
         u8* ptr_image = (u8*)input;
         image.data = reinterpret_cast<void**>(&ptr_image);
 
-        printf("  %d x %d\n", image.dim_x, image.dim_y);
+        //printf("  %d x %d\n", image.dim_x, image.dim_y);
 
         size_t len = xblocks * yblocks * 16;
 
@@ -83,6 +85,43 @@ namespace mango::image
         }
 
         astcenc_context_free(context);
+    }
+
+} // namespace mango
+
+namespace mango::image
+{
+
+    void encode_surface_astc(const TextureCompression& info, u8* output, const u8* input, size_t stride)
+    {
+        TextureCompression temp(info.compression);
+
+        int width = info.width;
+        int height = info.height;
+        int block_x = temp.width;
+        int block_y = temp.height;
+
+        // Compute the number of ASTC blocks in each dimension
+        u32 xblocks = ceil_div(width, block_x);
+        u32 yblocks = ceil_div(height, block_y);
+
+        ConcurrentQueue q;
+
+        int n = 8;
+
+        for (u32 y = 0; y < yblocks; y += n)
+        {
+            TextureCompression xx = info;
+            xx.height = std::min(block_y * n, height);
+
+            q.enqueue([=]
+            {
+                encode_row(xx, output + y * xblocks * 16, input, stride);
+            });
+
+            height -= xx.height;
+            input += xx.height * stride;
+        }
     }
 
     void decode_surface_astc(const TextureCompression& info, u8* output, const u8* input, size_t stride)
@@ -118,7 +157,9 @@ namespace mango::image
 
         astcenc_context* context = nullptr;
 
-        status = astcenc_context_alloc(&config, 1, &context);
+        int threads = 1;
+
+        status = astcenc_context_alloc(&config, threads, &context);
         if (status != ASTCENC_SUCCESS)
         {
             debugPrint("ERROR: Codec context alloc failed: %s\n", astcenc_get_error_string(status));
