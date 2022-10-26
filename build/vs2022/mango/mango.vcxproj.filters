@@ -2105,9 +2105,6 @@
     <ClCompile Include="..\..\..\source\external\astc\astcenc_pick_best_endpoint_format.cpp">
       <Filter>external\astc</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\source\external\astc\astcenc_platform_isa_detection.cpp">
-      <Filter>external\astc</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\source\external\astc\astcenc_quantization.cpp">
       <Filter>external\astc</Filter>
     </ClCompile>

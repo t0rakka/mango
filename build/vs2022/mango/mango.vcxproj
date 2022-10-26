@@ -396,7 +396,6 @@
     <ClCompile Include="..\..\..\source\external\astc\astcenc_partition_tables.cpp" />
     <ClCompile Include="..\..\..\source\external\astc\astcenc_percentile_tables.cpp" />
     <ClCompile Include="..\..\..\source\external\astc\astcenc_pick_best_endpoint_format.cpp" />
-    <ClCompile Include="..\..\..\source\external\astc\astcenc_platform_isa_detection.cpp" />
     <ClCompile Include="..\..\..\source\external\astc\astcenc_quantization.cpp" />
     <ClCompile Include="..\..\..\source\external\astc\astcenc_symbolic_physical.cpp" />
     <ClCompile Include="..\..\..\source\external\astc\astcenc_weight_align.cpp" />
