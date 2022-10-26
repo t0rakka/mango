@@ -860,7 +860,6 @@ external_astc_sources = files(
     '../source/external/astc/astcenc_partition_tables.cpp',
     '../source/external/astc/astcenc_percentile_tables.cpp',
     '../source/external/astc/astcenc_pick_best_endpoint_format.cpp',
-    '../source/external/astc/astcenc_platform_isa_detection.cpp',
     '../source/external/astc/astcenc_quantization.cpp',
     '../source/external/astc/astcenc_symbolic_physical.cpp',
     '../source/external/astc/astcenc_weight_align.cpp',

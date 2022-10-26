@@ -173,6 +173,10 @@ namespace mango
         info << "FMA3 ";
     #endif
 
+    #if defined(MANGO_ENABLE_POPCNT)
+        info << "POPCNT ";
+    #endif
+
     #if defined(MANGO_ENABLE_INTEL_F16C)
         info << "F16C ";
     #endif

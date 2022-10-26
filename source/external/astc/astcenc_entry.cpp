@@ -27,6 +27,8 @@
 #include "astcenc_internal_entry.h"
 #include "astcenc_diagnostic_trace.h"
 
+#include "../../../include/mango/core/cpuinfo.hpp"
+
 /**
  * @brief Record of the quality tuning parameter values.
  *
@@ -161,29 +163,31 @@ static astcenc_error validate_cpu_float()
  */
 static astcenc_error validate_cpu_isa()
 {
+	mango::u64 flags = mango::getCPUFlags();
+
 	#if ASTCENC_SSE >= 41
-		if (!cpu_supports_sse41())
+		if (!(flags & mango::INTEL_SSE4_1))
 		{
 			return ASTCENC_ERR_BAD_CPU_ISA;
 		}
 	#endif
 
 	#if ASTCENC_POPCNT >= 1
-		if (!cpu_supports_popcnt())
+		if (!(flags & mango::INTEL_POPCNT))
 		{
 			return ASTCENC_ERR_BAD_CPU_ISA;
 		}
 	#endif
 
 	#if ASTCENC_F16C >= 1
-		if (!cpu_supports_f16c())
+		if (!(flags & mango::INTEL_F16C))
 		{
 			return ASTCENC_ERR_BAD_CPU_ISA;
 		}
 	#endif
 
 	#if ASTCENC_AVX >= 2
-		if (!cpu_supports_avx2())
+		if (!(flags & mango::INTEL_AVX2))
 		{
 			return ASTCENC_ERR_BAD_CPU_ISA;
 		}
