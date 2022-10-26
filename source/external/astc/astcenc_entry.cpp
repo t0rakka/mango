@@ -1068,11 +1068,13 @@ astcenc_error astcenc_compress_image(
 	unsigned int zblocks = (image.dim_z + block_z - 1) / block_z;
 
 	// Check we have enough output space (16 bytes per block)
+	/*
 	size_t size_needed = xblocks * yblocks * zblocks * 16;
 	if (data_len < size_needed)
 	{
 		return ASTCENC_ERR_OUT_OF_MEM;
 	}
+	*/
 
 	// If context thread count is one then implicitly reset
 	if (ctx->thread_count == 1)
@@ -1178,11 +1180,13 @@ astcenc_error astcenc_decompress_image(
 	int plane_blocks = xblocks * yblocks;
 
 	// Check we have enough output space (16 bytes per block)
+	/*
 	size_t size_needed = xblocks * yblocks * zblocks * 16;
 	if (data_len < size_needed)
 	{
 		return ASTCENC_ERR_OUT_OF_MEM;
 	}
+	*/
 
 	image_block blk;
 	blk.texel_count = static_cast<uint8_t>(block_x * block_y * block_z);
