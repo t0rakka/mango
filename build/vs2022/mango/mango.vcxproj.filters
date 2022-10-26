@@ -175,6 +175,9 @@
     <Filter Include="external\basisu">
       <UniqueIdentifier>{dd5e16f9-ff55-4408-bbce-2277e2ffe8d0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\astc">
+      <UniqueIdentifier>{5f54ab0b-e572-4995-b687-87dabe0c86c0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\mango\core\bits.hpp">
@@ -1188,6 +1191,39 @@
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\matchfinder_common.h">
       <Filter>external\libdeflate\lib</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_diagnostic_trace.h">
+      <Filter>external\astc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_internal.h">
+      <Filter>external\astc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_internal_entry.h">
+      <Filter>external\astc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_mathlib.h">
+      <Filter>external\astc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib.h">
+      <Filter>external\astc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_avx2_8.h">
+      <Filter>external\astc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_common_4.h">
+      <Filter>external\astc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_neon_4.h">
+      <Filter>external\astc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_none_4.h">
+      <Filter>external\astc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_sse_4.h">
+      <Filter>external\astc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\astc\astcenc.h">
+      <Filter>external\astc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp">
@@ -1378,9 +1414,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\source\external\lz4\lz4hc.c">
       <Filter>external\lz4</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\external\google\astc.cpp">
-      <Filter>external\google</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\source\external\google\etc.cpp">
       <Filter>external\google</Filter>
@@ -2040,6 +2073,78 @@
       <Filter>mango\source\image</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\source\mango\image\image_jxl.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_entry.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_find_best_partitioning.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_ideal_endpoints_and_weights.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_image.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_integer_sequence.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_mathlib.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_mathlib_softfloat.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_partition_tables.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_percentile_tables.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_pick_best_endpoint_format.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_platform_isa_detection.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_quantization.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_symbolic_physical.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_weight_align.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_weight_quant_xfer_tables.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_averages_and_directions.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_block_sizes.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_color_quantize.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_color_unquantize.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_compress_symbolic.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_compute_variance.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_decompress_symbolic.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_diagnostic_trace.cpp">
+      <Filter>external\astc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\image\block_astc.cpp">
       <Filter>mango\source\image</Filter>
     </ClCompile>
   </ItemGroup>

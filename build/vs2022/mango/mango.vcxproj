@@ -182,6 +182,17 @@
     <ClInclude Include="..\..\..\include\mango\simd\sse2_int128.hpp" />
     <ClInclude Include="..\..\..\include\mango\window\window.hpp" />
     <ClInclude Include="..\..\..\source\external\aes\bc_aes.h" />
+    <ClInclude Include="..\..\..\source\external\astc\astcenc.h" />
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_diagnostic_trace.h" />
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_internal.h" />
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_internal_entry.h" />
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_mathlib.h" />
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib.h" />
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_avx2_8.h" />
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_common_4.h" />
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_neon_4.h" />
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_none_4.h" />
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_sse_4.h" />
     <ClInclude Include="..\..\..\source\external\basisu\transcoder\basisu.h" />
     <ClInclude Include="..\..\..\source\external\basisu\transcoder\basisu_containers.h" />
     <ClInclude Include="..\..\..\source\external\basisu\transcoder\basisu_containers_impl.h" />
@@ -367,6 +378,29 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\external\aes\bc_aes.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_averages_and_directions.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_block_sizes.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_color_quantize.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_color_unquantize.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_compress_symbolic.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_compute_variance.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_decompress_symbolic.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_diagnostic_trace.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_entry.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_find_best_partitioning.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_ideal_endpoints_and_weights.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_image.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_integer_sequence.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_mathlib.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_mathlib_softfloat.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_partition_tables.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_percentile_tables.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_pick_best_endpoint_format.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_platform_isa_detection.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_quantization.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_symbolic_physical.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_weight_align.cpp" />
+    <ClCompile Include="..\..\..\source\external\astc\astcenc_weight_quant_xfer_tables.cpp" />
     <ClCompile Include="..\..\..\source\external\basisu\transcoder\basisu_transcoder.cpp" />
     <ClCompile Include="..\..\..\source\external\bc\BC.cpp" />
     <ClCompile Include="..\..\..\source\external\bc\BC4BC5.cpp" />
@@ -378,7 +412,6 @@
     <ClCompile Include="..\..\..\source\external\bzip2\bz_decompress.c" />
     <ClCompile Include="..\..\..\source\external\bzip2\bz_huffman.c" />
     <ClCompile Include="..\..\..\source\external\bzip2\bz_randtable.c" />
-    <ClCompile Include="..\..\..\source\external\google\astc.cpp" />
     <ClCompile Include="..\..\..\source\external\google\etc.cpp" />
     <ClCompile Include="..\..\..\source\external\google\etc1.cpp" />
     <ClCompile Include="..\..\..\source\external\libdeflate\lib\arm\cpu_arm_features.c" />
@@ -605,6 +638,7 @@
     <ClCompile Include="..\..\..\source\mango\filesystem\win32\mapper_file.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\blitter.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\block.cpp" />
+    <ClCompile Include="..\..\..\source\mango\image\block_astc.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\block_dxt.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\block_fxt1.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\block_pvrtc.cpp" />
