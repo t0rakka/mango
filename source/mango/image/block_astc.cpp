@@ -32,7 +32,7 @@ namespace
         status = astcenc_config_init(profile, info.width, info.height, 1, quality, 0, &config);
         if (status != ASTCENC_SUCCESS)
         {
-            debugPrint("ERROR: Codec config init failed: %s\n", astcenc_get_error_string(status));
+            debugPrint("[ASTC] Codec config init failed: %s\n", astcenc_get_error_string(status));
             return;
         }
 
@@ -43,7 +43,7 @@ namespace
         status = astcenc_context_alloc(&config, threads, &context);
         if (status != ASTCENC_SUCCESS)
         {
-            debugPrint("ERROR: Codec context alloc failed: %s\n", astcenc_get_error_string(status));
+            debugPrint("[ASTC] Codec context alloc failed: %s\n", astcenc_get_error_string(status));
             return;
         }
 
@@ -62,7 +62,7 @@ namespace
         status = astcenc_compress_image(context, &image, &swizzle, output, 0, 0);
         if (status != ASTCENC_SUCCESS)
         {
-            debugPrint("ERROR: Codec compress failed: %s\n", astcenc_get_error_string(status));
+            debugPrint("[ASTC] Codec compress failed: %s\n", astcenc_get_error_string(status));
             astcenc_context_free(context);
             return;
         }
@@ -83,7 +83,7 @@ namespace
         status = astcenc_config_init(profile, info.width, info.height, 1, quality, 0, &config);
         if (status != ASTCENC_SUCCESS)
         {
-            debugPrint("ERROR: Codec config init failed: %s\n", astcenc_get_error_string(status));
+            debugPrint("[ASTC] Codec config init failed: %s\n", astcenc_get_error_string(status));
             return;
         }
 
@@ -94,7 +94,7 @@ namespace
         status = astcenc_context_alloc(&config, threads, &context);
         if (status != ASTCENC_SUCCESS)
         {
-            debugPrint("ERROR: Codec context alloc failed: %s\n", astcenc_get_error_string(status));
+            debugPrint("[ASTC] Codec context alloc failed: %s\n", astcenc_get_error_string(status));
             return;
         }
 
