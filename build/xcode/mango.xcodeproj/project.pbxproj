@@ -290,7 +290,6 @@
 		A6D78CCD290987A200304D88 /* astcenc_weight_align.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6D78CAB290987A100304D88 /* astcenc_weight_align.cpp */; };
 		A6D78CCE290987A200304D88 /* astcenc_weight_quant_xfer_tables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6D78CAC290987A100304D88 /* astcenc_weight_quant_xfer_tables.cpp */; };
 		A6D78CCF290987A200304D88 /* astcenc_diagnostic_trace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6D78CAD290987A100304D88 /* astcenc_diagnostic_trace.cpp */; };
-		A6D78CD0290987A200304D88 /* astcenc_platform_isa_detection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6D78CAE290987A100304D88 /* astcenc_platform_isa_detection.cpp */; };
 		A6D78CD1290987A200304D88 /* astcenc_mathlib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6D78CAF290987A100304D88 /* astcenc_mathlib.cpp */; };
 		A6D78CD2290987A200304D88 /* astcenc_diagnostic_trace.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D78CB0290987A100304D88 /* astcenc_diagnostic_trace.h */; };
 		A6D78CD3290987A200304D88 /* astcenc_pick_best_endpoint_format.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6D78CB1290987A100304D88 /* astcenc_pick_best_endpoint_format.cpp */; };
@@ -803,7 +802,6 @@
 		A6D78CAB290987A100304D88 /* astcenc_weight_align.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = astcenc_weight_align.cpp; path = external/astc/astcenc_weight_align.cpp; sourceTree = "<group>"; };
 		A6D78CAC290987A100304D88 /* astcenc_weight_quant_xfer_tables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = astcenc_weight_quant_xfer_tables.cpp; path = external/astc/astcenc_weight_quant_xfer_tables.cpp; sourceTree = "<group>"; };
 		A6D78CAD290987A100304D88 /* astcenc_diagnostic_trace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = astcenc_diagnostic_trace.cpp; path = external/astc/astcenc_diagnostic_trace.cpp; sourceTree = "<group>"; };
-		A6D78CAE290987A100304D88 /* astcenc_platform_isa_detection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = astcenc_platform_isa_detection.cpp; path = external/astc/astcenc_platform_isa_detection.cpp; sourceTree = "<group>"; };
 		A6D78CAF290987A100304D88 /* astcenc_mathlib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = astcenc_mathlib.cpp; path = external/astc/astcenc_mathlib.cpp; sourceTree = "<group>"; };
 		A6D78CB0290987A100304D88 /* astcenc_diagnostic_trace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = astcenc_diagnostic_trace.h; path = external/astc/astcenc_diagnostic_trace.h; sourceTree = "<group>"; };
 		A6D78CB1290987A100304D88 /* astcenc_pick_best_endpoint_format.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = astcenc_pick_best_endpoint_format.cpp; path = external/astc/astcenc_pick_best_endpoint_format.cpp; sourceTree = "<group>"; };
@@ -1535,7 +1533,6 @@
 				A6D78CA8290987A100304D88 /* astcenc_partition_tables.cpp */,
 				A6D78CAA290987A100304D88 /* astcenc_percentile_tables.cpp */,
 				A6D78CB1290987A100304D88 /* astcenc_pick_best_endpoint_format.cpp */,
-				A6D78CAE290987A100304D88 /* astcenc_platform_isa_detection.cpp */,
 				A6D78CC4290987A200304D88 /* astcenc_quantization.cpp */,
 				A6D78CB4290987A100304D88 /* astcenc_symbolic_physical.cpp */,
 				A6D78CC5290987A200304D88 /* astcenc_vecmathlib_avx2_8.h */,
@@ -2290,7 +2287,6 @@
 				A6EC3E79230D7BB800B17F21 /* vp8_dec.c in Sources */,
 				A0F21ED11CA05EA30084302D /* dynamic_library.cpp in Sources */,
 				A00559D41C93329A00A6D963 /* surface.cpp in Sources */,
-				A6D78CD0290987A200304D88 /* astcenc_platform_isa_detection.cpp in Sources */,
 				A642437921852AEF0044B763 /* Lzma2Dec.c in Sources */,
 				A63DD7A61E706F8800D4D499 /* BC6HBC7.cpp in Sources */,
 				A6EC3F53230D7C2E00B17F21 /* config_enc.c in Sources */,
