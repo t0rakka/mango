@@ -6,9 +6,6 @@
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 
-#define FORMAT_ASTC_SRGB Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
-#define FORMAT_ASTC_FP16 Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16)
-
 namespace mango::image
 {
 
@@ -32,13 +29,11 @@ namespace mango::image
     void decode_block_atc_i           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_fxt1_rgb        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_fxt1_rgba       (const TextureCompression& info, u8* output, const u8* input, size_t stride);
-
     void decode_block_etc1            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_etc2            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_etc2_eac        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_eac_r11         (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_eac_rg11        (const TextureCompression& info, u8* output, const u8* input, size_t stride);
-
     void decode_block_bc4u            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_bc4s            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_bc5u            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
@@ -64,8 +59,9 @@ namespace mango::image
     void encode_block_bc6hu           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void encode_block_bc6hs           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void encode_block_bc7             (const TextureCompression& info, u8* output, const u8* input, size_t stride);
-
     void encode_block_etc1            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+
+    void encode_surface_astc          (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
 } // namespace mango::image
 
@@ -565,8 +561,8 @@ namespace
             dxgi::FORMAT_ASTC_4X4_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_4x4_KHR,
             vulkan::FORMAT_ASTC_4x4_UNORM_BLOCK,
-            4, 4, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            4, 4, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -574,8 +570,8 @@ namespace
             dxgi::FORMAT_ASTC_5X4_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_5x4_KHR,
             vulkan::FORMAT_ASTC_5x4_UNORM_BLOCK,
-            5, 4, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            5, 4, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -583,8 +579,8 @@ namespace
             dxgi::FORMAT_ASTC_5X5_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_5x5_KHR,
             vulkan::FORMAT_ASTC_5x5_UNORM_BLOCK,
-            5, 5, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            5, 5, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -592,8 +588,8 @@ namespace
             dxgi::FORMAT_ASTC_6X5_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_6x5_KHR,
             vulkan::FORMAT_ASTC_6x5_UNORM_BLOCK,
-            6, 5, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            6, 5, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -601,8 +597,8 @@ namespace
             dxgi::FORMAT_ASTC_6X6_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_6x6_KHR,
             vulkan::FORMAT_ASTC_6x6_UNORM_BLOCK,
-            6, 6, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            6, 6, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -610,8 +606,8 @@ namespace
             dxgi::FORMAT_ASTC_8X5_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_8x5_KHR,
             vulkan::FORMAT_ASTC_8x5_UNORM_BLOCK,
-            8, 5, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            8, 5, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -619,8 +615,8 @@ namespace
             dxgi::FORMAT_ASTC_8X6_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_8x6_KHR,
             vulkan::FORMAT_ASTC_8x6_UNORM_BLOCK,
-            8, 6, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            8, 6, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -628,8 +624,8 @@ namespace
             dxgi::FORMAT_ASTC_8X8_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_8x8_KHR,
             vulkan::FORMAT_ASTC_8x8_UNORM_BLOCK,
-            8, 8, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            8, 8, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -637,8 +633,8 @@ namespace
             dxgi::FORMAT_ASTC_10X5_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_10x5_KHR,
             vulkan::FORMAT_ASTC_10x5_UNORM_BLOCK,
-            10, 5, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            10, 5, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -646,8 +642,8 @@ namespace
             dxgi::FORMAT_ASTC_10X6_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_10x6_KHR,
             vulkan::FORMAT_ASTC_10x6_UNORM_BLOCK,
-            10, 6, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            10, 6, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -655,8 +651,8 @@ namespace
             dxgi::FORMAT_ASTC_10X8_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_10x8_KHR,
             vulkan::FORMAT_ASTC_10x8_UNORM_BLOCK,
-            10, 8, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            10, 8, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -664,8 +660,8 @@ namespace
             dxgi::FORMAT_ASTC_10X10_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_10x10_KHR,
             vulkan::FORMAT_ASTC_10x10_UNORM_BLOCK,
-            10, 10, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            10, 10, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -673,8 +669,8 @@ namespace
             dxgi::FORMAT_ASTC_12X10_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_12x10_KHR,
             vulkan::FORMAT_ASTC_12x10_UNORM_BLOCK,
-            12, 10, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            12, 10, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -682,8 +678,8 @@ namespace
             dxgi::FORMAT_ASTC_12X12_UNORM,
             opengl::COMPRESSED_RGBA_ASTC_12x12_KHR,
             vulkan::FORMAT_ASTC_12x12_UNORM_BLOCK,
-            12, 12, 1, 16, FORMAT_ASTC_FP16, 
-            decode_surface_astc, nullptr
+            12, 12, 1, 16, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -691,8 +687,8 @@ namespace
             dxgi::FORMAT_ASTC_4X4_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR,
             vulkan::FORMAT_ASTC_4x4_SRGB_BLOCK,
-            4, 4, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            4, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -700,8 +696,8 @@ namespace
             dxgi::FORMAT_ASTC_5X4_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR,
             vulkan::FORMAT_ASTC_5x4_SRGB_BLOCK,
-            5, 4, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            5, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -709,8 +705,8 @@ namespace
             dxgi::FORMAT_ASTC_5X5_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR,
             vulkan::FORMAT_ASTC_5x5_SRGB_BLOCK,
-            5, 5, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            5, 5, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -718,8 +714,8 @@ namespace
             dxgi::FORMAT_ASTC_6X5_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR,
             vulkan::FORMAT_ASTC_6x5_SRGB_BLOCK,
-            6, 5, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            6, 5, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -727,8 +723,8 @@ namespace
             dxgi::FORMAT_ASTC_6X6_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR,
             vulkan::FORMAT_ASTC_6x6_SRGB_BLOCK,
-            6, 6, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            6, 6, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -736,8 +732,8 @@ namespace
             dxgi::FORMAT_ASTC_8X5_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR,
             vulkan::FORMAT_ASTC_8x5_SRGB_BLOCK,
-            8, 5, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            8, 5, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -745,8 +741,8 @@ namespace
             dxgi::FORMAT_ASTC_8X6_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR,
             vulkan::FORMAT_ASTC_8x6_SRGB_BLOCK,
-            8, 6, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            8, 6, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -754,8 +750,8 @@ namespace
             dxgi::FORMAT_ASTC_8X8_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR,
             vulkan::FORMAT_ASTC_8x8_SRGB_BLOCK,
-            8, 8, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            8, 8, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -763,8 +759,8 @@ namespace
             dxgi::FORMAT_ASTC_10X5_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR,
             vulkan::FORMAT_ASTC_10x5_SRGB_BLOCK,
-            10, 5, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            10, 5, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -772,8 +768,8 @@ namespace
             dxgi::FORMAT_ASTC_10X6_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR,
             vulkan::FORMAT_ASTC_10x6_SRGB_BLOCK,
-            10, 6, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            10, 6, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -781,8 +777,8 @@ namespace
             dxgi::FORMAT_ASTC_10X8_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR,
             vulkan::FORMAT_ASTC_10x8_SRGB_BLOCK,
-            10, 8, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            10, 8, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -790,8 +786,8 @@ namespace
             dxgi::FORMAT_ASTC_10X10_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR,
             vulkan::FORMAT_ASTC_10x10_SRGB_BLOCK,
-            10, 10, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            10, 10, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -799,8 +795,8 @@ namespace
             dxgi::FORMAT_ASTC_12X10_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR,
             vulkan::FORMAT_ASTC_12x10_SRGB_BLOCK,
-            12, 10, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            12, 10, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         TextureCompression(
@@ -808,8 +804,8 @@ namespace
             dxgi::FORMAT_ASTC_12X12_UNORM_SRGB,
             opengl::COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR,
             vulkan::FORMAT_ASTC_12x12_SRGB_BLOCK,
-            12, 12, 1, 16, FORMAT_ASTC_SRGB, 
-            decode_surface_astc, nullptr
+            12, 12, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), 
+            decode_surface_astc, encode_surface_astc
         ),
 
         // OES_texture_compression_astc
@@ -1313,42 +1309,61 @@ namespace mango::image
             return status;
         }
 
-        ConcurrentQueue queue;
-
-        u8* address = memory.address;
-
-        const int xblocks = getBlocksX(surface.width);
-        const int yblocks = getBlocksY(surface.height);
-
-        for (int y = 0; y < yblocks; ++y)
+        if (compression & TextureCompression::SURFACE)
         {
-            queue.enqueue([this, y, xblocks, &surface, address]
-            {
-                Bitmap temp(xblocks * width, height, format);
+            const int xblocks = getBlocksX(surface.width);
+            const int yblocks = getBlocksY(surface.height);
+            int w = xblocks * width;
+            int h = yblocks * height;
 
-                int w = std::min(surface.width, xblocks * width);
-                int h = std::min(height, surface.height - y * height);
+            Bitmap temp(w, h, format);
+            temp.blit(0, 0, surface);
 
-                Surface source(surface, 0, y * height, w, h);
-                temp.blit(0, 0, source);
+            TextureCompression info = *this;
+            info.width = w;
+            info.height = h;
 
-                u8* data = address + y * xblocks * bytes;
-                u8* image = temp.image;
-                size_t step = width * format.bytes();
-
-                //debugPrint(".");
-
-                for (int x = 0; x < xblocks; ++x)
-                {
-                    encode(*this, data, image, temp.stride);
-                    data += bytes;
-                    image += step;
-                }
-            });
+            encode(info, memory.address, temp.image, temp.stride);
         }
+        else
+        {
+            ConcurrentQueue queue;
 
-        //queue.wait();
-        //debugPrint("\n");
+            u8* address = memory.address;
+
+            const int xblocks = getBlocksX(surface.width);
+            const int yblocks = getBlocksY(surface.height);
+
+            for (int y = 0; y < yblocks; ++y)
+            {
+                queue.enqueue([this, y, xblocks, &surface, address]
+                {
+                    Bitmap temp(xblocks * width, height, format);
+
+                    int w = std::min(surface.width, xblocks * width);
+                    int h = std::min(height, surface.height - y * height);
+
+                    Surface source(surface, 0, y * height, w, h);
+                    temp.blit(0, 0, source);
+
+                    u8* data = address + y * xblocks * bytes;
+                    u8* image = temp.image;
+                    size_t step = width * format.bytes();
+
+                    //debugPrint(".");
+
+                    for (int x = 0; x < xblocks; ++x)
+                    {
+                        encode(*this, data, image, temp.stride);
+                        data += bytes;
+                        image += step;
+                    }
+                });
+            }
+
+            //queue.wait();
+            //debugPrint("\n");
+        }
 
         return status;
     }
