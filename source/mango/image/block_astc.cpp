@@ -181,14 +181,14 @@ namespace mango::image
 
         ConcurrentQueue q;
 
-        for (int y = 0; y < yblocks; ++y)
+        for (u32 y = 0; y < yblocks; ++y)
         {
             q.enqueue([=, &image]
             {
                 image_block blk;
                 blk.texel_count = u8(block_x * block_y);
 
-                for (int x = 0; x < xblocks; ++x)
+                for (u32 x = 0; x < xblocks; ++x)
                 {
                     u32 offset = ((y * xblocks) + x) * 16;
                     const u8* bp = input + offset;

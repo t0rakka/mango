@@ -66,7 +66,6 @@ message(STATUS "Build: ${CMAKE_BUILD_TYPE}")
 
 OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    ON)
 
-OPTION(ENABLE_FAST_MATH     "Use relaxed-precision floating point"      ON)
 OPTION(ENABLE_SSE2          "Enable SSE2 instructions"                  OFF)
 OPTION(ENABLE_SSE4          "Enable SSE4.1 and SSE4.2 instructions"     ON)
 OPTION(ENABLE_AVX           "Enable AVX instructions"                   OFF)
@@ -180,6 +179,9 @@ FILE(GLOB EXTERNAL_BZIP2
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bzip2/*.c")
 FILE(GLOB EXTERNAL_CONCURRENT_QUEUE
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/concurrentqueue/*.h")
+FILE(GLOB EXTERNAL_ASTC
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/astc/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/astc/*.h")
 FILE(GLOB EXTERNAL_GOOGLE
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/google/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/google/*.cpp"
@@ -229,6 +231,7 @@ SOURCE_GROUP("external" FILES
     ${EXTERNAL_BC}
     ${EXTERNAL_BZIP2}
     ${EXTERNAL_CONCURRENT_QUEUE}
+    ${EXTERNAL_ASTC}
     ${EXTERNAL_GOOGLE}
     ${EXTERNAL_LZ4}
     ${EXTERNAL_LZFSE}
@@ -261,6 +264,7 @@ add_library(mango
     ${EXTERNAL_BC}
     ${EXTERNAL_BZIP2}
     ${EXTERNAL_CONCURRENT_QUEUE}
+    ${EXTERNAL_ASTC}
     ${EXTERNAL_GOOGLE}
     ${EXTERNAL_LZ4}
     ${EXTERNAL_LZFSE}
@@ -313,10 +317,6 @@ endif ()
 if (COMPILER_MSVC)
     target_compile_options(mango PUBLIC "/DUNICODE")
 
-    if (ENABLE_FAST_MATH)
-        target_compile_options(mango PUBLIC "/fp:fast")
-    endif ()
-
     if (ENABLE_AVX512)
         message(STATUS "SIMD: AVX-512 (2015)")
         target_compile_definitions(mango PUBLIC "-D__AVX512F__" "-D__AVX512DQ__")
@@ -336,10 +336,6 @@ else ()
 
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         target_compile_options(mango PUBLIC "-ftree-vectorize")
-    endif ()
-
-    if (ENABLE_FAST_MATH)
-        target_compile_options(mango PUBLIC "-ffast-math")
     endif ()
 
     if ((ARM AND ENABLE_NEON) OR AARCH64)

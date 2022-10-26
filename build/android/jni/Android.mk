@@ -35,6 +35,7 @@ SOURCE_DIRS := mango/core \
                external/lzfse \
                external/unrar \
                external/bc \
+               external/astc \
                external/google \
                external/libdeflate/lib \
                external/libdeflate/lib/x86 \
