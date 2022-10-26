@@ -47,12 +47,7 @@ namespace
             return;
         }
 
-        //astcenc_contexti* ctx = &context->context;
-
         astcenc_image image;
-
-        // TODO: stride
-        // - when supported, rewrite the yflip logic in block.cpp
 
         image.dim_x = width;
         image.dim_y = height;
@@ -62,7 +57,6 @@ namespace
         u8* ptr_image = (u8*)input;
         image.data = reinterpret_cast<void**>(&ptr_image);
 
-        //printf("  %d x %d\n", image.dim_x, image.dim_y);
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
         status = astcenc_compress_image(context, &image, &swizzle, output, 0, 0);
@@ -104,12 +98,7 @@ namespace
             return;
         }
 
-        //astcenc_contexti* ctx = &context->context;
-
         astcenc_image image;
-
-        // TODO: stride
-        // - when supported, rewrite the yflip logic in block.cpp
 
         image.dim_x = width;
         image.dim_y = height;
@@ -119,12 +108,44 @@ namespace
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
-        status = astcenc_decompress_image(context, input, 0, &image, &swizzle, 0);
-        if (status != ASTCENC_SUCCESS)
+        astcenc_contexti* ctx = &context->context;
+
+        unsigned int block_x = ctx->config.block_x;
+        unsigned int block_y = ctx->config.block_y;
+        unsigned int block_z = ctx->config.block_z;
+
+        unsigned int xblocks = (image.dim_x + block_x - 1) / block_x;
+        unsigned int yblocks = (image.dim_y + block_y - 1) / block_y;
+        unsigned int zblocks = (image.dim_z + block_z - 1) / block_z;
+
+        image_block blk;
+        blk.texel_count = static_cast<uint8_t>(block_x * block_y * block_z);
+
+        astcenc_decompress_reset(context);
+
+        // Only the first thread actually runs the initializer
+        context->manage_decompress.init(zblocks * yblocks * xblocks);
+
+        constexpr int z = 0;
+
+        for (u32 y = 0; y < yblocks; ++y)
         {
-            debugPrint("ERROR: Codec decompress failed: %s\n", astcenc_get_error_string(status));
-            astcenc_context_free(context);
-            return;
+            for (u32 x = 0; x < xblocks; ++x)
+            {
+                const physical_compressed_block& pcb = *reinterpret_cast<const physical_compressed_block*>(input);
+                symbolic_compressed_block scb;
+
+                physical_to_symbolic(*ctx->bsd, pcb, scb);
+
+                decompress_symbolic_block(ctx->config.profile, *ctx->bsd,
+                                          x * block_x, y * block_y, z * block_z,
+                                          scb, blk);
+
+                store_image_block(image, blk, *ctx->bsd,
+                                  x * block_x, y * block_y, z * block_z, swizzle);
+
+                input += 16;
+            }
         }
 
         astcenc_context_free(context);
