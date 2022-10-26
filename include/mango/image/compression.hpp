@@ -236,8 +236,8 @@ namespace mango::image
         u32 opengl;         // OpenGL format
         u32 vulkan;         // Vulkan format
 
-        int width;          // block width (surface width when SURFACE flag is set)
-        int height;         // block height (surface height when SURFACE flag is set)
+        int width;          // block width
+        int height;         // block height
         int depth;          // block depth
         int bytes;          // block size in bytes
         Format format;      // pixel format for encode/decode

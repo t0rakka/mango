@@ -84,9 +84,8 @@ namespace
             0,
             opengl::COMPRESSED_RGB_FXT1_3DFX,
             0,
-            8, 4, 1, 16,Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
-            decode_block_fxt1_rgb, nullptr
-        ),
+            8, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            decode_block_fxt1_rgb, nullptr),
 
         TextureCompression(
             TextureCompression::FXT1_RGBA,
@@ -1113,18 +1112,6 @@ namespace
         }
     }
 
-    void directSurfaceDecode(const TextureCompression& info, const Surface& surface, ConstMemory memory)
-    {
-        TextureCompression temp(info);
-
-        u8* image = surface.image;
-        size_t stride = surface.stride;
-
-        temp.width = surface.width;
-        temp.height = surface.height;
-        temp.decode(temp, image, memory.address, stride);
-    }
-
 } // namespace
 
 namespace mango::image
@@ -1255,25 +1242,36 @@ namespace mango::image
 
         if (compression & TextureCompression::SURFACE)
         {
+            TextureCompression info = *this;
+
             // mode: surface
             if (direct)
             {
-                directSurfaceDecode(*this, surface, memory);
+                // surface decoders get size from block information
+                info.width = surface.width;
+                info.height = surface.height;
+
+                info.decode(info, surface.image, memory.address, surface.stride);
             }
             else
             {
                 Bitmap bitmap(xblocks * width, yblocks * height, format);
-                directSurfaceDecode(*this, bitmap, memory);
 
-                Surface temp = surface;
+                // surface decoders get size from block information
+                info.width = bitmap.width;
+                info.height = bitmap.height;
+
+                info.decode(info, bitmap.image, memory.address, bitmap.stride);
+
+                Surface target = surface;
 
                 if (yflip)
                 {
-                    temp.image += (temp.height - 1) * temp.stride;
-                    temp.stride = -temp.stride;
+                    target.image += (target.height - 1) * target.stride;
+                    target.stride = -target.stride;
                 }
 
-                temp.blit(0, 0, bitmap);
+                target.blit(0, 0, bitmap);
             }
         }
         else
@@ -1319,6 +1317,7 @@ namespace mango::image
             Bitmap temp(w, h, format);
             temp.blit(0, 0, surface);
 
+            // surface encoders get size from block information
             TextureCompression info = *this;
             info.width = w;
             info.height = h;
