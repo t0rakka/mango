@@ -1054,6 +1054,7 @@ astcenc_error astcenc_compress_image(
 		return status;
 	}
 
+	/*
 	if (thread_index >= ctx->thread_count)
 	{
 		return ASTCENC_ERR_BAD_PARAM;
@@ -1068,7 +1069,6 @@ astcenc_error astcenc_compress_image(
 	unsigned int zblocks = (image.dim_z + block_z - 1) / block_z;
 
 	// Check we have enough output space (16 bytes per block)
-	/*
 	size_t size_needed = xblocks * yblocks * zblocks * 16;
 	if (data_len < size_needed)
 	{
