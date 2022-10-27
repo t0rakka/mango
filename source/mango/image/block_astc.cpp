@@ -29,7 +29,9 @@ namespace
         astcenc_error status;
         astcenc_config config;
 
-        status = astcenc_config_init(profile, info.width, info.height, 1, quality, 0, &config);
+        u32 flags = 0;
+
+        status = astcenc_config_init(profile, info.width, info.height, 1, quality, flags, &config);
         if (status != ASTCENC_SUCCESS)
         {
             debugPrint("[ASTC] Codec config init failed: %s\n", astcenc_get_error_string(status));
