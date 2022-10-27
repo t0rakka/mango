@@ -1227,7 +1227,7 @@ struct astcenc_contexti
 	 */
 
 	/** @brief The input image alpha channel averages table, may be @c nullptr if not needed. */
-	float* input_alpha_averages;
+	float input_alpha_averages[ASTCENC_BLOCK_MAX_TEXELS];
 
 	/** @brief The scratch working buffer. */
 	compression_working_buffers working_buffer;
@@ -1568,7 +1568,6 @@ void find_best_partition_candidates(
  * @param      swz                     Input data component swizzle.
  * @param[out] ag                      The average variance arguments to init.
  *
- * @return The number of tasks in the processing stage.
  */
 unsigned int init_compute_averages(
 	const astcenc_image& img,
