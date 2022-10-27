@@ -72,9 +72,9 @@ namespace
         astcenc_context_free(context);
     }
 
-    void decode_rows(const TextureCompression& info, u8* output, const u8* input, int width, int height, size_t stride)
+    void decode_rows(const TextureCompression& block, u8* output, const u8* input, int width, int height, size_t stride)
     {
-        bool isFloat = (info.compression & TextureCompression::FLOAT) != 0;
+        bool isFloat = (block.compression & TextureCompression::FLOAT) != 0;
 
         const astcenc_profile profile = ASTCENC_PRF_LDR;
         const float quality = ASTCENC_PRE_MEDIUM;
@@ -84,7 +84,7 @@ namespace
 
         u32 flags = ASTCENC_FLG_DECOMPRESS_ONLY;
 
-        status = astcenc_config_init(profile, info.width, info.height, 1, quality, flags, &config);
+        status = astcenc_config_init(profile, block.width, block.height, 1, quality, flags, &config);
         if (status != ASTCENC_SUCCESS)
         {
             debugPrint("[ASTC] Codec config init failed: %s\n", astcenc_get_error_string(status));
@@ -114,40 +114,27 @@ namespace
 
         astcenc_contexti* ctx = &context->context;
 
-        unsigned int block_x = ctx->config.block_x;
-        unsigned int block_y = ctx->config.block_y;
-        unsigned int block_z = ctx->config.block_z;
-
-        unsigned int xblocks = (image.dim_x + block_x - 1) / block_x;
-        unsigned int yblocks = (image.dim_y + block_y - 1) / block_y;
-        unsigned int zblocks = (image.dim_z + block_z - 1) / block_z;
+        u32 xblocks = block.getBlocksX(width);
+        u32 yblocks = block.getBlocksY(height);
 
         image_block blk;
-        blk.texel_count = static_cast<uint8_t>(block_x * block_y * block_z);
-
-        astcenc_decompress_reset(context);
-
-        // Only the first thread actually runs the initializer
-        context->manage_decompress.init(zblocks * yblocks * xblocks);
-
-        constexpr int z = 0;
+        blk.texel_count = u8(block.width * block.height);
 
         for (u32 y = 0; y < yblocks; ++y)
         {
+            u32 yoffset = y * block.height;
+            u32 xoffset = 0;
+
             for (u32 x = 0; x < xblocks; ++x)
             {
                 const physical_compressed_block& pcb = *reinterpret_cast<const physical_compressed_block*>(input);
                 symbolic_compressed_block scb;
 
                 physical_to_symbolic(*ctx->bsd, pcb, scb);
+                decompress_symbolic_block(ctx->config.profile, *ctx->bsd, xoffset, yoffset, 0, scb, blk);
+                store_image_block(image, blk, *ctx->bsd, xoffset, yoffset, 0, swizzle);
 
-                decompress_symbolic_block(ctx->config.profile, *ctx->bsd,
-                                          x * block_x, y * block_y, z * block_z,
-                                          scb, blk);
-
-                store_image_block(image, blk, *ctx->bsd,
-                                  x * block_x, y * block_y, z * block_z, swizzle);
-
+                xoffset += block.width;
                 input += 16;
             }
         }
