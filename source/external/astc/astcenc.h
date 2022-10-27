@@ -673,15 +673,13 @@ ASTCENC_PUBLIC astcenc_error astcenc_config_init(
  * any context.
  *
  * @param[in]  config         Codec config.
- * @param      thread_count   Thread count to configure for.
  * @param[out] context        Location to store an opaque context pointer.
  *
  * @return @c ASTCENC_SUCCESS on success, or an error if context creation failed.
  */
 ASTCENC_PUBLIC astcenc_error astcenc_context_alloc(
 	const astcenc_config* config,
-	unsigned int thread_count,
-	astcenc_context** context);
+	astcenc_context& context);
 
 /**
  * @brief Compress an image.
@@ -696,18 +694,14 @@ ASTCENC_PUBLIC astcenc_error astcenc_context_alloc(
  * @param[in,out] image          An input image, in 2D slices.
  * @param         swizzle        Compression data swizzle, applied before compression.
  * @param[out]    data_out       Pointer to output data array.
- * @param         data_len       Length of the output data array.
- * @param         thread_index   Thread index [0..N-1] of calling thread.
  *
  * @return @c ASTCENC_SUCCESS on success, or an error if compression failed.
  */
 ASTCENC_PUBLIC astcenc_error astcenc_compress_image(
-	astcenc_context* context,
-	astcenc_image* image,
+	astcenc_context& context,
+	astcenc_image& image,
 	const astcenc_swizzle* swizzle,
-	uint8_t* data_out,
-	size_t data_len,
-	unsigned int thread_index);
+	uint8_t* data_out);
 
 /**
  * @brief Reset the codec state for a new compression.
@@ -723,43 +717,7 @@ ASTCENC_PUBLIC astcenc_error astcenc_compress_image(
  * @return @c ASTCENC_SUCCESS on success, or an error if reset failed.
  */
 ASTCENC_PUBLIC astcenc_error astcenc_compress_reset(
-	astcenc_context* context);
-
-/**
- * @brief Decompress an image.
- *
- * @param         context        Codec context.
- * @param[in]     data           Pointer to compressed data.
- * @param         data_len       Length of the compressed data, in bytes.
- * @param[in,out] image_out      Output image.
- * @param         swizzle        Decompression data swizzle, applied after decompression.
- * @param         thread_index   Thread index [0..N-1] of calling thread.
- *
- * @return @c ASTCENC_SUCCESS on success, or an error if decompression failed.
- */
-ASTCENC_PUBLIC astcenc_error astcenc_decompress_image(
-	astcenc_context* context,
-	const uint8_t* data,
-	size_t data_len,
-	astcenc_image* image_out,
-	const astcenc_swizzle* swizzle,
-	unsigned int thread_index);
-
-/**
- * @brief Reset the codec state for a new decompression.
- *
- * The caller is responsible for synchronizing threads in the worker thread pool. This function must
- * only be called when all threads have exited the @c astcenc_decompress_image() function for image
- * N, but before any thread enters it for image N + 1.
- *
- * Calling this is not required (but won't hurt), if the context is created for single threaded use.
- *
- * @param context   Codec context.
- *
- * @return @c ASTCENC_SUCCESS on success, or an error if reset failed.
- */
-ASTCENC_PUBLIC astcenc_error astcenc_decompress_reset(
-	astcenc_context* context);
+	astcenc_context& context);
 
 /**
  * Free the compressor context.
@@ -767,7 +725,7 @@ ASTCENC_PUBLIC astcenc_error astcenc_decompress_reset(
  * @param context   The codec context.
  */
 ASTCENC_PUBLIC void astcenc_context_free(
-	astcenc_context* context);
+	astcenc_context& context);
 
 /**
  * @brief Provide a high level summary of a block's encoding.

@@ -1217,9 +1217,6 @@ struct astcenc_contexti
 	/** @brief The configuration this context was created with. */
 	astcenc_config config;
 
-	/** @brief The thread count supported by this context. */
-	unsigned int thread_count;
-
 	/** @brief The block size descriptor this context was created with. */
 	block_size_descriptor* bsd;
 
@@ -1232,8 +1229,8 @@ struct astcenc_contexti
 	/** @brief The input image alpha channel averages table, may be @c nullptr if not needed. */
 	float* input_alpha_averages;
 
-	/** @brief The scratch working buffers, one per thread (see @c thread_count). */
-	compression_working_buffers* working_buffers;
+	/** @brief The scratch working buffer. */
+	compression_working_buffers working_buffer;
 
 #if !defined(ASTCENC_DECOMPRESS_ONLY)
 	/** @brief The pixel region and variance worker arguments. */

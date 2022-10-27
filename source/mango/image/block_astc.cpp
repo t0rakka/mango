@@ -12,7 +12,6 @@
 
 // TODO: clean up the code
 // TODO: stride support
-// TODO: optimize; the native threading is still faster
 
 namespace
 {
@@ -38,11 +37,9 @@ namespace
             return;
         }
 
-        astcenc_context* context = nullptr;
+        astcenc_context context;
 
-        int threads = 1;
-
-        status = astcenc_context_alloc(&config, threads, &context);
+        status = astcenc_context_alloc(&config, context);
         if (status != ASTCENC_SUCCESS)
         {
             debugPrint("[ASTC] Codec context alloc failed: %s\n", astcenc_get_error_string(status));
@@ -61,12 +58,10 @@ namespace
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
-        status = astcenc_compress_image(context, &image, &swizzle, output, 0, 0);
+        status = astcenc_compress_image(context, image, &swizzle, output);
         if (status != ASTCENC_SUCCESS)
         {
             debugPrint("[ASTC] Codec compress failed: %s\n", astcenc_get_error_string(status));
-            astcenc_context_free(context);
-            return;
         }
 
         astcenc_context_free(context);
@@ -91,11 +86,9 @@ namespace
             return;
         }
 
-        astcenc_context* context = nullptr;
+        astcenc_context context;
 
-        int threads = 1;
-
-        status = astcenc_context_alloc(&config, threads, &context);
+        status = astcenc_context_alloc(&config, context);
         if (status != ASTCENC_SUCCESS)
         {
             debugPrint("[ASTC] Codec context alloc failed: %s\n", astcenc_get_error_string(status));
@@ -112,7 +105,7 @@ namespace
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
-        astcenc_contexti* ctx = &context->context;
+        astcenc_contexti* ctx = &context.context;
 
         u32 xblocks = block.getBlocksX(width);
         u32 yblocks = block.getBlocksY(height);

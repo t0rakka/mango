@@ -332,54 +332,6 @@ static astcenc_error validate_compression_swizzle(
 #endif
 
 /**
- * @brief Validate single channel decompression swizzle.
- *
- * @param swizzle   The swizzle to check.
- *
- * @return Return @c ASTCENC_SUCCESS if validated, otherwise an error on failure.
- */
-static astcenc_error validate_decompression_swz(
-	astcenc_swz swizzle
-) {
-	// Values in this enum are from an external user, so not guaranteed to be
-	// bounded to the enum values
-	switch (static_cast<int>(swizzle))
-	{
-	case ASTCENC_SWZ_R:
-	case ASTCENC_SWZ_G:
-	case ASTCENC_SWZ_B:
-	case ASTCENC_SWZ_A:
-	case ASTCENC_SWZ_0:
-	case ASTCENC_SWZ_1:
-	case ASTCENC_SWZ_Z:
-		return ASTCENC_SUCCESS;
-	default:
-		return ASTCENC_ERR_BAD_SWIZZLE;
-	}
-}
-
-/**
- * @brief Validate overall decompression swizzle.
- *
- * @param swizzle   The swizzle to check.
- *
- * @return Return @c ASTCENC_SUCCESS if validated, otherwise an error on failure.
- */
-static astcenc_error validate_decompression_swizzle(
-	const astcenc_swizzle& swizzle
-) {
-	if (validate_decompression_swz(swizzle.r) ||
-	    validate_decompression_swz(swizzle.g) ||
-	    validate_decompression_swz(swizzle.b) ||
-	    validate_decompression_swz(swizzle.a))
-	{
-		return ASTCENC_ERR_BAD_SWIZZLE;
-	}
-
-	return ASTCENC_SUCCESS;
-}
-
-/**
  * Validate that an incoming configuration is in-spec.
  *
  * This function can respond in two ways:
@@ -675,8 +627,7 @@ astcenc_error astcenc_config_init(
 /* See header for documentation. */
 astcenc_error astcenc_context_alloc(
 	const astcenc_config* configp,
-	unsigned int thread_count,
-	astcenc_context** context
+	astcenc_context& context
 ) {
 	astcenc_error status;
 	const astcenc_config& config = *configp;
@@ -693,24 +644,8 @@ astcenc_error astcenc_context_alloc(
 		return status;
 	}
 
-	if (thread_count == 0)
-	{
-		return ASTCENC_ERR_BAD_PARAM;
-	}
-
-#if defined(ASTCENC_DIAGNOSTICS)
-	// Force single threaded compressor use in diagnostic mode.
-	if (thread_count != 1)
-	{
-		return ASTCENC_ERR_BAD_PARAM;
-	}
-#endif
-
-	astcenc_context* ctxo = new astcenc_context;
-	astcenc_contexti* ctx = &ctxo->context;
-	ctx->thread_count = thread_count;
+	astcenc_contexti* ctx = &context.context;
 	ctx->config = config;
-	ctx->working_buffers = nullptr;
 
 	// These are allocated per-compress, as they depend on image size
 	ctx->input_alpha_averages = nullptr;
@@ -744,18 +679,6 @@ astcenc_error astcenc_context_alloc(
 		{
 			ctx->config.tune_db_limit = 0.0f;
 		}
-
-		size_t worksize = sizeof(compression_working_buffers) * thread_count;
-		ctx->working_buffers = aligned_malloc<compression_working_buffers>(worksize, ASTCENC_VECALIGN);
-		static_assert((sizeof(compression_working_buffers) % ASTCENC_VECALIGN) == 0,
-		              "compression_working_buffers size must be multiple of vector alignment");
-		if (!ctx->working_buffers)
-		{
-			aligned_free<block_size_descriptor>(ctx->bsd);
-			delete ctxo;
-			*context = nullptr;
-			return ASTCENC_ERR_OUT_OF_MEM;
-		}
 	}
 #endif
 
@@ -771,8 +694,6 @@ astcenc_error astcenc_context_alloc(
 	trace_add_data("block_z", config.block_z);
 #endif
 
-	*context = ctxo;
-
 #if !defined(ASTCENC_DECOMPRESS_ONLY)
 	prepare_angular_tables();
 #endif
@@ -782,18 +703,13 @@ astcenc_error astcenc_context_alloc(
 
 /* See header dor documentation. */
 void astcenc_context_free(
-	astcenc_context* ctxo
+	astcenc_context& ctxo
 ) {
-	if (ctxo)
-	{
-		astcenc_contexti* ctx = &ctxo->context;
-		aligned_free<compression_working_buffers>(ctx->working_buffers);
-		aligned_free<block_size_descriptor>(ctx->bsd);
+	astcenc_contexti* ctx = &ctxo.context;
+	aligned_free<block_size_descriptor>(ctx->bsd);
 #if defined(ASTCENC_DIAGNOSTICS)
-		delete ctx->trace_log;
+	delete ctx->trace_log;
 #endif
-		delete ctxo;
-	}
 }
 
 #if !defined(ASTCENC_DECOMPRESS_ONLY)
@@ -802,14 +718,12 @@ void astcenc_context_free(
  * @brief Compress an image, after any preflight has completed.
  *
  * @param[out] ctxo           The compressor context.
- * @param      thread_index   The thread index.
  * @param      image          The intput image.
  * @param      swizzle        The input swizzle.
  * @param[out] buffer         The output array for the compressed data.
  */
 static void compress_image(
 	astcenc_context& ctxo,
-	unsigned int thread_index,
 	const astcenc_image& image,
 	const astcenc_swizzle& swizzle,
 	uint8_t* buffer
@@ -844,7 +758,7 @@ static void compress_image(
 	                             ctx.config.cw_a_weight);
 
 	// Use preallocated scratch buffer
-	auto& temp_buffers = ctx.working_buffers[thread_index];
+	auto& temp_buffers = ctx.working_buffer;
 
 	// Only the first thread actually runs the initializer
 	ctxo.manage_compress.init(block_count);
@@ -1023,25 +937,21 @@ static void compute_averages(
 
 /* See header for documentation. */
 astcenc_error astcenc_compress_image(
-	astcenc_context* ctxo,
-	astcenc_image* imagep,
+	astcenc_context& ctxo,
+	astcenc_image& image,
 	const astcenc_swizzle* swizzle,
-	uint8_t* data_out,
-	size_t data_len,
-	unsigned int thread_index
+	uint8_t* data_out
 ) {
 #if defined(ASTCENC_DECOMPRESS_ONLY)
 	(void)ctxo;
 	(void)imagep;
 	(void)swizzle;
 	(void)data_out;
-	(void)data_len;
 	(void)thread_index;
 	return ASTCENC_ERR_BAD_CONTEXT;
 #else
-	astcenc_contexti* ctx = &ctxo->context;
+	astcenc_contexti* ctx = &ctxo.context;
 	astcenc_error status;
-	astcenc_image& image = *imagep;
 
 	if (ctx->config.flags & ASTCENC_FLG_DECOMPRESS_ONLY)
 	{
@@ -1054,33 +964,7 @@ astcenc_error astcenc_compress_image(
 		return status;
 	}
 
-	/*
-	if (thread_index >= ctx->thread_count)
-	{
-		return ASTCENC_ERR_BAD_PARAM;
-	}
-
-	unsigned int block_x = ctx->config.block_x;
-	unsigned int block_y = ctx->config.block_y;
-	unsigned int block_z = ctx->config.block_z;
-
-	unsigned int xblocks = (image.dim_x + block_x - 1) / block_x;
-	unsigned int yblocks = (image.dim_y + block_y - 1) / block_y;
-	unsigned int zblocks = (image.dim_z + block_z - 1) / block_z;
-
-	// Check we have enough output space (16 bytes per block)
-	size_t size_needed = xblocks * yblocks * zblocks * 16;
-	if (data_len < size_needed)
-	{
-		return ASTCENC_ERR_OUT_OF_MEM;
-	}
-	*/
-
-	// If context thread count is one then implicitly reset
-	if (ctx->thread_count == 1)
-	{
-		astcenc_compress_reset(ctxo);
-	}
+	astcenc_compress_reset(ctxo);
 
 	if (ctx->config.a_scale_radius != 0)
 	{
@@ -1097,19 +981,19 @@ astcenc_error astcenc_compress_image(
 		};
 
 		// Only the first thread actually runs the initializer
-		ctxo->manage_avg.init(init_avg);
+		ctxo.manage_avg.init(init_avg);
 
 		// All threads will enter this function and dynamically grab work
-		compute_averages(*ctxo, ctx->avg_preprocess_args);
+		compute_averages(ctxo, ctx->avg_preprocess_args);
 	}
 
 	// Wait for compute_averages to complete before compressing
-	ctxo->manage_avg.wait();
+	ctxo.manage_avg.wait();
 
-	compress_image(*ctxo, thread_index, image, *swizzle, data_out);
+	compress_image(ctxo, image, *swizzle, data_out);
 
 	// Wait for compress to complete before freeing memory
-	ctxo->manage_compress.wait();
+	ctxo.manage_compress.wait();
 
 	auto term_compress = [ctx]() {
 		delete[] ctx->input_alpha_averages;
@@ -1117,7 +1001,7 @@ astcenc_error astcenc_compress_image(
 	};
 
 	// Only the first thread to arrive actually runs the term
-	ctxo->manage_compress.term(term_compress);
+	ctxo.manage_compress.term(term_compress);
 
 	return ASTCENC_SUCCESS;
 #endif
@@ -1125,127 +1009,22 @@ astcenc_error astcenc_compress_image(
 
 /* See header for documentation. */
 astcenc_error astcenc_compress_reset(
-	astcenc_context* ctxo
+	astcenc_context& ctxo
 ) {
 #if defined(ASTCENC_DECOMPRESS_ONLY)
 	(void)ctxo;
 	return ASTCENC_ERR_BAD_CONTEXT;
 #else
-	astcenc_contexti* ctx = &ctxo->context;
+	astcenc_contexti* ctx = &ctxo.context;
 	if (ctx->config.flags & ASTCENC_FLG_DECOMPRESS_ONLY)
 	{
 		return ASTCENC_ERR_BAD_CONTEXT;
 	}
 
-	ctxo->manage_avg.reset();
-	ctxo->manage_compress.reset();
+	ctxo.manage_avg.reset();
+	ctxo.manage_compress.reset();
 	return ASTCENC_SUCCESS;
 #endif
-}
-
-/* See header for documentation. */
-astcenc_error astcenc_decompress_image(
-	astcenc_context* ctxo,
-	const uint8_t* data,
-	size_t data_len,
-	astcenc_image* image_outp,
-	const astcenc_swizzle* swizzle,
-	unsigned int thread_index
-) {
-	astcenc_error status;
-	astcenc_image& image_out = *image_outp;
-	astcenc_contexti* ctx = &ctxo->context;
-
-	// Today this doesn't matter (working set on stack) but might in future ...
-	if (thread_index >= ctx->thread_count)
-	{
-		return ASTCENC_ERR_BAD_PARAM;
-	}
-
-	status = validate_decompression_swizzle(*swizzle);
-	if (status != ASTCENC_SUCCESS)
-	{
-		return status;
-	}
-
-	unsigned int block_x = ctx->config.block_x;
-	unsigned int block_y = ctx->config.block_y;
-	unsigned int block_z = ctx->config.block_z;
-
-	unsigned int xblocks = (image_out.dim_x + block_x - 1) / block_x;
-	unsigned int yblocks = (image_out.dim_y + block_y - 1) / block_y;
-	unsigned int zblocks = (image_out.dim_z + block_z - 1) / block_z;
-
-	int row_blocks = xblocks;
-	int plane_blocks = xblocks * yblocks;
-
-	// Check we have enough output space (16 bytes per block)
-	/*
-	size_t size_needed = xblocks * yblocks * zblocks * 16;
-	if (data_len < size_needed)
-	{
-		return ASTCENC_ERR_OUT_OF_MEM;
-	}
-	*/
-
-	image_block blk;
-	blk.texel_count = static_cast<uint8_t>(block_x * block_y * block_z);
-
-	// If context thread count is one then implicitly reset
-	if (ctx->thread_count == 1)
-	{
-		astcenc_decompress_reset(ctxo);
-	}
-
-	// Only the first thread actually runs the initializer
-	ctxo->manage_decompress.init(zblocks * yblocks * xblocks);
-
-	// All threads run this processing loop until there is no work remaining
-	while (true)
-	{
-		unsigned int count;
-		unsigned int base = ctxo->manage_decompress.get_task_assignment(128, count);
-		if (!count)
-		{
-			break;
-		}
-
-		for (unsigned int i = base; i < base + count; i++)
-		{
-			// Decode i into x, y, z block indices
-			int z = i / plane_blocks;
-			unsigned int rem = i - (z * plane_blocks);
-			int y = rem / row_blocks;
-			int x = rem - (y * row_blocks);
-
-			unsigned int offset = (((z * yblocks + y) * xblocks) + x) * 16;
-			const uint8_t* bp = data + offset;
-
-			const physical_compressed_block& pcb = *reinterpret_cast<const physical_compressed_block*>(bp);
-			symbolic_compressed_block scb;
-
-			physical_to_symbolic(*ctx->bsd, pcb, scb);
-
-			decompress_symbolic_block(ctx->config.profile, *ctx->bsd,
-			                          x * block_x, y * block_y, z * block_z,
-			                          scb, blk);
-
-			store_image_block(image_out, blk, *ctx->bsd,
-			                  x * block_x, y * block_y, z * block_z, *swizzle);
-		}
-
-		ctxo->manage_decompress.complete_task_assignment(count);
-	}
-
-	return ASTCENC_SUCCESS;
-}
-
-/* See header for documentation. */
-astcenc_error astcenc_decompress_reset(
-	astcenc_context* ctxo
-) {
-	ctxo->manage_decompress.reset();
-	return ASTCENC_SUCCESS;
 }
 
 /* See header for documentation. */
