@@ -765,12 +765,12 @@ static void compress_image(
 		load_func = load_image_block_fast_ldr;
 	}
 
-	for (unsigned int y = 0; y < yblocks; ++y)
+	for (int y = 0; y < yblocks; ++y)
 	{
 		unsigned int yoffset = y * block_y;
 		unsigned int xoffset = 0;
 
-		for (unsigned int x = 0; x < xblocks; ++x)
+		for (int x = 0; x < xblocks; ++x)
 		{
 			// Test if we can apply some basic alpha-scale RDO
 			bool use_full_block = true;
