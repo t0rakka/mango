@@ -206,14 +206,7 @@ namespace
     }
 
     // enable file drop events
-#if 1
-    // deprecated in 10.14
-    [self registerForDraggedTypes:[NSArray arrayWithObjects: NSFilenamesPboardType, nil]];
-#else
-    // requires 10.13 or later version
-    // TODO: does not work, fix
     [self registerForDraggedTypes:[NSArray arrayWithObjects: NSPasteboardTypeFileURL, nil]];
-#endif
     
     return self;
 }
@@ -426,32 +419,22 @@ namespace
 
 - (BOOL) performDragOperation:(id <NSDraggingInfo>)sender
 {
-    NSPasteboard *pboard = [sender draggingPasteboard];
+    NSPasteboard *pasteboard = [sender draggingPasteboard];
 
-#if 1
-    // deprecated in 10.14
-    if ([[pboard types] containsObject:NSFilenamesPboardType])
-#else
-    // requires 10.13 or later version
-    // TODO: does not work, fix
-    if ([[pboard types] containsObject:NSPasteboardTypeFileURL])
-#endif
+    NSArray *classes = [NSArray arrayWithObject:[NSURL class]];
+    NSDictionary *options = [NSDictionary dictionaryWithObject:
+                            [NSNumber numberWithBool:YES] forKey:NSPasteboardURLReadingFileURLsOnlyKey];
+    NSArray *fileURLs = [pasteboard readObjectsForClasses:classes options:options];
+    
+    int numberOfFiles = (int) [fileURLs count];
+
+    if (numberOfFiles > 0)
     {
-#if 1
-        // deprecated in 10.14
-        NSArray *files = [pboard propertyListForType:NSFilenamesPboardType];
-#else
-        // requires 10.13 or later version
-        // TODO: does not work, fix
-        NSArray *files = [pboard propertyListForType:NSPasteboardTypeFileURL];
-#endif
-        int numberOfFiles = (int) [files count];
-
         filesystem::FileIndex dropped;
 
         for (int i = 0; i < numberOfFiles; ++i)
         {
-            NSString *path = [files objectAtIndex:i];
+            NSString *path = [[fileURLs objectAtIndex:i] path];
 
             BOOL isDirectory;
             [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory];
@@ -470,6 +453,7 @@ namespace
 
         context->onDropFiles(dropped);
     }
+
     return YES;
 }
 
