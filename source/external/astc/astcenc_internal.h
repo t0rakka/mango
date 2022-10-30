@@ -2103,51 +2103,6 @@ void physical_to_symbolic(
 	const physical_compressed_block& pcb,
 	symbolic_compressed_block& scb);
 
-/**
- * @brief Allocate an aligned memory buffer.
- *
- * Allocated memory must be freed by aligned_free;
- *
- * @param size    The desired buffer size.
- * @param align   The desired buffer alignment; must be 2^N.
- *
- * @return The memory buffer pointer or nullptr on allocation failure.
- */
-template<typename T>
-T* aligned_malloc(size_t size, size_t align)
-{
-	void* ptr;
-	int error = 0;
-
-#if defined(_WIN32)
-	ptr = _aligned_malloc(size, align);
-#else
-	error = posix_memalign(&ptr, align, size);
-#endif
-
-	if (error || (!ptr))
-	{
-		return nullptr;
-	}
-
-	return static_cast<T*>(ptr);
-}
-
-/**
- * @brief Free an aligned memory buffer.
- *
- * @param ptr   The buffer to free.
- */
-template<typename T>
-void aligned_free(T* ptr)
-{
-#if defined(_WIN32)
-	_aligned_free(reinterpret_cast<void*>(ptr));
-#else
-	free(reinterpret_cast<void*>(ptr));
-#endif
-}
-
 static inline void dump_weights(const char* label, uint8_t* weights, int weight_count)
 {
 	printf("%s\n", label);
