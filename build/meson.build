@@ -831,7 +831,6 @@ external_astc_headers = files(
     '../source/external/astc/astcenc.h',
     '../source/external/astc/astcenc_diagnostic_trace.h',
     '../source/external/astc/astcenc_internal.h',
-    '../source/external/astc/astcenc_internal_entry.h',
     '../source/external/astc/astcenc_mathlib.h',
     '../source/external/astc/astcenc_vecmathlib.h',
     '../source/external/astc/astcenc_vecmathlib_avx2_8.h',

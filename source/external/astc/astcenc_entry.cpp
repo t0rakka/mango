@@ -24,7 +24,7 @@
 #include <new>
 
 #include "astcenc.h"
-#include "astcenc_internal_entry.h"
+#include "astcenc_internal.h"
 #include "astcenc_diagnostic_trace.h"
 
 #include "../../../include/mango/core/cpuinfo.hpp"
@@ -644,44 +644,42 @@ astcenc_error astcenc_context_alloc(
 		return status;
 	}
 
-	astcenc_contexti* ctx = &context.context;
-	ctx->config = config;
+	context.config = config;
 
 	// Copy the config first and validate the copy (we may modify it)
-	status = validate_config(ctx->config);
+	status = validate_config(context.config);
 	if (status != ASTCENC_SUCCESS)
 	{
-		delete ctx;
 		return status;
 	}
 
-	ctx->bsd = aligned_malloc<block_size_descriptor>(sizeof(block_size_descriptor), ASTCENC_VECALIGN);
+	context.bsd = new block_size_descriptor();
 	bool can_omit_modes = static_cast<bool>(config.flags & ASTCENC_FLG_SELF_DECOMPRESS_ONLY);
 	init_block_size_descriptor(config.block_x, config.block_y, config.block_z,
 	                           can_omit_modes,
 	                           config.tune_partition_count_limit,
 	                           static_cast<float>(config.tune_block_mode_limit) / 100.0f,
-	                           *ctx->bsd);
+	                           *context.bsd);
 
 #if !defined(ASTCENC_DECOMPRESS_ONLY)
 	// Do setup only needed by compression
 	if (!(status & ASTCENC_FLG_DECOMPRESS_ONLY))
 	{
 		// Turn a dB limit into a per-texel error for faster use later
-		if ((ctx->config.profile == ASTCENC_PRF_LDR) || (ctx->config.profile == ASTCENC_PRF_LDR_SRGB))
+		if ((context.config.profile == ASTCENC_PRF_LDR) || (context.config.profile == ASTCENC_PRF_LDR_SRGB))
 		{
-			ctx->config.tune_db_limit = astc::pow(0.1f, ctx->config.tune_db_limit * 0.1f) * 65535.0f * 65535.0f;
+			context.config.tune_db_limit = astc::pow(0.1f, context.config.tune_db_limit * 0.1f) * 65535.0f * 65535.0f;
 		}
 		else
 		{
-			ctx->config.tune_db_limit = 0.0f;
+			context.config.tune_db_limit = 0.0f;
 		}
 	}
 #endif
 
 #if defined(ASTCENC_DIAGNOSTICS)
-	ctx->trace_log = new TraceLog(ctx->config.trace_file_path);
-	if (!ctx->trace_log->m_file)
+	context->trace_log = new TraceLog(context->config.trace_file_path);
+	if (!context->trace_log->m_file)
 	{
 		return ASTCENC_ERR_DTRACE_FAILURE;
 	}
@@ -700,12 +698,11 @@ astcenc_error astcenc_context_alloc(
 
 /* See header dor documentation. */
 void astcenc_context_free(
-	astcenc_context& ctxo
+	astcenc_context& context
 ) {
-	astcenc_contexti* ctx = &ctxo.context;
-	aligned_free<block_size_descriptor>(ctx->bsd);
+	delete context.bsd;
 #if defined(ASTCENC_DIAGNOSTICS)
-	delete ctx->trace_log;
+	delete context.trace_log;
 #endif
 }
 
@@ -720,14 +717,13 @@ void astcenc_context_free(
  * @param[out] buffer         The output array for the compressed data.
  */
 static void compress_image(
-	astcenc_context& ctxo,
+	astcenc_context& context,
 	const astcenc_image& image,
 	const astcenc_swizzle& swizzle,
 	uint8_t* buffer
 ) {
-	astcenc_contexti& ctx = ctxo.context;
-	const block_size_descriptor& bsd = *ctx.bsd;
-	astcenc_profile decode_mode = ctx.config.profile;
+	const block_size_descriptor& bsd = *context.bsd;
+	astcenc_profile decode_mode = context.config.profile;
 
 	image_block blk;
 
@@ -742,13 +738,13 @@ static void compress_image(
 	int yblocks = (dim_y + block_y - 1) / block_y;
 
 	// Populate the block channel weights
-	blk.channel_weight = vfloat4(ctx.config.cw_r_weight,
-	                             ctx.config.cw_g_weight,
-	                             ctx.config.cw_b_weight,
-	                             ctx.config.cw_a_weight);
+	blk.channel_weight = vfloat4(context.config.cw_r_weight,
+	                             context.config.cw_g_weight,
+	                             context.config.cw_b_weight,
+	                             context.config.cw_a_weight);
 
 	// Use preallocated scratch buffer
-	auto& temp_buffers = ctx.working_buffer;
+	auto& temp_buffers = context.working_buffer;
 
 	// Determine if we can use an optimized load function
 	bool needs_swz = (swizzle.r != ASTCENC_SWZ_R) || (swizzle.g != ASTCENC_SWZ_G) ||
@@ -774,7 +770,7 @@ static void compress_image(
 		{
 			// Test if we can apply some basic alpha-scale RDO
 			bool use_full_block = true;
-			if (ctx.config.a_scale_radius != 0)
+			if (context.config.a_scale_radius != 0)
 			{
 				int start_x = xoffset;
 				int end_x = astc::min(dim_x, start_x + block_x);
@@ -785,9 +781,9 @@ static void compress_image(
 				// SATs accumulate error, so don't test exactly zero. Test for
 				// less than 1 alpha in the expanded block footprint that
 				// includes the alpha radius.
-				int x_footprint = block_x + 2 * (ctx.config.a_scale_radius - 1);
+				int x_footprint = block_x + 2 * (context.config.a_scale_radius - 1);
 
-				int y_footprint = block_y + 2 * (ctx.config.a_scale_radius - 1);
+				int y_footprint = block_y + 2 * (context.config.a_scale_radius - 1);
 
 				float footprint = static_cast<float>(x_footprint * y_footprint);
 				float threshold = 0.9f / (255.0f * footprint);
@@ -798,7 +794,7 @@ static void compress_image(
 				{
 					for (int ax = start_x; ax < end_x; ax++)
 					{
-						float a_avg = ctx.input_alpha_averages[ay * dim_x + ax];
+						float a_avg = context.input_alpha_averages[ay * dim_x + ax];
 						if (a_avg > threshold)
 						{
 							use_full_block = true;
@@ -817,13 +813,13 @@ static void compress_image(
 				// Scale RGB error contribution by the maximum alpha in the block
 				// This encourages preserving alpha accuracy in regions with high
 				// transparency, and can buy up to 0.5 dB PSNR.
-				if (ctx.config.flags & ASTCENC_FLG_USE_ALPHA_WEIGHT)
+				if (context.config.flags & ASTCENC_FLG_USE_ALPHA_WEIGHT)
 				{
 					float alpha_scale = blk.data_max.lane<3>() * (1.0f / 65535.0f);
-					blk.channel_weight = vfloat4(ctx.config.cw_r_weight * alpha_scale,
-												 ctx.config.cw_g_weight * alpha_scale,
-												 ctx.config.cw_b_weight * alpha_scale,
-												 ctx.config.cw_a_weight);
+					blk.channel_weight = vfloat4(context.config.cw_r_weight * alpha_scale,
+												 context.config.cw_g_weight * alpha_scale,
+												 context.config.cw_b_weight * alpha_scale,
+												 context.config.cw_a_weight);
 				}
 			}
 			else
@@ -838,7 +834,7 @@ static void compress_image(
 
 			uint8_t *bp = buffer;
 			physical_compressed_block* pcb = reinterpret_cast<physical_compressed_block*>(bp);
-			compress_block(ctx, blk, *pcb, temp_buffers);
+			compress_block(context, blk, *pcb, temp_buffers);
 
 			xoffset += block_x;
 			buffer += 16;
@@ -858,7 +854,7 @@ static void compress_image(
  * @param      ag    The average and variance arguments created during setup.
  */
 static void compute_averages(
-	astcenc_context& ctx,
+	astcenc_context& context,
 	const avg_args &ag,
 	unsigned int count
 ) {
@@ -889,7 +885,7 @@ static void compute_averages(
 		{
 			arg.size_x = astc::min(step_xy, size_x - x);
 			arg.offset_x = x;
-			compute_pixel_region_variance(ctx.context, arg);
+			compute_pixel_region_variance(context, arg);
 		}
 	}
 
@@ -900,23 +896,22 @@ static void compute_averages(
 
 /* See header for documentation. */
 astcenc_error astcenc_compress_image(
-	astcenc_context& ctxo,
+	astcenc_context& context,
 	astcenc_image& image,
 	const astcenc_swizzle* swizzle,
 	uint8_t* data_out
 ) {
 #if defined(ASTCENC_DECOMPRESS_ONLY)
-	(void)ctxo;
+	(void)context;
 	(void)imagep;
 	(void)swizzle;
 	(void)data_out;
 	(void)thread_index;
 	return ASTCENC_ERR_BAD_CONTEXT;
 #else
-	astcenc_contexti* ctx = &ctxo.context;
 	astcenc_error status;
 
-	if (ctx->config.flags & ASTCENC_FLG_DECOMPRESS_ONLY)
+	if (context.config.flags & ASTCENC_FLG_DECOMPRESS_ONLY)
 	{
 		return ASTCENC_ERR_BAD_CONTEXT;
 	}
@@ -927,16 +922,16 @@ astcenc_error astcenc_compress_image(
 		return status;
 	}
 
-	if (ctx->config.a_scale_radius != 0)
+	if (context.config.a_scale_radius != 0)
 	{
 		unsigned int count = init_compute_averages(
-			image, ctx->config.a_scale_radius, *swizzle,
-			ctx->avg_preprocess_args);
+			image, context.config.a_scale_radius, *swizzle,
+			context.avg_preprocess_args);
 
-		compute_averages(ctxo, ctx->avg_preprocess_args, count);
+		compute_averages(context, context.avg_preprocess_args, count);
 	}
 
-	compress_image(ctxo, image, *swizzle, data_out);
+	compress_image(context, image, *swizzle, data_out);
 
 	return ASTCENC_SUCCESS;
 #endif
@@ -944,35 +939,33 @@ astcenc_error astcenc_compress_image(
 
 /* See header for documentation. */
 astcenc_error astcenc_get_block_info(
-	astcenc_context* ctxo,
+	astcenc_context* context,
 	const uint8_t data[16],
 	astcenc_block_info* info
 ) {
 #if defined(ASTCENC_DECOMPRESS_ONLY)
-	(void)ctxo;
+	(void)context;
 	(void)data;
 	(void)info;
 	return ASTCENC_ERR_BAD_CONTEXT;
 #else
-	astcenc_contexti* ctx = &ctxo->context;
-
 	// Decode the compressed data into a symbolic form
 	const physical_compressed_block&pcb = *reinterpret_cast<const physical_compressed_block*>(data);
 	symbolic_compressed_block scb;
-	physical_to_symbolic(*ctx->bsd, pcb, scb);
+	physical_to_symbolic(*context->bsd, pcb, scb);
 
 	// Fetch the appropriate partition and decimation tables
-	block_size_descriptor& bsd = *ctx->bsd;
+	block_size_descriptor& bsd = *context->bsd;
 
 	// Start from a clean slate
 	memset(info, 0, sizeof(*info));
 
 	// Basic info we can always populate
-	info->profile = ctx->config.profile;
+	info->profile = context->config.profile;
 
-	info->block_x = ctx->config.block_x;
-	info->block_y = ctx->config.block_y;
-	info->block_z = ctx->config.block_z;
+	info->block_x = context->config.block_x;
+	info->block_y = context->config.block_y;
+	info->block_z = context->config.block_z;
 	info->texel_count = bsd.texel_count;
 
 	// Check for error blocks first
@@ -1017,7 +1010,7 @@ astcenc_error astcenc_get_block_info(
 		bool a_hdr;
 		vint4 endpnt[2];
 
-		unpack_color_endpoints(ctx->config.profile,
+		unpack_color_endpoints(context->config.profile,
 		                       scb.color_formats[i],
 		                       scb.get_color_quant_mode(),
 		                       scb.color_values[i],

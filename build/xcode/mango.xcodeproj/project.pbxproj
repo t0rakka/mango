@@ -307,7 +307,6 @@
 		A6D78CDF290987A200304D88 /* astcenc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D78CBD290987A200304D88 /* astcenc.h */; };
 		A6D78CE0290987A200304D88 /* astcenc_block_sizes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6D78CBE290987A200304D88 /* astcenc_block_sizes.cpp */; };
 		A6D78CE1290987A200304D88 /* astcenc_compute_variance.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6D78CBF290987A200304D88 /* astcenc_compute_variance.cpp */; };
-		A6D78CE2290987A200304D88 /* astcenc_internal_entry.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D78CC0290987A200304D88 /* astcenc_internal_entry.h */; };
 		A6D78CE3290987A200304D88 /* astcenc_find_best_partitioning.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6D78CC1290987A200304D88 /* astcenc_find_best_partitioning.cpp */; };
 		A6D78CE4290987A200304D88 /* astcenc_mathlib_softfloat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6D78CC2290987A200304D88 /* astcenc_mathlib_softfloat.cpp */; };
 		A6D78CE5290987A200304D88 /* astcenc_vecmathlib.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D78CC3290987A200304D88 /* astcenc_vecmathlib.h */; };
@@ -819,7 +818,6 @@
 		A6D78CBD290987A200304D88 /* astcenc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = astcenc.h; path = external/astc/astcenc.h; sourceTree = "<group>"; };
 		A6D78CBE290987A200304D88 /* astcenc_block_sizes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = astcenc_block_sizes.cpp; path = external/astc/astcenc_block_sizes.cpp; sourceTree = "<group>"; };
 		A6D78CBF290987A200304D88 /* astcenc_compute_variance.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = astcenc_compute_variance.cpp; path = external/astc/astcenc_compute_variance.cpp; sourceTree = "<group>"; };
-		A6D78CC0290987A200304D88 /* astcenc_internal_entry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = astcenc_internal_entry.h; path = external/astc/astcenc_internal_entry.h; sourceTree = "<group>"; };
 		A6D78CC1290987A200304D88 /* astcenc_find_best_partitioning.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = astcenc_find_best_partitioning.cpp; path = external/astc/astcenc_find_best_partitioning.cpp; sourceTree = "<group>"; };
 		A6D78CC2290987A200304D88 /* astcenc_mathlib_softfloat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = astcenc_mathlib_softfloat.cpp; path = external/astc/astcenc_mathlib_softfloat.cpp; sourceTree = "<group>"; };
 		A6D78CC3290987A200304D88 /* astcenc_vecmathlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = astcenc_vecmathlib.h; path = external/astc/astcenc_vecmathlib.h; sourceTree = "<group>"; };
@@ -1525,7 +1523,6 @@
 				A6D78CB6290987A100304D88 /* astcenc_ideal_endpoints_and_weights.cpp */,
 				A6D78CB8290987A200304D88 /* astcenc_image.cpp */,
 				A6D78CA7290987A100304D88 /* astcenc_integer_sequence.cpp */,
-				A6D78CC0290987A200304D88 /* astcenc_internal_entry.h */,
 				A6D78CB5290987A100304D88 /* astcenc_internal.h */,
 				A6D78CC2290987A200304D88 /* astcenc_mathlib_softfloat.cpp */,
 				A6D78CAF290987A100304D88 /* astcenc_mathlib.cpp */,
@@ -1980,7 +1977,6 @@
 				A686FD2027A37E3C00EDC399 /* basisu_containers.h in Headers */,
 				A69B9DFF285ABF7E00E7BEDC /* cpu_features.h in Headers */,
 				A6EC3F9A230D7C4D00B17F21 /* quant_levels_utils.h in Headers */,
-				A6D78CE2290987A200304D88 /* astcenc_internal_entry.h in Headers */,
 				A6EC3E87230D7BB800B17F21 /* vp8li_dec.h in Headers */,
 				A6EC3F92230D7C4D00B17F21 /* utils.h in Headers */,
 				A6CD2BD6209B3958000B0EF8 /* zpng.h in Headers */,

@@ -1171,7 +1171,7 @@ static float prepare_block_statistics(
 
 /* See header for documentation. */
 void compress_block(
-	const astcenc_contexti& ctx,
+	const astcenc_context& ctx,
 	const image_block& blk,
 	physical_compressed_block& pcb,
 	compression_working_buffers& tmpbuf)

@@ -1212,7 +1212,7 @@ class TraceLog;
 /**
  * @brief The astcenc compression context.
  */
-struct astcenc_contexti
+struct astcenc_context
 {
 	/** @brief The configuration this context was created with. */
 	astcenc_config config;
@@ -1585,7 +1585,7 @@ unsigned int init_compute_averages(
  * @param      arg   The input parameter structure.
  */
 void compute_pixel_region_variance(
-	astcenc_contexti& ctx,
+	astcenc_context& ctx,
 	const pixel_region_args& arg);
 /**
  * @brief Load a single image block from the input image.
@@ -1986,7 +1986,7 @@ void compute_angular_endpoints_2planes(
  * @param[out] tmpbuf   Preallocated scratch buffers for the compressor.
  */
 void compress_block(
-	const astcenc_contexti& ctx,
+	const astcenc_context& ctx,
 	const image_block& blk,
 	physical_compressed_block& pcb,
 	compression_working_buffers& tmpbuf);

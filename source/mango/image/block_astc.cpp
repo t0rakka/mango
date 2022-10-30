@@ -7,7 +7,7 @@
 #include <mango/image/color.hpp>
 
 #include "../../external/astc/astcenc.h"
-#include "../../external/astc/astcenc_internal_entry.h"
+#include "../../external/astc/astcenc_internal.h"
 #include "../../external/astc/astcenc_diagnostic_trace.h"
 
 // TODO: clean up the code
@@ -105,8 +105,6 @@ namespace
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
-        astcenc_contexti* ctx = &context.context;
-
         u32 xblocks = block.getBlocksX(width);
         u32 yblocks = block.getBlocksY(height);
 
@@ -123,9 +121,9 @@ namespace
                 const physical_compressed_block& pcb = *reinterpret_cast<const physical_compressed_block*>(input);
                 symbolic_compressed_block scb;
 
-                physical_to_symbolic(*ctx->bsd, pcb, scb);
-                decompress_symbolic_block(ctx->config.profile, *ctx->bsd, xoffset, yoffset, 0, scb, blk);
-                store_image_block(image, blk, *ctx->bsd, xoffset, yoffset, 0, swizzle);
+                physical_to_symbolic(*context.bsd, pcb, scb);
+                decompress_symbolic_block(context.config.profile, *context.bsd, xoffset, yoffset, 0, scb, blk);
+                store_image_block(image, blk, *context.bsd, xoffset, yoffset, 0, swizzle);
 
                 xoffset += block.width;
                 input += 16;
@@ -154,7 +152,7 @@ namespace mango::image
 
         ConcurrentQueue q;
 
-        int n = 8;
+        int n = 12;
 
         for (u32 y = 0; y < yblocks; y += n)
         {
@@ -185,7 +183,7 @@ namespace mango::image
 
         ConcurrentQueue q;
 
-        constexpr int n = 16;
+        constexpr int n = 24;
 
         for (u32 y = 0; y < yblocks; y += n)
         {
