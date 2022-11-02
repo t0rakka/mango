@@ -21,6 +21,8 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ImageHeader m_header;
+        ConstMemory m_icc;
+        ConstMemory m_exif;
 
         avifDecoder* m_decoder = nullptr;
         avifRGBImage m_rgb;
@@ -54,6 +56,10 @@ namespace
 
             avifImage* image = m_decoder->image;
 
+            m_icc = ConstMemory(image->icc.data, image->icc.size);
+            m_exif = ConstMemory(image->exif.data, image->exif.size);
+            //m_xmp = ConstMemory(image->xmp.data, image->xmp.size);
+
             m_header.width   = image->width;
             m_header.height  = image->height;
             m_header.depth   = 0;
@@ -84,12 +90,12 @@ namespace
 
         ConstMemory icc() override
         {
-            return ConstMemory();
+            return m_icc;
         }
 
         ConstMemory exif() override
         {
-            return ConstMemory();
+            return m_exif;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
