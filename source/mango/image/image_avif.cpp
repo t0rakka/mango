@@ -22,25 +22,59 @@ namespace
     {
         ImageHeader m_header;
 
+        avifDecoder* m_decoder = nullptr;
+        avifRGBImage m_rgb;
+
         Interface(ConstMemory memory)
         {
-            // TODO
-            int width = 100;
-            int height = 100;
-            Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            m_decoder = avifDecoderCreate();
+            if (!m_decoder)
+            {
+                m_header.setError("[ImageDecoder.AVIF] avifDecoderCreate FAILED.");
+                return;
+            }
 
-            m_header.width   = width;
-            m_header.height  = height;
+            m_decoder->maxThreads = int(std::thread::hardware_concurrency());
+
+            avifResult result = avifDecoderSetIOMemory(m_decoder, memory.address, memory.size);
+            if (result != AVIF_RESULT_OK)
+            {
+                m_header.setError("[ImageDecoder.AVIF] avifDecoderSetIOMemory FAILED.");
+                return;
+            }
+
+            result = avifDecoderParse(m_decoder);
+            if (result != AVIF_RESULT_OK)
+            {
+                m_header.setError("[ImageDecoder.AVIF] avifDecoderParse FAILED.");
+                return;
+            }
+
+            std::memset(&m_rgb, 0, sizeof(m_rgb));
+
+            avifImage* image = m_decoder->image;
+
+            m_header.width   = image->width;
+            m_header.height  = image->height;
             m_header.depth   = 0;
             m_header.levels  = 0;
             m_header.faces   = 0;
             m_header.palette = false;
-            m_header.format  = format;
+            m_header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             m_header.compression = TextureCompression::NONE;
         }
 
         ~Interface()
         {
+            if (m_decoder)
+            {
+                avifDecoderDestroy(m_decoder);
+            }
+
+            if (m_rgb.pixels)
+            {
+                avifRGBImageFreePixels(&m_rgb);
+            }
         }
 
         ImageHeader header() override
@@ -64,8 +98,40 @@ namespace
             MANGO_UNREFERENCED(depth);
             MANGO_UNREFERENCED(face);
 
-            // TODO
             ImageDecodeStatus status;
+
+            if (!m_decoder)
+            {
+                status.setError("[ImageDecoder.AVIF] avifDecoderCreate FAILED.");
+                return status;
+            }
+
+            avifImage* image = m_decoder->image;
+
+            if (!m_rgb.pixels)
+            {
+                avifResult result = avifDecoderNextImage(m_decoder);
+                if (result != AVIF_RESULT_OK)
+                {
+                    status.setError("[ImageDecoder.AVIF] avifDecoderNextImage FAILED.");
+                    return status;
+                }
+
+                avifRGBImageSetDefaults(&m_rgb, image);
+                avifRGBImageAllocatePixels(&m_rgb);
+
+                if (avifImageYUVToRGB(image, &m_rgb) != AVIF_RESULT_OK)
+                {
+                    avifRGBImageFreePixels(&m_rgb);
+                    status.setError("[ImageDecoder.AVIF] avifImageYUVToRGB FAILED.");
+                    return status;
+                }
+            }
+
+            Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            Surface temp(image->width, image->height, format, m_rgb.rowBytes, m_rgb.pixels);
+            dest.blit(0, 0, temp);
+
             return status;
         }
     };
@@ -100,7 +166,8 @@ namespace
         avifRGBImageSetDefaults(&rgb, image);
         avifRGBImageAllocatePixels(&rgb);
 
-        Surface temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8), rgb.rowBytes, rgb.pixels);
+        Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        Surface temp(width, height, format, rgb.rowBytes, rgb.pixels);
         temp.blit(0, 0, surface);
 
         avifResult convertResult = avifImageRGBToYUV(image, &rgb);
@@ -165,11 +232,7 @@ namespace mango::image
 
     void registerImageCodecAVIF()
     {
-        // TODO
-        MANGO_UNREFERENCED(createInterface);
-        /*
-        registerImageDecoder(createInterface, ".xxx");
-        */
+        registerImageDecoder(createInterface, ".avif");
         registerImageEncoder(imageEncode, ".avif");
     }
 
