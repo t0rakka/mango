@@ -58,6 +58,14 @@ namespace mango::image
     void registerImageCodecJP2();
 #endif
 
+#if defined(MANGO_ENABLE_HEIF)
+    void registerImageCodecHEIF();
+#endif
+
+#if defined(MANGO_ENABLE_AVIF)
+    void registerImageCodecAVIF();
+#endif
+
     class ImageServer
     {
     protected:
@@ -96,6 +104,14 @@ namespace mango::image
 
 #if defined(MANGO_ENABLE_JP2)
             registerImageCodecJP2();
+#endif
+
+#if defined(MANGO_ENABLE_HEIF)
+            registerImageCodecHEIF();
+#endif
+
+#if defined(MANGO_ENABLE_AVIF)
+            registerImageCodecAVIF();
 #endif
         }
 
