@@ -134,6 +134,9 @@ namespace
                 }
             }
 
+            // TODO: We probably should check if the image was more than 8 bits per component before
+            //       just assuming it's 32 bit RGBA.
+
             Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             Surface temp(image->width, image->height, format, m_rgb.rowBytes, m_rgb.pixels);
             dest.blit(0, 0, temp);
