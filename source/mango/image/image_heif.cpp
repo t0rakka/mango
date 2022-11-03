@@ -7,7 +7,7 @@
 
 #if defined(MANGO_ENABLE_HEIF)
 
-//#include <libheif.h>
+#include <libheif/heif.h>
 
 namespace
 {
