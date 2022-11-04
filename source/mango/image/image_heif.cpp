@@ -43,6 +43,15 @@ namespace
                 return;
             }
 
+            heif_filetype_result filetype = heif_check_filetype(memory.address, memory.size);
+            debugPrint("  - filetype: %d\n", filetype);
+
+            heif_brand2 brand = heif_read_main_brand(memory.address, memory.size);
+            debugPrint("  - brand: %d\n", brand);
+
+            const char* mime = heif_get_file_mime_type(memory.address, memory.size);
+            debugPrint("  - mime: %s\n", mime);
+
             /*
             heif_filetype_result filetype = heif_check_filetype(memory.address, memory.size);
             if (filetype != heif_filetype_yes_supported)
