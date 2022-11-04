@@ -137,8 +137,17 @@ namespace
 
             ImageDecodeStatus status;
 
+            heif_decoding_options* decode_options = heif_decoding_options_alloc();
+
+            printf("version: %d\n", decode_options->version);
+            decode_options->convert_hdr_to_8bit = true;
+            decode_options->ignore_transformations = true;
+
             heif_image* image = nullptr;
             heif_error error = heif_decode_image(m_image_handle, &image, heif_colorspace_RGB, heif_chroma_interleaved_RGBA, nullptr);
+
+            heif_decoding_options_free(decode_options);
+
             if (error.code != heif_error_Ok)
             {
                 // ...
