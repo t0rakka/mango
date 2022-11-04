@@ -61,13 +61,17 @@ namespace
             m_exif = ConstMemory(image->exif.data, image->exif.size);
             //m_xmp = ConstMemory(image->xmp.data, image->xmp.size);
 
+            Format format = image->depth > 8 ?
+                Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16) :
+                Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+
             m_header.width   = image->width;
             m_header.height  = image->height;
             m_header.depth   = 0;
             m_header.levels  = 0;
             m_header.faces   = 0;
             m_header.palette = false;
-            m_header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            m_header.format  = format;
             m_header.compression = TextureCompression::NONE;
         }
 
@@ -135,12 +139,39 @@ namespace
                 }
             }
 
-            // TODO: We probably should check if the image was more than 8 bits per component before
-            //       just assuming it's 32 bit RGBA.
+            debugPrint("image: %d x %d, depth: %d, stride: %d\n",
+                image->width, image->height, image->depth, m_rgb.rowBytes);
 
-            Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-            Surface temp(image->width, image->height, format, m_rgb.rowBytes, m_rgb.pixels);
-            dest.blit(0, 0, temp);
+            if (avifImageUsesU16(image))
+            {
+                Bitmap temp(image->width, image->height, m_header.format);
+
+                int precision = image->depth;
+
+                for (int y = 0; y < image->height; ++y)
+                {
+                    u16* d = temp.address<u16>(0, y);
+                    const u16* s = reinterpret_cast<const u16*>(m_rgb.pixels + y * m_rgb.rowBytes);
+
+                    for (int x = 0; x < image->width; ++x)
+                    {
+                        d[0] = u16_extend(s[0], precision, 16);
+                        d[1] = u16_extend(s[1], precision, 16);
+                        d[2] = u16_extend(s[2], precision, 16);
+                        d[3] = u16_extend(s[3], precision, 16);
+                        d += 4;
+                        s += 4;
+                    }
+                }
+
+                dest.blit(0, 0, temp);
+            }
+            else
+            {
+                Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                Surface temp(image->width, image->height, format, m_rgb.rowBytes, m_rgb.pixels);
+                dest.blit(0, 0, temp);
+            }
 
             return status;
         }
@@ -222,8 +253,7 @@ namespace
             return status;
         }
 
-        // TODO: debugPrint
-        printf("Encode success: %zu total bytes\n", avifOutput.size);
+        debugPrint("AVIF encoded: %zu bytes\n", avifOutput.size);
 
         output.write(avifOutput.data, avifOutput.size);
 
