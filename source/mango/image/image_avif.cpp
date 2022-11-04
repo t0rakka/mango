@@ -37,6 +37,7 @@ namespace
             }
 
             m_decoder->maxThreads = int(std::thread::hardware_concurrency());
+            m_decoder->strictFlags = AVIF_STRICT_DISABLED;
 
             avifResult result = avifDecoderSetIOMemory(m_decoder, memory.address, memory.size);
             if (result != AVIF_RESULT_OK)
