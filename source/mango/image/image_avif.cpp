@@ -142,11 +142,11 @@ namespace
             debugPrint("image: %d x %d, depth: %d, stride: %d\n",
                 image->width, image->height, image->depth, m_rgb.rowBytes);
 
-            if (avifImageUsesU16(image))
+            const int precision = image->depth;
+
+            if (precision > 8)
             {
                 Bitmap temp(image->width, image->height, m_header.format);
-
-                int precision = image->depth;
 
                 for (int y = 0; y < image->height; ++y)
                 {
@@ -168,8 +168,7 @@ namespace
             }
             else
             {
-                Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                Surface temp(image->width, image->height, format, m_rgb.rowBytes, m_rgb.pixels);
+                Surface temp(image->width, image->height, m_header.format, m_rgb.rowBytes, m_rgb.pixels);
                 dest.blit(0, 0, temp);
             }
 
