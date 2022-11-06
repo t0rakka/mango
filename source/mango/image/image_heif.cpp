@@ -32,25 +32,15 @@ namespace
             error = heif_init(nullptr);
             if (error.code != heif_error_Ok)
             {
-                // ...
-                debugPrint("%s\n", error.message);
+                m_header.setError("[ImageDecoder.HEIF] heif_init FAILED (%s).", error.message);
                 return;
             }
 
             if (memory.size < 12)
             {
-                // ...
+                m_header.setError("[ImageDecoder.HEIF] Not enough data (%d bytes).", int(memory.size));
                 return;
             }
-
-            heif_filetype_result filetype = heif_check_filetype(memory.address, memory.size);
-            debugPrint("  - filetype: %d\n", filetype);
-
-            heif_brand2 brand = heif_read_main_brand(memory.address, memory.size);
-            debugPrint("  - brand: %d\n", brand);
-
-            const char* mime = heif_get_file_mime_type(memory.address, memory.size);
-            debugPrint("  - mime: %s\n", mime);
 
             /*
             heif_filetype_result filetype = heif_check_filetype(memory.address, memory.size);
@@ -62,26 +52,27 @@ namespace
             }
             */
 
+            const char* mime = heif_get_file_mime_type(memory.address, memory.size);
+            debugPrint("MIME: %s\n", mime);
+
             m_context = heif_context_alloc();
             if (!m_context)
             {
-                // ...
+                m_header.setError("[ImageDecoder.HEIF]heif_context_alloc FAILED.");
                 return;
             }
 
             error = heif_context_read_from_memory_without_copy(m_context, memory.address, memory.size, nullptr);
             if (error.code != heif_error_Ok)
             {
-                // ...
-                debugPrint("%s\n", error.message);
+                m_header.setError("[ImageDecoder.HEIF] heif_context_read_from_memory_without_copy FAILED (%s).", error.message);
                 return;
             }
 
             error = heif_context_get_primary_image_handle(m_context, &m_image_handle);
             if (error.code != heif_error_Ok)
             {
-                // ...
-                debugPrint("%s\n", error.message);
+                m_header.setError("[ImageDecoder.HEIF] heif_context_get_primary_image_handle FAILED (%s).", error.message);
                 return;
             }
 
@@ -92,10 +83,9 @@ namespace
             int alpha = heif_image_handle_has_alpha_channel(m_image_handle);
             int luma = heif_image_handle_get_luma_bits_per_pixel(m_image_handle);
 
-            printf("image: %d x %d, bits: %d, chroma: %d, alpha: %d, luma: %d\n", 
+            debugPrint("image: %d x %d, bits: %d, chroma: %d, alpha: %d, luma: %d\n", 
                 width, height, bpp, cbpp, alpha, luma);
 
-            // TODO
             Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
             m_header.width   = width;
@@ -148,7 +138,6 @@ namespace
 
             heif_decoding_options* decode_options = heif_decoding_options_alloc();
 
-            printf("version: %d\n", decode_options->version);
             decode_options->convert_hdr_to_8bit = true;
             decode_options->ignore_transformations = true;
 
@@ -159,8 +148,7 @@ namespace
 
             if (error.code != heif_error_Ok)
             {
-                // ...
-                debugPrint("%s\n", error.message);
+                status.setError("[ImageDecoder.HEIF] heif_decode_image FAILED (%s).", error.message);
                 return status;
             }
 
@@ -179,7 +167,7 @@ namespace
             heif_channel ch = heif_channel_interleaved;
             int s0 = heif_image_get_bits_per_pixel(image, ch);
             int s1 = heif_image_get_bits_per_pixel_range(image, ch);
-            printf("s0: %d, s1: %d\n", s0, s1);
+            debugPrint("s0: %d, s1: %d\n", s0, s1);
             if (s0 != 32)
             {
                 heif_image_release(image);
@@ -192,8 +180,7 @@ namespace
             if (!p)
             {
                 heif_image_release(image);
-                // ...
-                printf("p: null\n");
+                status.setError("[ImageDecoder.HEIF] heif_image_get_plane_readonly FAILED.");
                 return status;
             }
 
@@ -216,174 +203,116 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
+    static
+    heif_error heif_stream_write(heif_context* context, const void* data, size_t size, void* userdata)
+    {
+        MANGO_UNREFERENCED(context);
+        Stream* stream = reinterpret_cast<Stream*>(userdata);
+        stream->write(data, size);
+        debugPrint("heif.write: %d KB\n", int(size / 1024));
+
+        heif_error error;
+        error.code = heif_error_Ok;
+        error.message = "";
+        return error;
+    }
+
     ImageEncodeStatus imageEncode(Stream& output, const Surface& surface, const ImageEncodeOptions& options)
     {
-
-/*
-
- bool has_alpha = (color_type & PNG_COLOR_MASK_ALPHA);
-
-  if (band == 1 && bit_depth==8) {
-    err = heif_image_create((int) width, (int) height,
-                            heif_colorspace_monochrome,
-                            heif_chroma_monochrome,
-                            &image);
-    (void) err;
-
-    heif_image_add_plane(image, heif_channel_Y, (int) width, (int) height, 8);
-
-    int y_stride;
-    int a_stride;
-    uint8_t* py = heif_image_get_plane(image, heif_channel_Y, &y_stride);
-    uint8_t* pa = nullptr;
-
-    if (has_alpha) {
-      heif_image_add_plane(image, heif_channel_Alpha, (int) width, (int) height, 8);
-
-      pa = heif_image_get_plane(image, heif_channel_Alpha, &a_stride);
-    }
-
-
-    for (uint32_t y = 0; y < height; y++) {
-      uint8_t* p = row_pointers[y];
-
-      if (has_alpha) {
-        for (uint32_t x = 0; x < width; x++) {
-          py[y * y_stride + x] = *p++;
-          pa[y * a_stride + x] = *p++;
-        }
-      }
-      else {
-        memcpy(&py[y * y_stride], p, width);
-      }
-    }
-  }
-  else if (band == 1) {
-    assert(bit_depth>8);
-
-    err = heif_image_create((int) width, (int) height,
-                            heif_colorspace_monochrome,
-                            heif_chroma_monochrome,
-                            &image);
-    (void) err;
-
-    int bdShift = 16 - output_bit_depth;
-
-    heif_image_add_plane(image, heif_channel_Y, (int) width, (int) height, output_bit_depth);
-
-    int y_stride;
-    int a_stride = 0;
-    uint16_t* py = (uint16_t*)heif_image_get_plane(image, heif_channel_Y, &y_stride);
-    uint16_t* pa = nullptr;
-
-    if (has_alpha) {
-      heif_image_add_plane(image, heif_channel_Alpha, (int) width, (int) height, output_bit_depth);
-
-      pa = (uint16_t*)heif_image_get_plane(image, heif_channel_Alpha, &a_stride);
-    }
-
-    y_stride /= 2;
-    a_stride /= 2;
-
-    for (uint32_t y = 0; y < height; y++) {
-      uint8_t* p = row_pointers[y];
-
-      if (has_alpha) {
-        for (uint32_t x = 0; x < width; x++) {
-          uint16_t vp = (uint16_t) (((p[0] << 8) | p[1]) >> bdShift);
-          uint16_t va = (uint16_t) (((p[2] << 8) | p[3]) >> bdShift);
-
-          py[x + y * y_stride] = vp;
-          pa[x + y * y_stride] = va;
-
-          p += 4;
-        }
-      }
-      else {
-        for (uint32_t x = 0; x < width; x++) {
-          uint16_t vp = (uint16_t) (((p[0] << 8) | p[1]) >> bdShift);
-
-          py[x + y * y_stride] = vp;
-
-          p += 2;
-        }
-      }
-    }
-  }
-  else if (bit_depth == 8) {
-    err = heif_image_create((int) width, (int) height,
-                            heif_colorspace_RGB,
-                            has_alpha ? heif_chroma_interleaved_RGBA : heif_chroma_interleaved_RGB,
-                            &image);
-    (void) err;
-
-    heif_image_add_plane(image, heif_channel_interleaved, (int) width, (int) height,
-                         has_alpha ? 32 : 24);
-
-    int stride;
-    uint8_t* p = heif_image_get_plane(image, heif_channel_interleaved, &stride);
-
-    for (uint32_t y = 0; y < height; y++) {
-      if (has_alpha) {
-        memcpy(p + y * stride, row_pointers[y], width * 4);
-      }
-      else {
-        memcpy(p + y * stride, row_pointers[y], width * 3);
-      }
-    }
-  }
-  else {
-    err = heif_image_create((int) width, (int) height,
-                            heif_colorspace_RGB,
-                            has_alpha ?
-                            heif_chroma_interleaved_RRGGBBAA_LE :
-                            heif_chroma_interleaved_RRGGBB_LE,
-                            &image);
-    (void) err;
-
-    int bdShift = 16 - output_bit_depth;
-
-    heif_image_add_plane(image, heif_channel_interleaved, (int) width, (int) height, output_bit_depth);
-
-    int stride;
-    uint8_t* p_out = (uint8_t*) heif_image_get_plane(image, heif_channel_interleaved, &stride);
-
-    for (uint32_t y = 0; y < height; y++) {
-      uint8_t* p = row_pointers[y];
-
-      uint32_t nVal = (has_alpha ? 4 : 3) * width;
-
-      for (uint32_t x = 0; x < nVal; x++) {
-        uint16_t v = (uint16_t) (((p[0] << 8) | p[1]) >> bdShift);
-        p_out[2 * x + y * stride + 1] = (uint8_t) (v >> 8);
-        p_out[2 * x + y * stride + 0] = (uint8_t) (v & 0xFF);
-        p += 2;
-      }
-    }
-  }
-
-  if (profile_data && profile_length > 0) {
-    heif_image_set_raw_color_profile(image, "prof", profile_data, (size_t) profile_length);
-  }
-
-  free(profile_data);
-  for (uint32_t y = 0; y < height; y++) {
-    free(row_pointers[y]);
-  } // for
-
-  delete[] row_pointers;
-
-  input_image.image = std::shared_ptr<heif_image>(image,
-                                                  [](heif_image* img) { heif_image_release(img); });
-
-  return input_image;
-
-*/
-
-
-
-        // TODO
         ImageEncodeStatus status;
+
+        int width = surface.width;
+        int height = surface.height;
+
+        heif_error error;
+
+        error = heif_init(nullptr);
+        if (error.code != heif_error_Ok)
+        {
+            status.setError("[ImageEncoder.HEIF] heif_init FAILED (%s).", error.message);
+            return status;
+        }
+
+        // create heif_image
+
+        heif_image* image = nullptr;
+        error = heif_image_create(width, height, heif_colorspace_RGB, heif_chroma_interleaved_RGBA, &image);
+
+        heif_image_add_plane(image, heif_channel_interleaved, width, height, 32);
+
+        int stride;
+        u8* p = heif_image_get_plane(image, heif_channel_interleaved, &stride);
+
+        Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        Surface temp(width, height, format, stride, p);
+        temp.blit(0, 0, surface);
+
+        // ..........................
+
+        heif_context* context = heif_context_alloc();
+        if (!context)
+        {
+            heif_image_release(image);
+            heif_deinit();
+            status.setError("[ImageEncoder.HEIF]heif_context_alloc FAILED.");
+            return status;
+        }
+
+        heif_encoder* encoder;
+        error = heif_context_get_encoder_for_format(context, heif_compression_HEVC, &encoder);
+        if (error.code != heif_error_Ok)
+        {
+            heif_context_free(context);
+            heif_image_release(image);
+            heif_deinit();
+            status.setError("[ImageEncoder.HEIF] heif_context_get_encoder_for_format FAILED (%s).", error.message);
+            return status;
+        }
+
+        if (options.lossless)
+        {
+            error = heif_encoder_set_lossless(encoder, 1);
+        }
+        else
+        {
+            int quality = u32_clamp(int(options.quality * 100), 0, 100);
+            error = heif_encoder_set_lossy_quality(encoder, quality);
+        }
+
+        heif_image_handle* image_handle = nullptr;
+        error = heif_context_encode_image(context, image, encoder, nullptr, &image_handle);
+        if (error.code != heif_error_Ok)
+        {
+            heif_encoder_release(encoder);
+            heif_context_free(context);
+            heif_image_release(image);
+            heif_deinit();
+            status.setError("[ImageEncoder.HEIF] heif_context_encode_image FAILED (%s).", error.message);
+            return status;
+        }
+
+        heif_writer writer;
+        writer.writer_api_version = 1;
+        writer.write = heif_stream_write;
+
+        error = heif_context_write(context, &writer, &output);
+        if (error.code != heif_error_Ok)
+        {
+            heif_image_handle_release(image_handle);
+            heif_encoder_release(encoder);
+            heif_context_free(context);
+            heif_image_release(image);
+            heif_deinit();
+            status.setError("[ImageEncoder.HEIF] heif_context_write FAILED (%s).", error.message);
+            return status;
+        }
+
+        heif_image_handle_release(image_handle);
+        heif_encoder_release(encoder);
+        heif_context_free(context);
+        heif_image_release(image);
+        heif_deinit();
+
         return status;
     }
 
@@ -396,12 +325,8 @@ namespace mango::image
     {
         registerImageDecoder(createInterface, ".heif");
         registerImageDecoder(createInterface, ".heic");
-
-        // TODO
-        MANGO_UNREFERENCED(imageEncode);
-        /*
-        registerImageEncoder(imageEncode, ".xxx");
-        */
+        registerImageEncoder(imageEncode, ".heif");
+        registerImageEncoder(imageEncode, ".heic");
     }
 
 } // namespace mango::image
