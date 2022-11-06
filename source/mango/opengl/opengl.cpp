@@ -753,7 +753,7 @@ namespace
             int minor;
             std::sscanf(version, "%d.%d", &major, &minor);
             char buffer[80];
-            sprintf(buffer, "#version %d%d\n", major, minor);
+            snprintf(buffer, 80, "#version %d%d\n", major, minor);
             s = buffer;
         }
 
