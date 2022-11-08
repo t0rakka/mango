@@ -148,12 +148,12 @@ namespace
             {
                 Bitmap temp(image->width, image->height, m_header.format);
 
-                for (int y = 0; y < image->height; ++y)
+                for (u32 y = 0; y < image->height; ++y)
                 {
                     u16* d = temp.address<u16>(0, y);
                     const u16* s = reinterpret_cast<const u16*>(m_rgb.pixels + y * m_rgb.rowBytes);
 
-                    for (int x = 0; x < image->width; ++x)
+                    for (u32 x = 0; x < image->width; ++x)
                     {
                         d[0] = u16_extend(s[0], precision, 16);
                         d[1] = u16_extend(s[1], precision, 16);
