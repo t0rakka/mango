@@ -796,6 +796,15 @@ namespace mango
 
 #endif
 
+    static constexpr
+    u32 u32_parity(u32 value)
+    {
+        value ^= value >> 16;
+        value ^= value >> 8;
+        value ^= value >> 4;
+        return (0b0110100110010110 >> (value & 0xf)) & 1;
+    }
+
     // ----------------------------------------------------------------------------
     // u32_interleave_bits
     // ----------------------------------------------------------------------------
@@ -1317,6 +1326,16 @@ namespace mango
     }
 
 #endif
+
+    static constexpr
+    u64 u64_parity(u64 value)
+    {
+        value ^= value >> 32;
+        value ^= value >> 16;
+        value ^= value >> 8;
+        value ^= value >> 4;
+        return (0b0110100110010110 >> (value & 0xf)) & 1;
+    }
 
     // ----------------------------------------------------------------------------
     // u64_interleave_bits
