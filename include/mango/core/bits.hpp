@@ -819,7 +819,7 @@ namespace mango
     static inline
     u32 u32_interleave_bits(u32 x, u32 y)
     {
-        // NOTE: Emulated in microcode on ARM Zen
+        // NOTE: Emulated in microcode on AMD Zen
         u32 value = _pdep_u32(y, 0xaaaaaaaa) |
                     _pdep_u32(x, 0x55555555);
         return value;
@@ -877,7 +877,7 @@ namespace mango
     static inline
     void u32_deinterleave_bits(u32& x, u32& y, u32 value)
     {
-        // NOTE: Emulated in microcode on ARM Zen
+        // NOTE: Emulated in microcode on AMD Zen
         x = _pext_u32(value, 0x55555555);
         y = _pext_u32(value, 0xaaaaaaaa);
     }
@@ -1351,7 +1351,7 @@ namespace mango
     static inline
     u64 u64_interleave_bits(u64 x, u64 y)
     {
-        // NOTE: Emulated in microcode on ARM Zen
+        // NOTE: Emulated in microcode on AMD Zen
         u64 value = _pdep_u64(y, 0xaaaaaaaaaaaaaaaa) |
                     _pdep_u64(x, 0x5555555555555555);
         return value;
@@ -1417,7 +1417,7 @@ namespace mango
     static inline
     void u64_deinterleave_bits(u64& x, u64& y, u64 value)
     {
-        // NOTE: Emulated in microcode on ARM Zen
+        // NOTE: Emulated in microcode on AMD Zen
         x = _pext_u64(value, 0x5555555555555555);
         y = _pext_u64(value, 0xaaaaaaaaaaaaaaaa);
     }
