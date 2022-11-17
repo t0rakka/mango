@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <algorithm>
+#include <mango/core/configure.hpp>
 #include <mango/simd/simd.hpp>
 
 /*
