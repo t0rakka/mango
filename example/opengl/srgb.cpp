@@ -100,7 +100,7 @@ public:
                 if (y > surface.height / 2)
                 {
                     float linear = s / 255.0f;
-                    float nonlinear = srgbEncode(linear);
+                    float nonlinear = linear_to_srgb(linear);
                     s = u8(nonlinear * 255.0f);
                 }
                 dest[x] = Color(s, s, s, 0xff);

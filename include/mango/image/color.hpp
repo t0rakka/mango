@@ -1,12 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/core/configure.hpp>
 #include <mango/core/endian.hpp>
 #include <mango/core/bits.hpp>
+#include <mango/math/srgb.hpp>
 
 namespace mango::image
 {
@@ -22,6 +23,10 @@ namespace mango::image
     {
         return (alpha << 24) | (blue << 16) | (green << 8) | red;
     }
+
+    // ------------------------------------------------------------------
+    // Color
+    // ------------------------------------------------------------------
 
     union Color
     {
@@ -62,6 +67,10 @@ namespace mango::image
         }
     };
 
+    // ------------------------------------------------------------------
+    // Palette
+    // ------------------------------------------------------------------
+
     struct Palette
     {
         u32 size { 0 };
@@ -75,6 +84,56 @@ namespace mango::image
         Color operator [] (int index) const
         {
             return color[index];
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // sRGB
+    // ------------------------------------------------------------------
+
+    struct sRGB
+    {
+        // NOTE: The alpha component is always linear
+        Color color;
+
+        sRGB() = default;
+
+        sRGB(Color srgb)
+            : color(srgb)
+        {
+        }
+
+        sRGB(math::float32x4 linear)
+        {
+            *this = linear;
+        }
+
+        sRGB& operator = (math::float32x4 linear)
+        {
+            math::float32x4 srgb = math::linear_to_srgb(linear) * 255.0f;
+            srgb.w = linear.w * 255.0f; // pass-through linear alpha
+            color = srgb.pack();
+            return *this;
+        }
+
+        sRGB& operator = (Color srgb)
+        {
+            color = srgb;
+            return *this;
+        }
+
+        operator u32 () const
+        {
+            return color;
+        }
+
+        operator math::float32x4 () const
+        {
+            math::float32x4 srgb;
+            srgb.unpack(color);
+            math::float32x4 linear = math::srgb_to_linear(srgb / 255.0f);
+            linear.w = float(color >> 24) / 255.0f; // pass-through linear alpha
+            return linear;
         }
     };
 

@@ -122,8 +122,8 @@ void example10(const std::vector<Box>& boxes, const Ray& ray)
 void example11()
 {
     float32x4 linear(1.0f, 0.5f, 0.5f, 1.0f);
-    float32x4 nonlinear = srgbEncode(linear);
-    linear = srgbDecode(nonlinear);
+    float32x4 nonlinear = linear_to_srgb(linear);
+    linear = srgb_to_linear(nonlinear);
 }
 
 /*

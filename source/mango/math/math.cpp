@@ -1040,13 +1040,15 @@ namespace mango::math
     // sRGB
     // ------------------------------------------------------------------------
 
-    float srgbEncode(float linear)
+    float linear_to_srgb(float linear)
     {
-        float srgb = (linear < 0.0031308f) ? 12.92f * linear : 1.055f * detail::pow24(linear) - 0.055f;
+        float srgb = (linear < 0.0031308f) ?
+            12.92f * linear :
+            1.055f * detail::pow24(linear) - 0.055f;
         return srgb;
     }
 
-    float srgbDecode(float srgb)
+    float srgb_to_linear(float srgb)
     {
         float linear;
         if (srgb <= 0.04045f)
@@ -1061,7 +1063,7 @@ namespace mango::math
         return linear;
     }
 
-    float32x4 srgbEncode(float32x4 linear)
+    float32x4 linear_to_srgb(float32x4 linear)
     {
         float32x4 a = linear * 12.92f;
         float32x4 b = 1.055f * detail::pow24(linear) - 0.055f;
@@ -1069,7 +1071,7 @@ namespace mango::math
         return srgb;
     }
 
-    float32x4 srgbDecode(float32x4 srgb)
+    float32x4 srgb_to_linear(float32x4 srgb)
     {
         float32x4 a = srgb * (1.0f / 12.92f);
         float32x4 s = (srgb * (1.f / 1.055f) + 0.055f / 1.055f);
