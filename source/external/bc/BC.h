@@ -324,8 +324,7 @@ namespace DirectX
             const u32* image = reinterpret_cast<const u32*>(input + y * stride);
             for (int x = 0; x < 4; ++x)
             {
-                int32x4 v = simd::unpack(image[x]);
-                dest[x] = convert<float32x4>(v) / 255.0f;
+                dest[x] = float32x4::unpack(image[x]) / 255.0f;
             }
             dest += 4;
         }

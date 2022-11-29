@@ -129,9 +129,8 @@ namespace mango::image
 
         operator math::float32x4 () const
         {
-            math::float32x4 srgb;
-            srgb.unpack(color);
-            math::float32x4 linear = math::srgb_to_linear(srgb / 255.0f);
+            math::float32x4 srgb = math::float32x4::unpack(color) / 255.0f;
+            math::float32x4 linear = math::srgb_to_linear(srgb);
             linear.w = float(color >> 24) / 255.0f; // pass-through linear alpha
             return linear;
         }

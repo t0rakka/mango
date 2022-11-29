@@ -369,9 +369,7 @@ namespace DirectX
 
         operator float32x4 () const
         {
-            int32x4 value;
-            value.unpack(*this);
-            return convert<float32x4>(value);
+            return float32x4::unpack(*this);
         }
 
         LDRColorA operator = (const HDRColorA& c) noexcept

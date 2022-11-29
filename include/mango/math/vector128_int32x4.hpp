@@ -127,9 +127,9 @@ namespace mango::math
             return simd::pack(m);
         }
 
-        void unpack(u32 a)
+        static Vector unpack(u32 a)
         {
-            m = simd::unpack(a);
+            return simd::unpack(a);
         }
 
         static Vector ascend()

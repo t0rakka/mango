@@ -167,10 +167,10 @@ namespace mango::math
             return simd::pack(temp);
         }
 
-        void unpack(u32 a)
+        static Vector unpack(u32 a)
         {
             const simd::s32x4 temp = simd::unpack(a);
-            m = simd::convert<simd::f32x4>(temp);
+            return simd::convert<simd::f32x4>(temp);
         }
 
         static Vector ascend()
