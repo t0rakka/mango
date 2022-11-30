@@ -986,9 +986,17 @@ namespace mango::math
         return slerp(qa, qb, 0, 2.0f * time * (1.0f - time));
     }
 
+    // ------------------------------------------------------------------------
+    // sRGB
+    // ------------------------------------------------------------------------
+
+#if 0
+
     namespace detail
     {
-        inline float pow24(float v)
+
+        static inline
+        float pow24(float v)
         {
             s32 i = reinterpret_bits<s32>(v);
             i = (i >> 2) + (i >> 4);
@@ -1000,7 +1008,8 @@ namespace mango::math
             return s * sqrt(sqrt(s));
         }
 
-        inline float root5(float v)
+        static inline
+        float root5(float v)
         {
             s32 i = reinterpret_bits<s32>(v);
             s32 d = (i >> 2) - (i >> 4) + (i >> 6) - (i >> 8) + (i >> 10);
@@ -1011,7 +1020,8 @@ namespace mango::math
             return f;
         }
 
-        inline float32x4 pow24(float32x4 v)
+        static inline
+        float32x4 pow24(float32x4 v)
         {
             int32x4 i = reinterpret<int32x4>(v);
             i = (i >> 2) + (i >> 4);
@@ -1023,7 +1033,8 @@ namespace mango::math
             return s * sqrt(sqrt(s));
         }
 
-        inline float32x4 root5(float32x4 v)
+        static inline
+        float32x4 root5(float32x4 v)
         {
             int32x4 i = reinterpret<int32x4>(v);
             int32x4 d = (i >> 2) - (i >> 4) + (i >> 6) - (i >> 8) + (i >> 10);
@@ -1035,10 +1046,6 @@ namespace mango::math
         }
 
     } // namespace detail
-
-    // ------------------------------------------------------------------------
-    // sRGB
-    // ------------------------------------------------------------------------
 
     float linear_to_srgb(float linear)
     {
@@ -1079,5 +1086,37 @@ namespace mango::math
         float32x4 linear = select(srgb <= 0.04045f, a, b);
         return linear;
     }
+
+#else
+
+    // http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
+
+    float linear_to_srgb(float linear)
+    {
+        float s1 = sqrt(linear);
+        float s2 = sqrt(s1);
+        float s3 = sqrt(s2);
+        return 0.662002687f * s1 + 0.684122060f * s2 - 0.323583601f * s3 - 0.0225411470f * linear;
+    }
+
+    float srgb_to_linear(float s)
+    {
+        return s * (s * (s * 0.305306011f + 0.682171111f) + 0.012522878f);
+    }
+
+    float32x4 linear_to_srgb(float32x4 linear)
+    {
+        float32x4 s1 = sqrt(linear);
+        float32x4 s2 = sqrt(s1);
+        float32x4 s3 = sqrt(s2);
+        return 0.662002687f * s1 + 0.684122060f * s2 - 0.323583601f * s3 - 0.0225411470f * linear;
+    }
+
+    float32x4 srgb_to_linear(float32x4 s)
+    {
+        return s * (s * (s * 0.305306011f + 0.682171111f) + 0.012522878f);
+    }
+
+#endif
 
 } // namespace mango::math

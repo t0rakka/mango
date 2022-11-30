@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -2045,9 +2045,21 @@ namespace mango::math
         return a; \
     } \
     \
+    static inline Vector<T, N>& operator += (Vector<T, N>& a, T b) \
+    { \
+        a = simd::add(a, simd::T##x##N##_set(b)); \
+        return a; \
+    } \
+    \
     static inline Vector<T, N>& operator -= (Vector<T, N>& a, Vector<T, N> b) \
     { \
         a = simd::sub(a, b); \
+        return a; \
+    } \
+    \
+    static inline Vector<T, N>& operator -= (Vector<T, N>& a, T b) \
+    { \
+        a = simd::sub(a, simd::T##x##N##_set(b)); \
         return a; \
     } \
     \
