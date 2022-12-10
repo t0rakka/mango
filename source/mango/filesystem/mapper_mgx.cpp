@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/filesystem/filesystem.hpp>
@@ -336,7 +336,7 @@ namespace mango::filesystem
             u8* ptr = new u8[size_t(file.size)];
             u8* x = ptr;
 
-            ConcurrentQueue q("mgx.decompessor", Priority::HIGH);
+            ConcurrentQueue q("mgx.decompressor", Priority::HIGH);
 
             for (auto &segment : file.segments)
             {
