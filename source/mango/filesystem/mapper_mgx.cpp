@@ -14,23 +14,29 @@ namespace
 
     static constexpr u64 mgx_header_size = 24;
 
+    struct Segment
+    {
+        u32 block;
+        u32 offset;
+        u32 size;
+    };
+
     struct Block
     {
-        u64 offset;
-        u64 compressed;
+        ConstMemory memory;
         u64 uncompressed;
         u32 method;
+
+        void decompress(Memory dest) const
+        {
+            assert(dest.size == uncompressed);
+            Compressor compressor = getCompressor(Compressor::Method(method));
+            compressor.decompress(dest, memory);
+        }
     };
 
     struct FileHeader
     {
-        struct Segment
-        {
-            u32 block;
-            u32 offset;
-            u32 size;
-        };
-
         u64 size;
         u32 checksum;
         bool is_compressed;
@@ -108,8 +114,10 @@ namespace
             for (u32 i = 0; i < num_blocks; ++i)
             {
                 Block block;
-                block.offset = p.read64();
-                block.compressed = p.read64();
+
+                u64 offset = p.read64();
+                u64 compressed = p.read64();
+                block.memory = ConstMemory(m_memory.address + offset, compressed);
                 block.uncompressed = p.read64();
                 block.method = p.read32();
 
@@ -293,7 +301,7 @@ namespace mango::filesystem
 
             if (!file.isMultiSegment())
             {
-                const auto& segment = file.segments[0];
+                const Segment& segment = file.segments[0];
                 Block& block = m_header.m_blocks[segment.block];
 
                 if (file.isCompressed())
@@ -319,9 +327,9 @@ namespace mango::filesystem
                     // The file is encoded as a single, non-compressed block, so
                     // we can simply map it into parent's memory
 
-                    const u8* ptr = m_header.m_memory.address + block.offset + segment.offset;
+                    const u8* ptr = block.memory.address + segment.offset;
 
-                    if (block.offset + segment.offset + file.size > m_header.m_memory.size)
+                    if (ptr + file.size > m_header.m_memory.address + m_header.m_memory.size)
                     {
                         MANGO_EXCEPTION("[mapper.mgx] File \"%s\" has mapped region outside of parent memory.", filename.c_str());
                     }
@@ -338,27 +346,27 @@ namespace mango::filesystem
 
             ConcurrentQueue q("mgx.decompressor", Priority::HIGH);
 
-            for (auto &segment : file.segments)
+            for (auto& segment : file.segments)
             {
                 const Block& block = m_header.m_blocks[segment.block];
 
                 if (block.method)
                 {
-                    Compressor compressor = getCompressor(Compressor::Method(block.method));
-                    ConstMemory src(m_header.m_memory.address + block.offset, size_t(block.compressed));
-
                     q.enqueue([=, &block, &segment]
                     {
                         if (block.uncompressed == segment.size && segment.offset == 0)
                         {
                             // segment is full-block so we can decode directly w/o intermediate buffer
                             Memory dest(x, size_t(block.uncompressed));
-                            compressor.decompress(dest, src);
+                            block.decompress(dest);
                         }
                         else
                         {
-                            Buffer dest(size_t(block.uncompressed));
-                            compressor.decompress(dest, src);
+                            // we must decompress the whole block so need a temporary buffer
+                            Buffer dest(block.memory.size);
+                            block.decompress(dest);
+
+                            // copy the segment out from the temporary buffer
                             std::memcpy(x, Memory(dest).address + segment.offset, segment.size);
                         }
                     });
@@ -368,7 +376,7 @@ namespace mango::filesystem
                     q.enqueue([=, &block, &segment]
                     {
                         // no compression
-                        std::memcpy(x, m_header.m_memory.address + block.offset + segment.offset, segment.size);
+                        std::memcpy(x, block.memory.address + segment.offset, segment.size);
                     });
                 }
 
