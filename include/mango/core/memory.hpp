@@ -59,6 +59,11 @@ namespace mango
 
 #endif
 
+            T* end() const
+            {
+                return address + size;
+            }
+
             operator T* () const
             {
                 return address;
