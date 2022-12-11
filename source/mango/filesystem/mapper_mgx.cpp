@@ -295,6 +295,7 @@ namespace mango::filesystem
 
             const FileHeader& file = *ptrHeader;
 
+            // TODO: decompression cache for small-file blocks
             // TODO: compute segment.size instead of storing it in .mgx container
             // TODO: checksum
             // TODO: encryption
@@ -302,7 +303,9 @@ namespace mango::filesystem
             if (!file.isMultiSegment())
             {
                 const Segment& segment = file.segments[0];
-                Block& block = m_header.m_blocks[segment.block];
+                const Block& block = m_header.m_blocks[segment.block];
+
+                assert(file.size == segment.size);
 
                 if (file.isCompressed())
                 {
@@ -310,30 +313,26 @@ namespace mango::filesystem
                     {
                         // a small file stored in one block with other small files
 
-                        // TODO: decompression cache for small-file blocks
-                        // NOTE: this will fall-through into the generic compression case for now
-#if 0
-                        // simulate almost-zero-cost (AZC) decompression
-                        u8* ptr = new u8[file.size];
-                        std::memset(ptr, 0, file.size);
-                        VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, ptr, file.size);
+                        // we must decompress the whole block so need a temporary buffer
+                        Buffer dest(block.uncompressed);
+                        block.decompress(dest);
+
+                        u8* ptr = new u8[size_t(segment.size)];
+                        std::memcpy(ptr, dest.data() + segment.offset, segment.size);
+                        VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, ptr, segment.size);
                         return vm;
-#endif
+                    }
+                    else
+                    {
+                        // fall-through into the generic case
                     }
                 }
                 else
                 {
                     // The file is encoded as a single, non-compressed block, so
                     // we can simply map it into parent's memory
-
                     const u8* ptr = block.compressed.address + segment.offset;
-
-                    if (ptr + file.size > m_header.m_memory.end())
-                    {
-                        MANGO_EXCEPTION("[mapper.mgx] File \"%s\" has mapped region outside of parent memory.", filename.c_str());
-                    }
-
-                    VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, nullptr, size_t(file.size));
+                    VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, nullptr, size_t(segment.size));
                     return vm;
                 }
             }
@@ -362,11 +361,11 @@ namespace mango::filesystem
                         else
                         {
                             // we must decompress the whole block so need a temporary buffer
-                            Buffer dest(block.compressed.size);
+                            Buffer dest(block.uncompressed);
                             block.decompress(dest);
 
                             // copy the segment out from the temporary buffer
-                            std::memcpy(x, Memory(dest).address + segment.offset, segment.size);
+                            std::memcpy(x, dest.data() + segment.offset, segment.size);
                         }
                     });
                 }
