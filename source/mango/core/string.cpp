@@ -540,12 +540,9 @@ namespace mango
             if (mask)
             {
                 int index = u32_tzcnt(mask);
-                for (int i = index; i < 16; ++i)
-                {
-                    if (p[i] == value)
-                        return p + i;
-                }
+                return p + index;
             }
+
             count -= 16;
             p += 16;
         }
@@ -556,7 +553,7 @@ namespace mango
                 return p + i;
         }
 
-        return p;
+        return nullptr;
     }
 
 #else
@@ -564,7 +561,7 @@ namespace mango
     const u8* memchr(const u8* p, u8 value, size_t count)
     {
         p = reinterpret_cast<const u8 *>(std::memchr(p, value, count));
-        return p ? p : p + count;
+        return p;
     }
 
 #endif

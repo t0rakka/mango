@@ -199,31 +199,40 @@ namespace mango::jpeg
         if (p + 1 > end)
             return end;
 
-        p += (p[1] == 0xff); // HACK: some really ancient jpeg encoders encode markers sometimes as
-                             // (0xff, 0xff, ID) ; this will skip to the "correct" 0xff (the second one)
+        // HACK: some really ancient jpeg encoders encode markers sometimes as
+        // (0xff, 0xff, ID) ; this will skip to the "correct" 0xff (the second one)
+        p += (p[1] == 0xff);
+
         return p;
     }
 
-    const u8* Parser::seekRestartMarker(const u8* start, const u8* end) const
+    const u8* Parser::seekMarker(const u8* start, const u8* end) const
     {
         const u8* p = start;
-        --end; // marker is two bytes: don't look at last byte
+        --end; // markers are two bytes: don't look at the last byte
 
         while (p < end)
         {
             p = mango::memchr(p, 0xff, end - p);
-            if (p[1])
+            if (!p)
             {
-                return p; // found a marker
+                // found nothing
+                return end + 1;
             }
-            p += 2; // skip: 0xff, 0x00
+            else if (p[1])
+            {
+                // found a marker
+                return p;
+            }
+
+            // skip stuff byte (0xff, 0x00)
+            p += 2;
         }
 
-        //if (*p != 0xff)
-        ++p; // skip last byte (warning! if it is 0xff a marker can be potentially missed)
         debugPrint("  Seek: %d bytes\n", int(p - start));
 
-        return p;
+        // found nothing
+        return end + 1;
     }
 
     void Parser::processSOI()
@@ -2078,7 +2087,9 @@ namespace mango::jpeg
                 });
 
                 // seek next restart marker
-                p = seekRestartMarker(p, decodeState.buffer.end);
+                p = seekMarker(p, decodeState.buffer.end);
+                if (p >= decodeState.buffer.end)
+                    break;
                 if (isRestartMarker(p))
                     p += 2;
             }
@@ -2151,7 +2162,9 @@ namespace mango::jpeg
                 });
 
                 // seek next restart marker
-                p = seekRestartMarker(p, decodeState.buffer.end);
+                p = seekMarker(p, decodeState.buffer.end);
+                if (p >= decodeState.buffer.end)
+                    break;
                 if (isRestartMarker(p))
                     p += 2;
             }
@@ -2231,7 +2244,9 @@ namespace mango::jpeg
                 });
 
                 // seek next restart marker
-                p = seekRestartMarker(p, decodeState.buffer.end);
+                p = seekMarker(p, decodeState.buffer.end);
+                if (p >= decodeState.buffer.end)
+                    break;
                 if (isRestartMarker(p))
                     p += 2;
             }
