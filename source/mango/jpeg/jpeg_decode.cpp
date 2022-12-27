@@ -15,7 +15,8 @@ namespace mango::jpeg
     // utilities
     // ----------------------------------------------------------------------------
 
-    static const u8 g_zigzag_table_inverse [] =
+    static
+    const u8 g_zigzag_table_inverse [] =
     {
          0,  1,  8, 16,  9,  2,  3, 10,
         17, 24, 32, 25, 18, 11,  4,  5,
@@ -27,7 +28,8 @@ namespace mango::jpeg
         53, 60, 61, 54, 47, 55, 62, 63,
     };
 
-    inline bool isRestartMarker(const u8* p)
+    static inline
+    bool isRestartMarker(const u8* p)
     {
         bool is = false;
 
@@ -40,6 +42,7 @@ namespace mango::jpeg
         return is;
     }
 
+    static
     void jpegPrintMemory(const u8* ptr)
     {
         for (int i = 0; i < 8; ++i)
@@ -984,11 +987,12 @@ namespace mango::jpeg
 
             if (!is_lossless)
             {
-                u8 max_pq = is_baseline ? 0 : 1;
+                //const u8 max_pq = is_baseline ? 0 : 1;
+                const u8 max_pq = 1; // relaxed limit; lots of non-conforming files out in the wild
 
                 if (Pq > max_pq)
                 {
-                    header.setError("Incorrect quantization table element precision (%d bits)", Pq);
+                    header.setError("Incorrect quantization table element precision (%d)", Pq);
                     return;
                 }
 
