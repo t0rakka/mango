@@ -31,7 +31,7 @@ namespace
     #endif
 
     // MSVC doesn't implement all of the AVX2 intrindics in 32 bit target mode
-#if defined(MANGO_ENABLE_AVX2) && defined(MANGO_CPU_64BIT)
+    #if defined(MANGO_ENABLE_AVX2) && defined(MANGO_CPU_64BIT)
         #define BLITTER_ENABLE_AVX2
     #endif
 
