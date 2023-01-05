@@ -98,6 +98,11 @@ namespace
 
         ImageHeader header;
 
+        void setDataError()
+        {
+            header.setError("Decoding error (out of data).");
+        }
+
         HeaderPNM(ConstMemory memory)
             : width(0)
             , height(0)
@@ -124,7 +129,7 @@ namespace
 
                 if (!p)
                 {
-                    header.setError("Decoding error (out of data).");
+                    setDataError();
                     return;
                 }
 
@@ -142,7 +147,7 @@ namespace
 
                 if (!p)
                 {
-                    header.setError("Decoding error (out of data).");
+                    setDataError();
                     return;
                 }
 
@@ -157,59 +162,59 @@ namespace
                 p = nextLine(p, end);
                 if (!p)
                 {
-                    header.setError("Decoding error (out of data).");
+                    setDataError();
                     return;
                 }
 
                 if (std::sscanf(p, "WIDTH %i", &width) < 1)
                 {
-                    header.setError("[ImageDecoder.PNM] Incorrect width");
+                    header.setError("[ImageDecoder.PNM] Incorrect WIDTH.");
                     return;
                 }
 
                 p = nextLine(p, end);
                 if (!p)
                 {
-                    header.setError("Decoding error (out of data).");
+                    setDataError();
                     return;
                 }
 
                 if (std::sscanf(p, "HEIGHT %i", &height) < 1)
                 {
-                    header.setError("[ImageDecoder.PNM] Incorrect height");
+                    header.setError("[ImageDecoder.PNM] Incorrect HEIGHT.");
                     return;
                 }
 
                 p = nextLine(p, end);
                 if (!p)
                 {
-                    header.setError("Decoding error (out of data).");
+                    setDataError();
                     return;
                 }
 
                 if (std::sscanf(p, "DEPTH %i", &channels) < 1)
                 {
-                    header.setError("[ImageDecoder.PNM] Incorrect depth");
+                    header.setError("[ImageDecoder.PNM] Incorrect DEPTH.");
                     return;
                 }
 
                 p = nextLine(p, end);
                 if (!p)
                 {
-                    header.setError("Decoding error (out of data).");
+                    setDataError();
                     return;
                 }
 
                 if (std::sscanf(p, "MAXVAL %i", &maxvalue) < 1)
                 {
-                    header.setError("[ImageDecoder.PNM] Incorrect maxval");
+                    header.setError("[ImageDecoder.PNM] Incorrect MAXVAL.");
                     return;
                 }
 
                 p = nextLine(p, end);
                 if (!p)
                 {
-                    header.setError("Decoding error (out of data).");
+                    setDataError();
                     return;
                 }
 
@@ -239,13 +244,13 @@ namespace
                 p = nextLine(p, end);
                 if (!p)
                 {
-                    header.setError("Decoding error (out of data).");
+                    setDataError();
                     return;
                 }
 
                 if (std::strncmp(p, "ENDHDR", 6))
                 {
-                    header.setError("[ImageDecoder.PNM] Incorrect endhdr");
+                    header.setError("[ImageDecoder.PNM] Incorrect ENDHDR.");
                     return;
                 }
             }
@@ -284,7 +289,7 @@ namespace
                 }
                 else
                 {
-                    header.setError("[ImageDecoder.PNM] Incorrect header magic (%s)", p);
+                    header.setError("[ImageDecoder.PNM] Incorrect header magic (%s).", p);
                     return;
                 }
 
@@ -299,7 +304,7 @@ namespace
 
                 if (!p)
                 {
-                    header.setError("Decoding error (out of data).");
+                    setDataError();
                     return;
                 }
             }
@@ -309,7 +314,7 @@ namespace
 
             if (maxvalue < 1 || maxvalue > 65535)
             {
-                header.setError("[ImageDecoder.PNM] Incorrect maxvalue");
+                header.setError("[ImageDecoder.PNM] Incorrect maxvalue.");
                 return;
             }
 
@@ -322,7 +327,7 @@ namespace
                     case 1: format = Format(32, Format::FLOAT32, Color(32, 32, 32, 0), Color(0, 0, 0, 0)); break;
                     case 3: format = Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32, 0); break;
                     default:
-                        header.setError("[ImageDecoder.PNM] Incorrect number of channels");
+                        header.setError("[ImageDecoder.PNM] Incorrect number of channels.");
                         return;
                 }
             }
@@ -335,7 +340,7 @@ namespace
                     case 3: format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0); break;
                     case 4: format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8); break;
                     default:
-                        header.setError("[ImageDecoder.PNM] Incorrect number of channels");
+                        header.setError("[ImageDecoder.PNM] Incorrect number of channels.");
                         return;
                 }
             }
@@ -347,7 +352,7 @@ namespace
             header.depth   = 0;
             header.levels  = 0;
             header.faces   = 0;
-			header.palette = false;
+            header.palette = false;
             header.format  = format;
             header.compression = TextureCompression::NONE;
         }
