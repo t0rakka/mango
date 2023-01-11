@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -97,12 +97,12 @@ namespace detail {
             s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
     }
 
-    static inline u8x32 u8x32_uload(const u8* source)
+    static inline u8x32 u8x32_uload(const void* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void u8x32_ustore(u8* dest, u8x32 a)
+    static inline void u8x32_ustore(void* dest, u8x32 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
@@ -272,12 +272,12 @@ namespace detail {
             s08, s09, s10, s11, s12, s13, s14, s15);
     }
 
-    static inline u16x16 u16x16_uload(const u16* source)
+    static inline u16x16 u16x16_uload(const void* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void u16x16_ustore(u16* dest, u16x16 a)
+    static inline void u16x16_ustore(void* dest, u16x16 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
@@ -485,12 +485,12 @@ namespace detail {
         return _mm256_setr_epi32(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
-    static inline u32x8 u32x8_uload(const u32* source)
+    static inline u32x8 u32x8_uload(const void* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void u32x8_ustore(u32* dest, u32x8 a)
+    static inline void u32x8_ustore(void* dest, u32x8 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
@@ -722,12 +722,12 @@ namespace detail {
         return _mm256_setr_epi64x(x, y, z, w);
     }
 
-    static inline u64x4 u64x4_uload(const u64* source)
+    static inline u64x4 u64x4_uload(const void* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void u64x4_ustore(u64* dest, u64x4 a)
+    static inline void u64x4_ustore(void* dest, u64x4 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
@@ -924,12 +924,12 @@ namespace detail {
             s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
     }
 
-    static inline s8x32 s8x32_uload(const s8* source)
+    static inline s8x32 s8x32_uload(const void* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void s8x32_ustore(s8* dest, s8x32 a)
+    static inline void s8x32_ustore(void* dest, s8x32 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
@@ -1116,12 +1116,12 @@ namespace detail {
             s08, s09, s10, s11, s12, s13, s14, s15);
     }
 
-    static inline s16x16 s16x16_uload(const s16* source)
+    static inline s16x16 s16x16_uload(const void* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void s16x16_ustore(s16* dest, s16x16 a)
+    static inline void s16x16_ustore(void* dest, s16x16 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
@@ -1371,12 +1371,12 @@ namespace detail {
         return _mm256_setr_epi32(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
-    static inline s32x8 s32x8_uload(const s32* source)
+    static inline s32x8 s32x8_uload(const void* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void s32x8_ustore(s32* dest, s32x8 a)
+    static inline void s32x8_ustore(void* dest, s32x8 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
@@ -1636,12 +1636,12 @@ namespace detail {
         return _mm256_setr_epi64x(x, y, z, w);
     }
 
-    static inline s64x4 s64x4_uload(const s64* source)
+    static inline s64x4 s64x4_uload(const void* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void s64x4_ustore(s64* dest, s64x4 a)
+    static inline void s64x4_ustore(void* dest, s64x4 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }

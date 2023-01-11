@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -88,15 +88,16 @@ namespace mango::simd
         return {{ x, y }};
     }
 
-    static inline f32x2 f32x2_uload(const f32* source)
+    static inline f32x2 f32x2_uload(const void* source)
     {
-        return f32x2_set(source[0], source[1]);
+        f32x2 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
     }
 
-    static inline void f32x2_ustore(f32* dest, f32x2 a)
+    static inline void f32x2_ustore(void* dest, f32x2 a)
     {
-        dest[0] = a[0];
-        dest[1] = a[1];
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline f32x2 unpacklo(f32x2 a, f32x2 b)

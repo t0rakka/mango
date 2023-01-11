@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -87,14 +87,14 @@ namespace mango::simd
         return (f64x2::vector) { x, y };
     }
 
-    static inline f64x2 f64x2_uload(const f64* s)
+    static inline f64x2 f64x2_uload(const void* source)
     {
-        return vec_xl(0, s);
+        return vec_xl(0, reinterpret_cast<const f64*>(source));
     }
 
-    static inline void f64x2_ustore(f64* dest, f64x2 a)
+    static inline void f64x2_ustore(void* dest, f64x2 a)
     {
-        vec_xst(a.data, 0, dest);
+        vec_xst(a.data, 0, reinterpret_cast<f64*>(dest));
     }
 
     static inline f64x2 unpackhi(f64x2 a, f64x2 b)

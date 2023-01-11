@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -31,14 +31,14 @@ namespace mango::simd
             s8, s9, s10, s11, s12, s13, s14, s15);
     }
 
-    static inline f32x16 f32x16_uload(const f32* source)
+    static inline f32x16 f32x16_uload(const void* source)
     {
-        return _mm512_loadu_ps(source);
+        return _mm512_loadu_ps(reinterpret_cast<const f32*>(source));
     }
 
-    static inline void f32x16_ustore(f32* dest, f32x16 a)
+    static inline void f32x16_ustore(void* dest, f32x16 a)
     {
-        _mm512_storeu_ps(dest, a);
+        _mm512_storeu_ps(reinterpret_cast<f32*>(dest), a);
     }
 
     static inline f32x16 unpackhi(f32x16 a, f32x16 b)

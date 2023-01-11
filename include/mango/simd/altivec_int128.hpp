@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -44,14 +44,14 @@ namespace mango::simd
         return (u8x16::vector) { v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 };
     }
 
-    static inline u8x16 u8x16_uload(const u8* source)
+    static inline u8x16 u8x16_uload(const void* source)
     {
-        return vec_xl(0, source);
+        return vec_xl(0, reinterpret_cast<const u8*>(source));
     }
 
-    static inline void u8x16_ustore(u8* dest, u8x16 a)
+    static inline void u8x16_ustore(void* dest, u8x16 a)
     {
-        vec_xst(a.data, 0, dest);
+        vec_xst(a.data, 0, reinterpret_cast<u8*>(dest));
     }
 
     static inline u8x16 u8x16_load_low(const u8* source)
@@ -240,14 +240,14 @@ namespace mango::simd
         return (u16x8::vector) { s0, s1, s2, s3, s4, s5, s6, s7 };
     }
 
-    static inline u16x8 u16x8_uload(const u16* source)
+    static inline u16x8 u16x8_uload(const void* source)
     {
-        return vec_xl(0, source);
+        return vec_xl(0, reinterpret_cast<const u16*>(source));
     }
 
-    static inline void u16x8_ustore(u16* dest, u16x8 a)
+    static inline void u16x8_ustore(void* dest, u16x8 a)
     {
-        vec_xst(a.data, 0, dest);
+        vec_xst(a.data, 0, reinterpret_cast<u16*>(dest));
     }
 
     static inline u16x8 u16x8_load_low(const u16* source)
@@ -501,14 +501,14 @@ namespace mango::simd
         return (u32x4::vector) { x, y, z, w };
     }
 
-    static inline u32x4 u32x4_uload(const u32* source)
+    static inline u32x4 u32x4_uload(const void* source)
     {
-        return vec_xl(0, source);
+        return vec_xl(0, reinterpret_cast<const u32*>(source));
     }
 
-    static inline void u32x4_ustore(u32* dest, u32x4 a)
+    static inline void u32x4_ustore(void* dest, u32x4 a)
     {
-        vec_xst(a.data, 0, dest);
+        vec_xst(a.data, 0, reinterpret_cast<u32*>(dest));
     }
 
     static inline u32x4 u32x4_load_low(const u32* source)
@@ -753,14 +753,14 @@ namespace mango::simd
         return (u64x2::vector) { x, y };
     }
 
-    static inline u64x2 u64x2_uload(const u64* source)
+    static inline u64x2 u64x2_uload(const void* source)
     {
-        return vec_xl(0, source);
+        return vec_xl(0, reinterpret_cast<const u64*>(source));
     }
 
-    static inline void u64x2_ustore(u64* dest, u64x2 a)
+    static inline void u64x2_ustore(void* dest, u64x2 a)
     {
-        vec_xst(a.data, 0, dest);
+        vec_xst(a.data, 0, reinterpret_cast<u64*>(dest));
     }
 
     static inline u64x2 unpacklo(u64x2 a, u64x2 b)
@@ -957,14 +957,14 @@ namespace mango::simd
         return (s8x16::vector) { v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 };
     }
 
-    static inline s8x16 s8x16_uload(const s8* source)
+    static inline s8x16 s8x16_uload(const void* source)
     {
-        return vec_xl(0, source);
+        return vec_xl(0, reinterpret_cast<const s8*>(source));
     }
 
-    static inline void s8x16_ustore(s8* dest, s8x16 a)
+    static inline void s8x16_ustore(void* dest, s8x16 a)
     {
-        vec_xst(a.data, 0, dest);
+        vec_xst(a.data, 0, reinterpret_cast<s8*>(dest));
     }
 
     static inline s8x16 s8x16_load_low(const s8* source)
@@ -1170,14 +1170,14 @@ namespace mango::simd
         return (s16x8::vector) { s0, s1, s2, s3, s4, s5, s6, s7 };
     }
 
-    static inline s16x8 s16x8_uload(const s16* source)
+    static inline s16x8 s16x8_uload(const void* source)
     {
-        return vec_xl(0, source);
+        return vec_xl(0, reinterpret_cast<const s16*>(source));
     }
 
-    static inline void s16x8_ustore(s16* dest, s16x8 a)
+    static inline void s16x8_ustore(void* dest, s16x8 a)
     {
-        vec_xst(a.data, 0, dest);
+        vec_xst(a.data, 0, reinterpret_cast<s16*>(dest));
     }
 
     static inline s16x8 s16x8_load_low(const s16* source)
@@ -1508,14 +1508,14 @@ namespace mango::simd
         return (s32x4::vector) { x, y, z, w };
     }
 
-    static inline s32x4 s32x4_uload(const s32* source)
+    static inline s32x4 s32x4_uload(const void* source)
     {
-        return vec_xl(0, source);
+        return vec_xl(0, reinterpret_cast<const s32*>(source));
     }
 
-    static inline void s32x4_ustore(s32* dest, s32x4 a)
+    static inline void s32x4_ustore(void* dest, s32x4 a)
     {
-        vec_xst(a.data, 0, dest);
+        vec_xst(a.data, 0, reinterpret_cast<s32*>(dest));
     }
 
     static inline s32x4 s32x4_load_low(const s32* source)
@@ -1810,14 +1810,14 @@ namespace mango::simd
         return (s64x2::vector) { x, y };
     }
 
-    static inline s64x2 s64x2_uload(const s64* source)
+    static inline s64x2 s64x2_uload(const void* source)
     {
-        return vec_xl(0, source);
+        return vec_xl(0, reinterpret_cast<const s64*>(source));
     }
 
-    static inline void s64x2_ustore(s64* dest, s64x2 a)
+    static inline void s64x2_ustore(void* dest, s64x2 a)
     {
-        vec_xst(a.data, 0, dest);
+        vec_xst(a.data, 0, reinterpret_cast<s64*>(dest));
     }
 
     static inline s64x2 unpacklo(s64x2 a, s64x2 b)

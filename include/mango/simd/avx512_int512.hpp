@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -86,12 +86,12 @@ namespace mango::simd
             v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62, v63);
     }
 
-    static inline u8x64 u8x64_uload(const u8* source)
+    static inline u8x64 u8x64_uload(const void* source)
     {
         return _mm512_loadu_si512(source);
     }
 
-    static inline void u8x64_ustore(u8* dest, u8x64 a)
+    static inline void u8x64_ustore(void* dest, u8x64 a)
     {
         _mm512_storeu_si512(dest, a);
     }
@@ -297,12 +297,12 @@ namespace mango::simd
             s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
     }
 
-    static inline u16x32 u16x32_uload(const u16* source)
+    static inline u16x32 u16x32_uload(const void* source)
     {
         return _mm512_loadu_si512(source);
     }
 
-    static inline void u16x32_ustore(u16* dest, u16x32 a)
+    static inline void u16x32_ustore(void* dest, u16x32 a)
     {
         _mm512_storeu_si512(dest, a);
     }
@@ -546,12 +546,12 @@ namespace mango::simd
         return _mm512_setr_epi32(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15);
     }
 
-    static inline u32x16 u32x16_uload(const u32* source)
+    static inline u32x16 u32x16_uload(const void* source)
     {
         return _mm512_loadu_si512(source);
     }
 
-    static inline void u32x16_ustore(u32* dest, u32x16 a)
+    static inline void u32x16_ustore(void* dest, u32x16 a)
     {
         _mm512_storeu_si512(dest, a);
     }
@@ -817,12 +817,12 @@ namespace mango::simd
         return _mm512_setr_epi64(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
-    static inline u64x8 u64x8_uload(const u64* source)
+    static inline u64x8 u64x8_uload(const void* source)
     {
         return _mm512_loadu_si512(source);
     }
 
-    static inline void u64x8_ustore(u64* dest, u64x8 a)
+    static inline void u64x8_ustore(void* dest, u64x8 a)
     {
         _mm512_storeu_si512(dest, a);
     }
@@ -1035,12 +1035,12 @@ namespace mango::simd
             v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62, v63);
     }
 
-    static inline s8x64 s8x64_uload(const s8* source)
+    static inline s8x64 s8x64_uload(const void* source)
     {
         return _mm512_loadu_si512(source);
     }
 
-    static inline void s8x64_ustore(s8* dest, s8x64 a)
+    static inline void s8x64_ustore(void* dest, s8x64 a)
     {
         _mm512_storeu_si512(dest, a);
     }
@@ -1285,12 +1285,12 @@ namespace mango::simd
             v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31);
     }
 
-    static inline s16x32 s16x32_uload(const s16* source)
+    static inline s16x32 s16x32_uload(const void* source)
     {
         return _mm512_loadu_si512(source);
     }
 
-    static inline void s16x32_ustore(s16* dest, s16x32 a)
+    static inline void s16x32_ustore(void* dest, s16x32 a)
     {
         _mm512_storeu_si512(dest, a);
     }
@@ -1588,12 +1588,12 @@ namespace mango::simd
         return _mm512_setr_epi32(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
     }
 
-    static inline s32x16 s32x16_uload(const s32* source)
+    static inline s32x16 s32x16_uload(const void* source)
     {
         return _mm512_loadu_si512(source);
     }
 
-    static inline void s32x16_ustore(s32* dest, s32x16 a)
+    static inline void s32x16_ustore(void* dest, s32x16 a)
     {
         _mm512_storeu_si512(dest, a);
     }
@@ -1899,12 +1899,12 @@ namespace mango::simd
         return _mm512_setr_epi64(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
-    static inline s64x8 s64x8_uload(const s64* source)
+    static inline s64x8 s64x8_uload(const void* source)
     {
         return _mm512_loadu_si512(source);
     }
 
-    static inline void s64x8_ustore(s64* dest, s64x8 a)
+    static inline void s64x8_ustore(void* dest, s64x8 a)
     {
         _mm512_storeu_si512(dest, a);
     }

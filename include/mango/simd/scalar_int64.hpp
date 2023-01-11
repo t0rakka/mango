@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -43,15 +43,16 @@ namespace mango::simd
         return {{ x, y }};
     }
 
-    static inline u32x2 u32x2_uload(const u32* s)
+    static inline u32x2 u32x2_uload(const void* source)
     {
-        return u32x2_set(s[0], s[1]);
+        u32x2 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
     }
 
-    static inline void u32x2_ustore(u32* dest, u32x2 a)
+    static inline void u32x2_ustore(void* dest, u32x2 a)
     {
-        dest[0] = a[0];
-        dest[1] = a[1];
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline u32x2 add(u32x2 a, u32x2 b)
@@ -133,15 +134,16 @@ namespace mango::simd
         return {{ x, y }};
     }
 
-    static inline s32x2 s32x2_uload(const s32* s)
+    static inline s32x2 s32x2_uload(const void* source)
     {
-        return s32x2_set(s[0], s[1]);
+        s32x2 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
     }
 
-    static inline void s32x2_ustore(s32* dest, s32x2 a)
+    static inline void s32x2_ustore(void* dest, s32x2 a)
     {
-        dest[0] = a[0];
-        dest[1] = a[1];
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline s32x2 add(s32x2 a, s32x2 b)

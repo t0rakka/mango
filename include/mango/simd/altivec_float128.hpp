@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -105,14 +105,14 @@ namespace mango::simd
         return (f32x4::vector) { x, y, z, w };
     }
 
-    static inline f32x4 f32x4_uload(const f32* s)
+    static inline f32x4 f32x4_uload(const void* source)
     {
-        return vec_xl(0, s);
+        return vec_xl(0, reinterpret_cast<const f32*>(source));
     }
 
-    static inline void f32x4_ustore(f32* dest, f32x4 a)
+    static inline void f32x4_ustore(void* dest, f32x4 a)
     {
-        vec_xst(a.data, 0, dest);
+        vec_xst(a.data, 0, reinterpret_cast<f32*>(dest));
     }
 
     static inline f32x4 movelh(f32x4 a, f32x4 b)

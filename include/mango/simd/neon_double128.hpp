@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -89,28 +89,28 @@ namespace mango::simd
 
 #if defined(MANGO_COMPILER_GCC)
 
-    static inline f64x2 f64x2_uload(const f64* source)
+    static inline f64x2 f64x2_uload(const void* source)
     {
         f64x2 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void f64x2_ustore(f64* dest, f64x2 a)
+    static inline void f64x2_ustore(void* dest, f64x2 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
 #else
 
-    static inline f64x2 f64x2_uload(const f64* source)
+    static inline f64x2 f64x2_uload(const void* source)
     {
-        return vld1q_f64(source);
+        return vld1q_f64(reinterpret_cast<const f64*>(source));
     }
 
-    static inline void f64x2_ustore(f64* dest, f64x2 a)
+    static inline void f64x2_ustore(void* dest, f64x2 a)
     {
-        vst1q_f64(dest, a);
+        vst1q_f64(reinterpret_cast<f64*>(dest), a);
     }
 
 #endif // MANGO_COMPILER_GCC
@@ -450,15 +450,16 @@ namespace mango::simd
         return {{ x, y }};
     }
 
-    static inline f64x2 f64x2_uload(const f64* source)
+    static inline f64x2 f64x2_uload(const void* source)
     {
-        return f64x2_set(source[0], source[1]);
+        f64x2 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
     }
 
-    static inline void f64x2_ustore(f64* dest, f64x2 a)
+    static inline void f64x2_ustore(void* dest, f64x2 a)
     {
-        dest[0] = a.data[0];
-        dest[1] = a.data[1];
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline f64x2 unpackhi(f64x2 a, f64x2 b)

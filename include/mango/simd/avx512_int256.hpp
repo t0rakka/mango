@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -563,12 +563,12 @@ namespace mango::simd
         return _mm256_setr_epi32(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
-    static inline u32x8 u32x8_uload(const u32* source)
+    static inline u32x8 u32x8_uload(const void* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void u32x8_ustore(u32* dest, u32x8 a)
+    static inline void u32x8_ustore(void* dest, u32x8 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
@@ -1641,12 +1641,12 @@ namespace mango::simd
         return _mm256_setr_epi32(s0, s1, s2, s3, s4, s5, s6, s7);
     }
 
-    static inline s32x8 s32x8_uload(const s32* source)
+    static inline s32x8 s32x8_uload(const void* source)
     {
         return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
     }
 
-    static inline void s32x8_ustore(s32* dest, s32x8 a)
+    static inline void s32x8_ustore(void* dest, s32x8 a)
     {
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }

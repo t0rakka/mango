@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -50,12 +50,9 @@ namespace mango::simd
         return u8x16_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15]);
     }
 
-    static inline void u8x16_ustore(u8* dest, u8x16 a)
+    static inline void u8x16_ustore(void* dest, u8x16 a)
     {
-        for (int i = 0; i < 16; ++i)
-        {
-            dest[i] = a[i];
-        }
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline u8x16 u8x16_load_low(const u8* s)
@@ -224,12 +221,9 @@ namespace mango::simd
         return u16x8_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]);
     }
 
-    static inline void u16x8_ustore(u16* dest, u16x8 a)
+    static inline void u16x8_ustore(void* dest, u16x8 a)
     {
-        for (int i = 0; i < 8; ++i)
-        {
-            dest[i] = a[i];
-        }
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline u16x8 u16x8_load_low(const u16* s)
@@ -458,12 +452,9 @@ namespace mango::simd
         return u32x4_set(s[0], s[1], s[2], s[3]);
     }
 
-    static inline void u32x4_ustore(u32* dest, u32x4 a)
+    static inline void u32x4_ustore(void* dest, u32x4 a)
     {
-        dest[0] = a[0];
-        dest[1] = a[1];
-        dest[2] = a[2];
-        dest[3] = a[3];
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline u32x4 u32x4_load_low(const u32* s)
@@ -689,10 +680,9 @@ namespace mango::simd
         return u64x2_set(s[0], s[1]);
     }
 
-    static inline void u64x2_ustore(u64* dest, u64x2 a)
+    static inline void u64x2_ustore(void* dest, u64x2 a)
     {
-        dest[0] = a[0];
-        dest[1] = a[1];
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline u64x2 unpacklo(u64x2 a, u64x2 b)
@@ -866,12 +856,9 @@ namespace mango::simd
         return s8x16_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15]);
     }
 
-    static inline void s8x16_ustore(s8* dest, s8x16 a)
+    static inline void s8x16_ustore(void* dest, s8x16 a)
     {
-        for (int i = 0; i < 16; ++i)
-        {
-            dest[i] = a[i];
-        }
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline s8x16 s8x16_load_low(const s8* s)
@@ -1045,17 +1032,16 @@ namespace mango::simd
         return {{ s0, s1, s2, s3, s4, s5, s6, s7 }};
     }
 
-    static inline s16x8 s16x8_uload(const s16* s)
+    static inline s16x8 s16x8_uload(const void* source)
     {
-        return s16x8_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]);
+        s16x8 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
     }
 
-    static inline void s16x8_ustore(s16* dest, s16x8 a)
+    static inline void s16x8_ustore(void* dest, s16x8 a)
     {
-        for (int i = 0; i < 8; ++i)
-        {
-            dest[i] = a[i];
-        }
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline s16x8 s16x8_load_low(const s16* s)
@@ -1355,17 +1341,16 @@ namespace mango::simd
         return {{ x, y, z, w }};
     }
 
-    static inline s32x4 s32x4_uload(const s32* s)
+    static inline s32x4 s32x4_uload(const void* source)
     {
-        return s32x4_set(s[0], s[1], s[2], s[3]);
+        s32x4 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
     }
 
-    static inline void s32x4_ustore(s32* dest, s32x4 a)
+    static inline void s32x4_ustore(void* dest, s32x4 a)
     {
-        dest[0] = a[0];
-        dest[1] = a[1];
-        dest[2] = a[2];
-        dest[3] = a[3];
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline s32x4 s32x4_load_low(const s32* s)
@@ -1635,15 +1620,16 @@ namespace mango::simd
         return {{ x, y }};
     }
 
-    static inline s64x2 s64x2_uload(const s64* s)
+    static inline s64x2 s64x2_uload(const void* source)
     {
-        return s64x2_set(s[0], s[1]);
+        s64x2 temp;
+        std::memcpy(&temp, source, sizeof(temp));
+        return temp;
     }
 
-    static inline void s64x2_ustore(s64* dest, s64x2 a)
+    static inline void s64x2_ustore(void* dest, s64x2 a)
     {
-        dest[0] = a[0];
-        dest[1] = a[1];
+        std::memcpy(dest, &a, sizeof(a));
     }
 
     static inline s64x2 unpacklo(s64x2 a, s64x2 b)

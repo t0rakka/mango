@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -44,7 +44,7 @@ namespace mango::simd
         return (v16u8) { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 };
     }
 
-    static inline u8x16 u8x16_uload(const u8* source)
+    static inline u8x16 u8x16_uload(const void* source)
     {
         //return v16u8(__msa_ld_b(source, 0));
         u8x16 temp;
@@ -52,7 +52,7 @@ namespace mango::simd
         return temp;
     }
 
-    static inline void u8x16_ustore(u8* dest, u8x16 a)
+    static inline void u8x16_ustore(void* dest, u8x16 a)
     {
         //__msa_st_b(v16i8(a), dest, 0);
         std::memcpy(dest, &a, sizeof(a));
@@ -216,7 +216,7 @@ namespace mango::simd
         return (v8u16) { s0, s1, s2, s3, s4, s5, s6, s7 };
     }
 
-    static inline u16x8 u16x8_uload(const u16* source)
+    static inline u16x8 u16x8_uload(const void* source)
     {
         //return v8u16(__msa_ld_h(source, 0));
         u16x8 temp;
@@ -224,7 +224,7 @@ namespace mango::simd
         return temp;
     }
 
-    static inline void u16x8_ustore(u16* dest, u16x8 a)
+    static inline void u16x8_ustore(void* dest, u16x8 a)
     {
         //__msa_st_h(v8i16(a), dest, 0);
         std::memcpy(dest, &a, sizeof(a));
@@ -449,13 +449,13 @@ namespace mango::simd
         return (v4u32) { x, y, z, w };
     }
 
-    static inline u32x4 u32x4_uload(const u32* source)
+    static inline u32x4 u32x4_uload(const void* source)
     {
         //return v4u32(__msa_ld_w(source, 0));
         return reinterpret_cast<const v4u32 *>(source)[0];
     }
 
-    static inline void u32x4_ustore(u32* dest, u32x4 a)
+    static inline void u32x4_ustore(void* dest, u32x4 a)
     {
         //__msa_st_w(v4i32(a), dest, 0);
         reinterpret_cast<v4u32 *>(dest)[0] = a;
@@ -678,7 +678,7 @@ namespace mango::simd
         return (v2u64) { x, y };
     }
 
-    static inline u64x2 u64x2_uload(const u64* source)
+    static inline u64x2 u64x2_uload(const void* source)
     {
         //return v2u64(__msa_ld_d(source, 0));
         u64x2 temp;
@@ -686,7 +686,7 @@ namespace mango::simd
         return temp;
     }
 
-    static inline void u64x2_ustore(u64* dest, u64x2 a)
+    static inline void u64x2_ustore(void* dest, u64x2 a)
     {
         //__msa_st_d(v2i64(a), dest, 0);
         std::memcpy(dest, &a, sizeof(a));
@@ -857,7 +857,7 @@ namespace mango::simd
         return (v16i8) { v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 };
     }
 
-    static inline s8x16 s8x16_uload(const s8* source)
+    static inline s8x16 s8x16_uload(const void* source)
     {
         //return v16u8(__msa_ld_b(source, 0));
         s8x16 temp;
@@ -865,7 +865,7 @@ namespace mango::simd
         return temp;
     }
 
-    static inline void s8x16_ustore(s8* dest, s8x16 a)
+    static inline void s8x16_ustore(void* dest, s8x16 a)
     {
         //__msa_st_b(v16i8(a), dest, 0);
         std::memcpy(dest, &a, sizeof(a));
@@ -1040,7 +1040,7 @@ namespace mango::simd
         return (v8i16) { s0, s1, s2, s3, s4, s5, s6, s7 };
     }
 
-    static inline s16x8 s16x8_uload(const s16* source)
+    static inline s16x8 s16x8_uload(const void* source)
     {
         //return v8u16(__msa_ld_h(source, 0));
         s16x8 temp;
@@ -1048,7 +1048,7 @@ namespace mango::simd
         return temp;
     }
 
-    static inline void s16x8_ustore(s16* dest, s16x8 a)
+    static inline void s16x8_ustore(void* dest, s16x8 a)
     {
         //__msa_st_h(v8i16(a), dest, 0);
         std::memcpy(dest, &a, sizeof(a));
@@ -1344,13 +1344,13 @@ namespace mango::simd
         return (v4i32) { x, y, z, w };
     }
 
-    static inline s32x4 s32x4_uload(const s32* source)
+    static inline s32x4 s32x4_uload(const void* source)
     {
         //return v4u32(__msa_ld_w(source, 0));
         return reinterpret_cast<const v4i32 *>(source)[0];
     }
 
-    static inline void s32x4_ustore(s32* dest, s32x4 a)
+    static inline void s32x4_ustore(void* dest, s32x4 a)
     {
         //__msa_st_w(v4i32(a), dest, 0);
         reinterpret_cast<v4i32 *>(dest)[0] = a;
@@ -1620,7 +1620,7 @@ namespace mango::simd
         return (v2i64) { x, y };
     }
 
-    static inline s64x2 s64x2_uload(const s64* source)
+    static inline s64x2 s64x2_uload(const void* source)
     {
         //return v2u64(__msa_ld_d(source, 0));
         s64x2 temp;
@@ -1628,7 +1628,7 @@ namespace mango::simd
         return temp;
     }
 
-    static inline void s64x2_ustore(s64* dest, s64x2 a)
+    static inline void s64x2_ustore(void* dest, s64x2 a)
     {
         //__msa_st_d(v2i64(a), dest, 0);
         std::memcpy(dest, &a, sizeof(a));

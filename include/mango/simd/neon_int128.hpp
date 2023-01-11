@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -47,28 +47,28 @@ namespace mango::simd
 
 #if defined(MANGO_COMPILER_GCC)
 
-    static inline u8x16 u8x16_uload(const u8* source)
+    static inline u8x16 u8x16_uload(const void* source)
     {
         u8x16 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void u8x16_ustore(u8* dest, u8x16 a)
+    static inline void u8x16_ustore(void* dest, u8x16 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
 #else
 
-    static inline u8x16 u8x16_uload(const u8* source)
+    static inline u8x16 u8x16_uload(const void* source)
     {
-        return vld1q_u8(source);
+        return vld1q_u8(reinterpret_cast<const u8*>(source));
     }
 
-    static inline void u8x16_ustore(u8* dest, u8x16 a)
+    static inline void u8x16_ustore(void* dest, u8x16 a)
     {
-        vst1q_u8(dest, a);
+        vst1q_u8(reinterpret_cast<u8*>(dest), a);
     }
 
 #endif
@@ -235,28 +235,28 @@ namespace mango::simd
 
 #if defined(MANGO_COMPILER_GCC)
 
-    static inline u16x8 u16x8_uload(const u16* source)
+    static inline u16x8 u16x8_uload(const void* source)
     {
         u16x8 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void u16x8_ustore(u16* dest, u16x8 a)
+    static inline void u16x8_ustore(void* dest, u16x8 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
 #else
 
-    static inline u16x8 u16x8_uload(const u16* source)
+    static inline u16x8 u16x8_uload(const void* source)
     {
-        return vld1q_u16(source);
+        return vld1q_u16(reinterpret_cast<const u16*>(source));
     }
 
-    static inline void u16x8_ustore(u16* dest, u16x8 a)
+    static inline void u16x8_ustore(void* dest, u16x8 a)
     {
-        vst1q_u16(dest, a);
+        vst1q_u16(reinterpret_cast<u16*>(dest), a);
     }
 
 #endif
@@ -486,28 +486,28 @@ namespace mango::simd
 
 #if defined(MANGO_COMPILER_GCC)
 
-    static inline u32x4 u32x4_uload(const u32* source)
+    static inline u32x4 u32x4_uload(const void* source)
     {
         u32x4 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void u32x4_ustore(u32* dest, u32x4 a)
+    static inline void u32x4_ustore(void* dest, u32x4 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
 #else
 
-    static inline u32x4 u32x4_uload(const u32* source)
+    static inline u32x4 u32x4_uload(const void* source)
     {
-        return vld1q_u32(source);
+        return vld1q_u32(reinterpret_cast<const u32*>(source));
     }
 
-    static inline void u32x4_ustore(u32* dest, u32x4 a)
+    static inline void u32x4_ustore(void* dest, u32x4 a)
     {
-        vst1q_u32(dest, a);
+        vst1q_u32(reinterpret_cast<u32*>(dest), a);
     }
 
 #endif
@@ -737,28 +737,28 @@ namespace mango::simd
 
 #if defined(MANGO_COMPILER_GCC)
 
-    static inline u64x2 u64x2_uload(const u64* source)
+    static inline u64x2 u64x2_uload(const void* source)
     {
         u64x2 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void u64x2_ustore(u64* dest, u64x2 a)
+    static inline void u64x2_ustore(void* dest, u64x2 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
 #else
 
-    static inline u64x2 u64x2_uload(const u64* source)
+    static inline u64x2 u64x2_uload(const void* source)
     {
-        return vld1q_u64(source);
+        return vld1q_u64(reinterpret_cast<const u64*>(source));
     }
 
-    static inline void u64x2_ustore(u64* dest, u64x2 a)
+    static inline void u64x2_ustore(void* dest, u64x2 a)
     {
-        vst1q_u64(dest, a);
+        vst1q_u64(reinterpret_cast<u64*>(dest), a);
     }
 
 #endif
@@ -987,28 +987,28 @@ namespace mango::simd
 
 #if defined(MANGO_COMPILER_GCC)
 
-    static inline s8x16 s8x16_uload(const s8* source)
+    static inline s8x16 s8x16_uload(const void* source)
     {
         s8x16 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void s8x16_ustore(s8* dest, s8x16 a)
+    static inline void s8x16_ustore(void* dest, s8x16 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
 #else
 
-    static inline s8x16 s8x16_uload(const s8* source)
+    static inline s8x16 s8x16_uload(const void* source)
     {
-        return vld1q_s8(source);
+        return vld1q_s8(reinterpret_cast<const s8*>(source));
     }
 
-    static inline void s8x16_ustore(s8* dest, s8x16 a)
+    static inline void s8x16_ustore(void* dest, s8x16 a)
     {
-        vst1q_s8(dest, a);
+        vst1q_s8(reinterpret_cast<s8*>(dest), a);
     }
 
 #endif
@@ -1185,28 +1185,28 @@ namespace mango::simd
 
 #if defined(MANGO_COMPILER_GCC)
 
-    static inline s16x8 s16x8_uload(const s16* source)
+    static inline s16x8 s16x8_uload(const void* source)
     {
         s16x8 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void s16x8_ustore(s16* dest, s16x8 a)
+    static inline void s16x8_ustore(void* dest, s16x8 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
 #else
 
-    static inline s16x8 s16x8_uload(const s16* source)
+    static inline s16x8 s16x8_uload(const void* source)
     {
-        return vld1q_s16(source);
+        return vld1q_s16(reinterpret_cast<const s16*>(source));
     }
 
-    static inline void s16x8_ustore(s16* dest, s16x8 a)
+    static inline void s16x8_ustore(void* dest, s16x8 a)
     {
-        vst1q_s16(dest, a);
+        vst1q_s16(reinterpret_cast<s16*>(dest), a);
     }
 
 #endif
@@ -1517,28 +1517,28 @@ namespace mango::simd
 
 #if defined(MANGO_COMPILER_GCC)
 
-    static inline s32x4 s32x4_uload(const s32* source)
+    static inline s32x4 s32x4_uload(const void* source)
     {
         s32x4 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void s32x4_ustore(s32* dest, s32x4 a)
+    static inline void s32x4_ustore(void* dest, s32x4 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
 #else
 
-    static inline s32x4 s32x4_uload(const s32* source)
+    static inline s32x4 s32x4_uload(const void* source)
     {
-        return vld1q_s32(source);
+        return vld1q_s32(reinterpret_cast<const s32*>(source));
     }
 
-    static inline void s32x4_ustore(s32* dest, s32x4 a)
+    static inline void s32x4_ustore(void* dest, s32x4 a)
     {
-        vst1q_s32(dest, a);
+        vst1q_s32(reinterpret_cast<s32*>(dest), a);
     }
 
 #endif
@@ -1827,28 +1827,28 @@ namespace mango::simd
 
 #if defined(MANGO_COMPILER_GCC)
 
-    static inline s64x2 s64x2_uload(const s64* source)
+    static inline s64x2 s64x2_uload(const void* source)
     {
         s64x2 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void s64x2_ustore(s64* dest, s64x2 a)
+    static inline void s64x2_ustore(void* dest, s64x2 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
 #else
 
-    static inline s64x2 s64x2_uload(const s64* source)
+    static inline s64x2 s64x2_uload(const void* source)
     {
-        return vld1q_s64(source);
+        return vld1q_s64(reinterpret_cast<const s64*>(source));
     }
 
-    static inline void s64x2_ustore(s64* dest, s64x2 a)
+    static inline void s64x2_ustore(void* dest, s64x2 a)
     {
-        vst1q_s64(dest, a);
+        vst1q_s64(reinterpret_cast<s64*>(dest), a);
     }
 
 #endif // MANGO_COMPILER_GCC

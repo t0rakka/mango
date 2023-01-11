@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -170,18 +170,18 @@ namespace detail {
         return result;
     }
 
-    static inline u8x32 u8x32_uload(const u8* source)
+    static inline u8x32 u8x32_uload(const void* source)
     {
         u8x32 result;
-        result.lo = u8x16_uload(source + 0);
-        result.hi = u8x16_uload(source + 16);
+        result.lo = u8x16_uload(reinterpret_cast<const u8*>(source) +  0);
+        result.hi = u8x16_uload(reinterpret_cast<const u8*>(source) + 16);
         return result;
     }
 
-    static inline void u8x32_ustore(u8* dest, u8x32 a)
+    static inline void u8x32_ustore(void* dest, u8x32 a)
     {
-        u8x16_ustore(dest + 0, a.lo);
-        u8x16_ustore(dest + 16, a.hi);
+        u8x16_ustore(reinterpret_cast<u8*>(dest) + 0, a.lo);
+        u8x16_ustore(reinterpret_cast<u8*>(dest) + 16, a.hi);
     }
 
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, unpacklo)
@@ -297,18 +297,18 @@ namespace detail {
         return result;
     }
 
-    static inline u16x16 u16x16_uload(const u16* source)
+    static inline u16x16 u16x16_uload(const void* source)
     {
         u16x16 result;
-        result.lo = u16x8_uload(source + 0);
-        result.hi = u16x8_uload(source + 8);
+        result.lo = u16x8_uload(reinterpret_cast<const u16*>(source) + 0);
+        result.hi = u16x8_uload(reinterpret_cast<const u16*>(source) + 8);
         return result;
     }
 
-    static inline void u16x16_ustore(u16* dest, u16x16 a)
+    static inline void u16x16_ustore(void* dest, u16x16 a)
     {
-        u16x8_ustore(dest + 0, a.lo);
-        u16x8_ustore(dest + 8, a.hi);
+        u16x8_ustore(reinterpret_cast<u16*>(dest) + 0, a.lo);
+        u16x8_ustore(reinterpret_cast<u16*>(dest) + 8, a.hi);
     }
 
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, unpacklo)
@@ -478,18 +478,18 @@ namespace detail {
         return result;
     }
 
-    static inline u32x8 u32x8_uload(const u32* source)
+    static inline u32x8 u32x8_uload(const void* source)
     {
         u32x8 result;
-        result.lo = u32x4_uload(source + 0);
-        result.hi = u32x4_uload(source + 4);
+        result.lo = u32x4_uload(reinterpret_cast<const u32*>(source) + 0);
+        result.hi = u32x4_uload(reinterpret_cast<const u32*>(source) + 4);
         return result;
     }
 
-    static inline void u32x8_ustore(u32* dest, u32x8 a)
+    static inline void u32x8_ustore(void* dest, u32x8 a)
     {
-        u32x4_ustore(dest + 0, a.lo);
-        u32x4_ustore(dest + 4, a.hi);
+        u32x4_ustore(reinterpret_cast<u32*>(dest) + 0, a.lo);
+        u32x4_ustore(reinterpret_cast<u32*>(dest) + 4, a.hi);
     }
 
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, unpacklo)
@@ -685,18 +685,18 @@ namespace detail {
         return result;
     }
 
-    static inline u64x4 u64x4_uload(const u64* source)
+    static inline u64x4 u64x4_uload(const void* source)
     {
         u64x4 result;
-        result.lo = u64x2_uload(source + 0);
-        result.hi = u64x2_uload(source + 2);
+        result.lo = u64x2_uload(reinterpret_cast<const u64*>(source) + 0);
+        result.hi = u64x2_uload(reinterpret_cast<const u64*>(source) + 2);
         return result;
     }
 
-    static inline void u64x4_ustore(u64* dest, u64x4 a)
+    static inline void u64x4_ustore(void* dest, u64x4 a)
     {
-        u64x2_ustore(dest + 0, a.lo);
-        u64x2_ustore(dest + 2, a.hi);
+        u64x2_ustore(reinterpret_cast<u64*>(dest) + 0, a.lo);
+        u64x2_ustore(reinterpret_cast<u64*>(dest) + 2, a.hi);
     }
 
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, unpacklo)
@@ -850,18 +850,18 @@ namespace detail {
         return result;
     }
 
-    static inline s8x32 s8x32_uload(const s8* source)
+    static inline s8x32 s8x32_uload(const void* source)
     {
         s8x32 result;
-        result.lo = s8x16_uload(source + 0);
-        result.hi = s8x16_uload(source + 16);
+        result.lo = s8x16_uload(reinterpret_cast<const s8*>(source) +  0);
+        result.hi = s8x16_uload(reinterpret_cast<const s8*>(source) + 16);
         return result;
     }
 
-    static inline void s8x32_ustore(s8* dest, s8x32 a)
+    static inline void s8x32_ustore(void* dest, s8x32 a)
     {
-        s8x16_ustore(dest + 0, a.lo);
-        s8x16_ustore(dest + 16, a.hi);
+        s8x16_ustore(reinterpret_cast<s8*>(dest) + 0, a.lo);
+        s8x16_ustore(reinterpret_cast<s8*>(dest) + 16, a.hi);
     }
 
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, unpacklo)
@@ -979,18 +979,18 @@ namespace detail {
         return result;
     }
 
-    static inline s16x16 s16x16_uload(const s16* source)
+    static inline s16x16 s16x16_uload(const void* source)
     {
         s16x16 result;
-        result.lo = s16x8_uload(source + 0);
-        result.hi = s16x8_uload(source + 8);
+        result.lo = s16x8_uload(reinterpret_cast<const s16*>(source) + 0);
+        result.hi = s16x8_uload(reinterpret_cast<const s16*>(source) + 8);
         return result;
     }
 
-    static inline void s16x16_ustore(s16* dest, s16x16 a)
+    static inline void s16x16_ustore(void* dest, s16x16 a)
     {
-        s16x8_ustore(dest + 0, a.lo);
-        s16x8_ustore(dest + 8, a.hi);
+        s16x8_ustore(reinterpret_cast<s16*>(dest) + 0, a.lo);
+        s16x8_ustore(reinterpret_cast<s16*>(dest) + 8, a.hi);
     }
 
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, unpacklo)
@@ -1167,18 +1167,18 @@ namespace detail {
         return result;
     }
 
-    static inline s32x8 s32x8_uload(const s32* source)
+    static inline s32x8 s32x8_uload(const void* source)
     {
         s32x8 result;
-        result.lo = s32x4_uload(source + 0);
-        result.hi = s32x4_uload(source + 4);
+        result.lo = s32x4_uload(reinterpret_cast<const s32*>(source) + 0);
+        result.hi = s32x4_uload(reinterpret_cast<const s32*>(source) + 4);
         return result;
     }
 
-    static inline void s32x8_ustore(s32* dest, s32x8 a)
+    static inline void s32x8_ustore(void* dest, s32x8 a)
     {
-        s32x4_ustore(dest + 0, a.lo);
-        s32x4_ustore(dest + 4, a.hi);
+        s32x4_ustore(reinterpret_cast<s32*>(dest) + 0, a.lo);
+        s32x4_ustore(reinterpret_cast<s32*>(dest) + 4, a.hi);
     }
 
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, unpacklo)
@@ -1378,18 +1378,18 @@ namespace detail {
         return result;
     }
 
-    static inline s64x4 s64x4_uload(const s64* source)
+    static inline s64x4 s64x4_uload(const void* source)
     {
         s64x4 result;
-        result.lo = s64x2_uload(source + 0);
-        result.hi = s64x2_uload(source + 2);
+        result.lo = s64x2_uload(reinterpret_cast<const s64*>(source) + 0);
+        result.hi = s64x2_uload(reinterpret_cast<const s64*>(source) + 2);
         return result;
     }
 
-    static inline void s64x4_ustore(s64* dest, s64x4 a)
+    static inline void s64x4_ustore(void* dest, s64x4 a)
     {
-        s64x2_ustore(dest + 0, a.lo);
-        s64x2_ustore(dest + 2, a.hi);
+        s64x2_ustore(reinterpret_cast<s64*>(dest) + 0, a.lo);
+        s64x2_ustore(reinterpret_cast<s64*>(dest) + 2, a.hi);
     }
 
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, unpacklo)

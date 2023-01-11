@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -45,28 +45,28 @@ namespace mango::simd
 
 #if defined(MANGO_COMPILER_GCC)
 
-    static inline u32x2 u32x2_uload(const u32* s)
+    static inline u32x2 u32x2_uload(const void* source)
     {
         u32x2 temp;
-        std::memcpy(&temp, s, sizeof(temp));
+        std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void u32x2_ustore(u32* dest, u32x2 a)
+    static inline void u32x2_ustore(void* dest, u32x2 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
 #else
 
-    static inline u32x2 u32x2_uload(const u32* s)
+    static inline u32x2 u32x2_uload(const void* source)
     {
-        return vld1_u32(s);
+        return vld1_u32(reinterpret_cast<const u32*>(source));
     }
 
-    static inline void u32x2_ustore(u32* dest, u32x2 a)
+    static inline void u32x2_ustore(void* dest, u32x2 a)
     {
-        vst1_u32(dest, a);
+        vst1_u32(reinterpret_cast<u32*>(dest), a);
     }
 
 #endif
@@ -152,28 +152,28 @@ namespace mango::simd
 
 #if defined(MANGO_COMPILER_GCC)
 
-    static inline s32x2 s32x2_uload(const s32* s)
+    static inline s32x2 s32x2_uload(const void* source)
     {
         s32x2 temp;
-        std::memcpy(&temp, s, sizeof(temp));
+        std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void s32x2_ustore(s32* dest, s32x2 a)
+    static inline void s32x2_ustore(void* dest, s32x2 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
 #else
 
-    static inline s32x2 s32x2_uload(const s32* s)
+    static inline s32x2 s32x2_uload(const void* source)
     {
-        return vld1_s32(s);
+        return vld1_s32(reinterpret_cast<const s32*>(source));
     }
 
-    static inline void s32x2_ustore(s32* dest, s32x2 a)
+    static inline void s32x2_ustore(void* dest, s32x2 a)
     {
-        vst1_s32(dest, a);
+        vst1_s32(reinterpret_cast<s32*>(dest), a);
     }
 
 #endif

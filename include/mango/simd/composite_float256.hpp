@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -82,18 +82,18 @@ namespace mango::simd
         return result;
     }
 
-    static inline f32x8 f32x8_uload(const f32* source)
+    static inline f32x8 f32x8_uload(const void* source)
     {
         f32x8 result;
-        result.lo = f32x4_uload(source + 0);
-        result.hi = f32x4_uload(source + 4);
+        result.lo = f32x4_uload(reinterpret_cast<const f32*>(source) + 0);
+        result.hi = f32x4_uload(reinterpret_cast<const f32*>(source) + 4);
         return result;
     }
 
-    static inline void f32x8_ustore(f32* dest, f32x8 a)
+    static inline void f32x8_ustore(void* dest, f32x8 a)
     {
-        f32x4_ustore(dest + 0, a.lo);
-        f32x4_ustore(dest + 4, a.hi);
+        f32x4_ustore(reinterpret_cast<f32*>(dest) + 0, a.lo);
+        f32x4_ustore(reinterpret_cast<f32*>(dest) + 4, a.hi);
     }
 
     SIMD_COMPOSITE_FUNC2(f32x8, f32x8, unpackhi)
