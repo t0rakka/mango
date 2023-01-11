@@ -2348,6 +2348,55 @@ namespace mango::math
     using mask64x8   = simd::mask64x8;
 
     // ------------------------------------------------------------------
+    // unaligned load / store
+    // ------------------------------------------------------------------
+
+#define MATH_LOAD_STORE_ALIAS(T) \
+    static constexpr auto T##_uload = simd::T##_uload; \
+    static constexpr auto T##_ustore = simd::T##_ustore
+
+    MATH_LOAD_STORE_ALIAS(s32x2);
+    MATH_LOAD_STORE_ALIAS(u32x2);
+
+    MATH_LOAD_STORE_ALIAS(s8x16);
+    MATH_LOAD_STORE_ALIAS(s16x8);
+    MATH_LOAD_STORE_ALIAS(s32x4);
+    MATH_LOAD_STORE_ALIAS(s64x2);
+    MATH_LOAD_STORE_ALIAS(u8x16);
+    MATH_LOAD_STORE_ALIAS(u16x8);
+    MATH_LOAD_STORE_ALIAS(u32x4);
+    MATH_LOAD_STORE_ALIAS(u64x2);
+
+    MATH_LOAD_STORE_ALIAS(s8x32);
+    MATH_LOAD_STORE_ALIAS(s16x16);
+    MATH_LOAD_STORE_ALIAS(s32x8);
+    MATH_LOAD_STORE_ALIAS(s64x4);
+    MATH_LOAD_STORE_ALIAS(u8x32);
+    MATH_LOAD_STORE_ALIAS(u16x16);
+    MATH_LOAD_STORE_ALIAS(u32x8);
+    MATH_LOAD_STORE_ALIAS(u64x4);
+
+    MATH_LOAD_STORE_ALIAS(s8x64);
+    MATH_LOAD_STORE_ALIAS(s16x32);
+    MATH_LOAD_STORE_ALIAS(s32x16);
+    MATH_LOAD_STORE_ALIAS(s64x8);
+    MATH_LOAD_STORE_ALIAS(u8x64);
+    MATH_LOAD_STORE_ALIAS(u16x32);
+    MATH_LOAD_STORE_ALIAS(u32x16);
+    MATH_LOAD_STORE_ALIAS(u64x8);
+
+    MATH_LOAD_STORE_ALIAS(f32x2);
+    MATH_LOAD_STORE_ALIAS(f32x4);
+    MATH_LOAD_STORE_ALIAS(f32x8);
+    MATH_LOAD_STORE_ALIAS(f32x16);
+
+    MATH_LOAD_STORE_ALIAS(f64x2);
+    MATH_LOAD_STORE_ALIAS(f64x4);
+    MATH_LOAD_STORE_ALIAS(f64x8);
+
+#undef MATH_LOAD_STORE_ALIAS
+
+    // ------------------------------------------------------------------
     // maskToInt()
     // ------------------------------------------------------------------
 
