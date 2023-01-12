@@ -1880,6 +1880,50 @@ namespace
         }
     }
 
+    void blit_expand_4444_to_8888(u8* dest, const u8* src, int count)
+    {
+        u32* d = reinterpret_cast<u32*>(dest);
+        const u16* s = reinterpret_cast<const u16*>(src);
+
+#if defined(MANGO_ENABLE_SIMD)
+        while (count >= 8)
+        {
+            uint8x16 packed = u8x16_uload(s);
+            uint16x8 c0 = reinterpret<uint16x8>(unpacklo(packed, packed));
+            uint16x8 c1 = reinterpret<uint16x8>(unpackhi(packed, packed));
+            c0 = (c0 & 0xf00f) | ((c0 >> 4) & 0x0ff0);
+            c1 = (c1 & 0xf00f) | ((c1 >> 4) & 0x0ff0);
+            u16x8_ustore(d + 0, c0);
+            u16x8_ustore(d + 4, c1);
+            s += 8;
+            d += 8;
+            count -= 8;
+        }
+#endif
+
+        while (count-- > 0)
+        {
+            u32 v = *s++;
+            u32 u = ((v & 0xf000) << 16) | ((v & 0x0f00) << 12) |
+                    ((v & 0x00f0) <<  8) | ((v & 0x000f) << 4);
+            *d++ = u | (u >> 4);
+        }
+    }
+
+    void blit_shrink_8888_to_4444(u8* dest, const u8* src, int count)
+    {
+        u16* d = reinterpret_cast<u16*>(dest);
+        const u32* s = reinterpret_cast<const u32*>(src);
+
+        for (int x = 0; x < count; ++x)
+        {
+            u32 v = s[x];
+            u32 u = ((v >> 16) & 0xf000) | ((v >> 12) & 0x0f00) |
+                    ((v >> 8) & 0x00f0) | ((v >> 4) & 0x000f);
+            d[x] = u16(u);
+        }
+    }
+
 #if defined(MANGO_ENABLE_SSE4_1)
 
     // ----------------------------------------------------------------------------
@@ -2379,42 +2423,36 @@ namespace
         }
     },
 
+    // rgba.u8888 <-> rgba.u4444
+
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        Format(16, Format::UNORM, Format::RGBA, 4, 4, 4, 4),
+        0,
+        blit_expand_4444_to_8888
+    },
+
+    {
+        Format(16, Format::UNORM, Format::RGBA, 4, 4, 4, 4),
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        0,
+        blit_shrink_8888_to_4444
+    },
+
     // bgra.u8888 <-> bgra.u4444
 
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
         0,
-        [] (u8* dest, const u8* src, int count) -> void
-        {
-            u32* d = reinterpret_cast<u32*>(dest);
-            const u16* s = reinterpret_cast<const u16*>(src);
-            for (int x = 0; x < count; ++x)
-            {
-                u32 v = s[x];
-                u32 u = ((v & 0xf000) << 16) | ((v & 0x0f00) << 12) |
-                        ((v & 0x00f0) <<  8) | ((v & 0x000f) << 4);
-                d[x] = u | (u >> 4);
-            }
-        }
+        blit_expand_4444_to_8888
     },
 
     {
         Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4),
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
         0,
-        [] (u8* dest, const u8* src, int count) -> void
-        {
-            u16* d = reinterpret_cast<u16*>(dest);
-            const u32* s = reinterpret_cast<const u32*>(src);
-            for (int x = 0; x < count; ++x)
-            {
-                u32 v = s[x];
-                u32 u = ((v >> 16) & 0xf000) | ((v >> 12) & 0x0f00) |
-                        ((v >> 8) & 0x00f0) | ((v >> 4) & 0x000f);
-                d[x] = u16(u);
-            }
-        }
+        blit_shrink_8888_to_4444
     },
 
     // rgba.u8888 <-> bgra.u4444
