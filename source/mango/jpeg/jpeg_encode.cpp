@@ -381,7 +381,8 @@ namespace
     // fdct sse2
     // ----------------------------------------------------------------------------
 
-    static inline void interleave16(__m128i& a, __m128i& b)
+    static inline
+    void interleave16(__m128i& a, __m128i& b)
     {
         __m128i c = a;
         a = _mm_unpacklo_epi16(a, b);
@@ -405,63 +406,39 @@ namespace
     #define JPEG_CONST16_SSE2(x, y) \
         _mm_setr_epi16(x, y, x, y, x, y, x, y)
 
-    #define JPEG_TRANSFORM_SSE2(n) { \
-        __m128i a_lo; \
-        __m128i a_hi; \
-        __m128i b_lo; \
-        __m128i b_hi; \
-        \
-        a_lo = _mm_madd_epi16(x87_lo, c26p); \
-        a_hi = _mm_madd_epi16(x87_hi, c26p); \
-        a_lo = _mm_srai_epi32(a_lo, n); \
-        a_hi = _mm_srai_epi32(a_hi, n); \
-        v2 = _mm_packs_epi32(a_lo, a_hi); \
-        \
-        a_lo = _mm_madd_epi16(x87_lo, c62n); \
-        a_hi = _mm_madd_epi16(x87_hi, c62n); \
-        a_lo = _mm_srai_epi32(a_lo, n); \
-        a_hi = _mm_srai_epi32(a_hi, n); \
-        v6 = _mm_packs_epi32(a_lo, a_hi); \
-        \
-        a_lo = _mm_madd_epi16(x01_lo, c75n); \
-        a_hi = _mm_madd_epi16(x01_hi, c75n); \
-        b_lo = _mm_madd_epi16(x23_lo, c31n); \
-        b_hi = _mm_madd_epi16(x23_hi, c31n); \
-        a_lo = _mm_add_epi32(a_lo, b_lo); \
-        a_hi = _mm_add_epi32(a_hi, b_hi); \
-        a_lo = _mm_srai_epi32(a_lo, n); \
-        a_hi = _mm_srai_epi32(a_hi, n); \
-        v7 = _mm_packs_epi32(a_lo, a_hi); \
-        \
-        a_lo = _mm_madd_epi16(x01_lo, c51n); \
-        a_hi = _mm_madd_epi16(x01_hi, c51n); \
-        b_lo = _mm_madd_epi16(x23_lo, c73p); \
-        b_hi = _mm_madd_epi16(x23_hi, c73p); \
-        a_lo = _mm_add_epi32(a_lo, b_lo); \
-        a_hi = _mm_add_epi32(a_hi, b_hi); \
-        a_lo = _mm_srai_epi32(a_lo, n); \
-        a_hi = _mm_srai_epi32(a_hi, n); \
-        v5 = _mm_packs_epi32(a_lo, a_hi); \
-        \
-        a_lo = _mm_madd_epi16(x01_lo, c37n); \
-        a_hi = _mm_madd_epi16(x01_hi, c37n); \
-        b_lo = _mm_madd_epi16(x23_lo, c15p); \
-        b_hi = _mm_madd_epi16(x23_hi, c15p); \
-        a_lo = _mm_sub_epi32(a_lo, b_lo); \
-        a_hi = _mm_sub_epi32(a_hi, b_hi); \
-        a_lo = _mm_srai_epi32(a_lo, n); \
-        a_hi = _mm_srai_epi32(a_hi, n); \
-        v3 = _mm_packs_epi32(a_lo, a_hi); \
-        \
-        a_lo = _mm_madd_epi16(x01_lo, c13p); \
-        a_hi = _mm_madd_epi16(x01_hi, c13p); \
-        b_lo = _mm_madd_epi16(x23_lo, c57p); \
-        b_hi = _mm_madd_epi16(x23_hi, c57p); \
-        a_lo = _mm_add_epi32(a_lo, b_lo); \
-        a_hi = _mm_add_epi32(a_hi, b_hi); \
-        a_lo = _mm_srai_epi32(a_lo, n); \
-        a_hi = _mm_srai_epi32(a_hi, n); \
-        v1 = _mm_packs_epi32(a_lo, a_hi); }
+    static inline
+    __m128i transform_term(__m128i s0, __m128i s1, __m128i c, int n)
+    {
+        s0 = _mm_madd_epi16(s0, c);
+        s1 = _mm_madd_epi16(s1, c);
+        s0 = _mm_srai_epi32(s0, n);
+        s1 = _mm_srai_epi32(s1, n);
+        return _mm_packs_epi32(s0, s1);
+    }
+
+    static inline
+    __m128i transform_add_term(__m128i s0, __m128i s1, __m128i s2, __m128i s3, __m128i c0, __m128i c1, int n)
+    {
+        s0 = _mm_madd_epi16(s0, c0);
+        s1 = _mm_madd_epi16(s1, c0);
+        s0 = _mm_add_epi32(s0, _mm_madd_epi16(s2, c1));
+        s1 = _mm_add_epi32(s1, _mm_madd_epi16(s3, c1));
+        s0 = _mm_srai_epi32(s0, n);
+        s1 = _mm_srai_epi32(s1, n);
+        return _mm_packs_epi32(s0, s1);
+    }
+
+    static inline
+    __m128i transform_sub_term(__m128i s0, __m128i s1, __m128i s2, __m128i s3, __m128i c0, __m128i c1, int n)
+    {
+        s0 = _mm_madd_epi16(s0, c0);
+        s1 = _mm_madd_epi16(s1, c0);
+        s0 = _mm_sub_epi32(s0, _mm_madd_epi16(s2, c1));
+        s1 = _mm_sub_epi32(s1, _mm_madd_epi16(s3, c1));
+        s0 = _mm_srai_epi32(s0, n);
+        s1 = _mm_srai_epi32(s1, n);
+        return _mm_packs_epi32(s0, s1);
+    }
 
     static inline
     __m128i quantize(__m128i v, __m128i q, __m128i one, __m128i bias)
@@ -533,10 +510,16 @@ namespace
         __m128i x23_lo = _mm_unpacklo_epi16(x2, x3);
         __m128i x23_hi = _mm_unpackhi_epi16(x2, x3);
 
+        // transform
+
         v0 = _mm_add_epi16(x4, x5);
         v4 = _mm_sub_epi16(x4, x5);
-
-        JPEG_TRANSFORM_SSE2(10);
+        v2 = transform_term(x87_lo, x87_hi, c26p, 10);
+        v6 = transform_term(x87_lo, x87_hi, c62n, 10);
+        v7 = transform_add_term(x01_lo, x01_hi, x23_lo, x23_hi, c75n, c31n, 10);
+        v5 = transform_add_term(x01_lo, x01_hi, x23_lo, x23_hi, c51n, c73p, 10);
+        v3 = transform_sub_term(x01_lo, x01_hi, x23_lo, x23_hi, c37n, c15p, 10);
+        v1 = transform_add_term(x01_lo, x01_hi, x23_lo, x23_hi, c13p, c57p, 10);
 
         // pass 2
 
@@ -563,10 +546,16 @@ namespace
         x23_lo = _mm_unpacklo_epi16(x2, x3);
         x23_hi = _mm_unpackhi_epi16(x2, x3);
 
+        // transform
+
         v0 = _mm_srai_epi16(_mm_add_epi16(x4, x5), 3);
         v4 = _mm_srai_epi16(_mm_sub_epi16(x4, x5), 3);
-
-        JPEG_TRANSFORM_SSE2(13);
+        v2 = transform_term(x87_lo, x87_hi, c26p, 13);
+        v6 = transform_term(x87_lo, x87_hi, c62n, 13);
+        v7 = transform_add_term(x01_lo, x01_hi, x23_lo, x23_hi, c75n, c31n, 13);
+        v5 = transform_add_term(x01_lo, x01_hi, x23_lo, x23_hi, c51n, c73p, 13);
+        v3 = transform_sub_term(x01_lo, x01_hi, x23_lo, x23_hi, c37n, c15p, 13);
+        v1 = transform_add_term(x01_lo, x01_hi, x23_lo, x23_hi, c13p, c57p, 13);
 
         // quantize
 
@@ -1354,8 +1343,8 @@ namespace
 //#define PROTOTYPE_PARALLEL_COEFFICIENTS
 #ifdef PROTOTYPE_PARALLEL_COEFFICIENTS
 
-    static
-    inline __m512i getSymbolSize(__m512i absCoeff)
+    static inline
+    __m512i getSymbolSize(__m512i absCoeff)
     {
         int16x32 value(absCoeff);
         int16x32 base(0);
