@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include "jpeg.hpp"
@@ -210,11 +210,6 @@ namespace
 
 #endif
 
-    struct EncodeBuffer : Buffer
-    {
-        std::atomic<bool> ready { false };
-    };
-
     struct HuffmanEncoder
     {
         DataType code;
@@ -301,7 +296,7 @@ namespace
         jpegEncoder(const Surface& surface, SampleType sample, const ImageEncodeOptions& options);
         ~jpegEncoder();
 
-        void encodeInterval(EncodeBuffer& buffer, const u8* src, size_t stride, ReadFunc read_func, int rows);
+        void encodeInterval(Buffer& buffer, const u8* src, size_t stride, ReadFunc read_func, int rows);
         void writeMarkers(BigEndianStream& p);
         ImageEncodeStatus encodeImage(Stream& stream);
     };
@@ -2656,7 +2651,7 @@ namespace
         p.write8(0x00);
     }
 
-    void jpegEncoder::encodeInterval(EncodeBuffer& buffer, const u8* image, size_t stride, ReadFunc read_func, int rows)
+    void jpegEncoder::encodeInterval(Buffer& buffer, const u8* image, size_t stride, ReadFunc read_func, int rows)
     {
         HuffmanEncoder huffman;
         huffman.fdct = fdct;
@@ -2704,9 +2699,6 @@ namespace
         // flush encoding buffer
         ptr = huffman.flush(ptr);
         buffer.append(huff_temp, ptr - huff_temp);
-
-        // mark buffer ready for writing
-        buffer.ready = true;
     }
 
     ImageEncodeStatus jpegEncoder::encodeImage(Stream& stream)
@@ -2724,9 +2716,7 @@ namespace
         if (m_options.multithread)
         {
             ConcurrentQueue queue;
-
-            // bitstream for each MCU scan
-            std::vector<EncodeBuffer> buffers(vertical_mcus);
+            TicketQueue tk;
 
             for (int y = 0; y < vertical_mcus; ++y)
             {
@@ -2740,32 +2730,37 @@ namespace
                     read_func = read; // clipping reader
                 }
 
-                queue.enqueue([this, y, &buffers, image, stride, rows, read_func]
+                auto ticket = tk.acquire();
+
+                queue.enqueue([this, &s, ticket, y, image, stride, rows, read_func]
                 {
-                    EncodeBuffer& buffer = buffers[y];
+                    Buffer buffer;
                     encodeInterval(buffer, image, stride, read_func, rows);
+
+                    Memory memory = buffer.acquire();
+
+                    // tickets are consumed in acquired order
+                    ticket.consume([&s, y, memory]
+                    {
+                        // write encoded data
+                        s.write(memory);
+
+                        // write restart marker
+                        int index = y & 7;
+                        s.write16(MARKER_RST0 + index);
+
+                        Buffer::release(memory);
+                    });
                 });
 
                 image += m_surface.stride * mcu_height;
             }
 
-            for (int y = 0; y < vertical_mcus; ++y)
-            {
-                EncodeBuffer& buffer = buffers[y];
+            // wait until all work has been submitted
+            queue.wait();
 
-                for ( ; !buffer.ready; )
-                {
-                    // buffer is not processed yet; help the thread pool while waiting
-                    queue.steal();
-                }
-
-                // write huffman bitstream
-                s.write(buffer, buffer.size());
-
-                // write restart marker
-                int index = y & 7;
-                s.write16(MARKER_RST0 + index);
-            }
+            // wait until all tickets have been consumed (encoded data has been written)
+            tk.wait();
         }
         else
         {
@@ -2781,10 +2776,10 @@ namespace
                     read_func = read; // clipping reader
                 }
 
-                EncodeBuffer buffer;
+                Buffer buffer;
                 encodeInterval(buffer, image, stride, read_func, rows);
 
-                // write huffman bitstream
+                // write encoded data
                 s.write(buffer, buffer.size());
 
                 // write restart marker
