@@ -42,6 +42,7 @@ namespace mango
         void resize(size_t bytes);
         void reserve(size_t bytes);
         void append(const void* source, size_t bytes);
+        u8* append(size_t bytes);
 
         [[nodiscard]] Memory acquire();
         static void release(Memory memory);

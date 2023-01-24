@@ -260,7 +260,7 @@ void compress(const std::string& folder, const std::string& archive, const std::
 
     // create output stream
 
-    FileStream output(archive, Stream::WRITE);
+    OutputFileStream output(archive);
     LittleEndianStream str = output;
 
     // write identifier

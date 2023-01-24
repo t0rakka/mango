@@ -137,6 +137,20 @@ namespace mango
 
     void Buffer::append(const void* source, size_t bytes)
     {
+        u8* dest = append(bytes);
+
+        if (source)
+        {
+            std::memcpy(dest, source, bytes);
+        }
+        else
+        {
+            std::memset(dest, 0, bytes);
+        }
+    }
+
+    u8* Buffer::append(size_t bytes)
+    {
         size_t required = m_memory.size + bytes;
         if (required > m_capacity)
         {
@@ -144,16 +158,10 @@ namespace mango
             reserve((required * 7) / 5);
         }
 
-        if (source)
-        {
-            std::memcpy(m_memory.address + m_memory.size, source, bytes);
-        }
-        else
-        {
-            std::memset(m_memory.address + m_memory.size, 0, bytes);
-        }
-
+        u8* temp = m_memory.address + m_memory.size;
         m_memory.size += bytes;
+
+        return temp;
     }
 
     Memory Buffer::acquire()

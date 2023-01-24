@@ -80,7 +80,7 @@ void enumerate(const Path& path, State& state, std::string destination, std::str
                 ConstMemory memory = file;
 
                 // create file
-                FileStream outfile(filename, Stream::WRITE);
+                OutputFileStream outfile(filename);
                 outfile.write(memory.address, memory.size);
             }
 
