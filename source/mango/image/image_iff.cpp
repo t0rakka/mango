@@ -45,33 +45,68 @@ namespace
         }
     }
 
+    static
+    void p2c_byte(u8* image, const u8* src, int count, int plane, int)
+    {
+        while (count >= 8)
+        {
+            u64 data = *src++;
+            u64 value = ((data & 0x08) << 29) | ((data & 0x04) << 38) | ((data & 0x02) << 47) | ((data & 0x01) << 56) |
+                        ((data & 0x80) >>  7) | ((data & 0x40) <<  2) | ((data & 0x20) << 11) | ((data & 0x10) << 20);
+            u64* dest = reinterpret_cast<u64*>(image);
+            *dest |= (value << plane);
+            image += 8;
+            count -= 8;
+        }
+
+        u8 value = u8(1) << plane;
+
+        u8 data = *src;
+        u8 mask = 0x80;
+
+        while (count-- > 0)
+        {
+            *image++ |= ((data & mask) ? value : 0);
+            mask >>= 1;
+        }
+    }
+
+    static
+    void p2c_wide(u8* image, const u8* src, int count, int plane, int bpp)
+    {
+        u8* dest = image + (plane / 8);
+        const int pshift = plane & 7;
+
+        for (int x = 0; x < count; ++x)
+        {
+            const int xshift = ((x ^ 7) & 7);
+            int value = src[x / 8] >> xshift;
+            dest[0] |= (value & 1) << pshift;
+            dest += bpp;
+        }
+    }
+
     void p2c_raw(u8* image, const u8* temp, int xsize, int ysize, int nplanes, int masking)
     {
-        const int bpp = (nplanes + 7) >> 3;
-        const int scansize = xsize * bpp;
-        const int planesize = ((xsize + 15) & ~15) / 8;
-        const int mplanes = nplanes + (masking == 1);
+        const int pixel_bytes = (nplanes + 7) >> 3;
+        const int plane_bytes = ((xsize + 15) & ~15) / 8;
+
+        auto p2c = nplanes <= 8 ? p2c_byte : p2c_wide;
 
         for (int y = 0; y < ysize; ++y)
         {
-            std::memset(image, 0, scansize);
+            std::memset(image, 0, xsize * pixel_bytes);
 
-            for (int x = 0; x < xsize; ++x)
+            for (int p = 0; p < nplanes; ++p)
             {
-                const int shift = ((x ^ 7) & 7);
-
-                const u8* src = temp + x / 8;
-                u8* dest = image + x * bpp;
-
-                for (int n = 0; n < nplanes; ++n)
-                {
-                    int v = src[n * planesize] >> shift;
-                    dest[n / 8] |= (v & 1) << (n & 7);
-                }
+                p2c(image, temp, xsize, p, pixel_bytes);
+                temp += plane_bytes;
             }
 
-            image += scansize;
-            temp += planesize * mplanes;
+            if (masking == 1)
+                temp += plane_bytes;
+
+            image += xsize * pixel_bytes;
         }
     }
 
