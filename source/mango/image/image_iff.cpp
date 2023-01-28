@@ -79,9 +79,7 @@ namespace
 
         for (int x = 0; x < count; ++x)
         {
-            const int xshift = ((x ^ 7) & 7);
-            int value = src[x / 8] >> xshift;
-            dest[0] |= (value & 1) << pshift;
+            dest[0] |= ((src[x / 8] >> ((x ^ 7) & 7)) & 1) << pshift;
             dest += bpp;
         }
     }
