@@ -99,6 +99,16 @@ namespace mango::simd
             s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
     }
 
+    static inline u8x32 u8x32_uload(const void* source)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
+    }
+
+    static inline void u8x32_ustore(void* dest, u8x32 a)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
+    }
+
     static inline u8x32 unpacklo(u8x32 a, u8x32 b)
     {
         return _mm256_unpacklo_epi8(a, b);
@@ -310,6 +320,16 @@ namespace mango::simd
         return _mm256_set_epi16(
             s00, s01, s02, s03, s04, s05, s06, s07, 
             s08, s09, s10, s11, s12, s13, s14, s15);
+    }
+
+    static inline u16x16 u16x16_uload(const void* source)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
+    }
+
+    static inline void u16x16_ustore(void* dest, u16x16 a)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
 
     static inline u16x16 unpacklo(u16x16 a, u16x16 b)
@@ -848,6 +868,16 @@ namespace mango::simd
         return _mm256_setr_epi64x(x, y, z, w);
     }
 
+    static inline u64x4 u64x4_uload(const void* source)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
+    }
+
+    static inline void u64x4_ustore(void* dest, u64x4 a)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
+    }
+
     static inline u64x4 unpacklo(u64x4 a, u64x4 b)
     {
         return _mm256_unpacklo_epi64(a, b);
@@ -1062,6 +1092,16 @@ namespace mango::simd
         return _mm256_set_epi8(
             s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15, 
             s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
+    }
+
+    static inline s8x32 s8x32_uload(const void* source)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
+    }
+
+    static inline void s8x32_ustore(void* dest, s8x32 a)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
 
     static inline s8x32 unpacklo(s8x32 a, s8x32 b)
@@ -1314,6 +1354,16 @@ namespace mango::simd
         return _mm256_set_epi16(
             s00, s01, s02, s03, s04, s05, s06, s07, 
             s08, s09, s10, s11, s12, s13, s14, s15);
+    }
+
+    static inline s16x16 s16x16_uload(const void* source)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
+    }
+
+    static inline void s16x16_ustore(void* dest, s16x16 a)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
 
     static inline s16x16 unpacklo(s16x16 a, s16x16 b)
@@ -1974,6 +2024,16 @@ namespace mango::simd
     static inline s64x4 s64x4_set(s64 x, s64 y, s64 z, s64 w)
     {
         return _mm256_setr_epi64x(x, y, z, w);
+    }
+
+    static inline s64x4 s64x4_uload(const void* source)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(source));
+    }
+
+    static inline void s64x4_ustore(void* dest, s64x4 a)
+    {
+        _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest), a);
     }
 
     static inline s64x4 unpacklo(s64x4 a, s64x4 b)
