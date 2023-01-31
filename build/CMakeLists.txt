@@ -124,6 +124,20 @@ elseif (APPLE)
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/cocoa/*.mm")
 
+elseif (EMSCRIPTEN)
+
+    FILE(GLOB CORE
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp")
+    FILE(GLOB FILESYSTEM
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp")
+    FILE(GLOB OPENGL
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp")
+
 else()
 
     FILE(GLOB CORE
@@ -314,6 +328,11 @@ endif ()
 # configuration
 # ------------------------------------------------------------------------------
 
+if (EMSCRIPTEN)
+    # zlib uses deprecated K&R syntax
+    target_compile_options(mango PUBLIC "-Wno-deprecated-non-prototype")
+endif ()
+
 if (COMPILER_MSVC)
     target_compile_options(mango PUBLIC "/DUNICODE")
 
@@ -349,7 +368,7 @@ else ()
         endif ()
     endif ()
 
-    if (X86 OR X86_64)
+    if ((X86 OR X86_64) AND !EMSCRIPTEN)
         # enable AES (2008) by default
         target_compile_options(mango PUBLIC "-maes")
 

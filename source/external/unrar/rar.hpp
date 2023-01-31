@@ -80,7 +80,7 @@
 #endif
 
 #if !defined(LITTLE_ENDIAN) && !defined(BIG_ENDIAN)
-#if defined(__i386) || defined(i386) || defined(__i386__)
+#if defined(__i386) || defined(i386) || defined(__i386__) || defined(EMSCRIPTEN)
 #define LITTLE_ENDIAN
 #elif defined(BYTE_ORDER) && BYTE_ORDER == LITTLE_ENDIAN
 #define LITTLE_ENDIAN

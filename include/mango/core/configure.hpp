@@ -158,6 +158,13 @@
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "SGI IRIX"
 
+#elif defined(EMSCRIPTEN)
+
+    // Emscripten / WASM
+    #define MANGO_PLATFORM_EMSCRIPTEN
+    #define MANGO_PLATFORM_UNIX
+    #define MANGO_PLATFORM_NAME "EMSCRIPTEN"
+
 #else
 
     // unsupported
@@ -279,6 +286,8 @@
         #else
             #define MANGO_LITTLE_ENDIAN
         #endif
+    #elif defined(EMSCRIPTEN)
+        #define MANGO_LITTLE_ENDIAN
     #else
         #error "CPU endianess not supported."
     #endif

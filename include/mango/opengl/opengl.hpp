@@ -83,6 +83,14 @@
     #include <GLES3/gl32.h>
     */
 
+#elif defined(MANGO_PLATFORM_EMSCRIPTEN)
+
+    // -----------------------------------------------------------------------
+    // Emscripten / WASM
+    // -----------------------------------------------------------------------
+
+    #define MANGO_OPENGL_CONTEXT_NONE
+
 #elif defined(MANGO_PLATFORM_UNIX)
 
     // -----------------------------------------------------------------------
