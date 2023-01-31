@@ -128,10 +128,10 @@ namespace
 
     struct pvr_type_t
     {
-        int size : 8;
-        int sign : 1;
-        int integer : 1;
-        int normalized : 1;
+        u8 size : 4;
+        u8 sign : 1;
+        u8 integer : 1;
+        u8 normalized : 1;
     };
 
     const pvr_type_t typeTable[] =
