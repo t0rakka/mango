@@ -296,8 +296,10 @@ namespace
         jpegEncoder(const Surface& surface, SampleType sample, const ImageEncodeOptions& options);
         ~jpegEncoder();
 
-        void encodeInterval(Buffer& buffer, const u8* src, size_t stride, ReadFunc read_func, int rows);
         void writeMarkers(BigEndianStream& p);
+
+        void encodeInterval(Buffer& buffer, const u8* src, size_t stride, ReadFunc read_func, int rows);
+        void encodeSpan(Buffer& buffer, int y0, int y1, const u8* image, size_t stride);
         ImageEncodeStatus encodeImage(Stream& stream);
     };
 
@@ -2690,6 +2692,29 @@ namespace
         buffer.append(huff_temp, ptr - huff_temp);
     }
 
+    void jpegEncoder::encodeSpan(Buffer& buffer, int y0, int y1, const u8* image, size_t stride)
+    {
+        for (int y = y0; y < y1; ++y)
+        {
+            int rows = mcu_height;
+            auto read_func = read_8x8; // default: optimized 8x8 reader
+
+            if (y >= vertical_mcus - 1)
+            {
+                // vertical clipping
+                rows = rows_in_bottom_mcus;
+                read_func = read; // clipping reader
+            }
+
+            encodeInterval(buffer, image, stride, read_func, rows);
+            image += stride * mcu_height;
+
+            // write restart marker
+            BigEndianPointer p = buffer.append(2);
+            p.write16(MARKER_RST0 + (y & 7));
+        }
+    }
+
     ImageEncodeStatus jpegEncoder::encodeImage(Stream& stream)
     {
         const u8* image = m_surface.image;
@@ -2701,48 +2726,34 @@ namespace
         writeMarkers(s);
 
         // encode MCUs
+        constexpr int N = 8;
 
         if (m_options.multithread)
         {
             ConcurrentQueue queue;
             TicketQueue tk;
 
-            for (int y = 0; y < vertical_mcus; ++y)
+            for (int y = 0; y < vertical_mcus; y += N)
             {
-                int rows = mcu_height;
-                auto read_func = read_8x8; // default: optimized 8x8 reader
-
-                if (y >= vertical_mcus - 1)
-                {
-                    // vertical clipping
-                    rows = rows_in_bottom_mcus;
-                    read_func = read; // clipping reader
-                }
-
                 auto ticket = tk.acquire();
 
-                queue.enqueue([this, &s, ticket, y, image, stride, rows, read_func]
+                queue.enqueue([this, &s, ticket, y, image, stride]
                 {
                     Buffer buffer;
-                    encodeInterval(buffer, image, stride, read_func, rows);
+                    encodeSpan(buffer, y, std::min(vertical_mcus, y + N), image, stride);
 
                     Memory memory = buffer.acquire();
 
                     // tickets are consumed in acquired order
-                    ticket.consume([&s, y, memory]
+                    ticket.consume([&s, memory]
                     {
                         // write encoded data
                         s.write(memory);
-
-                        // write restart marker
-                        int index = y & 7;
-                        s.write16(MARKER_RST0 + index);
-
                         Buffer::release(memory);
                     });
                 });
 
-                image += m_surface.stride * mcu_height;
+                image += stride * mcu_height * N;
             }
 
             // wait until all work has been submitted
@@ -2753,29 +2764,15 @@ namespace
         }
         else
         {
-            for (int y = 0; y < vertical_mcus; ++y)
+            for (int y = 0; y < vertical_mcus; y += N)
             {
-                int rows = mcu_height;
-                auto read_func = read_8x8; // default: optimized 8x8 reader
-
-                if (y >= vertical_mcus - 1)
-                {
-                    // vertical clipping
-                    rows = rows_in_bottom_mcus;
-                    read_func = read; // clipping reader
-                }
-
                 Buffer buffer;
-                encodeInterval(buffer, image, stride, read_func, rows);
+                encodeSpan(buffer, y, std::min(vertical_mcus, y + N), image, stride);
 
                 // write encoded data
-                s.write(buffer, buffer.size());
+                s.write(buffer);
 
-                // write restart marker
-                int index = y & 7;
-                s.write16(MARKER_RST0 + index);
-
-                image += m_surface.stride * mcu_height;
+                image += stride * mcu_height * N;
             }
         }
 
