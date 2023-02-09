@@ -277,10 +277,7 @@ namespace mango::jpeg
         r_xmm4 = _mm_shufflehi_epi16(r_xmm4, 0xd8);
 
         const __m128i round_inv_row = _mm_set_epi16(0, 2048, 0, 2048, 0, 2048, 0, 2048);
-        const __m128i tg1 = _mm_set1_epi16(13036);
-        const __m128i tg2 = _mm_set1_epi16(27146);
-        const __m128i tg3 = _mm_set1_epi16(-21746);
-        const __m128i cos4 = _mm_set1_epi16(-19195);
+        const __m128i tg = _mm_set_epi16(-19195, -19195, -21746, -21746, 27146, 27146, 13036, 13036);
 
         // (xmm0 short 2 and short 0 plus pSi) + some constants
         r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
@@ -452,13 +449,13 @@ namespace mango::jpeg
         r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
         row7 = _mm_packs_epi32(r_xmm4, r_xmm6);
 
-        r_xmm1 = tg3;
+        r_xmm1 = _mm_shuffle_epi32(tg, 0xaa);
         r_xmm2 = row5;
         r_xmm3 = row3;
         r_xmm0 = _mm_mulhi_epi16(row5, r_xmm1);
 
         r_xmm1 = _mm_mulhi_epi16(r_xmm1, r_xmm3);
-        r_xmm5 = tg1;
+        r_xmm5 = _mm_shuffle_epi32(tg, 0x00);
         r_xmm6 = row7;
         r_xmm4 = _mm_mulhi_epi16(row7, r_xmm5);
 
@@ -470,7 +467,7 @@ namespace mango::jpeg
         const __m128i one = _mm_set1_epi16(1);
 
         r_xmm0 = _mm_adds_epi16(r_xmm0, r_xmm3);
-        r_xmm3 = tg2;
+        r_xmm3 = _mm_shuffle_epi32(tg, 0x55);
         r_xmm2 = _mm_subs_epi16(r_xmm2, r_xmm1);
         r_xmm7 = _mm_mulhi_epi16(r_xmm7, r_xmm3);
         r_xmm1 = r_xmm0;
@@ -486,17 +483,15 @@ namespace mango::jpeg
         r_xmm6 = _mm_adds_epi16(r_xmm6, r_xmm2);
 
         //Intermediate results, needed later
-        __m128i temp3, temp7;
-        temp7 = r_xmm0;
+        __m128i temp7 = r_xmm0;
 
         r_xmm1 = r_xmm4;
-        r_xmm0 = cos4;
+        r_xmm0 = _mm_shuffle_epi32(tg, 0xff);
         r_xmm4 = _mm_adds_epi16(r_xmm4, r_xmm5);
-        r_xmm2 = cos4;
-        r_xmm2 = _mm_mulhi_epi16(r_xmm2, r_xmm4);
+        r_xmm2 = _mm_mulhi_epi16(r_xmm0, r_xmm4);
 
         //Intermediate results, needed later
-        temp3 = r_xmm6;
+        __m128i temp3 = r_xmm6;
 
         r_xmm1 = _mm_subs_epi16(r_xmm1, r_xmm5);
         r_xmm7 = _mm_adds_epi16(r_xmm7, row2);
