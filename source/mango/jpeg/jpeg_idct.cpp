@@ -148,123 +148,66 @@ namespace mango::jpeg
     // SSE2 implementation
     // ------------------------------------------------------------------------------------------------
 
-    // The original code is by Petr Kobalicek ; WE HAVE TAKEN LIBERTIES TO ADAPT IT TO OUR USE!!!
-    // https://github.com/kobalicek/simdtests
-    // [License]
-    // Public Domain <unlicense.org>
+    // Copyright 2009 Intel Corporation
+    // All Rights Reserved
+    //
+    // Permission is granted to use, copy, distribute and prepare derivative works of this
+    // software for any purpose and without fee, provided, that the above copyright notice
+    // and this statement appear in all copies.  Intel makes no representations about the
+    // suitability of this software for any purpose.  THIS SOFTWARE IS PROVIDED "AS IS."
+    // INTEL SPECIFICALLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, AND ALL LIABILITY,
+    // INCLUDING CONSEQUENTIAL AND OTHER INDIRECT DAMAGES, FOR THE USE OF THIS SOFTWARE,
+    // INCLUDING LIABILITY FOR INFRINGEMENT OF ANY PROPRIETARY RIGHTS, AND INCLUDING THE
+    // WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  Intel does not
+    // assume any responsibility for any errors which may appear in this software nor any
+    // responsibility to update it.
+    //
+    // From:
+    // https://software.intel.com/sites/default/files/m/d/4/1/d/8/UsingIntelAVXToImplementIDCT-r1_5.pdf
+    // https://software.intel.com/file/29048
+    //
+    // Requires SSE
+    //
 
-    // Derived from jidctint's `jpeg_idct_islow`
-    static constexpr int JPEG_IDCT_PREC = 12;
-    static constexpr int JPEG_IDCT_HALF(int precision) { return (1 << ((precision) - 1)); }
-    static constexpr int JPEG_IDCT_FIXED(double x) { return int((x * double(1 << JPEG_IDCT_PREC) + 0.5)); }
-
-    static constexpr int JPEG_IDCT_M_2_562915447 = JPEG_IDCT_FIXED(-2.562915447);
-    static constexpr int JPEG_IDCT_M_1_961570560 = JPEG_IDCT_FIXED(-1.961570560);
-    static constexpr int JPEG_IDCT_M_1_847759065 = JPEG_IDCT_FIXED(-1.847759065);
-    static constexpr int JPEG_IDCT_M_0_899976223 = JPEG_IDCT_FIXED(-0.899976223);
-    static constexpr int JPEG_IDCT_M_0_390180644 = JPEG_IDCT_FIXED(-0.390180644);
-    static constexpr int JPEG_IDCT_P_0_298631336 = JPEG_IDCT_FIXED(0.298631336);
-    static constexpr int JPEG_IDCT_P_0_541196100 = JPEG_IDCT_FIXED(0.541196100);
-    static constexpr int JPEG_IDCT_P_0_765366865 = JPEG_IDCT_FIXED(0.765366865);
-    static constexpr int JPEG_IDCT_P_1_175875602 = JPEG_IDCT_FIXED(1.175875602);
-    static constexpr int JPEG_IDCT_P_1_501321110 = JPEG_IDCT_FIXED(1.501321110);
-    static constexpr int JPEG_IDCT_P_2_053119869 = JPEG_IDCT_FIXED(2.053119869);
-    static constexpr int JPEG_IDCT_P_3_072711026 = JPEG_IDCT_FIXED(3.072711026);
-
-    // Keep 2 bits of extra precision for the intermediate results
-    static constexpr int JPEG_IDCT_COL_NORM = (JPEG_IDCT_PREC - 2);
-    static constexpr int JPEG_IDCT_COL_BIAS = JPEG_IDCT_HALF(JPEG_IDCT_COL_NORM);
-
-    // Consume 2 bits of an intermediate results precision and 3 bits that were
-    // produced by `2 * sqrt(8)`. Also normalize to from `-128..127` to `0..255`
-    static constexpr int JPEG_IDCT_ROW_NORM = (JPEG_IDCT_PREC + 2 + 3);
-    static constexpr int JPEG_IDCT_ROW_BIAS = (JPEG_IDCT_HALF(JPEG_IDCT_ROW_NORM) + (128 << JPEG_IDCT_ROW_NORM));
-
-#define JPEG_CONST16_SSE2(x, y)  _mm_setr_epi16(x, y, x, y, x, y, x, y)
-#define JPEG_CONST32_SSE2(x)     _mm_setr_epi32(x, x, x, x)
-
-    static const __m128i rot0_0 = JPEG_CONST16_SSE2(JPEG_IDCT_P_0_541196100                          , JPEG_IDCT_P_0_541196100 + JPEG_IDCT_M_1_847759065);
-    static const __m128i rot0_1 = JPEG_CONST16_SSE2(JPEG_IDCT_P_0_541196100 + JPEG_IDCT_P_0_765366865, JPEG_IDCT_P_0_541196100                          );
-    static const __m128i rot1_0 = JPEG_CONST16_SSE2(JPEG_IDCT_P_1_175875602 + JPEG_IDCT_M_0_899976223, JPEG_IDCT_P_1_175875602                          );
-    static const __m128i rot1_1 = JPEG_CONST16_SSE2(JPEG_IDCT_P_1_175875602                          , JPEG_IDCT_P_1_175875602 + JPEG_IDCT_M_2_562915447);
-    static const __m128i rot2_0 = JPEG_CONST16_SSE2(JPEG_IDCT_M_1_961570560 + JPEG_IDCT_P_0_298631336, JPEG_IDCT_M_1_961570560                          );
-    static const __m128i rot2_1 = JPEG_CONST16_SSE2(JPEG_IDCT_M_1_961570560                          , JPEG_IDCT_M_1_961570560 + JPEG_IDCT_P_3_072711026);
-    static const __m128i rot3_0 = JPEG_CONST16_SSE2(JPEG_IDCT_M_0_390180644 + JPEG_IDCT_P_2_053119869, JPEG_IDCT_M_0_390180644                          );
-    static const __m128i rot3_1 = JPEG_CONST16_SSE2(JPEG_IDCT_M_0_390180644                          , JPEG_IDCT_M_0_390180644 + JPEG_IDCT_P_1_501321110);
-    static const __m128i colBias = JPEG_CONST32_SSE2(JPEG_IDCT_COL_BIAS);
-    static const __m128i rowBias = JPEG_CONST32_SSE2(JPEG_IDCT_ROW_BIAS);
-
-#define JPEG_IDCT_ROTATE_XMM(dst0, dst1, x, y, c0, c1) \
-    __m128i c0##_l = _mm_unpacklo_epi16(x, y); \
-    __m128i c0##_h = _mm_unpackhi_epi16(x, y); \
-    __m128i dst0##_l = _mm_madd_epi16(c0##_l, c0); \
-    __m128i dst0##_h = _mm_madd_epi16(c0##_h, c0); \
-    __m128i dst1##_l = _mm_madd_epi16(c0##_l, c1); \
-    __m128i dst1##_h = _mm_madd_epi16(c0##_h, c1);
-
-    // out = in << 12  (in 16-bit, out 32-bit)
-#define JPEG_IDCT_WIDEN_XMM(dst, in) \
-    __m128i dst##_l = _mm_srai_epi32(_mm_unpacklo_epi16(_mm_setzero_si128(), (in)), 4); \
-    __m128i dst##_h = _mm_srai_epi32(_mm_unpackhi_epi16(_mm_setzero_si128(), (in)), 4);
-
-    // wide add
-#define JPEG_IDCT_WADD_XMM(dst, a, b) \
-    __m128i dst##_l = _mm_add_epi32(a##_l, b##_l); \
-    __m128i dst##_h = _mm_add_epi32(a##_h, b##_h);
-
-    // wide sub
-#define JPEG_IDCT_WSUB_XMM(dst, a, b) \
-    __m128i dst##_l = _mm_sub_epi32(a##_l, b##_l); \
-    __m128i dst##_h = _mm_sub_epi32(a##_h, b##_h);
-
-    // butterfly a/b, add bias, then shift by `norm` and pack to 16-bit
-#define JPEG_IDCT_BFLY_XMM(dst0, dst1, a, b, bias, norm) { \
-    __m128i abiased_l = _mm_add_epi32(a##_l, bias); \
-    __m128i abiased_h = _mm_add_epi32(a##_h, bias); \
-    JPEG_IDCT_WADD_XMM(sum, abiased, b) \
-    JPEG_IDCT_WSUB_XMM(diff, abiased, b) \
-    dst0 = _mm_packs_epi32(_mm_srai_epi32(sum_l, norm), _mm_srai_epi32(sum_h, norm)); \
-    dst1 = _mm_packs_epi32(_mm_srai_epi32(diff_l, norm), _mm_srai_epi32(diff_h, norm)); \
-    }
-
-#define JPEG_IDCT_IDCT_PASS_XMM(bias, norm) { \
-    JPEG_IDCT_ROTATE_XMM(t2e, t3e, v2, v6, rot0_0, rot0_1) \
-    __m128i sum04 = _mm_add_epi16(v0, v4); \
-    __m128i dif04 = _mm_sub_epi16(v0, v4); \
-    JPEG_IDCT_WIDEN_XMM(t0e, sum04) \
-    JPEG_IDCT_WIDEN_XMM(t1e, dif04) \
-    JPEG_IDCT_WADD_XMM(x0, t0e, t3e) \
-    JPEG_IDCT_WSUB_XMM(x3, t0e, t3e) \
-    JPEG_IDCT_WADD_XMM(x1, t1e, t2e) \
-    JPEG_IDCT_WSUB_XMM(x2, t1e, t2e) \
-    JPEG_IDCT_ROTATE_XMM(y0o, y2o, v7, v3, rot2_0, rot2_1) \
-    JPEG_IDCT_ROTATE_XMM(y1o, y3o, v5, v1, rot3_0, rot3_1) \
-    __m128i sum17 = _mm_add_epi16(v1, v7); \
-    __m128i sum35 = _mm_add_epi16(v3, v5); \
-    JPEG_IDCT_ROTATE_XMM(y4o,y5o, sum17, sum35, rot1_0, rot1_1) \
-    JPEG_IDCT_WADD_XMM(x4, y0o, y4o) \
-    JPEG_IDCT_WADD_XMM(x5, y1o, y5o) \
-    JPEG_IDCT_WADD_XMM(x6, y2o, y5o) \
-    JPEG_IDCT_WADD_XMM(x7, y3o, y4o) \
-    JPEG_IDCT_BFLY_XMM(v0, v7, x0, x7, bias, norm) \
-    JPEG_IDCT_BFLY_XMM(v1, v6, x1, x6, bias, norm) \
-    JPEG_IDCT_BFLY_XMM(v2, v5, x2, x5, bias, norm) \
-    JPEG_IDCT_BFLY_XMM(v3, v4, x3, x4, bias, norm) \
-    }
-
-    static inline void interleave8(__m128i &a, __m128i &b)
+    // Table for rows 0,4 - constants are multiplied on cos_4_16
+    alignas(16)
+    s16 shortM128_tab_i_04 [] =
     {
-        __m128i c = a;
-        a = _mm_unpacklo_epi8(a, b);
-        b = _mm_unpackhi_epi8(c, b);
-    }
+        16384, 21407, 16384, 8867, 16384, -8867, 16384, -21407,
+        16384, 8867, -16384, -21407, -16384, 21407, 16384, -8867,
+        22725, 19266, 19266, -4520, 12873, -22725, 4520, -12873,
+        12873, 4520, -22725, -12873, 4520, 19266, 19266, -22725
+    };
 
-    static inline void interleave16(__m128i &a, __m128i &b)
+    // Table for rows 1,7 - constants are multiplied on cos_1_16
+    alignas(16)
+    s16 shortM128_tab_i_17 [] =
     {
-        __m128i c = a;
-        a = _mm_unpacklo_epi16(a, b);
-        b = _mm_unpackhi_epi16(c, b);
-    }
+        22725, 29692, 22725, 12299, 22725, -12299, 22725, -29692,
+        22725, 12299, -22725, -29692, -22725, 29692, 22725, -12299,
+        31521, 26722, 26722, -6270, 17855, -31521, 6270, -17855,
+        17855, 6270, -31521, -17855, 6270, 26722, 26722, -31521
+    };
+
+    // Table for rows 2,6 - constants are multiplied on cos_2_16
+    alignas(16)
+    s16 shortM128_tab_i_26 [] =
+    {
+        21407, 27969, 21407, 11585, 21407, -11585, 21407, -27969,
+        21407, 11585, -21407, -27969, -21407, 27969, 21407, -11585,
+        29692, 25172, 25172, -5906, 16819, -29692, 5906, -16819,
+        16819, 5906, -29692, -16819, 5906, 25172, 25172, -29692
+    };
+
+    // Table for rows 3,5 - constants are multiplied on cos_3_16
+    alignas(16)
+    s16 shortM128_tab_i_35 [] =
+    {
+        19266, 25172, 19266, 10426, 19266, -10426, 19266, -25172,
+        19266, 10426, -19266, -25172, -19266, 25172, 19266, -10426,
+        26722, 22654, 22654, -5315, 15137, -26722, 5315, -15137,
+        15137, 5315, -26722, -15137, 5315, 22654, 22654, -26722
+    };
 
     void idct_sse2(u8* dest, const s16* src, const s16* qt)
     {
@@ -281,47 +224,368 @@ namespace mango::jpeg
         __m128i v6 = _mm_mullo_epi16(data[6], qtable[6]);
         __m128i v7 = _mm_mullo_epi16(data[7], qtable[7]);
 
-        // IDCT columns
-        JPEG_IDCT_IDCT_PASS_XMM(colBias, 10)
+        __m128i r_xmm0, r_xmm4;
+        __m128i r_xmm1, r_xmm2, r_xmm3, r_xmm5, r_xmm6, r_xmm7;
 
-        // Transpose
-        interleave16(v0, v4);
-        interleave16(v2, v6);
-        interleave16(v1, v5);
-        interleave16(v3, v7);
+        __m128i row0, row1, row2, row3, row4, row5, row6, row7;
 
-        interleave16(v0, v2);
-        interleave16(v1, v3);
-        interleave16(v4, v6);
-        interleave16(v5, v7);
+        const __m128i* table04 = reinterpret_cast<const __m128i*>(shortM128_tab_i_04);
+        const __m128i* table26 = reinterpret_cast<const __m128i*>(shortM128_tab_i_26);
 
-        interleave16(v0, v1);
-        interleave16(v2, v3);
-        interleave16(v4, v5);
-        interleave16(v6, v7);
+        //Row 1 and Row 3
+        r_xmm0 = v0;
+        r_xmm4 = v2;
 
-        // IDCT rows
-        JPEG_IDCT_IDCT_PASS_XMM(rowBias, 17)
+        // *** Work on the data in xmm0
+        //low shuffle mask = 0xd8 = 11 01 10 00
+        //get short 2 and short 0 into ls 32-bits
+        r_xmm0 = _mm_shufflelo_epi16(r_xmm0, 0xd8);
 
-        // Pack to 8-bit integers, also saturates the result to 0..255
-        __m128i s0 = _mm_packus_epi16(v0, v1);
-        __m128i s1 = _mm_packus_epi16(v2, v3);
-        __m128i s2 = _mm_packus_epi16(v4, v5);
-        __m128i s3 = _mm_packus_epi16(v6, v7);
+        // copy short 2 and short 0 to all locations
+        r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0);
+            
+        // add to those copies
+        r_xmm1 = _mm_madd_epi16(r_xmm1, table04[0]);
 
-        // Transpose
-        interleave8(s0, s2);
-        interleave8(s1, s3);
-        interleave8(s0, s1);
-        interleave8(s2, s3);
-        interleave8(s0, s2);
-        interleave8(s1, s3);
+        // shuffle mask = 0x55 = 01 01 01 01
+        // copy short 3 and short 1 to all locations
+        r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
+            
+        // high shuffle mask = 0xd8 = 11 01 10 00
+        // get short 6 and short 4 into bit positions 64-95
+        // get short 7 and short 5 into bit positions 96-127
+        r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
+            
+        // add to short 3 and short 1
+        r_xmm3 = _mm_madd_epi16(r_xmm3, table04[2]);
+            
+        // shuffle mask = 0xaa = 10 10 10 10
+        // copy short 6 and short 4 to all locations
+        r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
+            
+        // shuffle mask = 0xaa = 11 11 11 11
+        // copy short 7 and short 5 to all locations
+        r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
+            
+        // add to short 6 and short 4
+        r_xmm2 = _mm_madd_epi16(r_xmm2, table04[1]);
 
-        // Store
+        // *** Work on the data in xmm4
+        // high shuffle mask = 0xd8 11 01 10 00
+        // get short 6 and short 4 into bit positions 64-95
+        // get short 7 and short 5 into bit positions 96-127
+        r_xmm4 = _mm_shufflehi_epi16(r_xmm4, 0xd8);
+
+        const __m128i round_inv_row = _mm_set_epi16(0, 2048, 0, 2048, 0, 2048, 0, 2048);
+        const __m128i tg1 = _mm_set1_epi16(13036);
+        const __m128i tg2 = _mm_set1_epi16(27146);
+        const __m128i tg3 = _mm_set1_epi16(-21746);
+        const __m128i cos4 = _mm_set1_epi16(-19195);
+
+        // (xmm0 short 2 and short 0 plus pSi) + some constants
+        r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
+        r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
+        r_xmm0 = _mm_madd_epi16(r_xmm0, table04[3]);
+        r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0);
+        r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
+        r_xmm5 = _mm_madd_epi16(r_xmm5, table26[0]);
+        r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
+        r_xmm2 = r_xmm1;
+        r_xmm7 = _mm_shuffle_epi32(r_xmm4, 0x55);
+        r_xmm6 = _mm_madd_epi16(r_xmm6, table26[1]);
+        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm3);
+        r_xmm4 = _mm_shuffle_epi32(r_xmm4, 0xff);
+        r_xmm2 = _mm_sub_epi32(r_xmm2, r_xmm0);
+        r_xmm7 = _mm_madd_epi16(r_xmm7, table26[2]);
+        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm1);
+        r_xmm2 = _mm_srai_epi32(r_xmm2, 12);
+        r_xmm5 = _mm_add_epi32(r_xmm5, round_inv_row);
+        r_xmm4 = _mm_madd_epi16(r_xmm4, table26[3]);
+        r_xmm5 = _mm_add_epi32(r_xmm5, r_xmm6);
+        r_xmm6 = r_xmm5;
+        r_xmm0 = _mm_srai_epi32(r_xmm0, 12);
+        r_xmm2 = _mm_shuffle_epi32(r_xmm2, 0x1b);
+        row0 = _mm_packs_epi32(r_xmm0, r_xmm2);
+        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
+        r_xmm6 = _mm_sub_epi32(r_xmm6, r_xmm4);
+        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm5);
+        r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
+        r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
+        r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
+        row2 = _mm_packs_epi32(r_xmm4, r_xmm6);
+
+        //Row 5 and row 7
+        r_xmm0 = v4;
+        r_xmm4 = v6;
+
+        r_xmm0 = _mm_shufflelo_epi16(r_xmm0, 0xd8);
+        r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0);
+        r_xmm1 = _mm_madd_epi16(r_xmm1, table04[0]);
+        r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
+        r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
+        r_xmm3 = _mm_madd_epi16(r_xmm3, table04[2]);
+        r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
+        r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
+        r_xmm2 = _mm_madd_epi16(r_xmm2, table04[1]);
+        r_xmm4 = _mm_shufflehi_epi16(r_xmm4, 0xd8);
+        r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
+        r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
+        r_xmm0 = _mm_madd_epi16(r_xmm0, table04[3]);
+        r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0);
+        r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
+        r_xmm5 = _mm_madd_epi16(r_xmm5, table26[0]);
+        r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
+        r_xmm2 = r_xmm1;
+        r_xmm7 = _mm_shuffle_epi32(r_xmm4, 0x55);
+        r_xmm6 = _mm_madd_epi16(r_xmm6, table26[1]);
+        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm3);
+        r_xmm4 = _mm_shuffle_epi32(r_xmm4, 0xff);
+        r_xmm2 = _mm_sub_epi32(r_xmm2, r_xmm0);
+        r_xmm7 = _mm_madd_epi16(r_xmm7, table26[2]);
+        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm1);
+        r_xmm2 = _mm_srai_epi32(r_xmm2, 12);
+        r_xmm5 = _mm_add_epi32(r_xmm5, round_inv_row);
+        r_xmm4 = _mm_madd_epi16(r_xmm4, table26[3]);
+        r_xmm5 = _mm_add_epi32(r_xmm5, r_xmm6);
+        r_xmm6 = r_xmm5;
+        r_xmm0 = _mm_srai_epi32(r_xmm0, 12);
+        r_xmm2 = _mm_shuffle_epi32(r_xmm2, 0x1b);
+        row4 = _mm_packs_epi32(r_xmm0, r_xmm2);
+        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
+        r_xmm6 = _mm_sub_epi32(r_xmm6, r_xmm4);
+        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm5);
+        r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
+        r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
+        r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
+        row6 = _mm_packs_epi32(r_xmm4, r_xmm6);
+
+        const __m128i* table35 = reinterpret_cast<const __m128i*>(shortM128_tab_i_35);
+        const __m128i* table17 = reinterpret_cast<const __m128i*>(shortM128_tab_i_17);
+
+        //Row 4 and row 2
+        r_xmm0 = v3;
+        r_xmm4 = v1;
+
+        r_xmm0 = _mm_shufflelo_epi16(r_xmm0, 0xd8);
+        r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0);
+        r_xmm1 = _mm_madd_epi16(r_xmm1, table35[0]);
+        r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
+        r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
+        r_xmm3 = _mm_madd_epi16(r_xmm3, table35[2]);
+        r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
+        r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
+        r_xmm2 = _mm_madd_epi16(r_xmm2, table35[1]);
+        r_xmm4 = _mm_shufflehi_epi16(r_xmm4, 0xd8);
+        r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
+        r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
+        r_xmm0 = _mm_madd_epi16(r_xmm0, table35[3]);
+        r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0);
+        r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
+        r_xmm5 = _mm_madd_epi16(r_xmm5, table17[0]);
+        r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
+        r_xmm2 = r_xmm1;
+        r_xmm7 = _mm_shuffle_epi32(r_xmm4, 0x55);
+        r_xmm6 = _mm_madd_epi16(r_xmm6, table17[1]);
+        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm3);
+        r_xmm4 = _mm_shuffle_epi32(r_xmm4, 0xff);
+        r_xmm2 = _mm_sub_epi32(r_xmm2, r_xmm0);
+        r_xmm7 = _mm_madd_epi16(r_xmm7, table17[2]);
+        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm1);
+        r_xmm2 = _mm_srai_epi32(r_xmm2, 12);
+        r_xmm5 = _mm_add_epi32(r_xmm5, round_inv_row);
+        r_xmm4 = _mm_madd_epi16(r_xmm4, table17[3]);
+        r_xmm5 = _mm_add_epi32(r_xmm5, r_xmm6);
+        r_xmm6 = r_xmm5;
+        r_xmm0 = _mm_srai_epi32(r_xmm0, 12);
+        r_xmm2 = _mm_shuffle_epi32(r_xmm2, 0x1b);
+        row3 = _mm_packs_epi32(r_xmm0, r_xmm2);
+        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
+        r_xmm6 = _mm_sub_epi32(r_xmm6, r_xmm4);
+        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm5);
+        r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
+        r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
+        r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
+        row1 = _mm_packs_epi32(r_xmm4, r_xmm6);
+
+        //Row 6 and row 8
+        r_xmm0 = v5;
+        r_xmm4 = v7;
+
+        r_xmm0 = _mm_shufflelo_epi16(r_xmm0, 0xd8);
+        r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0);
+        r_xmm1 = _mm_madd_epi16(r_xmm1, table35[0]);
+        r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
+        r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
+        r_xmm3 = _mm_madd_epi16(r_xmm3, table35[2]);
+        r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
+        r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
+        r_xmm2 = _mm_madd_epi16(r_xmm2, table35[1]);
+        r_xmm4 = _mm_shufflehi_epi16(r_xmm4, 0xd8);
+        r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
+        r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
+        r_xmm0 = _mm_madd_epi16(r_xmm0, table35[3]);
+        r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0);
+        r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
+        r_xmm5 = _mm_madd_epi16(r_xmm5, table17[0]);
+        r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
+        r_xmm2 = r_xmm1;
+        r_xmm7 = _mm_shuffle_epi32(r_xmm4, 0x55);
+        r_xmm6 = _mm_madd_epi16(r_xmm6, table17[1]);
+        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm3);
+        r_xmm4 = _mm_shuffle_epi32(r_xmm4, 0xff);
+        r_xmm2 = _mm_sub_epi32(r_xmm2, r_xmm0);
+        r_xmm7 = _mm_madd_epi16(r_xmm7, table17[2]);
+        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm1);
+        r_xmm2 = _mm_srai_epi32(r_xmm2, 12);
+        r_xmm5 = _mm_add_epi32(r_xmm5, round_inv_row);
+        r_xmm4 = _mm_madd_epi16(r_xmm4, table17[3]);
+        r_xmm5 = _mm_add_epi32(r_xmm5, r_xmm6);
+        r_xmm6 = r_xmm5;
+        r_xmm0 = _mm_srai_epi32(r_xmm0, 12);
+        r_xmm2 = _mm_shuffle_epi32(r_xmm2, 0x1b);
+        row5 = _mm_packs_epi32(r_xmm0, r_xmm2);
+        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
+        r_xmm6 = _mm_sub_epi32(r_xmm6, r_xmm4);
+        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm5);
+        r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
+        r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
+        r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
+        row7 = _mm_packs_epi32(r_xmm4, r_xmm6);
+
+        r_xmm1 = tg3;
+        r_xmm2 = row5;
+        r_xmm3 = row3;
+        r_xmm0 = _mm_mulhi_epi16(row5, r_xmm1);
+
+        r_xmm1 = _mm_mulhi_epi16(r_xmm1, r_xmm3);
+        r_xmm5 = tg1;
+        r_xmm6 = row7;
+        r_xmm4 = _mm_mulhi_epi16(row7, r_xmm5);
+
+        r_xmm0 = _mm_adds_epi16(r_xmm0, r_xmm2);
+        r_xmm5 = _mm_mulhi_epi16(r_xmm5, row1);
+        r_xmm1 = _mm_adds_epi16(r_xmm1, r_xmm3);
+        r_xmm7 = row6;
+
+        const __m128i one = _mm_set1_epi16(1);
+
+        r_xmm0 = _mm_adds_epi16(r_xmm0, r_xmm3);
+        r_xmm3 = tg2;
+        r_xmm2 = _mm_subs_epi16(r_xmm2, r_xmm1);
+        r_xmm7 = _mm_mulhi_epi16(r_xmm7, r_xmm3);
+        r_xmm1 = r_xmm0;
+        r_xmm3 = _mm_mulhi_epi16(r_xmm3, row2);
+        r_xmm5 = _mm_subs_epi16(r_xmm5, r_xmm6);
+        r_xmm4 = _mm_adds_epi16(r_xmm4, row1);
+        r_xmm0 = _mm_adds_epi16(r_xmm0, r_xmm4);
+        r_xmm0 = _mm_adds_epi16(r_xmm0, one);
+        r_xmm4 = _mm_subs_epi16(r_xmm4, r_xmm1);
+        r_xmm6 = r_xmm5;
+        r_xmm5 = _mm_subs_epi16(r_xmm5, r_xmm2);
+        r_xmm5 = _mm_adds_epi16(r_xmm5, one);
+        r_xmm6 = _mm_adds_epi16(r_xmm6, r_xmm2);
+
+        //Intermediate results, needed later
+        __m128i temp3, temp7;
+        temp7 = r_xmm0;
+
+        r_xmm1 = r_xmm4;
+        r_xmm0 = cos4;
+        r_xmm4 = _mm_adds_epi16(r_xmm4, r_xmm5);
+        r_xmm2 = cos4;
+        r_xmm2 = _mm_mulhi_epi16(r_xmm2, r_xmm4);
+
+        //Intermediate results, needed later
+        temp3 = r_xmm6;
+
+        r_xmm1 = _mm_subs_epi16(r_xmm1, r_xmm5);
+        r_xmm7 = _mm_adds_epi16(r_xmm7, row2);
+        r_xmm3 = _mm_subs_epi16(r_xmm3, row6);
+        r_xmm6 = row0;
+        r_xmm0 = _mm_mulhi_epi16(r_xmm0, r_xmm1);
+        r_xmm5 = row4;
+        r_xmm5 = _mm_adds_epi16(r_xmm5, r_xmm6);
+        r_xmm6 = _mm_subs_epi16(r_xmm6, row4);
+        r_xmm4 = _mm_adds_epi16(r_xmm4, r_xmm2);
+
+        r_xmm4 = _mm_or_si128(r_xmm4, one);
+        r_xmm0 = _mm_adds_epi16(r_xmm0, r_xmm1);
+        r_xmm0 = _mm_or_si128(r_xmm0, one);
+
+        const __m128i round_inv_col = _mm_set1_epi16(16);
+        const __m128i round_inv_corr = _mm_sub_epi16(round_inv_col, one);
+
+        r_xmm2 = r_xmm5;
+        r_xmm5 = _mm_adds_epi16(r_xmm5, r_xmm7);
+        r_xmm1 = r_xmm6;
+        r_xmm5 = _mm_adds_epi16(r_xmm5, round_inv_col);
+        r_xmm2 = _mm_subs_epi16(r_xmm2, r_xmm7);
+        r_xmm7 = temp7;
+        r_xmm6 = _mm_adds_epi16(r_xmm6, r_xmm3);
+        r_xmm6 = _mm_adds_epi16(r_xmm6, round_inv_col);
+        r_xmm7 = _mm_adds_epi16(r_xmm7, r_xmm5);
+        r_xmm7 = _mm_srai_epi16(r_xmm7, 5);
+        r_xmm1 = _mm_subs_epi16(r_xmm1, r_xmm3);
+        r_xmm1 = _mm_adds_epi16(r_xmm1, round_inv_corr);
+        r_xmm3 = r_xmm6;
+        r_xmm2 = _mm_adds_epi16(r_xmm2, round_inv_corr);
+        r_xmm6 = _mm_adds_epi16(r_xmm6, r_xmm4);
+
+        __m128i r0 = r_xmm7;
+
+        r_xmm6 = _mm_srai_epi16(r_xmm6, 5);
+        r_xmm7 = r_xmm1;
+        r_xmm1 = _mm_adds_epi16(r_xmm1, r_xmm0);
+
+        __m128i r1 = r_xmm6;
+
+        r_xmm1 = _mm_srai_epi16(r_xmm1, 5);
+        r_xmm6 = temp3;
+        r_xmm7 = _mm_subs_epi16(r_xmm7, r_xmm0);
+        r_xmm7 = _mm_srai_epi16(r_xmm7, 5);
+
+        __m128i r2 = r_xmm1;
+
+        r_xmm5 = _mm_subs_epi16(r_xmm5, temp7); 
+        r_xmm5 = _mm_srai_epi16(r_xmm5, 5);
+
+        __m128i r7 = r_xmm5;
+
+        r_xmm3 = _mm_subs_epi16(r_xmm3, r_xmm4);
+        r_xmm6 = _mm_adds_epi16(r_xmm6, r_xmm2);
+        r_xmm2 = _mm_subs_epi16(r_xmm2, temp3); 
+        r_xmm6 = _mm_srai_epi16(r_xmm6, 5);
+        r_xmm2 = _mm_srai_epi16(r_xmm2, 5);
+
+        __m128i r3 = r_xmm6;
+
+        r_xmm3 = _mm_srai_epi16(r_xmm3, 5);
+
+        __m128i r4 = r_xmm2;
+        __m128i r5 = r_xmm7;
+        __m128i r6 = r_xmm3;
+
+        const __m128i bias = _mm_set1_epi16(128);
+
+        r0 = _mm_add_epi16(r0, bias);
+        r1 = _mm_add_epi16(r1, bias);
+        r2 = _mm_add_epi16(r2, bias);
+        r3 = _mm_add_epi16(r3, bias);
+        r4 = _mm_add_epi16(r4, bias);
+        r5 = _mm_add_epi16(r5, bias);
+        r6 = _mm_add_epi16(r6, bias);
+        r7 = _mm_add_epi16(r7, bias);
+
+        __m128i s0 = _mm_packus_epi16(r0, r1);
+        __m128i s1 = _mm_packus_epi16(r2, r3);
+        __m128i s2 = _mm_packus_epi16(r4, r5);
+        __m128i s3 = _mm_packus_epi16(r6, r7);
+
+        // store
         __m128i* d = reinterpret_cast<__m128i *>(dest);
         _mm_storeu_si128(d + 0, s0);
-        _mm_storeu_si128(d + 1, s2);
-        _mm_storeu_si128(d + 2, s1);
+        _mm_storeu_si128(d + 1, s1);
+        _mm_storeu_si128(d + 2, s2);
         _mm_storeu_si128(d + 3, s3);
     }
 
