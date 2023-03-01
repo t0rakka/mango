@@ -162,7 +162,7 @@ namespace mango::jpeg
     static constexpr int JPEG_NUM_ARITH_TBLS     = 16;  // Arith-coding tables are numbered 0..15
     static constexpr int JPEG_DC_STAT_BINS       = 64;  // ...
     static constexpr int JPEG_AC_STAT_BINS       = 256; // ...
-    static constexpr int JPEG_HUFF_LOOKUP_BITS   = 8;   // Huffman look-ahead table log2 size
+    static constexpr int JPEG_HUFF_LOOKUP_BITS   = 12;  // Huffman look-ahead table log2 size
     static constexpr int JPEG_HUFF_LOOKUP_SIZE   = (1 << JPEG_HUFF_LOOKUP_BITS);
 
     // supported external data formats (encode from, decode to)
