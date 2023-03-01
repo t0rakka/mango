@@ -155,6 +155,7 @@ namespace mango::jpeg
         }
 
         buffer.remain -= size;
+
         return symbol;
     }
 
@@ -180,6 +181,54 @@ namespace mango::jpeg
 
             s += huffman.last_dc_value[block->pred];
             output[j] = s;
+        }
+    }
+
+    static
+    void huff_decode_ac_block(s16* output, const HuffTable* ac, BitBuffer& buffer, const u8* zigzagTable)
+    {
+        for (int i = 1; i < 64; )
+        {
+            buffer.ensure();
+
+            int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
+            int size = ac->lookupSize[index];
+
+            int symbol;
+
+            if (size <= JPEG_HUFF_LOOKUP_BITS)
+            {
+                symbol = ac->lookupValue[index];
+            }
+            else
+            {
+                DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
+                while (x > ac->maxcode[size])
+                {
+                    ++size;
+                }
+
+                DataType offset = (x >> (JPEG_REGISTER_BITS - size)) + ac->valueOffset[size];
+                symbol = ac->value[offset];
+            }
+
+            buffer.remain -= size;
+
+            int s = symbol;
+            int x = s & 15;
+
+            if (x)
+            {
+                i += (s >> 4);
+                s = buffer.receive(x);
+                output[zigzagTable[i++]] = s16(s);
+            }
+            else
+            {
+                if (s < 16)
+                    break;
+                i += 16;
+            }
         }
     }
 
@@ -211,23 +260,7 @@ namespace mango::jpeg
             output[0] = s16(s);
 
             // AC
-            for (int i = 1; i < 64; )
-            {
-                int s = ac->decode(buffer);
-                int x = s & 15;
-
-                if (x)
-                {
-                    i += (s >> 4);
-                    s = buffer.receive(x);
-                    output[zigzagTable[i++]] = s16(s);
-                }
-                else
-                {
-                    if (s < 16) break;
-                    i += 16;
-                }
-            }
+            huff_decode_ac_block(output, ac, buffer, zigzagTable);
 
             output += 64;
         }
