@@ -170,7 +170,7 @@ namespace mango::jpeg
     //
 
     // Table for rows 0,4 - constants are multiplied on cos_4_16
-    alignas(16)
+    alignas(16) static
     s16 shortM128_tab_i_04 [] =
     {
         16384, 21407, 16384, 8867, 16384, -8867, 16384, -21407,
@@ -180,7 +180,7 @@ namespace mango::jpeg
     };
 
     // Table for rows 1,7 - constants are multiplied on cos_1_16
-    alignas(16)
+    alignas(16) static
     s16 shortM128_tab_i_17 [] =
     {
         22725, 29692, 22725, 12299, 22725, -12299, 22725, -29692,
@@ -190,7 +190,7 @@ namespace mango::jpeg
     };
 
     // Table for rows 2,6 - constants are multiplied on cos_2_16
-    alignas(16)
+    alignas(16) static
     s16 shortM128_tab_i_26 [] =
     {
         21407, 27969, 21407, 11585, 21407, -11585, 21407, -27969,
@@ -200,7 +200,7 @@ namespace mango::jpeg
     };
 
     // Table for rows 3,5 - constants are multiplied on cos_3_16
-    alignas(16)
+    alignas(16) static
     s16 shortM128_tab_i_35 [] =
     {
         19266, 25172, 19266, 10426, 19266, -10426, 19266, -25172,
@@ -243,30 +243,30 @@ namespace mango::jpeg
 
         // copy short 2 and short 0 to all locations
         r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0);
-            
+
         // add to those copies
         r_xmm1 = _mm_madd_epi16(r_xmm1, table04[0]);
 
         // shuffle mask = 0x55 = 01 01 01 01
         // copy short 3 and short 1 to all locations
         r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
-            
+
         // high shuffle mask = 0xd8 = 11 01 10 00
         // get short 6 and short 4 into bit positions 64-95
         // get short 7 and short 5 into bit positions 96-127
         r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
-            
+
         // add to short 3 and short 1
         r_xmm3 = _mm_madd_epi16(r_xmm3, table04[2]);
-            
+
         // shuffle mask = 0xaa = 10 10 10 10
         // copy short 6 and short 4 to all locations
         r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
-            
+
         // shuffle mask = 0xaa = 11 11 11 11
         // copy short 7 and short 5 to all locations
         r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
-            
+
         // add to short 6 and short 4
         r_xmm2 = _mm_madd_epi16(r_xmm2, table04[1]);
 
@@ -541,14 +541,14 @@ namespace mango::jpeg
 
         __m128i r2 = r_xmm1;
 
-        r_xmm5 = _mm_subs_epi16(r_xmm5, temp7); 
+        r_xmm5 = _mm_subs_epi16(r_xmm5, temp7);
         r_xmm5 = _mm_srai_epi16(r_xmm5, 5);
 
         __m128i r7 = r_xmm5;
 
         r_xmm3 = _mm_subs_epi16(r_xmm3, r_xmm4);
         r_xmm6 = _mm_adds_epi16(r_xmm6, r_xmm2);
-        r_xmm2 = _mm_subs_epi16(r_xmm2, temp3); 
+        r_xmm2 = _mm_subs_epi16(r_xmm2, temp3);
         r_xmm6 = _mm_srai_epi16(r_xmm6, 5);
         r_xmm2 = _mm_srai_epi16(r_xmm2, 5);
 
@@ -627,25 +627,25 @@ namespace mango::jpeg
     static inline
     void dct_trn8(uint8x8_t& x, uint8x8_t& y)
     {
-        uint8x8x2_t t = vtrn_u8(x, y); 
-        x = t.val[0]; 
+        uint8x8x2_t t = vtrn_u8(x, y);
+        x = t.val[0];
         y = t.val[1];
     }
 
     static inline
     void dct_trn16(uint8x8_t& x, uint8x8_t& y)
     {
-        uint16x4x2_t t = vtrn_u16(vreinterpret_u16_u8(x), vreinterpret_u16_u8(y)); 
-        x = vreinterpret_u8_u16(t.val[0]); 
-        y = vreinterpret_u8_u16(t.val[1]); 
+        uint16x4x2_t t = vtrn_u16(vreinterpret_u16_u8(x), vreinterpret_u16_u8(y));
+        x = vreinterpret_u8_u16(t.val[0]);
+        y = vreinterpret_u8_u16(t.val[1]);
     }
 
     static inline
     void dct_trn32(uint8x8_t& x, uint8x8_t& y)
     {
-        uint32x2x2_t t = vtrn_u32(vreinterpret_u32_u8(x), vreinterpret_u32_u8(y)); 
-        x = vreinterpret_u8_u32(t.val[0]); 
-        y = vreinterpret_u8_u32(t.val[1]); 
+        uint32x2x2_t t = vtrn_u32(vreinterpret_u32_u8(x), vreinterpret_u32_u8(y));
+        x = vreinterpret_u8_u32(t.val[0]);
+        y = vreinterpret_u8_u32(t.val[1]);
     }
 
 #define dct_long_mul(out, inq, coeff) \
