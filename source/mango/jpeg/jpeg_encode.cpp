@@ -2763,7 +2763,7 @@ namespace
             {
                 auto ticket = tk.acquire();
 
-                queue.enqueue([this, &s, ticket, y, image, stride]
+                queue.enqueue([this, &s, ticket, y, N, image, stride]
                 {
                     Buffer buffer;
                     encodeSpan(buffer, y, std::min(vertical_mcus, y + N), image, stride);
