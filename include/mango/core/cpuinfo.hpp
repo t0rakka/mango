@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -63,6 +63,6 @@ namespace mango
         ARM_PMULL         = 0x0040000000000000,
     };
 
-	u64 getCPUFlags();
+    u64 getCPUFlags();
 
 } // namespace mango
