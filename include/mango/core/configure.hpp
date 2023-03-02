@@ -500,19 +500,27 @@
 
     #ifdef __BMI__
         // NOTE: slow on AMD Zen architecture (emulated in microcode)
-        #define MANGO_ENABLE_BMI
+        #define MANGO_ENABLE_BMI_32BIT
+        #if defined(MANGO_CPU_64BIT)
+            #define MANGO_ENABLE_BMI_64BIT
+        #endif
         #include <immintrin.h>
     #endif
 
     #ifdef __BMI2__
         // NOTE: slow on AMD Zen architecture (emulated in microcode)
-        #define MANGO_ENABLE_BMI2
+        #define MANGO_ENABLE_BMI2_32BIT
+        #if defined(MANGO_CPU_64BIT)
+            #define MANGO_ENABLE_BMI2_64BIT
+        #endif
         #include <immintrin.h>
     #endif
 
     #ifdef __LZCNT__
         #define MANGO_ENABLE_LZCNT_32BIT
-        #define MANGO_ENABLE_LZCNT_64BIT
+        #if defined(MANGO_CPU_64BIT)
+            #define MANGO_ENABLE_LZCNT_64BIT
+        #endif
         #include <immintrin.h>
     #endif
 
