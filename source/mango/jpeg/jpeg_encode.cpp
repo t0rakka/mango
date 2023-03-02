@@ -2752,7 +2752,8 @@ namespace
         writeMarkers(s);
 
         // encode MCUs
-        constexpr int N = 8;
+        int N = 8; // NOTE: DO NOT make this const or constexpr!
+                   // compiler's can't agree if it needs to be captured or not ( *sigh* )
 
         if (m_options.multithread)
         {
