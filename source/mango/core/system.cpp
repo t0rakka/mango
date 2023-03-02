@@ -110,7 +110,7 @@ namespace mango
         if (flags & INTEL_AVX512DQ) info << "AVX512DQ ";
         if (flags & INTEL_AVX512IFMA) info << "AVX512IFMA ";
         if (flags & INTEL_AVX512VBMI) info << "AVX512VBMI ";
-        if (flags & INTEL_AVX512IFMA) info << "AVX512FP16 ";
+        if (flags & INTEL_AVX512FP16) info << "AVX512FP16 ";
         if (flags & ARM_NEON) info << "NEON ";
         if (flags & ARM_CRC32) info << "CRC32 ";
         if (flags & ARM_AES) info << "AES ";
