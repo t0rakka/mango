@@ -19,24 +19,24 @@ namespace mango::filesystem
 {
 
     // -----------------------------------------------------------------
-	// FileHandle
+    // FileHandle
     // -----------------------------------------------------------------
 
-	struct FileHandle
-	{
-		FILE* m_file;
+    struct FileHandle
+    {
+        FILE* m_file;
         std::string m_filename;
 
         FileHandle(const std::string& filename, const char* mode)
             : m_file(std::fopen(filename.c_str(), mode))
             , m_filename(filename)
-		{
-		}
+        {
+        }
 
-		~FileHandle()
-		{
+        ~FileHandle()
+        {
             std::fclose(m_file);
-		}
+        }
 
         const std::string& filename() const
         {
@@ -44,36 +44,36 @@ namespace mango::filesystem
         }
 
         u64 size() const
-		{
+        {
             struct stat sb;
             int fd = ::fileno(m_file);
             ::fflush(m_file);
             ::fstat(fd, &sb);
             return sb.st_size;
-		}
+        }
 
-		u64 offset() const
-		{
-	        return ftello(m_file);
-		}
+        u64 offset() const
+        {
+            return ftello(m_file);
+        }
 
-		void seek(s64 distance, int method)
-		{
-	        fseeko(m_file, distance, method);
-		}
+        void seek(s64 distance, int method)
+        {
+            fseeko(m_file, distance, method);
+        }
 
-	    void read(void* dest, u64 size)
-	    {
-    	    size_t status = std::fread(dest, 1, size_t(size), m_file);
-	        MANGO_UNREFERENCED(status);
-	    }
+        void read(void* dest, u64 size)
+        {
+            size_t status = std::fread(dest, 1, size_t(size), m_file);
+            MANGO_UNREFERENCED(status);
+        }
 
-	    void write(const void* data, u64 size)
-	    {
-	        size_t status = std::fwrite(data, 1, size_t(size), m_file);
-	        MANGO_UNREFERENCED(status);
-	    }
-	};
+        void write(const void* data, u64 size)
+        {
+            size_t status = std::fwrite(data, 1, size_t(size), m_file);
+            MANGO_UNREFERENCED(status);
+        }
+    };
 
     // -----------------------------------------------------------------
     // FileStream
@@ -82,29 +82,29 @@ namespace mango::filesystem
     FileStream::FileStream(const std::string& filename, OpenMode openmode)
         : m_handle(nullptr)
     {
-		const char* mode;
+        const char* mode;
 
        	switch (openmode)
         {
-   	        case READ:
+            case READ:
                 mode = "rb";
                 break;
 
-   	        case WRITE:
-       	        mode = "wb";
-           	    break;
+            case WRITE:
+                mode = "wb";
+                break;
 
             default:
-	            MANGO_EXCEPTION("[FileStream] Incorrect OpenMode.");
+                MANGO_EXCEPTION("[FileStream] Incorrect OpenMode.");
                 break;
         }
 
-		m_handle = new FileHandle(filename, mode);
+        m_handle = new FileHandle(filename, mode);
     }
 
     FileStream::~FileStream()
     {
-		delete m_handle;
+        delete m_handle;
     }
 
     const std::string& FileStream::filename() const
@@ -114,12 +114,12 @@ namespace mango::filesystem
 
     u64 FileStream::size() const
     {
-		return m_handle->size();
+        return m_handle->size();
     }
 
     u64 FileStream::offset() const
     {
-		return m_handle->offset();
+        return m_handle->offset();
     }
 
     void FileStream::seek(s64 distance, SeekMode mode)
@@ -144,17 +144,17 @@ namespace mango::filesystem
                 MANGO_EXCEPTION("[FileStream] Invalid seek mode.");
         }
 
-		m_handle->seek(distance, method);
+        m_handle->seek(distance, method);
     }
 
     void FileStream::read(void* dest, u64 size)
     {
-		m_handle->read(dest, size);
+        m_handle->read(dest, size);
     }
 
     void FileStream::write(const void* data, u64 size)
     {
-		m_handle->write(data, size);
+        m_handle->write(data, size);
     }
 
 } // namespace mango::filesystem
