@@ -13,67 +13,67 @@ namespace mango::filesystem
     // FileHandle
     // -----------------------------------------------------------------
 
-	struct FileHandle
-	{
+    struct FileHandle
+    {
         std::string m_filename;
-		HANDLE m_handle;
+        HANDLE m_handle;
 
-		FileHandle(const std::string& filename, HANDLE handle)
-		    : m_filename(filename)
+        FileHandle(const std::string& filename, HANDLE handle)
+            : m_filename(filename)
             , m_handle(handle)
-		{
-		}
+        {
+        }
 
-		~FileHandle()
-		{
+        ~FileHandle()
+        {
             CloseHandle(m_handle);
-		}
+        }
 
         const std::string& filename() const
         {
             return m_filename;
         }
 
-	    u64 size() const
-	    {
-	        LARGE_INTEGER integer;
-	        BOOL status = GetFileSizeEx(m_handle, &integer);
+        u64 size() const
+        {
+            LARGE_INTEGER integer;
+            BOOL status = GetFileSizeEx(m_handle, &integer);
             return status ? u64(integer.QuadPart) : 0;
-	    }
+        }
 
-	    u64 offset() const
-	    {
-    	    LARGE_INTEGER dist = { 0 };
-	        LARGE_INTEGER result = { 0 };
-	        BOOL status = SetFilePointerEx(m_handle, dist, &result, FILE_CURRENT);
-			MANGO_UNREFERENCED(status);
-	        return result.QuadPart;
-	    }
+        u64 offset() const
+        {
+            LARGE_INTEGER dist = { 0 };
+            LARGE_INTEGER result = { 0 };
+            BOOL status = SetFilePointerEx(m_handle, dist, &result, FILE_CURRENT);
+            MANGO_UNREFERENCED(status);
+            return result.QuadPart;
+        }
 
-	    void seek(s64 distance, DWORD method)
-	    {
-	        LARGE_INTEGER dist;
-	        dist.QuadPart = distance;
-	        BOOL status = SetFilePointerEx(m_handle, dist, NULL, method);
-			MANGO_UNREFERENCED(status);
-	    }
+        void seek(s64 distance, DWORD method)
+        {
+            LARGE_INTEGER dist;
+            dist.QuadPart = distance;
+            BOOL status = SetFilePointerEx(m_handle, dist, NULL, method);
+            MANGO_UNREFERENCED(status);
+        }
 
-	    void read(void* dest, u64 size)
-	    {
-	        DWORD bytes_read;
-	        BOOL status = ReadFile(m_handle, dest, DWORD(size), &bytes_read, NULL);
-			MANGO_UNREFERENCED(status);
-			MANGO_UNREFERENCED(bytes_read);
-	    }
+        void read(void* dest, u64 size)
+        {
+            DWORD bytes_read;
+            BOOL status = ReadFile(m_handle, dest, DWORD(size), &bytes_read, NULL);
+            MANGO_UNREFERENCED(status);
+            MANGO_UNREFERENCED(bytes_read);
+        }
 
-	    void write(const void* data, u64 size)
-	    {
-	        DWORD bytes_written;
-	        BOOL status = WriteFile(m_handle, data, DWORD(size), &bytes_written, NULL);
-			MANGO_UNREFERENCED(status);
-			MANGO_UNREFERENCED(bytes_written);
-	    }
-	};
+        void write(const void* data, u64 size)
+        {
+            DWORD bytes_written;
+            BOOL status = WriteFile(m_handle, data, DWORD(size), &bytes_written, NULL);
+            MANGO_UNREFERENCED(status);
+            MANGO_UNREFERENCED(bytes_written);
+        }
+    };
 
     // -----------------------------------------------------------------
     // FileStream
@@ -108,12 +108,12 @@ namespace mango::filesystem
             MANGO_EXCEPTION("[FileStream] CreateFileW(\"%s\") failed.", filename.c_str());
         }
 
-		m_handle = new FileHandle(filename, handle);
+        m_handle = new FileHandle(filename, handle);
     }
 
     FileStream::~FileStream()
     {
-		delete m_handle;
+        delete m_handle;
     }
 
     const std::string& FileStream::filename() const
@@ -153,17 +153,17 @@ namespace mango::filesystem
                 MANGO_EXCEPTION("[FileStream] Invalid seek mode.");
         }
 
-		m_handle->seek(distance, method);
+        m_handle->seek(distance, method);
     }
 
     void FileStream::read(void* dest, u64 size)
     {
-		m_handle->read(dest, size);
+        m_handle->read(dest, size);
     }
 
     void FileStream::write(const void* data, u64 size)
     {
-		m_handle->write(data, size);
+        m_handle->write(data, size);
     }
 
 } // namespace mango::filesystem

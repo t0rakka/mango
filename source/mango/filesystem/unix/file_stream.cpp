@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
@@ -24,18 +25,18 @@ namespace mango::filesystem
 
     struct FileHandle
     {
-        FILE* m_file;
+        int m_file;
         std::string m_filename;
 
-        FileHandle(const std::string& filename, const char* mode)
-            : m_file(std::fopen(filename.c_str(), mode))
+        FileHandle(const std::string& filename, int oflag)
+            : m_file(::open(filename.c_str(), oflag))
             , m_filename(filename)
         {
         }
 
         ~FileHandle()
         {
-            std::fclose(m_file);
+            ::close(m_file);
         }
 
         const std::string& filename() const
@@ -46,31 +47,29 @@ namespace mango::filesystem
         u64 size() const
         {
             struct stat sb;
-            int fd = ::fileno(m_file);
-            ::fflush(m_file);
-            ::fstat(fd, &sb);
+            ::fstat(m_file, &sb);
             return sb.st_size;
         }
 
         u64 offset() const
         {
-            return ftello(m_file);
+            return u64(::lseek(m_file, 0, SEEK_CUR));
         }
 
         void seek(s64 distance, int method)
         {
-            fseeko(m_file, distance, method);
+            ::lseek(m_file, distance, method);
         }
 
         void read(void* dest, u64 size)
         {
-            size_t status = std::fread(dest, 1, size_t(size), m_file);
+            ssize_t status = ::read(m_file, dest, size_t(size));
             MANGO_UNREFERENCED(status);
         }
 
         void write(const void* data, u64 size)
         {
-            size_t status = std::fwrite(data, 1, size_t(size), m_file);
+            ssize_t status = ::write(m_file, data, size_t(size));
             MANGO_UNREFERENCED(status);
         }
     };
@@ -82,24 +81,20 @@ namespace mango::filesystem
     FileStream::FileStream(const std::string& filename, OpenMode openmode)
         : m_handle(nullptr)
     {
-        const char* mode;
-
        	switch (openmode)
         {
             case READ:
-                mode = "rb";
+                m_handle = new FileHandle(filename, O_RDONLY);
                 break;
 
             case WRITE:
-                mode = "wb";
+                m_handle = new FileHandle(filename, O_WRONLY | O_CREAT);
                 break;
 
             default:
                 MANGO_EXCEPTION("[FileStream] Incorrect OpenMode.");
                 break;
         }
-
-        m_handle = new FileHandle(filename, mode);
     }
 
     FileStream::~FileStream()
