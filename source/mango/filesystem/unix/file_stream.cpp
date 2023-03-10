@@ -28,8 +28,8 @@ namespace mango::filesystem
         int m_file;
         std::string m_filename;
 
-        FileHandle(const std::string& filename, int oflag)
-            : m_file(::open(filename.c_str(), oflag))
+        FileHandle(const std::string& filename, int flags)
+            : m_file(::open(filename.c_str(), flags, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH))
             , m_filename(filename)
         {
         }
