@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <algorithm>
 #include <mango/mango.hpp>
@@ -339,7 +339,7 @@ bool test6()
     ConcurrentQueue q;
     TicketQueue tk;
 
-    constexpr u64 icount = 1'000'000 / 10;
+    constexpr u64 icount = 1'000'000 / 1;
 
     for (u64 i = 0; i < icount; ++i)
     {
@@ -358,11 +358,32 @@ bool test6()
     q.wait();
     tk.wait();
 
-    printf("  acquire: %d\n", acquire_counter.load());
-    printf("  consume: %d\n", consume_counter.load());
+    int acquired = acquire_counter.load();
+    int consumed = consume_counter.load();
 
-    bool success = acquire_counter.load() == icount && consume_counter.load() == icount;
+    printf("  acquire: %d\n", acquired);
+    printf("  consume: %d\n", consumed);
+
+    bool success = (acquired == icount) && (consumed == icount);
     return success;
+}
+
+bool test7()
+{
+    ConcurrentQueue q;
+
+    // This test should take approximately one second
+    const size_t count = ThreadPool::getHardwareConcurrency() * 1000;
+
+    for (size_t i = 0; i < count; ++i)
+    {
+        q.enqueue([]
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        });
+    }
+
+    return true;
 }
 
 int main(int argc, char* argv[])
@@ -384,6 +405,7 @@ int main(int argc, char* argv[])
         test4,
         test5,
         test6,
+        test7,
     };
 
     for (int i = 0; i < count; ++i)
