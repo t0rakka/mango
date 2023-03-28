@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/hash.hpp>
 #include <mango/core/exception.hpp>
@@ -25,7 +25,7 @@ namespace
 
     void arm_sha2_update(u32* state, const u8* data, int count)
     {
-        static const uint32_t K[] =
+        static const u32 K [] =
         {
             0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5,
             0x3956C25B, 0x59F111F1, 0x923F82A4, 0xAB1C5ED5,
@@ -577,6 +577,7 @@ namespace mango
     SHA2 sha2(ConstMemory memory)
     {
         SHA2 hash;
+
         hash.data[0] = 0x6a09e667;
         hash.data[1] = 0xbb67ae85;
         hash.data[2] = 0x3c6ef372;

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/aes.hpp>
 #include <mango/core/endian.hpp>
@@ -272,9 +272,9 @@ void arm_ecb128_encrypt(u8* output, const u8* input, size_t length, const u8* ke
         v = vaesmcq_u8(vaeseq_u8(v, k8));
         v = veorq_u8(vaeseq_u8(v, k9), k10);
         vst1q_u8(output, v);
-		input += 16;
+        input += 16;
         output += 16;
-		length -= 16;
+        length -= 16;
     }
 }
 
@@ -310,9 +310,9 @@ void arm_ecb192_encrypt(u8* output, const u8* input, size_t length, const u8* ke
         v = vaesmcq_u8(vaeseq_u8(v, k10));
         v = veorq_u8(vaeseq_u8(v, k11), k12);
         vst1q_u8(output, v);
-		input += 16;
+        input += 16;
         output += 16;
-		length -= 16;
+        length -= 16;
     }
 }
 
@@ -352,9 +352,9 @@ void arm_ecb256_encrypt(u8* output, const u8* input, size_t length, const u8* ke
         v = vaesmcq_u8(vaeseq_u8(v, k12));
         v = veorq_u8(vaeseq_u8(v, k13), k14);
         vst1q_u8(output, v);
-		input += 16;
+        input += 16;
         output += 16;
-		length -= 16;
+        length -= 16;
     }
 }
 
@@ -406,9 +406,9 @@ void arm_ecb128_decrypt(u8* output, const u8* input, size_t length, const u8* ke
         v = vaesimcq_u8(vaesdq_u8(v, k8));
         v = veorq_u8(vaesdq_u8(v, k9), k10);
         vst1q_u8(output, v);
-		input += 16;
+        input += 16;
         output += 16;
-		length -= 16;
+        length -= 16;
     }
 }
 
@@ -444,9 +444,9 @@ void arm_ecb192_decrypt(u8* output, const u8* input, size_t length, const u8* ke
         v = vaesimcq_u8(vaesdq_u8(v, k10));
         v = veorq_u8(vaesdq_u8(v, k11), k12);
         vst1q_u8(output, v);
-		input += 16;
+        input += 16;
         output += 16;
-		length -= 16;
+        length -= 16;
     }
 }
 
@@ -486,9 +486,9 @@ void arm_ecb256_decrypt(u8* output, const u8* input, size_t length, const u8* ke
         v = vaesimcq_u8(vaesdq_u8(v, k12));
         v = veorq_u8(vaesdq_u8(v, k13), k14);
         vst1q_u8(output, v);
-		input += 16;
+        input += 16;
         output += 16;
-		length -= 16;
+        length -= 16;
     }
 }
 
@@ -541,9 +541,9 @@ void arm_cbc128_encrypt(u8* output, const u8* input, size_t length, uint8x16_t i
         v = vaesmcq_u8(vaeseq_u8(v, k8));
         v = veorq_u8(vaeseq_u8(v, k9), k10);
         vst1q_u8(output, v);
-		input += 16;
+        input += 16;
         output += 16;
-		length -= 16;
+        length -= 16;
     }
 }
 
@@ -580,9 +580,9 @@ void arm_cbc192_encrypt(u8* output, const u8* input, size_t length, uint8x16_t i
         v = vaesmcq_u8(vaeseq_u8(v, k10));
         v = veorq_u8(vaeseq_u8(v, k11), k12);
         vst1q_u8(output, v);
-		input += 16;
+        input += 16;
         output += 16;
-		length -= 16;
+        length -= 16;
     }
 }
 
@@ -623,9 +623,9 @@ void arm_cbc256_encrypt(u8* output, const u8* input, size_t length, uint8x16_t i
         v = vaesmcq_u8(vaeseq_u8(v, k12));
         v = veorq_u8(vaeseq_u8(v, k13), k14);
         vst1q_u8(output, v);
-		input += 16;
+        input += 16;
         output += 16;
-		length -= 16;
+        length -= 16;
     }
 }
 
@@ -679,9 +679,9 @@ void arm_cbc128_decrypt(u8* output, const u8* input, size_t length, uint8x16_t i
         v = veorq_u8(vaesdq_u8(v, k9), k10);
         v = veorq_u8(v, iv);
         vst1q_u8(output, v);
-		input += 16;
+        input += 16;
         output += 16;
-		length -= 16;
+        length -= 16;
     }
 }
 
@@ -718,9 +718,9 @@ void arm_cbc192_decrypt(u8* output, const u8* input, size_t length, uint8x16_t i
         v = veorq_u8(vaesdq_u8(v, k11), k12);
         v = veorq_u8(v, iv);
         vst1q_u8(output, v);
-		input += 16;
+        input += 16;
         output += 16;
-		length -= 16;
+        length -= 16;
     }
 }
 
@@ -761,9 +761,9 @@ void arm_cbc256_decrypt(u8* output, const u8* input, size_t length, uint8x16_t i
         v = veorq_u8(vaesdq_u8(v, k13), k14);
         v = veorq_u8(v, iv);
         vst1q_u8(output, v);
-		input += 16;
+        input += 16;
         output += 16;
-		length -= 16;
+        length -= 16;
     }
 }
 
@@ -801,10 +801,10 @@ template <int R>
 inline __m128i aesni_key128_expand(__m128i key)
 {
     __m128i temp = _mm_aeskeygenassist_si128(key, R);
-	key = _mm_xor_si128(key, _mm_slli_si128(key, 4));
-	key = _mm_xor_si128(key, _mm_slli_si128(key, 4));
-	key = _mm_xor_si128(key, _mm_slli_si128(key, 4));
-	return _mm_xor_si128(key, _mm_shuffle_epi32(temp, 0xff));
+    key = _mm_xor_si128(key, _mm_slli_si128(key, 4));
+    key = _mm_xor_si128(key, _mm_slli_si128(key, 4));
+    key = _mm_xor_si128(key, _mm_slli_si128(key, 4));
+    return _mm_xor_si128(key, _mm_shuffle_epi32(temp, 0xff));
 }
 
 template <int R>
@@ -836,16 +836,16 @@ void aesni_key128_expand(__m128i* schedule, const u8* key)
 {
     // encryption schedule
     schedule[0]  = _mm_loadu_si128(reinterpret_cast<const __m128i *> (key));
-	schedule[1]  = aesni_key128_expand<0x01>(schedule[0]);
-	schedule[2]  = aesni_key128_expand<0x02>(schedule[1]);
-	schedule[3]  = aesni_key128_expand<0x04>(schedule[2]);
-	schedule[4]  = aesni_key128_expand<0x08>(schedule[3]);
-	schedule[5]  = aesni_key128_expand<0x10>(schedule[4]);
-	schedule[6]  = aesni_key128_expand<0x20>(schedule[5]);
-	schedule[7]  = aesni_key128_expand<0x40>(schedule[6]);
-	schedule[8]  = aesni_key128_expand<0x80>(schedule[7]);
-	schedule[9]  = aesni_key128_expand<0x1b>(schedule[8]);
-	schedule[10] = aesni_key128_expand<0x36>(schedule[9]);
+    schedule[1]  = aesni_key128_expand<0x01>(schedule[0]);
+    schedule[2]  = aesni_key128_expand<0x02>(schedule[1]);
+    schedule[3]  = aesni_key128_expand<0x04>(schedule[2]);
+    schedule[4]  = aesni_key128_expand<0x08>(schedule[3]);
+    schedule[5]  = aesni_key128_expand<0x10>(schedule[4]);
+    schedule[6]  = aesni_key128_expand<0x20>(schedule[5]);
+    schedule[7]  = aesni_key128_expand<0x40>(schedule[6]);
+    schedule[8]  = aesni_key128_expand<0x80>(schedule[7]);
+    schedule[9]  = aesni_key128_expand<0x1b>(schedule[8]);
+    schedule[10] = aesni_key128_expand<0x36>(schedule[9]);
 
     // decryption schedule
     schedule[11] = _mm_aesimc_si128(schedule[9]);
