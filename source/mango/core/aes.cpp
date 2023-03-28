@@ -1738,33 +1738,49 @@ void AES::ccm_block_decrypt(Memory output, ConstMemory input, ConstMemory associ
 
 void AES::ecb_encrypt(u8* output, const u8* input, size_t length)
 {
-    const size_t blocks = length / 16;
-    const size_t left = length % 16;
-    ecb_block_encrypt(output, input, blocks * 16);
-    if (left)
+    size_t blocks = length / 16;
+
+    if (blocks)
+    {
+        size_t bytes = blocks * 16;
+        ecb_block_encrypt(output, input, bytes);
+        output += bytes;
+        input += bytes;
+        length -= bytes;
+    }
+
+    if (length)
     {
         u8 temp[16] = { 0 };
-        std::memcpy(temp, input + blocks * 16, left);
+        std::memcpy(temp, input, length);
 
         u8 result[16];
         ecb_block_encrypt(result, temp, 16);
-        std::memcpy(output + blocks * 16, result, left);
+        std::memcpy(output, result, length);
     }
 }
 
 void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
 {
-    const size_t blocks = length / 16;
-    const size_t left = length % 16;
-    ecb_block_decrypt(output, input, blocks * 16);
-    if (left)
+    size_t blocks = length / 16;
+
+    if (blocks)
+    {
+        size_t bytes = blocks * 16;
+        ecb_block_decrypt(output, input, bytes);
+        output += bytes;
+        input += bytes;
+        length -= bytes;
+    }
+
+    if (length)
     {
         u8 temp[16] = { 0 };
-        std::memcpy(temp, input + blocks * 16, left);
+        std::memcpy(temp, input, length);
 
         u8 result[16];
         ecb_block_decrypt(result, temp, 16);
-        std::memcpy(output + blocks * 16, result, left);
+        std::memcpy(output, result, length);
     }
 }
 
