@@ -2063,7 +2063,7 @@ namespace mango::jpeg
                     DecodeState state = decodeState;
                     state.buffer.ptr = p;
 
-                    const int left = std::min(restartInterval, mcus - i);
+                    const int end = i + std::min(restartInterval, mcus - i);
 
                     const int xmcu_last = xmcu - 1;
                     const int ymcu_last = ymcu - 1;
@@ -2073,14 +2073,12 @@ namespace mango::jpeg
                     const int xblock_last = xclip ? xclip : xblock;
                     const int yblock_last = yclip ? yclip : yblock;
 
-                    for (int j = 0; j < left; ++j)
+                    for (int j = i; j < end; ++j)
                     {
-                        int n = i + j;
-
                         state.decode(data, &state);
 
-                        int x = n % xmcu;
-                        int y = n / xmcu;
+                        int x = j % xmcu;
+                        int y = j / xmcu;
                         u8* dest = image + y * ystride + x * xstride;
 
                         int width = x == xmcu_last ? xblock_last : xblock;
