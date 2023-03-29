@@ -1111,6 +1111,84 @@ void aesni_ecb128_decrypt(u8* output, const u8* input, size_t length, const __m1
     const __m128i k18 = schedule[18];
     const __m128i k19 = schedule[19];
 
+#if 0
+
+    // TODO: Profile
+
+    while (length >= 64)
+    {
+        __m128i data0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input +  0));
+        __m128i data1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input + 16));
+        __m128i data2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input + 32));
+        __m128i data3 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input + 48));
+
+        data0 = _mm_xor_si128(data0, k10);
+        data1 = _mm_xor_si128(data1, k10);
+        data2 = _mm_xor_si128(data2, k10);
+        data3 = _mm_xor_si128(data3, k10);
+
+        data0 = _mm_aesdec_si128(data0, k11);
+        data1 = _mm_aesdec_si128(data1, k11);
+        data2 = _mm_aesdec_si128(data2, k11);
+        data3 = _mm_aesdec_si128(data3, k11);
+
+        data0 = _mm_aesdec_si128(data0, k12);
+        data1 = _mm_aesdec_si128(data1, k12);
+        data2 = _mm_aesdec_si128(data2, k12);
+        data3 = _mm_aesdec_si128(data3, k12);
+
+        data0 = _mm_aesdec_si128(data0, k13);
+        data1 = _mm_aesdec_si128(data1, k13);
+        data2 = _mm_aesdec_si128(data2, k13);
+        data3 = _mm_aesdec_si128(data3, k13);
+
+        data0 = _mm_aesdec_si128(data0, k14);
+        data1 = _mm_aesdec_si128(data1, k14);
+        data2 = _mm_aesdec_si128(data2, k14);
+        data3 = _mm_aesdec_si128(data3, k14);
+
+        data0 = _mm_aesdec_si128(data0, k15);
+        data1 = _mm_aesdec_si128(data1, k15);
+        data2 = _mm_aesdec_si128(data2, k15);
+        data3 = _mm_aesdec_si128(data3, k15);
+
+        data0 = _mm_aesdec_si128(data0, k16);
+        data1 = _mm_aesdec_si128(data1, k16);
+        data2 = _mm_aesdec_si128(data2, k16);
+        data3 = _mm_aesdec_si128(data3, k16);
+
+        data0 = _mm_aesdec_si128(data0, k17);
+        data1 = _mm_aesdec_si128(data1, k17);
+        data2 = _mm_aesdec_si128(data2, k17);
+        data3 = _mm_aesdec_si128(data3, k17);
+
+        data0 = _mm_aesdec_si128(data0, k18);
+        data1 = _mm_aesdec_si128(data1, k18);
+        data2 = _mm_aesdec_si128(data2, k18);
+        data3 = _mm_aesdec_si128(data3, k18);
+
+        data0 = _mm_aesdec_si128(data0, k19);
+        data1 = _mm_aesdec_si128(data1, k19);
+        data2 = _mm_aesdec_si128(data2, k19);
+        data3 = _mm_aesdec_si128(data3, k19);
+
+        data0 = _mm_aesdeclast_si128(data0, k0);
+        data1 = _mm_aesdeclast_si128(data1, k0);
+        data2 = _mm_aesdeclast_si128(data2, k0);
+        data3 = _mm_aesdeclast_si128(data3, k0);
+
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output +  0), data0);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output + 16), data1);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output + 32), data2);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output + 48), data3);
+
+        output += 64;
+        input += 64;
+        length -= 64;
+    }
+
+#endif
+
     while (length >= 16)
     {
         __m128i data = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input));
