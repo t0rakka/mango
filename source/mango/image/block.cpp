@@ -1366,12 +1366,12 @@ namespace mango::image
 
     int TextureCompression::getBlocksX(int width) const
     {
-        return ceil_div(width, this->width);
+        return div_ceil(width, this->width);
     }
 
     int TextureCompression::getBlocksY(int height) const
     {
-        return ceil_div(height, this->height);
+        return div_ceil(height, this->height);
     }
 
     int TextureCompression::getBlockCount(int width, int height) const

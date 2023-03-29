@@ -286,6 +286,9 @@ namespace
 
         std::string info;
 
+        u64 restart_offset = 0;
+        std::vector<u32> restart_offsets;
+
         using ReadFunc = void (*)(s16*, const u8*, size_t, int, int);
 
         void (*read_8x8) (s16* block, const u8* input, size_t stride, int rows, int cols);
@@ -296,7 +299,7 @@ namespace
         jpegEncoder(const Surface& surface, SampleType sample, const ImageEncodeOptions& options);
         ~jpegEncoder();
 
-        void writeMarkers(BigEndianStream& p);
+        void writeMarkers(BigEndianStream& p, int interval);
 
         void encodeInterval(Buffer& buffer, const u8* src, size_t stride, ReadFunc read_func, int rows);
         void encodeSpan(Buffer& buffer, int y0, int y1, const u8* image, size_t stride);
@@ -2562,7 +2565,7 @@ namespace
     {
     }
 
-    void jpegEncoder::writeMarkers(BigEndianStream& p)
+    void jpegEncoder::writeMarkers(BigEndianStream& p, int interval)
     {
         // Start of image marker
         p.write16(MARKER_SOI);
@@ -2586,6 +2589,24 @@ namespace
                 p.write8(u8(iccSegments));
                 p.write(m_options.icc.slice(i * iccMaxSegmentSize), size);
             }
+        }
+
+        // MANGO marker
+        const u8 magic_mango[] = { 0x4d, 0x61, 0x6e, 0x67, 0x6f }; // 'Mango'
+
+        int intervals = div_ceil(vertical_mcus, interval);
+
+        p.write16(MARKER_APP14);
+        p.write16(11 + intervals * sizeof(u32));
+        p.write(magic_mango, 5);
+        p.write32(interval);
+
+        restart_offset = p.offset();
+
+        for (int i = 0; i < intervals; ++i)
+        {
+            // reserve space for restart offsets
+            p.write32(0);
         }
 
         // Quantization table marker
@@ -2748,12 +2769,11 @@ namespace
 
         BigEndianStream s(stream);
 
-        // writing marker data
-        writeMarkers(s);
-
         // encode MCUs
-        int N = 8; // NOTE: DO NOT make this const or constexpr!
-                   // compiler's can't agree if it needs to be captured or not ( *sigh* )
+        int N = 8;
+
+        // writing marker data
+        writeMarkers(s, N);
 
         if (m_options.multithread)
         {
@@ -2764,7 +2784,7 @@ namespace
             {
                 auto ticket = tk.acquire();
 
-                queue.enqueue([this, &s, ticket, y, N, image, stride]
+                queue.enqueue([this, &s, ticket, N, y, image, stride]
                 {
                     Buffer buffer;
                     encodeSpan(buffer, y, std::min(vertical_mcus, y + N), image, stride);
@@ -2772,11 +2792,15 @@ namespace
                     Memory memory = buffer.acquire();
 
                     // tickets are consumed in acquired order
-                    ticket.consume([&s, memory]
+                    ticket.consume([this, &s, memory]
                     {
                         // write encoded data
                         s.write(memory);
                         Buffer::release(memory);
+
+                        // store offset
+                        u64 offset = s.offset();
+                        restart_offsets.push_back(offset);
                     });
                 });
 
@@ -2799,12 +2823,23 @@ namespace
                 // write encoded data
                 s.write(buffer);
 
+                // store offset
+                u64 offset = s.offset();
+                restart_offsets.push_back(offset);
+
                 image += stride * mcu_height * N;
             }
         }
 
         // EOI marker
         s.write16(MARKER_EOI);
+
+        // patch restart offsets
+        s.seek(restart_offset, Stream::BEGIN);
+        for (u32 offset : restart_offsets)
+        {
+            s.write32(offset);
+        }
 
         ImageEncodeStatus status;
         status.info = info;

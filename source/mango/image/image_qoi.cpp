@@ -498,8 +498,8 @@ namespace
 
         void decodeTiles(const Surface& dest)
         {
-            const int xs = ceil_div(m_header.width, m_xtile);
-            const int ys = ceil_div(m_header.height, m_ytile);
+            const int xs = div_ceil(m_header.width, m_xtile);
+            const int ys = div_ceil(m_header.height, m_ytile);
 
             ConcurrentQueue q;
 
@@ -549,8 +549,8 @@ namespace
 
         const int width = surface.width;
         const int height = surface.height;
-        const int xs = ceil_div(width, xtile);
-        const int ys = ceil_div(height, ytile);
+        const int xs = div_ceil(width, xtile);
+        const int ys = div_ceil(height, ytile);
 
         Surface source = surface;
         std::unique_ptr<u8[]> temp;

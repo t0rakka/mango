@@ -993,8 +993,8 @@ namespace
         constexpr int block_height = 4;
         constexpr int quad_width = block_width / 2;
         constexpr int quad_height = block_height / 2;
-        const u32 xblocks = ceil_div(width, block_width);
-        const u32 yblocks = ceil_div(height, block_height);
+        const u32 xblocks = div_ceil(width, block_width);
+        const u32 yblocks = div_ceil(height, block_height);
 
         for (u32 y0 = 0; y0 < yblocks; ++y0)
         {
@@ -1088,8 +1088,8 @@ namespace
         const u32 block_height = 4;
         const u32 quad_width = block_width / 2;
         const u32 quad_height = block_height / 2;
-        const u32 xblocks = ceil_div(width, block_width);
-        const u32 yblocks = ceil_div(height, block_height);
+        const u32 xblocks = div_ceil(width, block_width);
+        const u32 yblocks = div_ceil(height, block_height);
 
         for (u32 y0 = 0; y0 < yblocks; ++y0)
         {

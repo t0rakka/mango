@@ -307,6 +307,7 @@ namespace mango::jpeg
         BitBuffer buffer;
         Huffman huffman;
         Arithmetic arithmetic;
+        bool is_arithmetic = false;
 
         DecodeBlock block[JPEG_MAX_BLOCKS_IN_MCU];
         int blocks;
@@ -318,6 +319,20 @@ namespace mango::jpeg
         int spectralEnd;
         int successiveHigh;
         int successiveLow;
+
+        void restart()
+        {
+            if (is_arithmetic)
+            {
+                arithmetic.restart(buffer);
+            }
+            else
+            {
+                huffman.restart();
+            }
+
+            buffer.restart();
+        }
 
         void (*decode)(s16* output, DecodeState* state);
     };
@@ -356,10 +371,15 @@ namespace mango::jpeg
     class Parser
     {
     protected:
+        ConstMemory memory;
+
         QuantTable quantTable[JPEG_MAX_COMPS_IN_SCAN];
 
         AlignedStorage<s16> quantTableVector;
         AlignedStorage<s16> blockVector;
+
+        int m_decode_interval;
+        std::vector<u32> m_restart_offsets;
 
         std::vector<Frame> frames;
         Frame* scanFrame = nullptr; // current Progressive AC scan frame
@@ -389,7 +409,6 @@ namespace mango::jpeg
         bool is_baseline = true;
         bool is_progressive = false;
         bool is_multiscan = false;
-        bool is_arithmetic = false;
         bool is_lossless = false;
         bool is_differential = false;
 
@@ -427,7 +446,6 @@ namespace mango::jpeg
 
         void parse(ConstMemory memory, bool decode);
 
-        void restart();
         bool handleRestart();
 
         void decodeLossless();

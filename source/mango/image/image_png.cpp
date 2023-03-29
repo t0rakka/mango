@@ -3545,7 +3545,7 @@ namespace
 
         Buffer buffer(bytes_per_scan * surface.height);
 
-        const int N = ceil_div(surface.height, segment_height);
+        const int N = div_ceil(surface.height, segment_height);
         const int level = math::clamp(options.compression, 0, 9);
 
         u32 cumulative_adler = 1;

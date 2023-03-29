@@ -296,14 +296,14 @@ namespace mango
     }
 
     static constexpr
-    int floor_div(int value, int multiple)
+    int div_floor(int value, int multiple)
     {
         // plain division
         return value / multiple;
     }
 
     static constexpr
-    int ceil_div(int value, int multiple)
+    int div_ceil(int value, int multiple)
     {
         // round to next multiple
         return (value + multiple - 1) / multiple;

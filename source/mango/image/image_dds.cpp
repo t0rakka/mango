@@ -1084,7 +1084,7 @@ namespace
             }
             else
             {
-                const int bytesPerPixel = ceil_div(pixelFormat.format.bits, 8);
+                const int bytesPerPixel = div_ceil(pixelFormat.format.bits, 8);
                 pitch = xsize * bytesPerPixel;
             }
 
