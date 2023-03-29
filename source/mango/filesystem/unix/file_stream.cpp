@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #if __ANDROID_API__ < __ANDROID_API_N__
@@ -88,7 +88,7 @@ namespace mango::filesystem
                 break;
 
             case WRITE:
-                m_handle = new FileHandle(filename, O_WRONLY | O_CREAT);
+                m_handle = new FileHandle(filename, O_WRONLY | O_CREAT | O_TRUNC);
                 break;
 
             default:
