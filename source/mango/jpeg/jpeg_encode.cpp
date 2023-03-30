@@ -2366,14 +2366,14 @@ namespace
 
             case JPEG_U8_BGR:
 #if defined(MANGO_ENABLE_SSE4_1)
-				if (flags & INTEL_SSSE3)
+                if (flags & INTEL_SSSE3)
                 {
                     read_8x8 = read_bgr_format_ssse3;
                     sampler_name = "BGR 8x8 SSSE3";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
-				if (flags & ARM_NEON)
+                if (flags & ARM_NEON)
                 {
                     read_8x8 = read_bgr_format_neon;
                     sampler_name = "BGR 8x8 NEON";

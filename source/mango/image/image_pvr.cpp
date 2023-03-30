@@ -639,7 +639,7 @@ namespace
 
             ImageDecodeStatus status;
 
-			const ImageHeader& header = m_pvr_header.header;
+            const ImageHeader& header = m_pvr_header.header;
             if (!header.success)
             {
                 status.setError(header.info);

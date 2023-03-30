@@ -79,7 +79,7 @@ Let's take a look at example function:
 
     float32x4 test(float32x4 a, float32x4 b, float32x4 c)
     {
-  	    return a.wwww * b.xxyy + (c.xxzz - a).zzzz * b.w;
+        return a.wwww * b.xxyy + (c.xxzz - a).zzzz * b.w;
     }
 
 gcc 5.4 will generate the following instructions for ARM64:

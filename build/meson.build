@@ -392,7 +392,7 @@ external_lzma_headers = files(
     '../source/external/lzma/Compiler.h',
     '../source/external/lzma/CpuArch.h',
     '../source/external/lzma/LzFind.h',
-	'../source/external/lzma/LzFindMt.h',
+    '../source/external/lzma/LzFindMt.h',
     '../source/external/lzma/LzHash.h',
     '../source/external/lzma/Lzma2Dec.h',
     '../source/external/lzma/Lzma2Enc.h',
@@ -403,14 +403,14 @@ external_lzma_headers = files(
     '../source/external/lzma/Ppmd7.h',
     '../source/external/lzma/Ppmd8.h',
     '../source/external/lzma/Precomp.h',
-	'../source/external/lzma/Threads.h'
+    '../source/external/lzma/Threads.h'
 )
 
 external_lzma_sources = files(
     '../source/external/lzma/Alloc.c',
     '../source/external/lzma/CpuArch.c',
     '../source/external/lzma/LzFind.c',
-	'../source/external/lzma/LzFindMt.c',
+    '../source/external/lzma/LzFindMt.c',
     '../source/external/lzma/LzFindOpt.c',
     '../source/external/lzma/Lzma2Dec.c',
     '../source/external/lzma/Lzma2Enc.c',
@@ -423,7 +423,7 @@ external_lzma_sources = files(
     '../source/external/lzma/Ppmd8.c',
     '../source/external/lzma/Ppmd8Dec.c',
     '../source/external/lzma/Ppmd8Enc.c',
-	'../source/external/lzma/Threads.c'
+    '../source/external/lzma/Threads.c'
 )
 
 external_aes_sources = files(

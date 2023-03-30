@@ -39,10 +39,10 @@ namespace mango::simd
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
 #if 1
         float32x4_t result;
-	    result = vmovq_n_f32(vgetq_lane_f32(a, x));
-	    result = vsetq_lane_f32(vgetq_lane_f32(a, y), result, 1);
-	    result = vsetq_lane_f32(vgetq_lane_f32(b, z), result, 2);
-	    result = vsetq_lane_f32(vgetq_lane_f32(b, w), result, 3);
+        result = vmovq_n_f32(vgetq_lane_f32(a, x));
+        result = vsetq_lane_f32(vgetq_lane_f32(a, y), result, 1);
+        result = vsetq_lane_f32(vgetq_lane_f32(b, z), result, 2);
+        result = vsetq_lane_f32(vgetq_lane_f32(b, w), result, 3);
         return result;
 #else
         // warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
@@ -130,21 +130,21 @@ namespace mango::simd
     inline f32x4 shuffle<1, 1, 0, 0>(f32x4 v)
     {
         // .yyxx
-	    return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 1)), vdup_n_f32(vgetq_lane_f32(v, 0)));
+        return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 1)), vdup_n_f32(vgetq_lane_f32(v, 0)));
     }
 
     template <>
     inline f32x4 shuffle<2, 2, 0, 0>(f32x4 v)
     {
         // .zzxx
-	    return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 2)), vdup_n_f32(vgetq_lane_f32(v, 0)));
+        return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 2)), vdup_n_f32(vgetq_lane_f32(v, 0)));
     }
 
     template <>
     inline f32x4 shuffle<3, 3, 1, 1>(f32x4 v)
     {
         // .wwyy
-	    return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 3)), vdup_n_f32(vgetq_lane_f32(v, 1)));
+        return vcombine_f32(vdup_n_f32(vgetq_lane_f32(v, 3)), vdup_n_f32(vgetq_lane_f32(v, 1)));
     }
 
     // indexed access
@@ -380,14 +380,14 @@ namespace mango::simd
     static inline f32x4 hadd(f32x4 a, f32x4 b)
     {
         return vcombine_f32(vpadd_f32(vget_low_f32(a), vget_high_f32(a)),
-	                        vpadd_f32(vget_low_f32(b), vget_high_f32(b)));
+                            vpadd_f32(vget_low_f32(b), vget_high_f32(b)));
     }
 
     static inline f32x4 hsub(f32x4 a, f32x4 b)
     {
         b = vnegq_f32(b);
         return vcombine_f32(vpadd_f32(vget_low_f32(a), vget_high_f32(a)),
-	                        vpadd_f32(vget_low_f32(b), vget_high_f32(b)));
+                            vpadd_f32(vget_low_f32(b), vget_high_f32(b)));
     }
 
 #endif
