@@ -60,10 +60,10 @@ namespace mango
 
         void ccm_block_encrypt(Memory output, ConstMemory input, ConstMemory associated, ConstMemory nonce, int mac_length);
         void ccm_block_decrypt(Memory output, ConstMemory input, ConstMemory associated, ConstMemory nonce, int mac_length);
-    
+
         // aribtrary size buffer encryption
         // input can be any size but last block is automatically zero padded
-    
+
         void ecb_encrypt(u8* output, const u8* input, size_t length);
         void ecb_decrypt(u8* output, const u8* input, size_t length);
     };

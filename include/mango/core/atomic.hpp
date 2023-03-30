@@ -90,7 +90,8 @@ namespace mango
 
         void lock()
         {
-            if (!m_locked) {
+            if (!m_locked)
+            {
                 m_locked = true;
                 m_spinlock.lock();
             }
@@ -98,7 +99,8 @@ namespace mango
 
         void unlock()
         {
-            if (m_locked) {
+            if (m_locked)
+            {
                 m_locked = false;
                 m_spinlock.unlock();
             }
@@ -118,9 +120,11 @@ namespace mango
         bool tryWriteLock()
         {
             bool status = tryLock();
-            if (status) {
+            if (status)
+            {
                 // acquired exclusive access - flush all readers
-                while (m_read_count > 0) {
+                while (m_read_count > 0)
+                {
                 }
             }
 
@@ -133,7 +137,8 @@ namespace mango
             lock();
 
             // flush all readers
-            while (m_read_count > 0) {
+            while (m_read_count > 0)
+            {
             }
         }
 
@@ -146,7 +151,8 @@ namespace mango
         bool tryReadLock()
         {
             bool status = tryLock();
-            if (status) {
+            if (status)
+            {
                 // gained temporary exclusivity - add one reader
                 m_read_count.fetch_add(1, std::memory_order_acquire);
                 unlock();
@@ -190,7 +196,8 @@ namespace mango
 
         void lock()
         {
-            if (!m_locked) {
+            if (!m_locked)
+            {
                 m_locked = true;
                 m_rwlock.writeLock();
             }
@@ -198,7 +205,8 @@ namespace mango
 
         void unlock()
         {
-            if (m_locked) {
+            if (m_locked)
+            {
                 m_locked = false;
                 m_rwlock.writeUnlock();
             }
@@ -225,7 +233,8 @@ namespace mango
 
         void lock()
         {
-            if (!m_locked) {
+            if (!m_locked)
+            {
                 m_locked = true;
                 m_rwlock.readLock();
             }
@@ -233,7 +242,8 @@ namespace mango
 
         void unlock()
         {
-            if (m_locked) {
+            if (m_locked)
+            {
                 m_locked = false;
                 m_rwlock.readUnlock();
             }

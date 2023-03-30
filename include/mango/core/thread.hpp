@@ -111,7 +111,7 @@ namespace mango
         // submit work into the queue
         q.enqueue([]
         {
-            // TODO: do your stuff here..
+            // your stuff here..
         });
 
         // wait until the queue is drained
@@ -163,7 +163,7 @@ namespace mango
         // submit work into the queue
         s.enqueue([]
         {
-            // TODO: do your stuff here..
+            // your stuff here..
         });
 
         // wait until the queue is drained

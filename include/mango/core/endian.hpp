@@ -288,5 +288,5 @@ namespace mango
     using float64be = detail::TypeCopy<float64>;
 
 #endif
-    
+
 } // namespace mango
