@@ -2597,7 +2597,7 @@ namespace
         int intervals = div_ceil(vertical_mcus, interval);
 
         p.write16(MARKER_APP14);
-        p.write16(11 + intervals * sizeof(u32));
+        p.write16(u16(11 + intervals * sizeof(u32)));
         p.write(magic_mango, 5);
         p.write32(interval);
 
