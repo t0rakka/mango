@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     Copyright 2017 The Chromium Authors. All rights reserved.
@@ -87,7 +87,7 @@ namespace mango
             const __m128i zero = _mm_setr_epi8( 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
             const __m128i ones = _mm_set_epi16( 1, 1, 1, 1, 1, 1, 1, 1);
 
-            // Process n blocks of data. 
+            // Process n blocks of data.
             // At most NMAX data bytes can be processed before s2 must be reduced modulo BASE.
             __m128i v_ps = _mm_set_epi32(0, 0, 0, s1 * u32(n));
             __m128i v_s2 = _mm_set_epi32(0, 0, 0, s2);
@@ -95,7 +95,7 @@ namespace mango
 
             while (n-- > 0)
             {
-                // Load 32 input bytes. 
+                // Load 32 input bytes.
                 const __m128i bytes1 = _mm_loadu_si128((__m128i*)(buffer + 0));
                 const __m128i bytes2 = _mm_loadu_si128((__m128i*)(buffer + 16));
 
@@ -176,7 +176,7 @@ namespace mango
                 n = blocks;
             blocks -= n;
 
-            // Process n blocks of data. 
+            // Process n blocks of data.
             // At most NMAX data bytes can be processed before s2 must be reduced modulo BASE.
             uint32x4_t v_s2 = (uint32x4_t) { 0, 0, 0, s1 * u32(n) };
             uint32x4_t v_s1 = (uint32x4_t) { 0, 0, 0, 0 };

@@ -289,7 +289,7 @@ namespace
             // Rounds 0-3
             msg     = _mm_loadu_si128((__m128i*) data);
             msgtmp0 = _mm_shuffle_epi8(msg, shuf_mask);
-            msg    = _mm_add_epi32(msgtmp0, 
+            msg    = _mm_add_epi32(msgtmp0,
                      _mm_set_epi64x(0xE9B5DBA5B5C0FBCFull, 0x71374491428A2F98ull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             msg    = _mm_shuffle_epi32(msg, 0x0E);
@@ -298,7 +298,7 @@ namespace
             // Rounds 4-7
             msgtmp1 = _mm_loadu_si128((__m128i*) (data+16));
             msgtmp1 = _mm_shuffle_epi8(msgtmp1, shuf_mask);
-            msg    = _mm_add_epi32(msgtmp1, 
+            msg    = _mm_add_epi32(msgtmp1,
                      _mm_set_epi64x(0xAB1C5ED5923F82A4ull, 0x59F111F13956C25Bull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             msg    = _mm_shuffle_epi32(msg, 0x0E);
@@ -308,7 +308,7 @@ namespace
             // Rounds 8-11
             msgtmp2 = _mm_loadu_si128((__m128i*) (data+32));
             msgtmp2 = _mm_shuffle_epi8(msgtmp2, shuf_mask);
-            msg    = _mm_add_epi32(msgtmp2, 
+            msg    = _mm_add_epi32(msgtmp2,
                      _mm_set_epi64x(0x550C7DC3243185BEull, 0x12835B01D807AA98ull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             msg    = _mm_shuffle_epi32(msg, 0x0E);
@@ -318,7 +318,7 @@ namespace
             // Rounds 12-15
             msgtmp3 = _mm_loadu_si128((__m128i*) (data+48));
             msgtmp3 = _mm_shuffle_epi8(msgtmp3, shuf_mask);
-            msg    = _mm_add_epi32(msgtmp3, 
+            msg    = _mm_add_epi32(msgtmp3,
                      _mm_set_epi64x(0xC19BF1749BDC06A7ull, 0x80DEB1FE72BE5D74ull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             tmp     = _mm_alignr_epi8(msgtmp3, msgtmp2, 4);
@@ -329,7 +329,7 @@ namespace
             msgtmp2 = _mm_sha256msg1_epu32(msgtmp2, msgtmp3);
 
             // Rounds 16-19
-            msg    = _mm_add_epi32(msgtmp0, 
+            msg    = _mm_add_epi32(msgtmp0,
                      _mm_set_epi64x(0x240CA1CC0FC19DC6ull, 0xEFBE4786E49B69C1ull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             tmp     = _mm_alignr_epi8(msgtmp0, msgtmp3, 4);
@@ -340,7 +340,7 @@ namespace
             msgtmp3 = _mm_sha256msg1_epu32(msgtmp3, msgtmp0);
 
             // Rounds 20-23
-            msg    = _mm_add_epi32(msgtmp1, 
+            msg    = _mm_add_epi32(msgtmp1,
                      _mm_set_epi64x(0x76F988DA5CB0A9DCull, 0x4A7484AA2DE92C6Full));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             tmp     = _mm_alignr_epi8(msgtmp1, msgtmp0, 4);
@@ -351,7 +351,7 @@ namespace
             msgtmp0 = _mm_sha256msg1_epu32(msgtmp0, msgtmp1);
 
             // Rounds 24-27
-            msg    = _mm_add_epi32(msgtmp2, 
+            msg    = _mm_add_epi32(msgtmp2,
                      _mm_set_epi64x(0xBF597FC7B00327C8ull, 0xA831C66D983E5152ull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             tmp     = _mm_alignr_epi8(msgtmp2, msgtmp1, 4);
@@ -362,7 +362,7 @@ namespace
             msgtmp1 = _mm_sha256msg1_epu32(msgtmp1, msgtmp2);
 
             // Rounds 28-31
-            msg    = _mm_add_epi32(msgtmp3, 
+            msg    = _mm_add_epi32(msgtmp3,
                      _mm_set_epi64x(0x1429296706CA6351ull, 0xD5A79147C6E00BF3ull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             tmp     = _mm_alignr_epi8(msgtmp3, msgtmp2, 4);
@@ -373,7 +373,7 @@ namespace
             msgtmp2 = _mm_sha256msg1_epu32(msgtmp2, msgtmp3);
 
             // Rounds 32-35
-            msg    = _mm_add_epi32(msgtmp0, 
+            msg    = _mm_add_epi32(msgtmp0,
                      _mm_set_epi64x(0x53380D134D2C6DFCull, 0x2E1B213827B70A85ull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             tmp     = _mm_alignr_epi8(msgtmp0, msgtmp3, 4);
@@ -384,7 +384,7 @@ namespace
             msgtmp3 = _mm_sha256msg1_epu32(msgtmp3, msgtmp0);
 
             // Rounds 36-39
-            msg    = _mm_add_epi32(msgtmp1, 
+            msg    = _mm_add_epi32(msgtmp1,
                      _mm_set_epi64x(0x92722C8581C2C92Eull, 0x766A0ABB650A7354ull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             tmp     = _mm_alignr_epi8(msgtmp1, msgtmp0, 4);
@@ -395,7 +395,7 @@ namespace
             msgtmp0 = _mm_sha256msg1_epu32(msgtmp0, msgtmp1);
 
             // Rounds 40-43
-            msg    = _mm_add_epi32(msgtmp2, 
+            msg    = _mm_add_epi32(msgtmp2,
                      _mm_set_epi64x(0xC76C51A3C24B8B70ull, 0xA81A664BA2BFE8A1ull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             tmp     = _mm_alignr_epi8(msgtmp2, msgtmp1, 4);
@@ -406,7 +406,7 @@ namespace
             msgtmp1 = _mm_sha256msg1_epu32(msgtmp1, msgtmp2);
 
             // Rounds 44-47
-            msg    = _mm_add_epi32(msgtmp3, 
+            msg    = _mm_add_epi32(msgtmp3,
                      _mm_set_epi64x(0x106AA070F40E3585ull, 0xD6990624D192E819ull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             tmp     = _mm_alignr_epi8(msgtmp3, msgtmp2, 4);
@@ -417,7 +417,7 @@ namespace
             msgtmp2 = _mm_sha256msg1_epu32(msgtmp2, msgtmp3);
 
             // Rounds 48-51
-            msg    = _mm_add_epi32(msgtmp0, 
+            msg    = _mm_add_epi32(msgtmp0,
                      _mm_set_epi64x(0x34B0BCB52748774Cull, 0x1E376C0819A4C116ull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             tmp     = _mm_alignr_epi8(msgtmp0, msgtmp3, 4);
@@ -428,7 +428,7 @@ namespace
             msgtmp3 = _mm_sha256msg1_epu32(msgtmp3, msgtmp0);
 
             // Rounds 52-55
-            msg    = _mm_add_epi32(msgtmp1, 
+            msg    = _mm_add_epi32(msgtmp1,
                      _mm_set_epi64x(0x682E6FF35B9CCA4Full, 0x4ED8AA4A391C0CB3ull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             tmp     = _mm_alignr_epi8(msgtmp1, msgtmp0, 4);
@@ -438,7 +438,7 @@ namespace
             state0 = _mm_sha256rnds2_epu32(state0, state1, msg);
 
             // Rounds 56-59
-            msg    = _mm_add_epi32(msgtmp2, 
+            msg    = _mm_add_epi32(msgtmp2,
                      _mm_set_epi64x(0x8CC7020884C87814ull, 0x78A5636F748F82EEull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             tmp     = _mm_alignr_epi8(msgtmp2, msgtmp1, 4);
@@ -448,7 +448,7 @@ namespace
             state0 = _mm_sha256rnds2_epu32(state0, state1, msg);
 
             // Rounds 60-63
-            msg    = _mm_add_epi32(msgtmp3, 
+            msg    = _mm_add_epi32(msgtmp3,
                      _mm_set_epi64x(0xC67178F2BEF9A3F7ull, 0xA4506CEB90BEFFFAull));
             state1 = _mm_sha256rnds2_epu32(state1, state0, msg);
             msg    = _mm_shuffle_epi32(msg, 0x0E);
@@ -521,7 +521,7 @@ namespace
                 u32 s0 = rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22);
                 u32 maj = (a & b) ^ (a & c) ^ (b & c);
                 u32 y = s0 + maj;
-                
+
                 h = g;
                 g = f;
                 f = e;
@@ -544,7 +544,7 @@ namespace
                 u32 s0 = rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22);
                 u32 maj = (a & b) ^ (a & c) ^ (b & c);
                 u32 y = s0 + maj;
-                
+
                 h = g;
                 g = f;
                 f = e;
@@ -587,7 +587,9 @@ namespace mango
         hash.data[6] = 0x1f83d9ab;
         hash.data[7] = 0x5be0cd19;
 
+        // select implementation
         auto transform = generic_sha2_transform;
+
 #if defined(__ARM_FEATURE_CRYPTO)
         if ((getCPUFlags() & ARM_SHA2) != 0)
         {
@@ -607,7 +609,7 @@ namespace mango
         transform(hash.data, data, block_count);
         data += block_count * 64;
         size -= block_count * 64;
-        
+
         u8 buffer[64];
         std::memcpy(buffer, data, size);
         std::memset(buffer + size, 0, 64 - size);

@@ -244,7 +244,7 @@ namespace
             abcd = _mm_sha1rnds4_epu32(abcd, e1, 1);
             msg0 = _mm_sha1msg1_epu32(msg0, msg1);
             msg3 = _mm_xor_si128(msg3, msg1);
-            
+
             // Rounds 24-27
             e0   = _mm_sha1nexte_epu32(e0, msg2);
             e1   = abcd;
@@ -276,7 +276,7 @@ namespace
             abcd = _mm_sha1rnds4_epu32(abcd, e1, 1);
             msg0 = _mm_sha1msg1_epu32(msg0, msg1);
             msg3 = _mm_xor_si128(msg3, msg1);
-            
+
             // Rounds 40-43
             e0   = _mm_sha1nexte_epu32(e0, msg2);
             e1   = abcd;
@@ -308,7 +308,7 @@ namespace
             abcd = _mm_sha1rnds4_epu32(abcd, e1, 2);
             msg0 = _mm_sha1msg1_epu32(msg0, msg1);
             msg3 = _mm_xor_si128(msg3, msg1);
-            
+
             // Rounds 56-59
             e0   = _mm_sha1nexte_epu32(e0, msg2);
             e1   = abcd;
@@ -339,7 +339,7 @@ namespace
             msg2 = _mm_sha1msg2_epu32(msg2, msg1);
             abcd = _mm_sha1rnds4_epu32(abcd, e1, 3);
             msg3 = _mm_xor_si128(msg3, msg1);
-            
+
             // Rounds 72-75
             e0   = _mm_sha1nexte_epu32(e0, msg2);
             e1   = abcd;
@@ -524,7 +524,9 @@ namespace mango
         hash.data[3] = 0x10325476;
         hash.data[4] = 0xC3D2E1F0;
 
+        // select implementation
         auto transform = generic_sha1_update;
+
 #if defined(__ARM_FEATURE_CRYPTO)
         if ((getCPUFlags() & ARM_SHA1) != 0)
         {
