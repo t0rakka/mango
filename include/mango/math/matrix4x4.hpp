@@ -80,7 +80,7 @@ namespace mango::math
             m[2] = v.m[2];
             m[3] = v.m[3];
         }
-        
+
         explicit Matrix(
             const Vector<float, 4>& v0,
             const Vector<float, 4>& v1,
@@ -179,7 +179,8 @@ namespace mango::math
     // operators
     // ------------------------------------------------------------------
 
-    static inline Vector<float, 3> operator * (const Vector<float, 3>& v, const Matrix4x4& m)
+    static inline
+    Vector<float, 3> operator * (const Vector<float, 3>& v, const Matrix4x4& m)
     {
         float x = v[0] * m(0, 0) + v[1] * m(1, 0) + v[2] * m(2, 0) + m(3, 0);
         float y = v[0] * m(0, 1) + v[1] * m(1, 1) + v[2] * m(2, 1) + m(3, 1);
@@ -187,7 +188,8 @@ namespace mango::math
         return Vector<float, 3>(x, y, z);
     }
 
-    static inline Vector<float, 4> operator * (const Vector<float, 4>& v, const Matrix4x4& m)
+    static inline
+    Vector<float, 4> operator * (const Vector<float, 4>& v, const Matrix4x4& m)
     {
         float32x4 temp = m[0] * v.xxxx;
         temp = madd(temp, m[1], v.yyyy);
@@ -196,7 +198,8 @@ namespace mango::math
         return temp;
     }
 
-    static inline Matrix4x4 operator * (const Matrix4x4& a, const Matrix4x4& b)
+    static inline
+    Matrix4x4 operator * (const Matrix4x4& a, const Matrix4x4& b)
     {
         Matrix4x4 result;
         result[0] = a[0] * b;
@@ -227,12 +230,14 @@ namespace mango::math
     Matrix4x4 obliqueVK(const Matrix4x4& matrix, const float32x4& nearclip);
     Matrix4x4 obliqueD3D(const Matrix4x4& matrix, const float32x4& nearclip);
 
-    static inline Matrix4x4 transpose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    static inline
+    Matrix4x4 transpose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         float32x4 temp0 = unpacklo(m0, m1);
         float32x4 temp1 = unpacklo(m2, m3);
         float32x4 temp2 = unpackhi(m0, m1);
         float32x4 temp3 = unpackhi(m2, m3);
+
         Matrix4x4 result;
         result[0] = movelh(temp0, temp1);
         result[1] = movehl(temp1, temp0);
@@ -241,7 +246,8 @@ namespace mango::math
         return result;
     }
 
-    static inline Matrix4x4 inverse(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    static inline
+    Matrix4x4 inverse(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         // Original Intel SSE code (C) Rune Stubbe. All rights reserved.
         // Modified to use our SIMD abstraction so that compiles for more architectures.
@@ -296,7 +302,8 @@ namespace mango::math
         return result;
     }
 
-    static inline Matrix4x4 inverseTranspose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    static inline
+    Matrix4x4 inverseTranspose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         const float32x4 m0zwyz = m0.zwyz;
         const float32x4 m0wzwy = m0.wzwy;
@@ -345,7 +352,8 @@ namespace mango::math
     //     - last column is [0 0 0 1]
     //     - matrix may contain: translation, rotation and scaling
 
-    static inline Matrix4x4 inverseTRS(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    static inline
+    Matrix4x4 inverseTRS(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         Matrix4x4 r;
 
@@ -374,7 +382,8 @@ namespace mango::math
     //     - matrix may contain: translation and rotation
     //     - no scaling (scale must be 1.0)
 
-    static inline Matrix4x4 inverseTR(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    static inline
+    Matrix4x4 inverseTR(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         Matrix4x4 r;
 
@@ -401,27 +410,32 @@ namespace mango::math
     // inverseTranspose:  67,000,000 / sec  (44 clocks)
     // inverse:           59,000,000 / sec  (50 clocks)
 
-    static inline Matrix4x4 transpose(const Matrix4x4& m)
+    static inline
+    Matrix4x4 transpose(const Matrix4x4& m)
     {
         return transpose(m[0], m[1], m[2], m[3]);
     }
 
-    static inline Matrix4x4 inverse(const Matrix4x4& m)
+    static inline
+    Matrix4x4 inverse(const Matrix4x4& m)
     {
         return inverse(m[0], m[1], m[2], m[3]);
     }
 
-    static inline Matrix4x4 inverseTranspose(const Matrix4x4& m)
+    static inline
+    Matrix4x4 inverseTranspose(const Matrix4x4& m)
     {
         return inverseTranspose(m[0], m[1], m[2], m[3]);
     }
 
-    static inline Matrix4x4 inverseTRS(const Matrix4x4& m)
+    static inline
+    Matrix4x4 inverseTRS(const Matrix4x4& m)
     {
         return inverseTRS(m[0], m[1], m[2], m[3]);
     }
 
-    static inline Matrix4x4 inverseTR(const Matrix4x4& m)
+    static inline
+    Matrix4x4 inverseTR(const Matrix4x4& m)
     {
         return inverseTR(m[0], m[1], m[2], m[3]);
     }
