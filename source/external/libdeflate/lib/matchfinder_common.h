@@ -48,7 +48,7 @@ load_u24_unaligned(const u8 *p)
 
 typedef s16 mf_pos_t;
 
-#define MATCHFINDER_INITVAL ((mf_pos_t)(0-MATCHFINDER_WINDOW_SIZE))
+#define MATCHFINDER_INITVAL ((mf_pos_t)-MATCHFINDER_WINDOW_SIZE)
 
 /*
  * Required alignment of the matchfinder buffer pointer and size.  The values
@@ -61,9 +61,9 @@ typedef s16 mf_pos_t;
 #undef matchfinder_rebase
 #ifdef _aligned_attribute
 #  define MATCHFINDER_ALIGNED _aligned_attribute(MATCHFINDER_MEM_ALIGNMENT)
-#  if defined(__arm__) || defined(__aarch64__)
+#  if defined(ARCH_ARM32) || defined(ARCH_ARM64)
 #    include "arm/matchfinder_impl.h"
-#  elif defined(__i386__) || defined(__x86_64__)
+#  elif defined(ARCH_X86_32) || defined(ARCH_X86_64)
 #    include "x86/matchfinder_impl.h"
 #  endif
 #else
@@ -125,9 +125,9 @@ matchfinder_rebase(mf_pos_t *data, size_t size)
 	} else {
 		for (i = 0; i < num_entries; i++) {
 			if (data[i] >= 0)
-				data[i] -= (mf_pos_t)(0-MATCHFINDER_WINDOW_SIZE);
+				data[i] -= (mf_pos_t)-MATCHFINDER_WINDOW_SIZE;
 			else
-				data[i] = (mf_pos_t)(0 - MATCHFINDER_WINDOW_SIZE);
+				data[i] = (mf_pos_t)-MATCHFINDER_WINDOW_SIZE;
 		}
 	}
 }

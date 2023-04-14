@@ -42,12 +42,8 @@
  *   instructions enabled and is used automatically at runtime when supported.
  */
 
-#include <limits.h>
-
 #include "lib_common.h"
 #include "deflate_constants.h"
-
-#include "../libdeflate.h"
 
 /*
  * If the expression passed to SAFETY_CHECK() evaluates to false, then the
@@ -1075,7 +1071,7 @@ typedef enum libdeflate_result (*decompress_func_t)
 /* Include architecture-specific implementation(s) if available. */
 #undef DEFAULT_IMPL
 #undef arch_select_decompress_func
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(ARCH_X86_32) || defined(ARCH_X86_64)
 #  include "x86/decompress_impl.h"
 #endif
 
@@ -1121,7 +1117,7 @@ dispatch_decomp(struct libdeflate_decompressor *d,
  * handles calling the appropriate implementation depending on the CPU features
  * at runtime.
  */
-LIBDEFLATEEXPORT enum libdeflate_result LIBDEFLATEAPI
+LIBDEFLATEAPI enum libdeflate_result
 libdeflate_deflate_decompress_ex(struct libdeflate_decompressor *d,
 				 const void *in, size_t in_nbytes,
 				 void *out, size_t out_nbytes_avail,
@@ -1132,7 +1128,7 @@ libdeflate_deflate_decompress_ex(struct libdeflate_decompressor *d,
 			       actual_in_nbytes_ret, actual_out_nbytes_ret);
 }
 
-LIBDEFLATEEXPORT enum libdeflate_result LIBDEFLATEAPI
+LIBDEFLATEAPI enum libdeflate_result
 libdeflate_deflate_decompress(struct libdeflate_decompressor *d,
 			      const void *in, size_t in_nbytes,
 			      void *out, size_t out_nbytes_avail,
@@ -1143,7 +1139,7 @@ libdeflate_deflate_decompress(struct libdeflate_decompressor *d,
 						NULL, actual_out_nbytes_ret);
 }
 
-LIBDEFLATEEXPORT struct libdeflate_decompressor * LIBDEFLATEAPI
+LIBDEFLATEAPI struct libdeflate_decompressor *
 libdeflate_alloc_decompressor(void)
 {
 	/*
@@ -1169,7 +1165,7 @@ libdeflate_alloc_decompressor(void)
 	return d;
 }
 
-LIBDEFLATEEXPORT void LIBDEFLATEAPI
+LIBDEFLATEAPI void
 libdeflate_free_decompressor(struct libdeflate_decompressor *d)
 {
 	libdeflate_free(d);

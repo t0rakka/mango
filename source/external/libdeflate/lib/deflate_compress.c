@@ -28,8 +28,6 @@
 #include "deflate_compress.h"
 #include "deflate_constants.h"
 
-#include "../libdeflate.h"
-
 /******************************************************************************/
 
 /*
@@ -136,7 +134,8 @@
  * BIT_COST should be a power of 2.  A value of 8 or 16 works well.  A higher
  * value isn't very useful since the calculations are approximate anyway.
  *
- * BIT_COST doesn't apply to deflate_flush_block(), which considers whole bits.
+ * BIT_COST doesn't apply to deflate_flush_block() and
+ * deflate_compute_true_cost(), which consider whole bits.
  */
 #define BIT_COST	16
 
@@ -604,6 +603,8 @@ struct libdeflate_compressor {
 			/* The current cost model being used */
 			struct deflate_costs costs;
 
+			struct deflate_costs costs_producing_best_true_cost;
+
 			/*
 			 * A table that maps match offset to offset slot.  This
 			 * differs from deflate_offset_slot[] in that this is a
@@ -628,7 +629,31 @@ struct libdeflate_compressor {
 			u32 new_match_len_freqs[DEFLATE_MAX_MATCH_LEN + 1];
 			u32 match_len_freqs[DEFLATE_MAX_MATCH_LEN + 1];
 
-			unsigned num_optim_passes;
+			/*
+			 * The maximum number of optimization passes
+			 * (min-cost path searches) per block.
+			 * Larger values = more compression.
+			 */
+			unsigned max_optim_passes;
+
+			/*
+			 * If an optimization pass improves the cost by fewer
+			 * than this number of bits, then optimization will stop
+			 * early, before max_optim_passes has been reached.
+			 * Smaller values = more compression.
+			 */
+			unsigned min_improvement_to_continue;
+
+			/*
+			 * The minimum number of bits that would need to be
+			 * saved for it to be considered worth the time to
+			 * regenerate and use the min-cost path from a previous
+			 * optimization pass, in the case where the final
+			 * optimization pass actually increased the cost.
+			 * Smaller values = more compression.
+			 */
+			unsigned min_bits_to_use_nonfinal_path;
+
 		} n; /* (n)ear-optimal */
 	#endif /* SUPPORT_NEAR_OPTIMAL_PARSING */
 
@@ -771,8 +796,7 @@ heapify_array(u32 A[], unsigned length)
  * Sort the array 'A', which contains 'length' unsigned 32-bit integers.
  *
  * Note: name this function heap_sort() instead of heapsort() to avoid colliding
- * with heapsort() from stdlib.h on BSD-derived systems --- though this isn't
- * necessary when compiling with -D_ANSI_SOURCE, which is the better solution.
+ * with heapsort() from stdlib.h on BSD-derived systems.
  */
 static void
 heap_sort(u32 A[], unsigned length)
@@ -1660,6 +1684,12 @@ do {									\
 /*
  * Choose the best type of block to use (dynamic Huffman, static Huffman, or
  * uncompressed), then output it.
+ *
+ * The uncompressed data of the block is @block_begin[0..@block_length-1].  The
+ * sequence of literals and matches that will be used to compress the block (if
+ * a compressed block is chosen) is given by @sequences if it's non-NULL, or
+ * else @c->p.n.optimum_nodes.  @c->freqs and @c->codes must be already set
+ * according to the literals, matches, and end-of-block symbol.
  */
 static void
 deflate_flush_block(struct libdeflate_compressor *c,
@@ -1695,15 +1725,6 @@ deflate_flush_block(struct libdeflate_compressor *c,
 	ASSERT(bitcount <= 7);
 	ASSERT((bitbuf & ~(((bitbuf_t)1 << bitcount) - 1)) == 0);
 	ASSERT(out_next <= out_end);
-
-	if (sequences != NULL /* !near_optimal */ ||
-	    !SUPPORT_NEAR_OPTIMAL_PARSING) {
-		/* Tally the end-of-block symbol. */
-		c->freqs.litlen[DEFLATE_END_OF_BLOCK]++;
-
-		/* Build dynamic Huffman codes. */
-		deflate_make_huffman_codes(&c->freqs, &c->codes);
-	} /* Else, this was already done. */
 
 	/* Precompute the precode items and build the precode. */
 	deflate_precompute_huffman_header(c);
@@ -1984,6 +2005,19 @@ out:
 	os->bitbuf = bitbuf;
 	os->bitcount = bitcount;
 	os->next = out_next;
+}
+
+static void
+deflate_finish_block(struct libdeflate_compressor *c,
+		     struct deflate_output_bitstream *os,
+		     const u8 *block_begin, u32 block_length,
+		     const struct deflate_sequence *sequences,
+		     bool is_final_block)
+{
+	c->freqs.litlen[DEFLATE_END_OF_BLOCK]++;
+	deflate_make_huffman_codes(&c->freqs, &c->codes);
+	deflate_flush_block(c, os, block_begin, block_length, sequences,
+			    is_final_block);
 }
 
 /******************************************************************************/
@@ -2446,9 +2480,9 @@ deflate_compress_fastest(struct libdeflate_compressor * restrict c,
 		} while (in_next < in_max_block_end &&
 			 seq < &c->p.f.sequences[FAST_SEQ_STORE_LENGTH]);
 
-		deflate_flush_block(c, os, in_block_begin,
-				    in_next - in_block_begin,
-				    c->p.f.sequences, in_next == in_end);
+		deflate_finish_block(c, os, in_block_begin,
+				     in_next - in_block_begin,
+				     c->p.f.sequences, in_next == in_end);
 	} while (in_next != in_end);
 }
 
@@ -2525,9 +2559,9 @@ deflate_compress_greedy(struct libdeflate_compressor * restrict c,
 			 !should_end_block(&c->split_stats,
 					   in_block_begin, in_next, in_end));
 
-		deflate_flush_block(c, os, in_block_begin,
-				    in_next - in_block_begin,
-				    c->p.g.sequences, in_next == in_end);
+		deflate_finish_block(c, os, in_block_begin,
+				     in_next - in_block_begin,
+				     c->p.g.sequences, in_next == in_end);
 	} while (in_next != in_end);
 }
 
@@ -2731,9 +2765,9 @@ have_cur_match:
 			 !should_end_block(&c->split_stats,
 					   in_block_begin, in_next, in_end));
 
-		deflate_flush_block(c, os, in_block_begin,
-				    in_next - in_block_begin,
-				    c->p.g.sequences, in_next == in_end);
+		deflate_finish_block(c, os, in_block_begin,
+				     in_next - in_block_begin,
+				     c->p.g.sequences, in_next == in_end);
 	} while (in_next != in_end);
 }
 
@@ -2795,6 +2829,59 @@ deflate_tally_item_list(struct libdeflate_compressor *c, u32 block_length)
 
 	/* Tally the end-of-block symbol. */
 	c->freqs.litlen[DEFLATE_END_OF_BLOCK]++;
+}
+
+static void
+deflate_choose_all_literals(struct libdeflate_compressor *c,
+			    const u8 *block, u32 block_length)
+{
+	u32 i;
+
+	deflate_reset_symbol_frequencies(c);
+	for (i = 0; i < block_length; i++)
+		c->freqs.litlen[block[i]]++;
+	c->freqs.litlen[DEFLATE_END_OF_BLOCK]++;
+
+	deflate_make_huffman_codes(&c->freqs, &c->codes);
+}
+
+/*
+ * Compute the exact cost, in bits, that would be required to output the matches
+ * and literals described by @c->freqs as a dynamic Huffman block.  The litlen
+ * and offset codes are assumed to have already been built in @c->codes.
+ */
+static u32
+deflate_compute_true_cost(struct libdeflate_compressor *c)
+{
+	u32 cost = 0;
+	unsigned sym;
+
+	deflate_precompute_huffman_header(c);
+
+	memset(&c->codes.lens.litlen[c->o.precode.num_litlen_syms], 0,
+	       DEFLATE_NUM_LITLEN_SYMS - c->o.precode.num_litlen_syms);
+
+	cost += 5 + 5 + 4 + (3 * c->o.precode.num_explicit_lens);
+	for (sym = 0; sym < DEFLATE_NUM_PRECODE_SYMS; sym++) {
+		cost += c->o.precode.freqs[sym] *
+			(c->o.precode.lens[sym] +
+			 deflate_extra_precode_bits[sym]);
+	}
+
+	for (sym = 0; sym < DEFLATE_FIRST_LEN_SYM; sym++)
+		cost += c->freqs.litlen[sym] * c->codes.lens.litlen[sym];
+
+	for (; sym < DEFLATE_FIRST_LEN_SYM +
+	       ARRAY_LEN(deflate_extra_length_bits); sym++)
+		cost += c->freqs.litlen[sym] *
+			(c->codes.lens.litlen[sym] +
+			 deflate_extra_length_bits[sym - DEFLATE_FIRST_LEN_SYM]);
+
+	for (sym = 0; sym < ARRAY_LEN(deflate_extra_offset_bits); sym++)
+		cost += c->freqs.offset[sym] *
+			(c->codes.lens.offset[sym] +
+			 deflate_extra_offset_bits[sym]);
+	return cost;
 }
 
 /* Set the current cost model from the codeword lengths specified in @lens. */
@@ -3124,11 +3211,11 @@ deflate_adjust_costs_impl(struct libdeflate_compressor *c,
 /*
  * Adjust the costs when beginning a new block.
  *
- * Since the current costs have been optimized for the data, it's undesirable to
- * throw them away and start over with the default costs.  At the same time, we
- * don't want to bias the parse by assuming that the next block will be similar
- * to the current block.  As a compromise, make the costs closer to the
- * defaults, but don't simply set them to the defaults.
+ * Since the current costs are optimized for the data already, it can be helpful
+ * to reuse them instead of starting over with the default costs.  However, this
+ * depends on how similar the new block is to the previous block.  Therefore,
+ * use a heuristic to decide how similar the blocks are, and mix together the
+ * current costs and the default costs accordingly.
  */
 static void
 deflate_adjust_costs(struct libdeflate_compressor *c,
@@ -3159,7 +3246,10 @@ deflate_adjust_costs(struct libdeflate_compressor *c,
 	cutoff = ((u64)c->p.n.prev_num_observations *
 		  c->split_stats.num_observations * 200) / 512;
 
-	if (4 * total_delta > 9 * cutoff)
+	if (total_delta > 3 * cutoff)
+		/* Big change in the data; just use the default costs. */
+		deflate_set_default_costs(c, lit_cost, len_sym_cost);
+	else if (4 * total_delta > 9 * cutoff)
 		deflate_adjust_costs_impl(c, lit_cost, len_sym_cost, 3);
 	else if (2 * total_delta > 3 * cutoff)
 		deflate_adjust_costs_impl(c, lit_cost, len_sym_cost, 2);
@@ -3167,6 +3257,21 @@ deflate_adjust_costs(struct libdeflate_compressor *c,
 		deflate_adjust_costs_impl(c, lit_cost, len_sym_cost, 1);
 	else
 		deflate_adjust_costs_impl(c, lit_cost, len_sym_cost, 0);
+}
+
+static void
+deflate_set_initial_costs(struct libdeflate_compressor *c,
+			  const u8 *block_begin, u32 block_length,
+			  bool is_first_block)
+{
+	u32 lit_cost, len_sym_cost;
+
+	deflate_choose_default_litlen_costs(c, block_begin, block_length,
+					    &lit_cost, &len_sym_cost);
+	if (is_first_block)
+		deflate_set_default_costs(c, lit_cost, len_sym_cost);
+	else
+		deflate_adjust_costs(c, lit_cost, len_sym_cost);
 }
 
 /*
@@ -3251,28 +3356,50 @@ deflate_find_min_cost_path(struct libdeflate_compressor *c,
 		}
 		cur_node->cost_to_end = best_cost_to_end;
 	} while (cur_node != &c->p.n.optimum_nodes[0]);
+
+	deflate_reset_symbol_frequencies(c);
+	deflate_tally_item_list(c, block_length);
+	deflate_make_huffman_codes(&c->freqs, &c->codes);
 }
 
 /*
- * Choose the literal/match sequence to use for the current block.  The basic
- * algorithm finds a minimum-cost path through the block's graph of
- * literal/match choices, given a cost model.  However, the cost of each symbol
- * is unknown until the Huffman codes have been built, but at the same time the
- * Huffman codes depend on the frequencies of chosen symbols.  Consequently,
- * multiple passes must be used to try to approximate an optimal solution.  The
- * first pass uses default costs, mixed with the costs from the previous block
- * if any.  Later passes use the Huffman codeword lengths from the previous pass
- * as the costs.
+ * Choose the literals and matches for the current block, then output the block.
+ *
+ * To choose the literal/match sequence, we find the minimum-cost path through
+ * the block's graph of literal/match choices, given a cost model.  However, the
+ * true cost of each symbol is unknown until the Huffman codes have been built,
+ * but at the same time the Huffman codes depend on the frequencies of chosen
+ * symbols.  Consequently, multiple passes must be used to try to approximate an
+ * optimal solution.  The first pass uses default costs, mixed with the costs
+ * from the previous block when it seems appropriate.  Later passes use the
+ * Huffman codeword lengths from the previous pass as the costs.
+ *
+ * As an alternate strategy, also consider using only literals.  The boolean
+ * returned in *used_only_literals indicates whether that strategy was best.
  */
 static void
-deflate_optimize_block(struct libdeflate_compressor *c,
-		       const u8 *block_begin, u32 block_length,
-		       const struct lz_match *cache_ptr, bool is_first_block,
-		       bool is_final_block)
+deflate_optimize_and_flush_block(struct libdeflate_compressor *c,
+				 struct deflate_output_bitstream *os,
+				 const u8 *block_begin, u32 block_length,
+				 const struct lz_match *cache_ptr,
+				 bool is_first_block, bool is_final_block,
+				 bool *used_only_literals)
 {
-	unsigned num_passes_remaining = c->p.n.num_optim_passes;
-	u32 lit_cost, len_sym_cost;
+	unsigned num_passes_remaining = c->p.n.max_optim_passes;
+	u32 best_true_cost = UINT32_MAX;
+	u32 true_cost;
+	u32 only_lits_cost;
+	struct deflate_sequence seq_;
+	struct deflate_sequence *seq = NULL;
 	u32 i;
+
+	/*
+	 * On some data, using only literals (no matches) ends up being better
+	 * than what the iterative optimization algorithm produces.  Therefore,
+	 * consider using only literals.
+	 */
+	deflate_choose_all_literals(c, block_begin, block_length);
+	only_lits_cost = deflate_compute_true_cost(c);
 
 	/*
 	 * Force the block to really end at the desired length, even if some
@@ -3283,33 +3410,60 @@ deflate_optimize_block(struct libdeflate_compressor *c,
 		      ARRAY_LEN(c->p.n.optimum_nodes) - 1); i++)
 		c->p.n.optimum_nodes[i].cost_to_end = 0x80000000;
 
-	/* Set the initial costs. */
-	deflate_choose_default_litlen_costs(c, block_begin, block_length,
-					    &lit_cost, &len_sym_cost);
-	if (is_first_block)
-		deflate_set_default_costs(c, lit_cost, len_sym_cost);
-	else
-		deflate_adjust_costs(c, lit_cost, len_sym_cost);
+	/* Initialize c->p.n.costs with default costs. */
+	deflate_set_initial_costs(c, block_begin, block_length, is_first_block);
 
 	do {
-		/* Find the minimum cost path for this pass. */
+		/*
+		 * Find the minimum-cost path for this pass.
+		 * Also set c->freqs and c->codes to match the path.
+		 */
 		deflate_find_min_cost_path(c, block_length, cache_ptr);
 
-		/* Compute frequencies of the chosen symbols. */
-		deflate_reset_symbol_frequencies(c);
-		deflate_tally_item_list(c, block_length);
-
-		/* Make the Huffman codes. */
-		deflate_make_huffman_codes(&c->freqs, &c->codes);
+		/*
+		 * Compute the exact cost of the block if the path were to be
+		 * used.  Note that this differs from
+		 * c->p.n.optimum_nodes[0].cost_to_end in that true_cost uses
+		 * the actual Huffman codes instead of c->p.n.costs.
+		 */
+		true_cost = deflate_compute_true_cost(c);
 
 		/*
-		 * Update the costs.  After the last optimization pass, the
-		 * final costs won't be needed for this block, but they will be
-		 * used in determining the initial costs for the next block.
+		 * If the cost didn't improve much from the previous pass, then
+		 * doing more passes probably won't be helpful, so stop early.
 		 */
-		if (--num_passes_remaining || !is_final_block)
-			deflate_set_costs_from_codes(c, &c->codes.lens);
-	} while (num_passes_remaining);
+		if (true_cost + c->p.n.min_improvement_to_continue >
+		    best_true_cost)
+			break;
+
+		best_true_cost = true_cost;
+		c->p.n.costs_producing_best_true_cost = c->p.n.costs;
+
+		/* Update the cost model from the Huffman codes. */
+		deflate_set_costs_from_codes(c, &c->codes.lens);
+
+	} while (--num_passes_remaining);
+
+	*used_only_literals = false;
+	if (only_lits_cost < best_true_cost) {
+		/* Using only literals ended up being best! */
+		deflate_choose_all_literals(c, block_begin, block_length);
+		deflate_set_costs_from_codes(c, &c->codes.lens);
+		seq_.litrunlen_and_length = block_length;
+		seq = &seq_;
+		*used_only_literals = true;
+	} else if (true_cost >=
+		   best_true_cost + c->p.n.min_bits_to_use_nonfinal_path) {
+		/*
+		 * The best solution was actually from a non-final optimization
+		 * pass, so recover and use the min-cost path from that pass.
+		 */
+		c->p.n.costs = c->p.n.costs_producing_best_true_cost;
+		deflate_find_min_cost_path(c, block_length, cache_ptr);
+		deflate_set_costs_from_codes(c, &c->codes.lens);
+	}
+	deflate_flush_block(c, os, block_begin, block_length, seq,
+			    is_final_block);
 }
 
 static void
@@ -3387,6 +3541,7 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 	unsigned nice_len = MIN(c->nice_match_length, max_len);
 	struct lz_match *cache_ptr = c->p.n.match_cache;
 	u32 next_hashes[2] = {0, 0};
+	bool prev_block_used_only_literals = false;
 
 	bt_matchfinder_init(&c->p.n.bt_mf);
 	deflate_near_optimal_init_stats(c);
@@ -3405,8 +3560,16 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 		 * literal/match statistics gathered during matchfinding.
 		 * However, the actual near-optimal parse won't respect min_len,
 		 * as it can accurately assess the costs of different matches.
+		 *
+		 * If the "use only literals" strategy happened to be the best
+		 * strategy on the previous block, then probably the
+		 * min_match_len heuristic is still not aggressive enough for
+		 * the data, so force gathering literal stats only.
 		 */
-		min_len = calculate_min_match_len(
+		if (prev_block_used_only_literals)
+			min_len = DEFLATE_MAX_MATCH_LEN + 1;
+		else
+			min_len = calculate_min_match_len(
 					in_block_begin,
 					in_max_block_end - in_block_begin,
 					c->max_search_depth);
@@ -3583,10 +3746,11 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 			} while (--num_bytes_to_rewind);
 			cache_len_rewound = orig_cache_ptr - cache_ptr;
 
-			deflate_optimize_block(c, in_block_begin, block_length,
-					       cache_ptr, is_first, is_final);
-			deflate_flush_block(c, os, in_block_begin, block_length,
-					    NULL, is_final);
+			deflate_optimize_and_flush_block(
+						c, os, in_block_begin,
+						block_length, cache_ptr,
+						is_first, is_final,
+						&prev_block_used_only_literals);
 			memmove(c->p.n.match_cache, cache_ptr,
 				cache_len_rewound * sizeof(*cache_ptr));
 			cache_ptr = &c->p.n.match_cache[cache_len_rewound];
@@ -3608,10 +3772,11 @@ deflate_compress_near_optimal(struct libdeflate_compressor * restrict c,
 			bool is_final = (in_next == in_end);
 
 			deflate_near_optimal_merge_stats(c);
-			deflate_optimize_block(c, in_block_begin, block_length,
-					       cache_ptr, is_first, is_final);
-			deflate_flush_block(c, os, in_block_begin, block_length,
-					    NULL, is_final);
+			deflate_optimize_and_flush_block(
+						c, os, in_block_begin,
+						block_length, cache_ptr,
+						is_first, is_final,
+						&prev_block_used_only_literals);
 			cache_ptr = &c->p.n.match_cache[0];
 			deflate_near_optimal_save_stats(c);
 			deflate_near_optimal_init_stats(c);
@@ -3641,7 +3806,7 @@ deflate_init_offset_slot_full(struct libdeflate_compressor *c)
 
 #endif /* SUPPORT_NEAR_OPTIMAL_PARSING */
 
-LIBDEFLATEEXPORT struct libdeflate_compressor * LIBDEFLATEAPI
+LIBDEFLATEAPI struct libdeflate_compressor *
 libdeflate_alloc_compressor(int compression_level)
 {
 	struct libdeflate_compressor *c;
@@ -3734,22 +3899,28 @@ libdeflate_alloc_compressor(int compression_level)
 		c->impl = deflate_compress_near_optimal;
 		c->max_search_depth = 35;
 		c->nice_match_length = 75;
-		c->p.n.num_optim_passes = 2;
+		c->p.n.max_optim_passes = 2;
+		c->p.n.min_improvement_to_continue = 32;
+		c->p.n.min_bits_to_use_nonfinal_path = 32;
 		deflate_init_offset_slot_full(c);
 		break;
 	case 11:
 		c->impl = deflate_compress_near_optimal;
-		c->max_search_depth = 70;
+		c->max_search_depth = 100;
 		c->nice_match_length = 150;
-		c->p.n.num_optim_passes = 3;
+		c->p.n.max_optim_passes = 4;
+		c->p.n.min_improvement_to_continue = 16;
+		c->p.n.min_bits_to_use_nonfinal_path = 16;
 		deflate_init_offset_slot_full(c);
 		break;
 	case 12:
 	default:
 		c->impl = deflate_compress_near_optimal;
-		c->max_search_depth = 150;
+		c->max_search_depth = 300;
 		c->nice_match_length = DEFLATE_MAX_MATCH_LEN;
-		c->p.n.num_optim_passes = 4;
+		c->p.n.max_optim_passes = 10;
+		c->p.n.min_improvement_to_continue = 1;
+		c->p.n.min_bits_to_use_nonfinal_path = 1;
 		deflate_init_offset_slot_full(c);
 		break;
 #endif /* SUPPORT_NEAR_OPTIMAL_PARSING */
@@ -3760,7 +3931,7 @@ libdeflate_alloc_compressor(int compression_level)
 	return c;
 }
 
-LIBDEFLATEEXPORT size_t LIBDEFLATEAPI
+LIBDEFLATEAPI size_t
 libdeflate_deflate_compress(struct libdeflate_compressor *c,
 			    const void *in, size_t in_nbytes,
 			    void *out, size_t out_nbytes_avail)
@@ -3803,7 +3974,7 @@ libdeflate_deflate_compress(struct libdeflate_compressor *c,
 	return os.next - (u8 *)out;
 }
 
-LIBDEFLATEEXPORT void LIBDEFLATEAPI
+LIBDEFLATEAPI void
 libdeflate_free_compressor(struct libdeflate_compressor *c)
 {
 	libdeflate_aligned_free(c);
@@ -3815,7 +3986,7 @@ libdeflate_get_compression_level(struct libdeflate_compressor *c)
 	return c->compression_level;
 }
 
-LIBDEFLATEEXPORT size_t LIBDEFLATEAPI
+LIBDEFLATEAPI size_t
 libdeflate_deflate_compress_bound(struct libdeflate_compressor *c,
 				  size_t in_nbytes)
 {
