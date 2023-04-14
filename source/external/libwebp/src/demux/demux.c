@@ -614,7 +614,7 @@ static int IsValidExtendedFormat(const WebPDemuxer* const dmux) {
 
   while (f != NULL) {
     const int cur_frame_set = f->frame_num_;
-    int frame_count = 0;
+    //int frame_count = 0;
 
     // Check frame properties.
     for (; f != NULL && f->frame_num_ == cur_frame_set; f = f->next_) {
@@ -650,7 +650,7 @@ static int IsValidExtendedFormat(const WebPDemuxer* const dmux) {
         return 0;
       }
 
-      ++frame_count;
+      //++frame_count;
     }
   }
   return 1;
