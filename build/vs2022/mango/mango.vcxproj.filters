@@ -1224,6 +1224,9 @@
     <ClInclude Include="..\..\..\source\external\astc\astcenc.h">
       <Filter>external\astc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\source\external\zstd\common\allocations.h">
+      <Filter>external\zstd\common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp">

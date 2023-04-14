@@ -334,6 +334,7 @@
     <ClInclude Include="..\..\..\source\external\zlib\zlib.h" />
     <ClInclude Include="..\..\..\source\external\zlib\zutil.h" />
     <ClInclude Include="..\..\..\source\external\zpng\zpng.h" />
+    <ClInclude Include="..\..\..\source\external\zstd\common\allocations.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\bits.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\bitstream.h" />
     <ClInclude Include="..\..\..\source\external\zstd\common\compiler.h" />
