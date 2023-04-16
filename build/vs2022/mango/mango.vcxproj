@@ -414,15 +414,35 @@
     <ClCompile Include="..\..\..\source\external\bzip2\bz_randtable.c" />
     <ClCompile Include="..\..\..\source\external\google\etc.cpp" />
     <ClCompile Include="..\..\..\source\external\google\etc1.cpp" />
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\arm\cpu_arm_features.c" />
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\adler32.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)hack_libdeflate_adler32.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">$(IntDir)hack_libdeflate_adler32.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)hack_libdeflate_adler32.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\arm\cpu_features.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)hack_libdeflate_arm_cpu_features.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)hack_libdeflate_arm_cpu_features.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">$(IntDir)hack_libdeflate_arm_cpu_features.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\crc32.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)hack_libdeflate_crc32.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)hack_libdeflate_crc32.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">$(IntDir)hack_libdeflate_crc32.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\..\source\external\libdeflate\lib\deflate_compress.c" />
     <ClCompile Include="..\..\..\source\external\libdeflate\lib\deflate_decompress.c" />
     <ClCompile Include="..\..\..\source\external\libdeflate\lib\gzip_compress.c" />
     <ClCompile Include="..\..\..\source\external\libdeflate\lib\gzip_decompress.c" />
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\libd_adler32.c" />
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\libd_crc32.c" />
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\libd_utils.c" />
-    <ClCompile Include="..\..\..\source\external\libdeflate\lib\x86\cpu_x86_features.c" />
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\utils.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)hack_libdeflate_utils.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)hack_libdeflate_utils.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">$(IntDir)hack_libdeflate_utils.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libdeflate\lib\x86\cpu_features.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)hack_libdeflate_x86_cpu_features.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">$(IntDir)hack_libdeflate_x86_cpu_features.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)hack_libdeflate_x86_cpu_features.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\..\source\external\libdeflate\lib\zlib_compress.c" />
     <ClCompile Include="..\..\..\source\external\libdeflate\lib\zlib_decompress.c" />
     <ClCompile Include="..\..\..\source\external\libwebp\src\dec\alpha_dec.c" />
@@ -574,17 +594,37 @@
     <ClCompile Include="..\..\..\source\external\unrar\rdwrfn.cpp" />
     <ClCompile Include="..\..\..\source\external\unrar\rijndael.cpp" />
     <ClCompile Include="..\..\..\source\external\unrar\unpack.cpp" />
+    <ClCompile Include="..\..\..\source\external\zlib\adler32.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)hack_zlib_adler32.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">$(IntDir)hack_zlib_adler32.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)hack_zlib_adler32.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\zlib\compress.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)hack_zlib_compress.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">$(IntDir)hack_zlib_compress.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)hack_zlib_compress.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\zlib\crc32.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)hack_zlib_crc32.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">$(IntDir)hack_zlib_crc32.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)hack_zlib_crc32.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\zlib\deflate.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)hack_zlib_deflate.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)hack_zlib_deflate.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">$(IntDir)hack_zlib_deflate.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\..\source\external\zlib\infback.c" />
     <ClCompile Include="..\..\..\source\external\zlib\inffast.c" />
+    <ClCompile Include="..\..\..\source\external\zlib\inflate.c">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)hack_zlib_inflate.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">$(IntDir)hack_zlib_inflate.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)hack_zlib_inflate.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\..\source\external\zlib\inftrees.c" />
     <ClCompile Include="..\..\..\source\external\zlib\trees.c" />
     <ClCompile Include="..\..\..\source\external\zlib\uncompr.c" />
     <ClCompile Include="..\..\..\source\external\zlib\zutil.c" />
-    <ClCompile Include="..\..\..\source\external\zlib\z_adler32.c" />
-    <ClCompile Include="..\..\..\source\external\zlib\z_compress.c" />
-    <ClCompile Include="..\..\..\source\external\zlib\z_crc32.c" />
-    <ClCompile Include="..\..\..\source\external\zlib\z_deflate.c" />
-    <ClCompile Include="..\..\..\source\external\zlib\z_inflate.c" />
     <ClCompile Include="..\..\..\source\external\zpng\zpng.cpp" />
     <ClCompile Include="..\..\..\source\external\zstd\common\debug.c" />
     <ClCompile Include="..\..\..\source\external\zstd\common\entropy_common.c" />

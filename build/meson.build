@@ -516,9 +516,9 @@ external_deflate_sources = files(
     '../source/external/libdeflate/lib/deflate_decompress.c',
     '../source/external/libdeflate/lib/gzip_compress.c',
     '../source/external/libdeflate/lib/gzip_decompress.c',
-    '../source/external/libdeflate/lib/libd_adler32.c',
-    '../source/external/libdeflate/lib/libd_crc32.c',
-    '../source/external/libdeflate/lib/libd_utils.c',
+    '../source/external/libdeflate/lib/adler32.c',
+    '../source/external/libdeflate/lib/crc32.c',
+    '../source/external/libdeflate/lib/utils.c',
     '../source/external/libdeflate/lib/zlib_compress.c',
     '../source/external/libdeflate/lib/zlib_decompress.c',
 )
@@ -537,14 +537,14 @@ external_zlib_headers = files(
 )
 
 external_zlib_sources = files(
-    '../source/external/zlib/z_adler32.c',
-    '../source/external/zlib/z_crc32.c',
+    '../source/external/zlib/adler32.c',
+    '../source/external/zlib/crc32.c',
     '../source/external/zlib/infback.c',
-    '../source/external/zlib/z_inflate.c',
+    '../source/external/zlib/inflate.c',
     '../source/external/zlib/trees.c',
     '../source/external/zlib/zutil.c',
-    '../source/external/zlib/z_compress.c',
-    '../source/external/zlib/z_deflate.c',
+    '../source/external/zlib/compress.c',
+    '../source/external/zlib/deflate.c',
     '../source/external/zlib/inffast.c',
     '../source/external/zlib/inftrees.c',
     '../source/external/zlib/uncompr.c',
@@ -552,11 +552,11 @@ external_zlib_sources = files(
 
 if is_arm
     external_deflate_sources += files(
-        '../source/external/libdeflate/lib/arm/cpu_arm_features.c'
+        '../source/external/libdeflate/lib/arm/cpu_features.c'
     )
 elif is_x86
     external_deflate_sources += files(
-        '../source/external/libdeflate/lib/x86/cpu_x86_features.c',
+        '../source/external/libdeflate/lib/x86/cpu_features.c',
     )
 endif
 
