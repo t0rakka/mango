@@ -9,7 +9,7 @@ The library does come with many ways to compile itself; hopefully one of them wo
 
 0. You should be in the build/ folder
 
-1. meson temp --buildtype=release
+1. meson setup --buildtype=release temp
 2. cd temp
 3. ninja -j20
 4. sudo ninja install
@@ -17,7 +17,7 @@ The library does come with many ways to compile itself; hopefully one of them wo
 NOTE! On some distributions it seems libdir might get unwanted decorations, if this
       occurs and want, for example /usr/local/lib replace step 1 with this:
 
-1. meson temp --buildtype=release --libdir=lib
+1. meson setup --buildtype=release --libdir=lib temp
 
 ------------------------------------------------------------------------------------------------
 * CMAKE!
