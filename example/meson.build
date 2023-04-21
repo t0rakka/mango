@@ -13,6 +13,17 @@ png_dep = dependency('libpng')
 jpeg_dep = dependency('libjpeg')
 
 # --------------------------------------------------------------------------------
+# compiler flags
+# --------------------------------------------------------------------------------
+ 
+is_x86 = host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
+ 
+if is_x86
+    # fpng requires at least SSE4.1
+    add_global_arguments('-msse4', language : 'cpp')
+endif
+
+# --------------------------------------------------------------------------------
 # core tests
 # --------------------------------------------------------------------------------
 
