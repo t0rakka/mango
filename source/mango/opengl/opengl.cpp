@@ -661,86 +661,108 @@ namespace
     // built-in shader sources
     // -------------------------------------------------------------------
 
-    const char* vertex_shader_source =
-        "uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0); \n"
-        "in vec2 inPosition; \n"
-        "out vec2 texcoord; \n"
-        "void main() { \n"
-        "    texcoord = inPosition * vec2(0.5, -0.5) + vec2(0.5); \n"
-        "    gl_Position = vec4((inPosition + uTransform.xy) * uTransform.zw, 0.0, 1.0); \n"
-        "}\n";
+    const char* vertex_shader_source = R"(
+        uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0);
 
-    const char* fragment_shader_source =
-        "uniform sampler2D uTexture; \n"
-        "in vec2 texcoord; \n"
-        "out vec4 outFragment0; \n"
-        "void main() { \n"
-        "    outFragment0 = texture(uTexture, texcoord); \n"
-        "} \n";
+        in vec2 inPosition;
+        out vec2 texcoord;
 
-    const char* vertex_shader_source_bicubic =
-        "uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0); \n"
-        "in vec2 inPosition; \n"
-        "out vec2 texcoord; \n"
-        "void main() { \n"
-        "    texcoord = inPosition * vec2(0.5, -0.5) + vec2(0.5); \n"
-        "    gl_Position = vec4((inPosition + uTransform.xy) * uTransform.zw, 0.0, 1.0); \n"
-        "}\n";
+        void main()
+        {
+            texcoord = inPosition * vec2(0.5, -0.5) + vec2(0.5);
+            gl_Position = vec4((inPosition + uTransform.xy) * uTransform.zw, 0.0, 1.0);
+        }
+    )";
 
-    const char* fragment_shader_source_bicubic =
-        "vec4 cubic(float v) \n"
-        "{ \n"
-        "    vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v; \n"
-        "    vec4 s = n * n * n; \n"
-        "    float x = s.x; \n"
-        "    float y = s.y - 4.0 * s.x; \n"
-        "    float z = s.z - 4.0 * s.y + 6.0 * s.x; \n"
-        "    float w = 6.0 - x - y - z; \n"
-        "    return vec4(x, y, z, w); \n"
-        "} \n"
-        "vec4 texture_filter(sampler2D uTexture, vec2 texcoord, vec2 texscale) \n"
-        "{ \n"
-        "    // hack to bring unit texcoords to integer pixel coords \n"
-        "    texcoord /= texscale; \n"
-        "    texcoord -= vec2(0.5, 0.5f); \n"
-        "    float fx = fract(texcoord.x); \n"
-        "    float fy = fract(texcoord.y); \n"
-        "    texcoord.x -= fx; \n"
-        "    texcoord.y -= fy; \n"
-        "    vec4 cx = cubic(fx); \n"
-        "    vec4 cy = cubic(fy); \n"
-        "    vec4 c = vec4(texcoord.x - 0.5, texcoord.x + 1.5, texcoord.y - 0.5, texcoord.y + 1.5); \n"
-        "    vec4 s = vec4(cx.x + cx.y, cx.z + cx.w, cy.x + cy.y, cy.z + cy.w); \n"
-        "    vec4 offset = c + vec4(cx.y, cx.w, cy.y, cy.w) / s; \n"
-        "    vec4 sample0 = texture(uTexture, vec2(offset.x, offset.z) * texscale); \n"
-        "    vec4 sample1 = texture(uTexture, vec2(offset.y, offset.z) * texscale); \n"
-        "    vec4 sample2 = texture(uTexture, vec2(offset.x, offset.w) * texscale); \n"
-        "    vec4 sample3 = texture(uTexture, vec2(offset.y, offset.w) * texscale); \n"
-        "    float sx = s.x / (s.x + s.y); \n"
-        "    float sy = s.z / (s.z + s.w); \n"
-        "    return mix(mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy); \n"
-        "} \n"
-        "uniform sampler2D uTexture; \n"
-        "uniform vec2 uTexScale; \n"
-        "in vec2 texcoord; \n"
-        "out vec4 outFragment0; \n"
-        "void main() { \n"
-        "    outFragment0 = texture_filter(uTexture, texcoord, uTexScale); \n"
-        "} \n";
+    const char* fragment_shader_source = R"(
+        uniform sampler2D uTexture;
 
-    const char* fragment_shader_source_index =
-        "uniform isampler2D uTexture; \n"
-        "uniform uint uPalette[256];\n"
-        "in vec2 texcoord; \n"
-        "out vec4 outFragment0; \n"
-        "void main() { \n"
-        "    uint color = uPalette[texture(uTexture, texcoord).r]; \n"
-        "    float r = ((color << 24) >> 24) / 255.0; \n"
-        "    float g = ((color << 16) >> 24) / 255.0; \n"
-        "    float b = ((color <<  8) >> 24) / 255.0; \n"
-        "    float a = ((color <<  0) >> 24) / 255.0; \n"
-        "    outFragment0 = vec4(r, g, b, a); \n"
-        "} \n";
+        in vec2 texcoord;
+        out vec4 outFragment0;
+
+        void main()
+        {
+            outFragment0 = texture(uTexture, texcoord);
+        }
+    )";
+
+    const char* vertex_shader_source_bicubic = R"(
+        uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0);
+
+        in vec2 inPosition;
+        out vec2 texcoord;
+
+        void main()
+        {
+            texcoord = inPosition * vec2(0.5, -0.5) + vec2(0.5);
+            gl_Position = vec4((inPosition + uTransform.xy) * uTransform.zw, 0.0, 1.0);
+        }
+    )";
+
+    const char* fragment_shader_source_bicubic = R"(
+        vec4 cubic(float v)
+        {
+            vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v;
+            vec4 s = n * n * n;
+            float x = s.x;
+            float y = s.y - 4.0 * s.x;
+            float z = s.z - 4.0 * s.y + 6.0 * s.x;
+            float w = 6.0 - x - y - z;
+            return vec4(x, y, z, w);
+        }
+
+        vec4 texture_filter(sampler2D uTexture, vec2 texcoord, vec2 texscale)
+        {
+            // hack to bring unit texcoords to integer pixel coords
+            texcoord /= texscale;
+            texcoord -= vec2(0.5, 0.5f);
+            float fx = fract(texcoord.x);
+            float fy = fract(texcoord.y);
+            texcoord.x -= fx;
+            texcoord.y -= fy;
+            vec4 cx = cubic(fx);
+            vec4 cy = cubic(fy);
+            vec4 c = vec4(texcoord.x - 0.5, texcoord.x + 1.5, texcoord.y - 0.5, texcoord.y + 1.5);
+            vec4 s = vec4(cx.x + cx.y, cx.z + cx.w, cy.x + cy.y, cy.z + cy.w);
+            vec4 offset = c + vec4(cx.y, cx.w, cy.y, cy.w) / s;
+            vec4 sample0 = texture(uTexture, vec2(offset.x, offset.z) * texscale);
+            vec4 sample1 = texture(uTexture, vec2(offset.y, offset.z) * texscale);
+            vec4 sample2 = texture(uTexture, vec2(offset.x, offset.w) * texscale);
+            vec4 sample3 = texture(uTexture, vec2(offset.y, offset.w) * texscale);
+            float sx = s.x / (s.x + s.y);
+            float sy = s.z / (s.z + s.w);
+            return mix(mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy);
+        }
+
+        uniform sampler2D uTexture;
+        uniform vec2 uTexScale;
+
+        in vec2 texcoord;
+        out vec4 outFragment0;
+
+        void main()
+        {
+            outFragment0 = texture_filter(uTexture, texcoord, uTexScale);
+        }
+    )";
+
+    const char* fragment_shader_source_index = R"(
+        uniform isampler2D uTexture;
+        uniform uint uPalette[256];
+
+        in vec2 texcoord;
+        out vec4 outFragment0;
+
+        void main()
+        {
+            uint color = uPalette[texture(uTexture, texcoord).r];
+            float r = ((color << 24) >> 24) / 255.0;
+            float g = ((color << 16) >> 24) / 255.0;
+            float b = ((color <<  8) >> 24) / 255.0;
+            float a = ((color <<  0) >> 24) / 255.0;
+            outFragment0 = vec4(r, g, b, a);
+        }
+    )";
 
     std::string get_shading_language_version_string()
     {
@@ -752,8 +774,10 @@ namespace
             int major;
             int minor;
             std::sscanf(version, "%d.%d", &major, &minor);
+
             char buffer[80];
             snprintf(buffer, 80, "#version %d%d\n", major, minor);
+
             s = buffer;
         }
 
