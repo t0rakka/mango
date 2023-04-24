@@ -978,6 +978,11 @@ namespace
 
     OpenGLFramebuffer::~OpenGLFramebuffer()
     {
+        if (m_index_program)
+        {
+            glDeleteProgram(m_index_program);
+        }
+
         if (m_bilinear.program)
         {
             glDeleteProgram(m_bilinear.program);
