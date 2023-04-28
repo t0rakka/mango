@@ -510,14 +510,14 @@ namespace mango
                 supported = ext.AMD_compressed_3DC_texture;
                 break;
 
-			case TextureCompression::LATC1_LUMINANCE:
-			case TextureCompression::LATC1_SIGNED_LUMINANCE:
-			case TextureCompression::LATC2_LUMINANCE_ALPHA:
-			case TextureCompression::LATC2_SIGNED_LUMINANCE_ALPHA:
-				supported = ext.EXT_texture_compression_latc;
-				break;
+            case TextureCompression::LATC1_LUMINANCE:
+            case TextureCompression::LATC1_SIGNED_LUMINANCE:
+            case TextureCompression::LATC2_LUMINANCE_ALPHA:
+            case TextureCompression::LATC2_SIGNED_LUMINANCE_ALPHA:
+                supported = ext.EXT_texture_compression_latc;
+                break;
 
-			case TextureCompression::DXT1:
+            case TextureCompression::DXT1:
             case TextureCompression::DXT1_ALPHA1:
                 supported = core.texture_compression_dxt1;
                 break;
