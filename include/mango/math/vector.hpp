@@ -357,7 +357,7 @@ namespace mango::math
         static Vector ascend()
         {
             return Vector(
-                ScalarType(0), 
+                ScalarType(0),
                 ScalarType(1)
             );
         }
@@ -449,8 +449,8 @@ namespace mango::math
         static Vector ascend()
         {
             return Vector(
-                ScalarType(0), 
-                ScalarType(1), 
+                ScalarType(0),
+                ScalarType(1),
                 ScalarType(2)
             );
         }
@@ -556,9 +556,9 @@ namespace mango::math
         static Vector ascend()
         {
             return Vector(
-                ScalarType(0), 
-                ScalarType(1), 
-                ScalarType(2), 
+                ScalarType(0),
+                ScalarType(1),
+                ScalarType(2),
                 ScalarType(3)
             );
         }
