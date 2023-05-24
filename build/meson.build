@@ -874,6 +874,41 @@ external_astc_sources = files(
     '../source/external/astc/astcenc_weight_quant_xfer_tables.cpp'
 )
 
+external_lcms_headers = files(
+    '../source/external/lcms/lcms2.h',
+    '../source/external/lcms/lcms2_plugin.h',
+    '../source/external/lcms/lcms2_internal.h'
+)
+
+external_lcms_sources = files(
+    '../source/external/lcms/cmsalpha.c',
+    '../source/external/lcms/cmscnvrt.c',
+    '../source/external/lcms/cmsgmt.c',
+    '../source/external/lcms/cmsio0.c',
+    '../source/external/lcms/cmsmd5.c',
+    '../source/external/lcms/cmsopt.c',
+    '../source/external/lcms/cmsplugin.c',
+    '../source/external/lcms/cmssm.c',
+    '../source/external/lcms/cmswtpnt.c',
+    '../source/external/lcms/cmscam02.c',
+    '../source/external/lcms/cmserr.c',
+    '../source/external/lcms/cmshalf.c',
+    '../source/external/lcms/cmsio1.c',
+    '../source/external/lcms/cmsmtrx.c',
+    '../source/external/lcms/cmspack.c',
+    '../source/external/lcms/cmsps2.c',
+    '../source/external/lcms/cmstypes.c',
+    '../source/external/lcms/cmsxform.c',
+    '../source/external/lcms/cmscgats.c',
+    '../source/external/lcms/cmsgamma.c',
+    '../source/external/lcms/cmsintrp.c',
+    '../source/external/lcms/cmslut.c',
+    '../source/external/lcms/cmsnamed.c',
+    '../source/external/lcms/cmspcs.c',
+    '../source/external/lcms/cmssamp.c',
+    '../source/external/lcms/cmsvirt.c'
+)
+
 # ------------------------------------------------------------------------------
 # compiler settings
 # ------------------------------------------------------------------------------
@@ -1082,6 +1117,7 @@ mango = shared_library('mango',
         external_webp_headers,
         external_basisu_headers,
         external_astc_headers,
+        external_lcms_headers,
         external_headers
     ],
     sources : [
@@ -1106,6 +1142,7 @@ mango = shared_library('mango',
         external_zpng_sources,
         external_basisu_sources,
         external_astc_sources,
+        external_lcms_sources,
     ],
     include_directories : [ mango_inc, '../source/external/libwebp' ],
     dependencies        : mango_deps,
