@@ -77,7 +77,36 @@
 		A601B0B4276E1B9D003B3A28 /* inftrees.h in Headers */ = {isa = PBXBuildFile; fileRef = A601B09F276E1B9D003B3A28 /* inftrees.h */; };
 		A601B0B5276E1B9D003B3A28 /* zutil.h in Headers */ = {isa = PBXBuildFile; fileRef = A601B0A0276E1B9D003B3A28 /* zutil.h */; };
 		A60B0760228CCA9C00BD520D /* quantize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A60B075F228CCA9C00BD520D /* quantize.cpp */; };
-		A60B0763229D21C900BD520D /* stb_image.h in Headers */ = {isa = PBXBuildFile; fileRef = A60B0762229D21C900BD520D /* stb_image.h */; };
+		A60BD6432A1E808F00F86B1C /* cmspack.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6262A1E808E00F86B1C /* cmspack.c */; };
+		A60BD6442A1E808F00F86B1C /* cmscam02.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6272A1E808E00F86B1C /* cmscam02.c */; };
+		A60BD6452A1E808F00F86B1C /* cmsnamed.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6282A1E808E00F86B1C /* cmsnamed.c */; };
+		A60BD6462A1E808F00F86B1C /* cmsmd5.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6292A1E808E00F86B1C /* cmsmd5.c */; };
+		A60BD6472A1E808F00F86B1C /* lcms2_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BD62A2A1E808E00F86B1C /* lcms2_internal.h */; };
+		A60BD6482A1E808F00F86B1C /* cmstypes.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD62B2A1E808E00F86B1C /* cmstypes.c */; };
+		A60BD6492A1E808F00F86B1C /* cmsintrp.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD62C2A1E808E00F86B1C /* cmsintrp.c */; };
+		A60BD64A2A1E808F00F86B1C /* cmspcs.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD62D2A1E808E00F86B1C /* cmspcs.c */; };
+		A60BD64B2A1E808F00F86B1C /* cmshalf.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD62E2A1E808E00F86B1C /* cmshalf.c */; };
+		A60BD64C2A1E808F00F86B1C /* cmsmtrx.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD62F2A1E808F00F86B1C /* cmsmtrx.c */; };
+		A60BD64D2A1E808F00F86B1C /* lcms2.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BD6302A1E808F00F86B1C /* lcms2.h */; };
+		A60BD64E2A1E808F00F86B1C /* cmsio0.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6312A1E808F00F86B1C /* cmsio0.c */; };
+		A60BD64F2A1E808F00F86B1C /* cmsio1.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6322A1E808F00F86B1C /* cmsio1.c */; };
+		A60BD6502A1E808F00F86B1C /* cmsgmt.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6332A1E808F00F86B1C /* cmsgmt.c */; };
+		A60BD6512A1E808F00F86B1C /* cmssm.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6342A1E808F00F86B1C /* cmssm.c */; };
+		A60BD6522A1E808F00F86B1C /* cmslut.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6352A1E808F00F86B1C /* cmslut.c */; };
+		A60BD6532A1E808F00F86B1C /* cmsvirt.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6362A1E808F00F86B1C /* cmsvirt.c */; };
+		A60BD6542A1E808F00F86B1C /* cmssamp.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6372A1E808F00F86B1C /* cmssamp.c */; };
+		A60BD6552A1E808F00F86B1C /* cmsgamma.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6382A1E808F00F86B1C /* cmsgamma.c */; };
+		A60BD6562A1E808F00F86B1C /* cmscgats.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6392A1E808F00F86B1C /* cmscgats.c */; };
+		A60BD6572A1E808F00F86B1C /* cmsps2.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD63A2A1E808F00F86B1C /* cmsps2.c */; };
+		A60BD6582A1E808F00F86B1C /* lcms2_plugin.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BD63B2A1E808F00F86B1C /* lcms2_plugin.h */; };
+		A60BD6592A1E808F00F86B1C /* cmsopt.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD63C2A1E808F00F86B1C /* cmsopt.c */; };
+		A60BD65A2A1E808F00F86B1C /* cmsxform.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD63D2A1E808F00F86B1C /* cmsxform.c */; };
+		A60BD65B2A1E808F00F86B1C /* cmsalpha.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD63E2A1E808F00F86B1C /* cmsalpha.c */; };
+		A60BD65C2A1E808F00F86B1C /* cmswtpnt.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD63F2A1E808F00F86B1C /* cmswtpnt.c */; };
+		A60BD65D2A1E808F00F86B1C /* cmsplugin.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6402A1E808F00F86B1C /* cmsplugin.c */; };
+		A60BD65E2A1E808F00F86B1C /* cmserr.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6412A1E808F00F86B1C /* cmserr.c */; };
+		A60BD65F2A1E808F00F86B1C /* cmscnvrt.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6422A1E808F00F86B1C /* cmscnvrt.c */; };
+		A60BD6612A1E810100F86B1C /* color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6602A1E810100F86B1C /* color.cpp */; };
 		A6269A4D1AB986AB0032EF56 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6269A4C1AB986AB0032EF56 /* geometry.cpp */; };
 		A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895B1DFC6D4700252BC4 /* crc32.cpp */; };
 		A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */; };
@@ -590,7 +619,36 @@
 		A601B09F276E1B9D003B3A28 /* inftrees.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = inftrees.h; path = external/zlib/inftrees.h; sourceTree = "<group>"; };
 		A601B0A0276E1B9D003B3A28 /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zutil.h; path = external/zlib/zutil.h; sourceTree = "<group>"; };
 		A60B075F228CCA9C00BD520D /* quantize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = quantize.cpp; path = image/quantize.cpp; sourceTree = "<group>"; };
-		A60B0762229D21C900BD520D /* stb_image.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stb_image.h; path = external/stb/stb_image.h; sourceTree = "<group>"; };
+		A60BD6262A1E808E00F86B1C /* cmspack.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmspack.c; path = external/lcms/cmspack.c; sourceTree = "<group>"; };
+		A60BD6272A1E808E00F86B1C /* cmscam02.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmscam02.c; path = external/lcms/cmscam02.c; sourceTree = "<group>"; };
+		A60BD6282A1E808E00F86B1C /* cmsnamed.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsnamed.c; path = external/lcms/cmsnamed.c; sourceTree = "<group>"; };
+		A60BD6292A1E808E00F86B1C /* cmsmd5.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsmd5.c; path = external/lcms/cmsmd5.c; sourceTree = "<group>"; };
+		A60BD62A2A1E808E00F86B1C /* lcms2_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lcms2_internal.h; path = external/lcms/lcms2_internal.h; sourceTree = "<group>"; };
+		A60BD62B2A1E808E00F86B1C /* cmstypes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmstypes.c; path = external/lcms/cmstypes.c; sourceTree = "<group>"; };
+		A60BD62C2A1E808E00F86B1C /* cmsintrp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsintrp.c; path = external/lcms/cmsintrp.c; sourceTree = "<group>"; };
+		A60BD62D2A1E808E00F86B1C /* cmspcs.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmspcs.c; path = external/lcms/cmspcs.c; sourceTree = "<group>"; };
+		A60BD62E2A1E808E00F86B1C /* cmshalf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmshalf.c; path = external/lcms/cmshalf.c; sourceTree = "<group>"; };
+		A60BD62F2A1E808F00F86B1C /* cmsmtrx.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsmtrx.c; path = external/lcms/cmsmtrx.c; sourceTree = "<group>"; };
+		A60BD6302A1E808F00F86B1C /* lcms2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lcms2.h; path = external/lcms/lcms2.h; sourceTree = "<group>"; };
+		A60BD6312A1E808F00F86B1C /* cmsio0.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsio0.c; path = external/lcms/cmsio0.c; sourceTree = "<group>"; };
+		A60BD6322A1E808F00F86B1C /* cmsio1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsio1.c; path = external/lcms/cmsio1.c; sourceTree = "<group>"; };
+		A60BD6332A1E808F00F86B1C /* cmsgmt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsgmt.c; path = external/lcms/cmsgmt.c; sourceTree = "<group>"; };
+		A60BD6342A1E808F00F86B1C /* cmssm.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmssm.c; path = external/lcms/cmssm.c; sourceTree = "<group>"; };
+		A60BD6352A1E808F00F86B1C /* cmslut.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmslut.c; path = external/lcms/cmslut.c; sourceTree = "<group>"; };
+		A60BD6362A1E808F00F86B1C /* cmsvirt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsvirt.c; path = external/lcms/cmsvirt.c; sourceTree = "<group>"; };
+		A60BD6372A1E808F00F86B1C /* cmssamp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmssamp.c; path = external/lcms/cmssamp.c; sourceTree = "<group>"; };
+		A60BD6382A1E808F00F86B1C /* cmsgamma.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsgamma.c; path = external/lcms/cmsgamma.c; sourceTree = "<group>"; };
+		A60BD6392A1E808F00F86B1C /* cmscgats.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmscgats.c; path = external/lcms/cmscgats.c; sourceTree = "<group>"; };
+		A60BD63A2A1E808F00F86B1C /* cmsps2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsps2.c; path = external/lcms/cmsps2.c; sourceTree = "<group>"; };
+		A60BD63B2A1E808F00F86B1C /* lcms2_plugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lcms2_plugin.h; path = external/lcms/lcms2_plugin.h; sourceTree = "<group>"; };
+		A60BD63C2A1E808F00F86B1C /* cmsopt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsopt.c; path = external/lcms/cmsopt.c; sourceTree = "<group>"; };
+		A60BD63D2A1E808F00F86B1C /* cmsxform.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsxform.c; path = external/lcms/cmsxform.c; sourceTree = "<group>"; };
+		A60BD63E2A1E808F00F86B1C /* cmsalpha.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsalpha.c; path = external/lcms/cmsalpha.c; sourceTree = "<group>"; };
+		A60BD63F2A1E808F00F86B1C /* cmswtpnt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmswtpnt.c; path = external/lcms/cmswtpnt.c; sourceTree = "<group>"; };
+		A60BD6402A1E808F00F86B1C /* cmsplugin.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsplugin.c; path = external/lcms/cmsplugin.c; sourceTree = "<group>"; };
+		A60BD6412A1E808F00F86B1C /* cmserr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmserr.c; path = external/lcms/cmserr.c; sourceTree = "<group>"; };
+		A60BD6422A1E808F00F86B1C /* cmscnvrt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmscnvrt.c; path = external/lcms/cmscnvrt.c; sourceTree = "<group>"; };
+		A60BD6602A1E810100F86B1C /* color.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = color.cpp; path = image/color.cpp; sourceTree = "<group>"; };
 		A6269A4C1AB986AB0032EF56 /* geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = math/geometry.cpp; sourceTree = "<group>"; };
 		A630895B1DFC6D4700252BC4 /* crc32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = crc32.cpp; path = core/crc32.cpp; sourceTree = "<group>"; };
 		A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = block_pvrtc.cpp; path = image/block_pvrtc.cpp; sourceTree = "<group>"; };
@@ -1109,6 +1167,7 @@
 				A6DB667624EAD42800BA9E1A /* block_fxt1.cpp */,
 				A00559AD1C93329A00A6D963 /* block_yuv.cpp */,
 				A00559AE1C93329A00A6D963 /* block.cpp */,
+				A60BD6602A1E810100F86B1C /* color.cpp */,
 				A00559AF1C93329A00A6D963 /* exif.cpp */,
 				A00559B01C93329A00A6D963 /* format.cpp */,
 				A00559B11C93329A00A6D963 /* image_astc.cpp */,
@@ -1244,12 +1303,40 @@
 			path = mango;
 			sourceTree = "<group>";
 		};
-		A60B0761229D21A700BD520D /* stb */ = {
+		A60BD6252A1E802500F86B1C /* lcms */ = {
 			isa = PBXGroup;
 			children = (
-				A60B0762229D21C900BD520D /* stb_image.h */,
+				A60BD63E2A1E808F00F86B1C /* cmsalpha.c */,
+				A60BD6272A1E808E00F86B1C /* cmscam02.c */,
+				A60BD6392A1E808F00F86B1C /* cmscgats.c */,
+				A60BD6422A1E808F00F86B1C /* cmscnvrt.c */,
+				A60BD6412A1E808F00F86B1C /* cmserr.c */,
+				A60BD6382A1E808F00F86B1C /* cmsgamma.c */,
+				A60BD6332A1E808F00F86B1C /* cmsgmt.c */,
+				A60BD62E2A1E808E00F86B1C /* cmshalf.c */,
+				A60BD62C2A1E808E00F86B1C /* cmsintrp.c */,
+				A60BD6312A1E808F00F86B1C /* cmsio0.c */,
+				A60BD6322A1E808F00F86B1C /* cmsio1.c */,
+				A60BD6352A1E808F00F86B1C /* cmslut.c */,
+				A60BD6292A1E808E00F86B1C /* cmsmd5.c */,
+				A60BD62F2A1E808F00F86B1C /* cmsmtrx.c */,
+				A60BD6282A1E808E00F86B1C /* cmsnamed.c */,
+				A60BD63C2A1E808F00F86B1C /* cmsopt.c */,
+				A60BD6262A1E808E00F86B1C /* cmspack.c */,
+				A60BD62D2A1E808E00F86B1C /* cmspcs.c */,
+				A60BD6402A1E808F00F86B1C /* cmsplugin.c */,
+				A60BD63A2A1E808F00F86B1C /* cmsps2.c */,
+				A60BD6372A1E808F00F86B1C /* cmssamp.c */,
+				A60BD6342A1E808F00F86B1C /* cmssm.c */,
+				A60BD62B2A1E808E00F86B1C /* cmstypes.c */,
+				A60BD6362A1E808F00F86B1C /* cmsvirt.c */,
+				A60BD63F2A1E808F00F86B1C /* cmswtpnt.c */,
+				A60BD63D2A1E808F00F86B1C /* cmsxform.c */,
+				A60BD62A2A1E808E00F86B1C /* lcms2_internal.h */,
+				A60BD63B2A1E808F00F86B1C /* lcms2_plugin.h */,
+				A60BD6302A1E808F00F86B1C /* lcms2.h */,
 			);
-			name = stb;
+			name = lcms;
 			sourceTree = "<group>";
 		};
 		A63DD6F21E706D5900D4D499 /* jpeg */ = {
@@ -1278,8 +1365,8 @@
 				A6E123F826D3EC2800B91946 /* xxhash */,
 				A6DD288B24125E900085E6EE /* libdeflate */,
 				A6EC3E67230D7B5200B17F21 /* libwebp */,
-				A60B0761229D21A700BD520D /* stb */,
 				A642430021852ABF0044B763 /* lzma */,
+				A60BD6252A1E802500F86B1C /* lcms */,
 				A6CD2BCE209B3817000B0EF8 /* zpng */,
 				A672D90F2026632700947D7E /* aes */,
 				A6FCC3781E8122C80037C15F /* zstd */,
@@ -1998,6 +2085,7 @@
 				A650BE9521F8D4290066B9B5 /* cocoa_window.h in Headers */,
 				A6E7DF382651D07E006A912E /* pool.h in Headers */,
 				A69B9DFD285ABF7E00E7BEDC /* crc32_pmull_helpers.h in Headers */,
+				A60BD6582A1E808F00F86B1C /* lcms2_plugin.h in Headers */,
 				A69B9DE4285ABF4200E7BEDC /* crc32_tables.h in Headers */,
 				A69B9DE3285ABF4200E7BEDC /* deflate_constants.h in Headers */,
 				A6EC3F07230D7C1500B17F21 /* yuv.h in Headers */,
@@ -2023,6 +2111,7 @@
 				A003D308192B9998009FED25 /* math in Headers */,
 				A63DD79A1E706F5400D4D499 /* minilzo.h in Headers */,
 				A6D78CD5290987A200304D88 /* astcenc_vecmathlib_common_4.h in Headers */,
+				A60BD6472A1E808F00F86B1C /* lcms2_internal.h in Headers */,
 				A642439521852AEF0044B763 /* LzHash.h in Headers */,
 				A6EC3EDE230D7C1500B17F21 /* common_sse2.h in Headers */,
 				A650BE8621F21C180066B9B5 /* CustomOpenGLView.h in Headers */,
@@ -2033,6 +2122,7 @@
 				A6872D092270546C008F0D1A /* jpeg_process_func.hpp in Headers */,
 				A6EC3E7D230D7BB800B17F21 /* webpi_dec.h in Headers */,
 				A6EC3F9B230D7C4D00B17F21 /* bit_writer_utils.h in Headers */,
+				A60BD64D2A1E808F00F86B1C /* lcms2.h in Headers */,
 				A69B9DF2285ABF4200E7BEDC /* ht_matchfinder.h in Headers */,
 				A6E7DF432651D07E006A912E /* bitstream.h in Headers */,
 				A6EC3F48230D7C2E00B17F21 /* vp8li_enc.h in Headers */,
@@ -2046,7 +2136,6 @@
 				A645DD712141551200EC714B /* zstd_ldm.h in Headers */,
 				A6EC3EF1230D7C1500B17F21 /* quant.h in Headers */,
 				A6EC3F59230D7C2E00B17F21 /* vp8i_enc.h in Headers */,
-				A60B0763229D21C900BD520D /* stb_image.h in Headers */,
 				A6EC3E632308589900B17F21 /* zstd_compress_literals.h in Headers */,
 				A6DD28DD24125F330085E6EE /* libdeflate.h in Headers */,
 				A69B9D96285ABF0800E7BEDC /* common_defs.h in Headers */,
@@ -2209,6 +2298,7 @@
 			files = (
 				A6EC3EDF230D7C1500B17F21 /* dec.c in Sources */,
 				A6EC3F42230D7C2E00B17F21 /* webp_enc.c in Sources */,
+				A60BD65D2A1E808F00F86B1C /* cmsplugin.c in Sources */,
 				A6D78CD3290987A200304D88 /* astcenc_pick_best_endpoint_format.cpp in Sources */,
 				A63DD7891E706F3400D4D499 /* bz_blocksort.c in Sources */,
 				A00559D21C93329A00A6D963 /* image_tga.cpp in Sources */,
@@ -2219,12 +2309,14 @@
 				A63DD7701E706EF100D4D499 /* lzfse_encode_base.c in Sources */,
 				A6EC3EEE230D7C1500B17F21 /* dec_msa.c in Sources */,
 				A6EC3F85230D7C4D00B17F21 /* quant_levels_utils.c in Sources */,
+				A60BD64C2A1E808F00F86B1C /* cmsmtrx.c in Sources */,
 				A00559A51C93327800A6D963 /* mapper_mgx.cpp in Sources */,
 				A6269A4D1AB986AB0032EF56 /* geometry.cpp in Sources */,
 				A6EC3F94230D7C4D00B17F21 /* filters_utils.c in Sources */,
 				A63DD76E1E706EF100D4D499 /* lzfse_decode_base.c in Sources */,
 				A642436D21852AEF0044B763 /* Alloc.c in Sources */,
 				A645DD752141551200EC714B /* fse_compress.c in Sources */,
+				A60BD65E2A1E808F00F86B1C /* cmserr.c in Sources */,
 				A6D78CCA290987A200304D88 /* astcenc_partition_tables.cpp in Sources */,
 				A6EC3E91230D7C0200B17F21 /* anim_decode.c in Sources */,
 				A6EC3EFB230D7C1500B17F21 /* filters_msa.c in Sources */,
@@ -2248,6 +2340,7 @@
 				A69B9DEE285ABF4200E7BEDC /* zlib_compress.c in Sources */,
 				A6EC3EFD230D7C1500B17F21 /* lossless_mips_dsp_r2.c in Sources */,
 				A6D78CE6290987A200304D88 /* astcenc_quantization.cpp in Sources */,
+				A60BD65B2A1E808F00F86B1C /* cmsalpha.c in Sources */,
 				A6EC3F03230D7C1500B17F21 /* alpha_processing_mips_dsp_r2.c in Sources */,
 				A6EC3F13230D7C1500B17F21 /* upsampling_msa.c in Sources */,
 				A6D78CCE290987A200304D88 /* astcenc_weight_quant_xfer_tables.cpp in Sources */,
@@ -2268,6 +2361,7 @@
 				A6EC3F54230D7C2E00B17F21 /* predictor_enc.c in Sources */,
 				A6EC3F8A230D7C4D00B17F21 /* huffman_encode_utils.c in Sources */,
 				A6EAF57429ECA388001EA03B /* adler32.c in Sources */,
+				A60BD6552A1E808F00F86B1C /* cmsgamma.c in Sources */,
 				A645DD7C2141551200EC714B /* zstdmt_compress.c in Sources */,
 				A645DD7A2141551200EC714B /* hist.c in Sources */,
 				A645DD27213D53C000EC714B /* jpeg_decode.cpp in Sources */,
@@ -2300,6 +2394,7 @@
 				A6EC3E7C230D7BB800B17F21 /* webp_dec.c in Sources */,
 				A00559CA1C93329A00A6D963 /* image_hdr.cpp in Sources */,
 				A00559991C93324E00A6D963 /* string.cpp in Sources */,
+				A60BD6592A1E808F00F86B1C /* cmsopt.c in Sources */,
 				A6EC3EFE230D7C1500B17F21 /* lossless_enc_neon.c in Sources */,
 				A6EC3EE8230D7C1500B17F21 /* lossless_enc_sse2.c in Sources */,
 				A672D9122026633600947D7E /* bc_aes.cpp in Sources */,
@@ -2314,20 +2409,24 @@
 				A6D78CDD290987A200304D88 /* astcenc_color_quantize.cpp in Sources */,
 				A63DD7901E706F3400D4D499 /* bzlib.c in Sources */,
 				A645DD1C21381E2D00EC714B /* image_sgi.cpp in Sources */,
+				A60BD6492A1E808F00F86B1C /* cmsintrp.c in Sources */,
 				A6EC3F45230D7C2E00B17F21 /* backward_references_cost_enc.c in Sources */,
 				A642438821852AEF0044B763 /* LzmaDec.c in Sources */,
 				A00559C81C93329A00A6D963 /* image_dds.cpp in Sources */,
 				A6EC3EE1230D7C1500B17F21 /* cost_sse2.c in Sources */,
+				A60BD6432A1E808F00F86B1C /* cmspack.c in Sources */,
 				A6EC3E7F230D7BB800B17F21 /* buffer_dec.c in Sources */,
 				A642436E21852AEF0044B763 /* LzFind.c in Sources */,
 				A6EC3F8B230D7C4D00B17F21 /* bit_reader_utils.c in Sources */,
 				A645DD7B2141551200EC714B /* zstd_ldm.c in Sources */,
 				A601B0B3276E1B9D003B3A28 /* trees.c in Sources */,
+				A60BD6442A1E808F00F86B1C /* cmscam02.c in Sources */,
 				A6EAF57329ECA388001EA03B /* crc32.c in Sources */,
 				A6D78CCD290987A200304D88 /* astcenc_weight_align.cpp in Sources */,
 				A6E7DF3F2651D07E006A912E /* threading.c in Sources */,
 				A6EAF56C29ECA353001EA03B /* compress.c in Sources */,
 				A601B0B1276E1B9D003B3A28 /* uncompr.c in Sources */,
+				A60BD65C2A1E808F00F86B1C /* cmswtpnt.c in Sources */,
 				A6EAF56F29ECA353001EA03B /* inflate.c in Sources */,
 				A6EC3EE0230D7C1500B17F21 /* dec_clip_tables.c in Sources */,
 				A6EC3F18230D7C1500B17F21 /* lossless_enc_mips32.c in Sources */,
@@ -2344,6 +2443,7 @@
 				A6EC3F09230D7C1500B17F21 /* lossless.c in Sources */,
 				A6EC3F4B230D7C2E00B17F21 /* picture_rescale_enc.c in Sources */,
 				A6EC3F66230D7C3D00B17F21 /* muxedit.c in Sources */,
+				A60BD6562A1E808F00F86B1C /* cmscgats.c in Sources */,
 				A645DD822141551D00EC714B /* huf_decompress.c in Sources */,
 				A672D9152026634B00947D7E /* aes.cpp in Sources */,
 				A642435721852AEF0044B763 /* Ppmd8Enc.c in Sources */,
@@ -2375,10 +2475,12 @@
 				A645DD2A213D53C000EC714B /* jpeg_process.cpp in Sources */,
 				A00559C31C93329A00A6D963 /* block.cpp in Sources */,
 				A6CD2BD8209B3BA7000B0EF8 /* image_zpng.cpp in Sources */,
+				A60BD64F2A1E808F00F86B1C /* cmsio1.c in Sources */,
 				A6EC3F0F230D7C1500B17F21 /* lossless_sse2.c in Sources */,
 				A6EC3E85230D7BB800B17F21 /* frame_dec.c in Sources */,
 				A6E7DF3E2651D07E006A912E /* pool.c in Sources */,
 				A645DD29213D53C000EC714B /* jpeg_huffman.cpp in Sources */,
+				A60BD65A2A1E808F00F86B1C /* cmsxform.c in Sources */,
 				A6EAF57729ECA3D1001EA03B /* cpu_features.c in Sources */,
 				A6D78CE0290987A200304D88 /* astcenc_block_sizes.cpp in Sources */,
 				A642438421852AEF0044B763 /* Ppmd8.c in Sources */,
@@ -2388,6 +2490,7 @@
 				A642437F21852AEF0044B763 /* Lzma2Enc.c in Sources */,
 				A601B0A6276E1B9D003B3A28 /* inftrees.c in Sources */,
 				A6EC3F4F230D7C2E00B17F21 /* filter_enc.c in Sources */,
+				A60BD64A2A1E808F00F86B1C /* cmspcs.c in Sources */,
 				A6EC3F99230D7C4D00B17F21 /* thread_utils.c in Sources */,
 				A6EC3F1B230D7C1500B17F21 /* enc_sse2.c in Sources */,
 				A6EC3F20230D7C1500B17F21 /* ssim.c in Sources */,
@@ -2402,24 +2505,29 @@
 				A00559A91C93327800A6D963 /* path.cpp in Sources */,
 				A6EC3EE3230D7C1500B17F21 /* cpu.c in Sources */,
 				A6D78CDA290987A200304D88 /* astcenc_image.cpp in Sources */,
+				A60BD6482A1E808F00F86B1C /* cmstypes.c in Sources */,
 				A6EC3E642308589900B17F21 /* zstd_compress_sequences.c in Sources */,
 				A6EC3F00230D7C1500B17F21 /* yuv_sse2.c in Sources */,
 				A63DD7581E706EB200D4D499 /* rijndael.cpp in Sources */,
 				A00559A41C93327800A6D963 /* file.cpp in Sources */,
 				A6EC3E7E230D7BB800B17F21 /* tree_dec.c in Sources */,
+				A60BD6462A1E808F00F86B1C /* cmsmd5.c in Sources */,
 				A0F21EDA1CA062EA0084302D /* file_observer.cpp in Sources */,
 				A63DD78C1E706F3400D4D499 /* bz_decompress.c in Sources */,
+				A60BD6512A1E808F00F86B1C /* cmssm.c in Sources */,
 				A6EC3E80230D7BB800B17F21 /* idec_dec.c in Sources */,
 				A005599C1C93324E00A6D963 /* timer.cpp in Sources */,
 				A6EC3F55230D7C2E00B17F21 /* syntax_enc.c in Sources */,
 				A6EC3F1D230D7C1500B17F21 /* alpha_processing.c in Sources */,
 				A6D78CCC290987A200304D88 /* astcenc_percentile_tables.cpp in Sources */,
 				A6EC3EF3230D7C1500B17F21 /* rescaler.c in Sources */,
+				A60BD6522A1E808F00F86B1C /* cmslut.c in Sources */,
 				A0F21ED61CA05EE90084302D /* cocoa_context.mm in Sources */,
 				A63DD78B1E706F3400D4D499 /* bz_crctable.c in Sources */,
 				A6EC3F89230D7C4D00B17F21 /* color_cache_utils.c in Sources */,
 				A6EC3F58230D7C2E00B17F21 /* alpha_enc.c in Sources */,
 				A6EC3E88230D7BB800B17F21 /* quant_dec.c in Sources */,
+				A60BD6452A1E808F00F86B1C /* cmsnamed.c in Sources */,
 				A642438321852AEF0044B763 /* LzmaLib.c in Sources */,
 				A6E7DF3A2651D07E006A912E /* xxhash.c in Sources */,
 				A6EC3EE6230D7C1500B17F21 /* filters.c in Sources */,
@@ -2453,6 +2561,7 @@
 				A650BE9421F8D4290066B9B5 /* cocoa_window.mm in Sources */,
 				A0F21EDB1CA062EA0084302D /* file_stream.cpp in Sources */,
 				A6EC3F12230D7C1500B17F21 /* cost_mips32.c in Sources */,
+				A60BD6532A1E808F00F86B1C /* cmsvirt.c in Sources */,
 				A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */,
 				A00559D31C93329A00A6D963 /* image.cpp in Sources */,
 				A68CD3F02651D9A200725A7C /* lossless_sse41.c in Sources */,
@@ -2464,6 +2573,8 @@
 				A6EC3EF7230D7C1500B17F21 /* lossless_neon.c in Sources */,
 				A6EC3F0C230D7C1500B17F21 /* lossless_msa.c in Sources */,
 				A00559C11C93329A00A6D963 /* block_dxt.cpp in Sources */,
+				A60BD64B2A1E808F00F86B1C /* cmshalf.c in Sources */,
+				A60BD6542A1E808F00F86B1C /* cmssamp.c in Sources */,
 				A6EC3F49230D7C2E00B17F21 /* picture_psnr_enc.c in Sources */,
 				A6D8E9F328D6AA2A007A0B24 /* Threads.c in Sources */,
 				A63DD7A51E706F8800D4D499 /* BC4BC5.cpp in Sources */,
@@ -2489,8 +2600,10 @@
 				A63DD7B01E706FA000D4D499 /* etc.cpp in Sources */,
 				A6EC3F5C230D7C2E00B17F21 /* picture_tools_enc.c in Sources */,
 				A00559C41C93329A00A6D963 /* exif.cpp in Sources */,
+				A60BD6502A1E808F00F86B1C /* cmsgmt.c in Sources */,
 				A00559961C93324E00A6D963 /* cpuinfo.cpp in Sources */,
 				A0F241D319D5E30D00218F92 /* math.cpp in Sources */,
+				A60BD6572A1E808F00F86B1C /* cmsps2.c in Sources */,
 				A6EC3F4D230D7C2E00B17F21 /* backward_references_enc.c in Sources */,
 				A00559CE1C93329A00A6D963 /* image_pcx.cpp in Sources */,
 				A6EC3EEB230D7C1500B17F21 /* alpha_processing_sse2.c in Sources */,
@@ -2500,6 +2613,7 @@
 				A650BE8721F21C180066B9B5 /* CustomOpenGLView.mm in Sources */,
 				A0F21EDC1CA062EA0084302D /* mapper_file.cpp in Sources */,
 				A6DB667724EAD42800BA9E1A /* block_fxt1.cpp in Sources */,
+				A60BD65F2A1E808F00F86B1C /* cmscnvrt.c in Sources */,
 				A690037C2008FF790080E5FA /* sha2.cpp in Sources */,
 				A63DD7541E706EB200D4D499 /* rarvm.cpp in Sources */,
 				A00559A81C93327800A6D963 /* mapper.cpp in Sources */,
@@ -2512,6 +2626,8 @@
 				A6EC3F84230D7C4D00B17F21 /* bit_writer_utils.c in Sources */,
 				A6D4807627985DE000F7E98D /* image_exr.cpp in Sources */,
 				A00559CB1C93329A00A6D963 /* image_iff.cpp in Sources */,
+				A60BD6612A1E810100F86B1C /* color.cpp in Sources */,
+				A60BD64E2A1E808F00F86B1C /* cmsio0.c in Sources */,
 				A6D78CA42909871700304D88 /* block_astc.cpp in Sources */,
 				A645DD30213ED71100EC714B /* image_c64.cpp in Sources */,
 				A00559CC1C93329A00A6D963 /* image_jpg.cpp in Sources */,
