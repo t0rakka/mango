@@ -178,6 +178,9 @@
     <Filter Include="external\astc">
       <UniqueIdentifier>{5f54ab0b-e572-4995-b687-87dabe0c86c0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\lcms">
+      <UniqueIdentifier>{fa0fcf94-b5de-406c-9de4-d1166b32ef3e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\mango\core\bits.hpp">
@@ -1227,6 +1230,15 @@
     <ClInclude Include="..\..\..\source\external\zstd\common\allocations.h">
       <Filter>external\zstd\common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\source\external\lcms\lcms2.h">
+      <Filter>external\lcms</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\lcms\lcms2_internal.h">
+      <Filter>external\lcms</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\lcms\lcms2_plugin.h">
+      <Filter>external\lcms</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp">
@@ -2146,6 +2158,87 @@
     </ClCompile>
     <ClCompile Include="..\..\..\source\external\libdeflate\lib\arm\cpu_features.c">
       <Filter>external\libdeflate\lib\arm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\image\color.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsalpha.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmscam02.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmscgats.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmscnvrt.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmserr.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsgamma.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsgmt.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmshalf.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsintrp.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsio0.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsio1.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmslut.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsmd5.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsmtrx.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsnamed.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsopt.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmspack.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmspcs.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsplugin.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsps2.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmssamp.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmssm.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmstypes.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsvirt.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmswtpnt.c">
+      <Filter>external\lcms</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\lcms\cmsxform.c">
+      <Filter>external\lcms</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

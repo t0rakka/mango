@@ -197,6 +197,9 @@
     <ClInclude Include="..\..\..\source\external\concurrentqueue\concurrentqueue.h" />
     <ClInclude Include="..\..\..\source\external\concurrentqueue\lightweightsemaphore.h" />
     <ClInclude Include="..\..\..\source\external\concurrentqueue\readerwriterqueue.h" />
+    <ClInclude Include="..\..\..\source\external\lcms\lcms2.h" />
+    <ClInclude Include="..\..\..\source\external\lcms\lcms2_internal.h" />
+    <ClInclude Include="..\..\..\source\external\lcms\lcms2_plugin.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\common_defs.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\libdeflate.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\adler32_vec_template.h" />
@@ -402,6 +405,32 @@
     <ClCompile Include="..\..\..\source\external\bzip2\bz_randtable.c" />
     <ClCompile Include="..\..\..\source\external\google\etc.cpp" />
     <ClCompile Include="..\..\..\source\external\google\etc1.cpp" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsalpha.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmscam02.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmscgats.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmscnvrt.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmserr.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsgamma.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsgmt.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmshalf.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsintrp.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsio0.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsio1.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmslut.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsmd5.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsmtrx.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsnamed.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsopt.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmspack.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmspcs.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsplugin.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsps2.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmssamp.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmssm.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmstypes.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsvirt.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmswtpnt.c" />
+    <ClCompile Include="..\..\..\source\external\lcms\cmsxform.c" />
     <ClCompile Include="..\..\..\source\external\libdeflate\lib\adler32.c">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)hack_libdeflate_adler32.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">$(IntDir)hack_libdeflate_adler32.obj</ObjectFileName>
@@ -671,6 +700,7 @@
     <ClCompile Include="..\..\..\source\mango\image\block_fxt1.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\block_pvrtc.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\block_yuv.cpp" />
+    <ClCompile Include="..\..\..\source\mango\image\color.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\exif.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\format.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\image.cpp" />
