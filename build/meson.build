@@ -256,6 +256,7 @@ mango_image_sources = files(
     '../source/mango/image/block_fxt1.cpp',
     '../source/mango/image/block_pvrtc.cpp',
     '../source/mango/image/block_yuv.cpp',
+    '../source/mango/image/color.cpp',
     '../source/mango/image/exif.cpp',
     '../source/mango/image/format.cpp',
     '../source/mango/image/image_astc.cpp',

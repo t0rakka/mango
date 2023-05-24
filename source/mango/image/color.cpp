@@ -4,6 +4,9 @@
 */
 #include <mango/image/image.hpp>
 
+#define CMS_NO_REGISTER_KEYWORD
+#include "../../source/external/lcms/lcms2.h"
+
 namespace mango::image
 {
 
