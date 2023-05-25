@@ -51,6 +51,8 @@ namespace mango::image
         MANGO_UNREFERENCED(output);
         MANGO_UNREFERENCED(input);
 
+        Bitmap bitmap(target, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+
         // TODO: lazy in-place transformation
         /*
 
