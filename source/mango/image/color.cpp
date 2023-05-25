@@ -10,12 +10,50 @@
 namespace mango::image
 {
 
-    // TODO
+    ColorProfile::ColorProfile(void* profile)
+        : m_profile(profile)
+    {
+    }
 
-    /*
+    ColorProfile::~ColorProfile()
+    {
+        cmsCloseProfile(m_profile);
+    }
 
-        cmsHPROFILE inputICC = cmsOpenProfileFromMem(icc_buffer.data(), icc_buffer.size());
-        cmsHPROFILE outputICC = cmsCreate_sRGBProfile();
+    ColorManager::ColorManager()
+    {
+        m_context = cmsCreateContext(nullptr, nullptr);
+    }
+
+    ColorManager::~ColorManager()
+    {
+        cmsContext context = reinterpret_cast<cmsContext>(m_context);
+        cmsDeleteContext(context);
+    }
+
+    ColorProfile ColorManager::create(ConstMemory icc)
+    {
+        cmsContext context = reinterpret_cast<cmsContext>(m_context);
+        cmsHPROFILE profile = cmsOpenProfileFromMemTHR(context, icc.address, cmsUInt32Number(icc.size));
+        return ColorProfile(profile);
+    }
+
+    ColorProfile ColorManager::createSRGB()
+    {
+        cmsContext context = reinterpret_cast<cmsContext>(m_context);
+        cmsHPROFILE profile = cmsCreate_sRGBProfileTHR(context);
+        return ColorProfile(profile);
+    }
+
+    void ColorManager::transform(const Surface& target, const ColorProfile& output, const ColorProfile& input)
+    {
+        MANGO_UNREFERENCED(target);
+        MANGO_UNREFERENCED(output);
+        MANGO_UNREFERENCED(input);
+
+        // TODO: lazy in-place transformation
+        /*
+
         if (target.format.bits == 24)
         {
             cmsHTRANSFORM transform = cmsCreateTransform(inputICC, TYPE_RGB_8,
@@ -41,6 +79,7 @@ namespace mango::image
             }
         }
 
-    */
+        */
+    }
 
 } // namespace mango::image

@@ -1,16 +1,21 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/core/configure.hpp>
 #include <mango/core/endian.hpp>
+#include <mango/core/memory.hpp>
 #include <mango/core/bits.hpp>
 #include <mango/math/srgb.hpp>
 
 namespace mango::image
 {
+
+    class Surface;
+
+    // ------------------------------------------------------------------
 
     static constexpr
     u32 makeBGRA(u32 red, u32 green, u32 blue, u32 alpha) noexcept
@@ -134,6 +139,35 @@ namespace mango::image
             linear.w = float(color >> 24) / 255.0f; // pass-through linear alpha
             return linear;
         }
+    };
+
+    // ------------------------------------------------------------------
+    // ColorManager
+    // ------------------------------------------------------------------
+
+    class ColorProfile : public NonCopyable
+    {
+    protected:
+        void* m_profile;
+
+    public:
+        ColorProfile(void* profile);
+        ~ColorProfile();
+    };
+
+    class ColorManager : public NonCopyable
+    {
+    private:
+        void* m_context;
+
+    public:
+        ColorManager();
+        ~ColorManager();
+
+        ColorProfile create(ConstMemory icc);
+        ColorProfile createSRGB();
+
+        void transform(const Surface& target, const ColorProfile& output, const ColorProfile& input);
     };
 
 } // namespace mango::image
