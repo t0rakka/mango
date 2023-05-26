@@ -2115,7 +2115,7 @@ namespace
         ~ParserPNG();
 
         const ImageHeader& getHeader();
-        ImageDecodeStatus decode(const Surface& dest, bool multithread, Palette* palette);
+        ImageDecodeStatus decode(const Surface& dest, bool multithread, bool use_icc, Palette* palette);
 
         ConstMemory icc()
         {
@@ -3074,7 +3074,7 @@ namespace
         }
     }
 
-    ImageDecodeStatus ParserPNG::decode(const Surface& dest, bool multithread, Palette* ptr_palette)
+    ImageDecodeStatus ParserPNG::decode(const Surface& dest, bool multithread, bool use_icc, Palette* ptr_palette)
     {
         ImageDecodeStatus status;
 
@@ -3252,6 +3252,14 @@ namespace
 
         // process image
         process(image, width, height, stride, buffer, multithread);
+
+        if (m_icc.size() > 0 && use_icc)
+        {
+            image::ColorManager manager;
+            image::ColorProfile profile = manager.create(ConstMemory(m_icc.data(), m_icc.size()));
+            image::ColorProfile display = manager.createSRGB();
+            manager.transform(dest, display, profile);
+        }
 
         if (m_number_of_frames > 0)
         {
@@ -3779,21 +3787,21 @@ namespace
             if (direct)
             {
                 // direct decoding
-                status = m_parser.decode(dest, options.multithread, nullptr);
+                status = m_parser.decode(dest, options.multithread, options.icc, nullptr);
             }
             else
             {
                 if (options.palette && header.palette)
                 {
                     // direct decoding with palette
-                    status = m_parser.decode(dest, options.multithread, options.palette);
+                    status = m_parser.decode(dest, options.multithread, options.icc, options.palette);
                     direct = true;
                 }
                 else
                 {
                     // indirect
                     Bitmap temp(header.width, header.height, header.format);
-                    status = m_parser.decode(temp, options.multithread, nullptr);
+                    status = m_parser.decode(temp, options.multithread, options.icc, nullptr);
                     dest.blit(0, 0, temp);
                 }
             }
