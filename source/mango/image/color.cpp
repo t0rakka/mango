@@ -20,6 +20,11 @@ namespace mango::image
         cmsCloseProfile(m_profile);
     }
 
+    ColorProfile::operator void* () const
+    {
+        return m_profile;
+    }
+
     ColorManager::ColorManager()
     {
         m_context = cmsCreateContext(nullptr, nullptr);
@@ -47,41 +52,25 @@ namespace mango::image
 
     void ColorManager::transform(const Surface& target, const ColorProfile& output, const ColorProfile& input)
     {
-        MANGO_UNREFERENCED(target);
-        MANGO_UNREFERENCED(output);
-        MANGO_UNREFERENCED(input);
+        // NOTE: lazy in-place ICC profile transformation
+        // TODO:
+        // - DoTransform can be multi-threaded
+        // - do direct transform when output and input are compatible
 
-        Bitmap bitmap(target, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+        cmsHTRANSFORM transform = cmsCreateTransform(
+            input, TYPE_RGBA_8,
+            output, TYPE_RGBA_8,
+            INTENT_PERCEPTUAL, cmsFLAGS_BLACKPOINTCOMPENSATION);
 
-        // TODO: lazy in-place transformation
-        /*
+        Bitmap temp(target, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
-        if (target.format.bits == 24)
+        for (int y = 0; y < target.height; ++y)
         {
-            cmsHTRANSFORM transform = cmsCreateTransform(inputICC, TYPE_RGB_8,
-                outputICC, TYPE_RGB_8,
-                INTENT_PERCEPTUAL, cmsFLAGS_BLACKPOINTCOMPENSATION);
-
-            for (int y = 0; y < target.height; ++y)
-            {
-                u8* image = target.address<u8>(0, y);
-                cmsDoTransform(transform, image, image, target.width);
-            }
-        }
-        else
-        {
-            cmsHTRANSFORM transform = cmsCreateTransform(inputICC, TYPE_RGBA_8,
-                outputICC, TYPE_RGBA_8,
-                INTENT_PERCEPTUAL, cmsFLAGS_BLACKPOINTCOMPENSATION);
-
-            for (int y = 0; y < target.height; ++y)
-            {
-                u8* image = target.address<u8>(0, y);
-                cmsDoTransform(transform, image, image, target.width);
-            }
+            u8* image = temp.address<u8>(0, y);
+            cmsDoTransform(transform, image, image, target.width);
         }
 
-        */
+        target.blit(0, 0, temp);
     }
 
 } // namespace mango::image

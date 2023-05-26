@@ -153,6 +153,8 @@ namespace mango::image
     public:
         ColorProfile(void* profile);
         ~ColorProfile();
+
+        operator void* () const;
     };
 
     class ColorManager : public NonCopyable

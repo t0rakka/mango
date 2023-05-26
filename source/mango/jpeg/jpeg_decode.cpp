@@ -1798,6 +1798,16 @@ namespace mango::jpeg
             target.blit(0, 0, *m_surface);
         }
 
+#if 0
+        if (icc_buffer.size() > 0)
+        {
+            image::ColorManager manager;
+            image::ColorProfile profile = manager.create(ConstMemory(icc_buffer.data(), icc_buffer.size()));
+            image::ColorProfile display = manager.createSRGB();
+            manager.transform(target, display, profile);
+        }
+#endif
+
         blockVector.resize(0);
         status.info = getInfo();
 
