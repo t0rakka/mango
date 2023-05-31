@@ -20,9 +20,6 @@ namespace
 
 #if 0
     // Recognize image format from header signature
-    // This is WIP.. will be used in validation that the ImageDecoder input is correct
-    // There are a lot of files with incorrect filenames (extension) out there, most are PNG/JPG and
-    // we want to tap into that a little bit with this.
 
     const char* getImageFormat(ConstMemory memory)
     {
@@ -34,7 +31,8 @@ namespace
             const char* name;
         };
 
-        const Signature signatures[] =
+        static
+        const Signature signatures [] =
         {
             { { 0xff, 0xd8, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, 0x0007, ".jpg" },
             { { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, 0x00ff, ".png" },
@@ -63,12 +61,29 @@ namespace
 
         if (memory.size < 16)
         {
-            // Our signature matching looks at first 16 bytes of a file, and if image file is
-            // smaller than 16 bytes it is invalid anyway.
             return nullptr;
         }
 
-        // TODO
+        const u8* p = memory.address;
+
+        for (const Signature& signature : signatures)
+        {
+            u16 mask = 0;
+
+            for (int i = 0; i < 16; ++i)
+            {
+                if (p[i] == signature.data[i])
+                {
+                    mask |= u16(1 << i);
+                }
+            }
+
+            if (signature.mask == (mask & signature.mask))
+            {
+                return signature.name;
+            }
+        }
+
         return nullptr;
     }
 #endif
