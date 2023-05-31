@@ -18,12 +18,10 @@ namespace
         return toLower(extension.empty() ? filename : extension);
     }
 
-#if 0
-    // Recognize image format from header signature
-
-    const char* getImageFormat(ConstMemory memory)
+    std::string getImageFormatExtension(ConstMemory memory)
     {
 
+        // Recognize image format from header signature
         struct Signature
         {
             u8 data[16];
@@ -61,7 +59,7 @@ namespace
 
         if (memory.size < 16)
         {
-            return nullptr;
+            return "";
         }
 
         const u8* p = memory.address;
@@ -84,9 +82,8 @@ namespace
             }
         }
 
-        return nullptr;
+        return "";
     }
-#endif
 
 } // namespace
 
@@ -264,7 +261,14 @@ namespace mango::image
 
     ImageDecoder::ImageDecoder(ConstMemory memory, const std::string& filename)
     {
-        std::string extension = getLowerCaseExtension(filename);
+        // Inspect signature to determine image format
+        std::string extension = getImageFormatExtension(memory);
+        if (extension.empty())
+        {
+            // signature wasn't recognized -> trust the filename
+            extension = getLowerCaseExtension(filename);
+        }
+
         ImageDecoder::CreateDecoderFunc create = g_imageServer.getImageDecoder(extension);
         if (create)
         {
