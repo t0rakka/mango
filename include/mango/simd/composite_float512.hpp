@@ -13,8 +13,8 @@ namespace mango::simd
     static inline R FUNC(A a) \
     { \
         R result; \
-        result.lo = FUNC(a.lo); \
-        result.hi = FUNC(a.hi); \
+        result.part[0] = FUNC(a.part[0]); \
+        result.part[1] = FUNC(a.part[1]); \
         return result; \
     }
 
@@ -22,8 +22,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b) \
     { \
         R result; \
-        result.lo = FUNC(a.lo, b.lo); \
-        result.hi = FUNC(a.hi, b.hi); \
+        result.part[0] = FUNC(a.part[0], b.part[0]); \
+        result.part[1] = FUNC(a.part[1], b.part[1]); \
         return result; \
     }
 
@@ -31,8 +31,8 @@ namespace mango::simd
     static inline R FUNC(ABC a, ABC b, ABC c) \
     { \
         R result; \
-        result.lo = FUNC(a.lo, b.lo, c.lo); \
-        result.hi = FUNC(a.hi, b.hi, c.hi); \
+        result.part[0] = FUNC(a.part[0], b.part[0], c.part[0]); \
+        result.part[1] = FUNC(a.part[1], b.part[1], c.part[1]); \
         return result; \
     }
 
@@ -40,8 +40,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b, MASK mask) \
     { \
         R result; \
-        result.lo = FUNC(a.lo, b.lo, mask.lo); \
-        result.hi = FUNC(a.hi, b.hi, mask.hi); \
+        result.part[0] = FUNC(a.part[0], b.part[0], mask.part[0]); \
+        result.part[1] = FUNC(a.part[1], b.part[1], mask.part[1]); \
         return result; \
     }
 
@@ -49,8 +49,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b, MASK mask, AB value) \
     { \
         R result; \
-        result.lo = FUNC(a.lo, b.lo, mask.lo, value.lo); \
-        result.hi = FUNC(a.hi, b.hi, mask.hi, value.hi); \
+        result.part[0] = FUNC(a.part[0], b.part[0], mask.part[0], value.part[0]); \
+        result.part[1] = FUNC(a.part[1], b.part[1], mask.part[1], value.part[1]); \
         return result; \
     }
 
@@ -61,16 +61,16 @@ namespace mango::simd
     static inline f32x16 f32x16_zero()
     {
         f32x16 result;
-        result.lo = f32x8_zero();
-        result.hi = f32x8_zero();
+        result.part[0] = f32x8_zero();
+        result.part[1] = f32x8_zero();
         return result;
     }
 
     static inline f32x16 f32x16_set(f32 s)
     {
         f32x16 result;
-        result.lo = f32x8_set(s);
-        result.hi = f32x8_set(s);
+        result.part[0] = f32x8_set(s);
+        result.part[1] = f32x8_set(s);
         return result;
     }
 
@@ -79,23 +79,23 @@ namespace mango::simd
         f32 s8, f32 s9, f32 s10, f32 s11, f32 s12, f32 s13, f32 s14, f32 s15)
     {
         f32x16 result;
-        result.lo = f32x8_set(s0, s1, s2, s3, s4, s5, s6, s7);
-        result.hi = f32x8_set(s8, s9, s10, s11, s12, s13, s14, s15);
+        result.part[0] = f32x8_set(s0, s1, s2, s3, s4, s5, s6, s7);
+        result.part[1] = f32x8_set(s8, s9, s10, s11, s12, s13, s14, s15);
         return result;
     }
 
     static inline f32x16 f32x16_uload(const void* source)
     {
         f32x16 result;
-        result.lo = f32x8_uload(reinterpret_cast<const f32*>(source) + 0);
-        result.hi = f32x8_uload(reinterpret_cast<const f32*>(source) + 8);
+        result.part[0] = f32x8_uload(reinterpret_cast<const f32*>(source) + 0);
+        result.part[1] = f32x8_uload(reinterpret_cast<const f32*>(source) + 8);
         return result;
     }
 
     static inline void f32x16_ustore(void* dest, f32x16 a)
     {
-        f32x8_ustore(reinterpret_cast<f32*>(dest) + 0, a.lo);
-        f32x8_ustore(reinterpret_cast<f32*>(dest) + 8, a.hi);
+        f32x8_ustore(reinterpret_cast<f32*>(dest) + 0, a.part[0]);
+        f32x8_ustore(reinterpret_cast<f32*>(dest) + 8, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(f32x16, f32x16, unpackhi)
@@ -131,8 +131,8 @@ namespace mango::simd
     static inline f32x16 div(f32x16 a, f32 b)
     {
         f32x16 result;
-        result.lo = div(a.lo, b);
-        result.hi = div(a.hi, b);
+        result.part[0] = div(a.part[0], b);
+        result.part[1] = div(a.part[1], b);
         return result;
     }
 
@@ -157,8 +157,8 @@ namespace mango::simd
     static inline f32x16 select(mask32x16 mask, f32x16 a, f32x16 b)
     {
         f32x16 result;
-        result.lo = select(mask.lo, a.lo, b.lo);
-        result.hi = select(mask.hi, a.hi, b.hi);
+        result.part[0] = select(mask.part[0], a.part[0], b.part[0]);
+        result.part[1] = select(mask.part[1], a.part[1], b.part[1]);
         return result;
     }
 

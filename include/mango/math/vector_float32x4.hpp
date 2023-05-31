@@ -154,12 +154,10 @@ namespace mango::math
             return m;
         }
 
-#ifdef simd_float128_is_hardware_vector
         operator simd::f32x4::vector () const
         {
             return m.data;
         }
-#endif
 
         u32 pack() const
         {

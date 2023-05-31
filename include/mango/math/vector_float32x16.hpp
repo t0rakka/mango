@@ -96,12 +96,10 @@ namespace mango::math
             return m;
         }
 
-#ifdef simd_float512_is_hardware_vector
         operator simd::f32x16::vector () const
         {
             return m.data;
         }
-#endif
 
         static Vector ascend()
         {

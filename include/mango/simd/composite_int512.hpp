@@ -13,8 +13,8 @@ namespace mango::simd
     static inline R FUNC(A a) \
     { \
         R result; \
-        result.lo = FUNC(a.lo); \
-        result.hi = FUNC(a.hi); \
+        result.part[0] = FUNC(a.part[0]); \
+        result.part[1] = FUNC(a.part[1]); \
         return result; \
     }
 
@@ -22,8 +22,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b) \
     { \
         R result; \
-        result.lo = FUNC(a.lo, b.lo); \
-        result.hi = FUNC(a.hi, b.hi); \
+        result.part[0] = FUNC(a.part[0], b.part[0]); \
+        result.part[1] = FUNC(a.part[1], b.part[1]); \
         return result; \
     }
 
@@ -31,8 +31,8 @@ namespace mango::simd
     static inline R FUNC(A a, MASK mask) \
     { \
         R result; \
-        result.lo = FUNC(a.lo, mask.lo); \
-        result.hi = FUNC(a.hi, mask.hi); \
+        result.part[0] = FUNC(a.part[0], mask.part[0]); \
+        result.part[1] = FUNC(a.part[1], mask.part[1]); \
         return result; \
     }
 
@@ -40,8 +40,8 @@ namespace mango::simd
     static inline R FUNC(A a, MASK mask, R value) \
     { \
         R result; \
-        result.lo = FUNC(a.lo, mask.lo, value.lo); \
-        result.hi = FUNC(a.hi, mask.hi, value.hi); \
+        result.part[0] = FUNC(a.part[0], mask.part[0], value.part[0]); \
+        result.part[1] = FUNC(a.part[1], mask.part[1], value.part[1]); \
         return result; \
     }
 
@@ -49,8 +49,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b, MASK mask) \
     { \
         R result; \
-        result.lo = FUNC(a.lo, b.lo, mask.lo); \
-        result.hi = FUNC(a.hi, b.hi, mask.hi); \
+        result.part[0] = FUNC(a.part[0], b.part[0], mask.part[0]); \
+        result.part[1] = FUNC(a.part[1], b.part[1], mask.part[1]); \
         return result; \
     }
 
@@ -58,8 +58,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b, MASK mask, R value) \
     { \
         R result; \
-        result.lo = FUNC(a.lo, b.lo, mask.lo, value.lo); \
-        result.hi = FUNC(a.hi, b.hi, mask.hi, value.hi); \
+        result.part[0] = FUNC(a.part[0], b.part[0], mask.part[0], value.part[0]); \
+        result.part[1] = FUNC(a.part[1], b.part[1], mask.part[1], value.part[1]); \
         return result; \
     }
 
@@ -67,8 +67,8 @@ namespace mango::simd
     static inline AB select(MASK mask, AB a, AB b) \
     { \
         AB result; \
-        result.lo = select(mask.lo, a.lo, b.lo); \
-        result.hi = select(mask.hi, a.hi, b.hi); \
+        result.part[0] = select(mask.part[0], a.part[0], b.part[0]); \
+        result.part[1] = select(mask.part[1], a.part[1], b.part[1]); \
         return result; \
     }
 
@@ -79,16 +79,16 @@ namespace mango::simd
     static inline u8x64 u8x64_zero()
     {
         u8x64 result;
-        result.lo = u8x32_zero();
-        result.hi = u8x32_zero();
+        result.part[0] = u8x32_zero();
+        result.part[1] = u8x32_zero();
         return result;
     }
 
     static inline u8x64 u8x64_set(u8 s)
     {
         u8x64 result;
-        result.lo = u8x32_set(s);
-        result.hi = u8x32_set(s);
+        result.part[0] = u8x32_set(s);
+        result.part[1] = u8x32_set(s);
         return result;
     }
 
@@ -103,23 +103,23 @@ namespace mango::simd
         u8 v56, u8 v57, u8 v58, u8 v59, u8 v60, u8 v61, u8 v62, u8 v63)
     {
         u8x64 result;
-        result.lo = u8x32_set(v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31);
-        result.hi = u8x32_set(v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62, v63);
+        result.part[0] = u8x32_set(v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31);
+        result.part[1] = u8x32_set(v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62, v63);
         return result;
     }
 
     static inline u8x64 u8x64_uload(const void* source)
     {
         u8x64 result;
-        result.lo = u8x32_uload(reinterpret_cast<const u8*>(source) +  0);
-        result.hi = u8x32_uload(reinterpret_cast<const u8*>(source) + 32);
+        result.part[0] = u8x32_uload(reinterpret_cast<const u8*>(source) +  0);
+        result.part[1] = u8x32_uload(reinterpret_cast<const u8*>(source) + 32);
         return result;
     }
 
     static inline void u8x64_ustore(void* dest, u8x64 a)
     {
-        u8x32_ustore(reinterpret_cast<u8*>(dest) +  0, a.lo);
-        u8x32_ustore(reinterpret_cast<u8*>(dest) + 32, a.hi);
+        u8x32_ustore(reinterpret_cast<u8*>(dest) +  0, a.part[0]);
+        u8x32_ustore(reinterpret_cast<u8*>(dest) + 32, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(u8x64, u8x64, unpacklo)
@@ -168,16 +168,16 @@ namespace mango::simd
     static inline u16x32 u16x32_zero()
     {
         u16x32 result;
-        result.lo = u16x16_zero();
-        result.hi = u16x16_zero();
+        result.part[0] = u16x16_zero();
+        result.part[1] = u16x16_zero();
         return result;
     }
 
     static inline u16x32 u16x32_set(u16 s)
     {
         u16x32 result;
-        result.lo = u16x16_set(s);
-        result.hi = u16x16_set(s);
+        result.part[0] = u16x16_set(s);
+        result.part[1] = u16x16_set(s);
         return result;
     }
 
@@ -188,23 +188,23 @@ namespace mango::simd
         u16 v24, u16 v25, u16 v26, u16 v27, u16 v28, u16 v29, u16 v30, u16 v31)
     {
         u16x32 result;
-        result.lo = u16x16_set(v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15);
-        result.hi = u16x16_set(v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31);
+        result.part[0] = u16x16_set(v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15);
+        result.part[1] = u16x16_set(v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31);
         return result;
     }
 
     static inline u16x32 u16x32_uload(const void* source)
     {
         u16x32 result;
-        result.lo = u16x16_uload(reinterpret_cast<const u16*>(source) +  0);
-        result.hi = u16x16_uload(reinterpret_cast<const u16*>(source) + 16);
+        result.part[0] = u16x16_uload(reinterpret_cast<const u16*>(source) +  0);
+        result.part[1] = u16x16_uload(reinterpret_cast<const u16*>(source) + 16);
         return result;
     }
 
     static inline void u16x32_ustore(void* dest, u16x32 a)
     {
-        u16x16_ustore(reinterpret_cast<u16*>(dest) +  0, a.lo);
-        u16x16_ustore(reinterpret_cast<u16*>(dest) + 16, a.hi);
+        u16x16_ustore(reinterpret_cast<u16*>(dest) +  0, a.part[0]);
+        u16x16_ustore(reinterpret_cast<u16*>(dest) + 16, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(u16x32, u16x32, unpacklo)
@@ -253,8 +253,8 @@ namespace mango::simd
     static inline u16x32 slli(u16x32 a)
     {
         u16x32 result;
-        result.lo = slli<Count>(a.lo);
-        result.hi = slli<Count>(a.hi);
+        result.part[0] = slli<Count>(a.part[0]);
+        result.part[1] = slli<Count>(a.part[1]);
         return result;
     }
 
@@ -262,8 +262,8 @@ namespace mango::simd
     static inline u16x32 srli(u16x32 a)
     {
         u16x32 result;
-        result.lo = srli<Count>(a.lo);
-        result.hi = srli<Count>(a.hi);
+        result.part[0] = srli<Count>(a.part[0]);
+        result.part[1] = srli<Count>(a.part[1]);
         return result;
     }
 
@@ -271,8 +271,8 @@ namespace mango::simd
     static inline u16x32 srai(u16x32 a)
     {
         u16x32 result;
-        result.lo = srai<Count>(a.lo);
-        result.hi = srai<Count>(a.hi);
+        result.part[0] = srai<Count>(a.part[0]);
+        result.part[1] = srai<Count>(a.part[1]);
         return result;
     }
 
@@ -281,24 +281,24 @@ namespace mango::simd
     static inline u16x32 sll(u16x32 a, int count)
     {
         u16x32 result;
-        result.lo = sll(a.lo, count);
-        result.hi = sll(a.hi, count);
+        result.part[0] = sll(a.part[0], count);
+        result.part[1] = sll(a.part[1], count);
         return result;
     }
 
     static inline u16x32 srl(u16x32 a, int count)
     {
         u16x32 result;
-        result.lo = srl(a.lo, count);
-        result.hi = srl(a.hi, count);
+        result.part[0] = srl(a.part[0], count);
+        result.part[1] = srl(a.part[1], count);
         return result;
     }
 
     static inline u16x32 sra(u16x32 a, int count)
     {
         u16x32 result;
-        result.lo = sra(a.lo, count);
-        result.hi = sra(a.hi, count);
+        result.part[0] = sra(a.part[0], count);
+        result.part[1] = sra(a.part[1], count);
         return result;
     }
 
@@ -309,16 +309,16 @@ namespace mango::simd
     static inline u32x16 u32x16_zero()
     {
         u32x16 result;
-        result.lo = u32x8_zero();
-        result.hi = u32x8_zero();
+        result.part[0] = u32x8_zero();
+        result.part[1] = u32x8_zero();
         return result;
     }
 
     static inline u32x16 u32x16_set(u32 s)
     {
         u32x16 result;
-        result.lo = u32x8_set(s);
-        result.hi = u32x8_set(s);
+        result.part[0] = u32x8_set(s);
+        result.part[1] = u32x8_set(s);
         return result;
     }
 
@@ -327,23 +327,23 @@ namespace mango::simd
         u32 s8, u32 s9, u32 s10, u32 s11, u32 s12, u32 s13, u32 s14, u32 s15)
     {
         u32x16 result;
-        result.lo = u32x8_set(s0, s1, s2, s3, s4, s5, s6, s7);
-        result.hi = u32x8_set(s8, s9, s10, s11, s12, s13, s14, s15);
+        result.part[0] = u32x8_set(s0, s1, s2, s3, s4, s5, s6, s7);
+        result.part[1] = u32x8_set(s8, s9, s10, s11, s12, s13, s14, s15);
         return result;
     }
 
     static inline u32x16 u32x16_uload(const void* source)
     {
         u32x16 result;
-        result.lo = u32x8_uload(reinterpret_cast<const u32*>(source) + 0);
-        result.hi = u32x8_uload(reinterpret_cast<const u32*>(source) + 8);
+        result.part[0] = u32x8_uload(reinterpret_cast<const u32*>(source) + 0);
+        result.part[1] = u32x8_uload(reinterpret_cast<const u32*>(source) + 8);
         return result;
     }
 
     static inline void u32x16_ustore(void* dest, u32x16 a)
     {
-        u32x8_ustore(reinterpret_cast<u32*>(dest) + 0, a.lo);
-        u32x8_ustore(reinterpret_cast<u32*>(dest) + 8, a.hi);
+        u32x8_ustore(reinterpret_cast<u32*>(dest) + 0, a.part[0]);
+        u32x8_ustore(reinterpret_cast<u32*>(dest) + 8, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(u32x16, u32x16, unpacklo)
@@ -392,8 +392,8 @@ namespace mango::simd
     static inline u32x16 slli(u32x16 a)
     {
         u32x16 result;
-        result.lo = slli<Count>(a.lo);
-        result.hi = slli<Count>(a.hi);
+        result.part[0] = slli<Count>(a.part[0]);
+        result.part[1] = slli<Count>(a.part[1]);
         return result;
     }
 
@@ -401,8 +401,8 @@ namespace mango::simd
     static inline u32x16 srli(u32x16 a)
     {
         u32x16 result;
-        result.lo = srli<Count>(a.lo);
-        result.hi = srli<Count>(a.hi);
+        result.part[0] = srli<Count>(a.part[0]);
+        result.part[1] = srli<Count>(a.part[1]);
         return result;
     }
 
@@ -410,8 +410,8 @@ namespace mango::simd
     static inline u32x16 srai(u32x16 a)
     {
         u32x16 result;
-        result.lo = srai<Count>(a.lo);
-        result.hi = srai<Count>(a.hi);
+        result.part[0] = srai<Count>(a.part[0]);
+        result.part[1] = srai<Count>(a.part[1]);
         return result;
     }
 
@@ -420,24 +420,24 @@ namespace mango::simd
     static inline u32x16 sll(u32x16 a, int count)
     {
         u32x16 result;
-        result.lo = sll(a.lo, count);
-        result.hi = sll(a.hi, count);
+        result.part[0] = sll(a.part[0], count);
+        result.part[1] = sll(a.part[1], count);
         return result;
     }
 
     static inline u32x16 srl(u32x16 a, int count)
     {
         u32x16 result;
-        result.lo = srl(a.lo, count);
-        result.hi = srl(a.hi, count);
+        result.part[0] = srl(a.part[0], count);
+        result.part[1] = srl(a.part[1], count);
         return result;
     }
 
     static inline u32x16 sra(u32x16 a, int count)
     {
         u32x16 result;
-        result.lo = sra(a.lo, count);
-        result.hi = sra(a.hi, count);
+        result.part[0] = sra(a.part[0], count);
+        result.part[1] = sra(a.part[1], count);
         return result;
     }
 
@@ -445,22 +445,22 @@ namespace mango::simd
 
     static inline u32x16 sll(u32x16 a, u32x16 count)
     {
-        a.lo = sll(a.lo, count.lo);
-        a.hi = sll(a.hi, count.hi);
+        a.part[0] = sll(a.part[0], count.part[0]);
+        a.part[1] = sll(a.part[1], count.part[1]);
         return a;
     }
 
     static inline u32x16 srl(u32x16 a, u32x16 count)
     {
-        a.lo = srl(a.lo, count.lo);
-        a.hi = srl(a.hi, count.hi);
+        a.part[0] = srl(a.part[0], count.part[0]);
+        a.part[1] = srl(a.part[1], count.part[1]);
         return a;
     }
 
     static inline u32x16 sra(u32x16 a, u32x16 count)
     {
-        a.lo = sra(a.lo, count.lo);
-        a.hi = sra(a.hi, count.hi);
+        a.part[0] = sra(a.part[0], count.part[0]);
+        a.part[1] = sra(a.part[1], count.part[1]);
         return a;
     }
 
@@ -471,39 +471,39 @@ namespace mango::simd
     static inline u64x8 u64x8_zero()
     {
         u64x8 result;
-        result.lo = u64x4_zero();
-        result.hi = u64x4_zero();
+        result.part[0] = u64x4_zero();
+        result.part[1] = u64x4_zero();
         return result;
     }
 
     static inline u64x8 u64x8_set(u64 s)
     {
         u64x8 result;
-        result.lo = u64x4_set(s);
-        result.hi = u64x4_set(s);
+        result.part[0] = u64x4_set(s);
+        result.part[1] = u64x4_set(s);
         return result;
     }
 
     static inline u64x8 u64x8_set(u64 s0, u64 s1, u64 s2, u64 s3, u64 s4, u64 s5, u64 s6, u64 s7)
     {
         u64x8 result;
-        result.lo = u64x4_set(s0, s1, s2, s3);
-        result.hi = u64x4_set(s4, s5, s6, s7);
+        result.part[0] = u64x4_set(s0, s1, s2, s3);
+        result.part[1] = u64x4_set(s4, s5, s6, s7);
         return result;
     }
 
     static inline u64x8 u64x8_uload(const void* source)
     {
         u64x8 result;
-        result.lo = u64x4_uload(reinterpret_cast<const u64*>(source) + 0);
-        result.hi = u64x4_uload(reinterpret_cast<const u64*>(source) + 4);
+        result.part[0] = u64x4_uload(reinterpret_cast<const u64*>(source) + 0);
+        result.part[1] = u64x4_uload(reinterpret_cast<const u64*>(source) + 4);
         return result;
     }
 
     static inline void u64x8_ustore(void* dest, u64x8 a)
     {
-        u64x4_ustore(reinterpret_cast<u64*>(dest) + 0, a.lo);
-        u64x4_ustore(reinterpret_cast<u64*>(dest) + 4, a.hi);
+        u64x4_ustore(reinterpret_cast<u64*>(dest) + 0, a.part[0]);
+        u64x4_ustore(reinterpret_cast<u64*>(dest) + 4, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(u64x8, u64x8, unpacklo)
@@ -545,8 +545,8 @@ namespace mango::simd
     static inline u64x8 slli(u64x8 a)
     {
         u64x8 result;
-        result.lo = slli<Count>(a.lo);
-        result.hi = slli<Count>(a.hi);
+        result.part[0] = slli<Count>(a.part[0]);
+        result.part[1] = slli<Count>(a.part[1]);
         return result;
     }
 
@@ -554,8 +554,8 @@ namespace mango::simd
     static inline u64x8 srli(u64x8 a)
     {
         u64x8 result;
-        result.lo = srli<Count>(a.lo);
-        result.hi = srli<Count>(a.hi);
+        result.part[0] = srli<Count>(a.part[0]);
+        result.part[1] = srli<Count>(a.part[1]);
         return result;
     }
 
@@ -564,16 +564,16 @@ namespace mango::simd
     static inline u64x8 sll(u64x8 a, int count)
     {
         u64x8 result;
-        result.lo = sll(a.lo, count);
-        result.hi = sll(a.hi, count);
+        result.part[0] = sll(a.part[0], count);
+        result.part[1] = sll(a.part[1], count);
         return result;
     }
 
     static inline u64x8 srl(u64x8 a, int count)
     {
         u64x8 result;
-        result.lo = srl(a.lo, count);
-        result.hi = srl(a.hi, count);
+        result.part[0] = srl(a.part[0], count);
+        result.part[1] = srl(a.part[1], count);
         return result;
     }
 
@@ -584,16 +584,16 @@ namespace mango::simd
     static inline s8x64 s8x64_zero()
     {
         s8x64 result;
-        result.lo = s8x32_zero();
-        result.hi = s8x32_zero();
+        result.part[0] = s8x32_zero();
+        result.part[1] = s8x32_zero();
         return result;
     }
 
     static inline s8x64 s8x64_set(s8 s)
     {
         s8x64 result;
-        result.lo = s8x32_set(s);
-        result.hi = s8x32_set(s);
+        result.part[0] = s8x32_set(s);
+        result.part[1] = s8x32_set(s);
         return result;
     }
 
@@ -608,23 +608,23 @@ namespace mango::simd
         s8 v56, s8 v57, s8 v58, s8 v59, s8 v60, s8 v61, s8 v62, s8 v63)
     {
         s8x64 result;
-        result.lo = s8x32_set(v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31);
-        result.hi = s8x32_set(v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62, v63);
+        result.part[0] = s8x32_set(v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15, v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31);
+        result.part[1] = s8x32_set(v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54, v55, v56, v57, v58, v59, v60, v61, v62, v63);
         return result;
     }
 
     static inline s8x64 s8x64_uload(const void* source)
     {
         s8x64 result;
-        result.lo = s8x32_uload(reinterpret_cast<const s8*>(source) +  0);
-        result.hi = s8x32_uload(reinterpret_cast<const s8*>(source) + 32);
+        result.part[0] = s8x32_uload(reinterpret_cast<const s8*>(source) +  0);
+        result.part[1] = s8x32_uload(reinterpret_cast<const s8*>(source) + 32);
         return result;
     }
 
     static inline void s8x64_ustore(void* dest, s8x64 a)
     {
-        s8x32_ustore(reinterpret_cast<s8*>(dest) +  0, a.lo);
-        s8x32_ustore(reinterpret_cast<s8*>(dest) + 32, a.hi);
+        s8x32_ustore(reinterpret_cast<s8*>(dest) +  0, a.part[0]);
+        s8x32_ustore(reinterpret_cast<s8*>(dest) + 32, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(s8x64, s8x64, unpacklo)
@@ -677,16 +677,16 @@ namespace mango::simd
     static inline s16x32 s16x32_zero()
     {
         s16x32 result;
-        result.lo = s16x16_zero();
-        result.hi = s16x16_zero();
+        result.part[0] = s16x16_zero();
+        result.part[1] = s16x16_zero();
         return result;
     }
 
     static inline s16x32 s16x32_set(s16 s)
     {
         s16x32 result;
-        result.lo = s16x16_set(s);
-        result.hi = s16x16_set(s);
+        result.part[0] = s16x16_set(s);
+        result.part[1] = s16x16_set(s);
         return result;
     }
 
@@ -697,23 +697,23 @@ namespace mango::simd
         s16 v24, s16 v25, s16 v26, s16 v27, s16 v28, s16 v29, s16 v30, s16 v31)
     {
         s16x32 result;
-        result.lo = s16x16_set(v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15);
-        result.hi = s16x16_set(v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31);
+        result.part[0] = s16x16_set(v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15);
+        result.part[1] = s16x16_set(v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31);
         return result;
     }
 
     static inline s16x32 s16x32_uload(const void* source)
     {
         s16x32 result;
-        result.lo = s16x16_uload(reinterpret_cast<const s16*>(source) +  0);
-        result.hi = s16x16_uload(reinterpret_cast<const s16*>(source) + 16);
+        result.part[0] = s16x16_uload(reinterpret_cast<const s16*>(source) +  0);
+        result.part[1] = s16x16_uload(reinterpret_cast<const s16*>(source) + 16);
         return result;
     }
 
     static inline void s16x32_ustore(void* dest, s16x32 a)
     {
-        s16x16_ustore(reinterpret_cast<s16*>(dest) +  0, a.lo);
-        s16x16_ustore(reinterpret_cast<s16*>(dest) + 16, a.hi);
+        s16x16_ustore(reinterpret_cast<s16*>(dest) +  0, a.part[0]);
+        s16x16_ustore(reinterpret_cast<s16*>(dest) + 16, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(s16x32, s16x32, unpacklo)
@@ -769,8 +769,8 @@ namespace mango::simd
     static inline s16x32 slli(s16x32 a)
     {
         s16x32 result;
-        result.lo = slli<Count>(a.lo);
-        result.hi = slli<Count>(a.hi);
+        result.part[0] = slli<Count>(a.part[0]);
+        result.part[1] = slli<Count>(a.part[1]);
         return result;
     }
 
@@ -778,8 +778,8 @@ namespace mango::simd
     static inline s16x32 srli(s16x32 a)
     {
         s16x32 result;
-        result.lo = srli<Count>(a.lo);
-        result.hi = srli<Count>(a.hi);
+        result.part[0] = srli<Count>(a.part[0]);
+        result.part[1] = srli<Count>(a.part[1]);
         return result;
     }
 
@@ -787,8 +787,8 @@ namespace mango::simd
     static inline s16x32 srai(s16x32 a)
     {
         s16x32 result;
-        result.lo = srai<Count>(a.lo);
-        result.hi = srai<Count>(a.hi);
+        result.part[0] = srai<Count>(a.part[0]);
+        result.part[1] = srai<Count>(a.part[1]);
         return result;
     }
 
@@ -797,24 +797,24 @@ namespace mango::simd
     static inline s16x32 sll(s16x32 a, int count)
     {
         s16x32 result;
-        result.lo = sll(a.lo, count);
-        result.hi = sll(a.hi, count);
+        result.part[0] = sll(a.part[0], count);
+        result.part[1] = sll(a.part[1], count);
         return result;
     }
 
     static inline s16x32 srl(s16x32 a, int count)
     {
         s16x32 result;
-        result.lo = srl(a.lo, count);
-        result.hi = srl(a.hi, count);
+        result.part[0] = srl(a.part[0], count);
+        result.part[1] = srl(a.part[1], count);
         return result;
     }
 
     static inline s16x32 sra(s16x32 a, int count)
     {
         s16x32 result;
-        result.lo = sra(a.lo, count);
-        result.hi = sra(a.hi, count);
+        result.part[0] = sra(a.part[0], count);
+        result.part[1] = sra(a.part[1], count);
         return result;
     }
 
@@ -825,16 +825,16 @@ namespace mango::simd
     static inline s32x16 s32x16_zero()
     {
         s32x16 result;
-        result.lo = s32x8_zero();
-        result.hi = s32x8_zero();
+        result.part[0] = s32x8_zero();
+        result.part[1] = s32x8_zero();
         return result;
     }
 
     static inline s32x16 s32x16_set(s32 s)
     {
         s32x16 result;
-        result.lo = s32x8_set(s);
-        result.hi = s32x8_set(s);
+        result.part[0] = s32x8_set(s);
+        result.part[1] = s32x8_set(s);
         return result;
     }
 
@@ -843,23 +843,23 @@ namespace mango::simd
         s32 v8, s32 v9, s32 v10, s32 v11, s32 v12, s32 v13, s32 v14, s32 v15)
     {
         s32x16 result;
-        result.lo = s32x8_set(v0, v1, v2, v3, v4, v5, v6, v7);
-        result.hi = s32x8_set(v8, v9, v10, v11, v12, v13, v14, v15);
+        result.part[0] = s32x8_set(v0, v1, v2, v3, v4, v5, v6, v7);
+        result.part[1] = s32x8_set(v8, v9, v10, v11, v12, v13, v14, v15);
         return result;
     }
 
     static inline s32x16 s32x16_uload(const void* source)
     {
         s32x16 result;
-        result.lo = s32x8_uload(reinterpret_cast<const s32*>(source) + 0);
-        result.hi = s32x8_uload(reinterpret_cast<const s32*>(source) + 8);
+        result.part[0] = s32x8_uload(reinterpret_cast<const s32*>(source) + 0);
+        result.part[1] = s32x8_uload(reinterpret_cast<const s32*>(source) + 8);
         return result;
     }
 
     static inline void s32x16_ustore(void* dest, s32x16 a)
     {
-        s32x8_ustore(reinterpret_cast<s32*>(dest) + 0, a.lo);
-        s32x8_ustore(reinterpret_cast<s32*>(dest) + 8, a.hi);
+        s32x8_ustore(reinterpret_cast<s32*>(dest) + 0, a.part[0]);
+        s32x8_ustore(reinterpret_cast<s32*>(dest) + 8, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(s32x16, s32x16, unpacklo)
@@ -912,8 +912,8 @@ namespace mango::simd
     static inline s32x16 slli(s32x16 a)
     {
         s32x16 result;
-        result.lo = slli<Count>(a.lo);
-        result.hi = slli<Count>(a.hi);
+        result.part[0] = slli<Count>(a.part[0]);
+        result.part[1] = slli<Count>(a.part[1]);
         return result;
     }
 
@@ -921,8 +921,8 @@ namespace mango::simd
     static inline s32x16 srli(s32x16 a)
     {
         s32x16 result;
-        result.lo = srli<Count>(a.lo);
-        result.hi = srli<Count>(a.hi);
+        result.part[0] = srli<Count>(a.part[0]);
+        result.part[1] = srli<Count>(a.part[1]);
         return result;
     }
 
@@ -930,8 +930,8 @@ namespace mango::simd
     static inline s32x16 srai(s32x16 a)
     {
         s32x16 result;
-        result.lo = srai<Count>(a.lo);
-        result.hi = srai<Count>(a.hi);
+        result.part[0] = srai<Count>(a.part[0]);
+        result.part[1] = srai<Count>(a.part[1]);
         return result;
     }
 
@@ -940,24 +940,24 @@ namespace mango::simd
     static inline s32x16 sll(s32x16 a, int count)
     {
         s32x16 result;
-        result.lo = sll(a.lo, count);
-        result.hi = sll(a.hi, count);
+        result.part[0] = sll(a.part[0], count);
+        result.part[1] = sll(a.part[1], count);
         return result;
     }
 
     static inline s32x16 srl(s32x16 a, int count)
     {
         s32x16 result;
-        result.lo = srl(a.lo, count);
-        result.hi = srl(a.hi, count);
+        result.part[0] = srl(a.part[0], count);
+        result.part[1] = srl(a.part[1], count);
         return result;
     }
 
     static inline s32x16 sra(s32x16 a, int count)
     {
         s32x16 result;
-        result.lo = sra(a.lo, count);
-        result.hi = sra(a.hi, count);
+        result.part[0] = sra(a.part[0], count);
+        result.part[1] = sra(a.part[1], count);
         return result;
     }
 
@@ -965,22 +965,22 @@ namespace mango::simd
 
     static inline s32x16 sll(s32x16 a, u32x16 count)
     {
-        a.lo = sll(a.lo, count.lo);
-        a.hi = sll(a.hi, count.hi);
+        a.part[0] = sll(a.part[0], count.part[0]);
+        a.part[1] = sll(a.part[1], count.part[1]);
         return a;
     }
 
     static inline s32x16 srl(s32x16 a, u32x16 count)
     {
-        a.lo = srl(a.lo, count.lo);
-        a.hi = srl(a.hi, count.hi);
+        a.part[0] = srl(a.part[0], count.part[0]);
+        a.part[1] = srl(a.part[1], count.part[1]);
         return a;
     }
 
     static inline s32x16 sra(s32x16 a, u32x16 count)
     {
-        a.lo = sra(a.lo, count.lo);
-        a.hi = sra(a.hi, count.hi);
+        a.part[0] = sra(a.part[0], count.part[0]);
+        a.part[1] = sra(a.part[1], count.part[1]);
         return a;
     }
 
@@ -991,39 +991,39 @@ namespace mango::simd
     static inline s64x8 s64x8_zero()
     {
         s64x8 result;
-        result.lo = s64x4_zero();
-        result.hi = s64x4_zero();
+        result.part[0] = s64x4_zero();
+        result.part[1] = s64x4_zero();
         return result;
     }
 
     static inline s64x8 s64x8_set(s64 s)
     {
         s64x8 result;
-        result.lo = s64x4_set(s);
-        result.hi = s64x4_set(s);
+        result.part[0] = s64x4_set(s);
+        result.part[1] = s64x4_set(s);
         return result;
     }
 
     static inline s64x8 s64x8_set(s64 s0, s64 s1, s64 s2, s64 s3, s64 s4, s64 s5, s64 s6, s64 s7)
     {
         s64x8 result;
-        result.lo = s64x4_set(s0, s1, s2, s3);
-        result.hi = s64x4_set(s4, s5, s6, s7);
+        result.part[0] = s64x4_set(s0, s1, s2, s3);
+        result.part[1] = s64x4_set(s4, s5, s6, s7);
         return result;
     }
 
     static inline s64x8 s64x8_uload(const void* source)
     {
         s64x8 result;
-        result.lo = s64x4_uload(reinterpret_cast<const s64*>(source) + 0);
-        result.hi = s64x4_uload(reinterpret_cast<const s64*>(source) + 4);
+        result.part[0] = s64x4_uload(reinterpret_cast<const s64*>(source) + 0);
+        result.part[1] = s64x4_uload(reinterpret_cast<const s64*>(source) + 4);
         return result;
     }
 
     static inline void s64x8_ustore(void* dest, s64x8 a)
     {
-        s64x4_ustore(reinterpret_cast<s64*>(dest) + 0, a.lo);
-        s64x4_ustore(reinterpret_cast<s64*>(dest) + 4, a.hi);
+        s64x4_ustore(reinterpret_cast<s64*>(dest) + 0, a.part[0]);
+        s64x4_ustore(reinterpret_cast<s64*>(dest) + 4, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(s64x8, s64x8, unpacklo)
@@ -1066,8 +1066,8 @@ namespace mango::simd
     static inline s64x8 slli(s64x8 a)
     {
         s64x8 result;
-        result.lo = slli<Count>(a.lo);
-        result.hi = slli<Count>(a.hi);
+        result.part[0] = slli<Count>(a.part[0]);
+        result.part[1] = slli<Count>(a.part[1]);
         return result;
     }
 
@@ -1075,8 +1075,8 @@ namespace mango::simd
     static inline s64x8 srli(s64x8 a)
     {
         s64x8 result;
-        result.lo = srli<Count>(a.lo);
-        result.hi = srli<Count>(a.hi);
+        result.part[0] = srli<Count>(a.part[0]);
+        result.part[1] = srli<Count>(a.part[1]);
         return result;
     }
 
@@ -1085,16 +1085,16 @@ namespace mango::simd
     static inline s64x8 sll(s64x8 a, int count)
     {
         s64x8 result;
-        result.lo = sll(a.lo, count);
-        result.hi = sll(a.hi, count);
+        result.part[0] = sll(a.part[0], count);
+        result.part[1] = sll(a.part[1], count);
         return result;
     }
 
     static inline s64x8 srl(s64x8 a, int count)
     {
         s64x8 result;
-        result.lo = srl(a.lo, count);
-        result.hi = srl(a.hi, count);
+        result.part[0] = srl(a.part[0], count);
+        result.part[1] = srl(a.part[1], count);
         return result;
     }
 
@@ -1105,38 +1105,38 @@ namespace mango::simd
     static inline mask8x64 operator & (mask8x64 a, mask8x64 b)
     {
         mask8x64 result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
+        result.part[0] = a.part[0] & b.part[0];
+        result.part[1] = a.part[1] & b.part[1];
         return result;
     }
 
     static inline mask8x64 operator | (mask8x64 a, mask8x64 b)
     {
         mask8x64 result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
+        result.part[0] = a.part[0] | b.part[0];
+        result.part[1] = a.part[1] | b.part[1];
         return result;
     }
 
     static inline mask8x64 operator ^ (mask8x64 a, mask8x64 b)
     {
         mask8x64 result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
+        result.part[0] = a.part[0] ^ b.part[0];
+        result.part[1] = a.part[1] ^ b.part[1];
         return result;
     }
 
     static inline mask8x64 operator ! (mask8x64 a)
     {
         mask8x64 result;
-        result.lo = !a.lo;
-        result.hi = !a.hi;
+        result.part[0] = !a.part[0];
+        result.part[1] = !a.part[1];
         return result;
     }
 
     static inline u64 get_mask(mask8x64 a)
     {
-        u64 mask = get_mask(a.lo) | (u64(get_mask(a.hi)) << 32);
+        u64 mask = get_mask(a.part[0]) | (u64(get_mask(a.part[1])) << 32);
         return mask;
     }
 
@@ -1162,38 +1162,38 @@ namespace mango::simd
     static inline mask16x32 operator & (mask16x32 a, mask16x32 b)
     {
         mask16x32 result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
+        result.part[0] = a.part[0] & b.part[0];
+        result.part[1] = a.part[1] & b.part[1];
         return result;
     }
 
     static inline mask16x32 operator | (mask16x32 a, mask16x32 b)
     {
         mask16x32 result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
+        result.part[0] = a.part[0] | b.part[0];
+        result.part[1] = a.part[1] | b.part[1];
         return result;
     }
 
     static inline mask16x32 operator ^ (mask16x32 a, mask16x32 b)
     {
         mask16x32 result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
+        result.part[0] = a.part[0] ^ b.part[0];
+        result.part[1] = a.part[1] ^ b.part[1];
         return result;
     }
 
     static inline mask16x32 operator ! (mask16x32 a)
     {
         mask16x32 result;
-        result.lo = !a.lo;
-        result.hi = !a.hi;
+        result.part[0] = !a.part[0];
+        result.part[1] = !a.part[1];
         return result;
     }
 
     static inline u32 get_mask(mask16x32 a)
     {
-        u32 mask = get_mask(a.lo) | (get_mask(a.hi) << 16);
+        u32 mask = get_mask(a.part[0]) | (get_mask(a.part[1]) << 16);
         return mask;
     }
 
@@ -1219,38 +1219,38 @@ namespace mango::simd
     static inline mask32x16 operator & (mask32x16 a, mask32x16 b)
     {
         mask32x16 result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
+        result.part[0] = a.part[0] & b.part[0];
+        result.part[1] = a.part[1] & b.part[1];
         return result;
     }
 
     static inline mask32x16 operator | (mask32x16 a, mask32x16 b)
     {
         mask32x16 result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
+        result.part[0] = a.part[0] | b.part[0];
+        result.part[1] = a.part[1] | b.part[1];
         return result;
     }
 
     static inline mask32x16 operator ^ (mask32x16 a, mask32x16 b)
     {
         mask32x16 result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
+        result.part[0] = a.part[0] ^ b.part[0];
+        result.part[1] = a.part[1] ^ b.part[1];
         return result;
     }
 
     static inline mask32x16 operator ! (mask32x16 a)
     {
         mask32x16 result;
-        result.lo = !a.lo;
-        result.hi = !a.hi;
+        result.part[0] = !a.part[0];
+        result.part[1] = !a.part[1];
         return result;
     }
 
     static inline u32 get_mask(mask32x16 a)
     {
-        u32 mask = get_mask(a.lo) | (get_mask(a.hi) << 8);
+        u32 mask = get_mask(a.part[0]) | (get_mask(a.part[1]) << 8);
         return mask;
     }
 
@@ -1276,38 +1276,38 @@ namespace mango::simd
     static inline mask64x8 operator & (mask64x8 a, mask64x8 b)
     {
         mask64x8 result;
-        result.lo = a.lo & b.lo;
-        result.hi = a.hi & b.hi;
+        result.part[0] = a.part[0] & b.part[0];
+        result.part[1] = a.part[1] & b.part[1];
         return result;
     }
 
     static inline mask64x8 operator | (mask64x8 a, mask64x8 b)
     {
         mask64x8 result;
-        result.lo = a.lo | b.lo;
-        result.hi = a.hi | b.hi;
+        result.part[0] = a.part[0] | b.part[0];
+        result.part[1] = a.part[1] | b.part[1];
         return result;
     }
 
     static inline mask64x8 operator ^ (mask64x8 a, mask64x8 b)
     {
         mask64x8 result;
-        result.lo = a.lo ^ b.lo;
-        result.hi = a.hi ^ b.hi;
+        result.part[0] = a.part[0] ^ b.part[0];
+        result.part[1] = a.part[1] ^ b.part[1];
         return result;
     }
 
     static inline mask64x8 operator ! (mask64x8 a)
     {
         mask64x8 result;
-        result.lo = !a.lo;
-        result.hi = !a.hi;
+        result.part[0] = !a.part[0];
+        result.part[1] = !a.part[1];
         return result;
     }
 
     static inline u32 get_mask(mask64x8 a)
     {
-        u32 mask = get_mask(a.lo) | (get_mask(a.hi) << 4);
+        u32 mask = get_mask(a.part[0]) | (get_mask(a.part[1]) << 4);
         return mask;
     }
 

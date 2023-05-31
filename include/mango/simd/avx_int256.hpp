@@ -14,19 +14,19 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
 #define SIMD_SET_COMPONENT(vec, value, mask, index) \
-    if (index <= mask) vec.lo = set_component<index & mask>(vec.lo, value); \
-    else               vec.hi = set_component<index & mask>(vec.hi, value)
+    if (index <= mask) vec.part[0] = set_component<index & mask>(vec.part[0], value); \
+    else               vec.part[1] = set_component<index & mask>(vec.part[1], value)
 
 #define SIMD_GET_COMPONENT(vec, mask, index) \
-        Index <= mask ? get_component<index & mask>(vec.lo) \
-                      : get_component<index & mask>(vec.hi)
+        Index <= mask ? get_component<index & mask>(vec.part[0]) \
+                      : get_component<index & mask>(vec.part[1])
 
 #define SIMD_COMPOSITE_FUNC1(R, A, FUNC) \
     static inline R FUNC(A a) \
     { \
         R result; \
-        result.lo = FUNC(a.lo); \
-        result.hi = FUNC(a.hi); \
+        result.part[0] = FUNC(a.part[0]); \
+        result.part[1] = FUNC(a.part[1]); \
         return result; \
     }
 
@@ -34,8 +34,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b) \
     { \
         R result; \
-        result.lo = FUNC(a.lo, b.lo); \
-        result.hi = FUNC(a.hi, b.hi); \
+        result.part[0] = FUNC(a.part[0], b.part[0]); \
+        result.part[1] = FUNC(a.part[1], b.part[1]); \
         return result; \
     }
 
@@ -145,16 +145,16 @@ namespace detail {
     static inline u8x32 u8x32_zero()
     {
         u8x32 result;
-        result.lo = u8x16_zero();
-        result.hi = u8x16_zero();
+        result.part[0] = u8x16_zero();
+        result.part[1] = u8x16_zero();
         return result;
     }
 
     static inline u8x32 u8x32_set(u8 s)
     {
         u8x32 result;
-        result.lo = u8x16_set(s);
-        result.hi = u8x16_set(s);
+        result.part[0] = u8x16_set(s);
+        result.part[1] = u8x16_set(s);
         return result;
     }
 
@@ -165,23 +165,23 @@ namespace detail {
         u8 s24, u8 s25, u8 s26, u8 s27, u8 s28, u8 s29, u8 s30, u8 s31)
     {
         u8x32 result;
-        result.lo = u8x16_set(s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15);
-        result.hi = u8x16_set(s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
+        result.part[0] = u8x16_set(s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15);
+        result.part[1] = u8x16_set(s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
         return result;
     }
 
     static inline u8x32 u8x32_uload(const void* source)
     {
         u8x32 result;
-        result.lo = u8x16_uload(reinterpret_cast<const u8*>(source) +  0);
-        result.hi = u8x16_uload(reinterpret_cast<const u8*>(source) + 16);
+        result.part[0] = u8x16_uload(reinterpret_cast<const u8*>(source) +  0);
+        result.part[1] = u8x16_uload(reinterpret_cast<const u8*>(source) + 16);
         return result;
     }
 
     static inline void u8x32_ustore(void* dest, u8x32 a)
     {
-        u8x16_ustore(reinterpret_cast<u8*>(dest) + 0, a.lo);
-        u8x16_ustore(reinterpret_cast<u8*>(dest) + 16, a.hi);
+        u8x16_ustore(reinterpret_cast<u8*>(dest) + 0, a.part[0]);
+        u8x16_ustore(reinterpret_cast<u8*>(dest) + 16, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, unpacklo)
@@ -202,50 +202,50 @@ namespace detail {
 
     static inline mask8x32 compare_eq(u8x32 a, u8x32 b)
     {
-        mask8x16 lo = compare_eq(a.lo, b.lo);
-        mask8x16 hi = compare_eq(a.hi, b.hi);
+        mask8x16 lo = compare_eq(a.part[0], b.part[0]);
+        mask8x16 hi = compare_eq(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask8x32 compare_gt(u8x32 a, u8x32 b)
     {
-        mask8x16 lo = compare_gt(a.lo, b.lo);
-        mask8x16 hi = compare_gt(a.hi, b.hi);
+        mask8x16 lo = compare_gt(a.part[0], b.part[0]);
+        mask8x16 hi = compare_gt(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask8x32 compare_neq(u8x32 a, u8x32 b)
     {
-        mask8x16 lo = compare_neq(a.lo, b.lo);
-        mask8x16 hi = compare_neq(a.hi, b.hi);
+        mask8x16 lo = compare_neq(a.part[0], b.part[0]);
+        mask8x16 hi = compare_neq(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask8x32 compare_lt(u8x32 a, u8x32 b)
     {
-        mask8x16 lo = compare_lt(a.lo, b.lo);
-        mask8x16 hi = compare_lt(a.hi, b.hi);
+        mask8x16 lo = compare_lt(a.part[0], b.part[0]);
+        mask8x16 hi = compare_lt(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask8x32 compare_le(u8x32 a, u8x32 b)
     {
-        mask8x16 lo = compare_le(a.lo, b.lo);
-        mask8x16 hi = compare_le(a.hi, b.hi);
+        mask8x16 lo = compare_le(a.part[0], b.part[0]);
+        mask8x16 hi = compare_le(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask8x32 compare_ge(u8x32 a, u8x32 b)
     {
-        mask8x16 lo = compare_ge(a.lo, b.lo);
-        mask8x16 hi = compare_ge(a.hi, b.hi);
+        mask8x16 lo = compare_ge(a.part[0], b.part[0]);
+        mask8x16 hi = compare_ge(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline u8x32 select(mask8x32 mask, u8x32 a, u8x32 b)
     {
-        u8x16 lo = select(detail::get_low (mask), a.lo, b.lo);
-        u8x16 hi = select(detail::get_high(mask), a.hi, b.hi);
+        u8x16 lo = select(detail::get_low (mask), a.part[0], b.part[0]);
+        u8x16 hi = select(detail::get_high(mask), a.part[1], b.part[1]);
         return u8x32(lo, hi);
     }
 
@@ -274,16 +274,16 @@ namespace detail {
     static inline u16x16 u16x16_zero()
     {
         u16x16 result;
-        result.lo = u16x8_zero();
-        result.hi = u16x8_zero();
+        result.part[0] = u16x8_zero();
+        result.part[1] = u16x8_zero();
         return result;
     }
 
     static inline u16x16 u16x16_set(u16 s)
     {
         u16x16 result;
-        result.lo = u16x8_set(s);
-        result.hi = u16x8_set(s);
+        result.part[0] = u16x8_set(s);
+        result.part[1] = u16x8_set(s);
         return result;
     }
 
@@ -292,23 +292,23 @@ namespace detail {
         u16 s08, u16 s09, u16 s10, u16 s11, u16 s12, u16 s13, u16 s14, u16 s15)
     {
         u16x16 result;
-        result.lo = u16x8_set(s00, s01, s02, s03, s04, s05, s06, s07);
-        result.hi = u16x8_set(s08, s09, s10, s11, s12, s13, s14, s15);
+        result.part[0] = u16x8_set(s00, s01, s02, s03, s04, s05, s06, s07);
+        result.part[1] = u16x8_set(s08, s09, s10, s11, s12, s13, s14, s15);
         return result;
     }
 
     static inline u16x16 u16x16_uload(const void* source)
     {
         u16x16 result;
-        result.lo = u16x8_uload(reinterpret_cast<const u16*>(source) + 0);
-        result.hi = u16x8_uload(reinterpret_cast<const u16*>(source) + 8);
+        result.part[0] = u16x8_uload(reinterpret_cast<const u16*>(source) + 0);
+        result.part[1] = u16x8_uload(reinterpret_cast<const u16*>(source) + 8);
         return result;
     }
 
     static inline void u16x16_ustore(void* dest, u16x16 a)
     {
-        u16x8_ustore(reinterpret_cast<u16*>(dest) + 0, a.lo);
-        u16x8_ustore(reinterpret_cast<u16*>(dest) + 8, a.hi);
+        u16x8_ustore(reinterpret_cast<u16*>(dest) + 0, a.part[0]);
+        u16x8_ustore(reinterpret_cast<u16*>(dest) + 8, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, unpacklo)
@@ -330,50 +330,50 @@ namespace detail {
 
     static inline mask16x16 compare_eq(u16x16 a, u16x16 b)
     {
-        mask16x8 lo = compare_eq(a.lo, b.lo);
-        mask16x8 hi = compare_eq(a.hi, b.hi);
+        mask16x8 lo = compare_eq(a.part[0], b.part[0]);
+        mask16x8 hi = compare_eq(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask16x16 compare_gt(u16x16 a, u16x16 b)
     {
-        mask16x8 lo = compare_gt(a.lo, b.lo);
-        mask16x8 hi = compare_gt(a.hi, b.hi);
+        mask16x8 lo = compare_gt(a.part[0], b.part[0]);
+        mask16x8 hi = compare_gt(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask16x16 compare_neq(u16x16 a, u16x16 b)
     {
-        mask16x8 lo = compare_neq(a.lo, b.lo);
-        mask16x8 hi = compare_neq(a.hi, b.hi);
+        mask16x8 lo = compare_neq(a.part[0], b.part[0]);
+        mask16x8 hi = compare_neq(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask16x16 compare_lt(u16x16 a, u16x16 b)
     {
-        mask16x8 lo = compare_lt(a.lo, b.lo);
-        mask16x8 hi = compare_lt(a.hi, b.hi);
+        mask16x8 lo = compare_lt(a.part[0], b.part[0]);
+        mask16x8 hi = compare_lt(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask16x16 compare_le(u16x16 a, u16x16 b)
     {
-        mask16x8 lo = compare_le(a.lo, b.lo);
-        mask16x8 hi = compare_le(a.hi, b.hi);
+        mask16x8 lo = compare_le(a.part[0], b.part[0]);
+        mask16x8 hi = compare_le(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask16x16 compare_ge(u16x16 a, u16x16 b)
     {
-        mask16x8 lo = compare_ge(a.lo, b.lo);
-        mask16x8 hi = compare_ge(a.hi, b.hi);
+        mask16x8 lo = compare_ge(a.part[0], b.part[0]);
+        mask16x8 hi = compare_ge(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline u16x16 select(mask16x16 mask, u16x16 a, u16x16 b)
     {
-        u16x8 lo = select(detail::get_low (mask), a.lo, b.lo);
-        u16x8 hi = select(detail::get_high(mask), a.hi, b.hi);
+        u16x8 lo = select(detail::get_low (mask), a.part[0], b.part[0]);
+        u16x8 hi = select(detail::get_high(mask), a.part[1], b.part[1]);
         return u16x16(lo, hi);
     }
 
@@ -386,8 +386,8 @@ namespace detail {
     static inline u16x16 slli(u16x16 a)
     {
         u16x16 result;
-        result.lo = slli<Count>(a.lo);
-        result.hi = slli<Count>(a.hi);
+        result.part[0] = slli<Count>(a.part[0]);
+        result.part[1] = slli<Count>(a.part[1]);
         return result;
     }
 
@@ -395,8 +395,8 @@ namespace detail {
     static inline u16x16 srli(u16x16 a)
     {
         u16x16 result;
-        result.lo = srli<Count>(a.lo);
-        result.hi = srli<Count>(a.hi);
+        result.part[0] = srli<Count>(a.part[0]);
+        result.part[1] = srli<Count>(a.part[1]);
         return result;
     }
 
@@ -404,8 +404,8 @@ namespace detail {
     static inline u16x16 srai(u16x16 a)
     {
         u16x16 result;
-        result.lo = srai<Count>(a.lo);
-        result.hi = srai<Count>(a.hi);
+        result.part[0] = srai<Count>(a.part[0]);
+        result.part[1] = srai<Count>(a.part[1]);
         return result;
     }
 
@@ -414,24 +414,24 @@ namespace detail {
     static inline u16x16 sll(u16x16 a, int count)
     {
         u16x16 result;
-        result.lo = sll(a.lo, count);
-        result.hi = sll(a.hi, count);
+        result.part[0] = sll(a.part[0], count);
+        result.part[1] = sll(a.part[1], count);
         return result;
     }
 
     static inline u16x16 srl(u16x16 a, int count)
     {
         u16x16 result;
-        result.lo = srl(a.lo, count);
-        result.hi = srl(a.hi, count);
+        result.part[0] = srl(a.part[0], count);
+        result.part[1] = srl(a.part[1], count);
         return result;
     }
 
     static inline u16x16 sra(u16x16 a, int count)
     {
         u16x16 result;
-        result.lo = sra(a.lo, count);
-        result.hi = sra(a.hi, count);
+        result.part[0] = sra(a.part[0], count);
+        result.part[1] = sra(a.part[1], count);
         return result;
     }
 
@@ -457,39 +457,39 @@ namespace detail {
     static inline u32x8 u32x8_zero()
     {
         u32x8 result;
-        result.lo = u32x4_zero();
-        result.hi = u32x4_zero();
+        result.part[0] = u32x4_zero();
+        result.part[1] = u32x4_zero();
         return result;
     }
 
     static inline u32x8 u32x8_set(u32 s)
     {
         u32x8 result;
-        result.lo = u32x4_set(s);
-        result.hi = u32x4_set(s);
+        result.part[0] = u32x4_set(s);
+        result.part[1] = u32x4_set(s);
         return result;
     }
 
     static inline u32x8 u32x8_set(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7)
     {
         u32x8 result;
-        result.lo = u32x4_set(s0, s1, s2, s3);
-        result.hi = u32x4_set(s4, s5, s6, s7);
+        result.part[0] = u32x4_set(s0, s1, s2, s3);
+        result.part[1] = u32x4_set(s4, s5, s6, s7);
         return result;
     }
 
     static inline u32x8 u32x8_uload(const void* source)
     {
         u32x8 result;
-        result.lo = u32x4_uload(reinterpret_cast<const u32*>(source) + 0);
-        result.hi = u32x4_uload(reinterpret_cast<const u32*>(source) + 4);
+        result.part[0] = u32x4_uload(reinterpret_cast<const u32*>(source) + 0);
+        result.part[1] = u32x4_uload(reinterpret_cast<const u32*>(source) + 4);
         return result;
     }
 
     static inline void u32x8_ustore(void* dest, u32x8 a)
     {
-        u32x4_ustore(reinterpret_cast<u32*>(dest) + 0, a.lo);
-        u32x4_ustore(reinterpret_cast<u32*>(dest) + 4, a.hi);
+        u32x4_ustore(reinterpret_cast<u32*>(dest) + 0, a.part[0]);
+        u32x4_ustore(reinterpret_cast<u32*>(dest) + 4, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, unpacklo)
@@ -511,50 +511,50 @@ namespace detail {
 
     static inline mask32x8 compare_eq(u32x8 a, u32x8 b)
     {
-        mask32x4 lo = compare_eq(a.lo, b.lo);
-        mask32x4 hi = compare_eq(a.hi, b.hi);
+        mask32x4 lo = compare_eq(a.part[0], b.part[0]);
+        mask32x4 hi = compare_eq(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask32x8 compare_gt(u32x8 a, u32x8 b)
     {
-        mask32x4 lo = compare_gt(a.lo, b.lo);
-        mask32x4 hi = compare_gt(a.hi, b.hi);
+        mask32x4 lo = compare_gt(a.part[0], b.part[0]);
+        mask32x4 hi = compare_gt(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask32x8 compare_neq(u32x8 a, u32x8 b)
     {
-        mask32x4 lo = compare_neq(a.lo, b.lo);
-        mask32x4 hi = compare_neq(a.hi, b.hi);
+        mask32x4 lo = compare_neq(a.part[0], b.part[0]);
+        mask32x4 hi = compare_neq(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask32x8 compare_lt(u32x8 a, u32x8 b)
     {
-        mask32x4 lo = compare_lt(a.lo, b.lo);
-        mask32x4 hi = compare_lt(a.hi, b.hi);
+        mask32x4 lo = compare_lt(a.part[0], b.part[0]);
+        mask32x4 hi = compare_lt(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask32x8 compare_le(u32x8 a, u32x8 b)
     {
-        mask32x4 lo = compare_le(a.lo, b.lo);
-        mask32x4 hi = compare_le(a.hi, b.hi);
+        mask32x4 lo = compare_le(a.part[0], b.part[0]);
+        mask32x4 hi = compare_le(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask32x8 compare_ge(u32x8 a, u32x8 b)
     {
-        mask32x4 lo = compare_ge(a.lo, b.lo);
-        mask32x4 hi = compare_ge(a.hi, b.hi);
+        mask32x4 lo = compare_ge(a.part[0], b.part[0]);
+        mask32x4 hi = compare_ge(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline u32x8 select(mask32x8 mask, u32x8 a, u32x8 b)
     {
-        u32x4 lo = select(detail::get_low (mask), a.lo, b.lo);
-        u32x4 hi = select(detail::get_high(mask), a.hi, b.hi);
+        u32x4 lo = select(detail::get_low (mask), a.part[0], b.part[0]);
+        u32x4 hi = select(detail::get_high(mask), a.part[1], b.part[1]);
         return u32x8(lo, hi);
     }
 
@@ -567,8 +567,8 @@ namespace detail {
     static inline u32x8 slli(u32x8 a)
     {
         u32x8 result;
-        result.lo = slli<Count>(a.lo);
-        result.hi = slli<Count>(a.hi);
+        result.part[0] = slli<Count>(a.part[0]);
+        result.part[1] = slli<Count>(a.part[1]);
         return result;
     }
 
@@ -576,8 +576,8 @@ namespace detail {
     static inline u32x8 srli(u32x8 a)
     {
         u32x8 result;
-        result.lo = srli<Count>(a.lo);
-        result.hi = srli<Count>(a.hi);
+        result.part[0] = srli<Count>(a.part[0]);
+        result.part[1] = srli<Count>(a.part[1]);
         return result;
     }
 
@@ -585,8 +585,8 @@ namespace detail {
     static inline u32x8 srai(u32x8 a)
     {
         u32x8 result;
-        result.lo = srai<Count>(a.lo);
-        result.hi = srai<Count>(a.hi);
+        result.part[0] = srai<Count>(a.part[0]);
+        result.part[1] = srai<Count>(a.part[1]);
         return result;
     }
 
@@ -595,24 +595,24 @@ namespace detail {
     static inline u32x8 sll(u32x8 a, int count)
     {
         u32x8 result;
-        result.lo = sll(a.lo, count);
-        result.hi = sll(a.hi, count);
+        result.part[0] = sll(a.part[0], count);
+        result.part[1] = sll(a.part[1], count);
         return result;
     }
 
     static inline u32x8 srl(u32x8 a, int count)
     {
         u32x8 result;
-        result.lo = srl(a.lo, count);
-        result.hi = srl(a.hi, count);
+        result.part[0] = srl(a.part[0], count);
+        result.part[1] = srl(a.part[1], count);
         return result;
     }
 
     static inline u32x8 sra(u32x8 a, int count)
     {
         u32x8 result;
-        result.lo = sra(a.lo, count);
-        result.hi = sra(a.hi, count);
+        result.part[0] = sra(a.part[0], count);
+        result.part[1] = sra(a.part[1], count);
         return result;
     }
 
@@ -621,24 +621,24 @@ namespace detail {
     static inline u32x8 sll(u32x8 a, u32x8 count)
     {
         u32x8 result;
-        result.lo = sll(a.lo, count.lo);
-        result.hi = sll(a.hi, count.hi);
+        result.part[0] = sll(a.part[0], count.part[0]);
+        result.part[1] = sll(a.part[1], count.part[1]);
         return result;
     }
 
     static inline u32x8 srl(u32x8 a, u32x8 count)
     {
         u32x8 result;
-        result.lo = srl(a.lo, count.lo);
-        result.hi = srl(a.hi, count.hi);
+        result.part[0] = srl(a.part[0], count.part[0]);
+        result.part[1] = srl(a.part[1], count.part[1]);
         return result;
     }
 
     static inline u32x8 sra(u32x8 a, u32x8 count)
     {
         u32x8 result;
-        result.lo = sra(a.lo, count.lo);
-        result.hi = sra(a.hi, count.hi);
+        result.part[0] = sra(a.part[0], count.part[0]);
+        result.part[1] = sra(a.part[1], count.part[1]);
         return result;
     }
 
@@ -664,39 +664,39 @@ namespace detail {
     static inline u64x4 u64x4_zero()
     {
         u64x4 result;
-        result.lo = u64x2_zero();
-        result.hi = u64x2_zero();
+        result.part[0] = u64x2_zero();
+        result.part[1] = u64x2_zero();
         return result;
     }
 
     static inline u64x4 u64x4_set(u64 s)
     {
         u64x4 result;
-        result.lo = u64x2_set(s);
-        result.hi = u64x2_set(s);
+        result.part[0] = u64x2_set(s);
+        result.part[1] = u64x2_set(s);
         return result;
     }
 
     static inline u64x4 u64x4_set(u64 x, u64 y, u64 z, u64 w)
     {
         u64x4 result;
-        result.lo = u64x2_set(x, y);
-        result.hi = u64x2_set(z, w);
+        result.part[0] = u64x2_set(x, y);
+        result.part[1] = u64x2_set(z, w);
         return result;
     }
 
     static inline u64x4 u64x4_uload(const void* source)
     {
         u64x4 result;
-        result.lo = u64x2_uload(reinterpret_cast<const u64*>(source) + 0);
-        result.hi = u64x2_uload(reinterpret_cast<const u64*>(source) + 2);
+        result.part[0] = u64x2_uload(reinterpret_cast<const u64*>(source) + 0);
+        result.part[1] = u64x2_uload(reinterpret_cast<const u64*>(source) + 2);
         return result;
     }
 
     static inline void u64x4_ustore(void* dest, u64x4 a)
     {
-        u64x2_ustore(reinterpret_cast<u64*>(dest) + 0, a.lo);
-        u64x2_ustore(reinterpret_cast<u64*>(dest) + 2, a.hi);
+        u64x2_ustore(reinterpret_cast<u64*>(dest) + 0, a.part[0]);
+        u64x2_ustore(reinterpret_cast<u64*>(dest) + 2, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, unpacklo)
@@ -715,50 +715,50 @@ namespace detail {
 
     static inline mask64x4 compare_eq(u64x4 a, u64x4 b)
     {
-        __m128i lo = compare_eq(a.lo, b.lo);
-        __m128i hi = compare_eq(a.hi, b.hi);
+        __m128i lo = compare_eq(a.part[0], b.part[0]);
+        __m128i hi = compare_eq(a.part[1], b.part[1]);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_gt(u64x4 a, u64x4 b)
     {
-        __m128i lo = compare_gt(a.lo, b.lo);
-        __m128i hi = compare_gt(a.hi, b.hi);
+        __m128i lo = compare_gt(a.part[0], b.part[0]);
+        __m128i hi = compare_gt(a.part[1], b.part[1]);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_neq(u64x4 a, u64x4 b)
     {
-        __m128i lo = compare_neq(a.lo, b.lo);
-        __m128i hi = compare_neq(a.hi, b.hi);
+        __m128i lo = compare_neq(a.part[0], b.part[0]);
+        __m128i hi = compare_neq(a.part[1], b.part[1]);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_lt(u64x4 a, u64x4 b)
     {
-        __m128i lo = compare_lt(a.lo, b.lo);
-        __m128i hi = compare_lt(a.hi, b.hi);
+        __m128i lo = compare_lt(a.part[0], b.part[0]);
+        __m128i hi = compare_lt(a.part[1], b.part[1]);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_le(u64x4 a, u64x4 b)
     {
-        __m128i lo = compare_le(a.lo, b.lo);
-        __m128i hi = compare_le(a.hi, b.hi);
+        __m128i lo = compare_le(a.part[0], b.part[0]);
+        __m128i hi = compare_le(a.part[1], b.part[1]);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_ge(u64x4 a, u64x4 b)
     {
-        __m128i lo = compare_ge(a.lo, b.lo);
-        __m128i hi = compare_ge(a.hi, b.hi);
+        __m128i lo = compare_ge(a.part[0], b.part[0]);
+        __m128i hi = compare_ge(a.part[1], b.part[1]);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline u64x4 select(mask64x4 mask, u64x4 a, u64x4 b)
     {
-        u64x2 lo = select(detail::get_low (mask), a.lo, b.lo);
-        u64x2 hi = select(detail::get_high(mask), a.hi, b.hi);
+        u64x2 lo = select(detail::get_low (mask), a.part[0], b.part[0]);
+        u64x2 hi = select(detail::get_high(mask), a.part[1], b.part[1]);
         return u64x4(lo, hi);
     }
 
@@ -771,8 +771,8 @@ namespace detail {
     static inline u64x4 slli(u64x4 a)
     {
         u64x4 result;
-        result.lo = slli<Count>(a.lo);
-        result.hi = slli<Count>(a.hi);
+        result.part[0] = slli<Count>(a.part[0]);
+        result.part[1] = slli<Count>(a.part[1]);
         return result;
     }
 
@@ -780,8 +780,8 @@ namespace detail {
     static inline u64x4 srli(u64x4 a)
     {
         u64x4 result;
-        result.lo = srli<Count>(a.lo);
-        result.hi = srli<Count>(a.hi);
+        result.part[0] = srli<Count>(a.part[0]);
+        result.part[1] = srli<Count>(a.part[1]);
         return result;
     }
 
@@ -790,16 +790,16 @@ namespace detail {
     static inline u64x4 sll(u64x4 a, int count)
     {
         u64x4 result;
-        result.lo = sll(a.lo, count);
-        result.hi = sll(a.hi, count);
+        result.part[0] = sll(a.part[0], count);
+        result.part[1] = sll(a.part[1], count);
         return result;
     }
 
     static inline u64x4 srl(u64x4 a, int count)
     {
         u64x4 result;
-        result.lo = srl(a.lo, count);
-        result.hi = srl(a.hi, count);
+        result.part[0] = srl(a.part[0], count);
+        result.part[1] = srl(a.part[1], count);
         return result;
     }
 
@@ -825,16 +825,16 @@ namespace detail {
     static inline s8x32 s8x32_zero()
     {
         s8x32 result;
-        result.lo = s8x16_zero();
-        result.hi = s8x16_zero();
+        result.part[0] = s8x16_zero();
+        result.part[1] = s8x16_zero();
         return result;
     }
 
     static inline s8x32 s8x32_set(s8 s)
     {
         s8x32 result;
-        result.lo = s8x16_set(s);
-        result.hi = s8x16_set(s);
+        result.part[0] = s8x16_set(s);
+        result.part[1] = s8x16_set(s);
         return result;
     }
 
@@ -845,23 +845,23 @@ namespace detail {
         s8 s24, s8 s25, s8 s26, s8 s27, s8 s28, s8 s29, s8 s30, s8 s31)
     {
         s8x32 result;
-        result.lo = s8x16_set(s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15);
-        result.hi = s8x16_set(s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
+        result.part[0] = s8x16_set(s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15);
+        result.part[1] = s8x16_set(s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
         return result;
     }
 
     static inline s8x32 s8x32_uload(const void* source)
     {
         s8x32 result;
-        result.lo = s8x16_uload(reinterpret_cast<const s8*>(source) +  0);
-        result.hi = s8x16_uload(reinterpret_cast<const s8*>(source) + 16);
+        result.part[0] = s8x16_uload(reinterpret_cast<const s8*>(source) +  0);
+        result.part[1] = s8x16_uload(reinterpret_cast<const s8*>(source) + 16);
         return result;
     }
 
     static inline void s8x32_ustore(void* dest, s8x32 a)
     {
-        s8x16_ustore(reinterpret_cast<s8*>(dest) + 0, a.lo);
-        s8x16_ustore(reinterpret_cast<s8*>(dest) + 16, a.hi);
+        s8x16_ustore(reinterpret_cast<s8*>(dest) + 0, a.part[0]);
+        s8x16_ustore(reinterpret_cast<s8*>(dest) + 16, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, unpacklo)
@@ -884,50 +884,50 @@ namespace detail {
 
     static inline mask8x32 compare_eq(s8x32 a, s8x32 b)
     {
-        mask8x16 lo = compare_eq(a.lo, b.lo);
-        mask8x16 hi = compare_eq(a.hi, b.hi);
+        mask8x16 lo = compare_eq(a.part[0], b.part[0]);
+        mask8x16 hi = compare_eq(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask8x32 compare_gt(s8x32 a, s8x32 b)
     {
-        mask8x16 lo = compare_gt(a.lo, b.lo);
-        mask8x16 hi = compare_gt(a.hi, b.hi);
+        mask8x16 lo = compare_gt(a.part[0], b.part[0]);
+        mask8x16 hi = compare_gt(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask8x32 compare_neq(s8x32 a, s8x32 b)
     {
-        mask8x16 lo = compare_neq(a.lo, b.lo);
-        mask8x16 hi = compare_neq(a.hi, b.hi);
+        mask8x16 lo = compare_neq(a.part[0], b.part[0]);
+        mask8x16 hi = compare_neq(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask8x32 compare_lt(s8x32 a, s8x32 b)
     {
-        mask8x16 lo = compare_lt(a.lo, b.lo);
-        mask8x16 hi = compare_lt(a.hi, b.hi);
+        mask8x16 lo = compare_lt(a.part[0], b.part[0]);
+        mask8x16 hi = compare_lt(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask8x32 compare_le(s8x32 a, s8x32 b)
     {
-        mask8x16 lo = compare_le(a.lo, b.lo);
-        mask8x16 hi = compare_le(a.hi, b.hi);
+        mask8x16 lo = compare_le(a.part[0], b.part[0]);
+        mask8x16 hi = compare_le(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask8x32 compare_ge(s8x32 a, s8x32 b)
     {
-        mask8x16 lo = compare_ge(a.lo, b.lo);
-        mask8x16 hi = compare_ge(a.hi, b.hi);
+        mask8x16 lo = compare_ge(a.part[0], b.part[0]);
+        mask8x16 hi = compare_ge(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline s8x32 select(mask8x32 mask, s8x32 a, s8x32 b)
     {
-        s8x16 lo = select(detail::get_low (mask), a.lo, b.lo);
-        s8x16 hi = select(detail::get_high(mask), a.hi, b.hi);
+        s8x16 lo = select(detail::get_low (mask), a.part[0], b.part[0]);
+        s8x16 hi = select(detail::get_high(mask), a.part[1], b.part[1]);
         return s8x32(lo, hi);
     }
 
@@ -956,16 +956,16 @@ namespace detail {
     static inline s16x16 s16x16_zero()
     {
         s16x16 result;
-        result.lo = s16x8_zero();
-        result.hi = s16x8_zero();
+        result.part[0] = s16x8_zero();
+        result.part[1] = s16x8_zero();
         return result;
     }
 
     static inline s16x16 s16x16_set(s16 s)
     {
         s16x16 result;
-        result.lo = s16x8_set(s);
-        result.hi = s16x8_set(s);
+        result.part[0] = s16x8_set(s);
+        result.part[1] = s16x8_set(s);
         return result;
     }
 
@@ -974,23 +974,23 @@ namespace detail {
         s16 s08, s16 s09, s16 s10, s16 s11, s16 s12, s16 s13, s16 s14, s16 s15)
     {
         s16x16 result;
-        result.lo = s16x8_set(s00, s01, s02, s03, s04, s05, s06, s07);
-        result.hi = s16x8_set(s08, s09, s10, s11, s12, s13, s14, s15);
+        result.part[0] = s16x8_set(s00, s01, s02, s03, s04, s05, s06, s07);
+        result.part[1] = s16x8_set(s08, s09, s10, s11, s12, s13, s14, s15);
         return result;
     }
 
     static inline s16x16 s16x16_uload(const void* source)
     {
         s16x16 result;
-        result.lo = s16x8_uload(reinterpret_cast<const s16*>(source) + 0);
-        result.hi = s16x8_uload(reinterpret_cast<const s16*>(source) + 8);
+        result.part[0] = s16x8_uload(reinterpret_cast<const s16*>(source) + 0);
+        result.part[1] = s16x8_uload(reinterpret_cast<const s16*>(source) + 8);
         return result;
     }
 
     static inline void s16x16_ustore(void* dest, s16x16 a)
     {
-        s16x8_ustore(reinterpret_cast<s16*>(dest) + 0, a.lo);
-        s16x8_ustore(reinterpret_cast<s16*>(dest) + 8, a.hi);
+        s16x8_ustore(reinterpret_cast<s16*>(dest) + 0, a.part[0]);
+        s16x8_ustore(reinterpret_cast<s16*>(dest) + 8, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, unpacklo)
@@ -1019,50 +1019,50 @@ namespace detail {
 
     static inline mask16x16 compare_eq(s16x16 a, s16x16 b)
     {
-        mask16x8 lo = compare_eq(a.lo, b.lo);
-        mask16x8 hi = compare_eq(a.hi, b.hi);
+        mask16x8 lo = compare_eq(a.part[0], b.part[0]);
+        mask16x8 hi = compare_eq(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask16x16 compare_gt(s16x16 a, s16x16 b)
     {
-        mask16x8 lo = compare_gt(a.lo, b.lo);
-        mask16x8 hi = compare_gt(a.hi, b.hi);
+        mask16x8 lo = compare_gt(a.part[0], b.part[0]);
+        mask16x8 hi = compare_gt(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask16x16 compare_neq(s16x16 a, s16x16 b)
     {
-        mask16x8 lo = compare_neq(a.lo, b.lo);
-        mask16x8 hi = compare_neq(a.hi, b.hi);
+        mask16x8 lo = compare_neq(a.part[0], b.part[0]);
+        mask16x8 hi = compare_neq(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask16x16 compare_lt(s16x16 a, s16x16 b)
     {
-        mask16x8 lo = compare_lt(a.lo, b.lo);
-        mask16x8 hi = compare_lt(a.hi, b.hi);
+        mask16x8 lo = compare_lt(a.part[0], b.part[0]);
+        mask16x8 hi = compare_lt(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask16x16 compare_le(s16x16 a, s16x16 b)
     {
-        mask16x8 lo = compare_le(a.lo, b.lo);
-        mask16x8 hi = compare_le(a.hi, b.hi);
+        mask16x8 lo = compare_le(a.part[0], b.part[0]);
+        mask16x8 hi = compare_le(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask16x16 compare_ge(s16x16 a, s16x16 b)
     {
-        mask16x8 lo = compare_ge(a.lo, b.lo);
-        mask16x8 hi = compare_ge(a.hi, b.hi);
+        mask16x8 lo = compare_ge(a.part[0], b.part[0]);
+        mask16x8 hi = compare_ge(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline s16x16 select(mask16x16 mask, s16x16 a, s16x16 b)
     {
-        s16x8 lo = select(detail::get_low (mask), a.lo, b.lo);
-        s16x8 hi = select(detail::get_high(mask), a.hi, b.hi);
+        s16x8 lo = select(detail::get_low (mask), a.part[0], b.part[0]);
+        s16x8 hi = select(detail::get_high(mask), a.part[1], b.part[1]);
         return s16x16(lo, hi);
     }
 
@@ -1075,8 +1075,8 @@ namespace detail {
     static inline s16x16 slli(s16x16 a)
     {
         s16x16 result;
-        result.lo = slli<Count>(a.lo);
-        result.hi = slli<Count>(a.hi);
+        result.part[0] = slli<Count>(a.part[0]);
+        result.part[1] = slli<Count>(a.part[1]);
         return result;
     }
 
@@ -1084,8 +1084,8 @@ namespace detail {
     static inline s16x16 srli(s16x16 a)
     {
         s16x16 result;
-        result.lo = srli<Count>(a.lo);
-        result.hi = srli<Count>(a.hi);
+        result.part[0] = srli<Count>(a.part[0]);
+        result.part[1] = srli<Count>(a.part[1]);
         return result;
     }
 
@@ -1093,8 +1093,8 @@ namespace detail {
     static inline s16x16 srai(s16x16 a)
     {
         s16x16 result;
-        result.lo = srai<Count>(a.lo);
-        result.hi = srai<Count>(a.hi);
+        result.part[0] = srai<Count>(a.part[0]);
+        result.part[1] = srai<Count>(a.part[1]);
         return result;
     }
 
@@ -1103,24 +1103,24 @@ namespace detail {
     static inline s16x16 sll(s16x16 a, int count)
     {
         s16x16 result;
-        result.lo = sll(a.lo, count);
-        result.hi = sll(a.hi, count);
+        result.part[0] = sll(a.part[0], count);
+        result.part[1] = sll(a.part[1], count);
         return result;
     }
 
     static inline s16x16 srl(s16x16 a, int count)
     {
         s16x16 result;
-        result.lo = srl(a.lo, count);
-        result.hi = srl(a.hi, count);
+        result.part[0] = srl(a.part[0], count);
+        result.part[1] = srl(a.part[1], count);
         return result;
     }
 
     static inline s16x16 sra(s16x16 a, int count)
     {
         s16x16 result;
-        result.lo = sra(a.lo, count);
-        result.hi = sra(a.hi, count);
+        result.part[0] = sra(a.part[0], count);
+        result.part[1] = sra(a.part[1], count);
         return result;
     }
 
@@ -1146,39 +1146,39 @@ namespace detail {
     static inline s32x8 s32x8_zero()
     {
         s32x8 result;
-        result.lo = s32x4_zero();
-        result.hi = s32x4_zero();
+        result.part[0] = s32x4_zero();
+        result.part[1] = s32x4_zero();
         return result;
     }
 
     static inline s32x8 s32x8_set(s32 s)
     {
         s32x8 result;
-        result.lo = s32x4_set(s);
-        result.hi = s32x4_set(s);
+        result.part[0] = s32x4_set(s);
+        result.part[1] = s32x4_set(s);
         return result;
     }
 
     static inline s32x8 s32x8_set(s32 s0, s32 s1, s32 s2, s32 s3, s32 s4, s32 s5, s32 s6, s32 s7)
     {
         s32x8 result;
-        result.lo = s32x4_set(s0, s1, s2, s3);
-        result.hi = s32x4_set(s4, s5, s6, s7);
+        result.part[0] = s32x4_set(s0, s1, s2, s3);
+        result.part[1] = s32x4_set(s4, s5, s6, s7);
         return result;
     }
 
     static inline s32x8 s32x8_uload(const void* source)
     {
         s32x8 result;
-        result.lo = s32x4_uload(reinterpret_cast<const s32*>(source) + 0);
-        result.hi = s32x4_uload(reinterpret_cast<const s32*>(source) + 4);
+        result.part[0] = s32x4_uload(reinterpret_cast<const s32*>(source) + 0);
+        result.part[1] = s32x4_uload(reinterpret_cast<const s32*>(source) + 4);
         return result;
     }
 
     static inline void s32x8_ustore(void* dest, s32x8 a)
     {
-        s32x4_ustore(reinterpret_cast<s32*>(dest) + 0, a.lo);
-        s32x4_ustore(reinterpret_cast<s32*>(dest) + 4, a.hi);
+        s32x4_ustore(reinterpret_cast<s32*>(dest) + 0, a.part[0]);
+        s32x4_ustore(reinterpret_cast<s32*>(dest) + 4, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, unpacklo)
@@ -1204,50 +1204,50 @@ namespace detail {
 
     static inline mask32x8 compare_eq(s32x8 a, s32x8 b)
     {
-        mask32x4 lo = compare_eq(a.lo, b.lo);
-        mask32x4 hi = compare_eq(a.hi, b.hi);
+        mask32x4 lo = compare_eq(a.part[0], b.part[0]);
+        mask32x4 hi = compare_eq(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask32x8 compare_gt(s32x8 a, s32x8 b)
     {
-        mask32x4 lo = compare_gt(a.lo, b.lo);
-        mask32x4 hi = compare_gt(a.hi, b.hi);
+        mask32x4 lo = compare_gt(a.part[0], b.part[0]);
+        mask32x4 hi = compare_gt(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask32x8 compare_neq(s32x8 a, s32x8 b)
     {
-        mask32x4 lo = compare_neq(a.lo, b.lo);
-        mask32x4 hi = compare_neq(a.hi, b.hi);
+        mask32x4 lo = compare_neq(a.part[0], b.part[0]);
+        mask32x4 hi = compare_neq(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask32x8 compare_lt(s32x8 a, s32x8 b)
     {
-        mask32x4 lo = compare_lt(a.lo, b.lo);
-        mask32x4 hi = compare_lt(a.hi, b.hi);
+        mask32x4 lo = compare_lt(a.part[0], b.part[0]);
+        mask32x4 hi = compare_lt(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask32x8 compare_le(s32x8 a, s32x8 b)
     {
-        mask32x4 lo = compare_le(a.lo, b.lo);
-        mask32x4 hi = compare_le(a.hi, b.hi);
+        mask32x4 lo = compare_le(a.part[0], b.part[0]);
+        mask32x4 hi = compare_le(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline mask32x8 compare_ge(s32x8 a, s32x8 b)
     {
-        mask32x4 lo = compare_ge(a.lo, b.lo);
-        mask32x4 hi = compare_ge(a.hi, b.hi);
+        mask32x4 lo = compare_ge(a.part[0], b.part[0]);
+        mask32x4 hi = compare_ge(a.part[1], b.part[1]);
         return detail::combine(lo, hi);
     }
 
     static inline s32x8 select(mask32x8 mask, s32x8 a, s32x8 b)
     {
-        s32x4 lo = select(detail::get_low (mask), a.lo, b.lo);
-        s32x4 hi = select(detail::get_high(mask), a.hi, b.hi);
+        s32x4 lo = select(detail::get_low (mask), a.part[0], b.part[0]);
+        s32x4 hi = select(detail::get_high(mask), a.part[1], b.part[1]);
         return s32x8(lo, hi);
     }
 
@@ -1260,8 +1260,8 @@ namespace detail {
     static inline s32x8 slli(s32x8 a)
     {
         s32x8 result;
-        result.lo = slli<Count>(a.lo);
-        result.hi = slli<Count>(a.hi);
+        result.part[0] = slli<Count>(a.part[0]);
+        result.part[1] = slli<Count>(a.part[1]);
         return result;
     }
 
@@ -1269,8 +1269,8 @@ namespace detail {
     static inline s32x8 srli(s32x8 a)
     {
         s32x8 result;
-        result.lo = srli<Count>(a.lo);
-        result.hi = srli<Count>(a.hi);
+        result.part[0] = srli<Count>(a.part[0]);
+        result.part[1] = srli<Count>(a.part[1]);
         return result;
     }
 
@@ -1278,8 +1278,8 @@ namespace detail {
     static inline s32x8 srai(s32x8 a)
     {
         s32x8 result;
-        result.lo = srai<Count>(a.lo);
-        result.hi = srai<Count>(a.hi);
+        result.part[0] = srai<Count>(a.part[0]);
+        result.part[1] = srai<Count>(a.part[1]);
         return result;
     }
 
@@ -1288,24 +1288,24 @@ namespace detail {
     static inline s32x8 sll(s32x8 a, int count)
     {
         s32x8 result;
-        result.lo = sll(a.lo, count);
-        result.hi = sll(a.hi, count);
+        result.part[0] = sll(a.part[0], count);
+        result.part[1] = sll(a.part[1], count);
         return result;
     }
 
     static inline s32x8 srl(s32x8 a, int count)
     {
         s32x8 result;
-        result.lo = srl(a.lo, count);
-        result.hi = srl(a.hi, count);
+        result.part[0] = srl(a.part[0], count);
+        result.part[1] = srl(a.part[1], count);
         return result;
     }
 
     static inline s32x8 sra(s32x8 a, int count)
     {
         s32x8 result;
-        result.lo = sra(a.lo, count);
-        result.hi = sra(a.hi, count);
+        result.part[0] = sra(a.part[0], count);
+        result.part[1] = sra(a.part[1], count);
         return result;
     }
 
@@ -1314,24 +1314,24 @@ namespace detail {
     static inline s32x8 sll(s32x8 a, u32x8 count)
     {
         s32x8 result;
-        result.lo = sll(a.lo, count.lo);
-        result.hi = sll(a.hi, count.hi);
+        result.part[0] = sll(a.part[0], count.part[0]);
+        result.part[1] = sll(a.part[1], count.part[1]);
         return result;
     }
 
     static inline s32x8 srl(s32x8 a, u32x8 count)
     {
         s32x8 result;
-        result.lo = srl(a.lo, count.lo);
-        result.hi = srl(a.hi, count.hi);
+        result.part[0] = srl(a.part[0], count.part[0]);
+        result.part[1] = srl(a.part[1], count.part[1]);
         return result;
     }
 
     static inline s32x8 sra(s32x8 a, u32x8 count)
     {
         s32x8 result;
-        result.lo = sra(a.lo, count.lo);
-        result.hi = sra(a.hi, count.hi);
+        result.part[0] = sra(a.part[0], count.part[0]);
+        result.part[1] = sra(a.part[1], count.part[1]);
         return result;
     }
 
@@ -1357,39 +1357,39 @@ namespace detail {
     static inline s64x4 s64x4_zero()
     {
         s64x4 result;
-        result.lo = s64x2_zero();
-        result.hi = s64x2_zero();
+        result.part[0] = s64x2_zero();
+        result.part[1] = s64x2_zero();
         return result;
     }
 
     static inline s64x4 s64x4_set(s64 s)
     {
         s64x4 result;
-        result.lo = s64x2_set(s);
-        result.hi = s64x2_set(s);
+        result.part[0] = s64x2_set(s);
+        result.part[1] = s64x2_set(s);
         return result;
     }
 
     static inline s64x4 s64x4_set(s64 x, s64 y, s64 z, s64 w)
     {
         s64x4 result;
-        result.lo = s64x2_set(x, y);
-        result.hi = s64x2_set(z, w);
+        result.part[0] = s64x2_set(x, y);
+        result.part[1] = s64x2_set(z, w);
         return result;
     }
 
     static inline s64x4 s64x4_uload(const void* source)
     {
         s64x4 result;
-        result.lo = s64x2_uload(reinterpret_cast<const s64*>(source) + 0);
-        result.hi = s64x2_uload(reinterpret_cast<const s64*>(source) + 2);
+        result.part[0] = s64x2_uload(reinterpret_cast<const s64*>(source) + 0);
+        result.part[1] = s64x2_uload(reinterpret_cast<const s64*>(source) + 2);
         return result;
     }
 
     static inline void s64x4_ustore(void* dest, s64x4 a)
     {
-        s64x2_ustore(reinterpret_cast<s64*>(dest) + 0, a.lo);
-        s64x2_ustore(reinterpret_cast<s64*>(dest) + 2, a.hi);
+        s64x2_ustore(reinterpret_cast<s64*>(dest) + 0, a.part[0]);
+        s64x2_ustore(reinterpret_cast<s64*>(dest) + 2, a.part[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, unpacklo)
@@ -1409,50 +1409,50 @@ namespace detail {
 
     static inline mask64x4 compare_eq(s64x4 a, s64x4 b)
     {
-        __m128i lo = compare_eq(a.lo, b.lo);
-        __m128i hi = compare_eq(a.hi, b.hi);
+        __m128i lo = compare_eq(a.part[0], b.part[0]);
+        __m128i hi = compare_eq(a.part[1], b.part[1]);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_gt(s64x4 a, s64x4 b)
     {
-        __m128i lo = compare_gt(a.lo, b.lo);
-        __m128i hi = compare_gt(a.hi, b.hi);
+        __m128i lo = compare_gt(a.part[0], b.part[0]);
+        __m128i hi = compare_gt(a.part[1], b.part[1]);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_neq(s64x4 a, s64x4 b)
     {
-        __m128i lo = compare_neq(a.lo, b.lo);
-        __m128i hi = compare_neq(a.hi, b.hi);
+        __m128i lo = compare_neq(a.part[0], b.part[0]);
+        __m128i hi = compare_neq(a.part[1], b.part[1]);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_lt(s64x4 a, s64x4 b)
     {
-        __m128i lo = compare_lt(a.lo, b.lo);
-        __m128i hi = compare_lt(a.hi, b.hi);
+        __m128i lo = compare_lt(a.part[0], b.part[0]);
+        __m128i hi = compare_lt(a.part[1], b.part[1]);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_le(s64x4 a, s64x4 b)
     {
-        __m128i lo = compare_le(a.lo, b.lo);
-        __m128i hi = compare_le(a.hi, b.hi);
+        __m128i lo = compare_le(a.part[0], b.part[0]);
+        __m128i hi = compare_le(a.part[1], b.part[1]);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline mask64x4 compare_ge(s64x4 a, s64x4 b)
     {
-        __m128i lo = compare_ge(a.lo, b.lo);
-        __m128i hi = compare_ge(a.hi, b.hi);
+        __m128i lo = compare_ge(a.part[0], b.part[0]);
+        __m128i hi = compare_ge(a.part[1], b.part[1]);
         return _mm256_setr_m128i(lo, hi);
     }
 
     static inline s64x4 select(mask64x4 mask, s64x4 a, s64x4 b)
     {
-        s64x2 lo = select(detail::get_low (mask), a.lo, b.lo);
-        s64x2 hi = select(detail::get_high(mask), a.hi, b.hi);
+        s64x2 lo = select(detail::get_low (mask), a.part[0], b.part[0]);
+        s64x2 hi = select(detail::get_high(mask), a.part[1], b.part[1]);
         return s64x4(lo, hi);
     }
 
@@ -1465,8 +1465,8 @@ namespace detail {
     static inline s64x4 slli(s64x4 a)
     {
         s64x4 result;
-        result.lo = slli<Count>(a.lo);
-        result.hi = slli<Count>(a.hi);
+        result.part[0] = slli<Count>(a.part[0]);
+        result.part[1] = slli<Count>(a.part[1]);
         return result;
     }
 
@@ -1474,8 +1474,8 @@ namespace detail {
     static inline s64x4 srli(s64x4 a)
     {
         s64x4 result;
-        result.lo = srli<Count>(a.lo);
-        result.hi = srli<Count>(a.hi);
+        result.part[0] = srli<Count>(a.part[0]);
+        result.part[1] = srli<Count>(a.part[1]);
         return result;
     }
 
@@ -1484,16 +1484,16 @@ namespace detail {
     static inline s64x4 sll(s64x4 a, int count)
     {
         s64x4 result;
-        result.lo = sll(a.lo, count);
-        result.hi = sll(a.hi, count);
+        result.part[0] = sll(a.part[0], count);
+        result.part[1] = sll(a.part[1], count);
         return result;
     }
 
     static inline s64x4 srl(s64x4 a, int count)
     {
         s64x4 result;
-        result.lo = srl(a.lo, count);
-        result.hi = srl(a.hi, count);
+        result.part[0] = srl(a.part[0], count);
+        result.part[1] = srl(a.part[1], count);
         return result;
     }
 

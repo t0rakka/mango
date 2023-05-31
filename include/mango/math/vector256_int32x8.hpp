@@ -89,12 +89,10 @@ namespace mango::math
             return m;
         }
 
-#ifdef simd_int256_is_hardware_vector
         operator simd::s32x8::vector () const
         {
             return m.data;
         }
-#endif
 
         static Vector ascend()
         {

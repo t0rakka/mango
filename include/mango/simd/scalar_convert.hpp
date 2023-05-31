@@ -30,8 +30,8 @@ namespace mango::simd
             D temp;
             for (int i = 0; i < halfsize; ++i)
             {
-                temp.lo[i] = s[i + 0];
-                temp.hi[i] = s[i + halfsize];
+                temp.part[0][i] = s[i + 0];
+                temp.part[1][i] = s[i + halfsize];
             }
             return temp;
         }
@@ -266,31 +266,31 @@ namespace mango::simd
 
     static inline u32x4 get_low(u32x8 a)
     {
-        return a.lo;
+        return a.part[0];
     }
 
     static inline u32x4 get_high(u32x8 a)
     {
-        return a.hi;
+        return a.part[1];
     }
 
     static inline u32x8 set_low(u32x8 a, u32x4 low)
     {
-        a.lo = low;
+        a.part[0] = low;
         return a;
     }
 
     static inline u32x8 set_high(u32x8 a, u32x4 high)
     {
-        a.hi = high;
+        a.part[1] = high;
         return a;
     }
 
     static inline u32x8 combine(u32x4 a, u32x4 b)
     {
         u32x8 v;
-        v.lo = a;
-        v.hi = b;
+        v.part[0] = a;
+        v.part[1] = b;
         return v;
     }
 
@@ -300,31 +300,31 @@ namespace mango::simd
 
     static inline s32x4 get_low(s32x8 a)
     {
-        return a.lo;
+        return a.part[0];
     }
 
     static inline s32x4 get_high(s32x8 a)
     {
-        return a.hi;
+        return a.part[1];
     }
 
     static inline s32x8 set_low(s32x8 a, s32x4 low)
     {
-        a.lo = low;
+        a.part[0] = low;
         return a;
     }
 
     static inline s32x8 set_high(s32x8 a, s32x4 high)
     {
-        a.hi = high;
+        a.part[1] = high;
         return a;
     }
 
     static inline s32x8 combine(s32x4 a, s32x4 b)
     {
         s32x8 v;
-        v.lo = a;
-        v.hi = b;
+        v.part[0] = a;
+        v.part[1] = b;
         return v;
     }
 
@@ -334,31 +334,31 @@ namespace mango::simd
 
     static inline f32x4 get_low(f32x8 a)
     {
-        return a.lo;
+        return a.part[0];
     }
 
     static inline f32x4 get_high(f32x8 a)
     {
-        return a.hi;
+        return a.part[1];
     }
 
     static inline f32x8 set_low(f32x8 a, f32x4 low)
     {
-        a.lo = low;
+        a.part[0] = low;
         return a;
     }
 
     static inline f32x8 set_high(f32x8 a, f32x4 high)
     {
-        a.hi = high;
+        a.part[1] = high;
         return a;
     }
 
     static inline f32x8 combine(f32x4 a, f32x4 b)
     {
         f32x8 v;
-        v.lo = a;
-        v.hi = b;
+        v.part[0] = a;
+        v.part[1] = b;
         return v;
     }
 
@@ -425,8 +425,8 @@ namespace mango::simd
     inline s32x8 convert<s32x8>(f32x8 s)
     {
         s32x8 result;
-        result.lo = convert<s32x4>(s.lo);
-        result.hi = convert<s32x4>(s.hi);
+        result.part[0] = convert<s32x4>(s.part[0]);
+        result.part[1] = convert<s32x4>(s.part[1]);
         return result;
     }
 
@@ -434,8 +434,8 @@ namespace mango::simd
     inline f32x8 convert<f32x8>(s32x8 s)
     {
         f32x8 result;
-        result.lo = convert<f32x4>(s.lo);
-        result.hi = convert<f32x4>(s.hi);
+        result.part[0] = convert<f32x4>(s.part[0]);
+        result.part[1] = convert<f32x4>(s.part[1]);
         return result;
     }
 
@@ -443,8 +443,8 @@ namespace mango::simd
     inline u32x8 convert<u32x8>(f32x8 s)
     {
         u32x8 result;
-        result.lo = convert<u32x4>(s.lo);
-        result.hi = convert<u32x4>(s.hi);
+        result.part[0] = convert<u32x4>(s.part[0]);
+        result.part[1] = convert<u32x4>(s.part[1]);
         return result;
     }
 
@@ -452,8 +452,8 @@ namespace mango::simd
     inline f32x8 convert<f32x8>(u32x8 s)
     {
         f32x8 result;
-        result.lo = convert<f32x4>(s.lo);
-        result.hi = convert<f32x4>(s.hi);
+        result.part[0] = convert<f32x4>(s.part[0]);
+        result.part[1] = convert<f32x4>(s.part[1]);
         return result;
     }
 
@@ -461,8 +461,8 @@ namespace mango::simd
     inline s32x8 truncate<s32x8>(f32x8 s)
     {
         s32x8 result;
-        result.lo = truncate<s32x4>(s.lo);
-        result.hi = truncate<s32x4>(s.hi);
+        result.part[0] = truncate<s32x4>(s.part[0]);
+        result.part[1] = truncate<s32x4>(s.part[1]);
         return result;
     }
 
@@ -472,8 +472,8 @@ namespace mango::simd
     inline s32x16 convert<s32x16>(f32x16 s)
     {
         s32x16 result;
-        result.lo = convert<s32x8>(s.lo);
-        result.hi = convert<s32x8>(s.hi);
+        result.part[0] = convert<s32x8>(s.part[0]);
+        result.part[1] = convert<s32x8>(s.part[1]);
         return result;
     }
 
@@ -481,8 +481,8 @@ namespace mango::simd
     inline f32x16 convert<f32x16>(s32x16 s)
     {
         f32x16 result;
-        result.lo = convert<f32x8>(s.lo);
-        result.hi = convert<f32x8>(s.hi);
+        result.part[0] = convert<f32x8>(s.part[0]);
+        result.part[1] = convert<f32x8>(s.part[1]);
         return result;
     }
 
@@ -490,8 +490,8 @@ namespace mango::simd
     inline u32x16 convert<u32x16>(f32x16 s)
     {
         u32x16 result;
-        result.lo = convert<u32x8>(s.lo);
-        result.hi = convert<u32x8>(s.hi);
+        result.part[0] = convert<u32x8>(s.part[0]);
+        result.part[1] = convert<u32x8>(s.part[1]);
         return result;
     }
 
@@ -499,8 +499,8 @@ namespace mango::simd
     inline f32x16 convert<f32x16>(u32x16 s)
     {
         f32x16 result;
-        result.lo = convert<f32x8>(s.lo);
-        result.hi = convert<f32x8>(s.hi);
+        result.part[0] = convert<f32x8>(s.part[0]);
+        result.part[1] = convert<f32x8>(s.part[1]);
         return result;
     }
 
@@ -508,8 +508,8 @@ namespace mango::simd
     inline s32x16 truncate<s32x16>(f32x16 s)
     {
         s32x16 result;
-        result.lo = truncate<s32x8>(s.lo);
-        result.hi = truncate<s32x8>(s.hi);
+        result.part[0] = truncate<s32x8>(s.part[0]);
+        result.part[1] = truncate<s32x8>(s.part[1]);
         return result;
     }
 
@@ -519,31 +519,31 @@ namespace mango::simd
 
     static inline f64x2 get_low(f64x4 a)
     {
-        return a.lo;
+        return a.part[0];
     }
 
     static inline f64x2 get_high(f64x4 a)
     {
-        return a.hi;
+        return a.part[1];
     }
 
     static inline f64x4 set_low(f64x4 a, f64x2 low)
     {
-        a.lo = low;
+        a.part[0] = low;
         return a;
     }
 
     static inline f64x4 set_high(f64x4 a, f64x2 high)
     {
-        a.hi = high;
+        a.part[1] = high;
         return a;
     }
 
     static inline f64x4 combine(f64x2 a, f64x2 b)
     {
         f64x4 v;
-        v.lo = a;
-        v.hi = b;
+        v.part[0] = a;
+        v.part[1] = b;
         return v;
     }
 
@@ -553,10 +553,10 @@ namespace mango::simd
     inline f64x4 convert<f64x4>(s32x4 s)
     {
         f64x4 v;
-        v.lo[0] = f64(s[0]);
-        v.lo[1] = f64(s[1]);
-        v.hi[0] = f64(s[2]);
-        v.hi[1] = f64(s[3]);
+        v.part[0][0] = f64(s[0]);
+        v.part[0][1] = f64(s[1]);
+        v.part[1][0] = f64(s[2]);
+        v.part[1][1] = f64(s[3]);
         return v;
     }
 
@@ -564,10 +564,10 @@ namespace mango::simd
     inline f64x4 convert<f64x4>(u32x4 u)
     {
         f64x4 v;
-        v.lo[0] = unsignedIntToDouble(u[0]);
-        v.lo[1] = unsignedIntToDouble(u[1]);
-        v.hi[0] = unsignedIntToDouble(u[2]);
-        v.hi[1] = unsignedIntToDouble(u[3]);
+        v.part[0][0] = unsignedIntToDouble(u[0]);
+        v.part[0][1] = unsignedIntToDouble(u[1]);
+        v.part[1][0] = unsignedIntToDouble(u[2]);
+        v.part[1][1] = unsignedIntToDouble(u[3]);
         return v;
     }
 
@@ -575,10 +575,10 @@ namespace mango::simd
     inline f64x4 convert<f64x4>(f32x4 s)
     {
         f64x4 v;
-        v.lo[0] = f64(s[0]);
-        v.lo[1] = f64(s[1]);
-        v.hi[0] = f64(s[2]);
-        v.hi[1] = f64(s[3]);
+        v.part[0][0] = f64(s[0]);
+        v.part[0][1] = f64(s[1]);
+        v.part[1][0] = f64(s[2]);
+        v.part[1][1] = f64(s[3]);
         return v;
     }
 
@@ -587,60 +587,60 @@ namespace mango::simd
     template <>
     inline s32x4 truncate<s32x4>(f64x4 s)
     {
-        s32 x = s32(s.lo[0]);
-        s32 y = s32(s.lo[1]);
-        s32 z = s32(s.hi[0]);
-        s32 w = s32(s.hi[1]);
+        s32 x = s32(s.part[0][0]);
+        s32 y = s32(s.part[0][1]);
+        s32 z = s32(s.part[1][0]);
+        s32 w = s32(s.part[1][1]);
         return s32x4_set(x, y, z, w);
     }
 
     template <>
     inline s32x4 convert<s32x4>(f64x4 s)
     {
-        s32 x = s32(s.lo[0] + 0.5);
-        s32 y = s32(s.lo[1] + 0.5);
-        s32 z = s32(s.hi[0] + 0.5);
-        s32 w = s32(s.hi[1] + 0.5);
+        s32 x = s32(s.part[0][0] + 0.5);
+        s32 y = s32(s.part[0][1] + 0.5);
+        s32 z = s32(s.part[1][0] + 0.5);
+        s32 w = s32(s.part[1][1] + 0.5);
         return s32x4_set(x, y, z, w);
     }
 
     template <>
     inline u32x4 convert<u32x4>(f64x4 d)
     {
-        u32 x = doubleToUnsignedInt(d.lo[0]);
-        u32 y = doubleToUnsignedInt(d.lo[1]);
-        u32 z = doubleToUnsignedInt(d.hi[0]);
-        u32 w = doubleToUnsignedInt(d.hi[1]);
+        u32 x = doubleToUnsignedInt(d.part[0][0]);
+        u32 y = doubleToUnsignedInt(d.part[0][1]);
+        u32 z = doubleToUnsignedInt(d.part[1][0]);
+        u32 w = doubleToUnsignedInt(d.part[1][1]);
         return u32x4_set(x, y, z, w);
     }
 
     template <>
     inline f32x4 convert<f32x4>(f64x4 s)
     {
-        f32 x = f32(s.lo[0]);
-        f32 y = f32(s.lo[1]);
-        f32 z = f32(s.hi[0]);
-        f32 w = f32(s.hi[1]);
+        f32 x = f32(s.part[0][0]);
+        f32 y = f32(s.part[0][1]);
+        f32 z = f32(s.part[1][0]);
+        f32 w = f32(s.part[1][1]);
         return f32x4_set(x, y, z, w);
     }
 
     template <>
     inline f32x4 convert<f32x4>(s64x4 s)
     {
-        f32 x = f32(s.lo[0]);
-        f32 y = f32(s.lo[1]);
-        f32 z = f32(s.hi[0]);
-        f32 w = f32(s.hi[1]);
+        f32 x = f32(s.part[0][0]);
+        f32 y = f32(s.part[0][1]);
+        f32 z = f32(s.part[1][0]);
+        f32 w = f32(s.part[1][1]);
         return f32x4_set(x, y, z, w);
     }
 
     template <>
     inline f32x4 convert<f32x4>(u64x4 s)
     {
-        f32 x = f32(s.lo[0]);
-        f32 y = f32(s.lo[1]);
-        f32 z = f32(s.hi[0]);
-        f32 w = f32(s.hi[1]);
+        f32 x = f32(s.part[0][0]);
+        f32 y = f32(s.part[0][1]);
+        f32 z = f32(s.part[1][0]);
+        f32 w = f32(s.part[1][1]);
         return f32x4_set(x, y, z, w);
     }
 
@@ -701,48 +701,48 @@ namespace mango::simd
     template <>
     inline s64x4 convert<s64x4>(f64x4 v)
     {
-        auto lo = convert<s64x2>(v.lo);
-        auto hi = convert<s64x2>(v.hi);
+        auto lo = convert<s64x2>(v.part[0]);
+        auto hi = convert<s64x2>(v.part[1]);
         return { lo, hi };
     }
 
     template <>
     inline u64x4 convert<u64x4>(f64x4 v)
     {
-        auto lo = convert<u64x2>(v.lo);
-        auto hi = convert<u64x2>(v.hi);
+        auto lo = convert<u64x2>(v.part[0]);
+        auto hi = convert<u64x2>(v.part[1]);
         return { lo, hi };
     }
 
     template <>
     inline s64x4 truncate<s64x4>(f64x4 v)
     {
-        auto lo = truncate<s64x2>(v.lo);
-        auto hi = truncate<s64x2>(v.hi);
+        auto lo = truncate<s64x2>(v.part[0]);
+        auto hi = truncate<s64x2>(v.part[1]);
         return { lo, hi };
     }
 
     template <>
     inline u64x4 truncate<u64x4>(f64x4 v)
     {
-        auto lo = truncate<u64x2>(v.lo);
-        auto hi = truncate<u64x2>(v.hi);
+        auto lo = truncate<u64x2>(v.part[0]);
+        auto hi = truncate<u64x2>(v.part[1]);
         return { lo, hi };
     }
 
     template <>
     inline f64x4 convert<f64x4>(s64x4 v)
     {
-        auto lo = convert<f64x2>(v.lo);
-        auto hi = convert<f64x2>(v.hi);
+        auto lo = convert<f64x2>(v.part[0]);
+        auto hi = convert<f64x2>(v.part[1]);
         return { lo, hi };
     }
 
     template <>
     inline f64x4 convert<f64x4>(u64x4 v)
     {
-        auto lo = convert<f64x2>(v.lo);
-        auto hi = convert<f64x2>(v.hi);
+        auto lo = convert<f64x2>(v.part[0]);
+        auto hi = convert<f64x2>(v.part[1]);
         return { lo, hi };
     }
 
@@ -751,48 +751,48 @@ namespace mango::simd
     template <>
     inline s64x8 convert<s64x8>(f64x8 v)
     {
-        auto lo = convert<s64x4>(v.lo);
-        auto hi = convert<s64x4>(v.hi);
+        auto lo = convert<s64x4>(v.part[0]);
+        auto hi = convert<s64x4>(v.part[1]);
         return { lo, hi };
     }
 
     template <>
     inline u64x8 convert<u64x8>(f64x8 v)
     {
-        auto lo = convert<u64x4>(v.lo);
-        auto hi = convert<u64x4>(v.hi);
+        auto lo = convert<u64x4>(v.part[0]);
+        auto hi = convert<u64x4>(v.part[1]);
         return { lo, hi };
     }
 
     template <>
     inline s64x8 truncate<s64x8>(f64x8 v)
     {
-        auto lo = truncate<s64x4>(v.lo);
-        auto hi = truncate<s64x4>(v.hi);
+        auto lo = truncate<s64x4>(v.part[0]);
+        auto hi = truncate<s64x4>(v.part[1]);
         return { lo, hi };
     }
 
     template <>
     inline u64x8 truncate<u64x8>(f64x8 v)
     {
-        auto lo = truncate<u64x4>(v.lo);
-        auto hi = truncate<u64x4>(v.hi);
+        auto lo = truncate<u64x4>(v.part[0]);
+        auto hi = truncate<u64x4>(v.part[1]);
         return { lo, hi };
     }
 
     template <>
     inline f64x8 convert<f64x8>(s64x8 v)
     {
-        auto lo = convert<f64x4>(v.lo);
-        auto hi = convert<f64x4>(v.hi);
+        auto lo = convert<f64x4>(v.part[0]);
+        auto hi = convert<f64x4>(v.part[1]);
         return { lo, hi };
     }
 
     template <>
     inline f64x8 convert<f64x8>(u64x8 v)
     {
-        auto lo = convert<f64x4>(v.lo);
-        auto hi = convert<f64x4>(v.hi);
+        auto lo = convert<f64x4>(v.part[0]);
+        auto hi = convert<f64x4>(v.part[1]);
         return { lo, hi };
     }
 

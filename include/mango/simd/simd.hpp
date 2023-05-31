@@ -1,10 +1,11 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <cmath>
+#include <array>
 #include <algorithm>
 #include <type_traits>
 #include <mango/core/configure.hpp>
@@ -100,7 +101,7 @@ namespace mango::simd
     struct scalar_vector
     {
         using scalar = ScalarType;
-        using vector = ScalarType[VectorSize];
+        using vector = std::array<ScalarType, VectorSize>;
 
         enum
         {
@@ -113,12 +114,12 @@ namespace mango::simd
 
         vector data;
 
-        ScalarType & operator [] (int index)
+        ScalarType& operator [] (int index)
         {
             return data[index];
         }
 
-        const ScalarType & operator [] (int index) const
+        const ScalarType& operator [] (int index) const
         {
             return data[index];
         }
@@ -129,15 +130,14 @@ namespace mango::simd
     template <typename VectorType>
     struct composite_mask
     {
-        VectorType lo;
-        VectorType hi;
+        std::array<VectorType, 2> part;
     };
 
     template <typename VectorType>
     struct composite_vector
     {
         using scalar = typename VectorType::scalar;
-        using vector = scalar[VectorType::size * 2];
+        using vector = std::array<scalar, VectorType::size * 2>;
 
         enum
         {
@@ -148,13 +148,15 @@ namespace mango::simd
             is_composite = 1
         };
 
-        VectorType lo;
-        VectorType hi;
+        union
+        {
+            vector data;
+            std::array<VectorType, 2> part;
+        };
 
         composite_vector() = default;
         composite_vector(VectorType lo, VectorType hi)
-            : lo(lo)
-            , hi(hi)
+            : part{lo, hi}
         {
         }
     };
@@ -171,13 +173,6 @@ namespace mango::simd
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
-
-    #define simd_int128_is_hardware_vector
-    #define simd_int256_is_hardware_vector
-    #define simd_int512_is_hardware_vector
-    #define simd_float128_is_hardware_vector
-    #define simd_float256_is_hardware_vector
-    #define simd_float512_is_hardware_vector
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -266,11 +261,6 @@ namespace mango::simd
 
     #define MANGO_ENABLE_SIMD
 
-    #define simd_int128_is_hardware_vector
-    #define simd_int256_is_hardware_vector
-    #define simd_float128_is_hardware_vector
-    #define simd_float256_is_hardware_vector
-
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
@@ -358,10 +348,6 @@ namespace mango::simd
 
     #define MANGO_ENABLE_SIMD
 
-    #define simd_int128_is_hardware_vector
-    #define simd_float128_is_hardware_vector
-    #define simd_float256_is_hardware_vector
-
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
@@ -448,9 +434,6 @@ namespace mango::simd
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
-
-    #define simd_int128_is_hardware_vector
-    #define simd_float128_is_hardware_vector
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -542,9 +525,6 @@ namespace mango::simd
     // http://kib.kiev.ua/x86docs/ARMARM/DDI0487A_e_armv8_arm.pdf
 
     #define MANGO_ENABLE_SIMD
-
-    #define simd_int128_is_hardware_vector
-    #define simd_float128_is_hardware_vector
 
 #ifndef __aarch64__
 
@@ -658,9 +638,6 @@ namespace mango::simd
 
     #define MANGO_ENABLE_SIMD
 
-    #define simd_int128_is_hardware_vector
-    #define simd_float128_is_hardware_vector
-
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
     using u32x2   = scalar_vector<u32, 2>;
@@ -755,9 +732,6 @@ namespace mango::simd
     // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
-
-    #define simd_int128_is_hardware_vector
-    #define simd_float128_is_hardware_vector
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
