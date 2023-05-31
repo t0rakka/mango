@@ -25,7 +25,7 @@ namespace
         struct Signature
         {
             u8 data[16];
-            u16 mask;
+            u32 mask;
             const char* name;
         };
 
@@ -57,28 +57,19 @@ namespace
             { { 0x44, 0x44, 0x53, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, 0x000f, ".dds" },
         };
 
-        if (memory.size < 16)
+        if (memory.size >= 16)
         {
-            return "";
-        }
+            math::uint8x16 current = simd::u8x16_uload(memory.address);
 
-        const u8* p = memory.address;
-
-        for (const Signature& signature : signatures)
-        {
-            u16 mask = 0;
-
-            for (int i = 0; i < 16; ++i)
+            for (const Signature& signature : signatures)
             {
-                if (p[i] == signature.data[i])
+                math::uint8x16 data = simd::u8x16_uload(signature.data);
+                u32 mask = math::maskToInt(current == data);
+
+                if (signature.mask == (mask & signature.mask))
                 {
-                    mask |= u16(1 << i);
+                    return signature.name;
                 }
-            }
-
-            if (signature.mask == (mask & signature.mask))
-            {
-                return signature.name;
             }
         }
 
