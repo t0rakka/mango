@@ -229,9 +229,7 @@ void test_float32x4()
         Vector& operator = (float s)
         operator simd::f32x4 () const
 
-#ifdef simd_float128_is_hardware_vector
         operator simd::f32x4::vector () const
-#endif
 
         u32 pack() const
         void unpack(u32 a)
