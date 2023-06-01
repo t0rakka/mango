@@ -59,11 +59,11 @@ namespace
 
         if (memory.size >= 16)
         {
-            math::uint8x16 current = simd::u8x16_uload(memory.address);
+            math::uint8x16 current = math::u8x16_uload(memory.address);
 
             for (const Signature& signature : signatures)
             {
-                math::uint8x16 data = simd::u8x16_uload(signature.data);
+                math::uint8x16 data = math::u8x16_uload(signature.data);
                 u32 mask = math::maskToInt(current == data);
 
                 if (signature.mask == (mask & signature.mask))
