@@ -116,7 +116,7 @@ namespace
                 packet.mask = u8_reverse_bits(p[3]);
                 p += 4;
 
-                printf("[packet %d] size: %d  type: %d  mask: %x\n", i,
+                debugPrint("[packet %d] size: %d  type: %d  mask: %x\n", i,
                     packet.size, packet.type, packet.mask);
 
                 if (packet.size != 8)
@@ -141,7 +141,6 @@ namespace
 
             int width = m_header.width;
             int height = m_header.height;
-            printf("%d x %d\n", width, height);
 
             Bitmap temp(width, height, m_header.format);
             temp.clear(0xff000000);
