@@ -11,6 +11,8 @@ namespace
     using namespace mango;
     using namespace mango::image;
 
+    constexpr size_t PICT_HEADER_SIZE = 104;
+
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
@@ -21,11 +23,11 @@ namespace
         ConstMemory m_data;
 
         Interface(ConstMemory memory)
-            : m_data(memory.address + 104, memory.size - 104)
+            : m_data(memory.address + PICT_HEADER_SIZE, memory.size - PICT_HEADER_SIZE)
         {
             BigEndianConstPointer p = memory;
 
-            if (memory.size < 104)
+            if (memory.size < PICT_HEADER_SIZE)
             {
                 m_header.setError("[ImageDecoder.PIC] Not enough data.");
                 return;
