@@ -119,7 +119,7 @@ namespace mango::image
     void registerImageCodecWEBP();
     void registerImageCodecEXR();
     void registerImageCodecQOI();
-    //void registerImageCodecPIC();
+    void registerImageCodecPIC();
     //void registerImageCodecPSD();
     //void registerImageCodecPSB();
     //void registerImageCodecTIFF();
@@ -171,7 +171,7 @@ namespace mango::image
             registerImageCodecWEBP();
             registerImageCodecEXR();
             registerImageCodecQOI();
-            //registerImageCodecPIC();
+            registerImageCodecPIC();
             //registerImageCodecPSD();
             //registerImageCodecPSB();
             //registerImageCodecTIFF();

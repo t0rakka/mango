@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -79,7 +79,15 @@ public:
 
 int main(int argc, const char* argv[])
 {
-    Bitmap bitmap("data/hanselun.png", Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+    std::string filename = "data/hanselun.png";
+    if (argc == 2)
+    {
+        filename = argv[1];
+    }
+
+    Bitmap bitmap(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+    printf("Image: %d x %d\n", bitmap.width, bitmap.height);
+
     TestWindow window(bitmap);
     window.enterEventLoop();
 }

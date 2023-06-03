@@ -543,6 +543,7 @@
 		A6EC3FAA230D7C6100B17F21 /* demux.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC3FA3230D7C6100B17F21 /* demux.h */; };
 		A6EC3FAC230D7FF800B17F21 /* image_webp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6EC3FAB230D7FF700B17F21 /* image_webp.cpp */; };
 		A6F0A5A1237247370015944D /* zstd_cwksp.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F0A5A0237247370015944D /* zstd_cwksp.h */; };
+		A6F534CC2A2B5CA300E852B9 /* image_pic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6F534CB2A2B5CA300E852B9 /* image_pic.cpp */; };
 		A6FCC37A1E8122D40037C15F /* zstd.h in Headers */ = {isa = PBXBuildFile; fileRef = A6FCC3791E8122D40037C15F /* zstd.h */; };
 /* End PBXBuildFile section */
 
@@ -1084,6 +1085,7 @@
 		A6EC3FA3230D7C6100B17F21 /* demux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = demux.h; path = external/libwebp/src/webp/demux.h; sourceTree = "<group>"; };
 		A6EC3FAB230D7FF700B17F21 /* image_webp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_webp.cpp; path = image/image_webp.cpp; sourceTree = "<group>"; };
 		A6F0A5A0237247370015944D /* zstd_cwksp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd_cwksp.h; path = external/zstd/compress/zstd_cwksp.h; sourceTree = "<group>"; };
+		A6F534CB2A2B5CA300E852B9 /* image_pic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_pic.cpp; path = image/image_pic.cpp; sourceTree = "<group>"; };
 		A6FCC3791E8122D40037C15F /* zstd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zstd.h; path = external/zstd/zstd.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1184,6 +1186,7 @@
 				A6D4807327985DC600F7E98D /* image_ktx2.cpp */,
 				A00559B91C93329A00A6D963 /* image_pcx.cpp */,
 				A00559BA1C93329A00A6D963 /* image_pkm.cpp */,
+				A6F534CB2A2B5CA300E852B9 /* image_pic.cpp */,
 				A00559BB1C93329A00A6D963 /* image_png.cpp */,
 				A00559BC1C93329A00A6D963 /* image_pvr.cpp */,
 				A00559BD1C93329A00A6D963 /* image_tga.cpp */,
@@ -2580,6 +2583,7 @@
 				A63DD7A51E706F8800D4D499 /* BC4BC5.cpp in Sources */,
 				A6DD288923FF09680085E6EE /* zstd_compress_superblock.c in Sources */,
 				A00559C01C93329A00A6D963 /* blitter.cpp in Sources */,
+				A6F534CC2A2B5CA300E852B9 /* image_pic.cpp in Sources */,
 				A642437021852AEF0044B763 /* Ppmd7.c in Sources */,
 				A6EC3F17230D7C1500B17F21 /* cost_neon.c in Sources */,
 				A6C8F4F7200612E900A25756 /* md5.cpp in Sources */,
