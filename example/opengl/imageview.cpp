@@ -24,15 +24,41 @@ public:
 
         // compute window size
         int32x2 screen = getScreenSize();
-        int scale = std::max(1, (screen.y / std::max(1, bitmap.height)) / 2);
-        setWindowSize(bitmap.width * scale, bitmap.height * scale);
+        int32x2 window(bitmap.width, bitmap.height);
+
+        if (window.x > screen.x)
+        {
+            // fit horizontally
+            int scale = div_ceil(window.x, screen.x);
+            window.x = window.x / scale;
+            window.y = window.y / scale;
+        }
+
+        if (window.y > screen.y)
+        {
+            // fit vertically
+            int scale = div_ceil(window.y, screen.y);
+            window.x = window.x / scale;
+            window.y = window.y / scale;
+        }
+
+        if (window.y < screen.y)
+        {
+            // enlarge tiny windows
+            int scale = std::max(1, (screen.y / std::max(1, window.y)) / 2);
+            window.x *= scale;
+            window.y *= scale;
+        }
+
+        setWindowSize(window.x, window.y);
 
         // upload image into the framebuffer
         Surface s = lock();
         s.blit(0, 0, m_bitmap);
         unlock();
 
-        printf("screen: %d x %d (scale: %dx)\n", screen.x, screen.y, scale);
+        printf("screen: %d x %d\n", screen.x, screen.y);
+        printf("Image: %d x %d\n", bitmap.width, bitmap.height);
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -85,8 +111,9 @@ int main(int argc, const char* argv[])
         filename = argv[1];
     }
 
+    debugPrintEnable(true);
+
     Bitmap bitmap(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-    printf("Image: %d x %d\n", bitmap.width, bitmap.height);
 
     TestWindow window(bitmap);
     window.enterEventLoop();
