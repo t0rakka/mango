@@ -723,6 +723,7 @@
     <ClCompile Include="..\..\..\source\mango\image\image_pkm.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\image_png.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\image_pnm.cpp" />
+    <ClCompile Include="..\..\..\source\mango\image\image_psd.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\image_pvr.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\image_qoi.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\image_sgi.cpp" />
