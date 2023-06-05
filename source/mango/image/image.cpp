@@ -3,6 +3,7 @@
     Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
+#include <mango/core/system.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/image/image.hpp>
@@ -120,8 +121,7 @@ namespace mango::image
     void registerImageCodecEXR();
     void registerImageCodecQOI();
     void registerImageCodecPIC();
-    //void registerImageCodecPSD();
-    //void registerImageCodecPSB();
+    void registerImageCodecPSD();
     //void registerImageCodecTIFF();
 
 #if defined(MANGO_ENABLE_JXL)
@@ -172,8 +172,7 @@ namespace mango::image
             registerImageCodecEXR();
             registerImageCodecQOI();
             registerImageCodecPIC();
-            //registerImageCodecPSD();
-            //registerImageCodecPSB();
+            registerImageCodecPSD();
             //registerImageCodecTIFF();
 
 #if defined(MANGO_ENABLE_JXL)
@@ -320,6 +319,10 @@ namespace mango::image
         if (m_interface)
         {
             status = m_interface->decode(dest, options, level, depth, face);
+            if (!status)
+            {
+                debugPrint(status.info.c_str());
+            }
         }
         else
         {

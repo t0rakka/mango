@@ -257,6 +257,7 @@
 		A6872D092270546C008F0D1A /* jpeg_process_func.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A6872D082270546C008F0D1A /* jpeg_process_func.hpp */; };
 		A68CD3F02651D9A200725A7C /* lossless_sse41.c in Sources */ = {isa = PBXBuildFile; fileRef = A68CD3EF2651D9A200725A7C /* lossless_sse41.c */; };
 		A690037C2008FF790080E5FA /* sha2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A690037B2008FF790080E5FA /* sha2.cpp */; };
+		A6930AE42A2E854000AC433B /* image_psd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6930AE32A2E854000AC433B /* image_psd.cpp */; };
 		A6984DEA29E90217002021FE /* allocations.h in Headers */ = {isa = PBXBuildFile; fileRef = A6984DE929E90217002021FE /* allocations.h */; };
 		A69B9D96285ABF0800E7BEDC /* common_defs.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9D95285ABF0800E7BEDC /* common_defs.h */; };
 		A69B9DDC285ABF4200E7BEDC /* bt_matchfinder.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9DC5285ABF4100E7BEDC /* bt_matchfinder.h */; };
@@ -799,6 +800,7 @@
 		A6872D082270546C008F0D1A /* jpeg_process_func.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jpeg_process_func.hpp; path = jpeg/jpeg_process_func.hpp; sourceTree = "<group>"; };
 		A68CD3EF2651D9A200725A7C /* lossless_sse41.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lossless_sse41.c; path = external/libwebp/src/dsp/lossless_sse41.c; sourceTree = "<group>"; };
 		A690037B2008FF790080E5FA /* sha2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha2.cpp; path = core/sha2.cpp; sourceTree = "<group>"; };
+		A6930AE32A2E854000AC433B /* image_psd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_psd.cpp; path = image/image_psd.cpp; sourceTree = "<group>"; };
 		A6984DE929E90217002021FE /* allocations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = allocations.h; path = external/zstd/common/allocations.h; sourceTree = "<group>"; };
 		A69B9D95285ABF0800E7BEDC /* common_defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common_defs.h; path = external/libdeflate/common_defs.h; sourceTree = "<group>"; };
 		A69B9DC5285ABF4100E7BEDC /* bt_matchfinder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bt_matchfinder.h; path = external/libdeflate/lib/bt_matchfinder.h; sourceTree = "<group>"; };
@@ -1187,6 +1189,7 @@
 				A00559B91C93329A00A6D963 /* image_pcx.cpp */,
 				A00559BA1C93329A00A6D963 /* image_pkm.cpp */,
 				A6F534CB2A2B5CA300E852B9 /* image_pic.cpp */,
+				A6930AE32A2E854000AC433B /* image_psd.cpp */,
 				A00559BB1C93329A00A6D963 /* image_png.cpp */,
 				A00559BC1C93329A00A6D963 /* image_pvr.cpp */,
 				A00559BD1C93329A00A6D963 /* image_tga.cpp */,
@@ -2344,6 +2347,7 @@
 				A6EC3EFD230D7C1500B17F21 /* lossless_mips_dsp_r2.c in Sources */,
 				A6D78CE6290987A200304D88 /* astcenc_quantization.cpp in Sources */,
 				A60BD65B2A1E808F00F86B1C /* cmsalpha.c in Sources */,
+				A6930AE42A2E854000AC433B /* image_psd.cpp in Sources */,
 				A6EC3F03230D7C1500B17F21 /* alpha_processing_mips_dsp_r2.c in Sources */,
 				A6EC3F13230D7C1500B17F21 /* upsampling_msa.c in Sources */,
 				A6D78CCE290987A200304D88 /* astcenc_weight_quant_xfer_tables.cpp in Sources */,
