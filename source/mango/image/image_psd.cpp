@@ -44,6 +44,8 @@ namespace
         ImageHeader m_header;
         ConstMemory m_memory;
 
+        const u8* m_palette = nullptr;
+
         int m_version;
         ColorMode m_color_mode;
         Compression m_compression;
@@ -111,7 +113,7 @@ namespace
                 case 1:
                     // TODO
                     m_header.setError("[ImageDecoder.PSD] Unsupported number of bits (%d).", m_bits);
-                    break;
+                    return;
                 default:
                     m_header.setError("[ImageDecoder.PSD] Incorrect number of bits (%d).", m_bits);
                     return;
@@ -120,28 +122,45 @@ namespace
             m_color_mode = ColorMode(p.read16());
             switch (m_color_mode)
             {
+                case ColorMode::INDEXED:
                 case ColorMode::GRAYSCALE:
                 case ColorMode::RGB:
                 case ColorMode::CMYK:
                     break;
                 case ColorMode::BITMAP:
-                case ColorMode::INDEXED:
                 case ColorMode::MULTICHANNEL:
                 case ColorMode::DUOTONE:
                 case ColorMode::LAB:
                     m_header.setError("[ImageDecoder.PSD] Unsupported color mode (%d).", m_color_mode);
-                    break;
+                    return;
                 default:
                     m_header.setError("[ImageDecoder.PSD] Incorrect color mode (%d).", m_color_mode);
-                    break;
+                    return;
             }
 
+            // ColorMode data
             int colormode_size = p.read32();
+
+            if (m_color_mode == ColorMode::INDEXED)
+            {
+                if (colormode_size == 768)
+                {
+                    m_palette = p;
+                }
+                else
+                {
+                    m_header.setError("[ImageDecoder.PSD] Incorrect palette size (%d).", colormode_size);
+                    return;
+                }
+            }
+
             p += colormode_size;
 
+            // ImageResource data
             int resource_size = p.read32();
             p += resource_size;
 
+            // Layer and Mask data
             int layer_size = p.read32();
             p += layer_size;
 
@@ -155,7 +174,7 @@ namespace
                 case Compression::ZIP_PRED:
                     // TODO
                     m_header.setError("[ImageDecoder.PSD] Unsupported compression (%d).", m_compression);
-                    break;
+                    return;
                 default:
                     m_header.setError("[ImageDecoder.PSD] Incorrect compression (%d).", m_compression);
                     return;
@@ -304,8 +323,31 @@ namespace
             }
 
             Bitmap temp(width, height, m_header.format);
+            resolve(temp.image, buffer, pixels, channels, pixels);
 
-            if (m_color_mode == ColorMode::GRAYSCALE)
+            dest.blit(0, 0, temp);
+
+            return status;
+        }
+
+        void resolve(u8* dest, const u8* src, int stride, int channels, int count)
+        {
+            if (m_color_mode == ColorMode::INDEXED)
+            {
+                if (m_bits == 8 && m_palette)
+                {
+                    for (int i = 0; i < count; ++i)
+                    {
+                        u8 index = *src++;
+                        dest[0] = m_palette[index + 256 * 0];
+                        dest[1] = m_palette[index + 256 * 1];
+                        dest[2] = m_palette[index + 256 * 2];
+                        dest[3] = 0xff;
+                        dest += 4;
+                    }
+                }
+            }
+            else if (m_color_mode == ColorMode::GRAYSCALE)
             {
                 switch (m_bits)
                 {
@@ -313,13 +355,13 @@ namespace
                         // TODO
                         break;
                     case 8:
-                        pack_grayscale<u8>(temp.image, buffer, pixels, 0xff);
+                        pack_grayscale<u8>(dest, src, count, 0xff);
                         break;
                     case 16:
-                        pack_grayscale<u16>(temp.image, buffer, pixels, 0xffff);
+                        pack_grayscale<u16>(dest, src, count, 0xffff);
                         break;
                     case 32:
-                        pack_grayscale<float>(temp.image, buffer, pixels, 1.0f);
+                        pack_grayscale<float>(dest, src, count, 1.0f);
                         break;
                 }
             }
@@ -332,21 +374,21 @@ namespace
                         break;
                     case 8:
                         if (channels == 4)
-                            pack_rgba<u8>(temp.image, buffer, pixels);
+                            pack_rgba<u8>(dest, src, count);
                         else
-                            pack_rgb<u8>(temp.image, buffer, pixels, 0xff);
+                            pack_rgb<u8>(dest, src, count, 0xff);
                         break;
                     case 16:
                         if (channels == 4)
-                            pack_rgba<u16>(temp.image, buffer, pixels);
+                            pack_rgba<u16>(dest, src, count);
                         else
-                            pack_rgb<u16>(temp.image, buffer, pixels, 0xffff);
+                            pack_rgb<u16>(dest, src, count, 0xffff);
                         break;
                     case 32:
                         if (channels == 4)
-                            pack_rgba<float>(temp.image, buffer, pixels);
+                            pack_rgba<float>(dest, src, count);
                         else
-                            pack_rgb<float>(temp.image, buffer, pixels, 1.0f);
+                            pack_rgb<float>(dest, src, count, 1.0f);
                         break;
                 }
             }
@@ -356,15 +398,12 @@ namespace
                 // TODO: different nr of channels
                 if (m_bits == 8)
                 {
-                    u8* dest = temp.image;
-                    u8* src = buffer;
-
-                    for (int i = 0; i < pixels; ++i)
+                    for (int i = 0; i < count; ++i)
                     {
-                        int c = src[pixels * 0];
-                        int m = src[pixels * 1];
-                        int y = src[pixels * 2];
-                        int k = src[pixels * 3];
+                        int c = src[stride * 0];
+                        int m = src[stride * 1];
+                        int y = src[stride * 2];
+                        int k = src[stride * 3];
                         dest[0] = (c * k) / 255;
                         dest[1] = (m * k) / 255;
                         dest[2] = (y * k) / 255;
@@ -374,10 +413,6 @@ namespace
                     }
                 }
             }
-
-            dest.blit(0, 0, temp);
-
-            return status;
         }
 
         template <typename T>
