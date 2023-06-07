@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -41,6 +41,7 @@ namespace mango
         void reset(size_t bytes, u8 value);
         void resize(size_t bytes);
         void reserve(size_t bytes);
+        void append(ConstMemory memory);
         void append(const void* source, size_t bytes);
         u8* append(size_t bytes);
 

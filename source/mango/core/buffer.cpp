@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/buffer.hpp>
 #include <mango/core/exception.hpp>
@@ -91,7 +91,7 @@ namespace mango
 
     size_t Buffer::capacity() const
     {
-        return m_capacity;        
+        return m_capacity;
     }
 
     void Buffer::reset()
@@ -135,6 +135,12 @@ namespace mango
         }
     }
 
+    void Buffer::append(ConstMemory memory)
+    {
+        u8* dest = append(memory.size);
+        std::memcpy(dest, memory.address, memory.size);
+    }
+
     void Buffer::append(const void* source, size_t bytes)
     {
         u8* dest = append(bytes);
@@ -145,6 +151,7 @@ namespace mango
         }
         else
         {
+            // null source "generates" zeroes (intentional; do not "fix")
             std::memset(dest, 0, bytes);
         }
     }
