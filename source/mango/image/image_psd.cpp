@@ -468,11 +468,11 @@ namespace
 
         // decoding
 
-        const u8* decode_runlength(u8* dest, const u8* p, int count) const
+        const u8* decode_runlength(u8* output, const u8* input, int count) const
         {
             while (count > 0)
             {
-                int code = s8(*p++);
+                int code = s8(*input++);
 
                 if (code == 128)
                 {
@@ -484,22 +484,22 @@ namespace
                     int length = 1 + code;
                     count -= length;
 
-                    std::memcpy(dest, p, length);
-                    dest += length;
-                    p += length;
+                    std::memcpy(output, input, length);
+                    output += length;
+                    input += length;
                 }
                 else
                 {
                     int length = 1 - code;
                     count -= length;
 
-                    u8 value = *p++;
-                    std::memset(dest, value, length);
-                    dest += length;
+                    u8 value = *input++;
+                    std::memset(output, value, length);
+                    output += length;
                 }
             }
 
-            return p;
+            return input;
         }
     };
 
