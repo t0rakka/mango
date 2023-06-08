@@ -285,6 +285,7 @@ namespace
                         u8* dest = buffer + channel * bytes_per_channel;
                         p = decompress_packbits(dest, p, bytes_per_channel);
 
+#if defined(MANGO_LITTLE_ENDIAN)
                         if (m_bits == 16)
                         {
                             u16* ptr = reinterpret_cast<u16*>(dest);
@@ -301,6 +302,7 @@ namespace
                                 ptr[i] = byteswap(ptr[i]);
                             }
                         }
+#endif // MANGO_LITTLE_ENDIAN
                     }
 
                     break;
@@ -413,11 +415,11 @@ namespace
             }
             else if (m_color_mode == ColorMode::CMYK)
             {
-                // TODO: 1, 16, 32 bits
+                // TODO: 16, 32 bits
                 // TODO: different nr of channels
                 if (m_bits == 8)
                 {
-                    int stride = count;// * sizeof(u8);
+                    int stride = count;
                     for (int i = 0; i < count; ++i)
                     {
                         int c = src[stride * 0];
@@ -485,8 +487,6 @@ namespace
                 dest += 4;
             }
         }
-
-        // decoding
 
         const u8* decompress_packbits(u8* output, const u8* input, int count) const
         {
