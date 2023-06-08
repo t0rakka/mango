@@ -101,6 +101,7 @@ namespace
             m_bits = p.read16();
             switch (m_bits)
             {
+                case 1:
                 case 8:
                     format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     break;
@@ -110,10 +111,6 @@ namespace
                 case 32:
                     format = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
                     break;
-                case 1:
-                    // TODO
-                    m_header.setError("[ImageDecoder.PSD] Unsupported number of bits (%d).", m_bits);
-                    return;
                 default:
                     m_header.setError("[ImageDecoder.PSD] Incorrect number of bits (%d).", m_bits);
                     return;
@@ -122,12 +119,12 @@ namespace
             m_color_mode = ColorMode(p.read16());
             switch (m_color_mode)
             {
-                case ColorMode::INDEXED:
+                case ColorMode::BITMAP:
                 case ColorMode::GRAYSCALE:
+                case ColorMode::INDEXED:
                 case ColorMode::RGB:
                 case ColorMode::CMYK:
                     break;
-                case ColorMode::BITMAP:
                 case ColorMode::MULTICHANNEL:
                 case ColorMode::DUOTONE:
                 case ColorMode::LAB:
@@ -231,8 +228,11 @@ namespace
             int pixels = width * height;
             int channels = std::min(4, m_channels);
 
-            int bytes_per_pixel = div_ceil(m_bits, 8);
-            int bytes_per_channel = pixels * bytes_per_pixel;
+            int bytes_per_scan = div_ceil(width * m_bits, 8);
+            int bytes_per_channel = height * bytes_per_scan;
+
+            //debugPrint("  available: %d bytes\n", u32(m_memory.size));
+            //debugPrint("  request:   %d bytes\n", u32(channels * bytes_per_channel));
 
             Buffer buffer(channels * bytes_per_channel);
 
@@ -243,9 +243,6 @@ namespace
                     switch (m_bits)
                     {
                         case 1:
-                            // TODO
-                            break;
-
                         case 8:
                             std::memcpy(buffer, p, channels * bytes_per_channel);
                             break;
@@ -286,7 +283,7 @@ namespace
                     for (int channel = 0; channel < channels; ++channel)
                     {
                         u8* dest = buffer + channel * bytes_per_channel;
-                        p = decode_runlength(dest, p, bytes_per_channel);
+                        p = decompress_packbits(dest, p, bytes_per_channel);
 
                         if (m_bits == 16)
                         {
@@ -323,16 +320,44 @@ namespace
             }
 
             Bitmap temp(width, height, m_header.format);
-            resolve(temp.image, buffer, pixels, channels, pixels);
+            resolve(temp.image, buffer, width, height, channels);
 
             dest.blit(0, 0, temp);
 
             return status;
         }
 
-        void resolve(u8* dest, const u8* src, int stride, int channels, int count)
+        void resolve(u8* dest, const u8* src, int width, int height, int channels)
         {
-            if (m_color_mode == ColorMode::INDEXED)
+            int count = width * height;
+
+            if (m_color_mode == ColorMode::BITMAP)
+            {
+                for (int y = 0; y < height; ++y)
+                {
+                    u8 mask = 0;
+                    u8 data = 0;
+
+                    for (int x = 0; x < width; ++x)
+                    {
+                        if (!mask)
+                        {
+                            mask = 0x80;
+                            data = *src++;
+                        }
+
+                        u8 value = 0xff + !!(data & mask);
+                        mask >>= 1;
+
+                        dest[0] = value;
+                        dest[1] = value;
+                        dest[2] = value;
+                        dest[3] = 0xff;
+                        dest += 4;
+                    }
+                }
+            }
+            else if (m_color_mode == ColorMode::INDEXED)
             {
                 if (m_bits == 8 && m_palette)
                 {
@@ -351,9 +376,6 @@ namespace
             {
                 switch (m_bits)
                 {
-                    case 1:
-                        // TODO
-                        break;
                     case 8:
                         pack_grayscale<u8>(dest, src, count, 0xff);
                         break;
@@ -369,9 +391,6 @@ namespace
             {
                 switch (m_bits)
                 {
-                    case 1:
-                        // TODO
-                        break;
                     case 8:
                         if (channels == 4)
                             pack_rgba<u8>(dest, src, count);
@@ -398,6 +417,7 @@ namespace
                 // TODO: different nr of channels
                 if (m_bits == 8)
                 {
+                    int stride = count;// * sizeof(u8);
                     for (int i = 0; i < count; ++i)
                     {
                         int c = src[stride * 0];
@@ -468,7 +488,7 @@ namespace
 
         // decoding
 
-        const u8* decode_runlength(u8* output, const u8* input, int count) const
+        const u8* decompress_packbits(u8* output, const u8* input, int count) const
         {
             while (count > 0)
             {
