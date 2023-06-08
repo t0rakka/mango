@@ -221,11 +221,10 @@ namespace
         {
             ImageDecodeStatus status;
 
-            BigEndianConstPointer p = m_memory.address;
+            const u8* p = m_memory.address;
 
             int width = m_header.width;
             int height = m_header.height;
-            int pixels = width * height;
             int channels = std::min(4, m_channels);
 
             int bytes_per_scan = div_ceil(width * m_bits, 8);
@@ -240,69 +239,20 @@ namespace
             {
                 case Compression::RAW:
                 {
-                    switch (m_bits)
-                    {
-                        case 1:
-                        case 8:
-                            std::memcpy(buffer, p, channels * bytes_per_channel);
-                            break;
-
-                        case 16:
-                        {
-                            u16* dest = reinterpret_cast<u16*>(buffer.data());
-                            int count = pixels * channels;
-                            for (int i = 0; i < count; ++i)
-                            {
-                                dest[i] = p.read16();
-                            }
-                            break;
-                        }
-
-                        case 32:
-                        {
-                            u32* dest = reinterpret_cast<u32*>(buffer.data());
-                            int count = pixels * channels;
-                            for (int i = 0; i < count; ++i)
-                            {
-                                dest[i] = p.read32();
-                            }
-                            break;
-                        }
-                    }
-
+                    std::memcpy(buffer, p, channels * bytes_per_channel);
                     break;
                 }
 
                 case Compression::RLE:
                 {
-                    // number of bytes per scanline are stored in array before RLE data
-                    // version 1 files use u16 to store the length, version 2 files use u32
-                    int scan_header_size = m_version == 1 ? sizeof(u16) : sizeof(u32);
-                    p += height * m_channels * scan_header_size;
+                    // skip packbits packet sizes
+                    int packet_size = m_version == 1 ? sizeof(u16) : sizeof(u32);
+                    p += height * m_channels * packet_size;
 
                     for (int channel = 0; channel < channels; ++channel)
                     {
                         u8* dest = buffer + channel * bytes_per_channel;
                         p = decompress_packbits(dest, p, bytes_per_channel);
-
-#if defined(MANGO_LITTLE_ENDIAN)
-                        if (m_bits == 16)
-                        {
-                            u16* ptr = reinterpret_cast<u16*>(dest);
-                            for (int i = 0; i < pixels; ++i)
-                            {
-                                ptr[i] = byteswap(ptr[i]);
-                            }
-                        }
-                        else if (m_bits == 32)
-                        {
-                            u32* ptr = reinterpret_cast<u32*>(dest);
-                            for (int i = 0; i < pixels; ++i)
-                            {
-                                ptr[i] = byteswap(ptr[i]);
-                            }
-                        }
-#endif // MANGO_LITTLE_ENDIAN
                     }
 
                     break;
@@ -319,6 +269,15 @@ namespace
                     // TODO
                     break;
                 }
+            }
+
+            if (m_bits == 16)
+            {
+                byteswap<u16>(buffer);
+            }
+            else if (m_bits == 32)
+            {
+                byteswap<u32>(buffer);
             }
 
             Bitmap temp(width, height, m_header.format);
@@ -486,6 +445,21 @@ namespace
                 ++src;
                 dest += 4;
             }
+        }
+
+        template <typename T>
+        void byteswap(Memory memory)
+        {
+#if defined(MANGO_LITTLE_ENDIAN)
+            T* data = reinterpret_cast<T*>(memory.address);
+            size_t count = memory.size / sizeof(T);
+            for (size_t i = 0; i < count; ++i)
+            {
+                data[i] = mango::byteswap(data[i]);
+            }
+#else
+            MANGO_UNREFERENCED(memory);
+#endif
         }
 
         const u8* decompress_packbits(u8* output, const u8* input, int count) const
