@@ -52,6 +52,8 @@ namespace
         int m_channels;
         int m_bits;
 
+        ConstMemory m_icc_profile;
+
         Interface(ConstMemory memory)
         {
             BigEndianConstPointer p = memory;
@@ -154,12 +156,12 @@ namespace
             p += colormode_size;
 
             // ImageResource data
-            int resource_size = p.read32();
-            p += resource_size;
+            ConstMemory image_resource_data(p + 4, p.read32());
+            p += image_resource_data.size;
 
             // Layer and Mask data
-            int layer_size = p.read32();
-            p += layer_size;
+            ConstMemory layer_data(p + 4, p.read32());
+            p += layer_data.size;
 
             m_compression = Compression(p.read16());
             switch (m_compression)
@@ -184,6 +186,8 @@ namespace
                 return;
             }
 
+            m_memory = ConstMemory(p, end - p);
+
             debugPrint("[psd]\n");
             debugPrint("  Version:     %d\n", m_version);
             debugPrint("  Image:       %d x %d\n", width, height);
@@ -191,7 +195,7 @@ namespace
             debugPrint("  ColorMode:   %d\n", m_color_mode);
             debugPrint("  Compression: %d\n", m_compression);
 
-            m_memory = ConstMemory(p, end - p);
+            parse_resources(image_resource_data);
 
             m_header.width   = width;
             m_header.height  = height;
@@ -215,6 +219,11 @@ namespace
         ConstMemory memory(int level, int depth, int face) override
         {
             return ConstMemory();
+        }
+
+        ConstMemory icc() override
+        {
+            return m_icc_profile;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -286,6 +295,79 @@ namespace
             dest.blit(0, 0, temp);
 
             return status;
+        }
+
+        std::string parse_string(BigEndianConstPointer& p, int alignment)
+        {
+            std::string str;
+
+            u8 length = *p++;
+            if (length)
+            {
+                const char* s = p.cast<const char>();
+                str = std::string(s, s + length);
+            }
+
+            p += length;
+            p += (0 - (length + 1)) & (alignment - 1);
+
+            return str;
+        }
+
+        void parse_resources(ConstMemory resources)
+        {
+            BigEndianConstPointer p = resources.address;
+            const u8* end = resources.address + resources.size;
+
+            debugPrint("  [ImageResourceBlocks]\n");
+
+            while (p < end)
+            {
+                u32 signature = p.read32();
+                if (signature != 0x3842494d)
+                {
+                    return;
+                }
+
+                u16 id = p.read16();
+                std::string name = parse_string(p, 2);
+                u32 length = p.read32();
+
+                bool supported = true;
+
+                if (id == 1005)
+                {
+                    debugPrint("    Resolution Info\n");
+                }
+                else if (id == 1039)
+                {
+                    debugPrint("    ICC Profile\n");
+                    m_icc_profile = ConstMemory(p, length);
+                }
+                else if (id == 1047)
+                {
+                    debugPrint("    TransparencyIndex\n");
+                }
+                else if (id == 1058 || id == 1059)
+                {
+                    debugPrint("    EXIF\n");
+                }
+                else if (id == 1060)
+                {
+                    debugPrint("    XMP\n");
+                }
+                else
+                {
+                    supported = false;
+                }
+
+                p += length;
+
+                if (supported)
+                {
+                    debugPrint("      %d bytes\n", length);
+                }
+            }
         }
 
         void resolve(u8* dest, const u8* src, int width, int height, int channels)
