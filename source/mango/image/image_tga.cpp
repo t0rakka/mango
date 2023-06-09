@@ -442,7 +442,7 @@ namespace
             }
 
             const u8* data = p;
-            const u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.end();
 
             std::unique_ptr<u8[]> temp;
 

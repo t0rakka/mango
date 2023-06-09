@@ -553,7 +553,7 @@ namespace
             , m_image(nullptr)
         {
             m_start = nullptr;
-            m_end = m_memory.address + m_memory.size;
+            m_end = m_memory.end();
             m_data = m_memory.address;
 
             m_data = read_magic(m_header, m_data, m_end);

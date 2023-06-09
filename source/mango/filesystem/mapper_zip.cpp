@@ -341,7 +341,7 @@ namespace
             // find central directory end record signature
             // by scanning backwards from the end of the file
             const u8* start = memory.address;
-            const u8* end = memory.address + memory.size;
+            const u8* end = memory.end();
 
             end -= 22; // header size is 22 bytes
 

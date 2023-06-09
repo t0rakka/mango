@@ -1264,7 +1264,7 @@ namespace mango::jpeg
 
     void Parser::parse(ConstMemory memory, bool decode)
     {
-        const u8* end = memory.address + memory.size;
+        const u8* end = memory.end();
         const u8* p = memory.address;
 
         for ( ; p < end; )

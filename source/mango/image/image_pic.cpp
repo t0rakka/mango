@@ -86,7 +86,7 @@ namespace
         {
             ImageDecodeStatus status;
 
-            const u8* end = m_data.address + m_data.size;
+            const u8* end = m_data.end();
             const u8* p = m_data;
 
             constexpr int MAX_PACKETS = 10;

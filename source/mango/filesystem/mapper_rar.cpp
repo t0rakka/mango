@@ -428,7 +428,7 @@ namespace mango::filesystem
             if (parent.address)
             {
                 const u8* ptr = parent.address;
-                const u8* end = parent.address + parent.size;
+                const u8* end = parent.end();
 
                 const u8 rar4_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x00 };
                 const u8 rar5_signature[] = { 0x52, 0x61, 0x72, 0x21, 0x1a, 0x07, 0x01, 0x00 };

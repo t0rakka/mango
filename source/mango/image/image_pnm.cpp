@@ -115,7 +115,7 @@ namespace
             , invert(0)
         {
             const char* p = reinterpret_cast<const char *>(memory.address);
-            const char* end = reinterpret_cast<const char *>(memory.address + memory.size);
+            const char* end = reinterpret_cast<const char *>(memory.end());
 
             debugPrint("[Header: %c%c]\n", p[0], p[1]);
 
@@ -385,7 +385,7 @@ namespace
         bool decode_matching(const Surface& dest)
         {
             const char* p = m_header.data;
-            const char* end = reinterpret_cast<const char *>(m_memory.address + m_memory.size);
+            const char* end = reinterpret_cast<const char *>(m_memory.end());
 
             const int xcount = m_header.width * m_header.channels;
             int maxvalue = m_header.maxvalue;

@@ -682,7 +682,7 @@ namespace mango::image
         initExif(*this);
 
         const u8* start = memory.address;
-        const u8* end = start + memory.size;
+        const u8* end = memory.end();
 
         const u8* p = start;
         if (p > end - 8)

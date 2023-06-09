@@ -219,7 +219,7 @@ namespace
         const u8* parse(ConstMemory memory)
         {
             const u8* data = memory.address;
-            const u8* end = memory.address + memory.size;
+            const u8* end = memory.end();
 
             std::string_view id = readline(data, end);
             if (id != "#?RADIANCE")

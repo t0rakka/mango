@@ -179,7 +179,7 @@ namespace
                     return;
             }
 
-            const u8* end = memory.address + memory.size;
+            const u8* end = memory.end();
             if (p >= end)
             {
                 m_header.setError("[ImageDecoder.PSD] Out of data.");
@@ -317,7 +317,7 @@ namespace
         void parse_resources(ConstMemory resources)
         {
             BigEndianConstPointer p = resources.address;
-            const u8* end = resources.address + resources.size;
+            const u8* end = resources.end();
 
             debugPrint("  [ImageResourceBlocks]\n");
 

@@ -20,10 +20,10 @@ namespace
     void unpack(Memory dest, ConstMemory source)
     {
         const u8* s = source.address;
-        const u8* s_end = source.address + source.size;
+        const u8* s_end = source.end();
 
         u8* d = dest.address;
-        u8* d_end = dest.address + dest.size;
+        u8* d_end = dest.end();
 
         for ( ; d < d_end && s < s_end; )
         {

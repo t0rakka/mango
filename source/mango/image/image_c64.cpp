@@ -577,7 +577,7 @@ namespace
             , m_data(nullptr)
         {
             // read header
-            const u8* end = memory.address + memory.size;
+            const u8* end = memory.end();
 
             if (end[-1] == 0x0 && end[-2] == 0xc2)
             {
@@ -597,7 +597,7 @@ namespace
             if (!m_data)
                 return;
 
-            const u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.end();
 
             Buffer temp;
             const u8* buffer = m_data;
@@ -829,7 +829,7 @@ namespace
             if (!m_data)
                 return;
 
-            const u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.end();
 
             Buffer temp;
             const u8* buffer = m_data;
@@ -903,7 +903,7 @@ namespace
             if (!m_data)
                 return;
 
-            const u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.end();
 
             Buffer temp;
             const u8* buffer = m_data;
@@ -971,7 +971,7 @@ namespace
             if (!m_data)
                 return;
 
-            const u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.end();
 
             Buffer temp;
             const u8* buffer = m_data;
@@ -1201,7 +1201,7 @@ namespace
             if (!m_data)
                 return;
 
-            const u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.end();
 
             Buffer temp;
             const u8* buffer = m_data;
@@ -1668,7 +1668,7 @@ namespace
             if (!m_data)
                 return;
 
-            const u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.end();
 
             Buffer temp;
             const u8* buffer = m_data;
@@ -2211,7 +2211,7 @@ namespace
             if (m_compressed)
             {
                 temp.reset(16192);
-                const u8* end = m_memory.address + m_memory.size;
+                const u8* end = m_memory.end();
                 rle_ecb(temp, m_data, 16192, end, m_escape_char);
                 buffer = temp;
             }

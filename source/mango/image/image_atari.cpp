@@ -287,7 +287,7 @@ namespace
 			if (!m_data)
                 return;
 
-            const u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.end();
             BigEndianConstPointer p = m_data;
 
             // read palette
@@ -456,7 +456,7 @@ namespace
             if (!m_data)
                 return;
 
-            const u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.end();
 
             m_neo_header.decode(s, m_data, end);
         }
@@ -724,7 +724,7 @@ namespace
                 return;
 
             const u8* data = m_data;
-            const u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.end();
 
             m_spu_header.decode(s, data, end);
         }
@@ -1052,7 +1052,7 @@ namespace
             if (!m_data)
                 return;
 
-            const u8* end = m_memory.address + m_memory.size;
+            const u8* end = m_memory.end();
             m_ca_header.decode(s, m_data, end);
 		}
     };
