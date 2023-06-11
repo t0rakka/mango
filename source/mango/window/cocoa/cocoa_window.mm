@@ -1,10 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #ifndef MANGO_OPENGL_CONTEXT_NONE
 
 #include "cocoa_window.h"
+
+#include <chrono>
+#include <thread>
 
 // -----------------------------------------------------------------------
 // CustomNSWindow
@@ -183,6 +186,9 @@ namespace mango
             {
                 onIdle();
             }
+
+            // avoid saturating cpu
+            std::this_thread::sleep_for(std::chrono::microseconds(100));
         }
     }
     
