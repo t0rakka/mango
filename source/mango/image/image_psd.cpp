@@ -82,9 +82,12 @@ namespace
             return p;
         }
 
-        const u8* decompress(u8* output, const u8* input, int count) const
+        void decompress(u8* output, const u8* input, int outbytes, int inbytes) const
         {
-            while (count > 0)
+            // TODO: use for range checking input
+            MANGO_UNREFERENCED(inbytes);
+
+            while (outbytes > 0)
             {
                 int code = s8(*input++);
 
@@ -96,7 +99,7 @@ namespace
                 if (code >= 0)
                 {
                     int length = 1 + code;
-                    count -= length;
+                    outbytes -= length;
 
                     std::memcpy(output, input, length);
                     output += length;
@@ -105,15 +108,13 @@ namespace
                 else
                 {
                     int length = 1 - code;
-                    count -= length;
+                    outbytes -= length;
 
                     u8 value = *input++;
                     std::memset(output, value, length);
                     output += length;
                 }
             }
-
-            return input;
         }
     };
 
@@ -431,7 +432,7 @@ namespace
                             packbits.offsets[channel] += bytes;
 
                             u8* dest = buffer + channel * bytes_per_scan;
-                            packbits.decompress(dest, src, bytes_per_scan);
+                            packbits.decompress(dest, src, bytes_per_scan, bytes);
                         }
 
                         byteswap(buffer, m_bits);
