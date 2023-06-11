@@ -226,98 +226,6 @@ namespace
             return m_icc_profile;
         }
 
-#if 0
-        // TODO: this is prototype for decoding psd files scan at a time (to conserve memory)
-        void parse_packbits(BigEndianConstPointer p, int height, int channels)
-        {
-            int offset = 0;
-            for (int channel = 0; channel < channels; ++channel)
-            {
-                debugPrint("  offset: %d\n", offset);
-                debugPrint("    ");
-                for (int y = 0; y < height; ++y)
-                {
-                    u32 s = p.read16();
-                    offset += s;
-                    debugPrint("%d ", s);
-                }
-                debugPrint("\n");
-            }
-        }
-#endif
-
-        ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
-        {
-            ImageDecodeStatus status;
-
-            const u8* p = m_memory.address;
-
-            int width = m_header.width;
-            int height = m_header.height;
-            int channels = std::min(4, m_channels);
-
-            int bytes_per_scan = div_ceil(width * m_bits, 8);
-            int bytes_per_channel = height * bytes_per_scan;
-
-            //debugPrint("  available: %d bytes\n", u32(m_memory.size));
-            //debugPrint("  request:   %d bytes\n", u32(channels * bytes_per_channel));
-
-            Buffer buffer(channels * bytes_per_channel);
-
-            switch (m_compression)
-            {
-                case Compression::RAW:
-                {
-                    std::memcpy(buffer, p, channels * bytes_per_channel);
-                    break;
-                }
-
-                case Compression::RLE:
-                {
-                    // skip packbits packet sizes
-                    int packet_size = m_version == 1 ? sizeof(u16) : sizeof(u32);
-                    //parse_packbits(p, height, channels);
-                    p += height * m_channels * packet_size;
-
-                    for (int channel = 0; channel < channels; ++channel)
-                    {
-                        u8* dest = buffer + channel * bytes_per_channel;
-                        p = decompress_packbits(dest, p, bytes_per_channel);
-                    }
-
-                    break;
-                }
-
-                case Compression::ZIP:
-                {
-                    // TODO
-                    break;
-                }
-
-                case Compression::ZIP_PRED:
-                {
-                    // TODO
-                    break;
-                }
-            }
-
-            if (m_bits == 16)
-            {
-                byteswap<u16>(buffer);
-            }
-            else if (m_bits == 32)
-            {
-                byteswap<u32>(buffer);
-            }
-
-            Bitmap temp(width, height, m_header.format);
-            resolve(temp.image, buffer, width, height, channels);
-
-            dest.blit(0, 0, temp);
-
-            return status;
-        }
-
         std::string parse_string(BigEndianConstPointer& p, int alignment)
         {
             std::string str;
@@ -390,6 +298,107 @@ namespace
                     debugPrint("      %d bytes\n", length);
                 }
             }
+        }
+
+#if 1
+        // TODO: this is prototype for decoding psd files scan at a time (to conserve memory)
+        const u8* parse_packbits(const u8* p, int height, int channels)
+        {
+            int offset = 0;
+            for (int channel = 0; channel < channels; ++channel)
+            {
+                debugPrint("  offset: %d\n", offset);
+                debugPrint("    ");
+
+                if (m_version == 1)
+                {
+                    for (int y = 0; y < height; ++y)
+                    {
+                        u32 scan_bytes = uload16be(p);
+                        offset += scan_bytes;
+                        p += 2;
+                        debugPrint("%d ", scan_bytes);
+                    }
+                }
+                else
+                {
+                    for (int y = 0; y < height; ++y)
+                    {
+                        u32 scan_bytes = uload32be(p);
+                        offset += scan_bytes;
+                        p += 4;
+                        debugPrint("%d ", scan_bytes);
+                    }
+                }
+
+                debugPrint("\n");
+            }
+
+            return p;
+        }
+#endif
+
+        ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
+        {
+            ImageDecodeStatus status;
+
+            const u8* p = m_memory.address;
+
+            int width = m_header.width;
+            int height = m_header.height;
+            int channels = std::min(4, m_channels);
+
+            int bytes_per_scan = div_ceil(width * m_bits, 8);
+            int bytes_per_channel = height * bytes_per_scan;
+
+            //debugPrint("  available: %d bytes\n", u32(m_memory.size));
+            //debugPrint("  request:   %d bytes\n", u32(channels * bytes_per_channel));
+
+            Buffer buffer(channels * bytes_per_channel);
+
+            switch (m_compression)
+            {
+                case Compression::RAW:
+                {
+                    std::memcpy(buffer, p, channels * bytes_per_channel);
+                    break;
+                }
+
+                case Compression::RLE:
+                {
+                    p = parse_packbits(p, height, channels);
+
+                    for (int channel = 0; channel < channels; ++channel)
+                    {
+                        u8* dest = buffer + channel * bytes_per_channel;
+                        p = decompress_packbits(dest, p, bytes_per_channel);
+                    }
+
+                    break;
+                }
+
+                case Compression::ZIP:
+                {
+                    // TODO
+                    break;
+                }
+
+                case Compression::ZIP_PRED:
+                {
+                    // TODO
+                    break;
+                }
+            }
+
+
+            Bitmap temp(width, height, m_header.format);
+
+            byteswap(buffer, m_bits);
+            resolve(temp.image, buffer, width, height, channels);
+
+            dest.blit(0, 0, temp);
+
+            return status;
         }
 
         void resolve(u8* dest, const u8* src, int width, int height, int channels)
@@ -554,15 +563,28 @@ namespace
         template <typename T>
         void byteswap(Memory memory)
         {
-#if defined(MANGO_LITTLE_ENDIAN)
             T* data = reinterpret_cast<T*>(memory.address);
             size_t count = memory.size / sizeof(T);
             for (size_t i = 0; i < count; ++i)
             {
                 data[i] = mango::byteswap(data[i]);
             }
+        }
+
+        void byteswap(Memory memory, int bits)
+        {
+#if defined(MANGO_LITTLE_ENDIAN)
+            if (bits == 16)
+            {
+                byteswap<u16>(memory);
+            }
+            else if (bits == 32)
+            {
+                byteswap<u32>(memory);
+            }
 #else
             MANGO_UNREFERENCED(memory);
+            MANGO_UNREFERENCED(bits);
 #endif
         }
 
