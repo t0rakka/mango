@@ -39,6 +39,84 @@ namespace
         ZIP_PRED = 3
     };
 
+    struct PackBits
+    {
+        std::vector<u32> offsets;
+        std::vector<u32> sizes;
+
+        PackBits(int channels, int height)
+            : offsets(channels)
+            , sizes(channels * height)
+        {            
+        }
+
+        const u8* parse(const u8* p, int channels, int height, int version)
+        {
+            int offset = 0;
+            for (int channel = 0; channel < channels; ++channel)
+            {
+                offsets[channel] = offset;
+
+                if (version == 1)
+                {
+                    for (int y = 0; y < height; ++y)
+                    {
+                        u32 bytes = uload16be(p);
+                        p += 2;
+                        sizes[channel * height + y] = bytes;
+                        offset += bytes;
+                    }
+                }
+                else
+                {
+                    for (int y = 0; y < height; ++y)
+                    {
+                        u32 bytes = uload32be(p);
+                        p += 4;
+                        sizes[channel * height + y] = bytes;
+                        offset += bytes;
+                    }
+                }
+            }
+
+            return p;
+        }
+
+        const u8* decompress(u8* output, const u8* input, int count) const
+        {
+            while (count > 0)
+            {
+                int code = s8(*input++);
+
+                if (code == 128)
+                {
+                    continue;
+                }
+
+                if (code >= 0)
+                {
+                    int length = 1 + code;
+                    count -= length;
+
+                    std::memcpy(output, input, length);
+                    output += length;
+                    input += length;
+                }
+                else
+                {
+                    int length = 1 - code;
+                    count -= length;
+
+                    u8 value = *input++;
+                    std::memset(output, value, length);
+                    output += length;
+                }
+            }
+
+            return input;
+        }
+    };
+
     struct Interface : ImageDecoderInterface
     {
         ImageHeader m_header;
@@ -300,44 +378,6 @@ namespace
             }
         }
 
-#if 1
-        // TODO: this is prototype for decoding psd files scan at a time (to conserve memory)
-        const u8* parse_packbits(const u8* p, int height, int channels)
-        {
-            int offset = 0;
-            for (int channel = 0; channel < channels; ++channel)
-            {
-                debugPrint("  offset: %d\n", offset);
-                debugPrint("    ");
-
-                if (m_version == 1)
-                {
-                    for (int y = 0; y < height; ++y)
-                    {
-                        u32 scan_bytes = uload16be(p);
-                        offset += scan_bytes;
-                        p += 2;
-                        debugPrint("%d ", scan_bytes);
-                    }
-                }
-                else
-                {
-                    for (int y = 0; y < height; ++y)
-                    {
-                        u32 scan_bytes = uload32be(p);
-                        offset += scan_bytes;
-                        p += 4;
-                        debugPrint("%d ", scan_bytes);
-                    }
-                }
-
-                debugPrint("\n");
-            }
-
-            return p;
-        }
-#endif
-
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             ImageDecodeStatus status;
@@ -354,24 +394,48 @@ namespace
             //debugPrint("  available: %d bytes\n", u32(m_memory.size));
             //debugPrint("  request:   %d bytes\n", u32(channels * bytes_per_channel));
 
-            Buffer buffer(channels * bytes_per_channel);
+            Bitmap temp(width, height, m_header.format);
+            Buffer buffer(channels * bytes_per_scan);
 
             switch (m_compression)
             {
                 case Compression::RAW:
                 {
-                    std::memcpy(buffer, p, channels * bytes_per_channel);
+                    for (int y = 0; y < height; ++y)
+                    {
+                        for (int channel = 0; channel < channels; ++channel)
+                        {
+                            const u8* src = p + channel * bytes_per_channel + y * bytes_per_scan;
+                            u8* dest = buffer + channel * bytes_per_scan;
+                            std::memcpy(dest, src, bytes_per_scan);
+                        }
+
+                        byteswap(buffer, m_bits);
+                        resolve(temp.image + y * temp.stride, buffer, width, channels);
+                    }
+
                     break;
                 }
 
                 case Compression::RLE:
                 {
-                    p = parse_packbits(p, height, channels);
+                    PackBits packbits(m_channels, height);
+                    p = packbits.parse(p, m_channels, height, m_version);
 
-                    for (int channel = 0; channel < channels; ++channel)
+                    for (int y = 0; y < height; ++y)
                     {
-                        u8* dest = buffer + channel * bytes_per_channel;
-                        p = decompress_packbits(dest, p, bytes_per_channel);
+                        for (int channel = 0; channel < channels; ++channel)
+                        {
+                            u32 bytes = packbits.sizes[channel * height + y];
+                            const u8* src = p + packbits.offsets[channel];
+                            packbits.offsets[channel] += bytes;
+
+                            u8* dest = buffer + channel * bytes_per_scan;
+                            packbits.decompress(dest, src, bytes_per_scan);
+                        }
+
+                        byteswap(buffer, m_bits);
+                        resolve(temp.image + y * temp.stride, buffer, width, channels);
                     }
 
                     break;
@@ -390,52 +454,41 @@ namespace
                 }
             }
 
-
-            Bitmap temp(width, height, m_header.format);
-
-            byteswap(buffer, m_bits);
-            resolve(temp.image, buffer, width, height, channels);
-
             dest.blit(0, 0, temp);
 
             return status;
         }
 
-        void resolve(u8* dest, const u8* src, int width, int height, int channels)
+        void resolve(u8* dest, const u8* src, int width, int channels)
         {
-            int count = width * height;
-
             if (m_color_mode == ColorMode::BITMAP)
             {
-                for (int y = 0; y < height; ++y)
+                u8 mask = 0;
+                u8 data = 0;
+
+                for (int x = 0; x < width; ++x)
                 {
-                    u8 mask = 0;
-                    u8 data = 0;
-
-                    for (int x = 0; x < width; ++x)
+                    if (!mask)
                     {
-                        if (!mask)
-                        {
-                            mask = 0x80;
-                            data = *src++;
-                        }
-
-                        u8 value = 0xff + !!(data & mask);
-                        mask >>= 1;
-
-                        dest[0] = value;
-                        dest[1] = value;
-                        dest[2] = value;
-                        dest[3] = 0xff;
-                        dest += 4;
+                        mask = 0x80;
+                        data = *src++;
                     }
+
+                    u8 value = 0xff + !!(data & mask);
+                    mask >>= 1;
+
+                    dest[0] = value;
+                    dest[1] = value;
+                    dest[2] = value;
+                    dest[3] = 0xff;
+                    dest += 4;
                 }
             }
             else if (m_color_mode == ColorMode::INDEXED)
             {
                 if (m_bits == 8 && m_palette)
                 {
-                    for (int i = 0; i < count; ++i)
+                    for (int i = 0; i < width; ++i)
                     {
                         u8 index = *src++;
                         dest[0] = m_palette[index + 256 * 0];
@@ -451,13 +504,13 @@ namespace
                 switch (m_bits)
                 {
                     case 8:
-                        pack_grayscale<u8>(dest, src, count, 0xff);
+                        pack_grayscale<u8>(dest, src, width, 0xff);
                         break;
                     case 16:
-                        pack_grayscale<u16>(dest, src, count, 0xffff);
+                        pack_grayscale<u16>(dest, src, width, 0xffff);
                         break;
                     case 32:
-                        pack_grayscale<float>(dest, src, count, 1.0f);
+                        pack_grayscale<float>(dest, src, width, 1.0f);
                         break;
                 }
             }
@@ -467,21 +520,21 @@ namespace
                 {
                     case 8:
                         if (channels == 4)
-                            pack_rgba<u8>(dest, src, count);
+                            pack_rgba<u8>(dest, src, width);
                         else
-                            pack_rgb<u8>(dest, src, count, 0xff);
+                            pack_rgb<u8>(dest, src, width, 0xff);
                         break;
                     case 16:
                         if (channels == 4)
-                            pack_rgba<u16>(dest, src, count);
+                            pack_rgba<u16>(dest, src, width);
                         else
-                            pack_rgb<u16>(dest, src, count, 0xffff);
+                            pack_rgb<u16>(dest, src, width, 0xffff);
                         break;
                     case 32:
                         if (channels == 4)
-                            pack_rgba<float>(dest, src, count);
+                            pack_rgba<float>(dest, src, width);
                         else
-                            pack_rgb<float>(dest, src, count, 1.0f);
+                            pack_rgb<float>(dest, src, width, 1.0f);
                         break;
                 }
             }
@@ -491,13 +544,12 @@ namespace
                 // TODO: different nr of channels
                 if (m_bits == 8)
                 {
-                    int stride = count;
-                    for (int i = 0; i < count; ++i)
+                    for (int i = 0; i < width; ++i)
                     {
-                        int c = src[stride * 0];
-                        int m = src[stride * 1];
-                        int y = src[stride * 2];
-                        int k = src[stride * 3];
+                        int c = src[width * 0];
+                        int m = src[width * 1];
+                        int y = src[width * 2];
+                        int k = src[width * 3];
                         dest[0] = (c * k) / 255;
                         dest[1] = (m * k) / 255;
                         dest[2] = (y * k) / 255;
@@ -510,12 +562,12 @@ namespace
         }
 
         template <typename T>
-        void pack_grayscale(u8* image, const u8* buffer, int pixels, T alpha) const
+        void pack_grayscale(u8* image, const u8* buffer, int width, T alpha) const
         {
             const T* src = reinterpret_cast<const T*>(buffer);
             T* dest = reinterpret_cast<T*>(image);
 
-            for (int i = 0; i < pixels; ++i)
+            for (int i = 0; i < width; ++i)
             {
                 T s = *src++;
                 dest[0] = s;
@@ -527,16 +579,16 @@ namespace
         }
 
         template <typename T>
-        void pack_rgb(u8* image, const u8* buffer, int pixels, T alpha) const
+        void pack_rgb(u8* image, const u8* buffer, int width, T alpha) const
         {
             const T* src = reinterpret_cast<const T*>(buffer);
             T* dest = reinterpret_cast<T*>(image);
 
-            for (int i = 0; i < pixels; ++i)
+            for (int i = 0; i < width; ++i)
             {
-                dest[0] = src[pixels * 0];
-                dest[1] = src[pixels * 1];
-                dest[2] = src[pixels * 2];
+                dest[0] = src[width * 0];
+                dest[1] = src[width * 1];
+                dest[2] = src[width * 2];
                 dest[3] = alpha;
                 ++src;
                 dest += 4;
@@ -544,17 +596,17 @@ namespace
         }
 
         template <typename T>
-        void pack_rgba(u8* image, const u8* buffer, int pixels) const
+        void pack_rgba(u8* image, const u8* buffer, int width) const
         {
             const T* src = reinterpret_cast<const T*>(buffer);
             T* dest = reinterpret_cast<T*>(image);
 
-            for (int i = 0; i < pixels; ++i)
+            for (int i = 0; i < width; ++i)
             {
-                dest[0] = src[pixels * 0];
-                dest[1] = src[pixels * 1];
-                dest[2] = src[pixels * 2];
-                dest[3] = src[pixels * 3];
+                dest[0] = src[width * 0];
+                dest[1] = src[width * 1];
+                dest[2] = src[width * 2];
+                dest[3] = src[width * 3];
                 ++src;
                 dest += 4;
             }
@@ -586,40 +638,6 @@ namespace
             MANGO_UNREFERENCED(memory);
             MANGO_UNREFERENCED(bits);
 #endif
-        }
-
-        const u8* decompress_packbits(u8* output, const u8* input, int count) const
-        {
-            while (count > 0)
-            {
-                int code = s8(*input++);
-
-                if (code == 128)
-                {
-                    continue;
-                }
-
-                if (code >= 0)
-                {
-                    int length = 1 + code;
-                    count -= length;
-
-                    std::memcpy(output, input, length);
-                    output += length;
-                    input += length;
-                }
-                else
-                {
-                    int length = 1 - code;
-                    count -= length;
-
-                    u8 value = *input++;
-                    std::memset(output, value, length);
-                    output += length;
-                }
-            }
-
-            return input;
         }
     };
 
