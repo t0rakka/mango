@@ -171,7 +171,7 @@ namespace
                     break;
                 case Compression::ZIP:
                 case Compression::ZIP_PRED:
-                    // TODO
+                    // TODO: need psd files with these compressions
                     m_header.setError("[ImageDecoder.PSD] Unsupported compression (%d).", m_compression);
                     return;
                 default:
@@ -226,6 +226,26 @@ namespace
             return m_icc_profile;
         }
 
+#if 0
+        // TODO: this is prototype for decoding psd files scan at a time (to conserve memory)
+        void parse_packbits(BigEndianConstPointer p, int height, int channels)
+        {
+            int offset = 0;
+            for (int channel = 0; channel < channels; ++channel)
+            {
+                debugPrint("  offset: %d\n", offset);
+                debugPrint("    ");
+                for (int y = 0; y < height; ++y)
+                {
+                    u32 s = p.read16();
+                    offset += s;
+                    debugPrint("%d ", s);
+                }
+                debugPrint("\n");
+            }
+        }
+#endif
+
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             ImageDecodeStatus status;
@@ -256,6 +276,7 @@ namespace
                 {
                     // skip packbits packet sizes
                     int packet_size = m_version == 1 ? sizeof(u16) : sizeof(u32);
+                    //parse_packbits(p, height, channels);
                     p += height * m_channels * packet_size;
 
                     for (int channel = 0; channel < channels; ++channel)
@@ -347,6 +368,7 @@ namespace
                 else if (id == 1047)
                 {
                     debugPrint("    TransparencyIndex\n");
+                    // TODO: need psd file that uses this feature
                 }
                 else if (id == 1058 || id == 1059)
                 {
