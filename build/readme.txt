@@ -11,7 +11,7 @@ The library does come with many ways to compile itself; hopefully one of them wo
 
 1. meson setup --buildtype=release temp
 2. cd temp
-3. ninja -j20
+3. ninja
 4. sudo ninja install
 
 NOTE! On some distributions it seems libdir might get unwanted decorations, if this
@@ -27,8 +27,8 @@ This is probably the most generic build script we have; it has been tested on Li
 
 0. You should be in the build/ folder
 
-1. mkdir cmake
-2. cd cmake
+1. mkdir temp
+2. cd temp
 3. cmake ..
 4. make -j20
 5. sudo make install
@@ -43,43 +43,18 @@ Select compiler:
     "cmake .. -DCMAKE_C_COMPILER=gcc-mp-7 -DCMAKE_CXX_COMPILER=g++-mp-7" (example for gcc-7 mp)    
 
 ------------------------------------------------------------------------------------------------
-* MAKE!
-------------------------------------------------------------------------------------------------
-
-This is a hand-written, custom makefile which needs some manual tinkering on different platforms 
-for example when building with cross-compilation toolchains. Should work out of the box on Linux and macOS.
-
-1. cd build/unix
-2. make -j20
-3. make install
-
-The library will be compiled as shared object (.so) files: 
-  - libmango.so
-  - libmango-opengl.so
-
-The separation is done so that when not using OpenGL don't have to pull in X11 libraries.
-
-Pro tip! "make simd=avx2" to enable Intel AVX2 SIMD instructions.
-
-NOTE! The "plain" make compiler libraries will not be versioned
-
-------------------------------------------------------------------------------------------------
 * XCODE!!!
 ------------------------------------------------------------------------------------------------
 
 Load the xcode project and build for release.
-Drag and drop or link with the mango.framework to get access to the headers and binaries.
 
 ------------------------------------------------------------------------------------------------
 * VISUAL STUDIO!!!
 ------------------------------------------------------------------------------------------------
 
-Load the solution file. Select configuration (the Release / x64 is very nice one). Build!
-
-When using the library; add the include/ into your projects INCLUDE path and
-link with the appropriate library. Each configuration generates own static .lib file to it's own folder.
-
-We only support the latest Visual Studio (2022 at the time of writing this); apologies for the inconvenience.
+1. Load the solution file.
+2. Select configuration (the Release / x64 is a very nice one).
+3. Build!
 
 ------------------------------------------------------------------------------------------------
 * ANDROID!!?
@@ -119,7 +94,3 @@ Solution:
   apt install libgl1-mesa-dev
 
 ------------------------------------------------------------------------------------------------
-
-Apologies for poor quality build scripts and instructions. Typically you configure the library to be part of your build system
-just once and there are so many ways organizations and individuals do these things it's super duper hard to please everyone so
-our main focus was pleasing ourselves foremost and fix problems as they are reported. Have a nice day! :)
