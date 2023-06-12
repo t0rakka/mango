@@ -204,7 +204,9 @@ namespace
             greenMask = p.read32();
             blueMask = p.read32();
 
-            debugPrint("  redMask: 0x%x, greenMask: 0x%x, blueMask: 0x%x\n", redMask, greenMask, blueMask);
+            debugPrint("  redMask:   0x%.8x\n", redMask);
+            debugPrint("  greenMask: 0x%.8x\n", greenMask);
+            debugPrint("  blueMask:  0x%.8x\n", blueMask);
         }
 
         void WinBitmapHeader3(LittleEndianConstPointer& p)
@@ -213,7 +215,7 @@ namespace
 
             alphaMask = p.read32();
 
-            debugPrint("  alphaMask: 0x%x\n", alphaMask);
+            debugPrint("  alphaMask: 0x%.8x\n", alphaMask);
         }
 
         void WinBitmapHeader4(LittleEndianConstPointer& p)
@@ -379,9 +381,6 @@ namespace
                 return;
             }
 
-            debugPrint("  numPlanes: %d\n", numPlanes);
-            debugPrint("  bitsPerPixel: %d\n", bitsPerPixel);
-
             if (numPlanes != 1)
             {
                 setError("[ImageDecoder.BMP] Incorrect number of planes (%d).", numPlanes);
@@ -393,11 +392,6 @@ namespace
                 height /= 2;
             }
 
-            if (!imageDataSize)
-            {
-                // TODO: compute
-            }
-
             if (height < 0)
             {
                 height = -height;
@@ -406,6 +400,13 @@ namespace
             else
             {
                 yflip = true;
+            }
+
+            if (!imageDataSize)
+            {
+                int stride = div_ceil(width * bitsPerPixel, 32) * 4;
+                imageDataSize = height * stride;
+                debugPrint("  computed imageDataSize: %d\n", imageDataSize);
             }
 
             if (bitsPerPixel <= 8)
@@ -421,7 +422,7 @@ namespace
                 }
 
                 // Convert indexed bmp files to bgra
-                format = Format(32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+                format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0);
                 palette = memory.address + headerSize;
             }
             else
@@ -429,17 +430,19 @@ namespace
                 // no palette
                 palette = nullptr;
 
+#if 0 /* disabled because too many "broken" files */
                 u32 colorMask = redMask | greenMask | blueMask;
                 if (colorMask)
                 {
                     // Filter out alpha if it doesn't fit into the pixel
-                    u32 pixelSizeMask = u32((1ull << bitsPerPixel) - 1);
-                    alphaMask &= pixelSizeMask;
+                    u32 pixelMask = u32((1ull << bitsPerPixel) - 1);
+                    alphaMask &= pixelMask;
 
                     // WinBitmapHeader2 or later store the component masks
                     format = Format(bitsPerPixel, redMask, greenMask, blueMask, alphaMask);
                 }
                 else
+#endif
                 {
                     // WinBitmapHeader1 uses fixed pixel formats
                     switch (bitsPerPixel)
@@ -471,13 +474,16 @@ namespace
     // .bmp decoder
     // ------------------------------------------------------------
 
-    void readRLE4(Surface& surface, const BitmapHeader& header, size_t stride, const u8* data)
+    void readRLE4(Surface& surface, const BitmapHeader& header, size_t stride, ConstMemory memory)
     {
         MANGO_UNREFERENCED(stride);
 
+        const u8* data = memory.address;
+        const u32 size = u32(memory.size);
+
         int x = 0;
         int y = 0;
-        int offset = 0;
+        u32 offset = 0;
 
         while (y < header.height)
         {
@@ -488,6 +494,8 @@ namespace
                 x = 0;
             }
 
+            if (offset > size - 2)
+                return;
             u8 n = data[offset + 0];
             u8 c = data[offset + 1];
             offset += 2;
@@ -520,6 +528,8 @@ namespace
                     case 2:
                     {
                         // position delta
+                        if (offset > size - 2)
+                            return;
                         int dx = data[offset + 0];
                         int dy = data[offset + 1];
                         offset += 2;
@@ -536,6 +546,8 @@ namespace
 
                         while (count-- > 0)
                         {
+                            if (offset > size - 1)
+                                return;
                             u8 s = data[offset++];
                             image[x++] = s >> 4;
                             image[x++] = s & 0xf;
@@ -543,6 +555,8 @@ namespace
 
                         if (c & 1)
                         {
+                            if (offset > size - 1)
+                                return;
                             u8 s = data[offset++];
                             image[x++] = s >> 4;
                         }
@@ -556,9 +570,12 @@ namespace
         }
     }
 
-    void readRLE8(Surface& surface, const BitmapHeader& header, size_t stride, const u8* data)
+    void readRLE8(Surface& surface, const BitmapHeader& header, size_t stride, ConstMemory memory)
     {
         MANGO_UNREFERENCED(stride);
+
+        const u8* data = memory.address;
+        const u8* end = memory.end();
 
         int x = 0;
         int y = 0;
@@ -572,6 +589,8 @@ namespace
                 x = 0;
             }
 
+            if (data > end - 2)
+                return;
             u8 n = data[0];
             u8 c = data[1];
             data += 2;
@@ -602,6 +621,8 @@ namespace
                     case 2:
                     {
                         // position delta
+                        if (data > end - 2)
+                            return;
                         int dx = data[0];
                         int dy = data[1];
                         data += 2;
@@ -613,12 +634,13 @@ namespace
                     default:
                     {
                         // linear imagedata
-                        for (int i = 0; i < c; ++i)
-                        {
-                            image[x++] = data[i];
-                        }
-                        data += c;
-                        data += (c & 1); // skip padding byte
+                        size_t bytes = c + (c & 1);
+                        if (data > end - bytes)
+                            return;
+
+                        std::memcpy(image + x, data, c);
+                        x += c;
+                        data += bytes;
                         break;
                     }
                 }
@@ -626,8 +648,11 @@ namespace
         }
     }
 
-    void readRLE24(const Surface& surface, const BitmapHeader& header, const u8* data)
+    void readRLE24(const Surface& surface, const BitmapHeader& header, ConstMemory memory)
     {
+        const u8* data = memory.address;
+        const u8* end = memory.end();
+
         int x = 0;
         int y = 0;
 
@@ -640,11 +665,15 @@ namespace
                 x = 0;
             }
 
+            if (data > end - 1)
+                return;
             u8 n = data[0];
             ++data;
 
             if (n)
             {
+                if (data > end - 3)
+                    return;
                 u8 r = data[0];
                 u8 g = data[1];
                 u8 b = data[2];
@@ -661,6 +690,8 @@ namespace
             }
             else
             {
+                if (data > end - 1)
+                    return;
                 n = data[0];
                 ++data;
 
@@ -680,6 +711,8 @@ namespace
                     case 2:
                     {
                         // position delta
+                        if (data > end - 2)
+                            return;
                         x += data[0];
                         y += data[1];
                         data += 2;
@@ -689,6 +722,8 @@ namespace
                     default:
                     {
                         // linear imagedata
+                        if (data > end - n * 3)
+                            return;
                         for (int i = 0; i < n; ++i)
                         {
                             image[x * 3 + 0] = data[2];
@@ -705,8 +740,11 @@ namespace
         }
     }
 
-    void readIndexed(Surface& surface, const BitmapHeader& header, size_t stride, const u8* data)
+    void readIndexed(Surface& surface, const BitmapHeader& header, size_t stride, ConstMemory memory)
     {
+        const u8* data = memory.address;
+        const u8* end = memory.end() - 4;
+
         const int bits = header.bitsPerPixel;
         const u32 mask = (1 << bits) - 1;
 
@@ -722,7 +760,7 @@ namespace
             {
                 if (!left)
                 {
-                    value = p.read32();
+                    value = p > end ? 0 :  p.read32();
                     left = 32;
                 }
 
@@ -732,9 +770,16 @@ namespace
         }
     }
 
-    void readRGB(const Surface& surface, const BitmapHeader& header, size_t stride, const u8* data)
+    void readRGB(const Surface& surface, const BitmapHeader& header, size_t stride, ConstMemory memory)
     {
-        Surface source(header.width, header.height, header.format, stride, data);
+        // clip height to available data
+        int height = std::min(header.height, int(div_floor(memory.size, stride)));
+        if (height != header.height)
+        {
+            debugPrint("  WARNING: clipped height: %d -> %d (not enough data)\n", header.height, height);
+        }
+
+        Surface source(header.width, height, header.format, stride, memory.address);
         surface.blit(0, 0, source);
     }
 
@@ -793,7 +838,14 @@ namespace
         }
 
         const size_t stride = ((header.bitsPerPixel * header.width + 31) / 32) * 4;
-        const u8* data = memory.address + offset;
+
+        if (offset >= memory.size)
+        {
+            header.setError("[ImageDecoder.BMP] Out of data.");
+            return std::move(header);
+        }
+
+        ConstMemory data(memory.address + offset, memory.size - offset);
 
         Surface mirror = surface;
 
@@ -911,9 +963,9 @@ namespace
         return std::move(header);
     }
 
-	// ------------------------------------------------------------
-	// support for embedded format files
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
+    // support for embedded format files
+    // ------------------------------------------------------------
 
     ImageHeader getHeader(ConstMemory memory, std::string extension)
     {
