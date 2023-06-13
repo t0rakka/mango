@@ -803,7 +803,7 @@ namespace
         dest.blit(0, 0, temp);
     }
 
-    mango::Status decodeBitmap(const Surface& surface, ConstMemory memory, int offset, bool isIcon, Palette* ptr_palette)
+    mango::Status decodeBitmap(const Surface& surface, ConstMemory memory, size_t offset, bool isIcon, Palette* ptr_palette)
     {
         BitmapHeader header(memory, isIcon);
         if (!header)
