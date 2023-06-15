@@ -24,8 +24,8 @@ namespace
         BIC_RGB            = 0,
         BIC_RLE8           = 1,
         BIC_RLE4           = 2,
-        BIC_BITFIELDS      = 3, // Huffman with OS2 header
-        BIC_JPEG           = 4, // RLE24 with OS2 header
+        BIC_BITFIELDS      = 3, // Huffman with OS/2 header
+        BIC_JPEG           = 4, // RLE24 with OS/2 header
         BIC_PNG            = 5,
         BIC_ALPHABITFIELDS = 6,
         BIC_CMYK           = 11,
@@ -404,8 +404,8 @@ namespace
 
             if (!imageDataSize)
             {
-                int stride = div_ceil(width * bitsPerPixel, 32) * 4;
-                imageDataSize = height * stride;
+                int bytesPerScan = div_ceil(width * bitsPerPixel, 32) * 4;
+                imageDataSize = height * bytesPerScan;
                 debugPrint("  computed imageDataSize: %d\n", imageDataSize);
             }
 
@@ -474,9 +474,9 @@ namespace
     // .bmp decoder
     // ------------------------------------------------------------
 
-    void readRLE4(Surface& surface, const BitmapHeader& header, size_t stride, ConstMemory memory)
+    void readRLE4(Surface& surface, const BitmapHeader& header, size_t bytesPerScan, ConstMemory memory)
     {
-        MANGO_UNREFERENCED(stride);
+        MANGO_UNREFERENCED(bytesPerScan);
 
         const u8* data = memory.address;
         const u32 size = u32(memory.size);
@@ -570,9 +570,9 @@ namespace
         }
     }
 
-    void readRLE8(Surface& surface, const BitmapHeader& header, size_t stride, ConstMemory memory)
+    void readRLE8(Surface& surface, const BitmapHeader& header, size_t bytesPerScan, ConstMemory memory)
     {
-        MANGO_UNREFERENCED(stride);
+        MANGO_UNREFERENCED(bytesPerScan);
 
         const u8* data = memory.address;
         const u8* end = memory.end();
@@ -740,27 +740,34 @@ namespace
         }
     }
 
-    void readIndexed(Surface& surface, const BitmapHeader& header, size_t stride, ConstMemory memory)
+    void readIndexed(Surface& surface, const BitmapHeader& header, size_t bytesPerScan, ConstMemory memory)
     {
         const u8* data = memory.address;
-        const u8* end = memory.end() - 4;
 
+        const int width = header.width;
         const int bits = header.bitsPerPixel;
         const u32 mask = (1 << bits) - 1;
 
-        for (int y = 0; y < header.height; ++y)
+        // clip height to available data
+        const int height = std::min(header.height, int(div_floor(memory.size, bytesPerScan)));
+        if (height != header.height)
         {
-            BigEndianConstPointer p(data + y * stride);
+            debugPrint("  WARNING: clipped height: %d -> %d (not enough data)\n", header.height, height);
+        }
+
+        for (int y = 0; y < height; ++y)
+        {
+            BigEndianConstPointer p(data + y * bytesPerScan);
             u8* dest = surface.address<u8>(0, y);
 
             u32 value = 0;
             int left = 0;
 
-            for (int x = 0; x < header.width; ++x)
+            for (int x = 0; x < width; ++x)
             {
                 if (!left)
                 {
-                    value = p > end ? 0 :  p.read32();
+                    value = p.read32();
                     left = 32;
                 }
 
@@ -770,16 +777,16 @@ namespace
         }
     }
 
-    void readRGB(const Surface& surface, const BitmapHeader& header, size_t stride, ConstMemory memory)
+    void readRGB(const Surface& surface, const BitmapHeader& header, size_t bytesPerScan, ConstMemory memory)
     {
         // clip height to available data
-        int height = std::min(header.height, int(div_floor(memory.size, stride)));
+        int height = std::min(header.height, int(div_floor(memory.size, bytesPerScan)));
         if (height != header.height)
         {
             debugPrint("  WARNING: clipped height: %d -> %d (not enough data)\n", header.height, height);
         }
 
-        Surface source(header.width, height, header.format, stride, memory.address);
+        Surface source(header.width, height, header.format, bytesPerScan, memory.address);
         surface.blit(0, 0, source);
     }
 
@@ -837,7 +844,7 @@ namespace
             }
         }
 
-        const size_t stride = ((header.bitsPerPixel * header.width + 31) / 32) * 4;
+        const size_t bytesPerScan = div_ceil(header.width * header.bitsPerPixel, 32) * 4; // rounded to next 32 bits
 
         if (offset >= memory.size)
         {
@@ -859,7 +866,7 @@ namespace
         {
             if (header.compression == BIC_BITFIELDS)
             {
-                header.setError("[ImageDecoder.BMP] Unsupported compression (OS2 Huffman).");
+                header.setError("[ImageDecoder.BMP] Unsupported compression (OS/2 Huffman).");
                 return std::move(header);
             }
 
@@ -886,12 +893,12 @@ namespace
                         if (ptr_palette)
                         {
                             *ptr_palette = palette;
-                            readIndexed(mirror, header, stride, data);
+                            readIndexed(mirror, header, bytesPerScan, data);
                         }
                         else
                         {
                             Bitmap temp(header.width, header.height, LuminanceFormat(8, Format::UNORM, 8, 0));
-                            readIndexed(temp, header, stride, data);
+                            readIndexed(temp, header, bytesPerScan, data);
                             blitPalette(mirror, temp, palette);
                         }
                         break;
@@ -901,7 +908,7 @@ namespace
                     case 24:
                     case 32:
                     {
-                        readRGB(mirror, header, stride, data);
+                        readRGB(mirror, header, bytesPerScan, data);
                         break;
                     }
 
@@ -920,13 +927,13 @@ namespace
                 {
                     *ptr_palette = palette;
                     std::memset(surface.image, 0, surface.width * surface.height);
-                    readRLE8(mirror, header, stride, data);
+                    readRLE8(mirror, header, bytesPerScan, data);
                 }
                 else
                 {
                     Bitmap temp(header.width, header.height, LuminanceFormat(8, Format::UNORM, 8, 0));
                     std::memset(temp.image, 0, temp.width * temp.height);
-                    readRLE8(temp, header, stride, data);
+                    readRLE8(temp, header, bytesPerScan, data);
                     blitPalette(mirror, temp, palette);
                 }
                 break;
@@ -938,13 +945,13 @@ namespace
                 {
                     *ptr_palette = palette;
                     std::memset(surface.image, 0, surface.width * surface.height);
-                    readRLE4(mirror, header, stride, data);
+                    readRLE4(mirror, header, bytesPerScan, data);
                 }
                 else
                 {
                     Bitmap temp(header.width, header.height, LuminanceFormat(8, Format::UNORM, 8, 0));
                     std::memset(temp.image, 0, temp.width * temp.height);
-                    readRLE4(temp, header, stride, data);
+                    readRLE4(temp, header, bytesPerScan, data);
                     blitPalette(mirror, temp, palette);
                 }
                 break;
