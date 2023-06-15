@@ -135,27 +135,6 @@ namespace mango
         }
     }
 
-    void Buffer::append(ConstMemory memory)
-    {
-        u8* dest = append(memory.size);
-        std::memcpy(dest, memory.address, memory.size);
-    }
-
-    void Buffer::append(const void* source, size_t bytes)
-    {
-        u8* dest = append(bytes);
-
-        if (source)
-        {
-            std::memcpy(dest, source, bytes);
-        }
-        else
-        {
-            // null source "generates" zeroes (intentional; do not "fix")
-            std::memset(dest, 0, bytes);
-        }
-    }
-
     u8* Buffer::append(size_t bytes)
     {
         size_t required = m_memory.size + bytes;
@@ -169,6 +148,31 @@ namespace mango
         m_memory.size += bytes;
 
         return temp;
+    }
+
+    u8* Buffer::append(size_t bytes, u8 value)
+    {
+        u8* dest = append(bytes);
+        std::memset(dest, value, bytes);
+        return dest;
+    }
+
+    void Buffer::append(const u8* source, size_t bytes)
+    {
+        u8* dest = append(bytes);
+        if (source)
+        {
+            std::memcpy(dest, source, bytes);
+        }
+    }
+
+    void Buffer::append(ConstMemory memory)
+    {
+        u8* dest = append(memory.size);
+        if (memory.address)
+        {
+            std::memcpy(dest, memory.address, memory.size);
+        }
     }
 
     Memory Buffer::acquire()
@@ -292,8 +296,8 @@ namespace mango
         const u64 size = m_buffer.size();
         if (m_offset > size)
         {
-            // offset is past end of the stream ; write as many zeroes as needed
-            m_buffer.append(nullptr, m_offset - size);
+            // offset is past end of the stream ; write as many zeros as needed
+            m_buffer.append(m_offset - size, 0);
         }
 
         const u64 left = std::min(bytes, m_buffer.size() - m_offset);
