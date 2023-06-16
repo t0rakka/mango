@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -430,11 +430,9 @@ namespace
                 // no palette
                 palette = nullptr;
 
-#if 0 /* disabled because too many "broken" files */
-                u32 colorMask = redMask | greenMask | blueMask;
-                if (colorMask)
+                if (isMaskedFormat())
                 {
-                    // Filter out alpha if it doesn't fit into the pixel
+                    // mask alpha with complete mask
                     u32 pixelMask = u32((1ull << bitsPerPixel) - 1);
                     alphaMask &= pixelMask;
 
@@ -442,7 +440,6 @@ namespace
                     format = Format(bitsPerPixel, redMask, greenMask, blueMask, alphaMask);
                 }
                 else
-#endif
                 {
                     // WinBitmapHeader1 uses fixed pixel formats
                     switch (bitsPerPixel)
@@ -462,6 +459,37 @@ namespace
                     }
                 }
             }
+        }
+
+        bool isMaskCorrect(u32 mask) const
+        {
+            // mask must be continuous
+            bool is_solid = u32_is_solid_mask(mask);
+            return is_solid;
+        }
+
+        bool isMaskedFormat() const
+        {
+            u32 mask = redMask | greenMask | blueMask;
+            if (!mask)
+            {
+                // no color channels
+                return false;
+            }
+
+            mask = redMask & greenMask & blueMask;
+            if (mask)
+            {
+                // channels overlap
+                return false;
+            }
+
+            if (!isMaskCorrect(redMask) || !isMaskCorrect(greenMask) || !isMaskCorrect(blueMask) || !isMaskCorrect(alphaMask))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         bool isPalette() const

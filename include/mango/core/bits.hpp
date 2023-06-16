@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -465,7 +465,7 @@ namespace mango
 
 #else
 
-    static constexpr
+    static inline
     u32 u32_extract_lsb(u32 value)
     {
         // value:  xxxxxx100000
@@ -473,7 +473,7 @@ namespace mango
         return value & (0 - value);
     }
 
-    static constexpr
+    static inline
     u32 u32_clear_lsb(u32 value)
     {
         // value:  xxxxxx100000
@@ -481,7 +481,7 @@ namespace mango
         return value & (value - 1);
     }
 
-    static constexpr
+    static inline
     u32 u32_mask_lsb(u32 value)
     {
         // value:  xxxxxx100000
@@ -963,6 +963,14 @@ namespace mango
         return (value < low) ? low : (high < value) ? high : value;
     }
 
+    static inline
+    bool u32_is_solid_mask(u32 mask)
+    {
+        u32 lsb = u32_extract_lsb(mask);
+        bool is_pot = u32_is_power_of_two(mask + lsb);
+        return is_pot;
+    }
+
     // ----------------------------------------------------------------------------
     // 64 bits
     // ----------------------------------------------------------------------------
@@ -990,19 +998,19 @@ namespace mango
 
 #else
 
-    static constexpr
+    static inline
     u64 u64_extract_lsb(u64 value)
     {
         return value & (0 - value);
     }
 
-    static constexpr
+    static inline
     u64 u64_clear_lsb(u64 value)
     {
         return value & (value - 1);
     }
 
-    static constexpr
+    static inline
     u64 u64_mask_lsb(u64 value)
     {
         // NOTE: 0 expands to 0xffffffffffffffff
@@ -1507,6 +1515,14 @@ namespace mango
     u64 u64_clamp(u64 value, u64 low, u64 high)
     {
         return (value < low) ? low : (high < value) ? high : value;
+    }
+
+    static inline
+    bool u64_is_solid_mask(u64 mask)
+    {
+        u64 lsb = u64_extract_lsb(mask);
+        bool is_pot = u64_is_power_of_two(mask + lsb);
+        return is_pot;
     }
 
 } // namespace mango
