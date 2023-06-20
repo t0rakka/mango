@@ -1,11 +1,82 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/filesystem/filesystem.hpp>
 #include <mango/image/fourcc.hpp>
 #include "indexer.hpp"
+
+#include <unordered_map>
+#include <optional>
+#include <list>
+
+namespace
+{
+
+    template <typename Key, typename Value, size_t Capacity>
+    class LRUCache
+    {
+    private:
+        // most-recently-used to least-recently-used order
+        std::list<std::pair<Key,Value>> items;
+
+        // index to the items
+        std::unordered_map<Key, typename std::list<std::pair<Key,Value>>::iterator> index;
+
+    public:
+        bool put(const Key& k, const Value& v)
+        {
+            if (index.count(k))
+            {
+                return false;
+            }
+
+            if(items.size() == Capacity)
+            {
+                // delete the LRU item
+                index.erase(items.back().first); // erase the last item key from the map
+                items.pop_back(); // evict last item from the list 
+            }
+
+            // insert the new item at front of the list
+            items.emplace_front(k, v);
+
+            // insert {key->item_iterator} in the map 
+            index.emplace(k, items.begin());
+
+            return true;
+        }
+
+        std::optional<Value> get(const Key& k)
+        {
+            auto it = index.find(k);
+            if (it == index.end())
+            {
+                return {}; // empty std::optional
+            }
+
+            // make the item most-recently-used
+            items.splice(items.begin(), items, it->second);
+
+            // Return the value in a std::optional
+            return it->second->second;
+        }
+
+        void erase(const Key& k)
+        {
+            auto it = index.find(k);
+            if (it == index.end())
+            {
+                return;
+            }
+
+            items.erase(it->second);
+            index.erase(it);
+        }
+    };
+
+} // namespace
 
 namespace
 {
@@ -100,6 +171,10 @@ namespace
             parseFiles(memory.address + file_offset);
 
             MANGO_UNREFERENCED(version);
+        }
+
+        ~HeaderMGX()
+        {
         }
 
         void parseBlocks(LittleEndianConstPointer p)
@@ -217,18 +292,22 @@ namespace mango::filesystem
     class VirtualMemoryMGX : public mango::VirtualMemory
     {
     protected:
-        const u8* m_delete_address;
+        std::shared_ptr<Buffer> m_buffer;
 
     public:
-        VirtualMemoryMGX(const u8* address, const u8* delete_address, size_t size)
-            : m_delete_address(delete_address)
+        VirtualMemoryMGX(ConstMemory memory)
         {
-            m_memory = ConstMemory(address, size);
+            m_memory = memory;
+        }
+
+        VirtualMemoryMGX(std::shared_ptr<Buffer> buffer, ConstMemory memory)
+            : m_buffer(buffer)
+        {
+            m_memory = memory;
         }
 
         ~VirtualMemoryMGX()
         {
-            delete [] m_delete_address;
         }
     };
 
@@ -238,9 +317,13 @@ namespace mango::filesystem
 
     class MapperMGX : public AbstractMapper
     {
-    public:
+    protected:
         HeaderMGX m_header;
         std::string m_password;
+
+        // block cache
+        LRUCache<u32, std::shared_ptr<Buffer>, 6> m_cache;
+        std::mutex m_cache_mutex;
 
     public:
         MapperMGX(ConstMemory parent, const std::string& password)
@@ -295,15 +378,15 @@ namespace mango::filesystem
 
             const FileHeader& file = *ptrHeader;
 
-            // TODO: decompression cache for small-file blocks
-            // TODO: compute segment.size instead of storing it in .mgx container
             // TODO: checksum
             // TODO: encryption
 
             if (!file.isMultiSegment())
             {
                 const Segment& segment = file.segments[0];
-                const Block& block = m_header.m_blocks[segment.block];
+
+                u32 blockIndex = segment.block;
+                Block& block = m_header.m_blocks[blockIndex];
 
                 assert(file.size == segment.size);
 
@@ -313,13 +396,27 @@ namespace mango::filesystem
                     {
                         // a small file stored in one block with other small files
 
-                        // we must decompress the whole block so need a temporary buffer
-                        Buffer dest(block.uncompressed);
-                        block.decompress(dest);
+                        std::shared_ptr<Buffer> buffer;
+                        ConstMemory memory;
 
-                        u8* ptr = new u8[size_t(segment.size)];
-                        std::memcpy(ptr, dest.data() + segment.offset, segment.size);
-                        VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, ptr, segment.size);
+                        std::unique_lock<std::mutex> cache_lock(m_cache_mutex);
+
+                        auto item = m_cache.get(blockIndex);
+                        if (item)
+                        {
+                            // cache hit
+                            buffer = item.value();
+                        }
+                        else
+                        {
+                            // cache miss
+                            buffer = std::make_shared<Buffer>(block.uncompressed);
+                            block.decompress(*buffer);
+                            m_cache.put(blockIndex, buffer);
+                        }
+
+                        memory = ConstMemory(*buffer + segment.offset, segment.size);
+                        VirtualMemoryMGX* vm = new VirtualMemoryMGX(buffer, memory);
                         return vm;
                     }
                     else
@@ -329,18 +426,18 @@ namespace mango::filesystem
                 }
                 else
                 {
-                    // The file is encoded as a single, non-compressed block, so
+                    // The file is encoded as a single, non-compressed block
                     // we can simply map it into parent's memory
-                    const u8* ptr = block.compressed.address + segment.offset;
-                    VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, nullptr, size_t(segment.size));
+                    ConstMemory memory(block.compressed.address + segment.offset, size_t(segment.size));
+                    VirtualMemoryMGX* vm = new VirtualMemoryMGX(memory);
                     return vm;
                 }
             }
 
             // generic compression case
 
-            u8* ptr = new u8[size_t(file.size)];
-            u8* x = ptr;
+            std::shared_ptr<Buffer> buffer = std::make_shared<Buffer>(file.size);
+            u8* x = *buffer;
 
             ConcurrentQueue q("mgx.decompressor", Priority::HIGH);
 
@@ -383,7 +480,8 @@ namespace mango::filesystem
 
             q.wait();
 
-            VirtualMemoryMGX* vm = new VirtualMemoryMGX(ptr, ptr, size_t(file.size));
+            ConstMemory memory = *buffer;
+            VirtualMemoryMGX* vm = new VirtualMemoryMGX(buffer, memory);
             return vm;
         }
     };
