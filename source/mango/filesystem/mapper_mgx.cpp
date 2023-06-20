@@ -386,7 +386,7 @@ namespace mango::filesystem
                 const Segment& segment = file.segments[0];
 
                 u32 blockIndex = segment.block;
-                Block& block = m_header.m_blocks[blockIndex];
+                const Block& block = m_header.m_blocks[blockIndex];
 
                 assert(file.size == segment.size);
 
