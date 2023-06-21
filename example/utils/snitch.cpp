@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cinttypes>
 #include <algorithm>
@@ -10,6 +10,25 @@ using namespace mango;
 using namespace mango::filesystem;
 
 #define DISABLE_MMAP
+
+namespace
+{
+
+    // unit helpers
+
+    constexpr u64 KB = 1 << 10;
+    constexpr u64 MB = 1 << 20;
+    constexpr u64 GB = 1 << 30;
+
+    // configuration
+
+    constexpr u64 large_block_size = 4 * MB;
+    constexpr u64 small_file_max_size = 512 * KB;
+    constexpr u64 small_block_size = 2 * MB;
+
+    constexpr size_t store_threshold_default = 95; // percent
+
+} // namespace
 
 /*
 
@@ -46,9 +65,9 @@ sys:       18.7 s      4.9 s      2.3 s      1.7 s      3.6 s      3.7 s
 
 */
 
-constexpr u64 KB = 1 << 10;
-constexpr u64 MB = 1 << 20;
-constexpr u64 GB = 1 << 30;
+// ------------------------------------------------------------------------------------------
+// indexing
+// ------------------------------------------------------------------------------------------
 
 struct State
 {
@@ -118,7 +137,10 @@ void enumerate(const Path& path, const std::string& prefix, State& state, int de
     }
 }
 
-// compression block
+// ------------------------------------------------------------------------------------------
+// compression
+// ------------------------------------------------------------------------------------------
+
 struct Block
 {
     struct Segment
@@ -154,6 +176,7 @@ struct SegFile
 
     std::string filename;
     u64 size;
+    u32 checksum;
     std::vector<Segment> segments;
 };
 
@@ -178,14 +201,8 @@ struct BlockManager
     }
 };
 
-void compress(const std::string& folder, const std::string& archive, const std::string& compression, int level)
+void compress(const std::string& folder, const std::string& archive, const std::string& compression, int level, size_t store_threshold)
 {
-    constexpr size_t store_threshold = 95; // percent
-
-    constexpr u64 large_block_size = 4 * MB;
-    constexpr u64 small_file_max_size = 512 * KB;
-    constexpr u64 small_block_size = 2 * MB;
-
     Compressor compressor = getCompressor(compression);
 
     printf("Scanning files to compress...\n");
@@ -211,7 +228,8 @@ void compress(const std::string& folder, const std::string& archive, const std::
 
     // sort files by size
     std::sort(state.files.begin(), state.files.end(),
-        [] (const FileInfo& a, const FileInfo& b) {
+        [] (const FileInfo& a, const FileInfo& b)
+        {
             return a.size > b.size;
         });
 
@@ -220,7 +238,16 @@ void compress(const std::string& folder, const std::string& archive, const std::
 
     for (auto node : state.files)
     {
-        manager.files.push_back({node.name, node.size});
+
+        // TODO: compute checksum
+#if 0
+        File file(path, node.name);
+        u32 checksum = crc32c(0, file);
+#else
+        u32 checksum = 0;
+#endif
+
+        manager.files.push_back({node.name, node.size, checksum});
 
         if (node.size > small_file_max_size)
         {
@@ -286,7 +313,7 @@ void compress(const std::string& folder, const std::string& archive, const std::
             {
 #ifdef DISABLE_MMAP
                 std::string filename = path.pathname() + segment.filename;
-                FileStream file(filename, Stream::READ);
+                InputFileStream file(filename);
                 file.seek(segment.offset, Stream::BEGIN);
                 file.read(ptr, segment.size);
                 ptr += segment.size;
@@ -300,12 +327,21 @@ void compress(const std::string& folder, const std::string& archive, const std::
 
             Memory uncompressed = source;
 
-            size_t bound = compressor.bound(uncompressed.size);
-            Buffer dest(bound);
-
             Memory compressed;
-            compressed.size = compressor.compress(dest, uncompressed, level);
-            compressed.address = dest.data();
+            Buffer dest;
+
+            if (store_threshold > 0)
+            {
+                size_t bound = compressor.bound(uncompressed.size);
+                dest.reset(bound);
+
+                compressed.size = compressor.compress(dest, uncompressed, level);
+                compressed.address = dest.data();
+            }
+            else
+            {
+                compressed = source;
+            }
 
             if (compressed.size > uncompressed.size * store_threshold / 100)
             {
@@ -348,7 +384,7 @@ void compress(const std::string& folder, const std::string& archive, const std::
 #ifdef DISABLE_MMAP
         Buffer buffer(large_block_size);
         std::string filename = path.pathname() + node.name;
-        FileStream file(filename, Stream::READ);
+        InputFileStream file(filename);
 #else
         File file(path, node.name);
 #endif
@@ -426,12 +462,12 @@ void compress(const std::string& folder, const std::string& archive, const std::
     Segment:
         u32         block_index
         u32         offset
-        u32         size      <-- this doesn't need to be stored; can be computed
+        u32         size
 
     File:
         char[]      filename
         u64         size
-        u32         checksum    <-- TODO: 0
+        u32         checksum
         Segment[]   segments
 
     --------------------------------------------------------------------------
@@ -484,28 +520,27 @@ void compress(const std::string& folder, const std::string& archive, const std::
     // write file data into temporary buffer
 
     MemoryStream temp;
-    LittleEndianStream tstr = temp;
+    LittleEndianStream le = temp; // LE adaptor for writing into the stream
 
-    tstr.write32(u32(manager.files.size()));
+    le.write32(u32(manager.files.size()));
 
     for (auto &file : manager.files)
     {
         std::string filename = removePrefix(file.filename, folder);
         u32 length = filename.length();
-        u32 checksum = 0; // TODO
 
-        tstr.write32(length);
-        tstr.write(filename.c_str(), length);
+        le.write32(length);
+        le.write(filename.c_str(), length);
 
-        tstr.write64(file.size);
-        tstr.write32(checksum);
-        tstr.write32(u32(file.segments.size()));
+        le.write64(file.size);
+        le.write32(file.checksum);
+        le.write32(u32(file.segments.size()));
 
         for (auto &segment : file.segments)
         {
-            tstr.write32(segment.block);
-            tstr.write32(segment.offset);
-            tstr.write32(segment.size);
+            le.write32(segment.block);
+            le.write32(segment.offset);
+            le.write32(segment.size);
         }
     }
 
@@ -529,6 +564,10 @@ void compress(const std::string& folder, const std::string& archive, const std::
     str.write64(block_data_offset);
     str.write64(file_data_offset);
 }
+
+// ------------------------------------------------------------------------------------------
+// main
+// ------------------------------------------------------------------------------------------
 
 int main(int argc, char* argv[])
 {
@@ -563,10 +602,20 @@ int main(int argc, char* argv[])
     std::string archive = "result.snitch";//argv[2];
     std::string compression = argv[2];
     int level = std::atoi(argv[3]);
+    size_t store_threshold = store_threshold_default;
+
+    for (int i = 4; i < argc; ++i)
+    {
+        std::string c = argv[i];
+        if (c == "--store")
+        {
+            store_threshold = 0;
+        }
+    }
 
     try
     {
-        compress(folder, archive, compression, level);
+        compress(folder, archive, compression, level, store_threshold);
     }
     catch (Exception& e)
     {

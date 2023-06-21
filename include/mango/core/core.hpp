@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,6 +10,7 @@
 #include <mango/core/bits.hpp>
 #include <mango/core/endian.hpp>
 #include <mango/core/pointer.hpp>
+#include <mango/core/container.hpp>
 #include <mango/core/compress.hpp>
 #include <mango/core/adler32.hpp>
 #include <mango/core/crc32.hpp>

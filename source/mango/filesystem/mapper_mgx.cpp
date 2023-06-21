@@ -7,77 +7,6 @@
 #include <mango/image/fourcc.hpp>
 #include "indexer.hpp"
 
-#include <unordered_map>
-#include <optional>
-#include <list>
-
-namespace
-{
-
-    template <typename Key, typename Value, size_t Capacity>
-    class LRUCache
-    {
-    private:
-        // most-recently-used to least-recently-used order
-        std::list<std::pair<Key,Value>> items;
-
-        // index to the items
-        std::unordered_map<Key, typename std::list<std::pair<Key,Value>>::iterator> index;
-
-    public:
-        bool put(const Key& k, const Value& v)
-        {
-            if (index.count(k))
-            {
-                return false;
-            }
-
-            if(items.size() == Capacity)
-            {
-                // delete the LRU item
-                index.erase(items.back().first); // erase the last item key from the map
-                items.pop_back(); // evict last item from the list 
-            }
-
-            // insert the new item at front of the list
-            items.emplace_front(k, v);
-
-            // insert {key->item_iterator} in the map 
-            index.emplace(k, items.begin());
-
-            return true;
-        }
-
-        std::optional<Value> get(const Key& k)
-        {
-            auto it = index.find(k);
-            if (it == index.end())
-            {
-                return {}; // empty std::optional
-            }
-
-            // make the item most-recently-used
-            items.splice(items.begin(), items, it->second);
-
-            // Return the value in a std::optional
-            return it->second->second;
-        }
-
-        void erase(const Key& k)
-        {
-            auto it = index.find(k);
-            if (it == index.end())
-            {
-                return;
-            }
-
-            items.erase(it->second);
-            index.erase(it);
-        }
-    };
-
-} // namespace
-
 namespace
 {
     using namespace mango;
@@ -378,9 +307,6 @@ namespace mango::filesystem
 
             const FileHeader& file = *ptrHeader;
 
-            // TODO: checksum
-            // TODO: encryption
-
             if (!file.isMultiSegment())
             {
                 const Segment& segment = file.segments[0];
@@ -401,18 +327,18 @@ namespace mango::filesystem
 
                         std::unique_lock<std::mutex> cache_lock(m_cache_mutex);
 
-                        auto item = m_cache.get(blockIndex);
-                        if (item)
+                        auto value = m_cache.get(blockIndex);
+                        if (value)
                         {
                             // cache hit
-                            buffer = item.value();
+                            buffer = *value;
                         }
                         else
                         {
                             // cache miss
                             buffer = std::make_shared<Buffer>(block.uncompressed);
                             block.decompress(*buffer);
-                            m_cache.put(blockIndex, buffer);
+                            m_cache.insert(blockIndex, buffer);
                         }
 
                         memory = ConstMemory(*buffer + segment.offset, segment.size);

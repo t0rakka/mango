@@ -57,6 +57,7 @@ mango_core_headers = files(
     '../include/mango/core/atomic.hpp',
     '../include/mango/core/bits.hpp',
     '../include/mango/core/buffer.hpp',
+    '../include/mango/core/container.hpp',
     '../include/mango/core/compress.hpp',
     '../include/mango/core/configure.hpp',
     '../include/mango/core/core.hpp',
