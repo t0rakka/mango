@@ -777,7 +777,7 @@ namespace
         const u32 mask = (1 << bits) - 1;
 
         // clip height to available data
-        const int height = std::min(header.height, int(div_floor(memory.size, bytesPerScan)));
+        const int height = std::min(header.height, int(memory.size / bytesPerScan));
         if (height != header.height)
         {
             debugPrint("  WARNING: clipped height: %d -> %d (not enough data)\n", header.height, height);
@@ -808,7 +808,7 @@ namespace
     void readRGB(const Surface& surface, const BitmapHeader& header, size_t bytesPerScan, ConstMemory memory)
     {
         // clip height to available data
-        int height = std::min(header.height, int(div_floor(memory.size, bytesPerScan)));
+        int height = std::min(header.height, int(memory.size / bytesPerScan));
         if (height != header.height)
         {
             debugPrint("  WARNING: clipped height: %d -> %d (not enough data)\n", header.height, height);

@@ -22,6 +22,7 @@
     <ClInclude Include="..\..\..\include\mango\core\buffer.hpp" />
     <ClInclude Include="..\..\..\include\mango\core\compress.hpp" />
     <ClInclude Include="..\..\..\include\mango\core\configure.hpp" />
+    <ClInclude Include="..\..\..\include\mango\core\container.hpp" />
     <ClInclude Include="..\..\..\include\mango\core\core.hpp" />
     <ClInclude Include="..\..\..\include\mango\core\cpuinfo.hpp" />
     <ClInclude Include="..\..\..\include\mango\core\crc32.hpp" />

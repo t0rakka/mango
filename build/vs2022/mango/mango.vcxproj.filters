@@ -1239,6 +1239,9 @@
     <ClInclude Include="..\..\..\source\external\lcms\lcms2_plugin.h">
       <Filter>external\lcms</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\container.hpp">
+      <Filter>mango\include\core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp">
