@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -45,7 +45,7 @@ namespace mango::filesystem
     class FileStream : public Stream
     {
     protected:
-		struct FileHandle* m_handle;
+        struct FileHandle* m_handle;
 
     public:
         FileStream(const std::string& filename, OpenMode mode);

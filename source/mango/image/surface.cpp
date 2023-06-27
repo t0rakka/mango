@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -359,7 +359,7 @@ namespace mango::image
             }
         }
         else
-#endif        
+#endif
         {
             blitter.convert(rect);
         }
@@ -460,6 +460,16 @@ namespace mango::image
 
     Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const Format& format, const ImageDecodeOptions& options)
         : Surface(create_surface(memory, extension, &format, options))
+    {
+    }
+
+    Bitmap::Bitmap(const filesystem::File& file, const ImageDecodeOptions& options)
+        : Surface(create_surface(file, filesystem::getExtension(file.filename()), nullptr, options))
+    {
+    }
+
+    Bitmap::Bitmap(const filesystem::File& file, const Format& format, const ImageDecodeOptions& options)
+        : Surface(create_surface(file, filesystem::getExtension(file.filename()), &format, options))
     {
     }
 

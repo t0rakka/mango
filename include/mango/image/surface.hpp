@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -64,6 +64,10 @@ namespace mango::image
 
         Bitmap(ConstMemory memory, const std::string& extension, const ImageDecodeOptions& options = ImageDecodeOptions());
         Bitmap(ConstMemory memory, const std::string& extension, const Format& format, const ImageDecodeOptions& options = ImageDecodeOptions());
+
+        Bitmap(const filesystem::File& file, const ImageDecodeOptions& options = ImageDecodeOptions());
+        Bitmap(const filesystem::File& file, const Format& format, const ImageDecodeOptions& options = ImageDecodeOptions());
+
         Bitmap(const std::string& filename, const ImageDecodeOptions& options = ImageDecodeOptions());
         Bitmap(const std::string& filename, const Format& format, const ImageDecodeOptions& options = ImageDecodeOptions());
 
