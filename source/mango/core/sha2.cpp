@@ -23,7 +23,7 @@ namespace
     /*   Based on code from ARM, and by Johannes Schneiders, Skip */
     /*   Hovsmith and Barry O'Rourke for the mbedTLS project.     */
 
-    void arm_sha2_update(u32* state, const u8* data, int count)
+    void arm_sha2_transform(u32* state, const u8* data, int count)
     {
         static const u32 K [] =
         {
@@ -476,12 +476,6 @@ namespace
     // Generic C++ SHA-256
     // ----------------------------------------------------------------------------------------
 
-    static constexpr
-    u32 rotateRight(u32 value, int count)
-    {
-        return (value >> count) | (value << (32 - count));
-    }
-
     void generic_sha2_transform(u32 state[8], const u8* data, int block_count)
     {
         static const u32 k[] =
@@ -513,10 +507,10 @@ namespace
             {
                 w[i] = uload32be(data + i * 4);
 
-                u32 s1 = rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25);
+                u32 s1 = u32_ror(e, 6) ^ u32_ror(e, 11) ^ u32_ror(e, 25);
                 u32 ch = (e & f) ^ ((~e) & g);
                 u32 x = h + s1 + ch + k[i] + w[i];
-                u32 s0 = rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22);
+                u32 s0 = u32_ror(a, 2) ^ u32_ror(a, 13) ^ u32_ror(a, 22);
                 u32 maj = (a & b) ^ (a & c) ^ (b & c);
                 u32 y = s0 + maj;
 
@@ -532,14 +526,14 @@ namespace
 
             for (int i = 16; i < 64; ++i)
             {
-                u32 t0 = rotateRight(w[i - 15], 7) ^ rotateRight(w[i - 15], 18) ^ (w[i - 15] >> 3);
-                u32 t1 = rotateRight(w[i - 2], 17) ^ rotateRight(w[i - 2], 19) ^ (w[i - 2] >> 10);
+                u32 t0 = u32_ror(w[i - 15], 7) ^ u32_ror(w[i - 15], 18) ^ (w[i - 15] >> 3);
+                u32 t1 = u32_ror(w[i - 2], 17) ^ u32_ror(w[i - 2], 19) ^ (w[i - 2] >> 10);
                 w[i] = w[i - 16] + t0 + w[i - 7] + t1;
 
-                u32 s1 = rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25);
+                u32 s1 = u32_ror(e, 6) ^ u32_ror(e, 11) ^ u32_ror(e, 25);
                 u32 ch = (e & f) ^ ((~e) & g);
                 u32 x = h + s1 + ch + k[i] + w[i];
-                u32 s0 = rotateRight(a, 2) ^ rotateRight(a, 13) ^ rotateRight(a, 22);
+                u32 s0 = u32_ror(a, 2) ^ u32_ror(a, 13) ^ u32_ror(a, 22);
                 u32 maj = (a & b) ^ (a & c) ^ (b & c);
                 u32 y = s0 + maj;
 
@@ -591,7 +585,7 @@ namespace mango
 #if defined(__ARM_FEATURE_CRYPTO)
         if ((getCPUFlags() & ARM_SHA2) != 0)
         {
-            transform = arm_sha2_update;
+            transform = arm_sha2_transform;
         }
 #elif defined(MANGO_ENABLE_SHA)
         if ((getCPUFlags() & INTEL_SHA) != 0)

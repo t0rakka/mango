@@ -34,7 +34,7 @@ namespace
     A = vsha1su1q_u32(A, D);           \
     B = vsha1su0q_u32(B, C, D);
 
-    void arm_sha1_update(u32 state[5], const u8* block, int count)
+    void arm_sha1_transform(u32 state[5], const u8* block, int count)
     {
         // set K0..K3 constants
         uint32x4_t k0 = vdupq_n_u32(0x5A827999);
@@ -174,7 +174,7 @@ namespace
     *
     *******************************************************************************/
 
-    void intel_sha1_update(u32 *digest, const u8 *data, int blocks)
+    void intel_sha1_transform(u32 *digest, const u8 *data, int blocks)
     {
         const __m128i e_mask    = _mm_set_epi64x(0xffffffff00000000ull, 0x0000000000000000ull);
         const __m128i shuf_mask = _mm_set_epi64x(0x0001020304050607ull, 0x08090a0b0c0d0e0full);
@@ -403,7 +403,7 @@ namespace
     e = ((a << 5) | (a >> 27)) + (b ^ c ^ d) + e + 0xCA62C1D6 + x; } \
     b = (b << 30) | (b >> 2)
 
-    void generic_sha1_update(u32 state[5], const u8* block, int count)
+    void generic_sha1_transform(u32 state[5], const u8* block, int count)
     {
         for (int i = 0; i < count; ++i)
         {
@@ -524,17 +524,17 @@ namespace mango
         hash.data[4] = 0xc3d2e1f0;
 
         // select implementation
-        auto transform = generic_sha1_update;
+        auto transform = generic_sha1_transform;
 
 #if defined(__ARM_FEATURE_CRYPTO)
         if ((getCPUFlags() & ARM_SHA1) != 0)
         {
-            transform = arm_sha1_update;
+            transform = arm_sha1_transform;
         }
 #elif defined(MANGO_ENABLE_SHA)
         if ((getCPUFlags() & INTEL_SHA) != 0)
         {
-            transform = intel_sha1_update;
+            transform = intel_sha1_transform;
         }
 #endif
 
