@@ -519,10 +519,10 @@ namespace mango
         SHA1 hash;
 
         hash.data[0] = 0x67452301;
-        hash.data[1] = 0xEFCDAB89;
-        hash.data[2] = 0x98BADCFE;
+        hash.data[1] = 0xefcdab89;
+        hash.data[2] = 0x98badcfe;
         hash.data[3] = 0x10325476;
-        hash.data[4] = 0xC3D2E1F0;
+        hash.data[4] = 0xc3d2e1f0;
 
         // select implementation
         auto transform = generic_sha1_update;
@@ -533,37 +533,37 @@ namespace mango
             transform = arm_sha1_update;
         }
 #elif defined(MANGO_ENABLE_SHA)
-        if ((getCPUFlags() & CPU_SHA) != 0)
+        if ((getCPUFlags() & INTEL_SHA) != 0)
         {
             transform = intel_sha1_update;
         }
 #endif
 
-        const u32 len = u32(memory.size);
-        const u8* message = memory.address;
+        u32 size = u32(memory.size);
+        const u8* data = memory.address;
 
-        int block_count = len / 64;
-        transform(hash.data, message, block_count);
-        message += block_count * 64;
-        u32 i = block_count * 64;
+        const int block_count = size / 64;
+        transform(hash.data, data, block_count);
+        data += block_count * 64;
+        size -= block_count * 64;
 
         u8 block[64];
-        u32 rem = len - i;
-        memcpy(block, message + i, rem);
 
-        block[rem++] = 0x80;
-        if (64 - rem >= 8)
+        std::memcpy(block, data, size);
+        block[size++] = 0x80;
+
+        if (size <= 56)
         {
-            memset(block + rem, 0, 56 - rem);
+            std::memset(block + size, 0, 56 - size);
         }
         else
         {
-            memset(block + rem, 0, 64 - rem);
+            std::memset(block + size, 0, 64 - size);
             transform(hash.data, block, 1);
-            memset(block, 0, 56);
+            std::memset(block, 0, 56);
         }
 
-        ustore64be(block + 56, memory.size * 8);
+        ustore64be(block + 56, u64(memory.size * 8));
         transform(hash.data, block, 1);
 
 #ifdef MANGO_LITTLE_ENDIAN

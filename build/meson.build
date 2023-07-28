@@ -32,6 +32,7 @@ enable_f16c      = get_option('enable_f16c')
 enable_bmi       = get_option('enable_bmi')
 enable_bmi2      = get_option('enable_bmi2')
 enable_fma       = get_option('enable_fma')
+enable_sha       = get_option('enable_sha')
 
 is_arm = host_machine.cpu_family() == 'arm' or host_machine.cpu_family() == 'aarch64'
 is_x86 = host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
@@ -990,6 +991,12 @@ else
         if enable_fma
             message('FMA: enabled (2013)')
             add_project_arguments('-mfma', language: ['c', 'cpp'])
+        endif
+
+        # sha crypto
+        if enable_sha
+            message('SHA: enabled (2013)')
+            add_project_arguments('-msha', language: ['c', 'cpp'])
         endif
 
         # enable only one (the most recent) SIMD extension

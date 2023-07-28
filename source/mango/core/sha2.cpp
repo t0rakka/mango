@@ -596,7 +596,7 @@ namespace mango
             transform = arm_sha2_update;
         }
 #elif defined(MANGO_ENABLE_SHA)
-        if ((getCPUFlags() & CPU_SHA) != 0)
+        if ((getCPUFlags() & INTEL_SHA) != 0)
         {
             transform = intel_sha2_transform;
         }
