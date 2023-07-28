@@ -369,142 +369,159 @@ namespace
     // Generic C++ SHA1
     // ----------------------------------------------------------------------------------------
 
-#define SHW(index) \
-    u32 x = (w[(index -  3) & 15] ^ \
-             w[(index -  8) & 15] ^ \
-             w[(index - 14) & 15] ^ \
-             w[(index - 16) & 15]); \
-    x = (x << 1) | (x >> 31); \
-    w[index & 15] = x;
+    #define K1 0x5A827999
+    #define K2 0x6ED9EBA1
+    #define K3 0x8F1BBCDC
+    #define K4 0xCA62C1D6
 
-#define PASS0(a, b, c, d, e, index) { \
-    u32 x = uload32be(block + index * 4); \
-    w[index] = x; \
-    e = ((a << 5) | (a >> 27)) + ((b & c) | ((~b) & d)) + e + 0x5A827999 + x; } \
-    b = (b << 30) | (b >> 2)
-
-#define PASS1(a, b, c, d, e, index) { \
-    SHW(index); \
-    e = ((a << 5) | (a >> 27)) + ((b & c) | ((~b) & d)) + e + 0x5A827999 + x; } \
-    b = (b << 30) | (b >> 2)
-
-#define PASS2(a, b, c, d, e, index) { \
-    SHW(index); \
-    e = ((a << 5) | (a >> 27)) + (b ^ c ^ d) + e + 0x6ED9EBA1 + x; } \
-    b = (b << 30) | (b >> 2)
-
-#define PASS3(a, b, c, d, e, index) { \
-    SHW(index); \
-    e = ((a << 5) | (a >> 27)) + ((b & c) | (b & d) | (c & d)) + e + 0x8F1BBCDC + x; } \
-    b = (b << 30) | (b >> 2)
-
-#define PASS4(a, b, c, d, e, index) { \
-    SHW(index); \
-    e = ((a << 5) | (a >> 27)) + (b ^ c ^ d) + e + 0xCA62C1D6 + x; } \
-    b = (b << 30) | (b >> 2)
-
-    void generic_sha1_transform(u32 state[5], const u8* block, int count)
+    inline
+    void F1(u32 A, u32& B, u32 C, u32 D, u32& E, u32 msg)
     {
-        for (int i = 0; i < count; ++i)
+        E += u32_select(B, C, D) + msg + K1 + u32_rol(A, 5);
+        B = u32_rol(B, 30);
+    }
+
+    inline
+    void F2(u32 A, u32& B, u32 C, u32 D, u32& E, u32 msg)
+    {
+        E += (B ^ C ^ D) + msg + K2 + u32_rol(A, 5);
+        B = u32_rol(B, 30);
+    }
+
+    inline
+    void F3(u32 A, u32& B, u32 C, u32 D, u32& E, u32 msg)
+    {
+        E += u32_select(B ^ C, D, C) + msg + K3 + u32_rol(A, 5);
+        B = u32_rol(B, 30);
+    }
+
+    inline
+    void F4(u32 A, u32& B, u32 C, u32 D, u32& E, u32 msg)
+    {
+        E += (B ^ C ^ D) + msg + K4 + u32_rol(A, 5);
+        B = u32_rol(B, 30);
+    }
+
+    void generic_sha1_transform(u32* digest, const u8* data, int blocks)
+    {
+        u32 A = digest[0];
+        u32 B = digest[1];
+        u32 C = digest[2];
+        u32 D = digest[3];
+        u32 E = digest[4];
+
+        while (blocks-- > 0)
         {
-            u32 a = state[0];
-            u32 b = state[1];
-            u32 c = state[2];
-            u32 d = state[3];
-            u32 e = state[4];
+            u32 w[80];
 
-            u32 w[16];
+            for (int i = 0; i < 16; ++i)
+            {
+                w[i] = uload32be(data + i * 4);
+            }
 
-            PASS0(a, b, c, d, e, 0);
-            PASS0(e, a, b, c, d, 1);
-            PASS0(d, e, a, b, c, 2);
-            PASS0(c, d, e, a, b, 3);
-            PASS0(b, c, d, e, a, 4);
-            PASS0(a, b, c, d, e, 5);
-            PASS0(e, a, b, c, d, 6);
-            PASS0(d, e, a, b, c, 7);
-            PASS0(c, d, e, a, b, 8);
-            PASS0(b, c, d, e, a, 9);
-            PASS0(a, b, c, d, e, 10);
-            PASS0(e, a, b, c, d, 11);
-            PASS0(d, e, a, b, c, 12);
-            PASS0(c, d, e, a, b, 13);
-            PASS0(b, c, d, e, a, 14);
-            PASS0(a, b, c, d, e, 15);
+            for (int i = 16; i < 80; i += 8)
+            {
+                w[i + 0] = u32_rol(w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16], 1);
+                w[i + 1] = u32_rol(w[i - 2] ^ w[i - 7] ^ w[i - 13] ^ w[i - 15], 1);
+                w[i + 2] = u32_rol(w[i - 1] ^ w[i - 6] ^ w[i - 12] ^ w[i - 14], 1);
+                w[i + 3] = u32_rol(w[i + 0] ^ w[i - 5] ^ w[i - 11] ^ w[i - 13], 1);
+                w[i + 4] = u32_rol(w[i + 1] ^ w[i - 4] ^ w[i - 10] ^ w[i - 12], 1);
+                w[i + 5] = u32_rol(w[i + 2] ^ w[i - 3] ^ w[i -  9] ^ w[i - 11], 1);
+                w[i + 6] = u32_rol(w[i + 3] ^ w[i - 2] ^ w[i -  8] ^ w[i - 10], 1);
+                w[i + 7] = u32_rol(w[i + 4] ^ w[i - 1] ^ w[i -  7] ^ w[i -  9], 1);
+            }
 
-            PASS1(e, a, b, c, d, 16);
-            PASS1(d, e, a, b, c, 17);
-            PASS1(c, d, e, a, b, 18);
-            PASS1(b, c, d, e, a, 19);
+            F1(A, B, C, D, E, w[0]);
+            F1(E, A, B, C, D, w[1]);
+            F1(D, E, A, B, C, w[2]);
+            F1(C, D, E, A, B, w[3]);
+            F1(B, C, D, E, A, w[4]);
+            F1(A, B, C, D, E, w[5]);
+            F1(E, A, B, C, D, w[6]);
+            F1(D, E, A, B, C, w[7]);
+            F1(C, D, E, A, B, w[8]);
+            F1(B, C, D, E, A, w[9]);
+            F1(A, B, C, D, E, w[10]);
+            F1(E, A, B, C, D, w[11]);
+            F1(D, E, A, B, C, w[12]);
+            F1(C, D, E, A, B, w[13]);
+            F1(B, C, D, E, A, w[14]);
+            F1(A, B, C, D, E, w[15]);
+            F1(E, A, B, C, D, w[16]);
+            F1(D, E, A, B, C, w[17]);
+            F1(C, D, E, A, B, w[18]);
+            F1(B, C, D, E, A, w[19]);
 
-            PASS2(a, b, c, d, e, 20);
-            PASS2(e, a, b, c, d, 21);
-            PASS2(d, e, a, b, c, 22);
-            PASS2(c, d, e, a, b, 23);
-            PASS2(b, c, d, e, a, 24);
-            PASS2(a, b, c, d, e, 25);
-            PASS2(e, a, b, c, d, 26);
-            PASS2(d, e, a, b, c, 27);
-            PASS2(c, d, e, a, b, 28);
-            PASS2(b, c, d, e, a, 29);
-            PASS2(a, b, c, d, e, 30);
-            PASS2(e, a, b, c, d, 31);
-            PASS2(d, e, a, b, c, 32);
-            PASS2(c, d, e, a, b, 33);
-            PASS2(b, c, d, e, a, 34);
-            PASS2(a, b, c, d, e, 35);
-            PASS2(e, a, b, c, d, 36);
-            PASS2(d, e, a, b, c, 37);
-            PASS2(c, d, e, a, b, 38);
-            PASS2(b, c, d, e, a, 39);
+            F2(A, B, C, D, E, w[20]);
+            F2(E, A, B, C, D, w[21]);
+            F2(D, E, A, B, C, w[22]);
+            F2(C, D, E, A, B, w[23]);
+            F2(B, C, D, E, A, w[24]);
+            F2(A, B, C, D, E, w[25]);
+            F2(E, A, B, C, D, w[26]);
+            F2(D, E, A, B, C, w[27]);
+            F2(C, D, E, A, B, w[28]);
+            F2(B, C, D, E, A, w[29]);
+            F2(A, B, C, D, E, w[30]);
+            F2(E, A, B, C, D, w[31]);
+            F2(D, E, A, B, C, w[32]);
+            F2(C, D, E, A, B, w[33]);
+            F2(B, C, D, E, A, w[34]);
+            F2(A, B, C, D, E, w[35]);
+            F2(E, A, B, C, D, w[36]);
+            F2(D, E, A, B, C, w[37]);
+            F2(C, D, E, A, B, w[38]);
+            F2(B, C, D, E, A, w[39]);
 
-            PASS3(a, b, c, d, e, 40);
-            PASS3(e, a, b, c, d, 41);
-            PASS3(d, e, a, b, c, 42);
-            PASS3(c, d, e, a, b, 43);
-            PASS3(b, c, d, e, a, 44);
-            PASS3(a, b, c, d, e, 45);
-            PASS3(e, a, b, c, d, 46);
-            PASS3(d, e, a, b, c, 47);
-            PASS3(c, d, e, a, b, 48);
-            PASS3(b, c, d, e, a, 49);
-            PASS3(a, b, c, d, e, 50);
-            PASS3(e, a, b, c, d, 51);
-            PASS3(d, e, a, b, c, 52);
-            PASS3(c, d, e, a, b, 53);
-            PASS3(b, c, d, e, a, 54);
-            PASS3(a, b, c, d, e, 55);
-            PASS3(e, a, b, c, d, 56);
-            PASS3(d, e, a, b, c, 57);
-            PASS3(c, d, e, a, b, 58);
-            PASS3(b, c, d, e, a, 59);
+            F3(A, B, C, D, E, w[40]);
+            F3(E, A, B, C, D, w[41]);
+            F3(D, E, A, B, C, w[42]);
+            F3(C, D, E, A, B, w[43]);
+            F3(B, C, D, E, A, w[44]);
+            F3(A, B, C, D, E, w[45]);
+            F3(E, A, B, C, D, w[46]);
+            F3(D, E, A, B, C, w[47]);
+            F3(C, D, E, A, B, w[48]);
+            F3(B, C, D, E, A, w[49]);
+            F3(A, B, C, D, E, w[50]);
+            F3(E, A, B, C, D, w[51]);
+            F3(D, E, A, B, C, w[52]);
+            F3(C, D, E, A, B, w[53]);
+            F3(B, C, D, E, A, w[54]);
+            F3(A, B, C, D, E, w[55]);
+            F3(E, A, B, C, D, w[56]);
+            F3(D, E, A, B, C, w[57]);
+            F3(C, D, E, A, B, w[58]);
+            F3(B, C, D, E, A, w[59]);
 
-            PASS4(a, b, c, d, e, 60);
-            PASS4(e, a, b, c, d, 61);
-            PASS4(d, e, a, b, c, 62);
-            PASS4(c, d, e, a, b, 63);
-            PASS4(b, c, d, e, a, 64);
-            PASS4(a, b, c, d, e, 65);
-            PASS4(e, a, b, c, d, 66);
-            PASS4(d, e, a, b, c, 67);
-            PASS4(c, d, e, a, b, 68);
-            PASS4(b, c, d, e, a, 69);
-            PASS4(a, b, c, d, e, 70);
-            PASS4(e, a, b, c, d, 71);
-            PASS4(d, e, a, b, c, 72);
-            PASS4(c, d, e, a, b, 73);
-            PASS4(b, c, d, e, a, 74);
-            PASS4(a, b, c, d, e, 75);
-            PASS4(e, a, b, c, d, 76);
-            PASS4(d, e, a, b, c, 77);
-            PASS4(c, d, e, a, b, 78);
-            PASS4(b, c, d, e, a, 79);
+            F4(A, B, C, D, E, w[60]);
+            F4(E, A, B, C, D, w[61]);
+            F4(D, E, A, B, C, w[62]);
+            F4(C, D, E, A, B, w[63]);
+            F4(B, C, D, E, A, w[64]);
+            F4(A, B, C, D, E, w[65]);
+            F4(E, A, B, C, D, w[66]);
+            F4(D, E, A, B, C, w[67]);
+            F4(C, D, E, A, B, w[68]);
+            F4(B, C, D, E, A, w[69]);
+            F4(A, B, C, D, E, w[70]);
+            F4(E, A, B, C, D, w[71]);
+            F4(D, E, A, B, C, w[72]);
+            F4(C, D, E, A, B, w[73]);
+            F4(B, C, D, E, A, w[74]);
+            F4(A, B, C, D, E, w[75]);
+            F4(E, A, B, C, D, w[76]);
+            F4(D, E, A, B, C, w[77]);
+            F4(C, D, E, A, B, w[78]);
+            F4(B, C, D, E, A, w[79]);
 
-            state[0] += a;
-            state[1] += b;
-            state[2] += c;
-            state[3] += d;
-            state[4] += e;
+            A = (digest[0] += A);
+            B = (digest[1] += B);
+            C = (digest[2] += C);
+            D = (digest[3] += D);
+            E = (digest[4] += E);
+
+            data += 64;
         }
     }
 

@@ -8,8 +8,41 @@ using namespace mango;
 
 constexpr u64 MB = 1 << 20;
 
-void validate_sha1()
+template <typename T>
+void check(T hash, const u32* correct)
 {
+    printf("  ");
+    for (size_t i = 0; i < sizeof(hash.data) / sizeof(hash.data[0]); ++i)
+    {
+        printf("%.8x ", hash.data[i]);
+    }
+    printf("\n");
+
+    printf("  ");
+    for (size_t i = 0; i < sizeof(hash.data) / sizeof(hash.data[0]); ++i)
+    {
+        printf("%.8x ", byteswap(correct[i]));
+    }
+    printf("\n");
+}
+
+void validate(ConstMemory memory)
+{
+
+    // SHA1: 37a6b201 48116c58 4c875f2a b963248a 630d6aad
+    // SHA2: 486cc817 b95d853d 3c357ff2 83b204c0 144bd255 e73fe2de b1389493 b257e3c0
+
+    SHA1 sha1 = mango::sha1(memory);
+    const u32 sha1_correct[] = { 0x37a6b201, 0x48116c58, 0x4c875f2a, 0xb963248a, 0x630d6aad };
+    check(sha1, sha1_correct);
+
+    printf("\n");
+
+    SHA2 sha2 = mango::sha2(memory);
+    const u32 sha2_correct[] = { 0x486cc817, 0xb95d853d, 0x3c357ff2, 0x83b204c0, 0x144bd255, 0xe73fe2de, 0xb1389493, 0xb257e3c0 };
+    check(sha2, sha2_correct);
+
+    printf("\n");
 
     /*
     const u8 message[] = "abc";
@@ -129,6 +162,7 @@ void test_xx3hash128(const Buffer& buffer)
 int main()
 {
     constexpr u64 size = 256 * MB;
+
     Buffer buffer(size);
 
     for (u64 i = 0; i < size; ++i)
@@ -138,7 +172,7 @@ int main()
 
     printf("%s\n", getPlatformInfo().c_str());
 
-    validate_sha1();
+    validate(buffer);
 
     test_md5(buffer);
     test_sha1(buffer);
