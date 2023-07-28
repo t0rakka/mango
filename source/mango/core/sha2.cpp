@@ -261,11 +261,7 @@ namespace
     void intel_sha2_transform(u32 digest[8], const u8* data, int block_count)
     {
         __m128i state0, state1;
-        __m128i msg;
-        __m128i msgtmp0, msgtmp1, msgtmp2, msgtmp3;
         __m128i tmp;
-        __m128i shuf_mask;
-        __m128i abef_save, cdgh_save;
 
         // Load initial hash values
         // Need to reorder these appropriately
@@ -278,13 +274,16 @@ namespace
         state0 = _mm_alignr_epi8(tmp, state1, 8);    // ABEF
         state1 = _mm_blend_epi16(state1, tmp, 0xF0); // CDGH
 
-        shuf_mask = _mm_set_epi64x(0x0c0d0e0f08090a0bull, 0x0405060700010203ull);
+        const __m128i shuf_mask = _mm_set_epi64x(0x0c0d0e0f08090a0bull, 0x0405060700010203ull);
 
-        while (block_count > 0)
+        while (block_count-- > 0)
         {
             // Save hash values for addition after rounds
-            abef_save = state0;
-            cdgh_save = state1;
+            __m128i abef_save = state0;
+            __m128i cdgh_save = state1;
+
+            __m128i msg;
+            __m128i msgtmp0, msgtmp1, msgtmp2, msgtmp3;
 
             // Rounds 0-3
             msg     = _mm_loadu_si128((__m128i*) data);
@@ -459,7 +458,6 @@ namespace
             state1 = _mm_add_epi32(state1, cdgh_save);
 
             data += 64;
-            --block_count;
         }
 
         // Write hash values back in the correct order

@@ -174,36 +174,38 @@ namespace
     *
     *******************************************************************************/
 
-    void intel_sha1_update(u32 *digest, const u8 *data, int num_blks)
+    void intel_sha1_update(u32 *digest, const u8 *data, int blocks)
     {
-        __m128i abcd, e0, e1;
-        __m128i abcd_save, e_save;
-        __m128i msg0, msg1, msg2, msg3;
-
-        __m128i e_mask    = _mm_set_epi64x(0xFFFFFFFF00000000ull, 0x0000000000000000ull);
-        __m128i shuf_mask = _mm_set_epi64x(0x0001020304050607ull, 0x08090a0b0c0d0e0full);
+        const __m128i e_mask    = _mm_set_epi64x(0xffffffff00000000ull, 0x0000000000000000ull);
+        const __m128i shuf_mask = _mm_set_epi64x(0x0001020304050607ull, 0x08090a0b0c0d0e0full);
 
         // Load initial hash values
-        e0        = _mm_setzero_si128();
-        abcd      = _mm_loadu_si128((__m128i*) digest);
-        e0        = _mm_insert_epi32(e0, *(digest+4), 3);
-        abcd      = _mm_shuffle_epi32(abcd, 0x1B);
-        e0        = _mm_and_si128(e0, e_mask);
+        __m128i abcd = _mm_loadu_si128((__m128i*) digest);
+        __m128i e0   = _mm_setzero_si128();
+        e0   = _mm_insert_epi32(e0, digest[4], 3);
+        abcd = _mm_shuffle_epi32(abcd, 0x1b);
+        e0   = _mm_and_si128(e0, e_mask);
 
-        while (num_blks > 0) {
+        while (blocks-- > 0)
+        {
             // Save hash values for addition after rounds
-            abcd_save = abcd;
-            e_save    = e0;
+            __m128i abcd_save = abcd;
+            __m128i e_save    = e0;
+
+            __m128i msg0 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(data + 0));
+            __m128i msg1 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(data + 16));
+            __m128i msg2 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(data + 32));
+            __m128i msg3 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(data + 48));
+
+            __m128i e1;
 
             // Rounds 0-3
-            msg0 = _mm_loadu_si128((__m128i*) data);
             msg0 = _mm_shuffle_epi8(msg0, shuf_mask);
             e0   = _mm_add_epi32(e0, msg0);
             e1   = abcd;
             abcd = _mm_sha1rnds4_epu32(abcd, e0, 0);
 
             // Rounds 4-7
-            msg1 = _mm_loadu_si128((__m128i*) (data+16));
             msg1 = _mm_shuffle_epi8(msg1, shuf_mask);
             e1   = _mm_sha1nexte_epu32(e1, msg1);
             e0   = abcd;
@@ -211,7 +213,6 @@ namespace
             msg0 = _mm_sha1msg1_epu32(msg0, msg1);
 
             // Rounds 8-11
-            msg2 = _mm_loadu_si128((__m128i*) (data+32));
             msg2 = _mm_shuffle_epi8(msg2, shuf_mask);
             e0   = _mm_sha1nexte_epu32(e0, msg2);
             e1   = abcd;
@@ -220,7 +221,6 @@ namespace
             msg0 = _mm_xor_si128(msg0, msg2);
 
             // Rounds 12-15
-            msg3 = _mm_loadu_si128((__m128i*) (data+48));
             msg3 = _mm_shuffle_epi8(msg3, shuf_mask);
             e1   = _mm_sha1nexte_epu32(e1, msg3);
             e0   = abcd;
@@ -356,12 +356,11 @@ namespace
             abcd = _mm_add_epi32(abcd, abcd_save);
 
             data += 64;
-            num_blks--;
         }
 
-        abcd = _mm_shuffle_epi32(abcd, 0x1B);
-        _mm_store_si128((__m128i*) digest, abcd);
-        *(digest+4) = _mm_extract_epi32(e0, 3);
+        abcd = _mm_shuffle_epi32(abcd, 0x1b);
+        _mm_store_si128(reinterpret_cast<__m128i*>(digest), abcd);
+        digest[4] = _mm_extract_epi32(e0, 3);
     }
 
 #endif
