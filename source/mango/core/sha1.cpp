@@ -12,6 +12,11 @@ namespace
 {
     using namespace mango;
 
+    #define K1 0x5A827999
+    #define K2 0x6ED9EBA1
+    #define K3 0x8F1BBCDC
+    #define K4 0xCA62C1D6
+
 #if defined(__ARM_FEATURE_CRYPTO)
 
     // ----------------------------------------------------------------------------------------
@@ -54,131 +59,131 @@ namespace
             MSG3 = vreinterpretq_u32_u8(vrev32q_u8(vreinterpretq_u8_u32(MSG3)));
 #endif
 
-            TMP0 = vaddq_u32(MSG0, vdupq_n_u32(0x5A827999));
-            TMP1 = vaddq_u32(MSG1, vdupq_n_u32(0x5A827999));
+            TMP0 = vaddq_u32(MSG0, vdupq_n_u32(K1));
+            TMP1 = vaddq_u32(MSG1, vdupq_n_u32(K1));
 
             // Rounds 0-3
             E1 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1cq_u32(ABCD, E0, TMP0);
-            TMP0 = vaddq_u32(MSG2, vdupq_n_u32(0x5A827999));
+            TMP0 = vaddq_u32(MSG2, vdupq_n_u32(K1));
             MSG0 = vsha1su0q_u32(MSG0, MSG1, MSG2);
 
             // Rounds 4-7
             E0 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1cq_u32(ABCD, E1, TMP1);
-            TMP1 = vaddq_u32(MSG3, vdupq_n_u32(0x5A827999));
+            TMP1 = vaddq_u32(MSG3, vdupq_n_u32(K1));
             MSG0 = vsha1su1q_u32(MSG0, MSG3);
             MSG1 = vsha1su0q_u32(MSG1, MSG2, MSG3);
 
             // Rounds 8-11
             E1 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1cq_u32(ABCD, E0, TMP0);
-            TMP0 = vaddq_u32(MSG0, vdupq_n_u32(0x5A827999));
+            TMP0 = vaddq_u32(MSG0, vdupq_n_u32(K1));
             MSG1 = vsha1su1q_u32(MSG1, MSG0);
             MSG2 = vsha1su0q_u32(MSG2, MSG3, MSG0);
 
             // Rounds 12-15
             E0 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1cq_u32(ABCD, E1, TMP1);
-            TMP1 = vaddq_u32(MSG1, vdupq_n_u32(0x6ED9EBA1));
+            TMP1 = vaddq_u32(MSG1, vdupq_n_u32(K2));
             MSG2 = vsha1su1q_u32(MSG2, MSG1);
             MSG3 = vsha1su0q_u32(MSG3, MSG0, MSG1);
 
             // Rounds 16-19
             E1 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1cq_u32(ABCD, E0, TMP0);
-            TMP0 = vaddq_u32(MSG2, vdupq_n_u32(0x6ED9EBA1));
+            TMP0 = vaddq_u32(MSG2, vdupq_n_u32(K2));
             MSG3 = vsha1su1q_u32(MSG3, MSG2);
             MSG0 = vsha1su0q_u32(MSG0, MSG1, MSG2);
 
             // Rounds 20-23
             E0 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1pq_u32(ABCD, E1, TMP1);
-            TMP1 = vaddq_u32(MSG3, vdupq_n_u32(0x6ED9EBA1));
+            TMP1 = vaddq_u32(MSG3, vdupq_n_u32(K2));
             MSG0 = vsha1su1q_u32(MSG0, MSG3);
             MSG1 = vsha1su0q_u32(MSG1, MSG2, MSG3);
 
             // Rounds 24-27
             E1 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1pq_u32(ABCD, E0, TMP0);
-            TMP0 = vaddq_u32(MSG0, vdupq_n_u32(0x6ED9EBA1));
+            TMP0 = vaddq_u32(MSG0, vdupq_n_u32(K2));
             MSG1 = vsha1su1q_u32(MSG1, MSG0);
             MSG2 = vsha1su0q_u32(MSG2, MSG3, MSG0);
 
             // Rounds 28-31
             E0 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1pq_u32(ABCD, E1, TMP1);
-            TMP1 = vaddq_u32(MSG1, vdupq_n_u32(0x6ED9EBA1));
+            TMP1 = vaddq_u32(MSG1, vdupq_n_u32(K2));
             MSG2 = vsha1su1q_u32(MSG2, MSG1);
             MSG3 = vsha1su0q_u32(MSG3, MSG0, MSG1);
 
             // Rounds 32-35
             E1 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1pq_u32(ABCD, E0, TMP0);
-            TMP0 = vaddq_u32(MSG2, vdupq_n_u32(0x8F1BBCDC));
+            TMP0 = vaddq_u32(MSG2, vdupq_n_u32(K3));
             MSG3 = vsha1su1q_u32(MSG3, MSG2);
             MSG0 = vsha1su0q_u32(MSG0, MSG1, MSG2);
 
             // Rounds 36-39
             E0 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1pq_u32(ABCD, E1, TMP1);
-            TMP1 = vaddq_u32(MSG3, vdupq_n_u32(0x8F1BBCDC));
+            TMP1 = vaddq_u32(MSG3, vdupq_n_u32(K3));
             MSG0 = vsha1su1q_u32(MSG0, MSG3);
             MSG1 = vsha1su0q_u32(MSG1, MSG2, MSG3);
 
             // Rounds 40-43
             E1 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1mq_u32(ABCD, E0, TMP0);
-            TMP0 = vaddq_u32(MSG0, vdupq_n_u32(0x8F1BBCDC));
+            TMP0 = vaddq_u32(MSG0, vdupq_n_u32(K3));
             MSG1 = vsha1su1q_u32(MSG1, MSG0);
             MSG2 = vsha1su0q_u32(MSG2, MSG3, MSG0);
 
             // Rounds 44-47
             E0 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1mq_u32(ABCD, E1, TMP1);
-            TMP1 = vaddq_u32(MSG1, vdupq_n_u32(0x8F1BBCDC));
+            TMP1 = vaddq_u32(MSG1, vdupq_n_u32(K3));
             MSG2 = vsha1su1q_u32(MSG2, MSG1);
             MSG3 = vsha1su0q_u32(MSG3, MSG0, MSG1);
 
             // Rounds 48-51
             E1 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1mq_u32(ABCD, E0, TMP0);
-            TMP0 = vaddq_u32(MSG2, vdupq_n_u32(0x8F1BBCDC));
+            TMP0 = vaddq_u32(MSG2, vdupq_n_u32(K3));
             MSG3 = vsha1su1q_u32(MSG3, MSG2);
             MSG0 = vsha1su0q_u32(MSG0, MSG1, MSG2);
 
             // Rounds 52-55
             E0 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1mq_u32(ABCD, E1, TMP1);
-            TMP1 = vaddq_u32(MSG3, vdupq_n_u32(0xCA62C1D6));
+            TMP1 = vaddq_u32(MSG3, vdupq_n_u32(K4));
             MSG0 = vsha1su1q_u32(MSG0, MSG3);
             MSG1 = vsha1su0q_u32(MSG1, MSG2, MSG3);
 
             // Rounds 56-59
             E1 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1mq_u32(ABCD, E0, TMP0);
-            TMP0 = vaddq_u32(MSG0, vdupq_n_u32(0xCA62C1D6));
+            TMP0 = vaddq_u32(MSG0, vdupq_n_u32(K4));
             MSG1 = vsha1su1q_u32(MSG1, MSG0);
             MSG2 = vsha1su0q_u32(MSG2, MSG3, MSG0);
 
             // Rounds 60-63
             E0 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1pq_u32(ABCD, E1, TMP1);
-            TMP1 = vaddq_u32(MSG1, vdupq_n_u32(0xCA62C1D6));
+            TMP1 = vaddq_u32(MSG1, vdupq_n_u32(K4));
             MSG2 = vsha1su1q_u32(MSG2, MSG1);
             MSG3 = vsha1su0q_u32(MSG3, MSG0, MSG1);
 
             // Rounds 64-67
             E1 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1pq_u32(ABCD, E0, TMP0);
-            TMP0 = vaddq_u32(MSG2, vdupq_n_u32(0xCA62C1D6));
+            TMP0 = vaddq_u32(MSG2, vdupq_n_u32(K4));
             MSG3 = vsha1su1q_u32(MSG3, MSG2);
             MSG0 = vsha1su0q_u32(MSG0, MSG1, MSG2);
 
             // Rounds 68-71
             E0 = vsha1h_u32(vgetq_lane_u32(ABCD, 0));
             ABCD = vsha1pq_u32(ABCD, E1, TMP1);
-            TMP1 = vaddq_u32(MSG3, vdupq_n_u32(0xCA62C1D6));
+            TMP1 = vaddq_u32(MSG3, vdupq_n_u32(K4));
             MSG0 = vsha1su1q_u32(MSG0, MSG3);
 
             // Rounds 72-75
@@ -448,11 +453,6 @@ namespace
     // Generic C++ SHA1
     // ----------------------------------------------------------------------------------------
 
-    #define K1 0x5A827999
-    #define K2 0x6ED9EBA1
-    #define K3 0x8F1BBCDC
-    #define K4 0xCA62C1D6
-
     inline
     void F1(u32 A, u32& B, u32 C, u32 D, u32& E, u32 msg)
     {
@@ -497,6 +497,8 @@ namespace
             {
                 w[i] = uload32be(data + i * 4);
             }
+
+            data += 64;
 
             for (int i = 16; i < 80; i += 8)
             {
@@ -599,8 +601,6 @@ namespace
             C = (digest[2] += C);
             D = (digest[3] += D);
             E = (digest[4] += E);
-
-            data += 64;
         }
     }
 
