@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -379,16 +379,24 @@
     #if defined(MANGO_CPU_INTEL) && (_MSC_VER >= 1920)
         // 1920: Visual Studio 2019 (14.20)
 
-        #define MANGO_ENABLE_AES
-        #define MANGO_ENABLE_POPCNT
-        #define MANGO_ENABLE_LZCNT_32BIT
-        #define MANGO_ENABLE_BMI_32BIT
-        #define MANGO_ENABLE_BMI2_32BIT
+        #ifndef __AES__
+        #define __AES__
+        #endif
 
-        #if defined(MANGO_CPU_64BIT)
-            #define MANGO_ENABLE_LZCNT_64BIT
-            #define MANGO_ENABLE_BMI_64BIT
-            #define MANGO_ENABLE_BMI2_64BIT
+        #ifndef __LZCNT__
+        #define __LZCNT__
+        #endif
+
+        #ifndef __BMI__
+        #define __BMI__
+        #endif
+
+        #ifndef __BMI2__
+        #define __BMI2__
+        #endif
+
+        #ifndef __POPCNT__
+        #define __POPCNT__
         #endif
 
         #include <immintrin.h>
@@ -489,48 +497,32 @@
     #endif
 
     #ifdef __F16C__
-        #define MANGO_ENABLE_INTEL_F16C
         #include <immintrin.h>
     #endif
 
     #ifdef __POPCNT__
-        #define MANGO_ENABLE_POPCNT
         #include <immintrin.h>
     #endif
 
     #ifdef __BMI__
         // NOTE: slow on AMD Zen architecture (emulated in microcode)
-        #define MANGO_ENABLE_BMI_32BIT
-        #if defined(MANGO_CPU_64BIT)
-            #define MANGO_ENABLE_BMI_64BIT
-        #endif
         #include <immintrin.h>
     #endif
 
     #ifdef __BMI2__
         // NOTE: slow on AMD Zen architecture (emulated in microcode)
-        #define MANGO_ENABLE_BMI2_32BIT
-        #if defined(MANGO_CPU_64BIT)
-            #define MANGO_ENABLE_BMI2_64BIT
-        #endif
         #include <immintrin.h>
     #endif
 
     #ifdef __LZCNT__
-        #define MANGO_ENABLE_LZCNT_32BIT
-        #if defined(MANGO_CPU_64BIT)
-            #define MANGO_ENABLE_LZCNT_64BIT
-        #endif
         #include <immintrin.h>
     #endif
 
     #ifdef __AES__
-        #define MANGO_ENABLE_AES
         #include <wmmintrin.h>
     #endif
 
     #ifdef __SHA__
-        #define MANGO_ENABLE_SHA
         #include <immintrin.h>
     #endif
 

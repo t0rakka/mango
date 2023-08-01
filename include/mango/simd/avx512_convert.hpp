@@ -741,7 +741,7 @@ namespace mango::simd
     // f16
     // -----------------------------------------------------------------
 
-#ifdef MANGO_ENABLE_INTEL_F16C
+#ifdef __F16C__
 
     template <>
     inline f32x4 convert<f32x4>(f16x4 h)
@@ -828,6 +828,6 @@ namespace mango::simd
         return _mm_extract_epi64(v, 0);
     }
 
-#endif // MANGO_ENABLE_INTEL_F16C
+#endif // __F16C__
 
 } // namespace mango::simd

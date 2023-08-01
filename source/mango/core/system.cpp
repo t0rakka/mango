@@ -191,31 +191,31 @@ namespace mango
         info << " FMA3";
     #endif
 
-    #if defined(MANGO_ENABLE_POPCNT)
+    #if defined(__POPCNT__)
         info << " POPCNT";
     #endif
 
-    #if defined(MANGO_ENABLE_INTEL_F16C)
+    #if defined(__F16C__)
         info << " F16C";
     #endif
 
-    #if defined(MANGO_ENABLE_BMI_32BIT) || defined(MANGO_ENABLE_BMI_64BIT)
+    #if defined(__BMI__)
         info << " BMI";
     #endif
 
-    #if defined(MANGO_ENABLE_BMI2_32BIT) || defined(MANGO_ENABLE_BMI2_64BIT)
+    #if defined(__BMI2__)
         info << " BMI2";
     #endif
 
-    #if defined(MANGO_ENABLE_LZCNT_32BIT) || defined(MANGO_ENABLE_LZCNT_64BIT)
+    #if defined(__LZCNT__)
         info << " LZCNT";
     #endif
 
-    #if defined(MANGO_ENABLE_AES)
+    #if defined(__AES__)
         info << " AES";
     #endif
 
-    #if defined(MANGO_ENABLE_SHA)
+    #if defined(__SHA__)
         info << " SHA";
     #endif
 

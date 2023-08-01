@@ -435,7 +435,7 @@ namespace mango
     // 32 bits
     // ----------------------------------------------------------------------------
 
-#if defined(MANGO_ENABLE_BMI_32BIT)
+#if defined(__BMI__)
 
     static inline
     u32 u32_extract_lsb(u32 value)
@@ -528,7 +528,7 @@ namespace mango
         return std::countr_zero(value);
     }
 
-#elif defined(MANGO_ENABLE_BMI_32BIT)
+#elif defined(__BMI__)
 
     static inline
     int u32_tzcnt(u32 value)
@@ -599,7 +599,7 @@ namespace mango
         return int(std::countl_zero(value));
     }
 
-#elif defined(MANGO_ENABLE_LZCNT_32BIT)
+#elif defined(__LZCNT__)
 
     static inline
     u32 u32_mask_msb(u32 value)
@@ -767,7 +767,7 @@ namespace mango
         return std::popcount(value);
     }
 
-#elif defined(MANGO_ENABLE_POPCNT)
+#elif defined(__POPCNT__)
 
     static inline
     int u32_popcnt(u32 value)
@@ -805,7 +805,7 @@ namespace mango
 
 #endif
 
-#if defined(MANGO_ENABLE_BMI_32BIT)
+#if defined(__BMI__)
 
     static inline
     u32 u32_extract_bits(u32 value, int offset, int size)
@@ -841,7 +841,7 @@ namespace mango
     // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
     //                       32
 
-#if defined(MANGO_ENABLE_BMI2_32BIT)
+#if defined(__BMI2__)
 
     static inline
     u32 u32_interleave_bits(u32 x, u32 y)
@@ -899,7 +899,7 @@ namespace mango
     //     y: 0000000000000000yyyyyyyyyyyyyyyy
     //               16              16
 
-#if defined(MANGO_ENABLE_BMI2_32BIT)
+#if defined(__BMI2__)
 
     static inline
     void u32_deinterleave_bits(u32& x, u32& y, u32 value)
@@ -975,7 +975,7 @@ namespace mango
     // 64 bits
     // ----------------------------------------------------------------------------
 
-#if defined(MANGO_ENABLE_BMI_64BIT)
+#if defined(__BMI__) && defined(MANGO_CPU_64BIT)
 
     static inline
     u64 u64_extract_lsb(u64 value)
@@ -1047,7 +1047,7 @@ namespace mango
         return std::countr_zero(value);
     }
 
-#elif defined(MANGO_ENABLE_BMI_64BIT)
+#elif defined(__BMI__) && defined(MANGO_CPU_64BIT)
 
     static inline
     int u64_tzcnt(u64 value)
@@ -1120,7 +1120,7 @@ namespace mango
         return int(std::countl_zero(value));
     }
 
-#elif defined(MANGO_ENABLE_LZCNT_64BIT)
+#elif defined(__LZCNT__) && defined(MANGO_CPU_64BIT)
 
     static inline
     u64 u64_mask_msb(u64 value)
@@ -1298,7 +1298,7 @@ namespace mango
         return std::popcount(value);
     }
 
-#elif defined(MANGO_ENABLE_POPCNT)
+#elif defined(__POPCNT__)
 
     static inline
     int u64_popcnt(u64 value)
@@ -1306,7 +1306,7 @@ namespace mango
     #if defined(MANGO_CPU_64BIT)
         return int(_mm_popcnt_u64(value));
     #else
-        // popcnt_u64 is invalid instruction in 32 bit legacy mode
+        // popcnt_u64 is invalid instruction in 32 bit mode
         u32 low = value & 0xffffffff;
         u32 high = value >> 32;
         return _mm_popcnt_u32(low) + _mm_popcnt_u32(high);
@@ -1344,7 +1344,7 @@ namespace mango
 
 #endif
 
-#if defined(MANGO_ENABLE_BMI_64BIT)
+#if defined(__BMI__) && defined(MANGO_CPU_64BIT)
 
     static inline
     u64 u64_extract_bits(u64 value, int offset, int size)
@@ -1381,7 +1381,7 @@ namespace mango
     // value: yxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyxyx
     //                                       64
 
-#if defined(MANGO_ENABLE_BMI2_64BIT)
+#if defined(__BMI2__) && defined(MANGO_CPU_64BIT)
 
     static inline
     u64 u64_interleave_bits(u64 x, u64 y)
@@ -1447,7 +1447,7 @@ namespace mango
     //     y: 00000000000000000000000000000000yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
     //                       32                              32
 
-#if defined(MANGO_ENABLE_BMI2_64BIT)
+#if defined(__BMI2__) && defined(MANGO_CPU_64BIT)
 
     static inline
     void u64_deinterleave_bits(u64& x, u64& y, u64 value)

@@ -204,7 +204,7 @@ namespace
 
 #endif
 
-#if defined(MANGO_ENABLE_SHA)
+#if defined(__SHA__)
 
     /*******************************************************************************
     * Copyright (c) 2013, Intel Corporation 
@@ -587,7 +587,7 @@ namespace mango
         {
             transform = arm_sha2_transform;
         }
-#elif defined(MANGO_ENABLE_SHA)
+#elif defined(__SHA__)
         if ((getCPUFlags() & INTEL_SHA) != 0)
         {
             transform = intel_sha2_transform;

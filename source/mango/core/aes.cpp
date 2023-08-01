@@ -788,7 +788,7 @@ void arm_cbc_decrypt(u8* output, const u8* input, size_t length, const u8* ivec,
 
 #endif // __ARM_FEATURE_CRYPTO
 
-#if defined(MANGO_ENABLE_AES)
+#if defined(__AES__)
 
 // ----------------------------------------------------------------------------------------
 // Intel AES-NI
@@ -1592,7 +1592,7 @@ void aesni_cbc_decrypt(u8* output, const u8* input, size_t length, const u8* ive
     }
 }
 
-#endif // defined(MANGO_ENABLE_AES)
+#endif // defined(__AES__)
 
 } // namespace
 
@@ -1602,7 +1602,7 @@ namespace mango
 struct KeyScheduleAES
 {
 
-#if defined(MANGO_ENABLE_AES)
+#if defined(__AES__)
     __m128i aesni_schedule[28];
     bool aesni_supported;
 #endif
@@ -1631,7 +1631,7 @@ AES::AES(const u8* key, int bits)
             break;
     }
 
-#if defined(MANGO_ENABLE_AES)
+#if defined(__AES__)
     m_schedule->aesni_supported = (getCPUFlags() & INTEL_AES) != 0;
     if (m_schedule->aesni_supported)
     {
@@ -1659,7 +1659,7 @@ void AES::ecb_block_encrypt(u8* output, const u8* input, size_t length)
         MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
     }
 
-#if defined(MANGO_ENABLE_AES)
+#if defined(__AES__)
     if (m_schedule->aesni_supported)
     {
         aesni_ecb_encrypt(output, input, length, m_schedule->aesni_schedule, m_bits);
@@ -1688,7 +1688,7 @@ void AES::ecb_block_decrypt(u8* output, const u8* input, size_t length)
         MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
     }
 
-#if defined(MANGO_ENABLE_AES)
+#if defined(__AES__)
     if (m_schedule->aesni_supported)
     {
         aesni_ecb_decrypt(output, input, length, m_schedule->aesni_schedule, m_bits);
@@ -1717,7 +1717,7 @@ void AES::cbc_block_encrypt(u8* output, const u8* input, size_t length, const u8
         MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
     }
 
-#if defined(MANGO_ENABLE_AES)
+#if defined(__AES__)
     if (m_schedule->aesni_supported)
     {
         aesni_cbc_encrypt(output, input, length, iv, m_schedule->aesni_schedule, m_bits);
@@ -1743,7 +1743,7 @@ void AES::cbc_block_decrypt(u8* output, const u8* input, size_t length, const u8
         MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
     }
 
-#if defined(MANGO_ENABLE_AES)
+#if defined(__AES__)
     if (m_schedule->aesni_supported)
     {
         aesni_cbc_decrypt(output, input, length, iv, m_schedule->aesni_schedule, m_bits);

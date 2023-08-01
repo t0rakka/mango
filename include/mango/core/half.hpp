@@ -316,7 +316,7 @@ namespace mango
             return temp;
         }
 
-#elif defined(MANGO_ENABLE_INTEL_F16C) && defined(MANGO_ENABLE_SSE4_1)
+#elif defined(__F16C__) && defined(MANGO_ENABLE_SSE4_1)
 
         // NOTE: wasting 3/4 of conversions here but still faster than emulation
 
