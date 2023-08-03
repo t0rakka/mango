@@ -50,7 +50,7 @@ void check(T hash, T correct)
     }
 }
 
-void validate()
+void validate(Buffer& message5)
 {
     const u8 message0 [] = "abc";
     const u8 message1 [] = "";
@@ -71,6 +71,7 @@ void validate()
     check(mango::sha1(memory2), { 0x84983e44, 0x1c3bd26e, 0xbaae4aa1, 0xf95129e5, 0xe54670f1 });
     check(mango::sha1(memory3), { 0xa49b2446, 0xa02c645b, 0xf419f995, 0xb6709125, 0x3a04a259 });
     check(mango::sha1(message4), { 0x34aa973c, 0xd4c4daa4, 0xf61eeb2b, 0xdbad2731, 0x6534016f });
+    check(mango::sha1(message5), { 0x37a6b201, 0x48116c58, 0x4c875f2a, 0xb963248a, 0x630d6aad });
 
     printf("\n");
     printf("SHA2 test vectors:\n");
@@ -81,6 +82,7 @@ void validate()
     check(mango::sha2(ConstMemory(message2, sizeof(message2) - 1)), { 0x248d6a61, 0xd20638b8, 0xe5c02693, 0x0c3e6039, 0xa33ce459, 0x64ff2167, 0xf6ecedd4, 0x19db06c1 });
     check(mango::sha2(ConstMemory(message3, sizeof(message3) - 1)), { 0xcf5b16a7, 0x78af8380, 0x036ce59e, 0x7b049237, 0x0b249b11, 0xe8f07a51, 0xafac4503, 0x7afee9d1 });
     check(mango::sha2(message4), { 0xcdc76e5c, 0x9914fb92, 0x81a1c7e2, 0x84d73e67, 0xf1809a48, 0xa497200e, 0x046d39cc, 0xc7112cd0 });
+    check(mango::sha2(message5), { 0x486cc817, 0xb95d853d, 0x3c357ff2, 0x83b204c0, 0x144bd255, 0xe73fe2de, 0xb1389493, 0xb257e3c0 });
 
     printf("\n");
 }
@@ -178,7 +180,7 @@ int main()
     }
 
     printf("%s\n", getPlatformInfo().c_str());
-    validate();
+    validate(buffer);
 
     test_md5(buffer);
     test_sha1(buffer);

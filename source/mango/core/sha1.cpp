@@ -433,154 +433,137 @@ namespace
     // Generic C++ SHA1
     // ----------------------------------------------------------------------------------------
 
-    inline
-    void F1(u32 A, u32& B, u32 C, u32 D, u32& E, u32 msg)
-    {
-        E += u32_select(B, C, D) + msg + K1 + u32_rol(A, 5);
-        B = u32_rol(B, 30);
-    }
+    // Copyright (c) 2012 Nayuki Minase
 
-    inline
-    void F2(u32 A, u32& B, u32 C, u32 D, u32& E, u32 msg)
-    {
-        E += (B ^ C ^ D) + msg + K2 + u32_rol(A, 5);
-        B = u32_rol(B, 30);
-    }
+#define SCHEDULE(i) \
+	temp = schedule[(i - 3) & 0xf] ^ schedule[(i - 8) & 0xf] ^ schedule[(i - 14) & 0xf] ^ schedule[(i - 16) & 0xf]; \
+	schedule[i & 0xf] = u32_rol(temp, 1);
 
-    inline
-    void F3(u32 A, u32& B, u32 C, u32 D, u32& E, u32 msg)
-    {
-        E += u32_select(B ^ C, D, C) + msg + K3 + u32_rol(A, 5);
-        B = u32_rol(B, 30);
-    }
+#define ROUNDTAIL(a,b,e,f,i,k) \
+	e += u32_rol(a, 5) + f + k + schedule[i & 0xf]; \
+    b = u32_rol(b, 30);
 
-    inline
-    void F4(u32 A, u32& B, u32 C, u32 D, u32& E, u32 msg)
-    {
-        E += (B ^ C ^ D) + msg + K4 + u32_rol(A, 5);
-        B = u32_rol(B, 30);
-    }
+#define ROUND0a(a,b,c,d,e,i) \
+	schedule[i] = uload32be(data + i * 4); \
+	ROUNDTAIL(a, b, e, ((b & c) | (~b & d)), i, K1)
+
+#define ROUND0b(a,b,c,d,e,i) \
+	SCHEDULE(i) \
+	ROUNDTAIL(a, b, e, ((b & c) | (~b & d)), i, K1)
+
+#define ROUND1(a,b,c,d,e,i) \
+	SCHEDULE(i) \
+	ROUNDTAIL(a, b, e, (b ^ c ^ d), i, K2)
+
+#define ROUND2(a,b,c,d,e,i) \
+	SCHEDULE(i) \
+	ROUNDTAIL(a, b, e, ((b & c) ^ (b & d) ^ (c & d)), i, K3)
+
+#define ROUND3(a,b,c,d,e,i) \
+	SCHEDULE(i) \
+	ROUNDTAIL(a, b, e, (b ^ c ^ d), i, K4)
 
     void generic_sha1_transform(u32* digest, const u8* data, int blocks)
     {
-        u32 A = digest[0];
-        u32 B = digest[1];
-        u32 C = digest[2];
-        u32 D = digest[3];
-        u32 E = digest[4];
-
         while (blocks-- > 0)
         {
-            u32 w[80];
+            u32 a = digest[0];
+            u32 b = digest[1];
+            u32 c = digest[2];
+            u32 d = digest[3];
+            u32 e = digest[4];
+            
+            u32 schedule[16];
+            u32 temp;
 
-            for (int i = 0; i < 16; ++i)
-            {
-                w[i] = uload32be(data + i * 4);
-            }
+            ROUND0a(a, b, c, d, e,  0)
+            ROUND0a(e, a, b, c, d,  1)
+            ROUND0a(d, e, a, b, c,  2)
+            ROUND0a(c, d, e, a, b,  3)
+            ROUND0a(b, c, d, e, a,  4)
+            ROUND0a(a, b, c, d, e,  5)
+            ROUND0a(e, a, b, c, d,  6)
+            ROUND0a(d, e, a, b, c,  7)
+            ROUND0a(c, d, e, a, b,  8)
+            ROUND0a(b, c, d, e, a,  9)
+            ROUND0a(a, b, c, d, e, 10)
+            ROUND0a(e, a, b, c, d, 11)
+            ROUND0a(d, e, a, b, c, 12)
+            ROUND0a(c, d, e, a, b, 13)
+            ROUND0a(b, c, d, e, a, 14)
+            ROUND0a(a, b, c, d, e, 15)
+            ROUND0b(e, a, b, c, d, 16)
+            ROUND0b(d, e, a, b, c, 17)
+            ROUND0b(c, d, e, a, b, 18)
+            ROUND0b(b, c, d, e, a, 19)
+            ROUND1(a, b, c, d, e, 20)
+            ROUND1(e, a, b, c, d, 21)
+            ROUND1(d, e, a, b, c, 22)
+            ROUND1(c, d, e, a, b, 23)
+            ROUND1(b, c, d, e, a, 24)
+            ROUND1(a, b, c, d, e, 25)
+            ROUND1(e, a, b, c, d, 26)
+            ROUND1(d, e, a, b, c, 27)
+            ROUND1(c, d, e, a, b, 28)
+            ROUND1(b, c, d, e, a, 29)
+            ROUND1(a, b, c, d, e, 30)
+            ROUND1(e, a, b, c, d, 31)
+            ROUND1(d, e, a, b, c, 32)
+            ROUND1(c, d, e, a, b, 33)
+            ROUND1(b, c, d, e, a, 34)
+            ROUND1(a, b, c, d, e, 35)
+            ROUND1(e, a, b, c, d, 36)
+            ROUND1(d, e, a, b, c, 37)
+            ROUND1(c, d, e, a, b, 38)
+            ROUND1(b, c, d, e, a, 39)
+            ROUND2(a, b, c, d, e, 40)
+            ROUND2(e, a, b, c, d, 41)
+            ROUND2(d, e, a, b, c, 42)
+            ROUND2(c, d, e, a, b, 43)
+            ROUND2(b, c, d, e, a, 44)
+            ROUND2(a, b, c, d, e, 45)
+            ROUND2(e, a, b, c, d, 46)
+            ROUND2(d, e, a, b, c, 47)
+            ROUND2(c, d, e, a, b, 48)
+            ROUND2(b, c, d, e, a, 49)
+            ROUND2(a, b, c, d, e, 50)
+            ROUND2(e, a, b, c, d, 51)
+            ROUND2(d, e, a, b, c, 52)
+            ROUND2(c, d, e, a, b, 53)
+            ROUND2(b, c, d, e, a, 54)
+            ROUND2(a, b, c, d, e, 55)
+            ROUND2(e, a, b, c, d, 56)
+            ROUND2(d, e, a, b, c, 57)
+            ROUND2(c, d, e, a, b, 58)
+            ROUND2(b, c, d, e, a, 59)
+            ROUND3(a, b, c, d, e, 60)
+            ROUND3(e, a, b, c, d, 61)
+            ROUND3(d, e, a, b, c, 62)
+            ROUND3(c, d, e, a, b, 63)
+            ROUND3(b, c, d, e, a, 64)
+            ROUND3(a, b, c, d, e, 65)
+            ROUND3(e, a, b, c, d, 66)
+            ROUND3(d, e, a, b, c, 67)
+            ROUND3(c, d, e, a, b, 68)
+            ROUND3(b, c, d, e, a, 69)
+            ROUND3(a, b, c, d, e, 70)
+            ROUND3(e, a, b, c, d, 71)
+            ROUND3(d, e, a, b, c, 72)
+            ROUND3(c, d, e, a, b, 73)
+            ROUND3(b, c, d, e, a, 74)
+            ROUND3(a, b, c, d, e, 75)
+            ROUND3(e, a, b, c, d, 76)
+            ROUND3(d, e, a, b, c, 77)
+            ROUND3(c, d, e, a, b, 78)
+            ROUND3(b, c, d, e, a, 79)
+
+            digest[0] += a;
+            digest[1] += b;
+            digest[2] += c;
+            digest[3] += d;
+            digest[4] += e;
 
             data += 64;
-
-            for (int i = 16; i < 80; i += 8)
-            {
-                w[i + 0] = u32_rol(w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16], 1);
-                w[i + 1] = u32_rol(w[i - 2] ^ w[i - 7] ^ w[i - 13] ^ w[i - 15], 1);
-                w[i + 2] = u32_rol(w[i - 1] ^ w[i - 6] ^ w[i - 12] ^ w[i - 14], 1);
-                w[i + 3] = u32_rol(w[i + 0] ^ w[i - 5] ^ w[i - 11] ^ w[i - 13], 1);
-                w[i + 4] = u32_rol(w[i + 1] ^ w[i - 4] ^ w[i - 10] ^ w[i - 12], 1);
-                w[i + 5] = u32_rol(w[i + 2] ^ w[i - 3] ^ w[i -  9] ^ w[i - 11], 1);
-                w[i + 6] = u32_rol(w[i + 3] ^ w[i - 2] ^ w[i -  8] ^ w[i - 10], 1);
-                w[i + 7] = u32_rol(w[i + 4] ^ w[i - 1] ^ w[i -  7] ^ w[i -  9], 1);
-            }
-
-            F1(A, B, C, D, E, w[0]);
-            F1(E, A, B, C, D, w[1]);
-            F1(D, E, A, B, C, w[2]);
-            F1(C, D, E, A, B, w[3]);
-            F1(B, C, D, E, A, w[4]);
-            F1(A, B, C, D, E, w[5]);
-            F1(E, A, B, C, D, w[6]);
-            F1(D, E, A, B, C, w[7]);
-            F1(C, D, E, A, B, w[8]);
-            F1(B, C, D, E, A, w[9]);
-            F1(A, B, C, D, E, w[10]);
-            F1(E, A, B, C, D, w[11]);
-            F1(D, E, A, B, C, w[12]);
-            F1(C, D, E, A, B, w[13]);
-            F1(B, C, D, E, A, w[14]);
-            F1(A, B, C, D, E, w[15]);
-            F1(E, A, B, C, D, w[16]);
-            F1(D, E, A, B, C, w[17]);
-            F1(C, D, E, A, B, w[18]);
-            F1(B, C, D, E, A, w[19]);
-
-            F2(A, B, C, D, E, w[20]);
-            F2(E, A, B, C, D, w[21]);
-            F2(D, E, A, B, C, w[22]);
-            F2(C, D, E, A, B, w[23]);
-            F2(B, C, D, E, A, w[24]);
-            F2(A, B, C, D, E, w[25]);
-            F2(E, A, B, C, D, w[26]);
-            F2(D, E, A, B, C, w[27]);
-            F2(C, D, E, A, B, w[28]);
-            F2(B, C, D, E, A, w[29]);
-            F2(A, B, C, D, E, w[30]);
-            F2(E, A, B, C, D, w[31]);
-            F2(D, E, A, B, C, w[32]);
-            F2(C, D, E, A, B, w[33]);
-            F2(B, C, D, E, A, w[34]);
-            F2(A, B, C, D, E, w[35]);
-            F2(E, A, B, C, D, w[36]);
-            F2(D, E, A, B, C, w[37]);
-            F2(C, D, E, A, B, w[38]);
-            F2(B, C, D, E, A, w[39]);
-
-            F3(A, B, C, D, E, w[40]);
-            F3(E, A, B, C, D, w[41]);
-            F3(D, E, A, B, C, w[42]);
-            F3(C, D, E, A, B, w[43]);
-            F3(B, C, D, E, A, w[44]);
-            F3(A, B, C, D, E, w[45]);
-            F3(E, A, B, C, D, w[46]);
-            F3(D, E, A, B, C, w[47]);
-            F3(C, D, E, A, B, w[48]);
-            F3(B, C, D, E, A, w[49]);
-            F3(A, B, C, D, E, w[50]);
-            F3(E, A, B, C, D, w[51]);
-            F3(D, E, A, B, C, w[52]);
-            F3(C, D, E, A, B, w[53]);
-            F3(B, C, D, E, A, w[54]);
-            F3(A, B, C, D, E, w[55]);
-            F3(E, A, B, C, D, w[56]);
-            F3(D, E, A, B, C, w[57]);
-            F3(C, D, E, A, B, w[58]);
-            F3(B, C, D, E, A, w[59]);
-
-            F4(A, B, C, D, E, w[60]);
-            F4(E, A, B, C, D, w[61]);
-            F4(D, E, A, B, C, w[62]);
-            F4(C, D, E, A, B, w[63]);
-            F4(B, C, D, E, A, w[64]);
-            F4(A, B, C, D, E, w[65]);
-            F4(E, A, B, C, D, w[66]);
-            F4(D, E, A, B, C, w[67]);
-            F4(C, D, E, A, B, w[68]);
-            F4(B, C, D, E, A, w[69]);
-            F4(A, B, C, D, E, w[70]);
-            F4(E, A, B, C, D, w[71]);
-            F4(D, E, A, B, C, w[72]);
-            F4(C, D, E, A, B, w[73]);
-            F4(B, C, D, E, A, w[74]);
-            F4(A, B, C, D, E, w[75]);
-            F4(E, A, B, C, D, w[76]);
-            F4(D, E, A, B, C, w[77]);
-            F4(C, D, E, A, B, w[78]);
-            F4(B, C, D, E, A, w[79]);
-
-            A = (digest[0] += A);
-            B = (digest[1] += B);
-            C = (digest[2] += C);
-            D = (digest[3] += D);
-            E = (digest[4] += E);
         }
     }
 
