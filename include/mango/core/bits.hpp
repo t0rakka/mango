@@ -429,7 +429,7 @@ namespace mango
     static constexpr
     u32 u32_mask_inclusive_lsz(u32 value)
     {
-        // value:  xxxxxxx00000
+        // value:  xxxxxxx01111
         // result: 000000011111
         return value ^ (value + 1);
     }
@@ -437,7 +437,7 @@ namespace mango
     static constexpr
     u32 u32_mask_exclusive_lsz(u32 value)
     {
-        // value:  xxxxxxx00000
+        // value:  xxxxxxx01111
         // result: 000000001111
         return value & (~value - 1);
     }
@@ -445,7 +445,7 @@ namespace mango
     static constexpr
     u32 u32_extend_inclusive_lsz(u32 value)
     {
-        // value:  xxxxxxx00000
+        // value:  xxxxxxx01111
         // result: 111111110000
         return ~value | (value + 1);
     }
@@ -453,7 +453,7 @@ namespace mango
     static constexpr
     u32 u32_extend_exclusive_lsz(u32 value)
     {
-        // value:  xxxxxxx00000
+        // value:  xxxxxxx01111
         // result: 111111100000
         return ~value ^ (value + 1);
     }
@@ -985,32 +985,24 @@ namespace mango
     static constexpr
     u64 u64_mask_inclusive_lsz(u64 value)
     {
-        // value:  xxxxxxx00000
-        // result: 000000011111
         return value ^ (value + 1);
     }
 
     static constexpr
     u64 u64_mask_exclusive_lsz(u64 value)
     {
-        // value:  xxxxxxx00000
-        // result: 000000001111
         return value & (~value - 1);
     }
 
     static constexpr
     u64 u64_extend_inclusive_lsz(u64 value)
     {
-        // value:  xxxxxxx00000
-        // result: 111111110000
         return ~value | (value + 1);
     }
 
     static constexpr
     u64 u64_extend_exclusive_lsz(u64 value)
     {
-        // value:  xxxxxxx00000
-        // result: 111111100000
         return ~value ^ (value + 1);
     }
 
