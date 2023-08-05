@@ -431,6 +431,8 @@ namespace mango
     {
         // value:  xxxxxxx01111
         // result: 000000011111
+
+        // NOTE: 0xffffffff evaluates to 0xffffffff
         return value ^ (value + 1);
     }
 
@@ -439,6 +441,8 @@ namespace mango
     {
         // value:  xxxxxxx01111
         // result: 000000001111
+
+        // NOTE: 0xffffffff evaluates to 0xffffffff
         return value & (~value - 1);
     }
 
@@ -466,7 +470,7 @@ namespace mango
         // value:  xxxxxx100000
         // result: 000000111111
 
-        // NOTE: 0 expands to 0xffffffff
+        // NOTE: 0 evaluates to 0xffffffff
         return value ^ (value - 1);
     }
 
@@ -476,7 +480,7 @@ namespace mango
         // value:  xxxxxx100000
         // result: 000000011111
 
-        // NOTE: 0 expands to 0xffffffff
+        // NOTE: 0 evaluates to 0xffffffff
         return ~value & (value - 1);
     }
 
@@ -985,12 +989,14 @@ namespace mango
     static constexpr
     u64 u64_mask_inclusive_lsz(u64 value)
     {
+        // NOTE: 0xffffffffffffffff evaluates to 0xffffffffffffffff
         return value ^ (value + 1);
     }
 
     static constexpr
     u64 u64_mask_exclusive_lsz(u64 value)
     {
+        // NOTE: 0xffffffffffffffff evaluates to 0xffffffffffffffff
         return value & (~value - 1);
     }
 
@@ -1011,14 +1017,14 @@ namespace mango
     static constexpr
     u64 u64_mask_inclusive_lsb(u64 value)
     {
-        // NOTE: 0 expands to 0xffffffffffffffff
+        // NOTE: 0 evaluates to 0xffffffffffffffff
         return value ^ (value - 1);
     }
 
     static constexpr
     u64 u64_mask_exclusive_lsb(u64 value)
     {
-        // NOTE: 0 expands to 0xffffffffffffffff
+        // NOTE: 0 evaluates to 0xffffffffffffffff
         return ~value & (value - 1);
     }
 
