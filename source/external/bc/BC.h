@@ -65,11 +65,11 @@ namespace DirectX
 
     public:
         HDRColorA() = default;
-        HDRColorA(float _r, float _g, float _b, float _a) noexcept
-            : r(_r)
-            , g(_g)
-            , b(_b)
-            , a(_a)
+        HDRColorA(float r, float g, float b, float a) noexcept
+            : r(r)
+            , g(g)
+            , b(b)
+            , a(a)
         {
         }
 
@@ -152,13 +152,13 @@ namespace DirectX
         LDRColorA ToLDRColorA() const noexcept;
     };
 
-    inline HDRColorA* HDRColorALerp(HDRColorA *pOut, const HDRColorA *pC1, const HDRColorA *pC2, float s) noexcept
+    static inline
+    void HDRColorALerp(HDRColorA& pOut, const HDRColorA& pC1, const HDRColorA& pC2, float s) noexcept
     {
-        pOut->r = pC1->r + s * (pC2->r - pC1->r);
-        pOut->g = pC1->g + s * (pC2->g - pC1->g);
-        pOut->b = pC1->b + s * (pC2->b - pC1->b);
-        pOut->a = pC1->a + s * (pC2->a - pC1->a);
-        return pOut;
+        pOut.r = pC1.r + s * (pC2.r - pC1.r);
+        pOut.g = pC1.g + s * (pC2.g - pC1.g);
+        pOut.b = pC1.b + s * (pC2.b - pC1.b);
+        pOut.a = pC1.a + s * (pC2.a - pC1.a);
     }
 
     // BC1/DXT1 compression (4 bits per texel)
@@ -319,13 +319,18 @@ namespace DirectX
     {
         float32x4* dest = reinterpret_cast<float32x4*>(output);
 
+        const float32x4 scale(1.0f / 255.0f);
+
         for (int y = 0; y < 4; ++y)
         {
-            const u32* image = reinterpret_cast<const u32*>(input + y * stride);
-            for (int x = 0; x < 4; ++x)
-            {
-                dest[x] = float32x4::unpack(image[x]) / 255.0f;
-            }
+            uint32x4 color = uint32x4::uload(input);
+            float32x4 r = convert<float32x4>((color >>  0) & 0xff) * scale;
+            float32x4 g = convert<float32x4>((color >>  8) & 0xff) * scale;
+            float32x4 b = convert<float32x4>((color >> 16) & 0xff) * scale;
+            float32x4 a = convert<float32x4>((color >> 24) & 0xff) * scale;
+            transpose(dest, r, g, b, a);
+
+            input += stride;
             dest += 4;
         }
     }
