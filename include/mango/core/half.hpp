@@ -63,10 +63,6 @@ namespace mango
         {
         }
 
-        ~Double()
-        {
-        }
-
         Double& operator = (double s)
         {
             f = s;
@@ -123,10 +119,6 @@ namespace mango
 
         Float(float s)
             : f(s)
-        {
-        }
-
-        ~Float()
         {
         }
 
@@ -240,9 +232,6 @@ namespace mango
         };
 
         Half()
-            : mantissa(0)
-            , exponent(0)
-            , sign(0)
         {
         }
 
@@ -268,11 +257,9 @@ namespace mango
             *this = float(s);
         }
 
-        ~Half()
-        {
-        }
-
 #if defined(MANGO_ENABLE_ARM_FP16)
+
+        // NOTE: ARM extension to support float16_t making life easier :)
 
         Half(float16_t s)
         {
@@ -293,12 +280,6 @@ namespace mango
         }
 
 #endif
-
-        Half& operator = (u16 s)
-        {
-            u = s;
-            return *this;
-        }
 
 #if defined(MANGO_ENABLE_ARM_FP16)
 
@@ -347,6 +328,12 @@ namespace mango
         }
 
 #endif
+
+        Half& operator = (u16 s)
+        {
+            u = s;
+            return *this;
+        }
 
         Half& operator = (double s)
         {
