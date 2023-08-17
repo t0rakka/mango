@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -107,6 +107,13 @@ namespace mango::math
         operator simd::f16x4& ()
         {
             return m;
+        }
+
+        static Vector uload(const void* source)
+        {
+            Vector v;
+            std::memcpy(v.data(), source, 8);
+            return v;
         }
     };
 

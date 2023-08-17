@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -169,6 +169,11 @@ namespace mango::math
         {
             const simd::s32x4 temp = simd::unpack(a);
             return simd::convert<simd::f32x4>(temp);
+        }
+
+        static Vector uload(const void* source)
+        {
+            return simd::f32x4_uload(source);
         }
 
         static Vector ascend()
