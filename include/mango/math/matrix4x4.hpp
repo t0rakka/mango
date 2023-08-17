@@ -231,23 +231,20 @@ namespace mango::math
     Matrix4x4 obliqueD3D(const Matrix4x4& matrix, const float32x4& nearclip);
 
     static inline
-    Matrix4x4 transpose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    void transpose(float32x4* result, float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         float32x4 temp0 = unpacklo(m0, m1);
         float32x4 temp1 = unpacklo(m2, m3);
         float32x4 temp2 = unpackhi(m0, m1);
         float32x4 temp3 = unpackhi(m2, m3);
-
-        Matrix4x4 result;
         result[0] = movelh(temp0, temp1);
         result[1] = movehl(temp1, temp0);
         result[2] = movelh(temp2, temp3);
         result[3] = movehl(temp3, temp2);
-        return result;
     }
 
     static inline
-    Matrix4x4 inverse(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    void inverse(float32x4* result, float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         // Original Intel SSE code (C) Rune Stubbe. All rights reserved.
         // Modified to use our SIMD abstraction so that compiles for more architectures.
@@ -294,16 +291,14 @@ namespace mango::math
         float32x4 minors2 = r0_wzyx * inner13 - r1_wzyx * inner30 - r3_wzyx * inner01;
         float32x4 minors3 = r1_wzyx * inner02 - r0_wzyx * inner12 + r2_wzyx * inner01;
 
-        Matrix4x4 result;
         result[0] = minors0 * rcp_denom_ppnn;
         result[1] = minors1 * rcp_denom_ppnn;
         result[2] = minors2 * rcp_denom_ppnn;
         result[3] = minors3 * rcp_denom_ppnn;
-        return result;
     }
 
     static inline
-    Matrix4x4 inverseTranspose(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    void inverseTranspose(float32x4* result, float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         const float32x4 m0zwyz = m0.zwyz;
         const float32x4 m0wzwy = m0.wzwy;
@@ -340,7 +335,11 @@ namespace mango::math
         d =  madd(d, m2yxxx, v0);
 
         float32x4 det = 1.0f / dot(m0, a);
-        return Matrix4x4(a * det, b * det, c * det, d * det);
+
+        result[0] = a * det;
+        result[1] = b * det;
+        result[2] = c * det;
+        result[3] = d * det;
     }
 
     /*
@@ -353,28 +352,24 @@ namespace mango::math
     //     - matrix may contain: translation, rotation and scaling
 
     static inline
-    Matrix4x4 inverseTRS(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    void inverseTRS(float32x4* result, float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
-        Matrix4x4 r;
-
         // 3x3 transpose
         float32x4 t0 = shuffle<0, 1, 0, 1>(m0, m1);
         float32x4 t1 = shuffle<2, 3, 2, 3>(m0, m1);
-        r[0] = shuffle<0, 2, 0, 3>(t0, m2);
-        r[1] = shuffle<1, 3, 1, 3>(t0, m2);
-        r[2] = shuffle<0, 2, 2, 3>(t1, m2);
+        result[0] = shuffle<0, 2, 0, 3>(t0, m2);
+        result[1] = shuffle<1, 3, 1, 3>(t0, m2);
+        result[2] = shuffle<0, 2, 2, 3>(t1, m2);
 
         // 3x3 de-scale
-        float32x4 det = 1.0f / (r[0] * r[0] + r[1] * r[1] + r[2] * r[2]);
-        r[0] = r[0] * det;
-        r[1] = r[1] * det;
-        r[2] = r[2] * det;
+        float32x4 det = 1.0f / (result[0] * result[0] + result[1] * result[1] + result[2] * result[2]);
+        result[0] = result[0] * det;
+        result[1] = result[1] * det;
+        result[2] = result[2] * det;
 
         // last row
         float32x4 t2 = m0 * m3.xxxx + m1 * m3.yyyy + m2 * m3.zzzz;
-        r[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f) - t2;
-
-        return r;
+        result[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f) - t2;
     }
 
     // Optimized transformation matrix inversion:
@@ -383,22 +378,18 @@ namespace mango::math
     //     - no scaling (scale must be 1.0)
 
     static inline
-    Matrix4x4 inverseTR(float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
+    void inverseTR(float32x4* result, float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
-        Matrix4x4 r;
-
         // 3x3 transpose
         float32x4 t0 = shuffle<0, 1, 0, 1>(m0, m1);
         float32x4 t1 = shuffle<2, 3, 2, 3>(m0, m1);
-        r[0] = shuffle<0, 2, 0, 3>(t0, m2);
-        r[1] = shuffle<1, 3, 1, 3>(t0, m2);
-        r[2] = shuffle<0, 2, 2, 3>(t1, m2);
+        result[0] = shuffle<0, 2, 0, 3>(t0, m2);
+        result[1] = shuffle<1, 3, 1, 3>(t0, m2);
+        result[2] = shuffle<0, 2, 2, 3>(t1, m2);
 
         // last row
         float32x4 t2 = m0 * m3.xxxx + m1 * m3.yyyy + m2 * m3.zzzz;
-        r[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f) - t2;
-
-        return r;
+        result[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f) - t2;
     }
 
     // Matrix inversion performance
@@ -413,31 +404,41 @@ namespace mango::math
     static inline
     Matrix4x4 transpose(const Matrix4x4& m)
     {
-        return transpose(m[0], m[1], m[2], m[3]);
+        Matrix4x4 result;
+        transpose(result, m[0], m[1], m[2], m[3]);
+        return result;
     }
 
     static inline
     Matrix4x4 inverse(const Matrix4x4& m)
     {
-        return inverse(m[0], m[1], m[2], m[3]);
+        Matrix4x4 result;
+        inverse(result, m[0], m[1], m[2], m[3]);
+        return result;
     }
 
     static inline
     Matrix4x4 inverseTranspose(const Matrix4x4& m)
     {
-        return inverseTranspose(m[0], m[1], m[2], m[3]);
+        Matrix4x4 result;
+        inverseTranspose(result, m[0], m[1], m[2], m[3]);
+        return result;
     }
 
     static inline
     Matrix4x4 inverseTRS(const Matrix4x4& m)
     {
-        return inverseTRS(m[0], m[1], m[2], m[3]);
+        Matrix4x4 result;
+        inverseTRS(result, m[0], m[1], m[2], m[3]);
+        return result;
     }
 
     static inline
     Matrix4x4 inverseTR(const Matrix4x4& m)
     {
-        return inverseTR(m[0], m[1], m[2], m[3]);
+        Matrix4x4 result;
+        inverseTR(result, m[0], m[1], m[2], m[3]);
+        return result;
     }
 
 } // namespace mango::math
