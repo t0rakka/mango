@@ -13,6 +13,7 @@ using namespace mango::image;
 //#define TEST_JPEG_COMPRESSOR
 //#define TEST_JPEGDEC
 #define TEST_TOOJPEG
+#define TEST_WUFFS
 
 // ----------------------------------------------------------------------
 // utils
@@ -326,6 +327,88 @@ size_t toojpeg_save(const char* filename, const Surface& surface)
 #endif
 
 // ----------------------------------------------------------------------
+// wuffs
+// ----------------------------------------------------------------------
+
+#ifdef TEST_WUFFS
+
+#define WUFFS_IMPLEMENTATION
+
+#define WUFFS_CONFIG__MODULES
+#define WUFFS_CONFIG__MODULE__ADLER32
+#define WUFFS_CONFIG__MODULE__AUX__BASE
+#define WUFFS_CONFIG__MODULE__AUX__IMAGE
+#define WUFFS_CONFIG__MODULE__BASE
+#define WUFFS_CONFIG__MODULE__BMP
+#define WUFFS_CONFIG__MODULE__CRC32
+#define WUFFS_CONFIG__MODULE__DEFLATE
+#define WUFFS_CONFIG__MODULE__GIF
+#define WUFFS_CONFIG__MODULE__LZW
+#define WUFFS_CONFIG__MODULE__PNG
+#define WUFFS_CONFIG__MODULE__ZLIB
+#define WUFFS_CONFIG__MODULE__JPEG
+
+#include "../png_benchmark/wuffs/wuffs-unsupported-snapshot.c"
+
+class WuffsCallbacks : public wuffs_aux::DecodeImageCallbacks
+{
+public:
+    Buffer buffer;
+    Surface surface;
+
+    WuffsCallbacks()
+    {
+    }
+
+    ~WuffsCallbacks()
+    {
+    }
+
+private:
+    wuffs_base__pixel_format SelectPixfmt(const wuffs_base__image_config& image_config) override
+    {
+        return wuffs_base__make_pixel_format(WUFFS_BASE__PIXEL_FORMAT__BGRA_NONPREMUL);
+    }
+
+    AllocPixbufResult AllocPixbuf(const wuffs_base__image_config& image_config, bool allow_uninitialized_memory) override
+    {
+        u32 width = image_config.pixcfg.width();
+        u32 height = image_config.pixcfg.height();
+        buffer.resize(width * height * 4);
+
+        surface = Surface(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8), width * 4, buffer);
+
+        wuffs_base__pixel_buffer pixbuf;
+        wuffs_base__status status = pixbuf.set_interleaved(
+            &image_config.pixcfg,
+            wuffs_base__make_table_u8(buffer, surface.stride, surface.height, surface.stride),
+            wuffs_base__empty_slice_u8());
+        if (!status.is_ok())
+        {
+            return AllocPixbufResult(status.message());
+        }
+        return AllocPixbufResult(wuffs_aux::MemOwner(NULL, &free), pixbuf);
+    }
+};
+
+void load_wuffs(const char* filename)
+{
+    File file(filename);
+    ConstMemory memory = file;
+
+    wuffs_aux::sync_io::MemoryInput input(memory.address, memory.size);
+    WuffsCallbacks cb;
+
+    wuffs_aux::DecodeImageResult res = wuffs_aux::DecodeImage(cb, input);
+    if (!res.error_message.empty())
+    {
+        printf("%s\n", res.error_message.c_str());
+    }
+}
+
+#endif
+
+// ----------------------------------------------------------------------
 // main()
 // ----------------------------------------------------------------------
 
@@ -445,6 +528,18 @@ int main(int argc, const char* argv[])
 
     time2 = Time::us();
     print("toojpeg: ", NOT_AVAILABLE, time2 - time1, size);
+
+#endif
+
+    // ------------------------------------------------------------------
+
+#ifdef TEST_WUFFS
+
+    time0 = Time::us();
+    load_wuffs(filename);
+
+    time1 = Time::us();
+    print("wuffs:   ", time1 - time0, NOT_AVAILABLE, 0);
 
 #endif
 
