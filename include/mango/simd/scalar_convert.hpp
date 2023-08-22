@@ -7,36 +7,37 @@
 #include <mango/simd/simd.hpp>
 #include <mango/simd/common.hpp>
 
+namespace mango::simd::detail
+{
+
+    template <typename D, typename S>
+    inline D extend(S s)
+    {
+        D temp;
+        for (int i = 0; i < D::size; ++i)
+        {
+            temp[i] = s[i];
+        }
+        return temp;
+    }
+
+    template <typename D, typename S>
+    inline D extend_composite(S s)
+    {
+        constexpr int halfsize = D::size / 2;
+        D temp;
+        for (int i = 0; i < halfsize; ++i)
+        {
+            temp.part[0][i] = s[i + 0];
+            temp.part[1][i] = s[i + halfsize];
+        }
+        return temp;
+    }
+
+} // namespace mango::simd::detail
+
 namespace mango::simd
 {
-    namespace detail
-    {
-
-        template <typename D, typename S>
-        inline D extend(S s)
-        {
-            D temp;
-            for (int i = 0; i < D::size; ++i)
-            {
-                temp[i] = s[i];
-            }
-            return temp;
-        }
-
-        template <typename D, typename S>
-        inline D extend_composite(S s)
-        {
-            constexpr int halfsize = D::size / 2;
-            D temp;
-            for (int i = 0; i < halfsize; ++i)
-            {
-                temp.part[0][i] = s[i + 0];
-                temp.part[1][i] = s[i + halfsize];
-            }
-            return temp;
-        }
-
-    } // namespace detail
 
     // -----------------------------------------------------------------
     // reinterpret

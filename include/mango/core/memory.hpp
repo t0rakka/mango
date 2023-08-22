@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -13,86 +13,86 @@
     #include <span>
 #endif
 
-namespace mango
+namespace mango::detail
 {
 
-    namespace detail
+    template <typename T>
+    struct Memory
     {
+        T* address;
+        size_t size;
 
-        template <typename T>
-        struct Memory
+        Memory()
+            : address(nullptr)
+            , size(0)
         {
-            T* address;
-            size_t size;
+        }
 
-            Memory()
-                : address(nullptr)
-                , size(0)
-            {
-            }
-
-            Memory(T* address, size_t bytes)
-                : address(address)
-                , size(bytes)
-            {
-            }
+        Memory(T* address, size_t bytes)
+            : address(address)
+            , size(bytes)
+        {
+        }
 
 #if MANGO_CPP_VERSION >= 20
 
-            Memory(std::span<T> s)
-                : address(s.data())
-                , size(s.size())
-            {
-            }
+        Memory(std::span<T> s)
+            : address(s.data())
+            , size(s.size())
+        {
+        }
 
-            const Memory& operator = (std::span<T> s)
-            {
-                address = s.data();
-                size = s.size();
-                return *this;
-            }
+        const Memory& operator = (std::span<T> s)
+        {
+            address = s.data();
+            size = s.size();
+            return *this;
+        }
 
-            operator std::span<T> () const
-            {
-                return std::span<T>(address, address + size);
-            }
+        operator std::span<T> () const
+        {
+            return std::span<T>(address, address + size);
+        }
 
 #endif
 
-            T* end() const
-            {
-                return address + size;
-            }
+        T* end() const
+        {
+            return address + size;
+        }
 
-            operator T* () const
-            {
-                return address;
-            }
+        operator T* () const
+        {
+            return address;
+        }
 
-            template <typename S>
-            operator Memory<S> () const
-            {
-                return Memory<S>(address, size);
-            }
+        template <typename S>
+        operator Memory<S> () const
+        {
+            return Memory<S>(address, size);
+        }
 
-            template <typename S>
-            S* cast() const
-            {
-                return reinterpret_cast<S*>(address);
-            }
+        template <typename S>
+        S* cast() const
+        {
+            return reinterpret_cast<S*>(address);
+        }
 
-            Memory slice(size_t slice_offset, size_t slice_size = 0) const
+        Memory slice(size_t slice_offset, size_t slice_size = 0) const
+        {
+            Memory memory(address + slice_offset, size - slice_offset);
+            if (slice_size)
             {
-                Memory memory(address + slice_offset, size - slice_offset);
-                if (slice_size)
-                {
-                    memory.size = std::min(memory.size, slice_size);
-                }
-                return memory;
+                memory.size = std::min(memory.size, slice_size);
             }
-        };
+            return memory;
+        }
+    };
 
-    } // namespace detail
+} // namespace mango::detail
+
+namespace mango
+{
 
     // -----------------------------------------------------------------------
     // NonCopyable

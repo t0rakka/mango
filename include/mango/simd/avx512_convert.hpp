@@ -7,141 +7,142 @@
 #include <mango/simd/simd.hpp>
 #include <mango/simd/common.hpp>
 
+namespace mango::simd::detail
+{
+
+    template <int bits>
+    struct reinterpret_vector;
+
+    template <>
+    struct reinterpret_vector<128>
+    {
+        __m128 data;
+
+        template <typename ScalarType, int VectorSize, typename VectorType>
+        reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
+            : data(v)
+        {
+        }
+
+        template <typename ScalarType, int VectorSize>
+        reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m128i> v)
+            : data(_mm_castsi128_ps(v))
+        {
+        }
+
+        template <typename ScalarType, int VectorSize>
+        reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m128d> v)
+            : data(_mm_castpd_ps(v))
+        {
+        }
+
+        template <typename ScalarType, int VectorSize, typename VectorType>
+        operator hardware_vector<ScalarType, VectorSize, VectorType> ()
+        {
+            return hardware_vector<ScalarType, VectorSize, VectorType>(data);
+        }
+
+        template <typename ScalarType, int VectorSize>
+        operator hardware_vector<ScalarType, VectorSize, __m128i> ()
+        {
+            return hardware_vector<ScalarType, VectorSize, __m128i>(_mm_castps_si128(data));
+        }
+
+        template <typename ScalarType, int VectorSize>
+        operator hardware_vector<ScalarType, VectorSize, __m128d> ()
+        {
+            return hardware_vector<ScalarType, VectorSize, __m128d>(_mm_castps_pd(data));
+        }
+    };
+
+    template <>
+    struct reinterpret_vector<256>
+    {
+        __m256 data;
+
+        template <typename ScalarType, int VectorSize, typename VectorType>
+        reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
+            : data(v)
+        {
+        }
+
+        template <typename ScalarType, int VectorSize>
+        reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m256i> v)
+            : data(_mm256_castsi256_ps(v))
+        {
+        }
+
+        template <typename ScalarType, int VectorSize>
+        reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m256d> v)
+            : data(_mm256_castpd_ps(v))
+        {
+        }
+
+        template <typename ScalarType, int VectorSize, typename VectorType>
+        operator hardware_vector<ScalarType, VectorSize, VectorType> ()
+        {
+            return hardware_vector<ScalarType, VectorSize, VectorType>(data);
+        }
+
+        template <typename ScalarType, int VectorSize>
+        operator hardware_vector<ScalarType, VectorSize, __m256i> ()
+        {
+            return hardware_vector<ScalarType, VectorSize, __m256i>(_mm256_castps_si256(data));
+        }
+
+        template <typename ScalarType, int VectorSize>
+        operator hardware_vector<ScalarType, VectorSize, __m256d> ()
+        {
+            return hardware_vector<ScalarType, VectorSize, __m256d>(_mm256_castps_pd(data));
+        }
+    };
+
+    template <>
+    struct reinterpret_vector<512>
+    {
+        __m512 data;
+
+        template <typename ScalarType, int VectorSize, typename VectorType>
+        reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
+            : data(v)
+        {
+        }
+
+        template <typename ScalarType, int VectorSize>
+        reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m512i> v)
+            : data(_mm512_castsi512_ps(v))
+        {
+        }
+
+        template <typename ScalarType, int VectorSize>
+        reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m512d> v)
+            : data(_mm512_castpd_ps(v))
+        {
+        }
+
+        template <typename ScalarType, int VectorSize, typename VectorType>
+        operator hardware_vector<ScalarType, VectorSize, VectorType> ()
+        {
+            return hardware_vector<ScalarType, VectorSize, VectorType>(data);
+        }
+
+        template <typename ScalarType, int VectorSize>
+        operator hardware_vector<ScalarType, VectorSize, __m512i> ()
+        {
+            return hardware_vector<ScalarType, VectorSize, __m512i>(_mm512_castps_si512(data));
+        }
+
+        template <typename ScalarType, int VectorSize>
+        operator hardware_vector<ScalarType, VectorSize, __m512d> ()
+        {
+            return hardware_vector<ScalarType, VectorSize, __m512d>(_mm512_castps_pd(data));
+        }
+    };
+
+} // namespace mango::simd::detail
+
 namespace mango::simd
 {
-    namespace detail
-    {
-
-        template <int bits>
-        struct reinterpret_vector;
-
-        template <>
-        struct reinterpret_vector<128>
-        {
-            __m128 data;
-
-            template <typename ScalarType, int VectorSize, typename VectorType>
-            reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
-                : data(v)
-            {
-            }
-
-            template <typename ScalarType, int VectorSize>
-            reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m128i> v)
-                : data(_mm_castsi128_ps(v))
-            {
-            }
-
-            template <typename ScalarType, int VectorSize>
-            reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m128d> v)
-                : data(_mm_castpd_ps(v))
-            {
-            }
-
-            template <typename ScalarType, int VectorSize, typename VectorType>
-            operator hardware_vector<ScalarType, VectorSize, VectorType> ()
-            {
-                return hardware_vector<ScalarType, VectorSize, VectorType>(data);
-            }
-
-            template <typename ScalarType, int VectorSize>
-            operator hardware_vector<ScalarType, VectorSize, __m128i> ()
-            {
-                return hardware_vector<ScalarType, VectorSize, __m128i>(_mm_castps_si128(data));
-            }
-
-            template <typename ScalarType, int VectorSize>
-            operator hardware_vector<ScalarType, VectorSize, __m128d> ()
-            {
-                return hardware_vector<ScalarType, VectorSize, __m128d>(_mm_castps_pd(data));
-            }
-        };
-
-        template <>
-        struct reinterpret_vector<256>
-        {
-            __m256 data;
-
-            template <typename ScalarType, int VectorSize, typename VectorType>
-            reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
-                : data(v)
-            {
-            }
-
-            template <typename ScalarType, int VectorSize>
-            reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m256i> v)
-                : data(_mm256_castsi256_ps(v))
-            {
-            }
-
-            template <typename ScalarType, int VectorSize>
-            reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m256d> v)
-                : data(_mm256_castpd_ps(v))
-            {
-            }
-
-            template <typename ScalarType, int VectorSize, typename VectorType>
-            operator hardware_vector<ScalarType, VectorSize, VectorType> ()
-            {
-                return hardware_vector<ScalarType, VectorSize, VectorType>(data);
-            }
-
-            template <typename ScalarType, int VectorSize>
-            operator hardware_vector<ScalarType, VectorSize, __m256i> ()
-            {
-                return hardware_vector<ScalarType, VectorSize, __m256i>(_mm256_castps_si256(data));
-            }
-
-            template <typename ScalarType, int VectorSize>
-            operator hardware_vector<ScalarType, VectorSize, __m256d> ()
-            {
-                return hardware_vector<ScalarType, VectorSize, __m256d>(_mm256_castps_pd(data));
-            }
-        };
-
-        template <>
-        struct reinterpret_vector<512>
-        {
-            __m512 data;
-
-            template <typename ScalarType, int VectorSize, typename VectorType>
-            reinterpret_vector(hardware_vector<ScalarType, VectorSize, VectorType> v)
-                : data(v)
-            {
-            }
-
-            template <typename ScalarType, int VectorSize>
-            reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m512i> v)
-                : data(_mm512_castsi512_ps(v))
-            {
-            }
-
-            template <typename ScalarType, int VectorSize>
-            reinterpret_vector(hardware_vector<ScalarType, VectorSize, __m512d> v)
-                : data(_mm512_castpd_ps(v))
-            {
-            }
-
-            template <typename ScalarType, int VectorSize, typename VectorType>
-            operator hardware_vector<ScalarType, VectorSize, VectorType> ()
-            {
-                return hardware_vector<ScalarType, VectorSize, VectorType>(data);
-            }
-
-            template <typename ScalarType, int VectorSize>
-            operator hardware_vector<ScalarType, VectorSize, __m512i> ()
-            {
-                return hardware_vector<ScalarType, VectorSize, __m512i>(_mm512_castps_si512(data));
-            }
-
-            template <typename ScalarType, int VectorSize>
-            operator hardware_vector<ScalarType, VectorSize, __m512d> ()
-            {
-                return hardware_vector<ScalarType, VectorSize, __m512d>(_mm512_castps_pd(data));
-            }
-        };
-
-    } // namespace detail
 
     // -----------------------------------------------------------------
     // reinterpret

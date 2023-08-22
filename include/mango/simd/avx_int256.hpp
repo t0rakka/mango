@@ -6,7 +6,7 @@
 
 #include <mango/simd/simd.hpp>
 
-namespace mango::simd
+namespace mango::simd::detail
 {
 
     // -----------------------------------------------------------------
@@ -38,8 +38,6 @@ namespace mango::simd
         result.part[1] = FUNC(a.part[1], b.part[1]); \
         return result; \
     }
-
-namespace detail {
 
     static inline __m256i simd256_not_si256(__m256i a)
     {
@@ -121,7 +119,10 @@ namespace detail {
 
 #endif
 
-} // namespace detail
+} // namespace mango::simd::detail
+
+namespace mango::simd
+{
 
     // -----------------------------------------------------------------
     // u8x32

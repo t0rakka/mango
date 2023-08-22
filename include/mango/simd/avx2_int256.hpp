@@ -6,14 +6,12 @@
 
 #include <mango/simd/simd.hpp>
 
-namespace mango::simd
+namespace mango::simd::detail
 {
 
     // -----------------------------------------------------------------
     // helpers
     // -----------------------------------------------------------------
-
-namespace detail {
 
     static inline __m256i simd256_not_si256(__m256i a)
     {
@@ -30,14 +28,6 @@ namespace detail {
         a = _mm256_srli_epi16(a, 1);
         return _mm256_and_si256(a, _mm256_set1_epi32(0x7f7f7f7f));
     }
-
-#if 0
-    static inline __m256i simd256_srli7_epi8(__m256i a)
-    {
-        a = _mm256_srli_epi16(a, 7);
-        return _mm256_and_si256(a, _mm256_set1_epi32(0x01010101));
-    }
-#endif
 
     static inline __m256i simd256_srai1_epi8(__m256i a)
     {
@@ -56,7 +46,10 @@ namespace detail {
         return a;
     }
 
-} // namespace detail
+} // namespace mango::simd::detail
+
+namespace mango::simd
+{
 
     // -----------------------------------------------------------------
     // u8x32

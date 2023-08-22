@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -135,6 +135,78 @@ namespace mango
 
 #endif
 
+} // namespace mango
+
+namespace mango::detail
+{
+
+    template <typename T>
+    class TypeCopy
+    {
+    protected:
+        char data[sizeof(T)];
+
+    public:
+        TypeCopy() = default;
+
+        TypeCopy(const T &value)
+        {
+            std::memcpy(data, &value, sizeof(T));
+        }
+
+        // copy-on-write
+        const TypeCopy& operator = (const T &value)
+        {
+            std::memcpy(data, &value, sizeof(T));
+            return *this;
+        }
+
+        // copy-on-read
+        operator T () const
+        {
+            T temp;
+            std::memcpy(&temp, data, sizeof(T));
+            return temp;
+        }
+    };
+
+    template <typename T>
+    class TypeSwap
+    {
+    protected:
+        char data[sizeof(T)];
+
+    public:
+        TypeSwap() = default;
+
+        TypeSwap(const T &value)
+        {
+            T temp = byteswap(value);
+            std::memcpy(data, &temp, sizeof(T));
+        }
+
+        // swap-on-write
+        const TypeSwap& operator = (const T &value)
+        {
+            T temp = byteswap(value);
+            std::memcpy(data, &temp, sizeof(T));
+            return *this;
+        }
+
+        // swap-on-read
+        operator T () const
+        {
+            T temp;
+            std::memcpy(&temp, data, sizeof(T));
+            return byteswap(temp);
+        }
+    };
+
+} // namespace mango::detail
+
+namespace mango
+{
+
     // --------------------------------------------------------------
     // endian storage types
     // --------------------------------------------------------------
@@ -171,73 +243,6 @@ namespace mango
     }
 
     */
-
-    namespace detail
-    {
-
-        template <typename T>
-        class TypeCopy
-        {
-        protected:
-            char data[sizeof(T)];
-
-        public:
-            TypeCopy() = default;
-
-            TypeCopy(const T &value)
-            {
-                std::memcpy(data, &value, sizeof(T));
-            }
-
-            // copy-on-write
-            const TypeCopy& operator = (const T &value)
-            {
-                std::memcpy(data, &value, sizeof(T));
-                return *this;
-            }
-
-            // copy-on-read
-            operator T () const
-            {
-                T temp;
-                std::memcpy(&temp, data, sizeof(T));
-                return temp;
-            }
-        };
-
-        template <typename T>
-        class TypeSwap
-        {
-        protected:
-            char data[sizeof(T)];
-
-        public:
-            TypeSwap() = default;
-
-            TypeSwap(const T &value)
-            {
-                T temp = byteswap(value);
-                std::memcpy(data, &temp, sizeof(T));
-            }
-
-            // swap-on-write
-            const TypeSwap& operator = (const T &value)
-            {
-                T temp = byteswap(value);
-                std::memcpy(data, &temp, sizeof(T));
-                return *this;
-            }
-
-            // swap-on-read
-            operator T () const
-            {
-                T temp;
-                std::memcpy(&temp, data, sizeof(T));
-                return byteswap(temp);
-            }
-        };
-
-    } // namespace detail
 
 #ifdef MANGO_LITTLE_ENDIAN
 
