@@ -2723,6 +2723,7 @@ namespace
         {
             u32* d = reinterpret_cast<u32*>(dest);
             const float16x4* s = reinterpret_cast<const float16x4*>(src);
+
             for (int x = 0; x < count; ++x)
             {
                 float32x4 f = convert<float32x4>(s[x]);
@@ -2742,6 +2743,7 @@ namespace
         {
             u32* d = reinterpret_cast<u32*>(dest);
             const float16x4* s = reinterpret_cast<const float16x4*>(src);
+
             for (int x = 0; x < count; ++x)
             {
                 float32x4 f = convert<float32x4>(s[x]);
@@ -2798,15 +2800,13 @@ namespace
 
             while (count-- > 0)
             {
-                u32 color = s[0];
+                u32 color = *s++;
                 float r = float((color >>  0) & 0xff) / 255.0f;
                 float g = float((color >>  8) & 0xff) / 255.0f;
                 float b = float((color >> 16) & 0xff) / 255.0f;
                 float a = float((color >> 24) & 0xff) / 255.0f;
                 float32x4 v(r, g, b, a);
-                d[0] = convert<float16x4>(v);
-                s += 1;
-                d += 1;
+                *d++ = convert<float16x4>(v);
             }
         }
     },
@@ -2821,13 +2821,40 @@ namespace
         {
             u32* d = reinterpret_cast<u32*>(dest);
             const float32x4* s = reinterpret_cast<const float32x4*>(src);
-            for (int x = 0; x < count; ++x)
+
+            /*
+            while (count >= 4)
             {
-                float32x4 f = s[x];
-                f = clamp(f, 0.0f, 1.0f);
-                f = f * 255.0f + 0.5f;
-                int32x4 i = convert<int32x4>(f);
-                d[x] = i.pack();
+                float32x4 v0 = clamp(float32x4::uload(s + 0), 0.0f, 1.0f) * 255.0f;
+                float32x4 v1 = clamp(float32x4::uload(s + 1), 0.0f, 1.0f) * 255.0f;
+                float32x4 v2 = clamp(float32x4::uload(s + 2), 0.0f, 1.0f) * 255.0f;
+                float32x4 v3 = clamp(float32x4::uload(s + 3), 0.0f, 1.0f) * 255.0f;
+                float32x4 temp0 = unpacklo(v0, v1);
+                float32x4 temp1 = unpacklo(v2, v3);
+                float32x4 temp2 = unpackhi(v0, v1);
+                float32x4 temp3 = unpackhi(v2, v3);
+                v0 = movelh(temp0, temp1);
+                v1 = movehl(temp1, temp0);
+                v2 = movelh(temp2, temp3);
+                v3 = movehl(temp3, temp2);
+                uint32x4 r = convert<uint32x4>(v0);
+                uint32x4 g = convert<uint32x4>(v1);
+                uint32x4 b = convert<uint32x4>(v2);
+                uint32x4 a = convert<uint32x4>(v3);
+                uint32x4 color = (a << 24) | (b << 16) | (g << 8) | r;
+                u32x4_ustore(d, color);
+                d += 4;
+                s += 4;
+                count -= 4;
+            }
+            */
+
+            while (count-- > 0)
+            {
+                float32x4 v = clamp(float32x4::uload(s), 0.0f, 1.0f) * 255.0f;// + 0.5f;
+                int32x4 color = convert<int32x4>(v);
+                *d++ = color.pack();
+                ++s;
             }
         }
     },
@@ -2840,6 +2867,7 @@ namespace
         {
             u32* d = reinterpret_cast<u32*>(dest);
             const float32x4* s = reinterpret_cast<const float32x4*>(src);
+
             for (int x = 0; x < count; ++x)
             {
                 float32x4 f = s[x];
@@ -2891,12 +2919,11 @@ namespace
 
             while (count-- > 0)
             {
-                u32 color = s[0];
+                u32 color = *s++;
                 d[0] = float((color >>  0) & 0xff) / 255.0f;
                 d[1] = float((color >>  8) & 0xff) / 255.0f;
                 d[2] = float((color >> 16) & 0xff) / 255.0f;
                 d[3] = float((color >> 24) & 0xff) / 255.0f;
-                s += 1;
                 d += 4;
             }
         }
@@ -2912,6 +2939,7 @@ namespace
         {
             float16x4* d = reinterpret_cast<float16x4*>(dest);
             const float32x4* s = reinterpret_cast<const float32x4*>(src);
+
             for (int x = 0; x < count; ++x)
             {
                 d[x] = convert<float16x4>(s[x]);
@@ -2927,6 +2955,7 @@ namespace
         {
             float32x4* d = reinterpret_cast<float32x4*>(dest);
             const float16x4* s = reinterpret_cast<const float16x4*>(src);
+
             for (int x = 0; x < count; ++x)
             {
                 d[x] = convert<float32x4>(s[x]);
