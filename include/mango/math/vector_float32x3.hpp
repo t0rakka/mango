@@ -163,6 +163,11 @@ namespace mango::math
             return v;
         }
 
+        static void ustore(void* dest, Vector v)
+        {
+            std::memcpy(dest, v.data(), 12);
+        }
+
         static Vector ascend()
         {
             return Vector(0.0f, 1.0f, 2.0f);

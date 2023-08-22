@@ -115,6 +115,11 @@ namespace mango::math
             std::memcpy(v.data(), source, 8);
             return v;
         }
+
+        static void ustore(void* dest, Vector v)
+        {
+            std::memcpy(dest, v.data(), 8);
+        }
     };
 
 } // namespace mango::math

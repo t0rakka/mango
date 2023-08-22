@@ -128,6 +128,11 @@ namespace mango::math
             return simd::f64x2_uload(source);
         }
 
+        static void ustore(void* dest, Vector v)
+        {
+            simd::f64x2_ustore(dest, v);
+        }
+
         static Vector ascend()
         {
             return Vector(0.0, 1.0);

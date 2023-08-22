@@ -103,6 +103,11 @@ namespace mango::math
             return simd::s8x32_uload(source);
         }
 
+        static void ustore(void* dest, Vector v)
+        {
+            simd::s8x32_ustore(dest, v);
+        }
+
         static Vector ascend()
         {
             return Vector(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,

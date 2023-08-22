@@ -1828,9 +1828,9 @@ namespace
 #if 0
         while (count >= 4)
         {
-            uint32x4 color = simd::u32x4_uload(s);
+            uint32x4 color = uint32x4::uload(s);
             color = (color & 0xff00ff00) | ((color & 0x00ff) << 16) | ((color >> 16) & 0x00ff);
-            simd::u32x4_ustore(d, color);
+            uint32x4::ustore(d, color);
             s += 4;
             d += 4;
             count -= 4;
@@ -1888,13 +1888,13 @@ namespace
 #if defined(MANGO_ENABLE_SIMD)
         while (count >= 8)
         {
-            uint8x16 packed = u8x16_uload(s);
+            uint8x16 packed = uint8x16::uload(s);
             uint16x8 c0 = reinterpret<uint16x8>(unpacklo(packed, packed));
             uint16x8 c1 = reinterpret<uint16x8>(unpackhi(packed, packed));
             c0 = (c0 & 0xf00f) | ((c0 >> 4) & 0x0ff0);
             c1 = (c1 & 0xf00f) | ((c1 >> 4) & 0x0ff0);
-            u16x8_ustore(d + 0, c0);
-            u16x8_ustore(d + 4, c1);
+            uint16x8::ustore(d + 0, c0);
+            uint16x8::ustore(d + 4, c1);
             s += 8;
             d += 8;
             count -= 8;
@@ -2767,7 +2767,7 @@ namespace
 
             while (count >= 4)
             {
-                uint32x4 color = simd::u32x4_uload(s);
+                uint32x4 color = uint32x4::uload(s);
 
                 uint32x4 r = (color >>  0) & 0xff;
                 uint32x4 g = (color >>  8) & 0xff;
@@ -2842,7 +2842,7 @@ namespace
                 uint32x4 b = convert<uint32x4>(v2);
                 uint32x4 a = convert<uint32x4>(v3);
                 uint32x4 color = (a << 24) | (b << 16) | (g << 8) | r;
-                u32x4_ustore(d, color);
+                uint32x4::ustore(d, color);
                 d += 4;
                 s += 4;
                 count -= 4;
@@ -2891,7 +2891,7 @@ namespace
 
             while (count >= 4)
             {
-                uint32x4 color = simd::u32x4_uload(s);
+                uint32x4 color = uint32x4::uload(s);
 
                 uint32x4 r = (color >>  0) & 0xff;
                 uint32x4 g = (color >>  8) & 0xff;
@@ -2908,10 +2908,10 @@ namespace
                 uint32x4 rgba2 = unpacklo(rb23, ga23);
                 uint32x4 rgba3 = unpackhi(rb23, ga23);
 
-                simd::f32x4_ustore(d + 4 * 0, convert<float32x4>(rgba0) / 255.0f);
-                simd::f32x4_ustore(d + 4 * 1, convert<float32x4>(rgba1) / 255.0f);
-                simd::f32x4_ustore(d + 4 * 2, convert<float32x4>(rgba2) / 255.0f);
-                simd::f32x4_ustore(d + 4 * 3, convert<float32x4>(rgba3) / 255.0f);
+                float32x4::ustore(d + 4 * 0, convert<float32x4>(rgba0) / 255.0f);
+                float32x4::ustore(d + 4 * 1, convert<float32x4>(rgba1) / 255.0f);
+                float32x4::ustore(d + 4 * 2, convert<float32x4>(rgba2) / 255.0f);
+                float32x4::ustore(d + 4 * 3, convert<float32x4>(rgba3) / 255.0f);
                 s += 4;
                 d += 16;
                 count -= 4;
