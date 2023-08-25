@@ -87,11 +87,12 @@ void validate(Buffer& message5)
     printf("\n");
 }
 
-void print(const Buffer& buffer, const char* name, u64 time0, u64 time1, u32 value)
+void print(const Buffer& buffer, const char* name, u64 time0, u64 time1, u32 value, u32 correct)
 {
     u64 x = buffer.size() * 1000000; // buffer size in bytes * microseconds_in_second
     u32 delta = time1 - time0;
-    printf("%s 0x%.8x %5d.%1d ms (%6d MB/s )\n", name, value, u32(delta/1000), u32(((delta+50)/100)%10), u32(x / (delta * MB)));
+    const char* status = (value == correct) ? "" : "FAILED";
+    printf("%s    %5d.%1d ms (%6d MB/s ) %s\n", name, u32(delta/1000), u32(((delta+50)/100)%10), u32(x / (delta * MB)), status);
 }
 
 void test_md5(const Buffer& buffer)
@@ -101,7 +102,7 @@ void test_md5(const Buffer& buffer)
     MD5 v = mango::md5(buffer);
     u64 time1 = Time::us();
 
-    print(buffer, "md5:        ", time0, time1, v[0]);
+    print(buffer, "md5:        ", time0, time1, v[0], 0x4751b8c2);
 }
 
 void test_sha1(const Buffer& buffer)
@@ -111,7 +112,7 @@ void test_sha1(const Buffer& buffer)
     SHA1 v = mango::sha1(buffer);
     u64 time1 = Time::us();
 
-    print(buffer, "sha1:       ", time0, time1, v[0]);
+    print(buffer, "sha1:       ", time0, time1, v[0], 0x01b2a637);
 }
 
 void test_sha2(const Buffer& buffer)
@@ -121,7 +122,7 @@ void test_sha2(const Buffer& buffer)
     SHA2 v = mango::sha2(buffer);
     u64 time1 = Time::us();
 
-    print(buffer, "sha2:       ", time0, time1, v[0]);
+    print(buffer, "sha2:       ", time0, time1, v[0], 0x17c86c48);
 }
 
 void test_xxhash32(const Buffer& buffer)
@@ -132,7 +133,7 @@ void test_xxhash32(const Buffer& buffer)
     u32 v = mango::xxhash32(seed, buffer);
     u64 time1 = Time::us();
 
-    print(buffer, "xxhash32:   ", time0, time1, v);
+    print(buffer, "xxhash32:   ", time0, time1, v, 0x672a127e);
 }
 
 void test_xxhash64(const Buffer& buffer)
@@ -143,7 +144,7 @@ void test_xxhash64(const Buffer& buffer)
     u64 v = mango::xxhash32(seed, buffer);
     u64 time1 = Time::us();
 
-    print(buffer, "xxhash64:   ", time0, time1, u32(v));
+    print(buffer, "xxhash64:   ", time0, time1, u32(v), 0x672a127e);
 }
 
 void test_xx3hash64(const Buffer& buffer)
@@ -154,7 +155,7 @@ void test_xx3hash64(const Buffer& buffer)
     u64 v = mango::xx3hash64(seed, buffer);
     u64 time1 = Time::us();
 
-    print(buffer, "xx3hash64:  ", time0, time1, u32(v));
+    print(buffer, "xx3hash64:  ", time0, time1, u32(v), 0x8d332372);
 }
 
 void test_xx3hash128(const Buffer& buffer)
@@ -165,7 +166,7 @@ void test_xx3hash128(const Buffer& buffer)
     mango::XX3H128 v = mango::xx3hash128(seed, buffer);
     u64 time1 = Time::us();
 
-    print(buffer, "xx3hash128: ", time0, time1, u32(v[0]));
+    print(buffer, "xx3hash128: ", time0, time1, u32(v[0]), 0x8d332372);
 }
 
 int main()

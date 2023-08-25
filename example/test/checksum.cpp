@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -132,8 +132,8 @@ int main()
     u64 time2 = test_adler32(buffer);
 
     printf("\n");
-    print(buffer, "crc32:   ", time0);
-    print(buffer, "crc32c:  ", time1);
-    print(buffer, "adler32: ", time2);
+    print(buffer, "crc32:         ", time0);
+    print(buffer, "crc32c:        ", time1);
+    print(buffer, "adler32:       ", time2);
     printf("\n");
 }
