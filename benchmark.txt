@@ -1,0 +1,161 @@
+
+-----------------------------------------------------------------------------------
+Intel(R) Core(TM) i9-7900X CPU @ 3.30GHz (Intel Desktop, 2017)
+-----------------------------------------------------------------------------------
+
+aes128 encrypt:   409.1 ms (  3128 MB/s )
+aes128 decrypt:   392.2 ms (  3263 MB/s )
+aes192 encrypt:   421.8 ms (  3034 MB/s )
+aes192 decrypt:   456.5 ms (  2804 MB/s )
+aes256 encrypt:   476.8 ms (  2684 MB/s )
+aes256 decrypt:   459.2 ms (  2787 MB/s )
+
+crc32:              5.0 ms ( 50864 MB/s )
+crc32c:             5.0 ms ( 51067 MB/s )
+adler32:           44.7 ms (  5732 MB/s )
+
+md5:              353.6 ms (   724 MB/s )
+sha1:             410.2 ms (   624 MB/s )
+sha2:            1062.8 ms (   240 MB/s )
+xxhash32:          43.1 ms (  5946 MB/s )
+xxhash64:          42.0 ms (  5954 MB/s )
+xx3hash64:         20.9 ms ( 12269 MB/s )
+xx3hash128:        20.0 ms ( 12213 MB/s )
+
+-----------------------------------------------------------------------------------
+Intel Core i9 8950HK @ 2.90GHz  (MacBook Pro, 2018)
+-----------------------------------------------------------------------------------
+
+aes128 encrypt:   302.6 ms (  4230 MB/s )
+aes128 decrypt:   306.6 ms (  4174 MB/s )
+aes192 encrypt:   282.9 ms (  4524 MB/s )
+aes192 decrypt:   283.4 ms (  4516 MB/s )
+aes256 encrypt:   297.6 ms (  4300 MB/s )
+aes256 decrypt:   298.6 ms (  4287 MB/s )
+
+crc32:             10.0 ms ( 25480 MB/s )
+crc32c:             9.1 ms ( 28088 MB/s )
+adler32:           28.5 ms (  8969 MB/s )
+
+md5:              387.9 ms (   659 MB/s )
+sha1:             408.4 ms (   626 MB/s )
+sha2:            1057.0 ms (   241 MB/s )
+xxhash32:          38.1 ms (  6719 MB/s )
+xxhash64:          41.1 ms (  6226 MB/s )
+xx3hash64:         16.4 ms ( 15613 MB/s )
+xx3hash128:        15.9 ms ( 16070 MB/s )
+
+-----------------------------------------------------------------------------------
+Apple M1 (Mac mini, 2020)
+-----------------------------------------------------------------------------------
+
+aes128 encrypt:   106.9 ms ( 11979 MB/s )
+aes128 decrypt:   105.8 ms ( 12102 MB/s )
+aes192 encrypt:   131.1 ms (  9762 MB/s )
+aes192 decrypt:   130.7 ms (  9794 MB/s )
+aes256 encrypt:   160.5 ms (  7972 MB/s )
+aes256 decrypt:   158.8 ms (  8059 MB/s )
+
+crc32:              7.8 ms ( 33006 MB/s )
+crc32c:             4.6 ms ( 56152 MB/s )
+adler32:            8.2 ms ( 31045 MB/s )
+
+md5:              497.3 ms (   514 MB/s )
+sha1:             117.7 ms (  2175 MB/s )
+sha2:             122.8 ms (  2085 MB/s )
+xxhash32:          36.9 ms (  6941 MB/s )
+xxhash64:          36.8 ms (  6958 MB/s )
+xx3hash64:          7.4 ms ( 34608 MB/s )
+xx3hash128:         7.4 ms ( 34566 MB/s )
+
+-----------------------------------------------------------------------------------
+AMD Ryzen Threadripper 3990X 64-Core Processor (AMD Desktop, 2021)
+-----------------------------------------------------------------------------------
+
+aes128 encrypt:   192.0 ms (  6665 MB/s )
+aes128 decrypt:   207.6 ms (  6166 MB/s )
+aes192 encrypt:   228.8 ms (  5594 MB/s )
+aes192 decrypt:   243.9 ms (  5248 MB/s )
+aes256 encrypt:   274.1 ms (  4669 MB/s )
+aes256 decrypt:   297.6 ms (  4300 MB/s )
+
+crc32:              5.6 ms ( 45575 MB/s )
+crc32c:             5.6 ms ( 45503 MB/s )
+adler32:           27.8 ms (  9216 MB/s )
+
+md5:              345.8 ms (   740 MB/s )
+sha1:             120.1 ms (  2132 MB/s )
+sha2:             127.4 ms (  2009 MB/s )
+xxhash32:          37.8 ms (  6769 MB/s )
+xxhash64:          41.9 ms (  6108 MB/s )
+xx3hash64:         15.0 ms ( 17042 MB/s )
+xx3hash128:        14.0 ms ( 17076 MB/s )
+
+-----------------------------------------------------------------------------------
+11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz (Intel Laptop, 2022)
+-----------------------------------------------------------------------------------
+
+aes128 encrypt:   172.5 ms (  7421 MB/s )
+aes128 decrypt:   183.3 ms (  6982 MB/s )
+aes192 encrypt:   163.5 ms (  7827 MB/s )
+aes192 decrypt:   164.7 ms (  7769 MB/s )
+aes256 encrypt:   181.0 ms (  7034 MB/s )
+aes256 decrypt:   187.5 ms (  6827 MB/s )
+
+crc32:              6.4 ms ( 39714 MB/s )
+crc32c:             8.6 ms ( 29629 MB/s )
+adler32:           20.4 ms ( 12551 MB/s )
+
+md5:              307.3 ms (   833 MB/s )
+sha1:             134.7 ms (  1900 MB/s )
+sha2:             155.0 ms (  1651 MB/s )
+xxhash32:          36.2 ms (  7080 MB/s )
+xxhash64:          34.3 ms (  7461 MB/s )
+xx3hash64:         16.7 ms ( 15346 MB/s )
+xx3hash128:        16.5 ms ( 15480 MB/s )
+
+-----------------------------------------------------------------------------------
+13th Gen Intel(R) Core(TM) i9-13900K (Intel Desktop, 2023)
+-----------------------------------------------------------------------------------
+
+aes128 encrypt:   134.9 ms (  9487 MB/s )
+aes128 decrypt:   140.7 ms (  9095 MB/s )
+aes192 encrypt:   133.6 ms (  9578 MB/s )
+aes192 decrypt:   129.8 ms (  9861 MB/s )
+aes256 encrypt:   144.2 ms (  8873 MB/s )
+aes256 decrypt:   148.1 ms (  8643 MB/s )
+
+crc32:              5.7 ms ( 45157 MB/s )
+crc32c:             4.6 ms ( 56017 MB/s )
+adler32:           15.3 ms ( 16696 MB/s )
+
+md5:              255.4 ms (  1002 MB/s )
+sha1:              94.2 ms (  2716 MB/s )
+sha2:             102.9 ms (  2487 MB/s )
+xxhash32:          30.9 ms (  8285 MB/s )
+xxhash64:          30.9 ms (  8286 MB/s )
+xx3hash64:         14.1 ms ( 18143 MB/s )
+xx3hash128:        14.2 ms ( 18000 MB/s )
+
+-----------------------------------------------------------------------------------
+AMD Ryzen 9 7950X 16-Core Processor (AMD Desktop, 2023)
+-----------------------------------------------------------------------------------
+
+aes128 encrypt:   118.5 ms ( 10800 MB/s )
+aes128 decrypt:   131.3 ms (  9745 MB/s )
+aes192 encrypt:   138.5 ms (  9239 MB/s )
+aes192 decrypt:   151.8 ms (  8430 MB/s )
+aes256 encrypt:   162.8 ms (  7862 MB/s )
+aes256 decrypt:   216.1 ms (  5924 MB/s )
+
+crc32:              5.9 ms ( 43485 MB/s )
+crc32c:             5.0 ms ( 50894 MB/s )
+adler32:           10.1 ms ( 25318 MB/s )
+
+md5:              256.3 ms (   998 MB/s )
+sha1:              94.7 ms (  2703 MB/s )
+sha2:              99.0 ms (  2585 MB/s )
+xxhash32:          23.9 ms ( 10703 MB/s )
+xxhash64:          23.9 ms ( 10720 MB/s )
+xx3hash64:          5.8 ms ( 44039 MB/s )
+xx3hash128:         6.0 ms ( 42468 MB/s )
