@@ -41,6 +41,7 @@ void example3(LittleEndianPointer& p)
     u64 a = p.read64();
 
     MANGO_UNREFERENCED(f);
+    MANGO_UNREFERENCED(h);
     MANGO_UNREFERENCED(a);
 }
 
