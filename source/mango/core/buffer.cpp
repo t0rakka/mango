@@ -12,48 +12,42 @@ namespace mango
     // Buffer
     // ----------------------------------------------------------------------------
 
-    Buffer::Buffer(Alignment alignment)
+    Buffer::Buffer()
         : m_memory()
         , m_capacity(0)
-        , m_alignment(alignment)
     {
     }
 
-    Buffer::Buffer(size_t bytes, Alignment alignment)
-        : m_memory(allocate(bytes, alignment), bytes)
+    Buffer::Buffer(size_t bytes)
+        : m_memory(allocate(bytes), bytes)
         , m_capacity(bytes)
-        , m_alignment(alignment)
     {
     }
 
-    Buffer::Buffer(size_t bytes, u8 value, Alignment alignment)
-        : m_memory(allocate(bytes, alignment), bytes)
+    Buffer::Buffer(size_t bytes, u8 value)
+        : m_memory(allocate(bytes), bytes)
         , m_capacity(bytes)
-        , m_alignment(alignment)
     {
         std::memset(m_memory.address, value, bytes);
     }
 
-    Buffer::Buffer(const u8* source, size_t bytes, Alignment alignment)
-        : m_memory(allocate(bytes, alignment), bytes)
+    Buffer::Buffer(const u8* source, size_t bytes)
+        : m_memory(allocate(bytes), bytes)
         , m_capacity(bytes)
-        , m_alignment(alignment)
     {
         std::memcpy(m_memory.address, source, bytes);
     }
 
-    Buffer::Buffer(ConstMemory memory, Alignment alignment)
-        : m_memory(allocate(memory.size, alignment), memory.size)
+    Buffer::Buffer(ConstMemory memory)
+        : m_memory(allocate(memory.size), memory.size)
         , m_capacity(memory.size)
-        , m_alignment(alignment)
     {
         std::memcpy(m_memory.address, memory.address, memory.size);
     }
 
-    Buffer::Buffer(Stream& stream, Alignment alignment)
-        : m_memory(allocate(size_t(stream.size()), alignment), size_t(stream.size()))
+    Buffer::Buffer(Stream& stream)
+        : m_memory(allocate(size_t(stream.size())), size_t(stream.size()))
         , m_capacity(m_memory.size)
-        , m_alignment(alignment)
     {
         stream.seek(0, Stream::BEGIN);
         stream.read(m_memory.address, m_memory.size);
@@ -61,7 +55,7 @@ namespace mango
 
     Buffer::~Buffer()
     {
-        free(m_memory.address);
+        std::free(m_memory.address);
     }
 
     Buffer::operator ConstMemory () const
@@ -96,15 +90,15 @@ namespace mango
 
     void Buffer::reset()
     {
-        free(m_memory.address);
+        std::free(m_memory.address);
         m_memory = Memory();
         m_capacity = 0;
     }
 
     void Buffer::reset(size_t bytes)
     {
-        free(m_memory.address);
-        m_memory = Memory(allocate(bytes, m_alignment), bytes);
+        std::free(m_memory.address);
+        m_memory = Memory(allocate(bytes), bytes);
         m_capacity = bytes;
     }
 
@@ -124,11 +118,11 @@ namespace mango
     {
         if (bytes > m_capacity)
         {
-            u8* storage = allocate(bytes, m_alignment);
+            u8* storage = allocate(bytes);
             if (m_memory.address)
             {
                 std::memcpy(storage, m_memory.address, m_memory.size);
-                free(m_memory.address);
+                std::free(m_memory.address);
             }
             m_memory.address = storage;
             m_capacity = bytes;
@@ -187,18 +181,14 @@ namespace mango
 
     void Buffer::release(Memory memory)
     {
-        aligned_free(memory.address);
+        std::free(memory.address);
     }
 
-    u8* Buffer::allocate(size_t bytes, Alignment alignment) const
+    u8* Buffer::allocate(size_t bytes) const
     {
-        void* ptr = aligned_malloc(bytes, alignment);
-        return reinterpret_cast<u8*>(ptr);
-    }
-
-    void Buffer::free(u8* ptr) const
-    {
-        aligned_free(ptr);
+        const size_t alignment = 64;
+        void* p = std::aligned_alloc(alignment, bytes);
+        return reinterpret_cast<u8*>(p);
     }
 
     // ----------------------------------------------------------------------------

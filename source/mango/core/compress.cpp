@@ -268,13 +268,11 @@ namespace lzo
     {
         MANGO_UNREFERENCED(level);
 
-        void* workmem = aligned_malloc(LZO1X_MEM_COMPRESS);
+        Buffer work(LZO1X_MEM_COMPRESS);
 
         lzo_uint dst_len = (lzo_uint)dest.size;
         int x = lzo1x_1_compress(source.address, lzo_uint(source.size),
-            dest.address, &dst_len, workmem);
-
-        aligned_free(workmem);
+            dest.address, &dst_len, work);
 
         CompressionStatus status;
 

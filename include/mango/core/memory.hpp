@@ -152,37 +152,6 @@ namespace mango
     };
 
     // -----------------------------------------------------------------------
-    // Alignment
-    // -----------------------------------------------------------------------
-
-    // NOTE: The alignment has to be a power-of-two and at least sizeof(void*)
-
-    class Alignment
-    {
-    protected:
-        u32 m_alignment;
-
-    public:
-        Alignment(); // default alignment
-        Alignment(u32 alignment);
-
-        operator u32 () const;
-    };
-
-    // -----------------------------------------------------------------------
-    // aligned malloc / free
-    // -----------------------------------------------------------------------
-
-    void* aligned_malloc(size_t bytes, Alignment alignment = Alignment());
-    void aligned_free(void* aligned);
-
-    template <typename T>
-    T* aligned_alloc(size_t size, u32 alignment)
-    {
-        return reinterpret_cast<T*>(aligned_malloc(size * sizeof(T), Alignment(alignment)));
-    }
-
-    // -----------------------------------------------------------------------
     // AlignedStorage
     // -----------------------------------------------------------------------
 
@@ -190,24 +159,8 @@ namespace mango
     class AlignedStorage : public NonCopyable
     {
     private:
-        T* m_data;
+        void* m_data;
         size_t m_size;
-
-        void allocate(size_t size, Alignment alignment)
-        {
-            m_data = aligned_alloc<T>(size, alignment);
-            m_size = size;
-        }
-
-        void clear()
-        {
-            if (m_data)
-            {
-                aligned_free(m_data);
-                m_data = nullptr;
-                m_size = 0;
-            }
-        }
 
     public:
         AlignedStorage()
@@ -216,37 +169,35 @@ namespace mango
         {
         }
 
-        AlignedStorage(size_t size, Alignment alignment = Alignment())
+        AlignedStorage(size_t size, size_t alignment = 64)
         {
-            allocate(size, alignment);
+            m_data = std::aligned_alloc(alignment, size * sizeof(T));
+            m_size = size;
         }
 
         ~AlignedStorage()
         {
-            clear();
+            std::free(m_data);
         }
 
-        void resize(size_t size, Alignment alignment = Alignment())
+        void resize(size_t size, size_t alignment = 64)
         {
             if (size != m_size)
             {
-                clear();
-
-                if (size)
-                {
-                    allocate(size, alignment);
-                }
+                std::free(m_data);
+                m_data = size ? std::aligned_alloc(alignment, size * sizeof(T)) : nullptr;
+                m_size = size;
             }
         }
 
         operator T* () const
         {
-            return m_data;
+            return reinterpret_cast<T*>(m_data);
         }
 
         T* data() const
         {
-            return m_data;
+            return reinterpret_cast<T*>(m_data);
         }
 
         size_t size() const
@@ -256,32 +207,32 @@ namespace mango
 
         T& operator [] (int index)
         {
-            return m_data[index];
+            return data()[index];
         }
 
         const T& operator [] (int index) const
         {
-            return m_data[index];
+            return data()[index];
         }
 
         T* begin()
         {
-            return m_data;
+            return data();
         }
 
         T* end()
         {
-            return m_data + m_size;
+            return data() + m_size;
         }
 
         const T* begin() const
         {
-            return m_data;
+            return data();
         }
 
         const T* end() const
         {
-            return m_data + m_size;
+            return data() + m_size;
         }
     };
 

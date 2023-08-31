@@ -17,15 +17,14 @@ namespace mango
     private:
         Memory m_memory;
         size_t m_capacity;
-        Alignment m_alignment;
 
     public:
-        explicit Buffer(Alignment alignment = Alignment());
-        explicit Buffer(size_t bytes, Alignment alignment = Alignment());
-        explicit Buffer(size_t bytes, u8 value, Alignment alignment = Alignment());
-        explicit Buffer(const u8* source, size_t bytes, Alignment alignment = Alignment());
-        explicit Buffer(ConstMemory memory, Alignment alignment = Alignment());
-        explicit Buffer(Stream& stream, Alignment alignment = Alignment());
+        explicit Buffer();
+        explicit Buffer(size_t bytes);
+        explicit Buffer(size_t bytes, u8 value);
+        explicit Buffer(const u8* source, size_t bytes);
+        explicit Buffer(ConstMemory memory);
+        explicit Buffer(Stream& stream);
         ~Buffer();
 
         operator ConstMemory () const;
@@ -50,8 +49,7 @@ namespace mango
         static void release(Memory memory);
 
     private:
-        u8* allocate(size_t bytes, Alignment alignment) const;
-        void free(u8* ptr) const;
+        u8* allocate(size_t bytes) const;
     };
 
     class BufferStream : public Stream

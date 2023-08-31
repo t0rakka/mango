@@ -674,23 +674,19 @@
 #endif
 
 #define MANGO_UNREFERENCED(x) (void) x
-#define MANGO_DEFAULT_ALIGNMENT 64
 
 #ifdef MANGO_PLATFORM_WINDOWS
 
-    #define MANGO_ALIGN(...) __declspec(align(__VA_ARGS__))
     #define MANGO_IMPORT __declspec(dllimport)
     #define MANGO_EXPORT __declspec(dllexport)
 
 #elif __GNUC__ >= 4
 
-    #define MANGO_ALIGN(...) __attribute__((aligned(__VA_ARGS__)))
     #define MANGO_IMPORT __attribute__ ((__visibility__ ("default")))
     #define MANGO_EXPORT __attribute__ ((__visibility__ ("default")))
 
 #else
 
-    #define MANGO_ALIGN(...)
     #define MANGO_IMPORT
     #define MANGO_EXPORT
 
