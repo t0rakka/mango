@@ -42,8 +42,8 @@ namespace mango::image
         template <typename SampleType>
         SampleType* address(int x = 0, int y = 0) const
         {
-            SampleType* scan = reinterpret_cast<SampleType*>(image + y * stride);
-            return scan + size_t(x);
+            u8* ptr = address(x, y);
+            return reinterpret_cast<SampleType*>(ptr);
         }
 
         ImageEncodeStatus save(Stream& stream, const std::string& extension, const ImageEncodeOptions& options = ImageEncodeOptions()) const;
