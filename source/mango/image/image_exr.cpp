@@ -2403,6 +2403,8 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
 
     LittleEndianConstPointer p = m_pointer;
 
+    ConcurrentQueue q;
+
     if (is_single_tile)
     {
         int xtiles = div_ceil(width, m_attributes.tiles.xsize);
@@ -2436,16 +2438,17 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
             int y0 = tiley * h;
             int y1 = std::min(height, y0 + h);
 
-            ConstMemory memory(ptr, size);
-            decodeBlock(surface, memory, x0, y0, x1, y1);
+            q.enqueue([=, &surface]
+            {
+                ConstMemory memory(ptr, size);
+                decodeBlock(surface, memory, x0, y0, x1, y1);
+            });
         }
     }
     else
     {
         int nblocks = div_ceil(height, m_scanLinesPerBlock);
         debugPrint("Blocks: %d\n", nblocks);
-
-        ConcurrentQueue q;
 
         for (int i = 0; i < nblocks; ++i)
         {
@@ -2472,9 +2475,9 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
                 decodeBlock(surface, memory, x0, y0, x1, y1);
             });
         }
-
-        q.wait();
     }
+
+    q.wait();
 
     u64 time1 = mango::Time::us();
     m_time_decode += (time1 - time0);
