@@ -1794,38 +1794,33 @@ const u8* ContextEXR::decompress_piz(Memory dest, ConstMemory source, int width,
     return dest;
 }
 
-const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int width, int height, int ystart)
+const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int width, int height, int y0)
 {
     const std::vector<Channel>& channels = m_attributes.chlist.channels;
 
     Buffer temp(dest.size);
-
     CompressionStatus status = deflate_zlib::decompress(temp, source);
 
-    //debugPrint("  temp: %d bytes\n", int(dest.size));
-    //debugPrint("  out:  %d bytes\n", int(status.size));
-
     u8* out = dest.address;
-    size_t nOut = 0;
-    size_t nDec = 0;
+    u8* out_end = dest.end();
     const u8* lastIn = temp.data();
+    const u8* lastIn_end = lastIn + dest.size;
 
-    for (int y = 0; y < height; ++y)
+    int y1 = y0 + height;
+
+    for (int y = y0; y < y1; ++y)
     {
-        int cury = y + ystart;
-
         for (size_t c = 0; c < channels.size(); ++c)
         {
             const Channel& channel = channels[c];
 
-            int w = width;
-            //int w = channel.width;
+            int w = width; // channel.width
             size_t nBytes = w * channel.bytes;
 
-            if (height == 0 || (channel.ysamples > 1 && (cury % channel.ysamples) != 0))
+            if (height == 0 || (channel.ysamples > 1 && (y % channel.ysamples) != 0))
                 continue;
 
-            if (nOut + nBytes > dest.size)
+            if (out + nBytes > out_end)
             {
                 debugPrint("OUT OF MEMORY\n");
                 return nullptr;
@@ -1835,20 +1830,12 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
             {
                 case UINT:
                 {
-                    const u8* ptr[4];
-                    u32   pixel = 0;
-                    u32*  dout  = (u32*) (out);
+                    const u8* ptr = lastIn;
+                    lastIn += nBytes;
 
-                    ptr[0] = lastIn;
-                    lastIn += w;
-                    ptr[1] = lastIn;
-                    lastIn += w;
-                    ptr[2] = lastIn;
-                    lastIn += w;
-                    ptr[3] = lastIn;
-                    lastIn += w;
+                    u32 pixel = 0;
 
-                    if (nDec + nBytes > dest.size)
+                    if (lastIn > lastIn_end)
                     {
                         debugPrint("CORRUPT CHUNK\n");
                         return nullptr;
@@ -1856,30 +1843,24 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
                     for (int x = 0; x < w; ++x)
                     {
-                        u32 diff =
-                            ((u32(*(ptr[0]++)) << 24) |
-                             (u32(*(ptr[1]++)) << 16) |
-                             (u32(*(ptr[2]++)) <<  8) |
-                             (u32(*(ptr[3]++)) <<  0));
+                        u32 diff = ((u32(ptr[x + w * 0]) << 24) |
+                                    (u32(ptr[x + w * 1]) << 16) |
+                                    (u32(ptr[x + w * 2]) <<  8) |
+                                    (u32(ptr[x + w * 3]) <<  0));
                         pixel += diff;
-                        ustore32(dout, pixel);
-                        ++dout;
+                        ustore32(out + x * 4, pixel);
                     }
-                    nDec += nBytes;
                     break;
                 }
 
                 case HALF:
                 {
-                    const u8* ptr[2];
-                    u32  pixel = 0;
+                    const u8* ptr = lastIn;
+                    lastIn += nBytes;
 
-                    ptr[0] = lastIn;
-                    lastIn += w;
-                    ptr[1] = lastIn;
-                    lastIn += w;
+                    u32 pixel = 0;
 
-                    if (nDec + nBytes > dest.size)
+                    if (lastIn > lastIn_end)
                     {
                         debugPrint("CORRUPT CHUNK\n");
                         return nullptr;
@@ -1887,30 +1868,22 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
                     for (int x = 0; x < w; ++x)
                     {
-                        u32 diff =
-                            ((u32(*(ptr[0]++)) << 8) |
-                             (u32(*(ptr[1]++)) << 0));
+                        u32 diff = ((u32(ptr[x + w * 0]) << 8) |
+                                    (u32(ptr[x + w * 1]) << 0));
                         pixel += diff;
                         ustore16(out + x * 2, u16(pixel));
                     }
-                    nDec += nBytes;
                     break;
                 }
 
                 case FLOAT:
                 {
-                    const u8* ptr[3];
-                    u32  pixel = 0;
-                    u32* dout  = (u32*) (out);
+                    const u8* ptr = lastIn;
+                    lastIn += w * 3; // 24 bits per sample
 
-                    ptr[0] = lastIn;
-                    lastIn += w;
-                    ptr[1] = lastIn;
-                    lastIn += w;
-                    ptr[2] = lastIn;
-                    lastIn += w;
+                    u32 pixel = 0;
 
-                    if (nDec + u64(w * 3) > dest.size)
+                    if (lastIn > lastIn_end)
                     {
                         debugPrint("CORRUPT CHUNK\n");
                         return nullptr;
@@ -1918,21 +1891,17 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
                     for (int x = 0; x < w; ++x)
                     {
-                        uint32_t diff =
-                            ((u32(*(ptr[0]++)) << 24) |
-                             (u32(*(ptr[1]++)) << 16) |
-                             (u32(*(ptr[2]++)) <<  8));
+                        u32 diff = ((u32(ptr[x + w * 0]) << 24) |
+                                    (u32(ptr[x + w * 1]) << 16) |
+                                    (u32(ptr[x + w * 2]) <<  8));
                         pixel += diff;
-                        ustore32(dout, pixel);
-                        ++dout;
+                        ustore32(out + x * 4, pixel);
                     }
-                    nDec += (w * 3);
                     break;
                 }
             }
 
             out += nBytes;
-            nOut += nBytes;
         }
     }
 
@@ -2096,12 +2065,24 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
 
 const u8* ContextEXR::decompress_dwaa(Memory dest, ConstMemory source, int width, int height, int ystart)
 {
+    MANGO_UNREFERENCED(dest);
+    MANGO_UNREFERENCED(source);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
+    MANGO_UNREFERENCED(ystart);
+
     // TODO
     return nullptr;
 }
 
 const u8* ContextEXR::decompress_dwab(Memory dest, ConstMemory source, int width, int height, int ystart)
 {
+    MANGO_UNREFERENCED(dest);
+    MANGO_UNREFERENCED(source);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
+    MANGO_UNREFERENCED(ystart);
+
     // TODO
     return nullptr;
 }
