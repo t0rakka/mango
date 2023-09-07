@@ -857,6 +857,51 @@ void applyLut(const u16 lut[USHORT_RANGE], u16 data[], size_t size)
     }
 }
 
+static
+void predictor(u8* data, size_t count)
+{
+    u8 delta = data[0];
+
+    for (size_t i = 1; i < count; ++i)
+    {
+        delta += (data[i] - 128);
+        data[i] = delta;
+    }
+}
+
+static
+void deinterleave(u8* dest, const u8* source, size_t size)
+{
+    const size_t count = size / 2;
+    const u8* temp0 = source;
+    const u8* temp1 = source + ((size + 1) / 2);
+
+    for (size_t i = 0; i < count; ++i)
+    {
+        dest[i * 2 + 0] = temp0[i];
+        dest[i * 2 + 1] = temp1[i];
+    }
+}
+
+static inline
+bool isfinite(float16 f)
+{
+    constexpr u16 exponent_mask = 0x7c00;
+    constexpr u16 mantissa_mask = 0x03ff;
+
+    u16 e = f.u & exponent_mask;
+    if (e == exponent_mask)
+    {
+        return false;
+    }
+    else if (e == 0)
+    {
+        return (f.u & mantissa_mask) != 0;
+    }
+
+    return true;
+}
+
 // --------------------------------------------------------------------------------------
 // Context
 // --------------------------------------------------------------------------------------
@@ -946,6 +991,94 @@ struct Chromaticities
     float32x2 blue;
     float32x2 white;
 };
+
+static
+Chromaticities Chromaticities_BT709()
+{
+    Chromaticities chromaticities;
+
+    // Rec. ITU-R BT.709-3
+    chromaticities.red   = float32x2(0.6400f, 0.3300f);
+    chromaticities.green = float32x2(0.3000f, 0.6000f);
+    chromaticities.blue  = float32x2(0.1500f, 0.0600f);
+    chromaticities.white = float32x2(0.3127f, 0.3290f);
+
+    return chromaticities;
+}
+
+static
+Matrix4x4 RGBtoXYZ(const Chromaticities& chromaticities, float Y)
+{
+    // For an explanation of how the color conversion matrix is derived,
+    // see Roy Hall, "Illumination and Color in Computer Generated Imagery",
+    // Springer-Verlag, 1989, chapter 3, "Perceptual Response"; and 
+    // Charles A. Poynton, "A Technical Introduction to Digital Video",
+    // John Wiley & Sons, 1996, chapter 7, "Color science for video".
+
+    // X and Z values of RGB value (1, 1, 1), or "white"
+
+    float32x2 red   = chromaticities.red;
+    float32x2 green = chromaticities.green;
+    float32x2 blue  = chromaticities.blue;
+    float32x2 white = chromaticities.white;
+
+    float X = white.x * Y / white.y;
+    float Z = (1.0f - white.x - white.y) * Y / white.y;
+
+    // Scale factors for matrix rows, compute numerators and common denominator
+
+    float d = red.x * (blue.y  - green.y) +
+             blue.x * (green.y - red.y) +
+            green.x * (red.y   - blue.y);
+
+    float SrN = (X * (blue.y - green.y) -
+        green.x * (Y * (blue.y - 1) +
+        blue.y  * (X + Z)) +
+        blue.x  * (Y * (green.y - 1) +
+        green.y * (X + Z)));
+
+
+    float SgN = (X * (red.y - blue.y) +
+        red.x   * (Y * (blue.y - 1) +
+        blue.y  * (X + Z)) -
+        blue.x  * (Y * (red.y - 1) +
+        red.y   * (X + Z)));
+
+    float SbN = (X * (green.y - red.y) -
+        red.x   * (Y * (green.y - 1) +
+        green.y * (X + Z)) +
+        green.x * (Y * (red.y - 1) +
+        red.y   * (X + Z)));
+
+    float Sr = SrN / d;
+    float Sg = SgN / d;
+    float Sb = SbN / d;
+
+    // Assemble the matrix
+
+    Matrix4x4 M;
+
+    M[0][0] = Sr * red.x;
+    M[0][1] = Sr * red.y;
+    M[0][2] = Sr * (1.0f - red.x - red.y);
+
+    M[1][0] = Sg * green.x;
+    M[1][1] = Sg * green.y;
+    M[1][2] = Sg * (1.0f - green.x - green.y);
+
+    M[2][0] = Sb * blue.x;
+    M[2][1] = Sb * blue.y;
+    M[2][2] = Sb * (1.0f - blue.x - blue.y);
+
+    return M;
+}
+
+static
+float32x3 computeYW(const Chromaticities& chromaticities, float Y = 1.0f)
+{
+    Matrix4x4 m = RGBtoXYZ(chromaticities, Y);
+    return float32x3(m[0][1], m[1][1], m[2][1]) / (m[0][1] + m[1][1] + m[2][1]);
+}
 
 template <typename T>
 struct Attribute
@@ -1182,7 +1315,7 @@ struct AttributeTable
     float       pixelAspectRatio;
     float32x2   screenWindowCenter;
     float       screenWindowWidth;
-    u8          envmap = 0; // 0: None, 1: LatLong, 2 - Cube
+    u8          envmap; // 0: None, 1: LatLong, 2 - Cube
     Chromaticities chromaticities;
 
     // Tile Header Attribute
@@ -1199,6 +1332,12 @@ struct AttributeTable
 
     // Deep Data Header Attributes
     u32         maxSamplesPerPixel;
+
+    AttributeTable()
+    {
+        envmap = 0;
+        chromaticities = Chromaticities_BT709();
+    }
 
     void parse(const std::string& name, const std::string& type, LittleEndianConstPointer p, u32 size)
     {
@@ -1254,139 +1393,6 @@ struct AttributeTable
     }
 };
 
-static inline
-bool isfinite(float16 f)
-{
-    constexpr u16 exponent_mask = 0x7c00;
-    constexpr u16 mantissa_mask = 0x03ff;
-
-    u16 e = f.u & exponent_mask;
-    if (e == exponent_mask)
-    {
-        return false;
-    }
-    else if (e == 0)
-    {
-        return (f.u & mantissa_mask) != 0;
-    }
-
-    return true;
-}
-
-static
-void predictor(u8* data, size_t count)
-{
-    u8 delta = data[0];
-
-    for (size_t i = 1; i < count; ++i)
-    {
-        delta += (data[i] - 128);
-        data[i] = delta;
-    }
-}
-
-static
-void deinterleave(u8* dest, const u8* source, size_t size)
-{
-    const size_t count = size / 2;
-    const u8* temp0 = source;
-    const u8* temp1 = source + ((size + 1) / 2);
-
-    for (size_t i = 0; i < count; ++i)
-    {
-        dest[i * 2 + 0] = temp0[i];
-        dest[i * 2 + 1] = temp1[i];
-    }
-}
-
-static
-Chromaticities Chromaticities_BT709()
-{
-    Chromaticities chromacities;
-
-    // Rec. ITU-R BT.709-3
-    chromacities.red   = float32x2(0.6400f, 0.3300f);
-    chromacities.green = float32x2(0.3000f, 0.6000f);
-    chromacities.blue  = float32x2(0.1500f, 0.0600f);
-    chromacities.white = float32x2(0.3127f, 0.3290f);
-
-    return chromacities;
-}
-
-static
-Matrix4x4 RGBtoXYZ(const Chromaticities& chromacities, float Y)
-{
-    // For an explanation of how the color conversion matrix is derived,
-    // see Roy Hall, "Illumination and Color in Computer Generated Imagery",
-    // Springer-Verlag, 1989, chapter 3, "Perceptual Response"; and 
-    // Charles A. Poynton, "A Technical Introduction to Digital Video",
-    // John Wiley & Sons, 1996, chapter 7, "Color science for video".
-
-    // X and Z values of RGB value (1, 1, 1), or "white"
-
-    float32x2 red   = chromacities.red;
-    float32x2 green = chromacities.green;
-    float32x2 blue  = chromacities.blue;
-    float32x2 white = chromacities.white;
-
-    float X = white.x * Y / white.y;
-    float Z = (1.0f - white.x - white.y) * Y / white.y;
-
-    // Scale factors for matrix rows, compute numerators and common denominator
-
-    float d = red.x * (blue.y  - green.y) +
-             blue.x * (green.y - red.y) +
-            green.x * (red.y   - blue.y);
-
-    float SrN = (X * (blue.y - green.y) -
-        green.x * (Y * (blue.y - 1) +
-        blue.y  * (X + Z)) +
-        blue.x  * (Y * (green.y - 1) +
-        green.y * (X + Z)));
-
-
-    float SgN = (X * (red.y - blue.y) +
-        red.x   * (Y * (blue.y - 1) +
-        blue.y  * (X + Z)) -
-        blue.x  * (Y * (red.y - 1) +
-        red.y   * (X + Z)));
-
-    float SbN = (X * (green.y - red.y) -
-        red.x   * (Y * (green.y - 1) +
-        green.y * (X + Z)) +
-        green.x * (Y * (red.y - 1) +
-        red.y   * (X + Z)));
-
-    float Sr = SrN / d;
-    float Sg = SgN / d;
-    float Sb = SbN / d;
-
-    // Assemble the matrix
-
-    Matrix4x4 M;
-
-    M[0][0] = Sr * red.x;
-    M[0][1] = Sr * red.y;
-    M[0][2] = Sr * (1.0f - red.x - red.y);
-
-    M[1][0] = Sg * green.x;
-    M[1][1] = Sg * green.y;
-    M[1][2] = Sg * (1.0f - green.x - green.y);
-
-    M[2][0] = Sb * blue.x;
-    M[2][1] = Sb * blue.y;
-    M[2][2] = Sb * (1.0f - blue.x - blue.y);
-
-    return M;
-}
-
-static
-float32x3 computeYW(const Chromaticities& chromacities, float Y = 1.0f)
-{
-    Matrix4x4 m = RGBtoXYZ(chromacities, Y);
-    return float32x3(m[0][1], m[1][1], m[2][1]) / (m[0][1] + m[1][1] + m[2][1]);
-}
-
 struct ContextEXR
 {
     ConstMemory m_memory;
@@ -1405,8 +1411,9 @@ struct ContextEXR
 
     u16 m_log_table[0x10000];
 
-    u64 m_time_decoding = 0;
-    u64 m_time_blitting = 0;
+    u64 m_time_decompress = 0;
+    u64 m_time_blit = 0;
+    u64 m_time_decode = 0;
 
     ContextEXR(ConstMemory memory);
     ~ContextEXR();
@@ -1457,8 +1464,9 @@ struct ContextEXR
 
     void report()
     {
-        debugPrint("  decoding: %d ms\n", int(m_time_decoding / 1000));
-        debugPrint("  blitting: %d ms\n", int(m_time_blitting / 1000));
+        debugPrint("  decoding: %d ms\n", int(m_time_decompress / 1000));
+        debugPrint("  blitting: %d ms\n", int(m_time_blit / 1000));
+        debugPrint("  decode: %d ms\n", int(m_time_decode / 1000));
     }
 };
 
@@ -2162,8 +2170,7 @@ void decodeChroma(Surface surface, const u8* src, const AttributeTable& attribut
     size_t bytesPerPixel = attributes.chlist.bytes;
     size_t bytesPerScan = blockWidth * bytesPerPixel;
 
-    Chromaticities chromacities = Chromaticities_BT709();
-    float32x3 yw = computeYW(chromacities, 1.0f);
+    float32x3 yw = computeYW(attributes.chromaticities, 1.0f);
 
     // TODO: configure channel inputs correctly
     // TODO: support UINT and FLOAT
@@ -2208,7 +2215,7 @@ void decodeChroma(Surface surface, const u8* src, const AttributeTable& attribut
 
         //src += blockWidth * 4;
         //src += blockWidth * 6;
-        src += blockWidth * bytesPerScan;
+        src += bytesPerScan;
     }
 }
 
@@ -2367,8 +2374,8 @@ void ContextEXR::decodeBlock(Surface surface, ConstMemory memory, int x0, int y0
 
     u64 time2 = mango::Time::us();
 
-    m_time_decoding += (time1 - time0);
-    m_time_blitting += (time2 - time1);
+    m_time_decompress += (time1 - time0);
+    m_time_blit += (time2 - time1);
 }
 
 ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
@@ -2380,6 +2387,8 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
         status.setError("Decoding stopped.");
         return status;
     }
+
+    u64 time0 = mango::Time::us();
 
     int width = m_header.width;
     int height = m_header.height;
@@ -2458,15 +2467,18 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
             int y0 = m_scanLinesPerBlock * i;
             int y1 = std::min(y0 + m_scanLinesPerBlock, height);
 
-            //q.enqueue([=, &surface]
+            q.enqueue([=, &surface]
             {
                 ConstMemory memory(ptr, size);
                 decodeBlock(surface, memory, x0, y0, x1, y1);
-            }//);
+            });
         }
 
         q.wait();
     }
+
+    u64 time1 = mango::Time::us();
+    m_time_decode += (time1 - time0);
 
     dest.blit(0, 0, bitmap);
 
