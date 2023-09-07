@@ -2468,6 +2468,8 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
         q.wait();
     }
 
+    dest.blit(0, 0, bitmap);
+
     report();
 
     return status;
