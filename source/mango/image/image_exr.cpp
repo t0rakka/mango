@@ -1721,7 +1721,6 @@ const u8* ContextEXR::decompress_piz(Memory dest, ConstMemory source, int width,
         int nx;
         int ny;
         int wcount;
-        int xsamples;
         int ysamples;
         size_t offset;
     };
@@ -1740,7 +1739,6 @@ const u8* ContextEXR::decompress_piz(Memory dest, ConstMemory source, int width,
         cd.nx = nx;
         cd.ny = ny;
         cd.wcount = wcount;
-        cd.xsamples = chan.xsamples;
         cd.ysamples = chan.ysamples;
         cd.offset = outputSize;
 
@@ -1771,6 +1769,7 @@ const u8* ContextEXR::decompress_piz(Memory dest, ConstMemory source, int width,
     }
 
     // Expand the pixel data to their original range
+
     applyLut(lut.data(), tmpBuffer.data(), tmpBuffer.size());
 
     // Rearrange the pixel data into the format expected by the caller
@@ -1782,14 +1781,10 @@ const u8* ContextEXR::decompress_piz(Memory dest, ConstMemory source, int width,
     {
         for (auto& channel : data)
         {
-            int nx = channel.nx;
-            //int ny = channel.ny;
-            int wcount = channel.wcount;
-
             if ((y % channel.ysamples) != 0)
                 continue;
 
-            int n = nx * wcount;
+            int n = channel.nx * channel.wcount;
             std::memcpy(dst, buf + channel.offset, n * sizeof(u16));
             dst += n * sizeof(u16);
             channel.offset += n;
@@ -1832,8 +1827,8 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
             if (nOut + nBytes > dest.size)
             {
-                //    return EXR_ERR_OUT_OF_MEMORY;
                 debugPrint("OUT OF MEMORY\n");
+                return nullptr;
             }
 
             switch (channel.type)
@@ -1853,13 +1848,11 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
                     ptr[3] = lastIn;
                     lastIn += w;
 
-#if 0
                     if (nDec + nBytes > dest.size)
                     {
-                        //    return EXR_ERR_CORRUPT_CHUNK;
                         debugPrint("CORRUPT CHUNK\n");
+                        return nullptr;
                     }
-#endif
 
                     for (int x = 0; x < w; ++x)
                     {
@@ -1875,24 +1868,22 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
                     nDec += nBytes;
                     break;
                 }
+
                 case HALF:
                 {
                     const u8* ptr[2];
                     u32  pixel = 0;
-                    u16* dout  = (u16*) (out);
 
                     ptr[0] = lastIn;
                     lastIn += w;
                     ptr[1] = lastIn;
                     lastIn += w;
 
-#if 1
                     if (nDec + nBytes > dest.size)
                     {
-                        //    return EXR_ERR_CORRUPT_CHUNK;
                         debugPrint("CORRUPT CHUNK\n");
+                        return nullptr;
                     }
-#endif
 
                     for (int x = 0; x < w; ++x)
                     {
@@ -1900,12 +1891,12 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
                             ((u32(*(ptr[0]++)) << 8) |
                              (u32(*(ptr[1]++)) << 0));
                         pixel += diff;
-                        ustore16(dout, u16(pixel));
-                        ++dout;
+                        ustore16(out + x * 2, u16(pixel));
                     }
                     nDec += nBytes;
                     break;
                 }
+
                 case FLOAT:
                 {
                     const u8* ptr[3];
@@ -1919,13 +1910,11 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
                     ptr[2] = lastIn;
                     lastIn += w;
 
-#if 0
-                    if (nDec + (u64) (w * 3) > dest.size)
+                    if (nDec + u64(w * 3) > dest.size)
                     {
-                        //    return EXR_ERR_CORRUPT_CHUNK;
                         debugPrint("CORRUPT CHUNK\n");
+                        return nullptr;
                     }
-#endif
 
                     for (int x = 0; x < w; ++x)
                     {
@@ -2144,6 +2133,8 @@ void decodeLuminance(Surface surface, const u8* src, const AttributeTable& attri
 
         const float16* scan = reinterpret_cast<const float16*>(src + blockWidth * 0);
 
+        // TODO: FLOAT, alpha
+
         float16 one(1.0f);
 
         for (int x = x0; x < x1; ++x)
@@ -2173,8 +2164,7 @@ void decodeChroma(Surface surface, const u8* src, const AttributeTable& attribut
 
     // TODO: configure channel inputs correctly
     // TODO: support UINT and FLOAT
-
-    //src += blockWidth * 1 * blockHeight;
+    // TODO: alpha
 
     for (int y = y0; y < y1; y += 2)
     {
@@ -2291,8 +2281,6 @@ void ContextEXR::decodeBlock(Surface surface, ConstMemory memory, int x0, int y0
     int blockWidth = x1 - x0;
     int blockHeight = y1 - y0;
 
-    //debugPrint("decodeBlock %d x %d\n", blockWidth, blockHeight);
-
     size_t bytesPerPixel = m_attributes.chlist.bytes;
     size_t bytesPerScan = blockWidth * bytesPerPixel;
 
@@ -2345,13 +2333,13 @@ void ContextEXR::decodeBlock(Surface surface, ConstMemory memory, int x0, int y0
             break;
     }
 
-    u64 time1 = mango::Time::us();
-
     if (!src)
     {
-        // TODO: decoding failed
+        // decompression failed
         return;
     }
+
+    u64 time1 = mango::Time::us();
 
     switch (m_attributes.chlist.colortype)
     {
@@ -2409,16 +2397,15 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
     {
         int xtiles = div_ceil(width, m_attributes.tiles.xsize);
         int ytiles = div_ceil(height, m_attributes.tiles.ysize);
-        debugPrint("Tiles: %d x %d\n", xtiles, ytiles);
-
         int ntiles = xtiles * ytiles;
+
+        debugPrint("Tiles: %d x %d (%d)\n", xtiles, ytiles, ntiles);
 
         for (int i = 0; i < ntiles; ++i)
         {
             u64 offset = p.read64();
-            //debugPrint("offset: %d KB\n", int(offset / 1024));
-
             LittleEndianConstPointer ptr = m_memory.address + offset;
+
             int tilex = ptr.read32();
             int tiley = ptr.read32();
             int xlevel = ptr.read32();
@@ -2429,51 +2416,65 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
             MANGO_UNREFERENCED(xlevel);
             MANGO_UNREFERENCED(ylevel);
 
-            int w = m_attributes.tiles.xsize;
-            int h = m_attributes.tiles.ysize;
+            int tileWidth = m_attributes.tiles.xsize;
+            int tileHeight = m_attributes.tiles.ysize;
 
-            int x0 = tilex * w;
-            int x1 = std::min(width, x0 + w);
+            int x0 = tilex * tileWidth;
+            int y0 = tiley * tileHeight;
+            int x1 = std::min(width, x0 + tileWidth);
+            int y1 = std::min(height, y0 + tileHeight);
 
-            int y0 = tiley * h;
-            int y1 = std::min(height, y0 + h);
-
-            q.enqueue([=, &surface]
+            auto task = [=]
             {
                 ConstMemory memory(ptr, size);
                 decodeBlock(surface, memory, x0, y0, x1, y1);
-            });
+            };
+
+            if (options.multithread)
+            {
+                q.enqueue(task);
+            }
+            else
+            {
+                task();
+            }
         }
     }
     else
     {
         int nblocks = div_ceil(height, m_scanLinesPerBlock);
+
         debugPrint("Blocks: %d\n", nblocks);
 
         for (int i = 0; i < nblocks; ++i)
         {
             u64 offset = p.read64();
-            //debugPrint("offset: %d KB\n", int(offset / 1024));
-
             LittleEndianConstPointer ptr = m_memory.address + offset;
 
             int ystart = ptr.read32();
             u32 size = ptr.read32();
-            //y0 -= attributes.dataWindow.ymin; // NOTE: brittle code
-            //debugPrint("  y:%d, size: %d bytes\n", y0, size);
-            MANGO_UNREFERENCED(ystart);
+
+            //debugPrint("  y:%d, size: %d bytes\n", ystart, size);
 
             int x0 = 0;
+            int y0 = ystart - m_attributes.dataWindow.ymin;
             int x1 = width;
+            int y1 = std::min(height, y0 + m_scanLinesPerBlock);
 
-            int y0 = m_scanLinesPerBlock * i;
-            int y1 = std::min(y0 + m_scanLinesPerBlock, height);
-
-            q.enqueue([=, &surface]
+            auto task = [=]
             {
                 ConstMemory memory(ptr, size);
                 decodeBlock(surface, memory, x0, y0, x1, y1);
-            });
+            };
+
+            if (options.multithread)
+            {
+                q.enqueue(task);
+            }
+            else
+            {
+                task();
+            }
         }
     }
 
