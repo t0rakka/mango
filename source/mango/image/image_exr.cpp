@@ -2123,11 +2123,10 @@ void writeChromaRGBA(float16* dest, float32x3 yw, float RY, float BY, float Y, f
     float r = RY * Y + Y;
     float b = BY * Y + Y;
     float g = (Y - r * yw.x - b * yw.z) / yw.y;
-    float a = alpha;
     dest[0] = linear_to_srgb(r); // TODO: replace with gamma()
     dest[1] = linear_to_srgb(g);
     dest[2] = linear_to_srgb(b);
-    dest[3] = a;
+    dest[3] = alpha;
 }
 
 static
