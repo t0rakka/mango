@@ -2169,7 +2169,7 @@ namespace mango::jpeg
                 const int count = (y1 - y0) * xmcu;
                 debugPrint("  Process: [%d, %d] --> ThreadPool.\n", y0, y1 - 1);
 
-                void* aligned_ptr = std::aligned_alloc(64, count * mcu_data_size * sizeof(s16));
+                void* aligned_ptr = aligned_malloc(count * mcu_data_size * sizeof(s16), 64);
                 s16* data = reinterpret_cast<s16*>(aligned_ptr);
 
                 for (int i = 0; i < count; ++i)
@@ -2181,7 +2181,7 @@ namespace mango::jpeg
                 queue.enqueue([=]
                 {
                     process_range(y0, y1, data);
-                    std::free(data);
+                    aligned_free(data);
                 });
             }
         }

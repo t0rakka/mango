@@ -152,6 +152,16 @@ namespace mango
     };
 
     // -----------------------------------------------------------------------
+    // aligned malloc / free
+    // -----------------------------------------------------------------------
+
+    // IMPORTANT: Don't give in to temptation to use std::aligned_alloc -
+    //            IT DOESN'T WORK ON ALL PLATFORMS! Blood has been sacrificed for this notice!
+
+    void* aligned_malloc(size_t bytes, size_t alignment = 64);
+    void aligned_free(void* aligned);
+
+    // -----------------------------------------------------------------------
     // AlignedStorage
     // -----------------------------------------------------------------------
 
@@ -171,21 +181,21 @@ namespace mango
 
         AlignedStorage(size_t size, size_t alignment = 64)
         {
-            m_data = std::aligned_alloc(alignment, size * sizeof(T));
+            m_data = aligned_malloc(size * sizeof(T), alignment);
             m_size = size;
         }
 
         ~AlignedStorage()
         {
-            std::free(m_data);
+            aligned_free(m_data);
         }
 
         void resize(size_t size, size_t alignment = 64)
         {
             if (size != m_size)
             {
-                std::free(m_data);
-                m_data = size ? std::aligned_alloc(alignment, size * sizeof(T)) : nullptr;
+                aligned_free(m_data);
+                m_data = size ? aligned_malloc(size * sizeof(T), alignment) : nullptr;
                 m_size = size;
             }
         }
