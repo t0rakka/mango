@@ -55,7 +55,7 @@ namespace mango
 
     Buffer::~Buffer()
     {
-        std::free(m_memory.address);
+        aligned_free(m_memory.address);
     }
 
     Buffer::operator ConstMemory () const
@@ -90,14 +90,14 @@ namespace mango
 
     void Buffer::reset()
     {
-        std::free(m_memory.address);
+        aligned_free(m_memory.address);
         m_memory = Memory();
         m_capacity = 0;
     }
 
     void Buffer::reset(size_t bytes)
     {
-        std::free(m_memory.address);
+        aligned_free(m_memory.address);
         m_memory = Memory(allocate(bytes), bytes);
         m_capacity = bytes;
     }
@@ -122,7 +122,7 @@ namespace mango
             if (m_memory.address)
             {
                 std::memcpy(storage, m_memory.address, m_memory.size);
-                std::free(m_memory.address);
+                aligned_free(m_memory.address);
             }
             m_memory.address = storage;
             m_capacity = bytes;
@@ -181,13 +181,12 @@ namespace mango
 
     void Buffer::release(Memory memory)
     {
-        std::free(memory.address);
+        aligned_free(memory.address);
     }
 
     u8* Buffer::allocate(size_t bytes) const
     {
-        const size_t alignment = 64;
-        void* p = std::aligned_alloc(alignment, bytes);
+        void* p = aligned_malloc(bytes, 64);
         return reinterpret_cast<u8*>(p);
     }
 
