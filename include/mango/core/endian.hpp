@@ -12,7 +12,7 @@ namespace mango
 {
 
     // --------------------------------------------------------------
-    // unaligned load/store
+    // unaligned load
     // --------------------------------------------------------------
 
     static inline
@@ -40,6 +40,34 @@ namespace mango
     }
 
     static inline
+    float16 uload16f(const void* p)
+    {
+        float16 value;
+        std::memcpy(&value, p, sizeof(float16));
+        return value;
+    }
+
+    static inline
+    float32 uload32f(const void* p)
+    {
+        float32 value;
+        std::memcpy(&value, p, sizeof(float32));
+        return value;
+    }
+
+    static inline
+    float64 uload64f(const void* p)
+    {
+        float64 value;
+        std::memcpy(&value, p, sizeof(float64));
+        return value;
+    }
+
+    // --------------------------------------------------------------
+    // unaligned store
+    // --------------------------------------------------------------
+
+    static inline
     void ustore16(void* p, u16 value)
     {
         std::memcpy(p, &value, sizeof(u16));
@@ -57,81 +85,87 @@ namespace mango
         std::memcpy(p, &value, sizeof(u64));
     }
 
-    // --------------------------------------------------------------
-    // unaligned load/store + byteswap
-    // --------------------------------------------------------------
-
     static inline
-    u16 uload16swap(const void* p)
+    void ustore16f(void* p, float16 value)
     {
-        return byteswap(uload16(p));
+        std::memcpy(p, &value, sizeof(float16));
     }
 
     static inline
-    u32 uload32swap(const void* p)
+    void ustore32f(void* p, float32 value)
     {
-        return byteswap(uload32(p));
+        std::memcpy(p, &value, sizeof(float32));
     }
 
     static inline
-    u64 uload64swap(const void* p)
+    void ustore64f(void* p, float64 value)
     {
-        return byteswap(uload64(p));
-    }
-
-    static inline
-    void ustore16swap(void* p, u16 value)
-    {
-        ustore16(p, byteswap(value));
-    }
-
-    static inline
-    void ustore32swap(void* p, u32 value)
-    {
-        ustore32(p, byteswap(value));
-    }
-
-    static inline
-    void ustore64swap(void* p, u64 value)
-    {
-        ustore64(p, byteswap(value));
+        std::memcpy(p, &value, sizeof(float64));
     }
 
     // --------------------------------------------------------------
-	// endian load/store
+    // endian load/store
     // --------------------------------------------------------------
 
 #ifdef MANGO_LITTLE_ENDIAN
 
-    static constexpr auto uload16le = uload16;
-    static constexpr auto uload32le = uload32;
-    static constexpr auto uload64le = uload64;
-    static constexpr auto uload16be = uload16swap;
-    static constexpr auto uload32be = uload32swap;
-    static constexpr auto uload64be = uload64swap;
+    static inline auto uload16le = uload16;
+    static inline auto uload32le = uload32;
+    static inline auto uload64le = uload64;
+    static inline auto uload16be = [] (const void* p) { return byteswap(uload16(p)); };
+    static inline auto uload32be = [] (const void* p) { return byteswap(uload32(p)); };
+    static inline auto uload64be = [] (const void* p) { return byteswap(uload64(p)); };
 
-    static constexpr auto ustore16le = ustore16;
-    static constexpr auto ustore32le = ustore32;
-    static constexpr auto ustore64le = ustore64;
-    static constexpr auto ustore16be = ustore16swap;
-    static constexpr auto ustore32be = ustore32swap;
-    static constexpr auto ustore64be = ustore64swap;
+    static inline auto ustore16le = ustore16;
+    static inline auto ustore32le = ustore32;
+    static inline auto ustore64le = ustore64;
+    static inline auto ustore16be = [] (void* p, u16 value) { ustore16(p, byteswap(value)); };
+    static inline auto ustore32be = [] (void* p, u32 value) { ustore32(p, byteswap(value)); };
+    static inline auto ustore64be = [] (void* p, u64 value) { ustore64(p, byteswap(value)); };
+
+    static inline auto uload16fle = uload16f;
+    static inline auto uload32fle = uload32f;
+    static inline auto uload64fle = uload64f;
+    static inline auto uload16fbe = [] (const void* p) { return byteswap(uload16f(p)); };
+    static inline auto uload32fbe = [] (const void* p) { return byteswap(uload32f(p)); };
+    static inline auto uload64fbe = [] (const void* p) { return byteswap(uload64f(p)); };
+
+    static inline auto ustore16fle = ustore16f;
+    static inline auto ustore32fle = ustore32f;
+    static inline auto ustore64fle = ustore64f;
+    static inline auto ustore16fbe = [] (void* p, float16 value) { ustore16f(p, byteswap(value)); };
+    static inline auto ustore32fbe = [] (void* p, float32 value) { ustore32f(p, byteswap(value)); };
+    static inline auto ustore64fbe = [] (void* p, float64 value) { ustore64f(p, byteswap(value)); };
 
 #else
 
-    static constexpr auto uload16le = uload16swap;
-    static constexpr auto uload32le = uload32swap;
-    static constexpr auto uload64le = uload64swap;
-    static constexpr auto uload16be = uload16;
-    static constexpr auto uload32be = uload32;
-    static constexpr auto uload64be = uload64;
+    static inline auto uload16le = [] (const void* p) { return byteswap(uload16(p)); };
+    static inline auto uload32le = [] (const void* p) { return byteswap(uload32(p)); };
+    static inline auto uload64le = [] (const void* p) { return byteswap(uload64(p)); };
+    static inline auto uload16be = uload16;
+    static inline auto uload32be = uload32;
+    static inline auto uload64be = uload64;
 
-    static constexpr auto ustore16le = ustore16swap;
-    static constexpr auto ustore32le = ustore32swap;
-    static constexpr auto ustore64le = ustore64swap;
-    static constexpr auto ustore16be = ustore16;
-    static constexpr auto ustore32be = ustore32;
-    static constexpr auto ustore64be = ustore64;
+    static inline auto ustore16le = [] (void* p, u16 value) { ustore16(p, byteswap(value)); };
+    static inline auto ustore32le = [] (void* p, u32 value) { ustore32(p, byteswap(value)); };
+    static inline auto ustore64le = [] (void* p, u64 value) { ustore64(p, byteswap(value)); };
+    static inline auto ustore16be = ustore16;
+    static inline auto ustore32be = ustore32;
+    static inline auto ustore64be = ustore64;
+
+    static inline auto uload16fle = [] (const void* p) { return byteswap(uload16f(p)); };
+    static inline auto uload32fle = [] (const void* p) { return byteswap(uload32f(p)); };
+    static inline auto uload64fle = [] (const void* p) { return byteswap(uload64f(p)); };
+    static inline auto uload16fbe = uload16f;
+    static inline auto uload32fbe = uload32f;
+    static inline auto uload64fbe = uload64f;
+
+    static inline auto ustore16fle = [] (void* p, float16 value) { ustore16f(p, byteswap(value)); };
+    static inline auto ustore32fle = [] (void* p, float32 value) { ustore32f(p, byteswap(value)); };
+    static inline auto ustore64fle = [] (void* p, float64 value) { ustore64f(p, byteswap(value)); };
+    static inline auto ustore16fbe = ustore16f;
+    static inline auto ustore32fbe = ustore32f;
+    static inline auto ustore64fbe = ustore64f;
 
 #endif
 
