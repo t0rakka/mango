@@ -927,11 +927,12 @@ enum LineOrder : u8
     RANDOM_Y = 2
 };
 
-enum PixelType : u32
+enum class DataType
 {
     UINT = 0,
     HALF = 1,
-    FLOAT = 2
+    FLOAT = 2,
+    NONE
 };
 
 enum class ColorType
@@ -944,7 +945,7 @@ enum class ColorType
 
 struct Channel
 {
-    PixelType type;
+    DataType datatype;
     int xsamples;
     int ysamples;
     int linear;
@@ -966,7 +967,7 @@ struct TileDesc
     u32 xsize;
     u32 ysize;
     u8 mode; // 0: single image, 1: mipmap, 2: ripmap
-             // 4th bit (0x10) indicates rounding direction (0: down, 1: up)
+             // 5th bit (0x10) indicates rounding direction (0: down, 1: up)
 };
 
 struct Box2i
@@ -1117,19 +1118,19 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
         switch (type)
         {
             case 0:
-                channel.type = UINT;
+                channel.datatype = DataType::UINT;
                 channel.bytes = 4;
                 break;
             case 1:
-                channel.type = HALF;
+                channel.datatype = DataType::HALF;
                 channel.bytes = 2;
                 break;
             case 2:
-                channel.type = FLOAT;
+                channel.datatype = DataType::FLOAT;
                 channel.bytes = 4;
                 break;
             default:
-                // TODO: error
+                channel.datatype = DataType::NONE;
                 channel.bytes = 0;
                 break;
         }
@@ -1189,9 +1190,6 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
         else
         {
             // not supported
-            channel.component = -1;
-            channel.offset = data.bytes;
-            data.channels.push_back(channel);
         }
 
         data.bytes += channel.bytes;
@@ -1316,6 +1314,7 @@ struct AttributeTable
     float32x2   screenWindowCenter;
     float       screenWindowWidth;
     u8          envmap; // 0: None, 1: LatLong, 2 - Cube
+                        // cube face order: +x, -x, +y, -y, +z. -z
     Chromaticities chromaticities;
 
     // Tile Header Attribute
@@ -1826,9 +1825,9 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
                 return nullptr;
             }
 
-            switch (channel.type)
+            switch (channel.datatype)
             {
-                case UINT:
+                case DataType::UINT:
                 {
                     const u8* ptr = lastIn;
                     lastIn += nBytes;
@@ -1853,7 +1852,7 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
                     break;
                 }
 
-                case HALF:
+                case DataType::HALF:
                 {
                     const u8* ptr = lastIn;
                     lastIn += nBytes;
@@ -1876,7 +1875,7 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
                     break;
                 }
 
-                case FLOAT:
+                case DataType::FLOAT:
                 {
                     const u8* ptr = lastIn;
                     lastIn += w * 3; // 24 bits per sample
@@ -1899,6 +1898,9 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
                     }
                     break;
                 }
+
+                case DataType::NONE:
+                    break;
             }
 
             out += nBytes;
@@ -1932,7 +1934,7 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
         if (nBytes == 0)
             continue;
 
-        if (channel.type != HALF)
+        if (channel.datatype != DataType::HALF)
         {
             //if (bIn + nBytes > comp_buf_size)
             //    return EXR_ERR_OUT_OF_MEMORY;
@@ -2087,23 +2089,10 @@ const u8* ContextEXR::decompress_dwab(Memory dest, ConstMemory source, int width
     return nullptr;
 }
 
-static inline
-void writeChromaRGBA(float16* dest, float32x3 yw, float RY, float BY, float Y, float16 alpha)
-{
-    float r = RY * Y + Y;
-    float b = BY * Y + Y;
-    float g = (Y - r * yw.x - b * yw.z) / yw.y;
-    dest[0] = linear_to_srgb(r); // TODO: replace with gamma()
-    dest[1] = linear_to_srgb(g);
-    dest[2] = linear_to_srgb(b);
-    dest[3] = alpha;
-}
-
 static
 void decodeLuminance(Surface surface, const u8* src, const AttributeTable& attributes, int x0, int y0, int x1, int y1)
 {
     int blockWidth = x1 - x0;
-    //int blockHeight = y1 - y0;
 
     size_t bytesPerPixel = attributes.chlist.bytes;
     size_t bytesPerScan = blockWidth * bytesPerPixel;
@@ -2114,7 +2103,7 @@ void decodeLuminance(Surface surface, const u8* src, const AttributeTable& attri
 
         const float16* scan = reinterpret_cast<const float16*>(src + blockWidth * 0);
 
-        // TODO: FLOAT, alpha
+        // TODO: FLOAT, alpha, channel.offset
 
         float16 one(1.0f);
 
@@ -2132,6 +2121,21 @@ void decodeLuminance(Surface surface, const u8* src, const AttributeTable& attri
     }
 }
 
+static inline
+void writeChromaRGBA(float16* dest, float32x3 yw, float RY, float BY, float Y, float16 alpha)
+{
+    float r = RY * Y + Y;
+    float b = BY * Y + Y;
+    float g = (Y - r * yw.x - b * yw.z) / yw.y;
+    r = linear_to_srgb(r); // TODO: replace with gamma()
+    g = linear_to_srgb(g);
+    b = linear_to_srgb(b);
+    dest[0] = r;
+    dest[1] = g;
+    dest[2] = b;
+    dest[3] = alpha;
+}
+
 static
 void decodeChroma(Surface surface, const u8* src, const AttributeTable& attributes, int x0, int y0, int x1, int y1)
 {
@@ -2144,7 +2148,7 @@ void decodeChroma(Surface surface, const u8* src, const AttributeTable& attribut
     float32x3 yw = computeYW(attributes.chromaticities, 1.0f);
 
     // TODO: configure channel inputs correctly
-    // TODO: support UINT and FLOAT
+    // TODO: support FLOAT
     // TODO: alpha
 
     for (int y = y0; y < y1; y += 2)
@@ -2183,8 +2187,6 @@ void decodeChroma(Surface surface, const u8* src, const AttributeTable& attribut
             image1 += 8;
         }
 
-        //src += blockWidth * 4;
-        //src += blockWidth * 6;
         src += bytesPerScan;
     }
 }
@@ -2193,67 +2195,198 @@ static
 void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes, int x0, int y0, int x1, int y1)
 {
     int blockWidth = x1 - x0;
-    //int blockHeight = y1 - y0;
 
     size_t bytesPerPixel = attributes.chlist.bytes;
     size_t bytesPerScan = blockWidth * bytesPerPixel;
 
-    int ch_offset[4] = { 0, 0, 0, 0 };
-    int ch_size[4] = { 0, 0, 0, 0 };
-
-    for (auto channel : attributes.chlist.channels)
+    DataType datatype = attributes.chlist.channels[0].datatype;
+    for (size_t i = 1; i < attributes.chlist.channels.size(); ++i)
     {
-        if (channel.component >= 0)
+        const Channel& channel = attributes.chlist.channels[i];
+        if (channel.datatype != datatype)
         {
-            ch_offset[channel.component] = channel.offset;
-            ch_size[channel.component] = channel.bytes;
+            // all channels must be of same datatype
+            return;
         }
     }
 
-    //debugPrint("  blitting: (%d, %d) %d x %d)\n", x0, y0, x1 - x0, y1 - y0);
-
-    for (int y = y0; y < y1; ++y)
+    if (datatype == DataType::HALF)
     {
-        float16* image = surface.address<float16>(x0, y);
+        float16 zeros [] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        float16 ones [] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-        // TODO: component type (UINT, HALF, FLOAT)
-        // TODO: UINT is not "color" but support it for extraction of arbitrary channels
-
-        float16 values [] = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-        const float16* ptr[4];
-        size_t step[4];
-
-        for (int i = 0; i < 4; ++i)
+        const u8* ptr[4] =
         {
-            if (ch_size[i] > 0)
-            {
-                ptr[i] = reinterpret_cast<const float16*>(src + blockWidth * ch_offset[i]);
-                step[i] = 1;
-            }
-            else
-            {
-                ptr[i] = values + i;
-                step[i] = 0;
-            }
+            reinterpret_cast<const u8*>(zeros),
+            reinterpret_cast<const u8*>(zeros), 
+            reinterpret_cast<const u8*>(zeros), 
+            reinterpret_cast<const u8*>(ones)
+        };
+
+        size_t ch_bytes[] = { 0, 0, 0, 0 };
+        int ch_offset[4] = { 0, 0, 0, 0 };
+
+        for (auto channel : attributes.chlist.channels)
+        {
+            ch_offset[channel.component] = channel.offset;
+            ch_bytes[channel.component] = channel.bytes;
         }
 
-        for (int x = x0; x < x1; ++x)
+        for (int y = y0; y < y1; ++y)
         {
-            image[0] = linear_to_srgb(*ptr[0]); // TODO: replace with gamma()
-            image[1] = linear_to_srgb(*ptr[1]);
-            image[2] = linear_to_srgb(*ptr[2]);
-            image[3] = *ptr[3];
+            float16* image = surface.address<float16>(x0, y);
 
-            ptr[0] += step[0];
-            ptr[1] += step[1];
-            ptr[2] += step[2];
-            ptr[3] += step[3];
+            for (int i = 0; i < 4; ++i)
+            {
+                if (ch_bytes[i])
+                {
+                    ptr[i] = src + blockWidth * ch_offset[i];
+                }
+            }
 
-            image += 4;
+            int count = blockWidth;
+#if 1
+            while (count >= 4)
+            {
+                float32x4 r = convert<float32x4>(float16x4::uload(ptr[0]));
+                float32x4 g = convert<float32x4>(float16x4::uload(ptr[1]));
+                float32x4 b = convert<float32x4>(float16x4::uload(ptr[2]));
+                float32x4 a = convert<float32x4>(float16x4::uload(ptr[3]));
+                r = linear_to_srgb(r);
+                g = linear_to_srgb(g);
+                b = linear_to_srgb(b);
+
+                float32x4 color[4];
+                transpose(color, r, g, b, a);
+
+                float16x4::ustore(image +  0, convert<float16x4>(color[0]));
+                float16x4::ustore(image +  4, convert<float16x4>(color[1]));
+                float16x4::ustore(image +  8, convert<float16x4>(color[2]));
+                float16x4::ustore(image + 12, convert<float16x4>(color[3]));
+
+                ptr[0] += ch_bytes[0] * 4;
+                ptr[1] += ch_bytes[1] * 4;
+                ptr[2] += ch_bytes[2] * 4;
+                ptr[3] += ch_bytes[3] * 4;
+
+                image += 16;
+                count -= 4;
+            }
+#endif
+            while (count-- > 0)
+            {
+                float16 r = uload16f(ptr[0]);
+                float16 g = uload16f(ptr[1]);
+                float16 b = uload16f(ptr[2]);
+                float16 a = uload16f(ptr[3]);
+                r = linear_to_srgb(r);
+                g = linear_to_srgb(g);
+                b = linear_to_srgb(b);
+
+                image[0] = r;
+                image[1] = g;
+                image[2] = b;
+                image[3] = a;
+
+                ptr[0] += ch_bytes[0];
+                ptr[1] += ch_bytes[1];
+                ptr[2] += ch_bytes[2];
+                ptr[3] += ch_bytes[3];
+
+                image += 4;
+            }
+
+            src += bytesPerScan;
+        }
+    }
+    else if (datatype == DataType::FLOAT)
+    {
+        float32 zeros [] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        float32 ones [] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+        const u8* ptr[4] =
+        {
+            reinterpret_cast<const u8*>(zeros),
+            reinterpret_cast<const u8*>(zeros), 
+            reinterpret_cast<const u8*>(zeros), 
+            reinterpret_cast<const u8*>(ones)
+        };
+
+        size_t ch_bytes[] = { 0, 0, 0, 0 };
+        int ch_offset[4] = { 0, 0, 0, 0 };
+
+        for (auto channel : attributes.chlist.channels)
+        {
+            ch_offset[channel.component] = channel.offset;
+            ch_bytes[channel.component] = channel.bytes;
         }
 
-        src += bytesPerScan;
+        for (int y = y0; y < y1; ++y)
+        {
+            float16* image = surface.address<float16>(x0, y);
+
+            for (int i = 0; i < 4; ++i)
+            {
+                if (ch_bytes[i])
+                {
+                    ptr[i] = src + blockWidth * ch_offset[i];
+                }
+            }
+
+            int count = blockWidth;
+#if 1
+            while (count >= 4)
+            {
+                float32x4 r = float32x4::uload(ptr[0]);
+                float32x4 g = float32x4::uload(ptr[1]);
+                float32x4 b = float32x4::uload(ptr[2]);
+                float32x4 a = float32x4::uload(ptr[3]);
+                r = linear_to_srgb(r);
+                g = linear_to_srgb(g);
+                b = linear_to_srgb(b);
+
+                float32x4 color[4];
+                transpose(color, r, g, b, a);
+
+                float16x4::ustore(image +  0, convert<float16x4>(color[0]));
+                float16x4::ustore(image +  4, convert<float16x4>(color[1]));
+                float16x4::ustore(image +  8, convert<float16x4>(color[2]));
+                float16x4::ustore(image + 12, convert<float16x4>(color[3]));
+
+                ptr[0] += ch_bytes[0] * 4;
+                ptr[1] += ch_bytes[1] * 4;
+                ptr[2] += ch_bytes[2] * 4;
+                ptr[3] += ch_bytes[3] * 4;
+
+                image += 16;
+                count -= 4;
+            }
+#endif
+            while (count-- > 0)
+            {
+                float16 r = uload16f(ptr[0]);
+                float16 g = uload16f(ptr[1]);
+                float16 b = uload16f(ptr[2]);
+                float16 a = uload16f(ptr[3]);
+                r = linear_to_srgb(r);
+                g = linear_to_srgb(g);
+                b = linear_to_srgb(b);
+
+                image[0] = r;
+                image[1] = g;
+                image[2] = b;
+                image[3] = a;
+
+                ptr[0] += ch_bytes[0];
+                ptr[1] += ch_bytes[1];
+                ptr[2] += ch_bytes[2];
+                ptr[3] += ch_bytes[3];
+
+                image += 4;
+            }
+
+            src += bytesPerScan;
+        }
     }
 }
 
