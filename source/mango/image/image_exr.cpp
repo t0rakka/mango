@@ -1102,6 +1102,8 @@ void readAttribute(T& data, LittleEndianConstPointer p)
 template <>
 void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
 {
+    int offset = 0;
+
     for ( ; *p; )
     {
         std::string name = p.cast<const char>();
@@ -1142,43 +1144,43 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
 
         if (name == "R")
         {
-            channel.offset = data.bytes;
+            channel.offset = offset;
             data.channels.push_back(channel);
             data.red = channel;
         }
         else if (name == "G")
         {
-            channel.offset = data.bytes;
+            channel.offset = offset;
             data.channels.push_back(channel);
             data.green = channel;
         }
         else if (name == "B")
         {
-            channel.offset = data.bytes;
+            channel.offset = offset;
             data.channels.push_back(channel);
             data.blue = channel;
         }
         else if (name == "A")
         {
-            channel.offset = data.bytes;
+            channel.offset = offset;
             data.channels.push_back(channel);
             data.alpha = channel;
         }
         else if (name == "BY")
         {
-            channel.offset = data.bytes;
+            channel.offset = offset;
             data.channels.push_back(channel);
             data.blue = channel;
         }
         else if (name == "RY")
         {
-            channel.offset = data.bytes;
+            channel.offset = offset;
             data.channels.push_back(channel);
             data.red = channel;
         }
         else if (name == "Y")
         {
-            channel.offset = data.bytes;
+            channel.offset = offset;
             data.channels.push_back(channel);
             data.luminance = channel;
         }
@@ -1187,6 +1189,7 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
             // not supported
         }
 
+        offset += channel.bytes / xsamples;
         data.bytes += channel.bytes;
 
         debugPrint("    \"%s\", type: %d, linear: %d, offset: %d, samples: (%d x %d)\n",
@@ -1224,6 +1227,7 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
         }
     }
 
+    debugPrint("    DataPerPixel: %d bytes\n", data.bytes);
     debugPrint("    Color: %s\n", color);
 }
 
@@ -2123,7 +2127,7 @@ void writeChromaRGBA(float16* dest, float32x3 yw, float RY, float BY, float Y, f
     float r = RY * Y + Y;
     float b = BY * Y + Y;
     float g = (Y - r * yw.x - b * yw.z) / yw.y;
-    r = linear_to_srgb(r); // TODO: replace with gamma()
+    r = linear_to_srgb(r);
     g = linear_to_srgb(g);
     b = linear_to_srgb(b);
     dest[0] = r;
@@ -2149,32 +2153,32 @@ void decodeLuminance(Surface surface, const u8* src, const AttributeTable& attri
     {
         float16 one(1.0f);
 
-        const float16* scan_a = &one;
-        size_t step_a = alpha.bytes ? 1 : 0;
+        const u8* scan_a = reinterpret_cast<const u8*>(&one);
+
+        size_t step_y = luminance.bytes;
+        size_t step_a = alpha.bytes;
 
         for (int y = y0; y < y1; ++y)
         {
             float16* image = surface.address<float16>(x0, y);
 
-            const float16* scan_y = reinterpret_cast<const float16*>(src + blockWidth * luminance.offset);
+            const u8* scan_y = src + blockWidth * luminance.offset;
             if (step_a)
             {
-                scan_a = reinterpret_cast<const float16*>(src + blockWidth * alpha.offset);
+                scan_a = src + blockWidth * alpha.offset;
             }
-
-            float16 a(1.0f);
 
             for (int x = x0; x < x1; ++x)
             {
-                float16 s = *scan_y;
-                float16 a = *scan_a;
+                float16 s = uload16f(scan_y);
+                float16 a = uload16f(scan_a);
 
                 image[0] = s;
                 image[1] = s;
                 image[2] = s;
                 image[3] = a;
 
-                scan_y++;
+                scan_y += step_y;
                 scan_a += step_a;
                 image += 4;
             }
@@ -2199,47 +2203,51 @@ void decodeChroma(Surface surface, const u8* src, const AttributeTable& attribut
 
     float32x3 yw = computeYW(attributes.chromaticities, 1.0f);
 
-    // TODO: configure channel inputs correctly
-    // TODO: support FLOAT
-    // TODO: alpha
+    Channel luminance = attributes.chlist.luminance;
+    Channel red = attributes.chlist.red;
+    Channel blue = attributes.chlist.blue;
 
-    for (int y = y0; y < y1; y += 2)
+    DataType datatype = getDataType(attributes);
+
+    if (datatype == DataType::HALF)
     {
-        // TODO: clip modulo scanline at the end
-        float16* image0 = surface.address<float16>(0, y + 0);
-        float16* image1 = surface.address<float16>(0, y + 1);
-
-        float16 alpha(1.0f);
-
-#if 1
-        const float16* scan_b = reinterpret_cast<const float16*>(src + blockWidth * 0);
-        const float16* scan_r = reinterpret_cast<const float16*>(src + blockWidth * 1);
-        const float16* scan_0 = reinterpret_cast<const float16*>(src + blockWidth * 2);
-        const float16* scan_1 = reinterpret_cast<const float16*>(src + blockWidth * 4);
-#endif
-        //const float16* scan_0 = reinterpret_cast<const float16*>(src + blockWidth * 0);
-        //const float16* scan_1 = reinterpret_cast<const float16*>(src + blockWidth * 2);
-
-        // TODO: clip modulo pixel at the end
-        for (int x = x0; x < x1; x += 2)
+        // TODO: clipping
+        for (int y = y0; y < y1; y += 2)
         {
-            float RY = scan_r[x / 2];
-            float BY = scan_b[x / 2];
-            float Y0 = scan_0[x + 0];
-            float Y1 = scan_0[x + 1];
-            float Y2 = scan_1[x + 0];
-            float Y3 = scan_1[x + 1];
+            float16* image0 = surface.address<float16>(0, y + 0);
+            float16* image1 = surface.address<float16>(0, y + 1);
 
-            writeChromaRGBA(image0 + 0, yw, RY, BY, Y0, alpha);
-            writeChromaRGBA(image0 + 4, yw, RY, BY, Y1, alpha);
-            writeChromaRGBA(image1 + 0, yw, RY, BY, Y2, alpha);
-            writeChromaRGBA(image1 + 4, yw, RY, BY, Y3, alpha);
+            float16 alpha(1.0f);
 
-            image0 += 8;
-            image1 += 8;
+            const u8* scan_y0 = src + blockWidth * (luminance.offset + 0);
+            const u8* scan_y1 = src + blockWidth * (luminance.offset + 2);
+            const u8* scan_r = src + blockWidth * red.offset;
+            const u8* scan_b = src + blockWidth * blue.offset;
+
+            for (int x = x0; x < x1; x += 2)
+            {
+                float r = uload16f(scan_r + x * 1);
+                float b = uload16f(scan_b + x * 1);
+                float s0 = uload16f(scan_y0 + x * 2 + 0);
+                float s1 = uload16f(scan_y0 + x * 2 + 2);
+                float s2 = uload16f(scan_y1 + x * 2 + 0);
+                float s3 = uload16f(scan_y1 + x * 2 + 2);
+
+                writeChromaRGBA(image0 + 0, yw, r, b, s0, alpha);
+                writeChromaRGBA(image0 + 4, yw, r, b, s1, alpha);
+                writeChromaRGBA(image1 + 0, yw, r, b, s2, alpha);
+                writeChromaRGBA(image1 + 4, yw, r, b, s3, alpha);
+
+                image0 += 8;
+                image1 += 8;
+            }
+
+            src += bytesPerScan;
         }
-
-        src += bytesPerScan;
+    }
+    else
+    {
+        // TODO
     }
 }
 
@@ -2251,29 +2259,29 @@ void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes,
     size_t bytesPerPixel = attributes.chlist.bytes;
     size_t bytesPerScan = blockWidth * bytesPerPixel;
 
-    size_t ch_bytes[] = { 0, 0, 0, 0 };
-    int ch_offset[4] = { 0, 0, 0, 0 };
+    size_t ch_step [] = { 0, 0, 0, 0 };
+    int ch_offset [] = { 0, 0, 0, 0 };
 
     if (attributes.chlist.red.bytes)
     {
         ch_offset[0] = attributes.chlist.red.offset;
-        ch_bytes[0] = attributes.chlist.red.bytes;
+        ch_step[0] = attributes.chlist.red.bytes;
     }
 
     if (attributes.chlist.green.bytes)
     {
         ch_offset[1] = attributes.chlist.green.offset;
-        ch_bytes[1] = attributes.chlist.green.bytes;
+        ch_step[1] = attributes.chlist.green.bytes;
     }
     if (attributes.chlist.blue.bytes)
     {
         ch_offset[2] = attributes.chlist.blue.offset;
-        ch_bytes[2] = attributes.chlist.blue.bytes;
+        ch_step[2] = attributes.chlist.blue.bytes;
     }
     if (attributes.chlist.alpha.bytes)
     {
         ch_offset[3] = attributes.chlist.alpha.offset;
-        ch_bytes[3] = attributes.chlist.alpha.bytes;
+        ch_step[3] = attributes.chlist.alpha.bytes;
     }
 
     DataType datatype = getDataType(attributes);
@@ -2297,7 +2305,7 @@ void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes,
 
             for (int i = 0; i < 4; ++i)
             {
-                if (ch_bytes[i])
+                if (ch_step[i])
                 {
                     ptr[i] = src + blockWidth * ch_offset[i];
                 }
@@ -2323,10 +2331,10 @@ void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes,
                 float16x4::ustore(image +  8, convert<float16x4>(color[2]));
                 float16x4::ustore(image + 12, convert<float16x4>(color[3]));
 
-                ptr[0] += ch_bytes[0] * 4;
-                ptr[1] += ch_bytes[1] * 4;
-                ptr[2] += ch_bytes[2] * 4;
-                ptr[3] += ch_bytes[3] * 4;
+                ptr[0] += ch_step[0] * 4;
+                ptr[1] += ch_step[1] * 4;
+                ptr[2] += ch_step[2] * 4;
+                ptr[3] += ch_step[3] * 4;
 
                 image += 16;
                 count -= 4;
@@ -2347,10 +2355,10 @@ void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes,
                 image[2] = b;
                 image[3] = a;
 
-                ptr[0] += ch_bytes[0];
-                ptr[1] += ch_bytes[1];
-                ptr[2] += ch_bytes[2];
-                ptr[3] += ch_bytes[3];
+                ptr[0] += ch_step[0];
+                ptr[1] += ch_step[1];
+                ptr[2] += ch_step[2];
+                ptr[3] += ch_step[3];
 
                 image += 4;
             }
@@ -2377,7 +2385,7 @@ void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes,
 
             for (int i = 0; i < 4; ++i)
             {
-                if (ch_bytes[i])
+                if (ch_step[i])
                 {
                     ptr[i] = src + blockWidth * ch_offset[i];
                 }
@@ -2403,10 +2411,10 @@ void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes,
                 float16x4::ustore(image +  8, convert<float16x4>(color[2]));
                 float16x4::ustore(image + 12, convert<float16x4>(color[3]));
 
-                ptr[0] += ch_bytes[0] * 4;
-                ptr[1] += ch_bytes[1] * 4;
-                ptr[2] += ch_bytes[2] * 4;
-                ptr[3] += ch_bytes[3] * 4;
+                ptr[0] += ch_step[0] * 4;
+                ptr[1] += ch_step[1] * 4;
+                ptr[2] += ch_step[2] * 4;
+                ptr[3] += ch_step[3] * 4;
 
                 image += 16;
                 count -= 4;
@@ -2427,10 +2435,10 @@ void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes,
                 image[2] = b;
                 image[3] = a;
 
-                ptr[0] += ch_bytes[0];
-                ptr[1] += ch_bytes[1];
-                ptr[2] += ch_bytes[2];
-                ptr[3] += ch_bytes[3];
+                ptr[0] += ch_step[0];
+                ptr[1] += ch_step[1];
+                ptr[2] += ch_step[2];
+                ptr[3] += ch_step[3];
 
                 image += 4;
             }
