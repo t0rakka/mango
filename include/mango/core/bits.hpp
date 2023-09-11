@@ -114,24 +114,27 @@ namespace mango
 #endif
 
     static inline
-    Half byteswap(Half v)
+    float16 byteswap(float16 v)
     {
-        v.u = byteswap(v.u);
-        return v;
+        Half temp(v);
+        temp.u = byteswap(temp.u);
+        return temp;
     }
 
     static inline
-    Float byteswap(Float v)
+    float32 byteswap(float32 v)
     {
-        v.u = byteswap(v.u);
-        return v;
+        Float temp(v);
+        temp.u = byteswap(temp.u);
+        return temp;
     }
 
     static inline
-    Double byteswap(Double v)
+    float64 byteswap(float64 v)
     {
-        v.u = byteswap(v.u);
-        return v;
+        Double temp(v);
+        temp.u = byteswap(temp.u);
+        return temp;
     }
 
     // ----------------------------------------------------------------------------

@@ -122,7 +122,6 @@ namespace mango::image
     void registerImageCodecQOI();
     void registerImageCodecPIC();
     void registerImageCodecPSD();
-    //void registerImageCodecTIFF();
 
 #if defined(MANGO_ENABLE_JXL)
     void registerImageCodecJXL();
@@ -173,7 +172,6 @@ namespace mango::image
             registerImageCodecQOI();
             registerImageCodecPIC();
             registerImageCodecPSD();
-            //registerImageCodecTIFF();
 
 #if defined(MANGO_ENABLE_JXL)
             registerImageCodecJXL();

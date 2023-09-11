@@ -145,24 +145,21 @@ namespace mango::detail
 
         float16 read16f()
         {
-            Half value;
-            value.u = uload16(p);
+            float16 value = uload16f(p);
             p += 2;
             return value;
         }
 
-        float read32f()
+        float32 read32f()
         {
-            Float value;
-            value.u = uload32(p);
+            float32 value = uload32f(p);
             p += 4;
             return value;
         }
 
-        double read64f()
+        float64 read64f()
         {
-            Double value;
-            value.u = uload64(p);
+            float64 value = uload64f(p);
             p += 8;
             return value;
         }
@@ -230,21 +227,21 @@ namespace mango::detail
             p += 8;
         }
 
-        void write16f(Half value)
+        void write16f(float16 value)
         {
-            ustore16(p, value.u);
+            ustore16f(p, value);
             p += 2;
         }
 
-        void write32f(Float value)
+        void write32f(float32 value)
         {
-            ustore32(p, value.u);
+            ustore32f(p, value);
             p += 4;
         }
 
-        void write64f(Double value)
+        void write64f(float64 value)
         {
-            ustore64(p, value.u);
+            ustore64f(p, value);
             p += 8;
         }
     };
@@ -289,45 +286,42 @@ namespace mango::detail
 
         u16 read16()
         {
-            u16 value = uload16swap(p);
+            u16 value = byteswap(uload16(p));
             p += 2;
             return value;
         }
 
         u32 read32()
         {
-            u32 value = uload32swap(p);
+            u32 value = byteswap(uload32(p));
             p += 4;
             return value;
         }
 
         u64 read64()
         {
-            u64 value = uload64swap(p);
+            u64 value = byteswap(uload64(p));
             p += 8;
             return value;
         }
 
         float16 read16f()
         {
-            Half value;
-            value.u = uload16swap(p);
+            float16 value = byteswap(uload16f(p));
             p += 2;
             return value;
         }
 
-        float read32f()
+        float32 read32f()
         {
-            Float value;
-            value.u = uload32swap(p);
+            float32 value = byteswap(uload32f(p));
             p += 4;
             return value;
         }
 
-        double read64f()
+        float64 read64f()
         {
-            Double value;
-            value.u = uload64swap(p);
+            float64 value = byteswap(uload64f(p));
             p += 8;
             return value;
         }
@@ -379,37 +373,43 @@ namespace mango::detail
 
         void write16(u16 value)
         {
-            ustore16swap(p, value);
+            value = byteswap(value);
+            ustore16(p, value);
             p += 2;
         }
 
         void write32(u32 value)
         {
-            ustore32swap(p, value);
+            value = byteswap(value);
+            ustore32(p, value);
             p += 4;
         }
 
         void write64(u64 value)
         {
-            ustore64swap(p, value);
+            value = byteswap(value);
+            ustore64(p, value);
             p += 8;
         }
 
-        void write16f(Half value)
+        void write16f(float16 value)
         {
-            ustore16swap(p, value.u);
+            value = byteswap(value);
+            ustore16f(p, value);
             p += 2;
         }
 
-        void write32f(Float value)
+        void write32f(float32 value)
         {
-            ustore32swap(p, value.u);
+            value = byteswap(value);
+            ustore32f(p, value);
             p += 4;
         }
 
-        void write64f(Double value)
+        void write64f(float64 value)
         {
-            ustore64swap(p, value.u);
+            value = byteswap(value);
+            ustore64f(p, value);
             p += 8;
         }
     };
