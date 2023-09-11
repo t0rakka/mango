@@ -15,6 +15,12 @@ namespace
     using namespace mango::math;
     using namespace mango::image;
 
+    // TODO: mipmap/ripmap selection
+    // TODO: cubemap face selection
+    // TODO: deep image support
+    // TODO: multi-part support
+    // TODO: more flexible color resolver (=more formats)
+
 // --------------------------------------------------------------------------------------
 //
 // Copyright (c) Contributors to the OpenEXR Project. All rights reserved.
