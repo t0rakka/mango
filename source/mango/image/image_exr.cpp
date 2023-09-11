@@ -1195,7 +1195,7 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
             // not supported
         }
 
-        offset += channel.bytes / xsamples;
+        offset += div_ceil(channel.bytes, xsamples);
         data.bytes += channel.bytes;
 
         debugPrint("    \"%s\", type: %d, linear: %d, offset: %d, samples: (%d x %d)\n",
