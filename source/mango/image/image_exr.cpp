@@ -1158,25 +1158,28 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
                 break;
         }
 
-        if (name == "R")
+        // TODO: systematic way to recognize RGB channels
+        //       and classify them as different images (left vs. right, etc.)
+
+        if (name == "R" || name == "rgb.R")
         {
             channel.offset = offset;
             data.channels.push_back(channel);
             data.red = channel;
         }
-        else if (name == "G")
+        else if (name == "G" || name == "rgb.G")
         {
             channel.offset = offset;
             data.channels.push_back(channel);
             data.green = channel;
         }
-        else if (name == "B")
+        else if (name == "B" || name == "rgb.B")
         {
             channel.offset = offset;
             data.channels.push_back(channel);
             data.blue = channel;
         }
-        else if (name == "A")
+        else if (name == "A" || name == "rgb.A")
         {
             channel.offset = offset;
             data.channels.push_back(channel);
