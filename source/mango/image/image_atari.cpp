@@ -225,7 +225,7 @@ namespace
 			}
             else
             {
-                const u16be* buffer = reinterpret_cast<const u16be *>(data);
+                const bigEndian::u16* buffer = reinterpret_cast<const bigEndian::u16 *>(data);
 
                 if (bitplanes == 1)
                 {

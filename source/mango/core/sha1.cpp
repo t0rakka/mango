@@ -444,7 +444,7 @@ namespace
     b = u32_rol(b, 30);
 
 #define ROUND0a(a,b,c,d,e,i) \
-	schedule[i] = uload32be(data + i * 4); \
+	schedule[i] = bigEndian::uload32(data + i * 4); \
 	ROUNDTAIL(a, b, e, ((b & c) | (~b & d)), i, K1)
 
 #define ROUND0b(a,b,c,d,e,i) \
@@ -621,7 +621,7 @@ namespace mango
             std::memset(block, 0, 56);
         }
 
-        ustore64be(block + 56, u64(memory.size * 8));
+        bigEndian::ustore64(block + 56, u64(memory.size * 8));
         transform(hash.data, block, 1);
 
 #ifdef MANGO_LITTLE_ENDIAN

@@ -94,7 +94,7 @@ namespace fpng
 #define PUT_BITS_FLUSH do { \
     if ((dst_ofs + 8) > dst_buf_size) \
         return 0; \
-    ustore64le(pDst + dst_ofs, bit_buf); \
+    littleEndian::ustore64(pDst + dst_ofs, bit_buf); \
     uint32_t bits_to_shift = bit_buf_size & ~7; \
     dst_ofs += (bits_to_shift >> 3); \
     assert(bits_to_shift < 64); \
@@ -141,7 +141,7 @@ namespace fpng
 
             u32 prev_lits;
             {
-                u32 lits = uload32le(pSrc + src_ofs);
+                u32 lits = littleEndian::uload32(pSrc + src_ofs);
 
                 PUT_BITS_CZ(g_dyn_huff_4_codes[lits & 0xFF].m_code, g_dyn_huff_4_codes[lits & 0xFF].m_code_size);
                 PUT_BITS_CZ(g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code, g_dyn_huff_4_codes[(lits >> 8) & 0xFF].m_code_size);
@@ -163,7 +163,7 @@ namespace fpng
 
             while (src_ofs < end_src_ofs)
             {
-                u32 lits = uload32le(pSrc + src_ofs);
+                u32 lits = littleEndian::uload32(pSrc + src_ofs);
 
                 if (lits == prev_lits)
                 {
@@ -172,7 +172,7 @@ namespace fpng
 
                     while (match_len < max_match_len)
                     {
-                        if (uload32le(pSrc + src_ofs + match_len) != lits)
+                        if (littleEndian::uload32(pSrc + src_ofs + match_len) != lits)
                             break;
                         match_len += 4;
                     }
@@ -1400,7 +1400,7 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            dest[x] = uload16be(src);
+            dest[x] = bigEndian::uload16(src);
             src += 2;
         }
     }
@@ -1415,7 +1415,7 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            u16 gray = uload16be(src);
+            u16 gray = bigEndian::uload16(src);
             u16 alpha = (transparent_sample == gray) ? 0 : 0xffff;
             dest[0] = gray;
             dest[1] = alpha;
@@ -1439,8 +1439,8 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            dest[0] = uload16be(src + 0);
-            dest[1] = uload16be(src + 2);
+            dest[0] = bigEndian::uload16(src + 0);
+            dest[1] = bigEndian::uload16(src + 2);
             dest += 2;
             src += 4;
         }
@@ -1503,9 +1503,9 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            dest[0] = uload16be(src + 0);
-            dest[1] = uload16be(src + 2);
-            dest[2] = uload16be(src + 4);
+            dest[0] = bigEndian::uload16(src + 0);
+            dest[1] = bigEndian::uload16(src + 2);
+            dest[2] = bigEndian::uload16(src + 4);
             dest[3] = 0xffff;
             dest += 4;
             src += 6;
@@ -1524,9 +1524,9 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            u16 red   = uload16be(src + 0);
-            u16 green = uload16be(src + 2);
-            u16 blue  = uload16be(src + 4);
+            u16 red   = bigEndian::uload16(src + 0);
+            u16 green = bigEndian::uload16(src + 2);
+            u16 blue  = bigEndian::uload16(src + 4);
             u16 alpha = 0xffff;
             if (transparent_sample0 == red &&
                 transparent_sample1 == green &&
@@ -1556,10 +1556,10 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            dest[0] = uload16be(src + 0);
-            dest[1] = uload16be(src + 2);
-            dest[2] = uload16be(src + 4);
-            dest[3] = uload16be(src + 6);
+            dest[0] = bigEndian::uload16(src + 0);
+            dest[1] = bigEndian::uload16(src + 2);
+            dest[2] = bigEndian::uload16(src + 4);
+            dest[3] = bigEndian::uload16(src + 6);
             dest += 4;
             src += 8;
         }
@@ -1592,10 +1592,10 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            dest[0] = uload16be(src + 0);
-            dest[1] = uload16be(src + 2);
-            dest[2] = uload16be(src + 4);
-            dest[3] = uload16be(src + 6);
+            dest[0] = bigEndian::uload16(src + 0);
+            dest[1] = bigEndian::uload16(src + 2);
+            dest[2] = bigEndian::uload16(src + 4);
+            dest[3] = bigEndian::uload16(src + 6);
             dest += 4;
             src += 8;
         }
@@ -1628,10 +1628,10 @@ namespace
 
         for (int x = 0; x < width; ++x)
         {
-            dest[0] = uload16be(src + 0);
-            dest[1] = uload16be(src + 2);
-            dest[2] = uload16be(src + 4);
-            dest[3] = uload16be(src + 6);
+            dest[0] = bigEndian::uload16(src + 0);
+            dest[1] = bigEndian::uload16(src + 2);
+            dest[2] = bigEndian::uload16(src + 4);
+            dest[3] = bigEndian::uload16(src + 6);
             dest += 4;
             src += 8;
         }
@@ -1730,9 +1730,9 @@ namespace
 
         while (width-- > 0)
         {
-            dest[0] = uload16be(src + 0);
-            dest[1] = uload16be(src + 2);
-            dest[2] = uload16be(src + 4);
+            dest[0] = bigEndian::uload16(src + 0);
+            dest[1] = bigEndian::uload16(src + 2);
+            dest[2] = bigEndian::uload16(src + 4);
             dest[3] = 0xffff;
             src += 6;
             dest += 4;
@@ -3362,7 +3362,7 @@ namespace
         BigEndianStream s(stream);
 
         u8 temp[4];
-        ustore32be(temp, chunk_id);
+        bigEndian::ustore32(temp, chunk_id);
 
         u32 crc = crc32(0, Memory(temp, 4));
         crc = crc32(crc, memory);
@@ -3525,7 +3525,7 @@ namespace
             u32 adler = adler32(1, buffer);
 
             // append adler checksum
-            ustore32be(compressed.data() + bytes_out, adler);
+            bigEndian::ustore32(compressed.data() + bytes_out, adler);
             bytes_out += 4;
 
             // write chunkdID + compressed data
@@ -3652,7 +3652,7 @@ namespace
                     if (is_last)
                     {
                         // 4 last bytes is adler, overwrite it with cumulative adler
-                        ustore32be(c.address + c.size - 4, cumulative_adler);
+                        bigEndian::ustore32(c.address + c.size - 4, cumulative_adler);
                     }
 
                     // write chunkdID + compressed data

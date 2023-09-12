@@ -238,7 +238,7 @@ namespace
                 {
                     if (count == 128)
                     {
-                        count = uload16be(p);
+                        count = bigEndian::uload16(p);
                         p += 2;
                     }
                     else

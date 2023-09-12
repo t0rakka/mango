@@ -400,8 +400,8 @@ namespace mango::image
         etc_encode_block_helper(input, stride, colors, &a, false);
         etc_encode_block_helper(input, stride, flipped, &b, true);
         take_best(&a, &b);
-        ustore32be(output + 0, a.high);
-        ustore32be(output + 4, a.low);
+        bigEndian::ustore32(output + 0, a.high);
+        bigEndian::ustore32(output + 4, a.low);
     }
 
 } // namespace mango::image

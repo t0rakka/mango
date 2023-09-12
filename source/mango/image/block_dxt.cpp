@@ -40,8 +40,8 @@ namespace
 
     void GetBlockColors(u32* color, const ColorBlock* block, u8 alpha, bool isFourColorBlock)
     {
-        u16 c0 = uload16le(block->color + 0);
-        u16 c1 = uload16le(block->color + 1);
+        u16 c0 = littleEndian::uload16(block->color + 0);
+        u16 c1 = littleEndian::uload16(block->color + 1);
 
         u32 r0 = u32_extend((c0 >> 11) & 0x1f, 5, 8);
         u32 g0 = u32_extend((c0 >>  5) & 0x3f, 6, 8);
@@ -73,7 +73,7 @@ namespace
         u32 color[4];
         GetBlockColors(color, colorBlock, alpha, isFourColorBlock);
 
-        u32 data = uload32le(&colorBlock->data);
+        u32 data = littleEndian::uload32(&colorBlock->data);
 
         for (int y = 0; y < 4; ++y)
         {
@@ -125,7 +125,7 @@ namespace
     
     void DecodeAlpha(u8* dest, size_t stride, const AlphaBlockExplicit* alphaBlock)
     {
-        u64 data = uload64le(&alphaBlock->data[0]);
+        u64 data = littleEndian::uload64(&alphaBlock->data[0]);
 
         for (int y = 0; y < 4; ++y)
         {
@@ -144,7 +144,7 @@ namespace
         DecodeAlphaTable(table, alphaBlock);
 
         // decode the codes into values
-        u64 data = uload64le(alphaBlock) >> 16; // load whole block and discard first 16 bits
+        u64 data = littleEndian::uload64(alphaBlock) >> 16; // load whole block and discard first 16 bits
 
         for (int y = 0; y < 4; ++y)
         {
@@ -163,7 +163,7 @@ namespace
     {
         for (int y = 0; y < 4; ++y)
         {
-            u32 data = uload16le(&alphaBlock->data[y]);
+            u32 data = littleEndian::uload16(&alphaBlock->data[y]);
             dest[0]  = u32_extend((data >>  0) & 0xf, 4, 8);
             dest[4]  = u32_extend((data >>  4) & 0xf, 4, 8);
             dest[8]  = u32_extend((data >>  8) & 0xf, 4, 8);
@@ -201,9 +201,9 @@ namespace
 
     void DecodeATC(u8* dest, size_t stride, const u8* src)
     {
-        u32 a = uload16le(src + 0);
-        u32 b = uload16le(src + 2);
-        u32 indices = uload32le(src + 4);
+        u32 a = littleEndian::uload16(src + 0);
+        u32 b = littleEndian::uload16(src + 2);
+        u32 indices = littleEndian::uload32(src + 4);
 
         u8 color[16];
 

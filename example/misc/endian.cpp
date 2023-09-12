@@ -10,9 +10,9 @@ void example1(const u8* p)
 {
     // unaligned little-endian loads
     // address must be manually computed and updated
-    u16 a = uload16le(p + 0);
-    u16 b = uload16le(p + 2);
-    u32 c = uload32le(p + 4);
+    u16 a = littleEndian::uload16(p + 0);
+    u16 b = littleEndian::uload16(p + 2);
+    u32 c = littleEndian::uload32(p + 4);
     p += 8;
 
     MANGO_UNREFERENCED(a);
@@ -70,9 +70,9 @@ void example4(Stream& stream)
 
 struct SomeHeader
 {
-    u16be a;
-    u16be b;
-    u32be c;
+    bigEndian::u16 a;
+    bigEndian::u16 b;
+    bigEndian::u32 c;
 };
 
 void example5(const u8* p)

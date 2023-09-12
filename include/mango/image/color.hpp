@@ -43,22 +43,22 @@ namespace mango::image
 
         Color()
         {
-            ustore32le(this, 0);
+            littleEndian::ustore32(this, 0);
         }
 
         Color(u8 red, u8 green, u8 blue, u8 alpha)
         {
-            ustore32le(this, makeRGBA(red, green, blue, alpha));
+            littleEndian::ustore32(this, makeRGBA(red, green, blue, alpha));
         }
 
         Color(u32 value)
         {
-            ustore32le(this, value);
+            littleEndian::ustore32(this, value);
         }
 
         operator u32 () const
         {
-            return uload32le(this);
+            return littleEndian::uload32(this);
         }
 
         u8& operator [] (int index)

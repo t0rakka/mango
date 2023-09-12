@@ -171,7 +171,7 @@ namespace mango::jpeg
         if (!memory.address || memory.size < 4)
             return false;
 
-        if (uload16be(memory.address) != MARKER_SOI)
+        if (bigEndian::uload16(memory.address) != MARKER_SOI)
             return false;
 
 #if 0
@@ -179,7 +179,7 @@ namespace mango::jpeg
         const u8* p = memory.address + memory.size - 2;
         for (int i = 0; i < 32; ++i, --p)
         {
-            u16 marker = uload16be(p);
+            u16 marker = bigEndian::uload16(p);
             if (marker == MARKER_EOI)
                 return true;
         }
@@ -197,7 +197,7 @@ namespace mango::jpeg
         if (p + 2 > end)
             return end;
 
-        u16 size = uload16be(p);
+        u16 size = bigEndian::uload16(p);
         p += size;
 
         if (p + 1 > end)
@@ -291,7 +291,7 @@ namespace mango::jpeg
     {
         debugPrint("[ APP%d ]\n", int(marker - MARKER_APP0));
 
-        int size = uload16be(p) - 2;
+        int size = bigEndian::uload16(p) - 2;
         p += 2;
 
         switch (marker)
@@ -407,9 +407,9 @@ namespace mango::jpeg
 
                 if (size == 12 && !std::memcmp(p, magic_adobe, 5))
                 {
-                    u16 version = uload16be(p + 5);
-                    //u16 flags0 = uload16be(p + 7);
-                    //u16 flags1 = uload16be(p + 9);
+                    u16 version = bigEndian::uload16(p + 5);
+                    //u16 flags0 = bigEndian::uload16(p + 7);
+                    //u16 flags1 = bigEndian::uload16(p + 9);
                     u8 color_transform = p[11]; // 0 - CMYK, 1 - YCbCr, 2 - YCCK
                     if (color_transform <= 2)
                     {
@@ -422,13 +422,13 @@ namespace mango::jpeg
                 }
                 else if (!std::memcmp(p, magic_mango, 5))
                 {
-                    m_decode_interval = uload32be(p + 5);
+                    m_decode_interval = bigEndian::uload32(p + 5);
                     p += 9;
                     int intervals = (size - 9) / sizeof(u32);
 
                     for (int i = 0; i < intervals; ++i)
                     {
-                        u32 offset = uload32be(p);
+                        u32 offset = bigEndian::uload32(p);
                         p += sizeof(u32);
                         m_restart_offsets.push_back(offset);
                     }
@@ -448,10 +448,10 @@ namespace mango::jpeg
         is_lossless = false;
         is_differential = false;
 
-        u16 length = uload16be(p + 0);
+        u16 length = bigEndian::uload16(p + 0);
         precision = p[2];
-        ysize = uload16be(p + 3);
-        xsize = uload16be(p + 5);
+        ysize = bigEndian::uload16(p + 3);
+        xsize = bigEndian::uload16(p + 5);
         components = p[7];
         p += 8;
 
@@ -685,7 +685,7 @@ namespace mango::jpeg
     {
         debugPrint("[ SOS ]\n");
 
-        u16 length = uload16be(p);
+        u16 length = bigEndian::uload16(p);
         u8 components = p[2]; // Ns
         p += 3;
 
@@ -987,7 +987,7 @@ namespace mango::jpeg
     {
         debugPrint("[ DQT ]\n");
 
-        u16 Lq = uload16be(p); // Quantization table definition length
+        u16 Lq = bigEndian::uload16(p); // Quantization table definition length
         p += 2;
         Lq -= 2;
 
@@ -1033,7 +1033,7 @@ namespace mango::jpeg
                 case 1:
                     for (int i = 0; i < 64; ++i)
                     {
-                        table.table[g_zigzag_table_inverse[i]] = uload16be(p);
+                        table.table[g_zigzag_table_inverse[i]] = bigEndian::uload16(p);
                         p += 2;
                     }
                     break;
@@ -1050,7 +1050,7 @@ namespace mango::jpeg
     {
         debugPrint("[ DHT ]\n");
 
-        int Lh = uload16be(p); // Huffman table definition length
+        int Lh = bigEndian::uload16(p); // Huffman table definition length
         p += 2;
         Lh -= 2;
 
@@ -1149,7 +1149,7 @@ namespace mango::jpeg
     {
         debugPrint("[ DAC ]\n");
 
-        u16 La = uload16be(p); // Arithmetic coding conditioning definition length
+        u16 La = bigEndian::uload16(p); // Arithmetic coding conditioning definition length
         p += 2;
 
         if (is_baseline)
@@ -1219,8 +1219,8 @@ namespace mango::jpeg
     {
         debugPrint("[ DNL ]\n");
 
-        u16 Ld = uload16be(p + 0); // Define number of lines segment length
-        u16 NL = uload16be(p + 2); // Number of lines
+        u16 Ld = bigEndian::uload16(p + 0); // Define number of lines segment length
+        u16 NL = bigEndian::uload16(p + 2); // Number of lines
         MANGO_UNREFERENCED(NL); // TODO: ysize = NL, no files to test with found yet..
         MANGO_UNREFERENCED(Ld);
     }
@@ -1229,13 +1229,13 @@ namespace mango::jpeg
     {
         debugPrint("[ DRI ]\n");
 
-        int Lh = uload16be(p + 0); // length
+        int Lh = bigEndian::uload16(p + 0); // length
         if (Lh != 4)
         {
             // signal error
         }
 
-        restartInterval = uload16be(p + 2); // number of MCU in restart interval
+        restartInterval = bigEndian::uload16(p + 2); // number of MCU in restart interval
         debugPrint("  Restart interval: %i\n", restartInterval);
     }
 
@@ -1251,7 +1251,7 @@ namespace mango::jpeg
     {
         debugPrint("[ EXP ]\n");
 
-        u16 Le = uload16be(p); // Expand reference components segment length
+        u16 Le = bigEndian::uload16(p); // Expand reference components segment length
         u8 x = p[2];
         u8 Eh = (x >> 4) & 0xf; // Expand horizontally
         u8 Ev = (x >> 0) & 0xf; // Expand vertically
@@ -1275,7 +1275,7 @@ namespace mango::jpeg
                 break;
             }
 
-            u16 marker = uload16be(p);
+            u16 marker = bigEndian::uload16(p);
             p += 2;
 
             u64 time0 = Time::us();

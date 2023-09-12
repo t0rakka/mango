@@ -162,14 +162,14 @@ namespace
         CanonLenseName              = 0x0095
     };
 
-    u16 parse16(const u8* p, bool littleEndian)
+    u16 parse16(const u8* p, bool isLittleEndian)
     {
-        return littleEndian ? uload16le(p) : uload16be(p);
+        return isLittleEndian ? littleEndian::uload16(p) : bigEndian::uload16(p);
     }
 
-    u32 parse32(const u8* p, bool littleEndian)
+    u32 parse32(const u8* p, bool isLittleEndian)
     {
-        return littleEndian ? uload32le(p) : uload32be(p);
+        return isLittleEndian ? littleEndian::uload32(p) : bigEndian::uload32(p);
     }
 
     std::string parseAscii(const u8* start, u32 data, int components)
@@ -191,10 +191,10 @@ namespace
         return value;
     }
 
-    float parseRational(const u8* p, bool littleEndian)
+    float parseRational(const u8* p, bool isLittleEndian)
     {
-        u32 a = parse32(p + 0, littleEndian);
-        u32 b = parse32(p + 4, littleEndian);
+        u32 a = parse32(p + 0, isLittleEndian);
+        u32 b = parse32(p + 4, isLittleEndian);
         return b ? float(a) / float(b) : 0;
     }
 
@@ -211,12 +211,12 @@ namespace
         std::string valueAscii;
         float valueRational;
 
-        Entry(const u8* p, const u8* start, bool littleEndian)
+        Entry(const u8* p, const u8* start, bool isLittleEndian)
         {
-            tag    = parse16(p + 0, littleEndian);
-            format = parse16(p + 2, littleEndian);
-            length = parse32(p + 4, littleEndian);
-            data   = parse32(p + 8, littleEndian);
+            tag    = parse16(p + 0, isLittleEndian);
+            format = parse16(p + 2, isLittleEndian);
+            length = parse32(p + 4, isLittleEndian);
+            data   = parse32(p + 8, isLittleEndian);
 
             //printf("tag: %.4x  ", tag);
 
@@ -229,13 +229,13 @@ namespace
                     valueAscii = parseAscii(start, data, length);
                     break;
                 case EXIF_SHORT:
-                    valueShort = parse16(p + 8, littleEndian);
+                    valueShort = parse16(p + 8, isLittleEndian);
                     break;
                 case EXIF_LONG:
                     valueLong = data;
                     break;
                 case EXIF_RATIONAL:
-                    valueRational = parseRational(start + data, littleEndian);
+                    valueRational = parseRational(start + data, isLittleEndian);
                     break;
                 case EXIF_UNDEFINED:
                 case EXIF_SLONG:
@@ -410,15 +410,15 @@ namespace
 
 #define EXIF(name, type) name: entry.get##type(exif.name); break
 
-    void parseGPS(Exif& exif, const u8* p, const u8* start, bool littleEndian)
+    void parseGPS(Exif& exif, const u8* p, const u8* start, bool isLittleEndian)
     {
         MANGO_UNREFERENCED(exif);
 
-        int count = parse16(p, littleEndian);
+        int count = parse16(p, isLittleEndian);
         p += 2;
         for (int i = 0; i < count; ++i)
         {
-            Entry entry(p, start, littleEndian);
+            Entry entry(p, start, isLittleEndian);
 
             switch (entry.tag)
             {
@@ -465,13 +465,13 @@ namespace
         }
     }
 
-    void parseMakerNote(Exif& exif, const u8* p, const u8* start, bool littleEndian)
+    void parseMakerNote(Exif& exif, const u8* p, const u8* start, bool isLittleEndian)
     {
         // support MakerNote only for "Canon" manufacturer for now
         //if (exif.Make != "Canon")
         //    return;
 
-        int count = parse16(p, littleEndian);
+        int count = parse16(p, isLittleEndian);
         if (count > 255)
         {
             // MakerNote is sometimes in different endianess, this bails out of any high-byte bits are set
@@ -481,7 +481,7 @@ namespace
 
         for (int i = 0; i < count; ++i)
         {
-            Entry entry(p, start, littleEndian);
+            Entry entry(p, start, isLittleEndian);
             if (entry.format > 10)
             {
                 // Sanity-check for corrupted files.
@@ -503,13 +503,13 @@ namespace
         }
     }
 
-    void parseIFD(Exif& exif, const u8* p, const u8* start, bool littleEndian)
+    void parseIFD(Exif& exif, const u8* p, const u8* start, bool isLittleEndian)
     {
-        int count = parse16(p, littleEndian);
+        int count = parse16(p, isLittleEndian);
         p += 2;
         for (int i = 0; i < count; ++i)
         {
-            Entry entry(p, start, littleEndian);
+            Entry entry(p, start, isLittleEndian);
 
             switch (entry.tag)
             {
@@ -638,19 +638,19 @@ namespace
 #endif
 
                 case UserComment:
-                    //parseIFD(exif, start + entry.data, start, littleEndian);
+                    //parseIFD(exif, start + entry.data, start, isLittleEndian);
                     break;
 
                 case MakerNote:
-                    parseMakerNote(exif, start + entry.data, start, littleEndian);
+                    parseMakerNote(exif, start + entry.data, start, isLittleEndian);
                     break;
 
                 case Exif_IFD:
-                    parseIFD(exif, start + entry.data, start, littleEndian);
+                    parseIFD(exif, start + entry.data, start, isLittleEndian);
                     break;
 
                 case GPS_IFD:
-                    parseGPS(exif, start + entry.data, start, littleEndian);
+                    parseGPS(exif, start + entry.data, start, isLittleEndian);
                     break;
 
                 case Interoperability_IFD:
@@ -690,20 +690,20 @@ namespace mango::image
 
         u16 endian = parse16(p + 0, true);
 
-        bool littleEndian;
+        bool isLittleEndian;
         switch (endian)
         {
             case 0x4949:
-                littleEndian = true;
+                isLittleEndian = true;
                 break;
             case 0x4d4d:
-                littleEndian = false;
+                isLittleEndian = false;
                 break;
             default:
                 return; // ERROR: incorrect endian
         }
 
-        u16 magic = parse16(p + 2, littleEndian);
+        u16 magic = parse16(p + 2, isLittleEndian);
         switch (magic)
         {
             case 0x002a:
@@ -717,12 +717,12 @@ namespace mango::image
                 return;
         }
 
-        u32 offset = parse32(p + 4, littleEndian);
+        u32 offset = parse32(p + 4, isLittleEndian);
         p += offset;
         if (p > end)
             return; // ERROR: out of bytes
 
-        parseIFD(*this, p, start, littleEndian);
+        parseIFD(*this, p, start, isLittleEndian);
     }
 
 } // namespace mango::image

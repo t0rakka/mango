@@ -628,7 +628,7 @@ namespace mango::image
     void decode_block_etc1(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
-        const u64 color = uload64be(input);
+        const u64 color = bigEndian::uload64(input);
         decompress_block_etc1(output, stride, color);
     }
 
@@ -636,15 +636,15 @@ namespace mango::image
     {
         const bool alphaMode = info.compression == TextureCompression::ETC2_RGB_ALPHA1 ||
                                info.compression == TextureCompression::ETC2_SRGB_ALPHA1;
-        const u64 color = uload64be(input);
+        const u64 color = bigEndian::uload64(input);
         decompress_block_etc2(output, stride, color, alphaMode);
     }
 
     void decode_block_etc2_eac(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         MANGO_UNREFERENCED(info);
-        const u64 alpha = uload64be(input + 0);
-        const u64 color = uload64be(input + 8);
+        const u64 alpha = bigEndian::uload64(input + 0);
+        const u64 color = bigEndian::uload64(input + 8);
         decompress_block_etc2(output, stride, color, false);
         decompress_block_eac8(output, stride, alpha);
     }
@@ -652,15 +652,15 @@ namespace mango::image
     void decode_block_eac_r11(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         const bool signedMode = info.compression == TextureCompression::EAC_SIGNED_R11;
-        const u64 red = uload64be(input);
+        const u64 red = bigEndian::uload64(input);
         decompress_block_eac11(output, 1, stride, red, signedMode);
     }
 
     void decode_block_eac_rg11(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
         const bool signedMode = info.compression == TextureCompression::EAC_SIGNED_RG11;
-        const u64 red = uload64be(input + 0);
-        const u64 green = uload64be(input + 8);
+        const u64 red = bigEndian::uload64(input + 0);
+        const u64 green = bigEndian::uload64(input + 8);
         decompress_block_eac11(output + 0, 2, stride, red, signedMode);
         decompress_block_eac11(output + 2, 2, stride, green, signedMode);
     }

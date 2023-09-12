@@ -505,7 +505,7 @@ namespace
 
             for (int i = 0; i < 16; ++i)
             {
-                w[i] = uload32be(data + i * 4);
+                w[i] = bigEndian::uload32(data + i * 4);
 
                 u32 s1 = u32_ror(e, 6) ^ u32_ror(e, 11) ^ u32_ror(e, 25);
                 u32 ch = (e & f) ^ ((~e) & g);
@@ -613,7 +613,7 @@ namespace mango
             std::memset(buffer, 0, 56);
         }
 
-        ustore64be(buffer + 56, memory.size * 8);
+        bigEndian::ustore64(buffer + 56, memory.size * 8);
         transform(hash.data, buffer, 1);
 
 #ifdef MANGO_LITTLE_ENDIAN

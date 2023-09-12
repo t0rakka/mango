@@ -129,8 +129,8 @@ namespace
         color[6] = Color(r1, g1, b1, 0xff);
         color[7] = Color(0, 0, 0, alphaMask);
 
-        u64 indices0 = uload64le(block.indices + 0);
-        u64 indices1 = uload64le(block.indices + 6);
+        u64 indices0 = littleEndian::uload64(block.indices + 0);
+        u64 indices1 = littleEndian::uload64(block.indices + 6);
 
         for (int y = 0; y < 4; ++y)
         {
@@ -177,8 +177,8 @@ namespace
         color[2] = Color(r2, g2, b2, 0xff);
         color[3] = Color(r3, g3, b3, 0xff);
 
-        u32 indices0 = uload32le(block.indices + 0);
-        u32 indices1 = uload32le(block.indices + 4);
+        u32 indices0 = littleEndian::uload32(block.indices + 0);
+        u32 indices1 = littleEndian::uload32(block.indices + 4);
 
         for (int y = 0; y < 4; ++y)
         {
@@ -248,8 +248,8 @@ namespace
             color[7] = Color(r1, g1, b1, a1);
         }
 
-        u32 indices0 = uload32le(block.indices + 0);
-        u32 indices1 = uload32le(block.indices + 4);
+        u32 indices0 = littleEndian::uload32(block.indices + 0);
+        u32 indices1 = littleEndian::uload32(block.indices + 4);
 
         for (int y = 0; y < 4; ++y)
         {
@@ -339,8 +339,8 @@ namespace
             color[7] = Color(0, 0, 0, alphaMask);
         }
 
-        u32 indices0 = uload32le(block.indices + 0);
-        u32 indices1 = uload32le(block.indices + 4);
+        u32 indices0 = littleEndian::uload32(block.indices + 0);
+        u32 indices1 = littleEndian::uload32(block.indices + 4);
 
         for (int y = 0; y < 4; ++y)
         {

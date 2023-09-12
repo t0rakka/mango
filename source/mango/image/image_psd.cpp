@@ -61,7 +61,7 @@ namespace
                 {
                     for (int y = 0; y < height; ++y)
                     {
-                        u32 bytes = uload16be(p);
+                        u32 bytes = bigEndian::uload16(p);
                         p += 2;
                         sizes[channel * height + y] = bytes;
                         offset += bytes;
@@ -71,7 +71,7 @@ namespace
                 {
                     for (int y = 0; y < height; ++y)
                     {
-                        u32 bytes = uload32be(p);
+                        u32 bytes = bigEndian::uload32(p);
                         p += 4;
                         sizes[channel * height + y] = bytes;
                         offset += bytes;

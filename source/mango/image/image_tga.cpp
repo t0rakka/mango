@@ -382,7 +382,7 @@ namespace
                     {
                         for (u32 i = 0; i < length; ++i)
                         {
-                            u16 color = uload16le(p);
+                            u16 color = littleEndian::uload16(p);
                             u32 r = (color >> 0) & 0x1f;
                             u32 g = (color >> 5) & 0x1f;
                             u32 b = (color >> 10) & 0x1f;

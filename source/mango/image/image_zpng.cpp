@@ -18,9 +18,9 @@ namespace
 
     struct zpng_header
     {
-        u16le magic;
-        u16le width;
-        u16le height;
+        littleEndian::u16 magic;
+        littleEndian::u16 width;
+        littleEndian::u16 height;
         u8 channels;
         u8 bytes_per_channel;
     };

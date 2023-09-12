@@ -59,14 +59,14 @@ namespace
 
             while (size >= 64)
             {
-                u64 data0 = uload64le(address + 8 * 0);
-                u64 data1 = uload64le(address + 8 * 1);
-                u64 data2 = uload64le(address + 8 * 2);
-                u64 data3 = uload64le(address + 8 * 3);
-                u64 data4 = uload64le(address + 8 * 4);
-                u64 data5 = uload64le(address + 8 * 5);
-                u64 data6 = uload64le(address + 8 * 6);
-                u64 data7 = uload64le(address + 8 * 7);
+                u64 data0 = littleEndian::uload64(address + 8 * 0);
+                u64 data1 = littleEndian::uload64(address + 8 * 1);
+                u64 data2 = littleEndian::uload64(address + 8 * 2);
+                u64 data3 = littleEndian::uload64(address + 8 * 3);
+                u64 data4 = littleEndian::uload64(address + 8 * 4);
+                u64 data5 = littleEndian::uload64(address + 8 * 5);
+                u64 data6 = littleEndian::uload64(address + 8 * 6);
+                u64 data7 = littleEndian::uload64(address + 8 * 7);
                 crc = u64_crc32(crc, data0);
                 crc = u64_crc32(crc, data1);
                 crc = u64_crc32(crc, data2);
@@ -81,7 +81,7 @@ namespace
 
             while (size >= 8)
             {
-                u64 data = uload64le(address);
+                u64 data = littleEndian::uload64(address);
                 crc = u64_crc32(crc, data);
                 address += 8;
                 size -= 8;
@@ -167,7 +167,7 @@ namespace
 
                 #undef CRC32C_32BYTES
 
-                crc = u64_crc32c(crc3, uload64le(address + 1024));
+                crc = u64_crc32c(crc3, littleEndian::uload64(address + 1024));
 
                 u64 t2 = u64(vmull_p64(crc2, k2));
                 u64 t1 = u64(vmull_p64(crc1, k1));
@@ -183,7 +183,7 @@ namespace
 
             while (size >= 8)
             {
-                u64 data = uload64le(address);
+                u64 data = littleEndian::uload64(address);
                 crc = u64_crc32c(crc, data);
                 address += 8;
                 size -= 8;
@@ -339,21 +339,21 @@ namespace
                 u32 c2 = 0;
                 for (int i = 0; i < g_skip_block0_size; i += 32)
                 {
-                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block0_size + 0 * 8));
-                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_block0_size + 0 * 8));
-                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_block0_size + 0 * 8));
+                    c0 = u64_crc32c(c0, littleEndian::uload64(address + 0 * g_skip_block0_size + 0 * 8));
+                    c1 = u64_crc32c(c1, littleEndian::uload64(address + 1 * g_skip_block0_size + 0 * 8));
+                    c2 = u64_crc32c(c2, littleEndian::uload64(address + 2 * g_skip_block0_size + 0 * 8));
 
-                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block0_size + 1 * 8));
-                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_block0_size + 1 * 8));
-                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_block0_size + 1 * 8));
+                    c0 = u64_crc32c(c0, littleEndian::uload64(address + 0 * g_skip_block0_size + 1 * 8));
+                    c1 = u64_crc32c(c1, littleEndian::uload64(address + 1 * g_skip_block0_size + 1 * 8));
+                    c2 = u64_crc32c(c2, littleEndian::uload64(address + 2 * g_skip_block0_size + 1 * 8));
 
-                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block0_size + 2 * 8));
-                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_block0_size + 2 * 8));
-                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_block0_size + 2 * 8));
+                    c0 = u64_crc32c(c0, littleEndian::uload64(address + 0 * g_skip_block0_size + 2 * 8));
+                    c1 = u64_crc32c(c1, littleEndian::uload64(address + 1 * g_skip_block0_size + 2 * 8));
+                    c2 = u64_crc32c(c2, littleEndian::uload64(address + 2 * g_skip_block0_size + 2 * 8));
 
-                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block0_size + 3 * 8));
-                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_block0_size + 3 * 8));
-                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_block0_size + 3 * 8));
+                    c0 = u64_crc32c(c0, littleEndian::uload64(address + 0 * g_skip_block0_size + 3 * 8));
+                    c1 = u64_crc32c(c1, littleEndian::uload64(address + 1 * g_skip_block0_size + 3 * 8));
+                    c2 = u64_crc32c(c2, littleEndian::uload64(address + 2 * g_skip_block0_size + 3 * 8));
 
                     address += 32;
                 }
@@ -370,9 +370,9 @@ namespace
                 u32 c2 = 0;
                 for (int i = 0; i < g_skip_block1_size; i += 8)
                 {
-                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block1_size));
-                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_block1_size));
-                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_block1_size));
+                    c0 = u64_crc32c(c0, littleEndian::uload64(address + 0 * g_skip_block1_size));
+                    c1 = u64_crc32c(c1, littleEndian::uload64(address + 1 * g_skip_block1_size));
+                    c2 = u64_crc32c(c2, littleEndian::uload64(address + 2 * g_skip_block1_size));
                     address += 8;
                 }
 
@@ -388,9 +388,9 @@ namespace
                 u32 c2 = 0;
                 for (int i = 0; i < g_skip_block2_size; i += 8)
                 {
-                    c0 = u64_crc32c(c0, uload64le(address + 0 * g_skip_block2_size));
-                    c1 = u64_crc32c(c1, uload64le(address + 1 * g_skip_block2_size));
-                    c2 = u64_crc32c(c2, uload64le(address + 2 * g_skip_block2_size));
+                    c0 = u64_crc32c(c0, littleEndian::uload64(address + 0 * g_skip_block2_size));
+                    c1 = u64_crc32c(c1, littleEndian::uload64(address + 1 * g_skip_block2_size));
+                    c2 = u64_crc32c(c2, littleEndian::uload64(address + 2 * g_skip_block2_size));
                     address += 8;
                 }
 
@@ -404,7 +404,7 @@ namespace
 
             while (size >= 8)
             {
-                u64 data = uload64le(address);
+                u64 data = littleEndian::uload64(address);
                 crc = u64_crc32c(crc, data);
                 address += 8;
                 size -= 8;
@@ -622,7 +622,7 @@ namespace
 
             while (size >= 8)
             {
-                u64 data = uload64le(address);
+                u64 data = littleEndian::uload64(address);
                 crc = compute64(crc, data);
                 address += 8;
                 size -= 8;

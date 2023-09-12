@@ -224,7 +224,7 @@ namespace
         }
         else
         {
-            ustore64be(output, code);
+            bigEndian::ustore64(output, code);
             output += 8;
         }
         return output;
@@ -242,7 +242,7 @@ namespace
         }
         else
         {
-            ustore32be(output, code);
+            bigEndian::ustore32(output, code);
             output += 4;
         }
         return output;

@@ -570,8 +570,8 @@ namespace
 
         BlockPVRTC2(const u8* data)
         {
-            modulation = uload32le(data + 0);
-            u32 packed = uload32le(data + 4);
+            modulation = littleEndian::uload32(data + 0);
+            u32 packed = littleEndian::uload32(data + 4);
 
             mode = packed & 0x0001;
             hard = packed & 0x8000;

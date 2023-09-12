@@ -757,7 +757,7 @@ void hufDecode(const u64*  hcode, // i : encoding table
         }
     }
 
-    if (out - outb != no)
+    if (out - outb != ptrdiff_t(no))
     {
         //notEnoughData ();
     }
@@ -777,9 +777,9 @@ bool hufUncompress(const u8* compressed, int nCompressed, std::vector<u16>& outp
 
     // read header (20 bytes)
 
-    int im = mango::uload32le(compressed + 0);
-    int iM = mango::uload32le(compressed + 4);
-    int nBits = mango::uload32le(compressed + 12);
+    int im = littleEndian::uload32(compressed + 0);
+    int iM = littleEndian::uload32(compressed + 4);
+    int nBits = littleEndian::uload32(compressed + 12);
 
     if (im < 0 || im >= HUF_ENCSIZE || iM < 0 || iM >= HUF_ENCSIZE)
     {
@@ -1709,8 +1709,8 @@ const u8* ContextEXR::decompress_piz(Memory dest, ConstMemory source, int width,
 
     const u8* ptr = source.address; 
 
-    u16 minNonZero = uload16le(ptr + 0);
-    u16 maxNonZero = uload16le(ptr + 2);
+    u16 minNonZero = littleEndian::uload16(ptr + 0);
+    u16 maxNonZero = littleEndian::uload16(ptr + 2);
     ptr += 4;
 
     if (maxNonZero >= BITMAP_SIZE)
@@ -1730,7 +1730,7 @@ const u8* ContextEXR::decompress_piz(Memory dest, ConstMemory source, int width,
 
     // Huffman decoding
 
-    int length = uload32le(ptr);
+    int length = littleEndian::uload32(ptr);
     ptr += 4;
 
     size_t outputSize = 0;

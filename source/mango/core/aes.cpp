@@ -161,7 +161,7 @@ void arm_aes_setkey(u32* enc, u32* dec, const u8* key, int bits)
 
     for (int i = 0; i < words; ++i)
     {
-        RK[i] = uload32le(key + i * 4);
+        RK[i] = littleEndian::uload32(key + i * 4);
     }
 
     switch (nr)

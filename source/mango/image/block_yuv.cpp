@@ -137,7 +137,7 @@ namespace mango::image
         MANGO_UNREFERENCED(info);
         MANGO_UNREFERENCED(stride);
 
-        u32 data = uload32le(input);
+        u32 data = littleEndian::uload32(input);
         RGB9E5 sample(data);
 
         const int exponent = sample.Exponent - (RGB9E5::BIAS + RGB9E5::MANTISSA);
@@ -168,7 +168,7 @@ namespace mango::image
         MANGO_UNREFERENCED(info);
         MANGO_UNREFERENCED(stride);
 
-        u32 data = uload32le(input);
+        u32 data = littleEndian::uload32(input);
 
         // extract components
         const u32 red_mantissa = (data >> 0) & 0x3f;
@@ -190,7 +190,7 @@ namespace mango::image
         MANGO_UNREFERENCED(info);
         MANGO_UNREFERENCED(stride);
 
-        u32 data = uload32le(input);
+        u32 data = littleEndian::uload32(input);
 
         // extract components
         const u32 red_mantissa = (data >> 0) & 0x1f;
