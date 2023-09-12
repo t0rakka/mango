@@ -975,10 +975,20 @@ struct ChannelList
 
 struct TileDesc
 {
-    u32 xsize;
-    u32 ysize;
-    u8 mode; // 0: single image, 1: mipmap, 2: ripmap
-             // 5th bit (0x10) indicates rounding direction (0: down, 1: up)
+    u32 xsize = 0;
+    u32 ysize = 0;
+    u8 mode = 0; // 0: single image, 1: mipmap, 2: ripmap
+                 // 5th bit (0x10) indicates rounding direction (0: down, 1: up)
+
+    bool isMipmap() const
+    {
+        return (mode & 0x01) != 0;
+    }
+
+    bool isRipmap() const
+    {
+        return (mode & 0x02) != 0;
+    }
 };
 
 struct Box2i
@@ -1243,7 +1253,8 @@ void readAttribute<TileDesc>(TileDesc& data, LittleEndianConstPointer p)
     data.xsize = p.read32();
     data.ysize = p.read32();
     data.mode = p.read8();
-    debugPrint("    %d x %d mode: %x\n", data.xsize, data.ysize, data.mode);
+    debugPrint("    %d x %d mode: %x (mipmap: %d, ripmap: %d, round: %d)\n", data.xsize, data.ysize, data.mode,
+        (data.mode & 0x02) != 0, (data.mode & 0x02) != 0, (data.mode & 0x10) != 0);
 }
 
 /*
@@ -1333,12 +1344,12 @@ struct AttributeTable
     float       pixelAspectRatio;
     float32x2   screenWindowCenter;
     float       screenWindowWidth;
-    u8          envmap; // 0: None, 1: LatLong, 2 - Cube
-                        // cube face order: +x, -x, +y, -y, +z. -z
+    u8          envmap = 0; // 0: None, 1: LatLong, 2: Cube
+                            // cube face order: +x, -x, +y, -y, +z. -z
     Chromaticities chromaticities;
 
     // Tile Header Attribute
-    TileDesc    tiles;
+    TileDesc    tiledesc;
 
     // Multi-View Header Attribute
     Text        view;
@@ -1354,7 +1365,6 @@ struct AttributeTable
 
     AttributeTable()
     {
-        envmap = 0;
         chromaticities = Chromaticities_BT709();
     }
 
@@ -1366,7 +1376,7 @@ struct AttributeTable
         }
         else if (name == "tiles")
         {
-            readAttribute(tiles, p);
+            readAttribute(tiledesc, p);
         }
         else if (name == "compression")
         {
@@ -1434,6 +1444,9 @@ struct ContextEXR
     u64 m_time_blit = 0;
     u64 m_time_decode = 0;
 
+    Buffer m_image_buffer;
+    Surface m_surface;
+
     ContextEXR(ConstMemory memory);
     ~ContextEXR();
 
@@ -1447,6 +1460,8 @@ struct ContextEXR
     const u8* decompress_dwab(Memory dest, ConstMemory source, int width, int height, int ystart);
 
     void decodeBlock(Surface surface, ConstMemory memory, int x0, int y0, int x1, int y1);
+    void decodeImage(const ImageDecodeOptions& options);
+
     ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face);
 
     void initLogTable()
@@ -1606,11 +1621,17 @@ ContextEXR::ContextEXR(ConstMemory memory)
     int height = m_attributes.dataWindow.ymax - m_attributes.dataWindow.ymin + 1;
     debugPrint("Image: %d x %d\n", width, height);
 
+    bool isCubemap = (m_attributes.envmap == 2) && ((height % 6) == 0);
+    if (isCubemap)
+    {
+        height = height / 6;
+    }
+
     m_header.width   = width;
     m_header.height  = height;
     m_header.depth   = 0;
     m_header.levels  = 0;
-    m_header.faces   = 0;
+    m_header.faces   = isCubemap ? 6 : 1;
     m_header.palette = false;
     m_header.format  = Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
     m_header.compression = TextureCompression::NONE;
@@ -2543,29 +2564,28 @@ void ContextEXR::decodeBlock(Surface surface, ConstMemory memory, int x0, int y0
     m_time_blit += (time2 - time1);
 }
 
-ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
+void ContextEXR::decodeImage(const ImageDecodeOptions& options)
 {
-    ImageDecodeStatus status;
-
-    if (!m_pointer)
+    if (m_surface.image)
     {
-        status.setError("No data.");
-        return status;
+        // already decoded
+        return;
+    }
+
+    int width = m_header.width;
+    int height = m_header.height * m_header.faces;
+    size_t stride = width * m_header.format.bytes();
+
+    m_image_buffer.resize(height * stride);
+    m_surface = Surface(width, height, m_header.format, stride, m_image_buffer.data());
+
+    if (m_attributes.lineOrder)
+    {
+        m_surface.image = m_surface.image + m_surface.stride * (m_surface.height - 1);
+        m_surface.stride = -m_surface.stride;
     }
 
     u64 time0 = mango::Time::us();
-
-    int width = m_header.width;
-    int height = m_header.height;
-
-    Bitmap bitmap(m_header.width, m_header.height, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16));
-
-    Surface surface(bitmap);
-    if (m_attributes.lineOrder)
-    {
-        surface.image = surface.image + surface.stride * (surface.height - 1);
-        surface.stride = -surface.stride;
-    }
 
     LittleEndianConstPointer p = m_pointer;
 
@@ -2573,8 +2593,8 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
 
     if (is_single_tile)
     {
-        int xtiles = div_ceil(width, m_attributes.tiles.xsize);
-        int ytiles = div_ceil(height, m_attributes.tiles.ysize);
+        int xtiles = div_ceil(width, m_attributes.tiledesc.xsize);
+        int ytiles = div_ceil(height, m_attributes.tiledesc.ysize);
         int ntiles = xtiles * ytiles;
 
         debugPrint("Tiles: %d x %d (%d)\n", xtiles, ytiles, ntiles);
@@ -2594,8 +2614,8 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
             MANGO_UNREFERENCED(xlevel);
             MANGO_UNREFERENCED(ylevel);
 
-            int tileWidth = m_attributes.tiles.xsize;
-            int tileHeight = m_attributes.tiles.ysize;
+            int tileWidth = m_attributes.tiledesc.xsize;
+            int tileHeight = m_attributes.tiledesc.ysize;
 
             int x0 = tilex * tileWidth;
             int y0 = tiley * tileHeight;
@@ -2605,7 +2625,7 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
             auto task = [=]
             {
                 ConstMemory memory(ptr, size);
-                decodeBlock(surface, memory, x0, y0, x1, y1);
+                decodeBlock(m_surface, memory, x0, y0, x1, y1);
             };
 
             if (options.multithread)
@@ -2642,7 +2662,7 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
             auto task = [=]
             {
                 ConstMemory memory(ptr, size);
-                decodeBlock(surface, memory, x0, y0, x1, y1);
+                decodeBlock(m_surface, memory, x0, y0, x1, y1);
             };
 
             if (options.multithread)
@@ -2656,14 +2676,29 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
         }
     }
 
-    q.wait();
-
     u64 time1 = mango::Time::us();
     m_time_decode += (time1 - time0);
 
-    dest.blit(0, 0, bitmap);
-
     report();
+}
+
+ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
+{
+    ImageDecodeStatus status;
+
+    if (!m_pointer)
+    {
+        status.setError("No data.");
+        return status;
+    }
+
+    decodeImage(options);
+
+    int width = m_header.width;
+    int height = m_header.height;
+    face = std::clamp(face, 0, m_header.faces - 1);
+
+    dest.blit(0, 0, Surface(m_surface, 0, face * height, width, (face + 1) * height));
 
     return status;
 }
