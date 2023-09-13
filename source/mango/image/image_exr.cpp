@@ -1159,8 +1159,8 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
 
         channel.offset = offset;
 
-        // TODO: systematic way to recognize RGB channels
-        //       and classify them as different images (left vs. right, etc.)
+        // TODO: demux layer information
+        // example: "left.R", "left.G", "left.B" -> R,G,B channels of "left" layer
 
         if (name == "R" || name == "rgb.R")
         {
