@@ -16,7 +16,6 @@ namespace
     using namespace mango::image;
 
     // TODO: mipmap/ripmap selection
-    // TODO: cubemap face selection
     // TODO: deep image support
     // TODO: multi-part support
     // TODO: more flexible color resolver (=more formats)
@@ -1158,49 +1157,37 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
                 break;
         }
 
+        channel.offset = offset;
+
         // TODO: systematic way to recognize RGB channels
         //       and classify them as different images (left vs. right, etc.)
 
         if (name == "R" || name == "rgb.R")
         {
-            channel.offset = offset;
-            data.channels.push_back(channel);
             data.red = channel;
         }
         else if (name == "G" || name == "rgb.G")
         {
-            channel.offset = offset;
-            data.channels.push_back(channel);
             data.green = channel;
         }
         else if (name == "B" || name == "rgb.B")
         {
-            channel.offset = offset;
-            data.channels.push_back(channel);
             data.blue = channel;
         }
         else if (name == "A" || name == "rgb.A")
         {
-            channel.offset = offset;
-            data.channels.push_back(channel);
             data.alpha = channel;
         }
         else if (name == "BY")
         {
-            channel.offset = offset;
-            data.channels.push_back(channel);
             data.blue = channel;
         }
         else if (name == "RY")
         {
-            channel.offset = offset;
-            data.channels.push_back(channel);
             data.red = channel;
         }
         else if (name == "Y")
         {
-            channel.offset = offset;
-            data.channels.push_back(channel);
             data.luminance = channel;
         }
         else
@@ -1208,11 +1195,13 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
             // not supported
         }
 
+        data.channels.push_back(channel);
+
         offset += div_ceil(channel.bytes, xsamples);
         data.bytes += channel.bytes;
 
-        debugPrint("    \"%s\", type: %d, linear: %d, offset: %d, samples: (%d x %d)\n",
-            name.c_str(), type, linear, channel.offset, xsamples, ysamples);
+        debugPrint("    \"%s\", type: %d, linear: %d, offset: %d, size: %d, samples: (%d x %d)\n",
+            name.c_str(), type, linear, channel.offset, channel.bytes, xsamples, ysamples);
     }
 
     // resolve color type
@@ -1634,7 +1623,7 @@ ContextEXR::ContextEXR(ConstMemory memory)
     m_header.height  = height;
     m_header.depth   = 0;
     m_header.levels  = 0;
-    m_header.faces   = isCubemap ? 6 : 1;
+    m_header.faces   = isCubemap ? 6 : 0;
     m_header.palette = false;
     m_header.format  = Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
     m_header.compression = TextureCompression::NONE;
@@ -2136,18 +2125,8 @@ const u8* ContextEXR::decompress_dwab(Memory dest, ConstMemory source, int width
 static
 DataType getDataType(const AttributeTable& attributes)
 {
+    // TODO: all active channels must have same datatype
     DataType datatype = attributes.chlist.channels[0].datatype;
-
-    for (size_t i = 1; i < attributes.chlist.channels.size(); ++i)
-    {
-        const Channel& channel = attributes.chlist.channels[i];
-        if (channel.datatype != datatype)
-        {
-            // all channels must be of same datatype
-            return DataType::NONE;
-        }
-    }
-
     return datatype;
 }
 
@@ -2482,6 +2461,7 @@ void ContextEXR::decodeBlock(Surface surface, ConstMemory memory, int x0, int y0
 {
     int blockWidth = x1 - x0;
     int blockHeight = y1 - y0;
+    //debugPrint("decodeBlock: (%d, %d )%d x %d\n", x0, y0, blockWidth, blockHeight);
 
     size_t bytesPerPixel = m_attributes.chlist.bytes;
     size_t bytesPerScan = blockWidth * bytesPerPixel;
@@ -2576,7 +2556,7 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
     }
 
     int width = m_header.width;
-    int height = m_header.height * m_header.faces;
+    int height = m_header.height * std::max(1, m_header.faces);
     size_t stride = width * m_header.format.bytes();
 
     m_image_buffer.resize(height * stride);
@@ -2679,6 +2659,8 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
         }
     }
 
+    q.wait();
+
     u64 time1 = mango::Time::us();
     m_time_decode += (time1 - time0);
 
@@ -2699,7 +2681,7 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
 
     int width = m_header.width;
     int height = m_header.height;
-    face = std::clamp(face, 0, m_header.faces - 1);
+    face = std::clamp(face, 0, std::max(1, m_header.faces) - 1);
 
     dest.blit(0, 0, Surface(m_surface, 0, face * height, width, (face + 1) * height));
 
