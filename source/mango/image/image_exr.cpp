@@ -1821,20 +1821,18 @@ const u8* ContextEXR::decompress_piz(Memory dest, ConstMemory source, int width,
     };
     std::vector<ChannelData> data;
 
-    for (size_t i = 0; i < channels.size(); ++i)
+    for (const Channel& channel : channels)
     {
-        const Channel& chan = channels[i];
-
-        int nx = div_ceil(width, chan.xsamples);
-        int ny = div_ceil(height, chan.ysamples);
-        int wcount = chan.bytes / 2;
+        int nx = div_ceil(width, channel.xsamples);
+        int ny = div_ceil(height, channel.ysamples);
+        int wcount = channel.bytes / 2;
 
         ChannelData cd;
 
         cd.nx = nx;
         cd.ny = ny;
         cd.wcount = wcount;
-        cd.ysamples = chan.ysamples;
+        cd.ysamples = channel.ysamples;
         cd.offset = outputSize;
 
         data.push_back(cd);
@@ -1905,12 +1903,9 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
     for (int y = y0; y < y1; ++y)
     {
-        for (size_t c = 0; c < channels.size(); ++c)
+        for (const Channel& channel : channels)
         {
-            const Channel& channel = channels[c];
-
-            int w = width; // channel.width
-            size_t nBytes = w * channel.bytes;
+            size_t nBytes = width * channel.bytes;
 
             if (height == 0 || (channel.ysamples > 1 && (y % channel.ysamples) != 0))
                 continue;
@@ -1936,12 +1931,12 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
                         return nullptr;
                     }
 
-                    for (int x = 0; x < w; ++x)
+                    for (int x = 0; x < width; ++x)
                     {
-                        u32 diff = ((u32(ptr[x + w * 0]) << 24) |
-                                    (u32(ptr[x + w * 1]) << 16) |
-                                    (u32(ptr[x + w * 2]) <<  8) |
-                                    (u32(ptr[x + w * 3]) <<  0));
+                        u32 diff = ((u32(ptr[x + width * 0]) << 24) |
+                                    (u32(ptr[x + width * 1]) << 16) |
+                                    (u32(ptr[x + width * 2]) <<  8) |
+                                    (u32(ptr[x + width * 3]) <<  0));
                         pixel += diff;
                         ustore32(out + x * 4, pixel);
                     }
@@ -1961,10 +1956,10 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
                         return nullptr;
                     }
 
-                    for (int x = 0; x < w; ++x)
+                    for (int x = 0; x < width; ++x)
                     {
-                        u32 diff = ((u32(ptr[x + w * 0]) << 8) |
-                                    (u32(ptr[x + w * 1]) << 0));
+                        u32 diff = ((u32(ptr[x + width * 0]) << 8) |
+                                    (u32(ptr[x + width * 1]) << 0));
                         pixel += diff;
                         ustore16(out + x * 2, u16(pixel));
                     }
@@ -1974,7 +1969,7 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
                 case DataType::FLOAT:
                 {
                     const u8* ptr = lastIn;
-                    lastIn += w * 3; // 24 bits per sample
+                    lastIn += width * 3; // 24 bits per sample
 
                     u32 pixel = 0;
 
@@ -1984,11 +1979,11 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
                         return nullptr;
                     }
 
-                    for (int x = 0; x < w; ++x)
+                    for (int x = 0; x < width; ++x)
                     {
-                        u32 diff = ((u32(ptr[x + w * 0]) << 24) |
-                                    (u32(ptr[x + w * 1]) << 16) |
-                                    (u32(ptr[x + w * 2]) <<  8));
+                        u32 diff = ((u32(ptr[x + width * 0]) << 24) |
+                                    (u32(ptr[x + width * 1]) << 16) |
+                                    (u32(ptr[x + width * 2]) <<  8));
                         pixel += diff;
                         ustore32(out + x * 4, pixel);
                     }
@@ -2018,10 +2013,13 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
     const u8* source_end = source.end();
     const u8* dest_end = dest.end();
 
+    const int block_width = width;
+    const int block_height = std::max(height, m_scanLinesPerBlock);
+
     for (const Channel& channel : channels)
     {
-        size_t nx = div_ceil(width, channel.xsamples);
-        size_t ny = div_ceil(height, channel.ysamples);
+        size_t nx = div_ceil(block_width, channel.xsamples);
+        size_t ny = div_ceil(block_height, channel.ysamples);
         size_t nBytes = ny * nx * channel.bytes;
 
         if (nBytes == 0)
@@ -2116,8 +2114,8 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
 
         for (const Channel& channel : channels)
         {
-            size_t nx = div_ceil(width, channel.xsamples);
-            size_t ny = div_ceil(height, channel.ysamples);
+            size_t nx = div_ceil(block_width, channel.xsamples);
+            size_t ny = div_ceil(block_height, channel.ysamples);
             size_t bpl    = nx * channel.bytes;
             size_t nBytes = ny * bpl;
 
