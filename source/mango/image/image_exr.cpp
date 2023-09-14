@@ -948,6 +948,18 @@ enum class ColorType
     NONE
 };
 
+enum class Component
+{
+    R,
+    G,
+    B,
+    A,
+    Y,
+    RY,
+    BY,
+    NONE
+};
+
 struct Channel
 {
     DataType datatype = DataType::NONE;
@@ -957,19 +969,40 @@ struct Channel
 
     int bytes = 0;
     int offset = 0;
+    Component component = Component::NONE;
+};
+
+struct Layer
+{
+    std::string name;
+    std::vector<Channel> channels;
+    ColorType colortype = ColorType::NONE;
+    int bytes = 0;
 };
 
 struct ChannelList
 {
+    // decompressor needs all channels
     std::vector<Channel> channels;
     int bytes = 0;
 
-    Channel luminance;
-    Channel red;
-    Channel green;
-    Channel blue;
-    Channel alpha;
-    ColorType colortype = ColorType::NONE;
+    // decoder is only interested in a specific layer
+    std::vector<Layer> layers;
+
+    Layer& getLayer(const std::string& name)
+    {
+        for (Layer& layer : layers)
+        {
+            if (layer.name == name)
+                return layer;
+        }
+
+        Layer temp;
+        temp.name = name;
+
+        layers.push_back(temp);
+        return layers.back();
+    }
 };
 
 struct TileDesc
@@ -1012,6 +1045,257 @@ struct Chromaticities
     float32x2 blue;
     float32x2 white;
 };
+
+template <typename T>
+struct Attribute
+{
+    T data;
+};
+
+template <typename T>
+void readAttribute(T& data, LittleEndianConstPointer p)
+{
+    MANGO_UNREFERENCED(data);
+    MANGO_UNREFERENCED(p);
+}
+
+template <>
+void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
+{
+    int offset = 0;
+
+    for ( ; *p; )
+    {
+        std::string name = p.cast<const char>();
+        p += name.length() + 1;
+
+        u32 type = p.read32();
+        u8 linear = p.read8();
+        p += 3; // reserved
+        u32 xsamples = p.read32();
+        u32 ysamples = p.read32();
+
+        Channel channel;
+
+        channel.xsamples = xsamples;
+        channel.ysamples = ysamples;
+        channel.linear = linear;
+        //debugPrint("  %s xs: %d  ys: %d  linear: %d\n", name.c_str(), xsamples, ysamples, linear);
+
+        switch (type)
+        {
+            case 0:
+                channel.datatype = DataType::UINT;
+                channel.bytes = 4;
+                break;
+            case 1:
+                channel.datatype = DataType::HALF;
+                channel.bytes = 2;
+                break;
+            case 2:
+                channel.datatype = DataType::FLOAT;
+                channel.bytes = 4;
+                break;
+            default:
+                channel.datatype = DataType::NONE;
+                channel.bytes = 0;
+                break;
+        }
+
+        channel.offset = offset;
+
+        std::string layer_name;
+        std::string channel_name = name;
+
+        auto n = channel_name.find_last_of('.');
+        if (n != std::string_view::npos)
+        {
+            layer_name = channel_name.substr(0, n);
+            channel_name = channel_name.substr(n + 1);
+        }
+
+        if (channel_name == "R")
+        {
+            channel.component = Component::R;
+        }
+        else if (channel_name == "G")
+        {
+            channel.component = Component::G;
+        }
+        else if (channel_name == "B")
+        {
+            channel.component = Component::B;
+        }
+        else if (channel_name == "A")
+        {
+            channel.component = Component::A;
+        }
+        else if (channel_name == "Y")
+        {
+            channel.component = Component::Y;
+        }
+        else if (channel_name == "RY")
+        {
+            channel.component = Component::RY;
+        }
+        else if (channel_name == "BY")
+        {
+            channel.component = Component::BY;
+        }
+        else
+        {
+            // not supported
+            channel.component = Component::NONE;
+        }
+
+        Layer& layer = data.getLayer(layer_name);
+        layer.channels.push_back(channel);
+
+        data.channels.push_back(channel);
+
+        offset += div_ceil(channel.bytes, xsamples);
+        data.bytes += channel.bytes;
+
+        debugPrint("    \"%s\", type: %d, linear: %d, offset: %d, size: %d, samples: (%d x %d)\n",
+            name.data(), type, linear, channel.offset, channel.bytes, xsamples, ysamples);
+    }
+
+    for (Layer& layer : data.layers)
+    {
+        bool rgb = false;
+        bool luminance = false;
+        bool chroma = false;
+
+        for (Channel& channel : layer.channels)
+        {
+            switch (channel.component)
+            {
+                case Component::R:
+                case Component::G:
+                case Component::B:
+                    rgb = true;
+                    break;
+                case Component::A:
+                    break;
+                case Component::Y:
+                    luminance = true;
+                    break;
+                case Component::RY:
+                case Component::BY:
+                    chroma = true;
+                    break;
+                case Component::NONE:
+                    break;
+            }
+        }
+
+        if (luminance)
+        {
+            if (chroma)
+            {
+                layer.colortype = ColorType::CHROMA;
+            }
+            else
+            {
+                layer.colortype = ColorType::LUMINANCE;
+            }
+        }
+        else if (rgb)
+        {
+            layer.colortype = ColorType::RGB;
+        }
+
+        layer.bytes = data.bytes;
+    }
+
+    debugPrint("    DataPerPixel: %d bytes\n", data.bytes);
+}
+
+template <>
+void readAttribute<TileDesc>(TileDesc& data, LittleEndianConstPointer p)
+{
+    data.xsize = p.read32();
+    data.ysize = p.read32();
+    data.mode = p.read8();
+    debugPrint("    %d x %d mode: %x (mipmap: %d, ripmap: %d, round: %d)\n", data.xsize, data.ysize, data.mode,
+        (data.mode & 0x02) != 0, (data.mode & 0x02) != 0, (data.mode & 0x10) != 0);
+}
+
+/*
+template <>
+void readAttribute<String>(String& data, LittleEndianConstPointer p)
+{
+    // TODO
+    MANGO_UNREFERENCED(data);
+    MANGO_UNREFERENCED(p);
+}
+
+template <>
+void readAttribute<Text>(Text& data, LittleEndianConstPointer p)
+{
+    // TODO
+    MANGO_UNREFERENCED(data);
+    MANGO_UNREFERENCED(p);
+}
+*/
+
+template <>
+void readAttribute<u8>(u8& data, LittleEndianConstPointer p)
+{
+    data = p.read8();
+    debugPrint("    %d\n", data);
+}
+
+/*
+template <>
+void readAttribute<u32>(u32& data, LittleEndianConstPointer p)
+{
+    data = p.read32();
+    debugPrint("    %d\n", data);
+}
+*/
+
+template <>
+void readAttribute<float>(float& data, LittleEndianConstPointer p)
+{
+    data = p.read32f();
+    debugPrint("    %f\n", data);
+}
+
+template <>
+void readAttribute<float32x2>(float32x2& data, LittleEndianConstPointer p)
+{
+    data.x = p.read32f();
+    data.y = p.read32f();
+    debugPrint("    %f, %f\n", data.x, data.y);
+}
+
+template <>
+void readAttribute<Box2i>(Box2i& data, LittleEndianConstPointer p)
+{
+    data.xmin = p.read32();
+    data.ymin = p.read32();
+    data.xmax = p.read32();
+    data.ymax = p.read32();
+    debugPrint("    %d, %d, %d, %d\n", data.xmin, data.ymin, data.xmax, data.ymax);
+}
+
+template <>
+void readAttribute<Chromaticities>(Chromaticities& data, LittleEndianConstPointer p)
+{
+    data.red.x   = p.read32f();
+    data.red.y   = p.read32f();
+    data.green.x = p.read32f();
+    data.green.y = p.read32f();
+    data.blue.x  = p.read32f();
+    data.blue.y  = p.read32f();
+    data.white.x = p.read32f();
+    data.white.y = p.read32f();
+    debugPrint("    red:   %f, %f\n", float(data.red.x), float(data.red.y));
+    debugPrint("    green: %f, %f\n", float(data.green.x), float(data.green.y));
+    debugPrint("    blue:  %f, %f\n", float(data.blue.x), float(data.blue.y));
+    debugPrint("    white: %f, %f\n", float(data.white.x), float(data.white.y));
+}
 
 static
 Chromaticities Chromaticities_BT709()
@@ -1099,230 +1383,6 @@ float32x3 computeYW(const Chromaticities& chromaticities, float Y = 1.0f)
 {
     Matrix4x4 m = RGBtoXYZ(chromaticities, Y);
     return float32x3(m[0][1], m[1][1], m[2][1]) / (m[0][1] + m[1][1] + m[2][1]);
-}
-
-template <typename T>
-struct Attribute
-{
-    T data;
-};
-
-template <typename T>
-void readAttribute(T& data, LittleEndianConstPointer p)
-{
-    MANGO_UNREFERENCED(data);
-    MANGO_UNREFERENCED(p);
-}
-
-template <>
-void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
-{
-    int offset = 0;
-
-    for ( ; *p; )
-    {
-        std::string name = p.cast<const char>();
-        p += name.length() + 1;
-
-        u32 type = p.read32();
-        u8 linear = p.read8();
-        p += 3; // reserved
-        u32 xsamples = p.read32();
-        u32 ysamples = p.read32();
-
-        Channel channel;
-
-        channel.xsamples = xsamples;
-        channel.ysamples = ysamples;
-        channel.linear = linear;
-        //debugPrint("  %s xs: %d  ys: %d  linear: %d\n", name.c_str(), xsamples, ysamples, linear);
-
-        switch (type)
-        {
-            case 0:
-                channel.datatype = DataType::UINT;
-                channel.bytes = 4;
-                break;
-            case 1:
-                channel.datatype = DataType::HALF;
-                channel.bytes = 2;
-                break;
-            case 2:
-                channel.datatype = DataType::FLOAT;
-                channel.bytes = 4;
-                break;
-            default:
-                channel.datatype = DataType::NONE;
-                channel.bytes = 0;
-                break;
-        }
-
-        channel.offset = offset;
-
-        // TODO: demux layer information
-        // example: "left.R", "left.G", "left.B" -> R,G,B channels of "left" layer
-
-        if (name == "R" || name == "rgb.R")
-        {
-            data.red = channel;
-        }
-        else if (name == "G" || name == "rgb.G")
-        {
-            data.green = channel;
-        }
-        else if (name == "B" || name == "rgb.B")
-        {
-            data.blue = channel;
-        }
-        else if (name == "A" || name == "rgb.A")
-        {
-            data.alpha = channel;
-        }
-        else if (name == "BY")
-        {
-            data.blue = channel;
-        }
-        else if (name == "RY")
-        {
-            data.red = channel;
-        }
-        else if (name == "Y")
-        {
-            data.luminance = channel;
-        }
-        else
-        {
-            // not supported
-        }
-
-        data.channels.push_back(channel);
-
-        offset += div_ceil(channel.bytes, xsamples);
-        data.bytes += channel.bytes;
-
-        debugPrint("    \"%s\", type: %d, linear: %d, offset: %d, size: %d, samples: (%d x %d)\n",
-            name.c_str(), type, linear, channel.offset, channel.bytes, xsamples, ysamples);
-    }
-
-    // resolve color type
-
-    const char* color = "NONE";
-
-    if (data.luminance.bytes)
-    {
-        if (data.red.bytes && data.blue.bytes)
-        {
-            data.colortype = ColorType::CHROMA;
-            color = "CHROMA";
-        }
-        else
-        {
-            data.colortype = ColorType::LUMINANCE;
-            color = "LUMINANCE";
-        }
-    }
-    else
-    {
-        if (data.red.bytes || data.green.bytes || data.blue.bytes)
-        {
-            data.colortype = ColorType::RGB;
-            color = "RGB";
-        }
-        else
-        {
-            data.colortype = ColorType::NONE;
-            color = "NONE";
-        }
-    }
-
-    debugPrint("    DataPerPixel: %d bytes\n", data.bytes);
-    debugPrint("    Color: %s\n", color);
-}
-
-template <>
-void readAttribute<TileDesc>(TileDesc& data, LittleEndianConstPointer p)
-{
-    data.xsize = p.read32();
-    data.ysize = p.read32();
-    data.mode = p.read8();
-    debugPrint("    %d x %d mode: %x (mipmap: %d, ripmap: %d, round: %d)\n", data.xsize, data.ysize, data.mode,
-        (data.mode & 0x02) != 0, (data.mode & 0x02) != 0, (data.mode & 0x10) != 0);
-}
-
-/*
-template <>
-void readAttribute<String>(String& data, LittleEndianConstPointer p)
-{
-    // TODO
-    MANGO_UNREFERENCED(data);
-    MANGO_UNREFERENCED(p);
-}
-
-template <>
-void readAttribute<Text>(Text& data, LittleEndianConstPointer p)
-{
-    // TODO
-    MANGO_UNREFERENCED(data);
-    MANGO_UNREFERENCED(p);
-}
-*/
-
-template <>
-void readAttribute<u8>(u8& data, LittleEndianConstPointer p)
-{
-    data = p.read8();
-    debugPrint("    %d\n", data);
-}
-
-/*
-template <>
-void readAttribute<u32>(u32& data, LittleEndianConstPointer p)
-{
-    data = p.read32();
-    debugPrint("    %d\n", data);
-}
-*/
-
-template <>
-void readAttribute<float>(float& data, LittleEndianConstPointer p)
-{
-    data = p.read32f();
-    debugPrint("    %f\n", data);
-}
-
-template <>
-void readAttribute<float32x2>(float32x2& data, LittleEndianConstPointer p)
-{
-    data.x = p.read32f();
-    data.y = p.read32f();
-    debugPrint("    %f, %f\n", data.x, data.y);
-}
-
-template <>
-void readAttribute<Box2i>(Box2i& data, LittleEndianConstPointer p)
-{
-    data.xmin = p.read32();
-    data.ymin = p.read32();
-    data.xmax = p.read32();
-    data.ymax = p.read32();
-    debugPrint("    %d, %d, %d, %d\n", data.xmin, data.ymin, data.xmax, data.ymax);
-}
-
-template <>
-void readAttribute<Chromaticities>(Chromaticities& data, LittleEndianConstPointer p)
-{
-    data.red.x   = p.read32f();
-    data.red.y   = p.read32f();
-    data.green.x = p.read32f();
-    data.green.y = p.read32f();
-    data.blue.x  = p.read32f();
-    data.blue.y  = p.read32f();
-    data.white.x = p.read32f();
-    data.white.y = p.read32f();
-    debugPrint("    red:   %f, %f\n", float(data.red.x), float(data.red.y));
-    debugPrint("    green: %f, %f\n", float(data.green.x), float(data.green.y));
-    debugPrint("    blue:  %f, %f\n", float(data.blue.x), float(data.blue.y));
-    debugPrint("    white: %f, %f\n", float(data.white.x), float(data.white.y));
 }
 
 struct AttributeTable
@@ -2122,14 +2182,6 @@ const u8* ContextEXR::decompress_dwab(Memory dest, ConstMemory source, int width
     return nullptr;
 }
 
-static
-DataType getDataType(const AttributeTable& attributes)
-{
-    // TODO: all active channels must have same datatype
-    DataType datatype = attributes.chlist.channels[0].datatype;
-    return datatype;
-}
-
 static inline
 void writeChromaRGBA(float16* dest, float32x3 yw, float RY, float BY, float Y, float16 alpha)
 {
@@ -2146,17 +2198,37 @@ void writeChromaRGBA(float16* dest, float32x3 yw, float RY, float BY, float Y, f
 }
 
 static
-void decodeLuminance(Surface surface, const u8* src, const AttributeTable& attributes, int x0, int y0, int x1, int y1)
+void decodeLuminance(Surface surface, const u8* src, const Layer& layer, int x0, int y0, int x1, int y1)
 {
     int blockWidth = x1 - x0;
 
-    size_t bytesPerPixel = attributes.chlist.bytes;
-    size_t bytesPerScan = blockWidth * bytesPerPixel;
+    size_t bytesPerScan = blockWidth * layer.bytes;
 
-    Channel luminance = attributes.chlist.luminance;
-    Channel alpha = attributes.chlist.alpha;
+    DataType datatype = DataType::NONE;
 
-    DataType datatype = getDataType(attributes);
+    Channel luminance;
+    Channel alpha;
+
+    for (const Channel& channel : layer.channels)
+    {
+        if (datatype != DataType::NONE && datatype != channel.datatype)
+        {
+            // all channels must have same datatype
+            return;
+        }
+
+        datatype = channel.datatype;
+
+        if (channel.component == Component::Y)
+        {
+            luminance = channel;
+        }
+
+        if (channel.component == Component::A)
+        {
+            alpha = channel;
+        }
+    }
 
     if (datatype == DataType::HALF)
     {
@@ -2202,21 +2274,46 @@ void decodeLuminance(Surface surface, const u8* src, const AttributeTable& attri
 }
 
 static
-void decodeChroma(Surface surface, const u8* src, const AttributeTable& attributes, int x0, int y0, int x1, int y1)
+void decodeChroma(Surface surface, const u8* src, const Layer& layer, const Chromaticities& chromaticities, int x0, int y0, int x1, int y1)
 {
     int blockWidth = x1 - x0;
     //int blockHeight = y1 - y0;
 
-    size_t bytesPerPixel = attributes.chlist.bytes;
-    size_t bytesPerScan = blockWidth * bytesPerPixel;
+    size_t bytesPerScan = blockWidth * layer.bytes;
 
-    float32x3 yw = computeYW(attributes.chromaticities, 1.0f);
+    float32x3 yw = computeYW(chromaticities, 1.0f);
 
-    Channel luminance = attributes.chlist.luminance;
-    Channel red = attributes.chlist.red;
-    Channel blue = attributes.chlist.blue;
+    DataType datatype = DataType::NONE;
 
-    DataType datatype = getDataType(attributes);
+    Channel luminance;
+    Channel red;
+    Channel blue;
+
+    for (const Channel& channel : layer.channels)
+    {
+        if (datatype != DataType::NONE && datatype != channel.datatype)
+        {
+            // all channels must have same datatype
+            return;
+        }
+
+        datatype = channel.datatype;
+
+        if (channel.component == Component::Y)
+        {
+            luminance = channel;
+        }
+
+        if (channel.component == Component::RY)
+        {
+            red = channel;
+        }
+
+        if (channel.component == Component::BY)
+        {
+            blue = channel;
+        }
+    }
 
     if (datatype == DataType::HALF)
     {
@@ -2261,39 +2358,51 @@ void decodeChroma(Surface surface, const u8* src, const AttributeTable& attribut
 }
 
 static
-void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes, int x0, int y0, int x1, int y1)
+void decodeRGB(Surface surface, const u8* src, const Layer& layer, int x0, int y0, int x1, int y1)
 {
     int blockWidth = x1 - x0;
 
-    size_t bytesPerPixel = attributes.chlist.bytes;
-    size_t bytesPerScan = blockWidth * bytesPerPixel;
+    size_t bytesPerScan = blockWidth * layer.bytes;
 
     size_t ch_step [] = { 0, 0, 0, 0 };
     int ch_offset [] = { 0, 0, 0, 0 };
 
-    if (attributes.chlist.red.bytes)
-    {
-        ch_offset[0] = attributes.chlist.red.offset;
-        ch_step[0] = attributes.chlist.red.bytes;
-    }
+    DataType datatype = DataType::NONE;
 
-    if (attributes.chlist.green.bytes)
+    for (const Channel& channel : layer.channels)
     {
-        ch_offset[1] = attributes.chlist.green.offset;
-        ch_step[1] = attributes.chlist.green.bytes;
-    }
-    if (attributes.chlist.blue.bytes)
-    {
-        ch_offset[2] = attributes.chlist.blue.offset;
-        ch_step[2] = attributes.chlist.blue.bytes;
-    }
-    if (attributes.chlist.alpha.bytes)
-    {
-        ch_offset[3] = attributes.chlist.alpha.offset;
-        ch_step[3] = attributes.chlist.alpha.bytes;
-    }
+        if (datatype != DataType::NONE && datatype != channel.datatype)
+        {
+            // all channels must have same datatype
+            return;
+        }
 
-    DataType datatype = getDataType(attributes);
+        datatype = channel.datatype;
+
+        if (channel.component == Component::R)
+        {
+            ch_offset[0] = channel.offset;
+            ch_step[0] = channel.bytes;
+        }
+
+        if (channel.component == Component::G)
+        {
+            ch_offset[1] = channel.offset;
+            ch_step[1] = channel.bytes;
+        }
+
+        if (channel.component == Component::B)
+        {
+            ch_offset[2] = channel.offset;
+            ch_step[2] = channel.bytes;
+        }
+
+        if (channel.component == Component::A)
+        {
+            ch_offset[3] = channel.offset;
+            ch_step[3] = channel.bytes;
+        }
+    }
 
     if (datatype == DataType::HALF)
     {
@@ -2321,7 +2430,7 @@ void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes,
             }
 
             int count = blockWidth;
-#if 1
+
             while (count >= 4)
             {
                 float32x4 r = convert<float32x4>(float16x4::uload(ptr[0]));
@@ -2348,7 +2457,7 @@ void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes,
                 image += 16;
                 count -= 4;
             }
-#endif
+
             while (count-- > 0)
             {
                 float16 r = uload16f(ptr[0]);
@@ -2401,7 +2510,7 @@ void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes,
             }
 
             int count = blockWidth;
-#if 1
+
             while (count >= 4)
             {
                 float32x4 r = float32x4::uload(ptr[0]);
@@ -2428,7 +2537,7 @@ void decodeRGB(Surface surface, const u8* src, const AttributeTable& attributes,
                 image += 16;
                 count -= 4;
             }
-#endif
+
             while (count-- > 0)
             {
                 float16 r = uload16f(ptr[0]);
@@ -2523,18 +2632,21 @@ void ContextEXR::decodeBlock(Surface surface, ConstMemory memory, int x0, int y0
 
     u64 time1 = mango::Time::us();
 
-    switch (m_attributes.chlist.colortype)
+    // select first layer
+    const Layer& layer = m_attributes.chlist.layers[0];
+
+    switch (layer.colortype)
     {
         case ColorType::LUMINANCE:
-            decodeLuminance(surface, src, m_attributes, x0, y0, x1, y1);
+            decodeLuminance(surface, src, layer, x0, y0, x1, y1);
             break;
 
         case ColorType::CHROMA:
-            decodeChroma(surface, src, m_attributes, x0, y0, x1, y1);
+            decodeChroma(surface, src, layer, m_attributes.chromaticities, x0, y0, x1, y1);
             break;
 
         case ColorType::RGB:
-            decodeRGB(surface, src, m_attributes, x0, y0, x1, y1);
+            decodeRGB(surface, src, layer, x0, y0, x1, y1);
             break;
 
         case ColorType::NONE:
