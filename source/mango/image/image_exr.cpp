@@ -2014,15 +2014,12 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
 
     u8* scratch = temp;
     const u8* in = source.address;
-    size_t bIn = 0;
-    size_t n;
 
-    u16 s[16];
+    const u8* source_end = source.end();
+    const u8* dest_end = dest.end();
 
-    for (size_t c = 0; c < channels.size(); ++c)
+    for (const Channel& channel : channels)
     {
-        const Channel& channel = channels[c];
-
         int nx = width / channel.xsamples;
         int ny = height / channel.ysamples;
         size_t nBytes = ny * nx * channel.bytes;
@@ -2032,72 +2029,70 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
 
         if (channel.datatype != DataType::HALF)
         {
-            //if (bIn + nBytes > comp_buf_size)
-            //    return EXR_ERR_OUT_OF_MEMORY;
+            if (in + nBytes > source_end)
+            {
+                // out of memory
+                return nullptr;
+            }
 
             std::memcpy(scratch, in, nBytes);
             in += nBytes;
-            bIn += nBytes;
             scratch += nBytes;
             continue;
         }
 
         for (int y = 0; y < ny; y += 4)
         {
-            u16* row0;
-            u16* row1;
-            u16* row2;
-            u16* row3;
-
-            row0 = (u16*) scratch;
-            row0 += y * nx;
-            row1 = row0 + nx;
-            row2 = row1 + nx;
-            row3 = row2 + nx;
+            u16* row0 = reinterpret_cast<u16*>(scratch) + y * nx;
+            u16* row1 = row0 + nx;
+            u16* row2 = row1 + nx;
+            u16* row3 = row2 + nx;
 
             //debugPrint("(%d,%d) [%d x %d]\n", 0, y, nx, ny);
             for (int x = 0; x < nx; x += 4)
             {
-                if (bIn + 3 > source.size)
+                if (in + 3 > source_end)
                 {
-                    //    return EXR_ERR_OUT_OF_MEMORY;
+                    // out of memory
+                    return nullptr;
                 }
+
+                u16 s[16];
 
                 // check if 3-byte encoded flat field
                 if (in[2] >= (13 << 2))
                 {
                     unpack3(in, s);
                     in += 3;
-                    bIn += 3;
                 }
                 else
                 {
-                    //if (bIn + 14 > comp_buf_size)
-                    //    return EXR_ERR_OUT_OF_MEMORY;
+                    if (in + 14 > source_end)
+                    {
+                        // out of memory
+                        return nullptr;
+                    }
 
                     unpack14(in, s);
                     in += 14;
-                    bIn += 14;
                 }
 
                 if (channel.linear)
                     convertToLinear(s);
 
-                //priv_from_native16(s, 16);
-
-                n = (x + 3 < nx) ? 4 * sizeof(u16) : (size_t) (nx - x) * sizeof(u16);
+                size_t n = (x + 3 < nx) ? 4 * sizeof(u16) : size_t(nx - x) * sizeof(u16);
                 if (y + 3 < ny)
                 {
-                    std::memcpy(row0, &s[0], n);
-                    std::memcpy(row1, &s[4], n);
-                    std::memcpy(row2, &s[8], n);
-                    std::memcpy(row3, &s[12], n);
+                    std::memcpy(row0, s + 0, n);
+                    std::memcpy(row1, s + 4, n);
+                    std::memcpy(row2, s + 8, n);
+                    std::memcpy(row3, s + 12, n);
                 }
                 else
                 {
-                    std::memcpy(row0, &s[0], n);
-                    if (y + 1 < ny) std::memcpy(row1, &s[4], n);
-                    if (y + 2 < ny) std::memcpy(row2, &s[8], n);
+                    std::memcpy(row0, s + 0, n);
+                    if (y + 1 < ny) std::memcpy(row1, s + 4, n);
+                    if (y + 2 < ny) std::memcpy(row2, s + 8, n);
                 }
 
                 row0 += 4;
@@ -2111,7 +2106,6 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
     }
 
     // now put it back so each scanline has channel data
-    bIn = 0;
     u8* out = dest.address;
 
     for (int y = 0; y < height; ++y)
@@ -2120,10 +2114,8 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
 
         scratch = temp;
 
-        for (size_t c = 0; c < channels.size(); ++c)
+        for (const Channel& channel : channels)
         {
-            const Channel& channel = channels[c];
-
             int nx = width / channel.xsamples;
             int ny = height / channel.ysamples;
             size_t bpl    = u64(nx) * (u64) channel.bytes;
@@ -2147,12 +2139,14 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
                 tmp += u64(y) * bpl;
             }
 
-            //if (bIn + bpl > uncomp_buf_size)
-            //    return EXR_ERR_OUT_OF_MEMORY;
+            if (out + bpl > dest_end)
+            {
+                // out of memory
+                return nullptr;
+            }
 
             std::memcpy(out, tmp, bpl);
 
-            bIn += bpl;
             out += bpl;
             scratch += nBytes;
         }
@@ -2573,7 +2567,7 @@ void ContextEXR::decodeBlock(Surface surface, ConstMemory memory, int x0, int y0
 {
     int blockWidth = x1 - x0;
     int blockHeight = y1 - y0;
-    //debugPrint("decodeBlock: (%d, %d )%d x %d\n", x0, y0, blockWidth, blockHeight);
+    //debugPrint("decodeBlock: (%d, %d) %d x %d\n", x0, y0, blockWidth, blockHeight);
 
     size_t bytesPerPixel = m_attributes.chlist.bytes;
     size_t bytesPerScan = blockWidth * bytesPerPixel;
@@ -2750,12 +2744,12 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
             int ystart = ptr.read32();
             u32 size = ptr.read32();
 
-            //debugPrint("  y:%d, size: %d bytes\n", ystart, size);
-
             int x0 = 0;
             int y0 = ystart - m_attributes.dataWindow.ymin;
             int x1 = width;
             int y1 = std::min(height, y0 + m_scanLinesPerBlock);
+
+            //debugPrint("  y:%d, size: %d bytes\n", y0, size);
 
             auto task = [=]
             {
