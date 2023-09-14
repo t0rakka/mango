@@ -1148,8 +1148,11 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
             channel.component = Component::NONE;
         }
 
-        Layer& layer = data.getLayer(layer_name);
-        layer.channels.push_back(channel);
+        if (channel.component != Component::NONE)
+        {
+            Layer& layer = data.getLayer(layer_name);
+            layer.channels.push_back(channel);
+        }
 
         data.channels.push_back(channel);
 
@@ -2057,7 +2060,7 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
             {
                 if (bIn + 3 > source.size)
                 {
-                //    return EXR_ERR_OUT_OF_MEMORY;
+                    //    return EXR_ERR_OUT_OF_MEMORY;
                 }
 
                 // check if 3-byte encoded flat field
@@ -2123,8 +2126,8 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
 
             int nx = width / channel.xsamples;
             int ny = height / channel.ysamples;
-            size_t bpl    = ((u64) (nx)) * (u64) channel.bytes;
-            size_t nBytes = ((u64) (ny)) * bpl;
+            size_t bpl    = u64(nx) * (u64) channel.bytes;
+            size_t nBytes = u64(ny) * bpl;
 
             if (nBytes == 0)
                 continue;
@@ -2137,7 +2140,7 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
                     scratch += nBytes;
                     continue;
                 }
-                tmp += ((u64) (y / channel.ysamples)) * bpl;
+                tmp += u64(y / channel.ysamples) * bpl;
             }
             else
             {
@@ -2540,10 +2543,10 @@ void decodeRGB(Surface surface, const u8* src, const Layer& layer, int x0, int y
 
             while (count-- > 0)
             {
-                float16 r = uload16f(ptr[0]);
-                float16 g = uload16f(ptr[1]);
-                float16 b = uload16f(ptr[2]);
-                float16 a = uload16f(ptr[3]);
+                float16 r = uload32f(ptr[0]);
+                float16 g = uload32f(ptr[1]);
+                float16 b = uload32f(ptr[2]);
+                float16 a = uload32f(ptr[3]);
                 r = linear_to_srgb(r);
                 g = linear_to_srgb(g);
                 b = linear_to_srgb(b);
