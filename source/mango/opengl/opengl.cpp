@@ -661,7 +661,8 @@ namespace
     // built-in shader sources
     // -------------------------------------------------------------------
 
-    const char* vertex_shader_source = R"(
+    const char* vertex_shader_source =
+    R"(
         uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0);
 
         in vec2 inPosition;
@@ -674,7 +675,8 @@ namespace
         }
     )";
 
-    const char* fragment_shader_source = R"(
+    const char* fragment_shader_source =
+    R"(
         uniform sampler2D uTexture;
 
         in vec2 texcoord;
@@ -686,7 +688,8 @@ namespace
         }
     )";
 
-    const char* vertex_shader_source_bicubic = R"(
+    const char* vertex_shader_source_bicubic =
+    R"(
         uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0);
 
         in vec2 inPosition;
@@ -699,7 +702,8 @@ namespace
         }
     )";
 
-    const char* fragment_shader_source_bicubic = R"(
+    const char* fragment_shader_source_bicubic =
+    R"(
         vec4 cubic(float v)
         {
             vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v;
@@ -746,7 +750,8 @@ namespace
         }
     )";
 
-    const char* fragment_shader_source_index = R"(
+    const char* fragment_shader_source_index =
+    R"(
         uniform isampler2D uTexture;
         uniform uint uPalette[256];
 
