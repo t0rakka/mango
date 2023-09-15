@@ -1564,6 +1564,7 @@ ContextEXR::ContextEXR(ConstMemory memory)
 {
     debugPrint("Memory: %d KB\n", int(memory.size / 1024));
 
+    const u8* end = memory.end();
     LittleEndianConstPointer p = memory.address;
 
     u32 magic = p.read32();
@@ -1617,6 +1618,12 @@ ContextEXR::ContextEXR(ConstMemory memory)
 
         m_attributes.parse(name, type, p, size);
         p += size;
+
+        if (p > end)
+        {
+            m_header.setError("Incorrect file: out of data.");
+            return;
+        }
     }
 
     ++p; // skip terminator
@@ -2712,6 +2719,12 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
             int x1 = std::min(width, x0 + tileWidth);
             int y1 = std::min(height, y0 + tileHeight);
 
+            if (x0 < 0 || x1 > width || y0 < 0 || y1 > height)
+            {
+                // incorrect tile
+                return;
+            }
+
             auto task = [=]
             {
                 ConstMemory memory(ptr, size);
@@ -2746,6 +2759,12 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
             int y0 = ystart - m_attributes.dataWindow.ymin;
             int x1 = width;
             int y1 = std::min(height, y0 + m_scanLinesPerBlock);
+
+            if (y0 < 0 || y1 > height)
+            {
+                // incorrect block
+                return;
+            }
 
             //debugPrint("  y:%d, size: %d bytes\n", y0, size);
 
