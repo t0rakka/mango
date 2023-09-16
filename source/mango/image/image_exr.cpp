@@ -2807,7 +2807,12 @@ ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptio
 
     int width = m_header.width;
     int height = m_header.height;
+
     face = std::clamp(face, 0, std::max(1, m_header.faces) - 1);
+
+    // flip z-axis for cubemap faces
+    if (face == 4) face = 5;
+    else if (face == 5) face = 4;
 
     dest.blit(0, 0, Surface(m_surface, 0, face * height, width, (face + 1) * height));
 
