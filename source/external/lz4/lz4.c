@@ -79,7 +79,7 @@
   ( defined(__ARM_ARCH_6__) || defined(__ARM_ARCH_6J__) || defined(__ARM_ARCH_6K__) \
   || defined(__ARM_ARCH_6Z__) || defined(__ARM_ARCH_6ZK__) || defined(__ARM_ARCH_6T2__) )
 #    define LZ4_FORCE_MEMORY_ACCESS 2
-#  elif (defined(__INTEL_COMPILER) && !defined(_WIN32)) || defined(__GNUC__)
+#  elif (defined(__INTEL_COMPILER) && !defined(_WIN32)) || defined(__GNUC__) || defined(_MSC_VER)
 #    define LZ4_FORCE_MEMORY_ACCESS 1
 #  endif
 #endif
@@ -365,6 +365,11 @@ static unsigned LZ4_isLittleEndian(void)
     return one.c[0];
 }
 
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
+#define LZ4_PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
+#elif defined(_MSC_VER)
+#define LZ4_PACK( __Declaration__ ) __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop))
+#endif
 
 #if defined(LZ4_FORCE_MEMORY_ACCESS) && (LZ4_FORCE_MEMORY_ACCESS==2)
 /* lie to the compiler about data alignment; use with caution */
@@ -380,9 +385,9 @@ static void LZ4_write32(void* memPtr, U32 value) { *(U32*)memPtr = value; }
 
 /* __pack instructions are safer, but compiler specific, hence potentially problematic for some compilers */
 /* currently only defined for gcc and icc */
-typedef struct { U16 u16; } __attribute__((packed)) LZ4_unalign16;
-typedef struct { U32 u32; } __attribute__((packed)) LZ4_unalign32;
-typedef struct { reg_t uArch; } __attribute__((packed)) LZ4_unalignST;
+LZ4_PACK(typedef struct { U16 u16; }) LZ4_unalign16;
+LZ4_PACK(typedef struct { U32 u32; }) LZ4_unalign32;
+LZ4_PACK(typedef struct { reg_t uArch; }) LZ4_unalignST;
 
 static U16 LZ4_read16(const void* ptr) { return ((const LZ4_unalign16*)ptr)->u16; }
 static U32 LZ4_read32(const void* ptr) { return ((const LZ4_unalign32*)ptr)->u32; }
@@ -527,12 +532,12 @@ LZ4_memcpy_using_offset(BYTE* dstPtr, const BYTE* srcPtr, BYTE* dstEnd, const si
     case 2:
         LZ4_memcpy(v, srcPtr, 2);
         LZ4_memcpy(&v[2], srcPtr, 2);
-#if defined(_MSC_VER) && (_MSC_VER <= 1933) /* MSVC 2022 ver 17.3 or earlier */
+#if defined(_MSC_VER) && (_MSC_VER <= 1936) /* MSVC 2022 ver 17.6 or earlier */
 #  pragma warning(push)
 #  pragma warning(disable : 6385) /* warning C6385: Reading invalid data from 'v'. */
 #endif
         LZ4_memcpy(&v[4], v, 4);
-#if defined(_MSC_VER) && (_MSC_VER <= 1933) /* MSVC 2022 ver 17.3 or earlier */
+#if defined(_MSC_VER) && (_MSC_VER <= 1936) /* MSVC 2022 ver 17.6 or earlier */
 #  pragma warning(pop)
 #endif
         break;
@@ -2025,19 +2030,18 @@ LZ4_decompress_generic(
                 if (unlikely((uptrval)(ip)+length<(uptrval)(ip))) { goto _output_error; } /* overflow detection */
 
                 /* copy literals */
-                cpy = op+length;
                 LZ4_STATIC_ASSERT(MFLIMIT >= WILDCOPYLENGTH);
-                if ((cpy>oend-32) || (ip+length>iend-32)) { goto safe_literal_copy; }
-                LZ4_wildCopy32(op, ip, cpy);
-                ip += length; op = cpy;
-            } else {
-                cpy = op+length;
-                DEBUGLOG(7, "copy %u bytes in a 16-bytes stripe", (unsigned)length);
+                if ((op+length>oend-32) || (ip+length>iend-32)) { goto safe_literal_copy; }
+                LZ4_wildCopy32(op, ip, op+length);
+                ip += length; op += length;
+            } else if (ip <= iend-(16 + 1/*max lit + offset + nextToken*/)) {
                 /* We don't need to check oend, since we check it once for each loop below */
-                if (ip > iend-(16 + 1/*max lit + offset + nextToken*/)) { goto safe_literal_copy; }
+                DEBUGLOG(7, "copy %u bytes in a 16-bytes stripe", (unsigned)length);
                 /* Literals can only be <= 14, but hope compilers optimize better when copy by a register size */
                 LZ4_memcpy(op, ip, 16);
-                ip += length; op = cpy;
+                ip += length; op += length;
+            } else {
+                goto safe_literal_copy;
             }
 
             /* get offset */
@@ -2058,10 +2062,6 @@ LZ4_decompress_generic(
                 length += addl;
                 length += MINMATCH;
                 if (unlikely((uptrval)(op)+length<(uptrval)op)) { goto _output_error; } /* overflow detection */
-                if ((checkOffset) && (unlikely(match + dictSize < lowPrefix))) {
-                    DEBUGLOG(6, "Error : offset outside buffers");
-                    goto _output_error;
-                }
                 if (op + length >= oend - FASTLOOP_SAFE_DISTANCE) {
                     goto safe_match_copy;
                 }
@@ -2194,11 +2194,12 @@ LZ4_decompress_generic(
                 if (unlikely((uptrval)(ip)+length<(uptrval)(ip))) { goto _output_error; } /* overflow detection */
             }
 
-            /* copy literals */
-            cpy = op+length;
 #if LZ4_FAST_DEC_LOOP
         safe_literal_copy:
 #endif
+            /* copy literals */
+            cpy = op+length;
+
             LZ4_STATIC_ASSERT(MFLIMIT >= WILDCOPYLENGTH);
             if ((cpy>oend-MFLIMIT) || (ip+length>iend-(2+1+LASTLITERALS))) {
                 /* We've either hit the input parsing restriction or the output parsing restriction.

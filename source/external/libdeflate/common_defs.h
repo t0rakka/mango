@@ -101,11 +101,6 @@ typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
 
-// mango fix: ssize_t visibility (GCC / Linux)
-#if defined(__linux__)
-	#include <sys/types.h>
-#endif
-
 /* ssize_t, if not available in <sys/types.h> */
 #ifdef _MSC_VER
 #  ifdef _WIN64
