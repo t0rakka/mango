@@ -2025,9 +2025,9 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
 
     for (const Channel& channel : channels)
     {
-        size_t nx = div_ceil(block_width, channel.xsamples);
-        size_t ny = div_ceil(block_height, channel.ysamples);
-        size_t nBytes = ny * nx * channel.bytes;
+        int nx = div_ceil(block_width, channel.xsamples);
+        int ny = div_ceil(block_height, channel.ysamples);
+        int nBytes = ny * nx * channel.bytes;
 
         if (nBytes == 0)
             continue;
