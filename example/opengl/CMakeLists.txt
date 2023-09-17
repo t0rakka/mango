@@ -5,6 +5,7 @@ list(APPEND EXAMPLES
     animation
     mandelbrot
     srgb
+    cubemap
 )
 
 foreach(example IN LISTS EXAMPLES)
