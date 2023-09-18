@@ -370,7 +370,7 @@ public:
         meshTexture = createTexture2D("data/hanselun.png", true);
         meshProgram = createProgram(vs_mesh, fs_mesh);
 
-        bool cubemap = false;
+        bool cubemap = true;
 
         if (cubemap)
         {
@@ -395,13 +395,14 @@ public:
     ~DemoWindow()
     {
         glDeleteVertexArrays(1, &meshVAO);
-        glDeleteVertexArrays(1, &skyboxVAO);
         glDeleteBuffers(1, &meshVBO);
-        glDeleteBuffers(1, &skyboxVBO);
-        glDeleteTextures(1, &meshTexture);
-        glDeleteTextures(1, &skyboxTexture);
         glDeleteProgram(meshProgram);
+        glDeleteTextures(1, &meshTexture);
+
+        glDeleteVertexArrays(1, &skyboxVAO);
+        glDeleteBuffers(1, &skyboxVBO);
         glDeleteProgram(skyboxProgram);
+        glDeleteTextures(1, &skyboxTexture);
     }
 
     void onKeyPress(Keycode code, u32 mask) override
