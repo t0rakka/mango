@@ -2462,10 +2462,10 @@ void decodeRGB(Surface surface, const u8* src, const Layer& layer, int x0, int y
 
             while (count-- > 0)
             {
-                float16 r = uload16f(ptr[0]);
-                float16 g = uload16f(ptr[1]);
-                float16 b = uload16f(ptr[2]);
-                float16 a = uload16f(ptr[3]);
+                float32 r = uload16f(ptr[0]);
+                float32 g = uload16f(ptr[1]);
+                float32 b = uload16f(ptr[2]);
+                float32 a = uload16f(ptr[3]);
                 r = linear_to_srgb(r);
                 g = linear_to_srgb(g);
                 b = linear_to_srgb(b);
@@ -2542,10 +2542,10 @@ void decodeRGB(Surface surface, const u8* src, const Layer& layer, int x0, int y
 
             while (count-- > 0)
             {
-                float16 r = uload32f(ptr[0]);
-                float16 g = uload32f(ptr[1]);
-                float16 b = uload32f(ptr[2]);
-                float16 a = uload32f(ptr[3]);
+                float32 r = uload32f(ptr[0]);
+                float32 g = uload32f(ptr[1]);
+                float32 b = uload32f(ptr[2]);
+                float32 a = uload32f(ptr[3]);
                 r = linear_to_srgb(r);
                 g = linear_to_srgb(g);
                 b = linear_to_srgb(b);
