@@ -1093,6 +1093,7 @@ namespace mango::math
 
     float linear_to_srgb(float linear)
     {
+        linear = clamp(linear, 0.0f, 1.0f);
         float s1 = sqrt(linear);
         float s2 = sqrt(s1);
         float s3 = sqrt(s2);
@@ -1106,6 +1107,7 @@ namespace mango::math
 
     float32x4 linear_to_srgb(float32x4 linear)
     {
+        linear = clamp(linear, 0.0f, 1.0f);
         float32x4 s1 = sqrt(linear);
         float32x4 s2 = sqrt(s1);
         float32x4 s3 = sqrt(s2);
