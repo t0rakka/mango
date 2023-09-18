@@ -10,8 +10,10 @@ using namespace mango::filesystem;
 using namespace mango::math;
 using namespace mango::image;
 
-const char* mesh_vs =
-R"(
+namespace
+{
+
+const char* vs_mesh = R"(
     #version 330 core
 
     uniform mat4 model;
@@ -30,8 +32,7 @@ R"(
     }
 )";
 
-const char* mesh_fs =
-R"(
+const char* fs_mesh = R"(
     #version 330 core
 
     uniform sampler2D texture0;
@@ -45,8 +46,7 @@ R"(
     }
 )";
 
-const char* skybox_vs =
-R"(
+const char* vs_skybox = R"(
     #version 330 core
 
     uniform mat4 view;
@@ -54,32 +54,54 @@ R"(
 
     layout (location = 0) in vec3 aPosition;
 
-    out vec3 TexCoord;
+    out vec3 Normal;
 
     void main()
     {
-        TexCoord = aPosition;
+        Normal = aPosition;
         vec4 position = projection * view * vec4(aPosition, 1.0);
         gl_Position = position.xyww;
     }
 )";
 
-const char* skybox_fs =
-R"(
+const char* fs_skybox_cubemap = R"(
     #version 330 core
 
     uniform samplerCube skybox;
 
-    in vec3 TexCoord;
+    in vec3 Normal;
     out vec4 FragColor;
 
     void main()
     {
-        FragColor = texture(skybox, TexCoord);
+        FragColor = texture(skybox, Normal);
     }
 )";
 
-float cubeVertices [] =
+const char* fs_skybox_latlong = R"(
+    #version 330 core
+    #define PI 3.14159265359
+
+    uniform sampler2D skybox;
+
+    in vec3 Normal;
+    out vec4 FragColor;
+
+    vec2 latlong(vec3 direction)
+    {
+        direction = normalize(direction);
+        float s = atan(-direction.z, direction.x) / (2.0 * PI);
+        float t = acos(direction.y) / PI;
+        return vec2(s + 0.25, t);
+    }
+
+    void main()
+    {
+        FragColor = texture(skybox, latlong(Normal));
+    }
+)";
+
+const float cubeVertices [] =
 {
     // positions          texture coords
     -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -125,7 +147,7 @@ float cubeVertices [] =
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 };
 
-float skyboxVertices [] =
+const float skyboxVertices [] =
 {
     // positions          
     -1.0f,  1.0f, -1.0f,
@@ -170,6 +192,8 @@ float skyboxVertices [] =
     -1.0f, -1.0f,  1.0f,
      1.0f, -1.0f,  1.0f
 };
+
+} // namespace
 
 static inline
 void glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const Matrix4x4& value)
@@ -222,7 +246,7 @@ GLuint createProgram(const char* vertexShaderSource, const char* fragmentShaderS
     return program;
 }
 
-GLuint createTexture(const std::string& filename)
+GLuint createTexture2D(const std::string& filename, bool mipmap)
 {
     GLuint texture = 0;
 
@@ -245,19 +269,27 @@ GLuint createTexture(const std::string& filename)
         ImageDecodeStatus status = decoder.decode(bitmap, options, 0, 0, 0); 
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.image);
-        glGenerateMipmap(GL_TEXTURE_2D);
 
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        if (mipmap)
+        {
+            glGenerateMipmap(GL_TEXTURE_2D);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        }
+        else
+        {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
 
     return texture;
 }
 
-GLuint createCubeTexture(const std::string& filename)
+GLuint createTextureCube(const std::string& filename)
 {
     GLuint texture = 0;
 
@@ -299,32 +331,34 @@ GLuint createCubeTexture(const std::string& filename)
 class DemoWindow : public OpenGLContext
 {
 protected:
-    GLuint cubeVAO = 0;
-    GLuint cubeVBO = 0;
+    GLuint meshVAO = 0;
+    GLuint meshVBO = 0;
+    GLuint meshTexture = 0;
+    GLuint meshProgram = 0;
+
     GLuint skyboxVAO = 0;
     GLuint skyboxVBO = 0;
-    GLuint cubeTexture = 0;
-    GLuint cubemapTexture = 0;
+    GLuint skyboxTexture = 0;
+    GLuint skyboxProgram = 0;
 
-    GLuint shader;
-    GLuint skyboxShader;
+    GLenum skyboxSamplerType;
 
 public:
     DemoWindow()
         : OpenGLContext(1280, 800)
     {
-        // cube VAO
-        glGenVertexArrays(1, &cubeVAO);
-        glGenBuffers(1, &cubeVBO);
-        glBindVertexArray(cubeVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+        // mesh
+        glGenVertexArrays(1, &meshVAO);
+        glGenBuffers(1, &meshVBO);
+        glBindVertexArray(meshVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, meshVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), &cubeVertices, GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
-        // skybox VAO
+        // skybox
         glGenVertexArrays(1, &skyboxVAO);
         glGenBuffers(1, &skyboxVBO);
         glBindVertexArray(skyboxVAO);
@@ -333,27 +367,41 @@ public:
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
-        cubeTexture = createTexture("data/hanselun.png");
-        cubemapTexture = createCubeTexture("data/KernerEnvCube.exr");
+        meshTexture = createTexture2D("data/hanselun.png", true);
+        meshProgram = createProgram(vs_mesh, fs_mesh);
 
-        shader = createProgram(mesh_vs, mesh_fs);
-        skyboxShader = createProgram(skybox_vs, skybox_fs);
+        bool cubemap = false;
 
-        glUseProgram(shader);
-        glUniform1i(glGetUniformLocation(shader, "texture0"), 0);
+        if (cubemap)
+        {
+            skyboxTexture = createTextureCube("data/KernerEnvCube.exr");
+            skyboxProgram = createProgram(vs_skybox, fs_skybox_cubemap);
+            skyboxSamplerType = GL_TEXTURE_CUBE_MAP;
+        }
+        else
+        {
+            skyboxTexture = createTexture2D("data/KernerEnvLatLong.exr", false);
+            skyboxProgram = createProgram(vs_skybox, fs_skybox_latlong);
+            skyboxSamplerType = GL_TEXTURE_2D;
+        }
 
-        glUseProgram(skyboxShader);
-        glUniform1i(glGetUniformLocation(skyboxShader, "skybox"), 0);
+        glUseProgram(meshProgram);
+        glUniform1i(glGetUniformLocation(meshProgram, "texture0"), 0);
+
+        glUseProgram(skyboxProgram);
+        glUniform1i(glGetUniformLocation(skyboxProgram, "skybox"), 0);
     }
 
     ~DemoWindow()
     {
-        glDeleteVertexArrays(1, &cubeVAO);
+        glDeleteVertexArrays(1, &meshVAO);
         glDeleteVertexArrays(1, &skyboxVAO);
-        glDeleteBuffers(1, &cubeVBO);
+        glDeleteBuffers(1, &meshVBO);
         glDeleteBuffers(1, &skyboxVBO);
-        glDeleteTextures(1, &cubeTexture);
-        glDeleteTextures(1, &cubemapTexture);
+        glDeleteTextures(1, &meshTexture);
+        glDeleteTextures(1, &skyboxTexture);
+        glDeleteProgram(meshProgram);
+        glDeleteProgram(skyboxProgram);
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -414,15 +462,15 @@ public:
 
         // cube
 
-        glUseProgram(shader);
+        glUseProgram(meshProgram);
 
-        glUniformMatrix4fv(glGetUniformLocation(shader, "model"), 1, GL_FALSE, model);
-        glUniformMatrix4fv(glGetUniformLocation(shader, "view"), 1, GL_FALSE, view);
-        glUniformMatrix4fv(glGetUniformLocation(shader, "projection"), 1, GL_FALSE, projection);
+        glUniformMatrix4fv(glGetUniformLocation(meshProgram, "model"), 1, GL_FALSE, model);
+        glUniformMatrix4fv(glGetUniformLocation(meshProgram, "view"), 1, GL_FALSE, view);
+        glUniformMatrix4fv(glGetUniformLocation(meshProgram, "projection"), 1, GL_FALSE, projection);
 
-        glBindVertexArray(cubeVAO);
+        glBindVertexArray(meshVAO);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, cubeTexture);
+        glBindTexture(GL_TEXTURE_2D, meshTexture);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 
@@ -430,15 +478,15 @@ public:
 
         glDepthFunc(GL_LEQUAL);
 
-        glUseProgram(skyboxShader);
+        glUseProgram(skyboxProgram);
 
         view[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f);
-        glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "view"), 1, GL_FALSE, view);
-        glUniformMatrix4fv(glGetUniformLocation(skyboxShader, "projection"), 1, GL_FALSE, projection);
+        glUniformMatrix4fv(glGetUniformLocation(skyboxProgram, "view"), 1, GL_FALSE, view);
+        glUniformMatrix4fv(glGetUniformLocation(skyboxProgram, "projection"), 1, GL_FALSE, projection);
 
         glBindVertexArray(skyboxVAO);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glBindTexture(skyboxSamplerType, skyboxTexture);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 
