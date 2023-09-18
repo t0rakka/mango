@@ -293,7 +293,7 @@ GLuint createTextureCube(const std::string& filename)
 {
     GLuint texture = 0;
 
-    u64 time0 = Time::us();
+    u64 time0 = mango::Time::us();
 
     File file(filename);
 
@@ -359,7 +359,7 @@ GLuint createTextureCube(const std::string& filename)
         }
     }
 
-    u64 time1 = Time::us();
+    u64 time1 = mango::Time::us();
     printf("createTextureCube: %d.%d ms\n", int(time1-time0)/1000, int(time1-time0)%1000);
 
     return texture;
