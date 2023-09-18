@@ -293,6 +293,8 @@ GLuint createTextureCube(const std::string& filename)
 {
     GLuint texture = 0;
 
+    u64 time0 = Time::us();
+
     File file(filename);
 
     ImageDecoder decoder(file, filename);
@@ -307,7 +309,11 @@ GLuint createTextureCube(const std::string& filename)
             glGenTextures(1, &texture);
             glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
 
-            Bitmap bitmap(width, height, Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16));
+            Format format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
+
+#if 1
+
+            Bitmap bitmap(width, height, format);
 
             for (int face = 0; face < 6; ++face)
             {
@@ -317,6 +323,34 @@ GLuint createTextureCube(const std::string& filename)
                 glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_HALF_FLOAT, bitmap.image);
             }
 
+#else
+
+            int stride = width * format.bytes();
+            int size = height * stride;
+
+            GLuint buffer[6];
+            glGenBuffers(6, buffer);
+
+            for (int face = 0; face < 6; ++face)
+            {
+                glBindBuffer(GL_PIXEL_UNPACK_BUFFER, buffer[face]);
+                glBufferData(GL_PIXEL_UNPACK_BUFFER, size, nullptr, GL_STATIC_DRAW);
+
+                u8* data = reinterpret_cast<u8*>(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
+                Surface surface(width, height, format, stride, data);
+
+                ImageDecodeOptions options;
+                ImageDecodeStatus status = decoder.decode(surface, options, 0, 0, face);
+
+                glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_HALF_FLOAT, nullptr);
+            }
+
+            glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+            glDeleteBuffers(6, buffer);
+
+#endif
+
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -324,6 +358,9 @@ GLuint createTextureCube(const std::string& filename)
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
         }
     }
+
+    u64 time1 = Time::us();
+    printf("createTextureCube: %d.%d ms\n", int(time1-time0)/1000, int(time1-time0)%1000);
 
     return texture;
 }
