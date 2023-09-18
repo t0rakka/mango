@@ -171,41 +171,47 @@ float skyboxVertices [] =
      1.0f, -1.0f,  1.0f
 };
 
+static inline
+void glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const Matrix4x4& value)
+{
+    glUniformMatrix4fv(location, count, transpose, value[0].data());
+}
+
+GLuint createShader(GLenum type, const char* source)
+{
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+
+    GLint success;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+    if (!success)
+    {
+        GLchar infoLog[1024];
+        glGetShaderInfoLog(shader, sizeof(infoLog), NULL, infoLog);
+        printf("%s", infoLog);
+    }
+
+    return shader;
+}
+
 GLuint createProgram(const char* vertexShaderSource, const char* fragmentShaderSource)
 {
-    GLint success;
-    GLchar infoLog[1024];
-
-    GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertex);
-
-    glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertex, sizeof(infoLog), NULL, infoLog);
-        printf("%s", infoLog);
-    }
-
-    GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragment);
-
-    glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragment, sizeof(infoLog), NULL, infoLog);
-        printf("%s", infoLog);
-    }
+    GLuint vertex = createShader(GL_VERTEX_SHADER, vertexShaderSource);
+    GLuint fragment = createShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
 
     GLuint program = glCreateProgram();
     glAttachShader(program, vertex);
     glAttachShader(program, fragment);
     glLinkProgram(program);
 
+    GLint success;
     glGetProgramiv(program, GL_LINK_STATUS, &success);
+
     if (!success)
     {
+        GLchar infoLog[1024];
         glGetProgramInfoLog(program, sizeof(infoLog), NULL, infoLog);
         printf("%s", infoLog);
     }
@@ -214,12 +220,6 @@ GLuint createProgram(const char* vertexShaderSource, const char* fragmentShaderS
     glDeleteShader(fragment);
 
     return program;
-}
-
-static inline
-void glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const Matrix4x4& value)
-{
-    glUniformMatrix4fv(location, count, transpose, value[0].data());
 }
 
 GLuint createTexture(const std::string& filename)
