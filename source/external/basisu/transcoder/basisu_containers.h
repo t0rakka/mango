@@ -149,8 +149,8 @@ namespace basisu
    static inline void construct(X* p) { memset(p, 0, sizeof(X)); } \
    static inline void construct(X* p, const X& init) { memcpy(p, &init, sizeof(X)); } \
    static inline void construct_array(X* p, size_t n) { memset(p, 0, sizeof(X) * n); } \
-   static inline void destruct(X* p) { (void)p; } \
-   static inline void destruct_array(X* p, size_t n) { (void)p; (void)n; } };
+   static inline void destruct(X* p) { p; } \
+   static inline void destruct_array(X* p, size_t n) { p, n; } };
 
    BASISU_DEFINE_BUILT_IN_TYPE(bool)
    BASISU_DEFINE_BUILT_IN_TYPE(char)
@@ -188,7 +188,7 @@ namespace basisu
 
 #define BASISU_IS_SCALAR_TYPE(T) (scalar_type<T>::cFlag)
 
-#if defined(__GNUC__) && __GNUC__<5 && !defined(EMSCRIPTEN)
+#if 0 // !defined(BASISU_HAVE_STD_TRIVIALLY_COPYABLE) && defined(__GNUC__) && __GNUC__<5
    #define BASISU_IS_TRIVIALLY_COPYABLE(...) __has_trivial_copy(__VA_ARGS__)
 #else
    #define BASISU_IS_TRIVIALLY_COPYABLE(...) std::is_trivially_copyable<__VA_ARGS__>::value
@@ -285,7 +285,10 @@ namespace basisu
          m_size = other.m_size;
 
          if (BASISU_IS_BITWISE_COPYABLE(T))
-            memcpy(m_p, other.m_p, m_size * sizeof(T));
+         {
+             if ((m_p) && (other.m_p))
+                memcpy(m_p, other.m_p, m_size * sizeof(T));
+         }
          else
          {
             T* pDst = m_p;
@@ -326,7 +329,10 @@ namespace basisu
          }
 
          if (BASISU_IS_BITWISE_COPYABLE(T))
-            memcpy(m_p, other.m_p, other.m_size * sizeof(T));
+         {
+             if ((m_p) && (other.m_p))
+                memcpy(m_p, other.m_p, other.m_size * sizeof(T));
+         }
          else
          {
             T* pDst = m_p;
