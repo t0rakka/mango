@@ -619,10 +619,10 @@ void hufFreeDecTable(HufDec *hdecod)
         \
         u8 cs = (c >> lc); \
         \
-        if (out + cs > oe) \
+        /*if (out + cs > oe) \
             ; \
         else if (out - 1 < ob) \
-            ; \
+            ;*/ \
         \
         u16 s = out[-1]; \
         \
@@ -632,9 +632,6 @@ void hufFreeDecTable(HufDec *hdecod)
     else if (out < oe) \
     { \
         *out++ = po; \
-    } \
-    else \
-    { \
     } \
 }
 
@@ -679,12 +676,13 @@ void hufDecode(const u64*  hcode, // i : encoding table
                 //
 
                 lc -= pl.len;
-
+                /*
                 if ( lc < 0 )
                 {
                     //invalidCode(); // code length too long
                 }
-                getCode (pl.lit, rlc, c, lc, in, out, outb, oe);
+                */
+                getCode(pl.lit, rlc, c, lc, in, out, outb, oe)
             }
             else
             {
@@ -715,7 +713,7 @@ void hufDecode(const u64*  hcode, // i : encoding table
                             //
 
                             lc -= l;
-                            getCode (pl.p[j], rlc, c, lc, in, out, outb, oe);
+                            getCode(pl.p[j], rlc, c, lc, in, out, outb, oe)
                             break;
                         }
                     }
@@ -744,11 +742,13 @@ void hufDecode(const u64*  hcode, // i : encoding table
         if (pl.len)
         {
             lc -= pl.len;
+            /*
             if ( lc < 0 )
             {
                 //invalidCode(); // code length too long
             }
-            getCode (pl.lit, rlc, c, lc, in, out, outb, oe);
+            */
+            getCode(pl.lit, rlc, c, lc, in, out, outb, oe)
         }
         else
         {
