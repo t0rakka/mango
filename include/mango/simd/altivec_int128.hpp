@@ -720,6 +720,14 @@ namespace mango::simd
         return vec_sra(a.data, count.data);
     }
 
+    static inline u32 pack(u32x4 s)
+    {
+        u32x4 v = vec_sl(s.data, (u32x4::vector) { 0, 8, 16, 24 });
+        v = vec_or(vec_mergeh(v.data, v.data), vec_mergel(v.data, v.data));
+        v = vec_or(vec_mergeh(v.data, v.data), vec_mergel(v.data, v.data));
+        return vec_extract(v.data, 0);
+    }
+
     // -----------------------------------------------------------------
     // u64x2
     // -----------------------------------------------------------------

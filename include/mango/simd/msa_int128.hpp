@@ -645,6 +645,15 @@ namespace mango::simd
         return (v4u32) __msa_sra_w((v4i32)a, (v4i32)count);
     }
 
+    static inline u32 pack(u32x4 s)
+    {
+        u32 x = __msa_copy_u_w(s, 0);
+        u32 y = __msa_copy_u_w(s, 1);
+        u32 z = __msa_copy_u_w(s, 2);
+        u32 w = __msa_copy_u_w(s, 3);
+        return (w << 24) | (z << 16) | (y << 8) | x;
+    }
+
     // -----------------------------------------------------------------
     // u64x2
     // -----------------------------------------------------------------

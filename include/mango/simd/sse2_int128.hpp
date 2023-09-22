@@ -1100,6 +1100,13 @@ namespace mango::simd
 
 #endif
 
+    static inline u32 pack(u32x4 s)
+    {
+        __m128i s_16 = _mm_packus_epi32(s, s);
+        __m128i s_8 = _mm_packus_epi16(s_16, s_16);
+        return _mm_cvtsi128_si32(s_8);
+    }
+
     // -----------------------------------------------------------------
     // u64x2
     // -----------------------------------------------------------------
@@ -2474,9 +2481,9 @@ namespace mango::simd
 
     static inline u32 pack(s32x4 s)
     {
-        __m128i s16 = _mm_packs_epi32(s, s);
-        __m128i s8 = _mm_packus_epi16(s16, s16);
-        return _mm_cvtsi128_si32(s8);
+        __m128i s_16 = _mm_packus_epi32(s, s);
+        __m128i s_8 = _mm_packus_epi16(s_16, s_16);
+        return _mm_cvtsi128_si32(s_8);
     }
 
 #if defined(MANGO_ENABLE_SSE4_1)

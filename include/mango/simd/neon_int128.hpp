@@ -701,6 +701,15 @@ namespace mango::simd
         return vreinterpretq_u32_s32(vshlq_s32(vreinterpretq_s32_u32(a), shift));
     }
 
+    static inline u32 pack(u32x4 s)
+    {
+        const uint16x4_t a = vqmovun_u32(s);
+        const uint16x8_t b = vcombine_u16(a, a);
+        const uint8x8_t c = vqmovn_u16(b);
+        const uint32x2_t d = vreinterpret_u32_u8(c);
+        return vget_lane_u32(d, 0);
+    }
+
     // -----------------------------------------------------------------
     // u64x2
     // -----------------------------------------------------------------

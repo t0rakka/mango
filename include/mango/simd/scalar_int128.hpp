@@ -641,6 +641,15 @@ namespace mango::simd
         return detail::scalar_shift_right<u32x4, s32, u32x4>(a, count);
     }
 
+    static inline u32 pack(u32x4 s)
+    {
+        const u32 x = byteclamp(s[0]);
+        const u32 y = byteclamp(s[1]);
+        const u32 z = byteclamp(s[2]);
+        const u32 w = byteclamp(s[3]);
+        return x | (y << 8) | (z << 16) | (w << 24);
+    }
+
     // -----------------------------------------------------------------
     // u64x2
     // -----------------------------------------------------------------

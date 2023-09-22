@@ -873,6 +873,13 @@ namespace mango::simd
         return _mm_srav_epi32(a, count);
     }
 
+    static inline u32 pack(u32x4 s)
+    {
+        __m128i v_16 = _mm_packus_epi32(s, s);
+        __m128i v_8 = _mm_packus_epi16(v_16, v_16);
+        return _mm_cvtsi128_si32(v_8);
+    }
+
     // -----------------------------------------------------------------
     // u64x2
     // -----------------------------------------------------------------

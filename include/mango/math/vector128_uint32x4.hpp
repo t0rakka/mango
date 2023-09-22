@@ -120,6 +120,11 @@ namespace mango::math
             return m.data;
         }
 
+        u32 pack() const
+        {
+            return simd::pack(m);
+        }
+
         static Vector uload(const void* source)
         {
             return simd::u32x4_uload(source);
