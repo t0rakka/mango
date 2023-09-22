@@ -11,6 +11,7 @@ namespace
 {
     using namespace mango;
     using namespace mango::image;
+    using namespace mango::math;
 
     // ------------------------------------------------------------
     // ImageDecoder
@@ -205,10 +206,10 @@ namespace
                 case ColorMode::INDEXED:
                 case ColorMode::RGB:
                 case ColorMode::CMYK:
+                case ColorMode::LAB:
                     break;
                 case ColorMode::MULTICHANNEL:
                 case ColorMode::DUOTONE:
-                case ColorMode::LAB:
                     m_header.setError("[ImageDecoder.PSD] Unsupported color mode (%d).", m_color_mode);
                     return;
                 default:
@@ -560,6 +561,63 @@ namespace
                     }
                 }
             }
+            else if (m_color_mode == ColorMode::LAB)
+            {
+                if (m_bits == 8)
+                {
+                    for (int i = 0; i < width; ++i)
+                    {
+                        float L = src[width * 0 + i];
+                        float A = src[width * 1 + i] - 128;
+                        float B = src[width * 2 + i] - 128;
+
+                        L = (L * 100.0f) / 255.0f;
+
+                        uint32x4 color = convert<uint32x4>(lab_to_rgb(L, A, B) * 255.0f);
+                        ustore32(dest + i * 4, color.pack());
+                    }
+                }
+                else if (m_bits == 16)
+                {
+                    const u16* s = reinterpret_cast<const u16*>(src);
+                    u16* d = reinterpret_cast<u16*>(dest);
+
+                    for (int i = 0; i < width; ++i)
+                    {
+                        float L = s[width * 0 + i];
+                        float A = s[width * 1 + i] - 32768;
+                        float B = s[width * 2 + i] - 32768;
+
+                        L = (L * 100.0f) / 65535.0f;
+                        A = A / 257.0f;
+                        B = B / 257.0f;
+
+                        uint32x4 color = convert<uint32x4>(lab_to_rgb(L, A, B) * 65535.0f);
+                        store_low(d + i * 4, simd::narrow(color, color));
+                    }
+                }
+            }
+        }
+
+        float32x4 lab_to_rgb(float L, float A, float B)
+        {
+            float y = (L + 16.0f) / 116.0f;
+            float x = A / 500.0f + y;
+            float z = y - B / 200.0f;
+
+            x = 0.95047 * ((x * x * x > 0.008856) ? x * x * x : (x - 16/116.0) / 7.787);
+            y = 1.00000 * ((y * y * y > 0.008856) ? y * y * y : (y - 16/116.0) / 7.787);
+            z = 1.08883 * ((z * z * z > 0.008856) ? z * z * z : (z - 16/116.0) / 7.787);
+
+            float r = x *  3.2406 + y * -1.5372 + z * -0.4986;
+            float g = x * -0.9689 + y *  1.8758 + z *  0.0415;
+            float b = x *  0.0557 + y * -0.2040 + z *  1.0570;
+            float a = 1.0f;
+
+            float32x4 color(r, g, b, a);
+            color = linear_to_srgb(color);
+
+            return color;
         }
 
         template <typename T>
