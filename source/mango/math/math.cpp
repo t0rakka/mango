@@ -990,7 +990,7 @@ namespace mango::math
     // sRGB
     // ------------------------------------------------------------------------
 
-#if 0
+#if 1
 
     namespace detail
     {
@@ -1049,6 +1049,7 @@ namespace mango::math
 
     float linear_to_srgb(float linear)
     {
+        linear = clamp(linear, 0.0f, 1.0f);
         float srgb = (linear < 0.0031308f) ?
             12.92f * linear :
             1.055f * detail::pow24(linear) - 0.055f;
@@ -1072,6 +1073,7 @@ namespace mango::math
 
     float32x4 linear_to_srgb(float32x4 linear)
     {
+        linear = clamp(linear, 0.0f, 1.0f);
         float32x4 a = linear * 12.92f;
         float32x4 b = 1.055f * detail::pow24(linear) - 0.055f;
         float32x4 srgb = select(linear < 0.0031308f, a, b);
