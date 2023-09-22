@@ -113,7 +113,12 @@ int main(int argc, const char* argv[])
 
     debugPrintEnable(true);
 
+    u64 time0 = mango::Time::ms();
+
     Bitmap bitmap(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+
+    u64 time1 = mango::Time::ms();
+    printf("decode: %d ms\n", u32(time1 - time0));
 
     TestWindow window(bitmap);
     window.enterEventLoop();
