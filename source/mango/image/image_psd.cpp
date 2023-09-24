@@ -206,12 +206,10 @@ namespace
                 case ColorMode::INDEXED:
                 case ColorMode::RGB:
                 case ColorMode::CMYK:
-                case ColorMode::LAB:
-                    break;
                 case ColorMode::MULTICHANNEL:
                 case ColorMode::DUOTONE:
-                    m_header.setError("[ImageDecoder.PSD] Unsupported color mode (%d).", m_color_mode);
-                    return;
+                case ColorMode::LAB:
+                    break;
                 default:
                     m_header.setError("[ImageDecoder.PSD] Incorrect color mode (%d).", m_color_mode);
                     return;
@@ -463,140 +461,175 @@ namespace
 
         void resolve(u8* dest, const u8* src, int width, int channels)
         {
-            if (m_color_mode == ColorMode::BITMAP)
+            switch (m_color_mode)
             {
-                u8 mask = 0;
-                u8 data = 0;
+                case ColorMode::BITMAP:
+                    resolveBitmap(dest, src, width, channels);
+                    break;
+                case ColorMode::GRAYSCALE:
+                    resolveGrayscale(dest, src, width, channels);
+                    break;
+                case ColorMode::INDEXED:
+                    resolveIndexed(dest, src, width, channels);
+                    break;
+                case ColorMode::RGB:
+                    resolveRGB(dest, src, width, channels);
+                    break;
+                case ColorMode::CMYK:
+                    resolveCMYK(dest, src, width, channels);
+                    break;
+                case ColorMode::MULTICHANNEL:
+                    // TODO
+                    resolveGrayscale(dest, src, width, channels);
+                    break;
+                case ColorMode::DUOTONE:
+                    // TODO
+                    resolveGrayscale(dest, src, width, channels);
+                    break;
+                case ColorMode::LAB:
+                    resolveLab(dest, src, width, channels);
+                    break;
+            }
+        }
 
-                for (int x = 0; x < width; ++x)
+        void resolveBitmap(u8* dest, const u8* src, int width, int channels)
+        {
+            u8 mask = 0;
+            u8 data = 0;
+
+            for (int x = 0; x < width; ++x)
+            {
+                if (!mask)
                 {
-                    if (!mask)
-                    {
-                        mask = 0x80;
-                        data = *src++;
-                    }
+                    mask = 0x80;
+                    data = *src++;
+                }
 
-                    u8 value = 0xff + !!(data & mask);
-                    mask >>= 1;
+                u8 value = 0xff + !!(data & mask);
+                mask >>= 1;
 
-                    dest[0] = value;
-                    dest[1] = value;
-                    dest[2] = value;
+                dest[0] = value;
+                dest[1] = value;
+                dest[2] = value;
+                dest[3] = 0xff;
+                dest += 4;
+            }
+        }
+
+        void resolveGrayscale(u8* dest, const u8* src, int width, int channels)
+        {
+            switch (m_bits)
+            {
+                case 8:
+                    pack_grayscale<u8>(dest, src, width, 0xff);
+                    break;
+                case 16:
+                    pack_grayscale<u16>(dest, src, width, 0xffff);
+                    break;
+                case 32:
+                    pack_grayscale<float>(dest, src, width, 1.0f);
+                    break;
+            }
+        }
+
+        void resolveIndexed(u8* dest, const u8* src, int width, int channels)
+        {
+            if (m_bits == 8 && m_palette)
+            {
+                for (int i = 0; i < width; ++i)
+                {
+                    u8 index = *src++;
+                    dest[0] = m_palette[index + 256 * 0];
+                    dest[1] = m_palette[index + 256 * 1];
+                    dest[2] = m_palette[index + 256 * 2];
                     dest[3] = 0xff;
                     dest += 4;
                 }
             }
-            else if (m_color_mode == ColorMode::INDEXED)
+        }
+
+        void resolveRGB(u8* dest, const u8* src, int width, int channels)
+        {
+            switch (m_bits)
             {
-                if (m_bits == 8 && m_palette)
+                case 8:
+                    if (channels == 4)
+                        pack_rgba<u8>(dest, src, width);
+                    else
+                        pack_rgb<u8>(dest, src, width, 0xff);
+                    break;
+                case 16:
+                    if (channels == 4)
+                        pack_rgba<u16>(dest, src, width);
+                    else
+                        pack_rgb<u16>(dest, src, width, 0xffff);
+                    break;
+                case 32:
+                    if (channels == 4)
+                        pack_rgba<float>(dest, src, width);
+                    else
+                        pack_rgb<float>(dest, src, width, 1.0f);
+                    break;
+            }
+        }
+
+        void resolveCMYK(u8* dest, const u8* src, int width, int channels)
+        {
+            // TODO: 16, 32 bits
+            // TODO: different nr of channels
+            if (m_bits == 8)
+            {
+                for (int i = 0; i < width; ++i)
                 {
-                    for (int i = 0; i < width; ++i)
-                    {
-                        u8 index = *src++;
-                        dest[0] = m_palette[index + 256 * 0];
-                        dest[1] = m_palette[index + 256 * 1];
-                        dest[2] = m_palette[index + 256 * 2];
-                        dest[3] = 0xff;
-                        dest += 4;
-                    }
+                    int c = src[width * 0];
+                    int m = src[width * 1];
+                    int y = src[width * 2];
+                    int k = src[width * 3];
+                    dest[0] = (c * k) / 255;
+                    dest[1] = (m * k) / 255;
+                    dest[2] = (y * k) / 255;
+                    dest[3] = 0xff;
+                    ++src;
+                    dest += 4;
                 }
             }
-            else if (m_color_mode == ColorMode::GRAYSCALE)
+        }
+
+        void resolveLab(u8* dest, const u8* src, int width, int channels)
+        {
+            if (m_bits == 8)
             {
-                switch (m_bits)
+                for (int i = 0; i < width; ++i)
                 {
-                    case 8:
-                        pack_grayscale<u8>(dest, src, width, 0xff);
-                        break;
-                    case 16:
-                        pack_grayscale<u16>(dest, src, width, 0xffff);
-                        break;
-                    case 32:
-                        pack_grayscale<float>(dest, src, width, 1.0f);
-                        break;
+                    float L = src[width * 0 + i];
+                    float A = src[width * 1 + i];
+                    float B = src[width * 2 + i];
+
+                    L = (L * 100.0f) / 255.0f;
+                    A = A - 128;
+                    B = B - 128;
+
+                    uint32x4 color = convert<uint32x4>(lab_to_rgb(L, A, B) * 255.0f);
+                    ustore32(dest + i * 4, color.pack());
                 }
             }
-            else if (m_color_mode == ColorMode::RGB)
+            else if (m_bits == 16)
             {
-                switch (m_bits)
+                const u16* s = reinterpret_cast<const u16*>(src);
+                u16* d = reinterpret_cast<u16*>(dest);
+
+                for (int i = 0; i < width; ++i)
                 {
-                    case 8:
-                        if (channels == 4)
-                            pack_rgba<u8>(dest, src, width);
-                        else
-                            pack_rgb<u8>(dest, src, width, 0xff);
-                        break;
-                    case 16:
-                        if (channels == 4)
-                            pack_rgba<u16>(dest, src, width);
-                        else
-                            pack_rgb<u16>(dest, src, width, 0xffff);
-                        break;
-                    case 32:
-                        if (channels == 4)
-                            pack_rgba<float>(dest, src, width);
-                        else
-                            pack_rgb<float>(dest, src, width, 1.0f);
-                        break;
-                }
-            }
-            else if (m_color_mode == ColorMode::CMYK)
-            {
-                // TODO: 16, 32 bits
-                // TODO: different nr of channels
-                if (m_bits == 8)
-                {
-                    for (int i = 0; i < width; ++i)
-                    {
-                        int c = src[width * 0];
-                        int m = src[width * 1];
-                        int y = src[width * 2];
-                        int k = src[width * 3];
-                        dest[0] = (c * k) / 255;
-                        dest[1] = (m * k) / 255;
-                        dest[2] = (y * k) / 255;
-                        dest[3] = 0xff;
-                        ++src;
-                        dest += 4;
-                    }
-                }
-            }
-            else if (m_color_mode == ColorMode::LAB)
-            {
-                if (m_bits == 8)
-                {
-                    for (int i = 0; i < width; ++i)
-                    {
-                        float L = src[width * 0 + i];
-                        float A = src[width * 1 + i];
-                        float B = src[width * 2 + i];
+                    float L = s[width * 0 + i];
+                    float A = s[width * 1 + i];
+                    float B = s[width * 2 + i];
 
-                        L = (L * 100.0f) / 255.0f;
-                        A = A - 128;
-                        B = B - 128;
+                    L = (L * 100.0f) / 65535.0f;
+                    A = (A - 32768) / 257.0f;
+                    B = (B - 32768) / 257.0f;
 
-                        uint32x4 color = convert<uint32x4>(lab_to_rgb(L, A, B) * 255.0f);
-                        ustore32(dest + i * 4, color.pack());
-                    }
-                }
-                else if (m_bits == 16)
-                {
-                    const u16* s = reinterpret_cast<const u16*>(src);
-                    u16* d = reinterpret_cast<u16*>(dest);
-
-                    for (int i = 0; i < width; ++i)
-                    {
-                        float L = s[width * 0 + i];
-                        float A = s[width * 1 + i];
-                        float B = s[width * 2 + i];
-
-                        L = (L * 100.0f) / 65535.0f;
-                        A = (A - 32768) / 257.0f;
-                        B = (B - 32768) / 257.0f;
-
-                        uint32x4 color = convert<uint32x4>(lab_to_rgb(L, A, B) * 65535.0f);
-                        store_low(d + i * 4, simd::narrow(color, color));
-                    }
+                    uint32x4 color = convert<uint32x4>(lab_to_rgb(L, A, B) * 65535.0f);
+                    store_low(d + i * 4, simd::narrow(color, color));
                 }
             }
         }
