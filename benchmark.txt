@@ -125,6 +125,8 @@ aes192 decrypt:   129.8 ms (  9861 MB/s )
 aes256 encrypt:   144.2 ms (  8873 MB/s )
 aes256 decrypt:   148.1 ms (  8643 MB/s )
 
+crc32:              4.4 ms ( 57553 MB/s )
+crc32c:             3.0 ms ( 64810 MB/s )
 crc32:              5.7 ms ( 45157 MB/s )
 crc32c:             4.6 ms ( 56017 MB/s )
 adler32:           15.3 ms ( 16696 MB/s )
