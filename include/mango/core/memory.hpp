@@ -161,6 +161,13 @@ namespace mango
     void* aligned_malloc(size_t bytes, size_t alignment = 64);
     void aligned_free(void* aligned);
 
+    template <typename T>
+    T* aligned_malloc(size_t count, size_t alignment = 64)
+    {
+        void* ptr = aligned_malloc(count * sizeof(T), alignment);
+        return reinterpret_cast<T*>(ptr);
+    }
+
     // -----------------------------------------------------------------------
     // AlignedStorage
     // -----------------------------------------------------------------------
