@@ -703,7 +703,7 @@ namespace mango::simd
 
     static inline u32 pack(u32x4 s)
     {
-        const uint16x4_t a = vqmovun_u32(s);
+        const uint16x4_t a = vqmovn_u32(s);
         const uint16x8_t b = vcombine_u16(a, a);
         const uint8x8_t c = vqmovn_u16(b);
         const uint32x2_t d = vreinterpret_u32_u8(c);
