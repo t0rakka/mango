@@ -1,4 +1,4 @@
-/*
+                      /*
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
@@ -734,15 +734,14 @@ namespace mango
 
         for (; m_handle->looping && msg.message != WM_QUIT;)
         {
-            if (::PeekMessage(&msg, m_handle->hwnd, 0, 0, PM_REMOVE))
+            //if (::PeekMessage(&msg, m_handle->hwnd, 0, 0, PM_REMOVE))
+            while (::PeekMessage(&msg, m_handle->hwnd, 0, 0, PM_REMOVE))
             {
-                ::TranslateMessage(&msg);
-                ::DispatchMessage(&msg);
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
             }
-            else
-            {
-                onIdle();
-            }
+
+            onIdle();
 
             // avoid saturating cpu
             std::this_thread::sleep_for(std::chrono::microseconds(100));
