@@ -3169,7 +3169,7 @@ namespace
                     CompressionStatus result = decompress(output, memory);
                     if (!result)
                     {
-                        debugPrint("  %s\n", result.info.c_str());
+                        //debugPrint("  %s\n", result.info.c_str());
                     }
                 });
 
@@ -3242,7 +3242,7 @@ namespace
             CompressionStatus result = decompress(buffer, m_compressed);
             if (!result)
             {
-                debugPrint("  %s\n", result.info.c_str());
+                //debugPrint("  %s\n", result.info.c_str());
                 status.setError(result.info);
                 return status;
             }
