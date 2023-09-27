@@ -174,7 +174,7 @@ namespace mango
 
         struct InternalFormat
         {
-            GLenum iformat;
+            GLenum internalFormat;
             image::Format format;
             const char* name;
         };

@@ -84,9 +84,12 @@ namespace
         { 0x8815, Format( 96, Format::FLOAT32, Format::RGB,  32, 32, 32,  0), "RGB32F" },
         { 0x881A, Format( 64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), "RGBA16F" },
         { 0x881B, Format( 48, Format::FLOAT16, Format::RGB,  16, 16, 16,  0), "RGB16F" },
-        //{ 0x8C3A, Format(), "R11F_G11F_B10F" },
-        //{ 0x8C3B, Format(), "UNSIGNED_INT_10F_11F_11F_REV" },
-        //{ 0x8C3D, Format(), "RGB9_E5" },
+        // NOTE: these don't have blitter support but can be handled as compressed blocks
+        /* 
+        { 0x8C3A, Format(), "R11F_G11F_B10F" },
+        { 0x8C3B, Format(), "UNSIGNED_INT_10F_11F_11F_REV" },
+        { 0x8C3D, Format(), "RGB9_E5" },
+        */
         { 0x8C3E, Format( 32, Format::UNORM, Format::RGBA, 9, 9, 9, 5), "UNSIGNED_INT_5_9_9_9_REV" },
         { 0x8D70, Format(128, Format::UINT,  Format::RGBA, 32, 32, 32, 32), "RGBA32UI" },
         { 0x8D71, Format( 96, Format::UINT,  Format::RGB,  32, 32, 32,  0), "RGB32UI" },
@@ -645,7 +648,7 @@ namespace mango
     {
         for (auto& node : g_format_table)
         {
-            if (node.iformat == internalFormat)
+            if (node.internalFormat == internalFormat)
                 return &node;
         }
 
@@ -661,8 +664,7 @@ namespace
     // built-in shader sources
     // -------------------------------------------------------------------
 
-    const char* vertex_shader_source =
-    R"(
+    const char* vertex_shader_source = R"(
         uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0);
 
         in vec2 inPosition;
@@ -675,8 +677,7 @@ namespace
         }
     )";
 
-    const char* fragment_shader_source =
-    R"(
+    const char* fragment_shader_source = R"(
         uniform sampler2D uTexture;
 
         in vec2 texcoord;
@@ -688,8 +689,7 @@ namespace
         }
     )";
 
-    const char* vertex_shader_source_bicubic =
-    R"(
+    const char* vertex_shader_source_bicubic = R"(
         uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0);
 
         in vec2 inPosition;
@@ -702,8 +702,7 @@ namespace
         }
     )";
 
-    const char* fragment_shader_source_bicubic =
-    R"(
+    const char* fragment_shader_source_bicubic = R"(
         vec4 cubic(float v)
         {
             vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v;
@@ -750,8 +749,7 @@ namespace
         }
     )";
 
-    const char* fragment_shader_source_index =
-    R"(
+    const char* fragment_shader_source_index = R"(
         uniform isampler2D uTexture;
         uniform uint uPalette[256];
 
