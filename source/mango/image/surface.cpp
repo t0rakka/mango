@@ -334,7 +334,7 @@ namespace mango::image
 
         Blitter blitter(dest.format, source.format);
 
-#if 1
+#if 0 // emabling this creates a wind-tunnel for laptops
         const int slice = 128;
 
         if (ThreadPool::getHardwareConcurrency() > 2 && rect.height >= slice * 2)

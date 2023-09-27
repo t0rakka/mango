@@ -38,8 +38,8 @@ class DemoWindow : public OpenGLFramebuffer
 {
 protected:
     ImageAnimation& m_animation;
-    Timer timer;
-    u64 prev_time;
+    Timer m_timer;
+    u64 m_target_time;
 
 public:
     DemoWindow(ImageAnimation& animation)
@@ -48,7 +48,7 @@ public:
     {
         setVisible(true);
         setTitle("[DemoWindow]");
-        prev_time = timer.us();
+        m_target_time = m_timer.ms();
     }
 
     ~DemoWindow()
@@ -68,20 +68,21 @@ public:
 
     void onDraw() override
     {
-        u64 time = timer.ms();
-        u64 diff = time - prev_time;
-        if (diff > m_animation.m_delay)
+        u32 time = m_timer.ms();
+        if (time < m_target_time)
         {
-            prev_time = time;
-
-            Surface s = lock();
-
-            m_animation.decode();
-            s.blit(0, 0, m_animation.m_bitmap);
-
-            unlock();
-            present();
+            std::this_thread::sleep_for(std::chrono::milliseconds(m_target_time - time));
         }
+
+        Surface s = lock();
+
+        m_animation.decode();
+        m_target_time = m_timer.ms() + m_animation.m_delay;
+
+        s.blit(0, 0, m_animation.m_bitmap);
+
+        unlock();
+        present();
     }
 };
 
