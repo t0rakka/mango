@@ -1,0 +1,189 @@
+
+-------------------------------------------------------------------------------------------------------------
+GLM
+-------------------------------------------------------------------------------------------------------------
+
+#define GLM_FORCE_SWIZZLE
+#include "glm/glm.hpp"
+
+using namespace glm;
+
+vec4 compute1(vec4 a, vec4 b)
+{
+    return a.xyyz * b.wxxw + a * b.w;
+}
+
+vec4 compute2(vec4 a, vec4 b)
+{
+    return a * b + a * b;
+}
+
+vec3 compute3(vec3 a, vec3 b, vec3 c)
+{
+    return cross(a - b, a - c);
+}
+
+-------------------------------------------------------------------------------------------------------------
+MANGO
+-------------------------------------------------------------------------------------------------------------
+
+#include <mango/math/math.hpp>
+
+using namespace mango::math;
+
+float32x4 compute1(float32x4 a, float32x4 b)
+{
+    return a.xyyz * b.wxxw + a * b.w;
+}
+
+float32x4 compute2(float32x4 a, float32x4 b)
+{
+    return a * b + a * b;
+}
+
+float32x3 compute3(float32x3 a, float32x3 b, float32x3 c)
+{
+    return cross(a - b, a - c);
+}
+
+-------------------------------------------------------------------------------------------------------------
+compile times
+-------------------------------------------------------------------------------------------------------------
+
+compiler: g++ 12.1.0, x86-64
+options: -O3 -std=c++17 -S
+
+       glm:          mango:
+
+real   0m4.225s      0m0.651s                          
+user   0m4.128s      0m0.608s                          
+sys    0m0.092s      0m0.040s                          
+
+-------------------------------------------------------------------------------------------------------------
+
+compiled code : compute1
+
+    glm:                              mango (sse2):                   mango (avx):
+-------------------------------------------------------------------------------------------------------------
+	subq	$40, %rsp                 movaps %xmm1, %xmm2             vshufps	$255, %xmm1, %xmm1, %xmm2
+	shrq	$32, %rcx                 movaps %xmm0, %xmm3             vshufps	$148, %xmm0, %xmm0, %xmm3
+	movq	%fs:40, %rax              shufps $255, %xmm1, %xmm2       vshufps	$195, %xmm1, %xmm1, %xmm1
+	movq	%rax, 24(%rsp)            shufps $148, %xmm0, %xmm3       vpermilps	$0, %xmm2, %xmm2
+	xorl	%eax, %eax                shufps $195, %xmm1, %xmm1       vmulps	%xmm1, %xmm3, %xmm1
+	movq	%rdi, %rax                shufps $0, %xmm2, %xmm2         vmulps	%xmm0, %xmm2, %xmm0
+	shrq	$32, %rax                 mulps	%xmm3, %xmm1              vaddps	%xmm1, %xmm0, %xmm0
+	movl	%eax, 8(%rsp)             mulps	%xmm2, %xmm0              ret
+	movss	8(%rsp), %xmm2            addps	%xmm1, %xmm0
+	movl	%ecx, 8(%rsp)             ret
+	movss	8(%rsp), %xmm3
+	movl	%esi, 8(%rsp)
+	shrq	$32, %rsi
+	movd	8(%rsp), %xmm5
+	movl	%edx, 8(%rsp)
+	movd	8(%rsp), %xmm1
+	movq	%rsi, 8(%rsp)
+	movss	8(%rsp), %xmm4
+	movl	%edi, 8(%rsp)
+	mulss	%xmm3, %xmm5
+	movd	8(%rsp), %xmm0
+	mulss	%xmm2, %xmm1
+	mulss	%xmm3, %xmm2
+	mulss	%xmm3, %xmm0
+	mulss	%xmm3, %xmm4
+	addss	%xmm1, %xmm2
+	addss	%xmm0, %xmm0
+	addss	%xmm5, %xmm4
+	addss	%xmm5, %xmm1
+	movq	%xmm2, %rdx
+	movd	%xmm0, %eax
+	salq	$32, %rdx
+	orq	%rdx, %rax
+	movd	%xmm4, %edx
+	movq	%rdx, %rcx
+	movd	%xmm1, %edx
+	salq	$32, %rcx
+	orq	%rcx, %rdx
+	movq	24(%rsp), %rdi
+	xorq	%fs:40, %rdi
+	jne	.L5
+	addq	$40, %rsp
+	ret
+
+-------------------------------------------------------------------------------------------------------------
+
+compiled code : compute2
+
+    glm:                              mango (sse2):            mango (avx):
+-------------------------------------------------------------------------------------------------------------
+	subq	$56, %rsp                 mulps	%xmm1, %xmm0       vmulps %xmm0, %xmm1, %xmm0
+	movq	%rdx, 16(%rsp)            addps	%xmm0, %xmm0       vaddps %xmm0, %xmm0, %xmm0
+	movq	%rcx, 24(%rsp)            ret                      ret
+	movdqa	16(%rsp), %xmm0
+	movq	%rdi, (%rsp)
+	movq	%rsi, 8(%rsp)
+	mulps	(%rsp), %xmm0
+	movq	%fs:40, %rax
+	movq	%rax, 40(%rsp)
+	xorl	%eax, %eax
+	movq	40(%rsp), %rcx
+	xorq	%fs:40, %rcx
+	addps	%xmm0, %xmm0
+	movaps	%xmm0, (%rsp)
+	movq	(%rsp), %rax
+	movq	8(%rsp), %rdx
+	jne	.L9                              
+	addq	$56, %rsp                    
+	ret                                  
+
+-------------------------------------------------------------------------------------------------------------
+
+compiled code : compute3
+
+    glm:                              mango (sse2):            mango (avx):
+-------------------------------------------------------------------------------------------------------------
+	subq	$104, %rsp                movss	(%rsi), %xmm0      vmovss  (%rsi), %xmm0
+	movaps	%xmm0, %xmm5              movq	%rdi, %rax         movq %rdi, %rax
+	movq	%rdi, 48(%rsp)            movss	4(%rsi), %xmm2     vmovss 4(%rsi), %xmm2
+	movq	%rsi, 32(%rsp)            movss	8(%rsi), %xmm1     vsubss  (%rcx), %xmm0, %xmm5
+	movss	%xmm0, 56(%rsp)           movaps %xmm0, %xmm5      vmovss 8(%rsi), %xmm1
+	movss	48(%rsp), %xmm3           movaps %xmm2, %xmm6      vsubss 4(%rcx), %xmm2, %xmm6
+	subss	%xmm1, %xmm0              movaps %xmm1, %xmm3      vsubss 8(%rcx), %xmm1, %xmm3
+	movss	52(%rsp), %xmm4           subss	4(%rdx), %xmm2     vsubss (%rdx), %xmm0, %xmm0
+	subss	%xmm2, %xmm5              subss	8(%rdx), %xmm1     vsubss 4(%rdx), %xmm2, %xmm2
+	movaps	%xmm4, %xmm7              subss	(%rcx), %xmm5      vsubss 8(%rdx), %xmm1, %xmm1
+	movss	%xmm1, 40(%rsp)           subss	4(%rcx), %xmm6     vmulss %xmm3, %xmm2, %xmm4
+	subss	36(%rsp), %xmm4           subss	8(%rcx), %xmm3     vmulss %xmm6, %xmm1, %xmm7
+	movaps	%xmm3, %xmm6              subss	(%rdx), %xmm0      vmulss %xmm3, %xmm0, %xmm3
+	movaps	%xmm3, %xmm1              movaps %xmm2, %xmm4      vmulss %xmm5, %xmm1, %xmm1
+	movq	%rdx, 16(%rsp)            movaps %xmm1, %xmm7      vmulss %xmm6, %xmm0, %xmm0
+	subss	16(%rsp), %xmm6           mulss	%xmm5, %xmm2       vmulss %xmm5, %xmm2, %xmm2
+	movss	%xmm2, 24(%rsp)           mulss	%xmm6, %xmm7       vsubss %xmm7, %xmm4, %xmm4
+	subss	32(%rsp), %xmm1           mulss	%xmm3, %xmm4       vsubss %xmm3, %xmm1, %xmm1
+	subss	20(%rsp), %xmm7           mulss	%xmm5, %xmm1       vsubss %xmm2, %xmm0, %xmm0
+	movq	%fs:40, %rax              mulss	%xmm0, %xmm3       vmovss %xmm4, (%rdi)
+	movq	%rax, 88(%rsp)            mulss	%xmm6, %xmm0       vmovss %xmm1, 4(%rdi)
+	xorl	%eax, %eax                subss	%xmm7, %xmm4       vmovss %xmm0, 8(%rdi)
+	movaps	%xmm4, %xmm3              subss	%xmm3, %xmm1       ret
+	movaps	%xmm4, %xmm2              subss	%xmm2, %xmm0
+	movaps	%xmm0, %xmm4              movss	%xmm4, (%rdi)
+	mulss	%xmm5, %xmm3              movss	%xmm1, 4(%rdi)
+	mulss	%xmm6, %xmm0              movss	%xmm0, 8(%rdi)
+	mulss	%xmm1, %xmm5              ret
+	mulss	%xmm7, %xmm1
+	mulss	%xmm7, %xmm4
+	mulss	%xmm6, %xmm2
+	subss	%xmm5, %xmm0
+	movq	88(%rsp), %rcx
+	xorq	%fs:40, %rcx
+	subss	%xmm4, %xmm3
+	movss	%xmm0, 80(%rsp)
+	movaps	%xmm1, %xmm0
+	subss	%xmm2, %xmm0
+	movss	%xmm3, 76(%rsp)
+	movq	76(%rsp), %rax
+	movss	%xmm0, 84(%rsp)
+	jne	.L13
+	addq	$104, %rsp
+	ret
+
+-------------------------------------------------------------------------------------------------------------
