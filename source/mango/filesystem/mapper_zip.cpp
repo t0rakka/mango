@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/string.hpp>
@@ -765,6 +765,10 @@ namespace mango::filesystem
                 // use decode_buffer as memory map
                 address = buffer;
                 size = header.uncompressedSize;
+            }
+            else
+            {
+                MANGO_EXCEPTION("[mapper.zip] Unsupported compression algorithm (%d).", header.compression);
             }
 
             VirtualMemory* memory = new VirtualMemoryZIP(address, buffer, size_t(size));
