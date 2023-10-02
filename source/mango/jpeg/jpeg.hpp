@@ -483,19 +483,19 @@ namespace mango::jpeg
 
     using ProcessFunc = void (*)(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-    void huff_decode_mcu_lossless   (s16* output, DecodeState* state);
-    void huff_decode_mcu            (s16* output, DecodeState* state);
-    void huff_decode_dc_first       (s16* output, DecodeState* state);
-    void huff_decode_dc_refine      (s16* output, DecodeState* state);
-    void huff_decode_ac_first       (s16* output, DecodeState* state);
-    void huff_decode_ac_refine      (s16* output, DecodeState* state);
+    void huff_decode_mcu_lossless       (s16* output, DecodeState* state);
+    void huff_decode_mcu                (s16* output, DecodeState* state);
+    void huff_decode_dc_first           (s16* output, DecodeState* state);
+    void huff_decode_dc_refine          (s16* output, DecodeState* state);
+    void huff_decode_ac_first           (s16* output, DecodeState* state);
+    void huff_decode_ac_refine          (s16* output, DecodeState* state);
 
-    void arith_decode_mcu_lossless  (s16* output, DecodeState* state);
-    void arith_decode_mcu           (s16* output, DecodeState* state);
-    void arith_decode_dc_first      (s16* output, DecodeState* state);
-    void arith_decode_dc_refine     (s16* output, DecodeState* state);
-    void arith_decode_ac_first      (s16* output, DecodeState* state);
-    void arith_decode_ac_refine     (s16* output, DecodeState* state);
+    void arith_decode_mcu_lossless      (s16* output, DecodeState* state);
+    void arith_decode_mcu               (s16* output, DecodeState* state);
+    void arith_decode_dc_first          (s16* output, DecodeState* state);
+    void arith_decode_dc_refine         (s16* output, DecodeState* state);
+    void arith_decode_ac_first          (s16* output, DecodeState* state);
+    void arith_decode_ac_refine         (s16* output, DecodeState* state);
 
     void idct8                          (u8* dest, const s16* data, const s16* qt);
     void idct12                         (u8* dest, const s16* data, const s16* qt);

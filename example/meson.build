@@ -53,6 +53,7 @@ opengl_progs = [
     'imageview',
     'animation',
     'mandelbrot',
+    'cubemap',
 ]
 
 foreach p : opengl_progs

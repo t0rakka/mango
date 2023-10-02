@@ -45,15 +45,20 @@ namespace mango::jpeg
     static
     void jpegPrintMemory(const u8* ptr)
     {
+        printf("  Memory: ");
+
         for (int i = 0; i < 8; ++i)
         {
             printf("%.2x ", ptr[i - 8]);
         }
+
         printf("| ");
+
         for (int i = 0; i < 8; ++i)
         {
             printf("%.2x ", ptr[i]);
         }
+
         printf("\n");
     }
 
