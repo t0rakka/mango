@@ -190,7 +190,7 @@ namespace mango::image
     // ----------------------------------------------------------------------------
 
     IndexedFormat::IndexedFormat(int bits)
-        : Format(bits, Format::UNORM, Color(bits, bits, bits, 0), Color(0, 0, 0, 0))
+        : Format(bits, Format::UINT, Color(bits, bits, bits, 0), Color(0, 0, 0, 0))
     {
         flags = FLAG_INDEXED;
     }
