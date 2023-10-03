@@ -632,11 +632,6 @@ jpeg
 // [License]
 // Public Domain <unlicense.org>
 
-// The original code is by Sean Barrett ; WE HAVE TAKEN LIBERTIES TO ADAPT IT TO OUR USE!!!
-// https://github.com/nothings/stb
-// [License]
-// Public Domain / MIT
-
 // Copyright 2009 Intel Corporation
 // All Rights Reserved
 //
