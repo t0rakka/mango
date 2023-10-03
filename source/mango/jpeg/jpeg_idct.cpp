@@ -645,8 +645,7 @@ namespace mango::jpeg
         int32x4_t high = vmull_high_s16(a, b);
         return vpaddq_s32(low, high);
 #else
-    int32x4_t high = vmull_s16(vget_high_s16(vreinterpretq_s16_m128i(a)),
-                               vget_high_s16(vreinterpretq_s16_m128i(b)));
+    int32x4_t high = vmull_s16(vget_high_s16(a), vget_high_s16(b));
     int32x2_t low_sum = vpadd_s32(vget_low_s32(low), vget_high_s32(low));
     int32x2_t high_sum = vpadd_s32(vget_low_s32(high), vget_high_s32(high));
     return vcombine_s32(low_sum, high_sum);
