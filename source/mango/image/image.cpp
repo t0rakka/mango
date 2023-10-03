@@ -123,19 +123,19 @@ namespace mango::image
     void registerImageCodecPIC();
     void registerImageCodecPSD();
 
-#if defined(MANGO_ENABLE_JXL)
+#if defined(MANGO_ENABLE_JXL) && defined(MANGO_LICENSE_ENABLE_BSD)
     void registerImageCodecJXL();
 #endif
 
-#if defined(MANGO_ENABLE_JP2)
+#if defined(MANGO_ENABLE_JP2) && defined(MANGO_LICENSE_ENABLE_BSD)
     void registerImageCodecJP2();
 #endif
 
-#if defined(MANGO_ENABLE_HEIF)
+#if defined(MANGO_ENABLE_HEIF) && defined(MANGO_LICENSE_ENABLE_GPL)
     void registerImageCodecHEIF();
 #endif
 
-#if defined(MANGO_ENABLE_AVIF)
+#if defined(MANGO_ENABLE_AVIF) && defined(MANGO_LICENSE_ENABLE_APACHE)
     void registerImageCodecAVIF();
 #endif
 
@@ -173,19 +173,19 @@ namespace mango::image
             registerImageCodecPIC();
             registerImageCodecPSD();
 
-#if defined(MANGO_ENABLE_JXL)
+#if defined(MANGO_ENABLE_JXL) && defined(MANGO_LICENSE_ENABLE_BSD)
             registerImageCodecJXL();
 #endif
 
-#if defined(MANGO_ENABLE_JP2)
+#if defined(MANGO_ENABLE_JP2) && defined(MANGO_LICENSE_ENABLE_BSD)
             registerImageCodecJP2();
 #endif
 
-#if defined(MANGO_ENABLE_HEIF)
+#if defined(MANGO_ENABLE_HEIF) && defined(MANGO_LICENSE_ENABLE_GPL)
             registerImageCodecHEIF();
 #endif
 
-#if defined(MANGO_ENABLE_AVIF)
+#if defined(MANGO_ENABLE_AVIF) && defined(MANGO_LICENSE_ENABLE_APACHE)
             registerImageCodecAVIF();
 #endif
         }

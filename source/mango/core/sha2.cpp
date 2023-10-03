@@ -12,7 +12,7 @@ namespace
 {
     using namespace mango;
 
-#if defined(__ARM_FEATURE_CRYPTO)
+#if defined(MANGO_LICENSE_ENABLE_APACHE) && defined(__ARM_FEATURE_CRYPTO)
 
     // ----------------------------------------------------------------------------------------
     // ARMv8 Crypto SHA2
@@ -204,7 +204,7 @@ namespace
 
 #endif
 
-#if defined(__SHA__)
+#if defined(MANGO_LICENSE_ENABLE_BSD) && defined(__SHA__)
 
     /*******************************************************************************
     * Copyright (c) 2013, Intel Corporation 
@@ -582,12 +582,13 @@ namespace mango
         // select implementation
         auto transform = generic_sha2_transform;
 
-#if defined(__ARM_FEATURE_CRYPTO)
+#if defined(MANGO_LICENSE_ENABLE_APACHE) && defined(__ARM_FEATURE_CRYPTO)
         if ((getCPUFlags() & ARM_SHA2) != 0)
         {
             transform = arm_sha2_transform;
         }
-#elif defined(__SHA__)
+#endif
+#if defined(MANGO_LICENSE_ENABLE_BSD) && defined(__SHA__)
         if ((getCPUFlags() & INTEL_SHA) != 0)
         {
             transform = intel_sha2_transform;

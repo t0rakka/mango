@@ -102,6 +102,8 @@ namespace mango
         CompressionStatus decompress(Memory dest, ConstMemory source);
     }
 
+#ifdef MANGO_LICENSE_ENABLE_GPL
+
     namespace lzo
     {
         size_t bound(size_t size);
@@ -109,7 +111,18 @@ namespace mango
         CompressionStatus decompress(Memory dest, ConstMemory source);
     }
 
+#endif
+
     namespace zstd
+    {
+        size_t bound(size_t size);
+        CompressionStatus compress(Memory dest, ConstMemory source, int level = 6);
+        CompressionStatus decompress(Memory dest, ConstMemory source);
+    }
+
+#ifdef MANGO_LICENSE_ENABLE_ZLIB
+
+    namespace zlib
     {
         size_t bound(size_t size);
         CompressionStatus compress(Memory dest, ConstMemory source, int level = 6);
@@ -122,6 +135,8 @@ namespace mango
         CompressionStatus compress(Memory dest, ConstMemory source, int level = 6);
         CompressionStatus decompress(Memory dest, ConstMemory source);
     }
+
+#endif
 
     namespace lzfse
     {
@@ -145,13 +160,6 @@ namespace mango
     }
 
     namespace ppmd8
-    {
-        size_t bound(size_t size);
-        CompressionStatus compress(Memory dest, ConstMemory source, int level = 6);
-        CompressionStatus decompress(Memory dest, ConstMemory source);
-    }
-
-    namespace zlib
     {
         size_t bound(size_t size);
         CompressionStatus compress(Memory dest, ConstMemory source, int level = 6);
@@ -188,6 +196,7 @@ namespace mango
 
     struct Compressor
     {
+        // NOTE: some might not be available due to blocked license
         enum Method
         {
             NONE = 0,

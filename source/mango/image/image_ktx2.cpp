@@ -1229,6 +1229,7 @@ namespace
 
             if (m_is_etc1s)
             {
+#ifdef MANGO_LICENSE_ENABLE_APACHE
                 ConstMemory memory = this->memory(level, depth, 0);
 
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
@@ -1259,9 +1260,11 @@ namespace
                 MANGO_UNREFERENCED(x);
 
                 dest.blit(0, 0, temp);
+#endif
             }
             else if (m_is_uastc)
             {
+#ifdef MANGO_LICENSE_ENABLE_APACHE
                 ConstMemory memory = this->memory(level, depth, face);
 
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
@@ -1284,6 +1287,7 @@ namespace
                 MANGO_UNREFERENCED(x);
 
                 dest.blit(0, 0, temp);
+#endif
             }
             else
             {
@@ -1351,9 +1355,11 @@ namespace
                             case SUPERCOMPRESSION_ZSTANDARD:
                                 status = zstd::decompress(dest, level.memory);
                                 break;
+#ifdef MANGO_LICENSE_ENABLE_ZLIB
                             case SUPERCOMPRESSION_ZLIB:
                                 status = zlib::decompress(dest, level.memory);
                                 break;
+#endif
                         }
 
                         if (status)

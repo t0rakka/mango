@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <vector>
@@ -15,7 +15,10 @@
 
 #include "../../external/lz4/lz4.h"
 #include "../../external/lz4/lz4hc.h"
+
+#ifdef MANGO_LICENSE_ENABLE_GPL
 #include "../../external/lzo/minilzo.h"
+#endif
 
 #define ZSTD_DISABLE_DEPRECATE_WARNINGS
 #include "../../external/zstd/zstd.h"
@@ -252,6 +255,8 @@ namespace lz4
 
 } // namespace lz4
 
+#ifdef MANGO_LICENSE_ENABLE_GPL
+
 // ----------------------------------------------------------------------------
 // lzo
 // ----------------------------------------------------------------------------
@@ -303,6 +308,8 @@ namespace lzo
     }
 
 } // namespace lzo
+
+#endif // MANGO_LICENSE_ENABLE_GPL
 
 // ----------------------------------------------------------------------------
 // zstd
@@ -461,6 +468,8 @@ namespace zstd
 
 } // namespace zstd
 
+#ifdef MANGO_LICENSE_ENABLE_ZLIB
+
 // ----------------------------------------------------------------------------
 // bzip2
 // ----------------------------------------------------------------------------
@@ -562,6 +571,89 @@ namespace bzip2
     }
 
 } // namespace bzip2
+
+// ----------------------------------------------------------------------------
+// zlib
+// ----------------------------------------------------------------------------
+
+namespace zlib
+{
+
+    static
+    const char* get_error_string(int result)
+    {
+        const char* error = nullptr;
+        switch (result)
+        {
+            default:
+            case Z_OK:
+                break;
+            case Z_MEM_ERROR:
+                error = "Z_MEM_ERROR";
+                break;
+            case Z_BUF_ERROR:
+                error = "Z_BUF_ERROR";
+                break;
+            case Z_STREAM_ERROR:
+                error = "Z_STREAM_ERROR";
+                break;
+        }
+        return error;
+    }
+
+    size_t bound(size_t size)
+    {
+        return uLong(::compressBound(uLong(size)));
+    }
+
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
+    {
+        level = math::clamp(level, 0, 9);
+
+        uLongf destLen = uLongf(dest.size);
+
+        int result = ::compress2(dest.address, &destLen, source.address, uLong(source.size), level);
+        const char* error = get_error_string(result);
+
+        CompressionStatus status;
+
+        if (error)
+        {
+            status.setError("[zlib] %s.", error);
+        }
+        else
+        {
+            status.size = size_t(destLen);
+        }
+
+        return status;
+    }
+
+    CompressionStatus decompress(Memory dest, ConstMemory source)
+    {
+        uLongf sourceLen = uLongf(source.size);
+        uLongf destLen = uLongf(dest.size);
+
+        int result = uncompress2(dest.address, &destLen, source.address, &sourceLen);
+        const char* error = get_error_string(result);
+
+        CompressionStatus status;
+
+        if (error)
+        {
+            status.setError("[zlib] %s.", error);
+        }
+        else
+        {
+            status.size = size_t(destLen);
+        }
+
+        return status;
+    }
+
+} // namespace zlib
+
+#endif // MANGO_LICENSE_ENABLE_ZLIB
 
 // ----------------------------------------------------------------------------
 // lzfse
@@ -936,87 +1028,6 @@ namespace ppmd8
 } // namespace ppmd
 
 // ----------------------------------------------------------------------------
-// zlib
-// ----------------------------------------------------------------------------
-
-namespace zlib
-{
-
-    static
-    const char* get_error_string(int result)
-    {
-        const char* error = nullptr;
-        switch (result)
-        {
-            default:
-            case Z_OK:
-                break;
-            case Z_MEM_ERROR:
-                error = "Z_MEM_ERROR";
-                break;
-            case Z_BUF_ERROR:
-                error = "Z_BUF_ERROR";
-                break;
-            case Z_STREAM_ERROR:
-                error = "Z_STREAM_ERROR";
-                break;
-        }
-        return error;
-    }
-
-    size_t bound(size_t size)
-    {
-        return uLong(::compressBound(uLong(size)));
-    }
-
-    CompressionStatus compress(Memory dest, ConstMemory source, int level)
-    {
-        level = math::clamp(level, 0, 9);
-
-        uLongf destLen = uLongf(dest.size);
-
-        int result = ::compress2(dest.address, &destLen, source.address, uLong(source.size), level);
-        const char* error = get_error_string(result);
-
-        CompressionStatus status;
-
-        if (error)
-        {
-            status.setError("[zlib] %s.", error);
-        }
-        else
-        {
-            status.size = size_t(destLen);
-        }
-
-        return status;
-    }
-
-    CompressionStatus decompress(Memory dest, ConstMemory source)
-    {
-        uLongf sourceLen = uLongf(source.size);
-        uLongf destLen = uLongf(dest.size);
-
-        int result = uncompress2(dest.address, &destLen, source.address, &sourceLen);
-        const char* error = get_error_string(result);
-
-        CompressionStatus status;
-
-        if (error)
-        {
-            status.setError("[zlib] %s.", error);
-        }
-        else
-        {
-            status.size = size_t(destLen);
-        }
-
-        return status;
-    }
-
-} // namespace zlib
-
-// ----------------------------------------------------------------------------
 // deflate
 // ----------------------------------------------------------------------------
 
@@ -1185,16 +1196,22 @@ namespace deflate_gzip
     const std::vector<Compressor> g_compressors =
     {
         { Compressor::NONE,    "none",  nocompress::bound, nocompress::compress, nocompress::decompress },
+#ifdef MANGO_LICENSE_ENABLE_ZLIB
         { Compressor::BZIP2,   "bzip2", bzip2::bound, bzip2::compress, bzip2::decompress },
+#endif
         { Compressor::LZ4,     "lz4",   lz4::bound,   lz4::compress,   lz4::decompress },
+#ifdef MANGO_LICENSE_ENABLE_GPL
         { Compressor::LZO,     "lzo",   lzo::bound,   lzo::compress,   lzo::decompress },
+#endif
         { Compressor::ZSTD,    "zstd",  zstd::bound,  zstd::compress,  zstd::decompress },
         { Compressor::LZFSE,   "lzfse", lzfse::bound, lzfse::compress, lzfse::decompress },
         { Compressor::LZMA,    "lzma",  lzma::bound,  lzma::compress,  lzma::decompress },
         { Compressor::LZMA2,   "lzma2", lzma2::bound, lzma2::compress, lzma2::decompress },
         { Compressor::PPMD8,   "ppmd8", ppmd8::bound, ppmd8::compress, ppmd8::decompress },
+#ifdef MANGO_LICENSE_ENABLE_ZLIB
         { Compressor::ZLIB,    "zlib",  zlib::bound,  zlib::compress,  zlib::decompress },
-        { Compressor::DEFLATE, "deflate",      deflate::bound,      deflate::compress,      deflate::decompress },
+#endif
+        { Compressor::DEFLATE,      "deflate",      deflate::bound,      deflate::compress,      deflate::decompress },
         { Compressor::DEFLATE_ZLIB, "deflate.zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },
         { Compressor::DEFLATE_GZIP, "deflate.gzip", deflate_gzip::bound, deflate_gzip::compress, deflate_gzip::decompress },
     };
@@ -1206,7 +1223,23 @@ namespace deflate_gzip
 
     Compressor getCompressor(Compressor::Method method)
     {
-        return g_compressors[method];
+        Compressor compressor;
+
+        auto i = std::find_if(g_compressors.begin(), g_compressors.end(),[&] (const Compressor& compressor)
+        {
+            return method == compressor.method;
+        });
+
+        if (i != g_compressors.end())
+        {
+            compressor = *i;
+        }
+        else
+        {
+            MANGO_EXCEPTION("[WARNING] Incorrect compressor (%d).", int(method));
+        }
+
+        return compressor;
     }
 
     Compressor getCompressor(const std::string& name)
