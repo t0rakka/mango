@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include "jpeg.hpp"
 
@@ -973,7 +973,8 @@ namespace mango::jpeg
         r16_xmm0 = vqaddq_s16(r16_xmm0, r16_xmm1);
         r16_xmm0 = vorrq_s16(r16_xmm0, one);
 
-        const int16x8_t round_inv_col = vdupq_n_s16(16);
+        const s16 bias = 128 << 5;
+        const int16x8_t round_inv_col = vdupq_n_s16(16 + bias);
         const int16x8_t round_inv_corr = vqsubq_s16(round_inv_col, one);
 
         r16_xmm2 = r16_xmm5;
@@ -1011,16 +1012,6 @@ namespace mango::jpeg
         int16x8_t r5 = vshrq_n_s16(r16_xmm7, 5);
         int16x8_t r6 = vshrq_n_s16(r16_xmm3, 5);
         int16x8_t r7 = vshrq_n_s16(r16_xmm5, 5);
-
-        const int16x8_t bias = vdupq_n_s16(128);
-        r0 = vaddq_s16(r0, bias);
-        r1 = vaddq_s16(r1, bias);
-        r2 = vaddq_s16(r2, bias);
-        r3 = vaddq_s16(r3, bias);
-        r4 = vaddq_s16(r4, bias);
-        r5 = vaddq_s16(r5, bias);
-        r6 = vaddq_s16(r6, bias);
-        r7 = vaddq_s16(r7, bias);
 
         uint8x16_t s0 = vcombine_u8(vqmovun_s16(r0), vqmovun_s16(r1));
         uint8x16_t s1 = vcombine_u8(vqmovun_s16(r2), vqmovun_s16(r3));
