@@ -986,14 +986,13 @@ namespace mango::jpeg
         r16_xmm6 = vqaddq_s16(r16_xmm6, r16_xmm3);
         r16_xmm6 = vqaddq_s16(r16_xmm6, round_inv_col);
         r16_xmm7 = vqaddq_s16(r16_xmm7, r16_xmm5);
-        r16_xmm7 = vshrq_n_s16(r16_xmm7, 5);
         r16_xmm1 = vqsubq_s16(r16_xmm1, r16_xmm3);
         r16_xmm1 = vqaddq_s16(r16_xmm1, round_inv_corr);
         r16_xmm3 = r16_xmm6;
         r16_xmm2 = vqaddq_s16(r16_xmm2, round_inv_corr);
         r16_xmm6 = vqaddq_s16(r16_xmm6, r16_xmm4);
 
-        int16x8_t r0 = r16_xmm7;
+        int16x8_t r0 = vshrq_n_s16(r16_xmm7, 5);
 
         r16_xmm7 = r16_xmm1;
         r16_xmm1 = vqaddq_s16(r16_xmm1, r16_xmm0);
