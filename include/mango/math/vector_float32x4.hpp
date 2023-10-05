@@ -244,7 +244,7 @@ namespace mango::math
     {
         return simd::movelh(a, b);
     }
-    
+
     static inline Vector<float, 4> movehl(Vector<float, 4> a, Vector<float, 4> b)
     {
         return simd::movehl(a, b);

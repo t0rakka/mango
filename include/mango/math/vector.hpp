@@ -2518,6 +2518,7 @@ namespace mango::math
 #include <mango/math/vector_float32x8.hpp>
 #include <mango/math/vector_float32x16.hpp>
 #include <mango/math/vector_float64x2.hpp>
+#include <mango/math/vector_float64x3.hpp>
 #include <mango/math/vector_float64x4.hpp>
 #include <mango/math/vector_float64x8.hpp>
 #include <mango/math/vector_gather.hpp>
