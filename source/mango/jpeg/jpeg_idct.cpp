@@ -227,10 +227,10 @@ namespace mango::jpeg
         __m128i r_xmm0, r_xmm1, r_xmm2, r_xmm3, r_xmm4, r_xmm5, r_xmm6, r_xmm7;
         __m128i row0, row1, row2, row3, row4, row5, row6, row7;
 
+        // row 1 and Row 3
+
         const __m128i* table04 = reinterpret_cast<const __m128i*>(shortM128_tab_i_04);
         const __m128i* table26 = reinterpret_cast<const __m128i*>(shortM128_tab_i_26);
-
-        // row 1 and Row 3
 
         r_xmm0 = _mm_shufflelo_epi16(v0, 0xd8);
         r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0x00);
@@ -290,7 +290,7 @@ namespace mango::jpeg
         r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
         r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
         r_xmm0 = _mm_madd_epi16(r_xmm0, table04[3]);
-        r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0);
+        r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0x00);
         r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
         r_xmm5 = _mm_madd_epi16(r_xmm5, table26[0]);
         r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
@@ -317,10 +317,10 @@ namespace mango::jpeg
         r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
         row6 = _mm_packs_epi32(r_xmm4, r_xmm6);
 
+        // row 4 and row 2
+
         const __m128i* table35 = reinterpret_cast<const __m128i*>(shortM128_tab_i_35);
         const __m128i* table17 = reinterpret_cast<const __m128i*>(shortM128_tab_i_17);
-
-        // row 4 and row 2
 
         r_xmm0 = _mm_shufflelo_epi16(v3, 0xd8);
         r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0x00);
@@ -356,7 +356,7 @@ namespace mango::jpeg
 
         r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
         r_xmm6 = _mm_sub_epi32(r_xmm5, r_xmm4);
-        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm5);
+        r_xmm4 = _mm_add_epi32(r_xmm5, r_xmm4);
         r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
         r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
         r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
@@ -398,7 +398,7 @@ namespace mango::jpeg
 
         r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
         r_xmm6 = _mm_sub_epi32(r_xmm5, r_xmm4);
-        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm5);
+        r_xmm4 = _mm_add_epi32(r_xmm5, r_xmm4);
         r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
         r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
         r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
@@ -666,15 +666,16 @@ namespace mango::jpeg
         r16_xmm1 = splat_epi32<0>(r16_xmm0);
         r32_xmm1 = madd_epi16(r16_xmm1, table04[0]);
         r16_xmm3 = splat_epi32<1>(r16_xmm0);
+
         r16_xmm0 = shufflehi(r16_xmm0);
         r32_xmm3 = madd_epi16(r16_xmm3, table04[2]);
         r16_xmm2 = splat_epi32<2>(r16_xmm0);
         r16_xmm0 = splat_epi32<3>(r16_xmm0);
         r32_xmm2 = madd_epi16(r16_xmm2, table04[1]);
-        r16_xmm4 = shufflehi(v2);
 
         const int32x4_t round_inv_row = vdupq_n_s32(2048);
 
+        r16_xmm4 = shufflehi(v2);
         r32_xmm1 = vaddq_s32(r32_xmm1, round_inv_row);
         r16_xmm4 = shufflelo(r16_xmm4);
         r32_xmm0 = madd_epi16(r16_xmm0, table04[3]);
@@ -682,12 +683,11 @@ namespace mango::jpeg
         r16_xmm6 = splat_epi32<2>(r16_xmm4);
         r32_xmm5 = madd_epi16(r16_xmm5, table26[0]);
         r32_xmm1 = vaddq_s32(r32_xmm1, r32_xmm2);
-        r32_xmm2 = r32_xmm1;
         r16_xmm7 = splat_epi32<1>(r16_xmm4);
         r32_xmm6 = madd_epi16(r16_xmm6, table26[1]);
         r32_xmm0 = vaddq_s32(r32_xmm0, r32_xmm3);
         r16_xmm4 = splat_epi32<3>(r16_xmm4);
-        r32_xmm2 = vsubq_s32(r32_xmm2, r32_xmm0);
+        r32_xmm2 = vsubq_s32(r32_xmm1, r32_xmm0);
         r32_xmm7 = madd_epi16(r16_xmm7, table26[2]);
         r32_xmm0 = vaddq_s32(r32_xmm0, r32_xmm1);
         r32_xmm2 = vshrq_n_s32(r32_xmm2, 12);
@@ -698,8 +698,9 @@ namespace mango::jpeg
         r32_xmm0 = vshrq_n_s32(r32_xmm0, 12);
         r32_xmm2 = rev_epi32(r32_xmm2);
         row0 = packs_epi32(r32_xmm0, r32_xmm2);
+
         r32_xmm4 = vaddq_s32(r32_xmm4, r32_xmm7);
-        r32_xmm6 = vsubq_s32(r32_xmm6, r32_xmm4);
+        r32_xmm6 = vsubq_s32(r32_xmm5, r32_xmm4);
         r32_xmm4 = vaddq_s32(r32_xmm4, r32_xmm5);
         r32_xmm6 = vshrq_n_s32(r32_xmm6, 12);
         r32_xmm4 = vshrq_n_s32(r32_xmm4, 12);
@@ -708,7 +709,7 @@ namespace mango::jpeg
 
         // row5 and row7
 
-        r16_xmm0 = shufflelo();
+        r16_xmm0 = shufflelo(v4);
         r16_xmm1 = splat_epi32<0>(r16_xmm0);
         r32_xmm1 = madd_epi16(r16_xmm1, table04[0]);
         r16_xmm3 = splat_epi32<1>(r16_xmm0);
@@ -717,7 +718,7 @@ namespace mango::jpeg
         r16_xmm2 = splat_epi32<2>(r16_xmm0);
         r16_xmm0 = splat_epi32<3>(r16_xmm0);
         r32_xmm2 = madd_epi16(r16_xmm2, table04[1]);
-        r16_xmm4 = shufflehi(v4);
+        r16_xmm4 = shufflehi(v6);
         r32_xmm1 = vaddq_s32(r32_xmm1, round_inv_row);
         r16_xmm4 = shufflelo(r16_xmm4);
         r32_xmm0 = madd_epi16(r16_xmm0, table04[3]);
@@ -725,14 +726,14 @@ namespace mango::jpeg
         r16_xmm6 = splat_epi32<2>(r16_xmm4);
         r32_xmm5 = madd_epi16(r16_xmm5, table26[0]);
         r32_xmm1 = vaddq_s32(r32_xmm1, r32_xmm2);
-        r32_xmm2 = r32_xmm1;
         r16_xmm7 = splat_epi32<1>(r16_xmm4);
         r32_xmm6 = madd_epi16(r16_xmm6, table26[1]);
         r32_xmm0 = vaddq_s32(r32_xmm0, r32_xmm3);
         r16_xmm4 = splat_epi32<3>(r16_xmm4);
-        r32_xmm2 = vsubq_s32(r32_xmm2, r32_xmm0);
+        r32_xmm2 = vsubq_s32(r32_xmm1, r32_xmm0);
         r32_xmm7 = madd_epi16(r16_xmm7, table26[2]);
         r32_xmm0 = vaddq_s32(r32_xmm0, r32_xmm1);
+
         r32_xmm2 = vshrq_n_s32(r32_xmm2, 12);
         r32_xmm5 = vaddq_s32(r32_xmm5, round_inv_row);
         r32_xmm4 = madd_epi16(r16_xmm4, table26[3]);
@@ -741,8 +742,9 @@ namespace mango::jpeg
         r32_xmm0 = vshrq_n_s32(r32_xmm0, 12);
         r32_xmm2 = rev_epi32(r32_xmm2);
         row4 = packs_epi32(r32_xmm0, r32_xmm2);
+
         r32_xmm4 = vaddq_s32(r32_xmm4, r32_xmm7);
-        r32_xmm6 = vsubq_s32(r32_xmm6, r32_xmm4);
+        r32_xmm6 = vsubq_s32(r32_xmm5, r32_xmm4);
         r32_xmm4 = vaddq_s32(r32_xmm4, r32_xmm5);
         r32_xmm6 = vshrq_n_s32(r32_xmm6, 12);
         r32_xmm4 = vshrq_n_s32(r32_xmm4, 12);
@@ -771,25 +773,24 @@ namespace mango::jpeg
         r16_xmm6 = splat_epi32<2>(r16_xmm4);
         r32_xmm5 = madd_epi16(r16_xmm5, table17[0]);
         r32_xmm1 = vaddq_s32(r32_xmm1, r32_xmm2);
-        r32_xmm2 = r32_xmm1;
         r16_xmm7 = splat_epi32<1>(r16_xmm4);
         r32_xmm6 = madd_epi16(r16_xmm6, table17[1]);
         r32_xmm0 = vaddq_s32(r32_xmm0, r32_xmm3);
         r16_xmm4 = splat_epi32<3>(r16_xmm4);
-        r32_xmm2 = vsubq_s32(r32_xmm2, r32_xmm0);
+        r32_xmm2 = vsubq_s32(r32_xmm1, r32_xmm0);
         r32_xmm7 = madd_epi16(r16_xmm7, table17[2]);
         r32_xmm0 = vaddq_s32(r32_xmm0, r32_xmm1);
         r32_xmm2 = vshrq_n_s32(r32_xmm2, 12);
         r32_xmm5 = vaddq_s32(r32_xmm5, round_inv_row);
         r32_xmm4 = madd_epi16(r16_xmm4, table17[3]);
         r32_xmm5 = vaddq_s32(r32_xmm5, r32_xmm6);
-        r32_xmm6 = r32_xmm5;
         r32_xmm0 = vshrq_n_s32(r32_xmm0, 12);
         r32_xmm2 = rev_epi32(r32_xmm2);
         row3 = packs_epi32(r32_xmm0, r32_xmm2);
+
         r32_xmm4 = vaddq_s32(r32_xmm4, r32_xmm7);
-        r32_xmm6 = vsubq_s32(r32_xmm6, r32_xmm4);
-        r32_xmm4 = vaddq_s32(r32_xmm4, r32_xmm5);
+        r32_xmm6 = vsubq_s32(r32_xmm5, r32_xmm4);
+        r32_xmm4 = vaddq_s32(r32_xmm5, r32_xmm4);
         r32_xmm6 = vshrq_n_s32(r32_xmm6, 12);
         r32_xmm4 = vshrq_n_s32(r32_xmm4, 12);
         r32_xmm6 = rev_epi32(r32_xmm6);
@@ -814,120 +815,99 @@ namespace mango::jpeg
         r16_xmm6 = splat_epi32<2>(r16_xmm4);
         r32_xmm5 = madd_epi16(r16_xmm5, table17[0]);
         r32_xmm1 = vaddq_s32(r32_xmm1, r32_xmm2);
-        r32_xmm2 = r32_xmm1;
         r16_xmm7 = splat_epi32<1>(r16_xmm4);
         r32_xmm6 = madd_epi16(r16_xmm6, table17[1]);
         r32_xmm0 = vaddq_s32(r32_xmm0, r32_xmm3);
         r16_xmm4 = splat_epi32<3>(r16_xmm4);
-        r32_xmm2 = vsubq_s32(r32_xmm2, r32_xmm0);
+        r32_xmm2 = vsubq_s32(r32_xmm1, r32_xmm0);
         r32_xmm7 = madd_epi16(r16_xmm7, table17[2]);
         r32_xmm0 = vaddq_s32(r32_xmm0, r32_xmm1);
         r32_xmm2 = vshrq_n_s32(r32_xmm2, 12);
         r32_xmm5 = vaddq_s32(r32_xmm5, round_inv_row);
         r32_xmm4 = madd_epi16(r16_xmm4, table17[3]);
         r32_xmm5 = vaddq_s32(r32_xmm5, r32_xmm6);
-        r32_xmm6 = r32_xmm5;
         r32_xmm0 = vshrq_n_s32(r32_xmm0, 12);
         r32_xmm2 = rev_epi32(r32_xmm2);
         row5 = packs_epi32(r32_xmm0, r32_xmm2);
+
         r32_xmm4 = vaddq_s32(r32_xmm4, r32_xmm7);
-        r32_xmm6 = vsubq_s32(r32_xmm6, r32_xmm4);
-        r32_xmm4 = vaddq_s32(r32_xmm4, r32_xmm5);
+        r32_xmm6 = vsubq_s32(r32_xmm5, r32_xmm4);
+        r32_xmm4 = vaddq_s32(r32_xmm5, r32_xmm4);
         r32_xmm6 = vshrq_n_s32(r32_xmm6, 12);
         r32_xmm4 = vshrq_n_s32(r32_xmm4, 12);
         r32_xmm6 = rev_epi32(r32_xmm6);
         row7 = packs_epi32(r32_xmm4, r32_xmm6);
 
-        r16_xmm2 = row5;
-        r16_xmm3 = row3;
         r16_xmm0 = mulhi(row5, -21746);
-
-        r16_xmm1 = mulhi(r16_xmm3, -21746);
-        r16_xmm6 = row7;
+        r16_xmm1 = mulhi(row3, -21746);
         r16_xmm4 = mulhi(row7, 13036);
-
-        r16_xmm0 = vqaddq_s16(r16_xmm0, r16_xmm2);
+        r16_xmm0 = vqaddq_s16(r16_xmm0, row5);
         r16_xmm5 = mulhi(row1, 13036);
-        r16_xmm1 = vqaddq_s16(r16_xmm1, r16_xmm3);
-        r16_xmm7 = row6;
+        r16_xmm1 = vqaddq_s16(r16_xmm1, row3);
 
         const int16x8_t one = vdupq_n_s16(1);
 
-        r16_xmm0 = vqaddq_s16(r16_xmm0, r16_xmm3);
+        r16_xmm0 = vqaddq_s16(r16_xmm0, row3);
         r16_xmm2 = vqsubq_s16(r16_xmm2, r16_xmm1);
-        r16_xmm7 = mulhi(r16_xmm7, 27146);
+        r16_xmm7 = mulhi(row6, 27146);
         r16_xmm1 = r16_xmm0;
         r16_xmm3 = mulhi(row2, 27146);
-        r16_xmm5 = vqsubq_s16(r16_xmm5, r16_xmm6);
+        r16_xmm5 = vqsubq_s16(r16_xmm5, row7);
         r16_xmm4 = vqaddq_s16(r16_xmm4, row1);
         r16_xmm0 = vqaddq_s16(r16_xmm0, r16_xmm4);
         r16_xmm0 = vqaddq_s16(r16_xmm0, one);
         r16_xmm4 = vqsubq_s16(r16_xmm4, r16_xmm1);
-        r16_xmm6 = r16_xmm5;
+        r16_xmm6 = vqaddq_s16(r16_xmm5, r16_xmm2);
         r16_xmm5 = vqsubq_s16(r16_xmm5, r16_xmm2);
         r16_xmm5 = vqaddq_s16(r16_xmm5, one);
-        r16_xmm6 = vqaddq_s16(r16_xmm6, r16_xmm2);
 
         int16x8_t temp7 = r16_xmm0;
-
-        r16_xmm1 = r16_xmm4;
-        r16_xmm4 = vqaddq_s16(r16_xmm4, r16_xmm5);
-        r16_xmm2 = mulhi(r16_xmm4, -19195);
-
         int16x8_t temp3 = r16_xmm6;
 
-        r16_xmm1 = vqsubq_s16(r16_xmm1, r16_xmm5);
+        r16_xmm1 = vqsubq_s16(r16_xmm4, r16_xmm5);
+        r16_xmm4 = vqaddq_s16(r16_xmm4, r16_xmm5);
+        r16_xmm2 = mulhi(r16_xmm4, -19195);
         r16_xmm7 = vqaddq_s16(r16_xmm7, row2);
         r16_xmm3 = vqsubq_s16(r16_xmm3, row6);
-        r16_xmm6 = row0;
         r16_xmm0 = mulhi(r16_xmm1, -19195);
-        r16_xmm5 = row4;
-        r16_xmm5 = vqaddq_s16(r16_xmm5, r16_xmm6);
-        r16_xmm6 = vqsubq_s16(r16_xmm6, row4);
+        r16_xmm0 = vqaddq_s16(r16_xmm0, r16_xmm1);
+        r16_xmm5 = vqaddq_s16(row0, row4);
+        r16_xmm6 = vqsubq_s16(row0, row4);
         r16_xmm4 = vqaddq_s16(r16_xmm4, r16_xmm2);
 
         r16_xmm4 = vorrq_s16(r16_xmm4, one);
-        r16_xmm0 = vqaddq_s16(r16_xmm0, r16_xmm1);
         r16_xmm0 = vorrq_s16(r16_xmm0, one);
 
         const s16 bias = 128 << 5;
         const int16x8_t round_inv_col = vdupq_n_s16(16 + bias);
         const int16x8_t round_inv_corr = vqsubq_s16(round_inv_col, one);
 
-        r16_xmm2 = r16_xmm5;
+        r16_xmm1 = vqsubq_s16(r16_xmm6, r16_xmm3);
+        r16_xmm1 = vqaddq_s16(r16_xmm1, round_inv_corr);
+        r16_xmm2 = vqsubq_s16(r16_xmm5, r16_xmm7);
+        r16_xmm2 = vqaddq_s16(r16_xmm2, round_inv_corr);
         r16_xmm5 = vqaddq_s16(r16_xmm5, r16_xmm7);
-        r16_xmm1 = r16_xmm6;
         r16_xmm5 = vqaddq_s16(r16_xmm5, round_inv_col);
-        r16_xmm2 = vqsubq_s16(r16_xmm2, r16_xmm7);
-        r16_xmm7 = temp7;
         r16_xmm6 = vqaddq_s16(r16_xmm6, r16_xmm3);
         r16_xmm6 = vqaddq_s16(r16_xmm6, round_inv_col);
-        r16_xmm7 = vqaddq_s16(r16_xmm7, r16_xmm5);
-        r16_xmm1 = vqsubq_s16(r16_xmm1, r16_xmm3);
-        r16_xmm1 = vqaddq_s16(r16_xmm1, round_inv_corr);
-        r16_xmm3 = r16_xmm6;
-        r16_xmm2 = vqaddq_s16(r16_xmm2, round_inv_corr);
-        r16_xmm6 = vqaddq_s16(r16_xmm6, r16_xmm4);
 
-        int16x8_t r0 = vshrq_n_s16(r16_xmm7, 5);
+        int16x8_t r0 = vqaddq_s16(r16_xmm5, temp7);
+        int16x8_t r1 = vqaddq_s16(r16_xmm6, r16_xmm4);
+        int16x8_t r2 = vqaddq_s16(r16_xmm1, r16_xmm0);
+        int16x8_t r3 = vqaddq_s16(r16_xmm2, temp3);
+        int16x8_t r4 = vqsubq_s16(r16_xmm2, temp3);
+        int16x8_t r5 = vqsubq_s16(r16_xmm1, r16_xmm0);
+        int16x8_t r6 = vqsubq_s16(r16_xmm6, r16_xmm4);
+        int16x8_t r7 = vqsubq_s16(r16_xmm5, temp7);
 
-        r16_xmm7 = r16_xmm1;
-        r16_xmm1 = vqaddq_s16(r16_xmm1, r16_xmm0);
-
-        int16x8_t r1 = vshrq_n_s16(r16_xmm6, 5);
-
-        r16_xmm6 = vqaddq_s16(r16_xmm2, temp3);
-        r16_xmm2 = vqsubq_s16(r16_xmm2, temp3);
-        r16_xmm7 = vqsubq_s16(r16_xmm7, r16_xmm0);
-        r16_xmm3 = vqsubq_s16(r16_xmm3, r16_xmm4);
-        r16_xmm5 = vqsubq_s16(r16_xmm5, temp7);
-
-        int16x8_t r2 = vshrq_n_s16(r16_xmm1, 5);
-        int16x8_t r3 = vshrq_n_s16(r16_xmm6, 5);
-        int16x8_t r4 = vshrq_n_s16(r16_xmm2, 5);
-        int16x8_t r5 = vshrq_n_s16(r16_xmm7, 5);
-        int16x8_t r6 = vshrq_n_s16(r16_xmm3, 5);
-        int16x8_t r7 = vshrq_n_s16(r16_xmm5, 5);
+        r0 = vshrq_n_s16(r0, 5);
+        r1 = vshrq_n_s16(r1, 5);
+        r2 = vshrq_n_s16(r2, 5);
+        r3 = vshrq_n_s16(r3, 5);
+        r4 = vshrq_n_s16(r4, 5);
+        r5 = vshrq_n_s16(r5, 5);
+        r6 = vshrq_n_s16(r6, 5);
+        r7 = vshrq_n_s16(r7, 5);
 
         uint8x16_t s0 = vcombine_u8(vqmovun_s16(r0), vqmovun_s16(r1));
         uint8x16_t s1 = vcombine_u8(vqmovun_s16(r2), vqmovun_s16(r3));
