@@ -168,7 +168,7 @@ namespace mango::filesystem
                     return;
                 }
 
-                for (bool looping = true; looping;)
+                for (bool isLooping = true; isLooping;)
                 {
                     DWORD status = WaitForMultipleObjects(3, m_handle, FALSE, INFINITE);
                     switch (status)
@@ -188,7 +188,7 @@ namespace mango::filesystem
                                 // Restart the read directory
                                 if (!ReadDirectoryChangesW(m_directory[index], buffer + index * BUFFER_SIZE, BUFFER_BYTES, FALSE, filter[index], &bytes, &overlapped[index], NULL))
                                 {
-                                    looping = false;
+                                    isLooping = false;
                                 }
                             }
                             break;
@@ -197,7 +197,7 @@ namespace mango::filesystem
                         case WAIT_OBJECT_0 + 2:
                         {
                             // Received cancel event
-                            looping = false;
+                            isLooping = false;
                             break;
                         }
                     }

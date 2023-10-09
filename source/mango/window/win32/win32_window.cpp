@@ -730,11 +730,10 @@ namespace mango
         MSG msg;
         ::ZeroMemory(&msg, sizeof(msg));
 
-        m_handle->looping = true;
+        m_handle->is_looping = true;
 
-        for (; m_handle->looping && msg.message != WM_QUIT;)
+        for (; m_handle->is_looping && msg.message != WM_QUIT;)
         {
-            //if (::PeekMessage(&msg, m_handle->hwnd, 0, 0, PM_REMOVE))
             while (::PeekMessage(&msg, m_handle->hwnd, 0, 0, PM_REMOVE))
             {
                 TranslateMessage(&msg);
@@ -747,13 +746,13 @@ namespace mango
             std::this_thread::sleep_for(std::chrono::microseconds(100));
         }
 
-        m_handle->looping = false;
+        m_handle->is_looping = false;
     }
 
     void Window::breakEventLoop()
     {
         ::PostQuitMessage(0);
-        m_handle->looping = false;
+        m_handle->is_looping = false;
     }
 
     void Window::onIdle()

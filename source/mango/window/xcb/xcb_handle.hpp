@@ -15,7 +15,7 @@ namespace mango
         xcb_connection_t* connection;
         xcb_window_t window;
 
-        bool looping { false };
+        bool is_looping { false };
 
         WindowHandle(int width, int height);
         ~WindowHandle();

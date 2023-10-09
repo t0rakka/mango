@@ -12,7 +12,7 @@ namespace mango
     {
         // window state
         id     window;
-        bool   looping;
+        bool   is_looping;
         u32 keystate[4] = { 0, 0, 0, 0 };
     };
 

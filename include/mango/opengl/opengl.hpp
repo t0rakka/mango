@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -187,7 +187,6 @@ namespace mango
         void initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared);
 
     public:
-
         OpenGLContext(int width, int height, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr);
         ~OpenGLContext();
 
@@ -246,8 +245,6 @@ namespace mango
             #undef GLX_EXTENSION
         } glx;
 #endif
-
-        static void parseExtensionString(std::set<std::string>& container, const char* extensions);
     };
 
 #ifdef MANGO_OPENGL_FRAMEBUFFER

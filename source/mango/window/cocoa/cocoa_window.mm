@@ -166,9 +166,9 @@ namespace mango
 
     void Window::enterEventLoop()
     {
-        m_handle->looping = true;
+        m_handle->is_looping = true;
 
-        while (m_handle->looping)
+        while (m_handle->is_looping)
         {
             NSEvent* event = [NSApp nextEventMatchingMask: NSEventMaskAny
                               untilDate: nil
@@ -194,7 +194,7 @@ namespace mango
     
     void Window::breakEventLoop()
     {
-        m_handle->looping = false;
+        m_handle->is_looping = false;
     }
 
     void Window::onIdle()

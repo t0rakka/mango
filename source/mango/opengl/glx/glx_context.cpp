@@ -173,13 +173,26 @@ namespace mango
             XFree(vi);
 
             // Get the default screen's GLX extension list
-            const char* glxExts = glXQueryExtensionsString(window->x11_display, DefaultScreen(window->x11_display));
+            const char* extensions = glXQueryExtensionsString(window->x11_display, DefaultScreen(window->x11_display));
 
             // Create GLX extension set
             std::set<std::string> glxExtensions;
-            if (glxExts)
+            if (extensions)
             {
-                OpenGLContext::parseExtensionString(glxExtensions, glxExts);
+                // parse extensions
+                for (const char* s = extensions; *s; ++s)
+                {
+                    if (*s == ' ')
+                    {
+                        const std::ptrdiff_t length = s - extensions;
+                        if (length > 0)
+                        {
+                            glxExtensions.emplace(extensions, length);
+                        }
+
+                        extensions = s + 1;
+                    }
+                }
             }
 
             // NOTE: It is not necessary to create or make current to a context before calling glXGetProcAddressARB

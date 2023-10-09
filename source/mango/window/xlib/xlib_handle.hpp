@@ -59,7 +59,7 @@ namespace mango
         int         xdnd_version { 0 };
         int         size[2] = { 0, 0 };
         float       mouse_time[6];
-        bool        looping { false };
+        bool        is_looping { false };
         bool        busy { false };
 
         u32         flags;

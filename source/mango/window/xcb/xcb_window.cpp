@@ -293,9 +293,9 @@ namespace mango
 #endif
 
 
-        m_handle->looping = true;
+        m_handle->is_looping = true;
 
-        for ( ; m_handle->looping; )
+        for ( ; m_handle->is_looping; )
         {
             xcb_generic_event_t* event = xcb_poll_for_event(m_handle->connection);
             if (event)
@@ -327,7 +327,7 @@ namespace mango
 #if 0
                         if ( (*(xcb_client_message_event_t*)event).data.data32[0] == (*delete_reply).atom )
                         {
-                            m_handle->looping = false;
+                            m_handle->is_looping = false;
                             free(delete_reply);
                         }
 #endif
@@ -337,7 +337,7 @@ namespace mango
                     case XCB_KEY_PRESS:
                     {
                         // TODO
-                        m_handle->looping = false;
+                        m_handle->is_looping = false;
                         break;
                     }
 
@@ -608,7 +608,7 @@ namespace mango
 
     void Window::breakEventLoop()
     {
-        m_handle->looping = false;
+        m_handle->is_looping = false;
     }
 
     void Window::onIdle()

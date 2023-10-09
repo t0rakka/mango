@@ -14,7 +14,7 @@ namespace mango
         WNDCLASSEX wndclass { 0 };
 		HWND hwnd { NULL };
         HICON icon { NULL };
-		bool looping { false };
+		bool is_looping { false };
 
 		WindowHandle(int width, int height, u32 flags);
 		~WindowHandle();

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <mango/core/exception.hpp>
@@ -8,23 +8,6 @@
 #include <mango/opengl/opengl.hpp>
 
 #ifndef MANGO_OPENGL_CONTEXT_NONE
-
-/* TODO: (type, format) mapping to Format, example:
-
-    glTexImage2D(..., GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, ...)
-        { 0x8032, "UNSIGNED_BYTE_3_3_2" },
-        { 0x8362, "UNSIGNED_BYTE_2_3_3_REV" },
-        { 0x8363, "UNSIGNED_SHORT_5_6_5" },
-        { 0x8364, "UNSIGNED_SHORT_5_6_5_REV" },
-        { 0x8033, "UNSIGNED_SHORT_4_4_4_4" },
-        { 0x8365, "UNSIGNED_SHORT_4_4_4_4_REV" },
-        { 0x8034, "UNSIGNED_SHORT_5_5_5_1" },
-        { 0x8366, "UNSIGNED_SHORT_1_5_5_5_REV" },
-        { 0x8035, "UNSIGNED_INT_8_8_8_8" },
-        { 0x8367, "UNSIGNED_INT_8_8_8_8_REV" },
-        { 0x8036, "UNSIGNED_INT_10_10_10_2" },
-        { 0x8368, "UNSIGNED_INT_2_10_10_10_REV" },
-*/
 
 namespace
 {
@@ -332,7 +315,20 @@ namespace mango
         const GLubyte* extensions = glGetString(GL_EXTENSIONS);
         if (extensions)
         {
-            parseExtensionString(m_extensions, reinterpret_cast<const char*>(extensions));
+            // parse extensions
+            for (const GLubyte* s = extensions; *s; ++s)
+            {
+                if (*s == ' ')
+                {
+                    const std::ptrdiff_t length = s - extensions;
+                    if (length > 0)
+                    {
+                        m_extensions.emplace(reinterpret_cast<const char*>(extensions), length);
+                    }
+
+                    extensions = s + 1;
+                }
+            }
         }
 
         // initialize extension mask
@@ -380,23 +376,6 @@ namespace mango
     math::int32x2 OpenGLContext::getWindowSize() const
     {
         return m_context->getWindowSize();
-    }
-
-    void OpenGLContext::parseExtensionString(std::set<std::string>& container, const char* extensions)
-    {
-        for (const char* s = extensions; *s; ++s)
-        {
-            if (*s == ' ')
-            {
-                const std::ptrdiff_t length = s - extensions;
-                if (length > 0)
-                {
-                    container.emplace(extensions, length);
-                }
-
-                extensions = s + 1;
-            }
-        }
     }
 
     void OpenGLContext::initExtensionMask()
@@ -665,6 +644,8 @@ namespace
     // -------------------------------------------------------------------
 
     const char* vertex_shader_source = R"(
+        #version 130
+
         uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0);
 
         in vec2 inPosition;
@@ -678,6 +659,8 @@ namespace
     )";
 
     const char* fragment_shader_source = R"(
+        #version 130
+
         uniform sampler2D uTexture;
 
         in vec2 texcoord;
@@ -690,6 +673,8 @@ namespace
     )";
 
     const char* vertex_shader_source_bicubic = R"(
+        #version 130
+
         uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0);
 
         in vec2 inPosition;
@@ -703,6 +688,8 @@ namespace
     )";
 
     const char* fragment_shader_source_bicubic = R"(
+        #version 130
+
         vec4 cubic(float v)
         {
             vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v;
@@ -750,6 +737,8 @@ namespace
     )";
 
     const char* fragment_shader_source_index = R"(
+        #version 130
+
         uniform isampler2D uTexture;
         uniform uint uPalette[256];
 
@@ -767,39 +756,11 @@ namespace
         }
     )";
 
-    std::string get_shading_language_version_string()
-    {
-        std::string s = "#version 110\n"; // default for OpenGL 2.0
-
-        const char* version = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
-        if (version)
-        {
-            int major;
-            int minor;
-            std::sscanf(version, "%d.%d", &major, &minor);
-
-            char buffer[80];
-            snprintf(buffer, 80, "#version %d%d\n", major, minor);
-
-            s = buffer;
-        }
-
-        return s;
-    }
-
     GLuint create_shader(GLenum type, const char* source)
     {
         GLuint shader = glCreateShader(type);
 
-        std::string header = get_shading_language_version_string();
-
-        const GLchar* string[] =
-        {
-            reinterpret_cast<const GLchar*>(header.c_str()),
-            reinterpret_cast<const GLchar*>(source)
-        };
-
-        glShaderSource(shader, 2, string, NULL);
+        glShaderSource(shader, 1, &source, NULL);
         glCompileShader(shader);
 
         GLint status;

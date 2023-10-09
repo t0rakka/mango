@@ -833,7 +833,7 @@ namespace mango
 
     void Window::enterEventLoop()
     {
-        m_handle->looping = true;
+        m_handle->is_looping = true;
 
         static Timer timer;
 
@@ -842,7 +842,7 @@ namespace mango
             m_handle->mouse_time[i] = 0;
         }
 
-        for (; m_handle->looping;)
+        for (; m_handle->is_looping;)
         {
             for (; XPending(m_handle->x11_display) > 0;)
             {
@@ -1112,7 +1112,7 @@ namespace mango
 
     void Window::breakEventLoop()
     {
-        m_handle->looping = false;
+        m_handle->is_looping = false;
     }
 
     void Window::onIdle()
