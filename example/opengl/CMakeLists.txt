@@ -6,6 +6,7 @@ list(APPEND EXAMPLES
     mandelbrot
     srgb
     cubemap
+    compute
 )
 
 foreach(example IN LISTS EXAMPLES)

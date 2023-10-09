@@ -201,21 +201,41 @@ void glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, cons
     glUniformMatrix4fv(location, count, transpose, value[0].data());
 }
 
-GLuint createShader(GLenum type, const char* source)
+GLint getCompileStatus(GLuint shader)
 {
-    GLuint shader = glCreateShader(type);
-    glShaderSource(shader, 1, &source, NULL);
-    glCompileShader(shader);
-
     GLint success;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-
     if (!success)
     {
         GLchar infoLog[1024];
         glGetShaderInfoLog(shader, sizeof(infoLog), NULL, infoLog);
         printf("%s", infoLog);
     }
+
+    return success;
+}
+
+GLint getLinkStatus(GLuint program)
+{
+    GLint success;
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success)
+    {
+        GLchar infoLog[1024];
+        glGetProgramInfoLog(program, sizeof(infoLog), NULL, infoLog);
+        printf("%s", infoLog);
+    }
+
+    return success;
+}
+
+GLuint createShader(GLenum type, const char* source)
+{
+    GLuint shader = glCreateShader(type);
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+
+    getCompileStatus(shader);
 
     return shader;
 }
@@ -230,15 +250,7 @@ GLuint createProgram(const char* vertexShaderSource, const char* fragmentShaderS
     glAttachShader(program, fragment);
     glLinkProgram(program);
 
-    GLint success;
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-
-    if (!success)
-    {
-        GLchar infoLog[1024];
-        glGetProgramInfoLog(program, sizeof(infoLog), NULL, infoLog);
-        printf("%s", infoLog);
-    }
+    getLinkStatus(program);
 
     glDeleteShader(vertex);
     glDeleteShader(fragment);
@@ -384,6 +396,8 @@ public:
     DemoWindow()
         : OpenGLContext(1280, 800)
     {
+        setTitle("OpenGL Cubemap");
+
         // mesh
         glGenVertexArrays(1, &meshVAO);
         glGenBuffers(1, &meshVBO);
