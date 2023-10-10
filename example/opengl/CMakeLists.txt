@@ -6,8 +6,13 @@ list(APPEND EXAMPLES
     mandelbrot
     srgb
     cubemap
-    compute
 )
+
+if (!APPLE)
+    list(APPEND EXAMPLES
+        compute
+    )
+endif ()
 
 foreach(example IN LISTS EXAMPLES)
     add_executable(${example} ${example}.cpp)
