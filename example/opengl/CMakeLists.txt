@@ -8,7 +8,7 @@ list(APPEND EXAMPLES
     cubemap
 )
 
-if (!APPLE)
+if (NOT APPLE)
     list(APPEND EXAMPLES
         compute
     )

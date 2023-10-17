@@ -147,9 +147,7 @@ protected:
     GLuint renderVAO = 0;
     GLuint renderVBO = 0;
     GLuint renderProgram = 0;
-
     GLuint computeProgram = 0;
-
     GLuint texture = 0;
 
 public:
@@ -161,8 +159,8 @@ public:
         int version = getVersion();
         if (version < 430)
         {
-            printf("OpenGL 4.3 required (you have: %d.%d)\n", version / 100, version % 100);
-            breakEventLoop();
+            printf("OpenGL 4.3 required (you have: %d.%d)\n", version / 100, (version % 100) / 10);
+            return;
         }
 
         static const float vertices[] =
@@ -193,23 +191,54 @@ public:
         glBindImageTexture(0, texture, 0, GL_FALSE, 0,  GL_READ_ONLY, GL_RGBA32F);
 
         computeProgram = createComputeProgram();
+        if (!computeProgram)
+        {
+            printf("createComputeProgram() failed.\n");
+            return;
+        }
 
         glUseProgram(computeProgram);
         glUniform1i(glGetUniformLocation(computeProgram, "uTexture"), 0);
 
         renderProgram = createProgram(vs_render, fs_render);
+        if (!renderProgram)
+        {
+            printf("createProgram() failed.\n");
+            return;
+        }
 
         glUseProgram(renderProgram);
         glUniform1i(glGetUniformLocation(renderProgram, "uTexture"), 0);
+
+        enterEventLoop();
     }
 
     ~DemoWindow()
     {
-        glDeleteVertexArrays(1, &renderVAO);
-        glDeleteBuffers(1, &renderVBO);
-        glDeleteProgram(renderProgram);
-        glDeleteProgram(computeProgram);
-        glDeleteTextures(1, &texture);
+        if (renderVAO)
+        {
+            glDeleteVertexArrays(1, &renderVAO);
+        }
+
+        if (renderVBO)
+        {
+            glDeleteBuffers(1, &renderVBO);
+        }
+
+        if (renderProgram)
+        {
+            glDeleteProgram(renderProgram);
+        }
+
+        if (computeProgram)
+        {
+            glDeleteProgram(computeProgram);
+        }
+
+        if (texture)
+        {
+            glDeleteTextures(1, &texture);
+        }
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -267,5 +296,4 @@ public:
 int main()
 {
     DemoWindow window;
-    window.enterEventLoop();
 }
