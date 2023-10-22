@@ -644,8 +644,6 @@ namespace
     // -------------------------------------------------------------------
 
     const char* vertex_shader_source = R"(
-        #version 130
-
         uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0);
 
         in vec2 inPosition;
@@ -659,8 +657,6 @@ namespace
     )";
 
     const char* fragment_shader_source = R"(
-        #version 130
-
         uniform sampler2D uTexture;
 
         in vec2 texcoord;
@@ -673,8 +669,6 @@ namespace
     )";
 
     const char* vertex_shader_source_bicubic = R"(
-        #version 130
-
         uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0);
 
         in vec2 inPosition;
@@ -688,8 +682,6 @@ namespace
     )";
 
     const char* fragment_shader_source_bicubic = R"(
-        #version 130
-
         vec4 cubic(float v)
         {
             vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v;
@@ -737,8 +729,6 @@ namespace
     )";
 
     const char* fragment_shader_source_index = R"(
-        #version 130
-
         uniform isampler2D uTexture;
         uniform uint uPalette[256];
 
@@ -760,7 +750,15 @@ namespace
     {
         GLuint shader = glCreateShader(type);
 
-        glShaderSource(shader, 1, &source, NULL);
+        const char* table[] =
+        {
+            R"(
+                #version 330
+            )",
+            source
+        };
+
+        glShaderSource(shader, 2, table, NULL);
         glCompileShader(shader);
 
         GLint status;
