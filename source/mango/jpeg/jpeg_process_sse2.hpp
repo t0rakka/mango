@@ -17,11 +17,11 @@ void FUNCTION_YCBCR_8x8(u8* dest, size_t stride, const s16* data, ProcessState* 
     const __m128i s1 = JPEG_CONST_SSE2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.77200));
     const __m128i s2 = JPEG_CONST_SSE2(JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414));
     const __m128i rounding = _mm_set1_epi32(1 << (JPEG_PREC - 1));
-    const __m128i tosigned = _mm_set1_epi16(-128);
+    const __m128i tosigned = _mm_set1_epi16(128);
 
     for (int y = 0; y < 4; ++y)
     {
-        __m128i yy = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 0));
+        __m128i y0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 0));
         __m128i cb = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 64));
         __m128i cr = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 128));
 
@@ -32,15 +32,15 @@ void FUNCTION_YCBCR_8x8(u8* dest, size_t stride, const s16* data, ProcessState* 
         __m128i cb1 = _mm_unpackhi_epi8(cb, zero);
         __m128i cr1 = _mm_unpackhi_epi8(cr, zero);
 
-        cb0 = _mm_add_epi16(cb0, tosigned);
-        cr0 = _mm_add_epi16(cr0, tosigned);
-        cb1 = _mm_add_epi16(cb1, tosigned);
-        cr1 = _mm_add_epi16(cr1, tosigned);
+        cb0 = _mm_sub_epi16(cb0, tosigned);
+        cr0 = _mm_sub_epi16(cr0, tosigned);
+        cb1 = _mm_sub_epi16(cb1, tosigned);
+        cr1 = _mm_sub_epi16(cr1, tosigned);
 
-        INNERLOOP_YCBCR(dest, _mm_unpacklo_epi8(yy, zero), cb0, cr0, s0, s1, s2, rounding);
+        INNERLOOP_YCBCR(dest, _mm_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
         dest += stride;
 
-        INNERLOOP_YCBCR(dest, _mm_unpackhi_epi8(yy, zero), cb1, cr1, s0, s1, s2, rounding);
+        INNERLOOP_YCBCR(dest, _mm_unpackhi_epi8(y0, zero), cb1, cr1, s0, s1, s2, rounding);
         dest += stride;
     }
 
@@ -64,7 +64,7 @@ void FUNCTION_YCBCR_8x16(u8* dest, size_t stride, const s16* data, ProcessState*
     const __m128i s1 = JPEG_CONST_SSE2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.77200));
     const __m128i s2 = JPEG_CONST_SSE2(JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414));
     const __m128i rounding = _mm_set1_epi32(1 << (JPEG_PREC - 1));
-    const __m128i tosigned = _mm_set1_epi16(-128);
+    const __m128i tosigned = _mm_set1_epi16(128);
 
     for (int y = 0; y < 4; ++y)
     {
@@ -80,10 +80,10 @@ void FUNCTION_YCBCR_8x16(u8* dest, size_t stride, const s16* data, ProcessState*
         __m128i cb1 = _mm_unpackhi_epi8(cb, zero);
         __m128i cr1 = _mm_unpackhi_epi8(cr, zero);
 
-        cb0 = _mm_add_epi16(cb0, tosigned);
-        cr0 = _mm_add_epi16(cr0, tosigned);
-        cb1 = _mm_add_epi16(cb1, tosigned);
-        cr1 = _mm_add_epi16(cr1, tosigned);
+        cb0 = _mm_sub_epi16(cb0, tosigned);
+        cr0 = _mm_sub_epi16(cr0, tosigned);
+        cb1 = _mm_sub_epi16(cb1, tosigned);
+        cr1 = _mm_sub_epi16(cr1, tosigned);
 
         INNERLOOP_YCBCR(dest, _mm_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
         dest += stride;
@@ -118,7 +118,7 @@ void FUNCTION_YCBCR_16x8(u8* dest, size_t stride, const s16* data, ProcessState*
     const __m128i s1 = JPEG_CONST_SSE2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.77200));
     const __m128i s2 = JPEG_CONST_SSE2(JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414));
     const __m128i rounding = _mm_set1_epi32(1 << (JPEG_PREC - 1));
-    const __m128i tosigned = _mm_set1_epi16(-128);
+    const __m128i tosigned = _mm_set1_epi16(128);
 
     for (int y = 0; y < 4; ++y)
     {
@@ -141,10 +141,10 @@ void FUNCTION_YCBCR_16x8(u8* dest, size_t stride, const s16* data, ProcessState*
         cb0 = _mm_unpacklo_epi8(cb0, zero);
         cr0 = _mm_unpacklo_epi8(cr0, zero);
 
-        cb0 = _mm_add_epi16(cb0, tosigned);
-        cr0 = _mm_add_epi16(cr0, tosigned);
-        cb1 = _mm_add_epi16(cb1, tosigned);
-        cr1 = _mm_add_epi16(cr1, tosigned);
+        cb0 = _mm_sub_epi16(cb0, tosigned);
+        cr0 = _mm_sub_epi16(cr0, tosigned);
+        cb1 = _mm_sub_epi16(cb1, tosigned);
+        cr1 = _mm_sub_epi16(cr1, tosigned);
 
         INNERLOOP_YCBCR(dest + 0 * XSTEP, _mm_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
         INNERLOOP_YCBCR(dest + 1 * XSTEP, _mm_unpacklo_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
@@ -190,7 +190,7 @@ void FUNCTION_YCBCR_16x16(u8* dest, size_t stride, const s16* data, ProcessState
     const __m128i s1 = JPEG_CONST_SSE2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.77200));
     const __m128i s2 = JPEG_CONST_SSE2(JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414));
     const __m128i rounding = _mm_set1_epi32(1 << (JPEG_PREC - 1));
-    const __m128i tosigned = _mm_set1_epi16(-128);
+    const __m128i tosigned = _mm_set1_epi16(128);
 
     for (int y = 0; y < 4; ++y)
     {
@@ -215,10 +215,10 @@ void FUNCTION_YCBCR_16x16(u8* dest, size_t stride, const s16* data, ProcessState
         cb0 = _mm_unpacklo_epi8(cb0, zero);
         cr0 = _mm_unpacklo_epi8(cr0, zero);
 
-        cb0 = _mm_add_epi16(cb0, tosigned);
-        cr0 = _mm_add_epi16(cr0, tosigned);
-        cb1 = _mm_add_epi16(cb1, tosigned);
-        cr1 = _mm_add_epi16(cr1, tosigned);
+        cb0 = _mm_sub_epi16(cb0, tosigned);
+        cr0 = _mm_sub_epi16(cr0, tosigned);
+        cb1 = _mm_sub_epi16(cb1, tosigned);
+        cr1 = _mm_sub_epi16(cr1, tosigned);
 
         INNERLOOP_YCBCR(dest + 0 * XSTEP, _mm_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
         INNERLOOP_YCBCR(dest + 1 * XSTEP, _mm_unpacklo_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
