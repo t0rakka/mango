@@ -586,7 +586,13 @@ namespace mango::jpeg
 
 #endif // MANGO_ENABLE_SSE4_1
 
+#if defined(MANGO_ENABLE_AVX2)
+
+    void process_ycbcr_rgba_8x8_avx2    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+
+#endif // MANGO_ENABLE_AVX2
+
     SampleFormat getSampleFormat(const Format& format);
-	ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options);
+    ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options);
 
 } // namespace mango::jpeg

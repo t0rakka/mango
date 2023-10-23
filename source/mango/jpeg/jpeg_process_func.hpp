@@ -1,9 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #ifdef FUNCTION_GENERIC
+
 void FUNCTION_GENERIC(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[JPEG_MAX_SAMPLES_IN_MCU];
@@ -70,9 +71,11 @@ void FUNCTION_GENERIC(u8* dest, size_t stride, const s16* data, ProcessState* st
         }
     }
 }
+
 #endif
 
 #ifdef FUNCTION_YCBCR_8x8
+
 void FUNCTION_YCBCR_8x8(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 3];
@@ -106,9 +109,11 @@ void FUNCTION_YCBCR_8x8(u8* dest, size_t stride, const s16* data, ProcessState* 
     MANGO_UNREFERENCED(width);
     MANGO_UNREFERENCED(height);
 }
+
 #endif
 
 #ifdef FUNCTION_YCBCR_8x16
+
 void FUNCTION_YCBCR_8x16(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 4];
@@ -146,9 +151,11 @@ void FUNCTION_YCBCR_8x16(u8* dest, size_t stride, const s16* data, ProcessState*
     MANGO_UNREFERENCED(width);
     MANGO_UNREFERENCED(height);
 }
+
 #endif
 
 #ifdef FUNCTION_YCBCR_16x8
+
 void FUNCTION_YCBCR_16x8(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 4];
@@ -197,9 +204,11 @@ void FUNCTION_YCBCR_16x8(u8* dest, size_t stride, const s16* data, ProcessState*
     MANGO_UNREFERENCED(width);
     MANGO_UNREFERENCED(height);
 }
+
 #endif
 
 #ifdef FUNCTION_YCBCR_16x16
+
 void FUNCTION_YCBCR_16x16(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 6];
@@ -254,4 +263,5 @@ void FUNCTION_YCBCR_16x16(u8* dest, size_t stride, const s16* data, ProcessState
     MANGO_UNREFERENCED(width);
     MANGO_UNREFERENCED(height);
 }
+
 #endif

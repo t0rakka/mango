@@ -251,7 +251,8 @@ void process_ycbcr_8bit(u8* dest, size_t stride, const s16* data, ProcessState* 
     }
 }
 
-static inline void write_color_bgra(u8* dest, int y, int r, int g, int b)
+static inline
+void write_color_bgra(u8* dest, int y, int r, int g, int b)
 {
     dest[0] = byteclamp(b + y);
     dest[1] = byteclamp(g + y);
@@ -259,7 +260,8 @@ static inline void write_color_bgra(u8* dest, int y, int r, int g, int b)
     dest[3] = 0xff;
 }
 
-static inline void write_color_rgba(u8* dest, int y, int r, int g, int b)
+static inline
+void write_color_rgba(u8* dest, int y, int r, int g, int b)
 {
     dest[0] = byteclamp(r + y);
     dest[1] = byteclamp(g + y);
@@ -267,14 +269,16 @@ static inline void write_color_rgba(u8* dest, int y, int r, int g, int b)
     dest[3] = 0xff;
 }
 
-static inline void write_color_bgr(u8* dest, int y, int r, int g, int b)
+static inline
+void write_color_bgr(u8* dest, int y, int r, int g, int b)
 {
     dest[0] = byteclamp(b + y);
     dest[1] = byteclamp(g + y);
     dest[2] = byteclamp(r + y);
 }
 
-static inline void write_color_rgb(u8* dest, int y, int r, int g, int b)
+static inline
+void write_color_rgb(u8* dest, int y, int r, int g, int b)
 {
     dest[0] = byteclamp(r + y);
     dest[1] = byteclamp(g + y);
@@ -351,11 +355,11 @@ static inline void write_color_rgb(u8* dest, int y, int r, int g, int b)
 
 #undef COMPUTE_CBCR
 
-#if defined(MANGO_ENABLE_NEON)
-
 // ------------------------------------------------------------------------------------------------
 // NEON implementation
 // ------------------------------------------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_NEON)
 
 static constexpr s16 JPEG_PREC = 12;
 static constexpr s16 JPEG_FIXED(double x) { return s16((x * double(1 << JPEG_PREC) + 0.5)); }
@@ -496,11 +500,11 @@ void convert_ycbcr_rgb_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t c
 
 #endif // MANGO_ENABLE_NEON
 
-#if defined(MANGO_ENABLE_SSE2)
-
 // ------------------------------------------------------------------------------------------------
 // SSE2 implementation
 // ------------------------------------------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_SSE2)
 
 // The original code is by Petr Kobalicek ; WE HAVE TAKEN LIBERTIES TO ADAPT IT TO OUR USE!!!
 // https://github.com/kobalicek/simdtests
@@ -508,7 +512,6 @@ void convert_ycbcr_rgb_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t c
 // Public Domain <unlicense.org>
 
 static constexpr int JPEG_PREC = 12;
-//static constexpr int JPEG_SCALE(int x) { return x << JPEG_PREC; }
 static constexpr int JPEG_FIXED(double x) { return int((x * double(1 << JPEG_PREC) + 0.5)); }
 
 #define JPEG_CONST_SSE2(x, y)  _mm_setr_epi16(x, y, x, y, x, y, x, y)
@@ -551,11 +554,11 @@ void convert_ycbcr_bgra_8x1_sse2(u8* dest, __m128i y, __m128i cb, __m128i cr, __
     __m128i r = _mm_packs_epi32(r_l, r_h);
     __m128i g = _mm_packs_epi32(g_l, g_h);
     __m128i b = _mm_packs_epi32(b_l, b_h);
+    __m128i a = _mm_cmpeq_epi8(r, r);
 
     r = _mm_packus_epi16(r, r);
     g = _mm_packus_epi16(g, g);
     b = _mm_packus_epi16(b, b);
-    __m128i a = _mm_cmpeq_epi8(r, r);
 
     __m128i ra = _mm_unpacklo_epi8(r, a);
     __m128i bg = _mm_unpacklo_epi8(b, g);
@@ -605,11 +608,11 @@ void convert_ycbcr_rgba_8x1_sse2(u8* dest, __m128i y, __m128i cb, __m128i cr, __
     __m128i r = _mm_packs_epi32(r_l, r_h);
     __m128i g = _mm_packs_epi32(g_l, g_h);
     __m128i b = _mm_packs_epi32(b_l, b_h);
+    __m128i a = _mm_cmpeq_epi8(r, r);
 
     r = _mm_packus_epi16(r, r);
     g = _mm_packus_epi16(g, g);
     b = _mm_packus_epi16(b, b);
-    __m128i a = _mm_cmpeq_epi8(r, r);
 
     __m128i ba = _mm_unpacklo_epi8(b, a);
     __m128i rg = _mm_unpacklo_epi8(r, g);
@@ -652,6 +655,10 @@ void convert_ycbcr_rgba_8x1_sse2(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 #undef FUNCTION_YCBCR_16x16
 
 #endif // MANGO_ENABLE_SSE2
+
+// ------------------------------------------------------------------------------------------------
+// SSE4.1 implementation
+// ------------------------------------------------------------------------------------------------
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
@@ -802,5 +809,123 @@ void convert_ycbcr_rgb_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 #undef FUNCTION_YCBCR_16x16
 
 #endif // MANGO_ENABLE_SSE4_1
+
+// ------------------------------------------------------------------------------------------------
+// AVX2 implementation
+// ------------------------------------------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_AVX2)
+
+#define JPEG_CONST_AVX2(x, y)  _mm256_setr_epi16(x, y, x, y, x, y, x, y, x, y, x, y, x, y, x, y)
+
+static inline
+u8* convert_ycbcr_rgba_8x2_avx2(u8* dest, size_t stride, __m256i y, __m256i cb, __m256i cr, __m256i s0, __m256i s1, __m256i s2, __m256i rounding)
+{
+    __m256i zero = _mm256_setzero_si256();
+
+    __m256i r_l = _mm256_madd_epi16(_mm256_unpacklo_epi16(y, cr), s0);
+    __m256i r_h = _mm256_madd_epi16(_mm256_unpackhi_epi16(y, cr), s0);
+
+    __m256i b_l = _mm256_madd_epi16(_mm256_unpacklo_epi16(y, cb), s1);
+    __m256i b_h = _mm256_madd_epi16(_mm256_unpackhi_epi16(y, cb), s1);
+
+    __m256i g_l = _mm256_madd_epi16(_mm256_unpacklo_epi16(cb, cr), s2);
+    __m256i g_h = _mm256_madd_epi16(_mm256_unpackhi_epi16(cb, cr), s2);
+
+    g_l = _mm256_add_epi32(g_l, _mm256_slli_epi32(_mm256_unpacklo_epi16(y, zero), JPEG_PREC));
+    g_h = _mm256_add_epi32(g_h, _mm256_slli_epi32(_mm256_unpackhi_epi16(y, zero), JPEG_PREC));
+
+    r_l = _mm256_add_epi32(r_l, rounding);
+    r_h = _mm256_add_epi32(r_h, rounding);
+
+    b_l = _mm256_add_epi32(b_l, rounding);
+    b_h = _mm256_add_epi32(b_h, rounding);
+
+    g_l = _mm256_add_epi32(g_l, rounding);
+    g_h = _mm256_add_epi32(g_h, rounding);
+
+    r_l = _mm256_srai_epi32(r_l, JPEG_PREC);
+    r_h = _mm256_srai_epi32(r_h, JPEG_PREC);
+
+    b_l = _mm256_srai_epi32(b_l, JPEG_PREC);
+    b_h = _mm256_srai_epi32(b_h, JPEG_PREC);
+
+    g_l = _mm256_srai_epi32(g_l, JPEG_PREC);
+    g_h = _mm256_srai_epi32(g_h, JPEG_PREC);
+
+    __m256i r = _mm256_packs_epi32(r_l, r_h);
+    __m256i g = _mm256_packs_epi32(g_l, g_h);
+    __m256i b = _mm256_packs_epi32(b_l, b_h);
+    __m256i a = _mm256_cmpeq_epi8(r, r);
+
+    __m256i pair0 = _mm256_packus_epi16(r, g);
+    __m256i pair1 = _mm256_packus_epi16(b, a);
+    __m256i pair2 = _mm256_unpacklo_epi8(pair0, pair1);
+    __m256i pair3 = _mm256_unpackhi_epi8(pair0, pair1);
+    __m256i color0 = _mm256_unpacklo_epi8(pair2, pair3);
+    __m256i color1 = _mm256_unpackhi_epi8(pair2, pair3);
+
+    __m256i c0 = _mm256_permute2x128_si256(color0, color1, _MM_SHUFFLE(3, 2, 1, 0));
+    __m256i c1 = _mm256_permute2x128_si256(color0, color1, _MM_SHUFFLE(1, 2, 3, 0));
+    __m256i c2 = _mm256_permute2x128_si256(color0, color1, _MM_SHUFFLE(3, 2, 0, 1));
+    __m256i c3 = _mm256_permute2x128_si256(color0, color1, _MM_SHUFFLE(0, 3, 2, 1));
+    color0 = _mm256_blend_epi32(c0, c1, 0xf0);
+    color1 = _mm256_blend_epi32(c2, c3, 0xf0);
+
+    _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest +  0), color0);
+    dest += stride;
+
+    _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest +  0), color1);
+    dest += stride;
+
+    return dest;
+}
+
+void process_ycbcr_rgba_8x8_avx2(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+{
+    u8 result[64 * 3];
+
+    state->idct(result +   0, data +   0, state->block[0].qt); // Y
+    state->idct(result +  64, data +  64, state->block[1].qt); // Cb
+    state->idct(result + 128, data + 128, state->block[2].qt); // Cr
+
+    // color conversion
+    const __m256i s0 = JPEG_CONST_AVX2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200));
+    const __m256i s1 = JPEG_CONST_AVX2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.77200));
+    const __m256i s2 = JPEG_CONST_AVX2(JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414));
+    const __m256i rounding = _mm256_set1_epi32(1 << (JPEG_PREC - 1));
+    const __m256i tosigned = _mm256_set1_epi16(128);
+
+    for (int y = 0; y < 2; ++y)
+    {
+        __m256i y0 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 0));
+        __m256i cb = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 64));
+        __m256i cr = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 128));
+
+        y0 = _mm256_permute4x64_epi64(y0, _MM_SHUFFLE(3, 1, 2, 0));
+        cb = _mm256_permute4x64_epi64(cb, _MM_SHUFFLE(3, 1, 2, 0));
+        cr = _mm256_permute4x64_epi64(cr, _MM_SHUFFLE(3, 1, 2, 0));
+
+        __m256i zero = _mm256_setzero_si256();
+
+        __m256i cb0 = _mm256_unpacklo_epi8(cb, zero);
+        __m256i cr0 = _mm256_unpacklo_epi8(cr, zero);
+        __m256i cb1 = _mm256_unpackhi_epi8(cb, zero);
+        __m256i cr1 = _mm256_unpackhi_epi8(cr, zero);
+
+        cb0 = _mm256_sub_epi16(cb0, tosigned);
+        cr0 = _mm256_sub_epi16(cr0, tosigned);
+        cb1 = _mm256_sub_epi16(cb1, tosigned);
+        cr1 = _mm256_sub_epi16(cr1, tosigned);
+
+        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
+        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpackhi_epi8(y0, zero), cb1, cr1, s0, s1, s2, rounding);
+    }
+
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
+}
+
+#endif // MANGO_ENABLE_AVX2
 
 } // namespace mango::jpeg

@@ -1648,6 +1648,29 @@ namespace mango::jpeg
 
 #endif // MANGO_ENABLE_SSE4_1
 
+#if defined(MANGO_ENABLE_AVX2)
+
+        if (flags & INTEL_AVX2)
+        {
+            switch (sample)
+            {
+                case JPEG_U8_Y:
+                    break;
+                case JPEG_U8_BGR:
+                    break;
+                case JPEG_U8_RGB:
+                    break;
+                case JPEG_U8_BGRA:
+                    break;
+                case JPEG_U8_RGBA:
+                    processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_avx2;
+                    simd = "AVX2";
+                    break;
+            }
+        }
+
+#endif // MANGO_ENABLE_AVX2
+
         std::string id;
 
         // determine jpeg type -> select innerloops
