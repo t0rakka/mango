@@ -335,7 +335,6 @@ namespace mango
         initExtensionMask();
 
         // initialize version
-
         const char* str_version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
 
         int major = 0;
@@ -355,7 +354,6 @@ namespace mango
         printf("version: %d\n", m_version);
 
         // renderer information
-
         const GLubyte* s0 = glGetString(GL_VENDOR);
         const GLubyte* s1 = glGetString(GL_RENDERER);
         const GLubyte* s2 = glGetString(GL_VERSION);
@@ -404,8 +402,6 @@ namespace mango
     {
         const int version = getVersion();
         const bool gles = isGLES();
-
-        // TODO: GLES version number
 
         init_ext(*this);
         init_core(*this, version);
