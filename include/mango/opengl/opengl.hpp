@@ -182,6 +182,8 @@ namespace mango
     protected:
         OpenGLContextHandle* m_context;
         std::set<std::string> m_extensions;
+        bool m_is_gles = false;
+        int m_version = 0;
 
         void initExtensionMask();
         void initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared);

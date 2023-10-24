@@ -180,7 +180,7 @@ namespace mango
     static
     void init_core(OpenGLContext& context, int version)
     {
-        int versions[] =
+        int table[] =
         {
 #define CORE_EXTENSION(Version, Name)  Version,
 #include <mango/opengl/func/glcorearb.hpp>
@@ -190,9 +190,9 @@ namespace mango
         u32* mask = reinterpret_cast<u32*>(&context.core);
         std::memset(mask, 0, sizeof(context.core));
 
-        for (size_t i = 0; i < std::size(versions); ++i)
+        for (size_t i = 0; i < std::size(table); ++i)
         {
-            if (version >= versions[i])
+            if (version >= table[i])
             {
                 mask[i / 32] |= (1 << (i % 32));
             }
@@ -334,6 +334,28 @@ namespace mango
         // initialize extension mask
         initExtensionMask();
 
+        // initialize version
+
+        const char* str_version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+
+        int major = 0;
+        int minor = 0;
+
+        if (!std::strncmp(str_version, "OpenGL ES", 9))
+        {
+            m_is_gles = true;
+            std::sscanf(str_version, "%*s %*s %d.%d", &major, &minor);
+        }
+        else
+        {
+            std::sscanf(str_version, "%d.%d", &major, &minor);
+        }
+
+        m_version = major * 100 + minor * 10;
+        printf("version: %d\n", m_version);
+
+        // renderer information
+
         const GLubyte* s0 = glGetString(GL_VENDOR);
         const GLubyte* s1 = glGetString(GL_RENDERER);
         const GLubyte* s2 = glGetString(GL_VERSION);
@@ -462,17 +484,12 @@ namespace mango
 
     bool OpenGLContext::isGLES() const
     {
-        return false; // TODO: add GLES support
+        return m_is_gles;
     }
 
     int OpenGLContext::getVersion() const
     {
-        int major;
-        int minor;
-        const char* str = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-        std::sscanf(str, "%d.%d", &major, &minor);
-        int version = major * 100 + minor * 10;
-        return version;
+        return m_version;
     }
 
     bool OpenGLContext::isCompressedTextureSupported(u32 compression) const
