@@ -408,7 +408,7 @@ namespace mango::jpeg
             case MARKER_APP14:
             {
                 const u8 magic_adobe[] = { 0x41, 0x64, 0x6f, 0x62, 0x65 }; // 'Adobe'
-                const u8 magic_mango[] = { 0x4d, 0x61, 0x6e, 0x67, 0x6f }; // 'Mango'
+                const u8 magic_mango[] = { 0x4d, 0x61, 0x6e, 0x67, 0x4f }; // 'MangO'
 
                 if (size == 12 && !std::memcmp(p, magic_adobe, 5))
                 {
@@ -2052,13 +2052,12 @@ namespace mango::jpeg
 
         if (!m_restart_offsets.empty())
         {
-            // ---------------------------------------------------------------
-            // custom mango encoded file (APP14:'Mango' chunk present)
-            // ---------------------------------------------------------------
-            // - restart interval is used
-            // - restart marker at start of MCU scan
-            // - marker offsets are stored in the APP14 chunk
-            // ---------------------------------------------------------------
+            // -----------------------------------------------------------------
+            // custom mango encoded file (APP14:'MangO' chunk present)
+            // -----------------------------------------------------------------
+            // - restart interval marker offsets are stored in the APP14 chunk
+            // - the markers are present for other decoders; we don't need them
+            // -----------------------------------------------------------------
 
             const u8* p = decodeState.buffer.ptr;
 
@@ -2105,12 +2104,6 @@ namespace mango::jpeg
                         // last column
                         state.decode(data, &state);
                         process_and_clip(dest, stride, data, xblock_last, height);
-
-                        if (isRestartMarker(state.buffer.ptr))
-                        {
-                            state.restart();
-                            state.buffer.ptr += 2;
-                        }
                     }
                 });
 
