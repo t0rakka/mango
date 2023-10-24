@@ -1994,7 +1994,7 @@ namespace mango::jpeg
     void Parser::decodeSequentialST()
     {
         const size_t stride = m_surface->stride;
-        const int bytes_per_pixel = m_surface->format.bytes();
+        const size_t bytes_per_pixel = m_surface->format.bytes();
         const size_t xstride = bytes_per_pixel * xblock;
         const size_t ystride = stride * yblock;
 
@@ -2063,7 +2063,7 @@ namespace mango::jpeg
             const u8* p = decodeState.buffer.ptr;
 
             const size_t stride = m_surface->stride;
-            const int bytes_per_pixel = m_surface->format.bytes();
+            const size_t bytes_per_pixel = m_surface->format.bytes();
             const size_t xstride = bytes_per_pixel * xblock;
             const size_t ystride = stride * yblock;
 
@@ -2129,7 +2129,7 @@ namespace mango::jpeg
             const u8* p = decodeState.buffer.ptr;
 
             const size_t stride = m_surface->stride;
-            const int bytes_per_pixel = m_surface->format.bytes();
+            const size_t bytes_per_pixel = m_surface->format.bytes();
             const size_t xstride = bytes_per_pixel * xblock;
             const size_t ystride = stride * yblock;
 
