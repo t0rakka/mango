@@ -351,7 +351,6 @@ namespace mango
         }
 
         m_version = major * 100 + minor * 10;
-        printf("version: %d\n", m_version);
 
         // renderer information
         const GLubyte* s0 = glGetString(GL_VENDOR);
