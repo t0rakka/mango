@@ -311,6 +311,24 @@ namespace mango
 
         setVisible(true);
 
+        // initialize version
+        const char* str_version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+
+        int major = 0;
+        int minor = 0;
+
+        if (!std::strncmp(str_version, "OpenGL ES", 9))
+        {
+            m_is_gles = true;
+            std::sscanf(str_version, "%*s %*s %d.%d", &major, &minor);
+        }
+        else
+        {
+            std::sscanf(str_version, "%d.%d", &major, &minor);
+        }
+
+        m_version = major * 100 + minor * 10;
+
         // parse extension string
         const GLubyte* extensions = glGetString(GL_EXTENSIONS);
         if (extensions)
@@ -333,24 +351,6 @@ namespace mango
 
         // initialize extension mask
         initExtensionMask();
-
-        // initialize version
-        const char* str_version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
-
-        int major = 0;
-        int minor = 0;
-
-        if (!std::strncmp(str_version, "OpenGL ES", 9))
-        {
-            m_is_gles = true;
-            std::sscanf(str_version, "%*s %*s %d.%d", &major, &minor);
-        }
-        else
-        {
-            std::sscanf(str_version, "%d.%d", &major, &minor);
-        }
-
-        m_version = major * 100 + minor * 10;
 
         // renderer information
         const GLubyte* s0 = glGetString(GL_VENDOR);
@@ -399,11 +399,8 @@ namespace mango
 
     void OpenGLContext::initExtensionMask()
     {
-        const int version = getVersion();
-        const bool gles = isGLES();
-
         init_ext(*this);
-        init_core(*this, version);
+        init_core(*this, m_version);
 
 #if defined(MANGO_OPENGL_CONTEXT_WGL)
         init_wgl(*this);
@@ -460,15 +457,15 @@ namespace mango
         core.texture_compression_atc = ext.AMD_compressed_ATC_texture || ext.ATI_texture_compression_atitc;
         core.texture_compression_astc = ext.KHR_texture_compression_astc_hdr || ext.KHR_texture_compression_astc_ldr;
 
-        if (gles)
+        if (m_is_gles)
         {
-            core.texture_compression_etc2 = version >= 300;
-            core.texture_compression_eac = version >= 300;
+            core.texture_compression_etc2 = m_version >= 300;
+            core.texture_compression_eac = m_version >= 300;
         }
         else
         {
-            core.texture_compression_etc2 = version >= 430;
-            core.texture_compression_eac = version >= 430;
+            core.texture_compression_etc2 = m_version >= 430;
+            core.texture_compression_eac = m_version >= 430;
         }
     }
 
