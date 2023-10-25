@@ -2053,7 +2053,7 @@ namespace mango::jpeg
         if (!m_restart_offsets.empty())
         {
             // -----------------------------------------------------------------
-            // custom mango encoded file (APP14:'MangO' chunk present)
+            // custom mango encoded file (APP14:'Mango1' chunk present)
             // -----------------------------------------------------------------
             // - restart interval marker offsets are stored in the APP14 chunk
             // - the markers are present for other decoders; we don't need them
