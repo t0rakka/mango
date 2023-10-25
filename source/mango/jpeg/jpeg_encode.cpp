@@ -341,8 +341,8 @@ namespace
 
         void writeMarkers(BigEndianStream& p, int interval);
 
-        void encodeInterval(Buffer& buffer, HuffmanEncoder& huffman, const u8* src, size_t stride, ReadFunc read_func, int rows);
-        void encodeSpan(Buffer& buffer, int y0, int y1, int restartCounter, const u8* image, size_t stride);
+        void encodeScan(Buffer& buffer, HuffmanEncoder& huffman, const u8* src, size_t stride, ReadFunc read_func, int rows);
+        void encodeInterval(Buffer& buffer, int y0, int y1, int restartCounter, const u8* image, size_t stride);
         ImageEncodeStatus encodeImage(Stream& stream);
     };
 
@@ -2730,7 +2730,7 @@ namespace
         p.write8(0x00);
     }
 
-    void jpegEncoder::encodeInterval(Buffer& buffer, HuffmanEncoder& huffman, const u8* image, size_t stride, ReadFunc read_func, int rows)
+    void jpegEncoder::encodeScan(Buffer& buffer, HuffmanEncoder& huffman, const u8* image, size_t stride, ReadFunc read_func, int rows)
     {
         const int right_mcu = horizontal_mcus - 1;
 
@@ -2776,7 +2776,7 @@ namespace
         buffer.append(temp, ptr - temp);
     }
 
-    void jpegEncoder::encodeSpan(Buffer& buffer, int y0, int y1, int restartCounter, const u8* image, size_t stride)
+    void jpegEncoder::encodeInterval(Buffer& buffer, int y0, int y1, int restartCounter, const u8* image, size_t stride)
     {
         HuffmanEncoder huffman;
         huffman.fdct = fdct;
@@ -2793,7 +2793,7 @@ namespace
                 read_func = read; // clipping reader
             }
 
-            encodeInterval(buffer, huffman, image, stride, read_func, rows);
+            encodeScan(buffer, huffman, image, stride, read_func, rows);
             image += stride * mcu_height;
         }
 
@@ -2833,7 +2833,7 @@ namespace
                 queue.enqueue([this, &s, ticket, N, y, restartCounter, image, stride]
                 {
                     Buffer buffer;
-                    encodeSpan(buffer, y, std::min(vertical_mcus, y + N), restartCounter, image, stride);
+                    encodeInterval(buffer, y, std::min(vertical_mcus, y + N), restartCounter, image, stride);
 
                     Memory memory = buffer.acquire();
 
@@ -2865,7 +2865,7 @@ namespace
             for (int y = 0; y < vertical_mcus; y += N)
             {
                 Buffer buffer;
-                encodeSpan(buffer, y, std::min(vertical_mcus, y + N), restartCounter, image, stride);
+                encodeInterval(buffer, y, std::min(vertical_mcus, y + N), restartCounter, image, stride);
 
                 // write encoded data
                 s.write(buffer);
