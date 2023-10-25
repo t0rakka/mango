@@ -326,8 +326,6 @@ namespace
 
         std::string info;
 
-        int restart_height = 8; // number of MCU scans per restart interval
-
         u64 restart_offset = 0;
         std::vector<u32> restart_offsets;
 
@@ -2634,13 +2632,14 @@ namespace
         }
 
         // MANGO marker
-        const u8 magic_mango[] = { 0x4d, 0x61, 0x6e, 0x67, 0x4f }; // 'MangO'
+        const u8 magic_mango[] = { 0x4d, 0x61, 0x6e, 0x67, 0x6f, 0x31 }; // 'Mango1'
+        const int magic_mango_size = sizeof(magic_mango);
 
         int intervals = div_ceil(vertical_mcus, interval);
 
         p.write16(MARKER_APP14);
-        p.write16(u16(11 + intervals * sizeof(u32)));
-        p.write(magic_mango, 5);
+        p.write16(u16(6 + magic_mango_size + intervals * sizeof(u32)));
+        p.write(magic_mango, magic_mango_size);
         p.write32(interval);
 
         restart_offset = p.offset();
@@ -2711,7 +2710,7 @@ namespace
         // Define Restart Interval marker
         p.write16(MARKER_DRI);
         p.write16(4);
-        p.write16(horizontal_mcus * restart_height);
+        p.write16(horizontal_mcus * interval);
 
         // Start of scan marker
         p.write16(MARKER_SOS);
@@ -2816,7 +2815,7 @@ namespace
         BigEndianStream s(stream);
 
         // encode MCUs
-        int N = restart_height;
+        int N = 8; // number of MCU scans per restart interval
         int restartCounter = 0;
 
         // writing marker data

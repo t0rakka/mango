@@ -408,7 +408,7 @@ namespace mango::jpeg
             case MARKER_APP14:
             {
                 const u8 magic_adobe[] = { 0x41, 0x64, 0x6f, 0x62, 0x65 }; // 'Adobe'
-                const u8 magic_mango[] = { 0x4d, 0x61, 0x6e, 0x67, 0x4f }; // 'MangO'
+                const u8 magic_mango[] = { 0x4d, 0x61, 0x6e, 0x67, 0x6f, 0x31 }; // 'Mango1'
 
                 if (size == 12 && !std::memcmp(p, magic_adobe, 5))
                 {
@@ -425,11 +425,11 @@ namespace mango::jpeg
                     MANGO_UNREFERENCED(version);
                     MANGO_UNREFERENCED(color_transform);
                 }
-                else if (!std::memcmp(p, magic_mango, 5))
+                else if (!std::memcmp(p, magic_mango, 6))
                 {
-                    m_decode_interval = bigEndian::uload32(p + 5);
-                    p += 9;
-                    int intervals = (size - 9) / sizeof(u32);
+                    m_decode_interval = bigEndian::uload32(p + 6);
+                    p += 10;
+                    int intervals = (size - 10) / sizeof(u32);
 
                     for (int i = 0; i < intervals; ++i)
                     {
