@@ -2734,11 +2734,11 @@ namespace
     {
         const int right_mcu = horizontal_mcus - 1;
 
-        constexpr int buffer_size = 2048;
-        constexpr int flush_threshold = buffer_size - 512;
+        constexpr int buffer_size = 4096;
+        constexpr int flush_threshold = buffer_size - 1024;
 
-        u8 huff_temp[buffer_size]; // encoding buffer
-        u8* ptr = huff_temp;
+        u8 temp[buffer_size]; // encoding buffer
+        u8* ptr = temp;
 
         int cols = mcu_width;
         auto reader = read_func;
@@ -2763,17 +2763,17 @@ namespace
             }
 
             // flush encoding buffer
-            if (ptr - huff_temp > flush_threshold)
+            if (ptr - temp > flush_threshold)
             {
-                buffer.append(huff_temp, ptr - huff_temp);
-                ptr = huff_temp;
+                buffer.append(temp, ptr - temp);
+                ptr = temp;
             }
 
             image += mcu_stride;
         }
 
         // flush encoding buffer
-        buffer.append(huff_temp, ptr - huff_temp);
+        buffer.append(temp, ptr - temp);
     }
 
     void jpegEncoder::encodeSpan(Buffer& buffer, int y0, int y1, int restartCounter, const u8* image, size_t stride)
@@ -2798,7 +2798,7 @@ namespace
         }
 
         // flush huffman encoder
-        u8 temp[8];
+        u8 temp[16];
         u8* ptr = huffman.flush(temp);
         buffer.append(temp, ptr - temp);
 
@@ -2815,7 +2815,7 @@ namespace
         BigEndianStream s(stream);
 
         // encode MCUs
-        int N = 8; // number of MCU scans per restart interval
+        int N = 6; // number of MCU scans per restart interval
         int restartCounter = 0;
 
         // writing marker data
