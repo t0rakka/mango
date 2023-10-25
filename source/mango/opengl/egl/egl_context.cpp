@@ -42,7 +42,7 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextEGL] eglGetDisplay() failed.");
             }
 
-            if (!eglInitialize(egl_display, NULL, NULL)) 
+            if (!eglInitialize(egl_display, NULL, NULL))
             {
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContextEGL] eglInitialize() failed.");
@@ -83,6 +83,7 @@ namespace mango
 
             if (config.samples > 1)
             {
+                // TODO
             }
 
             configAttribs.push_back(EGL_NONE);
