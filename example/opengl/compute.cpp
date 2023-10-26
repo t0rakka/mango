@@ -106,24 +106,29 @@ GLuint createComputeProgram()
         #version 430 core
 
         uniform float time;
-        layout(rgba32f, binding = 0) uniform image2D uTexture;
+        layout(rgba8, binding = 0) uniform image2D uTexture;
 
         layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
         void main()
         {
-            ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
-            float width = 512;
+            for (int y = 0; y < 8; ++y)
+            {
+                for (int x = 0; x < 8; ++x)
+                {
+                    ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy) * 8 + ivec2(x, y);
+                    float width = 512;
 
-            float s = mod(float(texelCoord.x), width) / (gl_NumWorkGroups.x);
-            float t = float(texelCoord.y) / (gl_NumWorkGroups.y);
+                    float s = mod(float(texelCoord.x), width) / (gl_NumWorkGroups.x * 8 + x);
+                    float t = float(texelCoord.y) / (gl_NumWorkGroups.y * 8 + y);
 
-            vec4 color = vec4(0.5 + cos(time / 100.0) * s + sin(time / 100.0) * t,
-                              0.5 + sin(time / 100.0) * s - cos(time / 100.0) * t,
-                              sin(time / 40.0) * 0.5 + 0.5,
-                              1.0);
-
-            imageStore(uTexture, texelCoord, color);
+                    vec4 color = vec4(0.5 + cos(time / 100.0) * s + sin(time / 100.0) * t,
+                                    0.5 + sin(time / 100.0) * s - cos(time / 100.0) * t,
+                                    sin(time / 40.0) * 0.5 + 0.5,
+                                    1.0);
+                    imageStore(uTexture, texelCoord, color);
+                }
+            }
         }
     )";
 
@@ -184,11 +189,11 @@ public:
 
         glGenTextures(1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 512, 512, 0, GL_RGBA, GL_FLOAT, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glBindImageTexture(0, texture, 0, GL_FALSE, 0,  GL_READ_ONLY, GL_RGBA32F);
+        glBindImageTexture(0, texture, 0, GL_FALSE, 0,  GL_READ_ONLY, GL_RGBA8);
 
         computeProgram = createComputeProgram();
         if (!computeProgram)
@@ -278,7 +283,7 @@ public:
 
         glUseProgram(computeProgram);
         glUniform1f(glGetUniformLocation(computeProgram, "time"), time);
-        glDispatchCompute(512, 512, 1);
+        glDispatchCompute(512 / 8, 512 / 8, 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
         glUseProgram(renderProgram);
