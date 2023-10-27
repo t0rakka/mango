@@ -318,4 +318,6 @@ namespace mango
 
 } // namespace mango
 
+#include "jpeg_decoder.hpp"
+
 #endif // MANGO_OPENGL_CONTEXT_NONE

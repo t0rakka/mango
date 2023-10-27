@@ -343,7 +343,8 @@ else
 endif
 
 mango_opengl_sources = files(
-    '../source/mango/opengl/opengl.cpp'
+    '../source/mango/opengl/opengl.cpp',
+    '../source/mango/opengl/jpeg_decoder.cpp'
 )
 
 if is_windows
