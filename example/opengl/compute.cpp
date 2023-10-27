@@ -43,63 +43,6 @@ const char* fs_render = R"(
 
 } // namespace
 
-GLint getCompileStatus(GLuint shader)
-{
-    GLint success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        GLchar infoLog[1024];
-        glGetShaderInfoLog(shader, sizeof(infoLog), NULL, infoLog);
-        printf("%s", infoLog);
-    }
-
-    return success;
-}
-
-GLint getLinkStatus(GLuint program)
-{
-    GLint success;
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        GLchar infoLog[1024];
-        glGetProgramInfoLog(program, sizeof(infoLog), NULL, infoLog);
-        printf("%s", infoLog);
-    }
-
-    return success;
-}
-
-GLuint createShader(GLenum type, const char* source)
-{
-    GLuint shader = glCreateShader(type);
-    glShaderSource(shader, 1, &source, NULL);
-    glCompileShader(shader);
-
-    getCompileStatus(shader);
-
-    return shader;
-}
-
-GLuint createProgram(const char* vertexShaderSource, const char* fragmentShaderSource)
-{
-    GLuint vertex = createShader(GL_VERTEX_SHADER, vertexShaderSource);
-    GLuint fragment = createShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
-
-    GLuint program = glCreateProgram();
-    glAttachShader(program, vertex);
-    glAttachShader(program, fragment);
-    glLinkProgram(program);
-
-    getLinkStatus(program);
-
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-
-    return program;
-}
-
 GLuint createComputeProgram()
 {
     const char* source = R"(
@@ -132,16 +75,15 @@ GLuint createComputeProgram()
         }
     )";
 
-    GLuint compute = createShader(GL_COMPUTE_SHADER, source);
-
+    GLuint shader = opengl::createShader(GL_COMPUTE_SHADER, source);
     GLuint program = glCreateProgram();
 
-    glAttachShader(program, compute);
+    glAttachShader(program, shader);
     glLinkProgram(program);
 
-    getLinkStatus(program);
+    opengl::getLinkStatus(program);
 
-    glDeleteShader(compute);
+    glDeleteShader(shader);
 
     return program;
 }
@@ -205,7 +147,7 @@ public:
         glUseProgram(computeProgram);
         glUniform1i(glGetUniformLocation(computeProgram, "uTexture"), 0);
 
-        renderProgram = createProgram(vs_render, fs_render);
+        renderProgram = opengl::createProgram(vs_render, fs_render);
         if (!renderProgram)
         {
             printf("createProgram() failed.\n");

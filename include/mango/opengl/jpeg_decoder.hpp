@@ -4,7 +4,9 @@
 */
 #pragma once
 
-#include "opengl.hpp"
+#include <mango/core/core.hpp>
+#include <mango/image/image.hpp>
+#include "context.hpp"
 
 namespace mango
 {
