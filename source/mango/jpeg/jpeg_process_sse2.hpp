@@ -163,10 +163,10 @@ void FUNCTION_YCBCR_16x8(u8* dest, size_t stride, const s16* data, ProcessState*
         cb0 = _mm_unpacklo_epi8(cb0, zero);
         cr0 = _mm_unpacklo_epi8(cr0, zero);
 
-        cb0 = _mm_add_epi16(cb0, tosigned);
-        cr0 = _mm_add_epi16(cr0, tosigned);
-        cb1 = _mm_add_epi16(cb1, tosigned);
-        cr1 = _mm_add_epi16(cr1, tosigned);
+        cb0 = _mm_sub_epi16(cb0, tosigned);
+        cr0 = _mm_sub_epi16(cr0, tosigned);
+        cb1 = _mm_sub_epi16(cb1, tosigned);
+        cr1 = _mm_sub_epi16(cr1, tosigned);
 
         INNERLOOP_YCBCR(dest + 0 * XSTEP, _mm_unpackhi_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
         INNERLOOP_YCBCR(dest + 1 * XSTEP, _mm_unpackhi_epi8(y1, zero), cb1, cr1, s0, s1, s2, rounding);
@@ -243,10 +243,10 @@ void FUNCTION_YCBCR_16x16(u8* dest, size_t stride, const s16* data, ProcessState
         cb0 = _mm_unpacklo_epi8(cb0, zero);
         cr0 = _mm_unpacklo_epi8(cr0, zero);
 
-        cb0 = _mm_add_epi16(cb0, tosigned);
-        cr0 = _mm_add_epi16(cr0, tosigned);
-        cb1 = _mm_add_epi16(cb1, tosigned);
-        cr1 = _mm_add_epi16(cr1, tosigned);
+        cb0 = _mm_sub_epi16(cb0, tosigned);
+        cr0 = _mm_sub_epi16(cr0, tosigned);
+        cb1 = _mm_sub_epi16(cb1, tosigned);
+        cr1 = _mm_sub_epi16(cr1, tosigned);
 
         INNERLOOP_YCBCR(dest + 0 * XSTEP, _mm_unpacklo_epi8(y2, zero), cb0, cr0, s0, s1, s2, rounding);
         INNERLOOP_YCBCR(dest + 1 * XSTEP, _mm_unpacklo_epi8(y3, zero), cb1, cr1, s0, s1, s2, rounding);
