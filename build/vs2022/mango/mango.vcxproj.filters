@@ -1242,6 +1242,18 @@
     <ClInclude Include="..\..\..\include\mango\core\container.hpp">
       <Filter>mango\include\core</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\opengl\utilities.hpp">
+      <Filter>mango\include\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\opengl\context.hpp">
+      <Filter>mango\include\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\opengl\framebuffer.hpp">
+      <Filter>mango\include\opengl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\opengl\jpeg_decoder.hpp">
+      <Filter>mango\include\opengl</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp">
@@ -1375,9 +1387,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\source\mango\image\image_tga.cpp">
       <Filter>mango\source\image</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\mango\opengl\opengl.cpp">
-      <Filter>mango\source\opengl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\source\mango\opengl\wgl\wgl_context.cpp">
       <Filter>mango\source\opengl\wgl</Filter>
@@ -2248,6 +2257,18 @@
     </ClCompile>
     <ClCompile Include="..\..\..\source\mango\image\image_psd.cpp">
       <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\opengl\utilities.cpp">
+      <Filter>mango\source\opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\opengl\context.cpp">
+      <Filter>mango\source\opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\opengl\framebuffer.cpp">
+      <Filter>mango\source\opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\opengl\jpeg_decoder.cpp">
+      <Filter>mango\source\opengl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

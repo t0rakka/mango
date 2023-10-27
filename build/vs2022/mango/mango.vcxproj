@@ -96,10 +96,13 @@
     <ClInclude Include="..\..\..\include\mango\math\vector_float64x4.hpp" />
     <ClInclude Include="..\..\..\include\mango\math\vector_float64x8.hpp" />
     <ClInclude Include="..\..\..\include\mango\math\vector_gather.hpp" />
+    <ClInclude Include="..\..\..\include\mango\opengl\context.hpp" />
+    <ClInclude Include="..\..\..\include\mango\opengl\framebuffer.hpp" />
     <ClInclude Include="..\..\..\include\mango\opengl\func\glcorearb.hpp" />
     <ClInclude Include="..\..\..\include\mango\opengl\func\glext.hpp" />
     <ClInclude Include="..\..\..\include\mango\opengl\func\glxext.hpp" />
     <ClInclude Include="..\..\..\include\mango\opengl\func\wglext.hpp" />
+    <ClInclude Include="..\..\..\include\mango\opengl\jpeg_decoder.hpp" />
     <ClInclude Include="..\..\..\include\mango\opengl\khronos\GLES2\gl2.h" />
     <ClInclude Include="..\..\..\include\mango\opengl\khronos\GLES2\gl2ext.h" />
     <ClInclude Include="..\..\..\include\mango\opengl\khronos\GLES2\gl2platform.h" />
@@ -118,6 +121,7 @@
     <ClInclude Include="..\..\..\include\mango\opengl\khronos\GL\wglext.h" />
     <ClInclude Include="..\..\..\include\mango\opengl\khronos\KHR\khrplatform.h" />
     <ClInclude Include="..\..\..\include\mango\opengl\opengl.hpp" />
+    <ClInclude Include="..\..\..\include\mango\opengl\utilities.hpp" />
     <ClInclude Include="..\..\..\include\mango\simd\altivec_convert.hpp" />
     <ClInclude Include="..\..\..\include\mango\simd\altivec_double128.hpp" />
     <ClInclude Include="..\..\..\include\mango\simd\altivec_float128.hpp" />
@@ -742,7 +746,10 @@
     <ClCompile Include="..\..\..\source\mango\math\geometry.cpp" />
     <ClCompile Include="..\..\..\source\mango\math\math.cpp" />
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp" />
-    <ClCompile Include="..\..\..\source\mango\opengl\opengl.cpp" />
+    <ClCompile Include="..\..\..\source\mango\opengl\context.cpp" />
+    <ClCompile Include="..\..\..\source\mango\opengl\framebuffer.cpp" />
+    <ClCompile Include="..\..\..\source\mango\opengl\jpeg_decoder.cpp" />
+    <ClCompile Include="..\..\..\source\mango\opengl\utilities.cpp" />
     <ClCompile Include="..\..\..\source\mango\opengl\wgl\wgl_context.cpp" />
     <ClCompile Include="..\..\..\source\mango\window\win32\win32_window.cpp" />
   </ItemGroup>
