@@ -2815,7 +2815,7 @@ namespace
         BigEndianStream s(stream);
 
         // encode MCUs
-        int N = 6; // number of MCU scans per restart interval
+        int N = 1; // number of MCU scans per restart interval
         int restartCounter = 0;
 
         // writing marker data
@@ -2884,6 +2884,7 @@ namespace
 
         // patch restart offsets
         s.seek(restart_offset, Stream::BEGIN);
+
         for (u32 offset : restart_offsets)
         {
             s.write32(offset);

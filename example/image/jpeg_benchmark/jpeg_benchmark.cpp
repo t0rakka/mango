@@ -64,6 +64,8 @@ void warmup(const char* filename)
 // libjpeg
 // ----------------------------------------------------------------------
 
+#ifdef TEST_LIBJPEG
+
 #include <jpeglib.h>
 #include <jerror.h>
 
@@ -162,9 +164,13 @@ size_t save_jpeg(const char* filename, const Surface& surface)
     return get_file_size(filename);
 }
 
+#endif
+
 // ----------------------------------------------------------------------
 // stb
 // ----------------------------------------------------------------------
+
+#ifdef TEST_STB
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -174,8 +180,12 @@ size_t save_jpeg(const char* filename, const Surface& surface)
 
 Surface stb_load_jpeg(const char* filename)
 {
-    int width, height, bytes;
-    u8* rgb = stbi_load(filename, &width, &height, &bytes, 3);
+    int width, height, components;
+    u8* rgb = stbi_load(filename, &width, &height, &components, 3);
+    if (!rgb)
+    {
+        printf("  decoding failure.\n");
+    }
 
     return Surface(width, height, Format(24, Format::UNORM, Format::RGB, 8, 8, 8), width * 3, rgb);
 }
@@ -186,6 +196,8 @@ size_t stb_save_jpeg(const char* filename, const Surface& surface)
     stbi_image_free(surface.image);
     return get_file_size(filename);
 }
+
+#endif
 
 // ----------------------------------------------------------------------
 // jpeg-compressor
