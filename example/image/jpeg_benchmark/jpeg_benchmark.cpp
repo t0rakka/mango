@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -174,15 +174,15 @@ size_t save_jpeg(const char* filename, const Surface& surface)
 
 Surface stb_load_jpeg(const char* filename)
 {
-    int width, height, bpp;
-    u8* rgb = stbi_load(filename, &width, &height, &bpp, 3);
+    int width, height, bytes;
+    u8* rgb = stbi_load(filename, &width, &height, &bytes, 3);
 
     return Surface(width, height, Format(24, Format::UNORM, Format::RGB, 8, 8, 8), width * 3, rgb);
 }
 
 size_t stb_save_jpeg(const char* filename, const Surface& surface)
 {
-    stbi_write_jpg(filename, surface.width, surface.height, 3, surface.image, surface.width*3);
+    stbi_write_jpg(filename, surface.width, surface.height, 3, surface.image, surface.width * 3);
     stbi_image_free(surface.image);
     return get_file_size(filename);
 }
@@ -296,13 +296,6 @@ void toojpeg_write_byte(u8 value)
         toojpeg_stream->write(toojpeg_temp, 4096);
         toojpeg_temp_offset = 0;
     }
-}
-
-Surface toojpeg_load(const char* filename)
-{
-    // NOT SUPPORTED
-    MANGO_UNREFERENCED(filename);
-    return Surface();
 }
 
 size_t toojpeg_save(const char* filename, const Surface& surface)
@@ -520,9 +513,6 @@ int main(int argc, const char* argv[])
     // toojpeg is encoder-only so we'll provide the input for it
     Bitmap toojpeg_bitmap(filename, Format(24, Format::UNORM, Format::RGB, 8, 8, 8));
 
-    time0 = Time::us();
-    Surface s_toojpeg = toojpeg_load(filename);
-
     time1 = Time::us();
     size = toojpeg_save("output-toojpeg.jpg", toojpeg_bitmap);
 
@@ -550,6 +540,7 @@ int main(int argc, const char* argv[])
     ImageDecodeOptions decode_options;
     decode_options.simd = true;
     decode_options.multithread = multithread;
+
     Bitmap bitmap(filename, decode_options);
 
     time1 = Time::us();
