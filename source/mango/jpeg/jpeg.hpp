@@ -397,8 +397,8 @@ namespace mango::jpeg
         std::string m_idct_name;
         std::string m_ycbcr_name;
 
-        const Surface* m_surface;
-        image::ComputeDecoder* m_compute_decoder;
+        const Surface* m_surface = nullptr;
+        image::ComputeDecoder* m_compute_decoder = nullptr;
 
         int width;  // Image width, does include alignment
         int height; // Image height, does include alignment

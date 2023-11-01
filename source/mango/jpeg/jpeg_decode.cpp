@@ -1798,7 +1798,6 @@ namespace mango::jpeg
 
         // set decoding target surface
         m_surface = &target;
-        m_compute_decoder = nullptr;
 
         std::unique_ptr<Bitmap> temp;
 
@@ -1885,7 +1884,6 @@ namespace mango::jpeg
 
         status.direct = true;
 
-        m_surface = nullptr;
         m_compute_decoder = decoder;
 
         parse(scan_memory, true);
