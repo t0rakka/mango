@@ -9,6 +9,12 @@
 
 #ifdef MANGO_OPENGL_JPEG
 
+// TODO: Huffman decoding in compute shader
+// TODO: Different MCU configurations
+// TODO: Progressive mode
+// TODO: Different color formats (Chroma, Luminance)
+// TODO: Arithmetic, CMYK, 12 bit DCT, 16 bit QT table, Lossless -> not supported
+
 namespace mango
 {
 
@@ -131,7 +137,7 @@ namespace mango
             float r = y + cr * 1.400;
             float g = y - cb * 0.343 - cr * 0.711;
             float b = y + cb * 1.765;
-            return vec4( r, g, b, 1.0);
+            return vec4(r, g, b, 1.0);
         }
 
         void main()
