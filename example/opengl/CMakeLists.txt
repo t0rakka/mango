@@ -11,6 +11,7 @@ list(APPEND EXAMPLES
 if (NOT APPLE)
     list(APPEND EXAMPLES
         compute
+        jpeg_compute
     )
 endif ()
 
