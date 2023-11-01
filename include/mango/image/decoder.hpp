@@ -120,6 +120,22 @@ namespace mango::image
         std::unique_ptr<ImageDecoderInterface> m_interface;
     };
 
+    struct ComputeDecoder
+    {
+        int blocks_in_mcu;
+        const s16* qt[10];
+
+        ComputeDecoder()
+        {
+        }
+
+        virtual ~ComputeDecoder()
+        {
+        }
+
+        virtual void decode(s16* data, int xmcu, int ymcu) = 0;
+    };
+
     void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension);
     bool isImageDecoder(const std::string& extension);
 

@@ -11,8 +11,13 @@
 namespace mango
 {
 
-    struct OpenGLJPEGDecoder
+    struct OpenGLJPEGDecoder : image::ComputeDecoder
     {
+        GLuint program;
+        GLuint texture;
+
+        void decode(s16* data, int xmcu, int ymcu) override;
+
         OpenGLJPEGDecoder();
         ~OpenGLJPEGDecoder();
 

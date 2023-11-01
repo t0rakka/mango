@@ -46,66 +46,61 @@ namespace
     void idct(u8* dest, const s16* data, const s16* qt)
     {
         int temp[64];
-        int* v;
-
-        const s16* s = data;
-
-        v = temp;
 
         for (int i = 0; i < 8; ++i)
         {
-            if (s[i + 8 * 1] || s[i + 8 * 2] || s[i + 8 * 3] || s[i + 8 * 4] || s[i + 8 * 5] || s[i + 8 * 6] || s[i + 8 * 7])
+            if (data[i + 8 * 1] || data[i + 8 * 2] || data[i + 8 * 3] || data[i + 8 * 4] ||
+                data[i + 8 * 5] || data[i + 8 * 6] || data[i + 8 * 7])
             {
                 // dequantize
-                const int s0 = s[i + 8 * 0] * qt[i + 8 * 0];
-                const int s1 = s[i + 8 * 1] * qt[i + 8 * 1];
-                const int s2 = s[i + 8 * 2] * qt[i + 8 * 2];
-                const int s3 = s[i + 8 * 3] * qt[i + 8 * 3];
-                const int s4 = s[i + 8 * 4] * qt[i + 8 * 4];
-                const int s5 = s[i + 8 * 5] * qt[i + 8 * 5];
-                const int s6 = s[i + 8 * 6] * qt[i + 8 * 6];
-                const int s7 = s[i + 8 * 7] * qt[i + 8 * 7];
+                const int s0 = data[i + 8 * 0] * qt[i + 8 * 0];
+                const int s1 = data[i + 8 * 1] * qt[i + 8 * 1];
+                const int s2 = data[i + 8 * 2] * qt[i + 8 * 2];
+                const int s3 = data[i + 8 * 3] * qt[i + 8 * 3];
+                const int s4 = data[i + 8 * 4] * qt[i + 8 * 4];
+                const int s5 = data[i + 8 * 5] * qt[i + 8 * 5];
+                const int s6 = data[i + 8 * 6] * qt[i + 8 * 6];
+                const int s7 = data[i + 8 * 7] * qt[i + 8 * 7];
 
                 IDCT idct;
                 idct.compute(s0, s1, s2, s3, s4, s5, s6, s7);
+
                 const int bias = 0x200;
                 idct.x0 += bias;
                 idct.x1 += bias;
                 idct.x2 += bias;
                 idct.x3 += bias;
-                v[0] = (idct.x0 + idct.y3) >> 10;
-                v[1] = (idct.x1 + idct.y2) >> 10;
-                v[2] = (idct.x2 + idct.y1) >> 10;
-                v[3] = (idct.x3 + idct.y0) >> 10;
-                v[4] = (idct.x3 - idct.y0) >> 10;
-                v[5] = (idct.x2 - idct.y1) >> 10;
-                v[6] = (idct.x1 - idct.y2) >> 10;
-                v[7] = (idct.x0 - idct.y3) >> 10;
+                temp[i * 8 + 0] = (idct.x0 + idct.y3) >> 10;
+                temp[i * 8 + 1] = (idct.x1 + idct.y2) >> 10;
+                temp[i * 8 + 2] = (idct.x2 + idct.y1) >> 10;
+                temp[i * 8 + 3] = (idct.x3 + idct.y0) >> 10;
+                temp[i * 8 + 4] = (idct.x3 - idct.y0) >> 10;
+                temp[i * 8 + 5] = (idct.x2 - idct.y1) >> 10;
+                temp[i * 8 + 6] = (idct.x1 - idct.y2) >> 10;
+                temp[i * 8 + 7] = (idct.x0 - idct.y3) >> 10;
             }
             else
             {
-                int dc = (s[i] * qt[i]) << 2;
-                v[0] = dc;
-                v[1] = dc;
-                v[2] = dc;
-                v[3] = dc;
-                v[4] = dc;
-                v[5] = dc;
-                v[6] = dc;
-                v[7] = dc;
+                int dc = (data[i] * qt[i]) << 2;
+                temp[i * 8 + 0] = dc;
+                temp[i * 8 + 1] = dc;
+                temp[i * 8 + 2] = dc;
+                temp[i * 8 + 3] = dc;
+                temp[i * 8 + 4] = dc;
+                temp[i * 8 + 5] = dc;
+                temp[i * 8 + 6] = dc;
+                temp[i * 8 + 7] = dc;
             }
-
-            v += 8;
         }
 
-        v = temp;
         const int shift = PRECISION + 9;
 
         for (int i = 0; i < 8; ++i)
         {
             IDCT idct;
-            idct.compute(v[0], v[8], v[16], v[24], v[32], v[40], v[48], v[56]);
-            ++v;
+            idct.compute(temp[i + 0], temp[i + 8], temp[i + 16], temp[i + 24],
+                         temp[i + 32], temp[i + 40], temp[i + 48], temp[i + 56]);
+
             const int bias = 0x10000 + (128 << shift);
             idct.x0 += bias;
             idct.x1 += bias;

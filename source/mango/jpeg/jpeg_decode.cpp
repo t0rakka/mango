@@ -1840,6 +1840,67 @@ namespace mango::jpeg
         return status;
     }
 
+    ImageDecodeStatus Parser::decode(image::ComputeDecoder* decoder, const ImageDecodeOptions& options)
+    {
+        ImageDecodeStatus status;
+
+        if (!scan_memory.address || !header)
+        {
+            status.setError(header.info);
+            return status;
+        }
+
+        // determine if we need a full-surface temporary storage
+        if (is_progressive || is_multiscan)
+        {
+            // allocate blocks
+            size_t num_blocks = size_t(mcus) * blocks_in_mcu;
+            blockVector.resize(num_blocks * 64);
+        }
+
+        // configure innerloops based on CPU caps
+        SampleFormat sf { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) };
+        configureCPU(sf.sample, options);
+
+        // configure multithreading
+        m_hardware_concurrency = int(options.multithread ? ThreadPool::getHardwareConcurrency() : 1);
+
+        if (is_lossless)
+        {
+            status.setError("Lossless is not supported.");
+            return status;
+        }
+        else if (components == 4)
+        {
+            status.setError("CMYK is not supported.");
+            return status;
+        }
+
+        if (is_progressive || is_multiscan)
+        {
+            status.setError("progressive or multiscan are not supported.");
+            return status;
+        }
+
+        status.direct = true;
+
+        m_surface = nullptr;
+        m_compute_decoder = decoder;
+
+        parse(scan_memory, true);
+
+        if (!header)
+        {
+            status.setError(header.info);
+            return status;
+        }
+
+        blockVector.resize(0);
+        status.info = getInfo();
+
+        return status;
+    }
+
     std::string Parser::getInfo() const
     {
         std::string info = m_encoding;
@@ -1981,13 +2042,21 @@ namespace mango::jpeg
     void Parser::decodeSequential()
     {
         int n = getTaskSize(ymcu);
-        if (n)
+
+        if (m_compute_decoder)
         {
-            decodeSequentialMT(n);
+            decodeSequentialCompute(n);
         }
         else
         {
-            decodeSequentialST();
+            if (n)
+            {
+                decodeSequentialMT(n);
+            }
+            else
+            {
+                decodeSequentialST();
+            }
         }
     }
 
@@ -2206,6 +2275,122 @@ namespace mango::jpeg
                 });
             }
         }
+    }
+
+    void Parser::decodeSequentialCompute(int N)
+    {
+        ConcurrentQueue queue("jpeg.sequential.compute", Priority::HIGH);
+
+        const int mcu_data_size = blocks_in_mcu * 64;
+
+        AlignedStorage<s16> temp(mcu_data_size * xmcu * ymcu);
+        s16* data = temp.data();
+
+        if (!m_restart_offsets.empty())
+        {
+            // -----------------------------------------------------------------
+            // custom mango encoded file (APP14:'Mango1' chunk present)
+            // -----------------------------------------------------------------
+            // - restart interval marker offsets are stored in the APP14 chunk
+            // - the markers are present for other decoders; we don't need them
+            // -----------------------------------------------------------------
+
+            const u8* p = decodeState.buffer.ptr;
+
+            int i = 0;
+
+            for (u32 offset : m_restart_offsets)
+            {
+                int y0 = i;
+                int y1 = std::min(i + m_decode_interval, ymcu);
+
+                // enqueue task
+                queue.enqueue([=] (s16* data)
+                {
+                    DecodeState state = decodeState;
+                    state.buffer.ptr = p;
+
+                    for (int y = y0; y < y1; ++y)
+                    {
+                        for (int x = 0; x < xmcu; ++x)
+                        {
+                            state.decode(data, &state);
+                            data += mcu_data_size;
+                        }
+                    }
+                }, data);
+
+                i += m_decode_interval;
+                p = memory.address + offset;
+                data += (y1 - y0) * mcu_data_size * xmcu;
+            }
+
+            decodeState.buffer.ptr = p;
+        }
+        else if (restartInterval)
+        {
+            // ---------------------------------------------------------------
+            // standard jpeg with DRI marker present
+            // ---------------------------------------------------------------
+
+            const u8* p = decodeState.buffer.ptr;
+
+            for (int i = 0; i < mcus; i += restartInterval)
+            {
+                // enqueue task
+                queue.enqueue([=] (s16* data)
+                {
+                    DecodeState state = decodeState;
+                    state.buffer.ptr = p;
+
+                    const int left = i + std::min(restartInterval, mcus - i);
+
+                    for (int j = i; j < left; ++j)
+                    {
+                        state.decode(data, &state);
+                        data += mcu_data_size;
+                    }
+                }, data);
+
+                // seek next restart marker
+                p = seekMarker(p, decodeState.buffer.end);
+
+                if (p >= decodeState.buffer.end)
+                    break;
+
+                if (isRestartMarker(p))
+                    p += 2;
+
+                data += restartInterval * mcu_data_size;
+            }
+
+            decodeState.buffer.ptr = p;
+        }
+        else
+        {
+            // ---------------------------------------------------------------
+            // standard jpeg - Huffman/Arithmetic decoder must be serial
+            // ---------------------------------------------------------------
+
+            int count = xmcu * ymcu;
+
+            for (int i = 0; i < count; ++i)
+            {
+                decodeState.decode(data, &decodeState);
+                data += mcu_data_size;
+            }
+        }
+
+        queue.wait();
+
+        m_compute_decoder->blocks_in_mcu = blocks_in_mcu;
+
+        for (int i = 0; i < blocks_in_mcu; ++i)
+        {
+            m_compute_decoder->qt[i] = processState.block[i].qt;
+        }
+
+        m_compute_decoder->decode(temp.data(), xmcu, ymcu);
     }
 
     void Parser::decodeMultiScan()

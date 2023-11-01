@@ -398,6 +398,7 @@ namespace mango::jpeg
         std::string m_ycbcr_name;
 
         const Surface* m_surface;
+        image::ComputeDecoder* m_compute_decoder;
 
         int width;  // Image width, does include alignment
         int height; // Image height, does include alignment
@@ -425,6 +426,7 @@ namespace mango::jpeg
 
         const u8* stepMarker(const u8* p, const u8* end) const;
         const u8* seekMarker(const u8* p, const u8* end) const;
+        const u8* processSOS(const u8* p, const u8* end);
 
         void processSOI();
         void processEOI();
@@ -435,7 +437,6 @@ namespace mango::jpeg
         void processJPG(const u8* p, u16 marker);
         void processAPP(const u8* p, u16 marker);
         void processSOF(const u8* p, u16 marker);
-        const u8* processSOS(const u8* p, const u8* end);
         void processDQT(const u8* p);
         void processDNL(const u8* p);
         void processDRI(const u8* p);
@@ -452,6 +453,7 @@ namespace mango::jpeg
         void decodeSequential();
         void decodeSequentialST();
         void decodeSequentialMT(int N);
+        void decodeSequentialCompute(int N);
         void decodeMultiScan();
         void decodeProgressive();
         void decodeProgressiveDC();
@@ -475,6 +477,7 @@ namespace mango::jpeg
         ~Parser();
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
+        ImageDecodeStatus decode(image::ComputeDecoder* decoder, const ImageDecodeOptions& options);
     };
 
     // ----------------------------------------------------------------------------
