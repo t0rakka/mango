@@ -2,9 +2,12 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+
 #include <mango/opengl/jpeg_decoder.hpp>
 #include <mango/opengl/utilities.hpp>
 #include "../jpeg/jpeg.hpp"
+
+#ifdef MANGO_OPENGL_JPEG
 
 namespace mango
 {
@@ -279,3 +282,5 @@ GLuint OpenGLJPEGDecoder::decode(ConstMemory memory)
 }
 
 } // namespace mango
+
+#endif // MANGO_OPENGL_JPEG

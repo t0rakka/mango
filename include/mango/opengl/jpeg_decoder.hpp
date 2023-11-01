@@ -8,6 +8,8 @@
 #include <mango/image/image.hpp>
 #include "context.hpp"
 
+#ifdef MANGO_OPENGL_JPEG
+
 namespace mango
 {
 
@@ -25,3 +27,5 @@ namespace mango
     };
 
 } // namespace mango
+
+#endif // MANGO_OPENGL_JPEG
