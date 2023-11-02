@@ -177,15 +177,13 @@ namespace mango
 
             // resolve color
 
-            int textureHeight = imageSize(uTexture).y - 1;
             ivec2 blockCoord = ivec2(gl_GlobalInvocationID.xy * 8);
-            blockCoord = ivec2(blockCoord.x, textureHeight - blockCoord.y);
 
             for (int y = 0; y < 8; ++y)
             {
                 for (int x = 0; x < 8; ++x)
                 {
-                    ivec2 coord = blockCoord + ivec2(x, -y);
+                    ivec2 coord = blockCoord + ivec2(x, y);
 
                     float Y = float(lu[y * 8 + x]) / 255.0;
                     float cb = float(cb[y * 8 + x] - 128) / 255.0;
@@ -260,15 +258,26 @@ void OpenGLJPEGDecoder::decode(s16* data, int xmcu, int ymcu)
 
     glDeleteBuffers(1, &sbo);
 
-    printf("compute decode: %d x %d.\n", xmcu, ymcu);
+    //debugPrint("\n[ComputeDecode]\n");
+    //debugPrint("  MCU: %d x %d.\n\n", xmcu, ymcu);
+}
+
+void OpenGLJPEGDecoder::decode(const image::Surface& surface)
+{
+    if (width != surface.width || height != surface.height)
+    {
+        return;
+    }
+
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, surface.width, surface.height, GL_RGBA, GL_UNSIGNED_BYTE, surface.image);
 }
 
 GLuint OpenGLJPEGDecoder::decode(ConstMemory memory)
 {
     jpeg::Parser parser(memory);
 
-    int width = parser.header.width;
-    int height = parser.header.height;
+    width = parser.header.width;
+    height = parser.header.height;
 
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);

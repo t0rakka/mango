@@ -60,7 +60,7 @@ protected:
     GLuint texture = 0;
 
 public:
-    DemoWindow()
+    DemoWindow(const std::string& filename)
         : OpenGLContext(1280, 800)
     {
         setTitle("OpenGL Compute Shader");
@@ -75,10 +75,10 @@ public:
         static const float vertices[] =
         {
             // position  texcoord
-            -1.0f,-1.0f,  0.0f, 0.0f,
-             1.0f,-1.0f,  1.0f, 0.0f,
-             1.0f, 1.0f,  1.0f, 1.0f,
-            -1.0f, 1.0f,  0.0f, 1.0f,
+            -1.0f,-1.0f,  0.0f, 1.0f,
+             1.0f,-1.0f,  1.0f, 1.0f,
+             1.0f, 1.0f,  1.0f, 0.0f,
+            -1.0f, 1.0f,  0.0f, 0.0f,
         };
 
         glGenVertexArrays(1, &renderVAO);
@@ -94,7 +94,7 @@ public:
         debugPrintEnable(true);
 
         OpenGLJPEGDecoder decoder;
-        filesystem::File file("../image/conquer.jpg");
+        filesystem::File file(filename);
         texture = decoder.decode(file);
 
         glBindImageTexture(0, texture, 0, GL_FALSE, 0,  GL_READ_ONLY, GL_RGBA8);
@@ -180,7 +180,14 @@ public:
     }
 };
 
-int main()
+int main(int argc, const char* argv[])
 {
-    DemoWindow window;
+    if (argc != 2)
+    {
+        printf("Usage: %s <filename.jpg>\n", argv[0]);
+        return 0;
+    }
+
+    std::string filename = argv[1];
+    DemoWindow window(filename);
 }

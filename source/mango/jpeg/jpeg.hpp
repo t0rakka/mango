@@ -453,7 +453,7 @@ namespace mango::jpeg
         void decodeSequential();
         void decodeSequentialST();
         void decodeSequentialMT(int N);
-        void decodeSequentialCompute(int N);
+        void decodeSequentialCompute();
         void decodeMultiScan();
         void decodeProgressive();
         void decodeProgressiveDC();

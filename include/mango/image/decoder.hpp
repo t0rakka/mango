@@ -134,6 +134,7 @@ namespace mango::image
         }
 
         virtual void decode(s16* data, int xmcu, int ymcu) = 0;
+        virtual void decode(const Surface& surface) = 0;
     };
 
     void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension);

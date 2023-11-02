@@ -1733,7 +1733,9 @@ namespace mango::jpeg
         }
 
         m_ycbcr_name = id;
-        debugPrint("  Decoder: %s\n", id.c_str());
+
+        debugPrint("[ConfigureCPU]\n");
+        debugPrint("  Decoder: %s\n\n", id.c_str());
     }
 
     ImageDecodeStatus Parser::decode(const Surface& target, const ImageDecodeOptions& options)
@@ -1798,6 +1800,7 @@ namespace mango::jpeg
 
         // set decoding target surface
         m_surface = &target;
+        m_compute_decoder = nullptr;
 
         std::unique_ptr<Bitmap> temp;
 
@@ -1850,52 +1853,45 @@ namespace mango::jpeg
             return status;
         }
 
-        // determine if we need a full-surface temporary storage
-        if (is_progressive || is_multiscan)
-        {
-            // allocate blocks
-            size_t num_blocks = size_t(mcus) * blocks_in_mcu;
-            blockVector.resize(num_blocks * 64);
-        }
-
-        // configure innerloops based on CPU caps
-        SampleFormat sf { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) };
-        configureCPU(sf.sample, options);
-
         // configure multithreading
-        m_hardware_concurrency = int(options.multithread ? ThreadPool::getHardwareConcurrency() : 1);
+        m_hardware_concurrency = 1;
+
+        bool compute = true;
 
         if (is_lossless)
         {
-            status.setError("Lossless is not supported.");
-            return status;
+            compute = false;
         }
         else if (components == 4)
         {
-            status.setError("CMYK is not supported.");
-            return status;
+            compute = false;
         }
 
         if (is_progressive || is_multiscan)
         {
-            status.setError("progressive or multiscan are not supported.");
-            return status;
+            compute = false;
         }
 
-        status.direct = true;
-
-        m_compute_decoder = decoder;
-
-        parse(scan_memory, true);
-
-        if (!header)
+        if (decodeState.is_arithmetic)
         {
-            status.setError(header.info);
-            return status;
+            compute = false;
         }
 
-        blockVector.resize(0);
-        status.info = getInfo();
+        if (compute)
+        {
+            m_surface = nullptr;
+            m_compute_decoder = decoder;
+
+            parse(scan_memory, true);
+
+            status.info = getInfo();
+        }
+        else
+        {
+            Bitmap temp(xsize, ysize, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+            status = decode(temp, options);
+            decoder->decode(temp);
+        }
 
         return status;
     }
@@ -2040,14 +2036,13 @@ namespace mango::jpeg
 
     void Parser::decodeSequential()
     {
-        int n = getTaskSize(ymcu);
-
         if (m_compute_decoder)
         {
-            decodeSequentialCompute(n);
+            decodeSequentialCompute();
         }
         else
         {
+            int n = getTaskSize(ymcu);
             if (n)
             {
                 decodeSequentialMT(n);
@@ -2276,7 +2271,7 @@ namespace mango::jpeg
         }
     }
 
-    void Parser::decodeSequentialCompute(int N)
+    void Parser::decodeSequentialCompute()
     {
         ConcurrentQueue queue("jpeg.sequential.compute", Priority::HIGH);
 
