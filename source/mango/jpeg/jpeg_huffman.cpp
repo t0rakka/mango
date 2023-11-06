@@ -185,7 +185,7 @@ namespace mango::jpeg
     }
 
     static
-    void huff_decode_ac_block(s16* output, const HuffTable* ac, BitBuffer& buffer, const u8* zigzagTable)
+    void huff_decode_ac_block(s16* output, const HuffTable* ac, BitBuffer& buffer)
     {
         for (int i = 1; i < 64; )
         {
@@ -234,7 +234,6 @@ namespace mango::jpeg
 
     void huff_decode_mcu(s16* output, DecodeState* state)
     {
-        const u8* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
         BitBuffer& buffer = state->buffer;
 
@@ -260,7 +259,7 @@ namespace mango::jpeg
             output[0] = s16(s);
 
             // AC
-            huff_decode_ac_block(output, ac, buffer, zigzagTable);
+            huff_decode_ac_block(output, ac, buffer);
 
             output += 64;
         }
@@ -306,7 +305,6 @@ namespace mango::jpeg
 
     void huff_decode_ac_first(s16* output, DecodeState* state)
     {
-        const u8* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
         BitBuffer& buffer = state->buffer;
 
@@ -354,7 +352,6 @@ namespace mango::jpeg
 
     void huff_decode_ac_refine(s16* output, DecodeState* state)
     {
-        const u8* zigzagTable = state->zigzagTable;
         Huffman& huffman = state->huffman;
         BitBuffer& buffer = state->buffer;
 

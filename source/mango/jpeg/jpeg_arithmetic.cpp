@@ -215,7 +215,6 @@ namespace mango::jpeg
 
     void arith_decode_mcu(s16* output, DecodeState* state)
     {
-        const u8* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
         BitBuffer& buffer = state->buffer;
         DecodeBlock* block = state->block;
@@ -438,7 +437,6 @@ namespace mango::jpeg
 
     void arith_decode_ac_first(s16* output, DecodeState* state)
     {
-        const u8* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
         BitBuffer& buffer = state->buffer;
 
@@ -504,7 +502,6 @@ namespace mango::jpeg
 
     void arith_decode_ac_refine(s16* output, DecodeState* state)
     {
-        const u8* zigzagTable = state->zigzagTable;
         Arithmetic& arithmetic = state->arithmetic;
         BitBuffer& buffer = state->buffer;
 
