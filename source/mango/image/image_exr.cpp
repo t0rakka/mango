@@ -24,26 +24,26 @@ namespace
 //
 // Copyright (c) Contributors to the OpenEXR Project. All rights reserved.
 //
-// Redistribution and use in source and binary forms, with or without modification, 
+// Redistribution and use in source and binary forms, with or without modification,
 // are permitted provided that the following conditions are met:
 //
-// 1. Redistributions of source code must retain the above copyright notice, 
+// 1. Redistributions of source code must retain the above copyright notice,
 //    this list of conditions and the following disclaimer.
 //
-// 2. Redistributions in binary form must reproduce the above copyright notice, 
-//    this list of conditions and the following disclaimer in the documentation and/or other 
+// 2. Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation and/or other
 //    materials provided with the distribution.
 //
-// 3. Neither the name of the copyright holder nor the names of its contributors may be used to 
+// 3. Neither the name of the copyright holder nor the names of its contributors may be used to
 //    endorse or promote products derived from this software without specific prior written permission.
 //
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR 
-// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
-// FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
-// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
-// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+// FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ void unpack14(const u8 b[14], u16 s[16])
     }
 }
 
-static inline 
+static inline
 void unpack3(const u8 b[3], u16 s[16])
 {
     s[0] = ((u16) (b[0] << 8)) | ((u16) b[1]);
@@ -300,7 +300,7 @@ const int HUF_DECSIZE = 1 << HUF_DECBITS;        // decoding table size
 const int HUF_DECMASK = HUF_DECSIZE - 1;
 
 struct HufDec
-{  
+{
     // short code    long code
     //-------------------------------
     int len : 8;   // code length    0
@@ -1319,7 +1319,7 @@ Matrix4x4 RGBtoXYZ(const Chromaticities& chromaticities, float Y)
 {
     // For an explanation of how the color conversion matrix is derived,
     // see Roy Hall, "Illumination and Color in Computer Generated Imagery",
-    // Springer-Verlag, 1989, chapter 3, "Perceptual Response"; and 
+    // Springer-Verlag, 1989, chapter 3, "Perceptual Response"; and
     // Charles A. Poynton, "A Technical Introduction to Digital Video",
     // John Wiley & Sons, 1996, chapter 7, "Color science for video".
 
@@ -1739,7 +1739,7 @@ const u8* ContextEXR::decompress_rle(Memory dest, ConstMemory source)
             in += count;
             source_bytes -= count + 1;
         }
-        else 
+        else
         {
             ++count;
 
@@ -1790,7 +1790,7 @@ const u8* ContextEXR::decompress_piz(Memory dest, ConstMemory source, int width,
 
     std::vector<u8> bitmap(BITMAP_SIZE, 0);
 
-    const u8* ptr = source.address; 
+    const u8* ptr = source.address;
 
     u16 minNonZero = littleEndian::uload16(ptr + 0);
     u16 maxNonZero = littleEndian::uload16(ptr + 2);
@@ -2414,11 +2414,11 @@ void decodeRGB(Surface surface, const u8* src, const Layer& layer, int x0, int y
         const u8* ptr[4] =
         {
             reinterpret_cast<const u8*>(zeros),
-            reinterpret_cast<const u8*>(zeros), 
-            reinterpret_cast<const u8*>(zeros), 
+            reinterpret_cast<const u8*>(zeros),
+            reinterpret_cast<const u8*>(zeros),
             reinterpret_cast<const u8*>(ones)
         };
-    
+
         for (int y = y0; y < y1; ++y)
         {
             float16* image = surface.address<float16>(x0, y);
@@ -2494,8 +2494,8 @@ void decodeRGB(Surface surface, const u8* src, const Layer& layer, int x0, int y
         const u8* ptr[4] =
         {
             reinterpret_cast<const u8*>(zeros),
-            reinterpret_cast<const u8*>(zeros), 
-            reinterpret_cast<const u8*>(zeros), 
+            reinterpret_cast<const u8*>(zeros),
+            reinterpret_cast<const u8*>(zeros),
             reinterpret_cast<const u8*>(ones)
         };
 

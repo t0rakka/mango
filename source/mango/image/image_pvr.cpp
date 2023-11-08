@@ -242,14 +242,14 @@ namespace
             u8 fmt = flags & 0xff;
 
 #if 0
-            0x00000100  MIP-Maps are present 
-            0x00000200  Data is twiddled     
-            0x00000400  Contains normal data 
-            0x00000800  Has a border         
-            0x00001000  Is a cube map (Every 6 surfaces make up one cube map) 
-            0x00002000  MIP-Maps have debug colouring    
-            0x00004000  Is a volume (3D) texture (numSurfaces is interpreted as a depth value)  
-            0x00008000  Alpha channel data is present (PVRTC only) 
+            0x00000100  MIP-Maps are present
+            0x00000200  Data is twiddled
+            0x00000400  Contains normal data
+            0x00000800  Has a border
+            0x00001000  Is a cube map (Every 6 surfaces make up one cube map)
+            0x00002000  MIP-Maps have debug colouring
+            0x00004000  Is a volume (3D) texture (numSurfaces is interpreted as a depth value)
+            0x00008000  Alpha channel data is present (PVRTC only)
 #endif
 
             debugPrint("flags: 0x%x\n", flags);

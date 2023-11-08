@@ -48,7 +48,7 @@ namespace
         PackBits(int channels, int height)
             : offsets(channels)
             , sizes(channels * height)
-        {            
+        {
         }
 
         const u8* parse(const u8* p, int channels, int height, int version)
