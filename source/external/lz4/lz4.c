@@ -532,12 +532,12 @@ LZ4_memcpy_using_offset(BYTE* dstPtr, const BYTE* srcPtr, BYTE* dstEnd, const si
     case 2:
         LZ4_memcpy(v, srcPtr, 2);
         LZ4_memcpy(&v[2], srcPtr, 2);
-#if defined(_MSC_VER) && (_MSC_VER <= 1936) /* MSVC 2022 ver 17.6 or earlier */
+#if defined(_MSC_VER) && (_MSC_VER <= 1937) /* MSVC 2022 ver 17.7 or earlier */
 #  pragma warning(push)
 #  pragma warning(disable : 6385) /* warning C6385: Reading invalid data from 'v'. */
 #endif
         LZ4_memcpy(&v[4], v, 4);
-#if defined(_MSC_VER) && (_MSC_VER <= 1936) /* MSVC 2022 ver 17.6 or earlier */
+#if defined(_MSC_VER) && (_MSC_VER <= 1937) /* MSVC 2022 ver 17.7 or earlier */
 #  pragma warning(pop)
 #endif
         break;
@@ -903,7 +903,7 @@ LZ4_prepareTable(LZ4_stream_t_internal* const cctx,
     cctx->dictSize = 0;
 }
 
-/** LZ4_compress_generic() :
+/** LZ4_compress_generic_validated() :
  *  inlined, to ensure branches are decided at compilation time.
  *  The following conditions are presumed already validated:
  *  - source != NULL
@@ -1085,7 +1085,10 @@ LZ4_FORCE_INLINE int LZ4_compress_generic_validated(
 
         /* Catch up */
         filledIp = ip;
-        while (((ip>anchor) & (match > lowLimit)) && (unlikely(ip[-1]==match[-1]))) { ip--; match--; }
+        assert(ip > anchor); /* this is always true as ip has been advanced before entering the main loop */
+        if ((match > lowLimit) && unlikely(ip[-1] == match[-1])) {
+            do { ip--; match--; } while (((ip > anchor) & (match > lowLimit)) && (unlikely(ip[-1] == match[-1])));
+        }
 
         /* Encode Literals */
         {   unsigned const litLength = (unsigned)(ip - anchor);
