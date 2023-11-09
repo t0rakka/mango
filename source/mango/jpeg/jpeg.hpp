@@ -376,6 +376,34 @@ namespace mango::jpeg
     };
 
     // ----------------------------------------------------------------------------
+    // ComputeDecoder
+    // ----------------------------------------------------------------------------
+
+    struct ComputeDecoderInput
+    {
+        const s16* qt[10];
+        int blocks_in_mcu;
+
+        s16* data;
+        int xmcu;
+        int ymcu;
+    };
+
+    struct ComputeDecoder
+    {
+        ComputeDecoder()
+        {
+        }
+
+        virtual ~ComputeDecoder()
+        {
+        }
+
+        virtual void send(const ComputeDecoderInput& input) = 0;
+        virtual void send(const Surface& surface) = 0;
+    };
+
+    // ----------------------------------------------------------------------------
     // Parser
     // ----------------------------------------------------------------------------
 
@@ -409,7 +437,7 @@ namespace mango::jpeg
         std::string m_ycbcr_name;
 
         const Surface* m_surface = nullptr;
-        image::ComputeDecoder* m_compute_decoder = nullptr;
+        ComputeDecoder* m_compute_decoder = nullptr;
 
         int width;  // Image width, does include alignment
         int height; // Image height, does include alignment
@@ -488,7 +516,7 @@ namespace mango::jpeg
         ~Parser();
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
-        ImageDecodeStatus decode(image::ComputeDecoder* decoder, const ImageDecodeOptions& options);
+        ImageDecodeStatus decode(ComputeDecoder* decoder, const ImageDecodeOptions& options);
     };
 
     // ----------------------------------------------------------------------------

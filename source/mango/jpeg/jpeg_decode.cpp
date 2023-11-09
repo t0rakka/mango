@@ -1828,7 +1828,7 @@ namespace mango::jpeg
         return status;
     }
 
-    ImageDecodeStatus Parser::decode(image::ComputeDecoder* decoder, const ImageDecodeOptions& options)
+    ImageDecodeStatus Parser::decode(ComputeDecoder* decoder, const ImageDecodeOptions& options)
     {
         ImageDecodeStatus status;
 
@@ -1875,7 +1875,7 @@ namespace mango::jpeg
         {
             Bitmap temp(xsize, ysize, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
             status = decode(temp, options);
-            decoder->decode(temp);
+            decoder->send(temp);
         }
 
         return status;
@@ -2362,14 +2362,20 @@ namespace mango::jpeg
 
         queue.wait();
 
-        m_compute_decoder->blocks_in_mcu = blocks_in_mcu;
+        ComputeDecoderInput input;
+
+        input.data = temp.data();
+        input.xmcu = xmcu;
+        input.ymcu = ymcu;
+
+        input.blocks_in_mcu = blocks_in_mcu;
 
         for (int i = 0; i < blocks_in_mcu; ++i)
         {
-            m_compute_decoder->qt[i] = processState.block[i].qt;
+            input.qt[i] = processState.block[i].qt;
         }
 
-        m_compute_decoder->decode(temp.data(), xmcu, ymcu);
+        m_compute_decoder->send(input);
     }
 
     void Parser::decodeMultiScan()
