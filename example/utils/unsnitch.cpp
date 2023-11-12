@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <filesystem>
 #include <mango/mango.hpp>
@@ -17,7 +17,6 @@ struct State
     bool print_tree { false };
     bool decompress { false };
 
-    u64 total_bytes_in = 0;
     u64 total_bytes_out = 0;
 };
 
@@ -151,28 +150,14 @@ int main(int argc, char* argv[])
     MANGO_UNREFERENCED(time0);
     MANGO_UNREFERENCED(time1);
 
-#if 0
+    printf("\n");
 
     constexpr u64 KB = 1 << 10;
-    constexpr u64 MB = 1 << 20;
-    constexpr u64 GB = 1 << 30;
-
-    printf("\n");
-    printf("------------------------------------------------------------------\n");
-    printf("uncompressed   compressed   ratio      time    status \n");
-    printf("------------------------------------------------------------------\n");
 
     u64 total_time = time1 - time0;
-    u64 rate = total_time ? state.total_bytes_in / (total_time * KB) : 0;
-    int failures = 0;
+    u64 rate = total_time ? state.total_bytes_out / (total_time * KB) : 0;
 
-    printf("\n");
-    printf("%" PRIu64 " KB -> %" PRIu64 " KB (%" PRIu64 " %%)  %" PRIu64 " ms  (%" PRIu64 " MB/s) \n",
-        state.total_bytes_in / KB,
+    printf("%12" PRIu64 " KB  %8" PRIu64 " ms     (%" PRIu64 " MB/s) \n",
         state.total_bytes_out / KB,
-        state.total_bytes_in ? state.total_bytes_out * 100 / state.total_bytes_in : 0,
         total_time, rate);
-    printf("Number of failures: %d\n", failures);
-
-#endif
 }
