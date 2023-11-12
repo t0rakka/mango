@@ -37,6 +37,8 @@
 
 #include "../../external/libdeflate/libdeflate.h"
 
+#include "../../external/lzav/lzav.h"
+
 namespace mango
 {
 
@@ -1193,6 +1195,49 @@ namespace deflate_gzip
 
 } // namespace deflate_gzip
 
+// ----------------------------------------------------------------------------
+// lzav
+// ----------------------------------------------------------------------------
+
+namespace lzav
+{
+
+    size_t bound(size_t size)
+    {
+        return lzav_compress_bound(size);
+    }
+
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
+    {
+        MANGO_UNREFERENCED(level);
+        int comp_len = lzav_compress_default(source.address, dest.address, source.size, dest.size);
+
+        if (comp_len == 0 && source.size != 0)
+        {
+            // TODO: error handling
+        }
+
+        CompressionStatus status;
+        status.size = comp_len;
+        return status;
+    }
+
+    CompressionStatus decompress(Memory dest, ConstMemory source)
+    {
+        int l = lzav_decompress(source.address, dest.address, source.size, dest.size);
+
+        if (l < 0)
+        {
+            // TODO: error handling
+        }
+
+        CompressionStatus status;
+        status.size = l;
+        return status;
+    }
+
+} // namespace lzav
+
     const std::vector<Compressor> g_compressors =
     {
         { Compressor::NONE,    "none",  nocompress::bound, nocompress::compress, nocompress::decompress },
@@ -1214,6 +1259,7 @@ namespace deflate_gzip
         { Compressor::DEFLATE,      "deflate",      deflate::bound,      deflate::compress,      deflate::decompress },
         { Compressor::DEFLATE_ZLIB, "deflate.zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },
         { Compressor::DEFLATE_GZIP, "deflate.gzip", deflate_gzip::bound, deflate_gzip::compress, deflate_gzip::decompress },
+        { Compressor::LZAV,    "lzav", lzav::bound, lzav::compress, lzav::decompress },
     };
 
     std::vector<Compressor> getCompressors()

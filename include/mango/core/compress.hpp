@@ -187,6 +187,13 @@ namespace mango
         CompressionStatus decompress(Memory dest, ConstMemory source);
     }
 
+    namespace lzav
+    {
+        size_t bound(size_t size);
+        CompressionStatus compress(Memory dest, ConstMemory source, int level = 6);
+        CompressionStatus decompress(Memory dest, ConstMemory source);
+    }
+
     // -----------------------------------------------------------------------
     // Compressor
     // -----------------------------------------------------------------------
@@ -212,6 +219,7 @@ namespace mango
             DEFLATE,
             DEFLATE_ZLIB,
             DEFLATE_GZIP,
+            LZAV,
         } method = NONE;
         std::string name;
 
