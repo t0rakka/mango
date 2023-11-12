@@ -1204,35 +1204,35 @@ namespace lzav
 
     size_t bound(size_t size)
     {
-        return lzav_compress_bound(size);
+        return size_t(lzav_compress_bound(size));
     }
 
     CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
         MANGO_UNREFERENCED(level);
-        int comp_len = lzav_compress_default(source.address, dest.address, source.size, dest.size);
-
-        if (comp_len == 0 && source.size != 0)
-        {
-            // TODO: error handling
-        }
 
         CompressionStatus status;
-        status.size = comp_len;
+
+        status.size = size_t(lzav_compress_default(source.address, dest.address, source.size, dest.size));
+        if (!status.size && source.size > 0)
+        {
+            status.setError("[lzav] compression failed.");
+        }
+
         return status;
     }
 
     CompressionStatus decompress(Memory dest, ConstMemory source)
     {
-        int l = lzav_decompress(source.address, dest.address, source.size, dest.size);
+        CompressionStatus status;
 
-        if (l < 0)
+        int bytes_out = lzav_decompress(source.address, dest.address, source.size, dest.size);
+        if (bytes_out < 0)
         {
-            // TODO: error handling
+            status.setError("[lzav] decompression failed.");
         }
 
-        CompressionStatus status;
-        status.size = l;
+        status.size = size_t(bytes_out);
         return status;
     }
 
@@ -1256,10 +1256,10 @@ namespace lzav
 #ifdef MANGO_LICENSE_ENABLE_ZLIB
         { Compressor::ZLIB,    "zlib",  zlib::bound,  zlib::compress,  zlib::decompress },
 #endif
+        { Compressor::LZAV,    "lzav",  lzav::bound,  lzav::compress,  lzav::decompress },
         { Compressor::DEFLATE,      "deflate",      deflate::bound,      deflate::compress,      deflate::decompress },
         { Compressor::DEFLATE_ZLIB, "deflate.zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },
         { Compressor::DEFLATE_GZIP, "deflate.gzip", deflate_gzip::bound, deflate_gzip::compress, deflate_gzip::decompress },
-        { Compressor::LZAV,    "lzav", lzav::bound, lzav::compress, lzav::decompress },
     };
 
     std::vector<Compressor> getCompressors()

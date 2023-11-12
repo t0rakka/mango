@@ -724,7 +724,7 @@ namespace mango
 // TODO: MIT license is not compile-time checked (libdeflate is also quite hard requirement)
 #ifndef MANGO_LICENSE_DISABLE_MIT
     #define MANGO_LICENSE_ENABLE_MIT
-    // components: libdeflate, lcms, bc
+    // components: libdeflate, lcms, bc, lzav
 #endif
 
 #ifndef MANGO_LICENSE_DISABLE_ZLIB
