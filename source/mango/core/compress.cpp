@@ -1204,7 +1204,7 @@ namespace lzav
 
     size_t bound(size_t size)
     {
-        return size_t(lzav_compress_bound(size));
+        return size_t(lzav_compress_bound(int(size)));
     }
 
     CompressionStatus compress(Memory dest, ConstMemory source, int level)
@@ -1213,7 +1213,7 @@ namespace lzav
 
         CompressionStatus status;
 
-        status.size = size_t(lzav_compress_default(source.address, dest.address, source.size, dest.size));
+        status.size = size_t(lzav_compress_default(source.address, dest.address, int(source.size), int(dest.size)));
         if (!status.size && source.size > 0)
         {
             status.setError("[lzav] compression failed.");
@@ -1226,7 +1226,7 @@ namespace lzav
     {
         CompressionStatus status;
 
-        int bytes_out = lzav_decompress(source.address, dest.address, source.size, dest.size);
+        int bytes_out = lzav_decompress(source.address, dest.address, int(source.size), int(dest.size));
         if (bytes_out < 0)
         {
             status.setError("[lzav] decompression failed.");
