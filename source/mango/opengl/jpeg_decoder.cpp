@@ -117,7 +117,7 @@ const char* compute_shader_source = R"(
         {
             IDCT idct;
             idct.compute(temp[i +  0], temp[i +  8], temp[i + 16], temp[i + 24],
-                            temp[i + 32], temp[i + 40], temp[i + 48], temp[i + 56]);
+                         temp[i + 32], temp[i + 40], temp[i + 48], temp[i + 56]);
 
             const int bias = 0x10000 + (128 << 17);
             idct.x0 += bias;

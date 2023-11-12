@@ -119,7 +119,7 @@ namespace mango::jpeg
     using mango::u64;
     using mango::s16;
 
-	using mango::Stream;
+    using mango::Stream;
     using mango::ThreadPool;
     using mango::Memory;
     using mango::ConstMemory;
