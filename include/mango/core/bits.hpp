@@ -331,7 +331,7 @@ namespace mango
     // -----------------------------------------------------------------------
 
     template <typename T>
-    static constexpr
+    static inline
     T align_padding(T offset, u32 alignment)
     {
         assert((alignment & (alignment - 1)) == 0);
@@ -340,7 +340,7 @@ namespace mango
     }
 
     template <typename T>
-    static constexpr
+    static inline
     T align_offset(T offset, u32 alignment)
     {
         assert((alignment & (alignment - 1)) == 0);
@@ -348,14 +348,14 @@ namespace mango
         return (offset + mask) & ~mask;
     }
 
-    static constexpr
+    static inline
     const u8* align_pointer(const u8* pointer, u32 alignment)
     {
         uintptr_t p = align_offset(reinterpret_cast<uintptr_t>(pointer), alignment);
         return reinterpret_cast<const u8*>(p);
     }
 
-    static constexpr
+    static inline
     u8* align_pointer(u8* pointer, u32 alignment)
     {
         uintptr_t p = align_offset(reinterpret_cast<uintptr_t>(pointer), alignment);
