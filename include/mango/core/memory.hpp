@@ -253,33 +253,4 @@ namespace mango
         }
     };
 
-    // -----------------------------------------------------------------------
-    // align_pointer
-    // -----------------------------------------------------------------------
-
-    template <size_t alignment>
-    static constexpr
-    uintptr_t align_pointer(uintptr_t pointer)
-    {
-        static_assert((alignment & (alignment - 1)) == 0, "alignment must be a power of two.");
-        constexpr size_t mask = alignment - 1;
-        return (pointer + mask) & ~mask;
-    }
-
-    template <size_t alignment>
-    static constexpr
-    const u8* align_pointer(const u8* pointer)
-    {
-        uintptr_t p = align_pointer<alignment>(reinterpret_cast<uintptr_t>(pointer));
-        return reinterpret_cast<const u8*>(p);
-    }
-
-    template <size_t alignment>
-    static constexpr
-    u8* align_pointer(u8* pointer)
-    {
-        uintptr_t p = align_pointer<alignment>(reinterpret_cast<uintptr_t>(pointer));
-        return reinterpret_cast<u8*>(p);
-    }
-
 } // namespace mango

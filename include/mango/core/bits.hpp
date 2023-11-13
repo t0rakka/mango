@@ -326,6 +326,42 @@ namespace mango
         return seed;
     }
 
+    // -----------------------------------------------------------------------
+    // alignment
+    // -----------------------------------------------------------------------
+
+    template <typename T>
+    static constexpr
+    T align_padding(T offset, u32 alignment)
+    {
+        assert((alignment & (alignment - 1)) == 0);
+        const T mask = T(alignment - 1);
+        return (~offset + 1) & mask;
+    }
+
+    template <typename T>
+    static constexpr
+    T align_offset(T offset, u32 alignment)
+    {
+        assert((alignment & (alignment - 1)) == 0);
+        const T mask = T(alignment - 1);
+        return (offset + mask) & ~mask;
+    }
+
+    static constexpr
+    const u8* align_pointer(const u8* pointer, u32 alignment)
+    {
+        uintptr_t p = align_offset(reinterpret_cast<uintptr_t>(pointer), alignment);
+        return reinterpret_cast<const u8*>(p);
+    }
+
+    static constexpr
+    u8* align_pointer(u8* pointer, u32 alignment)
+    {
+        uintptr_t p = align_offset(reinterpret_cast<uintptr_t>(pointer), alignment);
+        return reinterpret_cast<u8*>(p);
+    }
+
     // ----------------------------------------------------------------------------
     // scale / extend
     // ----------------------------------------------------------------------------
