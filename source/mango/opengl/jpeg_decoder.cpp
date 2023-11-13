@@ -199,6 +199,82 @@ const char* compute_shader_source = R"(
     }
 )";
 
+// ---------------------------------------------------------------------------------
+
+// TODO: do this in the compute shader
+
+void huff_decode_mcu(s16* output, const std::vector<DecodeBlock>& blocks, Huffman& huffman, BitBuffer& buffer)
+{
+    std::memset(output, 0, blocks.size() * 64 * sizeof(s16));
+
+    for (const auto& block : blocks)
+    {
+        const HuffTable* dc = &huffman.table[0][block.dc];
+        const HuffTable* ac = &huffman.table[1][block.ac];
+
+        // DC
+        int s = dc->decode(buffer);
+        if (s)
+        {
+            s = buffer.receive(s);
+        }
+
+        s += huffman.last_dc_value[block.pred];
+        huffman.last_dc_value[block.pred] = s;
+
+        output[0] = s16(s);
+
+        // AC
+        for (int i = 1; i < 64; )
+        {
+            buffer.ensure();
+
+            int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
+            int size = ac->lookupSize[index];
+
+            int symbol;
+
+            if (size <= JPEG_HUFF_LOOKUP_BITS)
+            {
+                symbol = ac->lookupValue[index];
+            }
+            else
+            {
+                DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
+                while (x > ac->maxcode[size])
+                {
+                    ++size;
+                }
+
+                DataType offset = (x >> (JPEG_REGISTER_BITS - size)) + ac->valueOffset[size];
+                symbol = ac->value[offset];
+            }
+
+            buffer.remain -= size;
+
+            int s = symbol;
+            int x = s & 15;
+
+            if (x)
+            {
+                i += (s >> 4);
+                s = buffer.receive(x);
+                output[zigzagTable[i++]] = s16(s);
+            }
+            else
+            {
+                if (s < 16)
+                    break;
+                i += 16;
+            }
+        }
+
+        output += 64;
+    }
+}
+
+// ---------------------------------------------------------------------------------
+
 struct ComputeDecoderContext : ComputeDecoder
 {
     GLuint program = 0;
@@ -206,7 +282,7 @@ struct ComputeDecoderContext : ComputeDecoder
 
     void send(const ComputeDecoderInput& input) override
     {
-
+#if 0
         Buffer buffer;
 
         for (auto interval : input.intervals)
@@ -216,18 +292,53 @@ struct ComputeDecoderContext : ComputeDecoder
             buffer.append(padding, 0);
         }
 
+        GLuint sbo;
+        glGenBuffers(1, &sbo);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, buffer.size(), reinterpret_cast<GLvoid*>(buffer.data()), GL_DYNAMIC_COPY);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sbo);
 
-        /*
-        size_t blocks_in_mcu = 3; // TODO
+#else
 
+        size_t blocks_in_mcu = input.blocks.size();
         size_t elements = input.ymcu * input.xmcu * blocks_in_mcu * 64;
-        size_t bytes = elements * sizeof(s16);
+
+        std::vector<s16> buffer(elements);
+
+        for (auto interval : input.intervals)
+        {
+            ConstMemory memory = interval.memory;
+            int y0 = interval.y0;
+            int y1 = interval.y1;
+
+            Huffman huffman = input.huffman;
+            BitBuffer bitbuffer;
+
+            huffman.restart();
+            bitbuffer.restart();
+
+            bitbuffer.ptr = memory.address;
+            bitbuffer.end = memory.address + memory.size;
+
+            s16* output = buffer.data() + y0 * input.xmcu * blocks_in_mcu * 64;
+
+            for (int y = y0; y < y1; ++y)
+            {
+                for (int i = 0; i < input.xmcu; ++i)
+                {
+                    huff_decode_mcu(output, input.blocks, huffman, bitbuffer);
+                    output += blocks_in_mcu * 64;
+                }
+            }
+        }
 
         GLuint sbo;
         glGenBuffers(1, &sbo);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, bytes, reinterpret_cast<GLvoid*>(input.data), GL_DYNAMIC_COPY);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, elements * sizeof(s16), reinterpret_cast<GLvoid*>(buffer.data()), GL_DYNAMIC_COPY);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sbo);
+
+#endif
 
         glUseProgram(program);
 
@@ -262,7 +373,6 @@ struct ComputeDecoderContext : ComputeDecoder
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
         glDeleteBuffers(1, &sbo);
-        */
 
 #if 0
         size_t total = 0;

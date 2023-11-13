@@ -2344,7 +2344,8 @@ namespace mango::jpeg
         input.xmcu = xmcu;
         input.ymcu = ymcu;
 
-        input.blocks_in_mcu = blocks_in_mcu;
+        input.huffman = decodeState.huffman;
+        input.blocks = std::vector<DecodeBlock>(decodeState.block + 0, decodeState.block + blocks_in_mcu);
 
         for (int i = 0; i < blocks_in_mcu; ++i)
         {
