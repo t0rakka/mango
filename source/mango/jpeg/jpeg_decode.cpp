@@ -2258,20 +2258,12 @@ namespace mango::jpeg
 
     void Parser::decodeSequentialCompute()
     {
-        ConcurrentQueue queue("jpeg.sequential.compute", Priority::HIGH);
-
-        const int mcu_data_size = blocks_in_mcu * 64;
-
-        AlignedStorage<s16> temp(mcu_data_size * xmcu * ymcu);
-        s16* data = temp.data();
+        ComputeDecoderInput input;
 
         if (!m_restart_offsets.empty())
         {
             // -----------------------------------------------------------------
             // custom mango encoded file (APP14:'Mango1' chunk present)
-            // -----------------------------------------------------------------
-            // - restart interval marker offsets are stored in the APP14 chunk
-            // - the markers are present for other decoders; we don't need them
             // -----------------------------------------------------------------
 
             const u8* p = decodeState.buffer.ptr;
@@ -2280,28 +2272,18 @@ namespace mango::jpeg
 
             for (u32 offset : m_restart_offsets)
             {
-                int y0 = i;
-                int y1 = std::min(i + m_decode_interval, ymcu);
+                const u8* p1 = memory.address + offset;
 
-                // enqueue task
-                queue.enqueue([=] (s16* data)
-                {
-                    DecodeState state = decodeState;
-                    state.buffer.ptr = p;
+                ComputeDecoderInput::Interval interval;
 
-                    for (int y = y0; y < y1; ++y)
-                    {
-                        for (int x = 0; x < xmcu; ++x)
-                        {
-                            state.decode(data, &state);
-                            data += mcu_data_size;
-                        }
-                    }
-                }, data);
+                interval.memory = ConstMemory(p, p1 - p);
+                interval.y0 = i;
+                interval.y1 = std::min(i + m_decode_interval, ymcu);
+
+                input.intervals.push_back(interval);
 
                 i += m_decode_interval;
-                p = memory.address + offset;
-                data += (y1 - y0) * mcu_data_size * xmcu;
+                p = p1;
             }
 
             decodeState.buffer.ptr = p;
@@ -2316,20 +2298,7 @@ namespace mango::jpeg
 
             for (int i = 0; i < mcus; i += restartInterval)
             {
-                // enqueue task
-                queue.enqueue([=] (s16* data)
-                {
-                    DecodeState state = decodeState;
-                    state.buffer.ptr = p;
-
-                    const int left = i + std::min(restartInterval, mcus - i);
-
-                    for (int j = i; j < left; ++j)
-                    {
-                        state.decode(data, &state);
-                        data += mcu_data_size;
-                    }
-                }, data);
+                const u8* p0 = p;
 
                 // seek next restart marker
                 p = seekMarker(p, decodeState.buffer.end);
@@ -2337,10 +2306,18 @@ namespace mango::jpeg
                 if (p >= decodeState.buffer.end)
                     break;
 
+                const u8* p1 = p;
+
                 if (isRestartMarker(p))
                     p += 2;
 
-                data += restartInterval * mcu_data_size;
+                ComputeDecoderInput::Interval interval;
+
+                interval.memory = ConstMemory(p0, p1 - p0);
+                interval.y0 = i;
+                interval.y1 = std::min(i + m_decode_interval, ymcu);
+
+                input.intervals.push_back(interval);
             }
 
             decodeState.buffer.ptr = p;
@@ -2351,20 +2328,19 @@ namespace mango::jpeg
             // standard jpeg - Huffman/Arithmetic decoder must be serial
             // ---------------------------------------------------------------
 
-            int count = xmcu * ymcu;
+            const u8* p0 = decodeState.buffer.ptr;
+            const u8* p1 = seekMarker(p0, decodeState.buffer.end);
+            decodeState.buffer.ptr = p1;
 
-            for (int i = 0; i < count; ++i)
-            {
-                decodeState.decode(data, &decodeState);
-                data += mcu_data_size;
-            }
+            ComputeDecoderInput::Interval interval;
+
+            interval.memory = ConstMemory(p0, p1 - p0);
+            interval.y0 = 0;
+            interval.y1 = ymcu;
+
+            input.intervals.push_back(interval);
         }
 
-        queue.wait();
-
-        ComputeDecoderInput input;
-
-        input.data = temp.data();
         input.xmcu = xmcu;
         input.ymcu = ymcu;
 

@@ -384,7 +384,15 @@ namespace mango::jpeg
         const s16* qt[10];
         int blocks_in_mcu;
 
-        s16* data;
+        struct Interval
+        {
+            ConstMemory memory;
+            int y0;
+            int y1;
+        };
+
+        std::vector<Interval> intervals;
+
         int xmcu;
         int ymcu;
     };

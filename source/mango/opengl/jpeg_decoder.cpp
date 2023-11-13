@@ -206,6 +206,18 @@ struct ComputeDecoderContext : ComputeDecoder
 
     void send(const ComputeDecoderInput& input) override
     {
+
+        Buffer buffer;
+
+        for (auto interval : input.intervals)
+        {
+            size_t padding = align_padding(interval.memory.size, 4);
+            buffer.append(interval.memory);
+            buffer.append(padding, 0);
+        }
+
+
+        /*
         size_t blocks_in_mcu = 3; // TODO
 
         size_t elements = input.ymcu * input.xmcu * blocks_in_mcu * 64;
@@ -250,6 +262,18 @@ struct ComputeDecoderContext : ComputeDecoder
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
         glDeleteBuffers(1, &sbo);
+        */
+
+#if 0
+        size_t total = 0;
+        debugPrint("Intervals: %d\n", (int)input.intervals.size());
+        for (auto interval : input.intervals)
+        {
+            total += interval.memory.size;
+            debugPrint("  %d KB\n", int(interval.memory.size/1024));
+        }
+        debugPrint("Total: %d KB\n", int(total/1024));
+#endif
 
         debugPrint("\n[ComputeDecode]\n");
         debugPrint("  MCU: %d x %d.\n\n", input.xmcu, input.ymcu);
