@@ -6,6 +6,8 @@
 #include <mango/core/core.hpp>
 #include <mango/opengl/opengl.hpp>
 
+#ifndef MANGO_OPENGL_CONTEXT_NONE
+
 namespace mango::opengl
 {
 
@@ -75,3 +77,5 @@ namespace mango::opengl
     }
 
 } // namespace mango::opengl
+
+#endif // MANGO_OPENGL_CONTEXT_NONE

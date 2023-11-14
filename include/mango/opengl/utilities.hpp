@@ -6,6 +6,8 @@
 
 #include "context.hpp"
 
+#ifndef MANGO_OPENGL_CONTEXT_NONE
+
 namespace mango::opengl
 {
 
@@ -15,3 +17,5 @@ namespace mango::opengl
     GLuint createProgram(const char* vertexShaderSource, const char* fragmentShaderSource);
 
 } // namespace mango::opengl
+
+#endif // MANGO_OPENGL_CONTEXT_NONE
