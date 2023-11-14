@@ -934,12 +934,6 @@ if buildtype == 'release'
     mango_public_cpp_args += ['-DNDEBUG']
 endif
 
-if is_darwin and not is_arm
-    # disable this warning until zlib pull request is merged
-    # also, the warning is unknown in M1/M2 ARM clang
-    add_project_arguments('-Wno-deprecated-non-prototype', language: ['c'])
-endif
-
 if is_windows
     add_project_arguments('-DUNICODE', '-D_UNICODE', language: ['c', 'cpp'])
 endif
