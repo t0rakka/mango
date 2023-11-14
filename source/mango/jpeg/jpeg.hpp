@@ -271,6 +271,8 @@ namespace mango::jpeg
         int eob_run;
 
         HuffTable table[2][JPEG_MAX_COMPS_IN_SCAN];
+        int maxTc = 0;
+        int maxTh = 0;
 
         void restart();
     };

@@ -203,17 +203,169 @@ const char* compute_shader_source = R"(
 
 // TODO: do this in the compute shader
 
+struct BitBuffer
+{
+    const u8* ptr;
+    const u8* end;
+
+    DataType data = 0;
+    int remain = 0;
+
+    void ensure()
+    {
+        if (remain < 16)
+        {
+            for (int i = 0; i < 2; ++i)
+            {
+                u32 x = *ptr++;
+                remain += 8;
+                data = (data << 8) | x;
+            }
+        }
+    }
+
+    int getBits(int nbits)
+    {
+        ensure();
+        return int(bextr(data, remain -= nbits, nbits));
+    }
+
+    int peekBits(int nbits)
+    {
+        return int(bextr(data, remain - nbits, nbits));
+    }
+
+    int extend(int value, int nbits) const
+    {
+        return value - ((((value + value) >> nbits) - 1) & ((1 << nbits) - 1));
+    }
+
+    int receive(int nbits)
+    {
+        int value = getBits(nbits);
+        return extend(value, nbits);
+    }
+};
+
+struct HuffmanTable
+{
+    u8 size[17];
+    u8 value[256];
+
+    // acceleration tables
+    u32 maxcode[18];
+    u32 valueOffset[19];
+    u8 lookupSize[JPEG_HUFF_LOOKUP_SIZE];
+    u8 lookupValue[JPEG_HUFF_LOOKUP_SIZE];
+
+    void configure(const HuffTable& source)
+    {
+        std::memcpy(size, source.size, 17);
+        std::memcpy(value, source.value, 256);
+        std::memcpy(lookupSize, source.lookupSize, JPEG_HUFF_LOOKUP_SIZE);
+        std::memcpy(lookupValue, source.lookupValue, JPEG_HUFF_LOOKUP_SIZE);
+
+        u8 huffsize[257];
+        u32 huffcode[257];
+
+        // Figure C.1: make table of Huffman code length for each symbol
+        int p = 0;
+        for (int j = 1; j <= 16; ++j)
+        {
+            int count = int(size[j]);
+            while (count-- > 0)
+            {
+                huffsize[p++] = u8(j);
+            }
+        }
+        huffsize[p] = 0;
+
+        // Figure C.2: generate the codes themselves
+        u32 code = 0;
+        int si = huffsize[0];
+        p = 0;
+        while (huffsize[p])
+        {
+            while ((int(huffsize[p])) == si)
+            {
+                huffcode[p++] = code;
+                code++;
+            }
+            code <<= 1;
+            si++;
+        }
+
+        // Figure F.15: generate decoding tables for bit-sequential decoding
+        p = 0;
+        for (int j = 1; j <= 16; j++)
+        {
+            if (size[j])
+            {
+                valueOffset[j] = p - int(huffcode[p]);
+                p += size[j];
+                maxcode[j] = huffcode[p - 1]; // maximum code of length j
+                maxcode[j] <<= (32 - j); // left justify
+                maxcode[j] |= (u32(1) << (32 - j)) - 1;
+            }
+            else
+            {
+                maxcode[j] = 0; // TODO: should be -1 if no codes of this length
+            }
+        }
+        valueOffset[18] = 0;
+        maxcode[17] = ~u32(0); //0xfffff; // ensures jpeg_huff_decode terminates
+    }
+};
+
+struct Huffman
+{
+    HuffmanTable table[2][JPEG_MAX_COMPS_IN_SCAN];
+    int last_dc_value[JPEG_MAX_COMPS_IN_SCAN];
+};
+
+static
+int decode(BitBuffer& buffer, const HuffmanTable& table)
+{
+    buffer.ensure();
+
+    int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
+    int size = table.lookupSize[index];
+
+    int symbol;
+
+    if (size <= JPEG_HUFF_LOOKUP_BITS)
+    {
+        symbol = table.lookupValue[index];
+    }
+    else
+    {
+        u32 x = (buffer.data << (32 - buffer.remain));
+        while (x > table.maxcode[size])
+        {
+            ++size;
+        }
+
+        u32 offset = (x >> (32 - size)) + table.valueOffset[size];
+        symbol = table.value[offset];
+    }
+
+    buffer.remain -= size;
+
+    return symbol;
+}
+
+static
 void huff_decode_mcu(s16* output, const std::vector<DecodeBlock>& blocks, Huffman& huffman, BitBuffer& buffer)
 {
     std::memset(output, 0, blocks.size() * 64 * sizeof(s16));
 
     for (const auto& block : blocks)
     {
-        const HuffTable* dc = &huffman.table[0][block.dc];
-        const HuffTable* ac = &huffman.table[1][block.ac];
+        const HuffmanTable* dc = &huffman.table[0][block.dc];
+        const HuffmanTable* ac = &huffman.table[1][block.ac];
 
         // DC
-        int s = dc->decode(buffer);
+        int s = decode(buffer, *dc);
         if (s)
         {
             s = buffer.receive(s);
@@ -227,32 +379,7 @@ void huff_decode_mcu(s16* output, const std::vector<DecodeBlock>& blocks, Huffma
         // AC
         for (int i = 1; i < 64; )
         {
-            buffer.ensure();
-
-            int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
-            int size = ac->lookupSize[index];
-
-            int symbol;
-
-            if (size <= JPEG_HUFF_LOOKUP_BITS)
-            {
-                symbol = ac->lookupValue[index];
-            }
-            else
-            {
-                DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
-                while (x > ac->maxcode[size])
-                {
-                    ++size;
-                }
-
-                DataType offset = (x >> (JPEG_REGISTER_BITS - size)) + ac->valueOffset[size];
-                symbol = ac->value[offset];
-            }
-
-            buffer.remain -= size;
-
-            int s = symbol;
+            int s = decode(buffer, *ac);
             int x = s & 15;
 
             if (x)
@@ -282,6 +409,44 @@ struct ComputeDecoderContext : ComputeDecoder
 
     void send(const ComputeDecoderInput& input) override
     {
+        Buffer buffer;
+        std::vector<u32> sizes;
+
+        for (auto interval : input.intervals)
+        {
+            std::vector<u8> temp;
+
+            // sanitize markers and stuff bytes
+
+            const u8* p = interval.memory.address;
+            const u8* end = interval.memory.end();
+
+            while (p < end)
+            {
+                if (p[0] == 0xff)
+                {
+                    if (p[1] == 0x00)
+                    {
+                        // literal
+                        temp.push_back(p[0]);
+                    }
+                    p += 2;
+                }
+                else
+                {
+                    temp.push_back(*p++);
+                }
+            }
+
+            size_t padding = align_padding(temp.size(), 4);
+
+            buffer.append(temp.data(), temp.size());
+            buffer.append(padding, 0);
+
+            sizes.push_back(u32(temp.size() + padding));
+        }
+
+
 #if 0
         Buffer buffer;
 
@@ -303,24 +468,41 @@ struct ComputeDecoderContext : ComputeDecoder
         size_t blocks_in_mcu = input.blocks.size();
         size_t elements = input.ymcu * input.xmcu * blocks_in_mcu * 64;
 
-        std::vector<s16> buffer(elements);
+        std::vector<s16> temp(elements);
 
-        for (auto interval : input.intervals)
+        ConstMemory memory = buffer;
+
+        Huffman huffman;
+
+        for (int Tc = 0; Tc <= input.huffman.maxTc; ++Tc)
         {
-            ConstMemory memory = interval.memory;
-            int y0 = interval.y0;
-            int y1 = interval.y1;
+            for (int Th = 0; Th <= input.huffman.maxTh; ++Th)
+            {
+                huffman.table[Tc][Th].configure(input.huffman.table[Tc][Th]);
+            }
+        }
 
-            Huffman huffman = input.huffman;
+        for (size_t i = 0; i < input.intervals.size(); ++i)
+        {
+            size_t bytes = sizes[i];
+            int y0 = input.intervals[i].y0;
+            int y1 = input.intervals[i].y1;
+
+            for (size_t j = 0; j < blocks_in_mcu; ++j)
+            {
+                huffman.last_dc_value[j] = 0;
+            }
+
             BitBuffer bitbuffer;
 
-            huffman.restart();
-            bitbuffer.restart();
-
             bitbuffer.ptr = memory.address;
-            bitbuffer.end = memory.address + memory.size;
+            bitbuffer.end = memory.address + bytes;
 
-            s16* output = buffer.data() + y0 * input.xmcu * blocks_in_mcu * 64;
+            memory.address += bytes;
+
+            s16* output = temp.data() + y0 * input.xmcu * blocks_in_mcu * 64;
+
+            //printf("range: %d .. %d\n", y0, y1 - 1);
 
             for (int y = y0; y < y1; ++y)
             {
@@ -335,7 +517,7 @@ struct ComputeDecoderContext : ComputeDecoder
         GLuint sbo;
         glGenBuffers(1, &sbo);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, elements * sizeof(s16), reinterpret_cast<GLvoid*>(buffer.data()), GL_DYNAMIC_COPY);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, elements * sizeof(s16), reinterpret_cast<GLvoid*>(temp.data()), GL_DYNAMIC_COPY);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sbo);
 
 #endif

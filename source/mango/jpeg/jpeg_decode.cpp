@@ -1068,6 +1068,8 @@ namespace mango::jpeg
             }
 
             HuffTable& table = decodeState.huffman.table[Tc][Th];
+            decodeState.huffman.maxTc = std::max(decodeState.huffman.maxTc, int(Tc));
+            decodeState.huffman.maxTh = std::max(decodeState.huffman.maxTh, int(Th));
 
             debugPrint("  Huffman table #%d table class: %d\n", Th, Tc);
             debugPrint("    codes: ");
@@ -2314,8 +2316,8 @@ namespace mango::jpeg
                 ComputeDecoderInput::Interval interval;
 
                 interval.memory = ConstMemory(p0, p1 - p0);
-                interval.y0 = i;
-                interval.y1 = std::min(i + m_decode_interval, ymcu);
+                interval.y0 = i / restartInterval;
+                interval.y1 = std::min(i + restartInterval, mcus) / restartInterval;
 
                 input.intervals.push_back(interval);
             }
