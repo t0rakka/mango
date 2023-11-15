@@ -229,11 +229,6 @@ struct BitBuffer
         return x;
     }
 
-    u32 extract(u32 value, int offset, int size)
-    {
-        return (value >> offset) & ((1 << size) - 1);
-    }
-
     void ensure()
     {
         if (remain < 16)
