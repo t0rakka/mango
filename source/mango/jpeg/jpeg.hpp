@@ -138,7 +138,7 @@ namespace mango::jpeg
 
     using DataType = u64;
 
-	#define bextr mango::u64_extract_bits
+    #define bextr mango::u64_extract_bits
 
     #define JPEG_REGISTER_BITS  64
     #define JPEG_REGISTER_BYTES 8
@@ -148,7 +148,7 @@ namespace mango::jpeg
 
     using DataType = u32;
 
-	#define bextr mango::u32_extract_bits
+    #define bextr mango::u32_extract_bits
 
     #define JPEG_REGISTER_BITS  32
     #define JPEG_REGISTER_BYTES 4

@@ -205,11 +205,34 @@ const char* compute_shader_source = R"(
 
 struct BitBuffer
 {
-    const u8* ptr;
-    const u8* end;
+    const u32* ptr;
+    int offset = 0;
 
-    DataType data = 0;
+    u32 mem_data = 0;
+    int mem_remain = 0;
+
+    u32 data = 0;
     int remain = 0;
+
+    u32 getByte()
+    {
+        if (!mem_remain)
+        {
+            mem_remain = 32;
+            mem_data = ptr[offset++];
+        }
+
+        u32 x = mem_data & 0xff;
+        mem_data >>= 8;
+        mem_remain -= 8;
+
+        return x;
+    }
+
+    u32 extract(u32 value, int offset, int size)
+    {
+        return (value >> offset) & ((1 << size) - 1);
+    }
 
     void ensure()
     {
@@ -217,33 +240,19 @@ struct BitBuffer
         {
             for (int i = 0; i < 2; ++i)
             {
-                u32 x = *ptr++;
+                u32 x = getByte();
                 remain += 8;
                 data = (data << 8) | x;
             }
         }
     }
 
-    int getBits(int nbits)
-    {
-        ensure();
-        return int(bextr(data, remain -= nbits, nbits));
-    }
-
-    int peekBits(int nbits)
-    {
-        return int(bextr(data, remain - nbits, nbits));
-    }
-
-    int extend(int value, int nbits) const
-    {
-        return value - ((((value + value) >> nbits) - 1) & ((1 << nbits) - 1));
-    }
-
     int receive(int nbits)
     {
-        int value = getBits(nbits);
-        return extend(value, nbits);
+        ensure();
+        remain -= nbits;
+        int value = (data >> remain) & ((1 << nbits) - 1);
+        return value - ((((value + value) >> nbits) - 1) & ((1 << nbits) - 1));
     }
 };
 
@@ -255,15 +264,11 @@ struct HuffmanTable
     // acceleration tables
     u32 maxcode[18];
     u32 valueOffset[19];
-    u8 lookupSize[JPEG_HUFF_LOOKUP_SIZE];
-    u8 lookupValue[JPEG_HUFF_LOOKUP_SIZE];
 
     void configure(const HuffTable& source)
     {
         std::memcpy(size, source.size, 17);
         std::memcpy(value, source.value, 256);
-        std::memcpy(lookupSize, source.lookupSize, JPEG_HUFF_LOOKUP_SIZE);
-        std::memcpy(lookupValue, source.lookupValue, JPEG_HUFF_LOOKUP_SIZE);
 
         u8 huffsize[257];
         u32 huffcode[257];
@@ -303,17 +308,17 @@ struct HuffmanTable
             {
                 valueOffset[j] = p - int(huffcode[p]);
                 p += size[j];
-                maxcode[j] = huffcode[p - 1]; // maximum code of length j
-                maxcode[j] <<= (32 - j); // left justify
-                maxcode[j] |= (u32(1) << (32 - j)) - 1;
+                maxcode[j] = huffcode[p - 1];
+                maxcode[j] <<= (32 - j);
+                maxcode[j] |= (1 << (32 - j)) - 1;
             }
             else
             {
-                maxcode[j] = 0; // TODO: should be -1 if no codes of this length
+                maxcode[j] = 0;
             }
         }
         valueOffset[18] = 0;
-        maxcode[17] = ~u32(0); //0xfffff; // ensures jpeg_huff_decode terminates
+        maxcode[17] = 0xffffffff;
     }
 };
 
@@ -328,26 +333,17 @@ int decode(BitBuffer& buffer, const HuffmanTable& table)
 {
     buffer.ensure();
 
-    int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
-    int size = table.lookupSize[index];
-
     int symbol;
+    int size = 0;
 
-    if (size <= JPEG_HUFF_LOOKUP_BITS)
+    u32 x = (buffer.data << (32 - buffer.remain));
+    while (x > table.maxcode[size])
     {
-        symbol = table.lookupValue[index];
+        ++size;
     }
-    else
-    {
-        u32 x = (buffer.data << (32 - buffer.remain));
-        while (x > table.maxcode[size])
-        {
-            ++size;
-        }
 
-        u32 offset = (x >> (32 - size)) + table.valueOffset[size];
-        symbol = table.value[offset];
-    }
+    u32 offset = (x >> (32 - size)) + table.valueOffset[size];
+    symbol = table.value[offset];
 
     buffer.remain -= size;
 
@@ -495,8 +491,8 @@ struct ComputeDecoderContext : ComputeDecoder
 
             BitBuffer bitbuffer;
 
-            bitbuffer.ptr = memory.address;
-            bitbuffer.end = memory.address + bytes;
+            bitbuffer.ptr = reinterpret_cast<const u32*>(memory.address);
+            //bitbuffer.end = memory.address + bytes;
 
             memory.address += bytes;
 
