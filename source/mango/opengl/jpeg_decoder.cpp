@@ -26,19 +26,18 @@ const char* compute_shader_source = R"(
     #version 430 core
     //#extension GL_EXT_shader_explicit_arithmetic_types : enable
 
-    layout(rgba8, binding = 0) uniform image2D uTexture;
+    layout(rgba8, binding = 0) uniform image2D u_texture;
 
-    uniform int uQuantize0[64];
-    uniform int uQuantize1[64];
-    uniform int uQuantize2[64];
+    uniform int u_quantize0[64];
+    uniform int u_quantize1[64];
+    uniform int u_quantize2[64];
 
     uniform int u_huffman_dc[10];
     uniform int u_huffman_ac[10];
     uniform int u_huffman_pred[10];
 
-    uniform int u_y0;
-    uniform int u_y1;
-    uniform int u_dataOffset;
+    //uniform int u_y0;
+    //uniform int u_y1;
     uniform int u_xmcu;
 
     layout(std430, binding = 0) buffer CompressedData
@@ -46,14 +45,19 @@ const char* compute_shader_source = R"(
         uint input[];
     };
 
-    layout(std430, binding = 1) buffer HuffmanTables
+    layout(std430, binding = 1) buffer CompressedDataOffsets
+    {
+        uint input_offsets[];
+    };
+
+    layout(std430, binding = 2) buffer HuffmanTables
     {
         uint huffman_tables[];
     };
 
     layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-    uint zigzagTable [] =
+    const uint zigzagTable [] =
     {
          0,  1,  8, 16,  9,  2,  3, 10,
         17, 24, 32, 25, 18, 11,  4,  5,
@@ -171,66 +175,54 @@ const char* compute_shader_source = R"(
 
     struct BitBuffer
     {
-        int offset;
-
-        uint mem_data;
-        int mem_remain;
+        uint offset;
+        uint used;
 
         uint data;
-        int remain;
+        uint remain;
 
         uint getByte()
         {
-            if (mem_remain == 0)
+            if (used == 32)
             {
-                mem_remain = 32;
-                mem_data = input[offset++];
+                used = 0;
+                ++offset;
             }
 
-            uint x = mem_data & 0xff;
-            mem_data >>= 8;
-            mem_remain -= 8;
+            uint x = (input[offset] >> used) & 0xff;
+            used += 8;
 
             return x;
         }
 
+        uint peekBits(uint nbits)
+        {
+            return (data >> (remain - nbits)) & ((1 << nbits) - 1);
+        }
+
         void ensure()
         {
-            if (remain < 16)
+            while (remain < 16)
             {
-                remain += 16;
-                uint x0 = getByte();
-                uint x1 = getByte();
-                data = (data << 8) | x0;
-                data = (data << 8) | x1;
+                remain += 8;
+                uint x = getByte();
+                data = (data << 8) | x;
             }
         }
 
-        int receive(int nbits)
+        uint receive(uint nbits)
         {
             ensure();
             remain -= nbits;
             uint mask = (1 << nbits) - 1;
+
+            // TODO: expand should be signed
+            //return (data >> remain) & mask;
+
             int value = int((data >> remain) & mask);
-            return int(value - ((((value + value) >> nbits) - 1) & mask));
+            return uint(value - ((((value + value) >> nbits) - 1) & mask));
         }
     };
-
-    struct HuffmanTable
-    {
-        uint size[17];
-        uint value[256];
-        uint maxcode[18];
-        uint valueOffset[19];
-    };
-
-    /*
-    struct Huffman
-    {
-        HuffmanTable tables[20];
-        int last_dc_value[10];
-    };
-    */
 
     struct DecodeBlock
     {
@@ -239,86 +231,149 @@ const char* compute_shader_source = R"(
         int pred;
     };
 
-    int decode(inout BitBuffer bitbuffer, HuffmanTable tables[4], int index)
+#define JPEG_HUFF_LOOKUP_BITS 6
+#define JPEG_HUFF_LOOKUP_SIZE (1 << JPEG_HUFF_LOOKUP_BITS)
+
+    struct HuffmanTable
+    {
+        uint size[17];
+        uint value[256];
+
+        uint maxcode[18];
+        uint valueOffset[19];
+        uint lookupSize[JPEG_HUFF_LOOKUP_SIZE];
+        uint lookupValue[JPEG_HUFF_LOOKUP_SIZE];
+
+        void configure()
+        {
+            uint huffsize[257];
+            uint huffcode[257];
+
+            // Figure C.1: make table of Huffman code length for each symbol
+            uint p = 0;
+            for (int j = 1; j <= 16; ++j)
+            {
+                int count = int(size[j]);
+                while (count-- > 0)
+                {
+                    huffsize[p++] = uint(j);
+                }
+            }
+            huffsize[p] = 0;
+
+            // Figure C.2: generate the codes themselves
+            uint code = 0;
+            uint si = huffsize[0];
+            p = 0;
+            while (huffsize[p] != 0)
+            {
+                while ((int(huffsize[p])) == si)
+                {
+                    huffcode[p++] = code;
+                    code++;
+                }
+                code <<= 1;
+                si++;
+            }
+
+            // Figure F.15: generate decoding tables for bit-sequential decoding
+            p = 0;
+            for (int j = 1; j <= 16; j++)
+            {
+                if (size[j] != 0)
+                {
+                    valueOffset[j] = p - int(huffcode[p]);
+                    p += size[j];
+                    maxcode[j] = huffcode[p - 1];
+                    maxcode[j] <<= (32 - j);
+                    maxcode[j] |= (1 << (32 - j)) - 1;
+                }
+                else
+                {
+                    maxcode[j] = 0;
+                }
+            }
+            valueOffset[18] = 0;
+            maxcode[17] = 0xffffffff;
+
+            for (int i = 0; i < JPEG_HUFF_LOOKUP_SIZE; i++)
+            {
+                lookupSize[i] = JPEG_HUFF_LOOKUP_BITS + 1;
+                lookupValue[i] = 0;
+            }
+
+            p = 0;
+
+            for (uint bits = 1; bits <= JPEG_HUFF_LOOKUP_BITS; ++bits)
+            {
+                uint ishift = JPEG_HUFF_LOOKUP_BITS - bits;
+                uint isize = size[bits];
+
+                uint current_size = bits;
+
+                for (int i = 1; i <= isize; ++i)
+                {
+                    uint current_value = value[p];
+                    uint lookbits = huffcode[p] << ishift;
+                    ++p;
+
+                    // Generate left-justified code followed by all possible bit sequences
+                    int count = 1 << ishift;
+                    for (uint mask = 0; mask < count; ++mask)
+                    {
+                        uint x = lookbits | mask;
+                        if (x >= JPEG_HUFF_LOOKUP_SIZE)
+                        {
+                            // overflow
+                            return;
+                        }
+
+                        lookupSize[x] = current_size;
+                        lookupValue[x] = current_value;
+                    }
+                }
+            }
+        }
+    };
+
+    HuffmanTable g_tables[4];
+
+    uint decode(inout BitBuffer bitbuffer, int tableIndex)
     {
         bitbuffer.ensure();
 
-        int symbol;
-        int size = 0;
+        uint index = bitbuffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
+        uint size = g_tables[tableIndex].lookupSize[index];
 
-        uint x = (bitbuffer.data << (32 - bitbuffer.remain));
-        while (x > tables[index].maxcode[size])
+        uint symbol;
+
+        if (size <= JPEG_HUFF_LOOKUP_BITS)
         {
-            ++size;
+            symbol = g_tables[tableIndex].lookupValue[index];
         }
+        else
+        {
+            uint x = (bitbuffer.data << (32 - bitbuffer.remain));
+            while (x > g_tables[tableIndex].maxcode[size])
+            {
+                ++size;
+            }
 
-        uint offset = (x >> (32 - size)) + tables[index].valueOffset[size];
-        symbol = int(tables[index].value[offset]);
+            uint offset = (x >> (32 - size)) + g_tables[tableIndex].valueOffset[size];
+            symbol = g_tables[tableIndex].value[offset];
+        }
 
         bitbuffer.remain -= size;
 
         return symbol;
     }
 
-    void huff_decode_mcu(out int dest[640], inout BitBuffer bitbuffer, inout int last_dc_value[3], DecodeBlock blocks[3], int numBlocks, HuffmanTable huffmanTables[4])
-    {
-        for (int i = 0; i < numBlocks * 64; ++i)
-        {
-            dest[i] = 0;
-        }
-
-        int offset = 0;
-
-        for (int blk = 0; blk < numBlocks; ++blk)
-        {
-            int dc = blocks[blk].dc;
-            int ac = blocks[blk].ac;
-            int pred = blocks[blk].pred;
-
-            // DC
-            int s = decode(bitbuffer, huffmanTables, dc);
-            if (s != 0)
-            {
-                s = bitbuffer.receive(s);
-            }
-
-            s += last_dc_value[pred];
-            last_dc_value[pred] = s;
-
-            dest[offset + 0] = s;
-
-            // AC
-            for (int i = 1; i < 64; )
-            {
-                int s = decode(bitbuffer, huffmanTables, ac);
-                int x = s & 15;
-
-                if (x != 0)
-                {
-                    i += (s >> 4);
-                    s = bitbuffer.receive(x);
-                    dest[offset + zigzagTable[i++]] = s;
-                }
-                else
-                {
-                    if (s < 16)
-                        break;
-                    i += 16;
-                }
-            }
-
-            offset += 64;
-        }
-    }
-
     void main()
     {
-#if 1
         BitBuffer bitbuffer;
 
-        bitbuffer.offset = u_dataOffset;
-        bitbuffer.mem_data = 0;
-        bitbuffer.mem_remain = 0;
+        bitbuffer.offset = input_offsets[gl_GlobalInvocationID.y];
+        bitbuffer.used = 0;
         bitbuffer.data = 0;
         bitbuffer.remain = 0;
 
@@ -336,228 +391,116 @@ const char* compute_shader_source = R"(
         decodeBlocks[2].ac = 3;
         decodeBlocks[2].pred = 2;
 
-        HuffmanTable huffmanTables[4];
-
         for (int i = 0; i < 4; ++i)
         {
+            int base = i * 273;
+
             for (int j = 0; j < 17; ++j)
             {
-                huffmanTables[i].size[j] = huffman_tables[i * 310 + 0 + j];
+                g_tables[i].size[j] = huffman_tables[base++];
             }
 
             for (int j = 0; j < 256; ++j)
             {
-                huffmanTables[i].value[j] = huffman_tables[i * 310 + 17 + j];
+                g_tables[i].value[j] = huffman_tables[base++];
             }
 
-            for (int j = 0; j < 18; ++j)
-            {
-                huffmanTables[i].maxcode[j] = huffman_tables[i * 310 + 17 + 256 + j];
-            }
-
-            for (int j = 0; j < 19; ++j)
-            {
-                huffmanTables[i].valueOffset[j] = huffman_tables[i * 310 + 17 + 256 + 18 + j];
-            }
+            // NOTE: configuring this per interval is expensive but we'll use this for quick start
+            g_tables[i].configure();
         }
 
-        int last_dc_value[3];
+        uint last_dc_value[3];
 
         for (int i = 0; i < 3; ++i)
         {
             last_dc_value[i] = 0;
         }
 
+        // -------------------------------------------------------------------------------
+
         for (int mx = 0; mx < u_xmcu; ++mx)
         {
-            int temp[640];
+            int temp[3][64];
 
-            huff_decode_mcu(temp, bitbuffer, last_dc_value, decodeBlocks, 3, huffmanTables);
-
-            int data0[64];
-            int data1[64];
-            int data2[64];
-
-            for (int i = 0; i < 64; ++i)
+            for (int blk = 0; blk < 3; ++blk)
             {
-                data0[i] = temp[64 * 0 + i];
-                data1[i] = temp[64 * 1 + i];
-                data2[i] = temp[64 * 2 + i];
-            }
+                int dc = decodeBlocks[blk].dc;
+                int ac = decodeBlocks[blk].ac;
+                int pred = decodeBlocks[blk].pred;
 
-            // xxx
-            bool clean = true;
-            for (int i = 0; i < 64; ++i)
-            {
-                if (data0[i] != 0) clean = false;
+                for (int i = 0; i < 64; ++i)
+                {
+                    temp[blk][i] = 0;
+                }
+
+                // DC
+                uint s = decode(bitbuffer, dc);
+                if (s != 0)
+                {
+                    s = bitbuffer.receive(s);
+                }
+
+                s += last_dc_value[pred];
+                last_dc_value[pred] = s;
+
+                temp[blk][0] = int(s);
+
+                // AC
+                for (int i = 1; i < 64; )
+                {
+                    uint s = decode(bitbuffer, ac);
+                    uint x = s & 15;
+
+                    if (x != 0)
+                    {
+                        i += int(s >> 4);
+                        s = bitbuffer.receive(x);
+                        temp[blk][zigzagTable[i++]] = int(s);
+                    }
+                    else
+                    {
+                        if (s < 16)
+                            break;
+                        i += 16;
+                    }
+                }
             }
 
             // inverse DCT
 
-            int lu[64];
+            int lm[64];
             int cb[64];
             int cr[64];
 
-            idct(lu, data0, uQuantize0);
-            idct(cb, data1, uQuantize1);
-            idct(cr, data2, uQuantize2);
+            idct(lm, temp[0], u_quantize0);
+            idct(cb, temp[1], u_quantize1);
+            idct(cr, temp[2], u_quantize2);
 
             // resolve color
 
-            //uint idx = gl_GlobalInvocationID.y * gl_NumWorkGroups.x + gl_GlobalInvocationID.x;
-
-            ivec2 blockCoord = ivec2(mx * 8, u_y0 * 8);
-            //ivec2 blockCoord = ivec2(gl_GlobalInvocationID.xy * 8);
+            ivec2 blockCoord = ivec2(mx * 8, gl_GlobalInvocationID.y * 8);
 
             for (int y = 0; y < 8; ++y)
             {
                 for (int x = 0; x < 8; ++x)
                 {
                     ivec2 coord = blockCoord + ivec2(x, y);
-
-                    float Y = float(lu[y * 8 + x]) / 255.0;
+                    float Y = float(lm[y * 8 + x]) / 255.0;
                     float cb = float(cb[y * 8 + x] - 128) / 255.0;
                     float cr = float(cr[y * 8 + x] - 128) / 255.0;
                     vec4 color = chroma_to_rgb(Y, cb, cr);
-
-                    // xxx
-                    if (clean) color = vec4(1.0, 1.0, 0.0, 1.0);
-
-                    imageStore(uTexture, coord, color);
+                    imageStore(u_texture, coord, color);
                 }
             }
         }
-
-#else
-
-        for (int mx = 0; mx < u_xmcu; ++mx)
-        {
-            int data0[64];
-            int data1[64];
-            int data2[64];
-
-            for (int i = 0; i < 64; ++i)
-            {
-                int base = mx * 64 * 3;
-                data0[i] = int(input[base + 64 * 0 + i]);
-                data1[i] = int(input[base + 64 * 1 + i]);
-                data2[i] = int(input[base + 64 * 2 + i]);
-            }
-
-            // inverse DCT
-
-            int lu[64];
-            int cb[64];
-            int cr[64];
-
-            idct(lu, data0, uQuantize0);
-            idct(cb, data1, uQuantize1);
-            idct(cr, data2, uQuantize2);
-
-            // resolve color
-
-            //uint idx = gl_GlobalInvocationID.y * gl_NumWorkGroups.x + gl_GlobalInvocationID.x;
-
-            ivec2 blockCoord = ivec2(mx * 8, u_y0 * 8);
-            //ivec2 blockCoord = ivec2(gl_GlobalInvocationID.xy * 8);
-
-            for (int y = 0; y < 8; ++y)
-            {
-                for (int x = 0; x < 8; ++x)
-                {
-                    ivec2 coord = blockCoord + ivec2(x, y);
-
-                    float Y = float(lu[y * 8 + x]) / 255.0;
-                    float cb = float(cb[y * 8 + x] - 128) / 255.0;
-                    float cr = float(cr[y * 8 + x] - 128) / 255.0;
-                    vec4 color = chroma_to_rgb(Y, cb, cr);
-
-                    imageStore(uTexture, coord, color);
-                }
-            }
-        }
-#endif
     }
 )";
 
 // ---------------------------------------------------------------------------------
 
-struct HuffmanTable
-{
-    u8 size[17];
-    u8 value[256];
-
-    // acceleration tables
-    u32 maxcode[18];
-    u32 valueOffset[19];
-
-    void configure(const HuffTable& source)
-    {
-        std::memcpy(size, source.size, 17);
-        std::memcpy(value, source.value, 256);
-
-        u8 huffsize[257];
-        u32 huffcode[257];
-
-        // Figure C.1: make table of Huffman code length for each symbol
-        int p = 0;
-        for (int j = 1; j <= 16; ++j)
-        {
-            int count = int(size[j]);
-            while (count-- > 0)
-            {
-                huffsize[p++] = u8(j);
-            }
-        }
-        huffsize[p] = 0;
-
-        // Figure C.2: generate the codes themselves
-        u32 code = 0;
-        int si = huffsize[0];
-        p = 0;
-        while (huffsize[p])
-        {
-            while ((int(huffsize[p])) == si)
-            {
-                huffcode[p++] = code;
-                code++;
-            }
-            code <<= 1;
-            si++;
-        }
-
-        // Figure F.15: generate decoding tables for bit-sequential decoding
-        p = 0;
-        for (int j = 1; j <= 16; j++)
-        {
-            if (size[j])
-            {
-                valueOffset[j] = p - int(huffcode[p]);
-                p += size[j];
-                maxcode[j] = huffcode[p - 1];
-                maxcode[j] <<= (32 - j);
-                maxcode[j] |= (1 << (32 - j)) - 1;
-            }
-            else
-            {
-                maxcode[j] = 0;
-            }
-        }
-        valueOffset[18] = 0;
-        maxcode[17] = 0xffffffff;
-    }
-};
-
-struct Huffman
-{
-    HuffmanTable table[2][JPEG_MAX_COMPS_IN_SCAN];
-    int last_dc_value[JPEG_MAX_COMPS_IN_SCAN];
-};
-
-// ---------------------------------------------------------------------------------
-
 // CPU decoder xD xD
 
+/*
 using uint = u32;
 static u32* input = nullptr;
 
@@ -565,36 +508,31 @@ struct BitBuffer
 {
     int offset;
 
-    uint mem_data;
-    int mem_remain;
-
     uint data;
     int remain;
+    int used;
 
     uint getByte()
     {
-        if (mem_remain == 0)
+        if (used == 32)
         {
-            mem_remain = 32;
-            mem_data = input[offset++];
+            used = 0;
+            ++offset;
         }
 
-        uint x = mem_data & 0xff;
-        mem_data >>= 8;
-        mem_remain -= 8;
+        uint x = (input[offset] >> used) & 0xff;
+        used += 8;
 
         return x;
     }
 
     void ensure()
     {
-        if (remain < 16)
+        while (remain < 16)
         {
-            remain += 16;
-            uint x0 = getByte();
-            uint x1 = getByte();
-            data = (data << 8) | x0;
-            data = (data << 8) | x1;
+            remain += 8;
+            uint x = getByte();
+            data = (data << 8) | x;
         }
     }
 
@@ -615,7 +553,7 @@ struct DecodeBlock
     int pred;
 };
 
-int decode(BitBuffer& bitbuffer, HuffmanTable tables[4], int index)
+int decode(BitBuffer& bitbuffer, HuffTable tables[4], int index)
 {
     bitbuffer.ensure();
 
@@ -636,7 +574,7 @@ int decode(BitBuffer& bitbuffer, HuffmanTable tables[4], int index)
     return symbol;
 }
 
-void huff_decode_mcu(int dest[640], DecodeBlock blocks[3], int numBlocks, HuffmanTable huffmanTables[4], int last_dc_value[3], BitBuffer& bitbuffer)
+void huff_decode_mcu(int dest[640], DecodeBlock blocks[3], int numBlocks, HuffTable huffmanTables[4], int last_dc_value[3], BitBuffer& bitbuffer)
 {
     for (int i = 0; i < numBlocks * 64; ++i)
     {
@@ -697,8 +635,7 @@ void cpu_decode_interval(int* temp, const Buffer& buffer, const std::vector<int>
     BitBuffer bitbuffer;
 
     bitbuffer.offset = dataOffset;
-    bitbuffer.mem_data = 0;
-    bitbuffer.mem_remain = 0;
+    bitbuffer.used = 0;
     bitbuffer.data = 0;
     bitbuffer.remain = 0;
 
@@ -716,28 +653,30 @@ void cpu_decode_interval(int* temp, const Buffer& buffer, const std::vector<int>
     decodeBlocks[2].ac = 3;
     decodeBlocks[2].pred = 2;
 
-    HuffmanTable huffmanTables[4];
+    HuffTable huffmanTables[4];
 
     for (int i = 0; i < 4; ++i)
     {
+        int base = i * 310;
+
         for (int j = 0; j < 17; ++j)
         {
-            huffmanTables[i].size[j] = huffman_tables[i * 310 + 0 + j];
+            huffmanTables[i].size[j] = huffman_tables[base + 0 + j];
         }
 
         for (int j = 0; j < 256; ++j)
         {
-            huffmanTables[i].value[j] = huffman_tables[i * 310 + 17 + j];
+            huffmanTables[i].value[j] = huffman_tables[base + 17 + j];
         }
 
         for (int j = 0; j < 18; ++j)
         {
-            huffmanTables[i].maxcode[j] = huffman_tables[i * 310 + 17 + 256 + j];
+            huffmanTables[i].maxcode[j] = huffman_tables[base + 17 + 256 + j];
         }
 
         for (int j = 0; j < 19; ++j)
         {
-            huffmanTables[i].valueOffset[j] = huffman_tables[i * 310 + 17 + 256 + 18 + j];
+            huffmanTables[i].valueOffset[j] = huffman_tables[base + 17 + 256 + 18 + j];
         }
     }
 
@@ -753,6 +692,7 @@ void cpu_decode_interval(int* temp, const Buffer& buffer, const std::vector<int>
         huff_decode_mcu(temp + 64 * 3 * mx, decodeBlocks, 3, huffmanTables, last_dc_value, bitbuffer);
     }
 }
+*/
 
 // ---------------------------------------------------------------------------------
 
@@ -807,75 +747,55 @@ struct ComputeDecoderContext : ComputeDecoder
             u32 size = u32(temp.size() + padding);
 
             sizes.push_back(size);
-            offsets.push_back(currentOffset);
+            offsets.push_back(u32(currentOffset / 4));
             currentOffset += size;
         }
 
-        GLuint sbo[2];
-        glGenBuffers(2, sbo);
+        GLuint sbo[3];
+        glGenBuffers(3, sbo);
 
+#if 1
+        // upload compressed bitstream
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[0]);
         glBufferData(GL_SHADER_STORAGE_BUFFER, buffer.size(), reinterpret_cast<GLvoid*>(buffer.data()), GL_DYNAMIC_COPY);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sbo[0]);
 
+        // upload offset tables
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[1]);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, offsets.size() * 4, reinterpret_cast<GLvoid*>(offsets.data()), GL_DYNAMIC_COPY);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, sbo[1]);
+#endif
+
         size_t blocks_in_mcu = input.blocks.size();
-
-        Huffman huffman;
-
-        for (int Tc = 0; Tc <= input.huffman.maxTc; ++Tc)
-        {
-            for (int Th = 0; Th <= input.huffman.maxTh; ++Th)
-            {
-                huffman.table[Tc][Th].configure(input.huffman.table[Tc][Th]);
-            }
-        }
-
-        for (size_t j = 0; j < blocks_in_mcu; ++j)
-        {
-            huffman.last_dc_value[j] = 0; // not used
-
-            printf("  block %d -> dc: %d, ac: %d, pred: %d\n", 
-                int(j), input.blocks[j].dc, input.blocks[j].ac, input.blocks[j].pred);
-        }
 
         std::vector<int> huffmanBuffer(310 * 4);
 
         for (int i = 0; i < 4; ++i)
         {
-            int* dest = huffmanBuffer.data() + 310 * i;
-
-            HuffmanTable& source = huffman.table[i & 1][i >> 1];
+            int* dest = huffmanBuffer.data() + i * 273;
+            const HuffTable& source = input.huffman.table[i & 1][i >> 1];
 
             for (int j = 0; j < 17; ++j)
             {
-                dest[0 + j] = source.size[j];
+                *dest++ = source.size[j];
             }
 
             for (int j = 0; j < 256; ++j)
             {
-                dest[17 + j] = source.value[j];
-            }
-
-            for (int j = 0; j < 18; ++j)
-            {
-                dest[17 + 256 + j] = source.maxcode[j];
-            }
-
-            for (int j = 0; j < 19; ++j)
-            {
-                dest[17 + 256 + 18 + j] = source.valueOffset[j];
+                *dest++ = source.value[j];
             }
         }
 
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[1]);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, huffmanBuffer.size(), reinterpret_cast<GLvoid*>(huffmanBuffer.data()), GL_DYNAMIC_COPY);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, sbo[1]);
+        // upload huffman tables
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[2]);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, huffmanBuffer.size() * 4, reinterpret_cast<GLvoid*>(huffmanBuffer.data()), GL_DYNAMIC_COPY);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, sbo[2]);
 
         glUseProgram(program);
 
         glBindImageTexture(0, texture, 0, GL_FALSE, 0,  GL_READ_WRITE, GL_RGBA8);
 
-        glUniform1i(glGetUniformLocation(program, "uTexture"), 0);
+        glUniform1i(glGetUniformLocation(program, "u_texture"), 0);
 
         // TODO: configure the source qt
 
@@ -896,9 +816,9 @@ struct ComputeDecoderContext : ComputeDecoder
             quantize[i + 64 * 2] = input.qt[2][i];
         }
 
-        glUniform1iv(glGetUniformLocation(program, "uQuantize0"), 64, quantize + 64 * 0);
-        glUniform1iv(glGetUniformLocation(program, "uQuantize1"), 64, quantize + 64 * 1);
-        glUniform1iv(glGetUniformLocation(program, "uQuantize2"), 64, quantize + 64 * 2);
+        glUniform1iv(glGetUniformLocation(program, "u_quantize0"), 64, quantize + 64 * 0);
+        glUniform1iv(glGetUniformLocation(program, "u_quantize1"), 64, quantize + 64 * 1);
+        glUniform1iv(glGetUniformLocation(program, "u_quantize2"), 64, quantize + 64 * 2);
 
         int huffman_dc [] =
         {
@@ -929,6 +849,7 @@ struct ComputeDecoderContext : ComputeDecoder
 
         debugPrint("  Compute Segments: %d\n", int(input.intervals.size()));
 
+        /*
         for (size_t i = 0; i < input.intervals.size(); ++i)
         {
             int y0 = input.intervals[i].y0;
@@ -938,7 +859,7 @@ struct ComputeDecoderContext : ComputeDecoder
 
             glUniform1i(glGetUniformLocation(program, "u_y0"), y0);
             glUniform1i(glGetUniformLocation(program, "u_y1"), y1);
-            glUniform1i(glGetUniformLocation(program, "u_dataOffset"), offset / 4);
+            //glUniform1i(glGetUniformLocation(program, "u_data_offset"), offset / 4);
 
 #if 0
             {
@@ -948,20 +869,20 @@ struct ComputeDecoderContext : ComputeDecoder
                 glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[0]);
                 glBufferData(GL_SHADER_STORAGE_BUFFER, temp.size() * 4, reinterpret_cast<GLvoid*>(temp.data()), GL_DYNAMIC_COPY);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sbo[0]);
-
-                glDispatchCompute(1, 1, 1);
             }
 #endif
 
             // .. compute ..
             glDispatchCompute(1, 1, 1);
         }
+        */
 
+        glDispatchCompute(1, input.intervals.size(), 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
-        glDeleteBuffers(2, sbo);
+        glDeleteBuffers(3, sbo);
 
-#if 0
+        /*
         size_t total = 0;
         debugPrint("Intervals: %d\n", (int)input.intervals.size());
         for (auto interval : input.intervals)
@@ -970,7 +891,7 @@ struct ComputeDecoderContext : ComputeDecoder
             debugPrint("  %d KB\n", int(interval.memory.size/1024));
         }
         debugPrint("Total: %d KB\n", int(total/1024));
-#endif
+        */
 
         debugPrint("\n");
     }
