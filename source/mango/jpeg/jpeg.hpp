@@ -138,7 +138,7 @@ namespace mango::jpeg
 
     using DataType = u64;
 
-	#define bextr mango::u64_extract_bits
+    #define bextr mango::u64_extract_bits
 
     #define JPEG_REGISTER_BITS  64
     #define JPEG_REGISTER_BYTES 8
@@ -148,7 +148,7 @@ namespace mango::jpeg
 
     using DataType = u32;
 
-	#define bextr mango::u32_extract_bits
+    #define bextr mango::u32_extract_bits
 
     #define JPEG_REGISTER_BITS  32
     #define JPEG_REGISTER_BYTES 4
@@ -162,7 +162,7 @@ namespace mango::jpeg
     static constexpr int JPEG_NUM_ARITH_TBLS     = 16;  // Arith-coding tables are numbered 0..15
     static constexpr int JPEG_DC_STAT_BINS       = 64;  // ...
     static constexpr int JPEG_AC_STAT_BINS       = 256; // ...
-    static constexpr int JPEG_HUFF_LOOKUP_BITS   = 12;  // Huffman look-ahead table log2 size
+    static constexpr int JPEG_HUFF_LOOKUP_BITS   = 9;   // Huffman look-ahead table log2 size
     static constexpr int JPEG_HUFF_LOOKUP_SIZE   = (1 << JPEG_HUFF_LOOKUP_BITS);
 
     static
@@ -271,6 +271,8 @@ namespace mango::jpeg
         int eob_run;
 
         HuffTable table[2][JPEG_MAX_COMPS_IN_SCAN];
+        int maxTc = 0;
+        int maxTh = 0;
 
         void restart();
     };
@@ -382,9 +384,19 @@ namespace mango::jpeg
     struct ComputeDecoderInput
     {
         const s16* qt[10];
-        int blocks_in_mcu;
 
-        s16* data;
+        Huffman huffman;
+        std::vector<DecodeBlock> blocks;
+
+        struct Interval
+        {
+            ConstMemory memory;
+            int y0;
+            int y1;
+        };
+
+        std::vector<Interval> intervals;
+
         int xmcu;
         int ymcu;
     };
