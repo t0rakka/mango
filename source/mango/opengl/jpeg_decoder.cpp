@@ -707,11 +707,7 @@ struct ComputeDecoderContext : ComputeDecoder
         debugPrint("  MCU: %d x %d.\n", input.xmcu, input.ymcu);
 
         Buffer buffer;
-
-        std::vector<u32> sizes;
         std::vector<u32> offsets;
-
-        size_t currentOffset = 0;
 
         for (auto interval : input.intervals)
         {
@@ -724,6 +720,10 @@ struct ComputeDecoderContext : ComputeDecoder
 
             while (p < end)
             {
+                u8 s = *p++;
+                p += !!(s == 0xff);
+                temp.push_back(s);
+                /*
                 if (p[0] == 0xff)
                 {
                     if (p[1] == 0x00)
@@ -737,18 +737,15 @@ struct ComputeDecoderContext : ComputeDecoder
                 {
                     temp.push_back(*p++);
                 }
+                */
             }
+
+            offsets.push_back(u32(buffer.size() / 4));
 
             size_t padding = align_padding(temp.size(), 4);
 
             buffer.append(temp.data(), temp.size());
             buffer.append(padding, 0);
-
-            u32 size = u32(temp.size() + padding);
-
-            sizes.push_back(size);
-            offsets.push_back(u32(currentOffset / 4));
-            currentOffset += size;
         }
 
         GLuint sbo[3];
