@@ -138,21 +138,15 @@ namespace mango::jpeg
 
     using DataType = u64;
 
-    #define bextr mango::u64_extract_bits
-
     #define JPEG_REGISTER_BITS  64
-    #define JPEG_REGISTER_BYTES 8
-    #define JPEG_REGISTER_FILL  6
+    #define bextr mango::u64_extract_bits
 
 #else
 
     using DataType = u32;
 
-    #define bextr mango::u32_extract_bits
-
     #define JPEG_REGISTER_BITS  32
-    #define JPEG_REGISTER_BYTES 4
-    #define JPEG_REGISTER_FILL  2
+    #define bextr mango::u32_extract_bits
 
 #endif
 
@@ -303,9 +297,9 @@ namespace mango::jpeg
     struct Frame
     {
         int compid; // Component identifier
-        int Hsf;    // Horizontal sampling factor
-        int Vsf;    // Vertical sampling factor
-        int Tq;     // Quantization table destination selector
+        int hsf;    // Horizontal sampling factor
+        int vsf;    // Vertical sampling factor
+        int tq;     // Quantization table destination selector
         int offset;
     };
 
@@ -328,13 +322,15 @@ namespace mango::jpeg
         int blocks;
         int comps_in_scan;
 
-        int spectralStart;
-        int spectralEnd;
-        int successiveHigh;
-        int successiveLow;
+        int spectral_start;
+        int spectral_end;
+        int successive_high;
+        int successive_low;
 
         void restart()
         {
+            buffer.restart();
+
             if (is_arithmetic)
             {
                 arithmetic.restart(buffer);
@@ -343,8 +339,6 @@ namespace mango::jpeg
             {
                 huffman.restart();
             }
-
-            buffer.restart();
         }
 
         void (*decode)(s16* output, DecodeState* state);
@@ -363,6 +357,7 @@ namespace mango::jpeg
 
         Frame frame[JPEG_MAX_COMPS_IN_SCAN];
         int frames;
+
         ColorSpace colorspace = ColorSpace::CMYK; // default
 
 	    void (*idct) (u8* dest, const s16* data, const s16* qt);

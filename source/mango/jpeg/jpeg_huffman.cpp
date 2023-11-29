@@ -288,7 +288,7 @@ namespace mango::jpeg
             s += huffman.last_dc_value[block->pred];
             huffman.last_dc_value[block->pred] = s;
 
-            dest[0] = s16(s << state->successiveLow);
+            dest[0] = s16(s << state->successive_low);
         }
     }
 
@@ -299,7 +299,7 @@ namespace mango::jpeg
         for (int j = 0; j < state->blocks; ++j)
         {
             s16* dest = output + state->block[j].offset;
-            dest[0] |= (buffer.getBits(1) << state->successiveLow);
+            dest[0] |= (buffer.getBits(1) << state->successive_low);
         }
     }
 
@@ -310,8 +310,8 @@ namespace mango::jpeg
 
         const HuffTable* ac = &huffman.table[1][state->block[0].ac];
 
-        const int start = state->spectralStart;
-        const int end = state->spectralEnd;
+        const int start = state->spectral_start;
+        const int end = state->spectral_end;
 
         if (huffman.eob_run)
         {
@@ -330,7 +330,7 @@ namespace mango::jpeg
                 if (s)
                 {
                     s = buffer.receive(s);
-                    output[zigzagTable[i]] = s16(s << state->successiveLow);
+                    output[zigzagTable[i]] = s16(s << state->successive_low);
                 }
                 else
                 {
@@ -357,11 +357,11 @@ namespace mango::jpeg
 
         const HuffTable* ac = &huffman.table[1][state->block[0].ac];
 
-        const int start = state->spectralStart;
-        const int end = state->spectralEnd;
+        const int start = state->spectral_start;
+        const int end = state->spectral_end;
 
-        const int p1 = 1 << state->successiveLow;
-        const int m1 = (-1) << state->successiveLow;
+        const int p1 = 1 << state->successive_low;
+        const int m1 = (-1) << state->successive_low;
 
         int k = start;
 

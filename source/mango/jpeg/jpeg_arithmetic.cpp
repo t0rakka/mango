@@ -54,9 +54,10 @@ namespace
         0x55976d6e, 0x504f6b6f, 0x5a106fee, 0x55226d70, 0x59eb6ff0, 0x5a1d7171
     };
 
-    inline u8 get_byte(BitBuffer& buffer)
+    inline
+    u8 get_byte(BitBuffer& buffer)
     {
-        // guard against corrupted bit-streams
+        // guard against corrupted streams
         if (buffer.ptr >= buffer.end)
             return 0;
 
@@ -221,7 +222,7 @@ namespace mango::jpeg
 
         std::memset(output, 0, state->blocks * 64 * sizeof(s16));
 
-        const int end = state->spectralEnd;
+        const int end = state->spectral_end;
 
         for (int j = 0; j < state->blocks; ++j)
         {
@@ -412,7 +413,7 @@ namespace mango::jpeg
                 arithmetic.last_dc_value[ci] += v;
             }
 
-            dest[0] = s16(arithmetic.last_dc_value[ci] << state->successiveLow);
+            dest[0] = s16(arithmetic.last_dc_value[ci] << state->successive_low);
             ++block;
         }
     }
@@ -430,7 +431,7 @@ namespace mango::jpeg
             // Encoded data is simply the next bit of the two's-complement DC value
             if (arith_decode(arithmetic, buffer, st))
             {
-                dest[0] |= (1 << state->successiveLow);
+                dest[0] |= (1 << state->successive_low);
             }
         }
     }
@@ -440,8 +441,8 @@ namespace mango::jpeg
         Arithmetic& arithmetic = state->arithmetic;
         BitBuffer& buffer = state->buffer;
 
-        const int start = state->spectralStart;
-        const int end = state->spectralEnd;
+        const int start = state->spectral_start;
+        const int end = state->spectral_end;
 
         u8* ac_stats = arithmetic.ac_stats[state->block[0].ac];
         u8 ac_K = arithmetic.ac_K[state->block[0].ac];
@@ -496,7 +497,7 @@ namespace mango::jpeg
             v += 1; if (sign) v = -v;
             
             // Scale and output coefficient in natural order
-            output[zigzagTable[k]] = s16(v << state->successiveLow);
+            output[zigzagTable[k]] = s16(v << state->successive_low);
         }
     }
 
@@ -505,13 +506,13 @@ namespace mango::jpeg
         Arithmetic& arithmetic = state->arithmetic;
         BitBuffer& buffer = state->buffer;
 
-        const int start = state->spectralStart;
-        const int end = state->spectralEnd;
+        const int start = state->spectral_start;
+        const int end = state->spectral_end;
 
         u8* ac_stats = arithmetic.ac_stats[state->block[0].ac];
 
-        int p1 = 1 << state->successiveLow; //  1 in the bit position being coded
-        int m1 = (-1) << state->successiveLow; // -1 in the bit position being coded
+        int p1 = 1 << state->successive_low; //  1 in the bit position being coded
+        int m1 = (-1) << state->successive_low; // -1 in the bit position being coded
 
         int kex;
 

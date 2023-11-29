@@ -105,7 +105,7 @@ namespace mango::jpeg
         }
 #endif
 
-        for (int i = 0; i < JPEG_REGISTER_FILL; ++i)
+        while (remain <= (JPEG_REGISTER_BITS - 8))
         {
             const u8* x = ptr;
 
@@ -474,27 +474,25 @@ namespace mango::jpeg
         decodeState.is_arithmetic = marker > MARKER_SOF7;
         m_compression = decodeState.is_arithmetic ? "Arithmetic" : "Huffman";
 
-        const char* encoding = "";
         switch (marker)
         {
             // Huffman
-            case MARKER_SOF0:  encoding = "Baseline DCT"; break;
-            case MARKER_SOF1:  encoding = "Extended sequential DCT"; break;
-            case MARKER_SOF2:  encoding = "Progressive DCT"; break;
-            case MARKER_SOF3:  encoding = "Lossless"; break;
-            case MARKER_SOF5:  encoding = "Differential sequential DCT"; break;
-            case MARKER_SOF6:  encoding = "Differential progressive DCT"; break;
-            case MARKER_SOF7:  encoding = "Differential lossless"; break;
-            // Arithmetic
-            case MARKER_SOF9:  encoding = "Extended sequential DCT"; break;
-            case MARKER_SOF10: encoding = "Progressive DCT"; break;
-            case MARKER_SOF11: encoding = "Lossless"; break;
-            case MARKER_SOF13: encoding = "Differential sequential DCT"; break;
-            case MARKER_SOF14: encoding = "Differential progressive DCT"; break;
-            case MARKER_SOF15: encoding = "Differential lossless"; break;
-        }
+            case MARKER_SOF0:  m_encoding = "Baseline DCT"; break;
+            case MARKER_SOF1:  m_encoding = "Extended sequential DCT"; break;
+            case MARKER_SOF2:  m_encoding = "Progressive DCT"; break;
+            case MARKER_SOF3:  m_encoding = "Lossless"; break;
+            case MARKER_SOF5:  m_encoding = "Differential sequential DCT"; break;
+            case MARKER_SOF6:  m_encoding = "Differential progressive DCT"; break;
+            case MARKER_SOF7:  m_encoding = "Differential lossless"; break;
 
-        m_encoding = encoding;
+            // Arithmetic
+            case MARKER_SOF9:  m_encoding = "Extended sequential DCT"; break;
+            case MARKER_SOF10: m_encoding = "Progressive DCT"; break;
+            case MARKER_SOF11: m_encoding = "Lossless"; break;
+            case MARKER_SOF13: m_encoding = "Differential sequential DCT"; break;
+            case MARKER_SOF14: m_encoding = "Differential progressive DCT"; break;
+            case MARKER_SOF15: m_encoding = "Differential lossless"; break;
+        }
 
         debugPrint("  Encoding: %s\n", m_encoding.c_str());
         debugPrint("  Compression: %s\n", m_compression.c_str());
@@ -565,33 +563,33 @@ namespace mango::jpeg
 
             frame.compid = p[0];
             u8 x = p[1];
-            frame.Hsf = (x >> 4) & 0xf;
-            frame.Vsf = (x >> 0) & 0xf;
-            frame.Tq = p[2];
+            frame.hsf = (x >> 4) & 0xf;
+            frame.vsf = (x >> 0) & 0xf;
+            frame.tq = p[2];
             frame.offset = offset;
             p += 3;
 
             u8 max_tq = is_lossless ? 0 : 3;
-            if (frame.Tq > max_tq)
+            if (frame.tq > max_tq)
             {
-                header.setError("Incorrect quantization table index (%d)", frame.Tq);
+                header.setError("Incorrect quantization table index (%d)", frame.tq);
                 return;
             }
 
             if (components == 1)
             {
                 // Optimization: force block size to 8x8 with grayscale images
-                frame.Hsf = 1;
-                frame.Vsf = 1;
+                frame.hsf = 1;
+                frame.vsf = 1;
             }
 
-            Hmax = std::max(Hmax, frame.Hsf);
-            Vmax = std::max(Vmax, frame.Vsf);
-            blocks_in_mcu += frame.Hsf * frame.Vsf;
+            Hmax = std::max(Hmax, frame.hsf);
+            Vmax = std::max(Vmax, frame.vsf);
+            blocks_in_mcu += frame.hsf * frame.vsf;
 
-            if (frame.Hsf < 1 || frame.Hsf > 4 || frame.Vsf < 1 || frame.Vsf > 4)
+            if (frame.hsf < 1 || frame.hsf > 4 || frame.vsf < 1 || frame.vsf > 4)
             {
-                header.setError(makeString("Incorrect frame sampling rate (%d x %d)", frame.Hsf, frame.Vsf));
+                header.setError(makeString("Incorrect frame sampling rate (%d x %d)", frame.hsf, frame.vsf));
                 return;
             }
 
@@ -601,14 +599,14 @@ namespace mango::jpeg
                 return;
             }
 
-            for (int y = 0; y < frame.Vsf; ++y)
+            for (int y = 0; y < frame.vsf; ++y)
             {
-                for (int x = 0; x < frame.Hsf; ++x)
+                for (int x = 0; x < frame.hsf; ++x)
                 {
-                    processState.block[offset].qt = quantTable[frame.Tq].table;
+                    processState.block[offset].qt = quantTable[frame.tq].table;
                     if (!processState.block[offset].qt)
                     {
-                        header.setError("No quantization table for index (%d)", frame.Tq);
+                        header.setError("No quantization table for index (%d)", frame.tq);
                         return;
                     }
 
@@ -617,7 +615,7 @@ namespace mango::jpeg
             }
 
             debugPrint("  Frame: %d, compid: %d, Hsf: %d, Vsf: %d, Tq: %d, offset: %d\n",
-                i, frame.compid, frame.Hsf, frame.Vsf, frame.Tq, frame.offset);
+                i, frame.compid, frame.hsf, frame.vsf, frame.tq, frame.offset);
 
             frames.push_back(frame);
         }
@@ -629,13 +627,13 @@ namespace mango::jpeg
         for (int i = 0; i < components; ++i)
         {
             Frame& frame = processState.frame[i];
-            if (!frame.Hsf || !frame.Vsf)
+            if (!frame.hsf || !frame.vsf)
             {
-                header.setError("Incorrect sampling factors (%d x %d)", frame.Hsf, frame.Vsf);
+                header.setError("Incorrect sampling factors (%d x %d)", frame.hsf, frame.vsf);
                 return;
             }
-            frame.Hsf = u32_log2(Hmax / frame.Hsf);
-            frame.Vsf = u32_log2(Vmax / frame.Vsf);
+            frame.hsf = u32_log2(Hmax / frame.hsf);
+            frame.vsf = u32_log2(Vmax / frame.vsf);
         }
 
         xblock = 8 * Hmax;
@@ -742,11 +740,11 @@ namespace mango::jpeg
             Frame* frame = nullptr;
             int pred = 0;
 
-            for (int j = 0; j < int(frames.size()); ++j)
+            for (size_t j = 0; j < frames.size(); ++j)
             {
                 if (frames[j].compid == cs)
                 {
-                    pred = j;
+                    pred = int(j);
                     frame = &frames[j];
                 }
             }
@@ -759,7 +757,7 @@ namespace mango::jpeg
 
             scanFrame = frame;
 
-            const int size = frame->Hsf * frame->Vsf;
+            const int size = frame->hsf * frame->vsf;
             int offset = frame->offset;
 
             std::string cs_name;
@@ -800,10 +798,10 @@ namespace mango::jpeg
         int Ah = (x >> 4) & 0xf;
         p += 3;
 
-        decodeState.spectralStart = Ss;
-        decodeState.spectralEnd = Se;
-        decodeState.successiveLow = Al;
-        decodeState.successiveHigh = Ah;
+        decodeState.spectral_start = Ss;
+        decodeState.spectral_end = Se;
+        decodeState.successive_low = Al;
+        decodeState.successive_high = Ah;
 
         debugPrint("  Spectral range: (%d, %d)\n", Ss, Se);
 
@@ -843,8 +841,8 @@ namespace mango::jpeg
             return p;
         }
 
-        bool dc_scan = (decodeState.spectralStart == 0);
-        bool refine_scan = (decodeState.successiveHigh != 0);
+        bool dc_scan = (decodeState.spectral_start == 0);
+        bool refine_scan = (decodeState.successive_high != 0);
 
         restartCounter = restartInterval;
 
@@ -1924,8 +1922,8 @@ namespace mango::jpeg
         // NOTE: need more test files to make this more conformant
         // NOTE: color sub-sampling is not supported (need test files)
 
-        int predictor = decodeState.spectralStart;
-        int pointTransform = decodeState.successiveLow;
+        int predictor = decodeState.spectral_start;
+        int pointTransform = decodeState.successive_low;
 
         auto decodeFunction = huff_decode_mcu_lossless;
         int* previousDC = decodeState.huffman.last_dc_value;
@@ -2372,7 +2370,7 @@ namespace mango::jpeg
 
     void Parser::decodeProgressive()
     {
-        if (decodeState.spectralStart == 0)
+        if (decodeState.spectral_start == 0)
         {
             if (decodeState.comps_in_scan == 1 && decodeState.blocks > 1)
             {
@@ -2448,8 +2446,8 @@ namespace mango::jpeg
         {
             s16* data = blockVector;
 
-            const int hsf = u32_log2(scanFrame->Hsf);
-            const int vsf = u32_log2(scanFrame->Vsf);
+            const int hsf = u32_log2(scanFrame->hsf);
+            const int vsf = u32_log2(scanFrame->vsf);
             const int hsize = (Hmax >> hsf) * 8;
             const int vsize = (Vmax >> vsf) * 8;
 
@@ -2516,8 +2514,8 @@ namespace mango::jpeg
         {
             s16* data = blockVector;
 
-            const int hsf = u32_log2(scanFrame->Hsf);
-            const int vsf = u32_log2(scanFrame->Vsf);
+            const int hsf = u32_log2(scanFrame->hsf);
+            const int vsf = u32_log2(scanFrame->vsf);
             const int hsize = (Hmax >> hsf) * 8;
             const int vsize = (Vmax >> vsf) * 8;
 

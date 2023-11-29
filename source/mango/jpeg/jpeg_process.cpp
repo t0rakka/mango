@@ -105,16 +105,16 @@ void process_cmyk_bgra(u8* dest, size_t stride, const s16* data, ProcessState* s
     int ysize = (height + 7) / 8;
 
     int cb_offset = state->frame[1].offset * 64;
-    int cb_xshift = state->frame[1].Hsf;
-    int cb_yshift = state->frame[1].Vsf;
+    int cb_xshift = state->frame[1].hsf;
+    int cb_yshift = state->frame[1].vsf;
 
     int cr_offset = state->frame[2].offset * 64;
-    int cr_xshift = state->frame[2].Hsf;
-    int cr_yshift = state->frame[2].Vsf;
+    int cr_xshift = state->frame[2].hsf;
+    int cr_yshift = state->frame[2].vsf;
 
     int ck_offset = state->frame[3].offset * 64;
-    int ck_xshift = state->frame[3].Hsf;
-    int ck_yshift = state->frame[3].Vsf;
+    int ck_xshift = state->frame[3].hsf;
+    int ck_yshift = state->frame[3].vsf;
 
     u8* cb_data = result + cb_offset;
     u8* cr_data = result + cr_offset;
