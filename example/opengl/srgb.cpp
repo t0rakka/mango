@@ -21,7 +21,7 @@ public:
         : OpenGLFramebuffer(256, 128)
         , m_bitmap(256, 128, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8))
     {
-        updateTile();
+        updateTitle();
 
         // compute window size
         int32x2 screen = getScreenSize();
@@ -68,7 +68,7 @@ public:
 
         case KEYCODE_S:
             m_srgb = !m_srgb;
-            updateTile();
+            updateTitle();
             if (m_srgb)
                 glEnable(GL_FRAMEBUFFER_SRGB_EXT);
             else
@@ -90,7 +90,7 @@ public:
         present(m_filter);
     }
 
-    void updateTile()
+    void updateTitle()
     {
         if (m_srgb)
             setTitle("[OpenGLFramebuffer] top: LINEAR, sRGB: ENABLE");
