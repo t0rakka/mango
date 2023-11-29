@@ -315,9 +315,18 @@ namespace mango
         return std::floor(0.5f + value / grid) * grid;
     }
 
+    /*
+        NOTE: crackle() and pop() functions removed for copyright reasons.
+    */
+
     static constexpr
     u32 wang_hash(u32 seed)
     {
+        // What's this weird-looking code?
+        // It's a wang hash, of course! (credit: Thomas Wang)
+        // What does it do? It causes avalanche-affect; one bit difference in seed
+        // will cause AT LEAST half of the bits in the hash to be different.
+        // One would use this to reduce hash collisions and other cool stuff like that.
         seed = (seed ^ 61) ^ (seed >> 16);
         seed *= 9;
         seed = seed ^ (seed >> 4);
@@ -334,8 +343,11 @@ namespace mango
     static inline
     T align_padding(T offset, u32 alignment)
     {
+        // alignment must be a power of two
         assert((alignment & (alignment - 1)) == 0);
         const T mask = T(alignment - 1);
+
+        // padding needed for aligned offset
         return (~offset + 1) & mask;
     }
 
@@ -343,14 +355,18 @@ namespace mango
     static inline
     T align_offset(T offset, u32 alignment)
     {
+        // alignment must be a power of two
         assert((alignment & (alignment - 1)) == 0);
         const T mask = T(alignment - 1);
+
+        // aligned offset
         return (offset + mask) & ~mask;
     }
 
     static inline
     const u8* align_pointer(const u8* pointer, u32 alignment)
     {
+        // alignment must be a power of two
         uintptr_t p = align_offset(reinterpret_cast<uintptr_t>(pointer), alignment);
         return reinterpret_cast<const u8*>(p);
     }
@@ -358,6 +374,7 @@ namespace mango
     static inline
     u8* align_pointer(u8* pointer, u32 alignment)
     {
+        // alignment must be a power of two
         uintptr_t p = align_offset(reinterpret_cast<uintptr_t>(pointer), alignment);
         return reinterpret_cast<u8*>(p);
     }
