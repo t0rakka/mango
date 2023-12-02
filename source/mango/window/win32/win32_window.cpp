@@ -720,7 +720,7 @@ namespace mango
         return pressed;
     }
 
-    Window::operator HWND () const
+    Window::operator NativeWindowHandle () const
     {
         return m_handle->hwnd;
     }

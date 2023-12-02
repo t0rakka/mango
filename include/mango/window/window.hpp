@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -12,6 +12,37 @@
 #include <mango/image/surface.hpp>
 #include <mango/filesystem/filesystem.hpp>
 #include <mango/math/math.hpp>
+
+#ifdef MANGO_WINDOW_SYSTEM_WIN32
+
+    using NativeWindowHandle = HWND;
+
+#endif
+
+#ifdef MANGO_WINDOW_SYSTEM_XLIB
+
+    #include <X11/Xlib.h>
+
+    #ifdef Status
+        #undef Status
+        using Status = int;
+    #endif
+
+    struct NativeWindowHandle
+    {
+        ::Display* display;
+        ::Window window;
+    };
+
+#endif
+
+#ifdef MANGO_WINDOW_SYSTEM_XCB
+        // TODO
+#endif
+
+#ifdef MANGO_WINDOW_SYSTEM_WAYLAND
+        // TODO
+#endif
 
 namespace mango
 {
@@ -155,9 +186,7 @@ namespace mango
 		virtual math::int32x2 getCursorPosition() const;
         virtual bool isKeyPressed(Keycode code) const;
 
-#ifdef MANGO_PLATFORM_WINDOWS
-		operator HWND () const;
-#endif
+        operator NativeWindowHandle () const;
 
         operator struct WindowHandle* () const
         {
