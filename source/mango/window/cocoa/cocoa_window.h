@@ -1,8 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/window/window.hpp>
+
+#if defined(MANGO_WINDOW_SYSTEM_COCOA)
 
 #import <Cocoa/Cocoa.h>
 
@@ -30,3 +32,5 @@ namespace mango
 
 - (void)createMenu;
 @end
+
+#endif // defined(MANGO_WINDOW_SYSTEM_COCOA)

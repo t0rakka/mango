@@ -13,13 +13,31 @@
 #include <mango/filesystem/filesystem.hpp>
 #include <mango/math/math.hpp>
 
-#ifdef MANGO_WINDOW_SYSTEM_WIN32
+// -----------------------------------------------------------------------
+// MANGO_WINDOW_SYSTEM_WIN32
+// -----------------------------------------------------------------------
+
+#if defined(MANGO_WINDOW_SYSTEM_WIN32)
 
     using NativeWindowHandle = HWND;
 
 #endif
 
-#ifdef MANGO_WINDOW_SYSTEM_XLIB
+// -----------------------------------------------------------------------
+// MANGO_WINDOW_SYSTEM_COCOA
+// -----------------------------------------------------------------------
+
+#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+
+    using NativeWindowHandle = void*;
+
+#endif
+
+// -----------------------------------------------------------------------
+// MANGO_WINDOW_SYSTEM_XLIB
+// -----------------------------------------------------------------------
+
+#if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
     #include <X11/Xlib.h>
 
@@ -36,16 +54,40 @@
 
 #endif
 
-#ifdef MANGO_WINDOW_SYSTEM_XCB
-        // TODO
+// -----------------------------------------------------------------------
+// MANGO_WINDOW_SYSTEM_XCB
+// -----------------------------------------------------------------------
+
+#if defined(MANGO_WINDOW_SYSTEM_XCB)
+
+    #include <xcb/xcb.h>
+
+    struct NativeWindowHandle
+    {
+        xcb_connection_t* connection;
+        xcb_window_t window;
+    };
+
 #endif
 
-#ifdef MANGO_WINDOW_SYSTEM_WAYLAND
+// -----------------------------------------------------------------------
+// MANGO_WINDOW_SYSTEM_WAYLAND
+// -----------------------------------------------------------------------
+
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+
         // TODO
+
 #endif
 
 namespace mango
 {
+
+#if !defined(MANGO_WINDOW_SYSTEM_NONE)
+
+    // -----------------------------------------------------------------------
+    // Window
+    // -----------------------------------------------------------------------
 
     enum Keycode
     {
@@ -155,10 +197,6 @@ namespace mango
         MOUSEBUTTON_WHEEL
     };
 
-    // -----------------------------------------------------------------------
-    // Window
-    // -----------------------------------------------------------------------
-
     class Window : public NonCopyable
     {
     protected:
@@ -183,7 +221,7 @@ namespace mango
         void setVisible(bool enable);
 
         virtual math::int32x2 getWindowSize() const;
-		virtual math::int32x2 getCursorPosition() const;
+        virtual math::int32x2 getCursorPosition() const;
         virtual bool isKeyPressed(Keycode code) const;
 
         operator NativeWindowHandle () const;
@@ -210,5 +248,7 @@ namespace mango
         virtual void onShow();
         virtual void onHide();
     };
+
+#endif // !defined(MANGO_WINDOW_SYSTEM_NONE)
 
 } // namespace mango

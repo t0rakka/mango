@@ -2,9 +2,9 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#ifndef MANGO_OPENGL_CONTEXT_NONE
-
 #include "cocoa_window.h"
+
+#if defined(MANGO_WINDOW_SYSTEM_COCOA)
 
 #include <chrono>
 #include <thread>
@@ -164,6 +164,11 @@ namespace mango
         return state != 0;
     }
 
+    Window::operator NativeWindowHandle () const
+    {
+        return nullptr;
+    }
+
     void Window::enterEventLoop()
     {
         m_handle->is_looping = true;
@@ -263,4 +268,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // MANGO_OPENGL_CONTEXT_NONE
+#endif // defined(MANGO_WINDOW_SYSTEM_COCOA)

@@ -9,6 +9,8 @@
 #include <mango/core/string.hpp>
 #include "win32_handle.hpp"
 
+#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+
 namespace
 {
     using namespace mango;
@@ -820,3 +822,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif // defined(MANGO_WINDOW_SYSTEM_WIN32)

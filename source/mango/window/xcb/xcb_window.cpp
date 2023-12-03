@@ -1,11 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2016 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <unistd.h>
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
 #include "xcb_handle.hpp"
+
+#if defined(MANGO_WINDOW_SYSTEM_XCB)
 
 namespace
 {
@@ -277,6 +279,16 @@ namespace mango
         return pressed;
 #endif
         return false;
+    }
+
+    Window::operator NativeWindowHandle () const
+    {
+        NativeWindowHandle handle;
+
+        handle.connection = m_handle->connection;
+        handle.window = m_handle->window;
+
+        return handle;
     }
 
     void Window::enterEventLoop()
@@ -676,3 +688,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif // defined(MANGO_WINDOW_SYSTEM_XCB)

@@ -5,6 +5,9 @@
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
 #include "xlib_handle.hpp"
+
+#if defined(MANGO_WINDOW_SYSTEM_XLIB)
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -1190,3 +1193,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif // defined(MANGO_WINDOW_SYSTEM_XLIB)

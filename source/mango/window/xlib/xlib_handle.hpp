@@ -6,6 +6,8 @@
 
 #include <mango/window/window.hpp>
 
+#if defined(MANGO_WINDOW_SYSTEM_XLIB)
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -19,7 +21,7 @@ namespace mango
 
     struct WindowHandle
     {
-		// window data
+        // window data
         ::Display*  x11_display { NULL };
         ::Window    x11_window { 0 };
         ::Colormap  x11_colormap { 0 };
@@ -65,3 +67,5 @@ namespace mango
     };
 
 } // namespace mango
+
+#endif // defined(MANGO_WINDOW_SYSTEM_XLIB)

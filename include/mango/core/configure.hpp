@@ -20,35 +20,35 @@
     // Microsoft XBOX
     #define MANGO_PLATFORM_XBOX
     #define MANGO_PLATFORM_NAME "Xbox"
-    #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+    #define MANGO_WINDOW_SYSTEM_NONE
 
 #elif (defined(_XBOX_VER) && (_XBOX_VER >= 200)) || defined(_XENON)
 
     // Microsoft XBOX 360
     #define MANGO_PLATFORM_XBOX360
     #define MANGO_PLATFORM_NAME "Xbox 360"
-    #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+    #define MANGO_WINDOW_SYSTEM_NONE
 
 #elif defined(_DURANGO)
 
     // Microsoft XBOX ONE
     #define MANGO_PLATFORM_XBOXONE
     #define MANGO_PLATFORM_NAME "Xbox One"
-    #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+    #define MANGO_WINDOW_SYSTEM_NONE
 
 #elif defined(__CELLOS_LV2__)
 
     // SONY Playstation 3
     #define MANGO_PLATFORM_PS3
     #define MANGO_PLATFORM_NAME "Playstation 3"
-    #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+    #define MANGO_WINDOW_SYSTEM_NONE
 
 #elif defined(__ORBIS__)
 
     // SONY Playstation 4
     #define MANGO_PLATFORM_PS4
     #define MANGO_PLATFORM_NAME "Playstation 4"
-    #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+    #define MANGO_WINDOW_SYSTEM_NONE
 
 #elif defined(_WIN32) || defined(_WINDOWS_)
 
@@ -88,7 +88,7 @@
         #define MANGO_PLATFORM_IOS
         #define MANGO_PLATFORM_UNIX
         #define MANGO_PLATFORM_NAME "iOS"
-        #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+        #define MANGO_WINDOW_SYSTEM_NONE
 
     #else
 
@@ -96,7 +96,7 @@
         #define MANGO_PLATFORM_OSX
         #define MANGO_PLATFORM_UNIX
         #define MANGO_PLATFORM_NAME "macOS"
-        #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+        #define MANGO_WINDOW_SYSTEM_COCOA
 
     #endif
 
@@ -106,7 +106,7 @@
     #define MANGO_PLATFORM_ANDROID
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "Android"
-    #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+    #define MANGO_WINDOW_SYSTEM_NONE
 
     #include <stdint.h>
     #include <malloc.h>
@@ -130,7 +130,7 @@
     #define MANGO_PLATFORM_CYGWIN
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "Cygwin"
-    #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+    #define MANGO_WINDOW_SYSTEM_NONE
 
     #include <stdint.h>
     #include <malloc.h>
@@ -141,7 +141,7 @@
     #define MANGO_PLATFORM_BSD
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "BSD"
-    #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+    #define MANGO_WINDOW_SYSTEM_NONE
 
     #include <inttypes.h>
     #include <malloc.h>
@@ -152,7 +152,7 @@
     #define MANGO_PLATFORM_SUN
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "SUN"
-    #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+    #define MANGO_WINDOW_SYSTEM_NONE
 
     #include <inttypes.h>
     #include <malloc.h>
@@ -163,7 +163,7 @@
     #define MANGO_PLATFORM_HPUX
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "HPUX"
-    #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+    #define MANGO_WINDOW_SYSTEM_NONE
 
     #include <inttypes.h>
     #include <malloc.h>
@@ -174,7 +174,7 @@
     #define MANGO_PLATFORM_IRIX
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "SGI IRIX"
-    #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+    #define MANGO_WINDOW_SYSTEM_NONE
 
 #elif defined(EMSCRIPTEN)
 
@@ -182,7 +182,7 @@
     #define MANGO_PLATFORM_EMSCRIPTEN
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "EMSCRIPTEN"
-    #define MANGO_WINDOW_SYSTEM_NONE /* NOT SUPPORTED */
+    #define MANGO_WINDOW_SYSTEM_NONE
 
 #else
 
