@@ -351,7 +351,8 @@ namespace
         return file;
     }
 
-    inline char hex_to_char(char s)
+    inline
+    char hex_to_char(char s)
     {
         char c;
 
@@ -567,7 +568,7 @@ namespace mango
         wa.colormap          = x11_colormap;
         wa.background_pixmap = None ;
         wa.border_pixel      = 0;
-	    wa.event_mask        = ExposureMask |
+        wa.event_mask        = ExposureMask |
                                KeyPressMask |
                                KeyReleaseMask |
                                ButtonPressMask |

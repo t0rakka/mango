@@ -535,7 +535,6 @@ namespace
 
 } // namespace
 
-
 namespace mango
 {
     using namespace mango::math;

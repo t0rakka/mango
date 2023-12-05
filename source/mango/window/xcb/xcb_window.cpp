@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
-#include "xcb_handle.hpp"
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
 
