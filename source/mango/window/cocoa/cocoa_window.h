@@ -13,9 +13,9 @@ namespace mango
     struct WindowHandle
     {
         // window state
-        id     window;
-        bool   is_looping;
-        u32 keystate[4] = { 0, 0, 0, 0 };
+        id      window;
+        bool    is_looping;
+        u32     keystate[4] = { 0, 0, 0, 0 };
     };
 
 } // namespace mango

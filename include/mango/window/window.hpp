@@ -48,8 +48,8 @@
 
     struct NativeWindowHandle
     {
-        ::Display* display;
-        ::Window window;
+        ::Display* display { NULL };
+        ::Window window { 0 };
     };
 
 #endif

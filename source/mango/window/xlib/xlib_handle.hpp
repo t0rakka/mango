@@ -21,9 +21,9 @@ namespace mango
 
     struct WindowHandle
     {
+        NativeWindowHandle native;
+
         // window data
-        ::Display*  x11_display { NULL };
-        ::Window    x11_window { 0 };
         ::Colormap  x11_colormap { 0 };
         ::XImage*   x11_icon { NULL };
 

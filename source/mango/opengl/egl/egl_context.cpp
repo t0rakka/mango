@@ -34,7 +34,7 @@ namespace mango
             : window(*theContext)
         {
 
-            //egl_display = eglGetDisplay((EGLNativeDisplayType)window->x11_display);
+            //egl_display = eglGetDisplay((EGLNativeDisplayType)window->native.display);
             egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
             if (egl_display == EGL_NO_DISPLAY)
             {
@@ -123,7 +123,7 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
             }
 
-            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], window->x11_window, NULL);
+            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], window->native.window, NULL);
             if (egl_surface == EGL_NO_SURFACE)
             {
                 shutdown();
@@ -185,7 +185,7 @@ namespace mango
             std::memset(&xevent, 0, sizeof(xevent));
 
             xevent.type = ClientMessage;
-            xevent.xclient.window = window->x11_window;
+            xevent.xclient.window = window->native.window;
             xevent.xclient.message_type = window->atom_state;
             xevent.xclient.format = 32;
             xevent.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
@@ -194,16 +194,16 @@ namespace mango
             xevent.xclient.data.l[3] = 1; // source indication: application
             xevent.xclient.data.l[4] = 0; // unused
 
-            XMapWindow(window->x11_display, window->x11_window);
+            XMapWindow(window->native.display, window->native.window);
 
             // send the event to the root window
-            if (!XSendEvent(window->x11_display, DefaultRootWindow(window->x11_display), False,
+            if (!XSendEvent(window->native.display, DefaultRootWindow(window->native.display), False,
                 SubstructureRedirectMask | SubstructureNotifyMask, &xevent))
             {
                 // TODO: failed
             }
 
-            XFlush(window->x11_display);
+            XFlush(window->native.display);
 
             // Enable rendering now that all the tricks are done
             window->busy = false;
@@ -220,7 +220,7 @@ namespace mango
         int32x2 getWindowSize() const override
         {
             XWindowAttributes attributes;
-            XGetWindowAttributes(window->x11_display, window->x11_window, &attributes);
+            XGetWindowAttributes(window->native.display, window->native.window, &attributes);
             return int32x2(attributes.width, attributes.height);
         }
     };

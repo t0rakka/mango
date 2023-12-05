@@ -99,7 +99,6 @@ if (WIN32)
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/win32/*.cpp")
     FILE(GLOB WINDOW
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/window/win32/*.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/win32/*.cpp")
     FILE(GLOB OPENGL
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
@@ -117,7 +116,6 @@ elseif (APPLE)
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp")
     FILE(GLOB WINDOW
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/window/cocoa/*.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/cocoa/*.mm")
     FILE(GLOB OPENGL
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
@@ -149,7 +147,6 @@ else()
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp")
     FILE(GLOB WINDOW
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/window/xlib/*.hpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/xlib/*.cpp")
     FILE(GLOB OPENGL
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"

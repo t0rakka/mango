@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
@@ -99,7 +99,7 @@ namespace mango
             int glx_major;
             int glx_minor;
 
-            if (!glXQueryVersion(window->x11_display, &glx_major, &glx_minor))
+            if (!glXQueryVersion(window->native.display, &glx_major, &glx_minor))
             {
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContextGLX] glXQueryVersion() failed.");
@@ -114,8 +114,8 @@ namespace mango
             }
 
             int fbcount;
-            GLXFBConfig* fbc = glXChooseFBConfig(window->x11_display, 
-                DefaultScreen(window->x11_display), visualAttribs.data(), &fbcount);
+            GLXFBConfig* fbc = glXChooseFBConfig(window->native.display, 
+                DefaultScreen(window->native.display), visualAttribs.data(), &fbcount);
             if (!fbc)
             {
                 shutdown();
@@ -128,14 +128,14 @@ namespace mango
 
             for (int i = 0; i < fbcount; ++i)
             {
-                XVisualInfo* vi = glXGetVisualFromFBConfig(window->x11_display, fbc[i]);
+                XVisualInfo* vi = glXGetVisualFromFBConfig(window->native.display, fbc[i]);
                 if (vi)
                 {
                     int sample_buffers;
-                    glXGetFBConfigAttrib(window->x11_display, fbc[i], GLX_SAMPLE_BUFFERS, &sample_buffers);
+                    glXGetFBConfigAttrib(window->native.display, fbc[i], GLX_SAMPLE_BUFFERS, &sample_buffers);
 
                     int samples;
-                    glXGetFBConfigAttrib(window->x11_display, fbc[i], GLX_SAMPLES, &samples);
+                    glXGetFBConfigAttrib(window->native.display, fbc[i], GLX_SAMPLES, &samples);
 
 #if 0
                     debugPrint("  Matching fbconfig %d, visual ID 0x%2x: SAMPLE_BUFFERS = %d, SAMPLES = %d\n",
@@ -161,7 +161,7 @@ namespace mango
             GLXFBConfig bestFbc = fbc[best_fbc];
             XFree(fbc);
 
-            XVisualInfo* vi = glXGetVisualFromFBConfig(window->x11_display, bestFbc);
+            XVisualInfo* vi = glXGetVisualFromFBConfig(window->native.display, bestFbc);
 
             // create window
             if (!window->createWindow(vi->screen, vi->depth, vi->visual, width, height, "OpenGL"))
@@ -173,7 +173,7 @@ namespace mango
             XFree(vi);
 
             // Get the default screen's GLX extension list
-            const char* extensions = glXQueryExtensionsString(window->x11_display, DefaultScreen(window->x11_display));
+            const char* extensions = glXQueryExtensionsString(window->native.display, DefaultScreen(window->native.display));
 
             // Create GLX extension set
             std::set<std::string> glxExtensions;
@@ -220,10 +220,10 @@ namespace mango
                     None
                 };
 
-                context = glXCreateContextAttribsARB(window->x11_display, bestFbc, 0, True, context_attribs);
+                context = glXCreateContextAttribsARB(window->native.display, bestFbc, 0, True, context_attribs);
 
                 // Sync to ensure any errors generated are processed.
-                XSync(window->x11_display, False);
+                XSync(window->native.display, False);
 
                 if (context)
                 {
@@ -232,17 +232,17 @@ namespace mango
                 else
                 {
                     //debugPrint("Failed to create GL 3.0 context ... using old-style GLX context\n");
-                    context = glXCreateContextAttribsARB(window->x11_display, bestFbc, 0, True, NULL);
+                    context = glXCreateContextAttribsARB(window->native.display, bestFbc, 0, True, NULL);
                 }
             }
             else
             {
                 //debugPrint("glXCreateContextAttribsARB() not found ... using old-style GLX context\n");
-                context = glXCreateNewContext(window->x11_display, bestFbc, GLX_RGBA_TYPE, 0, True);
+                context = glXCreateNewContext(window->native.display, bestFbc, GLX_RGBA_TYPE, 0, True);
             }
 
             // Sync to ensure any errors generated are processed.
-            XSync(window->x11_display, False);
+            XSync(window->native.display, False);
 
             // Restore the original error handler
             XSetErrorHandler(oldHandler);
@@ -254,7 +254,7 @@ namespace mango
             }
 
             // Verifying that context is a direct context
-            if (!glXIsDirect(window->x11_display, context))
+            if (!glXIsDirect(window->native.display, context))
             {
                 debugPrint("Indirect GLX rendering context obtained.\n");
             }
@@ -266,7 +266,7 @@ namespace mango
             // TODO: configuration selection API
             // TODO: context version selection: 4.3, 3.2, etc.
             // TODO: initialize GLX extensions using GLEXT headers
-            glXMakeCurrent(window->x11_display, window->x11_window, context);
+            glXMakeCurrent(window->native.display, window->native.window, context);
 
 #if 0
             PFNGLGETSTRINGIPROC glGetStringi = (PFNGLGETSTRINGIPROC)glXGetProcAddress((const GLubyte*)"glGetStringi");
@@ -299,7 +299,7 @@ namespace mango
 
         void shutdown()
         {
-            Display* display = window->x11_display;
+            Display* display = window->native.display;
             if (display)
             {
                 glXMakeCurrent(display, 0, 0);
@@ -313,30 +313,30 @@ namespace mango
 
         void makeCurrent() override
         {
-            glXMakeCurrent(window->x11_display, window->x11_window, context);
+            glXMakeCurrent(window->native.display, window->native.window, context);
         }
 
         void swapBuffers() override
         {
-            glXSwapBuffers(window->x11_display, window->x11_window);
+            glXSwapBuffers(window->native.display, window->native.window);
         }
 
         void swapInterval(int interval) override
         {
-            glXSwapIntervalEXT(window->x11_display, window->x11_window, interval);
+            glXSwapIntervalEXT(window->native.display, window->native.window, interval);
         }
 
         void toggleFullscreen() override
         {
             // Disable rendering while switching fullscreen mode
             window->busy = true;
-            glXMakeCurrent(window->x11_display, 0, 0);
+            glXMakeCurrent(window->native.display, 0, 0);
 
             XEvent xevent;
             std::memset(&xevent, 0, sizeof(xevent));
 
             xevent.type = ClientMessage;
-            xevent.xclient.window = window->x11_window;
+            xevent.xclient.window = window->native.window;
             xevent.xclient.message_type = window->atom_state;
             xevent.xclient.format = 32;
             xevent.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
@@ -345,20 +345,20 @@ namespace mango
             xevent.xclient.data.l[3] = 1; // source indication: application
             xevent.xclient.data.l[4] = 0; // unused
 
-            XMapWindow(window->x11_display, window->x11_window);
+            XMapWindow(window->native.display, window->native.window);
 
             // send the event to the root window
-            if (!XSendEvent(window->x11_display, DefaultRootWindow(window->x11_display),
+            if (!XSendEvent(window->native.display, DefaultRootWindow(window->native.display),
                 False, SubstructureRedirectMask | SubstructureNotifyMask, &xevent))
             {
                 // TODO: failed
             }
 
-            XFlush(window->x11_display);
+            XFlush(window->native.display);
 
             // Enable rendering now that all the tricks are done
             window->busy = false;
-            glXMakeCurrent(window->x11_display, window->x11_window, context);
+            glXMakeCurrent(window->native.display, window->native.window, context);
 
             fullscreen = !fullscreen;
         }
@@ -371,7 +371,7 @@ namespace mango
         int32x2 getWindowSize() const override
         {
             XWindowAttributes attributes;
-            XGetWindowAttributes(window->x11_display, window->x11_window, &attributes);
+            XGetWindowAttributes(window->native.display, window->native.window, &attributes);
             return int32x2(attributes.width, attributes.height);
         }
     };
