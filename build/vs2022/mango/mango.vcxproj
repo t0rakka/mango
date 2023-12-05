@@ -371,7 +371,6 @@
     <ClInclude Include="..\..\..\source\mango\jpeg\jpeg_process_func.hpp" />
     <ClInclude Include="..\..\..\source\mango\jpeg\jpeg_process_neon.hpp" />
     <ClInclude Include="..\..\..\source\mango\jpeg\jpeg_process_sse2.hpp" />
-    <ClInclude Include="..\..\..\source\mango\window\win32\win32_handle.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\external\aes\bc_aes.cpp" />

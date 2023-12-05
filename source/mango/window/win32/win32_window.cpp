@@ -7,7 +7,7 @@
 #include <chrono>
 #include <thread>
 #include <mango/core/string.hpp>
-#include "win32_handle.hpp"
+#include <mango/window/window.hpp>
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
 
@@ -543,6 +543,17 @@ namespace mango
     // -----------------------------------------------------------------------
     // WindowHandle
     // -----------------------------------------------------------------------
+
+    struct WindowHandle
+    {
+        WNDCLASSEX wndclass{ 0 };
+        HWND hwnd{ NULL };
+        HICON icon{ NULL };
+        bool is_looping{ false };
+
+        WindowHandle(int width, int height, u32 flags);
+        ~WindowHandle();
+    };
 
     WindowHandle::WindowHandle(int width, int height, u32 flags)
     {

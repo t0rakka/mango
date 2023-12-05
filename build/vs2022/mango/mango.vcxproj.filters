@@ -666,9 +666,6 @@
     <ClInclude Include="..\..\..\source\mango\filesystem\indexer.hpp">
       <Filter>mango\source\filesystem</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\source\mango\window\win32\win32_handle.hpp">
-      <Filter>mango\source\window</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\include\mango\window\window.hpp">
       <Filter>mango\include\window</Filter>
     </ClInclude>

@@ -5,7 +5,6 @@
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
-#include "../../window/win32/win32_handle.hpp"
 
 // -----------------------------------------------------------------------
 // Extensions
@@ -51,10 +50,10 @@ namespace mango
         RECT rect;
         bool fullscreen { false };
 
-        WindowHandle* window;
+        HWND hwnd;
 
         OpenGLContextWGL(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
-            : window(*theContext)
+            : hwnd(*theContext)
         {
             OpenGLContextWGL* shared = reinterpret_cast<OpenGLContextWGL*>(theShared);
 
@@ -66,7 +65,7 @@ namespace mango
 
             theContext->setWindowSize(width, height);
 
-            hdc = ::GetDC(window->hwnd);
+            hdc = ::GetDC(hwnd);
 
             // Configure attributes
             OpenGLContext::Config config;
@@ -243,7 +242,7 @@ namespace mango
 
             if (hdc)
             {
-                ::ReleaseDC(window->hwnd, hdc);
+                ::ReleaseDC(hwnd, hdc);
             }
         }
 
@@ -269,19 +268,19 @@ namespace mango
         {
             if (!fullscreen)
             {
-                GetWindowRect(window->hwnd, &rect);
+                GetWindowRect(hwnd, &rect);
 
                 DEVMODE dm;
                 dm.dmSize = sizeof(DEVMODE);
                 EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm);
 
-                ::SetWindowLongPtr(window->hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
-                ::MoveWindow(window->hwnd, 0, 0, dm.dmPelsWidth, dm.dmPelsHeight, TRUE);
+                ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
+                ::MoveWindow(hwnd, 0, 0, dm.dmPelsWidth, dm.dmPelsHeight, TRUE);
             }
             else
             {
-                ::SetWindowLongPtr(window->hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
-                ::SetWindowPos(window->hwnd, HWND_TOP, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, 0);
+                ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+                ::SetWindowPos(hwnd, HWND_TOP, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, 0);
             }
 
             fullscreen = !fullscreen;
@@ -295,7 +294,7 @@ namespace mango
         int32x2 getWindowSize() const
         {
             RECT rect;
-            ::GetClientRect(window->hwnd, &rect);
+            ::GetClientRect(hwnd, &rect);
             return int32x2(rect.right - rect.left, rect.bottom - rect.top);
         }
     };
