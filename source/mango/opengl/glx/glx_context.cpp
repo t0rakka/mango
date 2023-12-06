@@ -329,8 +329,8 @@ namespace mango
         void toggleFullscreen() override
         {
             // Disable rendering while switching fullscreen mode
-            window->busy = true;
             glXMakeCurrent(window->native.display, 0, 0);
+            window->busy = true;
 
             XEvent xevent;
             std::memset(&xevent, 0, sizeof(xevent));

@@ -594,7 +594,9 @@ namespace mango
         }
 
         if (!native.window)
+        {
             return false;
+        }
 
         if (flags & Window::DISABLE_RESIZE)
         {
@@ -948,7 +950,8 @@ namespace mango
                         {
                             m_handle->size[0] = width;
                             m_handle->size[1] = height;
-                            if (!m_handle->busy) {
+                            if (!m_handle->busy)
+                            {
                                 onResize(width, height);
                             }
                         }
@@ -956,7 +959,8 @@ namespace mango
                     }
 
                     case Expose:
-                        if (!m_handle->busy) {
+                        if (!m_handle->busy)
+                        {
                             onDraw();
                         }
                         break;
@@ -980,14 +984,17 @@ namespace mango
                             bool use_list = e.xclient.data.l[1] & 1;
                             m_handle->xdnd_source = e.xclient.data.l[0];
                             m_handle->xdnd_version = (e.xclient.data.l[1] >> 24);
-                            if (use_list) {
+                            if (use_list)
+                            {
                                 // fetch conversion targets
                                 x11Prop p;
                                 ReadProperty(&p, m_handle->native.display, m_handle->xdnd_source, m_handle->atom_xdnd_TypeList);
                                 // pick one
                                 m_handle->atom_xdnd_req = PickTarget(m_handle->native.display, (Atom*)p.data, p.count);
                                 XFree(p.data);
-                            } else {
+                            }
+                            else
+                            {
                                 // pick from list of three
                                 m_handle->atom_xdnd_req = PickTargetFromAtoms(m_handle->native.display, 
                                     e.xclient.data.l[2], e.xclient.data.l[3], e.xclient.data.l[4]);
@@ -1041,10 +1048,13 @@ namespace mango
                             else
                             {
                                 // convert
-                                if (m_handle->xdnd_version >= 1) {
+                                if (m_handle->xdnd_version >= 1)
+                                {
                                     XConvertSelection(m_handle->native.display, m_handle->atom_xdnd_Selection, m_handle->atom_xdnd_req, 
                                                       m_handle->atom_primary, m_handle->native.window, e.xclient.data.l[2]);
-                                } else {
+                                }
+                                else
+                                {
                                     XConvertSelection(m_handle->native.display, m_handle->atom_xdnd_Selection, m_handle->atom_xdnd_req, 
                                                       m_handle->atom_primary, m_handle->native.window, CurrentTime);
                                 }
@@ -1080,7 +1090,8 @@ namespace mango
                             x11Prop p;
                             ReadProperty(&p, m_handle->native.display, m_handle->native.window, m_handle->atom_primary);
 
-                            if (p.format == 8) {
+                            if (p.format == 8)
+                            {
                                 dispatchOnDrop(this, p);
                             }
 
