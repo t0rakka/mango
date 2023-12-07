@@ -211,8 +211,8 @@ namespace
 
     enum
     {
-        LHD_SPLIT_BEFORE = 0x0001, // TODO: not supported
-        LHD_SPLIT_AFTER  = 0x0002, // TODO: not supported
+        LHD_SPLIT_BEFORE = 0x0001, // NOTE: not supported
+        LHD_SPLIT_AFTER  = 0x0002, // NOTE: not supported
         LHD_PASSWORD     = 0x0004,
         LHD_COMMENT      = 0x0008,
         LHD_SOLID        = 0x0010,
@@ -261,7 +261,7 @@ namespace
 			    size += p.read32();
             }
 
-            // TODO: header CRC check
+            // MANGO TODO: header CRC check
 
             switch (type)
             {
@@ -664,8 +664,8 @@ namespace mango::filesystem
                 MANGO_UNREFERENCED(crc);
                 MANGO_UNREFERENCED(extra_size);
 
-                // TODO: add support for AES decryption headers
-                // TODO: add support for RAR 5.0 compression
+                // MANGO TODO: add support for AES decryption headers
+                // MANGO TODO: add support for RAR 5.0 compression
 
                 switch (type)
                 {

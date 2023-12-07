@@ -239,7 +239,7 @@ void compress(const std::string& folder, const std::string& archive, const std::
     for (auto node : state.files)
     {
 
-        // TODO: compute checksum
+        // MANGO TODO: compute checksum
 #if 0
         File file(path, node.name);
         u32 checksum = crc32c(0, file);
@@ -576,8 +576,8 @@ int main(int argc, char* argv[])
         std::string program_name = removePath(argv[0]);
 
         printf("\n");
-        printf("MGX/SNITCH Compression Tool version 0.5 \n");
-        printf("Copyright (C) 2018-2022 Fapware, inc. All rights reserved.\n");
+        printf("MGX/SNITCH Compression Tool version 0.5.2 \n");
+        printf("Copyright (C) 2018-2023 Fapware, inc. All rights reserved.\n");
         printf("Usage: %s [input folder] [compression] [level:0..10]\n", program_name.c_str());
         printf("\n");
 
@@ -594,9 +594,9 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // TODO: configure archive name (-output result.snitch)
-    // TODO: compression: "--store" (no compression to any of the files)
-    // TODO: compression: "--extreme" (try ALL compressors to find the best, use compression even if file shrinks just 0.1%)
+    // MANGO TODO: configure archive name (-output result.snitch)
+    // MANGO TODO: compression: "--store" (no compression to any of the files)
+    // MANGO TODO: compression: "--extreme" (try ALL compressors to find the best)
 
     std::string folder = argv[1];
     std::string archive = "result.snitch";//argv[2];

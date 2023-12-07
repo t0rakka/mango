@@ -76,7 +76,7 @@
 
 #if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
 
-        // TODO
+        // MANGO TODO
 
 #endif
 

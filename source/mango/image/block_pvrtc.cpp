@@ -464,7 +464,8 @@ namespace
         return value * ((1 << to) - 1) / ((1 << from) - 1);
     }
 
-#if 0 // TODO: should use these (specification conforming)
+#if 0 // MANGO TODO: should use these (specification conforming)
+
     static constexpr
     u32 pvrtc2_alpha0(u32 alpha)
     {
@@ -478,6 +479,7 @@ namespace
         alpha = (alpha << 1) | 1;
         return (alpha << 4) | alpha;
     }
+
 #endif
 
     static inline
@@ -489,11 +491,6 @@ namespace
     static inline
     Color pvrtc2_2bit_lerp(Color a, Color b, int mod)
     {
-        // TODO: specification
-        // mod(0): a
-        // mod(1): (a*5 + b*3) / 8
-        // mod(2): (a*3 + b*5) / 8
-        // mod(3): b
         Color c;
 
         switch (mod)

@@ -51,8 +51,6 @@ using std::chrono::milliseconds;
 
 #else
 
-    // TODO: iOS, macOS, Android
-
     template <typename H>
     static void set_thread_affinity(H handle, int processor)
     {

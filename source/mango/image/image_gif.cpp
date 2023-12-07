@@ -806,10 +806,10 @@ namespace
             s.write8(palette[i].b);
         }
 
-        // TODO: write graphics_control_extension to disable translucent color
-        // TODO: support the extension in decoder so that we don't have one index being invisible
+        // MANGO TODO: write graphics_control_extension to disable translucent color
+        // MANGO TODO: support the extension in decoder so that we don't have one index being invisible
 
-        // TODO: gif animations will repeat this section
+        // MANGO TODO: gif animations will repeat this section
         {
             // image descriptor
             s.write8(GIF_IMAGE);

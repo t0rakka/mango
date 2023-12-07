@@ -1424,7 +1424,7 @@ namespace
 
                 if (out - n < out_end)
                 {
-                    // TODO: "Hires Manager: unpacked size does not match file format."
+                    // MANGO TODO: "Hires Manager: unpacked size does not match file format."
                     return;
                 }
 
@@ -1439,7 +1439,7 @@ namespace
 
                 if (out - n < out_end || in - n < in_end)
                 {
-                    // TODO: "Hires Manager: unpacked size does not match file format."
+                    // MANGO TODO: "Hires Manager: unpacked size does not match file format."
                     return;
                 }
 
@@ -1824,7 +1824,7 @@ namespace
                     /*
                     if (sprite_pointer1 > 15872)
                     {
-                        // TODO: "SHF: invalid sprite pointer."
+                        // MANGO TODO: "SHF: invalid sprite pointer."
                         return;
                     }
                     */
@@ -1837,7 +1837,7 @@ namespace
                     /*
                     if (sprite_pointer2 > 15872)
                     {
-                        // TODO: "SHF: invalid sprite pointer."
+                        // MANGO TODO: "SHF: invalid sprite pointer."
                         return;
                     }
                     */
@@ -1936,7 +1936,7 @@ namespace
 
                     if (sprite_byte_offset > 15360)
                     {
-                        // TODO: "SHF-XL: invalid sprite pointer."
+                        // MANGO TODO: "SHF-XL: invalid sprite pointer."
                     }
 
                     u8 sprite_byte = m_data[sprite_byte_offset];
@@ -2000,7 +2000,7 @@ namespace
 
                 if (out - 3 < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
+                    // MANGO TODO: "True Paint: unpacked size does not match file format."
                     return;
                 }
 
@@ -2016,7 +2016,7 @@ namespace
 
                 if (out - n < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
+                    // MANGO TODO: "True Paint: unpacked size does not match file format."
                     return;
                 }
 
@@ -2030,7 +2030,7 @@ namespace
                 // 3-zero run
                 if (out - 3 < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
+                    // MANGO TODO: "True Paint: unpacked size does not match file format."
                     return;
                 }
 
@@ -2048,7 +2048,7 @@ namespace
 
                 if (out - n < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
+                    // MANGO TODO: "True Paint: unpacked size does not match file format."
                     return;
                 }
 
@@ -2062,7 +2062,7 @@ namespace
                 // 1st 2-character run
                 if (out - 2 < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
+                    // MANGO TODO: "True Paint: unpacked size does not match file format."
                     return;
                 }
 
@@ -2074,7 +2074,7 @@ namespace
                 // 2nd 2-character run
                 if (out - 2 < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
+                    // MANGO TODO: "True Paint: unpacked size does not match file format."
                     return;
                 }
 
@@ -2086,7 +2086,7 @@ namespace
                 // 3rd 2-character run
                 if (out - 2 < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
+                    // MANGO TODO: "True Paint: unpacked size does not match file format."
                     return;
                 }
 
@@ -2526,7 +2526,7 @@ namespace mango::image
     void registerImageCodecC64()
     {
         // Advanced Art Studio
-        registerImageDecoder(createInterfaceMPIC, ".mpic"); // TODO: test
+        registerImageDecoder(createInterfaceMPIC, ".mpic"); // MANGO TODO: test
 
         // AFLI-editor v2.0
         registerImageDecoder(createInterfaceAFL, ".afl");
@@ -2537,7 +2537,7 @@ namespace mango::image
 
         // Art Studio
         registerImageDecoder(createInterfaceART, ".art");
-        registerImageDecoder(createInterfaceART, ".ocp"); // TODO: check the format_size
+        registerImageDecoder(createInterfaceART, ".ocp"); // MANGO TODO: check the format_size
 
         // Artist 64
         registerImageDecoder(createInterfaceA64, ".a64");
@@ -2556,7 +2556,7 @@ namespace mango::image
         // Doodle
         registerImageDecoder(createInterfaceDD, ".dd");
         registerImageDecoder(createInterfaceDD, ".ddl");
-        //registerImageDecoder(createInterfaceDD, "jj"); // TODO: support compression
+        //registerImageDecoder(createInterfaceDD, "jj"); // MANGO TODO: support compression
 
         // Drazlace
         registerImageDecoder(createInterfaceDRL, ".drl");
@@ -2620,7 +2620,7 @@ namespace mango::image
         registerImageDecoder(createInterfaceSHF, ".shfli");
 
         // SHF-XL v1.0
-        registerImageDecoder(createInterfaceSHFXL, ".shx"); // TODO: support compression
+        registerImageDecoder(createInterfaceSHFXL, ".shx"); // MANGO TODO: support compression
         registerImageDecoder(createInterfaceSHFXL, ".shfxl");
 
         // True Paint

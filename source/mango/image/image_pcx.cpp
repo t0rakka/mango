@@ -325,10 +325,10 @@ namespace
                     switch (m_header.NPlanes)
                     {
                         case 1:
-                            // TODO: 16 color palette (need sample files for testing)
+                            // MANGO TODO: 16 color palette (need sample files for testing)
                             break;
                         case 4:
-                            // TODO: 4096 color ARGB4444 (need sample files for testing)
+                            // MANGO TODO: 4096 color ARGB4444 (need sample files for testing)
                             break;
                         default:
                             break;

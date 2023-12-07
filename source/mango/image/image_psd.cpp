@@ -85,7 +85,7 @@ namespace
 
         void decompress(u8* output, const u8* input, int outbytes, int inbytes) const
         {
-            // TODO: use for range checking input
+            // MANGO TODO: use for range checking input
             MANGO_UNREFERENCED(inbytes);
 
             while (outbytes > 0)
@@ -249,7 +249,7 @@ namespace
                     break;
                 case Compression::ZIP:
                 case Compression::ZIP_PRED:
-                    // TODO: need psd files with these compressions
+                    // MANGO TODO: need psd files with these compressions
                     m_header.setError("[ImageDecoder.PSD] Unsupported compression (%d).", m_compression);
                     return;
                 default:
@@ -354,7 +354,7 @@ namespace
                 else if (id == 1047)
                 {
                     debugPrint("    TransparencyIndex\n");
-                    // TODO: need psd file that uses this feature
+                    // MANGO TODO: need psd file that uses this feature
                 }
                 else if (id == 1058 || id == 1059)
                 {
@@ -443,13 +443,13 @@ namespace
 
                 case Compression::ZIP:
                 {
-                    // TODO
+                    // MANGO TODO
                     break;
                 }
 
                 case Compression::ZIP_PRED:
                 {
-                    // TODO
+                    // MANGO TODO
                     break;
                 }
             }
@@ -479,11 +479,11 @@ namespace
                     resolveCMYK(dest, src, width, channels);
                     break;
                 case ColorMode::MULTICHANNEL:
-                    // TODO
+                    // MANGO TODO
                     resolveGrayscale(dest, src, width, channels);
                     break;
                 case ColorMode::DUOTONE:
-                    // TODO
+                    // MANGO TODO
                     resolveGrayscale(dest, src, width, channels);
                     break;
                 case ColorMode::LAB:
@@ -575,8 +575,8 @@ namespace
 
         void resolveCMYK(u8* dest, const u8* src, int width, int channels)
         {
-            // TODO: 16, 32 bits
-            // TODO: different nr of channels
+            // MANGO TODO: 16, 32 bits
+            // MANGO TODO: different nr of channels
             if (m_bits == 8)
             {
                 for (int i = 0; i < width; ++i)

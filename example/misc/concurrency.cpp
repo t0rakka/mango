@@ -136,7 +136,7 @@ void example5()
     // the ThreadPool to get more detailed information what is going on.
     ConcurrentQueue queue("important queue", Priority::HIGH);
 
-    // TODO: Enqueue tasks here..
+    // NOTE: Enqueue tasks here..
 }
 
 /*

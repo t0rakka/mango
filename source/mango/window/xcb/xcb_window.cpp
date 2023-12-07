@@ -27,7 +27,7 @@ namespace mango
 
     WindowHandle::WindowHandle(int width, int height)
     {
-        const char* title = "XCB Window"; // TODO
+        const char* title = "XCB Window"; // MANGO TODO
 
         int screen_index;
         native.connection = xcb_connect(nullptr, &screen_index);
@@ -92,13 +92,13 @@ namespace mango
 
     int Window::getScreenCount()
     {
-        // TODO
+        // MANGO TODO
         return 0;
     }
 
     int32x2 Window::getScreenSize(int screen)
     {
-        // TODO
+        // MANGO TODO
         MANGO_UNREFERENCED(screen);
         return int32x2(0, 0);
     }
@@ -106,7 +106,7 @@ namespace mango
     Window::Window(int width, int height, u32 flags)
     {
 		m_handle = new WindowHandle(width, height);
-        MANGO_UNREFERENCED(flags); // TODO
+        MANGO_UNREFERENCED(flags); // MANGO TODO
     }
 
     Window::~Window()
@@ -116,7 +116,7 @@ namespace mango
 
     void Window::setWindowPosition(int x, int y)
     {
-        // TODO
+        // MANGO TODO
         MANGO_UNREFERENCED(x);
         MANGO_UNREFERENCED(y);
     }
@@ -238,7 +238,7 @@ namespace mango
 
     int32x2 Window::getWindowSize() const
     {
-        // TODO
+        // MANGO TODO
 #if 0
         XWindowAttributes attributes;
         XGetWindowAttributes(m_handle->display, m_handle->native.window, &attributes);
@@ -249,7 +249,7 @@ namespace mango
 
 	int32x2 Window::getCursorPosition() const
 	{
-        // TODO
+        // MANGO TODO
 #if 0
 		::Window root;
 		::Window child;
@@ -266,7 +266,7 @@ namespace mango
 
     bool Window::isKeyPressed(Keycode code) const
     {
-        // TODO
+        // MANGO TODO
 #if 0
         char keys[32];
         XQueryKeymap(m_handle->display, keys);
@@ -346,7 +346,7 @@ namespace mango
 
                     case XCB_KEY_PRESS:
                     {
-                        // TODO
+                        // MANGO TODO
                         m_handle->is_looping = false;
                         break;
                     }
@@ -354,7 +354,7 @@ namespace mango
                     case XCB_BUTTON_PRESS:
                     {
                         xcb_button_press_event_t* button_press = (xcb_button_press_event_t *)event;
-                        (void) button_press; // TODO
+                        (void) button_press; // MANGO TODO
                         break;
                     }
                 }

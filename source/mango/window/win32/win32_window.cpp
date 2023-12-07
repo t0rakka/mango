@@ -619,13 +619,13 @@ namespace mango
 
     int Window::getScreenCount()
     {
-        // TODO: support more than default screen
+        // MANGO TODO: support more than default screen
         return 1;
     }
 
     int32x2 Window::getScreenSize(int screen)
     {
-        // TODO: support more than default screen
+        // MANGO TODO: support more than default screen
         MANGO_UNREFERENCED(screen);
 
         int width = int(GetSystemMetrics(SM_CXSCREEN));
@@ -649,7 +649,7 @@ namespace mango
 
     void Window::setWindowPosition(int x, int y)
     {
-        // TODO
+        // MANGO TODO
         MANGO_UNREFERENCED(x);
         MANGO_UNREFERENCED(y);
     }

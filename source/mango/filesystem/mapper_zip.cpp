@@ -499,7 +499,7 @@ namespace
             //       but some compression programs don't create compatible
             //       dcheader so the check would fail above.
 
-#if 0 // TODO: the condition is reversed here.. need more testing (check specs!)
+#if 0 // MANGO TODO: the condition is reversed here.. need more testing (check specs!)
             if (keyfile[11] == (crc >> 24))
             {
                 // incorrect password
@@ -662,8 +662,8 @@ namespace mango::filesystem
                     compressed_size -= AES_PWVERIFYSIZE;
                     compressed_size -= HMAC_LENGTH;
 
-                    // TODO: password + salt --> key
-                    // TODO: decrypt using the generated key
+                    // MANGO TODO: password + salt --> key
+                    // MANGO TODO: decrypt using the generated key
 #endif                
                     break;
                 }

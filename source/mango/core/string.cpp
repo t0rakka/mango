@@ -299,7 +299,7 @@ namespace mango
 
     std::string u16_toBytes(const std::wstring& source)
     {
-        // TODO: validate against reference implementation
+        // MANGO TODO: validate against reference implementation
 #if 0
         std::string s;
         StringBuilder<char, 256, 4> sb(s);
@@ -365,7 +365,7 @@ namespace mango
 
     std::wstring u16_fromBytes(const std::string& source)
     {
-        // TODO: validate against reference implementation
+        // MANGO TODO: validate against reference implementation
 #if 0
         std::wstring s;
         StringBuilder<wchar_t, 256, 1> sb(s);

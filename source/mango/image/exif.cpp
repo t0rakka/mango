@@ -240,7 +240,7 @@ namespace
                 case EXIF_UNDEFINED:
                 case EXIF_SLONG:
                 case EXIF_SRATIONAL:
-                    // TODO
+                    // MANGO TODO
                     break;
                 default:
                     tag = 0xffff; // illegal value
@@ -422,9 +422,9 @@ namespace
 
             switch (entry.tag)
             {
-                case 0xffff: // TODO: silence compiler warning
+                case 0xffff:
                     break;
-#if 0 // TODO
+#if 0 // MANGO TODO
                     // GPS
                     u8		     GPSVersionID[4];
                     std::string	 GPSLatitudeRef;
@@ -457,7 +457,7 @@ namespace
                     u16		     GPSDifferential;
 #endif
                 default:
-                    //printf("gps tag: %.4x, format: %d, length: %d\n", entry.tag, entry.format, entry.length); // TODO: debug
+                    //printf("gps tag: %.4x, format: %d, length: %d\n", entry.tag, entry.format, entry.length);
                     break;
             }
 
@@ -580,8 +580,8 @@ namespace
                 //SubsecTimeDigitized
                 //FlashpixVersion, ); // 7
                 case EXIF(ColorSpace, Short);
-                case EXIF(PixelXDimension, Long); // TODO: could also be Short
-                case EXIF(PixelYDimension, Long); // TODO: could also be Short
+                case EXIF(PixelXDimension, Long); // MANGO TODO: could also be Short
+                case EXIF(PixelYDimension, Long); // MANGO TODO: could also be Short
                 //RelatedSoundFile			= 0xA004,	// Used to record the name of an audio file related to the image data.
                 case EXIF(FlashEnergy, Rational);
                 //SpatialFrequencyResponse	= 0xA20C,	//
@@ -657,7 +657,7 @@ namespace
                     break;
 
                 default:
-                    //printf("tag: %.4x, format: %d, length: %d\n", entry.tag, entry.format, entry.length); // TODO: debug
+                    //printf("tag: %.4x, format: %d, length: %d\n", entry.tag, entry.format, entry.length);
                     break;
             }
 

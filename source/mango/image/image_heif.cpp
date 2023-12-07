@@ -152,7 +152,7 @@ namespace
                 return status;
             }
 
-            // TODO: hdr image, > 8 bits per channel
+            // MANGO TODO: hdr image, > 8 bits per channel
 
             /*
             heif_channel_Y = 0,

@@ -595,7 +595,7 @@ namespace
             case FOURCC_ETC1:
             case FOURCC_ETC2:
             case FOURCC_ET2A:
-                // TODO
+                // MANGO TODO
                 break;
         }
 
@@ -918,7 +918,7 @@ namespace
 
             if (header10.arraySize > 1)
             {
-                // TODO
+                // MANGO TODO
                 header.setError("[ImageDecoder.DDS] Arrays are not supported.");
                 return;
             }
@@ -961,7 +961,6 @@ namespace
                 case Format::SINT:
                 case Format::SNORM:
                 case Format::FLOAT64:
-                    // TODO: These could be supported in a custom "DXGI Blitter"
                     header.setError("[ImageDecoder.DDS] DXGI format type not supported.");
                     return;
             }
@@ -1023,7 +1022,7 @@ namespace
 
             header.width   = width;
             header.height  = height;
-            header.depth   = 0; // TODO: support volume images
+            header.depth   = 0; // MANGO TODO: support volume images
             header.levels  = getMipmapCount();
             header.faces   = getFaceCount();
             header.palette = false;
@@ -1093,7 +1092,7 @@ namespace
 
         ConstMemory getMemory(int level, int depth, int face) const
         {
-            MANGO_UNREFERENCED(depth); // TODO: Support depth parameter for volume textures
+            MANGO_UNREFERENCED(depth); // MANGO TODO: Support depth parameter for volume textures
 
             const int maxFace = getFaceCount();
             const int maxLevel = getMipmapCount();

@@ -292,7 +292,6 @@ namespace mango::image
             }
 
             default:
-                // TODO: not supported?
                 break;
         }
     }

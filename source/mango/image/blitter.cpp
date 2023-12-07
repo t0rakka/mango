@@ -24,8 +24,6 @@ namespace
     // The compiler optimizes the scalar loops really well with ICC/CLANG/GCC so these custom
     // conversions are only enabled for MSVC, where the speed up varies between 2x and 4x.
 
-    // TODO: fine-tune the detection if some combination is found that improves the performance. :)
-
     #if defined(MANGO_ENABLE_SSE4_1)
         #define BLITTER_ENABLE_SSE4
     #endif

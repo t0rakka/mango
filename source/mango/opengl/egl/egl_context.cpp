@@ -83,7 +83,7 @@ namespace mango
 
             if (config.samples > 1)
             {
-                // TODO
+                // MANGO TODO
             }
 
             configAttribs.push_back(EGL_NONE);
@@ -200,7 +200,7 @@ namespace mango
             if (!XSendEvent(window->native.display, DefaultRootWindow(window->native.display), False,
                 SubstructureRedirectMask | SubstructureNotifyMask, &xevent))
             {
-                // TODO: failed
+                // MANGO TODO: failed
             }
 
             XFlush(window->native.display);

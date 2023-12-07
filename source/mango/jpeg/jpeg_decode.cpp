@@ -319,7 +319,7 @@ namespace mango::jpeg
                     debugPrint("    density: %i x %i %s\n", Xdensity, Ydensity, unit_str);
                     debugPrint("    thumbnail: %i x %i\n", Xthumbnail, Ythumbnail);
 
-                    // TODO: process thumbnail / store JFIF block
+                    // MANGO TODO: process thumbnail / store JFIF block
                     MANGO_UNREFERENCED(version);
                     MANGO_UNREFERENCED(Xdensity);
                     MANGO_UNREFERENCED(Ydensity);
@@ -344,7 +344,7 @@ namespace mango::jpeg
                     debugPrint("  EXIF: %d bytes\n", size);
                 }
 
-                // TODO: detect and support XMP
+                // MANGO TODO: detect and support XMP
 
                 break;
             }
@@ -1211,7 +1211,7 @@ namespace mango::jpeg
 
         u16 Ld = bigEndian::uload16(p + 0); // Define number of lines segment length
         u16 NL = bigEndian::uload16(p + 2); // Number of lines
-        MANGO_UNREFERENCED(NL); // TODO: ysize = NL, no files to test with found yet..
+        MANGO_UNREFERENCED(NL); // MANGO TODO: ysize = NL, no files to test with found yet..
         MANGO_UNREFERENCED(Ld);
     }
 
@@ -1233,7 +1233,7 @@ namespace mango::jpeg
     {
         debugPrint("[ DHP ]\n");
 
-        // TODO: "Define Hierarchical Progression" marker
+        // MANGO TODO: "Define Hierarchical Progression" marker
         MANGO_UNREFERENCED(p);
     }
 

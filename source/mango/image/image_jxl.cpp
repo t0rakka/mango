@@ -256,7 +256,7 @@ namespace
         Bitmap temp(surface, Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32));
         JxlPixelFormat pixel_format = { 3, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
 #else
-        // TODO: doesn't work, fix
+        // MANGO TODO: doesn't work, fix
         Bitmap temp(surface, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32));
         JxlPixelFormat pixel_format = { 4, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
 #endif
