@@ -608,7 +608,7 @@ namespace
             const int maxLevel = int(numberOfMipmapLevels);
             const int maxFace = int(numberOfFaces);
 
-            MANGO_UNREFERENCED(depth); // TODO
+            MANGO_UNREFERENCED(depth); // MANGO TODO
 
             ConstMemory data;
 

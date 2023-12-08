@@ -13,7 +13,7 @@
 // https://wiki.mozilla.org/APNG_Specification
 // https://datatracker.ietf.org/doc/html/rfc1951
 
-// TODO HDR support: "cICP", "iCCN"
+// MANGO TODO HDR support: "cICP", "iCCN"
 // https://github.com/w3c/ColorWeb-CG/blob/master/hdr-in-png-requirements.md#cicp-chunk
 
 namespace fpng

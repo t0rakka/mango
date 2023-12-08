@@ -36,7 +36,7 @@ namespace mango
         {
             if (theShared)
             {
-                // TODO
+                // MANGO TODO
                 MANGO_EXCEPTION("[OpenGLContextGLX] Shared context is not implemented.");
             }
 
@@ -263,9 +263,8 @@ namespace mango
                 debugPrint("Direct GLX rendering context obtained.\n");
             }
 
-            // TODO: configuration selection API
-            // TODO: context version selection: 4.3, 3.2, etc.
-            // TODO: initialize GLX extensions using GLEXT headers
+            // MANGO TODO: configuration selection API
+            // MANGO TODO: initialize GLX extensions using GLEXT headers
             glXMakeCurrent(window->native.display, window->native.window, context);
 
 #if 0
@@ -351,7 +350,7 @@ namespace mango
             if (!XSendEvent(window->native.display, DefaultRootWindow(window->native.display),
                 False, SubstructureRedirectMask | SubstructureNotifyMask, &xevent))
             {
-                // TODO: failed
+                // MANGO TODO: failed
             }
 
             XFlush(window->native.display);

@@ -9,11 +9,11 @@
 
 #ifdef MANGO_OPENGL_JPEG
 
-// TODO: Huffman decoding in compute shader
-// TODO: Different MCU configurations
-// TODO: Progressive mode
-// TODO: Different color formats (Chroma, Luminance)
-// TODO: Arithmetic, CMYK, 12 bit DCT, 16 bit QT table, Lossless -> not supported
+// MANGO TODO: Huffman decoding in compute shader
+// MANGO TODO: Different MCU configurations
+// MANGO TODO: Progressive mode
+// MANGO TODO: Different color formats (Chroma, Luminance)
+// MANGO TODO: Arithmetic, CMYK, 12 bit DCT, 16 bit QT table, Lossless -> not supported
 
 namespace
 {
@@ -221,7 +221,7 @@ const char* compute_shader_source = R"(
             remain -= nbits;
             uint mask = (1 << nbits) - 1;
 
-            // TODO: expand should be signed
+            // MANGO TODO: expand should be signed
             //return (data >> remain) & mask;
 
             int value = int((data >> remain) & mask);
@@ -817,7 +817,7 @@ struct ComputeDecoderContext : ComputeDecoder
 
         glUniform1i(glGetUniformLocation(program, "u_texture"), 0);
 
-        // TODO: configure the source qt
+        // MANGO TODO: configure the source qt
 
         int quantize[64 * 3];
 
@@ -918,7 +918,7 @@ struct ComputeDecoderContext : ComputeDecoder
 
     void send(const Surface& surface) override
     {
-        // TODO: check dimensions match
+        // MANGO TODO: check dimensions match
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, surface.width, surface.height, GL_RGBA, GL_UNSIGNED_BYTE, surface.image);
     }
 };

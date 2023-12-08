@@ -290,13 +290,13 @@ namespace
                     format = LuminanceFormat(16, Format::UNORM, 8, 8);
                     break;
                 case 0x09: // 1BPP
-                    // TODO
+                    // MANGO TODO
                     break;
                 case 0x0A: // (V,Y1,U,Y0)
-                    // TODO
+                    // MANGO TODO
                     break;
                 case 0x0B: // (Y1,V,Y0,U)
-                    // TODO
+                    // MANGO TODO
                     break;
                 case 0x0C: // PVRTC2
                     compression = TextureCompression::PVRTC_RGBA_2BPP;
@@ -359,13 +359,13 @@ namespace
                     format = LuminanceFormat(8, Format::UNORM, 4, 4);
                     break;
                 case 0x27: // LVU 655
-                    // TODO
+                    // MANGO TODO
                     break;
                 case 0x28: // XLVU 8888
-                    // TODO
+                    // MANGO TODO
                     break;
                 case 0x29: // QWVU 8888
-                    // TODO
+                    // MANGO TODO
                     break;
                 case 0x2A: // ABGR 2101010
                     format = Format(32, Format::UNORM, Format::ABGR, 2, 10, 10, 10);
@@ -374,16 +374,16 @@ namespace
                     format = Format(32, Format::UNORM, Format::ARGB, 2, 10, 10, 10);
                     break;
                 case 0x2C: // AWVU 2101010
-                    // TODO
+                    // MANGO TODO
                     break;
                 case 0x2D: // GR 1616
-                    // TODO
+                    // MANGO TODO
                     break;
                 case 0x2E: // VU 1616
-                    // TODO
+                    // MANGO TODO
                     break;
                 case 0x2F: // ABGR 16161616
-                    // TODO
+                    // MANGO TODO
                     break;
                 case 0x30: // R 16F
                     format = Format(16, Format::FLOAT16, Format::R, 16, 0, 0, 0);
@@ -410,7 +410,7 @@ namespace
                     format = Format(8, Format::UNORM, Format::A, 8, 0, 0, 0);
                     break;
                 case 0x41: // VU 88
-                    // TODO
+                    // MANGO TODO
                     break;
                 case 0x42: // L16
                     format = LuminanceFormat(16, Format::UNORM, 16, 0);
@@ -422,10 +422,10 @@ namespace
                     format = LuminanceFormat(16, Format::UNORM, 8, 8);
                     break;
                 case 0x45: // UYVY
-                    // TODO
+                    // MANGO TODO
                     break;
                 case 0x46: // YUY2
-                    // TODO
+                    // MANGO TODO
                     break;
             }
 
@@ -510,7 +510,7 @@ namespace
                 {
                     debugPrint("pvr.pixelformat: %d \n", formatIndex);
 
-                    // TODO: support for COMPRESSED_NONE entries in the table (packed pixel formats, yuv, shared exponent, 1-bit b/w)
+                    // MANGO TODO: support for COMPRESSED_NONE entries in the table (packed pixel formats, yuv, shared exponent, 1-bit b/w)
                     TextureCompression compression = formatTable[formatIndex];
 
                     TextureCompression info(compression);

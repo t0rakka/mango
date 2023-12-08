@@ -1063,7 +1063,7 @@ namespace
     // encode_block_scalar
     // ----------------------------------------------------------------------------
 
-    /* TODO: g++ -O3 vectorizes this; translate the code to intrinsics for every compiler
+    /* MANGO TODO: g++ -O3 vectorizes this; translate the code to intrinsics for every compiler
 #define SHF(idx, v0, v1, v2, v3, v4, v5, v6, v7) \
     d[idx * 8 + 0] = s[v0]; \
     d[idx * 8 + 1] = s[v1]; \

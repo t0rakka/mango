@@ -657,13 +657,13 @@ namespace mango
 
     int Window::getScreenCount()
     {
-        // TODO: support more than default screen
+        // MANGO TODO: support more than default screen
         return 1;
     }
 
     int32x2 Window::getScreenSize(int unused__screen)
     {
-        // TODO: support more than default screen
+        // MANGO TODO: support more than default screen
         MANGO_UNREFERENCED(unused__screen);
 
         Display* display = XOpenDisplay(NULL);

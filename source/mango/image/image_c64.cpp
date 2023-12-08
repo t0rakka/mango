@@ -473,23 +473,39 @@ namespace
             status.direct = dest.format == m_header.format &&
                             dest.width >= m_header.width &&
                             dest.height >= m_header.height;
+            status.success = true;
+
+            const char* error = nullptr;
+
+            if (!m_memory.address)
+            {
+                status.setError("C64 ImageDecoder - no data.");
+                return status;
+            }
 
             if (status.direct)
             {
-                decodeImage(dest);
+                error = decodeImage(dest);
             }
             else
             {
                 Bitmap temp(m_header.width, m_header.height, m_header.format);
-                decodeImage(temp);
-                dest.blit(0, 0, temp);
+                error = decodeImage(temp);
+                if (!error)
+                {
+                    dest.blit(0, 0, temp);
+                }
             }
 
-            status.success = true;
+            if (error)
+            {
+                status.setError(error);
+            }
+
             return status;
         }
 
-        virtual void decodeImage(const Surface& dest) = 0;
+        virtual const char* decodeImage(const Surface& dest) = 0;
     };
 
     struct GenericInterface : Interface
@@ -522,12 +538,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             m_generic_header.multicolor_load(s, m_data, 0x0, 0x1f40, 0x2338, 0x2329, 0x0, 1, false);
+            return nullptr;
         }
     };
 
@@ -548,12 +562,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             hires_to_surface(s, m_data, m_header.width, m_header.height, 0x2000, 0x0, true, false, 0);
+            return nullptr;
         }
     };
 
@@ -592,11 +604,8 @@ namespace
             }
         }
             
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             const u8* end = m_memory.end();
 
             Buffer temp;
@@ -610,6 +619,7 @@ namespace
             }
 
             multicolor_to_surface(s, buffer, m_header.width, m_header.height, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, false, false);
+            return nullptr;
         }
     };
 
@@ -630,12 +640,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             m_generic_header.hires_load(s, m_data, 0x0, 0x1f40, false);
+            return nullptr;
         }
     };
 
@@ -656,12 +664,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             m_generic_header.multicolor_load(s, m_data, 0x0, 0x2000, 0x2400, 0x27ff, 0x0, 1, false);
+            return nullptr;
         }
     };
 
@@ -682,12 +688,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
-        m_generic_header.multicolor_load(s, m_data, 0x0, 0x2000, 0x2400, 0x1f80, 0x0, 1, false);
+            m_generic_header.multicolor_load(s, m_data, 0x0, 0x2000, 0x2400, 0x1f80, 0x0, 1, false);
+            return nullptr;
         }
     };
 
@@ -708,12 +712,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             m_generic_header.multicolor_load(s, m_data, 0x111, 0x2051, 0x2439, 0x2821, 0x0, 1, false);
+            return nullptr;
         }
     };
 
@@ -734,12 +736,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             m_generic_header.multicolor_load(s, m_data, 0x800, 0x400, 0x0, 0x7e8, 0x0, 1, false);
+            return nullptr;
         }
     };
 
@@ -760,12 +760,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             m_generic_header.hires_load(s, m_data, 0x400, 0x0, false);
+            return nullptr;
         }
     };
 
@@ -824,11 +822,8 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             const u8* end = m_memory.end();
 
             Buffer temp;
@@ -843,6 +838,8 @@ namespace
 
             Buffer background(200, *(buffer + 0x2740));
             multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x800, 0x2800, 0x400, 0x400, 0x0, background, 0x0, 2, false, 2);
+
+            return nullptr;
         }
     };
 
@@ -898,11 +895,8 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             const u8* end = m_memory.end();
 
             Buffer temp;
@@ -916,6 +910,7 @@ namespace
             }
 
             multicolor_to_surface(s, buffer, m_header.width, m_header.height, 0x800, 0x400, 0x0, 0x2740, 0x0, false, false);
+            return nullptr;
         }
     };
 
@@ -966,11 +961,8 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             const u8* end = m_memory.end();
 
             Buffer temp;
@@ -984,6 +976,7 @@ namespace
             }
 
             hires_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x0, 0x4000, 0x2000, 0x6000, true, false, 0);
+            return nullptr;
         }
     };
 
@@ -1004,12 +997,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             m_generic_header.multicolor_load(s, m_data, 0x0, 0x1f40, 0x2328, 0x2712, 0x0, 1, false);
+            return nullptr;
         }
     };
 
@@ -1030,12 +1021,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             m_generic_header.multicolor_load(s, m_data, 0x2400, 0x400, 0x0, 0x0, 0x0, 0, true);
+            return nullptr;
         }
     };
 
@@ -1056,11 +1045,8 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             u8 sprite_color1 = m_data[0x448];
             u8 sprite_color2 = m_data[0x449];
             const u8 *sprite_colors = m_data + 0x280;
@@ -1114,6 +1100,7 @@ namespace
             }
 
             resolve_palette(s, temp, m_header.width, m_header.height, palette);
+            return nullptr;
         }
     };
 
@@ -1196,11 +1183,8 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             const u8* end = m_memory.end();
 
             Buffer temp;
@@ -1218,6 +1202,7 @@ namespace
             std::memcpy(background.data() + 100, buffer + 0x8328, 100);
 
             multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x2000, 0x63e8, 0x0, 0x43e8, 0x4000, background.data(), 0x0, 2, true, 2);
+            return nullptr;
         }
     };
 
@@ -1256,17 +1241,15 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             Buffer background(200);
             std::memcpy(background.data() +   0, m_data + 0x3f4f, 177);
             std::memcpy(background.data() + 177, m_data + 0x47e8, 20);
             background[197] = background[198] = background[199] = background[196];  // replicate the last color four times
 
             multicolor_interlace_to_surface(s, m_data, m_header.width, m_header.height, 0x2000, 0x6400, 0x0, 0x4400, 0x4000, background.data(), 0x0, 2, true, 2);
+            return nullptr;
         }
     };
 
@@ -1287,11 +1270,8 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             const u8* bitmap_c64 = m_data + 0x1000;
             const u8* video_ram = m_data + 0x800;
             const u8* color_ram = m_data;
@@ -1364,6 +1344,7 @@ namespace
             }
 
             resolve_palette(s, temp, m_header.width, m_header.height, palette);
+            return nullptr;
         }
     };
 
@@ -1384,12 +1365,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             hires_to_surface(s, m_data, m_header.width, m_header.height, 0x0, 0x2000, true, false, 0);
+            return nullptr;
         }
     };
 
@@ -1403,7 +1382,7 @@ namespace
     // ImageDecoder: HIM (Hires Manager)
     // ------------------------------------------------------------
 
-    void depack_him(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
+    const char* depack_him(u8* buffer, const u8* input, int scansize, int insize, u8 escape_char)
     {
         MANGO_UNREFERENCED(scansize);
 
@@ -1424,8 +1403,7 @@ namespace
 
                 if (out - n < out_end)
                 {
-                    // TODO: "Hires Manager: unpacked size does not match file format."
-                    return;
+                    return "Hires Manager: unpacked size does not match file format.";
                 }
 
                 for (int i = 0; i < n; ++i)
@@ -1439,8 +1417,7 @@ namespace
 
                 if (out - n < out_end || in - n < in_end)
                 {
-                    // TODO: "Hires Manager: unpacked size does not match file format."
-                    return;
+                    return "Hires Manager: unpacked size does not match file format.";
                 }
 
                 for (int i = 0; i < n; ++i)
@@ -1449,6 +1426,8 @@ namespace
                 }
             }
         }
+
+        return nullptr;
     }
 
     struct InterfaceHIM : Interface
@@ -1486,22 +1465,22 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             Buffer temp;
             const u8* buffer = m_data;
+
+            const char* error = nullptr;
 
             if (m_compressed)
             {
                 temp.reset(16383);
-                depack_him(temp, m_data, 16383, int(m_memory.size - 2), 0);
+                error = depack_him(temp, m_data, 16383, int(m_memory.size - 2), 0);
                 buffer = temp;
             }
 
             hires_to_surface(s, buffer, m_header.width, m_header.height, 0x140, 0x2028, true, false, 0);
+            return error;
         }
     };
 
@@ -1535,12 +1514,10 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             multicolor_to_surface(s, m_data, m_header.width, m_header.height, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, false, false);
+            return nullptr;
         }
     };
 
@@ -1561,11 +1538,8 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             PaletteC64 palette;
             Buffer temp(m_header.width * m_header.height, 0);
 
@@ -1577,6 +1551,7 @@ namespace
                                       1, false);
 
             resolve_palette(s, temp, m_header.width, m_header.height, palette);
+            return nullptr;
         }
     };
 
@@ -1663,11 +1638,8 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             const u8* end = m_memory.end();
 
             Buffer temp;
@@ -1682,6 +1654,8 @@ namespace
 
             Buffer background(200, *(buffer + 0x437f));
             multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x2400, 0x6400, 0x400, 0x4400, 0x0, background, nullptr, 1, true, 2);
+
+            return nullptr;
         }
     };
 
@@ -1702,12 +1676,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             m_generic_header.multicolor_load(s, m_data, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, 1, false);
+            return nullptr;
         }
     };
 
@@ -1728,12 +1700,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             m_generic_header.multicolor_load(s, m_data, 0x400, 0x0, 0x2400, 0x3f0, 0x0, 1, false);
+            return nullptr;
         }
     };
 
@@ -1781,11 +1751,8 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             const u8* buffer = m_data;
 
             const u8* bitmap_c64 = buffer + 0x2000;
@@ -1821,26 +1788,20 @@ namespace
                     int sprite_ram_bank = y & 0x7;
 
                     u8 sprite_pointer1 = buffer[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb];
-                    /*
                     if (sprite_pointer1 > 15872)
                     {
-                        // TODO: "SHF: invalid sprite pointer."
-                        return;
+                        return "SHF: invalid sprite pointer.";
                     }
-                    */
 
                     int sprite_byte_offset1 = (sprite_pointer1 * 64) + (sprite_line * 3) + (x % 24) / 8;
                     u8 sprite_byte1 = buffer[sprite_byte_offset1];
                     int sprite_bit_pattern1 = (sprite_byte1 >> (7 - (x & 0x7))) & 0x1;
 
                     u8 sprite_pointer2 = buffer[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb + 4];
-                    /*
                     if (sprite_pointer2 > 15872)
                     {
-                        // TODO: "SHF: invalid sprite pointer."
-                        return;
+                        return "SHF: invalid sprite pointer.";
                     }
-                    */
 
                     int sprite_byte_offset2 = (sprite_pointer2 * 64) + (sprite_line * 3) + (x % 24) / 8;
                     u8 sprite_byte2 = buffer[sprite_byte_offset2];
@@ -1871,6 +1832,7 @@ namespace
             }
 
             resolve_palette(s, tempImage, m_header.width, m_header.height, palette);
+            return nullptr;
         }
     };
 
@@ -1896,11 +1858,8 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             const u8* bitmap_c64 = m_data + 0x2000;
             const u8* video_ram = m_data;
             u8 sprite_color = *(m_data + 0x3e9);
@@ -1936,7 +1895,7 @@ namespace
 
                     if (sprite_byte_offset > 15360)
                     {
-                        // TODO: "SHF-XL: invalid sprite pointer."
+                        return "SHF-XL: invalid sprite pointer.";
                     }
 
                     u8 sprite_byte = m_data[sprite_byte_offset];
@@ -1963,6 +1922,8 @@ namespace
             }
 
             resolve_palette(s, tempImage, m_header.width, m_header.height, palette);
+
+            return nullptr;
         }
     };
 
@@ -1976,7 +1937,7 @@ namespace
     // ImageDecoder: MCI (True Paint)
     // ------------------------------------------------------------
 
-    void depack_mci(u8* buffer, const u8* input, int scansize, int insize)
+    const char* depack_mci(u8* buffer, const u8* input, int scansize, int insize)
     {
         const u8* in = input + insize - 1;
         const u8* in_end = input + 272;
@@ -2000,8 +1961,7 @@ namespace
 
                 if (out - 3 < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
-                    return;
+                    return "True Paint: unpacked size does not match file format.";
                 }
 
                 *out-- = v;
@@ -2016,8 +1976,7 @@ namespace
 
                 if (out - n < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
-                    return;
+                    return "True Paint: unpacked size does not match file format.";
                 }
 
                 for (int i = 0; i < n; ++i)
@@ -2030,8 +1989,7 @@ namespace
                 // 3-zero run
                 if (out - 3 < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
-                    return;
+                    return "True Paint: unpacked size does not match file format.";
                 }
 
                 *out-- = 0;
@@ -2048,8 +2006,7 @@ namespace
 
                 if (out - n < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
-                    return;
+                    return "True Paint: unpacked size does not match file format.";
                 }
 
                 for (int i = 0; i < n; ++i)
@@ -2062,8 +2019,7 @@ namespace
                 // 1st 2-character run
                 if (out - 2 < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
-                    return;
+                    return "True Paint: unpacked size does not match file format.";
                 }
 
                 *out-- = *(input + 0x88);
@@ -2074,8 +2030,7 @@ namespace
                 // 2nd 2-character run
                 if (out - 2 < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
-                    return;
+                    return "True Paint: unpacked size does not match file format.";
                 }
 
                 *out-- = *(input + 0x89);
@@ -2086,8 +2041,7 @@ namespace
                 // 3rd 2-character run
                 if (out - 2 < out_end)
                 {
-                    // TODO: "True Paint: unpacked size does not match file format."
-                    return;
+                    return "True Paint: unpacked size does not match file format.";
                 }
 
                 *out-- = *(input + 0x8a);
@@ -2098,6 +2052,8 @@ namespace
                 *out-- = v;
             }
         }
+
+        return nullptr;
     }
 
     struct InterfaceMCI : Interface
@@ -2136,23 +2092,24 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             Buffer temp;
             const u8* buffer = m_data;
+
+            const char* error = nullptr;
 
             if (m_compressed)
             {
                 temp.reset(19432);
-                depack_mci(temp, m_data, 19432, int(m_memory.size - 2));
+                error = depack_mci(temp, m_data, 19432, int(m_memory.size - 2));
                 buffer = temp;
             }
 
             Buffer background(200, *(buffer + 0x3e8));
             multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x400, 0x2400, 0x0, 0x4400, 0x4800, background, 0x0, 2, false, 2);
+
+            return error;
         }
     };
 
@@ -2200,11 +2157,8 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             Buffer temp;
             const u8* buffer = m_data;
 
@@ -2296,6 +2250,8 @@ namespace
             }
 
             resolve_palette(s, tempImage, m_header.width, m_header.height, palette);
+
+            return nullptr;
         }
     };
 
@@ -2367,11 +2323,8 @@ namespace
             }
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             Buffer temp;
             const u8* buffer = m_data;
 
@@ -2483,6 +2436,8 @@ namespace
                     image[x].a = 0xff;
                 }
             }
+
+            return nullptr;
         }
     };
 
@@ -2503,12 +2458,10 @@ namespace
         {
         }
 
-        void decodeImage(const Surface& s) override
+        const char* decodeImage(const Surface& s) override
         {
-            if (!m_data)
-                return;
-
             m_generic_header.multicolor_load(s, m_data, 0x800, 0x400, 0x0, 0x7e9, 0x0, 1, false);
+            return nullptr;
         }
     };
 
@@ -2526,7 +2479,7 @@ namespace mango::image
     void registerImageCodecC64()
     {
         // Advanced Art Studio
-        registerImageDecoder(createInterfaceMPIC, ".mpic"); // TODO: test
+        registerImageDecoder(createInterfaceMPIC, ".mpic"); // MANGO TODO: test
 
         // AFLI-editor v2.0
         registerImageDecoder(createInterfaceAFL, ".afl");
@@ -2537,7 +2490,7 @@ namespace mango::image
 
         // Art Studio
         registerImageDecoder(createInterfaceART, ".art");
-        registerImageDecoder(createInterfaceART, ".ocp"); // TODO: check the format_size
+        registerImageDecoder(createInterfaceART, ".ocp"); // MANGO TODO: check the format_size
 
         // Artist 64
         registerImageDecoder(createInterfaceA64, ".a64");
@@ -2556,7 +2509,7 @@ namespace mango::image
         // Doodle
         registerImageDecoder(createInterfaceDD, ".dd");
         registerImageDecoder(createInterfaceDD, ".ddl");
-        //registerImageDecoder(createInterfaceDD, "jj"); // TODO: support compression
+        //registerImageDecoder(createInterfaceDD, "jj"); // MANGO TODO: support compression
 
         // Drazlace
         registerImageDecoder(createInterfaceDRL, ".drl");
@@ -2620,7 +2573,7 @@ namespace mango::image
         registerImageDecoder(createInterfaceSHF, ".shfli");
 
         // SHF-XL v1.0
-        registerImageDecoder(createInterfaceSHFXL, ".shx"); // TODO: support compression
+        registerImageDecoder(createInterfaceSHFXL, ".shx"); // MANGO TODO: support compression
         registerImageDecoder(createInterfaceSHFXL, ".shfxl");
 
         // True Paint

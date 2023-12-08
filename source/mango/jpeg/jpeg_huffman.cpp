@@ -72,7 +72,7 @@ namespace mango::jpeg
             }
             else
             {
-                maxcode[j] = 0; // TODO: should be -1 if no codes of this length
+                maxcode[j] = 0; // MANGO TODO: should be -1 if no codes of this length
             }
         }
         valueOffset[18] = 0;

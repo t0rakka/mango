@@ -140,7 +140,7 @@ namespace
             KEYCODE_F12,
             KEYCODE_NONE,
             KEYCODE_NONE, // F15
-            KEYCODE_INSERT, // TODO: check
+            KEYCODE_INSERT, // MANGO TODO: check
             KEYCODE_HOME,
             KEYCODE_PAGE_UP,
             KEYCODE_DELETE,
@@ -172,8 +172,7 @@ namespace
         return mask;
     }
     
-    // TODO: Replace this with "friend class Keyboard" to send
-    //       keyboard events.
+    // MANGO TODO: Replace this with "friend class Keyboard" to send keyboard events
     
     class WindowAdapter : public OpenGLContext
     {

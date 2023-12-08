@@ -12,8 +12,7 @@
 #include "../../external/astc/astcenc_internal.h"
 #include "../../external/astc/astcenc_diagnostic_trace.h"
 
-// TODO: clean up the code
-// TODO: stride support
+// MANGO TODO: stride support
 
 namespace
 {

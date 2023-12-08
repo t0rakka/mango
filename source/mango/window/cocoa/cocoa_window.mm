@@ -53,13 +53,13 @@ namespace mango
 
     int Window::getScreenCount()
     {
-        // TODO: support more than default screen
+        // MANGO TODO: support more than default screen
         return 1;
     }
 
     math::int32x2 Window::getScreenSize(int screen)
     {
-        // TODO: support more than default screen
+        // MANGO TODO: support more than default screen
         MANGO_UNREFERENCED(screen);
 
         // NOTE: both of these report incorrect resolution on Retina Display :D
@@ -92,7 +92,7 @@ namespace mango
 
     void Window::setWindowPosition(int x, int y)
     {
-        // TODO
+        // MANGO TODO
         MANGO_UNREFERENCED(x);
         MANGO_UNREFERENCED(y);
     }

@@ -8,9 +8,6 @@
 using namespace mango;
 using namespace mango::filesystem;
 
-// TODO: file validation with checksum
-// TODO: file permissions (the ultimate goal -> rsync will not "do" anything)
-
 struct State
 {
     bool print_list { false };
@@ -103,7 +100,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // TODO: proper parsing of command line
+    // MANGO TODO: proper parsing of command line
 
     std::string filename = argv[1];
     std::string destination = argv[2];
@@ -117,7 +114,7 @@ int main(int argc, char* argv[])
 #if 0
     else if (destination == "--verify")
     {
-        // TODO
+        // MANGO TODO
     }
 #endif
     else if (destination == "--list")

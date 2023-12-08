@@ -29,8 +29,8 @@ namespace
     {
         Format format;
 
-        // TODO: this format selection assumes that the format supports 1, 3 or 4 channels and 8 and 16 bits per channel
-        // TODO: probably should switch with number of channels -and- bytes per channel separately
+        // MANGO TODO: this format selection assumes that the format supports 1, 3 or 4 channels and 8 and 16 bits per channel
+        // MANGO TODO: probably should switch with number of channels -and- bytes per channel separately
         int bytes_per_pixel = bytes_per_channel * channels;
         switch (bytes_per_pixel)
         {
@@ -157,7 +157,7 @@ namespace
 
         ImageEncodeStatus status;
 
-        // TODO: optimize encoder
+        // MANGO TODO: optimize encoder
         Bitmap temp(surface.width, surface.height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
         temp.blit(0, 0, surface);
 

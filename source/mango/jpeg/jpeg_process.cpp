@@ -191,9 +191,9 @@ void process_cmyk_bgra(u8* dest, size_t stride, const s16* data, ProcessState* s
                     // We don't have API to expose the CMYK color data so we do the worst possible
                     // thing and approximate the RGB colors. THIS IS VERY BAD!!!!!
                     //
-                    // TODO: Proposed API is to expose CMYK as "packed pixels" compressed image format,
-                    //       we DO have a mechanism for that. Alternatively, we could add CMYK
-                    //       color type in the mango::Format. We already expose sRGB-U8 this way.
+                    // MANGO TODO: Proposed API is to expose CMYK as "packed pixels" compressed image format,
+                    //             we DO have a mechanism for that. Alternatively, we could add CMYK
+                    //             color type in the mango::Format. We already expose sRGB-U8 this way.
                     int r = (C * K) / 255;
                     int g = (M * K) / 255;
                     int b = (Y * K) / 255;

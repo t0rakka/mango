@@ -295,8 +295,7 @@ namespace mango::filesystem
 #else
 
 // -----------------------------------------------------------------
-// FileObserver: SUN, HPUX, IRIX, etc. implementation
-// TODO
+// FileObserver: NOT SUPPORTED
 // 
 // -----------------------------------------------------------------
 

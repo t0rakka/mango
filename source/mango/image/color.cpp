@@ -53,7 +53,7 @@ namespace mango::image
     void ColorManager::transform(const Surface& target, const ColorProfile& output, const ColorProfile& input)
     {
         // NOTE: lazy in-place ICC profile transformation
-        // TODO:
+        // MANGO TODO:
         // - DoTransform can be multi-threaded
         // - do direct transform when output and input are compatible
 

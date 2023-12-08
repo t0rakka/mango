@@ -7,7 +7,6 @@ endif()
 
 add_executable(webp_test webp/webp.cpp)
 add_executable(jpeg_reader jpeg_reader/jpeg_reader.cpp)
-add_executable(jpeg_debugger jpeg_debugger/jpeg_debugger.cpp)
 add_executable(icc_p3_test icc/p3.cpp)
 add_executable(blitter blitter/blitter.cpp)
 add_executable(palette palette/palette.cpp)

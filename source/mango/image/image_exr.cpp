@@ -15,10 +15,10 @@ namespace
     using namespace mango::math;
     using namespace mango::image;
 
-    // TODO: mipmap/ripmap selection
-    // TODO: deep image support
-    // TODO: multi-part support
-    // TODO: more flexible color resolver (=more formats)
+    // MANGO TODO: mipmap/ripmap selection
+    // MANGO TODO: deep image support
+    // MANGO TODO: multi-part support
+    // MANGO TODO: more flexible color resolver (=more formats)
 
 // --------------------------------------------------------------------------------------
 //
@@ -1228,7 +1228,7 @@ void readAttribute<TileDesc>(TileDesc& data, LittleEndianConstPointer p)
 template <>
 void readAttribute<String>(String& data, LittleEndianConstPointer p)
 {
-    // TODO
+    // MANGO TODO
     MANGO_UNREFERENCED(data);
     MANGO_UNREFERENCED(p);
 }
@@ -1236,7 +1236,7 @@ void readAttribute<String>(String& data, LittleEndianConstPointer p)
 template <>
 void readAttribute<Text>(Text& data, LittleEndianConstPointer p)
 {
-    // TODO
+    // MANGO TODO
     MANGO_UNREFERENCED(data);
     MANGO_UNREFERENCED(p);
 }
@@ -2168,7 +2168,7 @@ const u8* ContextEXR::decompress_dwaa(Memory dest, ConstMemory source, int width
     MANGO_UNREFERENCED(height);
     MANGO_UNREFERENCED(ystart);
 
-    // TODO
+    // MANGO TODO
     return nullptr;
 }
 
@@ -2180,7 +2180,7 @@ const u8* ContextEXR::decompress_dwab(Memory dest, ConstMemory source, int width
     MANGO_UNREFERENCED(height);
     MANGO_UNREFERENCED(ystart);
 
-    // TODO
+    // MANGO TODO
     return nullptr;
 }
 
@@ -2271,7 +2271,7 @@ void decodeLuminance(Surface surface, const u8* src, const Layer& layer, int x0,
     }
     else
     {
-        // TODO
+        // MANGO TODO
     }
 }
 
@@ -2319,7 +2319,7 @@ void decodeChroma(Surface surface, const u8* src, const Layer& layer, const Chro
 
     if (datatype == DataType::HALF)
     {
-        // TODO: clipping
+        // MANGO TODO: clipping
         for (int y = y0; y < y1; y += 2)
         {
             float16* image0 = surface.address<float16>(0, y + 0);
@@ -2355,7 +2355,7 @@ void decodeChroma(Surface surface, const u8* src, const Layer& layer, const Chro
     }
     else
     {
-        // TODO
+        // MANGO TODO
     }
 }
 

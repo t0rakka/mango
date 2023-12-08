@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -11,8 +11,8 @@
 #include "../../external/basisu/transcoder/basisu_transcoder.h"
 #include <map>
 
-// TODO: more input validation so that fuzzing tests pass :)
-// TODO: supercompression transcoding API to ImageDecoder interface.
+// MANGO TODO: more input validation so that fuzzing tests pass :)
+// MANGO TODO: supercompression transcoding API to ImageDecoder interface.
 /*
     Implementation note: The BASIS_LZ and UASTC supercompression schemes are
     meant as transcoders so that other (supported) block compression-formatted
@@ -1131,7 +1131,7 @@ namespace
                     }
                     else if (!strcmp(key, "KTXswizzle"))
                     {
-                        // TODO: this modifies m_header.format
+                        // MANGO TODO: this modifies m_header.format
                     }
 
                     debugPrint("  %s\n", key);
@@ -1212,7 +1212,7 @@ namespace
 
             decompress();
 
-            // TODO: typesize dictates endianness swap on big-endian
+            // MANGO TODO: typesize dictates endianness swap on big-endian
 
             ImageDecodeStatus status;
 

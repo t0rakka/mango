@@ -939,7 +939,6 @@ namespace mango::math
             const float sp = std::sin((1.0f - time) * halfpi);
             const float sq = std::sin(time * halfpi);
 
-            // TODO: check the return value
             return Quaternion(a.x * sp - a.y * sq,
                               a.y * sp + a.x * sq,
                               a.z * sp - a.w * sq,

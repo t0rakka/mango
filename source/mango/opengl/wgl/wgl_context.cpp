@@ -59,7 +59,7 @@ namespace mango
 
             if (shared)
             {
-                // TODO
+                // MANGO TODO
                 MANGO_EXCEPTION("[OpenGLContextWGL] Shared context is not implemented.");
             }
 
@@ -167,7 +167,7 @@ namespace mango
 
                     if (wglExtensions.find("WGL_ARB_pixel_format_float") != std::string::npos)
                     {
-                        // TODO
+                        // MANGO TODO
                     }
 
                     if (wglExtensions.find("WGL_ARB_framebuffer_sRGB") != std::string::npos)
@@ -219,7 +219,7 @@ namespace mango
 
             if (shared)
             {
-                // TODO
+                // MANGO TODO
                 //::wglShareLists(hrc, shared->m_context->hrc);
             }
 
