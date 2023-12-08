@@ -206,6 +206,11 @@ const char* compute_shader_source = R"(
             {
                 remain += 8;
                 uint x = getByte();
+                if (x == 0xff)
+                {
+                    // skip stuff byte
+                    getByte();
+                }
                 data = (data << 8) | x;
             }
         }
@@ -709,6 +714,23 @@ struct ComputeDecoderContext : ComputeDecoder
         Buffer buffer;
         std::vector<u32> offsets;
 
+#if 1
+        for (auto interval : input.intervals)
+        {
+            ConstMemory memory = interval.memory;
+
+            offsets.push_back(u32(buffer.size() / 4));
+
+            size_t padding = align_padding(memory.size, 4);
+
+            buffer.append(memory);
+            buffer.append(padding, 0);
+        }
+
+        printf("  Buffer: %d bytes\n", u32(buffer.size()));
+#endif
+
+#if 0
         for (auto interval : input.intervals)
         {
             std::vector<u8> temp;
@@ -747,20 +769,6 @@ struct ComputeDecoderContext : ComputeDecoder
             buffer.append(temp.data(), temp.size());
             buffer.append(padding, 0);
         }
-
-        GLuint sbo[3];
-        glGenBuffers(3, sbo);
-
-#if 1
-        // upload compressed bitstream
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[0]);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, buffer.size(), reinterpret_cast<GLvoid*>(buffer.data()), GL_DYNAMIC_COPY);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sbo[0]);
-
-        // upload offset tables
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[1]);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, offsets.size() * 4, reinterpret_cast<GLvoid*>(offsets.data()), GL_DYNAMIC_COPY);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, sbo[1]);
 #endif
 
         size_t blocks_in_mcu = input.blocks.size();
@@ -783,10 +791,25 @@ struct ComputeDecoderContext : ComputeDecoder
             }
         }
 
+        GLuint sbo[3];
+        glGenBuffers(3, sbo);
+
+#if 1
+        // upload compressed bitstream
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[0]);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, buffer.size(), reinterpret_cast<GLvoid*>(buffer.data()), GL_DYNAMIC_COPY);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sbo[0]);
+
+        // upload offset tables
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[1]);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, offsets.size() * 4, reinterpret_cast<GLvoid*>(offsets.data()), GL_DYNAMIC_COPY);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, sbo[1]);
+
         // upload huffman tables
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[2]);
         glBufferData(GL_SHADER_STORAGE_BUFFER, huffmanBuffer.size() * 4, reinterpret_cast<GLvoid*>(huffmanBuffer.data()), GL_DYNAMIC_COPY);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, sbo[2]);
+#endif
 
         glUseProgram(program);
 
