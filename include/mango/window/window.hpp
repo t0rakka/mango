@@ -67,6 +67,7 @@
     {
         xcb_connection_t* connection;
         xcb_window_t window;
+        xcb_visualid_t visualid;
     };
 
 #endif
@@ -75,9 +76,16 @@
 // MANGO_WINDOW_SYSTEM_WAYLAND
 // -----------------------------------------------------------------------
 
+    #include <wayland-client.h>
+    #include <wayland-client-protocol.h>
+
 #if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
 
-        // MANGO TODO
+    struct NativeWindowHandle
+    {
+        wl_display* display;
+        wl_surface* surface;
+    };
 
 #endif
 
