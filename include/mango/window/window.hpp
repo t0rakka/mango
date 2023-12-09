@@ -50,6 +50,7 @@
     {
         ::Display* display { NULL };
         ::Window window { 0 };
+        ::VisualID visualid { 0 };
     };
 
 #endif
