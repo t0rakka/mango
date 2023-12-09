@@ -550,13 +550,13 @@ namespace mango
         }
     }
 
-    bool WindowHandle::createXWindow(int screen, int depth, Visual* visual_ptr, int width, int height, const char* title)
+    bool WindowHandle::createXWindow(int screen, int depth, Visual* visual, int width, int height, const char* title)
     {
         if (!native.display)
             return false;
 
-        visual = visual_ptr ? visual_ptr
-                            : DefaultVisual(native.display, screen);
+        visual = visual ? visual
+                        : DefaultVisual(native.display, screen);
 
         native.visualid = XVisualIDFromVisual(visual);
 
@@ -564,6 +564,7 @@ namespace mango
                                : DefaultRootWindow(native.display);
 
         x11_colormap = XCreateColormap(native.display, root, visual, AllocNone);
+        x11_visual = visual;
 
         XSetWindowAttributes wa;
 
@@ -708,7 +709,7 @@ namespace mango
         int screen = DefaultScreen(m_handle->native.display);
         int depth = DefaultDepth(m_handle->native.display, screen);
 
-        XImage* icon = XCreateImage(m_handle->native.display, m_handle->visual, depth, ZPixmap, 0,
+        XImage* icon = XCreateImage(m_handle->native.display, m_handle->x11_visual, depth, ZPixmap, 0,
             reinterpret_cast<char*>(bitmap.image), width, height, 32, 0);
         if (!icon)
         {

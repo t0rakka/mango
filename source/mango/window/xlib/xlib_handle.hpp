@@ -22,10 +22,10 @@ namespace mango
     struct WindowHandle
     {
         NativeWindowHandle native;
-        ::Visual* visual { nullptr };
 
         // window data
         ::Colormap  x11_colormap { 0 };
+        ::Visual*   x11_visual { nullptr };
         ::XImage*   x11_icon { nullptr };
 
         // window close event atoms
