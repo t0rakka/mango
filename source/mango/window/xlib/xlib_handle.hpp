@@ -64,7 +64,7 @@ namespace mango
         WindowHandle(int width, int height, u32 flags);
         ~WindowHandle();
 
-        bool createWindow(int screen, int depth, Visual* visual, int width, int height, const char* title);
+        bool createXWindow(int screen, int depth, Visual* visual, int width, int height, const char* title);
     };
 
 } // namespace mango

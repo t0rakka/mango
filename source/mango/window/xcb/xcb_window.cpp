@@ -289,6 +289,11 @@ namespace mango
         return m_handle->native;
     }
 
+    Window::operator WindowHandle* () const
+    {
+        return m_handle;
+    }
+
     void Window::enterEventLoop()
     {
 

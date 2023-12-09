@@ -550,7 +550,7 @@ namespace mango
         }
     }
 
-    bool WindowHandle::createWindow(int screen, int depth, Visual* visual_ptr, int width, int height, const char* title)
+    bool WindowHandle::createXWindow(int screen, int depth, Visual* visual_ptr, int width, int height, const char* title)
     {
         if (!native.display)
             return false;
@@ -830,6 +830,11 @@ namespace mango
     Window::operator NativeWindowHandle () const
     {
         return m_handle->native;
+    }
+
+    Window::operator WindowHandle* () const
+    {
+        return m_handle;
     }
 
     void Window::enterEventLoop()

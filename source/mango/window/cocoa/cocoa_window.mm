@@ -169,6 +169,11 @@ namespace mango
         return nullptr;
     }
 
+    Window::operator WindowHandle* () const
+    {
+        return m_handle;
+    }
+
     void Window::enterEventLoop()
     {
         m_handle->is_looping = true;
@@ -196,7 +201,7 @@ namespace mango
             std::this_thread::sleep_for(std::chrono::microseconds(100));
         }
     }
-    
+
     void Window::breakEventLoop()
     {
         m_handle->is_looping = false;

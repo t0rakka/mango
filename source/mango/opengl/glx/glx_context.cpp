@@ -164,10 +164,10 @@ namespace mango
             XVisualInfo* vi = glXGetVisualFromFBConfig(window->native.display, bestFbc);
 
             // create window
-            if (!window->createWindow(vi->screen, vi->depth, vi->visual, width, height, "OpenGL"))
+            if (!window->createXWindow(vi->screen, vi->depth, vi->visual, width, height, "OpenGL"))
             {
                 shutdown();
-                MANGO_EXCEPTION("[OpenGLContextGLX] createWindow() failed.");
+                MANGO_EXCEPTION("[OpenGLContextGLX] createXWindow() failed.");
             }
 
             XFree(vi);

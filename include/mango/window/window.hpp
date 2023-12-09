@@ -19,7 +19,12 @@
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
 
+namespace mango
+{
+
     using NativeWindowHandle = HWND;
+
+} // namespace mango
 
 #endif
 
@@ -29,7 +34,12 @@
 
 #if defined(MANGO_WINDOW_SYSTEM_COCOA)
 
+namespace mango
+{
+
     using NativeWindowHandle = void*;
+
+} // namespace mango
 
 #endif
 
@@ -46,12 +56,17 @@
         using Status = int;
     #endif
 
+namespace mango
+{
+
     struct NativeWindowHandle
     {
         ::Display* display { NULL };
         ::Window window { 0 };
         ::VisualID visualid { 0 };
     };
+
+} // namespace mango
 
 #endif
 
@@ -63,6 +78,9 @@
 
     #include <xcb/xcb.h>
 
+namespace mango
+{
+
     struct NativeWindowHandle
     {
         xcb_connection_t* connection;
@@ -70,16 +88,21 @@
         xcb_visualid_t visualid;
     };
 
+} // namespace mango
+
 #endif
 
 // -----------------------------------------------------------------------
 // MANGO_WINDOW_SYSTEM_WAYLAND
 // -----------------------------------------------------------------------
 
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+
     #include <wayland-client.h>
     #include <wayland-client-protocol.h>
 
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+namespace mango
+{
 
     struct NativeWindowHandle
     {
@@ -87,16 +110,14 @@
         wl_surface* surface;
     };
 
+} // namespace mango
+
 #endif
 
 namespace mango
 {
 
 #if !defined(MANGO_WINDOW_SYSTEM_NONE)
-
-    // -----------------------------------------------------------------------
-    // Window
-    // -----------------------------------------------------------------------
 
     enum Keycode
     {
@@ -206,6 +227,10 @@ namespace mango
         MOUSEBUTTON_WHEEL
     };
 
+    // -----------------------------------------------------------------------
+    // Window
+    // -----------------------------------------------------------------------
+
     class Window : public NonCopyable
     {
     protected:
@@ -234,11 +259,7 @@ namespace mango
         virtual bool isKeyPressed(Keycode code) const;
 
         operator NativeWindowHandle () const;
-
-        operator struct WindowHandle* () const
-        {
-            return m_handle;
-        }
+        operator struct WindowHandle* () const;
 
         void enterEventLoop();
         void breakEventLoop();
