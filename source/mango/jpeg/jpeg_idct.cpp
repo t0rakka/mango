@@ -7,7 +7,7 @@
 namespace
 {
     using namespace mango;
-    using namespace jpeg;
+    using namespace mango::image::jpeg;
 
     struct IDCT
     {
@@ -120,7 +120,7 @@ namespace
 
 } // namespace
 
-namespace mango::jpeg
+namespace mango::image::jpeg
 {
 
     // ------------------------------------------------------------------------------------------------
@@ -914,4 +914,4 @@ namespace mango::jpeg
 
 #endif // MANGO_ENABLE_NEON
 
-} // namespace mango::jpeg
+} // namespace mango::image::jpeg

@@ -1,10 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include "jpeg.hpp"
 
-namespace mango::jpeg
+namespace mango::image::jpeg
 {
 
 // ----------------------------------------------------------------------------
@@ -928,4 +928,4 @@ void process_ycbcr_rgba_8x8_avx2(u8* dest, size_t stride, const s16* data, Proce
 
 #endif // MANGO_ENABLE_AVX2
 
-} // namespace mango::jpeg
+} // namespace mango::image::jpeg

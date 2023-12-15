@@ -19,7 +19,8 @@ namespace
 {
 
 using namespace mango;
-using namespace mango::jpeg;
+using namespace mango::image;
+using namespace mango::image::jpeg;
 
 static
 const char* compute_shader_source = R"(
@@ -558,7 +559,7 @@ struct DecodeBlock
     int pred;
 };
 
-int decode(BitBuffer& bitbuffer, HuffTable tables[4], int index)
+int decode(BitBuffer& bitbuffer, HuffmanTable tables[4], int index)
 {
     bitbuffer.ensure();
 
@@ -579,7 +580,7 @@ int decode(BitBuffer& bitbuffer, HuffTable tables[4], int index)
     return symbol;
 }
 
-void huff_decode_mcu(int dest[640], DecodeBlock blocks[3], int numBlocks, HuffTable huffmanTables[4], int last_dc_value[3], BitBuffer& bitbuffer)
+void huff_decode_mcu(int dest[640], DecodeBlock blocks[3], int numBlocks, HuffmanTable huffmanTables[4], int last_dc_value[3], BitBuffer& bitbuffer)
 {
     for (int i = 0; i < numBlocks * 64; ++i)
     {
@@ -658,7 +659,7 @@ void cpu_decode_interval(int* temp, const Buffer& buffer, const std::vector<int>
     decodeBlocks[2].ac = 3;
     decodeBlocks[2].pred = 2;
 
-    HuffTable huffmanTables[4];
+    HuffmanTable huffmanTables[4];
 
     for (int i = 0; i < 4; ++i)
     {
@@ -701,7 +702,7 @@ void cpu_decode_interval(int* temp, const Buffer& buffer, const std::vector<int>
 
 // ---------------------------------------------------------------------------------
 
-struct ComputeDecoderContext : ComputeDecoder
+struct ComputeDecoderContext : jpeg::ComputeDecoder
 {
     GLuint program = 0;
     GLuint texture = 0;
@@ -778,7 +779,7 @@ struct ComputeDecoderContext : ComputeDecoder
         for (int i = 0; i < 4; ++i)
         {
             int* dest = huffmanBuffer.data() + i * 273;
-            const HuffTable& source = input.huffman.table[i & 1][i >> 1];
+            const HuffmanTable& source = input.huffman.table[i & 1][i >> 1];
 
             for (int j = 0; j < 17; ++j)
             {

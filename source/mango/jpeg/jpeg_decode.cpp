@@ -8,7 +8,7 @@
 #include <mango/core/thread.hpp>
 #include "jpeg.hpp"
 
-namespace mango::jpeg
+namespace mango::image::jpeg
 {
 
     // ----------------------------------------------------------------------------
@@ -848,7 +848,7 @@ namespace mango::jpeg
 
         if (decodeState.is_arithmetic)
         {
-            Arithmetic& arithmetic = decodeState.arithmetic;
+            ArithmeticDecoder& arithmetic = decodeState.arithmetic;
 
             decodeState.buffer.ptr = p;
             decodeState.buffer.end = end;
@@ -905,7 +905,7 @@ namespace mango::jpeg
         }
         else
         {
-            Huffman& huffman = decodeState.huffman;
+            HuffmanDecoder& huffman = decodeState.huffman;
 
             decodeState.buffer.ptr = p;
             decodeState.buffer.end = end;
@@ -1042,7 +1042,7 @@ namespace mango::jpeg
         p += 2;
         Lh -= 2;
 
-        std::vector<HuffTable*> tables;
+        std::vector<HuffmanTable*> tables;
 
         for ( ; Lh > 0; )
         {
@@ -1065,7 +1065,7 @@ namespace mango::jpeg
                 return;
             }
 
-            HuffTable& table = decodeState.huffman.table[Tc][Th];
+            HuffmanTable& table = decodeState.huffman.table[Tc][Th];
             decodeState.huffman.maxTc = std::max(decodeState.huffman.maxTc, int(Tc));
             decodeState.huffman.maxTh = std::max(decodeState.huffman.maxTh, int(Th));
 
@@ -1125,7 +1125,7 @@ namespace mango::jpeg
         }
 
         // configure tables only after the data is determined to be correct
-        for (HuffTable* table : tables)
+        for (HuffmanTable* table : tables)
         {
             if (!table->configure())
             {
@@ -2646,4 +2646,4 @@ namespace mango::jpeg
         }
     }
 
-} // namespace mango::jpeg
+} // namespace mango::image::jpeg

@@ -1,18 +1,18 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cstring>
 #include "jpeg.hpp"
 
-namespace mango::jpeg
+namespace mango::image::jpeg
 {
 
     // ----------------------------------------------------------------------------
-    // Huffman
+    // HuffmanDecoder
     // ----------------------------------------------------------------------------
 
-    void Huffman::restart()
+    void HuffmanDecoder::restart()
     {
         for (int i = 0; i < JPEG_MAX_COMPS_IN_SCAN; ++i)
         {
@@ -23,10 +23,10 @@ namespace mango::jpeg
     }
 
     // ----------------------------------------------------------------------------
-    // HuffTable
+    // HuffmanTable
     // ----------------------------------------------------------------------------
 
-    bool HuffTable::configure()
+    bool HuffmanTable::configure()
     {
         u8 huffsize[257];
         u32 huffcode[257];
@@ -68,7 +68,7 @@ namespace mango::jpeg
                 p += size[j];
                 maxcode[j] = huffcode[p - 1]; // maximum code of length j
                 maxcode[j] <<= (JPEG_REGISTER_BITS - j); // left justify
-                maxcode[j] |= (DataType(1) << (JPEG_REGISTER_BITS - j)) - 1;
+                maxcode[j] |= (HuffmanType(1) << (JPEG_REGISTER_BITS - j)) - 1;
             }
             else
             {
@@ -76,7 +76,7 @@ namespace mango::jpeg
             }
         }
         valueOffset[18] = 0;
-        maxcode[17] = ~DataType(0); //0xfffff; // ensures jpeg_huff_decode terminates
+        maxcode[17] = ~HuffmanType(0); //0xfffff; // ensures jpeg_huff_decode terminates
 
         // Compute lookahead tables to speed up decoding.
         // First we set all the table entries to 0, indicating "too long";
@@ -125,7 +125,7 @@ namespace mango::jpeg
         return true;
     }
 
-    int HuffTable::decode(BitBuffer& buffer) const
+    int HuffmanTable::decode(BitBuffer& buffer) const
     {
         buffer.ensure();
 
@@ -140,13 +140,13 @@ namespace mango::jpeg
         }
         else
         {
-            DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
+            HuffmanType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
             while (x > maxcode[size])
             {
                 ++size;
             }
 
-            DataType offset = (x >> (JPEG_REGISTER_BITS - size)) + valueOffset[size];
+            HuffmanType offset = (x >> (JPEG_REGISTER_BITS - size)) + valueOffset[size];
 #if 0
             if (offset > 255)
                 return 0; // decoding error
@@ -165,13 +165,13 @@ namespace mango::jpeg
 
     void huff_decode_mcu_lossless(s16* output, DecodeState* state)
     {
-        Huffman& huffman = state->huffman;
+        HuffmanDecoder& huffman = state->huffman;
         BitBuffer& buffer = state->buffer;
 
         for (int j = 0; j < state->blocks; ++j)
         {
             const DecodeBlock* block = state->block + j;
-            const HuffTable* dc = &huffman.table[0][block->dc];
+            const HuffmanTable* dc = &huffman.table[0][block->dc];
 
             int s = dc->decode(buffer);
             if (s)
@@ -185,7 +185,7 @@ namespace mango::jpeg
     }
 
     static
-    void huff_decode_ac_block(s16* output, const HuffTable* ac, BitBuffer& buffer)
+    void huff_decode_ac_block(s16* output, const HuffmanTable* ac, BitBuffer& buffer)
     {
         for (int i = 1; i < 64; )
         {
@@ -202,13 +202,13 @@ namespace mango::jpeg
             }
             else
             {
-                DataType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
+                HuffmanType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
                 while (x > ac->maxcode[size])
                 {
                     ++size;
                 }
 
-                DataType offset = (x >> (JPEG_REGISTER_BITS - size)) + ac->valueOffset[size];
+                HuffmanType offset = (x >> (JPEG_REGISTER_BITS - size)) + ac->valueOffset[size];
                 symbol = ac->value[offset];
             }
 
@@ -234,7 +234,7 @@ namespace mango::jpeg
 
     void huff_decode_mcu(s16* output, DecodeState* state)
     {
-        Huffman& huffman = state->huffman;
+        HuffmanDecoder& huffman = state->huffman;
         BitBuffer& buffer = state->buffer;
 
         std::memset(output, 0, state->blocks * 64 * sizeof(s16));
@@ -243,8 +243,8 @@ namespace mango::jpeg
         {
             const DecodeBlock* block = state->block + j;
 
-            const HuffTable* dc = &huffman.table[0][block->dc];
-            const HuffTable* ac = &huffman.table[1][block->ac];
+            const HuffmanTable* dc = &huffman.table[0][block->dc];
+            const HuffmanTable* ac = &huffman.table[1][block->ac];
 
             // DC
             int s = dc->decode(buffer);
@@ -267,7 +267,7 @@ namespace mango::jpeg
 
     void huff_decode_dc_first(s16* output, DecodeState* state)
     {
-        Huffman& huffman = state->huffman;
+        HuffmanDecoder& huffman = state->huffman;
         BitBuffer& buffer = state->buffer;
 
         for (int j = 0; j < state->blocks; ++j)
@@ -275,7 +275,7 @@ namespace mango::jpeg
             const DecodeBlock* block = state->block + j;
 
             s16* dest = output + block->offset;
-            const HuffTable* dc = &huffman.table[0][block->dc];
+            const HuffmanTable* dc = &huffman.table[0][block->dc];
 
             std::memset(dest, 0, 64 * sizeof(s16));
 
@@ -305,10 +305,10 @@ namespace mango::jpeg
 
     void huff_decode_ac_first(s16* output, DecodeState* state)
     {
-        Huffman& huffman = state->huffman;
+        HuffmanDecoder& huffman = state->huffman;
         BitBuffer& buffer = state->buffer;
 
-        const HuffTable* ac = &huffman.table[1][state->block[0].ac];
+        const HuffmanTable* ac = &huffman.table[1][state->block[0].ac];
 
         const int start = state->spectral_start;
         const int end = state->spectral_end;
@@ -352,10 +352,10 @@ namespace mango::jpeg
 
     void huff_decode_ac_refine(s16* output, DecodeState* state)
     {
-        Huffman& huffman = state->huffman;
+        HuffmanDecoder& huffman = state->huffman;
         BitBuffer& buffer = state->buffer;
 
-        const HuffTable* ac = &huffman.table[1][state->block[0].ac];
+        const HuffmanTable* ac = &huffman.table[1][state->block[0].ac];
 
         const int start = state->spectral_start;
         const int end = state->spectral_end;
@@ -448,4 +448,4 @@ namespace mango::jpeg
         }
     }
 
-} // namespace mango::jpeg
+} // namespace mango::image::jpeg

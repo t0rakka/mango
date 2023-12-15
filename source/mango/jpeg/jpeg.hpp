@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,7 +10,7 @@
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
 
-namespace mango::jpeg
+namespace mango::image::jpeg
 {
 
     // ----------------------------------------------------------------------------
@@ -23,7 +23,7 @@ namespace mango::jpeg
     // markers
     // ----------------------------------------------------------------------------
 
-    enum jpegMarker
+    enum
     {
         // Start of Frame markers, non-differential, Huffman coding
         MARKER_SOF0     = 0xffc0,  // Baseline DCT
@@ -113,37 +113,16 @@ namespace mango::jpeg
     // types
     // ----------------------------------------------------------------------------
 
-    using mango::u8;
-    using mango::u16;
-    using mango::u32;
-    using mango::u64;
-    using mango::s16;
-
-    using mango::Stream;
-    using mango::ThreadPool;
-    using mango::Memory;
-    using mango::ConstMemory;
-
-    using mango::image::Format;
-    using mango::image::LuminanceFormat;
-    using mango::image::Surface;
-    using mango::image::Bitmap;
-    using mango::image::ImageHeader;
-    using mango::image::ImageDecodeStatus;
-    using mango::image::ImageEncodeStatus;
-    using mango::image::ImageDecodeOptions;
-    using mango::image::ImageEncodeOptions;
-
 #ifdef MANGO_CPU_64BIT
 
-    using DataType = u64;
+    using HuffmanType = u64;
 
     #define JPEG_REGISTER_BITS  64
     #define bextr mango::u64_extract_bits
 
 #else
 
-    using DataType = u32;
+    using HuffmanType = u32;
 
     #define JPEG_REGISTER_BITS  32
     #define bextr mango::u32_extract_bits
@@ -206,7 +185,7 @@ namespace mango::jpeg
         const u8* ptr;
         const u8* end;
 
-        DataType data;
+        HuffmanType data;
         int remain;
 
         void restart();
@@ -244,14 +223,14 @@ namespace mango::jpeg
         }
     };
 
-    struct HuffTable
+    struct HuffmanTable
     {
         u8 size[17];
         u8 value[256];
 
         // acceleration tables
-        DataType maxcode[18];
-        DataType valueOffset[19];
+        HuffmanType maxcode[18];
+        HuffmanType valueOffset[19];
         u8 lookupSize[JPEG_HUFF_LOOKUP_SIZE];
         u8 lookupValue[JPEG_HUFF_LOOKUP_SIZE];
 
@@ -259,19 +238,19 @@ namespace mango::jpeg
         int decode(BitBuffer& buffer) const;
     };
 
-    struct Huffman
+    struct HuffmanDecoder
     {
         int last_dc_value[JPEG_MAX_COMPS_IN_SCAN];
         int eob_run;
 
-        HuffTable table[2][JPEG_MAX_COMPS_IN_SCAN];
+        HuffmanTable table[2][JPEG_MAX_COMPS_IN_SCAN];
         int maxTc = 0;
         int maxTh = 0;
 
         void restart();
     };
 
-    struct Arithmetic
+    struct ArithmeticDecoder
     {
         u32 c;
         u32 a;
@@ -288,8 +267,8 @@ namespace mango::jpeg
         u8 ac_stats[JPEG_NUM_ARITH_TBLS][JPEG_AC_STAT_BINS];
         u8 fixed_bin[4]; // Statistics bin for coding with fixed probability 0.5
 
-        Arithmetic();
-        ~Arithmetic();
+        ArithmeticDecoder();
+        ~ArithmeticDecoder();
 
         void restart(BitBuffer& buffer);
     };
@@ -314,8 +293,8 @@ namespace mango::jpeg
     struct DecodeState
     {
         BitBuffer buffer;
-        Huffman huffman;
-        Arithmetic arithmetic;
+        HuffmanDecoder huffman;
+        ArithmeticDecoder arithmetic;
         bool is_arithmetic = false;
 
         DecodeBlock block[JPEG_MAX_BLOCKS_IN_MCU];
@@ -360,7 +339,7 @@ namespace mango::jpeg
 
         ColorSpace colorspace = ColorSpace::CMYK; // default
 
-	    void (*idct) (u8* dest, const s16* data, const s16* qt);
+        void (*idct) (u8* dest, const s16* data, const s16* qt);
 
         void (*process            ) (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
         void (*process_y          ) (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
@@ -380,7 +359,7 @@ namespace mango::jpeg
     {
         const s16* qt[10];
 
-        Huffman huffman;
+        HuffmanDecoder huffman;
         std::vector<DecodeBlock> blocks;
 
         struct Interval

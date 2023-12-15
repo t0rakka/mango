@@ -10,7 +10,8 @@ namespace
 {
     using namespace mango;
     using namespace mango::math;
-    using namespace jpeg;
+    using namespace mango::image;
+    using namespace mango::image::jpeg;
 
     static constexpr int BLOCK_SIZE = 64;
 
@@ -197,7 +198,7 @@ namespace
     // ----------------------------------------------------------------------------
 
     static inline
-    u8* writeStuffedBytes(u8* output, DataType code, int count)
+    u8* writeStuffedBytes(u8* output, HuffmanType code, int count)
     {
         code = byteswap(code);
         for (int i = 0; i < count; ++i)
@@ -215,7 +216,7 @@ namespace
 #ifdef MANGO_CPU_64BIT
 
     static inline
-    u8* flushStuffedBytes(u8* output, DataType code)
+    u8* flushStuffedBytes(u8* output, HuffmanType code)
     {
         // check if any of the bytes is 0xff
         if (code & 0x8080808080808080ull & ~(code + 0x0101010101010101ull))
@@ -233,7 +234,7 @@ namespace
 #else
 
     static inline
-    u8* flushStuffedBytes(u8* output, DataType code)
+    u8* flushStuffedBytes(u8* output, HuffmanType code)
     {
         // check if any of the bytes is 0xff
         if (code & 0x80808080 & ~(code + 0x01010101))
@@ -252,7 +253,7 @@ namespace
 
     struct HuffmanEncoder
     {
-        DataType code;
+        HuffmanType code;
         int space;
 
         int last_dc_value[3] = { 0, 0, 0 };
@@ -268,7 +269,7 @@ namespace
         {
         }
 
-        u8* putBits(u8* output, DataType data, int numbits)
+        u8* putBits(u8* output, HuffmanType data, int numbits)
         {
             space -= numbits;
             if (space < 0)
@@ -2898,7 +2899,7 @@ namespace
 
 } // namespace
 
-namespace mango::jpeg
+namespace mango::image::jpeg
 {
 
     ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
@@ -2925,4 +2926,4 @@ namespace mango::jpeg
         return status;
     }
 
-} // namespace mango::jpeg
+} // namespace mango::image::jpeg

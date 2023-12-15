@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cstdio>
 #include <cstddef>
@@ -29,7 +29,7 @@
 namespace
 {
     using namespace mango;
-    using namespace jpeg;
+    using namespace mango::image::jpeg;
 
     const u32 jpeg_aritab[] =
     {
@@ -71,7 +71,7 @@ namespace
         return value;
     }
 
-    int arith_decode(Arithmetic& e, BitBuffer& buffer, u8* st)
+    int arith_decode(ArithmeticDecoder& e, BitBuffer& buffer, u8* st)
     {
         while (e.a < 0x8000L)
         {
@@ -88,20 +88,20 @@ namespace
         // Fetch values from our compact representation of Table D.2:
         // Qe values and probability estimation state machine
         int sv = *st;
-        
+
         u32 qe = jpeg_aritab[sv & 0x7F];
         u8 nextLPS = qe & 0xFF; qe >>= 8;
         u8 nextMPS = qe & 0xFF; qe >>= 8;
-        
+
         // Decode & estimation procedures per sections D.2.4 & D.2.5
         u32 temp = e.a - qe;
         e.a = temp;
         temp <<= e.ct;
-        
+
         if (e.c >= temp)
         {
             e.c -= temp;
-            
+
             // Conditional LPS (less probable symbol) exchange
             if (e.a < qe)
             {
@@ -131,13 +131,13 @@ namespace
                 }
             }
         }
-        
+
         return sv >> 7;
     }
 
 } // namespace
 
-namespace mango::jpeg
+namespace mango::image::jpeg
 {
 
     // ----------------------------------------------------------------------------
@@ -146,7 +146,7 @@ namespace mango::jpeg
 
     void arith_decode_mcu_lossless(s16* output, DecodeState* state)
     {
-        Arithmetic& arithmetic = state->arithmetic;
+        ArithmeticDecoder& arithmetic = state->arithmetic;
         BitBuffer& buffer = state->buffer;
         DecodeBlock* block = state->block;
 
@@ -216,7 +216,7 @@ namespace mango::jpeg
 
     void arith_decode_mcu(s16* output, DecodeState* state)
     {
-        Arithmetic& arithmetic = state->arithmetic;
+        ArithmeticDecoder& arithmetic = state->arithmetic;
         BitBuffer& buffer = state->buffer;
         DecodeBlock* block = state->block;
 
@@ -346,7 +346,7 @@ namespace mango::jpeg
 
     void arith_decode_dc_first(s16* output, DecodeState* state)
     {
-        Arithmetic& arithmetic = state->arithmetic;
+        ArithmeticDecoder& arithmetic = state->arithmetic;
         BitBuffer& buffer = state->buffer;
         DecodeBlock* block = state->block;
 
@@ -371,7 +371,7 @@ namespace mango::jpeg
             {
                 sign = arith_decode(arithmetic, buffer, st + 1);
                 st += 2; st += sign;
-                
+
                 if ((m = arith_decode(arithmetic, buffer, st)) != 0)
                 {
                     st = arithmetic.dc_stats[tbl] + 20;	// Table F.4: X1 = 20
@@ -381,7 +381,7 @@ namespace mango::jpeg
                         ++st;
                     }
                 }
-                
+
                 // Section F.1.4.4.1.2: Establish dc_context conditioning category
                 if (m < (int) ((1L << arithmetic.dc_L[tbl]) >> 1))
                 {
@@ -398,9 +398,9 @@ namespace mango::jpeg
                     // small diff category
                     arithmetic.dc_context[ci] = 4 + (sign * 4);
                 }
-                
+
                 v = m;
-                
+
                 // Figure F.24: Decoding the magnitude bit pattern of v
                 st += 14;
                 while (m >>= 1)
@@ -408,7 +408,7 @@ namespace mango::jpeg
                     if (arith_decode(arithmetic, buffer, st))
                         v |= m;
                 }
-                
+
                 v += 1; if (sign) v = -v;
                 arithmetic.last_dc_value[ci] += v;
             }
@@ -420,7 +420,7 @@ namespace mango::jpeg
 
     void arith_decode_dc_refine(s16* output, DecodeState* state)
     {
-        Arithmetic& arithmetic = state->arithmetic;
+        ArithmeticDecoder& arithmetic = state->arithmetic;
         BitBuffer& buffer = state->buffer;
         u8* st = arithmetic.fixed_bin;
 
@@ -438,7 +438,7 @@ namespace mango::jpeg
 
     void arith_decode_ac_first(s16* output, DecodeState* state)
     {
-        Arithmetic& arithmetic = state->arithmetic;
+        ArithmeticDecoder& arithmetic = state->arithmetic;
         BitBuffer& buffer = state->buffer;
 
         const int start = state->spectral_start;
@@ -446,28 +446,28 @@ namespace mango::jpeg
 
         u8* ac_stats = arithmetic.ac_stats[state->block[0].ac];
         u8 ac_K = arithmetic.ac_K[state->block[0].ac];
-        
+
         // Figure F.20: Decode_AC_coefficients
         for (int k = start; k <= end; k++)
         {
             u8* st = ac_stats + 3 * (k - 1);
-            
+
             if (arith_decode(arithmetic, buffer, st))
                 break; // EOB flag
-            
+
             while (arith_decode(arithmetic, buffer, st + 1) == 0)
             {
                 st += 3;
                 ++k;
             }
-            
+
             // Figure F.21: Decoding nonzero value v
             // Figure F.22: Decoding the sign of v
             int sign = arith_decode(arithmetic, buffer, arithmetic.fixed_bin);
             st += 2;
-            
+
             int m;
-            
+
             // Figure F.23: Decoding the magnitude category of v
             if ((m = arith_decode(arithmetic, buffer, st)) != 0)
             {
@@ -475,7 +475,7 @@ namespace mango::jpeg
                 {
                     m <<= 1;
                     st = ac_stats + (k <= ac_K ? 189 : 217);
-                    
+
                     while (arith_decode(arithmetic, buffer, st))
                     {
                         m += m;
@@ -483,9 +483,9 @@ namespace mango::jpeg
                     }
                 }
             }
-            
+
             int v = m;
-            
+
             // Figure F.24: Decoding the magnitude bit pattern of v
             st += 14;
             while (m >>= 1)
@@ -493,9 +493,9 @@ namespace mango::jpeg
                 if (arith_decode(arithmetic, buffer, st))
                     v |= m;
             }
-            
+
             v += 1; if (sign) v = -v;
-            
+
             // Scale and output coefficient in natural order
             output[zigzagTable[k]] = s16(v << state->successive_low);
         }
@@ -503,7 +503,7 @@ namespace mango::jpeg
 
     void arith_decode_ac_refine(s16* output, DecodeState* state)
     {
-        Arithmetic& arithmetic = state->arithmetic;
+        ArithmeticDecoder& arithmetic = state->arithmetic;
         BitBuffer& buffer = state->buffer;
 
         const int start = state->spectral_start;
@@ -556,7 +556,7 @@ namespace mango::jpeg
                         *coef = s16(m1);
                     else
                         *coef = s16(p1);
-                    
+
                     break;
                 }
 
@@ -567,10 +567,10 @@ namespace mango::jpeg
     }
 
     // ----------------------------------------------------------------------------
-    // Arithmetic
+    // ArithmeticDecoder
     // ----------------------------------------------------------------------------
 
-    Arithmetic::Arithmetic()
+    ArithmeticDecoder::ArithmeticDecoder()
     {
         fixed_bin[0] = 113;
         std::memset(dc_L, 0, JPEG_NUM_ARITH_TBLS);
@@ -578,11 +578,11 @@ namespace mango::jpeg
         std::memset(ac_K, 5, JPEG_NUM_ARITH_TBLS);
     }
 
-    Arithmetic::~Arithmetic()
+    ArithmeticDecoder::~ArithmeticDecoder()
     {
     }
 
-    void Arithmetic::restart(BitBuffer& buffer)
+    void ArithmeticDecoder::restart(BitBuffer& buffer)
     {
         u8 v0 = get_byte(buffer);
         u8 v1 = get_byte(buffer);
@@ -601,4 +601,4 @@ namespace mango::jpeg
         }
     }
 
-} // namespace mango::jpeg
+} // namespace mango::image::jpeg
