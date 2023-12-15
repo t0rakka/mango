@@ -216,8 +216,6 @@ namespace mango
         return s;
     }
 
-#if 1
-
     std::u16string utf16_from_utf8(const std::string& source)
     {
         std::u16string s;
@@ -280,22 +278,6 @@ namespace mango
         sb.flush();
         return s;
     }
-
-#else
-
-    std::u16string utf16_from_utf8(const std::string& source)
-    {
-        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
-        return convert.from_bytes(source);
-    }
-
-    std::string utf8_from_utf16(const std::u16string& source)
-    {
-        std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
-        return convert.to_bytes(source);
-    }
-
-#endif
 
     std::string u16_toBytes(const std::wstring& source)
     {
