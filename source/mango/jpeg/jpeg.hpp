@@ -308,14 +308,14 @@ namespace mango::image::jpeg
 
         void restart()
         {
-            buffer.restart();
-
             if (is_arithmetic)
             {
+                buffer.restart();
                 arithmetic.restart(buffer);
             }
             else
             {
+                buffer.restart();
                 huffman.restart();
             }
         }
@@ -508,8 +508,6 @@ namespace mango::image::jpeg
     // ----------------------------------------------------------------------------
     // functions
     // ----------------------------------------------------------------------------
-
-    using ProcessFunc = void (*)(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
     void huff_decode_mcu_lossless       (s16* output, DecodeState* state);
     void huff_decode_mcu                (s16* output, DecodeState* state);

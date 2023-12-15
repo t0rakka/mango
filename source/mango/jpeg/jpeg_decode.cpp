@@ -32,21 +32,24 @@ namespace mango::image::jpeg
     static
     void jpegPrintMemory(const u8* ptr)
     {
-        printf("  Memory: ");
-
-        for (int i = 0; i < 8; ++i)
+        if (debugPrintIsEnable())
         {
-            printf("%.2x ", ptr[i - 8]);
+            printf("  Memory: ");
+
+            for (int i = 0; i < 8; ++i)
+            {
+                printf("%.2x ", ptr[i - 8]);
+            }
+
+            printf("| ");
+
+            for (int i = 0; i < 8; ++i)
+            {
+                printf("%.2x ", ptr[i]);
+            }
+
+            printf("\n");
         }
-
-        printf("| ");
-
-        for (int i = 0; i < 8; ++i)
-        {
-            printf("%.2x ", ptr[i]);
-        }
-
-        printf("\n");
     }
 
     static
@@ -855,7 +858,6 @@ namespace mango::image::jpeg
 
             // restart
             decodeState.buffer.restart();
-
             arithmetic.restart(decodeState.buffer);
 
             if (is_lossless)
@@ -895,6 +897,7 @@ namespace mango::image::jpeg
                         decodeState.decode = arith_decode_ac_refine;
                     }
                 }
+
                 decodeProgressive();
             }
             else
@@ -902,6 +905,8 @@ namespace mango::image::jpeg
                 decodeState.decode = arith_decode_mcu;
                 decodeSequential();
             }
+
+            p = decodeState.buffer.ptr;
         }
         else
         {
@@ -912,7 +917,6 @@ namespace mango::image::jpeg
 
             // restart
             decodeState.buffer.restart();
-
             huffman.restart();
 
             if (is_lossless)
@@ -952,6 +956,7 @@ namespace mango::image::jpeg
                         decodeState.decode = huff_decode_ac_refine;
                     }
                 }
+
                 decodeProgressive();
             }
             else
@@ -959,14 +964,11 @@ namespace mango::image::jpeg
                 decodeState.decode = huff_decode_mcu;
                 decodeSequential();
             }
+
+            p = decodeState.buffer.ptr;
         }
 
-        if (debugPrintIsEnable())
-        {
-            jpegPrintMemory(decodeState.buffer.ptr);
-        }
-
-        p = decodeState.buffer.ptr;
+        jpegPrintMemory(p);
 
         return p;
     }
@@ -2048,8 +2050,6 @@ namespace mango::image::jpeg
 
         u8* image = m_surface->image;
 
-        ProcessFunc process = processState.process;
-
         const int xmcu_last = xmcu - 1;
         const int ymcu_last = ymcu - 1;
         const int xclip = xsize % xblock;
@@ -2067,31 +2067,39 @@ namespace mango::image::jpeg
             for (int x = 0; x < xmcu_last; ++x)
             {
                 decodeState.decode(data, &decodeState);
-                handleRestart();
-                process(dest, stride, data, &processState, xblock, yblock);
+                processState.process(dest, stride, data, &processState, xblock, yblock);
                 dest += xstride;
             }
 
             // last column
             decodeState.decode(data, &decodeState);
-            handleRestart();
             process_and_clip(dest, stride, data, xblock_last, yblock);
             dest += xstride;
+
+            if (isRestartMarker(decodeState.buffer.ptr))
+            {
+                decodeState.restart();
+                decodeState.buffer.ptr += 2;
+            }
         }
 
         // last row
         for (int x = 0; x < xmcu_last; ++x)
         {
             decodeState.decode(data, &decodeState);
-            handleRestart();
             process_and_clip(image, stride, data, xblock, yblock_last);
             image += xstride;
         }
 
         // last mcu
         decodeState.decode(data, &decodeState);
-        handleRestart();
         process_and_clip(image, stride, data, xblock_last, yblock_last);
+
+        if (isRestartMarker(decodeState.buffer.ptr))
+        {
+            decodeState.restart();
+            decodeState.buffer.ptr += 2;
+        }
     }
 
     void Parser::decodeSequentialMT(int N)
@@ -2360,11 +2368,19 @@ namespace mango::image::jpeg
         s16* data = blockVector;
         data += decodeState.block[0].offset;
 
-        for (int i = 0; i < mcus; ++i)
+        for (int y = 0; y < ymcu; ++y)
         {
-            decodeState.decode(data, &decodeState);
-            handleRestart();
-            data += blocks_in_mcu * 64;
+            for (int x = 0; x < xmcu; ++x)
+            {
+                decodeState.decode(data, &decodeState);
+                data += blocks_in_mcu * 64;
+            }
+
+            if (isRestartMarker(decodeState.buffer.ptr))
+            {
+                decodeState.restart();
+                decodeState.buffer.ptr += 2;
+            }
         }
     }
 
