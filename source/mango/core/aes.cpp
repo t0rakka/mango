@@ -1649,7 +1649,6 @@ AES::AES(const u8* key, int bits)
 
 AES::~AES()
 {
-    delete m_schedule;
 }
 
 void AES::ecb_block_encrypt(u8* output, const u8* input, size_t length)

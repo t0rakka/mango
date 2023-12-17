@@ -29,11 +29,11 @@ namespace mango::filesystem
         BUFFER_SIZE = (EVENT_SIZE + PATH_MAX + 1) * 32
     };
 
-	struct FileObserverState
-	{
+    struct FileObserverState
+    {
         FileObserver* m_observer;
-		int m_notify;
-		int m_watch;
+        int m_notify;
+        int m_watch;
         std::thread m_thread;
 
         FileObserverState(FileObserver* observer, int notify, int watch)
@@ -144,21 +144,21 @@ namespace mango::filesystem
             m_thread.join();
             close(m_notify);
         }
-	};
+    };
 
     // -----------------------------------------------------------------
     // FileObserver
     // -----------------------------------------------------------------
 
-	FileObserver::FileObserver()
+    FileObserver::FileObserver()
         : m_state(nullptr)
-	{
-	}
+    {
+    }
 
-	FileObserver::~FileObserver()
-	{
+    FileObserver::~FileObserver()
+    {
         stop();
-	}
+    }
 
     void FileObserver::start(const std::string& pathname)
     {

@@ -182,7 +182,7 @@ namespace mango
         };
 
     protected:
-        OpenGLContextHandle* m_context;
+        std::unique_ptr<OpenGLContextHandle> m_context;
         std::set<std::string> m_extensions;
         bool m_is_gles = false;
         int m_version = 0;

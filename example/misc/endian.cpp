@@ -57,9 +57,8 @@ void example4(Stream& stream)
 
     // read a block of memory
     u32 size = s.read32();
-    char* buffer = new char[size];
-    s.read(buffer, size);
-    delete[] buffer;
+    std::vector<char> buffer(size);
+    s.read(buffer.data(), size);
 
     MANGO_UNREFERENCED(a);
     MANGO_UNREFERENCED(b);

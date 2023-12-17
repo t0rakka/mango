@@ -234,7 +234,7 @@ namespace mango
     class Window : public NonCopyable
     {
     protected:
-       	struct WindowHandle* m_handle;
+        std::unique_ptr<struct WindowHandle> m_handle;
 
     public:
         enum : u32

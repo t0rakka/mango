@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/dynamic_library.hpp>
 #include <mango/core/exception.hpp>
@@ -46,12 +46,11 @@ namespace mango
 
     DynamicLibrary::DynamicLibrary(const std::string& filename)
     {
-        m_handle = new DynamicLibraryHandle(filename);
+        m_handle = std::make_unique<DynamicLibraryHandle>(filename);
     }
 
     DynamicLibrary::~DynamicLibrary()
     {
-        delete m_handle;
     }
 
     void* DynamicLibrary::address(const std::string& symbol) const

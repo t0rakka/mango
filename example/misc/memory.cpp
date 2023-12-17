@@ -41,10 +41,10 @@ void example2()
     SharedMemory shared2(buffer, 40000);
 
     // The buffer is now owned by shared2 and releasing the memory would be a programming error:
-    delete [] buffer; // ERROR! 
+    //delete [] buffer; // ERROR! 
 }
 
-void example3(VirtualMemory *vm)
+void example3(VirtualMemory& vm)
 {
     // What on EARTH is VirtualMemory!? It is a type of Memory that is created by some
     // unknown superpower, who also knows how to release the memory. For example, the MANGO
@@ -58,7 +58,7 @@ void example3(VirtualMemory *vm)
     // stored file is at; this is zero-cost abstraction! 
 
     // Thus, the VirtualMemory again has the same Memory interface the other memory types:
-    ConstMemory memory = *vm;
+    ConstMemory memory = vm;
 
     // So any code that knows how to read from Memory, knows how to read from both SharedMemory
     // and VirtualMemory. These interfaces might at initial glance look superficial but they

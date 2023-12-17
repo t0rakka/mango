@@ -105,13 +105,12 @@ namespace mango
 
     Window::Window(int width, int height, u32 flags)
     {
-		m_handle = new WindowHandle(width, height);
+        m_handle = std::make_unique<WindowHandle>(width, height);
         MANGO_UNREFERENCED(flags); // MANGO TODO
     }
 
     Window::~Window()
     {
-		delete m_handle;
     }
 
     void Window::setWindowPosition(int x, int y)
@@ -247,22 +246,22 @@ namespace mango
         return int2(0, 0);
     }
 
-	int32x2 Window::getCursorPosition() const
-	{
+    int32x2 Window::getCursorPosition() const
+    {
         // MANGO TODO
 #if 0
-		::Window root;
-		::Window child;
-		int root_x, root_y;
-		int child_x, child_y;
-		unsigned int mask;
+        ::Window root;
+        ::Window child;
+        int root_x, root_y;
+        int child_x, child_y;
+        unsigned int mask;
 
-		XQueryPointer(m_handle->display, m_handle->native.window, &root, &child,
+        XQueryPointer(m_handle->display, m_handle->native.window, &root, &child,
                       &root_x, &root_y, &child_x, &child_y, &mask);
-		return int2(child_x, child_y);
+        return int2(child_x, child_y);
 #endif
         return int2(0, 0);
-	}
+    }
 
     bool Window::isKeyPressed(Keycode code) const
     {
@@ -291,7 +290,7 @@ namespace mango
 
     Window::operator WindowHandle* () const
     {
-        return m_handle;
+        return m_handle.get();
     }
 
     void Window::enterEventLoop()

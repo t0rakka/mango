@@ -82,12 +82,11 @@ namespace mango
         MANGO_UNREFERENCED(height);
         MANGO_UNREFERENCED(flags);
 
-        m_handle = new WindowHandle();
+        m_handle = std::make_unique<WindowHandle>();
     }
 
     Window::~Window()
     {
-        delete m_handle;
     }
 
     void Window::setWindowPosition(int x, int y)
@@ -171,7 +170,7 @@ namespace mango
 
     Window::operator WindowHandle* () const
     {
-        return m_handle;
+        return m_handle.get();
     }
 
     void Window::enterEventLoop()

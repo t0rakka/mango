@@ -635,7 +635,7 @@ namespace mango
 
     Window::Window(int width, int height, u32 flags)
     {
-        m_handle = new WindowHandle(width, height, flags);
+        m_handle = std::make_unique<WindowHandle>(width, height, flags);
 
         // register listener window
         LONG_PTR userdata = reinterpret_cast<LONG_PTR>(this);
@@ -644,7 +644,6 @@ namespace mango
 
     Window::~Window()
     {
-        delete m_handle;
     }
 
     void Window::setWindowPosition(int x, int y)
@@ -739,7 +738,7 @@ namespace mango
 
     Window::operator WindowHandle* () const
     {
-        return m_handle;
+        return m_handle.get();
     }
 
     void Window::enterEventLoop()

@@ -301,13 +301,14 @@ namespace mango
 
     OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
         : Window(width, height, flags)
-        , m_context(nullptr)
     {
-        m_context = createOpenGLContext(this, width, height, flags, configPtr, shared);
-        if (!m_context)
+        OpenGLContextHandle* context = createOpenGLContext(this, width, height, flags, configPtr, shared);
+        if (!context)
         {
             MANGO_EXCEPTION("[OpenGLContext] context creation failed.");
         }
+
+        m_context.reset(context);
 
         setVisible(true);
 
@@ -364,7 +365,6 @@ namespace mango
 
     OpenGLContext::~OpenGLContext()
     {
-        delete m_context;
     }
 
     void OpenGLContext::makeCurrent()
