@@ -670,7 +670,7 @@ namespace
 
             ImageDecodeStatus status;
 
-			const ImageHeader& header = m_ktx_header.header;
+            const ImageHeader& header = m_ktx_header.header;
             if (!header.success)
             {
                 status.setError(header.info);

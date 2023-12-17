@@ -26,7 +26,7 @@ namespace
 
     void clear_u8_scan(u8* dest, int count, u32 color)
     {
-		std::memset(dest, u8(color), count);
+        std::memset(dest, u8(color), count);
     }
 
     void clear_u16_scan(u8* dest, int count, u32 color)
@@ -120,10 +120,7 @@ namespace
 
             // decode
             ImageDecodeStatus status = decoder.decode(surface, options, 0, 0, 0);
-            if (!status)
-            {
-                debugPrint(status.info);
-            }
+            MANGO_UNREFERENCED(status);
         }
 
         return surface;

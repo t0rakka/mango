@@ -263,20 +263,20 @@ namespace mango::filesystem
 
         bool isFile(const std::string& filename) const override
         {
-            const FileHeader* ptrHeader = m_header.m_folders.getHeader(filename);
-            if (ptrHeader)
+            const FileHeader* header = m_header.m_folders.getHeader(filename);
+            if (header)
             {
-                return !ptrHeader->isFolder();
+                return !header->isFolder();
             }
             return false;
         }
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            const fs::Indexer<FileHeader>::Folder* ptrFolder = m_header.m_folders.getFolder(pathname);
-            if (ptrFolder)
+            const fs::Indexer<FileHeader>::Folder* folder = m_header.m_folders.getFolder(pathname);
+            if (folder)
             {
-                for (auto i : ptrFolder->headers)
+                for (auto i : folder->headers)
                 {
                     const FileHeader& header = *i.second;
 
@@ -323,7 +323,6 @@ namespace mango::filesystem
                         // a small file stored in one block with other small files
 
                         std::shared_ptr<Buffer> buffer;
-                        ConstMemory memory;
 
                         std::unique_lock<std::mutex> cache_lock(m_cache_mutex);
 
@@ -341,7 +340,7 @@ namespace mango::filesystem
                             m_cache.insert(blockIndex, buffer);
                         }
 
-                        memory = ConstMemory(*buffer + segment.offset, segment.size);
+                        ConstMemory memory(*buffer + segment.offset, segment.size);
                         VirtualMemoryMGX* vm = new VirtualMemoryMGX(buffer, memory);
                         return vm;
                     }

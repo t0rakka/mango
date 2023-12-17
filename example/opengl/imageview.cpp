@@ -120,6 +120,9 @@ int main(int argc, const char* argv[])
     u64 time1 = mango::Time::ms();
     printf("decode: %d ms\n", u32(time1 - time0));
 
-    TestWindow window(bitmap);
-    window.enterEventLoop();
+    if (bitmap.width * bitmap.height > 0)
+    {
+        TestWindow window(bitmap);
+        window.enterEventLoop();
+    }
 }

@@ -1788,20 +1788,24 @@ namespace
                     int sprite_ram_bank = y & 0x7;
 
                     u8 sprite_pointer1 = buffer[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb];
+                    /*
                     if (sprite_pointer1 > 15872)
                     {
                         return "SHF: invalid sprite pointer.";
                     }
+                    */
 
                     int sprite_byte_offset1 = (sprite_pointer1 * 64) + (sprite_line * 3) + (x % 24) / 8;
                     u8 sprite_byte1 = buffer[sprite_byte_offset1];
                     int sprite_bit_pattern1 = (sprite_byte1 >> (7 - (x & 0x7))) & 0x1;
 
                     u8 sprite_pointer2 = buffer[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb + 4];
+                    /*
                     if (sprite_pointer2 > 15872)
                     {
                         return "SHF: invalid sprite pointer.";
                     }
+                    */
 
                     int sprite_byte_offset2 = (sprite_pointer2 * 64) + (sprite_line * 3) + (x % 24) / 8;
                     u8 sprite_byte2 = buffer[sprite_byte_offset2];
@@ -1860,6 +1864,11 @@ namespace
 
         const char* decodeImage(const Surface& s) override
         {
+            if (!m_data)
+            {
+                return "SHF-XL: invalid data.";
+            }
+
             const u8* bitmap_c64 = m_data + 0x2000;
             const u8* video_ram = m_data;
             u8 sprite_color = *(m_data + 0x3e9);
