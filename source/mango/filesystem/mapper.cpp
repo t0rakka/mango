@@ -171,7 +171,6 @@ namespace mango::filesystem
 
     Mapper::~Mapper()
     {
-        delete m_parent_memory;
     }
 
     std::string Mapper::parse(const std::string& pathname, const std::string& password)
@@ -203,7 +202,7 @@ namespace mango::filesystem
 
                     if (m_current_mapper->isFile(container))
                     {
-                        m_parent_memory = m_current_mapper->mmap(container);
+                        m_parent_memory.reset(m_current_mapper->mmap(container));
 
                         mapper = node.create(*m_parent_memory, password);
                         m_mappers.emplace_back(mapper);
@@ -247,6 +246,7 @@ namespace mango::filesystem
     {
         if (!m_current_mapper)
             return false;
+
         return m_current_mapper->isFile(filename);
     }
 
@@ -254,6 +254,7 @@ namespace mango::filesystem
     {
         if (!m_current_mapper)
             return;
+
         m_current_mapper->getIndex(index, pathname);
     }
 
@@ -261,6 +262,7 @@ namespace mango::filesystem
     {
         if (!m_current_mapper)
             return nullptr;
+
         return m_current_mapper->mmap(m_basepath + filename);
     }
 
