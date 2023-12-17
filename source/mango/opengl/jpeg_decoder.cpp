@@ -772,7 +772,7 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
         }
 #endif
 
-        size_t blocks_in_mcu = input.blocks.size();
+        GLsizei blocks_in_mcu = GLsizei(input.blocks.size());
 
         std::vector<int> huffmanBuffer(310 * 4);
 
@@ -898,7 +898,7 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
         }
         */
 
-        glDispatchCompute(1, input.intervals.size(), 1);
+        glDispatchCompute(1, GLuint(input.intervals.size()), 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
         glDeleteBuffers(3, sbo);
