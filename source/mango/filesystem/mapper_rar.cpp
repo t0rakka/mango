@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2018 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     RAR decompression code: Alexander L. Roshal / unRAR library.
@@ -258,7 +258,7 @@ namespace
 
             if (flags & 0x8000 && type != FILE_HEAD)
             {
-			    size += p.read32();
+                size += p.read32();
             }
 
             // MANGO TODO: header CRC check
@@ -377,14 +377,18 @@ namespace
             return method != 0x30;
         }
 
-        VirtualMemory* mmap() const
+        std::unique_ptr<VirtualMemory> map() const
         {
-            VirtualMemory* memory;
+            const u8* v_address = nullptr;
+            const u8* v_delete_address = nullptr;
+            size_t v_size = 0;
 
             if (!compressed())
             {
                 // no compression
-                memory = new VirtualMemoryRAR(data, nullptr, size_t(unpacked_size));
+                v_address = data;
+                v_delete_address = nullptr;
+                v_size = size_t(unpacked_size);
             }
             else
             {
@@ -398,10 +402,12 @@ namespace
                     MANGO_EXCEPTION("[mapper.rar] Decompression failed.");
                 }
 
-                memory = new VirtualMemoryRAR(buffer, buffer, size);
+                v_size = size;
+                v_address = buffer;
+                v_delete_address = buffer;
             }
 
-            return memory;
+            return std::make_unique<VirtualMemoryRAR>(v_address, v_delete_address, v_size);
         }
     };
 
@@ -736,7 +742,7 @@ namespace mango::filesystem
             }
         }
 
-        VirtualMemory* mmap(const std::string& filename) override
+        std::unique_ptr<VirtualMemory> map(const std::string& filename) override
         {
             const FileHeader* ptrHeader = m_folders.getHeader(filename);
             if (!ptrHeader)
@@ -745,7 +751,7 @@ namespace mango::filesystem
             }
 
             const FileHeader& header = *ptrHeader;
-            return header.mmap();
+            return header.map();
         }
     };
 

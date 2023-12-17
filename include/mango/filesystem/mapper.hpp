@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -97,7 +97,7 @@ namespace mango::filesystem
 
         virtual bool isFile(const std::string& filename) const = 0;
         virtual void getIndex(FileIndex& index, const std::string& pathname) = 0;
-        virtual VirtualMemory* mmap(const std::string& filename) = 0;
+        virtual std::unique_ptr<VirtualMemory> map(const std::string& filename) = 0;
     };
 
     class Mapper : public AbstractMapper
@@ -127,7 +127,7 @@ namespace mango::filesystem
 
         bool isFile(const std::string& filename) const override;
         void getIndex(FileIndex& index, const std::string& pathname) override;
-        VirtualMemory* mmap(const std::string& filename) override;
+        std::unique_ptr<VirtualMemory> map(const std::string& filename) override;
     };
 
 } // namespace mango::filesystem

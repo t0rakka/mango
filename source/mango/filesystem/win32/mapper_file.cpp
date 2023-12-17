@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2017 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
@@ -199,10 +199,9 @@ namespace
             }
         }
 
-        VirtualMemory* mmap(const std::string& filename) override
+        std::unique_ptr<VirtualMemory> map(const std::string& filename) override
         {
-            VirtualMemory* memory = new FileMemory(m_basepath + filename, 0, 0);
-            return memory;
+            return std::make_unique<FileMemory>(m_basepath + filename, 0, 0);
         }
     };
 

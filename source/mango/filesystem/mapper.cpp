@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -202,7 +202,7 @@ namespace mango::filesystem
 
                     if (m_current_mapper->isFile(container))
                     {
-                        m_parent_memory.reset(m_current_mapper->mmap(container));
+                        m_parent_memory = m_current_mapper->map(container);
 
                         mapper = node.create(*m_parent_memory, password);
                         m_mappers.emplace_back(mapper);
@@ -258,12 +258,12 @@ namespace mango::filesystem
         m_current_mapper->getIndex(index, pathname);
     }
 
-    VirtualMemory* Mapper::mmap(const std::string& filename)
+    std::unique_ptr<VirtualMemory> Mapper::map(const std::string& filename)
     {
         if (!m_current_mapper)
             return nullptr;
 
-        return m_current_mapper->mmap(m_basepath + filename);
+        return m_current_mapper->map(m_basepath + filename);
     }
 
 } // namespace mango::filesystem

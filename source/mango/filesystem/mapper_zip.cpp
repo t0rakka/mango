@@ -595,7 +595,7 @@ namespace mango::filesystem
         {
         }
 
-        VirtualMemory* mmap(FileHeader header, const u8* start, const std::string& password)
+        std::unique_ptr<VirtualMemory> map(FileHeader header, const u8* start, const std::string& password)
         {
             LittleEndianConstPointer p = start + header.localOffset;
 
@@ -771,8 +771,7 @@ namespace mango::filesystem
                 MANGO_EXCEPTION("[mapper.zip] Unsupported compression algorithm (%d).", header.compression);
             }
 
-            VirtualMemory* memory = new VirtualMemoryZIP(address, buffer, size_t(size));
-            return memory;
+            return std::make_unique<VirtualMemoryZIP>(address, buffer, size_t(size));
         }
 
         bool isFile(const std::string& filename) const override
@@ -818,7 +817,7 @@ namespace mango::filesystem
             }
         }
 
-        VirtualMemory* mmap(const std::string& filename) override
+        std::unique_ptr<VirtualMemory> map(const std::string& filename) override
         {
             const FileHeader* ptrHeader = m_folders.getHeader(filename);
             if (!ptrHeader)
@@ -827,7 +826,7 @@ namespace mango::filesystem
             }
 
             const FileHeader& header = *ptrHeader;
-            return mmap(header, m_parent_memory.address, m_password);
+            return map(header, m_parent_memory.address, m_password);
         }
     };
 

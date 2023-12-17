@@ -297,7 +297,7 @@ namespace mango::filesystem
             }
         }
 
-        VirtualMemory* mmap(const std::string& filename) override
+        std::unique_ptr<VirtualMemory> map(const std::string& filename) override
         {
             const FileHeader* ptrHeader = m_header.m_folders.getHeader(filename);
             if (!ptrHeader)
@@ -341,8 +341,7 @@ namespace mango::filesystem
                         }
 
                         ConstMemory memory(*buffer + segment.offset, segment.size);
-                        VirtualMemoryMGX* vm = new VirtualMemoryMGX(buffer, memory);
-                        return vm;
+                        return std::make_unique<VirtualMemoryMGX>(buffer, memory);
                     }
                     else
                     {
@@ -354,8 +353,7 @@ namespace mango::filesystem
                     // The file is encoded as a single, non-compressed block
                     // we can simply map it into parent's memory
                     ConstMemory memory(block.compressed.address + segment.offset, size_t(segment.size));
-                    VirtualMemoryMGX* vm = new VirtualMemoryMGX(memory);
-                    return vm;
+                    return std::make_unique<VirtualMemoryMGX>(memory);
                 }
             }
 
@@ -406,8 +404,7 @@ namespace mango::filesystem
             q.wait();
 
             ConstMemory memory = *buffer;
-            VirtualMemoryMGX* vm = new VirtualMemoryMGX(buffer, memory);
-            return vm;
+            return std::make_unique<VirtualMemoryMGX>(buffer, memory);
         }
     };
 

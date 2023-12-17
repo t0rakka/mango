@@ -71,10 +71,9 @@ namespace mango::filesystem
 
     void File::initMemory(Mapper& mapper)
     {
-        VirtualMemory* ptr = mapper.mmap(m_filename);
-        if (ptr)
+        m_virtual_memory = mapper.map(m_filename);
+        if (m_virtual_memory)
         {
-            m_virtual_memory = std::unique_ptr<VirtualMemory>(ptr);
             m_memory = *m_virtual_memory;
         }
     }
