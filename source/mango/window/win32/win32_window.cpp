@@ -260,6 +260,48 @@ namespace
         return u64(nLargeInteger.QuadPart);
     }
 
+    struct ScreenInfo
+    {
+        HMONITOR monitor;
+        math::int32x2 resolution;
+    };
+
+    std::vector<ScreenInfo> getScreenInfo()
+    {
+        std::vector<ScreenInfo> screens;
+
+        ::EnumDisplayMonitors(NULL, NULL, [] (HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM data) -> BOOL
+        {
+            std::vector<ScreenInfo>& screens = *reinterpret_cast<std::vector<ScreenInfo>*>(data);
+
+            int width = rect->right - rect->left;
+            int height = rect->bottom - rect->top;
+
+            ScreenInfo screen;
+
+            screen.monitor = monitor;
+            screen.resolution = math::int32x2(width, height);
+
+            MONITORINFO info = { 0 };
+            info.cbSize = sizeof(info);
+            ::GetMonitorInfo(monitor, &info);
+
+            if (info.dwFlags & MONITORINFOF_PRIMARY)
+            {
+                // primary monitor is always first
+                screens.insert(screens.begin(), screen);
+            }
+            else
+            {
+                screens.push_back(screen);
+            }
+
+            return TRUE;
+        }, reinterpret_cast<LPARAM>(&screens));
+
+        return screens;
+    }
+
     // -----------------------------------------------------------------------
     // WindowProc()
     // -----------------------------------------------------------------------
@@ -619,18 +661,21 @@ namespace mango
 
     int Window::getScreenCount()
     {
-        // MANGO TODO: support more than default screen
-        return 1;
+        auto screens = getScreenInfo();
+        int count = int(screens.size());
+
+        return count;
     }
 
-    int32x2 Window::getScreenSize(int screen)
+    int32x2 Window::getScreenSize(int index)
     {
-        // MANGO TODO: support more than default screen
-        MANGO_UNREFERENCED(screen);
+        auto screens = getScreenInfo();
+        int count = int(screens.size());
 
-        int width = int(GetSystemMetrics(SM_CXSCREEN));
-        int height = int(GetSystemMetrics(SM_CYSCREEN));
-        return int32x2(width, height);
+        index = std::max(index, 0);
+        index = std::min(index, count - 1);
+
+        return screens[index].resolution;
     }
 
     Window::Window(int width, int height, u32 flags)
@@ -648,9 +693,7 @@ namespace mango
 
     void Window::setWindowPosition(int x, int y)
     {
-        // MANGO TODO
-        MANGO_UNREFERENCED(x);
-        MANGO_UNREFERENCED(y);
+        ::SetWindowPos(m_handle->hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
     }
 
     void Window::setWindowSize(int width, int height)

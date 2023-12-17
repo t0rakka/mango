@@ -57,12 +57,6 @@ namespace mango
         {
             OpenGLContextWGL* shared = reinterpret_cast<OpenGLContextWGL*>(theShared);
 
-            if (shared)
-            {
-                // MANGO TODO
-                MANGO_EXCEPTION("[OpenGLContextWGL] Shared context is not implemented.");
-            }
-
             theContext->setWindowSize(width, height);
 
             hdc = ::GetDC(hwnd);
@@ -202,9 +196,12 @@ namespace mango
                 };
 
                 HGLRC old_hrc = hrc;
+                HGLRC shared_hrc = shared ? shared->hrc : 0;
 
-                hrc = wglCreateContextAttribsARB(hdc, 0, contextAttribs);
-                wglMakeCurrent(hdc, hrc);
+                shared = nullptr; // indicate we don't want to call wglShareLists()
+                
+                hrc = wglCreateContextAttribsARB(hdc, shared_hrc, contextAttribs);
+                ::wglMakeCurrent(hdc, hrc);
 
                 // Initialize extension function pointers (for the ARB extended context)
                 init_wgl_extensions();
@@ -219,8 +216,7 @@ namespace mango
 
             if (shared)
             {
-                // MANGO TODO
-                //::wglShareLists(hrc, shared->m_context->hrc);
+                ::wglShareLists(hrc, shared->hrc);
             }
 
             init_glext_extensions();
