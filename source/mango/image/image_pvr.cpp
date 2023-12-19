@@ -290,11 +290,7 @@ namespace
                     format = LuminanceFormat(16, Format::UNORM, 8, 8);
                     break;
                 case 0x09: // 1BPP
-                    // MANGO TODO
-                    break;
                 case 0x0A: // (V,Y1,U,Y0)
-                    // MANGO TODO
-                    break;
                 case 0x0B: // (Y1,V,Y0,U)
                     // MANGO TODO
                     break;
@@ -359,11 +355,7 @@ namespace
                     format = LuminanceFormat(8, Format::UNORM, 4, 4);
                     break;
                 case 0x27: // LVU 655
-                    // MANGO TODO
-                    break;
                 case 0x28: // XLVU 8888
-                    // MANGO TODO
-                    break;
                 case 0x29: // QWVU 8888
                     // MANGO TODO
                     break;
@@ -374,14 +366,8 @@ namespace
                     format = Format(32, Format::UNORM, Format::ARGB, 2, 10, 10, 10);
                     break;
                 case 0x2C: // AWVU 2101010
-                    // MANGO TODO
-                    break;
                 case 0x2D: // GR 1616
-                    // MANGO TODO
-                    break;
                 case 0x2E: // VU 1616
-                    // MANGO TODO
-                    break;
                 case 0x2F: // ABGR 16161616
                     // MANGO TODO
                     break;
@@ -422,8 +408,6 @@ namespace
                     format = LuminanceFormat(16, Format::UNORM, 8, 8);
                     break;
                 case 0x45: // UYVY
-                    // MANGO TODO
-                    break;
                 case 0x46: // YUY2
                     // MANGO TODO
                     break;

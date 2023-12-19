@@ -1228,7 +1228,6 @@ void readAttribute<TileDesc>(TileDesc& data, LittleEndianConstPointer p)
 template <>
 void readAttribute<String>(String& data, LittleEndianConstPointer p)
 {
-    // MANGO TODO
     MANGO_UNREFERENCED(data);
     MANGO_UNREFERENCED(p);
 }
@@ -1236,7 +1235,6 @@ void readAttribute<String>(String& data, LittleEndianConstPointer p)
 template <>
 void readAttribute<Text>(Text& data, LittleEndianConstPointer p)
 {
-    // MANGO TODO
     MANGO_UNREFERENCED(data);
     MANGO_UNREFERENCED(p);
 }

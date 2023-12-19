@@ -443,13 +443,13 @@ namespace
 
                 case Compression::ZIP:
                 {
-                    // MANGO TODO
+                    // MANGO TODO: need example files
                     break;
                 }
 
                 case Compression::ZIP_PRED:
                 {
-                    // MANGO TODO
+                    // MANGO TODO: need example files
                     break;
                 }
             }
@@ -479,11 +479,9 @@ namespace
                     resolveCMYK(dest, src, width, channels);
                     break;
                 case ColorMode::MULTICHANNEL:
-                    // MANGO TODO
                     resolveGrayscale(dest, src, width, channels);
                     break;
                 case ColorMode::DUOTONE:
-                    // MANGO TODO
                     resolveGrayscale(dest, src, width, channels);
                     break;
                 case ColorMode::LAB:
