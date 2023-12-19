@@ -5,7 +5,7 @@
 #pragma once
 
 #include <mango/image/image.hpp>
-#include "context.hpp"
+#include <mango/opengl/context.hpp>
 
 #ifdef MANGO_OPENGL_FRAMEBUFFER
 

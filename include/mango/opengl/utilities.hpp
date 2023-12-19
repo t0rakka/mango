@@ -4,7 +4,7 @@
 */
 #pragma once
 
-#include "context.hpp"
+#include <mango/opengl/context.hpp>
 
 #ifndef MANGO_OPENGL_CONTEXT_NONE
 

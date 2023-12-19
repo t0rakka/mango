@@ -4,7 +4,7 @@
 */
 #pragma once
 
-#include "context.hpp"
-#include "utilities.hpp"
-#include "framebuffer.hpp"
-#include "jpeg_decoder.hpp"
+#include <mango/opengl/context.hpp>
+#include <mango/opengl/utilities.hpp>
+#include <mango/opengl/framebuffer.hpp>
+#include <mango/opengl/jpeg_decoder.hpp>
