@@ -649,25 +649,39 @@ namespace mango
 
     int Window::getScreenCount()
     {
-        // MANGO TODO: support more than default screen
-        return 1;
-    }
-
-    int32x2 Window::getScreenSize(int unused__screen)
-    {
-        // MANGO TODO: support more than default screen
-        MANGO_UNREFERENCED(unused__screen);
-
         Display* display = XOpenDisplay(NULL);
         if (!display)
         {
             MANGO_EXCEPTION("[Window] XOpenDisplay() failed.");
         }
 
-        Screen* screen = XDefaultScreenOfDisplay(display);
+        int count = ScreenCount(display);
+
+        XCloseDisplay(display);
+
+        return count;
+    }
+
+    int32x2 Window::getScreenSize(int index)
+    {
+        Display* display = XOpenDisplay(NULL);
+        if (!display)
+        {
+            MANGO_EXCEPTION("[Window] XOpenDisplay() failed.");
+        }
+
+        int count = ScreenCount(display);
+
+        index = std::max(index, 0);
+        index = std::min(index, count - 1);
+
+        Screen* screen = ScreenOfDisplay(display, index);
 
         int width = XWidthOfScreen(screen);
         int height = XHeightOfScreen(screen);
+
+        XCloseDisplay(display);
+
         return int32x2(width, height);
     }
 

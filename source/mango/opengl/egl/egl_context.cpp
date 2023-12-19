@@ -197,11 +197,8 @@ namespace mango
             XMapWindow(window->native.display, window->native.window);
 
             // send the event to the root window
-            if (!XSendEvent(window->native.display, DefaultRootWindow(window->native.display), False,
-                SubstructureRedirectMask | SubstructureNotifyMask, &xevent))
-            {
-                // MANGO TODO: failed
-            }
+            XSendEvent(window->native.display, DefaultRootWindow(window->native.display), False,
+                SubstructureRedirectMask | SubstructureNotifyMask, &xevent);
 
             XFlush(window->native.display);
 

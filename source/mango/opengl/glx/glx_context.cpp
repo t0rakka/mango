@@ -8,6 +8,10 @@
 #include <mango/opengl/opengl.hpp>
 #include "../../window/xlib/xlib_handle.hpp"
 
+#ifndef GLX_CONTEXT_SHARE_CONTEXT_ARB
+#define GLX_CONTEXT_SHARE_CONTEXT_ARB        0x2090
+#endif
+
 namespace mango
 {
     using namespace math;
@@ -31,15 +35,9 @@ namespace mango
 
         WindowHandle* window;
 
-        OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
+        OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
             : window(*theContext)
         {
-            if (theShared)
-            {
-                // MANGO TODO
-                MANGO_EXCEPTION("[OpenGLContextGLX] Shared context is not implemented.");
-            }
-
             // override defaults
             OpenGLContext::Config config;
             if (configPtr)
@@ -213,14 +211,26 @@ namespace mango
             // Check for the GLX_ARB_create_context extension string and the function.
             if (isGLX_ARB_create_context && glXCreateContextAttribsARB)
             {
-                int context_attribs[] =
-                {
-                    //GLX_CONTEXT_PROFILE_MASK_ARB,  GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
-                    GLX_CONTEXT_FLAGS_ARB,         GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-                    None
-                };
+                std::vector<int> contextAttribs;
 
-                context = glXCreateContextAttribsARB(window->native.display, bestFbc, 0, True, context_attribs);
+                //contextAttribs.push_back(GLX_CONTEXT_PROFILE_MASK_ARB);
+                //contextAttribs.push_back(GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB);
+
+                contextAttribs.push_back(GLX_CONTEXT_FLAGS_ARB);
+                contextAttribs.push_back(GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB);
+
+                GLXContext shared_context = 0;
+                if (shared)
+                {
+                    shared_context = reinterpret_cast<OpenGLContextGLX*>(shared)->context;
+
+                    contextAttribs.push_back(GLX_CONTEXT_SHARE_CONTEXT_ARB);
+                    contextAttribs.push_back(intptr_t(shared_context));
+                }
+
+                contextAttribs.push_back(None);
+
+                context = glXCreateContextAttribsARB(window->native.display, bestFbc, shared_context, True, contextAttribs.data());
 
                 // Sync to ensure any errors generated are processed.
                 XSync(window->native.display, False);
@@ -347,11 +357,8 @@ namespace mango
             XMapWindow(window->native.display, window->native.window);
 
             // send the event to the root window
-            if (!XSendEvent(window->native.display, DefaultRootWindow(window->native.display),
-                False, SubstructureRedirectMask | SubstructureNotifyMask, &xevent))
-            {
-                // MANGO TODO: failed
-            }
+            XSendEvent(window->native.display, DefaultRootWindow(window->native.display),
+                False, SubstructureRedirectMask | SubstructureNotifyMask, &xevent);
 
             XFlush(window->native.display);
 
