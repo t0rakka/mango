@@ -152,8 +152,7 @@ namespace mango
             if (!view)
             {
                 debugPrint("NSView initWithFrame failed.\n");
-                // MANGO TODO: delete window
-                // try this: [win release];
+                [win release];
                 return;
             }
 
@@ -214,8 +213,7 @@ namespace mango
             if (pixelFormat == nil)
             {
                 debugPrint("NSOpenGLPixelFormat initWithAttributes failed.\n");
-                // MANGO TODO: delete window
-                // try this: [win release];
+                [win release];
                 return;
             }
 
@@ -229,8 +227,7 @@ namespace mango
             if (!ctx)
             {
                 debugPrint("Failed to create NSOpenGL Context.\n");
-                // MANGO TODO: delete window
-                // try this: [win release];
+                [win release];
                 return;
             }
 
@@ -265,7 +262,7 @@ namespace mango
                 [win setContentView:nil];
                 [view release];
                 [win close];
-                // MANGO TODO: [win release] ?
+                [win release];
             }
 
             [NSApp stop:nil];
