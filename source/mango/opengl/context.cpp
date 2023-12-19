@@ -622,7 +622,7 @@ namespace mango
             case TextureCompression::ASTC_SRGB_ALPHA_6x5x5:
             case TextureCompression::ASTC_SRGB_ALPHA_6x6x5:
             case TextureCompression::ASTC_SRGB_ALPHA_6x6x6:
-                // MANGO TODO: OES_texture_compression_astc
+                supported = ext.OES_texture_compression_astc;
                 break;
 
             default:

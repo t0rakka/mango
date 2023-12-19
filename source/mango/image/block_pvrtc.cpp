@@ -464,24 +464,6 @@ namespace
         return value * ((1 << to) - 1) / ((1 << from) - 1);
     }
 
-#if 0 // MANGO TODO: should use these (specification conforming)
-
-    static constexpr
-    u32 pvrtc2_alpha0(u32 alpha)
-    {
-        alpha = (alpha << 1) | 0;
-        return (alpha << 4) | alpha;
-    }
-
-    static constexpr
-    u32 pvrtc2_alpha1(u32 alpha)
-    {
-        alpha = (alpha << 1) | 1;
-        return (alpha << 4) | alpha;
-    }
-
-#endif
-
     static inline
     Color pvrtc2_1bit_lerp(Color a, Color b, int mod)
     {

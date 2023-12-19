@@ -405,7 +405,6 @@ namespace mango::math
 
         const float det = b * b - c;
 
-        // MANGO TODO: branchless version
         if (det >= 0)
         {
             const float sd = float(std::sqrt(det));

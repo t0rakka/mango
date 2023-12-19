@@ -158,10 +158,12 @@ namespace
             heif_channel_Y = 0,
             heif_channel_Cb = 1,
             heif_channel_Cr = 2,
+
             heif_channel_R = 3,
             heif_channel_G = 4,
             heif_channel_B = 5,
             heif_channel_Alpha = 6,
+
             heif_channel_interleaved = 10
             */
             heif_channel ch = heif_channel_interleaved;
@@ -171,7 +173,7 @@ namespace
             if (s0 != 32)
             {
                 heif_image_release(image);
-                // ... unsupported format ...
+                status.setError("[ImageDecoder.HEIF] Unsupported format.");
                 return status;
             }
 

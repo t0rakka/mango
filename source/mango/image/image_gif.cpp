@@ -1,10 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     The lzw_decode() function is based on Jean-Marc Lienher / STB decoder.
-    The symbol resolver is iterative instead of recursive as in the original.
+    The symbol resolver is iterative instead of recursive like in the original.
 */
 #include <algorithm>
 #include <mango/core/pointer.hpp>
@@ -806,10 +806,8 @@ namespace
             s.write8(palette[i].b);
         }
 
-        // MANGO TODO: write graphics_control_extension to disable translucent color
-        // MANGO TODO: support the extension in decoder so that we don't have one index being invisible
-
-        // MANGO TODO: gif animations will repeat this section
+        // NOTE: If we ever add support for encoding gif animations this is the section that
+        //       would write individual frames.
         {
             // image descriptor
             s.write8(GIF_IMAGE);

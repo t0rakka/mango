@@ -261,8 +261,6 @@ namespace
                 size += p.read32();
             }
 
-            // MANGO TODO: header CRC check
-
             switch (type)
             {
                 case MAIN_HEAD:

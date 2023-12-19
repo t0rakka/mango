@@ -14,7 +14,7 @@ namespace
     {
         static const Keycode table[] =
         {
-            // 0
+            // offset: 0
             KEYCODE_A,
             KEYCODE_S,
             KEYCODE_D,
@@ -25,7 +25,7 @@ namespace
             KEYCODE_X,
             KEYCODE_C,
             KEYCODE_V,
-            // 10
+            // offset: 10
             KEYCODE_NONE, // backtick
             KEYCODE_B,
             KEYCODE_Q,
@@ -36,7 +36,7 @@ namespace
             KEYCODE_T,
             KEYCODE_1,
             KEYCODE_2,
-            // 20
+            // offset: 20
             KEYCODE_3,
             KEYCODE_4,
             KEYCODE_6,
@@ -47,7 +47,7 @@ namespace
             KEYCODE_NONE, // minus
             KEYCODE_8,
             KEYCODE_0,
-            // 30
+            // offset: 30
             KEYCODE_NONE, // right bracket
             KEYCODE_O,
             KEYCODE_U,
@@ -58,7 +58,7 @@ namespace
             KEYCODE_L,
             KEYCODE_J,
             KEYCODE_NONE, // apostrophe
-            // 40
+            // offset: 40
             KEYCODE_K,
             KEYCODE_NONE, // semicolon
             KEYCODE_NONE, // backslash
@@ -69,7 +69,7 @@ namespace
             KEYCODE_NONE, // period
             KEYCODE_TAB,
             KEYCODE_SPACE,
-            // 50
+            // offset: 50
             KEYCODE_NONE,
             KEYCODE_BACKSPACE,
             KEYCODE_NONE,
@@ -80,7 +80,7 @@ namespace
             KEYCODE_CAPS_LOCK,
             KEYCODE_LEFT_ALT,
             KEYCODE_NONE, // LCTRL,
-            // 60
+            // offset: 60
             KEYCODE_NONE, // RSHIFT,
             KEYCODE_RIGHT_ALT,
             KEYCODE_NONE, // RCTRL,
@@ -91,7 +91,7 @@ namespace
             KEYCODE_MULTIPLY,
             KEYCODE_NONE,
             KEYCODE_ADDITION,
-            // 70
+            // offset: 70
             KEYCODE_NONE,
             KEYCODE_NUMLOCK,
             KEYCODE_NONE, // volume up
@@ -102,7 +102,7 @@ namespace
             KEYCODE_NONE,
             KEYCODE_SUBTRACT,
             KEYCODE_NONE, // F18
-            // 80
+            // offset: 80
             KEYCODE_NONE, // F19
             KEYCODE_NONE, // keypad equal
             KEYCODE_NUMPAD0,
@@ -113,7 +113,7 @@ namespace
             KEYCODE_NUMPAD5,
             KEYCODE_NUMPAD6,
             KEYCODE_NUMPAD7,
-            // 90
+            // offset: 90
             KEYCODE_NONE, // F20
             KEYCODE_NUMPAD8,
             KEYCODE_NUMPAD9,
@@ -124,7 +124,7 @@ namespace
             KEYCODE_F6,
             KEYCODE_F7,
             KEYCODE_F3,
-            // 100
+            // offset: 100
             KEYCODE_F8,
             KEYCODE_F9,
             KEYCODE_NONE,
@@ -135,7 +135,7 @@ namespace
             KEYCODE_NONE, // F14
             KEYCODE_NONE,
             KEYCODE_F10,
-            // 110
+            // offset: 110
             KEYCODE_NONE,
             KEYCODE_F12,
             KEYCODE_NONE,
@@ -146,7 +146,7 @@ namespace
             KEYCODE_DELETE,
             KEYCODE_F4,
             KEYCODE_END,
-            // 120
+            // offset: 120
             KEYCODE_F2,
             KEYCODE_PAGE_DOWN,
             KEYCODE_F1,

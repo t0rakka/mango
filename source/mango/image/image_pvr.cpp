@@ -366,10 +366,16 @@ namespace
                     format = Format(32, Format::UNORM, Format::ARGB, 2, 10, 10, 10);
                     break;
                 case 0x2C: // AWVU 2101010
-                case 0x2D: // GR 1616
-                case 0x2E: // VU 1616
-                case 0x2F: // ABGR 16161616
                     // MANGO TODO
+                    break;
+                case 0x2D: // GR 1616
+                    format = Format(32, Format::UNORM, Format::GR, 16, 16, 0, 0);
+                    break;
+                case 0x2E: // VU 1616
+                    // MANGO TODO
+                    break;
+                case 0x2F: // ABGR 16161616
+                    format = Format(64, Format::UNORM, Format::ABGR, 16, 16, 16, 16);
                     break;
                 case 0x30: // R 16F
                     format = Format(16, Format::FLOAT16, Format::R, 16, 0, 0, 0);
@@ -408,8 +414,10 @@ namespace
                     format = LuminanceFormat(16, Format::UNORM, 8, 8);
                     break;
                 case 0x45: // UYVY
+                    compression = TextureCompression::UYVY;
+                    break;
                 case 0x46: // YUY2
-                    // MANGO TODO
+                    compression = TextureCompression::YUY2;
                     break;
             }
 

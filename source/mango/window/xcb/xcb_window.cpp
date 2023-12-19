@@ -8,6 +8,44 @@
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
 
+namespace
+{
+    using namespace mango;
+
+    struct ScreenInfo
+    {
+        xcb_connection_t* screen;
+        math::int32x2 resolution;
+    };
+
+    std::vector<ScreenInfo> getScreenInfo(xcb_connection_t* connection)
+    {
+        std::vector<ScreenInfo> screens;
+
+        xcb_screen_iterator_t screen_iter = xcb_setup_roots_iterator(xcb_get_setup(connection));
+        while (screen_iter.rem)
+        {
+            xcb_screen_t* screen = screen_iter.data;
+
+            int width = screen_iter.data->width_in_pixels);
+            int height = screen_iter.data->height_in_pixels);
+            printf("screen %d: %d x %d\n", screen_iter.index, width, height);
+
+            ScreenInfo info;
+
+            info.screen = screen;
+            info.resolution = math::int32x2(width, height);
+
+            screens.push_back(info);
+
+            xcb_screen_next(&screen_iter);
+        }
+
+        return screens;
+    }
+
+} // namespace
+
 namespace mango
 {
 
@@ -92,15 +130,37 @@ namespace mango
 
     int Window::getScreenCount()
     {
-        // MANGO TODO
-        return 0;
+        xcb_connection_t* connection = xcb_connect(NULL, NULL);
+        if (xcb_connection_has_error(connection))
+        {
+            MANGO_EXCEPTION("[Window] xcb_connect() failed.");
+        }
+
+        std::vector<ScreenInfo> screens = getScreenInfo();
+        int count = int(screens.size());
+
+        xcb_disconnect(connection);
+
+        return count;
     }
 
-    int32x2 Window::getScreenSize(int screen)
+    int32x2 Window::getScreenSize(int index)
     {
-        // MANGO TODO
-        MANGO_UNREFERENCED(screen);
-        return int32x2(0, 0);
+        xcb_connection_t* connection = xcb_connect(NULL, NULL);
+        if (xcb_connection_has_error(connection))
+        {
+            MANGO_EXCEPTION("[Window] xcb_connect() failed.");
+        }
+
+        std::vector<ScreenInfo> screens = getScreenInfo();
+        int count = int(screens.size());
+
+        xcb_disconnect(connection);
+
+        index = std::max(index, 0);
+        index = std::min(index, count - 1);
+
+        return screens[index];
     }
 
     Window::Window(int width, int height, u32 flags)

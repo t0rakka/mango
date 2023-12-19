@@ -153,6 +153,7 @@ namespace mango
             {
                 debugPrint("NSView initWithFrame failed.\n");
                 // MANGO TODO: delete window
+                // try this: [win release];
                 return;
             }
 
@@ -214,6 +215,7 @@ namespace mango
             {
                 debugPrint("NSOpenGLPixelFormat initWithAttributes failed.\n");
                 // MANGO TODO: delete window
+                // try this: [win release];
                 return;
             }
 
@@ -228,6 +230,7 @@ namespace mango
             {
                 debugPrint("Failed to create NSOpenGL Context.\n");
                 // MANGO TODO: delete window
+                // try this: [win release];
                 return;
             }
 
@@ -262,6 +265,7 @@ namespace mango
                 [win setContentView:nil];
                 [view release];
                 [win close];
+                // MANGO TODO: [win release] ?
             }
 
             [NSApp stop:nil];

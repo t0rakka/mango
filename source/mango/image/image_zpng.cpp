@@ -29,9 +29,8 @@ namespace
     {
         Format format;
 
-        // MANGO TODO: this format selection assumes that the format supports 1, 3 or 4 channels and 8 and 16 bits per channel
-        // MANGO TODO: probably should switch with number of channels -and- bytes per channel separately
         int bytes_per_pixel = bytes_per_channel * channels;
+
         switch (bytes_per_pixel)
         {
             case 1:
@@ -84,6 +83,11 @@ namespace
                 m_header.palette = false;
                 m_header.format  = resolve_format(zheader->channels, zheader->bytes_per_channel);
                 m_header.compression = TextureCompression::NONE;
+
+                if (!m_header.format.bits)
+                {
+                    m_header.setError("[ImageDecoder.ZPNG] Unsupported format.");
+                }
             }
         }
 
@@ -116,20 +120,12 @@ namespace
             {
                 Format format = resolve_format(z.Channels, z.BytesPerChannel);
 
-                /*
-                Bitmap temp(z.WidthPixels, z.HeightPixels, format);
-
-                u8* d = temp.image;
-                u8* s = z.Buffer.Data;
-                int bytes = temp.width * format.bytes();
-
-                for (int y = 0; y < temp.height; ++y)
+                if (!format.bits)
                 {
-                    std::memcpy(d, s, bytes);
-                    d += temp.stride;
-                    s += z.StrideBytes;
+                    ZPNG_Free(&z.Buffer);
+                    status.setError("[ImageDecoder.ZPNG] Unsupported format.");
+                    return status;
                 }
-                */
 
                 Surface temp(z.WidthPixels, z.HeightPixels, format, z.StrideBytes, z.Buffer.Data);
                 dest.blit(0, 0, temp);
@@ -157,7 +153,6 @@ namespace
 
         ImageEncodeStatus status;
 
-        // MANGO TODO: optimize encoder
         Bitmap temp(surface.width, surface.height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
         temp.blit(0, 0, surface);
 

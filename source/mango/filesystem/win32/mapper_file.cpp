@@ -38,7 +38,6 @@ namespace
             // special handling when too long filename
             if (m_file == INVALID_HANDLE_VALUE)
             {
-                // MANGO TODO: use UNC filename or ShortPath
                 if (filename.length() > MAX_PATH)
                 {
                     m_memory.address = nullptr;
