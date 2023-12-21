@@ -211,7 +211,9 @@ namespace
                     }
 
                     case JXL_DEC_FULL_IMAGE:
+                    {
                         break;
+                    }
 
                     case JXL_DEC_SUCCESS:
                     {
@@ -220,8 +222,10 @@ namespace
                     }
 
                     default:
+                    {
                         m_status.setError("JxlDecoderProcessInput : ERROR");
                         return;
+                    }
                 }
             }
         }
