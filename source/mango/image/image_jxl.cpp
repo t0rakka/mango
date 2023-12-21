@@ -163,9 +163,9 @@ namespace
 
                     case JXL_DEC_COLOR_ENCODING:
                     {
-                        size_t bytes;
+                        size_t bytes = 0;
 
-                        if (JxlDecoderGetICCProfileSize(decoder, &format, JXL_COLOR_PROFILE_TARGET_DATA, &bytes) != JXL_DEC_SUCCESS)
+                        if (JxlDecoderGetICCProfileSize(decoder, JXL_COLOR_PROFILE_TARGET_DATA, &bytes) != JXL_DEC_SUCCESS)
                         {
                             // Silently fail
                             break;
@@ -173,7 +173,7 @@ namespace
 
                         m_icc.resize(bytes);
 
-                        if (JxlDecoderGetColorAsICCProfile(decoder, &format, JXL_COLOR_PROFILE_TARGET_DATA, m_icc.data(), m_icc.size()) != JXL_DEC_SUCCESS)
+                        if (JxlDecoderGetColorAsICCProfile(decoder, JXL_COLOR_PROFILE_TARGET_DATA, m_icc.data(), m_icc.size()) != JXL_DEC_SUCCESS)
                         {
                             // Silently fail
                             m_icc.reset();

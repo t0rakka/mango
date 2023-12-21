@@ -1068,7 +1068,7 @@ endif
 #
 # jpeg-xl
 #
-libjxl_dep = dependency('libjxl', version: '>=0.7', required: false)
+libjxl_dep = dependency('libjxl', version: '>=0.8.2', required: false)
 libjxl_threads_dep = dependency('libjxl_threads', version: '>=0.7', required: false)
 enable_jxl = libjxl_dep.found() and libjxl_threads_dep.found()
 if enable_jxl
