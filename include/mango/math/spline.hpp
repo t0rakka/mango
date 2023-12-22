@@ -4,8 +4,8 @@
 */
 #pragma once
 
-#include <mango/math/vector.hpp>
 #include <mango/core/bits.hpp>
+#include <mango/math/vector.hpp>
 
 namespace mango::math
 {

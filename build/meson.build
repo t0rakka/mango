@@ -7,7 +7,7 @@
 project(
     'mango', 'c', 'cpp',
     meson_version: '>= 0.50.0',
-    version: '1.1.0',
+    version: '1.1.2',
     default_options : [
         'c_std=c11',
         'cpp_std=c++17',
@@ -17,6 +17,8 @@ project(
 )
 
 mango_version = meson.project_version()
+mango_opengl_version = '0.8.0'
+mango_import3d_version = '0.1.0'
 
 if host_machine.system() == 'darwin'
     add_languages('objcpp')
@@ -232,6 +234,14 @@ mango_opengl_headers = files(
     '../include/mango/opengl/khronos/KHR/khrplatform.h',
 )
 
+mango_import3d_headers = files(
+    '../include/mango/import3d/import3d.hpp',
+    '../include/mango/import3d/mesh.hpp',
+    '../include/mango/import3d/import_obj.hpp',
+    '../include/mango/import3d/import_3ds.hpp',
+    '../include/mango/import3d/import_gltf.hpp',
+)
+
 # ------------------------------------------------------------------------------
 # mango sources
 # ------------------------------------------------------------------------------
@@ -377,6 +387,10 @@ else
         '../source/mango/opengl/egl/egl_context.cpp'
     )
 endif
+
+mango_import3d_sources = files(
+    '../source/mango/import3d/mesh.cpp',
+)
 
 # ------------------------------------------------------------------------------
 # external sources + headers
@@ -1032,6 +1046,7 @@ threads_dep = dependency('threads')
 mango_deps             = [ threads_dep ]
 mango_public_deps      = [ ]
 mango_opengl_deps      = [ ]
+mango_import3d_deps    = [ ]
 
 opengl_dep = dependency('gl')
 
@@ -1068,6 +1083,7 @@ endif
 #
 # jpeg-xl
 #
+
 libjxl_dep = dependency('libjxl', version: '>=0.8.2', required: false)
 libjxl_threads_dep = dependency('libjxl_threads', version: '>=0.7', required: false)
 enable_jxl = libjxl_dep.found() and libjxl_threads_dep.found()
@@ -1080,6 +1096,7 @@ endif
 #
 # openjp2
 #
+
 libopenjp2_dep = dependency('libopenjp2', version: '>=2.4.0', required: false)
 if libopenjp2_dep.found()
     add_project_arguments('-DMANGO_ENABLE_JP2', language: ['cpp'])
@@ -1089,6 +1106,7 @@ endif
 #
 # libavif
 #
+
 libavif_dep = dependency('libavif', version: '>=0.11.1', required: false)
 if libavif_dep.found()
     add_project_arguments('-DMANGO_ENABLE_AVIF', language: ['cpp'])
@@ -1098,6 +1116,7 @@ endif
 #
 # libheif
 #
+
 libheif_dep = dependency('libheif', version: '>=1.13.0', required: false)
 if libheif_dep.found()
     add_project_arguments('-DMANGO_ENABLE_HEIF', language: ['cpp'])
@@ -1110,6 +1129,10 @@ endif
 
 mango_inc = include_directories('../include')
 
+#
+# mango
+#
+
 mango = shared_library('mango',
     version: mango_version,
     soversion: mango_version,
@@ -1121,6 +1144,7 @@ mango = shared_library('mango',
         mango_math_headers,
         mango_simd_headers,
         mango_opengl_headers,
+        mango_import3d_headers,
         external_lzma_headers,
         external_lzfse_headers,
         external_deflate_headers,
@@ -1170,9 +1194,13 @@ mango_dep = declare_dependency(
     compile_args        : mango_public_cpp_args + mango_interface_cpp_args
 )
 
+#
+# mango-opengl
+#
+
 mango_opengl = shared_library('mango-opengl',
-    version             : mango_version,
-    soversion           : mango_version,
+    version             : mango_opengl_version,
+    soversion           : mango_opengl_version,
     sources             : mango_window_sources + mango_opengl_sources,
     link_with           : mango,
     dependencies        : mango_opengl_deps,
@@ -1183,6 +1211,27 @@ mango_opengl = shared_library('mango-opengl',
 
 mango_opengl_dep = declare_dependency(
     link_with           : mango_opengl,
+    include_directories : mango_inc,
+    compile_args        : mango_public_cpp_args + mango_interface_cpp_args
+)
+
+#
+# mango-import3d
+#
+
+mango_import3d = shared_library('mango-import3d',
+    version             : mango_import3d_version,
+    soversion           : mango_import3d_version,
+    sources             : mango_import3d_sources,
+    link_with           : mango,
+    dependencies        : mango_deps,
+    include_directories : mango_inc,
+    cpp_args            : mango_public_cpp_args,
+    install             : true
+)
+
+mango_import3d_dep = declare_dependency(
+    link_with           : mango_import3d,
     include_directories : mango_inc,
     compile_args        : mango_public_cpp_args + mango_interface_cpp_args
 )
@@ -1200,4 +1249,10 @@ pkg.generate(mango_opengl,
     name: 'mango-opengl',
     libraries_private : [ mango_opengl_deps ],
     description : 'A multi-platform low-level development framework for graphics programmers - OpenGL'
+)
+
+pkg.generate(mango_import3d,
+    name: 'mango-import3d',
+    libraries_private : [ mango_import3d_deps ],
+    description : 'A multi-platform low-level development framework for graphics programmers - Import3D'
 )
