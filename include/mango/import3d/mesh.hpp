@@ -38,6 +38,24 @@ namespace mango::import3d
         std::vector<u32> indices;
     };
 
+    struct Cube : IndexedMesh
+    {
+        Cube(float size);
+    };
+
+    struct Torus : IndexedMesh
+    {
+        struct Parameters
+        {
+            int innerSegments;
+            int outerSegments;
+            float innerRadius;
+            float outerRadius;
+        };
+
+        Torus(Parameters params);
+    };
+
     struct Torusknot : IndexedMesh
     {
         struct Parameters
@@ -56,11 +74,6 @@ namespace mango::import3d
         };
 
         Torusknot(Parameters params);
-    };
-
-    struct Cube : IndexedMesh
-    {
-        Cube(float size);
     };
 
 } // namespace mango::import3d
