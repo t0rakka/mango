@@ -11,4 +11,31 @@ namespace mango::import3d
 
     // TODO
 
+    /*
+
+    struct Mesh
+    {
+        u32 material;
+        std::vector<Triangle> triangles;
+    };
+
+    struct Object
+    {
+        std::string name;
+        u32 parent;
+        Matrix4 transform;
+        std::vector<u32> meshes;
+    };
+
+    struct ImportOBJ
+    {
+        std::vector<Material> materials;
+        std::vector<Mesh> meshes;
+        std::vector<Object> objects;
+
+        ImportOBJ(const filesystem::Path& path, const std::string& filename);
+    };
+
+    */
+
 } // namespace mango::import3d

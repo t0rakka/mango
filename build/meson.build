@@ -390,6 +390,9 @@ endif
 
 mango_import3d_sources = files(
     '../source/mango/import3d/mesh.cpp',
+    '../source/mango/import3d/import_obj.cpp',
+    '../source/mango/import3d/import_3ds.cpp',
+    '../source/mango/import3d/import_gltf.cpp',
 )
 
 # ------------------------------------------------------------------------------
