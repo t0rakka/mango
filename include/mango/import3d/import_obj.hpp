@@ -23,7 +23,7 @@ namespace mango::import3d
     {
         std::string name;
         u32 parent;
-        Matrix4 transform;
+        matrix4x4 transform;
         std::vector<u32> meshes;
     };
 

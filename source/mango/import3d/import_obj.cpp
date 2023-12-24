@@ -5,7 +5,6 @@
 #include <string_view>
 #include <mango/filesystem/filesystem.hpp>
 #include <mango/import3d/import_obj.hpp>
-#include "../../external/fast_float/fast_float.h"
 
 namespace mango::import3d
 {
@@ -80,9 +79,7 @@ namespace mango::import3d
 
         float parse_float(std::string_view s) const
         {
-            float value;
-            fast_float::from_chars(s.data(), s.data() + s.size(), value);
-            return value;
+            return parseFloat(s);
         }
 
         float parse_float(const std::vector<std::string_view>& tokens) const
