@@ -23,7 +23,7 @@ namespace mango::import3d
     {
         float32x3 position { 0.0f, 0.0f, 0.0f };
         float32x3 normal   { 0.0f, 0.0f, 0.0f };
-        float32x3 tangent  { 0.0f, 0.0f, 0.0f };
+        float32x4 tangent  { 0.0f, 0.0f, 0.0f, 1.0f };
         float32x2 texcoord { 0.0f, 0.0f };
     };
 

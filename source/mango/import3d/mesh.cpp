@@ -14,7 +14,7 @@ Cube::Cube(float size)
 {
     const float s = size * 0.5f;
 
-    float32x3 tangent(0.0f, 0.0f, 0.0f); // TODO
+    float32x4 tangent(0.0f, 0.0f, 0.0f, 1.0f);
 
     vertices =
     {
