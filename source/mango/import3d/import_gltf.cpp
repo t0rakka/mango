@@ -8,4 +8,3 @@ namespace mango::import3d
 {
 
 } // namespace mango::import3d
-

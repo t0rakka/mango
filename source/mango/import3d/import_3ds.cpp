@@ -1116,4 +1116,3 @@ Import3DS::~Import3DS()
 #endif
 
 } // namespace mango::import3d
-

@@ -618,11 +618,10 @@ namespace mango::import3d
 
             o.name = object.name;
             o.parent = ~0;
-            o.transform = Matrix4(1.0f);
+            o.transform = matrix4x4(1.0f);
             o.meshes.push_back(u32(meshes.size()));
 
             objects.push_back(o);
-
             meshes.push_back(mesh);
         }
 
@@ -632,4 +631,3 @@ namespace mango::import3d
     */
 
 } // namespace mango::import3d
-

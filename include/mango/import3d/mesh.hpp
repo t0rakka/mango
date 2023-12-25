@@ -15,10 +15,15 @@ namespace mango::import3d
     using float32x4 = math::Vector<float, 4>;
     using matrix4x4 = math::Matrix<float, 4, 4>;
 
+    // -----------------------------------------------------------------------
+    // scene
+    // -----------------------------------------------------------------------
+
     struct Vertex
     {
         float32x3 position { 0.0f, 0.0f, 0.0f };
         float32x3 normal   { 0.0f, 0.0f, 0.0f };
+        float32x3 tangent  { 0.0f, 0.0f, 0.0f };
         float32x2 texcoord { 0.0f, 0.0f };
     };
 
@@ -27,16 +32,39 @@ namespace mango::import3d
         Vertex vertex[3];
     };
 
+    struct Material
+    {
+        u32 todo;
+    };
+
+    struct MaterialCluster
+    {
+        u32 start;
+        u32 count;
+        u32 material;
+    };
+
     struct Mesh
     {
         std::vector<Triangle> triangles;
+        std::vector<MaterialCluster> clusters;
     };
 
     struct IndexedMesh
     {
         std::vector<Vertex> vertices;
         std::vector<u32> indices;
+        std::vector<MaterialCluster> clusters;
     };
+
+    struct Scene
+    {
+        u32 todo;
+    };
+
+    // -----------------------------------------------------------------------
+    // primitives
+    // -----------------------------------------------------------------------
 
     struct Cube : IndexedMesh
     {
