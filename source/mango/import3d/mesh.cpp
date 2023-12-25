@@ -12,41 +12,69 @@ constexpr float pi2 = float(math::pi * 2.0);
 
 Cube::Cube(float size)
 {
-    const float s = size * 0.5f;
+    float s0 = size *-0.5f;
+    float s1 = size * 0.5f;
 
-    float32x4 tangent(0.0f, 0.0f, 0.0f, 1.0f);
+    const float32x3 position0(s0, s0, s0);
+    const float32x3 position1(s1, s0, s0);
+    const float32x3 position2(s0, s1, s0);
+    const float32x3 position3(s1, s1, s0);
+    const float32x3 position4(s0, s0, s1);
+    const float32x3 position5(s1, s0, s1);
+    const float32x3 position6(s0, s1, s1);
+    const float32x3 position7(s1, s1, s1);
+
+    const float32x3 normal0( 0.0f, 0.0f,-1.0f);
+    const float32x3 normal1( 0.0f, 0.0f, 1.0f);
+    const float32x3 normal2(-1.0f, 0.0f, 0.0f);
+    const float32x3 normal3( 1.0f, 0.0f, 0.0f);
+    const float32x3 normal4( 0.0f,-1.0f, 0.0f);
+    const float32x3 normal5( 0.0f, 1.0f, 0.0f);
+
+    const float32x4 tangent(0.0f, 0.0f, 0.0f, 1.0f);
+
+    const float32x2 texcoord0(0.0f, 0.0f);
+    const float32x2 texcoord1(1.0f, 0.0f);
+    const float32x2 texcoord2(0.0f, 1.0f);
+    const float32x2 texcoord3(1.0f, 1.0f);
 
     vertices =
     {
-        { float32x3( s, s,-s), float32x3( 0,-1, 0), tangent, float32x2(0, 0) },
-        { float32x3(-s, s,-s), float32x3( 0,-1, 0), tangent, float32x2(1, 0) },
-        { float32x3(-s, s, s), float32x3( 0,-1, 0), tangent, float32x2(1, 1) },
-        { float32x3( s, s, s), float32x3( 0,-1, 0), tangent, float32x2(0, 1) },
+        // bottom
+        { position3, normal4, tangent, texcoord0 },
+        { position2, normal4, tangent, texcoord1 },
+        { position6, normal4, tangent, texcoord3 },
+        { position7, normal4, tangent, texcoord2 },
 
-        { float32x3( s,-s, s), float32x3( 0, 1, 0), tangent, float32x2(0, 0) },
-        { float32x3(-s,-s, s), float32x3( 0, 1, 0), tangent, float32x2(1, 0) },
-        { float32x3(-s,-s,-s), float32x3( 0, 1, 0), tangent, float32x2(1, 1) },
-        { float32x3( s,-s,-s), float32x3( 0, 1, 0), tangent, float32x2(0, 1) },
+        // top
+        { position5, normal5, tangent, texcoord0 },
+        { position4, normal5, tangent, texcoord1 },
+        { position0, normal5, tangent, texcoord3 },
+        { position1, normal5, tangent, texcoord2 },
 
-        { float32x3( s, s, s), float32x3( 0, 0,-1), tangent, float32x2(0, 0) },
-        { float32x3(-s, s, s), float32x3( 0, 0,-1), tangent, float32x2(1, 0) },
-        { float32x3(-s,-s, s), float32x3( 0, 0,-1), tangent, float32x2(1, 1) },
-        { float32x3( s,-s, s), float32x3( 0, 0,-1), tangent, float32x2(0, 1) },
+        // front
+        { position7, normal0, tangent, texcoord0 },
+        { position6, normal0, tangent, texcoord1 },
+        { position4, normal0, tangent, texcoord3 },
+        { position5, normal0, tangent, texcoord2 },
 
-        { float32x3( s,-s,-s), float32x3( 0, 0, 1), tangent, float32x2(0, 0) },
-        { float32x3(-s,-s,-s), float32x3( 0, 0, 1), tangent, float32x2(1, 0) },
-        { float32x3(-s, s,-s), float32x3( 0, 0, 1), tangent, float32x2(1, 1) },
-        { float32x3( s, s,-s), float32x3( 0, 0, 1), tangent, float32x2(0, 1) },
+        // back
+        { position1, normal1, tangent, texcoord0 },
+        { position0, normal1, tangent, texcoord1 },
+        { position2, normal1, tangent, texcoord3 },
+        { position3, normal1, tangent, texcoord2 },
 
-        { float32x3(-s, s, s), float32x3( 1, 0, 0), tangent, float32x2(0, 0) },
-        { float32x3(-s, s,-s), float32x3( 1, 0, 0), tangent, float32x2(1, 0) },
-        { float32x3(-s,-s,-s), float32x3( 1, 0, 0), tangent, float32x2(1, 1) },
-        { float32x3(-s,-s, s), float32x3( 1, 0, 0), tangent, float32x2(0, 1) },
+        // right
+        { position6, normal3, tangent, texcoord0 },
+        { position2, normal3, tangent, texcoord1 },
+        { position0, normal3, tangent, texcoord3 },
+        { position4, normal3, tangent, texcoord2 },
 
-        { float32x3( s, s,-s), float32x3(-1, 0, 0), tangent, float32x2(0, 0) },
-        { float32x3( s, s, s), float32x3(-1, 0, 0), tangent, float32x2(1, 0) },
-        { float32x3( s,-s, s), float32x3(-1, 0, 0), tangent, float32x2(1, 1) },
-        { float32x3( s,-s,-s), float32x3(-1, 0, 0), tangent, float32x2(0, 1) },
+        // left
+        { position3, normal2, tangent, texcoord0 },
+        { position7, normal2, tangent, texcoord1 },
+        { position5, normal2, tangent, texcoord3 },
+        { position1, normal2, tangent, texcoord2 },
     };
 
     indices =
@@ -65,24 +93,28 @@ Torus::Torus(Parameters params)
     const float is = pi2 / params.innerSegments;
     const float js = pi2 / params.outerSegments;
 
-    for (int i = 0; i < params.innerSegments; ++i)
+    const float uscale = 4.0f / float(params.innerSegments);
+    const float vscale = 1.0f / float(params.outerSegments);
+
+    for (int i = 0; i < params.innerSegments + 1; ++i)
     {
-        for (int j = 0; j < params.outerSegments; ++j)
+        for (int j = 0; j < params.outerSegments + 1; ++j)
         {
             const float icos = std::cos(i * is);
             const float isin = std::sin(i * is);
             const float jcos = std::cos(j * js);
             const float jsin = std::sin(j * js);
 
-            Vertex v;
+            Vertex vertex;
 
-            v.position = float32x3(
+            vertex.position = float32x3(
                 icos * (params.innerRadius + jcos * params.outerRadius),
                 isin * (params.innerRadius + jcos * params.outerRadius),
                 jsin * params.outerRadius);
-            v.normal = normalize(float32x3(icos * jcos, isin * jcos, jsin));
+            vertex.normal = normalize(float32x3(icos * jcos, isin * jcos, jsin));
+            vertex.texcoord = float32x2(i * uscale, j * vscale);
 
-            vertices.push_back(v);
+            vertices.push_back(vertex);
         }
     }
 
@@ -92,27 +124,26 @@ Torus::Torus(Parameters params)
         {
             int ci = i;
             int cj = j;
-            int ni = (i + 1) % params.innerSegments;
-            int nj = (j + 1) % params.outerSegments;
+            int ni = (i + 1) % (params.innerSegments + 1);
+            int nj = (j + 1) % (params.outerSegments + 1);
 
-            ci *= params.outerSegments;
-            ni *= params.outerSegments;
+            ci *= (params.outerSegments + 1);
+            ni *= (params.outerSegments + 1);
 
             int a = ci + cj;
             int b = ni + cj;
             int c = ci + nj;
             int d = ni + nj;
 
+            indices.push_back(c);
+            indices.push_back(b);
             indices.push_back(a);
-            indices.push_back(b);
-            indices.push_back(c);
 
-            indices.push_back(b);
-            indices.push_back(d);
             indices.push_back(c);
+            indices.push_back(d);
+            indices.push_back(b);
         }
     }
-
 }
 
 // Torus knot generation
@@ -125,6 +156,7 @@ Torusknot::Torusknot(Parameters params)
     params.thickness *= params.scale;
 
     // generate indices
+
     std::vector<int> stripIndices((params.steps + 1) * params.facets * 2);
 
     for (int j = 0; j < params.facets; j++)
@@ -137,6 +169,7 @@ Torusknot::Torusknot(Parameters params)
     }
 
     // convert triangle strip into triangles
+
     for (size_t i = 2; i < stripIndices.size(); ++i)
     {
         int s = i & 1; // swap triangle winding-order
@@ -146,25 +179,26 @@ Torusknot::Torusknot(Parameters params)
     }
 
     // generate vertices
+
     vertices.resize((params.steps + 1) * (params.facets + 1) + 1);
 
     float32x3 centerpoint;
     float Pp = params.p * 0 * pi2 / params.steps;
     float Qp = params.q * 0 * pi2 / params.steps;
-    float r = (.5f * (2 + (float)sin(Qp))) * params.scale;
-    centerpoint.x = r * (float)cos(Pp);
-    centerpoint.y = r * (float)cos(Qp);
-    centerpoint.z = r * (float)sin(Pp);
+    float r = (.5f * (2 + std::sin(Qp))) * params.scale;
+    centerpoint.x = r * std::cos(Pp);
+    centerpoint.y = r * std::cos(Qp);
+    centerpoint.z = r * std::sin(Pp);
 
     for (int i = 0; i < params.steps; i++)
     {
         float32x3 nextpoint;
         Pp = params.p * (i + 1) * pi2 / params.steps;
         Qp = params.q * (i + 1) * pi2 / params.steps;
-        r = (.5f * (2 + (float)sin(Qp))) * params.scale;
-        nextpoint.x = r * (float)cos(Pp);
-        nextpoint.y = r * (float)cos(Qp);
-        nextpoint.z = r * (float)sin(Pp);
+        r = (.5f * (2 + std::sin(Qp))) * params.scale;
+        nextpoint.x = r * std::cos(Pp);
+        nextpoint.y = r * std::cos(Qp);
+        nextpoint.z = r * std::sin(Pp);
 
         float32x3 T = nextpoint - centerpoint;
         float32x3 N = nextpoint + centerpoint;
@@ -175,13 +209,14 @@ Torusknot::Torusknot(Parameters params)
 
         for (int j = 0; j < params.facets; j++)
         {
-            float pointx = (float)sin(j * pi2 / params.facets) * params.thickness * (((float)sin(params.clumpOffset + params.clumps * i * pi2 / params.steps) * params.clumpScale) + 1);
-            float pointy = (float)cos(j * pi2 / params.facets) * params.thickness * (((float)cos(params.clumpOffset + params.clumps * i * pi2 / params.steps) * params.clumpScale) + 1);
+            float pointx = std::sin(j * pi2 / params.facets) * params.thickness * ((std::sin(params.clumpOffset + params.clumps * i * pi2 / params.steps) * params.clumpScale) + 1);
+            float pointy = std::cos(j * pi2 / params.facets) * params.thickness * ((std::cos(params.clumpOffset + params.clumps * i * pi2 / params.steps) * params.clumpScale) + 1);
 
             const int offset = i * (params.facets + 1) + j;
             vertices[offset].position = N * pointx + B * pointy + centerpoint;
             vertices[offset].normal = normalize(vertices[offset].position - centerpoint);
-            vertices[offset].texcoord = float32x2((float(j) / params.facets) * params.uscale, (float(i) / params.steps) * params.vscale);
+            vertices[offset].texcoord = float32x2((float(j) / params.facets) * params.uscale, 
+                                                  (float(i) / params.steps) * params.vscale);
         }
 
         // create duplicate vertex for sideways wrapping

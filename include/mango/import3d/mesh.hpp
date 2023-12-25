@@ -32,6 +32,7 @@ namespace mango::import3d
         Vertex vertex[3];
     };
 
+    /*
     struct Material
     {
         u32 todo;
@@ -43,18 +44,19 @@ namespace mango::import3d
         u32 count;
         u32 material;
     };
+    */
 
     struct Mesh
     {
         std::vector<Triangle> triangles;
-        std::vector<MaterialCluster> clusters;
+        //std::vector<MaterialCluster> clusters;
     };
 
     struct IndexedMesh
     {
         std::vector<Vertex> vertices;
         std::vector<u32> indices;
-        std::vector<MaterialCluster> clusters;
+        //std::vector<MaterialCluster> clusters;
     };
 
     struct Scene
@@ -75,10 +77,10 @@ namespace mango::import3d
     {
         struct Parameters
         {
-            int innerSegments;
-            int outerSegments;
-            float innerRadius;
-            float outerRadius;
+            int innerSegments = 128;
+            int outerSegments = 32;
+            float innerRadius = 3.0f;
+            float outerRadius = 0.8f;
         };
 
         Torus(Parameters params);
@@ -88,17 +90,17 @@ namespace mango::import3d
     {
         struct Parameters
         {
-            int steps;           // Number of steps in the torus knot
-            int facets;          // Number of facets
-            float scale;         // Scale of the knot
-            float thickness;     // Thickness of the knot
-            float clumps;        // Number of clumps in the knot
-            float clumpOffset;   // Offset of the clump (in 0..2pi)
-            float clumpScale;    // Scale of a clump
-            float uscale;        // U coordinate scale
-            float vscale;        // V coordinate scale
-            float p;             // P parameter of the knot
-            float q;             // Q parameter of the knot
+            int steps = 256;            // Number of steps in the torus knot
+            int facets = 16;            // Number of facets
+            float scale = 3.0f;         // Scale of the knot
+            float thickness = 0.124f;   // Thickness of the knot
+            float clumps = 12.0f;       // Number of clumps in the knot
+            float clumpOffset = 20.0f;  // Offset of the clump (in 0..2pi)
+            float clumpScale = 0.4f;    // Scale of a clump
+            float uscale = 4.0f;        // U coordinate scale
+            float vscale = 128.0f;      // V coordinate scale
+            float p = 2.0f;             // P parameter of the knot
+            float q = 5.0f;             // Q parameter of the knot
         };
 
         Torusknot(Parameters params);
