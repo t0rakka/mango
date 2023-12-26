@@ -120,20 +120,15 @@ Torus::Torus(Parameters params)
 
     for (int i = 0; i < params.innerSegments; ++i)
     {
+        int ci = (i + 0) * (params.outerSegments + 1);
+        int ni = (i + 1) * (params.outerSegments + 1);
+
         for (int j = 0; j < params.outerSegments; ++j)
         {
-            int ci = i;
-            int cj = j;
-            int ni = (i + 1) % (params.innerSegments + 1);
-            int nj = (j + 1) % (params.outerSegments + 1);
-
-            ci *= (params.outerSegments + 1);
-            ni *= (params.outerSegments + 1);
-
-            int a = ci + cj;
-            int b = ni + cj;
-            int c = ci + nj;
-            int d = ni + nj;
+            int a = ci + j + 0;
+            int b = ni + j + 0;
+            int c = ci + j + 1;
+            int d = ni + j + 1;
 
             indices.push_back(c);
             indices.push_back(b);
