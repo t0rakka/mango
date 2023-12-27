@@ -325,6 +325,8 @@ GLuint createTextureCube(const std::string& filename)
 
 #if 1
 
+            // easy and fast: 9 ms
+
             Bitmap bitmap(width, height, format);
 
             for (int face = 0; face < 6; ++face)
@@ -336,6 +338,8 @@ GLuint createTextureCube(const std::string& filename)
             }
 
 #else
+
+            // complicated and not well optimized: 24 ms
 
             int stride = width * format.bytes();
             int size = height * stride;
@@ -421,6 +425,7 @@ public:
         meshTexture = createTexture2D("data/hanselun.png", true);
         meshProgram = createProgram(vs_mesh, fs_mesh);
 
+        // select between cubemap and latlong texture
         bool cubemap = true;
 
         if (cubemap)
@@ -519,6 +524,8 @@ public:
         glUniformMatrix4fv(glGetUniformLocation(meshProgram, "model"), 1, GL_FALSE, model);
         glUniformMatrix4fv(glGetUniformLocation(meshProgram, "view"), 1, GL_FALSE, view);
         glUniformMatrix4fv(glGetUniformLocation(meshProgram, "projection"), 1, GL_FALSE, projection);
+
+        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
         glBindVertexArray(meshVAO);
         glActiveTexture(GL_TEXTURE0);
