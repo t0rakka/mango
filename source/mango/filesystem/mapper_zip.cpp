@@ -675,7 +675,7 @@ namespace mango::filesystem
             {
                 case COMPRESSION_NONE:
                 {
-                    size = header.uncompressedSize;
+                    compressor = getCompressor(Compressor::NONE);
                     break;
                 }
 
