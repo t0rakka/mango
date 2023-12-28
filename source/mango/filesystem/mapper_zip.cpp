@@ -767,7 +767,11 @@ namespace mango::filesystem
                 address = buffer;
                 size = header.uncompressedSize;
             }
-            else if (!size)
+            else if (size > 0)
+            {
+                // no compression -> mapped directly to parent address
+            }
+            else
             {
                 MANGO_EXCEPTION("[mapper.zip] Unsupported compression algorithm (%d).", header.compression);
             }
