@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <map>
 #include <mango/import3d/mesh.hpp>
 #include "../../external/mikktspace/mikktspace.h"
 
@@ -76,6 +77,60 @@ namespace mango::import3d
 
 static
 constexpr float pi2 = float(math::pi * 2.0);
+
+static inline
+bool operator < (const Vertex& a, const Vertex& b)
+{
+    return std::memcmp(&a, &b, sizeof(Vertex)) < 0;
+}
+
+void convertMesh(Mesh& output, const IndexedMesh& input)
+{
+    output.triangles.clear();
+
+    for (size_t i = 0; i < input.indices.size(); i += 3)
+    {
+        Triangle triangle;
+
+        triangle.vertex[0] = input.vertices[input.indices[i + 0]];
+        triangle.vertex[1] = input.vertices[input.indices[i + 1]];
+        triangle.vertex[2] = input.vertices[input.indices[i + 2]];
+
+        output.triangles.push_back(triangle);
+    }
+}
+
+void convertMesh(IndexedMesh& output, const Mesh& input)
+{
+    output.vertices.clear();
+    output.indices.clear();
+
+    std::map<Vertex, size_t> unique;
+
+    for (const Triangle& triangle : input.triangles)
+    {
+        for (int i = 0; i < 3; ++i)
+        {
+            const Vertex& vertex = triangle.vertex[i];
+            size_t index;
+
+            auto it = unique.find(vertex);
+            if (it != unique.end())
+            {
+                // vertex already exists; use it's index
+                index = it->second;
+            }
+            else
+            {
+                index = output.vertices.size();
+                unique[vertex] = index; // remember the index of this vertex
+                output.vertices.push_back(vertex);
+            }
+
+            output.indices.push_back(u32(index));
+        }
+    }
+}
 
 void computeTangents(Mesh& mesh)
 {
@@ -232,6 +287,11 @@ Torus::Torus(Parameters params)
             indices.push_back(c);
         }
     }
+
+    Mesh temp;
+    convertMesh(temp, *this);
+    computeTangents(temp);
+    convertMesh(*this, temp);
 }
 
 // Torus knot generation
@@ -299,8 +359,11 @@ Torusknot::Torusknot(Parameters params)
             float pointy = std::cos(j * pi2 / params.facets) * params.thickness * ((std::cos(params.clumpOffset + params.clumps * i * pi2 / params.steps) * params.clumpScale) + 1);
 
             const int offset = i * (params.facets + 1) + j;
-            vertices[offset].position = N * pointx + B * pointy + centerpoint;
-            vertices[offset].normal = normalize(vertices[offset].position - centerpoint);
+
+            float32x3 normal = N * pointx + B * pointy;
+
+            vertices[offset].position = centerpoint + normal;
+            vertices[offset].normal = normalize(normal);
             vertices[offset].texcoord = float32x2((float(j) / params.facets) * params.uscale, 
                                                   (float(i) / params.steps) * params.vscale);
         }
@@ -330,6 +393,11 @@ Torusknot::Torusknot(Parameters params)
     vertices[params.steps * (params.facets + 1) + params.facets].position = vertices[0].position;
     vertices[params.steps * (params.facets + 1) + params.facets].normal = vertices[0].normal;
     vertices[params.steps * (params.facets + 1) + params.facets].texcoord = float32x2(params.uscale, params.vscale);
+
+    Mesh temp;
+    convertMesh(temp, *this);
+    computeTangents(temp);
+    convertMesh(*this, temp);
 }
 
 } // namespace mango::import3d
