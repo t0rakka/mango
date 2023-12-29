@@ -24,67 +24,67 @@ Cube::Cube(float size)
     const float32x3 position6(s0, s1, s1);
     const float32x3 position7(s1, s1, s1);
 
-    const float32x3 normal0( 0.0f, 0.0f,-1.0f);
-    const float32x3 normal1( 0.0f, 0.0f, 1.0f);
-    const float32x3 normal2(-1.0f, 0.0f, 0.0f);
-    const float32x3 normal3( 1.0f, 0.0f, 0.0f);
-    const float32x3 normal4( 0.0f,-1.0f, 0.0f);
-    const float32x3 normal5( 0.0f, 1.0f, 0.0f);
+    const float32x3 normal0( 1.0f, 0.0f, 0.0f);
+    const float32x3 normal1(-1.0f, 0.0f, 0.0f);
+    const float32x3 normal2( 0.0f, 1.0f, 0.0f);
+    const float32x3 normal3( 0.0f,-1.0f, 0.0f);
+    const float32x3 normal4( 0.0f, 0.0f, 1.0f);
+    const float32x3 normal5( 0.0f, 0.0f,-1.0f);
 
     const float32x4 tangent(0.0f, 0.0f, 0.0f, 1.0f);
 
-    const float32x2 texcoord0(0.0f, 0.0f);
-    const float32x2 texcoord1(1.0f, 0.0f);
-    const float32x2 texcoord2(0.0f, 1.0f);
+    const float32x2 texcoord0(0.0f, 1.0f);
+    const float32x2 texcoord1(0.0f, 0.0f);
+    const float32x2 texcoord2(1.0f, 0.0f);
     const float32x2 texcoord3(1.0f, 1.0f);
 
     vertices =
     {
-        // bottom
-        { position3, normal4, tangent, texcoord0 },
-        { position2, normal4, tangent, texcoord1 },
-        { position6, normal4, tangent, texcoord3 },
-        { position7, normal4, tangent, texcoord2 },
+        // right (+x)
+        { position1, normal0, tangent, texcoord0 },
+        { position3, normal0, tangent, texcoord1 },
+        { position7, normal0, tangent, texcoord2 },
+        { position5, normal0, tangent, texcoord3 },
 
-        // top
-        { position5, normal5, tangent, texcoord0 },
-        { position4, normal5, tangent, texcoord1 },
-        { position0, normal5, tangent, texcoord3 },
-        { position1, normal5, tangent, texcoord2 },
+        // left (-x)
+        { position4, normal1, tangent, texcoord0 },
+        { position6, normal1, tangent, texcoord1 },
+        { position2, normal1, tangent, texcoord2 },
+        { position0, normal1, tangent, texcoord3 },
 
-        // front
-        { position7, normal0, tangent, texcoord0 },
-        { position6, normal0, tangent, texcoord1 },
-        { position4, normal0, tangent, texcoord3 },
-        { position5, normal0, tangent, texcoord2 },
+        // top (+y)
+        { position2, normal2, tangent, texcoord0 },
+        { position6, normal2, tangent, texcoord1 },
+        { position7, normal2, tangent, texcoord2 },
+        { position3, normal2, tangent, texcoord3 },
 
-        // back
-        { position1, normal1, tangent, texcoord0 },
-        { position0, normal1, tangent, texcoord1 },
-        { position2, normal1, tangent, texcoord3 },
-        { position3, normal1, tangent, texcoord2 },
+        // bottom (-y)
+        { position4, normal3, tangent, texcoord0 },
+        { position0, normal3, tangent, texcoord1 },
+        { position1, normal3, tangent, texcoord2 },
+        { position5, normal3, tangent, texcoord3 },
 
-        // right
-        { position6, normal3, tangent, texcoord0 },
-        { position2, normal3, tangent, texcoord1 },
-        { position0, normal3, tangent, texcoord3 },
-        { position4, normal3, tangent, texcoord2 },
+        // front (+z)
+        { position5, normal4, tangent, texcoord0 },
+        { position7, normal4, tangent, texcoord1 },
+        { position6, normal4, tangent, texcoord2 },
+        { position4, normal4, tangent, texcoord3 },
 
-        // left
-        { position3, normal2, tangent, texcoord0 },
-        { position7, normal2, tangent, texcoord1 },
-        { position5, normal2, tangent, texcoord3 },
-        { position1, normal2, tangent, texcoord2 },
+        // back (-z)
+        { position0, normal5, tangent, texcoord0 },
+        { position2, normal5, tangent, texcoord1 },
+        { position3, normal5, tangent, texcoord2 },
+        { position1, normal5, tangent, texcoord3 },
     };
 
     indices =
     {
-         0,  2,  1,  0,  3,  2,
-         4,  6,  5,  4,  7,  6,
-         8, 10,  9,  8, 11, 10,
-        12, 14, 13, 12, 15, 14,
-        16, 18, 17, 16, 19, 18,
-        20, 22, 21, 20, 23, 22,
+         0,  1,  2,  0,  2,  3,
+         4,  5,  6,  4,  6,  7,
+         8,  9, 10,  8, 10, 11,
+        12, 13, 14, 12, 14, 15,
+        16, 17, 18, 16, 18, 19,
+        20, 21, 22, 20, 22, 23,
     };
 }
 
@@ -151,7 +151,6 @@ Torusknot::Torusknot(Parameters params)
     params.thickness *= params.scale;
 
     // generate indices
-
     std::vector<int> stripIndices((params.steps + 1) * params.facets * 2);
 
     for (int j = 0; j < params.facets; j++)
@@ -164,7 +163,6 @@ Torusknot::Torusknot(Parameters params)
     }
 
     // convert triangle strip into triangles
-
     for (size_t i = 2; i < stripIndices.size(); ++i)
     {
         int s = i & 1; // swap triangle winding-order
@@ -174,7 +172,6 @@ Torusknot::Torusknot(Parameters params)
     }
 
     // generate vertices
-
     vertices.resize((params.steps + 1) * (params.facets + 1) + 1);
 
     float32x3 centerpoint;
