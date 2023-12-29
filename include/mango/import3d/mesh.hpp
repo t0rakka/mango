@@ -65,6 +65,12 @@ namespace mango::import3d
     };
 
     // -----------------------------------------------------------------------
+    // utilities
+    // -----------------------------------------------------------------------
+
+    void computeTangents(Mesh& mesh);
+
+    // -----------------------------------------------------------------------
     // primitives
     // -----------------------------------------------------------------------
 
@@ -79,8 +85,8 @@ namespace mango::import3d
         {
             int innerSegments = 128;
             int outerSegments = 32;
-            float innerRadius = 3.0f;
-            float outerRadius = 0.8f;
+            float innerRadius = 1.0f;
+            float outerRadius = 0.2f;
         };
 
         Torus(Parameters params);
@@ -92,7 +98,7 @@ namespace mango::import3d
         {
             int steps = 256;            // Number of steps in the torus knot
             int facets = 16;            // Number of facets
-            float scale = 3.0f;         // Scale of the knot
+            float scale = 1.0f;         // Scale of the knot
             float thickness = 0.124f;   // Thickness of the knot
             float clumps = 12.0f;       // Number of clumps in the knot
             float clumpOffset = 20.0f;  // Offset of the clump (in 0..2pi)

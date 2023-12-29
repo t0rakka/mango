@@ -223,13 +223,13 @@ Torus::Torus(Parameters params)
             int c = ci + j + 1;
             int d = ni + j + 1;
 
-            indices.push_back(c);
-            indices.push_back(b);
             indices.push_back(a);
-
-            indices.push_back(c);
-            indices.push_back(d);
             indices.push_back(b);
+            indices.push_back(c);
+
+            indices.push_back(b);
+            indices.push_back(d);
+            indices.push_back(c);
         }
     }
 }
@@ -241,6 +241,7 @@ Torus::Torus(Parameters params)
 
 Torusknot::Torusknot(Parameters params)
 {
+    params.scale *= 0.5f;
     params.thickness *= params.scale;
 
     // generate indices
@@ -259,9 +260,9 @@ Torusknot::Torusknot(Parameters params)
     for (size_t i = 2; i < stripIndices.size(); ++i)
     {
         int s = i & 1; // swap triangle winding-order
-        indices.push_back(stripIndices[i]);
-        indices.push_back(stripIndices[i - 1 - s]);
         indices.push_back(stripIndices[i - 2 + s]);
+        indices.push_back(stripIndices[i - 1 - s]);
+        indices.push_back(stripIndices[i]);
     }
 
     // generate vertices
