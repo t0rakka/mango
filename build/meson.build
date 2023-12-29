@@ -938,6 +938,14 @@ external_lcms_sources = files(
     '../source/external/lcms/cmsvirt.c'
 )
 
+external_mikktspace_headers = files(
+    '../source/external/mikktspace/mikktspace.h'
+)
+
+external_mikktspace_sources = files(
+    '../source/external/mikktspace/mikktspace.c'
+)
+
 # ------------------------------------------------------------------------------
 # compiler settings
 # ------------------------------------------------------------------------------
@@ -1158,6 +1166,7 @@ mango = shared_library('mango',
         external_basisu_headers,
         external_astc_headers,
         external_lcms_headers,
+        external_mikktspace_headers,
         external_headers
     ],
     sources : [
@@ -1183,6 +1192,7 @@ mango = shared_library('mango',
         external_basisu_sources,
         external_astc_sources,
         external_lcms_sources,
+        external_mikktspace_sources,
     ],
     include_directories : [ mango_inc, '../source/external/libwebp' ],
     dependencies        : mango_deps,

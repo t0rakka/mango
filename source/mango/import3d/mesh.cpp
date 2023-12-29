@@ -3,12 +3,100 @@
     Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/import3d/mesh.hpp>
+#include "../../external/mikktspace/mikktspace.h"
+
+namespace
+{
+    using namespace mango;
+    using namespace mango::import3d;
+
+    int callback_getNumFaces(const SMikkTSpaceContext* pContext)
+    {
+        Mesh& mesh = *reinterpret_cast<Mesh*>(pContext->m_pUserData);
+        return int(mesh.triangles.size());
+    }
+
+    int callback_getNumVerticesOfFace(const SMikkTSpaceContext* pContext, const int iFace)
+    {
+        MANGO_UNREFERENCED(pContext);
+        MANGO_UNREFERENCED(iFace);
+        return 3;
+    }
+
+    void callback_getPosition(const SMikkTSpaceContext* pContext, float fvPosOut[], const int iFace, const int iVert)
+    {
+        Mesh& mesh = *reinterpret_cast<Mesh*>(pContext->m_pUserData);
+        Vertex& vertex = mesh.triangles[iFace].vertex[iVert];
+        fvPosOut[0] = vertex.position[0];
+        fvPosOut[1] = vertex.position[1];
+        fvPosOut[2] = vertex.position[2];
+    }
+
+    void callback_getNormal(const SMikkTSpaceContext* pContext, float fvNormOut[], const int iFace, const int iVert)
+    {
+        Mesh& mesh = *reinterpret_cast<Mesh*>(pContext->m_pUserData);
+        Vertex& vertex = mesh.triangles[iFace].vertex[iVert];
+        fvNormOut[0] = vertex.normal[0];
+        fvNormOut[1] = vertex.normal[1];
+        fvNormOut[2] = vertex.normal[2];
+    }
+
+    void callback_getTexCoord(const SMikkTSpaceContext* pContext, float fvTexcOut[], const int iFace, const int iVert)
+    {
+        Mesh& mesh = *reinterpret_cast<Mesh*>(pContext->m_pUserData);
+        Vertex& vertex = mesh.triangles[iFace].vertex[iVert];
+        fvTexcOut[0] = vertex.texcoord[0];
+        fvTexcOut[1] = vertex.texcoord[1];
+    }
+
+    void callback_setTSpaceBasic(const SMikkTSpaceContext* pContext, const float fvTangent[], const float fSign, const int iFace, const int iVert)
+    {
+        Mesh& mesh = *reinterpret_cast<Mesh*>(pContext->m_pUserData);
+        Vertex& vertex = mesh.triangles[iFace].vertex[iVert];
+        vertex.tangent = float32x4(fvTangent[0], fvTangent[1], fvTangent[2], fSign);
+    }
+
+    void callback_setTSpace(const SMikkTSpaceContext* pContext, const float fvTangent[], const float fvBiTangent[], const float fMagS, const float fMagT,
+                            const tbool bIsOrientationPreserving, const int iFace, const int iVert)
+    {
+        MANGO_UNREFERENCED(pContext);
+        MANGO_UNREFERENCED(fvTangent);
+        MANGO_UNREFERENCED(fvBiTangent);
+        MANGO_UNREFERENCED(fMagS);
+        MANGO_UNREFERENCED(fMagT);
+        MANGO_UNREFERENCED(bIsOrientationPreserving);
+        MANGO_UNREFERENCED(iFace);
+        MANGO_UNREFERENCED(iVert);
+    }
+
+} // namespace
 
 namespace mango::import3d
 {
 
 static
 constexpr float pi2 = float(math::pi * 2.0);
+
+void computeTangents(Mesh& mesh)
+{
+    SMikkTSpaceInterface mik_interface;
+
+    mik_interface.m_getNumFaces = callback_getNumFaces;
+    mik_interface.m_getNumVerticesOfFace = callback_getNumVerticesOfFace;
+    mik_interface.m_getPosition = callback_getPosition;
+    mik_interface.m_getNormal = callback_getNormal;
+    mik_interface.m_getTexCoord = callback_getTexCoord;
+    mik_interface.m_setTSpaceBasic = callback_setTSpaceBasic;
+    mik_interface.m_setTSpace = callback_setTSpace;
+
+    SMikkTSpaceContext mik_context;
+
+    mik_context.m_pInterface = &mik_interface;
+    mik_context.m_pUserData = &mesh;
+
+    tbool status = genTangSpaceDefault(&mik_context);
+    MANGO_UNREFERENCED(status);
+}
 
 Cube::Cube(float size)
 {
@@ -31,7 +119,12 @@ Cube::Cube(float size)
     const float32x3 normal4( 0.0f, 0.0f, 1.0f);
     const float32x3 normal5( 0.0f, 0.0f,-1.0f);
 
-    const float32x4 tangent(0.0f, 0.0f, 0.0f, 1.0f);
+    const float32x4 tangent0( 0.0f, 0.0f, 1.0f, 1.0f);
+    const float32x4 tangent1( 0.0f, 0.0f,-1.0f, 1.0f);
+    const float32x4 tangent2( 1.0f, 0.0f, 0.0f, 1.0f);
+    const float32x4 tangent3(-1.0f, 0.0f, 0.0f, 1.0f);
+    const float32x4 tangent4(-1.0f, 0.0f, 0.0f, 1.0f);
+    const float32x4 tangent5( 1.0f, 0.0f, 0.0f, 1.0f);
 
     const float32x2 texcoord0(0.0f, 1.0f);
     const float32x2 texcoord1(0.0f, 0.0f);
@@ -41,40 +134,40 @@ Cube::Cube(float size)
     vertices =
     {
         // right (+x)
-        { position1, normal0, tangent, texcoord0 },
-        { position3, normal0, tangent, texcoord1 },
-        { position7, normal0, tangent, texcoord2 },
-        { position5, normal0, tangent, texcoord3 },
+        { position1, normal0, tangent0, texcoord0 },
+        { position3, normal0, tangent0, texcoord1 },
+        { position7, normal0, tangent0, texcoord2 },
+        { position5, normal0, tangent0, texcoord3 },
 
         // left (-x)
-        { position4, normal1, tangent, texcoord0 },
-        { position6, normal1, tangent, texcoord1 },
-        { position2, normal1, tangent, texcoord2 },
-        { position0, normal1, tangent, texcoord3 },
+        { position4, normal1, tangent1, texcoord0 },
+        { position6, normal1, tangent1, texcoord1 },
+        { position2, normal1, tangent1, texcoord2 },
+        { position0, normal1, tangent1, texcoord3 },
 
         // top (+y)
-        { position2, normal2, tangent, texcoord0 },
-        { position6, normal2, tangent, texcoord1 },
-        { position7, normal2, tangent, texcoord2 },
-        { position3, normal2, tangent, texcoord3 },
+        { position2, normal2, tangent2, texcoord0 },
+        { position6, normal2, tangent2, texcoord1 },
+        { position7, normal2, tangent2, texcoord2 },
+        { position3, normal2, tangent2, texcoord3 },
 
         // bottom (-y)
-        { position4, normal3, tangent, texcoord0 },
-        { position0, normal3, tangent, texcoord1 },
-        { position1, normal3, tangent, texcoord2 },
-        { position5, normal3, tangent, texcoord3 },
+        { position4, normal3, tangent3, texcoord2 },
+        { position0, normal3, tangent3, texcoord3 },
+        { position1, normal3, tangent3, texcoord0 },
+        { position5, normal3, tangent3, texcoord1 },
 
         // front (+z)
-        { position5, normal4, tangent, texcoord0 },
-        { position7, normal4, tangent, texcoord1 },
-        { position6, normal4, tangent, texcoord2 },
-        { position4, normal4, tangent, texcoord3 },
+        { position5, normal4, tangent4, texcoord0 },
+        { position7, normal4, tangent4, texcoord1 },
+        { position6, normal4, tangent4, texcoord2 },
+        { position4, normal4, tangent4, texcoord3 },
 
         // back (-z)
-        { position0, normal5, tangent, texcoord0 },
-        { position2, normal5, tangent, texcoord1 },
-        { position3, normal5, tangent, texcoord2 },
-        { position1, normal5, tangent, texcoord3 },
+        { position0, normal5, tangent5, texcoord0 },
+        { position2, normal5, tangent5, texcoord1 },
+        { position3, normal5, tangent5, texcoord2 },
+        { position1, normal5, tangent5, texcoord3 },
     };
 
     indices =
