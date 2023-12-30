@@ -245,6 +245,70 @@ Cube::Cube(float size)
     };
 }
 
+/*
+
+float du = 2 * M_PI / _nR;
+float dv = 2 * M_PI / _nr;
+
+for (size_t i = 0; i < _nR; i++) {
+
+    float u = i * du;
+
+    for (size_t j = 0; j <= _nr; j++) {
+
+        float v = (j % _nr) * dv;
+
+        for (size_t k = 0; k < 2; k++)
+        {
+            float uu = u + k * du;
+
+            // compute vertex
+            float x = (_R + _r * cos(v)) * cos(uu);
+            float y = (_R + _r * cos(v)) * sin(uu);
+            float z = _r * sin(v);
+
+            // add vertex 
+            _vertices.push_back(x);
+            _vertices.push_back(y);
+            _vertices.push_back(z);
+
+            // compute normal 
+            float nx = cos(v) * cos(uu);
+            float ny = cos(v) * sin(uu);
+            float nz = sin(v);
+
+            // add normal 
+            _normals.push_back(nx);
+            _normals.push_back(ny);
+            _normals.push_back(nz);
+
+            // compute texture coords
+            float tx = uu / (2 * M_PI);
+            float ty = v / (2 * M_PI);
+
+            // add tex coords
+            _texCoords.push_back(tx);
+            _texCoords.push_back(ty);
+
+            // add tangent vector
+            // T = d(S)/du 
+            // S(u) is the circle at constant v
+            glm::vec3 tg(  -(_R + _r * cos(v)) * sin(uu),
+                            (_R + _r * cos(v)) * cos(uu),
+                            0.0f
+                        );
+            tg = glm::normalize(tg);
+            _tangents.push_back(tg.x);
+            _tangents.push_back(tg.y);
+            _tangents.push_back(tg.z);
+        }
+        // incr angle
+        v += dv;
+    }
+}
+
+*/
+
 Torus::Torus(Parameters params)
 {
     const float is = pi2 / params.innerSegments;
@@ -262,13 +326,17 @@ Torus::Torus(Parameters params)
             const float jcos = std::cos(j * js);
             const float jsin = std::sin(j * js);
 
-            Vertex vertex;
-
-            vertex.position = float32x3(
+            float32x3 position(
                 icos * (params.innerRadius + jcos * params.outerRadius),
                 isin * (params.innerRadius + jcos * params.outerRadius),
                 jsin * params.outerRadius);
-            vertex.normal = normalize(float32x3(icos * jcos, isin * jcos, jsin));
+            float32x3 tangent = normalize(float32x3(-position.y, position.x, 0.0f));
+
+            Vertex vertex;
+
+            vertex.position = position;
+            vertex.normal = normalize(float32x3(jcos * icos, jcos * isin, jsin));
+            vertex.tangent = float32x4(tangent, 1.0f);;
             vertex.texcoord = float32x2(i * uscale, j * vscale);
 
             vertices.push_back(vertex);
@@ -296,8 +364,6 @@ Torus::Torus(Parameters params)
             indices.push_back(c);
         }
     }
-
-    computeTangents(*this);
 }
 
 // Torus knot generation
@@ -340,7 +406,7 @@ Torusknot::Torusknot(Parameters params)
     float32x3 centerpoint;
     float Pp = params.p * 0 * pi2 / params.steps;
     float Qp = params.q * 0 * pi2 / params.steps;
-    float r = (.5f * (2 + std::sin(Qp))) * params.scale;
+    float r = (0.5f * (2.0f + std::sin(Qp))) * params.scale;
     centerpoint.x = r * std::cos(Pp);
     centerpoint.y = r * std::cos(Qp);
     centerpoint.z = r * std::sin(Pp);
@@ -350,7 +416,7 @@ Torusknot::Torusknot(Parameters params)
         float32x3 nextpoint;
         Pp = params.p * (i + 1) * pi2 / params.steps;
         Qp = params.q * (i + 1) * pi2 / params.steps;
-        r = (.5f * (2 + std::sin(Qp))) * params.scale;
+        r = (0.5f * (2.0f + std::sin(Qp))) * params.scale;
         nextpoint.x = r * std::cos(Pp);
         nextpoint.y = r * std::cos(Qp);
         nextpoint.z = r * std::sin(Pp);
@@ -368,19 +434,20 @@ Torusknot::Torusknot(Parameters params)
             float pointy = std::cos(j * pi2 / params.facets) * params.thickness * ((std::cos(params.clumpOffset + params.clumps * i * pi2 / params.steps) * params.clumpScale) + 1);
 
             float32x3 normal = N * pointx + B * pointy;
+            float32x3 tangent = normalize(-N * pointy + B * pointx);
 
             const int offset = i * (params.facets + 1) + j;
 
             vertices[offset].position = centerpoint + normal;
             vertices[offset].normal = normalize(normal);
+            vertices[offset].tangent = float32x4(tangent, 1.0f);
             vertices[offset].texcoord = float32x2(j * uscale, i * vscale);
         }
 
         // create duplicate vertex for sideways wrapping
         // otherwise identical to first vertex in the 'ring' except for the U coordinate
-        vertices[i * (params.facets + 1) + params.facets].position = vertices[i * (params.facets + 1)].position;
-        vertices[i * (params.facets + 1) + params.facets].normal = vertices[i * (params.facets + 1)].normal;
-        vertices[i * (params.facets + 1) + params.facets].texcoord = float32x2(params.uscale, vertices[i * (params.facets + 1)].texcoord.y);
+        vertices[i * (params.facets + 1) + params.facets] = vertices[i * (params.facets + 1)];
+        vertices[i * (params.facets + 1) + params.facets].texcoord.x = params.uscale;
         
         centerpoint = nextpoint;
     }
@@ -389,17 +456,13 @@ Torusknot::Torusknot(Parameters params)
     // otherwise identical to first 'ring' in the knot except for the V coordinate
     for (int j = 0; j < params.facets; j++)
     {
-        vertices[params.steps * (params.facets + 1) + j].position = vertices[j].position;
-        vertices[params.steps * (params.facets + 1) + j].normal = vertices[j].normal;
-        vertices[params.steps * (params.facets + 1) + j].texcoord = float32x2(vertices[j].texcoord.x, params.vscale);
+        vertices[params.steps * (params.facets + 1) + j] = vertices[j];
+        vertices[params.steps * (params.facets + 1) + j].texcoord.y = params.vscale;
     }
 
     // finally, there's one vertex that needs to be duplicated due to both U and V coordinate.
-    vertices[params.steps * (params.facets + 1) + params.facets].position = vertices[0].position;
-    vertices[params.steps * (params.facets + 1) + params.facets].normal = vertices[0].normal;
+    vertices[params.steps * (params.facets + 1) + params.facets] = vertices[0];
     vertices[params.steps * (params.facets + 1) + params.facets].texcoord = float32x2(params.uscale, params.vscale);
-
-    computeTangents(*this);
 }
 
 } // namespace mango::import3d
