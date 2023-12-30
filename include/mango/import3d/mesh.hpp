@@ -70,7 +70,9 @@ namespace mango::import3d
 
     void convertMesh(Mesh& output, const IndexedMesh& input);
     void convertMesh(IndexedMesh& output, const Mesh& input);
+
     void computeTangents(Mesh& mesh);
+    void computeTangents(IndexedMesh& mesh);
 
     // -----------------------------------------------------------------------
     // primitives

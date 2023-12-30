@@ -153,6 +153,15 @@ void computeTangents(Mesh& mesh)
     MANGO_UNREFERENCED(status);
 }
 
+void computeTangents(IndexedMesh& mesh)
+{
+    Mesh temp;
+    convertMesh(temp, mesh);
+    computeTangents(temp);
+
+    convertMesh(mesh, temp);
+}
+
 Cube::Cube(float size)
 {
     float s0 = size *-0.5f;
@@ -288,10 +297,7 @@ Torus::Torus(Parameters params)
         }
     }
 
-    Mesh temp;
-    convertMesh(temp, *this);
-    computeTangents(temp);
-    convertMesh(*this, temp);
+    computeTangents(*this);
 }
 
 // Torus knot generation
@@ -303,6 +309,9 @@ Torusknot::Torusknot(Parameters params)
 {
     params.scale *= 0.5f;
     params.thickness *= params.scale;
+
+    const float uscale = params.uscale / params.facets;
+    const float vscale = params.vscale / params.steps;
 
     // generate indices
     std::vector<int> stripIndices((params.steps + 1) * params.facets * 2);
@@ -358,22 +367,20 @@ Torusknot::Torusknot(Parameters params)
             float pointx = std::sin(j * pi2 / params.facets) * params.thickness * ((std::sin(params.clumpOffset + params.clumps * i * pi2 / params.steps) * params.clumpScale) + 1);
             float pointy = std::cos(j * pi2 / params.facets) * params.thickness * ((std::cos(params.clumpOffset + params.clumps * i * pi2 / params.steps) * params.clumpScale) + 1);
 
-            const int offset = i * (params.facets + 1) + j;
-
             float32x3 normal = N * pointx + B * pointy;
+
+            const int offset = i * (params.facets + 1) + j;
 
             vertices[offset].position = centerpoint + normal;
             vertices[offset].normal = normalize(normal);
-            vertices[offset].texcoord = float32x2((float(j) / params.facets) * params.uscale, 
-                                                  (float(i) / params.steps) * params.vscale);
+            vertices[offset].texcoord = float32x2(j * uscale, i * vscale);
         }
 
         // create duplicate vertex for sideways wrapping
         // otherwise identical to first vertex in the 'ring' except for the U coordinate
         vertices[i * (params.facets + 1) + params.facets].position = vertices[i * (params.facets + 1)].position;
         vertices[i * (params.facets + 1) + params.facets].normal = vertices[i * (params.facets + 1)].normal;
-        vertices[i * (params.facets + 1) + params.facets].texcoord.x = params.uscale;
-        vertices[i * (params.facets + 1) + params.facets].texcoord.y = vertices[i * (params.facets + 1)].texcoord.y;
+        vertices[i * (params.facets + 1) + params.facets].texcoord = float32x2(params.uscale, vertices[i * (params.facets + 1)].texcoord.y);
         
         centerpoint = nextpoint;
     }
@@ -384,9 +391,7 @@ Torusknot::Torusknot(Parameters params)
     {
         vertices[params.steps * (params.facets + 1) + j].position = vertices[j].position;
         vertices[params.steps * (params.facets + 1) + j].normal = vertices[j].normal;
-
-        vertices[params.steps * (params.facets + 1) + j].texcoord.x = vertices[j].texcoord.x;
-        vertices[params.steps * (params.facets + 1) + j].texcoord.y = params.vscale;
+        vertices[params.steps * (params.facets + 1) + j].texcoord = float32x2(vertices[j].texcoord.x, params.vscale);
     }
 
     // finally, there's one vertex that needs to be duplicated due to both U and V coordinate.
@@ -394,10 +399,7 @@ Torusknot::Torusknot(Parameters params)
     vertices[params.steps * (params.facets + 1) + params.facets].normal = vertices[0].normal;
     vertices[params.steps * (params.facets + 1) + params.facets].texcoord = float32x2(params.uscale, params.vscale);
 
-    Mesh temp;
-    convertMesh(temp, *this);
-    computeTangents(temp);
-    convertMesh(*this, temp);
+    computeTangents(*this);
 }
 
 } // namespace mango::import3d
