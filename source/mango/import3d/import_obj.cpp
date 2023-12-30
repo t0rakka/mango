@@ -3,13 +3,13 @@
     Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <string_view>
-#include <mango/filesystem/filesystem.hpp>
+#include <mango/core/core.hpp>
 #include <mango/import3d/import_obj.hpp>
 
 namespace mango::import3d
 {
 
-// https://en.wikipedia.org/wiki/Wavefront_.obj_file
+    // https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
     struct FaceOBJ
     {
@@ -576,20 +576,22 @@ namespace mango::import3d
         }
     }
 
-    /*
     ImportOBJ::ImportOBJ(const filesystem::Path& path, const std::string& filename)
     {
-        ReaderOBJ reader(path, filename);
-
         u64 time0 = mango::Time::ms();
 
-        materials = reader.m_materials;
+        ReaderOBJ reader(path, filename);
+
+        u64 time1 = mango::Time::ms();
+
+        //materials = reader.m_materials;
 
         for (const auto& object : reader.m_objects)
         {
             Mesh mesh;
 
-            mesh.material = object.material;
+            //mesh.material = object.material;
+
             mesh.triangles.resize(object.faces.size());
 
             for (size_t faceIndex = 0; faceIndex < object.faces.size(); ++faceIndex)
@@ -604,13 +606,19 @@ namespace mango::import3d
                     size_t positionIndex = face.position[i];
                     size_t texcoordIndex = face.texcoord[i];
                     size_t normalIndex = face.normal[i];
-                    // TODO: bound check indices
 
                     vertex.position = reader.positions[positionIndex - 1];
-                    vertex.texcoord = texcoordIndex ? reader.texcoords[texcoordIndex - 1] : float32x2(0.0f, 0.0f);
-                    vertex.normal = normalIndex ? reader.normals[normalIndex - 1] : float32x3(0.0f, 0.0f, 0.0f);
 
-                    vertex.texcoord.y = -vertex.texcoord.y; // GL flip
+                    if (texcoordIndex)
+                    {
+                        vertex.texcoord = reader.texcoords[texcoordIndex - 1];
+                        //vertex.texcoord.y = -vertex.texcoord.y; // GL flip
+                    }
+
+                    if (normalIndex)
+                    {
+                        vertex.normal = reader.normals[normalIndex - 1];
+                    }
                 }
             }
 
@@ -625,9 +633,10 @@ namespace mango::import3d
             meshes.push_back(mesh);
         }
 
-        u64 time1 = mango::Time::ms();
-        printf("Conversion: %d ms\n", int(time1 - time0));
+        u64 time2 = mango::Time::ms();
+
+        debugPrint("Reading: %d ms\n", int(time1 - time0));
+        debugPrint("Conversion: %d ms\n", int(time2 - time1));
     }
-    */
 
 } // namespace mango::import3d
