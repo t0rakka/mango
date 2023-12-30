@@ -434,7 +434,7 @@ Torusknot::Torusknot(Parameters params)
             float pointy = std::cos(j * pi2 / params.facets) * params.thickness * ((std::cos(params.clumpOffset + params.clumps * i * pi2 / params.steps) * params.clumpScale) + 1);
 
             float32x3 normal = N * pointx + B * pointy;
-            float32x3 tangent = normalize(-N * pointy + B * pointx);
+            float32x3 tangent = normalize(B * pointx - N * pointy);
 
             const int offset = i * (params.facets + 1) + j;
 
