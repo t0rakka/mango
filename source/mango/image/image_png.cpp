@@ -1991,11 +1991,11 @@ namespace
             dispose = p.read8();
             blend = p.read8();
 
-            debugPrint("  Sequence: %d\n", sequence_number);
-            debugPrint("  Frame: %d x %d (%d, %d)\n", width, height, xoffset, yoffset);
-            debugPrint("  Time: %d / %d\n", delay_num, delay_den);
-            debugPrint("  Dispose: %d\n", dispose);
-            debugPrint("  Blend: %d\n", blend);
+            debugPrintLine("  Sequence: %d", sequence_number);
+            debugPrintLine("  Frame: %d x %d (%d, %d)", width, height, xoffset, yoffset);
+            debugPrintLine("  Time: %d / %d", delay_num, delay_den);
+            debugPrintLine("  Dispose: %d", dispose);
+            debugPrintLine("  Blend: %d", blend);
         }
     };
 
@@ -2148,7 +2148,7 @@ namespace
 
         if (id == u32_mask_rev('C', 'g', 'B', 'I'))
         {
-            debugPrint("CgBI: reading PNG as iphone optimized");
+            debugPrintLine("CgBI: reading PNG as iphone optimized");
 
             m_iphoneOptimized = true;
             p += size; // skip chunk data
@@ -2226,7 +2226,7 @@ namespace
 
     void ParserPNG::read_IHDR(BigEndianConstPointer p, u32 size)
     {
-        debugPrint("[\"IHDR\"] %d bytes\n", size);
+        debugPrintLine("[\"IHDR\"] %d bytes", size);
 
         if (size != 13)
         {
@@ -2320,11 +2320,11 @@ namespace
             m_scale_bits[i] = m_color_state.bits;
         }
 
-        debugPrint("  Image: (%d x %d), %d bits\n", m_width, m_height, m_color_state.bits);
-        debugPrint("  Color:       %s\n", get_string(ColorType(m_color_type)));
-        debugPrint("  Compression: %d\n", m_compression);
-        debugPrint("  Filter:      %d\n", m_filter);
-        debugPrint("  Interlace:   %d\n", m_interlace);
+        debugPrintLine("  Image: (%d x %d), %d bits", m_width, m_height, m_color_state.bits);
+        debugPrintLine("  Color:       %s", get_string(ColorType(m_color_type)));
+        debugPrintLine("  Compression: %d", m_compression);
+        debugPrintLine("  Filter:      %d", m_filter);
+        debugPrintLine("  Interlace:   %d", m_interlace);
     }
 
     void ParserPNG::read_IDAT(BigEndianConstPointer p, u32 size)
@@ -2486,8 +2486,8 @@ namespace
         m_number_of_frames = p.read32();
         m_repeat_count = p.read32();
 
-        debugPrint("  Frames: %d\n", m_number_of_frames);
-        debugPrint("  Repeat: %d %s\n", m_repeat_count, m_repeat_count ? "" : "(infinite)");
+        debugPrintLine("  Frames: %d", m_number_of_frames);
+        debugPrintLine("  Repeat: %d %s", m_repeat_count, m_repeat_count ? "" : "(infinite)");
     }
 
     void ParserPNG::read_fcTL(BigEndianConstPointer p, u32 size)
@@ -2511,7 +2511,7 @@ namespace
         u32 sequence_number = p.read32();
         size -= 4;
 
-        debugPrint("  Sequence: %d\n", sequence_number);
+        debugPrintLine("  Sequence: %d", sequence_number);
         MANGO_UNREFERENCED(sequence_number);
 
         m_compressed.append(p, size);
@@ -2529,18 +2529,18 @@ namespace
         size_t name_len = png_strnlen(name, size);
         if (name_len == size)
         {
-            debugPrint("iCCP: profile name not terminated\n");
+            debugPrintLine("iCCP: profile name not terminated");
             return;
         }
 
-        debugPrint("  profile name '%s'\n", name);
+        debugPrintLine("  profile name '%s'", name);
 
         const u8* profile = p + name_len + 2;
         const size_t icc_bytes = size - name_len - 2;
 
         m_icc.reset();
 
-        debugPrint("  decompressing icc profile %d bytes\n", int(icc_bytes));
+        debugPrintLine("  decompressing icc profile %d bytes", int(icc_bytes));
 
         constexpr size_t max_profile_size = 1024 * 1024 * 2;
         Buffer buffer(max_profile_size);
@@ -2548,11 +2548,11 @@ namespace
         CompressionStatus status = deflate_zlib::decompress(buffer, ConstMemory(profile, icc_bytes));
         if (status)
         {
-            debugPrint("  unpacked icc profile %d bytes\n", int(status.size));
+            debugPrintLine("  unpacked icc profile %d bytes", int(status.size));
             m_icc.append(buffer, status.size);
         }
 
-        debugPrint("  icc profile %d bytes\n", int(m_icc.size()));
+        debugPrintLine("  icc profile %d bytes", int(m_icc.size()));
     }
 
     void ParserPNG::read_iDOT(BigEndianConstPointer p, u32 size)
@@ -2587,9 +2587,9 @@ namespace
         {
             m_idot_address = x;
 
-            debugPrint("  First:  %d\n", m_first_half_height);
-            debugPrint("  Second: %d\n", m_second_half_height);
-            debugPrint("  Offset: %d\n", idat_offset);
+            debugPrintLine("  First:  %d", m_first_half_height);
+            debugPrintLine("  Second: %d", m_second_half_height);
+            debugPrintLine("  Offset: %d", idat_offset);
         }
 
         MANGO_UNREFERENCED(divided_height);
@@ -2606,8 +2606,8 @@ namespace
         m_parallel_height = p.read32();
         m_parallel_flags = p.read8();
 
-        debugPrint("  Segment height: %d\n", m_parallel_height);
-        debugPrint("  Flags: %x\n", m_parallel_flags);
+        debugPrintLine("  Segment height: %d", m_parallel_height);
+        debugPrintLine("  Flags: %x", m_parallel_flags);
     }
 
     void ParserPNG::parse()
@@ -2622,7 +2622,7 @@ namespace
             const u8* ptr_next_chunk = p + size;
             ptr_next_chunk += 4; // skip crc
 
-            debugPrint("[\"%c%c%c%c\"] %d bytes\n", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
+            debugPrintLine("[\"%c%c%c%c\"] %d bytes", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
 
             // check that we won't read past end of file
             if (p + size + 4 > m_end)
@@ -2719,7 +2719,7 @@ namespace
                     break;
 
                 default:
-                    debugPrint("  # UNKNOWN: [\"%c%c%c%c\"] %d bytes\n", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
+                    debugPrintLine("  # UNKNOWN: [\"%c%c%c%c\"] %d bytes", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
                     break;
             }
 
@@ -2885,7 +2885,7 @@ namespace
         for (int pass = 0; pass < 7; ++pass)
         {
             AdamInterleave adam(pass, width, height);
-            debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
+            debugPrintLine("  pass: %d (%d x %d)", pass, adam.w, adam.h);
 
             const int bw = PNG_FILTER_BYTE + ((adam.w + mask) >> shift);
             filter(buffer, bw, adam.h);
@@ -2922,7 +2922,7 @@ namespace
         for (int pass = 0; pass < 7; ++pass)
         {
             AdamInterleave adam(pass, width, height);
-            debugPrint("  pass: %d (%d x %d)\n", pass, adam.w, adam.h);
+            debugPrintLine("  pass: %d (%d x %d)", pass, adam.w, adam.h);
 
             const int bw = PNG_FILTER_BYTE + adam.w * components;
             filter(buffer, bw, adam.h);
@@ -3138,7 +3138,7 @@ namespace
 
         // allocate output buffer
         Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
-        debugPrint("  buffer bytes:  %d\n", buffer_size);
+        debugPrintLine("  buffer bytes:  %d", buffer_size);
 
         // zero scanline for filters at the beginning
         std::memset(temp, 0, bytes_per_line);
@@ -3169,7 +3169,7 @@ namespace
                     CompressionStatus result = decompress(output, memory);
                     if (!result)
                     {
-                        //debugPrint("  %s\n", result.info.c_str());
+                        //debugPrintLine("  %s", result.info.c_str());
                     }
                 });
 
@@ -3222,8 +3222,8 @@ namespace
             size_t bytes_out_top = result.size;
             size_t bytes_out_bottom = task.get(); // synchronize
 
-            debugPrint("  output top bytes:     %d\n", int(bytes_out_top));
-            debugPrint("  output bottom bytes:  %d\n", int(bytes_out_bottom));
+            debugPrintLine("  output top bytes:     %d", int(bytes_out_top));
+            debugPrintLine("  output bottom bytes:  %d", int(bytes_out_bottom));
             MANGO_UNREFERENCED(bytes_out_top);
             MANGO_UNREFERENCED(bytes_out_bottom);
         }
@@ -3242,12 +3242,12 @@ namespace
             CompressionStatus result = decompress(buffer, m_compressed);
             if (!result)
             {
-                //debugPrint("  %s\n", result.info.c_str());
+                //debugPrintLine("  %s", result.info.c_str());
                 status.setError(result.info);
                 return status;
             }
 
-            debugPrint("  output bytes:  %d\n", int(result.size));
+            debugPrintLine("  output bytes:  %d", int(result.size));
         }
 
         // process image
@@ -3689,13 +3689,13 @@ namespace
             if (N > 1)
             {
                 height = int(surface.height / N);
-                debugPrint("[image]\n");
-                debugPrint("    %d x %d\n", surface.width, surface.height);
-                debugPrint("    size: %d KB\n", image_bytes / 1024);
-                debugPrint("[segment]\n");
-                debugPrint("    N:     %d\n", int(N));
-                debugPrint("    height: %d\n", height);
-                debugPrint("    size:   %d KB\n", block_size/1024);
+                debugPrintLine("[image]");
+                debugPrintLine("    %d x %d", surface.width, surface.height);
+                debugPrintLine("    size: %d KB", image_bytes / 1024);
+                debugPrintLine("[segment]");
+                debugPrintLine("    N:     %d", int(N));
+                debugPrintLine("    height: %d", height);
+                debugPrintLine("    size:   %d KB", block_size/1024);
             }
         }
 

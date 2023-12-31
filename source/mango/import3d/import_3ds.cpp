@@ -6,11 +6,9 @@
 #include <mango/core/core.hpp>
 #include <mango/import3d/import_3ds.hpp>
 
-
-#define debugPrintLine(...) \
+#define debugPrint3DS(...) \
     printf("%*s", level * 2, " "); \
-    debugPrint(__VA_ARGS__); \
-    printf("\n");
+    debugPrintLine(__VA_ARGS__);
 
 namespace
 {
@@ -204,14 +202,14 @@ namespace
         void chunk_master_scale(LittleEndianConstPointer& p)
         {
             float master_scale = p.read32f();
-            debugPrintLine("master scale: %f", master_scale);
+            debugPrint3DS("master scale: %f", master_scale);
         }
 
         // main chunks
 
         void chunk_main(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[main]");
+            debugPrint3DS("[main]");
             parse_chunks(p);
         }
 
@@ -223,28 +221,28 @@ namespace
                 MANGO_EXCEPTION("[Import3DS] Incorrect version: %d", version);
             }
 
-            debugPrintLine("version: %d", version);
+            debugPrint3DS("version: %d", version);
         }
 
         // editor chunks
 
         void chunk_editor(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[editor]");
+            debugPrint3DS("[editor]");
             parse_chunks(p);
         }
 
         void chunk_mesh_version(LittleEndianConstPointer& p)
         {
             u32 mesh_version = p.read32();
-            debugPrintLine("mesh version: %d", mesh_version);
+            debugPrint3DS("mesh version: %d", mesh_version);
         }
 
         // material chunks
 
         void chunk_material(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[material]");
+            debugPrint3DS("[material]");
 
             materials.emplace_back();
             parse_chunks(p);
@@ -254,7 +252,7 @@ namespace
         {
             Material3DS& material = getCurrentMaterial();
             material.name = read_string(p);
-            debugPrintLine("name: \"%s\"", material.name.c_str());
+            debugPrint3DS("name: \"%s\"", material.name.c_str());
         }
 
         void chunk_material_ambient_color(LittleEndianConstPointer& p)
@@ -263,7 +261,7 @@ namespace
 
             Material3DS& material = getCurrentMaterial();
             //material.ambient = color;
-            //debugPrintLine("ambient color: %d, %d, %d", color[0], color[1], color[2]);
+            //debugPrint3DS("ambient color: %d, %d, %d", color[0], color[1], color[2]);
         }
 
         void chunk_material_diffuse_color(LittleEndianConstPointer& p)
@@ -272,7 +270,7 @@ namespace
 
             Material3DS& material = getCurrentMaterial();
             //material.diffuse = color;
-            //debugPrintLine("diffuse color: %d, %d, %d", color[0], color[1], color[2]);
+            //debugPrint3DS("diffuse color: %d, %d, %d", color[0], color[1], color[2]);
         }
 
         void chunk_material_specular_color(LittleEndianConstPointer& p)
@@ -281,7 +279,7 @@ namespace
 
             Material3DS& material = getCurrentMaterial();
             //material.specular = color;
-            //debugPrintLine("specular color: %d, %d, %d", color[0], color[1], color[2]);
+            //debugPrint3DS("specular color: %d, %d, %d", color[0], color[1], color[2]);
         }
 
         void chunk_material_shininess(LittleEndianConstPointer& p)
@@ -290,7 +288,7 @@ namespace
 
             Material3DS& material = getCurrentMaterial();
             material.shininess = percent;
-            debugPrintLine("shininess: %f", percent);
+            debugPrint3DS("shininess: %f", percent);
         }
 
         void chunk_material_shininess2(LittleEndianConstPointer& p)
@@ -299,7 +297,7 @@ namespace
 
             Material3DS& material = getCurrentMaterial();
             material.shininess2 = percent;
-            debugPrintLine("shininess2: %f", percent);
+            debugPrint3DS("shininess2: %f", percent);
         }
 
         void chunk_material_transparency(LittleEndianConstPointer& p)
@@ -308,52 +306,52 @@ namespace
 
             Material3DS& material = getCurrentMaterial();
             material.transparency = percent;
-            debugPrintLine("transparency: %f", percent);
+            debugPrint3DS("transparency: %f", percent);
         }
 
         void chunk_material_xpfall(LittleEndianConstPointer& p)
         {
             parse_chunks(p);
-            debugPrintLine("xpfall: %f", percent);
+            debugPrint3DS("xpfall: %f", percent);
         }
 
         void chunk_material_refblur(LittleEndianConstPointer& p)
         {
             parse_chunks(p);
-            debugPrintLine("refblur: %f", percent);
+            debugPrint3DS("refblur: %f", percent);
         }
 
         void chunk_material_twosided(LittleEndianConstPointer& p)
         {
             Material3DS& material = getCurrentMaterial();
             material.twosided = true;
-            debugPrintLine("+ twosided");
+            debugPrint3DS("+ twosided");
         }
 
         void chunk_material_additive(LittleEndianConstPointer& p)
         {
             Material3DS& material = getCurrentMaterial();
             material.additive = true;
-            debugPrintLine("+ additive");
+            debugPrint3DS("+ additive");
         }
 
         void chunk_material_self_illum_pct(LittleEndianConstPointer& p)
         {
             parse_chunks(p);
-            debugPrintLine("self illum: %f", percent);
+            debugPrint3DS("self illum: %f", percent);
         }
 
         void chunk_material_wireframe(LittleEndianConstPointer& p)
         {
             Material3DS& material = getCurrentMaterial();
             material.wireframe = true;
-            debugPrintLine("+ wireframe");
+            debugPrint3DS("+ wireframe");
         }
 
         void chunk_material_wireframe_size(LittleEndianConstPointer& p)
         {
             float wireframe_size = p.read32f();
-            debugPrintLine("wireframe size: %f", percent);
+            debugPrint3DS("wireframe size: %f", percent);
         }
 
         void chunk_material_shading(LittleEndianConstPointer& p)
@@ -364,63 +362,63 @@ namespace
             // 3 - phong
             // 4 - metal
             u16 shading = p.read16();
-            debugPrintLine("shading: %d", shading);
+            debugPrint3DS("shading: %d", shading);
         }
 
         // texture chunks
 
         void chunk_texture_map1(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[texture:map1]");
+            debugPrint3DS("[texture:map1]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_map1;
         }
 
         void chunk_texture_map2(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[texture:map2]");
+            debugPrint3DS("[texture:map2]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_map2;
         }
 
         void chunk_texture_opacity(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[texture:opacity]");
+            debugPrint3DS("[texture:opacity]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_opacity;
         }
 
         void chunk_texture_bump(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[texture:bump]");
+            debugPrint3DS("[texture:bump]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_bump;
         }
 
         void chunk_texture_specular(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[texture:specular]");
+            debugPrint3DS("[texture:specular]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_specular;
         }
 
         void chunk_texture_shininess(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[texture:shininess]");
+            debugPrint3DS("[texture:shininess]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_shininess;
         }
 
         void chunk_texture_self_illum(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[texture:self-illum]");
+            debugPrint3DS("[texture:self-illum]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_self_illum;
         }
 
         void chunk_texture_reflection(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[texture:reflection]");
+            debugPrint3DS("[texture:reflection]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_reflection;
         }
@@ -429,7 +427,7 @@ namespace
         {
             assert(texture != nullptr);
             texture->filename = read_string(p);
-            debugPrintLine("filename: \"%s\"", texture->filename.c_str());
+            debugPrint3DS("filename: \"%s\"", texture->filename.c_str());
         }
 
         void chunk_texture_map_tiling(LittleEndianConstPointer& p)
@@ -437,52 +435,52 @@ namespace
             // 1 - tile
             // 2 - decal
             u16 tiling_flags = p.read16();
-            debugPrintLine("tiling: 0x%x", tiling_flags);
+            debugPrint3DS("tiling: 0x%x", tiling_flags);
         }
 
         void chunk_texture_map_blur(LittleEndianConstPointer& p)
         {
             float blur = p.read32f();
-            debugPrintLine("blur: %f", blur);
+            debugPrint3DS("blur: %f", blur);
         }
 
         void chunk_texture_map_uscale(LittleEndianConstPointer& p)
         {
             float uscale = p.read32f();
-            debugPrintLine("uscale: %f", uscale);
+            debugPrint3DS("uscale: %f", uscale);
         }
 
         void chunk_texture_map_vscale(LittleEndianConstPointer& p)
         {
             float vscale = p.read32f();
-            debugPrintLine("vscale: %f", vscale);
+            debugPrint3DS("vscale: %f", vscale);
         }
 
         void chunk_texture_map_uoffset(LittleEndianConstPointer& p)
         {
             float uoffset = p.read32f();
-            debugPrintLine("uoffset: %f", uoffset);
+            debugPrint3DS("uoffset: %f", uoffset);
         }
 
         void chunk_texture_map_voffset(LittleEndianConstPointer& p)
         {
             float voffset = p.read32f();
-            debugPrintLine("voffset: %f", voffset);
+            debugPrint3DS("voffset: %f", voffset);
         }
 
         void chunk_texture_map_angle(LittleEndianConstPointer& p)
         {
             float angle = p.read32f();
-            debugPrintLine("angle: %f", angle);
+            debugPrint3DS("angle: %f", angle);
         }
 
         // object chunks
 
         void chunk_object(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[object]");
+            debugPrint3DS("[object]");
             std::string name = read_string(p);
-            debugPrintLine("  name: \"%s\"", name.c_str());
+            debugPrint3DS("  name: \"%s\"", name.c_str());
 
             parse_chunks(p);
         }
@@ -491,7 +489,7 @@ namespace
 
         void chunk_mesh(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[mesh]");
+            debugPrint3DS("[mesh]");
 
             meshes.emplace_back();
             parse_chunks(p);
@@ -500,7 +498,7 @@ namespace
         void chunk_mesh_vertex_list(LittleEndianConstPointer& p)
         {
             int count = p.read16();
-            debugPrintLine("vertex.list: %d", count);
+            debugPrint3DS("vertex.list: %d", count);
 
             Mesh3DS& mesh = getCurrentMesh();
             mesh.positions.resize(count);
@@ -515,7 +513,7 @@ namespace
         void chunk_mesh_flag_list(LittleEndianConstPointer& p)
         {
             int count = p.read16();
-            debugPrintLine("flag.list: %d", count);
+            debugPrint3DS("flag.list: %d", count);
 
             for (int i = 0; i < count; ++i)
             {
@@ -528,7 +526,7 @@ namespace
         void chunk_mesh_face_list(LittleEndianConstPointer& p)
         {
             int count = p.read16();
-            debugPrintLine("face.list: %d", count);
+            debugPrint3DS("face.list: %d", count);
 
             Mesh3DS& mesh = getCurrentMesh();
             mesh.faces.resize(count);
@@ -549,7 +547,7 @@ namespace
             u32 material = getMaterialIndex(name);
 
             int count = p.read16();
-            debugPrintLine("material.list: %d, name: \"%s\"", count, name.c_str());
+            debugPrint3DS("material.list: %d, name: \"%s\"", count, name.c_str());
 
             Mesh3DS& mesh = getCurrentMesh();
 
@@ -563,7 +561,7 @@ namespace
         void chunk_mesh_mapping_list(LittleEndianConstPointer& p)
         {
             int count = p.read16();
-            debugPrintLine("mapping.list: %d", count);
+            debugPrint3DS("mapping.list: %d", count);
 
             Mesh3DS& mesh = getCurrentMesh();
             mesh.mappings.resize(count);
@@ -580,7 +578,7 @@ namespace
             Mesh3DS& mesh = getCurrentMesh();
             size_t count = mesh.faces.size();
 
-            debugPrintLine("smoothing.list: %d", count);
+            debugPrint3DS("smoothing.list: %d", count);
 
             for (size_t i = 0; i < count; ++i)
             {
@@ -687,7 +685,7 @@ namespace
 
         void chunk_keyframer(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[keyframer]");
+            debugPrint3DS("[keyframer]");
             parse_chunks(p);
         }
 
@@ -936,7 +934,7 @@ namespace
 
                 default:
                     p += size;
-                    debugPrintLine("[* 0x%.4x *] %d bytes", id, size);
+                    debugPrint3DS("[* 0x%.4x *] %d bytes", id, size);
                     break;
             }
 
@@ -990,8 +988,8 @@ namespace mango::import3d
         filesystem::File file(path, filename);
         Reader3DS reader(file);
 
-        debugPrint("materials: %d\n", int(reader.materials.size()));
-        debugPrint("meshes: %d\n", int(reader.meshes.size()));
+        debugPrintLine("materials: %d", int(reader.materials.size()));
+        debugPrintLine("meshes: %d", int(reader.meshes.size()));
 
         /*
         for (auto& material3ds : reader.materials)

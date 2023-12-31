@@ -358,9 +358,9 @@ namespace mango
         const GLubyte* s1 = glGetString(GL_RENDERER);
         const GLubyte* s2 = glGetString(GL_VERSION);
 
-        debugPrint("Vendor:   \"%s\"\n", reinterpret_cast<const char *>(s0));
-        debugPrint("Renderer: \"%s\"\n", reinterpret_cast<const char *>(s1));
-        debugPrint("Version:  \"%s\"\n", reinterpret_cast<const char *>(s2));
+        debugPrintLine("Vendor:   \"%s\"", reinterpret_cast<const char *>(s0));
+        debugPrintLine("Renderer: \"%s\"", reinterpret_cast<const char *>(s1));
+        debugPrintLine("Version:  \"%s\"", reinterpret_cast<const char *>(s2));
     }
 
     OpenGLContext::~OpenGLContext()

@@ -844,14 +844,14 @@ namespace
             tablesByteLength = p.read32();
             extendedByteLength = p.read32();
 
-            debugPrint("\n");
-            debugPrint("[BasisLZ]\n");
-            debugPrint("  endpointCount: %d\n", endpointCount);
-            debugPrint("  selectorCount: %d\n", selectorCount);
-            debugPrint("  endpointsByteLength: %d\n", endpointsByteLength);
-            debugPrint("  selectorsByteLength: %d\n", selectorsByteLength);
-            debugPrint("  tablesByteLength:    %d\n", tablesByteLength);
-            debugPrint("  extendedByteLength:  %d\n", extendedByteLength);
+            debugPrintLine("");
+            debugPrintLine("[BasisLZ]");
+            debugPrintLine("  endpointCount: %d", endpointCount);
+            debugPrintLine("  selectorCount: %d", selectorCount);
+            debugPrintLine("  endpointsByteLength: %d", endpointsByteLength);
+            debugPrintLine("  selectorsByteLength: %d", selectorsByteLength);
+            debugPrintLine("  tablesByteLength:    %d", tablesByteLength);
+            debugPrintLine("  extendedByteLength:  %d", extendedByteLength);
 
             imageDescData = p;
             p += imageCount * 20;
@@ -874,10 +874,10 @@ namespace
             desc.alphaSliceByteOffset = p.read32();
             desc.alphaSliceByteLength = p.read32();
 
-            debugPrint("\n");
-            debugPrint("[BasisImageDesc]\n");
-            debugPrint("  rgb offset: %d, length: %d\n", desc.rgbSliceByteOffset, desc.rgbSliceByteLength);
-            debugPrint("  alpha offset: %d, length: %d\n", desc.alphaSliceByteOffset, desc.alphaSliceByteLength);
+            debugPrintLine("");
+            debugPrintLine("[BasisImageDesc]");
+            debugPrintLine("  rgb offset: %d, length: %d", desc.rgbSliceByteOffset, desc.rgbSliceByteLength);
+            debugPrintLine("  alpha offset: %d, length: %d", desc.alphaSliceByteOffset, desc.alphaSliceByteLength);
 
             return desc;
         }
@@ -930,13 +930,13 @@ namespace
             HeaderKTX2 header;
             if (!header.read(p))
             {
-                debugPrint("[KTX2] Incorrect identifier.\n");
+                debugPrintLine("[KTX2] Incorrect identifier.");
                 return;
             }
 
             if (isFormatProhibited(header.vkFormat))
             {
-                debugPrint("[KTX2] Prohibited format.\n");
+                debugPrintLine("[KTX2] Prohibited format.");
                 return;
             }
 
@@ -950,11 +950,11 @@ namespace
             m_header.format = desc.format;
             m_header.compression = desc.compression;
 
-            debugPrint("\n");
-            debugPrint("[HeaderKTX2]\n");
-            debugPrint("  vkFormat: %d \"%s\"\n", header.vkFormat, desc.name);
-            debugPrint("  typeSize: %d\n", header.typeSize);
-            debugPrint("  supercompressionScheme: %d\n", header.supercompressionScheme);
+            debugPrintLine("");
+            debugPrintLine("[HeaderKTX2]");
+            debugPrintLine("  vkFormat: %d \"%s\"", header.vkFormat, desc.name);
+            debugPrintLine("  typeSize: %d", header.typeSize);
+            debugPrintLine("  supercompressionScheme: %d", header.supercompressionScheme);
 
             m_supercompression = header.supercompressionScheme;
 
@@ -992,13 +992,13 @@ namespace
             MANGO_UNREFERENCED(sgdByteOffset);
             MANGO_UNREFERENCED(sgdByteLength);
 
-            debugPrint("  dfdByteOffset: %d, dfdByteLength: %d\n", dfdByteOffset, dfdByteLength);
-            debugPrint("  kvdByteOffset: %d, kvdByteLength: %d\n", kvdByteOffset, kvdByteLength);
-            debugPrint("  sgdByteOffset: %d, sgdByteLength: %d\n", (int)sgdByteOffset, (int)sgdByteLength);
+            debugPrintLine("  dfdByteOffset: %d, dfdByteLength: %d", dfdByteOffset, dfdByteLength);
+            debugPrintLine("  kvdByteOffset: %d, kvdByteLength: %d", kvdByteOffset, kvdByteLength);
+            debugPrintLine("  sgdByteOffset: %d, sgdByteLength: %d", (int)sgdByteOffset, (int)sgdByteLength);
 
             int levels = std::max(1, m_header.levels);
-            debugPrint("\n");
-            debugPrint("[levels: %d]\n", levels);
+            debugPrintLine("");
+            debugPrintLine("[levels: %d]", levels);
 
             for (int i = 0; i < levels; ++i)
             {
@@ -1010,7 +1010,7 @@ namespace
                 level.memory = ConstMemory(m_memory.address + level.offset, level.length);
 
                 m_levels.push_back(level);
-                debugPrint("  offset: %d, length: %d, uncompressed: %d\n",  (int)level.offset, (int)level.length, (int)level.uncompressed_length);
+                debugPrintLine("  offset: %d, length: %d, uncompressed: %d",  (int)level.offset, (int)level.length, (int)level.uncompressed_length);
             }
 
             // Data Format Descriptor
@@ -1031,10 +1031,10 @@ namespace
                     u32 version_number = v1 & 0xffff;
                     u32 descriptor_block_size = v1 >> 16;
 
-                    debugPrint("\n");
-                    debugPrint("[DataFormatDescriptor]\n");
-                    debugPrint("  vendor: %d, version: %d\n", vendor_id, version_number);
-                    debugPrint("  type: %d, size: %d\n", descriptor_type, descriptor_block_size);
+                    debugPrintLine("");
+                    debugPrintLine("[DataFormatDescriptor]");
+                    debugPrintLine("  vendor: %d, version: %d", vendor_id, version_number);
+                    debugPrintLine("  type: %d, size: %d", descriptor_type, descriptor_block_size);
 
                     u8 colorModel           = p[0];
                     u8 colorPrimaries       = p[1];
@@ -1063,11 +1063,11 @@ namespace
                     texelBlockDimension2 += !!texelBlockDimension2;
                     texelBlockDimension3 += !!texelBlockDimension3;
 
-                    debugPrint("  colorModel: %d\n", colorModel);
-                    debugPrint("  colorPrimaries: %d\n", colorPrimaries);
-                    debugPrint("  transferFunction: %d\n", transferFunction);
-                    debugPrint("  flags: %d\n", flags);
-                    debugPrint("  dimensions: %d %d %d %d\n",
+                    debugPrintLine("  colorModel: %d", colorModel);
+                    debugPrintLine("  colorPrimaries: %d", colorPrimaries);
+                    debugPrintLine("  transferFunction: %d", transferFunction);
+                    debugPrintLine("  flags: %d", flags);
+                    debugPrintLine("  dimensions: %d %d %d %d",
                         texelBlockDimension0, texelBlockDimension1,
                         texelBlockDimension2, texelBlockDimension3);
 
@@ -1081,7 +1081,7 @@ namespace
                     u8 bytesPlane7 = p[7];
                     p += 8;
 
-                    debugPrint("  planes: %d %d %d %d %d %d %d %d\n",
+                    debugPrintLine("  planes: %d %d %d %d %d %d %d %d",
                         bytesPlane0, bytesPlane1, bytesPlane2, bytesPlane3, 
                         bytesPlane4, bytesPlane5, bytesPlane6, bytesPlane7);
 
@@ -1100,8 +1100,8 @@ namespace
                 p = memory.address + kvdByteOffset;
                 const u8* end = p + kvdByteLength;
 
-                debugPrint("\n");
-                debugPrint("[Key/Value Data]\n");
+                debugPrintLine("");
+                debugPrintLine("[Key/Value Data]");
 
                 while (p < end)
                 {
@@ -1134,7 +1134,7 @@ namespace
                         // MANGO TODO: this modifies m_header.format
                     }
 
-                    debugPrint("  %s\n", key);
+                    debugPrintLine("  %s", key);
 
                     p += length;
                     p += padding;
@@ -1233,7 +1233,7 @@ namespace
                 ConstMemory memory = this->memory(level, depth, 0);
 
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-                //debugPrint("memory: %d bytes\n", (int)memory.size);
+                //debugPrintLine("memory: %d bytes", (int)memory.size);
 
                 initialize_basis();
                 basist::basisu_lowlevel_etc1s_transcoder transcoder;
@@ -1304,8 +1304,8 @@ namespace
                 }
                 else
                 {
-                    debugPrint("surface: %d x %d (%d bits)\n", width, height, format.bits);
-                    debugPrint("memory: %d bytes\n", (int)memory.size);
+                    debugPrintLine("surface: %d x %d (%d bits)", width, height, format.bits);
+                    debugPrintLine("memory: %d bytes", (int)memory.size);
 
                     // The image data is uncompressed in the file
                     Surface temp(width, height, format, width * format.bytes(), memory.address);
@@ -1364,11 +1364,11 @@ namespace
 
                         if (status)
                         {
-                            debugPrint("* decompressed: %d bytes\n", int(status.size));
+                            debugPrintLine("* decompressed: %d bytes", int(status.size));
                         }
                         else
                         {
-                            debugPrint("* decompress status: %s\n", status.info.c_str());
+                            debugPrintLine("* decompress status: %s", status.info.c_str());
                         }
 
                         level.memory = dest;

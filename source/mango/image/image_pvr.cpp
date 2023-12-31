@@ -252,8 +252,8 @@ namespace
             0x00008000  Alpha channel data is present (PVRTC only)
 #endif
 
-            debugPrint("flags: 0x%x\n", flags);
-            debugPrint("format: 0x%x\n", fmt);
+            debugPrintLine("flags: 0x%x", flags);
+            debugPrintLine("format: 0x%x", fmt);
 
             // compressed block default values
             TextureCompression compression = TextureCompression::NONE;
@@ -488,7 +488,7 @@ namespace
             if (pvr.pixelformat & 0xffffffff00000000)
             {
                 m_info.format = eightcc_to_format(pvr.pixelformat);
-                debugPrint("eightcc format: %d (%d,%d,%d,%d)\n", m_info.format.bits,
+                debugPrintLine("eightcc format: %d (%d,%d,%d,%d)", m_info.format.bits,
                     m_info.format.size[0],
                     m_info.format.size[1],
                     m_info.format.size[2],
@@ -500,7 +500,7 @@ namespace
 
                 if (formatIndex < int(std::size(formatTable)))
                 {
-                    debugPrint("pvr.pixelformat: %d \n", formatIndex);
+                    debugPrintLine("pvr.pixelformat: %d", formatIndex);
 
                     // MANGO TODO: support for COMPRESSED_NONE entries in the table (packed pixel formats, yuv, shared exponent, 1-bit b/w)
                     TextureCompression compression = formatTable[formatIndex];

@@ -1080,7 +1080,7 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
         channel.xsamples = xsamples;
         channel.ysamples = ysamples;
         channel.linear = linear;
-        //debugPrint("  %s xs: %d  ys: %d  linear: %d\n", name.c_str(), xsamples, ysamples, linear);
+        //debugPrintLine("  %s xs: %d  ys: %d  linear: %d", name.c_str(), xsamples, ysamples, linear);
 
         switch (type)
         {
@@ -1159,7 +1159,7 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
         offset += div_ceil(channel.bytes, xsamples);
         data.bytes += channel.bytes;
 
-        debugPrint("    \"%s\", type: %d, linear: %d, offset: %d, size: %d, samples: (%d x %d)\n",
+        debugPrintLine("    \"%s\", type: %d, linear: %d, offset: %d, size: %d, samples: (%d x %d)",
             name.data(), type, linear, channel.offset, channel.bytes, xsamples, ysamples);
     }
 
@@ -1211,7 +1211,7 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
         layer.bytes = data.bytes;
     }
 
-    debugPrint("    DataPerPixel: %d bytes\n", data.bytes);
+    debugPrintLine("    DataPerPixel: %d bytes", data.bytes);
 }
 
 template <>
@@ -1220,7 +1220,7 @@ void readAttribute<TileDesc>(TileDesc& data, LittleEndianConstPointer p)
     data.xsize = p.read32();
     data.ysize = p.read32();
     data.mode = p.read8();
-    debugPrint("    %d x %d mode: %x (mipmap: %d, ripmap: %d, round: %d)\n", data.xsize, data.ysize, data.mode,
+    debugPrintLine("    %d x %d mode: %x (mipmap: %d, ripmap: %d, round: %d)", data.xsize, data.ysize, data.mode,
         (data.mode & 0x02) != 0, (data.mode & 0x02) != 0, (data.mode & 0x10) != 0);
 }
 
@@ -1244,7 +1244,7 @@ template <>
 void readAttribute<u8>(u8& data, LittleEndianConstPointer p)
 {
     data = p.read8();
-    debugPrint("    %d\n", data);
+    debugPrintLine("    %d", data);
 }
 
 /*
@@ -1252,7 +1252,7 @@ template <>
 void readAttribute<u32>(u32& data, LittleEndianConstPointer p)
 {
     data = p.read32();
-    debugPrint("    %d\n", data);
+    debugPrintLine("    %d", data);
 }
 */
 
@@ -1260,7 +1260,7 @@ template <>
 void readAttribute<float>(float& data, LittleEndianConstPointer p)
 {
     data = p.read32f();
-    debugPrint("    %f\n", data);
+    debugPrintLine("    %f", data);
 }
 
 template <>
@@ -1268,7 +1268,7 @@ void readAttribute<float32x2>(float32x2& data, LittleEndianConstPointer p)
 {
     data.x = p.read32f();
     data.y = p.read32f();
-    debugPrint("    %f, %f\n", data.x, data.y);
+    debugPrintLine("    %f, %f", data.x, data.y);
 }
 
 template <>
@@ -1278,7 +1278,7 @@ void readAttribute<Box2i>(Box2i& data, LittleEndianConstPointer p)
     data.ymin = p.read32();
     data.xmax = p.read32();
     data.ymax = p.read32();
-    debugPrint("    %d, %d, %d, %d\n", data.xmin, data.ymin, data.xmax, data.ymax);
+    debugPrintLine("    %d, %d, %d, %d", data.xmin, data.ymin, data.xmax, data.ymax);
 }
 
 template <>
@@ -1292,10 +1292,10 @@ void readAttribute<Chromaticities>(Chromaticities& data, LittleEndianConstPointe
     data.blue.y  = p.read32f();
     data.white.x = p.read32f();
     data.white.y = p.read32f();
-    debugPrint("    red:   %f, %f\n", float(data.red.x), float(data.red.y));
-    debugPrint("    green: %f, %f\n", float(data.green.x), float(data.green.y));
-    debugPrint("    blue:  %f, %f\n", float(data.blue.x), float(data.blue.y));
-    debugPrint("    white: %f, %f\n", float(data.white.x), float(data.white.y));
+    debugPrintLine("    red:   %f, %f", float(data.red.x), float(data.red.y));
+    debugPrintLine("    green: %f, %f", float(data.green.x), float(data.green.y));
+    debugPrintLine("    blue:  %f, %f", float(data.blue.x), float(data.blue.y));
+    debugPrintLine("    white: %f, %f", float(data.white.x), float(data.white.y));
 }
 
 static
@@ -1470,7 +1470,7 @@ struct AttributeTable
         }
         else
         {
-            debugPrint("    Unknown attribute.\n");
+            debugPrintLine("    Unknown attribute.");
         }
     }
 };
@@ -1551,16 +1551,16 @@ struct ContextEXR
 
     void report()
     {
-        debugPrint("  decoding: %d ms\n", int(m_time_decompress / 1000));
-        debugPrint("  blitting: %d ms\n", int(m_time_blit / 1000));
-        debugPrint("  decode: %d ms\n", int(m_time_decode / 1000));
+        debugPrintLine("  decoding: %d ms", int(m_time_decompress / 1000));
+        debugPrintLine("  blitting: %d ms", int(m_time_blit / 1000));
+        debugPrintLine("  decode: %d ms", int(m_time_decode / 1000));
     }
 };
 
 ContextEXR::ContextEXR(ConstMemory memory)
     : m_memory(memory)
 {
-    debugPrint("Memory: %d KB\n", int(memory.size / 1024));
+    debugPrintLine("Memory: %d KB", int(memory.size / 1024));
 
     const u8* end = memory.end();
     LittleEndianConstPointer p = memory.address;
@@ -1580,8 +1580,8 @@ ContextEXR::ContextEXR(ConstMemory memory)
     is_deep_format = (flags & 0x0800) != 0;
     is_multi_part  = (flags & 0x1000) != 0;
 
-    debugPrint("[Header]\n");
-    debugPrint("  version: %d\n", version);
+    debugPrintLine("[Header]");
+    debugPrintLine("  version: %d", version);
     debugPrint("  single_tile: %d\n"
                "  long_name: %d\n"
                "  deep_format: %d\n"
@@ -1600,8 +1600,8 @@ ContextEXR::ContextEXR(ConstMemory memory)
         return;
     }
 
-    debugPrint("\n");
-    debugPrint("[Attributes]\n");
+    debugPrintLine("");
+    debugPrintLine("[Attributes]");
 
     for ( ; *p; )
     {
@@ -1612,7 +1612,7 @@ ContextEXR::ContextEXR(ConstMemory memory)
         p += type.length() + 1;
 
         u32 size = p.read32();
-        debugPrint("  \"%s\", type: %s, size: %d\n", name.c_str(), type.c_str(), size);
+        debugPrintLine("  \"%s\", type: %s, size: %d", name.c_str(), type.c_str(), size);
 
         m_attributes.parse(name, type, p, size);
         p += size;
@@ -1679,7 +1679,7 @@ ContextEXR::ContextEXR(ConstMemory memory)
 
     int width = m_attributes.dataWindow.xmax - m_attributes.dataWindow.xmin + 1;
     int height = m_attributes.dataWindow.ymax - m_attributes.dataWindow.ymin + 1;
-    debugPrint("Image: %d x %d\n", width, height);
+    debugPrintLine("Image: %d x %d", width, height);
 
     bool isCubemap = (m_attributes.envmap == 2) && ((height % 6) == 0);
     if (isCubemap)
@@ -1762,7 +1762,7 @@ const u8* ContextEXR::decompress_zip(Memory dest, ConstMemory source)
     Buffer temp(dest.size);
 
     CompressionStatus status = deflate_zlib::decompress(temp, source);
-    //debugPrint("  out: %d bytes\n", int(status.size));
+    //debugPrintLine("  out: %d bytes", int(status.size));
 
     predictor(temp, dest.size);
     deinterleave(dest, temp, dest.size);
@@ -1917,7 +1917,7 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
             if (out + nBytes > out_end)
             {
-                debugPrint("OUT OF MEMORY\n");
+                debugPrintLine("OUT OF MEMORY");
                 return nullptr;
             }
 
@@ -1932,7 +1932,7 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
                     if (lastIn > lastIn_end)
                     {
-                        debugPrint("CORRUPT CHUNK\n");
+                        debugPrintLine("CORRUPT CHUNK");
                         return nullptr;
                     }
 
@@ -1957,7 +1957,7 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
                     if (lastIn > lastIn_end)
                     {
-                        debugPrint("CORRUPT CHUNK\n");
+                        debugPrintLine("CORRUPT CHUNK");
                         return nullptr;
                     }
 
@@ -1980,7 +1980,7 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
                     if (lastIn > lastIn_end)
                     {
-                        debugPrint("CORRUPT CHUNK\n");
+                        debugPrintLine("CORRUPT CHUNK");
                         return nullptr;
                     }
 
@@ -2051,7 +2051,7 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
             u16* row2 = row1 + nx;
             u16* row3 = row2 + nx;
 
-            //debugPrint("(%d,%d) [%d x %d]\n", 0, y, nx, ny);
+            //debugPrintLine("(%d,%d) [%d x %d]", 0, y, nx, ny);
             for (int x = 0; x < nx; x += 4)
             {
                 if (in + 3 > source_end)
@@ -2570,7 +2570,7 @@ void ContextEXR::decodeBlock(Surface surface, ConstMemory memory, int x0, int y0
 {
     int blockWidth = x1 - x0;
     int blockHeight = y1 - y0;
-    //debugPrint("decodeBlock: (%d, %d) %d x %d\n", x0, y0, blockWidth, blockHeight);
+    //debugPrintLine("decodeBlock: (%d, %d) %d x %d", x0, y0, blockWidth, blockHeight);
 
     size_t bytesPerPixel = m_attributes.chlist.bytes;
     size_t bytesPerScan = blockWidth * bytesPerPixel;
@@ -2692,7 +2692,7 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
         int ytiles = div_ceil(height, m_attributes.tiledesc.ysize);
         int ntiles = xtiles * ytiles;
 
-        debugPrint("Tiles: %d x %d (%d)\n", xtiles, ytiles, ntiles);
+        debugPrintLine("Tiles: %d x %d (%d)", xtiles, ytiles, ntiles);
 
         for (int i = 0; i < ntiles; ++i)
         {
@@ -2705,7 +2705,7 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
             int ylevel = ptr.read32();
             u32 size = ptr.read32();
 
-            //debugPrint("  pos:(%d,%d) level:(%d,%d) size: %d bytes\n", tilex, tiley, xlevel, ylevel, size);
+            //debugPrintLine("  pos:(%d,%d) level:(%d,%d) size: %d bytes", tilex, tiley, xlevel, ylevel, size);
             MANGO_UNREFERENCED(xlevel);
             MANGO_UNREFERENCED(ylevel);
 
@@ -2743,7 +2743,7 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
     {
         int nblocks = div_ceil(height, m_scanLinesPerBlock);
 
-        debugPrint("Blocks: %d\n", nblocks);
+        debugPrintLine("Blocks: %d", nblocks);
 
         for (int i = 0; i < nblocks; ++i)
         {
@@ -2764,7 +2764,7 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
                 return;
             }
 
-            //debugPrint("  y:%d, size: %d bytes\n", y0, size);
+            //debugPrintLine("  y:%d, size: %d bytes", y0, size);
 
             auto task = [=]
             {

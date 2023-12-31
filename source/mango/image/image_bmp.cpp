@@ -112,7 +112,7 @@ namespace
 
         void WinBitmapHeader1(LittleEndianConstPointer& p)
         {
-            debugPrint("[WinBitmapHeader1]\n");
+            debugPrintLine("[WinBitmapHeader1]");
 
             width = p.read32();
             height = p.read32();
@@ -190,37 +190,37 @@ namespace
                 }
             }
 
-            debugPrint("  image: %d x %d, planes: %d, bits: %d\n", width, height, numPlanes, bitsPerPixel);
-            debugPrint("  compression: %d, imageDataSize: %d\n", compression, imageDataSize);
-            debugPrint("  resolution: %d x %d\n", xResolution, yResolution);
-            debugPrint("  palette: %d, importantColorCount: %d\n", paletteSize, importantColorCount);
+            debugPrintLine("  image: %d x %d, planes: %d, bits: %d", width, height, numPlanes, bitsPerPixel);
+            debugPrintLine("  compression: %d, imageDataSize: %d", compression, imageDataSize);
+            debugPrintLine("  resolution: %d x %d", xResolution, yResolution);
+            debugPrintLine("  palette: %d, importantColorCount: %d", paletteSize, importantColorCount);
         }
 
         void WinBitmapHeader2(LittleEndianConstPointer& p)
         {
-            debugPrint("[WinBitmapHeader2]\n");
+            debugPrintLine("[WinBitmapHeader2]");
 
             redMask = p.read32();
             greenMask = p.read32();
             blueMask = p.read32();
 
-            debugPrint("  redMask:   0x%.8x\n", redMask);
-            debugPrint("  greenMask: 0x%.8x\n", greenMask);
-            debugPrint("  blueMask:  0x%.8x\n", blueMask);
+            debugPrintLine("  redMask:   0x%.8x", redMask);
+            debugPrintLine("  greenMask: 0x%.8x", greenMask);
+            debugPrintLine("  blueMask:  0x%.8x", blueMask);
         }
 
         void WinBitmapHeader3(LittleEndianConstPointer& p)
         {
-            debugPrint("[WinBitmapHeader3]\n");
+            debugPrintLine("[WinBitmapHeader3]");
 
             alphaMask = p.read32();
 
-            debugPrint("  alphaMask: 0x%.8x\n", alphaMask);
+            debugPrintLine("  alphaMask: 0x%.8x", alphaMask);
         }
 
         void WinBitmapHeader4(LittleEndianConstPointer& p)
         {
-            debugPrint("[WinBitmapHeader4]\n");
+            debugPrintLine("[WinBitmapHeader4]");
 
             csType = p.read32();
             for (int i = 0; i < 9; ++i)
@@ -231,25 +231,25 @@ namespace
             gammaGreen = p.read32();
             gammaBlue = p.read32();
 
-            debugPrint("  gamma: %d %d %d\n", gammaRed, gammaGreen, gammaBlue);
+            debugPrintLine("  gamma: %d %d %d", gammaRed, gammaGreen, gammaBlue);
         }
 
         void WinBitmapHeader5(LittleEndianConstPointer& p)
         {
-            debugPrint("[WinBitmapHeader5]\n");
+            debugPrintLine("[WinBitmapHeader5]");
 
             intent = p.read32();
             profileData = p.read32();
             profileSize = p.read32();
             reserved3 = p.read32();
 
-            debugPrint("  intent: %d\n", intent);
-            debugPrint("  profile data: %d, size: %d\n", profileData, profileSize);
+            debugPrintLine("  intent: %d", intent);
+            debugPrintLine("  profile data: %d, size: %d", profileData, profileSize);
         }
 
         void OS2BitmapHeader1(LittleEndianConstPointer& p, int headerSize)
         {
-            debugPrint("[OS2BitmapHeader1]\n");
+            debugPrintLine("[OS2BitmapHeader1]");
 
             if (headerSize == 16)
             {
@@ -265,12 +265,12 @@ namespace
             numPlanes    = p.read16();
             bitsPerPixel = p.read16();
 
-            debugPrint("  image: %d x %d, planes: %d, bits: %d\n", width, height, numPlanes, bitsPerPixel);
+            debugPrintLine("  image: %d x %d, planes: %d, bits: %d", width, height, numPlanes, bitsPerPixel);
         }
 
         void OS2BitmapHeader2(LittleEndianConstPointer& p)
         {
-            debugPrint("[OS2BitmapHeader2]\n");
+            debugPrintLine("[OS2BitmapHeader2]");
 
             units         = p.read16();
             reserved      = p.read16();
@@ -299,7 +299,7 @@ namespace
 
             parseHeaderSize(p);
 
-            debugPrint("  HeaderSize: %d\n", headerSize);
+            debugPrintLine("  HeaderSize: %d", headerSize);
 
             switch (headerSize)
             {
@@ -406,7 +406,7 @@ namespace
             {
                 int bytesPerScan = div_ceil(width * bitsPerPixel, 32) * 4;
                 imageDataSize = height * bytesPerScan;
-                debugPrint("  computed imageDataSize: %d\n", imageDataSize);
+                debugPrintLine("  computed imageDataSize: %d", imageDataSize);
             }
 
             if (bitsPerPixel <= 8)
@@ -780,7 +780,7 @@ namespace
         const int height = std::min(header.height, int(memory.size / bytesPerScan));
         if (height != header.height)
         {
-            debugPrint("  WARNING: clipped height: %d -> %d (not enough data)\n", header.height, height);
+            debugPrintLine("  WARNING: clipped height: %d -> %d (not enough data)", header.height, height);
         }
 
         for (int y = 0; y < height; ++y)
@@ -811,7 +811,7 @@ namespace
         int height = std::min(header.height, int(memory.size / bytesPerScan));
         if (height != header.height)
         {
-            debugPrint("  WARNING: clipped height: %d -> %d (not enough data)\n", header.height, height);
+            debugPrintLine("  WARNING: clipped height: %d -> %d (not enough data)", header.height, height);
         }
 
         Surface source(header.width, height, header.format, bytesPerScan, memory.address);
@@ -850,9 +850,9 @@ namespace
 
         if (header.palette)
         {
-            debugPrint("[Palette]\n");
-            debugPrint("  size: %d\n", header.importantColorCount);
-            debugPrint("  components: %d\n", header.paletteComponents);
+            debugPrintLine("[Palette]");
+            debugPrintLine("  size: %d", header.importantColorCount);
+            debugPrintLine("  components: %d", header.paletteComponents);
 
             int components = header.paletteComponents;
             if (!components)
@@ -1187,7 +1187,7 @@ namespace
             : m_memory(memory)
             , m_file_header(memory)
         {
-            debugPrint("magic: 0x%x\n", m_file_header.magic);
+            debugPrintLine("magic: 0x%x", m_file_header.magic);
 
             switch (m_file_header.magic)
             {
@@ -1215,23 +1215,23 @@ namespace
                     m_image_header.format  = bmp_header.format;
                     m_image_header.compression = TextureCompression::NONE;
 
-                    debugPrint("[Header]\n");
-                    debugPrint("  image: %d x %d, bits: %d\n",
+                    debugPrintLine("[Header]");
+                    debugPrintLine("  image: %d x %d, bits: %d",
                         m_image_header.width,
                         m_image_header.height,
                         m_image_header.format.bits);
-                    debugPrint("[Format]\n");
-                    debugPrint("  bits: %d, bytes: %d, type: 0x%x, flags: 0x%x\n",
+                    debugPrintLine("[Format]");
+                    debugPrintLine("  bits: %d, bytes: %d, type: 0x%x, flags: 0x%x",
                         m_image_header.format.bits,
                         m_image_header.format.bytes(),
                         m_image_header.format.type,
                         m_image_header.format.flags);
-                    debugPrint("  size: %d %d %d %d\n",
+                    debugPrintLine("  size: %d %d %d %d",
                         m_image_header.format.size.r,
                         m_image_header.format.size.g,
                         m_image_header.format.size.b,
                         m_image_header.format.size.a);
-                    debugPrint("  offset: %d %d %d %d\n",
+                    debugPrintLine("  offset: %d %d %d %d",
                         m_image_header.format.offset.r,
                         m_image_header.format.offset.g,
                         m_image_header.format.offset.b,

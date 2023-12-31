@@ -445,7 +445,7 @@ namespace
         state.delay = x.read16(); // delay between frames in 1/100th of seconds (50 = .5 seconds, 100 = 1.0 seconds, etc)
         state.transparent_color = state.transparent_color_flag ? *x : 0;
 
-        debugPrint("      delay: %d, dispose: %d, transparent: %s (%d)\n",
+        debugPrintLine("      delay: %d, dispose: %d, transparent: %s (%d)",
             state.delay,
             state.disposal_method,
             state.transparent_color_flag ? "YES" : "NO",
@@ -462,7 +462,7 @@ namespace
     {
         u8 label = *p++;
         u8 size = *p++;
-        debugPrint("    label: %x, size: %d\n", int(label), int(size));
+        debugPrintLine("    label: %x, size: %d", int(label), int(size));
 
         switch (label)
         {
@@ -512,7 +512,7 @@ namespace
         while (data < end)
         {
             u8 chunkID = *data++;
-            debugPrint("  chunkID: %x\n", int(chunkID));
+            debugPrintLine("  chunkID: %x", int(chunkID));
             switch (chunkID)
             {
                 case GIF_EXTENSION:

@@ -1755,7 +1755,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
                 case BZ: aEndPts[1].B.b |= 1 << uint32_t(desc[uCurBit].m_uBit); break;
                 default:
                     {
-                        debugPrint("BC6H: Invalid header bits encountered during decoding\n");
+                        debugPrintLine("BC6H: Invalid header bits encountered during decoding");
                         FillWithErrorColorF64(output, stride);
                         return;
                     }
@@ -1802,7 +1802,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
                 const size_t uNumBits = IsFixUpOffset(info.uPartitions, uShape, idx) ? info.uIndexPrec - 1u : info.uIndexPrec;
                 if (uStartBit + uNumBits > 128)
                 {
-                    debugPrint("BC6H: Invalid block encountered during decoding\n");
+                    debugPrintLine("BC6H: Invalid block encountered during decoding");
                     FillWithErrorColorF64(output, stride);
                     return;
                 }
@@ -1810,7 +1810,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
 
                 if (uIndex >= ((info.uPartitions > 0) ? 8 : 16))
                 {
-                    debugPrint("BC6H: Invalid index encountered during decoding\n");
+                    debugPrintLine("BC6H: Invalid index encountered during decoding");
                     FillWithErrorColorF64(output, stride);
                     return;
                 }
@@ -1841,15 +1841,15 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
     }
     else
     {
-        const char* warnstr = "BC6H: Invalid mode encountered during decoding\n";
+        const char* warnstr = "BC6H: Invalid mode encountered during decoding";
         switch (uMode)
         {
-        case 0x13:  warnstr = "BC6H: Reserved mode 10011 encountered during decoding\n"; break;
-        case 0x17:  warnstr = "BC6H: Reserved mode 10111 encountered during decoding\n"; break;
-        case 0x1B:  warnstr = "BC6H: Reserved mode 11011 encountered during decoding\n"; break;
-        case 0x1F:  warnstr = "BC6H: Reserved mode 11111 encountered during decoding\n"; break;
+            case 0x13:  warnstr = "BC6H: Reserved mode 10011 encountered during decoding"; break;
+            case 0x17:  warnstr = "BC6H: Reserved mode 10111 encountered during decoding"; break;
+            case 0x1B:  warnstr = "BC6H: Reserved mode 11011 encountered during decoding"; break;
+            case 0x1F:  warnstr = "BC6H: Reserved mode 11111 encountered during decoding"; break;
         }
-        debugPrint(warnstr);
+        debugPrintLine(warnstr);
 
         // Per the BC6H format spec, we must return opaque black
         FillColorF64(output, stride, float16x4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -2589,7 +2589,7 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
         {
             if (uStartBit + RGBAPrec.r > 128)
             {
-                debugPrint("BC7: Invalid block encountered during decoding\n");
+                debugPrintLine("BC7: Invalid block encountered during decoding");
                 FillWithErrorColorU32(output, stride);
                 return;
             }
@@ -2602,7 +2602,7 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
         {
             if (uStartBit + RGBAPrec.g > 128)
             {
-                debugPrint("BC7: Invalid block encountered during decoding\n");
+                debugPrintLine("BC7: Invalid block encountered during decoding");
                 FillWithErrorColorU32(output, stride);
                 return;
             }
@@ -2615,7 +2615,7 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
         {
             if (uStartBit + RGBAPrec.b > 128)
             {
-                debugPrint("BC7: Invalid block encountered during decoding\n");
+                debugPrintLine("BC7: Invalid block encountered during decoding");
                 FillWithErrorColorU32(output, stride);
                 return;
             }
@@ -2628,7 +2628,7 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
         {
             if (uStartBit + RGBAPrec.a > 128)
             {
-                debugPrint("BC7: Invalid block encountered during decoding\n");
+                debugPrintLine("BC7: Invalid block encountered during decoding");
                 FillWithErrorColorU32(output, stride);
                 return;
             }
@@ -2642,7 +2642,7 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
         {
             if (uStartBit > 127)
             {
-                debugPrint("BC7: Invalid block encountered during decoding\n");
+                debugPrintLine("BC7: Invalid block encountered during decoding");
                 FillWithErrorColorU32(output, stride);
                 return;
             }
@@ -2679,7 +2679,7 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
             const size_t uNumBits = IsFixUpOffset(ms_aInfo[uMode].uPartitions, uShape, i) ? uIndexPrec - 1u : uIndexPrec;
             if (uStartBit + uNumBits > 128)
             {
-                debugPrint("BC7: Invalid block encountered during decoding\n");
+                debugPrintLine("BC7: Invalid block encountered during decoding");
                 FillWithErrorColorU32(output, stride);
                 return;
             }
@@ -2694,7 +2694,7 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
                 const size_t uNumBits = i ? uIndexPrec2 : uIndexPrec2 - 1u;
                 if (uStartBit + uNumBits > 128)
                 {
-                    debugPrint("BC7: Invalid block encountered during decoding\n");
+                    debugPrintLine("BC7: Invalid block encountered during decoding");
                     FillWithErrorColorU32(output, stride);
                     return;
                 }
@@ -2741,7 +2741,7 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
     }
     else
     {
-        debugPrint("BC7: Reserved mode 8 encountered during decoding\n");
+        debugPrintLine("BC7: Reserved mode 8 encountered during decoding");
         // Per the BC7 format spec, we must return transparent black
         FillColorU32(output, stride, 0xff000000);
     }

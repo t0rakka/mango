@@ -635,8 +635,8 @@ namespace mango::import3d
 
         u64 time2 = mango::Time::ms();
 
-        debugPrint("Reading: %d ms\n", int(time1 - time0));
-        debugPrint("Conversion: %d ms\n", int(time2 - time1));
+        debugPrintLine("Reading: %d ms", int(time1 - time0));
+        debugPrintLine("Conversion: %d ms", int(time2 - time1));
     }
 
 } // namespace mango::import3d
