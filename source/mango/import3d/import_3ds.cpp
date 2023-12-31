@@ -13,7 +13,7 @@
 namespace
 {
     using namespace mango;
-    using namespace mango::math;
+    using namespace mango::import3d;
 
     struct Texture3DS
     {
@@ -24,9 +24,9 @@ namespace
     {
         std::string name;
 
-        //ucolor ambient;
-        //ucolor diffuse;
-        //ucolor specular;
+        color8x4 ambient;
+        color8x4 diffuse;
+        color8x4 specular;
 
         Texture3DS texture_map1;
         Texture3DS texture_map2;
@@ -91,7 +91,7 @@ namespace
         int level = 0;
         bool debug = true;
 
-        //ucolor color;
+        color8x4 color;
         float percent;
         std::string text;
         Texture3DS* texture = nullptr;
@@ -180,12 +180,12 @@ namespace
             float r = p.read32f();
             float g = p.read32f();
             float b = p.read32f();
-            //color = ucolor(r, g, b, 0xff);
+            color = color8x4(r, g, b, 0xff);
         }
 
         void chunk_color_u8(LittleEndianConstPointer& p)
         {
-            //color = ucolor(p[0], p[1], p[2], 0xff);
+            color = color8x4(p[0], p[1], p[2], 0xff);
             p += 3;
         }
 
@@ -260,8 +260,8 @@ namespace
             parse_chunks(p);
 
             Material3DS& material = getCurrentMaterial();
-            //material.ambient = color;
-            //debugPrint3DS("ambient color: %d, %d, %d", color[0], color[1], color[2]);
+            material.ambient = color;
+            debugPrint3DS("ambient color: %d, %d, %d", color[0], color[1], color[2]);
         }
 
         void chunk_material_diffuse_color(LittleEndianConstPointer& p)
@@ -269,8 +269,8 @@ namespace
             parse_chunks(p);
 
             Material3DS& material = getCurrentMaterial();
-            //material.diffuse = color;
-            //debugPrint3DS("diffuse color: %d, %d, %d", color[0], color[1], color[2]);
+            material.diffuse = color;
+            debugPrint3DS("diffuse color: %d, %d, %d", color[0], color[1], color[2]);
         }
 
         void chunk_material_specular_color(LittleEndianConstPointer& p)
@@ -278,8 +278,8 @@ namespace
             parse_chunks(p);
 
             Material3DS& material = getCurrentMaterial();
-            //material.specular = color;
-            //debugPrint3DS("specular color: %d, %d, %d", color[0], color[1], color[2]);
+            material.specular = color;
+            debugPrint3DS("specular color: %d, %d, %d", color[0], color[1], color[2]);
         }
 
         void chunk_material_shininess(LittleEndianConstPointer& p)
@@ -352,6 +352,7 @@ namespace
         {
             float wireframe_size = p.read32f();
             debugPrint3DS("wireframe size: %f", percent);
+            MANGO_UNREFERENCED(wireframe_size);
         }
 
         void chunk_material_shading(LittleEndianConstPointer& p)
@@ -588,16 +589,28 @@ namespace
 
         void chunk_mesh_local_axis(LittleEndianConstPointer& p)
         {
-            float xform[4][4];
+            //Mesh3DS& mesh = getCurrentMesh();
 
             for (int i = 0; i < 4; ++i)
             {
-                xform[0][i] = p.read32f();
-                xform[1][i] = p.read32f();
-                xform[2][i] = p.read32f();
-            }
+                float x = p.read32f();
+                float y = p.read32f();
+                float z = p.read32f();
 
-            // TODO: xxx
+                debugPrint3DS("%f %f %f", x, y, z);
+
+                /*
+                if (i == 3)
+                {
+                    float32x3 offset = float32x3(-x, z, -y);
+
+                    for (auto& position : mesh.positions)
+                    {
+                        position -= offset;
+                    }
+                }
+                */
+            }
         }
 
         void chunk_mesh_visible(LittleEndianConstPointer& p)
@@ -637,7 +650,8 @@ namespace
         {
             float32x3 position = read_vec3(p);
             parse_chunks(p);
-            //ucolor color = color;
+            MANGO_UNREFERENCED(position);
+            //color8x4 color = color;
         }
 
         void chunk_light_spot(LittleEndianConstPointer& p)
@@ -763,6 +777,7 @@ namespace
         void chunk_key_pivot(LittleEndianConstPointer& p)
         {
             float32x3 pivot = read_vec3(p);
+            //debugPrint3DS("pivot: %f %f %f", pivot[0], pivot[1], pivot[2]);
             MANGO_UNREFERENCED(pivot);
         }
 
@@ -961,7 +976,7 @@ namespace
         }
     }
 
-    void texcoord_wrapping(import3d::Triangle& triangle, u32 flags)
+    void texcoord_wrapping(Triangle& triangle, u32 flags)
     {
         if (flags & Face3DS::UWRAP)
         {
@@ -988,9 +1003,6 @@ namespace mango::import3d
         filesystem::File file(path, filename);
         Reader3DS reader(file);
 
-        debugPrintLine("materials: %d", int(reader.materials.size()));
-        debugPrintLine("meshes: %d", int(reader.meshes.size()));
-
         /*
         for (auto& material3ds : reader.materials)
         {
@@ -1008,9 +1020,9 @@ namespace mango::import3d
         {
             Material material;
 
-            material.ambient = ucolor(255, 255, 255, 255);
-            material.diffuse = ucolor(255, 255, 255, 255);
-            material.specular = ucolor(255, 255, 255, 255);
+            material.ambient = color8x4(255, 255, 255, 255);
+            material.diffuse = color8x4(255, 255, 255, 255);
+            material.specular = color8x4(255, 255, 255, 255);
 
             materials.push_back(material);
         }
@@ -1048,7 +1060,7 @@ namespace mango::import3d
             {
                 Face3DS& face = mesh3ds.faces[i];
 
-                import3d::Triangle triangle;
+                Triangle triangle;
 
                 //triangle.material = face.material;
 

@@ -14,6 +14,7 @@ namespace mango::import3d
     using float32x3 = math::Vector<float, 3>;
     using float32x4 = math::Vector<float, 4>;
     using matrix4x4 = math::Matrix<float, 4, 4>;
+    using color8x4 = math::Vector<u8, 4>;
 
     // -----------------------------------------------------------------------
     // scene
