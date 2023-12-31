@@ -4,23 +4,19 @@
 */
 #pragma once
 
+#include <string>
+#include <mango/filesystem/filesystem.hpp>
 #include <mango/import3d/mesh.hpp>
 
 namespace mango::import3d
 {
 
-    // TODO
-
-    /*
-
     struct Import3DS
     {
-        std::vector<Material> materials;
+        //std::vector<Material> materials;
         std::vector<Mesh> meshes;
 
-        Import3DS(File& file);
+        Import3DS(const filesystem::Path& path, const std::string& filename);
     };
-
-    */
 
 } // namespace mango::import3d
