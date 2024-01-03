@@ -11,19 +11,9 @@
 namespace mango::import3d
 {
 
-    struct Object
-    {
-        std::string name;
-        u32 parent;
-        matrix4x4 transform;
-        std::vector<u32> meshes;
-    };
-
-    struct ImportOBJ
+    struct ImportOBJ : Scene
     {
         //std::vector<Material> materials;
-        std::vector<Mesh> meshes;
-        std::vector<Object> objects;
 
         ImportOBJ(const filesystem::Path& path, const std::string& filename);
     };

@@ -5,7 +5,10 @@
 #pragma once
 
 #include <vector>
+#include <string>
+#include <memory>
 #include <mango/math/math.hpp>
+#include <mango/image/image.hpp>
 
 namespace mango::import3d
 {
@@ -33,12 +36,34 @@ namespace mango::import3d
         Vertex vertex[3];
     };
 
-    /*
-    struct Material
+    using Texture = std::shared_ptr<image::Bitmap>;
+
+    enum class AlphaMode
     {
-        u32 todo;
+        OPAQUE,
+        MASK,
+        BLEND
     };
 
+    struct Material
+    {
+        float roughnessFactor { 1.0f };
+        float metallicFactor { 1.0f };
+        float32x4 baseColorFactor { 1.0f, 1.0f, 1.0f, 1.0f };
+        float32x3 emissiveFactor { 0.0f, 0.0f, 0.0f };
+
+        Texture metallicRoughnessTexture;
+        Texture baseColorTexture;
+        Texture emissiveTexture;
+        Texture normalTexture;
+        Texture occlusionTexture;
+
+        AlphaMode alphaMode { AlphaMode::OPAQUE };
+        float alphaCutoff { 0.5f };
+        bool doubleSided { false };
+    };
+
+    /*
     struct MaterialCluster
     {
         u32 start;
@@ -60,9 +85,20 @@ namespace mango::import3d
         //std::vector<MaterialCluster> clusters;
     };
 
+    struct Object
+    {
+        static constexpr u32 NoParent = 0xffffffff;
+
+        std::string name;
+        u32 parent { NoParent };
+        matrix4x4 transform { 1.0f };
+        std::vector<u32> meshes;
+    };
+
     struct Scene
     {
-        u32 todo;
+        std::vector<Mesh> meshes;
+        std::vector<Object> objects;
     };
 
     // -----------------------------------------------------------------------

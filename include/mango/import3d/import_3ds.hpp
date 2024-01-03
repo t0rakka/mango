@@ -11,10 +11,9 @@
 namespace mango::import3d
 {
 
-    struct Import3DS
+    struct Import3DS : Scene
     {
         //std::vector<Material> materials;
-        std::vector<Mesh> meshes;
 
         Import3DS(const filesystem::Path& path, const std::string& filename);
     };

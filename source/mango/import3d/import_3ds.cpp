@@ -66,6 +66,8 @@ namespace
         std::vector<float32x2> mappings;
         std::vector<Face3DS> faces;
 
+        bool visible = true;
+
         float32x3 computeNormal(const Face3DS& face) const
         {
             float32x3 p0 = positions[face.index[0]];
@@ -589,8 +591,6 @@ namespace
 
         void chunk_mesh_local_axis(LittleEndianConstPointer& p)
         {
-            //Mesh3DS& mesh = getCurrentMesh();
-
             for (int i = 0; i < 4; ++i)
             {
                 float x = p.read32f();
@@ -604,6 +604,8 @@ namespace
                 {
                     float32x3 offset = float32x3(-x, z, -y);
 
+                    Mesh3DS& mesh = getCurrentMesh();
+
                     for (auto& position : mesh.positions)
                     {
                         position -= offset;
@@ -616,8 +618,8 @@ namespace
         void chunk_mesh_visible(LittleEndianConstPointer& p)
         {
             u8 visible = *p++;
-            MANGO_UNREFERENCED(visible);
-            // TODO: xxx
+            Mesh3DS& mesh = getCurrentMesh();
+            mesh.visible = visible != 0;
         }
 
         // camera chunks
