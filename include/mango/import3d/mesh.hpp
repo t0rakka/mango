@@ -83,6 +83,7 @@ namespace mango::import3d
         std::vector<Vertex> vertices;
         std::vector<u32> indices;
         //std::vector<MaterialCluster> clusters;
+        // TODO: primitive type
     };
 
     struct Object
