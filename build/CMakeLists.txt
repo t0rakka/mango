@@ -7,8 +7,13 @@ PROJECT(mango CXX C ASM)
 
 set(MANGO_VERSION_MAJOR 1)
 set(MANGO_VERSION_MINOR 1)
-set(MANGO_VERSION_PATCH 0)
+set(MANGO_VERSION_PATCH 2)
 set(MANGO_VERSION_STRING ${MANGO_VERSION_MAJOR}.${MANGO_VERSION_MINOR}.${MANGO_VERSION_PATCH})
+
+set(MANGO_OPENGL_VERSION_MAJOR 0)
+set(MANGO_OPENGL_VERSION_MINOR 8)
+set(MANGO_OPENGL_VERSION_PATCH 0)
+set(MANGO_OPENGL_VERSION_STRING ${MANGO_OPENGL_VERSION_MAJOR}.${MANGO_OPENGL_VERSION_MINOR}.${MANGO_OPENGL_VERSION_PATCH})
 
 # ------------------------------------------------------------------------------
 # compiler
@@ -305,8 +310,8 @@ add_library(mango-opengl
 )
 
 set_target_properties(mango-opengl PROPERTIES
-    VERSION ${MANGO_VERSION_STRING}
-    SOVERSION ${MANGO_VERSION_MAJOR}
+    VERSION ${MANGO_OPENGL_VERSION_STRING}
+    SOVERSION ${MANGO_OPENGL_VERSION_MAJOR}
 )
 
 target_link_libraries(mango-opengl PUBLIC mango)
@@ -329,11 +334,6 @@ endif ()
 # ------------------------------------------------------------------------------
 # configuration
 # ------------------------------------------------------------------------------
-
-if (EMSCRIPTEN)
-    # zlib uses deprecated K&R syntax
-    target_compile_options(mango PUBLIC "-Wno-deprecated-non-prototype")
-endif ()
 
 if (COMPILER_MSVC)
     target_compile_options(mango PUBLIC "/DUNICODE")
