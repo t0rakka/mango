@@ -88,10 +88,10 @@ namespace mango::import3d
 
     struct Object
     {
-        static constexpr u32 NoParent = 0xffffffff;
+        static constexpr u32 DefaultParent = 0xffffffff;
 
         std::string name;
-        u32 parent { NoParent };
+        u32 parent { DefaultParent };
         matrix4x4 transform { 1.0f };
         std::vector<u32> meshes;
     };
