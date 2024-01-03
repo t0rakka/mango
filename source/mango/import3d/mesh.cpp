@@ -88,15 +88,62 @@ Mesh convertMesh(const IndexedMesh& input)
 {
     Mesh output;
 
-    for (size_t i = 0; i < input.indices.size(); i += 3)
+    switch (input.mode)
     {
-        Triangle triangle;
+        case PrimitiveMode::TRIANGLE_LIST:
+        {
+            for (size_t i = 0; i < input.indices.size(); i += 3)
+            {
+                Triangle triangle;
 
-        triangle.vertex[0] = input.vertices[input.indices[i + 0]];
-        triangle.vertex[1] = input.vertices[input.indices[i + 1]];
-        triangle.vertex[2] = input.vertices[input.indices[i + 2]];
+                triangle.vertex[0] = input.vertices[input.indices[i + 0]];
+                triangle.vertex[1] = input.vertices[input.indices[i + 1]];
+                triangle.vertex[2] = input.vertices[input.indices[i + 2]];
 
-        output.triangles.push_back(triangle);
+                output.triangles.push_back(triangle);
+            }
+            break;
+        }
+
+        case PrimitiveMode::TRIANGLE_STRIP:
+        {
+            Vertex v0 = input.vertices[input.indices[0]];
+            Vertex v1 = input.vertices[input.indices[1]];
+
+            for (size_t i = 2; i < input.indices.size(); ++i)
+            {
+                Triangle triangle;
+
+                triangle.vertex[(i + 0) & 1] = v0;
+                triangle.vertex[(i + 1) & 1] = v1;
+                triangle.vertex[2] = input.vertices[input.indices[i]];
+
+                v0 = v1;
+                v1 = triangle.vertex[2];
+
+                output.triangles.push_back(triangle);
+            }
+
+            break;
+        }
+
+        case PrimitiveMode::TRIANGLE_FAN:
+        {
+            Triangle triangle;
+
+            triangle.vertex[0] = input.vertices[input.indices[0]];
+            triangle.vertex[2] = input.vertices[input.indices[1]];
+
+            for (size_t i = 2; i < input.indices.size(); ++i)
+            {
+                triangle.vertex[1] = triangle.vertex[2];
+                triangle.vertex[2] = input.vertices[input.indices[i]];
+
+                output.triangles.push_back(triangle);
+            }
+
+            break;
+        }
     }
 
     return output;

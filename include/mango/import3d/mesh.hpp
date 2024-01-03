@@ -78,12 +78,19 @@ namespace mango::import3d
         //std::vector<MaterialCluster> clusters;
     };
 
+    enum class PrimitiveMode
+    {
+        TRIANGLE_LIST,
+        TRIANGLE_STRIP,
+        TRIANGLE_FAN,
+    };
+
     struct IndexedMesh
     {
         std::vector<Vertex> vertices;
         std::vector<u32> indices;
+        PrimitiveMode mode { PrimitiveMode::TRIANGLE_LIST };
         //std::vector<MaterialCluster> clusters;
-        // TODO: primitive type
     };
 
     struct Object
