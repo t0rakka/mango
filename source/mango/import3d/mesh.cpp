@@ -84,9 +84,9 @@ bool operator < (const Vertex& a, const Vertex& b)
     return std::memcmp(&a, &b, sizeof(Vertex)) < 0;
 }
 
-void convertMesh(Mesh& output, const IndexedMesh& input)
+Mesh convertMesh(const IndexedMesh& input)
 {
-    output.triangles.clear();
+    Mesh output;
 
     for (size_t i = 0; i < input.indices.size(); i += 3)
     {
@@ -98,12 +98,13 @@ void convertMesh(Mesh& output, const IndexedMesh& input)
 
         output.triangles.push_back(triangle);
     }
+
+    return output;
 }
 
-void convertMesh(IndexedMesh& output, const Mesh& input)
+IndexedMesh convertMesh(const Mesh& input)
 {
-    output.vertices.clear();
-    output.indices.clear();
+    IndexedMesh output;
 
     std::map<Vertex, size_t> unique;
 
@@ -130,6 +131,8 @@ void convertMesh(IndexedMesh& output, const Mesh& input)
             output.indices.push_back(u32(index));
         }
     }
+
+    return output;
 }
 
 void computeTangents(Mesh& mesh)
@@ -151,15 +154,6 @@ void computeTangents(Mesh& mesh)
 
     tbool status = genTangSpaceDefault(&mik_context);
     MANGO_UNREFERENCED(status);
-}
-
-void computeTangents(IndexedMesh& mesh)
-{
-    Mesh temp;
-    convertMesh(temp, mesh);
-    computeTangents(temp);
-
-    convertMesh(mesh, temp);
 }
 
 Cube::Cube(float size)

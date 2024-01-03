@@ -106,11 +106,10 @@ namespace mango::import3d
     // utilities
     // -----------------------------------------------------------------------
 
-    void convertMesh(Mesh& output, const IndexedMesh& input);
-    void convertMesh(IndexedMesh& output, const Mesh& input);
+    Mesh convertMesh(const IndexedMesh& input);
+    IndexedMesh convertMesh(const Mesh& input);
 
     void computeTangents(Mesh& mesh);
-    void computeTangents(IndexedMesh& mesh);
 
     // -----------------------------------------------------------------------
     // primitives
