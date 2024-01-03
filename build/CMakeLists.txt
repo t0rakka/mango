@@ -95,91 +95,150 @@ include_directories("../source/external/libwebp/")
 
 if (WIN32)
 
-    FILE(GLOB CORE
+    FILE(GLOB CORE_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/win32/*.cpp")
-    FILE(GLOB FILESYSTEM
+    )
+    FILE(GLOB FILESYSTEM_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/win32/*.cpp")
-    FILE(GLOB WINDOW
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/win32/*.cpp")
-    FILE(GLOB OPENGL
+    )
+    FILE(GLOB WINDOW_HEADERS
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/window/*.hpp"
+    )
+    FILE(GLOB OPENGL_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
+    )
+
+    FILE(GLOB CORE_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/win32/*.cpp"
+    )
+    FILE(GLOB FILESYSTEM_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/win32/*.cpp"
+    )
+    FILE(GLOB WINDOW_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/win32/*.cpp"
+    )
+    FILE(GLOB OPENGL_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/wgl/*.cpp")
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/wgl/*.cpp"
+    )
 
 elseif (APPLE)
 
-    FILE(GLOB CORE
+    FILE(GLOB CORE_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp")
-    FILE(GLOB FILESYSTEM
+    )
+    FILE(GLOB FILESYSTEM_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp")
-    FILE(GLOB WINDOW
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/cocoa/*.mm")
-    FILE(GLOB OPENGL
+    )
+    FILE(GLOB WINDOW_HEADERS
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/window/*.hpp"
+    )
+    FILE(GLOB OPENGL_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
+    )
+
+    FILE(GLOB CORE_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp"
+    )
+    FILE(GLOB FILESYSTEM_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp"
+    )
+    FILE(GLOB WINDOW_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/cocoa/*.mm"
+    )
+    FILE(GLOB OPENGL_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/cocoa/*.mm")
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/cocoa/*.mm"
+    )
 
 elseif (EMSCRIPTEN)
 
-    FILE(GLOB CORE
+    FILE(GLOB CORE_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp")
-    FILE(GLOB FILESYSTEM
+    )
+    FILE(GLOB FILESYSTEM_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp")
-    FILE(GLOB OPENGL
+    )
+    FILE(GLOB OPENGL_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp")
+    )
+
+    FILE(GLOB CORE_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp"
+    )
+    FILE(GLOB FILESYSTEM_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp"
+    )
+    FILE(GLOB OPENGL_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
+    )
 
 else()
 
-    FILE(GLOB CORE
+    FILE(GLOB CORE_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp")
-    FILE(GLOB FILESYSTEM
+    )
+    FILE(GLOB FILESYSTEM_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp")
-    FILE(GLOB WINDOW
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/xlib/*.cpp")
-    FILE(GLOB OPENGL
+    )
+    FILE(GLOB WINDOW_HEADERS
+        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/window/*.hpp"
+    )
+    FILE(GLOB OPENGL_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
+    )
+
+    FILE(GLOB CORE_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp"
+    )
+    FILE(GLOB FILESYSTEM_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp"
+    )
+    FILE(GLOB WINDOW_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/xlib/*.cpp"
+    )
+    FILE(GLOB OPENGL_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/glx/*.cpp")
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/glx/*.cpp"
+    )
 
 endif()
 
-FILE(GLOB IMAGE
-    "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/image/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/image/*.cpp")
-FILE(GLOB JPEG
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.cpp")
-FILE(GLOB MATH
-    "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/math/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/math/*.cpp")
-FILE(GLOB SIMD
-    "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/simd/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/simd/*.cpp")
+FILE(GLOB IMAGE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/image/*.hpp")
+FILE(GLOB JPEG_HEADERS  "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.hpp")
+FILE(GLOB MATH_HEADERS  "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/math/*.hpp")
+FILE(GLOB SIMD_HEADERS  "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/simd/*.hpp")
 
-SOURCE_GROUP("core" FILES ${CORE})
-SOURCE_GROUP("filesystem" FILES ${FILESYSTEM})
-SOURCE_GROUP("image" FILES ${IMAGE})
-SOURCE_GROUP("jpeg" FILES ${JPEG})
-SOURCE_GROUP("math" FILES ${MATH})
-SOURCE_GROUP("simd" FILES ${SIMD})
-SOURCE_GROUP("window" FILES ${WINDOW})
-SOURCE_GROUP("opengl" FILES ${OPENGL})
+FILE(GLOB IMAGE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/image/*.cpp")
+FILE(GLOB JPEG_SOURCES  "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.cpp")
+FILE(GLOB MATH_SOURCES  "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/math/*.cpp")
+FILE(GLOB SIMD_SOURCES  "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/simd/*.cpp")
+
+SOURCE_GROUP("include/core" FILES ${CORE_HEADERS})
+SOURCE_GROUP("include/filesystem" FILES ${FILESYSTEM_HEADERS})
+SOURCE_GROUP("include/window" FILES ${WINDOW_HEADERS})
+SOURCE_GROUP("include/opengl" FILES ${OPENGL_HEADERS})
+SOURCE_GROUP("include/image" FILES ${IMAGE_HEADERS})
+SOURCE_GROUP("include/jpeg" FILES ${JPEG_HEADERS})
+SOURCE_GROUP("include/math" FILES ${MATH_HEADERS})
+SOURCE_GROUP("include/simd" FILES ${SIMD_HEADERS})
+
+SOURCE_GROUP("source/core" FILES ${CORE_SOURCES})
+SOURCE_GROUP("source/filesystem" FILES ${FILESYSTEM_SOURCES})
+SOURCE_GROUP("source/window" FILES ${WINDOW_SOURCES})
+SOURCE_GROUP("source/opengl" FILES ${OPENGL_SOURCES})
+SOURCE_GROUP("source/image" FILES ${IMAGE_SOURCES})
+SOURCE_GROUP("source/jpeg" FILES ${JPEG_SOURCES})
+SOURCE_GROUP("source/math" FILES ${MATH_SOURCES})
+SOURCE_GROUP("source/simd" FILES ${SIMD_SOURCES})
 
 FILE(GLOB EXTERNAL_LZMA
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzma/*.h"
@@ -273,12 +332,18 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(mango
-    ${CORE}
-    ${FILESYSTEM}
-    ${IMAGE}
-    ${JPEG}
-    ${MATH}
-    ${SIMD}
+    ${CORE_HEADERS}
+    ${CORE_SOURCES}
+    ${FILESYSTEM_HEADERS}
+    ${FILESYSTEM_SOURCES}
+    ${IMAGE_HEADERS}
+    ${IMAGE_SOURCES}
+    ${JPEG_HEADERS}
+    ${JPEG_SOURCES}
+    ${MATH_HEADERS}
+    ${MATH_SOURCES}
+    ${SIMD_HEADERS}
+    ${SIMD_SOURCES}
     ${EXTERNAL_LZMA}
     ${EXTERNAL_AES}
     ${EXTERNAL_BC}
@@ -305,8 +370,8 @@ set_target_properties(mango PROPERTIES
 )
 
 add_library(mango-opengl
-    ${WINDOW}
-    ${OPENGL}
+    ${WINDOW_SOURCES}
+    ${OPENGL_SOURCES}
 )
 
 set_target_properties(mango-opengl PROPERTIES
