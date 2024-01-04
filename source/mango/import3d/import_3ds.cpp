@@ -964,11 +964,11 @@ namespace
         }
     };
 
-    void texcoord_unwrap(float& a, float& b, float& c)
+    void unwrapTexcoord(float& a, float& b, float& c)
     {
-        float smin = std::min(std::min(a, b), c);
-        float smax = std::max(std::max(a, b), c);
-        float d = smax - smin;
+        float s0 = std::min({a, b, c});
+        float s1 = std::max({a, b, c});
+        float d = s1 - s0;
         if (d > 0.8f)
         {
             d = std::ceil(d);
@@ -978,20 +978,20 @@ namespace
         }
     }
 
-    void texcoord_wrapping(Triangle& triangle, u32 flags)
+    void fixTexcoordWrapping(Triangle& triangle, u32 flags)
     {
         if (flags & Face3DS::UWRAP)
         {
-            texcoord_unwrap(triangle.vertex[0].texcoord.x,
-                            triangle.vertex[1].texcoord.x,
-                            triangle.vertex[2].texcoord.x);
+            unwrapTexcoord(triangle.vertex[0].texcoord.x,
+                           triangle.vertex[1].texcoord.x,
+                           triangle.vertex[2].texcoord.x);
         }
 
         if (flags & Face3DS::VWRAP)
         {
-            texcoord_unwrap(triangle.vertex[0].texcoord.y,
-                            triangle.vertex[1].texcoord.y,
-                            triangle.vertex[2].texcoord.y);
+            unwrapTexcoord(triangle.vertex[0].texcoord.y,
+                           triangle.vertex[1].texcoord.y,
+                           triangle.vertex[2].texcoord.y);
         }
     }
 
@@ -1093,7 +1093,7 @@ namespace mango::import3d
                 }
 
                 // fix texcoord wrapping
-                texcoord_wrapping(triangle, face.flags);
+                fixTexcoordWrapping(triangle, face.flags);
 
                 mesh.triangles.push_back(triangle);
             }

@@ -60,7 +60,7 @@ namespace mango::import3d
 
         AlphaMode alphaMode { AlphaMode::OPAQUE };
         float alphaCutoff { 0.5f };
-        bool doubleSided { false };
+        bool twosided { false };
     };
 
     /*
