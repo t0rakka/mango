@@ -63,19 +63,9 @@ namespace mango::import3d
         bool twosided { false };
     };
 
-    /*
-    struct MaterialCluster
-    {
-        u32 start;
-        u32 count;
-        u32 material;
-    };
-    */
-
     struct Mesh
     {
         std::vector<Triangle> triangles;
-        //std::vector<MaterialCluster> clusters;
     };
 
     enum class PrimitiveMode
@@ -88,9 +78,9 @@ namespace mango::import3d
     struct IndexedMesh
     {
         std::vector<Vertex> vertices;
+
         std::vector<u32> indices;
         PrimitiveMode mode { PrimitiveMode::TRIANGLE_LIST };
-        //std::vector<MaterialCluster> clusters;
     };
 
     struct Object

@@ -946,6 +946,27 @@ external_mikktspace_sources = files(
     '../source/external/mikktspace/mikktspace.c'
 )
 
+external_simdjson_headers = files(
+    '../source/external/simdjson/simdjson.h'
+)
+
+external_simdjson_sources = files(
+    '../source/external/simdjson/simdjson.cpp'
+)
+
+external_fastgltf_headers = files(
+    '../source/external/fastgltf/include/fastgltf/base64.hpp',
+    '../source/external/fastgltf/include/fastgltf/parser.hpp',
+    '../source/external/fastgltf/include/fastgltf/tools.hpp',
+    '../source/external/fastgltf/include/fastgltf/types.hpp',
+    '../source/external/fastgltf/include/fastgltf/util.hpp',
+)
+
+external_fastgltf_sources = files(
+    '../source/external/fastgltf/src/base64.cpp',
+    '../source/external/fastgltf/src/fastgltf.cpp',
+)
+
 # ------------------------------------------------------------------------------
 # compiler settings
 # ------------------------------------------------------------------------------
@@ -957,6 +978,11 @@ message('cpp: @0@'.format(cpp.get_id()))
 
 if buildtype == 'release'
     mango_public_cpp_args += ['-DNDEBUG']
+endif
+
+if cpp.get_id() != 'msvc'
+    # fastgltf uses #pragma region
+    add_project_arguments('-Wno-unknown-pragmas', language: ['c', 'cpp'])
 endif
 
 if is_windows
@@ -1166,7 +1192,6 @@ mango = shared_library('mango',
         external_basisu_headers,
         external_astc_headers,
         external_lcms_headers,
-        external_mikktspace_headers,
         external_headers
     ],
     sources : [
@@ -1192,7 +1217,6 @@ mango = shared_library('mango',
         external_basisu_sources,
         external_astc_sources,
         external_lcms_sources,
-        external_mikktspace_sources,
     ],
     include_directories : [ mango_inc, '../source/external/libwebp' ],
     dependencies        : mango_deps,
@@ -1235,10 +1259,24 @@ mango_opengl_dep = declare_dependency(
 mango_import3d = shared_library('mango-import3d',
     version             : mango_import3d_version,
     soversion           : mango_import3d_version,
-    sources             : mango_import3d_sources,
+    extra_files : [
+        external_mikktspace_headers,
+        external_simdjson_headers,
+        external_fastgltf_headers,
+    ],
+    sources : [
+        mango_import3d_sources,
+        external_mikktspace_sources,
+        external_simdjson_sources,
+        external_fastgltf_sources,
+    ],
     link_with           : mango,
     dependencies        : mango_deps,
-    include_directories : mango_inc,
+    include_directories : [
+        mango_inc,
+        '../source/external/fastgltf/include',
+        '../source/external/simdjson',
+    ],
     cpp_args            : mango_public_cpp_args,
     install             : true
 )
