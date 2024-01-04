@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -65,7 +65,7 @@ namespace mango::import3d
     struct Triangle
     {
         Vertex vertex[3];
-        //u32 material;
+        u32 material;
     };
 
     struct Mesh
@@ -77,15 +77,6 @@ namespace mango::import3d
     // indexed mesh
     // -----------------------------------------------------------------------
 
-#if 0
-
-    // TODO: convert everythin to use this layout:
-    //
-    // - requires supporting material index in Mesh
-    // - add flags which vertex components are present
-    // - use separate array for each vertex component
-    // - support 16 and 32 bit indices
-
     struct Primitive
     {
         enum class Mode
@@ -95,35 +86,18 @@ namespace mango::import3d
             TRIANGLE_FAN,
         };
 
-        std::vector<u32> indices;
         Mode mode { Mode::TRIANGLE_LIST };
+        u32 start;
+        u32 count;
         u32 material;
     };
 
     struct IndexedMesh
     {
         std::vector<Vertex> vertices;
+        std::vector<u32> indices;
         std::vector<Primitive> primitives;
     };
-
-#else
-
-    enum class PrimitiveMode
-    {
-        TRIANGLE_LIST,
-        TRIANGLE_STRIP,
-        TRIANGLE_FAN,
-    };
-
-    struct IndexedMesh
-    {
-        std::vector<Vertex> vertices;
-
-        std::vector<u32> indices;
-        PrimitiveMode mode { PrimitiveMode::TRIANGLE_LIST };
-    };
-
-#endif
 
     // -----------------------------------------------------------------------
     // scene
@@ -158,12 +132,9 @@ namespace mango::import3d
     // shapes
     // -----------------------------------------------------------------------
 
-    // TODO: more shapes (sphere, icosahedron, etc.)
-
     struct Cube : IndexedMesh
     {
-        // TODO: float32x3 as size
-        Cube(float size);
+        Cube(float32x3 size);
     };
 
     struct Torus : IndexedMesh

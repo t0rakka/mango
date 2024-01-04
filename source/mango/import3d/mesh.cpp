@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/import3d/mesh.hpp>
@@ -84,104 +84,6 @@ bool operator < (const Vertex& a, const Vertex& b)
     return std::memcmp(&a, &b, sizeof(Vertex)) < 0;
 }
 
-Mesh convertMesh(const IndexedMesh& input)
-{
-    Mesh output;
-
-    switch (input.mode)
-    {
-        case PrimitiveMode::TRIANGLE_LIST:
-        {
-            for (size_t i = 0; i < input.indices.size(); i += 3)
-            {
-                Triangle triangle;
-
-                triangle.vertex[0] = input.vertices[input.indices[i + 0]];
-                triangle.vertex[1] = input.vertices[input.indices[i + 1]];
-                triangle.vertex[2] = input.vertices[input.indices[i + 2]];
-
-                output.triangles.push_back(triangle);
-            }
-            break;
-        }
-
-        case PrimitiveMode::TRIANGLE_STRIP:
-        {
-            Vertex v0 = input.vertices[input.indices[0]];
-            Vertex v1 = input.vertices[input.indices[1]];
-
-            for (size_t i = 2; i < input.indices.size(); ++i)
-            {
-                Triangle triangle;
-
-                triangle.vertex[(i + 0) & 1] = v0;
-                triangle.vertex[(i + 1) & 1] = v1;
-                triangle.vertex[2] = input.vertices[input.indices[i]];
-
-                v0 = v1;
-                v1 = triangle.vertex[2];
-
-                output.triangles.push_back(triangle);
-            }
-
-            break;
-        }
-
-        case PrimitiveMode::TRIANGLE_FAN:
-        {
-            Triangle triangle;
-
-            triangle.vertex[0] = input.vertices[input.indices[0]];
-            triangle.vertex[2] = input.vertices[input.indices[1]];
-
-            for (size_t i = 2; i < input.indices.size(); ++i)
-            {
-                triangle.vertex[1] = triangle.vertex[2];
-                triangle.vertex[2] = input.vertices[input.indices[i]];
-
-                output.triangles.push_back(triangle);
-            }
-
-            break;
-        }
-    }
-
-    return output;
-}
-
-IndexedMesh convertMesh(const Mesh& input)
-{
-    IndexedMesh output;
-
-    std::map<Vertex, size_t> unique;
-
-    for (const Triangle& triangle : input.triangles)
-    {
-        for (int i = 0; i < 3; ++i)
-        {
-            const Vertex& vertex = triangle.vertex[i];
-            size_t index;
-
-            auto it = unique.find(vertex);
-            if (it != unique.end())
-            {
-                // vertex already exists; use it's index
-                index = it->second;
-            }
-            else
-            {
-                index = output.vertices.size();
-                unique[vertex] = index; // remember the index of this vertex
-                output.vertices.push_back(vertex);
-            }
-
-            output.indices.push_back(u32(index));
-        }
-    }
-
-    return output;
-}
-
 void computeTangents(Mesh& mesh)
 {
     SMikkTSpaceInterface mik_interface;
@@ -203,19 +105,166 @@ void computeTangents(Mesh& mesh)
     MANGO_UNREFERENCED(status);
 }
 
-Cube::Cube(float size)
+Mesh convertMesh(const IndexedMesh& input)
 {
-    float s0 = size *-0.5f;
-    float s1 = size * 0.5f;
+    Mesh output;
 
-    const float32x3 position0(s0, s0, s0);
-    const float32x3 position1(s1, s0, s0);
-    const float32x3 position2(s0, s1, s0);
-    const float32x3 position3(s1, s1, s0);
-    const float32x3 position4(s0, s0, s1);
-    const float32x3 position5(s1, s0, s1);
-    const float32x3 position6(s0, s1, s1);
-    const float32x3 position7(s1, s1, s1);
+    for (const Primitive& primitive : input.primitives)
+    {
+        switch (primitive.mode)
+        {
+            case Primitive::Mode::TRIANGLE_LIST:
+            {
+                Triangle triangle;
+                triangle.material = primitive.material;
+
+                const size_t start = primitive.start;
+                const size_t end = start + primitive.count;
+
+                for (size_t i = start; i < end; i += 3)
+                {
+                    triangle.vertex[0] = input.vertices[input.indices[i + 0]];
+                    triangle.vertex[1] = input.vertices[input.indices[i + 1]];
+                    triangle.vertex[2] = input.vertices[input.indices[i + 2]];
+
+                    output.triangles.push_back(triangle);
+                }
+
+                break;
+            }
+
+            case Primitive::Mode::TRIANGLE_STRIP:
+            {
+                Triangle triangle;
+                triangle.material = primitive.material;
+
+                const size_t start = primitive.start;
+                const size_t end = start + primitive.count;
+
+                Vertex v0 = input.vertices[input.indices[start + 0]];
+                Vertex v1 = input.vertices[input.indices[start + 1]];
+
+                for (size_t i = start + 2; i < end; ++i)
+                {
+                    triangle.vertex[(i + 0) & 1] = v0;
+                    triangle.vertex[(i + 1) & 1] = v1;
+                    triangle.vertex[2] = input.vertices[input.indices[i]];
+
+                    v0 = v1;
+                    v1 = triangle.vertex[2];
+
+                    output.triangles.push_back(triangle);
+                }
+
+                break;
+            }
+
+            case Primitive::Mode::TRIANGLE_FAN:
+            {
+                Triangle triangle;
+                triangle.material = primitive.material;
+
+                const size_t start = primitive.start;
+                const size_t end = start + primitive.count;
+
+                triangle.vertex[0] = input.vertices[input.indices[start + 0]];
+                triangle.vertex[2] = input.vertices[input.indices[start + 1]];
+
+                for (size_t i = start + 2; i < end; ++i)
+                {
+                    triangle.vertex[1] = triangle.vertex[2];
+                    triangle.vertex[2] = input.vertices[input.indices[i]];
+
+                    output.triangles.push_back(triangle);
+                }
+
+                break;
+            }
+        }
+    }
+
+    return output;
+}
+
+IndexedMesh convertMesh(const Mesh& input)
+{
+    IndexedMesh output;
+
+    std::vector<Triangle> triangles = input.triangles;
+ 
+    std::sort(triangles.begin(), triangles.end(), [] (const Triangle& a, const Triangle& b)
+    {
+        // sort triangles by material
+        return a.material < b.material;
+    });
+
+    std::map<Vertex, size_t> unique;
+
+    Primitive primitive;
+
+    primitive.mode = Primitive::Mode::TRIANGLE_LIST;
+    primitive.start = 0;
+    primitive.count = 0;
+    primitive.material = 0;
+
+    for (const Triangle& triangle : input.triangles)
+    {
+        if (primitive.material != triangle.material)
+        {
+            if (primitive.count > 0)
+            {
+                output.primitives.push_back(primitive);
+
+                primitive.start += primitive.count;
+                primitive.count = 0;
+                primitive.material = triangle.material;
+            }
+        }
+
+        for (int i = 0; i < 3; ++i)
+        {
+            const Vertex& vertex = triangle.vertex[i];
+            size_t index;
+
+            auto it = unique.find(vertex);
+            if (it != unique.end())
+            {
+                // vertex already exists; use it's index
+                index = it->second;
+            }
+            else
+            {
+                index = output.vertices.size();
+                unique[vertex] = index; // remember the index of this vertex
+                output.vertices.push_back(vertex);
+            }
+
+            output.indices.push_back(u32(index));
+            ++primitive.count;
+        }
+    }
+
+    if (primitive.count > 0)
+    {
+        output.primitives.push_back(primitive);
+    }
+
+    return output;
+}
+
+Cube::Cube(float32x3 size)
+{
+    const float32x3 pos = size * 0.5f;
+    const float32x3 neg = size * -0.5f;
+
+    const float32x3 position0(neg.x, neg.y, neg.z);
+    const float32x3 position1(pos.x, neg.y, neg.z);
+    const float32x3 position2(neg.x, pos.y, neg.z);
+    const float32x3 position3(pos.x, pos.y, neg.z);
+    const float32x3 position4(neg.x, neg.y, pos.z);
+    const float32x3 position5(pos.x, neg.y, pos.z);
+    const float32x3 position6(neg.x, pos.y, pos.z);
+    const float32x3 position7(pos.x, pos.y, pos.z);
 
     const float32x3 normal0( 1.0f, 0.0f, 0.0f);
     const float32x3 normal1(-1.0f, 0.0f, 0.0f);
@@ -284,6 +333,15 @@ Cube::Cube(float size)
         16, 17, 18, 16, 18, 19,
         20, 21, 22, 20, 22, 23,
     };
+
+    Primitive primitive;
+
+    primitive.mode = Primitive::Mode::TRIANGLE_LIST;
+    primitive.start = 0;
+    primitive.count = 36;
+    primitive.material = 0;
+
+    primitives.push_back(primitive);
 }
 
 Torus::Torus(Parameters params)
@@ -341,6 +399,15 @@ Torus::Torus(Parameters params)
             indices.push_back(c);
         }
     }
+
+    Primitive primitive;
+
+    primitive.mode = Primitive::Mode::TRIANGLE_LIST;
+    primitive.start = 0;
+    primitive.count = u32(indices.size());
+    primitive.material = 0;
+
+    primitives.push_back(primitive);
 }
 
 // Torus knot generation
@@ -355,27 +422,6 @@ Torusknot::Torusknot(Parameters params)
 
     const float uscale = params.uscale / params.facets;
     const float vscale = params.vscale / params.steps;
-
-    // generate indices
-    std::vector<int> stripIndices((params.steps + 1) * params.facets * 2);
-
-    for (int j = 0; j < params.facets; j++)
-    {
-        for (int i = 0; i < params.steps + 1; i++)
-        {
-            stripIndices[i * 2 + 0 + j * (params.steps + 1) * 2] = (j + 1 + i * (params.facets + 1));
-            stripIndices[i * 2 + 1 + j * (params.steps + 1) * 2] = (j + 0 + i * (params.facets + 1));
-        }
-    }
-
-    // convert triangle strip into triangles
-    for (size_t i = 2; i < stripIndices.size(); ++i)
-    {
-        int s = i & 1; // swap triangle winding-order
-        indices.push_back(stripIndices[i - 2 + s]);
-        indices.push_back(stripIndices[i - 1 - s]);
-        indices.push_back(stripIndices[i]);
-    }
 
     // generate vertices
     vertices.resize((params.steps + 1) * (params.facets + 1) + 1);
@@ -440,6 +486,36 @@ Torusknot::Torusknot(Parameters params)
     // finally, there's one vertex that needs to be duplicated due to both U and V coordinate.
     vertices[params.steps * (params.facets + 1) + params.facets] = vertices[0];
     vertices[params.steps * (params.facets + 1) + params.facets].texcoord = float32x2(params.uscale, params.vscale);
+
+    // generate indices
+    std::vector<int> stripIndices((params.steps + 1) * params.facets * 2);
+
+    for (int j = 0; j < params.facets; j++)
+    {
+        for (int i = 0; i < params.steps + 1; i++)
+        {
+            stripIndices[i * 2 + 0 + j * (params.steps + 1) * 2] = (j + 1 + i * (params.facets + 1));
+            stripIndices[i * 2 + 1 + j * (params.steps + 1) * 2] = (j + 0 + i * (params.facets + 1));
+        }
+    }
+
+    // convert triangle strip into triangles
+    for (size_t i = 2; i < stripIndices.size(); ++i)
+    {
+        int s = i & 1; // swap triangle winding-order
+        indices.push_back(stripIndices[i - 2 + s]);
+        indices.push_back(stripIndices[i - 1 - s]);
+        indices.push_back(stripIndices[i]);
+    }
+
+    Primitive primitive;
+
+    primitive.mode = Primitive::Mode::TRIANGLE_LIST;
+    primitive.start = 0;
+    primitive.count = u32(indices.size());
+    primitive.material = 0;
+
+    primitives.push_back(primitive);
 }
 
 } // namespace mango::import3d
