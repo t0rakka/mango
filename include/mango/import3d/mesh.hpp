@@ -20,21 +20,8 @@ namespace mango::import3d
     using color8x4 = math::Vector<u8, 4>;
 
     // -----------------------------------------------------------------------
-    // scene
+    // material
     // -----------------------------------------------------------------------
-
-    struct Vertex
-    {
-        float32x3 position { 0.0f, 0.0f, 0.0f };
-        float32x3 normal   { 0.0f, 0.0f, 0.0f };
-        float32x4 tangent  { 0.0f, 0.0f, 0.0f, 1.0f };
-        float32x2 texcoord { 0.0f, 0.0f };
-    };
-
-    struct Triangle
-    {
-        Vertex vertex[3];
-    };
 
     using Texture = std::shared_ptr<image::Bitmap>;
 
@@ -63,10 +50,63 @@ namespace mango::import3d
         bool twosided { false };
     };
 
+    // -----------------------------------------------------------------------
+    // mesh
+    // -----------------------------------------------------------------------
+
+    struct Vertex
+    {
+        float32x3 position { 0.0f, 0.0f, 0.0f };
+        float32x3 normal   { 0.0f, 0.0f, 0.0f };
+        float32x4 tangent  { 0.0f, 0.0f, 0.0f, 1.0f };
+        float32x2 texcoord { 0.0f, 0.0f };
+    };
+
+    struct Triangle
+    {
+        Vertex vertex[3];
+        //u32 material;
+    };
+
     struct Mesh
     {
         std::vector<Triangle> triangles;
     };
+
+    // -----------------------------------------------------------------------
+    // indexed mesh
+    // -----------------------------------------------------------------------
+
+#if 0
+
+    // TODO: convert everythin to use this layout:
+    //
+    // - requires supporting material index in Mesh
+    // - add flags which vertex components are present
+    // - use separate array for each vertex component
+    // - support 16 and 32 bit indices
+
+    struct Primitive
+    {
+        enum class Mode
+        {
+            TRIANGLE_LIST,
+            TRIANGLE_STRIP,
+            TRIANGLE_FAN,
+        };
+
+        std::vector<u32> indices;
+        Mode mode { Mode::TRIANGLE_LIST };
+        u32 material;
+    };
+
+    struct IndexedMesh
+    {
+        std::vector<Vertex> vertices;
+        std::vector<Primitive> primitives;
+    };
+
+#else
 
     enum class PrimitiveMode
     {
@@ -82,6 +122,12 @@ namespace mango::import3d
         std::vector<u32> indices;
         PrimitiveMode mode { PrimitiveMode::TRIANGLE_LIST };
     };
+
+#endif
+
+    // -----------------------------------------------------------------------
+    // scene
+    // -----------------------------------------------------------------------
 
     struct Object
     {
@@ -103,17 +149,20 @@ namespace mango::import3d
     // utilities
     // -----------------------------------------------------------------------
 
+    void computeTangents(Mesh& mesh);
+
     Mesh convertMesh(const IndexedMesh& input);
     IndexedMesh convertMesh(const Mesh& input);
 
-    void computeTangents(Mesh& mesh);
+    // -----------------------------------------------------------------------
+    // shapes
+    // -----------------------------------------------------------------------
 
-    // -----------------------------------------------------------------------
-    // primitives
-    // -----------------------------------------------------------------------
+    // TODO: more shapes (sphere, icosahedron, etc.)
 
     struct Cube : IndexedMesh
     {
+        // TODO: float32x3 as size
         Cube(float size);
     };
 

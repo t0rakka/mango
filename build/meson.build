@@ -974,7 +974,7 @@ external_fastgltf_sources = files(
 cpp = meson.get_compiler('cpp')
 buildtype = get_option('buildtype')
 
-message('cpp: @0@'.format(cpp.get_id()))
+message('Compiler: @0@'.format(cpp.get_id()))
 
 if buildtype == 'release'
     mango_public_cpp_args += ['-DNDEBUG']
