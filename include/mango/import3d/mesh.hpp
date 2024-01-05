@@ -9,6 +9,7 @@
 #include <memory>
 #include <mango/math/math.hpp>
 #include <mango/image/image.hpp>
+#include <mango/filesystem/filesystem.hpp>
 
 namespace mango::import3d
 {
@@ -34,6 +35,8 @@ namespace mango::import3d
 
     struct Material
     {
+        std::string name;
+
         float roughnessFactor { 1.0f };
         float metallicFactor { 1.0f };
         float32x4 baseColorFactor { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -125,6 +128,7 @@ namespace mango::import3d
     // -----------------------------------------------------------------------
 
     void computeTangents(Mesh& mesh);
+    void loadTexture(Texture& texture, const filesystem::Path& path, const std::string& filename);
 
     Mesh convertMesh(const IndexedMesh& input);
     IndexedMesh convertMesh(const Mesh& input);

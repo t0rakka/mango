@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <string_view>
 #include <mango/core/core.hpp>
@@ -22,24 +22,40 @@ namespace mango::import3d
     {
         std::string name;
 
-        float ns;
-        float ni;
-        float d;
-        float tr;
-        float tf;
+        float ns = 0.0f; // specular exponent
+        float ni = 1.0f; // optical density / refraction index
+        float tr = 1.0f; // transparency (1.0 = opaque)
+        float tf = 1.0f; // transmission filter (for transparency)
 
-        float illum;
+        u32 illum = 2; // illumination model
 
-        float32x3 ka;
-        float32x3 kd;
-        float32x3 ks;
-        float32x3 ke;
+        float32x3 ka { 0.0f, 0.0f, 0.0f }; // ambient color
+        float32x3 kd { 1.0f, 1.0f, 1.0f }; // diffuse color
+        float32x3 ks { 0.0f, 0.0f, 0.0f }; // specular color
+        float32x3 ke { 0.0f, 0.0f, 0.0f }; // emissive color
 
-        std::string map_ka;
-        std::string map_kd;
-        std::string map_ks;
-        std::string map_ke;
-        std::string map_bump;
+        std::string map_ka;    // ambient texture
+        std::string map_kd;    // diffuse texture
+        std::string map_ks;    // specular texture
+        std::string map_ke;    // emissive texture
+        std::string map_bump;  // normal texture
+        std::string map_ns;    // specular exponent texture
+        std::string map_d;     // alpha texture
+        std::string map_disp;  // displacement texture
+        std::string map_decal; // stencil texture
+        std::string map_refl;  // reflection texture
+
+        /* PBR:
+        Pr / map_Pr     # roughness
+        Pm / map_Pm     # metallic
+        Ps / map_Ps     # sheen
+        Pc              # clearcoat thickness
+        Pcr             # clearcoat roughness
+        Ke / map_Ke     # emissive
+        aniso           # anisotropy
+        anisor          # anisotropy rotation
+        norm            # normal map (RGB components represent XYZ components of the surface normal)
+        */
     };
 
     struct ObjectOBJ
@@ -330,15 +346,19 @@ namespace mango::import3d
                         }
                         else if (id == "d")
                         {
-                            m_current_material->d = parse_float(tokens);
+                            m_current_material->tr = parse_float(tokens);
                         }
                         else if (id == "Tr")
                         {
-                            m_current_material->tr = parse_float(tokens);
+                            m_current_material->tr = 1.0f - parse_float(tokens);
+                        }
+                        else if (id == "Tf")
+                        {
+                            m_current_material->tf = parse_float(tokens);
                         }
                         else if (id == "illum")
                         {
-                            m_current_material->illum = parse_float(tokens);
+                            m_current_material->illum = u32(parse_float(tokens));
                         }
                         else if (id == "Ka")
                         {
@@ -372,10 +392,36 @@ namespace mango::import3d
                         {
                             m_current_material->map_ke = std::string(tokens[0]);
                         }
-                        else if (id == "map_bump")
+                        else if (id == "map_bump" || id == "map_Bump"|| id == "bump")
                         {
                             m_current_material->map_bump = std::string(tokens[0]);
                         }
+                        else if (id == "map_Ns")
+                        {
+                            m_current_material->map_ns = std::string(tokens[0]);
+                        }
+                        else if (id == "map_d")
+                        {
+                            m_current_material->map_d = std::string(tokens[0]);
+                        }
+                        else if (id == "disp")
+                        {
+                            m_current_material->map_disp = std::string(tokens[0]);
+                        }
+                        else if (id == "decal")
+                        {
+                            m_current_material->map_decal = std::string(tokens[0]);
+                        }
+                        else if (id == "refl")
+                        {
+                            m_current_material->map_refl = std::string(tokens[0]);
+                        }
+                        else
+                        {
+                            debugPrintLine("TODO: %s", std::string(id).c_str());
+                        }
+
+                        //debugPrintLine("token: %s : %s", std::string(id).c_str(), std::string(tokens[0]).c_str());
                     }
 
                     id = std::string_view();
@@ -584,13 +630,26 @@ namespace mango::import3d
 
         u64 time1 = mango::Time::ms();
 
-        //materials = reader.m_materials;
+        for (const MaterialOBJ& materialobj : reader.m_materials)
+        {
+            Material material;
+
+            material.name = materialobj.name;
+
+            material.baseColorFactor = float32x4(materialobj.kd, materialobj.tr);
+            material.emissiveFactor = materialobj.ke;
+
+            loadTexture(material.baseColorTexture, path, materialobj.map_kd);
+            loadTexture(material.emissiveTexture, path, materialobj.map_ke);
+            loadTexture(material.normalTexture, path, materialobj.map_bump);
+            loadTexture(material.occlusionTexture, path, materialobj.map_ka);
+
+            materials.push_back(material);
+        }
 
         for (const auto& object : reader.m_objects)
         {
             Mesh mesh;
-
-            //mesh.material = object.material;
 
             mesh.triangles.resize(object.faces.size());
 
@@ -598,6 +657,8 @@ namespace mango::import3d
             {
                 const FaceOBJ& face = object.faces[faceIndex];
                 Triangle& triangle = mesh.triangles[faceIndex];
+
+                triangle.material = object.material;
 
                 for (int i = 0; i < 3; ++i)
                 {

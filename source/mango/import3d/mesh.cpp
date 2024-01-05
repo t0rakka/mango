@@ -3,8 +3,17 @@
     Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
+#include <mango/core/core.hpp>
 #include <mango/import3d/mesh.hpp>
 #include "../../external/mikktspace/mikktspace.h"
+
+/*
+
+This is a convenience API for reading various 3D object formats and providing the data in
+unified layout for rendering, or processing and dumping into a file that custom engine can
+read more efficiently. The intent is accessibility not performance.
+
+*/
 
 namespace
 {
@@ -103,6 +112,37 @@ void computeTangents(Mesh& mesh)
 
     tbool status = genTangSpaceDefault(&mik_context);
     MANGO_UNREFERENCED(status);
+}
+
+void loadTexture(Texture& texture, const filesystem::Path& path, const std::string& filename)
+{
+    /* NOTE:
+
+    This is just a convenience function. What we really need is "TextureProvider" interface,
+    which can return a memory mapped view of the texture file, or result of combining two textures
+    into one when it is required. We might also want to use compressed textures and directly upload
+    them into the GPU, or use compute decoder to decompress JPEG. DX12 also has DirectTexture API
+    which could be supported when we don't always provide the data as Bitmap like we do here.
+
+    A texture loading queue can cut the loading time into fraction but we want to keep this simple for now.
+
+    */
+
+    if (filename.empty())
+    {
+        return;
+    }
+
+    bool is_debug_enable = debugPrintIsEnable();
+    debugPrintEnable(false);
+
+    filesystem::File file(path, filename);
+
+    image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
+    texture = std::make_shared<image::Bitmap>(file, filename, format);
+
+    debugPrintEnable(is_debug_enable);
+    debugPrintLine("Texture: \"%s\" (%d x %d)", filename.c_str(), texture->width, texture->height);
 }
 
 Mesh convertMesh(const IndexedMesh& input)

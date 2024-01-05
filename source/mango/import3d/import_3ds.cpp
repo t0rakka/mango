@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/core.hpp>
@@ -998,25 +998,6 @@ namespace
         }
     }
 
-    void loadTexture(Texture& texture, const filesystem::Path& path, const std::string& filename)
-    {
-        if (filename.empty())
-        {
-            return;
-        }
-
-        bool is_debug_enable = debugPrintIsEnable();
-        debugPrintEnable(false);
-
-        filesystem::File file(path, filename);
-
-        image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
-        texture = std::make_shared<image::Bitmap>(file, filename, format);
-
-        debugPrintEnable(is_debug_enable);
-        debugPrintLine("Texture: \"%s\" (%d x %d)", filename.c_str(), texture->width, texture->height);
-    }
-
 } // namespace
 
 namespace mango::import3d
@@ -1030,6 +1011,8 @@ namespace mango::import3d
         for (auto& material3ds : reader.materials)
         {
             Material material;
+
+            material.name = material3ds.name;
 
             material.baseColorFactor = material3ds.diffuse;
             material.twosided = material3ds.twosided;
