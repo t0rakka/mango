@@ -115,6 +115,7 @@ namespace mango::import3d
 
     struct Scene
     {
+        std::vector<Material> materials;
         std::vector<Mesh> meshes;
         std::vector<Object> objects;
     };

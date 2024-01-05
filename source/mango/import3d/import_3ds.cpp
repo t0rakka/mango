@@ -24,9 +24,9 @@ namespace
     {
         std::string name;
 
-        color8x4 ambient;
-        color8x4 diffuse;
-        color8x4 specular;
+        float32x4 ambient;
+        float32x4 diffuse;
+        float32x4 specular;
 
         Texture3DS texture_map1;
         Texture3DS texture_map2;
@@ -93,7 +93,7 @@ namespace
         int level = 0;
         bool debug = true;
 
-        color8x4 color;
+        float32x4 color;
         float percent;
         std::string text;
         Texture3DS* texture = nullptr;
@@ -179,15 +179,18 @@ namespace
 
         void chunk_color_f32(LittleEndianConstPointer& p)
         {
-            float r = p.read32f();
-            float g = p.read32f();
-            float b = p.read32f();
-            color = color8x4(r, g, b, 0xff);
+            float r = p.read32f() / 255.0f;
+            float g = p.read32f() / 255.0f;
+            float b = p.read32f() / 255.0f;
+            color = float32x4(r, g, b, 1.0f);
         }
 
         void chunk_color_u8(LittleEndianConstPointer& p)
         {
-            color = color8x4(p[0], p[1], p[2], 0xff);
+            float r = float(p[0]) / 255.0f;
+            float g = float(p[1]) / 255.0f;
+            float b = float(p[2]) / 255.0f;
+            color = float32x4(r, g, b, 1.0f);
             p += 3;
         }
 
@@ -263,7 +266,7 @@ namespace
 
             Material3DS& material = getCurrentMaterial();
             material.ambient = color;
-            debugPrint3DS("ambient color: %d, %d, %d", color[0], color[1], color[2]);
+            debugPrint3DS("ambient color: %f, %f, %f", color[0], color[1], color[2]);
         }
 
         void chunk_material_diffuse_color(LittleEndianConstPointer& p)
@@ -272,7 +275,7 @@ namespace
 
             Material3DS& material = getCurrentMaterial();
             material.diffuse = color;
-            debugPrint3DS("diffuse color: %d, %d, %d", color[0], color[1], color[2]);
+            debugPrint3DS("diffuse color: %f, %f, %f", color[0], color[1], color[2]);
         }
 
         void chunk_material_specular_color(LittleEndianConstPointer& p)
@@ -281,7 +284,7 @@ namespace
 
             Material3DS& material = getCurrentMaterial();
             material.specular = color;
-            debugPrint3DS("specular color: %d, %d, %d", color[0], color[1], color[2]);
+            debugPrint3DS("specular color: %f, %f, %f", color[0], color[1], color[2]);
         }
 
         void chunk_material_shininess(LittleEndianConstPointer& p)
@@ -995,6 +998,25 @@ namespace
         }
     }
 
+    void loadTexture(Texture& texture, const filesystem::Path& path, const std::string& filename)
+    {
+        if (filename.empty())
+        {
+            return;
+        }
+
+        bool is_debug_enable = debugPrintIsEnable();
+        debugPrintEnable(false);
+
+        filesystem::File file(path, filename);
+
+        image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
+        texture = std::make_shared<image::Bitmap>(file, filename, format);
+
+        debugPrintEnable(is_debug_enable);
+        debugPrintLine("Texture: \"%s\" (%d x %d)", filename.c_str(), texture->width, texture->height);
+    }
+
 } // namespace
 
 namespace mango::import3d
@@ -1005,15 +1027,15 @@ namespace mango::import3d
         filesystem::File file(path, filename);
         Reader3DS reader(file);
 
-        /*
         for (auto& material3ds : reader.materials)
         {
             Material material;
 
-            material.ambient = material3ds.ambient;
-            material.diffuse = material3ds.diffuse;
-            material.specular = material3ds.specular;
-            material.texture = material3ds.texture_map1.filename;
+            material.baseColorFactor = material3ds.diffuse;
+            material.twosided = material3ds.twosided;
+
+            loadTexture(material.baseColorTexture, path, material3ds.texture_map1.filename);
+            loadTexture(material.emissiveTexture, path, material3ds.texture_self_illum.filename);
 
             materials.push_back(material);
         }
@@ -1021,14 +1043,8 @@ namespace mango::import3d
         if (materials.empty())
         {
             Material material;
-
-            material.ambient = color8x4(255, 255, 255, 255);
-            material.diffuse = color8x4(255, 255, 255, 255);
-            material.specular = color8x4(255, 255, 255, 255);
-
             materials.push_back(material);
         }
-        */
 
         for (auto& mesh3ds : reader.meshes)
         {
@@ -1064,7 +1080,7 @@ namespace mango::import3d
 
                 Triangle triangle;
 
-                //triangle.material = face.material;
+                triangle.material = face.material;
 
                 for (int j = 0; j < 3; ++j)
                 {
