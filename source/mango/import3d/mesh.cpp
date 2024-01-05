@@ -420,9 +420,6 @@ Icosahedron::Icosahedron(float radius)
 
     Mesh mesh;
 
-    Triangle triangle;
-    triangle.material = 0;
-
     for (int i = 0; i < 20; ++i)
     {
         float32x3 p0 = points[faces[i * 3 + 0]];
@@ -431,13 +428,15 @@ Icosahedron::Icosahedron(float radius)
 
         float32x3 normal = normalize(cross(p0 - p1, p0 - p2));
 
-        triangle.vertex[0].position = p0;
-        triangle.vertex[1].position = p1;
-        triangle.vertex[2].position = p2;
+        Triangle triangle;
 
         triangle.vertex[0].normal = normal;
         triangle.vertex[1].normal = normal;
         triangle.vertex[2].normal = normal;
+
+        triangle.vertex[0].position = p0;
+        triangle.vertex[1].position = p1;
+        triangle.vertex[2].position = p2;
 
         mesh.triangles.push_back(triangle);
     }
@@ -497,9 +496,6 @@ Dodecahedron::Dodecahedron(float radius)
 
     Mesh mesh;
 
-    Triangle triangle;
-    triangle.material = 0;
-
     for (int i = 0; i < 12; ++i)
     {
         float32x3 p0 = points[faces[i * 5 + 0]] * scale;
@@ -509,6 +505,8 @@ Dodecahedron::Dodecahedron(float radius)
         float32x3 p4 = points[faces[i * 5 + 4]] * scale;
 
         float32x3 normal = normalize(cross(p0 - p1, p0 - p2));
+
+        Triangle triangle;
 
         triangle.vertex[0].normal = normal;
         triangle.vertex[1].normal = normal;

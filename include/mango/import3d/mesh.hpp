@@ -68,7 +68,7 @@ namespace mango::import3d
     struct Triangle
     {
         Vertex vertex[3];
-        u32 material;
+        u32 material = 0;
     };
 
     struct Mesh
