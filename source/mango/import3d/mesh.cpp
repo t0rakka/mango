@@ -384,6 +384,159 @@ Cube::Cube(float32x3 size)
     primitives.push_back(primitive);
 }
 
+Icosahedron::Icosahedron(float radius)
+{
+    const float sqrt5 = std::sqrt(5.0f);
+    const float phi = (1.0f + sqrt5) * 0.5f; // "golden ratio"
+
+    const float ratio = std::sqrt(10.0f + (2.0f * sqrt5)) / (4.0f * phi);
+    const float a = (radius / ratio) * 0.5;
+    const float b = (radius / ratio) / (2.0f * phi);
+
+    const float32x3 points [] =
+    {
+        float32x3( 0,  b, -a),
+        float32x3( b,  a,  0),
+        float32x3(-b,  a,  0),
+        float32x3( 0,  b,  a),
+        float32x3( 0, -b,  a),
+        float32x3(-a,  0,  b),
+        float32x3( 0, -b, -a),
+        float32x3( a,  0, -b),
+        float32x3( a,  0,  b),
+        float32x3(-a,  0, -b),
+        float32x3( b, -a,  0),
+        float32x3(-b, -a,  0),
+    };
+
+    const u32 faces [] =
+    {
+        2, 1, 0, 1, 2, 3, 5, 4, 3, 4, 8, 3,
+        7, 6, 0, 6, 9, 0, 11, 10, 4, 10, 11, 6,
+        9, 5, 2, 5, 9, 11, 8, 7, 1, 7, 8, 10,
+        2, 5, 3, 8, 1, 3, 9, 2, 0, 1, 7, 0, 
+        11, 9, 6, 7, 10, 6, 5, 11, 4, 10, 8, 4,
+    };
+
+    Mesh mesh;
+
+    Triangle triangle;
+    triangle.material = 0;
+
+    for (int i = 0; i < 20; ++i)
+    {
+        float32x3 p0 = points[faces[i * 3 + 0]];
+        float32x3 p1 = points[faces[i * 3 + 1]];
+        float32x3 p2 = points[faces[i * 3 + 2]];
+
+        float32x3 normal = normalize(cross(p0 - p1, p0 - p2));
+
+        triangle.vertex[0].position = p0;
+        triangle.vertex[1].position = p1;
+        triangle.vertex[2].position = p2;
+
+        triangle.vertex[0].normal = normal;
+        triangle.vertex[1].normal = normal;
+        triangle.vertex[2].normal = normal;
+
+        mesh.triangles.push_back(triangle);
+    }
+
+    *reinterpret_cast<IndexedMesh*>(this) = convertMesh(mesh);
+}
+
+Dodecahedron::Dodecahedron(float radius)
+{
+    const float sqrt5 = std::sqrt(5.0f);
+    const float phi = (1.0f + sqrt5) * 0.5f; // "golden ratio"
+
+    const float a = phi;
+    const float b = 1.0f / phi;
+
+    const float scale = radius / sqrt(3.0f);
+
+    const float32x3 points [] =
+    {
+        float32x3( 1,  1,  1),
+        float32x3( 1,  1, -1),
+        float32x3( 1, -1,  1),
+        float32x3( 1, -1, -1),
+        float32x3(-1,  1,  1),
+        float32x3(-1,  1, -1),
+        float32x3(-1, -1,  1),
+        float32x3(-1, -1, -1),
+        float32x3( 0,  b,  a),
+        float32x3( 0,  b, -a),
+        float32x3( 0, -b,  a),
+        float32x3( 0, -b, -a),
+        float32x3( b,  a,  0),
+        float32x3( b, -a,  0),
+        float32x3(-b,  a,  0),
+        float32x3(-b, -a,  0),
+        float32x3( a,  0,  b),
+        float32x3( a,  0, -b),
+        float32x3(-a,  0,  b),
+        float32x3(-a,  0, -b),
+    };
+
+    const u32 faces [] =
+    {
+        8, 10, 2, 16, 0,
+        12, 14, 4, 8, 0,
+        16, 17, 1, 12, 0,
+        17, 3, 11, 9, 1,
+        9, 5, 14, 12, 1,
+        10, 6, 15, 13, 2,
+        13, 3, 17, 16, 2,
+        13, 15, 7, 11, 3,
+        18, 6, 10, 8, 4,
+        14, 5, 19, 18, 4,
+        9, 11, 7, 19, 5,
+        6, 18, 19, 7, 15,
+    };
+
+    Mesh mesh;
+
+    Triangle triangle;
+    triangle.material = 0;
+
+    for (int i = 0; i < 12; ++i)
+    {
+        float32x3 p0 = points[faces[i * 5 + 0]] * scale;
+        float32x3 p1 = points[faces[i * 5 + 1]] * scale;
+        float32x3 p2 = points[faces[i * 5 + 2]] * scale;
+        float32x3 p3 = points[faces[i * 5 + 3]] * scale;
+        float32x3 p4 = points[faces[i * 5 + 4]] * scale;
+
+        float32x3 normal = normalize(cross(p0 - p1, p0 - p2));
+
+        triangle.vertex[0].normal = normal;
+        triangle.vertex[1].normal = normal;
+        triangle.vertex[2].normal = normal;
+
+        triangle.vertex[0].position = p0;
+        triangle.vertex[1].position = p1;
+        triangle.vertex[2].position = p2;
+
+        mesh.triangles.push_back(triangle);
+
+        triangle.vertex[0].position = p0;
+        triangle.vertex[1].position = p2;
+        triangle.vertex[2].position = p3;
+
+        mesh.triangles.push_back(triangle);
+
+        triangle.vertex[0].position = p0;
+        triangle.vertex[1].position = p3;
+        triangle.vertex[2].position = p4;
+
+        mesh.triangles.push_back(triangle);
+    }
+
+    *reinterpret_cast<IndexedMesh*>(this) = convertMesh(mesh);
+
+}
+
 Torus::Torus(Parameters params)
 {
     const float is = pi2 / params.innerSegments;

@@ -142,6 +142,16 @@ namespace mango::import3d
         Cube(float32x3 size);
     };
 
+    struct Icosahedron : IndexedMesh
+    {
+        Icosahedron(float radius);
+    };
+
+    struct Dodecahedron : IndexedMesh
+    {
+        Dodecahedron(float radius);
+    };
+
     struct Torus : IndexedMesh
     {
         struct Parameters
