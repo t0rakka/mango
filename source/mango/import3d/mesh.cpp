@@ -254,11 +254,12 @@ IndexedMesh convertMesh(const Mesh& input)
             if (primitive.count > 0)
             {
                 output.primitives.push_back(primitive);
-
-                primitive.start += primitive.count;
-                primitive.count = 0;
-                primitive.material = triangle.material;
             }
+
+            // start a new primitive
+            primitive.start += primitive.count;
+            primitive.count = 0;
+            primitive.material = triangle.material;
         }
 
         for (int i = 0; i < 3; ++i)
