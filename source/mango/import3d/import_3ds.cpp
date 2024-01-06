@@ -1031,7 +1031,7 @@ namespace mango::import3d
 
         for (auto& mesh3ds : reader.meshes)
         {
-            Mesh mesh;
+            Mesh trimesh;
 
             // NOTE: we must use the actual vertex positions and not the indices
             //       because meshes do not always share indices for shared positions
@@ -1094,8 +1094,11 @@ namespace mango::import3d
                 // fix texcoord wrapping
                 fixTexcoordWrapping(triangle, face.flags);
 
-                mesh.triangles.push_back(triangle);
+                trimesh.triangles.push_back(triangle);
             }
+
+            computeTangents(trimesh);
+            IndexedMesh mesh = convertMesh(trimesh);
 
             meshes.push_back(mesh);
         }

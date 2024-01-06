@@ -65,7 +65,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     std::vector<std::unique_ptr<filesystem::File>> files;
     std::vector<ConstMemory> buffers;
 
-    for (auto& buffer : asset.buffers)
+    for (const auto& cbuffer : asset.buffers)
     {
         debugPrintLine("[Buffer]");
 
@@ -80,8 +80,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
         std::visit(fastgltf::visitor
         {
-            [] (auto& arg) {},
-            [&] (fastgltf::sources::URI& source)
+            [] (const auto& arg)
+            {
+            },
+            [&] (const fastgltf::sources::URI& source)
             {
                 //std::string filename = path.parent_path() / source.uri.path();
                 std::string filename = std::string(source.uri.path().begin(), source.uri.path().end());
@@ -95,7 +97,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] embedded
                 debugPrintLine("  URI: %s", filename.c_str());
             },
-			[&] (fastgltf::sources::ByteView& source)
+			[&] (const fastgltf::sources::ByteView& source)
             {
                 ConstMemory memory = ConstMemory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
                 buffers.push_back(memory);
@@ -105,14 +107,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] embedded
                 debugPrintLine("  ByteView: %d bytes", int(memory.size));
 			},
-            [&] (fastgltf::sources::BufferView& source)
+            [&] (const fastgltf::sources::BufferView& source)
             {
                 // [ ] standard
                 // [ ] binary
                 // [ ] embedded
                 debugPrintLine("  BufferView:");
             },
-            [&] (fastgltf::sources::Vector& source)
+            [&] (const fastgltf::sources::Vector& source)
             {
                 ConstMemory memory = ConstMemory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
                 buffers.push_back(memory);
@@ -122,14 +124,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [x] embedded
                 debugPrintLine("  vector: %d bytes", int(memory.size));
             },
-            [&] (fastgltf::sources::CustomBuffer& source)
+            [&] (const fastgltf::sources::CustomBuffer& source)
             {
                 // [ ] standard
                 // [ ] binary
                 // [ ] embedded
                 debugPrintLine("  CustomBuffer: %d", int(source.id));
             },
-        }, buffer.data);
+        }, cbuffer.data);
     }
 
     // --------------------------------------------------------------------------
@@ -138,7 +140,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     std::vector<Texture> m_images;
 
-    for (auto& image : asset.images)
+    for (const auto& cimage : asset.images)
     {
         debugPrintLine("[Image]");
 
@@ -152,8 +154,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
         std::visit(fastgltf::visitor
         {
-            [] (auto& arg) {},
-            [&] (fastgltf::sources::URI& source)
+            [] (const auto& arg)
+            {
+            },
+            [&] (const fastgltf::sources::URI& source)
             {
                 //assert(source.fileByteOffset == 0); // We don't support offsets with stbi.
                 //assert(source.uri.isLocalPath()); // We're only capable of loading local files.
@@ -172,7 +176,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] embedded
                 debugPrintLine("  URI: %s : %d bytes", filename.c_str(), u32(memory.size));
             },
-            [&] (fastgltf::sources::Vector& source)
+            [&] (const fastgltf::sources::Vector& source)
             {
                 ConstMemory memory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
                 //std::cout << "  ImageFormat: " << getImageFormat(memory) << std::endl;
@@ -186,14 +190,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [x] embedded
                 debugPrintLine("  vector: %d bytes", u32(memory.size));
             },
-			[&] (fastgltf::sources::ByteView& source)
+			[&] (const fastgltf::sources::ByteView& source)
             {
                 // [ ] standard
                 // [ ] binary
                 // [ ] embedded
                 debugPrintLine("  ByteView: %d bytes (not supported)", u32(source.bytes.size()));
 			},
-            [&] (fastgltf::sources::BufferView& source)
+            [&] (const fastgltf::sources::BufferView& source)
             {
                 auto& bufferView = asset.bufferViews[source.bufferViewIndex];
                 auto& buffer = asset.buffers[bufferView.bufferIndex];
@@ -211,7 +215,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] embedded
                 debugPrintLine("  BufferView: %d bytes", u32(memory.size));
             },
-        }, image.data);
+        }, cimage.data);
 
     }
 
@@ -219,12 +223,12 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     // materials
     // --------------------------------------------------------------------------
 
-    for (auto& material : asset.materials)
+    for (const auto& cmaterial : asset.materials)
     {
         debugPrintLine("[Material]");
-        debugPrintLine("  name %s", material.name.c_str());
+        debugPrintLine("  name %s", cmaterial.name.c_str());
 
-        const fastgltf::PBRData& pbr = material.pbrData;
+        const fastgltf::PBRData& pbr = cmaterial.pbrData;
         const auto* baseColor = pbr.baseColorFactor.data();
 
         debugPrintLine("  [PBR]");
@@ -252,9 +256,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             }
         }
 
-        if (material.normalTexture.has_value())
+        if (cmaterial.normalTexture.has_value())
         {
-                fastgltf::Texture& texture = asset.textures[material.normalTexture->textureIndex];
+                fastgltf::Texture& texture = asset.textures[cmaterial.normalTexture->textureIndex];
                 if (texture.imageIndex.has_value())
                 {
                     Texture image = m_images[*texture.imageIndex];
@@ -262,9 +266,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 }
         }
 
-        if (material.occlusionTexture.has_value())
+        if (cmaterial.occlusionTexture.has_value())
         {
-                fastgltf::Texture& texture = asset.textures[material.occlusionTexture->textureIndex];
+                fastgltf::Texture& texture = asset.textures[cmaterial.occlusionTexture->textureIndex];
                 if (texture.imageIndex.has_value())
                 {
                     Texture image = m_images[*texture.imageIndex];
@@ -272,9 +276,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 }
         }
 
-        if (material.emissiveTexture.has_value())
+        if (cmaterial.emissiveTexture.has_value())
         {
-                fastgltf::Texture& texture = asset.textures[material.emissiveTexture->textureIndex];
+                fastgltf::Texture& texture = asset.textures[cmaterial.emissiveTexture->textureIndex];
                 if (texture.imageIndex.has_value())
                 {
                     Texture image = m_images[*texture.imageIndex];
@@ -283,9 +287,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         }
 
         debugPrintLine("    emissiveFactor: %f %f %f",
-            material.emissiveFactor[0],
-            material.emissiveFactor[1],
-            material.emissiveFactor[2]);
+            cmaterial.emissiveFactor[0],
+            cmaterial.emissiveFactor[1],
+            cmaterial.emissiveFactor[2]);
 
 #if 0
 
@@ -365,28 +369,67 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     // meshes
     // --------------------------------------------------------------------------
 
-    for (auto& mesh : asset.meshes)
+    for (const auto& cmesh : asset.meshes)
     {
         debugPrintLine("[Mesh]");
-        debugPrintLine("  name: %s", mesh.name.c_str());
+        debugPrintLine("  name: %s", cmesh.name.c_str());
 
-        for (auto it = mesh.primitives.begin(); it != mesh.primitives.end(); ++it)
+        IndexedMesh mesh;
+
+        for (auto primitiveIterator = cmesh.primitives.begin(); primitiveIterator != cmesh.primitives.end(); ++primitiveIterator)
         {
             debugPrintLine("  [primitive]");
 
-            for (auto a = it->attributes.begin(); a != it->attributes.end(); ++a)
+            struct Attribute
             {
-                debugPrintLine("    [Attribute]");
-                debugPrintLine("      name: %s", a->first.c_str());
+                const u8* data = nullptr;
+                size_t count = 0;
+                size_t stride = 0;
+            };
 
-                auto& accessor = asset.accessors[a->second];
+            Attribute attributePosition;
+            Attribute attributeNormal;
+            Attribute attributeTangent;
+            Attribute attributeTexcoord;
+
+            for (auto attributeIterator = primitiveIterator->attributes.begin(); attributeIterator != primitiveIterator->attributes.end(); ++attributeIterator)
+            {
+                auto name = attributeIterator->first;
+
+                Attribute* attribute = nullptr;
+                const char* message = "";
+
+                if (name == "POSITION")
+                {
+                    attribute = &attributePosition;
+                }
+                else if (name == "NORMAL")
+                {
+                    attribute = &attributeNormal;
+                }
+                else if (name == "TANGENT")
+                {
+                    attribute = &attributeTangent;
+                }
+                else if (name == "TEXCOORD_0")
+                {
+                    attribute = &attributeTexcoord;
+                }
+                else
+                {
+                    message = " : NOT SUPPORTED!";
+                }
+
+                debugPrintLine("    [Attribute]");
+                debugPrintLine("      name: \"%s\"%s", name.c_str(), message);
+
+                auto& accessor = asset.accessors[attributeIterator->second];
                 debugPrintLine("      components: %d", u32(fastgltf::getNumComponents(accessor.type)));
-                //std::cout << "      type: " << fastgltf::getGLComponentType(accessor.componentType) << std::endl;
 
                 auto& view = asset.bufferViews[accessor.bufferViewIndex.value()];
 
                 auto offset = view.byteOffset + accessor.byteOffset;
-                //u32 index = view.bufferIndex;
+                u32 index = view.bufferIndex;
                 u32 count = accessor.count;
 
                 u32 stride;
@@ -402,89 +445,151 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 debugPrintLine("      stride: %d", stride);
                 debugPrintLine("      offset: %d", offset);
                 debugPrintLine("      count: %d", count);
+
+                if (attribute)
+                {
+                    attribute->data = buffers[index].address + offset;
+                    attribute->count = count;
+                    attribute->stride = stride;
+                }
             }
 
-            /*
-            // position
+            // TODO: support different attribute types currently we "assume" everything is float
 
-            auto& positionAccessor = asset.accessors[it->attributes["POSITION"]];
-            if (!positionAccessor.bufferViewIndex.has_value())
+            std::vector<Vertex> vertices;
+
+            if (attributePosition.data)
             {
-                std::cout << "INFO: NO BufferViewIndex!" << std::endl;
-                continue;
-            }
+                vertices.resize(attributePosition.count);
 
-            std::cout << "      components: " << u32(fastgltf::getNumComponents(positionAccessor.type)) << std::endl;
-            std::cout << "      type: " << fastgltf::getGLComponentType(positionAccessor.componentType) << std::endl;
+                const u8* data = attributePosition.data;
 
-            auto& positionView = asset.bufferViews[positionAccessor.bufferViewIndex.value()];
-            auto offset = positionView.byteOffset + positionAccessor.byteOffset;
-            u32 index = positionView.bufferIndex;
-            u32 count = positionAccessor.count;
-
-            u32 stride;
-            if (positionView.byteStride.has_value())
-            {
-                stride = u32(positionView.byteStride.value());
+                for (size_t i = 0; i < attributePosition.count; ++i)
+                {
+                    std::memcpy(vertices[i].position.data(), data, sizeof(float32x3));
+                    data += attributePosition.stride;
+                }
             }
             else
             {
-                stride = u32(fastgltf::getElementByteSize(positionAccessor.type, positionAccessor.componentType));
+                // position attribute is required
+                continue;
             }
 
-            std::cout << "      stride: " << stride << std::endl;
-            std::cout << "      offset: " << offset << std::endl;
-            std::cout << "      count: " << count << std::endl;
-
-            for (int i = 0; i < 4; ++i)
+            if (attributeNormal.data)
             {
-                float* p = reinterpret_cast<float*>(buf.data() + offset + i * stride);
-                std::cout << p[0] << " " << p[1] << " " << p[2] << std::endl;
+                if (attributeNormal.count != attributePosition.count)
+                {
+                    // attribute counts must be identical
+                    continue;
+                }
+
+                const u8* data = attributeNormal.data;
+
+                for (size_t i = 0; i < attributeNormal.count; ++i)
+                {
+                    std::memcpy(vertices[i].normal.data(), data, sizeof(float32x3));
+                    data += attributeNormal.stride;
+                }
             }
-            */
+
+            if (attributeTangent.data)
+            {
+                if (attributeTangent.count != attributePosition.count)
+                {
+                    // attribute counts must be identical
+                    continue;
+                }
+
+                const u8* data = attributeTangent.data;
+
+                for (size_t i = 0; i < attributeTangent.count; ++i)
+                {
+                    std::memcpy(vertices[i].normal.data(), data, sizeof(float32x4));
+                    data += attributeTangent.stride;
+                }
+            }
+
+            if (attributeTexcoord.data)
+            {
+                if (attributeTexcoord.count != attributePosition.count)
+                {
+                    // attribute counts must be identical
+                    continue;
+                }
+
+                const u8* data = attributeTexcoord.data;
+
+                for (size_t i = 0; i < attributeTexcoord.count; ++i)
+                {
+                    std::memcpy(vertices[i].normal.data(), data, sizeof(float32x2));
+                    data += attributeTexcoord.stride;
+                }
+            }
+
+            for (Vertex& vertex : vertices)
+            {
+                if (attributeNormal.data)
+                {
+                    // TODO: do this inline
+                    vertex.normal = normalize(vertex.normal);
+                }
+            }
 
             // indices
 
-            if (it->indicesAccessor.has_value())
+            std::vector<u32> indices;
+
+            if (primitiveIterator->indicesAccessor.has_value())
             {
-                auto& indices = asset.accessors[it->indicesAccessor.value()];
-                if (indices.bufferViewIndex.has_value())
+                auto& indicesAccessor = asset.accessors[primitiveIterator->indicesAccessor.value()];
+                if (indicesAccessor.bufferViewIndex.has_value())
                 {
-                    //auto& indicesView = asset.bufferViews[indices.bufferViewIndex.value()];
+                    auto& indicesView = asset.bufferViews[indicesAccessor.bufferViewIndex.value()];
 
                     //u32 firstIndex = u32(indices.byteOffset + indicesView.byteOffset) / fastgltf::getElementByteSize(indices.type, indices.componentType);
                     //u32 indexType = u32(fastgltf::getGLComponentType(indices.componentType));
-                    //u32 offset = indicesView.byteOffset + indices.byteOffset;
-                    u32 count = u32(indices.count);
+                    u32 offset = indicesView.byteOffset + indicesAccessor.byteOffset;
+                    size_t count = indicesAccessor.count;
 
                     u32 indexTypeSize = 0;
-                    //u32 maxIndex = 0;
 
-                    //u32 bufferIndex = indicesView.bufferIndex;
-                    //const u8* data = buffers[bufferIndex].address;
+                    u32 bufferIndex = indicesView.bufferIndex;
+                    const u8* data = buffers[bufferIndex].address + offset;
 
-                    switch (indices.componentType)
+                    indices.resize(count);
+
+                    switch (indicesAccessor.componentType)
                     {
                         case fastgltf::ComponentType::UnsignedByte:
                         {
-                            //const u8* source = reinterpret_cast<const u8*>(data + offset);
-                            //maxIndex = computeMaxIndex(source, count);
+                            const u8* source = reinterpret_cast<const u8*>(data);
+                            for (size_t i = 0; i < count; ++i)
+                            {
+                                indices[i] = source[i];
+                            }
                             indexTypeSize = 1;
                             break;
                         }
 
                         case fastgltf::ComponentType::UnsignedShort:
                         {
-                            //const u16* source = reinterpret_cast<const u16*>(data + offset);
-                            //maxIndex = computeMaxIndex(source, count);
+                            const u16* source = reinterpret_cast<const u16*>(data);
+                            for (size_t i = 0; i < count; ++i)
+                            {
+                                indices[i] = source[i];
+                            }
                             indexTypeSize = 2;
                             break;
                         }
 
                         case fastgltf::ComponentType::UnsignedInt:
                         {
-                            //const u32* source = reinterpret_cast<const u32*>(data + offset);
-                            //maxIndex = computeMaxIndex(source, count);
+                            const u32* source = reinterpret_cast<const u32*>(data);
+                            for (size_t i = 0; i < count; ++i)
+                            {
+                                indices[i] = source[i];
+                            }
                             indexTypeSize = 4;
                             break;
                         }
@@ -494,35 +599,37 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     }
 
                     debugPrintLine("    [Indices]");
-                    //debugPrintLine("      maxIndex: %d", maxIndex);
                     debugPrintLine("      indexTypeSize: %d", indexTypeSize);
                     debugPrintLine("      count: %d", count);
                 }
             }
-        }
+
+            mesh.vertices = vertices;
+            mesh.indices = indices;
+
+            Primitive primitive;
+
+            primitive.mode = Primitive::Mode::TRIANGLE_LIST; // TODO: correct type
+            primitive.start = 0;
+            primitive.count = u32(indices.size());
+            primitive.material = 0;
+
+            mesh.primitives.push_back(primitive);
+
+        } // primitive
+
+        meshes.push_back(mesh);
+        debugPrintLine("Mesh. vertices: %d, indices: %d", (int)mesh.vertices.size(), (int)mesh.indices.size());
 
         /*
 
-        for (auto it = mesh.primitives.begin(); it != mesh.primitives.end(); ++it) {
+        for (auto it = cmesh.primitives.begin(); it != cmesh.primitives.end(); ++it) {
 
             // Get the output primitive
-            auto index = std::distance(mesh.primitives.begin(), it);
+            auto index = std::distance(cmesh.primitives.begin(), it);
             auto& primitive = outMesh.primitives[index];
-            primitive.primitiveType = fastgltf::to_underlying(it->type);
-            primitive.vertexArray = vao;
 
-            if (it->materialIndex.has_value())
-            {
-                primitive.materialUniformsIndex = it->materialIndex.value();
-                auto& material = viewer->asset.materials[it->materialIndex.value()];
-                if (material.pbrData.has_value() && material.pbrData->baseColorTexture.has_value())
-                {
-                    auto& texture = viewer->asset.textures[material.pbrData->baseColorTexture->textureIndex];
-                    if (!texture.imageIndex.has_value())
-                        return false;
-                    primitive.albedoTexture = viewer->textures[texture.imageIndex.value()].texture;
-                }
-            }
+            primitive.primitiveType = fastgltf::to_underlying(it->type);
         }
 
         */

@@ -581,14 +581,14 @@ namespace mango::import3d
 
         for (const auto& object : reader.m_objects)
         {
-            Mesh mesh;
+            Mesh trimesh;
 
-            mesh.triangles.resize(object.faces.size());
+            trimesh.triangles.resize(object.faces.size());
 
             for (size_t faceIndex = 0; faceIndex < object.faces.size(); ++faceIndex)
             {
                 const FaceOBJ& face = object.faces[faceIndex];
-                Triangle& triangle = mesh.triangles[faceIndex];
+                Triangle& triangle = trimesh.triangles[faceIndex];
 
                 triangle.material = object.material;
 
@@ -614,6 +614,9 @@ namespace mango::import3d
                     }
                 }
             }
+
+            computeTangents(trimesh);
+            IndexedMesh mesh = convertMesh(trimesh);
 
             Object o;
 
