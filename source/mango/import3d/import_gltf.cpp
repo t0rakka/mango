@@ -391,6 +391,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             Attribute attributeNormal;
             Attribute attributeTangent;
             Attribute attributeTexcoord;
+            Attribute attributeColor;
 
             for (auto attributeIterator = primitiveIterator->attributes.begin(); attributeIterator != primitiveIterator->attributes.end(); ++attributeIterator)
             {
@@ -414,6 +415,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 else if (name == "TEXCOORD_0")
                 {
                     attribute = &attributeTexcoord;
+                }
+                else if (name == "COLOR_0")
+                {
+                    attribute = &attributeColor;
                 }
                 else
                 {
@@ -527,6 +532,23 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 }
             }
 
+            if (attributeColor.data)
+            {
+                if (attributeColor.count != attributePosition.count)
+                {
+                    // attribute counts must be identical
+                    continue;
+                }
+
+                const u8* data = attributeColor.data;
+
+                for (size_t i = 0; i < attributeColor.count; ++i)
+                {
+                    std::memcpy(vertices[i].color.data(), data, sizeof(float32x3));
+                    data += attributeColor.stride;
+                }
+            }
+
             for (Vertex& vertex : vertices)
             {
                 if (attributeNormal.data)
@@ -547,8 +569,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 {
                     auto& indicesView = asset.bufferViews[indicesAccessor.bufferViewIndex.value()];
 
-                    //u32 firstIndex = u32(indices.byteOffset + indicesView.byteOffset) / fastgltf::getElementByteSize(indices.type, indices.componentType);
-                    //u32 indexType = u32(fastgltf::getGLComponentType(indices.componentType));
                     u32 offset = indicesView.byteOffset + indicesAccessor.byteOffset;
                     size_t count = indicesAccessor.count;
 
@@ -558,6 +578,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     const u8* data = buffers[bufferIndex].address + offset;
 
                     indices.resize(count);
+                    u32 baseIndex = u32(mesh.vertices.size());
 
                     switch (indicesAccessor.componentType)
                     {
@@ -566,7 +587,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                             const u8* source = reinterpret_cast<const u8*>(data);
                             for (size_t i = 0; i < count; ++i)
                             {
-                                indices[i] = source[i];
+                                indices[i] = baseIndex + source[i];
                             }
                             indexTypeSize = 1;
                             break;
@@ -577,7 +598,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                             const u16* source = reinterpret_cast<const u16*>(data);
                             for (size_t i = 0; i < count; ++i)
                             {
-                                indices[i] = source[i];
+                                indices[i] = baseIndex + source[i];
                             }
                             indexTypeSize = 2;
                             break;
@@ -588,7 +609,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                             const u32* source = reinterpret_cast<const u32*>(data);
                             for (size_t i = 0; i < count; ++i)
                             {
-                                indices[i] = source[i];
+                                indices[i] = baseIndex + source[i];
                             }
                             indexTypeSize = 4;
                             break;
@@ -604,35 +625,41 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 }
             }
 
-            mesh.vertices = vertices;
-            mesh.indices = indices;
-
             Primitive primitive;
 
-            primitive.mode = Primitive::Mode::TRIANGLE_LIST; // TODO: correct type
-            primitive.start = 0;
+            switch (primitiveIterator->type)
+            {
+                case fastgltf::PrimitiveType::Triangles:
+                    primitive.mode = Primitive::Mode::TRIANGLE_LIST;
+                    break;
+
+                case fastgltf::PrimitiveType::TriangleStrip:
+                    primitive.mode = Primitive::Mode::TRIANGLE_STRIP;
+                    break;
+
+                case fastgltf::PrimitiveType::TriangleFan:
+                    primitive.mode = Primitive::Mode::TRIANGLE_FAN;
+                    break;
+
+                default:
+                    // unsupported primitive type
+                    continue;
+            }
+
+            primitive.start = u32(mesh.indices.size());
             primitive.count = u32(indices.size());
-            primitive.material = 0;
+            primitive.material = 0; // TODO
+
+            // TODO: accumulate into the mesh and adjust index base
+            //mesh.vertices = vertices;
+            //mesh.indices = indices;
+            mesh.vertices.insert(mesh.vertices.end(), vertices.begin(), vertices.end());
+            mesh.indices.insert(mesh.indices.end(), indices.begin(), indices.end());
 
             mesh.primitives.push_back(primitive);
-
-        } // primitive
-
-        meshes.push_back(mesh);
-        debugPrintLine("Mesh. vertices: %d, indices: %d", (int)mesh.vertices.size(), (int)mesh.indices.size());
-
-        /*
-
-        for (auto it = cmesh.primitives.begin(); it != cmesh.primitives.end(); ++it) {
-
-            // Get the output primitive
-            auto index = std::distance(cmesh.primitives.begin(), it);
-            auto& primitive = outMesh.primitives[index];
-
-            primitive.primitiveType = fastgltf::to_underlying(it->type);
         }
 
-        */
+        meshes.push_back(mesh);
     }
 
     debugPrintLine("[Summary]");

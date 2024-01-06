@@ -308,72 +308,70 @@ Cube::Cube(float32x3 size)
     const float32x3 pos = size * 0.5f;
     const float32x3 neg = size * -0.5f;
 
-    const float32x3 position0(neg.x, neg.y, neg.z);
-    const float32x3 position1(pos.x, neg.y, neg.z);
-    const float32x3 position2(neg.x, pos.y, neg.z);
-    const float32x3 position3(pos.x, pos.y, neg.z);
-    const float32x3 position4(neg.x, neg.y, pos.z);
-    const float32x3 position5(pos.x, neg.y, pos.z);
-    const float32x3 position6(neg.x, pos.y, pos.z);
-    const float32x3 position7(pos.x, pos.y, pos.z);
-
-    const float32x3 normal0( 1.0f, 0.0f, 0.0f);
-    const float32x3 normal1(-1.0f, 0.0f, 0.0f);
-    const float32x3 normal2( 0.0f, 1.0f, 0.0f);
-    const float32x3 normal3( 0.0f,-1.0f, 0.0f);
-    const float32x3 normal4( 0.0f, 0.0f, 1.0f);
-    const float32x3 normal5( 0.0f, 0.0f,-1.0f);
-
-    const float32x4 tangent0( 0.0f, 0.0f, 1.0f, 1.0f);
-    const float32x4 tangent1( 0.0f, 0.0f,-1.0f, 1.0f);
-    const float32x4 tangent2( 1.0f, 0.0f, 0.0f, 1.0f);
-    const float32x4 tangent3(-1.0f, 0.0f, 0.0f, 1.0f);
-    const float32x4 tangent4(-1.0f, 0.0f, 0.0f, 1.0f);
-    const float32x4 tangent5( 1.0f, 0.0f, 0.0f, 1.0f);
-
-    const float32x2 texcoord0(0.0f, 1.0f);
-    const float32x2 texcoord1(0.0f, 0.0f);
-    const float32x2 texcoord2(1.0f, 0.0f);
-    const float32x2 texcoord3(1.0f, 1.0f);
-
-    vertices =
+    const float32x3 positions [] =
     {
-        // right (+x)
-        { position1, normal0, tangent0, texcoord0 },
-        { position3, normal0, tangent0, texcoord1 },
-        { position7, normal0, tangent0, texcoord2 },
-        { position5, normal0, tangent0, texcoord3 },
-
-        // left (-x)
-        { position4, normal1, tangent1, texcoord0 },
-        { position6, normal1, tangent1, texcoord1 },
-        { position2, normal1, tangent1, texcoord2 },
-        { position0, normal1, tangent1, texcoord3 },
-
-        // top (+y)
-        { position2, normal2, tangent2, texcoord0 },
-        { position6, normal2, tangent2, texcoord1 },
-        { position7, normal2, tangent2, texcoord2 },
-        { position3, normal2, tangent2, texcoord3 },
-
-        // bottom (-y)
-        { position4, normal3, tangent3, texcoord2 },
-        { position0, normal3, tangent3, texcoord3 },
-        { position1, normal3, tangent3, texcoord0 },
-        { position5, normal3, tangent3, texcoord1 },
-
-        // front (+z)
-        { position5, normal4, tangent4, texcoord0 },
-        { position7, normal4, tangent4, texcoord1 },
-        { position6, normal4, tangent4, texcoord2 },
-        { position4, normal4, tangent4, texcoord3 },
-
-        // back (-z)
-        { position0, normal5, tangent5, texcoord0 },
-        { position2, normal5, tangent5, texcoord1 },
-        { position3, normal5, tangent5, texcoord2 },
-        { position1, normal5, tangent5, texcoord3 },
+        float32x3(neg.x, neg.y, neg.z),
+        float32x3(pos.x, neg.y, neg.z),
+        float32x3(neg.x, pos.y, neg.z),
+        float32x3(pos.x, pos.y, neg.z),
+        float32x3(neg.x, neg.y, pos.z),
+        float32x3(pos.x, neg.y, pos.z),
+        float32x3(neg.x, pos.y, pos.z),
+        float32x3(pos.x, pos.y, pos.z),
     };
+
+    const float32x3 normals [] =
+    {
+        float32x3( 1.0f, 0.0f, 0.0f),
+        float32x3(-1.0f, 0.0f, 0.0f),
+        float32x3( 0.0f, 1.0f, 0.0f),
+        float32x3( 0.0f,-1.0f, 0.0f),
+        float32x3( 0.0f, 0.0f, 1.0f),
+        float32x3( 0.0f, 0.0f,-1.0f),
+    };
+
+    const float32x4 tangents [] =
+    {
+        float32x4( 0.0f, 0.0f, 1.0f, 1.0f),
+        float32x4( 0.0f, 0.0f,-1.0f, 1.0f),
+        float32x4( 1.0f, 0.0f, 0.0f, 1.0f),
+        float32x4( 1.0f, 0.0f, 0.0f, 1.0f),
+        float32x4(-1.0f, 0.0f, 0.0f, 1.0f),
+        float32x4( 1.0f, 0.0f, 0.0f, 1.0f),
+    };
+
+    const float32x2 texcoords [] =
+    {
+        float32x2(0.0f, 1.0f),
+        float32x2(0.0f, 0.0f),
+        float32x2(1.0f, 0.0f),
+        float32x2(1.0f, 1.0f),
+    };
+
+    const u32 points [] =
+    {
+        1, 3, 7, 5,
+        4, 6, 2, 0,
+        2, 6, 7, 3,
+        4, 0, 1, 5,
+        5, 7, 6, 4,
+        0, 2, 3, 1,
+    };
+
+    for (int i = 0; i < 6; ++i)
+    {
+        Vertex vertex;
+
+        vertex.normal = normals[i];
+        vertex.tangent = tangents[i];
+
+        for (int j = 0; j < 4; ++j)
+        {
+            vertex.position = positions[points[i * 4 + j]];
+            vertex.texcoord = texcoords[j];
+            vertices.push_back(vertex);
+        }
+    }
 
     indices =
     {
