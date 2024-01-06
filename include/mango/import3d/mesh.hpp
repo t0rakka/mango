@@ -26,15 +26,15 @@ namespace mango::import3d
 
     using Texture = std::shared_ptr<image::Bitmap>;
 
-    enum class AlphaMode
-    {
-        OPAQUE,
-        MASK,
-        BLEND
-    };
-
     struct Material
     {
+        enum class AlphaMode
+        {
+            OPAQUE,
+            MASK,
+            BLEND
+        };
+
         std::string name;
 
         float roughnessFactor { 1.0f };
@@ -129,6 +129,7 @@ namespace mango::import3d
 
     void computeTangents(Mesh& mesh);
     void loadTexture(Texture& texture, const filesystem::Path& path, const std::string& filename);
+    void loadTexture(Texture& texture, ConstMemory memory);
 
     Mesh convertMesh(const IndexedMesh& input);
     IndexedMesh convertMesh(const Mesh& input);

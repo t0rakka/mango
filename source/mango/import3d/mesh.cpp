@@ -142,7 +142,17 @@ void loadTexture(Texture& texture, const filesystem::Path& path, const std::stri
     texture = std::make_shared<image::Bitmap>(file, filename, format);
 
     debugPrintEnable(is_debug_enable);
-    debugPrintLine("Texture: \"%s\" (%d x %d)", filename.c_str(), texture->width, texture->height);
+}
+
+void loadTexture(Texture& texture, ConstMemory memory)
+{
+    bool is_debug_enable = debugPrintIsEnable();
+    debugPrintEnable(false);
+
+    image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
+    texture = std::make_shared<image::Bitmap>(memory, "", format);
+
+    debugPrintEnable(is_debug_enable);
 }
 
 Mesh convertMesh(const IndexedMesh& input)

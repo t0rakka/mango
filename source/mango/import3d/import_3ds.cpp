@@ -1035,7 +1035,7 @@ namespace mango::import3d
 
             // NOTE: we must use the actual vertex positions and not the indices
             //       because meshes do not always share indices for shared positions
-            struct compare
+            struct PositionCompare
             {
                 bool operator () (const float32x3& a, const float32x3& b) const
                 {
@@ -1043,7 +1043,7 @@ namespace mango::import3d
                 }
             };
 
-            std::multimap<float32x3, u32, compare> sharing;
+            std::multimap<float32x3, u32, PositionCompare> sharing;
 
             // resolve vertex position sharing between faces
             for (size_t i = 0; i < mesh3ds.faces.size(); ++i)

@@ -131,77 +131,10 @@ namespace mango::import3d
         : m_path(path)
     {
         filesystem::File file(path, filename);
-        printf("size: %d KB\n", int(file.size() / 1024));
 
         std::string_view s(reinterpret_cast<const char *>(file.data()), file.size());
 
         // ---------------------
-#if 0
-        const u8* data = file.data();
-        const u8* end = file.data() + file.size();
-
-        for ( ; data < end; )
-        {
-            const u8* p = mango::memchr(data, '\n', end - data);
-            //if (!p) break;
-            std::string_view line((const char *)data, p - data);
-            //printf("%s\n", std::string(line).c_str());
-
-            std::vector<std::string_view> v = split(line, " \t");
-
-            if (!v.empty())
-            {
-                std::string_view id = v[0];
-
-                std::vector<std::string_view> tokens(v.begin() + 1, v.end());
-
-                if (id == "#")
-                {
-                    // comment
-                }
-                else if (id == "v")
-                {
-                    parse_v(tokens);
-                }
-                else if (id == "vn")
-                {
-                    parse_vn(tokens);
-                }
-                else if (id == "vt")
-                {
-                    parse_vt(tokens);
-                }
-                else if (id == "mtllib")
-                {
-                    //parse_mtllib(tokens);
-                }
-                else if (id == "usemtl")
-                {
-                    parse_usemtl(tokens);
-                }
-                else if (id == "o")
-                {
-                    parse_o(tokens);
-                }
-                else if (id == "g")
-                {
-                    parse_g(tokens);
-                }
-                else if (id == "s")
-                {
-                    parse_s(tokens);
-                }
-                else if (id == "f")
-                {
-                    parse_f(tokens);
-                }
-
-            }
-
-            data = p + 1;
-        }
-
-#else
 
         std::string_view id;
         std::vector<std::string_view> tokens;
@@ -290,7 +223,6 @@ namespace mango::import3d
 
             first = second + 1;
         }
-#endif
     }
 
     void ReaderOBJ::parse_mtl(const std::string_view& s)
@@ -490,7 +422,7 @@ namespace mango::import3d
         }
 
         std::string filename(tokens[0]);
-        printf("mtllib: %s\n", filename.c_str());
+        debugPrintLine("mtllib: %s", filename.c_str());
 
         filesystem::File file(m_path, filename);
 

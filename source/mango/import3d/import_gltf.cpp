@@ -23,11 +23,13 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     fastgltf::GltfDataBuffer data;
     data.fromByteView(filebuffer.data(), filebuffer.size() - fastgltf::getGltfBufferPadding(), filebuffer.size());
 
-    debugPrintLine("BufferSize: %d", int(data.getBufferSize()));
+    //debugPrintLine("BufferSize: %d", int(data.getBufferSize()));
 
     // --------------------------------------------------------------------------
     // parse
     // --------------------------------------------------------------------------
+
+    debugPrintLine("[ImportGLTF]");
 
     auto gltfOptions = 
         fastgltf::Options::DontRequireValidAssetMember |
@@ -130,13 +132,11 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         }, buffer.data);
     }
 
-    debugPrintLine("Buffers: %d", int(buffers.size()));
-
     // --------------------------------------------------------------------------
     // images
     // --------------------------------------------------------------------------
 
-    std::vector<u32> m_images;
+    std::vector<Texture> m_images;
 
     for (auto& image : asset.images)
     {
@@ -155,36 +155,43 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             [] (auto& arg) {},
             [&] (fastgltf::sources::URI& source)
             {
-                assert(source.fileByteOffset == 0); // We don't support offsets with stbi.
-                assert(source.uri.isLocalPath()); // We're only capable of loading local files.
+                //assert(source.fileByteOffset == 0); // We don't support offsets with stbi.
+                //assert(source.uri.isLocalPath()); // We're only capable of loading local files.
 
-                const std::string path(source.uri.path().begin(), source.uri.path().end());
+                const std::string filename(source.uri.path().begin(), source.uri.path().end());
 
-                m_images.push_back(0);
+                auto file = std::make_unique<filesystem::File>(path, filename);
+                ConstMemory memory = *file;
+
+                Texture texture;
+                loadTexture(texture, path, filename);
+                m_images.push_back(texture);
 
                 // [x] standard
                 // [ ] binary
                 // [ ] embedded
-                debugPrintLine("  URI: %s", path.c_str());
+                debugPrintLine("  URI: %s : %d bytes", filename.c_str(), u32(memory.size));
             },
             [&] (fastgltf::sources::Vector& source)
             {
                 ConstMemory memory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
                 //std::cout << "  ImageFormat: " << getImageFormat(memory) << std::endl;
 
-                m_images.push_back(u32(memory.size));
+                Texture texture;
+                loadTexture(texture, memory);
+                m_images.push_back(texture);
 
                 // [ ] standard
                 // [ ] binary
                 // [x] embedded
-                debugPrintLine("  vector: %d bytes", int(memory.size));
+                debugPrintLine("  vector: %d bytes", u32(memory.size));
             },
 			[&] (fastgltf::sources::ByteView& source)
             {
                 // [ ] standard
                 // [ ] binary
                 // [ ] embedded
-                debugPrintLine("  ByteView: %d bytes", int(source.bytes.size()));
+                debugPrintLine("  ByteView: %d bytes (not supported)", u32(source.bytes.size()));
 			},
             [&] (fastgltf::sources::BufferView& source)
             {
@@ -195,12 +202,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 ConstMemory memory(reinterpret_cast<const u8*>(span.data() + bufferView.byteOffset), bufferView.byteLength);
                 //std::cout << "  ImageFormat: " << getImageFormat(memory) << std::endl;
 
-                m_images.push_back(u32(memory.size));
+                Texture texture;
+                loadTexture(texture, memory);
+                m_images.push_back(texture);
 
                 // [ ] standard
                 // [x] binary
                 // [ ] embedded
-                debugPrintLine("  BufferView: %d bytes", int(memory.size));
+                debugPrintLine("  BufferView: %d bytes", u32(memory.size));
             },
         }, image.data);
 
@@ -228,8 +237,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             fastgltf::Texture& texture = asset.textures[pbr.baseColorTexture->textureIndex];
             if (texture.imageIndex.has_value())
             {
-                u32 s = m_images[*texture.imageIndex];
-                debugPrintLine("    baseColorTexture: %d", s);
+                Texture image = m_images[*texture.imageIndex];
+                debugPrintLine("    baseColorTexture: (%d x %d)", image->width, image->height);
             }
         }
 
@@ -238,8 +247,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             fastgltf::Texture& texture = asset.textures[pbr.metallicRoughnessTexture->textureIndex];
             if (texture.imageIndex.has_value())
             {
-                u32 s = m_images[*texture.imageIndex];
-                debugPrintLine("    metallicRoughnessTexture: %d", s);
+                Texture image = m_images[*texture.imageIndex];
+                debugPrintLine("    metallicRoughnessTexture: (%d x %d)", image->width, image->height);
             }
         }
 
@@ -248,8 +257,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 fastgltf::Texture& texture = asset.textures[material.normalTexture->textureIndex];
                 if (texture.imageIndex.has_value())
                 {
-                    u32 s = m_images[*texture.imageIndex];
-                    debugPrintLine("    normalTexture: %d", s);
+                    Texture image = m_images[*texture.imageIndex];
+                    debugPrintLine("    normalTexture: (%d x %d)", image->width, image->height);
                 }
         }
 
@@ -258,8 +267,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 fastgltf::Texture& texture = asset.textures[material.occlusionTexture->textureIndex];
                 if (texture.imageIndex.has_value())
                 {
-                    u32 s = m_images[*texture.imageIndex];
-                    debugPrintLine("    occlusionTexture: %d", s);
+                    Texture image = m_images[*texture.imageIndex];
+                    debugPrintLine("    occlusionTexture: (%d x %d)", image->width, image->height);
                 }
         }
 
@@ -268,8 +277,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 fastgltf::Texture& texture = asset.textures[material.emissiveTexture->textureIndex];
                 if (texture.imageIndex.has_value())
                 {
-                    u32 s = m_images[*texture.imageIndex];
-                    debugPrintLine("    emissiveTexture: %d", s);
+                    Texture image = m_images[*texture.imageIndex];
+                    debugPrintLine("    emissiveTexture: (%d x %d)", image->width, image->height);
                 }
         }
 
@@ -518,6 +527,12 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
         */
     }
+
+    debugPrintLine("[Summary]");
+    debugPrintLine("  Buffers:   %d", int(asset.buffers.size()));
+    debugPrintLine("  Images:    %d", int(asset.images.size()));
+    debugPrintLine("  Materials: %d", int(asset.materials.size()));
+    debugPrintLine("  Meshes:    %d", int(asset.meshes.size()));
 
     u64 time1 = Time::ms();
     debugPrintLine("Time: %d ms", int(time1 - time0));
