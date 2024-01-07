@@ -17,18 +17,62 @@ namespace
         const u8* data = nullptr;
         size_t count = 0;
         size_t stride = 0;
+        size_t components;
+        fastgltf::ComponentType type;
     };
 
     template <typename T>
     void copyAttributes(T& target, Attribute attribute)
     {
-        u8* dest = reinterpret_cast<u8*>(&target);
-
-        for (size_t i = 0; i < attribute.count; ++i)
+        switch (attribute.type)
         {
-            std::memcpy(dest, attribute.data, sizeof(T));
-            dest += sizeof(import3d::Vertex);
-            attribute.data += attribute.stride;
+            case fastgltf::ComponentType::UnsignedByte:
+                for (size_t i = 0; i < attribute.count; ++i)
+                {
+                    const u8* source = reinterpret_cast<const u8*>(attribute.data);
+                    float* dest = reinterpret_cast<float*>(reinterpret_cast<u8*>(target.data()) + sizeof(import3d::Vertex) * i);
+
+                    for (size_t j = 0; j < attribute.components; ++j)
+                    {
+                        dest[j] = source[j] / 255.0f;
+                    }
+
+                    attribute.data += attribute.stride;
+                }
+                break;
+
+            case fastgltf::ComponentType::UnsignedShort:
+                for (size_t i = 0; i < attribute.count; ++i)
+                {
+                    const u16* source = reinterpret_cast<const u16*>(attribute.data);
+                    float* dest = reinterpret_cast<float*>(reinterpret_cast<u8*>(target.data()) + sizeof(import3d::Vertex) * i);
+
+                    for (size_t j = 0; j < attribute.components; ++j)
+                    {
+                        dest[j] = source[j] / 65535.0f;
+                    }
+
+                    attribute.data += attribute.stride;
+                }
+                break;
+
+            case fastgltf::ComponentType::Float:
+                for (size_t i = 0; i < attribute.count; ++i)
+                {
+                    const float* source = reinterpret_cast<const float*>(attribute.data);
+                    float* dest = reinterpret_cast<float*>(reinterpret_cast<u8*>(target.data()) + sizeof(import3d::Vertex) * i);
+
+                    for (size_t j = 0; j < attribute.components; ++j)
+                    {
+                        dest[j] = source[j];
+                    }
+
+                    attribute.data += attribute.stride;
+                }
+                break;
+
+            default:
+                break;
         }
     }
 
@@ -452,7 +496,25 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     stride = fastgltf::getElementByteSize(accessor.type, accessor.componentType);
                 }
 
-                debugPrintLine("      components: %d", u32(fastgltf::getNumComponents(accessor.type)));
+                size_t components = fastgltf::getNumComponents(accessor.type);
+
+                switch (accessor.componentType)
+                {
+                    case fastgltf::ComponentType::UnsignedByte:
+                        debugPrintLine("      type: u8");
+                        break;
+                    case fastgltf::ComponentType::UnsignedShort:
+                        debugPrintLine("      type: u16");
+                        break;
+                    case fastgltf::ComponentType::Float:
+                        debugPrintLine("      type: f32");
+                        break;
+                    default:
+                        debugPrintLine("      type: NOT SUPPORTED!");
+                        break;
+                }
+
+                debugPrintLine("      components: %d", u32(components));
                 debugPrintLine("      stride: %d", u32(stride));
                 debugPrintLine("      count: %d", u32(count));
 
@@ -461,10 +523,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     attribute->data = buffers[index].address + offset;
                     attribute->count = count;
                     attribute->stride = stride;
+                    attribute->components = components;
+                    attribute->type = accessor.componentType;
                 }
             }
-
-            // TODO: support different attribute types currently we "assume" everything is float
 
             std::vector<Vertex> vertices;
 
@@ -488,13 +550,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 }
 
                 copyAttributes(vertices[0].normal, attributeNormal);
-
-                /*
-                for (Vertex& vertex : vertices)
-                {
-                    vertex.normal = normalize(vertex.normal);
-                }
-                */
             }
 
             if (attributeTangent.data)
@@ -527,6 +582,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
+                attributeColor.components = 3;
                 copyAttributes(vertices[0].color, attributeColor);
             }
 
@@ -620,9 +676,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 primitive.material = primitiveIterator->materialIndex.value() + 1;
             }
 
-            // TODO: accumulate into the mesh and adjust index base
-            //mesh.vertices = vertices;
-            //mesh.indices = indices;
             mesh.vertices.insert(mesh.vertices.end(), vertices.begin(), vertices.end());
             mesh.indices.insert(mesh.indices.end(), indices.begin(), indices.end());
 
