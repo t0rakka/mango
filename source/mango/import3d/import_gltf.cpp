@@ -8,6 +8,32 @@
 #include <fastgltf/parser.hpp>
 #include <fastgltf/types.hpp>
 
+namespace
+{
+    using namespace mango;
+
+    struct Attribute
+    {
+        const u8* data = nullptr;
+        size_t count = 0;
+        size_t stride = 0;
+    };
+
+    template <typename T>
+    void copyAttributes(T& target, Attribute attribute)
+    {
+        u8* dest = reinterpret_cast<u8*>(&target);
+
+        for (size_t i = 0; i < attribute.count; ++i)
+        {
+            std::memcpy(dest, attribute.data, sizeof(T));
+            dest += sizeof(import3d::Vertex);
+            attribute.data += attribute.stride;
+        }
+    }
+
+} // namesoace
+
 namespace mango::import3d
 {
 
@@ -69,15 +95,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     {
         debugPrintLine("[Buffer]");
 
-        /*
-        std::cout << "  ByteLength: " << buffer.byteLength << std::endl;
-        std::cout << "  BufferView:   " << std::holds_alternative<fastgltf::sources::BufferView>(buffer.data) << std::endl;
-        std::cout << "  URI:          " << std::holds_alternative<fastgltf::sources::URI>(buffer.data) << std::endl;
-        std::cout << "  Vector:       " << std::holds_alternative<fastgltf::sources::Vector>(buffer.data) << std::endl;
-        std::cout << "  CustomBuffer: " << std::holds_alternative<fastgltf::sources::CustomBuffer>(buffer.data) << std::endl;
-        std::cout << "  ByteView:     " << std::holds_alternative<fastgltf::sources::ByteView>(buffer.data) << std::endl;
-        */
-
         std::visit(fastgltf::visitor
         {
             [] (const auto& arg)
@@ -89,13 +106,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 std::string filename = std::string(source.uri.path().begin(), source.uri.path().end());
 
                 auto file = std::make_unique<filesystem::File>(path, filename);
-                buffers.push_back(*file);
+                ConstMemory memory = *file;
+                buffers.push_back(memory);
                 files.emplace_back(std::move(file));
 
                 // [x] standard
                 // [ ] binary
                 // [ ] embedded
-                debugPrintLine("  URI: %s", filename.c_str());
+                debugPrintLine("  URI: %s : %d bytes", filename.c_str(), u32(memory.size));
             },
 			[&] (const fastgltf::sources::ByteView& source)
             {
@@ -143,14 +161,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     for (const auto& cimage : asset.images)
     {
         debugPrintLine("[Image]");
-
-        /*
-        std::cout << "  BufferView:   " << std::holds_alternative<fastgltf::sources::BufferView>(image.data) << std::endl;
-        std::cout << "  URI:          " << std::holds_alternative<fastgltf::sources::URI>(image.data) << std::endl;
-        std::cout << "  Vector:       " << std::holds_alternative<fastgltf::sources::Vector>(image.data) << std::endl;
-        std::cout << "  CustomBuffer: " << std::holds_alternative<fastgltf::sources::CustomBuffer>(image.data) << std::endl;
-        std::cout << "  ByteView:     " << std::holds_alternative<fastgltf::sources::ByteView>(image.data) << std::endl;
-        */
 
         std::visit(fastgltf::visitor
         {
@@ -226,15 +236,18 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     for (const auto& cmaterial : asset.materials)
     {
         debugPrintLine("[Material]");
-        debugPrintLine("  name %s", cmaterial.name.c_str());
+        debugPrintLine("  name: \"%s\"", cmaterial.name.c_str());
 
         const fastgltf::PBRData& pbr = cmaterial.pbrData;
         const auto* baseColor = pbr.baseColorFactor.data();
 
-        debugPrintLine("  [PBR]");
-        debugPrintLine("    baseColorFactor: %f %f %f %f", baseColor[0], baseColor[1], baseColor[2], baseColor[3]);
-        debugPrintLine("    metallicFactor: %f", pbr.metallicFactor);
-        debugPrintLine("    roughnessFactor: %f", pbr.roughnessFactor);
+        debugPrintLine("  baseColorFactor: %f %f %f %f", baseColor[0], baseColor[1], baseColor[2], baseColor[3]);
+        debugPrintLine("  metallicFactor: %f", pbr.metallicFactor);
+        debugPrintLine("  roughnessFactor: %f", pbr.roughnessFactor);
+        debugPrintLine("  emissiveFactor: %f %f %f",
+            cmaterial.emissiveFactor[0],
+            cmaterial.emissiveFactor[1],
+            cmaterial.emissiveFactor[2]);
 
         if (pbr.baseColorTexture.has_value())
         {
@@ -242,7 +255,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             if (texture.imageIndex.has_value())
             {
                 Texture image = m_images[*texture.imageIndex];
-                debugPrintLine("    baseColorTexture: (%d x %d)", image->width, image->height);
+                debugPrintLine("  baseColorTexture: (%d x %d)", image->width, image->height);
             }
         }
 
@@ -252,7 +265,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             if (texture.imageIndex.has_value())
             {
                 Texture image = m_images[*texture.imageIndex];
-                debugPrintLine("    metallicRoughnessTexture: (%d x %d)", image->width, image->height);
+                debugPrintLine("  metallicRoughnessTexture: (%d x %d)", image->width, image->height);
             }
         }
 
@@ -262,7 +275,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 if (texture.imageIndex.has_value())
                 {
                     Texture image = m_images[*texture.imageIndex];
-                    debugPrintLine("    normalTexture: (%d x %d)", image->width, image->height);
+                    debugPrintLine("  normalTexture: (%d x %d)", image->width, image->height);
                 }
         }
 
@@ -272,7 +285,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 if (texture.imageIndex.has_value())
                 {
                     Texture image = m_images[*texture.imageIndex];
-                    debugPrintLine("    occlusionTexture: (%d x %d)", image->width, image->height);
+                    debugPrintLine("  occlusionTexture: (%d x %d)", image->width, image->height);
                 }
         }
 
@@ -282,14 +295,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 if (texture.imageIndex.has_value())
                 {
                     Texture image = m_images[*texture.imageIndex];
-                    debugPrintLine("    emissiveTexture: (%d x %d)", image->width, image->height);
+                    debugPrintLine("  emissiveTexture: (%d x %d)", image->width, image->height);
                 }
         }
-
-        debugPrintLine("    emissiveFactor: %f %f %f",
-            cmaterial.emissiveFactor[0],
-            cmaterial.emissiveFactor[1],
-            cmaterial.emissiveFactor[2]);
 
 #if 0
 
@@ -365,6 +373,13 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 #endif
     }
 
+    if (materials.empty())
+    {
+        // Add default material
+        Material material;
+        materials.push_back(material);
+    }
+
     // --------------------------------------------------------------------------
     // meshes
     // --------------------------------------------------------------------------
@@ -379,13 +394,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         for (auto primitiveIterator = cmesh.primitives.begin(); primitiveIterator != cmesh.primitives.end(); ++primitiveIterator)
         {
             debugPrintLine("  [primitive]");
-
-            struct Attribute
-            {
-                const u8* data = nullptr;
-                size_t count = 0;
-                size_t stride = 0;
-            };
 
             Attribute attributePosition;
             Attribute attributeNormal;
@@ -425,31 +433,28 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     message = " : NOT SUPPORTED!";
                 }
 
-                debugPrintLine("    [Attribute]");
-                debugPrintLine("      name: \"%s\"%s", name.c_str(), message);
+                debugPrintLine("    [Attribute:\"%s\"%s]", name.c_str(), message);
 
                 auto& accessor = asset.accessors[attributeIterator->second];
-                debugPrintLine("      components: %d", u32(fastgltf::getNumComponents(accessor.type)));
-
                 auto& view = asset.bufferViews[accessor.bufferViewIndex.value()];
 
                 auto offset = view.byteOffset + accessor.byteOffset;
-                u32 index = view.bufferIndex;
-                u32 count = accessor.count;
+                size_t index = view.bufferIndex;
+                size_t count = accessor.count;
 
-                u32 stride;
+                size_t stride;
                 if (view.byteStride.has_value())
                 {
-                    stride = u32(view.byteStride.value());
+                    stride = view.byteStride.value();
                 }
                 else
                 {
-                    stride = u32(fastgltf::getElementByteSize(accessor.type, accessor.componentType));
+                    stride = fastgltf::getElementByteSize(accessor.type, accessor.componentType);
                 }
 
-                debugPrintLine("      stride: %d", stride);
-                debugPrintLine("      offset: %d", offset);
-                debugPrintLine("      count: %d", count);
+                debugPrintLine("      components: %d", u32(fastgltf::getNumComponents(accessor.type)));
+                debugPrintLine("      stride: %d", u32(stride));
+                debugPrintLine("      count: %d", u32(count));
 
                 if (attribute)
                 {
@@ -466,14 +471,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             if (attributePosition.data)
             {
                 vertices.resize(attributePosition.count);
-
-                const u8* data = attributePosition.data;
-
-                for (size_t i = 0; i < attributePosition.count; ++i)
-                {
-                    std::memcpy(vertices[i].position.data(), data, sizeof(float32x3));
-                    data += attributePosition.stride;
-                }
+                copyAttributes(vertices[0].position, attributePosition);
             }
             else
             {
@@ -489,13 +487,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                const u8* data = attributeNormal.data;
+                copyAttributes(vertices[0].normal, attributeNormal);
 
-                for (size_t i = 0; i < attributeNormal.count; ++i)
+                /*
+                for (Vertex& vertex : vertices)
                 {
-                    std::memcpy(vertices[i].normal.data(), data, sizeof(float32x3));
-                    data += attributeNormal.stride;
+                    vertex.normal = normalize(vertex.normal);
                 }
+                */
             }
 
             if (attributeTangent.data)
@@ -506,13 +505,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                const u8* data = attributeTangent.data;
-
-                for (size_t i = 0; i < attributeTangent.count; ++i)
-                {
-                    std::memcpy(vertices[i].normal.data(), data, sizeof(float32x4));
-                    data += attributeTangent.stride;
-                }
+                copyAttributes(vertices[0].tangent, attributeTangent);
             }
 
             if (attributeTexcoord.data)
@@ -523,13 +516,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                const u8* data = attributeTexcoord.data;
-
-                for (size_t i = 0; i < attributeTexcoord.count; ++i)
-                {
-                    std::memcpy(vertices[i].normal.data(), data, sizeof(float32x2));
-                    data += attributeTexcoord.stride;
-                }
+                copyAttributes(vertices[0].texcoord, attributeTexcoord);
             }
 
             if (attributeColor.data)
@@ -540,22 +527,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                const u8* data = attributeColor.data;
-
-                for (size_t i = 0; i < attributeColor.count; ++i)
-                {
-                    std::memcpy(vertices[i].color.data(), data, sizeof(float32x3));
-                    data += attributeColor.stride;
-                }
-            }
-
-            for (Vertex& vertex : vertices)
-            {
-                if (attributeNormal.data)
-                {
-                    // TODO: do this inline
-                    vertex.normal = normalize(vertex.normal);
-                }
+                copyAttributes(vertices[0].color, attributeColor);
             }
 
             // indices
@@ -572,8 +544,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     u32 offset = indicesView.byteOffset + indicesAccessor.byteOffset;
                     size_t count = indicesAccessor.count;
 
-                    u32 indexTypeSize = 0;
-
                     u32 bufferIndex = indicesView.bufferIndex;
                     const u8* data = buffers[bufferIndex].address + offset;
 
@@ -589,7 +559,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                             {
                                 indices[i] = baseIndex + source[i];
                             }
-                            indexTypeSize = 1;
                             break;
                         }
 
@@ -600,7 +569,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                             {
                                 indices[i] = baseIndex + source[i];
                             }
-                            indexTypeSize = 2;
                             break;
                         }
 
@@ -611,7 +579,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                             {
                                 indices[i] = baseIndex + source[i];
                             }
-                            indexTypeSize = 4;
                             break;
                         }
 
@@ -620,7 +587,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     }
 
                     debugPrintLine("    [Indices]");
-                    debugPrintLine("      indexTypeSize: %d", indexTypeSize);
                     debugPrintLine("      count: %d", count);
                 }
             }
@@ -648,7 +614,11 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
             primitive.start = u32(mesh.indices.size());
             primitive.count = u32(indices.size());
-            primitive.material = 0; // TODO
+
+            if (primitiveIterator->materialIndex.has_value())
+            {
+                primitive.material = primitiveIterator->materialIndex.value() + 1;
+            }
 
             // TODO: accumulate into the mesh and adjust index base
             //mesh.vertices = vertices;

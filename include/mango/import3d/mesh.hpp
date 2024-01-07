@@ -90,10 +90,10 @@ namespace mango::import3d
             TRIANGLE_FAN,
         };
 
-        Mode mode { Mode::TRIANGLE_LIST };
+        Mode mode = Mode::TRIANGLE_LIST;
         u32 start;
         u32 count;
-        u32 material;
+        u32 material = 0;
     };
 
     struct IndexedMesh
