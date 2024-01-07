@@ -282,6 +282,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         debugPrintLine("[Material]");
         debugPrintLine("  name: \"%s\"", cmaterial.name.c_str());
 
+        Material material;
+
         const fastgltf::PBRData& pbr = cmaterial.pbrData;
         const auto* baseColor = pbr.baseColorFactor.data();
 
@@ -299,6 +301,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             if (texture.imageIndex.has_value())
             {
                 Texture image = m_images[*texture.imageIndex];
+                material.baseColorTexture = image;
                 debugPrintLine("  baseColorTexture: (%d x %d)", image->width, image->height);
             }
         }
@@ -309,6 +312,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             if (texture.imageIndex.has_value())
             {
                 Texture image = m_images[*texture.imageIndex];
+                material.metallicRoughnessTexture = image;
                 debugPrintLine("  metallicRoughnessTexture: (%d x %d)", image->width, image->height);
             }
         }
@@ -319,6 +323,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 if (texture.imageIndex.has_value())
                 {
                     Texture image = m_images[*texture.imageIndex];
+                    material.normalTexture = image;
                     debugPrintLine("  normalTexture: (%d x %d)", image->width, image->height);
                 }
         }
@@ -329,6 +334,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 if (texture.imageIndex.has_value())
                 {
                     Texture image = m_images[*texture.imageIndex];
+                    material.occlusionTexture = image;
                     debugPrintLine("  occlusionTexture: (%d x %d)", image->width, image->height);
                 }
         }
@@ -339,9 +345,12 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 if (texture.imageIndex.has_value())
                 {
                     Texture image = m_images[*texture.imageIndex];
+                    material.emissiveTexture = image;
                     debugPrintLine("  emissiveTexture: (%d x %d)", image->width, image->height);
                 }
         }
+
+        materials.push_back(material);
 
 #if 0
 
@@ -673,7 +682,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
             if (primitiveIterator->materialIndex.has_value())
             {
-                primitive.material = primitiveIterator->materialIndex.value() + 1;
+                primitive.material = primitiveIterator->materialIndex.value();
             }
 
             mesh.vertices.insert(mesh.vertices.end(), vertices.begin(), vertices.end());
@@ -681,6 +690,13 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
             mesh.primitives.push_back(primitive);
         }
+
+        /*
+        Mesh temp;
+        temp = convertMesh(mesh);
+        computeTangents(temp);
+        mesh = convertMesh(temp);
+        */
 
         meshes.push_back(mesh);
     }
