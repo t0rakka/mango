@@ -114,47 +114,6 @@ void computeTangents(Mesh& mesh)
     MANGO_UNREFERENCED(status);
 }
 
-void loadTexture(Texture& texture, const filesystem::Path& path, const std::string& filename)
-{
-    /* NOTE:
-
-    This is just a convenience function. What we really need is "TextureProvider" interface,
-    which can return a memory mapped view of the texture file, or result of combining two textures
-    into one when it is required. We might also want to use compressed textures and directly upload
-    them into the GPU, or use compute decoder to decompress JPEG. DX12 also has DirectTexture API
-    which could be supported when we don't always provide the data as Bitmap like we do here.
-
-    A texture loading queue can cut the loading time into fraction but we want to keep this simple for now.
-
-    */
-
-    if (filename.empty())
-    {
-        return;
-    }
-
-    bool is_debug_enable = debugPrintIsEnable();
-    debugPrintEnable(false);
-
-    filesystem::File file(path, filename);
-
-    image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
-    texture = std::make_shared<image::Bitmap>(file, filename, format);
-
-    debugPrintEnable(is_debug_enable);
-}
-
-void loadTexture(Texture& texture, ConstMemory memory)
-{
-    bool is_debug_enable = debugPrintIsEnable();
-    debugPrintEnable(false);
-
-    image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
-    texture = std::make_shared<image::Bitmap>(memory, "", format);
-
-    debugPrintEnable(is_debug_enable);
-}
-
 Mesh convertMesh(const IndexedMesh& input)
 {
     Mesh output;
@@ -301,6 +260,41 @@ IndexedMesh convertMesh(const Mesh& input)
     }
 
     return output;
+}
+
+Texture createTexture(const filesystem::Path& path, const std::string& filename)
+{
+    std::shared_ptr<image::Bitmap> texture;
+
+    if (filename.empty())
+    {
+        return texture;
+    }
+
+    bool is_debug_enable = debugPrintIsEnable();
+    debugPrintEnable(false);
+
+    filesystem::File file(path, filename);
+
+    image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
+    texture = std::make_shared<image::Bitmap>(file, filename, format);
+
+    debugPrintEnable(is_debug_enable);
+
+    return texture;
+}
+
+Texture createTexture(ConstMemory memory)
+{
+    bool is_debug_enable = debugPrintIsEnable();
+    debugPrintEnable(false);
+
+    image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
+    std::shared_ptr<image::Bitmap> texture = std::make_shared<image::Bitmap>(memory, "", format);
+
+    debugPrintEnable(is_debug_enable);
+
+    return texture;
 }
 
 Cube::Cube(float32x3 size)

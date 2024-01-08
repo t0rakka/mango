@@ -200,7 +200,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     // images
     // --------------------------------------------------------------------------
 
-    std::vector<Texture> m_images;
+    std::vector<Texture> textures;
 
     for (const auto& cimage : asset.images)
     {
@@ -221,9 +221,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 auto file = std::make_unique<filesystem::File>(path, filename);
                 ConstMemory memory = *file;
 
-                Texture texture;
-                loadTexture(texture, path, filename);
-                m_images.push_back(texture);
+                Texture texture = createTexture(path, filename);
+                textures.push_back(texture);
 
                 // [x] standard
                 // [ ] binary
@@ -235,9 +234,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 ConstMemory memory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
                 //std::cout << "  ImageFormat: " << getImageFormat(memory) << std::endl;
 
-                Texture texture;
-                loadTexture(texture, memory);
-                m_images.push_back(texture);
+                Texture texture = createTexture(memory);
+                textures.push_back(texture);
 
                 // [ ] standard
                 // [ ] binary
@@ -260,9 +258,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 ConstMemory memory(reinterpret_cast<const u8*>(span.data() + bufferView.byteOffset), bufferView.byteLength);
                 //std::cout << "  ImageFormat: " << getImageFormat(memory) << std::endl;
 
-                Texture texture;
-                loadTexture(texture, memory);
-                m_images.push_back(texture);
+                Texture texture = createTexture(memory);
+                textures.push_back(texture);
 
                 // [ ] standard
                 // [x] binary
@@ -300,7 +297,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             fastgltf::Texture& texture = asset.textures[pbr.baseColorTexture->textureIndex];
             if (texture.imageIndex.has_value())
             {
-                Texture image = m_images[*texture.imageIndex];
+                Texture image = textures[*texture.imageIndex];
                 material.baseColorTexture = image;
                 debugPrintLine("  baseColorTexture: (%d x %d)", image->width, image->height);
             }
@@ -311,7 +308,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             fastgltf::Texture& texture = asset.textures[pbr.metallicRoughnessTexture->textureIndex];
             if (texture.imageIndex.has_value())
             {
-                Texture image = m_images[*texture.imageIndex];
+                Texture image = textures[*texture.imageIndex];
                 material.metallicRoughnessTexture = image;
                 debugPrintLine("  metallicRoughnessTexture: (%d x %d)", image->width, image->height);
             }
@@ -319,35 +316,35 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
         if (cmaterial.normalTexture.has_value())
         {
-                fastgltf::Texture& texture = asset.textures[cmaterial.normalTexture->textureIndex];
-                if (texture.imageIndex.has_value())
-                {
-                    Texture image = m_images[*texture.imageIndex];
-                    material.normalTexture = image;
-                    debugPrintLine("  normalTexture: (%d x %d)", image->width, image->height);
-                }
+            fastgltf::Texture& texture = asset.textures[cmaterial.normalTexture->textureIndex];
+            if (texture.imageIndex.has_value())
+            {
+                Texture image = textures[*texture.imageIndex];
+                material.normalTexture = image;
+                debugPrintLine("  normalTexture: (%d x %d)", image->width, image->height);
+            }
         }
 
         if (cmaterial.occlusionTexture.has_value())
         {
-                fastgltf::Texture& texture = asset.textures[cmaterial.occlusionTexture->textureIndex];
-                if (texture.imageIndex.has_value())
-                {
-                    Texture image = m_images[*texture.imageIndex];
-                    material.occlusionTexture = image;
-                    debugPrintLine("  occlusionTexture: (%d x %d)", image->width, image->height);
-                }
+            fastgltf::Texture& texture = asset.textures[cmaterial.occlusionTexture->textureIndex];
+            if (texture.imageIndex.has_value())
+            {
+                Texture image = textures[*texture.imageIndex];
+                material.occlusionTexture = image;
+                debugPrintLine("  occlusionTexture: (%d x %d)", image->width, image->height);
+            }
         }
 
         if (cmaterial.emissiveTexture.has_value())
         {
-                fastgltf::Texture& texture = asset.textures[cmaterial.emissiveTexture->textureIndex];
-                if (texture.imageIndex.has_value())
-                {
-                    Texture image = m_images[*texture.imageIndex];
-                    material.emissiveTexture = image;
-                    debugPrintLine("  emissiveTexture: (%d x %d)", image->width, image->height);
-                }
+            fastgltf::Texture& texture = asset.textures[cmaterial.emissiveTexture->textureIndex];
+            if (texture.imageIndex.has_value())
+            {
+                Texture image = textures[*texture.imageIndex];
+                material.emissiveTexture = image;
+                debugPrintLine("  emissiveTexture: (%d x %d)", image->width, image->height);
+            }
         }
 
         materials.push_back(material);

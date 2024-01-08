@@ -656,7 +656,6 @@ namespace
             float32x3 position = read_vec3(p);
             parse_chunks(p);
             MANGO_UNREFERENCED(position);
-            //color8x4 color = color;
         }
 
         void chunk_light_spot(LittleEndianConstPointer& p)
@@ -1017,8 +1016,8 @@ namespace mango::import3d
             material.baseColorFactor = material3ds.diffuse;
             material.twosided = material3ds.twosided;
 
-            loadTexture(material.baseColorTexture, path, material3ds.texture_map1.filename);
-            loadTexture(material.emissiveTexture, path, material3ds.texture_self_illum.filename);
+            material.baseColorTexture = createTexture(path, material3ds.texture_map1.filename);
+            material.emissiveTexture = createTexture(path, material3ds.texture_self_illum.filename);
 
             materials.push_back(material);
         }

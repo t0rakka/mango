@@ -571,10 +571,10 @@ namespace mango::import3d
             material.baseColorFactor = float32x4(materialobj.kd, materialobj.tr);
             material.emissiveFactor = materialobj.ke;
 
-            loadTexture(material.baseColorTexture, path, materialobj.map_kd);
-            loadTexture(material.emissiveTexture, path, materialobj.map_ke);
-            loadTexture(material.normalTexture, path, materialobj.map_bump);
-            loadTexture(material.occlusionTexture, path, materialobj.map_ka);
+            material.baseColorTexture = createTexture(path, materialobj.map_kd);
+            material.emissiveTexture = createTexture(path, materialobj.map_ke);
+            material.normalTexture = createTexture(path, materialobj.map_bump);
+            material.occlusionTexture = createTexture(path, materialobj.map_ka);
 
             materials.push_back(material);
         }
@@ -605,7 +605,6 @@ namespace mango::import3d
                     if (texcoordIndex)
                     {
                         vertex.texcoord = reader.texcoords[texcoordIndex - 1];
-                        //vertex.texcoord.y = -vertex.texcoord.y; // GL flip
                     }
 
                     if (normalIndex)

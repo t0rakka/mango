@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <string>
+#include <optional>
 #include <memory>
 #include <mango/math/math.hpp>
 #include <mango/image/image.hpp>
@@ -18,7 +19,6 @@ namespace mango::import3d
     using float32x3 = math::Vector<float, 3>;
     using float32x4 = math::Vector<float, 4>;
     using matrix4x4 = math::Matrix<float, 4, 4>;
-    using color8x4 = math::Vector<u8, 4>;
 
     // -----------------------------------------------------------------------
     // material
@@ -129,11 +129,11 @@ namespace mango::import3d
     // -----------------------------------------------------------------------
 
     void computeTangents(Mesh& mesh);
-    void loadTexture(Texture& texture, const filesystem::Path& path, const std::string& filename);
-    void loadTexture(Texture& texture, ConstMemory memory);
-
     Mesh convertMesh(const IndexedMesh& input);
     IndexedMesh convertMesh(const Mesh& input);
+
+    Texture createTexture(const filesystem::Path& path, const std::string& filename);
+    Texture createTexture(ConstMemory memory);
 
     // -----------------------------------------------------------------------
     // shapes
