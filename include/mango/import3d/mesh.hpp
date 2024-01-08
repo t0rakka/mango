@@ -107,21 +107,22 @@ namespace mango::import3d
     // scene
     // -----------------------------------------------------------------------
 
-    struct Object
+    struct Node
     {
-        static constexpr u32 DefaultParent = 0xffffffff;
+        static constexpr u32 NONE = 0xffffffff;
 
         std::string name;
-        u32 parent { DefaultParent };
+        std::vector<u32> children;
         matrix4x4 transform { 1.0f };
-        std::vector<u32> meshes;
+        u32 mesh = NONE;
     };
 
     struct Scene
     {
         std::vector<Material> materials;
         std::vector<IndexedMesh> meshes;
-        std::vector<Object> objects;
+        std::vector<Node> nodes;
+        std::vector<u32> roots;
     };
 
     // -----------------------------------------------------------------------

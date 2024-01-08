@@ -85,6 +85,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 {
     u64 time0 = Time::ms();
 
+    // --------------------------------------------------------------------------
+    // read
+    // --------------------------------------------------------------------------
+
     filesystem::File file(path, filename);
 
     Buffer filebuffer(file);
@@ -93,23 +97,23 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     fastgltf::GltfDataBuffer data;
     data.fromByteView(filebuffer.data(), filebuffer.size() - fastgltf::getGltfBufferPadding(), filebuffer.size());
 
-    //debugPrintLine("BufferSize: %d", int(data.getBufferSize()));
-
     // --------------------------------------------------------------------------
     // parse
     // --------------------------------------------------------------------------
 
     debugPrintLine("[ImportGLTF]");
 
+    fastgltf::Parser parser(fastgltf::Extensions::KHR_mesh_quantization);
+
     auto gltfOptions = 
         fastgltf::Options::DontRequireValidAssetMember |
         fastgltf::Options::AllowDouble;
+	gltfOptions |= fastgltf::Options::GenerateMeshIndices;
     //gltfOptions |= fastgltf::Options::LoadGLBBuffers;
     //gltfOptions |= fastgltf::Options::LoadExternalBuffers;
     //gltfOptions |= fastgltf::Options::LoadExternalImages;
-
-    fastgltf::Parser parser(fastgltf::Extensions::KHR_mesh_quantization);
-
+    //gltfOptions |= fastgltf::Options::LoadExternalImages;
+    
     auto type = fastgltf::determineGltfFileType(&data);
     if (type == fastgltf::GltfType::glTF)
     {
@@ -126,6 +130,12 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     }
 
     auto expected = parser.loadGltf(&data, "", gltfOptions);
+    if (expected.error() != fastgltf::Error::None)
+    {
+        debugPrintLine("  ERROR: %s", fastgltf::getErrorMessage(expected.error()).data());
+        return;
+    }
+
     fastgltf::Asset asset = std::move(expected.get());
 
     // --------------------------------------------------------------------------
@@ -135,7 +145,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     std::vector<std::unique_ptr<filesystem::File>> files;
     std::vector<ConstMemory> buffers;
 
-    for (const auto& cbuffer : asset.buffers)
+    for (const auto& current : asset.buffers)
     {
         debugPrintLine("[Buffer]");
 
@@ -193,7 +203,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] embedded
                 debugPrintLine("  CustomBuffer: %d", int(source.id));
             },
-        }, cbuffer.data);
+        }, current.data);
     }
 
     // --------------------------------------------------------------------------
@@ -202,7 +212,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     std::vector<Texture> textures;
 
-    for (const auto& cimage : asset.images)
+    for (const auto& current : asset.images)
     {
         debugPrintLine("[Image]");
 
@@ -266,7 +276,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] embedded
                 debugPrintLine("  BufferView: %d bytes", u32(memory.size));
             },
-        }, cimage.data);
+        }, current.data);
 
     }
 
@@ -274,23 +284,23 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     // materials
     // --------------------------------------------------------------------------
 
-    for (const auto& cmaterial : asset.materials)
+    for (const auto& current : asset.materials)
     {
         debugPrintLine("[Material]");
-        debugPrintLine("  name: \"%s\"", cmaterial.name.c_str());
+        debugPrintLine("  name: \"%s\"", current.name.c_str());
 
         Material material;
 
-        const fastgltf::PBRData& pbr = cmaterial.pbrData;
+        const fastgltf::PBRData& pbr = current.pbrData;
         const auto* baseColor = pbr.baseColorFactor.data();
 
         debugPrintLine("  baseColorFactor: %f %f %f %f", baseColor[0], baseColor[1], baseColor[2], baseColor[3]);
         debugPrintLine("  metallicFactor: %f", pbr.metallicFactor);
         debugPrintLine("  roughnessFactor: %f", pbr.roughnessFactor);
         debugPrintLine("  emissiveFactor: %f %f %f",
-            cmaterial.emissiveFactor[0],
-            cmaterial.emissiveFactor[1],
-            cmaterial.emissiveFactor[2]);
+            current.emissiveFactor[0],
+            current.emissiveFactor[1],
+            current.emissiveFactor[2]);
 
         if (pbr.baseColorTexture.has_value())
         {
@@ -314,9 +324,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             }
         }
 
-        if (cmaterial.normalTexture.has_value())
+        if (current.normalTexture.has_value())
         {
-            fastgltf::Texture& texture = asset.textures[cmaterial.normalTexture->textureIndex];
+            fastgltf::Texture& texture = asset.textures[current.normalTexture->textureIndex];
             if (texture.imageIndex.has_value())
             {
                 Texture image = textures[*texture.imageIndex];
@@ -325,9 +335,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             }
         }
 
-        if (cmaterial.occlusionTexture.has_value())
+        if (current.occlusionTexture.has_value())
         {
-            fastgltf::Texture& texture = asset.textures[cmaterial.occlusionTexture->textureIndex];
+            fastgltf::Texture& texture = asset.textures[current.occlusionTexture->textureIndex];
             if (texture.imageIndex.has_value())
             {
                 Texture image = textures[*texture.imageIndex];
@@ -336,9 +346,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             }
         }
 
-        if (cmaterial.emissiveTexture.has_value())
+        if (current.emissiveTexture.has_value())
         {
-            fastgltf::Texture& texture = asset.textures[cmaterial.emissiveTexture->textureIndex];
+            fastgltf::Texture& texture = asset.textures[current.emissiveTexture->textureIndex];
             if (texture.imageIndex.has_value())
             {
                 Texture image = textures[*texture.imageIndex];
@@ -434,14 +444,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     // meshes
     // --------------------------------------------------------------------------
 
-    for (const auto& cmesh : asset.meshes)
+    for (const auto& current : asset.meshes)
     {
         debugPrintLine("[Mesh]");
-        debugPrintLine("  name: %s", cmesh.name.c_str());
+        debugPrintLine("  name: %s", current.name.c_str());
 
         IndexedMesh mesh;
 
-        for (auto primitiveIterator = cmesh.primitives.begin(); primitiveIterator != cmesh.primitives.end(); ++primitiveIterator)
+        for (auto primitiveIterator = current.primitives.begin(); primitiveIterator != current.primitives.end(); ++primitiveIterator)
         {
             debugPrintLine("  [primitive]");
 
@@ -688,7 +698,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             mesh.primitives.push_back(primitive);
         }
 
-        /*
+        /* TODO: should be done per primitive
         Mesh temp;
         temp = convertMesh(mesh);
         computeTangents(temp);
@@ -698,11 +708,60 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         meshes.push_back(mesh);
     }
 
+    // nodes
+
+    for (const auto& current : asset.nodes)
+    {
+        Node node;
+
+        if (const auto* matrix = std::get_if<fastgltf::Node::TransformMatrix>(&current.transform))
+        {
+            const float* data = matrix->data();
+            node.transform = matrix4x4(data);
+        }
+        else if (const auto* trs = std::get_if<fastgltf::Node::TRS>(&current.transform))
+        {
+            const float* t = trs->translation.data();
+            const float* r = trs->rotation.data();
+            const float* s = trs->scale.data();
+
+            matrix4x4 translation = matrix4x4::translate(t[0], t[1], t[2]);
+            matrix4x4 rotation(math::Quaternion(r[0], r[1], r[2], r[3]));
+            matrix4x4 scale = matrix4x4::scale(s[0], s[1], s[2]);
+
+            node.transform = scale * rotation * translation;
+        }
+
+        node.name = current.name;
+        node.children = std::vector<u32>(current.children.begin(), current.children.end());
+
+        if (current.meshIndex)
+        {
+            node.mesh = u32(current.meshIndex.value());
+        }
+
+        nodes.push_back(node);
+    }
+
+    // scenes
+
+    for (const auto& current : asset.scenes)
+    {
+        debugPrintLine("[Scene]");
+        debugPrintLine("  nodeIndices: %d", int(current.nodeIndices.size()));
+
+        roots = std::vector<u32>(current.nodeIndices.begin(), current.nodeIndices.end());
+    }
+
+    // summary
+
     debugPrintLine("[Summary]");
     debugPrintLine("  Buffers:   %d", int(asset.buffers.size()));
     debugPrintLine("  Images:    %d", int(asset.images.size()));
     debugPrintLine("  Materials: %d", int(asset.materials.size()));
     debugPrintLine("  Meshes:    %d", int(asset.meshes.size()));
+    debugPrintLine("  Nodes:     %d", int(asset.nodes.size()));
+    debugPrintLine("  Scenes:    %d", int(asset.scenes.size()));
 
     u64 time1 = Time::ms();
     debugPrintLine("Time: %d ms", int(time1 - time0));

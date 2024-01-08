@@ -617,15 +617,22 @@ namespace mango::import3d
             computeTangents(trimesh);
             IndexedMesh mesh = convertMesh(trimesh);
 
-            Object o;
+            Node node;
 
-            o.name = object.name;
-            o.parent = ~0;
-            o.transform = matrix4x4(1.0f);
-            o.meshes.push_back(u32(meshes.size()));
+            node.name = object.name;
+            node.transform = matrix4x4(1.0f);
+            node.mesh = u32(meshes.size());
 
-            objects.push_back(o);
+            nodes.push_back(node);
             meshes.push_back(mesh);
+        }
+
+        // NOTE: we don't care about hierarchy in the .obj scene
+
+        for (size_t i = 0; i < nodes.size(); ++i)
+        {
+            u32 index = u32(i);
+            roots.push_back(index);
         }
 
         u64 time2 = mango::Time::ms();

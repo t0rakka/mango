@@ -1028,7 +1028,7 @@ namespace mango::import3d
             materials.push_back(material);
         }
 
-        for (auto& mesh3ds : reader.meshes)
+        for (const auto& mesh3ds : reader.meshes)
         {
             Mesh trimesh;
 
@@ -1047,7 +1047,7 @@ namespace mango::import3d
             // resolve vertex position sharing between faces
             for (size_t i = 0; i < mesh3ds.faces.size(); ++i)
             {
-                Face3DS& face = mesh3ds.faces[i];
+                const Face3DS& face = mesh3ds.faces[i];
 
                 // store face index into sharing map for all the positions
                 sharing.emplace(mesh3ds.positions[face.index[0]], i);
@@ -1058,7 +1058,7 @@ namespace mango::import3d
             // compute vertex normals
             for (size_t i = 0; i < mesh3ds.faces.size(); ++i)
             {
-                Face3DS& face = mesh3ds.faces[i];
+                const Face3DS& face = mesh3ds.faces[i];
 
                 Triangle triangle;
 
@@ -1080,7 +1080,7 @@ namespace mango::import3d
 
                     for (auto s = share.first; s != share.second; ++s)
                     {
-                        Face3DS& shared = mesh3ds.faces[s->second];
+                        const Face3DS& shared = mesh3ds.faces[s->second];
                         if (!face.smoothing || (face.smoothing & shared.smoothing))
                         {
                             normal += mesh3ds.computeNormal(shared);
@@ -1101,6 +1101,24 @@ namespace mango::import3d
 
             meshes.push_back(mesh);
         }
+
+        // NOTE: we don't care about hierarchy in the .3ds scene
+
+        Node root;
+
+        for (size_t i = 0; i < meshes.size(); ++i)
+        {
+            u32 index = u32(i);
+
+            Node node;
+            node.mesh = index;
+
+            nodes.push_back(node);
+            root.children.push_back(index);
+        }
+
+        nodes.push_back(root);
+        roots.push_back(u32(meshes.size()));
     }
 
 } // namespace mango::import3d
