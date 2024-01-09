@@ -363,13 +363,14 @@ namespace fp64
     static constexpr double double_pi4_b = 4.9604678871439933374e-10;
     static constexpr double double_pi4_c = 1.1258708853173288931e-18;
     static constexpr double double_pi4_d = 1.7607799325916000908e-27;
-    static constexpr double double_r_ln2 = 1.442695040888963407359924681001892137426645954152985934135449406931;
+    //static constexpr double double_r_ln2 = 1.442695040888963407359924681001892137426645954152985934135449406931;
     static constexpr double double_r_inf = double(std::numeric_limits<double>::infinity());
-    static constexpr double double_l2u   = 0.693145751953125;
-    static constexpr double double_l2l   = 1.428606765330187045e-06;
+    //static constexpr double double_l2u   = 0.693145751953125;
+    //static constexpr double double_l2l   = 1.428606765330187045e-06;
 
     // utility functions
 
+    /*
     static inline
     simd::s64x2 srai64(simd::s64x2 a, int count)
     {
@@ -404,6 +405,7 @@ namespace fp64
         data[7] >>= count;
         return a;
     }
+    */
 
     template <typename F>
     inline F signbit(F f)
