@@ -76,7 +76,7 @@ static WEBP_INLINE int clip(int v, int m, int M) {
 // MANGO FIX:
 // compiler claims "center" is not initialized, even if write 0 to every element of the array
 // we're done... silence!
-#if __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
   #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 

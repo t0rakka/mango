@@ -39,6 +39,11 @@
 #include <android/asset_manager.h>
 #endif
 
+// MANGO FIX:
+#if defined(__clang__)
+  #pragma GCC diagnostic ignored "-Wunused-lambda-capture"
+#endif
+
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 5030) // attribute 'x' is not recognized
