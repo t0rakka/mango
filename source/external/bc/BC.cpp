@@ -360,7 +360,9 @@ namespace
         HDRColorA Error[NUM_PIXELS_PER_BLOCK];
 
         if (flags & BC_FLAGS_DITHER_RGB)
-            memset(Error, 0x00, NUM_PIXELS_PER_BLOCK * sizeof(HDRColorA));
+        {
+            // Error[0 .. NUM_PIXELS_PER_BLOCK-1] = HDRColorA(0, 0, 0, 0)
+        }
 
         size_t i;
         for (i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
@@ -543,8 +545,11 @@ namespace
 
         // Encode colors
         uint32_t dw = 0;
+
         if (flags & BC_FLAGS_DITHER_RGB)
-            memset(Error, 0x00, NUM_PIXELS_PER_BLOCK * sizeof(HDRColorA));
+        {
+            // Error[0 .. NUM_PIXELS_PER_BLOCK-1] = HDRColorA(0, 0, 0, 0)
+        }
 
         for (i = 0; i < NUM_PIXELS_PER_BLOCK; ++i)
         {

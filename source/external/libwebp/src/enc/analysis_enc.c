@@ -73,6 +73,13 @@ static WEBP_INLINE int clip(int v, int m, int M) {
   return (v < m) ? m : (v > M) ? M : v;
 }
 
+// MANGO FIX:
+// compiler claims "center" is not initialized, even if write 0 to every element of the array
+// we're done... silence!
+#if __GNUC__
+  #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 static void SetSegmentAlphas(VP8Encoder* const enc,
                              const int centers[NUM_MB_SEGMENTS],
                              int mid) {
@@ -80,7 +87,7 @@ static void SetSegmentAlphas(VP8Encoder* const enc,
   int min = centers[0], max = centers[0];
   int n;
 
-  if (nb > 1) {
+    if (nb > 1) {
     for (n = 0; n < nb; ++n) {
       if (min > centers[n]) min = centers[n];
       if (max < centers[n]) max = centers[n];
