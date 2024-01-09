@@ -517,20 +517,19 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 switch (accessor.componentType)
                 {
                     case fastgltf::ComponentType::UnsignedByte:
-                        debugPrintLine("      type: u8");
+                        debugPrintLine("      type: u8 x %d", u32(components));
                         break;
                     case fastgltf::ComponentType::UnsignedShort:
-                        debugPrintLine("      type: u16");
+                        debugPrintLine("      type: u16 x %d", u32(components));
                         break;
                     case fastgltf::ComponentType::Float:
-                        debugPrintLine("      type: f32");
+                        debugPrintLine("      type: f32 x %d", u32(components));
                         break;
                     default:
-                        debugPrintLine("      type: NOT SUPPORTED!");
+                        debugPrintLine("      type: NOT SUPPORTED");
                         break;
                 }
 
-                debugPrintLine("      components: %d", u32(components));
                 debugPrintLine("      stride: %d", u32(stride));
                 debugPrintLine("      count: %d", u32(count));
 
