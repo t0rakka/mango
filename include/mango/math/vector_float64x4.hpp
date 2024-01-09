@@ -229,8 +229,7 @@ namespace mango::math
     // trigonometric functions
     // ------------------------------------------------------------------
 
-    /* These come from default implementation:
-
+    /*
     Vector<double, 4> sin(Vector<double, 4> a);
     Vector<double, 4> cos(Vector<double, 4> a);
     Vector<double, 4> tan(Vector<double, 4> a);
@@ -243,7 +242,6 @@ namespace mango::math
     Vector<double, 4> atan(Vector<double, 4> a);
     Vector<double, 4> atan2(Vector<double, 4> a, Vector<double, 4> b);
     Vector<double, 4> pow(Vector<double, 4> a, Vector<double, 4> b);
-
     */
 
 } // namespace mango::math
