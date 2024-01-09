@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -13,8 +13,8 @@ namespace mango::simd
     static inline R FUNC(A a) \
     { \
         R result; \
-        result.part[0] = FUNC(a.part[0]); \
-        result.part[1] = FUNC(a.part[1]); \
+        result.data[0] = FUNC(a.data[0]); \
+        result.data[1] = FUNC(a.data[1]); \
         return result; \
     }
 
@@ -22,8 +22,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b) \
     { \
         R result; \
-        result.part[0] = FUNC(a.part[0], b.part[0]); \
-        result.part[1] = FUNC(a.part[1], b.part[1]); \
+        result.data[0] = FUNC(a.data[0], b.data[0]); \
+        result.data[1] = FUNC(a.data[1], b.data[1]); \
         return result; \
     }
 
@@ -31,8 +31,8 @@ namespace mango::simd
     static inline R FUNC(ABC a, ABC b, ABC c) \
     { \
         R result; \
-        result.part[0] = FUNC(a.part[0], b.part[0], c.part[0]); \
-        result.part[1] = FUNC(a.part[1], b.part[1], c.part[1]); \
+        result.data[0] = FUNC(a.data[0], b.data[0], c.data[0]); \
+        result.data[1] = FUNC(a.data[1], b.data[1], c.data[1]); \
         return result; \
     }
 
@@ -40,8 +40,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b, MASK mask) \
     { \
         R result; \
-        result.part[0] = FUNC(a.part[0], b.part[0], mask.part[0]); \
-        result.part[1] = FUNC(a.part[1], b.part[1], mask.part[1]); \
+        result.data[0] = FUNC(a.data[0], b.data[0], mask.data[0]); \
+        result.data[1] = FUNC(a.data[1], b.data[1], mask.data[1]); \
         return result; \
     }
 
@@ -49,8 +49,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b, MASK mask, AB value) \
     { \
         R result; \
-        result.part[0] = FUNC(a.part[0], b.part[0], mask.part[0], value.part[0]); \
-        result.part[1] = FUNC(a.part[1], b.part[1], mask.part[1], value.part[1]); \
+        result.data[0] = FUNC(a.data[0], b.data[0], mask.data[0], value.data[0]); \
+        result.data[1] = FUNC(a.data[1], b.data[1], mask.data[1], value.data[1]); \
         return result; \
     }
 
@@ -63,14 +63,14 @@ namespace mango::simd
     template <u32 x, u32 y, u32 z, u32 w>
     static inline f64x4 shuffle(f64x4 v)
     {
-        const f64x2 v0 = x & 2 ? v.part[1] : v.part[0];
-        const f64x2 v1 = y & 2 ? v.part[1] : v.part[0];
-        const f64x2 v2 = z & 2 ? v.part[1] : v.part[0];
-        const f64x2 v3 = w & 2 ? v.part[1] : v.part[0];
+        const f64x2 v0 = x & 2 ? v.data[1] : v.data[0];
+        const f64x2 v1 = y & 2 ? v.data[1] : v.data[0];
+        const f64x2 v2 = z & 2 ? v.data[1] : v.data[0];
+        const f64x2 v3 = w & 2 ? v.data[1] : v.data[0];
 
         f64x4 result;
-        result.part[0] = shuffle<x & 1, y & 1>(v0, v1);
-        result.part[1] = shuffle<z & 1, w & 1>(v2, v3);
+        result.data[0] = shuffle<x & 1, y & 1>(v0, v1);
+        result.data[1] = shuffle<z & 1, w & 1>(v2, v3);
         return result;
     }
 
@@ -85,10 +85,10 @@ namespace mango::simd
     inline f64x4 shuffle<0, 0, 0, 0>(f64x4 v)
     {
         // .xxxx
-        const f64x2 xx = shuffle<0, 0>(v.part[0]);
+        const f64x2 xx = shuffle<0, 0>(v.data[0]);
         f64x4 result;
-        result.part[0] = xx;
-        result.part[1] = xx;
+        result.data[0] = xx;
+        result.data[1] = xx;
         return result;
     }
 
@@ -96,10 +96,10 @@ namespace mango::simd
     inline f64x4 shuffle<1, 1, 1, 1>(f64x4 v)
     {
         // .yyyy
-        const f64x2 yy = shuffle<1, 1>(v.part[0]);
+        const f64x2 yy = shuffle<1, 1>(v.data[0]);
         f64x4 result;
-        result.part[0] = yy;
-        result.part[1] = yy;
+        result.data[0] = yy;
+        result.data[1] = yy;
         return result;
     }
 
@@ -107,10 +107,10 @@ namespace mango::simd
     inline f64x4 shuffle<2, 2, 2, 2>(f64x4 v)
     {
         // .zzzz
-        const f64x2 zz = shuffle<0, 0>(v.part[1]);
+        const f64x2 zz = shuffle<0, 0>(v.data[1]);
         f64x4 result;
-        result.part[0] = zz;
-        result.part[1] = zz;
+        result.data[0] = zz;
+        result.data[1] = zz;
         return result;
     }
 
@@ -118,10 +118,10 @@ namespace mango::simd
     inline f64x4 shuffle<3, 3, 3, 3>(f64x4 v)
     {
         // .wwww
-        const f64x2 ww = shuffle<1, 1>(v.part[1]);
+        const f64x2 ww = shuffle<1, 1>(v.data[1]);
         f64x4 result;
-        result.part[0] = ww;
-        result.part[1] = ww;
+        result.data[0] = ww;
+        result.data[1] = ww;
         return result;
     }
 
@@ -133,10 +133,10 @@ namespace mango::simd
         static_assert(Index < 4, "Index out of range.");
         switch (Index)
         {
-            case 0: a.part[0] = set_component<0>(a.part[0], s); break;
-            case 1: a.part[0] = set_component<1>(a.part[0], s); break;
-            case 2: a.part[1] = set_component<0>(a.part[1], s); break;
-            case 3: a.part[1] = set_component<1>(a.part[1], s); break;
+            case 0: a.data[0] = set_component<0>(a.data[0], s); break;
+            case 1: a.data[0] = set_component<1>(a.data[0], s); break;
+            case 2: a.data[1] = set_component<0>(a.data[1], s); break;
+            case 3: a.data[1] = set_component<1>(a.data[1], s); break;
         }
         return a;
     }
@@ -150,10 +150,10 @@ namespace mango::simd
         f64 s = 0.0;
         switch (Index)
         {
-            case 0: s = get_component<0>(a.part[0]); break;
-            case 1: s = get_component<1>(a.part[0]); break;
-            case 2: s = get_component<0>(a.part[1]); break;
-            case 3: s = get_component<1>(a.part[1]); break;
+            case 0: s = get_component<0>(a.data[0]); break;
+            case 1: s = get_component<1>(a.data[0]); break;
+            case 2: s = get_component<0>(a.data[1]); break;
+            case 3: s = get_component<1>(a.data[1]); break;
         }
         return s;
     }
@@ -161,54 +161,54 @@ namespace mango::simd
     static inline f64x4 f64x4_zero()
     {
         f64x4 result;
-        result.part[0] = f64x2_zero();
-        result.part[1] = f64x2_zero();
+        result.data[0] = f64x2_zero();
+        result.data[1] = f64x2_zero();
         return result;
     }
 
     static inline f64x4 f64x4_set(f64 s)
     {
         f64x4 result;
-        result.part[0] = f64x2_set(s);
-        result.part[1] = f64x2_set(s);
+        result.data[0] = f64x2_set(s);
+        result.data[1] = f64x2_set(s);
         return result;
     }
 
     static inline f64x4 f64x4_set(f64 x, f64 y, f64 z, f64 w)
     {
         f64x4 result;
-        result.part[0] = f64x2_set(x, y);
-        result.part[1] = f64x2_set(z, w);
+        result.data[0] = f64x2_set(x, y);
+        result.data[1] = f64x2_set(z, w);
         return result;
     }
 
     static inline f64x4 f64x4_uload(const void* source)
     {
         f64x4 result;
-        result.part[0] = f64x2_uload(reinterpret_cast<const f64*>(source) + 0);
-        result.part[1] = f64x2_uload(reinterpret_cast<const f64*>(source) + 2);
+        result.data[0] = f64x2_uload(reinterpret_cast<const f64*>(source) + 0);
+        result.data[1] = f64x2_uload(reinterpret_cast<const f64*>(source) + 2);
         return result;
     }
 
     static inline void f64x4_ustore(void* dest, f64x4 a)
     {
-        f64x2_ustore(reinterpret_cast<f64*>(dest) + 0, a.part[0]);
-        f64x2_ustore(reinterpret_cast<f64*>(dest) + 2, a.part[1]);
+        f64x2_ustore(reinterpret_cast<f64*>(dest) + 0, a.data[0]);
+        f64x2_ustore(reinterpret_cast<f64*>(dest) + 2, a.data[1]);
     }
 
     static inline f64x4 movelh(f64x4 a, f64x4 b)
     {
         f64x4 result;
-        result.part[0] = a.part[0];
-        result.part[1] = b.part[0];
+        result.data[0] = a.data[0];
+        result.data[1] = b.data[0];
         return result;
     }
 
     static inline f64x4 movehl(f64x4 a, f64x4 b)
     {
         f64x4 result;
-        result.part[0] = b.part[1];
-        result.part[1] = a.part[1];
+        result.data[0] = b.data[1];
+        result.data[1] = a.data[1];
         return result;
     }
 
@@ -224,23 +224,23 @@ namespace mango::simd
 
     static inline f64x4 hmin(f64x4 a)
     {
-        const f64x2 xy = min(a.part[0], shuffle<1, 0>(a.part[0]));
-        const f64x2 zw = min(a.part[1], shuffle<1, 0>(a.part[1]));
+        const f64x2 xy = min(a.data[0], shuffle<1, 0>(a.data[0]));
+        const f64x2 zw = min(a.data[1], shuffle<1, 0>(a.data[1]));
         const f64x2 s = min(xy, zw);
         f64x4 result;
-        result.part[0] = s;
-        result.part[1] = s;
+        result.data[0] = s;
+        result.data[1] = s;
         return result;
     }
 
     static inline f64x4 hmax(f64x4 a)
     {
-        const f64x2 xy = max(a.part[0], shuffle<1, 0>(a.part[0]));
-        const f64x2 zw = max(a.part[1], shuffle<1, 0>(a.part[1]));
+        const f64x2 xy = max(a.data[0], shuffle<1, 0>(a.data[0]));
+        const f64x2 zw = max(a.data[1], shuffle<1, 0>(a.data[1]));
         const f64x2 s = max(xy, zw);
         f64x4 result;
-        result.part[0] = s;
-        result.part[1] = s;
+        result.data[0] = s;
+        result.data[1] = s;
         return result;
     }
 
@@ -268,8 +268,8 @@ namespace mango::simd
     static inline f64x4 div(f64x4 a, f64 b)
     {
         f64x4 result;
-        result.part[0] = div(a.part[0], b);
-        result.part[1] = div(a.part[1], b);
+        result.data[0] = div(a.data[0], b);
+        result.data[1] = div(a.data[1], b);
         return result;
     }
 
@@ -286,8 +286,8 @@ namespace mango::simd
 
     static inline f64 dot4(f64x4 a, f64x4 b)
     {
-        f64 low = dot2(a.part[0], b.part[0]);
-        f64 high = dot2(a.part[1], b.part[1]);
+        f64 low = dot2(a.data[0], b.data[0]);
+        f64 high = dot2(a.data[1], b.data[1]);
         return low + high;
     }
 
@@ -303,8 +303,8 @@ namespace mango::simd
     static inline f64x4 select(mask64x4 mask, f64x4 a, f64x4 b)
     {
         f64x4 result;
-        result.part[0] = select(mask.part[0], a.part[0], b.part[0]);
-        result.part[1] = select(mask.part[1], a.part[1], b.part[1]);
+        result.data[0] = select(mask.data[0], a.data[0], b.data[0]);
+        result.data[1] = select(mask.data[1], a.data[1], b.data[1]);
         return result;
     }
 

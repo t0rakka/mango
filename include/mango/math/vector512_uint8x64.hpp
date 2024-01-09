@@ -101,7 +101,7 @@ namespace mango::math
             return m;
         }
 
-        operator simd::u8x64::vector () const
+        operator const auto& () const
         {
             return m.data;
         }

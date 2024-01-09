@@ -96,7 +96,7 @@ namespace
             ImageHeader header = decoder.header();
             if (!header)
             {
-                debugPrint(header.info);
+                debugPrintLine(header.info);
                 return surface;
             }
 
@@ -215,7 +215,7 @@ namespace mango::image
             status = encoder.encode(stream, *this, options);
             if (!status)
             {
-                debugPrint(status.info);
+                debugPrintLine(status.info);
             }
         }
         else

@@ -670,7 +670,7 @@ namespace
         {
             char temp[4];
             ustore32(temp, fourCC);
-            debugPrint(".dds fourcc: %c%c%c%c\n", temp[0], temp[1], temp[2], temp[3]);
+            debugPrintLine(".dds fourcc: %c%c%c%c", temp[0], temp[1], temp[2], temp[3]);
 
             bool preserve_fourcc = false;
 
@@ -834,7 +834,7 @@ namespace
             bBitMask = p.read32();
             aBitMask = p.read32();
 
-            debugPrint(".dds format: [bits: %d, red: %d, green: %d, blue: %d, alpha: %d]\n",
+            debugPrintLine(".dds format: [bits: %d, red: %d, green: %d, blue: %d, alpha: %d]",
                 rgbBitCount,
                 u32_popcnt(rBitMask),
                 u32_popcnt(gBitMask),
@@ -903,7 +903,7 @@ namespace
 
         void processDX10(const HeaderDX10& header10)
         {
-            debugPrint("DXGI format: %d\n", header10.dxgiFormat);
+            debugPrintLine("DXGI format: %d", header10.dxgiFormat);
 
             if (header10.dxgiFormat >= u32(std::size(g_dxgi_table)))
             {
@@ -1003,8 +1003,8 @@ namespace
             caps4 = p.read32();
             p += 4;
 
-            debugPrint(".dds image: [%d x %d]\n", width, height);
-            debugPrint("     depth: %d, mips: %d\n", depth, mipMapCount);
+            debugPrintLine(".dds image: [%d x %d]", width, height);
+            debugPrintLine("     depth: %d, mips: %d", depth, mipMapCount);
 
             if (pixelFormat.flags & DDPF_FOURCC)
             {

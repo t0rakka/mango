@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2019 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cctype>
 #include <algorithm>
@@ -8,6 +8,7 @@
 #include <cstring>
 #include <mango/core/string.hpp>
 #include <mango/core/bits.hpp>
+#include "../../external/fast_float/fast_float.h"
 
 namespace
 {
@@ -547,5 +548,12 @@ namespace mango
     }
 
 #endif
+
+    float parseFloat(std::string_view s)
+    {
+        float value = 0.0f;
+        fast_float::from_chars(s.data(), s.data() + s.size(), value);
+        return value;
+    }
 
 } // namespace mango

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <limits>
@@ -31,10 +31,10 @@ namespace mango::math
 
     const Matrix4x4& Matrix4x4::operator = (const float* ptr)
     {
-        m[0] = simd::f32x4_uload(ptr + 0 * 16);
-        m[1] = simd::f32x4_uload(ptr + 1 * 16);
-        m[2] = simd::f32x4_uload(ptr + 2 * 16);
-        m[3] = simd::f32x4_uload(ptr + 3 * 16);
+        m[0] = simd::f32x4_uload(ptr + 0);
+        m[1] = simd::f32x4_uload(ptr + 4);
+        m[2] = simd::f32x4_uload(ptr + 8);
+        m[3] = simd::f32x4_uload(ptr + 12);
         return *this;
     }
 

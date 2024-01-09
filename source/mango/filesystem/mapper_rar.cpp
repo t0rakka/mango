@@ -298,7 +298,7 @@ namespace
                     const char* s = reinterpret_cast<const char*>(us);
                     p += filename_size;
 
-                    debugPrint("[RAR] version: 0x%x, method: 0x%x\n", version, method);
+                    debugPrintLine("[RAR] version: 0x%x, method: 0x%x", version, method);
 
                     if (isSupportedVersion())
                     {
@@ -313,7 +313,7 @@ namespace
                             filename = std::string(s, filename_size);
                         }
 
-                        debugPrint("  Filename: %s\n", filename.c_str());
+                        debugPrintLine("  Filename: %s", filename.c_str());
                         std::replace(filename.begin(), filename.end(), '\\', '/');
                     }
 
@@ -440,19 +440,19 @@ namespace mango::filesystem
                 if (!std::memcmp(ptr, rar4_signature, 7))
                 {
                     // RAR 4.x
-                    debugPrint("[RAR] Signature: 4\n");
+                    debugPrintLine("[RAR] Signature: 4");
                     parse_rar4(ptr + 7, end);
                 }
                 else if (!std::memcmp(ptr, rar5_signature, 8))
                 {
                     // RAR 5.0
-                    debugPrint("[RAR] Signature: 4\n");
+                    debugPrintLine("[RAR] Signature: 4");
                     parse_rar5(ptr + 8, end);
                 }
                 else
                 {
                     // Incorrect signature
-                    debugPrint("[RAR] Incorrect signature.\n");
+                    debugPrintLine("[RAR] Incorrect signature.");
                 }
 
                 for (auto& header : m_files)

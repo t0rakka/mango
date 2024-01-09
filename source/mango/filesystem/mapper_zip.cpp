@@ -675,6 +675,7 @@ namespace mango::filesystem
             {
                 case COMPRESSION_NONE:
                 {
+                    // direct mapping to parent address
                     size = header.uncompressedSize;
                     break;
                 }
@@ -765,6 +766,10 @@ namespace mango::filesystem
                 // use decode_buffer as memory map
                 address = buffer;
                 size = header.uncompressedSize;
+            }
+            else if (size > 0)
+            {
+                // no compression -> mapped directly to parent address
             }
             else
             {

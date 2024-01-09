@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -36,5 +36,6 @@ namespace mango
     std::vector<std::string_view> split(std::string_view s, std::string_view delimiter);
     std::string makeString(const char* format, ...);
     const u8* memchr(const u8* p, u8 value, size_t count);
+    float parseFloat(std::string_view s);
 
 } // namespace mango

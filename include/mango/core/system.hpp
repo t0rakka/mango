@@ -30,6 +30,7 @@ namespace mango
     bool debugPrintIsEnable();
     void debugPrintEnable(bool enable);
     void debugPrint(const char* format, ...);
-    void debugPrint(const std::string& text);
+    void debugPrintLine(const char* format, ...);
+    void debugPrintLine(const std::string& text);
 
 } // namespace mango

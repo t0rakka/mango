@@ -91,7 +91,7 @@ namespace mango::math
             return m;
         }
 
-        operator simd::u16x16::vector () const
+        operator const auto& () const
         {
             return m.data;
         }

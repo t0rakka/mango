@@ -232,7 +232,7 @@ namespace
             return nullptr;
         }
 
-        debugPrint("[header]\n");
+        debugPrintLine("[header]");
         debugPrint("  magic: | ");
         for (int i = 0; i < 12; ++i)
         {
@@ -240,19 +240,19 @@ namespace
             if (!((i - 3) % 4))
                 debugPrint("| ");
         }
-        debugPrint("\n");
+        debugPrintLine("");
 
         opj_codec_t* codec = nullptr;
 
         if (!std::memcmp(memory.address, JP2_RFC3745_MAGIC, 12) ||
             !std::memcmp(memory.address, JP2_RFC3745_MAGIC + 8, 4))
         {
-            debugPrint("  codec: JP2\n");
+            debugPrintLine("  codec: JP2");
             codec = opj_create_decompress(OPJ_CODEC_JP2);
         }
         else if (!std::memcmp(memory.address, J2K_CODESTREAM_MAGIC, 4))
         {
-            debugPrint("  codec: J2K\n");
+            debugPrintLine("  codec: J2K");
             codec = opj_create_decompress(OPJ_CODEC_J2K);
         }
 
@@ -725,11 +725,11 @@ namespace
                     return;
             }
 
-            debugPrint("[image]\n");
-            debugPrint("  dimensions: %d x %d\n", width, height);
-            debugPrint("  color space: %d\n", m_image->color_space);
+            debugPrintLine("[image]");
+            debugPrintLine("  dimensions: %d x %d", width, height);
+            debugPrintLine("  color space: %d", m_image->color_space);
 
-            debugPrint("[components]\n");
+            debugPrintLine("[components]");
 
             bool is_signed = false;
             bool is_subsampled = false;
@@ -739,7 +739,7 @@ namespace
             {
                 const opj_image_comp_t& comp = m_image->comps[i];
 
-                debugPrint("  #%d: %d x %d, bits: %d, alpha: %d, sgnd: %d, dx: %d, dy: %d\n", 
+                debugPrintLine("  #%d: %d x %d, bits: %d, alpha: %d, sgnd: %d, dx: %d, dy: %d", 
                     i, comp.w, comp.h, comp.prec, comp.alpha, comp.sgnd, comp.dx, comp.dy);
 
                 if (comp.w != width || comp.h != height || comp.dx != 1 || comp.dy != 1)
@@ -1048,7 +1048,7 @@ namespace
         opj_image_destroy(image);
         opj_destroy_codec(codec);
 
-        debugPrint("Encoded: %d bytes\n", (int)writer.output.size());
+        debugPrintLine("Encoded: %d bytes", (int)writer.output.size());
 
         return status;
     }

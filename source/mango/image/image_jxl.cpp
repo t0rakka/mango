@@ -163,6 +163,9 @@ namespace
 
                     case JXL_DEC_COLOR_ENCODING:
                     {
+                        // NOTE: disabled until this compiles on both macOS/BREW and Linux
+                        //       currently the API is different for same library version!
+                        /*
                         size_t bytes = 0;
 
                         if (JxlDecoderGetICCProfileSize(decoder, JXL_COLOR_PROFILE_TARGET_DATA, &bytes) != JXL_DEC_SUCCESS)
@@ -179,6 +182,7 @@ namespace
                             m_icc.reset();
                             break;
                         }
+                        */
 
                         break;
                     }

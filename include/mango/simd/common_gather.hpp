@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -114,48 +114,48 @@ namespace mango::simd
     static inline u32x16 gather(const u32* address, s32x16 offset)
     {
         u32x16 result;
-        result.part[0] = gather(address, offset.part[0]);
-        result.part[1] = gather(address, offset.part[1]);
+        result.data[0] = gather(address, offset.data[0]);
+        result.data[1] = gather(address, offset.data[1]);
         return result;
     }
 
     static inline s32x16 gather(const s32* address, s32x16 offset)
     {
         s32x16 result;
-        result.part[0] = gather(address, offset.part[0]);
-        result.part[1] = gather(address, offset.part[1]);
+        result.data[0] = gather(address, offset.data[0]);
+        result.data[1] = gather(address, offset.data[1]);
         return result;
     }
 
     static inline f32x16 gather(const f32* address, s32x16 offset)
     {
         f32x16 result;
-        result.part[0] = gather(address, offset.part[0]);
-        result.part[1] = gather(address, offset.part[1]);
+        result.data[0] = gather(address, offset.data[0]);
+        result.data[1] = gather(address, offset.data[1]);
         return result;
     }
 
     static inline u64x8 gather(const u64* address, s32x8 offset)
     {
         u64x8 result;
-        result.part[0] = gather(address, offset.part[0]);
-        result.part[1] = gather(address, offset.part[1]);
+        result.data[0] = gather(address, offset.data[0]);
+        result.data[1] = gather(address, offset.data[1]);
         return result;
     }
 
     static inline s64x8 gather(const s64* address, s32x8 offset)
     {
         s64x8 result;
-        result.part[0] = gather(address, offset.part[0]);
-        result.part[1] = gather(address, offset.part[1]);
+        result.data[0] = gather(address, offset.data[0]);
+        result.data[1] = gather(address, offset.data[1]);
         return result;
     }
 
     static inline f64x8 gather(const f64* address, s32x8 offset)
     {
         f64x8 result;
-        result.part[0] = gather(address, offset.part[0]);
-        result.part[1] = gather(address, offset.part[1]);
+        result.data[0] = gather(address, offset.data[0]);
+        result.data[1] = gather(address, offset.data[1]);
         return result;
     }
 

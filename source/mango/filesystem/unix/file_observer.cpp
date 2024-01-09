@@ -195,7 +195,7 @@ namespace mango::filesystem
 // -----------------------------------------------------------------
 // FileObserver: BSD, macOS and iOS implementation
 // Uses BSD/MACH Kernel kqueue interface
-// 
+//
 // -----------------------------------------------------------------
 
 #include <thread>
@@ -296,7 +296,7 @@ namespace mango::filesystem
 
 // -----------------------------------------------------------------
 // FileObserver: NOT SUPPORTED
-// 
+//
 // -----------------------------------------------------------------
 
 namespace mango::filesystem

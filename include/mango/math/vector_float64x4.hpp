@@ -153,7 +153,7 @@ namespace mango::math
             return m;
         }
 
-        operator simd::f64x4::vector () const
+        operator const auto& () const
         {
             return m.data;
         }
@@ -229,21 +229,21 @@ namespace mango::math
     // trigonometric functions
     // ------------------------------------------------------------------
 
-    /* These come from default implementation:
-
     Vector<double, 4> sin(Vector<double, 4> a);
     Vector<double, 4> cos(Vector<double, 4> a);
     Vector<double, 4> tan(Vector<double, 4> a);
-    Vector<double, 4> exp(Vector<double, 4> a);
-    Vector<double, 4> exp2(Vector<double, 4> a);
-    Vector<double, 4> log(Vector<double, 4> a);
-    Vector<double, 4> log2(Vector<double, 4> a);
     Vector<double, 4> asin(Vector<double, 4> a);
     Vector<double, 4> acos(Vector<double, 4> a);
     Vector<double, 4> atan(Vector<double, 4> a);
     Vector<double, 4> atan2(Vector<double, 4> a, Vector<double, 4> b);
-    Vector<double, 4> pow(Vector<double, 4> a, Vector<double, 4> b);
 
+    /* These are handled by vector template:
+
+    Vector<double, 4> exp(Vector<double, 4> a);
+    Vector<double, 4> exp2(Vector<double, 4> a);
+    Vector<double, 4> log(Vector<double, 4> a);
+    Vector<double, 4> log2(Vector<double, 4> a);
+    Vector<double, 4> pow(Vector<double, 4> a, Vector<double, 4> b);
     */
 
 } // namespace mango::math

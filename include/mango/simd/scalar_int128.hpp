@@ -45,8 +45,9 @@ namespace mango::simd
         return {{ s0, s1, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 }};
     }
 
-    static inline u8x16 u8x16_uload(const u8* s)
+    static inline u8x16 u8x16_uload(const void* source)
     {
+        const u8* s = reinterpret_cast<const u8*>(source);
         return u8x16_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15]);
     }
 
@@ -216,8 +217,9 @@ namespace mango::simd
         return {{ s0, s1, s2, s3, s4, s5, s6, s7 }};
     }
 
-    static inline u16x8 u16x8_uload(const u16* s)
+    static inline u16x8 u16x8_uload(const void* source)
     {
+        const u16* s = reinterpret_cast<const u16*>(source);
         return u16x8_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]);
     }
 
@@ -447,8 +449,9 @@ namespace mango::simd
         return {{ x, y, z, w }};
     }
 
-    static inline u32x4 u32x4_uload(const u32* s)
+    static inline u32x4 u32x4_uload(const void* source)
     {
+        const u32* s = reinterpret_cast<const u32*>(source);
         return u32x4_set(s[0], s[1], s[2], s[3]);
     }
 
@@ -684,8 +687,9 @@ namespace mango::simd
         return {{ x, y }};
     }
 
-    static inline u64x2 u64x2_uload(const u64* s)
+    static inline u64x2 u64x2_uload(const void* source)
     {
+        const u64* s = reinterpret_cast<const u64*>(source);
         return u64x2_set(s[0], s[1]);
     }
 
@@ -860,8 +864,9 @@ namespace mango::simd
         return {{ v0, v1, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 }};
     }
 
-    static inline s8x16 s8x16_uload(const s8* s)
+    static inline s8x16 s8x16_uload(const void* source)
     {
+        const s8* s = reinterpret_cast<const s8*>(source);
         return s8x16_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15]);
     }
 

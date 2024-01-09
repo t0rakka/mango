@@ -47,13 +47,13 @@ namespace
             if (filetype != heif_filetype_yes_supported)
             {
                 // ...
-                debugPrint("not heif.\n");
+                debugPrintLine("not heif.");
                 return;
             }
             */
 
             const char* mime = heif_get_file_mime_type(memory.address, memory.size);
-            debugPrint("MIME: %s\n", mime);
+            debugPrintLine("MIME: %s", mime);
 
             m_context = heif_context_alloc();
             if (!m_context)
@@ -83,7 +83,7 @@ namespace
             int alpha = heif_image_handle_has_alpha_channel(m_image_handle);
             int luma = heif_image_handle_get_luma_bits_per_pixel(m_image_handle);
 
-            debugPrint("image: %d x %d, bits: %d, chroma: %d, alpha: %d, luma: %d\n", 
+            debugPrintLine("image: %d x %d, bits: %d, chroma: %d, alpha: %d, luma: %d", 
                 width, height, bpp, cbpp, alpha, luma);
 
             Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
@@ -169,7 +169,7 @@ namespace
             heif_channel ch = heif_channel_interleaved;
             int s0 = heif_image_get_bits_per_pixel(image, ch);
             int s1 = heif_image_get_bits_per_pixel_range(image, ch);
-            debugPrint("s0: %d, s1: %d\n", s0, s1);
+            debugPrintLine("s0: %d, s1: %d", s0, s1);
             if (s0 != 32)
             {
                 heif_image_release(image);
@@ -211,7 +211,7 @@ namespace
         MANGO_UNREFERENCED(context);
         Stream* stream = reinterpret_cast<Stream*>(userdata);
         stream->write(data, size);
-        debugPrint("heif.write: %d KB\n", int(size / 1024));
+        debugPrintLine("heif.write: %d KB", int(size / 1024));
 
         heif_error error;
         error.code = heif_error_Ok;

@@ -264,14 +264,31 @@ namespace mango
         if (g_context.debug_print_enable)
         {
             va_list args;
+
             va_start(args, format);
             std::vprintf(format, args);
-            std::fflush(stdout);
             va_end(args);
+
+            std::fflush(stdout);
         }
     }
 
-    void debugPrint(const std::string& text)
+    void debugPrintLine(const char* format, ...)
+    {
+        if (g_context.debug_print_enable)
+        {
+            va_list args;
+
+            va_start(args, format);
+            std::vprintf(format, args);
+            va_end(args);
+
+            std::printf("\n");
+            std::fflush(stdout);
+        }
+    }
+
+    void debugPrintLine(const std::string& text)
     {
         if (g_context.debug_print_enable)
         {

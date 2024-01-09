@@ -266,12 +266,12 @@ namespace
 
             m_memory = ConstMemory(p, end - p);
 
-            debugPrint("[psd]\n");
-            debugPrint("  Version:     %d\n", m_version);
-            debugPrint("  Image:       %d x %d\n", width, height);
-            debugPrint("  Channels:    %d (%d bits)\n", m_channels, m_bits);
-            debugPrint("  ColorMode:   %d\n", m_color_mode);
-            debugPrint("  Compression: %d\n", m_compression);
+            debugPrintLine("[psd]\n");
+            debugPrintLine("  Version:     %d", m_version);
+            debugPrintLine("  Image:       %d x %d", width, height);
+            debugPrintLine("  Channels:    %d (%d bits)", m_channels, m_bits);
+            debugPrintLine("  ColorMode:   %d", m_color_mode);
+            debugPrintLine("  Compression: %d", m_compression);
 
             parse_resources(image_resource_data);
 
@@ -326,7 +326,7 @@ namespace
             BigEndianConstPointer p = resources.address;
             const u8* end = resources.end();
 
-            debugPrint("  [ImageResourceBlocks]\n");
+            debugPrintLine("  [ImageResourceBlocks]");
 
             while (p < end)
             {
@@ -344,25 +344,25 @@ namespace
 
                 if (id == 1005)
                 {
-                    debugPrint("    Resolution Info\n");
+                    debugPrintLine("    Resolution Info");
                 }
                 else if (id == 1039)
                 {
-                    debugPrint("    ICC Profile\n");
+                    debugPrintLine("    ICC Profile");
                     m_icc_profile = ConstMemory(p, length);
                 }
                 else if (id == 1047)
                 {
-                    debugPrint("    TransparencyIndex\n");
+                    debugPrintLine("    TransparencyIndex");
                     // MANGO TODO: need psd file that uses this feature
                 }
                 else if (id == 1058 || id == 1059)
                 {
-                    debugPrint("    EXIF\n");
+                    debugPrintLine("    EXIF");
                 }
                 else if (id == 1060)
                 {
-                    debugPrint("    XMP\n");
+                    debugPrintLine("    XMP");
                 }
                 else
                 {
@@ -373,7 +373,7 @@ namespace
 
                 if (supported)
                 {
-                    debugPrint("      %d bytes\n", length);
+                    debugPrintLine("      %d bytes", length);
                 }
             }
         }
@@ -391,8 +391,8 @@ namespace
             int bytes_per_scan = div_ceil(width * m_bits, 8);
             int bytes_per_channel = height * bytes_per_scan;
 
-            //debugPrint("  available: %d bytes\n", u32(m_memory.size));
-            //debugPrint("  request:   %d bytes\n", u32(channels * bytes_per_channel));
+            //debugPrintLine("  available: %d bytes", u32(m_memory.size));
+            //debugPrintLine("  request:   %d bytes", u32(channels * bytes_per_channel));
 
             Bitmap temp(width, height, m_header.format);
             Buffer buffer(channels * bytes_per_scan);

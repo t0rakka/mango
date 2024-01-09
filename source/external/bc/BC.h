@@ -64,7 +64,14 @@ namespace DirectX
         float r, g, b, a;
 
     public:
-        HDRColorA() = default;
+        HDRColorA()
+            : r(0)
+            , g(0)
+            , b(0)
+            , a(0)
+        {
+        }
+
         HDRColorA(float r, float g, float b, float a) noexcept
             : r(r)
             , g(g)

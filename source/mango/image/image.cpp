@@ -317,7 +317,7 @@ namespace mango::image
             status = m_interface->decode(dest, options, level, depth, face);
             if (!status)
             {
-                debugPrint(status.info);
+                debugPrintLine(status.info);
             }
         }
         else

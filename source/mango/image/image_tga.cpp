@@ -71,14 +71,14 @@ namespace
             pixel_size       = p.read8();
             descriptor       = p.read8();
 
-            debugPrint("  dimensions:    %d x %d\n", width, height);
-            debugPrint("  image_type:    %d\n", image_type);
-            debugPrint("  pixel_size:    %d\n", pixel_size);
-            debugPrint("  colormap_type: %d\n", colormap_type);
-            debugPrint("  colormap_bits: %d\n", colormap_bits);
-            debugPrint("  colormap:      [%d, %d]\n", colormap_origin, colormap_origin + colormap_length);
-            debugPrint("  descriptor:    %x\n", descriptor);
-            debugPrint("  id_length:     %d\n", id_length);
+            debugPrintLine("  dimensions:    %d x %d", width, height);
+            debugPrintLine("  image_type:    %d", image_type);
+            debugPrintLine("  pixel_size:    %d", pixel_size);
+            debugPrintLine("  colormap_type: %d", colormap_type);
+            debugPrintLine("  colormap_bits: %d", colormap_bits);
+            debugPrintLine("  colormap:      [%d, %d]", colormap_origin, colormap_origin + colormap_length);
+            debugPrintLine("  descriptor:    %x", descriptor);
+            debugPrintLine("  id_length:     %d", id_length);
 
             switch (image_type)
             {

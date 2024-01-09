@@ -115,7 +115,7 @@ namespace mango::math
             return m;
         }
 
-        operator simd::s32x4::vector () const
+        operator const auto& () const
         {
             return m.data;
         }
