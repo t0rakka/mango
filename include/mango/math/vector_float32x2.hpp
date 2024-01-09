@@ -392,34 +392,6 @@ namespace mango::math
         return Vector<float, 2>(x, y);
     }
 
-    static inline Vector<float, 2> exp(Vector<float, 2> v)
-    {
-        float x = std::exp(v.x);
-        float y = std::exp(v.y);
-        return Vector<float, 2>(x, y);
-    }
-
-    static inline Vector<float, 2> exp2(Vector<float, 2> v)
-    {
-        float x = std::exp2(v.x);
-        float y = std::exp2(v.y);
-        return Vector<float, 2>(x, y);
-    }
-
-    static inline Vector<float, 2> log(Vector<float, 2> v)
-    {
-        float x = std::log(v.x);
-        float y = std::log(v.y);
-        return Vector<float, 2>(x, y);
-    }
-
-    static inline Vector<float, 2> log2(Vector<float, 2> v)
-    {
-        float x = std::log2(v.x);
-        float y = std::log2(v.y);
-        return Vector<float, 2>(x, y);
-    }
-
     static inline Vector<float, 2> asin(Vector<float, 2> v)
     {
         float x = std::asin(v.x);
@@ -445,6 +417,34 @@ namespace mango::math
     {
         float x = std::atan2(a.x, b.x);
         float y = std::atan2(a.y, b.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> exp(Vector<float, 2> v)
+    {
+        float x = std::exp(v.x);
+        float y = std::exp(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> exp2(Vector<float, 2> v)
+    {
+        float x = std::exp2(v.x);
+        float y = std::exp2(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> log(Vector<float, 2> v)
+    {
+        float x = std::log(v.x);
+        float y = std::log(v.y);
+        return Vector<float, 2>(x, y);
+    }
+
+    static inline Vector<float, 2> log2(Vector<float, 2> v)
+    {
+        float x = std::log2(v.x);
+        float y = std::log2(v.y);
         return Vector<float, 2>(x, y);
     }
 

@@ -7,7 +7,7 @@
 project(
     'mango', 'c', 'cpp',
     meson_version: '>= 0.50.0',
-    version: '1.1.2',
+    version: '1.2.0',
     default_options : [
         'c_std=c11',
         'cpp_std=c++17',
@@ -18,7 +18,7 @@ project(
 
 mango_version = meson.project_version()
 mango_opengl_version = '0.8.0'
-mango_import3d_version = '0.1.0'
+mango_import3d_version = '0.1.2'
 
 if host_machine.system() == 'darwin'
     add_languages('objcpp')
@@ -1001,7 +1001,9 @@ if cpp.get_id() == 'msvc'
         message('SIMD: AVX (2008)')
         add_project_arguments('/arch:AVX', language: ['c', 'cpp'])
     endif
+
 else
+
     if cpp.get_id() == 'gcc'
         add_project_arguments('-ftree-vectorize', language: ['c', 'cpp'])
     endif
@@ -1071,7 +1073,9 @@ else
             message('SIMD: SSE2 (2001)')
             add_project_arguments('-msse2', language: ['c', 'cpp'])
         endif
+
     endif
+
 endif
 
 # ------------------------------------------------------------------------------

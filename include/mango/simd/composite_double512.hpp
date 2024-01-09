@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -13,8 +13,8 @@ namespace mango::simd
     static inline R FUNC(A a) \
     { \
         R result; \
-        result.part[0] = FUNC(a.part[0]); \
-        result.part[1] = FUNC(a.part[1]); \
+        result.data[0] = FUNC(a.data[0]); \
+        result.data[1] = FUNC(a.data[1]); \
         return result; \
     }
 
@@ -22,8 +22,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b) \
     { \
         R result; \
-        result.part[0] = FUNC(a.part[0], b.part[0]); \
-        result.part[1] = FUNC(a.part[1], b.part[1]); \
+        result.data[0] = FUNC(a.data[0], b.data[0]); \
+        result.data[1] = FUNC(a.data[1], b.data[1]); \
         return result; \
     }
 
@@ -31,8 +31,8 @@ namespace mango::simd
     static inline R FUNC(ABC a, ABC b, ABC c) \
     { \
         R result; \
-        result.part[0] = FUNC(a.part[0], b.part[0], c.part[0]); \
-        result.part[1] = FUNC(a.part[1], b.part[1], c.part[1]); \
+        result.data[0] = FUNC(a.data[0], b.data[0], c.data[0]); \
+        result.data[1] = FUNC(a.data[1], b.data[1], c.data[1]); \
         return result; \
     }
 
@@ -40,8 +40,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b, MASK mask) \
     { \
         R result; \
-        result.part[0] = FUNC(a.part[0], b.part[0], mask.part[0]); \
-        result.part[1] = FUNC(a.part[1], b.part[1], mask.part[1]); \
+        result.data[0] = FUNC(a.data[0], b.data[0], mask.data[0]); \
+        result.data[1] = FUNC(a.data[1], b.data[1], mask.data[1]); \
         return result; \
     }
 
@@ -49,8 +49,8 @@ namespace mango::simd
     static inline R FUNC(AB a, AB b, MASK mask, AB value) \
     { \
         R result; \
-        result.part[0] = FUNC(a.part[0], b.part[0], mask.part[0], value.part[0]); \
-        result.part[1] = FUNC(a.part[1], b.part[1], mask.part[1], value.part[1]); \
+        result.data[0] = FUNC(a.data[0], b.data[0], mask.data[0], value.data[0]); \
+        result.data[1] = FUNC(a.data[1], b.data[1], mask.data[1], value.data[1]); \
         return result; \
     }
 
@@ -61,39 +61,39 @@ namespace mango::simd
     static inline f64x8 f64x8_zero()
     {
         f64x8 result;
-        result.part[0] = f64x4_zero();
-        result.part[1] = f64x4_zero();
+        result.data[0] = f64x4_zero();
+        result.data[1] = f64x4_zero();
         return result;
     }
 
     static inline f64x8 f64x8_set(f64 s)
     {
         f64x8 result;
-        result.part[0] = f64x4_set(s);
-        result.part[1] = f64x4_set(s);
+        result.data[0] = f64x4_set(s);
+        result.data[1] = f64x4_set(s);
         return result;
     }
 
     static inline f64x8 f64x8_set(f64 s0, f64 s1, f64 s2, f64 s3, f64 s4, f64 s5, f64 s6, f64 s7)
     {
         f64x8 result;
-        result.part[0] = f64x4_set(s0, s1, s2, s3);
-        result.part[1] = f64x4_set(s4, s5, s6, s7);
+        result.data[0] = f64x4_set(s0, s1, s2, s3);
+        result.data[1] = f64x4_set(s4, s5, s6, s7);
         return result;
     }
 
     static inline f64x8 f64x8_uload(const void* source)
     {
         f64x8 result;
-        result.part[0] = f64x4_uload(reinterpret_cast<const f64*>(source) + 0);
-        result.part[1] = f64x4_uload(reinterpret_cast<const f64*>(source) + 4);
+        result.data[0] = f64x4_uload(reinterpret_cast<const f64*>(source) + 0);
+        result.data[1] = f64x4_uload(reinterpret_cast<const f64*>(source) + 4);
         return result;
     }
 
     static inline void f64x8_ustore(void* dest, f64x8 a)
     {
-        f64x4_ustore(reinterpret_cast<f64*>(dest) + 0, a.part[0]);
-        f64x4_ustore(reinterpret_cast<f64*>(dest) + 4, a.part[1]);
+        f64x4_ustore(reinterpret_cast<f64*>(dest) + 0, a.data[0]);
+        f64x4_ustore(reinterpret_cast<f64*>(dest) + 4, a.data[1]);
     }
 
     SIMD_COMPOSITE_FUNC2(f64x8, f64x8, unpackhi)
@@ -129,8 +129,8 @@ namespace mango::simd
     static inline f64x8 div(f64x8 a, f64 b)
     {
         f64x8 result;
-        result.part[0] = div(a.part[0], b);
-        result.part[1] = div(a.part[1], b);
+        result.data[0] = div(a.data[0], b);
+        result.data[1] = div(a.data[1], b);
         return result;
     }
 
@@ -157,8 +157,8 @@ namespace mango::simd
     static inline f64x8 select(mask64x8 mask, f64x8 a, f64x8 b)
     {
         f64x8 result;
-        result.part[0] = select(mask.part[0], a.part[0], b.part[0]);
-        result.part[1] = select(mask.part[1], a.part[1], b.part[1]);
+        result.data[0] = select(mask.data[0], a.data[0], b.data[0]);
+        result.data[1] = select(mask.data[1], a.data[1], b.data[1]);
         return result;
     }
 

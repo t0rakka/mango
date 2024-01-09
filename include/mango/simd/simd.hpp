@@ -1,12 +1,12 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <cmath>
-#include <array>
 #include <algorithm>
+#include <array>
 #include <type_traits>
 #include <mango/core/configure.hpp>
 #include <mango/core/half.hpp>
@@ -101,7 +101,7 @@ namespace mango::simd
     struct scalar_vector
     {
         using scalar = ScalarType;
-        using vector = std::array<ScalarType, VectorSize>;
+        using vector = ScalarType[VectorSize];
 
         enum
         {
@@ -130,14 +130,14 @@ namespace mango::simd
     template <typename VectorType>
     struct composite_mask
     {
-        std::array<VectorType, 2> part;
+        alignas(sizeof(VectorType)) VectorType data[2];
     };
 
     template <typename VectorType>
     struct composite_vector
     {
         using scalar = typename VectorType::scalar;
-        using vector = std::array<scalar, VectorType::size * 2>;
+        using vector = std::array<VectorType, 2>;
 
         enum
         {
@@ -148,15 +148,11 @@ namespace mango::simd
             is_composite = 1
         };
 
-        union
-        {
-            vector data;
-            std::array<VectorType, 2> part;
-        };
+        alignas(sizeof(VectorType)) vector data;
 
         composite_vector() = default;
         composite_vector(VectorType lo, VectorType hi)
-            : part{lo, hi}
+            : data{lo, hi}
         {
         }
     };

@@ -154,7 +154,7 @@ namespace mango::math
             return m;
         }
 
-        operator simd::f32x4::vector () const
+        operator const auto& () const
         {
             return m.data;
         }
@@ -260,14 +260,14 @@ namespace mango::math
     Vector<float, 4> sin(Vector<float, 4> a);
     Vector<float, 4> cos(Vector<float, 4> a);
     Vector<float, 4> tan(Vector<float, 4> a);
-    Vector<float, 4> exp(Vector<float, 4> a);
-    Vector<float, 4> exp2(Vector<float, 4> a);
-    Vector<float, 4> log(Vector<float, 4> a);
-    Vector<float, 4> log2(Vector<float, 4> a);
     Vector<float, 4> asin(Vector<float, 4> a);
     Vector<float, 4> acos(Vector<float, 4> a);
     Vector<float, 4> atan(Vector<float, 4> a);
     Vector<float, 4> atan2(Vector<float, 4> a, Vector<float, 4> b);
+    Vector<float, 4> exp(Vector<float, 4> a);
+    Vector<float, 4> exp2(Vector<float, 4> a);
+    Vector<float, 4> log(Vector<float, 4> a);
+    Vector<float, 4> log2(Vector<float, 4> a);
     Vector<float, 4> pow(Vector<float, 4> a, Vector<float, 4> b);
 
 } // namespace mango::math
