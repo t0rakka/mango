@@ -455,14 +455,14 @@ namespace mango::image::jpeg
         u16 correct_length = 8 + 3 * components;
         if (length != correct_length)
         {
-            header.setError("Incorrect chunk length (%d, should be %d).", length, correct_length);
+            header.setError("Incorrect chunk length ({}, should be {}).", length, correct_length);
             return;
         }
 
         if (xsize <= 0 || ysize <= 0 || xsize > 65535 || ysize > 65535)
         {
             // NOTE: ysize of 0 is allowed in the specs but we won't
-            header.setError("Incorrect dimensions (%d x %d)", xsize, ysize);
+            header.setError("Incorrect dimensions ({} x {})", xsize, ysize);
             return;
         }
 
@@ -470,7 +470,7 @@ namespace mango::image::jpeg
         {
             // NOTE: only progressive is required to have 1..4 components,
             //       other modes allow 1..255 but we are extra strict here :)
-            header.setError("Incorrect number of components (%d)", components);
+            header.setError("Incorrect number of components ({})", components);
             return;
         }
 
@@ -526,7 +526,7 @@ namespace mango::image::jpeg
         {
             if (precision != 8)
             {
-                header.setError(makeString("Incorrect precision (%d, allowed: 8)", precision));
+                header.setError("Incorrect precision ({}, allowed: 8)", precision);
                 return;
             }
         }
@@ -534,7 +534,7 @@ namespace mango::image::jpeg
         {
             if (precision < 2 || precision > 16)
             {
-                header.setError(makeString("Incorrect precision (%d, allowed: 2..16)", precision));
+                header.setError("Incorrect precision ({}, allowed: 2..16)", precision);
                 return;
             }
         }
@@ -542,7 +542,7 @@ namespace mango::image::jpeg
         {
             if (precision != 8 && precision != 12)
             {
-                header.setError(makeString("Incorrect precision (%d, allowed: 8, 12)", precision));
+                header.setError("Incorrect precision ({}, allowed: 8, 12)", precision);
                 return;
             }
         }
@@ -558,7 +558,7 @@ namespace mango::image::jpeg
         {
             if (offset >= JPEG_MAX_BLOCKS_IN_MCU)
             {
-                header.setError("Incorrect blocks offset (%d >= %d).", offset, JPEG_MAX_BLOCKS_IN_MCU);
+                header.setError("Incorrect blocks offset ({} >= {}).", offset, JPEG_MAX_BLOCKS_IN_MCU);
                 return;
             }
 
@@ -575,7 +575,7 @@ namespace mango::image::jpeg
             u8 max_tq = is_lossless ? 0 : 3;
             if (frame.tq > max_tq)
             {
-                header.setError("Incorrect quantization table index (%d)", frame.tq);
+                header.setError("Incorrect quantization table index ({})", frame.tq);
                 return;
             }
 
@@ -592,13 +592,13 @@ namespace mango::image::jpeg
 
             if (frame.hsf < 1 || frame.hsf > 4 || frame.vsf < 1 || frame.vsf > 4)
             {
-                header.setError(makeString("Incorrect frame sampling rate (%d x %d)", frame.hsf, frame.vsf));
+                header.setError("Incorrect frame sampling rate ({} x {})", frame.hsf, frame.vsf);
                 return;
             }
 
             if (blocks_in_mcu > JPEG_MAX_BLOCKS_IN_MCU)
             {
-                header.setError(makeString("Incorrect number of blocks in MCU (%d >= %d).", blocks_in_mcu, JPEG_MAX_BLOCKS_IN_MCU));
+                header.setError("Incorrect number of blocks in MCU ({} >= {}).", blocks_in_mcu, JPEG_MAX_BLOCKS_IN_MCU);
                 return;
             }
 
@@ -609,7 +609,7 @@ namespace mango::image::jpeg
                     processState.block[offset].qt = quantTable[frame.tq].table;
                     if (!processState.block[offset].qt)
                     {
-                        header.setError("No quantization table for index (%d)", frame.tq);
+                        header.setError("No quantization table for index ({})", frame.tq);
                         return;
                     }
 
@@ -632,7 +632,7 @@ namespace mango::image::jpeg
             Frame& frame = processState.frame[i];
             if (!frame.hsf || !frame.vsf)
             {
-                header.setError("Incorrect sampling factors (%d x %d)", frame.hsf, frame.vsf);
+                header.setError("Incorrect sampling factors ({} x {})", frame.hsf, frame.vsf);
                 return;
             }
             frame.hsf = u32_log2(Hmax / frame.hsf);
@@ -644,7 +644,7 @@ namespace mango::image::jpeg
 
         if (!xblock || !yblock)
         {
-            header.setError("Incorrect dimensions (%d x %d)", xblock, yblock);
+            header.setError("Incorrect dimensions ({} x {})", xblock, yblock);
             return;
         }
 
@@ -685,13 +685,13 @@ namespace mango::image::jpeg
         u16 correct_length = 6 + 2 * components;
         if (length != correct_length)
         {
-            header.setError("Incorrect chunk length (%d, should be %d).", length, correct_length);
+            header.setError("Incorrect chunk length ({}, should be {}).", length, correct_length);
             return p;
         }
 
         if (components < 1 || components > 4)
         {
-            header.setError("Incorrect number of components (%d).", components);
+            header.setError("Incorrect number of components ({}).", components);
             return p;
         }
 
@@ -735,7 +735,7 @@ namespace mango::image::jpeg
 
             if (dc > max_dc || ac > max_ac)
             {
-                header.setError(makeString("Incorrect coding table selector (DC: %d, AC: %d).", dc, ac));
+                header.setError("Incorrect coding table selector (DC: {}, AC: {}).", dc, ac);
                 return p;
             }
 
@@ -754,7 +754,7 @@ namespace mango::image::jpeg
 
             if (!frame)
             {
-                header.setError("Incorrect scan component selector (%d)", cs);
+                header.setError("Incorrect scan component selector ({})", cs);
                 return p;
             }
 
@@ -766,7 +766,7 @@ namespace mango::image::jpeg
             std::string cs_name;
             if (cs >= 32 && cs < 128)
             {
-                cs_name = makeString(" (%c)", char(cs));
+                cs_name = fmt::format(" ({:c})", cs);
             }
 
             debugPrintLine("  Component: %i%s, DC: %i, AC: %i, offset: %d, size: %d",
@@ -776,7 +776,7 @@ namespace mango::image::jpeg
             {
                 if (offset >= JPEG_MAX_BLOCKS_IN_MCU)
                 {
-                    header.setError("Incorrect number of blocks in MCU (%d >= %d).", offset, JPEG_MAX_BLOCKS_IN_MCU);
+                    header.setError("Incorrect number of blocks in MCU ({} >= {}).", offset, JPEG_MAX_BLOCKS_IN_MCU);
                     return p;
                 }
 
@@ -997,13 +997,13 @@ namespace mango::image::jpeg
 
                 if (Pq > max_pq)
                 {
-                    header.setError("Incorrect quantization table element precision (%d)", Pq);
+                    header.setError("Incorrect quantization table element precision ({})", Pq);
                     return;
                 }
 
                 if (Tq > 3)
                 {
-                    header.setError("Incorrect quantization table (%d)", Tq);
+                    header.setError("Incorrect quantization table ({})", Tq);
                     return;
                 }
             }
@@ -1057,13 +1057,13 @@ namespace mango::image::jpeg
 
             if (Tc > max_tc)
             {
-                header.setError(makeString("Incorrect huffman table class (%d)", Tc));
+                header.setError("Incorrect huffman table class ({})", Tc);
                 return;
             }
 
             if (Th > max_th)
             {
-                header.setError(makeString("Incorrect huffman table identifier (%d)", Th));
+                header.setError("Incorrect huffman table identifier ({})", Th);
                 return;
             }
 
@@ -1156,7 +1156,7 @@ namespace mango::image::jpeg
 
         if (n > 32)
         {
-            header.setError("Too many DAC entries (%d).", n);
+            header.setError("Too many DAC entries ({}).", n);
             return;
         }
 
@@ -1175,13 +1175,13 @@ namespace mango::image::jpeg
 
             if (Tc > max_tc || Tb > max_tb)
             {
-                header.setError(makeString("Incorrect Arithmetic table selector (Tc: %d, Tb: %d).", Tc, Tb));
+                header.setError("Incorrect Arithmetic table selector (Tc: {}, Tb: {}).", Tc, Tb);
                 return;
             }
 
             if (Cs < min_cs || Cs > max_cs)
             {
-                header.setError(makeString("Incorrect Arithmetic conditioning table (%d).", Cs));
+                header.setError("Incorrect Arithmetic conditioning table ({}).", Cs);
                 return;
             }
 
@@ -1199,7 +1199,7 @@ namespace mango::image::jpeg
                     break;
 
                 default:
-                    header.setError("Incorrect Arithmetic table class (%d).", Tc);
+                    header.setError("Incorrect Arithmetic table class ({}).", Tc);
                     return;
             }
 
@@ -1681,7 +1681,7 @@ namespace mango::image::jpeg
                         if (processState.process_ycbcr_8x8)
                         {
                             processState.process = processState.process_ycbcr_8x8;
-                            id = makeString("YCbCr 8x8 %s", simd);
+                            id = fmt::format("YCbCr 8x8 {}", simd);
                         }
                     }
 
@@ -1690,7 +1690,7 @@ namespace mango::image::jpeg
                         if (processState.process_ycbcr_8x16)
                         {
                             processState.process = processState.process_ycbcr_8x16;
-                            id = makeString("YCbCr 8x16 %s", simd);
+                            id = fmt::format("YCbCr 8x16 {}", simd);
                         }
                     }
 
@@ -1699,7 +1699,7 @@ namespace mango::image::jpeg
                         if (processState.process_ycbcr_16x8)
                         {
                             processState.process = processState.process_ycbcr_16x8;
-                            id = makeString("YCbCr 16x8 %s", simd);
+                            id = fmt::format("YCbCr 16x8 {}", simd);
                         }
                     }
 
@@ -1708,7 +1708,7 @@ namespace mango::image::jpeg
                         if (processState.process_ycbcr_16x16)
                         {
                             processState.process = processState.process_ycbcr_16x16;
-                            id = makeString("YCbCr 16x16 %s", simd);
+                            id = fmt::format("YCbCr 16x16 {}", simd);
                         }
                     }
                 }

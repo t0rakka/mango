@@ -721,7 +721,7 @@ namespace
                     break;
 
                 default:
-                    m_header.setError("[ImageDecoder.JP2] Incorrect number of components (%d).", components);
+                    m_header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
                     return;
             }
 
@@ -763,7 +763,7 @@ namespace
             switch (m_image->color_space)
             {
                 case OPJ_CLRSPC_UNKNOWN:
-                    m_header.setError("[ImageDecoder.JP2] Unknown color space (%d).", m_image->color_space);
+                    m_header.setError("[ImageDecoder.JP2] Unknown color space ({}).", int(m_image->color_space));
                     return;
 
                 case OPJ_CLRSPC_UNSPECIFIED:
@@ -800,7 +800,7 @@ namespace
                 case OPJ_CLRSPC_SRGB:
                     if (components < 3)
                     {
-                        m_header.setError("[ImageDecoder.JP2] Incorrect number of components (%d).", components);
+                        m_header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
                         return;
                     }
                     if (is_standard)
@@ -815,7 +815,7 @@ namespace
                 case OPJ_CLRSPC_GRAY:
                     if (components > 2)
                     {
-                        m_header.setError("[ImageDecoder.JP2] Incorrect number of components (%d).", components);
+                        m_header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
                         return;
                     }
                     if (is_standard)
@@ -834,11 +834,11 @@ namespace
                 case OPJ_CLRSPC_SYCC:
                 case OPJ_CLRSPC_EYCC:
                 case OPJ_CLRSPC_CMYK:
-                    m_header.setError("[ImageDecoder.JP2] Unsupported color space (%d).", m_image->color_space);
+                    m_header.setError("[ImageDecoder.JP2] Unsupported color space ({}).", int(m_image->color_space));
                     return;
 
                 default:
-                    m_header.setError("[ImageDecoder.JP2] Incorrect color space (%d).", m_image->color_space);
+                    m_header.setError("[ImageDecoder.JP2] Incorrect color space ({}).", int(m_image->color_space));
                     return;
             }
 

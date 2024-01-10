@@ -1568,7 +1568,7 @@ ContextEXR::ContextEXR(ConstMemory memory)
     u32 magic = p.read32();
     if (magic != 0x01312f76)
     {
-        m_header.setError("Incorrect format identifier: 0x%.8x", magic);
+        m_header.setError("Incorrect format identifier: {:#010x}", magic);
         return;
     }
 
@@ -1671,7 +1671,7 @@ ContextEXR::ContextEXR(ConstMemory memory)
             break;
 
         default:
-            m_header.setError("Incorrect compression: 0x%.8x", m_attributes.compression);
+            m_header.setError("Incorrect compression: {:#010x}", m_attributes.compression);
             return;
     }
 

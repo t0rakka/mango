@@ -2244,13 +2244,13 @@ namespace
 
         if (m_width <= 0 || m_height <= 0)
         {
-            setError(makeString("Incorrect dimensions (%d x %d).", m_width, m_height));
+            setError(fmt::format("Incorrect dimensions ({} x {}).", m_width, m_height));
             return;
         }
 
         if (!u32_is_power_of_two(m_color_state.bits))
         {
-            setError(makeString("Incorrect bit depth (%d).", m_color_state.bits));
+            setError(fmt::format("Incorrect bit depth ({}).", m_color_state.bits));
             return;
         }
 
@@ -2303,14 +2303,14 @@ namespace
                 m_channels = 4;
                 break;
             default:
-                setError(makeString("Incorrect color type (%d).", m_color_type));
+                setError(fmt::format("Incorrect color type ({}).", m_color_type));
                 return;
         }
 
         const int log2bits = u32_log2(m_color_state.bits);
         if (log2bits < minBits || log2bits > maxBits)
         {
-            setError(makeString("Unsupported bit depth for color type (%d).", m_color_state.bits));
+            setError(fmt::format("Unsupported bit depth for color type ({}).", m_color_state.bits));
             return;
         }
 
@@ -2627,7 +2627,7 @@ namespace
             // check that we won't read past end of file
             if (p + size + 4 > m_end)
             {
-                setError("Corrupted file.\n");
+                setError("Corrupted file.");
                 return;
             }
 
@@ -3830,13 +3830,13 @@ namespace
         {
             if (options.palette.size != 256)
             {
-                status.setError("[ImageEncoder.PNG] Incorrect palette size - must be 0 or 256 (size: %d).", options.palette.size);
+                status.setError("[ImageEncoder.PNG] Incorrect palette size - must be 0 or 256 (size: {}).", options.palette.size);
                 return status;
             }
 
             if (!surface.format.isIndexed() || surface.format.bits != 8)
             {
-                status.setError("[ImageEncoder.PNG] Incorrect format - must be 8 bit INDEXED (bits: %d).", surface.format.bits);
+                status.setError("[ImageEncoder.PNG] Incorrect format - must be 8 bit INDEXED (bits: {}).", surface.format.bits);
                 return status;
             }
 

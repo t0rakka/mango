@@ -32,13 +32,13 @@ namespace
             error = heif_init(nullptr);
             if (error.code != heif_error_Ok)
             {
-                m_header.setError("[ImageDecoder.HEIF] heif_init FAILED (%s).", error.message);
+                m_header.setError("[ImageDecoder.HEIF] heif_init FAILED ({}).", error.message);
                 return;
             }
 
             if (memory.size < 12)
             {
-                m_header.setError("[ImageDecoder.HEIF] Not enough data (%d bytes).", int(memory.size));
+                m_header.setError("[ImageDecoder.HEIF] Not enough data ({} bytes).", memory.size);
                 return;
             }
 
@@ -65,14 +65,14 @@ namespace
             error = heif_context_read_from_memory_without_copy(m_context, memory.address, memory.size, nullptr);
             if (error.code != heif_error_Ok)
             {
-                m_header.setError("[ImageDecoder.HEIF] heif_context_read_from_memory_without_copy FAILED (%s).", error.message);
+                m_header.setError("[ImageDecoder.HEIF] heif_context_read_from_memory_without_copy FAILED ({}).", error.message);
                 return;
             }
 
             error = heif_context_get_primary_image_handle(m_context, &m_image_handle);
             if (error.code != heif_error_Ok)
             {
-                m_header.setError("[ImageDecoder.HEIF] heif_context_get_primary_image_handle FAILED (%s).", error.message);
+                m_header.setError("[ImageDecoder.HEIF] heif_context_get_primary_image_handle FAILED ({}).", error.message);
                 return;
             }
 
@@ -148,7 +148,7 @@ namespace
 
             if (error.code != heif_error_Ok)
             {
-                status.setError("[ImageDecoder.HEIF] heif_decode_image FAILED (%s).", error.message);
+                status.setError("[ImageDecoder.HEIF] heif_decode_image FAILED ({}).", error.message);
                 return status;
             }
 
@@ -231,7 +231,7 @@ namespace
         error = heif_init(nullptr);
         if (error.code != heif_error_Ok)
         {
-            status.setError("[ImageEncoder.HEIF] heif_init FAILED (%s).", error.message);
+            status.setError("[ImageEncoder.HEIF] heif_init FAILED ({}).", error.message);
             return status;
         }
 
@@ -267,7 +267,7 @@ namespace
             heif_context_free(context);
             heif_image_release(image);
             heif_deinit();
-            status.setError("[ImageEncoder.HEIF] heif_context_get_encoder_for_format FAILED (%s).", error.message);
+            status.setError("[ImageEncoder.HEIF] heif_context_get_encoder_for_format FAILED ({}).", error.message);
             return status;
         }
 
@@ -289,7 +289,7 @@ namespace
             heif_context_free(context);
             heif_image_release(image);
             heif_deinit();
-            status.setError("[ImageEncoder.HEIF] heif_context_encode_image FAILED (%s).", error.message);
+            status.setError("[ImageEncoder.HEIF] heif_context_encode_image FAILED ({}).", error.message);
             return status;
         }
 
@@ -305,7 +305,7 @@ namespace
             heif_context_free(context);
             heif_image_release(image);
             heif_deinit();
-            status.setError("[ImageEncoder.HEIF] heif_context_write FAILED (%s).", error.message);
+            status.setError("[ImageEncoder.HEIF] heif_context_write FAILED ({}).", error.message);
             return status;
         }
 

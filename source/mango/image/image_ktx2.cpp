@@ -1219,7 +1219,7 @@ namespace
             const int maxLevel = int(m_levels.size() - 1);
             if (level < 0 || level > maxLevel)
             {
-                status.setError("Incorrect level (%d) [%d .. %d]", level, 0, maxLevel);
+                status.setError("Incorrect level ({}) [{} .. {}]", level, 0, maxLevel);
                 return status;
             }
 

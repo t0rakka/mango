@@ -127,25 +127,25 @@ namespace
 
             if (width < 0 || height < -65535 || width > 65535 || height > 65535)
             {
-                setError("Incorrect image dimensions (%d x %d)", width, height);
+                setError("Incorrect image dimensions ({} x {})", width, height);
                 return;
             }
 
             if (bitsPerPixel < 1 || bitsPerPixel > 32)
             {
-                setError("Incorrect bits per pixel (%d)", bitsPerPixel);
+                setError("Incorrect bits per pixel ({})", bitsPerPixel);
                 return;
             }
 
             if (paletteSize > 256)
             {
-                setError("Incorrect palette size (%d)", paletteSize);
+                setError("Incorrect palette size ({})", paletteSize);
                 return;
             }
 
             if (importantColorCount > 256)
             {
-                setError("Incorrect palette size (%d)", importantColorCount);
+                setError("Incorrect palette size ({})", importantColorCount);
                 return;
             }
 
@@ -164,13 +164,13 @@ namespace
                 case BIC_CMYKRLE8:
                 case BIC_CMYKRLE4:
                 {
-                    setError("[ImageDecoder.BMP] Unsupported compression (%d).", compression);
+                    setError("[ImageDecoder.BMP] Unsupported compression ({}).", compression);
                     return;
                 }
 
                 default:
                 {
-                    setError("[ImageDecoder.BMP] Incorrect compression (%d).", compression);
+                    setError("[ImageDecoder.BMP] Incorrect compression ({}).", compression);
                     return;
                 }
             }
@@ -371,7 +371,7 @@ namespace
                 }
 
                 default:
-                    setError("[ImageDecoder.BMP] Incorrect header size (%d).", headerSize);
+                    setError("[ImageDecoder.BMP] Incorrect header size ({}).", headerSize);
                     return;
             }
 
@@ -383,7 +383,7 @@ namespace
 
             if (numPlanes != 1)
             {
-                setError("[ImageDecoder.BMP] Incorrect number of planes (%d).", numPlanes);
+                setError("[ImageDecoder.BMP] Incorrect number of planes ({}).", numPlanes);
                 return;
             }
 
@@ -454,7 +454,7 @@ namespace
                             format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0);
                             break;
                         default:
-                            setError("[ImageDecoder.BMP] Incorrect number of color bits (%d).", bitsPerPixel);
+                            setError("[ImageDecoder.BMP] Incorrect number of color bits ({}).", bitsPerPixel);
                             return;
                     }
                 }
@@ -942,7 +942,7 @@ namespace
 
                     default:
                     {
-                        header.setError("[ImageDecoder.BMP] Incorrect number of color bits (%d).", header.bitsPerPixel);
+                        header.setError("[ImageDecoder.BMP] Incorrect number of color bits ({}).", header.bitsPerPixel);
                         return std::move(header);
                     }
                 }

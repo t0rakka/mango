@@ -121,13 +121,13 @@ namespace
 
                 if (packet.size != 8)
                 {
-                    status.setError("[ImageDecoder.PIC] Incorrect packet size (%d).", packet.size);
+                    status.setError("[ImageDecoder.PIC] Incorrect packet size ({}).", packet.size);
                     return status;
                 }
 
                 if (packet.type > 2)
                 {
-                    status.setError("[ImageDecoder.PIC] Incorrect packet type (%d).", packet.type);
+                    status.setError("[ImageDecoder.PIC] Incorrect packet type ({}).", packet.type);
                     return status;
                 }
 

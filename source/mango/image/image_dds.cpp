@@ -941,7 +941,7 @@ namespace
 
             if (!dxgi.format.bits)
             {
-                header.setError("[ImageDecoder.DDS] DXGI format (%d) not supported.", header10.dxgiFormat);
+                header.setError("[ImageDecoder.DDS] DXGI format ({}) not supported.", header10.dxgiFormat);
                 return;
             }
 

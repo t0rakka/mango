@@ -215,7 +215,7 @@ namespace
                     parse_version3(memory, true);
                     break;
                 default:
-                    header.setError("[ImageDecoder.PVR] Incorrect format version: 0x%x", magic);
+                    header.setError("[ImageDecoder.PVR] Incorrect format version: {:#x}", magic);
                     return;
             }
 
@@ -443,7 +443,7 @@ namespace
 
                 if (identifier != 0x21525650)
                 {
-                    header.setError("[ImageDecoder.PVR] Incorrect format identifier: 0x%x", identifier);
+                    header.setError("[ImageDecoder.PVR] Incorrect format identifier: {:#x}", identifier);
                     return;
                 }
             }
@@ -481,7 +481,7 @@ namespace
             }
             else
             {
-                header.setError("[ImageDecoder.PVR] Incorrect channeltype: %d", int(pvr.channeltype));
+                header.setError("[ImageDecoder.PVR] Incorrect channeltype: {}", int(pvr.channeltype));
                 return;
             }
 
@@ -515,7 +515,7 @@ namespace
                 }
                 else
                 {
-                    header.setError("[ImageDecoder.PVR] Incorrect pixelformat: %d", formatIndex);
+                    header.setError("[ImageDecoder.PVR] Incorrect pixelformat: {}", formatIndex);
                     return;
                 }
             }
@@ -535,7 +535,7 @@ namespace
 
             if (m_faces != 1 && m_faces != 6)
             {
-                header.setError("[ImageDecoder.PVR] Incorrect number of faces: %d", m_faces);
+                header.setError("[ImageDecoder.PVR] Incorrect number of faces: {}", m_faces);
                 return;
             }
 
@@ -548,7 +548,7 @@ namespace
                     // NOTE: sRGB
                     break;
                 default:
-                    header.setError("[ImageDecoder.PVR] Incorrect colorspace: %d", pvr.colorspace);
+                    header.setError("[ImageDecoder.PVR] Incorrect colorspace: {}", pvr.colorspace);
                     return;
             }
 

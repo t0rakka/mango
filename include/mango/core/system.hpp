@@ -35,8 +35,9 @@ namespace mango
     void debugPrintLine(const std::string& text);
 
     // TODO: testing...
+
     template <typename... T>
-    void print(T... s)
+    void __print(T... s)
     {
         fmt::print(s...);
     }

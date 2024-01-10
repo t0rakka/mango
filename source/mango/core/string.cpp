@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cctype>
 #include <algorithm>
@@ -492,19 +492,6 @@ namespace mango
     std::vector<std::string_view> split(std::string_view s, std::string_view delimiter)
     {
         return splitTemplate(s, delimiter);
-    }
-
-    std::string makeString(const char* format, ...)
-    {
-        constexpr size_t max_length = 512;
-        char buffer[max_length];
-
-        va_list args;
-        va_start(args, format);
-        std::vsnprintf(buffer, max_length, format, args);
-        va_end(args);
-
-        return buffer;
     }
 
     // ----------------------------------------------------------------------------

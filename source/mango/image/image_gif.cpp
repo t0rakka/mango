@@ -836,13 +836,13 @@ namespace
         {
             if (options.palette.size != 256)
             {
-                status.setError("[ImageEncoder.GIF] Incorrect palette size - must be 0 or 256 (size: %d).", options.palette.size);
+                status.setError("[ImageEncoder.GIF] Incorrect palette size - must be 0 or 256 (size: {}).", options.palette.size);
                 return status;
             }
 
             if (!surface.format.isIndexed() || surface.format.bits != 8)
             {
-                status.setError("[ImageEncoder.GIF] Incorrect format - must be 8 bit INDEXED (bits: %d).", surface.format.bits);
+                status.setError("[ImageEncoder.GIF] Incorrect format - must be 8 bit INDEXED (bits: {}).", surface.format.bits);
                 return status;
             }
 

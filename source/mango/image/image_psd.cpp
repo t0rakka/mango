@@ -148,7 +148,7 @@ namespace
             m_version = p.read16();
             if (m_version > 2)
             {
-                m_header.setError("[ImageDecoder.PSD] Incorrect version (%d).", m_version);
+                m_header.setError("[ImageDecoder.PSD] Incorrect version ({}).", m_version);
                 return;
             }
 
@@ -166,7 +166,7 @@ namespace
             m_channels = p.read16();
             if (m_channels < 1 || m_channels > 56)
             {
-                m_header.setError("[ImageDecoder.PSD] Incorrect number of channels (%d).", m_channels);
+                m_header.setError("[ImageDecoder.PSD] Incorrect number of channels ({}).", m_channels);
                 return;
             }
 
@@ -174,7 +174,7 @@ namespace
             int width = p.read32();
             if (width < 1 || width > width_max || height < 1 || height > height_max)
             {
-                m_header.setError("[ImageDecoder.PSD] Incorrect image dimensions (%d x %d).", width, height);
+                m_header.setError("[ImageDecoder.PSD] Incorrect image dimensions ({} x {}).", width, height);
                 return;
             }
 
@@ -194,7 +194,7 @@ namespace
                     format = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
                     break;
                 default:
-                    m_header.setError("[ImageDecoder.PSD] Incorrect number of bits (%d).", m_bits);
+                    m_header.setError("[ImageDecoder.PSD] Incorrect number of bits ({}).", m_bits);
                     return;
             }
 
@@ -211,7 +211,7 @@ namespace
                 case ColorMode::LAB:
                     break;
                 default:
-                    m_header.setError("[ImageDecoder.PSD] Incorrect color mode (%d).", m_color_mode);
+                    m_header.setError("[ImageDecoder.PSD] Incorrect color mode ({}).", int(m_color_mode));
                     return;
             }
 
@@ -226,7 +226,7 @@ namespace
                 }
                 else
                 {
-                    m_header.setError("[ImageDecoder.PSD] Incorrect palette size (%d).", colormode_size);
+                    m_header.setError("[ImageDecoder.PSD] Incorrect palette size ({}).", colormode_size);
                     return;
                 }
             }
@@ -250,10 +250,10 @@ namespace
                 case Compression::ZIP:
                 case Compression::ZIP_PRED:
                     // MANGO TODO: need psd files with these compressions
-                    m_header.setError("[ImageDecoder.PSD] Unsupported compression (%d).", m_compression);
+                    m_header.setError("[ImageDecoder.PSD] Unsupported compression ({}).", int(m_compression));
                     return;
                 default:
-                    m_header.setError("[ImageDecoder.PSD] Incorrect compression (%d).", m_compression);
+                    m_header.setError("[ImageDecoder.PSD] Incorrect compression ({}).", int(m_compression));
                     return;
             }
 

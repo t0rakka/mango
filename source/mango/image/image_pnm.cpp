@@ -289,7 +289,7 @@ namespace
                 }
                 else
                 {
-                    header.setError("[ImageDecoder.PNM] Incorrect header magic (%s).", p);
+                    header.setError("[ImageDecoder.PNM] Incorrect header magic ({}).", p);
                     return;
                 }
 
@@ -556,7 +556,7 @@ namespace
 
         LittleEndianStream s(stream);
 
-        std::string header = makeString("PF\n%d %d\n-1.0\n", width, height);
+        std::string header = fmt::format("PF\n{} {}\n-1.0\n", width, height);
         s.write(header.c_str(), header.length());
 
         Bitmap temp(width, height, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32));

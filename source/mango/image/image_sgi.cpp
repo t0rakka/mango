@@ -53,7 +53,7 @@ namespace
 
             if (bpc != 1 || colormap != 0)
             {
-                header.setError("[ImageDecoder.SGI] Incorrect channel/colormap.");
+                header.setError("[ImageDecoder.SGI] Incorrect channel / colormap.");
                 return;
             }
 

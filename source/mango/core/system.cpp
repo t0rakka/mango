@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/system.hpp>
 #include <mango/core/cpuinfo.hpp>
@@ -297,39 +297,10 @@ namespace mango
     }
 
     // ----------------------------------------------------------------------------
-    // Status
-    // ----------------------------------------------------------------------------
-
-    Status::operator bool () const
-    {
-        return success;
-    }
-
-    void Status::setError(const std::string& error)
-    {
-        info = error;
-        success = false;
-    }
-
-    void Status::setError(const char* format, ...)
-    {
-        constexpr size_t max_length = 512;
-        char buffer[max_length];
-
-        va_list args;
-        va_start(args, format);
-        std::vsnprintf(buffer, max_length, format, args);
-        va_end(args);
-
-        info = buffer;
-        success = false;
-    }
-
-    // ----------------------------------------------------------------------------
     // Exception
     // ----------------------------------------------------------------------------
 
-    Exception::Exception(const std::string message, const std::string func, const std::string file, int line)
+    Exception::Exception(const std::string message, const std::string func, const std::string file, u32 line)
         : m_message(message)
         , m_func(func)
         , m_file(file)
@@ -356,7 +327,7 @@ namespace mango
         return m_file.c_str();
     }
 
-    int Exception::line() const
+    u32 Exception::line() const
     {
         return m_line;
     }

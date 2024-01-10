@@ -1231,7 +1231,7 @@ namespace mango::image
 
         if (!decode)
         {
-            status.setError("No decoder for 0x%x.", compression);
+            status.setError("No decoder for {:#x}.", compression);
             return status;
         }
 
@@ -1304,7 +1304,7 @@ namespace mango::image
 
         if (!encode)
         {
-            status.setError("No encoder for 0x%x.", compression);
+            status.setError("No encoder for {:#x}.", compression);
             return status;
         }
 

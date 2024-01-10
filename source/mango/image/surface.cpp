@@ -220,7 +220,7 @@ namespace mango::image
         }
         else
         {
-            status.setError("Incorrect encoder: %s", extension.c_str());
+            status.setError("Incorrect encoder: {}", extension);
         }
 
         return status;
