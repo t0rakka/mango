@@ -8,6 +8,8 @@
 #include <string_view>
 #include <vector>
 #include <cstdarg>
+#include "fmt/format.h"
+#include "fmt/color.h"
 #include <mango/core/configure.hpp>
 
 namespace mango
