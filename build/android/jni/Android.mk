@@ -1,7 +1,7 @@
 # -------------------------------------------------------------
 # mango Android.mk
 #
-# Copyright (C) 2012-2023 Twilight 3D Finland Oy Ltd.
+# Copyright (C) 2012-2024 Twilight 3D Finland Oy Ltd.
 # -------------------------------------------------------------
 
 # -------------------------------------------------------------
@@ -48,10 +48,15 @@ SOURCE_DIRS := mango/core \
                external/aes \
                external/lzma \
                external/basisu/transcoder \
+               external/fmt/src \
+               \#external/simdjson \
+               \#external/fastgltf/src \
+               \#external/mikktspace \
                $(SOURCE_WEBP)
 
 SOURCES := $(foreach dir,$(SOURCE_DIRS), \
                          $(wildcard $(MANGO_SOURCE)/$(dir)/*.cpp) \
+                         $(wildcard $(MANGO_SOURCE)/$(dir)/*.cc) \
                          $(wildcard $(MANGO_SOURCE)/$(dir)/*.c) \
                          $(wildcard $(MANGO_SOURCE)/$(dir)/*.S) \
 )
