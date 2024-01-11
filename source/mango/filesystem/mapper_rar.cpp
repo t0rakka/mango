@@ -745,7 +745,7 @@ namespace mango::filesystem
             const FileHeader* ptrHeader = m_folders.getHeader(filename);
             if (!ptrHeader)
             {
-                MANGO_EXCEPTION("[mapper.rar] File \"%s\" not found.", filename.c_str());
+                MANGO_EXCEPTION("[mapper.rar] File \"{}\" not found.", filename);
             }
 
             const FileHeader& header = *ptrHeader;

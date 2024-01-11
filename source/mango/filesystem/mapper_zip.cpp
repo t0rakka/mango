@@ -740,7 +740,7 @@ namespace mango::filesystem
                 case COMPRESSION_WAVPACK:
                 case COMPRESSION_JPEG:
                 case COMPRESSION_AES:
-                    MANGO_EXCEPTION("[mapper.zip] Unsupported compression algorithm (%d).", header.compression);
+                    MANGO_EXCEPTION("[mapper.zip] Unsupported compression algorithm ({}).", header.compression);
                     break;
             }
 
@@ -760,7 +760,7 @@ namespace mango::filesystem
                 if (!status)
                 {
                     delete[] buffer;
-                    MANGO_EXCEPTION("[mapper.zip] %s", status.info.c_str());
+                    MANGO_EXCEPTION("[mapper.zip] {}", status.info);
                 }
 
                 // use decode_buffer as memory map
@@ -773,7 +773,7 @@ namespace mango::filesystem
             }
             else
             {
-                MANGO_EXCEPTION("[mapper.zip] Unsupported compression algorithm (%d).", header.compression);
+                MANGO_EXCEPTION("[mapper.zip] Unsupported compression algorithm ({}).", header.compression);
             }
 
             return std::make_unique<VirtualMemoryZIP>(address, buffer, size_t(size));
@@ -827,7 +827,7 @@ namespace mango::filesystem
             const FileHeader* ptrHeader = m_folders.getHeader(filename);
             if (!ptrHeader)
             {
-                MANGO_EXCEPTION("[mapper.zip] File \"%s\" not found.", filename.c_str());
+                MANGO_EXCEPTION("[mapper.zip] File \"{}\" not found.", filename);
             }
 
             const FileHeader& header = *ptrHeader;

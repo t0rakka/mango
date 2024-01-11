@@ -1282,7 +1282,7 @@ namespace lzav
         }
         else
         {
-            MANGO_EXCEPTION("[WARNING] Incorrect compressor (%d).", int(method));
+            MANGO_EXCEPTION("[WARNING] Incorrect compressor ({}).", int(method));
         }
 
         return compressor;
@@ -1303,7 +1303,7 @@ namespace lzav
         }
         else
         {
-            MANGO_EXCEPTION("[WARNING] Incorrect compressor (%s).", name.c_str());
+            MANGO_EXCEPTION("[WARNING] Incorrect compressor ({}).", name);
         }
 
         return compressor;

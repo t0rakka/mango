@@ -223,7 +223,7 @@ namespace
             u32 version = p.read32();
             if (version > 3)
             {
-                MANGO_EXCEPTION("[Import3DS] Incorrect version: %d", version);
+                MANGO_EXCEPTION("[Import3DS] Incorrect version: {}", version);
             }
 
             debugPrint3DS("version: %d", version);
