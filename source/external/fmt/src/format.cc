@@ -5,7 +5,7 @@
 //
 // For the license information refer to format.h.
 
-#include "../../../../include/mango/core/fmt/format-inl.h"
+#include <mango/core/fmt/format-inl.h>
 
 FMT_BEGIN_NAMESPACE
 namespace detail {
