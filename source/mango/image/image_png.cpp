@@ -3138,7 +3138,7 @@ namespace
 
         // allocate output buffer
         Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
-        printLine(Print::Info, "  buffer bytes: []", buffer_size);
+        printLine(Print::Info, "  buffer bytes: {}", buffer_size);
 
         // zero scanline for filters at the beginning
         std::memset(temp, 0, bytes_per_line);

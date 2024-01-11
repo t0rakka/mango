@@ -441,7 +441,7 @@ int main(int argc, const char* argv[])
         }
         else if (!strcmp(argv[i], "--debug"))
         {
-            printEnable(Print::Info);
+            printEnable(Print::Info, true);
         }
         else
         {
