@@ -19,7 +19,6 @@ namespace mango
     Context::Context()
         : thread_pool(ThreadPool::getHardwareConcurrency())
         , timer()
-        , debug_print_enable(false)
     {
     }
 

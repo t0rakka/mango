@@ -32,8 +32,6 @@ namespace mango
         bool print_enable_info = false;
         bool print_enable_verbose = true;
 
-        bool debug_print_enable; // TODO: deprecate
-
         Context();
         ~Context();
     };
