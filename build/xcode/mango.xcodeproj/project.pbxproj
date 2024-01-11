@@ -316,6 +316,11 @@
 		A69B9E0C285ABFA200E7BEDC /* matchfinder_impl.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9E05285ABFA200E7BEDC /* matchfinder_impl.h */; };
 		A69B9E0D285ABFA200E7BEDC /* cpu_features.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9E06285ABFA200E7BEDC /* cpu_features.h */; };
 		A69B9E0E285ABFA200E7BEDC /* adler32_impl.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9E07285ABFA200E7BEDC /* adler32_impl.h */; };
+		A69BEDC62B4F6C6E00B5010F /* import_gltf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A69BEDC22B4F6C6E00B5010F /* import_gltf.cpp */; };
+		A69BEDC72B4F6C6E00B5010F /* import_3ds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A69BEDC32B4F6C6E00B5010F /* import_3ds.cpp */; };
+		A69BEDC82B4F6C6E00B5010F /* import_obj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A69BEDC42B4F6C6E00B5010F /* import_obj.cpp */; };
+		A69BEDC92B4F6C6E00B5010F /* mesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A69BEDC52B4F6C6E00B5010F /* mesh.cpp */; };
+		A69BEDCB2B4F6C9000B5010F /* import3d in Resources */ = {isa = PBXBuildFile; fileRef = A69BEDCA2B4F6C9000B5010F /* import3d */; };
 		A6A1313A285ABA5F00DB6BDA /* bits.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13139285ABA5F00DB6BDA /* bits.h */; };
 		A6B2A54428F4E06200DC24CF /* image_jp2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6B2A54328F4E06200DC24CF /* image_jp2.cpp */; };
 		A6B2A54628F4E07400DC24CF /* image_jxl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6B2A54528F4E07400DC24CF /* image_jxl.cpp */; };
@@ -883,6 +888,11 @@
 		A69B9E05285ABFA200E7BEDC /* matchfinder_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = matchfinder_impl.h; path = external/libdeflate/lib/x86/matchfinder_impl.h; sourceTree = "<group>"; };
 		A69B9E06285ABFA200E7BEDC /* cpu_features.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpu_features.h; path = external/libdeflate/lib/x86/cpu_features.h; sourceTree = "<group>"; };
 		A69B9E07285ABFA200E7BEDC /* adler32_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = adler32_impl.h; path = external/libdeflate/lib/x86/adler32_impl.h; sourceTree = "<group>"; };
+		A69BEDC22B4F6C6E00B5010F /* import_gltf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = import_gltf.cpp; path = import3d/import_gltf.cpp; sourceTree = "<group>"; };
+		A69BEDC32B4F6C6E00B5010F /* import_3ds.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = import_3ds.cpp; path = import3d/import_3ds.cpp; sourceTree = "<group>"; };
+		A69BEDC42B4F6C6E00B5010F /* import_obj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = import_obj.cpp; path = import3d/import_obj.cpp; sourceTree = "<group>"; };
+		A69BEDC52B4F6C6E00B5010F /* mesh.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh.cpp; path = import3d/mesh.cpp; sourceTree = "<group>"; };
+		A69BEDCA2B4F6C9000B5010F /* import3d */ = {isa = PBXFileReference; lastKnownFileType = folder; name = import3d; path = mango/import3d; sourceTree = "<group>"; };
 		A6A13139285ABA5F00DB6BDA /* bits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bits.h; path = external/zstd/common/bits.h; sourceTree = "<group>"; };
 		A6B2A54328F4E06200DC24CF /* image_jp2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_jp2.cpp; path = image/image_jp2.cpp; sourceTree = "<group>"; };
 		A6B2A54528F4E07400DC24CF /* image_jxl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_jxl.cpp; path = image/image_jxl.cpp; sourceTree = "<group>"; };
@@ -1156,6 +1166,7 @@
 		A003D2AD192B9865009FED25 /* mango */ = {
 			isa = PBXGroup;
 			children = (
+				A69BEDCA2B4F6C9000B5010F /* import3d */,
 				A650BE8F21F8BB990066B9B5 /* window */,
 				A00559D91C93337C00A6D963 /* core */,
 				A00559E11C93340600A6D963 /* image */,
@@ -1281,13 +1292,14 @@
 		A08710A415B9E95F0033B09C /* mango */ = {
 			isa = PBXGroup;
 			children = (
-				A650BE9121F8D4130066B9B5 /* window */,
-				A005598A1C93323D00A6D963 /* core */,
 				A005599D1C93326000A6D963 /* filesystem */,
+				A005598A1C93323D00A6D963 /* core */,
 				A00559AA1C93328800A6D963 /* image */,
+				A0F241D019D5E2FE00218F92 /* math */,
+				A69BEDC12B4F6C4700B5010F /* import3d */,
+				A650BE9121F8D4130066B9B5 /* window */,
 				A63DD6F21E706D5900D4D499 /* jpeg */,
 				A00559D51C9332BB00A6D963 /* opengl */,
-				A0F241D019D5E2FE00218F92 /* math */,
 			);
 			path = mango;
 			sourceTree = "<group>";
@@ -1698,6 +1710,17 @@
 				A686FD1127A37E3C00EDC399 /* basisu.h */,
 			);
 			name = basisu;
+			sourceTree = "<group>";
+		};
+		A69BEDC12B4F6C4700B5010F /* import3d */ = {
+			isa = PBXGroup;
+			children = (
+				A69BEDC32B4F6C6E00B5010F /* import_3ds.cpp */,
+				A69BEDC22B4F6C6E00B5010F /* import_gltf.cpp */,
+				A69BEDC42B4F6C6E00B5010F /* import_obj.cpp */,
+				A69BEDC52B4F6C6E00B5010F /* mesh.cpp */,
+			);
+			name = import3d;
 			sourceTree = "<group>";
 		};
 		A6B5F009276CEA8D0014CD33 /* zlib */ = {
@@ -2443,6 +2466,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A69BEDCB2B4F6C9000B5010F /* import3d in Resources */,
 				A650BE9021F8BB990066B9B5 /* window in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2562,6 +2586,7 @@
 				A6D8E9FC28D6AA6B007A0B24 /* Ppmd7Enc.c in Sources */,
 				A6EC3EF5230D7C1500B17F21 /* alpha_processing_sse41.c in Sources */,
 				A00559C71C93329A00A6D963 /* image_bmp.cpp in Sources */,
+				A69BEDC82B4F6C6E00B5010F /* import_obj.cpp in Sources */,
 				A63F72282B4F692800137C36 /* simdjson.cpp in Sources */,
 				A6EC3F06230D7C1500B17F21 /* upsampling_sse2.c in Sources */,
 				A62C93D92AEBFEE6000CDFA9 /* utilities.cpp in Sources */,
@@ -2609,6 +2634,7 @@
 				A6EC3F66230D7C3D00B17F21 /* muxedit.c in Sources */,
 				A60BD6562A1E808F00F86B1C /* cmscgats.c in Sources */,
 				A645DD822141551D00EC714B /* huf_decompress.c in Sources */,
+				A69BEDC92B4F6C6E00B5010F /* mesh.cpp in Sources */,
 				A672D9152026634B00947D7E /* aes.cpp in Sources */,
 				A642435721852AEF0044B763 /* Ppmd8Enc.c in Sources */,
 				A6EC3EE7230D7C1500B17F21 /* dec_sse41.c in Sources */,
@@ -2621,6 +2647,7 @@
 				A6EC3E86230D7BB800B17F21 /* vp8l_dec.c in Sources */,
 				A645DD2F213ED71100EC714B /* image_atari.cpp in Sources */,
 				A69B9DE0285ABF4200E7BEDC /* gzip_compress.c in Sources */,
+				A69BEDC72B4F6C6E00B5010F /* import_3ds.cpp in Sources */,
 				A6D78CC8290987A200304D88 /* astcenc_decompress_symbolic.cpp in Sources */,
 				A00559971C93324E00A6D963 /* memory.cpp in Sources */,
 				A6EC3F11230D7C1500B17F21 /* rescaler_mips_dsp_r2.c in Sources */,
@@ -2661,6 +2688,7 @@
 				A6EC3F65230D7C3D00B17F21 /* muxread.c in Sources */,
 				A63DD7061E706DFA00D4D499 /* lz4.c in Sources */,
 				A6EC3F05230D7C1500B17F21 /* rescaler_neon.c in Sources */,
+				A69BEDC62B4F6C6E00B5010F /* import_gltf.cpp in Sources */,
 				A645DD26213D53C000EC714B /* jpeg_arithmetic.cpp in Sources */,
 				A6EC3F14230D7C1500B17F21 /* upsampling_neon.c in Sources */,
 				A6B2A54628F4E07400DC24CF /* image_jxl.cpp in Sources */,
