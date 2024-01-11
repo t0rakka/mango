@@ -19,6 +19,7 @@ namespace mango::opengl
         {
             GLint size;
             glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &size);
+
             std::vector<GLchar> buffer(size);
 
             GLsizei length;
@@ -37,6 +38,7 @@ namespace mango::opengl
         {
             GLint size;
             glGetProgramiv(program, GL_INFO_LOG_LENGTH, &size);
+
             std::vector<GLchar> buffer(size);
 
             GLsizei length;

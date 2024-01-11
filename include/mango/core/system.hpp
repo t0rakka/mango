@@ -30,16 +30,25 @@ namespace mango
 
     bool debugPrintIsEnable();
     void debugPrintEnable(bool enable);
+
     void debugPrint(const char* format, ...);
     void debugPrintLine(const char* format, ...);
     void debugPrintLine(const std::string& text);
 
-    // TODO: testing...
-
+    /*
     template <typename... T>
-    void __print(T... s)
+    void print(T... s)
     {
         fmt::print(s...);
+        fmt::print(fg(fmt::rgb(255, 255, 0)), s...);
     }
+
+    template<typename... Args>
+    void printi(int indent, fmt::format_string<Args...> format_str, Args&&... args)
+    {
+        fmt::print("{:{}}", "", indent);
+        fmt::print(format_str, std::forward<Args>(args)...);
+    }
+    */
 
 } // namespace mango
