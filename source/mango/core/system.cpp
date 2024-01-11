@@ -246,54 +246,49 @@ namespace mango
     }
 
     // ----------------------------------------------------------------------------
-    // debugPrint()
+    // print
     // ----------------------------------------------------------------------------
 
-    bool debugPrintIsEnable()
+    void printEnable(Print target, bool enable)
     {
-        return g_context.debug_print_enable;
-    }
-
-    void debugPrintEnable(bool enable)
-    {
-        g_context.debug_print_enable = enable;
-    }
-
-    void debugPrint(const char* format, ...)
-    {
-        if (g_context.debug_print_enable)
+        switch (target)
         {
-            va_list args;
-
-            va_start(args, format);
-            std::vprintf(format, args);
-            va_end(args);
-
-            std::fflush(stdout);
+            case Print::Error:
+                g_context.print_enable_error = enable;
+                break;
+            case Print::Warning:
+                g_context.print_enable_warning = enable;
+                break;
+            case Print::Info:
+                g_context.print_enable_info = enable;
+                break;
+            case Print::Verbose:
+                g_context.print_enable_verbose = enable;
+                break;
         }
     }
 
-    void debugPrintLine(const char* format, ...)
+    bool isEnable(Print target)
     {
-        if (g_context.debug_print_enable)
+        bool enable = false;
+
+        switch (target)
         {
-            va_list args;
-
-            va_start(args, format);
-            std::vprintf(format, args);
-            va_end(args);
-
-            std::printf("\n");
-            std::fflush(stdout);
+            case Print::Error:
+                enable = g_context.print_enable_error;
+                break;
+            case Print::Warning:
+                enable = g_context.print_enable_warning;
+                break;
+            case Print::Info:
+                enable = g_context.print_enable_info;
+                break;
+            case Print::Verbose:
+                enable = g_context.print_enable_verbose;
+                break;
         }
-    }
 
-    void debugPrintLine(const std::string& text)
-    {
-        if (g_context.debug_print_enable)
-        {
-            std::printf("%s\n", text.c_str());
-        }
+        return enable;
     }
 
     // ----------------------------------------------------------------------------

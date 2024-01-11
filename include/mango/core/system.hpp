@@ -13,11 +13,26 @@
 namespace mango
 {
 
+    enum class Print
+    {
+        Error,
+        Warning,
+        Info,
+        Verbose
+    };
+
     struct Context
     {
         mutable ThreadPool thread_pool;
+
         Timer timer;
-        bool debug_print_enable;
+
+        bool print_enable_error = true;
+        bool print_enable_warning = false;
+        bool print_enable_info = false;
+        bool print_enable_verbose = true;
+
+        bool debug_print_enable; // TODO: deprecate
 
         Context();
         ~Context();
@@ -28,27 +43,40 @@ namespace mango
     std::string getPlatformInfo();
     std::string getSystemInfo();
 
-    bool debugPrintIsEnable();
-    void debugPrintEnable(bool enable);
+    void printEnable(Print target, bool enable);
+    bool isEnable(Print target);
 
-    void debugPrint(const char* format, ...);
-    void debugPrintLine(const char* format, ...);
-    void debugPrintLine(const std::string& text);
-
-    /*
     template <typename... T>
-    void print(T... s)
+    void printLine(Print target, T... s)
     {
-        fmt::print(s...);
-        fmt::print(fg(fmt::rgb(255, 255, 0)), s...);
+        if (isEnable(target))
+        {
+            fmt::print(std::forward<T>(s)...);
+            fmt::print("\n");
+        }
     }
 
-    template<typename... Args>
-    void printi(int indent, fmt::format_string<Args...> format_str, Args&&... args)
+    template <typename... T>
+    void printLine(Print target, int indent, T... s)
     {
-        fmt::print("{:{}}", "", indent);
-        fmt::print(format_str, std::forward<Args>(args)...);
+        if (isEnable(target))
+        {
+            fmt::print("{:{}}", "", indent);
+            fmt::print(std::forward<T>(s)...);
+            fmt::print("\n");
+        }
     }
-    */
+
+    template <typename... T>
+    void printLine(T... s)
+    {
+        printLine(Print::Verbose, std::forward<T>(s)...);
+    }
+
+    template <typename... T>
+    void printLine(int indent, T... s)
+    {
+        printLine(Print::Verbose, indent, std::forward<T>(s)...);
+    }
 
 } // namespace mango

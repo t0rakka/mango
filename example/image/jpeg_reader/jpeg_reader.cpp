@@ -161,10 +161,9 @@ int main(int argc, const char* argv[])
         }
         else if (!strcmp(argv[i], "--debug"))
         {
-            debugPrintEnable(true);
+            printEnable(Print::Info);
         }
     }
 
-    //debugPrintEnable(true);
     test_jpeg(pathname, mmap, multithread);
 }

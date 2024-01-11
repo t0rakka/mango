@@ -117,7 +117,7 @@ namespace
             const char* p = reinterpret_cast<const char *>(memory.address);
             const char* end = reinterpret_cast<const char *>(memory.end());
 
-            debugPrintLine("[Header: %c%c]", p[0], p[1]);
+            printLine(Print::Info, "[Header: {:c}{:c}]", p[0], p[1]);
 
             if (!std::strncmp(p, "Pf\n", 3))
             {
@@ -220,7 +220,7 @@ namespace
 
                 if (std::sscanf(p, "TUPLTYPE %s", type) > 0)
                 {
-                    debugPrintLine("  tupltype: %s", type);
+                    printLine(Print::Info, "  tupltype: {}", type);
                     /*
                     if (!strncmp(type, "BLACKANDWHITE_ALPHA", strlen("BLACKANDWHITE_ALPHA")))
                     {
@@ -309,8 +309,8 @@ namespace
                 }
             }
 
-            debugPrintLine("  image: %d x %d, channels: %d", width, height, channels);
-            debugPrintLine("  maxvalue: %d", maxvalue);
+            printLine(Print::Info, "  image: {} x {}, channels: {}", width, height, channels);
+            printLine(Print::Info, "  maxvalue: {}", maxvalue);
 
             if (maxvalue < 1 || maxvalue > 65535)
             {

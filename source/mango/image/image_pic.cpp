@@ -116,7 +116,7 @@ namespace
                 packet.mask = u8_reverse_bits(p[3]);
                 p += 4;
 
-                debugPrintLine("[packet %d] size: %d  type: %d  mask: %x", i,
+                printLine(Print::Info, "[packet {}] size: {}  type: {}  mask: {:#x}", i,
                     packet.size, packet.type, packet.mask);
 
                 if (packet.size != 8)

@@ -111,7 +111,7 @@ int main(int argc, const char* argv[])
         filename = argv[1];
     }
 
-    debugPrintEnable(true);
+    printEnable(Print::Info, true);
 
     u64 time0 = mango::Time::ms();
 
