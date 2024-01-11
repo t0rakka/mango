@@ -1050,9 +1050,9 @@ namespace mango::import3d
                 const Face3DS& face = mesh3ds.faces[i];
 
                 // store face index into sharing map for all the positions
-                sharing.emplace(mesh3ds.positions[face.index[0]], i);
-                sharing.emplace(mesh3ds.positions[face.index[1]], i);
-                sharing.emplace(mesh3ds.positions[face.index[2]], i);
+                sharing.emplace(mesh3ds.positions[face.index[0]], u32(i));
+                sharing.emplace(mesh3ds.positions[face.index[1]], u32(i));
+                sharing.emplace(mesh3ds.positions[face.index[2]], u32(i));
             }
 
             // compute vertex normals
