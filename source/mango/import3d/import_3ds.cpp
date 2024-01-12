@@ -991,6 +991,10 @@ namespace
                            triangle.vertex[1].texcoord.y,
                            triangle.vertex[2].texcoord.y);
         }
+
+        triangle.vertex[0].texcoord.y = triangle.vertex[0].texcoord.y;
+        triangle.vertex[1].texcoord.y = triangle.vertex[1].texcoord.y;
+        triangle.vertex[2].texcoord.y = triangle.vertex[2].texcoord.y;
     }
 
 } // namespace

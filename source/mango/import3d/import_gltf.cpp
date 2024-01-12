@@ -132,7 +132,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     auto expected = parser.loadGltf(&data, "", gltfOptions);
     if (expected.error() != fastgltf::Error::None)
     {
-        printLine(Print::Error, "  ERROR: %s", fastgltf::getErrorMessage(expected.error()).data());
+        printLine(Print::Error, "  ERROR: {}", fastgltf::getErrorMessage(expected.error()).data());
         return;
     }
 
@@ -763,7 +763,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     printLine(Print::Verbose, "  Scenes:    {}", asset.scenes.size());
 
     u64 time1 = Time::ms();
-    printLine(Print::Verbose, "Time: %d ms", time1 - time0);
+    printLine(Print::Verbose, "Time: {} ms", time1 - time0);
 }
 
 } // namespace mango::import3d
