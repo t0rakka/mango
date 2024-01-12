@@ -25,7 +25,7 @@ namespace mango::opengl
             GLsizei length;
             glGetShaderInfoLog(shader, size, &length, buffer.data());
 
-            printLine(Print::Info, "{}", buffer.data());
+            printLine(Print::Error, "{}", buffer.data());
         }
 
         return success;
@@ -45,7 +45,7 @@ namespace mango::opengl
             GLsizei length;
             glGetProgramInfoLog(program, size, &length, buffer.data());
 
-            printLine(Print::Info, "{}", buffer.data());
+            printLine(Print::Error, "{}", buffer.data());
         }
 
         return success;
