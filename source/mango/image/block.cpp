@@ -1231,7 +1231,7 @@ namespace mango::image
 
         if (!decode)
         {
-            status.setError("No decoder for 0x%x.", compression);
+            status.setError("No decoder for {:#x}.", compression);
             return status;
         }
 
@@ -1304,7 +1304,7 @@ namespace mango::image
 
         if (!encode)
         {
-            status.setError("No encoder for 0x%x.", compression);
+            status.setError("No encoder for {:#x}.", compression);
             return status;
         }
 
@@ -1350,8 +1350,6 @@ namespace mango::image
                     u8* image = temp.image;
                     size_t step = width * format.bytes();
 
-                    //debugPrint(".");
-
                     for (int x = 0; x < xblocks; ++x)
                     {
                         encode(*this, data, image, temp.stride);
@@ -1360,9 +1358,6 @@ namespace mango::image
                     }
                 });
             }
-
-            //queue.wait();
-            //debugPrintLine("");
         }
 
         return status;

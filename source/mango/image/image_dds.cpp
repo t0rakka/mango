@@ -670,7 +670,7 @@ namespace
         {
             char temp[4];
             ustore32(temp, fourCC);
-            debugPrintLine(".dds fourcc: %c%c%c%c", temp[0], temp[1], temp[2], temp[3]);
+            printLine(Print::Info, ".dds fourcc: {:c}{:c}{:c}{:c}", temp[0], temp[1], temp[2], temp[3]);
 
             bool preserve_fourcc = false;
 
@@ -834,7 +834,7 @@ namespace
             bBitMask = p.read32();
             aBitMask = p.read32();
 
-            debugPrintLine(".dds format: [bits: %d, red: %d, green: %d, blue: %d, alpha: %d]",
+            printLine(Print::Info, ".dds format: [bits: {}, red: {}, green: {}, blue: {}, alpha: {}]",
                 rgbBitCount,
                 u32_popcnt(rBitMask),
                 u32_popcnt(gBitMask),
@@ -903,7 +903,7 @@ namespace
 
         void processDX10(const HeaderDX10& header10)
         {
-            debugPrintLine("DXGI format: %d", header10.dxgiFormat);
+            printLine(Print::Info, "DXGI format: {}", header10.dxgiFormat);
 
             if (header10.dxgiFormat >= u32(std::size(g_dxgi_table)))
             {
@@ -941,7 +941,7 @@ namespace
 
             if (!dxgi.format.bits)
             {
-                header.setError("[ImageDecoder.DDS] DXGI format (%d) not supported.", header10.dxgiFormat);
+                header.setError("[ImageDecoder.DDS] DXGI format ({}) not supported.", header10.dxgiFormat);
                 return;
             }
 
@@ -1003,8 +1003,8 @@ namespace
             caps4 = p.read32();
             p += 4;
 
-            debugPrintLine(".dds image: [%d x %d]", width, height);
-            debugPrintLine("     depth: %d, mips: %d", depth, mipMapCount);
+            printLine(Print::Info, ".dds image: [{} x {}]", width, height);
+            printLine(Print::Info, "     depth: {}, mips: {}", depth, mipMapCount);
 
             if (pixelFormat.flags & DDPF_FOURCC)
             {

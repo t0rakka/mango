@@ -445,7 +445,7 @@ namespace
         state.delay = x.read16(); // delay between frames in 1/100th of seconds (50 = .5 seconds, 100 = 1.0 seconds, etc)
         state.transparent_color = state.transparent_color_flag ? *x : 0;
 
-        debugPrintLine("      delay: %d, dispose: %d, transparent: %s (%d)",
+        printLine(Print::Info, "      delay: {}, dispose: {}, transparent: {} ({})",
             state.delay,
             state.disposal_method,
             state.transparent_color_flag ? "YES" : "NO",
@@ -462,7 +462,7 @@ namespace
     {
         u8 label = *p++;
         u8 size = *p++;
-        debugPrintLine("    label: %x, size: %d", int(label), int(size));
+        printLine(Print::Info, "    label: {:#x}, size: {}", int(label), int(size));
 
         switch (label)
         {
@@ -512,7 +512,7 @@ namespace
         while (data < end)
         {
             u8 chunkID = *data++;
-            debugPrintLine("  chunkID: %x", int(chunkID));
+            printLine(Print::Info, "  chunkID: {:#x}", int(chunkID));
             switch (chunkID)
             {
                 case GIF_EXTENSION:
@@ -836,13 +836,13 @@ namespace
         {
             if (options.palette.size != 256)
             {
-                status.setError("[ImageEncoder.GIF] Incorrect palette size - must be 0 or 256 (size: %d).", options.palette.size);
+                status.setError("[ImageEncoder.GIF] Incorrect palette size - must be 0 or 256 (size: {}).", options.palette.size);
                 return status;
             }
 
             if (!surface.format.isIndexed() || surface.format.bits != 8)
             {
-                status.setError("[ImageEncoder.GIF] Incorrect format - must be 8 bit INDEXED (bits: %d).", surface.format.bits);
+                status.setError("[ImageEncoder.GIF] Incorrect format - must be 8 bit INDEXED (bits: {}).", surface.format.bits);
                 return status;
             }
 

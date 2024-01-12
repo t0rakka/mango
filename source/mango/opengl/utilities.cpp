@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <mango/core/core.hpp>
@@ -19,11 +19,13 @@ namespace mango::opengl
         {
             GLint size;
             glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &size);
+
             std::vector<GLchar> buffer(size);
 
             GLsizei length;
             glGetShaderInfoLog(shader, size, &length, buffer.data());
-            debugPrint("%s", buffer.data());
+
+            printLine(Print::Error, "{}", buffer.data());
         }
 
         return success;
@@ -37,11 +39,13 @@ namespace mango::opengl
         {
             GLint size;
             glGetProgramiv(program, GL_INFO_LOG_LENGTH, &size);
+
             std::vector<GLchar> buffer(size);
 
             GLsizei length;
             glGetProgramInfoLog(program, size, &length, buffer.data());
-            debugPrint("%s", buffer.data());
+
+            printLine(Print::Error, "{}", buffer.data());
         }
 
         return success;

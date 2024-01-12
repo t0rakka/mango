@@ -22,7 +22,7 @@ namespace mango
             handle = ::dlopen(filename.c_str(), RTLD_NOW);
             if (!handle)
             {
-                MANGO_EXCEPTION("[DynamicLibrary] %s", ::dlerror());
+                MANGO_EXCEPTION("[DynamicLibrary] {}", ::dlerror());
             }
         }
 

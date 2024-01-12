@@ -57,7 +57,7 @@ namespace
                 {
                     ::close(m_file);
                     m_file = -1;
-                    MANGO_EXCEPTION("[mapper.file] Cannot fstat \"%s\".", filename.c_str());
+                    MANGO_EXCEPTION("[mapper.file] Cannot fstat \"{}\".", filename);
                 }
                 else
                 {
@@ -84,7 +84,7 @@ namespace
 
                         if (m_address == MAP_FAILED)
                         {
-                            MANGO_EXCEPTION("[mapper.file] Memory mapping \"%s\" failed.", filename.c_str());
+                            MANGO_EXCEPTION("[mapper.file] Memory mapping \"{}\" failed.", filename);
                         }
 
                         m_memory.size = m_size;
@@ -99,7 +99,7 @@ namespace
             }
             else
             {
-                MANGO_EXCEPTION("[mapper.file] Opening \"%s\" failed.", filename.c_str());
+                MANGO_EXCEPTION("[mapper.file] Opening \"{}\" failed.", filename);
             }
         }
 

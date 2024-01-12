@@ -139,7 +139,7 @@ namespace
                 }
             }
 
-            debugPrintLine("image: %d x %d, depth: %d, stride: %d",
+            printLine(Print::Info, "image: {} x {}, depth: {}, stride: {}",
                 image->width, image->height, image->depth, m_rgb.rowBytes);
 
             const int precision = image->depth;
@@ -252,7 +252,7 @@ namespace
             return status;
         }
 
-        debugPrintLine("AVIF encoded: %zu bytes", avifOutput.size);
+        printLine(Print::Info, "AVIF encoded: {} bytes", avifOutput.size);
 
         output.write(avifOutput.data, avifOutput.size);
 

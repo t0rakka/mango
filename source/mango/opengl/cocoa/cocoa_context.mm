@@ -134,7 +134,7 @@ namespace mango
                 defer:NO];
             if (!win)
             {
-                debugPrintLine("NSWindow initWithContentRect failed.");
+                printLine(Print::Error, "NSWindow initWithContentRect failed.");
                 return;
             }
 
@@ -151,7 +151,7 @@ namespace mango
             view = [[CustomView alloc] initWithFrame:[win frame] andCustomWindow:theContext];
             if (!view)
             {
-                debugPrintLine("NSView initWithFrame failed.");
+                printLine(Print::Error, "NSView initWithFrame failed.");
                 [win release];
                 return;
             }
@@ -212,7 +212,7 @@ namespace mango
             id pixelFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attribs.data()];
             if (pixelFormat == nil)
             {
-                debugPrintLine("NSOpenGLPixelFormat initWithAttributes failed.");
+                printLine(Print::Error, "NSOpenGLPixelFormat initWithAttributes failed.");
                 [win release];
                 return;
             }
@@ -226,7 +226,7 @@ namespace mango
 
             if (!ctx)
             {
-                debugPrintLine("Failed to create NSOpenGL Context.");
+                printLine(Print::Error, "Failed to create NSOpenGL Context.");
                 [win release];
                 return;
             }

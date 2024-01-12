@@ -103,7 +103,7 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextGLX] glXQueryVersion() failed.");
             }
 
-            debugPrintLine("GLX version: %d.%d", glx_major, glx_minor);
+            printLine(Print::Info, "GLX version: {}.{}", glx_major, glx_minor);
 
             if ((glx_major == 1 && glx_minor < 3) || glx_major < 1)
             {
@@ -136,7 +136,7 @@ namespace mango
                     glXGetFBConfigAttrib(window->native.display, fbc[i], GLX_SAMPLES, &samples);
 
 #if 0
-                    debugPrintLine("  Matching fbconfig %d, visual ID 0x%2x: SAMPLE_BUFFERS = %d, SAMPLES = %d",
+                    printLine(Print::Info, "  Matching fbconfig {}, visual ID {:#x}: SAMPLE_BUFFERS = {}, SAMPLES = {}",
                         i, (unsigned int)vi -> visualid, sample_buffers, samples);
 #endif
 
@@ -237,17 +237,17 @@ namespace mango
 
                 if (context)
                 {
-                    //debugPrintLine("Created GL 3.0 context");
+                    //printLine(Print::Info, "Created GL 3.0 context");
                 }
                 else
                 {
-                    //debugPrintLine("Failed to create GL 3.0 context ... using old-style GLX context");
+                    //printLine(Print::Error, "Failed to create GL 3.0 context ... using old-style GLX context");
                     context = glXCreateContextAttribsARB(window->native.display, bestFbc, 0, True, NULL);
                 }
             }
             else
             {
-                //debugPrintLine("glXCreateContextAttribsARB() not found ... using old-style GLX context");
+                //printLine(Print::Warning, "glXCreateContextAttribsARB() not found ... using old-style GLX context");
                 context = glXCreateNewContext(window->native.display, bestFbc, GLX_RGBA_TYPE, 0, True);
             }
 
@@ -266,11 +266,11 @@ namespace mango
             // Verifying that context is a direct context
             if (!glXIsDirect(window->native.display, context))
             {
-                debugPrintLine("Indirect GLX rendering context obtained.");
+                printLine(Print::Info, "Indirect GLX rendering context obtained.");
             }
             else
             {
-                debugPrintLine("Direct GLX rendering context obtained.");
+                printLine(Print::Info, "Direct GLX rendering context obtained.");
             }
 
             // MANGO TODO: configuration selection API

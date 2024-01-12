@@ -341,7 +341,7 @@ namespace zstd
 
             if (ZSTD_isError(x))
             {
-                status.setError("[zstd] %s", ZSTD_getErrorName(x));
+                status.setError("[zstd] {}", ZSTD_getErrorName(x));
             }
 
             status.size = x;
@@ -359,7 +359,7 @@ namespace zstd
 
         if (ZSTD_isError(x))
         {
-            status.setError("[zstd] %s", ZSTD_getErrorName(x));
+            status.setError("[zstd] {}", ZSTD_getErrorName(x));
         }
 
         status.size = dest.size;
@@ -621,7 +621,7 @@ namespace zlib
 
         if (error)
         {
-            status.setError("[zlib] %s.", error);
+            status.setError("[zlib] {}.", error);
         }
         else
         {
@@ -643,7 +643,7 @@ namespace zlib
 
         if (error)
         {
-            status.setError("[zlib] %s.", error);
+            status.setError("[zlib] {}.", error);
         }
         else
         {
@@ -763,7 +763,7 @@ namespace lzma
         const char* error = get_error_string(result);
         if (error)
         {
-            status.setError("[lzma] %s", error);
+            status.setError("[lzma] {}", error);
         }
 
         status.size = dest.address + dest_length - start;
@@ -789,7 +789,7 @@ namespace lzma
         const char* error = get_error_string(result);
         if (error)
         {
-            status.setError("[lzma] %s", error);
+            status.setError("[lzma] {}", error);
         }
 
         status.size = dest.size;
@@ -847,7 +847,7 @@ namespace lzma2
         const char* error = lzma::get_error_string(result);
         if (error)
         {
-            status.setError("[lzma2] %s", error);
+            status.setError("[lzma2] {}", error);
         }
 
         status.size = dest.address + outBufSize - start;
@@ -873,7 +873,7 @@ namespace lzma2
         const char* error = lzma::get_error_string(result);
         if (error)
         {
-            status.setError("[lzma2] %s", error);
+            status.setError("[lzma2] {}", error);
         }
 
         status.size = dest.size;
@@ -1090,7 +1090,7 @@ namespace deflate
         const char* error = deflate::get_error_string(result);
         if (error)
         {
-            status.setError("[deflate] %s.", error);
+            status.setError("[deflate] {}.", error);
         }
 
         status.size = bytes_out;
@@ -1138,7 +1138,7 @@ namespace deflate_zlib
         const char* error = deflate::get_error_string(result);
         if (error)
         {
-            status.setError("[deflate.zlib] %s.", error);
+            status.setError("[deflate.zlib] {}.", error);
         }
 
         status.size = bytes_out;
@@ -1186,7 +1186,7 @@ namespace deflate_gzip
         const char* error = deflate::get_error_string(result);
         if (error)
         {
-            status.setError("[deflate.gzip] %s.", error);
+            status.setError("[deflate.gzip] {}.", error);
         }
 
         status.size = bytes_out;
@@ -1282,7 +1282,7 @@ namespace lzav
         }
         else
         {
-            MANGO_EXCEPTION("[WARNING] Incorrect compressor (%d).", int(method));
+            MANGO_EXCEPTION("[WARNING] Incorrect compressor ({}).", int(method));
         }
 
         return compressor;
@@ -1303,7 +1303,7 @@ namespace lzav
         }
         else
         {
-            MANGO_EXCEPTION("[WARNING] Incorrect compressor (%s).", name.c_str());
+            MANGO_EXCEPTION("[WARNING] Incorrect compressor ({}).", name);
         }
 
         return compressor;

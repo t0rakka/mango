@@ -531,19 +531,19 @@ namespace
                 }
             }
 
-            debugPrintLine("endianness: 0x%x", endianness);
-            debugPrintLine("glType: 0x%x", glType);
-            debugPrintLine("glTypeSize: 0x%x", glTypeSize);
-            debugPrintLine("glFormat: 0x%x", glFormat);
-            debugPrintLine("glInternalFormat: 0x%x", glInternalFormat);
-            debugPrintLine("glBaseInternalFormat: 0x%x", glBaseInternalFormat);
-            debugPrintLine("pixelWidth: %d", pixelWidth);
-            debugPrintLine("pixelHeight: %d", pixelHeight);
-            debugPrintLine("pixelDepth: %d", pixelDepth);
-            debugPrintLine("numberOfArrayElements: %d", numberOfArrayElements);
-            debugPrintLine("numberOfFaces: %d", numberOfFaces);
-            debugPrintLine("numberOfMipmapLevels: %d", numberOfMipmapLevels);
-            debugPrintLine("bytesOfKeyValueData: %d", bytesOfKeyValueData);
+            printLine(Print::Info, "endianness: {:#x}", endianness);
+            printLine(Print::Info, "glType: {:#x}", glType);
+            printLine(Print::Info, "glTypeSize: {:#x}", glTypeSize);
+            printLine(Print::Info, "glFormat: {:#x}", glFormat);
+            printLine(Print::Info, "glInternalFormat: {:#x}", glInternalFormat);
+            printLine(Print::Info, "glBaseInternalFormat: {:#x}", glBaseInternalFormat);
+            printLine(Print::Info, "pixelWidth: {}", pixelWidth);
+            printLine(Print::Info, "pixelHeight: {}", pixelHeight);
+            printLine(Print::Info, "pixelDepth: {}", pixelDepth);
+            printLine(Print::Info, "numberOfArrayElements: {}", numberOfArrayElements);
+            printLine(Print::Info, "numberOfFaces: {}", numberOfFaces);
+            printLine(Print::Info, "numberOfMipmapLevels: {}", numberOfMipmapLevels);
+            printLine(Print::Info, "bytesOfKeyValueData: {}", bytesOfKeyValueData);
 
             if (numberOfFaces != 1 && numberOfFaces != 6)
             {

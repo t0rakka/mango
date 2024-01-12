@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -59,7 +59,7 @@ public:
             diff = diff / frames;
             frames = 0;
             prev_time = time;
-            std::string text = makeString("[Mandelbrot]  time: %.2f ms (%d fps)", diff / 1000.0f, diff ? 1000000 / diff : 0);
+            std::string text = fmt::format("[Mandelbrot]  time: {:.2f} ms ({} fps)", diff / 1000.0f, diff ? 1000000 / diff : 0);
             setTitle(text);
         }
 

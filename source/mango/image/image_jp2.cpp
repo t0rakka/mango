@@ -232,27 +232,30 @@ namespace
             return nullptr;
         }
 
-        debugPrintLine("[header]");
-        debugPrint("  magic: | ");
+        printLine(Print::Info, "[header]");
+        std::string ms = "  magic: | ";
         for (int i = 0; i < 12; ++i)
         {
-            debugPrint("%.2x ", memory[i]);
+            ms += fmt::format("{:#04x}", memory[i]);
             if (!((i - 3) % 4))
-                debugPrint("| ");
+            {
+                ms += "| ";
+
+            }
         }
-        debugPrintLine("");
+        printLine(Print::Info, ms);
 
         opj_codec_t* codec = nullptr;
 
         if (!std::memcmp(memory.address, JP2_RFC3745_MAGIC, 12) ||
             !std::memcmp(memory.address, JP2_RFC3745_MAGIC + 8, 4))
         {
-            debugPrintLine("  codec: JP2");
+            printLine(Print::Info, "  codec: JP2");
             codec = opj_create_decompress(OPJ_CODEC_JP2);
         }
         else if (!std::memcmp(memory.address, J2K_CODESTREAM_MAGIC, 4))
         {
-            debugPrintLine("  codec: J2K");
+            printLine(Print::Info, "  codec: J2K");
             codec = opj_create_decompress(OPJ_CODEC_J2K);
         }
 
@@ -721,15 +724,15 @@ namespace
                     break;
 
                 default:
-                    m_header.setError("[ImageDecoder.JP2] Incorrect number of components (%d).", components);
+                    m_header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
                     return;
             }
 
-            debugPrintLine("[image]");
-            debugPrintLine("  dimensions: %d x %d", width, height);
-            debugPrintLine("  color space: %d", m_image->color_space);
+            printLine(Print::Info, "[image]");
+            printLine(Print::Info, "  dimensions: {} x {}", width, height);
+            printLine(Print::Info, "  color space: {}", int(m_image->color_space));
 
-            debugPrintLine("[components]");
+            printLine(Print::Info, "[components]");
 
             bool is_signed = false;
             bool is_subsampled = false;
@@ -739,7 +742,7 @@ namespace
             {
                 const opj_image_comp_t& comp = m_image->comps[i];
 
-                debugPrintLine("  #%d: %d x %d, bits: %d, alpha: %d, sgnd: %d, dx: %d, dy: %d", 
+                printLine(Print::Info, "  #{}: {} x {}, bits: {}, alpha: {}, sgnd: {}, dx: {}, dy: {}", 
                     i, comp.w, comp.h, comp.prec, comp.alpha, comp.sgnd, comp.dx, comp.dy);
 
                 if (comp.w != width || comp.h != height || comp.dx != 1 || comp.dy != 1)
@@ -763,7 +766,7 @@ namespace
             switch (m_image->color_space)
             {
                 case OPJ_CLRSPC_UNKNOWN:
-                    m_header.setError("[ImageDecoder.JP2] Unknown color space (%d).", m_image->color_space);
+                    m_header.setError("[ImageDecoder.JP2] Unknown color space ({}).", int(m_image->color_space));
                     return;
 
                 case OPJ_CLRSPC_UNSPECIFIED:
@@ -800,7 +803,7 @@ namespace
                 case OPJ_CLRSPC_SRGB:
                     if (components < 3)
                     {
-                        m_header.setError("[ImageDecoder.JP2] Incorrect number of components (%d).", components);
+                        m_header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
                         return;
                     }
                     if (is_standard)
@@ -815,7 +818,7 @@ namespace
                 case OPJ_CLRSPC_GRAY:
                     if (components > 2)
                     {
-                        m_header.setError("[ImageDecoder.JP2] Incorrect number of components (%d).", components);
+                        m_header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
                         return;
                     }
                     if (is_standard)
@@ -834,11 +837,11 @@ namespace
                 case OPJ_CLRSPC_SYCC:
                 case OPJ_CLRSPC_EYCC:
                 case OPJ_CLRSPC_CMYK:
-                    m_header.setError("[ImageDecoder.JP2] Unsupported color space (%d).", m_image->color_space);
+                    m_header.setError("[ImageDecoder.JP2] Unsupported color space ({}).", int(m_image->color_space));
                     return;
 
                 default:
-                    m_header.setError("[ImageDecoder.JP2] Incorrect color space (%d).", m_image->color_space);
+                    m_header.setError("[ImageDecoder.JP2] Incorrect color space ({}).", int(m_image->color_space));
                     return;
             }
 
@@ -1048,7 +1051,7 @@ namespace
         opj_image_destroy(image);
         opj_destroy_codec(codec);
 
-        debugPrintLine("Encoded: %d bytes", (int)writer.output.size());
+        printLine(Print::Info, "Encoded: {} bytes", writer.output.size());
 
         return status;
     }

@@ -29,6 +29,20 @@
     <ClInclude Include="..\..\..\include\mango\core\dynamic_library.hpp" />
     <ClInclude Include="..\..\..\include\mango\core\endian.hpp" />
     <ClInclude Include="..\..\..\include\mango\core\exception.hpp" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\args.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\base.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\chrono.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\color.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\compile.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\core.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\format-inl.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\format.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\os.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\ostream.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\printf.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\ranges.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\std.h" />
+    <ClInclude Include="..\..\..\include\mango\core\fmt\xchar.h" />
     <ClInclude Include="..\..\..\include\mango\core\half.hpp" />
     <ClInclude Include="..\..\..\include\mango\core\hash.hpp" />
     <ClInclude Include="..\..\..\include\mango\core\memory.hpp" />
@@ -54,6 +68,11 @@
     <ClInclude Include="..\..\..\include\mango\image\image.hpp" />
     <ClInclude Include="..\..\..\include\mango\image\quantize.hpp" />
     <ClInclude Include="..\..\..\include\mango\image\surface.hpp" />
+    <ClInclude Include="..\..\..\include\mango\import3d\import3d.hpp" />
+    <ClInclude Include="..\..\..\include\mango\import3d\import_3ds.hpp" />
+    <ClInclude Include="..\..\..\include\mango\import3d\import_gltf.hpp" />
+    <ClInclude Include="..\..\..\include\mango\import3d\import_obj.hpp" />
+    <ClInclude Include="..\..\..\include\mango\import3d\mesh.hpp" />
     <ClInclude Include="..\..\..\include\mango\math\accessor.hpp" />
     <ClInclude Include="..\..\..\include\mango\math\geometry.hpp" />
     <ClInclude Include="..\..\..\include\mango\math\math.hpp" />
@@ -202,6 +221,20 @@
     <ClInclude Include="..\..\..\source\external\concurrentqueue\concurrentqueue.h" />
     <ClInclude Include="..\..\..\source\external\concurrentqueue\lightweightsemaphore.h" />
     <ClInclude Include="..\..\..\source\external\concurrentqueue\readerwriterqueue.h" />
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\base64.hpp" />
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\parser.hpp" />
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\tools.hpp" />
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\types.hpp" />
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\util.hpp" />
+    <ClInclude Include="..\..\..\source\external\fast_float\ascii_number.h" />
+    <ClInclude Include="..\..\..\source\external\fast_float\bigint.h" />
+    <ClInclude Include="..\..\..\source\external\fast_float\decimal_to_binary.h" />
+    <ClInclude Include="..\..\..\source\external\fast_float\digit_comparison.h" />
+    <ClInclude Include="..\..\..\source\external\fast_float\fast_float.h" />
+    <ClInclude Include="..\..\..\source\external\fast_float\fast_table.h" />
+    <ClInclude Include="..\..\..\source\external\fast_float\float_common.h" />
+    <ClInclude Include="..\..\..\source\external\fast_float\parse_number.h" />
+    <ClInclude Include="..\..\..\source\external\fast_float\simple_decimal_conversion.h" />
     <ClInclude Include="..\..\..\source\external\lcms\lcms2.h" />
     <ClInclude Include="..\..\..\source\external\lcms\lcms2_internal.h" />
     <ClInclude Include="..\..\..\source\external\lcms\lcms2_plugin.h" />
@@ -306,6 +339,8 @@
     <ClInclude Include="..\..\..\source\external\lzo\lzoconf.h" />
     <ClInclude Include="..\..\..\source\external\lzo\lzodefs.h" />
     <ClInclude Include="..\..\..\source\external\lzo\minilzo.h" />
+    <ClInclude Include="..\..\..\source\external\mikktspace\mikktspace.h" />
+    <ClInclude Include="..\..\..\source\external\simdjson\simdjson.h" />
     <ClInclude Include="..\..\..\source\external\unrar\array.hpp" />
     <ClInclude Include="..\..\..\source\external\unrar\compress.hpp" />
     <ClInclude Include="..\..\..\source\external\unrar\crc.hpp" />
@@ -407,6 +442,13 @@
     <ClCompile Include="..\..\..\source\external\bzip2\bz_decompress.c" />
     <ClCompile Include="..\..\..\source\external\bzip2\bz_huffman.c" />
     <ClCompile Include="..\..\..\source\external\bzip2\bz_randtable.c" />
+    <ClCompile Include="..\..\..\source\external\fastgltf\src\base64.cpp" />
+    <ClCompile Include="..\..\..\source\external\fastgltf\src\fastgltf.cpp" />
+    <ClCompile Include="..\..\..\source\external\fmt\src\format.cc">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)libfmt_format.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)libfmt_format.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">$(IntDir)libfmt_format.obj</ObjectFileName>
+    </ClCompile>
     <ClCompile Include="..\..\..\source\external\google\etc.cpp" />
     <ClCompile Include="..\..\..\source\external\google\etc1.cpp" />
     <ClCompile Include="..\..\..\source\external\lcms\cmsalpha.c" />
@@ -608,6 +650,8 @@
     <ClCompile Include="..\..\..\source\external\lzma\Ppmd8Enc.c" />
     <ClCompile Include="..\..\..\source\external\lzma\Threads.c" />
     <ClCompile Include="..\..\..\source\external\lzo\minilzo.c" />
+    <ClCompile Include="..\..\..\source\external\mikktspace\mikktspace.c" />
+    <ClCompile Include="..\..\..\source\external\simdjson\simdjson.cpp" />
     <ClCompile Include="..\..\..\source\external\unrar\crc.cpp" />
     <ClCompile Include="..\..\..\source\external\unrar\crypt.cpp" />
     <ClCompile Include="..\..\..\source\external\unrar\getbits.cpp" />
@@ -736,6 +780,10 @@
     <ClCompile Include="..\..\..\source\mango\image\image_zpng.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\quantize.cpp" />
     <ClCompile Include="..\..\..\source\mango\image\surface.cpp" />
+    <ClCompile Include="..\..\..\source\mango\import3d\import_3ds.cpp" />
+    <ClCompile Include="..\..\..\source\mango\import3d\import_gltf.cpp" />
+    <ClCompile Include="..\..\..\source\mango\import3d\import_obj.cpp" />
+    <ClCompile Include="..\..\..\source\mango\import3d\mesh.cpp" />
     <ClCompile Include="..\..\..\source\mango\jpeg\jpeg_arithmetic.cpp" />
     <ClCompile Include="..\..\..\source\mango\jpeg\jpeg_decode.cpp" />
     <ClCompile Include="..\..\..\source\mango\jpeg\jpeg_encode.cpp" />
@@ -809,17 +857,17 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>..\..\..\include\;..\..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>..\..\..\include\;..\..\..\source\external\fastgltf\include;..\..\..\source\external\simdjson;..\..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <IntDir>output\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>output\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>..\..\..\include\;..\..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>..\..\..\include\;..\..\..\source\external\fastgltf\include;..\..\..\source\external\simdjson;..\..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <IntDir>output\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>output\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release AVX512|x64'">
-    <IncludePath>..\..\..\include\;..\..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>..\..\..\include\;..\..\..\source\external\fastgltf\include;..\..\..\source\external\simdjson;..\..\..\source\external\libwebp;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
     <IntDir>output\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>output\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>

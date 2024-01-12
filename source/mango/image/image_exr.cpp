@@ -1080,7 +1080,7 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
         channel.xsamples = xsamples;
         channel.ysamples = ysamples;
         channel.linear = linear;
-        //debugPrintLine("  %s xs: %d  ys: %d  linear: %d", name.c_str(), xsamples, ysamples, linear);
+        //printLine(Print::Info, "  {} xs: {}  ys: {}  linear: {}", name, xsamples, ysamples, linear);
 
         switch (type)
         {
@@ -1159,7 +1159,7 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
         offset += div_ceil(channel.bytes, xsamples);
         data.bytes += channel.bytes;
 
-        debugPrintLine("    \"%s\", type: %d, linear: %d, offset: %d, size: %d, samples: (%d x %d)",
+        printLine(Print::Info, "    \"{}\", type: {}, linear: {}, offset: {}, size: {}, samples: ({} x {})",
             name.data(), type, linear, channel.offset, channel.bytes, xsamples, ysamples);
     }
 
@@ -1211,7 +1211,7 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
         layer.bytes = data.bytes;
     }
 
-    debugPrintLine("    DataPerPixel: %d bytes", data.bytes);
+    printLine(Print::Info, "    DataPerPixel: {} bytes", data.bytes);
 }
 
 template <>
@@ -1220,7 +1220,7 @@ void readAttribute<TileDesc>(TileDesc& data, LittleEndianConstPointer p)
     data.xsize = p.read32();
     data.ysize = p.read32();
     data.mode = p.read8();
-    debugPrintLine("    %d x %d mode: %x (mipmap: %d, ripmap: %d, round: %d)", data.xsize, data.ysize, data.mode,
+    printLine(Print::Info, "    {} x {} mode: {:#x} (mipmap: {}, ripmap: {}, round: {})", data.xsize, data.ysize, data.mode,
         (data.mode & 0x02) != 0, (data.mode & 0x02) != 0, (data.mode & 0x10) != 0);
 }
 
@@ -1244,7 +1244,7 @@ template <>
 void readAttribute<u8>(u8& data, LittleEndianConstPointer p)
 {
     data = p.read8();
-    debugPrintLine("    %d", data);
+    printLine(Print::Info, "    {}", data);
 }
 
 /*
@@ -1252,7 +1252,7 @@ template <>
 void readAttribute<u32>(u32& data, LittleEndianConstPointer p)
 {
     data = p.read32();
-    debugPrintLine("    %d", data);
+    printLine(Print::Info, "    {}", data);
 }
 */
 
@@ -1260,7 +1260,7 @@ template <>
 void readAttribute<float>(float& data, LittleEndianConstPointer p)
 {
     data = p.read32f();
-    debugPrintLine("    %f", data);
+    printLine(Print::Info, "    {}", data);
 }
 
 template <>
@@ -1268,7 +1268,7 @@ void readAttribute<float32x2>(float32x2& data, LittleEndianConstPointer p)
 {
     data.x = p.read32f();
     data.y = p.read32f();
-    debugPrintLine("    %f, %f", data.x, data.y);
+    printLine(Print::Info, "    {}, {}", data.x, data.y);
 }
 
 template <>
@@ -1278,7 +1278,7 @@ void readAttribute<Box2i>(Box2i& data, LittleEndianConstPointer p)
     data.ymin = p.read32();
     data.xmax = p.read32();
     data.ymax = p.read32();
-    debugPrintLine("    %d, %d, %d, %d", data.xmin, data.ymin, data.xmax, data.ymax);
+    printLine(Print::Info, "    {}, {}, {}, {}", data.xmin, data.ymin, data.xmax, data.ymax);
 }
 
 template <>
@@ -1292,10 +1292,10 @@ void readAttribute<Chromaticities>(Chromaticities& data, LittleEndianConstPointe
     data.blue.y  = p.read32f();
     data.white.x = p.read32f();
     data.white.y = p.read32f();
-    debugPrintLine("    red:   %f, %f", float(data.red.x), float(data.red.y));
-    debugPrintLine("    green: %f, %f", float(data.green.x), float(data.green.y));
-    debugPrintLine("    blue:  %f, %f", float(data.blue.x), float(data.blue.y));
-    debugPrintLine("    white: %f, %f", float(data.white.x), float(data.white.y));
+    printLine(Print::Info, "    red:   {}, {}", float(data.red.x), float(data.red.y));
+    printLine(Print::Info, "    green: {}, {}", float(data.green.x), float(data.green.y));
+    printLine(Print::Info, "    blue:  {}, {}", float(data.blue.x), float(data.blue.y));
+    printLine(Print::Info, "    white: {}, {}", float(data.white.x), float(data.white.y));
 }
 
 static
@@ -1470,7 +1470,7 @@ struct AttributeTable
         }
         else
         {
-            debugPrintLine("    Unknown attribute.");
+            printLine(Print::Info, "    Unknown attribute.");
         }
     }
 };
@@ -1551,16 +1551,16 @@ struct ContextEXR
 
     void report()
     {
-        debugPrintLine("  decoding: %d ms", int(m_time_decompress / 1000));
-        debugPrintLine("  blitting: %d ms", int(m_time_blit / 1000));
-        debugPrintLine("  decode: %d ms", int(m_time_decode / 1000));
+        printLine(Print::Info, "  decoding: {} ms", int(m_time_decompress / 1000));
+        printLine(Print::Info, "  blitting: {} ms", int(m_time_blit / 1000));
+        printLine(Print::Info, "  decode: {} ms", int(m_time_decode / 1000));
     }
 };
 
 ContextEXR::ContextEXR(ConstMemory memory)
     : m_memory(memory)
 {
-    debugPrintLine("Memory: %d KB", int(memory.size / 1024));
+    printLine(Print::Info, "Memory: {} KB", memory.size / 1024);
 
     const u8* end = memory.end();
     LittleEndianConstPointer p = memory.address;
@@ -1568,7 +1568,7 @@ ContextEXR::ContextEXR(ConstMemory memory)
     u32 magic = p.read32();
     if (magic != 0x01312f76)
     {
-        m_header.setError("Incorrect format identifier: 0x%.8x", magic);
+        m_header.setError("Incorrect format identifier: {:#010x}", magic);
         return;
     }
 
@@ -1580,12 +1580,12 @@ ContextEXR::ContextEXR(ConstMemory memory)
     is_deep_format = (flags & 0x0800) != 0;
     is_multi_part  = (flags & 0x1000) != 0;
 
-    debugPrintLine("[Header]");
-    debugPrintLine("  version: %d", version);
-    debugPrint("  single_tile: %d\n"
-               "  long_name: %d\n"
-               "  deep_format: %d\n"
-               "  multi-part: %d\n",
+    printLine(Print::Info, "[Header]");
+    printLine(Print::Info, "  version: {}", version);
+    printLine(Print::Info, "  single_tile: {}\n"
+                           "  long_name: {}\n"
+                           "  deep_format: {}\n"
+                           "  multi-part: {}\n",
         is_single_tile, is_long_name, is_deep_format, is_multi_part);
 
     if (is_multi_part)
@@ -1600,8 +1600,7 @@ ContextEXR::ContextEXR(ConstMemory memory)
         return;
     }
 
-    debugPrintLine("");
-    debugPrintLine("[Attributes]");
+    printLine(Print::Info, "[Attributes]");
 
     for ( ; *p; )
     {
@@ -1612,7 +1611,7 @@ ContextEXR::ContextEXR(ConstMemory memory)
         p += type.length() + 1;
 
         u32 size = p.read32();
-        debugPrintLine("  \"%s\", type: %s, size: %d", name.c_str(), type.c_str(), size);
+        printLine(Print::Info, "  \"{}\", type: {}, size: {}", name, type, size);
 
         m_attributes.parse(name, type, p, size);
         p += size;
@@ -1671,7 +1670,7 @@ ContextEXR::ContextEXR(ConstMemory memory)
             break;
 
         default:
-            m_header.setError("Incorrect compression: 0x%.8x", m_attributes.compression);
+            m_header.setError("Incorrect compression: {:#010x}", m_attributes.compression);
             return;
     }
 
@@ -1679,7 +1678,7 @@ ContextEXR::ContextEXR(ConstMemory memory)
 
     int width = m_attributes.dataWindow.xmax - m_attributes.dataWindow.xmin + 1;
     int height = m_attributes.dataWindow.ymax - m_attributes.dataWindow.ymin + 1;
-    debugPrintLine("Image: %d x %d", width, height);
+    printLine(Print::Info, "Image: {} x {}", width, height);
 
     bool isCubemap = (m_attributes.envmap == 2) && ((height % 6) == 0);
     if (isCubemap)
@@ -1762,7 +1761,7 @@ const u8* ContextEXR::decompress_zip(Memory dest, ConstMemory source)
     Buffer temp(dest.size);
 
     CompressionStatus status = deflate_zlib::decompress(temp, source);
-    //debugPrintLine("  out: %d bytes", int(status.size));
+    //printLine(Print::Info, "  out: {} bytes", status.size);
 
     predictor(temp, dest.size);
     deinterleave(dest, temp, dest.size);
@@ -1917,7 +1916,7 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
             if (out + nBytes > out_end)
             {
-                debugPrintLine("OUT OF MEMORY");
+                printLine(Print::Error, "OUT OF MEMORY");
                 return nullptr;
             }
 
@@ -1932,7 +1931,7 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
                     if (lastIn > lastIn_end)
                     {
-                        debugPrintLine("CORRUPT CHUNK");
+                        printLine(Print::Error, "CORRUPT CHUNK");
                         return nullptr;
                     }
 
@@ -1957,7 +1956,7 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
                     if (lastIn > lastIn_end)
                     {
-                        debugPrintLine("CORRUPT CHUNK");
+                        printLine(Print::Error, "CORRUPT CHUNK");
                         return nullptr;
                     }
 
@@ -1980,7 +1979,7 @@ const u8* ContextEXR::decompress_pxr24(Memory dest, ConstMemory source, int widt
 
                     if (lastIn > lastIn_end)
                     {
-                        debugPrintLine("CORRUPT CHUNK");
+                        printLine(Print::Error, "CORRUPT CHUNK");
                         return nullptr;
                     }
 
@@ -2051,7 +2050,7 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
             u16* row2 = row1 + nx;
             u16* row3 = row2 + nx;
 
-            //debugPrintLine("(%d,%d) [%d x %d]", 0, y, nx, ny);
+            //printLine(Print::Info, "({},{}) [{} x {}]", 0, y, nx, ny);
             for (int x = 0; x < nx; x += 4)
             {
                 if (in + 3 > source_end)
@@ -2570,7 +2569,7 @@ void ContextEXR::decodeBlock(Surface surface, ConstMemory memory, int x0, int y0
 {
     int blockWidth = x1 - x0;
     int blockHeight = y1 - y0;
-    //debugPrintLine("decodeBlock: (%d, %d) %d x %d", x0, y0, blockWidth, blockHeight);
+    //printLine(Print::Info, "decodeBlock: ({}, {}) {} x {}", x0, y0, blockWidth, blockHeight);
 
     size_t bytesPerPixel = m_attributes.chlist.bytes;
     size_t bytesPerScan = blockWidth * bytesPerPixel;
@@ -2692,7 +2691,7 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
         int ytiles = div_ceil(height, m_attributes.tiledesc.ysize);
         int ntiles = xtiles * ytiles;
 
-        debugPrintLine("Tiles: %d x %d (%d)", xtiles, ytiles, ntiles);
+        printLine(Print::Info, "Tiles: {} x {} ({})", xtiles, ytiles, ntiles);
 
         for (int i = 0; i < ntiles; ++i)
         {
@@ -2705,7 +2704,7 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
             int ylevel = ptr.read32();
             u32 size = ptr.read32();
 
-            //debugPrintLine("  pos:(%d,%d) level:(%d,%d) size: %d bytes", tilex, tiley, xlevel, ylevel, size);
+            //printLine(Print::Info, "  pos:({},{}) level:({},{}) size: {} bytes", tilex, tiley, xlevel, ylevel, size);
             MANGO_UNREFERENCED(xlevel);
             MANGO_UNREFERENCED(ylevel);
 
@@ -2743,7 +2742,7 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
     {
         int nblocks = div_ceil(height, m_scanLinesPerBlock);
 
-        debugPrintLine("Blocks: %d", nblocks);
+        printLine(Print::Info, "Blocks: {}", nblocks);
 
         for (int i = 0; i < nblocks; ++i)
         {
@@ -2764,7 +2763,7 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
                 return;
             }
 
-            //debugPrintLine("  y:%d, size: %d bytes", y0, size);
+            //printLine(Print::Info, "  y:{}, size: {} bytes", y0, size);
 
             auto task = [=]
             {

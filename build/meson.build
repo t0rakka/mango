@@ -1,13 +1,13 @@
 # ---------------------------------------------------------------------------
 # mango meson.build
 #
-# Copyright (C) 2012-2023 Twilight 3D Finland Oy Ltd.
+# Copyright (C) 2012-2024 Twilight 3D Finland Oy Ltd.
 # ---------------------------------------------------------------------------
 
 project(
     'mango', 'c', 'cpp',
     meson_version: '>= 0.50.0',
-    version: '1.2.0',
+    version: '1.2.1',
     default_options : [
         'c_std=c11',
         'cpp_std=c++17',
@@ -79,6 +79,23 @@ mango_core_headers = files(
     '../include/mango/core/system.hpp',
     '../include/mango/core/thread.hpp',
     '../include/mango/core/timer.hpp',
+)
+
+mango_core_fmt_headers = files(
+    '../include/mango/core/fmt/args.h',
+    '../include/mango/core/fmt/base.h',
+    '../include/mango/core/fmt/chrono.h',
+    '../include/mango/core/fmt/color.h',
+    '../include/mango/core/fmt/compile.h',
+    '../include/mango/core/fmt/core.h',
+    '../include/mango/core/fmt/format-inl.h',
+    '../include/mango/core/fmt/format.h',
+    '../include/mango/core/fmt/os.h',
+    '../include/mango/core/fmt/ostream.h',
+    '../include/mango/core/fmt/printf.h',
+    '../include/mango/core/fmt/ranges.h',
+    '../include/mango/core/fmt/std.h',
+    '../include/mango/core/fmt/xchar.h',
 )
 
 mango_filesystem_headers = files(
@@ -938,6 +955,10 @@ external_lcms_sources = files(
     '../source/external/lcms/cmsvirt.c'
 )
 
+external_fmt_sources = files(
+    '../source/external/fmt/src/format.cc',
+)
+
 external_mikktspace_headers = files(
     '../source/external/mikktspace/mikktspace.h'
 )
@@ -1180,6 +1201,7 @@ mango = shared_library('mango',
     extra_files : [
         mango_headers,
         mango_core_headers,
+        mango_core_fmt_headers,
         mango_filesystem_headers,
         mango_image_headers,
         mango_math_headers,
@@ -1221,6 +1243,7 @@ mango = shared_library('mango',
         external_basisu_sources,
         external_astc_sources,
         external_lcms_sources,
+        external_fmt_sources,
     ],
     include_directories : [ mango_inc, '../source/external/libwebp' ],
     dependencies        : mango_deps,

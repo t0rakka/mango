@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -22,9 +22,17 @@ namespace mango
         std::string info;
         bool success = true;
 
-        operator bool () const;
-        void setError(const std::string& error);
-        void setError(const char* format, ...);
+        operator bool () const
+        {
+            return success;
+        }
+
+        template <typename... T>
+        void setError(T... s)
+        {
+            info = fmt::format(s...);
+            success = false;
+        }
     };
 
     // ----------------------------------------------------------------------------
@@ -37,16 +45,16 @@ namespace mango
         std::string m_message;
         std::string m_func;
         std::string m_file;
-        int m_line;
+        u32 m_line;
 
     public:
-        Exception(const std::string message, const std::string func, const std::string file, int line);
+        Exception(const std::string message, const std::string func, const std::string file, u32 line);
         ~Exception() noexcept;
 
         const char* what() const noexcept;
         const char* func() const;
         const char* file() const;
-        int line() const;
+        u32 line() const;
     };
 
     // ----------------------------------------------------------------------------
@@ -55,10 +63,10 @@ namespace mango
 
 #ifdef MANGO_PLATFORM_WINDOWS
     #define MANGO_EXCEPTION(...) \
-        throw mango::Exception(mango::makeString(__VA_ARGS__), __FUNCTION__, __FILE__, __LINE__)
+        throw mango::Exception(fmt::format(__VA_ARGS__), __FUNCTION__, __FILE__, __LINE__)
 #else
     #define MANGO_EXCEPTION(...) \
-        throw mango::Exception(mango::makeString(__VA_ARGS__), __func__, __FILE__, __LINE__)
+        throw mango::Exception(fmt::format(__VA_ARGS__), __func__, __FILE__, __LINE__)
 #endif
 
 } // namespace mango

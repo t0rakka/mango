@@ -117,7 +117,7 @@ namespace
             const char* p = reinterpret_cast<const char *>(memory.address);
             const char* end = reinterpret_cast<const char *>(memory.end());
 
-            debugPrintLine("[Header: %c%c]", p[0], p[1]);
+            printLine(Print::Info, "[Header: {:c}{:c}]", p[0], p[1]);
 
             if (!std::strncmp(p, "Pf\n", 3))
             {
@@ -220,7 +220,7 @@ namespace
 
                 if (std::sscanf(p, "TUPLTYPE %s", type) > 0)
                 {
-                    debugPrintLine("  tupltype: %s", type);
+                    printLine(Print::Info, "  tupltype: {}", type);
                     /*
                     if (!strncmp(type, "BLACKANDWHITE_ALPHA", strlen("BLACKANDWHITE_ALPHA")))
                     {
@@ -289,7 +289,7 @@ namespace
                 }
                 else
                 {
-                    header.setError("[ImageDecoder.PNM] Incorrect header magic (%s).", p);
+                    header.setError("[ImageDecoder.PNM] Incorrect header magic ({}).", p);
                     return;
                 }
 
@@ -309,8 +309,8 @@ namespace
                 }
             }
 
-            debugPrintLine("  image: %d x %d, channels: %d", width, height, channels);
-            debugPrintLine("  maxvalue: %d", maxvalue);
+            printLine(Print::Info, "  image: {} x {}, channels: {}", width, height, channels);
+            printLine(Print::Info, "  maxvalue: {}", maxvalue);
 
             if (maxvalue < 1 || maxvalue > 65535)
             {
@@ -556,7 +556,7 @@ namespace
 
         LittleEndianStream s(stream);
 
-        std::string header = makeString("PF\n%d %d\n-1.0\n", width, height);
+        std::string header = fmt::format("PF\n{} {}\n-1.0\n", width, height);
         s.write(header.c_str(), header.length());
 
         Bitmap temp(width, height, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32));

@@ -43,7 +43,7 @@ namespace
             u16 version = p.read16();
             if (version != u16_mask_rev('1','0') && version != u16_mask_rev('2','0'))
             {
-                header.setError("[ImageDecoder.PKM] Incorrect version (0x%x).", version);
+                header.setError("[ImageDecoder.PKM] Incorrect version ({:#x}).", version);
                 return;
             }
 
