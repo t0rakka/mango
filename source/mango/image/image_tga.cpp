@@ -71,14 +71,14 @@ namespace
             pixel_size       = p.read8();
             descriptor       = p.read8();
 
-            debugPrintLine("  dimensions:    %d x %d", width, height);
-            debugPrintLine("  image_type:    %d", image_type);
-            debugPrintLine("  pixel_size:    %d", pixel_size);
-            debugPrintLine("  colormap_type: %d", colormap_type);
-            debugPrintLine("  colormap_bits: %d", colormap_bits);
-            debugPrintLine("  colormap:      [%d, %d]", colormap_origin, colormap_origin + colormap_length);
-            debugPrintLine("  descriptor:    %x", descriptor);
-            debugPrintLine("  id_length:     %d", id_length);
+            printLine(Print::Info, "  dimensions:    {} x {}", width, height);
+            printLine(Print::Info, "  image_type:    {}", image_type);
+            printLine(Print::Info, "  pixel_size:    {}", pixel_size);
+            printLine(Print::Info, "  colormap_type: {}", colormap_type);
+            printLine(Print::Info, "  colormap_bits: {}", colormap_bits);
+            printLine(Print::Info, "  colormap:      [{}, {}]", colormap_origin, colormap_origin + colormap_length);
+            printLine(Print::Info, "  descriptor:    {:#x}", descriptor);
+            printLine(Print::Info, "  id_length:     {}", id_length);
 
             switch (image_type)
             {
@@ -91,7 +91,7 @@ namespace
                 case IMAGETYPE_RLE_MONOCHROME:
                     break;
                 default:
-                    error = makeString("[ImageDecoder.TGA] Invalid data type (%d).", image_type);
+                    error = fmt::format("[ImageDecoder.TGA] Invalid data type ({}).", image_type);
                     return nullptr;
             }
 
@@ -103,7 +103,7 @@ namespace
                 case 32:
                     break;
                 default:
-                    error = makeString("[ImageDecoder.TGA] Invalid pixel size (%d).", pixel_size);
+                    error = fmt::format("[ImageDecoder.TGA] Invalid pixel size ({}).", pixel_size);
                     return nullptr;
             }
 
@@ -118,7 +118,7 @@ namespace
                     // palette
                     if (colormap_origin + colormap_length > 256)
                     {
-                        error = makeString("[ImageDecoder.TGA] Invalid colormap (origin: %d, length: %d).", colormap_origin, colormap_length);
+                        error = fmt::format("[ImageDecoder.TGA] Invalid colormap (origin: {}, length: {}).", colormap_origin, colormap_length);
                         return nullptr;
                     }
 
@@ -127,7 +127,7 @@ namespace
                         colormap_bits != 24 &&
                         colormap_bits != 32)
                     {
-                        error = makeString("[ImageDecoder.TGA] Invalid colormap bits (%d).", colormap_bits);
+                        error = fmt::format("[ImageDecoder.TGA] Invalid colormap bits ({}).", colormap_bits);
                         return nullptr;
                     }
                 }
@@ -136,7 +136,7 @@ namespace
             /*
             if (width > 512 || height > 482)
             {
-                error = makeString("[ImageDecoder.TGA] Incorrect image dimensions: %d x %d (maximum: 512 x 482).", width, height);
+                error = fmt::format("[ImageDecoder.TGA] Incorrect image dimensions: {} x {} (maximum: 512 x 482).", width, height);
                 return nullptr;
             }
             */

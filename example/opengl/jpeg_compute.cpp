@@ -91,7 +91,7 @@ public:
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
 
-        debugPrintEnable(true);
+        printEnable(Print::Info, true);
 
         OpenGLJPEGDecoder decoder;
         filesystem::File file(filename);

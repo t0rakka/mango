@@ -1627,7 +1627,7 @@ AES::AES(const u8* key, int bits)
         case 256:
             break;
         default:
-            MANGO_EXCEPTION("[AES] Incorrect encryption key length: %d", bits);
+            MANGO_EXCEPTION("[AES] Incorrect encryption key length: {}", bits);
             break;
     }
 

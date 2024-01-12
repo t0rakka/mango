@@ -116,18 +116,18 @@ namespace
                 packet.mask = u8_reverse_bits(p[3]);
                 p += 4;
 
-                debugPrintLine("[packet %d] size: %d  type: %d  mask: %x", i,
+                printLine(Print::Info, "[packet {}] size: {}  type: {}  mask: {:#x}", i,
                     packet.size, packet.type, packet.mask);
 
                 if (packet.size != 8)
                 {
-                    status.setError("[ImageDecoder.PIC] Incorrect packet size (%d).", packet.size);
+                    status.setError("[ImageDecoder.PIC] Incorrect packet size ({}).", packet.size);
                     return status;
                 }
 
                 if (packet.type > 2)
                 {
-                    status.setError("[ImageDecoder.PIC] Incorrect packet type (%d).", packet.type);
+                    status.setError("[ImageDecoder.PIC] Incorrect packet type ({}).", packet.type);
                     return status;
                 }
 

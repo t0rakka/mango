@@ -89,13 +89,13 @@ namespace
                     }
                     else
                     {
-                        MANGO_EXCEPTION("[FileMemory] Memory \"%s\" mapping failed.", filename.c_str());
+                        MANGO_EXCEPTION("[FileMemory] Memory \"{}\" mapping failed.", filename);
                     }
                 }
             }
             else
             {
-                MANGO_EXCEPTION("[FileMemory] File \"%s\" cannot be opened.", filename.c_str());
+                MANGO_EXCEPTION("[FileMemory] File \"{}\" cannot be opened.", filename);
             }
         }
 

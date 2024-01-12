@@ -181,6 +181,36 @@
     <Filter Include="external\lcms">
       <UniqueIdentifier>{fa0fcf94-b5de-406c-9de4-d1166b32ef3e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\fmt">
+      <UniqueIdentifier>{9194c1fc-ba44-478d-8741-d04c026c45cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\simdjson">
+      <UniqueIdentifier>{79924f2b-9f2c-45f6-ba90-5a18af166d87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\fastgltf">
+      <UniqueIdentifier>{e271b440-aa62-48f0-8aaa-1c54ae2390ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\fastgltf\src">
+      <UniqueIdentifier>{a081ad5a-e393-44fb-8e39-975e9f196e24}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\fastgltf\include">
+      <UniqueIdentifier>{9b21a4ef-72dc-4494-a885-15fae756691a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\fast_float">
+      <UniqueIdentifier>{89e15d16-fd2c-43a6-9226-c6bef5e713c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="external\mikktspace">
+      <UniqueIdentifier>{f1cff23b-f887-4244-8a62-31353571464a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\import3d">
+      <UniqueIdentifier>{d42011ca-be12-40c2-8dcb-6b6d0792fe33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\source\import3d">
+      <UniqueIdentifier>{ee045635-259c-47c9-82ce-19303576894e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mango\include\core\fmt">
+      <UniqueIdentifier>{a80fdfe1-03da-44ab-8f29-1b5c55852a19}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\mango\core\bits.hpp">
@@ -1251,6 +1281,111 @@
     <ClInclude Include="..\..\..\include\mango\opengl\jpeg_decoder.hpp">
       <Filter>mango\include\opengl</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\source\external\simdjson\simdjson.h">
+      <Filter>external\simdjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\base64.hpp">
+      <Filter>external\fastgltf\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\parser.hpp">
+      <Filter>external\fastgltf\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\tools.hpp">
+      <Filter>external\fastgltf\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\types.hpp">
+      <Filter>external\fastgltf\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\util.hpp">
+      <Filter>external\fastgltf\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fast_float\ascii_number.h">
+      <Filter>external\fast_float</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fast_float\bigint.h">
+      <Filter>external\fast_float</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fast_float\decimal_to_binary.h">
+      <Filter>external\fast_float</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fast_float\digit_comparison.h">
+      <Filter>external\fast_float</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fast_float\fast_float.h">
+      <Filter>external\fast_float</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fast_float\fast_table.h">
+      <Filter>external\fast_float</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fast_float\float_common.h">
+      <Filter>external\fast_float</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fast_float\parse_number.h">
+      <Filter>external\fast_float</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fast_float\simple_decimal_conversion.h">
+      <Filter>external\fast_float</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\mikktspace\mikktspace.h">
+      <Filter>external\mikktspace</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\import3d\import_3ds.hpp">
+      <Filter>mango\include\import3d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\import3d\import_gltf.hpp">
+      <Filter>mango\include\import3d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\import3d\import_obj.hpp">
+      <Filter>mango\include\import3d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\import3d\import3d.hpp">
+      <Filter>mango\include\import3d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\import3d\mesh.hpp">
+      <Filter>mango\include\import3d</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\args.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\base.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\chrono.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\color.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\compile.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\core.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\format.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\format-inl.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\os.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\ostream.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\printf.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\ranges.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\std.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\core\fmt\xchar.h">
+      <Filter>mango\include\core\fmt</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp">
@@ -2266,6 +2401,33 @@
     </ClCompile>
     <ClCompile Include="..\..\..\source\mango\opengl\jpeg_decoder.cpp">
       <Filter>mango\source\opengl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\fmt\src\format.cc">
+      <Filter>external\fmt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\simdjson\simdjson.cpp">
+      <Filter>external\simdjson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\fastgltf\src\base64.cpp">
+      <Filter>external\fastgltf\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\fastgltf\src\fastgltf.cpp">
+      <Filter>external\fastgltf\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\mikktspace\mikktspace.c">
+      <Filter>external\mikktspace</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\import3d\import_3ds.cpp">
+      <Filter>mango\source\import3d</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\import3d\import_gltf.cpp">
+      <Filter>mango\source\import3d</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\import3d\import_obj.cpp">
+      <Filter>mango\source\import3d</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\import3d\mesh.cpp">
+      <Filter>mango\source\import3d</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

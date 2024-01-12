@@ -70,7 +70,7 @@ namespace
         {
             if (!memory.address)
             {
-                //MANGO_EXCEPTION("[mapper.mgx] Parent container doesn't have memory");
+                // MANGO_EXCEPTION("[mapper.mgx] Parent container doesn't have memory");
                 return;
             }
 
@@ -111,7 +111,7 @@ namespace
             u32 magic1 = p.read32();
             if (magic1 != u32_mask('m', 'g', 'x', '1'))
             {
-                MANGO_EXCEPTION("[mapper.mgx] Incorrect block identifier (%x)", magic1);
+                MANGO_EXCEPTION("[mapper.mgx] Incorrect block identifier (:#x)", magic1);
             }
 
             u32 num_blocks = p.read32();
@@ -131,7 +131,7 @@ namespace
             u32 magic2 = p.read32();
             if (magic2 != u32_mask('m', 'g', 'x', '2'))
             {
-                MANGO_EXCEPTION("[mapper.mgx] Incorrect block terminator (%x)", magic2);
+                MANGO_EXCEPTION("[mapper.mgx] Incorrect block terminator (:#x)", magic2);
             }
         }
 
@@ -140,7 +140,7 @@ namespace
             u32 magic2 = p.read32();
             if (magic2 != u32_mask('m', 'g', 'x', '2'))
             {
-                MANGO_EXCEPTION("[mapper.mgx] Incorrect block identifier (%x)", magic2);
+                MANGO_EXCEPTION("[mapper.mgx] Incorrect block identifier (:#x)", magic2);
             }
 
             u64 compressed = p.read64();
@@ -161,7 +161,7 @@ namespace
             u32 magic3 = p.read32();
             if (magic3 != u32_mask('m', 'g', 'x', '3'))
             {
-                MANGO_EXCEPTION("[mapper.mgx] Incorrect block terminator (%x)", magic3);
+                MANGO_EXCEPTION("[mapper.mgx] Incorrect block terminator (:#x)", magic3);
             }
         }
 
@@ -302,7 +302,7 @@ namespace mango::filesystem
             const FileHeader* ptrHeader = m_header.m_folders.getHeader(filename);
             if (!ptrHeader)
             {
-                MANGO_EXCEPTION("[mapper.mgx] File \"%s\" not found.", filename.c_str());
+                MANGO_EXCEPTION("[mapper.mgx] File \"{}\" not found.", filename);
             }
 
             const FileHeader& file = *ptrHeader;

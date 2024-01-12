@@ -215,7 +215,7 @@ namespace
                     parse_version3(memory, true);
                     break;
                 default:
-                    header.setError("[ImageDecoder.PVR] Incorrect format version: 0x%x", magic);
+                    header.setError("[ImageDecoder.PVR] Incorrect format version: {:#x}", magic);
                     return;
             }
 
@@ -252,8 +252,8 @@ namespace
             0x00008000  Alpha channel data is present (PVRTC only)
 #endif
 
-            debugPrintLine("flags: 0x%x", flags);
-            debugPrintLine("format: 0x%x", fmt);
+            printLine(Print::Info, "flags: {:#x}", flags);
+            printLine(Print::Info, "format: {:#x}", fmt);
 
             // compressed block default values
             TextureCompression compression = TextureCompression::NONE;
@@ -443,7 +443,7 @@ namespace
 
                 if (identifier != 0x21525650)
                 {
-                    header.setError("[ImageDecoder.PVR] Incorrect format identifier: 0x%x", identifier);
+                    header.setError("[ImageDecoder.PVR] Incorrect format identifier: {:#x}", identifier);
                     return;
                 }
             }
@@ -481,14 +481,14 @@ namespace
             }
             else
             {
-                header.setError("[ImageDecoder.PVR] Incorrect channeltype: %d", int(pvr.channeltype));
+                header.setError("[ImageDecoder.PVR] Incorrect channeltype: {}", int(pvr.channeltype));
                 return;
             }
 
             if (pvr.pixelformat & 0xffffffff00000000)
             {
                 m_info.format = eightcc_to_format(pvr.pixelformat);
-                debugPrintLine("eightcc format: %d (%d,%d,%d,%d)", m_info.format.bits,
+                printLine(Print::Info, "eightcc format: {} ({},{},{},{})", m_info.format.bits,
                     m_info.format.size[0],
                     m_info.format.size[1],
                     m_info.format.size[2],
@@ -500,7 +500,7 @@ namespace
 
                 if (formatIndex < int(std::size(formatTable)))
                 {
-                    debugPrintLine("pvr.pixelformat: %d", formatIndex);
+                    printLine(Print::Info, "pvr.pixelformat: {}", formatIndex);
 
                     // MANGO TODO: support for COMPRESSED_NONE entries in the table (packed pixel formats, yuv, shared exponent, 1-bit b/w)
                     TextureCompression compression = formatTable[formatIndex];
@@ -515,7 +515,7 @@ namespace
                 }
                 else
                 {
-                    header.setError("[ImageDecoder.PVR] Incorrect pixelformat: %d", formatIndex);
+                    header.setError("[ImageDecoder.PVR] Incorrect pixelformat: {}", formatIndex);
                     return;
                 }
             }
@@ -535,7 +535,7 @@ namespace
 
             if (m_faces != 1 && m_faces != 6)
             {
-                header.setError("[ImageDecoder.PVR] Incorrect number of faces: %d", m_faces);
+                header.setError("[ImageDecoder.PVR] Incorrect number of faces: {}", m_faces);
                 return;
             }
 
@@ -548,7 +548,7 @@ namespace
                     // NOTE: sRGB
                     break;
                 default:
-                    header.setError("[ImageDecoder.PVR] Incorrect colorspace: %d", pvr.colorspace);
+                    header.setError("[ImageDecoder.PVR] Incorrect colorspace: {}", pvr.colorspace);
                     return;
             }
 

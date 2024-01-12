@@ -101,7 +101,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     // parse
     // --------------------------------------------------------------------------
 
-    debugPrintLine("[ImportGLTF]");
+    printLine(Print::Verbose, "[ImportGLTF]");
 
     fastgltf::Parser parser(fastgltf::Extensions::KHR_mesh_quantization);
 
@@ -117,22 +117,22 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     auto type = fastgltf::determineGltfFileType(&data);
     if (type == fastgltf::GltfType::glTF)
     {
-        debugPrintLine("  Type: gltf");
+        printLine(Print::Verbose, "  Type: gltf");
     }
     else if (type == fastgltf::GltfType::GLB)
     {
-        debugPrintLine("  Type: glb");
+        printLine(Print::Verbose, "  Type: glb");
     }
     else
     {
-        debugPrintLine("Failed to determine glTF container");
+        printLine(Print::Error, "Failed to determine glTF container");
         return;
     }
 
     auto expected = parser.loadGltf(&data, "", gltfOptions);
     if (expected.error() != fastgltf::Error::None)
     {
-        debugPrintLine("  ERROR: %s", fastgltf::getErrorMessage(expected.error()).data());
+        printLine(Print::Error, "  ERROR: {}", fastgltf::getErrorMessage(expected.error()).data());
         return;
     }
 
@@ -147,7 +147,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     for (const auto& current : asset.buffers)
     {
-        debugPrintLine("[Buffer]");
+        printLine(Print::Verbose, "[Buffer]");
 
         std::visit(fastgltf::visitor
         {
@@ -167,7 +167,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [x] standard
                 // [ ] binary
                 // [ ] embedded
-                debugPrintLine("  URI: %s : %d bytes", filename.c_str(), u32(memory.size));
+                printLine(Print::Verbose, "  URI: {} : {} bytes", filename, memory.size);
             },
 			[&] (const fastgltf::sources::ByteView& source)
             {
@@ -177,14 +177,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] standard
                 // [x] binary
                 // [ ] embedded
-                debugPrintLine("  ByteView: %d bytes", int(memory.size));
+                printLine(Print::Verbose, "  ByteView: {} bytes", memory.size);
 			},
             [&] (const fastgltf::sources::BufferView& source)
             {
                 // [ ] standard
                 // [ ] binary
                 // [ ] embedded
-                debugPrintLine("  BufferView:");
+                printLine(Print::Verbose, "  BufferView:");
             },
             [&] (const fastgltf::sources::Vector& source)
             {
@@ -194,14 +194,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] standard
                 // [ ] binary
                 // [x] embedded
-                debugPrintLine("  vector: %d bytes", int(memory.size));
+                printLine(Print::Verbose, "  vector: {} bytes", memory.size);
             },
             [&] (const fastgltf::sources::CustomBuffer& source)
             {
                 // [ ] standard
                 // [ ] binary
                 // [ ] embedded
-                debugPrintLine("  CustomBuffer: %d", int(source.id));
+                printLine(Print::Verbose, "  CustomBuffer: {}", source.id);
             },
         }, current.data);
     }
@@ -214,7 +214,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     for (const auto& current : asset.images)
     {
-        debugPrintLine("[Image]");
+        printLine(Print::Verbose, "[Image]");
 
         std::visit(fastgltf::visitor
         {
@@ -237,7 +237,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [x] standard
                 // [ ] binary
                 // [ ] embedded
-                debugPrintLine("  URI: %s : %d bytes", filename.c_str(), u32(memory.size));
+                printLine(Print::Verbose, "  URI: {} : {} bytes", filename, memory.size);
             },
             [&] (const fastgltf::sources::Vector& source)
             {
@@ -250,14 +250,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] standard
                 // [ ] binary
                 // [x] embedded
-                debugPrintLine("  vector: %d bytes", u32(memory.size));
+                printLine(Print::Verbose, "  vector: {} bytes", memory.size);
             },
 			[&] (const fastgltf::sources::ByteView& source)
             {
                 // [ ] standard
                 // [ ] binary
                 // [ ] embedded
-                debugPrintLine("  ByteView: %d bytes (not supported)", u32(source.bytes.size()));
+                printLine(Print::Verbose, "  ByteView: {} bytes (not supported)", source.bytes.size());
 			},
             [&] (const fastgltf::sources::BufferView& source)
             {
@@ -274,7 +274,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] standard
                 // [x] binary
                 // [ ] embedded
-                debugPrintLine("  BufferView: %d bytes", u32(memory.size));
+                printLine(Print::Verbose, "  BufferView: {} bytes", memory.size);
             },
         }, current.data);
 
@@ -286,18 +286,18 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     for (const auto& current : asset.materials)
     {
-        debugPrintLine("[Material]");
-        debugPrintLine("  name: \"%s\"", current.name.c_str());
+        printLine(Print::Verbose, "[Material]");
+        printLine(Print::Verbose, "  name: \"{}\"", current.name);
 
         Material material;
 
         const fastgltf::PBRData& pbr = current.pbrData;
         const auto* baseColor = pbr.baseColorFactor.data();
 
-        debugPrintLine("  baseColorFactor: %f %f %f %f", baseColor[0], baseColor[1], baseColor[2], baseColor[3]);
-        debugPrintLine("  metallicFactor: %f", pbr.metallicFactor);
-        debugPrintLine("  roughnessFactor: %f", pbr.roughnessFactor);
-        debugPrintLine("  emissiveFactor: %f %f %f",
+        printLine(Print::Verbose, "  baseColorFactor: {} {} {} {}", baseColor[0], baseColor[1], baseColor[2], baseColor[3]);
+        printLine(Print::Verbose, "  metallicFactor: {}", pbr.metallicFactor);
+        printLine(Print::Verbose, "  roughnessFactor: {}", pbr.roughnessFactor);
+        printLine(Print::Verbose, "  emissiveFactor: {} {} {}",
             current.emissiveFactor[0],
             current.emissiveFactor[1],
             current.emissiveFactor[2]);
@@ -309,7 +309,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             {
                 Texture image = textures[*texture.imageIndex];
                 material.baseColorTexture = image;
-                debugPrintLine("  baseColorTexture: (%d x %d)", image->width, image->height);
+                printLine(Print::Verbose, "  baseColorTexture: ({} x {})", image->width, image->height);
             }
         }
 
@@ -320,7 +320,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             {
                 Texture image = textures[*texture.imageIndex];
                 material.metallicRoughnessTexture = image;
-                debugPrintLine("  metallicRoughnessTexture: (%d x %d)", image->width, image->height);
+                printLine(Print::Verbose, "  metallicRoughnessTexture: ({} x {})", image->width, image->height);
             }
         }
 
@@ -331,7 +331,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             {
                 Texture image = textures[*texture.imageIndex];
                 material.normalTexture = image;
-                debugPrintLine("  normalTexture: (%d x %d)", image->width, image->height);
+                printLine(Print::Verbose, "  normalTexture: ({} x {})", image->width, image->height);
             }
         }
 
@@ -342,7 +342,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             {
                 Texture image = textures[*texture.imageIndex];
                 material.occlusionTexture = image;
-                debugPrintLine("  occlusionTexture: (%d x %d)", image->width, image->height);
+                printLine(Print::Verbose, "  occlusionTexture: ({} x {})", image->width, image->height);
             }
         }
 
@@ -353,7 +353,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             {
                 Texture image = textures[*texture.imageIndex];
                 material.emissiveTexture = image;
-                debugPrintLine("  emissiveTexture: (%d x %d)", image->width, image->height);
+                printLine(Print::Verbose, "  emissiveTexture: ({} x {})", image->width, image->height);
             }
         }
 
@@ -446,14 +446,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     for (const auto& current : asset.meshes)
     {
-        debugPrintLine("[Mesh]");
-        debugPrintLine("  name: %s", current.name.c_str());
+        printLine(Print::Verbose, "[Mesh]");
+        printLine(Print::Verbose, "  name: {}", current.name);
 
         IndexedMesh mesh;
 
         for (auto primitiveIterator = current.primitives.begin(); primitiveIterator != current.primitives.end(); ++primitiveIterator)
         {
-            debugPrintLine("  [primitive]");
+            printLine(Print::Verbose, "  [primitive]");
 
             Attribute attributePosition;
             Attribute attributeNormal;
@@ -493,7 +493,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     message = " : NOT SUPPORTED!";
                 }
 
-                debugPrintLine("    [Attribute:\"%s\"%s]", name.c_str(), message);
+                printLine(Print::Verbose, "    [Attribute:\"{}\"{}]", name, message);
 
                 auto& accessor = asset.accessors[attributeIterator->second];
                 auto& view = asset.bufferViews[accessor.bufferViewIndex.value()];
@@ -517,21 +517,21 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 switch (accessor.componentType)
                 {
                     case fastgltf::ComponentType::UnsignedByte:
-                        debugPrintLine("      type: u8 x %d", u32(components));
+                        printLine(Print::Verbose, "      type: u8 x {}", components);
                         break;
                     case fastgltf::ComponentType::UnsignedShort:
-                        debugPrintLine("      type: u16 x %d", u32(components));
+                        printLine(Print::Verbose, "      type: u16 x {}", components);
                         break;
                     case fastgltf::ComponentType::Float:
-                        debugPrintLine("      type: f32 x %d", u32(components));
+                        printLine(Print::Verbose, "      type: f32 x {}", components);
                         break;
                     default:
-                        debugPrintLine("      type: NOT SUPPORTED");
+                        printLine(Print::Verbose, "      type: NOT SUPPORTED");
                         break;
                 }
 
-                debugPrintLine("      stride: %d", u32(stride));
-                debugPrintLine("      count: %d", u32(count));
+                printLine(Print::Verbose, "      stride: {}", stride);
+                printLine(Print::Verbose, "      count: {}", count);
 
                 if (attribute)
                 {
@@ -657,8 +657,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                             break;
                     }
 
-                    debugPrintLine("    [Indices]");
-                    debugPrintLine("      count: %d", count);
+                    printLine(Print::Verbose, "    [Indices]");
+                    printLine(Print::Verbose, "      count: {}", count);
                 }
             }
 
@@ -718,7 +718,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             const float* data = matrix->data();
             node.transform = matrix4x4(data);
         }
-        else if (const auto* trs = std::get_if<fastgltf::Node::TRS>(&current.transform))
+        else if (const auto* trs = std::get_if<fastgltf::TRS>(&current.transform))
         {
             const float* t = trs->translation.data();
             const float* r = trs->rotation.data();
@@ -746,24 +746,24 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     for (const auto& current : asset.scenes)
     {
-        debugPrintLine("[Scene]");
-        debugPrintLine("  nodeIndices: %d", int(current.nodeIndices.size()));
+        printLine(Print::Verbose, "[Scene]");
+        printLine(Print::Verbose, "  nodeIndices: {}", current.nodeIndices.size());
 
         roots = std::vector<u32>(current.nodeIndices.begin(), current.nodeIndices.end());
     }
 
     // summary
 
-    debugPrintLine("[Summary]");
-    debugPrintLine("  Buffers:   %d", int(asset.buffers.size()));
-    debugPrintLine("  Images:    %d", int(asset.images.size()));
-    debugPrintLine("  Materials: %d", int(asset.materials.size()));
-    debugPrintLine("  Meshes:    %d", int(asset.meshes.size()));
-    debugPrintLine("  Nodes:     %d", int(asset.nodes.size()));
-    debugPrintLine("  Scenes:    %d", int(asset.scenes.size()));
+    printLine(Print::Verbose, "[Summary]");
+    printLine(Print::Verbose, "  Buffers:   {}", asset.buffers.size());
+    printLine(Print::Verbose, "  Images:    {}", asset.images.size());
+    printLine(Print::Verbose, "  Materials: {}", asset.materials.size());
+    printLine(Print::Verbose, "  Meshes:    {}", asset.meshes.size());
+    printLine(Print::Verbose, "  Nodes:     {}", asset.nodes.size());
+    printLine(Print::Verbose, "  Scenes:    {}", asset.scenes.size());
 
     u64 time1 = Time::ms();
-    debugPrintLine("Time: %d ms", int(time1 - time0));
+    printLine(Print::Verbose, "Time: {} ms", time1 - time0);
 }
 
 } // namespace mango::import3d

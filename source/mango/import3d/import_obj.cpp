@@ -350,10 +350,10 @@ namespace mango::import3d
                         }
                         else
                         {
-                            debugPrintLine("TODO: %s", std::string(id).c_str());
+                            printLine(Print::Verbose, "TODO: {}", id);
                         }
 
-                        //debugPrintLine("token: %s : %s", std::string(id).c_str(), std::string(tokens[0]).c_str());
+                        //printLine(Print::Verbose, "token: {} : {}", i, tokens[0]);
                     }
 
                     id = std::string_view();
@@ -422,7 +422,7 @@ namespace mango::import3d
         }
 
         std::string filename(tokens[0]);
-        debugPrintLine("mtllib: %s", filename.c_str());
+        printLine(Print::Verbose, "mtllib: {}", filename);
 
         filesystem::File file(m_path, filename);
 
@@ -637,8 +637,8 @@ namespace mango::import3d
 
         u64 time2 = mango::Time::ms();
 
-        debugPrintLine("Reading: %d ms", int(time1 - time0));
-        debugPrintLine("Conversion: %d ms", int(time2 - time1));
+        printLine(Print::Verbose, "Reading: {} ms", time1 - time0);
+        printLine(Print::Verbose, "Conversion: {} ms", time2 - time1);
     }
 
 } // namespace mango::import3d

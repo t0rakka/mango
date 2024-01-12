@@ -148,7 +148,7 @@ namespace
             m_version = p.read16();
             if (m_version > 2)
             {
-                m_header.setError("[ImageDecoder.PSD] Incorrect version (%d).", m_version);
+                m_header.setError("[ImageDecoder.PSD] Incorrect version ({}).", m_version);
                 return;
             }
 
@@ -166,7 +166,7 @@ namespace
             m_channels = p.read16();
             if (m_channels < 1 || m_channels > 56)
             {
-                m_header.setError("[ImageDecoder.PSD] Incorrect number of channels (%d).", m_channels);
+                m_header.setError("[ImageDecoder.PSD] Incorrect number of channels ({}).", m_channels);
                 return;
             }
 
@@ -174,7 +174,7 @@ namespace
             int width = p.read32();
             if (width < 1 || width > width_max || height < 1 || height > height_max)
             {
-                m_header.setError("[ImageDecoder.PSD] Incorrect image dimensions (%d x %d).", width, height);
+                m_header.setError("[ImageDecoder.PSD] Incorrect image dimensions ({} x {}).", width, height);
                 return;
             }
 
@@ -194,7 +194,7 @@ namespace
                     format = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
                     break;
                 default:
-                    m_header.setError("[ImageDecoder.PSD] Incorrect number of bits (%d).", m_bits);
+                    m_header.setError("[ImageDecoder.PSD] Incorrect number of bits ({}).", m_bits);
                     return;
             }
 
@@ -211,7 +211,7 @@ namespace
                 case ColorMode::LAB:
                     break;
                 default:
-                    m_header.setError("[ImageDecoder.PSD] Incorrect color mode (%d).", m_color_mode);
+                    m_header.setError("[ImageDecoder.PSD] Incorrect color mode ({}).", int(m_color_mode));
                     return;
             }
 
@@ -226,7 +226,7 @@ namespace
                 }
                 else
                 {
-                    m_header.setError("[ImageDecoder.PSD] Incorrect palette size (%d).", colormode_size);
+                    m_header.setError("[ImageDecoder.PSD] Incorrect palette size ({}).", colormode_size);
                     return;
                 }
             }
@@ -250,10 +250,10 @@ namespace
                 case Compression::ZIP:
                 case Compression::ZIP_PRED:
                     // MANGO TODO: need psd files with these compressions
-                    m_header.setError("[ImageDecoder.PSD] Unsupported compression (%d).", m_compression);
+                    m_header.setError("[ImageDecoder.PSD] Unsupported compression ({}).", int(m_compression));
                     return;
                 default:
-                    m_header.setError("[ImageDecoder.PSD] Incorrect compression (%d).", m_compression);
+                    m_header.setError("[ImageDecoder.PSD] Incorrect compression ({}).", int(m_compression));
                     return;
             }
 
@@ -266,12 +266,12 @@ namespace
 
             m_memory = ConstMemory(p, end - p);
 
-            debugPrintLine("[psd]\n");
-            debugPrintLine("  Version:     %d", m_version);
-            debugPrintLine("  Image:       %d x %d", width, height);
-            debugPrintLine("  Channels:    %d (%d bits)", m_channels, m_bits);
-            debugPrintLine("  ColorMode:   %d", m_color_mode);
-            debugPrintLine("  Compression: %d", m_compression);
+            printLine(Print::Info, "[psd]\n");
+            printLine(Print::Info, "  Version:     {}", m_version);
+            printLine(Print::Info, "  Image:       {} x {}", width, height);
+            printLine(Print::Info, "  Channels:    {} ({} bits)", m_channels, m_bits);
+            printLine(Print::Info, "  ColorMode:   {}", int(m_color_mode));
+            printLine(Print::Info, "  Compression: {}", int(m_compression));
 
             parse_resources(image_resource_data);
 
@@ -326,7 +326,7 @@ namespace
             BigEndianConstPointer p = resources.address;
             const u8* end = resources.end();
 
-            debugPrintLine("  [ImageResourceBlocks]");
+            printLine(Print::Info, "  [ImageResourceBlocks]");
 
             while (p < end)
             {
@@ -344,25 +344,25 @@ namespace
 
                 if (id == 1005)
                 {
-                    debugPrintLine("    Resolution Info");
+                    printLine(Print::Info, "    Resolution Info");
                 }
                 else if (id == 1039)
                 {
-                    debugPrintLine("    ICC Profile");
+                    printLine(Print::Info, "    ICC Profile");
                     m_icc_profile = ConstMemory(p, length);
                 }
                 else if (id == 1047)
                 {
-                    debugPrintLine("    TransparencyIndex");
+                    printLine(Print::Info, "    TransparencyIndex");
                     // MANGO TODO: need psd file that uses this feature
                 }
                 else if (id == 1058 || id == 1059)
                 {
-                    debugPrintLine("    EXIF");
+                    printLine(Print::Info, "    EXIF");
                 }
                 else if (id == 1060)
                 {
-                    debugPrintLine("    XMP");
+                    printLine(Print::Info, "    XMP");
                 }
                 else
                 {
@@ -373,7 +373,7 @@ namespace
 
                 if (supported)
                 {
-                    debugPrintLine("      %d bytes", length);
+                    printLine(Print::Info, "      {} bytes", length);
                 }
             }
         }
@@ -391,8 +391,8 @@ namespace
             int bytes_per_scan = div_ceil(width * m_bits, 8);
             int bytes_per_channel = height * bytes_per_scan;
 
-            //debugPrintLine("  available: %d bytes", u32(m_memory.size));
-            //debugPrintLine("  request:   %d bytes", u32(channels * bytes_per_channel));
+            //printLine(Print::Info, "  available: {} bytes", m_memory.size);
+            //printLine(Print::Info, "  request:   {} bytes", channels * bytes_per_channel);
 
             Bitmap temp(width, height, m_header.format);
             Buffer buffer(channels * bytes_per_scan);

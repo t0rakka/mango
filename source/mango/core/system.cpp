@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/system.hpp>
 #include <mango/core/cpuinfo.hpp>
@@ -19,7 +19,6 @@ namespace mango
     Context::Context()
         : thread_pool(ThreadPool::getHardwareConcurrency())
         , timer()
-        , debug_print_enable(false)
     {
     }
 
@@ -246,90 +245,56 @@ namespace mango
     }
 
     // ----------------------------------------------------------------------------
-    // debugPrint()
+    // print
     // ----------------------------------------------------------------------------
 
-    bool debugPrintIsEnable()
+    void printEnable(Print target, bool enable)
     {
-        return g_context.debug_print_enable;
-    }
-
-    void debugPrintEnable(bool enable)
-    {
-        g_context.debug_print_enable = enable;
-    }
-
-    void debugPrint(const char* format, ...)
-    {
-        if (g_context.debug_print_enable)
+        switch (target)
         {
-            va_list args;
-
-            va_start(args, format);
-            std::vprintf(format, args);
-            va_end(args);
-
-            std::fflush(stdout);
+            case Print::Error:
+                g_context.print_enable_error = enable;
+                break;
+            case Print::Warning:
+                g_context.print_enable_warning = enable;
+                break;
+            case Print::Info:
+                g_context.print_enable_info = enable;
+                break;
+            case Print::Verbose:
+                g_context.print_enable_verbose = enable;
+                break;
         }
     }
 
-    void debugPrintLine(const char* format, ...)
+    bool isEnable(Print target)
     {
-        if (g_context.debug_print_enable)
+        bool enable = false;
+
+        switch (target)
         {
-            va_list args;
-
-            va_start(args, format);
-            std::vprintf(format, args);
-            va_end(args);
-
-            std::printf("\n");
-            std::fflush(stdout);
+            case Print::Error:
+                enable = g_context.print_enable_error;
+                break;
+            case Print::Warning:
+                enable = g_context.print_enable_warning;
+                break;
+            case Print::Info:
+                enable = g_context.print_enable_info;
+                break;
+            case Print::Verbose:
+                enable = g_context.print_enable_verbose;
+                break;
         }
-    }
 
-    void debugPrintLine(const std::string& text)
-    {
-        if (g_context.debug_print_enable)
-        {
-            std::printf("%s\n", text.c_str());
-        }
-    }
-
-    // ----------------------------------------------------------------------------
-    // Status
-    // ----------------------------------------------------------------------------
-
-    Status::operator bool () const
-    {
-        return success;
-    }
-
-    void Status::setError(const std::string& error)
-    {
-        info = error;
-        success = false;
-    }
-
-    void Status::setError(const char* format, ...)
-    {
-        constexpr size_t max_length = 512;
-        char buffer[max_length];
-
-        va_list args;
-        va_start(args, format);
-        std::vsnprintf(buffer, max_length, format, args);
-        va_end(args);
-
-        info = buffer;
-        success = false;
+        return enable;
     }
 
     // ----------------------------------------------------------------------------
     // Exception
     // ----------------------------------------------------------------------------
 
-    Exception::Exception(const std::string message, const std::string func, const std::string file, int line)
+    Exception::Exception(const std::string message, const std::string func, const std::string file, u32 line)
         : m_message(message)
         , m_func(func)
         , m_file(file)
@@ -356,7 +321,7 @@ namespace mango
         return m_file.c_str();
     }
 
-    int Exception::line() const
+    u32 Exception::line() const
     {
         return m_line;
     }

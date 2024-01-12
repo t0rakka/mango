@@ -7,13 +7,18 @@ PROJECT(mango CXX C ASM)
 
 set(MANGO_VERSION_MAJOR 1)
 set(MANGO_VERSION_MINOR 2)
-set(MANGO_VERSION_PATCH 0)
+set(MANGO_VERSION_PATCH 1)
 set(MANGO_VERSION_STRING ${MANGO_VERSION_MAJOR}.${MANGO_VERSION_MINOR}.${MANGO_VERSION_PATCH})
 
 set(MANGO_OPENGL_VERSION_MAJOR 0)
 set(MANGO_OPENGL_VERSION_MINOR 8)
 set(MANGO_OPENGL_VERSION_PATCH 0)
 set(MANGO_OPENGL_VERSION_STRING ${MANGO_OPENGL_VERSION_MAJOR}.${MANGO_OPENGL_VERSION_MINOR}.${MANGO_OPENGL_VERSION_PATCH})
+
+set(MANGO_IMPORT3D_VERSION_MAJOR 0)
+set(MANGO_IMPORT3D_VERSION_MINOR 1)
+set(MANGO_IMPORT3D_VERSION_PATCH 2)
+set(MANGO_IMPORT3D_VERSION_STRING ${MANGO_IMPORT3D_VERSION_MAJOR}.${MANGO_IMPORT3D_VERSION_MINOR}.${MANGO_IMPORT3D_VERSION_PATCH})
 
 # ------------------------------------------------------------------------------
 # compiler
@@ -88,6 +93,8 @@ OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
 
 include_directories("../include/")
 include_directories("../source/external/libwebp/")
+include_directories("../source/external/fastgltf/include/")
+include_directories("../source/external/simdjson/")
 
 # ------------------------------------------------------------------------------
 # source directories
@@ -212,64 +219,78 @@ else()
 
 endif()
 
-FILE(GLOB IMAGE_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/image/*.hpp")
-FILE(GLOB JPEG_HEADERS  "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.hpp")
-FILE(GLOB MATH_HEADERS  "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/math/*.hpp")
-FILE(GLOB SIMD_HEADERS  "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/simd/*.hpp")
+FILE(GLOB IMAGE_HEADERS     "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/image/*.hpp")
+FILE(GLOB JPEG_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.hpp")
+FILE(GLOB MATH_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/math/*.hpp")
+FILE(GLOB SIMD_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/simd/*.hpp")
+FILE(GLOB IMPORT3D_HEADERS  "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/import3d/*.hpp")
 
-FILE(GLOB IMAGE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/image/*.cpp")
-FILE(GLOB JPEG_SOURCES  "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.cpp")
-FILE(GLOB MATH_SOURCES  "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/math/*.cpp")
-FILE(GLOB SIMD_SOURCES  "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/simd/*.cpp")
+FILE(GLOB IMAGE_SOURCES     "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/image/*.cpp")
+FILE(GLOB JPEG_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.cpp")
+FILE(GLOB MATH_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/math/*.cpp")
+FILE(GLOB SIMD_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/simd/*.cpp")
+FILE(GLOB IMPORT3D_SOURCES  "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/import3d/*.cpp")
 
-SOURCE_GROUP("include/core" FILES ${CORE_HEADERS})
+SOURCE_GROUP("include/core"       FILES ${CORE_HEADERS})
 SOURCE_GROUP("include/filesystem" FILES ${FILESYSTEM_HEADERS})
-SOURCE_GROUP("include/window" FILES ${WINDOW_HEADERS})
-SOURCE_GROUP("include/opengl" FILES ${OPENGL_HEADERS})
-SOURCE_GROUP("include/image" FILES ${IMAGE_HEADERS})
-SOURCE_GROUP("include/jpeg" FILES ${JPEG_HEADERS})
-SOURCE_GROUP("include/math" FILES ${MATH_HEADERS})
-SOURCE_GROUP("include/simd" FILES ${SIMD_HEADERS})
+SOURCE_GROUP("include/image"      FILES ${IMAGE_HEADERS})
+SOURCE_GROUP("include/jpeg"       FILES ${JPEG_HEADERS})
+SOURCE_GROUP("include/math"       FILES ${MATH_HEADERS})
+SOURCE_GROUP("include/simd"       FILES ${SIMD_HEADERS})
+SOURCE_GROUP("include/window"     FILES ${WINDOW_HEADERS})
+SOURCE_GROUP("include/opengl"     FILES ${OPENGL_HEADERS})
+SOURCE_GROUP("include/import3d"   FILES ${IMPORT3D_HEADERS})
 
-SOURCE_GROUP("source/core" FILES ${CORE_SOURCES})
-SOURCE_GROUP("source/filesystem" FILES ${FILESYSTEM_SOURCES})
-SOURCE_GROUP("source/window" FILES ${WINDOW_SOURCES})
-SOURCE_GROUP("source/opengl" FILES ${OPENGL_SOURCES})
-SOURCE_GROUP("source/image" FILES ${IMAGE_SOURCES})
-SOURCE_GROUP("source/jpeg" FILES ${JPEG_SOURCES})
-SOURCE_GROUP("source/math" FILES ${MATH_SOURCES})
-SOURCE_GROUP("source/simd" FILES ${SIMD_SOURCES})
+SOURCE_GROUP("source/core"        FILES ${CORE_SOURCES})
+SOURCE_GROUP("source/filesystem"  FILES ${FILESYSTEM_SOURCES})
+SOURCE_GROUP("source/image"       FILES ${IMAGE_SOURCES})
+SOURCE_GROUP("source/jpeg"        FILES ${JPEG_SOURCES})
+SOURCE_GROUP("source/math"        FILES ${MATH_SOURCES})
+SOURCE_GROUP("source/simd"        FILES ${SIMD_SOURCES})
+SOURCE_GROUP("source/window"      FILES ${WINDOW_SOURCES})
+SOURCE_GROUP("source/opengl"      FILES ${OPENGL_SOURCES})
+SOURCE_GROUP("source/import3d"    FILES ${IMPORT3D_SOURCES})
 
 FILE(GLOB EXTERNAL_LZMA
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzma/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzma/*.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzma/*.c"
+)
 FILE(GLOB EXTERNAL_AES
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/aes/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/aes/*.cpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/aes/*.cpp"
+)
 FILE(GLOB EXTERNAL_BC
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bc/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bc/*.cpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bc/*.cpp"
+)
 FILE(GLOB EXTERNAL_BZIP2
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bzip2/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bzip2/*.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bzip2/*.c"
+)
 FILE(GLOB EXTERNAL_CONCURRENT_QUEUE
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/concurrentqueue/*.h")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/concurrentqueue/*.h"
+)
 FILE(GLOB EXTERNAL_ASTC
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/astc/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/astc/*.h")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/astc/*.h"
+)
 FILE(GLOB EXTERNAL_GOOGLE
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/google/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/google/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/google/*.h")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/google/*.h"
+)
 FILE(GLOB EXTERNAL_LZ4
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lz4/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lz4/*.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lz4/*.c"
+)
 FILE(GLOB EXTERNAL_LZFSE
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzfse/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzfse/*.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzfse/*.c"
+)
 FILE(GLOB EXTERNAL_LZO
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzo/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzo/*.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzo/*.c"
+)
 FILE(GLOB EXTERNAL_DEFLATE
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/common/*.h"
@@ -278,30 +299,48 @@ FILE(GLOB EXTERNAL_DEFLATE
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/x86/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/x86/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/arm/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/arm/*.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/arm/*.c"
+)
 FILE(GLOB EXTERNAL_ZLIB
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zlib/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zlib/*.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zlib/*.c"
+)
 FILE(GLOB EXTERNAL_LCMS
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lcms/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lcms/*.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lcms/*.c"
+)
 FILE(GLOB EXTERNAL_UNRAR
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp"
+)
 FILE(GLOB_RECURSE EXTERNAL_ZSTD
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.S")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.S"
+)
 FILE(GLOB_RECURSE EXTERNAL_WEBP
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.c"
+)
 FILE(GLOB EXTERNAL_ZPNG
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.cpp")
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.cpp"
+)
 FILE(GLOB EXTERNAL_BASISU
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/basisu/transcoder/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/basisu/transcoder/*.cpp")
-
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/basisu/transcoder/*.cpp"
+)
+FILE(GLOB EXTERNAL_FMT
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/fmt/src/*.cc"
+)
+FILE(GLOB EXTERNAL_IMPORT3D
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/mikktspace/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/mikktspace/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/simdjson/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/simdjson/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/fastgltf/include/fastgltf/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/fastgltf/src/*.cpp"
+)
 
 SOURCE_GROUP("external" FILES
     ${EXTERNAL_LZMA}
@@ -322,6 +361,8 @@ SOURCE_GROUP("external" FILES
     ${EXTERNAL_WEBP}
     ${EXTERNAL_ZPNG}
     ${EXTERNAL_BASISU}
+    ${EXTERNAL_FMT}
+    ${EXTERNAL_IMPORT3D}
 )
 
 # ------------------------------------------------------------------------------
@@ -362,6 +403,7 @@ add_library(mango
     ${EXTERNAL_WEBP}
     ${EXTERNAL_ZPNG}
     ${EXTERNAL_BASISU}
+    ${EXTERNAL_FMT}
 )
 
 set_target_properties(mango PROPERTIES
@@ -380,6 +422,19 @@ set_target_properties(mango-opengl PROPERTIES
 )
 
 target_link_libraries(mango-opengl PUBLIC mango)
+
+add_library(mango-import3d
+    ${IMPORT3D_HEADERS}
+    ${IMPORT3D_SOURCES}
+    ${EXTERNAL_IMPORT3D}
+)
+
+set_target_properties(mango-import3d PROPERTIES
+    VERSION ${MANGO_IMPORT3D_VERSION_STRING}
+    SOVERSION ${MANGO_IMPORT3D_VERSION_MAJOR}
+)
+
+target_link_libraries(mango-import3d PUBLIC mango)
 
 if (APPLE)
     if (BUILD_SHARED_LIBS)
@@ -422,6 +477,7 @@ else ()
 
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         target_compile_options(mango PUBLIC "-ftree-vectorize")
+        set(CMAKE_CXX_FLAGS "-Wno-psabi")
     endif ()
 
     if ((ARM AND ENABLE_NEON) OR AARCH64)
@@ -506,6 +562,12 @@ install(TARGETS mango
 )
 
 install(TARGETS mango-opengl
+    LIBRARY DESTINATION "lib"
+    ARCHIVE DESTINATION "lib"
+    RUNTIME DESTINATION "bin"
+)
+
+install(TARGETS mango-import3d
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin"

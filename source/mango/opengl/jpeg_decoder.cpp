@@ -709,8 +709,8 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
 
     void send(const ComputeDecoderInput& input) override
     {
-        debugPrintLine("\n[ComputeDecode]");
-        debugPrintLine("  MCU: %d x %d.", input.xmcu, input.ymcu);
+        printLine(Print::Info, "\n[ComputeDecode]");
+        printLine(Print::Info, "  MCU: {} x {}.", input.xmcu, input.ymcu);
 
         Buffer buffer;
         std::vector<u32> offsets;
@@ -868,7 +868,7 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
 
         glUniform1i(glGetUniformLocation(program, "u_xmcu"), input.xmcu);
 
-        debugPrintLine("  Compute Segments: %d", int(input.intervals.size()));
+        printLine(Print::Info, "  Compute Segments: {}", input.intervals.size());
 
         /*
         for (size_t i = 0; i < input.intervals.size(); ++i)
@@ -905,16 +905,16 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
 
         /*
         size_t total = 0;
-        debugPrintLine("Intervals: %d", (int)input.intervals.size());
+        printLine(Print::Info, "Intervals: {}", input.intervals.size());
         for (auto interval : input.intervals)
         {
             total += interval.memory.size;
-            debugPrintLine("  %d KB", int(interval.memory.size/1024));
+            printLine(Print::Info, "  {} KB", interval.memory.size / 1024);
         }
-        debugPrintLine("Total: %d KB", int(total/1024));
+        printLine(Print::Info, "Total: {} KB", total/1024);
         */
 
-        debugPrintLine("");
+        printLine(Print::Info, "");
     }
 
     void send(const Surface& surface) override

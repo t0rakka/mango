@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -112,7 +112,7 @@ namespace
 
         void WinBitmapHeader1(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[WinBitmapHeader1]");
+            printLine(Print::Info, "[WinBitmapHeader1]");
 
             width = p.read32();
             height = p.read32();
@@ -127,25 +127,25 @@ namespace
 
             if (width < 0 || height < -65535 || width > 65535 || height > 65535)
             {
-                setError("Incorrect image dimensions (%d x %d)", width, height);
+                setError("Incorrect image dimensions ({} x {})", width, height);
                 return;
             }
 
             if (bitsPerPixel < 1 || bitsPerPixel > 32)
             {
-                setError("Incorrect bits per pixel (%d)", bitsPerPixel);
+                setError("Incorrect bits per pixel ({})", bitsPerPixel);
                 return;
             }
 
             if (paletteSize > 256)
             {
-                setError("Incorrect palette size (%d)", paletteSize);
+                setError("Incorrect palette size ({})", paletteSize);
                 return;
             }
 
             if (importantColorCount > 256)
             {
-                setError("Incorrect palette size (%d)", importantColorCount);
+                setError("Incorrect palette size ({})", importantColorCount);
                 return;
             }
 
@@ -164,13 +164,13 @@ namespace
                 case BIC_CMYKRLE8:
                 case BIC_CMYKRLE4:
                 {
-                    setError("[ImageDecoder.BMP] Unsupported compression (%d).", compression);
+                    setError("[ImageDecoder.BMP] Unsupported compression ({}).", compression);
                     return;
                 }
 
                 default:
                 {
-                    setError("[ImageDecoder.BMP] Incorrect compression (%d).", compression);
+                    setError("[ImageDecoder.BMP] Incorrect compression ({}).", compression);
                     return;
                 }
             }
@@ -190,37 +190,37 @@ namespace
                 }
             }
 
-            debugPrintLine("  image: %d x %d, planes: %d, bits: %d", width, height, numPlanes, bitsPerPixel);
-            debugPrintLine("  compression: %d, imageDataSize: %d", compression, imageDataSize);
-            debugPrintLine("  resolution: %d x %d", xResolution, yResolution);
-            debugPrintLine("  palette: %d, importantColorCount: %d", paletteSize, importantColorCount);
+            printLine(Print::Info, "  image: {} x {}, planes: {}, bits: {}", width, height, numPlanes, bitsPerPixel);
+            printLine(Print::Info, "  compression: {}, imageDataSize: {}", compression, imageDataSize);
+            printLine(Print::Info, "  resolution: {} x {}", xResolution, yResolution);
+            printLine(Print::Info, "  palette: {}, importantColorCount: {}", paletteSize, importantColorCount);
         }
 
         void WinBitmapHeader2(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[WinBitmapHeader2]");
+            printLine(Print::Info, "[WinBitmapHeader2]");
 
             redMask = p.read32();
             greenMask = p.read32();
             blueMask = p.read32();
 
-            debugPrintLine("  redMask:   0x%.8x", redMask);
-            debugPrintLine("  greenMask: 0x%.8x", greenMask);
-            debugPrintLine("  blueMask:  0x%.8x", blueMask);
+            printLine(Print::Info, "  redMask:   {:#010x}", redMask);
+            printLine(Print::Info, "  greenMask: {:#010x}", greenMask);
+            printLine(Print::Info, "  blueMask:  {:#010x}", blueMask);
         }
 
         void WinBitmapHeader3(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[WinBitmapHeader3]");
+            printLine(Print::Info, "[WinBitmapHeader3]");
 
             alphaMask = p.read32();
 
-            debugPrintLine("  alphaMask: 0x%.8x", alphaMask);
+            printLine(Print::Info, "  alphaMask: {:#010x}", alphaMask);
         }
 
         void WinBitmapHeader4(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[WinBitmapHeader4]");
+            printLine(Print::Info, "[WinBitmapHeader4]");
 
             csType = p.read32();
             for (int i = 0; i < 9; ++i)
@@ -231,25 +231,25 @@ namespace
             gammaGreen = p.read32();
             gammaBlue = p.read32();
 
-            debugPrintLine("  gamma: %d %d %d", gammaRed, gammaGreen, gammaBlue);
+            printLine(Print::Info, "  gamma: {} {} {}", gammaRed, gammaGreen, gammaBlue);
         }
 
         void WinBitmapHeader5(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[WinBitmapHeader5]");
+            printLine(Print::Info, "[WinBitmapHeader5]");
 
             intent = p.read32();
             profileData = p.read32();
             profileSize = p.read32();
             reserved3 = p.read32();
 
-            debugPrintLine("  intent: %d", intent);
-            debugPrintLine("  profile data: %d, size: %d", profileData, profileSize);
+            printLine(Print::Info, "  intent: {}", intent);
+            printLine(Print::Info, "  profile data: {}, size: {}", profileData, profileSize);
         }
 
         void OS2BitmapHeader1(LittleEndianConstPointer& p, int headerSize)
         {
-            debugPrintLine("[OS2BitmapHeader1]");
+            printLine(Print::Info, "[OS2BitmapHeader1]");
 
             if (headerSize == 16)
             {
@@ -265,12 +265,12 @@ namespace
             numPlanes    = p.read16();
             bitsPerPixel = p.read16();
 
-            debugPrintLine("  image: %d x %d, planes: %d, bits: %d", width, height, numPlanes, bitsPerPixel);
+            printLine(Print::Info, "  image: {} x {}, planes: {}, bits: {}", width, height, numPlanes, bitsPerPixel);
         }
 
         void OS2BitmapHeader2(LittleEndianConstPointer& p)
         {
-            debugPrintLine("[OS2BitmapHeader2]");
+            printLine(Print::Info, "[OS2BitmapHeader2]");
 
             units         = p.read16();
             reserved      = p.read16();
@@ -299,7 +299,7 @@ namespace
 
             parseHeaderSize(p);
 
-            debugPrintLine("  HeaderSize: %d", headerSize);
+            printLine(Print::Info, "  HeaderSize: {}", headerSize);
 
             switch (headerSize)
             {
@@ -371,7 +371,7 @@ namespace
                 }
 
                 default:
-                    setError("[ImageDecoder.BMP] Incorrect header size (%d).", headerSize);
+                    setError("[ImageDecoder.BMP] Incorrect header size ({}).", headerSize);
                     return;
             }
 
@@ -383,7 +383,7 @@ namespace
 
             if (numPlanes != 1)
             {
-                setError("[ImageDecoder.BMP] Incorrect number of planes (%d).", numPlanes);
+                setError("[ImageDecoder.BMP] Incorrect number of planes ({}).", numPlanes);
                 return;
             }
 
@@ -406,7 +406,7 @@ namespace
             {
                 int bytesPerScan = div_ceil(width * bitsPerPixel, 32) * 4;
                 imageDataSize = height * bytesPerScan;
-                debugPrintLine("  computed imageDataSize: %d", imageDataSize);
+                printLine(Print::Info, "  computed imageDataSize: {}", imageDataSize);
             }
 
             if (bitsPerPixel <= 8)
@@ -454,7 +454,7 @@ namespace
                             format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 0);
                             break;
                         default:
-                            setError("[ImageDecoder.BMP] Incorrect number of color bits (%d).", bitsPerPixel);
+                            setError("[ImageDecoder.BMP] Incorrect number of color bits ({}).", bitsPerPixel);
                             return;
                     }
                 }
@@ -780,7 +780,7 @@ namespace
         const int height = std::min(header.height, int(memory.size / bytesPerScan));
         if (height != header.height)
         {
-            debugPrintLine("  WARNING: clipped height: %d -> %d (not enough data)", header.height, height);
+            printLine(Print::Warning, "  WARNING: clipped height: {} -> {} (not enough data)", header.height, height);
         }
 
         for (int y = 0; y < height; ++y)
@@ -811,7 +811,7 @@ namespace
         int height = std::min(header.height, int(memory.size / bytesPerScan));
         if (height != header.height)
         {
-            debugPrintLine("  WARNING: clipped height: %d -> %d (not enough data)", header.height, height);
+            printLine(Print::Warning, "  WARNING: clipped height: {} -> {} (not enough data)", header.height, height);
         }
 
         Surface source(header.width, height, header.format, bytesPerScan, memory.address);
@@ -850,9 +850,9 @@ namespace
 
         if (header.palette)
         {
-            debugPrintLine("[Palette]");
-            debugPrintLine("  size: %d", header.importantColorCount);
-            debugPrintLine("  components: %d", header.paletteComponents);
+            printLine(Print::Info, "[Palette]");
+            printLine(Print::Info, "  size: {}", header.importantColorCount);
+            printLine(Print::Info, "  components: {}", header.paletteComponents);
 
             int components = header.paletteComponents;
             if (!components)
@@ -942,7 +942,7 @@ namespace
 
                     default:
                     {
-                        header.setError("[ImageDecoder.BMP] Incorrect number of color bits (%d).", header.bitsPerPixel);
+                        header.setError("[ImageDecoder.BMP] Incorrect number of color bits ({}).", header.bitsPerPixel);
                         return std::move(header);
                     }
                 }
@@ -1187,7 +1187,7 @@ namespace
             : m_memory(memory)
             , m_file_header(memory)
         {
-            debugPrintLine("magic: 0x%x", m_file_header.magic);
+            printLine(Print::Info, "magic: {:#x}", m_file_header.magic);
 
             switch (m_file_header.magic)
             {
@@ -1215,23 +1215,23 @@ namespace
                     m_image_header.format  = bmp_header.format;
                     m_image_header.compression = TextureCompression::NONE;
 
-                    debugPrintLine("[Header]");
-                    debugPrintLine("  image: %d x %d, bits: %d",
+                    printLine(Print::Info, "[Header]");
+                    printLine(Print::Info, "  image: {} x {}, bits: {}",
                         m_image_header.width,
                         m_image_header.height,
                         m_image_header.format.bits);
-                    debugPrintLine("[Format]");
-                    debugPrintLine("  bits: %d, bytes: %d, type: 0x%x, flags: 0x%x",
+                    printLine(Print::Info, "[Format]");
+                    printLine(Print::Info, "  bits: {}, bytes: {}, type: {:#x}, flags: {:#x}",
                         m_image_header.format.bits,
                         m_image_header.format.bytes(),
-                        m_image_header.format.type,
+                        u16(m_image_header.format.type),
                         m_image_header.format.flags);
-                    debugPrintLine("  size: %d %d %d %d",
+                    printLine(Print::Info, "  size: {} {} {} {}",
                         m_image_header.format.size.r,
                         m_image_header.format.size.g,
                         m_image_header.format.size.b,
                         m_image_header.format.size.a);
-                    debugPrintLine("  offset: %d %d %d %d",
+                    printLine(Print::Info, "  offset: {} {} {} {}",
                         m_image_header.format.offset.r,
                         m_image_header.format.offset.g,
                         m_image_header.format.offset.b,
