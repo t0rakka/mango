@@ -2708,7 +2708,7 @@ fg::Error fg::Parser::parseMeshes(simdjson::dom::array& meshes, Asset& asset) {
                     return Error::InvalidGltf;
                 }
 
-                auto parseAttributes = [FASTGLTF_IF_PMR(this)](dom::object& object, decltype(primitive.attributes)& attributes) -> auto {
+                auto parseAttributes = [this](dom::object& object, decltype(primitive.attributes)& attributes) -> auto {
                     // We iterate through the JSON object and write each key/pair value into the
                     // attribute map. The keys are only validated in the validate() method.
 					attributes = FASTGLTF_CONSTRUCT_PMR_RESOURCE(std::remove_reference_t<decltype(attributes)>, resourceAllocator.get(), 0);
