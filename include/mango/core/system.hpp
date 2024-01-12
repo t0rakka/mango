@@ -27,9 +27,9 @@ namespace mango
 
         Timer timer;
 
-        bool print_enable_error = true;
+        bool print_enable_error   = true;
         bool print_enable_warning = false;
-        bool print_enable_info = false;
+        bool print_enable_info    = false;
         bool print_enable_verbose = true;
 
         Context();
