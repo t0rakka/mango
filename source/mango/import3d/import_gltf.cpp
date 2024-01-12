@@ -718,7 +718,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             const float* data = matrix->data();
             node.transform = matrix4x4(data);
         }
-        else if (const auto* trs = std::get_if<fastgltf::Node::TRS>(&current.transform))
+        else if (const auto* trs = std::get_if<fastgltf::TRS>(&current.transform))
         {
             const float* t = trs->translation.data();
             const float* r = trs->rotation.data();
