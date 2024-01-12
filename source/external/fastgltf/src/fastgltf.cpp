@@ -42,6 +42,7 @@
 // MANGO FIX: Compiling for Apple M1
 #if defined(__clang__)
 #pragma GCC diagnostic ignored "-Wunused-lambda-capture"
+#pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
 #ifdef _MSC_VER
