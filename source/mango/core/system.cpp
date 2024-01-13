@@ -9,6 +9,19 @@
 #include <mango/simd/simd.hpp>
 #include <sstream>
 
+namespace
+{
+    using namespace mango;
+
+    u64 getThreadID()
+    {
+        static std::atomic<u64> thread_counter { 0 };
+        thread_local u64 id = ++thread_counter;
+        return id;
+    }
+
+} // namespace
+
 namespace mango
 {
 
@@ -288,6 +301,114 @@ namespace mango
         }
 
         return enable;
+    }
+
+    // ----------------------------------------------------------------------------
+    // Trace
+    // ----------------------------------------------------------------------------
+
+    Trace::Trace(std::string_view name)
+        : tid(getThreadID())
+        , time0(Time::us())
+        , name(name)
+    {
+        if (g_context.tracer.output)
+        {
+        }        
+    }
+
+    Trace::~Trace()
+    {
+        if (g_context.tracer.output)
+        {
+            time1 = Time::us();
+            g_context.tracer.append(*this);
+        }        
+    }
+
+    Tracer::Tracer()
+    {
+    }
+
+    Tracer::~Tracer()
+    {
+    }
+
+    void Tracer::start(Stream* stream)
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+
+        if (output)
+        {
+            // already running a trace
+            return;
+        }
+
+        buffer.clear();
+
+        // write header
+        fmt::format_to(std::back_inserter(buffer),
+            "{{\n\"traceEvents\": [");
+
+        output = stream;
+    }
+
+    void Tracer::stop()
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+
+        if (!output)
+        {
+            // not running a trace
+            return;
+        }
+
+        // remove last comma in the buffer
+        if (buffer.size() > 1)
+        {
+            char last = buffer.data()[buffer.size() - 1];
+            if (last == ',')
+            {
+                buffer.resize(buffer.size() - 1);
+            }
+        }
+
+        // write footer
+        fmt::format_to(std::back_inserter(buffer),
+            "\n]\n}}\n");
+
+        // TODO: flush buffer periodically so that we don't have this uber-write here in the end
+        output->write(buffer.data(), buffer.size());
+
+        output = nullptr;
+    }
+
+    void Tracer::append(const Trace& trace)
+    {
+        std::unique_lock<std::mutex> lock(mutex);
+
+        if (!output)
+        {
+            // not running a trace
+            return;
+        }
+
+        u64 pid = 1;
+        const char* ph = "X";
+
+        fmt::format_to(std::back_inserter(buffer),
+            "\n{{ \"pid\":{}, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"{}\", \"name\":\"{}\" }},",
+                pid, trace.tid, trace.time0, trace.time1 - trace.time0, ph, trace.name);
+    }
+
+    void startTrace(Stream* stream)
+    {
+        g_context.tracer.start(stream);
+    }
+
+    void stopTrace()
+    {
+        g_context.tracer.stop();
     }
 
     // ----------------------------------------------------------------------------

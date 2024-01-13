@@ -110,7 +110,7 @@ namespace mango
         //       this gives better performance overall UNTIL we have some practical
         //       use for the affinity (eg. dependent tasks using same cache)
         const bool affinity = false; //std::thread::hardware_concurrency() > 1;
-		if (affinity)
+        if (affinity)
         {
             set_current_thread_affinity(0);
         }

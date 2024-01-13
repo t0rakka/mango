@@ -9,6 +9,7 @@
 #include <mango/core/thread.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/core/string.hpp>
+#include <mango/core/stream.hpp>
 
 namespace mango
 {
@@ -21,11 +22,39 @@ namespace mango
         Verbose
     };
 
+    struct Trace
+    {
+        u64 tid;
+        u64 time0;
+        u64 time1;
+        std::string_view name;
+
+        Trace(std::string_view name);
+        ~Trace();
+    };
+
+    struct Tracer
+    {
+        fmt::memory_buffer buffer;
+        std::mutex mutex;
+        Stream* output { nullptr };
+        //std::atomic<size_t> trace_count { 0 };
+
+        Tracer();
+        ~Tracer();
+
+        void start(Stream* stream);
+        void stop();
+
+        void append(const Trace& trace);
+    };
+
     struct Context
     {
         mutable ThreadPool thread_pool;
 
         Timer timer;
+        Tracer tracer;
 
         bool print_enable_error   = true;
         bool print_enable_warning = false;
@@ -40,6 +69,9 @@ namespace mango
 
     std::string getPlatformInfo();
     std::string getSystemInfo();
+
+    void startTrace(Stream* stream);
+    void stopTrace();
 
     void printEnable(Print target, bool enable);
     bool isEnable(Print target);
