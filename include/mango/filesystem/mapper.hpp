@@ -68,22 +68,22 @@ namespace mango::filesystem
             return files[index];
         }
 
-        std::vector<FileInfo>::iterator begin()
+        auto begin()
         {
             return files.begin();
         }
 
-        std::vector<FileInfo>::iterator end()
+        auto end()
         {
             return files.end();
         }
 
-        std::vector<FileInfo>::const_iterator begin() const
+        auto begin() const
         {
             return files.begin();
         }
 
-        std::vector<FileInfo>::const_iterator end() const
+        auto end() const
         {
             return files.end();
         }

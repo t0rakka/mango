@@ -443,34 +443,79 @@ namespace mango
         return s;
     }
 
-    std::string removePrefix(const std::string& s, const std::string& prefix)
+    std::string removePrefix(std::string_view s, std::string_view prefix)
     {
-        std::string temp = s;
-        size_t pos = temp.find(prefix);
+        size_t offset = s.find(prefix) != std::string_view::npos ? prefix.length() : 0;
+        return std::string(s.begin() + offset, s.end());
+    }
 
-        if (pos != std::string::npos)
+    bool isPrefix(std::string_view s, std::string_view prefix)
+    {
+        return s.length() > prefix.length() && !s.find(prefix, 0);
+    }
+
+    bool isMatch(std::string_view text, std::string_view pattern)
+    {
+        // Based on this article:
+        // https://www.geeksforgeeks.org/wildcard-pattern-matching/
+        // Summary: O(n) wildcard pattern matching
+
+        const size_t textLength = text.length();
+        const size_t patternLength = pattern.length();
+
+        size_t textIndex = 0;
+        size_t patternIndex = 0;
+        size_t startIndex = std::string_view::npos;
+        size_t matchIndex = 0;
+
+        while (textIndex < textLength)
         {
-            temp.erase(pos, prefix.length());
+            if (patternIndex < patternLength && (pattern[patternIndex] == '?' || pattern[patternIndex] == text[textIndex]))
+            {
+                // Characters match or '?' in pattern matches any character.
+                ++textIndex;
+                ++patternIndex;
+            }
+            else if (patternIndex < patternLength && pattern[patternIndex] == '*')
+            {
+                // Wildcard character '*', mark the current position in the pattern and the text as a proper match.
+                startIndex = patternIndex;
+                matchIndex = textIndex;
+                ++patternIndex;
+            }
+            else if (startIndex != std::string_view::npos)
+            {
+                // No match, but a previous wildcard was found. Backtrack to the last '*' character position and try for a different match.
+                patternIndex = startIndex + 1;
+                textIndex = ++matchIndex;
+            }
+            else
+            {
+                // If none of the above cases comply, the pattern does not match.
+                return false;
+            }
         }
 
-        return temp;
-    }
-
-    bool isPrefix(const std::string& str, const std::string& prefix)
-    {
-        return str.length() > prefix.length() && !str.find(prefix, 0);
-    }
-
-    void replace(std::string& s, const std::string& from, const std::string& to)
-    {
-        if (!from.empty())
+        // Consume any remaining '*' characters in the given pattern.
+        while (patternIndex < patternLength && pattern[patternIndex] == '*')
         {
-            size_t start = 0;
-            while ((start = s.find(from, start)) != std::string::npos)
-            {
-                s.replace(start, from.length(), to);
-                start += to.length();
-            }
+            ++patternIndex;
+        }
+
+        // If we have reached the end of both the pattern and the text, the pattern matches the text.
+        return patternIndex == patternLength;
+    }
+
+    void replace(std::string& s, std::string_view from, std::string_view to)
+    {
+        if (from.empty())
+            return;
+
+        size_t start = 0;
+        while ((start = s.find(from, start)) != std::string::npos)
+        {
+            s.replace(start, from.length(), to);
+            start += to.length();
         }
     }
 

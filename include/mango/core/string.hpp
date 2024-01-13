@@ -29,9 +29,10 @@ namespace mango
     // string utilities
     std::string toLower(std::string s);
     std::string toUpper(std::string s);
-    std::string removePrefix(const std::string& s, const std::string& prefix);
-    bool isPrefix(const std::string& s, const std::string& prefix);
-    void replace(std::string& s, const std::string& from, const std::string& to);
+    std::string removePrefix(std::string_view s, std::string_view prefix);
+    bool isPrefix(std::string_view s, std::string_view prefix);
+    bool isMatch(std::string_view s, std::string_view pattern);
+    void replace(std::string& s, std::string_view from, std::string_view to);
     std::vector<std::string> split(const std::string& s, char delimiter);
     std::vector<std::string> split(const std::string& s, const char* delimiter);
     std::vector<std::string> split(const std::string& s, const std::string& delimiter);
