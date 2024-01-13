@@ -106,11 +106,11 @@ public:
         int version = getVersion();
         if (version < 430)
         {
-            printf("OpenGL 4.3 required (you have: %d.%d)\n", version / 100, (version % 100) / 10);
+            printLine("OpenGL 4.3 required (you have: {}.{})", version / 100, (version % 100) / 10);
             return;
         }
 
-        static const float vertices[] =
+        static const float vertices [] =
         {
             // position  texcoord
             -1.0f,-1.0f,  0.0f, 0.0f,
@@ -140,7 +140,7 @@ public:
         computeProgram = createComputeProgram();
         if (!computeProgram)
         {
-            printf("createComputeProgram() failed.\n");
+            printLine("createComputeProgram() failed.");
             return;
         }
 
@@ -150,7 +150,7 @@ public:
         renderProgram = opengl::createProgram(vs_render, fs_render);
         if (!renderProgram)
         {
-            printf("createProgram() failed.\n");
+            printLine("createProgram() failed.");
             return;
         }
 

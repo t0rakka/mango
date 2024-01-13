@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 
@@ -46,11 +46,11 @@ void test_fips()
 
     if (!memcmp(result, expected, 16))
     {
-        printf("Status: OK\n\n");
+        printLine("Status: OK\n");
     }
     else
     {
-        printf("Status: FAILED\n\n");
+        printLine("Status: FAILED\n");
     }
 }
 
@@ -109,7 +109,7 @@ void test_aes(int bits)
 
 int main()
 {
-    printf("%s\n", getPlatformInfo().c_str());
+    printLine(getPlatformInfo());
     test_fips();
     test_aes(128);
     test_aes(192);

@@ -1,9 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/filesystem/filesystem.hpp>
 #include <mango/core/pointer.hpp>
+#include <mango/core/system.hpp>
 #include <mango/image/surface.hpp>
 
 using namespace mango;
@@ -17,11 +18,13 @@ void example1()
     // Iterate all objects in the folder
     for (auto info : path)
     {
-        printf("filename: %s ", info.name.c_str());
+        std::string msg;
+        msg += fmt::format("filename: {} ", info.name);
         if (info.isDirectory())
-            printf("(folder)\n");
+            msg += "(folder)";
         else
-            printf("(%d bytes)\n", int(info.size));
+            msg += fmt::format("({} bytes)", info.size);
+        printLine(msg);
     }
 }
 

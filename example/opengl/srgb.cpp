@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -36,7 +36,7 @@ public:
         s.blit(0, 0, m_bitmap);
         unlock();
 
-        printf("screen: %d x %d (scale: %dx)\n", screen.x, screen.y, scale);
+        printLine("screen: {} x {} (scale: {}x)\n", screen.x, screen.y, scale);
     }
 
     void onKeyPress(Keycode code, u32 mask) override

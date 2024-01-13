@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -29,8 +29,8 @@ struct ImageAnimation
     {
         ImageDecodeStatus status = m_decoder.decode(m_bitmap);
         m_delay = (1000 * status.frame_delay_numerator) / status.frame_delay_denominator;
-        printf("current: %d, next: %d (%d ms)\n", 
-            status.current_frame_index, status.next_frame_index, int(m_delay));
+        printLine("current: {}, next: {} ({} ms)", 
+            status.current_frame_index, status.next_frame_index, m_delay);
     }
 };
 
@@ -90,7 +90,7 @@ int main(int argc, const char* argv[])
 {
     if (argc < 2)
     {
-        printf("Too few arguments. Usage: %s <filename>\n", argv[0]);
+        printLine("Too few arguments. Usage: {} <filename>", argv[0]);
         return 1;
     }
 

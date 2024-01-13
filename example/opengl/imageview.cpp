@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -57,8 +57,8 @@ public:
         s.blit(0, 0, m_bitmap);
         unlock();
 
-        printf("screen: %d x %d\n", screen.x, screen.y);
-        printf("Image: %d x %d\n", bitmap.width, bitmap.height);
+        printLine("screen: {} x {}", screen.x, screen.y);
+        printLine("Image: {} x {}", bitmap.width, bitmap.height);
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -118,7 +118,7 @@ int main(int argc, const char* argv[])
     Bitmap bitmap(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
     u64 time1 = mango::Time::ms();
-    printf("decode: %d ms\n", u32(time1 - time0));
+    printLine("decode: {} ms", time1 - time0);
 
     if (bitmap.width * bitmap.height > 0)
     {

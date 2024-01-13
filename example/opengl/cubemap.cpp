@@ -209,7 +209,7 @@ GLint getCompileStatus(GLuint shader)
     {
         GLchar infoLog[1024];
         glGetShaderInfoLog(shader, sizeof(infoLog), NULL, infoLog);
-        printf("%s", infoLog);
+        printLine(infoLog);
     }
 
     return success;
@@ -223,7 +223,7 @@ GLint getLinkStatus(GLuint program)
     {
         GLchar infoLog[1024];
         glGetProgramInfoLog(program, sizeof(infoLog), NULL, infoLog);
-        printf("%s", infoLog);
+        printLine(infoLog);
     }
 
     return success;
@@ -376,7 +376,7 @@ GLuint createTextureCube(const std::string& filename)
     }
 
     u64 time1 = mango::Time::us();
-    printf("createTextureCube: %d.%d ms\n", int(time1-time0)/1000, int(time1-time0)%1000);
+    printLine("createTextureCube: {}.{} ms", (time1 - time0) / 1000, (time1 - time0) % 1000);
 
     return texture;
 }

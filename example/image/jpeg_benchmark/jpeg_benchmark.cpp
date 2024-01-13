@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -29,22 +29,23 @@ size_t get_file_size(const char* filename)
 }
 
 static
-void print(u64 time)
+std::string format_time(u64 time)
 {
     if (time != NOT_AVAILABLE)
-        printf("%7d.%d ms ", int(time / 1000), int(time % 1000) / 100);
+        return fmt::format("{:7}.{} ms ", time / 1000, (time % 1000) / 100);
     else
-        printf("         N/A ");
+        return("         N/A ");
 }
 
 static
 void print(const char* name, u64 load, u64 save, u64 size)
 {
-    printf("%s", name);
-    print(load);
-    print(save);
-    printf("  %8d", int(size / 1024));
-    printf("\n");
+    std::string s;
+    s = fmt::format("{}", name);
+    s += format_time(load);
+    s += format_time(save);
+    s += fmt::format("  {:8}", size / 1024);
+    printLine(s);
 }
 
 static
@@ -57,7 +58,7 @@ void warmup(const char* filename)
 
     ImageDecoder decoder(memory, filename);
     ImageHeader header = decoder.header();
-    printf("image: %d x %d (%zu KB)\n", header.width, header.height, memory.size / 1024);
+    printLine("image: {} x {} ({} KB)", header.width, header.height, memory.size / 1024);
 }
 
 // ----------------------------------------------------------------------
@@ -121,10 +122,10 @@ size_t save_jpeg(const char* filename, const Surface& surface)
     struct jpeg_error_mgr jerr;
     cinfo.err = jpeg_std_error(&jerr);
 
-    FILE * outfile;
+    FILE* outfile;
     if ((outfile = fopen(filename, "wb")) == NULL)
     {
-        fprintf(stderr, "can't open %s\n", filename);
+        printLine(stderr, "can't open {}", filename);
         exit(1);
     }
     jpeg_stdio_dest(&cinfo, outfile);
@@ -184,7 +185,7 @@ Surface stb_load_jpeg(const char* filename)
     u8* rgb = stbi_load(filename, &width, &height, &components, 3);
     if (!rgb)
     {
-        printf("  decoding failure.\n");
+        printLine("  decoding failure.");
     }
 
     return Surface(width, height, Format(24, Format::UNORM, Format::RGB, 8, 8, 8), width * 3, rgb);
@@ -260,7 +261,7 @@ Surface jpegdec_load(const char* filename)
 
     if (!decoder.openRAM(const_cast<u8*>(file.data()), int(file.size()), jpegdec_draw))
     {
-        printf("JPEGDEC::openRAM() failed.\n");
+        printLine("JPEGDEC::openRAM() failed.");
         return Surface();
     }
 
@@ -272,7 +273,7 @@ Surface jpegdec_load(const char* filename)
 
     if (!decoder.decode(0, 0, 0))
     {
-        printf("JPEGDEC::decode() failed.\n");
+        printLine("JPEGDEC::decode() failed.");
         return Surface();
     }
 
@@ -320,7 +321,7 @@ size_t toojpeg_save(const char* filename, const Surface& surface)
     bool status = TooJpeg::writeJpeg(toojpeg_write_byte, surface.image, surface.width, surface.height);
     if (!status)
     {
-        printf("Encode failed.\n");
+        printLine("Encode failed.");
     }
 
     // flush temp buffer
@@ -407,7 +408,7 @@ void load_wuffs(const char* filename)
     wuffs_aux::DecodeImageResult res = wuffs_aux::DecodeImage(cb, input);
     if (!res.error_message.empty())
     {
-        printf("%s\n", res.error_message.c_str());
+        printLine(res.error_message);
     }
 }
 
@@ -421,11 +422,11 @@ int main(int argc, const char* argv[])
 {
     if (argc < 2)
     {
-        printf("Too few arguments. usage: <filename.jpg>\n");
+        printLine("Too few arguments. usage: <filename.jpg>");
         exit(1);
     }
 
-    printf("%s\n", getSystemInfo().c_str());
+    printLine(getSystemInfo());
 
     const char* filename = argv[1];
     warmup(filename);
@@ -449,9 +450,9 @@ int main(int argc, const char* argv[])
         }
     }
 
-    printf("-----------------------------------------------------\n");
-    printf("           decode(ms)   encode(ms)   size(KB)        \n");
-    printf("-----------------------------------------------------\n");
+    printLine("-----------------------------------------------------");
+    printLine("           decode(ms)   encode(ms)   size(KB)        ");
+    printLine("-----------------------------------------------------");
 
     u64 time0;
     u64 time1;
@@ -596,10 +597,10 @@ int main(int argc, const char* argv[])
             print("         ", load, save, size);
         }
 
-        printf("----------------------------------------------\n");
+        printLine("----------------------------------------------");
         print("average: ", load_total / (test_count + 1), save_total / (test_count + 1), size);
         print("lowest : ", load_lowest, save_lowest, size);
-        printf("----------------------------------------------\n");
+        printLine("----------------------------------------------");
     }
 
 }

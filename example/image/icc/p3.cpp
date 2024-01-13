@@ -6,9 +6,9 @@ using namespace mango;
 using namespace mango::filesystem;
 using namespace mango::image;
 
-void printSize(const File &f)
+void print(const File& file)
 {
-    printf("'%s' is %" PRIu64 " bytes\n", f.filename().c_str(), f.size());
+    printLine("'{}' is {} bytes", file.filename(), file.size());
 }
 
 int main(int argc, const char* argv[])
@@ -23,7 +23,7 @@ int main(int argc, const char* argv[])
     options.compression = 4;
     options.icc = icc;
 
-    printSize(icc);
+    print(icc);
 
     Bitmap bitmap(512, 512, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
@@ -36,8 +36,8 @@ int main(int argc, const char* argv[])
     bitmap.save("icc-mango.jpg", options);
     bitmap.save("icc-mango.png", options);
 
-    printSize(File("icc-mango.jpg"));
-    printSize(File("icc-mango.png"));
+    print(File("icc-mango.jpg"));
+    print(File("icc-mango.png"));
 
     // now we have jpeg, png showing srgb full red on left, more saturated p3 full red on right side.
 }

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -57,7 +57,9 @@ size_t save_none(const Bitmap& bitmap)
 template <typename Load, typename Save>
 void test(const char* name, Load load, Save save, Memory memory, const Bitmap& bitmap)
 {
-    printf("%s", name);
+    std::string msg;
+    msg += name;
+
     u64 time0 = Time::us();
 
     for (int i = 0; i < g_option_count; ++i)
@@ -77,17 +79,17 @@ void test(const char* name, Load load, Save save, Memory memory, const Bitmap& b
     u64 time2 = Time::us();
 
     if (load != load_none)
-        printf("  %7d.%d ", int((time1 - time0) / 1000), int((time1 - time0) % 10));
+        msg += fmt::format("  {:7}.{} ", (time1 - time0) / 1000, (time1 - time0) % 10);
     else
-        printf("        N/A ");
+        msg += "        N/A ";
 
     if (save != save_none)
-        printf("  %7d.%d ", int((time2 - time1) / 1000), int((time2 - time1) % 10));
+        msg += fmt::format("  {:7}.{} ", (time2 - time1) / 1000, (time2 - time1) % 10);
     else
-        printf("        N/A ");
+        msg += "        N/A ";
 
-    printf("  %8d", int(size / 1024));
-    printf("\n");
+    msg += fmt::format("  {:8}", size / 1024);
+    printLine(msg);
 }
 
 // ----------------------------------------------------------------------
@@ -313,7 +315,7 @@ unsigned char *getimage_libspng(unsigned char *buf, size_t size, size_t *out_siz
 
     if(ctx==NULL)
     {
-        printf("spng_ctx_new() failed\n");
+        printLine("spng_ctx_new() failed");
         return NULL;
     }
 
@@ -323,7 +325,7 @@ unsigned char *getimage_libspng(unsigned char *buf, size_t size, size_t *out_siz
 
     if(r)
     {
-        printf("spng_set_png_buffer() error: %s\n", spng_strerror(r));
+        printLine("spng_set_png_buffer() error: {}", spng_strerror(r));
         goto err;
     }
 
@@ -331,7 +333,7 @@ unsigned char *getimage_libspng(unsigned char *buf, size_t size, size_t *out_siz
 
     if(r)
     {
-        printf("spng_get_ihdr() error: %s\n", spng_strerror(r));
+        printLine("spng_get_ihdr() error: {}", spng_strerror(r));
         goto err;
     }
 
@@ -349,7 +351,7 @@ unsigned char *getimage_libspng(unsigned char *buf, size_t size, size_t *out_siz
 
     if(r)
     {
-        printf("spng_decode_image() error: %s\n", spng_strerror(r));
+        printLine("spng_decode_image() error: {}", spng_strerror(r));
         goto err;
     }
 
@@ -403,7 +405,7 @@ size_t save_spng(const Bitmap& bitmap)
     int r = spng_encode_image(enc, image, image_size, SPNG_FMT_PNG, SPNG_ENCODE_FINALIZE);
     if(r)
     {
-        printf("spng_encode_image() error: %s\n", spng_strerror(r));
+        printLine("spng_encode_image() error: {}", spng_strerror(r));
         spng_ctx_free(enc);
         return 0;
     }
@@ -414,7 +416,7 @@ size_t save_spng(const Bitmap& bitmap)
     png_buf = spng_get_png_buffer(enc, &png_size, &r);
     if(png_buf == NULL)
     {
-        printf("spng_get_png_buffer() error: %s\n", spng_strerror(r));
+        printLine("spng_get_png_buffer() error: {}", spng_strerror(r));
     }
 
     OutputFileStream file(filename);
@@ -514,7 +516,7 @@ void load_fpng(Memory memory)
 
     if (error)
     {
-        printf("%s\n", error);
+        printLine(error);
     }
 }
 
@@ -623,7 +625,7 @@ void load_wuffs(Memory memory)
     wuffs_aux::DecodeImageResult res = wuffs_aux::DecodeImage(cb, input);
     if (!res.error_message.empty())
     {
-        printf("%s\n", res.error_message.c_str());
+        printLine(res.error_message);
     }
 }
 
@@ -669,11 +671,11 @@ int main(int argc, const char* argv[])
 {
     if (argc < 2)
     {
-        printf("Too few arguments. usage: <filename.png>\n");
+        printLine("Too few arguments. usage: <filename.png>");
         exit(1);
     }
 
-    printf("%s\n", getSystemInfo().c_str());
+    printLine(getSystemInfo());
 
     const char* filename = argv[1];
 
@@ -702,10 +704,10 @@ int main(int argc, const char* argv[])
     File file(filename);
     Buffer buffer(file);
 
-    printf("image: %d x %d (%d KB)\n", bitmap.width, bitmap.height, int(file.size() / 1024));
-    printf("---------------------------------------------------\n");
-    printf("          decode(ms)  encode(ms)   size(KB)        \n");
-    printf("---------------------------------------------------\n");
+    printLine("image: {} x {} ({} KB)", bitmap.width, bitmap.height, file.size() / 1024);
+    printLine("---------------------------------------------------");
+    printLine("          decode(ms)  encode(ms)   size(KB)        ");
+    printLine("---------------------------------------------------");
 
 #if defined ENABLE_LIBPNG
     test("libpng:  ", load_libpng, save_libpng, buffer, bitmap);

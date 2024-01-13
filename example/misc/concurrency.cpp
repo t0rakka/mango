@@ -268,7 +268,7 @@ void example8()
 
     if (counter != 1000)
     {
-        printf("counter: %d\n", counter);
+        printLine("counter: {}", counter);
     }
 }
 

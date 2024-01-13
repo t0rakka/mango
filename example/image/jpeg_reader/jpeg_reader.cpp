@@ -45,7 +45,7 @@ struct State
             ImageDecodeStatus status = decoder.decode(bitmap, options);
             if (!status)
             {
-                printf("  ERROR: %s\n", status.info.c_str());
+                printLine("  ERROR: {}", status.info);
             }
 
             input_bytes = memory.size;
@@ -56,9 +56,7 @@ struct State
         total_input_bytes += input_bytes;
         total_image_bytes += image_bytes;
 
-        printf("Decoded: \"%s\" (%zu KB -> %zu KB).\n",
-            filename.c_str(),
-            input_bytes >> 10, image_bytes >> 10);
+        printLine("Decoded: \"{}\" ({} KB -> {} KB).", filename, input_bytes >> 10, image_bytes >> 10);
     }
 
     void process(const Path& path, bool mmap, bool multithread)
@@ -121,13 +119,13 @@ void test_jpeg(const std::string& folder, bool mmap, bool multithread)
 
     u64 time1 = Time::ms();
 
-    printf("\n%s\n", getSystemInfo().c_str());
-    printf("MMAP: %s\n", mmap ? "ENABLED" : "DISABLED");
-    printf("MT: %s\n", multithread ? "ENABLED" : "DISABLED");
-    printf("\n");
-    printf("Decoded %zu files in %d ms (%zu MB -> %zu MB).\n",
+    printLine("\n{}", getSystemInfo());
+    printLine("MMAP: {}", mmap ? "ENABLED" : "DISABLED");
+    printLine("MT: {}", multithread ? "ENABLED" : "DISABLED");
+    printLine("");
+    printLine("Decoded {} files in {} ms ({} MB -> {} MB).",
         size_t(state.total_input_files),
-        u32(time1 - time0),
+        time1 - time0,
         state.total_input_bytes >> 20,
         state.total_image_bytes >> 20);
 }
@@ -140,7 +138,7 @@ int main(int argc, const char* argv[])
 {
     if (argc < 2)
     {
-        printf("Too few arguments. Usage: %s <folder>\n", argv[0]);
+        printLine("Too few arguments. Usage: {} <folder>", argv[0]);
         return 1;
     }
 

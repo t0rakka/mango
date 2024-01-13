@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -10,22 +10,22 @@ constexpr u64 MB = 1 << 20;
 
 void print(u32 value, u32 reference)
 {
-    printf("    0x%.8x : %s\n", value, value == reference ? "OK" : "FAILED");
+    printLine("    {:#010x} : {}", value, value == reference ? "OK" : "FAILED");
 }
 
 void print(ConstMemory buffer, const char* name, u64 time)
 {
     u64 x = buffer.size * 1000000; // buffer size in bytes * microseconds_in_second
-    printf("%s %5d.%1d ms (%6d MB/s )\n", name,
-        u32(time / 1000),
-        u32(((time + 50) / 100) % 10),
-        u32(x / (time * MB)));
+    printLine("{} {:5}.{:1} ms ({:6} MB/s )", name,
+        time / 1000,
+        ((time + 50) / 100) % 10,
+        x / (time * MB));
 }
 
 u64 test_crc32(ConstMemory buffer)
 {
-    printf("CRC32 test vectors: \n");
-    printf("\n");
+    printLine("CRC32 test vectors: ");
+    printLine("");
 
     const u8 name [] = "123456789";
 
@@ -45,9 +45,9 @@ u64 test_crc32c(ConstMemory buffer)
 {
     // RFC 3720 / iSCSI
 
-    printf("\n");
-    printf("CRC32C test vectors: \n");
-    printf("\n");
+    printLine("");
+    printLine("CRC32C test vectors: ");
+    printLine("");
 
     const u8 vec0 [] =
     {
@@ -81,9 +81,9 @@ u64 test_crc32c(ConstMemory buffer)
 
 u64 test_adler32(ConstMemory buffer)
 {
-    printf("\n");
-    printf("ADLER32 test vectors: \n");
-    printf("\n");
+    printLine("");
+    printLine("ADLER32 test vectors: ");
+    printLine("");
 
     const u8 vec0 [] =
     {
@@ -117,7 +117,7 @@ u64 test_adler32(ConstMemory buffer)
 
 int main()
 {
-    printf("%s\n", getPlatformInfo().c_str());
+    printLine(getPlatformInfo());
 
     constexpr u64 size = 256 * MB;
     Buffer buffer(size);
@@ -131,9 +131,9 @@ int main()
     u64 time1 = test_crc32c(buffer);
     u64 time2 = test_adler32(buffer);
 
-    printf("\n");
+    printLine("");
     print(buffer, "crc32:         ", time0);
     print(buffer, "crc32c:        ", time1);
     print(buffer, "adler32:       ", time2);
-    printf("\n");
+    printLine("");
 }

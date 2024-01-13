@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 
@@ -54,9 +54,9 @@ void compression_example(size_t size)
     bool correct = std::memcmp(buffer, output, size) == 0;
     const char* status = correct ? "PASSED" : "FAILED";
 
-    printf("compressed %zu bytes to %zu bytes in %d us (%.1f MB/s).\n", size, bytes, u32(time1 - time0), rate0);
-    printf("decompressed %zu bytes to %zu bytes in %d us (%.1f MB/s).\n", bytes, size, u32(time2 - time1), rate1);
-    printf("status: %s\n", status);
+    printLine("compressed {} bytes to {} bytes in {} us ({:.1f} MB/s).", size, bytes, time1 - time0, rate0);
+    printLine("decompressed {} bytes to {} bytes in {} us ({:.1f} MB/s).", bytes, size, time2 - time1, rate1);
+    printLine("status: {}", status);
 }
 
 int main(int argc, const char* argv[])
