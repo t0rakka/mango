@@ -433,6 +433,7 @@ int main(int argc, const char* argv[])
 
     int test_count = 0;
     bool multithread = true;
+    bool tracing = false;
 
     for (int i = 2; i < argc; ++i)
     {
@@ -443,6 +444,10 @@ int main(int argc, const char* argv[])
         else if (!strcmp(argv[i], "--debug"))
         {
             printEnable(Print::Info, true);
+        }
+        else if (!strcmp(argv[i], "--trace"))
+        {
+            tracing = true;
         }
         else
         {
@@ -554,7 +559,20 @@ int main(int argc, const char* argv[])
     decode_options.simd = true;
     decode_options.multithread = multithread;
 
+    std::unique_ptr<filesystem::OutputFileStream> output;
+
+    if (tracing)
+    {
+        output = std::make_unique<filesystem::OutputFileStream>("result.trace");
+        startTrace(output.get());
+    }
+
     Bitmap bitmap(filename, decode_options);
+
+    if (tracing)
+    {
+        stopTrace();
+    }
 
     time1 = Time::us();
 

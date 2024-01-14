@@ -146,6 +146,7 @@ int main(int argc, const char* argv[])
 
     bool mmap = false;
     bool multithread = false;
+    bool tracing = false;
 
     for (int i = 2; i < argc; ++i)
     {
@@ -161,7 +162,24 @@ int main(int argc, const char* argv[])
         {
             printEnable(Print::Info, true);
         }
+        else if (!strcmp(argv[i], "--trace"))
+        {
+            tracing = true;
+        }
+    }
+
+    std::unique_ptr<filesystem::OutputFileStream> output;
+
+    if (tracing)
+    {
+        output = std::make_unique<filesystem::OutputFileStream>("result.trace");
+        startTrace(output.get());
     }
 
     test_jpeg(pathname, mmap, multithread);
+
+    if (tracing)
+    {
+        stopTrace();
+    }
 }

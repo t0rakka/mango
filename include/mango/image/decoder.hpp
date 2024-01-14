@@ -88,6 +88,8 @@ namespace mango::image
     class ImageDecoderInterface : protected NonCopyable
     {
     public:
+        std::string name;
+
         ImageDecoderInterface() = default;
         virtual ~ImageDecoderInterface() = default;
 

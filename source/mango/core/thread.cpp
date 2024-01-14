@@ -229,8 +229,15 @@ namespace mango
                 // check if the task is cancelled
                 if (!queue->cancelled)
                 {
-                    // process task
-                    task.func();
+                    if (queue->name.empty())
+                    {
+                        task.func();
+                    }
+                    else
+                    {
+                        Trace trace("task", queue->name);
+                        task.func();
+                    }
                 }
 
                 --queue->task_counter;
@@ -262,7 +269,7 @@ namespace mango
 
     ConcurrentQueue::ConcurrentQueue()
         : m_pool(ThreadPool::getInstance())
-        , m_queue(&m_pool, int(Priority::NORMAL), "concurrent.default")
+        , m_queue(&m_pool, int(Priority::NORMAL), "")
     {
     }
 
@@ -274,7 +281,7 @@ namespace mango
 
     ConcurrentQueue::ConcurrentQueue(ThreadPool& pool)
         : m_pool(pool)
-        , m_queue(&m_pool, int(Priority::NORMAL), "concurrent.default")
+        , m_queue(&m_pool, int(Priority::NORMAL), "")
     {
     }
 

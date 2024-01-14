@@ -27,16 +27,17 @@ namespace mango
         u64 tid;
         u64 time0;
         u64 time1;
+        std::string_view category;
         std::string_view name;
 
-        Trace(std::string_view name);
+        Trace(std::string_view category, std::string_view name);
         ~Trace();
     };
 
     struct Tracer
     {
-        fmt::memory_buffer buffer;
         std::mutex mutex;
+        fmt::memory_buffer buffer;
         Stream* output { nullptr };
         //std::atomic<size_t> trace_count { 0 };
 

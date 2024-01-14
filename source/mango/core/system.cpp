@@ -30,7 +30,7 @@ namespace mango
     // ----------------------------------------------------------------------------
 
     Context::Context()
-        : thread_pool(ThreadPool::getHardwareConcurrency())
+        : thread_pool(std::max(size_t(1), ThreadPool::getHardwareConcurrency() - 1))
         , timer()
     {
     }
@@ -307,23 +307,24 @@ namespace mango
     // Trace
     // ----------------------------------------------------------------------------
 
-    Trace::Trace(std::string_view name)
+    Trace::Trace(std::string_view category, std::string_view name)
         : tid(getThreadID())
         , time0(Time::us())
+        , category(category)
         , name(name)
     {
-        if (g_context.tracer.output)
+        //if (g_context.tracer.output)
         {
-        }        
+        }
     }
 
     Trace::~Trace()
     {
-        if (g_context.tracer.output)
+        //if (g_context.tracer.output)
         {
             time1 = Time::us();
             g_context.tracer.append(*this);
-        }        
+        }
     }
 
     Tracer::Tracer()
@@ -332,6 +333,7 @@ namespace mango
 
     Tracer::~Tracer()
     {
+        stop();
     }
 
     void Tracer::start(Stream* stream)
@@ -378,6 +380,7 @@ namespace mango
             "\n]\n}}\n");
 
         // TODO: flush buffer periodically so that we don't have this uber-write here in the end
+        // TODO: generate json formatted output in writer thread (use two buffers, one for write one for trace)
         output->write(buffer.data(), buffer.size());
 
         output = nullptr;
@@ -397,8 +400,8 @@ namespace mango
         const char* ph = "X";
 
         fmt::format_to(std::back_inserter(buffer),
-            "\n{{ \"pid\":{}, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"{}\", \"name\":\"{}\" }},",
-                pid, trace.tid, trace.time0, trace.time1 - trace.time0, ph, trace.name);
+            "\n{{ \"cat\":\"{}\", \"pid\":{}, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"{}\", \"name\":\"{}\" }},",
+                trace.category, pid, trace.tid, trace.time0, trace.time1 - trace.time0, ph, trace.name);
     }
 
     void startTrace(Stream* stream)
