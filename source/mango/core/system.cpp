@@ -30,9 +30,11 @@ namespace mango
     // ----------------------------------------------------------------------------
 
     Context::Context()
-        : thread_pool(std::max(size_t(1), ThreadPool::getHardwareConcurrency() - 1))
+        : thread_pool(ThreadPool::getHardwareConcurrency())
         , timer()
     {
+        // get first ID to main thread
+        getThreadID();
     }
 
     Context::~Context()
