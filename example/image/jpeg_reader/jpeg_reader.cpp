@@ -81,23 +81,21 @@ struct State
                     {
                         queue.enqueue([this, filename, multithread]
                         {
-                            // decode directly from memory mapped file
                             File file(filename);
+
+                            // decode directly from memory mapped file
                             decode(file, filename, multithread);
                         });
                     }
                     else
                     {
-                        // serialize file reading
-                        InputFileStream file(filename);
-                        Buffer buffer(file);
-                        Memory memory = buffer.acquire();
-
-                        queue.enqueue([this, memory, filename, multithread]
+                        queue.enqueue([this, filename, multithread]
                         {
+                            InputFileStream file(filename);
+                            Buffer buffer(file);
+
                             // decode from a buffer
-                            decode(memory, filename, multithread);
-                            Buffer::release(memory);
+                            decode(buffer, filename, multithread);
                         });
                     }
                 }
