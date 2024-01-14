@@ -22,6 +22,14 @@ namespace mango
         Verbose
     };
 
+    struct TraceThread
+    {
+        std::string name;
+        u32 tid;
+
+        TraceThread(const std::string& name);
+    };
+
     struct Trace
     {
         u32 tid;
@@ -39,6 +47,7 @@ namespace mango
         std::mutex mutex;
         fmt::memory_buffer buffer;
         Stream* output { nullptr };
+        std::vector<TraceThread> threads;
 
         Tracer();
         ~Tracer();

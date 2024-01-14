@@ -34,7 +34,7 @@ namespace mango
         , timer()
     {
         // get first ID to main thread
-        getThreadID();
+        TraceThread th("MainThread");
     }
 
     Context::~Context()
@@ -309,24 +309,26 @@ namespace mango
     // Trace
     // ----------------------------------------------------------------------------
 
+    TraceThread::TraceThread(const std::string& name)
+        : name(name)
+    {
+        std::unique_lock<std::mutex> lock(g_context.tracer.mutex);
+        tid = getThreadID();
+        g_context.tracer.threads.push_back(*this);
+    }
+
     Trace::Trace(std::string_view category, std::string_view name)
         : tid(getThreadID())
         , time0(Time::us())
         , category(category)
         , name(name)
     {
-        //if (g_context.tracer.output)
-        {
-        }
     }
 
     Trace::~Trace()
     {
-        //if (g_context.tracer.output)
-        {
-            time1 = Time::us();
-            g_context.tracer.append(*this);
-        }
+        time1 = Time::us();
+        g_context.tracer.append(*this);
     }
 
     Tracer::Tracer()
@@ -399,11 +401,19 @@ namespace mango
         }
 
         u64 pid = 1;
-        const char* ph = "X";
+
+        for (const auto& th : threads)
+        {
+            fmt::format_to(std::back_inserter(buffer),
+                "\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":{}, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }},",
+                    pid, th.tid, th.name);
+        }
+
+        threads.clear();
 
         fmt::format_to(std::back_inserter(buffer),
-            "\n{{ \"cat\":\"{}\", \"pid\":{}, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"{}\", \"name\":\"{}\" }},",
-                trace.category, pid, trace.tid, trace.time0, trace.time1 - trace.time0, ph, trace.name);
+            "\n{{ \"cat\":\"{}\", \"pid\":{}, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"X\", \"name\":\"{}\" }},",
+                trace.category, pid, trace.tid, trace.time0, trace.time1 - trace.time0, trace.name);
     }
 
     void startTrace(Stream* stream)
