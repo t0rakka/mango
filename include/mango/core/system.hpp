@@ -24,7 +24,7 @@ namespace mango
 
     struct Trace
     {
-        u64 tid;
+        u32 tid;
         u64 time0;
         u64 time1;
         std::string_view category;
@@ -39,7 +39,6 @@ namespace mango
         std::mutex mutex;
         fmt::memory_buffer buffer;
         Stream* output { nullptr };
-        //std::atomic<size_t> trace_count { 0 };
 
         Tracer();
         ~Tracer();

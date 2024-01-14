@@ -13,10 +13,10 @@ namespace
 {
     using namespace mango;
 
-    u64 getThreadID()
+    u32 getThreadID()
     {
-        static std::atomic<u64> thread_counter { 0 };
-        thread_local u64 id = ++thread_counter;
+        static std::atomic<u32> thread_counter { 0 };
+        thread_local u32 id = ++thread_counter;
         return id;
     }
 
