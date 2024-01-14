@@ -12,11 +12,43 @@ using namespace mango::image;
 // pipelined jpeg reader
 // -----------------------------------------------------------------
 
-static
-inline bool isJPEG(const FileInfo& node)
+static inline 
+bool isJPEG(const FileInfo& node)
 {
     std::string ext = mango::toLower(filesystem::getExtension(node.name));
     return !node.isDirectory() && (ext == ".jpg" || ext == ".jpeg");
+}
+
+static
+void scan(const Path& path, FileIndex& index)
+{
+    for (auto node : path)
+    {
+        if (node.isDirectory() && !node.isContainer())
+        {
+            Path child(path, node.name);
+            scan(child, index);
+        }
+        else
+        {
+            if (isJPEG(node))
+            {
+                FileInfo info;
+
+                info.size = node.size;
+                info.flags = node.flags;
+                info.name = path.pathname() + node.name;
+
+                index.files.push_back(info);
+            }
+        }
+    }
+
+    // sort files by size; the largest decoding tasks should start first
+    std::sort(index.begin(), index.end(), [] (const FileInfo& a, const FileInfo& b)
+    {
+        return a.size > b.size;
+    });
 }
 
 struct State
@@ -59,46 +91,28 @@ struct State
         printLine("Decoded: \"{}\" ({} KB -> {} KB).", filename, input_bytes >> 10, image_bytes >> 10);
     }
 
-    void process(const Path& path, bool mmap, bool multithread)
+    void process(const FileIndex& index, bool mmap, bool multithread)
     {
-        for (auto node : path)
+        for (auto node : index)
         {
-            if (node.isDirectory())
+            const std::string& filename = node.name;
+
+            if (mmap)
             {
-                if (!node.isContainer())
+                queue.enqueue([this, filename, multithread]
                 {
-                    Path child(path, node.name);
-                    process(child, mmap, multithread);
-                }
+                    File file(filename);
+                    decode(file, filename, multithread);
+                });
             }
             else
             {
-                if (isJPEG(node))
+                queue.enqueue([this, filename, multithread]
                 {
-                    std::string filename = path.pathname() + node.name;
-
-                    if (mmap)
-                    {
-                        queue.enqueue([this, filename, multithread]
-                        {
-                            File file(filename);
-
-                            // decode directly from memory mapped file
-                            decode(file, filename, multithread);
-                        });
-                    }
-                    else
-                    {
-                        queue.enqueue([this, filename, multithread]
-                        {
-                            InputFileStream file(filename);
-                            Buffer buffer(file);
-
-                            // decode from a buffer
-                            decode(buffer, filename, multithread);
-                        });
-                    }
-                }
+                    InputFileStream file(filename);
+                    Buffer buffer(file);
+                    decode(buffer, filename, multithread);
+                });
             }
         }
     }
@@ -106,13 +120,15 @@ struct State
 
 void test_jpeg(const std::string& folder, bool mmap, bool multithread)
 {
-    State state;
-
     u64 time0 = Time::ms();
 
     Path path(folder);
 
-    state.process(path, mmap, multithread);
+    FileIndex index;
+    scan(path, index);
+
+    State state;
+    state.process(index, mmap, multithread);
     state.queue.wait();
 
     u64 time1 = Time::ms();
