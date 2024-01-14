@@ -3043,7 +3043,7 @@ namespace
 
             if (multithread)
             {
-                ConcurrentQueue q;
+                ConcurrentQueue q("png:process", Priority::HIGH);
 
                 for (int y = 0; y < height; ++y)
                 {
@@ -3151,7 +3151,7 @@ namespace
             // pLLD decoding
             // ----------------------------------------------------------------------
 
-            ConcurrentQueue q;
+            ConcurrentQueue q("png:decode", Priority::HIGH);
 
             u32 y = 0;
             auto decompress = deflate_zlib::decompress;

@@ -29,6 +29,7 @@ using namespace mango::image;
 // options
 // ----------------------------------------------------------------------
 
+bool g_option_tracing = false;
 bool g_option_multithread = true;
 int g_option_compression = 4;
 int g_option_count = 1;
@@ -647,7 +648,20 @@ void load_mango(Memory memory)
     ImageDecodeOptions options;
     options.multithread = g_option_multithread;
 
+    std::unique_ptr<filesystem::OutputFileStream> output;
+
+    if (g_option_tracing)
+    {
+        output = std::make_unique<filesystem::OutputFileStream>("result.trace");
+        startTrace(output.get());
+    }
+
     decoder.decode(bitmap, options);
+
+    if (g_option_tracing)
+    {
+        stopTrace();
+    }
 }
 
 size_t save_mango(const Bitmap& bitmap)
@@ -692,6 +706,10 @@ int main(int argc, const char* argv[])
         else if (!strcmp(argv[i], "--debug"))
         {
             printEnable(Print::Info, true);
+        }
+        else if (!strcmp(argv[i], "--trace"))
+        {
+            g_option_tracing = true;
         }
         else
         {
