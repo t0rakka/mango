@@ -86,11 +86,11 @@ namespace
     // create_surface()
     // ----------------------------------------------------------------------------
 
-    Surface create_surface(ConstMemory memory, const std::string& extension, const Format* format, const ImageDecodeOptions& options)
+    Surface create_surface(ConstMemory memory, const std::string& filename, const Format* format, const ImageDecodeOptions& options)
     {
         Surface surface;
 
-        ImageDecoder decoder(memory, extension);
+        ImageDecoder decoder(memory, filename);
         if (decoder.isDecoder())
         {
             ImageHeader header = decoder.header();
@@ -460,22 +460,22 @@ namespace mango::image
     }
 
     Bitmap::Bitmap(const filesystem::File& file, const ImageDecodeOptions& options)
-        : Surface(create_surface(file, filesystem::getExtension(file.filename()), nullptr, options))
+        : Surface(create_surface(file, file.filename(), nullptr, options))
     {
     }
 
     Bitmap::Bitmap(const filesystem::File& file, const Format& format, const ImageDecodeOptions& options)
-        : Surface(create_surface(file, filesystem::getExtension(file.filename()), &format, options))
+        : Surface(create_surface(file, file.filename(), &format, options))
     {
     }
 
     Bitmap::Bitmap(const std::string& filename, const ImageDecodeOptions& options)
-        : Surface(create_surface(filesystem::File(filename), filesystem::getExtension(filename), nullptr, options))
+        : Surface(create_surface(filesystem::File(filename), filename, nullptr, options))
     {
     }
 
     Bitmap::Bitmap(const std::string& filename, const Format& format, const ImageDecodeOptions& options)
-        : Surface(create_surface(filesystem::File(filename), filesystem::getExtension(filename), &format, options))
+        : Surface(create_surface(filesystem::File(filename), filename, &format, options))
     {
     }
 

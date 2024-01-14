@@ -279,7 +279,7 @@ namespace mango::image
         if (create)
         {
             ImageDecoderInterface* x = create(memory);
-            x->name = fmt::format("ImageDecoder:{}", filename);
+            x->name = fmt::format("ImageDecoder:{}", filesystem::removePath(filename));
             m_interface.reset(x);
         }
     }
@@ -315,7 +315,7 @@ namespace mango::image
 
         if (m_interface)
         {
-            Trace trace("", m_interface->name);
+            Trace trace("ImageDecoder", m_interface->name);
             status = m_interface->decode(dest, options, level, depth, face);
             if (!status)
             {

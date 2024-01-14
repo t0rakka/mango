@@ -235,7 +235,7 @@ namespace mango
                     }
                     else
                     {
-                        Trace trace("task", queue->name);
+                        Trace trace("Task", queue->name);
                         task.func();
                     }
                 }
