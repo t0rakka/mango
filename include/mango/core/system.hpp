@@ -60,10 +60,10 @@ namespace mango
 
     struct Context
     {
-        mutable ThreadPool thread_pool;
-
         Timer timer;
         Tracer tracer;
+
+        mutable ThreadPool thread_pool;
 
         bool print_enable_error   = true;
         bool print_enable_warning = false;

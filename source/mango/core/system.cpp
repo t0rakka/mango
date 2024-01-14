@@ -30,8 +30,9 @@ namespace mango
     // ----------------------------------------------------------------------------
 
     Context::Context()
-        : thread_pool(ThreadPool::getHardwareConcurrency())
-        , timer()
+        : timer()
+        , tracer()
+        , thread_pool(ThreadPool::getHardwareConcurrency())
     {
         // get first ID to main thread
         TraceThread th("MainThread");
@@ -407,13 +408,21 @@ namespace mango
             fmt::format_to(std::back_inserter(buffer),
                 "\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":{}, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }},",
                     pid, th.tid, th.name);
+
+            fmt::format_to(std::back_inserter(buffer),
+                "\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":{}, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }},",
+                    pid, th.tid + 0x10000, th.name + " tasks:");
         }
 
         threads.clear();
 
+        u32 offset = 0;
+        if (trace.category == "Task")
+            offset = 0x10000;
+
         fmt::format_to(std::back_inserter(buffer),
             "\n{{ \"cat\":\"{}\", \"pid\":{}, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"X\", \"name\":\"{}\" }},",
-                trace.category, pid, trace.tid, trace.time0, trace.time1 - trace.time0, trace.name);
+                trace.category, pid, trace.tid + offset, trace.time0, trace.time1 - trace.time0, trace.name);
     }
 
     void startTrace(Stream* stream)

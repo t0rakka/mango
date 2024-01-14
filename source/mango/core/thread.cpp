@@ -172,7 +172,7 @@ namespace mango
 
     void ThreadPool::thread(size_t threadID)
     {
-        std::string name = fmt::format("TP#{:3}", threadID + 1);
+        std::string name = fmt::format("TP#{:03}", threadID + 1);
         TraceThread th(name);
 
         auto time0 = high_resolution_clock::now();
