@@ -24,8 +24,8 @@ namespace mango
 
     struct TraceThread
     {
-        std::string name;
         u32 tid;
+        std::string name;
 
         TraceThread(const std::string& name);
     };

@@ -3145,6 +3145,8 @@ namespace
 
         Memory buffer(temp + bytes_per_line, buffer_size);
 
+        bool is_inline_process = false;
+
         if (m_parallel_height)
         {
             // ----------------------------------------------------------------------
@@ -3152,6 +3154,13 @@ namespace
             // ----------------------------------------------------------------------
 
             ConcurrentQueue q("png:decode", Priority::HIGH);
+
+            const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
+
+            if ((m_parallel_flags & 1) && !m_interlace && bpp <= 8)
+            {
+                is_inline_process = true;
+            }
 
             u32 y = 0;
             auto decompress = deflate_zlib::decompress;
@@ -3170,6 +3179,12 @@ namespace
                     if (!result)
                     {
                         //printLine(Print::Info, "  {}", result.info);
+                    }
+
+                    if (is_inline_process)
+                    {
+                        FilterDispatcher filter(bpp);
+                        process_range(image, buffer, stride, width, filter, y, y + h);
                     }
                 });
 
@@ -3251,7 +3266,10 @@ namespace
         }
 
         // process image
-        process(image, width, height, stride, buffer, multithread);
+        if (!is_inline_process)
+        {
+            process(image, width, height, stride, buffer, multithread);
+        }
 
         if (m_icc.size() > 0 && use_icc)
         {

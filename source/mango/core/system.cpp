@@ -311,10 +311,10 @@ namespace mango
     // ----------------------------------------------------------------------------
 
     TraceThread::TraceThread(const std::string& name)
-        : name(name)
+        : tid(getThreadID())
+        , name(name)
     {
         std::unique_lock<std::mutex> lock(g_context.tracer.mutex);
-        tid = getThreadID();
         g_context.tracer.threads.push_back(*this);
     }
 
