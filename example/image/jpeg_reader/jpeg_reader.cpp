@@ -103,7 +103,6 @@ struct State
             {
                 queue.enqueue([this, filename, multithread]
                 {
-                    Trace trace("", "task:decode");
                     File file(filename);
                     decode(file, filename, multithread);
                 });
@@ -112,11 +111,10 @@ struct State
             {
                 queue.enqueue([this, filename, multithread]
                 {
-                    Trace trace1("", "task:decode");
-                    Trace trace2("", fmt::format("load:{}", filesystem::removePath(filename)));
+                    Trace trace("", fmt::format("load:{}", filesystem::removePath(filename)));
                     InputFileStream file(filename);
                     Buffer buffer(file);
-                    trace2.stop();
+                    trace.stop();
 
                     decode(buffer, filename, multithread);
                 });
