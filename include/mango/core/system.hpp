@@ -35,11 +35,13 @@ namespace mango
         u32 tid;
         u64 time0;
         u64 time1;
-        std::string_view category;
-        std::string_view name;
+        std::string category;
+        std::string name;
 
-        Trace(std::string_view category, std::string_view name);
+        Trace(const std::string& category, const std::string& name);
         ~Trace();
+
+        void stop();
     };
 
     struct Tracer

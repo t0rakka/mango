@@ -318,7 +318,7 @@ namespace mango
         g_context.tracer.threads.push_back(*this);
     }
 
-    Trace::Trace(std::string_view category, std::string_view name)
+    Trace::Trace(const std::string& category, const std::string& name)
         : tid(getThreadID())
         , time0(Time::us())
         , category(category)
@@ -328,8 +328,17 @@ namespace mango
 
     Trace::~Trace()
     {
-        time1 = Time::us();
-        g_context.tracer.append(*this);
+        stop();
+    }
+
+    void Trace::stop()
+    {
+        if (tid)
+        {
+            time1 = Time::us();
+            g_context.tracer.append(*this);
+            tid = 0;
+        }
     }
 
     Tracer::Tracer()
