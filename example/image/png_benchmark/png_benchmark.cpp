@@ -2,7 +2,9 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include <mango/mango.hpp>
+#include <mango/core/core.hpp>
+#include <mango/image/image.hpp>
+#include <mango/filesystem/filesystem.hpp>
 
 using namespace mango;
 using namespace mango::filesystem;
@@ -32,7 +34,6 @@ using namespace mango::image;
 bool g_option_tracing = false;
 bool g_option_multithread = true;
 int g_option_compression = 4;
-int g_option_count = 1;
 
 // ----------------------------------------------------------------------
 // utils
@@ -63,20 +64,10 @@ void test(const char* name, Load load, Save save, Memory memory, const Bitmap& b
 
     u64 time0 = Time::us();
 
-    for (int i = 0; i < g_option_count; ++i)
-    {
-        load(memory);
-    }
-
+    load(memory);
     u64 time1 = Time::us();
 
-    size_t size = 0;
-
-    for (int i = 0; i < g_option_count; ++i)
-    {
-        size = save(bitmap);
-    }
-
+    size_t size = save(bitmap);
     u64 time2 = Time::us();
 
     if (load != load_none)
@@ -710,10 +701,6 @@ int main(int argc, const char* argv[])
         else if (!strcmp(argv[i], "--trace"))
         {
             g_option_tracing = true;
-        }
-        else
-        {
-            g_option_count = std::atoi(argv[i]);
         }
     }
 
