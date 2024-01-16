@@ -324,6 +324,12 @@ namespace mango
         , category(category)
         , name(name)
     {
+        std::unique_lock<std::mutex> lock(g_context.tracer.mutex);
+        if (!g_context.tracer.output)
+        {
+            // tracing is disabled; don't log the event
+            tid = 0;
+        }
     }
 
     Trace::~Trace()
@@ -424,6 +430,9 @@ namespace mango
         }
 
         threads.clear();
+
+        // TODO: eventually the buffer becomes so large that adding capacity will take a long time
+        //       we want a periodic flush (see Tracer::stop) so that the write event is constant time
 
         u32 offset = 0;
         if (trace.category == "Task")
