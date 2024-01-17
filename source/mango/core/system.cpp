@@ -366,13 +366,16 @@ namespace mango
             return;
         }
 
+        output = stream;
+
         buffer.clear();
 
-        // write header
-        fmt::format_to(std::back_inserter(buffer),
-            "{{\n\"traceEvents\": [");
+        comma = false;
+        count = 0;
 
-        output = stream;
+        // write header
+        std::string s = fmt::format("{{\n\"traceEvents\": [");
+        output->write(s.data(), s.length());
     }
 
     void Tracer::stop()
@@ -385,23 +388,15 @@ namespace mango
             return;
         }
 
-        // remove last comma in the buffer
-        if (buffer.size() > 1)
-        {
-            char last = buffer.data()[buffer.size() - 1];
-            if (last == ',')
-            {
-                buffer.resize(buffer.size() - 1);
-            }
-        }
-
-        // write footer
-        fmt::format_to(std::back_inserter(buffer),
-            "\n]\n}}\n");
-
         // TODO: flush buffer periodically so that we don't have this uber-write here in the end
         // TODO: generate json formatted output in writer thread (use two buffers, one for write one for trace)
         output->write(buffer.data(), buffer.size());
+
+        writer.wait();
+
+        // write footer
+        std::string s = fmt::format("\n]\n}}\n");
+        output->write(s.data(), s.length());
 
         output = nullptr;
     }
@@ -416,17 +411,17 @@ namespace mango
             return;
         }
 
-        u64 pid = 1;
-
         for (const auto& th : threads)
         {
             fmt::format_to(std::back_inserter(buffer),
-                "\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":{}, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }},",
-                    pid, th.tid, th.name);
+                "{}\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":1, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }}",
+                    comma ? "," : "", th.tid, th.name);
+
+            comma = true;
 
             fmt::format_to(std::back_inserter(buffer),
-                "\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":{}, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }},",
-                    pid, th.tid + 0x10000, th.name + " tasks:");
+                "{}\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":1, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }}",
+                    comma ? "," : "", th.tid + 0x10000, th.name + " tasks:");
         }
 
         threads.clear();
@@ -439,8 +434,8 @@ namespace mango
             offset = 0x10000;
 
         fmt::format_to(std::back_inserter(buffer),
-            "\n{{ \"cat\":\"{}\", \"pid\":{}, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"X\", \"name\":\"{}\" }},",
-                trace.category, pid, trace.tid + offset, trace.time0, trace.time1 - trace.time0, trace.name);
+            "{}\n{{ \"cat\":\"{}\", \"pid\":1, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"X\", \"name\":\"{}\" }}",
+                comma ? "," : "", trace.category, trace.tid + offset, trace.time0, trace.time1 - trace.time0, trace.name);
     }
 
     void startTrace(Stream* stream)

@@ -50,6 +50,9 @@ namespace mango
         fmt::memory_buffer buffer;
         Stream* output { nullptr };
         std::vector<TraceThread> threads;
+        SerialQueue writer;
+        bool comma;
+        u32 count;
 
         Tracer();
         ~Tracer();
