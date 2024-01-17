@@ -64,6 +64,18 @@ namespace mango::import3d
         float32x4 tangent  { 0.0f, 0.0f, 0.0f, 1.0f };
         float32x2 texcoord { 0.0f, 0.0f };
         float32x3 color    { 1.0f, 1.0f, 1.0f };
+
+        /* TODO: these flags will be used to generate attribute arrays for IndexedMesh
+        enum : u32
+        {
+            POSITION  = 0x00000001,
+            NORMAL    = 0x00000002,
+            TANGENT   = 0x00000004,
+            TEXCOORD  = 0x00000008,
+            COLOR     = 0x00000010,
+            // TODO: JOINTS, WEIGHTS
+        };
+        */
     };
 
     struct Triangle
@@ -80,6 +92,11 @@ namespace mango::import3d
     // -----------------------------------------------------------------------
     // indexed mesh
     // -----------------------------------------------------------------------
+
+    // TODO: vertices will eventually use nr. of attributes stored as separate arrays
+    // TODO: the attribute arrays will support different types
+    // TODO: primitives will have bounding volume (box + sphere)
+    // TODO: indices can be 16 or 32 bit
 
     struct Primitive
     {
