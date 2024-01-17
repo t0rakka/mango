@@ -539,22 +539,22 @@ namespace mango::math
 
         // mirror translation
         float32x3 pos = trans + normal2 * (dot(trans, normal) - dist);
-        
+
         // mirror x rotation
         xaxis += trans;
         xaxis += normal2 * (dot(xaxis, normal) - dist);
         xaxis -= pos;
-        
+
         // mirror y rotation
         yaxis += trans;
         yaxis += normal2 * (dot(yaxis, normal) - dist);
         yaxis -= pos;
-        
+
         // mirror z rotation
         zaxis += trans;
         zaxis += normal2 * (dot(zaxis, normal) - dist);
         zaxis -= pos;
-        
+
         Matrix4x4 result;
         result[0] = float32x4(xaxis.x, xaxis.y, xaxis.z, 0.0f);
         result[1] = float32x4(yaxis.x, yaxis.y, yaxis.z, 0.0f);
