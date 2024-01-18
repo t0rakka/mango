@@ -53,6 +53,7 @@ namespace mango
         Stream* output { nullptr };
         std::vector<TraceThread> threads;
         std::vector<Trace::Data> traces;
+        std::vector<Trace::Data> traces_out;
         SerialQueue writer;
         bool comma;
         u32 count;

@@ -310,6 +310,30 @@ namespace mango
     // Trace
     // ----------------------------------------------------------------------------
 
+    static
+    constexpr u32 trace_pool_offset = 0x10000;
+
+    static
+    void write(Stream& output, const std::vector<Trace::Data>& traces, bool& comma)
+    {
+        fmt::memory_buffer buffer;
+
+        for (const auto& trace : traces)
+        {
+            u32 offset = 0;
+            if (trace.category == "Task")
+                offset = trace_pool_offset;
+
+            fmt::format_to(std::back_inserter(buffer),
+                "{}\n{{ \"cat\":\"{}\", \"pid\":1, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"X\", \"name\":\"{}\" }}",
+                    comma ? "," : "", trace.category, trace.tid + offset, trace.time0, trace.time1 - trace.time0, trace.name);
+
+            comma = true;
+        }
+
+        output.write(buffer.data(), buffer.size());
+    }
+
     TraceThread::TraceThread(const std::string& name)
         : tid(getThreadID())
         , name(name)
@@ -378,7 +402,7 @@ namespace mango
             return;
         }
 
-        constexpr u32 pool_offset = 0x10000;
+        writer.wait();
 
         fmt::memory_buffer buffer;
 
@@ -392,32 +416,14 @@ namespace mango
 
             fmt::format_to(std::back_inserter(buffer),
                 "{}\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":1, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }}",
-                    comma ? "," : "", th.tid + pool_offset, th.name + " tasks:");
+                    comma ? "," : "", th.tid + trace_pool_offset, th.name + " tasks:");
         }
 
         threads.clear();
-
-        for (const auto& trace : traces)
-        {
-            u32 offset = 0;
-            if (trace.category == "Task")
-                offset = pool_offset;
-
-            fmt::format_to(std::back_inserter(buffer),
-                "{}\n{{ \"cat\":\"{}\", \"pid\":1, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"X\", \"name\":\"{}\" }}",
-                    comma ? "," : "", trace.category, trace.tid + offset, trace.time0, trace.time1 - trace.time0, trace.name);
-        }
-
-        traces.clear();
-
-        // TODO: Tracer::append() cost increases every time it runs out of capabity we should have two buffers:
-        //       - one buffer where we are appending, once full we flush it..
-        //       - another buffer which is being flushed in a background thread, which generates JSON strings
-        //         and writes them into the output stream
-
         output->write(buffer.data(), buffer.size());
 
-        writer.wait();
+        write(*output, traces, comma);
+        traces.clear();
 
         // write footer
         std::string s = fmt::format("\n]\n}}\n");
@@ -432,6 +438,18 @@ namespace mango
         if (output)
         {
             traces.push_back(trace.data);
+
+            if (traces.size() >= 1024)
+            {
+                writer.wait();
+                std::swap(traces_out, traces);
+
+                writer.enqueue([&]
+                {
+                    write(*output, traces_out, comma);
+                    traces_out.clear();
+                });
+            }
         }
     }
 
