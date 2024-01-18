@@ -319,16 +319,19 @@ namespace mango
     }
 
     Trace::Trace(const std::string& category, const std::string& name)
-        : tid(getThreadID())
-        , time0(Time::us())
-        , category(category)
-        , name(name)
     {
         std::unique_lock<std::mutex> lock(g_context.tracer.mutex);
         if (!g_context.tracer.output)
         {
             // tracing is disabled; don't log the event
-            tid = 0;
+            data.tid = 0;
+        }
+        else
+        {
+            data.tid = getThreadID();
+            data.time0 = Time::us();
+            data.category = category;
+            data.name = name;
         }
     }
 
@@ -339,11 +342,11 @@ namespace mango
 
     void Trace::stop()
     {
-        if (tid)
+        if (data.tid)
         {
-            time1 = Time::us();
+            data.time1 = Time::us();
             g_context.tracer.append(*this);
-            tid = 0;
+            data.tid = 0;
         }
     }
 
@@ -368,7 +371,7 @@ namespace mango
 
         output = stream;
 
-        buffer.clear();
+        traces.clear();
 
         comma = false;
         count = 0;
@@ -388,8 +391,43 @@ namespace mango
             return;
         }
 
-        // TODO: flush buffer periodically so that we don't have this uber-write here in the end
-        // TODO: generate json formatted output in writer thread (use two buffers, one for write one for trace)
+        constexpr u32 pool_offset = 0x10000;
+
+        fmt::memory_buffer buffer;
+
+        for (const auto& th : threads)
+        {
+            fmt::format_to(std::back_inserter(buffer),
+                "{}\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":1, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }}",
+                    comma ? "," : "", th.tid, th.name);
+
+            comma = true;
+
+            fmt::format_to(std::back_inserter(buffer),
+                "{}\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":1, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }}",
+                    comma ? "," : "", th.tid + pool_offset, th.name + " tasks:");
+        }
+
+        threads.clear();
+
+        for (const auto& trace : traces)
+        {
+            u32 offset = 0;
+            if (trace.category == "Task")
+                offset = pool_offset;
+
+            fmt::format_to(std::back_inserter(buffer),
+                "{}\n{{ \"cat\":\"{}\", \"pid\":1, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"X\", \"name\":\"{}\" }}",
+                    comma ? "," : "", trace.category, trace.tid + offset, trace.time0, trace.time1 - trace.time0, trace.name);
+        }
+
+        traces.clear();
+
+        // TODO: Tracer::append() cost increases every time it runs out of capabity we should have two buffers:
+        //       - one buffer where we are appending, once full we flush it..
+        //       - another buffer which is being flushed in a background thread, which generates JSON strings
+        //         and writes them into the output stream
+
         output->write(buffer.data(), buffer.size());
 
         writer.wait();
@@ -404,38 +442,7 @@ namespace mango
     void Tracer::append(const Trace& trace)
     {
         std::unique_lock<std::mutex> lock(mutex);
-
-        if (!output)
-        {
-            // not running a trace
-            return;
-        }
-
-        for (const auto& th : threads)
-        {
-            fmt::format_to(std::back_inserter(buffer),
-                "{}\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":1, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }}",
-                    comma ? "," : "", th.tid, th.name);
-
-            comma = true;
-
-            fmt::format_to(std::back_inserter(buffer),
-                "{}\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":1, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }}",
-                    comma ? "," : "", th.tid + 0x10000, th.name + " tasks:");
-        }
-
-        threads.clear();
-
-        // TODO: eventually the buffer becomes so large that adding capacity will take a long time
-        //       we want a periodic flush (see Tracer::stop) so that the write event is constant time
-
-        u32 offset = 0;
-        if (trace.category == "Task")
-            offset = 0x10000;
-
-        fmt::format_to(std::back_inserter(buffer),
-            "{}\n{{ \"cat\":\"{}\", \"pid\":1, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"X\", \"name\":\"{}\" }}",
-                comma ? "," : "", trace.category, trace.tid + offset, trace.time0, trace.time1 - trace.time0, trace.name);
+        traces.push_back(trace.data);
     }
 
     void startTrace(Stream* stream)

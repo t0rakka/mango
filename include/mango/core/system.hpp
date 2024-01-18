@@ -32,11 +32,14 @@ namespace mango
 
     struct Trace
     {
-        u32 tid;
-        u64 time0;
-        u64 time1;
-        std::string category;
-        std::string name;
+        struct Data
+        {
+            u32 tid;
+            u64 time0;
+            u64 time1;
+            std::string category;
+            std::string name;
+        } data;
 
         Trace(const std::string& category, const std::string& name);
         ~Trace();
@@ -47,9 +50,9 @@ namespace mango
     struct Tracer
     {
         std::mutex mutex;
-        fmt::memory_buffer buffer;
         Stream* output { nullptr };
         std::vector<TraceThread> threads;
+        std::vector<Trace::Data> traces;
         SerialQueue writer;
         bool comma;
         u32 count;
@@ -57,10 +60,10 @@ namespace mango
         Tracer();
         ~Tracer();
 
+        void append(const Trace& trace);
+
         void start(Stream* stream);
         void stop();
-
-        void append(const Trace& trace);
     };
 
     struct Context
