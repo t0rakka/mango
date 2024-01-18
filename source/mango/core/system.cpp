@@ -320,19 +320,10 @@ namespace mango
 
     Trace::Trace(const std::string& category, const std::string& name)
     {
-        std::unique_lock<std::mutex> lock(g_context.tracer.mutex);
-        if (!g_context.tracer.output)
-        {
-            // tracing is disabled; don't log the event
-            data.tid = 0;
-        }
-        else
-        {
-            data.tid = getThreadID();
-            data.time0 = Time::us();
-            data.category = category;
-            data.name = name;
-        }
+        data.tid = getThreadID();
+        data.time0 = Time::us();
+        data.category = category;
+        data.name = name;
     }
 
     Trace::~Trace()
@@ -342,12 +333,8 @@ namespace mango
 
     void Trace::stop()
     {
-        if (data.tid)
-        {
-            data.time1 = Time::us();
-            g_context.tracer.append(*this);
-            data.tid = 0;
-        }
+        data.time1 = Time::us();
+        g_context.tracer.append(*this);
     }
 
     Tracer::Tracer()
@@ -442,7 +429,10 @@ namespace mango
     void Tracer::append(const Trace& trace)
     {
         std::unique_lock<std::mutex> lock(mutex);
-        traces.push_back(trace.data);
+        if (output)
+        {
+            traces.push_back(trace.data);
+        }
     }
 
     void startTrace(Stream* stream)
