@@ -579,6 +579,8 @@ namespace mango::import3d
             materials.push_back(material);
         }
 
+        u64 time2 = mango::Time::ms();
+
         for (const auto& object : reader.m_objects)
         {
             Mesh trimesh;
@@ -635,10 +637,11 @@ namespace mango::import3d
             roots.push_back(index);
         }
 
-        u64 time2 = mango::Time::ms();
+        u64 time3 = mango::Time::ms();
 
         printLine(Print::Verbose, "Reading: {} ms", time1 - time0);
-        printLine(Print::Verbose, "Conversion: {} ms", time2 - time1);
+        printLine(Print::Verbose, "Textures: {} ms", time2 - time1);
+        printLine(Print::Verbose, "Conversion: {} ms", time3 - time2);
     }
 
 } // namespace mango::import3d

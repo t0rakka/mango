@@ -123,8 +123,8 @@ namespace mango::math
     bool Box::inside(const float32x3& point) const
     {
         return corner[0].x <= point.x && corner[1].x > point.x &&
-        corner[0].y <= point.y && corner[1].y > point.y &&
-        corner[0].z <= point.z && corner[1].z > point.z;
+               corner[0].y <= point.y && corner[1].y > point.y &&
+               corner[0].z <= point.z && corner[1].z > point.z;
     }
 
     float32x3 Box::vertex(int index) const
@@ -217,21 +217,27 @@ namespace mango::math
 
     Matrix3x3 TexTriangle::tbn() const
     {
-        const float32x3 a = position[1] - position[0];
-        const float32x3 b = position[2] - position[0];
-        const float32x2 c = texcoord[1] - texcoord[0];
-        const float32x2 d = texcoord[2] - texcoord[0];
-        float s = c.x * d.y - c.y * d.x;
+        const float32x3 p1 = position[1] - position[0];
+        const float32x3 p2 = position[2] - position[0];
+        const float32x2 t1 = texcoord[1] - texcoord[0];
+        const float32x2 t2 = texcoord[2] - texcoord[0];
+
+        float s = t1.x * t2.y - t1.y * t2.x;
         if (s)
         {
             s = 1.0f / s;
         }
 
+        const float t2y = t2.y * s;
+        const float t1y = t1.y * s;
+        const float t2x = t2.x * -s;
+        const float t1x = t1.x * -s;
+
         Matrix3x3 tbn;
 
-        tbn[0] = normalize((a * float(d.y) - b * float(c.y)) * s); // tangent
-        tbn[1] = normalize((a * float(d.x) + b * float(c.x)) * -s); // binormal
-        tbn[2] = normalize(cross(a, b)); // normal
+        tbn[0] = normalize(p1 * t2y - p2 * t1y); // tangent
+        tbn[1] = normalize(p1 * t2x + p2 * t1x); // binormal
+        tbn[2] = normalize(cross(p1, p2)); // normal
 
         return tbn;
     }

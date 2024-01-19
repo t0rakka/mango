@@ -211,7 +211,6 @@ namespace
         void chunk_main(LittleEndianConstPointer& p)
         {
             printLine(Print::Verbose, level * 2, "[main]");
-            parse_chunks(p);
         }
 
         void chunk_version(LittleEndianConstPointer& p)
@@ -230,7 +229,6 @@ namespace
         void chunk_editor(LittleEndianConstPointer& p)
         {
             printLine(Print::Verbose, level * 2, "[editor]");
-            parse_chunks(p);
         }
 
         void chunk_mesh_version(LittleEndianConstPointer& p)
@@ -246,7 +244,6 @@ namespace
             printLine(Print::Verbose, level * 2, "[material]");
 
             materials.emplace_back();
-            parse_chunks(p);
         }
 
         void chunk_material_name(LittleEndianConstPointer& p)
@@ -481,10 +478,9 @@ namespace
         void chunk_object(LittleEndianConstPointer& p)
         {
             printLine(Print::Verbose, level * 2, "[object]");
+
             std::string name = read_string(p);
             printLine(Print::Verbose, level * 2, "  name: \"{}\"", name);
-
-            parse_chunks(p);
         }
 
         // mesh chunks
@@ -492,9 +488,7 @@ namespace
         void chunk_mesh(LittleEndianConstPointer& p)
         {
             printLine(Print::Verbose, level * 2, "[mesh]");
-
             meshes.emplace_back();
-            parse_chunks(p);
         }
 
         void chunk_mesh_vertex_list(LittleEndianConstPointer& p)
@@ -633,8 +627,6 @@ namespace
             MANGO_UNREFERENCED(target);
             MANGO_UNREFERENCED(bank);
             MANGO_UNREFERENCED(lense);
-
-            parse_chunks(p);
         }
 
         void chunk_camera_range(LittleEndianConstPointer& p)
@@ -650,7 +642,6 @@ namespace
         void chunk_light(LittleEndianConstPointer& p)
         {
             float32x3 position = read_vec3(p);
-            parse_chunks(p);
             MANGO_UNREFERENCED(position);
         }
 
@@ -676,12 +667,6 @@ namespace
             MANGO_UNREFERENCED(roll);
         }
 
-        void chunk_light_brightness(LittleEndianConstPointer& p)
-        {
-            float brightness = p.read32f();
-            MANGO_UNREFERENCED(brightness);
-        }
-
         void chunk_light_inner_range(LittleEndianConstPointer& p)
         {
             float inner_range = p.read32f();
@@ -695,48 +680,58 @@ namespace
 
         }
 
+        void chunk_light_brightness(LittleEndianConstPointer& p)
+        {
+            float brightness = p.read32f();
+            MANGO_UNREFERENCED(brightness);
+        }
+
         // keyframer chunks
 
         void chunk_keyframer(LittleEndianConstPointer& p)
         {
-            printLine(Print::Verbose, level * 2, "[keyframer]");
-            parse_chunks(p);
+            //printLine(Print::Verbose, level * 2, "[keyframer]");
         }
 
         void chunk_key_ambient(LittleEndianConstPointer& p)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[key.ambient]");
         }
 
-        void chunk_key_mesh(LittleEndianConstPointer& p)
+        void chunk_key_object(LittleEndianConstPointer& p)
         {
-            // TODO
-            // 173 bytes
+            //printLine(Print::Verbose, level * 2, "[key.object]");
         }
 
         void chunk_key_camera(LittleEndianConstPointer& p)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[key.camera]");
         }
 
-        void chunk_key_target(LittleEndianConstPointer& p)
+        void chunk_key_camera_target(LittleEndianConstPointer& p)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[key.camera.target]");
         }
 
         void chunk_key_light(LittleEndianConstPointer& p)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[key.light]");
         }
 
         void chunk_key_light_target(LittleEndianConstPointer& p)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[key.light.target]");
         }
 
         void chunk_key_spotlight(LittleEndianConstPointer& p)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[key.spotlight]");
         }
 
         void chunk_key_segment(LittleEndianConstPointer& p)
@@ -750,12 +745,13 @@ namespace
         void chunk_key_current_time(LittleEndianConstPointer& p)
         {
             // TODO
+            p += 4;
         }
 
         void chunk_key_header(LittleEndianConstPointer& p)
         {
             // TODO
-            // 7 bytes
+            p += 15;
         }
 
         void chunk_key_node_header(LittleEndianConstPointer& p)
@@ -784,51 +780,69 @@ namespace
         void chunk_key_boundbox(LittleEndianConstPointer& p)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[boundbox]");
+            p += 24;
         }
 
-        void chunk_key_morph_smooth(LittleEndianConstPointer& p)
+        void chunk_key_morph_smooth(LittleEndianConstPointer& p, u32 size)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[key.morph.smooth]");
+            p += size;
         }
 
-        void chunk_key_pos_track(LittleEndianConstPointer& p)
+        void chunk_key_pos_track(LittleEndianConstPointer& p, u32 size)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[pos.track]");
+            p += size;
         }
 
-        void chunk_key_rot_track(LittleEndianConstPointer& p)
+        void chunk_key_rot_track(LittleEndianConstPointer& p, u32 size)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[rot.track]");
+            p += size;
         }
 
-        void chunk_key_scale_track(LittleEndianConstPointer& p)
+        void chunk_key_scale_track(LittleEndianConstPointer& p, u32 size)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[scale.track]");
+            p += size;
         }
 
-        void chunk_key_fov_track(LittleEndianConstPointer& p)
+        void chunk_key_fov_track(LittleEndianConstPointer& p, u32 size)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[fov.track]");
+            p += size;
         }
 
-        void chunk_key_roll_track(LittleEndianConstPointer& p)
+        void chunk_key_roll_track(LittleEndianConstPointer& p, u32 size)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[roll.track]");
+            p += size;
         }
 
-        void chunk_key_color_track(LittleEndianConstPointer& p)
+        void chunk_key_color_track(LittleEndianConstPointer& p, u32 size)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[color.track]");
+            p += size;
         }
 
-        void chunk_key_morph_track(LittleEndianConstPointer& p)
+        void chunk_key_morph_track(LittleEndianConstPointer& p, u32 size)
         {
             // TODO
+            //printLine(Print::Verbose, level * 2, "[morph.track]");
+            p += size;
         }
 
         void chunk_key_node_id(LittleEndianConstPointer& p)
         {
-            u16 id = p.read32();
+            u16 id = p.read16();
             MANGO_UNREFERENCED(id);
         }
 
@@ -912,40 +926,61 @@ namespace
                 case 0x4610: chunk_light_spot(p); break;
                 case 0x4620: chunk_light_off(p); break;
                 case 0x4656: chunk_light_spot_roll(p); break;
-                case 0x465b: chunk_light_brightness(p); break;
                 case 0x4659: chunk_light_inner_range(p); break;
                 case 0x465a: chunk_light_outer_range(p); break;
+                case 0x465b: chunk_light_brightness(p); break;
 
                 case 0xb000: chunk_keyframer(p); break;
-                /*
                 case 0xb001: chunk_key_ambient(p); break;
-                case 0xb002: chunk_key_mesh(p); break;
+                case 0xb002: chunk_key_object(p); break;
                 case 0xb003: chunk_key_camera(p); break;
-                case 0xb004: chunk_key_target(p); break;
+                case 0xb004: chunk_key_camera_target(p); break;
                 case 0xb005: chunk_key_light(p); break;
                 case 0xb006: chunk_key_light_target(p); break;
                 case 0xb007: chunk_key_spotlight(p); break;
-                */
                 case 0xb008: chunk_key_segment(p); break;
-                /*
                 case 0xb009: chunk_key_current_time(p); break;
                 case 0xb00a: chunk_key_header(p); break;
-                */
                 case 0xb010: chunk_key_node_header(p); break;
                 case 0xb011: chunk_key_dummy_object(p); break;
                 case 0xb013: chunk_key_pivot(p); break;
-                /*
                 case 0xb014: chunk_key_boundbox(p); break;
-                case 0xb015: chunk_key_morph_smooth(p); break;
-                case 0xb020: chunk_key_pos_track(p); break;
-                case 0xb021: chunk_key_rot_track(p); break;
-                case 0xb022: chunk_key_scale_track(p); break;
-                case 0xb023: chunk_key_fov_track(p); break;
-                case 0xb024: chunk_key_roll_track(p); break;
-                case 0xb025: chunk_key_color_track(p); break;
-                case 0xb026: chunk_key_morph_track(p); break;
-                */
+                case 0xb015: chunk_key_morph_smooth(p, size); break;
+                case 0xb020: chunk_key_pos_track(p, size); break;
+                case 0xb021: chunk_key_rot_track(p, size); break;
+                case 0xb022: chunk_key_scale_track(p, size); break;
+                case 0xb023: chunk_key_fov_track(p, size); break;
+                case 0xb024: chunk_key_roll_track(p, size); break;
+                case 0xb025: chunk_key_color_track(p, size); break;
+                case 0xb026: chunk_key_morph_track(p, size); break;
                 case 0xb030: chunk_key_node_id(p); break;
+
+                // These are silently ignored:
+                case 0x0000:
+                case 0x4170:
+                case 0xa252: // MAT_BUMP_PERCENT
+                case 0x4630: // DL_SHADOWED
+                case 0x4650: // DL_SEE_CONE
+                case 0x4658: // DL_RAY_BIAS
+                case 0x7001: // VIEWPORT_LAYOUT
+                case 0x1400: // LO_SHADOW_BIAS
+                case 0x1420: // SHADOW_MAP_SIZE
+                case 0x1430: // SHADOW_SAMPLES
+                case 0x1440: // SHADOW_RANGE
+                case 0x1450: // SHADOW_FILTER
+                case 0x1460: // SHADOW_BIAS
+                case 0x1500: // O_CONSTS
+                case 0x2100: // AMBIENT_LIGHT
+                case 0x1200: // SOLID_BGND
+                case 0x1100: // BIT_MAP filename
+                case 0x1300: // V_GRADIENT
+                case 0x1301: // USE_V_GRADIENT
+                case 0x2200: // FOG
+                case 0x2302: // LAYER_FOG
+                case 0x2300: // DISTANCE_CUE
+                case 0x3000: // DEFAULT_VIEW
+                    p += size;
+                    break;
 
                 default:
                     p += size;
@@ -1032,8 +1067,6 @@ namespace mango::import3d
         {
             Mesh trimesh;
 
-            // NOTE: we must use the actual vertex positions and not the indices
-            //       because meshes do not always share indices for shared positions
             struct PositionCompare
             {
                 bool operator () (const float32x3& a, const float32x3& b) const

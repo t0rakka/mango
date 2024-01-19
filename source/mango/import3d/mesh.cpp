@@ -273,6 +273,8 @@ Texture createTexture(const filesystem::Path& path, const std::string& filename)
 
     filesystem::File file(path, filename);
 
+    printLine("createTexture: {}", filename);
+
     image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
     texture = std::make_shared<image::Bitmap>(file, filename, format);
 
@@ -281,6 +283,8 @@ Texture createTexture(const filesystem::Path& path, const std::string& filename)
 
 Texture createTexture(ConstMemory memory)
 {
+    printLine("createTexture: {} KB", memory.size);
+
     image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
     std::shared_ptr<image::Bitmap> texture = std::make_shared<image::Bitmap>(memory, "", format);
 
