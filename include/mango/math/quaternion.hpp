@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -114,10 +114,10 @@ namespace mango::math
 
         const Quaternion& operator *= (const Quaternion& q)
         {
-            float s = w * q.w - (x * q.x + y * q.y + z * q.z);
             *this = Quaternion(q.x * w + x * q.w + y * q.z - z * q.y,
                                q.y * w + y * q.w + z * q.x - x * q.z,
-                               q.z * w + z * q.w + x * q.y - y * q.x, s);
+                               q.z * w + z * q.w + x * q.y - y * q.x,
+                               q.w * w - x * q.x - y * q.y - z * q.z);
             return *this;
         }
 
@@ -253,7 +253,7 @@ namespace mango::math
         float x = a.y * b.z - a.z * b.y + a.x * b.w + b.x * a.w;
         float y = a.z * b.x - a.x * b.z + a.y * b.w + b.y * a.w;
         float z = a.x * b.y - a.y * b.x + a.z * b.w + b.z * a.w;
-        float w = a.w * b.w - (a.x * b.x + a.y * b.y + a.z * b.z);
+        float w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
         return Quaternion(x, y, z, w);
     }
 
