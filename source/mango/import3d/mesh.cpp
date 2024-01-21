@@ -120,6 +120,8 @@ Mesh convertMesh(const IndexedMesh& input)
 
     for (const Primitive& primitive : input.primitives)
     {
+        const u32 baseIndex = primitive.base;
+
         switch (primitive.mode)
         {
             case Primitive::Mode::TRIANGLE_LIST:
@@ -132,9 +134,9 @@ Mesh convertMesh(const IndexedMesh& input)
 
                 for (size_t i = start; i < end; i += 3)
                 {
-                    triangle.vertex[0] = input.vertices[input.indices[i + 0]];
-                    triangle.vertex[1] = input.vertices[input.indices[i + 1]];
-                    triangle.vertex[2] = input.vertices[input.indices[i + 2]];
+                    triangle.vertex[0] = input.vertices[baseIndex + input.indices[i + 0]];
+                    triangle.vertex[1] = input.vertices[baseIndex + input.indices[i + 1]];
+                    triangle.vertex[2] = input.vertices[baseIndex + input.indices[i + 2]];
 
                     output.triangles.push_back(triangle);
                 }
@@ -150,14 +152,14 @@ Mesh convertMesh(const IndexedMesh& input)
                 const size_t start = primitive.start;
                 const size_t end = start + primitive.count;
 
-                Vertex v0 = input.vertices[input.indices[start + 0]];
-                Vertex v1 = input.vertices[input.indices[start + 1]];
+                Vertex v0 = input.vertices[baseIndex + input.indices[start + 0]];
+                Vertex v1 = input.vertices[baseIndex + input.indices[start + 1]];
 
                 for (size_t i = start + 2; i < end; ++i)
                 {
                     triangle.vertex[(i + 0) & 1] = v0;
                     triangle.vertex[(i + 1) & 1] = v1;
-                    triangle.vertex[2] = input.vertices[input.indices[i]];
+                    triangle.vertex[2] = input.vertices[baseIndex + input.indices[i]];
 
                     v0 = v1;
                     v1 = triangle.vertex[2];
@@ -176,13 +178,13 @@ Mesh convertMesh(const IndexedMesh& input)
                 const size_t start = primitive.start;
                 const size_t end = start + primitive.count;
 
-                triangle.vertex[0] = input.vertices[input.indices[start + 0]];
-                triangle.vertex[2] = input.vertices[input.indices[start + 1]];
+                triangle.vertex[0] = input.vertices[baseIndex + input.indices[start + 0]];
+                triangle.vertex[2] = input.vertices[baseIndex + input.indices[start + 1]];
 
                 for (size_t i = start + 2; i < end; ++i)
                 {
                     triangle.vertex[1] = triangle.vertex[2];
-                    triangle.vertex[2] = input.vertices[input.indices[i]];
+                    triangle.vertex[2] = input.vertices[baseIndex + input.indices[i]];
 
                     output.triangles.push_back(triangle);
                 }
@@ -214,6 +216,7 @@ IndexedMesh convertMesh(const Mesh& input)
     primitive.mode = Primitive::Mode::TRIANGLE_LIST;
     primitive.start = 0;
     primitive.count = 0;
+    primitive.base = 0;
     primitive.material = 0;
 
     for (const Triangle& triangle : input.triangles)
@@ -228,6 +231,7 @@ IndexedMesh convertMesh(const Mesh& input)
             // start a new primitive
             primitive.start += primitive.count;
             primitive.count = 0;
+            primitive.base = 0;
             primitive.material = triangle.material;
         }
 

@@ -110,6 +110,7 @@ namespace mango::import3d
         Mode mode = Mode::TRIANGLE_LIST;
         u32 start;
         u32 count;
+        u32 base;
         u32 material = 0;
     };
 

@@ -447,9 +447,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     for (const auto& current : asset.meshes)
     {
         printLine(Print::Verbose, "[Mesh]");
-        printLine(Print::Verbose, "  name: {}", current.name);
+        printLine(Print::Verbose, "  name: \"{}\"", current.name);
 
-        IndexedMesh mesh;
+        IndexedMesh complete;
 
         for (auto primitiveIterator = current.primitives.begin(); primitiveIterator != current.primitives.end(); ++primitiveIterator)
         {
@@ -543,12 +543,12 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 }
             }
 
-            std::vector<Vertex> vertices;
+            IndexedMesh mesh;
 
             if (attributePosition.data)
             {
-                vertices.resize(attributePosition.count);
-                copyAttributes(vertices[0].position, attributePosition);
+                mesh.vertices.resize(attributePosition.count);
+                copyAttributes(mesh.vertices[0].position, attributePosition);
             }
             else
             {
@@ -564,7 +564,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                copyAttributes(vertices[0].normal, attributeNormal);
+                copyAttributes(mesh.vertices[0].normal, attributeNormal);
             }
 
             if (attributeTangent.data)
@@ -575,7 +575,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                copyAttributes(vertices[0].tangent, attributeTangent);
+                copyAttributes(mesh.vertices[0].tangent, attributeTangent);
             }
 
             if (attributeTexcoord.data)
@@ -586,7 +586,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                copyAttributes(vertices[0].texcoord, attributeTexcoord);
+                copyAttributes(mesh.vertices[0].texcoord, attributeTexcoord);
             }
 
             if (attributeColor.data)
@@ -598,12 +598,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 }
 
                 attributeColor.components = 3;
-                copyAttributes(vertices[0].color, attributeColor);
+                copyAttributes(mesh.vertices[0].color, attributeColor);
             }
 
             // indices
-
-            std::vector<u32> indices;
 
             if (primitiveIterator->indicesAccessor.has_value())
             {
@@ -618,8 +616,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     u32 bufferIndex = indicesView.bufferIndex;
                     const u8* data = buffers[bufferIndex].address + offset;
 
-                    indices.resize(count);
-                    u32 baseIndex = u32(mesh.vertices.size());
+                    mesh.indices.resize(count);
 
                     switch (indicesAccessor.componentType)
                     {
@@ -628,7 +625,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                             const u8* source = reinterpret_cast<const u8*>(data);
                             for (size_t i = 0; i < count; ++i)
                             {
-                                indices[i] = baseIndex + source[i];
+                                mesh.indices[i] = source[i];
                             }
                             break;
                         }
@@ -638,7 +635,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                             const u16* source = reinterpret_cast<const u16*>(data);
                             for (size_t i = 0; i < count; ++i)
                             {
-                                indices[i] = baseIndex + source[i];
+                                mesh.indices[i] = source[i];
                             }
                             break;
                         }
@@ -648,7 +645,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                             const u32* source = reinterpret_cast<const u32*>(data);
                             for (size_t i = 0; i < count; ++i)
                             {
-                                indices[i] = baseIndex + source[i];
+                                mesh.indices[i] = source[i];
                             }
                             break;
                         }
@@ -683,28 +680,35 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
             }
 
-            primitive.start = u32(mesh.indices.size());
-            primitive.count = u32(indices.size());
-
             if (primitiveIterator->materialIndex.has_value())
             {
                 primitive.material = primitiveIterator->materialIndex.value();
             }
 
-            mesh.vertices.insert(mesh.vertices.end(), vertices.begin(), vertices.end());
-            mesh.indices.insert(mesh.indices.end(), indices.begin(), indices.end());
+            if (!attributeTangent.data && attributeNormal.data && attributeTexcoord.data)
+            {
+                primitive.start = 0;
+                primitive.count = u32(mesh.indices.size());
+                primitive.base = 0;
 
-            mesh.primitives.push_back(primitive);
+                mesh.primitives.push_back(primitive);
+
+                Mesh temp = convertMesh(mesh);
+                computeTangents(temp);
+                mesh = convertMesh(temp);
+            }
+
+            primitive.start = u32(complete.indices.size());
+            primitive.count = u32(mesh.indices.size());
+            primitive.base = u32(complete.vertices.size());
+
+            complete.vertices.insert(complete.vertices.end(), mesh.vertices.begin(), mesh.vertices.end());
+            complete.indices.insert(complete.indices.end(), mesh.indices.begin(), mesh.indices.end());
+
+            complete.primitives.push_back(primitive);
         }
 
-        /* TODO: should be done per primitive
-        Mesh temp;
-        temp = convertMesh(mesh);
-        computeTangents(temp);
-        mesh = convertMesh(temp);
-        */
-
-        meshes.push_back(mesh);
+        meshes.push_back(complete);
     }
 
     // nodes
