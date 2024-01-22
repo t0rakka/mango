@@ -13,9 +13,9 @@ namespace mango::import3d
 
     struct FaceOBJ
     {
-        int position[3];
-        int normal[3];
-        int texcoord[3];
+        s32 position[3];
+        s32 normal[3];
+        s32 texcoord[3];
     };
 
     struct MaterialOBJ
@@ -60,7 +60,7 @@ namespace mango::import3d
 
     struct ObjectOBJ
     {
-        u32 material;
+        u32 material = 0;
         std::string name;
         std::vector<FaceOBJ> faces;
     };
@@ -92,6 +92,13 @@ namespace mango::import3d
         void parse_g(const std::vector<std::string_view>& tokens);
         void parse_s(const std::vector<std::string_view>& tokens);
         void parse_f(const std::vector<std::string_view>& tokens);
+
+        std::string map_filename(std::string_view filename) const
+        {
+            std::string s(filename);
+            replace(s, "\\", "/");
+            return s;
+        }
 
         float parse_float(std::string_view s) const
         {
@@ -163,14 +170,14 @@ namespace mango::import3d
 
                 if (s0 == '\n' || s0 == '\r' || s1 == '\n' || s1 == '\r')
                 {
-                    /*
+#if 0
                     printf("%s", std::string(id).c_str());
                     for (size_t i = 0; i < tokens.size(); ++i)
                     {
                         printf(" %s", std::string(tokens[i]).c_str());
                     }
                     printf("\n");
-                    */
+#endif
 
                     if (id == "#")
                     {
@@ -310,47 +317,53 @@ namespace mango::import3d
                         }
                         else if (id == "map_Ka")
                         {
-                            m_current_material->map_ka = std::string(tokens[0]);
+                            m_current_material->map_ka = map_filename(tokens[0]);
                         }
                         else if (id == "map_Kd")
                         {
-                            m_current_material->map_kd = std::string(tokens[0]);
+                            m_current_material->map_kd = map_filename(tokens[0]);
                         }
                         else if (id == "map_Ks")
                         {
-                            m_current_material->map_ks = std::string(tokens[0]);
+                            m_current_material->map_ks = map_filename(tokens[0]);
                         }
                         else if (id == "map_Ke")
                         {
-                            m_current_material->map_ke = std::string(tokens[0]);
+                            m_current_material->map_ke = map_filename(tokens[0]);
                         }
                         else if (id == "map_bump" || id == "map_Bump"|| id == "bump")
                         {
-                            m_current_material->map_bump = std::string(tokens[0]);
+                            size_t filenameIndex = 0;
+                            if (tokens.size() > 1)
+                            {
+                                // there could be tokens here that we skip, example: "-bm <float>"
+                                filenameIndex = tokens.size() - 1;
+                            }
+                            m_current_material->map_bump = map_filename(tokens[filenameIndex]);
                         }
                         else if (id == "map_Ns")
                         {
-                            m_current_material->map_ns = std::string(tokens[0]);
+                            m_current_material->map_ns = map_filename(tokens[0]);
                         }
                         else if (id == "map_d")
                         {
-                            m_current_material->map_d = std::string(tokens[0]);
+                            m_current_material->map_d = map_filename(tokens[0]);
                         }
                         else if (id == "disp")
                         {
-                            m_current_material->map_disp = std::string(tokens[0]);
+                            m_current_material->map_disp = map_filename(tokens[0]);
                         }
                         else if (id == "decal")
                         {
-                            m_current_material->map_decal = std::string(tokens[0]);
+                            m_current_material->map_decal = map_filename(tokens[0]);
                         }
                         else if (id == "refl")
                         {
-                            m_current_material->map_refl = std::string(tokens[0]);
+                            m_current_material->map_refl = map_filename(tokens[0]);
                         }
                         else
                         {
-                            printLine(Print::Verbose, "TODO: {}", id);
+                            //printLine(Print::Verbose, "TODO: {}", id);
                         }
 
                         //printLine(Print::Verbose, "token: {} : {}", i, tokens[0]);
@@ -532,6 +545,14 @@ namespace mango::import3d
             normalIndex[i] = value[2];
         }
 
+        if (m_objects.empty())
+        {
+            // create default object
+            m_objects.push_back(ObjectOBJ());
+            m_current_object = &m_objects.back();
+            m_current_object->name = "default";
+        }
+
         auto& faces = m_objects.back().faces;
 
         for (size_t i = 0; i < tokens.size() - 2; ++i)
@@ -579,6 +600,19 @@ namespace mango::import3d
             materials.push_back(material);
         }
 
+        if (materials.empty())
+        {
+            // create default material
+            Material material;
+
+            material.name = "default";
+
+            material.baseColorFactor = float32x4(1.0f, 1.0f, 1.0f, 1.0f);
+            material.emissiveFactor = 1.0f;
+
+            materials.push_back(material);
+        }
+
         u64 time2 = mango::Time::ms();
 
         for (const auto& object : reader.m_objects)
@@ -598,15 +632,37 @@ namespace mango::import3d
                 {
                     Vertex& vertex = triangle.vertex[i];
 
-                    size_t positionIndex = face.position[i];
-                    size_t texcoordIndex = face.texcoord[i];
-                    size_t normalIndex = face.normal[i];
+                    // negative indices mean index from the end of the array
+                    u32 positionIndex = face.position[i] < 0 ? reader.positions.size() + face.position[i] + 1 : face.position[i];
+                    u32 texcoordIndex = face.texcoord[i] < 0 ? reader.texcoords.size() + face.texcoord[i] + 1 : face.texcoord[i];
+                    u32 normalIndex = face.normal[i] < 0 ? reader.normals.size() + face.normal[i] + 1 : face.normal[i];
+
+                    /*
+                    if (positionIndex > reader.positions.size())
+                    {
+                        //printLine("positionIndex: {} > {}", positionIndex, reader.positions.size());
+                        continue;
+                    }
+
+                    if (texcoordIndex != 0 && texcoordIndex > reader.texcoords.size())
+                    {
+                        //printLine("texcoordIndex: {} > {}", texcoordIndex, reader.texcoords.size());
+                        continue;
+                    }
+
+                    if (normalIndex != 0 && normalIndex > reader.normals.size())
+                    {
+                        //printLine("normalIndex: {} > {}", normalIndex, reader.normals.size());
+                        continue;
+                    }
+                    */
 
                     vertex.position = reader.positions[positionIndex - 1];
 
                     if (texcoordIndex)
                     {
                         vertex.texcoord = reader.texcoords[texcoordIndex - 1];
+                        vertex.texcoord.y = -vertex.texcoord.y;
                     }
 
                     if (normalIndex)

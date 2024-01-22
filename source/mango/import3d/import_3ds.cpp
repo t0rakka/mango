@@ -46,8 +46,8 @@ namespace
     {
         enum
         {
-            UWRAP = 0x0008,
-            VWRAP = 0x0800,
+            U_WRAP = 0x0008,
+            V_WRAP = 0x0010,
         };
 
         u16 index[3];
@@ -957,6 +957,10 @@ namespace
 
                 // These are silently ignored:
                 case 0x0000:
+                case 0xb027:
+                case 0xb028:
+                case 0x4641:
+                case 0x4627:
                 case 0x4170:
                 case 0xa252: // MAT_BUMP_PERCENT
                 case 0x4630: // DL_SHADOWED
@@ -1013,14 +1017,14 @@ namespace
 
     void fixTexcoordWrapping(Triangle& triangle, u32 flags)
     {
-        if (flags & Face3DS::UWRAP)
+        if (flags & Face3DS::U_WRAP)
         {
             unwrapTexcoord(triangle.vertex[0].texcoord.x,
                            triangle.vertex[1].texcoord.x,
                            triangle.vertex[2].texcoord.x);
         }
 
-        if (flags & Face3DS::VWRAP)
+        if (flags & Face3DS::V_WRAP)
         {
             unwrapTexcoord(triangle.vertex[0].texcoord.y,
                            triangle.vertex[1].texcoord.y,
