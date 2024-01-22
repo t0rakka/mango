@@ -228,6 +228,7 @@ namespace mango::math
 
         float32x3 center() const;
         float32x3 size() const;
+        bool empty() const;
         void extend(const float32x3& point);
         void extend(const Box& box);
         bool inside(const float32x3& point) const;

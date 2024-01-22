@@ -108,6 +108,14 @@ namespace mango::math
         return corner[1] - corner[0];
     }
 
+    bool Box::empty() const
+    {
+        return
+            corner[0].x >= corner[1].x ||
+            corner[0].y >= corner[1].y ||
+            corner[0].z >= corner[1].z;
+    }
+
     void Box::extend(const float32x3& point)
     {
         corner[0] = min(corner[0], point);
