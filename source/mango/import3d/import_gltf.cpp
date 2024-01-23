@@ -685,17 +685,21 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 primitive.material = primitiveIterator->materialIndex.value();
             }
 
-            if (!attributeTangent.data && attributeNormal.data && attributeTexcoord.data)
+            const Material& material = materials[primitive.material];
+            if (material.normalTexture)
             {
-                primitive.start = 0;
-                primitive.count = u32(mesh.indices.size());
-                primitive.base = 0;
+                if (!attributeTangent.data && attributeNormal.data && attributeTexcoord.data)
+                {
+                    primitive.start = 0;
+                    primitive.count = u32(mesh.indices.size());
+                    primitive.base = 0;
 
-                mesh.primitives.push_back(primitive);
+                    mesh.primitives.push_back(primitive);
 
-                Mesh temp = convertMesh(mesh);
-                computeTangents(temp);
-                mesh = convertMesh(temp);
+                    Mesh temp = convertMesh(mesh);
+                    computeTangents(temp);
+                    mesh = convertMesh(temp);
+                }
             }
 
             primitive.start = u32(complete.indices.size());
