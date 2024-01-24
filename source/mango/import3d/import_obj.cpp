@@ -506,14 +506,17 @@ namespace mango::import3d
 
     void ReaderOBJ::parse_f(const std::vector<std::string_view>& tokens)
     {
-        if (tokens.size() < 3 || tokens.size() > 4)
+        constexpr size_t maxVertexPerFace = 128;
+
+        if (tokens.size() < 3 || tokens.size() > maxVertexPerFace)
         {
             // error
+            return;
         }
 
-        int positionIndex[4];
-        int texcoordIndex[4];
-        int normalIndex[4];
+        int positionIndex[maxVertexPerFace];
+        int texcoordIndex[maxVertexPerFace];
+        int normalIndex[maxVertexPerFace];
 
         for (size_t i = 0; i < tokens.size(); ++i)
         {
@@ -672,7 +675,7 @@ namespace mango::import3d
                 }
             }
 
-            computeTangents(trimesh);
+            //computeTangents(trimesh);
             IndexedMesh mesh = convertMesh(trimesh);
 
             Node node;
