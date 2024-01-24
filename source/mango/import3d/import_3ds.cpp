@@ -218,7 +218,7 @@ namespace
             u32 version = p.read32();
             if (version > 3)
             {
-                MANGO_EXCEPTION("[Import3DS] Incorrect version: {}", version);
+                //MANGO_EXCEPTION("[Import3DS] Incorrect version: {}", version);
             }
 
             printLine(Print::Verbose, level * 2, "version: {}", version);
