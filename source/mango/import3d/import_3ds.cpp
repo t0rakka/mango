@@ -218,7 +218,7 @@ namespace
             u32 version = p.read32();
             if (version > 3)
             {
-                //MANGO_EXCEPTION("[Import3DS] Incorrect version: {}", version);
+                MANGO_EXCEPTION("[Import3DS] Incorrect version: {}", version);
             }
 
             printLine(Print::Verbose, level * 2, "version: {}", version);
@@ -748,10 +748,11 @@ namespace
             p += 4;
         }
 
-        void chunk_key_header(LittleEndianConstPointer& p)
+        void chunk_key_header(LittleEndianConstPointer& p, u32 size)
         {
             // TODO
-            p += 15;
+            //printLine(Print::Verbose, level * 2, "[key.header]");
+            p += size;
         }
 
         void chunk_key_node_header(LittleEndianConstPointer& p)
@@ -930,6 +931,7 @@ namespace
                 case 0x465a: chunk_light_outer_range(p); break;
                 case 0x465b: chunk_light_brightness(p); break;
 
+#if 0
                 case 0xb000: chunk_keyframer(p); break;
                 case 0xb001: chunk_key_ambient(p); break;
                 case 0xb002: chunk_key_object(p); break;
@@ -940,7 +942,7 @@ namespace
                 case 0xb007: chunk_key_spotlight(p); break;
                 case 0xb008: chunk_key_segment(p); break;
                 case 0xb009: chunk_key_current_time(p); break;
-                case 0xb00a: chunk_key_header(p); break;
+                case 0xb00a: chunk_key_header(p, size); break;
                 case 0xb010: chunk_key_node_header(p); break;
                 case 0xb011: chunk_key_dummy_object(p); break;
                 case 0xb013: chunk_key_pivot(p); break;
@@ -954,38 +956,7 @@ namespace
                 case 0xb025: chunk_key_color_track(p, size); break;
                 case 0xb026: chunk_key_morph_track(p, size); break;
                 case 0xb030: chunk_key_node_id(p); break;
-
-                // These are silently ignored:
-                case 0x0000:
-                case 0xb027:
-                case 0xb028:
-                case 0x4641:
-                case 0x4627:
-                case 0x4170:
-                case 0xa252: // MAT_BUMP_PERCENT
-                case 0x4630: // DL_SHADOWED
-                case 0x4650: // DL_SEE_CONE
-                case 0x4658: // DL_RAY_BIAS
-                case 0x7001: // VIEWPORT_LAYOUT
-                case 0x1400: // LO_SHADOW_BIAS
-                case 0x1420: // SHADOW_MAP_SIZE
-                case 0x1430: // SHADOW_SAMPLES
-                case 0x1440: // SHADOW_RANGE
-                case 0x1450: // SHADOW_FILTER
-                case 0x1460: // SHADOW_BIAS
-                case 0x1500: // O_CONSTS
-                case 0x2100: // AMBIENT_LIGHT
-                case 0x1200: // SOLID_BGND
-                case 0x1100: // BIT_MAP filename
-                case 0x1300: // V_GRADIENT
-                case 0x1301: // USE_V_GRADIENT
-                case 0x2200: // FOG
-                case 0x2302: // LAYER_FOG
-                case 0x2300: // DISTANCE_CUE
-                case 0x3000: // DEFAULT_VIEW
-                    p += size;
-                    break;
-
+#endif
                 default:
                     p += size;
                     printLine(Print::Verbose, level * 2, "[* {:#06x} *] {} bytes", id, size);
