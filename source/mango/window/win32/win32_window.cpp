@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <string>
 #include <sstream>
@@ -106,6 +106,12 @@ namespace
         case KEYCODE_RIGHT: v = VK_RIGHT; break;
         case KEYCODE_UP: v = VK_UP; break;
         case KEYCODE_DOWN: v = VK_DOWN; break;
+        case KEYCODE_SHIFT: v = VK_SHIFT; break;
+        case KEYCODE_LEFT_SHIFT: v = VK_LSHIFT; break;
+        case KEYCODE_RIGHT_SHIFT: v = VK_RSHIFT; break;
+        case KEYCODE_CONTROL: v = VK_CONTROL; break;
+        case KEYCODE_LEFT_CONTROL: v = VK_LCONTROL; break;
+        case KEYCODE_RIGHT_CONTROL: v = VK_RCONTROL; break;
         }
 
         return v;
@@ -179,10 +185,12 @@ namespace
             //KEYCODE_RIGHT_ALT,
         case VK_SPACE:     code = KEYCODE_SPACE; break;
             //KEYCODE_CAPS_LOCK,
-            //KEYCODE_LEFT_CTRL,
-            //KEYCODE_RIGHT_CTRL,
-            //KEYCODE_LEFT_SHIFT,
-            //KEYCODE_RIGHT_SHIFT,
+        case VK_SHIFT:     code = KEYCODE_SHIFT; break;
+        case VK_LSHIFT:    code = KEYCODE_LEFT_SHIFT; break;
+        case VK_RSHIFT:    code = KEYCODE_RIGHT_SHIFT; break;
+        case VK_CONTROL:   code = KEYCODE_CONTROL; break;
+        case VK_LCONTROL:  code = KEYCODE_LEFT_CONTROL; break;
+        case VK_RCONTROL:  code = KEYCODE_RIGHT_CONTROL; break;
             //KEYCODE_LEFT_SUPER,
             //KEYCODE_RIGHT_SUPER,
             //KEYCODE_MENU,
@@ -225,7 +233,7 @@ namespace
     u32 computeKeyMask()
     {
         u32 mask = 0;
-        if (GetKeyState(VK_CONTROL) & 0x8000) mask |= KEYMASK_CTRL;
+        if (GetKeyState(VK_CONTROL) & 0x8000) mask |= KEYMASK_CONTROL;
         if (GetKeyState(VK_SHIFT) & 0x8000) mask |= KEYMASK_SHIFT;
         if (GetKeyState(VK_LWIN) & 0x8000) mask |= KEYMASK_SUPER;
         if (GetKeyState(VK_RWIN) & 0x8000) mask |= KEYMASK_SUPER;

@@ -206,15 +206,21 @@ namespace mango
         KEYCODE_SUBTRACT,
         KEYCODE_ADDITION,
         KEYCODE_ENTER,
-        KEYCODE_DECIMAL
+        KEYCODE_DECIMAL,
+        KEYCODE_SHIFT,
+        KEYCODE_LEFT_SHIFT,
+        KEYCODE_RIGHT_SHIFT,
+        KEYCODE_CONTROL,
+        KEYCODE_LEFT_CONTROL,
+        KEYCODE_RIGHT_CONTROL,
     };
 
     enum
     {
-        KEYMASK_CTRL   = 0x0001,
-        KEYMASK_SHIFT  = 0x0002,
-        KEYMASK_SUPER  = 0x0004,
-        KEYMASK_MENU   = 0x0008
+        KEYMASK_CONTROL = 0x0001,
+        KEYMASK_SHIFT   = 0x0002,
+        KEYMASK_SUPER   = 0x0004,
+        KEYMASK_MENU    = 0x0008
     };
 
     enum MouseButton

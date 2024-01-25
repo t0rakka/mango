@@ -26,7 +26,9 @@ namespace
 
         switch (symbol)
         {
-            default: code = KEYCODE_NONE; break;
+            default:
+                code = KEYCODE_NONE;
+                break;
             TR(XK_Escape,         KEYCODE_ESC);
             TR(XK_0,              KEYCODE_0);
             TR(XK_1,              KEYCODE_1);
@@ -112,6 +114,10 @@ namespace
             TR(XK_KP_Add,         KEYCODE_ADDITION);
             TR(XK_KP_Enter,       KEYCODE_ENTER);
             TR(XK_KP_Decimal,     KEYCODE_DECIMAL);
+            TR(XK_Shift_L,        KEYCODE_LEFT_SHIFT);
+            TR(XK_Shift_R,        KEYCODE_RIGHT_SHIFT);
+            TR(XK_Control_L,      KEYCODE_LEFT_CONTROL);
+            TR(XK_Control_R,      KEYCODE_RIGHT_CONTROL);
         }
 
         return code;
@@ -213,7 +219,12 @@ namespace
             TR(XK_KP_Add,         KEYCODE_ADDITION);
             TR(XK_KP_Enter,       KEYCODE_ENTER);
             TR(XK_KP_Decimal,     KEYCODE_DECIMAL);
+            TR(XK_Shift_L,        KEYCODE_LEFT_SHIFT);
+            TR(XK_Shift_R,        KEYCODE_RIGHT_SHIFT);
+            TR(XK_Control_L,      KEYCODE_LEFT_CONTROL);
+            TR(XK_Control_R,      KEYCODE_RIGHT_CONTROL);
         }
+
         return symbol;
     }
 
@@ -222,7 +233,7 @@ namespace
     u32 translateKeyMask(int state)
     {
         u32 mask = 0;
-        if (state & ControlMask) mask |= KEYMASK_CTRL;
+        if (state & ControlMask) mask |= KEYMASK_CONTROL;
         if (state & ShiftMask  ) mask |= KEYMASK_SHIFT;
         if (state & Mod4Mask   ) mask |= KEYMASK_SUPER;
         //if (state & xxxxxxxxxxx) mask |= KEYMASK_MENU;
@@ -816,6 +827,18 @@ namespace mango
 
     bool Window::isKeyPressed(Keycode code) const
     {
+        switch (code)
+        {
+            case KEYCODE_SHIFT:
+                return isKeyPressed(KEYCODE_LEFT_SHIFT) || isKeyPressed(KEYCODE_RIGHT_SHIFT);
+
+            case KEYCODE_CONTROL:
+                return isKeyPressed(KEYCODE_LEFT_CONTROL) || isKeyPressed(KEYCODE_RIGHT_CONTROL);
+
+            default:
+                break;
+        }
+
         bool pressed = false;
 
         // get window with input focus

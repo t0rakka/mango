@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #ifndef MANGO_OPENGL_CONTEXT_NONE
 
@@ -12,7 +12,8 @@ namespace
 
     Keycode computeKeyCode(u32 code)
     {
-        static const Keycode table[] =
+        static
+        const Keycode table [] =
         {
             // offset: 0
             KEYCODE_A,
@@ -76,14 +77,14 @@ namespace
             KEYCODE_ESC,
             KEYCODE_NONE, // RSUPER,
             KEYCODE_NONE, // LSUPER,
-            KEYCODE_NONE, // LSHIFT,
+            KEYCODE_LEFT_SHIFT,
             KEYCODE_CAPS_LOCK,
             KEYCODE_LEFT_ALT,
-            KEYCODE_NONE, // LCTRL,
+            KEYCODE_LEFT_CONTROL,
             // offset: 60
-            KEYCODE_NONE, // RSHIFT,
+            KEYCODE_RIGHT_SHIFT,
             KEYCODE_RIGHT_ALT,
-            KEYCODE_NONE, // RCTRL,
+            KEYCODE_RIGHT_CONTROL,
             KEYCODE_NONE, // Fn
             KEYCODE_NONE, // F17
             KEYCODE_DECIMAL,
@@ -158,7 +159,9 @@ namespace
         };
         
         if (code >= 128)
+        {
             return KEYCODE_NONE;
+        }
         
         return table[code];
     }
@@ -166,7 +169,7 @@ namespace
     u32 computeKeyMask(NSUInteger flags)
     {
         u32 mask = 0;
-        if (flags & NSEventModifierFlagControl)    mask |= KEYMASK_CTRL;
+        if (flags & NSEventModifierFlagControl)    mask |= KEYMASK_CONTROL;
         if (flags & NSEventModifierFlagShift)      mask |= KEYMASK_SHIFT;
         if (flags & NSEventModifierFlagCommand)    mask |= KEYMASK_SUPER;
         return mask;

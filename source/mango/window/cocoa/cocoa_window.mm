@@ -158,9 +158,23 @@ namespace mango
 
     bool Window::isKeyPressed(Keycode code) const
     {
+        switch (code)
+        {
+            case KEYCODE_SHIFT:
+                return isKeyPressed(KEYCODE_LEFT_SHIFT) || isKeyPressed(KEYCODE_RIGHT_SHIFT);
+
+            case KEYCODE_CONTROL:
+                return isKeyPressed(KEYCODE_LEFT_CONTROL) || isKeyPressed(KEYCODE_RIGHT_CONTROL);
+
+            default:
+                break;
+        }
+
         const int keyIndex = int(code);
         u32 state = m_handle->keystate[keyIndex >> 5] & (1 << (keyIndex & 31));
-        return state != 0;
+        bool pressed = state != 0;
+
+        return pressed;
     }
 
     Window::operator NativeWindowHandle () const
