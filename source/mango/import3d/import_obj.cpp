@@ -18,6 +18,13 @@ namespace mango::import3d
         u32 texcoord[3];
     };
 
+    struct GroupOBJ
+    {
+        std::string name;
+        std::vector<FaceOBJ> faces;
+        u32 material = 0;
+    };
+
     struct MaterialOBJ
     {
         std::string name;
@@ -60,9 +67,8 @@ namespace mango::import3d
 
     struct ObjectOBJ
     {
-        u32 material = 0;
         std::string name;
-        std::vector<FaceOBJ> faces;
+        std::vector<GroupOBJ> groups;
     };
 
     struct ReaderOBJ
@@ -76,8 +82,8 @@ namespace mango::import3d
         std::vector<ObjectOBJ> m_objects;
         std::vector<MaterialOBJ> m_materials;
 
-        ObjectOBJ* m_current_object = nullptr;
         MaterialOBJ* m_current_material = nullptr;
+        u32 m_use_material_index = 0;
 
         ReaderOBJ(const filesystem::Path& path, const std::string& filename);
 
@@ -92,6 +98,32 @@ namespace mango::import3d
         void parse_g(const std::vector<std::string_view>& tokens);
         void parse_s(const std::vector<std::string_view>& tokens);
         void parse_f(const std::vector<std::string_view>& tokens);
+
+        ObjectOBJ& getCurrentObject()
+        {
+            if (m_objects.empty())
+            {
+                ObjectOBJ object;
+                object.name = "default";
+                m_objects.push_back(object);
+            }
+
+            return m_objects.back();
+        }
+
+        GroupOBJ& getCurrentGroup()
+        {
+            ObjectOBJ& object = getCurrentObject();
+            if (object.groups.empty())
+            {
+                GroupOBJ group;
+                group.name = "default";
+                group.material = m_use_material_index;
+                object.groups.push_back(group);
+            }
+
+            return object.groups.back();
+        }
 
         std::string map_filename(std::string_view filename) const
         {
@@ -450,17 +482,12 @@ namespace mango::import3d
             // error
         }
 
-        std::string name = std::string(tokens[0]);
-
-        if (m_current_object)
+        // NOTE: brute-force search
+        for (size_t index = 0; index < m_materials.size(); ++index)
         {
-            // NOTE: brute-force search
-            for (size_t index = 0; index < m_materials.size(); ++index)
+            if (m_materials[index].name == std::string(tokens[0]))
             {
-                if (m_materials[index].name == name)
-                {
-                    m_current_object->material = u32(index);
-                }
+                m_use_material_index = u32(index);
             }
         }
     }
@@ -470,14 +497,12 @@ namespace mango::import3d
         if (tokens.size() != 1)
         {
             // error
+            return;
         }
 
-        std::string name = std::string(tokens[0]);
-
-        m_objects.push_back(ObjectOBJ());
-        m_current_object = &m_objects.back();
-
-        m_current_object->name = name;
+        ObjectOBJ object;
+        object.name = std::string(tokens[0]);
+        m_objects.push_back(object);
     }
 
     void ReaderOBJ::parse_g(const std::vector<std::string_view>& tokens)
@@ -485,9 +510,15 @@ namespace mango::import3d
         if (tokens.size() != 1)
         {
             // error
+            return;
         }
 
-        //std::string name = std::string(tokens[0]);
+        ObjectOBJ& object = getCurrentObject();
+
+        GroupOBJ group;
+        group.name = std::string(tokens[0]);
+        group.material = m_use_material_index;
+        object.groups.push_back(group);
     }
 
     void ReaderOBJ::parse_s(const std::vector<std::string_view>& tokens)
@@ -495,6 +526,7 @@ namespace mango::import3d
         if (tokens.size() != 1)
         {
             // error
+            return;
         }
 
         // TODO
@@ -559,15 +591,9 @@ namespace mango::import3d
             normalIndex[i] = value[2];
         }
 
-        if (m_objects.empty())
-        {
-            // create default object
-            m_objects.push_back(ObjectOBJ());
-            m_current_object = &m_objects.back();
-            m_current_object->name = "default";
-        }
+        GroupOBJ& group = getCurrentGroup();
 
-        auto& faces = m_objects.back().faces;
+        auto& faces = group.faces;
 
         for (size_t i = 0; i < tokens.size() - 2; ++i)
         {
@@ -596,6 +622,8 @@ namespace mango::import3d
         ReaderOBJ reader(path, filename);
 
         u64 time1 = mango::Time::ms();
+
+        printLine("Materials: {}", reader.m_materials.size());
 
         for (const MaterialOBJ& materialobj : reader.m_materials)
         {
@@ -629,74 +657,80 @@ namespace mango::import3d
 
         u64 time2 = mango::Time::ms();
 
+        printLine("Objects: {}", reader.m_objects.size());
+
         for (const auto& object : reader.m_objects)
         {
-            Mesh trimesh;
-
-            trimesh.triangles.resize(object.faces.size());
-
-            for (size_t faceIndex = 0; faceIndex < object.faces.size(); ++faceIndex)
+            for (const auto& group : object.groups)
             {
-                const FaceOBJ& face = object.faces[faceIndex];
-                Triangle& triangle = trimesh.triangles[faceIndex];
+                Mesh trimesh;
 
-                triangle.material = object.material;
+                trimesh.triangles.resize(group.faces.size());
 
-                for (int i = 0; i < 3; ++i)
+                for (size_t faceIndex = 0; faceIndex < group.faces.size(); ++faceIndex)
                 {
-                    Vertex& vertex = triangle.vertex[i];
+                    const FaceOBJ& face = group.faces[faceIndex];
+                    Triangle& triangle = trimesh.triangles[faceIndex];
 
-                    u32 positionIndex = face.position[i];
-                    u32 texcoordIndex = face.texcoord[i];
-                    u32 normalIndex = face.normal[i];
+                    triangle.material = group.material;
 
-                    /*
-                    if (positionIndex > reader.positions.size())
+                    for (int i = 0; i < 3; ++i)
                     {
-                        printLine("positionIndex: {} > {}", positionIndex, reader.positions.size());
-                        continue;
-                    }
+                        Vertex& vertex = triangle.vertex[i];
 
-                    if (texcoordIndex != 0 && texcoordIndex > reader.texcoords.size())
-                    {
-                        printLine("texcoordIndex: {} > {}", texcoordIndex, reader.texcoords.size());
-                        continue;
-                    }
+                        u32 positionIndex = face.position[i];
+                        u32 texcoordIndex = face.texcoord[i];
+                        u32 normalIndex = face.normal[i];
 
-                    if (normalIndex != 0 && normalIndex > reader.normals.size())
-                    {
-                        printLine("normalIndex: {} > {}", normalIndex, reader.normals.size());
-                        continue;
-                    }
-                    */
+                        /*
+                        if (positionIndex > reader.positions.size())
+                        {
+                            printLine("positionIndex: {} > {}", positionIndex, reader.positions.size());
+                            continue;
+                        }
 
-                    vertex.position = reader.positions[positionIndex - 1];
+                        if (texcoordIndex != 0 && texcoordIndex > reader.texcoords.size())
+                        {
+                            printLine("texcoordIndex: {} > {}", texcoordIndex, reader.texcoords.size());
+                            continue;
+                        }
 
-                    if (texcoordIndex)
-                    {
-                        vertex.texcoord = reader.texcoords[texcoordIndex - 1];
-                        vertex.texcoord.y = -vertex.texcoord.y;
-                    }
+                        if (normalIndex != 0 && normalIndex > reader.normals.size())
+                        {
+                            printLine("normalIndex: {} > {}", normalIndex, reader.normals.size());
+                            continue;
+                        }
+                        */
 
-                    if (normalIndex)
-                    {
-                        vertex.normal = reader.normals[normalIndex - 1];
+                        vertex.position = reader.positions[positionIndex - 1];
+
+                        if (texcoordIndex)
+                        {
+                            vertex.texcoord = reader.texcoords[texcoordIndex - 1];
+                            vertex.texcoord.y = -vertex.texcoord.y;
+                        }
+
+                        if (normalIndex)
+                        {
+                            vertex.normal = reader.normals[normalIndex - 1];
+                        }
                     }
                 }
-            }
 
-            //computeTangents(trimesh);
-            IndexedMesh mesh = convertMesh(trimesh);
+                //computeTangents(trimesh);
+                IndexedMesh mesh = convertMesh(trimesh);
 
-            Node node;
+                Node node;
 
-            node.name = object.name;
-            node.transform = matrix4x4(1.0f);
-            node.mesh = u32(meshes.size());
+                node.name = object.name;
+                node.transform = matrix4x4(1.0f);
+                node.mesh = u32(meshes.size());
 
-            nodes.push_back(node);
-            meshes.push_back(mesh);
-        }
+                nodes.push_back(node);
+                meshes.push_back(mesh);
+
+            } // groups
+        } // objects
 
         // NOTE: we don't care about hierarchy in the .obj scene
 
