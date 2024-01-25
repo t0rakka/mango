@@ -13,9 +13,9 @@ namespace mango::import3d
 
     struct FaceOBJ
     {
-        s32 position[3];
-        s32 normal[3];
-        s32 texcoord[3];
+        u32 position[3];
+        u32 normal[3];
+        u32 texcoord[3];
     };
 
     struct MaterialOBJ
@@ -514,9 +514,16 @@ namespace mango::import3d
             return;
         }
 
-        int positionIndex[maxVertexPerFace];
-        int texcoordIndex[maxVertexPerFace];
-        int normalIndex[maxVertexPerFace];
+        s32 positionIndex[maxVertexPerFace];
+        s32 texcoordIndex[maxVertexPerFace];
+        s32 normalIndex[maxVertexPerFace];
+
+        const s32 bias[3] =
+        {
+            s32(positions.size() + 1),
+            s32(texcoords.size() + 1),
+            s32(normals.size() + 1),
+        };
 
         for (size_t i = 0; i < tokens.size(); ++i)
         {
@@ -527,8 +534,8 @@ namespace mango::import3d
             std::string_view s = tokens[i];
 
             int value[3] = { 0, 0, 0 };
-            size_t index = 0;
 
+            size_t index = 0;
             size_t first = 0;
 
             while (first < s.size() && index < 3)
@@ -536,17 +543,20 @@ namespace mango::import3d
                 value[index++] = std::atoi(s.data() + first);
 
                 size_t second = s.find_first_of("/", first);
-
                 if (second == std::string_view::npos)
                     break;
 
                 first = second + 1;
             }
 
-            // negative indices mean index from the end of the array
-            positionIndex[i] = value[0] < 0 ? value[0] + positions.size() + 1 : value[0];
-            texcoordIndex[i] = value[1] < 0 ? value[1] + texcoords.size() + 1 : value[1];
-            normalIndex[i] = value[2] < 0 ? value[2] + normals.size() + 1 : value[2];
+            // negative indices start from the last element
+            if (value[0] < 0) value[0] += bias[0];
+            if (value[1] < 0) value[1] += bias[1];
+            if (value[2] < 0) value[2] += bias[2];
+
+            positionIndex[i] = value[0];
+            texcoordIndex[i] = value[1];
+            normalIndex[i] = value[2];
         }
 
         if (m_objects.empty())
