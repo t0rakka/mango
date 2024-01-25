@@ -543,9 +543,10 @@ namespace mango::import3d
                 first = second + 1;
             }
 
-            positionIndex[i] = value[0];
-            texcoordIndex[i] = value[1];
-            normalIndex[i] = value[2];
+            // negative indices mean index from the end of the array
+            positionIndex[i] = value[0] < 0 ? value[0] + positions.size() + 1 : value[0];
+            texcoordIndex[i] = value[1] < 0 ? value[1] + texcoords.size() + 1 : value[1];
+            normalIndex[i] = value[2] < 0 ? value[2] + normals.size() + 1 : value[2];
         }
 
         if (m_objects.empty())
@@ -635,27 +636,26 @@ namespace mango::import3d
                 {
                     Vertex& vertex = triangle.vertex[i];
 
-                    // negative indices mean index from the end of the array
-                    u32 positionIndex = face.position[i] < 0 ? reader.positions.size() + face.position[i] + 1 : face.position[i];
-                    u32 texcoordIndex = face.texcoord[i] < 0 ? reader.texcoords.size() + face.texcoord[i] + 1 : face.texcoord[i];
-                    u32 normalIndex = face.normal[i] < 0 ? reader.normals.size() + face.normal[i] + 1 : face.normal[i];
+                    u32 positionIndex = face.position[i];
+                    u32 texcoordIndex = face.texcoord[i];
+                    u32 normalIndex = face.normal[i];
 
                     /*
                     if (positionIndex > reader.positions.size())
                     {
-                        //printLine("positionIndex: {} > {}", positionIndex, reader.positions.size());
+                        printLine("positionIndex: {} > {}", positionIndex, reader.positions.size());
                         continue;
                     }
 
                     if (texcoordIndex != 0 && texcoordIndex > reader.texcoords.size())
                     {
-                        //printLine("texcoordIndex: {} > {}", texcoordIndex, reader.texcoords.size());
+                        printLine("texcoordIndex: {} > {}", texcoordIndex, reader.texcoords.size());
                         continue;
                     }
 
                     if (normalIndex != 0 && normalIndex > reader.normals.size())
                     {
-                        //printLine("normalIndex: {} > {}", normalIndex, reader.normals.size());
+                        printLine("normalIndex: {} > {}", normalIndex, reader.normals.size());
                         continue;
                     }
                     */
