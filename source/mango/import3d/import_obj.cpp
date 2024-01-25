@@ -125,11 +125,14 @@ namespace mango::import3d
             return object.groups.back();
         }
 
-        std::string map_filename(std::string_view filename) const
+        std::string map_filename(const std::vector<std::string_view>& tokens) const
         {
-            std::string s(filename);
-            replace(s, "\\", "/");
-            return s;
+            // skip parameters
+            size_t index = tokens.size() - 1;
+
+            std::string filename(tokens[index]);
+            replace(filename, "\\", "/");
+            return filename;
         }
 
         float parse_float(std::string_view s) const
@@ -349,49 +352,43 @@ namespace mango::import3d
                         }
                         else if (id == "map_Ka")
                         {
-                            m_current_material->map_ka = map_filename(tokens[0]);
+                            m_current_material->map_ka = map_filename(tokens);
                         }
                         else if (id == "map_Kd")
                         {
-                            m_current_material->map_kd = map_filename(tokens[0]);
+                            m_current_material->map_kd = map_filename(tokens);
                         }
                         else if (id == "map_Ks")
                         {
-                            m_current_material->map_ks = map_filename(tokens[0]);
+                            m_current_material->map_ks = map_filename(tokens);
                         }
                         else if (id == "map_Ke")
                         {
-                            m_current_material->map_ke = map_filename(tokens[0]);
+                            m_current_material->map_ke = map_filename(tokens);
                         }
                         else if (id == "map_bump" || id == "map_Bump"|| id == "bump")
                         {
-                            size_t filenameIndex = 0;
-                            if (tokens.size() > 1)
-                            {
-                                // there could be tokens here that we skip, example: "-bm <float>"
-                                filenameIndex = tokens.size() - 1;
-                            }
-                            m_current_material->map_bump = map_filename(tokens[filenameIndex]);
+                            m_current_material->map_bump = map_filename(tokens);
                         }
                         else if (id == "map_Ns")
                         {
-                            m_current_material->map_ns = map_filename(tokens[0]);
+                            m_current_material->map_ns = map_filename(tokens);
                         }
                         else if (id == "map_d")
                         {
-                            m_current_material->map_d = map_filename(tokens[0]);
+                            m_current_material->map_d = map_filename(tokens);
                         }
                         else if (id == "disp")
                         {
-                            m_current_material->map_disp = map_filename(tokens[0]);
+                            m_current_material->map_disp = map_filename(tokens);
                         }
                         else if (id == "decal")
                         {
-                            m_current_material->map_decal = map_filename(tokens[0]);
+                            m_current_material->map_decal = map_filename(tokens);
                         }
                         else if (id == "refl")
                         {
-                            m_current_material->map_refl = map_filename(tokens[0]);
+                            m_current_material->map_refl = map_filename(tokens);
                         }
                         else
                         {
