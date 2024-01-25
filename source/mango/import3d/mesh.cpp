@@ -93,6 +93,24 @@ bool operator < (const Vertex& a, const Vertex& b)
     return std::memcmp(&a, &b, sizeof(Vertex)) < 0;
 }
 
+static inline
+bool operator == (const Vertex& a, const Vertex& b)
+{
+    return std::memcmp(&a, &b, sizeof(Vertex)) == 0;
+}
+
+struct VertexHash
+{
+    std::size_t operator () (const Vertex& v) const
+    {
+        size_t h0 = std::hash<float>{}(v.position.x);
+        size_t h1 = std::hash<float>{}(v.position.y);
+        size_t h2 = std::hash<float>{}(v.position.z);
+        size_t h = (h0 ^ h1) ^ (h2 >> 7);
+        return h;
+    }
+};
+
 void computeTangents(Mesh& mesh)
 {
     SMikkTSpaceInterface mik_interface;
@@ -209,7 +227,7 @@ IndexedMesh convertMesh(const Mesh& input)
         return a.material < b.material;
     });
 
-    std::map<Vertex, size_t> unique;
+    std::unordered_map<Vertex, size_t, VertexHash> unique;
 
     Primitive primitive;
 
