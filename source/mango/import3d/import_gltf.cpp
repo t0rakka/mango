@@ -76,7 +76,7 @@ namespace
         }
     }
 
-} // namesoace
+} // namespace
 
 namespace mango::import3d
 {
@@ -610,10 +610,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 {
                     auto& indicesView = asset.bufferViews[indicesAccessor.bufferViewIndex.value()];
 
-                    u32 offset = indicesView.byteOffset + indicesAccessor.byteOffset;
+                    size_t offset = indicesView.byteOffset + indicesAccessor.byteOffset;
                     size_t count = indicesAccessor.count;
 
-                    u32 bufferIndex = indicesView.bufferIndex;
+                    size_t bufferIndex = indicesView.bufferIndex;
                     const u8* data = buffers[bufferIndex].address + offset;
 
                     mesh.indices.resize(count);
@@ -682,7 +682,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
             if (primitiveIterator->materialIndex.has_value())
             {
-                primitive.material = primitiveIterator->materialIndex.value();
+                primitive.material = u32(primitiveIterator->materialIndex.value());
             }
 
             const Material& material = materials[primitive.material];
@@ -740,7 +740,11 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         }
 
         node.name = current.name;
-        node.children = std::vector<u32>(current.children.begin(), current.children.end());
+
+        for (auto child : current.children)
+        {
+            node.children.push_back(u32(child));
+        }
 
         if (current.meshIndex)
         {
@@ -757,7 +761,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         printLine(Print::Verbose, "[Scene]");
         printLine(Print::Verbose, "  nodeIndices: {}", current.nodeIndices.size());
 
-        roots = std::vector<u32>(current.nodeIndices.begin(), current.nodeIndices.end());
+        for (auto nodeIndex : current.nodeIndices)
+        {
+            roots.push_back(u32(nodeIndex));
+        }
     }
 
     // summary
