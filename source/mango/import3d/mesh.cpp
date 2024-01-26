@@ -87,11 +87,19 @@ namespace mango::import3d
 static
 constexpr float pi2 = float(math::pi * 2.0);
 
+#if 0
+
+// std::map<Vertex, u32>
+
 static inline
 bool operator < (const Vertex& a, const Vertex& b)
 {
     return std::memcmp(&a, &b, sizeof(Vertex)) < 0;
 }
+
+#else
+
+// std::unordered_map<Vertex, u32>
 
 static inline
 bool operator == (const Vertex& a, const Vertex& b)
@@ -110,6 +118,8 @@ struct VertexHash
         return h;
     }
 };
+
+#endif
 
 void computeTangents(Mesh& mesh)
 {
