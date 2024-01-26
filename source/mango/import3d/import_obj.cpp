@@ -3,6 +3,7 @@
     Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <string_view>
+#include <map>
 #include <mango/core/core.hpp>
 #include <mango/import3d/import_obj.hpp>
 #include "../../external/fast_float/fast_float.h"
@@ -12,11 +13,30 @@ namespace mango::import3d
 
     // https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
+    struct VertexOBJ
+    {
+        u32 position;
+        u32 texcoord;
+        u32 normal;
+    };
+
+    static inline
+    bool operator == (const VertexOBJ& a, const VertexOBJ& b)
+    {
+        return std::memcmp(&a, &b, sizeof(VertexOBJ)) == 0;
+    }
+
+    struct VertexHash
+    {
+        std::size_t operator () (const VertexOBJ& v) const
+        {
+            return v.position;
+        }
+    };
+
     struct FaceOBJ
     {
-        u32 position[3];
-        u32 normal[3];
-        u32 texcoord[3];
+        VertexOBJ vertex[3];
     };
 
     struct GroupOBJ
@@ -647,17 +667,17 @@ namespace mango::import3d
         {
             FaceOBJ face;
 
-            face.position[0] = positionIndex[0];
-            face.position[1] = positionIndex[i + 1];
-            face.position[2] = positionIndex[i + 2];
+            face.vertex[0].position = positionIndex[0];
+            face.vertex[0].texcoord = texcoordIndex[0];
+            face.vertex[0].normal   = normalIndex[0];
 
-            face.texcoord[0] = texcoordIndex[0];
-            face.texcoord[1] = texcoordIndex[i + 1];
-            face.texcoord[2] = texcoordIndex[i + 2];
+            face.vertex[1].position = positionIndex[i + 1];
+            face.vertex[1].texcoord = texcoordIndex[i + 1];
+            face.vertex[1].normal   = normalIndex[i + 1];
 
-            face.normal[0] = normalIndex[0];
-            face.normal[1] = normalIndex[i + 1];
-            face.normal[2] = normalIndex[i + 2];
+            face.vertex[2].position = positionIndex[i + 2];
+            face.vertex[2].texcoord = texcoordIndex[i + 2];
+            face.vertex[2].normal   = normalIndex[i + 2];
 
             faces.push_back(face);
         }
@@ -711,62 +731,78 @@ namespace mango::import3d
         {
             for (const auto& group : object.groups)
             {
-                Mesh trimesh;
+                IndexedMesh mesh;
 
-                trimesh.triangles.resize(group.faces.size());
+                std::unordered_map<VertexOBJ, u32, VertexHash> unique;
 
-                for (size_t faceIndex = 0; faceIndex < group.faces.size(); ++faceIndex)
+                for (const FaceOBJ& face : group.faces)
                 {
-                    const FaceOBJ& face = group.faces[faceIndex];
-                    Triangle& triangle = trimesh.triangles[faceIndex];
-
-                    triangle.material = group.material;
-
                     for (int i = 0; i < 3; ++i)
                     {
-                        Vertex& vertex = triangle.vertex[i];
+                        u32 index;
 
-                        u32 positionIndex = face.position[i];
-                        u32 texcoordIndex = face.texcoord[i];
-                        u32 normalIndex = face.normal[i];
-
-                        /*
-                        if (positionIndex > reader.positions.size())
+                        auto it = unique.find(face.vertex[i]);
+                        if (it != unique.end())
                         {
-                            printLine("positionIndex: {} > {}", positionIndex, reader.positions.size());
-                            continue;
+                            // vertex already exists; use it's index
+                            index = it->second;
+                        }
+                        else
+                        {
+                            index = u32(mesh.vertices.size());
+                            unique[face.vertex[i]] = index; // remember the index of this vertex
+
+                            Vertex vertex;
+
+                            /*
+                            if (positionIndex > reader.positions.size())
+                            {
+                                printLine("positionIndex: {} > {}", positionIndex, reader.positions.size());
+                                continue;
+                            }
+
+                            if (texcoordIndex != 0 && texcoordIndex > reader.texcoords.size())
+                            {
+                                printLine("texcoordIndex: {} > {}", texcoordIndex, reader.texcoords.size());
+                                continue;
+                            }
+
+                            if (normalIndex != 0 && normalIndex > reader.normals.size())
+                            {
+                                printLine("normalIndex: {} > {}", normalIndex, reader.normals.size());
+                                continue;
+                            }
+                            */
+
+                            vertex.position = reader.positions[face.vertex[i].position - 1];
+
+                            if (face.vertex[i].texcoord)
+                            {
+                                vertex.texcoord = reader.texcoords[face.vertex[i].texcoord - 1];
+                                vertex.texcoord.y = -vertex.texcoord.y;
+                            }
+
+                            if (face.vertex[i].normal)
+                            {
+                                vertex.normal = reader.normals[face.vertex[i].normal - 1];
+                            }
+
+                            mesh.vertices.push_back(vertex);
                         }
 
-                        if (texcoordIndex != 0 && texcoordIndex > reader.texcoords.size())
-                        {
-                            printLine("texcoordIndex: {} > {}", texcoordIndex, reader.texcoords.size());
-                            continue;
-                        }
-
-                        if (normalIndex != 0 && normalIndex > reader.normals.size())
-                        {
-                            printLine("normalIndex: {} > {}", normalIndex, reader.normals.size());
-                            continue;
-                        }
-                        */
-
-                        vertex.position = reader.positions[positionIndex - 1];
-
-                        if (texcoordIndex)
-                        {
-                            vertex.texcoord = reader.texcoords[texcoordIndex - 1];
-                            vertex.texcoord.y = -vertex.texcoord.y;
-                        }
-
-                        if (normalIndex)
-                        {
-                            vertex.normal = reader.normals[normalIndex - 1];
-                        }
+                        mesh.indices.push_back(index);
                     }
                 }
 
-                //computeTangents(trimesh);
-                IndexedMesh mesh = convertMesh(trimesh);
+                Primitive primitive;
+
+                primitive.mode = Primitive::Mode::TRIANGLE_LIST;
+                primitive.start = 0;
+                primitive.count = mesh.indices.size();
+                primitive.base = 0;
+                primitive.material = group.material;
+
+                mesh.primitives.push_back(primitive);
 
                 Node node;
 
