@@ -5,6 +5,7 @@
 #include <string_view>
 #include <mango/core/core.hpp>
 #include <mango/import3d/import_obj.hpp>
+#include "../../external/fast_float/fast_float.h"
 
 namespace mango::import3d
 {
@@ -125,6 +126,61 @@ namespace mango::import3d
             return object.groups.back();
         }
 
+        float parseFloat(std::string_view s) const
+        {
+            float value = 0.0f;
+            fast_float::from_chars(s.data(), s.data() + s.size(), value);
+            return value;
+        }
+
+        int parseInt(const char* s) const
+        {
+            int result = 0;
+
+            // Skip whitespaces
+            for ( ;; ++s)
+            {
+                char c = *s;
+                bool whitespace = c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
+                if (!whitespace)
+                    break;
+            }
+
+            if (*s == '-')
+            {
+                ++s;
+
+                // Iterate through all characters of input string and update result
+                for ( ;; ++s)
+                {
+                    u32 d = u32(*s) - '0';
+                    if (d > 9)
+                    {
+                        return result;
+                    }
+                    result = result * 10 - d;
+                }
+            }
+            else if (*s == '+')
+            {
+                ++s;
+            }
+
+            // Iterate through all characters of input string and update result
+            for ( ;; ++s)
+            {
+                u32 d = u32(*s) - '0';
+                if (d > 9)
+                {
+                    return result;
+                }
+                result = result * 10 + d;
+            }
+
+            //  unreachable
+            return result;
+        }
+
         std::string map_filename(const std::vector<std::string_view>& tokens) const
         {
             // skip parameters
@@ -135,11 +191,6 @@ namespace mango::import3d
             return filename;
         }
 
-        float parse_float(std::string_view s) const
-        {
-            return parseFloat(s);
-        }
-
         float parse_float(const std::vector<std::string_view>& tokens) const
         {
             if (tokens.size() != 1)
@@ -147,7 +198,7 @@ namespace mango::import3d
                 // error
             }
 
-            double value = parse_float(tokens[0]);
+            float value = parseFloat(tokens[0]);
             return value;
         }
 
@@ -158,11 +209,11 @@ namespace mango::import3d
                 // error
             }
 
-            double value[3];
+            float value[3];
 
             for (size_t i = 0; i < tokens.size(); ++i)
             {
-                value[i] = parse_float(tokens[i]);
+                value[i] = parseFloat(tokens[i]);
             }
 
             return float32x3(value[0], value[1], value[2]);
@@ -417,13 +468,13 @@ namespace mango::import3d
             // error
         }
 
-        double value[4];
+        float value[4];
 
         value[3] = 1.0;
 
         for (size_t i = 0; i < tokens.size(); ++i)
         {
-            value[i] = parse_float(tokens[i]);
+            value[i] = parseFloat(tokens[i]);
         }
 
         //printf("v %f %f %f %f\n", value[0], value[1], value[2], value[3]);
@@ -443,13 +494,13 @@ namespace mango::import3d
             // error
         }
 
-        double value[3];
+        float value[3];
 
         value[2] = 0.0;
 
         for (size_t i = 0; i < tokens.size(); ++i)
         {
-            value[i] = parse_float(tokens[i]);
+            value[i] = parseFloat(tokens[i]);
         }
 
         //printf("vt %f %f %f\n", value[0], value[1], value[2]);
@@ -569,7 +620,7 @@ namespace mango::import3d
 
             while (first < s.size() && index < 3)
             {
-                value[index++] = std::atoi(s.data() + first);
+                value[index++] = parseInt(s.data() + first);
 
                 size_t second = s.find_first_of("/", first);
                 if (second == std::string_view::npos)

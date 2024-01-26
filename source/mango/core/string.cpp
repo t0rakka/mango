@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <locale>
 #include <cstring>
+#include <charconv>
 #include <mango/core/string.hpp>
 #include <mango/core/bits.hpp>
 #include "../../external/fast_float/fast_float.h"
@@ -585,6 +586,13 @@ namespace mango
     {
         float value = 0.0f;
         fast_float::from_chars(s.data(), s.data() + s.size(), value);
+        return value;
+    }
+
+    int parseInt(std::string_view str)
+    {
+        int value = 0;
+        std::from_chars(str.data(), str.data() + str.size(), value);
         return value;
     }
 

@@ -38,6 +38,7 @@ namespace mango
     std::vector<std::string> split(const std::string& s, const std::string& delimiter);
     std::vector<std::string_view> split(std::string_view s, std::string_view delimiter);
     const u8* memchr(const u8* p, u8 value, size_t count);
-    float parseFloat(std::string_view s);
+    float parseFloat(std::string_view str);
+    int parseInt(std::string_view str);
 
 } // namespace mango
