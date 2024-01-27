@@ -110,15 +110,15 @@ namespace mango::import3d
 
         void parse_mtl(const std::string_view& s);
 
-        void parse_v(const std::vector<std::string_view>& tokens);
-        void parse_vn(const std::vector<std::string_view>& tokens);
-        void parse_vt(const std::vector<std::string_view>& tokens);
-        void parse_mtllib(const std::vector<std::string_view>& tokens);
-        void parse_usemtl(const std::vector<std::string_view>& tokens);
-        void parse_o(const std::vector<std::string_view>& tokens);
-        void parse_g(const std::vector<std::string_view>& tokens);
-        void parse_s(const std::vector<std::string_view>& tokens);
-        void parse_f(const std::vector<std::string_view>& tokens);
+        void parse_v(const std::string_view* tokens, size_t count);
+        void parse_vn(const std::string_view* tokens, size_t count);
+        void parse_vt(const std::string_view* tokens, size_t count);
+        void parse_mtllib(const std::string_view* tokens, size_t count);
+        void parse_usemtl(const std::string_view* tokens, size_t count);
+        void parse_o(const std::string_view* tokens, size_t count);
+        void parse_g(const std::string_view* tokens, size_t count);
+        void parse_s(const std::string_view* tokens, size_t count);
+        void parse_f(const std::string_view* tokens, size_t count);
 
         ObjectOBJ& getCurrentObject()
         {
@@ -201,19 +201,19 @@ namespace mango::import3d
             return result;
         }
 
-        std::string map_filename(const std::vector<std::string_view>& tokens) const
+        std::string map_filename(const std::string_view* tokens, size_t count) const
         {
             // skip parameters
-            size_t index = tokens.size() - 1;
+            size_t index = count - 1;
 
             std::string filename(tokens[index]);
             replace(filename, "\\", "/");
             return filename;
         }
 
-        float parse_float(const std::vector<std::string_view>& tokens) const
+        float parse_float(const std::string_view* tokens, size_t count) const
         {
-            if (tokens.size() != 1)
+            if (count != 1)
             {
                 // error
             }
@@ -222,16 +222,16 @@ namespace mango::import3d
             return value;
         }
 
-        float32x3 parse_float32x3(const std::vector<std::string_view>& tokens) const
+        float32x3 parse_float32x3(const std::string_view* tokens, size_t count) const
         {
-            if (tokens.size() != 3)
+            if (count != 3)
             {
                 // error
             }
 
             float value[3];
 
-            for (size_t i = 0; i < tokens.size(); ++i)
+            for (size_t i = 0; i < count; ++i)
             {
                 value[i] = parseFloat(tokens[i]);
             }
@@ -244,12 +244,8 @@ namespace mango::import3d
         : m_path(path)
     {
         filesystem::File file(path, filename);
-
         std::string_view s(reinterpret_cast<const char *>(file.data()), file.size());
 
-        // ---------------------
-
-        std::string_view id;
         std::vector<std::string_view> tokens;
 
         size_t first = 0;
@@ -258,32 +254,27 @@ namespace mango::import3d
         {
             size_t second = s.find_first_of(" \t\n\r", first);
 
-            if (first != second)
+            if (first < second)
             {
-                std::string_view token = s.substr(first, second - first);
-
-                if (id.empty())
-                {
-                    id = token;
-                }
-                else
-                {
-                    tokens.push_back(token);
-                }
+                tokens.emplace_back(s.data() + first, second - first);
 
                 char s0 = s[second + 0];
                 char s1 = s[second + 1];
 
                 if (s0 == '\n' || s0 == '\r' || s1 == '\n' || s1 == '\r')
                 {
-#if 0
+                    /*
                     printf("%s", std::string(id).c_str());
                     for (size_t i = 0; i < tokens.size(); ++i)
                     {
                         printf(" %s", std::string(tokens[i]).c_str());
                     }
                     printf("\n");
-#endif
+                    */
+
+                    const std::string_view& id = tokens[0];
+                    const std::string_view* data = tokens.data() + 1;
+                    size_t count = tokens.size() - 1;
 
                     if (id == "#")
                     {
@@ -291,42 +282,41 @@ namespace mango::import3d
                     }
                     else if (id == "v")
                     {
-                        parse_v(tokens);
+                        parse_v(data, count);
                     }
                     else if (id == "vn")
                     {
-                        parse_vn(tokens);
+                        parse_vn(data, count);
                     }
                     else if (id == "vt")
                     {
-                        parse_vt(tokens);
+                        parse_vt(data, count);
                     }
                     else if (id == "mtllib")
                     {
-                        parse_mtllib(tokens);
+                        parse_mtllib(data, count);
                     }
                     else if (id == "usemtl")
                     {
-                        parse_usemtl(tokens);
+                        parse_usemtl(data, count);
                     }
                     else if (id == "o")
                     {
-                        parse_o(tokens);
+                        parse_o(data, count);
                     }
                     else if (id == "g")
                     {
-                        parse_g(tokens);
+                        parse_g(data, count);
                     }
                     else if (id == "s")
                     {
-                        parse_s(tokens);
+                        parse_s(data, count);
                     }
                     else if (id == "f")
                     {
-                        parse_f(tokens);
+                        parse_f(data, count);
                     }
 
-                    id = std::string_view();
                     tokens.clear();
                 }
             }
@@ -340,7 +330,6 @@ namespace mango::import3d
 
     void ReaderOBJ::parse_mtl(const std::string_view& s)
     {
-        std::string_view id;
         std::vector<std::string_view> tokens;
 
         size_t first = 0;
@@ -351,22 +340,17 @@ namespace mango::import3d
 
             if (first != second)
             {
-                std::string_view token = s.substr(first, second - first);
-
-                if (id.empty())
-                {
-                    id = token;
-                }
-                else
-                {
-                    tokens.push_back(token);
-                }
+                tokens.emplace_back(s.data() + first, second - first);
 
                 char s0 = s[second + 0];
                 char s1 = s[second + 1];
 
                 if (s0 == '\n' || s0 == '\r' || s1 == '\n' || s1 == '\r')
                 {
+                    const std::string_view& id = tokens[0];
+                    const std::string_view* data = tokens.data() + 1;
+                    size_t count = tokens.size() - 1;
+
                     if (id == "newmtl")
                     {
                         MaterialOBJ material;
@@ -383,83 +367,83 @@ namespace mango::import3d
                         }
                         else if (id == "Ns")
                         {
-                            m_current_material->ns = parse_float(tokens);
+                            m_current_material->ns = parse_float(data, count);
                         }
                         else if (id == "Ni")
                         {
-                            m_current_material->ni = parse_float(tokens);
+                            m_current_material->ni = parse_float(data, count);
                         }
                         else if (id == "d")
                         {
-                            m_current_material->tr = parse_float(tokens);
+                            m_current_material->tr = parse_float(data, count);
                         }
                         else if (id == "Tr")
                         {
-                            m_current_material->tr = 1.0f - parse_float(tokens);
+                            m_current_material->tr = 1.0f - parse_float(data, count);
                         }
                         else if (id == "Tf")
                         {
-                            m_current_material->tf = parse_float(tokens);
+                            m_current_material->tf = parse_float(data, count);
                         }
                         else if (id == "illum")
                         {
-                            m_current_material->illum = u32(parse_float(tokens));
+                            m_current_material->illum = u32(parse_float(data, count));
                         }
                         else if (id == "Ka")
                         {
-                            m_current_material->ka = parse_float32x3(tokens);
+                            m_current_material->ka = parse_float32x3(data, count);
                         }
                         else if (id == "Kd")
                         {
-                            m_current_material->kd = parse_float32x3(tokens);
+                            m_current_material->kd = parse_float32x3(data, count);
                         }
                         else if (id == "Ks")
                         {
-                            m_current_material->ks = parse_float32x3(tokens);
+                            m_current_material->ks = parse_float32x3(data, count);
                         }
                         else if (id == "Ke")
                         {
-                            m_current_material->ke = parse_float32x3(tokens);
+                            m_current_material->ke = parse_float32x3(data, count);
                         }
                         else if (id == "map_Ka")
                         {
-                            m_current_material->map_ka = map_filename(tokens);
+                            m_current_material->map_ka = map_filename(data, count);
                         }
                         else if (id == "map_Kd")
                         {
-                            m_current_material->map_kd = map_filename(tokens);
+                            m_current_material->map_kd = map_filename(data, count);
                         }
                         else if (id == "map_Ks")
                         {
-                            m_current_material->map_ks = map_filename(tokens);
+                            m_current_material->map_ks = map_filename(data, count);
                         }
                         else if (id == "map_Ke")
                         {
-                            m_current_material->map_ke = map_filename(tokens);
+                            m_current_material->map_ke = map_filename(data, count);
                         }
                         else if (id == "map_bump" || id == "map_Bump"|| id == "bump")
                         {
-                            m_current_material->map_bump = map_filename(tokens);
+                            m_current_material->map_bump = map_filename(data, count);
                         }
                         else if (id == "map_Ns")
                         {
-                            m_current_material->map_ns = map_filename(tokens);
+                            m_current_material->map_ns = map_filename(data, count);
                         }
                         else if (id == "map_d")
                         {
-                            m_current_material->map_d = map_filename(tokens);
+                            m_current_material->map_d = map_filename(data, count);
                         }
                         else if (id == "disp")
                         {
-                            m_current_material->map_disp = map_filename(tokens);
+                            m_current_material->map_disp = map_filename(data, count);
                         }
                         else if (id == "decal")
                         {
-                            m_current_material->map_decal = map_filename(tokens);
+                            m_current_material->map_decal = map_filename(data, count);
                         }
                         else if (id == "refl")
                         {
-                            m_current_material->map_refl = map_filename(tokens);
+                            m_current_material->map_refl = map_filename(data, count);
                         }
                         else
                         {
@@ -469,7 +453,6 @@ namespace mango::import3d
                         //printLine(Print::Verbose, "token: {} : {}", i, tokens[0]);
                     }
 
-                    id = std::string_view();
                     tokens.clear();
                 }
             }
@@ -481,9 +464,9 @@ namespace mango::import3d
         }
     }
 
-    void ReaderOBJ::parse_v(const std::vector<std::string_view>& tokens)
+    void ReaderOBJ::parse_v(const std::string_view* tokens, size_t count)
     {
-        if (tokens.size() < 3 || tokens.size() > 4)
+        if (count < 3 || count > 4)
         {
             // error
         }
@@ -492,7 +475,7 @@ namespace mango::import3d
 
         value[3] = 1.0;
 
-        for (size_t i = 0; i < tokens.size(); ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             value[i] = parseFloat(tokens[i]);
         }
@@ -501,15 +484,15 @@ namespace mango::import3d
         positions.emplace_back(value[0], value[1], value[2]);
     }
 
-    void ReaderOBJ::parse_vn(const std::vector<std::string_view>& tokens)
+    void ReaderOBJ::parse_vn(const std::string_view* tokens, size_t count)
     {
-        float32x3 value = parse_float32x3(tokens);
+        float32x3 value = parse_float32x3(tokens, count);
         normals.push_back(value);
     }
 
-    void ReaderOBJ::parse_vt(const std::vector<std::string_view>& tokens)
+    void ReaderOBJ::parse_vt(const std::string_view* tokens, size_t count)
     {
-        if (tokens.size() < 2 || tokens.size() > 3)
+        if (count < 2 || count > 3)
         {
             // error
         }
@@ -518,7 +501,7 @@ namespace mango::import3d
 
         value[2] = 0.0;
 
-        for (size_t i = 0; i < tokens.size(); ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             value[i] = parseFloat(tokens[i]);
         }
@@ -527,9 +510,9 @@ namespace mango::import3d
         texcoords.emplace_back(value[0], value[1]);
     }
 
-    void ReaderOBJ::parse_mtllib(const std::vector<std::string_view>& tokens)
+    void ReaderOBJ::parse_mtllib(const std::string_view* tokens, size_t count)
     {
-        if (tokens.size() != 1)
+        if (count != 1)
         {
             // error
         }
@@ -543,9 +526,9 @@ namespace mango::import3d
         parse_mtl(s);
     }
 
-    void ReaderOBJ::parse_usemtl(const std::vector<std::string_view>& tokens)
+    void ReaderOBJ::parse_usemtl(const std::string_view* tokens, size_t count)
     {
-        if (tokens.size() != 1)
+        if (count != 1)
         {
             // error
         }
@@ -560,9 +543,9 @@ namespace mango::import3d
         }
     }
 
-    void ReaderOBJ::parse_o(const std::vector<std::string_view>& tokens)
+    void ReaderOBJ::parse_o(const std::string_view* tokens, size_t count)
     {
-        if (tokens.size() != 1)
+        if (count != 1)
         {
             // error
             return;
@@ -573,9 +556,9 @@ namespace mango::import3d
         m_objects.push_back(object);
     }
 
-    void ReaderOBJ::parse_g(const std::vector<std::string_view>& tokens)
+    void ReaderOBJ::parse_g(const std::string_view* tokens, size_t count)
     {
-        if (tokens.size() != 1)
+        if (count != 1)
         {
             // error
             return;
@@ -589,9 +572,9 @@ namespace mango::import3d
         object.groups.push_back(group);
     }
 
-    void ReaderOBJ::parse_s(const std::vector<std::string_view>& tokens)
+    void ReaderOBJ::parse_s(const std::string_view* tokens, size_t count)
     {
-        if (tokens.size() != 1)
+        if (count != 1)
         {
             // error
             return;
@@ -604,11 +587,11 @@ namespace mango::import3d
         */
     }
 
-    void ReaderOBJ::parse_f(const std::vector<std::string_view>& tokens)
+    void ReaderOBJ::parse_f(const std::string_view* tokens, size_t count)
     {
         constexpr size_t maxVertexPerFace = 128;
 
-        if (tokens.size() < 3 || tokens.size() > maxVertexPerFace)
+        if (count < 3 || count > maxVertexPerFace)
         {
             // error
             return;
@@ -625,7 +608,7 @@ namespace mango::import3d
             s32(normals.size() + 1),
         };
 
-        for (size_t i = 0; i < tokens.size(); ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             // "pos"
             // "pos/tex"
@@ -663,7 +646,7 @@ namespace mango::import3d
 
         auto& faces = group.faces;
 
-        for (size_t i = 0; i < tokens.size() - 2; ++i)
+        for (size_t i = 0; i < count - 2; ++i)
         {
             FaceOBJ face;
 
