@@ -104,7 +104,6 @@ namespace mango::import3d
         std::vector<MaterialOBJ> m_materials;
 
         MaterialOBJ* m_current_material = nullptr;
-        u32 m_use_material_index = 0;
 
         ReaderOBJ(const filesystem::Path& path, const std::string& filename);
 
@@ -139,7 +138,6 @@ namespace mango::import3d
             {
                 GroupOBJ group;
                 group.name = "default";
-                group.material = m_use_material_index;
                 object.groups.push_back(group);
             }
 
@@ -354,7 +352,7 @@ namespace mango::import3d
                     if (id == "newmtl")
                     {
                         MaterialOBJ material;
-                        material.name = std::string(tokens[0]);
+                        material.name = std::string(data[0]);
 
                         m_materials.push_back(material);
                         m_current_material = &m_materials.back();
@@ -533,12 +531,15 @@ namespace mango::import3d
             // error
         }
 
+        std::string name(tokens[0]);
+
         // NOTE: brute-force search
         for (size_t index = 0; index < m_materials.size(); ++index)
         {
-            if (m_materials[index].name == std::string(tokens[0]))
+            if (m_materials[index].name == name)
             {
-                m_use_material_index = u32(index);
+                auto& group = getCurrentGroup();
+                group.material = u32(index);
             }
         }
     }
@@ -568,7 +569,6 @@ namespace mango::import3d
 
         GroupOBJ group;
         group.name = std::string(tokens[0]);
-        group.material = m_use_material_index;
         object.groups.push_back(group);
     }
 
@@ -737,37 +737,38 @@ namespace mango::import3d
 
                             Vertex vertex;
 
-                            /*
+                            u32 positionIndex = face.vertex[i].position;
+                            u32 texcoordIndex = face.vertex[i].texcoord;
+                            u32 normalIndex = face.vertex[i].normal;
+
                             if (positionIndex > reader.positions.size())
                             {
-                                printLine("positionIndex: {} > {}", positionIndex, reader.positions.size());
-                                continue;
+                                //printLine("positionIndex: {} > {}", positionIndex, reader.positions.size());
                             }
 
                             if (texcoordIndex != 0 && texcoordIndex > reader.texcoords.size())
                             {
-                                printLine("texcoordIndex: {} > {}", texcoordIndex, reader.texcoords.size());
-                                continue;
+                                //printLine("texcoordIndex: {} > {}", texcoordIndex, reader.texcoords.size());
+                                texcoordIndex = 0;
                             }
 
                             if (normalIndex != 0 && normalIndex > reader.normals.size())
                             {
-                                printLine("normalIndex: {} > {}", normalIndex, reader.normals.size());
-                                continue;
+                                //printLine("normalIndex: {} > {}", normalIndex, reader.normals.size());
+                                normalIndex = 0;
                             }
-                            */
 
-                            vertex.position = reader.positions[face.vertex[i].position - 1];
+                            vertex.position = reader.positions[positionIndex - 1];
 
-                            if (face.vertex[i].texcoord)
+                            if (texcoordIndex)
                             {
-                                vertex.texcoord = reader.texcoords[face.vertex[i].texcoord - 1];
+                                vertex.texcoord = reader.texcoords[texcoordIndex - 1];
                                 vertex.texcoord.y = -vertex.texcoord.y;
                             }
 
-                            if (face.vertex[i].normal)
+                            if (normalIndex)
                             {
-                                vertex.normal = reader.normals[face.vertex[i].normal - 1];
+                                vertex.normal = reader.normals[normalIndex - 1];
                             }
 
                             mesh.vertices.push_back(vertex);
@@ -798,6 +799,8 @@ namespace mango::import3d
 
             } // groups
         } // objects
+
+        printLine("Nodes: {}", nodes.size());
 
         // NOTE: we don't care about hierarchy in the .obj scene
 
