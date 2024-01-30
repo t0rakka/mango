@@ -105,7 +105,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     fastgltf::Parser parser(fastgltf::Extensions::KHR_mesh_quantization);
 
-    auto gltfOptions = 
+    auto gltfOptions =
         fastgltf::Options::DontRequireValidAssetMember |
         fastgltf::Options::AllowDouble;
 	gltfOptions |= fastgltf::Options::GenerateMeshIndices;
@@ -113,7 +113,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     //gltfOptions |= fastgltf::Options::LoadExternalBuffers;
     //gltfOptions |= fastgltf::Options::LoadExternalImages;
     //gltfOptions |= fastgltf::Options::LoadExternalImages;
-    
+
     auto type = fastgltf::determineGltfFileType(&data);
     if (type == fastgltf::GltfType::glTF)
     {
