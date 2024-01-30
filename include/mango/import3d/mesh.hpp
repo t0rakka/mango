@@ -64,18 +64,6 @@ namespace mango::import3d
         float32x4 tangent  { 0.0f, 0.0f, 0.0f, 1.0f };
         float32x2 texcoord { 0.0f, 0.0f };
         float32x3 color    { 1.0f, 1.0f, 1.0f };
-
-        /* TODO: these flags will be used to generate attribute arrays for IndexedMesh
-        enum : u32
-        {
-            POSITION  = 0x00000001,
-            NORMAL    = 0x00000002,
-            TANGENT   = 0x00000004,
-            TEXCOORD  = 0x00000008,
-            COLOR     = 0x00000010,
-            // TODO: JOINTS, WEIGHTS
-        };
-        */
     };
 
     struct Triangle
@@ -93,26 +81,77 @@ namespace mango::import3d
     // indexed mesh
     // -----------------------------------------------------------------------
 
-    // TODO: vertices will eventually use nr. of attributes stored as separate arrays
-    // TODO: the attribute arrays will support different types
-    // TODO: primitives will have bounding volume (box + sphere)
-    // TODO: indices can be 16 or 32 bit
-
     struct Primitive
     {
-        enum class Mode
+        enum Mode
         {
             TRIANGLE_LIST,
             TRIANGLE_STRIP,
             TRIANGLE_FAN,
         };
 
-        Mode mode = Mode::TRIANGLE_LIST;
+        Mode mode = TRIANGLE_LIST;
         u32 start;
         u32 count;
         u32 base;
         u32 material = 0;
     };
+
+    /*
+
+    struct VertexAttribute
+    {
+        enum Type
+        {
+            NONE,
+            S8,
+            S16,
+            S32,
+            U8,
+            U16,
+            U32,
+            FLOAT16,
+            FLOAT32,
+        };
+
+        Type type = NONE;
+        u32 size = 0;
+        bool normalize = false;
+        size_t offset = 0;
+    };
+
+    struct IndexAttribute
+    {
+        enum Type
+        {
+            NONE,
+            U8,
+            U16,
+            U32,
+        };
+
+        Type type = NONE;
+        size_t offset = 0;
+    };
+
+    struct Mesh
+    {
+        Buffer vertexBuffer;
+        VertexAttribute positions;
+        VertexAttribute normals;
+        VertexAttribute tangents;
+        VertexAttribute texcoords;
+        VertexAttribute colors;
+        VertexAttribute joints;
+        VertexAttribute weights;
+
+        Buffer indexBuffer;
+        IndexAttribute indices;
+
+        std::vector<Primitive> primitives;
+    };
+
+    */
 
     struct IndexedMesh
     {

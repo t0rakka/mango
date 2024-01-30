@@ -664,15 +664,15 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             switch (primitiveIterator->type)
             {
                 case fastgltf::PrimitiveType::Triangles:
-                    primitive.mode = Primitive::Mode::TRIANGLE_LIST;
+                    primitive.mode = Primitive::TRIANGLE_LIST;
                     break;
 
                 case fastgltf::PrimitiveType::TriangleStrip:
-                    primitive.mode = Primitive::Mode::TRIANGLE_STRIP;
+                    primitive.mode = Primitive::TRIANGLE_STRIP;
                     break;
 
                 case fastgltf::PrimitiveType::TriangleFan:
-                    primitive.mode = Primitive::Mode::TRIANGLE_FAN;
+                    primitive.mode = Primitive::TRIANGLE_FAN;
                     break;
 
                 default:
