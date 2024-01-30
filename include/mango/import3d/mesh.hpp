@@ -104,12 +104,12 @@ namespace mango::import3d
         enum Type
         {
             NONE,
-            S8,
-            S16,
-            S32,
-            U8,
-            U16,
-            U32,
+            INT8,
+            INT16,
+            INT32,
+            UINT8,
+            UINT16,
+            UINT32,
             FLOAT16,
             FLOAT32,
         };
