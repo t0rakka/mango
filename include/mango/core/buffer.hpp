@@ -22,7 +22,7 @@ namespace mango
         explicit Buffer();
         explicit Buffer(size_t bytes);
         explicit Buffer(size_t bytes, u8 value);
-        explicit Buffer(const u8* source, size_t bytes);
+        explicit Buffer(const void* source, size_t bytes);
         explicit Buffer(ConstMemory memory);
         explicit Buffer(Stream& stream);
         ~Buffer();
@@ -42,7 +42,7 @@ namespace mango
         void reserve(size_t bytes);
         u8* append(size_t bytes);
         u8* append(size_t bytes, u8 value);
-        void append(const u8* source, size_t bytes);
+        void append(const void* source, size_t bytes);
         void append(ConstMemory memory);
 
         [[nodiscard]] Memory acquire();

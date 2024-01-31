@@ -31,7 +31,7 @@ namespace mango
         std::memset(m_memory.address, value, bytes);
     }
 
-    Buffer::Buffer(const u8* source, size_t bytes)
+    Buffer::Buffer(const void* source, size_t bytes)
         : m_memory(allocate(bytes), bytes)
         , m_capacity(bytes)
     {
@@ -151,7 +151,7 @@ namespace mango
         return dest;
     }
 
-    void Buffer::append(const u8* source, size_t bytes)
+    void Buffer::append(const void* source, size_t bytes)
     {
         u8* dest = append(bytes);
         if (source)
