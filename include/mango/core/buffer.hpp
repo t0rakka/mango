@@ -1,10 +1,11 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <cstddef>
+#include <vector>
 #include <mango/core/configure.hpp>
 #include <mango/core/memory.hpp>
 #include <mango/core/stream.hpp>
@@ -44,6 +45,12 @@ namespace mango
         u8* append(size_t bytes, u8 value);
         void append(const void* source, size_t bytes);
         void append(ConstMemory memory);
+
+        template <typename T>
+        void append(const std::vector<T>& v)
+        {
+            append(v.data(), v.size() * sizeof(T));
+        }
 
         [[nodiscard]] Memory acquire();
         static void release(Memory memory);
