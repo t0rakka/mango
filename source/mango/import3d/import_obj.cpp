@@ -14,8 +14,6 @@
     https://en.wikipedia.org/wiki/Wavefront_.obj_file
 */
 
-#if 0
-
 namespace mango::import3d
 {
 
@@ -722,6 +720,8 @@ namespace mango::import3d
             {
                 IndexedMesh mesh;
 
+                mesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD;
+
                 std::unordered_map<VertexOBJ, u32, VertexHash> unique;
 
                 for (const FaceOBJ& face : group.faces)
@@ -766,6 +766,8 @@ namespace mango::import3d
 
                             vertex.position = reader.positions[positionIndex - 1];
 
+                            mesh.boundingBox.extend(vertex.position);
+
                             if (texcoordIndex)
                             {
                                 vertex.texcoord = reader.texcoords[texcoordIndex - 1];
@@ -784,15 +786,7 @@ namespace mango::import3d
                     }
                 }
 
-                Primitive primitive;
-
-                primitive.mode = Primitive::TRIANGLE_LIST;
-                primitive.start = 0;
-                primitive.count = mesh.indices.size();
-                primitive.base = 0;
-                primitive.material = group.material;
-
-                mesh.primitives.push_back(primitive);
+                mesh.primitives.emplace_back(0, u32(mesh.indices.size()), group.material);
 
                 Node node;
 
@@ -801,8 +795,9 @@ namespace mango::import3d
                 node.mesh = u32(meshes.size());
 
                 nodes.push_back(node);
-                meshes.push_back(mesh);
 
+                std::unique_ptr<Mesh> ptr = std::make_unique<Mesh>(mesh);
+                meshes.push_back(std::move(ptr));
             } // groups
         } // objects
 
@@ -824,5 +819,3 @@ namespace mango::import3d
     }
 
 } // namespace mango::import3d
-
-#endif
