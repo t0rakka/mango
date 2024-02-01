@@ -10,6 +10,12 @@
 #include <fastgltf/parser.hpp>
 #include <fastgltf/types.hpp>
 
+/*
+    Khronos GLTF 2.0 importer
+
+    https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html
+*/
+
 namespace
 {
     using namespace mango;

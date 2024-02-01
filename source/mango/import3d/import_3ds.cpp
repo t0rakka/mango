@@ -6,6 +6,10 @@
 #include <mango/core/core.hpp>
 #include <mango/import3d/import_3ds.hpp>
 
+/*
+    Autodesk 3D Studio R4 importer
+*/
+
 namespace
 {
     using namespace mango;

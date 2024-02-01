@@ -8,12 +8,16 @@
 #include <mango/import3d/import_obj.hpp>
 #include "../../external/fast_float/fast_float.h"
 
+/*
+    Wavefront OBJ importer
+
+    // https://en.wikipedia.org/wiki/Wavefront_.obj_file
+*/
+
 #if 0
 
 namespace mango::import3d
 {
-
-    // https://en.wikipedia.org/wiki/Wavefront_.obj_file
 
     struct VertexOBJ
     {
