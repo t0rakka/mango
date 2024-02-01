@@ -8,6 +8,7 @@
 #include <string>
 #include <optional>
 #include <memory>
+#include <mango/core/buffer.hpp>
 #include <mango/math/math.hpp>
 #include <mango/image/image.hpp>
 #include <mango/filesystem/filesystem.hpp>
@@ -54,11 +55,20 @@ namespace mango::import3d
     };
 
     // -----------------------------------------------------------------------
-    // mesh
+    // TriangleMesh
     // -----------------------------------------------------------------------
 
     struct Vertex
     {
+        enum : u32
+        {
+            POSITION  = 0x0001,
+            NORMAL    = 0x0002,
+            TANGENT   = 0x0004,
+            TEXCOORD  = 0x0008,
+            COLOR     = 0x0010,
+        };
+
         float32x3 position { 0.0f, 0.0f, 0.0f };
         float32x3 normal   { 0.0f, 0.0f, 0.0f };
         float32x4 tangent  { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -69,16 +79,58 @@ namespace mango::import3d
     struct Triangle
     {
         Vertex vertex[3];
-        u32 material = 0;
     };
 
-    struct Mesh
+    struct TriangleMesh
     {
         std::vector<Triangle> triangles;
+        u32 material = 0;
+        u32 flags;
+
+        void computeTangents();
     };
 
     // -----------------------------------------------------------------------
-    // indexed mesh
+    // IndexedMesh
+    // -----------------------------------------------------------------------
+
+    struct IndexedPrimitive
+    {
+        u32 start = 0;
+        u32 count = 0;
+        u32 material = 0;
+
+        IndexedPrimitive() = default;
+
+        IndexedPrimitive(u32 start, u32 count)
+            : start(start)
+            , count(count)
+        {
+        }
+
+        IndexedPrimitive(u32 start, u32 count, u32 material)
+            : start(start)
+            , count(count)
+            , material(material)
+        {
+        }
+    };
+
+    struct IndexedMesh
+    {
+        std::vector<Vertex> vertices;
+        std::vector<u32> indices;
+        std::vector<IndexedPrimitive> primitives;
+        math::Box boundingBox;
+        u32 flags;
+
+        IndexedMesh();
+        IndexedMesh(const TriangleMesh& trimesh);
+        IndexedMesh(const std::vector<TriangleMesh>& trimeshes);
+    };
+
+    // -----------------------------------------------------------------------
+    // Mesh
     // -----------------------------------------------------------------------
 
     struct Primitive
@@ -91,13 +143,11 @@ namespace mango::import3d
         };
 
         Mode mode = TRIANGLE_LIST;
-        u32 start;
-        u32 count;
-        u32 base;
+        u32 start = 0;
+        u32 count = 0;
+        u32 base = 0;
         u32 material = 0;
     };
-
-    /*
 
     struct VertexAttribute
     {
@@ -116,48 +166,59 @@ namespace mango::import3d
 
         Type type = NONE;
         u32 size = 0;
-        bool normalize = false;
+        u32 bytes = 0;
+        u32 stride = 0;
         size_t offset = 0;
+
+        VertexAttribute();
+        VertexAttribute(Type type, u32 size);
+        VertexAttribute(Type type, u32 size, u32 stride, size_t offset);
+
+        operator bool () const;
     };
 
-    struct IndexAttribute
+    struct VertexBuffer : Buffer
+    {
+        template <typename T>
+        T* address(const VertexAttribute& attribute, size_t index = 0) const
+        {
+            return reinterpret_cast<T*>(data() + attribute.offset + index * attribute.stride);
+        }
+    };
+
+    struct IndexBuffer : Buffer
     {
         enum Type
         {
             NONE,
-            U8,
-            U16,
-            U32,
+            UINT8,
+            UINT16,
+            UINT32,
         };
 
         Type type = NONE;
-        size_t offset = 0;
     };
 
     struct Mesh
     {
-        Buffer vertexBuffer;
-        VertexAttribute positions;
-        VertexAttribute normals;
-        VertexAttribute tangents;
-        VertexAttribute texcoords;
-        VertexAttribute colors;
-        VertexAttribute joints;
-        VertexAttribute weights;
+        VertexBuffer vertices;
 
-        Buffer indexBuffer;
-        IndexAttribute indices;
+        VertexAttribute position;
+        VertexAttribute normal;
+        VertexAttribute tangent;
+        VertexAttribute texcoord;
+        VertexAttribute color;
+        VertexAttribute joint;
+        VertexAttribute weight;
+
+        IndexBuffer indices;
 
         std::vector<Primitive> primitives;
-    };
 
-    */
+        math::Box boundingBox;
 
-    struct IndexedMesh
-    {
-        std::vector<Vertex> vertices;
-        std::vector<u32> indices;
-        std::vector<Primitive> primitives;
+        Mesh();
+        Mesh(const IndexedMesh& mesh);
     };
 
     // -----------------------------------------------------------------------
@@ -177,7 +238,7 @@ namespace mango::import3d
     struct Scene
     {
         std::vector<Material> materials;
-        std::vector<IndexedMesh> meshes;
+        std::vector<std::unique_ptr<Mesh>> meshes;
         std::vector<Node> nodes;
         std::vector<u32> roots;
     };
@@ -186,63 +247,48 @@ namespace mango::import3d
     // utilities
     // -----------------------------------------------------------------------
 
+#if 0
+
     void computeTangents(Mesh& mesh);
     Mesh convertMesh(const IndexedMesh& input);
     IndexedMesh convertMesh(const Mesh& input);
+
+#endif
 
     Texture createTexture(const filesystem::Path& path, const std::string& filename);
     Texture createTexture(ConstMemory memory);
 
     // -----------------------------------------------------------------------
-    // shapes
+    // meshes
     // -----------------------------------------------------------------------
 
-    struct Cube : IndexedMesh
+    struct TorusParameters
     {
-        Cube(float32x3 size);
+        int innerSegments = 128;
+        int outerSegments = 32;
+        float innerRadius = 1.0f;
+        float outerRadius = 0.2f;
     };
 
-    struct Icosahedron : IndexedMesh
+    struct TorusknotParameters
     {
-        Icosahedron(float radius);
+        int steps = 256;            // Number of steps in the torus knot
+        int facets = 16;            // Number of facets
+        float scale = 1.0f;         // Scale of the knot
+        float thickness = 0.124f;   // Thickness of the knot
+        float clumps = 12.0f;       // Number of clumps in the knot
+        float clumpOffset = 20.0f;  // Offset of the clump (in 0..2pi)
+        float clumpScale = 0.4f;    // Scale of a clump
+        float uscale = 4.0f;        // U coordinate scale
+        float vscale = 128.0f;      // V coordinate scale
+        float p = 2.0f;             // P parameter of the knot
+        float q = 5.0f;             // Q parameter of the knot
     };
 
-    struct Dodecahedron : IndexedMesh
-    {
-        Dodecahedron(float radius);
-    };
-
-    struct Torus : IndexedMesh
-    {
-        struct Parameters
-        {
-            int innerSegments = 128;
-            int outerSegments = 32;
-            float innerRadius = 1.0f;
-            float outerRadius = 0.2f;
-        };
-
-        Torus(Parameters params);
-    };
-
-    struct Torusknot : IndexedMesh
-    {
-        struct Parameters
-        {
-            int steps = 256;            // Number of steps in the torus knot
-            int facets = 16;            // Number of facets
-            float scale = 1.0f;         // Scale of the knot
-            float thickness = 0.124f;   // Thickness of the knot
-            float clumps = 12.0f;       // Number of clumps in the knot
-            float clumpOffset = 20.0f;  // Offset of the clump (in 0..2pi)
-            float clumpScale = 0.4f;    // Scale of a clump
-            float uscale = 4.0f;        // U coordinate scale
-            float vscale = 128.0f;      // V coordinate scale
-            float p = 2.0f;             // P parameter of the knot
-            float q = 5.0f;             // Q parameter of the knot
-        };
-
-        Torusknot(Parameters params);
-    };
+    std::unique_ptr<Mesh> createCube(float32x3 size);
+    std::unique_ptr<Mesh> createIcosahedron(float radius);
+    std::unique_ptr<Mesh> createDodecahedron(float radius);
+    std::unique_ptr<Mesh> createTorus(TorusParameters params);
+    std::unique_ptr<Mesh> createTorusknot(TorusknotParameters params);
 
 } // namespace mango::import3d

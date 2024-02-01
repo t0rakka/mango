@@ -8,6 +8,8 @@
 #include <mango/import3d/import_obj.hpp>
 #include "../../external/fast_float/fast_float.h"
 
+#if 0
+
 namespace mango::import3d
 {
 
@@ -818,3 +820,5 @@ namespace mango::import3d
     }
 
 } // namespace mango::import3d
+
+#endif

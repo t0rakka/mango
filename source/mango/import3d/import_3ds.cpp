@@ -53,7 +53,13 @@ namespace
         u16 index[3];
         u16 flags = 0;
         u32 smoothing = 0;
-        u32 material = 0;
+    };
+
+    struct Primitive3DS
+    {
+        u32 material;
+        size_t start;
+        size_t count;
     };
 
     struct Mesh3DS
@@ -61,6 +67,9 @@ namespace
         std::vector<float32x3> positions;
         std::vector<float32x2> mappings;
         std::vector<Face3DS> faces;
+
+        std::vector<u16> face_materials;
+        std::vector<Primitive3DS> primitives;
 
         bool visible = true;
 
@@ -515,7 +524,6 @@ namespace
             {
                 u16 flags = p.read16();
                 MANGO_UNREFERENCED(flags);
-                // TODO: xxx
             }
         }
 
@@ -540,17 +548,23 @@ namespace
         void chunk_mesh_material_list(LittleEndianConstPointer& p)
         {
             std::string name = read_string(p);
-            u32 material = getMaterialIndex(name);
-
-            int count = p.read16();
+            size_t count = p.read16();
             printLine(Print::Verbose, level * 2, "material.list: {}, name: \"{}\"", count, name);
 
             Mesh3DS& mesh = getCurrentMesh();
 
-            for (int i = 0; i < count; ++i)
+            Primitive3DS primitive;
+
+            primitive.material = getMaterialIndex(name);
+            primitive.start = mesh.face_materials.size();
+            primitive.count = count;
+
+            mesh.primitives.push_back(primitive);
+
+            for (size_t i = 0; i < count; ++i)
             {
                 u16 index = p.read16();
-                mesh.faces[index].material = material;
+                mesh.face_materials.push_back(index);
             }
         }
 
@@ -931,7 +945,7 @@ namespace
                 case 0x465a: chunk_light_outer_range(p); break;
                 case 0x465b: chunk_light_brightness(p); break;
 
-#if 0
+                /*
                 case 0xb000: chunk_keyframer(p); break;
                 case 0xb001: chunk_key_ambient(p); break;
                 case 0xb002: chunk_key_object(p); break;
@@ -956,7 +970,8 @@ namespace
                 case 0xb025: chunk_key_color_track(p, size); break;
                 case 0xb026: chunk_key_morph_track(p, size); break;
                 case 0xb030: chunk_key_node_id(p); break;
-#endif
+                */
+
                 default:
                     p += size;
                     printLine(Print::Verbose, level * 2, "[* {:#06x} *] {} bytes", id, size);
@@ -1040,7 +1055,27 @@ namespace mango::import3d
 
         for (const auto& mesh3ds : reader.meshes)
         {
-            Mesh trimesh;
+
+            /*
+            
+            struct Primitive3DS
+            {
+                u32 material;
+                u32 start;
+                u32 count;
+            };
+
+            struct Mesh3DS
+            {
+                std::vector<u16> face_materials;
+                std::vector<Primitive3DS> primitives;
+            };
+            
+            */
+
+            TriangleMesh trimesh;
+
+            trimesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD;
 
             struct PositionCompare
             {
@@ -1069,8 +1104,6 @@ namespace mango::import3d
                 const Face3DS& face = mesh3ds.faces[i];
 
                 Triangle triangle;
-
-                triangle.material = face.material;
 
                 for (int j = 0; j < 3; ++j)
                 {
@@ -1104,10 +1137,11 @@ namespace mango::import3d
                 trimesh.triangles.push_back(triangle);
             }
 
-            computeTangents(trimesh);
-            IndexedMesh mesh = convertMesh(trimesh);
+            trimesh.computeTangents();
+            IndexedMesh mesh(trimesh);
 
-            meshes.push_back(mesh);
+            std::unique_ptr<Mesh> ptr = std::make_unique<Mesh>(mesh);
+            meshes.push_back(std::move(ptr));
         }
 
         // NOTE: we don't care about hierarchy in the .3ds scene

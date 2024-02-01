@@ -5,6 +5,8 @@
 #include <mango/core/core.hpp>
 #include <mango/import3d/import_gltf.hpp>
 
+#if 0
+
 #include <fastgltf/parser.hpp>
 #include <fastgltf/types.hpp>
 
@@ -782,3 +784,5 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 }
 
 } // namespace mango::import3d
+
+#endif

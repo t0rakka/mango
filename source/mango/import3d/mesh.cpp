@@ -7,14 +7,6 @@
 #include <mango/import3d/mesh.hpp>
 #include "../../external/mikktspace/mikktspace.h"
 
-/*
-
-This is a convenience API for reading various 3D object formats and providing the data in
-unified layout for rendering, or processing and dumping into a file that custom engine can
-read more efficiently. The intent is accessibility not performance.
-
-*/
-
 namespace
 {
     using namespace mango;
@@ -22,7 +14,7 @@ namespace
 
     int callback_getNumFaces(const SMikkTSpaceContext* pContext)
     {
-        Mesh& mesh = *reinterpret_cast<Mesh*>(pContext->m_pUserData);
+        TriangleMesh& mesh = *reinterpret_cast<TriangleMesh*>(pContext->m_pUserData);
         return int(mesh.triangles.size());
     }
 
@@ -35,7 +27,7 @@ namespace
 
     void callback_getPosition(const SMikkTSpaceContext* pContext, float fvPosOut[], const int iFace, const int iVert)
     {
-        Mesh& mesh = *reinterpret_cast<Mesh*>(pContext->m_pUserData);
+        TriangleMesh& mesh = *reinterpret_cast<TriangleMesh*>(pContext->m_pUserData);
         Vertex& vertex = mesh.triangles[iFace].vertex[iVert];
         fvPosOut[0] = vertex.position[0];
         fvPosOut[1] = vertex.position[1];
@@ -44,7 +36,7 @@ namespace
 
     void callback_getNormal(const SMikkTSpaceContext* pContext, float fvNormOut[], const int iFace, const int iVert)
     {
-        Mesh& mesh = *reinterpret_cast<Mesh*>(pContext->m_pUserData);
+        TriangleMesh& mesh = *reinterpret_cast<TriangleMesh*>(pContext->m_pUserData);
         Vertex& vertex = mesh.triangles[iFace].vertex[iVert];
         fvNormOut[0] = vertex.normal[0];
         fvNormOut[1] = vertex.normal[1];
@@ -53,7 +45,7 @@ namespace
 
     void callback_getTexCoord(const SMikkTSpaceContext* pContext, float fvTexcOut[], const int iFace, const int iVert)
     {
-        Mesh& mesh = *reinterpret_cast<Mesh*>(pContext->m_pUserData);
+        TriangleMesh& mesh = *reinterpret_cast<TriangleMesh*>(pContext->m_pUserData);
         Vertex& vertex = mesh.triangles[iFace].vertex[iVert];
         fvTexcOut[0] = vertex.texcoord[0];
         fvTexcOut[1] = vertex.texcoord[1];
@@ -61,7 +53,7 @@ namespace
 
     void callback_setTSpaceBasic(const SMikkTSpaceContext* pContext, const float fvTangent[], const float fSign, const int iFace, const int iVert)
     {
-        Mesh& mesh = *reinterpret_cast<Mesh*>(pContext->m_pUserData);
+        TriangleMesh& mesh = *reinterpret_cast<TriangleMesh*>(pContext->m_pUserData);
         Vertex& vertex = mesh.triangles[iFace].vertex[iVert];
         vertex.tangent = float32x4(fvTangent[0], fvTangent[1], fvTangent[2], fSign);
     }
@@ -87,19 +79,9 @@ namespace mango::import3d
 static
 constexpr float pi2 = float(math::pi * 2.0);
 
-#if 0
-
-// std::map<Vertex, u32>
-
-static inline
-bool operator < (const Vertex& a, const Vertex& b)
-{
-    return std::memcmp(&a, &b, sizeof(Vertex)) < 0;
-}
-
-#else
-
+// --------------------------------------------------------------------
 // std::unordered_map<Vertex, u32>
+// --------------------------------------------------------------------
 
 static inline
 bool operator == (const Vertex& a, const Vertex& b)
@@ -119,28 +101,14 @@ struct VertexHash
     }
 };
 
-#endif
+// --------------------------------------------------------------------
+// xxx
+// --------------------------------------------------------------------
 
-void computeTangents(Mesh& mesh)
-{
-    SMikkTSpaceInterface mik_interface;
+#if 0
 
-    mik_interface.m_getNumFaces = callback_getNumFaces;
-    mik_interface.m_getNumVerticesOfFace = callback_getNumVerticesOfFace;
-    mik_interface.m_getPosition = callback_getPosition;
-    mik_interface.m_getNormal = callback_getNormal;
-    mik_interface.m_getTexCoord = callback_getTexCoord;
-    mik_interface.m_setTSpaceBasic = callback_setTSpaceBasic;
-    mik_interface.m_setTSpace = callback_setTSpace;
-
-    SMikkTSpaceContext mik_context;
-
-    mik_context.m_pInterface = &mik_interface;
-    mik_context.m_pUserData = &mesh;
-
-    tbool status = genTangSpaceDefault(&mik_context);
-    MANGO_UNREFERENCED(status);
-}
+// TODO: refactor this into generic strip/fan -> triangles index converter
+// TODO: restart primitive
 
 Mesh convertMesh(const IndexedMesh& input)
 {
@@ -225,47 +193,59 @@ Mesh convertMesh(const IndexedMesh& input)
     return output;
 }
 
-IndexedMesh convertMesh(const Mesh& input)
+#endif
+
+
+void TriangleMesh::computeTangents()
 {
-    IndexedMesh output;
-
-    std::vector<Triangle> triangles = input.triangles;
- 
-    std::sort(triangles.begin(), triangles.end(), [] (const Triangle& a, const Triangle& b)
+    if (flags & Vertex::TANGENT)
     {
-        // sort triangles by material
-        return a.material < b.material;
-    });
+        // already have tangents
+        return;
+    }
 
-    std::unordered_map<Vertex, size_t, VertexHash> unique;
-
-    Primitive primitive;
-
-    primitive.mode = Primitive::Mode::TRIANGLE_LIST;
-    primitive.start = 0;
-    primitive.count = 0;
-    primitive.base = 0;
-    primitive.material = 0;
-
-    for (const Triangle& triangle : input.triangles)
+    if (!(flags & Vertex::NORMAL) || !(flags & Vertex::TEXCOORD))
     {
-        if (primitive.material != triangle.material)
-        {
-            if (primitive.count > 0)
-            {
-                output.primitives.push_back(primitive);
-            }
+        // normals and texcoords are required for tangents
+        return;
+    }
 
-            // start a new primitive
-            primitive.start += primitive.count;
-            primitive.count = 0;
-            primitive.base = 0;
-            primitive.material = triangle.material;
-        }
+    SMikkTSpaceInterface mik_interface;
 
+    mik_interface.m_getNumFaces = callback_getNumFaces;
+    mik_interface.m_getNumVerticesOfFace = callback_getNumVerticesOfFace;
+    mik_interface.m_getPosition = callback_getPosition;
+    mik_interface.m_getNormal = callback_getNormal;
+    mik_interface.m_getTexCoord = callback_getTexCoord;
+    mik_interface.m_setTSpaceBasic = callback_setTSpaceBasic;
+    mik_interface.m_setTSpace = callback_setTSpace;
+
+    SMikkTSpaceContext mik_context;
+
+    mik_context.m_pInterface = &mik_interface;
+    mik_context.m_pUserData = this;
+
+    tbool status = genTangSpaceDefault(&mik_context);
+    MANGO_UNREFERENCED(status);
+
+    // enable tangents
+    flags |= Vertex::TANGENT;
+}
+
+IndexedMesh::IndexedMesh()
+{
+}
+
+IndexedMesh::IndexedMesh(const TriangleMesh& mesh)
+{
+    std::unordered_map<Vertex, u32, VertexHash> unique;
+
+    for (const Triangle& triangle : mesh.triangles)
+    {
         for (int i = 0; i < 3; ++i)
         {
             const Vertex& vertex = triangle.vertex[i];
+
             size_t index;
 
             auto it = unique.find(vertex);
@@ -276,22 +256,29 @@ IndexedMesh convertMesh(const Mesh& input)
             }
             else
             {
-                index = output.vertices.size();
+                index = vertices.size();
                 unique[vertex] = index; // remember the index of this vertex
-                output.vertices.push_back(vertex);
+                vertices.push_back(vertex);
+
+                // update bounding box
+                boundingBox.extend(vertex.position);
             }
 
-            output.indices.push_back(u32(index));
-            ++primitive.count;
+            indices.push_back(u32(index));
         }
     }
 
-    if (primitive.count > 0)
-    {
-        output.primitives.push_back(primitive);
-    }
+    primitives.emplace_back(0, u32(indices.size()), mesh.material);
+    flags = mesh.flags;
+}
 
-    return output;
+IndexedMesh::IndexedMesh(const std::vector<TriangleMesh>& trimeshes)
+{
+    for (const auto& trimesh : trimeshes)
+    {
+        // TODO
+        MANGO_UNREFERENCED(trimesh);
+    }
 }
 
 Texture createTexture(const filesystem::Path& path, const std::string& filename)
@@ -323,10 +310,225 @@ Texture createTexture(ConstMemory memory)
     return texture;
 }
 
-Cube::Cube(float32x3 size)
+static
+u32 getAttributeSize(const VertexAttribute& attribute)
+{
+    u32 bytes = 0;
+
+    switch (attribute.type)
+    {
+        case import3d::VertexAttribute::NONE:
+            break;
+
+        case import3d::VertexAttribute::INT8:
+        case import3d::VertexAttribute::UINT8:
+            bytes = 1;
+            break;
+
+        case import3d::VertexAttribute::INT16:
+        case import3d::VertexAttribute::UINT16:
+        case import3d::VertexAttribute::FLOAT16:
+            bytes = 2;
+            break;
+
+        case import3d::VertexAttribute::INT32:
+        case import3d::VertexAttribute::UINT32:
+        case import3d::VertexAttribute::FLOAT32:
+            bytes = 4;
+            break;
+    }
+
+    return attribute.size * bytes;
+}
+
+VertexAttribute::VertexAttribute()
+{
+}
+
+VertexAttribute::VertexAttribute(Type type, u32 size)
+    : type(type)
+    , size(size)
+{
+    bytes = getAttributeSize(*this);
+}
+
+VertexAttribute::VertexAttribute(Type type, u32 size, u32 stride, size_t offset)
+    : type(type)
+    , size(size)
+    , stride(stride)
+    , offset(offset)
+{
+    bytes = getAttributeSize(*this);
+}
+
+VertexAttribute::operator bool () const
+{
+    return bytes != 0;
+}
+
+class VertexAttributeBuilder
+{
+protected:
+    std::vector<VertexAttribute> attributes;
+
+public:
+    void append(VertexAttribute::Type type, u32 size);
+    size_t resolve(size_t numVertex, bool interleave = false);
+
+    const VertexAttribute& operator [] (int index) const
+    {
+        return attributes[index];
+    }
+};
+
+void VertexAttributeBuilder::append(VertexAttribute::Type type, u32 size)
+{
+    attributes.emplace_back(type, size);
+}
+
+size_t VertexAttributeBuilder::resolve(size_t numVertex, bool interleave)
+{
+    size_t bytesPerVertex = 0;
+
+    for (auto& attribute : attributes)
+    {
+        attribute.stride = attribute.bytes;
+        attribute.offset = interleave ? bytesPerVertex : numVertex * bytesPerVertex;
+
+        bytesPerVertex += attribute.bytes;
+    }
+
+    if (interleave)
+    {
+        for (auto& attribute : attributes)
+        {
+            attribute.stride = bytesPerVertex;
+        }
+    }
+
+   return bytesPerVertex;
+}
+
+Mesh::Mesh()
+{
+}
+
+Mesh::Mesh(const IndexedMesh& mesh)
+{
+    const size_t numVertex = mesh.vertices.size();
+
+    VertexAttributeBuilder builder;
+
+    if (mesh.flags & Vertex::POSITION)
+    {
+        builder.append(VertexAttribute::FLOAT32, 3);
+    }
+
+    if (mesh.flags & Vertex::NORMAL)
+    {
+        builder.append(VertexAttribute::FLOAT32, 3);
+    }
+
+    if (mesh.flags & Vertex::TANGENT)
+    {
+        builder.append(VertexAttribute::FLOAT32, 4);
+    }
+
+    if (mesh.flags & Vertex::TEXCOORD)
+    {
+        builder.append(VertexAttribute::FLOAT32, 2);
+    }
+
+    if (mesh.flags & Vertex::COLOR)
+    {
+        builder.append(VertexAttribute::FLOAT32, 3);
+    }
+
+    const size_t bytesPerVertex = builder.resolve(numVertex, false);
+
+    vertices.resize(numVertex * bytesPerVertex);
+    u8* data = vertices.data();
+
+    size_t index = 0;
+
+    if (mesh.flags & Vertex::POSITION)
+    {
+        position = builder[index++];
+
+        for (size_t i = 0; i < numVertex; ++i)
+        {
+            const Vertex* vertex = &mesh.vertices[i];
+            std::memcpy(data + position.offset + i * position.stride, vertex->position.data(), position.bytes);
+        }
+    }
+
+    if (mesh.flags & Vertex::NORMAL)
+    {
+        normal = builder[index++];
+
+        for (size_t i = 0; i < numVertex; ++i)
+        {
+            const Vertex* vertex = &mesh.vertices[i];
+            std::memcpy(data + normal.offset + i * normal.stride, vertex->normal.data(), normal.bytes);
+        }
+    }
+
+    if (mesh.flags & Vertex::TANGENT)
+    {
+        tangent = builder[index++];
+
+        for (size_t i = 0; i < numVertex; ++i)
+        {
+            const Vertex* vertex = &mesh.vertices[i];
+            std::memcpy(data + tangent.offset + i * tangent.stride, vertex->tangent.data(), tangent.bytes);
+        }
+    }
+
+    if (mesh.flags & Vertex::TEXCOORD)
+    {
+        texcoord = builder[index++];
+
+        for (size_t i = 0; i < numVertex; ++i)
+        {
+            const Vertex* vertex = &mesh.vertices[i];
+            std::memcpy(data + texcoord.offset + i * texcoord.stride, vertex->texcoord.data(), texcoord.bytes);
+        }
+    }
+
+    if (mesh.flags & Vertex::COLOR)
+    {
+        color = builder[index++];
+
+        for (size_t i = 0; i < numVertex; ++i)
+        {
+            const Vertex* vertex = &mesh.vertices[i];
+            std::memcpy(data + color.offset + i * color.stride, vertex->color.data(), color.bytes);
+        }
+    }
+
+    indices.type = IndexBuffer::UINT32;
+    indices.append(mesh.indices);
+
+    for (auto p : mesh.primitives)
+    {
+        Primitive primitive;
+
+        primitive.mode = Primitive::TRIANGLE_LIST;
+        primitive.start = p.start;
+        primitive.count = p.count;
+        primitive.base = 0;
+        primitive.material = p.material;
+
+        primitives.push_back(primitive);
+    }
+
+    boundingBox = mesh.boundingBox;
+}
+
+std::unique_ptr<Mesh> createCube(float32x3 size)
 {
     const float32x3 pos = size * 0.5f;
-    const float32x3 neg = size * -0.5f;
+    const float32x3 neg = -pos;
 
     const float32x3 positions [] =
     {
@@ -368,7 +570,7 @@ Cube::Cube(float32x3 size)
         float32x2(1.0f, 1.0f),
     };
 
-    const u32 points [] =
+    const u32 faces [] =
     {
         1, 3, 7, 5,
         4, 6, 2, 0,
@@ -378,22 +580,7 @@ Cube::Cube(float32x3 size)
         0, 2, 3, 1,
     };
 
-    for (int i = 0; i < 6; ++i)
-    {
-        Vertex vertex;
-
-        vertex.normal = normals[i];
-        vertex.tangent = tangents[i];
-
-        for (int j = 0; j < 4; ++j)
-        {
-            vertex.position = positions[points[i * 4 + j]];
-            vertex.texcoord = texcoords[j];
-            vertices.push_back(vertex);
-        }
-    }
-
-    indices =
+    const u16 indices [] =
     {
          0,  1,  2,  0,  2,  3,
          4,  5,  6,  4,  6,  7,
@@ -403,17 +590,64 @@ Cube::Cube(float32x3 size)
         20, 21, 22, 20, 22, 23,
     };
 
+    const size_t numVertex = 6 * 4;
+
+    // create mesh
+
+    std::unique_ptr<Mesh> ptr = std::make_unique<Mesh>();
+    Mesh& mesh = *ptr;
+
+    VertexAttributeBuilder builder;
+
+    builder.append(VertexAttribute::FLOAT32, 3);
+    builder.append(VertexAttribute::FLOAT32, 3);
+    builder.append(VertexAttribute::FLOAT32, 4);
+    builder.append(VertexAttribute::FLOAT32, 2);
+
+    size_t bytesPerVertex = builder.resolve(numVertex, true);
+
+    mesh.position = builder[0];
+    mesh.normal   = builder[1];
+    mesh.tangent  = builder[2];
+    mesh.texcoord = builder[3];
+
+    mesh.vertices.resize(numVertex * bytesPerVertex);
+
+    u8* data = mesh.vertices.data();
+
+    for (int i = 0; i < 6; ++i)
+    {
+        for (int j = 0; j < 4; ++j)
+        {
+            const int k = faces[i * 4 + j];
+            std::memcpy(data + mesh.position.offset, positions + k, mesh.position.bytes);
+            std::memcpy(data + mesh.normal.offset,   normals + i,   mesh.normal.bytes);
+            std::memcpy(data + mesh.tangent.offset,  tangents + i,  mesh.tangent.bytes);
+            std::memcpy(data + mesh.texcoord.offset, texcoords + j, mesh.texcoord.bytes);
+            data += bytesPerVertex;
+        }
+    }
+
+    mesh.indices.type = IndexBuffer::UINT16;
+    mesh.indices.append(indices, sizeof(indices));
+
     Primitive primitive;
 
-    primitive.mode = Primitive::Mode::TRIANGLE_LIST;
+    primitive.mode = Primitive::TRIANGLE_LIST;
     primitive.start = 0;
     primitive.count = 36;
+    primitive.base = 0;
     primitive.material = 0;
 
-    primitives.push_back(primitive);
+    mesh.primitives.push_back(primitive);
+
+    mesh.boundingBox.extend(pos);
+    mesh.boundingBox.extend(neg);
+
+    return ptr;
 }
 
-Icosahedron::Icosahedron(float radius)
+std::unique_ptr<Mesh> createIcosahedron(float radius)
 {
     const float sqrt5 = std::sqrt(5.0f);
     const float phi = (1.0f + sqrt5) * 0.5f; // "golden ratio"
@@ -447,7 +681,9 @@ Icosahedron::Icosahedron(float radius)
         11, 9, 6, 7, 10, 6, 5, 11, 4, 10, 8, 4,
     };
 
-    Mesh mesh;
+    TriangleMesh trimesh;
+
+    trimesh.flags = Vertex::POSITION | Vertex::NORMAL;
 
     for (int i = 0; i < 20; ++i)
     {
@@ -467,13 +703,14 @@ Icosahedron::Icosahedron(float radius)
         triangle.vertex[1].position = p1;
         triangle.vertex[2].position = p2;
 
-        mesh.triangles.push_back(triangle);
+        trimesh.triangles.push_back(triangle);
     }
 
-    *reinterpret_cast<IndexedMesh*>(this) = convertMesh(mesh);
+    std::unique_ptr<Mesh> ptr = std::make_unique<Mesh>(trimesh);
+    return ptr;
 }
 
-Dodecahedron::Dodecahedron(float radius)
+std::unique_ptr<Mesh> createDodecahedron(float radius)
 {
     const float sqrt5 = std::sqrt(5.0f);
     const float phi = (1.0f + sqrt5) * 0.5f; // "golden ratio"
@@ -523,7 +760,9 @@ Dodecahedron::Dodecahedron(float radius)
         6, 18, 19, 7, 15,
     };
 
-    Mesh mesh;
+    TriangleMesh trimesh;
+
+    trimesh.flags = Vertex::POSITION | Vertex::NORMAL;
 
     for (int i = 0; i < 12; ++i)
     {
@@ -545,32 +784,41 @@ Dodecahedron::Dodecahedron(float radius)
         triangle.vertex[1].position = p1;
         triangle.vertex[2].position = p2;
 
-        mesh.triangles.push_back(triangle);
+        trimesh.triangles.push_back(triangle);
 
         triangle.vertex[0].position = p0;
         triangle.vertex[1].position = p2;
         triangle.vertex[2].position = p3;
 
-        mesh.triangles.push_back(triangle);
+        trimesh.triangles.push_back(triangle);
 
         triangle.vertex[0].position = p0;
         triangle.vertex[1].position = p3;
         triangle.vertex[2].position = p4;
 
-        mesh.triangles.push_back(triangle);
+        trimesh.triangles.push_back(triangle);
     }
 
-    *reinterpret_cast<IndexedMesh*>(this) = convertMesh(mesh);
-
+    std::unique_ptr<Mesh> ptr = std::make_unique<Mesh>(trimesh);
+    return ptr;
 }
 
-Torus::Torus(Parameters params)
+std::unique_ptr<Mesh> createTorus(TorusParameters params)
 {
     const float is = pi2 / params.innerSegments;
     const float js = pi2 / params.outerSegments;
 
     const float uscale = 4.0f / float(params.innerSegments);
     const float vscale = 1.0f / float(params.outerSegments);
+
+    const size_t numVertex = (params.innerSegments + 1) * (params.outerSegments + 1);
+
+    std::vector<float32x3> positions(numVertex);
+    std::vector<float32x3> normals(numVertex);
+    std::vector<float32x4> tangents(numVertex);
+    std::vector<float32x2> texcoords(numVertex);
+
+    math::Box boundingBox;
 
     for (int i = 0; i < params.innerSegments + 1; ++i)
     {
@@ -587,16 +835,18 @@ Torus::Torus(Parameters params)
                 jsin * params.outerRadius);
             float32x3 tangent = normalize(float32x3(-position.y, position.x, 0.0f));
 
-            Vertex vertex;
+            const size_t index = i * (params.outerSegments + 1) + j;
 
-            vertex.position = position;
-            vertex.normal = normalize(float32x3(jcos * icos, jcos * isin, jsin));
-            vertex.tangent = float32x4(tangent, 1.0f);;
-            vertex.texcoord = float32x2(i * uscale, j * vscale);
+            positions[index] = position;
+            normals  [index] = normalize(float32x3(jcos * icos, jcos * isin, jsin));
+            tangents [index] = float32x4(tangent, 1.0f);
+            texcoords[index] = float32x2(i * uscale, j * vscale);
 
-            vertices.push_back(vertex);
+            boundingBox.extend(position);
         }
     }
+
+    std::vector<u32> indices;
 
     for (int i = 0; i < params.innerSegments; ++i)
     {
@@ -620,46 +870,87 @@ Torus::Torus(Parameters params)
         }
     }
 
+    // create mesh
+
+    std::unique_ptr<Mesh> ptr = std::make_unique<Mesh>();
+    Mesh& mesh = *ptr;
+
+    VertexAttributeBuilder builder;
+
+    builder.append(VertexAttribute::FLOAT32, 3);
+    builder.append(VertexAttribute::FLOAT32, 3);
+    builder.append(VertexAttribute::FLOAT32, 4);
+    builder.append(VertexAttribute::FLOAT32, 2);
+
+    size_t bytesPerVertex = builder.resolve(numVertex);
+
+    mesh.position = builder[0];
+    mesh.normal   = builder[1];
+    mesh.tangent  = builder[2];
+    mesh.texcoord = builder[3];
+
+    mesh.vertices.resize(numVertex * bytesPerVertex);
+
+    u8* data = mesh.vertices.data();
+    std::memcpy(data + mesh.position.offset, positions.data(), numVertex * mesh.position.bytes);
+    std::memcpy(data + mesh.normal.offset,   normals.data(),   numVertex * mesh.normal.bytes);
+    std::memcpy(data + mesh.tangent.offset,  tangents.data(),  numVertex * mesh.tangent.bytes);
+    std::memcpy(data + mesh.texcoord.offset, texcoords.data(), numVertex * mesh.texcoord.bytes);
+
+    mesh.indices.type = IndexBuffer::UINT32;
+    mesh.indices.append(indices);
+
     Primitive primitive;
 
-    primitive.mode = Primitive::Mode::TRIANGLE_LIST;
+    primitive.mode = Primitive::TRIANGLE_LIST;
     primitive.start = 0;
     primitive.count = u32(indices.size());
+    primitive.base = 0;
     primitive.material = 0;
 
-    primitives.push_back(primitive);
+    mesh.primitives.push_back(primitive);
+
+    mesh.boundingBox = boundingBox;
+
+    return ptr;
 }
 
-// Torus knot generation
-// written by Jari Komppa aka Sol / Trauma
-// Based on:
-// http://www.blackpawn.com/texts/pqtorus/default.html
-
-Torusknot::Torusknot(Parameters params)
+std::unique_ptr<Mesh> createTorusknot(TorusknotParameters params)
 {
+    // Torus knot generation
+    // written by Jari Komppa aka Sol / Trauma
+    // Tangent space generation added by t0rakka
+    // Based on: http://www.blackpawn.com/texts/pqtorus/default.html
+
     params.scale *= 0.5f;
     params.thickness *= params.scale;
 
     const float uscale = params.uscale / params.facets;
     const float vscale = params.vscale / params.steps;
 
-    // generate vertices
-    vertices.resize((params.steps + 1) * (params.facets + 1) + 1);
+    const size_t numVertex = (params.steps + 1) * (params.facets + 1) + 1;
 
-    float32x3 centerpoint;
+    std::vector<float32x3> positions(numVertex);
+    std::vector<float32x3> normals(numVertex);
+    std::vector<float32x4> tangents(numVertex);
+    std::vector<float32x2> texcoords(numVertex);
+
     float Pp = params.p * 0 * pi2 / params.steps;
     float Qp = params.q * 0 * pi2 / params.steps;
     float r = (0.5f * (2.0f + std::sin(Qp))) * params.scale;
+
+    float32x3 centerpoint;
     centerpoint.x = r * std::cos(Pp);
     centerpoint.y = r * std::cos(Qp);
     centerpoint.z = r * std::sin(Pp);
 
-    for (int i = 0; i < params.steps; i++)
+    for (int i = 0; i < params.steps; ++i)
     {
-        float32x3 nextpoint;
         Pp = params.p * (i + 1) * pi2 / params.steps;
         Qp = params.q * (i + 1) * pi2 / params.steps;
         r = (0.5f * (2.0f + std::sin(Qp))) * params.scale;
+
+        float32x3 nextpoint;
         nextpoint.x = r * std::cos(Pp);
         nextpoint.y = r * std::cos(Qp);
         nextpoint.z = r * std::sin(Pp);
@@ -681,61 +972,106 @@ Torusknot::Torusknot(Parameters params)
 
             const int offset = i * (params.facets + 1) + j;
 
-            vertices[offset].position = centerpoint + normal;
-            vertices[offset].normal = normalize(normal);
-            vertices[offset].tangent = float32x4(tangent, 1.0f);
-            vertices[offset].texcoord = float32x2(j * uscale, i * vscale);
+            positions[offset] = centerpoint + normal;
+            normals  [offset] = normalize(normal);
+            tangents [offset] = float32x4(tangent, 1.0f);
+            texcoords[offset] = float32x2(j * uscale, i * vscale);
         }
 
         // create duplicate vertex for sideways wrapping
         // otherwise identical to first vertex in the 'ring' except for the U coordinate
-        vertices[i * (params.facets + 1) + params.facets] = vertices[i * (params.facets + 1)];
-        vertices[i * (params.facets + 1) + params.facets].texcoord.x = params.uscale;
+
+        const size_t s = i * (params.facets + 1);
+        const size_t d = i * (params.facets + 1) + params.facets;
+
+        positions[d] = positions[s];
+        normals  [d] = normals  [s];
+        tangents [d] = tangents [s];
+        texcoords[d] = float32x2(params.uscale, texcoords[s].y);
         
         centerpoint = nextpoint;
     }
 
     // create duplicate ring of vertices for longways wrapping
     // otherwise identical to first 'ring' in the knot except for the V coordinate
-    for (int j = 0; j < params.facets; j++)
+
+    for (int j = 0; j < params.facets; ++j)
     {
-        vertices[params.steps * (params.facets + 1) + j] = vertices[j];
-        vertices[params.steps * (params.facets + 1) + j].texcoord.y = params.vscale;
+        const size_t d = params.steps * (params.facets + 1) + j;
+
+        positions[d] = positions[j];
+        normals  [d] = normals  [j];
+        tangents [d] = tangents [j];
+        texcoords[d] = float32x2(texcoords[j].x, params.vscale);
     }
 
     // finally, there's one vertex that needs to be duplicated due to both U and V coordinate.
-    vertices[params.steps * (params.facets + 1) + params.facets] = vertices[0];
-    vertices[params.steps * (params.facets + 1) + params.facets].texcoord = float32x2(params.uscale, params.vscale);
+
+    const size_t d = params.steps * (params.facets + 1) + params.facets;
+    positions[d] = positions[0];
+    normals  [d] = normals  [0];
+    tangents [d] = tangents [0];
+    texcoords[d] = float32x2(params.uscale, params.vscale);
 
     // generate indices
-    std::vector<int> stripIndices((params.steps + 1) * params.facets * 2);
+
+    std::vector<u32> indices((params.steps + 1) * params.facets * 2);
 
     for (int j = 0; j < params.facets; j++)
     {
         for (int i = 0; i < params.steps + 1; i++)
         {
-            stripIndices[i * 2 + 0 + j * (params.steps + 1) * 2] = (j + 1 + i * (params.facets + 1));
-            stripIndices[i * 2 + 1 + j * (params.steps + 1) * 2] = (j + 0 + i * (params.facets + 1));
+            indices[i * 2 + 0 + j * (params.steps + 1) * 2] = (j + 1 + i * (params.facets + 1));
+            indices[i * 2 + 1 + j * (params.steps + 1) * 2] = (j + 0 + i * (params.facets + 1));
         }
     }
 
-    // convert triangle strip into triangles
-    for (size_t i = 2; i < stripIndices.size(); ++i)
-    {
-        int s = i & 1; // swap triangle winding-order
-        indices.push_back(stripIndices[i - 2 + s]);
-        indices.push_back(stripIndices[i - 1 - s]);
-        indices.push_back(stripIndices[i]);
-    }
+    // create mesh
+
+    std::unique_ptr<Mesh> ptr = std::make_unique<Mesh>();
+    Mesh& mesh = *ptr;
+
+    VertexAttributeBuilder builder;
+
+    builder.append(VertexAttribute::FLOAT32, 3);
+    builder.append(VertexAttribute::FLOAT32, 3);
+    builder.append(VertexAttribute::FLOAT32, 4);
+    builder.append(VertexAttribute::FLOAT32, 2);
+
+    size_t bytesPerVertex = builder.resolve(numVertex);
+
+    mesh.position = builder[0];
+    mesh.normal   = builder[1];
+    mesh.tangent  = builder[2];
+    mesh.texcoord = builder[3];
+
+    mesh.vertices.resize(numVertex * bytesPerVertex);
+
+    u8* data = mesh.vertices.data();
+    std::memcpy(data + mesh.position.offset, positions.data(), numVertex * mesh.position.bytes);
+    std::memcpy(data + mesh.normal.offset,   normals.data(),   numVertex * mesh.normal.bytes);
+    std::memcpy(data + mesh.tangent.offset,  tangents.data(),  numVertex * mesh.tangent.bytes);
+    std::memcpy(data + mesh.texcoord.offset, texcoords.data(), numVertex * mesh.texcoord.bytes);
+
+    mesh.indices.type = IndexBuffer::UINT32;
+    mesh.indices.append(indices);
 
     Primitive primitive;
 
-    primitive.mode = Primitive::Mode::TRIANGLE_LIST;
+    primitive.mode = Primitive::TRIANGLE_STRIP;
     primitive.start = 0;
     primitive.count = u32(indices.size());
+    primitive.base = 0;
     primitive.material = 0;
 
-    primitives.push_back(primitive);
+    mesh.primitives.push_back(primitive);
+
+    for (const float32x3& position : positions)
+    {
+        mesh.boundingBox.extend(position);
+    }
+
+    return ptr;
 }
 
 } // namespace mango::import3d
