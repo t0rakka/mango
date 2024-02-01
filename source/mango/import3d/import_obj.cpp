@@ -11,7 +11,7 @@
 /*
     Wavefront OBJ importer
 
-    // https://en.wikipedia.org/wiki/Wavefront_.obj_file
+    https://en.wikipedia.org/wiki/Wavefront_.obj_file
 */
 
 #if 0
