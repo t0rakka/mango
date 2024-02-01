@@ -193,8 +193,7 @@ Mesh convertMesh(const IndexedMesh& input)
     return output;
 }
 
-#endif
-
+#endif // 0
 
 void TriangleMesh::computeTangents()
 {
@@ -232,15 +231,18 @@ void TriangleMesh::computeTangents()
     flags |= Vertex::TANGENT;
 }
 
-IndexedMesh::IndexedMesh()
-{
-}
-
-IndexedMesh::IndexedMesh(const TriangleMesh& mesh)
+struct IndexedMeshBuilder
 {
     std::unordered_map<Vertex, u32, VertexHash> unique;
 
-    for (const Triangle& triangle : mesh.triangles)
+    void append(IndexedMesh& output, const TriangleMesh& input);
+};
+
+void IndexedMeshBuilder::append(IndexedMesh& output, const TriangleMesh& input)
+{
+    u32 startIndex = u32(output.indices.size());
+
+    for (const Triangle& triangle : input.triangles)
     {
         for (int i = 0; i < 3; ++i)
         {
@@ -256,28 +258,41 @@ IndexedMesh::IndexedMesh(const TriangleMesh& mesh)
             }
             else
             {
-                index = vertices.size();
+                index = output.vertices.size();
                 unique[vertex] = index; // remember the index of this vertex
-                vertices.push_back(vertex);
+                output.vertices.push_back(vertex);
 
                 // update bounding box
-                boundingBox.extend(vertex.position);
+                output.boundingBox.extend(vertex.position);
             }
 
-            indices.push_back(u32(index));
+            output.indices.push_back(u32(index));
         }
     }
 
-    primitives.emplace_back(0, u32(indices.size()), mesh.material);
-    flags = mesh.flags;
+    u32 endIndex = u32(output.indices.size());
+
+    output.primitives.emplace_back(startIndex, endIndex - startIndex, input.material);
+    output.flags |= input.flags;
+}
+
+IndexedMesh::IndexedMesh()
+{
+}
+
+IndexedMesh::IndexedMesh(const TriangleMesh& trimesh)
+{
+    IndexedMeshBuilder builder;
+    builder.append(*this, trimesh);
 }
 
 IndexedMesh::IndexedMesh(const std::vector<TriangleMesh>& trimeshes)
 {
+    IndexedMeshBuilder builder;
+
     for (const auto& trimesh : trimeshes)
     {
-        // TODO
-        MANGO_UNREFERENCED(trimesh);
+        builder.append(*this, trimesh);
     }
 }
 
@@ -392,8 +407,15 @@ size_t VertexAttributeBuilder::resolve(size_t numVertex, bool interleave)
 
     for (auto& attribute : attributes)
     {
-        attribute.stride = attribute.bytes;
-        attribute.offset = interleave ? bytesPerVertex : numVertex * bytesPerVertex;
+        if (interleave)
+        {
+            attribute.offset = bytesPerVertex;
+        }
+        else
+        {
+            attribute.stride = attribute.bytes;
+            attribute.offset = numVertex * bytesPerVertex;
+        }
 
         bytesPerVertex += attribute.bytes;
     }

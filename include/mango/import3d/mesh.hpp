@@ -85,7 +85,7 @@ namespace mango::import3d
     {
         std::vector<Triangle> triangles;
         u32 material = 0;
-        u32 flags;
+        u32 flags = 0;
 
         void computeTangents();
     };
@@ -122,7 +122,7 @@ namespace mango::import3d
         std::vector<u32> indices;
         std::vector<IndexedPrimitive> primitives;
         math::Box boundingBox;
-        u32 flags;
+        u32 flags = 0;
 
         IndexedMesh();
         IndexedMesh(const TriangleMesh& trimesh);

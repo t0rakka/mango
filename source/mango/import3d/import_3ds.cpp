@@ -44,12 +44,6 @@ namespace
 
     struct Face3DS
     {
-        enum
-        {
-            U_WRAP = 0x0008,
-            V_WRAP = 0x0010,
-        };
-
         u16 index[3];
         u16 flags = 0;
         u32 smoothing = 0;
@@ -59,7 +53,7 @@ namespace
     {
         u32 material;
         size_t start;
-        size_t count;
+        size_t end;
     };
 
     struct Mesh3DS
@@ -557,7 +551,7 @@ namespace
 
             primitive.material = getMaterialIndex(name);
             primitive.start = mesh.face_materials.size();
-            primitive.count = count;
+            primitive.end = mesh.face_materials.size() + count;
 
             mesh.primitives.push_back(primitive);
 
@@ -1003,14 +997,20 @@ namespace
 
     void fixTexcoordWrapping(Triangle& triangle, u32 flags)
     {
-        if (flags & Face3DS::U_WRAP)
+        enum
+        {
+            WRAP_U = 0x0008,
+            WRAP_V = 0x0010,
+        };
+
+        if (flags & WRAP_U)
         {
             unwrapTexcoord(triangle.vertex[0].texcoord.x,
                            triangle.vertex[1].texcoord.x,
                            triangle.vertex[2].texcoord.x);
         }
 
-        if (flags & Face3DS::V_WRAP)
+        if (flags & WRAP_V)
         {
             unwrapTexcoord(triangle.vertex[0].texcoord.y,
                            triangle.vertex[1].texcoord.y,
@@ -1055,28 +1055,6 @@ namespace mango::import3d
 
         for (const auto& mesh3ds : reader.meshes)
         {
-
-            /*
-            
-            struct Primitive3DS
-            {
-                u32 material;
-                u32 start;
-                u32 count;
-            };
-
-            struct Mesh3DS
-            {
-                std::vector<u16> face_materials;
-                std::vector<Primitive3DS> primitives;
-            };
-            
-            */
-
-            TriangleMesh trimesh;
-
-            trimesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD;
-
             struct PositionCompare
             {
                 bool operator () (const float32x3& a, const float32x3& b) const
@@ -1086,6 +1064,8 @@ namespace mango::import3d
             };
 
             std::multimap<float32x3, u32, PositionCompare> sharing;
+
+            std::vector<Triangle> triangles;
 
             // resolve vertex position sharing between faces
             for (size_t i = 0; i < mesh3ds.faces.size(); ++i)
@@ -1134,11 +1114,30 @@ namespace mango::import3d
                 // fix texcoord wrapping
                 fixTexcoordWrapping(triangle, face.flags);
 
-                trimesh.triangles.push_back(triangle);
+                triangles.push_back(triangle);
             }
 
-            trimesh.computeTangents();
-            IndexedMesh mesh(trimesh);
+            // process material lists
+
+            std::vector<TriangleMesh> trimeshes;
+
+            for (const auto& primitive3ds : mesh3ds.primitives)
+            {
+                TriangleMesh trimesh;
+
+                trimesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD;
+                trimesh.material = primitive3ds.material;
+
+                for (size_t i = primitive3ds.start; i < primitive3ds.end; ++i)
+                {
+                    u16 idx = mesh3ds.face_materials[i];
+                    trimesh.triangles.push_back(triangles[idx]);
+                }
+
+                trimeshes.push_back(trimesh);
+            }
+
+            IndexedMesh mesh(trimeshes);
 
             std::unique_ptr<Mesh> ptr = std::make_unique<Mesh>(mesh);
             meshes.push_back(std::move(ptr));
