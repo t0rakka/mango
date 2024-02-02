@@ -71,9 +71,9 @@ namespace mango::import3d
 
         float32x3 position { 0.0f, 0.0f, 0.0f };
         float32x3 normal   { 0.0f, 0.0f, 0.0f };
-        float32x4 tangent  { 0.0f, 0.0f, 0.0f, 1.0f };
         float32x2 texcoord { 0.0f, 0.0f };
-        float32x3 color    { 1.0f, 1.0f, 1.0f };
+        float32x4 tangent  { 0.0f, 0.0f, 0.0f, 0.0f };
+        float32x4 color    { 0.0f, 0.0f, 0.0f, 0.0f };
     };
 
     struct Triangle
@@ -165,14 +165,14 @@ namespace mango::import3d
         };
 
         Type type = NONE;
-        u32 size = 0;
+        u32 components = 0;
         u32 bytes = 0;
         u32 stride = 0;
         size_t offset = 0;
 
         VertexAttribute();
-        VertexAttribute(Type type, u32 size);
-        VertexAttribute(Type type, u32 size, u32 stride, size_t offset);
+        VertexAttribute(Type type, u32 components);
+        VertexAttribute(Type type, u32 components, u32 stride, size_t offset);
 
         operator bool () const;
     };

@@ -5,8 +5,6 @@
 #include <mango/core/core.hpp>
 #include <mango/import3d/import_gltf.hpp>
 
-#if 0
-
 #include <fastgltf/parser.hpp>
 #include <fastgltf/types.hpp>
 
@@ -27,7 +25,14 @@ namespace
         size_t stride = 0;
         size_t components;
         fastgltf::ComponentType type;
+
+        operator bool () const
+        {
+            return data != nullptr;
+        }
     };
+
+    /* TODO
 
     template <typename T>
     void copyAttributes(T& target, Attribute attribute)
@@ -83,6 +88,8 @@ namespace
                 break;
         }
     }
+
+    */
 
 } // namespace
 
@@ -457,7 +464,11 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         printLine(Print::Verbose, "[Mesh]");
         printLine(Print::Verbose, "  name: \"{}\"", current.name);
 
+        /* TODO
         IndexedMesh complete;
+        */
+
+        math::Box boundingBox;
 
         for (auto primitiveIterator = current.primitives.begin(); primitiveIterator != current.primitives.end(); ++primitiveIterator)
         {
@@ -551,12 +562,37 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 }
             }
 
-            IndexedMesh mesh;
+            const size_t materialIndex = primitiveIterator->materialIndex.has_value() ?
+                primitiveIterator->materialIndex.value() : 0;
 
-            if (attributePosition.data)
+            const Material& material = materials[materialIndex];
+
+            if (material.normalTexture)
             {
-                mesh.vertices.resize(attributePosition.count);
-                copyAttributes(mesh.vertices[0].position, attributePosition);
+                if (!attributeTangent && attributeNormal && attributeTexcoord)
+                {
+                    // TODO: generate tangents
+                }
+            }
+
+            /*
+            IndexedMesh mesh;
+            */
+
+            if (attributePosition)
+            {
+                //mesh.vertices.resize(attributePosition.count);
+                //copyAttributes(mesh.vertices[0].position, attributePosition);
+
+                const u8* data = attributePosition.data;
+
+                for (size_t i = 0; i < attributePosition.count; ++i)
+                {
+                    float32x3 position = float32x3::uload(data);
+                    data += attributePosition.stride;
+
+                    boundingBox.extend(position);
+                }
             }
             else
             {
@@ -564,7 +600,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 continue;
             }
 
-            if (attributeNormal.data)
+            if (attributeNormal)
             {
                 if (attributeNormal.count != attributePosition.count)
                 {
@@ -572,10 +608,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                copyAttributes(mesh.vertices[0].normal, attributeNormal);
+                //copyAttributes(mesh.vertices[0].normal, attributeNormal);
             }
 
-            if (attributeTangent.data)
+            if (attributeTangent)
             {
                 if (attributeTangent.count != attributePosition.count)
                 {
@@ -583,10 +619,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                copyAttributes(mesh.vertices[0].tangent, attributeTangent);
+                //copyAttributes(mesh.vertices[0].tangent, attributeTangent);
             }
 
-            if (attributeTexcoord.data)
+            if (attributeTexcoord)
             {
                 if (attributeTexcoord.count != attributePosition.count)
                 {
@@ -594,10 +630,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                copyAttributes(mesh.vertices[0].texcoord, attributeTexcoord);
+                //copyAttributes(mesh.vertices[0].texcoord, attributeTexcoord);
             }
 
-            if (attributeColor.data)
+            if (attributeColor)
             {
                 if (attributeColor.count != attributePosition.count)
                 {
@@ -606,9 +642,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 }
 
                 attributeColor.components = 3;
-                copyAttributes(mesh.vertices[0].color, attributeColor);
+                //copyAttributes(mesh.vertices[0].color, attributeColor);
             }
 
+            /*
             // indices
 
             if (primitiveIterator->indicesAccessor.has_value())
@@ -692,24 +729,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             {
                 primitive.material = u32(primitiveIterator->materialIndex.value());
             }
+            */
 
-            const Material& material = materials[primitive.material];
-            if (material.normalTexture)
-            {
-                if (!attributeTangent.data && attributeNormal.data && attributeTexcoord.data)
-                {
-                    primitive.start = 0;
-                    primitive.count = u32(mesh.indices.size());
-                    primitive.base = 0;
-
-                    mesh.primitives.push_back(primitive);
-
-                    Mesh temp = convertMesh(mesh);
-                    computeTangents(temp);
-                    mesh = convertMesh(temp);
-                }
-            }
-
+            /*
             primitive.start = u32(complete.indices.size());
             primitive.count = u32(mesh.indices.size());
             primitive.base = u32(complete.vertices.size());
@@ -718,9 +740,16 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             complete.indices.insert(complete.indices.end(), mesh.indices.begin(), mesh.indices.end());
 
             complete.primitives.push_back(primitive);
+            */
         }
 
-        meshes.push_back(complete);
+        //meshes.push_back(complete);
+
+        std::unique_ptr<Mesh> ptr = std::make_unique<Mesh>();
+
+        ptr->boundingBox = boundingBox;
+
+        meshes.push_back(std::move(ptr));
     }
 
     // nodes
@@ -790,5 +819,3 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 }
 
 } // namespace mango::import3d
-
-#endif

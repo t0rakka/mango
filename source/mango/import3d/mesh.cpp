@@ -93,16 +93,16 @@ struct VertexHash
 {
     std::size_t operator () (const Vertex& v) const
     {
-        size_t h0 = std::hash<float>{}(v.position.x);
-        size_t h1 = std::hash<float>{}(v.position.y);
-        size_t h2 = std::hash<float>{}(v.position.z);
-        size_t h = (h0 ^ h1) ^ (h2 >> 7);
-        return h;
+        u32 x, y, z;
+        std::memcpy(&x, &v.position.x, 4);
+        std::memcpy(&y, &v.position.y, 4);
+        std::memcpy(&z, &v.position.z, 4);
+        return (x ^ y) | (z << 16);
     }
 };
 
 // --------------------------------------------------------------------
-// xxx
+// zzz
 // --------------------------------------------------------------------
 
 #if 0
@@ -242,6 +242,8 @@ void IndexedMeshBuilder::append(IndexedMesh& output, const TriangleMesh& input)
 {
     u32 startIndex = u32(output.indices.size());
 
+    u64 time0 = Time::us();
+
     for (const Triangle& triangle : input.triangles)
     {
         for (int i = 0; i < 3; ++i)
@@ -271,6 +273,9 @@ void IndexedMeshBuilder::append(IndexedMesh& output, const TriangleMesh& input)
     }
 
     u32 endIndex = u32(output.indices.size());
+
+    u64 time1 = Time::us();
+    printLine("output: {} vertices, time: {}", output.vertices.size(), time1 - time0); // xxx
 
     output.primitives.emplace_back(startIndex, endIndex - startIndex, input.material);
     output.flags |= input.flags;
@@ -353,23 +358,23 @@ u32 getAttributeSize(const VertexAttribute& attribute)
             break;
     }
 
-    return attribute.size * bytes;
+    return attribute.components * bytes;
 }
 
 VertexAttribute::VertexAttribute()
 {
 }
 
-VertexAttribute::VertexAttribute(Type type, u32 size)
+VertexAttribute::VertexAttribute(Type type, u32 components)
     : type(type)
-    , size(size)
+    , components(components)
 {
     bytes = getAttributeSize(*this);
 }
 
-VertexAttribute::VertexAttribute(Type type, u32 size, u32 stride, size_t offset)
+VertexAttribute::VertexAttribute(Type type, u32 components, u32 stride, size_t offset)
     : type(type)
-    , size(size)
+    , components(components)
     , stride(stride)
     , offset(offset)
 {
