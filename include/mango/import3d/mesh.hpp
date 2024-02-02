@@ -64,8 +64,8 @@ namespace mango::import3d
         {
             POSITION  = 0x0001,
             NORMAL    = 0x0002,
-            TANGENT   = 0x0004,
-            TEXCOORD  = 0x0008,
+            TEXCOORD  = 0x0004,
+            TANGENT   = 0x0008,
             COLOR     = 0x0010,
         };
 
