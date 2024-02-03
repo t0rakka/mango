@@ -718,7 +718,8 @@ namespace mango::import3d
         {
             for (const auto& group : object.groups)
             {
-                IndexedMesh mesh;
+                std::unique_ptr<IndexedMesh> ptr = std::make_unique<IndexedMesh>();
+                IndexedMesh& mesh = *ptr;
 
                 mesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD;
 
@@ -786,7 +787,15 @@ namespace mango::import3d
                     }
                 }
 
-                mesh.primitives.emplace_back(0, u32(mesh.indices.size()), group.material);
+                Primitive primitive;
+
+                primitive.mode = Primitive::TRIANGLE_LIST;
+                primitive.start = 0;
+                primitive.count = u32(mesh.indices.size());
+                primitive.base = 0;
+                primitive.material = group.material;
+
+                mesh.primitives.push_back(primitive);
 
                 Node node;
 
@@ -795,8 +804,6 @@ namespace mango::import3d
                 node.mesh = u32(meshes.size());
 
                 nodes.push_back(node);
-
-                std::unique_ptr<Mesh> ptr = std::make_unique<Mesh>(mesh);
                 meshes.push_back(std::move(ptr));
             } // groups
         } // objects

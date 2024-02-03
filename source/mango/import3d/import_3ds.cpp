@@ -1123,14 +1123,14 @@ namespace mango::import3d
 
             // process material lists
 
-            std::vector<TriangleMesh> trimeshes;
+            std::unique_ptr<IndexedMesh> ptr = std::make_unique<IndexedMesh>();
+            IndexedMesh& mesh = *ptr;
 
             for (const auto& primitive3ds : mesh3ds.primitives)
             {
-                TriangleMesh trimesh;
+                Mesh trimesh;
 
                 trimesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD;
-                trimesh.material = primitive3ds.material;
 
                 for (size_t i = primitive3ds.start; i < primitive3ds.end; ++i)
                 {
@@ -1138,12 +1138,9 @@ namespace mango::import3d
                     trimesh.triangles.push_back(triangles[idx]);
                 }
 
-                trimeshes.push_back(trimesh);
+                mesh.append(trimesh, primitive3ds.material);
             }
 
-            IndexedMesh mesh(trimeshes);
-
-            std::unique_ptr<Mesh> ptr = std::make_unique<Mesh>(mesh);
             meshes.push_back(std::move(ptr));
         }
 

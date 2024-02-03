@@ -464,11 +464,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         printLine(Print::Verbose, "[Mesh]");
         printLine(Print::Verbose, "  name: \"{}\"", current.name);
 
-        /* TODO
-        IndexedMesh complete;
-        */
-
-        math::Box boundingBox;
+        std::unique_ptr<IndexedMesh> ptr = std::make_unique<IndexedMesh>();
+        IndexedMesh& mesh = *ptr;
 
         for (auto primitiveIterator = current.primitives.begin(); primitiveIterator != current.primitives.end(); ++primitiveIterator)
         {
@@ -490,22 +487,27 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 if (name == "POSITION")
                 {
                     attribute = &attributePosition;
+                    mesh.flags |= Vertex::POSITION;
                 }
                 else if (name == "NORMAL")
                 {
                     attribute = &attributeNormal;
+                    mesh.flags |= Vertex::NORMAL;
                 }
                 else if (name == "TANGENT")
                 {
                     attribute = &attributeTangent;
+                    mesh.flags |= Vertex::TANGENT;
                 }
                 else if (name == "TEXCOORD_0")
                 {
                     attribute = &attributeTexcoord;
+                    mesh.flags |= Vertex::TEXCOORD;
                 }
                 else if (name == "COLOR_0")
                 {
                     attribute = &attributeColor;
+                    mesh.flags |= Vertex::COLOR;
                 }
                 else
                 {
@@ -560,30 +562,15 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     attribute->components = components;
                     attribute->type = accessor.componentType;
                 }
-            }
 
-            const size_t materialIndex = primitiveIterator->materialIndex.has_value() ?
-                primitiveIterator->materialIndex.value() : 0;
+            } // attributeIterator
 
-            const Material& material = materials[materialIndex];
+            // vertices
 
-            if (material.normalTexture)
-            {
-                if (!attributeTangent && attributeNormal && attributeTexcoord)
-                {
-                    // TODO: generate tangents
-                }
-            }
-
-            /*
-            IndexedMesh mesh;
-            */
+            std::vector<Vertex> vertices(attributePosition.count);
 
             if (attributePosition)
             {
-                //mesh.vertices.resize(attributePosition.count);
-                //copyAttributes(mesh.vertices[0].position, attributePosition);
-
                 const u8* data = attributePosition.data;
 
                 for (size_t i = 0; i < attributePosition.count; ++i)
@@ -591,7 +578,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     float32x3 position = float32x3::uload(data);
                     data += attributePosition.stride;
 
-                    boundingBox.extend(position);
+                    vertices[i].position = position;
+
+                    mesh.boundingBox.extend(position);
                 }
             }
             else
@@ -608,7 +597,15 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                //copyAttributes(mesh.vertices[0].normal, attributeNormal);
+                const u8* data = attributeNormal.data;
+
+                for (size_t i = 0; i < attributeNormal.count; ++i)
+                {
+                    float32x3 normal = float32x3::uload(data);
+                    data += attributeNormal.stride;
+
+                    vertices[i].normal = normal;
+                }
             }
 
             if (attributeTangent)
@@ -619,7 +616,15 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                //copyAttributes(mesh.vertices[0].tangent, attributeTangent);
+                const u8* data = attributeTangent.data;
+
+                for (size_t i = 0; i < attributeTangent.count; ++i)
+                {
+                    float32x4 tangent = float32x4::uload(data);
+                    data += attributeTangent.stride;
+
+                    vertices[i].tangent = tangent;
+                }
             }
 
             if (attributeTexcoord)
@@ -630,7 +635,16 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                //copyAttributes(mesh.vertices[0].texcoord, attributeTexcoord);
+                const u8* data = attributeTexcoord.data;
+
+                for (size_t i = 0; i < attributeTexcoord.count; ++i)
+                {
+                    // TODO: u8, u16
+                    float32x2 texcoord = float32x2::uload(data);
+                    data += attributeTexcoord.stride;
+
+                    vertices[i].texcoord = texcoord;
+                }
             }
 
             if (attributeColor)
@@ -641,12 +655,24 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     continue;
                 }
 
-                attributeColor.components = 3;
-                //copyAttributes(mesh.vertices[0].color, attributeColor);
+                const u8* data = attributeColor.data;
+
+                for (size_t i = 0; i < attributeColor.count; ++i)
+                {
+                    // TODO: 3 and 4 components
+                    // TODO: u8, u16
+                    float32x3 color = float32x3::uload(data);
+                    data += attributeColor.stride;
+
+                    vertices[i].color = float32x4(color, 1.0f);
+                }
             }
 
-            /*
             // indices
+
+            std::vector<u32> indices;
+
+            // TODO: support restart primitive indices: (0xff, 0xffff, 0xffffffff)
 
             if (primitiveIterator->indicesAccessor.has_value())
             {
@@ -661,36 +687,39 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     size_t bufferIndex = indicesView.bufferIndex;
                     const u8* data = buffers[bufferIndex].address + offset;
 
-                    mesh.indices.resize(count);
+                    if (count < 3)
+                    {
+                        // not enough indices
+                        continue;
+                    }
+
+                    indices.resize(count);
 
                     switch (indicesAccessor.componentType)
                     {
                         case fastgltf::ComponentType::UnsignedByte:
                         {
-                            const u8* source = reinterpret_cast<const u8*>(data);
                             for (size_t i = 0; i < count; ++i)
                             {
-                                mesh.indices[i] = source[i];
+                                indices[i] = data[i];
                             }
                             break;
                         }
 
                         case fastgltf::ComponentType::UnsignedShort:
                         {
-                            const u16* source = reinterpret_cast<const u16*>(data);
                             for (size_t i = 0; i < count; ++i)
                             {
-                                mesh.indices[i] = source[i];
+                                indices[i] = uload16(data + i * 2);
                             }
                             break;
                         }
 
                         case fastgltf::ComponentType::UnsignedInt:
                         {
-                            const u32* source = reinterpret_cast<const u32*>(data);
                             for (size_t i = 0; i < count; ++i)
                             {
-                                mesh.indices[i] = source[i];
+                                indices[i] = uload32(data + i * 4);
                             }
                             break;
                         }
@@ -704,50 +733,132 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 }
             }
 
-            Primitive primitive;
+            const size_t materialIndex = primitiveIterator->materialIndex.has_value() ?
+                primitiveIterator->materialIndex.value() : 0;
 
-            switch (primitiveIterator->type)
+            const Material& material = materials[materialIndex];
+
+            bool needTangent = false;
+
+            if (material.normalTexture)
             {
-                case fastgltf::PrimitiveType::Triangles:
-                    primitive.mode = Primitive::TRIANGLE_LIST;
-                    break;
-
-                case fastgltf::PrimitiveType::TriangleStrip:
-                    primitive.mode = Primitive::TRIANGLE_STRIP;
-                    break;
-
-                case fastgltf::PrimitiveType::TriangleFan:
-                    primitive.mode = Primitive::TRIANGLE_FAN;
-                    break;
-
-                default:
-                    // unsupported primitive type
-                    continue;
+                if (!attributeTangent && attributeNormal && attributeTexcoord)
+                {
+                    needTangent = true;
+                }
             }
 
-            if (primitiveIterator->materialIndex.has_value())
+            if (needTangent)
             {
-                primitive.material = u32(primitiveIterator->materialIndex.value());
+                Mesh trimesh;
+
+                trimesh.flags = mesh.flags;
+
+                u64 time0 = Time::ms();
+
+                // TODO: support primitive restart (index: 0xffffffff)
+
+                switch (primitiveIterator->type)
+                {
+                    case fastgltf::PrimitiveType::Triangles:
+                    {
+                        for (size_t i = 2; i < indices.size(); i += 3)
+                        {
+                            Triangle triangle;
+
+                            triangle.vertex[0] = vertices[indices[i - 2]];
+                            triangle.vertex[1] = vertices[indices[i - 1]];
+                            triangle.vertex[2] = vertices[indices[i - 0]];
+
+                            trimesh.triangles.push_back(triangle);
+                        }
+                        break;
+                    }
+
+                    case fastgltf::PrimitiveType::TriangleStrip:
+                    {
+                        Vertex v0 = vertices[indices[0]];
+                        Vertex v1 = vertices[indices[1]];
+
+                        for (size_t i = 2; i < indices.size(); ++i)
+                        {
+                            Triangle triangle;
+
+                            triangle.vertex[(i + 0) & 1] = v0;
+                            triangle.vertex[(i + 1) & 1] = v1;
+                            triangle.vertex[2] = vertices[indices[i]];
+
+                            trimesh.triangles.push_back(triangle);
+
+                            v0 = v1;
+                            v1 = triangle.vertex[2];
+                        }
+                        break;
+                    }
+
+                    case fastgltf::PrimitiveType::TriangleFan:
+                    {
+                        Triangle triangle;
+
+                        triangle.vertex[0] = vertices[indices[0]];
+                        triangle.vertex[2] = vertices[indices[1]];
+
+                        for (size_t i = 2; i < indices.size(); ++i)
+                        {
+                            triangle.vertex[1] = triangle.vertex[2];
+                            triangle.vertex[2] = vertices[indices[i]];
+
+                            trimesh.triangles.push_back(triangle);
+                        }
+                        break;
+                    }
+
+                    default:
+                        // unsupported primitive type
+                        continue;
+                }
+
+                trimesh.computeTangents();
+
+                u64 time1 = Time::ms();
+                printLine("  Computing tangents: {} ms", time1 - time0);
+
+                mesh.append(trimesh, u32(materialIndex));
             }
-            */
+            else
+            {
+                Primitive primitive;
 
-            /*
-            primitive.start = u32(complete.indices.size());
-            primitive.count = u32(mesh.indices.size());
-            primitive.base = u32(complete.vertices.size());
+                switch (primitiveIterator->type)
+                {
+                    case fastgltf::PrimitiveType::Triangles:
+                        primitive.mode = Primitive::TRIANGLE_LIST;
+                        break;
 
-            complete.vertices.insert(complete.vertices.end(), mesh.vertices.begin(), mesh.vertices.end());
-            complete.indices.insert(complete.indices.end(), mesh.indices.begin(), mesh.indices.end());
+                    case fastgltf::PrimitiveType::TriangleStrip:
+                        primitive.mode = Primitive::TRIANGLE_STRIP;
+                        break;
 
-            complete.primitives.push_back(primitive);
-            */
+                    case fastgltf::PrimitiveType::TriangleFan:
+                        primitive.mode = Primitive::TRIANGLE_FAN;
+                        break;
+
+                    default:
+                        // unsupported primitive type
+                        continue;
+                }
+
+                primitive.start = u32(mesh.indices.size());
+                primitive.count = u32(indices.size());
+                primitive.base = u32(mesh.vertices.size());
+                primitive.material = u32(materialIndex);
+
+                mesh.primitives.push_back(primitive);
+
+                mesh.vertices.insert(mesh.vertices.end(), vertices.begin(), vertices.end());
+                mesh.indices.insert(mesh.indices.end(), indices.begin(), indices.end());
+            }
         }
-
-        //meshes.push_back(complete);
-
-        std::unique_ptr<Mesh> ptr = std::make_unique<Mesh>();
-
-        ptr->boundingBox = boundingBox;
 
         meshes.push_back(std::move(ptr));
     }

@@ -15,17 +15,23 @@
 
 namespace mango::import3d
 {
-
     using float32x2 = math::Vector<float, 2>;
     using float32x3 = math::Vector<float, 3>;
     using float32x4 = math::Vector<float, 4>;
     using matrix4x4 = math::Matrix<float, 4, 4>;
 
     // -----------------------------------------------------------------------
-    // material
+    // texture
     // -----------------------------------------------------------------------
 
     using Texture = std::shared_ptr<image::Bitmap>;
+
+    Texture createTexture(const filesystem::Path& path, const std::string& filename);
+    Texture createTexture(ConstMemory memory);
+
+    // -----------------------------------------------------------------------
+    // material
+    // -----------------------------------------------------------------------
 
     struct Material
     {
@@ -81,10 +87,9 @@ namespace mango::import3d
         Vertex vertex[3];
     };
 
-    struct TriangleMesh
+    struct Mesh
     {
         std::vector<Triangle> triangles;
-        u32 material = 0;
         u32 flags = 0;
 
         void computeTangents();
@@ -92,45 +97,6 @@ namespace mango::import3d
 
     // -----------------------------------------------------------------------
     // IndexedMesh
-    // -----------------------------------------------------------------------
-
-    struct IndexedPrimitive
-    {
-        u32 start = 0;
-        u32 count = 0;
-        u32 material = 0;
-
-        IndexedPrimitive() = default;
-
-        IndexedPrimitive(u32 start, u32 count)
-            : start(start)
-            , count(count)
-        {
-        }
-
-        IndexedPrimitive(u32 start, u32 count, u32 material)
-            : start(start)
-            , count(count)
-            , material(material)
-        {
-        }
-    };
-
-    struct IndexedMesh
-    {
-        std::vector<Vertex> vertices;
-        std::vector<u32> indices;
-        std::vector<IndexedPrimitive> primitives;
-        math::Box boundingBox;
-        u32 flags = 0;
-
-        IndexedMesh();
-        IndexedMesh(const TriangleMesh& trimesh);
-        IndexedMesh(const std::vector<TriangleMesh>& trimeshes);
-    };
-
-    // -----------------------------------------------------------------------
-    // Mesh
     // -----------------------------------------------------------------------
 
     struct Primitive
@@ -149,76 +115,18 @@ namespace mango::import3d
         u32 material = 0;
     };
 
-    struct VertexAttribute
+    struct IndexedMesh
     {
-        enum Type
-        {
-            NONE,
-            INT8,
-            INT16,
-            INT32,
-            UINT8,
-            UINT16,
-            UINT32,
-            FLOAT16,
-            FLOAT32,
-        };
-
-        Type type = NONE;
-        u32 components = 0;
-        u32 bytes = 0;
-        u32 stride = 0;
-        size_t offset = 0;
-
-        VertexAttribute();
-        VertexAttribute(Type type, u32 components);
-        VertexAttribute(Type type, u32 components, u32 stride, size_t offset);
-
-        operator bool () const;
-    };
-
-    struct VertexBuffer : Buffer
-    {
-        template <typename T>
-        T* address(const VertexAttribute& attribute, size_t index = 0) const
-        {
-            return reinterpret_cast<T*>(data() + attribute.offset + index * attribute.stride);
-        }
-    };
-
-    struct IndexBuffer : Buffer
-    {
-        enum Type
-        {
-            NONE,
-            UINT8,
-            UINT16,
-            UINT32,
-        };
-
-        Type type = NONE;
-    };
-
-    struct Mesh
-    {
-        VertexBuffer vertices;
-
-        VertexAttribute position;
-        VertexAttribute normal;
-        VertexAttribute tangent;
-        VertexAttribute texcoord;
-        VertexAttribute color;
-        VertexAttribute joint;
-        VertexAttribute weight;
-
-        IndexBuffer indices;
-
+        std::vector<Vertex> vertices;
+        std::vector<u32> indices;
         std::vector<Primitive> primitives;
-
         math::Box boundingBox;
+        u32 flags = 0;
 
-        Mesh();
-        Mesh(const IndexedMesh& mesh);
+        IndexedMesh();
+        IndexedMesh(const Mesh& mesh, u32 material);
+
+        void append(const Mesh& mesh, u32 material);
     };
 
     // -----------------------------------------------------------------------
@@ -238,28 +146,13 @@ namespace mango::import3d
     struct Scene
     {
         std::vector<Material> materials;
-        std::vector<std::unique_ptr<Mesh>> meshes;
+        std::vector<std::unique_ptr<IndexedMesh>> meshes;
         std::vector<Node> nodes;
         std::vector<u32> roots;
     };
 
     // -----------------------------------------------------------------------
-    // utilities
-    // -----------------------------------------------------------------------
-
-#if 0
-
-    void computeTangents(Mesh& mesh);
-    Mesh convertMesh(const IndexedMesh& input);
-    IndexedMesh convertMesh(const Mesh& input);
-
-#endif
-
-    Texture createTexture(const filesystem::Path& path, const std::string& filename);
-    Texture createTexture(ConstMemory memory);
-
-    // -----------------------------------------------------------------------
-    // meshes
+    // shapes
     // -----------------------------------------------------------------------
 
     struct TorusParameters
@@ -285,10 +178,10 @@ namespace mango::import3d
         float q = 5.0f;             // Q parameter of the knot
     };
 
-    std::unique_ptr<Mesh> createCube(float32x3 size);
-    std::unique_ptr<Mesh> createIcosahedron(float radius);
-    std::unique_ptr<Mesh> createDodecahedron(float radius);
-    std::unique_ptr<Mesh> createTorus(TorusParameters params);
-    std::unique_ptr<Mesh> createTorusknot(TorusknotParameters params);
+    std::unique_ptr<IndexedMesh> createCube(float32x3 size);
+    std::unique_ptr<IndexedMesh> createIcosahedron(float radius);
+    std::unique_ptr<IndexedMesh> createDodecahedron(float radius);
+    std::unique_ptr<IndexedMesh> createTorus(TorusParameters params);
+    std::unique_ptr<IndexedMesh> createTorusknot(TorusknotParameters params);
 
 } // namespace mango::import3d
