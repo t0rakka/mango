@@ -326,9 +326,6 @@ namespace mango::import3d
 
         mesh.indices.insert(mesh.indices.begin(), indices + 0, indices + 36);
 
-        //mesh.indices.type = IndexBuffer::UINT16;
-        //mesh.indices.append(indices, sizeof(indices));
-
         Primitive primitive;
 
         primitive.mode = Primitive::TRIANGLE_LIST;
