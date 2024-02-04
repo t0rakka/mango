@@ -1386,6 +1386,9 @@
     <ClInclude Include="..\..\..\include\mango\core\fmt\xchar.h">
       <Filter>mango\include\core\fmt</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\import3d\import_lwo.hpp">
+      <Filter>mango\include\import3d</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp">
@@ -2427,6 +2430,9 @@
       <Filter>mango\source\import3d</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\source\mango\import3d\mesh.cpp">
+      <Filter>mango\source\import3d</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\import3d\import_lwo.cpp">
       <Filter>mango\source\import3d</Filter>
     </ClCompile>
   </ItemGroup>

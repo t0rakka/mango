@@ -71,6 +71,7 @@
     <ClInclude Include="..\..\..\include\mango\import3d\import3d.hpp" />
     <ClInclude Include="..\..\..\include\mango\import3d\import_3ds.hpp" />
     <ClInclude Include="..\..\..\include\mango\import3d\import_gltf.hpp" />
+    <ClInclude Include="..\..\..\include\mango\import3d\import_lwo.hpp" />
     <ClInclude Include="..\..\..\include\mango\import3d\import_obj.hpp" />
     <ClInclude Include="..\..\..\include\mango\import3d\mesh.hpp" />
     <ClInclude Include="..\..\..\include\mango\math\accessor.hpp" />
@@ -782,6 +783,7 @@
     <ClCompile Include="..\..\..\source\mango\image\surface.cpp" />
     <ClCompile Include="..\..\..\source\mango\import3d\import_3ds.cpp" />
     <ClCompile Include="..\..\..\source\mango\import3d\import_gltf.cpp" />
+    <ClCompile Include="..\..\..\source\mango\import3d\import_lwo.cpp" />
     <ClCompile Include="..\..\..\source\mango\import3d\import_obj.cpp" />
     <ClCompile Include="..\..\..\source\mango\import3d\mesh.cpp" />
     <ClCompile Include="..\..\..\source\mango\jpeg\jpeg_arithmetic.cpp" />
