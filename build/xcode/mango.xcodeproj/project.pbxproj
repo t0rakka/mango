@@ -399,6 +399,7 @@
 		A6E7DF482651D07E006A912E /* compiler.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7DF322651D07E006A912E /* compiler.h */; };
 		A6E7DF492651D07E006A912E /* huf.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7DF332651D07E006A912E /* huf.h */; };
 		A6E7DF4A2651D07E006A912E /* cpu.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E7DF342651D07E006A912E /* cpu.h */; };
+		A6E8BD102B6FE77A004A1108 /* import_lwo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6E8BD0F2B6FE77A004A1108 /* import_lwo.cpp */; };
 		A6EAF56B29ECA353001EA03B /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EAF56629ECA352001EA03B /* adler32.c */; };
 		A6EAF56C29ECA353001EA03B /* compress.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EAF56729ECA352001EA03B /* compress.c */; };
 		A6EAF56D29ECA353001EA03B /* crc32.c in Sources */ = {isa = PBXBuildFile; fileRef = A6EAF56829ECA352001EA03B /* crc32.c */; };
@@ -971,6 +972,7 @@
 		A6E7DF322651D07E006A912E /* compiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = compiler.h; path = external/zstd/common/compiler.h; sourceTree = "<group>"; };
 		A6E7DF332651D07E006A912E /* huf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = huf.h; path = external/zstd/common/huf.h; sourceTree = "<group>"; };
 		A6E7DF342651D07E006A912E /* cpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpu.h; path = external/zstd/common/cpu.h; sourceTree = "<group>"; };
+		A6E8BD0F2B6FE77A004A1108 /* import_lwo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = import_lwo.cpp; path = import3d/import_lwo.cpp; sourceTree = "<group>"; };
 		A6EAF56629ECA352001EA03B /* adler32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = adler32.c; path = external/zlib/adler32.c; sourceTree = "<group>"; };
 		A6EAF56729ECA352001EA03B /* compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = compress.c; path = external/zlib/compress.c; sourceTree = "<group>"; };
 		A6EAF56829ECA352001EA03B /* crc32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = crc32.c; path = external/zlib/crc32.c; sourceTree = "<group>"; };
@@ -1715,6 +1717,7 @@
 		A69BEDC12B4F6C4700B5010F /* import3d */ = {
 			isa = PBXGroup;
 			children = (
+				A6E8BD0F2B6FE77A004A1108 /* import_lwo.cpp */,
 				A69BEDC32B4F6C6E00B5010F /* import_3ds.cpp */,
 				A69BEDC22B4F6C6E00B5010F /* import_gltf.cpp */,
 				A69BEDC42B4F6C6E00B5010F /* import_obj.cpp */,
@@ -2679,6 +2682,7 @@
 				A645DD2B213D53C100EC714B /* jpeg_encode.cpp in Sources */,
 				A645DD782141551200EC714B /* zstd_fast.c in Sources */,
 				A642437F21852AEF0044B763 /* Lzma2Enc.c in Sources */,
+				A6E8BD102B6FE77A004A1108 /* import_lwo.cpp in Sources */,
 				A601B0A6276E1B9D003B3A28 /* inftrees.c in Sources */,
 				A6EC3F4F230D7C2E00B17F21 /* filter_enc.c in Sources */,
 				A60BD64A2A1E808F00F86B1C /* cmspcs.c in Sources */,
