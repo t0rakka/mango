@@ -9,6 +9,67 @@
     NewTek LightWave Object importer
 */
 
+namespace
+{
+    using namespace mango;
+
+    static
+    constexpr float pi = float(math::pi);
+
+    static
+    void xyz_to_h(float x, float y, float z, float& h)
+    {
+        if (x == 0.0f && z == 0.0f)
+        {
+            h = 0.0f;
+        }
+        else
+        {
+            if (z == 0.0f)
+                h = x < 0 ? pi * 0.5f : pi * -0.5f;
+            else if (z < 0.0f)
+                h = -(std::atan(x / z) + pi);
+            else
+                h = -std::atan(x / z);
+        }
+    }
+
+    static
+    void xyz_to_hp(float x, float y, float z, float& h, float& p)
+    {
+        if (x == 0.0f && z == 0.0f)
+        {
+            h = 0.0f;
+            if (y != 0.0f)
+                p = y < 0.0f ? pi * -0.5f : pi * 0.5f;
+            else
+                p = 0.0f;
+        }
+        else
+        {
+            if (z == 0.0f)
+                h = x < 0.0f ? pi * 0.5f : pi * -0.5f;
+            else if (z < 0.0f)
+                h = -(std::atan(x / z) + pi);
+            else
+                h = -std::atan(x / z);
+
+            x = std::sqrt(x * x + z * z);
+            if (x == 0.0f)
+                p = y < 0.0f ? pi * -0.5f : pi * 0.5f;
+            else
+                p = std::atan(y / x);
+        }
+    }
+
+    static inline
+    float fract(float v)
+    {
+        return v - std::floor(v);
+    }
+
+} // namespace
+
 namespace mango::import3d
 {
 
@@ -32,10 +93,14 @@ namespace mango::import3d
             Spherical   = 2,
             Cubic       = 3,
             Crumple     = 4,
+            Front       = 5,
+            UV          = 6,
         };
 
         u16 flags = XAxis;
         Type type = Planar;
+
+        std::string name;
 
         image::Color color = 0xffffffff;
         float value = 1.0f;
@@ -46,6 +111,86 @@ namespace mango::import3d
         float32x3 falloff { 0.0f, 0.0f, 0.0f };
         float32x3 size { 1.0f, 1.0f, 1.0f };
         float32x3 tile { 1.0f, 1.0f, 1.0f };
+
+        float32x2 texcoord(const float32x3& point, float time = 0.0f) const
+        {
+            float32x3 p = point - center + (velocity - falloff * time) * time;
+
+            float32x2 texcoord(0.0f, 0.0f);
+
+            switch (type)
+            {
+                case Planar:
+                {
+                    float s = (flags & XAxis) ? p.z / size.z + 0.5f :  p.x / size.x + 0.5f;
+                    float t = (flags & YAxis) ? p.z / size.z + 0.5f :  p.y / size.y + 0.5f;
+
+                    texcoord = float32x2(s * tile.x, -t * tile.y);
+                    break;
+                }
+
+                case Cylindrical:
+                {
+                    float lon;
+                    float t;
+
+                    if (flags & XAxis)
+                    {
+                        xyz_to_h(p.z, p.x, -p.y, lon);
+                        t = -p.x / size.x + 0.5f;
+                    }
+                    else if (flags & YAxis)
+                    {
+                        xyz_to_h(-p.x, p.y, p.z, lon);
+                        t = -p.y / size.y + 0.5f;
+                    }
+                    else
+                    {
+                        xyz_to_h(-p.x, p.z, -p.y, lon);
+                        t = -p.z / size.z + 0.5f;
+                    }
+
+                    lon = 1.0f - lon / (pi * 2.0f);
+                    if (tile.x != 1.0f)
+                        lon = fract(lon) * tile.x;
+                    float s = fract(lon) / 4.0f;
+                    t = fract(t);
+
+                    texcoord = float32x2(s, t);
+                    break;
+                }
+
+                case Spherical:
+                {
+                    float lon;
+                    float lat;
+
+                    if (flags & XAxis)
+                        xyz_to_hp( p.z, p.x, -p.y, lon, lat);
+                    else if (flags & YAxis)
+                        xyz_to_hp(-p.x, p.y, p.z, lon, lat);
+                    else
+                        xyz_to_hp(-p.x, p.z, -p.y, lon, lat);
+
+                    lon = 1.0f - lon / (pi * 2.0f);
+                    lat = 0.5f - lat / pi;
+                    float s = fract(fract(lon) * tile.x) / 4.0f;
+                    float t = fract(fract(lat) * tile.y);
+
+                    texcoord = float32x2(s, t);
+                    break;
+                };
+
+                case Cubic:
+                case Crumple:
+                case Front:
+                case UV:
+                default:
+                    break;
+            }
+
+            return texcoord;
+        }
     };
 
     struct TriangleLWO
@@ -81,12 +226,12 @@ namespace mango::import3d
         float reflection = 0.0f;
         float transparency = 0.0f;
 
-        TextureLWO ctex;
-        TextureLWO dtex;
-        TextureLWO stex;
-        TextureLWO rtex;
-        TextureLWO ttex;
-        TextureLWO btex;
+        TextureLWO ctex; // color
+        TextureLWO dtex; // diffuse
+        TextureLWO stex; // specular
+        TextureLWO rtex; // reflection
+        TextureLWO ttex; // transparency
+        TextureLWO btex; // bump
 
         std::vector<TriangleLWO> triangles;
     };
@@ -540,13 +685,7 @@ namespace mango::import3d
             std::string name = read_string(p);
             printLine(Print::Verbose, level * 2 + 2, "name: \"{}\"", name);
 
-            // TODO
-            /*
-            if ( strcmp(name,"(none)") )
-            {
-                curtexture->filename = name;
-            }
-            */
+            currentTexture->name = name;
         }
 
         void chunk_TFLG(BigEndianConstPointer p, u32 length)
@@ -687,112 +826,6 @@ namespace mango::import3d
         }
     };
 
-    /* TODO: texture coordinate generation
-
-    static const float PI     = prmath::pi;
-    static const float HALFPI = PI * 0.5f;
-    static const float TWOPI  = PI * 2.0f;
-
-    static void xyztoh(float x, float y, float z, float *h)
-    {
-        if ( x == 0.0f && z == 0.0f )
-        {
-        *h = 0.0f;
-        }
-        else
-        {
-            if ( z == 0.0f )     *h = x < 0.0f ? HALFPI : -HALFPI;
-            else if ( z < 0.0f ) *h = -static_cast<float>(atan(x / z) + PI);
-            else                 *h = -static_cast<float>(atan(x / z));
-        }
-    }
-
-    static void xyztohp(float x, float y, float z, float* h, float* p)
-    {
-        if ( x == 0.0f && z == 0.0f )
-        {
-            *h = 0.0f;
-            if ( y != 0.0f ) *p = y < 0.0f ? -HALFPI : HALFPI;
-            else             *p = 0.0f;
-        }
-        else
-        {
-            if ( z == 0.0f )     *h = x < 0.0f ? HALFPI : -HALFPI;
-            else if ( z < 0.0f ) *h = -static_cast<float>(atan(x / z) + PI);
-            else                 *h = -static_cast<float>(atan(x / z));
-
-            x = static_cast<float>(sqrt(x*x + z*z));
-            if ( x == 0.0f ) *p = y < 0.0f ? -HALFPI : HALFPI;
-            else             *p = static_cast<float>(atan(y / x));
-        }
-    }
-
-    static inline float fract(float v)
-    {
-        return v - static_cast<float>(floor(v));
-    }
-
-    point2f TextureLWO::GetTexCoord(const point3f& point, float time) const
-    {
-        point3f p = point - center + (velocity - falloff * time) * time;
-
-        switch ( style )
-        {
-            case PLANAR:
-            {
-                float s = (flags & X_AXIS) ? p.z / size.z + 0.5f :  p.x / size.x + 0.5f;
-                float t = (flags & Y_AXIS) ? -p.z / size.z + 0.5f : -p.y / size.y + 0.5f;
-                return point2f(s * tile.x,t * tile.y);
-            }
-
-            case CYLINDRICAL:
-            {
-                float lon, t;
-                if ( flags & X_AXIS )
-                {
-                    xyztoh(p.z,p.x,-p.y,&lon);
-                    t = -p.x / size.x + 0.5f;
-                }
-                else if ( flags & Y_AXIS )
-                {
-                    xyztoh(-p.x,p.y,p.z,&lon);
-                    t = -p.y / size.y + 0.5f;
-                }
-                else
-                {
-                    xyztoh(-p.x,p.z,-p.y,&lon);
-                    t = -p.z / size.z + 0.5f;
-                }
-
-                lon = 1.0f - lon / TWOPI;
-                if ( tile.x != 1.0f ) lon = fract(lon) * tile.x;
-                float s = fract(lon) / 4.0f;
-                t = fract(t);
-                return point2f(s,t);
-            }
-
-            case SPHERICAL:
-            {
-                float lon, lat;
-
-                if ( flags & X_AXIS )		xyztohp( p.z, p.x,-p.y, &lon, &lat);
-                else if ( flags & Y_AXIS )	xyztohp(-p.x, p.y, p.z, &lon, &lat);
-                else						xyztohp(-p.x, p.z,-p.y, &lon, &lat);
-
-                lon = 1.0f - lon / TWOPI;
-                lat = 0.5f - lat / PI;
-                float s = fract(fract(lon) * tile.x) / 4.0f;
-                float t = fract(fract(lat) * tile.y);
-                return point2f(s,t);
-            };
-            case CUBIC:
-            default:
-                return point2f(0,0);
-        }
-    }
-
-    */
-
     ImportLWO::ImportLWO(const filesystem::Path& path, const std::string& filename)
     {
         filesystem::File file(path, filename);
@@ -808,19 +841,47 @@ namespace mango::import3d
             Material material;
 
             material.name = surface.name;
+
+            if (!surface.ctex.name.empty())
+            {
+                std::string filename = filesystem::removePath(surface.ctex.name);
+                try
+                {
+                    Texture ctex = createTexture(path, filename);
+                    material.baseColorTexture = ctex;
+                }
+                catch(...)
+                {
+                }
+            }
+
             materials.push_back(material);
 
             Mesh trimesh;
 
-            trimesh.flags = Vertex::POSITION;// | Vertex::NORMAL | Vertex::TEXCOORD;
+            trimesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD;
 
             for (size_t i = 0; i < surface.triangles.size(); ++i)
             {
                 Triangle triangle;
 
-                triangle.vertex[0].position = reader.points[surface.triangles[i].point[0]];
-                triangle.vertex[1].position = reader.points[surface.triangles[i].point[1]];
-                triangle.vertex[2].position = reader.points[surface.triangles[i].point[2]];
+                float32x3 p0 = reader.points[surface.triangles[i].point[0]];
+                float32x3 p1 = reader.points[surface.triangles[i].point[1]];
+                float32x3 p2 = reader.points[surface.triangles[i].point[2]];
+
+                float32x3 normal = normalize(cross(p0 - p1, p0 - p2));
+
+                triangle.vertex[0].position = p0;
+                triangle.vertex[1].position = p1;
+                triangle.vertex[2].position = p2;
+
+                triangle.vertex[0].normal = normal;
+                triangle.vertex[1].normal = normal;
+                triangle.vertex[2].normal = normal;
+
+                triangle.vertex[0].texcoord = surface.ctex.texcoord(p0);
+                triangle.vertex[1].texcoord = surface.ctex.texcoord(p1);
+                triangle.vertex[2].texcoord = surface.ctex.texcoord(p2);
 
                 trimesh.triangles.push_back(triangle);
             }
