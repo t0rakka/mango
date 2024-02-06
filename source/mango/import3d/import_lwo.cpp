@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <map>
 #include <mango/core/core.hpp>
 #include <mango/import3d/import_lwo.hpp>
 
@@ -468,6 +469,7 @@ namespace mango::import3d
                     for (size_t i = 2; i < numVertex; ++i)
                     {
                         triangle.point[2] = vertexIndexPointer.read16();
+
                         surface.triangles.push_back(triangle);
 
                         triangle.point[1] = triangle.point[2];
@@ -563,7 +565,13 @@ namespace mango::import3d
         void chunk_FLAG(BigEndianConstPointer p, u32 length)
         {
             MANGO_UNREFERENCED(length);
-            currentSurface->flags = p.read16();
+            u16 flags = p.read16();
+            currentSurface->flags = flags;
+
+            if (flags & SurfaceLWO::Smoothing)
+            {
+                currentSurface->smoothingLimit = 1.57f; // 90 degrees in radians
+            }
         }
 
         void chunk_COLR(BigEndianConstPointer p, u32 length)
@@ -861,23 +869,75 @@ namespace mango::import3d
 
             trimesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD;
 
+            // triangles sharing positions
+            std::multimap<u32, u32> sharing;
+
+            // resolve vertex position sharing between triangles
             for (size_t i = 0; i < surface.triangles.size(); ++i)
             {
+                u32 triangleIndex = u32(i);
+
+                // store triangle index into sharing map for all the positions
+                sharing.emplace(surface.triangles[i].point[0], triangleIndex);
+                sharing.emplace(surface.triangles[i].point[1], triangleIndex);
+                sharing.emplace(surface.triangles[i].point[2], triangleIndex);
+            }
+
+            float angleLimit = std::cos(surface.smoothingLimit);
+
+            for (size_t i = 0; i < surface.triangles.size(); ++i)
+            {
+                const TriangleLWO& current = surface.triangles[i];
+
                 Triangle triangle;
 
-                float32x3 p0 = reader.points[surface.triangles[i].point[0]];
-                float32x3 p1 = reader.points[surface.triangles[i].point[1]];
-                float32x3 p2 = reader.points[surface.triangles[i].point[2]];
+                float32x3 p0 = reader.points[current.point[0]];
+                float32x3 p1 = reader.points[current.point[1]];
+                float32x3 p2 = reader.points[current.point[2]];
 
-                float32x3 normal = normalize(cross(p0 - p1, p0 - p2));
+                // compute triangle normal
+                float32x3 currentNormal = normalize(cross(p0 - p1, p0 - p2));
+
+                // compute vertex normals
+                for (int j = 0; j < 3; ++j)
+                {
+                    Vertex& vertex = triangle.vertex[j];
+                    u32 pointIndex = current.point[j];
+
+                    float32x3 normal = currentNormal;
+
+                    // lookup all triangles sharing the position
+                    auto share = sharing.equal_range(pointIndex);
+
+                    for (auto s = share.first; s != share.second; ++s)
+                    {
+                        u32 triangleIndex = s->second;
+                        if (triangleIndex == i)
+                        {
+                            // we already accumulated current triangle normal
+                            continue;
+                        }
+
+                        const TriangleLWO& shared = surface.triangles[triangleIndex];
+
+                        float32x3 s0 = reader.points[shared.point[0]];
+                        float32x3 s1 = reader.points[shared.point[1]];
+                        float32x3 s2 = reader.points[shared.point[2]];
+                        float32x3 sharedNormal = normalize(cross(s0 - s1, s0 - s2));
+
+                        float angle = dot(currentNormal, sharedNormal);
+                        if (angle >= angleLimit)
+                        {
+                            normal += sharedNormal;
+                        }
+                    }
+
+                    vertex.normal = normalize(normal);
+                }
 
                 triangle.vertex[0].position = p0;
                 triangle.vertex[1].position = p1;
                 triangle.vertex[2].position = p2;
-
-                triangle.vertex[0].normal = normal;
-                triangle.vertex[1].normal = normal;
-                triangle.vertex[2].normal = normal;
 
                 triangle.vertex[0].texcoord = surface.ctex.texcoord(p0);
                 triangle.vertex[1].texcoord = surface.ctex.texcoord(p1);
