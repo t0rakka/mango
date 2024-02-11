@@ -1389,6 +1389,9 @@
     <ClInclude Include="..\..\..\include\mango\import3d\import_lwo.hpp">
       <Filter>mango\include\import3d</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\core.hpp">
+      <Filter>external\fastgltf\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp">

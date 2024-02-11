@@ -5019,12 +5019,12 @@ fg::Expected<fg::ExportResult<std::vector<std::byte>>> fg::Exporter::writeGltfBi
     BinaryGltfHeader header;
     header.magic = binaryGltfHeaderMagic;
     header.version = 2;
-    header.length = binarySize;
+    header.length = uint32_t(binarySize);
     write(&header, sizeof header);
 
     BinaryGltfChunk jsonChunk;
     jsonChunk.chunkType = binaryGltfJsonChunkMagic;
-    jsonChunk.chunkLength = json.size();
+    jsonChunk.chunkLength = uint32_t(json.size());
     write(&jsonChunk, sizeof jsonChunk);
 
     write(json.data(), json.size() * sizeof(decltype(json)::value_type));
@@ -5034,7 +5034,7 @@ fg::Expected<fg::ExportResult<std::vector<std::byte>>> fg::Exporter::writeGltfBi
 
         BinaryGltfChunk dataChunk;
         dataChunk.chunkType = binaryGltfDataChunkMagic;
-        dataChunk.chunkLength = alignUp(buffer.byteLength, 4);
+        dataChunk.chunkLength = uint32_t(alignUp(buffer.byteLength, 4));
         write(&dataChunk, sizeof dataChunk);
 		for (std::size_t i = 0; i < buffer.byteLength % 4; ++i) {
 			static constexpr std::uint8_t zero = 0x0U;

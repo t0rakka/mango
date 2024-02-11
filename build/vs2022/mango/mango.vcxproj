@@ -223,6 +223,7 @@
     <ClInclude Include="..\..\..\source\external\concurrentqueue\lightweightsemaphore.h" />
     <ClInclude Include="..\..\..\source\external\concurrentqueue\readerwriterqueue.h" />
     <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\base64.hpp" />
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\core.hpp" />
     <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\parser.hpp" />
     <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\tools.hpp" />
     <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\types.hpp" />
