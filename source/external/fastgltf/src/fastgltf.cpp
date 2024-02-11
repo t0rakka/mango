@@ -1285,7 +1285,7 @@ fg::Expected<fg::Asset> fg::Parser::parse(simdjson::dom::object root, Category c
 	}
 
 	Category readCategories = Category::None;
-	for (const auto& object : root) {
+    for (const auto object : root) {
 		auto hashedKey = crcStringFunction(object.key);
 		if (hashedKey == force_consteval<crc32c("scene")>) {
 			std::uint64_t defaultScene;
@@ -2982,7 +2982,7 @@ fg::Error fg::Parser::parseMeshes(simdjson::dom::array& meshes, Asset& asset) {
                     // attribute map. The keys are only validated in the validate() method.
 					attributes = FASTGLTF_CONSTRUCT_PMR_RESOURCE(std::remove_reference_t<decltype(attributes)>, resourceAllocator.get(), 0);
 					attributes.reserve(object.size());
-                    for (const auto& field : object) {
+                    for (const auto field : object) {
                         const auto key = field.key;
 
                         std::uint64_t attributeIndex;
@@ -3219,7 +3219,7 @@ fg::Error fg::Parser::parseNodes(simdjson::dom::array& nodes, Asset& asset) {
 							// attribute map. The keys are only validated in the validate() method.
 							attributes = FASTGLTF_CONSTRUCT_PMR_RESOURCE(decltype(node.instancingAttributes), resourceAllocator.get(), 0);
 							attributes.reserve(object.size());
-							for (const auto& field : object) {
+                            for (const auto field : object) {
 								const auto key = field.key;
 
 								std::uint64_t attributeIndex;

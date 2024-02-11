@@ -75,6 +75,7 @@
 		A601B0B3276E1B9D003B3A28 /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = A601B09E276E1B9D003B3A28 /* trees.c */; };
 		A601B0B4276E1B9D003B3A28 /* inftrees.h in Headers */ = {isa = PBXBuildFile; fileRef = A601B09F276E1B9D003B3A28 /* inftrees.h */; };
 		A601B0B5276E1B9D003B3A28 /* zutil.h in Headers */ = {isa = PBXBuildFile; fileRef = A601B0A0276E1B9D003B3A28 /* zutil.h */; };
+		A60791E92B784936000AB009 /* core.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A60791E82B784936000AB009 /* core.hpp */; };
 		A60B0760228CCA9C00BD520D /* quantize.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A60B075F228CCA9C00BD520D /* quantize.cpp */; };
 		A60BD6432A1E808F00F86B1C /* cmspack.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6262A1E808E00F86B1C /* cmspack.c */; };
 		A60BD6442A1E808F00F86B1C /* cmscam02.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6272A1E808E00F86B1C /* cmscam02.c */; };
@@ -649,6 +650,7 @@
 		A601B09E276E1B9D003B3A28 /* trees.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = trees.c; path = external/zlib/trees.c; sourceTree = "<group>"; };
 		A601B09F276E1B9D003B3A28 /* inftrees.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = inftrees.h; path = external/zlib/inftrees.h; sourceTree = "<group>"; };
 		A601B0A0276E1B9D003B3A28 /* zutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zutil.h; path = external/zlib/zutil.h; sourceTree = "<group>"; };
+		A60791E82B784936000AB009 /* core.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = core.hpp; path = external/fastgltf/include/fastgltf/core.hpp; sourceTree = "<group>"; };
 		A60B075F228CCA9C00BD520D /* quantize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = quantize.cpp; path = image/quantize.cpp; sourceTree = "<group>"; };
 		A60BD6262A1E808E00F86B1C /* cmspack.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmspack.c; path = external/lcms/cmspack.c; sourceTree = "<group>"; };
 		A60BD6272A1E808E00F86B1C /* cmscam02.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmscam02.c; path = external/lcms/cmscam02.c; sourceTree = "<group>"; };
@@ -1632,6 +1634,7 @@
 			isa = PBXGroup;
 			children = (
 				A63F721D2B4F690F00137C36 /* base64.hpp */,
+				A60791E82B784936000AB009 /* core.hpp */,
 				A63F721A2B4F690F00137C36 /* parser.hpp */,
 				A63F721C2B4F690F00137C36 /* tools.hpp */,
 				A63F721E2B4F690F00137C36 /* types.hpp */,
@@ -2222,6 +2225,7 @@
 				A6EC3FA4230D7C6100B17F21 /* encode.h in Headers */,
 				A642438221852AEF0044B763 /* Ppmd7.h in Headers */,
 				A63DD75C1E706EB200D4D499 /* suballoc.hpp in Headers */,
+				A60791E92B784936000AB009 /* core.hpp in Headers */,
 				A69B9E09285ABFA200E7BEDC /* decompress_impl.h in Headers */,
 				A6F0A5A1237247370015944D /* zstd_cwksp.h in Headers */,
 				A6E7DF472651D07E006A912E /* zstd_internal.h in Headers */,
