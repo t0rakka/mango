@@ -124,7 +124,7 @@ namespace mango::import3d
 
     Texture createTexture(ConstMemory memory)
     {
-        printLine("createTexture: {} KB", memory.size);
+        printLine("createTexture: {} KB", memory.size / 1024);
 
         image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
         std::shared_ptr<image::Bitmap> texture = std::make_shared<image::Bitmap>(memory, "", format);
