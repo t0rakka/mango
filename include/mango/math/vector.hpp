@@ -1394,6 +1394,13 @@ namespace mango::math
 
     // operator +
 
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a)
+    {
+        // +a
+        return ScalarType(a);
+    }
+
     template <typename ScalarType, typename VectorType, int Index0, int Index1>
     ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b)
@@ -1431,6 +1438,13 @@ namespace mango::math
     }
 
     // operator -
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a)
+    {
+        // -a
+        return -ScalarType(a);
+    }
 
     template <typename ScalarType, typename VectorType, int Index0, int Index1>
     ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
