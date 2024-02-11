@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <unistd.h>
 #include <mango/core/exception.hpp>
@@ -434,8 +434,6 @@ namespace mango
 
 
 #if 0
-        static Timer timer;
-
         for (int i = 0; i < 6; ++i)
         {
             m_handle->mouse_time[i] = 0;
@@ -456,8 +454,8 @@ namespace mango
                             case 3:
                             {
                                 // Simulate double click
-                                float time = timer.time();
-                                if (time - m_handle->mouse_time[button] < 300.0f/1000.0f)
+                                u64 time = Time::ms();
+                                if (time - m_handle->mouse_time[button] < 300)
                                 {
                                     count = 2;
                                 }

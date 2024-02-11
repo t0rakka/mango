@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -55,7 +55,7 @@ namespace mango
         ::Window    xdnd_source;
         int         xdnd_version { 0 };
         int         size[2] = { 0, 0 };
-        float       mouse_time[6];
+        u64         mouse_time[6];
         bool        is_looping { false };
         bool        busy { false };
 

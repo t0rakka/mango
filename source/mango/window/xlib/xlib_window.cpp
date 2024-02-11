@@ -1,9 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
+#include <mango/core/timer.hpp>
 #include "xlib_handle.hpp"
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
@@ -26,9 +27,6 @@ namespace
 
         switch (symbol)
         {
-            default:
-                code = KEYCODE_NONE;
-                break;
             TR(XK_Escape,         KEYCODE_ESC);
             TR(XK_0,              KEYCODE_0);
             TR(XK_1,              KEYCODE_1);
@@ -118,6 +116,10 @@ namespace
             TR(XK_Shift_R,        KEYCODE_RIGHT_SHIFT);
             TR(XK_Control_L,      KEYCODE_LEFT_CONTROL);
             TR(XK_Control_R,      KEYCODE_RIGHT_CONTROL);
+
+            default:
+                code = KEYCODE_NONE;
+                break;
         }
 
         return code;
@@ -878,8 +880,6 @@ namespace mango
     {
         m_handle->is_looping = true;
 
-        static Timer timer;
-
         for (int i = 0; i < 6; ++i)
         {
             m_handle->mouse_time[i] = 0;
@@ -907,8 +907,8 @@ namespace mango
                             case 3:
                             {
                                 // Simulate double click
-                                float time = timer.time();
-                                if (time - m_handle->mouse_time[button] < 300.0f/1000.0f)
+                                u32 time = Time::ms();
+                                if (time - m_handle->mouse_time[button] < 300)
                                 {
                                     count = 2;
                                 }
