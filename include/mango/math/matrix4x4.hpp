@@ -357,19 +357,24 @@ namespace mango::math
         // 3x3 transpose
         float32x4 t0 = shuffle<0, 1, 0, 1>(m0, m1);
         float32x4 t1 = shuffle<2, 3, 2, 3>(m0, m1);
-        result[0] = shuffle<0, 2, 0, 3>(t0, m2);
-        result[1] = shuffle<1, 3, 1, 3>(t0, m2);
-        result[2] = shuffle<0, 2, 2, 3>(t1, m2);
+        m0 = shuffle<0, 2, 0, 3>(t0, m2);
+        m1 = shuffle<1, 3, 1, 3>(t0, m2);
+        m2 = shuffle<0, 2, 2, 3>(t1, m2);
 
         // 3x3 de-scale
-        float32x4 det = 1.0f / (result[0] * result[0] + result[1] * result[1] + result[2] * result[2]);
-        result[0] = result[0] * det;
-        result[1] = result[1] * det;
-        result[2] = result[2] * det;
+        float32x4 sq = m0 * m0 + m1 * m1 + m2 * m2;
+        float32x4 det = select(sq < 1.e-8f, 1.0f, 1.0f / sq);
+        m0 = m0 * det;
+        m1 = m1 * det;
+        m2 = m2 * det;
 
         // last row
-        float32x4 t2 = m0 * m3.xxxx + m1 * m3.yyyy + m2 * m3.zzzz;
-        result[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f) - t2;
+        m3 = float32x4(0.0f, 0.0f, 0.0f, 1.0f) - (m0 * m3.xxxx + m1 * m3.yyyy + m2 * m3.zzzz);
+
+        result[0] = m0;
+        result[1] = m1;
+        result[2] = m2;
+        result[3] = m3;
     }
 
     // Optimized transformation matrix inversion:
@@ -383,13 +388,17 @@ namespace mango::math
         // 3x3 transpose
         float32x4 t0 = shuffle<0, 1, 0, 1>(m0, m1);
         float32x4 t1 = shuffle<2, 3, 2, 3>(m0, m1);
-        result[0] = shuffle<0, 2, 0, 3>(t0, m2);
-        result[1] = shuffle<1, 3, 1, 3>(t0, m2);
-        result[2] = shuffle<0, 2, 2, 3>(t1, m2);
+        m0 = shuffle<0, 2, 0, 3>(t0, m2);
+        m1 = shuffle<1, 3, 1, 3>(t0, m2);
+        m2 = shuffle<0, 2, 2, 3>(t1, m2);
 
         // last row
-        float32x4 t2 = m0 * m3.xxxx + m1 * m3.yyyy + m2 * m3.zzzz;
-        result[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f) - t2;
+        m3 = float32x4(0.0f, 0.0f, 0.0f, 1.0f) - (m0 * m3.xxxx + m1 * m3.yyyy + m2 * m3.zzzz);
+
+        result[0] = m0;
+        result[1] = m1;
+        result[2] = m2;
+        result[3] = m3;
     }
 
     // Matrix inversion performance
