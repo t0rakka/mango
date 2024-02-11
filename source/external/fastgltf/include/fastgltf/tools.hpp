@@ -29,7 +29,7 @@
 #include <cstring>
 #include <iterator>
 
-#include "types.hpp"
+#include <fastgltf/types.hpp>
 
 namespace fastgltf {
 
@@ -123,6 +123,50 @@ concept Element = std::is_arithmetic_v<typename ElementTraits<ElementType>::comp
 
 namespace internal {
 
+/**
+ * This function deserializes some N bytes in little endian order (as required by the glTF spec)
+ * into the given arithmetic type T in a standard-conforming fashion.
+ *
+ * This uses bit-shifts and ORs to correctly convert the bytes to avoid violating the strict aliasing
+ * rule as if we would just use T*.
+ */
+template <typename T>
+constexpr T deserializeComponent(const std::byte* bytes, std::size_t index) {
+    static_assert(std::is_integral_v<T> && !std::is_same_v<T, bool>, "Component deserialization is only supported on basic arithmetic types.");
+    T ret = 0;
+    // Turns out that on some systems a byte is not 8-bit so this sizeof is not technically correct.
+    for (std::size_t i = 0; i < sizeof(T); ++i) {
+        ret |= (static_cast<T>(bytes[i + index * sizeof(T)]) << i * 8);
+    }
+    return ret;
+}
+
+template<>
+#if FASTGLTF_CONSTEXPR_BITCAST
+constexpr
+#endif
+float deserializeComponent<float>(const std::byte* bytes, std::size_t index) {
+    static_assert(std::numeric_limits<float>::is_iec559 &&
+                  std::numeric_limits<float>::radix == 2 &&
+                  std::numeric_limits<float>::digits == 24 &&
+                  std::numeric_limits<float>::max_exponent == 128,
+                  "Float deserialization is only supported on IEE754 platforms");
+    return bit_cast<float>(deserializeComponent<std::uint32_t>(bytes, index));
+}
+
+template<>
+#if FASTGLTF_CONSTEXPR_BITCAST
+constexpr
+#endif
+double deserializeComponent<double>(const std::byte* bytes, std::size_t index) {
+    static_assert(std::numeric_limits<double>::is_iec559 &&
+                  std::numeric_limits<double>::radix == 2 &&
+                  std::numeric_limits<double>::digits == 53 &&
+                  std::numeric_limits<double>::max_exponent == 1024,
+                  "Float deserialization is only supported on IEE754 platforms");
+    return bit_cast<double>(deserializeComponent<std::uint64_t>(bytes, index));
+}
+
 template <typename DestType, typename SourceType>
 constexpr DestType convertComponent(const SourceType& source, bool normalized) {
 	if (normalized) {
@@ -148,9 +192,21 @@ constexpr DestType convertComponent(const SourceType& source, bool normalized) {
 	return static_cast<DestType>(source);
 }
 
-template <typename SourceType, typename DestType, std::size_t Index>
+template <typename DestType, typename SourceType, AccessorType ElementAccessorType, std::size_t Index>
 constexpr DestType convertComponent(const std::byte* bytes, bool normalized) {
-	return convertComponent<DestType>(reinterpret_cast<const SourceType*>(bytes)[Index], normalized);
+    if constexpr (isMatrix(ElementAccessorType)) {
+        const auto rowCount = getElementRowCount(ElementAccessorType);
+        const auto componentSize = sizeof(SourceType);
+        if constexpr ((rowCount * componentSize) % 4 != 0) {
+            // There's only four cases where this happens, but the glTF spec requires us to insert some padding for each column.
+            auto index = Index + (Index / rowCount) * (4 - (rowCount % 4));
+            return convertComponent<DestType>(deserializeComponent<SourceType>(bytes, index), normalized);
+        } else {
+            return convertComponent<DestType>(deserializeComponent<SourceType>(bytes, Index), normalized);
+        }
+    } else {
+        return convertComponent<DestType>(deserializeComponent<SourceType>(bytes, Index), normalized);
+    }
 }
 
 template <typename ElementType, typename SourceType, std::size_t... I>
@@ -161,10 +217,11 @@ constexpr ElementType convertAccessorElement(const std::byte* bytes, bool normal
 	using DestType = typename ElementTraits<ElementType>::component_type;
 	static_assert(std::is_arithmetic_v<DestType>, "Accessor traits must provide a valid component type");
 
+    const auto accessorType = ElementTraits<ElementType>::type;
 	if constexpr (std::is_aggregate_v<ElementType>) {
-		return {convertComponent<SourceType, DestType, I>(bytes, normalized)...};
+		return {convertComponent<DestType, SourceType, accessorType, I>(bytes, normalized)...};
 	} else {
-		return ElementType{convertComponent<SourceType, DestType, I>(bytes, normalized)...};
+		return ElementType(convertComponent<DestType, SourceType, accessorType, I>(bytes, normalized)...);
 	}
 }
 
@@ -199,9 +256,8 @@ ElementType getAccessorElementAt(ComponentType componentType, const std::byte* b
 
 // Performs a binary search for the index into the sparse index list whose value matches the desired index
 template <typename ElementType>
-bool findSparseIndex(const std::byte* bytes, std::size_t indexCount, std::size_t desiredIndex,
+bool findSparseIndex(const std::byte* indices, std::size_t indexCount, std::size_t desiredIndex,
 		std::size_t& resultIndex) {
-	auto* elements = reinterpret_cast<const ElementType*>(bytes);
 	auto count = indexCount;
 
 	resultIndex = 0;
@@ -210,7 +266,7 @@ bool findSparseIndex(const std::byte* bytes, std::size_t indexCount, std::size_t
 		auto step = count / 2;
 		auto index = resultIndex + step;
 
-		if (elements[index] < static_cast<ElementType>(desiredIndex)) {
+		if (deserializeComponent<ElementType>(indices, index) < static_cast<ElementType>(desiredIndex)) {
 			resultIndex = index + 1;
 			count -= step + 1;
 		} else {
@@ -218,7 +274,7 @@ bool findSparseIndex(const std::byte* bytes, std::size_t indexCount, std::size_t
 		}
 	}
 
-	return resultIndex < indexCount && elements[resultIndex] == static_cast<ElementType>(desiredIndex);
+	return resultIndex < indexCount && deserializeComponent<ElementType>(indices, resultIndex) == static_cast<ElementType>(desiredIndex);
 }
 
 // Finds the index of the nearest sparse index to the desired index
@@ -249,10 +305,14 @@ inline bool findSparseIndex(ComponentType componentType, const std::byte* bytes,
 } // namespace internal
 
 struct DefaultBufferDataAdapter {
-	const std::byte* operator()(const Buffer& buffer) const {
+    auto operator()(const Buffer& buffer) const {
 		return std::visit(visitor {
 			[](auto&) -> const std::byte* {
+				assert(false && "Tried accessing a buffer with no data, likely because no buffers were loaded. Perhaps you forgot to specify the LoadExternalBuffers option?");
 				return nullptr;
+			},
+			[&](const sources::Array& vec) {
+                return reinterpret_cast<const std::byte*>(vec.bytes.data());
 			},
 			[&](const sources::Vector& vec) {
 				return reinterpret_cast<const std::byte*>(vec.bytes.data());
@@ -373,8 +433,8 @@ public:
 		const auto& view = asset.bufferViews[*accessor.bufferViewIndex];
 		stride = view.byteStride ? *view.byteStride : getElementByteSize(accessor.type, accessor.componentType);
 
-		bufferBytes = adapter(asset.buffers[view.bufferIndex]);
-		bufferBytes += view.byteOffset + accessor.byteOffset;
+		bufferBytes = adapter(asset.buffers[view.bufferIndex])
+                + view.byteOffset + accessor.byteOffset;
 
 		if (accessor.sparse.has_value()) {
 			const auto& indicesView = asset.bufferViews[accessor.sparse->indicesBufferView];
@@ -433,7 +493,7 @@ ElementType getAccessorElement(const Asset& asset, const Accessor& accessor, siz
 		if (internal::findSparseIndex(accessor.sparse->indexComponentType, indicesBytes, accessor.sparse->count,
 				index, sparseIndex)) {
 			return internal::getAccessorElementAt<ElementType>(accessor.componentType,
-					valuesBytes + valueStride * sparseIndex,
+					&valuesBytes[valueStride * sparseIndex],
 					accessor.normalized);
 		}
 	}
@@ -450,12 +510,13 @@ ElementType getAccessorElement(const Asset& asset, const Accessor& accessor, siz
 	}
 
 	const auto& view = asset.bufferViews[*accessor.bufferViewIndex];
-	auto stride = view.byteStride ? *view.byteStride : getElementByteSize(accessor.type, accessor.componentType);
+    auto stride = view.byteStride.value_or(getElementByteSize(accessor.type, accessor.componentType));
 
-	auto* bytes = adapter(asset.buffers[view.bufferIndex]);
-	bytes += view.byteOffset + accessor.byteOffset;
+	auto* bytes = adapter(asset.buffers[view.bufferIndex])
+            + view.byteOffset + accessor.byteOffset;
 
-	return internal::getAccessorElementAt<ElementType>(accessor.componentType, bytes + index * stride, accessor.normalized);
+	return internal::getAccessorElementAt<ElementType>(
+            accessor.componentType, &bytes[index * stride], accessor.normalized);
 }
 
 template<typename ElementType, typename BufferDataAdapter = DefaultBufferDataAdapter>
@@ -504,10 +565,10 @@ void iterateAccessor(const Asset& asset, const Accessor& accessor, Functor&& fun
 		// property or extensions MAY override zeros with actual values.
 		if (accessor.bufferViewIndex) {
 			auto& view = asset.bufferViews[*accessor.bufferViewIndex];
-			srcBytes = adapter(asset.buffers[view.bufferIndex]) + view.byteOffset + accessor.byteOffset;
-			srcStride = view.byteStride ? *view.byteStride
-					: getElementByteSize(accessor.type, accessor.componentType);
-		}
+            srcBytes = adapter(asset.buffers[view.bufferIndex])
+                    + view.byteOffset + accessor.byteOffset;
+            srcStride = view.byteStride.value_or(getElementByteSize(accessor.type, accessor.componentType));
+        }
 
 		auto nextSparseIndex = internal::getAccessorElementAt<std::uint32_t>(
 				accessor.sparse->indexComponentType, indicesBytes);
@@ -516,18 +577,18 @@ void iterateAccessor(const Asset& asset, const Accessor& accessor, Functor&& fun
 		for (std::size_t i = 0; i < accessor.count; ++i) {
 			if (i == nextSparseIndex) {
 				func(internal::getAccessorElementAt<ElementType>(accessor.componentType,
-						valuesBytes + valueStride * sparseIndexCount,
+						&valuesBytes[valueStride * sparseIndexCount],
 						accessor.normalized));
 
 				++sparseIndexCount;
 
 				if (sparseIndexCount < accessor.sparse->count) {
 					nextSparseIndex = internal::getAccessorElementAt<std::uint32_t>(
-							accessor.sparse->indexComponentType, indicesBytes + indexStride * sparseIndexCount);
+							accessor.sparse->indexComponentType, &indicesBytes[indexStride * sparseIndexCount]);
 				}
 			} else if (accessor.bufferViewIndex) {
 				func(internal::getAccessorElementAt<ElementType>(accessor.componentType,
-						srcBytes + srcStride * i,
+						&srcBytes[srcStride * i],
 						accessor.normalized));
 			} else {
 				func(ElementType{});
@@ -547,13 +608,14 @@ void iterateAccessor(const Asset& asset, const Accessor& accessor, Functor&& fun
 	}
 	else {
 		auto& view = asset.bufferViews[*accessor.bufferViewIndex];
-		auto stride = view.byteStride ? *view.byteStride : getElementByteSize(accessor.type, accessor.componentType);
+        auto stride = view.byteStride.value_or(getElementByteSize(accessor.type, accessor.componentType));
 
-		auto* bytes = adapter(asset.buffers[view.bufferIndex]);
-		bytes += view.byteOffset + accessor.byteOffset;
+		auto* bytes = adapter(asset.buffers[view.bufferIndex])
+                + view.byteOffset + accessor.byteOffset;
 
 		for (std::size_t i = 0; i < accessor.count; ++i) {
-			func(internal::getAccessorElementAt<ElementType>(accessor.componentType, bytes + i * stride, accessor.normalized));
+			func(internal::getAccessorElementAt<ElementType>(
+                    accessor.componentType, &bytes[i * stride], accessor.normalized));
 		}
 	}
 }
@@ -632,20 +694,20 @@ void copyFromAccessor(const Asset& asset, const Accessor& accessor, void* dest,
 
 	auto* srcBytes = adapter(asset.buffers[view.bufferIndex]) + view.byteOffset + accessor.byteOffset;
 
-	// We have to perform normalization if the accessor is marked as containing normalized data, which is why
-	// we can't just memcpy then.
+    // If the data is normalized or the component/accessor type is different, we have to convert each element and can't memcpy.
 	if (std::is_trivially_copyable_v<ElementType> && !accessor.normalized && accessor.componentType == Traits::enum_component_type) {
 		if (srcStride == elemSize && srcStride == TargetStride) {
 			std::memcpy(dest, srcBytes, elemSize * accessor.count);
 		} else {
 			for (std::size_t i = 0; i < accessor.count; ++i) {
-				std::memcpy(dstBytes + TargetStride * i, srcBytes + srcStride * i, elemSize);
+				std::memcpy(dstBytes + TargetStride * i, &srcBytes[srcStride * i], elemSize);
 			}
 		}
 	} else {
 		for (std::size_t i = 0; i < accessor.count; ++i) {
 			auto* pDest = reinterpret_cast<ElementType*>(dstBytes + TargetStride * i);
-			*pDest = internal::getAccessorElementAt<ElementType>(accessor.componentType, srcBytes + srcStride * i);
+			*pDest = internal::getAccessorElementAt<ElementType>(
+                    accessor.componentType, &srcBytes[srcStride * i]);
 		}
 	}
 }

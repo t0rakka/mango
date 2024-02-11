@@ -30,18 +30,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
-#include <vector>
+
+#include <fastgltf/types.hpp>
 
 #ifdef _MSC_VER
 #pragma warning(push) // attribute 'x' is not recognized
 #pragma warning(disable : 5030)
-#endif
-
-#if defined(__x86_64__) || defined(_M_AMD64) || defined(_M_IX86)
-#define FASTGLTF_IS_X86
-#elif defined(_M_ARM64) || defined(__aarch64__)
-// __ARM_NEON is only for general Neon availability. It does not guarantee the full A64 instruction set.
-#define FASTGLTF_IS_A64
 #endif
 
 namespace fastgltf::base64 {
@@ -73,17 +67,17 @@ namespace fastgltf::base64 {
     void sse4_decode_inplace(std::string_view encoded, std::uint8_t* output, std::size_t padding);
     void avx2_decode_inplace(std::string_view encoded, std::uint8_t* output, std::size_t padding);
 
-    [[nodiscard]] std::vector<std::uint8_t> sse4_decode(std::string_view encoded);
-    [[nodiscard]] std::vector<std::uint8_t> avx2_decode(std::string_view encoded);
+    [[nodiscard]] StaticVector<std::uint8_t> sse4_decode(std::string_view encoded);
+    [[nodiscard]] StaticVector<std::uint8_t> avx2_decode(std::string_view encoded);
 #elif defined(FASTGLTF_IS_A64)
     void neon_decode_inplace(std::string_view encoded, std::uint8_t* output, std::size_t padding);
-    [[nodiscard]] std::vector<std::uint8_t> neon_decode(std::string_view encoded);
+    [[nodiscard]] StaticVector<std::uint8_t> neon_decode(std::string_view encoded);
 #endif
     void fallback_decode_inplace(std::string_view encoded, std::uint8_t* output, std::size_t padding);
     void decode_inplace(std::string_view encoded, std::uint8_t* output, std::size_t padding);
 
-    [[nodiscard]] std::vector<std::uint8_t> fallback_decode(std::string_view encoded);
-    [[nodiscard]] std::vector<std::uint8_t> decode(std::string_view encoded);
+    [[nodiscard]] StaticVector<std::uint8_t> fallback_decode(std::string_view encoded);
+    [[nodiscard]] StaticVector<std::uint8_t> decode(std::string_view encoded);
 } // namespace fastgltf::base64
 
 #ifdef _MSC_VER

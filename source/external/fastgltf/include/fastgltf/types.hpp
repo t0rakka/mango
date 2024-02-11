@@ -32,12 +32,13 @@
 #include <cstdint>
 #include <filesystem>
 #include <optional>
+#include <string>
 #include <utility>
 #include <variant>
 #include <vector>
 
 // Utils header already includes some headers, which we'll try and avoid including twice.
-#include "util.hpp"
+#include <fastgltf/util.hpp>
 
 #if defined(_GLIBCXX_USE_CXX11_ABI) && !_GLIBCXX_USE_CXX11_ABI
 // polymorphic allocators are only supported with the 'new' GCC ABI.
@@ -69,11 +70,13 @@
 #define FASTGLTF_FG_PMR_NS ::fastgltf
 
 #define FASTGLTF_CONSTRUCT_PMR_RESOURCE(type, memoryResource, ...) type(__VA_ARGS__)
+#define FASTGLTF_IF_PMR(expr)
 #else
 #define FASTGLTF_STD_PMR_NS ::std::pmr
 #define FASTGLTF_FG_PMR_NS ::fastgltf::pmr
 
 #define FASTGLTF_CONSTRUCT_PMR_RESOURCE(type, memoryResource, ...) type(__VA_ARGS__, memoryResource)
+#define FASTGLTF_IF_PMR(expr) expr
 #endif
 
 #if FASTGLTF_CPP_20
@@ -90,7 +93,7 @@
 #define FASTGLTF_QUOTE(x) FASTGLTF_QUOTE_Q(x)
 
 // fastgltf version string. Use FASTGLTF_QUOTE to stringify.
-#define FASTGLTF_VERSION 0.6.1
+#define FASTGLTF_VERSION 0.7.0
 
 namespace fastgltf {
 #if defined(FASTGLTF_USE_64BIT_FLOAT) && FASTGLTF_USE_64BIT_FLOAT
@@ -238,7 +241,6 @@ namespace fastgltf {
     };
 
     enum class MeshoptCompressionMode : std::uint8_t {
-        None = 0,
         Attributes,
         Triangles,
         Indices,
@@ -298,15 +300,50 @@ namespace fastgltf {
         return static_cast<std::uint8_t>(to_underlying(type) >> 8U);
     }
 
+    /**
+     * Returns the number of rows in the given accessor type.
+     */
+    constexpr auto getElementRowCount(AccessorType type) noexcept {
+        switch (type) {
+            case AccessorType::Mat2:
+            case AccessorType::Vec2:
+                return 2;
+            case AccessorType::Mat3:
+            case AccessorType::Vec3:
+                return 3;
+            case AccessorType::Mat4:
+            case AccessorType::Vec4:
+                return 4;
+            default:
+                return 1;
+        }
+    }
+
+    constexpr bool isMatrix(AccessorType type) noexcept {
+        return type == AccessorType::Mat2 || type == AccessorType::Mat3 || type == AccessorType::Mat4;
+    }
+
     constexpr auto getComponentBitSize(ComponentType componentType) noexcept {
     	static_assert(std::is_same_v<std::underlying_type_t<ComponentType>, std::uint32_t>);
     	return static_cast<std::uint16_t>(to_underlying(componentType) >> 16U);
     }
 
     constexpr auto getElementByteSize(AccessorType type, ComponentType componentType) noexcept {
-        return static_cast<std::uint16_t>(getNumComponents(type)) * (getComponentBitSize(componentType) / 8);
+        const auto componentSize = getComponentBitSize(componentType) / 8;
+        auto numComponents = getNumComponents(type);
+        const auto rowCount = getElementRowCount(type);
+        if (isMatrix(type) && (rowCount * componentSize) % 4 != 0) {
+            // Matrices need extra padding per-column which affects their size.
+            numComponents += rowCount * (4 - (rowCount % 4));
+        }
+        return static_cast<std::uint16_t>(numComponents) * componentSize;
     }
 
+    /**
+     * Returns the OpenGL component type enumeration for the given component type.
+     *
+     * For example, getGLComponentType(ComponentType::Float) will return GL_FLOAT (0x1406).
+     */
     constexpr auto getGLComponentType(ComponentType type) noexcept {
     	static_assert(std::is_same_v<std::underlying_type_t<ComponentType>, std::uint32_t>);
         return static_cast<std::uint16_t>(to_underlying(type));
@@ -374,9 +411,145 @@ namespace fastgltf {
         		return AccessorType::Invalid;
         }
     }
+
+	static constexpr std::array<std::string_view, 7> accessorTypeNames = {
+		"SCALAR",
+		"VEC2",
+		"VEC3",
+		"VEC4",
+		"MAT2",
+		"MAT3",
+		"MAT4"
+	};
+
+	constexpr std::string_view getAccessorTypeName(AccessorType type) noexcept {
+		if (type == AccessorType::Invalid)
+			return "";
+		auto idx = to_underlying(type) & 0xFF;
+		return accessorTypeNames[idx - 1];
+	}
+
+	constexpr std::string_view mimeTypeJpeg = "image/jpeg";
+	constexpr std::string_view mimeTypePng = "image/png";
+	constexpr std::string_view mimeTypeKtx = "image/ktx2";
+	constexpr std::string_view mimeTypeDds = "image/vnd-ms.dds";
+	constexpr std::string_view mimeTypeGltfBuffer = "application/gltf-buffer";
+	constexpr std::string_view mimeTypeOctetStream = "application/octet-stream";
+
+	constexpr std::string_view getMimeTypeString(MimeType mimeType) noexcept {
+		switch (mimeType) {
+			case MimeType::JPEG:
+				return mimeTypeJpeg;
+			case MimeType::PNG:
+				return mimeTypePng;
+			case MimeType::KTX2:
+				return mimeTypeKtx;
+			case MimeType::DDS:
+				return mimeTypeDds;
+			case MimeType::GltfBuffer:
+				return mimeTypeGltfBuffer;
+			case MimeType::OctetStream:
+				return mimeTypeOctetStream;
+			default:
+				return "";
+		}
+	}
 #pragma endregion
 
 #pragma region Containers
+    /**
+     * A static vector which cannot be resized freely. When constructed, the backing array is allocated once.
+     */
+    template <typename T>
+    class StaticVector final {
+        using array_t = T[];
+
+        std::size_t _size = 0;
+        std::unique_ptr<array_t> _array;
+
+    public:
+        using pointer = T*;
+        using const_pointer = const T*;
+        using iterator = pointer;
+        using const_iterator = const_pointer;
+
+        explicit StaticVector(std::size_t size) : _size(size), _array(std::move(std::unique_ptr<array_t>(new std::remove_extent_t<array_t>[size]))) {}
+
+        StaticVector(const StaticVector& other) {
+            if (other.size() == 0) {
+                _array.reset();
+                _size = 0;
+            } else {
+                _array.reset(new std::remove_extent_t<array_t>[other.size()]);
+                _size = other.size();
+            }
+        }
+
+        StaticVector(StaticVector&& other) noexcept {
+            _array = std::move(other._array);
+            _size = other.size();
+        }
+
+		StaticVector& operator=(StaticVector&& other) noexcept {
+			_array = std::move(other._array);
+			_size = other.size();
+			return *this;
+		}
+
+		/**
+		 * Copies the contents of the given vector into a new StaticVector.
+		 */
+		static StaticVector<T> fromVector(std::vector<T> vector) {
+			StaticVector<T> staticVector(vector.size());
+			if constexpr (std::is_trivially_copyable_v<T>) {
+				std::memcpy(staticVector.data(), vector.data(), vector.size());
+			} else {
+				for (auto it = vector.begin(); it != vector.end(); ++it) {
+					staticVector[std::distance(vector.begin(), it)] = *it;
+				}
+			}
+			return staticVector;
+		}
+
+        [[nodiscard]] pointer data() noexcept {
+            return &_array.get()[0];
+        }
+
+        [[nodiscard]] const_pointer data() const noexcept {
+            return &_array.get()[0];
+        }
+
+        [[nodiscard]] std::size_t size() const noexcept {
+            return _size;
+        }
+
+        [[nodiscard]] std::size_t size_bytes() const noexcept {
+            return _size * sizeof(T);
+        }
+
+        [[nodiscard]] bool empty() const noexcept {
+            return _size == 0;
+        }
+
+        [[nodiscard]] iterator begin() noexcept { return data(); }
+        [[nodiscard]] const_iterator begin() const noexcept { return data(); }
+        [[nodiscard]] const_iterator cbegin() const noexcept { return data(); }
+        [[nodiscard]] iterator end() noexcept { return begin() + size(); }
+        [[nodiscard]] const_iterator end() const noexcept { return begin() + size(); }
+        [[nodiscard]] const_iterator cend() const noexcept { return begin() + size(); }
+
+        bool operator==(const StaticVector<T>& other) const {
+            if (other.size() != size()) return false;
+            return std::memcmp(data(), other.data(), size_bytes()) == 0;
+        }
+
+        // This is mostly just here for compatibility and the tests
+        bool operator==(const std::vector<T>& other) const {
+            if (other.size() != size()) return false;
+            return std::memcmp(data(), other.data(), size_bytes()) == 0;
+        }
+    };
+
 	/*
 	 * The amount of items that the SmallVector can initially store in the storage
 	 * allocated within the object itself.
@@ -1184,6 +1357,10 @@ namespace fastgltf {
         template <typename Iterator>
         explicit constexpr span(Iterator first, size_type count) : _ptr(first), _size(count) {}
 
+#if FASTGLTF_CPP_20
+        constexpr span(std::span<T> data) : _ptr(data.data()), _size(data.size()) {}
+#endif
+
         constexpr span(const span& other) noexcept = default;
         constexpr span& operator=(const span& other) noexcept = default;
 
@@ -1211,6 +1388,14 @@ namespace fastgltf {
             return span(_ptr, count);
         }
 
+        [[nodiscard]] constexpr span<T, Extent> last(size_type count) const {
+            return span(&data()[size() - count], count);
+        }
+
+        [[nodiscard]] constexpr span<T, Extent> subspan(size_type offset, size_type count = dynamic_extent) const {
+            return span(&data()[offset], count == dynamic_extent ? size() - offset : count);
+        }
+
 #if FASTGLTF_CPP_20
         operator std::span<T>() const {
             return std::span(data(), size());
@@ -1235,10 +1420,16 @@ namespace fastgltf {
             MimeType mimeType;
         };
 
-        struct Vector {
-            std::vector<std::uint8_t> bytes;
+        struct Array {
+            StaticVector<std::uint8_t> bytes;
             MimeType mimeType;
         };
+
+		/** @note This type is not used by the fastgltf parser and is only used for exporting. Use sources::Array instead when importing intead. */
+		struct Vector {
+			std::vector<std::uint8_t> bytes;
+			MimeType mimeType;
+		};
 
         struct CustomBuffer {
             CustomBufferId id;
@@ -1255,19 +1446,19 @@ namespace fastgltf {
 
     /**
      * Represents the data source of a buffer or image. These could be a buffer view, a file path
-     * (including offsets), a ordinary vector (if #Options::LoadExternalBuffers or #Options::LoadGLBBuffers
+     * (including offsets), a StaticVector (if #Options::LoadExternalBuffers or #Options::LoadGLBBuffers
      * was specified), or the ID of a custom buffer.
      *
-     * @note As a user, you should never encounter this variant holding the std::monostate, as that would be a ill-formed glTF,
+     * @note As a user, you should never encounter this variant holding the std::monostate, as that would be an ill-formed glTF,
      * which fastgltf already checks for while parsing.
      *
      * @note For buffers, this variant will never hold a sources::BufferView, as only images are able to reference buffer views as a source.
      */
-    using DataSource = std::variant<std::monostate, sources::BufferView, sources::URI, sources::Vector, sources::CustomBuffer, sources::ByteView, sources::Fallback>;
+    using DataSource = std::variant<std::monostate, sources::BufferView, sources::URI, sources::Array, sources::Vector, sources::CustomBuffer, sources::ByteView, sources::Fallback>;
 
     struct AnimationChannel {
         std::size_t samplerIndex;
-        std::size_t nodeIndex;
+        Optional<std::size_t> nodeIndex;
         AnimationPath path;
     };
 
@@ -1314,9 +1505,9 @@ namespace fastgltf {
     };
 
     struct Skin {
-	    FASTGLTF_FG_PMR_NS::MaybeSmallVector<std::size_t> joints;
-	    Optional<std::size_t> skeleton;
 	    Optional<std::size_t> inverseBindMatrices;
+        Optional<std::size_t> skeleton;
+        FASTGLTF_FG_PMR_NS::MaybeSmallVector<std::size_t> joints;
 
         FASTGLTF_STD_PMR_NS::string name;
     };
@@ -1674,6 +1865,11 @@ namespace fastgltf {
          */
         bool unlit = false;
 
+		/**
+		 * The dispersion factor from KHR_materials_dispersion, specifies as 20/Abbe number (20/V).
+		 */
+		num dispersion = 0.0f;
+
         FASTGLTF_STD_PMR_NS::string name;
     };
 
@@ -1786,6 +1982,7 @@ namespace fastgltf {
         /** Range for point and spot lights. If not present, range is infinite. */
         Optional<num> range;
 
+		/** The inner and outer cone angles only apply to spot lights */
         Optional<num> innerConeAngle;
         Optional<num> outerConeAngle;
 
