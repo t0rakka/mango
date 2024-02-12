@@ -76,23 +76,23 @@ namespace mango
             pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
             pfd.nVersion = 1;
             pfd.dwFlags = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW;
-            pfd.iPixelType = 32;
-            pfd.cColorBits = (BYTE)colorBits;
-            pfd.cRedBits = (BYTE)config.red;
+            pfd.iPixelType = PFD_TYPE_RGBA;
+            pfd.cColorBits = static_cast<BYTE>(colorBits);
+            pfd.cRedBits = static_cast<BYTE>(config.red);
             pfd.cRedShift = 0;
-            pfd.cGreenBits = (BYTE)config.green;
+            pfd.cGreenBits = static_cast<BYTE>(config.green);
             pfd.cGreenShift = 0;
-            pfd.cBlueBits = (BYTE)config.blue;
+            pfd.cBlueBits = static_cast<BYTE>(config.blue);
             pfd.cBlueShift = 0;
-            pfd.cAlphaBits = (BYTE)config.alpha;
+            pfd.cAlphaBits = static_cast<BYTE>(config.alpha);
             pfd.cAlphaShift = 0;
             pfd.cAccumBits = 0;
             pfd.cAccumRedBits = 0;
             pfd.cAccumGreenBits = 0;
             pfd.cAccumBlueBits = 0;
             pfd.cAccumAlphaBits = 0;
-            pfd.cDepthBits = (BYTE)config.depth;
-            pfd.cStencilBits = (BYTE)config.stencil;
+            pfd.cDepthBits = static_cast<BYTE>(config.depth);
+            pfd.cStencilBits = static_cast<BYTE>(config.stencil);
             pfd.cAuxBuffers = 0;
             pfd.iLayerType = PFD_MAIN_PLANE;
             pfd.bReserved = 0;
@@ -135,8 +135,39 @@ namespace mango
                     formatAttribs.push_back(WGL_DOUBLE_BUFFER_ARB);
                     formatAttribs.push_back(GL_TRUE);
 
-                    formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
-                    formatAttribs.push_back(WGL_TYPE_RGBA_ARB);
+                    if (wglExtensions.find("WGL_ARB_pixel_format_float") != std::string::npos)
+                    {
+                        if (config.hdr)
+                        {
+                            // HDR
+                            formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
+                            formatAttribs.push_back(WGL_TYPE_RGBA_FLOAT_ARB);
+                        }
+                        else
+                        {
+                            // SDR
+                            formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
+                            formatAttribs.push_back(WGL_TYPE_RGBA_ARB);
+                        }
+                    }
+                    else
+                    {
+                        // SDR
+                        formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
+                        formatAttribs.push_back(WGL_TYPE_RGBA_ARB);
+                    }
+
+                    formatAttribs.push_back(WGL_RED_BITS_ARB);
+                    formatAttribs.push_back(config.red);
+
+                    formatAttribs.push_back(WGL_GREEN_BITS_ARB);
+                    formatAttribs.push_back(config.green);
+
+                    formatAttribs.push_back(WGL_BLUE_BITS_ARB);
+                    formatAttribs.push_back(config.blue);
+
+                    formatAttribs.push_back(WGL_ALPHA_BITS_ARB);
+                    formatAttribs.push_back(config.alpha);
 
                     formatAttribs.push_back(WGL_COLOR_BITS_ARB);
                     formatAttribs.push_back(colorBits);
@@ -157,11 +188,6 @@ namespace mango
                             formatAttribs.push_back(WGL_SAMPLES_ARB);
                             formatAttribs.push_back(config.samples);
                         }
-                    }
-
-                    if (wglExtensions.find("WGL_ARB_pixel_format_float") != std::string::npos)
-                    {
-                        // MANGO TODO
                     }
 
                     if (wglExtensions.find("WGL_ARB_framebuffer_sRGB") != std::string::npos)
