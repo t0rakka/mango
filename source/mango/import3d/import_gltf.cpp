@@ -306,16 +306,30 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
         Material material;
 
-        const fastgltf::PBRData& pbr = current.pbrData;
-        const auto* baseColor = pbr.baseColorFactor.data();
+        const auto* emissiveFactor = current.emissiveFactor.data();
 
-        printLine(Print::Verbose, "  baseColorFactor: {} {} {} {}", baseColor[0], baseColor[1], baseColor[2], baseColor[3]);
+        const fastgltf::PBRData& pbr = current.pbrData;
+        const auto* baseColorFactor = pbr.baseColorFactor.data();
+
+        printLine(Print::Verbose, "  baseColorFactor: {} {} {} {}", baseColorFactor[0], baseColorFactor[1], baseColorFactor[2], baseColorFactor[3]);
         printLine(Print::Verbose, "  metallicFactor: {}", pbr.metallicFactor);
         printLine(Print::Verbose, "  roughnessFactor: {}", pbr.roughnessFactor);
         printLine(Print::Verbose, "  emissiveFactor: {} {} {}",
             current.emissiveFactor[0],
             current.emissiveFactor[1],
             current.emissiveFactor[2]);
+
+        material.roughnessFactor = pbr.roughnessFactor;
+        material.metallicFactor = pbr.metallicFactor;
+
+        material.baseColorFactor[0] = pbr.baseColorFactor[0];
+        material.baseColorFactor[1] = pbr.baseColorFactor[1];
+        material.baseColorFactor[2] = pbr.baseColorFactor[2];
+        material.baseColorFactor[3] = pbr.baseColorFactor[3];
+
+        material.emissiveFactor[0] = emissiveFactor[0];
+        material.emissiveFactor[1] = emissiveFactor[1];
+        material.emissiveFactor[2] = emissiveFactor[2];
 
         if (pbr.baseColorTexture.has_value())
         {
@@ -372,16 +386,65 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             }
         }
 
+        switch (current.alphaMode)
+        {
+            case fastgltf::AlphaMode::Opaque:
+                material.alphaMode = Material::AlphaMode::ALPHA_OPAQUE;
+                break;
+
+            case fastgltf::AlphaMode::Mask:
+                material.alphaMode = Material::AlphaMode::ALPHA_MASK;
+                break;
+
+            case fastgltf::AlphaMode::Blend:
+                material.alphaMode = Material::AlphaMode::ALPHA_BLEND;
+                break;
+        }
+
+        material.alphaCutoff = current.alphaCutoff;
+        material.twosided = current.doubleSided;
+
         materials.push_back(material);
+
+        if (current.clearcoat)
+        {
+            printLine(Print::Verbose, "  Clearcoat: TODO");
+        }
+
+        if (current.iridescence)
+        {
+            printLine(Print::Verbose, "  Iridescence: TODO");
+        }
+
+        if (current.sheen)
+        {
+            printLine(Print::Verbose, "  Sheen: TODO");
+        }
+
+        if (current.specular)
+        {
+            printLine(Print::Verbose, "  Specular: TODO");
+        }
+
+        if (current.transmission)
+        {
+            printLine(Print::Verbose, "  Transmission: TODO");
+        }
+
+        if (current.volume)
+        {
+            printLine(Print::Verbose, "  Volume: TODO");
+        }
 
 #if 0
 
-        struct MaterialSpecular
+        struct MaterialClearcoat
         {
-            float specularFactor;
-            std::optional<TextureInfo> specularTexture;
-            std::array<float, 3> specularColorFactor;
-            std::optional<TextureInfo> specularColorTexture;
+            float clearcoatFactor;
+            std::optional<TextureInfo> clearcoatTexture;
+            float clearcoatRoughnessFactor;
+            std::optional<TextureInfo> clearcoatRoughnessTexture;
+            std::optional<TextureInfo> clearcoatNormalTexture;
         };
 
         struct MaterialIridescence
@@ -394,29 +457,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             std::optional<TextureInfo> iridescenceThicknessTexture;
         };
 
-        struct MaterialVolume
-        {
-            float thicknessFactor;
-            std::optional<TextureInfo> thicknessTexture;
-            float attenuationDistance;
-            std::array<float, 3> attenuationColor;
-        };
-
-        struct MaterialTransmission
-        {
-            float transmissionFactor;
-            std::optional<TextureInfo> transmissionTexture;
-        };
-
-        struct MaterialClearcoat
-        {
-            float clearcoatFactor;
-            std::optional<TextureInfo> clearcoatTexture;
-            float clearcoatRoughnessFactor;
-            std::optional<TextureInfo> clearcoatRoughnessTexture;
-            std::optional<TextureInfo> clearcoatNormalTexture;
-        };
-
         struct MaterialSheen
         {
             std::array<float, 3> sheenColorFactor;
@@ -425,23 +465,32 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             std::optional<TextureInfo> sheenRoughnessTexture;
         };
 
+        struct MaterialSpecular
+        {
+            float specularFactor;
+            std::optional<TextureInfo> specularTexture;
+            std::array<float, 3> specularColorFactor;
+            std::optional<TextureInfo> specularColorTexture;
+        };
+
+        struct MaterialTransmission
+        {
+            float transmissionFactor;
+            std::optional<TextureInfo> transmissionTexture;
+        };
+
+        struct MaterialVolume
+        {
+            float thicknessFactor;
+            std::optional<TextureInfo> thicknessTexture;
+            float attenuationDistance;
+            std::array<float, 3> attenuationColor;
+        };
+
         struct Material
         {
-            AlphaMode alphaMode;
-            float alphaCutoff;
-
-            bool doubleSided;
-
-            std::unique_ptr<MaterialClearcoat> clearcoat;
-            std::unique_ptr<MaterialIridescence> iridescence;
-            std::unique_ptr<MaterialSheen> sheen;
-            std::unique_ptr<MaterialSpecular> specular;
-            std::unique_ptr<MaterialTransmission> transmission;
-            std::unique_ptr<MaterialVolume> volume;
-
             std::optional<float> emissiveStrength;
             std::optional<float> ior;
-
             bool unlit;
         };
 
