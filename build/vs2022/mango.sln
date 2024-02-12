@@ -10,6 +10,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "blitter", "blitter\blitter.
 		{375AE88F-BDF7-4923-AFEA-BB5345ABF375} = {375AE88F-BDF7-4923-AFEA-BB5345ABF375}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opengl_basic", "opengl_basic\opengl_basic.vcxproj", "{208E1E1A-59CE-4A4C-BCD7-4E98C9DA313F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -29,6 +31,12 @@ Global
 		{622FAF6A-113D-44EE-826C-7331AFB00159}.Release AVX512|x64.Build.0 = Release|x64
 		{622FAF6A-113D-44EE-826C-7331AFB00159}.Release|x64.ActiveCfg = Release|x64
 		{622FAF6A-113D-44EE-826C-7331AFB00159}.Release|x64.Build.0 = Release|x64
+		{208E1E1A-59CE-4A4C-BCD7-4E98C9DA313F}.Debug|x64.ActiveCfg = Debug|x64
+		{208E1E1A-59CE-4A4C-BCD7-4E98C9DA313F}.Debug|x64.Build.0 = Debug|x64
+		{208E1E1A-59CE-4A4C-BCD7-4E98C9DA313F}.Release AVX512|x64.ActiveCfg = Release|x64
+		{208E1E1A-59CE-4A4C-BCD7-4E98C9DA313F}.Release AVX512|x64.Build.0 = Release|x64
+		{208E1E1A-59CE-4A4C-BCD7-4E98C9DA313F}.Release|x64.ActiveCfg = Release|x64
+		{208E1E1A-59CE-4A4C-BCD7-4E98C9DA313F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
