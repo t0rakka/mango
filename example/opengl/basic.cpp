@@ -97,13 +97,19 @@ int main(int argc, const char* argv[])
 
     if (argc == 2)
     {
-        if (std::string_view(argv[1]) == "--hdr")
+        std::string_view p1 = argv[1];
+
+        if (p1 == "--hdr")
         {
             config.red = 16;
             config.green = 16;
             config.blue = 16;
             config.alpha = 16;
             config.hdr = true;
+        }
+        else if (p1 == "--srgb")
+        {
+            config.srgb = true;
         }
     }
 
