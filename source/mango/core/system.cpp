@@ -277,6 +277,9 @@ namespace mango
             case Print::Info:
                 g_context.print_enable_info = enable;
                 break;
+            case Print::Debug:
+                g_context.print_enable_debug = enable;
+                break;
             case Print::Verbose:
                 g_context.print_enable_verbose = enable;
                 break;
@@ -297,6 +300,9 @@ namespace mango
                 break;
             case Print::Info:
                 enable = g_context.print_enable_info;
+                break;
+            case Print::Debug:
+                enable = g_context.print_enable_debug;
                 break;
             case Print::Verbose:
                 enable = g_context.print_enable_verbose;

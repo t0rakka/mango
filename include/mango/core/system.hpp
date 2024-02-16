@@ -19,6 +19,7 @@ namespace mango
         Error,
         Warning,
         Info,
+        Debug,
         Verbose
     };
 
@@ -77,6 +78,7 @@ namespace mango
         bool print_enable_error   = true;
         bool print_enable_warning = false;
         bool print_enable_info    = false;
+        bool print_enable_debug   = false;
         bool print_enable_verbose = true;
 
         Context();
