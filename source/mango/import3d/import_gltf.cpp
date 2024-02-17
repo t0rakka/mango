@@ -109,6 +109,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         {
             [] (const auto& arg)
             {
+                printLine(Print::Verbose, "  Unknown");
             },
             [&] (const fastgltf::sources::URI& source)
             {
@@ -123,11 +124,11 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [x] standard
                 // [ ] binary
                 // [ ] embedded
-                printLine(Print::Verbose, "  URI: {} : {} bytes", filename, memory.size);
+                printLine(Print::Verbose, "  URI: \"{}\" {} bytes", filename, memory.size);
             },
 			[&] (const fastgltf::sources::ByteView& source)
             {
-                ConstMemory memory = ConstMemory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
+                ConstMemory memory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
                 buffers.push_back(memory);
 
                 // [ ] standard
@@ -142,9 +143,19 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] embedded
                 printLine(Print::Verbose, "  BufferView:");
             },
+            [&](const fastgltf::sources::Array& array)
+            {
+                ConstMemory memory(array.bytes.data(), array.bytes.size());
+                buffers.push_back(memory);
+
+                // [ ] standard
+                // [ ] binary
+                // [x] embedded
+                printLine(Print::Verbose, "  Array: {} bytes", memory.size);
+            },
             [&] (const fastgltf::sources::Vector& source)
             {
-                ConstMemory memory = ConstMemory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
+                ConstMemory memory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
                 buffers.push_back(memory);
 
                 // [ ] standard
@@ -172,6 +183,63 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     {
         printLine(Print::Verbose, "[Image]");
 
+#if 0
+
+        // xxx
+
+        std::visit(fastgltf::visitor
+        {
+            [](auto& arg) 
+            {
+            },
+            [&](fastgltf::sources::URI& filePath)
+            {
+                assert(filePath.fileByteOffset == 0); // We don't support offsets with stbi.
+                assert(filePath.uri.isLocalPath()); // We're only capable of loading local files.
+                int width, height, nrChannels;
+
+                const std::string path(filePath.uri.path().begin(), filePath.uri.path().end()); // Thanks C++.
+                unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 4);
+                glTextureStorage2D(texture, getLevelCount(width, height), GL_RGBA8, width, height);
+                glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+                stbi_image_free(data);
+            },
+            [&](fastgltf::sources::Array& vector)
+            {
+                int width, height, nrChannels;
+                unsigned char *data = stbi_load_from_memory(vector.bytes.data(), static_cast<int>(vector.bytes.size()), &width, &height, &nrChannels, 4);
+                glTextureStorage2D(texture, getLevelCount(width, height), GL_RGBA8, width, height);
+                glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+                stbi_image_free(data);
+            },
+            [&](fastgltf::sources::BufferView& view)
+            {
+                auto& bufferView = viewer->asset.bufferViews[view.bufferViewIndex];
+                auto& buffer = viewer->asset.buffers[bufferView.bufferIndex];
+
+                // Yes, we've already loaded every buffer into some GL buffer. However, with GL it's simpler
+                // to just copy the buffer data again for the texture. Besides, this is just an example.
+                std::visit(fastgltf::visitor
+                {
+                    // We only care about VectorWithMime here, because we specify LoadExternalBuffers, meaning
+                    // all buffers are already loaded into a vector.
+                    [](auto& arg)
+                    {
+                    },
+                    [&](fastgltf::sources::Array& vector)
+                    {
+                        int width, height, nrChannels;
+                        unsigned char* data = stbi_load_from_memory(vector.bytes.data() + bufferView.byteOffset, static_cast<int>(bufferView.byteLength), &width, &height, &nrChannels, 4);
+                        glTextureStorage2D(texture, getLevelCount(width, height), GL_RGBA8, width, height);
+                        glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+                        stbi_image_free(data);
+                    }
+                }, buffer.data);
+            },
+        }, image.data);
+
+#endif
+
         std::visit(fastgltf::visitor
         {
             [] (const auto& arg)
@@ -179,9 +247,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             },
             [&] (const fastgltf::sources::URI& source)
             {
-                //assert(source.fileByteOffset == 0); // We don't support offsets with stbi.
-                //assert(source.uri.isLocalPath()); // We're only capable of loading local files.
-
                 const std::string filename(source.uri.path().begin(), source.uri.path().end());
 
                 auto file = std::make_unique<filesystem::File>(path, filename);
@@ -193,12 +258,23 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [x] standard
                 // [ ] binary
                 // [ ] embedded
-                printLine(Print::Verbose, "  URI: {} : {} bytes", filename, memory.size);
+                printLine(Print::Verbose, "  URI: \"{}\" {} bytes", filename, memory.size);
+            },
+            [&] (const fastgltf::sources::Array& source)
+            {
+                ConstMemory memory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
+
+                Texture texture = createTexture(memory);
+                textures.push_back(texture);
+
+                // [ ] standard
+                // [ ] binary
+                // [x] embedded
+                printLine(Print::Verbose, "  Array: {} bytes", memory.size);
             },
             [&] (const fastgltf::sources::Vector& source)
             {
                 ConstMemory memory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
-                //std::cout << "  ImageFormat: " << getImageFormat(memory) << std::endl;
 
                 Texture texture = createTexture(memory);
                 textures.push_back(texture);
@@ -232,9 +308,13 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] embedded
                 printLine(Print::Verbose, "  BufferView: {} bytes", memory.size);
             },
+            [&] (const fastgltf::sources::CustomBuffer& source)
+            {
+                printLine(Print::Verbose, "  CustomBuffer: TODO");
+            },
         }, current.data);
 
-    }
+    } // images
 
     // --------------------------------------------------------------------------
     // materials
@@ -434,9 +514,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             std::optional<float> ior;
             bool unlit;
         };
-
 #endif
-    }
+
+    } // materials
 
     if (materials.empty())
     {
