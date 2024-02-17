@@ -624,7 +624,11 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
                 for (size_t i = 0; i < attributePosition.count; ++i)
                 {
-                    float32x3 position = float32x3::uload(data);
+                    float x = uload32f(data + 0);
+                    float y = uload32f(data + 4);
+                    float z = uload32f(data + 8);
+                    float32x3 position(x, y, -z);
+
                     data += attributePosition.stride;
 
                     vertices[i].position = position;
@@ -650,7 +654,11 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
                 for (size_t i = 0; i < attributeNormal.count; ++i)
                 {
-                    float32x3 normal = float32x3::uload(data);
+                    float x = uload32f(data + 0);
+                    float y = uload32f(data + 4);
+                    float z = uload32f(data + 8);
+                    float32x3 normal(x, y, -z);
+
                     data += attributeNormal.stride;
 
                     vertices[i].normal = normal;
@@ -669,7 +677,12 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
                 for (size_t i = 0; i < attributeTangent.count; ++i)
                 {
-                    float32x4 tangent = float32x4::uload(data);
+                    float x = uload32f(data + 0);
+                    float y = uload32f(data + 4);
+                    float z = uload32f(data + 8);
+                    float w = uload32f(data + 12);
+                    float32x4 tangent(x, y, -z, w);
+
                     data += attributeTangent.stride;
 
                     vertices[i].tangent = tangent;
@@ -787,17 +800,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
             const Material& material = materials[materialIndex];
 
-            bool needTangent = false;
-
-            if (material.normalTexture)
-            {
-                if (!attributeTangent && attributeNormal && attributeTexcoord)
-                {
-                    needTangent = true;
-                }
-            }
-
-            if (needTangent)
             {
                 Mesh trimesh;
 
@@ -815,9 +817,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         {
                             Triangle triangle;
 
-                            triangle.vertex[0] = vertices[indices[i - 2]];
+                            triangle.vertex[0] = vertices[indices[i - 0]];
                             triangle.vertex[1] = vertices[indices[i - 1]];
-                            triangle.vertex[2] = vertices[indices[i - 0]];
+                            triangle.vertex[2] = vertices[indices[i - 2]];
 
                             trimesh.triangles.push_back(triangle);
                         }
@@ -833,8 +835,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         {
                             Triangle triangle;
 
-                            triangle.vertex[(i + 0) & 1] = v0;
-                            triangle.vertex[(i + 1) & 1] = v1;
+                            triangle.vertex[(i + 1) & 1] = v0;
+                            triangle.vertex[(i + 0) & 1] = v1;
                             triangle.vertex[2] = vertices[indices[i]];
 
                             trimesh.triangles.push_back(triangle);
@@ -850,12 +852,12 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         Triangle triangle;
 
                         triangle.vertex[0] = vertices[indices[0]];
-                        triangle.vertex[2] = vertices[indices[1]];
+                        triangle.vertex[1] = vertices[indices[1]];
 
                         for (size_t i = 2; i < indices.size(); ++i)
                         {
-                            triangle.vertex[1] = triangle.vertex[2];
-                            triangle.vertex[2] = vertices[indices[i]];
+                            triangle.vertex[2] = triangle.vertex[1];
+                            triangle.vertex[1] = vertices[indices[i]];
 
                             trimesh.triangles.push_back(triangle);
                         }
@@ -867,45 +869,18 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         continue;
                 }
 
-                trimesh.computeTangents();
+                if (material.normalTexture)
+                {
+                    if (!attributeTangent && attributeNormal && attributeTexcoord)
+                    {
+                        trimesh.computeTangents();
+                    }
+                }
 
                 u64 time1 = Time::ms();
                 printLine("  Computing tangents: {} ms", time1 - time0);
 
                 mesh.append(trimesh, u32(materialIndex));
-            }
-            else
-            {
-                Primitive primitive;
-
-                switch (primitiveIterator->type)
-                {
-                    case fastgltf::PrimitiveType::Triangles:
-                        primitive.mode = Primitive::TRIANGLE_LIST;
-                        break;
-
-                    case fastgltf::PrimitiveType::TriangleStrip:
-                        primitive.mode = Primitive::TRIANGLE_STRIP;
-                        break;
-
-                    case fastgltf::PrimitiveType::TriangleFan:
-                        primitive.mode = Primitive::TRIANGLE_FAN;
-                        break;
-
-                    default:
-                        // unsupported primitive type
-                        continue;
-                }
-
-                primitive.start = u32(mesh.indices.size());
-                primitive.count = u32(indices.size());
-                primitive.base = u32(mesh.vertices.size());
-                primitive.material = u32(materialIndex);
-
-                mesh.primitives.push_back(primitive);
-
-                mesh.vertices.insert(mesh.vertices.end(), vertices.begin(), vertices.end());
-                mesh.indices.insert(mesh.indices.end(), indices.begin(), indices.end());
             }
         }
 
@@ -935,6 +910,13 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
             node.transform = scale * rotation * translation;
         }
+
+        // coordinate system conversion
+        matrix4x4& m = node.transform;
+        m[0] = float32x4( m[0][0], m[0][1],-m[0][2], m[0][3]);
+        m[1] = float32x4( m[1][0], m[1][1],-m[1][2], m[1][3]);
+        m[2] = float32x4(-m[2][0],-m[2][1], m[2][2],-m[2][3]);
+        m[3] = float32x4( m[3][0], m[3][1],-m[3][2], m[3][3]);
 
         node.name = current.name;
 
