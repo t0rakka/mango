@@ -32,65 +32,6 @@ namespace
         }
     };
 
-    /* TODO
-
-    template <typename T>
-    void copyAttributes(T& target, Attribute attribute)
-    {
-        switch (attribute.type)
-        {
-            case fastgltf::ComponentType::UnsignedByte:
-                for (size_t i = 0; i < attribute.count; ++i)
-                {
-                    const u8* source = reinterpret_cast<const u8*>(attribute.data);
-                    float* dest = reinterpret_cast<float*>(reinterpret_cast<u8*>(target.data()) + sizeof(import3d::Vertex) * i);
-
-                    for (size_t j = 0; j < attribute.components; ++j)
-                    {
-                        dest[j] = source[j] / 255.0f;
-                    }
-
-                    attribute.data += attribute.stride;
-                }
-                break;
-
-            case fastgltf::ComponentType::UnsignedShort:
-                for (size_t i = 0; i < attribute.count; ++i)
-                {
-                    const u16* source = reinterpret_cast<const u16*>(attribute.data);
-                    float* dest = reinterpret_cast<float*>(reinterpret_cast<u8*>(target.data()) + sizeof(import3d::Vertex) * i);
-
-                    for (size_t j = 0; j < attribute.components; ++j)
-                    {
-                        dest[j] = source[j] / 65535.0f;
-                    }
-
-                    attribute.data += attribute.stride;
-                }
-                break;
-
-            case fastgltf::ComponentType::Float:
-                for (size_t i = 0; i < attribute.count; ++i)
-                {
-                    const float* source = reinterpret_cast<const float*>(attribute.data);
-                    float* dest = reinterpret_cast<float*>(reinterpret_cast<u8*>(target.data()) + sizeof(import3d::Vertex) * i);
-
-                    for (size_t j = 0; j < attribute.components; ++j)
-                    {
-                        dest[j] = source[j];
-                    }
-
-                    attribute.data += attribute.stride;
-                }
-                break;
-
-            default:
-                break;
-        }
-    }
-
-    */
-
 } // namespace
 
 namespace mango::import3d
@@ -123,7 +64,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     auto gltfOptions =
         fastgltf::Options::DontRequireValidAssetMember |
         fastgltf::Options::AllowDouble;
-	gltfOptions |= fastgltf::Options::GenerateMeshIndices;
+	//gltfOptions |= fastgltf::Options::GenerateMeshIndices; // broken - don't use
     //gltfOptions |= fastgltf::Options::LoadGLBBuffers;
     //gltfOptions |= fastgltf::Options::LoadExternalBuffers;
     //gltfOptions |= fastgltf::Options::LoadExternalImages;
@@ -734,8 +675,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
             std::vector<u32> indices;
 
-            // TODO: support restart primitive indices: (0xff, 0xffff, 0xffffffff)
-
             if (primitiveIterator->indicesAccessor.has_value())
             {
                 auto& indicesAccessor = asset.accessors[primitiveIterator->indicesAccessor.value()];
@@ -748,6 +687,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
                     size_t bufferIndex = indicesView.bufferIndex;
                     const u8* data = buffers[bufferIndex].address + offset;
+
+                    printLine(Print::Verbose, "    [Indices]");
+                    printLine(Print::Verbose, "      count: {}", count);
 
                     if (count < 3)
                     {
@@ -763,7 +705,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         {
                             for (size_t i = 0; i < count; ++i)
                             {
-                                indices[i] = data[i];
+                                u8 index = data[i];
+                                indices[i] = index == 0xff ? 0xffffffff : index;
                             }
                             break;
                         }
@@ -772,7 +715,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         {
                             for (size_t i = 0; i < count; ++i)
                             {
-                                indices[i] = uload16(data + i * 2);
+                                u16 index = uload16(data + i * 2);
+                                indices[i] = index == 0xffff ? 0xffffffff : index;
                             }
                             break;
                         }
@@ -789,9 +733,19 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         default:
                             break;
                     }
+                }
+            }
 
-                    printLine(Print::Verbose, "    [Indices]");
-                    printLine(Print::Verbose, "      count: {}", count);
+            bool needIndices = false;
+
+            if (indices.empty())
+            {
+                needIndices = true;
+
+                for (size_t i = 0; i < vertices.size(); ++i)
+                {
+                    u32 index = u32(i);
+                    indices.push_back(index);
                 }
             }
 
@@ -800,12 +754,21 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
             const Material& material = materials[materialIndex];
 
+            bool needTangent = false;
+
+            if (material.normalTexture)
+            {
+                if (!attributeTangent && attributeNormal && attributeTexcoord)
+                {
+                    needTangent = true;
+                }
+            }
+
+            if (needTangent || needIndices)
             {
                 Mesh trimesh;
 
                 trimesh.flags = mesh.flags;
-
-                u64 time0 = Time::ms();
 
                 // TODO: support primitive restart (index: 0xffffffff)
 
@@ -869,18 +832,105 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         continue;
                 }
 
-                if (material.normalTexture)
+                u64 time0 = Time::ms();
+
+                if (needTangent)
                 {
-                    if (!attributeTangent && attributeNormal && attributeTexcoord)
-                    {
-                        trimesh.computeTangents();
-                    }
+                    trimesh.computeTangents();
                 }
 
                 u64 time1 = Time::ms();
-                printLine("  Computing tangents: {} ms", time1 - time0);
+                printLine(Print::Verbose, "  Computing tangents: {} ms", time1 - time0);
 
                 mesh.append(trimesh, u32(materialIndex));
+            }
+            else
+            {
+                Primitive primitive;
+
+                // re-generate indices because coordinate system conversion
+                // reverses winding (front faces are now ccw, we want cw)
+                std::vector<u32> temp;
+
+                // TODO: support primitive restart (index: 0xffffffff)
+
+                switch (primitiveIterator->type)
+                {
+                    case fastgltf::PrimitiveType::Triangles:
+                    {
+                        primitive.mode = Primitive::TRIANGLE_LIST;
+
+                        for (size_t i = 0; i < indices.size(); i += 3)
+                        {
+                            temp.push_back(indices[i + 0]);
+                            temp.push_back(indices[i + 2]);
+                            temp.push_back(indices[i + 1]);
+                        }
+                        break;
+                    }
+
+                    case fastgltf::PrimitiveType::TriangleStrip:
+                    {
+                        primitive.mode = Primitive::TRIANGLE_LIST;
+
+                        u32 index0 = indices[0];
+                        u32 index1 = indices[1];
+
+                        for (size_t i = 2; i < indices.size(); ++i)
+                        {
+                            if (i & 1)
+                            {
+                                temp.push_back(index0);
+                                temp.push_back(index1);
+                            }
+                            else
+                            {
+                                temp.push_back(index1);
+                                temp.push_back(index0);
+                            }
+
+                            u32 index2 = indices[i];
+                            temp.push_back(index2);
+
+                            index0 = index1;
+                            index1 = index2;
+                        }
+
+                        break;
+                    }
+
+                    case fastgltf::PrimitiveType::TriangleFan:
+                    {
+                        primitive.mode = Primitive::TRIANGLE_FAN;
+
+                        temp.push_back(indices[0]);
+
+                        const size_t size = indices.size();
+
+                        for (size_t i = 1; i < size; ++i)
+                        {
+                            temp.push_back(indices[size - i]);
+                        }
+                        break;
+                    }
+
+                    default:
+                        // unsupported primitive type
+                        continue;
+                }
+
+                // use the re-generated indices
+                std::swap(indices, temp);
+
+                primitive.start = u32(mesh.indices.size());
+                primitive.count = u32(indices.size());
+                primitive.base = u32(mesh.vertices.size());
+                primitive.material = u32(materialIndex);
+
+                mesh.primitives.push_back(primitive);
+
+                mesh.vertices.insert(mesh.vertices.end(), vertices.begin(), vertices.end());
+                mesh.indices.insert(mesh.indices.end(), indices.begin(), indices.end());
             }
         }
 
