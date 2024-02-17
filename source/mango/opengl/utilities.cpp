@@ -56,7 +56,7 @@ namespace mango::opengl
         GLuint shader = glCreateShader(type);
 
         const GLchar* data = source.data();
-        GLint length = source.length();
+        GLint length = GLint(source.length());
 
         glShaderSource(shader, 1, &data, &length);
         glCompileShader(shader);
@@ -75,10 +75,10 @@ namespace mango::opengl
         for (auto view : sources)
         {
             strings.emplace_back(view.data());
-            lengths.emplace_back(view.length());
+            lengths.emplace_back(GLint(view.length()));
         }
 
-        glShaderSource(shader, sources.size(), strings.data(), lengths.data());
+        glShaderSource(shader, GLsizei(sources.size()), strings.data(), lengths.data());
         glCompileShader(shader);
         getCompileStatus(shader);
 
