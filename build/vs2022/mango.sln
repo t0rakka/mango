@@ -11,6 +11,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "blitter", "blitter\blitter.
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opengl_basic", "opengl_basic\opengl_basic.vcxproj", "{208E1E1A-59CE-4A4C-BCD7-4E98C9DA313F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{375AE88F-BDF7-4923-AFEA-BB5345ABF375} = {375AE88F-BDF7-4923-AFEA-BB5345ABF375}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
