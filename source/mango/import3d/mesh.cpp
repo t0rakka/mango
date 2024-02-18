@@ -114,8 +114,6 @@ namespace mango::import3d
 
         filesystem::File file(path, filename);
 
-        printLine("createTexture: {}", filename);
-
         image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
         texture = std::make_shared<image::Bitmap>(file, filename, format);
 
@@ -124,8 +122,6 @@ namespace mango::import3d
 
     Texture createTexture(ConstMemory memory)
     {
-        printLine("createTexture: {} KB", memory.size / 1024);
-
         image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
         std::shared_ptr<image::Bitmap> texture = std::make_shared<image::Bitmap>(memory, "", format);
 
@@ -181,9 +177,6 @@ namespace mango::import3d
         // NOTE: This starts a new primitive with it's own unique vertices!
         std::unordered_map<Vertex, u32, VertexHash> unique;
 
-        u64 time0 = Time::us();
-
-        size_t startVertex = vertices.size();
         size_t startIndex = indices.size();
 
         for (const Triangle& triangle : mesh.triangles)
@@ -212,13 +205,7 @@ namespace mango::import3d
             }
         }
 
-        size_t endVertex = vertices.size();
         size_t endIndex = indices.size();
-
-        u64 time1 = Time::us();
-
-        printLine("vertices: {}, indices: {}, time: {} us",
-            endVertex - startVertex, endIndex - startIndex, time1 - time0);
 
         Primitive primitive;
 

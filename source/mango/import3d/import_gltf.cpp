@@ -855,17 +855,23 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         continue;
                 }
 
-                u64 time0 = Time::ms();
+                u64 time0 = Time::us();
 
                 if (needTangent)
                 {
                     trimesh.computeTangents();
                 }
 
-                u64 time1 = Time::ms();
-                printLine(Print::Verbose, "  Computing tangents: {} ms", time1 - time0);
+                u64 time1 = Time::us();
 
                 mesh.append(trimesh, u32(materialIndex));
+
+                u64 time2 = Time::us();
+                u64 delta0 = time1 - time0;
+                u64 delta1 = time2 - time1;
+
+                printLine(Print::Verbose, "    Computing tangents: {}.{} ms", delta0 / 1000, delta0 % 1000);
+                printLine(Print::Verbose, "    Mesh Indexing: {}.{} ms", delta1 / 1000, delta1 % 1000);
             }
             else
             {
