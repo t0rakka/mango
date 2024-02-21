@@ -65,7 +65,7 @@ namespace mango::opengl
         return shader;
     }
 
-    GLuint createShader(GLenum type, std::vector<std::string_view> sources)
+    GLuint createShader(GLenum type, const std::vector<std::string_view>& sources)
     {
         GLuint shader = glCreateShader(type);
 
@@ -103,7 +103,7 @@ namespace mango::opengl
         return program;
     }
 
-    GLuint createProgram(std::vector<std::string_view> vertexShaderSources, std::vector<std::string_view> fragmentShaderSources)
+    GLuint createProgram(const std::vector<std::string_view>& vertexShaderSources, const std::vector<std::string_view>& fragmentShaderSources)
     {
         GLuint vertex = createShader(GL_VERTEX_SHADER, vertexShaderSources);
         GLuint fragment = createShader(GL_FRAGMENT_SHADER, fragmentShaderSources);

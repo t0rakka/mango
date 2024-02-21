@@ -17,9 +17,9 @@ namespace mango::opengl
     GLint getCompileStatus(GLuint shader);
     GLint getLinkStatus(GLuint program);
     GLuint createShader(GLenum type, std::string_view source);
-    GLuint createShader(GLenum type, std::vector<std::string_view> sources);
+    GLuint createShader(GLenum type, const std::vector<std::string_view>& sources);
     GLuint createProgram(std::string_view vertexShaderSource, std::string_view fragmentShaderSource);
-    GLuint createProgram(std::vector<std::string_view> vertexShaderSources, std::vector<std::string_view> fragmentShaderSources);
+    GLuint createProgram(const std::vector<std::string_view>& vertexShaderSources, const std::vector<std::string_view>& fragmentShaderSources);
     GLuint createProgram(filesystem::Path& path, const std::string& vertexShaderFilename, const std::string& fragmentShaderFilename);
     GLuint createProgram(filesystem::Path& path, const std::vector<std::string>& vertexShaderFilenames, const std::vector<std::string>& fragmentShaderFilenames);
 
