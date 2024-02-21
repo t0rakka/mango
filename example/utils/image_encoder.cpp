@@ -11,6 +11,7 @@ int main(int argc, const char* argv[])
 {
     if (argc < 2)
     {
+        // TODO: print help message
         return 0;
     }
 
@@ -18,6 +19,7 @@ int main(int argc, const char* argv[])
 
     for (int i = 1; i < argc; ++i)
     {
+        // TODO: check if supported image format
         std::string filename = argv[i];
         printLine("Processing: {}", filename);
 
@@ -25,7 +27,7 @@ int main(int argc, const char* argv[])
         {
             Bitmap bitmap(filename);
 
-
+            // TODO: select encoding options from command line
             ImageEncodeOptions options;
             options.compression = 10;
 
