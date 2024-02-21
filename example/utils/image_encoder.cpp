@@ -21,10 +21,11 @@ int main(int argc, const char* argv[])
     {
         // TODO: check if supported image format
         std::string filename = argv[i];
-        printLine("Processing: {}", filename);
 
         q.enqueue([=]
         {
+            printLine("Processing: {}", filename);
+
             Bitmap bitmap(filename);
 
             // TODO: select encoding options from command line
