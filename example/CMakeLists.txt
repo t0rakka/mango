@@ -10,7 +10,7 @@ project(mango-examples)
 # build options
 option(BUILD_OPENGL      "Enables build of OpenGL examples"      OFF)
 
-add_compile_options(-Wall -O3 -g)
+add_compile_options(-Wall -O3)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
