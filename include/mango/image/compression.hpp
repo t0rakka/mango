@@ -70,7 +70,7 @@ namespace mango::image
 
             // 3DFX_texture_compression_FXT1
             FXT1_RGB                      = makeTextureCompression(FXT1, 0, 0),
-	        FXT1_RGBA                     = makeTextureCompression(FXT1, 1, ALPHA),
+            FXT1_RGBA                     = makeTextureCompression(FXT1, 1, ALPHA),
 
             // AMD_compressed_ATC_texture
             ATC_RGB                       = makeTextureCompression(ATC, 0, 0),
