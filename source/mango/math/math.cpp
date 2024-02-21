@@ -989,7 +989,47 @@ namespace mango::math
     // sRGB
     // ------------------------------------------------------------------------
 
-#if 1
+#define ENABLE_LINEAR_APPROXIMATIONS
+
+#if defined(ENABLE_LINEAR_APPROXIMATIONS)
+
+    //
+    // http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
+    //
+
+    float linear_to_srgb(float linear)
+    {
+        linear = clamp(linear, 0.0f, 1.0f);
+        float s1 = sqrt(linear);
+        float s2 = sqrt(s1);
+        float s3 = sqrt(s2);
+        return 0.662002687f * s1 + 0.684122060f * s2 - 0.323583601f * s3 - 0.0225411470f * linear;
+    }
+
+    float srgb_to_linear(float s)
+    {
+        return s * (s * (s * 0.305306011f + 0.682171111f) + 0.012522878f);
+    }
+
+    float32x4 linear_to_srgb(float32x4 linear)
+    {
+        linear = clamp(linear, 0.0f, 1.0f);
+        float32x4 s1 = sqrt(linear);
+        float32x4 s2 = sqrt(s1);
+        float32x4 s3 = sqrt(s2);
+        return 0.662002687f * s1 + 0.684122060f * s2 - 0.323583601f * s3 - 0.0225411470f * linear;
+    }
+
+    float32x4 srgb_to_linear(float32x4 s)
+    {
+        return s * (s * (s * 0.305306011f + 0.682171111f) + 0.012522878f);
+    }
+
+#else
+
+    //
+    // Hardcore almost-nearly-perfect approximations
+    //
 
     namespace detail
     {
@@ -1086,38 +1126,6 @@ namespace mango::math
         float32x4 b = (s * s) * detail::root5(s * s);
         float32x4 linear = select(srgb <= 0.04045f, a, b);
         return linear;
-    }
-
-#else
-
-    // http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
-
-    float linear_to_srgb(float linear)
-    {
-        linear = clamp(linear, 0.0f, 1.0f);
-        float s1 = sqrt(linear);
-        float s2 = sqrt(s1);
-        float s3 = sqrt(s2);
-        return 0.662002687f * s1 + 0.684122060f * s2 - 0.323583601f * s3 - 0.0225411470f * linear;
-    }
-
-    float srgb_to_linear(float s)
-    {
-        return s * (s * (s * 0.305306011f + 0.682171111f) + 0.012522878f);
-    }
-
-    float32x4 linear_to_srgb(float32x4 linear)
-    {
-        linear = clamp(linear, 0.0f, 1.0f);
-        float32x4 s1 = sqrt(linear);
-        float32x4 s2 = sqrt(s1);
-        float32x4 s3 = sqrt(s2);
-        return 0.662002687f * s1 + 0.684122060f * s2 - 0.323583601f * s3 - 0.0225411470f * linear;
-    }
-
-    float32x4 srgb_to_linear(float32x4 s)
-    {
-        return s * (s * (s * 0.305306011f + 0.682171111f) + 0.012522878f);
     }
 
 #endif
