@@ -31,6 +31,8 @@ int main(int argc, const char* argv[])
             ImageEncodeOptions options;
             options.compression = 10;
 
+            // NOTE: always override input file, might want to be able to configure output filename
+            //       - we could also change formats here:  .jpg -> .png, etc.
             bitmap.save(filename, options);
         });
     }
