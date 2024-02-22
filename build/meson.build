@@ -257,6 +257,7 @@ mango_import3d_headers = files(
     '../include/mango/import3d/import_obj.hpp',
     '../include/mango/import3d/import_3ds.hpp',
     '../include/mango/import3d/import_lwo.hpp',
+    '../include/mango/import3d/import_fbx.hpp',
     '../include/mango/import3d/import_gltf.hpp',
 )
 
@@ -411,6 +412,7 @@ mango_import3d_sources = files(
     '../source/mango/import3d/import_obj.cpp',
     '../source/mango/import3d/import_3ds.cpp',
     '../source/mango/import3d/import_lwo.cpp',
+    '../source/mango/import3d/import_fbx.cpp',
     '../source/mango/import3d/import_gltf.cpp',
 )
 

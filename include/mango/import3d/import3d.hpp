@@ -8,4 +8,5 @@
 #include <mango/import3d/import_3ds.hpp>
 #include <mango/import3d/import_obj.hpp>
 #include <mango/import3d/import_lwo.hpp>
+#include <mango/import3d/import_fbx.hpp>
 #include <mango/import3d/import_gltf.hpp>
