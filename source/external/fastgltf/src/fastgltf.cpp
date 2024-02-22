@@ -35,9 +35,11 @@
 #include <mutex>
 #include <utility>
 
+/*
 #if defined(__ANDROID__)
 #include <android/asset_manager.h>
 #endif
+*/
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -3524,6 +3526,7 @@ bool fg::GltfDataBuffer::loadFromFile(const fs::path& path, std::uint64_t byteOf
 }
 #pragma endregion
 
+/*
 #pragma region AndroidGltfDataBuffer
 #if defined(__ANDROID__)
 fg::AndroidGltfDataBuffer::AndroidGltfDataBuffer(AAssetManager* assetManager) noexcept : assetManager{assetManager} {}
@@ -3571,6 +3574,7 @@ bool fg::AndroidGltfDataBuffer::loadFromAndroidAsset(const fs::path& path, std::
 }
 #endif
 #pragma endregion
+*/
 
 #pragma region Parser
 fastgltf::GltfType fg::determineGltfFileType(GltfDataBuffer* buffer) {

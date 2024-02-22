@@ -12,6 +12,8 @@ LOCAL_PATH := $(call my-dir)/../../..
 MANGO_INCLUDE := $(LOCAL_PATH)/include
 MANGO_SOURCE := $(LOCAL_PATH)/source
 
+INCLUDE_FASTGLTF := $(LOCAL_PATH)/source/external/fastgltf/include $(LOCAL_PATH)/source/external/simdjson
+
 INCLUDE_WEBP = $(LOCAL_PATH)/source/external/libwebp
 SOURCE_WEBP = external/libwebp/src/dec \
               external/libwebp/src/enc \
@@ -27,6 +29,7 @@ SOURCE_DIRS := mango/core \
                mango/image  \
                mango/math \
                mango/opengl \
+               mango/import3d \
                mango/jpeg \
                external/zstd/common \
                external/zstd/compress \
@@ -49,9 +52,9 @@ SOURCE_DIRS := mango/core \
                external/lzma \
                external/basisu/transcoder \
                external/fmt/src \
-               \#external/simdjson \
-               \#external/fastgltf/src \
-               \#external/mikktspace \
+               external/simdjson \
+               external/fastgltf/src \
+               external/mikktspace \
                $(SOURCE_WEBP)
 
 SOURCES := $(foreach dir,$(SOURCE_DIRS), \
@@ -104,10 +107,10 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := mango_shared
 
 LOCAL_SRC_FILES := $(mango_sources)
-LOCAL_C_INCLUDES := $(MANGO_INCLUDE) $(INCLUDE_WEBP)
+LOCAL_C_INCLUDES := $(MANGO_INCLUDE) $(INCLUDE_WEBP) $(INCLUDE_FASTGLTF)
 LOCAL_EXPORT_C_INCLUDES := $(MANGO_INCLUDE)
 LOCAL_CPP_FEATURES += exceptions
-LOCAL_CPPFLAGS := $(OPTIONS) -Wno-extern-c-compat
+LOCAL_CPPFLAGS := $(OPTIONS) -Wno-extern-c-compat -Wno-\#pragma-messages -Wno-unused-variable
 LOCAL_STATIC_LIBRARIES := cpufeatures
 
 ifeq ($(LOCAL_MODULE),mango_static)
