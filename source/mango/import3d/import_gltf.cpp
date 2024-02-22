@@ -59,16 +59,28 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     printLine(Print::Verbose, "[ImportGLTF]");
 
-    fastgltf::Parser parser(fastgltf::Extensions::KHR_mesh_quantization);
+    auto extensions = fastgltf::Extensions::None;
 
-    auto gltfOptions =
-        fastgltf::Options::DontRequireValidAssetMember |
-        fastgltf::Options::AllowDouble;
-	//gltfOptions |= fastgltf::Options::GenerateMeshIndices; // broken - don't use
-    //gltfOptions |= fastgltf::Options::LoadGLBBuffers;
-    //gltfOptions |= fastgltf::Options::LoadExternalBuffers;
-    //gltfOptions |= fastgltf::Options::LoadExternalImages;
-    //gltfOptions |= fastgltf::Options::LoadExternalImages;
+    extensions |= fastgltf::Extensions::KHR_mesh_quantization;
+    extensions |= fastgltf::Extensions::KHR_texture_transform;
+    extensions |= fastgltf::Extensions::KHR_texture_basisu;
+    extensions |= fastgltf::Extensions::MSFT_texture_dds;
+    extensions |= fastgltf::Extensions::KHR_mesh_quantization;
+    extensions |= fastgltf::Extensions::EXT_meshopt_compression;
+    extensions |= fastgltf::Extensions::KHR_lights_punctual;
+    extensions |= fastgltf::Extensions::EXT_texture_webp;
+    extensions |= fastgltf::Extensions::KHR_materials_specular;
+    extensions |= fastgltf::Extensions::KHR_materials_ior;
+    extensions |= fastgltf::Extensions::KHR_materials_iridescence;
+    extensions |= fastgltf::Extensions::KHR_materials_volume;
+    extensions |= fastgltf::Extensions::KHR_materials_transmission;
+    extensions |= fastgltf::Extensions::KHR_materials_clearcoat;
+    extensions |= fastgltf::Extensions::KHR_materials_emissive_strength;
+    extensions |= fastgltf::Extensions::KHR_materials_sheen;
+    extensions |= fastgltf::Extensions::KHR_materials_unlit;
+    extensions |= fastgltf::Extensions::KHR_materials_anisotropy;
+
+    fastgltf::Parser parser(extensions);
 
     auto type = fastgltf::determineGltfFileType(&data);
     if (type == fastgltf::GltfType::glTF)
@@ -85,7 +97,17 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         return;
     }
 
-    auto expected = parser.loadGltf(&data, "", gltfOptions);
+    auto options = fastgltf::Options::None;
+
+    options |= fastgltf::Options::DontRequireValidAssetMember;
+    options |= fastgltf::Options::AllowDouble;
+	//options |= fastgltf::Options::GenerateMeshIndices; // broken - don't use
+    //options |= fastgltf::Options::LoadGLBBuffers;
+    //options |= fastgltf::Options::LoadExternalBuffers;
+    //options |= fastgltf::Options::LoadExternalImages;
+    //options |= fastgltf::Options::LoadExternalImages;
+
+    auto expected = parser.loadGltf(&data, "", options);
     if (expected.error() != fastgltf::Error::None)
     {
         printLine(Print::Error, "  ERROR: {}", fastgltf::getErrorMessage(expected.error()).data());
