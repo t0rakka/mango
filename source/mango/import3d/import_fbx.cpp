@@ -51,6 +51,51 @@ namespace
         {
         }
 
+        template<typename T>
+        void read_values(std::vector<T>& output, const u8* p, u32 count)
+        {
+            while (count-- > 0)
+            {
+                T value;
+                std::memcpy(&value, p, sizeof(T));
+                p += sizeof(T);
+#if !defined(MANGO_LITTLE_ENDIAN)
+                value = byteswap(value);
+#endif
+                output.push_back(value);
+            }
+        }
+
+        template<typename T>
+        std::vector<T> read_property_array(LittleEndianConstPointer& p, const char* type, u32 i, int level)
+        {
+            u32 length = p.read32();
+            u32 encoding = p.read32();
+            u32 compressedLength = p.read32();
+
+            std::vector<T> output;
+
+            if (encoding)
+            {
+                Buffer buffer(length * sizeof(T));
+                CompressionStatus status = deflate_zlib::decompress(buffer, ConstMemory(p, compressedLength));
+
+                read_values(output, buffer, length);
+
+                p += compressedLength;
+                printLine(Print::Verbose, level * 2 + 2, "#{}: {}[{}] (compressed)", i, type, length);
+            }
+            else
+            {
+                read_values(output, p, length);
+
+                p += length * sizeof(T);
+                printLine(Print::Verbose, level * 2 + 2, "#{}: {}[{}]", i, type, length);
+            }
+
+            return output;
+        }
+
         const u8* read_node(LittleEndianConstPointer p, int level)
         {
             u32 endOffset = p.read32();
@@ -68,12 +113,123 @@ namespace
 
             printLine(Print::Verbose, level * 2, "[{}]", name);
 
+            /*
             if (numProperties > 0)
             {
                 printLine(Print::Verbose, level * 2 + 2, "count: {} ({} bytes)", numProperties, propertyListLength);
             }
+            */
 
-            p += propertyListLength;
+            const u8* next = p + propertyListLength;
+
+            for (u32 i = 0; i < numProperties; ++i)
+            {
+                char type = *p++;
+
+                switch (type)
+                {
+                    case 'C':
+                    case 'B':
+                    {
+                        u8 value = *p++;
+                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {}", i, type, value);
+                        break;
+                    }
+
+                    case 'Y':
+                    {
+                        u16 value = p.read16();
+                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {}", i, type, value);
+                        break;
+                    }
+
+                    case 'I':
+                    {
+                        u32 value = p.read32();
+                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {}", i, type, value);
+                        break;
+                    }
+
+                    case 'L':
+                    {
+                        u64 value = p.read64();
+                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {}", i, type, value);
+                        break;
+                    }
+
+                    case 'F':
+                    {
+                        float value = p.read32f();
+                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {}", i, type, value);
+                        break;
+                    }
+
+                    case 'D':
+                    {
+                        double value = p.read64f();
+                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {}", i, type, value);
+                        break;
+                    }
+
+                    case 'f':
+                    {
+                        auto values = read_property_array<float>(p, "f32", i, level);
+                        MANGO_UNREFERENCED(values);
+                        break;
+                    }
+
+                    case 'd':
+                    {
+                        auto values = read_property_array<double>(p, "f64", i, level);
+                        MANGO_UNREFERENCED(values);
+                        break;
+                    }
+
+                    case 'l':
+                    {
+                        auto values = read_property_array<u64>(p, "u64", i, level);
+                        MANGO_UNREFERENCED(values);
+                        break;
+                    }
+
+                    case 'i':
+                    {
+                        auto values = read_property_array<u32>(p, "u32", i, level);
+                        MANGO_UNREFERENCED(values);
+                        break;
+                    }
+
+                    case 'b':
+                    {
+                        auto values = read_property_array<u8>(p, "u8", i, level);
+                        MANGO_UNREFERENCED(values);
+                        break;
+                    }
+
+                    case 'S':
+                    {
+                        u32 length = p.read32();
+                        std::string_view view(p.cast<const char>(), length);
+                        p += length;
+                        printLine(Print::Verbose, level * 2 + 2, "#{}: \"{}\"", i, view);
+                        break;
+                    }
+
+                    case 'R':
+                    {
+                        u32 length = p.read32();
+                        p += length;
+                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {} bytes", i, type, length);
+                        break;
+                    }
+
+                    default:
+                        printLine(Print::Verbose, level * 2 + 2, "#{}: xxxxxxxxxx", i);
+                        break;
+                }
+            }
+
+            p = next;
 
             const u8* end = m_memory.address + endOffset;
 

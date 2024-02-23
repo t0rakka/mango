@@ -114,6 +114,13 @@ namespace mango
 #endif
 
     static inline
+    u8 byteswap(u8 v)
+    {
+        // NOTE: we haven't gone mad; this is for templates
+        return v;
+    }
+
+    static inline
     float16 byteswap(float16 v)
     {
         Half temp(v);
