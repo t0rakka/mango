@@ -67,7 +67,7 @@ namespace
         }
 
         template<typename T>
-        std::vector<T> read_property_array(LittleEndianConstPointer& p, const char* type, u32 i, int level)
+        std::vector<T> read_property_array(LittleEndianConstPointer& p, const char* type, int level)
         {
             u32 length = p.read32();
             u32 encoding = p.read32();
@@ -83,14 +83,14 @@ namespace
                 read_values(output, buffer, length);
 
                 p += compressedLength;
-                printLine(Print::Verbose, level * 2 + 2, "#{}: {}[{}] (compressed)", i, type, length);
+                printLine(Print::Verbose, level * 2 + 2, "{}[{}] (compressed)", type, length);
             }
             else
             {
                 read_values(output, p, length);
 
                 p += length * sizeof(T);
-                printLine(Print::Verbose, level * 2 + 2, "#{}: {}[{}]", i, type, length);
+                printLine(Print::Verbose, level * 2 + 2, "{}[{}]", type, length);
             }
 
             return output;
@@ -132,76 +132,76 @@ namespace
                     case 'B':
                     {
                         u8 value = *p++;
-                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {}", i, type, value);
+                        printLine(Print::Verbose, level * 2 + 2, "u8: {}", value);
                         break;
                     }
 
                     case 'Y':
                     {
                         u16 value = p.read16();
-                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {}", i, type, value);
+                        printLine(Print::Verbose, level * 2 + 2, "u16: {}", value);
                         break;
                     }
 
                     case 'I':
                     {
                         u32 value = p.read32();
-                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {}", i, type, value);
+                        printLine(Print::Verbose, level * 2 + 2, "u32: {}", value);
                         break;
                     }
 
                     case 'L':
                     {
                         u64 value = p.read64();
-                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {}", i, type, value);
+                        printLine(Print::Verbose, level * 2 + 2, "u64: {}", value);
                         break;
                     }
 
                     case 'F':
                     {
                         float value = p.read32f();
-                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {}", i, type, value);
+                        printLine(Print::Verbose, level * 2 + 2, "f32: {}", value);
                         break;
                     }
 
                     case 'D':
                     {
                         double value = p.read64f();
-                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {}", i, type, value);
+                        printLine(Print::Verbose, level * 2 + 2, "f64: {}", value);
                         break;
                     }
 
                     case 'f':
                     {
-                        auto values = read_property_array<float>(p, "f32", i, level);
+                        auto values = read_property_array<float>(p, "f32", level);
                         MANGO_UNREFERENCED(values);
                         break;
                     }
 
                     case 'd':
                     {
-                        auto values = read_property_array<double>(p, "f64", i, level);
+                        auto values = read_property_array<double>(p, "f64", level);
                         MANGO_UNREFERENCED(values);
                         break;
                     }
 
                     case 'l':
                     {
-                        auto values = read_property_array<u64>(p, "u64", i, level);
+                        auto values = read_property_array<u64>(p, "u64", level);
                         MANGO_UNREFERENCED(values);
                         break;
                     }
 
                     case 'i':
                     {
-                        auto values = read_property_array<u32>(p, "u32", i, level);
+                        auto values = read_property_array<u32>(p, "u32", level);
                         MANGO_UNREFERENCED(values);
                         break;
                     }
 
                     case 'b':
                     {
-                        auto values = read_property_array<u8>(p, "u8", i, level);
+                        auto values = read_property_array<u8>(p, "u8", level);
                         MANGO_UNREFERENCED(values);
                         break;
                     }
@@ -211,7 +211,7 @@ namespace
                         u32 length = p.read32();
                         std::string_view view(p.cast<const char>(), length);
                         p += length;
-                        printLine(Print::Verbose, level * 2 + 2, "#{}: \"{}\"", i, view);
+                        printLine(Print::Verbose, level * 2 + 2, "string: \"{}\"", view);
                         break;
                     }
 
@@ -219,12 +219,12 @@ namespace
                     {
                         u32 length = p.read32();
                         p += length;
-                        printLine(Print::Verbose, level * 2 + 2, "#{}: {} {} bytes", i, type, length);
+                        printLine(Print::Verbose, level * 2 + 2, "raw: {} {} bytes", type, length);
                         break;
                     }
 
                     default:
-                        printLine(Print::Verbose, level * 2 + 2, "#{}: xxxxxxxxxx", i);
+                        printLine(Print::Verbose, level * 2 + 2, "unknown: xxxxxxxxxx");
                         break;
                 }
             }
