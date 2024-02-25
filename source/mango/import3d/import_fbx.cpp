@@ -15,14 +15,38 @@ namespace
     using namespace mango;
     using namespace mango::import3d;
 
+    enum MappingInformationType
+    {
+        ByPolygonVertex,
+        ByVertice,
+        ByEdge,
+    };
+
+    enum ReferenceInformationType
+    {
+        Direct,
+        IndexToDirect,
+    };
+
+    template <typename T>
+    struct ArrayFBX
+    {
+        std::vector<T> values;
+        std::vector<u32> indices;
+        MappingInformationType mappingType { ByPolygonVertex };
+        ReferenceInformationType referenceType { Direct };
+    };
+
     struct MeshFBX
     {
-        std::vector<float32x3> positions;
-        std::vector<u32> indices;
+        ArrayFBX<float32x3> positions;
+        ArrayFBX<float32x3> normals;
+        ArrayFBX<float32x2> texcoords;
     };
 
     struct Property
     {
+        /*
         enum Type : u8
         {
             U8,
@@ -30,13 +54,14 @@ namespace
             U32,
             U64,
             F32,
-            VECTOR_U8,
-            VECTOR_U32,
-            VECTOR_U64,
-            VECTOR_F32,
+            ARRAY_U8,
+            ARRAY_U32,
+            ARRAY_U64,
+            ARRAY_F32,
             STRING,
             MEMORY,
         };
+        */
 
         using Variant = std::variant<
             u8,
@@ -51,13 +76,17 @@ namespace
             std::string_view,
             ConstMemory>;
 
-        Type type;
+        //Type type;
         Variant value;
     };
 
     struct ReaderFBX
     {
         ConstMemory m_memory;
+        u32 m_version;
+
+        MappingInformationType currentMappingType { ByPolygonVertex };
+        ReferenceInformationType currentReferenceType { Direct };
 
         std::vector<MeshFBX> m_meshes;
 
@@ -79,8 +108,8 @@ namespace
             }
 
             p += 23;
-            u32 version = p.read32();
-            printLine(Print::Verbose, "Version: {}", version);
+            m_version = p.read32();
+            printLine(Print::Verbose, "Version: {}", m_version);
 
             const u8* end = memory.address + memory.size;
 
@@ -137,9 +166,23 @@ namespace
 
         const u8* read_node(LittleEndianConstPointer p, int level)
         {
-            u32 endOffset = p.read32();
-            u32 numProperties = p.read32();
-            u32 propertyListLength = p.read32();
+            u64 endOffset;
+            u64 numProperties;
+            u64 propertyListLength;
+
+            if (m_version < 7500)
+            {
+                endOffset = p.read32();
+                numProperties = p.read32();
+                propertyListLength = p.read32();
+            }
+            else
+            {
+                endOffset = p.read64();
+                numProperties = p.read64();
+                propertyListLength = p.read64();
+            }
+
             u8 nameLength = *p++;
 
             if (!endOffset)
@@ -305,11 +348,42 @@ namespace
 
             if (name == "Geometry")
             {
-                //printLine(Print::Verbose, "-- starting new geometry");
-                // TODO: check that it is "Mesh"
-
                 MeshFBX mesh;
                 m_meshes.push_back(mesh);
+            }
+            else if (name == "MappingInformationType")
+            {
+                if (std::holds_alternative<std::string_view>(properties[0].value))
+                {
+                    auto str = std::get<std::string_view>(properties[0].value);
+                    if (str == "ByPolygonVertex")
+                    {
+                        currentMappingType = ByPolygonVertex;
+                    }
+                    else if (str == "ByVertice")
+                    {
+                        currentMappingType = ByVertice;
+                    }
+                    else if (str == "ByEdge")
+                    {
+                        currentMappingType = ByEdge;
+                    }
+                }
+            }
+            else if (name == "ReferenceInformationType")
+            {
+                if (std::holds_alternative<std::string_view>(properties[0].value))
+                {
+                    auto str = std::get<std::string_view>(properties[0].value);
+                    if (str == "Direct")
+                    {
+                        currentReferenceType = Direct;
+                    }
+                    else if (str == "IndexToDirect")
+                    {
+                        currentReferenceType = IndexToDirect;
+                    }
+                }
             }
 
             if (!m_meshes.empty())
@@ -324,15 +398,15 @@ namespace
 
                         for (size_t i = 0; i < vec.size() - 2; i += 3)
                         {
+                            // TODO: coordinate system conversion
                             float x = vec[i + 0];
                             float y = vec[i + 1];
                             float z = vec[i + 2];
                             float32x3 position(x, y, z);
-                            mesh.positions.push_back(position);
+                            mesh.positions.values.push_back(position);
                         }
-
-                        //printLine("-- positions: {}", mesh.positions.size());
                     }
+
                     // 51750 floats -> 17250 positions
                 }
                 else if (name == "PolygonVertexIndex")
@@ -340,27 +414,78 @@ namespace
                     if (std::holds_alternative<std::vector<u32>>(properties[0].value))
                     {
                         auto vec = std::get<std::vector<u32>>(properties[0].value);
-                        mesh.indices = vec;
+                        mesh.positions.indices = vec;
                     }
+
                     // 100629 indices -> 33542 triangles
                 }
                 else if (name == "Normals")
                 {
-                    // MappingInformationType = ByPolygonVertex
+                    if (std::holds_alternative<std::vector<float32>>(properties[0].value))
+                    {
+                        auto vec = std::get<std::vector<float32>>(properties[0].value);
+
+                        mesh.normals.mappingType = currentMappingType;
+                        mesh.normals.referenceType = currentReferenceType;
+
+                        for (size_t i = 0; i < vec.size() - 2; i += 3)
+                        {
+                            // TODO: coordinate system conversion
+                            float x = vec[i + 0];
+                            float y = vec[i + 1];
+                            float z = vec[i + 2];
+                            float32x3 normal(x, y, z);
+                            mesh.normals.values.push_back(normal);
+                        }
+                    }
+
+                    // MappingInformationType = ByPolygonVertex / ByVertice
                     // ReferenceInformationType = Direct
                     // 301887 floats -> 100629 normals (33542 triangles)
                 }
+                else if (name == "NormalsW")
+                {
+                    // TODO
+                }
                 else if (name == "UV")
                 {
+                    if (std::holds_alternative<std::vector<float32>>(properties[0].value))
+                    {
+                        auto vec = std::get<std::vector<float32>>(properties[0].value);
+
+                        mesh.texcoords.mappingType = currentMappingType;
+                        mesh.texcoords.referenceType = currentReferenceType;
+
+                        for (size_t i = 0; i < vec.size() - 1; i += 2)
+                        {
+                            float x = vec[i + 0];
+                            float y = vec[i + 1];
+                            float32x2 texcoord(x, y);
+                            mesh.texcoords.values.push_back(texcoord);
+                        }
+                    }
+
                     // MappingInformationType = ByPolygonVertex
                     // ReferenceInformationType = IndexToDirect
                     // 47874 floats -> 23936 texcoords
                 }
                 else if (name == "UVIndex")
                 {
+                    if (std::holds_alternative<std::vector<u32>>(properties[0].value))
+                    {
+                        auto vec = std::get<std::vector<u32>>(properties[0].value);
+                        mesh.texcoords.indices = vec;
+                    }
+
                     // MappingInformationType = ByPolygonVertex
                     // ReferenceInformationType = IndexToDirect
                     // 100629 indices -> 33542 triangles
+                }
+                else if (name == "Smoothing")
+                {
+                    // TODO
+                    // MappingInformationType = ByEdge
+                    // ReferenceInformationType = Direct
                 }
             }
 
@@ -394,37 +519,76 @@ namespace mango::import3d
             Mesh trimesh;
             trimesh.flags = Vertex::POSITION | Vertex::NORMAL;
 
+            bool hasNormals = !current.normals.values.empty();
+            bool hasTexcoords = !current.texcoords.values.empty();
+            bool hasTexcoordIndices = !current.texcoords.indices.empty();
+
+            printLine(Print::Verbose, "positions: {}, indices: {}, normals: {}",
+                current.positions.values.size(),
+                current.positions.indices.size(),
+                current.normals.values.size());
+
+            if (hasTexcoords)
+            {
+                trimesh.flags |= Vertex::TEXCOORD;
+            }
+
             // triangle indices
-            s32 temp[3];
+            s32 tempIndex[3];
             int count = 0;
 
-            for (size_t i = 0; i < current.indices.size(); ++i)
-            {
-                s32 index = current.indices[i];
+            Triangle triangle;
 
-                temp[count++] = index < 0 ? -(index + 1) : index;
+            for (size_t i = 0; i < current.positions.indices.size(); ++i)
+            {
+                s32 index = current.positions.indices[i];
+
+                tempIndex[count] = index < 0 ? -(index + 1) : index;
+
+                if (hasNormals && current.normals.mappingType == ByPolygonVertex)
+                {
+                    triangle.vertex[count].normal = current.normals.values[i];
+                }
+
+                if (hasTexcoords)
+                {
+                    s32 idx = hasTexcoordIndices ? current.texcoords.indices[i] : i;
+                    triangle.vertex[count].texcoord = current.texcoords.values[idx];
+                }
+
+                ++count;
+
                 if (count == 3)
                 {
-                    float32x3 p0 = current.positions[temp[0]];
-                    float32x3 p1 = current.positions[temp[1]];
-                    float32x3 p2 = current.positions[temp[2]];
+                    float32x3 position0 = current.positions.values[tempIndex[0]];
+                    float32x3 position1 = current.positions.values[tempIndex[1]];
+                    float32x3 position2 = current.positions.values[tempIndex[2]];
 
-                    float32x3 normal = normalize(cross(p0 - p1, p0 - p2));
+                    triangle.vertex[0].position = position0;
+                    triangle.vertex[1].position = position1;
+                    triangle.vertex[2].position = position2;
 
-                    Triangle triangle;
+                    if (current.normals.mappingType == ByVertice)
+                    {
+                        triangle.vertex[0].normal = current.normals.values[tempIndex[0]];
+                        triangle.vertex[1].normal = current.normals.values[tempIndex[1]];
+                        triangle.vertex[2].normal = current.normals.values[tempIndex[2]];
+                    }
 
-                    triangle.vertex[0].position = p0;
-                    triangle.vertex[1].position = p1;
-                    triangle.vertex[2].position = p2;
-
-                    triangle.vertex[0].normal = normal;
-                    triangle.vertex[1].normal = normal;
-                    triangle.vertex[2].normal = normal;
+                    if (!hasNormals)
+                    {
+                        // TODO: smoothing groups (need file for testing)
+                        float32x3 normal = normalize(cross(position0 - position1, position0 - position2));
+                        triangle.vertex[0].normal = normal;
+                        triangle.vertex[1].normal = normal;
+                        triangle.vertex[2].normal = normal;
+                    }
 
                     trimesh.triangles.push_back(triangle);
 
                     // next vertex
-                    temp[1] = temp[2];
+                    tempIndex[1] = tempIndex[2];
+                    triangle.vertex[1].normal = triangle.vertex[2].normal;
                     --count;
                 }
 
