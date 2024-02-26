@@ -269,6 +269,7 @@
 		A672D9132026633600947D7E /* bc_aes.h in Headers */ = {isa = PBXBuildFile; fileRef = A672D9112026633600947D7E /* bc_aes.h */; };
 		A672D9152026634B00947D7E /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A672D9142026634B00947D7E /* aes.cpp */; };
 		A6734C7A2763C82E00FE6A20 /* image_qoi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6734C792763C82E00FE6A20 /* image_qoi.cpp */; };
+		A67393792B8C67630071E2E6 /* import_fbx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A67393782B8C67630071E2E6 /* import_fbx.cpp */; };
 		A6835B3A27724BDE004CAC9C /* adler32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6835B3927724BDE004CAC9C /* adler32.cpp */; };
 		A6835B3C27724C1F004CAC9C /* huf_decompress_amd64.S in Sources */ = {isa = PBXBuildFile; fileRef = A6835B3B27724C1F004CAC9C /* huf_decompress_amd64.S */; };
 		A686FD1D27A37E3C00EDC399 /* basisu_transcoder_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = A686FD0927A37E3B00EDC399 /* basisu_transcoder_internal.h */; };
@@ -843,6 +844,7 @@
 		A672D9112026633600947D7E /* bc_aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bc_aes.h; path = external/aes/bc_aes.h; sourceTree = "<group>"; };
 		A672D9142026634B00947D7E /* aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = aes.cpp; path = core/aes.cpp; sourceTree = "<group>"; };
 		A6734C792763C82E00FE6A20 /* image_qoi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_qoi.cpp; path = image/image_qoi.cpp; sourceTree = "<group>"; };
+		A67393782B8C67630071E2E6 /* import_fbx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = import_fbx.cpp; path = import3d/import_fbx.cpp; sourceTree = "<group>"; };
 		A6835B3927724BDE004CAC9C /* adler32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = adler32.cpp; path = core/adler32.cpp; sourceTree = "<group>"; };
 		A6835B3B27724C1F004CAC9C /* huf_decompress_amd64.S */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; name = huf_decompress_amd64.S; path = external/zstd/decompress/huf_decompress_amd64.S; sourceTree = "<group>"; };
 		A686FD0927A37E3B00EDC399 /* basisu_transcoder_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = basisu_transcoder_internal.h; path = external/basisu/transcoder/basisu_transcoder_internal.h; sourceTree = "<group>"; };
@@ -1723,6 +1725,7 @@
 				A6E8BD0F2B6FE77A004A1108 /* import_lwo.cpp */,
 				A69BEDC32B4F6C6E00B5010F /* import_3ds.cpp */,
 				A69BEDC22B4F6C6E00B5010F /* import_gltf.cpp */,
+				A67393782B8C67630071E2E6 /* import_fbx.cpp */,
 				A69BEDC42B4F6C6E00B5010F /* import_obj.cpp */,
 				A69BEDC52B4F6C6E00B5010F /* mesh.cpp */,
 			);
@@ -2543,6 +2546,7 @@
 				A6D78CE9290987A200304D88 /* astcenc_averages_and_directions.cpp in Sources */,
 				A63DD78A1E706F3400D4D499 /* bz_compress.c in Sources */,
 				A6D8EA0A28D6AA9A007A0B24 /* LzFindMt.c in Sources */,
+				A67393792B8C67630071E2E6 /* import_fbx.cpp in Sources */,
 				A6D8EA0928D6AA9A007A0B24 /* LzFindOpt.c in Sources */,
 				A6EC3E7A230D7BB800B17F21 /* io_dec.c in Sources */,
 				A00559A61C93327800A6D963 /* mapper_rar.cpp in Sources */,
