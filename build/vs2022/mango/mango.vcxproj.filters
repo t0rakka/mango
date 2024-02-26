@@ -1392,6 +1392,9 @@
     <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\core.hpp">
       <Filter>external\fastgltf\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\import3d\import_fbx.hpp">
+      <Filter>mango\include\import3d</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp">
@@ -2436,6 +2439,9 @@
       <Filter>mango\source\import3d</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\source\mango\import3d\import_lwo.cpp">
+      <Filter>mango\source\import3d</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\import3d\import_fbx.cpp">
       <Filter>mango\source\import3d</Filter>
     </ClCompile>
   </ItemGroup>
