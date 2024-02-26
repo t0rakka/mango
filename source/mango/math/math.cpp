@@ -17,6 +17,304 @@ namespace mango::math
     static constexpr float epsilon = std::numeric_limits<float>::epsilon();
 
     // ------------------------------------------------------------------------
+    // Matrix3x3
+    // ------------------------------------------------------------------------
+
+    const Matrix3x3& Matrix3x3::operator = (float s)
+    {
+        m[0] = float32x3(s, 0, 0);
+        m[1] = float32x3(0, s, 0);
+        m[2] = float32x3(0, 0, s);
+        return *this;
+    }
+
+    const Matrix3x3& Matrix3x3::operator = (const float* ptr)
+    {
+        m[0][0] = ptr[0];
+        m[0][1] = ptr[1];
+        m[0][2] = ptr[2];
+        m[1][0] = ptr[3];
+        m[1][1] = ptr[4];
+        m[1][2] = ptr[5];
+        m[2][0] = ptr[6];
+        m[2][1] = ptr[7];
+        m[2][2] = ptr[8];
+        return *this;
+    }
+
+    const Matrix3x3& Matrix3x3::operator = (const Quaternion& q)
+    {
+        const float x2 = q.x * 2.0f;
+        const float y2 = q.y * 2.0f;
+        const float z2 = q.z * 2.0f;
+
+        const float wx = q.w * x2;
+        const float wy = q.w * y2;
+        const float wz = q.w * z2;
+
+        const float xx = q.x * x2;
+        const float xy = q.x * y2;
+        const float xz = q.x * z2;
+
+        const float yy = q.y * y2;
+        const float yz = q.y * z2;
+        const float zz = q.z * z2;
+
+        m[0] = float32x3(1.0f - yy - zz, xy + wz, xz - wy);
+        m[1] = float32x3(xy - wz, 1.0f - xx - zz, yz + wx);
+        m[2] = float32x3(xz + wy, yz - wx, 1.0f - xx - yy);
+
+        return *this;
+    }
+
+    const Matrix3x3& Matrix3x3::operator = (const AngleAxis& a)
+    {
+        float length2 = square(a.axis);
+        if (length2 < epsilon)
+        {
+            *this = 1.0f; // set identity
+            return *this;
+        }
+
+        float s = std::sin(a.angle);
+        float c = std::cos(a.angle);
+        float k = 1.0f - c;
+
+        float length = 1.0f / std::sqrt(length2);
+
+        float x = a.axis.x * length;
+        float y = a.axis.y * length;
+        float z = a.axis.z * length;
+
+        float xk = x * k;
+        float yk = y * k;
+        float zk = z * k;
+
+        float xy = x * yk;
+        float yz = y * zk;
+        float zx = z * xk;
+        float xs = x * s;
+        float ys = y * s;
+        float zs = z * s;
+
+        m[0] = float32x3(x * xk + c, xy + zs, zx - ys);
+        m[1] = float32x3(xy - zs, y * yk + c, yz + xs);
+        m[2] = float32x3(zx + ys, yz - xs, z * zk + c);
+
+        return *this;
+    }
+
+    const Matrix3x3& Matrix3x3::operator = (const EulerAngles& euler)
+    {
+        // use vectorized sin / cos
+        const float32x4 v = float32x4(euler.x, euler.y, euler.z, 0.0f);
+        const float32x4 s = sin(v);
+        const float32x4 c = cos(v);
+
+        const float sx = s.x;
+        const float sy = s.y;
+        const float sz = s.z;
+        const float cx = c.x;
+        const float cy = c.y;
+        const float cz = c.z;
+        const float sysx = sy * sx;
+        const float sycx = sy * cx;
+
+        m[0] = float32x3(cz * cy, sz * cy, -sy);
+        m[1] = float32x3(cz * sysx - sz * cx, sz * sysx + cz * cx, cy * sx);
+        m[2] = float32x3(cz * sycx + sz * sx, sz * sycx - cz * sx, cy * cx);
+
+        return *this;
+    }
+
+    float Matrix3x3::determinant2x2() const
+    {
+        return m[0][0] * m[1][1] - m[1][0] * m[0][1];
+    }
+
+    float Matrix3x3::determinant3x3() const
+    {
+        return m[0][0] * (m[1][1] * m[2][2] - m[2][1] * m[1][2]) -
+               m[0][1] * (m[1][0] * m[2][2] - m[2][0] * m[1][2]) +
+               m[0][2] * (m[1][0] * m[2][1] - m[2][0] * m[1][1]);
+    }
+
+    Matrix3x3 Matrix3x3::identity()
+    {
+        return Matrix3x3(1.0f);
+    }
+
+    Matrix3x3 Matrix3x3::scale(float s)
+    {
+        Matrix3x3 m;
+        m[0] = float32x3(s, 0, 0);
+        m[1] = float32x3(0, s, 0);
+        m[2] = float32x3(0, 0, s);
+        return m;
+    }
+
+    Matrix3x3 Matrix3x3::scale(float x, float y, float z)
+    {
+        Matrix3x3 m;
+        m[0] = float32x3(x, 0, 0);
+        m[1] = float32x3(0, y, 0);
+        m[2] = float32x3(0, 0, z);
+        return m;
+    }
+
+    Matrix3x3 Matrix3x3::rotate(float angle, const float32x3& axis)
+    {
+        const Matrix3x3 m = AngleAxis(angle, axis);
+        return m;
+    }
+
+    Matrix3x3 Matrix3x3::rotateX(float angle)
+    {
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
+
+        Matrix3x3 m;
+        m[0] = float32x3(1, 0, 0);
+        m[1] = float32x3(0, c, s);
+        m[2] = float32x3(0,-s, c);
+        return m;
+    }
+
+    Matrix3x3 Matrix3x3::rotateY(float angle)
+    {
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
+
+        Matrix3x3 m;
+        m[0] = float32x3(c, 0,-s);
+        m[1] = float32x3(0, 1, 0);
+        m[2] = float32x3(s, 0, c);
+        return m;
+     }
+
+    Matrix3x3 Matrix3x3::rotateZ(float angle)
+    {
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
+
+        Matrix3x3 m;
+        m[0] = float32x3( c, s, 0);
+        m[1] = float32x3(-s, c, 0);
+        m[2] = float32x3( 0, 0, 1);
+        return m;
+    }
+
+    Matrix3x3 Matrix3x3::rotateXYZ(float x, float y, float z)
+    {
+        return Matrix3x3(EulerAngles(x, y, z));
+    }
+
+    Matrix3x3 scale(const Matrix3x3& input, float s)
+    {
+        const float32x3 v = float32x3(s, s, s);
+
+        Matrix3x3 m;
+        m[0] = input[0] * v;
+        m[1] = input[1] * v;
+        m[2] = input[2] * v;
+        return m;
+    }
+
+    Matrix3x3 scale(const Matrix3x3& input, float x, float y, float z)
+    {
+        const float32x3 v = float32x3(x, y, z);
+
+        Matrix3x3 m;
+        m[0] = input[0] * v;
+        m[1] = input[1] * v;
+        m[2] = input[2] * v;
+        return m;
+    }
+
+    Matrix3x3 rotate(const Matrix3x3& input, float angle, const float32x3& axis)
+    {
+        const Matrix3x3 temp = AngleAxis(angle, axis);
+        return input * temp;
+    }
+
+    Matrix3x3 rotateX(const Matrix3x3& input, float angle)
+    {
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
+
+        Matrix3x3 m;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            const float x = input[i][0];
+            const float y = input[i][1];
+            const float z = input[i][2];
+            m[i][0] = x;
+            m[i][1] = y * c - z * s;
+            m[i][2] = z * c + y * s;
+        }
+
+        return m;
+    }
+
+    Matrix3x3 rotateY(const Matrix3x3& input, float angle)
+    {
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
+
+        Matrix3x3 m;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            const float x = input[i][0];
+            const float y = input[i][1];
+            const float z = input[i][2];
+            m[i][0] = x * c + z * s;
+            m[i][1] = y;
+            m[i][2] = z * c - x * s;
+        }
+
+        return m;
+    }
+
+    Matrix3x3 rotateZ(const Matrix3x3& input, float angle)
+    {
+        const float s = std::sin(angle);
+        const float c = std::cos(angle);
+
+        Matrix3x3 m;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            const float x = input[i][0];
+            const float y = input[i][1];
+            const float z = input[i][2];
+            m[i][0] = x * c - y * s;
+            m[i][1] = y * c + x * s;
+            m[i][2] = z;
+        }
+
+        return m;
+    }
+
+    Matrix3x3 rotateXYZ(const Matrix3x3& input, float x, float y, float z)
+    {
+        const Matrix3x3 temp = Matrix3x3::rotateXYZ(x, y, z);
+        return input * temp;
+    }
+
+    Matrix3x3 normalize(const Matrix3x3& input)
+    {
+        float32x3 x = input[0];
+        float32x3 y = input[1];
+        float32x3 z = input[2];
+        x = normalize(x);
+        y = normalize(y - x * dot(x, y));
+        z = cross(x, y);
+        return Matrix3x3(x, y, z);
+    }
+
+    // ------------------------------------------------------------------------
     // Matrix4x4
     // ------------------------------------------------------------------------
 
