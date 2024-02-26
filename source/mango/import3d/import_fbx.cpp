@@ -20,6 +20,7 @@ namespace
         ByPolygonVertex,
         ByVertice,
         ByEdge,
+        AllSame,
     };
 
     enum ReferenceInformationType
@@ -332,7 +333,7 @@ namespace
                         ConstMemory value(p, length);
                         property.value = value;
                         p += length;
-                        printLine(Print::Verbose, level * 2 + 2, "raw: {} {} bytes", type, length);
+                        printLine(Print::Verbose, level * 2 + 2, "raw: {} bytes", length);
                         break;
                     }
 
@@ -367,6 +368,10 @@ namespace
                     else if (str == "ByEdge")
                     {
                         currentMappingType = ByEdge;
+                    }
+                    else if (str == "AllSame")
+                    {
+                        currentMappingType = AllSame;
                     }
                 }
             }
@@ -406,8 +411,6 @@ namespace
                             mesh.positions.values.push_back(position);
                         }
                     }
-
-                    // 51750 floats -> 17250 positions
                 }
                 else if (name == "PolygonVertexIndex")
                 {
@@ -416,8 +419,6 @@ namespace
                         auto vec = std::get<std::vector<u32>>(properties[0].value);
                         mesh.positions.indices = vec;
                     }
-
-                    // 100629 indices -> 33542 triangles
                 }
                 else if (name == "Normals")
                 {
@@ -438,10 +439,6 @@ namespace
                             mesh.normals.values.push_back(normal);
                         }
                     }
-
-                    // MappingInformationType = ByPolygonVertex / ByVertice
-                    // ReferenceInformationType = Direct
-                    // 301887 floats -> 100629 normals (33542 triangles)
                 }
                 else if (name == "NormalsW")
                 {
@@ -464,10 +461,6 @@ namespace
                             mesh.texcoords.values.push_back(texcoord);
                         }
                     }
-
-                    // MappingInformationType = ByPolygonVertex
-                    // ReferenceInformationType = IndexToDirect
-                    // 47874 floats -> 23936 texcoords
                 }
                 else if (name == "UVIndex")
                 {
@@ -476,16 +469,10 @@ namespace
                         auto vec = std::get<std::vector<u32>>(properties[0].value);
                         mesh.texcoords.indices = vec;
                     }
-
-                    // MappingInformationType = ByPolygonVertex
-                    // ReferenceInformationType = IndexToDirect
-                    // 100629 indices -> 33542 triangles
                 }
                 else if (name == "Smoothing")
                 {
                     // TODO
-                    // MappingInformationType = ByEdge
-                    // ReferenceInformationType = Direct
                 }
             }
 
@@ -523,10 +510,12 @@ namespace mango::import3d
             bool hasTexcoords = !current.texcoords.values.empty();
             bool hasTexcoordIndices = !current.texcoords.indices.empty();
 
+#if 0
             printLine(Print::Verbose, "positions: {}, indices: {}, normals: {}",
                 current.positions.values.size(),
                 current.positions.indices.size(),
                 current.normals.values.size());
+#endif
 
             if (hasTexcoords)
             {
