@@ -34,7 +34,7 @@ namespace mango::image
         enum BaseFormat : u32
         {
             FXT1        = 1,
-            ATC         = 2, 
+            ATC         = 2,
             AMD_3DC     = 3,
             LATC        = 4,
             DXT         = 5,
