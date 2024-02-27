@@ -1017,6 +1017,14 @@ namespace mango::math
     // AngleAxis
     // ------------------------------------------------------------------------
 
+    AngleAxis::AngleAxis(const Matrix3x3& m)
+    {
+        axis = float32x3(m[1][2] - m[2][1], m[2][0] - m[0][2], m[0][1] - m[1][0]);
+        const float s = square(axis) * 0.5f;
+        const float c = (m[0][0] + m[1][1] + m[2][2] - 1.0f) * 0.5f;
+        angle = std::atan2(s, c);
+    }
+
     AngleAxis::AngleAxis(const Matrix4x4& m)
     {
         axis = float32x3(m[1][2] - m[2][1], m[2][0] - m[0][2], m[0][1] - m[1][0]);
@@ -1035,7 +1043,9 @@ namespace mango::math
     // Quaternion
     // ------------------------------------------------------------------------
 
-    const Quaternion& Quaternion::operator = (const Matrix<float, 4, 4>& m)
+    template <int Width, int Height>
+    static inline
+    Quaternion matrixToQuaternion(const Matrix<float, Width, Height>& m)
     {
         const float m00 = m(0, 0);
         const float m01 = m(0, 1);
@@ -1077,7 +1087,18 @@ namespace mango::math
             }
         }
 
-        *this = q * float(0.5f / std::sqrt(s));
+        return q * float(0.5f / std::sqrt(s));
+    }
+
+    const Quaternion& Quaternion::operator = (const Matrix<float, 3, 3>& m)
+    {
+        *this = matrixToQuaternion(m);
+        return *this;
+    }
+
+    const Quaternion& Quaternion::operator = (const Matrix<float, 4, 4>& m)
+    {
+        *this = matrixToQuaternion(m);
         return *this;
     }
 

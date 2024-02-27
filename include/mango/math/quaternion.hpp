@@ -62,6 +62,11 @@ namespace mango::math
             w = v.w;
         }
 
+        Quaternion(const Matrix<float, 3, 3>& m)
+        {
+            *this = m;
+        }
+
         Quaternion(const Matrix<float, 4, 4>& m)
         {
             *this = m;
@@ -90,6 +95,7 @@ namespace mango::math
             return *this;
         }
 
+        const Quaternion& operator = (const Matrix<float, 3, 3>& m);
         const Quaternion& operator = (const Matrix<float, 4, 4>& m);
         const Quaternion& operator = (const AngleAxis& a);
         const Quaternion& operator = (const EulerAngles& euler);
@@ -181,6 +187,7 @@ namespace mango::math
         {
         }
 
+        AngleAxis(const Matrix3x3& m);
         AngleAxis(const Matrix4x4& m);
         AngleAxis(const Quaternion& q);
         ~AngleAxis() = default;
