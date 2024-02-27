@@ -1693,6 +1693,7 @@ ContextEXR::ContextEXR(ConstMemory memory)
     m_header.faces   = isCubemap ? 6 : 0;
     m_header.palette = false;
     m_header.format  = Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
+    m_header.linear  = true;
     m_header.compression = TextureCompression::NONE;
 }
 

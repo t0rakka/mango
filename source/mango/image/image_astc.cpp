@@ -95,6 +95,7 @@ namespace
 
             TextureCompression info(compression);
             header.format = info.format;
+            header.linear = info.isLinear();
             header.compression = compression | TextureCompression::YFLIP;
         }
     };

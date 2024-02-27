@@ -64,26 +64,26 @@ namespace
         KHR_DF_MODEL_DXT1A         = 128U,
         KHR_DF_MODEL_BC1A          = 128U,
 
-        // DXT2/DXT3/BC2, with explicit 4-bit alpha 
+        // DXT2/DXT3/BC2, with explicit 4-bit alpha
         KHR_DF_MODEL_DXT2          = 129U,
         KHR_DF_MODEL_DXT3          = 129U,
         KHR_DF_MODEL_BC2           = 129U,
 
-        // DXT4/DXT5/BC3, with interpolated alpha 
+        // DXT4/DXT5/BC3, with interpolated alpha
         KHR_DF_MODEL_DXT4          = 130U,
         KHR_DF_MODEL_DXT5          = 130U,
         KHR_DF_MODEL_BC3           = 130U,
 
-        // BC4 - single channel interpolated 8-bit data 
+        // BC4 - single channel interpolated 8-bit data
         KHR_DF_MODEL_BC4           = 131U,
 
-        // BC5 - two channel interpolated 8-bit data 
+        // BC5 - two channel interpolated 8-bit data
         KHR_DF_MODEL_BC5           = 132U,
 
-        // BC6H - DX11 format for 16-bit float channels 
+        // BC6H - DX11 format for 16-bit float channels
         KHR_DF_MODEL_BC6H          = 133U,
 
-        // BC7 - DX11 format 
+        // BC7 - DX11 format
         KHR_DF_MODEL_BC7           = 134U,
 
         // Mobile compressed formats
@@ -768,9 +768,9 @@ namespace
 
         bool read(LittleEndianConstPointer& p)
         {
-            constexpr u8 identifier[] =
+            constexpr u8 identifier [] =
             {
-                0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 
+                0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32,
                 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A
             };
 
@@ -949,6 +949,7 @@ namespace
             m_header.faces = header.faceCount;
             m_header.format = desc.format;
             m_header.compression = desc.compression;
+            m_header.linear = (desc.compression & TextureCompression::SRGB) == 0;
 
             printLine(Print::Info, "");
             printLine(Print::Info, "[HeaderKTX2]");
@@ -1082,7 +1083,7 @@ namespace
                     p += 8;
 
                     printLine(Print::Info, "  planes: {} {} {} {} {} {} {} {}",
-                        bytesPlane0, bytesPlane1, bytesPlane2, bytesPlane3, 
+                        bytesPlane0, bytesPlane1, bytesPlane2, bytesPlane3,
                         bytesPlane4, bytesPlane5, bytesPlane6, bytesPlane7);
 
                     u32 sample_count = (descriptor_block_size - 24) / 16;

@@ -574,6 +574,7 @@ namespace
             {
                 TextureCompression info(compression);
                 format = info.format;
+                header.linear = info.isLinear();
             }
 
             header.width   = pixelWidth;

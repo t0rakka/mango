@@ -52,6 +52,7 @@ namespace mango::image
         int     faces = 0;   // cubemap faces
         bool    palette = false; // palette is available
         bool    premultiplied = false; // alpha is premultiplied
+        bool    linear = false; // linear colorspace (non-linear is assumed to be sRGB)
         Format  format; // preferred format (fastest available "direct" decoding is possible)
         u32     compression = TextureCompression::NONE;
         u32     supercompression = 0; // mask of supported compression formats

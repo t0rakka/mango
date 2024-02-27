@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -256,6 +256,8 @@ namespace mango::image
 
         Status decompress(const Surface& surface, ConstMemory memory) const;
         Status compress(Memory memory, const Surface& surface) const;
+
+        bool isLinear() const;
 
         // number of blocks horizontally required to compress the surface
         int getBlocksX(int width) const;

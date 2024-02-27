@@ -256,14 +256,14 @@ namespace
         u32 fourcc;
         u32 compression;
         Format format;
-        bool srgb; // NOTE: this is not used anywhere yet
+        bool srgb;
         const char* name;
     };
 
 #define MAKE_FORMAT(bits, type, order, s0, s1, s2, s3) \
     Format(bits, Format::type, Format::order, s0, s1, s2, s3)
 
-    const FormatDXGI g_dxgi_table[] =
+    const FormatDXGI g_dxgi_table [] =
     {
         { 0, 0, Format(), false, "UNKNOWN" },
         { 0, 0, MAKE_FORMAT(128, NONE, RGBA, 32, 32, 32, 32), false, "R32G32B32A32_TYPELESS" },
@@ -948,6 +948,8 @@ namespace
             pixelFormat.fourCC = 0;
             pixelFormat.compression = TextureCompression::NONE;
 
+            header.linear = dxgi.srgb;
+
             switch (dxgi.format.type)
             {
                 case Format::FLOAT16:
@@ -1033,6 +1035,7 @@ namespace
                 info = compression;
                 header.format  = info.format;
                 header.compression = compression;
+                header.linear = (compression & TextureCompression::SRGB) == 0;
             }
             else
             {
