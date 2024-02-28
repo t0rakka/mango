@@ -948,7 +948,7 @@ namespace
             pixelFormat.fourCC = 0;
             pixelFormat.compression = TextureCompression::NONE;
 
-            header.linear = dxgi.srgb;
+            header.linear = !dxgi.srgb;
 
             switch (dxgi.format.type)
             {
