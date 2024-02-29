@@ -747,7 +747,8 @@ namespace mango
     static inline
     int u32_lzcnt(u32 value)
     {
-        return int(__builtin_clz(value));
+        // NOTE: returns garbage when value is zero and compiling with -O0
+        return value ? int(__builtin_clz(value)) : 32;
     }
 
 #else
