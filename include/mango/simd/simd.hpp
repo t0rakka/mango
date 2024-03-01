@@ -35,6 +35,11 @@ namespace mango::simd
     template <int ScalarBits, int VectorSize, typename MaskType>
     struct hardware_mask
     {
+        enum
+        {
+            alignment = sizeof(MaskType),
+        };
+
         MaskType data;
 
         hardware_mask() = default;
@@ -59,6 +64,7 @@ namespace mango::simd
         {
             scalar_bits = sizeof(ScalarType) * 8,
             vector_bits = sizeof(VectorType) * 8,
+            alignment = sizeof(VectorType),
             size = VectorSize,
             is_hardware = 1,
             is_composite = 0
@@ -83,6 +89,11 @@ namespace mango::simd
     template <int ScalarBits, int VectorSize>
     struct scalar_mask
     {
+        enum
+        {
+            alignment = sizeof(u32),
+        };
+
         u32 mask;
 
         scalar_mask() = default;
@@ -107,6 +118,7 @@ namespace mango::simd
         {
             scalar_bits = sizeof(ScalarType) * 8,
             vector_bits = sizeof(ScalarType) * VectorSize * 8,
+            alignment = sizeof(ScalarType),
             size = VectorSize,
             is_hardware = 0,
             is_composite = 0
@@ -127,10 +139,15 @@ namespace mango::simd
 
     // Vector types implemented as separate low/high parts, which typically have hardware support
 
-    template <typename VectorType>
+    template <typename MaskType>
     struct composite_mask
     {
-        alignas(sizeof(VectorType)) VectorType data[2];
+        enum
+        {
+            alignment = MaskType::alignment,
+        };
+
+        alignas(alignment) MaskType data[2];
     };
 
     template <typename VectorType>
@@ -143,12 +160,13 @@ namespace mango::simd
         {
             scalar_bits = sizeof(scalar) * 8,
             vector_bits = sizeof(VectorType) * 2 * 8,
+            alignment = VectorType::alignment,
             size = VectorType::size * 2,
             is_hardware = VectorType::is_hardware,
             is_composite = 1
         };
 
-        alignas(sizeof(VectorType)) vector data;
+        alignas(VectorType::alignment) vector data;
 
         composite_vector() = default;
         composite_vector(VectorType lo, VectorType hi)
