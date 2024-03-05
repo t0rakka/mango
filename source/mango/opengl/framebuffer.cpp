@@ -17,44 +17,47 @@ namespace
     const char* vertex_shader_source = R"(
         #version 330
 
-        uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0);
+        uniform vec4 u_Transform = vec4(0.0, 0.0, 1.0, 1.0);
 
-        in vec2 inPosition;
+        in vec2 a_Position;
+
         out vec2 texcoord;
 
         void main()
         {
-            texcoord = inPosition * vec2(0.5, -0.5) + vec2(0.5);
-            gl_Position = vec4((inPosition + uTransform.xy) * uTransform.zw, 0.0, 1.0);
+            texcoord = a_Position * vec2(0.5, -0.5) + vec2(0.5);
+            gl_Position = vec4((a_Position + u_Transform.xy) * u_Transform.zw, 0.0, 1.0);
         }
     )";
 
     const char* fragment_shader_source = R"(
         #version 330
 
-        uniform sampler2D uTexture;
+        uniform sampler2D u_Texture;
 
         in vec2 texcoord;
+
         out vec4 outFragment0;
 
         void main()
         {
-            outFragment0 = texture(uTexture, texcoord);
+            outFragment0 = texture(u_Texture, texcoord);
         }
     )";
 
     const char* vertex_shader_source_bicubic = R"(
         #version 330
 
-        uniform vec4 uTransform = vec4(0.0, 0.0, 1.0, 1.0);
+        uniform vec4 u_Transform = vec4(0.0, 0.0, 1.0, 1.0);
 
-        in vec2 inPosition;
+        in vec2 a_Position;
+
         out vec2 texcoord;
 
         void main()
         {
-            texcoord = inPosition * vec2(0.5, -0.5) + vec2(0.5);
-            gl_Position = vec4((inPosition + uTransform.xy) * uTransform.zw, 0.0, 1.0);
+            texcoord = a_Position * vec2(0.5, -0.5) + vec2(0.5);
+            gl_Position = vec4((a_Position + u_Transform.xy) * u_Transform.zw, 0.0, 1.0);
         }
     )";
 
@@ -72,7 +75,7 @@ namespace
             return vec4(x, y, z, w);
         }
 
-        vec4 texture_filter(sampler2D uTexture, vec2 texcoord, vec2 texscale)
+        vec4 texture_filter(sampler2D u_Texture, vec2 texcoord, vec2 texscale)
         {
             // hack to bring unit texcoords to integer pixel coords
             texcoord /= texscale;
@@ -86,39 +89,41 @@ namespace
             vec4 c = vec4(texcoord.x - 0.5, texcoord.x + 1.5, texcoord.y - 0.5, texcoord.y + 1.5);
             vec4 s = vec4(cx.x + cx.y, cx.z + cx.w, cy.x + cy.y, cy.z + cy.w);
             vec4 offset = c + vec4(cx.y, cx.w, cy.y, cy.w) / s;
-            vec4 sample0 = texture(uTexture, vec2(offset.x, offset.z) * texscale);
-            vec4 sample1 = texture(uTexture, vec2(offset.y, offset.z) * texscale);
-            vec4 sample2 = texture(uTexture, vec2(offset.x, offset.w) * texscale);
-            vec4 sample3 = texture(uTexture, vec2(offset.y, offset.w) * texscale);
+            vec4 sample0 = texture(u_Texture, vec2(offset.x, offset.z) * texscale);
+            vec4 sample1 = texture(u_Texture, vec2(offset.y, offset.z) * texscale);
+            vec4 sample2 = texture(u_Texture, vec2(offset.x, offset.w) * texscale);
+            vec4 sample3 = texture(u_Texture, vec2(offset.y, offset.w) * texscale);
             float sx = s.x / (s.x + s.y);
             float sy = s.z / (s.z + s.w);
             return mix(mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy);
         }
 
-        uniform sampler2D uTexture;
-        uniform vec2 uTexScale;
+        uniform sampler2D u_Texture;
+        uniform vec2 u_TexScale;
 
         in vec2 texcoord;
+
         out vec4 outFragment0;
 
         void main()
         {
-            outFragment0 = texture_filter(uTexture, texcoord, uTexScale);
+            outFragment0 = texture_filter(u_Texture, texcoord, u_TexScale);
         }
     )";
 
     const char* fragment_shader_source_index = R"(
         #version 330
 
-        uniform isampler2D uTexture;
-        uniform uint uPalette[256];
+        uniform isampler2D u_Texture;
+        uniform uint u_Palette[256];
 
         in vec2 texcoord;
+
         out vec4 outFragment0;
 
         void main()
         {
-            uint color = uPalette[texture(uTexture, texcoord).r];
+            uint color = u_Palette[texture(u_Texture, texcoord).r];
             float r = ((color << 24) >> 24) / 255.0;
             float g = ((color << 16) >> 24) / 255.0;
             float b = ((color <<  8) >> 24) / 255.0;
@@ -242,17 +247,17 @@ namespace mango
         // create bilinear program
 
         m_bilinear.program = createProgram(vertex_shader_source, fragment_shader_source);
-        m_bilinear.transform = glGetUniformLocation(m_bilinear.program, "uTransform");
-        m_bilinear.texture = glGetUniformLocation(m_bilinear.program, "uTexture");
-        m_bilinear.position = glGetAttribLocation(m_bilinear.program, "inPosition");
+        m_bilinear.transform = glGetUniformLocation(m_bilinear.program, "u_Transform");
+        m_bilinear.texture = glGetUniformLocation(m_bilinear.program, "u_Texture");
+        m_bilinear.position = glGetAttribLocation(m_bilinear.program, "a_Position");
 
         // create bicubic program
 
         m_bicubic.program = createProgram(vertex_shader_source_bicubic, fragment_shader_source_bicubic);
-        m_bicubic.transform = glGetUniformLocation(m_bicubic.program, "uTransform");
-        m_bicubic.texture = glGetUniformLocation(m_bicubic.program, "uTexture");
-        m_bicubic.scale = glGetUniformLocation(m_bicubic.program, "uTexScale");
-        m_bicubic.position = glGetAttribLocation(m_bicubic.program, "inPosition");
+        m_bicubic.transform = glGetUniformLocation(m_bicubic.program, "u_Transform");
+        m_bicubic.texture = glGetUniformLocation(m_bicubic.program, "u_Texture");
+        m_bicubic.scale = glGetUniformLocation(m_bicubic.program, "u_TexScale");
+        m_bicubic.position = glGetAttribLocation(m_bicubic.program, "a_Position");
     }
 
     OpenGLFramebuffer::~OpenGLFramebuffer()
@@ -340,7 +345,7 @@ namespace mango
     {
         if (m_is_palette)
         {
-            GLint location = glGetUniformLocation(m_index_program, "uPalette");
+            GLint location = glGetUniformLocation(m_index_program, "u_Palette");
             glProgramUniform1uiv(m_index_program, location, 256, palette);
         }
     }
