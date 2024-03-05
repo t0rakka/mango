@@ -70,9 +70,9 @@ public:
             m_srgb = !m_srgb;
             updateTitle();
             if (m_srgb)
-                glEnable(GL_FRAMEBUFFER_SRGB_EXT);
+                glEnable(GL_FRAMEBUFFER_SRGB);
             else
-                glDisable(GL_FRAMEBUFFER_SRGB_EXT);
+                glDisable(GL_FRAMEBUFFER_SRGB);
             onDraw();
             break;
 
