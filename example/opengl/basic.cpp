@@ -27,7 +27,7 @@ const char* fragment_shader_source = R"(
 
     void main()
     {
-        vec3 color = vec3(0.9, 1.0, 0.9) * 16.0f;
+        vec3 color = vec3(0.8, 1.0, 0.8) * 16.0f;
         fragColor0 = vec4(color, 1.0);
     }
 )";
