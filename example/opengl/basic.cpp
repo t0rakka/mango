@@ -23,12 +23,12 @@ static
 const char* fragment_shader_source = R"(
     #version 410
 
-    layout(location = 0) out vec4 out_FragColor0;
+    layout(location = 0) out vec4 fragColor0;
 
     void main()
     {
-        vec3 color = vec3(0.9), 1.0, 0.9) * 16.0f;
-        out_FragColor0 = vec4(color, 1.0);
+        vec3 color = vec3(0.9, 1.0, 0.9) * 16.0f;
+        fragColor0 = vec4(color, 1.0);
     }
 )";
 
@@ -47,8 +47,6 @@ public:
         }
 
         m_program = opengl::createProgram(vertex_shader_source, fragment_shader_source);
-        //glLinkProgram(m_program);
-        //opengl::getLinkStatus(m_program);
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -79,7 +77,6 @@ public:
         glClearColor(0.1f, 0.14f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        static
         const float positions [] =
         {
              0.0f,  0.9f,
@@ -87,8 +84,8 @@ public:
              0.7f, -0.9f,
         };
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 8, positions);
         glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 8, positions);
 
         glUseProgram(m_program);
         glDrawArrays(GL_TRIANGLES, 0, 3);
