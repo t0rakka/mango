@@ -36,6 +36,8 @@ class TestWindow : public OpenGLContext
 {
 protected:
     GLuint m_program = 0;
+    GLuint m_vao = 0;
+    GLuint m_vbo = 0;
 
 public:
     TestWindow(const OpenGLContext::Config& config)
@@ -47,6 +49,30 @@ public:
         }
 
         m_program = opengl::createProgram(vertex_shader_source, fragment_shader_source);
+
+        const float positions [] =
+        {
+             0.0f,  0.9f,
+            -0.7f, -0.9f,
+             0.7f, -0.9f,
+        };
+
+        glGenVertexArrays(1, &m_vao);
+        glBindVertexArray(m_vao);
+
+        glGenBuffers(1, &m_vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 8, reinterpret_cast<const void*>(0));
+    }
+
+    ~TestWindow()
+    {
+        glDeleteProgram(m_program);
+        glDeleteBuffers(1, &m_vbo);
+        glDeleteVertexArrays(1, &m_vao);
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -76,16 +102,6 @@ public:
     {
         glClearColor(0.1f, 0.14f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
-        const float positions [] =
-        {
-             0.0f,  0.9f,
-            -0.7f, -0.9f,
-             0.7f, -0.9f,
-        };
-
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 8, positions);
 
         glUseProgram(m_program);
         glDrawArrays(GL_TRIANGLES, 0, 3);
