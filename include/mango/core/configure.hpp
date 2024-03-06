@@ -459,49 +459,53 @@
 
 #if defined(MANGO_CPU_INTEL)
 
-    #if defined(__AVX512F__) && defined(__AVX512DQ__)
-        #define MANGO_ENABLE_AVX512
-        #include <immintrin.h>
-    #endif
+    #if !defined(MANGO_NO_SIMD)
 
-    #ifdef __AVX2__
-        #define MANGO_ENABLE_AVX2
-        #include <immintrin.h>
-    #endif
+        #if defined(__AVX512F__) && defined(__AVX512DQ__)
+            #define MANGO_ENABLE_AVX512
+            #include <immintrin.h>
+        #endif
 
-    #ifdef __AVX__
-        #define MANGO_ENABLE_AVX
-        #include <immintrin.h>
-    #endif
+        #ifdef __AVX2__
+            #define MANGO_ENABLE_AVX2
+            #include <immintrin.h>
+        #endif
 
-    #ifdef __SSE4_2__
-        #define MANGO_ENABLE_SSE4_2
-        #include <nmmintrin.h>
-    #endif
+        #ifdef __AVX__
+            #define MANGO_ENABLE_AVX
+            #include <immintrin.h>
+        #endif
 
-    #ifdef __SSE4_1__
-        #define MANGO_ENABLE_SSE4_1
-        #include <smmintrin.h>
-    #endif
+        #ifdef __SSE4_2__
+            #define MANGO_ENABLE_SSE4_2
+            #include <nmmintrin.h>
+        #endif
 
-    #ifdef __SSSE3__
-        #define MANGO_ENABLE_SSSE3
-        #include <tmmintrin.h>
-    #endif
+        #ifdef __SSE4_1__
+            #define MANGO_ENABLE_SSE4_1
+            #include <smmintrin.h>
+        #endif
 
-    #ifdef __SSE3__
-        #define MANGO_ENABLE_SSE3
-        #include <pmmintrin.h>
-    #endif
+        #ifdef __SSSE3__
+            #define MANGO_ENABLE_SSSE3
+            #include <tmmintrin.h>
+        #endif
 
-    #ifdef __SSE2__
-        #define MANGO_ENABLE_SSE2
-        #include <emmintrin.h>
-    #endif
+        #ifdef __SSE3__
+            #define MANGO_ENABLE_SSE3
+            #include <pmmintrin.h>
+        #endif
 
-    // Intel SSE vector intrinsics
-    #define MANGO_ENABLE_SSE
-    #include <xmmintrin.h>
+        #ifdef __SSE2__
+            #define MANGO_ENABLE_SSE2
+            #include <emmintrin.h>
+        #endif
+
+        // Intel SSE vector intrinsics
+        #define MANGO_ENABLE_SSE
+        #include <xmmintrin.h>
+
+    #endif // MANGO_NO_SIMD
 
     #ifdef __XOP__
         #if defined(MANGO_COMPILER_MICROSOFT)
@@ -563,12 +567,17 @@
 #elif defined(MANGO_CPU_ARM)
 
     #if defined(__ARM_NEON__) || defined(__ARM_NEON) || defined(__ARM_FEATURE_CRYPTO)
-        // ARM NEON vector instrinsics
-        #define MANGO_ENABLE_NEON
 
-        #ifdef __aarch64__
-            #define MANGO_ENABLE_NEON64
-        #endif
+        #if !defined(MANGO_NO_SIMD)
+
+            // ARM NEON vector instrinsics
+            #define MANGO_ENABLE_NEON
+
+            #ifdef __aarch64__
+                #define MANGO_ENABLE_NEON64
+            #endif
+
+        #endif // MANGO_NO_SIMD
 
         #if defined(_M_ARM64)
             #include <arm64_neon.h>
@@ -592,54 +601,62 @@
 
 #elif defined(MANGO_CPU_PPC)
 
-    #if defined(_ARCH_PWR10)
+    #if !defined(MANGO_NO_SIMD)
 
-        // VMX x (Power ISA vx.x, 2020)
-        #define MANGO_ENABLE_ALTIVEC
-        #define MANGO_ENABLE_VSX
+        #if defined(_ARCH_PWR10)
 
-    #elif defined(_ARCH_PWR9)
+            // VMX x (Power ISA vx.x, 2020)
+            #define MANGO_ENABLE_ALTIVEC
+            #define MANGO_ENABLE_VSX
 
-        // VMX 3 (Power ISA v3.0, 2017)
-        #define MANGO_ENABLE_ALTIVEC
-        #define MANGO_ENABLE_VSX
+        #elif defined(_ARCH_PWR9)
 
-    #elif defined(_ARCH_PWR8)
+            // VMX 3 (Power ISA v3.0, 2017)
+            #define MANGO_ENABLE_ALTIVEC
+            #define MANGO_ENABLE_VSX
 
-        // VMX 2 (Power ISA v2.07, 2014)
-        #define MANGO_ENABLE_ALTIVEC
-        #define MANGO_ENABLE_VSX
+        #elif defined(_ARCH_PWR8)
 
-    #elif defined(_ARCH_PWR7)
+            // VMX 2 (Power ISA v2.07, 2014)
+            #define MANGO_ENABLE_ALTIVEC
+            #define MANGO_ENABLE_VSX
 
-        // VSX (Power ISA v2.06, 2010)
-        #define MANGO_ENABLE_ALTIVEC
-        #define MANGO_ENABLE_VSX
+        #elif defined(_ARCH_PWR7)
 
-    #elif defined(__PPU__) || defined(__SPU__)
+            // VSX (Power ISA v2.06, 2010)
+            #define MANGO_ENABLE_ALTIVEC
+            #define MANGO_ENABLE_VSX
 
-        // SONY Playstation 3 SPU / PPU (VMX)
+        #elif defined(__PPU__) || defined(__SPU__)
 
-    #elif defined(MANGO_PLATFORM_XBOX360)
+            // SONY Playstation 3 SPU / PPU (VMX)
 
-        // Microsoft Xbox 360 (VMX128)
+        #elif defined(MANGO_PLATFORM_XBOX360)
 
-    #elif defined(__VEC__)
+            // Microsoft Xbox 360 (VMX128)
 
-        // VMX (Power ISA v2.03)
-        #define MANGO_ENABLE_ALTIVEC
+        #elif defined(__VEC__)
 
-    #endif
+            // VMX (Power ISA v2.03)
+            #define MANGO_ENABLE_ALTIVEC
+
+        #endif
+
+    #endif // MANGO_NO_SIMD
 
 #elif defined(MANGO_CPU_MIPS)
 
-    #if defined(__mips_msa)
+    #if !defined(MANGO_NO_SIMD)
 
-        // MIPS SIMD Architecture
-        #define MANGO_ENABLE_MSA
-        #include <msa.h>
+        #if defined(__mips_msa)
 
-    #endif
+            // MIPS SIMD Architecture
+            #define MANGO_ENABLE_MSA
+            #include <msa.h>
+
+        #endif
+
+    #endif // MANGO_NO_SIMD
 
 #endif
 

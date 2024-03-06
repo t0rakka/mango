@@ -24,12 +24,15 @@ if host_machine.system() == 'darwin'
     add_languages('objcpp')
 endif
 
-enable_sse2      = get_option('enable_sse2')
-enable_sse4      = get_option('enable_sse4')
-enable_avx       = get_option('enable_avx')
-enable_avx2      = get_option('enable_avx2')
-enable_avx512    = get_option('enable_avx512')
-enable_neon      = get_option('enable_neon')
+disable_simd     = get_option('disable_simd')
+enable_simd      = not disable_simd
+
+enable_sse2      = enable_simd and get_option('enable_sse2')
+enable_sse4      = enable_simd and get_option('enable_sse4')
+enable_avx       = enable_simd and get_option('enable_avx')
+enable_avx2      = enable_simd and get_option('enable_avx2')
+enable_avx512    = enable_simd and get_option('enable_avx512')
+enable_neon      = enable_simd and get_option('enable_neon')
 enable_f16c      = get_option('enable_f16c')
 enable_bmi       = get_option('enable_bmi')
 enable_bmi2      = get_option('enable_bmi2')
@@ -1012,6 +1015,11 @@ endif
 
 if is_windows
     add_project_arguments('-DUNICODE', '-D_UNICODE', language: ['c', 'cpp'])
+endif
+
+if disable_simd
+    message('SIMD: DISABLE')
+    add_project_arguments('-DMANGO_NO_SIMD', language: ['c', 'cpp'])
 endif
 
 if cpp.get_id() == 'msvc'
