@@ -143,6 +143,7 @@ mango_math_headers = files(
     '../include/mango/math/vector_float64x8.hpp',
     '../include/mango/math/vector_gather.hpp',
     '../include/mango/math/vector.hpp',
+    '../include/mango/math/vector_simd.hpp',
     '../include/mango/math/vector128_int16x8.hpp',
     '../include/mango/math/vector128_int32x4.hpp',
     '../include/mango/math/vector128_int64x2.hpp',
