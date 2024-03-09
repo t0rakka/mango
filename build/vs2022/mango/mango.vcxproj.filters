@@ -1395,6 +1395,9 @@
     <ClInclude Include="..\..\..\include\mango\import3d\import_fbx.hpp">
       <Filter>mango\include\import3d</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\include\mango\math\vector_simd.hpp">
+      <Filter>mango\include\math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp">

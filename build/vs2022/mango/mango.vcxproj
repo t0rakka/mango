@@ -117,6 +117,7 @@
     <ClInclude Include="..\..\..\include\mango\math\vector_float64x4.hpp" />
     <ClInclude Include="..\..\..\include\mango\math\vector_float64x8.hpp" />
     <ClInclude Include="..\..\..\include\mango\math\vector_gather.hpp" />
+    <ClInclude Include="..\..\..\include\mango\math\vector_simd.hpp" />
     <ClInclude Include="..\..\..\include\mango\opengl\context.hpp" />
     <ClInclude Include="..\..\..\include\mango\opengl\framebuffer.hpp" />
     <ClInclude Include="..\..\..\include\mango\opengl\func\glcorearb.hpp" />

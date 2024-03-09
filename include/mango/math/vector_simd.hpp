@@ -8,6 +8,594 @@ namespace mango::math
 {
 
     // ------------------------------------------------------------------
+    // reinterpret / convert
+    // ------------------------------------------------------------------
+
+    // The reinterpret and conversion casts forward the work to the simd abstraction.
+    // This is enforced by requiring "VectorType" declaration in the Vector specialization.
+
+    template <typename D, typename S>
+    static inline D reinterpret(S s)
+    {
+        typename S::VectorType temp = s;
+        return simd::reinterpret<typename D::VectorType>(temp);
+    }
+
+    template <typename D, typename S>
+    static inline D convert(S s)
+    {
+        typename S::VectorType temp = s;
+        return simd::convert<typename D::VectorType>(temp);
+    }
+
+    template <typename D, typename S>
+    static inline D truncate(S s)
+    {
+        typename S::VectorType temp = s;
+        return simd::truncate<typename D::VectorType>(temp);
+    }
+
+    // ------------------------------------------------------------------
+    // specializations
+    // ------------------------------------------------------------------
+
+    template <typename ScalarType, int VectorSize>
+    static inline Vector<ScalarType, VectorSize> load_low(const ScalarType *source)
+    {
+        MANGO_UNREFERENCED(source);
+
+        // load_low() is not available by default
+        Vector<ScalarType, VectorSize>::undefined_operation();
+    }
+
+    // ------------------------------------------------------------------
+    // ScalarAccessor
+    // ------------------------------------------------------------------
+
+    template <typename ScalarType, typename VectorType, int Index>
+    struct ScalarAccessor
+    {
+        VectorType m;
+
+        operator ScalarType () const
+        {
+            return simd::get_component<Index>(m);
+        }
+
+        template <int VectorSize>
+        operator Vector<ScalarType, VectorSize> () const
+        {
+            return Vector<ScalarType, VectorSize>(simd::get_component<Index>(m));
+        }
+
+        ScalarAccessor& operator = (const ScalarAccessor& accessor)
+        {
+            m = simd::set_component<Index>(m, accessor);
+            return *this;
+        }
+
+        ScalarAccessor& operator = (ScalarType s)
+        {
+            m = simd::set_component<Index>(m, s);
+            return *this;
+        }
+
+        ScalarAccessor& operator += (ScalarType s)
+        {
+            *this = ScalarType(*this) + s;
+            return *this;
+        }
+
+        ScalarAccessor& operator -= (ScalarType s)
+        {
+            *this = ScalarType(*this) - s;
+            return *this;
+        }
+
+        ScalarAccessor& operator *= (ScalarType s)
+        {
+            *this = ScalarType(*this) * s;
+            return *this;
+        }
+
+        ScalarAccessor& operator /= (ScalarType s)
+        {
+            *this = ScalarType(*this) / s;
+            return *this;
+        }
+    };
+
+    // operator +
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a)
+    {
+        // +a
+        return ScalarType(a);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                           const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        // a + a
+        return ScalarType(a) + ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b)
+    {
+        // a + s
+        return ScalarType(a) + b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator + (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        // s + a
+        return a + ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b)
+    {
+        // a + v
+        return ScalarType(a) + b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator + (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        // v + a
+        return a + ScalarType(b);
+    }
+
+    // operator -
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a)
+    {
+        // -a
+        return -ScalarType(a);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                           const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        // a - a
+        return ScalarType(a) - ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b)
+    {
+        // a - s
+        return ScalarType(a) - b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator - (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        // s - a
+        return a - ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b)
+    {
+        // a - v
+        return ScalarType(a) - b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator - (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        // v - a
+        return a - ScalarType(b);
+    }
+
+    // operator *
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                           const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        // a * a
+        return ScalarType(a) * ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b)
+    {
+        // a * s
+        return ScalarType(a) * b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator * (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        // s * a
+        return a * ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator * (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b)
+    {
+        // a * v
+        return ScalarType(a) * b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator * (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        // v * a
+        return a * ScalarType(b);
+    }
+
+    // operator /
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                           const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        // a / a
+        return ScalarType(a) / ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b)
+    {
+        // a / s
+        return ScalarType(a) / b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    ScalarType operator / (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        // s / a
+        return a / ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator / (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b)
+    {
+        // a / v
+        return ScalarType(a) / b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    Vector<ScalarType, N> operator / (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b)
+    {
+        // v / a
+        return a / ScalarType(b);
+    }
+
+    // operator *=
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    static inline
+    Vector<ScalarType, N>& operator *= (Vector<ScalarType, N>& a, ScalarAccessor<ScalarType, VectorType, Index> b)
+    {
+        a = a * ScalarType(b);
+        return a;
+    }
+
+    // operator /=
+
+    template <typename ScalarType, typename VectorType, int Index, int N>
+    static inline
+    Vector<ScalarType, N>& operator /= (Vector<ScalarType, N>& a, ScalarAccessor<ScalarType, VectorType, Index> b)
+    {
+        a = a / ScalarType(b);
+        return a;
+    }
+
+    // compare
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    bool operator < (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                     const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) < ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    bool operator > (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                     const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) > ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    bool operator <= (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                      const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) <= ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    bool operator >= (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                      const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) >= ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    bool operator == (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                      const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) == ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index0, int Index1>
+    bool operator != (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
+                      const ScalarAccessor<ScalarType, VectorType, Index1>& b)
+    {
+        return ScalarType(a) != ScalarType(b);
+    }
+
+    // ------------------------------------------------------------------
+    // LowAccessor
+    // ------------------------------------------------------------------
+
+    template <typename LowType, typename VectorType>
+    struct LowAccessor
+    {
+        VectorType m;
+
+        operator LowType () const
+        {
+            return simd::get_low(m);
+        }
+
+        void operator = (LowType low)
+        {
+            m = simd::set_low(m, low);
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // HighAccessor
+    // ------------------------------------------------------------------
+
+    template <typename HighType, typename VectorType>
+    struct HighAccessor
+    {
+        VectorType m;
+
+        operator HighType () const
+        {
+            return simd::get_high(m);
+        }
+
+        void operator = (HighType high)
+        {
+            m = simd::set_high(m, high);
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // ShuffleAccessor2
+    // ------------------------------------------------------------------
+
+    template <typename ScalarType, typename VectorType, int X, int Y>
+    struct ShuffleAccessor2
+    {
+        VectorType m;
+
+        operator Vector<ScalarType, 2> () const
+        {
+            return simd::shuffle<X, Y>(m);
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // ShuffleAccessor4x2
+    // ------------------------------------------------------------------
+
+    template <typename ScalarType, typename VectorType, int X, int Y>
+    struct ShuffleAccessor4x2
+    {
+        VectorType m;
+
+        operator Vector<ScalarType, 2> () const
+        {
+            const ScalarType x = simd::get_component<X>(m);
+            const ScalarType y = simd::get_component<Y>(m);
+            return Vector<ScalarType, 2>(x, y);
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // ShuffleAccessor4x3
+    // ------------------------------------------------------------------
+
+    template <typename ScalarType, typename VectorType, int X, int Y, int Z>
+    struct ShuffleAccessor4x3
+    {
+        VectorType m;
+
+        operator Vector<ScalarType, 3> () const
+        {
+            const ScalarType x = simd::get_component<X>(m);
+            const ScalarType y = simd::get_component<Y>(m);
+            const ScalarType z = simd::get_component<Z>(m);
+            return Vector<ScalarType, 3>(x, y, z);
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // ShuffleAccessor4
+    // ------------------------------------------------------------------
+
+    template <typename ScalarType, typename VectorType, int X, int Y, int Z, int W>
+    struct ShuffleAccessor4
+    {
+        VectorType m;
+
+        operator Vector<ScalarType, 4> () const
+        {
+            return simd::shuffle<X, Y, Z, W>(m);
+        }
+
+#if 0
+        VectorType operator = (VectorType v)
+        {
+            m = simd::shuffle<X, Y, Z, W>(v);
+            return m;
+        }
+
+        template <int A, int B, int C, int D>
+        ShuffleAccessor4& operator = (const ShuffleAccessor4<ScalarType, VectorType, A, B, C, D>& v)
+        {
+            constexpr u32 mask = (D << 6) | (C << 4) | (B << 2) | A;
+            constexpr u32 s0 = (mask >> (X * 2)) & 3;
+            constexpr u32 s1 = (mask >> (Y * 2)) & 3;
+            constexpr u32 s2 = (mask >> (Z * 2)) & 3;
+            constexpr u32 s3 = (mask >> (W * 2)) & 3;
+            m = simd::shuffle<s0, s1, s2, s3>(v.m);
+            return *this;
+        }
+#endif
+    };
+
+    // ------------------------------------------------------------------
+    // unaligned load / store
+    // ------------------------------------------------------------------
+
+#define MATH_LOAD_STORE_ALIAS(T) \
+    static constexpr auto T##_uload = simd::T##_uload; \
+    static constexpr auto T##_ustore = simd::T##_ustore
+
+    MATH_LOAD_STORE_ALIAS(s32x2);
+    MATH_LOAD_STORE_ALIAS(u32x2);
+
+    MATH_LOAD_STORE_ALIAS(s8x16);
+    MATH_LOAD_STORE_ALIAS(s16x8);
+    MATH_LOAD_STORE_ALIAS(s32x4);
+    MATH_LOAD_STORE_ALIAS(s64x2);
+    MATH_LOAD_STORE_ALIAS(u8x16);
+    MATH_LOAD_STORE_ALIAS(u16x8);
+    MATH_LOAD_STORE_ALIAS(u32x4);
+    MATH_LOAD_STORE_ALIAS(u64x2);
+
+    MATH_LOAD_STORE_ALIAS(s8x32);
+    MATH_LOAD_STORE_ALIAS(s16x16);
+    MATH_LOAD_STORE_ALIAS(s32x8);
+    MATH_LOAD_STORE_ALIAS(s64x4);
+    MATH_LOAD_STORE_ALIAS(u8x32);
+    MATH_LOAD_STORE_ALIAS(u16x16);
+    MATH_LOAD_STORE_ALIAS(u32x8);
+    MATH_LOAD_STORE_ALIAS(u64x4);
+
+    MATH_LOAD_STORE_ALIAS(s8x64);
+    MATH_LOAD_STORE_ALIAS(s16x32);
+    MATH_LOAD_STORE_ALIAS(s32x16);
+    MATH_LOAD_STORE_ALIAS(s64x8);
+    MATH_LOAD_STORE_ALIAS(u8x64);
+    MATH_LOAD_STORE_ALIAS(u16x32);
+    MATH_LOAD_STORE_ALIAS(u32x16);
+    MATH_LOAD_STORE_ALIAS(u64x8);
+
+    MATH_LOAD_STORE_ALIAS(f32x2);
+    MATH_LOAD_STORE_ALIAS(f32x4);
+    MATH_LOAD_STORE_ALIAS(f32x8);
+    MATH_LOAD_STORE_ALIAS(f32x16);
+
+    MATH_LOAD_STORE_ALIAS(f64x2);
+    MATH_LOAD_STORE_ALIAS(f64x4);
+    MATH_LOAD_STORE_ALIAS(f64x8);
+
+#undef MATH_LOAD_STORE_ALIAS
+
+    // ------------------------------------------------------------------
+    // maskToInt()
+    // ------------------------------------------------------------------
+
+    static inline u32 maskToInt(mask8x16 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask16x8 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask32x4 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask64x2 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask8x32 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask16x16 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask32x8 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask64x4 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u64 maskToInt(mask8x64 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask16x32 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask32x16 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask64x8 mask)
+    {
+        return simd::get_mask(mask);
+    }
+
+    // ------------------------------------------------------------------
+    // mask reduction
+    // ------------------------------------------------------------------
+
+    template <typename T>
+    static inline bool none_of(T mask)
+    {
+        return simd::none_of(mask);
+    }
+
+    template <typename T>
+    static inline bool any_of(T mask)
+    {
+        return simd::any_of(mask);
+    }
+
+    template <typename T>
+    static inline bool all_of(T mask)
+    {
+        return simd::all_of(mask);
+    }
+
+    // ------------------------------------------------------------------
     // simd operator / function wrappers
     // ------------------------------------------------------------------
 

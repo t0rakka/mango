@@ -541,7 +541,7 @@ namespace mango::import3d
 
                 if (hasTexcoords)
                 {
-                    s32 idx = hasTexcoordIndices ? current.texcoords.indices[i] : i;
+                    s32 idx = s32(hasTexcoordIndices ? current.texcoords.indices[i] : i);
                     triangle.vertex[count].texcoord = current.texcoords.values[idx];
                 }
 
