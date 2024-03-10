@@ -1009,21 +1009,19 @@ namespace
 
         if (flags & WRAP_U)
         {
-            unwrapTexcoord(triangle.vertex[0].texcoord.x,
-                           triangle.vertex[1].texcoord.x,
-                           triangle.vertex[2].texcoord.x);
+            float& x0 = triangle.vertex[0].texcoord.x;
+            float& x1 = triangle.vertex[1].texcoord.x;
+            float& x2 = triangle.vertex[2].texcoord.x;
+            unwrapTexcoord(x0, x1, x2);
         }
 
         if (flags & WRAP_V)
         {
-            unwrapTexcoord(triangle.vertex[0].texcoord.y,
-                           triangle.vertex[1].texcoord.y,
-                           triangle.vertex[2].texcoord.y);
+            float& y0 = triangle.vertex[0].texcoord.y;
+            float& y1 = triangle.vertex[1].texcoord.y;
+            float& y2 = triangle.vertex[2].texcoord.y;
+            unwrapTexcoord(y0, y1, y2);
         }
-
-        triangle.vertex[0].texcoord.y = triangle.vertex[0].texcoord.y;
-        triangle.vertex[1].texcoord.y = triangle.vertex[1].texcoord.y;
-        triangle.vertex[2].texcoord.y = triangle.vertex[2].texcoord.y;
     }
 
 } // namespace

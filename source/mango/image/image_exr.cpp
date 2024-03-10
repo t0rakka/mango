@@ -1268,7 +1268,7 @@ void readAttribute<float32x2>(float32x2& data, LittleEndianConstPointer p)
 {
     data.x = p.read32f();
     data.y = p.read32f();
-    printLine(Print::Info, "    {}, {}", data.x, data.y);
+    printLine(Print::Info, "    {}, {}", float(data.x), float(data.y));
 }
 
 template <>
