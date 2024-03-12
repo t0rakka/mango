@@ -12,7 +12,7 @@ using namespace mango::image;
 // pipelined jpeg reader
 // -----------------------------------------------------------------
 
-static inline 
+static inline
 bool isJPEG(const FileInfo& node)
 {
     std::string ext = mango::toLower(filesystem::getExtension(node.name));
