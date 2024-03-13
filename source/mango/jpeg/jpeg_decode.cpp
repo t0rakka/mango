@@ -2118,25 +2118,24 @@ namespace mango::image::jpeg
             // - the markers are present for other decoders; we don't need them
             // -----------------------------------------------------------------
 
-            const u8* p = decodeState.buffer.ptr;
-
             const size_t stride = m_surface->stride;
             const size_t bytes_per_pixel = m_surface->format.bytes();
             const size_t xstride = bytes_per_pixel * xblock;
             const size_t ystride = stride * yblock;
 
+            const u8* p = decodeState.buffer.ptr;
             u8* image = m_surface->image;
 
-            int i = 0;
+#if 0
 
-            for (u32 offset : m_restart_offsets)
+            for (int y = 0; y < ymcu; ++y)
             {
+                u32 offset = m_restart_offsets[y];
+
                 // enqueue task
                 queue.enqueue([=]
                 {
                     AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
-
-                    int ymax = std::min(i + m_decode_interval, ymcu);
 
                     DecodeState state = decodeState;
                     state.buffer.ptr = p;
@@ -2148,10 +2147,60 @@ namespace mango::image::jpeg
                     const int xblock_last = xclip ? xclip : xblock;
                     const int yblock_last = yclip ? yclip : yblock;
 
-                    for (int y = i; y < ymax; ++y)
+                    u8* dest = image + y * ystride;
+                    int height = (y == ymcu_last) ? yblock_last : yblock;
+
+                    for (int x = 0; x < xmcu_last; ++x)
                     {
-                        u8* dest = image + y * ystride;
-                        int height = y == ymcu_last ? yblock_last : yblock;
+                        state.decode(data, &state);
+                        process_and_clip(dest, stride, data, xblock, height);
+                        dest += xstride;
+                    }
+
+                    // last column
+                    state.decode(data, &state);
+                    process_and_clip(dest, stride, data, xblock_last, height);
+                });
+
+                p = memory.address + offset;
+            }
+
+            decodeState.buffer.ptr = p;
+
+#else
+
+            // workaround for restart interval being only one row of MCUs (JPEG specification)
+            // less overhead as multiply intervals are in same task
+
+            const u32* offsets = m_restart_offsets.data();
+
+            for (int y = 0; y < ymcu; y += N)
+            {
+                int y0 = y;
+                int y1 = std::min(y + N, ymcu);
+
+                // enqueue task
+                queue.enqueue([=]
+                {
+                    AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
+
+                    const int xmcu_last = xmcu - 1;
+                    const int ymcu_last = ymcu - 1;
+                    const int xclip = xsize % xblock;
+                    const int yclip = ysize % yblock;
+                    const int xblock_last = xclip ? xclip : xblock;
+                    const int yblock_last = yclip ? yclip : yblock;
+
+                    const u8* ptr = p;
+
+                    for (int i = y0; i < y1; ++i)
+                    {
+                        DecodeState state = decodeState;
+                        state.buffer.ptr = ptr;
+                        ptr = memory.address + offsets[i];
+
+                        u8* dest = image + i * ystride;
+                        int height = (y == ymcu_last) ? yblock_last : yblock;
 
                         for (int x = 0; x < xmcu_last; ++x)
                         {
@@ -2166,11 +2215,13 @@ namespace mango::image::jpeg
                     }
                 });
 
-                i += m_decode_interval;
-                p = memory.address + offset;
+                // use last offset in the range
+                p = memory.address + offsets[y1 - 1];
             }
 
             decodeState.buffer.ptr = p;
+
+#endif
         }
         else if (restartInterval)
         {
