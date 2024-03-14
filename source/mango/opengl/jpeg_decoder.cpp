@@ -31,9 +31,7 @@ const char* compute_shader_source = R"(
 
     uniform int u_xmcu;
 
-    uniform int u_quantize0[64];
-    uniform int u_quantize1[64];
-    uniform int u_quantize2[64];
+    uniform int u_quantize[3][64];
 
     uniform int u_huffman_dc[10];
     uniform int u_huffman_ac[10];
@@ -378,7 +376,7 @@ const char* compute_shader_source = R"(
 
         for (int mcu_x = 0; mcu_x < u_xmcu; ++mcu_x)
         {
-            int temp[3][64];
+            int result[3][64];
 
             for (int blk = 0; blk < 3; ++blk)
             {
@@ -386,9 +384,11 @@ const char* compute_shader_source = R"(
                 int ac = decodeBlocks[blk].ac;
                 int pred = decodeBlocks[blk].pred;
 
+                int temp[64];
+
                 for (int i = 0; i < 64; ++i)
                 {
-                    temp[blk][i] = 0;
+                    temp[i] = 0;
                 }
 
                 // DC
@@ -401,7 +401,7 @@ const char* compute_shader_source = R"(
                 s += last_dc_value[pred];
                 last_dc_value[pred] = s;
 
-                temp[blk][0] = int(s);
+                temp[0] = int(s);
 
                 // AC
                 for (int i = 1; i < 64; )
@@ -413,7 +413,7 @@ const char* compute_shader_source = R"(
                     {
                         i += int(s >> 4);
                         s = receive(bitbuffer, x);
-                        temp[blk][zigzagTable[i++]] = int(s);
+                        temp[zigzagTable[i++]] = int(s);
                     }
                     else
                     {
@@ -422,17 +422,10 @@ const char* compute_shader_source = R"(
                         i += 16;
                     }
                 }
+
+                // inverse DCT
+                idct(result[blk], temp, u_quantize[blk]);
             }
-
-            // inverse DCT
-
-            int lm[64];
-            int cb[64];
-            int cr[64];
-
-            idct(lm, temp[0], u_quantize0);
-            idct(cb, temp[1], u_quantize1);
-            idct(cr, temp[2], u_quantize2);
 
             // resolve color
 
@@ -442,11 +435,11 @@ const char* compute_shader_source = R"(
             {
                 for (int x = 0; x < 8; ++x)
                 {
-                    ivec2 coord = blockCoord + ivec2(x, y);
-                    float Y = float(lm[y * 8 + x]) / 255.0;
-                    float cb = float(cb[y * 8 + x] - 128) / 255.0;
-                    float cr = float(cr[y * 8 + x] - 128) / 255.0;
+                    float Y  = float(result[0][y * 8 + x]) / 255.0;
+                    float cb = float(result[1][y * 8 + x] - 128) / 255.0;
+                    float cr = float(result[2][y * 8 + x] - 128) / 255.0;
                     vec4 color = chroma_to_rgb(Y, cb, cr);
+                    ivec2 coord = blockCoord + ivec2(x, y);
                     imageStore(u_texture, coord, color);
                 }
             }
@@ -589,9 +582,9 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
             quantize[i + 64 * 2] = input.qt[2][i];
         }
 
-        glUniform1iv(glGetUniformLocation(program, "u_quantize0"), 64, quantize + 64 * 0);
-        glUniform1iv(glGetUniformLocation(program, "u_quantize1"), 64, quantize + 64 * 1);
-        glUniform1iv(glGetUniformLocation(program, "u_quantize2"), 64, quantize + 64 * 2);
+        glUniform1iv(glGetUniformLocation(program, "u_quantize[0]"), 64, quantize + 64 * 0);
+        glUniform1iv(glGetUniformLocation(program, "u_quantize[1]"), 64, quantize + 64 * 1);
+        glUniform1iv(glGetUniformLocation(program, "u_quantize[2]"), 64, quantize + 64 * 2);
 
         int huffman_dc [] =
         {
