@@ -230,9 +230,6 @@ const char* compute_shader_source = R"(
         int pred;
     };
 
-#define JPEG_HUFF_LOOKUP_BITS 5
-#define JPEG_HUFF_LOOKUP_SIZE (1 << JPEG_HUFF_LOOKUP_BITS)
-
     struct HuffmanTable
     {
         uint size[17];
@@ -240,8 +237,6 @@ const char* compute_shader_source = R"(
 
         uint maxcode[18];
         uint valueOffset[19];
-        uint lookupSize[JPEG_HUFF_LOOKUP_SIZE];
-        uint lookupValue[JPEG_HUFF_LOOKUP_SIZE];
     };
 
     void huffman_configure(inout HuffmanTable table)
@@ -295,44 +290,6 @@ const char* compute_shader_source = R"(
         }
         table.valueOffset[18] = 0;
         table.maxcode[17] = 0xffffffff;
-
-        for (int i = 0; i < JPEG_HUFF_LOOKUP_SIZE; i++)
-        {
-            table.lookupSize[i] = JPEG_HUFF_LOOKUP_BITS + 1;
-            table.lookupValue[i] = 0;
-        }
-
-        p = 0;
-
-        for (uint bits = 1; bits <= JPEG_HUFF_LOOKUP_BITS; ++bits)
-        {
-            uint ishift = JPEG_HUFF_LOOKUP_BITS - bits;
-            uint isize = table.size[bits];
-
-            uint current_size = bits;
-
-            for (int i = 1; i <= isize; ++i)
-            {
-                uint current_value = table.value[p];
-                uint lookbits = huffcode[p] << ishift;
-                ++p;
-
-                // Generate left-justified code followed by all possible bit sequences
-                int count = 1 << ishift;
-                for (uint mask = 0; mask < count; ++mask)
-                {
-                    uint x = lookbits | mask;
-                    if (x >= JPEG_HUFF_LOOKUP_SIZE)
-                    {
-                        // overflow
-                        return;
-                    }
-
-                    table.lookupSize[x] = current_size;
-                    table.lookupValue[x] = current_value;
-                }
-            }
-        }
     }
 
     HuffmanTable g_tables[4];
@@ -341,26 +298,16 @@ const char* compute_shader_source = R"(
     {
         ensure(bitbuffer);
 
-        uint index = peekBits(bitbuffer, JPEG_HUFF_LOOKUP_BITS);
-        uint size = g_tables[tableIndex].lookupSize[index];
+        uint size = 1;
 
-        uint symbol;
-
-        if (size <= JPEG_HUFF_LOOKUP_BITS)
+        uint x = (bitbuffer.data << (32 - bitbuffer.remain));
+        while (x > g_tables[tableIndex].maxcode[size])
         {
-            symbol = g_tables[tableIndex].lookupValue[index];
+            ++size;
         }
-        else
-        {
-            uint x = (bitbuffer.data << (32 - bitbuffer.remain));
-            while (x > g_tables[tableIndex].maxcode[size])
-            {
-                ++size;
-            }
 
-            uint offset = (x >> (32 - size)) + g_tables[tableIndex].valueOffset[size];
-            symbol = g_tables[tableIndex].value[offset];
-        }
+        uint offset = (x >> (32 - size)) + g_tables[tableIndex].valueOffset[size];
+        uint symbol = g_tables[tableIndex].value[offset];
 
         bitbuffer.remain -= size;
 
@@ -432,7 +379,7 @@ const char* compute_shader_source = R"(
         for (int mcu_x = 0; mcu_x < u_xmcu; ++mcu_x)
         {
             int temp[3][64];
-#if 1
+
             for (int blk = 0; blk < 3; ++blk)
             {
                 int dc = decodeBlocks[blk].dc;
@@ -476,18 +423,16 @@ const char* compute_shader_source = R"(
                     }
                 }
             }
-#endif
+
             // inverse DCT
 
             int lm[64];
             int cb[64];
             int cr[64];
 
-#if 1
             idct(lm, temp[0], u_quantize0);
             idct(cb, temp[1], u_quantize1);
             idct(cr, temp[2], u_quantize2);
-#endif
 
             // resolve color
 
