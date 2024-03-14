@@ -27,29 +27,30 @@ const char* compute_shader_source = R"(
     #version 430 core
 
     layout(rgba8, binding = 0) uniform image2D u_texture;
+
     layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
     uniform int u_xmcu;
 
     uniform int u_quantize[3][64];
 
-    uniform int u_huffman_dc[10];
-    uniform int u_huffman_ac[10];
-    uniform int u_huffman_pred[10];
+    //uniform int u_huffman_dc[10];
+    //uniform int u_huffman_ac[10];
+    //uniform int u_huffman_pred[10];
 
     layout(std430, binding = 0) buffer CompressedData
     {
-        uint input_data[];
+        uint input_data [];
     };
 
     layout(std430, binding = 1) buffer CompressedDataOffsets
     {
-        uint input_offsets[];
+        uint input_offsets [];
     };
 
     layout(std430, binding = 2) buffer HuffmanTables
     {
-        uint huffman_tables[];
+        uint huffman_tables [];
     };
 
     // --------------------------------------------------------------------
@@ -66,13 +67,6 @@ const char* compute_shader_source = R"(
         53, 60, 61, 54, 47, 55, 62, 63,
     };
 
-    int clamp(int x)
-    {
-        //if (x < 0) x = 0;
-        //else if (x > 255) x = 255;
-        return x;
-    }
-
     // --------------------------------------------------------------------
 
     struct IDCT
@@ -88,6 +82,7 @@ const char* compute_shader_source = R"(
         const int t3 = n0 + s2 * 3135;
         const int t0 = (s0 + s4) << 12;
         const int t1 = (s0 - s4) << 12;
+
         idct.x0 = t0 + t3;
         idct.x3 = t0 - t3;
         idct.x1 = t1 + t2;
@@ -102,6 +97,7 @@ const char* compute_shader_source = R"(
         p2 = p2 * -10497 + p5;
         p3 = p3 * -8034;
         p4 = p4 * -1597;
+
         idct.y0 = p1 + p3 + s7 * 1223;
         idct.y1 = p2 + p4 + s5 * 8410;
         idct.y2 = p2 + p3 + s3 * 12586;
@@ -132,6 +128,7 @@ const char* compute_shader_source = R"(
             idct.x1 += bias;
             idct.x2 += bias;
             idct.x3 += bias;
+
             temp[i * 8 + 0] = (idct.x0 + idct.y3) >> 10;
             temp[i * 8 + 1] = (idct.x1 + idct.y2) >> 10;
             temp[i * 8 + 2] = (idct.x2 + idct.y1) >> 10;
@@ -154,14 +151,15 @@ const char* compute_shader_source = R"(
             idct.x1 += bias;
             idct.x2 += bias;
             idct.x3 += bias;
-            dest[i * 8 + 0] = clamp((idct.x0 + idct.y3) >> 17);
-            dest[i * 8 + 1] = clamp((idct.x1 + idct.y2) >> 17);
-            dest[i * 8 + 2] = clamp((idct.x2 + idct.y1) >> 17);
-            dest[i * 8 + 3] = clamp((idct.x3 + idct.y0) >> 17);
-            dest[i * 8 + 4] = clamp((idct.x3 - idct.y0) >> 17);
-            dest[i * 8 + 5] = clamp((idct.x2 - idct.y1) >> 17);
-            dest[i * 8 + 6] = clamp((idct.x1 - idct.y2) >> 17);
-            dest[i * 8 + 7] = clamp((idct.x0 - idct.y3) >> 17);
+
+            dest[i * 8 + 0] = (idct.x0 + idct.y3) >> 17;
+            dest[i * 8 + 1] = (idct.x1 + idct.y2) >> 17;
+            dest[i * 8 + 2] = (idct.x2 + idct.y1) >> 17;
+            dest[i * 8 + 3] = (idct.x3 + idct.y0) >> 17;
+            dest[i * 8 + 4] = (idct.x3 - idct.y0) >> 17;
+            dest[i * 8 + 5] = (idct.x2 - idct.y1) >> 17;
+            dest[i * 8 + 6] = (idct.x1 - idct.y2) >> 17;
+            dest[i * 8 + 7] = (idct.x0 - idct.y3) >> 17;
         }
     }
 
@@ -204,7 +202,7 @@ const char* compute_shader_source = R"(
             if (x == 0xff)
             {
                 // skip stuff byte
-                //getByte(bitbuffer); // filtered out before uploaded
+                getByte(bitbuffer); // filtered out before uploaded
             }
             bitbuffer.data = (bitbuffer.data << 8) | x;
         }
@@ -462,7 +460,7 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
         Buffer buffer;
         std::vector<u32> offsets;
 
-#if 0
+#if 1
         for (auto interval : input.intervals)
         {
             ConstMemory memory = interval.memory;
@@ -489,21 +487,6 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
                 u8 s = *p++;
                 p += !!(s == 0xff);
                 temp.push_back(s);
-                /*
-                if (p[0] == 0xff)
-                {
-                    if (p[1] == 0x00)
-                    {
-                        // literal
-                        temp.push_back(p[0]);
-                    }
-                    p += 2;
-                }
-                else
-                {
-                    temp.push_back(*p++);
-                }
-                */
             }
 
             offsets.push_back(u32(buffer.size() / 4));
@@ -517,9 +500,9 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
 
         printf("  Buffer: %d bytes\n", u32(buffer.size()));
 
-        GLsizei blocks_in_mcu = GLsizei(input.blocks.size());
+        //GLsizei blocks_in_mcu = GLsizei(input.blocks.size());
 
-        std::vector<int> huffmanBuffer(310 * 4);
+        std::vector<int> huffmanBuffer(273 * 4);
 
         for (int i = 0; i < 4; ++i)
         {
@@ -586,6 +569,7 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
         glUniform1iv(glGetUniformLocation(program, "u_quantize[1]"), 64, quantize + 64 * 1);
         glUniform1iv(glGetUniformLocation(program, "u_quantize[2]"), 64, quantize + 64 * 2);
 
+#if 0
         int huffman_dc [] =
         {
             input.blocks[0].dc,
@@ -610,6 +594,7 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
         glUniform1iv(glGetUniformLocation(program, "u_huffman_dc"), blocks_in_mcu, huffman_dc);
         glUniform1iv(glGetUniformLocation(program, "u_huffman_ac"), blocks_in_mcu, huffman_ac);
         glUniform1iv(glGetUniformLocation(program, "u_huffman_pred"), blocks_in_mcu, huffman_pred);
+#endif
 
         glUniform1i(glGetUniformLocation(program, "u_xmcu"), input.xmcu);
 
