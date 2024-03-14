@@ -298,7 +298,7 @@ const char* compute_shader_source = R"(
     {
         ensure(bitbuffer);
 
-        uint size = 1;
+        uint size = 2;
 
         uint x = (bitbuffer.data << (32 - bitbuffer.remain));
         while (x > g_tables[tableIndex].maxcode[size])
