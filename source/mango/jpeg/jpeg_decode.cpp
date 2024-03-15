@@ -2200,7 +2200,7 @@ namespace mango::image::jpeg
                         ptr = memory.address + offsets[i];
 
                         u8* dest = image + i * ystride;
-                        int height = (y == ymcu_last) ? yblock_last : yblock;
+                        int height = (i == ymcu_last) ? yblock_last : yblock;
 
                         for (int x = 0; x < xmcu_last; ++x)
                         {
