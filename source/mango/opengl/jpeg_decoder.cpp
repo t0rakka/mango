@@ -395,50 +395,44 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
         printLine(Print::Info, "\n[ComputeDecode]");
         printLine(Print::Info, "  MCU: {} x {}.", input.xmcu, input.ymcu);
 
-        Buffer buffer;
+        GLuint sbo[3];
+        glGenBuffers(3, sbo);
+
+        // compute offset table
+
         std::vector<u32> offsets;
 
-#if 1
+        size_t offset = 0;
+
         for (auto interval : input.intervals)
         {
             ConstMemory memory = interval.memory;
-
-            offsets.push_back(u32(buffer.size() / 4));
-
-            size_t padding = align_padding(memory.size, 4);
-
-            buffer.append(memory);
-            buffer.append(padding, 0);
+            offsets.push_back(u32(offset / 4));
+            offset += align_offset(memory.size, 4);
         }
-#else
+
+        // upload offset table
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[1]);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, offsets.size() * 4, reinterpret_cast<GLvoid*>(offsets.data()), GL_DYNAMIC_COPY);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, sbo[1]);
+
+        // allocate bitstream buffer
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[0]);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, offset, nullptr, GL_STREAM_COPY);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sbo[0]);
+
+        // upload bitstream buffer in blocks (we must do this for alignment)
+
+        offset = 0;
+
         for (auto interval : input.intervals)
         {
-            std::vector<u8> temp;
-
-            // sanitize markers and stuff bytes
-
-            const u8* p = interval.memory.address;
-            const u8* end = interval.memory.end();
-
-            while (p < end)
-            {
-                u8 s = *p++;
-                p += !!(s == 0xff);
-                temp.push_back(s);
-            }
-
-            offsets.push_back(u32(buffer.size() / 4));
-
-            size_t padding = align_padding(temp.size(), 4);
-
-            buffer.append(temp.data(), temp.size());
-            buffer.append(padding, 0);
+            ConstMemory memory = interval.memory;
+            glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, memory.size, reinterpret_cast<const GLvoid*>(memory.address));
+            offset += align_offset(memory.size, 4);
         }
-#endif
 
-        printf("  Buffer: %d bytes\n", u32(buffer.size()));
-
-        //GLsizei blocks_in_mcu = GLsizei(input.blocks.size());
+        // compute huffman decoding tables
 
         std::vector<ComputeHuffmanTable> huffmanBuffer(4);
 
@@ -511,28 +505,12 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
         /*
         */
 
-        GLuint sbo[3];
-        glGenBuffers(3, sbo);
-
-#if 1
-        // upload compressed bitstream
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[0]);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, buffer.size(), reinterpret_cast<GLvoid*>(buffer.data()), GL_DYNAMIC_COPY);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sbo[0]);
-
-        // upload offset tables
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[1]);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, offsets.size() * 4, reinterpret_cast<GLvoid*>(offsets.data()), GL_DYNAMIC_COPY);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, sbo[1]);
-
         // upload huffman tables
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[2]);
         glBufferData(GL_SHADER_STORAGE_BUFFER, huffmanBuffer.size() * 310 * 4, reinterpret_cast<GLvoid*>(huffmanBuffer.data()), GL_DYNAMIC_COPY);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, sbo[2]);
-#endif
 
         glUseProgram(program);
-
         glBindImageTexture(0, texture, 0, GL_FALSE, 0,  GL_READ_WRITE, GL_RGBA8);
 
         glUniform1i(glGetUniformLocation(program, "u_texture"), 0);
@@ -559,6 +537,8 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
         glUniform1iv(glGetUniformLocation(program, "u_quantize[0]"), 64, quantize + 64 * 0);
         glUniform1iv(glGetUniformLocation(program, "u_quantize[1]"), 64, quantize + 64 * 1);
         glUniform1iv(glGetUniformLocation(program, "u_quantize[2]"), 64, quantize + 64 * 2);
+
+        //GLsizei blocks_in_mcu = GLsizei(input.blocks.size());
 
 #if 0
         int huffman_dc [] =
