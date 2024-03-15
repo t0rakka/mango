@@ -222,8 +222,8 @@ const char* compute_shader_source = R"(
         ensure(bitbuffer);
         bitbuffer.remain -= nbits;
         uint mask = (1 << nbits) - 1;
-        int value = int((bitbuffer.data >> bitbuffer.remain) & mask);
-        return uint(value - ((((value + value) >> nbits) - 1) & mask));
+        uint value = (bitbuffer.data >> bitbuffer.remain) & mask;
+        return value - ((((value + value) >> nbits) - 1) & mask);
     }
 
     // --------------------------------------------------------------------
