@@ -183,7 +183,9 @@ const char* compute_shader_source = R"(
         uint remain;
     };
 
-    uint getByte(inout BitBuffer bitbuffer)
+    BitBuffer bitbuffer;
+
+    uint getByte()
     {
         if (bitbuffer.used == 32)
         {
@@ -197,29 +199,29 @@ const char* compute_shader_source = R"(
         return x;
     }
 
-    uint peekBits(inout BitBuffer bitbuffer, uint nbits)
+    uint peekBits(uint nbits)
     {
         return (bitbuffer.data >> (bitbuffer.remain - nbits)) & ((1 << nbits) - 1);
     }
 
-    void ensure(inout BitBuffer bitbuffer)
+    void ensure()
     {
         while (bitbuffer.remain < 16)
         {
             bitbuffer.remain += 8;
-            uint x = getByte(bitbuffer);
+            uint x = getByte();
             if (x == 0xff)
             {
                 // skip stuff byte
-                getByte(bitbuffer); // filtered out before uploaded
+                getByte();
             }
             bitbuffer.data = (bitbuffer.data << 8) | x;
         }
     }
 
-    uint receive(inout BitBuffer bitbuffer, uint nbits)
+    uint receive(uint nbits)
     {
-        ensure(bitbuffer);
+        ensure();
         bitbuffer.remain -= nbits;
         uint mask = (1 << nbits) - 1;
         uint value = (bitbuffer.data >> bitbuffer.remain) & mask;
@@ -235,9 +237,9 @@ const char* compute_shader_source = R"(
         int pred;
     };
 
-    uint decode(inout BitBuffer bitbuffer, int tableIndex)
+    uint decode(int tableIndex)
     {
-        ensure(bitbuffer);
+        ensure();
 
         uint size = 2;
 
@@ -269,8 +271,6 @@ const char* compute_shader_source = R"(
 
     void main()
     {
-        BitBuffer bitbuffer;
-
         bitbuffer.offset = input_offsets[gl_GlobalInvocationID.y];
         bitbuffer.used = 0;
         bitbuffer.data = 0;
@@ -317,10 +317,10 @@ const char* compute_shader_source = R"(
                 }
 
                 // DC
-                uint s = decode(bitbuffer, dc);
+                uint s = decode(dc);
                 if (s != 0)
                 {
-                    s = receive(bitbuffer, s);
+                    s = receive(s);
                 }
 
                 s += last_dc_value[pred];
@@ -331,13 +331,13 @@ const char* compute_shader_source = R"(
                 // AC
                 for (int i = 1; i < 64; )
                 {
-                    uint s = decode(bitbuffer, ac);
+                    uint s = decode(ac);
                     uint x = s & 15;
 
                     if (x != 0)
                     {
                         i += int(s >> 4);
-                        s = receive(bitbuffer, x);
+                        s = receive(x);
                         temp[zigzagTable[i++]] = int(s);
                     }
                     else
@@ -411,26 +411,34 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
             offset += align_offset(memory.size, 4);
         }
 
+        const size_t buffer_size = offset;
+
         // upload offset table
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[1]);
         glBufferData(GL_SHADER_STORAGE_BUFFER, offsets.size() * 4, reinterpret_cast<GLvoid*>(offsets.data()), GL_DYNAMIC_COPY);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, sbo[1]);
 
         // allocate bitstream buffer
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[0]);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, offset, nullptr, GL_STREAM_COPY);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sbo[0]);
+
+        GLbitfield flags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
+        glBufferStorage(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, flags);
+
+        u8* ptr = reinterpret_cast<u8*>(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, buffer_size, flags));
 
         // upload bitstream buffer in blocks (we must do this for alignment)
-
         offset = 0;
 
         for (auto interval : input.intervals)
         {
             ConstMemory memory = interval.memory;
-            glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, memory.size, reinterpret_cast<const GLvoid*>(memory.address));
+            std::memcpy(ptr + offset, memory.address, memory.size);
             offset += align_offset(memory.size, 4);
         }
+
+        //glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
+        //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
         // compute huffman decoding tables
 
@@ -508,6 +516,10 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
         // upload huffman tables
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, sbo[2]);
         glBufferData(GL_SHADER_STORAGE_BUFFER, huffmanBuffer.size() * 310 * 4, reinterpret_cast<GLvoid*>(huffmanBuffer.data()), GL_DYNAMIC_COPY);
+
+        // setup binding points
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sbo[0]);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, sbo[1]);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, sbo[2]);
 
         glUseProgram(program);
@@ -600,7 +612,7 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
         */
 
         glDispatchCompute(1, GLuint(input.intervals.size()), 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
+        //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT | GL_BUFFER_UPDATE_BARRIER_BIT);
 
         glDeleteBuffers(3, sbo);
 
@@ -672,8 +684,10 @@ GLuint OpenGLJPEGDecoder::decode(ConstMemory memory)
     image::ImageDecodeOptions options;
     image::ImageDecodeStatus status = parser.decode(&context, options);
 
+    //glFinish();
+
     u64 time1 = mango::Time::us();
-    printLine(Print::Info, "  compute decode: {}.{} ms", (time1 - time0) / 1000, (time1 - time0) % 1000);
+    printLine(Print::Debug, "  compute decode: {}.{} ms", (time1 - time0) / 1000, (time1 - time0) % 1000);
 
     return context.texture;
 }
