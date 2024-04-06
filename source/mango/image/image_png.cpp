@@ -2096,9 +2096,9 @@ namespace
 
         void blend(Surface& d, Surface& s, Palette* palette);
 
-        int getBytesPerLine(int width) const
+        size_t getBytesPerLine(int width) const
         {
-            return m_channels * ((m_color_state.bits * width + 7) / 8);
+            return m_channels * ((m_color_state.bits * size_t(width) + 7) / 8);
         }
 
         void setError(const std::string& error)
@@ -2108,7 +2108,7 @@ namespace
             m_header.success = false;
         }
 
-        int getImageBufferSize(int width, int height) const;
+        size_t getImageBufferSize(int width, int height) const;
 
     public:
         ParserPNG(ConstMemory memory);
@@ -2850,9 +2850,9 @@ namespace
         }
     }
 
-    int ParserPNG::getImageBufferSize(int width, int height) const
+    size_t ParserPNG::getImageBufferSize(int width, int height) const
     {
-        int buffer_size = 0;
+        size_t buffer_size = 0;
 
         if (m_interlace)
         {
@@ -3133,8 +3133,8 @@ namespace
             }
         }
 
-        const int bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
-        const int buffer_size = getImageBufferSize(width, height);
+        const size_t bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
+        const size_t buffer_size = getImageBufferSize(width, height);
 
         // allocate output buffer
         Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
