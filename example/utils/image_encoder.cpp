@@ -12,6 +12,7 @@ void printHelp(std::string_view program)
     printLine("Usage: {} <options> <inputs>", program);
     printLine("  Options:");
     printLine("    -format .extension");
+    printLine("    -compression level(0..10)");
     printLine("    --info");
 }
 
@@ -26,6 +27,9 @@ int main(int argc, const char* argv[])
     }
 
     std::string request_format;
+
+    ImageEncodeOptions options;
+    options.compression = 8;
 
     int index = 1;
 
@@ -45,6 +49,19 @@ int main(int argc, const char* argv[])
                 {
                     printLine("Unsupported output format: {}", extension);
                 }
+            }
+            else
+            {
+                printHelp(program);
+                return 0;
+            }
+        }
+        if (std::string_view(argv[index]) == "-compression")
+        {
+            if (++index < argc)
+            {
+                int level = std::atoi(argv[index++]);
+                options.compression = level;
             }
             else
             {
@@ -86,10 +103,6 @@ int main(int argc, const char* argv[])
         q.enqueue([=]
         {
             Bitmap bitmap(filename);
-
-            // TODO: select encoding options from command line
-            ImageEncodeOptions options;
-            options.compression = 10;
 
             bitmap.save(output, options);
         });
