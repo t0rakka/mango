@@ -3566,8 +3566,8 @@ namespace
     static
     void compress_parallel(Stream& stream, ImageEncodeStatus& status, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
     {
-        const int bpp = surface.format.bytes();
-        const int bytes_per_scan = surface.width * bpp + 1;
+        const size_t bpp = surface.format.bytes();
+        const size_t bytes_per_scan = size_t(surface.width) * bpp + 1;
 
         Buffer buffer(bytes_per_scan * surface.height);
 
@@ -3600,7 +3600,7 @@ namespace
                 filter_range(source.address, surface, y, y + h);
 
                 constexpr size_t TEMP_SIZE = 128 * 1024;
-                u8 temp[TEMP_SIZE];
+                Buffer temp(TEMP_SIZE);
 
                 z_stream strm;
 
@@ -3713,7 +3713,7 @@ namespace
                 printLine(Print::Info, "[segment]");
                 printLine(Print::Info, "    N:     {}", int(N));
                 printLine(Print::Info, "    height: {}", height);
-                printLine(Print::Info, "    size:   {} KB", block_size/1024);
+                printLine(Print::Info, "    size:   {} KB", block_size / 1024);
             }
         }
 
