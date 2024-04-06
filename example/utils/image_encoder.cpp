@@ -12,6 +12,7 @@ void printHelp(std::string_view program)
     printLine("Usage: {} <options> <inputs>", program);
     printLine("  Options:");
     printLine("    -format .extension");
+    printLine("    --info");
 }
 
 int main(int argc, const char* argv[])
@@ -50,6 +51,11 @@ int main(int argc, const char* argv[])
                 printHelp(program);
                 return 0;
             }
+        }
+        else if (std::string_view(argv[index]) == "--info")
+        {
+            ++index;
+            printEnable(Print::Info, true);
         }
         else
         {
