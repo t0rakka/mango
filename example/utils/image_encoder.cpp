@@ -103,7 +103,6 @@ int main(int argc, const char* argv[])
         q.enqueue([=]
         {
             Bitmap bitmap(filename);
-
             bitmap.save(output, options);
         });
     }

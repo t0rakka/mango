@@ -2976,7 +2976,7 @@ namespace
 
     void ParserPNG::process_range(u8* image, u8* buffer, size_t stride, int width, const FilterDispatcher& filter, int y0, int y1)
     {
-        const int bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
+        const size_t bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
         ColorState::Function convert = getColorFunction(m_color_state, m_color_type, m_color_state.bits);
 
         buffer += y0 * bytes_per_line;
@@ -3178,7 +3178,8 @@ namespace
                     CompressionStatus result = decompress(output, memory);
                     if (!result)
                     {
-                        //printLine(Print::Info, "  {}", result.info);
+                        // NOTE: libdeflate will report "Bad Data", zlib works but slower
+                        //printLine(Print::Error, "  {}", result.info);
                     }
 
                     if (is_inline_process)
