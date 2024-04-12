@@ -114,6 +114,7 @@
 		A62C93DC2AEBFEE6000CDFA9 /* framebuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A62C93D82AEBFEE6000CDFA9 /* framebuffer.cpp */; };
 		A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895B1DFC6D4700252BC4 /* crc32.cpp */; };
 		A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */; };
+		A6358CBB2BC91DEA0060136D /* matchfinder_impl.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358CBA2BC91DEA0060136D /* matchfinder_impl.h */; };
 		A63BA3D8225EA6B6008BFB8C /* jpeg_process_sse2.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63BA3D6225EA6B6008BFB8C /* jpeg_process_sse2.hpp */; };
 		A63BA3D9225EA6B6008BFB8C /* jpeg_process_neon.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63BA3D7225EA6B6008BFB8C /* jpeg_process_neon.hpp */; };
 		A63DD7061E706DFA00D4D499 /* lz4.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7021E706DFA00D4D499 /* lz4.c */; };
@@ -304,7 +305,6 @@
 		A69B9DEE285ABF4200E7BEDC /* zlib_compress.c in Sources */ = {isa = PBXBuildFile; fileRef = A69B9DD7285ABF4200E7BEDC /* zlib_compress.c */; };
 		A69B9DEF285ABF4200E7BEDC /* zlib_constants.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9DD8285ABF4200E7BEDC /* zlib_constants.h */; };
 		A69B9DF0285ABF4200E7BEDC /* zlib_decompress.c in Sources */ = {isa = PBXBuildFile; fileRef = A69B9DD9285ABF4200E7BEDC /* zlib_decompress.c */; };
-		A69B9DF1285ABF4200E7BEDC /* adler32_vec_template.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9DDA285ABF4200E7BEDC /* adler32_vec_template.h */; };
 		A69B9DF2285ABF4200E7BEDC /* ht_matchfinder.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9DDB285ABF4200E7BEDC /* ht_matchfinder.h */; };
 		A69B9DFA285ABF7E00E7BEDC /* crc32_impl.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9DF3285ABF7D00E7BEDC /* crc32_impl.h */; };
 		A69B9DFB285ABF7E00E7BEDC /* adler32_impl.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9DF4285ABF7D00E7BEDC /* adler32_impl.h */; };
@@ -690,6 +690,7 @@
 		A62C93D82AEBFEE6000CDFA9 /* framebuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = framebuffer.cpp; path = opengl/framebuffer.cpp; sourceTree = "<group>"; };
 		A630895B1DFC6D4700252BC4 /* crc32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = crc32.cpp; path = core/crc32.cpp; sourceTree = "<group>"; };
 		A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = block_pvrtc.cpp; path = image/block_pvrtc.cpp; sourceTree = "<group>"; };
+		A6358CBA2BC91DEA0060136D /* matchfinder_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = matchfinder_impl.h; path = external/libdeflate/lib/riscv/matchfinder_impl.h; sourceTree = "<group>"; };
 		A63BA3D6225EA6B6008BFB8C /* jpeg_process_sse2.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jpeg_process_sse2.hpp; path = jpeg/jpeg_process_sse2.hpp; sourceTree = "<group>"; };
 		A63BA3D7225EA6B6008BFB8C /* jpeg_process_neon.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jpeg_process_neon.hpp; path = jpeg/jpeg_process_neon.hpp; sourceTree = "<group>"; };
 		A63DD7021E706DFA00D4D499 /* lz4.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lz4.c; path = external/lz4/lz4.c; sourceTree = "<group>"; };
@@ -879,7 +880,6 @@
 		A69B9DD7285ABF4200E7BEDC /* zlib_compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zlib_compress.c; path = external/libdeflate/lib/zlib_compress.c; sourceTree = "<group>"; };
 		A69B9DD8285ABF4200E7BEDC /* zlib_constants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zlib_constants.h; path = external/libdeflate/lib/zlib_constants.h; sourceTree = "<group>"; };
 		A69B9DD9285ABF4200E7BEDC /* zlib_decompress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zlib_decompress.c; path = external/libdeflate/lib/zlib_decompress.c; sourceTree = "<group>"; };
-		A69B9DDA285ABF4200E7BEDC /* adler32_vec_template.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = adler32_vec_template.h; path = external/libdeflate/lib/adler32_vec_template.h; sourceTree = "<group>"; };
 		A69B9DDB285ABF4200E7BEDC /* ht_matchfinder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ht_matchfinder.h; path = external/libdeflate/lib/ht_matchfinder.h; sourceTree = "<group>"; };
 		A69B9DF3285ABF7D00E7BEDC /* crc32_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = crc32_impl.h; path = external/libdeflate/lib/arm/crc32_impl.h; sourceTree = "<group>"; };
 		A69B9DF4285ABF7D00E7BEDC /* adler32_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = adler32_impl.h; path = external/libdeflate/lib/arm/adler32_impl.h; sourceTree = "<group>"; };
@@ -1414,6 +1414,14 @@
 			name = lcms;
 			sourceTree = "<group>";
 		};
+		A6358CB92BC91DD90060136D /* riscv */ = {
+			isa = PBXGroup;
+			children = (
+				A6358CBA2BC91DEA0060136D /* matchfinder_impl.h */,
+			);
+			name = riscv;
+			sourceTree = "<group>";
+		};
 		A63DD6F21E706D5900D4D499 /* jpeg */ = {
 			isa = PBXGroup;
 			children = (
@@ -1434,8 +1442,6 @@
 		A63DD7011E706DAA00D4D499 /* external */ = {
 			isa = PBXGroup;
 			children = (
-				A63F722A2B4F695500137C36 /* mikktspace.c */,
-				A63F722B2B4F695500137C36 /* mikktspace.h */,
 				A63F72292B4F693F00137C36 /* mikktspace */,
 				A63F72242B4F691A00137C36 /* simdjson */,
 				A63F72132B4F68CD00137C36 /* fastgltf */,
@@ -1628,6 +1634,8 @@
 		A63F72292B4F693F00137C36 /* mikktspace */ = {
 			isa = PBXGroup;
 			children = (
+				A63F722A2B4F695500137C36 /* mikktspace.c */,
+				A63F722B2B4F695500137C36 /* mikktspace.h */,
 			);
 			name = mikktspace;
 			sourceTree = "<group>";
@@ -1821,10 +1829,10 @@
 		A6DD288D24125ED20085E6EE /* lib */ = {
 			isa = PBXGroup;
 			children = (
+				A6358CB92BC91DD90060136D /* riscv */,
 				A6DD288F24125EE90085E6EE /* arm */,
 				A6DD288E24125EDC0085E6EE /* x86 */,
 				A6EAF57129ECA388001EA03B /* adler32.c */,
-				A69B9DDA285ABF4200E7BEDC /* adler32_vec_template.h */,
 				A69B9DC5285ABF4100E7BEDC /* bt_matchfinder.h */,
 				A69B9DD1285ABF4200E7BEDC /* cpu_features_common.h */,
 				A6EAF57029ECA388001EA03B /* crc32.c */,
@@ -2220,6 +2228,7 @@
 				A6EC3FA7230D7C6100B17F21 /* types.h in Headers */,
 				A63F721F2B4F690F00137C36 /* parser.hpp in Headers */,
 				A63DD7911E706F3400D4D499 /* bzlib.h in Headers */,
+				A6358CBB2BC91DEA0060136D /* matchfinder_impl.h in Headers */,
 				A64243A121852AEF0044B763 /* LzmaEnc.h in Headers */,
 				A63F72202B4F690F00137C36 /* util.hpp in Headers */,
 				A6EC3F16230D7C1500B17F21 /* msa_macro.h in Headers */,
@@ -2408,7 +2417,6 @@
 				A642437421852AEF0044B763 /* 7zTypes.h in Headers */,
 				A6E7DF482651D07E006A912E /* compiler.h in Headers */,
 				A63DD7981E706F5400D4D499 /* lzodefs.h in Headers */,
-				A69B9DF1285ABF4200E7BEDC /* adler32_vec_template.h in Headers */,
 				A6EC3FAA230D7C6100B17F21 /* demux.h in Headers */,
 				A642436B21852AEF0044B763 /* Precomp.h in Headers */,
 				A63DD74A1E706EB200D4D499 /* array.hpp in Headers */,
@@ -2451,7 +2459,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1520;
+				LastUpgradeCheck = 1530;
 			};
 			buildConfigurationList = A0F981B315B9E61D00B8C49F /* Build configuration list for PBXProject "mango" */;
 			compatibilityVersion = "Xcode 3.2";
