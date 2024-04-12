@@ -2985,7 +2985,7 @@ namespace
         for (int y = y0; y < y1; ++y)
         {
             // filtering
-            filter(buffer, buffer - bytes_per_line, bytes_per_line);
+            filter(buffer, buffer - bytes_per_line, int(bytes_per_line));
 
             // color conversion
             convert(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
@@ -3002,7 +3002,7 @@ namespace
             return;
         }
 
-        const int bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
+        const size_t bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
 
         ColorState::Function convert = getColorFunction(m_color_state, m_color_type, m_color_state.bits);
 

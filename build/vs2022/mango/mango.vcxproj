@@ -244,7 +244,6 @@
     <ClInclude Include="..\..\..\source\external\lcms\lcms2_plugin.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\common_defs.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\libdeflate.h" />
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\adler32_vec_template.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\adler32_impl.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\cpu_features.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\arm\crc32_impl.h" />
@@ -263,6 +262,7 @@
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\ht_matchfinder.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\lib_common.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\matchfinder_common.h" />
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\riscv\matchfinder_impl.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\adler32_impl.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\cpu_features.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\crc32_impl.h" />

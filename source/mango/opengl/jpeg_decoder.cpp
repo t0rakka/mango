@@ -469,7 +469,7 @@ struct ComputeDecoderContext : jpeg::ComputeDecoder
                 int count = int(table.size[j]);
                 while (count-- > 0)
                 {
-                    huffsize[p++] = uint(j);
+                    huffsize[p++] = j;
                 }
             }
             huffsize[p] = 0;

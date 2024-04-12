@@ -211,6 +211,9 @@
     <Filter Include="mango\include\core\fmt">
       <UniqueIdentifier>{a80fdfe1-03da-44ab-8f29-1b5c55852a19}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\libdeflate\lib\riscv">
+      <UniqueIdentifier>{3ac467c0-32f6-4367-b23e-23c8ff71b837}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\mango\core\bits.hpp">
@@ -1182,9 +1185,6 @@
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\zlib_constants.h">
       <Filter>external\libdeflate\lib</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\source\external\libdeflate\lib\adler32_vec_template.h">
-      <Filter>external\libdeflate\lib</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\bt_matchfinder.h">
       <Filter>external\libdeflate\lib</Filter>
     </ClInclude>
@@ -1397,6 +1397,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\include\mango\math\vector_simd.hpp">
       <Filter>mango\include\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libdeflate\lib\riscv\matchfinder_impl.h">
+      <Filter>external\libdeflate\lib\riscv</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
