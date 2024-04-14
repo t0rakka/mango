@@ -87,14 +87,6 @@ OPTION(ENABLE_BMI           "Enable BMI"                                OFF)
 OPTION(ENABLE_BMI2          "Enable BMI2"                               OFF)
 OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
 
-# ------------------------------------------------------------------------------
-# include directories
-# ------------------------------------------------------------------------------
-
-include_directories("../include/")
-include_directories("../source/external/libwebp/")
-include_directories("../source/external/fastgltf/include/")
-include_directories("../source/external/simdjson/")
 
 # ------------------------------------------------------------------------------
 # source directories
@@ -219,6 +211,7 @@ else()
 
 endif()
 
+SET(MAIN_HEADER             "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/mango.hpp")
 FILE(GLOB IMAGE_HEADERS     "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/image/*.hpp")
 FILE(GLOB JPEG_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.hpp")
 FILE(GLOB MATH_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/math/*.hpp")
@@ -231,6 +224,7 @@ FILE(GLOB MATH_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/math/*.
 FILE(GLOB SIMD_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/simd/*.cpp")
 FILE(GLOB IMPORT3D_SOURCES  "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/import3d/*.cpp")
 
+SOURCE_GROUP("include"            FILES ${MAIN_HEADER})
 SOURCE_GROUP("include/core"       FILES ${CORE_HEADERS})
 SOURCE_GROUP("include/filesystem" FILES ${FILESYSTEM_HEADERS})
 SOURCE_GROUP("include/image"      FILES ${IMAGE_HEADERS})
@@ -369,10 +363,8 @@ SOURCE_GROUP("external" FILES
 # libraries
 # ------------------------------------------------------------------------------
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 add_library(mango
+    ${MAIN_HEADER}
     ${CORE_HEADERS}
     ${CORE_SOURCES}
     ${FILESYSTEM_HEADERS}
@@ -409,6 +401,8 @@ add_library(mango
 set_target_properties(mango PROPERTIES
     VERSION ${MANGO_VERSION_STRING}
     SOVERSION ${MANGO_VERSION_MAJOR}
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
 )
 
 add_library(mango-opengl
@@ -419,6 +413,8 @@ add_library(mango-opengl
 set_target_properties(mango-opengl PROPERTIES
     VERSION ${MANGO_OPENGL_VERSION_STRING}
     SOVERSION ${MANGO_OPENGL_VERSION_MAJOR}
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
 )
 
 target_link_libraries(mango-opengl PUBLIC mango)
@@ -432,6 +428,8 @@ add_library(mango-import3d
 set_target_properties(mango-import3d PROPERTIES
     VERSION ${MANGO_IMPORT3D_VERSION_STRING}
     SOVERSION ${MANGO_IMPORT3D_VERSION_MAJOR}
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
 )
 
 target_link_libraries(mango-import3d PUBLIC mango)
@@ -549,9 +547,19 @@ endif ()
 # install
 # ------------------------------------------------------------------------------
 
-target_include_directories(mango INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include/mango>
-    $<INSTALL_INTERFACE:include/mango>
+target_include_directories(mango
+  PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include/>
+  INTERFACE
+    $<INSTALL_INTERFACE:include/mango/>
+  PRIVATE
+    "${PROJECT_SOURCE_DIR}/../source/external/libwebp"
+)
+
+target_include_directories(mango-import3d
+  PRIVATE
+    "${PROJECT_SOURCE_DIR}/../source/external/fastgltf/include"
+    "${PROJECT_SOURCE_DIR}/../source/external/simdjson"
 )
 
 install(TARGETS mango
@@ -574,7 +582,7 @@ install(TARGETS mango-import3d
 )
 
 install(
-    DIRECTORY ${CMAKE_SOURCE_DIR}/../include/
+    DIRECTORY ${PROJECT_SOURCE_DIR}/../include/
     DESTINATION include
     FILES_MATCHING PATTERN "*.h*"
 )
