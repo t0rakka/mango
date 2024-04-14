@@ -11,6 +11,8 @@
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
 
+#include <shellapi.h>
+
 namespace
 {
     using namespace mango;
