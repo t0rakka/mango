@@ -1050,7 +1050,7 @@ namespace
                     switch (colorModel)
                     {
                         case KHR_DF_MODEL_ETC1S:
-                            // NOTE: This should be already be detected as supercompression
+                            // NOTE: This should already have been detected as supercompression
                             break;
                         case KDF_DF_MODEL_UASTC:
                             m_is_uastc = true;
