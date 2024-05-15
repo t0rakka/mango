@@ -60,8 +60,8 @@ protected:
     GLuint texture = 0;
 
 public:
-    DemoWindow(const std::string& filename)
-        : OpenGLContext(1280, 800)
+    DemoWindow(const std::string& filename, int width, int height)
+        : OpenGLContext(width, height)
     {
         setTitle("OpenGL Compute Shader");
 
@@ -189,5 +189,35 @@ int main(int argc, const char* argv[])
     }
 
     std::string filename = argv[1];
-    DemoWindow window(filename);
+
+    // compute window size
+    ImageHeader header = ImageDecoder(filesystem::File(filename), ".jpg").header();
+    int32x2 screen = mango::Window::getScreenSize();
+    int32x2 window(header.width, header.height);
+
+    if (window.x > screen.x)
+    {
+        // fit horizontally
+        int scale = div_ceil(window.x, screen.x);
+        window.x = window.x / scale;
+        window.y = window.y / scale;
+    }
+
+    if (window.y > screen.y)
+    {
+        // fit vertically
+        int scale = div_ceil(window.y, screen.y);
+        window.x = window.x / scale;
+        window.y = window.y / scale;
+    }
+
+    if (window.y < screen.y)
+    {
+        // enlarge tiny windows
+        int scale = std::max(1, (screen.y / std::max(1, window.y)) / 2);
+        window.x *= scale;
+        window.y *= scale;
+    }
+
+    DemoWindow demo(filename, window.x, window.y);
 }
