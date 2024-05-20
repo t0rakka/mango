@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <chrono>
 #include <mango/core/system.hpp>
@@ -101,7 +101,7 @@ namespace mango
 
     ThreadPool::ThreadPool(size_t size)
         : m_queues(nullptr)
-        , m_static_queue(this, int(Priority::NORMAL), "static")
+        , m_static_queue(this, int(Priority::Normal), "static")
         , m_threads(size)
     {
         m_queues = new TaskQueue[3];
@@ -270,7 +270,7 @@ namespace mango
 
     ConcurrentQueue::ConcurrentQueue()
         : m_pool(ThreadPool::getInstance())
-        , m_queue(&m_pool, int(Priority::NORMAL), "")
+        , m_queue(&m_pool, int(Priority::Normal), "")
     {
     }
 
@@ -282,7 +282,7 @@ namespace mango
 
     ConcurrentQueue::ConcurrentQueue(ThreadPool& pool)
         : m_pool(pool)
-        , m_queue(&m_pool, int(Priority::NORMAL), "")
+        , m_queue(&m_pool, int(Priority::Normal), "")
     {
     }
 

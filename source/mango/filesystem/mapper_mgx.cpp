@@ -362,7 +362,7 @@ namespace mango::filesystem
             std::shared_ptr<Buffer> buffer = std::make_shared<Buffer>(file.size);
             u8* x = *buffer;
 
-            ConcurrentQueue q("mgx.decompressor", Priority::HIGH);
+            ConcurrentQueue q("mgx.decompressor", Priority::High);
 
             for (const auto& segment : file.segments)
             {

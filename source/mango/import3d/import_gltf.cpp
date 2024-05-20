@@ -375,15 +375,15 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         switch (current.alphaMode)
         {
             case fastgltf::AlphaMode::Opaque:
-                material.alphaMode = Material::AlphaMode::ALPHA_OPAQUE;
+                material.alphaMode = Material::AlphaMode::Opaque;
                 break;
 
             case fastgltf::AlphaMode::Mask:
-                material.alphaMode = Material::AlphaMode::ALPHA_MASK;
+                material.alphaMode = Material::AlphaMode::Mask;
                 break;
 
             case fastgltf::AlphaMode::Blend:
-                material.alphaMode = Material::AlphaMode::ALPHA_BLEND;
+                material.alphaMode = Material::AlphaMode::Blend;
                 break;
         }
 

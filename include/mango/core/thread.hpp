@@ -87,9 +87,9 @@ namespace mango
 
     enum class Priority
     {
-        HIGH = 0,
-        NORMAL = 1,
-        LOW = 2
+        High   = 0,
+        Normal = 1,
+        Low    = 2
     };
 
     // ----------------------------------------------------------------------------------
@@ -127,9 +127,9 @@ namespace mango
 
     public:
         ConcurrentQueue();
-        ConcurrentQueue(const std::string& name, Priority priority = Priority::NORMAL);
+        ConcurrentQueue(const std::string& name, Priority priority = Priority::Normal);
         ConcurrentQueue(ThreadPool& pool);
-        ConcurrentQueue(ThreadPool& pool, const std::string& name, Priority priority = Priority::NORMAL);
+        ConcurrentQueue(ThreadPool& pool, const std::string& name, Priority priority = Priority::Normal);
         ~ConcurrentQueue();
 
         template <class F, class... Args>

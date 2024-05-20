@@ -37,9 +37,9 @@ namespace mango::import3d
     {
         enum class AlphaMode
         {
-            ALPHA_OPAQUE,
-            ALPHA_MASK,
-            ALPHA_BLEND
+            Opaque,
+            Mask,
+            Blend
         };
 
         std::string name;
@@ -55,7 +55,7 @@ namespace mango::import3d
         Texture normalTexture;
         Texture occlusionTexture;
 
-        AlphaMode alphaMode { AlphaMode::ALPHA_OPAQUE };
+        AlphaMode alphaMode { AlphaMode::Opaque };
         float alphaCutoff { 0.5f };
         bool twosided { false };
     };
