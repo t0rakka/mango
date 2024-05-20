@@ -134,7 +134,7 @@ void example5()
 
     // The queue names can be useful when debugging and instrumenting
     // the ThreadPool to get more detailed information what is going on.
-    ConcurrentQueue queue("important queue", Priority::HIGH);
+    ConcurrentQueue queue("important queue", Priority::High);
 
     // NOTE: Enqueue tasks here..
 }
