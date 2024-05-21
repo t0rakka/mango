@@ -549,7 +549,6 @@ external_deflate_headers = files(
     '../source/external/libdeflate/lib/x86/crc32_pclmul_template.h',
     '../source/external/libdeflate/lib/x86/decompress_impl.h',
     '../source/external/libdeflate/lib/x86/matchfinder_impl.h',
-    '../source/external/libdeflate/lib/adler32_vec_template.h',
     '../source/external/libdeflate/lib/bt_matchfinder.h',
     '../source/external/libdeflate/lib/cpu_features_common.h',
     '../source/external/libdeflate/lib/crc32_multipliers.h',
