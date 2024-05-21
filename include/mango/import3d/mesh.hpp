@@ -135,12 +135,10 @@ namespace mango::import3d
 
     struct Node
     {
-        static constexpr u32 NONE = 0xffffffff;
-
         std::string name;
         std::vector<u32> children;
         matrix4x4 transform { 1.0f };
-        u32 mesh = NONE;
+        std::optional<u32> mesh;
     };
 
     struct Scene

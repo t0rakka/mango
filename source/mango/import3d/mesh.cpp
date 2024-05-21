@@ -169,7 +169,7 @@ namespace mango::import3d
 
     IndexedMesh::IndexedMesh(const Mesh& mesh, u32 material)
     {
-        append(mesh, material);    
+        append(mesh, material);
     }
 
     void IndexedMesh::append(const Mesh& mesh, u32 material)

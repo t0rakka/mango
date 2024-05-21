@@ -811,7 +811,6 @@ namespace mango::import3d
         printLine("Nodes: {}", nodes.size());
 
         // NOTE: we don't care about hierarchy in the .obj scene
-
         for (size_t i = 0; i < nodes.size(); ++i)
         {
             u32 index = u32(i);
