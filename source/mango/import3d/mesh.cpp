@@ -209,7 +209,7 @@ namespace mango::import3d
 
         Primitive primitive;
 
-        primitive.mode = Primitive::TRIANGLE_LIST;
+        primitive.type = Primitive::Type::TriangleList;
         primitive.start = u32(startIndex);
         primitive.count = u32(endIndex - startIndex);
         primitive.base = 0;
@@ -315,7 +315,7 @@ namespace mango::import3d
 
         Primitive primitive;
 
-        primitive.mode = Primitive::TRIANGLE_LIST;
+        primitive.type = Primitive::Type::TriangleList;
         primitive.start = 0;
         primitive.count = 36;
         primitive.base = 0;
@@ -359,7 +359,7 @@ namespace mango::import3d
             2, 1, 0, 1, 2, 3, 5, 4, 3, 4, 8, 3,
             7, 6, 0, 6, 9, 0, 11, 10, 4, 10, 11, 6,
             9, 5, 2, 5, 9, 11, 8, 7, 1, 7, 8, 10,
-            2, 5, 3, 8, 1, 3, 9, 2, 0, 1, 7, 0, 
+            2, 5, 3, 8, 1, 3, 9, 2, 0, 1, 7, 0,
             11, 9, 6, 7, 10, 6, 5, 11, 4, 10, 8, 4,
         };
 
@@ -552,7 +552,7 @@ namespace mango::import3d
 
         Primitive primitive;
 
-        primitive.mode = Primitive::TRIANGLE_LIST;
+        primitive.type = Primitive::Type::TriangleList;
         primitive.start = 0;
         primitive.count = u32(mesh.indices.size());
         primitive.base = 0;
@@ -665,7 +665,7 @@ namespace mango::import3d
 
         Primitive primitive;
 
-        primitive.mode = Primitive::TRIANGLE_STRIP;
+        primitive.type = Primitive::Type::TriangleStrip;
         primitive.start = 0;
         primitive.count = u32(mesh.indices.size());
         primitive.base = 0;

@@ -909,7 +909,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 {
                     case fastgltf::PrimitiveType::Triangles:
                     {
-                        primitive.mode = Primitive::TRIANGLE_LIST;
+                        primitive.type = Primitive::Type::TriangleList;
 
                         for (size_t i = 0; i < indices.size(); i += 3)
                         {
@@ -922,7 +922,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
                     case fastgltf::PrimitiveType::TriangleStrip:
                     {
-                        primitive.mode = Primitive::TRIANGLE_LIST;
+                        primitive.type = Primitive::Type::TriangleList;
 
                         u32 index0 = indices[0];
                         u32 index1 = indices[1];
@@ -952,7 +952,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
                     case fastgltf::PrimitiveType::TriangleFan:
                     {
-                        primitive.mode = Primitive::TRIANGLE_FAN;
+                        primitive.type = Primitive::Type::TriangleFan;
 
                         temp.push_back(indices[0]);
 

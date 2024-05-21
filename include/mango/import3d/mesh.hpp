@@ -61,7 +61,7 @@ namespace mango::import3d
     };
 
     // -----------------------------------------------------------------------
-    // TriangleMesh
+    // Mesh
     // -----------------------------------------------------------------------
 
     struct Vertex
@@ -101,14 +101,14 @@ namespace mango::import3d
 
     struct Primitive
     {
-        enum Mode
+        enum class Type
         {
-            TRIANGLE_LIST,
-            TRIANGLE_STRIP,
-            TRIANGLE_FAN,
+            TriangleList,
+            TriangleStrip,
+            TriangleFan,
         };
 
-        Mode mode = TRIANGLE_LIST;
+        Type type = Type::TriangleList;
         u32 start = 0;
         u32 count = 0;
         u32 base = 0;

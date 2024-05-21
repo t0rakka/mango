@@ -789,7 +789,7 @@ namespace mango::import3d
 
                 Primitive primitive;
 
-                primitive.mode = Primitive::TRIANGLE_LIST;
+                primitive.type = Primitive::Type::TriangleList;
                 primitive.start = 0;
                 primitive.count = u32(mesh.indices.size());
                 primitive.base = 0;
