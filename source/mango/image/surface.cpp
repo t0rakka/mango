@@ -313,19 +313,19 @@ namespace mango::image
 
         rect.width = dest.width;
         rect.height = dest.height;
-        rect.src_address = source.image;
-        rect.src_stride = source.stride;
-        rect.dest_address = dest.image;
-        rect.dest_stride = dest.stride;
+        rect.source.address = source.image;
+        rect.source.stride = source.stride;
+        rect.dest.address = dest.image;
+        rect.dest.stride = dest.stride;
 
         if (x < 0)
         {
-            rect.src_address -= x * source.format.bytes();
+            rect.source.address -= x * source.format.bytes();
         }
 
         if (y < 0)
         {
-            rect.src_address -= y * source.stride;
+            rect.source.address -= y * source.stride;
         }
 
         Blitter blitter(dest.format, source.format);
@@ -335,7 +335,7 @@ namespace mango::image
 
         if (ThreadPool::getHardwareConcurrency() > 2 && rect.height >= slice * 2)
         {
-            ConcurrentQueue queue("blit", Priority::HIGH);
+            ConcurrentQueue queue("blit", Priority::High);
 
             for (int y = 0; y < rect.height; y += slice)
             {
@@ -346,8 +346,8 @@ namespace mango::image
 
                     BlitRect temp = rect;
 
-                    temp.dest_address += y0 * rect.dest_stride;
-                    temp.src_address += y0 * rect.src_stride;
+                    temp.dest.address += y0 * rect.dest.stride;
+                    temp.source.address += y0 * rect.source.stride;
                     temp.height = y1 - y0;
 
                     blitter.convert(temp);

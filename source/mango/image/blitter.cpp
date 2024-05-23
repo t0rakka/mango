@@ -426,8 +426,8 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            const u8* s = rect.src_address + rect.src_stride * y;
-            u8* d = rect.dest_address + rect.dest_stride * y;;
+            const u8* s = rect.source.address + rect.source.stride * y;
+            u8* d = rect.dest.address + rect.dest.stride * y;;
 
             for (int x = 0; x < width; ++x)
             {
@@ -624,8 +624,8 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            const u8* s = rect.src_address + rect.src_stride * y;
-            u8* d = rect.dest_address + rect.dest_stride * y;;
+            const u8* s = rect.source.address + rect.source.stride * y;
+            u8* d = rect.dest.address + rect.dest.stride * y;;
 
             int xcount = width;
 
@@ -672,8 +672,8 @@ namespace
             BlitRect patch = rect;
 
             patch.width = xremain;
-            patch.src_address += (width - xremain) * sizeof(SourceType);
-            patch.dest_address += (width - xremain) * sizeof(DestType);
+            patch.source.address += (width - xremain) * sizeof(SourceType);
+            patch.dest.address += (width - xremain) * sizeof(DestType);
 
             table_convert_template_unorm_unorm<DestType, SourceType>(blitter, patch);
         }
@@ -871,8 +871,8 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            const u8* s = rect.src_address + rect.src_stride * y;
-            u8* d = rect.dest_address + rect.dest_stride * y;;
+            const u8* s = rect.source.address + rect.source.stride * y;
+            u8* d = rect.dest.address + rect.dest.stride * y;;
 
             int xcount = width;
 
@@ -919,8 +919,8 @@ namespace
             BlitRect patch = rect;
 
             patch.width = xremain;
-            patch.src_address += (width - xremain) * sizeof(SourceType);
-            patch.dest_address += (width - xremain) * sizeof(DestType);
+            patch.source.address += (width - xremain) * sizeof(SourceType);
+            patch.dest.address += (width - xremain) * sizeof(DestType);
 
             table_convert_template_unorm_unorm<DestType, SourceType>(blitter, patch);
         }
@@ -1230,8 +1230,8 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            const u8* s = rect.src_address + rect.src_stride * y;
-            u8* d = rect.dest_address + rect.dest_stride * y;;
+            const u8* s = rect.source.address + rect.source.stride * y;
+            u8* d = rect.dest.address + rect.dest.stride * y;;
 
             int xcount = width;
 
@@ -1278,8 +1278,8 @@ namespace
             BlitRect patch = rect;
 
             patch.width = xremain;
-            patch.src_address += (width - xremain) * sizeof(SourceType);
-            patch.dest_address += (width - xremain) * sizeof(DestType);
+            patch.source.address += (width - xremain) * sizeof(SourceType);
+            patch.dest.address += (width - xremain) * sizeof(DestType);
 
             table_convert_template_unorm_unorm<DestType, SourceType>(blitter, patch);
         }
@@ -1369,8 +1369,8 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            const u8* s = rect.src_address + rect.src_stride * y;
-            u8* d = rect.dest_address + rect.dest_stride * y;;
+            const u8* s = rect.source.address + rect.source.stride * y;
+            u8* d = rect.dest.address + rect.dest.stride * y;;
 
             for (int x = 0; x < width; ++x)
             {
@@ -1435,8 +1435,8 @@ namespace
         const int offset2 = offset[2];
         const int offset3 = offset[3];
 
-        u8* source = rect.src_address;
-        u8* dest = rect.dest_address;
+        u8* source = rect.source.address;
+        u8* dest = rect.dest.address;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -1454,8 +1454,8 @@ namespace
                 src += components;
             }
 
-            source += rect.src_stride;
-            dest += rect.dest_stride;
+            source += rect.source.stride;
+            dest += rect.dest.stride;
         }
     }
 
@@ -1508,8 +1508,8 @@ namespace
         const float alpha2 = alpha[2];
         const float alpha3 = alpha[3];
 
-        u8* source = rect.src_address;
-        u8* dest = rect.dest_address;
+        u8* source = rect.source.address;
+        u8* dest = rect.dest.address;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -1536,8 +1536,8 @@ namespace
                 dst += components;
             }
 
-            source += rect.src_stride;
-            dest += rect.dest_stride;
+            source += rect.source.stride;
+            dest += rect.dest.stride;
         }
     }
 
@@ -1576,8 +1576,8 @@ namespace
             }
         }
 
-        u8* source = rect.src_address;
-        u8* dest = rect.dest_address;
+        u8* source = rect.source.address;
+        u8* dest = rect.dest.address;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -1625,8 +1625,8 @@ namespace
                 dst += components;
             }
 
-            source += rect.src_stride;
-            dest += rect.dest_stride;
+            source += rect.source.stride;
+            dest += rect.dest.stride;
         }
     }
 
@@ -1638,14 +1638,14 @@ namespace
 
     void convert_custom(const Blitter& blitter, const BlitRect& rect)
     {
-        u8* src = rect.src_address;
-        u8* dest = rect.dest_address;
+        BlitScan source = rect.source;
+        BlitScan dest = rect.dest;
 
         for (int y = 0; y < rect.height; ++y)
         {
-            blitter.scan_convert(dest, src, rect.width);
-            src += rect.src_stride;
-            dest += rect.dest_stride;
+            blitter.scan_convert(dest.address, source.address, rect.width);
+            source.address += source.stride;
+            dest.address += dest.stride;
         }
     }
 
