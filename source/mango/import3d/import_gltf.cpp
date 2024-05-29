@@ -101,7 +101,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     options |= fastgltf::Options::DontRequireValidAssetMember;
     options |= fastgltf::Options::AllowDouble;
-	//options |= fastgltf::Options::GenerateMeshIndices; // broken - don't use
+    //options |= fastgltf::Options::GenerateMeshIndices; // broken - don't use
     //options |= fastgltf::Options::LoadGLBBuffers;
     //options |= fastgltf::Options::LoadExternalBuffers;
     //options |= fastgltf::Options::LoadExternalImages;
