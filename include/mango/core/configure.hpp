@@ -182,7 +182,7 @@
     #define MANGO_PLATFORM_IRIX
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "SGI IRIX"
-    #define MANGO_WINDOW_SYSTEM_NONE
+    #define MANGO_WINDOW_SYSTEM_XLIB
 
 #elif defined(EMSCRIPTEN)
 
