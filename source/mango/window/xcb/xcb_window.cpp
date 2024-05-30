@@ -175,171 +175,118 @@ namespace mango
 
     void Window::setWindowPosition(int x, int y)
     {
-        // MANGO TODO
-        MANGO_UNREFERENCED(x);
-        MANGO_UNREFERENCED(y);
+        auto connection = m_handle->native.connection;
+        auto window = m_handle->native.window;
+
+        const u32 values [] = { u32(x), u32(y) };
+
+        xcb_configure_window(
+            connection,
+            window,
+            XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y,
+            values);
+        xcb_flush(connection);
     }
 
     void Window::setWindowSize(int width, int height)
     {
-        const uint32_t values[] = { uint32_t(width), uint32_t(height) };
+        auto connection = m_handle->native.connection;
+        auto window = m_handle->native.window;
+
+        const u32 values [] = { u32(width), u32(height) };
 
         xcb_configure_window(
-            m_handle->native.connection,
-            m_handle->native.window,
+            connection,
+            window,
             XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
             values);
-        xcb_flush(m_handle->native.connection);
+        xcb_flush(connection);
     }
 
     void Window::setTitle(const std::string& title)
     {
+        auto connection = m_handle->native.connection;
+        auto window = m_handle->native.window;
+
         xcb_change_property(
-            m_handle->native.connection,
+            connection,
             XCB_PROP_MODE_REPLACE,
-            m_handle->native.window,
+            window,
             XCB_ATOM_WM_NAME,
             XCB_ATOM_STRING,
             8,
             title.length(),
             title.c_str());
-        xcb_flush(m_handle->native.connection);
+        xcb_flush(connection);
     }
 
     void Window::setIcon(const Surface& surface)
     {
-#if 0
-        // clamp icon size to 256 x 256
-        const int width = std::min(256, surface.width);
-        const int height = std::min(256, surface.height);
-
-        Bitmap bitmap(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
-        bitmap.blit(0, 0, surface);
-
-        int screen = DefaultScreen(m_handle->display);
-        int depth = DefaultDepth(m_handle->display, screen);
-        Visual* visual = DefaultVisual(m_handle->display, screen);
-
-        XImage* icon = XCreateImage(m_handle->display, visual, depth, ZPixmap, 0,
-            reinterpret_cast<char*>(bitmap.image), width, height, 32, 0);
-        if (!icon)
-        {
-            MANGO_EXCEPTION("[Window] XCreateImage() failed.");
-        }
-
-        Pixmap icon_pixmap = XCreatePixmap(m_handle->display, RootWindow(m_handle->display, screen), width, height, depth);
-        if (!icon_pixmap)
-        {
-            MANGO_EXCEPTION("[Window] XCreatePixmap() failed.");
-        }
-
-        XGCValues values;
-        GC gc = XCreateGC(m_handle->display, icon_pixmap, 0, &values);
-        if (!gc)
-        {
-            MANGO_EXCEPTION("[Window] XCreateGC() failed.");
-        }
-
-        XPutImage(m_handle->display, icon_pixmap, gc, icon, 0, 0, 0, 0, width, height);
-        XFreeGC(m_handle->display, gc);
-
-        // convert alpha channel to mask
-        size_t stride = (width + 7) / 8; // round to next multiple of 8
-        Bitmap alphaMask(stride, height, Format(8, Format::UNORM, Format::A, 8));
-
-        for (int y = 0; y < height; ++y)
-        {
-            u8* alpha = bitmap.image + y * bitmap.stride + 3;
-            u8* dest = alphaMask.image + y * stride;
-
-            for (int x = 0; x < width; ++x)
-            {
-                int s = alpha[x * 4] > 0 ? 1 : 0;
-                dest[x / 8] |= (s << (x & 7));
-            }
-        }
-
-        Pixmap mask_pixmap = XCreatePixmapFromBitmapData(m_handle->display, m_handle->native.window,
-            reinterpret_cast<char*>(alphaMask.image), width, height, 1, 0, 1);
-
-        XWMHints* hints = XAllocWMHints();
-        hints->flags       = IconPixmapHint | IconMaskHint;
-        hints->icon_pixmap = icon_pixmap;
-        hints->icon_mask   = mask_pixmap;
-        XSetWMHints(m_handle->display, m_handle->native.window, hints);
-        XFree(hints);
-
-        XFlush(m_handle->display);
-
-        if (m_handle->icon)
-        {
-            XDestroyImage(m_handle->icon);
-            m_handle->icon = icon;
-        }
-#endif
+        // MANGO TODO
     }
 
     void Window::setVisible(bool enable)
     {
-#if 0
+        auto connection = m_handle->native.connection;
+        auto window = m_handle->native.window;
+
         if (enable)
         {
-            XMapRaised(m_handle->display, m_handle->native.window);
-            XFlush(m_handle->display);
+            xcb_map_window(connection, window);
+            xcb_flush(connection);
         }
         else
         {
-            XUnmapWindow(m_handle->display, m_handle->native.window);
-            XFlush(m_handle->display);
+            xcb_unmap_window(connection, window);
+            xcb_flush(connection);
         }
-#endif
     }
 
     int32x2 Window::getWindowSize() const
     {
-        // MANGO TODO
-#if 0
-        XWindowAttributes attributes;
-        XGetWindowAttributes(m_handle->display, m_handle->native.window, &attributes);
-        return int2(attributes.width, attributes.height);
-#endif
-        return int2(0, 0);
+        auto connection = m_handle->native.connection;
+        auto window = m_handle->native.window;
+
+        xcb_get_geometry_cookie_t cookie = xcb_get_geometry(connection, window);
+        xcb_get_geometry_reply_t* reply = xcb_get_geometry_reply(connection, cookie, NULL);
+
+        int width = 0;
+        int height = 0;
+
+        if (reply)
+        {
+            width = reply->width;
+            height = reply->height;
+            free(reply);
+        }
+
+        return int32x2(width, height);
     }
 
     int32x2 Window::getCursorPosition() const
     {
-        // MANGO TODO
-#if 0
-        ::Window root;
-        ::Window child;
-        int root_x, root_y;
-        int child_x, child_y;
-        unsigned int mask;
+        auto connection = m_handle->native.connection;
+        auto window = m_handle->native.window;
 
-        XQueryPointer(m_handle->display, m_handle->native.window, &root, &child,
-                      &root_x, &root_y, &child_x, &child_y, &mask);
-        return int2(child_x, child_y);
-#endif
-        return int2(0, 0);
+        xcb_query_pointer_cookie_t cookie = xcb_query_pointer(connection, window);
+        xcb_query_pointer_reply_t* reply = xcb_query_pointer_reply(connection, cookie, NULL);
+
+        int x = 0;
+        int y = 0;
+
+        if (reply)
+        {
+            x = reply->root_x;
+            y = reply->root_y;
+            free(reply);
+        }
+
+        return int32x2(x, y);
     }
 
     bool Window::isKeyPressed(Keycode code) const
     {
         // MANGO TODO
-#if 0
-        char keys[32];
-        XQueryKeymap(m_handle->display, keys);
-
-        bool pressed = false;
-
-        KeySym symbol = translateKeycodeToSymbol(code);
-        int keyidx = XKeysymToKeycode(m_handle->display, symbol);
-
-        if (keyidx >=0 && keyidx < 255)
-            pressed = (keys[keyidx / 8] & (1 << (keyidx % 8))) != 0;
-
-        return pressed;
-#endif
         return false;
     }
 
@@ -431,251 +378,6 @@ namespace mango
                 usleep(125);
             }
         }
-
-
-#if 0
-        for (int i = 0; i < 6; ++i)
-        {
-            m_handle->mouse_time[i] = 0;
-        }
-
-                switch (e.type)
-                {
-                    case ButtonPress:
-                    {
-                        MouseButton button = translateButton(e.xbutton.button);
-                        int count = 1;
-
-                        switch (e.xbutton.button)
-                        {
-                            case 0:
-                            case 1:
-                            case 2:
-                            case 3:
-                            {
-                                // Simulate double click
-                                u64 time = Time::ms();
-                                if (time - m_handle->mouse_time[button] < 300)
-                                {
-                                    count = 2;
-                                }
-                                m_handle->mouse_time[button] = time;
-                                break;
-                            }
-
-                            case 4:
-                                count = 120;
-                                break;
-
-                            case 5:
-                                count = -120;
-                                break;
-                        }
-
-                        onMouseClick(e.xbutton.x, e.xbutton.y, button, count);
-                        break;
-                    }
-
-                    case ButtonRelease:
-                    {
-                        MouseButton button = translateButton(e.xbutton.button);
-                        onMouseClick(e.xbutton.x, e.xbutton.y, button, 0);
-                        break;
-                    }
-
-                    case MotionNotify:
-                        onMouseMove(e.xmotion.x, e.xmotion.y);
-                        break;
-
-                    case KeyPress:
-                    {
-                        u32 mask = translateKeyMask(e.xkey.state);
-                        onKeyPress(translateEventToKeycode(&e), mask);
-                        break;
-                    }
-
-                    case KeyRelease:
-                    {
-                        bool is_repeat = false;
-
-                        if (XEventsQueued(m_handle->display, QueuedAfterReading))
-                        {
-                            XEvent next;
-                            XPeekEvent(m_handle->display, &next);
-
-                            if (next.type == KeyPress &&
-                                next.xkey.time == e.xkey.time &&
-                                next.xkey.keycode == e.xkey.keycode)
-                            {
-                                // delete repeated KeyPress event
-                                XNextEvent(m_handle->display, &e);
-                                is_repeat = true;
-                            }
-                        }
-
-                        if (!is_repeat)
-                            onKeyRelease(translateEventToKeycode(&e));
-                        break;
-                    }
-
-                    case ConfigureNotify:
-                    {
-                        // Filter identical notifications
-                        int width = e.xconfigure.width;
-                        int height = e.xconfigure.height;
-                        if (width != m_handle->size[0] || height != m_handle->size[1])
-                        {
-                            m_handle->size[0] = width;
-                            m_handle->size[1] = height;
-                            if (!m_handle->busy) {
-                                onResize(width, height);
-                            }
-                        }
-                        break;
-                    }
-
-                    case Expose:
-                        if (!m_handle->busy) {
-                            onDraw();
-                        }
-                        break;
-
-                    case DestroyNotify:
-                        break;
-
-                    case ClientMessage:
-                    {
-                        unsigned int type = e.xclient.message_type;
-
-                        if (type == m_handle->atom_xdnd_Enter)
-                        {
-                            bool use_list = e.xclient.data.l[1] & 1;
-                            m_handle->xdnd_source = e.xclient.data.l[0];
-                            m_handle->xdnd_version = (e.xclient.data.l[1] >> 24);
-                            if (use_list) {
-                                // fetch conversion targets
-                                x11Prop p;
-                                ReadProperty(&p, m_handle->display, m_handle->xdnd_source, m_handle->atom_xdnd_TypeList);
-                                // pick one
-                                m_handle->atom_xdnd_req = PickTarget(m_handle->display, (Atom*)p.data, p.count);
-                                XFree(p.data);
-                            } else {
-                                // pick from list of three
-                                m_handle->atom_xdnd_req = PickTargetFromAtoms(m_handle->display, 
-                                    e.xclient.data.l[2], e.xclient.data.l[3], e.xclient.data.l[4]);
-                            }
-                        }
-                        else if (type == m_handle->atom_xdnd_Position)
-                        {
-                            XClientMessageEvent m = { 0 };
-
-                            m.type = ClientMessage;
-                            m.display = e.xclient.display;
-                            m.window = e.xclient.data.l[0];
-                            m.message_type = m_handle->atom_xdnd_Status;
-                            m.format=32;
-                            m.data.l[0] = m_handle->native.window;
-                            m.data.l[1] = (m_handle->atom_xdnd_req != None);
-                            m.data.l[2] = 0; // specify an empty rectangle
-                            m.data.l[3] = 0;
-                            m.data.l[4] = m_handle->atom_xdnd_ActionCopy; // we only accept copying anyway
-
-                            XSendEvent(m_handle->display, e.xclient.data.l[0], False, NoEventMask, (XEvent*)&m);
-                            XFlush(m_handle->display);
-                        }
-                        else if (type == m_handle->atom_xdnd_Status)
-                        {
-                        }
-                        else if (type == m_handle->atom_xdnd_TypeList)
-                        {
-                        }
-                        else if (type == m_handle->atom_xdnd_ActionCopy)
-                        {
-                        }
-                        else if (type == m_handle->atom_xdnd_Drop)
-                        {
-                            if (m_handle->atom_xdnd_req == None)
-                            {
-                                // respond to empty request
-                                XClientMessageEvent m = { 0 };
-
-                                m.type = ClientMessage;
-                                m.display = e.xclient.display;
-                                m.window = e.xclient.data.l[0];
-                                m.message_type = m_handle->atom_xdnd_Finished;
-                                m.format = 32;
-                                m.data.l[0] = m_handle->native.window;
-                                m.data.l[1] = 0;
-                                m.data.l[2] = None; // failed
-                                XSendEvent(m_handle->display, e.xclient.data.l[0],
-                                    False, NoEventMask, (XEvent*)&m);
-                            }
-                            else
-                            {
-                                // convert
-                                if (m_handle->xdnd_version >= 1) {
-                                    XConvertSelection(m_handle->display, m_handle->atom_xdnd_Selection, m_handle->atom_xdnd_req, 
-                                                      m_handle->atom_primary, m_handle->native.window, e.xclient.data.l[2]);
-                                } else {
-                                    XConvertSelection(m_handle->display, m_handle->atom_xdnd_Selection, m_handle->atom_xdnd_req, 
-                                                      m_handle->atom_primary, m_handle->native.window, CurrentTime);
-                                }
-                            }
-                        }
-                        else if (type == m_handle->atom_xdnd_Finished)
-                        {
-                        }
-                        else if (type == m_handle->atom_xdnd_Selection)
-                        {
-                        }
-                        else if (type == m_handle->atom_xdnd_Leave)
-                        {
-                        }
-                        else if (type == m_handle->atom_protocols)
-                        {
-                            if ((Atom)e.xclient.data.l[0] == m_handle->atom_delete)
-                            {
-                                breakEventLoop();
-                                // NOTE: We should destroy the window here since it doesn't exist anymore.
-                            }
-                        }
-
-                        break;
-                    }
-
-                    case SelectionNotify:
-                    {
-                        Atom target = e.xselection.target;
-                        if (target == m_handle->atom_xdnd_req)
-                        {
-                            // read data
-                            x11Prop p;
-                            ReadProperty(&p, m_handle->display, m_handle->native.window, m_handle->atom_primary);
-
-                            if (p.format == 8) {
-                                dispatchOnDrop(this, p);
-                            }
-
-                            XFree(p.data);
-
-                            // send reply
-                            XClientMessageEvent m = { 0 };
-
-                            m.type = ClientMessage;
-                            m.display = m_handle->display;
-                            m.window = m_handle->xdnd_source;
-                            m.message_type = m_handle->atom_xdnd_Finished;
-                            m.format = 32;
-                            m.data.l[0] = m_handle->native.window;
-                            m.data.l[1] = 1;
-                            m.data.l[2] = m_handle->atom_xdnd_ActionCopy;
-                            XSendEvent(m_handle->display, m_handle->xdnd_source, False, NoEventMask, (XEvent*)&m);
-                            XSync(m_handle->display, False);
-                        }
-
-                        break;
-                    }
-#endif
     }
 
     void Window::breakEventLoop()

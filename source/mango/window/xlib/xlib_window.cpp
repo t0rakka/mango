@@ -420,7 +420,7 @@ namespace
         {
             if (!expect_lf)
             {
-                if (*scan == 0x0d) 
+                if (*scan == 0x0d)
                 {
                     expect_lf = true;
                 }
