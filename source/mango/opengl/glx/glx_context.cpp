@@ -1,12 +1,21 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
 #include "../../window/xlib/xlib_handle.hpp"
+
+#if defined(MANGO_WINDOW_SYSTEM_XCB)
+
+    // TODO: for future reference, if ever need XCB/GLX, this is a good place to start:
+    // https://xcb.freedesktop.org/opengl/
+
+#endif // defined(MANGO_WINDOW_SYSTEM_XCB)
+
+#if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
 #ifndef GLX_CONTEXT_SHARE_CONTEXT_ARB
 #define GLX_CONTEXT_SHARE_CONTEXT_ARB        0x2090
@@ -389,3 +398,5 @@ namespace mango
     }
 
 } // namespace mango
+
+#endif // defined(MANGO_WINDOW_SYSTEM_XLIB)
