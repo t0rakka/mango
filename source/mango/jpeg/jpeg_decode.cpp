@@ -1322,6 +1322,7 @@ namespace mango::image::jpeg
                 case MARKER_COM:
                     processCOM(p);
                     p = stepMarker(p, end);
+                    p = seekMarker(p, end);
                     break;
 
                 case MARKER_TEM:
