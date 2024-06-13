@@ -1197,6 +1197,16 @@ if libheif_dep.found()
     mango_deps += libheif_dep
 endif
 
+#
+# libisal
+#
+
+libisal_dep = dependency('libisal', version: '>=2.30.0', required: false)
+if libisal_dep.found()
+    add_project_arguments('-DMANGO_ENABLE_ISAL', language: ['cpp'])
+    mango_deps += libisal_dep
+endif
+
 # ------------------------------------------------------------------------------
 # sources
 # ------------------------------------------------------------------------------

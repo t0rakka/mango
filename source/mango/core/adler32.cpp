@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     Copyright 2017 The Chromium Authors. All rights reserved.
@@ -9,11 +9,17 @@
 */
 #include <mango/core/adler32.hpp>
 
+#if defined(MANGO_ENABLE_ISAL)
+#include <isa-l.h>
+#endif
+
 namespace mango
 {
 
     static constexpr size_t BASE = 65521; // largest prime smaller than 65536
     static constexpr size_t NMAX = 5552;
+
+#if !defined(MANGO_ENABLE_ISAL)
 
     static
     u32 adler32_remainder(u32 s1, u32 s2, const u8* buffer, size_t length)
@@ -54,7 +60,36 @@ namespace mango
         return s1 | (s2 << 16);
     }
 
-#if defined(MANGO_ENABLE_SSSE3)
+#endif
+
+    u32 adler32_combine(u32 adler0, u32 adler1, size_t length1)
+    {
+        length1 %= BASE;
+
+        u32 rem = u32(length1);
+        u32 sum1 = adler0 & 0xffff;
+        u32 sum2 = rem * sum1;
+
+        sum2 %= BASE;
+        sum1 += (adler1 & 0xffff) + BASE - 1;
+        sum2 += ((adler0 >> 16) & 0xffff) + ((adler1 >> 16) & 0xffff) + BASE - rem;
+
+        if (sum1 >= BASE) sum1 -= BASE;
+        if (sum1 >= BASE) sum1 -= BASE;
+        if (sum2 >= (BASE << 1)) sum2 -= (BASE << 1);
+        if (sum2 >= BASE) sum2 -= BASE;
+
+        return sum1 | (sum2 << 16);
+    }
+
+#if defined(MANGO_ENABLE_ISAL)
+
+    u32 adler32(u32 adler, ConstMemory memory)
+    {
+        return isal_adler32(adler, memory.address, memory.size);
+    }
+
+#elif defined(MANGO_ENABLE_SSSE3)
 
     // ----------------------------------------------------------------------------------------
     // Intel SSSE3 adler32
@@ -71,7 +106,7 @@ namespace mango
         u32 s1 = adler & 0xffff;
         u32 s2 = adler >> 16;
 
-        // Process the data in blocks. 
+        // Process the data in blocks.
         size_t blocks = length / BLOCK_SIZE;
         length -= blocks * BLOCK_SIZE;
 
@@ -276,25 +311,5 @@ namespace mango
     }
 
 #endif
-
-    u32 adler32_combine(u32 adler0, u32 adler1, size_t length1)
-    {
-        length1 %= BASE;
-
-        u32 rem = u32(length1);
-        u32 sum1 = adler0 & 0xffff;
-        u32 sum2 = rem * sum1;
-
-        sum2 %= BASE;
-        sum1 += (adler1 & 0xffff) + BASE - 1;
-        sum2 += ((adler0 >> 16) & 0xffff) + ((adler1 >> 16) & 0xffff) + BASE - rem;
-
-        if (sum1 >= BASE) sum1 -= BASE;
-        if (sum1 >= BASE) sum1 -= BASE;
-        if (sum2 >= (BASE << 1)) sum2 -= (BASE << 1);
-        if (sum2 >= BASE) sum2 -= BASE;
-
-        return sum1 | (sum2 << 16);
-    }
 
 } // namespace mango

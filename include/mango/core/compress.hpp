@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -220,6 +220,7 @@ namespace mango
             DEFLATE_ZLIB,
             DEFLATE_GZIP,
             LZAV,
+            ISAL,
         } method = NONE;
         std::string name;
 

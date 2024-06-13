@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <vector>
@@ -38,6 +38,10 @@
 #include "../../external/libdeflate/libdeflate.h"
 
 #include "../../external/lzav/lzav.h"
+
+#ifdef MANGO_ENABLE_ISAL
+#include <isa-l.h>
+#endif
 
 namespace mango
 {
@@ -86,7 +90,7 @@ namespace lz4
     size_t bound(size_t size)
     {
         const int s = int(size);
-		return LZ4_compressBound(s);
+        return LZ4_compressBound(s);
     }
 
     CompressionStatus compress(Memory dest, ConstMemory source, int level)
@@ -112,10 +116,10 @@ namespace lz4
 	    if (status.size > dest.size)
         {
             status.setError("[lz4] compression failed.");
-		}
+        }
 
         return status;
-	}
+    }
 
     CompressionStatus decompress(Memory dest, ConstMemory source)
     {
@@ -324,7 +328,7 @@ namespace zstd
     {
         // compression is faster when it has more temporary buffer
         const size_t turbo = 1024 * 128;
-		return ZSTD_compressBound(size) + turbo;
+        return ZSTD_compressBound(size) + turbo;
     }
 
     CompressionStatus compress(Memory dest, ConstMemory source, int level)
@@ -348,7 +352,7 @@ namespace zstd
         }
 
         return status;
-	}
+    }
 
     CompressionStatus decompress(Memory dest, ConstMemory source)
     {
@@ -1238,6 +1242,131 @@ namespace lzav
 
 } // namespace lzav
 
+// ----------------------------------------------------------------------------
+// isal
+// ----------------------------------------------------------------------------
+
+namespace isal
+{
+
+#ifdef MANGO_ENABLE_ISAL
+
+    size_t bound(size_t size)
+    {
+        // conservative estimate
+        return 1024 + size;
+    }
+
+    CompressionStatus compress(Memory dest, ConstMemory source, int level)
+    {
+        isal_zstream stream;
+        isal_deflate_stateless_init(&stream);
+
+        stream.next_in = const_cast<u8*>(source.address);
+        stream.avail_in = u32(source.size);
+        stream.next_out = dest.address;
+        stream.avail_out = u32(dest.size);
+
+        size_t level_buffer_size = 0;
+        stream.level = 0;
+
+        switch (level)
+        {
+            case 0:
+            case 1:
+            case 2:
+                stream.level = 0;
+                level_buffer_size = ISAL_DEF_LVL0_DEFAULT;
+                break;
+
+            case 3:
+            case 4:
+            case 5:
+                stream.level = 1;
+                level_buffer_size = ISAL_DEF_LVL1_DEFAULT;
+                break;
+
+            case 6:
+            case 7:
+            case 8:
+                stream.level = 2;
+                level_buffer_size = ISAL_DEF_LVL2_DEFAULT;
+                break;
+
+            case 9:
+            case 10:
+                stream.level = 3;
+                level_buffer_size = ISAL_DEF_LVL3_DEFAULT;
+                break;
+        }
+
+        Buffer temp(level_buffer_size);
+
+        stream.level_buf_size = temp.size();
+        stream.level_buf = temp.data();
+
+        CompressionStatus status;
+
+        int s = isal_deflate_stateless(&stream);
+        switch (s)
+        {
+            case COMP_OK:
+                status.size = stream.total_out;
+                break;
+
+            case INVALID_FLUSH:
+            case ISAL_INVALID_LEVEL:
+            case ISAL_INVALID_LEVEL_BUF:
+            case STATELESS_OVERFLOW:
+            default:
+                status.setError("[isal] compression failed.");
+                break;
+        }
+
+        return status;
+    }
+
+    CompressionStatus decompress(Memory dest, ConstMemory source)
+    {
+        inflate_state state;
+
+        isal_inflate_init(&state);
+
+        state.next_out = dest.address;
+        state.avail_out = u32(dest.size);
+        state.next_in = const_cast<u8*>(source.address);
+        state.avail_in = u32(source.size);
+
+        CompressionStatus status;
+
+        int s = isal_inflate_stateless(&state);
+        switch (s)
+        {
+            case ISAL_DECOMP_OK:
+                status.size = state.total_out;
+                break;
+
+            case ISAL_END_INPUT:
+            case ISAL_NEED_DICT:
+            case ISAL_OUT_OVERFLOW:
+            case ISAL_INVALID_BLOCK:
+            case ISAL_INVALID_SYMBOL:
+            case ISAL_INVALID_LOOKBACK:
+            case ISAL_INVALID_WRAPPER:
+            case ISAL_UNSUPPORTED_METHOD:
+            case ISAL_INCORRECT_CHECKSUM:
+            default:
+                status.setError("[isal] compression failed.");
+                break;
+        }
+
+        return status;
+    }
+
+#endif
+
+} // namespace isal
+
     const std::vector<Compressor> g_compressors =
     {
         { Compressor::NONE,    "none",  nocompress::bound, nocompress::compress, nocompress::decompress },
@@ -1260,6 +1389,9 @@ namespace lzav
         { Compressor::DEFLATE,      "deflate",      deflate::bound,      deflate::compress,      deflate::decompress },
         { Compressor::DEFLATE_ZLIB, "deflate.zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },
         { Compressor::DEFLATE_GZIP, "deflate.gzip", deflate_gzip::bound, deflate_gzip::compress, deflate_gzip::decompress },
+#ifdef MANGO_ENABLE_ISAL
+        { Compressor::ISAL,    "isal",  isal::bound,  isal::compress,  isal::decompress },
+#endif
     };
 
     std::vector<Compressor> getCompressors()

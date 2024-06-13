@@ -9,6 +9,10 @@
 
 #include "../../external/zlib/zlib.h"
 
+#ifdef MANGO_ENABLE_ISAL
+#include <isa-l.h>
+#endif
+
 // https://www.w3.org/TR/2003/REC-PNG-20031110/
 // https://wiki.mozilla.org/APNG_Specification
 // https://datatracker.ietf.org/doc/html/rfc1951
@@ -3165,6 +3169,11 @@ namespace
             u32 y = 0;
             auto decompress = deflate_zlib::decompress;
 
+#ifdef MANGO_ENABLE_ISAL
+            auto compressor = getCompressor(Compressor::ISAL);
+            decompress = compressor.decompress;
+#endif
+
             for (ConstMemory memory : m_parallel_segments)
             {
                 int h = std::min(m_parallel_height, m_height - y);
@@ -3600,6 +3609,112 @@ namespace
             {
                 filter_range(source.address, surface, y, y + h);
 
+#ifdef MANGO_ENABLE_ISAL
+                constexpr size_t TEMP_SIZE = 128 * 1024;
+                Buffer temp(TEMP_SIZE);
+
+                isal_zstream zstream;
+                isal_deflate_init(&zstream);
+
+                zstream.next_in = source.address;
+                zstream.avail_in = u32(source.size);
+                zstream.next_out = temp;
+                zstream.avail_out = u32(TEMP_SIZE);
+
+                // defaults
+                size_t level_buffer_size = 0;
+                zstream.level = 0;
+
+                switch (level)
+                {
+                    case 0:
+                    case 1:
+                    case 2:
+                        zstream.level = 0;
+                        level_buffer_size = ISAL_DEF_LVL0_DEFAULT;
+                        break;
+
+                    case 3:
+                    case 4:
+                    case 5:
+                        zstream.level = 1;
+                        level_buffer_size = ISAL_DEF_LVL1_DEFAULT;
+                        break;
+
+                    case 6:
+                    case 7:
+                    case 8:
+                        zstream.level = 2;
+                        level_buffer_size = ISAL_DEF_LVL2_DEFAULT;
+                        break;
+
+                    case 9:
+                    case 10:
+                        zstream.level = 3;
+                        level_buffer_size = ISAL_DEF_LVL3_DEFAULT;
+                        break;
+                }
+
+                Buffer level_buffer(level_buffer_size);
+
+                zstream.level_buf_size = level_buffer.size();
+                zstream.level_buf = level_buffer.data();
+
+                zstream.end_of_stream = 0;
+                zstream.flush = NO_FLUSH;
+
+                zstream.gzip_flag = IGZIP_ZLIB;
+                zstream.hist_bits = 15; // log2 compression window size
+
+                Buffer compressed;
+
+                while (zstream.avail_in != 0)
+                {
+                    int res = isal_deflate(&zstream);
+                    if (res != COMP_OK)
+                    {
+                        encoding_failure = true;
+                        return;
+                    }
+
+                    if (zstream.avail_out == 0)
+                    {
+                        compressed.append(temp, TEMP_SIZE);
+                        zstream.next_out = temp;
+                        zstream.avail_out = u32(TEMP_SIZE);
+                    }
+                }
+
+                compressed.append(temp, TEMP_SIZE - zstream.avail_out);
+                zstream.next_out = temp;
+                zstream.avail_out = u32(TEMP_SIZE);
+
+                if (is_last)
+                {
+                    zstream.end_of_stream = 1;
+                    zstream.flush = FULL_FLUSH;
+                }
+                else
+                {
+                    zstream.flush = FULL_FLUSH;
+                }
+
+                int res = isal_deflate(&zstream);
+                if (res != ZSTATE_END && res != COMP_OK)
+                {
+                    encoding_failure = true;
+                    return;
+                }
+
+                compressed.append(temp, TEMP_SIZE - zstream.avail_out);
+
+                // capture compressed memory
+                Memory segment_memory = compressed.acquire();
+
+                u32 segment_adler = adler32(1, source);
+                u32 segment_length = u32(source.size);
+#else
+
                 constexpr size_t TEMP_SIZE = 128 * 1024;
                 Buffer temp(TEMP_SIZE);
 
@@ -3654,6 +3769,7 @@ namespace
 
                 u32 segment_adler = strm.adler;
                 u32 segment_length = u32(source.size);
+#endif
 
                 ticket.consume([=, &cumulative_adler, &stream]
                 {
