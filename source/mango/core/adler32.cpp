@@ -17,7 +17,6 @@ namespace mango
 {
 
     static constexpr size_t BASE = 65521; // largest prime smaller than 65536
-    static constexpr size_t NMAX = 5552;
 
 #if !defined(MANGO_ENABLE_ISAL)
 
@@ -100,6 +99,7 @@ namespace mango
         const u8* buffer = memory.address;
         size_t length = memory.size;
 
+        constexpr size_t NMAX = 5552;
         constexpr size_t BLOCK_SIZE = 32;
 
         // Split Adler-32 into component sums.
@@ -177,6 +177,7 @@ namespace mango
         const u8* buffer = memory.address;
         size_t length = memory.size;
 
+        constexpr size_t NMAX = 5552;
         constexpr size_t BLOCK_SIZE = 32;
 
         u32 s1 = adler & 0xffff;
@@ -273,6 +274,8 @@ namespace mango
     {
         u32 s1 = adler & 0xffff;
         u32 s2 = adler >> 16;
+
+        constexpr size_t NMAX = 5552;
 
         const u8* buffer = memory.address;
         size_t length = memory.size;
