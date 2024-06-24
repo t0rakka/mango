@@ -83,7 +83,7 @@ namespace
             header.depth   = 0;
             header.levels  = 0;
             header.faces   = 0;
-			header.palette = false;
+            header.palette = false;
             header.format  = format;
             header.compression = TextureCompression::NONE;
         }
@@ -215,7 +215,7 @@ namespace
 
             ImageDecodeStatus status;
 
-			const ImageHeader& header = m_sgi_header.header;
+            const ImageHeader& header = m_sgi_header.header;
             if (!header.success)
             {
                 status.setError(header.info);
