@@ -107,6 +107,7 @@
 		A60BD65E2A1E808F00F86B1C /* cmserr.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6412A1E808F00F86B1C /* cmserr.c */; };
 		A60BD65F2A1E808F00F86B1C /* cmscnvrt.c in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6422A1E808F00F86B1C /* cmscnvrt.c */; };
 		A60BD6612A1E810100F86B1C /* color.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A60BD6602A1E810100F86B1C /* color.cpp */; };
+		A613E3182C29D4D500C1677B /* image_raw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A613E3172C29D4D500C1677B /* image_raw.cpp */; };
 		A6269A4D1AB986AB0032EF56 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6269A4C1AB986AB0032EF56 /* geometry.cpp */; };
 		A62C93D92AEBFEE6000CDFA9 /* utilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A62C93D52AEBFEE5000CDFA9 /* utilities.cpp */; };
 		A62C93DA2AEBFEE6000CDFA9 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A62C93D62AEBFEE5000CDFA9 /* context.cpp */; };
@@ -683,6 +684,7 @@
 		A60BD6412A1E808F00F86B1C /* cmserr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmserr.c; path = external/lcms/cmserr.c; sourceTree = "<group>"; };
 		A60BD6422A1E808F00F86B1C /* cmscnvrt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmscnvrt.c; path = external/lcms/cmscnvrt.c; sourceTree = "<group>"; };
 		A60BD6602A1E810100F86B1C /* color.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = color.cpp; path = image/color.cpp; sourceTree = "<group>"; };
+		A613E3172C29D4D500C1677B /* image_raw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_raw.cpp; path = image/image_raw.cpp; sourceTree = "<group>"; };
 		A6269A4C1AB986AB0032EF56 /* geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = math/geometry.cpp; sourceTree = "<group>"; };
 		A62C93D52AEBFEE5000CDFA9 /* utilities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = utilities.cpp; path = opengl/utilities.cpp; sourceTree = "<group>"; };
 		A62C93D62AEBFEE5000CDFA9 /* context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = context.cpp; path = opengl/context.cpp; sourceTree = "<group>"; };
@@ -1259,6 +1261,7 @@
 				A00559BC1C93329A00A6D963 /* image_pvr.cpp */,
 				A00559BD1C93329A00A6D963 /* image_tga.cpp */,
 				A6CD2BD7209B3BA6000B0EF8 /* image_zpng.cpp */,
+				A613E3172C29D4D500C1677B /* image_raw.cpp */,
 				A645DD1B21381E2D00EC714B /* image_sgi.cpp */,
 				A645DD1D213A9A9300EC714B /* image_pnm.cpp */,
 				A645DD2D213ED71100EC714B /* image_atari.cpp */,
@@ -2459,7 +2462,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1530;
+				LastUpgradeCheck = 1540;
 			};
 			buildConfigurationList = A0F981B315B9E61D00B8C49F /* Build configuration list for PBXProject "mango" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -2826,6 +2829,7 @@
 				A66F158821C15CB400E1C8AA /* zstd_decompress_block.c in Sources */,
 				A69B9DF0285ABF4200E7BEDC /* zlib_decompress.c in Sources */,
 				A6EC3F97230D7C4D00B17F21 /* quant_levels_dec_utils.c in Sources */,
+				A613E3182C29D4D500C1677B /* image_raw.cpp in Sources */,
 				A650BE8721F21C180066B9B5 /* CustomOpenGLView.mm in Sources */,
 				A0F21EDC1CA062EA0084302D /* mapper_file.cpp in Sources */,
 				A6DB667724EAD42800BA9E1A /* block_fxt1.cpp in Sources */,

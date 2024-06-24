@@ -7,7 +7,7 @@
 project(
     'mango', 'c', 'cpp',
     meson_version: '>= 0.50.0',
-    version: '1.2.1',
+    version: '1.2.4',
     default_options : [
         'c_std=c11',
         'cpp_std=c++17',
@@ -18,7 +18,7 @@ project(
 
 mango_version = meson.project_version()
 mango_opengl_version = '0.8.0'
-mango_import3d_version = '0.1.2'
+mango_import3d_version = '0.1.3'
 
 if host_machine.system() == 'darwin'
     add_languages('objcpp')
@@ -327,6 +327,7 @@ mango_image_sources = files(
     '../source/mango/image/image_qoi.cpp',
     '../source/mango/image/image_pic.cpp',
     '../source/mango/image/image_psd.cpp',
+    '../source/mango/image/image_raw.cpp',
     '../source/mango/image/quantize.cpp',
     '../source/mango/image/surface.cpp'
 )
