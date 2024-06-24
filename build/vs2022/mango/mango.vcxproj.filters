@@ -2450,6 +2450,9 @@
     <ClCompile Include="..\..\..\source\mango\import3d\import_fbx.cpp">
       <Filter>mango\source\import3d</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\source\mango\image\image_raw.cpp">
+      <Filter>mango\source\image</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\source\external\basisu\transcoder\basisu_transcoder_tables_astc.inc">
