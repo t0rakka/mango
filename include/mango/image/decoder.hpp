@@ -20,7 +20,7 @@ namespace mango::image
         This kind of data can be extracted from the file by two mechanisms:
 
         1. decoded into Surface
-        2. the compressed memory block and TextureCompression format can be queried (MANGO TODO)
+        2. the compressed memory block and TextureCompression format can be queried
 
     */
     enum : u32
@@ -38,7 +38,6 @@ namespace mango::image
         SUPERCOMPRESS_PVRTC2_RGBA_4BPP = 0x00000300,
         SUPERCOMPRESS_EAC_R11          = 0x00000400,
         SUPERCOMPRESS_EAC_RG11         = 0x00001000,
-
         SUPERCOMPRESS_BASISU_ETC1S     = 0x00001fff,
         SUPERCOMPRESS_BASISU_UASTC     = 0x00001fff,
     };

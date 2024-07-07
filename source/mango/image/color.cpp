@@ -52,26 +52,33 @@ namespace mango::image
 
     void ColorManager::transform(const Surface& target, const ColorProfile& output, const ColorProfile& input)
     {
-        // NOTE: lazy in-place ICC profile transformation
-
-        // MANGO TODO:
-        // - DoTransform can be multi-threaded
-        // - do direct transform when output and input are compatible
-
         cmsHTRANSFORM transform = cmsCreateTransform(
             input, TYPE_RGBA_8,
             output, TYPE_RGBA_8,
             INTENT_PERCEPTUAL, cmsFLAGS_BLACKPOINTCOMPENSATION);
 
-        Bitmap temp(target, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+        const Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
-        for (int y = 0; y < target.height; ++y)
+        if (target.format == format)
         {
-            u8* image = temp.address<u8>(0, y);
-            cmsDoTransform(transform, image, image, target.width);
+            for (int y = 0; y < target.height; ++y)
+            {
+                u8* image = target.address<u8>(0, y);
+                cmsDoTransform(transform, image, image, target.width);
+            }
         }
+        else
+        {
+            Bitmap temp(target, format);
 
-        target.blit(0, 0, temp);
+            for (int y = 0; y < target.height; ++y)
+            {
+                u8* image = temp.address<u8>(0, y);
+                cmsDoTransform(transform, image, image, target.width);
+            }
+
+            target.blit(0, 0, temp);
+        }
     }
 
 } // namespace mango::image

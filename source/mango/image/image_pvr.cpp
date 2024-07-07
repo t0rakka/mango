@@ -290,9 +290,13 @@ namespace
                     format = LuminanceFormat(16, Format::UNORM, 8, 8);
                     break;
                 case 0x09: // 1BPP
+                    compression = TextureCompression::BITPLANE1;
+                    break;
                 case 0x0A: // (V,Y1,U,Y0)
+                    compression = TextureCompression::YUY2;
+                    break;
+                    compression = TextureCompression::UYVY;
                 case 0x0B: // (Y1,V,Y0,U)
-                    // MANGO TODO
                     break;
                 case 0x0C: // PVRTC2
                     compression = TextureCompression::PVRTC_RGBA_2BPP;

@@ -765,7 +765,7 @@ namespace mango
     // components: concurrentqueue, zstd, zpng, xxHash, lzfse, lz4, webp, exr, adler32, intel sha, jp2, jxl
 #endif
 
-// TODO: MIT license is not compile-time checked (libdeflate is also quite hard requirement)
+// NOTE: MIT license is not compile-time checked
 #ifndef MANGO_LICENSE_DISABLE_MIT
     #define MANGO_LICENSE_ENABLE_MIT
     // components: libdeflate, lcms, bc, lzav

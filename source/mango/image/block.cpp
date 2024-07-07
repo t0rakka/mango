@@ -24,6 +24,7 @@ namespace mango::image
     void decode_block_rgb9e5          (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_r11f_g11f_b10f  (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_r10f_g11f_b11f  (const TextureCompression& info, u8* output, const u8* input, size_t stride);
+    void decode_block_bitplane1       (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_atc             (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_atc_e           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void decode_block_atc_i           (const TextureCompression& info, u8* output, const u8* input, size_t stride);
@@ -1020,6 +1021,15 @@ namespace
             0,
             1, 1, 1, 4, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
             decode_block_r10f_g11f_b11f, nullptr
+        ),
+
+        TextureCompression(
+            TextureCompression::BITPLANE1,
+            0,
+            0,
+            0,
+            8, 1, 1, 1, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+            decode_block_bitplane1, nullptr
         ),
 
         TextureCompression(

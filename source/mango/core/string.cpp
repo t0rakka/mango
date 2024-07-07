@@ -86,14 +86,17 @@ namespace
     // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
     // -----------------------------------------------------------------
 
-    enum {
+    enum
+    {
         UTF8_ACCEPT = 0,
         UTF8_REJECT = 12
     };
 
-    inline u32 utf8_decode(u32& state, u32& code, u32 byte)
+    static inline
+    u32 utf8_decode(u32& state, u32& code, u32 byte)
     {
-        static const u8 utf8d[] = {
+        static const u8 utf8d [] =
+        {
             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
@@ -117,7 +120,8 @@ namespace
         return state;
     }
 
-    inline char* utf8_encode(char* ptr, u32 code)
+    static inline
+    char* utf8_encode(char* ptr, u32 code)
     {
         const u32 mask = 0x3f;
 
@@ -165,7 +169,9 @@ namespace mango
         u32 state = 0;
 
         for (u8 c : source)
+        {
             utf8_decode(state, code, c);
+        }
 
         return state == UTF8_ACCEPT;
     }

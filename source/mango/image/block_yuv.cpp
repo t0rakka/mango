@@ -207,4 +207,22 @@ namespace mango::image
         dest[3] = 1.0f;
     }
 
+    void decode_block_bitplane1(const TextureCompression& info, u8* output, const u8* input, size_t stride)
+    {
+        MANGO_UNREFERENCED(info);
+        MANGO_UNREFERENCED(stride);
+
+        u32* dest = reinterpret_cast<u32*>(output);
+        u32 value = input[0];
+
+        dest[0] = value & 0x01 ? 0xffffffff : 0;
+        dest[1] = value & 0x02 ? 0xffffffff : 0;
+        dest[2] = value & 0x04 ? 0xffffffff : 0;
+        dest[3] = value & 0x08 ? 0xffffffff : 0;
+        dest[4] = value & 0x10 ? 0xffffffff : 0;
+        dest[5] = value & 0x20 ? 0xffffffff : 0;
+        dest[6] = value & 0x40 ? 0xffffffff : 0;
+        dest[7] = value & 0x80 ? 0xffffffff : 0;
+    }
+
 } // namespace mango::image

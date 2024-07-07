@@ -209,8 +209,9 @@ namespace mango::image
             R10F_G11F_B11F                = makeTextureCompression(PACKED, 2, FLOAT),
             UYVY                          = makeTextureCompression(PACKED, 3, YUV),
             YUY2                          = makeTextureCompression(PACKED, 4, YUV),
-            G8R8G8B8                      = makeTextureCompression(PACKED, 5, 0),
-            R8G8B8G8                      = makeTextureCompression(PACKED, 6, 0),
+            BITPLANE1                     = makeTextureCompression(PACKED, 5, 0),
+            G8R8G8B8                      = makeTextureCompression(PACKED, 6, 0),
+            R8G8B8G8                      = makeTextureCompression(PACKED, 7, 0),
 
             // BC (these alias with DXT, RGTC and BPTC)
             BC1_UNORM                     = DXT1,

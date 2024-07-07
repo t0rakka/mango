@@ -569,7 +569,6 @@ namespace
             case FOURCC_R8G8B8G8:
                 compression = TextureCompression::R8G8B8G8;
                 break;
-
             case FOURCC_ASTC4x4:
                 compression = TextureCompression::ASTC_SRGB_ALPHA_4x4;
                 break;
@@ -589,13 +588,23 @@ namespace
                 compression = TextureCompression::ASTC_SRGB_ALPHA_10x5;
                 break;
             case FOURCC_ATC:
+                compression = TextureCompression::ATC_RGB;
+                break;
             case FOURCC_ATCE:
+                compression = TextureCompression::ATC_RGBA_EXPLICIT_ALPHA;
+                break;
             case FOURCC_ATCI:
+                compression = TextureCompression::ATC_RGBA_INTERPOLATED_ALPHA;
+                break;
             case FOURCC_ETC:
             case FOURCC_ETC1:
+                compression = TextureCompression::ETC1_RGB;
+                break;
             case FOURCC_ETC2:
+                compression = TextureCompression::ETC2_RGB;
+                break;
             case FOURCC_ET2A:
-                // MANGO TODO
+                compression = TextureCompression::ETC2_RGB_ALPHA1;
                 break;
         }
 
@@ -918,7 +927,6 @@ namespace
 
             if (header10.arraySize > 1)
             {
-                // MANGO TODO
                 header.setError("[ImageDecoder.DDS] Arrays are not supported.");
                 return;
             }
@@ -1024,7 +1032,7 @@ namespace
 
             header.width   = width;
             header.height  = height;
-            header.depth   = 0; // MANGO TODO: support volume images
+            header.depth   = depth > 1 ? depth : 0;
             header.levels  = getMipmapCount();
             header.faces   = getFaceCount();
             header.palette = false;
@@ -1073,6 +1081,11 @@ namespace
             return value;
         }
 
+        int getDepthCount() const
+        {
+            return depth > 0 ? depth : 1;
+        }
+
         int getLevelSize(int xsize, int ysize) const
         {
             int pitch = 0;
@@ -1095,29 +1108,34 @@ namespace
 
         ConstMemory getMemory(int level, int depth, int face) const
         {
-            MANGO_UNREFERENCED(depth); // MANGO TODO: Support depth parameter for volume textures
-
             const int maxFace = getFaceCount();
             const int maxLevel = getMipmapCount();
+            const int maxDepth = getDepthCount();
 
             const u8* image = data;
             ConstMemory selected;
 
-            for (int iFace = 0; iFace < maxFace; ++iFace)
+            for (int iDepth = 0; iDepth < maxDepth; ++iDepth)
             {
-                for (int iLevel = 0; iLevel < maxLevel; ++iLevel)
+                for (int iFace = 0; iFace < maxFace; ++iFace)
                 {
-                    const int xsize = std::max(1, int(width) >> iLevel);
-                    const int ysize = std::max(1, int(height) >> iLevel);
-                    const int bytes = getLevelSize(xsize, ysize);
+                    bool isDepthFace = (depth == iDepth) && (face == iFace);
 
-                    if (iFace == face && iLevel == level)
+                    for (int iLevel = 0; iLevel < maxLevel; ++iLevel)
                     {
-                        // Store selected address
-                        selected = ConstMemory(image, bytes);
-                    }
+                        const int xsize = std::max(1, int(width) >> iLevel);
+                        const int ysize = std::max(1, int(height) >> iLevel);
+                        const int bytes = getLevelSize(xsize, ysize);
 
-                    image += bytes;
+                        if (isDepthFace && iLevel == level)
+                        {
+                            // Store selected address
+                            selected = ConstMemory(image, bytes);
+                            return selected;
+                        }
+
+                        image += bytes;
+                    }
                 }
             }
 

@@ -2488,7 +2488,7 @@ namespace mango::image
     void registerImageCodecC64()
     {
         // Advanced Art Studio
-        registerImageDecoder(createInterfaceMPIC, ".mpic"); // MANGO TODO: test
+        registerImageDecoder(createInterfaceMPIC, ".mpic");
 
         // AFLI-editor v2.0
         registerImageDecoder(createInterfaceAFL, ".afl");
@@ -2499,7 +2499,7 @@ namespace mango::image
 
         // Art Studio
         registerImageDecoder(createInterfaceART, ".art");
-        registerImageDecoder(createInterfaceART, ".ocp"); // MANGO TODO: check the format_size
+        registerImageDecoder(createInterfaceART, ".ocp");
 
         // Artist 64
         registerImageDecoder(createInterfaceA64, ".a64");
@@ -2518,7 +2518,7 @@ namespace mango::image
         // Doodle
         registerImageDecoder(createInterfaceDD, ".dd");
         registerImageDecoder(createInterfaceDD, ".ddl");
-        //registerImageDecoder(createInterfaceDD, "jj"); // MANGO TODO: support compression
+        //registerImageDecoder(createInterfaceDD, "jj");
 
         // Drazlace
         registerImageDecoder(createInterfaceDRL, ".drl");
@@ -2582,7 +2582,7 @@ namespace mango::image
         registerImageDecoder(createInterfaceSHF, ".shfli");
 
         // SHF-XL v1.0
-        registerImageDecoder(createInterfaceSHFXL, ".shx"); // MANGO TODO: support compression
+        registerImageDecoder(createInterfaceSHFXL, ".shx");
         registerImageDecoder(createInterfaceSHFXL, ".shfxl");
 
         // True Paint

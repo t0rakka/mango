@@ -647,7 +647,7 @@ namespace mango::filesystem
                 {
                     u32 salt_length = getSaltLength(header.encryption);
                     MANGO_UNREFERENCED(salt_length);
-                    MANGO_EXCEPTION("[mapper.zip] AES encryption is not yet supported.");
+                    MANGO_EXCEPTION("[mapper.zip] AES encryption is not supported.");
 #if 0                
                     u8* saltvalue = address;
                     address += salt_length;

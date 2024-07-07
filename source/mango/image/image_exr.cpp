@@ -15,10 +15,10 @@ namespace
     using namespace mango::math;
     using namespace mango::image;
 
-    // MANGO TODO: mipmap/ripmap selection
+    // MANGO TODO: mipmap / ripmap selection
     // MANGO TODO: deep image support
     // MANGO TODO: multi-part support
-    // MANGO TODO: more flexible color resolver (=more formats)
+    // MANGO TODO: more flexible color resolver (more formats)
 
 // --------------------------------------------------------------------------------------
 //

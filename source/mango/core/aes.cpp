@@ -1111,10 +1111,6 @@ void aesni_ecb128_decrypt(u8* output, const u8* input, size_t length, const __m1
     const __m128i k18 = schedule[18];
     const __m128i k19 = schedule[19];
 
-#if 0
-
-    // MANGO TODO: Profile
-
     while (length >= 64)
     {
         __m128i data0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input +  0));
@@ -1186,8 +1182,6 @@ void aesni_ecb128_decrypt(u8* output, const u8* input, size_t length, const __m1
         input += 64;
         length -= 64;
     }
-
-#endif
 
     while (length >= 16)
     {
