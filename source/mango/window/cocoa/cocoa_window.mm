@@ -76,8 +76,8 @@ namespace mango
 
     Window::Window(int width, int height, u32 flags)
     {
-        // NOTE: Cocoa/OSX implementation only uses Window as interface and does NOT
-        //       use the window constructor for anything else except creating the internal state (m_handle).
+        // NOTE: Cocoa/OSX implementation only uses Window as interface and does NOT use the window
+        //       constructor for anything else except creating the internal state (m_handle).
         MANGO_UNREFERENCED(width);
         MANGO_UNREFERENCED(height);
         MANGO_UNREFERENCED(flags);
@@ -91,9 +91,8 @@ namespace mango
 
     void Window::setWindowPosition(int x, int y)
     {
-        // MANGO TODO
-        MANGO_UNREFERENCED(x);
-        MANGO_UNREFERENCED(y);
+        // NOTE: Retina conversion
+        [m_handle->window setFrameTopLeftPoint:NSMakePoint(x, y)];
     }
 
     void Window::setWindowSize(int width, int height)
@@ -144,8 +143,9 @@ namespace mango
 
     math::int32x2 Window::getWindowSize() const
     {
+        // NOTE: Retina conversion
         NSRect rect = [[m_handle->window contentView] frame];
-        rect = [[m_handle->window contentView] convertRectToBacking:rect]; // NOTE: Retina conversion
+        rect = [[m_handle->window contentView] convertRectToBacking:rect];
         return math::int32x2(rect.size.width, rect.size.height);
     }
 

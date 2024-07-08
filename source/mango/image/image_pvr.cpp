@@ -506,9 +506,7 @@ namespace
                 {
                     printLine(Print::Info, "pvr.pixelformat: {}", formatIndex);
 
-                    // MANGO TODO: support for COMPRESSED_NONE entries in the table (packed pixel formats, yuv, shared exponent, 1-bit b/w)
                     TextureCompression compression = formatTable[formatIndex];
-
                     TextureCompression info(compression);
 
                     if (info.compression != TextureCompression::NONE)

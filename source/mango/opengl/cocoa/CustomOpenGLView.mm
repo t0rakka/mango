@@ -141,7 +141,7 @@ namespace
             KEYCODE_F12,
             KEYCODE_NONE,
             KEYCODE_NONE, // F15
-            KEYCODE_INSERT, // MANGO TODO: check
+            KEYCODE_INSERT, // NOTE: only with non-mac keyboards
             KEYCODE_HOME,
             KEYCODE_PAGE_UP,
             KEYCODE_DELETE,
@@ -157,7 +157,7 @@ namespace
             KEYCODE_UP,
             KEYCODE_NONE,
         };
-        
+
         if (code >= 128)
         {
             return KEYCODE_NONE;
@@ -174,9 +174,7 @@ namespace
         if (flags & NSEventModifierFlagCommand)    mask |= KEYMASK_SUPER;
         return mask;
     }
-    
-    // MANGO TODO: Replace this with "friend class Keyboard" to send keyboard events
-    
+
     class WindowAdapter : public OpenGLContext
     {
     public:
@@ -184,7 +182,7 @@ namespace
         {
             const int keyIndex = int(code) >> 5;
             const int keyMask = 1 << (int(code) & 31);
-            
+
             if (press)
             {
                 m_handle->keystate[keyIndex] |= keyMask;
