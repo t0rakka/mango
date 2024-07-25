@@ -35,8 +35,8 @@ namespace mango
 
         void* address(const std::string& symbol) const
         {
-            void* ptr = ::GetProcAddress(handle, symbol.c_str());
-            return ptr;
+            auto ptr = ::GetProcAddress(handle, symbol.c_str());
+            return reinterpret_cast<void*>(ptr);
         }
     };
 
