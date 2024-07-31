@@ -98,10 +98,10 @@ namespace mango::filesystem
         return m_memory;
     }
 
-	File::operator const u8* () const
-	{
+    File::operator const u8* () const
+    {
         return m_memory.address;
-	}
+    }
 
     const u8* File::data() const
     {
