@@ -19,7 +19,7 @@ void print(ConstMemory buffer, const char* name, u64 time)
     printLine("{} {:5}.{:1} ms ({:6} MB/s )", name,
         time / 1000,
         ((time + 50) / 100) % 10,
-        x / (time * MB));
+        time ? x / (time * MB) : 0);
 }
 
 u64 test_crc32(ConstMemory buffer)
