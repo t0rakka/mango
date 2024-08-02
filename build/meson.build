@@ -1044,10 +1044,23 @@ else
 
     if host_machine.cpu_family() == 'arm' and enable_neon
         message('SIMD: NEON')
-        add_project_arguments('-mfpu=neon', '-mfloat-abi=hard', language: ['c', 'cpp'])
-        add_project_arguments('-fpermissive', '-Wno-psabi', language: ['c', 'cpp'])
+        add_project_arguments('-mfpu=neon',
+                              '-mfloat-abi=hard',
+                              language: ['c', 'cpp'])
+        add_project_arguments('-fpermissive',
+                              '-Wno-psabi',
+                              language: ['c', 'cpp'])
     elif host_machine.cpu_family() == 'aarch64'
         message('SIMD: NEON64')
+        if is_darwin
+            # Apple M1
+            # NOTE: we get this warning '++crc' is not a recognized feature for this target (ignoring feature)
+            #       but the fastgltf does not compile without +crc compiler flag
+            add_project_arguments('-fpermissive',
+                                  '-Wno-unknown-attributes',
+                                  '-Wno-unused-lambda-capture',
+                                  '-march=armv8.2-a+crypto+dotprod+crc', language: ['c', 'cpp'])
+        endif
     endif
 
     if host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
