@@ -9,16 +9,10 @@
 */
 #include <mango/core/adler32.hpp>
 
-#if defined(MANGO_ENABLE_ISAL)
-#include <isa-l.h>
-#endif
-
 namespace mango
 {
 
     static constexpr size_t BASE = 65521; // largest prime smaller than 65536
-
-#if !defined(MANGO_ENABLE_ISAL)
 
     static
     u32 adler32_remainder(u32 s1, u32 s2, const u8* buffer, size_t length)
@@ -59,8 +53,6 @@ namespace mango
         return s1 | (s2 << 16);
     }
 
-#endif
-
     u32 adler32_combine(u32 adler0, u32 adler1, size_t length1)
     {
         length1 %= BASE;
@@ -81,11 +73,75 @@ namespace mango
         return sum1 | (sum2 << 16);
     }
 
-#if defined(MANGO_ENABLE_ISAL)
+#if defined(MANGO_ENABLE_AVX2)
+
+    // ----------------------------------------------------------------------------------------
+    // Intel AVX2 adler32
+    // ----------------------------------------------------------------------------------------
+
+    static inline
+    int hadd_epi32(__m256i a)
+    {
+        __m256i a_hi = _mm256_permute2x128_si256(a, a, 1);
+        a = _mm256_hadd_epi32(a, a_hi);
+        a = _mm256_hadd_epi32(a, a);
+        a = _mm256_hadd_epi32(a, a);
+        return _mm256_extract_epi32(a, 0);
+    }
 
     u32 adler32(u32 adler, ConstMemory memory)
     {
-        return isal_adler32(adler, memory.address, memory.size);
+        constexpr size_t NMAX = 5552;
+        constexpr size_t BLOCK_SIZE = 32;
+
+        u32 s1 = adler & 0xffff;
+        u32 s2 = adler >> 16;
+
+        const u8* buffer = memory.address;
+        size_t length = memory.size;
+
+        const __m256i zero_v = _mm256_setzero_si256();
+        const __m256i one_epi16_v = _mm256_set1_epi16(1);
+        const __m256i coeff_v = _mm256_set_epi8(
+            1,   2,  3,  4,  5,  6,  7,  8,
+            9,  10, 11, 12, 13, 14, 15, 16,
+            17, 18, 19, 20, 21, 22, 23, 24,
+            25, 26, 27, 28, 29, 30, 31, 32);
+
+        size_t blocks = length / BLOCK_SIZE;
+        length -= blocks * BLOCK_SIZE;
+
+        while (blocks > 0)
+        {
+            size_t n = NMAX / BLOCK_SIZE;
+            if (n > blocks)
+                n = blocks;
+            blocks -= n;
+
+            s2 += s1 * n * BLOCK_SIZE;
+
+            __m256i v1 = _mm256_setzero_si256();
+            __m256i v2 = _mm256_setzero_si256();
+
+            while (n-- > 0)
+            {
+                __m256i chunk_v = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(buffer));
+                buffer += BLOCK_SIZE;
+
+                __m256i mad = _mm256_maddubs_epi16(chunk_v, coeff_v);
+                v2 = _mm256_add_epi32(v2, _mm256_madd_epi16(mad, one_epi16_v));
+                v2 = _mm256_add_epi32(v2, _mm256_slli_epi32(v1, 5));
+                v1 = _mm256_add_epi32(v1, _mm256_sad_epu8(chunk_v, zero_v));
+            }
+
+            s1 += hadd_epi32(v1);
+            s2 += hadd_epi32(v2);
+
+            s1 %= BASE;
+            s2 %= BASE;
+        }
+
+        return adler32_remainder(s1, s2, buffer, length);
     }
 
 #elif defined(MANGO_ENABLE_SSSE3)
@@ -96,11 +152,11 @@ namespace mango
 
     u32 adler32(u32 adler, ConstMemory memory)
     {
-        const u8* buffer = memory.address;
-        size_t length = memory.size;
-
         constexpr size_t NMAX = 5552;
         constexpr size_t BLOCK_SIZE = 32;
+
+        const u8* buffer = memory.address;
+        size_t length = memory.size;
 
         // Split Adler-32 into component sums.
         u32 s1 = adler & 0xffff;
@@ -166,6 +222,105 @@ namespace mango
         return adler32_remainder(s1, s2, buffer, length);
     }
 
+#elif defined(__ARM_FEATURE_DOTPROD) && defined(__aarch64__)
+
+    // ----------------------------------------------------------------------------------------
+    // ARM UDOT adler32
+    // ----------------------------------------------------------------------------------------
+
+    u32 adler32(u32 adler, ConstMemory memory)
+    {
+        // Copyright (c) 2022 Dougall Johnson
+
+        constexpr size_t NMAX = 5552;
+        constexpr size_t BLOCK_SIZE = 64;
+        constexpr size_t BLOCK_MASK = BLOCK_SIZE - 1;
+
+        const u8* buffer = memory.address;
+        size_t length = memory.size;
+
+        u64 s1 = adler & 0xffff;
+        u64 s2 = adler >> 16;
+
+        // The block loop requires alignment to block size
+        size_t alignment = size_t((0 - reinterpret_cast<uintptr_t>(buffer)) & BLOCK_MASK);
+
+        alignment = std::min(alignment, length);
+        if (alignment)
+        {
+            length -= alignment;
+
+            while (alignment-- > 0)
+            {
+                s2 += (s1 += *buffer++);
+            }
+
+            if (s1 >= BASE)
+                s1 -= BASE;
+            s2 %= BASE;
+        }
+
+        size_t blocks = length / BLOCK_SIZE;
+        length -= blocks * BLOCK_SIZE;
+
+        while (blocks)
+        {
+            size_t n = NMAX / BLOCK_SIZE;
+            if (n > blocks)
+                n = blocks;
+            blocks -= n;
+
+            u64 num_iterate_bytes = n * BLOCK_SIZE;
+
+            // multipliers
+            uint8_t mul_bytes[BLOCK_SIZE];
+            for (int i = 0; i < BLOCK_SIZE; i++)
+            {
+                mul_bytes[i] = BLOCK_SIZE - i;
+            }
+            uint8x16x4_t mul = vld1q_u8_x4(mul_bytes);
+
+            uint32x4_t accs[4] = { 0 };
+            uint32x4_t sums[4] = { 0 };
+            uint32x4_t extras[4] = { 0 };
+
+            while (n-- > 0)
+            {
+                uint8x16x4_t raw = vld1q_u8_x4(buffer);
+                buffer += BLOCK_SIZE;
+
+                for (int i = 0; i < 4; i++)
+                {
+                    accs[i] = vaddq_u32(accs[i], sums[i]);
+                    sums[i] = vdotq_u32(sums[i], raw.val[i], vdupq_n_u8(1));
+                    extras[i] = vdotq_u32(extras[i], raw.val[i], mul.val[i]);
+                }
+            }
+
+            for (int i = 1; i < 4; i++)
+            {
+                extras[0] = vaddq_u32(extras[0], extras[i]);
+                sums[0] = vaddq_u32(sums[0], sums[i]);
+            }
+
+            uint64_t acc = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                acc += vaddlvq_u32(accs[i]);
+            }
+            uint64_t extra = vaddlvq_u32(extras[0]);
+            uint64_t sum = vaddlvq_u32(sums[0]);
+
+            s2 += s1 * num_iterate_bytes + acc * BLOCK_SIZE + extra;
+            s1 += sum;
+
+            s1 %= BASE;
+            s2 %= BASE;
+        }
+
+        return adler32_remainder(s1, s2, buffer, length);
+    }
+
 #elif defined(MANGO_ENABLE_NEON)
 
     // ----------------------------------------------------------------------------------------
@@ -174,17 +329,18 @@ namespace mango
 
     u32 adler32(u32 adler, ConstMemory memory)
     {
+        constexpr size_t NMAX = 5552;
+        constexpr size_t BLOCK_SIZE = 16;
+        constexpr size_t BLOCK_MASK = BLOCK_SIZE - 1;
+
         const u8* buffer = memory.address;
         size_t length = memory.size;
-
-        constexpr size_t NMAX = 5552;
-        constexpr size_t BLOCK_SIZE = 32;
 
         u32 s1 = adler & 0xffff;
         u32 s2 = adler >> 16;
 
-        // The NEON loop requires alignment to 16 bytes
-        size_t alignment = size_t((0 - reinterpret_cast<uintptr_t>(buffer)) & 15);
+        // The block loop requires alignment to block size
+        size_t alignment = size_t((0 - reinterpret_cast<uintptr_t>(buffer)) & BLOCK_MASK);
 
         alignment = std::min(alignment, length);
         if (alignment)
@@ -270,12 +426,17 @@ namespace mango
 
 #else
 
+    // ----------------------------------------------------------------------------------------
+    // Scalar adler32
+    // ----------------------------------------------------------------------------------------
+
     u32 adler32(u32 adler, ConstMemory memory)
     {
+        constexpr size_t NMAX = 5552;
+        constexpr size_t BLOCK_SIZE = 16;
+
         u32 s1 = adler & 0xffff;
         u32 s2 = adler >> 16;
-
-        constexpr size_t NMAX = 5552;
 
         const u8* buffer = memory.address;
         size_t length = memory.size;
@@ -283,7 +444,7 @@ namespace mango
         while (length >= NMAX)
         {
             length -= NMAX;
-            size_t n = NMAX / 16;
+            size_t n = NMAX / BLOCK_SIZE;
 
             while (n-- > 0)
             {
