@@ -2033,9 +2033,10 @@ namespace mango::image::jpeg
         }
         else
         {
-            int n = getTaskSize(ymcu);
-            if (n)
+            bool isParallelEfficient = !m_restart_offsets.empty() || restartInterval > 12;
+            if (isParallelEfficient && m_hardware_concurrency > 1)
             {
+                int n = getTaskSize(ymcu);
                 decodeSequentialMT(n);
             }
             else
@@ -2047,62 +2048,92 @@ namespace mango::image::jpeg
 
     void Parser::decodeSequentialST()
     {
-        const size_t stride = m_surface->stride;
-        const size_t bytes_per_pixel = m_surface->format.bytes();
-        const size_t xstride = bytes_per_pixel * xblock;
-        const size_t ystride = stride * yblock;
-
-        u8* image = m_surface->image;
-
-        const int xmcu_last = xmcu - 1;
-        const int ymcu_last = ymcu - 1;
-        const int xclip = xsize % xblock;
-        const int yclip = ysize % yblock;
-        const int xblock_last = xclip ? xclip : xblock;
-        const int yblock_last = yclip ? yclip : yblock;
-
-        s16 data[JPEG_MAX_SAMPLES_IN_MCU];
-
-        for (int y = 0; y < ymcu_last; ++y)
+        if (restartInterval)
         {
-            u8* dest = image;
-            image += ystride;
+            // ---------------------------------------------------------------
+            // standard jpeg with DRI marker present
+            // ---------------------------------------------------------------
 
-            for (int x = 0; x < xmcu_last; ++x)
+            const u8* p = decodeState.buffer.ptr;
+
+            const size_t stride = m_surface->stride;
+            const size_t bytes_per_pixel = m_surface->format.bytes();
+            const size_t xstride = bytes_per_pixel * xblock;
+            const size_t ystride = stride * yblock;
+
+            u8* image = m_surface->image;
+
+            for (int i = 0; i < mcus; i += restartInterval)
             {
-                decodeState.decode(data, &decodeState);
-                processState.process(dest, stride, data, &processState, xblock, yblock);
-                dest += xstride;
+                    AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
+
+                    DecodeState state = decodeState;
+                    state.buffer.ptr = p;
+
+                    const int left = i + std::min(restartInterval, mcus - i);
+
+                    const int xmcu_last = xmcu - 1;
+                    const int ymcu_last = ymcu - 1;
+
+                    const int xclip = xsize % xblock;
+                    const int yclip = ysize % yblock;
+                    const int xblock_last = xclip ? xclip : xblock;
+                    const int yblock_last = yclip ? yclip : yblock;
+
+                    for (int j = i; j < left; ++j)
+                    {
+                        state.decode(data, &state);
+
+                        int x = j % xmcu;
+                        int y = j / xmcu;
+                        u8* dest = image + y * ystride + x * xstride;
+
+                        int width = x == xmcu_last ? xblock_last : xblock;
+                        int height = y == ymcu_last ? yblock_last : yblock;
+
+                        process_and_clip(dest, stride, data, width, height);
+                    }
+
+                // seek next restart marker
+                p = seekMarker(p, decodeState.buffer.end);
+
+                if (p >= decodeState.buffer.end)
+                    break;
+
+                if (isRestartMarker(p))
+                    p += 2;
             }
 
-            // last column
-            decodeState.decode(data, &decodeState);
-            process_and_clip(dest, stride, data, xblock_last, yblock);
-            dest += xstride;
+            decodeState.buffer.ptr = p;
+        }
+        else
+        {
+            // ---------------------------------------------------------------
+            // standard jpeg - Huffman/Arithmetic decoder must be serial
+            // ---------------------------------------------------------------
 
-            if (isRestartMarker(decodeState.buffer.ptr))
+            const int mcu_data_size = blocks_in_mcu * 64;
+            const int N = 8;
+            const int ncount = N * xmcu;
+
+            void* aligned_ptr = aligned_malloc(ncount * mcu_data_size * sizeof(s16), 64);
+            s16* data = reinterpret_cast<s16*>(aligned_ptr);
+
+            for (int y = 0; y < ymcu; y += N)
             {
-                decodeState.restart();
-                decodeState.buffer.ptr += 2;
+                const int y0 = y;
+                const int y1 = std::min(y + N, ymcu);
+                const int count = (y1 - y0) * xmcu;
+
+                for (int i = 0; i < count; ++i)
+                {
+                    decodeState.decode(data + i * mcu_data_size, &decodeState);
+                }
+
+                process_range(y0, y1, data);
             }
-        }
 
-        // last row
-        for (int x = 0; x < xmcu_last; ++x)
-        {
-            decodeState.decode(data, &decodeState);
-            process_and_clip(image, stride, data, xblock, yblock_last);
-            image += xstride;
-        }
-
-        // last mcu
-        decodeState.decode(data, &decodeState);
-        process_and_clip(image, stride, data, xblock_last, yblock_last);
-
-        if (isRestartMarker(decodeState.buffer.ptr))
-        {
-            decodeState.restart();
-            decodeState.buffer.ptr += 2;
+            aligned_free(data);
         }
     }
 
@@ -2221,7 +2252,6 @@ namespace mango::image::jpeg
             }
 
             decodeState.buffer.ptr = p;
-
 #endif
         }
         else if (restartInterval)
