@@ -2054,45 +2054,44 @@ namespace mango::image::jpeg
             // standard jpeg with DRI marker present
             // ---------------------------------------------------------------
 
-            const u8* p = decodeState.buffer.ptr;
-
             const size_t stride = m_surface->stride;
             const size_t bytes_per_pixel = m_surface->format.bytes();
             const size_t xstride = bytes_per_pixel * xblock;
             const size_t ystride = stride * yblock;
 
+            AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
+
+            const u8* p = decodeState.buffer.ptr;
             u8* image = m_surface->image;
 
             for (int i = 0; i < mcus; i += restartInterval)
             {
-                    AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
+                DecodeState state = decodeState;
+                state.buffer.ptr = p;
 
-                    DecodeState state = decodeState;
-                    state.buffer.ptr = p;
+                const int left = i + std::min(restartInterval, mcus - i);
 
-                    const int left = i + std::min(restartInterval, mcus - i);
+                const int xmcu_last = xmcu - 1;
+                const int ymcu_last = ymcu - 1;
 
-                    const int xmcu_last = xmcu - 1;
-                    const int ymcu_last = ymcu - 1;
+                const int xclip = xsize % xblock;
+                const int yclip = ysize % yblock;
+                const int xblock_last = xclip ? xclip : xblock;
+                const int yblock_last = yclip ? yclip : yblock;
 
-                    const int xclip = xsize % xblock;
-                    const int yclip = ysize % yblock;
-                    const int xblock_last = xclip ? xclip : xblock;
-                    const int yblock_last = yclip ? yclip : yblock;
+                for (int j = i; j < left; ++j)
+                {
+                    state.decode(data, &state);
 
-                    for (int j = i; j < left; ++j)
-                    {
-                        state.decode(data, &state);
+                    int x = j % xmcu;
+                    int y = j / xmcu;
+                    u8* dest = image + y * ystride + x * xstride;
 
-                        int x = j % xmcu;
-                        int y = j / xmcu;
-                        u8* dest = image + y * ystride + x * xstride;
+                    int width = x == xmcu_last ? xblock_last : xblock;
+                    int height = y == ymcu_last ? yblock_last : yblock;
 
-                        int width = x == xmcu_last ? xblock_last : xblock;
-                        int height = y == ymcu_last ? yblock_last : yblock;
-
-                        process_and_clip(dest, stride, data, width, height);
-                    }
+                    process_and_clip(dest, stride, data, width, height);
+                }
 
                 // seek next restart marker
                 p = seekMarker(p, decodeState.buffer.end);
