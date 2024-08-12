@@ -2033,8 +2033,7 @@ namespace mango::image::jpeg
         }
         else
         {
-            bool isParallelEfficient = !m_restart_offsets.empty() || restartInterval > 12;
-            if (isParallelEfficient && m_hardware_concurrency > 1)
+            if (m_hardware_concurrency > 1)
             {
                 int n = getTaskSize(ymcu);
                 decodeSequentialMT(n);
