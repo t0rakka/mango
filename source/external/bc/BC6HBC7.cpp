@@ -3341,7 +3341,7 @@ float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation,
 
     const LDREndPntPair* aEndPts = &pEP->aEndPts[uShape][0];
 
-#ifdef __GNUC__
+#if __GNUC__ >= 13
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
@@ -3352,7 +3352,7 @@ float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation,
         aOrgEndPts[p].B = Quantize(aEndPts[p].B, ms_aInfo[pEP->uMode].RGBAPrecWithP);
     }
 
-#ifdef __GNUC_
+#if __GNUC__ >= 13
     #pragma GCC diagnostic pop
 #endif
 
