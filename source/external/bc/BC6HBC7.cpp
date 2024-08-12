@@ -336,6 +336,12 @@ namespace DirectX
         LDRColorA() = default;
         LDRColorA(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a) noexcept : r(_r), g(_g), b(_b), a(_a) {}
 
+        LDRColorA(LDRColorA const&) = default;
+        LDRColorA& operator= (const LDRColorA&) = default;
+
+        LDRColorA(LDRColorA&&) = default;
+        LDRColorA& operator= (LDRColorA&&) = default;
+
         const uint8_t& operator [] (size_t uElement) const noexcept
         {
             switch (uElement)
@@ -389,9 +395,9 @@ namespace DirectX
             const int* aWeights = nullptr;
             switch (wcprec)
             {
-            case 2: aWeights = g_aWeights2; break;
-            case 3: aWeights = g_aWeights3; break;
-            case 4: aWeights = g_aWeights4; break;
+            case 2: aWeights = g_aWeights2; assert(wc < 4); break;
+            case 3: aWeights = g_aWeights3; assert(wc < 8); break;
+            case 4: aWeights = g_aWeights4; assert(wc < 16); break;
             default: assert(false); out.r = out.g = out.b = 0; return;
             }
             out.r = uint8_t((uint32_t(c0.r) * uint32_t(BC67_WEIGHT_MAX - aWeights[wc]) + uint32_t(c1.r) * uint32_t(aWeights[wc]) + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT);
@@ -404,9 +410,9 @@ namespace DirectX
             const int* aWeights = nullptr;
             switch (waprec)
             {
-            case 2: aWeights = g_aWeights2; break;
-            case 3: aWeights = g_aWeights3; break;
-            case 4: aWeights = g_aWeights4; break;
+            case 2: aWeights = g_aWeights2; assert(wa < 4); break;
+            case 3: aWeights = g_aWeights3; assert(wa < 8); break;
+            case 4: aWeights = g_aWeights4; assert(wa < 16); break;
             default: assert(false); out.a = 0; return;
             }
             out.a = uint8_t((uint32_t(c0.a) * uint32_t(BC67_WEIGHT_MAX - aWeights[wa]) + uint32_t(c1.a) * uint32_t(aWeights[wa]) + BC67_WEIGHT_ROUND) >> BC67_WEIGHT_SHIFT);
@@ -446,17 +452,15 @@ namespace DirectX
 
     inline LDRColorA HDRColorA::ToLDRColorA() const noexcept
     {
-        return LDRColorA(
-            static_cast<uint8_t>(r + 0.01f), 
-            static_cast<uint8_t>(g + 0.01f), 
-            static_cast<uint8_t>(b + 0.01f), 
-            static_cast<uint8_t>(a + 0.01f));
+        return LDRColorA(static_cast<uint8_t>(r + 0.01f), static_cast<uint8_t>(g + 0.01f), static_cast<uint8_t>(b + 0.01f), static_cast<uint8_t>(a + 0.01f));
     }
-}
+
+} // namespace DirectX
 
 namespace
 {
-    static
+
+    inline
     float16 INT2F16(int input, bool bSigned) noexcept
     {
         float16 h;
@@ -485,15 +489,14 @@ namespace
         int r, g, b;
         int pad;
 
-    public:
         INTColor() = default;
-        INTColor(int nr, int ng, int nb) noexcept
-            : r(nr)
-            , g(ng)
-            , b(nb)
-            , pad(0)
-        {
-        }
+        INTColor(int nr, int ng, int nb) noexcept : r(nr), g(ng), b(nb), pad(0) {}
+
+        INTColor(INTColor const&) = default;
+        INTColor& operator= (const INTColor&) = default;
+
+        INTColor(INTColor&&) = default;
+        INTColor& operator= (INTColor&&) = default;
 
         INTColor& operator += (const INTColor& c) noexcept
         {
@@ -536,7 +539,7 @@ namespace
             float16x4 aF16;
 
             const float32x4 v = simd::f32x4_uload(reinterpret_cast<const float*>(&c));
-            aF16 = v; //XMStoreHalf4(&aF16, v);
+            aF16 = v;
 
             r = F16ToINT(aF16[0], bSigned);
             g = F16ToINT(aF16[1], bSigned);
@@ -559,7 +562,6 @@ namespace
             return *this;
         }
 
-    private:
         static int F16ToINT(const float16& f, bool bSigned) noexcept
         {
             uint16_t input = *reinterpret_cast<const uint16_t*>(&f);
@@ -711,7 +713,7 @@ namespace
             const bool bSigned;
             uint8_t uMode;
             uint8_t uShape;
-            HDRColorA aHDRPixels[NUM_PIXELS_PER_BLOCK];;
+            HDRColorA aHDRPixels[NUM_PIXELS_PER_BLOCK];
             INTEndPntPair aUnqEndPts[BC6H_MAX_SHAPES][BC6H_MAX_REGIONS];
             INTColor aIPixels[NUM_PIXELS_PER_BLOCK];
 
@@ -763,8 +765,7 @@ namespace
             size_t aIndices[],
             float aTotErr[]) const noexcept;
         void QuantizeEndPts(const EncodeParams* pEP, INTEndPntPair* qQntEndPts) const noexcept;
-        void EmitBlock(const EncodeParams* pEP, const INTEndPntPair aEndPts[],
-            const size_t aIndices[]) noexcept;
+        void EmitBlock(const EncodeParams* pEP, const INTEndPntPair aEndPts[], const size_t aIndices[]) noexcept;
         void Refine(EncodeParams* pEP) noexcept;
 
         static void GeneratePaletteUnquantized(const EncodeParams* pEP, size_t uRegion, INTColor aPalette[]) noexcept;
@@ -785,7 +786,7 @@ namespace
     {
     public:
         void Decode(u8* output, size_t stride) const noexcept;
-        void Encode(uint32_t flags, const u8* input, size_t stride) noexcept;
+        void Encode(u32 flags, const u8* input, size_t stride) noexcept;
 
     private:
         struct ModeInfo
@@ -808,13 +809,7 @@ namespace
             LDRColorA aLDRPixels[NUM_PIXELS_PER_BLOCK];
             const HDRColorA* const aHDRPixels;
 
-            EncodeParams(const HDRColorA* const aOriginal) noexcept
-                : uMode(0)
-                , aEndPts{}
-                , aLDRPixels{}
-                , aHDRPixels(aOriginal)
-            {
-            }
+            EncodeParams(const HDRColorA* const aOriginal) noexcept : uMode(0), aEndPts{}, aLDRPixels{}, aHDRPixels(aOriginal) {}
         };
 
         static uint8_t Quantize(uint8_t comp, uint8_t uPrec) noexcept
@@ -884,265 +879,261 @@ namespace
 
     private:
         static constexpr uint8_t c_NumModes = 8;
-
         static const ModeInfo ms_aInfo[c_NumModes];
     };
-}
 
-// BC6H Compression
-const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[D3DX_BC6H::c_NumModes][82] =
-{
-    {   // Mode 1 (0x00) - 10 5 5 5
-        { M, 0}, { M, 1}, {GY, 4}, {BY, 4}, {BZ, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
-        {GZ, 4}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
-        {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
-        {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
-        {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4},
-    },
+    // BC6H Compression
+    const D3DX_BC6H::ModeDescriptor D3DX_BC6H::ms_aDesc[D3DX_BC6H::c_NumModes][82] =
+    {
+        {   // Mode 1 (0x00) - 10 5 5 5
+            { M, 0}, { M, 1}, {GY, 4}, {BY, 4}, {BZ, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
+            {GZ, 4}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
+            {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
+            {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
+            {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
+            { D, 3}, { D, 4},
+        },
 
-    {   // Mode 2 (0x01) - 7 6 6 6
-        { M, 0}, { M, 1}, {GY, 5}, {GZ, 4}, {GZ, 5}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {BZ, 0}, {BZ, 1}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {BY, 5}, {BZ, 2}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BZ, 3}, {BZ, 5}, {BZ, 4}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
-        {RX, 5}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
-        {GX, 5}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
-        {BX, 5}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
-        {RY, 5}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4},
-    },
+        {   // Mode 2 (0x01) - 7 6 6 6
+            { M, 0}, { M, 1}, {GY, 5}, {GZ, 4}, {GZ, 5}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {BZ, 0}, {BZ, 1}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {BY, 5}, {BZ, 2}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BZ, 3}, {BZ, 5}, {BZ, 4}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
+            {RX, 5}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
+            {GX, 5}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
+            {BX, 5}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
+            {RY, 5}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}, { D, 0}, { D, 1}, { D, 2},
+            { D, 3}, { D, 4},
+        },
 
-    {   // Mode 3 (0x02) - 11 5 4 4
-        { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
-        {RW,10}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GW,10},
-        {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BW,10},
-        {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
-        {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4},
-    },
+        {   // Mode 3 (0x02) - 11 5 4 4
+            { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
+            {RW,10}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GW,10},
+            {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BW,10},
+            {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
+            {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
+            { D, 3}, { D, 4},
+        },
 
-    {   // Mode 4 (0x06) - 11 4 5 4
-        { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RW,10},
-        {GZ, 4}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
-        {GW,10}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BW,10},
-        {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {BZ, 0},
-        {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {GY, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4},
-    },
+        {   // Mode 4 (0x06) - 11 4 5 4
+            { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RW,10},
+            {GZ, 4}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
+            {GW,10}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BW,10},
+            {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {BZ, 0},
+            {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {GY, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
+            { D, 3}, { D, 4},
+        },
 
-    {   // Mode 5 (0x0a) - 11 4 4 5
-        { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RW,10},
-        {BY, 4}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GW,10},
-        {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
-        {BW,10}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {BZ, 1},
-        {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {BZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4},
-    },
+        {   // Mode 5 (0x0a) - 11 4 4 5
+            { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RW,10},
+            {BY, 4}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GW,10},
+            {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
+            {BW,10}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {BZ, 1},
+            {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {BZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
+            { D, 3}, { D, 4},
+        },
 
-    {   // Mode 6 (0x0e) - 9 5 5 5
-        { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BZ, 4}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
-        {GZ, 4}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
-        {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
-        {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
-        {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4},
-    },
+        {   // Mode 6 (0x0e) - 9 5 5 5
+            { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BZ, 4}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
+            {GZ, 4}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
+            {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
+            {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
+            {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
+            { D, 3}, { D, 4},
+        },
 
-    {   // Mode 7 (0x12) - 8 6 5 5
-        { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {RW, 7}, {GZ, 4}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {GW, 7}, {BZ, 2}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BW, 7}, {BZ, 3}, {BZ, 4}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
-        {RX, 5}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
-        {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
-        {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
-        {RY, 5}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4},
-    },
+        {   // Mode 7 (0x12) - 8 6 5 5
+            { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {RW, 7}, {GZ, 4}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {GW, 7}, {BZ, 2}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BW, 7}, {BZ, 3}, {BZ, 4}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
+            {RX, 5}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
+            {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
+            {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
+            {RY, 5}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}, { D, 0}, { D, 1}, { D, 2},
+            { D, 3}, { D, 4},
+        },
 
-    {   // Mode 8 (0x16) - 8 5 6 5
-        { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {RW, 7}, {BZ, 0}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {GW, 7}, {GY, 5}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BW, 7}, {GZ, 5}, {BZ, 4}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
-        {GZ, 4}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
-        {GX, 5}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
-        {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
-        {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4},
-    },
+        {   // Mode 8 (0x16) - 8 5 6 5
+            { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {RW, 7}, {BZ, 0}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {GW, 7}, {GY, 5}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BW, 7}, {GZ, 5}, {BZ, 4}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
+            {GZ, 4}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
+            {GX, 5}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
+            {BZ, 1}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
+            {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
+            { D, 3}, { D, 4},
+        },
 
-    {   // Mode 9 (0x1a) - 8 5 5 6
-        { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {RW, 7}, {BZ, 1}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {GW, 7}, {BY, 5}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BW, 7}, {BZ, 5}, {BZ, 4}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
-        {GZ, 4}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
-        {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
-        {BX, 5}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
-        {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4},
-    },
+        {   // Mode 9 (0x1a) - 8 5 5 6
+            { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {RW, 7}, {BZ, 1}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {GW, 7}, {BY, 5}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BW, 7}, {BZ, 5}, {BZ, 4}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
+            {GZ, 4}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
+            {BZ, 0}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
+            {BX, 5}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
+            {BZ, 2}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {BZ, 3}, { D, 0}, { D, 1}, { D, 2},
+            { D, 3}, { D, 4},
+        },
 
-    {   // Mode 10 (0x1e) - 6 6 6 6
-        { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {GZ, 4}, {BZ, 0}, {BZ, 1}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GY, 5}, {BY, 5}, {BZ, 2}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {GZ, 5}, {BZ, 3}, {BZ, 5}, {BZ, 4}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
-        {RX, 5}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
-        {GX, 5}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
-        {BX, 5}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
-        {RY, 5}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}, { D, 0}, { D, 1}, { D, 2},
-        { D, 3}, { D, 4},
-    },
+        {   // Mode 10 (0x1e) - 6 6 6 6
+            { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {GZ, 4}, {BZ, 0}, {BZ, 1}, {BY, 4}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GY, 5}, {BY, 5}, {BZ, 2}, {GY, 4}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {GZ, 5}, {BZ, 3}, {BZ, 5}, {BZ, 4}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
+            {RX, 5}, {GY, 0}, {GY, 1}, {GY, 2}, {GY, 3}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
+            {GX, 5}, {GZ, 0}, {GZ, 1}, {GZ, 2}, {GZ, 3}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
+            {BX, 5}, {BY, 0}, {BY, 1}, {BY, 2}, {BY, 3}, {RY, 0}, {RY, 1}, {RY, 2}, {RY, 3}, {RY, 4},
+            {RY, 5}, {RZ, 0}, {RZ, 1}, {RZ, 2}, {RZ, 3}, {RZ, 4}, {RZ, 5}, { D, 0}, { D, 1}, { D, 2},
+            { D, 3}, { D, 4},
+        },
 
-    {   // Mode 11 (0x03) - 10 10
-        { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
-        {RX, 5}, {RX, 6}, {RX, 7}, {RX, 8}, {RX, 9}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
-        {GX, 5}, {GX, 6}, {GX, 7}, {GX, 8}, {GX, 9}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
-        {BX, 5}, {BX, 6}, {BX, 7}, {BX, 8}, {BX, 9}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0},
-    },
+        {   // Mode 11 (0x03) - 10 10
+            { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
+            {RX, 5}, {RX, 6}, {RX, 7}, {RX, 8}, {RX, 9}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
+            {GX, 5}, {GX, 6}, {GX, 7}, {GX, 8}, {GX, 9}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
+            {BX, 5}, {BX, 6}, {BX, 7}, {BX, 8}, {BX, 9}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
+            {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
+            {NA, 0}, {NA, 0},
+        },
 
-    {   // Mode 12 (0x07) - 11 9
-        { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
-        {RX, 5}, {RX, 6}, {RX, 7}, {RX, 8}, {RW,10}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
-        {GX, 5}, {GX, 6}, {GX, 7}, {GX, 8}, {GW,10}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
-        {BX, 5}, {BX, 6}, {BX, 7}, {BX, 8}, {BW,10}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0},
-    },
+        {   // Mode 12 (0x07) - 11 9
+            { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
+            {RX, 5}, {RX, 6}, {RX, 7}, {RX, 8}, {RW,10}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
+            {GX, 5}, {GX, 6}, {GX, 7}, {GX, 8}, {GW,10}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
+            {BX, 5}, {BX, 6}, {BX, 7}, {BX, 8}, {BW,10}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
+            {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
+            {NA, 0}, {NA, 0},
+        },
 
-    {   // Mode 13 (0x0b) - 12 8
-        { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
-        {RX, 5}, {RX, 6}, {RX, 7}, {RW,11}, {RW,10}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
-        {GX, 5}, {GX, 6}, {GX, 7}, {GW,11}, {GW,10}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
-        {BX, 5}, {BX, 6}, {BX, 7}, {BW,11}, {BW,10}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0},
-    },
+        {   // Mode 13 (0x0b) - 12 8
+            { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RX, 4},
+            {RX, 5}, {RX, 6}, {RX, 7}, {RW,11}, {RW,10}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GX, 4},
+            {GX, 5}, {GX, 6}, {GX, 7}, {GW,11}, {GW,10}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BX, 4},
+            {BX, 5}, {BX, 6}, {BX, 7}, {BW,11}, {BW,10}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
+            {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
+            {NA, 0}, {NA, 0},
+        },
 
-    {   // Mode 14 (0x0f) - 16 4
-        { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
-        {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
-        {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
-        {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RW,15},
-        {RW,14}, {RW,13}, {RW,12}, {RW,11}, {RW,10}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GW,15},
-        {GW,14}, {GW,13}, {GW,12}, {GW,11}, {GW,10}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BW,15},
-        {BW,14}, {BW,13}, {BW,12}, {BW,11}, {BW,10}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
-        {NA, 0}, {NA, 0},
-    },
-};
+        {   // Mode 14 (0x0f) - 16 4
+            { M, 0}, { M, 1}, { M, 2}, { M, 3}, { M, 4}, {RW, 0}, {RW, 1}, {RW, 2}, {RW, 3}, {RW, 4},
+            {RW, 5}, {RW, 6}, {RW, 7}, {RW, 8}, {RW, 9}, {GW, 0}, {GW, 1}, {GW, 2}, {GW, 3}, {GW, 4},
+            {GW, 5}, {GW, 6}, {GW, 7}, {GW, 8}, {GW, 9}, {BW, 0}, {BW, 1}, {BW, 2}, {BW, 3}, {BW, 4},
+            {BW, 5}, {BW, 6}, {BW, 7}, {BW, 8}, {BW, 9}, {RX, 0}, {RX, 1}, {RX, 2}, {RX, 3}, {RW,15},
+            {RW,14}, {RW,13}, {RW,12}, {RW,11}, {RW,10}, {GX, 0}, {GX, 1}, {GX, 2}, {GX, 3}, {GW,15},
+            {GW,14}, {GW,13}, {GW,12}, {GW,11}, {GW,10}, {BX, 0}, {BX, 1}, {BX, 2}, {BX, 3}, {BW,15},
+            {BW,14}, {BW,13}, {BW,12}, {BW,11}, {BW,10}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
+            {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0}, {NA, 0},
+            {NA, 0}, {NA, 0},
+        },
+    };
 
-// Mode, Partitions, Transformed, IndexPrec, RGBAPrec
-const D3DX_BC6H::ModeInfo D3DX_BC6H::ms_aInfo[D3DX_BC6H::c_NumModes] =
-{
-    {0x00, 1, true,  3, { { LDRColorA(10,10,10,0), LDRColorA(5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 1
-    {0x01, 1, true,  3, { { LDRColorA(7, 7, 7,0), LDRColorA(6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 2
-    {0x02, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(5, 4, 4,0) }, { LDRColorA(5,4,4,0), LDRColorA(5,4,4,0) } } }, // Mode 3
-    {0x06, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(4, 5, 4,0) }, { LDRColorA(4,5,4,0), LDRColorA(4,5,4,0) } } }, // Mode 4
-    {0x0a, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(4, 4, 5,0) }, { LDRColorA(4,4,5,0), LDRColorA(4,4,5,0) } } }, // Mode 5
-    {0x0e, 1, true,  3, { { LDRColorA(9, 9, 9,0), LDRColorA(5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 6
-    {0x12, 1, true,  3, { { LDRColorA(8, 8, 8,0), LDRColorA(6, 5, 5,0) }, { LDRColorA(6,5,5,0), LDRColorA(6,5,5,0) } } }, // Mode 7
-    {0x16, 1, true,  3, { { LDRColorA(8, 8, 8,0), LDRColorA(5, 6, 5,0) }, { LDRColorA(5,6,5,0), LDRColorA(5,6,5,0) } } }, // Mode 8
-    {0x1a, 1, true,  3, { { LDRColorA(8, 8, 8,0), LDRColorA(5, 5, 6,0) }, { LDRColorA(5,5,6,0), LDRColorA(5,5,6,0) } } }, // Mode 9
-    {0x1e, 1, false, 3, { { LDRColorA(6, 6, 6,0), LDRColorA(6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 10
-    {0x03, 0, false, 4, { { LDRColorA(10,10,10,0), LDRColorA(10,10,10,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 11
-    {0x07, 0, true,  4, { { LDRColorA(11,11,11,0), LDRColorA(9, 9, 9,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 12
-    {0x0b, 0, true,  4, { { LDRColorA(12,12,12,0), LDRColorA(8, 8, 8,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 13
-    {0x0f, 0, true,  4, { { LDRColorA(16,16,16,0), LDRColorA(4, 4, 4,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 14
-};
+    // Mode, Partitions, Transformed, IndexPrec, RGBAPrec
+    const D3DX_BC6H::ModeInfo D3DX_BC6H::ms_aInfo[D3DX_BC6H::c_NumModes] =
+    {
+        {0x00, 1, true,  3, { { LDRColorA(10,10,10,0), LDRColorA(5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 1
+        {0x01, 1, true,  3, { { LDRColorA(7, 7, 7,0), LDRColorA(6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 2
+        {0x02, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(5, 4, 4,0) }, { LDRColorA(5,4,4,0), LDRColorA(5,4,4,0) } } }, // Mode 3
+        {0x06, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(4, 5, 4,0) }, { LDRColorA(4,5,4,0), LDRColorA(4,5,4,0) } } }, // Mode 4
+        {0x0a, 1, true,  3, { { LDRColorA(11,11,11,0), LDRColorA(4, 4, 5,0) }, { LDRColorA(4,4,5,0), LDRColorA(4,4,5,0) } } }, // Mode 5
+        {0x0e, 1, true,  3, { { LDRColorA(9, 9, 9,0), LDRColorA(5, 5, 5,0) }, { LDRColorA(5,5,5,0), LDRColorA(5,5,5,0) } } }, // Mode 6
+        {0x12, 1, true,  3, { { LDRColorA(8, 8, 8,0), LDRColorA(6, 5, 5,0) }, { LDRColorA(6,5,5,0), LDRColorA(6,5,5,0) } } }, // Mode 7
+        {0x16, 1, true,  3, { { LDRColorA(8, 8, 8,0), LDRColorA(5, 6, 5,0) }, { LDRColorA(5,6,5,0), LDRColorA(5,6,5,0) } } }, // Mode 8
+        {0x1a, 1, true,  3, { { LDRColorA(8, 8, 8,0), LDRColorA(5, 5, 6,0) }, { LDRColorA(5,5,6,0), LDRColorA(5,5,6,0) } } }, // Mode 9
+        {0x1e, 1, false, 3, { { LDRColorA(6, 6, 6,0), LDRColorA(6, 6, 6,0) }, { LDRColorA(6,6,6,0), LDRColorA(6,6,6,0) } } }, // Mode 10
+        {0x03, 0, false, 4, { { LDRColorA(10,10,10,0), LDRColorA(10,10,10,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 11
+        {0x07, 0, true,  4, { { LDRColorA(11,11,11,0), LDRColorA(9, 9, 9,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 12
+        {0x0b, 0, true,  4, { { LDRColorA(12,12,12,0), LDRColorA(8, 8, 8,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 13
+        {0x0f, 0, true,  4, { { LDRColorA(16,16,16,0), LDRColorA(4, 4, 4,0) }, { LDRColorA(0,0,0,0), LDRColorA(0,0,0,0) } } }, // Mode 14
+    };
 
-const int D3DX_BC6H::ms_aModeToInfo[D3DX_BC6H::c_NumModeInfo] =
-{
-     0, // Mode 1   - 0x00
-     1, // Mode 2   - 0x01
-     2, // Mode 3   - 0x02
-    10, // Mode 11  - 0x03
-    -1, // Invalid  - 0x04
-    -1, // Invalid  - 0x05
-     3, // Mode 4   - 0x06
-    11, // Mode 12  - 0x07
-    -1, // Invalid  - 0x08
-    -1, // Invalid  - 0x09
-     4, // Mode 5   - 0x0a
-    12, // Mode 13  - 0x0b
-    -1, // Invalid  - 0x0c
-    -1, // Invalid  - 0x0d
-     5, // Mode 6   - 0x0e
-    13, // Mode 14  - 0x0f
-    -1, // Invalid  - 0x10
-    -1, // Invalid  - 0x11
-     6, // Mode 7   - 0x12
-    -1, // Reserved - 0x13
-    -1, // Invalid  - 0x14
-    -1, // Invalid  - 0x15
-     7, // Mode 8   - 0x16
-    -1, // Reserved - 0x17
-    -1, // Invalid  - 0x18
-    -1, // Invalid  - 0x19
-     8, // Mode 9   - 0x1a
-    -1, // Reserved - 0x1b
-    -1, // Invalid  - 0x1c
-    -1, // Invalid  - 0x1d
-     9, // Mode 10  - 0x1e
-    -1, // Resreved - 0x1f
-};
+    const int D3DX_BC6H::ms_aModeToInfo[D3DX_BC6H::c_NumModeInfo] =
+    {
+        0, // Mode 1   - 0x00
+        1, // Mode 2   - 0x01
+        2, // Mode 3   - 0x02
+        10, // Mode 11  - 0x03
+        -1, // Invalid  - 0x04
+        -1, // Invalid  - 0x05
+        3, // Mode 4   - 0x06
+        11, // Mode 12  - 0x07
+        -1, // Invalid  - 0x08
+        -1, // Invalid  - 0x09
+        4, // Mode 5   - 0x0a
+        12, // Mode 13  - 0x0b
+        -1, // Invalid  - 0x0c
+        -1, // Invalid  - 0x0d
+        5, // Mode 6   - 0x0e
+        13, // Mode 14  - 0x0f
+        -1, // Invalid  - 0x10
+        -1, // Invalid  - 0x11
+        6, // Mode 7   - 0x12
+        -1, // Reserved - 0x13
+        -1, // Invalid  - 0x14
+        -1, // Invalid  - 0x15
+        7, // Mode 8   - 0x16
+        -1, // Reserved - 0x17
+        -1, // Invalid  - 0x18
+        -1, // Invalid  - 0x19
+        8, // Mode 9   - 0x1a
+        -1, // Reserved - 0x1b
+        -1, // Invalid  - 0x1c
+        -1, // Invalid  - 0x1d
+        9, // Mode 10  - 0x1e
+        -1, // Resreved - 0x1f
+    };
 
-// BC7 compression: uPartitions, uPartitionBits, uPBits, uRotationBits, uIndexModeBits, uIndexPrec, uIndexPrec2, RGBAPrec, RGBAPrecWithP
-const D3DX_BC7::ModeInfo D3DX_BC7::ms_aInfo[D3DX_BC7::c_NumModes] =
-{
-    {2, 4, 6, 0, 0, 3, 0, LDRColorA(4,4,4,0), LDRColorA(5,5,5,0)},
-        // Mode 0: Color only, 3 Subsets, RGBP 4441 (unique P-bit), 3-bit indecies, 16 partitions
-    {1, 6, 2, 0, 0, 3, 0, LDRColorA(6,6,6,0), LDRColorA(7,7,7,0)},
-        // Mode 1: Color only, 2 Subsets, RGBP 6661 (shared P-bit), 3-bit indecies, 64 partitions
-    {2, 6, 0, 0, 0, 2, 0, LDRColorA(5,5,5,0), LDRColorA(5,5,5,0)},
-        // Mode 2: Color only, 3 Subsets, RGB 555, 2-bit indecies, 64 partitions
-    {1, 6, 4, 0, 0, 2, 0, LDRColorA(7,7,7,0), LDRColorA(8,8,8,0)},
-        // Mode 3: Color only, 2 Subsets, RGBP 7771 (unique P-bit), 2-bits indecies, 64 partitions
-    {0, 0, 0, 2, 1, 2, 3, LDRColorA(5,5,5,6), LDRColorA(5,5,5,6)},
-        // Mode 4: Color w/ Separate Alpha, 1 Subset, RGB 555, A6, 16x2/16x3-bit indices, 2-bit rotation, 1-bit index selector
-    {0, 0, 0, 2, 0, 2, 2, LDRColorA(7,7,7,8), LDRColorA(7,7,7,8)},
-        // Mode 5: Color w/ Separate Alpha, 1 Subset, RGB 777, A8, 16x2/16x2-bit indices, 2-bit rotation
-    {0, 0, 2, 0, 0, 4, 0, LDRColorA(7,7,7,7), LDRColorA(8,8,8,8)},
-        // Mode 6: Color+Alpha, 1 Subset, RGBAP 77771 (unique P-bit), 16x4-bit indecies
-    {1, 6, 4, 0, 0, 2, 0, LDRColorA(5,5,5,5), LDRColorA(6,6,6,6)}
-        // Mode 7: Color+Alpha, 2 Subsets, RGBAP 55551 (unique P-bit), 2-bit indices, 64 partitions
-};
+    // BC7 compression: uPartitions, uPartitionBits, uPBits, uRotationBits, uIndexModeBits, uIndexPrec, uIndexPrec2, RGBAPrec, RGBAPrecWithP
+    const D3DX_BC7::ModeInfo D3DX_BC7::ms_aInfo[D3DX_BC7::c_NumModes] =
+    {
+        {2, 4, 6, 0, 0, 3, 0, LDRColorA(4,4,4,0), LDRColorA(5,5,5,0)},
+            // Mode 0: Color only, 3 Subsets, RGBP 4441 (unique P-bit), 3-bit indecies, 16 partitions
+        {1, 6, 2, 0, 0, 3, 0, LDRColorA(6,6,6,0), LDRColorA(7,7,7,0)},
+            // Mode 1: Color only, 2 Subsets, RGBP 6661 (shared P-bit), 3-bit indecies, 64 partitions
+        {2, 6, 0, 0, 0, 2, 0, LDRColorA(5,5,5,0), LDRColorA(5,5,5,0)},
+            // Mode 2: Color only, 3 Subsets, RGB 555, 2-bit indecies, 64 partitions
+        {1, 6, 4, 0, 0, 2, 0, LDRColorA(7,7,7,0), LDRColorA(8,8,8,0)},
+            // Mode 3: Color only, 2 Subsets, RGBP 7771 (unique P-bit), 2-bits indecies, 64 partitions
+        {0, 0, 0, 2, 1, 2, 3, LDRColorA(5,5,5,6), LDRColorA(5,5,5,6)},
+            // Mode 4: Color w/ Separate Alpha, 1 Subset, RGB 555, A6, 16x2/16x3-bit indices, 2-bit rotation, 1-bit index selector
+        {0, 0, 0, 2, 0, 2, 2, LDRColorA(7,7,7,8), LDRColorA(7,7,7,8)},
+            // Mode 5: Color w/ Separate Alpha, 1 Subset, RGB 777, A8, 16x2/16x2-bit indices, 2-bit rotation
+        {0, 0, 2, 0, 0, 4, 0, LDRColorA(7,7,7,7), LDRColorA(8,8,8,8)},
+            // Mode 6: Color+Alpha, 1 Subset, RGBAP 77771 (unique P-bit), 16x4-bit indecies
+        {1, 6, 4, 0, 0, 2, 0, LDRColorA(5,5,5,5), LDRColorA(6,6,6,6)}
+            // Mode 7: Color+Alpha, 2 Subsets, RGBAP 55551 (unique P-bit), 2-bit indices, 64 partitions
+    };
 
-
-namespace
-{
     //-------------------------------------------------------------------------------------
     // Helper functions
     //-------------------------------------------------------------------------------------
+
     inline bool IsFixUpOffset(size_t uPartitions, size_t uShape, size_t uOffset) noexcept
     {
         assert(uPartitions < 3 && uShape < 64 && uOffset < 16);
@@ -1206,9 +1197,9 @@ namespace
         }
     }
 
-
     //-------------------------------------------------------------------------------------
-    float OptimizeRGB(
+
+    void OptimizeRGB(
         const HDRColorA* const pPoints,
         HDRColorA* pX,
         HDRColorA* pY,
@@ -1216,7 +1207,6 @@ namespace
         size_t cPixels,
         const size_t* pIndex) noexcept
     {
-        constexpr float fError = FLT_MAX;
         const float *pC = (3 == cSteps) ? pC3 : pC4;
         const float *pD = (3 == cSteps) ? pD3 : pD4;
 
@@ -1247,7 +1237,7 @@ namespace
         {
             pX->r = X.r; pX->g = X.g; pX->b = X.b;
             pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
-            return 0.0f;
+            return;
         }
 
         // Try all four axis directions, to determine which diagonal best fits data
@@ -1300,7 +1290,7 @@ namespace
         {
             pX->r = X.r; pX->g = X.g; pX->b = X.b;
             pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
-            return 0.0f;
+            return;
         }
 
         // Use Newton's Method to find local minima of sum-of-squares error.
@@ -1340,8 +1330,7 @@ namespace
 
             for (size_t iPoint = 0; iPoint < cPixels; iPoint++)
             {
-                const float fDot = 
-                    (pPoints[pIndex[iPoint]].r - X.r) * Dir.r +
+                const float fDot = (pPoints[pIndex[iPoint]].r - X.r) * Dir.r +
                     (pPoints[pIndex[iPoint]].g - X.g) * Dir.g +
                     (pPoints[pIndex[iPoint]].b - X.b) * Dir.b;
 
@@ -1400,12 +1389,11 @@ namespace
 
         pX->r = X.r; pX->g = X.g; pX->b = X.b;
         pY->r = Y.r; pY->g = Y.g; pY->b = Y.b;
-        return fError;
     }
 
     //-------------------------------------------------------------------------------------
 
-    float OptimizeRGBA(
+    void OptimizeRGBA(
         const HDRColorA* const pPoints,
         HDRColorA* pX,
         HDRColorA* pY,
@@ -1413,7 +1401,6 @@ namespace
         size_t cPixels,
         const size_t* pIndex) noexcept
     {
-        constexpr float fError = FLT_MAX;
         const float *pC = (3 == cSteps) ? pC3 : pC4;
         const float *pD = (3 == cSteps) ? pD3 : pD4;
 
@@ -1442,7 +1429,7 @@ namespace
         {
             *pX = X;
             *pY = Y;
-            return 0.0f;
+            return;
         }
 
         // Try all four axis directions, to determine which diagonal best fits data
@@ -1493,13 +1480,13 @@ namespace
         {
             *pX = X;
             *pY = Y;
-            return 0.0f;
+            return;
         }
 
         // Use Newton's Method to find local minima of sum-of-squares error.
         const auto fSteps = static_cast<float>(cSteps - 1u);
 
-        for (size_t iIteration = 0; iIteration < 8 && fError > 0.0f; iIteration++)
+        for (size_t iIteration = 0; iIteration < 8; iIteration++)
         {
             // Calculate new steps
             HDRColorA pSteps[BC7_MAX_INDICES];
@@ -1569,12 +1556,11 @@ namespace
 
         *pX = X;
         *pY = Y;
-        return fError;
     }
 
     //-------------------------------------------------------------------------------------
 
-    float ComputeError(
+   float ComputeError(
         const LDRColorA& pixel,
         const LDRColorA aPalette[],
         uint8_t uIndexPrec,
@@ -1701,8 +1687,6 @@ namespace
 
         FillColorU32(output, stride, color);
     }
-
-} // namespace
 
 //-------------------------------------------------------------------------------------
 // BC6H Compression
@@ -1858,7 +1842,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
 
 void D3DX_BC6H::Encode(bool bSigned, const u8* input, size_t stride) noexcept
 {
-    assert(input);
+    assert(pIn);
 
     EncodeParams EP(input, stride, bSigned);
 
@@ -1900,6 +1884,7 @@ void D3DX_BC6H::Encode(bool bSigned, const u8* input, size_t stride) noexcept
     }
 }
 
+
 //-------------------------------------------------------------------------------------
 
 int D3DX_BC6H::Quantize(int iValue, int prec, bool bSigned) noexcept
@@ -1928,6 +1913,7 @@ int D3DX_BC6H::Quantize(int iValue, int prec, bool bSigned) noexcept
 
     return q;
 }
+
 
 int D3DX_BC6H::Unquantize(int comp, uint8_t uBitsPerComp, bool bSigned) noexcept
 {
@@ -2067,6 +2053,7 @@ void D3DX_BC6H::GeneratePaletteQuantized(const EncodeParams* pEP, const INTEndPn
             pEP->bSigned);
     }
 }
+
 
 // given a collection of colors and quantized endpoints, generate a palette, choose best entries, and return a single toterr
 float D3DX_BC6H::MapColorsQuantized(const EncodeParams* pEP, const INTColor aColors[], size_t np, const INTEndPntPair &endPts) const noexcept
@@ -2240,9 +2227,7 @@ void D3DX_BC6H::OptimizeEndPoints(const EncodeParams* pEP, const float aOrgErr[]
     }
 }
 
-
 // Swap endpoints as needed to ensure that the indices at fix up have a 0 high-order bit
-
 void D3DX_BC6H::SwapIndices(const EncodeParams* pEP, INTEndPntPair aEndPts[], size_t aIndices[]) noexcept
 {
     assert(pEP);
@@ -2270,9 +2255,7 @@ void D3DX_BC6H::SwapIndices(const EncodeParams* pEP, INTEndPntPair aEndPts[], si
     }
 }
 
-
 // assign indices given a tile, shape, and quantized endpoints, return toterr for each region
-
 void D3DX_BC6H::AssignIndices(const EncodeParams* pEP, const INTEndPntPair aEndPts[], size_t aIndices[], float aTotErr[]) const noexcept
 {
     assert(pEP);
@@ -2442,7 +2425,7 @@ void D3DX_BC6H::GeneratePaletteUnquantized(const EncodeParams* pEP, size_t uRegi
     switch (uIndexPrec)
     {
     case 3: aWeights = g_aWeights3; assert(uNumIndices <= 8); break;
-    case 4: aWeights = g_aWeights4; assert(uNumIndices <= 16); break;
+    case 4: aWeights = g_aWeights4; assert(uNumIndices <= 16);break;
     default:
         assert(false);
         for (size_t i = 0; i < uNumIndices; ++i)
@@ -2747,7 +2730,7 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
     }
 }
 
-void D3DX_BC7::Encode(uint32_t flags, const u8* input, size_t stride) noexcept
+void D3DX_BC7::Encode(u32 flags, const u8* input, size_t stride) noexcept
 {
     assert(input);
 
@@ -3358,16 +3341,20 @@ float D3DX_BC7::Refine(const EncodeParams* pEP, size_t uShape, size_t uRotation,
 
     const LDREndPntPair* aEndPts = &pEP->aEndPts[uShape][0];
 
+#ifdef __GNUC__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
     for (size_t p = 0; p <= uPartitions; p++)
     {
-        // NOTE: This silences compiler warning (GCC 12); it incorrectly analyses that
-        //       we will have overflow. Checking it manually disables the compile-time check.
-        if (p < BC7_MAX_REGIONS)
-        {
-            aOrgEndPts[p].A = Quantize(aEndPts[p].A, ms_aInfo[pEP->uMode].RGBAPrecWithP);
-            aOrgEndPts[p].B = Quantize(aEndPts[p].B, ms_aInfo[pEP->uMode].RGBAPrecWithP);
-        }
+        aOrgEndPts[p].A = Quantize(aEndPts[p].A, ms_aInfo[pEP->uMode].RGBAPrecWithP);
+        aOrgEndPts[p].B = Quantize(aEndPts[p].B, ms_aInfo[pEP->uMode].RGBAPrecWithP);
     }
+
+#ifdef __GNUC_
+    #pragma GCC diagnostic pop
+#endif
 
     LDREndPntPair newEndPts1[BC7_MAX_REGIONS];
     FixEndpointPBits(pEP, aOrgEndPts, newEndPts1);
@@ -3526,6 +3513,8 @@ float D3DX_BC7::RoughMSE(EncodeParams* pEP, size_t uShape, size_t uIndexMode) no
 
     return fTotalErr;
 }
+
+} // namespace
 
 namespace mango::image
 {
