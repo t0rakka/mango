@@ -2648,10 +2648,19 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
             }
         }
 
+#if __GNUC__ >= 7 && !defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
         for (size_t i = 0; i < uNumEndPts; i++)
         {
             c[i] = Unquantize(c[i], RGBAPrecWithP);
         }
+
+#if __GNUC__ >= 7 && !defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
 
         u8 w1[NUM_PIXELS_PER_BLOCK];
         u8 w2[NUM_PIXELS_PER_BLOCK];
