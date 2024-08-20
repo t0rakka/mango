@@ -1842,7 +1842,7 @@ void D3DX_BC6H::Decode(bool bSigned, u8* output, size_t stride) const noexcept
 
 void D3DX_BC6H::Encode(bool bSigned, const u8* input, size_t stride) noexcept
 {
-    assert(pIn);
+    assert(input);
 
     EncodeParams EP(input, stride, bSigned);
 
