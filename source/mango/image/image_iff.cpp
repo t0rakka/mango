@@ -217,7 +217,9 @@ namespace
     {
         SIGNATURE_IFF = 0,
         SIGNATURE_PBM = 1,
-        SIGNATURE_ERROR = 2
+        SIGNATURE_RGB8 = 2,
+        SIGNATURE_RGBN = 3,
+        SIGNATURE_ERROR = 4
     };
 
     Signature read_signature(const u8*& data)
@@ -233,12 +235,28 @@ namespace
             return SIGNATURE_ERROR;
         }
 
-        if (v1 != u32_mask_rev('I','L','B','M') && v1 != u32_mask_rev('P','B','M',' '))
+        Signature signature = SIGNATURE_ERROR;
+
+        switch (v1)
         {
-            return SIGNATURE_ERROR;
+            case u32_mask_rev('I','L','B','M'):
+                signature = SIGNATURE_IFF;
+                break;
+
+            case u32_mask_rev('P','B','M',' '):
+                signature = SIGNATURE_PBM;
+                break;
+
+            case u32_mask_rev('R','G','B','N'):
+                signature = SIGNATURE_RGBN;
+                break;
+
+            case u32_mask_rev('R','G','B','8'):
+                signature = SIGNATURE_RGB8;
+                break;
         }
 
-        return v1 == u32_mask_rev('P','B','M',' ') ? SIGNATURE_PBM : SIGNATURE_IFF;
+        return signature;
     }
 
     struct ChunkBMHD
@@ -362,6 +380,14 @@ namespace
                         ChunkBMHD bmhd;
                         bmhd.parse(p);
 
+                        if (signature == SIGNATURE_RGBN || signature == SIGNATURE_RGB8)
+                        {
+                            if (bmhd.compression != 4)
+                            {
+                                m_header.setError("[ImageDecoder.IFF] Incorrect compression.");
+                            }
+                        }
+
                         m_header.width  = bmhd.xsize;
                         m_header.height = bmhd.ysize;
                         nplanes = bmhd.nplanes;
@@ -466,14 +492,77 @@ namespace
 
                     case u32_mask_rev('B','O','D','Y'):
                     {
-                        if (bmhd.compression)
+                        if (bmhd.compression == 1)
                         {
-                            int scan_size = ((bmhd.xsize + 15) & ~15) / 8 * (bmhd.nplanes + (bmhd.masking == 1));
-                            int bytes = scan_size * bmhd.ysize;
+                            size_t scan_size = ((bmhd.xsize + 15) & ~15) / 8 * (bmhd.nplanes + (bmhd.masking == 1));
+                            size_t bytes = scan_size * bmhd.ysize;
+
                             allocation.reset(new u8[bytes]);
                             u8* allocated = allocation.get();
 
                             unpack(Memory(allocated, bytes), ConstMemory(p, size));
+                            buffer = allocated;
+                        }
+                        else if (signature == SIGNATURE_RGBN && bmhd.compression == 4)
+                        {
+                            size_t pixels = bmhd.xsize * bmhd.ysize;
+                            size_t bytes = pixels * 2;
+
+                            allocation.reset(new u8[bytes]);
+                            u8* allocated = allocation.get();
+
+                            u16* ptr = reinterpret_cast<u16*>(allocated);
+
+                            while (pixels > 0)
+                            {
+                                u16 v = p.read16();
+                                u16 color = (v >> 4) | 0xf000;
+                                u16 count = v & 0x07;
+                                if (!count)
+                                {
+                                    count = p.read8();
+                                }
+                                if (!count)
+                                {
+                                    count = p.read16();
+                                }
+
+                                for (u32 i = 0; i < count; ++i)
+                                {
+                                    ptr[i] = color;
+                                }
+
+                                ptr += count;
+                                pixels -= count;
+                            }
+
+                            buffer = allocated;
+                        }
+                        else if (signature == SIGNATURE_RGB8 && bmhd.compression == 4)
+                        {
+                            size_t pixels = bmhd.xsize * bmhd.ysize;
+                            size_t bytes = pixels * 4;
+
+                            allocation.reset(new u8[bytes]);
+                            u8* allocated = allocation.get();
+
+                            u32* ptr = reinterpret_cast<u32*>(allocated);
+
+                            while (pixels > 0)
+                            {
+                                u32 v = p.read32();
+                                u32 color = (v >> 8) | 0xff000000;
+                                u32 count = v & 0x7f;
+
+                                for (u32 i = 0; i < count; ++i)
+                                {
+                                    ptr[i] = color;
+                                }
+
+                                ptr += count;
+                                pixels -= count;
+                            }
+
                             buffer = allocated;
                         }
                         else
@@ -510,7 +599,23 @@ namespace
                 }
             }
 
-            if (palette.size > 0 && !ham && ptr_palette)
+            if (signature == SIGNATURE_RGBN)
+            {
+                Format format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4);
+                Bitmap temp(bmhd.xsize, bmhd.ysize, format);
+
+                std::memcpy(temp.image, buffer, bmhd.xsize * bmhd.ysize * 2);
+                dest.blit(0, 0, temp);
+            }
+            else if (signature == SIGNATURE_RGB8)
+            {
+                Format format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                Bitmap temp(bmhd.xsize, bmhd.ysize, format);
+
+                std::memcpy(temp.image, buffer, bmhd.xsize * bmhd.ysize * 4);
+                dest.blit(0, 0, temp);
+            }
+            else if (palette.size > 0 && !ham && ptr_palette)
             {
                 // client requests for palette and the image has one
                 *ptr_palette = palette;
@@ -569,7 +674,6 @@ namespace
                     }
                 }
 
-                // NOTE: we could directly decode into dest if the formats match.
                 dest.blit(0, 0, temp);
             }
 
@@ -596,6 +700,7 @@ namespace mango::image
         registerImageDecoder(createInterface, ".ham8");
         registerImageDecoder(createInterface, ".ilbm");
         registerImageDecoder(createInterface, ".ehb");
+        registerImageDecoder(createInterface, ".rgbn");
     }
 
 } // namespace mango::image
