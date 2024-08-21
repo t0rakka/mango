@@ -264,49 +264,12 @@ namespace
 
     enum Signature
     {
-        SIGNATURE_IFF = 0,
-        SIGNATURE_PBM = 1,
-        SIGNATURE_RGB8 = 2,
-        SIGNATURE_RGBN = 3,
-        SIGNATURE_ERROR = 4
+        SIGNATURE_ERROR = 0,
+        SIGNATURE_IFF = 1,
+        SIGNATURE_PBM = 2,
+        SIGNATURE_RGB8 = 3,
+        SIGNATURE_RGBN = 4,
     };
-
-    Signature read_signature(const u8*& data)
-    {
-        BigEndianConstPointer p = data;
-
-        u32 v0 = p.read32(); p += 4;
-        u32 v1 = p.read32();
-        data = p;
-
-        if (v0 != u32_mask_rev('F','O','R','M'))
-        {
-            return SIGNATURE_ERROR;
-        }
-
-        Signature signature = SIGNATURE_ERROR;
-
-        switch (v1)
-        {
-            case u32_mask_rev('I','L','B','M'):
-                signature = SIGNATURE_IFF;
-                break;
-
-            case u32_mask_rev('P','B','M',' '):
-                signature = SIGNATURE_PBM;
-                break;
-
-            case u32_mask_rev('R','G','B','N'):
-                signature = SIGNATURE_RGBN;
-                break;
-
-            case u32_mask_rev('R','G','B','8'):
-                signature = SIGNATURE_RGB8;
-                break;
-        }
-
-        return signature;
-    }
 
     struct ChunkBMHD
     {
@@ -385,39 +348,91 @@ namespace
         ConstMemory m_memory;
         ImageHeader m_header;
 
+        Signature m_signature;
+        ChunkBMHD m_bmhd;
+        bool m_ham = false;
+        bool m_ehb = false;
+        Palette m_palette;
+
+        ConstMemory m_body;
+
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
-            parseHeader();
+            parse();
         }
 
         ~Interface()
         {
         }
 
-        void parseHeader()
+        const u8* readSignature(const u8* data)
+        {
+            BigEndianConstPointer p = data;
+
+            u32 s0 = p.read32();
+            p += 4;
+            u32 s1 = p.read32();
+
+            if (s0 != u32_mask_rev('F','O','R','M'))
+            {
+                const char* c = reinterpret_cast<const char*>(p - 4);
+                m_header.setError("[ImageDecoder.IFF] Incorrect signature ({}{}{}{}).", c[0], c[1], c[2], c[3]);
+                return nullptr;
+            }
+
+            switch (s1)
+            {
+                case u32_mask_rev('I','L','B','M'):
+                    m_signature = SIGNATURE_IFF;
+                    break;
+
+                case u32_mask_rev('P','B','M',' '):
+                    m_signature = SIGNATURE_PBM;
+                    break;
+
+                case u32_mask_rev('R','G','B','N'):
+                    m_signature = SIGNATURE_RGBN;
+                    break;
+
+                case u32_mask_rev('R','G','B','8'):
+                    m_signature = SIGNATURE_RGB8;
+                    break;
+
+                default:
+                {
+                    const char* c = reinterpret_cast<const char*>(p - 4);
+                    m_header.setError("[ImageDecoder.IFF] Incorrect signature ({}{}{}{}).", c[0], c[1], c[2], c[3]);
+                    return nullptr;
+                }
+            }
+
+            return p;
+        }
+
+        void parse()
         {
             const u8* data = m_memory.address;
             const u8* end = m_memory.address + m_memory.size - 12;
 
-            Signature signature = read_signature(data);
-            if (signature == SIGNATURE_ERROR)
+            data = readSignature(data);
+            if (!data)
             {
-                m_header.setError("[ImageDecoder.IFF] Incorrect signature.");
+                // incorrect signature
                 return;
             }
-
-            bool ham = false;
-            u8 nplanes = 0;
 
             // chunk reader
             while (data < end)
             {
-                // chunk header
                 BigEndianConstPointer p = data;
 
+                // chunk header
                 u32 id = p.read32();
                 u32 size = p.read32();
+
+                const char* c = reinterpret_cast<const char*>(p - 8);
+                printLine(Print::Info, "[{}{}{}{}] {} bytes", c[0], c[1], c[2], c[3], size);
 
                 // next chunk
                 data = p + size + (size & 1);
@@ -426,37 +441,54 @@ namespace
                 {
                     case u32_mask_rev('B','M','H','D'):
                     {
-                        ChunkBMHD bmhd;
-                        bmhd.parse(p);
+                        m_bmhd.parse(p);
 
-                        if (signature == SIGNATURE_RGBN || signature == SIGNATURE_RGB8)
-                        {
-                            if (bmhd.compression != 4)
-                            {
-                                m_header.setError("[ImageDecoder.IFF] Incorrect compression.");
-                            }
-                        }
-
-                        m_header.width  = bmhd.xsize;
-                        m_header.height = bmhd.ysize;
-                        nplanes = bmhd.nplanes;
+                        m_header.width  = m_bmhd.xsize;
+                        m_header.height = m_bmhd.ysize;
                         break;
                     }
 
                     case u32_mask_rev('C','A','M','G'):
                     {
                         u32 v = p.read32();
-                        ham = (v & 0x0800) != 0;
+                        m_ham = (v & 0x0800) != 0;
+                        m_ehb = (v & 0x0080) != 0;
+                        break;
+                    }
+
+                    case u32_mask_rev('A','N','N','O'):
+                    {
+                        break;
+                    }
+
+                    case u32_mask_rev('C','M','A','P'):
+                    {
+                        m_palette.size = size / 3;
+                        for (u32 i = 0; i < m_palette.size; ++i)
+                        {
+                            m_palette[i] = Color(p[0], p[1], p[2], 0xff);
+                            p += 3;
+                        }
+                        break;
+                    }
+
+                    case u32_mask_rev('B','O','D','Y'):
+                    {
+                        m_body = ConstMemory(p, size);
                         break;
                     }
 
                     default:
+                    {
                         break;
+                    }
                 }
             }
 
-            m_header.palette = nplanes <= 8 && !ham;
-            m_header.format = select_format(nplanes, ham);
+            u8 nplanes = m_bmhd.nplanes;
+
+            m_header.palette = nplanes <= 8 && !m_ham;
+            m_header.format = select_format(nplanes, m_ham);
         }
 
         ImageHeader header() override
@@ -478,116 +510,70 @@ namespace
                 return status;
             }
 
-            const u8* data = m_memory.address;
-            const u8* end = m_memory.address + m_memory.size - 12;
+            if (!m_body.address)
+            {
+                status.setError("[ImageDecoder.IFF] Missing BODY chunk.");
+                return status;
+            }
 
-            Signature signature = read_signature(data);
-            bool is_pbm = signature == SIGNATURE_PBM;
+            if (m_signature == SIGNATURE_RGBN || m_signature == SIGNATURE_RGB8)
+            {
+                if (m_bmhd.compression != 4)
+                {
+                    m_header.setError("[ImageDecoder.IFF] Incorrect compression.");
+                }
+            }
 
-            Palette palette;
+            const u8* data = m_body.address;
+            //const u8* end = m_body.end();
+
+            //u8 nplanes = m_bmhd.nplanes;
+
+            bool is_pbm = m_signature == SIGNATURE_PBM;
+
             Palette* ptr_palette = options.palette; // palette request destination
 
             std::unique_ptr<u8[]> allocation;
             const u8* buffer = nullptr;
 
-            bool ham = false;
-            bool ehb = false;
+            const u8* p = data;
 
-            ChunkBMHD bmhd;
-
-            // chunk reader
-            while (data < end)
+            if (m_bmhd.compression == 1)
             {
-                // chunk header
-                BigEndianConstPointer p = data;
+                size_t scan_size = ((m_bmhd.xsize + 15) & ~15) / 8 * (m_bmhd.nplanes + (m_bmhd.masking == 1));
+                size_t bytes = scan_size * m_bmhd.ysize;
 
-                u32 id = p.read32();
-                u32 size = p.read32();
+                allocation.reset(new u8[bytes]);
+                u8* allocated = allocation.get();
 
-                const char* c = reinterpret_cast<const char*>(p - 8);
-                printLine(Print::Info, "[{}{}{}{}] {} bytes", c[0], c[1], c[2], c[3], size);
+                unpack(Memory(allocated, bytes), m_body);
+                buffer = allocated;
+            }
+            else if (m_signature == SIGNATURE_RGBN && m_bmhd.compression == 4)
+            {
+                size_t pixels = m_bmhd.xsize * m_bmhd.ysize;
+                size_t bytes = pixels * 2;
 
-                // next chunk
-                data = p + size + (size & 1);
+                allocation.reset(new u8[bytes]);
+                u8* allocated = allocation.get();
 
-                switch (id)
-                {
-                    case u32_mask_rev('A','N','N','O'):
-                    {
-                        break;
-                    }
+                unpack_rgbn(Memory(allocated, bytes), m_body, pixels);
+                buffer = allocated;
+            }
+            else if (m_signature == SIGNATURE_RGB8 && m_bmhd.compression == 4)
+            {
+                size_t pixels = m_bmhd.xsize * m_bmhd.ysize;
+                size_t bytes = pixels * 4;
 
-                    case u32_mask_rev('B','M','H','D'):
-                    {
-                        bmhd.parse(p);
-                        break;
-                    }
+                allocation.reset(new u8[bytes]);
+                u8* allocated = allocation.get();
 
-                    case u32_mask_rev('C','M','A','P'):
-                    {
-                        palette.size = size / 3;
-                        for (u32 i = 0; i < palette.size; ++i)
-                        {
-                            palette[i] = Color(p[0], p[1], p[2], 0xff);
-                            p += 3;
-                        }
-                        break;
-                    }
-
-                    case u32_mask_rev('C','A','M','G'):
-                    {
-                        u32 v = p.read32();
-                        ham = (v & 0x0800) != 0;
-                        ehb = (v & 0x0080) != 0;
-                        break;
-                    }
-
-                    case u32_mask_rev('B','O','D','Y'):
-                    {
-                        if (bmhd.compression == 1)
-                        {
-                            size_t scan_size = ((bmhd.xsize + 15) & ~15) / 8 * (bmhd.nplanes + (bmhd.masking == 1));
-                            size_t bytes = scan_size * bmhd.ysize;
-
-                            allocation.reset(new u8[bytes]);
-                            u8* allocated = allocation.get();
-
-                            unpack(Memory(allocated, bytes), ConstMemory(p, size));
-                            buffer = allocated;
-                        }
-                        else if (signature == SIGNATURE_RGBN && bmhd.compression == 4)
-                        {
-                            size_t pixels = bmhd.xsize * bmhd.ysize;
-                            size_t bytes = pixels * 2;
-
-                            allocation.reset(new u8[bytes]);
-                            u8* allocated = allocation.get();
-
-                            unpack_rgbn(Memory(allocated, bytes), ConstMemory(p, size) , pixels);
-                            buffer = allocated;
-                        }
-                        else if (signature == SIGNATURE_RGB8 && bmhd.compression == 4)
-                        {
-                            size_t pixels = bmhd.xsize * bmhd.ysize;
-                            size_t bytes = pixels * 4;
-
-                            allocation.reset(new u8[bytes]);
-                            u8* allocated = allocation.get();
-
-                            unpack_rgb8(Memory(allocated, bytes), ConstMemory(p, size) , pixels);
-                            buffer = allocated;
-                        }
-                        else
-                        {
-                            buffer = p;
-                        }
-
-                        break;
-                    }
-
-                    default:
-                        break;
-                }
+                unpack_rgb8(Memory(allocated, bytes), m_body, pixels);
+                buffer = allocated;
+            }
+            else
+            {
+                buffer = p;
             }
 
             if (!buffer)
@@ -597,91 +583,91 @@ namespace
             }
 
             // alignment
-            bmhd.xsize = bmhd.xsize + (bmhd.xsize & 1);
+            m_bmhd.xsize = m_bmhd.xsize + (m_bmhd.xsize & 1);
 
             // fix ehb palette
-            if (ehb && (palette.size == 32 || palette.size == 64))
+            if (m_ehb && (m_palette.size == 32 || m_palette.size == 64))
             {
                 for (int i = 0; i < 32; ++i)
                 {
-                    palette[i + 32].r = palette[i].r >> 1;
-                    palette[i + 32].g = palette[i].g >> 1;
-                    palette[i + 32].b = palette[i].b >> 1;
-                    palette[i + 32].a = 0xff;
+                    m_palette[i + 32].r = m_palette[i].r >> 1;
+                    m_palette[i + 32].g = m_palette[i].g >> 1;
+                    m_palette[i + 32].b = m_palette[i].b >> 1;
+                    m_palette[i + 32].a = 0xff;
                 }
             }
 
-            if (signature == SIGNATURE_RGBN)
+            if (m_signature == SIGNATURE_RGBN)
             {
                 Format format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4);
-                Bitmap temp(bmhd.xsize, bmhd.ysize, format);
+                Bitmap temp(m_bmhd.xsize, m_bmhd.ysize, format);
 
-                std::memcpy(temp.image, buffer, bmhd.xsize * bmhd.ysize * 2);
+                std::memcpy(temp.image, buffer, m_bmhd.xsize * m_bmhd.ysize * 2);
                 dest.blit(0, 0, temp);
             }
-            else if (signature == SIGNATURE_RGB8)
+            else if (m_signature == SIGNATURE_RGB8)
             {
                 Format format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-                Bitmap temp(bmhd.xsize, bmhd.ysize, format);
+                Bitmap temp(m_bmhd.xsize, m_bmhd.ysize, format);
 
-                std::memcpy(temp.image, buffer, bmhd.xsize * bmhd.ysize * 4);
+                std::memcpy(temp.image, buffer, m_bmhd.xsize * m_bmhd.ysize * 4);
                 dest.blit(0, 0, temp);
             }
-            else if (palette.size > 0 && !ham && ptr_palette)
+            else if (m_palette.size > 0 && !m_ham && ptr_palette)
             {
                 // client requests for palette and the image has one
-                *ptr_palette = palette;
+                *ptr_palette = m_palette;
 
                 if (is_pbm)
                 {
                     // linear
-                    std::memcpy(dest.image, buffer, bmhd.xsize * bmhd.ysize);
+                    std::memcpy(dest.image, buffer, m_bmhd.xsize * m_bmhd.ysize);
                 }
                 else
                 {
                     // interlaced
-                    Bitmap raw(bmhd.xsize, bmhd.ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
-                    p2c_raw(raw.image, buffer, bmhd.xsize, bmhd.ysize, bmhd.nplanes, bmhd.masking);
-                    std::memcpy(dest.image, raw.image, bmhd.xsize * bmhd.ysize);
+                    Bitmap raw(m_bmhd.xsize, m_bmhd.ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
+                    p2c_raw(raw.image, buffer, m_bmhd.xsize, m_bmhd.ysize, m_bmhd.nplanes, m_bmhd.masking);
+                    std::memcpy(dest.image, raw.image, m_bmhd.xsize * m_bmhd.ysize);
                 }
             }
             else
             {
                 // choose pixelformat
-                Format format = select_format(bmhd.nplanes, ham);
-                Bitmap temp(bmhd.xsize, bmhd.ysize, format);
+                Format format = select_format(m_bmhd.nplanes, m_ham);
+                Bitmap temp(m_bmhd.xsize, m_bmhd.ysize, format);
 
                 // planar-to-chunky conversion
-                if (ham)
+                if (m_ham)
                 {
-                    p2c_ham(temp.image, buffer, bmhd.xsize, bmhd.ysize, bmhd.nplanes, palette);
+                    p2c_ham(temp.image, buffer, m_bmhd.xsize, m_bmhd.ysize, m_bmhd.nplanes, m_palette);
                 }
                 else
                 {
                     if (is_pbm)
                     {
                         // linear
-                        if (bmhd.nplanes <= 8)
+                        if (m_bmhd.nplanes <= 8)
                         {
-                            expand_palette(temp.image, buffer, bmhd.xsize, bmhd.ysize, palette);
+                            expand_palette(temp.image, buffer, m_bmhd.xsize, m_bmhd.ysize, m_palette);
                         }
                         else
                         {
-                            std::memcpy(temp.image, buffer, temp.stride * bmhd.ysize);
+                            std::memcpy(temp.image, buffer, temp.stride * m_bmhd.ysize);
                         }
                     }
                     else
                     {
                         // interlaced
-                        if (bmhd.nplanes <= 8)
+                        if (m_bmhd.nplanes <= 8)
                         {
-                            Bitmap raw(bmhd.xsize, bmhd.ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
-                            p2c_raw(raw.image, buffer, bmhd.xsize, bmhd.ysize, bmhd.nplanes, bmhd.masking);
-                            expand_palette(temp.image, raw.image, bmhd.xsize, bmhd.ysize, palette);
+                            Bitmap raw(m_bmhd.xsize, m_bmhd.ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
+                            p2c_raw(raw.image, buffer, m_bmhd.xsize, m_bmhd.ysize, m_bmhd.nplanes, m_bmhd.masking);
+                            expand_palette(temp.image, raw.image, m_bmhd.xsize, m_bmhd.ysize, m_palette);
                         }
                         else
                         {
-                            p2c_raw(temp.image, buffer, bmhd.xsize, bmhd.ysize, bmhd.nplanes, bmhd.masking);
+                            p2c_raw(temp.image, buffer, m_bmhd.xsize, m_bmhd.ysize, m_bmhd.nplanes, m_bmhd.masking);
                         }
                     }
                 }
