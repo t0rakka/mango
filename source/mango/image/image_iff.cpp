@@ -4,6 +4,7 @@
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
+#include <mango/core/buffer.hpp>
 #include <mango/image/image.hpp>
 
 namespace
@@ -92,6 +93,32 @@ namespace
             ptr += count;
             pixels -= count;
         }
+    }
+
+    static
+    void decode_rgbn(const Surface& dest, ConstMemory source, size_t xsize, size_t ysize)
+    {
+        size_t count = xsize * ysize;
+
+        Format format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4);
+        Bitmap temp(xsize, ysize, format);
+
+        unpack_rgbn(Memory(temp.image, count * 2), source, count);
+
+        dest.blit(0, 0, temp);
+    }
+
+    static
+    void decode_rgb8(const Surface& dest, ConstMemory source, size_t xsize, size_t ysize)
+    {
+        size_t count = xsize * ysize;
+
+        Format format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+        Bitmap temp(xsize, ysize, format);
+
+        unpack_rgb8(Memory(temp.image, count * 4), source, count);
+
+        dest.blit(0, 0, temp);
     }
 
     static
@@ -302,42 +329,12 @@ namespace
             yaspect = p.read8();
             xscreen = p.read16();
             yscreen = p.read16();
+
+            printLine(Print::Info, "  size: {} x {}", xsize, ysize);
+            printLine(Print::Info, "  nplanes: {}", nplanes);
+            printLine(Print::Info, "  compression: {}", compression);
         }
     };
-
-    Format select_format(int nplanes, bool ham)
-    {
-        // choose pixelformat
-        Format format;
-
-        if (ham)
-        {
-            // always decode Hold And Modify modes into 32 bpp
-            format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-        }
-        else
-        {
-            int bpp = (nplanes + 7) >> 3;
-            switch (bpp)
-            {
-                case 1:
-                    // expand palette
-                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    break;
-                case 2:
-                    format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5);
-                    break;
-                case 3:
-                    format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8);
-                    break;
-                case 4:
-                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    break;
-            }
-        }
-
-        return format;
-    }
 
     // ------------------------------------------------------------
     // ImageDecoder
@@ -453,6 +450,8 @@ namespace
                         u32 v = p.read32();
                         m_ham = (v & 0x0800) != 0;
                         m_ehb = (v & 0x0080) != 0;
+                        printLine(Print::Info, "  ham: {}", m_ham);
+                        printLine(Print::Info, "  ehb: {}", m_ehb);
                         break;
                     }
 
@@ -469,6 +468,8 @@ namespace
                             m_palette[i] = Color(p[0], p[1], p[2], 0xff);
                             p += 3;
                         }
+
+                        printLine(Print::Info, "  palette: {} colors", m_palette.size);
                         break;
                     }
 
@@ -488,7 +489,33 @@ namespace
             u8 nplanes = m_bmhd.nplanes;
 
             m_header.palette = nplanes <= 8 && !m_ham;
-            m_header.format = select_format(nplanes, m_ham);
+            m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+
+            if (m_ham)
+            {
+                // keep 32 bit default RGBA
+            }
+            else
+            {
+                int bpp = (nplanes + 7) >> 3;
+                switch (bpp)
+                {
+                    case 1:
+                        // expand palette
+                        m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                        break;
+                    case 2:
+                        m_header.format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5);
+                        break;
+                    case 3:
+                        m_header.format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8);
+                        break;
+                    case 4:
+                        m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                        break;
+                }
+            }
+
         }
 
         ImageHeader header() override
@@ -524,10 +551,26 @@ namespace
                 }
             }
 
-            const u8* data = m_body.address;
-            //const u8* end = m_body.end();
+            size_t xsize = m_bmhd.xsize;
+            size_t ysize = m_bmhd.ysize;
 
-            //u8 nplanes = m_bmhd.nplanes;
+            switch (m_signature)
+            {
+                case SIGNATURE_IFF:
+                    break;
+                case SIGNATURE_PBM:
+                    break;
+                case SIGNATURE_RGB8:
+                    decode_rgb8(dest, m_body, xsize, ysize);
+                    return status;
+                case SIGNATURE_RGBN:
+                    decode_rgbn(dest, m_body, xsize, ysize);
+                    return status;
+                default:
+                    break;
+            }
+
+            const u8* p = m_body.address;
 
             bool is_pbm = m_signature == SIGNATURE_PBM;
 
@@ -536,39 +579,15 @@ namespace
             std::unique_ptr<u8[]> allocation;
             const u8* buffer = nullptr;
 
-            const u8* p = data;
-
             if (m_bmhd.compression == 1)
             {
-                size_t scan_size = ((m_bmhd.xsize + 15) & ~15) / 8 * (m_bmhd.nplanes + (m_bmhd.masking == 1));
-                size_t bytes = scan_size * m_bmhd.ysize;
+                size_t scan_size = ((xsize + 15) & ~15) / 8 * (m_bmhd.nplanes + (m_bmhd.masking == 1));
+                size_t bytes = scan_size * ysize;
 
                 allocation.reset(new u8[bytes]);
                 u8* allocated = allocation.get();
 
                 unpack(Memory(allocated, bytes), m_body);
-                buffer = allocated;
-            }
-            else if (m_signature == SIGNATURE_RGBN && m_bmhd.compression == 4)
-            {
-                size_t pixels = m_bmhd.xsize * m_bmhd.ysize;
-                size_t bytes = pixels * 2;
-
-                allocation.reset(new u8[bytes]);
-                u8* allocated = allocation.get();
-
-                unpack_rgbn(Memory(allocated, bytes), m_body, pixels);
-                buffer = allocated;
-            }
-            else if (m_signature == SIGNATURE_RGB8 && m_bmhd.compression == 4)
-            {
-                size_t pixels = m_bmhd.xsize * m_bmhd.ysize;
-                size_t bytes = pixels * 4;
-
-                allocation.reset(new u8[bytes]);
-                u8* allocated = allocation.get();
-
-                unpack_rgb8(Memory(allocated, bytes), m_body, pixels);
                 buffer = allocated;
             }
             else
@@ -578,12 +597,12 @@ namespace
 
             if (!buffer)
             {
-                status.setError("[ImageDecoder.IFF] BODY chunk missing.");
+                status.setError("[ImageDecoder.IFF] No decoding buffer.");
                 return status;
             }
 
             // alignment
-            m_bmhd.xsize = m_bmhd.xsize + (m_bmhd.xsize & 1);
+            xsize = xsize + (xsize & 1);
 
             // fix ehb palette
             if (m_ehb && (m_palette.size == 32 || m_palette.size == 64))
@@ -597,23 +616,7 @@ namespace
                 }
             }
 
-            if (m_signature == SIGNATURE_RGBN)
-            {
-                Format format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4);
-                Bitmap temp(m_bmhd.xsize, m_bmhd.ysize, format);
-
-                std::memcpy(temp.image, buffer, m_bmhd.xsize * m_bmhd.ysize * 2);
-                dest.blit(0, 0, temp);
-            }
-            else if (m_signature == SIGNATURE_RGB8)
-            {
-                Format format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-                Bitmap temp(m_bmhd.xsize, m_bmhd.ysize, format);
-
-                std::memcpy(temp.image, buffer, m_bmhd.xsize * m_bmhd.ysize * 4);
-                dest.blit(0, 0, temp);
-            }
-            else if (m_palette.size > 0 && !m_ham && ptr_palette)
+            if (m_palette.size > 0 && !m_ham && ptr_palette)
             {
                 // client requests for palette and the image has one
                 *ptr_palette = m_palette;
@@ -621,26 +624,24 @@ namespace
                 if (is_pbm)
                 {
                     // linear
-                    std::memcpy(dest.image, buffer, m_bmhd.xsize * m_bmhd.ysize);
+                    std::memcpy(dest.image, buffer, xsize * ysize);
                 }
                 else
                 {
                     // interlaced
-                    Bitmap raw(m_bmhd.xsize, m_bmhd.ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
-                    p2c_raw(raw.image, buffer, m_bmhd.xsize, m_bmhd.ysize, m_bmhd.nplanes, m_bmhd.masking);
-                    std::memcpy(dest.image, raw.image, m_bmhd.xsize * m_bmhd.ysize);
+                    Bitmap raw(xsize, ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
+                    p2c_raw(raw.image, buffer, xsize, ysize, m_bmhd.nplanes, m_bmhd.masking);
+                    std::memcpy(dest.image, raw.image, xsize * ysize);
                 }
             }
             else
             {
-                // choose pixelformat
-                Format format = select_format(m_bmhd.nplanes, m_ham);
-                Bitmap temp(m_bmhd.xsize, m_bmhd.ysize, format);
+                Bitmap temp(xsize, ysize, m_header.format);
 
                 // planar-to-chunky conversion
                 if (m_ham)
                 {
-                    p2c_ham(temp.image, buffer, m_bmhd.xsize, m_bmhd.ysize, m_bmhd.nplanes, m_palette);
+                    p2c_ham(temp.image, buffer, xsize, ysize, m_bmhd.nplanes, m_palette);
                 }
                 else
                 {
@@ -649,11 +650,11 @@ namespace
                         // linear
                         if (m_bmhd.nplanes <= 8)
                         {
-                            expand_palette(temp.image, buffer, m_bmhd.xsize, m_bmhd.ysize, m_palette);
+                            expand_palette(temp.image, buffer, xsize, ysize, m_palette);
                         }
                         else
                         {
-                            std::memcpy(temp.image, buffer, temp.stride * m_bmhd.ysize);
+                            std::memcpy(temp.image, buffer, temp.stride * ysize);
                         }
                     }
                     else
@@ -661,13 +662,13 @@ namespace
                         // interlaced
                         if (m_bmhd.nplanes <= 8)
                         {
-                            Bitmap raw(m_bmhd.xsize, m_bmhd.ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
-                            p2c_raw(raw.image, buffer, m_bmhd.xsize, m_bmhd.ysize, m_bmhd.nplanes, m_bmhd.masking);
-                            expand_palette(temp.image, raw.image, m_bmhd.xsize, m_bmhd.ysize, m_palette);
+                            Bitmap raw(xsize, ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
+                            p2c_raw(raw.image, buffer, xsize, ysize, m_bmhd.nplanes, m_bmhd.masking);
+                            expand_palette(temp.image, raw.image, xsize, ysize, m_palette);
                         }
                         else
                         {
-                            p2c_raw(temp.image, buffer, m_bmhd.xsize, m_bmhd.ysize, m_bmhd.nplanes, m_bmhd.masking);
+                            p2c_raw(temp.image, buffer, xsize, ysize, m_bmhd.nplanes, m_bmhd.masking);
                         }
                     }
                 }
