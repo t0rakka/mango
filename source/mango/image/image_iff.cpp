@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -17,6 +17,7 @@ namespace
 
     // https://wiki.amigaos.net/wiki/ILBM_IFF_Interleaved_Bitmap
 
+    static
     void unpack(Memory dest, ConstMemory source)
     {
         const u8* s = source.address;
@@ -42,6 +43,54 @@ namespace
                 s += count;
                 d += count;
             }
+        }
+    }
+
+    static
+    void unpack_rgb8(Memory dest, ConstMemory source, size_t pixels)
+    {
+        u32* ptr = reinterpret_cast<u32*>(dest.address);
+        BigEndianConstPointer p = source.address;
+
+        while (pixels > 0)
+        {
+            u32 v = p.read32();
+            u32 color = (v >> 8) | 0xff000000;
+            u32 count = v & 0x7f;
+
+            for (u32 i = 0; i < count; ++i)
+            {
+                ptr[i] = color;
+            }
+
+            ptr += count;
+            pixels -= count;
+        }
+    }
+
+    static
+    void unpack_rgbn(Memory dest, ConstMemory source, size_t pixels)
+    {
+        u16* ptr = reinterpret_cast<u16*>(dest.address);
+        BigEndianConstPointer p = source.address;
+
+        while (pixels > 0)
+        {
+            u16 v = p.read16();
+            u16 color = (v >> 4) | 0xf000;
+            u16 count = v & 0x07;
+            if (!count)
+                count = p.read8();
+            if (!count)
+                count = p.read16();
+
+            for (u32 i = 0; i < count; ++i)
+            {
+                ptr[i] = color;
+            }
+
+            ptr += count;
+            pixels -= count;
         }
     }
 
@@ -455,6 +504,9 @@ namespace
                 u32 id = p.read32();
                 u32 size = p.read32();
 
+                const char* c = reinterpret_cast<const char*>(p - 8);
+                printLine(Print::Info, "[{}{}{}{}] {} bytes", c[0], c[1], c[2], c[3], size);
+
                 // next chunk
                 data = p + size + (size & 1);
 
@@ -511,31 +563,7 @@ namespace
                             allocation.reset(new u8[bytes]);
                             u8* allocated = allocation.get();
 
-                            u16* ptr = reinterpret_cast<u16*>(allocated);
-
-                            while (pixels > 0)
-                            {
-                                u16 v = p.read16();
-                                u16 color = (v >> 4) | 0xf000;
-                                u16 count = v & 0x07;
-                                if (!count)
-                                {
-                                    count = p.read8();
-                                }
-                                if (!count)
-                                {
-                                    count = p.read16();
-                                }
-
-                                for (u32 i = 0; i < count; ++i)
-                                {
-                                    ptr[i] = color;
-                                }
-
-                                ptr += count;
-                                pixels -= count;
-                            }
-
+                            unpack_rgbn(Memory(allocated, bytes), ConstMemory(p, size) , pixels);
                             buffer = allocated;
                         }
                         else if (signature == SIGNATURE_RGB8 && bmhd.compression == 4)
@@ -546,23 +574,7 @@ namespace
                             allocation.reset(new u8[bytes]);
                             u8* allocated = allocation.get();
 
-                            u32* ptr = reinterpret_cast<u32*>(allocated);
-
-                            while (pixels > 0)
-                            {
-                                u32 v = p.read32();
-                                u32 color = (v >> 8) | 0xff000000;
-                                u32 count = v & 0x7f;
-
-                                for (u32 i = 0; i < count; ++i)
-                                {
-                                    ptr[i] = color;
-                                }
-
-                                ptr += count;
-                                pixels -= count;
-                            }
-
+                            unpack_rgb8(Memory(allocated, bytes), ConstMemory(p, size) , pixels);
                             buffer = allocated;
                         }
                         else
