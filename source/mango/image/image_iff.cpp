@@ -486,6 +486,14 @@ namespace
                 }
             }
 
+            if (m_signature == SIGNATURE_RGBN || m_signature == SIGNATURE_RGB8)
+            {
+                if (m_bmhd.compression != 4)
+                {
+                    m_header.setError("[ImageDecoder.IFF] Incorrect compression.");
+                }
+            }
+
             u8 nplanes = m_bmhd.nplanes;
 
             m_header.palette = nplanes <= 8 && !m_ham;
@@ -541,14 +549,6 @@ namespace
             {
                 status.setError("[ImageDecoder.IFF] Missing BODY chunk.");
                 return status;
-            }
-
-            if (m_signature == SIGNATURE_RGBN || m_signature == SIGNATURE_RGB8)
-            {
-                if (m_bmhd.compression != 4)
-                {
-                    m_header.setError("[ImageDecoder.IFF] Incorrect compression.");
-                }
             }
 
             size_t xsize = m_bmhd.xsize;
@@ -616,65 +616,59 @@ namespace
                 }
             }
 
-            if (m_palette.size > 0 && !m_ham && ptr_palette)
+            if (m_palette.size > 0 && ptr_palette)
             {
                 // client requests for palette and the image has one
                 *ptr_palette = m_palette;
 
                 if (is_pbm)
                 {
-                    // linear
                     std::memcpy(dest.image, buffer, xsize * ysize);
                 }
                 else
                 {
-                    // interlaced
                     Bitmap raw(xsize, ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
                     p2c_raw(raw.image, buffer, xsize, ysize, m_bmhd.nplanes, m_bmhd.masking);
                     std::memcpy(dest.image, raw.image, xsize * ysize);
                 }
-            }
-            else
-            {
-                Bitmap temp(xsize, ysize, m_header.format);
 
-                // planar-to-chunky conversion
-                if (m_ham)
+                return status;
+            }
+
+            Bitmap temp(xsize, ysize, m_header.format);
+
+            if (m_ham)
+            {
+                p2c_ham(temp.image, buffer, xsize, ysize, m_bmhd.nplanes, m_palette);
+            }
+            else if (m_bmhd.nplanes <= 8)
+            {
+                if (is_pbm)
                 {
-                    p2c_ham(temp.image, buffer, xsize, ysize, m_bmhd.nplanes, m_palette);
+                    expand_palette(temp.image, buffer, xsize, ysize, m_palette);
                 }
                 else
                 {
-                    if (is_pbm)
-                    {
-                        // linear
-                        if (m_bmhd.nplanes <= 8)
-                        {
-                            expand_palette(temp.image, buffer, xsize, ysize, m_palette);
-                        }
-                        else
-                        {
-                            std::memcpy(temp.image, buffer, temp.stride * ysize);
-                        }
-                    }
-                    else
-                    {
-                        // interlaced
-                        if (m_bmhd.nplanes <= 8)
-                        {
-                            Bitmap raw(xsize, ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
-                            p2c_raw(raw.image, buffer, xsize, ysize, m_bmhd.nplanes, m_bmhd.masking);
-                            expand_palette(temp.image, raw.image, xsize, ysize, m_palette);
-                        }
-                        else
-                        {
-                            p2c_raw(temp.image, buffer, xsize, ysize, m_bmhd.nplanes, m_bmhd.masking);
-                        }
-                    }
+                    // planar-to-chunky conversion
+                    Bitmap raw(xsize, ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
+                    p2c_raw(raw.image, buffer, xsize, ysize, m_bmhd.nplanes, m_bmhd.masking);
+                    expand_palette(temp.image, raw.image, xsize, ysize, m_palette);
                 }
-
-                dest.blit(0, 0, temp);
             }
+            else
+            {
+                if (is_pbm)
+                {
+                    std::memcpy(temp.image, buffer, temp.stride * ysize);
+                }
+                else
+                {
+                    // planar-to-chunky conversion
+                    p2c_raw(temp.image, buffer, xsize, ysize, m_bmhd.nplanes, m_bmhd.masking);
+                }
+            }
+
+            dest.blit(0, 0, temp);
 
             return status;
         }
