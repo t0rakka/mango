@@ -616,7 +616,7 @@ namespace
                 }
             }
 
-            if (m_palette.size > 0 && ptr_palette)
+            if (m_palette.size > 0 && ptr_palette && !m_ham)
             {
                 // client requests for palette and the image has one
                 *ptr_palette = m_palette;
