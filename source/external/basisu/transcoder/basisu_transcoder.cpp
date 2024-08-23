@@ -13210,8 +13210,17 @@ namespace basist
 						h = (h * 127 + 127) / 255;
 					}
 
+#if __GNUC__ >= 7 && !defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
 					dst_blk.m_low->m_c[bc7_comp] = (uint8_t)l;
 					dst_blk.m_high->m_c[bc7_comp] = (uint8_t)h;
+
+#if __GNUC__ >= 7 && !defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
 				}
 			}
 

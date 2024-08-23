@@ -2721,7 +2721,6 @@ void Unpack::UnpWriteData(byte *Data,size_t Size)
   WrittenFileSize+=Size;
 }
 
-
 bool Unpack::ReadTables()
 {
   byte BitLength[BC];
@@ -2757,10 +2756,19 @@ bool Unpack::ReadTables()
         BitLength[I]=15;
       else
       {
+#if __GNUC__ >= 7 && !defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
         ZeroCount+=2;
         while (ZeroCount-- > 0 && I<int(sizeof(BitLength)/sizeof(BitLength[0])))
           BitLength[I++]=0;
         I--;
+
+#if __GNUC__ >= 7 && !defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
       }
     }
     else
