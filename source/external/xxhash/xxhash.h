@@ -333,7 +333,7 @@ extern "C" {
    /* make all functions private */
 #  undef XXH_PUBLIC_API
 #  if defined(__GNUC__)
-#    define XXH_PUBLIC_API static __inline __attribute__((unused))
+#    define XXH_PUBLIC_API static __inline __attribute__((__unused__))
 #  elif defined (__cplusplus) || (defined (__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) /* C99 */)
 #    define XXH_PUBLIC_API static inline
 #  elif defined(_MSC_VER)
@@ -445,7 +445,7 @@ extern "C" {
 
 /*! @brief Marks a global symbol. */
 #if !defined(XXH_INLINE_ALL) && !defined(XXH_PRIVATE_API)
-#  if defined(WIN32) && defined(_MSC_VER) && (defined(XXH_IMPORT) || defined(XXH_EXPORT))
+#  if defined(_WIN32) && defined(_MSC_VER) && (defined(XXH_IMPORT) || defined(XXH_EXPORT))
 #    ifdef XXH_EXPORT
 #      define XXH_PUBLIC_API __declspec(dllexport)
 #    elif XXH_IMPORT
@@ -521,7 +521,7 @@ extern "C" {
 
 /* specific declaration modes for Windows */
 #if !defined(XXH_INLINE_ALL) && !defined(XXH_PRIVATE_API)
-#  if defined(WIN32) && defined(_MSC_VER) && (defined(XXH_IMPORT) || defined(XXH_EXPORT))
+#  if defined(_WIN32) && defined(_MSC_VER) && (defined(XXH_IMPORT) || defined(XXH_EXPORT))
 #    ifdef XXH_EXPORT
 #      define XXH_PUBLIC_API __declspec(dllexport)
 #    elif XXH_IMPORT
@@ -533,9 +533,9 @@ extern "C" {
 #endif
 
 #if defined (__GNUC__)
-# define XXH_CONSTF  __attribute__((const))
-# define XXH_PUREF   __attribute__((pure))
-# define XXH_MALLOCF __attribute__((malloc))
+# define XXH_CONSTF  __attribute__((__const__))
+# define XXH_PUREF   __attribute__((__pure__))
+# define XXH_MALLOCF __attribute__((__malloc__))
 #else
 # define XXH_CONSTF  /* disable */
 # define XXH_PUREF
@@ -547,7 +547,7 @@ extern "C" {
 ***************************************/
 #define XXH_VERSION_MAJOR    0
 #define XXH_VERSION_MINOR    8
-#define XXH_VERSION_RELEASE  2
+#define XXH_VERSION_RELEASE  3
 /*! @brief Version number, encoded as two digits each */
 #define XXH_VERSION_NUMBER  (XXH_VERSION_MAJOR *100*100 + XXH_VERSION_MINOR *100 + XXH_VERSION_RELEASE)
 
@@ -589,7 +589,11 @@ typedef uint32_t XXH32_hash_t;
 #elif !defined (__VMS) \
   && (defined (__cplusplus) \
   || (defined (__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) /* C99 */) )
-#   include <stdint.h>
+#   ifdef _AIX
+#     include <inttypes.h>
+#   else
+#     include <stdint.h>
+#   endif
     typedef uint32_t XXH32_hash_t;
 
 #else
@@ -836,7 +840,7 @@ XXH_PUBLIC_API XXH_PUREF XXH32_hash_t XXH32_hashFromCanonical(const XXH32_canoni
  * As of writing this, only supported by clang.
  */
 #if XXH_HAS_ATTRIBUTE(noescape)
-# define XXH_NOESCAPE __attribute__((noescape))
+# define XXH_NOESCAPE __attribute__((__noescape__))
 #else
 # define XXH_NOESCAPE
 #endif
@@ -863,7 +867,11 @@ typedef uint64_t XXH64_hash_t;
 #elif !defined (__VMS) \
   && (defined (__cplusplus) \
   || (defined (__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) /* C99 */) )
-#  include <stdint.h>
+#   ifdef _AIX
+#     include <inttypes.h>
+#   else
+#     include <stdint.h>
+#   endif
    typedef uint64_t XXH64_hash_t;
 #else
 #  include <limits.h>
@@ -1819,7 +1827,7 @@ XXH_PUBLIC_API XXH_PUREF XXH128_hash_t XXH128(XXH_NOESCAPE const void* data, siz
  * @brief Derive a high-entropy secret from any user-defined content, named customSeed.
  *
  * @param secretBuffer    A writable buffer for derived high-entropy secret data.
- * @param secretSize      Size of secretBuffer, in bytes.  Must be >= XXH3_SECRET_DEFAULT_SIZE.
+ * @param secretSize      Size of secretBuffer, in bytes.  Must be >= XXH3_SECRET_SIZE_MIN.
  * @param customSeed      A user-defined content.
  * @param customSeedSize  Size of customSeed, in bytes.
  *
@@ -1878,7 +1886,7 @@ XXH_PUBLIC_API XXH_errorcode XXH3_generateSecret(XXH_NOESCAPE void* secretBuffer
 /*!
  * @brief Generate the same secret as the _withSeed() variants.
  *
- * @param secretBuffer A writable buffer of @ref XXH3_SECRET_SIZE_MIN bytes
+ * @param secretBuffer A writable buffer of @ref XXH3_SECRET_DEFAULT_SIZE bytes
  * @param seed         The 64-bit seed to alter the hash result predictably.
  *
  * The generated secret can be used in combination with
@@ -1900,7 +1908,7 @@ XXH_PUBLIC_API XXH_errorcode XXH3_generateSecret(XXH_NOESCAPE void* secretBuffer
  *    };
  *    // Fast, caches the seeded secret for future uses.
  *    class HashFast {
- *        unsigned char secret[XXH3_SECRET_SIZE_MIN];
+ *        unsigned char secret[XXH3_SECRET_DEFAULT_SIZE];
  *    public:
  *        HashFast(XXH64_hash_t s) {
  *            XXH3_generateSecret_fromSeed(secret, seed);
@@ -1916,6 +1924,11 @@ XXH_PUBLIC_API XXH_errorcode XXH3_generateSecret(XXH_NOESCAPE void* secretBuffer
 XXH_PUBLIC_API void XXH3_generateSecret_fromSeed(XXH_NOESCAPE void* secretBuffer, XXH64_hash_t seed);
 
 /*!
+ * @brief Maximum size of "short" key in bytes.
+ */
+#define XXH3_MIDSIZE_MAX 240
+
+/*!
  * @brief Calculates 64/128-bit seeded variant of XXH3 hash of @p data.
  *
  * @param data       The block of data to be hashed, at least @p len bytes in size.
@@ -1924,9 +1937,9 @@ XXH_PUBLIC_API void XXH3_generateSecret_fromSeed(XXH_NOESCAPE void* secretBuffer
  * @param secretSize The length of @p secret, in bytes.
  * @param seed       The 64-bit seed to alter the hash result predictably.
  *
- * These variants generate hash values using either
- * @p seed for "short" keys (< @ref XXH3_MIDSIZE_MAX = 240 bytes)
- * or @p secret for "large" keys (>= @ref XXH3_MIDSIZE_MAX).
+ * These variants generate hash values using either:
+ * - @p seed for "short" keys (< @ref XXH3_MIDSIZE_MAX = 240 bytes)
+ * - @p secret for "large" keys (>= @ref XXH3_MIDSIZE_MAX).
  *
  * This generally benefits speed, compared to `_withSeed()` or `_withSecret()`.
  * `_withSeed()` has to generate the secret on the fly for "large" keys.
@@ -1953,24 +1966,26 @@ XXH_PUBLIC_API XXH_PUREF XXH64_hash_t
 XXH3_64bits_withSecretandSeed(XXH_NOESCAPE const void* data, size_t len,
                               XXH_NOESCAPE const void* secret, size_t secretSize,
                               XXH64_hash_t seed);
+
 /*!
  * @brief Calculates 128-bit seeded variant of XXH3 hash of @p data.
  *
- * @param input      The block of data to be hashed, at least @p len bytes in size.
+ * @param data       The memory segment to be hashed, at least @p len bytes in size.
  * @param length     The length of @p data, in bytes.
- * @param secret     The secret data.
- * @param secretSize The length of @p secret, in bytes.
+ * @param secret     The secret used to alter hash result predictably.
+ * @param secretSize The length of @p secret, in bytes (must be >= XXH3_SECRET_SIZE_MIN)
  * @param seed64     The 64-bit seed to alter the hash result predictably.
  *
  * @return @ref XXH_OK on success.
  * @return @ref XXH_ERROR on failure.
  *
- * @see XXH3_64bits_withSecretandSeed()
+ * @see XXH3_64bits_withSecretandSeed(): contract is the same.
  */
 XXH_PUBLIC_API XXH_PUREF XXH128_hash_t
 XXH3_128bits_withSecretandSeed(XXH_NOESCAPE const void* input, size_t length,
                                XXH_NOESCAPE const void* secret, size_t secretSize,
                                XXH64_hash_t seed64);
+
 #ifndef XXH_NO_STREAM
 /*!
  * @brief Resets an @ref XXH3_state_t with secret data to begin a new hash.
@@ -1983,12 +1998,13 @@ XXH3_128bits_withSecretandSeed(XXH_NOESCAPE const void* input, size_t length,
  * @return @ref XXH_OK on success.
  * @return @ref XXH_ERROR on failure.
  *
- * @see XXH3_64bits_withSecretandSeed()
+ * @see XXH3_64bits_withSecretandSeed(). Contract is identical.
  */
 XXH_PUBLIC_API XXH_errorcode
 XXH3_64bits_reset_withSecretandSeed(XXH_NOESCAPE XXH3_state_t* statePtr,
                                     XXH_NOESCAPE const void* secret, size_t secretSize,
                                     XXH64_hash_t seed64);
+
 /*!
  * @brief Resets an @ref XXH3_state_t with secret data to begin a new hash.
  *
@@ -2000,12 +2016,21 @@ XXH3_64bits_reset_withSecretandSeed(XXH_NOESCAPE XXH3_state_t* statePtr,
  * @return @ref XXH_OK on success.
  * @return @ref XXH_ERROR on failure.
  *
- * @see XXH3_64bits_withSecretandSeed()
+ * @see XXH3_64bits_withSecretandSeed(). Contract is identical.
+ *
+ * Note: there was a bug in an earlier version of this function (<= v0.8.2)
+ * that would make it generate an incorrect hash value
+ * when @p seed == 0 and @p length < XXH3_MIDSIZE_MAX
+ * and @p secret is different from XXH3_generateSecret_fromSeed().
+ * As stated in the contract, the correct hash result must be
+ * the same as XXH3_128bits_withSeed() when @p length <= XXH3_MIDSIZE_MAX.
+ * Results generated by this older version are wrong, hence not comparable.
  */
 XXH_PUBLIC_API XXH_errorcode
 XXH3_128bits_reset_withSecretandSeed(XXH_NOESCAPE XXH3_state_t* statePtr,
                                      XXH_NOESCAPE const void* secret, size_t secretSize,
                                      XXH64_hash_t seed64);
+
 #endif /* !XXH_NO_STREAM */
 
 #endif  /* !XXH_NO_XXH3 */
@@ -2373,15 +2398,15 @@ static void* XXH_memcpy(void* dest, const void* src, size_t size)
 
 #if XXH_NO_INLINE_HINTS  /* disable inlining hints */
 #  if defined(__GNUC__) || defined(__clang__)
-#    define XXH_FORCE_INLINE static __attribute__((unused))
+#    define XXH_FORCE_INLINE static __attribute__((__unused__))
 #  else
 #    define XXH_FORCE_INLINE static
 #  endif
 #  define XXH_NO_INLINE static
 /* enable inlining hints */
 #elif defined(__GNUC__) || defined(__clang__)
-#  define XXH_FORCE_INLINE static __inline__ __attribute__((always_inline, unused))
-#  define XXH_NO_INLINE static __attribute__((noinline))
+#  define XXH_FORCE_INLINE static __inline__ __attribute__((__always_inline__, __unused__))
+#  define XXH_NO_INLINE static __attribute__((__noinline__))
 #elif defined(_MSC_VER)  /* Visual Studio */
 #  define XXH_FORCE_INLINE static __forceinline
 #  define XXH_NO_INLINE static __declspec(noinline)
@@ -2479,10 +2504,14 @@ static void* XXH_memcpy(void* dest, const void* src, size_t size)
 #if !defined (__VMS) \
  && (defined (__cplusplus) \
  || (defined (__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) /* C99 */) )
-# include <stdint.h>
-  typedef uint8_t xxh_u8;
+#   ifdef _AIX
+#     include <inttypes.h>
+#   else
+#     include <stdint.h>
+#   endif
+    typedef uint8_t xxh_u8;
 #else
-  typedef unsigned char xxh_u8;
+    typedef unsigned char xxh_u8;
 #endif
 typedef XXH32_hash_t xxh_u32;
 
@@ -2568,11 +2597,11 @@ static xxh_u32 XXH_read32(const void* memPtr) { return *(const xxh_u32*) memPtr;
  * https://gcc.godbolt.org/z/xYez1j67Y.
  */
 #ifdef XXH_OLD_NAMES
-typedef union { xxh_u32 u32; } __attribute__((packed)) unalign;
+typedef union { xxh_u32 u32; } __attribute__((__packed__)) unalign;
 #endif
 static xxh_u32 XXH_read32(const void* ptr)
 {
-    typedef __attribute__((aligned(1))) xxh_u32 xxh_unalign32;
+    typedef __attribute__((__aligned__(1))) xxh_u32 xxh_unalign32;
     return *((const xxh_unalign32*)ptr);
 }
 
@@ -2863,7 +2892,7 @@ static xxh_u32 XXH32_round(xxh_u32 acc, xxh_u32 input)
 #if (defined(__SSE4_1__) || defined(__aarch64__) || defined(__wasm_simd128__)) && !defined(XXH_ENABLE_AUTOVECTORIZE)
     /*
      * UGLY HACK:
-     * A compiler fence is the only thing that prevents GCC and Clang from
+     * A compiler fence is used to prevent GCC and Clang from
      * autovectorizing the XXH32 loop (pragmas and attributes don't work for some
      * reason) without globally disabling SSE4.1.
      *
@@ -3247,11 +3276,11 @@ static xxh_u64 XXH_read64(const void* memPtr)
  * https://gcc.godbolt.org/z/xYez1j67Y.
  */
 #ifdef XXH_OLD_NAMES
-typedef union { xxh_u32 u32; xxh_u64 u64; } __attribute__((packed)) unalign64;
+typedef union { xxh_u32 u32; xxh_u64 u64; } __attribute__((__packed__)) unalign64;
 #endif
 static xxh_u64 XXH_read64(const void* ptr)
 {
-    typedef __attribute__((aligned(1))) xxh_u64 xxh_unalign64;
+    typedef __attribute__((__aligned__(1))) xxh_u64 xxh_unalign64;
     return *((const xxh_unalign64*)ptr);
 }
 
@@ -3370,6 +3399,23 @@ static xxh_u64 XXH64_round(xxh_u64 acc, xxh_u64 input)
     acc += input * XXH_PRIME64_2;
     acc  = XXH_rotl64(acc, 31);
     acc *= XXH_PRIME64_1;
+#if (defined(__AVX512F__)) && !defined(XXH_ENABLE_AUTOVECTORIZE)
+    /*
+     * DISABLE AUTOVECTORIZATION:
+     * A compiler fence is used to prevent GCC and Clang from
+     * autovectorizing the XXH64 loop (pragmas and attributes don't work for some
+     * reason) without globally disabling AVX512.
+     *
+     * Autovectorization of XXH64 tends to be detrimental,
+     * though the exact outcome may change depending on exact cpu and compiler version.
+     * For information, it has been reported as detrimental for Skylake-X,
+     * but possibly beneficial for Zen4.
+     *
+     * The default is to disable auto-vectorization,
+     * but you can select to enable it instead using `XXH_ENABLE_AUTOVECTORIZE` build variable.
+     */
+    XXH_COMPILER_GUARD(acc);
+#endif
     return acc;
 }
 
@@ -3676,7 +3722,11 @@ XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(XXH_NOESCAPE const XXH64_can
 
 #ifndef XXH_HAS_INCLUDE
 #  ifdef __has_include
-#    define XXH_HAS_INCLUDE(x) __has_include(x)
+/*
+ * Not defined as XXH_HAS_INCLUDE(x) (function-like) because
+ * this causes segfaults in Apple Clang 4.2 (on Mac OS X 10.7 Lion)
+ */
+#    define XXH_HAS_INCLUDE __has_include
 #  else
 #    define XXH_HAS_INCLUDE(x) 0
 #  endif
@@ -3915,7 +3965,7 @@ enum XXH_VECTOR_TYPE /* fake enum */ {
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-#  define XXH_ALIASING __attribute__((may_alias))
+#  define XXH_ALIASING __attribute__((__may_alias__))
 #else
 #  define XXH_ALIASING /* nothing */
 #endif
@@ -4667,11 +4717,6 @@ XXH3_len_17to128_64b(const xxh_u8* XXH_RESTRICT input, size_t len,
         return XXH3_avalanche(acc);
     }
 }
-
-/*!
- * @brief Maximum size of "short" key in bytes.
- */
-#define XXH3_MIDSIZE_MAX 240
 
 XXH_NO_INLINE XXH_PUREF XXH64_hash_t
 XXH3_len_129to240_64b(const xxh_u8* XXH_RESTRICT input, size_t len,
@@ -6010,7 +6055,7 @@ XXH3_64bits_withSecretandSeed(XXH_NOESCAPE const void* input, size_t length, XXH
 /* ===   XXH3 streaming   === */
 #ifndef XXH_NO_STREAM
 /*
- * Malloc's a pointer that is always aligned to align.
+ * Malloc's a pointer that is always aligned to @align.
  *
  * This must be freed with `XXH_alignedFree()`.
  *
@@ -6893,7 +6938,7 @@ XXH_PUBLIC_API XXH128_hash_t XXH3_128bits_digest (XXH_NOESCAPE const XXH3_state_
         }
     }
     /* len <= XXH3_MIDSIZE_MAX : short code */
-    if (state->seed)
+    if (state->useSeed)
         return XXH3_128bits_withSeed(state->buffer, (size_t)state->totalLen, state->seed);
     return XXH3_128bits_withSecret(state->buffer, (size_t)(state->totalLen),
                                    secret, state->secretLimit + XXH_STRIPE_LEN);
