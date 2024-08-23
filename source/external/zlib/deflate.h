@@ -1,5 +1,5 @@
 /* deflate.h -- internal compression state
- * Copyright (C) 1995-2018 Jean-loup Gailly
+ * Copyright (C) 1995-2024 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -222,9 +222,11 @@ typedef struct internal_state {
      */
 
 #ifdef LIT_MEM
+#   define LIT_BUFS 5
     ushf *d_buf;          /* buffer for distances */
     uchf *l_buf;          /* buffer for literals/lengths */
 #else
+#   define LIT_BUFS 4
     uchf *sym_buf;        /* buffer for distances and literals/lengths */
 #endif
 
@@ -268,6 +270,9 @@ typedef struct internal_state {
     int bi_valid;
     /* Number of valid bits in bi_buf.  All bits above the last valid bit
      * are always zero.
+     */
+    int bi_used;
+    /* Last number of used bits when going to a byte boundary.
      */
 
     ulg high_water;
