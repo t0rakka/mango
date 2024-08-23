@@ -131,7 +131,7 @@ namespace mango
                 group.Group = WORD(i & 1);
 
                 auto handle = get_native_handle(m_threads[i]);
-                BOOL r = SetThreadGroupAffinity(handle, &group, nullptr);
+                SetThreadGroupAffinity(handle, &group, nullptr);
             }
 #endif
 

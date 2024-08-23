@@ -246,11 +246,6 @@ namespace mango
             }
 
             init_glext_extensions();
-
-            if (glGetString == nullptr)
-            {
-                MANGO_EXCEPTION("[OpenGLContextWGL] Context creation failed, no GL functions.");
-            }
         }
 
         ~OpenGLContextWGL()

@@ -114,6 +114,14 @@ namespace
         case KEYCODE_CONTROL: v = VK_CONTROL; break;
         case KEYCODE_LEFT_CONTROL: v = VK_LCONTROL; break;
         case KEYCODE_RIGHT_CONTROL: v = VK_RCONTROL; break;
+
+        // NOT HANDLED
+        case KEYCODE_LEFT_ALT:
+        case KEYCODE_RIGHT_ALT:
+        case KEYCODE_CAPS_LOCK:
+        case KEYCODE_ENTER:
+        case KEYCODE_NONE:
+            break;
         }
 
         return v;
@@ -258,7 +266,7 @@ namespace
 
     u64 getFileSize(LPCWSTR name)
     {
-        LARGE_INTEGER nLargeInteger = { 0 };
+        LARGE_INTEGER nLargeInteger = { { 0, 0 } };
         HANDLE hFile = CreateFileW(name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
         if (hFile != INVALID_HANDLE_VALUE)
         {

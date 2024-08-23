@@ -43,8 +43,8 @@ namespace mango::filesystem
 
         u64 offset() const
         {
-            LARGE_INTEGER dist = { 0 };
-            LARGE_INTEGER result = { 0 };
+            LARGE_INTEGER dist = { { 0, 0 } };
+            LARGE_INTEGER result = { { 0, 0 } };
             BOOL status = SetFilePointerEx(m_handle, dist, &result, FILE_CURRENT);
             MANGO_UNREFERENCED(status);
             return result.QuadPart;
