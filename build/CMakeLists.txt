@@ -91,7 +91,7 @@ OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
 # source directories
 # ------------------------------------------------------------------------------
 
-if (WIN32)
+if (WIN32 OR CYGWIN)
 
     FILE(GLOB CORE_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp"
@@ -453,6 +453,7 @@ endif ()
 # ------------------------------------------------------------------------------
 
 if (COMPILER_MSVC)
+
     target_compile_options(mango PUBLIC "/DUNICODE")
 
     if (ENABLE_AVX512)
@@ -465,12 +466,18 @@ if (COMPILER_MSVC)
         message(STATUS "SIMD: AVX (2008)")
         target_compile_options(mango PUBLIC "/arch:AVX")
     endif ()
+
 else ()
+
     set(CMAKE_CXX_FLAGS "-Wall")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
     #set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
     target_compile_definitions(mango PUBLIC $<$<PLATFORM_ID:Windows>:UNICODE>)
+
+    if (CYGWIN)
+        target_compile_options(mango PUBLIC "-municode")
+    endif ()
 
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         target_compile_options(mango PUBLIC "-ftree-vectorize")
@@ -480,7 +487,7 @@ else ()
     if ((ARM AND ENABLE_NEON) OR AARCH64)
         message(STATUS "SIMD: NEON")
         if (ARM)
-            if (!APPLE)
+            if (NOT APPLE)
                 # The compiler for Apple Mx CPUs don't recognize these
                 add_definitions (-mfpu=neon -mfloat-abi=hard)
             endif()
@@ -488,7 +495,7 @@ else ()
         endif ()
     endif ()
 
-    if ((X86 OR X86_64) AND !EMSCRIPTEN)
+    if ((X86 OR X86_64) AND (NOT EMSCRIPTEN))
         # enable AES (2008) by default
         target_compile_options(mango PUBLIC "-maes")
 

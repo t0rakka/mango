@@ -50,6 +50,17 @@
     #define MANGO_PLATFORM_NAME "Playstation 4"
     #define MANGO_WINDOW_SYSTEM_NONE
 
+#elif defined(__CYGWIN__)
+
+    // Cygwin
+    #define MANGO_PLATFORM_CYGWIN
+    #define MANGO_PLATFORM_UNIX
+    #define MANGO_PLATFORM_NAME "Cygwin"
+    #define MANGO_WINDOW_SYSTEM_NONE
+
+    #include <stdint.h>
+    #include <malloc.h>
+
 #elif defined(_WIN32) || defined(_WINDOWS_)
 
     // Microsoft Windows
@@ -128,17 +139,6 @@
     #define MANGO_WINDOW_SYSTEM_XLIB
     //#define MANGO_WINDOW_SYSTEM_XCB
     //#define MANGO_WINDOW_SYSTEM_WAYLAND
-
-    #include <stdint.h>
-    #include <malloc.h>
-
-#elif defined(__CYGWIN__)
-
-    // Cygwin
-    #define MANGO_PLATFORM_CYGWIN
-    #define MANGO_PLATFORM_UNIX
-    #define MANGO_PLATFORM_NAME "Cygwin"
-    #define MANGO_WINDOW_SYSTEM_NONE
 
     #include <stdint.h>
     #include <malloc.h>
