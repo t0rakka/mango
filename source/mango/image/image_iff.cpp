@@ -48,7 +48,7 @@ namespace
     }
 
     static
-    void unpack_rgb8(Memory dest, ConstMemory source, size_t pixels)
+    void unpack_rgb8(Memory dest, ConstMemory source, u32 pixels)
     {
         u32* ptr = reinterpret_cast<u32*>(dest.address);
         BigEndianConstPointer p = source.address;
@@ -70,7 +70,7 @@ namespace
     }
 
     static
-    void unpack_rgbn(Memory dest, ConstMemory source, size_t pixels)
+    void unpack_rgbn(Memory dest, ConstMemory source, u32 pixels)
     {
         u16* ptr = reinterpret_cast<u16*>(dest.address);
         BigEndianConstPointer p = source.address;
@@ -96,9 +96,9 @@ namespace
     }
 
     static
-    void decode_rgbn(const Surface& dest, ConstMemory source, size_t xsize, size_t ysize)
+    void decode_rgbn(const Surface& dest, ConstMemory source, u32 xsize, u32 ysize)
     {
-        size_t count = xsize * ysize;
+        u32 count = xsize * ysize;
 
         Format format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4);
         Bitmap temp(xsize, ysize, format);
@@ -109,9 +109,9 @@ namespace
     }
 
     static
-    void decode_rgb8(const Surface& dest, ConstMemory source, size_t xsize, size_t ysize)
+    void decode_rgb8(const Surface& dest, ConstMemory source, u32 xsize, u32 ysize)
     {
-        size_t count = xsize * ysize;
+        u32 count = xsize * ysize;
 
         Format format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
         Bitmap temp(xsize, ysize, format);
@@ -122,8 +122,10 @@ namespace
     }
 
     static
-    void p2c_byte(u8* image, const u8* src, int count, int plane, int)
+    void p2c_byte(u8* image, const u8* src, int count, int plane, int bpp)
     {
+        MANGO_UNREFERENCED(bpp);
+
         while (count >= 8)
         {
             u64 data = *src++;
@@ -551,8 +553,8 @@ namespace
                 return status;
             }
 
-            size_t xsize = m_bmhd.xsize;
-            size_t ysize = m_bmhd.ysize;
+            u32 xsize = m_bmhd.xsize;
+            u32 ysize = m_bmhd.ysize;
 
             switch (m_signature)
             {
