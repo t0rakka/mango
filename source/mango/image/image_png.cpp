@@ -330,7 +330,7 @@ namespace
     // Long story short; the strnlen() is not part of std and not available
     // on all platforms or tool-chains so we have to wrap it like this. :(
 
-#if defined(__ppc__)
+    static inline
     size_t png_strnlen(const char* s, size_t maxlen)
     {
         for (size_t i = 0; i < maxlen ; ++i)
@@ -340,9 +340,6 @@ namespace
         }
         return maxlen;
     }
-#else
-    #define png_strnlen strnlen
-#endif
 
     // ------------------------------------------------------------
     // Filter
