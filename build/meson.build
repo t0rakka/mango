@@ -1130,21 +1130,18 @@ endif
 # ------------------------------------------------------------------------------
 
 threads_dep = dependency('threads')
+opengl_dep = dependency('gl', required: false)
 
 mango_deps             = [ threads_dep ]
 mango_public_deps      = [ ]
-mango_opengl_deps      = [ ]
+mango_opengl_deps      = [ opengl_dep ]
 mango_import3d_deps    = [ ]
-
-opengl_dep = dependency('gl')
 
 egl_dep = dependency('egl', version: '>=1.4', required: false)
 if egl_dep.found()
     add_project_arguments('-DMANGO_ENABLE_EGL', language: ['cpp'])
     mango_opengl_deps += egl_dep
 endif
-
-mango_public_deps += opengl_dep
 
 if not is_windows
     dl_dep = cpp.find_library('dl', required : false)
@@ -1161,7 +1158,7 @@ if is_linux
     x11_dep = cpp.find_library('X11', required : true)
     mango_deps += [ m_dep ]
     mango_public_deps += [ m_dep ]
-    mango_opengl_deps += [ x11_dep, opengl_dep ]
+    mango_opengl_deps += [ x11_dep ]
 endif
 
 # ------------------------------------------------------------------------------
@@ -1298,22 +1295,26 @@ mango_dep = declare_dependency(
 # mango-opengl
 #
 
-mango_opengl = shared_library('mango-opengl',
-    version             : mango_opengl_version,
-    soversion           : mango_opengl_version,
-    sources             : mango_window_sources + mango_opengl_sources,
-    link_with           : mango,
-    dependencies        : mango_opengl_deps,
-    include_directories : mango_inc,
-    cpp_args            : mango_public_cpp_args,
-    install             : true
-)
+if opengl_dep.found()
 
-mango_opengl_dep = declare_dependency(
-    link_with           : mango_opengl,
-    include_directories : mango_inc,
-    compile_args        : mango_public_cpp_args + mango_interface_cpp_args
-)
+    mango_opengl = shared_library('mango-opengl',
+        version             : mango_opengl_version,
+        soversion           : mango_opengl_version,
+        sources             : mango_window_sources + mango_opengl_sources,
+        link_with           : mango,
+        dependencies        : mango_opengl_deps,
+        include_directories : mango_inc,
+        cpp_args            : mango_public_cpp_args,
+        install             : true
+    )
+
+    mango_opengl_dep = declare_dependency(
+        link_with           : mango_opengl,
+        include_directories : mango_inc,
+        compile_args        : mango_public_cpp_args + mango_interface_cpp_args
+    )
+
+endif
 
 #
 # mango-import3d
@@ -1359,11 +1360,15 @@ pkg.generate(mango,
     description : 'A multi-platform low-level development framework for graphics programmers - Core'
 )
 
-pkg.generate(mango_opengl,
-    name: 'mango-opengl',
-    libraries_private : [ mango_opengl_deps ],
-    description : 'A multi-platform low-level development framework for graphics programmers - OpenGL'
-)
+if opengl_dep.found()
+
+    pkg.generate(mango_opengl,
+        name: 'mango-opengl',
+        libraries_private : [ mango_opengl_deps ],
+        description : 'A multi-platform low-level development framework for graphics programmers - OpenGL'
+    )
+
+endif
 
 pkg.generate(mango_import3d,
     name: 'mango-import3d',

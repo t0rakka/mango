@@ -87,7 +87,6 @@ OPTION(ENABLE_BMI           "Enable BMI"                                OFF)
 OPTION(ENABLE_BMI2          "Enable BMI2"                               OFF)
 OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
 
-
 # ------------------------------------------------------------------------------
 # source directories
 # ------------------------------------------------------------------------------
