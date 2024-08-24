@@ -61,23 +61,6 @@
     #include <stdint.h>
     #include <malloc.h>
 
-#elif defined(_WIN32) || defined(_WINDOWS_)
-
-    // Microsoft Windows
-    #define MANGO_PLATFORM_WINDOWS
-    #define MANGO_PLATFORM_NAME "Windows"
-    #define MANGO_WINDOW_SYSTEM_WIN32
-
-    #ifndef NOMINMAX
-    #define NOMINMAX
-    #endif
-
-    #ifndef WIN32_LEAN_AND_MEAN
-    #define WIN32_LEAN_AND_MEAN
-    #endif
-
-    #include <windows.h>
-
 #elif defined(__MINGW32__) || defined(__MINGW64__)
 
     // MinGW
@@ -96,6 +79,23 @@
 
     #include <windows.h>
     #include <windef.h>
+
+#elif defined(_WIN32) || defined(_WINDOWS_)
+
+    // Microsoft Windows
+    #define MANGO_PLATFORM_WINDOWS
+    #define MANGO_PLATFORM_NAME "Windows"
+    #define MANGO_WINDOW_SYSTEM_WIN32
+
+    #ifndef NOMINMAX
+    #define NOMINMAX
+    #endif
+
+    #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+    #endif
+
+    #include <windows.h>
 
 #elif defined(__APPLE__)
 
