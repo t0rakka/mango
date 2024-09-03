@@ -3166,7 +3166,7 @@ namespace
             u32 y = 0;
             auto decompress = deflate_zlib::decompress;
 
-#ifdef MANGO_ENABLE_ISAL
+#ifdef MANGO_ENABLE_ISAL__disabled // faster but decoding failures :(
             auto compressor = getCompressor(Compressor::ISAL);
             decompress = compressor.decompress;
 #endif
