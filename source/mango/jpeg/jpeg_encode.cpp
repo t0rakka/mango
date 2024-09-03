@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include "jpeg.hpp"
@@ -2633,8 +2633,8 @@ namespace
         }
 
         // MANGO marker
-        const u8 magic_mango[] = { 0x4d, 0x61, 0x6e, 0x67, 0x6f, 0x31 }; // 'Mango1'
-        const int magic_mango_size = sizeof(magic_mango);
+        const u8 magic_mango [] = { 0x4d, 0x61, 0x6e, 0x67, 0x6f, 0x31 }; // 'Mango1'
+        const u32 magic_mango_size = sizeof(magic_mango);
 
         int intervals = div_ceil(vertical_mcus, interval);
 
@@ -2705,10 +2705,10 @@ namespace
 
         p.write(nfdata + (number_of_components - 1) * 3, number_of_components * 3);
 
-        // huffman table(DHT)
+        // huffman table (DHT)
         p.write(g_marker_data, sizeof(g_marker_data));
 
-        // Define Restart Interval marker
+        // Define Restart Interval (DRI)
         p.write16(MARKER_DRI);
         p.write16(4);
         p.write16(horizontal_mcus * interval);

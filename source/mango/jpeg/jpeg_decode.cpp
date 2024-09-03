@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/endian.hpp>
@@ -2144,9 +2144,6 @@ namespace mango::image::jpeg
             // -----------------------------------------------------------------
             // custom mango encoded file (APP14:'Mango1' chunk present)
             // -----------------------------------------------------------------
-            // - restart interval marker offsets are stored in the APP14 chunk
-            // - the markers are present for other decoders; we don't need them
-            // -----------------------------------------------------------------
 
             const size_t stride = m_surface->stride;
             const size_t bytes_per_pixel = m_surface->format.bytes();
@@ -2357,6 +2354,7 @@ namespace mango::image::jpeg
             // custom mango encoded file (APP14:'Mango1' chunk present)
             // -----------------------------------------------------------------
 
+            /* NOTE: Experimental don't use
             const u8* p = decodeState.buffer.ptr;
 
             int i = 0;
@@ -2378,6 +2376,7 @@ namespace mango::image::jpeg
             }
 
             decodeState.buffer.ptr = p;
+            */
         }
         else if (restartInterval)
         {
