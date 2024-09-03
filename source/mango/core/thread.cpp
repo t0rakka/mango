@@ -212,7 +212,12 @@ namespace mango
         task.func = std::move(func);
 
         ++queue->task_counter;
-        m_queues[queue->priority].tasks.enqueue(std::move(task));
+
+        auto& tasks = m_queues[queue->priority].tasks;
+        //moodycamel::ProducerToken token(tasks);
+
+        tasks.enqueue(std::move(task));
+        //tasks.enqueue(token, std::move(task));
 
         m_condition.notify_one();
     }
@@ -222,8 +227,11 @@ namespace mango
         // scan task queues in priority order
         for (size_t priority = 0; priority < 3; ++priority)
         {
+            auto& tasks = m_queues[priority].tasks;
+            moodycamel::ConsumerToken token(tasks);
+
             Task task;
-            if (m_queues[priority].tasks.try_dequeue(task))
+            if (tasks.try_dequeue(token, task))
             {
                 Queue* queue = task.queue;
 
