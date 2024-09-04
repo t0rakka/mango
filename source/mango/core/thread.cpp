@@ -99,12 +99,22 @@ namespace mango
         moodycamel::ConcurrentQueue<Task> tasks;
     };
 
-    ThreadPool::ThreadPool(size_t size)
-        : m_queues(nullptr)
-        , m_static_queue(this, int(Priority::Normal), "static")
-        , m_threads(size)
+    struct ThreadPool::Consumer
     {
-        m_queues = new TaskQueue[3];
+        moodycamel::ConsumerToken token;
+
+        Consumer(TaskQueue& queue)
+            : token(queue.tasks)
+        {
+        }
+    };
+
+    ThreadPool::ThreadPool(size_t size)
+        : m_queue(nullptr)
+        , m_threads(size)
+        , m_static_queue(this, "static")
+    {
+        m_queue = new TaskQueue;
 
         // NOTE: let OS scheduler shuffle tasks as it sees fit
         //       this gives better performance overall UNTIL we have some practical
@@ -152,7 +162,7 @@ namespace mango
             thread.join();
         }
 
-        delete[] m_queues;
+        delete m_queue;
     }
 
     size_t ThreadPool::getHardwareConcurrency()
@@ -175,13 +185,16 @@ namespace mango
         std::string name = fmt::format("TP#{:03}", threadID + 1);
         TraceThread th(name);
 
+        Consumer consumer(*m_queue);
+
         auto time0 = high_resolution_clock::now();
 
         while (!m_stop.load(std::memory_order_relaxed))
         {
-            if (dequeue_and_process())
+            Task task;
+            if (m_queue->tasks.try_dequeue(consumer.token, task))
             {
-                // remember the last time we processed a task
+                process(task);
                 time0 = high_resolution_clock::now();
             }
             else
@@ -213,45 +226,41 @@ namespace mango
 
         ++queue->task_counter;
 
-        auto& tasks = m_queues[queue->priority].tasks;
-        //moodycamel::ProducerToken token(tasks);
-
-        tasks.enqueue(std::move(task));
-        //tasks.enqueue(token, std::move(task));
+        thread_local moodycamel::ProducerToken token(m_queue->tasks);
+        m_queue->tasks.enqueue(token, std::move(task));
+        //m_queue->tasks.enqueue(std::move(task));
 
         m_condition.notify_one();
     }
 
+    void ThreadPool::process(Task& task) const
+    {
+        Queue* queue = task.queue;
+
+        // check if the task is cancelled
+        if (!queue->cancelled)
+        {
+            if (queue->name.empty())
+            {
+                task.func();
+            }
+            else
+            {
+                Trace trace("Task", queue->name);
+                task.func();
+            }
+        }
+
+        --queue->task_counter;
+    }
+
     bool ThreadPool::dequeue_and_process()
     {
-        // scan task queues in priority order
-        for (size_t priority = 0; priority < 3; ++priority)
+        Task task;
+        if (m_queue->tasks.try_dequeue(task))
         {
-            auto& tasks = m_queues[priority].tasks;
-            moodycamel::ConsumerToken token(tasks);
-
-            Task task;
-            if (tasks.try_dequeue(token, task))
-            {
-                Queue* queue = task.queue;
-
-                // check if the task is cancelled
-                if (!queue->cancelled)
-                {
-                    if (queue->name.empty())
-                    {
-                        task.func();
-                    }
-                    else
-                    {
-                        Trace trace("Task", queue->name);
-                        task.func();
-                    }
-                }
-
-                --queue->task_counter;
-                return true;
-            }
+            process(task);
+            return true;
         }
 
         return false;
@@ -278,25 +287,25 @@ namespace mango
 
     ConcurrentQueue::ConcurrentQueue()
         : m_pool(ThreadPool::getInstance())
-        , m_queue(&m_pool, int(Priority::Normal), "")
+        , m_queue(&m_pool, "")
     {
     }
 
-    ConcurrentQueue::ConcurrentQueue(const std::string& name, Priority priority)
+    ConcurrentQueue::ConcurrentQueue(const std::string& name)
         : m_pool(ThreadPool::getInstance())
-        , m_queue(&m_pool, int(priority), name)
+        , m_queue(&m_pool, name)
     {
     }
 
     ConcurrentQueue::ConcurrentQueue(ThreadPool& pool)
         : m_pool(pool)
-        , m_queue(&m_pool, int(Priority::Normal), "")
+        , m_queue(&m_pool, "")
     {
     }
 
-    ConcurrentQueue::ConcurrentQueue(ThreadPool& pool, const std::string& name, Priority priority)
+    ConcurrentQueue::ConcurrentQueue(ThreadPool& pool, const std::string& name)
         : m_pool(pool)
-        , m_queue(&m_pool, int(priority), name)
+        , m_queue(&m_pool, name)
     {
     }
 
