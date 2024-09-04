@@ -120,7 +120,7 @@ namespace
             int channels = m_sgi_header.zsize;
 
             const u8* data = m_memory.address + 512;
-            
+
             for (int channel = 0; channel < channels; ++channel)
             {
                 for (int y = 0; y < height; ++y)
