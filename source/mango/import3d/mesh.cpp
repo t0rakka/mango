@@ -130,13 +130,13 @@ namespace mango::import3d
 
     void Mesh::computeTangents()
     {
-        if (flags & Vertex::TANGENT)
+        if (flags & Vertex::Tangent)
         {
             // already have tangents
             return;
         }
 
-        if (!(flags & Vertex::NORMAL) || !(flags & Vertex::TEXCOORD))
+        if (!(flags & Vertex::Normal) || !(flags & Vertex::Texcoord))
         {
             // normals and texcoords are required for tangents
             return;
@@ -160,7 +160,7 @@ namespace mango::import3d
         tbool status = genTangSpaceDefault(&mik_context);
         MANGO_UNREFERENCED(status);
 
-        flags |= Vertex::TANGENT;
+        flags |= Vertex::Tangent;
     }
 
     IndexedMesh::IndexedMesh()
@@ -294,7 +294,7 @@ namespace mango::import3d
         auto ptr = std::make_unique<IndexedMesh>();
         IndexedMesh& mesh = *ptr;
 
-        mesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD | Vertex::TANGENT;
+        mesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord | Vertex::Tangent;
 
         for (int i = 0; i < 6; ++i)
         {
@@ -365,7 +365,7 @@ namespace mango::import3d
 
         Mesh mesh;
 
-        mesh.flags = Vertex::POSITION | Vertex::NORMAL;
+        mesh.flags = Vertex::Position | Vertex::Normal;
 
         for (int i = 0; i < 20; ++i)
         {
@@ -442,7 +442,7 @@ namespace mango::import3d
 
         Mesh mesh;
 
-        mesh.flags = Vertex::POSITION | Vertex::NORMAL;
+        mesh.flags = Vertex::Position | Vertex::Normal;
 
         for (int i = 0; i < 12; ++i)
         {
@@ -499,7 +499,7 @@ namespace mango::import3d
         auto ptr = std::make_unique<IndexedMesh>();
         IndexedMesh& mesh = *ptr;
 
-        mesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD | Vertex::TANGENT;
+        mesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord | Vertex::Tangent;
 
         for (int i = 0; i < params.innerSegments + 1; ++i)
         {
@@ -579,7 +579,7 @@ namespace mango::import3d
         auto ptr = std::make_unique<IndexedMesh>();
         IndexedMesh& mesh = *ptr;
 
-        mesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD | Vertex::TANGENT;
+        mesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord | Vertex::Tangent;
 
         const size_t numVertex = (params.steps + 1) * (params.facets + 1) + 1;
         mesh.vertices.resize(numVertex);

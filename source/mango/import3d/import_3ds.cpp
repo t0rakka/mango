@@ -1128,7 +1128,7 @@ namespace mango::import3d
             {
                 Mesh trimesh;
 
-                trimesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD;
+                trimesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord;
 
                 for (size_t i = primitive3ds.start; i < primitive3ds.end; ++i)
                 {

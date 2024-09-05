@@ -847,7 +847,7 @@ namespace mango::import3d
 
             Mesh trimesh;
 
-            trimesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD;
+            trimesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord;
 
             // triangles sharing positions
             std::multimap<u32, u32> sharing;
@@ -1738,7 +1738,7 @@ namespace mango::import3d
         for (const LayerLWO2& layer : reader.layers)
         {
             Mesh trimesh;
-            trimesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD;
+            trimesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord;
 
             for (const PolygonLWO2& polygon : layer.polygons)
             {

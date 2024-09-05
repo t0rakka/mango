@@ -68,11 +68,11 @@ namespace mango::import3d
     {
         enum : u32
         {
-            POSITION  = 0x0001,
-            NORMAL    = 0x0002,
-            TEXCOORD  = 0x0004,
-            TANGENT   = 0x0008,
-            COLOR     = 0x0010,
+            Position  = 0x0001,
+            Normal    = 0x0002,
+            Texcoord  = 0x0004,
+            Tangent   = 0x0008,
+            Color     = 0x0010,
         };
 
         float32x3 position { 0.0f, 0.0f, 0.0f };

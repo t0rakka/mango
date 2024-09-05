@@ -504,7 +504,7 @@ namespace mango::import3d
         for (const auto& current : reader.m_meshes)
         {
             Mesh trimesh;
-            trimesh.flags = Vertex::POSITION | Vertex::NORMAL;
+            trimesh.flags = Vertex::Position | Vertex::Normal;
 
             bool hasNormals = !current.normals.values.empty();
             bool hasTexcoords = !current.texcoords.values.empty();
@@ -519,7 +519,7 @@ namespace mango::import3d
 
             if (hasTexcoords)
             {
-                trimesh.flags |= Vertex::TEXCOORD;
+                trimesh.flags |= Vertex::Texcoord;
             }
 
             // triangle indices

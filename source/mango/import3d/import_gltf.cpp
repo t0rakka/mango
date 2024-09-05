@@ -522,27 +522,27 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 if (name == "POSITION")
                 {
                     attribute = &attributePosition;
-                    mesh.flags |= Vertex::POSITION;
+                    mesh.flags |= Vertex::Position;
                 }
                 else if (name == "NORMAL")
                 {
                     attribute = &attributeNormal;
-                    mesh.flags |= Vertex::NORMAL;
+                    mesh.flags |= Vertex::Normal;
                 }
                 else if (name == "TANGENT")
                 {
                     attribute = &attributeTangent;
-                    mesh.flags |= Vertex::TANGENT;
+                    mesh.flags |= Vertex::Tangent;
                 }
                 else if (name == "TEXCOORD_0")
                 {
                     attribute = &attributeTexcoord;
-                    mesh.flags |= Vertex::TEXCOORD;
+                    mesh.flags |= Vertex::Texcoord;
                 }
                 else if (name == "COLOR_0")
                 {
                     attribute = &attributeColor;
-                    mesh.flags |= Vertex::COLOR;
+                    mesh.flags |= Vertex::Color;
                 }
                 else
                 {

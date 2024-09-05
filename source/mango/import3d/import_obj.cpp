@@ -721,7 +721,7 @@ namespace mango::import3d
                 std::unique_ptr<IndexedMesh> ptr = std::make_unique<IndexedMesh>();
                 IndexedMesh& mesh = *ptr;
 
-                mesh.flags = Vertex::POSITION | Vertex::NORMAL | Vertex::TEXCOORD;
+                mesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord;
 
                 std::unordered_map<VertexOBJ, u32, VertexHash> unique;
 
