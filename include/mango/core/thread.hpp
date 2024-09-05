@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -31,15 +31,13 @@ namespace mango
         struct Queue
         {
             ThreadPool* pool;
-            int priority;
             std::string name;
 
             alignas(64) std::atomic<int> task_counter { 0 };
             alignas(64) std::atomic<bool> cancelled { false };
 
-            Queue(ThreadPool* pool, int priority, const std::string& name)
+            Queue(ThreadPool* pool, const std::string& name)
                 : pool(pool)
-                , priority(priority)
                 , name(name)
             {
             }
@@ -66,30 +64,25 @@ namespace mango
         }
 
     protected:
+        struct Consumer;
+
         void thread(size_t threadID);
 
         void enqueue(Queue* queue, std::function<void()>&& func);
+        void process(Task& task) const;
         bool dequeue_and_process();
         void cancel(Queue* queue);
         void wait(Queue* queue);
 
     private:
         struct TaskQueue;
-        alignas(64) TaskQueue* m_queues;
+        alignas(64) TaskQueue* m_queue;
 
         alignas(64) std::atomic<bool> m_stop { false };
         std::mutex m_queue_mutex;
         std::condition_variable m_condition;
-
-        Queue m_static_queue;
         std::vector<std::thread> m_threads;
-    };
-
-    enum class Priority
-    {
-        High   = 0,
-        Normal = 1,
-        Low    = 2
+        Queue m_static_queue;
     };
 
     // ----------------------------------------------------------------------------------
@@ -127,9 +120,9 @@ namespace mango
 
     public:
         ConcurrentQueue();
-        ConcurrentQueue(const std::string& name, Priority priority = Priority::Normal);
+        ConcurrentQueue(const std::string& name);
         ConcurrentQueue(ThreadPool& pool);
-        ConcurrentQueue(ThreadPool& pool, const std::string& name, Priority priority = Priority::Normal);
+        ConcurrentQueue(ThreadPool& pool, const std::string& name);
         ~ConcurrentQueue();
 
         template <class F, class... Args>
@@ -302,26 +295,6 @@ namespace mango
         alignas(64) TaskQueue* m_queue;
 
         bool dequeue_and_process();
-    };
-
-    // ----------------------------------------------------------------------------------
-    // Task
-    // ----------------------------------------------------------------------------------
-
-    /*
-        Task is a simple queue-less convenience object to enqueue work into the ThreadPool.
-        Synchronization must be done manually.
-    */
-
-    class Task
-    {
-    public:
-        template <class F, class... Args>
-        Task(F&& f, Args&&... args)
-        {
-            ThreadPool& pool = ThreadPool::getInstance();
-            pool.enqueue(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-        }
     };
 
     // ----------------------------------------------------------------------------------

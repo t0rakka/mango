@@ -3044,7 +3044,7 @@ namespace
 
             if (multithread)
             {
-                ConcurrentQueue q("png:process", Priority::High);
+                ConcurrentQueue q("png:process");
 
                 for (int y = 0; y < height; ++y)
                 {
@@ -3154,7 +3154,7 @@ namespace
             // pLLD decoding
             // ----------------------------------------------------------------------
 
-            ConcurrentQueue q("png:decode", Priority::High);
+            ConcurrentQueue q("png:decode");
 
             const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
 
