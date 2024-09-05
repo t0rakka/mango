@@ -124,21 +124,6 @@ void example4()
     }
 }
 
-void example5()
-{
-    // Queues can be named and given a priority (LOW, NORMAL, HIGH)
-
-    // The granularity of priorities is not very fine-grained accidentally,
-    // the idea is that there is some amount of control but no incentive
-    // to go full-retard when scheduling the tasks.
-
-    // The queue names can be useful when debugging and instrumenting
-    // the ThreadPool to get more detailed information what is going on.
-    ConcurrentQueue queue("important queue", Priority::High);
-
-    // NOTE: Enqueue tasks here..
-}
-
 /*
     Demonstrate a way to keep reference to shared state which is processed in the
     ThreadPool. The State object is used in the captured lambdas which are executed
@@ -161,7 +146,7 @@ struct State
     }
 };
 
-void example6()
+void example5()
 {
     // Create the shared State in the heap and refer to it using std::shared_ptr
     std::shared_ptr<State> state = std::make_shared<State>(1024);
@@ -195,7 +180,7 @@ void example6()
     // In short: have implicit synchronization based on how you feed the work!
 }
 
-void example7()
+void example6()
 {
     // Can this code deadlock?
     ConcurrentQueue q;
@@ -241,7 +226,7 @@ void example7()
 
 using namespace std::chrono_literals;
 
-void example8()
+void example7()
 {
     int counter = 0;
     SpinLock lock;
@@ -281,5 +266,4 @@ int main()
     example5();
     example6();
     example7();
-    example8();
 }
