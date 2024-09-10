@@ -187,7 +187,6 @@
 		A63F72122B4F68BF00137C36 /* simple_decimal_conversion.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F72092B4F68BF00137C36 /* simple_decimal_conversion.h */; };
 		A63F72172B4F68FE00137C36 /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63F72152B4F68FD00137C36 /* base64.cpp */; };
 		A63F72182B4F68FE00137C36 /* fastgltf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63F72162B4F68FE00137C36 /* fastgltf.cpp */; };
-		A63F721F2B4F690F00137C36 /* parser.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63F721A2B4F690F00137C36 /* parser.hpp */; };
 		A63F72202B4F690F00137C36 /* util.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63F721B2B4F690F00137C36 /* util.hpp */; };
 		A63F72212B4F690F00137C36 /* tools.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63F721C2B4F690F00137C36 /* tools.hpp */; };
 		A63F72222B4F690F00137C36 /* base64.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A63F721D2B4F690F00137C36 /* base64.hpp */; };
@@ -285,6 +284,8 @@
 		A6872D092270546C008F0D1A /* jpeg_process_func.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A6872D082270546C008F0D1A /* jpeg_process_func.hpp */; };
 		A68CD3F02651D9A200725A7C /* lossless_sse41.c in Sources */ = {isa = PBXBuildFile; fileRef = A68CD3EF2651D9A200725A7C /* lossless_sse41.c */; };
 		A690037C2008FF790080E5FA /* sha2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A690037B2008FF790080E5FA /* sha2.cpp */; };
+		A690DFF62C90BF88000CCA64 /* io.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A690DFF52C90BF88000CCA64 /* io.cpp */; };
+		A690DFF82C90BF95000CCA64 /* math.hpp in Headers */ = {isa = PBXBuildFile; fileRef = A690DFF72C90BF95000CCA64 /* math.hpp */; };
 		A6930AE42A2E854000AC433B /* image_psd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6930AE32A2E854000AC433B /* image_psd.cpp */; };
 		A6984DEA29E90217002021FE /* allocations.h in Headers */ = {isa = PBXBuildFile; fileRef = A6984DE929E90217002021FE /* allocations.h */; };
 		A69B9D96285ABF0800E7BEDC /* common_defs.h in Headers */ = {isa = PBXBuildFile; fileRef = A69B9D95285ABF0800E7BEDC /* common_defs.h */; };
@@ -764,7 +765,6 @@
 		A63F72092B4F68BF00137C36 /* simple_decimal_conversion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = simple_decimal_conversion.h; path = external/fast_float/simple_decimal_conversion.h; sourceTree = "<group>"; };
 		A63F72152B4F68FD00137C36 /* base64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = base64.cpp; path = external/fastgltf/src/base64.cpp; sourceTree = "<group>"; };
 		A63F72162B4F68FE00137C36 /* fastgltf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = fastgltf.cpp; path = external/fastgltf/src/fastgltf.cpp; sourceTree = "<group>"; };
-		A63F721A2B4F690F00137C36 /* parser.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = parser.hpp; path = external/fastgltf/include/fastgltf/parser.hpp; sourceTree = "<group>"; };
 		A63F721B2B4F690F00137C36 /* util.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = util.hpp; path = external/fastgltf/include/fastgltf/util.hpp; sourceTree = "<group>"; };
 		A63F721C2B4F690F00137C36 /* tools.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = tools.hpp; path = external/fastgltf/include/fastgltf/tools.hpp; sourceTree = "<group>"; };
 		A63F721D2B4F690F00137C36 /* base64.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = base64.hpp; path = external/fastgltf/include/fastgltf/base64.hpp; sourceTree = "<group>"; };
@@ -861,6 +861,8 @@
 		A6872D082270546C008F0D1A /* jpeg_process_func.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = jpeg_process_func.hpp; path = jpeg/jpeg_process_func.hpp; sourceTree = "<group>"; };
 		A68CD3EF2651D9A200725A7C /* lossless_sse41.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lossless_sse41.c; path = external/libwebp/src/dsp/lossless_sse41.c; sourceTree = "<group>"; };
 		A690037B2008FF790080E5FA /* sha2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sha2.cpp; path = core/sha2.cpp; sourceTree = "<group>"; };
+		A690DFF52C90BF88000CCA64 /* io.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = io.cpp; path = external/fastgltf/src/io.cpp; sourceTree = "<group>"; };
+		A690DFF72C90BF95000CCA64 /* math.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = math.hpp; path = external/fastgltf/include/fastgltf/math.hpp; sourceTree = "<group>"; };
 		A6930AE32A2E854000AC433B /* image_psd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = image_psd.cpp; path = image/image_psd.cpp; sourceTree = "<group>"; };
 		A6984DE929E90217002021FE /* allocations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = allocations.h; path = external/zstd/common/allocations.h; sourceTree = "<group>"; };
 		A69B9D95285ABF0800E7BEDC /* common_defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common_defs.h; path = external/libdeflate/common_defs.h; sourceTree = "<group>"; };
@@ -1611,6 +1613,7 @@
 		A63F72142B4F68ED00137C36 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				A690DFF52C90BF88000CCA64 /* io.cpp */,
 				A63F72152B4F68FD00137C36 /* base64.cpp */,
 				A63F72162B4F68FE00137C36 /* fastgltf.cpp */,
 			);
@@ -1646,9 +1649,9 @@
 		A63F722E2B4F697800137C36 /* fastgltf */ = {
 			isa = PBXGroup;
 			children = (
+				A690DFF72C90BF95000CCA64 /* math.hpp */,
 				A63F721D2B4F690F00137C36 /* base64.hpp */,
 				A60791E82B784936000AB009 /* core.hpp */,
-				A63F721A2B4F690F00137C36 /* parser.hpp */,
 				A63F721C2B4F690F00137C36 /* tools.hpp */,
 				A63F721E2B4F690F00137C36 /* types.hpp */,
 				A63F721B2B4F690F00137C36 /* util.hpp */,
@@ -2229,7 +2232,6 @@
 				A642437121852AEF0044B763 /* Compiler.h in Headers */,
 				A645DD722141551200EC714B /* zstd_opt.h in Headers */,
 				A6EC3FA7230D7C6100B17F21 /* types.h in Headers */,
-				A63F721F2B4F690F00137C36 /* parser.hpp in Headers */,
 				A63DD7911E706F3400D4D499 /* bzlib.h in Headers */,
 				A6358CBB2BC91DEA0060136D /* matchfinder_impl.h in Headers */,
 				A64243A121852AEF0044B763 /* LzmaEnc.h in Headers */,
@@ -2325,6 +2327,7 @@
 				A645DD762141551200EC714B /* zstd_lazy.h in Headers */,
 				A6EC3F0A230D7C1500B17F21 /* common_sse41.h in Headers */,
 				A6EC3F9C230D7C4D00B17F21 /* filters_utils.h in Headers */,
+				A690DFF82C90BF95000CCA64 /* math.hpp in Headers */,
 				A6E7DF412651D07E006A912E /* xxhash.h in Headers */,
 				A6EC3F8D230D7C4D00B17F21 /* thread_utils.h in Headers */,
 				A63DD7791E706EF100D4D499 /* lzvn_decode_base.h in Headers */,
@@ -2716,6 +2719,7 @@
 				A6EC3F14230D7C1500B17F21 /* upsampling_neon.c in Sources */,
 				A6B2A54628F4E07400DC24CF /* image_jxl.cpp in Sources */,
 				A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */,
+				A690DFF62C90BF88000CCA64 /* io.cpp in Sources */,
 				A6EC3F0B230D7C1500B17F21 /* yuv_sse41.c in Sources */,
 				A00559A91C93327800A6D963 /* path.cpp in Sources */,
 				A6EC3EE3230D7C1500B17F21 /* cpu.c in Sources */,
