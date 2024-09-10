@@ -985,15 +985,16 @@ external_simdjson_sources = files(
 
 external_fastgltf_headers = files(
     '../source/external/fastgltf/include/fastgltf/base64.hpp',
-    '../source/external/fastgltf/include/fastgltf/parser.hpp',
     '../source/external/fastgltf/include/fastgltf/tools.hpp',
     '../source/external/fastgltf/include/fastgltf/types.hpp',
+    '../source/external/fastgltf/include/fastgltf/math.hpp',
     '../source/external/fastgltf/include/fastgltf/util.hpp',
 )
 
 external_fastgltf_sources = files(
     '../source/external/fastgltf/src/base64.cpp',
     '../source/external/fastgltf/src/fastgltf.cpp',
+    '../source/external/fastgltf/src/io.cpp',
 )
 
 # ------------------------------------------------------------------------------

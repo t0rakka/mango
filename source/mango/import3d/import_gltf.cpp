@@ -5,7 +5,7 @@
 #include <mango/core/core.hpp>
 #include <mango/import3d/import_gltf.hpp>
 
-#include <fastgltf/parser.hpp>
+#include <fastgltf/core.hpp>
 #include <fastgltf/types.hpp>
 
 /*
@@ -47,12 +47,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     filesystem::File file(path, filename);
 
-    Buffer filebuffer(file);
-    filebuffer.append(nullptr, fastgltf::getGltfBufferPadding());
-
-    fastgltf::GltfDataBuffer data;
-    data.fromByteView(filebuffer.data(), filebuffer.size() - fastgltf::getGltfBufferPadding(), filebuffer.size());
-
+    fastgltf::GltfDataBuffer data = *fastgltf::GltfDataBuffer::FromBytes(
+        reinterpret_cast<const std::byte*>(file.data()), file.size());
+        
     // --------------------------------------------------------------------------
     // parse
     // --------------------------------------------------------------------------
@@ -82,19 +79,18 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     fastgltf::Parser parser(extensions);
 
-    auto type = fastgltf::determineGltfFileType(&data);
-    if (type == fastgltf::GltfType::glTF)
+    auto type = fastgltf::determineGltfFileType(data);
+    switch (type)
     {
-        printLine(Print::Verbose, "  Type: gltf");
-    }
-    else if (type == fastgltf::GltfType::GLB)
-    {
-        printLine(Print::Verbose, "  Type: glb");
-    }
-    else
-    {
-        printLine(Print::Error, "Failed to determine glTF container");
-        return;
+        case fastgltf::GltfType::glTF:
+            printLine(Print::Verbose, "  Type: gltf");
+            break;
+        case fastgltf::GltfType::GLB:
+            printLine(Print::Verbose, "  Type: glb");
+            break;
+        default:
+            printLine(Print::Error, "Failed to determine glTF container");
+            return;
     }
 
     auto options = fastgltf::Options::None;
@@ -107,14 +103,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     //options |= fastgltf::Options::LoadExternalImages;
     //options |= fastgltf::Options::LoadExternalImages;
 
-    auto expected = parser.loadGltf(&data, "", options);
-    if (expected.error() != fastgltf::Error::None)
+    auto expected_asset = parser.loadGltf(data, "", options);
+    if (expected_asset.error() != fastgltf::Error::None)
     {
-        printLine(Print::Error, "  ERROR: {}", fastgltf::getErrorMessage(expected.error()).data());
+        printLine(Print::Error, "  ERROR: {}", fastgltf::getErrorMessage(expected_asset.error()).data());
         return;
     }
 
-    fastgltf::Asset asset = std::move(expected.get());
+    fastgltf::Asset asset = std::move(expected_asset.get());
 
     // --------------------------------------------------------------------------
     // buffers
@@ -167,7 +163,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             },
             [&](const fastgltf::sources::Array& array)
             {
-                ConstMemory memory(array.bytes.data(), array.bytes.size());
+                ConstMemory memory(reinterpret_cast<const u8*>(array.bytes.data()), array.bytes.size());
                 buffers.push_back(memory);
 
                 // [ ] standard
@@ -260,13 +256,25 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             {
                 auto& bufferView = asset.bufferViews[source.bufferViewIndex];
                 auto& buffer = asset.buffers[bufferView.bufferIndex];
-                auto span = std::get<fastgltf::sources::ByteView>(buffer.data).bytes;
 
-                ConstMemory memory(reinterpret_cast<const u8*>(span.data() + bufferView.byteOffset), bufferView.byteLength);
-                //std::cout << "  ImageFormat: " << getImageFormat(memory) << std::endl;
+                ConstMemory memory;
 
-                Texture texture = createTexture(memory);
-                textures.push_back(texture);
+                std::visit(fastgltf::visitor {
+                    [] (auto& arg)
+                    {
+                    },
+                    [&](fastgltf::sources::Array& vector)
+                    {
+                        memory.address = reinterpret_cast<const u8*>(vector.bytes.data() + bufferView.byteOffset);
+                        memory.size = bufferView.byteLength;
+                    }
+                }, buffer.data);
+
+                if (memory.address)
+                {
+                    Texture texture = createTexture(memory);
+                    textures.push_back(texture);
+                }
 
                 // [ ] standard
                 // [x] binary
@@ -479,6 +487,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             std::optional<float> ior;
             bool unlit;
         };
+
 #endif
 
     } // materials
@@ -514,7 +523,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
             for (auto attributeIterator = primitiveIterator->attributes.begin(); attributeIterator != primitiveIterator->attributes.end(); ++attributeIterator)
             {
-                auto name = attributeIterator->first;
+                auto name = attributeIterator->name;
 
                 Attribute* attribute = nullptr;
                 const char* message = "";
@@ -551,7 +560,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
                 printLine(Print::Verbose, "    [Attribute:\"{}\"{}]", name, message);
 
-                auto& accessor = asset.accessors[attributeIterator->second];
+                auto& accessor = asset.accessors[attributeIterator->accessorIndex];
                 auto& view = asset.bufferViews[accessor.bufferViewIndex.value()];
 
                 auto offset = view.byteOffset + accessor.byteOffset;
@@ -994,7 +1003,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     {
         Node node;
 
-        if (const auto* matrix = std::get_if<fastgltf::Node::TransformMatrix>(&current.transform))
+        if (const auto* matrix = std::get_if<fastgltf::math::fmat4x4>(&current.transform))
         {
             const float* data = matrix->data();
             node.transform = matrix4x4(data);

@@ -55,18 +55,11 @@
 
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable : 5030)
+#pragma warning(disable : 5030) // attribute 'x' is not recognized
+#pragma warning(disable : 4710) // function not inlined
 #endif
 
 namespace fg = fastgltf;
-
-#if defined(_MSC_VER)
-#define FORCEINLINE __forceinline
-#else
-// On other compilers we need the inline specifier, so that the functions in this compilation unit
-// can be properly inlined without the "function body can be overwritten at link time" error.
-#define FORCEINLINE inline
-#endif
 
 namespace fastgltf::base64 {
     using DecodeFunctionInplace = std::function<void(std::string_view, std::uint8_t*, std::size_t)>;
@@ -117,8 +110,7 @@ namespace fastgltf::base64 {
 // The AVX and SSE decoding functions are based on http://0x80.pl/notesen/2016-01-17-sse-base64-decoding.html.
 // It covers various methods of en-/decoding base64 using SSE and AVX and also shows their
 // performance metrics.
-// TODO: Mark these functions with msvc::forceinline which is available from C++20
-[[gnu::target("avx2"), gnu::always_inline]] FORCEINLINE auto avx2_lookup_pshufb_bitmask(const __m256i input) {
+[[gnu::target("avx2")]] FASTGLTF_FORCEINLINE auto avx2_lookup_pshufb_bitmask(const __m256i input) {
     const auto higher_nibble = _mm256_and_si256(_mm256_srli_epi32(input, 4), _mm256_set1_epi8(0x0f));
 
     const auto shiftLUT = _mm256_setr_epi8(
@@ -135,7 +127,7 @@ namespace fastgltf::base64 {
     return _mm256_add_epi8(input, shift);
 }
 
-[[gnu::target("avx2"), gnu::always_inline]] FORCEINLINE auto avx2_pack_ints(__m256i input) {
+[[gnu::target("avx2")]] FASTGLTF_FORCEINLINE auto avx2_pack_ints(__m256i input) {
     const auto merge = _mm256_maddubs_epi16(input, _mm256_set1_epi32(0x01400140));
     return _mm256_madd_epi16(merge, _mm256_set1_epi32(0x00011000));
 }
@@ -202,7 +194,7 @@ namespace fastgltf::base64 {
     return ret;
 }
 
-[[gnu::target("sse4.1"), gnu::always_inline]] FORCEINLINE auto sse4_lookup_pshufb_bitmask(const __m128i input) {
+[[gnu::target("sse4.1")]] FASTGLTF_FORCEINLINE auto sse4_lookup_pshufb_bitmask(const __m128i input) {
     const auto higher_nibble = _mm_and_si128(_mm_srli_epi32(input, 4), _mm_set1_epi8(0x0f));
 
     const auto shiftLUT = _mm_setr_epi8(
@@ -216,7 +208,7 @@ namespace fastgltf::base64 {
     return _mm_add_epi8(input, shift);
 }
 
-[[gnu::target("sse4.1"), gnu::always_inline]] FORCEINLINE auto sse4_pack_ints(__m128i input) {
+[[gnu::target("sse4.1")]] FASTGLTF_FORCEINLINE auto sse4_pack_ints(__m128i input) {
     const auto merge = _mm_maddubs_epi16(input, _mm_set1_epi32(0x01400140));
     return _mm_madd_epi16(merge, _mm_set1_epi32(0x00011000));
 }
@@ -277,7 +269,7 @@ namespace fastgltf::base64 {
     return ret;
 }
 #elif defined(FASTGLTF_IS_A64)
-[[gnu::always_inline]] FORCEINLINE int8x16_t neon_lookup_pshufb_bitmask(const uint8x16_t input) {
+FASTGLTF_FORCEINLINE int8x16_t neon_lookup_pshufb_bitmask(const uint8x16_t input) {
     // clang-format off
     constexpr std::array<int8_t, 16> shiftLUTdata = {
         0,   0,  19,   4, -65, -65, -71, -71,
@@ -296,7 +288,7 @@ namespace fastgltf::base64 {
     return vaddq_s8(input, shift);
 }
 
-[[gnu::always_inline]] FORCEINLINE int16x8_t neon_pack_ints(const int8x16_t input) {
+FASTGLTF_FORCEINLINE int16x8_t neon_pack_ints(const int8x16_t input) {
     const uint32x4_t mask = vdupq_n_u32(0x01400140);
 
     const int16x8_t tl = vmulq_s16(vreinterpretq_s16_u16(vmovl_u8(vget_low_u8(input))), vmovl_s8(vget_low_s8(mask)));
@@ -385,15 +377,15 @@ static constexpr std::array<std::uint8_t, 128> base64lut = {
 
 namespace fastgltf::base64 {
     template <typename Output>
-	[[gnu::always_inline]] FORCEINLINE void decode_block(std::array<std::uint8_t, 4>& sixBitChars, Output output) {
+	FASTGLTF_FORCEINLINE void decode_block(std::array<std::uint8_t, 4>& sixBitChars, Output output) {
 		for (std::size_t i = 0; i < 4; i++) {
 			assert(static_cast<std::size_t>(sixBitChars[i]) < base64lut.size());
 			sixBitChars[i] = base64lut[sixBitChars[i]];
 		}
 
-		output[0] = (sixBitChars[0] << 2) + ((sixBitChars[1] & 0x30) >> 4);
-		output[1] = ((sixBitChars[1] & 0xf) << 4) + ((sixBitChars[2] & 0x3c) >> 2);
-		output[2] = ((sixBitChars[2] & 0x3) << 6) + sixBitChars[3];
+		output[0] = (sixBitChars[0] << 2U) + ((sixBitChars[1] & 0x30U) >> 4U);
+		output[1] = ((sixBitChars[1] & 0xfU) << 4U) + ((sixBitChars[2] & 0x3cU) >> 2U);
+		output[2] = ((sixBitChars[2] & 0x3U) << 6U) + sixBitChars[3];
 	}
 } // namespace fastgltf::base64
 
