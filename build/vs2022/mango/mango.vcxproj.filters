@@ -1287,9 +1287,6 @@
     <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\base64.hpp">
       <Filter>external\fastgltf\include</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\parser.hpp">
-      <Filter>external\fastgltf\include</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\tools.hpp">
       <Filter>external\fastgltf\include</Filter>
     </ClInclude>
@@ -1400,6 +1397,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\riscv\matchfinder_impl.h">
       <Filter>external\libdeflate\lib\riscv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\fastgltf\include\fastgltf\math.hpp">
+      <Filter>external\fastgltf\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2452,6 +2452,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\source\mango\image\image_raw.cpp">
       <Filter>mango\source\image</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\fastgltf\src\io.cpp">
+      <Filter>external\fastgltf\src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
