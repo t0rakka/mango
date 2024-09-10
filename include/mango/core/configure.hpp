@@ -298,6 +298,17 @@
     #define MANGO_BIG_ENDIAN /* bi-endian; depends on OS */
     #define MANGO_CPU_NAME "Alpha"
 
+#elif defined(__riscv)
+
+    // RISC-V
+    #define MANGO_CPU_RISCV
+    #define MANGO_LITTLE_ENDIAN
+    #define MANGO_CPU_NAME "RISC-V"
+
+    #if (__riscv_xlen == 64)
+        #define MANGO_CPU_64BIT
+    #endif
+
 #else
 
     // generic CPU
@@ -326,13 +337,13 @@
     #define MANGO_CPU_64BIT
 #endif
 
-// compiling for little endian
+// force compiling for little endian
 #if defined(__LITTLE_ENDIAN__) && defined(MANGO_BIG_ENDIAN)
     #undef MANGO_BIG_ENDIAN
     #define MANGO_LITTLE_ENDIAN
 #endif
 
-// compiling for big endian
+// force compiling for big endian
 #if defined(__BIG_ENDIAN__) && defined(MANGO_LITTLE_ENDIAN)
     #undef MANGO_LITTLE_ENDIAN
     #define MANGO_BIG_ENDIAN

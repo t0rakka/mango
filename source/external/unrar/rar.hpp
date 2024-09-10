@@ -79,6 +79,11 @@
 #endif
 #endif
 
+// RISCV
+#if defined(__riscv)
+    #define LITTLE_ENDIAN
+#endif
+
 #if !defined(LITTLE_ENDIAN) && !defined(BIG_ENDIAN)
 #if defined(__i386) || defined(i386) || defined(__i386__) || defined(EMSCRIPTEN)
 #define LITTLE_ENDIAN
