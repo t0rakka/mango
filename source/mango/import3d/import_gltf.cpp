@@ -144,7 +144,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] embedded
                 printLine(Print::Verbose, "  URI: \"{}\" {} bytes", filename, memory.size);
             },
-			[&] (const fastgltf::sources::ByteView& source)
+            [&] (const fastgltf::sources::ByteView& source)
             {
                 ConstMemory memory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
                 buffers.push_back(memory);
@@ -153,7 +153,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [x] binary
                 // [ ] embedded
                 printLine(Print::Verbose, "  ByteView: {} bytes", memory.size);
-			},
+            },
             [&] (const fastgltf::sources::BufferView& source)
             {
                 // [ ] standard
@@ -245,13 +245,13 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [x] embedded
                 printLine(Print::Verbose, "  vector: {} bytes", memory.size);
             },
-			[&] (const fastgltf::sources::ByteView& source)
+            [&] (const fastgltf::sources::ByteView& source)
             {
                 // [ ] standard
                 // [ ] binary
                 // [ ] embedded
                 printLine(Print::Verbose, "  ByteView: {} bytes (not supported)", source.bytes.size());
-			},
+            },
             [&] (const fastgltf::sources::BufferView& source)
             {
                 auto& bufferView = asset.bufferViews[source.bufferViewIndex];
@@ -259,7 +259,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
                 ConstMemory memory;
 
-                std::visit(fastgltf::visitor {
+                std::visit(fastgltf::visitor
+                {
                     [] (auto& arg)
                     {
                     },
@@ -430,7 +431,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             printLine(Print::Verbose, "  Volume: TODO");
         }
 
-#if 0
+        /*
 
         struct MaterialClearcoat
         {
@@ -488,7 +489,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             bool unlit;
         };
 
-#endif
+        */
 
     } // materials
 
