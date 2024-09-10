@@ -40,6 +40,11 @@
 namespace fs = std::filesystem;
 namespace fg = fastgltf;
 
+// mango hack: don't want android extensions
+#if defined(__ANDROID__)
+#undef __ANDROID__
+#endif
+
 #pragma region glTF file loading
 fg::GltfDataBuffer::GltfDataBuffer(const fs::path& path) noexcept {
 	std::error_code ec;
@@ -393,7 +398,7 @@ fg::Expected<fg::DataSource> fg::Parser::loadFileFromApk(const fs::path& path) c
 	}
 
 	sources::Array arraySource {
-		StaticVector<std::uint8_t>(length)
+		StaticVector<std::byte>(length)
 	};
 	AAsset_read(file.get(), arraySource.bytes.data(), length);
 
