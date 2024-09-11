@@ -182,12 +182,12 @@ namespace mango::simd
 
     static inline f64x2 hadd(f64x2 a, f64x2 b)
     {
-	    return _mm_hadd_pd(a, b);
+        return _mm_hadd_pd(a, b);
     }
 
     static inline f64x2 hsub(f64x2 a, f64x2 b)
     {
-	    return _mm_hsub_pd(a, b);
+        return _mm_hsub_pd(a, b);
     }
 
 #else
