@@ -2420,6 +2420,6 @@ namespace mango::simd
     // masked functions
     // -----------------------------------------------------------------
 
-    // TODO
+    // NOTE: masked variants are implemented inline above
 
 } // namespace mango::simd

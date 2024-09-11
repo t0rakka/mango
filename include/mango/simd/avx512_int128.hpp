@@ -2526,7 +2526,7 @@ namespace mango::simd
     // masked functions
     // -----------------------------------------------------------------
 
-    // TODO
+    // NOTE: masked variants are implemented inline above
 
 #undef simd128_shuffle_epi32
 #undef simd128_shuffle_epi64
