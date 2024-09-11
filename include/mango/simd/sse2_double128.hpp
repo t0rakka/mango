@@ -29,7 +29,7 @@ namespace mango::simd
 
     // set component
 
-    template <int Index>
+    template <unsigned int Index>
     static inline f64x2 set_component(f64x2 a, f64 s);
 
     template <>
@@ -46,7 +46,7 @@ namespace mango::simd
 
     // get component
 
-    template <int Index>
+    template <unsigned int Index>
     static inline f64 get_component(f64x2 a);
 
     template <>

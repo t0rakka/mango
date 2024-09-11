@@ -65,7 +65,7 @@ namespace mango::simd
         return vec_insert(s, a.data, Index);
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline f64 get_component(f64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");

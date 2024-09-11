@@ -45,7 +45,7 @@ namespace mango::simd
         return _mm_insert_ps(a, _mm_set_ss(s), Index * 0x10);
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline f32 get_component(f32x4 a);
 
     template <>

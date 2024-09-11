@@ -31,7 +31,7 @@ namespace mango::simd
 
     // indexed access
 
-    template <int Index>
+    template <unsigned int Index>
     static inline f64x2 set_component(f64x2 a, f64 s)
     {
         static_assert(Index < 2, "Index out of range.");
@@ -40,7 +40,7 @@ namespace mango::simd
         return (v2f64) __msa_insert_d((v2i64) a, Index, temp);
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline f64 get_component(f64x2 a)
     {
         static_assert(Index < 2, "Index out of range.");

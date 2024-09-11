@@ -690,7 +690,7 @@ namespace mango::simd
 
 #else
 
-    template <int Index>
+    template <unsigned int Index>
     static inline u32x4 set_component(u32x4 a, u32 s);
 
     template <>
@@ -721,7 +721,7 @@ namespace mango::simd
         return simd128_shuffle_epi32(a, b, _MM_SHUFFLE(0, 1, 1, 0));
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline u32 get_component(u32x4 a);
 
     template <>
@@ -2023,7 +2023,7 @@ namespace mango::simd
 
 #else
 
-    template <int Index>
+    template <unsigned int Index>
     static inline s32x4 set_component(s32x4 a, s32 s);
 
     template <>
@@ -2054,7 +2054,7 @@ namespace mango::simd
         return simd128_shuffle_epi32(a, b, _MM_SHUFFLE(0, 1, 1, 0));
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline s32 get_component(s32x4 a);
 
     template <>

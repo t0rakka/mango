@@ -49,7 +49,7 @@ namespace mango::simd
         return (v4f32) __msa_insert_w((v4i32) a, Index, temp);
     }
 
-    template <int Index>
+    template <unsigned int Index>
     static inline f32 get_component(f32x4 a)
     {
         static_assert(Index < 4, "Index out of range.");

@@ -49,7 +49,7 @@ namespace mango::simd
 
 #else
 
-    template <int Index>
+    template <unsigned int Index>
     static inline f32x4 set_component(f32x4 a, f32 s);
 
     template <>
@@ -82,7 +82,7 @@ namespace mango::simd
 
 #endif
 
-    template <int Index>
+    template <unsigned int Index>
     static inline f32 get_component(f32x4 a);
 
     template <>
@@ -264,13 +264,13 @@ namespace mango::simd
     static inline f32x4 hadd(f32x4 a, f32x4 b)
     {
         return _mm_add_ps(_mm_shuffle_ps(a, b, 0x88),
-                            _mm_shuffle_ps(a, b, 0xdd));
+                          _mm_shuffle_ps(a, b, 0xdd));
     }
 
     static inline f32x4 hsub(f32x4 a, f32x4 b)
     {
         return _mm_sub_ps(_mm_shuffle_ps(a, b, 0x88),
-                            _mm_shuffle_ps(a, b, 0xdd));
+                          _mm_shuffle_ps(a, b, 0xdd));
     }
 
 #endif
