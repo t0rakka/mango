@@ -998,7 +998,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         meshes.push_back(std::move(ptr));
     }
 
+    // --------------------------------------------------------------------------
     // nodes
+    // --------------------------------------------------------------------------
 
     for (const auto& current : asset.nodes)
     {
@@ -1044,7 +1046,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         nodes.push_back(node);
     }
 
+    // --------------------------------------------------------------------------
     // scenes
+    // --------------------------------------------------------------------------
 
     for (const auto& current : asset.scenes)
     {
@@ -1057,7 +1061,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         }
     }
 
+    // --------------------------------------------------------------------------
     // summary
+    // --------------------------------------------------------------------------
 
     printLine(Print::Verbose, "[Summary]");
     printLine(Print::Verbose, "  Buffers:   {}", asset.buffers.size());
