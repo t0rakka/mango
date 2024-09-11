@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -548,6 +548,8 @@ namespace mango::simd
     // -----------------------------------------------------------------
     // masked functions
     // -----------------------------------------------------------------
+
+    // zeromask
 
     static inline f32x4 min(f32x4 a, f32x4 b, mask32x4 mask)
     {

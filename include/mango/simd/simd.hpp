@@ -897,16 +897,16 @@ namespace mango::simd
 
 #include <mango/simd/scalar_int64.hpp>
 #include <mango/simd/scalar_float64.hpp>
-//#include <mango/simd/wasm_int128.hpp>
-//#include <mango/simd/wasm_float128.hpp>
-//#include <mango/simd/wasm_double128.hpp>
+#include <mango/simd/wasm_int128.hpp>
+#include <mango/simd/wasm_float128.hpp>
+#include <mango/simd/wasm_double128.hpp>
 #include <mango/simd/composite_int256.hpp>
 #include <mango/simd/composite_float256.hpp>
 #include <mango/simd/composite_double256.hpp>
 #include <mango/simd/composite_int512.hpp>
 #include <mango/simd/composite_float512.hpp>
 #include <mango/simd/composite_double512.hpp>
-//#include <mango/simd/wasm_convert.hpp>
+#include <mango/simd/wasm_convert.hpp>
 #include <mango/simd/common_gather.hpp>
 
 #else

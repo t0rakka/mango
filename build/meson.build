@@ -221,6 +221,10 @@ mango_simd_headers = files(
     '../include/mango/simd/sse2_double128.hpp',
     '../include/mango/simd/sse2_float128.hpp',
     '../include/mango/simd/sse2_int128.hpp',
+    '../include/mango/simd/wasm_convert.hpp',
+    '../include/mango/simd/wasm_double128.hpp',
+    '../include/mango/simd/wasm_float128.hpp',
+    '../include/mango/simd/wasm_int128.hpp',
 )
 
 mango_opengl_headers = files(

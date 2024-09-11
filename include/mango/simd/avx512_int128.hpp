@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -2336,7 +2336,7 @@ namespace mango::simd
 
 #if !defined(MANGO_COMPILER_MICROSOFT)
 
-	static inline mask8x16 operator & (mask8x16 a, mask8x16 b)
+    static inline mask8x16 operator & (mask8x16 a, mask8x16 b)
     {
         return _mm512_kand(a, b);
     }
@@ -2431,8 +2431,8 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
 #if !defined(MANGO_COMPILER_MICROSOFT)
-	
-	static inline mask32x4 operator & (mask32x4 a, mask32x4 b)
+
+    static inline mask32x4 operator & (mask32x4 a, mask32x4 b)
     {
         return _mm512_kand(a, b);
     }
@@ -2480,7 +2480,7 @@ namespace mango::simd
 
 #if !defined(MANGO_COMPILER_MICROSOFT)
 
-	static inline mask64x2 operator & (mask64x2 a, mask64x2 b)
+    static inline mask64x2 operator & (mask64x2 a, mask64x2 b)
     {
         return _mm512_kand(a, b);
     }
@@ -2521,6 +2521,12 @@ namespace mango::simd
     {
         return get_mask(a) == 0x3;
     }
+
+    // -----------------------------------------------------------------
+    // masked functions
+    // -----------------------------------------------------------------
+
+    // TODO
 
 #undef simd128_shuffle_epi32
 #undef simd128_shuffle_epi64

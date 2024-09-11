@@ -415,6 +415,8 @@ namespace mango::simd
     // masked functions
     // -----------------------------------------------------------------
 
+    // zeromask
+
     static inline f64x2 min(f64x2 a, f64x2 b, mask64x2 mask)
     {
         return _mm_and_pd(_mm_castsi128_pd(mask), min(a, b));
