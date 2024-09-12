@@ -226,12 +226,12 @@ namespace mango::simd
         return wasm_f32x4_neg(wasm_f32x4_relaxed_madd(a, b, c));
     }
 
-    /*
     static inline f32x4 lerp(f32x4 a, f32x4 b, f32x4 s)
     {
-        // TODO
+        // a * (1.0 - s) + b * s
+        // (a - a * s) + (b * s)
+        return madd(nmadd(a, a, s), b, s);
     }
-    */
 
     static inline f32x4 rcp(f32x4 a)
     {
@@ -248,22 +248,32 @@ namespace mango::simd
         return wasm_f32x4_sqrt(a);
     }
 
-    /*
     static inline f32 dot3(f32x4 a, f32x4 b)
     {
-        // TODO
+        f32x4 s = wasm_f32x4_mul(a, b);
+        f32x4 x = shuffle<0, 0, 0, 0>(s);
+        f32x4 y = shuffle<1, 1, 1, 1>(s);
+        f32x4 z = shuffle<2, 2, 2, 2>(s);
+        s = wasm_f32x4_add(x, wasm_f32x4_add(y, z));
+        return get_component<0>(s);
     }
 
     static inline f32 dot4(f32x4 a, f32x4 b)
     {
-        // TODO
+        f32x4 s;
+        s = wasm_f32x4_mul(a, b);
+        s = wasm_f32x4_add(s, shuffle<2, 3, 0, 1>(s));
+        s = wasm_f32x4_add(s, shuffle<1, 0, 3, 2>(s));
+        return get_component<0>(s);
     }
 
     static inline f32x4 cross3(f32x4 a, f32x4 b)
     {
-        // TODO
+        f32x4 u = wasm_f32x4_mul(a, shuffle<1, 2, 0, 3>(b));
+        f32x4 v = wasm_f32x4_mul(b, shuffle<1, 2, 0, 3>(a));
+        f32x4 c = wasm_f32x4_sub(u, v);
+        return shuffle<1, 2, 0, 3>(c);
     }
-    */
 
     // compare
 
