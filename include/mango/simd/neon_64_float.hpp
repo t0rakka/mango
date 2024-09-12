@@ -73,8 +73,8 @@ namespace mango::simd
     {
         static_assert(x < 2 && y < 2, "Index out of range.");
         float32x2_t result;
-	    result = vmov_n_f32(vget_lane_f32(v, x));
-	    result = vset_lane_f32(vget_lane_f32(v, y), result, 1);
+        result = vmov_n_f32(vget_lane_f32(v, x));
+        result = vset_lane_f32(vget_lane_f32(v, y), result, 1);
         return result;
     }
 
@@ -83,8 +83,8 @@ namespace mango::simd
     {
         static_assert(x < 2 && y < 2, "Index out of range.");
         float32x2_t result;
-	    result = vmov_n_f32(vget_lane_f32(a, x));
-	    result = vset_lane_f32(vget_lane_f32(b, y), result, 1);
+        result = vmov_n_f32(vget_lane_f32(a, x));
+        result = vset_lane_f32(vget_lane_f32(b, y), result, 1);
         return result;
     }
 

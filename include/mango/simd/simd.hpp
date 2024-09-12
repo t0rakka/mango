@@ -179,12 +179,12 @@ namespace mango::simd
 
 #if defined(MANGO_ENABLE_AVX512)
 
+// --------------------------------------------------------------
+// Intel AVX512 vector intrinsics
+// --------------------------------------------------------------
+
 namespace mango::simd
 {
-
-    // --------------------------------------------------------------
-    // Intel AVX512 vector intrinsics
-    // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
 
@@ -250,28 +250,25 @@ namespace mango::simd
 
 } // namespace mango::simd
 
-#include <mango/simd/scalar_int64.hpp>
-#include <mango/simd/scalar_float64.hpp>
-#include <mango/simd/avx512_float128.hpp>
-#include <mango/simd/avx512_float256.hpp>
-#include <mango/simd/avx512_float512.hpp>
-#include <mango/simd/avx512_double128.hpp>
-#include <mango/simd/avx512_double256.hpp>
-#include <mango/simd/avx512_double512.hpp>
-#include <mango/simd/avx512_int128.hpp>
-#include <mango/simd/avx512_int256.hpp>
-#include <mango/simd/avx512_int512.hpp>
+#include <mango/simd/scalar_64_float.hpp>
+#include <mango/simd/scalar_64_int.hpp>
+#include <mango/simd/avx512_128_float.hpp>
+#include <mango/simd/avx512_128_int.hpp>
+#include <mango/simd/avx512_256_float.hpp>
+#include <mango/simd/avx512_256_int.hpp>
+#include <mango/simd/avx512_512_float.hpp>
+#include <mango/simd/avx512_512_int.hpp>
 #include <mango/simd/avx512_convert.hpp>
 #include <mango/simd/avx512_gather.hpp>
 
 #elif defined(MANGO_ENABLE_AVX2)
 
+// --------------------------------------------------------------
+// Intel AVX2 vector intrinsics
+// --------------------------------------------------------------
+
 namespace mango::simd
 {
-
-    // --------------------------------------------------------------
-    // Intel AVX2 vector intrinsics
-    // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
 
@@ -337,28 +334,25 @@ namespace mango::simd
 
 } // namespace mango::simd
 
-#include <mango/simd/scalar_int64.hpp>
-#include <mango/simd/scalar_float64.hpp>
-#include <mango/simd/sse2_int128.hpp>
-#include <mango/simd/sse2_float128.hpp>
-#include <mango/simd/sse2_double128.hpp>
-#include <mango/simd/avx2_int256.hpp>
-#include <mango/simd/avx_float256.hpp>
-#include <mango/simd/avx_double256.hpp>
-#include <mango/simd/composite_int512.hpp>
-#include <mango/simd/composite_float512.hpp>
-#include <mango/simd/composite_double512.hpp>
+#include <mango/simd/scalar_64_int.hpp>
+#include <mango/simd/scalar_64_float.hpp>
+#include <mango/simd/sse2_128_int.hpp>
+#include <mango/simd/sse2_128_float.hpp>
+#include <mango/simd/avx2_256_int.hpp>
+#include <mango/simd/avx_256_float.hpp>
+#include <mango/simd/composite_512_int.hpp>
+#include <mango/simd/composite_512_float.hpp>
 #include <mango/simd/avx_convert.hpp>
 #include <mango/simd/avx2_gather.hpp>
 
 #elif defined(MANGO_ENABLE_AVX)
 
+// --------------------------------------------------------------
+// Intel AVX vector intrinsics
+// --------------------------------------------------------------
+
 namespace mango::simd
 {
-
-    // --------------------------------------------------------------
-    // Intel AVX vector intrinsics
-    // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
 
@@ -424,28 +418,25 @@ namespace mango::simd
 
 } // namespace mango::simd
 
-#include <mango/simd/scalar_int64.hpp>
-#include <mango/simd/scalar_float64.hpp>
-#include <mango/simd/sse2_int128.hpp>
-#include <mango/simd/sse2_float128.hpp>
-#include <mango/simd/sse2_double128.hpp>
-#include <mango/simd/avx_int256.hpp>
-#include <mango/simd/avx_float256.hpp>
-#include <mango/simd/avx_double256.hpp>
-#include <mango/simd/composite_int512.hpp>
-#include <mango/simd/composite_float512.hpp>
-#include <mango/simd/composite_double512.hpp>
+#include <mango/simd/scalar_64_int.hpp>
+#include <mango/simd/scalar_64_float.hpp>
+#include <mango/simd/sse2_128_int.hpp>
+#include <mango/simd/sse2_128_float.hpp>
+#include <mango/simd/avx_256_int.hpp>
+#include <mango/simd/avx_256_float.hpp>
+#include <mango/simd/composite_512_int.hpp>
+#include <mango/simd/composite_512_float.hpp>
 #include <mango/simd/avx_convert.hpp>
 #include <mango/simd/common_gather.hpp>
 
 #elif defined(MANGO_ENABLE_SSE2)
 
+// --------------------------------------------------------------
+// Intel SSE2 vector intrinsics
+// --------------------------------------------------------------
+
 namespace mango::simd
 {
-
-    // --------------------------------------------------------------
-    // Intel SSE2 vector intrinsics
-    // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
 
@@ -511,28 +502,25 @@ namespace mango::simd
 
 } // namespace mango::simd
 
-#include <mango/simd/scalar_int64.hpp>
-#include <mango/simd/scalar_float64.hpp>
-#include <mango/simd/sse2_int128.hpp>
-#include <mango/simd/sse2_float128.hpp>
-#include <mango/simd/sse2_double128.hpp>
-#include <mango/simd/composite_int256.hpp>
-#include <mango/simd/composite_float256.hpp>
-#include <mango/simd/composite_double256.hpp>
-#include <mango/simd/composite_int512.hpp>
-#include <mango/simd/composite_float512.hpp>
-#include <mango/simd/composite_double512.hpp>
+#include <mango/simd/scalar_64_int.hpp>
+#include <mango/simd/scalar_64_float.hpp>
+#include <mango/simd/sse2_128_int.hpp>
+#include <mango/simd/sse2_128_float.hpp>
+#include <mango/simd/composite_256_int.hpp>
+#include <mango/simd/composite_256_float.hpp>
+#include <mango/simd/composite_512_int.hpp>
+#include <mango/simd/composite_512_float.hpp>
 #include <mango/simd/sse2_convert.hpp>
 #include <mango/simd/common_gather.hpp>
 
 #elif defined(MANGO_ENABLE_NEON)
 
+// --------------------------------------------------------------
+// ARM NEON vector instrinsics
+// --------------------------------------------------------------
+
 namespace mango::simd
 {
-
-    // --------------------------------------------------------------
-    // ARM NEON vector instrinsics
-    // --------------------------------------------------------------
 
     // http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0491f/BABDFJCI.html
     // http://infocenter.arm.com/help/topic/com.arm.doc.ihi0073a/IHI0073A_arm_neon_intrinsics_ref.pdf
@@ -620,31 +608,27 @@ namespace mango::simd
 
 } // namespace mango::simd
 
-#include <mango/simd/neon_int64.hpp>
-#include <mango/simd/neon_float64.hpp>
-#include <mango/simd/neon_int128.hpp>
-#include <mango/simd/neon_float128.hpp>
-#include <mango/simd/neon_double128.hpp>
-#include <mango/simd/composite_double256.hpp>
-#include <mango/simd/composite_int256.hpp>
-#include <mango/simd/composite_float256.hpp>
-#include <mango/simd/composite_int512.hpp>
-#include <mango/simd/composite_float512.hpp>
-#include <mango/simd/composite_double512.hpp>
+#include <mango/simd/neon_64_int.hpp>
+#include <mango/simd/neon_64_float.hpp>
+#include <mango/simd/neon_128_int.hpp>
+#include <mango/simd/neon_128_float.hpp>
+#include <mango/simd/composite_256_int.hpp>
+#include <mango/simd/composite_256_float.hpp>
+#include <mango/simd/composite_512_int.hpp>
+#include <mango/simd/composite_512_float.hpp>
 #include <mango/simd/neon_convert.hpp>
 #include <mango/simd/common_gather.hpp>
 
 #elif defined(MANGO_ENABLE_ALTIVEC) && defined(MANGO_ENABLE_VSX)
 
+// --------------------------------------------------------------
+// Altivec / VSX
+// --------------------------------------------------------------
+
 #include <altivec.h>
-//#include <builtins.h>
 
 namespace mango::simd
 {
-
-    // --------------------------------------------------------------
-    // Altivec / VSX
-    // --------------------------------------------------------------
 
     // https://www.nxp.com/docs/en/reference-manual/ALTIVECPIM.pdf
     // https://www.ibm.com/support/knowledgecenter/en/SSLTBW_2.4.0/com.ibm.zos.v2r4.cbcpx01/vectorbltin.htm
@@ -722,28 +706,25 @@ namespace mango::simd
 #undef __vector
 #undef __pixel
 
-#include <mango/simd/scalar_int64.hpp>
-#include <mango/simd/scalar_float64.hpp>
-#include <mango/simd/altivec_int128.hpp>
-#include <mango/simd/altivec_float128.hpp>
-#include <mango/simd/altivec_double128.hpp>
-#include <mango/simd/composite_int256.hpp>
-#include <mango/simd/composite_float256.hpp>
-#include <mango/simd/composite_double256.hpp>
-#include <mango/simd/composite_int512.hpp>
-#include <mango/simd/composite_float512.hpp>
-#include <mango/simd/composite_double512.hpp>
+#include <mango/simd/scalar_64_int.hpp>
+#include <mango/simd/scalar_64_float.hpp>
+#include <mango/simd/altivec_128_int.hpp>
+#include <mango/simd/altivec_128_float.hpp>
+#include <mango/simd/composite_256_int.hpp>
+#include <mango/simd/composite_256_float.hpp>
+#include <mango/simd/composite_512_int.hpp>
+#include <mango/simd/composite_512_float.hpp>
 #include <mango/simd/altivec_convert.hpp>
 #include <mango/simd/common_gather.hpp>
 
 #elif defined(MANGO_ENABLE_MSA)
 
+// --------------------------------------------------------------
+// MIPS MSA
+// --------------------------------------------------------------
+
 namespace mango::simd
 {
-
-    // --------------------------------------------------------------
-    // MIPS MSA
-    // --------------------------------------------------------------
 
     #define MANGO_ENABLE_SIMD
 
@@ -809,28 +790,109 @@ namespace mango::simd
 
 } // namespace mango::simd
 
-#include <mango/simd/scalar_int64.hpp>
-#include <mango/simd/scalar_float64.hpp>
-#include <mango/simd/msa_int128.hpp>
-#include <mango/simd/msa_float128.hpp>
-#include <mango/simd/msa_double128.hpp>
-#include <mango/simd/composite_int256.hpp>
-#include <mango/simd/composite_float256.hpp>
-#include <mango/simd/composite_double256.hpp>
-#include <mango/simd/composite_int512.hpp>
-#include <mango/simd/composite_float512.hpp>
-#include <mango/simd/composite_double512.hpp>
+#include <mango/simd/scalar_64_int.hpp>
+#include <mango/simd/scalar_64_float.hpp>
+#include <mango/simd/msa_128_int.hpp>
+#include <mango/simd/msa_128_float.hpp>
+#include <mango/simd/composite_256_int.hpp>
+#include <mango/simd/composite_256_float.hpp>
+#include <mango/simd/composite_512_int.hpp>
+#include <mango/simd/composite_512_float.hpp>
 #include <mango/simd/msa_convert.hpp>
 #include <mango/simd/common_gather.hpp>
 
-#else
+#elif defined(MANGO_ENABLE_WASM__disabled__work_in_progress)
+
+// --------------------------------------------------------------
+// WASM
+// --------------------------------------------------------------
 
 namespace mango::simd
 {
 
-    // --------------------------------------------------------------
-    // SIMD emulation
-    // --------------------------------------------------------------
+    #define MANGO_ENABLE_SIMD
+
+    // 64 bit vector
+    using s32x2   = scalar_vector<s32, 2>;
+    using u32x2   = scalar_vector<u32, 2>;
+    using f32x2   = scalar_vector<f32, 2>;
+    using f16x4   = hardware_vector<f16, 4, u64>;
+
+    // 128 bit vector
+    using s8x16   = hardware_vector<s8, 16, v128_t>;
+    using s16x8   = hardware_vector<s16, 8, v128_t>;
+    using s32x4   = hardware_vector<s32, 4, v128_t>;
+    using s64x2   = hardware_vector<s64, 2, v128_t>;
+    using u8x16   = hardware_vector<u8, 16, v128_t>;
+    using u16x8   = hardware_vector<u16, 8, v128_t>;
+    using u32x4   = hardware_vector<u32, 4, v128_t>;
+    using u64x2   = hardware_vector<u64, 2, v128_t>;
+    using f32x4   = hardware_vector<f32, 4, v128_t>;
+    using f64x2   = hardware_vector<f64, 2, v128_t>;
+
+    // 256 bit vector
+    using s8x32   = composite_vector<s8x16>;
+    using s16x16  = composite_vector<s16x8>;
+    using s32x8   = composite_vector<s32x4>;
+    using s64x4   = composite_vector<s64x2>;
+    using u8x32   = composite_vector<u8x16>;
+    using u16x16  = composite_vector<u16x8>;
+    using u32x8   = composite_vector<u32x4>;
+    using u64x4   = composite_vector<u64x2>;
+    using f32x8   = composite_vector<f32x4>;
+    using f64x4   = composite_vector<f64x2>;
+
+    // 512 bit vector
+    using s8x64   = composite_vector<s8x32>;
+    using s16x32  = composite_vector<s16x16>;
+    using s32x16  = composite_vector<s32x8>;
+    using s64x8   = composite_vector<s64x4>;
+    using u8x64   = composite_vector<u8x32>;
+    using u16x32  = composite_vector<u16x16>;
+    using u32x16  = composite_vector<u32x8>;
+    using u64x8   = composite_vector<u64x4>;
+    using f32x16  = composite_vector<f32x8>;
+    using f64x8   = composite_vector<f64x4>;
+
+    // 128 bit vector mask
+    using mask8x16  = hardware_mask<8, 16, v128_t>;
+    using mask16x8  = hardware_mask<16, 8, v128_t>;
+    using mask32x4  = hardware_mask<32, 4, v128_t>;
+    using mask64x2  = hardware_mask<64, 2, v128_t>;
+
+    // 256 bit vector mask
+    using mask8x32  = composite_mask<mask8x16>;
+    using mask16x16 = composite_mask<mask16x8>;
+    using mask32x8  = composite_mask<mask32x4>;
+    using mask64x4  = composite_mask<mask64x2>;
+
+    // 512 bit vector mask
+    using mask8x64  = composite_mask<mask8x32>;
+    using mask16x32 = composite_mask<mask16x16>;
+    using mask32x16 = composite_mask<mask32x8>;
+    using mask64x8  = composite_mask<mask64x4>;
+
+} // namespace mango::simd
+
+#include <mango/simd/scalar_64_int.hpp>
+#include <mango/simd/scalar_64_float.hpp>
+#include <mango/simd/wasm_128_int.hpp>
+#include <mango/simd/wasm_128_float.hpp>
+#include <mango/simd/composite_256_int.hpp>
+#include <mango/simd/composite_256_float.hpp>
+#include <mango/simd/composite_512_int.hpp>
+#include <mango/simd/composite_512_float.hpp>
+#include <mango/simd/wasm_convert.hpp>
+#include <mango/simd/common_gather.hpp>
+
+#else
+
+// --------------------------------------------------------------
+// SIMD emulation
+// --------------------------------------------------------------
+
+namespace mango::simd
+{
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -894,17 +956,14 @@ namespace mango::simd
 
 } // namespace mango::simd
 
-#include <mango/simd/scalar_int64.hpp>
-#include <mango/simd/scalar_float64.hpp>
-#include <mango/simd/scalar_int128.hpp>
-#include <mango/simd/scalar_float128.hpp>
-#include <mango/simd/scalar_double128.hpp>
-#include <mango/simd/composite_int256.hpp>
-#include <mango/simd/composite_float256.hpp>
-#include <mango/simd/composite_double256.hpp>
-#include <mango/simd/composite_int512.hpp>
-#include <mango/simd/composite_float512.hpp>
-#include <mango/simd/composite_double512.hpp>
+#include <mango/simd/scalar_64_int.hpp>
+#include <mango/simd/scalar_64_float.hpp>
+#include <mango/simd/scalar_128_int.hpp>
+#include <mango/simd/scalar_128_float.hpp>
+#include <mango/simd/composite_256_int.hpp>
+#include <mango/simd/composite_256_float.hpp>
+#include <mango/simd/composite_512_int.hpp>
+#include <mango/simd/composite_512_float.hpp>
 #include <mango/simd/scalar_convert.hpp>
 #include <mango/simd/common_gather.hpp>
 

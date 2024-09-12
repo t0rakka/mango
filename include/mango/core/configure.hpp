@@ -677,6 +677,15 @@
 
     #endif // MANGO_NO_SIMD
 
+#elif defined(MANGO_PLATFORM_EMSCRIPTEN)
+
+    #if !defined(MANGO_NO_SIMD)
+
+        // WebAssembly portable SIMD
+        #define MANGO_ENABLE_WASM
+
+    #endif // MANGO_NO_SIMD
+
 #endif
 
 // -----------------------------------------------------------------------
