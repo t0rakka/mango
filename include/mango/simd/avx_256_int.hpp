@@ -60,7 +60,7 @@ namespace mango::simd::detail
     {
         return _mm256_extractf128_si256(a, 0);
     }
-    
+
     static inline mask16x8 get_high(mask16x16 a)
     {
         return _mm256_extractf128_si256(a, 1);
@@ -70,7 +70,7 @@ namespace mango::simd::detail
     {
         return _mm256_extractf128_si256(a, 0);
     }
-    
+
     static inline mask32x4 get_high(mask32x8 a)
     {
         return _mm256_extractf128_si256(a, 1);
