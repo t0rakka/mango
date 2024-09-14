@@ -783,8 +783,8 @@ namespace mango::simd
     {
         f32 x = f32(get_component<0>(s));
         f32 y = f32(get_component<1>(s));
-        f32 z = f32(get_component<0>(s));
-        f32 w = f32(get_component<1>(s));
+        f32 z = f32(get_component<2>(s));
+        f32 w = f32(get_component<3>(s));
         return f32x4_set(x, y, z, w);
     }
 
@@ -793,8 +793,8 @@ namespace mango::simd
     {
         f32 x = f32(get_component<0>(s));
         f32 y = f32(get_component<1>(s));
-        f32 z = f32(get_component<0>(s));
-        f32 w = f32(get_component<1>(s));
+        f32 z = f32(get_component<2>(s));
+        f32 w = f32(get_component<3>(s));
         return f32x4_set(x, y, z, w);
     }
 
