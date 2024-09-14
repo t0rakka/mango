@@ -19,7 +19,7 @@ namespace mango::simd
     static inline f32x4 shuffle(f32x4 a, f32x4 b)
     {
         static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
-        return wasm_i32x4_shuffle(a, b, x, y, z, w);
+        return wasm_i32x4_shuffle(a, b, x, y, z + 4, w + 4);
     }
 
     template <u32 x, u32 y, u32 z, u32 w>
@@ -79,12 +79,12 @@ namespace mango::simd
 
     static inline f32x4 movelh(f32x4 a, f32x4 b)
     {
-        return shuffle<0, 1, 0, 1>(a, b);
+        return shuffle<0, 1, 4, 5>(a, b);
     }
 
     static inline f32x4 movehl(f32x4 a, f32x4 b)
     {
-        return shuffle<2, 3, 2, 3>(a, b);
+        return shuffle<2, 3, 6, 7>(a, b);
     }
 
     static inline f32x4 unpacklo(f32x4 a, f32x4 b)
@@ -144,14 +144,14 @@ namespace mango::simd
 
     static inline f32x4 hmin(f32x4 a)
     {
-        auto temp = wasm_f32x4_min(a, shuffle<2, 3, 0, 1>(a, a));
-        return wasm_f32x4_min(temp, shuffle<1, 0, 3, 2>(temp, temp));
+        auto temp = wasm_f32x4_min(a, shuffle<2, 3, 0, 1>(a));
+        return wasm_f32x4_min(temp, shuffle<1, 0, 3, 2>(temp));
     }
 
     static inline f32x4 hmax(f32x4 a)
     {
-        auto temp = wasm_f32x4_max(a, shuffle<2, 3, 0, 1>(a, a));
-        return wasm_f32x4_max(temp, shuffle<1, 0, 3, 2>(temp, temp));
+        auto temp = wasm_f32x4_max(a, shuffle<2, 3, 0, 1>(a));
+        return wasm_f32x4_max(temp, shuffle<1, 0, 3, 2>(temp));
     }
 
     static inline f32x4 abs(f32x4 a)
@@ -200,14 +200,14 @@ namespace mango::simd
 
     static inline f32x4 hadd(f32x4 a, f32x4 b)
     {
-        return wasm_f32x4_add(shuffle<0, 2, 0, 2>(a, b),
-                              shuffle<1, 3, 1, 3>(a, b));
+        return wasm_f32x4_add(shuffle<0, 2, 4, 6>(a, b),
+                              shuffle<1, 3, 5, 7>(a, b));
     }
 
     static inline f32x4 hsub(f32x4 a, f32x4 b)
     {
-        return wasm_f32x4_sub(shuffle<0, 2, 0, 2>(a, b),
-                              shuffle<1, 3, 1, 3>(a, b));
+        return wasm_f32x4_sub(shuffle<0, 2, 4, 6>(a, b),
+                              shuffle<1, 3, 5, 7>(a, b));
     }
 
     static inline f32x4 madd(f32x4 a, f32x4 b, f32x4 c)
@@ -362,7 +362,7 @@ namespace mango::simd
     static inline f64x2 shuffle(f64x2 a, f64x2 b)
     {
         static_assert(x < 2 && y < 2, "Index out of range.");
-        return wasm_v64x2_shuffle(a, b, x, y);
+        return wasm_v64x2_shuffle(a, b, x, y + 2);
     }
 
     // set component
