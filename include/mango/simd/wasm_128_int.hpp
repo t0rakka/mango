@@ -478,17 +478,19 @@ namespace mango::simd
         return wasm_i32x4_sub(a, b);
     }
 
-    /*
     static inline u32x4 adds(u32x4 a, u32x4 b)
     {
-        // TODO
+        // NOTE: same instruction is used for signed and unsigned
+        const __m128i temp = wasm_i32x4_add(a, b);
+        return wasm_v128_or(temp, wasm_i32x4_lt(temp, a));
     }
 
     static inline u32x4 subs(u32x4 a, u32x4 b)
     {
-        // TODO
+        // NOTE: same instruction is used for signed and unsigned
+        const __m128i temp = wasm_i32x4_sub(a, b);
+        return wasm_v128_and(temp, wasm_i32x4_gt(a, temp));
     }
-    */
 
     static inline u32x4 avg(u32x4 a, u32x4 b)
     {
@@ -620,27 +622,57 @@ namespace mango::simd
 
     // shift by vector
 
-    /*
     static inline u32x4 sll(u32x4 a, u32x4 count)
     {
-        // TODO
+        u32 count0 = wasm_u32x4_extract_lane(count, 0);
+        u32 count1 = wasm_u32x4_extract_lane(count, 1);
+        u32 count2 = wasm_u32x4_extract_lane(count, 2);
+        u32 count3 = wasm_u32x4_extract_lane(count, 3);
+        v128_t v0 = wasm_i32x4_shl(a, count0);
+        v128_t v1 = wasm_i32x4_shl(a, count1);
+        v128_t v2 = wasm_i32x4_shl(a, count2);
+        v128_t v3 = wasm_i32x4_shl(a, count3);
+        v128_t xyxy = wasm_i32x4_shuffle(v0, v1, 0, 5, 0, 5);
+        v128_t zwzw = wasm_i32x4_shuffle(v2, v3, 2, 7, 2, 7);
+        return wasm_i32x4_shuffle(xyxy, zwzw, 0, 1, 4, 5);
     }
 
     static inline u32x4 srl(u32x4 a, u32x4 count)
     {
-        // TODO
+        u32 count0 = wasm_u32x4_extract_lane(count, 0);
+        u32 count1 = wasm_u32x4_extract_lane(count, 1);
+        u32 count2 = wasm_u32x4_extract_lane(count, 2);
+        u32 count3 = wasm_u32x4_extract_lane(count, 3);
+        v128_t v0 = wasm_u32x4_shr(a, count0);
+        v128_t v1 = wasm_u32x4_shr(a, count1);
+        v128_t v2 = wasm_u32x4_shr(a, count2);
+        v128_t v3 = wasm_u32x4_shr(a, count3);
+        v128_t xyxy = wasm_i32x4_shuffle(v0, v1, 0, 5, 0, 5);
+        v128_t zwzw = wasm_i32x4_shuffle(v2, v3, 2, 7, 2, 7);
+        return wasm_i32x4_shuffle(xyxy, zwzw, 0, 1, 4, 5);
     }
 
     static inline u32x4 sra(u32x4 a, u32x4 count)
     {
-        // TODO
+        u32 count0 = wasm_u32x4_extract_lane(count, 0);
+        u32 count1 = wasm_u32x4_extract_lane(count, 1);
+        u32 count2 = wasm_u32x4_extract_lane(count, 2);
+        u32 count3 = wasm_u32x4_extract_lane(count, 3);
+        v128_t v0 = wasm_i32x4_shr(a, count0);
+        v128_t v1 = wasm_i32x4_shr(a, count1);
+        v128_t v2 = wasm_i32x4_shr(a, count2);
+        v128_t v3 = wasm_i32x4_shr(a, count3);
+        v128_t xyxy = wasm_i32x4_shuffle(v0, v1, 0, 5, 0, 5);
+        v128_t zwzw = wasm_i32x4_shuffle(v2, v3, 2, 7, 2, 7);
+        return wasm_i32x4_shuffle(xyxy, zwzw, 0, 1, 4, 5);
     }
 
     static inline u32 pack(u32x4 s)
     {
-        // TODO
+        v128_t s_16 = wasm_i16x8_narrow_i32x4(s, s);
+        v128_t s_8 = wasm_u8x16_narrow_i16x8(s_16, s_16);
+        return wasm_u32x4_extract_lane(s_8, 0);
     }
-    */
 
     // -----------------------------------------------------------------
     // u64x2
@@ -788,31 +820,29 @@ namespace mango::simd
 
     // shift by constant
 
-    /*
     template <int Count>
     static inline u64x2 slli(u64x2 a)
     {
-        // TODO
+        return wasm_i64x2_shl(a, Count);
     }
 
     template <int Count>
     static inline u64x2 srli(u64x2 a)
     {
-        // TODO
+        return wasm_u64x2_shr(a, Count);
     }
 
     // shift by scalar
 
     static inline u64x2 sll(u64x2 a, int count)
     {
-        // TODO
+        return wasm_i64x2_shl(a, count);
     }
 
     static inline u64x2 srl(u64x2 a, int count)
     {
-        // TODO
+        return wasm_u64x2_shr(a, count);
     }
-    */
 
     // -----------------------------------------------------------------
     // s8x16
@@ -1074,27 +1104,33 @@ namespace mango::simd
         return wasm_i16x8_sub_sat(a, b);
     }
 
-    /*
     static inline s16x8 hadd(s16x8 a, s16x8 b)
     {
-        // TODO
+        v128_t v0 = wasm_i16x8_shuffle(a, b, 0, 2, 4, 6, 8, 10, 12, 14);
+        v128_t v1 = wasm_i16x8_shuffle(a, b, 1, 3, 5, 7, 9, 11, 13, 15);
+        return wasm_i16x8_add(v0, v1);
     }
 
     static inline s16x8 hsub(s16x8 a, s16x8 b)
     {
-        // TODO
+        v128_t v0 = wasm_i16x8_shuffle(a, b, 0, 2, 4, 6, 8, 10, 12, 14);
+        v128_t v1 = wasm_i16x8_shuffle(a, b, 1, 3, 5, 7, 9, 11, 13, 15);
+        return wasm_i16x8_sub(v0, v1);
     }
 
     static inline s16x8 hadds(s16x8 a, s16x8 b)
     {
-        // TODO
+        v128_t v0 = wasm_i16x8_shuffle(a, b, 0, 2, 4, 6, 8, 10, 12, 14);
+        v128_t v1 = wasm_i16x8_shuffle(a, b, 1, 3, 5, 7, 9, 11, 13, 15);
+        return wasm_i16x8_add_sat(v0, v1);
     }
 
     static inline s16x8 hsubs(s16x8 a, s16x8 b)
     {
-        // TODO
+        v128_t v0 = wasm_i16x8_shuffle(a, b, 0, 2, 4, 6, 8, 10, 12, 14);
+        v128_t v1 = wasm_i16x8_shuffle(a, b, 1, 3, 5, 7, 9, 11, 13, 15);
+        return wasm_i16x8_sub_sat(v0, v1);
     }
-    */
 
     static inline s16x8 avg(s16x8 a, s16x8 b)
     {
@@ -1347,27 +1383,36 @@ namespace mango::simd
         return wasm_i32x4_sub(a, b);
     }
 
-    /*
     static inline s32x4 adds(s32x4 a, s32x4 b)
     {
-        // TODO
+        const v128_t v = wasm_i32x4_add(a, b);
+        a = wasm_i32x4_shr(a, 31);
+        v128_t temp = wasm_v128_xor(b, v);
+        temp = wasm_v128_or(wasm_v128_not(temp), wasm_v128_xor(a, b));
+        return wasm_v128_bitselect(v, a, wasm_i32x4_gt(wasm_i32x4_splat(0), temp));
     }
 
     static inline s32x4 subs(s32x4 a, s32x4 b)
     {
-        // TODO
+        const v128_t v = wasm_i32x4_sub(a, b);
+        a = wasm_i32x4_shr(a, 31);
+        v128_t temp = wasm_v128_and(wasm_v128_xor(a, b), wasm_v128_xor(a, v));
+        return wasm_v128_bitselect(a, v, wasm_i32x4_gt(wasm_i32x4_splat(0), temp));
     }
 
     static inline s32x4 hadd(s32x4 a, s32x4 b)
     {
-        // TODO
+        v128_t v0 = wasm_i32x4_shuffle(a, b, 0, 2, 4, 6);
+        v128_t v1 = wasm_i32x4_shuffle(a, b, 1, 3, 5, 7);
+        return wasm_i32x4_add(v0, v1);
     }
 
     static inline s32x4 hsub(s32x4 a, s32x4 b)
     {
-        // TODO
+        v128_t v0 = wasm_i32x4_shuffle(a, b, 0, 2, 4, 6);
+        v128_t v1 = wasm_i32x4_shuffle(a, b, 1, 3, 5, 7);
+        return wasm_i32x4_sub(v0, v1);
     }
-    */
 
     static inline s32x4 avg(s32x4 a, s32x4 b)
     {
@@ -1467,69 +1512,103 @@ namespace mango::simd
 
     // shift by constant
 
-    /*
     template <int Count>
     static inline s32x4 slli(s32x4 a)
     {
-        // TODO
+        return wasm_i32x4_shl(a, Count);
     }
 
     template <int Count>
     static inline s32x4 srli(s32x4 a)
     {
-        // TODO
+        return wasm_u32x4_shr(a, Count);
     }
 
     template <int Count>
     static inline s32x4 srai(s32x4 a)
     {
-        // TODO
+        return wasm_i32x4_shr(a, Count);
     }
 
     // shift by scalar
 
     static inline s32x4 sll(s32x4 a, int count)
     {
-        // TODO
+        return wasm_i32x4_shl(a, count);
     }
 
     static inline s32x4 srl(s32x4 a, int count)
     {
-        // TODO
+        return wasm_u32x4_shr(a, count);
     }
 
     static inline s32x4 sra(s32x4 a, int count)
     {
-        // TODO
+        return wasm_i32x4_shr(a, count);
     }
 
     // shift by vector
 
     static inline s32x4 sll(s32x4 a, u32x4 count)
     {
-        // TODO
+        u32 count0 = wasm_u32x4_extract_lane(count, 0);
+        u32 count1 = wasm_u32x4_extract_lane(count, 1);
+        u32 count2 = wasm_u32x4_extract_lane(count, 2);
+        u32 count3 = wasm_u32x4_extract_lane(count, 3);
+        v128_t v0 = wasm_i32x4_shl(a, count0);
+        v128_t v1 = wasm_i32x4_shl(a, count1);
+        v128_t v2 = wasm_i32x4_shl(a, count2);
+        v128_t v3 = wasm_i32x4_shl(a, count3);
+        v128_t xyxy = wasm_i32x4_shuffle(v0, v1, 0, 5, 0, 5);
+        v128_t zwzw = wasm_i32x4_shuffle(v2, v3, 2, 7, 2, 7);
+        return wasm_i32x4_shuffle(xyxy, zwzw, 0, 1, 4, 5);
     }
 
     static inline s32x4 srl(s32x4 a, u32x4 count)
     {
-        // TODO
+        u32 count0 = wasm_u32x4_extract_lane(count, 0);
+        u32 count1 = wasm_u32x4_extract_lane(count, 1);
+        u32 count2 = wasm_u32x4_extract_lane(count, 2);
+        u32 count3 = wasm_u32x4_extract_lane(count, 3);
+        v128_t v0 = wasm_u32x4_shr(a, count0);
+        v128_t v1 = wasm_u32x4_shr(a, count1);
+        v128_t v2 = wasm_u32x4_shr(a, count2);
+        v128_t v3 = wasm_u32x4_shr(a, count3);
+        v128_t xyxy = wasm_i32x4_shuffle(v0, v1, 0, 5, 0, 5);
+        v128_t zwzw = wasm_i32x4_shuffle(v2, v3, 2, 7, 2, 7);
+        return wasm_i32x4_shuffle(xyxy, zwzw, 0, 1, 4, 5);
     }
 
     static inline s32x4 sra(s32x4 a, u32x4 count)
     {
-        // TODO
+        u32 count0 = wasm_u32x4_extract_lane(count, 0);
+        u32 count1 = wasm_u32x4_extract_lane(count, 1);
+        u32 count2 = wasm_u32x4_extract_lane(count, 2);
+        u32 count3 = wasm_u32x4_extract_lane(count, 3);
+        v128_t v0 = wasm_i32x4_shr(a, count0);
+        v128_t v1 = wasm_i32x4_shr(a, count1);
+        v128_t v2 = wasm_i32x4_shr(a, count2);
+        v128_t v3 = wasm_i32x4_shr(a, count3);
+        v128_t xyxy = wasm_i32x4_shuffle(v0, v1, 0, 5, 0, 5);
+        v128_t zwzw = wasm_i32x4_shuffle(v2, v3, 2, 7, 2, 7);
+        return wasm_i32x4_shuffle(xyxy, zwzw, 0, 1, 4, 5);
     }
 
     static inline u32 pack(s32x4 s)
     {
-        // TODO
+        v128_t s_16 = wasm_i16x8_narrow_i32x4(s, s);
+        v128_t s_8 = wasm_u8x16_narrow_i16x8(s_16, s_16);
+        return wasm_u32x4_extract_lane(s_8, 0);
     }
 
     static inline s32x4 unpack(u32 s)
     {
-        // TODO
+        s32 x = s32((s >>  0) & 0xff);
+        s32 y = s32((s >>  8) & 0xff);
+        s32 z = s32((s >> 16) & 0xff);
+        s32 w = s32((s >> 24) & 0xff);
+        return wasm_i32x4_make(x, y, z, w);
     }
-    */
 
     // -----------------------------------------------------------------
     // s64x2
@@ -1675,31 +1754,29 @@ namespace mango::simd
 
     // shift by constant
 
-    /*
     template <int Count>
     static inline s64x2 slli(s64x2 a)
     {
-        // TODO
+        return wasm_i64x2_shl(a, Count);
     }
 
     template <int Count>
     static inline s64x2 srli(s64x2 a)
     {
-        // TODO
+        return wasm_u64x2_shr(a, Count);
     }
 
     // shift by scalar
 
     static inline s64x2 sll(s64x2 a, int count)
     {
-        // TODO
+        return wasm_i64x2_shl(a, count);
     }
 
     static inline s64x2 srl(s64x2 a, int count)
     {
-        // TODO
+        return wasm_u64x2_shr(a, count);
     }
-    */
 
     // -----------------------------------------------------------------
     // mask8x16
