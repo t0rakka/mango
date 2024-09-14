@@ -226,18 +226,18 @@ namespace mango::simd
 
     static inline f32x2 hadd(f32x2 a, f32x2 b)
     {
-	    f32x2 v;
-	    v[0] = a[0] + a[1];
-	    v[1] = b[0] + b[1];
-	    return v;
+        f32x2 v;
+        v[0] = a[0] + a[1];
+        v[1] = b[0] + b[1];
+        return v;
     }
 
     static inline f32x2 hsub(f32x2 a, f32x2 b)
     {
-	    f32x2 v;
-	    v[0] = a[0] - a[1];
-	    v[1] = b[0] - b[1];
-	    return v;
+        f32x2 v;
+        v[0] = a[0] - a[1];
+        v[1] = b[0] - b[1];
+        return v;
     }
 
     static inline f32x2 madd(f32x2 a, f32x2 b, f32x2 c)

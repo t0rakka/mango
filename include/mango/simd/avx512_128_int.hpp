@@ -659,8 +659,8 @@ namespace mango::simd
 
     static inline u32x4 adds(u32x4 a, u32x4 b)
     {
-  	    const __m128i temp = _mm_add_epi32(a, b);
-  	    return _mm_or_si128(temp, _mm_cmplt_epi32(temp, a));
+        const __m128i temp = _mm_add_epi32(a, b);
+        return _mm_or_si128(temp, _mm_cmplt_epi32(temp, a));
     }
 
     static inline u32x4 adds(u32x4 a, u32x4 b, mask32x4 mask)
@@ -675,8 +675,8 @@ namespace mango::simd
 
     static inline u32x4 subs(u32x4 a, u32x4 b)
     {
-  	    const __m128i temp = _mm_sub_epi32(a, b);
-  	    return _mm_and_si128(temp, _mm_cmpgt_epi32(a, temp));
+        const __m128i temp = _mm_sub_epi32(a, b);
+        return _mm_and_si128(temp, _mm_cmpgt_epi32(a, temp));
     }
 
     static inline u32x4 subs(u32x4 a, u32x4 b, mask32x4 mask)

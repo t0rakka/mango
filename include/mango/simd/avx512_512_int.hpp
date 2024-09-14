@@ -576,8 +576,8 @@ namespace mango::simd
 
     static inline u32x16 adds(u32x16 a, u32x16 b)
     {
-  	    const __m512i temp = _mm512_add_epi32(a, b);
-  	    return _mm512_or_si512(temp, _mm512_movm_epi32(_mm512_cmpgt_epi32_mask(a, temp)));
+        const __m512i temp = _mm512_add_epi32(a, b);
+        return _mm512_or_si512(temp, _mm512_movm_epi32(_mm512_cmpgt_epi32_mask(a, temp)));
     }
 
     static inline u32x16 adds(u32x16 a, u32x16 b, mask32x16 mask)
@@ -592,7 +592,7 @@ namespace mango::simd
 
     static inline u32x16 subs(u32x16 a, u32x16 b)
     {
-  	    const __m512i temp = _mm512_sub_epi32(a, b);
+        const __m512i temp = _mm512_sub_epi32(a, b);
         return _mm512_maskz_mov_epi32(_mm512_cmpgt_epi32_mask(a, temp), temp);
     }
 

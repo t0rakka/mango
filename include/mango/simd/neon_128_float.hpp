@@ -1238,18 +1238,18 @@ namespace mango::simd
 
     static inline f64x2 hadd(f64x2 a, f64x2 b)
     {
-	    f64x2 v;
-	    v.data[0] = a.data[0] + a.data[1];
-	    v.data[1] = b.data[0] + b.data[1];
-	    return v;
+        f64x2 v;
+        v.data[0] = a.data[0] + a.data[1];
+        v.data[1] = b.data[0] + b.data[1];
+        return v;
     }
 
     static inline f64x2 hsub(f64x2 a, f64x2 b)
     {
-	    f64x2 v;
-	    v.data[0] = a.data[0] - a.data[1];
-	    v.data[1] = b.data[0] - b.data[1];
-	    return v;
+        f64x2 v;
+        v.data[0] = a.data[0] - a.data[1];
+        v.data[1] = b.data[0] - b.data[1];
+        return v;
     }
 
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)

@@ -260,22 +260,22 @@ namespace mango::simd
 
     static inline f32x4 hadd(f32x4 a, f32x4 b)
     {
-	    f32x4 v;
-	    v[0] = a[0] + a[1];
-	    v[1] = a[2] + a[3];
-	    v[2] = b[0] + b[1];
-	    v[3] = b[2] + b[3];
-	    return v;
+        f32x4 v;
+        v[0] = a[0] + a[1];
+        v[1] = a[2] + a[3];
+        v[2] = b[0] + b[1];
+        v[3] = b[2] + b[3];
+        return v;
     }
 
     static inline f32x4 hsub(f32x4 a, f32x4 b)
     {
-	    f32x4 v;
-	    v[0] = a[0] - a[1];
-	    v[1] = a[2] - a[3];
-	    v[2] = b[0] - b[1];
-	    v[3] = b[2] - b[3];
-	    return v;
+        f32x4 v;
+        v[0] = a[0] - a[1];
+        v[1] = a[2] - a[3];
+        v[2] = b[0] - b[1];
+        v[3] = b[2] - b[3];
+        return v;
     }
 
     static inline f32x4 madd(f32x4 a, f32x4 b, f32x4 c)
@@ -686,18 +686,18 @@ namespace mango::simd
 
     static inline f64x2 hadd(f64x2 a, f64x2 b)
     {
-	    f64x2 v;
-	    v[0] = a[0] + a[1];
-	    v[1] = b[0] + b[1];
-	    return v;
+        f64x2 v;
+        v[0] = a[0] + a[1];
+        v[1] = b[0] + b[1];
+        return v;
     }
 
     static inline f64x2 hsub(f64x2 a, f64x2 b)
     {
-	    f64x2 v;
-	    v[0] = a[0] - a[1];
-	    v[1] = b[0] - b[1];
-	    return v;
+        f64x2 v;
+        v[0] = a[0] - a[1];
+        v[1] = b[0] - b[1];
+        return v;
     }
 
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)

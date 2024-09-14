@@ -76,17 +76,17 @@ namespace mango::simd::detail
     template <typename ScalarType>
     static inline ScalarType scalar_unsigned_adds(ScalarType a, ScalarType b)
     {
-	    ScalarType v = a + b;
-	    v |= -(v < a);
-	    return v;
+        ScalarType v = a + b;
+        v |= -(v < a);
+        return v;
     }
 
     template <typename ScalarType>
     static inline ScalarType scalar_unsigned_subs(ScalarType a, ScalarType b)
     {
-    	ScalarType v = a - b;
-	    v &= -(v <= a);
-	    return v;
+        ScalarType v = a - b;
+        v &= -(v <= a);
+        return v;
     }
 
     template <typename ScalarType>

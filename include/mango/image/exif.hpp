@@ -43,21 +43,21 @@ namespace mango::image
         float       ReferenceBlackWhite;
 
         // other tags
-        std::string	DateTime;
-        std::string	ImageDescription;
-        std::string	Make;
-        std::string	Model;
-        std::string	Software;
-        std::string	Artist;
-        std::string	Copyright;
+        std::string DateTime;
+        std::string ImageDescription;
+        std::string Make;
+        std::string Model;
+        std::string Software;
+        std::string Artist;
+        std::string Copyright;
 
         float       ExposureTime;
         float       FNumber;
         u16         ExposureProgram;
         std::string SpectralSensitivity;
         u16         ISOSpeedRatings;
-        std::string	DateTimeOriginal;
-        std::string	DateTimeDigitized;
+        std::string DateTimeOriginal;
+        std::string DateTimeDigitized;
         //ComponentsConfiguration       = 0x9101, // Specific to compressed data; specifies the channels and complements PhotometricInterpretation
         float       CompressedBitsPerPixel;
         float       ShutterSpeedValue;
@@ -104,7 +104,7 @@ namespace mango::image
         u16         Sharpness;
         //DeviceSettingDescription  = 0xA40B, // This tag indicates information on the picture-taking conditions of a particular camera model.
         u16         SubjectDistanceRange;
-        std::string	ImageUniqueID;
+        std::string ImageUniqueID;
 
         // GPS
         u8          GPSVersionID[4];
@@ -138,7 +138,7 @@ namespace mango::image
         u16         GPSDifferential;
 
         // Canon
-        std::string	LenseName;
+        std::string LenseName;
 
         Exif();
         Exif(ConstMemory memory);

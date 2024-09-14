@@ -140,35 +140,35 @@ namespace mango::simd
     // reinterpret
     // -----------------------------------------------------------------
 
-	template <typename D, typename S0, int S1, typename S2>
-	inline D reinterpret(hardware_vector<S0, S1, S2> s)
-	{
+    template <typename D, typename S0, int S1, typename S2>
+    inline D reinterpret(hardware_vector<S0, S1, S2> s)
+    {
         static_assert(sizeof(hardware_vector<S0, S1, S2>) == sizeof(D), "Vectors must be same size.");
-		return D(detail::reinterpret_vector<hardware_vector<S0, S1, S2>::vector_bits>(s));
-	}
+        return D(detail::reinterpret_vector<hardware_vector<S0, S1, S2>::vector_bits>(s));
+    }
 
-	template <typename D, typename S>
-	inline D reinterpret(composite_vector<S> s)
-	{
+    template <typename D, typename S>
+    inline D reinterpret(composite_vector<S> s)
+    {
         static_assert(sizeof(composite_vector<S>) == sizeof(D), "Vectors must be same size.");
-		return D(detail::reinterpret_vector<composite_vector<S>::vector_bits>(s));
-	}
+        return D(detail::reinterpret_vector<composite_vector<S>::vector_bits>(s));
+    }
 
     // -----------------------------------------------------------------
     // convert
     // -----------------------------------------------------------------
 
-	template <typename D, typename S>
-	inline D convert(S)
-	{
-		D::undefined_conversion();
-	}
+    template <typename D, typename S>
+    inline D convert(S)
+    {
+        D::undefined_conversion();
+    }
 
-	template <typename D, typename S>
-	inline D truncate(S)
-	{
-		D::undefined_conversion();
-	}
+    template <typename D, typename S>
+    inline D truncate(S)
+    {
+        D::undefined_conversion();
+    }
 
     // -----------------------------------------------------------------
     // zero extend
@@ -622,10 +622,10 @@ namespace mango::simd
     template <>
     inline u32x4 convert<u32x4>(f32x4 s)
     {
-	    __m128 x2 = _mm_castsi128_ps(_mm_set1_epi32(0x4f000000));
-	    __m128 x1 = _mm_cmple_ps(x2, s);
-  	    __m128i x0 = _mm_cvtps_epi32(_mm_sub_ps(s, _mm_and_ps(x2, x1)));
-  	    return _mm_or_si128(x0, _mm_slli_epi32(_mm_castps_si128(x1), 31));
+        __m128 x2 = _mm_castsi128_ps(_mm_set1_epi32(0x4f000000));
+        __m128 x1 = _mm_cmple_ps(x2, s);
+        __m128i x0 = _mm_cvtps_epi32(_mm_sub_ps(s, _mm_and_ps(x2, x1)));
+        return _mm_or_si128(x0, _mm_slli_epi32(_mm_castps_si128(x1), 31));
     }
 
     template <>
@@ -659,10 +659,10 @@ namespace mango::simd
     template <>
     inline u32x8 convert<u32x8>(f32x8 s)
     {
-	    __m256 x2 = _mm256_castsi256_ps(_mm256_set1_epi32(0x4f000000));
-	    __m256 x1 = _mm256_cmp_ps(x2, s, _CMP_LE_OS);
-  	    __m256i x0 = _mm256_cvtps_epi32(_mm256_sub_ps(s, _mm256_and_ps(x2, x1)));
-  	    return _mm256_or_si256(x0, _mm256_slli_epi32(_mm256_castps_si256(x1), 31));
+        __m256 x2 = _mm256_castsi256_ps(_mm256_set1_epi32(0x4f000000));
+        __m256 x1 = _mm256_cmp_ps(x2, s, _CMP_LE_OS);
+        __m256i x0 = _mm256_cvtps_epi32(_mm256_sub_ps(s, _mm256_and_ps(x2, x1)));
+        return _mm256_or_si256(x0, _mm256_slli_epi32(_mm256_castps_si256(x1), 31));
     }
 
     template <>

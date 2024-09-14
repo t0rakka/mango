@@ -613,8 +613,8 @@ namespace mango::simd
 
     static inline u32x8 adds(u32x8 a, u32x8 b)
     {
-  	    const __m256i temp = _mm256_add_epi32(a, b);
-  	    return _mm256_or_si256(temp, _mm256_cmpgt_epi32(a, temp));
+        const __m256i temp = _mm256_add_epi32(a, b);
+        return _mm256_or_si256(temp, _mm256_cmpgt_epi32(a, temp));
     }
 
     static inline u32x8 adds(u32x8 a, u32x8 b, mask32x8 mask)
@@ -629,8 +629,8 @@ namespace mango::simd
 
     static inline u32x8 subs(u32x8 a, u32x8 b)
     {
-  	    const __m256i temp = _mm256_sub_epi32(a, b);
-  	    return _mm256_and_si256(temp, _mm256_cmpgt_epi32(a, temp));
+        const __m256i temp = _mm256_sub_epi32(a, b);
+        return _mm256_and_si256(temp, _mm256_cmpgt_epi32(a, temp));
     }
 
     static inline u32x8 subs(u32x8 a, u32x8 b, mask32x8 mask)
