@@ -267,12 +267,10 @@ namespace mango::simd
         return wasm_u16x8_avgr(a, b);
     }
 
-    /*
     static inline u16x8 mullo(u16x8 a, u16x8 b)
     {
-        // TODO
+        return wasm_i16x8_mul(a, b);
     }
-    */
 
     // bitwise
 
@@ -502,12 +500,10 @@ namespace mango::simd
         return temp;
     }
 
-    /*
     static inline u32x4 mullo(u32x4 a, u32x4 b)
     {
-        // TODO
+        return wasm_i32x4_mul(a, b);
     }
-    */
 
     // bitwise
 
@@ -1108,17 +1104,26 @@ namespace mango::simd
         return wasm_v128_xor(wasm_u16x8_avgr(a, b), sign);
     }
 
-    /*
     static inline s16x8 mullo(s16x8 a, s16x8 b)
     {
-        // TODO
+        return wasm_i16x8_mul(a, b);
     }
 
-    static inline s32x4 madd(s16x8 a, s16x8 b)
+    static inline s32x4 madd(s16x8 v_a, s16x8 v_b)
     {
-        // TODO
+        s16 a[8];
+        std::memcpy(a, &v_a, 16);
+
+        s16 b[8];
+        std::memcpy(b, &v_b, 16);
+
+        s32 x = s32(a[0]) * s32(b[0]) + s32(a[1]) * s32(b[1]);
+        s32 y = s32(a[2]) * s32(b[2]) + s32(a[3]) * s32(b[3]);
+        s32 z = s32(a[4]) * s32(b[4]) + s32(a[5]) * s32(b[5]);
+        s32 w = s32(a[6]) * s32(b[6]) + s32(a[7]) * s32(b[7]);
+
+        return wasm_i32x4_make(x, y, z, w);
     }
-    */
 
     static inline s16x8 abs(s16x8 a)
     {
@@ -1381,12 +1386,10 @@ namespace mango::simd
         return temp;
     }
 
-    /*
     static inline s32x4 mullo(s32x4 a, s32x4 b)
     {
-        // TODO
+        return wasm_i32x4_mul(a, b);
     }
-    */
 
     // bitwise
 

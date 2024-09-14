@@ -1241,18 +1241,7 @@ namespace mango::simd
 
     static inline s32x4 madd(s16x8 a, s16x8 b)
     {
-        s16 a[8];
-        std::memcpy(a, &va, 16);
-
-        s16 b[8];
-        std::memcpy(b, &vb, 16);
-
-        s32 x = s32(a[0]) * s32(b[0]) + s32(a[1]) * s32(b[1]);
-        s32 y = s32(a[2]) * s32(b[2]) + s32(a[3]) * s32(b[3]);
-        s32 z = s32(a[4]) * s32(b[4]) + s32(a[5]) * s32(b[5]);
-        s32 w = s32(a[6]) * s32(b[6]) + s32(a[7]) * s32(b[7]);
-
-        return (s32x4::vector) { x, y, z, w };
+        return vec_msum(a.data, b.data, vec_splats(0));
     }
 
     static inline s16x8 abs(s16x8 a)
@@ -1697,10 +1686,9 @@ namespace mango::simd
 
     static inline u32 pack(s32x4 s)
     {
-        s32x4 v = vec_sl(s.data, (u32x4::vector) { 0, 8, 16, 24 });
-        v = vec_or(vec_mergeh(v.data, v.data), vec_mergel(v.data, v.data));
-        v = vec_or(vec_mergeh(v.data, v.data), vec_mergel(v.data, v.data));
-        return vec_extract(v.data, 0);
+        auto s_16 = vec_packs(s.data, s.data);
+        auto s_8 = vec_packsu(s_16, s_16);
+        return vec_extract(s_8, 0);
     }
 
     static inline s32x4 unpack(u32 s)
