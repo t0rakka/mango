@@ -97,14 +97,14 @@ namespace mango::simd::detail
         UnsignedScalarType y = b;
         UnsignedScalarType v = x + y;
 
-  	    // overflow
-	    x = (x >> (sizeof(ScalarType) * 8 - 1)) + std::numeric_limits<ScalarType>::max();
-	    if (ScalarType((x ^ y) | ~(y ^ v)) >= 0)
-	    {
-		    v = x;
-	    }
+        // overflow
+        x = (x >> (sizeof(ScalarType) * 8 - 1)) + std::numeric_limits<ScalarType>::max();
+        if (ScalarType((x ^ y) | ~(y ^ v)) >= 0)
+        {
+            v = x;
+        }
 
-	    return v;
+        return v;
     }
 
     template <typename ScalarType>
@@ -115,22 +115,24 @@ namespace mango::simd::detail
         UnsignedScalarType y = b;
         UnsignedScalarType v = x - y;
 
-  	    // overflow
-	    x = (x >> (sizeof(ScalarType) * 8 - 1)) + std::numeric_limits<ScalarType>::max();
-	    if (ScalarType((x ^ y) & (x ^ v)) < 0)
-	    {
-		    v = x;
-	    }
+        // overflow
+        x = (x >> (sizeof(ScalarType) * 8 - 1)) + std::numeric_limits<ScalarType>::max();
+        if (ScalarType((x ^ y) & (x ^ v)) < 0)
+        {
+            v = x;
+        }
 
-	    return v;
+        return v;
     }
 
+    /*
     template <typename ScalarType>
     static inline ScalarType scalar_unsigned_average(ScalarType a, ScalarType b)
     {
         ScalarType v = (a & b) + ((a ^ b) >> 1);
         return v;
     }
+    */
 
     template <typename ScalarType>
     static inline ScalarType scalar_unsigned_rounded_average(ScalarType a, ScalarType b)
@@ -139,6 +141,7 @@ namespace mango::simd::detail
         return v;
     }
 
+    /*
     template <typename ScalarType>
     static inline ScalarType scalar_signed_average(ScalarType a, ScalarType b)
     {
@@ -147,6 +150,7 @@ namespace mango::simd::detail
         constexpr UnsignedType sign = UnsignedType(1) << (sizeof(UnsignedType) * 8 - 1);
         return scalar_unsigned_average<UnsignedType>(a ^ sign, b ^ sign) ^ sign;
     }
+    */
 
     template <typename ScalarType>
     static inline ScalarType scalar_signed_rounded_average(ScalarType a, ScalarType b)

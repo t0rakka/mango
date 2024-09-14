@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -100,11 +100,6 @@ namespace mango::simd
     }
 
     static inline u8x16 avg(u8x16 a, u8x16 b)
-    {
-        return detail::scalar_unroll(detail::scalar_unsigned_average, a, b);
-    }
-
-    static inline u8x16 avg_round(u8x16 a, u8x16 b)
     {
         return detail::scalar_unroll(detail::scalar_unsigned_rounded_average, a, b);
     }
@@ -272,11 +267,6 @@ namespace mango::simd
     }
 
     static inline u16x8 avg(u16x8 a, u16x8 b)
-    {
-        return detail::scalar_unroll(detail::scalar_unsigned_average, a, b);
-    }
-
-    static inline u16x8 avg_round(u16x8 a, u16x8 b)
     {
         return detail::scalar_unroll(detail::scalar_unsigned_rounded_average, a, b);
     }
@@ -503,11 +493,6 @@ namespace mango::simd
 
     static inline u32x4 avg(u32x4 a, u32x4 b)
     {
-        return detail::scalar_unroll(detail::scalar_unsigned_average, a, b);
-    }
-
-    static inline u32x4 avg_round(u32x4 a, u32x4 b)
-    {
         return detail::scalar_unroll(detail::scalar_unsigned_rounded_average, a, b);
     }
 
@@ -718,16 +703,6 @@ namespace mango::simd
         return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
-    static inline u64x2 avg(u64x2 a, u64x2 b)
-    {
-        return detail::scalar_unroll(detail::scalar_unsigned_average, a, b);
-    }
-
-    static inline u64x2 avg_round(u64x2 a, u64x2 b)
-    {
-        return detail::scalar_unroll(detail::scalar_unsigned_rounded_average, a, b);
-    }
-
     // bitwise
 
     static inline u64x2 bitwise_nand(u64x2 a, u64x2 b)
@@ -919,11 +894,6 @@ namespace mango::simd
     }
 
     static inline s8x16 avg(s8x16 a, s8x16 b)
-    {
-        return detail::scalar_unroll(detail::scalar_signed_average, a, b);
-    }
-
-    static inline s8x16 avg_round(s8x16 a, s8x16 b)
     {
         return detail::scalar_unroll(detail::scalar_signed_rounded_average, a, b);
     }
@@ -1158,11 +1128,6 @@ namespace mango::simd
     }
 
     static inline s16x8 avg(s16x8 a, s16x8 b)
-    {
-        return detail::scalar_unroll(detail::scalar_signed_average, a, b);
-    }
-
-    static inline s16x8 avg_round(s16x8 a, s16x8 b)
     {
         return detail::scalar_unroll(detail::scalar_signed_rounded_average, a, b);
     }
@@ -1440,11 +1405,6 @@ namespace mango::simd
 
     static inline s32x4 avg(s32x4 a, s32x4 b)
     {
-        return detail::scalar_unroll(detail::scalar_signed_average, a, b);
-    }
-
-    static inline s32x4 avg_round(s32x4 a, s32x4 b)
-    {
         return detail::scalar_unroll(detail::scalar_signed_rounded_average, a, b);
     }
 
@@ -1664,16 +1624,6 @@ namespace mango::simd
     static inline s64x2 sub(s64x2 a, s64x2 b)
     {
         return detail::scalar_unroll(detail::scalar_sub, a, b);
-    }
-
-    static inline s64x2 avg(s64x2 a, s64x2 b)
-    {
-        return detail::scalar_unroll(detail::scalar_signed_average, a, b);
-    }
-
-    static inline s64x2 avg_round(s64x2 a, s64x2 b)
-    {
-        return detail::scalar_unroll(detail::scalar_signed_rounded_average, a, b);
     }
 
     static inline s64x2 neg(s64x2 a)

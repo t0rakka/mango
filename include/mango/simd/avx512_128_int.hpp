@@ -185,13 +185,6 @@ namespace mango::simd
 
     static inline u8x16 avg(u8x16 a, u8x16 b)
     {
-        __m128i axb = _mm_xor_si128(a, b);
-        __m128i temp = _mm_add_epi8(_mm_and_si128(a, b), detail::simd128_srli1_epi8(axb));
-        return temp;
-    }
-
-    static inline u8x16 avg_round(u8x16 a, u8x16 b)
-    {
         return _mm_avg_epu8(a, b);
     }
 
@@ -413,13 +406,6 @@ namespace mango::simd
     }
 
     static inline u16x8 avg(u16x8 a, u16x8 b)
-    {
-        __m128i axb = _mm_xor_si128(a, b);
-        __m128i temp = _mm_add_epi16(_mm_and_si128(a, b), _mm_srli_epi16(axb, 1));
-        return temp;
-    }
-
-    static inline u16x8 avg_round(u16x8 a, u16x8 b)
     {
         return _mm_avg_epu16(a, b);
     }
@@ -705,13 +691,6 @@ namespace mango::simd
 
     static inline u32x4 avg(u32x4 a, u32x4 b)
     {
-        __m128i axb = _mm_xor_si128(a, b);
-        __m128i temp = _mm_add_epi32(_mm_and_si128(a, b), _mm_srli_epi32(axb, 1));
-        return temp;
-    }
-
-    static inline u32x4 avg_round(u32x4 a, u32x4 b)
-    {
         __m128i one = _mm_set1_epi32(1);
         __m128i axb = _mm_xor_si128(a, b);
         __m128i temp = _mm_and_si128(a, b);
@@ -963,23 +942,6 @@ namespace mango::simd
         return _mm_mask_sub_epi64(value, mask, a, b);
     }
 
-    static inline u64x2 avg(u64x2 a, u64x2 b)
-    {
-        __m128i axb = _mm_xor_si128(a, b);
-        __m128i temp = _mm_add_epi64(_mm_and_si128(a, b), _mm_srli_epi64(axb, 1));
-        return temp;
-    }
-
-    static inline u64x2 avg_round(u64x2 a, u64x2 b)
-    {
-        __m128i one = _mm_set1_epi64x(1);
-        __m128i axb = _mm_xor_si128(a, b);
-        __m128i temp = _mm_and_si128(a, b);
-        temp = _mm_add_epi64(temp, _mm_srli_epi64(axb, 1));
-        temp = _mm_add_epi64(temp, _mm_and_si128(axb, one));
-        return temp;
-    }
-
     // bitwise
 
     static inline u64x2 bitwise_nand(u64x2 a, u64x2 b)
@@ -1227,33 +1189,10 @@ namespace mango::simd
 
     static inline s8x16 avg(s8x16 a, s8x16 b)
     {
-		const __m128i sign = _mm_set1_epi8(0x80u);
+        const __m128i sign = _mm_set1_epi8(0x80u);
         a = _mm_xor_si128(a, sign);
         b = _mm_xor_si128(b, sign);
-
-        // unsigned average
-        __m128i axb = _mm_xor_si128(a, b);
-        __m128i temp = _mm_add_epi8(_mm_and_si128(a, b), detail::simd128_srai1_epi8(axb));
-
-        temp = _mm_xor_si128(temp, sign);
-        return temp;
-    }
-
-    static inline s8x16 avg_round(s8x16 a, s8x16 b)
-    {
-		const __m128i sign = _mm_set1_epi8(0x80u);
-        a = _mm_xor_si128(a, sign);
-        b = _mm_xor_si128(b, sign);
-
-        // unsigned rounded average
-        __m128i one = _mm_set1_epi8(1);
-        __m128i axb = _mm_xor_si128(a, b);
-        __m128i temp = _mm_and_si128(a, b);
-        temp = _mm_add_epi8(temp, detail::simd128_srai1_epi8(axb));
-        temp = _mm_add_epi8(temp, _mm_and_si128(axb, one));
-
-        temp = _mm_xor_si128(temp, sign);
-        return temp;
+        return _mm_xor_si128(_mm_avg_epu8(a, b), sign);
     }
 
     static inline s8x16 abs(s8x16 a)
@@ -1518,30 +1457,7 @@ namespace mango::simd
         const __m128i sign = _mm_set1_epi16(0x8000u);
         a = _mm_xor_si128(a, sign);
         b = _mm_xor_si128(b, sign);
-
-        // unsigned average
-        __m128i axb = _mm_xor_si128(a, b);
-        __m128i temp = _mm_add_epi16(_mm_and_si128(a, b), _mm_srai_epi16(axb, 1));
-
-        temp = _mm_xor_si128(temp, sign);
-        return temp;
-    }
-
-    static inline s16x8 avg_round(s16x8 a, s16x8 b)
-    {
-        const __m128i sign = _mm_set1_epi16(0x8000u);
-        a = _mm_xor_si128(a, sign);
-        b = _mm_xor_si128(b, sign);
-
-        // unsigned rounded average
-        __m128i one = _mm_set1_epi16(1);
-        __m128i axb = _mm_xor_si128(a, b);
-        __m128i temp = _mm_and_si128(a, b);
-        temp = _mm_add_epi16(temp, _mm_srli_epi16(axb, 1));
-        temp = _mm_add_epi16(temp, _mm_and_si128(axb, one));
-
-        temp = _mm_xor_si128(temp, sign);
-        return temp;
+        return _mm_xor_si128(_mm_avg_epu16(a, b), sign);
     }
 
     static inline s16x8 mullo(s16x8 a, s16x8 b)
@@ -1900,20 +1816,6 @@ namespace mango::simd
         a = _mm_xor_si128(a, sign);
         b = _mm_xor_si128(b, sign);
 
-        // unsigned average
-        __m128i axb = _mm_xor_si128(a, b);
-        __m128i temp = _mm_add_epi32(_mm_and_si128(a, b), _mm_srai_epi32(axb, 1));
-
-        temp = _mm_xor_si128(temp, sign);
-        return temp;
-    }
-
-    static inline s32x4 avg_round(s32x4 a, s32x4 b)
-    {
-        const __m128i sign = _mm_set1_epi32(0x80000000);
-        a = _mm_xor_si128(a, sign);
-        b = _mm_xor_si128(b, sign);
-
         // unsigned rounded average
         __m128i one = _mm_set1_epi32(1);
         __m128i axb = _mm_xor_si128(a, b);
@@ -2172,37 +2074,6 @@ namespace mango::simd
     static inline s64x2 sub(s64x2 a, s64x2 b, mask64x2 mask, s64x2 value)
     {
         return _mm_mask_sub_epi64(value, mask, a, b);
-    }
-
-    static inline s64x2 avg(s64x2 a, s64x2 b)
-    {
-        const __m128i sign = _mm_set1_epi64x(0x8000000000000000ull);
-        a = _mm_xor_si128(a, sign);
-        b = _mm_xor_si128(b, sign);
-
-        // unsigned average
-        __m128i axb = _mm_xor_si128(a, b);
-        __m128i temp = _mm_add_epi64(_mm_and_si128(a, b), detail::simd128_srai1_epi64(axb));
-
-        temp = _mm_xor_si128(temp, sign);
-        return temp;
-    }
-
-    static inline s64x2 avg_round(s64x2 a, s64x2 b)
-    {
-        const __m128i sign = _mm_set1_epi64x(0x8000000000000000ull);
-        a = _mm_xor_si128(a, sign);
-        b = _mm_xor_si128(b, sign);
-
-        // unsigned rounded average
-        __m128i one = _mm_set1_epi64x(1);
-        __m128i axb = _mm_xor_si128(a, b);
-        __m128i temp = _mm_and_si128(a, b);
-        temp = _mm_add_epi64(temp, _mm_srli_epi64(axb, 1));
-        temp = _mm_add_epi64(temp, _mm_and_si128(axb, one));
-
-        temp = _mm_xor_si128(temp, sign);
-        return temp;
     }
 
     static inline s64x2 neg(s64x2 a)

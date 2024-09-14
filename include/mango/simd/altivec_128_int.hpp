@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -103,13 +103,6 @@ namespace mango::simd
     }
 
     static inline u8x16 avg(u8x16 a, u8x16 b)
-    {
-        auto axb = vec_xor(a.data, b.data);
-        auto temp = vec_add(vec_and(a.data, b.data), vec_sr(axb, vec_splats(u8(1))));
-        return temp;
-    }
-
-    static inline u8x16 avg_round(u8x16 a, u8x16 b)
     {
         return vec_avg(a, b);
     }
@@ -300,13 +293,6 @@ namespace mango::simd
     }
 
     static inline u16x8 avg(u16x8 a, u16x8 b)
-    {
-        auto axb = vec_xor(a.data, b.data);
-        auto temp = vec_add(vec_and(a.data, b.data), vec_sr(axb, vec_splats(u16(1))));
-        return temp;
-    }
-
-    static inline u16x8 avg_round(u16x8 a, u16x8 b)
     {
         return vec_avg(a, b);
     }
@@ -563,13 +549,6 @@ namespace mango::simd
 
     static inline u32x4 avg(u32x4 a, u32x4 b)
     {
-        auto axb = vec_xor(a.data, b.data);
-        auto temp = vec_add(vec_and(a.data, b.data), vec_sr(axb, vec_splats(u32(1))));
-        return temp;
-    }
-
-    static inline u32x4 avg_round(u32x4 a, u32x4 b)
-    {
         return vec_avg(a, b);
     }
 
@@ -789,18 +768,6 @@ namespace mango::simd
     static inline u64x2 sub(u64x2 a, u64x2 b)
     {
         return vec_sub(a.data, b.data);
-    }
-
-    static inline u64x2 avg(u64x2 a, u64x2 b)
-    {
-        auto axb = vec_xor(a.data, b.data);
-        auto temp = vec_add(vec_and(a.data, b.data), vec_sr(axb, vec_splats(u64(1))));
-        return temp;
-    }
-
-    static inline u64x2 avg_round(u64x2 a, u64x2 b)
-    {
-        return vec_avg(a, b);
     }
 
     // bitwise
@@ -1024,20 +991,6 @@ namespace mango::simd
     }
 
     static inline s8x16 avg(s8x16 sa, s8x16 sb)
-    {
-        u8x16::vector sign = vec_splats(u8(0x80));
-        u8x16::vector a = vec_xor(u8x16::vector(sa.data), sign);
-        u8x16::vector b = vec_xor(u8x16::vector(sb.data), sign);
-
-        // unsigned average
-        u8x16::vector axb = vec_xor(a, b);
-        u8x16::vector temp = vec_add(vec_and(a, b), vec_sr(axb, vec_splats(u8(1))));
-
-        temp = vec_xor(temp, sign);
-        return s8x16::vector(temp);
-    }
-
-    static inline s8x16 avg_round(s8x16 a, s8x16 b)
     {
         return vec_avg(a, b);
     }
@@ -1277,20 +1230,6 @@ namespace mango::simd
     }
 
     static inline s16x8 avg(s16x8 sa, s16x8 sb)
-    {
-        u16x8::vector sign = vec_splats(u16(0x8000));
-        u16x8::vector a = vec_xor(u16x8::vector(sa.data), sign);
-        u16x8::vector b = vec_xor(u16x8::vector(sb.data), sign);
-
-        // unsigned average
-        u16x8::vector axb = vec_xor(a, b);
-        u16x8::vector temp = vec_add(vec_and(a, b), vec_sr(axb, vec_splats(u16(1))));
-
-        temp = vec_xor(temp, sign);
-        return s16x8::vector(temp);
-    }
-
-    static inline s16x8 avg_round(s16x8 a, s16x8 b)
     {
         return vec_avg(a, b);
     }
@@ -1599,20 +1538,6 @@ namespace mango::simd
 
     static inline s32x4 avg(s32x4 sa, s32x4 sb)
     {
-        u32x4::vector sign = vec_splats(u32(0x80000000));
-        u32x4::vector a = vec_xor(u32x4::vector(sa.data), sign);
-        u32x4::vector b = vec_xor(u32x4::vector(sb.data), sign);
-
-        // unsigned average
-        u32x4::vector axb = vec_xor(a, b);
-        u32x4::vector temp = vec_add(vec_and(a, b), vec_sr(axb, vec_splats(u32(1))));
-
-        temp = vec_xor(temp, sign);
-        return s32x4::vector(temp);
-    }
-
-    static inline s32x4 avg_round(s32x4 a, s32x4 b)
-    {
         return vec_avg(a, b);
     }
 
@@ -1846,25 +1771,6 @@ namespace mango::simd
     static inline s64x2 sub(s64x2 a, s64x2 b)
     {
         return vec_sub(a.data, b.data);
-    }
-
-    static inline s64x2 avg(s64x2 sa, s64x2 sb)
-    {
-        u64x2::vector sign = vec_splats(u64(0x8000000000000000ull));
-        u64x2::vector a = vec_xor(u64x2::vector(sa.data), sign);
-        u64x2::vector b = vec_xor(u64x2::vector(sb.data), sign);
-
-        // unsigned average
-        u64x2::vector axb = vec_xor(a, b);
-        u64x2::vector temp = vec_add(vec_and(a, b), vec_sr(axb, vec_splats(u64(1))));
-
-        temp = vec_xor(temp, sign);
-        return s64x2::vector(temp);
-    }
-
-    static inline s64x2 avg_round(s64x2 a, s64x2 b)
-    {
-        return vec_avg(a, b);
     }
 
     static inline s64x2 neg(s64x2 a)

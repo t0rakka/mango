@@ -160,13 +160,6 @@ namespace mango::simd
 
     static inline u8x64 avg(u8x64 a, u8x64 b)
     {
-        __m512i axb = _mm512_xor_si512(a, b);
-        __m512i temp = _mm512_add_epi8(_mm512_and_si512(a, b), detail::simd512_srli1_epi8(axb));
-        return temp;
-    }
-
-    static inline u8x64 avg_round(u8x64 a, u8x64 b)
-    {
         return _mm512_avg_epu8(a, b);
     }
 
@@ -370,13 +363,6 @@ namespace mango::simd
     }
 
     static inline u16x32 avg(u16x32 a, u16x32 b)
-    {
-        __m512i axb = _mm512_xor_si512(a, b);
-        __m512i temp = _mm512_add_epi16(_mm512_and_si512(a, b), _mm512_srli_epi16(axb, 1));
-        return temp;
-    }
-
-    static inline u16x32 avg_round(u16x32 a, u16x32 b)
     {
         return _mm512_avg_epu16(a, b);
     }
@@ -622,13 +608,6 @@ namespace mango::simd
 
     static inline u32x16 avg(u32x16 a, u32x16 b)
     {
-        __m512i axb = _mm512_xor_si512(a, b);
-        __m512i temp = _mm512_add_epi32(_mm512_and_si512(a, b), _mm512_srli_epi32(axb, 1));
-        return temp;
-    }
-
-    static inline u32x16 avg_round(u32x16 a, u32x16 b)
-    {
         __m512i one = _mm512_set1_epi32(1);
         __m512i axb = _mm512_xor_si512(a, b);
         __m512i temp = _mm512_and_si512(a, b);
@@ -857,23 +836,6 @@ namespace mango::simd
     static inline u64x8 sub(u64x8 a, u64x8 b, mask64x8 mask, u64x8 value)
     {
         return _mm512_mask_sub_epi64(value, mask, a, b);
-    }
-
-    static inline u64x8 avg(u64x8 a, u64x8 b)
-    {
-        __m512i axb = _mm512_xor_si512(a, b);
-        __m512i temp = _mm512_add_epi64(_mm512_and_si512(a, b), _mm512_srli_epi64(axb, 1));
-        return temp;
-    }
-
-    static inline u64x8 avg_round(u64x8 a, u64x8 b)
-    {
-        __m512i one = _mm512_set1_epi64(1);
-        __m512i axb = _mm512_xor_si512(a, b);
-        __m512i temp = _mm512_and_si512(a, b);
-        temp = _mm512_add_epi64(temp, _mm512_srli_epi64(axb, 1));
-        temp = _mm512_add_epi64(temp, _mm512_and_si512(axb, one));
-        return temp;
     }
 
     // bitwise
@@ -1112,30 +1074,7 @@ namespace mango::simd
         const __m512i sign = _mm512_set1_epi8(0x80u);
         a = _mm512_xor_si512(a, sign);
         b = _mm512_xor_si512(b, sign);
-
-        // unsigned average
-        __m512i axb = _mm512_xor_si512(a, b);
-        __m512i temp = _mm512_add_epi8(_mm512_and_si512(a, b), detail::simd512_srai1_epi8(axb));
-
-        temp = _mm512_xor_si512(temp, sign);
-        return temp;
-    }
-
-    static inline s8x64 avg_round(s8x64 a, s8x64 b)
-    {
-        const __m512i sign = _mm512_set1_epi8(0x80u);
-        a = _mm512_xor_si512(a, sign);
-        b = _mm512_xor_si512(b, sign);
-
-        // unsigned rounded average
-        __m512i one = _mm512_set1_epi8(1);
-        __m512i axb = _mm512_xor_si512(a, b);
-        __m512i temp = _mm512_and_si512(a, b);
-        temp = _mm512_add_epi8(temp, detail::simd512_srli1_epi8(axb));
-        temp = _mm512_add_epi8(temp, _mm512_and_si512(axb, one));
-
-        temp = _mm512_xor_si512(temp, sign);
-        return temp;
+        return _mm512_xor_si512(_mm512_avg_epu8(a, b), sign);
     }
 
     static inline s8x64 abs(s8x64 a)
@@ -1362,30 +1301,7 @@ namespace mango::simd
         const __m512i sign = _mm512_set1_epi16(0x8000u);
         a = _mm512_xor_si512(a, sign);
         b = _mm512_xor_si512(b, sign);
-
-        // unsigned average
-        __m512i axb = _mm512_xor_si512(a, b);
-        __m512i temp = _mm512_add_epi16(_mm512_and_si512(a, b), _mm512_srai_epi16(axb, 1));
-
-        temp = _mm512_xor_si512(temp, sign);
-        return temp;
-    }
-
-    static inline s16x32 avg_round(s16x32 a, s16x32 b)
-    {
-        const __m512i sign = _mm512_set1_epi16(0x8000u);
-        a = _mm512_xor_si512(a, sign);
-        b = _mm512_xor_si512(b, sign);
-
-        // unsigned rounded average
-        __m512i one = _mm512_set1_epi16(1);
-        __m512i axb = _mm512_xor_si512(a, b);
-        __m512i temp = _mm512_and_si512(a, b);
-        temp = _mm512_add_epi16(temp, _mm512_srli_epi16(axb, 1));
-        temp = _mm512_add_epi16(temp, _mm512_and_si512(axb, one));
-
-        temp = _mm512_xor_si512(temp, sign);
-        return temp;
+        return _mm512_xor_si512(_mm512_avg_epu16(a, b), sign);
     }
 
     static inline s16x32 mullo(s16x32 a, s16x32 b)
@@ -1694,20 +1610,6 @@ namespace mango::simd
         a = _mm512_xor_si512(a, sign);
         b = _mm512_xor_si512(b, sign);
 
-        // unsigned average
-        __m512i axb = _mm512_xor_si512(a, b);
-        __m512i temp = _mm512_add_epi32(_mm512_and_si512(a, b), _mm512_srai_epi32(axb, 1));
-
-        temp = _mm512_xor_si512(temp, sign);
-        return temp;
-    }
-
-    static inline s32x16 avg_round(s32x16 a, s32x16 b)
-    {
-        const __m512i sign = _mm512_set1_epi32(0x80000000);
-        a = _mm512_xor_si512(a, sign);
-        b = _mm512_xor_si512(b, sign);
-
         // unsigned rounded average
         __m512i one = _mm512_set1_epi32(1);
         __m512i axb = _mm512_xor_si512(a, b);
@@ -1939,37 +1841,6 @@ namespace mango::simd
     static inline s64x8 sub(s64x8 a, s64x8 b, mask64x8 mask, s64x8 value)
     {
         return _mm512_mask_sub_epi64(value, mask, a, b);
-    }
-
-    static inline s64x8 avg(s64x8 a, s64x8 b)
-    {
-        const __m512i sign = _mm512_set1_epi64(0x8000000000000000ull);
-        a = _mm512_xor_si512(a, sign);
-        b = _mm512_xor_si512(b, sign);
-
-        // unsigned average
-        __m512i axb = _mm512_xor_si512(a, b);
-        __m512i temp = _mm512_add_epi64(_mm512_and_si512(a, b), detail::simd512_srai1_epi64(axb));
-
-        temp = _mm512_xor_si512(temp, sign);
-        return temp;
-    }
-
-    static inline s64x8 avg_round(s64x8 a, s64x8 b)
-    {
-        const __m512i sign = _mm512_set1_epi64(0x8000000000000000ull);
-        a = _mm512_xor_si512(a, sign);
-        b = _mm512_xor_si512(b, sign);
-
-        // unsigned rounded average
-        __m512i one = _mm512_set1_epi64(1);
-        __m512i axb = _mm512_xor_si512(a, b);
-        __m512i temp = _mm512_and_si512(a, b);
-        temp = _mm512_add_epi64(temp, _mm512_srli_epi64(axb, 1));
-        temp = _mm512_add_epi64(temp, _mm512_and_si512(axb, one));
-
-        temp = _mm512_xor_si512(temp, sign);
-        return temp;
     }
 
     static inline s64x8 neg(s64x8 a)

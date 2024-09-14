@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -116,11 +116,6 @@ namespace mango::simd
     }
 
     static inline u8x16 avg(u8x16 a, u8x16 b)
-    {
-        return vhaddq_u8(a, b);
-    }
-
-    static inline u8x16 avg_round(u8x16 a, u8x16 b)
     {
         return vrhaddq_u8(a, b);
     }
@@ -304,11 +299,6 @@ namespace mango::simd
     }
 
     static inline u16x8 avg(u16x8 a, u16x8 b)
-    {
-        return vhaddq_u16(a, b);
-    }
-
-    static inline u16x8 avg_round(u16x8 a, u16x8 b)
     {
         return vrhaddq_u16(a, b);
     }
@@ -556,11 +546,6 @@ namespace mango::simd
 
     static inline u32x4 avg(u32x4 a, u32x4 b)
     {
-        return vhaddq_u32(a, b);
-    }
-
-    static inline u32x4 avg_round(u32x4 a, u32x4 b)
-    {
         return vrhaddq_u32(a, b);
     }
 
@@ -790,23 +775,6 @@ namespace mango::simd
     static inline u64x2 sub(u64x2 a, u64x2 b)
     {
         return vsubq_u64(a, b);
-    }
-
-    static inline u64x2 avg(u64x2 a, u64x2 b)
-    {
-        uint64x2_t axb = veorq_u64(a, b);
-        uint64x2_t temp = vaddq_u64(vandq_u64(a, b), vshrq_n_u64(axb, 1));
-        return temp;
-    }
-
-    static inline u64x2 avg_round(u64x2 a, u64x2 b)
-    {
-        uint64x2_t one = vdupq_n_u64(1);
-        uint64x2_t axb = veorq_u64(a, b);
-        uint64x2_t temp = vandq_u64(a, b);
-        temp = vaddq_u64(temp, vshrq_n_u64(axb, 1));
-        temp = vaddq_u64(temp, vandq_u64(axb, one));
-        return temp;
     }
 
     // bitwise
@@ -1066,11 +1034,6 @@ namespace mango::simd
 
     static inline s8x16 avg(s8x16 a, s8x16 b)
     {
-        return vhaddq_s8(a, b);
-    }
-
-    static inline s8x16 avg_round(s8x16 a, s8x16 b)
-    {
         return vrhaddq_s8(a, b);
     }
 
@@ -1308,11 +1271,6 @@ namespace mango::simd
     }
 
     static inline s16x8 avg(s16x8 a, s16x8 b)
-    {
-        return vhaddq_s16(a, b);
-    }
-
-    static inline s16x8 avg_round(s16x8 a, s16x8 b)
     {
         return vrhaddq_s16(a, b);
     }
@@ -1637,11 +1595,6 @@ namespace mango::simd
 
     static inline s32x4 avg(s32x4 a, s32x4 b)
     {
-        return vhaddq_s32(a, b);
-    }
-
-    static inline s32x4 avg_round(s32x4 a, s32x4 b)
-    {
         return vrhaddq_s32(a, b);
     }
 
@@ -1880,37 +1833,6 @@ namespace mango::simd
     static inline s64x2 sub(s64x2 a, s64x2 b)
     {
         return vsubq_s64(a, b);
-    }
-
-    static inline s64x2 avg(s64x2 sa, s64x2 sb)
-    {
-        uint64x2_t sign = vdupq_n_u64(0x8000000000000000ull);
-        uint64x2_t a = veorq_u64(vreinterpretq_u64_s64(sa), sign);
-        uint64x2_t b = veorq_u64(vreinterpretq_u64_s64(sb), sign);
-
-        // unsigned average
-        uint64x2_t axb = veorq_u64(a, b);
-        uint64x2_t temp = vaddq_u64(vandq_u64(a, b), vshrq_n_u64(axb, 1));
-
-        temp = veorq_u64(temp, sign);
-        return vreinterpretq_s64_u64(temp);
-    }
-
-    static inline s64x2 avg_round(s64x2 sa, s64x2 sb)
-    {
-        uint64x2_t sign = vdupq_n_u64(0x8000000000000000ull);
-        uint64x2_t a = veorq_u64(vreinterpretq_u64_s64(sa), sign);
-        uint64x2_t b = veorq_u64(vreinterpretq_u64_s64(sb), sign);
-
-        // unsigned rounded average
-        uint64x2_t one = vdupq_n_u64(1);
-        uint64x2_t axb = veorq_u64(a, b);
-        uint64x2_t temp = vandq_u64(a, b);
-        temp = vaddq_u64(temp, vshrq_n_u64(axb, 1));
-        temp = vaddq_u64(temp, vandq_u64(axb, one));
-
-        temp = veorq_u64(temp, sign);
-        return vreinterpretq_s64_u64(temp);
     }
 
 #if defined(__aarch64__)

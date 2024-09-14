@@ -148,7 +148,6 @@ namespace mango::simd
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, adds)
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, subs)
     SIMD_COMPOSITE_FUNC2(u8x32, u8x32, avg)
-    SIMD_COMPOSITE_FUNC2(u8x32, u8x32, avg_round)
 
     SIMD_COMPOSITE_ZEROMASK_FUNC2(u8x32, u8x32, mask8x32, min)
     SIMD_COMPOSITE_ZEROMASK_FUNC2(u8x32, u8x32, mask8x32, max)
@@ -247,7 +246,6 @@ namespace mango::simd
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, adds)
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, subs)
     SIMD_COMPOSITE_FUNC2(u16x16, u16x16, avg)
-    SIMD_COMPOSITE_FUNC2(u16x16, u16x16, avg_round)
 
     SIMD_COMPOSITE_ZEROMASK_FUNC2(u16x16, u16x16, mask16x16, min)
     SIMD_COMPOSITE_ZEROMASK_FUNC2(u16x16, u16x16, mask16x16, max)
@@ -399,7 +397,6 @@ namespace mango::simd
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, adds)
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, subs)
     SIMD_COMPOSITE_FUNC2(u32x8, u32x8, avg)
-    SIMD_COMPOSITE_FUNC2(u32x8, u32x8, avg_round)
 
     SIMD_COMPOSITE_ZEROMASK_FUNC2(u32x8, u32x8, mask32x8, min)
     SIMD_COMPOSITE_ZEROMASK_FUNC2(u32x8, u32x8, mask32x8, max)
@@ -573,9 +570,7 @@ namespace mango::simd
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, unpackhi)
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, add)
     SIMD_COMPOSITE_FUNC2(u64x4, u64x4, sub)
-    SIMD_COMPOSITE_FUNC2(u64x4, u64x4, avg)
-    SIMD_COMPOSITE_FUNC2(u64x4, u64x4, avg_round)
-
+    
     SIMD_COMPOSITE_ZEROMASK_FUNC2(u64x4, u64x4, mask64x4, min)
     SIMD_COMPOSITE_ZEROMASK_FUNC2(u64x4, u64x4, mask64x4, max)
     SIMD_COMPOSITE_ZEROMASK_FUNC2(u64x4, u64x4, mask64x4, add)
@@ -708,7 +703,6 @@ namespace mango::simd
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, adds)
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, subs)
     SIMD_COMPOSITE_FUNC2(s8x32, s8x32, avg)
-    SIMD_COMPOSITE_FUNC2(s8x32, s8x32, avg_round)
     SIMD_COMPOSITE_FUNC1(s8x32, s8x32, abs)
     SIMD_COMPOSITE_FUNC1(s8x32, s8x32, neg)
 
@@ -814,7 +808,6 @@ namespace mango::simd
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, hadds)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, hsubs)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, avg)
-    SIMD_COMPOSITE_FUNC2(s16x16, s16x16, avg_round)
     SIMD_COMPOSITE_FUNC2(s16x16, s16x16, mullo)
     SIMD_COMPOSITE_FUNC2(s32x8, s16x16, madd)
     SIMD_COMPOSITE_FUNC1(s16x16, s16x16, abs)
@@ -975,7 +968,6 @@ namespace mango::simd
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, hadd)
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, hsub)
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, avg)
-    SIMD_COMPOSITE_FUNC2(s32x8, s32x8, avg_round)
     SIMD_COMPOSITE_FUNC2(s32x8, s32x8, mullo)
     SIMD_COMPOSITE_FUNC1(s32x8, s32x8, abs)
     SIMD_COMPOSITE_FUNC1(s32x8, s32x8, neg)
@@ -1154,8 +1146,6 @@ namespace mango::simd
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, unpackhi)
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, add)
     SIMD_COMPOSITE_FUNC2(s64x4, s64x4, sub)
-    SIMD_COMPOSITE_FUNC2(s64x4, s64x4, avg)
-    SIMD_COMPOSITE_FUNC2(s64x4, s64x4, avg_round)
     SIMD_COMPOSITE_FUNC1(s64x4, s64x4, neg)
 
     SIMD_COMPOSITE_ZEROMASK_FUNC2(s64x4, s64x4, mask64x4, min)
