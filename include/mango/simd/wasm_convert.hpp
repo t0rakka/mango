@@ -116,14 +116,12 @@ namespace mango::simd
 
     static inline u16x8 extend16x8(u8x16 s)
     {
-        const v128_t zero = wasm_v128_xor(s, s);
-        return wasm_i8x16_shuffle(s, zero, 0, 16, 1, 16, 2, 16, 3, 16, 4, 16, 5, 16, 6, 16, 7, 16);
+        return wasm_u16x8_extend_low_u8x16(s);
     }
 
     static inline u32x4 extend32x4(u8x16 s)
     {
-        const v128_t zero = wasm_v128_xor(s, s);
-        return wasm_i8x16_shuffle(s, zero, 0, 16, 16, 16, 1, 16, 16, 16, 2, 16, 16, 16, 3, 16, 16, 16);
+        return wasm_u32x4_extend_low_u16x8(s);
     }
 
     static inline u64x2 extend64x2(u8x16 s)
@@ -146,27 +144,24 @@ namespace mango::simd
 
     static inline u64x2 extend64x2(u32x4 s)
     {
-        const v128_t zero = wasm_v128_xor(s, s);
-        return wasm_i32x4_shuffle(s, zero, 0, 4, 1, 4);
+        return wasm_u64x2_extend_low_u32x4(s);
     }
 
     // 256 <- 128
 
     static inline u16x16 extend16x16(u8x16 s)
     {
-        const v128_t zero = wasm_v128_xor(s, s);
         u16x16 result;
-        result.data[0] = wasm_i8x16_shuffle(s, zero, 0, 16, 1, 16, 2, 16, 3, 16, 4, 16, 5, 16, 6, 16, 7, 16);
-        result.data[1] = wasm_i8x16_shuffle(s, zero, 8, 16, 9, 16, 10, 16, 11, 16, 12, 16, 13, 16, 14, 16, 15, 16);
+        result.data[0] = wasm_u16x8_extend_low_u8x16(s);
+        result.data[1] = wasm_u16x8_extend_high_u8x16(s);
         return result;
     }
 
     static inline u32x8 extend32x8(u8x16 s)
     {
-        const v128_t zero = wasm_v128_xor(s, s);
         u32x8 result;
-        result.data[0] = wasm_i8x16_shuffle(s, zero, 0, 16, 16, 16, 1, 16, 16, 16, 2, 16, 16, 16, 3, 16, 16, 16);
-        result.data[1] = wasm_i8x16_shuffle(s, zero, 4, 16, 16, 16, 5, 16, 16, 16, 6, 16, 16, 16, 7, 16, 16, 16);
+        result.data[0] = wasm_u32x4_extend_low_u16x8(s);
+        result.data[1] = wasm_u32x4_extend_high_u16x8(s);
         return result;
     }
 
@@ -199,10 +194,9 @@ namespace mango::simd
 
     static inline u64x4 extend64x4(u32x4 s)
     {
-        const v128_t zero = wasm_v128_xor(s, s);
         u64x4 result;
-        result.data[0] = wasm_i32x4_shuffle(s, zero, 0, 4, 1, 4);
-        result.data[1] = wasm_i32x4_shuffle(s, zero, 2, 4, 3, 4);
+        result.data[0] = wasm_u64x2_extend_low_u32x4(s);
+        result.data[1] = wasm_u64x2_extend_high_u32x4(s);
         return result;
     }
 
@@ -214,16 +208,12 @@ namespace mango::simd
 
     static inline s16x8 extend16x8(s8x16 s)
     {
-        const v128_t zero = wasm_v128_xor(s, s);
-        const v128_t sign = wasm_i8x16_gt(zero, s);
-        return wasm_i8x16_shuffle(s, sign, 0, 16, 1, 16, 2, 16, 3, 16, 4, 16, 5, 16, 6, 16, 7, 16);
+        return wasm_i16x8_extend_low_i8x16(s);
     }
 
     static inline s32x4 extend32x4(s8x16 s)
     {
-        const v128_t zero = wasm_v128_xor(s, s);
-        const v128_t sign = wasm_i8x16_gt(zero, s);
-        return wasm_i8x16_shuffle(s, sign, 0, 16, 16, 16, 1, 16, 16, 16, 2, 16, 16, 16, 3, 16, 16, 16);
+        return wasm_i32x4_extend_low_i16x8(s);
     }
 
     static inline s64x2 extend64x2(s8x16 s)
@@ -249,30 +239,24 @@ namespace mango::simd
 
     static inline s64x2 extend64x2(s32x4 s)
     {
-        const v128_t zero = wasm_v128_xor(s, s);
-        const v128_t sign = wasm_i32x4_gt(zero, s);
-        return wasm_i32x4_shuffle(s, sign, 0, 4, 1, 4);
+        return wasm_i64x2_extend_low_i32x4(s);
     }
 
     // 256 <- 128
 
     static inline s16x16 extend16x16(s8x16 s)
     {
-        const v128_t zero = wasm_v128_xor(s, s);
-        const v128_t sign = wasm_i8x16_gt(zero, s);
         u16x16 result;
-        result.data[0] = wasm_i8x16_shuffle(s, sign, 0, 16, 1, 16, 2, 16, 3, 16, 4, 16, 5, 16, 6, 16, 7, 16);
-        result.data[1] = wasm_i8x16_shuffle(s, sign, 8, 16, 9, 16, 10, 16, 11, 16, 12, 16, 13, 16, 14, 16, 15, 16);
+        result.data[0] = wasm_i16x8_extend_low_i8x16(s);
+        result.data[1] = wasm_i16x8_extend_high_i8x16(s);
         return result;
     }
 
     static inline s32x8 extend32x8(s8x16 s)
     {
-        const v128_t zero = wasm_v128_xor(s, s);
-        const v128_t sign = wasm_i8x16_gt(zero, s);
         u32x8 result;
-        result.data[0] = wasm_i8x16_shuffle(s, sign, 0, 16, 16, 16, 1, 16, 16, 16, 2, 16, 16, 16, 3, 16, 16, 16);
-        result.data[1] = wasm_i8x16_shuffle(s, sign, 4, 16, 16, 16, 5, 16, 16, 16, 6, 16, 16, 16, 7, 16, 16, 16);
+        result.data[0] = wasm_i32x4_extend_low_i16x8(s);
+        result.data[1] = wasm_i32x4_extend_high_i16x8(s);
         return result;
     }
 
@@ -308,11 +292,9 @@ namespace mango::simd
 
     static inline s64x4 extend64x4(s32x4 s)
     {
-        const v128_t zero = wasm_v128_xor(s, s);
-        const v128_t sign = wasm_i32x4_gt(zero, s);
         u64x4 result;
-        result.data[0] = wasm_i32x4_shuffle(s, sign, 0, 4, 1, 4);
-        result.data[1] = wasm_i32x4_shuffle(s, sign, 2, 4, 3, 4);
+        result.data[0] = wasm_i64x2_extend_low_i32x4(s);
+        result.data[1] = wasm_i64x2_extend_high_i32x4(s);
         return result;
     }
 
