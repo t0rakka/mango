@@ -487,18 +487,18 @@ namespace mango::simd
     {
         return a.data[0];
     }
-    
+
     static inline u32x4 get_high(u32x8 a)
     {
         return a.data[1];
     }
-    
+
     static inline u32x8 set_low(u32x8 a, u32x4 low)
     {
         a.data[0] = low;
         return a;
     }
-    
+
     static inline u32x8 set_high(u32x8 a, u32x4 high)
     {
         a.data[1] = high;
@@ -549,18 +549,18 @@ namespace mango::simd
     {
         return a.data[0];
     }
-    
+
     static inline s32x4 get_high(s32x8 a)
     {
         return a.data[1];
     }
-    
+
     static inline s32x8 set_low(s32x8 a, s32x4 low)
     {
         a.data[0] = low;
         return a;
     }
-    
+
     static inline s32x8 set_high(s32x8 a, s32x4 high)
     {
         a.data[1] = high;

@@ -452,7 +452,12 @@ endif ()
 # configuration
 # ------------------------------------------------------------------------------
 
-if (COMPILER_MSVC)
+if (EMSCRIPTEN)
+
+    message(STATUS "SIMD: WASM")
+    target_compile_options(mango PUBLIC "-msimd128")
+
+elseif (COMPILER_MSVC)
 
     target_compile_options(mango PUBLIC "/DUNICODE")
 

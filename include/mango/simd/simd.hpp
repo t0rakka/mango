@@ -801,11 +801,13 @@ namespace mango::simd
 #include <mango/simd/msa_convert.hpp>
 #include <mango/simd/common_gather.hpp>
 
-#elif defined(MANGO_ENABLE_WASM__disabled__work_in_progress)
+#elif defined(MANGO_ENABLE_WASM)
 
 // --------------------------------------------------------------
 // WASM
 // --------------------------------------------------------------
+
+#include <wasm_simd128.h>
 
 namespace mango::simd
 {

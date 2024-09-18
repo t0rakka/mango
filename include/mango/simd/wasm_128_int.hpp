@@ -38,10 +38,10 @@ namespace mango::simd
     }
 
     static inline u8x16 u8x16_set(
-        u8 s0, u8 s1, u8 s2, u8 s3, u8 s4, u8 s5, u8 s6, u8 s7,
-        u8 s8, u8 s9, u8 s10, u8 s11, u8 s12, u8 s13, u8 s14, u8 s15)
+        u8 v0, u8 v1, u8 v2, u8 v3, u8 v4, u8 v5, u8 v6, u8 v7,
+        u8 v8, u8 v9, u8 v10, u8 v11, u8 v12, u8 v13, u8 v14, u8 v15)
     {
-        return wasm_u8x16_make(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15);
+        return wasm_u8x16_make(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
     }
 
     static inline u8x16 u8x16_uload(const void* source)
@@ -481,14 +481,14 @@ namespace mango::simd
     static inline u32x4 adds(u32x4 a, u32x4 b)
     {
         // NOTE: same instruction is used for signed and unsigned
-        const __m128i temp = wasm_i32x4_add(a, b);
+        const v128_t temp = wasm_i32x4_add(a, b);
         return wasm_v128_or(temp, wasm_i32x4_lt(temp, a));
     }
 
     static inline u32x4 subs(u32x4 a, u32x4 b)
     {
         // NOTE: same instruction is used for signed and unsigned
-        const __m128i temp = wasm_i32x4_sub(a, b);
+        const v128_t temp = wasm_i32x4_sub(a, b);
         return wasm_v128_and(temp, wasm_i32x4_gt(a, temp));
     }
 
@@ -876,7 +876,7 @@ namespace mango::simd
         s8 v0, s8 v1, s8 v2, s8 v3, s8 v4, s8 v5, s8 v6, s8 v7,
         s8 v8, s8 v9, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
     {
-        return wasm_i8x16_make(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15);
+        return wasm_i8x16_make(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
     }
 
     static inline s8x16 s8x16_uload(const void* source)

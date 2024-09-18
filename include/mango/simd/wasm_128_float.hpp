@@ -59,7 +59,7 @@ namespace mango::simd
 
     static inline f32x4 f32x4_set(f32 s)
     {
-        return wasm_f32x4_const_splat(s);
+        return wasm_f32x4_splat(s);
     }
 
     static inline f32x4 f32x4_set(f32 x, f32 y, f32 z, f32 w)
@@ -79,12 +79,12 @@ namespace mango::simd
 
     static inline f32x4 movelh(f32x4 a, f32x4 b)
     {
-        return shuffle<0, 1, 4, 5>(a, b);
+        return wasm_i32x4_shuffle(a, b, 0, 1, 4, 5);
     }
 
     static inline f32x4 movehl(f32x4 a, f32x4 b)
     {
-        return shuffle<2, 3, 6, 7>(a, b);
+        return wasm_i32x4_shuffle(a, b, 2, 3, 6, 7);
     }
 
     static inline f32x4 unpacklo(f32x4 a, f32x4 b)
@@ -144,13 +144,13 @@ namespace mango::simd
 
     static inline f32x4 hmin(f32x4 a)
     {
-        auto temp = wasm_f32x4_min(a, shuffle<2, 3, 0, 1>(a));
+        f32x4 temp = wasm_f32x4_min(a, shuffle<2, 3, 0, 1>(a));
         return wasm_f32x4_min(temp, shuffle<1, 0, 3, 2>(temp));
     }
 
     static inline f32x4 hmax(f32x4 a)
     {
-        auto temp = wasm_f32x4_max(a, shuffle<2, 3, 0, 1>(a));
+        f32x4 temp = wasm_f32x4_max(a, shuffle<2, 3, 0, 1>(a));
         return wasm_f32x4_max(temp, shuffle<1, 0, 3, 2>(temp));
     }
 
@@ -195,25 +195,25 @@ namespace mango::simd
 
     static inline f32x4 div(f32x4 a, f32 b)
     {
-        return wasm_f32x4_div(a, wasm_f32x4_const_splat(b));
+        return wasm_f32x4_div(a, wasm_f32x4_splat(b));
     }
 
     static inline f32x4 hadd(f32x4 a, f32x4 b)
     {
-        return wasm_f32x4_add(shuffle<0, 2, 4, 6>(a, b),
-                              shuffle<1, 3, 5, 7>(a, b));
+        return wasm_f32x4_add(wasm_i32x4_shuffle(a, b, 0, 2, 4, 6),
+                              wasm_i32x4_shuffle(a, b, 1, 3, 5, 7));
     }
 
     static inline f32x4 hsub(f32x4 a, f32x4 b)
     {
-        return wasm_f32x4_sub(shuffle<0, 2, 4, 6>(a, b),
-                              shuffle<1, 3, 5, 7>(a, b));
+        return wasm_f32x4_sub(wasm_i32x4_shuffle(a, b, 0, 2, 4, 6),
+                              wasm_i32x4_shuffle(a, b, 1, 3, 5, 7));
     }
 
     static inline f32x4 madd(f32x4 a, f32x4 b, f32x4 c)
     {
         // a + b * c
-        return wasm_f32x4_relaxed_madd(a, b, c);
+        return wasm_f32x4_add(a, wasm_f32x4_mul(b, c));
     }
 
     static inline f32x4 msub(f32x4 a, f32x4 b, f32x4 c)
@@ -225,13 +225,13 @@ namespace mango::simd
     static inline f32x4 nmadd(f32x4 a, f32x4 b, f32x4 c)
     {
         // a - b * c
-        return wasm_f32x4_relaxed_nmadd(a, b, c);
+        return wasm_f32x4_sub(a, wasm_f32x4_mul(b, c));
     }
 
     static inline f32x4 nmsub(f32x4 a, f32x4 b, f32x4 c)
     {
         // -(a + b * c)
-        return wasm_f32x4_neg(wasm_f32x4_relaxed_madd(a, b, c));
+        return wasm_f32x4_neg(wasm_f32x4_add(a, wasm_f32x4_mul(b, c)));
     }
 
     static inline f32x4 lerp(f32x4 a, f32x4 b, f32x4 s)
@@ -355,14 +355,14 @@ namespace mango::simd
     static inline f64x2 shuffle(f64x2 v)
     {
         static_assert(x < 2 && y < 2, "Index out of range.");
-        return wasm_v64x2_shuffle(v, v, x, y);
+        return wasm_i64x2_shuffle(v, v, x, y);
     }
 
     template <u32 x, u32 y>
     static inline f64x2 shuffle(f64x2 a, f64x2 b)
     {
         static_assert(x < 2 && y < 2, "Index out of range.");
-        return wasm_v64x2_shuffle(a, b, x, y + 2);
+        return wasm_i64x2_shuffle(a, b, x, y + 2);
     }
 
     // set component
@@ -388,7 +388,7 @@ namespace mango::simd
 
     static inline f64x2 f64x2_set(f64 s)
     {
-        return wasm_f64x2_const_splat(s);
+        return wasm_f64x2_splat(s);
     }
 
     static inline f64x2 f64x2_set(f64 x, f64 y)
@@ -459,12 +459,12 @@ namespace mango::simd
 
     static inline f64x2 abs(f64x2 a)
     {
-        return wasm_f32x2_abs(a);
+        return wasm_f64x2_abs(a);
     }
 
     static inline f64x2 neg(f64x2 a)
     {
-        return wasm_f32x2_neg(a);
+        return wasm_f64x2_neg(a);
     }
 
     static inline f64x2 sign(f64x2 a)
@@ -498,7 +498,7 @@ namespace mango::simd
 
     static inline f64x2 div(f64x2 a, f64 b)
     {
-        return wasm_f64x2_div(a, wasm_f64x2_const_splat(b));
+        return wasm_f64x2_div(a, wasm_f64x2_splat(b));
     }
 
     static inline f64x2 hadd(f64x2 a, f64x2 b)
@@ -514,7 +514,7 @@ namespace mango::simd
     static inline f64x2 madd(f64x2 a, f64x2 b, f64x2 c)
     {
         // a + b * c
-        return wasm_f64x2_relaxed_madd(a, b, c);
+        return wasm_f64x2_add(a, wasm_f64x2_mul(b, c));
     }
 
     static inline f64x2 msub(f64x2 a, f64x2 b, f64x2 c)
@@ -526,13 +526,13 @@ namespace mango::simd
     static inline f64x2 nmadd(f64x2 a, f64x2 b, f64x2 c)
     {
         // a - b * c
-        return wasm_f64x2_relaxed_nmadd(a, b, c);
+        return wasm_f64x2_sub(a, wasm_f64x2_mul(b, c));
     }
 
     static inline f64x2 nmsub(f64x2 a, f64x2 b, f64x2 c)
     {
         // -(a + b * c)
-        return wasm_f64x2_neg(wasm_f64x2_relaxed_madd(a, b, c));
+        return wasm_f64x2_neg(wasm_f64x2_add(a, wasm_f64x2_mul(b, c)));
     }
 
     static inline f64x2 lerp(f64x2 a, f64x2 b, f64x2 s)
@@ -542,7 +542,7 @@ namespace mango::simd
 
     static inline f64x2 rcp(f64x2 a)
     {
-        return wasm_f32x2_div(wasm_f64x2_const_splat(1.0f), a);
+        return wasm_f64x2_div(wasm_f64x2_const_splat(1.0f), a);
     }
 
     static inline f64x2 rsqrt(f64x2 a)
@@ -552,7 +552,7 @@ namespace mango::simd
 
     static inline f64x2 sqrt(f64x2 a)
     {
-        return wasm_f64x2_sqrt(a, b);
+        return wasm_f64x2_sqrt(a);
     }
 
     static inline f64 dot2(f64x2 a, f64x2 b)

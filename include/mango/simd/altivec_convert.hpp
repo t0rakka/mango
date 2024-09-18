@@ -932,10 +932,10 @@ namespace mango::simd
     template <>
     inline f32x4 convert<f32x4>(f16x4 s)
     {
-        f16 x = u16(s.data >>  0) & 0xffff;
-        f16 y = u16(s.data >> 16) & 0xffff;
-        f16 z = u16(s.data >> 32) & 0xffff;
-        f16 w = u16(s.data >> 48) & 0xffff;
+        f16 x = u16((s.data >>  0) & 0xffff);
+        f16 y = u16((s.data >> 16) & 0xffff);
+        f16 z = u16((s.data >> 32) & 0xffff);
+        f16 w = u16((s.data >> 48) & 0xffff);
         return f32x4_set(x, y, z, w);
     }
 

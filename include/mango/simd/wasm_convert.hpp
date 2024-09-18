@@ -5,6 +5,7 @@
 #pragma once
 
 #include <mango/simd/simd.hpp>
+#include <mango/simd/common.hpp>
 
 namespace mango::simd::detail
 {
@@ -246,7 +247,7 @@ namespace mango::simd
 
     static inline s16x16 extend16x16(s8x16 s)
     {
-        u16x16 result;
+        s16x16 result;
         result.data[0] = wasm_i16x8_extend_low_i8x16(s);
         result.data[1] = wasm_i16x8_extend_high_i8x16(s);
         return result;
@@ -254,7 +255,7 @@ namespace mango::simd
 
     static inline s32x8 extend32x8(s8x16 s)
     {
-        u32x8 result;
+        s32x8 result;
         result.data[0] = wasm_i32x4_extend_low_i16x8(s);
         result.data[1] = wasm_i32x4_extend_high_i16x8(s);
         return result;
@@ -264,7 +265,7 @@ namespace mango::simd
     {
         const v128_t zero = wasm_v128_xor(s, s);
         const v128_t sign = wasm_i8x16_gt(zero, s);
-        u64x4 result;
+        s64x4 result;
         result.data[0] = wasm_i8x16_shuffle(s, sign, 0, 16, 16, 16, 16, 16, 16, 16, 1, 16, 16, 16, 16, 16, 16, 16);
         result.data[1] = wasm_i8x16_shuffle(s, sign, 2, 16, 16, 16, 16, 16, 16, 16, 3, 16, 16, 16, 16, 16, 16, 16);
         return result;
@@ -274,7 +275,7 @@ namespace mango::simd
     {
         const v128_t zero = wasm_v128_xor(s, s);
         const v128_t sign = wasm_i16x8_gt(zero, s);
-        u32x8 result;
+        s32x8 result;
         result.data[0] = wasm_i16x8_shuffle(s, sign, 0, 8, 1, 8, 2, 8, 3, 8);
         result.data[1] = wasm_i16x8_shuffle(s, sign, 4, 8, 5, 8, 6, 8, 7, 8);
         return result;
@@ -284,7 +285,7 @@ namespace mango::simd
     {
         const v128_t zero = wasm_v128_xor(s, s);
         const v128_t sign = wasm_i16x8_gt(zero, s);
-        u64x4 result;
+        s64x4 result;
         result.data[0] = wasm_i16x8_shuffle(s, sign, 0, 8, 8, 8, 1, 8, 8, 8);
         result.data[1] = wasm_i16x8_shuffle(s, sign, 2, 8, 8, 8, 3, 8, 8, 8);
         return result;
@@ -292,7 +293,7 @@ namespace mango::simd
 
     static inline s64x4 extend64x4(s32x4 s)
     {
-        u64x4 result;
+        s64x4 result;
         result.data[0] = wasm_i64x2_extend_low_i32x4(s);
         result.data[1] = wasm_i64x2_extend_high_i32x4(s);
         return result;
@@ -457,7 +458,7 @@ namespace mango::simd
         s32 y = s32(get_component<1>(s));
         s32 z = s32(get_component<2>(s));
         s32 w = s32(get_component<3>(s));
-        return u32x4_set(x, y, z, w);
+        return s32x4_set(x, y, z, w);
     }
 
     template <>
@@ -627,7 +628,7 @@ namespace mango::simd
     template <>
     inline s32x4 truncate<s32x4>(f64x4 s)
     {
-        s = truncate(s);
+        s = trunc(s);
         s32 x = s32(get_component<0>(s));
         s32 y = s32(get_component<1>(s));
         s32 z = s32(get_component<2>(s));
@@ -649,7 +650,7 @@ namespace mango::simd
     template <>
     inline u32x4 convert<u32x4>(f64x4 s)
     {
-        d = round(d);
+        s = round(s);
         u32 x = u32(get_component<0>(s));
         u32 y = u32(get_component<1>(s));
         u32 z = u32(get_component<2>(s));
@@ -846,10 +847,10 @@ namespace mango::simd
     template <>
     inline f32x4 convert<f32x4>(f16x4 s)
     {
-        f16 x = u16(s.data >>  0) & 0xffff;
-        f16 y = u16(s.data >> 16) & 0xffff;
-        f16 z = u16(s.data >> 32) & 0xffff;
-        f16 w = u16(s.data >> 48) & 0xffff;
+        f16 x = u16((s.data >>  0) & 0xffff);
+        f16 y = u16((s.data >> 16) & 0xffff);
+        f16 z = u16((s.data >> 32) & 0xffff);
+        f16 w = u16((s.data >> 48) & 0xffff);
         return f32x4_set(x, y, z, w);
     }
 
