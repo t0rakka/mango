@@ -116,14 +116,16 @@ namespace mango::simd
     }
 
     static inline u8x32 u8x32_set(
-        u8 s00, u8 s01, u8 s02, u8 s03, u8 s04, u8 s05, u8 s06, u8 s07,
-        u8 s08, u8 s09, u8 s10, u8 s11, u8 s12, u8 s13, u8 s14, u8 s15,
-        u8 s16, u8 s17, u8 s18, u8 s19, u8 s20, u8 s21, u8 s22, u8 s23,
-        u8 s24, u8 s25, u8 s26, u8 s27, u8 s28, u8 s29, u8 s30, u8 s31)
+        u8 v00, u8 v01, u8 v02, u8 v03, u8 v04, u8 v05, u8 v06, u8 v07,
+        u8 v08, u8 v09, u8 v10, u8 v11, u8 v12, u8 v13, u8 v14, u8 v15,
+        u8 v16, u8 v17, u8 v18, u8 v19, u8 v20, u8 v21, u8 v22, u8 v23,
+        u8 v24, u8 v25, u8 v26, u8 v27, u8 v28, u8 v29, u8 v30, u8 v31)
     {
         u8x32 result;
-        result.data[0] = u8x16_set(s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15);
-        result.data[1] = u8x16_set(s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
+        result.data[0] = u8x16_set(v00, v01, v02, v03, v04, v05, v06, v07,
+                                   v08, v09, v10, v11, v12, v13, v14, v15);
+        result.data[1] = u8x16_set(v16, v17, v18, v19, v20, v21, v22, v23,
+                                   v24, v25, v26, v27, v28, v29, v30, v31);
         return result;
     }
 
@@ -215,12 +217,12 @@ namespace mango::simd
     }
 
     static inline u16x16 u16x16_set(
-        u16 s00, u16 s01, u16 s02, u16 s03, u16 s04, u16 s05, u16 s06, u16 s07,
-        u16 s08, u16 s09, u16 s10, u16 s11, u16 s12, u16 s13, u16 s14, u16 s15)
+        u16 v00, u16 v01, u16 v02, u16 v03, u16 v04, u16 v05, u16 v06, u16 v07,
+        u16 v08, u16 v09, u16 v10, u16 v11, u16 v12, u16 v13, u16 v14, u16 v15)
     {
         u16x16 result;
-        result.data[0] = u16x8_set(s00, s01, s02, s03, s04, s05, s06, s07);
-        result.data[1] = u16x8_set(s08, s09, s10, s11, s12, s13, s14, s15);
+        result.data[0] = u16x8_set(v00, v01, v02, v03, v04, v05, v06, v07);
+        result.data[1] = u16x8_set(v08, v09, v10, v11, v12, v13, v14, v15);
         return result;
     }
 
@@ -367,11 +369,11 @@ namespace mango::simd
         return result;
     }
 
-    static inline u32x8 u32x8_set(u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7)
+    static inline u32x8 u32x8_set(u32 v0, u32 v1, u32 v2, u32 v3, u32 v4, u32 v5, u32 v6, u32 v7)
     {
         u32x8 result;
-        result.data[0] = u32x4_set(s0, s1, s2, s3);
-        result.data[1] = u32x4_set(s4, s5, s6, s7);
+        result.data[0] = u32x4_set(v0, v1, v2, v3);
+        result.data[1] = u32x4_set(v4, v5, v6, v7);
         return result;
     }
 
@@ -671,14 +673,16 @@ namespace mango::simd
     }
 
     static inline s8x32 s8x32_set(
-        s8 s00, s8 s01, s8 s02, s8 s03, s8 s04, s8 s05, s8 s06, s8 s07, 
-        s8 s08, s8 s09, s8 s10, s8 s11, s8 s12, s8 s13, s8 s14, s8 s15,
-        s8 s16, s8 s17, s8 s18, s8 s19, s8 s20, s8 s21, s8 s22, s8 s23, 
-        s8 s24, s8 s25, s8 s26, s8 s27, s8 s28, s8 s29, s8 s30, s8 s31)
+        s8 v00, s8 v01, s8 v02, s8 v03, s8 v04, s8 v05, s8 v06, s8 v07,
+        s8 v08, s8 v09, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15,
+        s8 v16, s8 v17, s8 v18, s8 v19, s8 v20, s8 v21, s8 v22, s8 v23,
+        s8 v24, s8 v25, s8 v26, s8 v27, s8 v28, s8 v29, s8 v30, s8 v31)
     {
         s8x32 result;
-        result.data[0] = s8x16_set(s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15);
-        result.data[1] = s8x16_set(s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
+        result.data[0] = s8x16_set(v00, v01, v02, v03, v04, v05, v06, v07,
+                                   v08, v09, v10, v11, v12, v13, v14, v15);
+        result.data[1] = s8x16_set(v16, v17, v18, v19, v20, v21, v22, v23,
+                                   v24, v25, v26, v27, v28, v29, v30, v31);
         return result;
     }
 
@@ -774,12 +778,12 @@ namespace mango::simd
     }
 
     static inline s16x16 s16x16_set(
-        s16 s00, s16 s01, s16 s02, s16 s03, s16 s04, s16 s05, s16 s06, s16 s07,
-        s16 s08, s16 s09, s16 s10, s16 s11, s16 s12, s16 s13, s16 s14, s16 s15)
+        s16 v00, s16 v01, s16 v02, s16 v03, s16 v04, s16 v05, s16 v06, s16 v07,
+        s16 v08, s16 v09, s16 v10, s16 v11, s16 v12, s16 v13, s16 v14, s16 v15)
     {
         s16x16 result;
-        result.data[0] = s16x8_set(s00, s01, s02, s03, s04, s05, s06, s07);
-        result.data[1] = s16x8_set(s08, s09, s10, s11, s12, s13, s14, s15);
+        result.data[0] = s16x8_set(v00, v01, v02, v03, v04, v05, v06, v07);
+        result.data[1] = s16x8_set(v08, v09, v10, v11, v12, v13, v14, v15);
         return result;
     }
 
@@ -937,11 +941,11 @@ namespace mango::simd
         return result;
     }
 
-    static inline s32x8 s32x8_set(s32 s0, s32 s1, s32 s2, s32 s3, s32 s4, s32 s5, s32 s6, s32 s7)
+    static inline s32x8 s32x8_set(s32 v0, s32 v1, s32 v2, s32 v3, s32 v4, s32 v5, s32 v6, s32 v7)
     {
         s32x8 result;
-        result.data[0] = s32x4_set(s0, s1, s2, s3);
-        result.data[1] = s32x4_set(s4, s5, s6, s7);
+        result.data[0] = s32x4_set(v0, v1, v2, v3);
+        result.data[1] = s32x4_set(v4, v5, v6, v7);
         return result;
     }
 
