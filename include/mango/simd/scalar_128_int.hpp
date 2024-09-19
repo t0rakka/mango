@@ -39,10 +39,10 @@ namespace mango::simd
     }
 
     static inline u8x16 u8x16_set(
-        u8 s0, u8 s1, u8 s2, u8 s3, u8 s4, u8 s5, u8 s6, u8 s7,
-        u8 s8, u8 s9, u8 s10, u8 s11, u8 s12, u8 s13, u8 s14, u8 s15)
+        u8 v00, u8 v01, u8 v02, u8 v03, u8 v04, u8 v05, u8 v06, u8 v07,
+        u8 v08, u8 v09, u8 v10, u8 v11, u8 v12, u8 v13, u8 v14, u8 v15)
     {
-        return {{ s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15 }};
+        return {{ v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15 }};
     }
 
     static inline u8x16 u8x16_uload(const void* source)
@@ -207,9 +207,9 @@ namespace mango::simd
         return detail::scalar_set<u16, 8>(s);
     }
 
-    static inline u16x8 u16x8_set(u16 s0, u16 s1, u16 s2, u16 s3, u16 s4, u16 s5, u16 s6, u16 s7)
+    static inline u16x8 u16x8_set(u16 v0, u16 v1, u16 v2, u16 v3, u16 v4, u16 v5, u16 v6, u16 v7)
     {
-        return {{ s0, s1, s2, s3, s4, s5, s6, s7 }};
+        return {{ v0, v1, v2, v3, v4, v5, v6, v7 }};
     }
 
     static inline u16x8 u16x8_uload(const void* source)
@@ -386,7 +386,7 @@ namespace mango::simd
     {
         return detail::scalar_shift_right<u16x8, s16>(a, count);
     }
-    
+
     // -----------------------------------------------------------------
     // u32x4
     // -----------------------------------------------------------------
@@ -833,10 +833,10 @@ namespace mango::simd
     }
 
     static inline s8x16 s8x16_set(
-        s8 v0, s8 v1, s8 v2, s8 v3, s8 v4, s8 v5, s8 v6, s8 v7,
-        s8 v8, s8 v9, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
+        s8 v00, s8 v01, s8 v02, s8 v03, s8 v04, s8 v05, s8 v06, s8 v07,
+        s8 v08, s8 v09, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15)
     {
-        return {{ v0, v1, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15 }};
+        return {{ v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15 }};
     }
 
     static inline s8x16 s8x16_uload(const void* source)
@@ -1011,9 +1011,9 @@ namespace mango::simd
         return detail::scalar_set<s16, 8>(s);
     }
 
-    static inline s16x8 s16x8_set(s16 s0, s16 s1, s16 s2, s16 s3, s16 s4, s16 s5, s16 s6, s16 s7)
+    static inline s16x8 s16x8_set(s16 v0, s16 v1, s16 v2, s16 v3, s16 v4, s16 v5, s16 v6, s16 v7)
     {
-        return {{ s0, s1, s2, s3, s4, s5, s6, s7 }};
+        return {{ v0, v1, v2, v3, v4, v5, v6, v7 }};
     }
 
     static inline s16x8 s16x8_uload(const void* source)

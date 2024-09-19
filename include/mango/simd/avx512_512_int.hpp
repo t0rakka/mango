@@ -272,14 +272,14 @@ namespace mango::simd
     }
 
     static inline u16x32 u16x32_set(
-        u16 s00, u16 s01, u16 s02, u16 s03, u16 s04, u16 s05, u16 s06, u16 s07, 
-        u16 s08, u16 s09, u16 s10, u16 s11, u16 s12, u16 s13, u16 s14, u16 s15,
-        u16 s16, u16 s17, u16 s18, u16 s19, u16 s20, u16 s21, u16 s22, u16 s23, 
-        u16 s24, u16 s25, u16 s26, u16 s27, u16 s28, u16 s29, u16 s30, u16 s31)
+        u16 v00, u16 v01, u16 v02, u16 v03, u16 v04, u16 v05, u16 v06, u16 v07,
+        u16 v08, u16 v09, u16 v10, u16 v11, u16 v12, u16 v13, u16 v14, u16 v15,
+        u16 v16, u16 v17, u16 v18, u16 v19, u16 v20, u16 v21, u16 v22, u16 v23,
+        u16 v24, u16 v25, u16 v26, u16 v27, u16 v28, u16 v29, u16 v30, u16 v31)
     {
         return _mm512_set_epi16(
-            s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15, 
-            s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31);
+            v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15,
+            v16, v17, v18, v19, v20, v21, v22, v23, v24, v25, v26, v27, v28, v29, v30, v31);
     }
 
     static inline u16x32 u16x32_uload(const void* source)
@@ -518,10 +518,11 @@ namespace mango::simd
     }
 
     static inline u32x16 u32x16_set(
-        u32 s0, u32 s1, u32 s2, u32 s3, u32 s4, u32 s5, u32 s6, u32 s7,
-        u32 s8, u32 s9, u32 s10, u32 s11, u32 s12, u32 s13, u32 s14, u32 s15)
+        u32 v00, u32 v01, u32 v02, u32 v03, u32 v04, u32 v05, u32 v06, u32 v07,
+        u32 v08, u32 v09, u32 v10, u32 v11, u32 v12, u32 v13, u32 v14, u32 v15)
     {
-        return _mm512_setr_epi32(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15);
+        return _mm512_setr_epi32(v00, v01, v02, v03, v04, v05, v06, v07,
+                                 v08, v09, v10, v11, v12, v13, v14, v15);
     }
 
     static inline u32x16 u32x16_uload(const void* source)
@@ -783,9 +784,9 @@ namespace mango::simd
         return _mm512_set1_epi64(s);
     }
 
-    static inline u64x8 u64x8_set(u64 s0, u64 s1, u64 s2, u64 s3, u64 s4, u64 s5, u64 s6, u64 s7)
+    static inline u64x8 u64x8_set(u64 v0, u64 v1, u64 v2, u64 v3, u64 v4, u64 v5, u64 v6, u64 v7)
     {
-        return _mm512_setr_epi64(s0, s1, s2, s3, s4, s5, s6, s7);
+        return _mm512_setr_epi64(v0, v1, v2, v3, v4, v5, v6, v7);
     }
 
     static inline u64x8 u64x8_uload(const void* source)
@@ -1490,10 +1491,11 @@ namespace mango::simd
     }
 
     static inline s32x16 s32x16_set(
-        s32 v0, s32 v1, s32 v2, s32 v3, s32 v4, s32 v5, s32 v6, s32 v7,
-        s32 v8, s32 v9, s32 v10, s32 v11, s32 v12, s32 v13, s32 v14, s32 v15)
+        s32 v00, s32 v01, s32 v02, s32 v03, s32 v04, s32 v05, s32 v06, s32 v07,
+        s32 v08, s32 v09, s32 v10, s32 v11, s32 v12, s32 v13, s32 v14, s32 v15)
     {
-        return _mm512_setr_epi32(v0, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15);
+        return _mm512_setr_epi32(v00, v01, v02, v03, v04, v05, v06, v07,
+                                 v08, v09, v10, v11, v12, v13, v14, v15);
     }
 
     static inline s32x16 s32x16_uload(const void* source)
@@ -1788,9 +1790,9 @@ namespace mango::simd
         return _mm512_set1_epi64(s);
     }
 
-    static inline s64x8 s64x8_set(s64 s0, s64 s1, s64 s2, s64 s3, s64 s4, s64 s5, s64 s6, s64 s7)
+    static inline s64x8 s64x8_set(s64 v0, s64 v1, s64 v2, s64 v3, s64 v4, s64 v5, s64 v6, s64 v7)
     {
-        return _mm512_setr_epi64(s0, s1, s2, s3, s4, s5, s6, s7);
+        return _mm512_setr_epi64(v0, v1, v2, v3, v4, v5, v6, v7);
     }
 
     static inline s64x8 s64x8_uload(const void* source)
