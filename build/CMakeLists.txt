@@ -306,11 +306,20 @@ FILE(GLOB EXTERNAL_UNRAR
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp"
 )
+
+if (WIN32)
+FILE(GLOB_RECURSE EXTERNAL_ZSTD
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
+)
+else ()
 FILE(GLOB_RECURSE EXTERNAL_ZSTD
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.S"
 )
+endif ()
+
 FILE(GLOB_RECURSE EXTERNAL_WEBP
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.c"
@@ -361,6 +370,8 @@ SOURCE_GROUP("external" FILES
 # ------------------------------------------------------------------------------
 # libraries
 # ------------------------------------------------------------------------------
+
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 add_library(mango
     ${MAIN_HEADER}
