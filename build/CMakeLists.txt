@@ -371,7 +371,9 @@ SOURCE_GROUP("external" FILES
 # libraries
 # ------------------------------------------------------------------------------
 
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+if (BUILD_SHARED_LIBS AND COMPILER_MSVC)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif ()
 
 add_library(mango
     ${MAIN_HEADER}
