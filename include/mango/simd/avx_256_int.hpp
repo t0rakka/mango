@@ -969,8 +969,8 @@ namespace mango::simd
     }
 
     static inline s16x16 s16x16_set(
-        s16 v00, s16 v01, s16 v02, s16 v03, v16 v04, s16 v05, s16 v06, s16 v07,
-        s16 v08, s16 v09, s16 v10, s16 v11, v16 v12, s16 v13, s16 v14, s16 v15)
+        s16 v00, s16 v01, s16 v02, s16 v03, s16 v04, s16 v05, s16 v06, s16 v07,
+        s16 v08, s16 v09, s16 v10, s16 v11, s16 v12, s16 v13, s16 v14, s16 v15)
     {
         s16x16 result;
         result.data[0] = s16x8_set(v00, v01, v02, v03, v04, v05, v06, v07);
