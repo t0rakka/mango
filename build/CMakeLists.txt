@@ -438,8 +438,8 @@ if (APPLE)
         target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
     endif ()
 
-    target_compile_options(mango PUBLIC "-mmacosx-version-min=10.13")
-    target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.13")
+    target_compile_options(mango PUBLIC "-mmacosx-version-min=10.15")
+    target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.15")
 endif ()
 
 # add "-lpthread" linker option when platform has support
