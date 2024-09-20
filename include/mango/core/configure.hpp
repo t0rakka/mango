@@ -380,6 +380,13 @@
         #endif
     #endif
 
+    // SSE2 enabled with /arch:SSE2 is visible like this
+    #if _M_IX86_FP == 2
+        #ifndef __SSE2__
+        #define __SSE2__
+        #endif
+    #endif
+
     // AVX and AVX2 include support for these
     #if defined(__AVX__) || defined(__AVX2__)
 
@@ -414,7 +421,7 @@
 
     #endif
 
-    #if defined(MANGO_CPU_INTEL) && (_MSC_VER >= 1920)
+    #if defined(MANGO_CPU_INTEL) && defined(MANGO_CPU_64BIT) && (_MSC_VER >= 1920)
         // 1920: Visual Studio 2019 (14.20)
 
         #ifndef __AES__
