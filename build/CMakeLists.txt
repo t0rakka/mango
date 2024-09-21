@@ -306,11 +306,20 @@ FILE(GLOB EXTERNAL_UNRAR
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp"
 )
+
+if (WIN32)
+FILE(GLOB_RECURSE EXTERNAL_ZSTD
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
+)
+else ()
 FILE(GLOB_RECURSE EXTERNAL_ZSTD
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.S"
 )
+endif ()
+
 FILE(GLOB_RECURSE EXTERNAL_WEBP
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.c"
@@ -361,6 +370,10 @@ SOURCE_GROUP("external" FILES
 # ------------------------------------------------------------------------------
 # libraries
 # ------------------------------------------------------------------------------
+
+if (BUILD_SHARED_LIBS AND COMPILER_MSVC)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif ()
 
 add_library(mango
     ${MAIN_HEADER}
@@ -460,6 +473,7 @@ if (EMSCRIPTEN)
 elseif (COMPILER_MSVC)
 
     target_compile_options(mango PUBLIC "/DUNICODE")
+    target_compile_options(mango PUBLIC "/MP")
 
     if (ENABLE_AVX512)
         message(STATUS "SIMD: AVX-512 (2015)")
@@ -470,6 +484,13 @@ elseif (COMPILER_MSVC)
     elseif (ENABLE_AVX)
         message(STATUS "SIMD: AVX (2008)")
         target_compile_options(mango PUBLIC "/arch:AVX")
+    elseif (ENABLE_SSE2 OR ENABLE_SSE4)
+        # MSVC does not have SSE4 compiler switch; at least enable SSE2
+        message(STATUS "SIMD: SSE2 (2001)")
+        if (WIN32)
+            # MSVC enables SSE2 by default on X86_64
+            target_compile_options(mango PUBLIC "/arch:SSE2")
+        endif ()
     endif ()
 
 else ()
