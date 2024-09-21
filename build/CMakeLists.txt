@@ -307,15 +307,17 @@ FILE(GLOB EXTERNAL_UNRAR
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp"
 )
 
-FILE(GLOB_RECURSE EXTERNAL_ZSTD
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
-)
 if (X86_64)
-    set(${EXTERNAL_ZSTD}
-        FILE(GLOB EXTERNAL_ZSTD
-            "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.S"
-        ))
+    FILE(GLOB_RECURSE EXTERNAL_ZSTD
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.S"
+    )
+else ()
+    FILE(GLOB_RECURSE EXTERNAL_ZSTD
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
+    )
 endif ()
 
 FILE(GLOB_RECURSE EXTERNAL_WEBP
