@@ -307,17 +307,15 @@ FILE(GLOB EXTERNAL_UNRAR
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp"
 )
 
-if (WIN32)
 FILE(GLOB_RECURSE EXTERNAL_ZSTD
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
 )
-else ()
-FILE(GLOB_RECURSE EXTERNAL_ZSTD
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.S"
-)
+if (X86_64)
+    set(${EXTERNAL_ZSTD}
+        FILE(GLOB EXTERNAL_ZSTD
+            "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.S"
+        ))
 endif ()
 
 FILE(GLOB_RECURSE EXTERNAL_WEBP
@@ -462,6 +460,21 @@ if (CMAKE_THREAD_LIBS_INIT)
 endif ()
 
 # ------------------------------------------------------------------------------
+# external libraries
+# ------------------------------------------------------------------------------
+
+if (BUILD_SHARED_LIBS AND WIN32)
+
+    find_package(OpenGL REQUIRED)
+
+    if (OPENGL_FOUND)
+        message(STATUS "OpenGL: FOUND")
+        target_link_libraries(mango ${OPENGL_gl_LIBRARY})
+    endif()
+
+endif ()
+
+# ------------------------------------------------------------------------------
 # configuration
 # ------------------------------------------------------------------------------
 
@@ -487,7 +500,7 @@ elseif (COMPILER_MSVC)
     elseif (ENABLE_SSE2 OR ENABLE_SSE4)
         # MSVC does not have SSE4 compiler switch; at least enable SSE2
         message(STATUS "SIMD: SSE2 (2001)")
-        if (WIN32)
+        if (NOT X86_64)
             # MSVC enables SSE2 by default on X86_64
             target_compile_options(mango PUBLIC "/arch:SSE2")
         endif ()
