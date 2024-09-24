@@ -98,25 +98,33 @@
     // GLX | EGL
     // -----------------------------------------------------------------------
 
-    #if defined(MANGO_ENABLE_EGL)
-        #define MANGO_OPENGL_CONTEXT_EGL
-    #endif
+    #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
-    #define MANGO_OPENGL_CONTEXT_GLX
-    #define MANGO_OPENGL_FRAMEBUFFER
-    #define MANGO_OPENGL_JPEG
+        #if defined(MANGO_ENABLE_EGL)
+            #define MANGO_OPENGL_CONTEXT_EGL
+        #endif
 
-    #define GL_GLEXT_PROTOTYPES
-    #include <GL/gl.h>
-    #include <GL/glext.h>
+        #define MANGO_OPENGL_CONTEXT_GLX
+        #define MANGO_OPENGL_FRAMEBUFFER
+        #define MANGO_OPENGL_JPEG
 
-    #define GLX_GLXEXT_PROTOTYPES
-    #include <GL/glx.h>
-    #include <GL/glxext.h>
-    #if defined(Status)
-        #undef Status
-        typedef int Status;
-    #endif
+        #define GL_GLEXT_PROTOTYPES
+        #include <GL/gl.h>
+        #include <GL/glext.h>
+
+        #define GLX_GLXEXT_PROTOTYPES
+        #include <GL/glx.h>
+        #include <GL/glxext.h>
+        #if defined(Status)
+            #undef Status
+            typedef int Status;
+        #endif
+
+    #else
+
+        #define MANGO_OPENGL_CONTEXT_NONE
+
+    #endif // MANGO_WINDOW_SYSTEM_XLIB
 
 #else
 

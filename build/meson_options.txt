@@ -18,3 +18,6 @@ option('enable_fma',                type : 'boolean', value : false, description
 
 # Shared
 option('disable_simd',              type : 'boolean', value : false, description : 'Disable SIMD' )
+
+# OpenGL
+option('enable_xlib',               type : 'boolean', value : true, description : 'Enable XLIB' )

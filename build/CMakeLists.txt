@@ -536,7 +536,7 @@ else ()
         endif ()
     endif ()
 
-    if ((X86 OR X86_64) AND (NOT EMSCRIPTEN))
+    if (X86 OR X86_64)
         # enable AES (2008) by default
         target_compile_options(mango PUBLIC "-maes")
 

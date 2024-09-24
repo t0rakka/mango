@@ -39,6 +39,20 @@ enable_bmi2      = get_option('enable_bmi2')
 enable_fma       = get_option('enable_fma')
 enable_sha       = get_option('enable_sha')
 
+if host_machine.cpu_family() == 'x86'
+    #enable_sse2      = controlled by user
+    enable_sse4      = false
+    enable_avx       = false
+    enable_avx2      = false
+    enable_avx512    = false
+    enable_neon      = false
+    enable_f16c      = false
+    enable_bmi       = false
+    enable_bmi2      = false
+    enable_fma       = false
+    enable_sha       = false
+endif
+
 is_arm = host_machine.cpu_family() == 'arm' or host_machine.cpu_family() == 'aarch64'
 is_x86 = host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
 
@@ -1123,11 +1137,10 @@ endif
 # ------------------------------------------------------------------------------
 
 threads_dep = dependency('threads')
-opengl_dep = dependency('gl', required: false)
 
 mango_deps             = [ threads_dep ]
 mango_public_deps      = [ ]
-mango_opengl_deps      = [ opengl_dep ]
+mango_opengl_deps      = [ ]
 mango_import3d_deps    = [ ]
 
 egl_dep = dependency('egl', version: '>=1.4', required: false)
@@ -1146,12 +1159,24 @@ if is_darwin
     mango_opengl_deps += [ apple_frameworks ]
 endif
 
+opengl_dep = dependency('gl', required: false)
+if opengl_dep.found()
+    mango_opengl_deps += opengl_dep
+endif
+
+enable_xlib = get_option('enable_xlib')
+
 if is_linux
     m_dep = cpp.find_library('m', required : true)
-    x11_dep = cpp.find_library('X11', required : true)
     mango_deps += [ m_dep ]
     mango_public_deps += [ m_dep ]
-    mango_opengl_deps += [ x11_dep ]
+
+    if opengl_dep.found() and enable_xlib
+        x11_dep = cpp.find_library('X11', required : true)
+        mango_opengl_deps += [ x11_dep ]
+        add_project_arguments('-DMANGO_ENABLE_XLIB', language: ['cpp'])
+    endif
+
 endif
 
 # ------------------------------------------------------------------------------

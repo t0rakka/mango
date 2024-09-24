@@ -136,7 +136,12 @@
     #define MANGO_PLATFORM_LINUX
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "Linux"
-    #define MANGO_WINDOW_SYSTEM_XLIB
+
+    #if defined(MANGO_ENABLE_XLIB)
+        #define MANGO_WINDOW_SYSTEM_XLIB
+    #else
+        #define MANGO_WINDOW_SYSTEM_NONE
+    #endif
     //#define MANGO_WINDOW_SYSTEM_XCB
     //#define MANGO_WINDOW_SYSTEM_WAYLAND
 
@@ -182,7 +187,12 @@
     #define MANGO_PLATFORM_IRIX
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "SGI IRIX"
-    #define MANGO_WINDOW_SYSTEM_XLIB
+
+    #if defined(MANGO_ENABLE_XLIB)
+        #define MANGO_WINDOW_SYSTEM_XLIB
+    #else
+        #define MANGO_WINDOW_SYSTEM_NONE
+    #endif
 
 #elif defined(EMSCRIPTEN)
 
