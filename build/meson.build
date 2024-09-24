@@ -1164,7 +1164,10 @@ if opengl_dep.found()
     mango_opengl_deps += opengl_dep
 endif
 
-enable_xlib = get_option('enable_xlib')
+window_library = get_option('window_library')
+if window_library == 'xlib'
+    enable_xlib = true
+endif
 
 if is_linux
     m_dep = cpp.find_library('m', required : true)
@@ -1175,6 +1178,7 @@ if is_linux
         x11_dep = cpp.find_library('X11', required : true)
         mango_opengl_deps += [ x11_dep ]
         add_project_arguments('-DMANGO_ENABLE_XLIB', language: ['cpp'])
+        message('Enable: XLIB')
     endif
 
 endif
