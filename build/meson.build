@@ -1169,15 +1169,15 @@ opengl_dep = dependency('gl', required: false)
 if opengl_dep.found()
     mango_opengl_deps += opengl_dep
 
-    window_library = get_option('window_library')
-    if window_library == 'xlib'
+    display_library = get_option('display_library')
+    if display_library == 'xlib'
         x11_dep = cpp.find_library('X11', required : true)
         mango_opengl_deps += [ x11_dep ]
         add_project_arguments('-DMANGO_ENABLE_XLIB', language: ['cpp'])
         message('Enable: XLIB')
-    elif window_library == 'xcb'
+    elif display_library == 'xcb'
         # TODO: XCB
-    elif window_library == 'wayland'
+    elif display_library == 'wayland'
         # TODO: WAYLAND
     endif
 endif
