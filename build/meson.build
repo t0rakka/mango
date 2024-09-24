@@ -40,7 +40,7 @@ enable_fma       = get_option('enable_fma')
 enable_sha       = get_option('enable_sha')
 
 if host_machine.cpu_family() == 'x86'
-    #enable_sse2      = controlled by user
+    enable_sse2      = enable_sse2 or enable_sse4 or enable_avx or enable_avx2 or enable_avx512
     enable_sse4      = false
     enable_avx       = false
     enable_avx2      = false
@@ -1143,15 +1143,15 @@ mango_public_deps      = [ ]
 mango_opengl_deps      = [ ]
 mango_import3d_deps    = [ ]
 
-egl_dep = dependency('egl', version: '>=1.4', required: false)
-if egl_dep.found()
-    add_project_arguments('-DMANGO_ENABLE_EGL', language: ['cpp'])
-    mango_opengl_deps += egl_dep
-endif
-
 if not is_windows
     dl_dep = cpp.find_library('dl', required : false)
     mango_deps += [ dl_dep ]
+endif
+
+if is_linux
+    m_dep = cpp.find_library('m', required : true)
+    mango_deps += [ m_dep ]
+    mango_public_deps += [ m_dep ]
 endif
 
 if is_darwin
@@ -1159,28 +1159,27 @@ if is_darwin
     mango_opengl_deps += [ apple_frameworks ]
 endif
 
+egl_dep = dependency('egl', version: '>=1.4', required: false)
+if egl_dep.found()
+    add_project_arguments('-DMANGO_ENABLE_EGL', language: ['cpp'])
+    mango_opengl_deps += egl_dep
+endif
+
 opengl_dep = dependency('gl', required: false)
 if opengl_dep.found()
     mango_opengl_deps += opengl_dep
-endif
 
-window_library = get_option('window_library')
-if window_library == 'xlib'
-    enable_xlib = true
-endif
-
-if is_linux
-    m_dep = cpp.find_library('m', required : true)
-    mango_deps += [ m_dep ]
-    mango_public_deps += [ m_dep ]
-
-    if opengl_dep.found() and enable_xlib
+    window_library = get_option('window_library')
+    if window_library == 'xlib'
         x11_dep = cpp.find_library('X11', required : true)
         mango_opengl_deps += [ x11_dep ]
         add_project_arguments('-DMANGO_ENABLE_XLIB', language: ['cpp'])
         message('Enable: XLIB')
+    elif window_library == 'xcb'
+        # TODO: XCB
+    elif window_library == 'wayland'
+        # TODO: WAYLAND
     endif
-
 endif
 
 # ------------------------------------------------------------------------------

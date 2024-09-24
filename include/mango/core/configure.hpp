@@ -139,11 +139,13 @@
 
     #if defined(MANGO_ENABLE_XLIB)
         #define MANGO_WINDOW_SYSTEM_XLIB
+    #elif defined(MANGO_ENABLE_XCB)
+        #define MANGO_WINDOW_SYSTEM_XCB
+    #elif defined(MANGO_ENABLE_WAYLAND)
+        #define MANGO_WINDOW_SYSTEM_WAYLAND
     #else
         #define MANGO_WINDOW_SYSTEM_NONE
     #endif
-    //#define MANGO_WINDOW_SYSTEM_XCB
-    //#define MANGO_WINDOW_SYSTEM_WAYLAND
 
     #include <stdint.h>
     #include <malloc.h>

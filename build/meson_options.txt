@@ -18,4 +18,4 @@ option('enable_fma',                type : 'boolean', value : false, description
 
 # Miscallaneous Options
 option('disable_simd',              type : 'boolean', value : false, description : 'Disable SIMD' )
-option('window_library',            type : 'string', value : 'xlib', description : 'Window Library' )
+option('window_library',            type : 'combo', choices: ['xlib', 'xcb', 'wayland', 'none'], description: 'Library for communicating with the window system')
