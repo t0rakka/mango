@@ -9,21 +9,14 @@ The library does come with many ways to compile itself; hopefully one of them wo
 
 0. You should be in the build/ folder
 
-1. meson setup --buildtype=release temp
+1. meson setup temp
 2. cd temp
 3. ninja
 4. sudo ninja install
 
-NOTE! On some distributions it seems libdir might get unwanted decorations, if this
-      occurs and want, for example /usr/local/lib replace step 1 with this:
-
-1. meson setup --buildtype=release --libdir=lib temp
-
 ------------------------------------------------------------------------------------------------
 * CMAKE!
 ------------------------------------------------------------------------------------------------
-
-This is probably the most generic build script we have; it has been tested on Linux, Windows and macOS.
 
 0. You should be in the build/ folder
 
@@ -46,15 +39,19 @@ Select compiler:
 * CMAKE + Emscripten
 ------------------------------------------------------------------------------------------------
 
-Replace step 3 of cmake with this:
+0. You should be in the build/ folder
 
-    emcmake cmake ..
+1. mkdir temp
+2. cd temp
+3. emcmake cmake ..
+4. make -j20
+5. sudo make install
 
 ------------------------------------------------------------------------------------------------
 * XCODE!!!
 ------------------------------------------------------------------------------------------------
 
-Load the xcode project and build for release.
+Load the xcode project and build for release; mango.framework will be generated.
 
 ------------------------------------------------------------------------------------------------
 * VISUAL STUDIO!!!

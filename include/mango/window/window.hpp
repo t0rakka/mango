@@ -111,10 +111,10 @@ namespace mango
 
 #endif
 
+#if !defined(MANGO_WINDOW_SYSTEM_NONE)
+
 namespace mango
 {
-
-#if !defined(MANGO_WINDOW_SYSTEM_NONE)
 
     enum Keycode
     {
@@ -282,6 +282,6 @@ namespace mango
         virtual void onHide();
     };
 
-#endif // !defined(MANGO_WINDOW_SYSTEM_NONE)
-
 } // namespace mango
+
+#endif // !defined(MANGO_WINDOW_SYSTEM_NONE)

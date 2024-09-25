@@ -144,7 +144,8 @@
     #elif defined(MANGO_ENABLE_WAYLAND)
         #define MANGO_WINDOW_SYSTEM_WAYLAND
     #else
-        #define MANGO_WINDOW_SYSTEM_NONE
+        // Linux defaults to XLIB when display library is not selected
+        #define MANGO_WINDOW_SYSTEM_XLIB
     #endif
 
     #include <stdint.h>
@@ -189,12 +190,7 @@
     #define MANGO_PLATFORM_IRIX
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "SGI IRIX"
-
-    #if defined(MANGO_ENABLE_XLIB)
-        #define MANGO_WINDOW_SYSTEM_XLIB
-    #else
-        #define MANGO_WINDOW_SYSTEM_NONE
-    #endif
+    #define MANGO_WINDOW_SYSTEM_XLIB
 
 #elif defined(EMSCRIPTEN)
 

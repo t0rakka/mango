@@ -12,7 +12,9 @@ project(
         'c_std=c11',
         'cpp_std=c++17',
         'objcpp_args=-std=c++17 -Wno-deprecated',
-        'default_library=static'
+        'default_library=static',
+        'buildtype=release',
+        'libdir=lib'
     ]
 )
 
