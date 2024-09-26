@@ -115,7 +115,12 @@
         #define MANGO_PLATFORM_OSX
         #define MANGO_PLATFORM_UNIX
         #define MANGO_PLATFORM_NAME "macOS"
-        #define MANGO_WINDOW_SYSTEM_COCOA
+
+        #if defined(__ppc__)
+            #define MANGO_OPENGL_CONTEXT_NONE
+        #else
+            #define MANGO_WINDOW_SYSTEM_COCOA
+        #endif
 
     #endif
 

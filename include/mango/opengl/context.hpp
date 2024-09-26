@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -9,10 +9,10 @@
 #include <mango/core/configure.hpp>
 
 // -----------------------------------------------------------------------
-// OpenGL API
+// OpenGL Configuration
 // -----------------------------------------------------------------------
 
-#if defined(MANGO_PLATFORM_WINDOWS)
+#if defined(MANGO_WINDOW_SYSTEM_WIN32)
 
     // -----------------------------------------------------------------------
     // WGL
@@ -34,11 +34,9 @@
 
     #undef GLEXT_PROC
 
-#elif defined(MANGO_PLATFORM_OSX)
+#endif
 
-    #if defined(__ppc__)
-        #define MANGO_OPENGL_CONTEXT_NONE
-    #else
+#if defined(MANGO_WINDOW_SYSTEM_COCOA)
 
     // -----------------------------------------------------------------------
     // Cocoa
@@ -55,84 +53,70 @@
     #define GL_GLEXT_PROTOTYPES
     #include <mango/opengl/khronos/GL/glext.h>
 
-    #endif
+#endif
 
-#elif defined(MANGO_PLATFORM_IOS)
-
-    // -----------------------------------------------------------------------
-    // EGL
-    // -----------------------------------------------------------------------
-
-    #define MANGO_OPENGL_CONTEXT_NONE
-
-    //#include <OpenGLES/ES1/gl.h>
-    //#include <OpenGLES/ES1/glext.h>
-
-#elif defined(MANGO_PLATFORM_ANDROID)
-
-    // -----------------------------------------------------------------------
-    // EGL
-    // -----------------------------------------------------------------------
-
-    #define MANGO_OPENGL_CONTEXT_NONE
-    /*
-    #define MANGO_OPENGL_CONTEXT_EGL
-
-    //#include <GLES/gl.h>
-    //#include <GLES/glext.h>
-    //#include <GLES2/gl2.h>
-    #include <GLES3/gl32.h>
-    */
-
-#elif defined(MANGO_PLATFORM_EMSCRIPTEN)
-
-    // -----------------------------------------------------------------------
-    // Emscripten / WASM
-    // -----------------------------------------------------------------------
-
-    #define MANGO_OPENGL_CONTEXT_NONE
-
-#elif defined(MANGO_PLATFORM_UNIX)
+#if defined(MANGO_WINDOW_SYSTEM_XLIB) || defined(MANGO_WINDOW_SYSTEM_XCB)
 
     // -----------------------------------------------------------------------
     // GLX | EGL
     // -----------------------------------------------------------------------
 
-    #if defined(MANGO_WINDOW_SYSTEM_XLIB)
+    #if defined(MANGO_ENABLE_EGL)
+        #define MANGO_OPENGL_CONTEXT_EGL
+    #endif
 
-        #if defined(MANGO_ENABLE_EGL)
-            #define MANGO_OPENGL_CONTEXT_EGL
-        #endif
+    #define MANGO_OPENGL_CONTEXT_GLX
+    #define MANGO_OPENGL_FRAMEBUFFER
+    #define MANGO_OPENGL_JPEG
 
-        #define MANGO_OPENGL_CONTEXT_GLX
-        #define MANGO_OPENGL_FRAMEBUFFER
-        #define MANGO_OPENGL_JPEG
+    #define GL_GLEXT_PROTOTYPES
+    #include <GL/gl.h>
+    #include <GL/glext.h>
 
-        #define GL_GLEXT_PROTOTYPES
-        #include <GL/gl.h>
-        #include <GL/glext.h>
+    #define GLX_GLXEXT_PROTOTYPES
+    #include <GL/glx.h>
+    #include <GL/glxext.h>
 
-        #define GLX_GLXEXT_PROTOTYPES
-        #include <GL/glx.h>
-        #include <GL/glxext.h>
-        #if defined(Status)
-            #undef Status
-            typedef int Status;
-        #endif
+    #if defined(Status)
+        #undef Status
+        typedef int Status;
+    #endif
 
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+
+    // -----------------------------------------------------------------------
+    // EGL
+    // -----------------------------------------------------------------------
+
+    #if defined(MANGO_ENABLE_EGL)
+        #define MANGO_OPENGL_CONTEXT_EGL
     #else
-
         #define MANGO_OPENGL_CONTEXT_NONE
+    #endif
 
-    #endif // MANGO_WINDOW_SYSTEM_XLIB
+    #define GL_GLEXT_PROTOTYPES
+    #include <GL/gl.h>
+    #include <GL/glext.h>
 
-#else
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_NONE)
+
+    // -----------------------------------------------------------------------
+    // NONE
+    // -----------------------------------------------------------------------
 
     #define MANGO_OPENGL_CONTEXT_NONE
 
 #endif
 
-#ifndef MANGO_OPENGL_CONTEXT_NONE
+// -----------------------------------------------------------------------
+// OpenGL API
+// -----------------------------------------------------------------------
+
+#if !defined(MANGO_OPENGL_CONTEXT_NONE)
 
 #include <mango/image/compression.hpp>
 #include <mango/window/window.hpp>
@@ -262,4 +246,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // MANGO_OPENGL_CONTEXT_NONE
+#endif // !defined(MANGO_OPENGL_CONTEXT_NONE)

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <mango/core/exception.hpp>
@@ -68,7 +68,7 @@ namespace
         { 0x881A, Format( 64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16), "RGBA16F" },
         { 0x881B, Format( 48, Format::FLOAT16, Format::RGB,  16, 16, 16,  0), "RGB16F" },
         // NOTE: these don't have blitter support but can be handled as compressed blocks
-        /* 
+        /*
         { 0x8C3A, Format(), "R11F_G11F_B10F" },
         { 0x8C3B, Format(), "UNSIGNED_INT_10F_11F_11F_REV" },
         { 0x8C3D, Format(), "RGB9_E5" },
@@ -453,7 +453,7 @@ namespace mango
             core.texture_snorm = true;
         }
 
-		core.texture_compression_latc = ext.NV_texture_compression_latc || ext.EXT_texture_compression_latc;
+        core.texture_compression_latc = ext.NV_texture_compression_latc || ext.EXT_texture_compression_latc;
         core.texture_compression_atc = ext.AMD_compressed_ATC_texture || ext.ATI_texture_compression_atitc;
         core.texture_compression_astc = ext.KHR_texture_compression_astc_hdr || ext.KHR_texture_compression_astc_ldr;
 
