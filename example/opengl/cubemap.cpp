@@ -41,7 +41,7 @@ const char* fs_mesh = R"(
     out vec4 FragColor;
 
     void main()
-    {    
+    {
         FragColor = texture(texture0, TexCoord);
     }
 )";
@@ -149,7 +149,7 @@ const float cubeVertices [] =
 
 const float skyboxVertices [] =
 {
-    // positions          
+    // positions
     -1.0f,  1.0f, -1.0f,
     -1.0f, -1.0f, -1.0f,
      1.0f, -1.0f, -1.0f,
@@ -278,7 +278,7 @@ GLuint createTexture2D(const std::string& filename, bool mipmap)
         Bitmap bitmap(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
         ImageDecodeOptions options;
-        ImageDecodeStatus status = decoder.decode(bitmap, options, 0, 0, 0); 
+        ImageDecodeStatus status = decoder.decode(bitmap, options, 0, 0, 0);
 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.image);
 
