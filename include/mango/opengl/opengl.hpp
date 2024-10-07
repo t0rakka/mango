@@ -7,4 +7,3 @@
 #include <mango/opengl/context.hpp>
 #include <mango/opengl/utilities.hpp>
 #include <mango/opengl/framebuffer.hpp>
-#include <mango/opengl/jpeg_decoder.hpp>

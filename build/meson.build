@@ -236,7 +236,6 @@ mango_opengl_headers = files(
     '../include/mango/opengl/context.hpp',
     '../include/mango/opengl/utilities.hpp',
     '../include/mango/opengl/framebuffer.hpp',
-    '../include/mango/opengl/jpeg_decoder.hpp',
     '../include/mango/opengl/func/glcorearb.hpp',
     '../include/mango/opengl/func/glext.hpp',
     '../include/mango/opengl/func/glxext.hpp',
@@ -391,8 +390,7 @@ endif
 mango_opengl_sources = files(
     '../source/mango/opengl/context.cpp',
     '../source/mango/opengl/utilities.cpp',
-    '../source/mango/opengl/framebuffer.cpp',
-    '../source/mango/opengl/jpeg_decoder.cpp'
+    '../source/mango/opengl/framebuffer.cpp'
 )
 
 if is_windows
