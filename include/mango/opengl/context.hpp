@@ -20,7 +20,6 @@
 
     #define MANGO_OPENGL_CONTEXT_WGL
     #define MANGO_OPENGL_FRAMEBUFFER
-    #define MANGO_OPENGL_JPEG
 
     #define GLEXT_PROC(proc, name) extern proc name
 
@@ -67,7 +66,6 @@
 
     #define MANGO_OPENGL_CONTEXT_GLX
     #define MANGO_OPENGL_FRAMEBUFFER
-    #define MANGO_OPENGL_JPEG
 
     #define GL_GLEXT_PROTOTYPES
     #include <GL/gl.h>
