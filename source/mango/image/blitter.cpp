@@ -3239,6 +3239,16 @@ namespace mango::image
         , scan_convert(nullptr)
         , rect_convert(nullptr)
     {
+        if (dest.isIndexed() || source.isIndexed())
+        {
+            MANGO_EXCEPTION("[Blitter] Indexed formats are not supported.");
+        }
+
+        if (dest.isLuminance())
+        {
+            MANGO_EXCEPTION("[Blitter] RGB to Luminance is not supported.");
+        }
+
         scan_convert = find_scan_blitter(dest, source);
         if (scan_convert)
         {
