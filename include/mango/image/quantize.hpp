@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -20,7 +20,7 @@ namespace mango::image
         int m_netindex[NETSIZE];
 
     public:
-        ColorQuantizer(const Surface& source, float quality = 0.90f);
+        ColorQuantizer(Surface source, float quality = 0.90f);
         ColorQuantizer(const Palette& palette);
         ~ColorQuantizer();
 
@@ -28,11 +28,30 @@ namespace mango::image
         Palette getPalette() const;
 
         // quantize ANY image with the quantization network (the original color image is recommended)
-        void quantize(const Surface& dest, const Surface& source, bool dithering = true);
+        void quantize(const Surface& dest, Surface source, bool dithering = true);
 
     protected:
         void buildIndex();
         int getIndex(int r, int g, int b) const;
+    };
+
+    class QuantizedBitmap : public Bitmap
+    {
+    private:
+        Palette m_palette;
+
+    public:
+        QuantizedBitmap(Surface source, float quality = 0.90f, bool dithering = true);
+        QuantizedBitmap(Surface source, const Palette& palette, bool dithering = true);
+        ~QuantizedBitmap();
+
+        Palette getPalette() const;
+    };
+
+    class LuminanceBitmap : public Bitmap
+    {
+    public:
+        LuminanceBitmap(Surface source, bool linear = true);
     };
 
 } // namespace mango::image

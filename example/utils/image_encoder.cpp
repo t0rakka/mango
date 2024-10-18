@@ -31,6 +31,8 @@ int main(int argc, const char* argv[])
     ImageEncodeOptions options;
     options.compression = 8;
 
+    bool luminance = false;
+
     int index = 1;
 
     while (index < argc)
@@ -69,6 +71,11 @@ int main(int argc, const char* argv[])
                 return 0;
             }
         }
+        else if (std::string_view(argv[index]) == "--luminance")
+        {
+            ++index;
+            luminance = true;
+        }
         else if (std::string_view(argv[index]) == "--info")
         {
             ++index;
@@ -102,8 +109,19 @@ int main(int argc, const char* argv[])
 
         q.enqueue([=]
         {
-            Bitmap bitmap(filename);
-            bitmap.save(output, options);
+            std::unique_ptr<Bitmap> bitmap;
+
+            if (luminance)
+            {
+                Bitmap temp(filename);
+                bitmap = std::make_unique<LuminanceBitmap>(temp, true);
+            }
+            else
+            {
+                bitmap = std::make_unique<Bitmap>(filename);
+            }
+
+            bitmap->save(output, options);
         });
     }
 
