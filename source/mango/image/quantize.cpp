@@ -638,12 +638,11 @@ namespace mango::image
 
                 for (int x = 0; x < source.width; ++x)
                 {
-                    u32 r = s[0];
-                    u32 g = s[1];
-                    u32 b = s[2];
+                    u32 r = s[x * 4 + 0];
+                    u32 g = s[x * 4 + 1];
+                    u32 b = s[x * 4 + 2];
                     u32 v = (r * 77 + g * 150 + b * 29) >> 8;
                     d[x] = u8(v);
-                    s += 4;
                 }
             }
         }
@@ -656,12 +655,11 @@ namespace mango::image
 
                 for (int x = 0; x < source.width; ++x)
                 {
-                    u32 r = decode_srgb_table[s[0]];
-                    u32 g = decode_srgb_table[s[1]];
-                    u32 b = decode_srgb_table[s[2]];
+                    u32 r = decode_srgb_table[s[x * 4 + 0]];
+                    u32 g = decode_srgb_table[s[x * 4 + 1]];
+                    u32 b = decode_srgb_table[s[x * 4 + 2]];
                     u32 v = (r * 77 + g * 150 + b * 29) >> 8;
-                    d[x] = encode_srgb_table[v & 0xff];
-                    s += 4;
+                    d[x] = encode_srgb_table[v];
                 }
             }
         }
