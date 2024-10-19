@@ -51,7 +51,7 @@ namespace mango::image
     class LuminanceBitmap : public Bitmap
     {
     public:
-        LuminanceBitmap(Surface source, bool linear = true);
+        LuminanceBitmap(Surface source, bool alpha = false, bool linear = true);
     };
 
 } // namespace mango::image

@@ -90,6 +90,58 @@ namespace
         0xde, 0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xed, 0xef, 0xf1, 0xf3, 0xf5, 0xf8, 0xfa, 0xfc, 0xff 
     };
 
+    void grayscale_linear(u8* d, const u8* s, int width)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            u32 r = s[x * 4 + 0];
+            u32 g = s[x * 4 + 1];
+            u32 b = s[x * 4 + 2];
+            u8 luminance = u8((r * 77 + g * 150 + b * 29) >> 8);
+            d[x] = luminance;
+        }
+    }
+
+    void grayscale_linear_alpha(u8* d, const u8* s, int width)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            u32 r = s[x * 4 + 0];
+            u32 g = s[x * 4 + 1];
+            u32 b = s[x * 4 + 2];
+            u8 luminance = u8((r * 77 + g * 150 + b * 29) >> 8);
+            d[x * 2 + 0] = luminance;
+            d[x * 2 + 1] = s[x * 4 + 3];
+        }
+    }
+
+    void grayscale_srgb(u8* d, const u8* s, int width)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            u32 r = decode_srgb_table[s[x * 4 + 0]];
+            u32 g = decode_srgb_table[s[x * 4 + 1]];
+            u32 b = decode_srgb_table[s[x * 4 + 2]];
+            u8 luminance = u8((r * 77 + g * 150 + b * 29) >> 8);
+            luminance = encode_srgb_table[luminance];
+            d[x] = luminance;
+        }
+    }
+
+    void grayscale_srgb_alpha(u8* d, const u8* s, int width)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            u32 r = decode_srgb_table[s[x * 4 + 0]];
+            u32 g = decode_srgb_table[s[x * 4 + 1]];
+            u32 b = decode_srgb_table[s[x * 4 + 2]];
+            u8 luminance = u8((r * 77 + g * 150 + b * 29) >> 8);
+            luminance = encode_srgb_table[luminance];
+            d[x * 2 + 0] = luminance;
+            d[x * 2 + 1] = s[x * 4 + 3];
+        }
+    }
+
     // ------------------------------------------------------------
     // NeuQuant
     // ------------------------------------------------------------
@@ -623,45 +675,26 @@ namespace mango::image
     // LuminanceBitmap
     // ----------------------------------------------------------------------------
 
-    LuminanceBitmap::LuminanceBitmap(Surface source, bool linear)
-        : Bitmap(source.width, source.height, LuminanceFormat(8, 0xff, 0))
+    LuminanceBitmap::LuminanceBitmap(Surface source, bool alpha, bool linear)
+        : Bitmap(source.width, source.height, alpha ? LuminanceFormat(16, 0x00ff, 0xff00) : LuminanceFormat(8, 0xff, 0))
     {
+        // convert to correct format when required
         TemporaryBitmap temp(source, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
         source = temp;
 
-        if (linear)
+        // select conversion function
+        auto convert_func = linear ? grayscale_linear : grayscale_srgb;
+        if (alpha)
         {
-            for (int y = 0; y < source.height; ++y)
-            {
-                const u8* s = source.address(0, y);
-                u8* d = address(0, y);
-
-                for (int x = 0; x < source.width; ++x)
-                {
-                    u32 r = s[x * 4 + 0];
-                    u32 g = s[x * 4 + 1];
-                    u32 b = s[x * 4 + 2];
-                    u32 v = (r * 77 + g * 150 + b * 29) >> 8;
-                    d[x] = u8(v);
-                }
-            }
+            convert_func = linear ? grayscale_linear_alpha : grayscale_srgb_alpha;
         }
-        else
-        {
-            for (int y = 0; y < source.height; ++y)
-            {
-                const u8* s = source.address(0, y);
-                u8* d = address(0, y);
 
-                for (int x = 0; x < source.width; ++x)
-                {
-                    u32 r = decode_srgb_table[s[x * 4 + 0]];
-                    u32 g = decode_srgb_table[s[x * 4 + 1]];
-                    u32 b = decode_srgb_table[s[x * 4 + 2]];
-                    u32 v = (r * 77 + g * 150 + b * 29) >> 8;
-                    d[x] = encode_srgb_table[v];
-                }
-            }
+        // resolve conversion
+        for (int y = 0; y < source.height; ++y)
+        {
+            const u8* s = source.address(0, y);
+            u8* d = address(0, y);
+            convert_func(d, s, source.width);
         }
     }
 
