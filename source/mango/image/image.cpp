@@ -16,7 +16,7 @@ namespace
     {
         // strip the filename away and make the extension (.ext) lower-case only
         std::string extension = filesystem::getExtension(filename);
-        return toLower(extension.empty() ? filename : extension);
+        return toLower(extension.empty() ? std::string(".") + filename : extension);
     }
 
     std::string getImageFormatExtension(ConstMemory memory)
