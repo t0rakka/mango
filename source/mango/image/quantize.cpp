@@ -143,7 +143,6 @@ namespace
         }
     }
 
-/*
 #if defined(MANGO_ENABLE_SSE2)
 
     void sse2_grayscale_linear(u8* d, const u8* s, int width)
@@ -230,6 +229,66 @@ namespace
 
 #endif // defined(MANGO_ENABLE_SSE2)
 
+#if defined(MANGO_ENABLE_SSSE3)
+
+    void ssse3_grayscale_linear(u8* d, const u8* s, int width)
+    {
+        const __m128i scale_rg = _mm_setr_epi16(77, 150, 77, 150, 77, 150, 77, 150);
+        const __m128i scale_b0 = _mm_setr_epi16(29, 0, 29, 0, 29, 0, 29, 0);
+        const __m128i index_rgba = _mm_setr_epi8(0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10 ,11, 14, 15);
+        const __m128i zero = _mm_setzero_si128();
+
+        while (width >= 16)
+        {
+            const __m128i* ptr = reinterpret_cast<const __m128i*>(s);
+
+            __m128i rgba0 = _mm_loadu_si128(ptr + 0); // RGBA RGBA RGBA RGBA
+            __m128i rgba1 = _mm_loadu_si128(ptr + 1); // RGBA RGBA RGBA RGBA
+            __m128i rgba2 = _mm_loadu_si128(ptr + 2); // RGBA RGBA RGBA RGBA
+            __m128i rgba3 = _mm_loadu_si128(ptr + 3); // RGBA RGBA RGBA RGBA
+
+            rgba0 = _mm_shuffle_epi8(rgba0, index_rgba); // RG RG RG RG BA BA BA BA
+            rgba1 = _mm_shuffle_epi8(rgba1, index_rgba); // RG RG RG RG BA BA BA BA
+            rgba2 = _mm_shuffle_epi8(rgba2, index_rgba); // RG RG RG RG BA BA BA BA
+            rgba3 = _mm_shuffle_epi8(rgba3, index_rgba); // RG RG RG RG BA BA BA BA
+
+            __m128i rgrg0 = _mm_unpacklo_epi64(rgba0, rgba1); // RG RG RG RG RG RG RG RG
+            __m128i rgrg1 = _mm_unpacklo_epi64(rgba2, rgba3); // RG RG RG RG RG RG RG RG
+
+            __m128i baba0 = _mm_unpackhi_epi64(rgba0, rgba1); // BA BA BA BA BA BA BA BA
+            __m128i baba1 = _mm_unpackhi_epi64(rgba2, rgba3); // BA BA BA BA BA BA BA BA
+
+            __m128i rg0 = _mm_madd_epi16(_mm_unpacklo_epi8(rgrg0, zero), scale_rg);
+            __m128i rg1 = _mm_madd_epi16(_mm_unpackhi_epi8(rgrg0, zero), scale_rg);
+            __m128i rg2 = _mm_madd_epi16(_mm_unpacklo_epi8(rgrg1, zero), scale_rg);
+            __m128i rg3 = _mm_madd_epi16(_mm_unpackhi_epi8(rgrg1, zero), scale_rg);
+
+            __m128i ba0 = _mm_madd_epi16(_mm_unpacklo_epi8(baba0, zero), scale_b0);
+            __m128i ba1 = _mm_madd_epi16(_mm_unpackhi_epi8(baba0, zero), scale_b0);
+            __m128i ba2 = _mm_madd_epi16(_mm_unpacklo_epi8(baba1, zero), scale_b0);
+            __m128i ba3 = _mm_madd_epi16(_mm_unpackhi_epi8(baba1, zero), scale_b0);
+
+            __m128i sum0 = _mm_add_epi32(rg0, ba0);
+            __m128i sum1 = _mm_add_epi32(rg1, ba1);
+            __m128i sum2 = _mm_add_epi32(rg2, ba2);
+            __m128i sum3 = _mm_add_epi32(rg3, ba3);
+
+            __m128i temp0 = _mm_srli_epi16(_mm_packus_epi32(sum0, sum1), 8);
+            __m128i temp1 = _mm_srli_epi16(_mm_packus_epi32(sum2, sum3), 8);
+            __m128i temp = _mm_packus_epi16(temp0, temp1);
+
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(d), temp);
+
+            s += 64;
+            d += 16;
+            width -= 16;
+        }
+
+        grayscale_linear(d, s, width);
+    }
+
+#endif // defined(MANGO_ENABLE_SSSE3)
+
 #if defined(MANGO_ENABLE_NEON)
 
     void neon_grayscale_linear(u8* d, const u8* s, int width)
@@ -254,7 +313,6 @@ namespace
     }
 
 #endif // defined(MANGO_ENABLE_NEON)
-*/
 
     using GrayConversionFunc = void (*)(u8*, const u8*, int);
 
@@ -268,7 +326,6 @@ namespace
             grayscale_srgb_alpha,
         };
 
-        /*
         u64 features = getCPUFlags();
         MANGO_UNREFERENCED(features);
 
@@ -278,13 +335,18 @@ namespace
             table[0] = sse2_grayscale_linear;
         }
 #endif
+#if defined(MANGO_ENABLE_SSSE3)
+        if (features & INTEL_SSSE3)
+        {
+            table[0] = ssse3_grayscale_linear;
+        }
+#endif
 #if defined(MANGO_ENABLE_NEON)
         if (features & ARM_NEON)
         {
             table[0] = neon_grayscale_linear;
         }
 #endif
-        */
 
         return table[alpha + (!linear) * 2];
     }
