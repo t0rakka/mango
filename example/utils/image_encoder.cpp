@@ -13,6 +13,7 @@ void printHelp(std::string_view program)
     printLine("  Options:");
     printLine("    -format .extension");
     printLine("    -compression level(0..10)");
+    printLine("    --luminance");
     printLine("    --info");
 }
 
