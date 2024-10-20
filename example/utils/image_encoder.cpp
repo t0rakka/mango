@@ -114,7 +114,7 @@ int main(int argc, const char* argv[])
             if (luminance)
             {
                 Bitmap temp(filename);
-                bitmap = std::make_unique<LuminanceBitmap>(temp, true);
+                bitmap = std::make_unique<LuminanceBitmap>(temp, false, true);
             }
             else
             {
