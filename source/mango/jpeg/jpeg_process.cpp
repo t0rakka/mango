@@ -89,7 +89,7 @@ void process_y_32bit(u8* dest, size_t stride, const s16* data, ProcessState* sta
     }
 }
 
-void process_cmyk_bgra(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[JPEG_MAX_SAMPLES_IN_MCU];
 
@@ -191,7 +191,7 @@ void process_cmyk_bgra(u8* dest, size_t stride, const s16* data, ProcessState* s
                     r = byteclamp(r);
                     g = byteclamp(g);
                     b = byteclamp(b);
-                    d[x] = image::makeBGRA(r, g, b, 0xff);
+                    d[x] = image::makeRGBA(r, g, b, 0xff);
                 }
                 dest_block += stride;
                 y_block += 8;

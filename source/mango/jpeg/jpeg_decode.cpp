@@ -668,7 +668,7 @@ namespace mango::image::jpeg
         // configure header
         header.width = xsize;
         header.height = ysize;
-        header.format = components > 1 ? Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8)
+        header.format = components > 1 ? Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
                                        : LuminanceFormat(8, Format::UNORM, 8, 0);
 
         MANGO_UNREFERENCED(length);
@@ -1533,7 +1533,7 @@ namespace mango::image::jpeg
         }
 
         // CMYK / YCCK
-        processState.process_cmyk = process_cmyk_bgra;
+        processState.process_cmyk = process_cmyk_rgba;
 
 #if defined(MANGO_ENABLE_NEON)
 
@@ -1758,7 +1758,7 @@ namespace mango::image::jpeg
 
         if (is_lossless)
         {
-            // lossless only supports L8 and BGRA
+            // lossless only supports L8 and RGBA
             if (components == 1)
             {
                 sf.sample = JPEG_U8_Y;
@@ -1766,15 +1766,15 @@ namespace mango::image::jpeg
             }
             else
             {
-                sf.sample = JPEG_U8_BGRA;
-                sf.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+                sf.sample = JPEG_U8_RGBA;
+                sf.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
         }
         else if (components == 4)
         {
-            // CMYK / YCCK is in the slow-path anyway so force BGRA
-            sf.sample = JPEG_U8_BGRA;
-            sf.format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            // CMYK / YCCK is in the slow-path anyway so force RGBA
+            sf.sample = JPEG_U8_RGBA;
+            sf.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
         }
 
         status.direct = true;
@@ -2015,9 +2015,9 @@ namespace mango::image::jpeg
                 }
                 else
                 {
-                    image[0] = byteclamp(data[2] + 128); // blue
+                    image[0] = byteclamp(data[0] + 128); // red
                     image[1] = byteclamp(data[1] + 128); // green
-                    image[2] = byteclamp(data[0] + 128); // red
+                    image[2] = byteclamp(data[2] + 128); // blue
                     image[3] = 0xff;
                     image += 4;
                 }

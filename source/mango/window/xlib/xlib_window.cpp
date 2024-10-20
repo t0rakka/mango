@@ -729,8 +729,7 @@ namespace mango
         const int width = std::min(256, surface.width);
         const int height = std::min(256, surface.height);
 
-        Bitmap bitmap(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
-        bitmap.blit(0, 0, surface);
+        Bitmap bitmap(surface, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
 
         int screen = DefaultScreen(m_handle->native.display);
         int depth = DefaultDepth(m_handle->native.display, screen);

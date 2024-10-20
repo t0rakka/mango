@@ -254,9 +254,9 @@ namespace
             {
                 int idx = indices & 3;
                 indices >>= 2;
-                dest[x * 4 + 0] = color[idx * 4 + 0];
+                dest[x * 4 + 0] = color[idx * 4 + 2];
                 dest[x * 4 + 1] = color[idx * 4 + 1];
-                dest[x * 4 + 2] = color[idx * 4 + 2];
+                dest[x * 4 + 2] = color[idx * 4 + 0];
                 dest[x * 4 + 3] = color[idx * 4 + 3];
             }
             dest += stride;

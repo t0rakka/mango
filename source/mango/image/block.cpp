@@ -104,7 +104,7 @@ namespace
             0,
             opengl::ATC_RGB_AMD,
             0,
-            4, 4, 1, 8, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            4, 4, 1, 8, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             decode_block_atc, nullptr
         ),
 
@@ -113,7 +113,7 @@ namespace
             0,
             opengl::ATC_RGBA_EXPLICIT_ALPHA_AMD,
             0,
-            4, 4, 1, 16, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            4, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             decode_block_atc_e, nullptr
         ),
 
@@ -122,7 +122,7 @@ namespace
             0,
             opengl::ATC_RGBA_INTERPOLATED_ALPHA_AMD,
             0,
-            4, 4, 1, 16, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+            4, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             decode_block_atc_i, nullptr
         ),
 

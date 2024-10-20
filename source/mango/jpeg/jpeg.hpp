@@ -529,7 +529,7 @@ namespace mango::image::jpeg
     void process_y_8bit                 (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_y_24bit                (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_y_32bit                (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_cmyk_bgra              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_cmyk_rgba              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_8bit             (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
     void process_ycbcr_bgr              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
