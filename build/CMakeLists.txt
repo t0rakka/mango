@@ -7,7 +7,7 @@ PROJECT(mango CXX C ASM)
 
 set(MANGO_VERSION_MAJOR 1)
 set(MANGO_VERSION_MINOR 2)
-set(MANGO_VERSION_PATCH 5)
+set(MANGO_VERSION_PATCH 7)
 set(MANGO_VERSION_STRING ${MANGO_VERSION_MAJOR}.${MANGO_VERSION_MINOR}.${MANGO_VERSION_PATCH})
 
 set(MANGO_OPENGL_VERSION_MAJOR 0)
@@ -472,6 +472,18 @@ if (BUILD_SHARED_LIBS AND WIN32)
     if (OPENGL_FOUND)
         message(STATUS "OpenGL: FOUND")
         target_link_libraries(mango ${OPENGL_gl_LIBRARY})
+    endif()
+
+else ()
+
+    find_package(OpenGL)
+
+    if (OPENGL_FOUND)
+        message(STATUS "OpenGL: FOUND")
+        target_link_libraries(mango ${OPENGL_gl_LIBRARY})
+
+        # default to XLIB until we have mechanism to select display_library
+        target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_XLIB")
     endif()
 
 endif ()
