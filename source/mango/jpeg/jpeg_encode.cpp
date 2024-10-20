@@ -2077,8 +2077,8 @@ namespace
             __m128i b0 = _mm_loadu_si128(ptr + 0);
             __m128i b1 = _mm_loadu_si128(ptr + 1);
             __m128i g0 = _mm_srli_epi32(b0, 8);
-            __m128i r0 = _mm_srli_epi32(b0, 16);
             __m128i g1 = _mm_srli_epi32(b1, 8);
+            __m128i r0 = _mm_srli_epi32(b0, 16);
             __m128i r1 = _mm_srli_epi32(b1, 16);
             b0 = _mm_and_si128(b0, mask);
             b1 = _mm_and_si128(b1, mask);
@@ -2086,9 +2086,9 @@ namespace
             g1 = _mm_and_si128(g1, mask);
             r0 = _mm_and_si128(r0, mask);
             r1 = _mm_and_si128(r1, mask);
-            __m128i b = _mm_packs_epi32(b0, b1);
-            __m128i g = _mm_packs_epi32(g0, g1);
-            __m128i r = _mm_packs_epi32(r0, r1);
+            __m128i b = _mm_packus_epi32(b0, b1);
+            __m128i g = _mm_packus_epi32(g0, g1);
+            __m128i r = _mm_packus_epi32(r0, r1);
 
             compute_ycbcr(block, r, g, b);
 
