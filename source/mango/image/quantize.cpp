@@ -233,10 +233,10 @@ namespace
 
     void ssse3_grayscale_linear(u8* d, const u8* s, int width)
     {
+        const __m128i index_r0g0 = _mm_setr_epi8(0, 0x80, 1, 0x80, 4, 0x80, 5, 0x80, 8, 0x80, 9, 0x80, 12, 0x80, 13, 0x80);
+        const __m128i index_b0a0 = _mm_setr_epi8(0, 0x80, 1, 0x80, 4, 0x80, 5, 0x80, 8, 0x80, 9, 0x80, 12, 0x80, 13, 0x80);
         const __m128i scale_rg = _mm_setr_epi16(77, 150, 77, 150, 77, 150, 77, 150);
         const __m128i scale_b0 = _mm_setr_epi16(29, 0, 29, 0, 29, 0, 29, 0);
-        const __m128i index_rgba = _mm_setr_epi8(0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10 ,11, 14, 15);
-        const __m128i zero = _mm_setzero_si128();
 
         while (width >= 16)
         {
@@ -247,26 +247,25 @@ namespace
             __m128i rgba2 = _mm_loadu_si128(ptr + 2); // RGBA RGBA RGBA RGBA
             __m128i rgba3 = _mm_loadu_si128(ptr + 3); // RGBA RGBA RGBA RGBA
 
-            rgba0 = _mm_shuffle_epi8(rgba0, index_rgba); // RG RG RG RG BA BA BA BA
-            rgba1 = _mm_shuffle_epi8(rgba1, index_rgba); // RG RG RG RG BA BA BA BA
-            rgba2 = _mm_shuffle_epi8(rgba2, index_rgba); // RG RG RG RG BA BA BA BA
-            rgba3 = _mm_shuffle_epi8(rgba3, index_rgba); // RG RG RG RG BA BA BA BA
+            __m128i rg0 = _mm_shuffle_epi8(rgba0, index_r0g0); // R0G0 R0G0 R0G0 R0G0
+            __m128i rg1 = _mm_shuffle_epi8(rgba1, index_r0g0); // R0G0 R0G0 R0G0 R0G0
+            __m128i rg2 = _mm_shuffle_epi8(rgba2, index_r0g0); // R0G0 R0G0 R0G0 R0G0
+            __m128i rg3 = _mm_shuffle_epi8(rgba3, index_r0g0); // R0G0 R0G0 R0G0 R0G0
 
-            __m128i rgrg0 = _mm_unpacklo_epi64(rgba0, rgba1); // RG RG RG RG RG RG RG RG
-            __m128i rgrg1 = _mm_unpacklo_epi64(rgba2, rgba3); // RG RG RG RG RG RG RG RG
+            __m128i ba0 = _mm_shuffle_epi8(rgba0, index_b0a0); // B0A0 B0A0 B0A0 B0A0
+            __m128i ba1 = _mm_shuffle_epi8(rgba1, index_b0a0); // B0A0 B0A0 B0A0 B0A0
+            __m128i ba2 = _mm_shuffle_epi8(rgba2, index_b0a0); // B0A0 B0A0 B0A0 B0A0
+            __m128i ba3 = _mm_shuffle_epi8(rgba3, index_b0a0); // B0A0 B0A0 B0A0 B0A0
 
-            __m128i baba0 = _mm_unpackhi_epi64(rgba0, rgba1); // BA BA BA BA BA BA BA BA
-            __m128i baba1 = _mm_unpackhi_epi64(rgba2, rgba3); // BA BA BA BA BA BA BA BA
+            rg0 = _mm_madd_epi16(rg0, scale_rg);
+            rg1 = _mm_madd_epi16(rg1, scale_rg);
+            rg2 = _mm_madd_epi16(rg2, scale_rg);
+            rg3 = _mm_madd_epi16(rg3, scale_rg);
 
-            __m128i rg0 = _mm_madd_epi16(_mm_unpacklo_epi8(rgrg0, zero), scale_rg);
-            __m128i rg1 = _mm_madd_epi16(_mm_unpackhi_epi8(rgrg0, zero), scale_rg);
-            __m128i rg2 = _mm_madd_epi16(_mm_unpacklo_epi8(rgrg1, zero), scale_rg);
-            __m128i rg3 = _mm_madd_epi16(_mm_unpackhi_epi8(rgrg1, zero), scale_rg);
-
-            __m128i ba0 = _mm_madd_epi16(_mm_unpacklo_epi8(baba0, zero), scale_b0);
-            __m128i ba1 = _mm_madd_epi16(_mm_unpackhi_epi8(baba0, zero), scale_b0);
-            __m128i ba2 = _mm_madd_epi16(_mm_unpacklo_epi8(baba1, zero), scale_b0);
-            __m128i ba3 = _mm_madd_epi16(_mm_unpackhi_epi8(baba1, zero), scale_b0);
+            ba0 = _mm_madd_epi16(ba0, scale_b0);
+            ba1 = _mm_madd_epi16(ba1, scale_b0);
+            ba2 = _mm_madd_epi16(ba2, scale_b0);
+            ba3 = _mm_madd_epi16(ba3, scale_b0);
 
             __m128i sum0 = _mm_add_epi32(rg0, ba0);
             __m128i sum1 = _mm_add_epi32(rg1, ba1);
