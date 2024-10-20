@@ -533,6 +533,8 @@ else ()
                 add_definitions (-mfpu=neon -mfloat-abi=hard)
             endif()
             set(CMAKE_CXX_FLAGS "-fpermissive -Wno-psabi")
+            # fastgltf doesn't compile without this on M1
+            set(CMAKE_CXX_FLAGS "-Wno-unknown-attributes")
         endif ()
     endif ()
 
