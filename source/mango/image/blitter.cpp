@@ -3244,7 +3244,7 @@ namespace mango::image
             MANGO_EXCEPTION("[Blitter] Indexed formats are not supported.");
         }
 
-        if (dest.isLuminance())
+        if (!source.isLuminance() && dest.isLuminance())
         {
             MANGO_EXCEPTION("[Blitter] RGB to Luminance is not supported.");
         }
