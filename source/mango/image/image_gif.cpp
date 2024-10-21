@@ -848,14 +848,26 @@ namespace
 
             gif_encode_file(stream, surface, options.palette);
         }
+        else if (surface.format.isLuminance())
+        {
+            TemporaryBitmap temp(surface, LuminanceFormat(8, 0xff, 0));
+
+            Palette palette(256);
+
+            u32 color = 0xff000000;
+
+            for (int i = 0; i <256; ++i)
+            {
+                palette[i] = color;
+                color += 0x00010101;
+            }
+
+            gif_encode_file(stream, temp, palette);
+        }
         else
         {
-            Bitmap temp(surface.width, surface.height, IndexedFormat(8));
-
-            image::ColorQuantizer quantizer(surface, options.quality);
-            quantizer.quantize(temp, surface, options.dithering);
-
-            gif_encode_file(stream, temp, quantizer.getPalette());
+            QuantizedBitmap temp(surface);
+            gif_encode_file(stream, temp, temp.getPalette());
         }
 
         return status;

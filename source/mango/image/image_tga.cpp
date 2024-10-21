@@ -548,22 +548,16 @@ namespace
         // write header
         header.write(stream);
 
-        // write image
-        if (format != surface.format)
-        {
-            Bitmap temp(surface, format);
-            stream.write(temp.image, width * height * format.bytes());
-        }
-        else
-        {
-            u8* image = surface.image;
-            const int bytesPerLine = width * format.bytes();
+        // convert to correct format when required
+        TemporaryBitmap temp(surface, format);
 
-            for (int y = 0; y < height; ++y)
-            {
-                stream.write(image, bytesPerLine);
-                image += surface.stride;
-            }
+        // write image
+        const int bytesPerLine = width * format.bytes();
+
+        for (int y = 0; y < height; ++y)
+        {
+            u8* image = temp.address(0, y);
+            stream.write(image, bytesPerLine);
         }
 
         return status;

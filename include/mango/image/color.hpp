@@ -78,8 +78,18 @@ namespace mango::image
 
     struct Palette
     {
-        u32 size { 0 };
+        u32 size;
         Color color[256];
+
+        Palette()
+            : size(0)
+        {
+        }
+
+        Palette(u32 size)
+            : size(size)
+        {
+        }
 
         Color& operator [] (int index)
         {

@@ -3968,12 +3968,11 @@ namespace
 
             if (!surface.format.isIndexed() || surface.format.bits != 8)
             {
-                status.setError("[ImageEncoder.PNG] Incorrect format - must be 8 bit INDEXED (bits: {}).", surface.format.bits);
+                status.setError("[ImageEncoder.PNG] Incorrect format - must be Indexed 8 bit (bits: {}).", surface.format.bits);
                 return status;
             }
 
             // encode indexed color image
-
             write_png(stream, status, surface, 8, COLOR_TYPE_PALETTE, options);
             return status;
         }
@@ -4022,8 +4021,7 @@ namespace
             // always encode alpha in non-luminance formats
             color_type = COLOR_TYPE_RGBA;
 
-            if (surface.format.size[0] > 8 &&
-                surface.format.type == Format::UNORM)
+            if (surface.format.size[0] > 8 && surface.format.type == Format::UNORM)
             {
                 // the UNORM is required above because we don't have color conversion
                 // from FLOAT/HALF to 16 bit UNORM

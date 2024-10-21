@@ -730,7 +730,7 @@ namespace mango::image
         }
 
         // convert to correct format when required
-        TemporaryBitmap temp(source, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+        Bitmap temp(source, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
         const int width = temp.width;
         const int height = temp.height;
@@ -756,12 +756,17 @@ namespace mango::image
                     g -= m_palette[index].g;
                     b -= m_palette[index].b;
 
+                    const auto distribute = [] (Color& color, int r, int g, int b, int scale)
+                    {
+                        color.r = math::clamp(color.r + (r * scale / 16), 0, 255);
+                        color.g = math::clamp(color.g + (g * scale / 16), 0, 255);
+                        color.b = math::clamp(color.b + (b * scale / 16), 0, 255);
+                    };
+
                     // distribute the error to neighbouring pixels with Floyd-Steinberg weights
                     if (x < width - 1)
                     {
-                        s[x + 1].r = math::clamp(s[x + 1].r + (r * 7 / 16), 0, 255);
-                        s[x + 1].g = math::clamp(s[x + 1].g + (g * 7 / 16), 0, 255);
-                        s[x + 1].b = math::clamp(s[x + 1].b + (b * 7 / 16), 0, 255);
+                        distribute(s[x + 1], r, g, b, 7);
 
                         // clipping
                         if (y < height - 1)
@@ -769,19 +774,11 @@ namespace mango::image
                             // clipping
                             if (x > 0)
                             {
-                                n[x - 1].r = math::clamp(n[x - 1].r + (r * 3 / 16), 0, 255);
-                                n[x - 1].g = math::clamp(n[x - 1].g + (g * 3 / 16), 0, 255);
-                                n[x - 1].b = math::clamp(n[x - 1].b + (b * 3 / 16), 0, 255);
+                                distribute(n[x - 1], r, g, b, 3);
                             }
 
-                            n[x + 0].r = math::clamp(n[x + 0].r + (r * 5 / 16), 0, 255);
-                            n[x + 0].g = math::clamp(n[x + 0].g + (g * 5 / 16), 0, 255);
-                            n[x + 0].b = math::clamp(n[x + 0].b + (b * 5 / 16), 0, 255);
-
-                            // NOTE: last pixel spills to next scan
-                            n[x + 1].r = math::clamp(n[x + 1].r + (r * 1 / 16), 0, 255);
-                            n[x + 1].g = math::clamp(n[x + 1].g + (g * 1 / 16), 0, 255);
-                            n[x + 1].b = math::clamp(n[x + 1].b + (b * 1 / 16), 0, 255);
+                            distribute(n[x + 0], r, g, b, 5);
+                            distribute(n[x + 1], r, g, b, 1);
                         }
                     }
                 }

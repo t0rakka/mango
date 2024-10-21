@@ -559,8 +559,7 @@ namespace
         std::string header = fmt::format("PF\n{} {}\n-1.0\n", width, height);
         s.write(header.c_str(), header.length());
 
-        Bitmap temp(width, height, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32));
-        temp.blit(0, 0, surface);
+        TemporaryBitmap temp(surface, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32));
 
         for (int y = height - 1; y >= 0; --y)
         {

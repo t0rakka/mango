@@ -2906,22 +2906,14 @@ namespace mango::image::jpeg
     {
         SampleFormat sf = getSampleFormat(surface.format);
 
-        ImageEncodeStatus status;
+        // convert source surface to format supported in the encoder
+        TemporaryBitmap temp(surface, sf.format);
 
         // encode
-        if (surface.format == sf.format)
-        {
-            jpegEncoder encoder(surface, sf.sample, options);
-            status = encoder.encodeImage(stream);
-            status.direct = true;
-        }
-        else
-        {
-            // convert source surface to format supported in the encoder
-            Bitmap temp(surface, sf.format);
-            jpegEncoder encoder(temp, sf.sample, options);
-            status = encoder.encodeImage(stream);
-        }
+        jpegEncoder encoder(temp, sf.sample, options);
+        ImageEncodeStatus status = encoder.encodeImage(stream);
+
+        status.direct = surface.format == sf.format;
 
         return status;
     }

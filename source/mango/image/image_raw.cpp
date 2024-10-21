@@ -112,10 +112,13 @@ namespace
         output.write32(width);
         output.write32(height);
 
-        Bitmap temp(width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
-        temp.blit(0, 0, surface);
+        TemporaryBitmap temp(surface, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
 
-        output.write(temp.image, width * height);
+        for (int y = 0; y < height; ++y)
+        {
+            u8* image = temp.address(0, y);
+            output.write(image, width * 4);
+        }
 
         return status;
     }

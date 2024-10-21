@@ -7,22 +7,19 @@
 using namespace mango;
 using namespace mango::image;
 
-void encode_indexed(Surface surface, const std::string& filename)
+void encode_indexed(const Surface& surface, const std::string& filename)
 {
-    Bitmap temp(surface.width, surface.height, IndexedFormat(8));
-
     u64 time0 = Time::ms();
 
     printf("Quantizing: ");
-    image::ColorQuantizer quantizer(surface, 0.80f);
-    quantizer.quantize(temp, surface, true);
+    QuantizedBitmap temp(surface, 0.80f, true);
 
     u64 time1 = Time::ms();
     printf("%d ms\n", int(time1 - time0));
 
     printf("Encoding: ");
     ImageEncodeOptions options;
-    options.palette = quantizer.getPalette();
+    options.palette = temp.getPalette();
 
     temp.save(filename, options);
 

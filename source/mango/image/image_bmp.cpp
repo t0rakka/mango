@@ -1396,7 +1396,7 @@ namespace
         s.write32(0x000000ff);  // blue mask
         s.write32(0xff000000);  // alpha mask
 
-        Bitmap temp(surface, format);
+        TemporaryBitmap temp(surface, format);
 
         for (int y = 0; y < temp.height; ++y)
         {

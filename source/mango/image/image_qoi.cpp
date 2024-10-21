@@ -365,21 +365,10 @@ namespace
     {
         MANGO_UNREFERENCED(options);
 
-        Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        TemporaryBitmap temp(surface, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
-        u8* buffer = nullptr;
         size_t size = 0;
-
-        if (surface.format == format)
-        {
-            buffer = qoi_encode(surface.image, surface.stride, surface.width, surface.height, &size);
-        }
-        else
-        {
-            Bitmap temp(surface.width, surface.height, format);
-            temp.blit(0, 0, surface);
-            buffer = qoi_encode(temp.image, temp.stride, temp.width, temp.height, &size);
-        }
+        u8* buffer = qoi_encode(temp.image, temp.stride, temp.width, temp.height, &size);
 
         ImageEncodeStatus status;
 

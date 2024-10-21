@@ -153,8 +153,7 @@ namespace
 
         ImageEncodeStatus status;
 
-        Bitmap temp(surface.width, surface.height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-        temp.blit(0, 0, surface);
+        TemporaryBitmap temp(surface, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
         ZPNG_ImageData z;
 
@@ -163,8 +162,8 @@ namespace
 
         z.BytesPerChannel = 1;
         z.Channels = 4;
-        z.WidthPixels = surface.width;
-        z.HeightPixels = surface.height;
+        z.WidthPixels = temp.width;
+        z.HeightPixels = temp.height;
         z.StrideBytes = int(temp.stride);
 
         // compress image
