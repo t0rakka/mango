@@ -149,7 +149,7 @@
     #elif defined(MANGO_ENABLE_WAYLAND)
         #define MANGO_WINDOW_SYSTEM_WAYLAND
     #else
-        #define MANGO_WINDOW_SYSTEM_NONE
+        #define MANGO_WINDOW_SYSTEM_XLIB
     #endif
 
     #include <stdint.h>
