@@ -660,15 +660,15 @@ namespace mango::image
     // ColorQuantizer
     // ----------------------------------------------------------------------------
 
-    ColorQuantizer::ColorQuantizer(Surface source, float quality)
+    ColorQuantizer::ColorQuantizer(const Surface& source, float quality)
     {
         quality = math::clamp(quality, 0.0f, 1.0f);
         int sample_factor = std::max(1, 30 - int(quality * 29.0f + 1.0f));
 
+        // convert to correct format when required
         TemporaryBitmap temp(source, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-        source = temp;
 
-        NeuQuant nq(source.image, source.width * source.height * 4, sample_factor);
+        NeuQuant nq(temp.image, temp.width * temp.height * 4, sample_factor);
 
         m_palette.size = NETSIZE;
 
@@ -717,7 +717,7 @@ namespace mango::image
         return m_palette;
     }
 
-    void ColorQuantizer::quantize(const Surface& dest, Surface source, bool dithering)
+    void ColorQuantizer::quantize(const Surface& dest, const Surface& source, bool dithering)
     {
         if (!dest.format.isIndexed())
         {
@@ -729,16 +729,16 @@ namespace mango::image
             MANGO_EXCEPTION("[ColorQuantizer] The destination and source dimensions must be identical.");
         }
 
+        // convert to correct format when required
         TemporaryBitmap temp(source, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-        source = temp;
 
-        const int width = source.width;
-        const int height = source.height;
+        const int width = temp.width;
+        const int height = temp.height;
 
         for (int y = 0; y < height; ++y)
         {
-            Color* s = source.address<Color>(0, y + 0);
-            Color* n = source.address<Color>(0, y + 1); // clipped in the loop
+            Color* s = temp.address<Color>(0, y + 0);
+            Color* n = temp.address<Color>(0, y + 1); // clipped in the loop
             u8* d = dest.address<u8>(0, y);
 
             for (int x = 0; x < width; ++x)
@@ -906,19 +906,19 @@ namespace mango::image
     // QuantizedBitmap
     // ----------------------------------------------------------------------------
 
-    QuantizedBitmap::QuantizedBitmap(Surface source, float quality, bool dithering)
+    QuantizedBitmap::QuantizedBitmap(const Surface& source, float quality, bool dithering)
         : Bitmap(source.width, source.height, IndexedFormat(8))
     {
+        // convert to correct format when required
         TemporaryBitmap temp(source, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-        source = temp;
 
-        ColorQuantizer qt(source, quality);
-        qt.quantize(*this, source, dithering);
+        ColorQuantizer qt(temp, quality);
+        qt.quantize(*this, temp, dithering);
 
         m_palette = qt.getPalette();
     }
 
-    QuantizedBitmap::QuantizedBitmap(Surface source, const Palette& palette, bool dithering)
+    QuantizedBitmap::QuantizedBitmap(const Surface& source, const Palette& palette, bool dithering)
         : Bitmap(source.width, source.height, IndexedFormat(8))
     {
         ColorQuantizer qt(palette);
@@ -940,22 +940,21 @@ namespace mango::image
     // LuminanceBitmap
     // ----------------------------------------------------------------------------
 
-    LuminanceBitmap::LuminanceBitmap(Surface source, bool alpha, bool linear)
+    LuminanceBitmap::LuminanceBitmap(const Surface& source, bool alpha, bool linear)
         : Bitmap(source.width, source.height, alpha ? LuminanceFormat(16, 0x00ff, 0xff00) : LuminanceFormat(8, 0xff, 0))
     {
         // convert to correct format when required
         TemporaryBitmap temp(source, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-        source = temp;
 
         // select conversion function
         auto func = select_conversion_function(alpha, linear);
 
         // resolve conversion
-        for (int y = 0; y < source.height; ++y)
+        for (int y = 0; y < temp.height; ++y)
         {
-            const u8* s = source.address(0, y);
+            const u8* s = temp.address(0, y);
             u8* d = address(0, y);
-            func(d, s, source.width);
+            func(d, s, temp.width);
         }
     }
 

@@ -20,7 +20,7 @@ namespace mango::image
         int m_netindex[NETSIZE];
 
     public:
-        ColorQuantizer(Surface source, float quality = 0.90f);
+        ColorQuantizer(const Surface& source, float quality = 0.90f);
         ColorQuantizer(const Palette& palette);
         ~ColorQuantizer();
 
@@ -28,7 +28,7 @@ namespace mango::image
         Palette getPalette() const;
 
         // quantize ANY image with the quantization network (the original color image is recommended)
-        void quantize(const Surface& dest, Surface source, bool dithering = true);
+        void quantize(const Surface& dest, const Surface& source, bool dithering = true);
 
     protected:
         void buildIndex();
@@ -41,8 +41,8 @@ namespace mango::image
         Palette m_palette;
 
     public:
-        QuantizedBitmap(Surface source, float quality = 0.90f, bool dithering = true);
-        QuantizedBitmap(Surface source, const Palette& palette, bool dithering = true);
+        QuantizedBitmap(const Surface& source, float quality = 0.90f, bool dithering = true);
+        QuantizedBitmap(const Surface& source, const Palette& palette, bool dithering = true);
         ~QuantizedBitmap();
 
         Palette getPalette() const;
@@ -51,7 +51,7 @@ namespace mango::image
     class LuminanceBitmap : public Bitmap
     {
     public:
-        LuminanceBitmap(Surface source, bool alpha = false, bool linear = true);
+        LuminanceBitmap(const Surface& source, bool alpha = false, bool linear = true);
     };
 
 } // namespace mango::image

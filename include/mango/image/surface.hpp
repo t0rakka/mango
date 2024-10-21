@@ -77,26 +77,20 @@ namespace mango::image
         Bitmap& operator = (Bitmap&& bitmap);
     };
 
-    class TemporaryBitmap : private NonCopyable
+    class TemporaryBitmap : public Surface, private NonCopyable
     {
     protected:
         std::unique_ptr<Bitmap> m_bitmap;
-        Surface m_surface;
 
     public:
-        TemporaryBitmap(Surface surface, const Format& format)
-            : m_surface(surface)
+        TemporaryBitmap(const Surface& surface, const Format& format)
+            : Surface(surface)
         {
             if (surface.format != format)
             {
                 m_bitmap = std::make_unique<Bitmap>(surface, format);
-                m_surface = *m_bitmap;
+                static_cast<Surface&>(*this) = *m_bitmap;
             }
-        }
-
-        operator Surface () const
-        {
-            return m_surface;
         }
     };
 
