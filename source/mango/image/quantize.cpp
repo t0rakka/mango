@@ -288,6 +288,57 @@ namespace
 
 #endif // defined(MANGO_ENABLE_SSSE3)
 
+#if defined(MANGO_ENABLE_AVX2)
+
+    void avx2_grayscale_linear(u8* d, const u8* s, int width)
+    {
+        // The scales are negative because signed range is [-128, 127] and we want a power of two
+        // so that we can shift the result; so we choose 7 bit weights. The abs() after scaling
+        // brings the values back to positive so that they can be stored with unsigned saturation.
+        const __m256i index_rgba = _mm256_setr_epi8(0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15,
+                                                    0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15);
+        const __m256i scale_rg = _mm256_setr_epi8(-38, -75, -38, -75, -38, -75, -38, -75, -38, -75, -38, -75, -38, -75, -38, -75, 
+                                                  -38, -75, -38, -75, -38, -75, -38, -75, -38, -75, -38, -75, -38, -75, -38, -75);
+        const __m256i scale_ba = _mm256_setr_epi8(-15, 0, -15, 0, -15, 0, -15, 0, -15, 0, -15, 0, -15, 0, -15, 0,
+                                                  -15, 0, -15, 0, -15, 0, -15, 0, -15, 0, -15, 0, -15, 0, -15, 0);
+
+        while (width >= 16)
+        {
+            const __m256i* ptr = reinterpret_cast<const __m256i*>(s);
+
+            __m256i rgba0 = _mm256_loadu_si256(ptr + 0); // RGBA RGBA RGBA RGBA | RGBA RGBA RGBA RGBA
+            __m256i rgba1 = _mm256_loadu_si256(ptr + 1); // RGBA RGBA RGBA RGBA | RGBA RGBA RGBA RGBA
+
+            rgba0 = _mm256_shuffle_epi8(rgba0, index_rgba); // RG[4] BA[4] | RG[4] BA[4]
+            rgba1 = _mm256_shuffle_epi8(rgba1, index_rgba); // RG[4] BA[4] | RG[4] BA[4]
+
+            rgba0 = _mm256_permute4x64_epi64(rgba0, 0xd8); // RG[8] | BA[8]
+            rgba1 = _mm256_permute4x64_epi64(rgba1, 0xd8); // RG[8] | BA[8]
+
+            __m256i rg01 = _mm256_permute2x128_si256(rgba0, rgba1, 0x20); // RG[8] | RG[8]
+            __m256i ba01 = _mm256_permute2x128_si256(rgba0, rgba1, 0x31); // BA[8] | BA[8]
+
+            // maddubs is u8 x s8 -> s16
+            __m256i rg = _mm256_maddubs_epi16(rg01, scale_rg);
+            __m256i ba = _mm256_maddubs_epi16(ba01, scale_ba);
+            __m256i sum = _mm256_add_epi16(rg, ba);
+            sum = _mm256_srai_epi16(sum, 7);
+            sum = _mm256_abs_epi16(sum);
+
+            __m128i temp0 = _mm256_extracti128_si256(sum, 0);
+            __m128i temp1 = _mm256_extracti128_si256(sum, 1);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(d), _mm_packus_epi16(temp0, temp1));
+
+            s += 64;
+            d += 16;
+            width -= 16;
+        }
+
+        grayscale_linear(d, s, width);
+    }
+
+#endif // defined(MANGO_ENABLE_AVX2)
+
 #if defined(MANGO_ENABLE_NEON)
 
     void neon_grayscale_linear(u8* d, const u8* s, int width)
@@ -338,6 +389,12 @@ namespace
         if (features & INTEL_SSSE3)
         {
             table[0] = ssse3_grayscale_linear;
+        }
+#endif
+#if defined(MANGO_ENABLE_AVX2)
+        if (features & INTEL_AVX2)
+        {
+            table[0] = avx2_grayscale_linear;
         }
 #endif
 #if defined(MANGO_ENABLE_NEON)
