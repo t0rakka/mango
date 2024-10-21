@@ -233,7 +233,8 @@ namespace
 
     void ssse3_grayscale_linear(u8* d, const u8* s, int width)
     {
-        const __m128i index_rgba = _mm_setr_epi8(0, -128, 1, -128, 4, -128, 5, -128, 8, -128, 9, -128, 12, -128, 13, -128);
+        const __m128i index_r0g0 = _mm_setr_epi8(0, -128, 1, -128, 4, -128, 5, -128, 8, -128, 9, -128, 12, -128, 13, -128);
+        const __m128i index_b0a0 = _mm_setr_epi8(2, -128, 3, -128, 6, -128, 7, -128, 10, -128, 11, -128, 14, -128, 15, -128);
         const __m128i scale_rg = _mm_setr_epi16(77, 150, 77, 150, 77, 150, 77, 150);
         const __m128i scale_b0 = _mm_setr_epi16(29, 0, 29, 0, 29, 0, 29, 0);
 
@@ -246,15 +247,15 @@ namespace
             __m128i rgba2 = _mm_loadu_si128(ptr + 2); // RGBA RGBA RGBA RGBA
             __m128i rgba3 = _mm_loadu_si128(ptr + 3); // RGBA RGBA RGBA RGBA
 
-            __m128i rg0 = _mm_shuffle_epi8(rgba0, index_rgba); // R0G0 R0G0 R0G0 R0G0
-            __m128i rg1 = _mm_shuffle_epi8(rgba1, index_rgba); // R0G0 R0G0 R0G0 R0G0
-            __m128i rg2 = _mm_shuffle_epi8(rgba2, index_rgba); // R0G0 R0G0 R0G0 R0G0
-            __m128i rg3 = _mm_shuffle_epi8(rgba3, index_rgba); // R0G0 R0G0 R0G0 R0G0
+            __m128i rg0 = _mm_shuffle_epi8(rgba0, index_r0g0); // R0G0 R0G0 R0G0 R0G0
+            __m128i rg1 = _mm_shuffle_epi8(rgba1, index_r0g0); // R0G0 R0G0 R0G0 R0G0
+            __m128i rg2 = _mm_shuffle_epi8(rgba2, index_r0g0); // R0G0 R0G0 R0G0 R0G0
+            __m128i rg3 = _mm_shuffle_epi8(rgba3, index_r0g0); // R0G0 R0G0 R0G0 R0G0
 
-            __m128i ba0 = _mm_shuffle_epi8(rgba0, index_rgba); // B0A0 B0A0 B0A0 B0A0
-            __m128i ba1 = _mm_shuffle_epi8(rgba1, index_rgba); // B0A0 B0A0 B0A0 B0A0
-            __m128i ba2 = _mm_shuffle_epi8(rgba2, index_rgba); // B0A0 B0A0 B0A0 B0A0
-            __m128i ba3 = _mm_shuffle_epi8(rgba3, index_rgba); // B0A0 B0A0 B0A0 B0A0
+            __m128i ba0 = _mm_shuffle_epi8(rgba0, index_b0a0); // B0A0 B0A0 B0A0 B0A0
+            __m128i ba1 = _mm_shuffle_epi8(rgba1, index_b0a0); // B0A0 B0A0 B0A0 B0A0
+            __m128i ba2 = _mm_shuffle_epi8(rgba2, index_b0a0); // B0A0 B0A0 B0A0 B0A0
+            __m128i ba3 = _mm_shuffle_epi8(rgba3, index_b0a0); // B0A0 B0A0 B0A0 B0A0
 
             rg0 = _mm_madd_epi16(rg0, scale_rg);
             rg1 = _mm_madd_epi16(rg1, scale_rg);
