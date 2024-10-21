@@ -4037,15 +4037,11 @@ namespace
             }
         }
 
-        if (surface.format == format)
-        {
-            write_png(stream, status, surface, color_bits, color_type, options);
-        }
-        else
-        {
-            Bitmap temp(surface, format);
-            write_png(stream, status, temp, color_bits, color_type, options);
-        }
+        // convert to correct format when required
+        TemporaryBitmap temp(surface, format);
+
+        // encode
+        write_png(stream, status, temp, color_bits, color_type, options);
 
         return status;
     }
