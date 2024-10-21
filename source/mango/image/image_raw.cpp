@@ -114,7 +114,7 @@ namespace
 
         TemporaryBitmap temp(surface, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
 
-        for (int y = 0; y < height; ++y)
+        for (int y = 0; y < surface.height; ++y)
         {
             u8* image = temp.address(0, y);
             output.write(image, width * 4);
