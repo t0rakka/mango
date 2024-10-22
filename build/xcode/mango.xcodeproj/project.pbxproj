@@ -111,7 +111,6 @@
 		A6269A4D1AB986AB0032EF56 /* geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A6269A4C1AB986AB0032EF56 /* geometry.cpp */; };
 		A62C93D92AEBFEE6000CDFA9 /* utilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A62C93D52AEBFEE5000CDFA9 /* utilities.cpp */; };
 		A62C93DA2AEBFEE6000CDFA9 /* context.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A62C93D62AEBFEE5000CDFA9 /* context.cpp */; };
-		A62C93DB2AEBFEE6000CDFA9 /* jpeg_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A62C93D72AEBFEE5000CDFA9 /* jpeg_decoder.cpp */; };
 		A62C93DC2AEBFEE6000CDFA9 /* framebuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A62C93D82AEBFEE6000CDFA9 /* framebuffer.cpp */; };
 		A630895D1DFC6D4700252BC4 /* crc32.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895B1DFC6D4700252BC4 /* crc32.cpp */; };
 		A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */; };
@@ -689,7 +688,6 @@
 		A6269A4C1AB986AB0032EF56 /* geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = geometry.cpp; path = math/geometry.cpp; sourceTree = "<group>"; };
 		A62C93D52AEBFEE5000CDFA9 /* utilities.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = utilities.cpp; path = opengl/utilities.cpp; sourceTree = "<group>"; };
 		A62C93D62AEBFEE5000CDFA9 /* context.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = context.cpp; path = opengl/context.cpp; sourceTree = "<group>"; };
-		A62C93D72AEBFEE5000CDFA9 /* jpeg_decoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = jpeg_decoder.cpp; path = opengl/jpeg_decoder.cpp; sourceTree = "<group>"; };
 		A62C93D82AEBFEE6000CDFA9 /* framebuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = framebuffer.cpp; path = opengl/framebuffer.cpp; sourceTree = "<group>"; };
 		A630895B1DFC6D4700252BC4 /* crc32.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = crc32.cpp; path = core/crc32.cpp; sourceTree = "<group>"; };
 		A630895F1E00BA2900252BC4 /* block_pvrtc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = block_pvrtc.cpp; path = image/block_pvrtc.cpp; sourceTree = "<group>"; };
@@ -1281,7 +1279,6 @@
 			children = (
 				A62C93D62AEBFEE5000CDFA9 /* context.cpp */,
 				A62C93D82AEBFEE6000CDFA9 /* framebuffer.cpp */,
-				A62C93D72AEBFEE5000CDFA9 /* jpeg_decoder.cpp */,
 				A62C93D52AEBFEE5000CDFA9 /* utilities.cpp */,
 				A0F21ED51CA05EE90084302D /* cocoa_context.mm */,
 				A650BE8121F21C180066B9B5 /* CustomOpenGLView.h */,
@@ -2465,7 +2462,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1540;
+				LastUpgradeCheck = 1600;
 			};
 			buildConfigurationList = A0F981B315B9E61D00B8C49F /* Build configuration list for PBXProject "mango" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -2578,7 +2575,6 @@
 				A6EAF56B29ECA353001EA03B /* adler32.c in Sources */,
 				A00559C91C93329A00A6D963 /* image_gif.cpp in Sources */,
 				A6EC3EF4230D7C1500B17F21 /* yuv_mips_dsp_r2.c in Sources */,
-				A62C93DB2AEBFEE6000CDFA9 /* jpeg_decoder.cpp in Sources */,
 				A00559CD1C93329A00A6D963 /* image_ktx.cpp in Sources */,
 				A6D78CE1290987A200304D88 /* astcenc_compute_variance.cpp in Sources */,
 				A6EC3EE2230D7C1500B17F21 /* yuv.c in Sources */,
