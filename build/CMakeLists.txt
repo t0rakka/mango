@@ -467,20 +467,25 @@ endif ()
 
 if (BUILD_SHARED_LIBS AND WIN32)
 
+    set(OpenGL_GL_PREFERENCE LEGACY)
     find_package(OpenGL REQUIRED)
 
     if (OPENGL_FOUND)
-        message(STATUS "OpenGL: FOUND")
+        message(STATUS "Enable: OpenGL")
         target_link_libraries(mango ${OPENGL_gl_LIBRARY})
     endif()
 
 else ()
 
+    set(OpenGL_GL_PREFERENCE GLVND)
     find_package(OpenGL)
 
     if (OPENGL_FOUND)
-        message(STATUS "OpenGL: FOUND")
+        message(STATUS "Enable: OpenGL")
+        message(STATUS "Enable: XLIB")
         target_link_libraries(mango ${OPENGL_gl_LIBRARY})
+        target_link_libraries(mango ${OPENGL_glx_LIBRARY})
+        target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_XLIB")
     endif()
 
 endif ()
