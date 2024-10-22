@@ -427,7 +427,8 @@ double from_chars(const char *first, const char* end) noexcept;
   #define simdjson_inline inline
 #else
   // Force inlining for most simdjson functions.
-  #define simdjson_inline simdjson_really_inline
+  #define simdjson_inline inline
+  //#define simdjson_inline simdjson_really_inline
 #endif
 
 #if SIMDJSON_VISUAL_STUDIO
@@ -2286,7 +2287,7 @@ namespace std {
 
 // By default, we allow AVX512.
 #ifndef SIMDJSON_AVX512_ALLOWED
-#define SIMDJSON_AVX512_ALLOWED 1
+#define SIMDJSON_AVX512_ALLOWED 0
 #endif
 
 #endif // SIMDJSON_COMMON_DEFS_H
@@ -18021,10 +18022,10 @@ namespace simd {
   struct simd8<bool>: base8<bool> {
     static simdjson_inline simd8<bool> splat(bool _value) { return _mm256_set1_epi8(uint8_t(-(!!_value))); }
 
-    simdjson_inline simd8<bool>() : base8() {}
-    simdjson_inline simd8<bool>(const __m256i _value) : base8<bool>(_value) {}
+    simdjson_inline simd8() : base8() {}
+    simdjson_inline simd8(const __m256i _value) : base8<bool>(_value) {}
     // Splat constructor
-    simdjson_inline simd8<bool>(bool _value) : base8<bool>(splat(_value)) {}
+    simdjson_inline simd8(bool _value) : base8<bool>(splat(_value)) {}
 
     simdjson_inline int to_bitmask() const { return _mm256_movemask_epi8(*this); }
     simdjson_inline bool any() const { return !_mm256_testz_si256(*this, *this); }
@@ -24157,10 +24158,10 @@ namespace simd {
   struct simd8<bool>: base8<bool> {
     static simdjson_inline simd8<bool> splat(bool _value) { return _mm512_set1_epi8(uint8_t(-(!!_value))); }
 
-    simdjson_inline simd8<bool>() : base8() {}
-    simdjson_inline simd8<bool>(const __m512i _value) : base8<bool>(_value) {}
+    simdjson_inline simd8() : base8() {}
+    simdjson_inline simd8(const __m512i _value) : base8<bool>(_value) {}
     // Splat constructor
-    simdjson_inline simd8<bool>(bool _value) : base8<bool>(splat(_value)) {}
+    simdjson_inline simd8(bool _value) : base8<bool>(splat(_value)) {}
     simdjson_inline bool any() const { return !!_mm512_test_epi8_mask (*this, *this); }
     simdjson_inline simd8<bool> operator~() const { return *this ^ true; }
   };

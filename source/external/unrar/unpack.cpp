@@ -2810,6 +2810,11 @@ bool Unpack::ReadTables()
       }
       else
       {
+#if __GNUC__ >= 7 && !defined(__clang__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
         int N;
         if (Number==18)
         {
@@ -2823,6 +2828,10 @@ bool Unpack::ReadTables()
         }
         while (N-- > 0 && I<TableSize)
           Table[I++]=0;
+
+#if __GNUC__ >= 7 && !defined(__clang__)
+    #pragma GCC diagnostic pop
+#endif
       }
   }
   TablesRead=true;

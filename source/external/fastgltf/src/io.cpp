@@ -29,6 +29,7 @@
 #include <fastgltf/core.hpp>
 
 #if defined(__APPLE__) || defined(__linux__)
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/file.h>
 #include <sys/mman.h>
@@ -397,11 +398,11 @@ fg::Expected<fg::DataSource> fg::Parser::loadFileFromApk(const fs::path& path) c
 		}
 	}
 
+	StaticVector<std::byte> data(static_cast<std::size_t>(length));
+	AAsset_read(file.get(), data.data(), length);
 	sources::Array arraySource {
-		StaticVector<std::byte>(length)
+		std::move(data),
 	};
-	AAsset_read(file.get(), arraySource.bytes.data(), length);
-
 	return { std::move(arraySource) };
 }
 #endif

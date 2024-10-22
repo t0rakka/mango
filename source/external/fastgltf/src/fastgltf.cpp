@@ -55,6 +55,9 @@ static_assert(std::string_view { SIMDJSON_TARGET_VERSION } == SIMDJSON_VERSION, 
 #elif defined(FASTGLTF_ENABLE_ARMV8_CRC)
 // MSVC does not provide the arm crc32 intrinsics.
 #include <arm_acle.h>
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#endif
 #endif
 
 namespace fg = fastgltf;
@@ -224,6 +227,11 @@ namespace fastgltf {
 #elif defined(FASTGLTF_ENABLE_ARMV8_CRC)
 		const auto& impls = simdjson::get_available_implementations();
 		if (const auto* neon = impls["arm64"]; neon != nullptr && neon->supported_by_runtime_system()) {
+#ifdef __APPLE__
+			std::int64_t ret = 0;
+			std::size_t size = sizeof(ret);
+			if (sysctlbyname("hw.optional.armv8_crc32", &ret, &size, nullptr, 0) == 0 && ret == 1)
+#endif
 			crcStringFunction = armv8_crc32c;
 		}
 #endif
@@ -791,6 +799,9 @@ fg::MimeType fg::Parser::getMimeTypeFromString(std::string_view mime) {
         case force_consteval<crc32c(mimeTypeOctetStream)>: {
             return MimeType::OctetStream;
         }
+        case force_consteval<crc32c(mimeTypeWebp)>: {
+            return MimeType::WEBP;
+        }
         default: {
             return MimeType::None;
         }
@@ -804,7 +815,7 @@ template <typename T> fg::Error fg::Parser::parseAttributes(simdjson::dom::objec
 	// attribute map. The keys are only validated in the validate() method.
 	attributes = FASTGLTF_CONSTRUCT_PMR_RESOURCE(std::remove_reference_t<decltype(attributes)>, resourceAllocator.get(), 0);
 	attributes.reserve(object.size());
-	for (const auto field : object) {
+	for (const auto& field : object) {
 		const auto key = field.key;
 
 		std::uint64_t accessorIndex;
@@ -1488,7 +1499,7 @@ fg::Expected<fg::Asset> fg::Parser::parse(simdjson::dom::object root, Category c
 	}
 
 	Category readCategories = Category::None;
-	for (const auto object : root) {
+	for (const auto& object : root) {
 		auto hashedKey = crcStringFunction(object.key);
 		if (hashedKey == force_consteval<crc32c("scene")>) {
 			std::uint64_t defaultScene;
@@ -2626,9 +2637,9 @@ fg::Error fg::Parser::parseMaterialExtensions(simdjson::dom::object &object, fas
 					return error;
 				}
 
-				TextureInfo clearcoatNormalTexture;
+				NormalTextureInfo clearcoatNormalTexture;
 				if (auto error = parseTextureInfo(clearcoatObject, "clearcoatNormalTexture",
-												  &clearcoatNormalTexture, config.extensions); error ==
+												  &clearcoatNormalTexture, config.extensions, TextureInfoType::NormalTexture); error ==
 																							   Error::None) {
 					clearcoat->clearcoatNormalTexture = std::move(clearcoatNormalTexture);
 				} else if (error != Error::MissingField) {
@@ -4727,7 +4738,7 @@ void fg::Exporter::writeMaterials(const Asset& asset, std::string& json) {
 			if (it->clearcoat->clearcoatNormalTexture.has_value()) {
 				if (json.back() != '{') json += ',';
 				json += "\"clearcoatNormalTexture\":";
-				writeTextureInfo(json, &it->clearcoat->clearcoatNormalTexture.value());
+				writeTextureInfo(json, &it->clearcoat->clearcoatNormalTexture.value(), TextureInfoType::NormalTexture);
 			}
 			json += '}';
 		}
