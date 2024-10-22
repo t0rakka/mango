@@ -143,95 +143,9 @@ namespace
         }
     }
 
-#if defined(MANGO_ENABLE_SSE2)
+#if defined(MANGO_ENABLE_SSE4_1)
 
-    void sse2_grayscale_linear(u8* d, const u8* s, int width)
-    {
-        const __m128i scale_rg = _mm_setr_epi16(77, 150, 77, 150, 77, 150, 77, 150);
-        const __m128i scale_b0 = _mm_setr_epi16(29, 0, 29, 0, 29, 0, 29, 0);
-        const __m128i mask = _mm_set1_epi32(0xff);
-
-        while (width >= 16)
-        {
-            const __m128i* ptr = reinterpret_cast<const __m128i*>(s);
-
-            __m128i rgba0 = _mm_loadu_si128(ptr + 0);
-            __m128i rgba1 = _mm_loadu_si128(ptr + 1);
-            __m128i rgba2 = _mm_loadu_si128(ptr + 2);
-            __m128i rgba3 = _mm_loadu_si128(ptr + 3);
-
-            __m128i r0 = rgba0;
-            __m128i r1 = rgba1;
-            __m128i r2 = rgba2;
-            __m128i r3 = rgba3;
-
-            __m128i g0 = _mm_srli_epi32(rgba0, 8);
-            __m128i g1 = _mm_srli_epi32(rgba1, 8);
-            __m128i g2 = _mm_srli_epi32(rgba2, 8);
-            __m128i g3 = _mm_srli_epi32(rgba3, 8);
-
-            __m128i b0 = _mm_srli_epi32(rgba0, 16);
-            __m128i b1 = _mm_srli_epi32(rgba1, 16);
-            __m128i b2 = _mm_srli_epi32(rgba2, 16);
-            __m128i b3 = _mm_srli_epi32(rgba3, 16);
-
-            r0 = _mm_and_si128(r0, mask);
-            r1 = _mm_and_si128(r1, mask);
-            r2 = _mm_and_si128(r2, mask);
-            r3 = _mm_and_si128(r3, mask);
-
-            g0 = _mm_and_si128(g0, mask);
-            g1 = _mm_and_si128(g1, mask);
-            g2 = _mm_and_si128(g2, mask);
-            g3 = _mm_and_si128(g3, mask);
-
-            b0 = _mm_and_si128(b0, mask);
-            b1 = _mm_and_si128(b1, mask);
-            b2 = _mm_and_si128(b2, mask);
-            b3 = _mm_and_si128(b3, mask);
-
-            __m128i r01 = _mm_packus_epi32(r0, r1);
-            __m128i g01 = _mm_packus_epi32(g0, g1);
-            __m128i b01 = _mm_packus_epi32(b0, b1);
-
-            __m128i r23 = _mm_packus_epi32(r2, r3);
-            __m128i g23 = _mm_packus_epi32(g2, g3);
-            __m128i b23 = _mm_packus_epi32(b2, b3);
-
-            __m128i rg0 = _mm_madd_epi16(_mm_unpacklo_epi16(r01, g01), scale_rg);
-            __m128i rg1 = _mm_madd_epi16(_mm_unpackhi_epi16(r01, g01), scale_rg);
-            __m128i rg2 = _mm_madd_epi16(_mm_unpacklo_epi16(r23, g23), scale_rg);
-            __m128i rg3 = _mm_madd_epi16(_mm_unpackhi_epi16(r23, g23), scale_rg);
-
-            __m128i bx0 = _mm_madd_epi16(_mm_unpacklo_epi16(b01, b01), scale_b0);
-            __m128i bx1 = _mm_madd_epi16(_mm_unpackhi_epi16(b01, b01), scale_b0);
-            __m128i bx2 = _mm_madd_epi16(_mm_unpacklo_epi16(b23, b23), scale_b0);
-            __m128i bx3 = _mm_madd_epi16(_mm_unpackhi_epi16(b23, b23), scale_b0);
-
-            __m128i sum0 = _mm_add_epi32(rg0, bx0);
-            __m128i sum1 = _mm_add_epi32(rg1, bx1);
-            __m128i sum2 = _mm_add_epi32(rg2, bx2);
-            __m128i sum3 = _mm_add_epi32(rg3, bx3);
-
-            __m128i temp0 = _mm_srli_epi16(_mm_packus_epi32(sum0, sum1), 8);
-            __m128i temp1 = _mm_srli_epi16(_mm_packus_epi32(sum2, sum3), 8);
-            __m128i temp = _mm_packus_epi16(temp0, temp1);
-
-            _mm_storeu_si128(reinterpret_cast<__m128i *>(d), temp);
-
-            s += 64;
-            d += 16;
-            width -= 16;
-        }
-
-        grayscale_linear(d, s, width);
-    }
-
-#endif // defined(MANGO_ENABLE_SSE2)
-
-#if defined(MANGO_ENABLE_SSSE3)
-
-    void ssse3_grayscale_linear(u8* d, const u8* s, int width)
+    void sse41_grayscale_linear(u8* d, const u8* s, int width)
     {
         const __m128i index_r0g0 = _mm_setr_epi8(0, -128, 1, -128, 4, -128, 5, -128, 8, -128, 9, -128, 12, -128, 13, -128);
         const __m128i index_b0a0 = _mm_setr_epi8(2, -128, 3, -128, 6, -128, 7, -128, 10, -128, 11, -128, 14, -128, 15, -128);
@@ -286,7 +200,7 @@ namespace
         grayscale_linear(d, s, width);
     }
 
-#endif // defined(MANGO_ENABLE_SSSE3)
+#endif // defined(MANGO_ENABLE_SSE4_1)
 
 #if defined(MANGO_ENABLE_AVX2)
 
@@ -379,16 +293,10 @@ namespace
         u64 features = getCPUFlags();
         MANGO_UNREFERENCED(features);
 
-#if defined(MANGO_ENABLE_SSE2)
-        if (features & INTEL_SSE2)
+#if defined(MANGO_ENABLE_SSE4_1)
+        if (features & INTEL_SSE4_1)
         {
-            table[0] = sse2_grayscale_linear;
-        }
-#endif
-#if defined(MANGO_ENABLE_SSSE3)
-        if (features & INTEL_SSSE3)
-        {
-            table[0] = ssse3_grayscale_linear;
+            table[0] = sse41_grayscale_linear;
         }
 #endif
 #if defined(MANGO_ENABLE_AVX2)
