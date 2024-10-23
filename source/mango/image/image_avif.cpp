@@ -129,7 +129,13 @@ namespace
                 }
 
                 avifRGBImageSetDefaults(&m_rgb, image);
-                avifRGBImageAllocatePixels(&m_rgb);
+
+                result = avifRGBImageAllocatePixels(&m_rgb);
+                if (result != AVIF_RESULT_OK)
+                {
+                    status.setError("[ImageDecoder.AVIF] avifRGBImageAllocatePixels FAILED.");
+                    return status;
+                }
 
                 if (avifImageYUVToRGB(image, &m_rgb) != AVIF_RESULT_OK)
                 {
@@ -204,7 +210,13 @@ namespace
         std::memset(&rgb, 0, sizeof(rgb));
 
         avifRGBImageSetDefaults(&rgb, image);
-        avifRGBImageAllocatePixels(&rgb);
+        avifResult result = avifRGBImageAllocatePixels(&rgb);
+        if (result != AVIF_RESULT_OK)
+        {
+            avifImageDestroy(image);
+            status.setError("[ImageEncoder.AVIF] avifRGBImageAllocatePixels FAILED.");
+            return status;
+        }
 
         Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
         Surface temp(width, height, format, rgb.rowBytes, rgb.pixels);
