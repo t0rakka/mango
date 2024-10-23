@@ -216,36 +216,49 @@ namespace
         const __m256i scale_ba = _mm256_setr_epi8(-15, 0, -15, 0, -15, 0, -15, 0, -15, 0, -15, 0, -15, 0, -15, 0,
                                                   -15, 0, -15, 0, -15, 0, -15, 0, -15, 0, -15, 0, -15, 0, -15, 0);
 
-        while (width >= 16)
+        while (width >= 32)
         {
             const __m256i* ptr = reinterpret_cast<const __m256i*>(s);
 
             __m256i rgba0 = _mm256_loadu_si256(ptr + 0); // RGBA RGBA RGBA RGBA | RGBA RGBA RGBA RGBA
             __m256i rgba1 = _mm256_loadu_si256(ptr + 1); // RGBA RGBA RGBA RGBA | RGBA RGBA RGBA RGBA
+            __m256i rgba2 = _mm256_loadu_si256(ptr + 2); // RGBA RGBA RGBA RGBA | RGBA RGBA RGBA RGBA
+            __m256i rgba3 = _mm256_loadu_si256(ptr + 3); // RGBA RGBA RGBA RGBA | RGBA RGBA RGBA RGBA
 
             rgba0 = _mm256_shuffle_epi8(rgba0, index_rgba); // RG[4] BA[4] | RG[4] BA[4]
             rgba1 = _mm256_shuffle_epi8(rgba1, index_rgba); // RG[4] BA[4] | RG[4] BA[4]
+            rgba2 = _mm256_shuffle_epi8(rgba2, index_rgba); // RG[4] BA[4] | RG[4] BA[4]
+            rgba3 = _mm256_shuffle_epi8(rgba3, index_rgba); // RG[4] BA[4] | RG[4] BA[4]
 
             rgba0 = _mm256_permute4x64_epi64(rgba0, 0xd8); // RG[8] | BA[8]
             rgba1 = _mm256_permute4x64_epi64(rgba1, 0xd8); // RG[8] | BA[8]
+            rgba2 = _mm256_permute4x64_epi64(rgba2, 0xd8); // RG[8] | BA[8]
+            rgba3 = _mm256_permute4x64_epi64(rgba3, 0xd8); // RG[8] | BA[8]
 
             __m256i rg01 = _mm256_permute2x128_si256(rgba0, rgba1, 0x20); // RG[8] | RG[8]
+            __m256i rg23 = _mm256_permute2x128_si256(rgba2, rgba3, 0x20); // RG[8] | RG[8]
             __m256i ba01 = _mm256_permute2x128_si256(rgba0, rgba1, 0x31); // BA[8] | BA[8]
+            __m256i ba23 = _mm256_permute2x128_si256(rgba2, rgba3, 0x31); // BA[8] | BA[8]
 
             // maddubs is u8 x s8 -> s16
-            __m256i rg = _mm256_maddubs_epi16(rg01, scale_rg);
-            __m256i ba = _mm256_maddubs_epi16(ba01, scale_ba);
-            __m256i sum = _mm256_add_epi16(rg, ba);
-            sum = _mm256_srai_epi16(sum, 7);
-            sum = _mm256_abs_epi16(sum);
+            __m256i rg0 = _mm256_maddubs_epi16(rg01, scale_rg);
+            __m256i rg1 = _mm256_maddubs_epi16(rg23, scale_rg);
+            __m256i ba0 = _mm256_maddubs_epi16(ba01, scale_ba);
+            __m256i ba1 = _mm256_maddubs_epi16(ba23, scale_ba);
+            __m256i sum0 = _mm256_add_epi16(rg0, ba0);
+            __m256i sum1 = _mm256_add_epi16(rg1, ba1);
+            sum0 = _mm256_srai_epi16(sum0, 7);
+            sum1 = _mm256_srai_epi16(sum1, 7);
+            sum0 = _mm256_abs_epi16(sum0);
+            sum1 = _mm256_abs_epi16(sum1);
 
-            __m128i temp0 = _mm256_extracti128_si256(sum, 0);
-            __m128i temp1 = _mm256_extracti128_si256(sum, 1);
-            _mm_storeu_si128(reinterpret_cast<__m128i *>(d), _mm_packus_epi16(temp0, temp1));
+            __m256i temp = _mm256_packus_epi16(sum0, sum1);
+            temp = _mm256_permute4x64_epi64(temp, 0xd8);
+            _mm256_storeu_si256(reinterpret_cast<__m256i *>(d), temp);
 
-            s += 64;
-            d += 16;
-            width -= 16;
+            s += 128;
+            d += 32;
+            width -= 32;
         }
 
         grayscale_linear(d, s, width);
