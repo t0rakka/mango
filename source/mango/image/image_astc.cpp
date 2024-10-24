@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/image/image.hpp>
@@ -22,20 +22,20 @@ namespace
     }
     const g_astc_table[] =
     {
-        {  4,  4, TextureCompression::ASTC_RGBA_4x4 },
-        {  5,  4, TextureCompression::ASTC_RGBA_5x4 },
-        {  5,  5, TextureCompression::ASTC_RGBA_5x5 },
-        {  6,  5, TextureCompression::ASTC_RGBA_6x5 },
-        {  6,  6, TextureCompression::ASTC_RGBA_6x6 },
-        {  8,  5, TextureCompression::ASTC_RGBA_8x5 },
-        {  8,  6, TextureCompression::ASTC_RGBA_8x6 },
-        {  8,  8, TextureCompression::ASTC_RGBA_8x8 },
-        { 10,  5, TextureCompression::ASTC_RGBA_10x5 },
-        { 10,  6, TextureCompression::ASTC_RGBA_10x6 },
-        { 10,  8, TextureCompression::ASTC_RGBA_10x8 },
-        { 10, 10, TextureCompression::ASTC_RGBA_10x10 },
-        { 12, 10, TextureCompression::ASTC_RGBA_12x10 },
-        { 12, 12, TextureCompression::ASTC_RGBA_12x12 }
+        {  4,  4, TextureCompression::ASTC_UNORM_4x4 },
+        {  5,  4, TextureCompression::ASTC_UNORM_5x4 },
+        {  5,  5, TextureCompression::ASTC_UNORM_5x5 },
+        {  6,  5, TextureCompression::ASTC_UNORM_6x5 },
+        {  6,  6, TextureCompression::ASTC_UNORM_6x6 },
+        {  8,  5, TextureCompression::ASTC_UNORM_8x5 },
+        {  8,  6, TextureCompression::ASTC_UNORM_8x6 },
+        {  8,  8, TextureCompression::ASTC_UNORM_8x8 },
+        { 10,  5, TextureCompression::ASTC_UNORM_10x5 },
+        { 10,  6, TextureCompression::ASTC_UNORM_10x6 },
+        { 10,  8, TextureCompression::ASTC_UNORM_10x8 },
+        { 10, 10, TextureCompression::ASTC_UNORM_10x10 },
+        { 12, 10, TextureCompression::ASTC_UNORM_12x10 },
+        { 12, 12, TextureCompression::ASTC_UNORM_12x12 }
     };
 
     u32 select_astc_format(int width, int height)

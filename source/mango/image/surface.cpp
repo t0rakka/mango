@@ -335,7 +335,7 @@ namespace mango::image
 
         if (ThreadPool::getHardwareConcurrency() > 2 && rect.height >= slice * 2)
         {
-            ConcurrentQueue queue("blit", Priority::High);
+            ConcurrentQueue queue("blitter");
 
             for (int y = 0; y < rect.height; y += slice)
             {

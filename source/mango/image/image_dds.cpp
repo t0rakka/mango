@@ -401,87 +401,87 @@ namespace
         { 0, 0, Format(), false, "V208" }, // not supported
         { 0, 0, Format(), false, "V408" }, // not supported
 
-        { FOURCC_ASTC4x4, TextureCompression::ASTC_RGBA_4x4, Format(), false, "ASTC_4X4_TYPELESS" },
-        { FOURCC_ASTC4x4, TextureCompression::ASTC_RGBA_4x4, Format(), false, "ASTC_4X4_UNORM" },
-        { FOURCC_ASTC4x4, TextureCompression::ASTC_SRGB_ALPHA_4x4, Format(), true,  "ASTC_4X4_UNORM_SRGB" },
+        { FOURCC_ASTC4x4, TextureCompression::ASTC_FLOAT_4x4, Format(), false, "ASTC_4X4_TYPELESS" },
+        { FOURCC_ASTC4x4, TextureCompression::ASTC_UNORM_4x4, Format(), false, "ASTC_4X4_UNORM" },
+        { FOURCC_ASTC4x4, TextureCompression::ASTC_SRGB_4x4, Format(), true,  "ASTC_4X4_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { 0, TextureCompression::ASTC_RGBA_5x4, Format(), false, "ASTC_5X4_TYPELESS" }, // 137
-        { 0, TextureCompression::ASTC_RGBA_5x4, Format(), false, "ASTC_5X4_UNORM" },
-        { 0, TextureCompression::ASTC_SRGB_ALPHA_5x4, Format(), true,  "ASTC_5X4_UNORM_SRGB" },
+        { 0, TextureCompression::ASTC_FLOAT_5x4, Format(), false, "ASTC_5X4_TYPELESS" }, // 137
+        { 0, TextureCompression::ASTC_UNORM_5x4, Format(), false, "ASTC_5X4_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_5x4, Format(), true,  "ASTC_5X4_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { FOURCC_ASTC5x5, TextureCompression::ASTC_RGBA_5x5, Format(), false, "ASTC_5X5_TYPELESS" }, // 141
-        { FOURCC_ASTC5x5, TextureCompression::ASTC_RGBA_5x5, Format(), false, "ASTC_5X5_UNORM" },
-        { FOURCC_ASTC5x5, TextureCompression::ASTC_SRGB_ALPHA_5x5, Format(), true,  "ASTC_5X5_UNORM_SRGB" },
+        { FOURCC_ASTC5x5, TextureCompression::ASTC_UNORM_5x5, Format(), false, "ASTC_5X5_TYPELESS" }, // 141
+        { FOURCC_ASTC5x5, TextureCompression::ASTC_UNORM_5x5, Format(), false, "ASTC_5X5_UNORM" },
+        { FOURCC_ASTC5x5, TextureCompression::ASTC_SRGB_5x5, Format(), true,  "ASTC_5X5_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { 0, TextureCompression::ASTC_RGBA_6x5, Format(), false, "ASTC_6X5_TYPELESS" }, // 145
-        { 0, TextureCompression::ASTC_RGBA_6x5, Format(), false, "ASTC_6X5_UNORM" },
-        { 0, TextureCompression::ASTC_SRGB_ALPHA_6x5, Format(), true,  "ASTC_6X5_UNORM_SRGB" },
+        { 0, TextureCompression::ASTC_UNORM_6x5, Format(), false, "ASTC_6X5_TYPELESS" }, // 145
+        { 0, TextureCompression::ASTC_UNORM_6x5, Format(), false, "ASTC_6X5_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_6x5, Format(), true,  "ASTC_6X5_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { FOURCC_ASTC6x6, TextureCompression::ASTC_RGBA_6x6, Format(), false, "ASTC_6X6_TYPELESS" }, // 149
-        { FOURCC_ASTC6x6, TextureCompression::ASTC_RGBA_6x6, Format(), false, "ASTC_6X6_UNORM" },
-        { FOURCC_ASTC6x6, TextureCompression::ASTC_SRGB_ALPHA_6x6, Format(), true,  "ASTC_6X6_UNORM_SRGB" },
+        { FOURCC_ASTC6x6, TextureCompression::ASTC_UNORM_6x6, Format(), false, "ASTC_6X6_TYPELESS" }, // 149
+        { FOURCC_ASTC6x6, TextureCompression::ASTC_UNORM_6x6, Format(), false, "ASTC_6X6_UNORM" },
+        { FOURCC_ASTC6x6, TextureCompression::ASTC_SRGB_6x6, Format(), true,  "ASTC_6X6_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { FOURCC_ASTC8x5, TextureCompression::ASTC_RGBA_8x5, Format(), false, "ASTC_8X5_TYPELESS" }, // 153
-        { FOURCC_ASTC8x5, TextureCompression::ASTC_RGBA_8x5, Format(), false, "ASTC_8X5_UNORM" },
-        { FOURCC_ASTC8x5, TextureCompression::ASTC_SRGB_ALPHA_8x5, Format(), true,  "ASTC_8X5_UNORM_SRGB" },
+        { FOURCC_ASTC8x5, TextureCompression::ASTC_UNORM_8x5, Format(), false, "ASTC_8X5_TYPELESS" }, // 153
+        { FOURCC_ASTC8x5, TextureCompression::ASTC_UNORM_8x5, Format(), false, "ASTC_8X5_UNORM" },
+        { FOURCC_ASTC8x5, TextureCompression::ASTC_SRGB_8x5, Format(), true,  "ASTC_8X5_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { FOURCC_ASTC8x6, TextureCompression::ASTC_RGBA_8x6, Format(), false, "ASTC_8X6_TYPELESS" }, // 157
-        { FOURCC_ASTC8x6, TextureCompression::ASTC_RGBA_8x6, Format(), false, "ASTC_8X6_UNORM" },
-        { FOURCC_ASTC8x6, TextureCompression::ASTC_SRGB_ALPHA_8x6, Format(), true,  "ASTC_8X6_UNORM_SRGB" },
+        { FOURCC_ASTC8x6, TextureCompression::ASTC_UNORM_8x6, Format(), false, "ASTC_8X6_TYPELESS" }, // 157
+        { FOURCC_ASTC8x6, TextureCompression::ASTC_UNORM_8x6, Format(), false, "ASTC_8X6_UNORM" },
+        { FOURCC_ASTC8x6, TextureCompression::ASTC_SRGB_8x6, Format(), true,  "ASTC_8X6_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { 0, TextureCompression::ASTC_RGBA_8x8, Format(), false, "ASTC_8X8_TYPELESS" }, // 161
-        { 0, TextureCompression::ASTC_RGBA_8x8, Format(), false, "ASTC_8X8_UNORM" },
-        { 0, TextureCompression::ASTC_SRGB_ALPHA_8x8, Format(), true,  "ASTC_8X8_UNORM_SRGB" },
+        { 0, TextureCompression::ASTC_UNORM_8x8, Format(), false, "ASTC_8X8_TYPELESS" }, // 161
+        { 0, TextureCompression::ASTC_UNORM_8x8, Format(), false, "ASTC_8X8_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_8x8, Format(), true,  "ASTC_8X8_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { FOURCC_ASTC10x5, TextureCompression::ASTC_RGBA_10x5, Format(), false, "ASTC_10X5_TYPELESS" }, // 165
-        { FOURCC_ASTC10x5, TextureCompression::ASTC_RGBA_10x5, Format(), false, "ASTC_10X5_UNORM" },
-        { FOURCC_ASTC10x5, TextureCompression::ASTC_SRGB_ALPHA_10x5, Format(), true,  "ASTC_10X5_UNORM_SRGB" },
+        { FOURCC_ASTC10x5, TextureCompression::ASTC_UNORM_10x5, Format(), false, "ASTC_10X5_TYPELESS" }, // 165
+        { FOURCC_ASTC10x5, TextureCompression::ASTC_UNORM_10x5, Format(), false, "ASTC_10X5_UNORM" },
+        { FOURCC_ASTC10x5, TextureCompression::ASTC_SRGB_10x5, Format(), true,  "ASTC_10X5_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { 0, TextureCompression::ASTC_RGBA_10x6, Format(), false, "ASTC_10X6_TYPELESS" }, // 169
-        { 0, TextureCompression::ASTC_RGBA_10x6, Format(), false, "ASTC_10X6_UNORM" },
-        { 0, TextureCompression::ASTC_SRGB_ALPHA_10x6, Format(), true,  "ASTC_10X6_UNORM_SRGB" },
+        { 0, TextureCompression::ASTC_UNORM_10x6, Format(), false, "ASTC_10X6_TYPELESS" }, // 169
+        { 0, TextureCompression::ASTC_UNORM_10x6, Format(), false, "ASTC_10X6_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_10x6, Format(), true,  "ASTC_10X6_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { 0, TextureCompression::ASTC_RGBA_10x8, Format(), false, "ASTC_10X8_TYPELESS" }, // 173
-        { 0, TextureCompression::ASTC_RGBA_10x8, Format(), false, "ASTC_10X8_UNORM" },
-        { 0, TextureCompression::ASTC_SRGB_ALPHA_10x8, Format(), true,  "ASTC_10X8_UNORM_SRGB" },
+        { 0, TextureCompression::ASTC_UNORM_10x8, Format(), false, "ASTC_10X8_TYPELESS" }, // 173
+        { 0, TextureCompression::ASTC_UNORM_10x8, Format(), false, "ASTC_10X8_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_10x8, Format(), true,  "ASTC_10X8_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { 0, TextureCompression::ASTC_RGBA_10x10, Format(), false, "ASTC_10X10_TYPELESS" }, // 177
-        { 0, TextureCompression::ASTC_RGBA_10x10, Format(), false, "ASTC_10X10_UNORM" },
-        { 0, TextureCompression::ASTC_SRGB_ALPHA_10x10, Format(), true,  "ASTC_10X10_UNORM_SRGB" },
+        { 0, TextureCompression::ASTC_UNORM_10x10, Format(), false, "ASTC_10X10_TYPELESS" }, // 177
+        { 0, TextureCompression::ASTC_UNORM_10x10, Format(), false, "ASTC_10X10_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_10x10, Format(), true,  "ASTC_10X10_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { 0, TextureCompression::ASTC_RGBA_12x10, Format(), false, "ASTC_12X10_TYPELESS" }, // 181
-        { 0, TextureCompression::ASTC_RGBA_12x10, Format(), false, "ASTC_12X10_UNORM" },
-        { 0, TextureCompression::ASTC_SRGB_ALPHA_12x10, Format(), true,  "ASTC_12X10_UNORM_SRGB" },
+        { 0, TextureCompression::ASTC_UNORM_12x10, Format(), false, "ASTC_12X10_TYPELESS" }, // 181
+        { 0, TextureCompression::ASTC_UNORM_12x10, Format(), false, "ASTC_12X10_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_12x10, Format(), true,  "ASTC_12X10_UNORM_SRGB" },
 
         { 0, 0, Format(), false, "UNKNOWN" },
 
-        { 0, TextureCompression::ASTC_RGBA_12x12, Format(), false, "ASTC_12X12_TYPELESS" }, // 185
-        { 0, TextureCompression::ASTC_RGBA_12x12, Format(), false, "ASTC_12X12_UNORM" },
-        { 0, TextureCompression::ASTC_SRGB_ALPHA_12x12, Format(), true,  "ASTC_12X12_UNORM_SRGB" },
+        { 0, TextureCompression::ASTC_UNORM_12x12, Format(), false, "ASTC_12X12_TYPELESS" }, // 185
+        { 0, TextureCompression::ASTC_UNORM_12x12, Format(), false, "ASTC_12X12_UNORM" },
+        { 0, TextureCompression::ASTC_SRGB_12x12, Format(), true,  "ASTC_12X12_UNORM_SRGB" },
     };
 
     struct HeaderDX10
@@ -570,22 +570,22 @@ namespace
                 compression = TextureCompression::R8G8B8G8;
                 break;
             case FOURCC_ASTC4x4:
-                compression = TextureCompression::ASTC_SRGB_ALPHA_4x4;
+                compression = TextureCompression::ASTC_SRGB_4x4;
                 break;
             case FOURCC_ASTC5x5:
-                compression = TextureCompression::ASTC_SRGB_ALPHA_5x5;
+                compression = TextureCompression::ASTC_SRGB_5x5;
                 break;
             case FOURCC_ASTC6x6:
-                compression = TextureCompression::ASTC_SRGB_ALPHA_6x6;
+                compression = TextureCompression::ASTC_SRGB_6x6;
                 break;
             case FOURCC_ASTC8x5:
-                compression = TextureCompression::ASTC_SRGB_ALPHA_8x5;
+                compression = TextureCompression::ASTC_SRGB_8x5;
                 break;
             case FOURCC_ASTC8x6:
-                compression = TextureCompression::ASTC_SRGB_ALPHA_8x6;
+                compression = TextureCompression::ASTC_SRGB_8x6;
                 break;
             case FOURCC_ASTC10x5:
-                compression = TextureCompression::ASTC_SRGB_ALPHA_10x5;
+                compression = TextureCompression::ASTC_SRGB_10x5;
                 break;
             case FOURCC_ATC:
                 compression = TextureCompression::ATC_RGB;

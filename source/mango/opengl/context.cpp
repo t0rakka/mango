@@ -410,6 +410,8 @@ namespace mango
         init_glx(*this);
 #endif
 
+        // detect compressed texture format support using extensions
+
         core.texture_compression_dxt1 = false;
         core.texture_compression_dxt3 = false;
         core.texture_compression_dxt5 = false;
@@ -467,6 +469,77 @@ namespace mango
             core.texture_compression_etc2 = m_version >= 430;
             core.texture_compression_eac = m_version >= 430;
         }
+
+#if 0
+        // detect compressed texture format support using API
+
+        GLint numCompressedFormats = 0;
+        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &numCompressedFormats);
+
+        if (numCompressedFormats > 0)
+        {
+            std::vector<GLint> compressedFormats(numCompressedFormats);
+            glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, compressedFormats.data());
+
+            for (auto format : compressedFormats)
+            {
+                switch (format)
+                {
+                    // GL_EXT_texture_compression_s3tc
+                    case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+                    case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+                    case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+                    case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+                        break;
+
+                    // GL_ARB_texture_compression_bptc
+                    case GL_COMPRESSED_RGBA_BPTC_UNORM_ARB:
+                    case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB:
+                    case GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB:
+                    case GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB:
+                        break;
+
+                    // GL_3DFX_texture_compression_FXT1
+                    case GL_COMPRESSED_RGB_FXT1_3DFX:
+                    case GL_COMPRESSED_RGBA_FXT1_3DFX:
+                        break;
+
+                    // GL_EXT_texture_compression_latc
+                    case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
+                    case GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:
+                    case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+                    case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
+                        break;
+
+                    // GL_EXT_texture_compression_rgtc
+                    case GL_COMPRESSED_RED_RGTC1_EXT:
+                    case GL_COMPRESSED_SIGNED_RED_RGTC1_EXT:
+                    case GL_COMPRESSED_RED_GREEN_RGTC2_EXT:
+                    case GL_COMPRESSED_SIGNED_RED_GREEN_RGTC2_EXT:
+                        break;
+
+                    // GL_IMG_texture_compression_pvrtc
+                    case GL_COMPRESSED_RGB_PVRTC_4BPPV1_IMG:
+                    case GL_COMPRESSED_RGB_PVRTC_2BPPV1_IMG:
+                    case GL_COMPRESSED_RGBA_PVRTC_4BPPV1_IMG:
+                    case GL_COMPRESSED_RGBA_PVRTC_2BPPV1_IMG:
+                        break;
+
+                    // GL_IMG_texture_compression_pvrtc2
+                    case GL_COMPRESSED_RGBA_PVRTC_2BPPV2_IMG:
+                    case GL_COMPRESSED_RGBA_PVRTC_4BPPV2_IMG:
+                        break;
+
+                    // GL_EXT_texture_compression_s3tc_srgb
+                    case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+                    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+                    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+                    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+                        break;
+                }
+            }
+        }
+#endif
     }
 
     bool OpenGLContext::isExtension(const std::string& name) const
@@ -571,57 +644,74 @@ namespace mango
                 supported = ext.OES_compressed_ETC1_RGB8_texture;
                 break;
 
-            case TextureCompression::ASTC_RGBA_4x4:
-            case TextureCompression::ASTC_RGBA_5x4:
-            case TextureCompression::ASTC_RGBA_5x5:
-            case TextureCompression::ASTC_RGBA_6x5:
-            case TextureCompression::ASTC_RGBA_6x6:
-            case TextureCompression::ASTC_RGBA_8x5:
-            case TextureCompression::ASTC_RGBA_8x6:
-            case TextureCompression::ASTC_RGBA_8x8:
-            case TextureCompression::ASTC_RGBA_10x5:
-            case TextureCompression::ASTC_RGBA_10x6:
-            case TextureCompression::ASTC_RGBA_10x8:
-            case TextureCompression::ASTC_RGBA_10x10:
-            case TextureCompression::ASTC_RGBA_12x10:
-            case TextureCompression::ASTC_RGBA_12x12:
-            case TextureCompression::ASTC_SRGB_ALPHA_4x4:
-            case TextureCompression::ASTC_SRGB_ALPHA_5x4:
-            case TextureCompression::ASTC_SRGB_ALPHA_5x5:
-            case TextureCompression::ASTC_SRGB_ALPHA_6x5:
-            case TextureCompression::ASTC_SRGB_ALPHA_6x6:
-            case TextureCompression::ASTC_SRGB_ALPHA_8x5:
-            case TextureCompression::ASTC_SRGB_ALPHA_8x6:
-            case TextureCompression::ASTC_SRGB_ALPHA_8x8:
-            case TextureCompression::ASTC_SRGB_ALPHA_10x5:
-            case TextureCompression::ASTC_SRGB_ALPHA_10x6:
-            case TextureCompression::ASTC_SRGB_ALPHA_10x8:
-            case TextureCompression::ASTC_SRGB_ALPHA_10x10:
-            case TextureCompression::ASTC_SRGB_ALPHA_12x10:
-            case TextureCompression::ASTC_SRGB_ALPHA_12x12:
-                supported = ext.KHR_texture_compression_astc_hdr || ext.KHR_texture_compression_astc_ldr;
+            case TextureCompression::ASTC_UNORM_4x4:
+            case TextureCompression::ASTC_UNORM_5x4:
+            case TextureCompression::ASTC_UNORM_5x5:
+            case TextureCompression::ASTC_UNORM_6x5:
+            case TextureCompression::ASTC_UNORM_6x6:
+            case TextureCompression::ASTC_UNORM_8x5:
+            case TextureCompression::ASTC_UNORM_8x6:
+            case TextureCompression::ASTC_UNORM_8x8:
+            case TextureCompression::ASTC_UNORM_10x5:
+            case TextureCompression::ASTC_UNORM_10x6:
+            case TextureCompression::ASTC_UNORM_10x8:
+            case TextureCompression::ASTC_UNORM_10x10:
+            case TextureCompression::ASTC_UNORM_12x10:
+            case TextureCompression::ASTC_UNORM_12x12:
+            case TextureCompression::ASTC_SRGB_4x4:
+            case TextureCompression::ASTC_SRGB_5x4:
+            case TextureCompression::ASTC_SRGB_5x5:
+            case TextureCompression::ASTC_SRGB_6x5:
+            case TextureCompression::ASTC_SRGB_6x6:
+            case TextureCompression::ASTC_SRGB_8x5:
+            case TextureCompression::ASTC_SRGB_8x6:
+            case TextureCompression::ASTC_SRGB_8x8:
+            case TextureCompression::ASTC_SRGB_10x5:
+            case TextureCompression::ASTC_SRGB_10x6:
+            case TextureCompression::ASTC_SRGB_10x8:
+            case TextureCompression::ASTC_SRGB_10x10:
+            case TextureCompression::ASTC_SRGB_12x10:
+            case TextureCompression::ASTC_SRGB_12x12:
+                supported = ext.KHR_texture_compression_astc_ldr;
                 break;
 
-            case TextureCompression::ASTC_RGBA_3x3x3:
-            case TextureCompression::ASTC_RGBA_4x3x3:
-            case TextureCompression::ASTC_RGBA_4x4x3:
-            case TextureCompression::ASTC_RGBA_4x4x4:
-            case TextureCompression::ASTC_RGBA_5x4x4:
-            case TextureCompression::ASTC_RGBA_5x5x4:
-            case TextureCompression::ASTC_RGBA_5x5x5:
-            case TextureCompression::ASTC_RGBA_6x5x5:
-            case TextureCompression::ASTC_RGBA_6x6x5:
-            case TextureCompression::ASTC_RGBA_6x6x6:
-            case TextureCompression::ASTC_SRGB_ALPHA_3x3x3:
-            case TextureCompression::ASTC_SRGB_ALPHA_4x3x3:
-            case TextureCompression::ASTC_SRGB_ALPHA_4x4x3:
-            case TextureCompression::ASTC_SRGB_ALPHA_4x4x4:
-            case TextureCompression::ASTC_SRGB_ALPHA_5x4x4:
-            case TextureCompression::ASTC_SRGB_ALPHA_5x5x4:
-            case TextureCompression::ASTC_SRGB_ALPHA_5x5x5:
-            case TextureCompression::ASTC_SRGB_ALPHA_6x5x5:
-            case TextureCompression::ASTC_SRGB_ALPHA_6x6x5:
-            case TextureCompression::ASTC_SRGB_ALPHA_6x6x6:
+            case TextureCompression::ASTC_FLOAT_4x4:
+            case TextureCompression::ASTC_FLOAT_5x4:
+            case TextureCompression::ASTC_FLOAT_5x5:
+            case TextureCompression::ASTC_FLOAT_6x5:
+            case TextureCompression::ASTC_FLOAT_6x6:
+            case TextureCompression::ASTC_FLOAT_8x5:
+            case TextureCompression::ASTC_FLOAT_8x6:
+            case TextureCompression::ASTC_FLOAT_8x8:
+            case TextureCompression::ASTC_FLOAT_10x5:
+            case TextureCompression::ASTC_FLOAT_10x6:
+            case TextureCompression::ASTC_FLOAT_10x8:
+            case TextureCompression::ASTC_FLOAT_10x10:
+            case TextureCompression::ASTC_FLOAT_12x10:
+            case TextureCompression::ASTC_FLOAT_12x12:
+                supported = ext.KHR_texture_compression_astc_hdr;
+                break;
+
+            case TextureCompression::ASTC_UNORM_3x3x3:
+            case TextureCompression::ASTC_UNORM_4x3x3:
+            case TextureCompression::ASTC_UNORM_4x4x3:
+            case TextureCompression::ASTC_UNORM_4x4x4:
+            case TextureCompression::ASTC_UNORM_5x4x4:
+            case TextureCompression::ASTC_UNORM_5x5x4:
+            case TextureCompression::ASTC_UNORM_5x5x5:
+            case TextureCompression::ASTC_UNORM_6x5x5:
+            case TextureCompression::ASTC_UNORM_6x6x5:
+            case TextureCompression::ASTC_UNORM_6x6x6:
+            case TextureCompression::ASTC_SRGB_3x3x3:
+            case TextureCompression::ASTC_SRGB_4x3x3:
+            case TextureCompression::ASTC_SRGB_4x4x3:
+            case TextureCompression::ASTC_SRGB_4x4x4:
+            case TextureCompression::ASTC_SRGB_5x4x4:
+            case TextureCompression::ASTC_SRGB_5x5x4:
+            case TextureCompression::ASTC_SRGB_5x5x5:
+            case TextureCompression::ASTC_SRGB_6x5x5:
+            case TextureCompression::ASTC_SRGB_6x6x5:
+            case TextureCompression::ASTC_SRGB_6x6x6:
                 supported = ext.OES_texture_compression_astc;
                 break;
 

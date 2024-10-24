@@ -22,9 +22,18 @@ namespace
     void encode_rows(const TextureCompression& info, u8* output, const u8* input, int width, int height, size_t stride)
     {
         bool isFloat = (info.compression & TextureCompression::FLOAT) != 0;
+        bool isSRGB = (info.compression & TextureCompression::SRGB) != 0;
 
-        const astcenc_profile profile = ASTCENC_PRF_LDR;
-        const float quality = ASTCENC_PRE_MEDIUM;
+        const astcenc_profile profiles [] =
+        {
+            ASTCENC_PRF_LDR,
+            ASTCENC_PRF_LDR_SRGB,
+            ASTCENC_PRF_HDR,
+            ASTCENC_PRF_HDR // Technically there is no "HDR + sRGB" but here we are
+        };
+
+        astcenc_profile profile = profiles[isFloat * 2 + isSRGB];
+        float quality = ASTCENC_PRE_MEDIUM;
 
         astcenc_error status;
         astcenc_config config;
@@ -71,9 +80,18 @@ namespace
     void decode_rows(const TextureCompression& block, u8* output, const u8* input, int width, int height, size_t stride)
     {
         bool isFloat = (block.compression & TextureCompression::FLOAT) != 0;
+        bool isSRGB = (block.compression & TextureCompression::SRGB) != 0;
 
-        const astcenc_profile profile = ASTCENC_PRF_LDR;
-        const float quality = ASTCENC_PRE_MEDIUM;
+        const astcenc_profile profiles [] =
+        {
+            ASTCENC_PRF_LDR,
+            ASTCENC_PRF_LDR_SRGB,
+            ASTCENC_PRF_HDR,
+            ASTCENC_PRF_HDR // Technically there is no "HDR + sRGB" but here we are
+        };
+
+        astcenc_profile profile = profiles[isFloat * 2 + isSRGB];
+        float quality = ASTCENC_PRE_MEDIUM;
 
         astcenc_error status;
         astcenc_config config;
