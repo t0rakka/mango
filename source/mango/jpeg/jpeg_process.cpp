@@ -853,12 +853,8 @@ u8* convert_ycbcr_rgba_8x2_avx2(u8* dest, size_t stride, __m256i y, __m256i cb, 
     __m256i rgba0 = _mm256_unpacklo_epi16(rg, ba); // RGBARGBARGBARGBA
     __m256i rgba1 = _mm256_unpackhi_epi16(rg, ba); // RGBARGBARGBARGBA
 
-    __m256i c0 = _mm256_permute2x128_si256(rgba0, rgba1, _MM_SHUFFLE(3, 2, 1, 0));
-    __m256i c1 = _mm256_permute2x128_si256(rgba0, rgba1, _MM_SHUFFLE(1, 2, 3, 0));
-    __m256i c2 = _mm256_permute2x128_si256(rgba0, rgba1, _MM_SHUFFLE(3, 2, 0, 1));
-    __m256i c3 = _mm256_permute2x128_si256(rgba0, rgba1, _MM_SHUFFLE(0, 3, 2, 1));
-    __m256i color0 = _mm256_blend_epi32(c0, c1, 0xf0);
-    __m256i color1 = _mm256_blend_epi32(c2, c3, 0xf0);
+    __m256i color0 = _mm256_permute2x128_si256(rgba0, rgba1, 0x20);
+    __m256i color1 = _mm256_permute2x128_si256(rgba0, rgba1, 0x31);
 
     _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest +  0), color0);
     dest += stride;
