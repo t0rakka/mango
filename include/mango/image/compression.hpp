@@ -56,10 +56,9 @@ namespace mango::image
             YUV      = 0x02000000, // YUV colorspace
             FLOAT    = 0x04000000, // 16 or 32 bit floating point color
             SURFACE  = 0x08000000, // Surface (not block) compression
-            YFLIP    = 0x10000000, // Origin is at bottom left
-            SIGNED   = 0x20000000, // Signed normalized color
-            ALPHA    = 0x40000000, // Color has alpha bits
-            SRGB     = 0x80000000, // sRGB colorspace
+            SIGNED   = 0x10000000, // Signed normalized color
+            ALPHA    = 0x20000000, // Color has alpha bits
+            SRGB     = 0x40000000, // sRGB colorspace
             MASK     = 0xffff0000
         };
 

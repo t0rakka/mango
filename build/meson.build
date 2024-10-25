@@ -899,6 +899,7 @@ external_basisu_sources = files(
 external_astc_headers = files(
     '../source/external/astc/astcenc.h',
     '../source/external/astc/astcenc_diagnostic_trace.h',
+    '../source/external/astc/astcenc_internal_entry.h',
     '../source/external/astc/astcenc_internal.h',
     '../source/external/astc/astcenc_mathlib.h',
     '../source/external/astc/astcenc_vecmathlib.h',
@@ -906,7 +907,8 @@ external_astc_headers = files(
     '../source/external/astc/astcenc_vecmathlib_common_4.h',
     '../source/external/astc/astcenc_vecmathlib_neon_4.h',
     '../source/external/astc/astcenc_vecmathlib_none_4.h',
-    '../source/external/astc/astcenc_vecmathlib_sse_4.h'
+    '../source/external/astc/astcenc_vecmathlib_sse_4.h',
+    '../source/external/astc/astcenc_vecmathlib_sve_8.h'
 )
 
 external_astc_sources = files(

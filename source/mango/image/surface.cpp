@@ -144,13 +144,18 @@ namespace mango::image
     {
     }
 
-    Surface::Surface(const Surface& surface)
+    Surface::Surface(const Surface& surface, bool yflip)
         : format(surface.format)
         , image(surface.image)
         , stride(surface.stride)
         , width(surface.width)
         , height(surface.height)
     {
+        if (yflip)
+        {
+            image += (height - 1) * stride;
+            stride = -stride;
+        }
     }
 
     Surface::Surface(int width, int height, const Format& format, size_t stride, const void* image)
@@ -401,6 +406,8 @@ namespace mango::image
         if (!image || !stride)
             return;
 
+        // NOTE: We can't do logical yflip here because image could be a storage pointer.
+
         const int bytes_per_pixel = format.bytes();
         const int bytes_per_scan = width * bytes_per_pixel;
         const int half_height = height / 2;
@@ -503,6 +510,26 @@ namespace mango::image
         bitmap.image = nullptr;
 
         return *this;
+    }
+
+    // ----------------------------------------------------------------------------
+    // TemporaryBitmap
+    // ----------------------------------------------------------------------------
+
+    TemporaryBitmap::TemporaryBitmap(const Surface& surface, const Format& format, bool yflip)
+        : Surface(surface)
+    {
+        if (surface.format != format)
+        {
+            m_bitmap = std::make_unique<Bitmap>(surface, format);
+            static_cast<Surface&>(*this) = *m_bitmap;
+        }
+
+        if (yflip)
+        {
+            image += (height - 1) * stride;
+            stride = 0 - stride;
+        }
     }
 
 } // namespace mango::image

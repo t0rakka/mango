@@ -101,7 +101,7 @@ static void brent_kung_prefix_sum(
 
 /* See header for documentation. */
 void compute_pixel_region_variance(
-	astcenc_context& ctx,
+	astcenc_contexti& ctx,
 	const pixel_region_args& arg
 ) {
 	// Unpack the memory structure into local variables

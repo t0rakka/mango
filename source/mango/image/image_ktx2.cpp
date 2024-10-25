@@ -1095,7 +1095,7 @@ namespace
                 }
             }
 
-            // Key/Value Data
+            // Key / Value Data
             if (kvdByteLength)
             {
                 p = memory.address + kvdByteOffset;
@@ -1144,7 +1144,7 @@ namespace
 
             if (m_orientation_y)
             {
-                m_header.compression |= TextureCompression::YFLIP;
+                // MANGO TODO: compressed format origin is at bottom
             }
 
             // Supercompression Global Data

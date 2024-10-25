@@ -1218,13 +1218,6 @@ namespace
         size_t xstride = info.width * surface.format.bytes();
         size_t ystride = info.height * surface.stride;
 
-        if (info.compression & TextureCompression::YFLIP)
-        {
-            image += yblocks * ystride - stride;
-            stride = -stride;
-            ystride = -ystride;
-        }
-
         bool multithread = true;
 
         if (multithread)
@@ -1378,11 +1371,9 @@ namespace mango::image
         const int w = xblocks * width;
         const int h = yblocks * height;
 
-        const bool noclip = surface.width == w &&
-                            surface.height == h;
+        const bool noclip = surface.width == w && surface.height == h;
         const bool noconvert = surface.format == format;
-        const bool yflip = (compression & TextureCompression::YFLIP) != 0;
-        const bool direct = noclip && noconvert && !yflip;
+        const bool direct = noclip && noconvert;
 
         // surface decoders get size from block information
         TextureCompression info = *this;
@@ -1398,18 +1389,9 @@ namespace mango::image
             }
             else
             {
-                Bitmap bitmap(w, h, format);
-                info.decode(info, bitmap.image, memory.address, bitmap.stride);
-
-                Surface target = surface;
-
-                if (yflip)
-                {
-                    target.image += (target.height - 1) * target.stride;
-                    target.stride = -target.stride;
-                }
-
-                target.blit(0, 0, bitmap);
+                Bitmap temp(w, h, format);
+                info.decode(info, temp.image, memory.address, temp.stride);
+                surface.blit(0, 0, temp);
             }
         }
         else
@@ -1421,12 +1403,9 @@ namespace mango::image
             }
             else
             {
-                Bitmap bitmap(xblocks * width, yblocks * height, format);
-                directBlockDecode(*this, bitmap, memory, xblocks, yblocks);
-
-                // compute y offset to skip padding pixels, if any
-                int yoffset = yflip ? surface.height - yblocks * height : 0;
-                surface.blit(0, yoffset, bitmap);
+                Bitmap temp(xblocks * width, yblocks * height, format);
+                directBlockDecode(*this, temp, memory, xblocks, yblocks);
+                surface.blit(0, 0, temp);
             }
         }
 
@@ -1447,19 +1426,14 @@ namespace mango::image
 
         if (compression & TextureCompression::SURFACE)
         {
+            TextureCompression info = *this;
+
             const int xblocks = getBlocksX(surface.width);
             const int yblocks = getBlocksY(surface.height);
-            int w = xblocks * width;
-            int h = yblocks * height;
+            info.width = xblocks * width;
+            info.height = yblocks * height;
 
-            Bitmap temp(w, h, format);
-            temp.blit(0, 0, surface);
-
-            // surface encoders get size from block information
-            TextureCompression info = *this;
-            info.width = w;
-            info.height = h;
-
+            TemporaryBitmap temp(surface, format);
             encode(info, memory.address, temp.image, temp.stride);
         }
         else
@@ -1477,10 +1451,10 @@ namespace mango::image
                 {
                     Bitmap temp(xblocks * width, height, format);
 
-                    int w = std::min(surface.width, xblocks * width);
-                    int h = std::min(height, surface.height - y * height);
+                    int source_width = std::min(surface.width, xblocks * width);
+                    int source_height = std::min(height, surface.height - y * height);
 
-                    Surface source(surface, 0, y * height, w, h);
+                    Surface source(surface, 0, y * height, source_width, source_height);
                     temp.blit(0, 0, source);
 
                     u8* data = address + y * xblocks * bytes;

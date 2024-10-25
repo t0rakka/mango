@@ -129,6 +129,11 @@ namespace mango
         {
         }
 
+        operator Stream& ()
+        {
+            return s;
+        }
+
         u64 size() const
         {
             return s.size();
@@ -262,6 +267,11 @@ namespace mango
         SwapEndianStream(Stream& stream)
             : s(stream)
         {
+        }
+
+        operator Stream& ()
+        {
+            return s;
         }
 
         u64 size() const

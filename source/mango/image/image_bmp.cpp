@@ -882,13 +882,7 @@ namespace
 
         ConstMemory data(memory.address + offset, memory.size - offset);
 
-        Surface mirror = surface;
-
-        if (header.yflip)
-        {
-            mirror.image += (header.height - 1) * surface.stride;
-            mirror.stride = 0 - surface.stride;
-        }
+        Surface mirror(surface, header.yflip);
 
         if (header.os2)
         {

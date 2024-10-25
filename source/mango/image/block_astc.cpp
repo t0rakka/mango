@@ -4,6 +4,7 @@
 */
 #include <mango/core/core.hpp>
 #include <mango/image/compression.hpp>
+#include <mango/image/surface.hpp>
 #include <mango/image/color.hpp>
 
 #ifdef MANGO_LICENSE_ENABLE_APACHE
@@ -12,15 +13,28 @@
 #include "../../external/astc/astcenc_internal.h"
 #include "../../external/astc/astcenc_diagnostic_trace.h"
 
-// MANGO TODO: stride support
-
-namespace
+namespace mango::image
 {
-    using namespace mango;
-    using namespace mango::image;
 
-    void encode_rows(const TextureCompression& info, u8* output, const u8* input, int width, int height, size_t stride)
+    void encode_surface_astc(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
+        MANGO_UNREFERENCED(stride);
+
+        // NOTE: implement stride and the temporary copy isn't needed anymore
+        Surface source(info.width, info.height, info.format, stride, input);
+        Bitmap temp(source, info.format);
+        input = temp.image;
+
+        TextureCompression block(info.compression);
+
+        // image size
+        int width = info.width;
+        int height = info.height;
+
+        // Compute the number of ASTC blocks in each dimension
+        u32 xblocks = block.getBlocksX(width);
+        u32 yblocks = block.getBlocksY(height);
+
         bool isFloat = (info.compression & TextureCompression::FLOAT) != 0;
         bool isSRGB = (info.compression & TextureCompression::SRGB) != 0;
 
@@ -40,19 +54,20 @@ namespace
 
         u32 flags = 0;
 
-        status = astcenc_config_init(profile, info.width, info.height, 1, quality, flags, &config);
+        status = astcenc_config_init(profile, block.width, block.height, 1, quality, flags, &config);
         if (status != ASTCENC_SUCCESS)
         {
-            printLine(Print::Error, "[ASTC] Codec config init failed: {}", astcenc_get_error_string(status));
+            printLine(Print::Error, "[ASTC] astcenc_config_init: {}", astcenc_get_error_string(status));
             return;
         }
 
-        astcenc_context context;
+        astcenc_context* context;
+        u32 thread_count = 1;
 
-        status = astcenc_context_alloc(&config, context);
+        status = astcenc_context_alloc(&config, thread_count, &context);
         if (status != ASTCENC_SUCCESS)
         {
-            printLine(Print::Error, "[ASTC] Codec context alloc failed: {}", astcenc_get_error_string(status));
+            printLine(Print::Error, "[ASTC] astcenc_context_alloc: {}", astcenc_get_error_string(status));
             return;
         }
 
@@ -68,17 +83,36 @@ namespace
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
-        status = astcenc_compress_image(context, image, &swizzle, output);
+        size_t output_bytes = xblocks * yblocks * 16;
+
+        u32 thread_index = 0;
+
+        status = astcenc_compress_image(context, &image, &swizzle, output, output_bytes, thread_index);
         if (status != ASTCENC_SUCCESS)
         {
-            printLine(Print::Error, "[ASTC] Codec compress failed: {}", astcenc_get_error_string(status));
+            printLine(Print::Error, "[ASTC] astcenc_compress_image: {}", astcenc_get_error_string(status));
         }
 
         astcenc_context_free(context);
     }
 
-    void decode_rows(const TextureCompression& block, u8* output, const u8* input, int width, int height, size_t stride)
+    void decode_surface_astc(const TextureCompression& info, u8* output, const u8* input, size_t stride)
     {
+        MANGO_UNREFERENCED(stride);
+
+        // NOTE: implement stride and the temporary copy isn't needed anymore
+        Bitmap temp(info.width, info.height, info.format);
+
+        TextureCompression block(info.compression);
+
+        // image size
+        int width = info.width;
+        int height = info.height;
+
+        // Compute the number of ASTC blocks in each dimension
+        u32 xblocks = block.getBlocksX(width);
+        u32 yblocks = block.getBlocksY(height);
+
         bool isFloat = (block.compression & TextureCompression::FLOAT) != 0;
         bool isSRGB = (block.compression & TextureCompression::SRGB) != 0;
 
@@ -101,16 +135,17 @@ namespace
         status = astcenc_config_init(profile, block.width, block.height, 1, quality, flags, &config);
         if (status != ASTCENC_SUCCESS)
         {
-            printLine(Print::Error, "[ASTC] Codec config init failed: {}", astcenc_get_error_string(status));
+            printLine(Print::Error, "[ASTC] astcenc_config_init: {}", astcenc_get_error_string(status));
             return;
         }
 
-        astcenc_context context;
+        astcenc_context* context;
+        u32 thread_count = 1;
 
-        status = astcenc_context_alloc(&config, context);
+        status = astcenc_context_alloc(&config, thread_count, &context);
         if (status != ASTCENC_SUCCESS)
         {
-            printLine(Print::Error, "[ASTC] Codec context alloc failed: {}", astcenc_get_error_string(status));
+            printLine(Print::Error, "[ASTC] astcenc_context_alloc: {}", astcenc_get_error_string(status));
             return;
         }
 
@@ -120,103 +155,25 @@ namespace
         image.dim_y = height;
         image.dim_z = 1;
         image.data_type = isFloat ? ASTCENC_TYPE_F16 : ASTCENC_TYPE_U8;
-        image.data = reinterpret_cast<void**>(&output);
+        image.data = reinterpret_cast<void**>(&temp.image);
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
-        u32 xblocks = block.getBlocksX(width);
-        u32 yblocks = block.getBlocksY(height);
+        size_t input_bytes = xblocks * yblocks * 16;
 
-        image_block blk;
-        blk.texel_count = u8(block.width * block.height);
+        u32 thread_index = 0;
 
-        for (u32 y = 0; y < yblocks; ++y)
+        status = astcenc_decompress_image(context, input, input_bytes, &image, &swizzle, thread_index);
+        if (status != ASTCENC_SUCCESS)
         {
-            u32 yoffset = y * block.height;
-            u32 xoffset = 0;
-
-            for (u32 x = 0; x < xblocks; ++x)
-            {
-                const physical_compressed_block& pcb = *reinterpret_cast<const physical_compressed_block*>(input);
-                symbolic_compressed_block scb;
-
-                physical_to_symbolic(*context.bsd, pcb, scb);
-                decompress_symbolic_block(context.config.profile, *context.bsd, xoffset, yoffset, 0, scb, blk);
-                store_image_block(image, blk, *context.bsd, xoffset, yoffset, 0, swizzle);
-
-                xoffset += block.width;
-                input += 16;
-            }
+            printLine(Print::Error, "[ASTC] astcenc_decompress_image: {}", astcenc_get_error_string(status));
         }
+
+        // NOTE: implement stride and the temporary copy isn't needed anymore
+        Surface target(info.width, info.height, info.format, stride, output);
+        target.blit(0, 0, temp);
 
         astcenc_context_free(context);
-    }
-
-} // namespace mango
-
-namespace mango::image
-{
-
-    void encode_surface_astc(const TextureCompression& info, u8* output, const u8* input, size_t stride)
-    {
-        TextureCompression block(info.compression);
-
-        // image size
-        int width = info.width;
-        int height = info.height;
-
-        // Compute the number of ASTC blocks in each dimension
-        u32 xblocks = block.getBlocksX(width);
-        u32 yblocks = block.getBlocksY(height);
-
-        ConcurrentQueue q;
-
-        int n = 12;
-
-        for (u32 y = 0; y < yblocks; y += n)
-        {
-            int segment_height = std::min(block.height * n, height);
-
-            q.enqueue([=]
-            {
-                encode_rows(block, output, input, width, segment_height, stride);
-            });
-
-            height -= segment_height;
-            input += segment_height * stride;
-            output += n * xblocks * 16;
-        }
-    }
-
-    void decode_surface_astc(const TextureCompression& info, u8* output, const u8* input, size_t stride)
-    {
-        TextureCompression block(info.compression);
-
-        // image size
-        int width = info.width;
-        int height = info.height;
-
-        // Compute the number of ASTC blocks in each dimension
-        u32 xblocks = block.getBlocksX(width);
-        u32 yblocks = block.getBlocksY(height);
-
-        ConcurrentQueue q;
-
-        constexpr int n = 24;
-
-        for (u32 y = 0; y < yblocks; y += n)
-        {
-            int segment_height = std::min(block.height * n, height);
-
-            q.enqueue([=]
-            {
-                decode_rows(block, output, input, width, segment_height, stride);
-            });
-
-            height -= segment_height;
-            output += segment_height * stride;
-            input += n * xblocks * 16;
-        }
     }
 
 } // namespace mango::image

@@ -26,7 +26,7 @@ namespace mango::image
         int     height;
 
         Surface();
-        Surface(const Surface& surface);
+        Surface(const Surface& surface, bool yflip = false);
         Surface(int width, int height, const Format& format, size_t stride, const void* image);
         Surface(const Surface& source, int x, int y, int width, int height);
         ~Surface();
@@ -83,15 +83,7 @@ namespace mango::image
         std::unique_ptr<Bitmap> m_bitmap;
 
     public:
-        TemporaryBitmap(const Surface& surface, const Format& format)
-            : Surface(surface)
-        {
-            if (surface.format != format)
-            {
-                m_bitmap = std::make_unique<Bitmap>(surface, format);
-                static_cast<Surface&>(*this) = *m_bitmap;
-            }
-        }
+        TemporaryBitmap(const Surface& surface, const Format& format, bool yflip = false);
     };
 
 } // namespace mango::image

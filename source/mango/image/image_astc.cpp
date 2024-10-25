@@ -3,6 +3,7 @@
     Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
+#include <mango/core/buffer.hpp>
 #include <mango/image/image.hpp>
 
 namespace
@@ -51,6 +52,22 @@ namespace
         return TextureCompression::NONE;
     }
 
+    u32 read24(LittleEndianConstPointer& p)
+    {
+        u32 value = (p[2] << 16) | (p[1] << 8) | p[0];
+        p += 3;
+        return value;
+    }
+
+    void write24(Stream& stream, u32 value)
+    {
+        u8 temp[3];
+        temp[0] = (value >>  0) & 0xff;
+        temp[1] = (value >>  8) & 0xff;
+        temp[2] = (value >> 16) & 0xff;
+        stream.write(temp, 3);
+    }
+
     // ----------------------------------------------------------------------------
     // HeaderASTC
     // ----------------------------------------------------------------------------
@@ -61,13 +78,6 @@ namespace
         int yblock;
         int zblock;
         ImageHeader header;
-
-        u32 read24(LittleEndianConstPointer& p) const
-        {
-            u32 value = (p[2] << 16) | (p[1] << 8) | p[0];
-            p += 3;
-            return value;
-        }
 
         void read(LittleEndianConstPointer& p)
         {
@@ -96,7 +106,7 @@ namespace
             TextureCompression info(compression);
             header.format = info.format;
             header.linear = info.isLinear();
-            header.compression = compression | TextureCompression::YFLIP;
+            header.compression = compression;
         }
     };
 
@@ -153,11 +163,8 @@ namespace
 
             if (info.compression != TextureCompression::NONE)
             {
-                TextureCompression::Status cs = info.decompress(dest, m_data);
-
-                status.info = cs.info;
-                status.success = cs.success;
-                status.direct = cs.direct;
+                TemporaryBitmap temp(dest, info.format, true);
+                static_cast<Status>(status) = info.decompress(temp, m_data);
             }
 
             return status;
@@ -170,6 +177,37 @@ namespace
         return x;
     }
 
+    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    {
+        ImageEncodeStatus status;
+
+        TextureCompression compression(TextureCompression::ASTC_SRGB_4x4);
+
+        TemporaryBitmap temp(surface, compression.format, true);
+
+        u64 bytes = compression.getBlockBytes(temp.width, temp.height);
+        Buffer buffer(bytes * 4);
+
+        auto compressionStatus = compression.compress(buffer, temp);
+        MANGO_UNREFERENCED(compressionStatus);
+
+        LittleEndianStream output(stream);
+
+        // write header
+        output.write32(0x5ca1ab13);
+        output.write8(4);
+        output.write8(4);
+        output.write8(0);
+        write24(output, temp.width);
+        write24(output, temp.height);
+        write24(output, 0);
+
+        // write compressed blocks
+        output.write(buffer);
+
+        return status;
+    }
+
 } // namespace
 
 namespace mango::image
@@ -178,6 +216,7 @@ namespace mango::image
     void registerImageCodecASTC()
     {
         registerImageDecoder(createInterface, ".astc");
+        registerImageEncoder(imageEncode, ".astc");
     }
 
 } // namespace mango::image
