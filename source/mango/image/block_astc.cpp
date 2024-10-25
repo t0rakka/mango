@@ -23,7 +23,6 @@ namespace mango::image
         // NOTE: implement stride and the temporary copy isn't needed anymore
         Surface source(info.width, info.height, info.format, stride, input);
         Bitmap temp(source, info.format);
-        input = temp.image;
 
         TextureCompression block(info.compression);
 
@@ -78,7 +77,7 @@ namespace mango::image
         image.dim_z = 1;
         image.data_type = isFloat ? ASTCENC_TYPE_F16 : ASTCENC_TYPE_U8;
 
-        u8* ptr_image = (u8*)input;
+        u8* ptr_image = temp.image;
         image.data = reinterpret_cast<void**>(&ptr_image);
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
@@ -155,7 +154,9 @@ namespace mango::image
         image.dim_y = height;
         image.dim_z = 1;
         image.data_type = isFloat ? ASTCENC_TYPE_F16 : ASTCENC_TYPE_U8;
-        image.data = reinterpret_cast<void**>(&temp.image);
+
+        u8* ptr_image = temp.image;
+        image.data = reinterpret_cast<void**>(&ptr_image);
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 

@@ -186,7 +186,7 @@ namespace
         TemporaryBitmap temp(surface, compression.format, true);
 
         u64 bytes = compression.getBlockBytes(temp.width, temp.height);
-        Buffer buffer(bytes * 4);
+        Buffer buffer(bytes);
 
         auto compressionStatus = compression.compress(buffer, temp);
         MANGO_UNREFERENCED(compressionStatus);
