@@ -163,11 +163,8 @@ namespace
 
             if (info.compression != TextureCompression::NONE)
             {
-                Bitmap temp(dest, info.format);
+                Surface temp(dest, true);
                 static_cast<Status&>(status) = info.decompress(temp, m_data);
-
-                Surface target(dest, true);
-                target.blit(0, 0, temp);
             }
 
             return status;
@@ -186,7 +183,7 @@ namespace
 
         TextureCompression compression(TextureCompression::ASTC_SRGB_4x4);
 
-        TemporaryBitmap temp(surface, compression.format, true);
+        Surface temp(surface, true);
 
         u64 bytes = compression.getBlockBytes(temp.width, temp.height);
         Buffer buffer(bytes);
