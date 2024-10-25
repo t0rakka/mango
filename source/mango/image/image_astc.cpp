@@ -163,8 +163,11 @@ namespace
 
             if (info.compression != TextureCompression::NONE)
             {
-                TemporaryBitmap temp(dest, info.format, true);
+                Bitmap temp(dest, info.format);
                 static_cast<Status&>(status) = info.decompress(temp, m_data);
+
+                Surface target(dest, true);
+                target.blit(0, 0, temp);
             }
 
             return status;

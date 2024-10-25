@@ -1368,45 +1368,43 @@ namespace mango::image
         const int xblocks = getBlocksX(surface.width);
         const int yblocks = getBlocksY(surface.height);
 
-        const int w = xblocks * width;
-        const int h = yblocks * height;
+        const int compressed_width = xblocks * width;
+        const int compressed_height = yblocks * height;
 
-        const bool noclip = surface.width == w && surface.height == h;
+        const bool noclip = surface.width == compressed_width && surface.height == compressed_height;
         const bool noconvert = surface.format == format;
         const bool direct = noclip && noconvert;
 
         // surface decoders get size from block information
         TextureCompression info = *this;
-        info.width = w;
-        info.height = h;
+        info.width = compressed_width;
+        info.height = compressed_height;
 
-        if (compression & TextureCompression::SURFACE)
+        if (direct)
         {
-            // mode: surface
-            if (direct)
+            if (compression & TextureCompression::SURFACE)
             {
                 info.decode(info, surface.image, memory.address, surface.stride);
             }
             else
             {
-                Bitmap temp(w, h, format);
-                info.decode(info, temp.image, memory.address, temp.stride);
-                surface.blit(0, 0, temp);
+                directBlockDecode(*this, surface, memory, xblocks, yblocks);
             }
         }
         else
         {
-            // mode: block
-            if (direct)
+            Bitmap temp(compressed_width, compressed_height, format);
+
+            if (compression & TextureCompression::SURFACE)
             {
-                directBlockDecode(*this, surface, memory, xblocks, yblocks);
+                info.decode(info, temp.image, memory.address, temp.stride);
             }
             else
             {
-                Bitmap temp(xblocks * width, yblocks * height, format);
                 directBlockDecode(*this, temp, memory, xblocks, yblocks);
-                surface.blit(0, 0, temp);
             }
+
+            surface.blit(0, 0, temp);
         }
 
         status.direct = direct;
