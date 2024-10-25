@@ -1125,9 +1125,6 @@
     <ClInclude Include="..\..\..\include\mango\opengl\framebuffer.hpp">
       <Filter>mango\include\opengl</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\mango\opengl\jpeg_decoder.hpp">
-      <Filter>mango\include\opengl</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\source\external\simdjson\simdjson.h">
       <Filter>external\simdjson</Filter>
     </ClInclude>
@@ -1379,6 +1376,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\include\mango\simd\wasm_convert.hpp">
       <Filter>mango\include\simd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_sve_8.h">
+      <Filter>external\astc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -2391,9 +2391,6 @@
       <Filter>mango\source\opengl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\source\mango\opengl\framebuffer.cpp">
-      <Filter>mango\source\opengl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\mango\opengl\jpeg_decoder.cpp">
       <Filter>mango\source\opengl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\source\external\fmt\src\format.cc">

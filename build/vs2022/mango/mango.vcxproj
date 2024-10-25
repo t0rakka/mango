@@ -200,6 +200,7 @@
     <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_neon_4.h" />
     <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_none_4.h" />
     <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_sse_4.h" />
+    <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_sve_8.h" />
     <ClInclude Include="..\..\..\source\external\basisu\transcoder\basisu.h" />
     <ClInclude Include="..\..\..\source\external\basisu\transcoder\basisu_containers.h" />
     <ClInclude Include="..\..\..\source\external\basisu\transcoder\basisu_containers_impl.h" />
