@@ -807,7 +807,7 @@ void convert_ycbcr_rgb_8x1_sse41(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 #define JPEG_CONST_AVX2(x, y) _mm256_setr_epi16(x, y, x, y, x, y, x, y, x, y, x, y, x, y, x, y)
 
 static inline
-u8* convert_ycbcr_rgba_8x2_avx2(u8* dest, size_t stride, __m256i y, __m256i cb, __m256i cr, __m256i s0, __m256i s1, __m256i s2, __m256i rounding)
+u8* convert_ycbcr_rgba_8x2_avx2(u8* dest, size_t stride, __m256i y, __m256i cb, __m256i cr, __m256i alpha, __m256i s0, __m256i s1, __m256i s2, __m256i rounding)
 {
     __m256i zero = _mm256_setzero_si256();
 
@@ -844,7 +844,7 @@ u8* convert_ycbcr_rgba_8x2_avx2(u8* dest, size_t stride, __m256i y, __m256i cb, 
     __m256i r = _mm256_packs_epi32(r_l, r_h);
     __m256i g = _mm256_packs_epi32(g_l, g_h);
     __m256i b = _mm256_packs_epi32(b_l, b_h);
-    __m256i a = _mm256_cmpeq_epi16(r, r);
+    __m256i a = alpha; // can't be generated: 0xffff (-1) will become 0 with packus (signed saturation)
 
     __m256i rb = _mm256_packus_epi16(r, b);        // RRRRRRRRBBBBBBBB
     __m256i ga = _mm256_packus_epi16(g, a);        // GGGGGGGGAAAAAAAA
@@ -879,6 +879,7 @@ void process_ycbcr_rgba_8x8_avx2(u8* dest, size_t stride, const s16* data, Proce
     const __m256i s2 = JPEG_CONST_AVX2(JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414));
     const __m256i rounding = _mm256_set1_epi32(1 << (JPEG_PREC - 1));
     const __m256i tosigned = _mm256_set1_epi16(128);
+    const __m256i alpha = _mm256_set1_epi16(0x00ff);
 
     for (int y = 0; y < 2; ++y)
     {
@@ -902,8 +903,8 @@ void process_ycbcr_rgba_8x8_avx2(u8* dest, size_t stride, const s16* data, Proce
         cb1 = _mm256_sub_epi16(cb1, tosigned);
         cr1 = _mm256_sub_epi16(cr1, tosigned);
 
-        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
-        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpackhi_epi8(y0, zero), cb1, cr1, s0, s1, s2, rounding);
+        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpacklo_epi8(y0, zero), cb0, cr0, alpha, s0, s1, s2, rounding);
+        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpackhi_epi8(y0, zero), cb1, cr1, alpha, s0, s1, s2, rounding);
     }
 
     MANGO_UNREFERENCED(width);
