@@ -532,4 +532,21 @@ namespace mango::image
         }
     }
 
+    TemporaryBitmap::TemporaryBitmap(const Surface& surface, int width, int height, const Format& format, bool yflip)
+        : Surface(surface)
+    {
+        if (surface.format != format || surface.width != width || surface.height != height)
+        {
+            m_bitmap = std::make_unique<Bitmap>(width, height, format);
+            m_bitmap->blit(0, 0, surface);
+            static_cast<Surface&>(*this) = *m_bitmap;
+        }
+
+        if (yflip)
+        {
+            image += (height - 1) * stride;
+            stride = 0 - stride;
+        }
+    }
+
 } // namespace mango::image

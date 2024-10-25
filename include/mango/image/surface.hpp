@@ -84,6 +84,7 @@ namespace mango::image
 
     public:
         TemporaryBitmap(const Surface& surface, const Format& format, bool yflip = false);
+        TemporaryBitmap(const Surface& surface, int width, int height, const Format& format, bool yflip = false);
     };
 
 } // namespace mango::image

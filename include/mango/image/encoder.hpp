@@ -33,6 +33,9 @@ namespace mango::image
         bool dithering = true;    // gif
         bool lossless = false;    // webp, jp2, heif
 
+        int astc_block_width = 4;
+        int astc_block_height = 4;
+
         bool simd = true;         // jpg
         bool multithread = true;  // jpg, jp2
     };

@@ -1422,16 +1422,19 @@ namespace mango::image
             return status;
         }
 
+        const int xblocks = getBlocksX(surface.width);
+        const int yblocks = getBlocksY(surface.height);
+
+        const int compressed_width = xblocks * width;
+        const int compressed_height = yblocks * height;
+
         if (compression & TextureCompression::SURFACE)
         {
             TextureCompression info = *this;
+            info.width = compressed_width;
+            info.height = compressed_height;
 
-            const int xblocks = getBlocksX(surface.width);
-            const int yblocks = getBlocksY(surface.height);
-            info.width = xblocks * width;
-            info.height = yblocks * height;
-
-            TemporaryBitmap temp(surface, format);
+            TemporaryBitmap temp(surface, compressed_width, compressed_height, format);
             encode(info, memory.address, temp.image, temp.stride);
         }
         else
@@ -1440,16 +1443,13 @@ namespace mango::image
 
             u8* address = memory.address;
 
-            const int xblocks = getBlocksX(surface.width);
-            const int yblocks = getBlocksY(surface.height);
-
             for (int y = 0; y < yblocks; ++y)
             {
-                queue.enqueue([this, y, xblocks, &surface, address]
+                queue.enqueue([=]
                 {
-                    Bitmap temp(xblocks * width, height, format);
+                    Bitmap temp(compressed_width, height, format);
 
-                    int source_width = std::min(surface.width, xblocks * width);
+                    int source_width = std::min(surface.width, compressed_width);
                     int source_height = std::min(height, surface.height - y * height);
 
                     Surface source(surface, 0, y * height, source_width, source_height);

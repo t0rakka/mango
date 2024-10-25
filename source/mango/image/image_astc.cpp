@@ -181,22 +181,32 @@ namespace
     {
         ImageEncodeStatus status;
 
-        TextureCompression compression(TextureCompression::ASTC_SRGB_4x4);
+        int block_width = options.astc_block_width;
+        int block_height = options.astc_block_height;
+
+        u32 compression = select_astc_format(block_width, block_height);
+        if (compression == TextureCompression::NONE)
+        {
+            status.setError("[ImageEncoder.ASTC] Incorrect block size: {} x {}", block_width, block_height);
+            return status;
+        }
+
+        TextureCompression texcomp(compression);
 
         Surface temp(surface, true);
 
-        u64 bytes = compression.getBlockBytes(temp.width, temp.height);
+        u64 bytes = texcomp.getBlockBytes(temp.width, temp.height);
         Buffer buffer(bytes);
 
-        auto compressionStatus = compression.compress(buffer, temp);
+        auto compressionStatus = texcomp.compress(buffer, temp);
         MANGO_UNREFERENCED(compressionStatus);
 
         LittleEndianStream output(stream);
 
         // write header
         output.write32(0x5ca1ab13);
-        output.write8(4);
-        output.write8(4);
+        output.write8(block_width);
+        output.write8(block_height);
         output.write8(0);
         write24(output, temp.width);
         write24(output, temp.height);
