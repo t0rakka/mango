@@ -60,39 +60,93 @@ namespace mango::image
             return;
         }
 
-        astcenc_context* context;
-        u32 thread_count = 1;
-
-        status = astcenc_context_alloc(&config, thread_count, &context);
-        if (status != ASTCENC_SUCCESS)
-        {
-            printLine(Print::Error, "[ASTC] astcenc_context_alloc: {}", astcenc_get_error_string(status));
-            return;
-        }
-
-        astcenc_image image;
-
-        image.dim_x = width;
-        image.dim_y = height;
-        image.dim_z = 1;
-        image.data_type = isFloat ? ASTCENC_TYPE_F16 : ASTCENC_TYPE_U8;
-
-        u8* ptr_image = temp.image;
-        image.data = reinterpret_cast<void**>(&ptr_image);
-
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
-        size_t output_bytes = xblocks * yblocks * 16;
+        // NOTE: This is poor way to parallelize the encoding as the context creation overhead
+        //       is paid for every encoded segment. ASTCENC has ParallelManager but in previous
+        //       versions the mango::TP had substantially better performance so we'll go with that.
 
-        u32 thread_index = 0;
+        // TODO: Implement the parallel encoding with low-level API in "astenc_internal.h"
 
-        status = astcenc_compress_image(context, &image, &swizzle, output, output_bytes, thread_index);
-        if (status != ASTCENC_SUCCESS)
+        u32 concurrency = std::min(yblocks, u32(ThreadPool::getHardwareConcurrency()));
+
+        if(concurrency > 1)
         {
-            printLine(Print::Error, "[ASTC] astcenc_compress_image: {}", astcenc_get_error_string(status));
-        }
+            ConcurrentQueue q;
 
-        astcenc_context_free(context);
+            u32 n = div_ceil(yblocks, concurrency * 2);
+            //printLine("[ASTC] concurrency: {}, yblocks: {}, n: {}", concurrency, yblocks, n);
+
+            for (u32 y = 0; y < yblocks; y += n)
+            {
+                q.enqueue([&, y]
+                {
+                    astcenc_context* context;
+                    u32 thread_count = 1;
+
+                    auto status = astcenc_context_alloc(&config, thread_count, &context);
+                    MANGO_UNREFERENCED(status);
+
+                    u32 y0 = y;
+                    u32 y1 = std::min(y + n, yblocks);
+                    u32 segment_height = y1 - y0;
+                    //printLine("[ASTC] y: {}, height: {}", y0, segment_height);
+
+                    astcenc_image image;
+
+                    image.dim_x = width;
+                    image.dim_y = block.height * segment_height;
+                    image.dim_z = 1;
+                    image.data_type = isFloat ? ASTCENC_TYPE_F16 : ASTCENC_TYPE_U8;
+
+                    u8* image_ptr = temp.image + y0 * block.height * temp.stride;
+                    image.data = reinterpret_cast<void**>(&image_ptr);
+
+                    size_t output_bytes = xblocks * segment_height * 16;
+
+                    u32 thread_index = 0;
+
+                    status = astcenc_compress_image(context, &image, &swizzle, output + y0 * xblocks * 16, output_bytes, thread_index);
+                    MANGO_UNREFERENCED(status);
+
+                    astcenc_context_free(context);
+                });
+            }
+        }
+        else
+        {
+            astcenc_context* context;
+            u32 thread_count = 1;
+
+            status = astcenc_context_alloc(&config, thread_count, &context);
+            if (status != ASTCENC_SUCCESS)
+            {
+                printLine(Print::Error, "[ASTC] astcenc_context_alloc: {}", astcenc_get_error_string(status));
+                return;
+            }
+
+            astcenc_image image;
+
+            image.dim_x = width;
+            image.dim_y = height;
+            image.dim_z = 1;
+            image.data_type = isFloat ? ASTCENC_TYPE_F16 : ASTCENC_TYPE_U8;
+
+            u8* ptr_image = temp.image;
+            image.data = reinterpret_cast<void**>(&ptr_image);
+
+            size_t output_bytes = xblocks * yblocks * 16;
+
+            u32 thread_index = 0;
+
+            status = astcenc_compress_image(context, &image, &swizzle, output, output_bytes, thread_index);
+            if (status != ASTCENC_SUCCESS)
+            {
+                printLine(Print::Error, "[ASTC] astcenc_compress_image: {}", astcenc_get_error_string(status));
+            }
+
+            astcenc_context_free(context);
+        }
     }
 
     void decode_surface_astc(const TextureCompression& info, u8* output, const u8* input, size_t stride)
