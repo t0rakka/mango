@@ -550,9 +550,8 @@ void convert_ycbcr_bgra_8x1_sse2(u8* dest, __m128i y, __m128i cb, __m128i cr, __
     g = _mm_packus_epi16(g, g);
     b = _mm_packus_epi16(b, b);
 
-    __m128i ra = _mm_unpacklo_epi8(r, a);
     __m128i bg = _mm_unpacklo_epi8(b, g);
-
+    __m128i ra = _mm_unpacklo_epi8(r, a);
     __m128i bgra0 = _mm_unpacklo_epi16(bg, ra);
     __m128i bgra1 = _mm_unpackhi_epi16(bg, ra);
 
@@ -604,9 +603,8 @@ void convert_ycbcr_rgba_8x1_sse2(u8* dest, __m128i y, __m128i cb, __m128i cr, __
     g = _mm_packus_epi16(g, g);
     b = _mm_packus_epi16(b, b);
 
-    __m128i ba = _mm_unpacklo_epi8(b, a);
     __m128i rg = _mm_unpacklo_epi8(r, g);
-
+    __m128i ba = _mm_unpacklo_epi8(b, a);
     __m128i rgba0 = _mm_unpacklo_epi16(rg, ba);
     __m128i rgba1 = _mm_unpackhi_epi16(rg, ba);
 
@@ -848,14 +846,19 @@ u8* convert_ycbcr_rgba_8x2_avx2(u8* dest, size_t stride, __m256i y, __m256i cb, 
     __m256i b = _mm256_packs_epi32(b_l, b_h);
     __m256i a = _mm256_cmpeq_epi16(r, r);
 
-    __m256i rg = _mm256_packus_epi16(r, g);        // RRRRRRRRGGGGGGGG | RRRRRRRRGGGGGGGG
-    __m256i ba = _mm256_packus_epi16(b, a);        // BBBBBBBBAAAAAAAA | BBBBBBBBAAAAAAAA
+    __m256i rb = _mm256_packus_epi16(r, b);        // RRRRRRRRBBBBBBBB
+    __m256i ga = _mm256_packus_epi16(g, a);        // GGGGGGGGAAAAAAAA
+    __m256i rg = _mm256_unpacklo_epi8(rb, ga);     // RGRGRGRGRGRGRGRG
+    __m256i ba = _mm256_unpackhi_epi8(rb, ga);     // BABABABABABABABA
+    __m256i rgba0 = _mm256_unpacklo_epi16(rg, ba); // RGBARGBARGBARGBA
+    __m256i rgba1 = _mm256_unpackhi_epi16(rg, ba); // RGBARGBARGBARGBA
 
-    __m256i rb = _mm256_unpacklo_epi8(rg, ba);     // RBRBRBRBRBRBRBRB | RBRBRBRBRBRBRBRB
-    __m256i ga = _mm256_unpackhi_epi8(rg, ba);     // GAGAGAGAGAGAGAGA | GAGAGAGAGAGAGAGA
-
-    __m256i color0 = _mm256_unpacklo_epi8(rb, ga); // RGBARGBA RGBARGBA | RGBARGBA RGBARGBA
-    __m256i color1 = _mm256_unpackhi_epi8(rb, ga); // RGBARGBA RGBARGBA | RGBARGBA RGBARGBA
+    __m256i c0 = _mm256_permute2x128_si256(rgba0, rgba1, _MM_SHUFFLE(3, 2, 1, 0));
+    __m256i c1 = _mm256_permute2x128_si256(rgba0, rgba1, _MM_SHUFFLE(1, 2, 3, 0));
+    __m256i c2 = _mm256_permute2x128_si256(rgba0, rgba1, _MM_SHUFFLE(3, 2, 0, 1));
+    __m256i c3 = _mm256_permute2x128_si256(rgba0, rgba1, _MM_SHUFFLE(0, 3, 2, 1));
+    __m256i color0 = _mm256_blend_epi32(c0, c1, 0xf0);
+    __m256i color1 = _mm256_blend_epi32(c2, c3, 0xf0);
 
     _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest +  0), color0);
     dest += stride;
