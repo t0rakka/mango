@@ -164,7 +164,7 @@ namespace
             if (info.compression != TextureCompression::NONE)
             {
                 TemporaryBitmap temp(dest, info.format, true);
-                static_cast<Status>(status) = info.decompress(temp, m_data);
+                static_cast<Status&>(status) = info.decompress(temp, m_data);
             }
 
             return status;

@@ -154,7 +154,7 @@ namespace mango::image
         if (yflip)
         {
             image += (height - 1) * stride;
-            stride = -stride;
+            stride = 0 - stride;
         }
     }
 
