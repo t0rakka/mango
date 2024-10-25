@@ -653,7 +653,7 @@ void convert_ycbcr_rgba_8x1_sse2(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 #if defined(MANGO_ENABLE_SSE4_1)
 
 static inline
-void convert_ycbcr_bgr_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)
+void convert_ycbcr_bgr_8x1_sse41(u8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)
 {
     __m128i zero = _mm_setzero_si128();
 
@@ -711,7 +711,7 @@ void convert_ycbcr_bgr_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 }
 
 static inline
-void convert_ycbcr_rgb_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)
+void convert_ycbcr_rgb_8x1_sse41(u8* dest, __m128i y, __m128i cb, __m128i cr, __m128i s0, __m128i s1, __m128i s2, __m128i rounding)
 {
     __m128i zero = _mm_setzero_si128();
 
@@ -769,12 +769,12 @@ void convert_ycbcr_rgb_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 }
 
 // Generate YCBCR to BGR functions
-#define INNERLOOP_YCBCR      convert_ycbcr_bgr_8x1_ssse3
+#define INNERLOOP_YCBCR      convert_ycbcr_bgr_8x1_sse41
 #define XSTEP                24
-#define FUNCTION_YCBCR_8x8   process_ycbcr_bgr_8x8_ssse3
-#define FUNCTION_YCBCR_8x16  process_ycbcr_bgr_8x16_ssse3
-#define FUNCTION_YCBCR_16x8  process_ycbcr_bgr_16x8_ssse3
-#define FUNCTION_YCBCR_16x16 process_ycbcr_bgr_16x16_ssse3
+#define FUNCTION_YCBCR_8x8   process_ycbcr_bgr_8x8_sse41
+#define FUNCTION_YCBCR_8x16  process_ycbcr_bgr_8x16_sse41
+#define FUNCTION_YCBCR_16x8  process_ycbcr_bgr_16x8_sse41
+#define FUNCTION_YCBCR_16x16 process_ycbcr_bgr_16x16_sse41
 #include "jpeg_process_sse2.hpp"
 #undef INNERLOOP_YCBCR
 #undef XSTEP
@@ -784,12 +784,12 @@ void convert_ycbcr_rgb_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 #undef FUNCTION_YCBCR_16x16
 
 // Generate YCBCR to RGB functions
-#define INNERLOOP_YCBCR      convert_ycbcr_rgb_8x1_ssse3
+#define INNERLOOP_YCBCR      convert_ycbcr_rgb_8x1_sse41
 #define XSTEP                24
-#define FUNCTION_YCBCR_8x8   process_ycbcr_rgb_8x8_ssse3
-#define FUNCTION_YCBCR_8x16  process_ycbcr_rgb_8x16_ssse3
-#define FUNCTION_YCBCR_16x8  process_ycbcr_rgb_16x8_ssse3
-#define FUNCTION_YCBCR_16x16 process_ycbcr_rgb_16x16_ssse3
+#define FUNCTION_YCBCR_8x8   process_ycbcr_rgb_8x8_sse41
+#define FUNCTION_YCBCR_8x16  process_ycbcr_rgb_8x16_sse41
+#define FUNCTION_YCBCR_16x8  process_ycbcr_rgb_16x8_sse41
+#define FUNCTION_YCBCR_16x16 process_ycbcr_rgb_16x16_sse41
 #include "jpeg_process_sse2.hpp"
 #undef INNERLOOP_YCBCR
 #undef XSTEP
@@ -806,10 +806,10 @@ void convert_ycbcr_rgb_8x1_ssse3(u8* dest, __m128i y, __m128i cb, __m128i cr, __
 
 #if defined(MANGO_ENABLE_AVX2)
 
-#define JPEG_CONST_AVX2(x, y)  _mm256_setr_epi16(x, y, x, y, x, y, x, y, x, y, x, y, x, y, x, y)
+#define JPEG_CONST_AVX2(x, y) _mm256_setr_epi16(x, y, x, y, x, y, x, y, x, y, x, y, x, y, x, y)
 
 static inline
-u8* convert_ycbcr_rgba_8x2_avx2(u8* dest, size_t stride, __m256i y, __m256i cb, __m256i cr, __m256i s0, __m256i s1, __m256i s2, __m256i rounding)
+u8* convert_ycbcr_rgba_8x2_avx2(u8* dest, size_t stride, __m256i y, __m256i cb, __m256i cr, __m256i s0, __m256i s1, __m256i s2, __m256i alpha, __m256i rounding)
 {
     __m256i zero = _mm256_setzero_si256();
 
@@ -846,7 +846,7 @@ u8* convert_ycbcr_rgba_8x2_avx2(u8* dest, size_t stride, __m256i y, __m256i cb, 
     __m256i r = _mm256_packs_epi32(r_l, r_h);
     __m256i g = _mm256_packs_epi32(g_l, g_h);
     __m256i b = _mm256_packs_epi32(b_l, b_h);
-    __m256i a = _mm256_cmpeq_epi8(r, r);
+    __m256i a = _mm256_cmpeq_epi16(r, r);
 
     __m256i pair0 = _mm256_packus_epi16(r, g);
     __m256i pair1 = _mm256_packus_epi16(b, a);
@@ -861,6 +861,8 @@ u8* convert_ycbcr_rgba_8x2_avx2(u8* dest, size_t stride, __m256i y, __m256i cb, 
     __m256i c3 = _mm256_permute2x128_si256(color0, color1, _MM_SHUFFLE(0, 3, 2, 1));
     color0 = _mm256_blend_epi32(c0, c1, 0xf0);
     color1 = _mm256_blend_epi32(c2, c3, 0xf0);
+    color0 = _mm256_or_si256(color0, alpha);
+    color1 = _mm256_or_si256(color1, alpha);
 
     _mm256_storeu_si256(reinterpret_cast<__m256i *>(dest +  0), color0);
     dest += stride;
@@ -885,6 +887,7 @@ void process_ycbcr_rgba_8x8_avx2(u8* dest, size_t stride, const s16* data, Proce
     const __m256i s2 = JPEG_CONST_AVX2(JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414));
     const __m256i rounding = _mm256_set1_epi32(1 << (JPEG_PREC - 1));
     const __m256i tosigned = _mm256_set1_epi16(128);
+    const __m256i alpha = _mm256_set1_epi32(0xff000000);
 
     for (int y = 0; y < 2; ++y)
     {
@@ -908,8 +911,8 @@ void process_ycbcr_rgba_8x8_avx2(u8* dest, size_t stride, const s16* data, Proce
         cb1 = _mm256_sub_epi16(cb1, tosigned);
         cr1 = _mm256_sub_epi16(cr1, tosigned);
 
-        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, rounding);
-        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpackhi_epi8(y0, zero), cb1, cr1, s0, s1, s2, rounding);
+        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpacklo_epi8(y0, zero), cb0, cr0, s0, s1, s2, alpha, rounding);
+        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpackhi_epi8(y0, zero), cb1, cr1, s0, s1, s2, alpha, rounding);
     }
 
     MANGO_UNREFERENCED(width);

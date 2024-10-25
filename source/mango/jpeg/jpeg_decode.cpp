@@ -64,20 +64,16 @@ namespace mango::image::jpeg
 
     SampleFormat getSampleFormat(const Format& format)
     {
-        // set default format
-        SampleFormat result { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) };
-
-        // find better match
-        for (auto sf : g_format_table)
+        for (auto sampleFormat : g_format_table)
         {
-            if (format == sf.format)
+            if (format == sampleFormat.format)
             {
-                result = sf;
-                break;
+                return sampleFormat;
             }
         }
 
-        return result;
+        // set default format
+        return { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) };
     }
 
     // ----------------------------------------------------------------------------
@@ -1609,25 +1605,25 @@ namespace mango::image::jpeg
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-        if (flags & INTEL_SSSE3)
+        if (flags & INTEL_SSE4_1)
         {
             switch (sample)
             {
                 case JPEG_U8_Y:
                     break;
                 case JPEG_U8_BGR:
-                    processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8_ssse3;
-                    processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_ssse3;
-                    processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_ssse3;
-                    processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_ssse3;
-                    simd = "SSSE3";
+                    processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8_sse41;
+                    processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_sse41;
+                    processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_sse41;
+                    processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_sse41;
+                    simd = "SSE4.1";
                     break;
                 case JPEG_U8_RGB:
-                    processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_ssse3;
-                    processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_ssse3;
-                    processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_ssse3;
-                    processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_ssse3;
-                    simd = "SSSE3";
+                    processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_sse41;
+                    processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_sse41;
+                    processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_sse41;
+                    processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_sse41;
+                    simd = "SSE4.1";
                     break;
                 case JPEG_U8_BGRA:
                     break;
@@ -1653,7 +1649,7 @@ namespace mango::image::jpeg
                 case JPEG_U8_BGRA:
                     break;
                 case JPEG_U8_RGBA:
-                    processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_avx2;
+                    processState.process_ycbcr_8x8 = process_ycbcr_rgba_8x8_avx2;
                     simd = "AVX2";
                     break;
             }
@@ -1791,7 +1787,6 @@ namespace mango::image::jpeg
 
         // set decoding target surface
         m_surface = &target;
-        m_compute_decoder = nullptr;
 
         std::unique_ptr<Bitmap> temp;
 
@@ -1830,59 +1825,6 @@ namespace mango::image::jpeg
 
         blockVector.resize(0);
         status.info = getInfo();
-
-        return status;
-    }
-
-    ImageDecodeStatus Parser::decode(ComputeDecoder* decoder, const ImageDecodeOptions& options)
-    {
-        ImageDecodeStatus status;
-
-        if (!scan_memory.address || !header)
-        {
-            status.setError(header.info);
-            return status;
-        }
-
-        // configure multithreading
-        m_hardware_concurrency = 1;
-
-        bool compute = true;
-
-        if (is_lossless)
-        {
-            compute = false;
-        }
-        else if (components == 4)
-        {
-            compute = false;
-        }
-
-        if (is_progressive || is_multiscan)
-        {
-            compute = false;
-        }
-
-        if (decodeState.is_arithmetic)
-        {
-            compute = false;
-        }
-
-        if (compute)
-        {
-            m_surface = nullptr;
-            m_compute_decoder = decoder;
-
-            parse(scan_memory, true);
-
-            status.info = getInfo();
-        }
-        else
-        {
-            Bitmap temp(xsize, ysize, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-            status = decode(temp, options);
-            decoder->send(temp);
-        }
 
         return status;
     }
@@ -2027,21 +1969,14 @@ namespace mango::image::jpeg
 
     void Parser::decodeSequential()
     {
-        if (m_compute_decoder)
+        if (m_hardware_concurrency > 1)
         {
-            decodeSequentialCompute();
+            int n = getTaskSize(ymcu);
+            decodeSequentialMT(n);
         }
         else
         {
-            if (m_hardware_concurrency > 1)
-            {
-                int n = getTaskSize(ymcu);
-                decodeSequentialMT(n);
-            }
-            else
-            {
-                decodeSequentialST();
-            }
+            decodeSequentialST();
         }
     }
 
@@ -2197,7 +2132,7 @@ namespace mango::image::jpeg
 #else
 
             // workaround for restart interval being only one row of MCUs (JPEG specification)
-            // less overhead as multiply intervals are in same task
+            // less overhead as multiple intervals are in same task
 
             const u32* offsets = m_restart_offsets.data();
 
@@ -2342,107 +2277,6 @@ namespace mango::image::jpeg
                 });
             }
         }
-    }
-
-    void Parser::decodeSequentialCompute()
-    {
-        ComputeDecoderInput input;
-
-        if (!m_restart_offsets.empty())
-        {
-            // -----------------------------------------------------------------
-            // custom mango encoded file (APP14:'Mango1' chunk present)
-            // -----------------------------------------------------------------
-
-            /* NOTE: Experimental don't use
-            const u8* p = decodeState.buffer.ptr;
-
-            int i = 0;
-
-            for (u32 offset : m_restart_offsets)
-            {
-                const u8* p1 = memory.address + offset;
-
-                ComputeDecoderInput::Interval interval;
-
-                interval.memory = ConstMemory(p, p1 - p);
-                interval.y0 = i;
-                interval.y1 = std::min(i + m_decode_interval, ymcu);
-
-                input.intervals.push_back(interval);
-
-                i += m_decode_interval;
-                p = p1;
-            }
-
-            decodeState.buffer.ptr = p;
-            */
-        }
-        else if (restartInterval)
-        {
-            // ---------------------------------------------------------------
-            // standard jpeg with DRI marker present
-            // ---------------------------------------------------------------
-
-            const u8* p = decodeState.buffer.ptr;
-
-            for (int i = 0; i < mcus; i += restartInterval)
-            {
-                const u8* p0 = p;
-
-                // seek next restart marker
-                p = seekMarker(p, decodeState.buffer.end);
-
-                if (p >= decodeState.buffer.end)
-                    break;
-
-                const u8* p1 = p;
-
-                if (isRestartMarker(p))
-                    p += 2;
-
-                ComputeDecoderInput::Interval interval;
-
-                interval.memory = ConstMemory(p0, p1 - p0);
-                interval.y0 = i / restartInterval;
-                interval.y1 = std::min(i + restartInterval, mcus) / restartInterval;
-
-                input.intervals.push_back(interval);
-            }
-
-            decodeState.buffer.ptr = p;
-        }
-        else
-        {
-            // ---------------------------------------------------------------
-            // standard jpeg - Huffman/Arithmetic decoder must be serial
-            // ---------------------------------------------------------------
-
-            const u8* p0 = decodeState.buffer.ptr;
-            const u8* p1 = seekMarker(p0, decodeState.buffer.end);
-            decodeState.buffer.ptr = p1;
-
-            ComputeDecoderInput::Interval interval;
-
-            interval.memory = ConstMemory(p0, p1 - p0);
-            interval.y0 = 0;
-            interval.y1 = ymcu;
-
-            input.intervals.push_back(interval);
-        }
-
-        input.xmcu = xmcu;
-        input.ymcu = ymcu;
-
-        input.huffman = decodeState.huffman;
-        input.blocks = std::vector<DecodeBlock>(decodeState.block + 0, decodeState.block + blocks_in_mcu);
-
-        for (int i = 0; i < blocks_in_mcu; ++i)
-        {
-            input.qt[i] = processState.block[i].qt;
-        }
-
-        m_compute_decoder->send(input);
     }
 
     void Parser::decodeMultiScan()

@@ -352,44 +352,6 @@ namespace mango::image::jpeg
     };
 
     // ----------------------------------------------------------------------------
-    // ComputeDecoder
-    // ----------------------------------------------------------------------------
-
-    struct ComputeDecoderInput
-    {
-        const s16* qt[10];
-
-        HuffmanDecoder huffman;
-        std::vector<DecodeBlock> blocks;
-
-        struct Interval
-        {
-            ConstMemory memory;
-            int y0;
-            int y1;
-        };
-
-        std::vector<Interval> intervals;
-
-        int xmcu;
-        int ymcu;
-    };
-
-    struct ComputeDecoder
-    {
-        ComputeDecoder()
-        {
-        }
-
-        virtual ~ComputeDecoder()
-        {
-        }
-
-        virtual void send(const ComputeDecoderInput& input) = 0;
-        virtual void send(const Surface& surface) = 0;
-    };
-
-    // ----------------------------------------------------------------------------
     // Parser
     // ----------------------------------------------------------------------------
 
@@ -423,7 +385,6 @@ namespace mango::image::jpeg
         std::string m_ycbcr_name;
 
         const Surface* m_surface = nullptr;
-        ComputeDecoder* m_compute_decoder = nullptr;
 
         int width;  // Image width, does include alignment
         int height; // Image height, does include alignment
@@ -478,7 +439,6 @@ namespace mango::image::jpeg
         void decodeSequential();
         void decodeSequentialST();
         void decodeSequentialMT(int N);
-        void decodeSequentialCompute();
         void decodeMultiScan();
         void decodeProgressive();
         void decodeProgressiveDC();
@@ -502,7 +462,6 @@ namespace mango::image::jpeg
         ~Parser();
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
-        ImageDecodeStatus decode(ComputeDecoder* decoder, const ImageDecodeOptions& options);
     };
 
     // ----------------------------------------------------------------------------
@@ -600,15 +559,15 @@ namespace mango::image::jpeg
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    void process_ycbcr_bgr_8x8_ssse3    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_8x16_ssse3   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x8_ssse3   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x16_ssse3  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_8x8_sse41    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_8x16_sse41   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_16x8_sse41   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_bgr_16x16_sse41  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
-    void process_ycbcr_rgb_8x8_ssse3    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_8x16_ssse3   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x8_ssse3   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x16_ssse3  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_8x8_sse41    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_8x16_sse41   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_16x8_sse41   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_ycbcr_rgb_16x16_sse41  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
 #endif // MANGO_ENABLE_SSE4_1
 
