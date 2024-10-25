@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -55,63 +55,14 @@ namespace mango
         u64 m_offset;
 
     public:
-        ConstMemoryStream(ConstMemory memory)
-            : m_memory(memory)
-            , m_offset(0)
-        {
-        }
+        ConstMemoryStream(ConstMemory memory);
+        ~ConstMemoryStream();
 
-        ~ConstMemoryStream()
-        {
-        }
-
-        u64 size() const
-        {
-            return u64(m_memory.size);
-        }
-
-        u64 offset() const
-        {
-            return m_offset;
-        }
-
-        void seek(s64 distance, SeekMode mode)
-        {
-            const u64 size = u64(m_memory.size);
-            switch (mode)
-            {
-                case BEGIN:
-                    distance = std::max(s64(0), distance);
-                    m_offset = std::min(size, u64(distance));
-                    break;
-
-                case CURRENT:
-                    m_offset = std::min(size, m_offset + distance);
-                    break;
-
-                case END:
-                    distance = std::min(s64(0), distance);
-                    m_offset = u64(std::max(s64(0), s64(size + distance)));
-                    break;
-            }
-        }
-
-        void read(void* dest, u64 bytes)
-        {
-            const u64 left = u64(m_memory.size) - m_offset;
-            if (left < bytes)
-            {
-                MANGO_EXCEPTION("[ConstMemoryStream] Reading past end of memory.");
-            }
-
-            std::memcpy(dest, m_memory.address + m_offset, size_t(bytes));
-            m_offset += bytes;
-        }
-
-        void write(const void* data, u64 size)
-        {
-            MANGO_EXCEPTION("[ConstMemoryStream] Writing into read-only memory.");
-        }
+        u64 size() const;
+        u64 offset() const;
+        void seek(s64 distance, SeekMode mode);;
+        void read(void* dest, u64 bytes);
+        void write(const void* data, u64 size);
     };
 
     // --------------------------------------------------------------
@@ -400,7 +351,7 @@ namespace mango
     };
 
     // --------------------------------------------------------------
-    // Little/BigEndianStream
+    // Little / BigEndianStream
     // --------------------------------------------------------------
 
 #ifdef MANGO_LITTLE_ENDIAN
