@@ -58,8 +58,6 @@ namespace mango::image
             return;
         }
 
-        const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
-
         astcenc_context* context;
         u32 thread_count = u32(ThreadPool::getHardwareConcurrency());
 
@@ -71,13 +69,15 @@ namespace mango::image
         }
 
         astcenc_image image;
-        void* p_image = temp.image;
+        void* ptr_image = temp.image;
 
         image.dim_x = width;
         image.dim_y = height;
         image.dim_z = 1;
         image.data_type = isFloat ? ASTCENC_TYPE_F16 : ASTCENC_TYPE_U8;
-        image.data = &p_image;
+        image.data = &ptr_image;
+
+        const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
         size_t output_bytes = xblocks * yblocks * 16;
 
@@ -156,7 +156,7 @@ namespace mango::image
         }
 
         astcenc_context* context;
-        u32 thread_count = 1;
+        u32 thread_count = u32(ThreadPool::getHardwareConcurrency());
 
         status = astcenc_context_alloc(&config, thread_count, &context);
         if (status != ASTCENC_SUCCESS)
@@ -166,25 +166,44 @@ namespace mango::image
         }
 
         astcenc_image image;
+        void* ptr_image = temp.image;
 
         image.dim_x = width;
         image.dim_y = height;
         image.dim_z = 1;
         image.data_type = isFloat ? ASTCENC_TYPE_F16 : ASTCENC_TYPE_U8;
-
-        u8* ptr_image = temp.image;
-        image.data = reinterpret_cast<void**>(&ptr_image);
+        image.data = &ptr_image;
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
         size_t input_bytes = xblocks * yblocks * 16;
 
-        u32 thread_index = 0;
-
-        status = astcenc_decompress_image(context, input, input_bytes, &image, &swizzle, thread_index);
-        if (status != ASTCENC_SUCCESS)
+        if (thread_count > 1)
         {
-            printLine(Print::Error, "[ASTC] astcenc_decompress_image: {}", astcenc_get_error_string(status));
+            std::vector<std::thread> threads;
+
+            for (u32 thread_index = 0; thread_index < thread_count; ++thread_index)
+            {
+                threads.emplace_back([&, thread_index]
+                {
+                    auto status = astcenc_decompress_image(context, input, input_bytes, &image, &swizzle, thread_index);
+                    MANGO_UNREFERENCED(status);
+                });
+            }
+
+            for (auto& thread : threads)
+            {
+                thread.join();
+            }
+        }
+        else
+        {
+            u32 thread_index = 0;
+            status = astcenc_decompress_image(context, input, input_bytes, &image, &swizzle, thread_index);
+            if (status != ASTCENC_SUCCESS)
+            {
+                printLine(Print::Error, "[ASTC] astcenc_decompress_image: {}", astcenc_get_error_string(status));
+            }
         }
 
         // NOTE: implement stride and the temporary copy isn't needed anymore
