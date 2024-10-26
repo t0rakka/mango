@@ -61,11 +61,8 @@ namespace
 
     void write24(Stream& stream, u32 value)
     {
-        u8 temp[3];
-        temp[0] = (value >>  0) & 0xff;
-        temp[1] = (value >>  8) & 0xff;
-        temp[2] = (value >> 16) & 0xff;
-        stream.write(temp, 3);
+        UnsignedInt24 u = value;
+        stream.write(u, 3);
     }
 
     // ----------------------------------------------------------------------------

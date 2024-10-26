@@ -372,10 +372,20 @@ namespace mango
             return v;
         }
 
+        operator u8* ()
+        {
+            return data;
+        }
+
+        operator const u8* () const
+        {
+            return data;
+        }
+
         UnsignedInt24& operator = (u32 v)
         {
-            data[0] = u8(v);
-            data[1] = u8(v >> 8);
+            data[0] = u8(v >>  0);
+            data[1] = u8(v >>  8);
             data[2] = u8(v >> 16);
             return *this;
         }
