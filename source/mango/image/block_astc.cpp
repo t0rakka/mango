@@ -65,13 +65,12 @@ namespace mango::image
         Bitmap temp(source, info.format);
 
         astcenc_image image;
-        void* ptr_image = temp.image;
 
         image.dim_x = width;
         image.dim_y = height;
         image.dim_z = 1;
         image.data_type = isFloat ? ASTCENC_TYPE_F16 : ASTCENC_TYPE_U8;
-        image.data = &ptr_image;
+        image.data = reinterpret_cast<void**>(&temp.image);
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
@@ -153,13 +152,12 @@ namespace mango::image
         Bitmap temp(width, height, info.format);
 
         astcenc_image image;
-        void* ptr_image = temp.image;
 
         image.dim_x = width;
         image.dim_y = height;
         image.dim_z = 1;
         image.data_type = isFloat ? ASTCENC_TYPE_F16 : ASTCENC_TYPE_U8;
-        image.data = &ptr_image;
+        image.data = reinterpret_cast<void**>(&temp.image);
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
