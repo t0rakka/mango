@@ -14,12 +14,8 @@
 namespace mango::image
 {
 
-    void encode_surface_astc(const TextureCompression& info, u8* output, const u8* input, size_t stride)
+    void encode_surface_astc(const TextureCompression& info, u8* output, const Surface& input)
     {
-        MANGO_UNREFERENCED(stride);
-
-        TextureCompression block(info.compression);
-
         bool isFloat = (info.compression & TextureCompression::FLOAT) != 0;
         bool isSRGB = (info.compression & TextureCompression::SRGB) != 0;
 
@@ -39,7 +35,7 @@ namespace mango::image
 
         u32 flags = 0;
 
-        status = astcenc_config_init(profile, block.width, block.height, 1, quality, flags, &config);
+        status = astcenc_config_init(profile, info.width, info.height, 1, quality, flags, &config);
         if (status != ASTCENC_SUCCESS)
         {
             printLine(Print::Error, "[ASTC] astcenc_config_init: {}", astcenc_get_error_string(status));
@@ -57,12 +53,11 @@ namespace mango::image
         }
 
         // image size
-        int width = info.width;
-        int height = info.height;
+        int width = input.width;
+        int height = input.height;
 
         // NOTE: implement stride and the temporary copy isn't needed anymore
-        Surface source(width, height, info.format, stride, input);
-        Bitmap temp(source, info.format);
+        Bitmap temp(input, info.format);
 
         astcenc_image image;
 
@@ -74,7 +69,7 @@ namespace mango::image
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
-        size_t output_bytes = block.getBlockBytes(width, height);
+        size_t output_bytes = info.getBlockBytes(width, height);
 
         if (thread_count > 1)
         {
@@ -102,14 +97,10 @@ namespace mango::image
         astcenc_context_free(context);
     }
 
-    void decode_surface_astc(const TextureCompression& info, u8* output, const u8* input, size_t stride)
+    void decode_surface_astc(const TextureCompression& info, const Surface& output, const u8* input)
     {
-        MANGO_UNREFERENCED(stride);
-
-        TextureCompression block(info.compression);
-
-        bool isFloat = (block.compression & TextureCompression::FLOAT) != 0;
-        bool isSRGB = (block.compression & TextureCompression::SRGB) != 0;
+        bool isFloat = (info.compression & TextureCompression::FLOAT) != 0;
+        bool isSRGB = (info.compression & TextureCompression::SRGB) != 0;
 
         const astcenc_profile profiles [] =
         {
@@ -127,7 +118,7 @@ namespace mango::image
 
         u32 flags = ASTCENC_FLG_DECOMPRESS_ONLY;
 
-        status = astcenc_config_init(profile, block.width, block.height, 1, quality, flags, &config);
+        status = astcenc_config_init(profile, info.width, info.height, 1, quality, flags, &config);
         if (status != ASTCENC_SUCCESS)
         {
             printLine(Print::Error, "[ASTC] astcenc_config_init: {}", astcenc_get_error_string(status));
@@ -145,8 +136,8 @@ namespace mango::image
         }
 
         // image size
-        int width = info.width;
-        int height = info.height;
+        int width = output.width;
+        int height = output.height;
 
         // NOTE: implement stride and the temporary copy isn't needed anymore
         Bitmap temp(width, height, info.format);
@@ -161,7 +152,7 @@ namespace mango::image
 
         const astcenc_swizzle swizzle { ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
 
-        size_t input_bytes = block.getBlockBytes(width, height);
+        size_t input_bytes = info.getBlockBytes(width, height);
 
         if (thread_count > 1)
         {
@@ -187,8 +178,7 @@ namespace mango::image
         }
 
         // NOTE: implement stride and the temporary copy isn't needed anymore
-        Surface target(width, height, info.format, stride, output);
-        target.blit(0, 0, temp);
+        output.blit(0, 0, temp);
 
         astcenc_context_free(context);
     }

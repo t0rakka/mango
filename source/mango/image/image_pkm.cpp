@@ -208,14 +208,14 @@ namespace
 
         // select block compressor
         TextureCompression info(TextureCompression::ETC1_RGB);
-        if (!info.encode)
+        if (!info.encodeBlock)
         {
             status.setError("[ImageEncoder.PKM] No ETC1 compressor.");
             return status;
         }
 
         // compute compressed data size
-        const int blocks = (width / info.width) * (height / info.height);
+        const int blocks = div_ceil(width, info.width) * div_ceil(height, info.height);
         const int bytes = blocks * info.bytes;
 
         // compress

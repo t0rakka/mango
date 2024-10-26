@@ -1,8 +1,9 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/image/compression.hpp>
+#include <mango/image/surface.hpp>
 #include <mango/image/color.hpp>
 
 namespace
@@ -1138,24 +1139,24 @@ namespace
 namespace mango::image
 {
 
-    void decode_surface_pvrtc(const TextureCompression& info, u8* out, const u8* in, size_t stride)
+    void decode_surface_pvrtc(const TextureCompression& info, const Surface& output, const u8* input)
     {
-#if 0
-        if (info.width < 8 || info.heigbt < 8)
+        /*
+        if (output.width < 8 || output.height < 8)
         {
             return;
         }
 
-        if (info.width != info.height)
+        if (output.width != output.height)
         {
             return;
         }
 
-        if (!u32_is_power_of_two(info.width))
+        if (!u32_is_power_of_two(output.width))
         {
             return;
         }
-#endif
+        */
 
         u8 bpp = 0;
 
@@ -1178,18 +1179,18 @@ namespace mango::image
                 return;
         }
 
-        pvrtc_decompress(in, out, stride, info.width, info.height, bpp);
+        pvrtc_decompress(input, output.image, output.stride, output.width, output.height, bpp);
     }
 
-    void decode_surface_pvrtc2(const TextureCompression& info, u8* out, const u8* in, size_t stride)
+    void decode_surface_pvrtc2(const TextureCompression& info, const Surface& output, const u8* input)
     {
         switch (info.compression)
         {
             case TextureCompression::PVRTC2_RGBA_2BPP:
-                pvrtc2_2bit_decompress(in, out, stride, info.width, info.height);
+                pvrtc2_2bit_decompress(input, output.image, output.stride, output.width, output.height);
                 break;
             case TextureCompression::PVRTC2_RGBA_4BPP:
-                pvrtc2_4bit_decompress(in, out, stride, info.width, info.height);
+                pvrtc2_4bit_decompress(input, output.image, output.stride, output.width, output.height);
                 break;
             default:
                 // Incorrect compression
