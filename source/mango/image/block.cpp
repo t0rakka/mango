@@ -1496,7 +1496,9 @@ namespace mango::image
 
     u64 TextureCompression::getBlockBytes(int width, int height) const
     {
-        return getBlockCount(width, height) * bytes;
+        int xblocks = getBlocksX(width);
+        int yblocks = getBlocksY(height);
+        return xblocks * yblocks * bytes;
     }
 
 } // namespace mango::image
