@@ -83,20 +83,15 @@ namespace mango::image
 
         if (thread_count > 1)
         {
-            std::vector<std::thread> threads;
+            ConcurrentQueue q;
 
             for (u32 thread_index = 0; thread_index < thread_count; ++thread_index)
             {
-                threads.emplace_back([&, thread_index]
+                q.enqueue([&, thread_index]
                 {
                     auto status = astcenc_compress_image(context, &image, &swizzle, output, output_bytes, thread_index);
                     MANGO_UNREFERENCED(status);
                 });
-            }
-
-            for (auto& thread : threads)
-            {
-                thread.join();
             }
         }
         else
@@ -180,20 +175,15 @@ namespace mango::image
 
         if (thread_count > 1)
         {
-            std::vector<std::thread> threads;
+            ConcurrentQueue q;
 
             for (u32 thread_index = 0; thread_index < thread_count; ++thread_index)
             {
-                threads.emplace_back([&, thread_index]
+                q.enqueue([&, thread_index]
                 {
                     auto status = astcenc_decompress_image(context, input, input_bytes, &image, &swizzle, thread_index);
                     MANGO_UNREFERENCED(status);
                 });
-            }
-
-            for (auto& thread : threads)
-            {
-                thread.join();
             }
         }
         else
