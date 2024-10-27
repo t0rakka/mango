@@ -1335,7 +1335,8 @@ namespace
         size_t xstride = info.width * surface.format.bytes();
         size_t ystride = info.height * surface.stride;
 
-        bool multithread = true;
+        size_t concurrency = ThreadPool::getHardwareConcurrency();
+        bool multithread = concurrency > 1;
 
         if (multithread)
         {
@@ -1343,7 +1344,7 @@ namespace
 
             for (int y = 0; y < yblocks; ++y)
             {
-                queue.enqueue([=]
+                queue.enqueue([=, &info]
                 {
                     scanBlockDecode(info, image, data, stride, xblocks, xstride);
                 });
