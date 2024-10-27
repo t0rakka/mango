@@ -849,6 +849,7 @@ namespace
                 u32_popcnt(gBitMask),
                 u32_popcnt(bBitMask),
                 u32_popcnt(aBitMask));
+            printLine(Print::Info, ".dds flags: {:08x}", flags);
 
             if (flags & DDPF_FOURCC)
             {
@@ -878,7 +879,7 @@ namespace
                 }
                 else if (flags & DDPF_PALETTE)
                 {
-                    error = "Unsupported mode (P8).";
+                    error = "Unsupported mode (PALETTE).";
                 }
                 else
                 {
