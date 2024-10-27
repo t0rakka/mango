@@ -334,13 +334,13 @@ namespace
         {
             if (data[0] != 2 || data[1] != 2 || data[2] & 0x80)
             {
-                status.setError("[ImageDecoder.HDR] Incorrect rle_rgbe stream (wrong header).");
+                status.setError("[ImageDecoder.HDR] Incorrect stream header ({:x} {:x} {:x}).", data[0], data[1], data[2]);
                 return;
             }
 
             if (((data[2] << 8) | data[3]) != surface.width)
             {
-                status.setError("[ImageDecoder.HDR] Incorrect rle_rgbe stream (wrong scan).");
+                status.setError("[ImageDecoder.HDR] Incorrect scan.");
                 return;
             }
 
@@ -360,7 +360,7 @@ namespace
                         count -= 128;
                         if (!count || dest + count > end)
                         {
-                            status.setError("[ImageDecoder.HDR] Incorrect rle_rgbe stream (rle count).");
+                            status.setError("[ImageDecoder.HDR] Incorrect rle count ({}).", count);
                             return;
                         }
 
@@ -372,7 +372,7 @@ namespace
                     {
                         if (!count || dest + count > end)
                         {
-                            status.setError("[ImageDecoder.HDR] Incorrect rle_rgbe stream (rle count).");
+                            status.setError("[ImageDecoder.HDR] Incorrect rle count ({}).", count);
                             return;
                         }
 
@@ -442,8 +442,8 @@ namespace
             }
 
             status.direct = dest.format == header.format &&
-                            dest.width == header.width &&
-                            dest.height == header.height;
+                            dest.width >= header.width &&
+                            dest.height >= header.height;
 
             if (status.direct)
             {
