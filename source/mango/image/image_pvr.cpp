@@ -184,12 +184,7 @@ namespace
 
     struct HeaderPVR
     {
-        int m_width;
-        int m_height;
-        int m_depth;
         int m_surfaces;
-        int m_faces;
-        int m_mipmaps;
         int m_data_offset;
         TextureCompression m_info;
         ImageHeader header;
@@ -219,11 +214,6 @@ namespace
                     return;
             }
 
-            header.width   = m_width;
-            header.height  = m_height;
-            header.depth   = m_depth;
-            header.levels  = m_mipmaps;
-            header.faces   = m_faces;
             header.palette = false;
             header.format  = m_info.format;
             header.compression = m_info.compression;
@@ -234,14 +224,14 @@ namespace
             LittleEndianConstPointer p = memory.address;
 
             u32 header_size = p.read32();
-            m_height = p.read32();
-            m_width = p.read32();
-            m_mipmaps = p.read32() + 1;
+            header.height = p.read32();
+            header.width = p.read32();
+            header.levels = p.read32() + 1;
 
             u32 flags = p.read32();
             u8 fmt = flags & 0xff;
 
-#if 0
+            /*
             0x00000100  MIP-Maps are present
             0x00000200  Data is twiddled
             0x00000400  Contains normal data
@@ -250,7 +240,7 @@ namespace
             0x00002000  MIP-Maps have debug colouring
             0x00004000  Is a volume (3D) texture (numSurfaces is interpreted as a depth value)
             0x00008000  Alpha channel data is present (PVRTC only)
-#endif
+            */
 
             printLine(Print::Info, "flags: {:#x}", flags);
             printLine(Print::Info, "format: {:#x}", fmt);
@@ -452,9 +442,9 @@ namespace
                 }
             }
 
-            m_depth = 1;
+            header.depth = 1;
+            header.faces = 1;
             m_surfaces = 1;
-            m_faces = 1;
             m_data_offset = header_size;
 
             m_info = TextureCompression(compression);
@@ -472,7 +462,7 @@ namespace
 
             if (pvr.flags & 0x02)
             {
-                // NOTE: pre-multiplied alpha
+                header.premultiplied = true;
             }
 
             // compressed block default values
@@ -522,12 +512,13 @@ namespace
                 }
             }
 
-            m_width    = pvr.width;
-            m_height   = pvr.height;
-            m_depth    = pvr.depth;
+            header.width  = pvr.width;
+            header.height = pvr.height;
+            header.depth  = pvr.depth;
+            header.faces  = pvr.numfaces;
+            header.levels = pvr.mipmapcount;
+
             m_surfaces = pvr.numsurfaces;
-            m_faces    = pvr.numfaces;
-            m_mipmaps  = pvr.mipmapcount;
 
             if (m_surfaces > 1)
             {
@@ -535,19 +526,19 @@ namespace
                 return;
             }
 
-            if (m_faces != 1 && m_faces != 6)
+            if (header.faces != 1 && header.faces != 6)
             {
-                header.setError("[ImageDecoder.PVR] Incorrect number of faces: {}", m_faces);
+                header.setError("[ImageDecoder.PVR] Incorrect number of faces: {}", header.faces);
                 return;
             }
 
             switch (pvr.colorspace)
             {
                 case 0:
-                    // NOTE: linear
+                    header.linear = true;
                     break;
                 case 1:
-                    // NOTE: sRGB
+                    header.linear = false;
                     break;
                 default:
                     header.setError("[ImageDecoder.PVR] Incorrect colorspace: {}", pvr.colorspace);
@@ -563,11 +554,11 @@ namespace
 
             ConstMemory data;
 
-            for (int iLevel = 0; iLevel < m_mipmaps; ++iLevel)
+            for (int iLevel = 0; iLevel < header.levels; ++iLevel)
             {
                 // compute mip level dimensions
-                int width = std::max(1, m_width >> iLevel);
-                int height = std::max(1, m_height >> iLevel);
+                int width = std::max(1, header.width >> iLevel);
+                int height = std::max(1, header.height >> iLevel);
 
                 // align to next block size
                 width = (width + m_info.width - 1) & ~(m_info.width - 1);
@@ -578,9 +569,9 @@ namespace
 
                 for (int iSurface = 0; iSurface < m_surfaces; ++iSurface)
                 {
-                    for (int iFace = 0; iFace < m_faces; ++iFace)
+                    for (int iFace = 0; iFace < header.faces; ++iFace)
                     {
-                        for (int iDepth = 0; iDepth < m_depth; ++iDepth)
+                        for (int iDepth = 0; iDepth < header.depth; ++iDepth)
                         {
                             if (iLevel == level && iDepth == depth && iFace == int(face) && iSurface == 0)
                             {
@@ -642,8 +633,8 @@ namespace
 
             ConstMemory data = m_pvr_header.getMemory(m_memory, level, depth, face);
 
-            int width = std::max(1, m_pvr_header.m_width >> level);
-            int height = std::max(1, m_pvr_header.m_height >> level);
+            int width = std::max(1, m_pvr_header.header.width >> level);
+            int height = std::max(1, m_pvr_header.header.height >> level);
 
             if (m_pvr_header.m_info.compression != TextureCompression::NONE)
             {
