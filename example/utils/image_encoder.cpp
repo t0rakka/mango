@@ -11,8 +11,10 @@ void printHelp(std::string_view program)
 {
     printLine("Usage: {} <options> <inputs>", program);
     printLine("  Options:");
-    printLine("    -format .extension");
-    printLine("    -compression level(0..10)");
+    printLine("    -format <.extension>");
+    printLine("    -astc <width> <height>");
+    printLine("    -output <filename>");
+    printLine("    -compression <level:0..10>");
     printLine("    --luminance");
     printLine("    --info");
 }
@@ -32,13 +34,28 @@ int main(int argc, const char* argv[])
     ImageEncodeOptions options;
     options.compression = 8;
 
+    std::string output_filename;
     bool luminance = false;
 
     int index = 1;
 
+    std::vector<std::string> filenames;
+
     while (index < argc)
     {
-        if (std::string_view(argv[index]) == "-format")
+        if (std::string_view(argv[index]) == "-output")
+        {
+            if (++index < argc)
+            {
+                output_filename = argv[index++];
+            }
+            else
+            {
+                printHelp(program);
+                return 0;
+            }
+        }
+        else if (std::string_view(argv[index]) == "-format")
         {
             if (++index < argc)
             {
@@ -59,7 +76,7 @@ int main(int argc, const char* argv[])
                 return 0;
             }
         }
-        if (std::string_view(argv[index]) == "-compression")
+        else if (std::string_view(argv[index]) == "-compression")
         {
             if (++index < argc)
             {
@@ -71,6 +88,19 @@ int main(int argc, const char* argv[])
                 printHelp(program);
                 return 0;
             }
+        }
+        else if (std::string_view(argv[index]) == "-astc")
+        {
+            ++index;
+
+            if (index + 2 > argc)
+            {
+                printHelp(program);
+                return 0;
+            }
+
+            options.astc_block_width = std::atoi(argv[index++]);
+            options.astc_block_height = std::atoi(argv[index++]);
         }
         else if (std::string_view(argv[index]) == "--luminance")
         {
@@ -84,16 +114,14 @@ int main(int argc, const char* argv[])
         }
         else
         {
-            break;
+            filenames.push_back(argv[index++]);
         }
     }
 
     ConcurrentQueue q;
 
-    for (int i = index; i < argc; ++i)
+    for (auto filename : filenames)
     {
-        std::string filename = argv[i];
-
         if (!isImageDecoder(filename))
         {
             printLine("Skipping: \"{}\"", filename);
@@ -101,7 +129,11 @@ int main(int argc, const char* argv[])
         }
 
         std::string output = filesystem::removePath(filename);
-        if (!request_format.empty())
+        if (!output_filename.empty() && filenames.size() == 1)
+        {
+            output = output_filename;
+        }
+        else if (!request_format.empty())
         {
             output = filesystem::removeExtension(output) + request_format;
         }
