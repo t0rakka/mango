@@ -966,6 +966,7 @@ namespace
                 case SUPERCOMPRESSION_BASIS_LZ:
                     m_is_etc1s = true;
                     m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    m_header.linear = false;
                     m_header.supercompression = SUPERCOMPRESS_BASISU_ETC1S;
                     break;
                 case SUPERCOMPRESSION_ZSTANDARD:
@@ -1055,6 +1056,7 @@ namespace
                         case KDF_DF_MODEL_UASTC:
                             m_is_uastc = true;
                             m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                            m_header.linear = false;
                             m_header.supercompression = SUPERCOMPRESS_BASISU_UASTC;
                             break;
                     }
@@ -1094,6 +1096,8 @@ namespace
                     }
                 }
             }
+
+            m_header.format.setLinear(m_header.linear);
 
             // Key / Value Data
             if (kvdByteLength)

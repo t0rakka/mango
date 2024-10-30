@@ -318,7 +318,7 @@ namespace
             header.levels  = 0;
             header.faces   = 0;
             header.palette = false;
-            header.format  = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
+            header.format  = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32, Format::FLAG_LINEAR);
             header.linear  = true;
             header.compression = TextureCompression::NONE;
 

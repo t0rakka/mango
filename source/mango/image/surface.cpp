@@ -86,7 +86,7 @@ namespace
     // create_surface()
     // ----------------------------------------------------------------------------
 
-    Surface create_surface(ConstMemory memory, const std::string& filename, const Format* format, const ImageDecodeOptions& options)
+    Surface create_surface(ConstMemory memory, const std::string& filename, const Format* ptr_format, const ImageDecodeOptions& options)
     {
         Surface surface;
 
@@ -100,7 +100,18 @@ namespace
                 return surface;
             }
 
-            surface.format = format ? *format : header.format;
+            if (ptr_format)
+            {
+                surface.format = *ptr_format;
+
+                // use flags from the header
+                surface.format.setLinear(header.linear);
+                surface.format.setPreMultiplied(header.premultiplied);
+            }
+            else
+            {
+                surface.format = header.format;
+            }
 
             if (options.palette)
             {

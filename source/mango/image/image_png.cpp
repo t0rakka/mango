@@ -2222,6 +2222,8 @@ namespace
             }
         }
 
+        m_header.format.setPreMultiplied(m_header.premultiplied);
+
         return m_header;
     }
 

@@ -195,20 +195,12 @@ int main(int argc, const char* argv[])
             }
             else
             {
-                filesystem::File file(filename);
-                ImageDecoder decoder(file, filename);
-                ImageHeader header = decoder.header();
+                bitmap = std::make_unique<Bitmap>(filename);
 
-                if (header.linear != linear)
+                if (bitmap->format.isLinear() != linear)
                 {
-                    bitmap = std::make_unique<Bitmap>(header.width, header.height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-                    decoder.decode(*bitmap);
                     srgbToLinear(*bitmap);
-                }
-                else
-                {
-                    bitmap = std::make_unique<Bitmap>(header.width, header.height, header.format);
-                    decoder.decode(*bitmap);
+                    bitmap->format.setLinear(true);
                 }
             }
 

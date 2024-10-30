@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -20,12 +20,17 @@ namespace mango::image
             TYPE_INT        = 0x0040,
             TYPE_FLOAT      = 0x0080,
             TYPE_SIGNED     = 0x0100,
-
-            FLAG_LUMINANCE  = 0x0001,
-            FLAG_INDEXED    = 0x0002,
         };
 
     public:
+        enum : u16
+        {
+            FLAG_LUMINANCE  = 0x0001,
+            FLAG_INDEXED    = 0x0002,
+            FLAG_LINEAR     = 0x0004,
+            FLAG_PREMULT    = 0x0008,
+        };
+
         enum Component : u32
         {
             RED   = 0,
@@ -124,9 +129,9 @@ namespace mango::image
         Color offset;
 
         Format();
-        explicit Format(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask);
-        explicit Format(int bits, Type type, Color size, Color offset);
-        explicit Format(int bits, Type type, Order order, int s0, int s1 = 0, int s2 = 0, int s3 = 0);
+        explicit Format(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask, u16 flags = 0);
+        explicit Format(int bits, Type type, Color size, Color offset, u16 flags = 0);
+        explicit Format(int bits, Type type, Order order, int s0, int s1 = 0, int s2 = 0, int s3 = 0, u16 flags = 0);
         Format(const Format& format) = default;
         ~Format() = default;
 
@@ -141,14 +146,28 @@ namespace mango::image
         bool isLuminance() const;
         bool isIndexed() const;
         bool isFloat() const;
+
+        // These do not affect blitter these are just for user convenience
+        void setLinear(bool enable);
+        void setPreMultiplied(bool enable);
+        bool isLinear() const;
+        bool isPreMult() const;
+
         u32 mask(int component) const;
         u32 pack(float red, float green, float blue, float alpha) const;
     };
 
+    struct LinearFormat : Format
+    {
+        explicit LinearFormat(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask, u16 flags = 0);
+        explicit LinearFormat(int bits, Type type, Color size, Color offset, u16 flags = 0);
+        explicit LinearFormat(int bits, Type type, Order order, int s0, int s1 = 0, int s2 = 0, int s3 = 0, u16 flags = 0);
+    };
+
     struct LuminanceFormat : Format
     {
-        explicit LuminanceFormat(int bits, u32 luminanceMask, u32 alphaMask);
-        explicit LuminanceFormat(int bits, Type type, u8 luminanceBits, u8 alphaBits);
+        explicit LuminanceFormat(int bits, u32 luminanceMask, u32 alphaMask, u16 flags = 0);
+        explicit LuminanceFormat(int bits, Type type, u8 luminanceBits, u8 alphaBits, u16 flags = 0);
     };
 
     struct IndexedFormat : Format

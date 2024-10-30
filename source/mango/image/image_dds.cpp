@@ -1042,13 +1042,13 @@ namespace
             if (compression)
             {
                 info = compression;
-                header.format  = info.format;
+                header.format = info.format;
                 header.compression = compression;
-                header.linear = (compression & TextureCompression::SRGB) == 0;
+                header.linear = info.format.isLinear();
             }
             else
             {
-                header.format  = pixelFormat.format;
+                header.format = pixelFormat.format;
                 header.compression = TextureCompression::NONE;
             }
         }
