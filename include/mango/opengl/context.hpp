@@ -220,7 +220,8 @@ namespace mango
             u32 texture_compression_eac : 1;
             u32 texture_compression_latc : 1;
             u32 texture_compression_atc : 1;
-            u32 texture_compression_astc : 1;
+            u32 texture_compression_astc_ldr : 1;
+            u32 texture_compression_astc_hdr : 1;
         } core;
 
 #if defined(MANGO_OPENGL_CONTEXT_WGL)

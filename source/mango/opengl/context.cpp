@@ -410,6 +410,18 @@ namespace mango
         init_glx(*this);
 #endif
 
+        int gl_version = 0;
+        int gles_version = 0;
+
+        if (m_is_gles)
+        {
+            gles_version = m_version;
+        }
+        else
+        {
+            gl_version = m_version;
+        }
+
         // detect compressed texture format support using extensions
 
         core.texture_compression_dxt1 = false;
@@ -440,7 +452,12 @@ namespace mango
             core.texture_compression_dxt5 = true;
         }
 
-        if (ext.EXT_texture_compression_rgtc || ext.ARB_texture_compression_rgtc)
+        if (gl_version >= 420 || ext.ARB_texture_compression_bptc || ext.EXT_texture_compression_bptc)
+        {
+            core.texture_compression_bptc = true;
+        }
+
+        if (gl_version >= 300 || ext.EXT_texture_compression_rgtc || ext.ARB_texture_compression_rgtc)
         {
             core.texture_compression_rgtc = true;
         }
@@ -457,17 +474,14 @@ namespace mango
 
         core.texture_compression_latc = ext.NV_texture_compression_latc || ext.EXT_texture_compression_latc;
         core.texture_compression_atc = ext.AMD_compressed_ATC_texture || ext.ATI_texture_compression_atitc;
-        core.texture_compression_astc = ext.KHR_texture_compression_astc_hdr || ext.KHR_texture_compression_astc_ldr;
 
-        if (m_is_gles)
+        core.texture_compression_astc_ldr = ext.KHR_texture_compression_astc_ldr || gles_version >= 320;
+        core.texture_compression_astc_hdr = ext.KHR_texture_compression_astc_hdr;
+
+        if (gl_version >= 430 || gles_version >= 300)
         {
-            core.texture_compression_etc2 = m_version >= 300;
-            core.texture_compression_eac = m_version >= 300;
-        }
-        else
-        {
-            core.texture_compression_etc2 = m_version >= 430;
-            core.texture_compression_eac = m_version >= 430;
+            core.texture_compression_etc2 = true;
+            core.texture_compression_eac = true;
         }
 
 #if 0
@@ -672,7 +686,7 @@ namespace mango
             case TextureCompression::ASTC_SRGB_10x10:
             case TextureCompression::ASTC_SRGB_12x10:
             case TextureCompression::ASTC_SRGB_12x12:
-                supported = ext.KHR_texture_compression_astc_ldr;
+                supported = core.texture_compression_astc_ldr;
                 break;
 
             case TextureCompression::ASTC_FLOAT_4x4:
@@ -689,7 +703,7 @@ namespace mango
             case TextureCompression::ASTC_FLOAT_10x10:
             case TextureCompression::ASTC_FLOAT_12x10:
             case TextureCompression::ASTC_FLOAT_12x12:
-                supported = ext.KHR_texture_compression_astc_hdr;
+                supported = core.texture_compression_astc_hdr;
                 break;
 
             case TextureCompression::ASTC_UNORM_3x3x3:
