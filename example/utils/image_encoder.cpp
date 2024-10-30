@@ -197,7 +197,7 @@ int main(int argc, const char* argv[])
             {
                 bitmap = std::make_unique<Bitmap>(filename);
 
-                if (bitmap->format.isLinear() != linear)
+                if (linear && !bitmap->format.isLinear())
                 {
                     srgbToLinear(*bitmap);
                 }
