@@ -13,7 +13,7 @@ namespace
     using namespace mango::image;
 
     // KTX Format Specification:
-    // http://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/
+    // https://registry.khronos.org/KTX/specs/1.0/ktxspec.v1.html
 
     // OpenGL glTexImage2D specification:
     // https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
@@ -503,32 +503,33 @@ namespace
                 numberOfFaces = p.read32();
                 numberOfMipmapLevels = p.read32();
                 bytesOfKeyValueData = p.read32();
+
+                ptr = p;
+            }
+            else if (endianness != 0x01020304)
+            {
+                // different endianness
+                SwapEndianConstPointer p = ptr;
+
+                glType = p.read32();
+                glTypeSize = p.read32();
+                glFormat = p.read32();
+                glInternalFormat = p.read32();
+                glBaseInternalFormat = p.read32();
+                pixelWidth = p.read32();
+                pixelHeight = p.read32();
+                pixelDepth = p.read32();
+                numberOfArrayElements = p.read32();
+                numberOfFaces = p.read32();
+                numberOfMipmapLevels = p.read32();
+                bytesOfKeyValueData = p.read32();
+
+                ptr = p;
             }
             else
             {
-                if (endianness != 0x01020304)
-                {
-                    header.setError("[ImageDecoder.KTX] Incorrect endianness.");
-                    return;
-                }
-                else
-                {
-                    // different endianness
-                    SwapEndianConstPointer p = ptr;
-
-                    glType = p.read32();
-                    glTypeSize = p.read32();
-                    glFormat = p.read32();
-                    glInternalFormat = p.read32();
-                    glBaseInternalFormat = p.read32();
-                    pixelWidth = p.read32();
-                    pixelHeight = p.read32();
-                    pixelDepth = p.read32();
-                    numberOfArrayElements = p.read32();
-                    numberOfFaces = p.read32();
-                    numberOfMipmapLevels = p.read32();
-                    bytesOfKeyValueData = p.read32();
-                }
+                header.setError("[ImageDecoder.KTX] Incorrect endianness.");
+                return;
             }
 
             printLine(Print::Info, "endianness: {:#x}", endianness);
@@ -544,6 +545,10 @@ namespace
             printLine(Print::Info, "numberOfFaces: {}", numberOfFaces);
             printLine(Print::Info, "numberOfMipmapLevels: {}", numberOfMipmapLevels);
             printLine(Print::Info, "bytesOfKeyValueData: {}", bytesOfKeyValueData);
+
+            // This is the raw metadata storage if find ktx file that uses it
+            ConstMemory metadata(ptr, bytesOfKeyValueData);
+            MANGO_UNREFERENCED(metadata);
 
             if (numberOfFaces != 1 && numberOfFaces != 6)
             {
@@ -562,19 +567,19 @@ namespace
             Format format;
             u32 compression = opengl::getTextureCompression(glInternalFormat);
 
-            if (!compression)
-            {
-                bool valid = resolve_format(format, compression, glType, glFormat);
-                if (!valid)
-                {
-                }
-            }
-
             if (compression)
             {
                 TextureCompression info(compression);
                 format = info.format;
                 header.linear = info.isLinear();
+            }
+            else
+            {
+                bool valid = resolve_format(format, compression, glType, glFormat);
+                if (!valid)
+                {
+                    header.setError("[ImageDecoder.KTX] Incorrect format.");
+                }
             }
 
             header.width   = pixelWidth;

@@ -160,7 +160,7 @@ namespace
 
             if (info.compression != TextureCompression::NONE)
             {
-                Surface temp(dest, true);
+                Surface temp(dest, false);
                 static_cast<Status&>(status) = info.decompress(temp, m_data);
             }
 
@@ -190,7 +190,7 @@ namespace
 
         TextureCompression texcomp(compression);
 
-        Surface temp(surface, true);
+        Surface temp(surface, false);
 
         u64 bytes = texcomp.getBlockBytes(temp.width, temp.height);
         Buffer buffer(bytes);
