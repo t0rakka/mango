@@ -103,7 +103,7 @@ namespace
             if (ptr_format)
             {
                 surface.format = *ptr_format;
-                surface.format.flags = header.format.flags & Format::MASK;
+                surface.format.flags = u16_select(Format::MASK, header.format.flags, surface.format.flags);
             }
             else
             {

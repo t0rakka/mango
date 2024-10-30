@@ -473,6 +473,13 @@ namespace mango
     // 16 bits
     // ----------------------------------------------------------------------------
 
+    static constexpr
+    u16 u16_select(u16 mask, u16 a, u16 b)
+    {
+        // bitwise mask ? a : b
+        return (mask & (a ^ b)) ^ b;
+    }
+
     static inline
     u16 u16_reverse_bits(u16 value)
     {
