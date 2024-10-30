@@ -209,6 +209,97 @@ namespace
     };
 #endif
 
+    u32 ktx_astc_compression(u32 compression)
+    {
+        // This function forces all sRGB and UNORM astc formats to FLOAT HDR.
+        //
+        // The reason is a very sad story: .ktx format (1.0) uses OpenGL enumerations for the
+        // compressed formats and OpenGL only recognizes Linear (UNORM) and non-linear (sRGB).
+        // The distinction is made when texture is created; GL_RGBA is LDR and RGBA16F is HDR.
+        //
+        // This means we cannot know if the block data in .ktx file is LDR or HDR, but HDR data
+        // cannot be decompressed by LDR mode so we must force the mode to HDR that works even for LDR data.
+        // The downside is that when the hardware cannot decompress HDR the block data it is unusable.
+        //
+        // We can use the mango decoder to get the RGBA HDR data into a surface and not use hw decoder.
+        // The best practise is to use .ktx2 container which can indicate the exact encoding used.
+
+        switch (compression)
+        {
+            case TextureCompression::ASTC_UNORM_4x4:
+            case TextureCompression::ASTC_SRGB_4x4:
+                compression = TextureCompression::ASTC_FLOAT_4x4;
+                break;
+
+            case TextureCompression::ASTC_UNORM_5x4:
+            case TextureCompression::ASTC_SRGB_5x4:
+                compression = TextureCompression::ASTC_FLOAT_5x4;
+                break;
+
+            case TextureCompression::ASTC_UNORM_5x5:
+            case TextureCompression::ASTC_SRGB_5x5:
+                compression = TextureCompression::ASTC_FLOAT_5x5;
+                break;
+
+            case TextureCompression::ASTC_UNORM_6x5:
+            case TextureCompression::ASTC_SRGB_6x5:
+                compression = TextureCompression::ASTC_FLOAT_6x5;
+                break;
+
+            case TextureCompression::ASTC_UNORM_6x6:
+            case TextureCompression::ASTC_SRGB_6x6:
+                compression = TextureCompression::ASTC_FLOAT_6x6;
+                break;
+
+            case TextureCompression::ASTC_UNORM_8x5:
+            case TextureCompression::ASTC_SRGB_8x5:
+                compression = TextureCompression::ASTC_FLOAT_8x5;
+                break;
+
+            case TextureCompression::ASTC_UNORM_8x6:
+            case TextureCompression::ASTC_SRGB_8x6:
+                compression = TextureCompression::ASTC_FLOAT_8x6;
+                break;
+
+            case TextureCompression::ASTC_UNORM_8x8:
+            case TextureCompression::ASTC_SRGB_8x8:
+                compression = TextureCompression::ASTC_FLOAT_8x8;
+                break;
+
+            case TextureCompression::ASTC_UNORM_10x5:
+            case TextureCompression::ASTC_SRGB_10x5:
+                compression = TextureCompression::ASTC_FLOAT_10x5;
+                break;
+
+            case TextureCompression::ASTC_UNORM_10x6:
+            case TextureCompression::ASTC_SRGB_10x6:
+                compression = TextureCompression::ASTC_FLOAT_10x6;
+                break;
+
+            case TextureCompression::ASTC_UNORM_10x8:
+            case TextureCompression::ASTC_SRGB_10x8:
+                compression = TextureCompression::ASTC_FLOAT_10x8;
+                break;
+
+            case TextureCompression::ASTC_UNORM_10x10:
+            case TextureCompression::ASTC_SRGB_10x10:
+                compression = TextureCompression::ASTC_FLOAT_10x10;
+                break;
+
+            case TextureCompression::ASTC_UNORM_12x10:
+            case TextureCompression::ASTC_SRGB_12x10:
+                compression = TextureCompression::ASTC_FLOAT_12x10;
+                break;
+
+            case TextureCompression::ASTC_UNORM_12x12:
+            case TextureCompression::ASTC_SRGB_12x12:
+                compression = TextureCompression::ASTC_FLOAT_12x12;
+                break;
+        }
+
+        return compression;
+    }
+
     bool resolve_format(Format& format, u32& compression, u32 gltype, u32 glformat)
     {
         Format::Type type = Format::NONE;
@@ -566,6 +657,7 @@ namespace
 
             Format format;
             u32 compression = opengl::getTextureCompression(glInternalFormat);
+            compression = ktx_astc_compression(compression);
 
             if (compression)
             {
