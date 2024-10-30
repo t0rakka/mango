@@ -1081,7 +1081,7 @@ else
 
         # half conversion instructions
         if enable_f16c
-            message('F16C: half conversion enabled (2012)')
+            message('F16C: enabled (2012)')
             add_project_arguments('-mf16c', language: ['c', 'cpp'])
         endif
 
@@ -1177,7 +1177,7 @@ if opengl_dep.found()
         if x11_dep.found()
             mango_opengl_deps += [ x11_dep ]
             add_project_arguments('-DMANGO_ENABLE_XLIB', language: ['cpp'])
-            message('Enable: XLIB')
+            message('XLIB: enabled')
         endif
     elif display_library == 'xcb'
         # TODO: XCB
