@@ -92,8 +92,8 @@ namespace mango::image
         // filter out flags that do not affect blitter
         Format a = *this;
         Format b = format;
-        a.flags = a.flags & ~(FLAG_LINEAR | FLAG_PREMULT);
-        b.flags = b.flags & ~(FLAG_LINEAR | FLAG_PREMULT);
+        a.flags = a.flags & ~MASK;
+        b.flags = b.flags & ~MASK;
 
         // compare
         return std::memcmp(&a, &b, sizeof(Format)) == 0;
@@ -104,8 +104,8 @@ namespace mango::image
         // filter out flags that do not affect blitter
         Format a = *this;
         Format b = format;
-        a.flags = a.flags & ~(FLAG_LINEAR | FLAG_PREMULT);
-        b.flags = b.flags & ~(FLAG_LINEAR | FLAG_PREMULT);
+        a.flags = a.flags & ~MASK;
+        b.flags = b.flags & ~MASK;
 
         // compare
         return std::memcmp(&a, &b, sizeof(Format)) != 0;
@@ -116,8 +116,8 @@ namespace mango::image
         // filter out flags that do not affect blitter
         Format a = *this;
         Format b = format;
-        a.flags = a.flags & ~(FLAG_LINEAR | FLAG_PREMULT);
-        b.flags = b.flags & ~(FLAG_LINEAR | FLAG_PREMULT);
+        a.flags = a.flags & ~MASK;
+        b.flags = b.flags & ~MASK;
 
         // compare
         return std::memcmp(&a, &b, sizeof(Format)) < 0;
@@ -133,53 +133,29 @@ namespace mango::image
         return size[ALPHA] > 0;
     }
 
-    bool Format::isLuminance() const
-    {
-        return (flags & FLAG_LUMINANCE) != 0;
-    }
-
-    bool Format::isIndexed() const
-    {
-        return (flags & FLAG_INDEXED) != 0;
-    }
-
     bool Format::isFloat() const
     {
         return (type & TYPE_FLOAT) != 0;
     }
 
-    void Format::setLinear(bool enable)
+    bool Format::isLuminance() const
     {
-        if (enable)
-        {
-            flags |= FLAG_LINEAR;
-        }
-        else
-        {
-            flags &= ~FLAG_LINEAR;
-        }
+        return (flags & LUMINANCE) != 0;
     }
 
-    void Format::setPreMultiplied(bool enable)
+    bool Format::isIndexed() const
     {
-        if (enable)
-        {
-            flags |= FLAG_PREMULT;
-        }
-        else
-        {
-            flags &= ~FLAG_PREMULT;
-        }
+        return (flags & INDEXED) != 0;
     }
 
     bool Format::isLinear() const
     {
-        return (flags & FLAG_LINEAR) != 0;
+        return (flags & LINEAR) != 0;
     }
 
-    bool Format::isPreMult() const
+    bool Format::isPreMultiplied() const
     {
-        return (flags & FLAG_PREMULT) != 0;
+        return (flags & PREMULT) != 0;
     }
 
     u32 Format::mask(int component) const
@@ -229,17 +205,17 @@ namespace mango::image
     // ----------------------------------------------------------------------------
 
     LinearFormat::LinearFormat(int bits, u32 redMask, u32 greenMask, u32 blueMask, u32 alphaMask, u16 flags)
-        : Format(bits, redMask, greenMask, blueMask, alphaMask, flags | FLAG_LINEAR)
+        : Format(bits, redMask, greenMask, blueMask, alphaMask, flags | LINEAR)
     {
     }
 
     LinearFormat::LinearFormat(int bits, Type type, Color size, Color offset, u16 flags)
-        : Format(bits, type, size, offset, flags | FLAG_LINEAR)
+        : Format(bits, type, size, offset, flags | LINEAR)
     {
     }
 
     LinearFormat::LinearFormat(int bits, Type type, Order order, int s0, int s1, int s2, int s3, u16 flags)
-        : Format(bits, type, order, s0, s1, s2, s3, flags | FLAG_LINEAR)
+        : Format(bits, type, order, s0, s1, s2, s3, flags | LINEAR)
     {
     }
 
@@ -248,12 +224,12 @@ namespace mango::image
     // ----------------------------------------------------------------------------
 
     LuminanceFormat::LuminanceFormat(int bits, u32 luminanceMask, u32 alphaMask, u16 flags)
-        : Format(bits, luminanceMask, luminanceMask, luminanceMask, alphaMask, flags | FLAG_LUMINANCE)
+        : Format(bits, luminanceMask, luminanceMask, luminanceMask, alphaMask, flags | LUMINANCE)
     {
     }
 
     LuminanceFormat::LuminanceFormat(int bits, Type type, u8 luminanceBits, u8 alphaBits, u16 flags)
-        : Format(bits, type, Color(luminanceBits, luminanceBits, luminanceBits, alphaBits), Color(0, 0, 0, luminanceBits), flags | FLAG_LUMINANCE)
+        : Format(bits, type, Color(luminanceBits, luminanceBits, luminanceBits, alphaBits), Color(0, 0, 0, luminanceBits), flags | LUMINANCE)
     {
     }
 
@@ -262,7 +238,7 @@ namespace mango::image
     // ----------------------------------------------------------------------------
 
     IndexedFormat::IndexedFormat(int bits)
-        : Format(bits, Format::UINT, Color(bits, bits, bits, 0), Color(0, 0, 0, 0), FLAG_INDEXED)
+        : Format(bits, Format::UINT, Color(bits, bits, bits, 0), Color(0, 0, 0, 0), INDEXED)
     {
     }
 

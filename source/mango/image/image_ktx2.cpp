@@ -949,7 +949,13 @@ namespace
             m_header.faces = header.faceCount;
             m_header.format = desc.format;
             m_header.compression = desc.compression;
-            m_header.linear = (desc.compression & TextureCompression::SRGB) == 0;
+
+            if (desc.compression != TextureCompression::NONE)
+            {
+                TextureCompression info(desc.compression);
+                m_header.format = info.format;
+                m_header.linear = info.isLinear();
+            }
 
             printLine(Print::Info, "");
             printLine(Print::Info, "[HeaderKTX2]");
@@ -1096,8 +1102,6 @@ namespace
                     }
                 }
             }
-
-            m_header.format.setLinear(m_header.linear);
 
             // Key / Value Data
             if (kvdByteLength)

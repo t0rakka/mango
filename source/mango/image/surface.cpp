@@ -103,10 +103,7 @@ namespace
             if (ptr_format)
             {
                 surface.format = *ptr_format;
-
-                // use flags from the header
-                surface.format.setLinear(header.linear);
-                surface.format.setPreMultiplied(header.premultiplied);
+                surface.format.flags = header.format.flags & Format::MASK;
             }
             else
             {

@@ -23,14 +23,6 @@ namespace mango::image
         };
 
     public:
-        enum : u16
-        {
-            FLAG_LUMINANCE  = 0x0001,
-            FLAG_INDEXED    = 0x0002,
-            FLAG_LINEAR     = 0x0004,
-            FLAG_PREMULT    = 0x0008,
-        };
-
         enum Component : u32
         {
             RED   = 0,
@@ -122,6 +114,15 @@ namespace mango::image
             FLOAT64 = 7 | TYPE_FLOAT | TYPE_SIGNED,
         };
 
+        enum Flag : u16
+        {
+            LUMINANCE = 0x0001, // Blitter only supports luminance -> RGB
+            INDEXED   = 0x0002, // Not supported by blitter
+            LINEAR    = 0x0004, // Ignored by blitter
+            PREMULT   = 0x0008, // Ignored by blitter
+            MASK      = 0x000c, // Mask for ignored by blitter
+        };
+
         u32 bits;
         Type type;
         u16 flags;
@@ -143,15 +144,11 @@ namespace mango::image
 
         int bytes() const;
         bool isAlpha() const;
+        bool isFloat() const;
         bool isLuminance() const;
         bool isIndexed() const;
-        bool isFloat() const;
-
-        // These do not affect blitter these are just for user convenience
-        void setLinear(bool enable);
-        void setPreMultiplied(bool enable);
         bool isLinear() const;
-        bool isPreMult() const;
+        bool isPreMultiplied() const;
 
         u32 mask(int component) const;
         u32 pack(float red, float green, float blue, float alpha) const;

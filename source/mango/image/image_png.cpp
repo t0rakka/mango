@@ -2189,7 +2189,15 @@ namespace
             m_header.faces   = 0;
             m_header.palette = false;
             m_header.compression = TextureCompression::NONE;
-            m_header.premultiplied = m_iphoneOptimized; // apple pngcrush premultiplies alpha
+
+            u16 flags = 0;
+
+            // apple pngcrush premultiplies alpha
+            if (m_iphoneOptimized)
+            {
+                m_header.premultiplied = true;
+                flags = Format::PREMULT;
+            }
 
             // force alpha channel on when transparency is enabled
             int color_type = m_color_type;
@@ -2203,26 +2211,24 @@ namespace
             switch (color_type)
             {
                 case COLOR_TYPE_I:
-                    m_header.format = LuminanceFormat(bits, Format::UNORM, bits, 0);
+                    m_header.format = LuminanceFormat(bits, Format::UNORM, bits, 0, flags);
                     break;
 
                 case COLOR_TYPE_IA:
-                    m_header.format = LuminanceFormat(bits * 2, Format::UNORM, bits, bits);
+                    m_header.format = LuminanceFormat(bits * 2, Format::UNORM, bits, bits, flags);
                     break;
 
                 case COLOR_TYPE_PALETTE:
-                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8, flags);
                     m_header.palette = true;
                     break;
 
                 case COLOR_TYPE_RGB:
                 case COLOR_TYPE_RGBA:
-                    m_header.format = Format(bits * 4, Format::UNORM, m_iphoneOptimized ? Format::BGRA : Format::RGBA, bits, bits, bits, bits);
+                    m_header.format = Format(bits * 4, Format::UNORM, m_iphoneOptimized ? Format::BGRA : Format::RGBA, bits, bits, bits, bits, flags);
                     break;
             }
         }
-
-        m_header.format.setPreMultiplied(m_header.premultiplied);
 
         return m_header;
     }

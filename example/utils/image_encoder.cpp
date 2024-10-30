@@ -200,7 +200,6 @@ int main(int argc, const char* argv[])
                 if (bitmap->format.isLinear() != linear)
                 {
                     srgbToLinear(*bitmap);
-                    bitmap->format.setLinear(true);
                 }
             }
 
