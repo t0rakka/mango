@@ -187,6 +187,7 @@ namespace mango::simd
 {
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_SIMD_VECTOR_SIZE 512
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -271,6 +272,7 @@ namespace mango::simd
 {
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_SIMD_VECTOR_SIZE 256
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -355,6 +357,7 @@ namespace mango::simd
 {
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_SIMD_VECTOR_SIZE 128 /* Sorry AVX, nice try.. */
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -439,6 +442,7 @@ namespace mango::simd
 {
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_SIMD_VECTOR_SIZE 128
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -527,6 +531,7 @@ namespace mango::simd
     // http://kib.kiev.ua/x86docs/ARMARM/DDI0487A_e_armv8_arm.pdf
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_SIMD_VECTOR_SIZE 128
 
 #ifndef __aarch64__
 
@@ -635,6 +640,7 @@ namespace mango::simd
     // https://www.ibm.com/support/knowledgecenter/SSGH2K_13.1.2/com.ibm.xlc131.aix.doc/compiler_ref/vec_intrin_cpp.html
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_SIMD_VECTOR_SIZE 128
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -727,6 +733,7 @@ namespace mango::simd
 {
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_SIMD_VECTOR_SIZE 128
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -813,6 +820,7 @@ namespace mango::simd
 {
 
     #define MANGO_ENABLE_SIMD
+    #define MANGO_SIMD_VECTOR_SIZE 128
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;
@@ -895,6 +903,8 @@ namespace mango::simd
 
 namespace mango::simd
 {
+
+    #define MANGO_SIMD_VECTOR_SIZE 32
 
     // 64 bit vector
     using s32x2   = scalar_vector<s32, 2>;

@@ -38,7 +38,7 @@ void srgbToLinear(Bitmap& bitmap)
         u8* scan = bitmap.address(0, y);
         int count = bitmap.width;
 
-#if defined(MANGO_ENABLE_AVX2)
+#if MANGO_SIMD_VECTOR_SIZE >= 256
         while (count >= 8)
         {
             int32x8 color = int32x8::uload(scan);
