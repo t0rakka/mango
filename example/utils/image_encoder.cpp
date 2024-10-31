@@ -6,6 +6,7 @@
 
 using namespace mango;
 using namespace mango::image;
+using namespace mango::math;
 
 // sRGB to linear table
 const u8 decode_srgb_table [] =
@@ -30,11 +31,39 @@ const u8 decode_srgb_table [] =
 
 void srgbToLinear(Bitmap& bitmap)
 {
+    u64 time0 = Time::us();
+
     for (int y = 0; y < bitmap.height; ++y)
     {
         u8* scan = bitmap.address(0, y);
+        int count = bitmap.width;
 
-        for (int x = 0; x < bitmap.width; ++x)
+#if defined(MANGO_ENABLE_AVX2)
+        while (count >= 8)
+        {
+            int32x8 color = int32x8::uload(scan);
+
+            float32x8 r = convert<float32x8>((color      ) & int32x8(0xff)) * (1.0f / 255.0f);
+            float32x8 g = convert<float32x8>((color >>  8) & int32x8(0xff)) * (1.0f / 255.0f);
+            float32x8 b = convert<float32x8>((color >> 16) & int32x8(0xff)) * (1.0f / 255.0f);
+            r = srgb_to_linear(r) * 255.0f;
+            g = srgb_to_linear(g) * 255.0f;
+            b = srgb_to_linear(b) * 255.0f;
+
+            int32x8 red   = convert<int32x8>(r);
+            int32x8 green = convert<int32x8>(g);
+            int32x8 blue  = convert<int32x8>(b);
+            int32x8 alpha = color & int32x8(0xff000000);
+
+            color = alpha | (blue << 16) | (green << 8) | red;
+
+            int32x8::ustore(scan, color);
+            scan += 32;
+            count -= 8;
+        }
+#endif
+
+        for (int x = 0; x < count; ++x)
         {
             u8 r = scan[x * 4 + 0];
             u8 g = scan[x * 4 + 1];
@@ -44,6 +73,10 @@ void srgbToLinear(Bitmap& bitmap)
             scan[x * 4 + 2] = decode_srgb_table[b];
         }
     }
+
+    u64 time1 = Time::us();
+    u64 time = time1 - time0;
+    printLine("Time: {}.{} ms", time/1000, time%1000);
 }
 
 void printHelp(std::string_view program)
