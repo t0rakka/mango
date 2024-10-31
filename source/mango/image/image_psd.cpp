@@ -6,6 +6,7 @@
 #include <mango/core/system.hpp>
 #include <mango/core/buffer.hpp>
 #include <mango/image/image.hpp>
+#include <mango/math/math.hpp>
 
 namespace
 {

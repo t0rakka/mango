@@ -1,11 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/system.hpp>
-#include <mango/core/string.hpp>
-#include <mango/core/timer.hpp>
+#include <mango/math/math.hpp>
 #include <mango/image/image.hpp>
 
 namespace

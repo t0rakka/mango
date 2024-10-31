@@ -1,21 +1,17 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/core/configure.hpp>
 #include <mango/core/endian.hpp>
 #include <mango/core/memory.hpp>
-#include <mango/core/bits.hpp>
-#include <mango/math/srgb.hpp>
 
 namespace mango::image
 {
 
     class Surface;
-
-    // ------------------------------------------------------------------
 
     static constexpr
     u32 makeBGRA(u32 red, u32 green, u32 blue, u32 alpha) noexcept
@@ -99,55 +95,6 @@ namespace mango::image
         Color operator [] (int index) const
         {
             return color[index];
-        }
-    };
-
-    // ------------------------------------------------------------------
-    // sRGB
-    // ------------------------------------------------------------------
-
-    struct sRGB
-    {
-        // NOTE: The alpha component is always linear
-        Color color;
-
-        sRGB() = default;
-
-        sRGB(Color srgb)
-            : color(srgb)
-        {
-        }
-
-        sRGB(math::float32x4 linear)
-        {
-            *this = linear;
-        }
-
-        sRGB& operator = (math::float32x4 linear)
-        {
-            math::float32x4 srgb = math::linear_to_srgb(linear) * 255.0f;
-            srgb.w = linear.w * 255.0f; // pass-through linear alpha
-            color = srgb.pack();
-            return *this;
-        }
-
-        sRGB& operator = (Color srgb)
-        {
-            color = srgb;
-            return *this;
-        }
-
-        operator u32 () const
-        {
-            return color;
-        }
-
-        operator math::float32x4 () const
-        {
-            math::float32x4 srgb = math::float32x4::unpack(color) / 255.0f;
-            math::float32x4 linear = math::srgb_to_linear(srgb);
-            linear.w = float(color >> 24) / 255.0f; // pass-through linear alpha
-            return linear;
         }
     };
 

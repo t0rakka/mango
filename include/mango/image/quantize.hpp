@@ -4,7 +4,6 @@
 */
 #pragma once
 
-#include <mango/image/format.hpp>
 #include <mango/image/surface.hpp>
 
 namespace mango::image
@@ -46,12 +45,6 @@ namespace mango::image
         ~QuantizedBitmap();
 
         Palette getPalette() const;
-    };
-
-    class LuminanceBitmap : public Bitmap
-    {
-    public:
-        LuminanceBitmap(const Surface& source, bool alpha = false, bool linear = true);
     };
 
 } // namespace mango::image

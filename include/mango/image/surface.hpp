@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -86,5 +86,15 @@ namespace mango::image
         TemporaryBitmap(const Surface& surface, const Format& format, bool yflip = false);
         TemporaryBitmap(const Surface& surface, int width, int height, const Format& format, bool yflip = false);
     };
+
+    class LuminanceBitmap : public Bitmap
+    {
+    public:
+        LuminanceBitmap(const Surface& source, bool alpha = false, bool linear = true);
+    };
+
+    // HACK: need a proper API (32 bit rgba in-place conversion)
+    void srgbToLinear(const Surface& surface);
+    void linearToSRGB(const Surface& surface);
 
 } // namespace mango::image
