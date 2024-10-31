@@ -1308,46 +1308,10 @@ namespace mango::math
     // sRGB
     // ------------------------------------------------------------------------
 
-#define ENABLE_LINEAR_APPROXIMATIONS
-
-#if defined(ENABLE_LINEAR_APPROXIMATIONS)
+#if 0
 
     //
-    // http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
-    //
-
-    float linear_to_srgb(float linear)
-    {
-        linear = clamp(linear, 0.0f, 1.0f);
-        float s1 = sqrt(linear);
-        float s2 = sqrt(s1);
-        float s3 = sqrt(s2);
-        return 0.662002687f * s1 + 0.684122060f * s2 - 0.323583601f * s3 - 0.0225411470f * linear;
-    }
-
-    float srgb_to_linear(float s)
-    {
-        return s * (s * (s * 0.305306011f + 0.682171111f) + 0.012522878f);
-    }
-
-    float32x4 linear_to_srgb(float32x4 linear)
-    {
-        linear = clamp(linear, 0.0f, 1.0f);
-        float32x4 s1 = sqrt(linear);
-        float32x4 s2 = sqrt(s1);
-        float32x4 s3 = sqrt(s2);
-        return 0.662002687f * s1 + 0.684122060f * s2 - 0.323583601f * s3 - 0.0225411470f * linear;
-    }
-
-    float32x4 srgb_to_linear(float32x4 s)
-    {
-        return s * (s * (s * 0.305306011f + 0.682171111f) + 0.012522878f);
-    }
-
-#else
-
-    //
-    // Hardcore almost-nearly-perfect approximations
+    // precise approximations
     //
 
     namespace detail
@@ -1367,18 +1331,6 @@ namespace mango::math
         }
 
         static inline
-        float root5(float v)
-        {
-            s32 i = reinterpret_bits<s32>(v);
-            s32 d = (i >> 2) - (i >> 4) + (i >> 6) - (i >> 8) + (i >> 10);
-            i = 0x32c9af22 + d;
-            float f = reinterpret_bits<float>(i);
-            float s = f * f;
-            f -= (f - v / (s * s)) * 0.2f;
-            return f;
-        }
-
-        static inline
         float32x4 pow24(float32x4 v)
         {
             int32x4 i = reinterpret<int32x4>(v);
@@ -1392,6 +1344,31 @@ namespace mango::math
         }
 
         static inline
+        float32x8 pow24(float32x8 v)
+        {
+            int32x8 i = reinterpret<int32x8>(v);
+            i = (i >> 2) + (i >> 4);
+            i += (i >> 4);
+            i += (i >> 8);
+            i += 0x2a514d80;
+            float32x8 s = reinterpret<float32x8>(i);
+            s = 0.3332454f * (2.0f * s + v / (s * s));
+            return s * sqrt(sqrt(s));
+        }
+
+        static inline
+        float root5(float v)
+        {
+            s32 i = reinterpret_bits<s32>(v);
+            s32 d = (i >> 2) - (i >> 4) + (i >> 6) - (i >> 8) + (i >> 10);
+            i = 0x32c9af22 + d;
+            float f = reinterpret_bits<float>(i);
+            float s = f * f;
+            f -= (f - v / (s * s)) * 0.2f;
+            return f;
+        }
+
+        static inline
         float32x4 root5(float32x4 v)
         {
             int32x4 i = reinterpret<int32x4>(v);
@@ -1399,6 +1376,18 @@ namespace mango::math
             i = 0x32c9af22 + d;
             float32x4 f = reinterpret<float32x4>(i);
             float32x4 s = f * f;
+            f -= (f - v / (s * s)) * 0.2f;
+            return f;
+        }
+
+        static inline
+        float32x8 root5(float32x8 v)
+        {
+            int32x8 i = reinterpret<int32x8>(v);
+            int32x8 d = (i >> 2) - (i >> 4) + (i >> 6) - (i >> 8) + (i >> 10);
+            i = 0x32c9af22 + d;
+            float32x8 f = reinterpret<float32x8>(i);
+            float32x8 s = f * f;
             f -= (f - v / (s * s)) * 0.2f;
             return f;
         }
@@ -1444,6 +1433,24 @@ namespace mango::math
         float32x4 s = (srgb * (1.f / 1.055f) + 0.055f / 1.055f);
         float32x4 b = (s * s) * detail::root5(s * s);
         float32x4 linear = select(srgb <= 0.04045f, a, b);
+        return linear;
+    }
+
+    float32x8 linear_to_srgb(float32x8 linear)
+    {
+        linear = clamp(linear, 0.0f, 1.0f);
+        float32x8 a = linear * 12.92f;
+        float32x8 b = 1.055f * detail::pow24(linear) - 0.055f;
+        float32x8 srgb = select(linear < 0.0031308f, a, b);
+        return srgb;
+    }
+
+    float32x8 srgb_to_linear(float32x8 srgb)
+    {
+        float32x8 a = srgb * (1.0f / 12.92f);
+        float32x8 s = (srgb * (1.f / 1.055f) + 0.055f / 1.055f);
+        float32x8 b = (s * s) * detail::root5(s * s);
+        float32x8 linear = select(srgb <= 0.04045f, a, b);
         return linear;
     }
 
