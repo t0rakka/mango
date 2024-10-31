@@ -90,7 +90,7 @@ namespace mango::image
     class LuminanceBitmap : public Bitmap
     {
     public:
-        LuminanceBitmap(const Surface& source, bool alpha = false, bool linear = true);
+        LuminanceBitmap(const Surface& source, bool alpha = false, bool force_linear = true);
     };
 
     // HACK: need a proper API (32 bit rgba in-place conversion)

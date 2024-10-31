@@ -1055,13 +1055,14 @@ namespace mango::image
     // LuminanceBitmap
     // ----------------------------------------------------------------------------
 
-    LuminanceBitmap::LuminanceBitmap(const Surface& source, bool alpha, bool linear)
+    LuminanceBitmap::LuminanceBitmap(const Surface& source, bool alpha, bool force_linear)
         : Bitmap(source.width, source.height, alpha ? LuminanceFormat(16, 0x00ff, 0xff00) : LuminanceFormat(8, 0xff, 0))
     {
         // convert to correct format when required
         TemporaryBitmap temp(source, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
         // select conversion function
+        bool linear = source.format.isLinear() || force_linear;
         auto func = select_conversion_function(alpha, linear);
 
         // resolve conversion
