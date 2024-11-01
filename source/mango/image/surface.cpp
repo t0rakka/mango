@@ -820,10 +820,8 @@ namespace mango::image
 
         rect.width = dest.width;
         rect.height = dest.height;
-        rect.source.address = source.image;
-        rect.source.stride = source.stride;
-        rect.dest.address = dest.image;
-        rect.dest.stride = dest.stride;
+        rect.source = { source.image, source.stride };
+        rect.dest = { dest.image, dest.stride };
 
         if (x < 0)
         {
