@@ -816,7 +816,7 @@ namespace mango::image
         if (!dest.width || !dest.height)
             return;
 
-        BlitRect rect;
+        Blitter::Rect rect;
 
         rect.width = dest.width;
         rect.height = dest.height;

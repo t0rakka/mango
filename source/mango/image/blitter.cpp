@@ -5,6 +5,7 @@
 #include <map>
 #include <cassert>
 #include <mango/core/cpuinfo.hpp>
+#include <mango/core/system.hpp>
 #include <mango/core/half.hpp>
 #include <mango/image/blitter.hpp>
 #include <mango/math/vector.hpp>
@@ -338,7 +339,7 @@ namespace
     // ----------------------------------------------------------------------------
 
     template <typename DestType, typename SourceType>
-    void table_convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
+    void table_convert_template_unorm_unorm(const Blitter& blitter, const Blitter::Rect& rect)
     {
         struct Component
         {
@@ -360,7 +361,7 @@ namespace
             c.srcMask = 0;
             c.bias = 0;
 
-            const Format& source = blitter.srcFormat;
+            const Format& source = blitter.sourceFormat;
             const Format& dest = blitter.destFormat;
 
             if (dest.size[i])
@@ -533,7 +534,7 @@ namespace
     // ----------------------------------------------------------------------------
 
     template <typename DestType, typename SourceType>
-    void sse4_table_convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
+    void sse4_table_convert_template_unorm_unorm(const Blitter& blitter, const Blitter::Rect& rect)
     {
         struct Component
         {
@@ -551,7 +552,7 @@ namespace
         {
             Component& c = component[i];
 
-            const Format& source = blitter.srcFormat;
+            const Format& source = blitter.sourceFormat;
             const Format& dest = blitter.destFormat;
 
             if (dest.size[i])
@@ -669,7 +670,7 @@ namespace
         const int xremain = width % 4;
         if (xremain)
         {
-            BlitRect patch = rect;
+            Blitter::Rect patch = rect;
 
             patch.width = xremain;
             patch.source.address += (width - xremain) * sizeof(SourceType);
@@ -780,7 +781,7 @@ namespace
     // ----------------------------------------------------------------------------
 
     template <typename DestType, typename SourceType>
-    void avx2_table_convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
+    void avx2_table_convert_template_unorm_unorm(const Blitter& blitter, const Blitter::Rect& rect)
     {
         struct Component
         {
@@ -798,7 +799,7 @@ namespace
         {
             Component& c = component[i];
 
-            const Format& source = blitter.srcFormat;
+            const Format& source = blitter.sourceFormat;
             const Format& dest = blitter.destFormat;
 
             if (dest.size[i])
@@ -916,7 +917,7 @@ namespace
         const int xremain = width % 8;
         if (xremain)
         {
-            BlitRect patch = rect;
+            Blitter::Rect patch = rect;
 
             patch.width = xremain;
             patch.source.address += (width - xremain) * sizeof(SourceType);
@@ -1139,7 +1140,7 @@ namespace
     // ----------------------------------------------------------------------------
 
     template <typename DestType, typename SourceType>
-    void avx512_table_convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
+    void avx512_table_convert_template_unorm_unorm(const Blitter& blitter, const Blitter::Rect& rect)
     {
         struct Component
         {
@@ -1157,7 +1158,7 @@ namespace
         {
             Component& c = component[i];
 
-            const Format& source = blitter.srcFormat;
+            const Format& source = blitter.sourceFormat;
             const Format& dest = blitter.destFormat;
 
             if (dest.size[i])
@@ -1275,7 +1276,7 @@ namespace
         const int xremain = width % 16;
         if (xremain)
         {
-            BlitRect patch = rect;
+            Blitter::Rect patch = rect;
 
             patch.width = xremain;
             patch.source.address += (width - xremain) * sizeof(SourceType);
@@ -1294,7 +1295,7 @@ namespace
     // unorm <- unorm
 
     template <typename DestType, typename SourceType>
-    void convert_template_unorm_unorm(const Blitter& blitter, const BlitRect& rect)
+    void convert_template_unorm_unorm(const Blitter& blitter, const Blitter::Rect& rect)
     {
         struct Component
         {
@@ -1315,7 +1316,7 @@ namespace
             c.srcMask = 0;
             c.scale = 0.0f;
 
-            const Format& source = blitter.srcFormat;
+            const Format& source = blitter.sourceFormat;
             const Format& dest = blitter.destFormat;
 
             if (dest.size[i])
@@ -1390,9 +1391,9 @@ namespace
     // unorm <- fp
 
     template <typename DestType, typename SourceType>
-    void convert_template_unorm_fp(const Blitter& blitter, const BlitRect& rect)
+    void convert_template_unorm_fp(const Blitter& blitter, const Blitter::Rect& rect)
     {
-        const Format& sf = blitter.srcFormat;
+        const Format& sf = blitter.sourceFormat;
         const Format& df = blitter.destFormat;
 
         u32 mask[4] = { 0 };
@@ -1462,9 +1463,9 @@ namespace
     // fp <- unorm
 
     template <typename DestType, typename SourceType>
-    void convert_template_fp_unorm(const Blitter& blitter, const BlitRect& rect)
+    void convert_template_fp_unorm(const Blitter& blitter, const Blitter::Rect& rect)
     {
-        const Format& sf = blitter.srcFormat;
+        const Format& sf = blitter.sourceFormat;
         const Format& df = blitter.destFormat;
 
         u32 mask[4] = { 0, 0, 0, 0 };
@@ -1544,11 +1545,11 @@ namespace
     // fp <- fp
 
     template <typename DestType, typename SourceType>
-    void convert_template_fp_fp(const Blitter& blitter, const BlitRect& rect)
+    void convert_template_fp_fp(const Blitter& blitter, const Blitter::Rect& rect)
     {
-        const int source_float_shift = blitter.srcFormat.type - Format::FLOAT16 + 4;
+        const int source_float_shift = blitter.sourceFormat.type - Format::FLOAT16 + 4;
 
-        int sample_size = blitter.srcFormat.bytes() / sizeof(SourceType);
+        int sample_size = blitter.sourceFormat.bytes() / sizeof(SourceType);
         int components = 0;
 
         SourceType constant[4];
@@ -1560,7 +1561,7 @@ namespace
         {
             if (blitter.destFormat.size[i])
             {
-                offset[components] = blitter.srcFormat.size[i] ? blitter.srcFormat.offset[i] >> source_float_shift : -1;
+                offset[components] = blitter.sourceFormat.size[i] ? blitter.sourceFormat.offset[i] >> source_float_shift : -1;
                 if (offset[components] < 0)
                 {
                     constant[components] = SourceType(i == 3 ? 1.0f : 0.0f);
@@ -1630,16 +1631,16 @@ namespace
         }
     }
 
-    void convert_none(const Blitter& blitter, const BlitRect& rect)
+    void convert_none(const Blitter& blitter, const Blitter::Rect& rect)
     {
         MANGO_UNREFERENCED(blitter);
         MANGO_UNREFERENCED(rect);
     }
 
-    void convert_custom(const Blitter& blitter, const BlitRect& rect)
+    void convert_custom(const Blitter& blitter, const Blitter::Rect& rect)
     {
-        BlitScan source = rect.source;
-        BlitScan dest = rect.dest;
+        Blitter::Scan source = rect.source;
+        Blitter::Scan dest = rect.dest;
 
         for (int y = 0; y < rect.height; ++y)
         {
@@ -3234,8 +3235,8 @@ namespace mango::image
     // ----------------------------------------------------------------------------
 
     Blitter::Blitter(const Format& dest, const Format& source)
-        : srcFormat(source)
-        , destFormat(dest)
+        : destFormat(dest)
+        , sourceFormat(source)
         , scan_convert(nullptr)
         , rect_convert(nullptr)
     {
@@ -3258,13 +3259,17 @@ namespace mango::image
         }
 
         rect_convert = get_rect_convert(dest, source);
+        if (!rect_convert)
+        {
+            MANGO_EXCEPTION("[Blitter] Could not find conversion function.");
+        }
     }
 
     Blitter::~Blitter()
     {
     }
 
-    void Blitter::convert(const BlitRect& rect) const
+    void Blitter::convert(const Rect& rect) const
     {
         rect_convert(*this, rect);
     }
