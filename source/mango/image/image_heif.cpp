@@ -118,16 +118,6 @@ namespace
             return m_header;
         }
 
-        ConstMemory icc() override
-        {
-            return ConstMemory();
-        }
-
-        ConstMemory exif() override
-        {
-            return ConstMemory();
-        }
-
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);

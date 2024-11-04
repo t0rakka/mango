@@ -300,6 +300,7 @@ namespace
 
         ~Interface()
         {
+            icc = m_icc_profile;
         }
 
         ImageHeader header() override
@@ -310,11 +311,6 @@ namespace
         ConstMemory memory(int level, int depth, int face) override
         {
             return ConstMemory();
-        }
-
-        ConstMemory icc() override
-        {
-            return m_icc_profile;
         }
 
         std::string parse_string(BigEndianConstPointer& p, int alignment)

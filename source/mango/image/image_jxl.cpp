@@ -97,6 +97,8 @@ namespace
                         return;
                 }
             }
+
+            icc = m_icc;
         }
 
         ~Interface()
@@ -106,16 +108,6 @@ namespace
         ImageHeader header() override
         {
             return m_header;
-        }
-
-        ConstMemory icc() override
-        {
-            return m_icc;
-        }
-
-        ConstMemory exif() override
-        {
-            return ConstMemory();
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override

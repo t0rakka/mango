@@ -252,16 +252,6 @@ namespace mango::image
         return ConstMemory();
     }
 
-    ConstMemory ImageDecoderInterface::icc()
-    {
-        return ConstMemory();
-    }
-
-    ConstMemory ImageDecoderInterface::exif()
-    {
-        return ConstMemory();
-    }
-
     // ----------------------------------------------------------------------------
     // ImageDecoder
     // ----------------------------------------------------------------------------
@@ -349,7 +339,7 @@ namespace mango::image
 
         if (m_interface)
         {
-            memory = m_interface->icc();
+            memory = m_interface->icc;
         }
 
         return memory;
@@ -361,7 +351,7 @@ namespace mango::image
 
         if (m_interface)
         {
-            memory = m_interface->exif();
+            memory = m_interface->exif;
         }
 
         return memory;

@@ -23,6 +23,8 @@ namespace
         Interface(ConstMemory memory)
             : m_parser(memory)
         {
+            icc = m_parser.icc_buffer;
+            exif = m_parser.exif_memory;
         }
 
         ~Interface()
@@ -32,16 +34,6 @@ namespace
         ImageHeader header() override
         {
             return m_parser.header;
-        }
-
-        ConstMemory icc() override
-        {
-            return m_parser.icc_buffer;
-        }
-
-        ConstMemory exif() override
-        {
-            return m_parser.exif_memory;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override

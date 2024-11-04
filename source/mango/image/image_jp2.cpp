@@ -639,7 +639,6 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ImageHeader m_header;
-        Memory m_icc;
 
         ImageProcessFunc m_process_func = nullptr;
         MemoryStreamReader m_memory_reader;
@@ -692,8 +691,8 @@ namespace
             }
 
             // ICC color profile
-            m_icc.address = m_image->icc_profile_buf;
-            m_icc.size = m_image->icc_profile_len;
+            icc.address = m_image->icc_profile_buf;
+            icc.size = m_image->icc_profile_len;
 
             u32 width = m_image->x1 - m_image->x0;
             u32 height = m_image->y1 - m_image->y0;
@@ -871,16 +870,6 @@ namespace
         ImageHeader header() override
         {
             return m_header;
-        }
-
-        ConstMemory icc() override
-        {
-            return m_icc;
-        }
-
-        ConstMemory exif() override
-        {
-            return ConstMemory();
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override

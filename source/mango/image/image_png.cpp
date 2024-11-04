@@ -2117,12 +2117,7 @@ namespace
 
         const ImageHeader& getHeader();
         ImageDecodeStatus decode(const Surface& dest, bool multithread, bool use_icc, Palette* palette);
-
-        ConstMemory icc()
-        {
-            return m_icc;
-        }
-
+        ConstMemory icc() const;
     };
 
     // ------------------------------------------------------------
@@ -3307,6 +3302,11 @@ namespace
         return status;
     }
 
+    ConstMemory ParserPNG::icc() const
+    {
+        return m_icc;
+    }
+
     // ------------------------------------------------------------
     // write_png()
     // ------------------------------------------------------------
@@ -3888,6 +3888,7 @@ namespace
         Interface(ConstMemory memory)
             : m_parser(memory)
         {
+            icc = m_parser.icc();
         }
 
         ~Interface()
@@ -3897,11 +3898,6 @@ namespace
         ImageHeader header() override
         {
             return m_parser.getHeader();
-        }
-
-        ConstMemory icc() override
-        {
-            return m_parser.icc();
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
