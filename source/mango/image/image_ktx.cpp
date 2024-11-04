@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cstring>
 #include <mango/core/pointer.hpp>
@@ -745,15 +745,11 @@ namespace
             : m_memory(memory)
             , m_ktx_header(memory)
         {
+            header = m_ktx_header.header;
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_ktx_header.header;
         }
 
         ConstMemory memory(int level, int depth, int face) override
@@ -768,7 +764,6 @@ namespace
 
             ImageDecodeStatus status;
 
-            const ImageHeader& header = m_ktx_header.header;
             if (!header.success)
             {
                 status.setError(header.info);

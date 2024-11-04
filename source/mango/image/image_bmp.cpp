@@ -1175,7 +1175,6 @@ namespace
     {
         ConstMemory m_memory;
         FileHeader m_file_header;
-        ImageHeader m_image_header;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
@@ -1196,82 +1195,77 @@ namespace
                     BitmapHeader bmp_header(bitmapMemory, false);
                     if (!bmp_header)
                     {
-                        m_image_header.setError(bmp_header.info);
+                        header.setError(bmp_header.info);
                         return;
                     }
 
-                    m_image_header.width   = bmp_header.width;
-                    m_image_header.height  = bmp_header.height;
-                    m_image_header.depth   = 0;
-                    m_image_header.levels  = 0;
-                    m_image_header.faces   = 0;
-        			m_image_header.palette = bmp_header.isPalette();
-                    m_image_header.format  = bmp_header.format;
-                    m_image_header.compression = TextureCompression::NONE;
+                    header.width   = bmp_header.width;
+                    header.height  = bmp_header.height;
+                    header.depth   = 0;
+                    header.levels  = 0;
+                    header.faces   = 0;
+                    header.palette = bmp_header.isPalette();
+                    header.format  = bmp_header.format;
+                    header.compression = TextureCompression::NONE;
 
                     printLine(Print::Info, "[Header]");
                     printLine(Print::Info, "  image: {} x {}, bits: {}",
-                        m_image_header.width,
-                        m_image_header.height,
-                        m_image_header.format.bits);
+                        header.width,
+                        header.height,
+                        header.format.bits);
                     printLine(Print::Info, "[Format]");
                     printLine(Print::Info, "  bits: {}, bytes: {}, type: {:#x}, flags: {:#x}",
-                        m_image_header.format.bits,
-                        m_image_header.format.bytes(),
-                        u16(m_image_header.format.type),
-                        m_image_header.format.flags);
+                        header.format.bits,
+                        header.format.bytes(),
+                        u16(header.format.type),
+                        header.format.flags);
                     printLine(Print::Info, "  size: {} {} {} {}",
-                        m_image_header.format.size.r,
-                        m_image_header.format.size.g,
-                        m_image_header.format.size.b,
-                        m_image_header.format.size.a);
+                        header.format.size.r,
+                        header.format.size.g,
+                        header.format.size.b,
+                        header.format.size.a);
                     printLine(Print::Info, "  offset: {} {} {} {}",
-                        m_image_header.format.offset.r,
-                        m_image_header.format.offset.g,
-                        m_image_header.format.offset.b,
-                        m_image_header.format.offset.a);
+                        header.format.offset.r,
+                        header.format.offset.g,
+                        header.format.offset.b,
+                        header.format.offset.a);
                     break;
                 }
 
                 case 0x0000:
                 {
-                    const char* error = parseIco(&m_image_header, nullptr, m_memory);
+                    const char* error = parseIco(&header, nullptr, m_memory);
                     if (error)
                     {
-                        m_image_header.setError(error);
+                        header.setError(error);
                     }
                     break;
                 }
 
                 case 0x5089:
-                    m_image_header = getHeader(m_memory, ".png");
+                    header = getHeader(m_memory, ".png");
                     break;
 
                 case 0xd8ff:
-                    m_image_header = getHeader(m_memory, ".jpg");
+                    header = getHeader(m_memory, ".jpg");
                     break;
 
                 case 0x4947:
-                    m_image_header = getHeader(m_memory, ".gif");
+                    header = getHeader(m_memory, ".gif");
                     break;
 
                 case 0xcdd7:
-                    m_image_header = getHeader(m_memory, ".apm");
+                    header = getHeader(m_memory, ".apm");
                     break;
 
                 default:
-                    m_image_header.setError("[ImageDecoder.BMP] Incorrect header identifier.");
+                    header.setError("[ImageDecoder.BMP] Incorrect header identifier.");
                     break;
             }
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_image_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -1282,9 +1276,9 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (!m_image_header)
+            if (!header)
             {
-                status.setError(m_image_header.info);
+                status.setError(header.info);
                 return status;
             }
 

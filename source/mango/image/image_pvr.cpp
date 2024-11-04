@@ -602,15 +602,11 @@ namespace
             : m_memory(memory)
         {
             m_pvr_header.read(memory);
+            header = m_pvr_header.header;
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_pvr_header.header;
         }
 
         ConstMemory memory(int level, int depth, int face) override
@@ -624,7 +620,6 @@ namespace
 
             ImageDecodeStatus status;
 
-            const ImageHeader& header = m_pvr_header.header;
             if (!header.success)
             {
                 status.setError(header.info);
@@ -633,8 +628,8 @@ namespace
 
             ConstMemory data = m_pvr_header.getMemory(m_memory, level, depth, face);
 
-            int width = std::max(1, m_pvr_header.header.width >> level);
-            int height = std::max(1, m_pvr_header.header.height >> level);
+            int width = std::max(1, header.width >> level);
+            int height = std::max(1, header.height >> level);
 
             if (m_pvr_header.m_info.compression != TextureCompression::NONE)
             {

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/pointer.hpp>
@@ -81,7 +81,6 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ConstMemory m_memory;
-        ImageHeader m_header;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
@@ -90,28 +89,23 @@ namespace
             int height;
             if (!WebPGetInfo(m_memory.address, m_memory.size, &width, &height))
             {
-                m_header.setError("[ImageDecoder.WEBP] Incorrect header.");
+                header.setError("[ImageDecoder.WEBP] Incorrect header.");
             }
             else
             {
-                m_header.width   = width;
-                m_header.height  = height;
-                m_header.depth   = 0;
-                m_header.levels  = 0;
-                m_header.faces   = 0;
-                m_header.palette = false;
-                m_header.format  = webpDefaultFormat(true).format;
-                m_header.compression = TextureCompression::NONE;
+                header.width   = width;
+                header.height  = height;
+                header.depth   = 0;
+                header.levels  = 0;
+                header.faces   = 0;
+                header.palette = false;
+                header.format  = webpDefaultFormat(true).format;
+                header.compression = TextureCompression::NONE;
             }
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -123,16 +117,16 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (!m_header.success)
+            if (!header.success)
             {
-                status.setError(m_header.info);
+                status.setError(header.info);
                 return status;
             }
 
             WebPFormat wpformat = webpFindFormat(dest.format);
             bool matching_formats = wpformat.format == dest.format;
-            bool matching_dimensions = m_header.width == dest.width &&
-                                       m_header.height == dest.height;
+            bool matching_dimensions = header.width == dest.width &&
+                                       header.height == dest.height;
 
             status.direct = matching_formats && matching_dimensions;
 
@@ -146,7 +140,7 @@ namespace
             else
             {
                 // Color conversion decoding
-                Bitmap temp(m_header.width, m_header.height, wpformat.format);
+                Bitmap temp(header.width, header.height, wpformat.format);
                 output = wpformat.decode(temp, m_memory);
                 if (output)
                 {

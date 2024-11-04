@@ -23,7 +23,6 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ConstMemory m_memory;
-        ImageHeader m_header;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
@@ -32,11 +31,6 @@ namespace
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -48,15 +42,15 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (!m_header.success)
+            if (!header.success)
             {
-                status.setError(m_header.info);
+                status.setError(header.info);
                 return status;
             }
 
-            status.direct = dest.format == m_header.format &&
-                            dest.width >= m_header.width &&
-                            dest.height >= m_header.height;
+            status.direct = dest.format == header.format &&
+                            dest.width >= header.width &&
+                            dest.height >= header.height;
 
             if (status.direct)
             {
@@ -64,7 +58,7 @@ namespace
             }
             else
             {
-                Bitmap temp(m_header.width, m_header.height, m_header.format);
+                Bitmap temp(header.width, header.height, header.format);
                 decodeImage(temp);
                 dest.blit(0, 0, temp);
             }
@@ -106,42 +100,42 @@ namespace
     }
 
     // ------------------------------------------------------------
-	// ImageDecoder: Degas/Degas Elite
-	// ------------------------------------------------------------
+    // ImageDecoder: Degas/Degas Elite
+    // ------------------------------------------------------------
 
-	void degas_decompress(u8* buffer, const u8* input, const u8* input_end, int scansize)
-	{
-		u8* buffer_end = buffer + scansize;
+    void degas_decompress(u8* buffer, const u8* input, const u8* input_end, int scansize)
+    {
+        u8* buffer_end = buffer + scansize;
 
-		for ( ; buffer < buffer_end && input < input_end; )
-		{
-			u8 v = *input++;
+        for ( ; buffer < buffer_end && input < input_end; )
+        {
+            u8 v = *input++;
 
-			if (v > 128)
-			{
-				const int n = 257 - v;
-				std::memset(buffer, *input++, n);
-				buffer += n;
-			}
-			else if (v < 128)
-			{
-				const int n = v + 1;
-				std::memcpy(buffer, input, n);
-				input += n;
-				buffer += n;
-			}
-			else
-			{
-				// 0x80
-				break;
-			}
-		}
-	}
+            if (v > 128)
+            {
+                const int n = 257 - v;
+                std::memset(buffer, *input++, n);
+                buffer += n;
+            }
+            else if (v < 128)
+            {
+                const int n = v + 1;
+                std::memcpy(buffer, input, n);
+                input += n;
+                buffer += n;
+            }
+            else
+            {
+                // 0x80
+                break;
+            }
+        }
+    }
 
-	struct header_degas
-	{
-		int width = 0;
-		int height = 0;
+    struct header_degas
+    {
+        int width = 0;
+        int height = 0;
         int bitplanes = 0;
         bool compressed = false;
 
@@ -201,15 +195,15 @@ namespace
             if (compressed)
             {
                 Buffer buffer(32000);
-			    degas_decompress(buffer, data, end, 32000);
+                degas_decompress(buffer, data, end, 32000);
 
                 BigEndianConstPointer p = buffer.data();
 
                 for (int y = 0; y < height; ++y)
                 {
-					u8* image = tempImage + y * width;
+                    u8* image = tempImage + y * width;
 
-					for (int j = 0; j < bitplanes; ++j)
+                    for (int j = 0; j < bitplanes; ++j)
                     {
                         for (int k = 0; k < words_per_scan / bitplanes; ++k)
                         {
@@ -222,7 +216,7 @@ namespace
                         }
                     }
                 }
-			}
+            }
             else
             {
                 const bigEndian::u16* buffer = reinterpret_cast<const bigEndian::u16 *>(data);
@@ -235,10 +229,10 @@ namespace
 
                 for (int y = 0; y < height; ++y)
                 {
-					u8* image = tempImage.data() + y * width;
-					int yoffset = y * (bitplanes == 1 ? 40 : 80);
+                    u8* image = tempImage.data() + y * width;
+                    int yoffset = y * (bitplanes == 1 ? 40 : 80);
 
-					for (int x = 0; x < width; ++x)
+                    for (int x = 0; x < width; ++x)
                     {
                         int x_offset = 15 - (x & 15);
                         int word_offset = (x >> 4) * bitplanes + yoffset;
@@ -251,14 +245,14 @@ namespace
                             index |= (bit_pattern << i);
                         }
 
-						image[x] = index;
+                        image[x] = index;
                     }
                 }
-			}
+            }
 
             resolve_palette(s, width, height, tempImage, palette);
         }
-	};
+    };
 
     struct InterfaceDEGAS : Interface
     {
@@ -272,19 +266,19 @@ namespace
             m_data = m_degas_header.parse(memory.address, memory.size);
             if (m_data)
             {
-                m_header.width  = m_degas_header.width;
-                m_header.height = m_degas_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width  = m_degas_header.width;
+                header.height = m_degas_header.height;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
             else
             {
-                m_header.setError(m_degas_header.error);
+                header.setError(m_degas_header.error);
             }
         }
 
         void decodeImage(const Surface& s) override
         {
-			if (!m_data)
+            if (!m_data)
                 return;
 
             const u8* end = m_memory.end();
@@ -311,14 +305,14 @@ namespace
         return x;
     }
 
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
     // ImageDecoder: NEOchrome
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
 
-	struct header_neo
-	{
-		int width = 0;
-		int height = 0;
+    struct header_neo
+    {
+        int width = 0;
+        int height = 0;
         int bitplanes;
 
         std::string error;
@@ -441,13 +435,13 @@ namespace
             m_data = m_neo_header.parse(memory.address, memory.size);
             if (m_data)
             {
-                m_header.width  = m_neo_header.width;
-                m_header.height = m_neo_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width  = m_neo_header.width;
+                header.height = m_neo_header.height;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
             else
             {
-                m_header.setError(m_neo_header.error);
+                header.setError(m_neo_header.error);
             }
         }
 
@@ -468,9 +462,9 @@ namespace
         return x;
     }
 
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
     // ImageDecoder: Spectrum 512
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
 
     u8 find_spectrum_palette_index(u32 x, u8 c)
     {
@@ -489,35 +483,35 @@ namespace
         return c + 16;
     }
 
-	void spu_decompress(u8* buffer, const u8* input, int scansize, int insize)
-	{
-		u8* buffer_end = buffer + scansize;
-		const u8* input_end = input + insize;
+    void spu_decompress(u8* buffer, const u8* input, int scansize, int insize)
+    {
+        u8* buffer_end = buffer + scansize;
+        const u8* input_end = input + insize;
 
-		for ( ; buffer < buffer_end && input < input_end; )
-		{
-			u8 v = *input++;
+        for ( ; buffer < buffer_end && input < input_end; )
+        {
+            u8 v = *input++;
 
-			if (v >= 128)
-			{
-				const int n = 258 - v;
-				std::memset(buffer, *input++, n);
-				buffer += n;
-			}
-			else if (v < 128)
-			{
-				const int n = v + 1;
-				std::memcpy(buffer, input, n);
-				input += n;
-				buffer += n;
-			}
-		}
-	}
+            if (v >= 128)
+            {
+                const int n = 258 - v;
+                std::memset(buffer, *input++, n);
+                buffer += n;
+            }
+            else if (v < 128)
+            {
+                const int n = v + 1;
+                std::memcpy(buffer, input, n);
+                input += n;
+                buffer += n;
+            }
+        }
+    }
 
-	struct header_spu
-	{
-		int width = 0;
-		int height = 0;
+    struct header_spu
+    {
+        int width = 0;
+        int height = 0;
         int bitplanes = 4;
         bool compressed = false;
         int length_of_data_bit_map = 0;
@@ -694,7 +688,7 @@ namespace
                 }
             }
         }
-	};
+    };
 
     struct InterfaceSPU : Interface
     {
@@ -708,13 +702,13 @@ namespace
             m_data = m_spu_header.parse(memory.address, memory.size);
             if (m_data)
             {
-                m_header.width  = m_spu_header.width;
-                m_header.height = m_spu_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width  = m_spu_header.width;
+                header.height = m_spu_header.height;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
             else
             {
-                m_header.setError(m_spu_header.error);
+                header.setError(m_spu_header.error);
             }
         }
 
@@ -736,174 +730,174 @@ namespace
         return x;
     }
 
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
     // ImageDecoder: Crack Art
-	// ------------------------------------------------------------
+    // ------------------------------------------------------------
 
-	void ca_decompress(u8* buffer, const u8* input, const int scansize, const u8 escape_char, const u16 offset)
-	{
-		u8* buffer_start = buffer;
-		u8* buffer_end = buffer + scansize;
+    void ca_decompress(u8* buffer, const u8* input, const int scansize, const u8 escape_char, const u16 offset)
+    {
+        u8* buffer_start = buffer;
+        u8* buffer_end = buffer + scansize;
 
         int count = scansize;
 
-		while (count > 0)
-		{
-			u8 v = *input++;
-			if (v != escape_char)
-			{
-				*buffer = v;
-				--count;
+        while (count > 0)
+        {
+            u8 v = *input++;
+            if (v != escape_char)
+            {
+                *buffer = v;
+                --count;
 
-			    buffer += offset;
-			    if (buffer >= buffer_end)
-			    {
-				    ++buffer_start;
-				    buffer = buffer_start;
-			    }
-			}
-			else
-			{
-				v = *input++;
-				if (v == 0)
-				{
-					int n = *input++;
-					++n;
+                buffer += offset;
+                if (buffer >= buffer_end)
+                {
+                    ++buffer_start;
+                    buffer = buffer_start;
+                }
+            }
+            else
+            {
+                v = *input++;
+                if (v == 0)
+                {
+                    int n = *input++;
+                    ++n;
 
-					v = *input++;
+                    v = *input++;
 
-					if (n > count)
-					{
-						n = count;
-					}
+                    if (n > count)
+                    {
+                        n = count;
+                    }
 
-					count -= n;
+                    count -= n;
 
-					while (n > 0)
-					{
-						*buffer = v;
-						--n;
+                    while (n > 0)
+                    {
+                        *buffer = v;
+                        --n;
 
-			            buffer += offset;
-			            if (buffer >= buffer_end)
-			            {
-				            ++buffer_start;
-				            buffer = buffer_start;
-			            }
-					}
-				}
-				else if (v == 1)
-				{
-					int n = *input++;
-					n <<= 8;
-					n += *input++;
-					++n;
+                        buffer += offset;
+                        if (buffer >= buffer_end)
+                        {
+                            ++buffer_start;
+                            buffer = buffer_start;
+                        }
+                    }
+                }
+                else if (v == 1)
+                {
+                    int n = *input++;
+                    n <<= 8;
+                    n += *input++;
+                    ++n;
 
-					v = *input++;
+                    v = *input++;
 
-					if (n > count)
-					{
-						n = count;
-					}
+                    if (n > count)
+                    {
+                        n = count;
+                    }
 
-					count -= n;
+                    count -= n;
 
-					while (n > 0)
-					{
-						*buffer = v;
-						--n;
+                    while (n > 0)
+                    {
+                        *buffer = v;
+                        --n;
 
-			            buffer += offset;
-			            if (buffer >= buffer_end)
-			            {
-				            ++buffer_start;
-				            buffer = buffer_start;
-			            }
-					}
-				}
-				else if (v == 2)
-				{
-					int n;
-					v = *input++;
+                        buffer += offset;
+                        if (buffer >= buffer_end)
+                        {
+                            ++buffer_start;
+                            buffer = buffer_start;
+                        }
+                    }
+                }
+                else if (v == 2)
+                {
+                    int n;
+                    v = *input++;
 
-					if (v == 0)
-					{
-						n = count;
-					}
-					else
-					{
-						n = v;
-						n <<= 8;
-						n += *input++;
+                    if (v == 0)
+                    {
+                        n = count;
+                    }
+                    else
+                    {
+                        n = v;
+                        n <<= 8;
+                        n += *input++;
                         ++n;
 
-						if (n > count)
-						{
-							n = count;
-						}
-					}
+                        if (n > count)
+                        {
+                            n = count;
+                        }
+                    }
 
-					count -= n;
+                    count -= n;
 
-					while (n > 0)
-					{
-						--n;
+                    while (n > 0)
+                    {
+                        --n;
 
-			            buffer += offset;
-			            if (buffer >= buffer_end)
-			            {
-				            ++buffer_start;
-				            buffer = buffer_start;
-			            }
-					}
-				}
-				else if (v == escape_char)
-				{
-					*buffer = v;
-					--count;
-
-		            buffer += offset;
-		            if (buffer >= buffer_end)
-		            {
-			            ++buffer_start;
-			            buffer = buffer_start;
-		            }
+                        buffer += offset;
+                        if (buffer >= buffer_end)
+                        {
+                            ++buffer_start;
+                            buffer = buffer_start;
+                        }
+                    }
                 }
-				else
-				{
-					int n = v;
-					++n;
+                else if (v == escape_char)
+                {
+                    *buffer = v;
+                    --count;
 
-					v = *input++;
+                    buffer += offset;
+                    if (buffer >= buffer_end)
+                    {
+                        ++buffer_start;
+                        buffer = buffer_start;
+                    }
+                }
+                else
+                {
+                    int n = v;
+                    ++n;
 
-					if (n > count)
-					{
-						n = count;
-					}
+                    v = *input++;
 
-					count -= n;
+                    if (n > count)
+                    {
+                        n = count;
+                    }
 
-					while (n > 0)
-					{
-						*buffer = v;
-						--n;
+                    count -= n;
 
-			            buffer += offset;
-			            if (buffer >= buffer_end)
-			            {
-				            ++buffer_start;
-				            buffer = buffer_start;
-			            }
-					}
-				}
-			}
-		}
-	}
+                    while (n > 0)
+                    {
+                        *buffer = v;
+                        --n;
 
-	struct header_ca
-	{
-		int width = 0;
-		int height = 0;
+                        buffer += offset;
+                        if (buffer >= buffer_end)
+                        {
+                            ++buffer_start;
+                            buffer = buffer_start;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    struct header_ca
+    {
+        int width = 0;
+        int height = 0;
         int bitplanes = 0;
         bool compressed = false;
 
@@ -983,7 +977,7 @@ namespace
                 const u16 offset = p.read16() & 0x7fff;
 
                 temp.reset(32000, initial_value);
-			    ca_decompress(temp.data(), p, 32000, escape_char, offset);
+                ca_decompress(temp.data(), p, 32000, escape_char, offset);
 
                 buffer = temp.data();
                 end = temp.data() + 32000;
@@ -1037,13 +1031,13 @@ namespace
             m_data = m_ca_header.parse(memory.address, memory.size);
             if (m_data)
             {
-                m_header.width  = m_ca_header.width;
-                m_header.height = m_ca_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width  = m_ca_header.width;
+                header.height = m_ca_header.height;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
             else
             {
-                m_header.setError(m_ca_header.error);
+                header.setError(m_ca_header.error);
             }
         }
 
@@ -1054,7 +1048,7 @@ namespace
 
             const u8* end = m_memory.end();
             m_ca_header.decode(s, m_data, end);
-		}
+        }
     };
 
     ImageDecoderInterface* createInterfaceCA(ConstMemory memory)

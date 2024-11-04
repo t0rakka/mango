@@ -3888,16 +3888,12 @@ namespace
         Interface(ConstMemory memory)
             : m_parser(memory)
         {
+            header = m_parser.getHeader();
             icc = m_parser.icc();
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_parser.getHeader();
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -3908,7 +3904,6 @@ namespace
 
             ImageDecodeStatus status;
 
-            const ImageHeader& header = m_parser.getHeader();
             if (!header.success)
             {
                 status.setError(header.info);

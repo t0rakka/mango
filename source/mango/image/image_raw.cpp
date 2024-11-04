@@ -20,7 +20,6 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ConstMemory m_memory;
-        ImageHeader m_header;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
@@ -30,7 +29,7 @@ namespace
             u32 magic = p.read32();
             if (magic != 0x706d6266)
             {
-                m_header.setError("[ImageDecoder.FBMP] Incorrect header magic.");
+                header.setError("[ImageDecoder.FBMP] Incorrect header magic.");
                 return;
             }
 
@@ -39,27 +38,22 @@ namespace
 
             if (memory.size != size_t(width) * height * 4 + 12)
             {
-                m_header.setError("[ImageDecoder.FBMP] Incorrect data size.");
+                header.setError("[ImageDecoder.FBMP] Incorrect data size.");
                 return;
             }
 
-            m_header.width   = width;
-            m_header.height  = height;
-            m_header.depth   = 0;
-            m_header.levels  = 0;
-            m_header.faces   = 0;
-            m_header.palette = false;
-            m_header.format  = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
-            m_header.compression = TextureCompression::NONE;
+            header.width   = width;
+            header.height  = height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+            header.palette = false;
+            header.format  = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
+            header.compression = TextureCompression::NONE;
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -71,15 +65,15 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (!m_header.success)
+            if (!header.success)
             {
-                status.setError(m_header.info);
+                status.setError(header.info);
                 return status;
             }
 
-            u32 width = m_header.width;
-            u32 height = m_header.height;
-            Format format = m_header.format;
+            u32 width = header.width;
+            u32 height = header.height;
+            Format format = header.format;
 
             Surface source(width, height, format, width * 4, m_memory.address + 12);
             dest.blit(0, 0, source);

@@ -28,7 +28,6 @@ namespace
         JxlDecoderPtr m_decoder;
         JxlResizableParallelRunnerPtr m_runner;
 
-        ImageHeader m_header;
         Surface m_surface;
         Buffer m_buffer;
         Buffer m_icc;
@@ -47,13 +46,13 @@ namespace
                                                    JXL_DEC_COLOR_ENCODING |
                                                    JXL_DEC_FULL_IMAGE) != JXL_DEC_SUCCESS)
             {
-                m_header.setError("JxlDecoderSubscribeEvents : FAILED");
+                header.setError("JxlDecoderSubscribeEvents : FAILED");
                 return;
             }
 
             if (JxlDecoderSetParallelRunner(decoder, JxlResizableParallelRunner, m_runner.get()) != JXL_DEC_SUCCESS)
             {
-                m_header.setError("JxlDecoderSetParallelRunner : FAILED");
+                header.setError("JxlDecoderSetParallelRunner : FAILED");
                 return;
             }
 
@@ -67,33 +66,33 @@ namespace
                 switch (status)
                 {
                     case JXL_DEC_ERROR:
-                        m_header.setError("JxlDecoderProcessInput : JXL_DEC_ERROR");
+                        header.setError("JxlDecoderProcessInput : JXL_DEC_ERROR");
                         return;
 
                     case JXL_DEC_NEED_MORE_INPUT:
-                        m_header.setError("JxlDecoderProcessInput : JXL_DEC_NEED_MORE_INPUT");
+                        header.setError("JxlDecoderProcessInput : JXL_DEC_NEED_MORE_INPUT");
                         return;
 
                     case JXL_DEC_BASIC_INFO:
                     {
                         if (JxlDecoderGetBasicInfo(decoder, &info) != JXL_DEC_SUCCESS)
                         {
-                            m_header.setError("JxlDecoderGetBasicInfo : FAILED");
+                            header.setError("JxlDecoderGetBasicInfo : FAILED");
                             return;
                         }
 
                         uint32_t n = JxlResizableParallelRunnerSuggestThreads(info.xsize, info.ysize);
                         JxlResizableParallelRunnerSetThreads(runner, n);
 
-                        m_header.width = info.xsize;
-                        m_header.height = info.ysize;
-                        m_header.format = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
+                        header.width = info.xsize;
+                        header.height = info.ysize;
+                        header.format = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
 
                         return;
                     }
 
                     default:
-                        m_header.setError("JxlDecoderProcessInput : ERROR");
+                        header.setError("JxlDecoderProcessInput : ERROR");
                         return;
                 }
             }
@@ -103,11 +102,6 @@ namespace
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -189,7 +183,7 @@ namespace
                             return;
                         }
 
-                        if (bytes != m_header.width * m_header.height * bpp)
+                        if (bytes != header.width * header.height * bpp)
                         {
                             m_status.setError("Incorrect buffer size request.");
                             return;
@@ -213,7 +207,7 @@ namespace
 
                     case JXL_DEC_SUCCESS:
                     {
-                        m_surface = Surface(m_header.width, m_header.height, m_header.format, m_header.width * 16, m_buffer.data());
+                        m_surface = Surface(header.width, header.height, header.format, header.width * 16, m_buffer.data());
                         return;
                     }
 

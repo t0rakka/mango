@@ -134,7 +134,6 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        ImageHeader m_header;
         ConstMemory m_memory;
 
         const u8* m_palette = nullptr;
@@ -154,14 +153,14 @@ namespace
             u32 magic = p.read32();
             if (magic != 0x38425053)
             {
-                m_header.setError("[ImageDecoder.PSD] Incorrect identifier.");
+                header.setError("[ImageDecoder.PSD] Incorrect identifier.");
                 return;
             }
 
             m_version = p.read16();
             if (m_version > 2)
             {
-                m_header.setError("[ImageDecoder.PSD] Incorrect version ({}).", m_version);
+                header.setError("[ImageDecoder.PSD] Incorrect version ({}).", m_version);
                 return;
             }
 
@@ -179,7 +178,7 @@ namespace
             m_channels = p.read16();
             if (m_channels < 1 || m_channels > 56)
             {
-                m_header.setError("[ImageDecoder.PSD] Incorrect number of channels ({}).", m_channels);
+                header.setError("[ImageDecoder.PSD] Incorrect number of channels ({}).", m_channels);
                 return;
             }
 
@@ -187,7 +186,7 @@ namespace
             int width = p.read32();
             if (width < 1 || width > width_max || height < 1 || height > height_max)
             {
-                m_header.setError("[ImageDecoder.PSD] Incorrect image dimensions ({} x {}).", width, height);
+                header.setError("[ImageDecoder.PSD] Incorrect image dimensions ({} x {}).", width, height);
                 return;
             }
 
@@ -207,7 +206,7 @@ namespace
                     format = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
                     break;
                 default:
-                    m_header.setError("[ImageDecoder.PSD] Incorrect number of bits ({}).", m_bits);
+                    header.setError("[ImageDecoder.PSD] Incorrect number of bits ({}).", m_bits);
                     return;
             }
 
@@ -224,7 +223,7 @@ namespace
                 case ColorMode::LAB:
                     break;
                 default:
-                    m_header.setError("[ImageDecoder.PSD] Incorrect color mode ({}).", int(m_color_mode));
+                    header.setError("[ImageDecoder.PSD] Incorrect color mode ({}).", int(m_color_mode));
                     return;
             }
 
@@ -239,7 +238,7 @@ namespace
                 }
                 else
                 {
-                    m_header.setError("[ImageDecoder.PSD] Incorrect palette size ({}).", colormode_size);
+                    header.setError("[ImageDecoder.PSD] Incorrect palette size ({}).", colormode_size);
                     return;
                 }
             }
@@ -263,17 +262,17 @@ namespace
                 case Compression::ZIP:
                 case Compression::ZIP_PRED:
                     // MANGO TODO: need psd files with these compressions
-                    m_header.setError("[ImageDecoder.PSD] Unsupported compression ({}).", int(m_compression));
+                    header.setError("[ImageDecoder.PSD] Unsupported compression ({}).", int(m_compression));
                     return;
                 default:
-                    m_header.setError("[ImageDecoder.PSD] Incorrect compression ({}).", int(m_compression));
+                    header.setError("[ImageDecoder.PSD] Incorrect compression ({}).", int(m_compression));
                     return;
             }
 
             const u8* end = memory.end();
             if (p >= end)
             {
-                m_header.setError("[ImageDecoder.PSD] Out of data.");
+                header.setError("[ImageDecoder.PSD] Out of data.");
                 return;
             }
 
@@ -288,24 +287,20 @@ namespace
 
             parse_resources(image_resource_data);
 
-            m_header.width   = width;
-            m_header.height  = height;
-            m_header.depth   = 0;
-            m_header.levels  = 0;
-            m_header.faces   = 0;
-            m_header.palette = false;
-            m_header.format  = format;
-            m_header.compression = TextureCompression::NONE;
+            header.width   = width;
+            header.height  = height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+            header.palette = false;
+            header.format  = format;
+            header.compression = TextureCompression::NONE;
+
+            icc = m_icc_profile;
         }
 
         ~Interface()
         {
-            icc = m_icc_profile;
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ConstMemory memory(int level, int depth, int face) override
@@ -393,8 +388,8 @@ namespace
 
             const u8* p = m_memory.address;
 
-            int width = m_header.width;
-            int height = m_header.height;
+            int width = header.width;
+            int height = header.height;
             int channels = std::min(4, m_channels);
 
             int bytes_per_scan = div_ceil(width * m_bits, 8);
@@ -403,7 +398,7 @@ namespace
             //printLine(Print::Info, "  available: {} bytes", m_memory.size);
             //printLine(Print::Info, "  request:   {} bytes", channels * bytes_per_channel);
 
-            Bitmap temp(width, height, m_header.format);
+            Bitmap temp(width, height, header.format);
             Buffer buffer(channels * bytes_per_scan);
 
             switch (m_compression)

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <cctype>
@@ -365,35 +365,31 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ConstMemory m_memory;
-        HeaderPNM m_header;
+        HeaderPNM m_pnm_header;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
-            , m_header(memory)
+            , m_pnm_header(memory)
         {
+            header = m_pnm_header.header;
         }
 
         ~Interface()
         {
         }
 
-        ImageHeader header() override
-        {
-            return m_header.header;
-        }
-
         bool decode_matching(const Surface& dest)
         {
-            const char* p = m_header.data;
+            const char* p = m_pnm_header.data;
             const char* end = reinterpret_cast<const char *>(m_memory.end());
 
-            const int xcount = m_header.width * m_header.channels;
-            int maxvalue = m_header.maxvalue;
-            u8 invert = m_header.invert;
+            const int xcount = m_pnm_header.width * m_pnm_header.channels;
+            int maxvalue = m_pnm_header.maxvalue;
+            u8 invert = m_pnm_header.invert;
 
-            if (m_header.is_ascii)
+            if (m_pnm_header.is_ascii)
             {
-                for (int y = 0; y < m_header.height; ++y)
+                for (int y = 0; y < m_pnm_header.height; ++y)
                 {
                     u8* image = dest.address<u8>(0, y);
 
@@ -410,15 +406,15 @@ namespace
                     }
                 }
             }
-            else if (m_header.is_float)
+            else if (m_pnm_header.is_float)
             {
-                if (m_header.endian < 0)
+                if (m_pnm_header.endian < 0)
                 {
                     LittleEndianConstPointer ptr = p;
 
-                    for (int y = 0; y < m_header.height; ++y)
+                    for (int y = 0; y < m_pnm_header.height; ++y)
                     {
-                        float* image = dest.address<float>(0, m_header.height - 1 - y);
+                        float* image = dest.address<float>(0, m_pnm_header.height - 1 - y);
 
                         for (int x = 0; x < xcount; ++x)
                         {
@@ -430,9 +426,9 @@ namespace
                 {
                     BigEndianConstPointer ptr = p;
 
-                    for (int y = 0; y < m_header.height; ++y)
+                    for (int y = 0; y < m_pnm_header.height; ++y)
                     {
-                        float* image = dest.address<float>(0, m_header.height - 1 - y);
+                        float* image = dest.address<float>(0, m_pnm_header.height - 1 - y);
 
                         for (int x = 0; x < xcount; ++x)
                         {
@@ -443,9 +439,9 @@ namespace
             }
             else
             {
-                if (m_header.invert)
+                if (m_pnm_header.invert)
                 {
-                    for (int y = 0; y < m_header.height; ++y)
+                    for (int y = 0; y < m_pnm_header.height; ++y)
                     {
                         u8* image = dest.address<u8>(0, y);
 
@@ -473,9 +469,9 @@ namespace
                         }
                     }
                 }
-                else if (m_header.maxvalue <= 255)
+                else if (m_pnm_header.maxvalue <= 255)
                 {
-                    for (int y = 0; y < m_header.height; ++y)
+                    for (int y = 0; y < m_pnm_header.height; ++y)
                     {
                         u8* image = dest.address<u8>(0, y);
                         std::memcpy(image, p, xcount);
@@ -486,14 +482,14 @@ namespace
                 {
                     BigEndianConstPointer e = p;
 
-                    for (int y = 0; y < m_header.height; ++y)
+                    for (int y = 0; y < m_pnm_header.height; ++y)
                     {
                         u8* image = dest.address<u8>(0, y);
 
                         for (int x = 0; x < xcount; ++x)
                         {
                             int value = e.read16();
-                            image[x] = u8(value * 255 / m_header.maxvalue);
+                            image[x] = u8(value * 255 / m_pnm_header.maxvalue);
                         }
                     }
                 }
@@ -511,7 +507,6 @@ namespace
 
             ImageDecodeStatus status;
 
-			const ImageHeader& header = m_header.header;
             if (!header.success)
             {
                 status.setError(header.info);

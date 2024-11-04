@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
@@ -118,23 +118,19 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        HeaderPKM m_header;
+        HeaderPKM m_pkm_header;
         ConstMemory m_data;
 
         Interface(ConstMemory memory)
         {
             BigEndianConstPointer p = memory.address;
-            m_header.read(p);
+            m_pkm_header.read(p);
             m_data = ConstMemory(memory.address + 16, memory.size - 16);
+            header = m_pkm_header.header;
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header.header;
         }
 
         ConstMemory memory(int level, int depth, int face) override
@@ -155,7 +151,6 @@ namespace
 
             ImageDecodeStatus status;
 
-			const ImageHeader& header = m_header.header;
             if (!header.success)
             {
                 status.setError(header.info);

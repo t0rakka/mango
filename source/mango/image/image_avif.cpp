@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
@@ -20,10 +20,6 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        ImageHeader m_header;
-        ConstMemory m_icc;
-        ConstMemory m_exif;
-
         avifDecoder* m_decoder = nullptr;
         avifRGBImage m_rgb;
 
@@ -32,7 +28,7 @@ namespace
             m_decoder = avifDecoderCreate();
             if (!m_decoder)
             {
-                m_header.setError("[ImageDecoder.AVIF] avifDecoderCreate FAILED.");
+                header.setError("[ImageDecoder.AVIF] avifDecoderCreate FAILED.");
                 return;
             }
 
@@ -42,14 +38,14 @@ namespace
             avifResult result = avifDecoderSetIOMemory(m_decoder, memory.address, memory.size);
             if (result != AVIF_RESULT_OK)
             {
-                m_header.setError("[ImageDecoder.AVIF] avifDecoderSetIOMemory FAILED.");
+                header.setError("[ImageDecoder.AVIF] avifDecoderSetIOMemory FAILED.");
                 return;
             }
 
             result = avifDecoderParse(m_decoder);
             if (result != AVIF_RESULT_OK)
             {
-                m_header.setError("[ImageDecoder.AVIF] avifDecoderParse FAILED.");
+                header.setError("[ImageDecoder.AVIF] avifDecoderParse FAILED.");
                 return;
             }
 
@@ -57,22 +53,22 @@ namespace
 
             avifImage* image = m_decoder->image;
 
-            m_icc = ConstMemory(image->icc.data, image->icc.size);
-            m_exif = ConstMemory(image->exif.data, image->exif.size);
-            //m_xmp = ConstMemory(image->xmp.data, image->xmp.size);
+            icc = ConstMemory(image->icc.data, image->icc.size);
+            exif = ConstMemory(image->exif.data, image->exif.size);
+            //xmp = ConstMemory(image->xmp.data, image->xmp.size);
 
             Format format = image->depth > 8 ?
                 Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16) :
                 Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
-            m_header.width   = image->width;
-            m_header.height  = image->height;
-            m_header.depth   = 0;
-            m_header.levels  = 0;
-            m_header.faces   = 0;
-            m_header.palette = false;
-            m_header.format  = format;
-            m_header.compression = TextureCompression::NONE;
+            header.width   = image->width;
+            header.height  = image->height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+            header.palette = false;
+            header.format  = format;
+            header.compression = TextureCompression::NONE;
         }
 
         ~Interface()
@@ -86,21 +82,6 @@ namespace
             {
                 avifRGBImageFreePixels(&m_rgb);
             }
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
-        }
-
-        ConstMemory icc() override
-        {
-            return m_icc;
-        }
-
-        ConstMemory exif() override
-        {
-            return m_exif;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -152,7 +133,7 @@ namespace
 
             if (precision > 8)
             {
-                Bitmap temp(image->width, image->height, m_header.format);
+                Bitmap temp(image->width, image->height, header.format);
 
                 for (u32 y = 0; y < image->height; ++y)
                 {
@@ -174,7 +155,7 @@ namespace
             }
             else
             {
-                Surface temp(image->width, image->height, m_header.format, m_rgb.rowBytes, m_rgb.pixels);
+                Surface temp(image->width, image->height, header.format, m_rgb.rowBytes, m_rgb.pixels);
                 dest.blit(0, 0, temp);
             }
 

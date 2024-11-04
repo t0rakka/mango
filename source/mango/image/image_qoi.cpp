@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <algorithm>
 #include <mango/core/thread.hpp>
@@ -255,13 +255,12 @@ namespace
     struct ImageDecoderQOI : ImageDecoderInterface
     {
         ConstMemory m_memory;
-        ImageHeader m_header;
 
         ImageDecoderQOI(ConstMemory memory)
         {
             if (memory.size < QOI_HEADER_SIZE)
             {
-                m_header.setError("[ImageDecoder.QOI] Not enough data.");
+                header.setError("[ImageDecoder.QOI] Not enough data.");
                 return;
             }
 
@@ -278,13 +277,13 @@ namespace
 
             if (magic != QOI_HEADER_MAGIC)
             {
-                m_header.setError("[ImageDecoder.QOI] Incorrect identifier.");
+                header.setError("[ImageDecoder.QOI] Incorrect identifier.");
                 return;
             }
 
             if (channels < 3 || channels > 4)
             {
-                m_header.setError("[ImageDecoder.QOI] Incorrect number of channels.");
+                header.setError("[ImageDecoder.QOI] Incorrect number of channels.");
                 return;
             }
 
@@ -295,27 +294,22 @@ namespace
                 case QOI_LINEAR:
                     break;
                 default:
-                    m_header.setError("[ImageDecoder.QOI] Incorrect colorspace.");
+                    header.setError("[ImageDecoder.QOI] Incorrect colorspace.");
                     return;
             }
 
-            m_header.width   = width;
-            m_header.height  = height;
-            m_header.depth   = 0;
-            m_header.levels  = 0;
-            m_header.faces   = 0;
-            m_header.palette = false;
-            m_header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-            m_header.compression = TextureCompression::NONE;
+            header.width   = width;
+            header.height  = height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+            header.palette = false;
+            header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            header.compression = TextureCompression::NONE;
         }
 
         ~ImageDecoderQOI()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -327,23 +321,25 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (!m_header.success)
+            if (!header.success)
             {
-                status.setError(m_header.info);
+                status.setError(header.info);
                 return status;
             }
 
-            if (dest.format == m_header.format &&
-                dest.width >= m_header.width &&
-                dest.height >= m_header.height)
+            status.direct =
+                dest.format == header.format &&
+                dest.width >= header.width &&
+                dest.height >= header.height;
+
+            if (status.direct)
             {
-                qoi_decode(dest.image, m_memory.address, m_memory.size, m_header.width, m_header.height, dest.stride);
-                status.direct = true;
+                qoi_decode(dest.image, m_memory.address, m_memory.size, header.width, header.height, dest.stride);
             }
             else
             {
-                Bitmap temp(m_header.width, m_header.height, m_header.format);
-                qoi_decode(temp.image, m_memory.address, m_memory.size, m_header.width, m_header.height, temp.stride);
+                Bitmap temp(header.width, header.height, header.format);
+                qoi_decode(temp.image, m_memory.address, m_memory.size, header.width, header.height, temp.stride);
                 dest.blit(0, 0, temp);
             }
 
@@ -406,7 +402,6 @@ namespace
     struct ImageDecoderTOI : ImageDecoderInterface
     {
         ConstMemory m_memory;
-        ImageHeader m_header;
         u32 m_xtile;
         u32 m_ytile;
 
@@ -414,7 +409,7 @@ namespace
         {
             if (memory.size < TOI_HEADER_SIZE)
             {
-                m_header.setError("[ImageDecoder.TOI] Not enough data.");
+                header.setError("[ImageDecoder.TOI] Not enough data.");
                 return;
             }
 
@@ -431,30 +426,25 @@ namespace
 
             if (magic != TOI_HEADER_MAGIC)
             {
-                m_header.setError("[ImageDecoder.TOI] Incorrect identifier.");
+                header.setError("[ImageDecoder.TOI] Incorrect identifier.");
                 return;
             }
 
             m_xtile = xtile;
             m_ytile = ytile;
 
-            m_header.width   = width;
-            m_header.height  = height;
-            m_header.depth   = 0;
-            m_header.levels  = 0;
-            m_header.faces   = 0;
-            m_header.palette = false;
-            m_header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-            m_header.compression = TextureCompression::NONE;
+            header.width   = width;
+            header.height  = height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+            header.palette = false;
+            header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            header.compression = TextureCompression::NONE;
         }
 
         ~ImageDecoderTOI()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -468,18 +458,20 @@ namespace
 
             Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
-            if (dest.format != format ||
-                dest.width != m_header.width ||
-                dest.height != m_header.height)
+            status.direct = 
+                dest.format != format ||
+                dest.width != header.width ||
+                dest.height != header.height;
+
+            if (status.direct)
             {
-                Bitmap temp(m_header.width, m_header.height, format);
-                decodeTiles(temp);
-                dest.blit(0, 0, temp);
+                decodeTiles(dest);
             }
             else
             {
-                decodeTiles(dest);
-                status.direct = true;
+                Bitmap temp(header.width, header.height, format);
+                decodeTiles(temp);
+                dest.blit(0, 0, temp);
             }
 
             return status;
@@ -487,8 +479,8 @@ namespace
 
         void decodeTiles(const Surface& dest)
         {
-            const int xs = div_ceil(m_header.width, m_xtile);
-            const int ys = div_ceil(m_header.height, m_ytile);
+            const int xs = div_ceil(header.width, m_xtile);
+            const int ys = div_ceil(header.height, m_ytile);
 
             ConcurrentQueue q;
 

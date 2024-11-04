@@ -290,7 +290,7 @@ namespace mango::image
 
         if (m_interface)
         {
-            header = m_interface->header();
+            header = m_interface->header;
         }
         else
         {

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
@@ -228,21 +228,17 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ConstMemory m_memory;
-        HeaderPCX m_header;
+        HeaderPCX m_pcx_header;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
-            , m_header(memory)
+            , m_pcx_header(memory)
         {
+            header = m_pcx_header.header;
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header.header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -253,7 +249,6 @@ namespace
 
             ImageDecodeStatus status;
 
-            const ImageHeader& header = m_header.header;
             if (!header.success)
             {
                 status.setError(header.info);
@@ -267,18 +262,18 @@ namespace
             Bitmap temp(width, height, format);
 
             // RLE scanline buffer
-            int bytesPerLine = m_header.BytesPerLine ? m_header.BytesPerLine
-                                                     : width * div_ceil(m_header.BitsPerPixel, 8);
-            int scansize = m_header.NPlanes * bytesPerLine;
+            int bytesPerLine = m_pcx_header.BytesPerLine ? m_pcx_header.BytesPerLine
+                                                     : width * div_ceil(m_pcx_header.BitsPerPixel, 8);
+            int scansize = m_pcx_header.NPlanes * bytesPerLine;
 
             Buffer buffer(scansize * height);
 
             scanRLE(buffer, scansize * height, m_memory.address + 128);
 
-            switch (m_header.BitsPerPixel)
+            switch (m_pcx_header.BitsPerPixel)
             {
                 case 1:
-                    switch (m_header.NPlanes)
+                    switch (m_pcx_header.NPlanes)
                     {
                         case 4:
                         {
@@ -286,7 +281,7 @@ namespace
                             palette.size = 16;
 
                             // read palette
-                            const u8* pal = m_header.ColorMap;
+                            const u8* pal = m_pcx_header.ColorMap;
                             for (u32 i = 0; i < palette.size; ++i)
                             {
                                 palette[i] = Color(pal[0], pal[1], pal[2], 0xff);
@@ -322,7 +317,7 @@ namespace
                     break;
 
                 case 4:
-                    switch (m_header.NPlanes)
+                    switch (m_pcx_header.NPlanes)
                     {
                         case 1:
                             // MANGO TODO: 16 color palette (need sample files for testing)
@@ -336,10 +331,10 @@ namespace
                     break;
 
                 case 8:
-                    switch (m_header.NPlanes)
+                    switch (m_pcx_header.NPlanes)
                     {
                         case 1:
-                            if (m_header.isPaletteMarker)
+                            if (m_pcx_header.isPaletteMarker)
                             {
                                 Palette palette;
                                 palette.size = 256;

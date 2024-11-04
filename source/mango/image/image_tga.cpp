@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/core/pointer.hpp>
@@ -302,7 +302,6 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ConstMemory m_memory;
-        ImageHeader m_header;
         HeaderTGA m_targa_header;
         const u8* m_pointer;
 
@@ -312,28 +311,23 @@ namespace
             m_pointer = m_targa_header.parse(memory.address);
             if (m_pointer)
             {
-                m_header.width   = m_targa_header.width;
-                m_header.height  = m_targa_header.height;
-                m_header.depth   = 0;
-                m_header.levels  = 0;
-                m_header.faces   = 0;
-                m_header.palette = m_targa_header.isPalette();
-                m_header.format  = m_targa_header.getFormat();
-                m_header.compression = TextureCompression::NONE;
+                header.width   = m_targa_header.width;
+                header.height  = m_targa_header.height;
+                header.depth   = 0;
+                header.levels  = 0;
+                header.faces   = 0;
+                header.palette = m_targa_header.isPalette();
+                header.format  = m_targa_header.getFormat();
+                header.compression = TextureCompression::NONE;
             }
             else
             {
-                m_header.setError(m_targa_header.error);
+                header.setError(m_targa_header.error);
             }
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& surface, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -344,9 +338,9 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (!m_header.success)
+            if (!header.success)
             {
-                status.setError(m_header.info);
+                status.setError(header.info);
                 return status;
             }
 

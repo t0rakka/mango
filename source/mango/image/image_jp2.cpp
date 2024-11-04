@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
@@ -638,8 +638,6 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        ImageHeader m_header;
-
         ImageProcessFunc m_process_func = nullptr;
         MemoryStreamReader m_memory_reader;
 
@@ -653,14 +651,14 @@ namespace
             m_codec = create_codec(memory);
             if (!m_codec)
             {
-                m_header.setError("[ImageDecoder.JP2] Incorrect identifier.");
+                header.setError("[ImageDecoder.JP2] Incorrect identifier.");
                 return;
             }
 
             m_stream = m_memory_reader.stream;
             if (!m_stream)
             {
-                m_header.setError("[ImageDecoder.JP2] opj_stream_create_default_memory_stream FAILED.");
+                header.setError("[ImageDecoder.JP2] opj_stream_create_default_memory_stream FAILED.");
                 return;
             }
 
@@ -669,7 +667,7 @@ namespace
 
             if (!opj_setup_decoder(m_codec, &parameters))
             {
-                m_header.setError("[ImageDecoder.JP2] opj_setup_decoder FAILED.");
+                header.setError("[ImageDecoder.JP2] opj_setup_decoder FAILED.");
                 return;
             }
 
@@ -680,13 +678,13 @@ namespace
 
             if (!opj_read_header(m_stream, m_codec, &m_image))
             {
-                m_header.setError("[ImageDecoder.JP2] opj_read_header FAILED.");
+                header.setError("[ImageDecoder.JP2] opj_read_header FAILED.");
                 return;
             }
 
             if (!m_image)
             {
-                m_header.setError("[ImageDecoder.JP2] Incorrect image.");
+                header.setError("[ImageDecoder.JP2] Incorrect image.");
                 return;
             }
 
@@ -723,7 +721,7 @@ namespace
                     break;
 
                 default:
-                    m_header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
+                    header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
                     return;
             }
 
@@ -765,7 +763,7 @@ namespace
             switch (m_image->color_space)
             {
                 case OPJ_CLRSPC_UNKNOWN:
-                    m_header.setError("[ImageDecoder.JP2] Unknown color space ({}).", int(m_image->color_space));
+                    header.setError("[ImageDecoder.JP2] Unknown color space ({}).", int(m_image->color_space));
                     return;
 
                 case OPJ_CLRSPC_UNSPECIFIED:
@@ -802,7 +800,7 @@ namespace
                 case OPJ_CLRSPC_SRGB:
                     if (components < 3)
                     {
-                        m_header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
+                        header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
                         return;
                     }
                     if (is_standard)
@@ -817,7 +815,7 @@ namespace
                 case OPJ_CLRSPC_GRAY:
                     if (components > 2)
                     {
-                        m_header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
+                        header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
                         return;
                     }
                     if (is_standard)
@@ -836,22 +834,22 @@ namespace
                 case OPJ_CLRSPC_SYCC:
                 case OPJ_CLRSPC_EYCC:
                 case OPJ_CLRSPC_CMYK:
-                    m_header.setError("[ImageDecoder.JP2] Unsupported color space ({}).", int(m_image->color_space));
+                    header.setError("[ImageDecoder.JP2] Unsupported color space ({}).", int(m_image->color_space));
                     return;
 
                 default:
-                    m_header.setError("[ImageDecoder.JP2] Incorrect color space ({}).", int(m_image->color_space));
+                    header.setError("[ImageDecoder.JP2] Incorrect color space ({}).", int(m_image->color_space));
                     return;
             }
 
-            m_header.width   = width;
-            m_header.height  = height;
-            m_header.depth   = 0;
-            m_header.levels  = 0;
-            m_header.faces   = 0;
-            m_header.palette = false;
-            m_header.format  = format;
-            m_header.compression = TextureCompression::NONE;
+            header.width   = width;
+            header.height  = height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+            header.palette = false;
+            header.format  = format;
+            header.compression = TextureCompression::NONE;
         }
 
         ~Interface()
@@ -865,11 +863,6 @@ namespace
             {
                 opj_destroy_codec(m_codec);
             }
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -906,10 +899,7 @@ namespace
 
             if (m_process_func)
             {
-                int width = m_header.width;
-                int height = m_header.height;
-                Bitmap bitmap(width, height, m_header.format);
-
+                Bitmap bitmap(header.width, header.height, header.format);
                 m_process_func(bitmap, *m_image);
                 dest.blit(0, 0, bitmap);
             }

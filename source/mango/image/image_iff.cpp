@@ -345,7 +345,6 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ConstMemory m_memory;
-        ImageHeader m_header;
 
         Signature m_signature;
         ChunkBMHD m_bmhd;
@@ -376,7 +375,7 @@ namespace
             if (s0 != u32_mask_rev('F','O','R','M'))
             {
                 const char* c = reinterpret_cast<const char*>(p - 4);
-                m_header.setError("[ImageDecoder.IFF] Incorrect signature ({}{}{}{}).", c[0], c[1], c[2], c[3]);
+                header.setError("[ImageDecoder.IFF] Incorrect signature ({}{}{}{}).", c[0], c[1], c[2], c[3]);
                 return nullptr;
             }
 
@@ -401,7 +400,7 @@ namespace
                 default:
                 {
                     const char* c = reinterpret_cast<const char*>(p - 4);
-                    m_header.setError("[ImageDecoder.IFF] Incorrect signature ({}{}{}{}).", c[0], c[1], c[2], c[3]);
+                    header.setError("[ImageDecoder.IFF] Incorrect signature ({}{}{}{}).", c[0], c[1], c[2], c[3]);
                     return nullptr;
                 }
             }
@@ -442,8 +441,8 @@ namespace
                     {
                         m_bmhd.parse(p);
 
-                        m_header.width  = m_bmhd.xsize;
-                        m_header.height = m_bmhd.ysize;
+                        header.width  = m_bmhd.xsize;
+                        header.height = m_bmhd.ysize;
                         break;
                     }
 
@@ -492,14 +491,14 @@ namespace
             {
                 if (m_bmhd.compression != 4)
                 {
-                    m_header.setError("[ImageDecoder.IFF] Incorrect compression.");
+                    header.setError("[ImageDecoder.IFF] Incorrect compression.");
                 }
             }
 
             u8 nplanes = m_bmhd.nplanes;
 
-            m_header.palette = nplanes <= 8 && !m_ham;
-            m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            header.palette = nplanes <= 8 && !m_ham;
+            header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
             if (m_ham)
             {
@@ -512,25 +511,20 @@ namespace
                 {
                     case 1:
                         // expand palette
-                        m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                        header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                         break;
                     case 2:
-                        m_header.format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5);
+                        header.format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5);
                         break;
                     case 3:
-                        m_header.format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8);
+                        header.format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8);
                         break;
                     case 4:
-                        m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                        header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                         break;
                 }
             }
 
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -541,9 +535,9 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (!m_header.success)
+            if (!header.success)
             {
-                status.setError(m_header.info);
+                status.setError(header.info);
                 return status;
             }
 
@@ -637,7 +631,7 @@ namespace
                 return status;
             }
 
-            Bitmap temp(xsize, ysize, m_header.format);
+            Bitmap temp(xsize, ysize, header.format);
 
             if (m_ham)
             {

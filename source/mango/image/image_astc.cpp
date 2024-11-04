@@ -113,23 +113,19 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        HeaderASTC m_header;
+        HeaderASTC m_astc_header;
         ConstMemory m_data;
 
         Interface(ConstMemory memory)
         {
             LittleEndianConstPointer p = memory.address;
-            m_header.read(p);
+            m_astc_header.read(p);
             m_data = ConstMemory(p, memory.address + memory.size - p);
+            header = m_astc_header.header;
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header.header;
         }
 
         ConstMemory memory(int level, int depth, int face) override
@@ -150,13 +146,13 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (!m_header.header.success)
+            if (!header.success)
             {
-                status.setError(m_header.header.info);
+                status.setError(header.info);
                 return status;
             }
 
-            TextureCompression info(m_header.header.compression);
+            TextureCompression info(header.compression);
 
             if (info.compression != TextureCompression::NONE)
             {

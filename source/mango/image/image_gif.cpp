@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     The lzw_decode() function is based on Jean-Marc Lienher / STB decoder.
@@ -538,7 +538,6 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ConstMemory m_memory;
-        ImageHeader m_header;
         gif_state m_state;
 
         std::unique_ptr<u8[]> m_image;
@@ -556,33 +555,28 @@ namespace
             m_end = m_memory.end();
             m_data = m_memory.address;
 
-            m_data = read_magic(m_header, m_data, m_end);
-            if (m_header.success)
+            m_data = read_magic(header, m_data, m_end);
+            if (header.success)
             {
                 m_data = m_state.screen_desc.read(m_data, m_end);
 
                 m_start = m_data;
 
-                m_header.width   = m_state.screen_desc.width;
-                m_header.height  = m_state.screen_desc.height;
-                m_header.depth   = 0;
-                m_header.levels  = 0;
-                m_header.faces   = 0;
-                m_header.palette = true;
-                m_header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                m_header.compression = TextureCompression::NONE;
+                header.width   = m_state.screen_desc.width;
+                header.height  = m_state.screen_desc.height;
+                header.depth   = 0;
+                header.levels  = 0;
+                header.faces   = 0;
+                header.palette = true;
+                header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.compression = TextureCompression::NONE;
 
-                m_image.reset(new u8[m_header.width * m_header.height * 4]);
+                m_image.reset(new u8[header.width * header.height * 4]);
             }
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -593,17 +587,17 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (!m_header.success)
+            if (!header.success)
             {
-                status.setError(m_header.info);
+                status.setError(header.info);
                 return status;
             }
 
             Format format = options.palette ? LuminanceFormat(8, Format::UNORM, 8, 0)
                                             : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
-            size_t stride = m_header.width * format.bytes();
-            Surface target(m_header.width, m_header.height, format, stride, m_image.get());
+            size_t stride = header.width * format.bytes();
+            Surface target(header.width, header.height, format, stride, m_image.get());
 
             status.current_frame_index = m_frame_counter;
 

@@ -96,15 +96,15 @@ namespace mango::image
     {
     public:
         std::string name;
+        ImageHeader header;
         ConstMemory icc;
         ConstMemory exif;
 
         ImageDecoderInterface() = default;
         virtual ~ImageDecoderInterface() = default;
 
-        virtual ImageHeader header() = 0;
-        virtual ConstMemory memory(int level, int depth, int face);
         virtual ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) = 0;
+        virtual ConstMemory memory(int level, int depth, int face);
     };
 
     class ImageDecoder : protected NonCopyable

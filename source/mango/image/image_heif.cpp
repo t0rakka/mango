@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
@@ -20,8 +20,6 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        ImageHeader m_header;
-
         heif_context* m_context = nullptr;
         heif_image_handle* m_image_handle = nullptr;
 
@@ -32,13 +30,13 @@ namespace
             error = heif_init(nullptr);
             if (error.code != heif_error_Ok)
             {
-                m_header.setError("[ImageDecoder.HEIF] heif_init FAILED ({}).", error.message);
+                header.setError("[ImageDecoder.HEIF] heif_init FAILED ({}).", error.message);
                 return;
             }
 
             if (memory.size < 12)
             {
-                m_header.setError("[ImageDecoder.HEIF] Not enough data ({} bytes).", memory.size);
+                header.setError("[ImageDecoder.HEIF] Not enough data ({} bytes).", memory.size);
                 return;
             }
 
@@ -58,21 +56,21 @@ namespace
             m_context = heif_context_alloc();
             if (!m_context)
             {
-                m_header.setError("[ImageDecoder.HEIF]heif_context_alloc FAILED.");
+                header.setError("[ImageDecoder.HEIF]heif_context_alloc FAILED.");
                 return;
             }
 
             error = heif_context_read_from_memory_without_copy(m_context, memory.address, memory.size, nullptr);
             if (error.code != heif_error_Ok)
             {
-                m_header.setError("[ImageDecoder.HEIF] heif_context_read_from_memory_without_copy FAILED ({}).", error.message);
+                header.setError("[ImageDecoder.HEIF] heif_context_read_from_memory_without_copy FAILED ({}).", error.message);
                 return;
             }
 
             error = heif_context_get_primary_image_handle(m_context, &m_image_handle);
             if (error.code != heif_error_Ok)
             {
-                m_header.setError("[ImageDecoder.HEIF] heif_context_get_primary_image_handle FAILED ({}).", error.message);
+                header.setError("[ImageDecoder.HEIF] heif_context_get_primary_image_handle FAILED ({}).", error.message);
                 return;
             }
 
@@ -88,14 +86,14 @@ namespace
 
             Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
-            m_header.width   = width;
-            m_header.height  = height;
-            m_header.depth   = 0;
-            m_header.levels  = 0;
-            m_header.faces   = 0;
-            m_header.palette = false;
-            m_header.format  = format;
-            m_header.compression = TextureCompression::NONE;
+            header.width   = width;
+            header.height  = height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+            header.palette = false;
+            header.format  = format;
+            header.compression = TextureCompression::NONE;
         }
 
         ~Interface()
@@ -111,11 +109,6 @@ namespace
             }
 
             heif_deinit();
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -176,7 +169,7 @@ namespace
                 return status;
             }
 
-            Surface temp(m_header.width, m_header.height, m_header.format, stride, p);
+            Surface temp(header.width, header.height, header.format, stride, p);
             dest.blit(0, 0, temp);
 
             heif_image_release(image);

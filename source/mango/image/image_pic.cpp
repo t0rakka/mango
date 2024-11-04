@@ -19,7 +19,6 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        ImageHeader m_header;
         ConstMemory m_data;
 
         Interface(ConstMemory memory)
@@ -29,7 +28,7 @@ namespace
 
             if (memory.size < PICT_HEADER_SIZE)
             {
-                m_header.setError("[ImageDecoder.PIC] Not enough data.");
+                header.setError("[ImageDecoder.PIC] Not enough data.");
                 return;
             }
 
@@ -40,7 +39,7 @@ namespace
 
             if (std::memcmp(p, identifier, sizeof(identifier)))
             {
-                m_header.setError("[ImageDecoder.PIC] Incorrect identifier.");
+                header.setError("[ImageDecoder.PIC] Incorrect identifier.");
                 return;
             }
 
@@ -51,30 +50,25 @@ namespace
             u32 pict = p.read32();
             if (pict != 0x50494354)
             {
-                m_header.setError("[ImageDecoder.PIC] Incorrect PICT.");
+                header.setError("[ImageDecoder.PIC] Incorrect PICT.");
                 return;
             }
 
             int width = p.read16();
             int height = p.read16();
 
-            m_header.width   = width;
-            m_header.height  = height;
-            m_header.depth   = 0;
-            m_header.levels  = 0;
-            m_header.faces   = 0;
-            m_header.palette = false;
-            m_header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-            m_header.compression = TextureCompression::NONE;
+            header.width   = width;
+            header.height  = height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+            header.palette = false;
+            header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            header.compression = TextureCompression::NONE;
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ConstMemory memory(int level, int depth, int face) override
@@ -139,10 +133,10 @@ namespace
                 }
             }
 
-            int width = m_header.width;
-            int height = m_header.height;
+            int width = header.width;
+            int height = header.height;
 
-            Bitmap temp(width, height, m_header.format);
+            Bitmap temp(width, height, header.format);
             temp.clear(0xff000000);
 
             for (int y = 0; y < height; ++y)

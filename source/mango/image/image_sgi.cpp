@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/pointer.hpp>
@@ -102,15 +102,11 @@ namespace
             : m_memory(memory)
             , m_sgi_header(memory)
         {
+            header = m_sgi_header.header;
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_sgi_header.header;
         }
 
         void decode_uncompressed(const Surface& s)

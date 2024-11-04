@@ -907,7 +907,6 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ConstMemory m_memory;
-        ImageHeader m_header;
 
         std::vector<LevelKTX2> m_levels;
         BasisLZ m_basis;
@@ -927,43 +926,43 @@ namespace
         {
             LittleEndianConstPointer p = memory.address;
 
-            HeaderKTX2 header;
-            if (!header.read(p))
+            HeaderKTX2 ktx2_header;
+            if (!ktx2_header.read(p))
             {
                 printLine(Print::Info, "[KTX2] Incorrect identifier.");
                 return;
             }
 
-            if (isFormatProhibited(header.vkFormat))
+            if (isFormatProhibited(ktx2_header.vkFormat))
             {
                 printLine(Print::Info, "[KTX2] Prohibited format.");
                 return;
             }
 
-            VulkanFormatDesc desc = getFormatDesc(header.vkFormat);
+            VulkanFormatDesc desc = getFormatDesc(ktx2_header.vkFormat);
 
-            m_header.width = header.pixelWidth;
-            m_header.height = header.pixelHeight;
-            m_header.depth = std::max(1u, header.pixelDepth);
-            m_header.levels = header.levelCount;
-            m_header.faces = header.faceCount;
-            m_header.format = desc.format;
-            m_header.compression = desc.compression;
+            header.width = ktx2_header.pixelWidth;
+            header.height = ktx2_header.pixelHeight;
+            header.depth = std::max(1u, ktx2_header.pixelDepth);
+            header.levels = ktx2_header.levelCount;
+            header.faces = ktx2_header.faceCount;
+            header.format = desc.format;
+            header.compression = desc.compression;
 
             if (desc.compression != TextureCompression::NONE)
             {
                 TextureCompression info(desc.compression);
-                m_header.format = info.format;
-                m_header.linear = info.isLinear();
+                header.format = info.format;
+                header.linear = info.isLinear();
             }
 
             printLine(Print::Info, "");
             printLine(Print::Info, "[HeaderKTX2]");
-            printLine(Print::Info, "  vkFormat: {} \"{}\"", header.vkFormat, desc.name);
-            printLine(Print::Info, "  typeSize: {}", header.typeSize);
-            printLine(Print::Info, "  supercompressionScheme: {}", header.supercompressionScheme);
+            printLine(Print::Info, "  vkFormat: {} \"{}\"", ktx2_header.vkFormat, desc.name);
+            printLine(Print::Info, "  typeSize: {}", ktx2_header.typeSize);
+            printLine(Print::Info, "  supercompressionScheme: {}", ktx2_header.supercompressionScheme);
 
-            m_supercompression = header.supercompressionScheme;
+            m_supercompression = ktx2_header.supercompressionScheme;
 
             switch (m_supercompression)
             {
@@ -971,9 +970,9 @@ namespace
                     break;
                 case SUPERCOMPRESSION_BASIS_LZ:
                     m_is_etc1s = true;
-                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    m_header.linear = false;
-                    m_header.supercompression = SUPERCOMPRESS_BASISU_ETC1S;
+                    header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    header.linear = false;
+                    header.supercompression = SUPERCOMPRESS_BASISU_ETC1S;
                     break;
                 case SUPERCOMPRESSION_ZSTANDARD:
                     break;
@@ -981,7 +980,7 @@ namespace
                     break;
                 default:
                     // Unsupported / Incorrect compression scheme
-                    m_header = ImageHeader();
+                    header = ImageHeader();
                     return;
             }
 
@@ -1004,7 +1003,7 @@ namespace
             printLine(Print::Info, "  kvdByteOffset: {}, kvdByteLength: {}", kvdByteOffset, kvdByteLength);
             printLine(Print::Info, "  sgdByteOffset: {}, sgdByteLength: {}", sgdByteOffset, sgdByteLength);
 
-            int levels = std::max(1, m_header.levels);
+            int levels = std::max(1, header.levels);
             printLine(Print::Info, "");
             printLine(Print::Info, "[levels: {}]", levels);
 
@@ -1061,9 +1060,9 @@ namespace
                             break;
                         case KDF_DF_MODEL_UASTC:
                             m_is_uastc = true;
-                            m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                            m_header.linear = false;
-                            m_header.supercompression = SUPERCOMPRESS_BASISU_UASTC;
+                            header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                            header.linear = false;
+                            header.supercompression = SUPERCOMPRESS_BASISU_UASTC;
                             break;
                     }
 
@@ -1140,7 +1139,7 @@ namespace
                     }
                     else if (!strcmp(key, "KTXswizzle"))
                     {
-                        // MANGO TODO: this modifies m_header.format
+                        // MANGO TODO: this modifies header.format
                     }
 
                     printLine(Print::Info, "  {}", key);
@@ -1160,7 +1159,7 @@ namespace
             {
                 if (m_supercompression == SUPERCOMPRESSION_BASIS_LZ)
                 {
-                    int imageCount = std::max(1u, header.levelCount) * header.faceCount;
+                    int imageCount = std::max(1u, ktx2_header.levelCount) * ktx2_header.faceCount;
                     m_basis.read(ConstMemory(memory.address + sgdByteOffset, sgdByteLength), imageCount);
                 }
             }
@@ -1170,11 +1169,6 @@ namespace
         {
         }
 
-        ImageHeader header() override
-        {
-            return m_header;
-        }
-
         ConstMemory memory(int level, int depth, int face) override
         {
             if (level < 0 || level >= int(m_levels.size()))
@@ -1182,12 +1176,12 @@ namespace
                 return ConstMemory();
             }
 
-            if (depth < 0 || depth >= m_header.depth)
+            if (depth < 0 || depth >= header.depth)
             {
                 return ConstMemory();
             }
 
-            if (face < 0 || face >= m_header.faces)
+            if (face < 0 || face >= header.faces)
             {
                 return ConstMemory();
             }
@@ -1198,17 +1192,17 @@ namespace
 
             if (m_orientation_z)
             {
-                depth = m_header.depth - (depth + 1);
+                depth = header.depth - (depth + 1);
             }
 
             if (depth > 0)
             {
-                memory.size /= m_header.depth;
+                memory.size /= header.depth;
                 memory.address += depth * memory.size;
             }
             else if (face > 0)
             {
-                memory.size /= m_header.faces;
+                memory.size /= header.faces;
                 memory.address += face * memory.size;
             }
 
@@ -1232,9 +1226,9 @@ namespace
                 return status;
             }
 
-            int width = std::max(1, m_header.width >> level);
-            int height = std::max(1, m_header.height >> level);
-            const Format& format = m_header.format;
+            int width = std::max(1, header.width >> level);
+            int height = std::max(1, header.height >> level);
+            const Format& format = header.format;
 
             if (m_is_etc1s)
             {
@@ -1255,7 +1249,7 @@ namespace
                 int xblocks = std::max(1, width / 4);
                 int yblocks = std::max(1, height / 4);
 
-                const int imageIndex = level * m_header.faces + face;
+                const int imageIndex = level * header.faces + face;
                 BasisImageDesc desc = m_basis.readImageDesc(imageIndex);
 
                 bool x = transcoder.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
@@ -1302,9 +1296,9 @@ namespace
             {
                 ConstMemory memory = this->memory(level, depth, face);
 
-                if (m_header.compression != TextureCompression::NONE)
+                if (header.compression != TextureCompression::NONE)
                 {
-                    TextureCompression info(m_header.compression);
+                    TextureCompression info(header.compression);
                     TextureCompression::Status ts = info.decompress(dest, memory);
                     if (!ts)
                     {

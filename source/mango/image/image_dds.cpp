@@ -1150,26 +1150,22 @@ namespace
 
     struct Interface : ImageDecoderInterface
     {
-        HeaderDDS m_header;
+        HeaderDDS m_dds_header;
 
         Interface(ConstMemory memory)
         {
             LittleEndianConstPointer p = memory.address;
-            m_header.read(p);
+            m_dds_header.read(p);
+            header = m_dds_header.header;
         }
 
         ~Interface()
         {
         }
 
-        ImageHeader header() override
-        {
-            return m_header.header;
-        }
-
         ConstMemory memory(int level, int depth, int face) override
         {
-            return m_header.getMemory(level, depth, face);
+            return m_dds_header.getMemory(level, depth, face);
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -1178,19 +1174,18 @@ namespace
 
             ImageDecodeStatus status;
 
-            const ImageHeader& header = m_header.header;
             if (!header.success)
             {
                 status.setError(header.info);
                 return status;
             }
 
-            ConstMemory imageMemory = m_header.getMemory(level, depth, face);
+            ConstMemory imageMemory = m_dds_header.getMemory(level, depth, face);
             u32 compression = header.compression;
 
-            if (m_header.pixelFormat.fourCC)
+            if (m_dds_header.pixelFormat.fourCC)
             {
-                TextureCompression info = fourcc_to_compression(m_header.pixelFormat.fourCC);
+                TextureCompression info = fourcc_to_compression(m_dds_header.pixelFormat.fourCC);
                 TextureCompression::Status cs = info.decompress(dest, imageMemory);
 
                 status.info = cs.info;

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
@@ -61,7 +61,6 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ZPNG_Buffer m_buffer;
-        ImageHeader m_header;
 
         Interface(ConstMemory memory)
         {
@@ -71,33 +70,28 @@ namespace
             const zpng_header* zheader = reinterpret_cast<const zpng_header *>(memory.address);
             if (zheader->magic != 0xfbf8)
             {
-                m_header.setError("[ImageDecoder.ZPNG] Incorrect identifier.");
+                header.setError("[ImageDecoder.ZPNG] Incorrect identifier.");
             }
             else
             {
-                m_header.width   = zheader->width;
-                m_header.height  = zheader->height;
-                m_header.depth   = 0;
-                m_header.levels  = 0;
-                m_header.faces   = 0;
-                m_header.palette = false;
-                m_header.format  = resolve_format(zheader->channels, zheader->bytes_per_channel);
-                m_header.compression = TextureCompression::NONE;
+                header.width   = zheader->width;
+                header.height  = zheader->height;
+                header.depth   = 0;
+                header.levels  = 0;
+                header.faces   = 0;
+                header.palette = false;
+                header.format  = resolve_format(zheader->channels, zheader->bytes_per_channel);
+                header.compression = TextureCompression::NONE;
 
-                if (!m_header.format.bits)
+                if (!header.format.bits)
                 {
-                    m_header.setError("[ImageDecoder.ZPNG] Unsupported format.");
+                    header.setError("[ImageDecoder.ZPNG] Unsupported format.");
                 }
             }
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -109,9 +103,9 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (!m_header.success)
+            if (!header.success)
             {
-                status.setError(m_header.info);
+                status.setError(header.info);
                 return status;
             }
 

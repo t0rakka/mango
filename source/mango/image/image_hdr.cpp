@@ -414,15 +414,11 @@ namespace
         Interface(ConstMemory memory)
         {
             m_data = m_rad_header.parse(memory);
+            header = m_rad_header.header;
         }
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_rad_header.header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -434,7 +430,6 @@ namespace
 
             ImageDecodeStatus status;
 
-            const ImageHeader& header = m_rad_header.header;
             if (!header.success)
             {
                 status.setError(header.info);

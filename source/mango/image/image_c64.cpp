@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     Commodore 64 decoders copyright (C) 2011 Toni Lönnberg. All rights reserved.
@@ -445,7 +445,6 @@ namespace
     struct Interface : ImageDecoderInterface
     {
         ConstMemory m_memory;
-        ImageHeader m_header;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
@@ -454,11 +453,6 @@ namespace
 
         ~Interface()
         {
-        }
-
-        ImageHeader header() override
-        {
-            return m_header;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -470,9 +464,9 @@ namespace
 
             ImageDecodeStatus status;
 
-            status.direct = dest.format == m_header.format &&
-                            dest.width >= m_header.width &&
-                            dest.height >= m_header.height;
+            status.direct = dest.format == header.format &&
+                            dest.width >= header.width &&
+                            dest.height >= header.height;
             status.success = true;
 
             const char* error = nullptr;
@@ -489,7 +483,7 @@ namespace
             }
             else
             {
-                Bitmap temp(m_header.width, m_header.height, m_header.format);
+                Bitmap temp(header.width, header.height, header.format);
                 error = decodeImage(temp);
                 if (!error)
                 {
@@ -520,9 +514,9 @@ namespace
             m_data = m_generic_header.parse(memory.address, memory.size, format_address, format_size);
             if (m_data)
             {
-                m_header.width  = m_generic_header.width;
-                m_header.height = m_generic_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width  = m_generic_header.width;
+                header.height = m_generic_header.height;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
         }
     };
@@ -564,7 +558,7 @@ namespace
 
         const char* decodeImage(const Surface& s) override
         {
-            hires_to_surface(s, m_data, m_header.width, m_header.height, 0x2000, 0x0, true, false, 0);
+            hires_to_surface(s, m_data, header.width, header.height, 0x2000, 0x0, true, false, 0);
             return nullptr;
         }
     };
@@ -593,9 +587,9 @@ namespace
 
             if (end[-1] == 0x0 && end[-2] == 0xc2)
             {
-                m_header.width = 320;
-                m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width = 320;
+                header.height = 200;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_generic_header.compressed = true;
                 m_generic_header.escape_char = 0xc2;
@@ -618,7 +612,7 @@ namespace
                 buffer = temp;
             }
 
-            multicolor_to_surface(s, buffer, m_header.width, m_header.height, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, false, false);
+            multicolor_to_surface(s, buffer, header.width, header.height, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, false, false);
             return nullptr;
         }
     };
@@ -794,9 +788,9 @@ namespace
             u16 load_address = p.read16();
             if (check_format(0x5800, 18242, load_address, memory.size))
             {
-                m_header.width = 320;
-                m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width = 320;
+                header.height = 200;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = false;
                 m_data = p;
@@ -810,9 +804,9 @@ namespace
                     {
                         p += sizeof(keyword) - 1;
 
-                        m_header.width = 320;
-                        m_header.height = 200;
-                        m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                        header.width = 320;
+                        header.height = 200;
+                        header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                         m_compressed = true;
                         m_escape_char = p.read8();
@@ -837,7 +831,7 @@ namespace
             }
 
             Buffer background(200, *(buffer + 0x2740));
-            multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x800, 0x2800, 0x400, 0x400, 0x0, background, 0x0, 2, false, 2);
+            multicolor_interlace_to_surface(s, buffer, header.width, header.height, 0x800, 0x2800, 0x400, 0x400, 0x0, background, 0x0, 2, false, 2);
 
             return nullptr;
         }
@@ -867,9 +861,9 @@ namespace
             u16 load_address = p.read16();
             if (check_format(0x5800, 10051, load_address, memory.size))
             {
-                m_header.width = 320;
-                m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width = 320;
+                header.height = 200;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = false;
                 m_data = p;
@@ -883,9 +877,9 @@ namespace
                     {
                         p += sizeof(keyword) - 1;
 
-                        m_header.width = 320;
-                        m_header.height = 200;
-                        m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                        header.width = 320;
+                        header.height = 200;
+                        header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                         m_compressed = true;
                         m_escape_char = p.read8();
@@ -909,7 +903,7 @@ namespace
                 buffer = temp;
             }
 
-            multicolor_to_surface(s, buffer, m_header.width, m_header.height, 0x800, 0x400, 0x0, 0x2740, 0x0, false, false);
+            multicolor_to_surface(s, buffer, header.width, header.height, 0x800, 0x400, 0x0, 0x2740, 0x0, false, false);
             return nullptr;
         }
     };
@@ -939,9 +933,9 @@ namespace
             u16 load_address = p.read16();
             if (check_format(0x4000, 32770, load_address, memory.size))
             {
-                m_header.width = 320;
-                m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width = 320;
+                header.height = 200;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = false;
                 m_data = p;
@@ -950,9 +944,9 @@ namespace
             {
                 if (load_address == 0x4000)
                 {
-                    m_header.width = 320;
-                    m_header.height = 200;
-                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    header.width = 320;
+                    header.height = 200;
+                    header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                     m_compressed = true;
                     m_escape_char = p.read8();
@@ -975,7 +969,7 @@ namespace
                 buffer = temp;
             }
 
-            hires_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x0, 0x4000, 0x2000, 0x6000, true, false, 0);
+            hires_interlace_to_surface(s, buffer, header.width, header.height, 0x0, 0x4000, 0x2000, 0x6000, true, false, 0);
             return nullptr;
         }
     };
@@ -1053,10 +1047,10 @@ namespace
 
             PaletteC64 palette;
 
-            Buffer temp(m_header.width * m_header.height, 0);
+            Buffer temp(header.width * header.height, 0);
             u8* image = temp;
 
-            convert_multicolor_bitmap(m_header.width, m_header.height, image, m_data + 0x2880, m_data + 0x880, m_data + 0x480, NULL, m_data + 0x380, 0, true);
+            convert_multicolor_bitmap(header.width, header.height, image, m_data + 0x2880, m_data + 0x880, m_data + 0x480, NULL, m_data + 0x380, 0, true);
 
             // Overlay sprite data
             // - Y-expanded
@@ -1065,7 +1059,7 @@ namespace
             {
                 for (int x = 0; x < 24; ++x)
                 {
-                    int offset = x + y * m_header.width;
+                    int offset = x + y * header.width;
                     u8 index = 0;
 
                     int sprite_nb = y / 42;
@@ -1099,7 +1093,7 @@ namespace
                 }
             }
 
-            resolve_palette(s, temp, m_header.width, m_header.height, palette);
+            resolve_palette(s, temp, header.width, header.height, palette);
             return nullptr;
         }
     };
@@ -1167,17 +1161,17 @@ namespace
                     {
                         if (memory.size == 33694)
                         {
-                            m_header.width = 320;
-                            m_header.height = 200;
+                            header.width = 320;
+                            header.height = 200;
                         }
                     }
                     else
                     {
-                        m_header.width = 320;
-                        m_header.height = 200;
+                        header.width = 320;
+                        header.height = 200;
                     }
 
-                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     m_data = p;
                 }
             }
@@ -1201,7 +1195,7 @@ namespace
             std::memcpy(background.data() +   0, buffer + 0x3f48, 100);
             std::memcpy(background.data() + 100, buffer + 0x8328, 100);
 
-            multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x2000, 0x63e8, 0x0, 0x43e8, 0x4000, background.data(), 0x0, 2, true, 2);
+            multicolor_interlace_to_surface(s, buffer, header.width, header.height, 0x2000, 0x63e8, 0x0, 0x43e8, 0x4000, background.data(), 0x0, 2, true, 2);
             return nullptr;
         }
     };
@@ -1232,9 +1226,9 @@ namespace
                 u8 keyword[] = "GUNPAINT (JZ)   ";
                 if (std::memcmp(keyword, memory.address + 0x3ea, 16) == 0)
                 {
-                    m_header.width = 320;
-                    m_header.height = 200;
-                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    header.width = 320;
+                    header.height = 200;
+                    header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                     m_data = p;
                 }
@@ -1248,7 +1242,7 @@ namespace
             std::memcpy(background.data() + 177, m_data + 0x47e8, 20);
             background[197] = background[198] = background[199] = background[196];  // replicate the last color four times
 
-            multicolor_interlace_to_surface(s, m_data, m_header.width, m_header.height, 0x2000, 0x6400, 0x0, 0x4400, 0x4000, background.data(), 0x0, 2, true, 2);
+            multicolor_interlace_to_surface(s, m_data, header.width, header.height, 0x2000, 0x6400, 0x0, 0x4400, 0x4000, background.data(), 0x0, 2, true, 2);
             return nullptr;
         }
     };
@@ -1279,18 +1273,18 @@ namespace
 
             PaletteC64 palette;
 
-            Buffer temp(m_header.width * m_header.height, 0);
+            Buffer temp(header.width * header.height, 0);
             u8* image = temp;
 
-            for (int y = 0; y < m_header.height; ++y)
+            for (int y = 0; y < header.height; ++y)
             {
-                for (int x = 0; x < m_header.width; ++x)
+                for (int x = 0; x < header.width; ++x)
                 {
                     int x_offset = x & 0x7;
                     int y_offset = (y >> 2) & 0x1;
                     int bitmap_offset = (x & 0xfffffff8) + (y & 0x7) + ((y >> 3) * (40 * 8));
                     int screen_offset = bitmap_offset >> 3;
-                    int offset = x + y * m_header.width;
+                    int offset = x + y * header.width;
 
                     u8 byte = bitmap_c64[bitmap_offset];
                     int bit_pattern = (byte >> (6 - (x_offset & 0x6))) & 0x3;
@@ -1343,7 +1337,7 @@ namespace
                 }
             }
 
-            resolve_palette(s, temp, m_header.width, m_header.height, palette);
+            resolve_palette(s, temp, header.width, header.height, palette);
             return nullptr;
         }
     };
@@ -1367,7 +1361,7 @@ namespace
 
         const char* decodeImage(const Surface& s) override
         {
-            hires_to_surface(s, m_data, m_header.width, m_header.height, 0x0, 0x2000, true, false, 0);
+            hires_to_surface(s, m_data, header.width, header.height, 0x0, 0x2000, true, false, 0);
             return nullptr;
         }
     };
@@ -1446,9 +1440,9 @@ namespace
             {
                 if (*p == 0xff)
                 {
-                    m_header.width = 320;
-                    m_header.height = 192;
-                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    header.width = 320;
+                    header.height = 192;
+                    header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                     m_compressed = false;
                     m_data = p;
@@ -1456,9 +1450,9 @@ namespace
             }
             else if (load_address == 0x4000)
             {
-                m_header.width = 320;
-                m_header.height = 192;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width = 320;
+                header.height = 192;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = true;
                 m_data = p;
@@ -1479,7 +1473,7 @@ namespace
                 buffer = temp;
             }
 
-            hires_to_surface(s, buffer, m_header.width, m_header.height, 0x140, 0x2028, true, false, 0);
+            hires_to_surface(s, buffer, header.width, header.height, 0x140, 0x2028, true, false, 0);
             return error;
         }
     };
@@ -1507,16 +1501,16 @@ namespace
             u16 load_address = p.read16();
             if (check_format(0x6000, 10003, load_address, memory.size))
             {
-                m_header.width = 320;
-                m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width = 320;
+                header.height = 200;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                 m_data = p;
             }
         }
 
         const char* decodeImage(const Surface& s) override
         {
-            multicolor_to_surface(s, m_data, m_header.width, m_header.height, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, false, false);
+            multicolor_to_surface(s, m_data, header.width, header.height, 0x0, 0x1f40, 0x2328, 0x2710, 0x0, false, false);
             return nullptr;
         }
     };
@@ -1541,16 +1535,16 @@ namespace
         const char* decodeImage(const Surface& s) override
         {
             PaletteC64 palette;
-            Buffer temp(m_header.width * m_header.height, 0);
+            Buffer temp(header.width * header.height, 0);
 
             Buffer color_ram(1000, *(m_data + 0x1fb5));
 
-            convert_multicolor_bitmap(m_header.width, m_header.height, temp.data(), 
+            convert_multicolor_bitmap(header.width, header.height, temp.data(), 
                                       m_data + 0x72, m_data + 0x2072, 
                                       color_ram, m_data + 0x1fb2, NULL,
                                       1, false);
 
-            resolve_palette(s, temp, m_header.width, m_header.height, palette);
+            resolve_palette(s, temp, header.width, header.height, palette);
             return nullptr;
         }
     };
@@ -1632,9 +1626,9 @@ namespace
             m_data = read_header_pp(m_generic_header, memory.address, memory.size);
             if (m_data)
             {
-                m_header.width  = m_generic_header.width;
-                m_header.height = m_generic_header.height;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width  = m_generic_header.width;
+                header.height = m_generic_header.height;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
         }
 
@@ -1653,7 +1647,7 @@ namespace
             }
 
             Buffer background(200, *(buffer + 0x437f));
-            multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x2400, 0x6400, 0x400, 0x4400, 0x0, background, nullptr, 1, true, 2);
+            multicolor_interlace_to_surface(s, buffer, header.width, header.height, 0x2400, 0x6400, 0x400, 0x4400, 0x0, background, nullptr, 1, true, 2);
 
             return nullptr;
         }
@@ -1732,18 +1726,18 @@ namespace
             u16 load_address = p.read16();
             if (check_format(0x4000, 15874, load_address, memory.size))
             {
-                m_header.width = 96;
-                m_header.height = 167;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width = 96;
+                header.height = 167;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = false;
                 m_data = p;
             }
             else if (load_address == 0xa000)
             {
-                m_header.width = 96;
-                m_header.height = 167;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width = 96;
+                header.height = 167;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = true;
                 m_escape_char = p.read8();
@@ -1762,14 +1756,14 @@ namespace
 
             PaletteC64 palette;
 
-            Buffer tempImage(m_header.width * m_header.height, 0);
+            Buffer tempImage(header.width * header.height, 0);
             u8* image = tempImage;
 
-            for (int y = 0; y < m_header.height; ++y)
+            for (int y = 0; y < header.height; ++y)
             {
-                for (int x = 0; x < m_header.width; ++x)
+                for (int x = 0; x < header.width; ++x)
                 {
-                    int offset = x + y * m_header.width;
+                    int offset = x + y * header.width;
                     u8 index = 0;
 
                     // Hires data
@@ -1835,7 +1829,7 @@ namespace
                 }
             }
 
-            resolve_palette(s, tempImage, m_header.width, m_header.height, palette);
+            resolve_palette(s, tempImage, header.width, header.height, palette);
             return nullptr;
         }
     };
@@ -1857,8 +1851,8 @@ namespace
         {
             if (m_data)
             {
-                m_header.width = 144;
-                m_header.height = 168;
+                header.width = 144;
+                header.height = 168;
             }
         }
 
@@ -1875,14 +1869,14 @@ namespace
 
             PaletteC64 palette;
 
-            Buffer tempImage(m_header.width * m_header.height, 0);
+            Buffer tempImage(header.width * header.height, 0);
             u8* image = tempImage;
 
-            for (int y = 0; y < m_header.height; ++y)
+            for (int y = 0; y < header.height; ++y)
             {
-                for (int x = 0; x < m_header.width; ++x)
+                for (int x = 0; x < header.width; ++x)
                 {
-                    int offset = x + y * m_header.width;
+                    int offset = x + y * header.width;
                     u8 index = 0;
 
                     // Hires data
@@ -1930,7 +1924,7 @@ namespace
                 }
             }
 
-            resolve_palette(s, tempImage, m_header.width, m_header.height, palette);
+            resolve_palette(s, tempImage, header.width, header.height, palette);
 
             return nullptr;
         }
@@ -2079,9 +2073,9 @@ namespace
             u16 load_address = p.read16();
             if (check_format(0x9c00, 19434, load_address, memory.size))
             {
-                m_header.width = 320;
-                m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width = 320;
+                header.height = 200;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = false;
                 m_data = p;
@@ -2091,9 +2085,9 @@ namespace
                 u8 keyword[] = "2059";
                 if (std::memcmp(keyword, p + 5, sizeof(keyword) - 1) == 0)
                 {
-                    m_header.width = 320;
-                    m_header.height = 200;
-                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    header.width = 320;
+                    header.height = 200;
+                    header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                     m_compressed = true;
                     m_data = p;
@@ -2116,7 +2110,7 @@ namespace
             }
 
             Buffer background(200, *(buffer + 0x3e8));
-            multicolor_interlace_to_surface(s, buffer, m_header.width, m_header.height, 0x400, 0x2400, 0x0, 0x4400, 0x4800, background, 0x0, 2, false, 2);
+            multicolor_interlace_to_surface(s, buffer, header.width, header.height, 0x400, 0x2400, 0x0, 0x4400, 0x4800, background, 0x0, 2, false, 2);
 
             return error;
         }
@@ -2147,18 +2141,18 @@ namespace
             u16 load_address = p.read16();
             if (check_format(0x4000, 16194, load_address, memory.size))
             {
-                m_header.width = 320;
-                m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width = 320;
+                header.height = 200;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = false;
                 m_data = p;
             }
             else if (load_address == 0x8000)
             {
-                m_header.width = 320;
-                m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width = 320;
+                header.height = 200;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = true;
                 m_escape_char = p.read8();
@@ -2187,14 +2181,14 @@ namespace
 
             PaletteC64 palette;
 
-            Buffer tempImage(m_header.width * m_header.height, 0);
+            Buffer tempImage(header.width * header.height, 0);
             u8* image = tempImage;
 
-            for (int y = 0; y < m_header.height; ++y)
+            for (int y = 0; y < header.height; ++y)
             {
-                for (int x = 0; x < m_header.width; ++x)
+                for (int x = 0; x < header.width; ++x)
                 {
-                    int offset = x + y * m_header.width;
+                    int offset = x + y * header.width;
                     u8 index = 0;
 
                     if (x < 24 || x >= 312)
@@ -2258,7 +2252,7 @@ namespace
                 }
             }
 
-            resolve_palette(s, tempImage, m_header.width, m_header.height, palette);
+            resolve_palette(s, tempImage, header.width, header.height, palette);
 
             return nullptr;
         }
@@ -2322,9 +2316,9 @@ namespace
             u16 load_address = p.read16();
             if (load_address == 0x4000)
             {
-                m_header.width = 320;
-                m_header.height = 200;
-                m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.width = 320;
+                header.height = 200;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
                 m_compressed = true;
                 m_escape_char = p.read8();
@@ -2349,11 +2343,11 @@ namespace
             u8 sprite_color[2] = { *(buffer + 0xff0), *(buffer + 0x4ff0) };
             const u8* sprites[2] = { buffer + 0x1000, buffer + 0x5000 };
 
-            for (int y = 0; y < m_header.height; ++y)
+            for (int y = 0; y < header.height; ++y)
             {
                 Color* image = s.address<Color>(0, y);
 
-                for (int x = 0; x < m_header.width; ++x)
+                for (int x = 0; x < header.width; ++x)
                 {
                     u8 index[2] = { 0, 0 };
 
