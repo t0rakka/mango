@@ -303,6 +303,12 @@ namespace basisu
 			return *this;
 		}
 
+// MANGO: hack to suppress compiler warning
+#if defined(__clang__) || defined(__GNUC__)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
+
 		inline operator uint32_t() const
 		{
 			switch (NumBytes)
@@ -355,6 +361,11 @@ namespace basisu
 			}
 		}
 	};
+
+// MANGO: hack to suppress compiler warning
+#if defined(__clang__) || defined(__GNUC__)
+	#pragma GCC diagnostic pop
+#endif
 
 	enum eZero { cZero };
 	enum eNoClamp { cNoClamp };
