@@ -85,13 +85,6 @@ namespace mango::image
         bool icc = false; // apply ICC profile
     };
 
-    class ImageDecodeController
-    {
-    public:
-        ImageDecodeController();
-        ~ImageDecodeController();
-    };
-
     class ImageDecoderInterface : protected NonCopyable
     {
     public:

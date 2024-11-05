@@ -131,6 +131,11 @@ namespace mango
             m_pool.enqueue(&m_queue, std::bind(std::forward<F>(f), std::forward<Args>(args)...));
         }
 
+        bool isCancelled() const
+        {
+            return m_queue.cancelled;
+        }
+
         void steal();
         void cancel();
         void wait();
