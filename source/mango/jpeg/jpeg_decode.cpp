@@ -1823,6 +1823,13 @@ namespace mango::image::jpeg
             manager.transform(target, display, profile);
         }
 
+        if (options.decode_listener)
+        {
+            ImageDecodeState state;
+            state.complete = true;
+            options.decode_listener->update(state);
+        }
+
         blockVector.resize(0);
         status.info = getInfo();
 

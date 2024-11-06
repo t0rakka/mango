@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <thread>
 #include <mango/core/memory.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/image/format.hpp>
@@ -59,7 +60,8 @@ namespace mango::image
 
     struct ImageDecodeStatus : Status
     {
-        bool direct = false;
+        bool direct = false; // decoding doesn't use temporary storage
+        bool async = false;  // decoding is asychronous
 
         // animation information
         // NOTE: we would love to simply return number of animation frames in the ImageHeader
@@ -73,12 +75,30 @@ namespace mango::image
         int frame_delay_denominator = 60; // ... every 60th of a second
     };
 
+    struct ImageDecodeState
+    {
+        int x;
+        int y;
+        int width;
+        int height;
+        bool complete;
+    };
+
+    struct ImageDecodeListener
+    {
+        virtual ~ImageDecodeListener() = default;
+        virtual void update(const ImageDecodeState& state) = 0;
+    };
+
     struct ImageDecodeOptions
     {
         // request indexed decoding
         // - palette is resolved into the provided palette object
         // - decode() destination surface must be indexed
         Palette* palette = nullptr; // enable indexed decoding by pointing to a palette
+
+        // request async decoding
+        ImageDecodeListener* decode_listener = nullptr;
 
         bool simd = true;
         bool multithread = true;
@@ -88,6 +108,8 @@ namespace mango::image
     class ImageDecoderInterface : protected NonCopyable
     {
     public:
+        bool async = false;
+        std::atomic<bool> cancelled { false };
         std::string name;
         ImageHeader header;
         ConstMemory icc;
@@ -107,6 +129,9 @@ namespace mango::image
         ~ImageDecoder();
 
         bool isDecoder() const;
+        bool isAsyncDecoder() const;
+        void cancel();
+
         ImageHeader header();
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
 
@@ -118,6 +143,7 @@ namespace mango::image
 
     protected:
         std::unique_ptr<ImageDecoderInterface> m_interface;
+        std::thread m_decode_thread;
     };
 
     void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension);
