@@ -61,7 +61,6 @@ namespace mango::image
     struct ImageDecodeStatus : Status
     {
         bool direct = false; // decoding doesn't use temporary storage
-        bool async = false;  // decoding is asychronous
 
         // animation information
         // NOTE: we would love to simply return number of animation frames in the ImageHeader
@@ -75,21 +74,6 @@ namespace mango::image
         int frame_delay_denominator = 60; // ... every 60th of a second
     };
 
-    struct ImageDecodeState
-    {
-        int x;
-        int y;
-        int width;
-        int height;
-        bool complete;
-    };
-
-    struct ImageDecodeListener
-    {
-        virtual ~ImageDecodeListener() = default;
-        virtual void update(const ImageDecodeState& state) = 0;
-    };
-
     struct ImageDecodeOptions
     {
         // request indexed decoding
@@ -97,18 +81,32 @@ namespace mango::image
         // - decode() destination surface must be indexed
         Palette* palette = nullptr; // enable indexed decoding by pointing to a palette
 
-        // request async decoding
-        ImageDecodeListener* decode_listener = nullptr;
-
         bool simd = true;
         bool multithread = true;
         bool icc = false; // apply ICC profile
+    };
+
+    struct ImageDecodeState
+    {
+        int x;
+        int y;
+        int width;
+        int height;
+    };
+
+    class ImageDecoderCallback
+    {
+    public:
+        virtual ~ImageDecoderCallback() = default;
+        virtual void update(const ImageDecodeState& state) = 0;
+        virtual void complete() = 0;
     };
 
     class ImageDecoderInterface : protected NonCopyable
     {
     public:
         bool async = false;
+        ImageDecoderCallback* callback = nullptr;
         std::atomic<bool> cancelled { false };
         std::string name;
         ImageHeader header;
@@ -129,8 +127,6 @@ namespace mango::image
         ~ImageDecoder();
 
         bool isDecoder() const;
-        bool isAsyncDecoder() const;
-        void cancel();
 
         ImageHeader header();
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
@@ -143,6 +139,20 @@ namespace mango::image
 
     protected:
         std::unique_ptr<ImageDecoderInterface> m_interface;
+    };
+
+    class AsyncImageDecoder : public ImageDecoder
+    {
+    public:
+        AsyncImageDecoder(ConstMemory memory, const std::string& extension);
+        ~AsyncImageDecoder();
+
+        bool isAsyncDecoder() const;
+        void setCallback(ImageDecoderCallback* callback);
+        void launch(const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
+        void cancel();
+
+    protected:
         std::thread m_decode_thread;
     };
 

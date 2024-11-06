@@ -129,8 +129,9 @@ namespace mango::image::jpeg
     // Parser
     // ----------------------------------------------------------------------------
 
-    Parser::Parser(ConstMemory memory)
+    Parser::Parser(ConstMemory memory, ImageDecoderInterface* interface)
         : memory(memory)
+        , m_interface(interface)
         , quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
     {
         restartInterval = 0;
@@ -1823,13 +1824,6 @@ namespace mango::image::jpeg
             manager.transform(target, display, profile);
         }
 
-        if (options.decode_listener)
-        {
-            ImageDecodeState state;
-            state.complete = true;
-            options.decode_listener->update(state);
-        }
-
         blockVector.resize(0);
         status.info = getInfo();
 
@@ -1907,6 +1901,11 @@ namespace mango::image::jpeg
 
         for (int y = 0; y < height; ++y)
         {
+            if (m_interface->cancelled)
+            {
+                break;
+            }
+
             u8* image = m_surface->address<u8>(0, y);
 
             for (int x = 0; x < width; ++x)
@@ -2007,6 +2006,11 @@ namespace mango::image::jpeg
 
             for (int i = 0; i < mcus; i += restartInterval)
             {
+                if (m_interface->cancelled)
+                {
+                    break;
+                }
+
                 DecodeState state = decodeState;
                 state.buffer.ptr = p;
 
@@ -2061,6 +2065,11 @@ namespace mango::image::jpeg
 
             for (int y = 0; y < ymcu; y += N)
             {
+                if (m_interface->cancelled)
+                {
+                    break;
+                }
+
                 const int y0 = y;
                 const int y1 = std::min(y + N, ymcu);
                 const int count = (y1 - y0) * xmcu;
@@ -2099,6 +2108,12 @@ namespace mango::image::jpeg
 
             for (int y = 0; y < ymcu; ++y)
             {
+                if (m_interface->cancelled)
+                {
+                    queue.cancel();
+                    break;
+                }
+
                 u32 offset = m_restart_offsets[y];
 
                 // enqueue task
@@ -2145,6 +2160,12 @@ namespace mango::image::jpeg
 
             for (int y = 0; y < ymcu; y += N)
             {
+                if (m_interface->cancelled)
+                {
+                    queue.cancel();
+                    break;
+                }
+
                 int y0 = y;
                 int y1 = std::min(y + N, ymcu);
 
@@ -2208,6 +2229,12 @@ namespace mango::image::jpeg
 
             for (int i = 0; i < mcus; i += restartInterval)
             {
+                if (m_interface->cancelled)
+                {
+                    queue.cancel();
+                    break;
+                }
+
                 // enqueue task
                 queue.enqueue([=]
                 {
@@ -2263,6 +2290,12 @@ namespace mango::image::jpeg
 
             for (int y = 0; y < ymcu; y += N)
             {
+                if (m_interface->cancelled)
+                {
+                    // NOTE: Don't cancel queue it deallocates memory
+                    break;
+                }
+
                 const int y0 = y;
                 const int y1 = std::min(y + N, ymcu);
                 const int count = (y1 - y0) * xmcu;
@@ -2293,6 +2326,11 @@ namespace mango::image::jpeg
 
         for (int y = 0; y < ymcu; ++y)
         {
+            if (m_interface->cancelled)
+            {
+                break;
+            }
+
             for (int x = 0; x < xmcu; ++x)
             {
                 decodeState.decode(data, &decodeState);
@@ -2341,6 +2379,12 @@ namespace mango::image::jpeg
 
             for (int i = 0; i < mcus; i += restartInterval)
             {
+                if (m_interface->cancelled)
+                {
+                    queue.cancel();
+                    break;
+                }
+
                 // enqueue task
                 queue.enqueue([=]
                 {
@@ -2373,6 +2417,11 @@ namespace mango::image::jpeg
 
             for (int i = 0; i < mcus; ++i)
             {
+                if (!(i & 0x200) && m_interface->cancelled)
+                {
+                    break;
+                }
+
                 decodeState.decode(data, &decodeState);
                 data += blocks_in_mcu * 64;
             }
@@ -2415,6 +2464,12 @@ namespace mango::image::jpeg
 
             for (int i = 0; i < cnt; i += restartInterval)
             {
+                if (m_interface->cancelled)
+                {
+                    queue.cancel();
+                    break;
+                }
+
                 // enqueue task
                 queue.enqueue([=]
                 {
@@ -2473,6 +2528,11 @@ namespace mango::image::jpeg
 
             for (int y = 0; y < ys; ++y)
             {
+                if (m_interface->cancelled)
+                {
+                    break;
+                }
+
                 int mcu_yoffset = (y >> vsf) * xmcu;
                 int block_yoffset = ((y & VMask) << hsf) + scan_offset;
 
@@ -2499,6 +2559,12 @@ namespace mango::image::jpeg
 
             for (int y = 0; y < ymcu; y += n)
             {
+                if (m_interface->cancelled)
+                {
+                    queue.cancel();
+                    break;
+                }
+
                 const int y0 = y;
                 const int y1 = std::min(y + n, ymcu);
 
@@ -2541,6 +2607,11 @@ namespace mango::image::jpeg
 
         for (int y = y0; y < y1; ++y)
         {
+            if (m_interface->cancelled)
+            {
+                break;
+            }
+
             u8* dest = image + y * ystride;
             int height = y == ymcu_last ? yblock_last : yblock;
 
@@ -2555,6 +2626,16 @@ namespace mango::image::jpeg
             process_and_clip(dest, stride, data, xblock_last, height);
             data += mcu_data_size;
             dest += xstride;
+        }
+
+        if (m_interface->callback)
+        {
+            ImageDecodeState state;
+            state.x = 0;
+            state.y = y0;
+            state.width = xsize;
+            state.height = y1 - y0;
+            m_interface->callback->update(state);
         }
     }
 

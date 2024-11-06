@@ -6,39 +6,48 @@
 #include <mango/image/image.hpp>
 #include <mango/filesystem/filesystem.hpp>
 
+using namespace std::chrono_literals;
+
 using namespace mango;
 using namespace mango::image;
 using namespace mango::filesystem;
 
-struct Listener : ImageDecodeListener
+class CustomCallback : public ImageDecoderCallback
 {
-    Bitmap bitmap;
-
-    Listener(int width, int height, const Format& format)
-        : bitmap(width, height, format)
-    {
-    }
-
+public:
     void update(const ImageDecodeState& state) override
     {
-        printLine("Update!");
+        printLine("Update: {} x {} ({}, {})", state.width, state.height, state.x, state.y);
+    }
+
+    void complete() override
+    {
+        printLine("complete!");
     }
 };
 
 int main()
 {
     File file("conquer.jpg");
-    std::unique_ptr<Listener> listener;
-    ImageDecoder decoder(file, "jpg");
-    if (decoder.isDecoder())
+    std::unique_ptr<Bitmap> bitmap;
+    CustomCallback callback;
+
+    u64 time0 = Time::ms();
+
     {
-        ImageHeader header = decoder.header();
+        AsyncImageDecoder decoder(file, "jpg");
+        if (decoder.isDecoder())
+        {
+            ImageHeader header = decoder.header();
+            bitmap = std::make_unique<Bitmap>(header.width, header.height, header.format);
 
-        listener = std::make_unique<Listener>(header.width, header.height, header.format);
-
-        ImageDecodeOptions options;
-        options.decode_listener = listener.get();
-
-        decoder.decode(listener->bitmap, options);
+            decoder.setCallback(&callback);
+            decoder.launch(*bitmap);
+            std::this_thread::sleep_for(3ms);
+            decoder.cancel();
+        }
     }
+
+    u64 time1 = Time::ms();
+    printLine("Decoding: {} ms", time1 - time0);
 }

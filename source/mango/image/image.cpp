@@ -277,29 +277,11 @@ namespace mango::image
 
     ImageDecoder::~ImageDecoder()
     {
-        if (m_decode_thread.joinable())
-        {
-            // block until the decoding is complete
-            m_decode_thread.join();
-        }
     }
 
     bool ImageDecoder::isDecoder() const
     {
         return m_interface != nullptr;
-    }
-
-    bool ImageDecoder::isAsyncDecoder() const
-    {
-        return m_interface ? m_interface->async : false;
-    }
-
-    void ImageDecoder::cancel()
-    {
-        if (m_interface)
-        {
-            m_interface->cancelled = true;
-        }
     }
 
     ImageHeader ImageDecoder::header()
@@ -312,7 +294,7 @@ namespace mango::image
         }
         else
         {
-            header.setError("[WARNING] ImageDecoder::header() is not supported for this extension.");
+            header.setError("[WARNING] header() is not supported for this extension.");
         }
 
         return header;
@@ -324,38 +306,16 @@ namespace mango::image
 
         if (m_interface)
         {
-            if (options.decode_listener)
+            Trace trace("ImageDecoder", m_interface->name);
+            status = m_interface->decode(dest, options, level, depth, face);
+            if (!status)
             {
-                if (!m_interface->async)
-                {
-                    status.setError("[WARNING] ImageDecoder::decode() requesting async decoding with non-async decoder.");
-                }
-
-                if (m_decode_thread.joinable())
-                {
-                    MANGO_EXCEPTION("[ImageDecoder] There already is async decoding in progress.");
-                }
-
-                m_decode_thread = std::thread([=]
-                {
-                    m_interface->decode(dest, options, level, depth, face);
-                });
-
-                status.async = true;
-            }
-            else
-            {
-                Trace trace("ImageDecoder", m_interface->name);
-                status = m_interface->decode(dest, options, level, depth, face);
-                if (!status)
-                {
-                    printLine(Print::Info, status.info);
-                }
+                printLine(Print::Info, status.info);
             }
         }
         else
         {
-            status.setError("[WARNING] ImageDecoder::decode() is not supported for this extension.");
+            status.setError("[WARNING] decode() is not supported for this extension.");
         }
 
         return status;
@@ -395,6 +355,68 @@ namespace mango::image
         }
 
         return memory;
+    }
+
+    // ----------------------------------------------------------------------------
+    // AsyncImageDecoder
+    // ----------------------------------------------------------------------------
+
+    AsyncImageDecoder::AsyncImageDecoder(ConstMemory memory, const std::string& extension)
+        : ImageDecoder(memory, extension)
+    {
+    }
+
+    AsyncImageDecoder::~AsyncImageDecoder()
+    {
+        if (m_decode_thread.joinable())
+        {
+            // block until the decoding is complete
+            m_decode_thread.join();
+        }
+    }
+
+    bool AsyncImageDecoder::isAsyncDecoder() const
+    {
+        return m_interface ? m_interface->async : false;
+    }
+
+    void AsyncImageDecoder::setCallback(ImageDecoderCallback* callback)
+    {
+        if (m_interface)
+        {
+            m_interface->callback = callback;
+        }
+    }
+
+    void AsyncImageDecoder::launch(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
+    {
+        if (!m_interface)
+        {
+            printLine(Print::Error, "[AsyncImageDecoder] launch() is not supported for this extension.");
+            return;
+        }
+
+        if (m_decode_thread.joinable())
+        {
+            MANGO_EXCEPTION("[AsyncImageDecoder] There already is async decoding in progress.");
+        }
+
+        m_decode_thread = std::thread([=]
+        {
+            m_interface->decode(dest, options, level, depth, face);
+            if (m_interface->callback)
+            {
+                m_interface->callback->complete();
+            }
+        });
+    }
+
+    void AsyncImageDecoder::cancel()
+    {
+        if (m_interface)
+        {
+            m_interface->cancelled = true;
+        }
     }
 
     // ----------------------------------------------------------------------------
