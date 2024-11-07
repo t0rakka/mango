@@ -2631,10 +2631,12 @@ namespace mango::image::jpeg
         if (m_interface->callback)
         {
             ImageDecodeState state;
+
             state.x = 0;
-            state.y = y0;
+            state.y = y0 * yblock;
             state.width = xsize;
-            state.height = y1 - y0;
+            state.height = (y1 - y0) * yblock;
+
             m_interface->callback->update(state);
         }
     }

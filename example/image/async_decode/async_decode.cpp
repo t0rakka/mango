@@ -43,11 +43,14 @@ int main()
 
             decoder.setCallback(&callback);
             decoder.launch(*bitmap);
-            std::this_thread::sleep_for(3ms);
+
+            Sleep::ms(14);
             decoder.cancel();
         }
     }
 
     u64 time1 = Time::ms();
     printLine("Decoding: {} ms", time1 - time0);
+
+    bitmap->save("test.png");
 }

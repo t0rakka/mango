@@ -24,6 +24,21 @@ namespace mango
         return getSystemContext().timer.ns();
     }
 
+    void Sleep::ms(s32 count)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(count));
+    }
+
+    void Sleep::us(s32 count)
+    {
+        std::this_thread::sleep_for(std::chrono::microseconds(count));
+    }
+
+    void Sleep::ns(s32 count)
+    {
+        std::this_thread::sleep_for(std::chrono::nanoseconds(count));
+    }
+
     LocalTime getLocalTime()
     {
         std::time_t t = std::time(nullptr);
