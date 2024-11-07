@@ -201,12 +201,12 @@ namespace mango
             {
                 auto time1 = high_resolution_clock::now();
                 auto elapsed = time1 - time0;
-                if (elapsed >= milliseconds(120))
+                if (elapsed >= milliseconds(60))
                 {
                     std::unique_lock<std::mutex> lock(m_queue_mutex);
-                    m_condition.wait_for(lock, milliseconds(120));
+                    m_condition.wait_for(lock, milliseconds(60));
                 }
-                else if (elapsed >= microseconds(3))
+                else if (elapsed >= microseconds(24))
                 {
                     std::this_thread::yield();
                 }
@@ -289,24 +289,32 @@ namespace mango
         : m_pool(ThreadPool::getInstance())
         , m_queue(&m_pool, "")
     {
+        // wake up one thread to be available instantly
+        m_pool.m_condition.notify_one();
     }
 
     ConcurrentQueue::ConcurrentQueue(const std::string& name)
         : m_pool(ThreadPool::getInstance())
         , m_queue(&m_pool, name)
     {
+        // wake up one thread to be available instantly
+        m_pool.m_condition.notify_one();
     }
 
     ConcurrentQueue::ConcurrentQueue(ThreadPool& pool)
         : m_pool(pool)
         , m_queue(&m_pool, "")
     {
+        // wake up one thread to be available instantly
+        m_pool.m_condition.notify_one();
     }
 
     ConcurrentQueue::ConcurrentQueue(ThreadPool& pool, const std::string& name)
         : m_pool(pool)
         , m_queue(&m_pool, name)
     {
+        // wake up one thread to be available instantly
+        m_pool.m_condition.notify_one();
     }
 
     ConcurrentQueue::~ConcurrentQueue()
