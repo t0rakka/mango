@@ -384,7 +384,10 @@ namespace mango::image::jpeg
         std::string m_idct_name;
         std::string m_ycbcr_name;
 
-        const Surface* m_surface = nullptr;
+        ImageDecodeStatus m_decode_status;
+
+        const Surface* m_target = nullptr;  // caller surface
+        const Surface* m_surface = nullptr; // temporary color conversion/clipping surface
 
         int width;  // Image width, does include alignment
         int height; // Image height, does include alignment

@@ -1265,6 +1265,12 @@ namespace mango::image::jpeg
                 break;
             }
 
+            if (m_interface->cancelled)
+            {
+                // decoding is cancelled
+                break;
+            }
+
             u16 marker = bigEndian::uload16(p);
             p += 2;
 
@@ -1728,12 +1734,12 @@ namespace mango::image::jpeg
 
     ImageDecodeStatus Parser::decode(const Surface& target, const ImageDecodeOptions& options)
     {
-        ImageDecodeStatus status;
+        m_decode_status = ImageDecodeStatus();
 
         if (!scan_memory.address || !header)
         {
-            status.setError(header.info);
-            return status;
+            m_decode_status.setError(header.info);
+            return m_decode_status;
         }
 
         // determine if we need a full-surface temporary storage
@@ -1774,36 +1780,46 @@ namespace mango::image::jpeg
             sf.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
         }
 
-        status.direct = true;
+        m_decode_status.direct = true;
 
         if (target.width != xsize || target.height != ysize)
         {
-            status.direct = false;
+            m_decode_status.direct = false;
         }
 
         if (target.format != sf.format)
         {
-            status.direct = false;
+            m_decode_status.direct = false;
         }
 
         // set decoding target surface
+        m_target = &target;
         m_surface = &target;
 
         std::unique_ptr<Bitmap> temp;
 
-        if (!status.direct)
+        if (!m_decode_status.direct)
         {
             // create a temporary decoding target
             temp = std::make_unique<Bitmap>(width, height, sf.format);
             m_surface = temp.get();
         }
 
+        // decoding
         parse(scan_memory, true);
 
         if (!header)
         {
-            status.setError(header.info);
-            return status;
+            blockVector.resize(0);
+            m_decode_status.setError(header.info);
+            return m_decode_status;
+        }
+
+        if (m_interface->cancelled)
+        {
+            blockVector.resize(0);
+            m_decode_status.info = getInfo();
+            return m_decode_status;
         }
 
         if (is_progressive || is_multiscan)
@@ -1811,7 +1827,7 @@ namespace mango::image::jpeg
             finishProgressive();
         }
 
-        if (!status.direct)
+        if (!m_decode_status.direct)
         {
             target.blit(0, 0, *m_surface);
         }
@@ -1825,9 +1841,9 @@ namespace mango::image::jpeg
         }
 
         blockVector.resize(0);
-        status.info = getInfo();
+        m_decode_status.info = getInfo();
 
-        return status;
+        return m_decode_status;
     }
 
     std::string Parser::getInfo() const
