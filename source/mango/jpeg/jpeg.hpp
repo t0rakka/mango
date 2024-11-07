@@ -388,6 +388,7 @@ namespace mango::image::jpeg
 
         const Surface* m_target = nullptr;  // caller surface
         const Surface* m_surface = nullptr; // temporary color conversion/clipping surface
+        bool m_request_blitting = false;
 
         int width;  // Image width, does include alignment
         int height; // Image height, does include alignment
@@ -413,6 +414,7 @@ namespace mango::image::jpeg
 
         bool isJPEG(ConstMemory memory) const;
 
+        const u8* seekRestartInterval(const u8* p) const;
         const u8* stepMarker(const u8* p, const u8* end) const;
         const u8* seekMarker(const u8* p, const u8* end) const;
         const u8* processSOS(const u8* p, const u8* end);
@@ -450,6 +452,7 @@ namespace mango::image::jpeg
 
         void process_range(int y0, int y1, const s16* data);
         void process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height);
+        void blit_and_update(const ImageDecodeRect& rect, bool force_blit = false);
 
         int getTaskSize(int count) const;
         void configureCPU(SampleType sample, const ImageDecodeOptions& options);

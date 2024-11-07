@@ -6,6 +6,7 @@
 
 #include <string>
 #include <thread>
+#include <atomic>
 #include <mango/core/memory.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/image/format.hpp>

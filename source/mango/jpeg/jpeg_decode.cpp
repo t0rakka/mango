@@ -846,6 +846,8 @@ namespace mango::image::jpeg
 
         restartCounter = restartInterval;
 
+        m_request_blitting = is_lossless || is_multiscan || is_progressive;
+
         if (decodeState.is_arithmetic)
         {
             ArithmeticDecoder& arithmetic = decodeState.arithmetic;
@@ -1437,6 +1439,23 @@ namespace mango::image::jpeg
         }
     }
 
+    const u8* Parser::seekRestartInterval(const u8* p) const
+    {
+        // seek next restart marker
+        p = seekMarker(p, decodeState.buffer.end);
+
+        if (p < decodeState.buffer.end)
+        {
+            if (isRestartMarker(p))
+            {
+                // skip restart marker
+                p += 2;
+            }
+        }
+
+        return p;
+    }
+
     bool Parser::handleRestart()
     {
         if (restartInterval > 0 && !--restartCounter)
@@ -1795,6 +1814,7 @@ namespace mango::image::jpeg
         // set decoding target surface
         m_target = &target;
         m_surface = &target;
+        m_request_blitting = false;
 
         std::unique_ptr<Bitmap> temp;
 
@@ -1827,9 +1847,16 @@ namespace mango::image::jpeg
             finishProgressive();
         }
 
-        if (!m_decode_status.direct)
+        if (m_request_blitting)
         {
-            //target.blit(0, 0, *m_surface);
+            ImageDecodeRect rect;
+
+            rect.x = 0;
+            rect.y = 0;
+            rect.width = xsize;
+            rect.height = ysize;
+
+            blit_and_update(rect, true);
         }
 
         if (icc_buffer.size() > 0 && options.icc)
@@ -2014,54 +2041,63 @@ namespace mango::image::jpeg
             const size_t bytes_per_pixel = m_surface->format.bytes();
             const size_t xstride = bytes_per_pixel * xblock;
             const size_t ystride = stride * yblock;
+            const int N = 8;
 
             AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
 
             const u8* p = decodeState.buffer.ptr;
+
             u8* image = m_surface->image;
 
-            for (int i = 0; i < mcus; i += restartInterval)
+            for (int scan = 0; scan < ymcu; scan += N)
             {
                 if (m_interface->cancelled)
                 {
                     break;
                 }
 
-                DecodeState state = decodeState;
-                state.buffer.ptr = p;
+                int y0 = scan;
+                int y1 = std::min(scan + N, ymcu);
 
-                const int left = i + std::min(restartInterval, mcus - i);
-
-                const int xmcu_last = xmcu - 1;
-                const int ymcu_last = ymcu - 1;
-
-                const int xclip = xsize % xblock;
-                const int yclip = ysize % yblock;
-                const int xblock_last = xclip ? xclip : xblock;
-                const int yblock_last = yclip ? yclip : yblock;
-
-                for (int j = i; j < left; ++j)
+                for (int y = y0; y < y1; ++y)
                 {
-                    state.decode(data, &state);
+                    DecodeState state = decodeState;
+                    state.buffer.ptr = p;
 
-                    int x = j % xmcu;
-                    int y = j / xmcu;
-                    u8* dest = image + y * ystride + x * xstride;
+                    const int xmcu_last = xmcu - 1;
+                    const int ymcu_last = ymcu - 1;
 
-                    int width = x == xmcu_last ? xblock_last : xblock;
-                    int height = y == ymcu_last ? yblock_last : yblock;
+                    const int xclip = xsize % xblock;
+                    const int yclip = ysize % yblock;
+                    const int xblock_last = xclip ? xclip : xblock;
+                    const int yblock_last = yclip ? yclip : yblock;
 
-                    process_and_clip(dest, stride, data, width, height);
+                    for (int x = 0; x < xmcu; ++x)
+                    {
+                        state.decode(data, &state);
+
+                        u8* dest = image + y * ystride + x * xstride;
+
+                        int width = x == xmcu_last ? xblock_last : xblock;
+                        int height = y == ymcu_last ? yblock_last : yblock;
+
+                        process_and_clip(dest, stride, data, width, height);
+                    }
+
+                    p = std::max(p, state.buffer.ptr - 16);
+                    p = seekRestartInterval(p);
+                    if (p >= state.buffer.end)
+                        break;
                 }
 
-                // seek next restart marker
-                p = seekMarker(p, decodeState.buffer.end);
+                ImageDecodeRect rect;
 
-                if (p >= decodeState.buffer.end)
-                    break;
+                rect.x = 0;
+                rect.y = y0 * yblock;
+                rect.width = xsize;
+                rect.height = (y1 - y0) * yblock;
 
-                if (isRestartMarker(p))
-                    p += 2;
+                blit_and_update(rect);
             }
 
             decodeState.buffer.ptr = p;
@@ -2175,17 +2211,7 @@ namespace mango::image::jpeg
                     rect.width = xsize;
                     rect.height = (y1 - y0) * yblock;
 
-                    if (!m_decode_status.direct)
-                    {
-                        // color conversion and clipping
-                        Surface source(*m_surface, rect.x, rect.y, rect.width, rect.height);
-                        m_target->blit(rect.x, rect.y, source);
-                    }
-
-                    if (m_interface->callback)
-                    {
-                        m_interface->callback->update(rect);
-                    }
+                    blit_and_update(rect);
                 });
 
                 // use last offset in the range
@@ -2250,14 +2276,10 @@ namespace mango::image::jpeg
                             process_and_clip(dest, stride, data, width, height);
                         }
 
-                        // seek next restart marker
-                        p = seekMarker(p, state.buffer.end);
-
+                        p = std::max(p, state.buffer.ptr - 16);
+                        p = seekRestartInterval(p);
                         if (p >= state.buffer.end)
                             break;
-
-                        if (isRestartMarker(p))
-                            p += 2;
                     }
 
                     ImageDecodeRect rect;
@@ -2267,30 +2289,13 @@ namespace mango::image::jpeg
                     rect.width = xsize;
                     rect.height = (y1 - y0) * yblock;
 
-                    if (!m_decode_status.direct)
-                    {
-                        // color conversion and clipping
-                        Surface source(*m_surface, rect.x, rect.y, rect.width, rect.height);
-                        m_target->blit(rect.x, rect.y, source);
-                    }
-
-                    if (m_interface->callback)
-                    {
-                        m_interface->callback->update(rect);
-                    }
+                    blit_and_update(rect);
                 }, p);
 
-                // skip N restart markers
+                // skip N restart intervals (handled by the task queue)
                 for (int i = y0; i < y1; ++i)
                 {
-                    // seek next restart marker
-                    p = seekMarker(p, decodeState.buffer.end);
-
-                    if (p >= decodeState.buffer.end)
-                        return;
-
-                    if (isRestartMarker(p))
-                        p += 2;
+                    p = seekRestartInterval(p);
                 }
             }
 
@@ -2329,7 +2334,7 @@ namespace mango::image::jpeg
                 queue.enqueue([=]
                 {
                     process_range(y0, y1, data);
-                    aligned_free(data);
+                    aligned_free(aligned_ptr);
                 });
             }
         }
@@ -2417,12 +2422,7 @@ namespace mango::image::jpeg
                     }
                 });
 
-                // seek next restart marker
-                p = seekMarker(p, decodeState.buffer.end);
-                if (p >= decodeState.buffer.end)
-                    break;
-                if (isRestartMarker(p))
-                    p += 2;
+                p = seekRestartInterval(p);
             }
 
             decodeState.buffer.ptr = p;
@@ -2510,12 +2510,7 @@ namespace mango::image::jpeg
                     }
                 });
 
-                // seek next restart marker
-                p = seekMarker(p, decodeState.buffer.end);
-                if (p >= decodeState.buffer.end)
-                    break;
-                if (isRestartMarker(p))
-                    p += 2;
+                p = seekRestartInterval(p);
             }
 
             decodeState.buffer.ptr = p;
@@ -2651,17 +2646,7 @@ namespace mango::image::jpeg
         rect.width = xsize;
         rect.height = (y1 - y0) * yblock;
 
-        if (!m_decode_status.direct)
-        {
-            // color conversion and clipping
-            Surface source(*m_surface, rect.x, rect.y, rect.width, rect.height);
-            m_target->blit(rect.x, rect.y, source);
-        }
-
-        if (m_interface->callback)
-        {
-            m_interface->callback->update(rect);
-        }
+        blit_and_update(rect);
     }
 
     void Parser::process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height)
@@ -2688,6 +2673,21 @@ namespace mango::image::jpeg
         {
             // fast-path (no clipping required)
             processState.process(dest, stride, data, &processState, width, height);
+        }
+    }
+
+    void Parser::blit_and_update(const ImageDecodeRect& rect, bool force_blit)
+    {
+        if (!m_decode_status.direct || force_blit)
+        {
+            // color conversion and clipping
+            Surface source(*m_surface, rect.x, rect.y, rect.width, rect.height);
+            m_target->blit(rect.x, rect.y, source);
+        }
+
+        if (m_interface->callback)
+        {
+            m_interface->callback->update(rect);
         }
     }
 
