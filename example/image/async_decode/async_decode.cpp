@@ -17,12 +17,13 @@ class CustomCallback : public ImageDecoderCallback
 public:
     void update(const ImageDecodeRect& rect) override
     {
-        printLine("Update: {} x {} ({}, {})", rect.width, rect.height, rect.x, rect.y);
+        printLine("[+] Update: [{} x {}] .. ({}, {})",
+            rect.width, rect.height, rect.x, rect.y);
     }
 
     void complete() override
     {
-        printLine("complete!");
+        printLine("[+] Complete!");
     }
 };
 
