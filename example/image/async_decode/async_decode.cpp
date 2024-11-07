@@ -15,9 +15,9 @@ using namespace mango::filesystem;
 class CustomCallback : public ImageDecoderCallback
 {
 public:
-    void update(const ImageDecodeState& state) override
+    void update(const ImageDecodeRect& rect) override
     {
-        printLine("Update: {} x {} ({}, {})", state.width, state.height, state.x, state.y);
+        printLine("Update: {} x {} ({}, {})", rect.width, rect.height, rect.x, rect.y);
     }
 
     void complete() override
@@ -26,26 +26,44 @@ public:
     }
 };
 
-int main()
+int main(int argc, const char* argv[])
 {
-    File file("conquer.jpg");
+    if (argc < 2)
+    {
+        printLine("Too few arguments. usage: <filename.jpg> <cancel_ms>");
+        exit(1);
+    }
+
+    const char* filename = argv[1];
+
+    int cancel_ms = -1;
+    if (argc == 3)
+    {
+        cancel_ms = std::atoi(argv[2]);
+    }
+
+    File file(filename);
     std::unique_ptr<Bitmap> bitmap;
     CustomCallback callback;
 
     u64 time0 = Time::ms();
 
     {
-        AsyncImageDecoder decoder(file, "jpg");
+        AsyncImageDecoder decoder(file, filename);
         if (decoder.isDecoder())
         {
             ImageHeader header = decoder.header();
-            bitmap = std::make_unique<Bitmap>(header.width, header.height, header.format);
+            //bitmap = std::make_unique<Bitmap>(header.width, header.height, header.format);
+            bitmap = std::make_unique<Bitmap>(header.width, header.height, Format(16, Format::UNORM, Format::BGR, 5, 6, 5));
 
             decoder.setCallback(&callback);
             decoder.launch(*bitmap);
 
-            Sleep::ms(14);
-            decoder.cancel();
+            if (cancel_ms >= 0)
+            {
+                Sleep::ms(cancel_ms);
+                decoder.cancel();
+            }
         }
     }
 

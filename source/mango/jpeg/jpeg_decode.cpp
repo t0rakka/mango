@@ -1829,7 +1829,7 @@ namespace mango::image::jpeg
 
         if (!m_decode_status.direct)
         {
-            target.blit(0, 0, *m_surface);
+            //target.blit(0, 0, *m_surface);
         }
 
         if (icc_buffer.size() > 0 && options.icc)
@@ -2120,58 +2120,6 @@ namespace mango::image::jpeg
             const u8* p = decodeState.buffer.ptr;
             u8* image = m_surface->image;
 
-#if 0
-
-            for (int y = 0; y < ymcu; ++y)
-            {
-                if (m_interface->cancelled)
-                {
-                    queue.cancel();
-                    break;
-                }
-
-                u32 offset = m_restart_offsets[y];
-
-                // enqueue task
-                queue.enqueue([=]
-                {
-                    AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
-
-                    DecodeState state = decodeState;
-                    state.buffer.ptr = p;
-
-                    const int xmcu_last = xmcu - 1;
-                    const int ymcu_last = ymcu - 1;
-                    const int xclip = xsize % xblock;
-                    const int yclip = ysize % yblock;
-                    const int xblock_last = xclip ? xclip : xblock;
-                    const int yblock_last = yclip ? yclip : yblock;
-
-                    u8* dest = image + y * ystride;
-                    int height = (y == ymcu_last) ? yblock_last : yblock;
-
-                    for (int x = 0; x < xmcu_last; ++x)
-                    {
-                        state.decode(data, &state);
-                        process_and_clip(dest, stride, data, xblock, height);
-                        dest += xstride;
-                    }
-
-                    // last column
-                    state.decode(data, &state);
-                    process_and_clip(dest, stride, data, xblock_last, height);
-                });
-
-                p = memory.address + offset;
-            }
-
-            decodeState.buffer.ptr = p;
-
-#else
-
-            // workaround for restart interval being only one row of MCUs (JPEG specification)
-            // less overhead as multiple intervals are in same task
-
             const u32* offsets = m_restart_offsets.data();
 
             for (int y = 0; y < ymcu; y += N)
@@ -2219,6 +2167,25 @@ namespace mango::image::jpeg
                         state.decode(data, &state);
                         process_and_clip(dest, stride, data, xblock_last, height);
                     }
+
+                    ImageDecodeRect rect;
+
+                    rect.x = 0;
+                    rect.y = y0 * yblock;
+                    rect.width = xsize;
+                    rect.height = (y1 - y0) * yblock;
+
+                    if (!m_decode_status.direct)
+                    {
+                        // color conversion and clipping
+                        Surface source(*m_surface, rect.x, rect.y, rect.width, rect.height);
+                        m_target->blit(rect.x, rect.y, source);
+                    }
+
+                    if (m_interface->callback)
+                    {
+                        m_interface->callback->update(rect);
+                    }
                 });
 
                 // use last offset in the range
@@ -2226,7 +2193,6 @@ namespace mango::image::jpeg
             }
 
             decodeState.buffer.ptr = p;
-#endif
         }
         else if (restartInterval)
         {
@@ -2243,7 +2209,7 @@ namespace mango::image::jpeg
 
             u8* image = m_surface->image;
 
-            for (int i = 0; i < mcus; i += restartInterval)
+            for (int y = 0; y < ymcu; y += N)
             {
                 if (m_interface->cancelled)
                 {
@@ -2251,47 +2217,81 @@ namespace mango::image::jpeg
                     break;
                 }
 
+                int y0 = y;
+                int y1 = std::min(y + N, ymcu);
+
                 // enqueue task
-                queue.enqueue([=]
+                queue.enqueue([=] (const u8* p)
                 {
-                    AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
-
-                    DecodeState state = decodeState;
-                    state.buffer.ptr = p;
-
-                    const int left = i + std::min(restartInterval, mcus - i);
-
-                    const int xmcu_last = xmcu - 1;
-                    const int ymcu_last = ymcu - 1;
-
-                    const int xclip = xsize % xblock;
-                    const int yclip = ysize % yblock;
-                    const int xblock_last = xclip ? xclip : xblock;
-                    const int yblock_last = yclip ? yclip : yblock;
-
-                    for (int j = i; j < left; ++j)
+                    for (int y = y0; y < y1; ++y)
                     {
-                        state.decode(data, &state);
+                        AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
 
-                        int x = j % xmcu;
-                        int y = j / xmcu;
-                        u8* dest = image + y * ystride + x * xstride;
+                        DecodeState state = decodeState;
+                        state.buffer.ptr = p;
 
-                        int width = x == xmcu_last ? xblock_last : xblock;
-                        int height = y == ymcu_last ? yblock_last : yblock;
+                        const int xmcu_last = xmcu - 1;
+                        const int ymcu_last = ymcu - 1;
 
-                        process_and_clip(dest, stride, data, width, height);
+                        const int xclip = xsize % xblock;
+                        const int yclip = ysize % yblock;
+                        const int xblock_last = xclip ? xclip : xblock;
+                        const int yblock_last = yclip ? yclip : yblock;
+
+                        for (int x = 0; x < xmcu; ++x)
+                        {
+                            state.decode(data, &state);
+
+                            u8* dest = image + y * ystride + x * xstride;
+
+                            int width = x == xmcu_last ? xblock_last : xblock;
+                            int height = y == ymcu_last ? yblock_last : yblock;
+
+                            process_and_clip(dest, stride, data, width, height);
+                        }
+
+                        // seek next restart marker
+                        p = seekMarker(p, state.buffer.end);
+
+                        if (p >= state.buffer.end)
+                            break;
+
+                        if (isRestartMarker(p))
+                            p += 2;
                     }
-                });
 
-                // seek next restart marker
-                p = seekMarker(p, decodeState.buffer.end);
+                    ImageDecodeRect rect;
 
-                if (p >= decodeState.buffer.end)
-                    break;
+                    rect.x = 0;
+                    rect.y = y0 * yblock;
+                    rect.width = xsize;
+                    rect.height = (y1 - y0) * yblock;
 
-                if (isRestartMarker(p))
-                    p += 2;
+                    if (!m_decode_status.direct)
+                    {
+                        // color conversion and clipping
+                        Surface source(*m_surface, rect.x, rect.y, rect.width, rect.height);
+                        m_target->blit(rect.x, rect.y, source);
+                    }
+
+                    if (m_interface->callback)
+                    {
+                        m_interface->callback->update(rect);
+                    }
+                }, p);
+
+                // skip N restart markers
+                for (int i = y0; i < y1; ++i)
+                {
+                    // seek next restart marker
+                    p = seekMarker(p, decodeState.buffer.end);
+
+                    if (p >= decodeState.buffer.end)
+                        return;
+
+                    if (isRestartMarker(p))
+                        p += 2;
+                }
             }
 
             decodeState.buffer.ptr = p;
@@ -2644,16 +2644,23 @@ namespace mango::image::jpeg
             dest += xstride;
         }
 
+        ImageDecodeRect rect;
+
+        rect.x = 0;
+        rect.y = y0 * yblock;
+        rect.width = xsize;
+        rect.height = (y1 - y0) * yblock;
+
+        if (!m_decode_status.direct)
+        {
+            // color conversion and clipping
+            Surface source(*m_surface, rect.x, rect.y, rect.width, rect.height);
+            m_target->blit(rect.x, rect.y, source);
+        }
+
         if (m_interface->callback)
         {
-            ImageDecodeState state;
-
-            state.x = 0;
-            state.y = y0 * yblock;
-            state.width = xsize;
-            state.height = (y1 - y0) * yblock;
-
-            m_interface->callback->update(state);
+            m_interface->callback->update(rect);
         }
     }
 

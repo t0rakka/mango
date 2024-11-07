@@ -86,7 +86,7 @@ namespace mango::image
         bool icc = false; // apply ICC profile
     };
 
-    struct ImageDecodeState
+    struct ImageDecodeRect
     {
         int x;
         int y;
@@ -98,7 +98,7 @@ namespace mango::image
     {
     public:
         virtual ~ImageDecoderCallback() = default;
-        virtual void update(const ImageDecodeState& state) = 0;
+        virtual void update(const ImageDecodeRect& rect) = 0;
         virtual void complete() = 0;
     };
 
