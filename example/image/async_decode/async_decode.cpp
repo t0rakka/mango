@@ -6,8 +6,6 @@
 #include <mango/image/image.hpp>
 #include <mango/filesystem/filesystem.hpp>
 
-using namespace std::chrono_literals;
-
 using namespace mango;
 using namespace mango::image;
 using namespace mango::filesystem;
@@ -54,8 +52,8 @@ int main(int argc, const char* argv[])
         if (decoder.isDecoder())
         {
             ImageHeader header = decoder.header();
-            //bitmap = std::make_unique<Bitmap>(header.width, header.height, header.format);
-            bitmap = std::make_unique<Bitmap>(header.width, header.height, Format(16, Format::UNORM, Format::BGR, 5, 6, 5));
+            bitmap = std::make_unique<Bitmap>(header.width, header.height, header.format);
+            //bitmap = std::make_unique<Bitmap>(header.width, header.height, Format(16, Format::UNORM, Format::BGR, 5, 6, 5));
 
             decoder.setCallback(&callback);
             decoder.launch(*bitmap);
