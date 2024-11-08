@@ -44,7 +44,7 @@ int main(int argc, const char* argv[])
 {
     if (argc < 2)
     {
-        printLine("Too few arguments. usage: <filename.jpg> <cancel_ms>");
+        printLine("Too few arguments. usage: <filename> <cancel:ms>");
         exit(1);
     }
 
