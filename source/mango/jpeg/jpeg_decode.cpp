@@ -2185,6 +2185,11 @@ namespace mango::image::jpeg
 
                     for (int i = y0; i < y1; ++i)
                     {
+                        if (m_interface->cancelled)
+                        {
+                            return;
+                        }
+
                         DecodeState state = decodeState;
                         state.buffer.ptr = ptr;
                         ptr = memory.address + offsets[i];
@@ -2251,6 +2256,11 @@ namespace mango::image::jpeg
                 {
                     for (int y = y0; y < y1; ++y)
                     {
+                        if (m_interface->cancelled)
+                        {
+                            return;
+                        }
+
                         AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
 
                         DecodeState state = decodeState;
