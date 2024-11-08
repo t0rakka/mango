@@ -2006,6 +2006,8 @@ namespace
         ConstMemory m_memory;
         ImageHeader m_header;
 
+        ImageDecodeInterface* m_interface;
+
         const u8* m_pointer = nullptr;
         const u8* m_end = nullptr;
         const char* m_error = nullptr;
@@ -2112,7 +2114,7 @@ namespace
         size_t getImageBufferSize(int width, int height) const;
 
     public:
-        ParserPNG(ConstMemory memory);
+        ParserPNG(ConstMemory memory, ImageDecodeInterface* interface);
         ~ParserPNG();
 
         const ImageHeader& getHeader();
@@ -2124,8 +2126,9 @@ namespace
     // ParserPNG
     // ------------------------------------------------------------
 
-    ParserPNG::ParserPNG(ConstMemory memory)
+    ParserPNG::ParserPNG(ConstMemory memory, ImageDecodeInterface* interface)
         : m_memory(memory)
+        , m_interface(interface)
         , m_end(memory.address + memory.size)
     {
         BigEndianConstPointer p = memory.address;
@@ -3151,6 +3154,11 @@ namespace
 
         bool is_inline_process = false;
 
+        if (m_interface->cancelled)
+        {
+            return status;
+        }
+
         if (m_parallel_height)
         {
             // ----------------------------------------------------------------------
@@ -3176,6 +3184,12 @@ namespace
 
             for (ConstMemory memory : m_parallel_segments)
             {
+                if (m_interface->cancelled)
+                {
+                    q.cancel();
+                    break;
+                }
+
                 int h = std::min(m_parallel_height, m_height - y);
 
                 Memory output;
@@ -3184,11 +3198,21 @@ namespace
 
                 q.enqueue([=]
                 {
+                    if (m_interface->cancelled)
+                    {
+                        return;
+                    }
+
                     CompressionStatus result = decompress(output, memory);
                     if (!result)
                     {
                         // NOTE: libdeflate will report "Bad Data", zlib works but slower
                         //printLine(Print::Error, "  {}", result.info);
+                    }
+
+                    if (m_interface->cancelled)
+                    {
+                        return;
                     }
 
                     if (is_inline_process)
@@ -3275,10 +3299,20 @@ namespace
             printLine(Print::Info, "  output bytes: {}", result.size);
         }
 
+        if (m_interface->cancelled)
+        {
+            return status;
+        }
+
         // process image
         if (!is_inline_process)
         {
             process(image, width, height, stride, buffer, multithread);
+        }
+
+        if (m_interface->cancelled)
+        {
+            return status;
         }
 
         if (m_icc.size() > 0 && use_icc)
@@ -3886,8 +3920,9 @@ namespace
         ParserPNG m_parser;
 
         Interface(ConstMemory memory)
-            : m_parser(memory)
+            : m_parser(memory, this)
         {
+            async = true;
             header = m_parser.getHeader();
             icc = m_parser.icc();
         }
