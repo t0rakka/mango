@@ -313,10 +313,6 @@ namespace mango::image
         {
             Trace trace("ImageDecoder", m_interface->name);
             status = m_interface->decode(dest, options, level, depth, face);
-            if (!status)
-            {
-                printLine(Print::Info, status.info);
-            }
         }
         else
         {
@@ -324,6 +320,44 @@ namespace mango::image
         }
 
         return status;
+    }
+
+    std::future<ImageDecodeStatus> ImageDecoder::launch(ImageDecodeCallback callback, const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
+    {
+        if (m_interface)
+        {
+            if (m_interface.use_count() > 1)
+            {
+                MANGO_EXCEPTION("[ImageDecoder] async decoding already in progress.");
+            }
+
+            m_interface->callback = std::move(callback);
+        }
+
+        return std::async(std::launch::async, [=] (std::shared_ptr<ImageDecodeInterface> interface)
+        {
+            ImageDecodeStatus status;
+
+            if (interface)
+            {
+                Trace trace("ImageDecoder", interface->name);
+                status = interface->decode(dest, options, level, depth, face);
+            }
+            else
+            {
+                status.setError("[WARNING] decode() is not supported for this extension.");
+            }
+
+            return status;
+        }, m_interface);
+    }
+
+    void ImageDecoder::cancel()
+    {
+        if (m_interface)
+        {
+            m_interface->cancelled = true;
+        }
     }
 
     ConstMemory ImageDecoder::memory(int level, int depth, int face)
@@ -360,59 +394,6 @@ namespace mango::image
         }
 
         return memory;
-    }
-
-    // ----------------------------------------------------------------------------
-    // AsyncImageDecoder
-    // ----------------------------------------------------------------------------
-
-    AsyncImageDecoder::AsyncImageDecoder(ConstMemory memory, const std::string& extension)
-        : ImageDecoder(memory, extension)
-    {
-    }
-
-    AsyncImageDecoder::~AsyncImageDecoder()
-    {
-        if (m_decode_thread.joinable())
-        {
-            // block until the decoding is complete
-            m_decode_thread.join();
-        }
-    }
-
-    std::future<ImageDecodeStatus> AsyncImageDecoder::launch(ImageDecodeCallback callback, const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
-    {
-        std::promise<ImageDecodeStatus> promise;
-        std::future<ImageDecodeStatus> future = promise.get_future();
-
-        if (!m_interface)
-        {
-            printLine(Print::Error, "[AsyncImageDecoder] launch() is not supported for this extension.");
-            return future;
-        }
-
-        if (m_decode_thread.joinable())
-        {
-            MANGO_EXCEPTION("[AsyncImageDecoder] There already is async decoding in progress.");
-        }
-
-        m_interface->callback = std::move(callback);
-
-        m_decode_thread = std::thread([=, promise = std::move(promise)] () mutable
-        {
-            ImageDecodeStatus status = m_interface->decode(dest, options, level, depth, face);
-            promise.set_value(status);
-        });
-
-        return future;
-    }
-
-    void AsyncImageDecoder::cancel()
-    {
-        if (m_interface)
-        {
-            m_interface->cancelled = true;
-        }
     }
 
     // ----------------------------------------------------------------------------

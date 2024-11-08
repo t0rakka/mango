@@ -13,7 +13,12 @@ using namespace mango::filesystem;
 void test(const char* filename, int cancel_ms)
 {
     File file(filename);
-    AsyncImageDecoder decoder(file, filename);
+    ImageDecoder decoder(file, filename);
+
+    if (!decoder.isDecoder())
+    {
+        return;
+    }
 
     ImageHeader header = decoder.header();
     Bitmap bitmap(header);
