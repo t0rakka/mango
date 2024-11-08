@@ -23,6 +23,7 @@ namespace
         Interface(ConstMemory memory)
             : m_parser(memory, this)
         {
+            async = true;
             header = m_parser.header;
             icc = m_parser.icc_buffer;
             exif = m_parser.exif_memory;
