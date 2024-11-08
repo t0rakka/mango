@@ -941,19 +941,22 @@ namespace mango::image
             stride = width * format.bytes();
         }
 
-        size_t bytes = stride * height;
-        image = new u8[bytes];
+        image = new u8[stride * height];
     }
 
     Bitmap::Bitmap(const Surface& source, const Format& format)
         : Surface(source.width, source.height, format, 0, nullptr)
     {
         stride = width * format.bytes();
-
-        size_t bytes = stride * height;
-        image = new u8[bytes];
-
+        image = new u8[stride * height];
         blit(0, 0, source);
+    }
+
+    Bitmap::Bitmap(const ImageHeader& header)
+        : Surface(header.width, header.height, header.format, 0, nullptr)
+    {
+        stride = width * format.bytes();
+        image = new u8[stride * height];
     }
 
     Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const ImageDecodeOptions& options)
@@ -989,6 +992,7 @@ namespace mango::image
     Bitmap::Bitmap(Bitmap&& bitmap)
         : Surface(bitmap)
     {
+        // move image ownership
         bitmap.image = nullptr;
     }
 
