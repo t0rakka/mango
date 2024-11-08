@@ -10,20 +10,35 @@ using namespace mango;
 using namespace mango::image;
 using namespace mango::filesystem;
 
-class CustomCallback : public ImageDecoderCallback
+void test(const char* filename, int cancel_ms)
 {
-public:
-    void update(const ImageDecodeRect& rect) override
+    File file(filename);
+    AsyncImageDecoder decoder(file, filename);
+
+    ImageHeader header = decoder.header();
+    Bitmap bitmap(header);
+
+    u64 time0 = Time::ms();
+
+    auto future = decoder.launch([] (const ImageDecodeRect& rect)
     {
         printLine("[+] Update: [{} x {}] .. ({}, {})",
             rect.width, rect.height, rect.x, rect.y);
+    }, bitmap);
+
+    if (cancel_ms >= 0)
+    {
+        Sleep::ms(cancel_ms);
+        decoder.cancel();
     }
 
-    void complete() override
-    {
-        printLine("[+] Complete!");
-    }
-};
+    future.get();
+
+    u64 time1 = Time::ms();
+    printLine("Decoding: {} ms", time1 - time0);
+
+    bitmap.save("test.png");
+}
 
 int main(int argc, const char* argv[])
 {
@@ -41,33 +56,5 @@ int main(int argc, const char* argv[])
         cancel_ms = std::atoi(argv[2]);
     }
 
-    File file(filename);
-    std::unique_ptr<Bitmap> bitmap;
-    CustomCallback callback;
-
-    u64 time0 = Time::ms();
-
-    {
-        AsyncImageDecoder decoder(file, filename);
-        if (decoder.isDecoder())
-        {
-            ImageHeader header = decoder.header();
-            bitmap = std::make_unique<Bitmap>(header.width, header.height, header.format);
-            //bitmap = std::make_unique<Bitmap>(header.width, header.height, Format(16, Format::UNORM, Format::BGR, 5, 6, 5));
-
-            decoder.setCallback(&callback);
-            decoder.launch(*bitmap);
-
-            if (cancel_ms >= 0)
-            {
-                Sleep::ms(cancel_ms);
-                decoder.cancel();
-            }
-        }
-    }
-
-    u64 time1 = Time::ms();
-    printLine("Decoding: {} ms", time1 - time0);
-
-    bitmap->save("test.png");
+    test(filename, cancel_ms);
 }

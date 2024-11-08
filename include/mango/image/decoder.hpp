@@ -7,6 +7,8 @@
 #include <string>
 #include <thread>
 #include <atomic>
+#include <memory>
+#include <future>
 #include <mango/core/memory.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/image/format.hpp>
@@ -95,27 +97,21 @@ namespace mango::image
         int height;
     };
 
-    class ImageDecoderCallback
-    {
-    public:
-        virtual ~ImageDecoderCallback() = default;
-        virtual void update(const ImageDecodeRect& rect) = 0;
-        virtual void complete() = 0;
-    };
+    using ImageDecodeCallback = std::function<void(const ImageDecodeRect& rect)>;
 
-    class ImageDecoderInterface : protected NonCopyable
+    class ImageDecodeInterface : protected NonCopyable
     {
     public:
         bool async = false;
-        ImageDecoderCallback* callback = nullptr;
+        ImageDecodeCallback callback;
         std::atomic<bool> cancelled { false };
         std::string name;
         ImageHeader header;
         ConstMemory icc;
         ConstMemory exif;
 
-        ImageDecoderInterface() = default;
-        virtual ~ImageDecoderInterface() = default;
+        ImageDecodeInterface() = default;
+        virtual ~ImageDecodeInterface() = default;
 
         virtual ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) = 0;
         virtual ConstMemory memory(int level, int depth, int face);
@@ -128,6 +124,7 @@ namespace mango::image
         ~ImageDecoder();
 
         bool isDecoder() const;
+        bool isAsyncDecoder() const;
 
         ImageHeader header();
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
@@ -136,10 +133,10 @@ namespace mango::image
         ConstMemory icc();
         ConstMemory exif();
 
-        using CreateDecoderFunc = ImageDecoderInterface* (*)(ConstMemory memory);
+        using CreateDecodeFunc = ImageDecodeInterface* (*)(ConstMemory memory);
 
     protected:
-        std::unique_ptr<ImageDecoderInterface> m_interface;
+        std::shared_ptr<ImageDecodeInterface> m_interface;
     };
 
     class AsyncImageDecoder : public ImageDecoder
@@ -148,16 +145,14 @@ namespace mango::image
         AsyncImageDecoder(ConstMemory memory, const std::string& extension);
         ~AsyncImageDecoder();
 
-        bool isAsyncDecoder() const;
-        void setCallback(ImageDecoderCallback* callback);
-        void launch(const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
+        std::future<ImageDecodeStatus> launch(ImageDecodeCallback callback, const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
         void cancel();
 
     protected:
         std::thread m_decode_thread;
     };
 
-    void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension);
+    void registerImageDecoder(ImageDecoder::CreateDecodeFunc func, const std::string& extension);
     bool isImageDecoder(const std::string& extension);
 
 } // namespace mango::image

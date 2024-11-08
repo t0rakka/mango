@@ -406,7 +406,7 @@ namespace
     // ImageDecoder
     // ------------------------------------------------------------
 
-    struct Interface : ImageDecoderInterface
+    struct Interface : ImageDecodeInterface
     {
         HeaderRAD m_rad_header;
         const u8* m_data;
@@ -458,9 +458,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecodeInterface* createInterface(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new Interface(memory);
+        ImageDecodeInterface* x = new Interface(memory);
         return x;
     }
 

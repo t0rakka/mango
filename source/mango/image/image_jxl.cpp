@@ -23,7 +23,7 @@ namespace
     // ImageDecoder
     // ------------------------------------------------------------
 
-    struct Interface : ImageDecoderInterface
+    struct Interface : ImageDecodeInterface
     {
         JxlDecoderPtr m_decoder;
         JxlResizableParallelRunnerPtr m_runner;
@@ -221,9 +221,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecodeInterface* createInterface(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new Interface(memory);
+        ImageDecodeInterface* x = new Interface(memory);
         return x;
     }
 

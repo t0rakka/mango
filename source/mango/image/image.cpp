@@ -140,7 +140,7 @@ namespace mango::image
     class ImageServer
     {
     protected:
-        std::map<std::string, ImageDecoder::CreateDecoderFunc> m_decoders;
+        std::map<std::string, ImageDecoder::CreateDecodeFunc> m_decoders;
         std::map<std::string, ImageEncoder::EncodeFunc> m_encoders;
 
     public:
@@ -193,7 +193,7 @@ namespace mango::image
         {
         }
 
-        void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension)
+        void registerImageDecoder(ImageDecoder::CreateDecodeFunc func, const std::string& extension)
         {
             m_decoders[toLower(extension)] = func;
         }
@@ -203,7 +203,7 @@ namespace mango::image
             m_encoders[toLower(extension)] = func;
         }
 
-        ImageDecoder::CreateDecoderFunc getImageDecoder(const std::string& extension) const
+        ImageDecoder::CreateDecodeFunc getImageDecoder(const std::string& extension) const
         {
             auto i = m_decoders.find(extension);
             return i != m_decoders.end() ? i->second : nullptr;
@@ -216,7 +216,7 @@ namespace mango::image
         }
     } g_imageServer;
 
-    void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension)
+    void registerImageDecoder(ImageDecoder::CreateDecodeFunc func, const std::string& extension)
     {
         g_imageServer.registerImageDecoder(func, extension);
     }
@@ -241,10 +241,10 @@ namespace mango::image
     }
 
     // ----------------------------------------------------------------------------
-    // ImageDecoderInterface
+    // ImageDecodeInterface
     // ----------------------------------------------------------------------------
 
-    ConstMemory ImageDecoderInterface::memory(int level, int depth, int face)
+    ConstMemory ImageDecodeInterface::memory(int level, int depth, int face)
     {
         MANGO_UNREFERENCED(level);
         MANGO_UNREFERENCED(depth);
@@ -266,10 +266,10 @@ namespace mango::image
             extension = getLowerCaseExtension(filename);
         }
 
-        ImageDecoder::CreateDecoderFunc create = g_imageServer.getImageDecoder(extension);
+        ImageDecoder::CreateDecodeFunc create = g_imageServer.getImageDecoder(extension);
         if (create)
         {
-            ImageDecoderInterface* x = create(memory);
+            ImageDecodeInterface* x = create(memory);
             x->name = fmt::format("ImageDecoder:{}", filesystem::removePath(filename));
             m_interface.reset(x);
         }
@@ -282,6 +282,11 @@ namespace mango::image
     bool ImageDecoder::isDecoder() const
     {
         return m_interface != nullptr;
+    }
+
+    bool ImageDecoder::isAsyncDecoder() const
+    {
+        return m_interface ? m_interface->async : false;
     }
 
     ImageHeader ImageDecoder::header()
@@ -375,25 +380,15 @@ namespace mango::image
         }
     }
 
-    bool AsyncImageDecoder::isAsyncDecoder() const
+    std::future<ImageDecodeStatus> AsyncImageDecoder::launch(ImageDecodeCallback callback, const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
     {
-        return m_interface ? m_interface->async : false;
-    }
+        std::promise<ImageDecodeStatus> promise;
+        std::future<ImageDecodeStatus> future = promise.get_future();
 
-    void AsyncImageDecoder::setCallback(ImageDecoderCallback* callback)
-    {
-        if (m_interface)
-        {
-            m_interface->callback = callback;
-        }
-    }
-
-    void AsyncImageDecoder::launch(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
-    {
         if (!m_interface)
         {
             printLine(Print::Error, "[AsyncImageDecoder] launch() is not supported for this extension.");
-            return;
+            return future;
         }
 
         if (m_decode_thread.joinable())
@@ -401,14 +396,15 @@ namespace mango::image
             MANGO_EXCEPTION("[AsyncImageDecoder] There already is async decoding in progress.");
         }
 
-        m_decode_thread = std::thread([=]
+        m_interface->callback = std::move(callback);
+
+        m_decode_thread = std::thread([=, promise = std::move(promise)] () mutable
         {
-            m_interface->decode(dest, options, level, depth, face);
-            if (m_interface->callback)
-            {
-                m_interface->callback->complete();
-            }
+            ImageDecodeStatus status = m_interface->decode(dest, options, level, depth, face);
+            promise.set_value(status);
         });
+
+        return future;
     }
 
     void AsyncImageDecoder::cancel()

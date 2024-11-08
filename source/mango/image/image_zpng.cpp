@@ -58,7 +58,7 @@ namespace
         return format;
     }
 
-    struct Interface : ImageDecoderInterface
+    struct Interface : ImageDecodeInterface
     {
         ZPNG_Buffer m_buffer;
 
@@ -131,9 +131,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecodeInterface* createInterface(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new Interface(memory);
+        ImageDecodeInterface* x = new Interface(memory);
         return x;
     }
 

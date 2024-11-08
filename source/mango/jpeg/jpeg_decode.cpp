@@ -129,7 +129,7 @@ namespace mango::image::jpeg
     // Parser
     // ----------------------------------------------------------------------------
 
-    Parser::Parser(ConstMemory memory, ImageDecoderInterface* interface)
+    Parser::Parser(ConstMemory memory, ImageDecodeInterface* interface)
         : memory(memory)
         , m_interface(interface)
         , quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
@@ -2697,7 +2697,7 @@ namespace mango::image::jpeg
 
         if (m_interface->callback)
         {
-            m_interface->callback->update(rect);
+            m_interface->callback(rect);
         }
     }
 
