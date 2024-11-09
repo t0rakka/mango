@@ -94,7 +94,8 @@ namespace mango::image
         LuminanceBitmap(const Surface& source, bool alpha = false, bool force_linear = true);
     };
 
-    // HACK: need a proper API (32 bit rgba in-place conversion)
+    // NOTE: These must be 32 bit RGBA surfaces as the conversion is done in-place
+    void transform(const Surface& surface, ConstMemory icc);
     void srgbToLinear(const Surface& surface);
     void linearToSRGB(const Surface& surface);
 

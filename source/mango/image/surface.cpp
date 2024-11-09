@@ -1080,6 +1080,14 @@ namespace mango::image
     // misc
     // ----------------------------------------------------------------------------
 
+    void transform(const Surface& surface, ConstMemory icc)
+    {
+        image::ColorManager manager;
+        image::ColorProfile profile = manager.create(icc);
+        image::ColorProfile display = manager.createSRGB();
+        manager.transform(surface, display, profile);
+    }
+
     void srgbToLinear(const Surface& surface)
     {
         ::srgbToLinear(surface);
