@@ -1859,14 +1859,6 @@ namespace mango::image::jpeg
             blit_and_update(rect, true);
         }
 
-        if (icc_buffer.size() > 0 && options.icc)
-        {
-            image::ColorManager manager;
-            image::ColorProfile profile = manager.create(ConstMemory(icc_buffer.data(), icc_buffer.size()));
-            image::ColorProfile display = manager.createSRGB();
-            manager.transform(target, display, profile);
-        }
-
         blockVector.resize(0);
         m_decode_status.info = getInfo();
 
@@ -2095,7 +2087,7 @@ namespace mango::image::jpeg
                 rect.x = 0;
                 rect.y = y0 * yblock;
                 rect.width = width;
-                rect.height = (y1 - y0) * yblock;
+                rect.height = std::min(height, y1 * yblock) - y0 * yblock;
 
                 blit_and_update(rect);
             }
@@ -2214,7 +2206,7 @@ namespace mango::image::jpeg
                     rect.x = 0;
                     rect.y = y0 * yblock;
                     rect.width = width;
-                    rect.height = (y1 - y0) * yblock;
+                    rect.height = std::min(height, y1 * yblock) - y0 * yblock;
 
                     blit_and_update(rect);
                 });
@@ -2297,7 +2289,7 @@ namespace mango::image::jpeg
                     rect.x = 0;
                     rect.y = y0 * yblock;
                     rect.width = width;
-                    rect.height = (y1 - y0) * yblock;
+                    rect.height = std::min(height, y1 * yblock) - y0 * yblock;
 
                     blit_and_update(rect);
                 }, p);
@@ -2654,7 +2646,7 @@ namespace mango::image::jpeg
         rect.x = 0;
         rect.y = y0 * yblock;
         rect.width = width;
-        rect.height = (y1 - y0) * yblock;
+        rect.height = std::min(height, y1 * yblock) - y0 * yblock;
 
         blit_and_update(rect);
     }
