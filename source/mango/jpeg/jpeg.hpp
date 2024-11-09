@@ -390,10 +390,11 @@ namespace mango::image::jpeg
         const Surface* m_surface = nullptr; // temporary color conversion/clipping surface
         bool m_request_blitting = false;
 
-        int width;  // Image width, does include alignment
-        int height; // Image height, does include alignment
-        int xsize;  // Image width, does NOT include alignment
-        int ysize;  // Image height, does NOT include alignment
+        int aligned_width;
+        int aligned_height;
+        int width;
+        int height;
+
         int precision; // 8 or 12 bits
         int components; // 1..4
 

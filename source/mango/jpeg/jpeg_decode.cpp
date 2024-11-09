@@ -442,12 +442,12 @@ namespace mango::image::jpeg
 
         u16 length = bigEndian::uload16(p + 0);
         precision = p[2];
-        ysize = bigEndian::uload16(p + 3);
-        xsize = bigEndian::uload16(p + 5);
+        height = bigEndian::uload16(p + 3);
+        width  = bigEndian::uload16(p + 5);
         components = p[7];
         p += 8;
 
-        printLine(Print::Info, "  Image: {} x {} x {}", xsize, ysize, precision);
+        printLine(Print::Info, "  Image: {} x {} x {}", width, height, precision);
 
         u16 correct_length = 8 + 3 * components;
         if (length != correct_length)
@@ -456,10 +456,10 @@ namespace mango::image::jpeg
             return;
         }
 
-        if (xsize <= 0 || ysize <= 0 || xsize > 65535 || ysize > 65535)
+        if (width <= 0 || height <= 0 || width > 65535 || height > 65535)
         {
             // NOTE: ysize of 0 is allowed in the specs but we won't
-            header.setError("Incorrect dimensions ({} x {})", xsize, ysize);
+            header.setError("Incorrect dimensions ({} x {})", width, height);
             return;
         }
 
@@ -651,20 +651,20 @@ namespace mango::image::jpeg
         // Align to next MCU boundary
         int xmask = xblock - 1;
         int ymask = yblock - 1;
-        width  = (xsize + xmask) & ~xmask;
-        height = (ysize + ymask) & ~ymask;
+        aligned_width  = (width  + xmask) & ~xmask;
+        aligned_height = (height + ymask) & ~ymask;
 
         // MCU resolution
-        xmcu = width  / xblock;
-        ymcu = height / yblock;
+        xmcu = aligned_width  / xblock;
+        ymcu = aligned_height / yblock;
         mcus = xmcu * ymcu;
 
         printLine(Print::Info, "  {} MCUs ({} x {}) -> ({} x {})", mcus, xmcu, ymcu, xmcu * xblock, ymcu * yblock);
-        printLine(Print::Info, "  Image: {} x {}", xsize, ysize);
+        printLine(Print::Info, "  Image: {} x {}", width, height);
 
         // configure header
-        header.width = xsize;
-        header.height = ysize;
+        header.width  = width;
+        header.height = height;
         header.format = components > 1 ? Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
                                        : LuminanceFormat(8, Format::UNORM, 8, 0);
 
@@ -1801,7 +1801,7 @@ namespace mango::image::jpeg
 
         m_decode_status.direct = true;
 
-        if (target.width != xsize || target.height != ysize)
+        if (target.width < width || target.height < height)
         {
             m_decode_status.direct = false;
         }
@@ -1821,7 +1821,7 @@ namespace mango::image::jpeg
         if (!m_decode_status.direct)
         {
             // create a temporary decoding target
-            temp = std::make_unique<Bitmap>(width, height, sf.format);
+            temp = std::make_unique<Bitmap>(aligned_width, aligned_height, sf.format);
             m_surface = temp.get();
         }
 
@@ -1853,8 +1853,8 @@ namespace mango::image::jpeg
 
             rect.x = 0;
             rect.y = 0;
-            rect.width = xsize;
-            rect.height = ysize;
+            rect.width = width;
+            rect.height = height;
 
             blit_and_update(rect, true);
         }
@@ -1926,7 +1926,7 @@ namespace mango::image::jpeg
             previousDC = decodeState.arithmetic.last_dc_value;
         }
 
-        const int width = m_surface->width;
+        const int width  = m_surface->width;
         const int height = m_surface->height;
         const int xlast = width - 1;
         const int components = decodeState.comps_in_scan;
@@ -2067,8 +2067,8 @@ namespace mango::image::jpeg
                     const int xmcu_last = xmcu - 1;
                     const int ymcu_last = ymcu - 1;
 
-                    const int xclip = xsize % xblock;
-                    const int yclip = ysize % yblock;
+                    const int xclip = width  % xblock;
+                    const int yclip = height % yblock;
                     const int xblock_last = xclip ? xclip : xblock;
                     const int yblock_last = yclip ? yclip : yblock;
 
@@ -2078,7 +2078,7 @@ namespace mango::image::jpeg
 
                         u8* dest = image + y * ystride + x * xstride;
 
-                        int width = x == xmcu_last ? xblock_last : xblock;
+                        int width  = x == xmcu_last ? xblock_last : xblock;
                         int height = y == ymcu_last ? yblock_last : yblock;
 
                         process_and_clip(dest, stride, data, width, height);
@@ -2094,7 +2094,7 @@ namespace mango::image::jpeg
 
                 rect.x = 0;
                 rect.y = y0 * yblock;
-                rect.width = xsize;
+                rect.width = width;
                 rect.height = (y1 - y0) * yblock;
 
                 blit_and_update(rect);
@@ -2176,8 +2176,8 @@ namespace mango::image::jpeg
 
                     const int xmcu_last = xmcu - 1;
                     const int ymcu_last = ymcu - 1;
-                    const int xclip = xsize % xblock;
-                    const int yclip = ysize % yblock;
+                    const int xclip = width  % xblock;
+                    const int yclip = height % yblock;
                     const int xblock_last = xclip ? xclip : xblock;
                     const int yblock_last = yclip ? yclip : yblock;
 
@@ -2213,7 +2213,7 @@ namespace mango::image::jpeg
 
                     rect.x = 0;
                     rect.y = y0 * yblock;
-                    rect.width = xsize;
+                    rect.width = width;
                     rect.height = (y1 - y0) * yblock;
 
                     blit_and_update(rect);
@@ -2269,8 +2269,8 @@ namespace mango::image::jpeg
                         const int xmcu_last = xmcu - 1;
                         const int ymcu_last = ymcu - 1;
 
-                        const int xclip = xsize % xblock;
-                        const int yclip = ysize % yblock;
+                        const int xclip = width  % xblock;
+                        const int yclip = height % yblock;
                         const int xblock_last = xclip ? xclip : xblock;
                         const int yblock_last = yclip ? yclip : yblock;
 
@@ -2280,7 +2280,7 @@ namespace mango::image::jpeg
 
                             u8* dest = image + y * ystride + x * xstride;
 
-                            int width = x == xmcu_last ? xblock_last : xblock;
+                            int width  = x == xmcu_last ? xblock_last : xblock;
                             int height = y == ymcu_last ? yblock_last : yblock;
 
                             process_and_clip(dest, stride, data, width, height);
@@ -2296,7 +2296,7 @@ namespace mango::image::jpeg
 
                     rect.x = 0;
                     rect.y = y0 * yblock;
-                    rect.width = xsize;
+                    rect.width = width;
                     rect.height = (y1 - y0) * yblock;
 
                     blit_and_update(rect);
@@ -2470,8 +2470,8 @@ namespace mango::image::jpeg
 
             const int scan_offset = scanFrame->offset;
 
-            const int xs = ((xsize + hsize - 1) / hsize);
-            const int ys = ((ysize + vsize - 1) / vsize);
+            const int xs = ((width  + hsize - 1) / hsize);
+            const int ys = ((height + vsize - 1) / vsize);
             const int cnt = xs * ys;
 
             printLine(Print::Info, "    blocks: {} x {} ({} x {})", xs, ys, xs * hsize, ys * vsize);
@@ -2539,8 +2539,8 @@ namespace mango::image::jpeg
 
             const int scan_offset = scanFrame->offset;
 
-            const int xs = ((xsize + hsize - 1) / hsize);
-            const int ys = ((ysize + vsize - 1) / vsize);
+            const int xs = ((width  + hsize - 1) / hsize);
+            const int ys = ((height + vsize - 1) / vsize);
 
             printLine(Print::Info, "    blocks: {} x {} ({} x {})", xs, ys, xs * hsize, ys * vsize);
 
@@ -2621,8 +2621,8 @@ namespace mango::image::jpeg
         const int xmcu_last = xmcu - 1;
         const int ymcu_last = ymcu - 1;
 
-        const int xclip = xsize % xblock;
-        const int yclip = ysize % yblock;
+        const int xclip = width  % xblock;
+        const int yclip = height % yblock;
         const int xblock_last = xclip ? xclip : xblock;
         const int yblock_last = yclip ? yclip : yblock;
 
@@ -2653,7 +2653,7 @@ namespace mango::image::jpeg
 
         rect.x = 0;
         rect.y = y0 * yblock;
-        rect.width = xsize;
+        rect.width = width;
         rect.height = (y1 - y0) * yblock;
 
         blit_and_update(rect);
