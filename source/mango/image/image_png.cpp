@@ -3295,18 +3295,17 @@ namespace
             // ----------------------------------------------------------------------
 
             // TODO: decompress IDAT at a time and do updates progressively
-            Buffer compressed;
+            Buffer compressed_top;
+            Buffer compressed_bottom;
 
             for (size_t i = 0; i < m_idot_index; ++i)
             {
-                compressed.append(m_idat[i]);
+                compressed_top.append(m_idat[i]);
             }
-
-            size_t idot_offset = compressed.size();
 
             for (size_t i = m_idot_index; i < m_idat.size(); ++i)
             {
-                compressed.append(m_idat[i]);
+                compressed_bottom.append(m_idat[i]);
             }
 
             // ----------------------------------------------------------------------
@@ -3317,17 +3316,12 @@ namespace
             top_buffer.address = buffer.address;
             top_buffer.size = top_size;
 
-            ConstMemory top_memory;
-            top_memory.address = compressed.data();
-            top_memory.size = idot_offset;
-
             Memory bottom_buffer;
             bottom_buffer.address = buffer.address + top_size;
             bottom_buffer.size = buffer.size - top_size;
 
-            ConstMemory bottom_memory;
-            bottom_memory.address = compressed.data() + idot_offset;
-            bottom_memory.size = compressed.size() - idot_offset;
+            ConstMemory top_memory = compressed_top;
+            ConstMemory bottom_memory = compressed_bottom;
 
             auto future = std::async(std::launch::async, [=]
             {
