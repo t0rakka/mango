@@ -3157,13 +3157,6 @@ namespace
                         target.format == m_header.format;
 
         std::unique_ptr<Bitmap> temp;
-
-        if (!status.direct)
-        {
-            temp = std::make_unique<Bitmap>(m_width, m_height, m_header.format);
-            target = *temp;
-        }
-
         std::unique_ptr<Bitmap> animation;
 
         if (m_number_of_frames > 0)
@@ -3177,6 +3170,14 @@ namespace
             if (m_next_frame_index >= m_number_of_frames)
             {
                 m_next_frame_index = 0;
+            }
+        }
+        else
+        {
+            if (!status.direct)
+            {
+                temp = std::make_unique<Bitmap>(m_width, m_height, m_header.format);
+                target = *temp;
             }
         }
 
@@ -3261,11 +3262,53 @@ namespace
                 y += m_parallel_height;
             }
         }
-        /* TODO: Apple iDOT decoding | old code here for reference
         else if (m_idot_address && multithread)
         {
             // ----------------------------------------------------------------------
             // Apple iDOT decoding
+            // ----------------------------------------------------------------------
+
+            size_t buffer_size = 0;
+
+            if (m_interlace)
+            {
+                for (int pass = 0; pass < 7; ++pass)
+                {
+                    buffer_size += getInterlacedPassSize(pass, target.width, target.height);
+                }
+            }
+            else
+            {
+                buffer_size = (PNG_FILTER_BYTE + getBytesPerLine(target.width)) * target.height;
+            }
+
+            printLine(Print::Info, "  buffer bytes: {}", buffer_size);
+
+            // allocate output buffer
+            Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
+
+            // zero scanline for filters at the beginning
+            std::memset(temp, 0, bytes_per_line);
+
+            Memory buffer(temp + bytes_per_line, buffer_size);
+
+            // ----------------------------------------------------------------------
+
+            // TODO: decompress IDAT at a time and do updates progressively
+            Buffer compressed;
+
+            for (size_t i = 0; i < m_idot_index; ++i)
+            {
+                compressed.append(m_idat[i]);
+            }
+
+            size_t idot_offset = compressed.size();
+
+            for (size_t i = m_idot_index; i < m_idat.size(); ++i)
+            {
+                compressed.append(m_idat[i]);
+            }
+
             // ----------------------------------------------------------------------
 
             size_t top_size = bytes_per_line * m_first_half_height;
@@ -3275,19 +3318,18 @@ namespace
             top_buffer.size = top_size;
 
             ConstMemory top_memory;
-            top_memory.address = m_compressed.data();
-            top_memory.size = m_idot_offset;
+            top_memory.address = compressed.data();
+            top_memory.size = idot_offset;
 
             Memory bottom_buffer;
             bottom_buffer.address = buffer.address + top_size;
             bottom_buffer.size = buffer.size - top_size;
 
             ConstMemory bottom_memory;
-            bottom_memory.address = m_compressed.data() + m_idot_offset;
-            bottom_memory.size = m_compressed.size() - m_idot_offset;
+            bottom_memory.address = compressed.data() + idot_offset;
+            bottom_memory.size = compressed.size() - idot_offset;
 
-            // enqueue task into the threadpool
-            FutureTask<size_t> task([=] () -> size_t
+            auto future = std::async(std::launch::async, [=]
             {
                 // Apple uses raw deflate format for iDOT extended IDAT chunks
                 CompressionStatus result = deflate::decompress(bottom_buffer, bottom_memory);
@@ -3299,19 +3341,22 @@ namespace
             auto decompress = m_iphoneOptimized ?
                 deflate::decompress :
                 deflate_zlib::decompress;
-
             CompressionStatus result = decompress(top_buffer, top_memory);
 
             size_t bytes_out_top = result.size;
-            size_t bytes_out_bottom = task.get(); // synchronize
+            size_t bytes_out_bottom = future.get();
 
             printLine(Print::Info, "  output top bytes:     {}", bytes_out_top);
             printLine(Print::Info, "  output bottom bytes:  {}", bytes_out_bottom);
             MANGO_UNREFERENCED(bytes_out_top);
             MANGO_UNREFERENCED(bytes_out_bottom);
 
+            // process image
+            if (!is_inline_process)
+            {
+                process_image(target, buffer, multithread);
+            }
         }
-        */
         else
         {
             // ----------------------------------------------------------------------
@@ -3342,11 +3387,7 @@ namespace
 
             Memory buffer(temp + bytes_per_line, buffer_size);
 
-            // Apple uses: raw deflate format
-            // png standard uses: zlib frame format
-            auto decompress = m_iphoneOptimized ?
-                deflate::decompress :
-                deflate_zlib::decompress;
+            // ----------------------------------------------------------------------
 
             // TODO: decompress IDAT/fDAT at a time and do updates progressively
             Buffer compressed;
@@ -3361,10 +3402,18 @@ namespace
                 compressed.append(data);
             }
 
+            // ----------------------------------------------------------------------
+
             if (m_interface->cancelled)
             {
                 return status;
             }
+
+            // Apple uses: raw deflate format
+            // png standard uses: zlib frame format
+            auto decompress = m_iphoneOptimized ?
+                deflate::decompress :
+                deflate_zlib::decompress;
 
             CompressionStatus result = decompress(buffer, compressed);
             if (!result)
