@@ -3187,8 +3187,6 @@ namespace
 
         const size_t bytes_per_line = getBytesPerLine(target.width) + PNG_FILTER_BYTE;
 
-        bool is_inline_process = false;
-
         // The first scanline of segment does not require previous scanline from other segment
         bool plld = m_parallel_height && (m_parallel_flags & 1) != 0;
 
@@ -3199,8 +3197,6 @@ namespace
             // ----------------------------------------------------------------------
 
             ConcurrentQueue q("png:decode");
-
-            is_inline_process = true;
 
             u32 y = 0;
             auto decompress = deflate_zlib::decompress;
@@ -3244,10 +3240,7 @@ namespace
                         return;
                     }
 
-                    if (is_inline_process)
-                    {
-                        process_range(target, buffer, y, y + h);
-                    }
+                    process_range(target, buffer, y, y + h);
                 });
 
 #ifdef MANGO_ENABLE_ISAL__disabled
@@ -3343,10 +3336,7 @@ namespace
             MANGO_UNREFERENCED(bytes_out_bottom);
 
             // process image
-            if (!is_inline_process)
-            {
-                process_image(target, buffer, multithread);
-            }
+            process_image(target, buffer, multithread);
         }
         else
         {
@@ -3402,12 +3392,15 @@ namespace
                 const size_t lastIndex = m_idat.size() - 1;
                 const size_t packetSize = 0x20000;
 
+                int y0 = 0;
+
                 for (size_t i = 0; i < m_idat.size(); ++i)
                 {
                     compressed.append(m_idat[i]);
+
+                    // decompress only when enough data or last IDAT
                     if (compressed.size() < packetSize && i < lastIndex)
                     {
-                        // decompress only when enough data or last IDAT
                         continue;
                     }
 
@@ -3443,6 +3436,13 @@ namespace
                         stream.total_out % bytes_per_line);
                     */
 
+                    if (!m_interlace)
+                    {
+                        int y1 = stream.total_out / bytes_per_line;
+                        process_range(target, buffer.address + bytes_per_line * y0, y0, y1);
+                        y0 = y1;
+                    }
+
                     compressed.resize(0);
                 }
 
@@ -3461,7 +3461,7 @@ namespace
                 }
 
                 // process image
-                if (!is_inline_process)
+                if (m_interlace)
                 {
                     process_image(target, buffer, multithread);
                 }
@@ -3500,10 +3500,7 @@ namespace
                 }
 
                 // process image
-                if (!is_inline_process)
-                {
-                    process_image(target, buffer, multithread);
-                }
+                process_image(target, buffer, multithread);
             }
         }
 
