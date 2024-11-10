@@ -3397,10 +3397,22 @@ namespace
                     return status;
                 }
 
-                for (auto data : m_idat)
+                Buffer compressed;
+
+                const size_t lastIndex = m_idat.size() - 1;
+                const size_t packetSize = 0x20000;
+
+                for (size_t i = 0; i < m_idat.size(); ++i)
                 {
-                    stream.avail_in = data.size;
-                    stream.next_in = const_cast<u8*>(data.address);
+                    compressed.append(m_idat[i]);
+                    if (compressed.size() < packetSize && i < lastIndex)
+                    {
+                        // decompress only when enough data or last IDAT
+                        continue;
+                    }
+
+                    stream.avail_in = compressed.size();
+                    stream.next_in = const_cast<u8*>(compressed.data());
 
                     if (m_interface->cancelled)
                     {
@@ -3410,10 +3422,6 @@ namespace
 
                     do
                     {
-                        if (stream.total_out >= buffer.size)
-                        {
-                        }
-
                         stream.avail_out = buffer.size - stream.total_out;
                         stream.next_out = buffer.address + stream.total_out;
 
@@ -3426,6 +3434,16 @@ namespace
                         }
                     }
                     while (stream.avail_in > 0);
+
+                    /*
+                    printLine(Print::Info, "idat: {}, total_out: {}, as lines: {}, leftover: {}",
+                        compressed.size(),
+                        stream.total_out, 
+                        stream.total_out / bytes_per_line, 
+                        stream.total_out % bytes_per_line);
+                    */
+
+                    compressed.resize(0);
                 }
 
                 ret = inflateEnd(&stream);
