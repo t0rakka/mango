@@ -3361,6 +3361,11 @@ namespace
                 compressed.append(data);
             }
 
+            if (m_interface->cancelled)
+            {
+                return status;
+            }
+
             CompressionStatus result = decompress(buffer, compressed);
             if (!result)
             {
@@ -3370,6 +3375,11 @@ namespace
             }
 
             printLine(Print::Info, "  output bytes: {}", result.size);
+
+            if (m_interface->cancelled)
+            {
+                return status;
+            }
 
             // process image
             if (!is_inline_process)
