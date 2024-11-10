@@ -86,7 +86,6 @@ namespace mango::image
 
         bool simd = true;
         bool multithread = true;
-        bool icc = false; // apply ICC profile
     };
 
     struct ImageDecodeRect
