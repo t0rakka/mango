@@ -2028,9 +2028,6 @@ namespace
         // IDAT
         std::vector<ConstMemory> m_idat;
 
-        // fDAT
-        std::vector<ConstMemory> m_fdat;
-
         // CgBI
         bool m_iphoneOptimized = false; // Apple's proprietary iphone optimized pngcrush
 
@@ -2534,7 +2531,8 @@ namespace
         printLine(Print::Info, "  Sequence: {}", sequence_number);
         MANGO_UNREFERENCED(sequence_number);
 
-        m_fdat.emplace_back(p, size);
+        // we can simply treat fdat like idat
+        m_idat.emplace_back(p, size);
     }
 
     void ParserPNG::read_iCCP(BigEndianConstPointer p, u32 size)
@@ -3111,12 +3109,11 @@ namespace
         m_decode_target = dest;
 
         m_idat.clear();
-        m_fdat.clear();
         m_idot_index = 0;
 
         parse();
 
-        if (m_idat.empty() && m_fdat.empty() && m_parallel_segments.empty())
+        if (m_idat.empty() && m_parallel_segments.empty())
         {
             status.setError("No compressed data.");
             return status;
@@ -3383,51 +3380,112 @@ namespace
 
             // ----------------------------------------------------------------------
 
-            // TODO: decompress IDAT/fDAT at a time and do updates progressively
-            Buffer compressed;
-
-            for (auto data : m_idat)
+            if (m_interface->callback)
             {
-                compressed.append(data);
+                z_stream stream;
+
+                stream.zalloc = Z_NULL;
+                stream.zfree = Z_NULL;
+                stream.opaque = Z_NULL;
+                stream.avail_in = 0;
+                stream.next_in = Z_NULL;
+
+                int ret = inflateInit(&stream);
+                if (ret != Z_OK)
+                {
+                    status.setError("inflateInit failed.");
+                    return status;
+                }
+
+                for (auto data : m_idat)
+                {
+                    stream.avail_in = data.size;
+                    stream.next_in = const_cast<u8*>(data.address);
+
+                    if (m_interface->cancelled)
+                    {
+                        ret = inflateEnd(&stream);
+                        return status;
+                    }
+
+                    do
+                    {
+                        if (stream.total_out >= buffer.size)
+                        {
+                        }
+
+                        stream.avail_out = buffer.size - stream.total_out;
+                        stream.next_out = buffer.address + stream.total_out;
+
+                        ret = inflate(&stream, Z_NO_FLUSH);
+                        if (ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR || ret == Z_MEM_ERROR)
+                        {
+                            inflateEnd(&stream);
+                            status.setError("inflate failed.");
+                            return status;
+                        }
+                    }
+                    while (stream.avail_in > 0);
+                }
+
+                ret = inflateEnd(&stream);
+                if (ret != Z_OK && ret != Z_STREAM_END)
+                {
+                    status.setError("inflateEnd failed.");
+                    return status;
+                }
+
+                printLine(Print::Info, "  output bytes: {}", stream.total_out);
+
+                if (m_interface->cancelled)
+                {
+                    return status;
+                }
+
+                // process image
+                if (!is_inline_process)
+                {
+                    process_image(target, buffer, multithread);
+                }
             }
-
-            for (auto data : m_fdat)
+            else
             {
-                compressed.append(data);
-            }
+                Buffer compressed;
 
-            // ----------------------------------------------------------------------
+                for (auto data : m_idat)
+                {
+                    compressed.append(data);
+                }
 
-            if (m_interface->cancelled)
-            {
-                return status;
-            }
+                if (m_interface->cancelled)
+                {
+                    return status;
+                }
 
-            // Apple uses: raw deflate format
-            // png standard uses: zlib frame format
-            auto decompress = m_iphoneOptimized ?
-                deflate::decompress :
-                deflate_zlib::decompress;
+                // Apple uses: raw deflate format
+                // png standard uses: zlib frame format
+                auto decompress = m_iphoneOptimized ? deflate::decompress : deflate_zlib::decompress;
 
-            CompressionStatus result = decompress(buffer, compressed);
-            if (!result)
-            {
-                //printLine(Print::Info, "  {}", result.info);
-                status.setError(result.info);
-                return status;
-            }
+                CompressionStatus result = decompress(buffer, compressed);
+                if (!result)
+                {
+                    //printLine(Print::Info, "  {}", result.info);
+                    status.setError(result.info);
+                    return status;
+                }
 
-            printLine(Print::Info, "  output bytes: {}", result.size);
+                printLine(Print::Info, "  output bytes: {}", result.size);
 
-            if (m_interface->cancelled)
-            {
-                return status;
-            }
+                if (m_interface->cancelled)
+                {
+                    return status;
+                }
 
-            // process image
-            if (!is_inline_process)
-            {
-                process_image(target, buffer, multithread);
+                // process image
+                if (!is_inline_process)
+                {
+                    process_image(target, buffer, multithread);
+                }
             }
         }
 
