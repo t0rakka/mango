@@ -3602,7 +3602,7 @@ namespace
 
                 auto decompress = deflate::decompress;
 
-                CompressionStatus result = decompress(buffer, compressed);
+                CompressionStatus result = decompress(buffer, memory);
                 if (!result)
                 {
                     //printLine(Print::Info, "  {}", result.info);
