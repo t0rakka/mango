@@ -2998,6 +2998,7 @@ namespace
         rect.y = y0;
         rect.width = target.width;
         rect.height = y1 - y0;
+        rect.progress = float(rect.height) / target.height;
 
         if (m_decode_target.image != target.image)
         {
@@ -3049,6 +3050,7 @@ namespace
             rect.y = 0;
             rect.width = target.width;
             rect.height = target.height;
+            rect.progress = 1.0f;
 
             if (m_decode_target.image != target.image)
             {

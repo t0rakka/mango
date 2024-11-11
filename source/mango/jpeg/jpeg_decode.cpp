@@ -1838,6 +1838,7 @@ namespace mango::image::jpeg
             rect.y = 0;
             rect.width = width;
             rect.height = height;
+            rect.progress = 1.0f;
 
             blit_and_update(rect, true);
         }
@@ -2085,6 +2086,7 @@ namespace mango::image::jpeg
                 rect.y = y0 * yblock;
                 rect.width = width;
                 rect.height = std::min(height, y1 * yblock) - y0 * yblock;
+                rect.progress = float(rect.height) / height;
 
                 blit_and_update(rect);
             }
@@ -2216,6 +2218,7 @@ namespace mango::image::jpeg
                     rect.y = y0 * yblock;
                     rect.width = width;
                     rect.height = std::min(height, y1 * yblock) - y0 * yblock;
+                    rect.progress = float(rect.height) / height;
 
                     blit_and_update(rect);
                 });
@@ -2315,6 +2318,7 @@ namespace mango::image::jpeg
                     rect.y = y0 * yblock;
                     rect.width = width;
                     rect.height = std::min(height, y1 * yblock) - y0 * yblock;
+                    rect.progress = float(rect.height) / height;
 
                     blit_and_update(rect);
                 }, p);
@@ -2701,6 +2705,7 @@ namespace mango::image::jpeg
         rect.y = y0 * yblock;
         rect.width = width;
         rect.height = std::min(height, y1 * yblock) - y0 * yblock;
+        rect.progress = float(rect.height) / height;
 
         blit_and_update(rect);
     }

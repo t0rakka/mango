@@ -94,6 +94,7 @@ namespace mango::image
         int y;
         int width;
         int height;
+        float progress;
     };
 
     using ImageDecodeCallback = std::function<void(const ImageDecodeRect& rect)>;

@@ -25,10 +25,16 @@ void test(const char* filename, int cancel_ms)
 
     u64 time0 = Time::ms();
 
-    auto future = decoder.launch([] (const ImageDecodeRect& rect)
+    float progress = 0.0f;
+    std::mutex mutex;
+
+    auto future = decoder.launch([&mutex, &progress] (const ImageDecodeRect& rect)
     {
-        printLine("[+] Update: [{} x {}] .. ({}, {})",
-            rect.width, rect.height, rect.x, rect.y);
+        std::lock_guard lock(mutex);
+        progress += rect.progress;
+        float percent = std::ceil(progress * 1000.0f) / 10.0f;
+        printLine("[+] Update: [{:>5} x {:<5}] ({:>5}, {:>5} )  {:6.1f} %",
+            rect.width, rect.height, rect.x, rect.y, percent);
     }, bitmap);
 
     if (cancel_ms >= 0)
