@@ -32,7 +32,7 @@ void test(const char* filename, int cancel_ms)
     {
         std::lock_guard lock(mutex);
         progress += rect.progress;
-        float percent = std::ceil(progress * 1000.0f) / 10.0f;
+        float percent = std::round(progress * 1000.0f) / 10.0f;
         printLine("[+] Update: [{:>5} x {:<5}] ({:>5}, {:>5} )  {:6.1f} %",
             rect.width, rect.height, rect.x, rect.y, percent);
     }, bitmap);
