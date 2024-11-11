@@ -3201,7 +3201,15 @@ namespace
             ConcurrentQueue q("png:decode");
 
             u32 y = 0;
-            auto decompress = deflate_zlib::decompress;
+
+            // skip zlib header
+            size_t first = 2;
+
+#ifdef MANGO_ENABLE_ISAL__disabled_the_deflate_is_slightly_faster
+            auto decompress = getCompressor(Compressor::ISAL).decompress;
+#else
+            auto decompress = getCompressor(Compressor::DEFLATE).decompress;
+#endif
 
             for (ConstMemory memory : m_parallel_segments)
             {
@@ -3210,6 +3218,9 @@ namespace
                     q.cancel();
                     break;
                 }
+
+                memory = memory.slice(first, memory.size - first);
+                first = 0;
 
                 int h = std::min(m_parallel_height, m_height - y);
 
@@ -3244,12 +3255,6 @@ namespace
 
                     process_range(target, buffer, y, y + h);
                 });
-
-#ifdef MANGO_ENABLE_ISAL__disabled
-                decompress = getCompressor(Compressor::ISAL).decompress;
-#else
-                decompress = deflate::decompress;
-#endif
 
                 y += m_parallel_height;
             }
@@ -3322,11 +3327,14 @@ namespace
                 return result.size;
             });
 
-            // Apple uses raw deflate format
-            // png standard uses zlib frame format
-            auto decompress = m_iphoneOptimized ?
-                deflate::decompress :
-                deflate_zlib::decompress;
+            if (!m_iphoneOptimized)
+            {
+                // skip zlib header
+                top_memory = top_memory.slice(2, top_memory.size - 2);
+            }
+
+            auto decompress = deflate::decompress;
+
             CompressionStatus result = decompress(top_buffer, top_memory);
 
             size_t bytes_out_top = result.size;
@@ -3374,6 +3382,115 @@ namespace
 
             if (m_interface->callback)
             {
+#ifdef MANGO_ENABLE_ISAL
+
+                inflate_state state;
+                isal_inflate_init(&state);
+
+                // skip zlib header
+                size_t first = 2;
+
+                Buffer compressed;
+
+                const size_t lastIndex = m_idat.size() - 1;
+                const size_t packetSize = 0x20000;
+
+                int y0 = 0;
+
+                for (size_t i = 0; i < m_idat.size(); ++i)
+                {
+                    compressed.append(m_idat[i]);
+
+                    // decompress only when enough data or last IDAT
+                    if (compressed.size() < packetSize && i < lastIndex)
+                    {
+                        continue;
+                    }
+
+                    state.next_in = const_cast<u8*>(compressed.data() + first);
+                    state.avail_in = u32(compressed.size() - first);
+                    first = 0;
+
+                    if (m_interface->cancelled)
+                    {
+                        // TODO: cleanup
+                        return status;
+                    }
+
+                    state.next_out = buffer.address + state.total_out;
+                    state.avail_out = u32(buffer.size - state.total_out);
+
+                    int s = isal_inflate(&state);
+
+                    const char* error = nullptr;
+                    switch (s)
+                    {
+                        case ISAL_DECOMP_OK:
+                            break;
+                        case ISAL_END_INPUT:
+                            error = "ISAL_END_INPUT.";
+                            break;
+                        case ISAL_NEED_DICT:
+                            error = "ISAL_NEED_DICT.";
+                            break;
+                        case ISAL_OUT_OVERFLOW:
+                            error = "ISAL_OUT_OVERFLOW.";
+                            break;
+                        case ISAL_INVALID_BLOCK:
+                            error = "ISAL_INVALID_BLOCK.";
+                            break;
+                        case ISAL_INVALID_SYMBOL:
+                            error = "ISAL_INVALID_SYMBOL.";
+                            break;
+                        case ISAL_INVALID_LOOKBACK:
+                            error = "ISAL_INVALID_LOOKBACK.";
+                            break;
+                        case ISAL_INVALID_WRAPPER:
+                            error = "ISAL_INVALID_WRAPPER.";
+                            break;
+                        case ISAL_UNSUPPORTED_METHOD:
+                            error = "ISAL_UNSUPPORTED_METHOD.";
+                            break;
+                        case ISAL_INCORRECT_CHECKSUM:
+                            error = "ISAL_INCORRECT_CHECKSUM.";
+                            break;
+                        default:
+                            error = "UNDEFINED.";
+                            break;
+                    }
+
+                    if (error)
+                    {
+                        status.setError(error);
+                        return status;
+                    }
+
+                    if (!m_interlace)
+                    {
+                        int y1 = state.total_out / bytes_per_line;
+                        process_range(target, buffer.address + bytes_per_line * y0, y0, y1);
+                        y0 = y1;
+                    }
+
+                    compressed.resize(0);
+                }
+   
+
+                printLine(Print::Info, "  output bytes: {}", state.total_out);
+
+                if (m_interface->cancelled)
+                {
+                    return status;
+                }
+
+                // process image
+                if (m_interlace)
+                {
+                    process_image(target, buffer, multithread);
+                }
+
+#else
+
                 z_stream stream;
 
                 stream.zalloc = Z_NULL;
@@ -3430,14 +3547,6 @@ namespace
                     }
                     while (stream.avail_in > 0);
 
-                    /*
-                    printLine(Print::Info, "idat: {}, total_out: {}, as lines: {}, leftover: {}",
-                        compressed.size(),
-                        stream.total_out, 
-                        stream.total_out / bytes_per_line, 
-                        stream.total_out % bytes_per_line);
-                    */
-
                     if (!m_interlace)
                     {
                         int y1 = stream.total_out / bytes_per_line;
@@ -3467,6 +3576,7 @@ namespace
                 {
                     process_image(target, buffer, multithread);
                 }
+#endif
             }
             else
             {
@@ -3482,9 +3592,15 @@ namespace
                     return status;
                 }
 
-                // Apple uses: raw deflate format
-                // png standard uses: zlib frame format
-                auto decompress = m_iphoneOptimized ? deflate::decompress : deflate_zlib::decompress;
+                ConstMemory memory = compressed;
+
+                if (!m_iphoneOptimized)
+                {
+                    // skip zlib header
+                    memory = memory.slice(2, memory.size - 2);
+                }
+
+                auto decompress = deflate::decompress;
 
                 CompressionStatus result = decompress(buffer, compressed);
                 if (!result)
