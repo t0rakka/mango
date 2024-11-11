@@ -1441,16 +1441,18 @@ namespace mango::image::jpeg
 
     const u8* Parser::seekRestartInterval(const u8* p) const
     {
-        // seek next restart marker
-        p = seekMarker(p, decodeState.buffer.end);
-
-        if (p < decodeState.buffer.end)
+        while (p < decodeState.buffer.end)
         {
+            // seek next marker
+            p = seekMarker(p, decodeState.buffer.end);
             if (isRestartMarker(p))
             {
                 // skip restart marker
                 p += 2;
+                return p;
             }
+
+            p += 2;
         }
 
         return p;
@@ -2037,9 +2039,10 @@ namespace mango::image::jpeg
 
             AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
 
-            const u8* p = decodeState.buffer.ptr;
-
             u8* image = m_surface->image;
+
+            int restart_counter = 0;
+            const u8* p = decodeState.buffer.ptr;
 
             for (int scan = 0; scan < ymcu; scan += N)
             {
@@ -2053,9 +2056,6 @@ namespace mango::image::jpeg
 
                 for (int y = y0; y < y1; ++y)
                 {
-                    DecodeState state = decodeState;
-                    state.buffer.ptr = p;
-
                     const int xmcu_last = xmcu - 1;
                     const int ymcu_last = ymcu - 1;
 
@@ -2064,22 +2064,27 @@ namespace mango::image::jpeg
                     const int xblock_last = xclip ? xclip : xblock;
                     const int yblock_last = yclip ? yclip : yblock;
 
+                    u8* dest = image + y * ystride;
+
                     for (int x = 0; x < xmcu; ++x)
                     {
-                        state.decode(data, &state);
+                        if (++restart_counter == restartInterval)
+                        {
+                            decodeState.restart();
+                            restart_counter = 0;
 
-                        u8* dest = image + y * ystride + x * xstride;
+                            p = seekRestartInterval(std::max(p, decodeState.buffer.ptr - 16));
+                            decodeState.buffer.ptr = p;
+                        }
+
+                        decodeState.decode(data, &decodeState);
 
                         int width  = x == xmcu_last ? xblock_last : xblock;
                         int height = y == ymcu_last ? yblock_last : yblock;
 
                         process_and_clip(dest, stride, data, width, height);
+                        dest += xstride;
                     }
-
-                    p = std::max(p, state.buffer.ptr - 16);
-                    p = seekRestartInterval(p);
-                    if (p >= state.buffer.end)
-                        break;
                 }
 
                 ImageDecodeRect rect;
@@ -2092,6 +2097,8 @@ namespace mango::image::jpeg
                 blit_and_update(rect);
             }
 
+            // update parser pointer
+            p = seekMarker(decodeState.buffer.ptr - 12, decodeState.buffer.end);
             decodeState.buffer.ptr = p;
         }
         else
@@ -2127,6 +2134,10 @@ namespace mango::image::jpeg
             }
 
             aligned_free(data);
+
+            // update parser pointer
+            const u8* p = seekMarker(decodeState.buffer.ptr - 12, decodeState.buffer.end);
+            decodeState.buffer.ptr = p;
         }
     }
 
@@ -2215,6 +2226,7 @@ namespace mango::image::jpeg
                 p = memory.address + offsets[y1 - 1];
             }
 
+            // update parser pointer
             decodeState.buffer.ptr = p;
         }
         else if (restartInterval)
@@ -2222,6 +2234,14 @@ namespace mango::image::jpeg
             // ---------------------------------------------------------------
             // standard jpeg with DRI marker present
             // ---------------------------------------------------------------
+
+            if (restartInterval < xmcu || restartInterval % xmcu)
+            {
+                // restart markers are in middle of MCU scan which is against the specification
+                // we can still handle this in sequential code
+                decodeSequentialST();
+                return;
+            }
 
             const u8* p = decodeState.buffer.ptr;
 
@@ -2301,6 +2321,8 @@ namespace mango::image::jpeg
                 }
             }
 
+            // update parser pointer
+            p = seekMarker(p - 12, decodeState.buffer.end);
             decodeState.buffer.ptr = p;
         }
         else
@@ -2335,10 +2357,18 @@ namespace mango::image::jpeg
                 // enqueue task
                 queue.enqueue([=]
                 {
-                    process_range(y0, y1, data);
+                    if (!m_interface->cancelled)
+                    {
+                        process_range(y0, y1, data);
+                    }
+
                     aligned_free(aligned_ptr);
                 });
             }
+
+            // update parser pointer
+            const u8* p = seekMarker(decodeState.buffer.ptr - 12, decodeState.buffer.end);
+            decodeState.buffer.ptr = p;
         }
     }
 
