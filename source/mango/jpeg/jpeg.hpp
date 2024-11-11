@@ -415,7 +415,6 @@ namespace mango::image::jpeg
 
         bool isJPEG(ConstMemory memory) const;
 
-        const u8* seekRestartInterval(const u8* p) const;
         const u8* stepMarker(const u8* p, const u8* end) const;
         const u8* seekMarker(const u8* p, const u8* end) const;
         const u8* processSOS(const u8* p, const u8* end);

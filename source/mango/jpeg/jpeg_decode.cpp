@@ -1439,25 +1439,6 @@ namespace mango::image::jpeg
         }
     }
 
-    const u8* Parser::seekRestartInterval(const u8* p) const
-    {
-        while (p < decodeState.buffer.end)
-        {
-            // seek next marker
-            p = seekMarker(p, decodeState.buffer.end);
-            if (isRestartMarker(p))
-            {
-                // skip restart marker
-                p += 2;
-                return p;
-            }
-
-            p += 2;
-        }
-
-        return p;
-    }
-
     bool Parser::handleRestart()
     {
         if (restartInterval > 0 && !--restartCounter)
@@ -2042,7 +2023,6 @@ namespace mango::image::jpeg
             u8* image = m_surface->image;
 
             int restart_counter = 0;
-            const u8* p = decodeState.buffer.ptr;
 
             for (int scan = 0; scan < ymcu; scan += N)
             {
@@ -2068,15 +2048,6 @@ namespace mango::image::jpeg
 
                     for (int x = 0; x < xmcu; ++x)
                     {
-                        if (++restart_counter == restartInterval)
-                        {
-                            decodeState.restart();
-                            restart_counter = 0;
-
-                            p = seekRestartInterval(std::max(p, decodeState.buffer.ptr - 16));
-                            decodeState.buffer.ptr = p;
-                        }
-
                         decodeState.decode(data, &decodeState);
 
                         int width  = x == xmcu_last ? xblock_last : xblock;
@@ -2084,6 +2055,27 @@ namespace mango::image::jpeg
 
                         process_and_clip(dest, stride, data, width, height);
                         dest += xstride;
+
+                        if (++restart_counter == restartInterval)
+                        {
+                            decodeState.restart();
+                            restart_counter = 0;
+
+                            const u8* p = decodeState.buffer.ptr;
+                            p = seekMarker(p, decodeState.buffer.end);
+                            if (isRestartMarker(p))
+                            {
+                                p += 2;
+                            }
+
+                            if (p >= decodeState.buffer.end)
+                            {
+                                // out of data
+                                break;
+                            }
+
+                            decodeState.buffer.ptr = p;
+                        }
                     }
                 }
 
@@ -2098,7 +2090,7 @@ namespace mango::image::jpeg
             }
 
             // update parser pointer
-            p = seekMarker(decodeState.buffer.ptr - 12, decodeState.buffer.end);
+            const u8* p = seekMarker(decodeState.buffer.ptr - 12, decodeState.buffer.end);
             decodeState.buffer.ptr = p;
         }
         else
@@ -2128,6 +2120,12 @@ namespace mango::image::jpeg
                 for (int i = 0; i < count; ++i)
                 {
                     decodeState.decode(data + i * mcu_data_size, &decodeState);
+                }
+
+                if (decodeState.buffer.ptr >= decodeState.buffer.end)
+                {
+                    // out of data
+                    break;
                 }
 
                 process_range(y0, y1, data);
@@ -2298,10 +2296,17 @@ namespace mango::image::jpeg
                             process_and_clip(dest, stride, data, width, height);
                         }
 
-                        p = std::max(p, state.buffer.ptr - 16);
-                        p = seekRestartInterval(p);
+                        p = seekMarker(decodeState.buffer.ptr, decodeState.buffer.end);
+                        if (isRestartMarker(p))
+                        {
+                            p += 2;
+                        }
+
                         if (p >= state.buffer.end)
-                            break;
+                        {
+                            // out of data
+                            return;
+                        }
                     }
 
                     ImageDecodeRect rect;
@@ -2317,7 +2322,18 @@ namespace mango::image::jpeg
                 // skip N restart intervals (handled by the task queue)
                 for (int i = y0; i < y1; ++i)
                 {
-                    p = seekRestartInterval(p);
+                    p = seekMarker(p, decodeState.buffer.end);
+                    if (isRestartMarker(p))
+                    {
+                        p += 2;
+                    }
+
+                }
+
+                if (p >= decodeState.buffer.end)
+                {
+                    // out of data
+                    break;
                 }
             }
 
@@ -2454,7 +2470,11 @@ namespace mango::image::jpeg
                     }
                 });
 
-                p = seekRestartInterval(p);
+                p = seekMarker(decodeState.buffer.ptr, decodeState.buffer.end);
+                if (isRestartMarker(p))
+                {
+                    p += 2;
+                }
             }
 
             decodeState.buffer.ptr = p;
@@ -2542,7 +2562,11 @@ namespace mango::image::jpeg
                     }
                 });
 
-                p = seekRestartInterval(p);
+                p = seekMarker(decodeState.buffer.ptr, decodeState.buffer.end);
+                if (isRestartMarker(p))
+                {
+                    p += 2;
+                }
             }
 
             decodeState.buffer.ptr = p;
