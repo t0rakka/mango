@@ -97,6 +97,7 @@ namespace mango
     bool isEnable(Print target);
 
     template <typename... T>
+    static inline
     void printLine(Print target, T... s)
     {
         if (isEnable(target))
@@ -107,6 +108,7 @@ namespace mango
     }
 
     template <typename... T>
+    static inline
     void printLine(Print target, int indent, T... s)
     {
         if (isEnable(target))
@@ -118,12 +120,14 @@ namespace mango
     }
 
     template <typename... T>
+    static inline
     void printLine(T... s)
     {
         printLine(Print::Verbose, std::forward<T>(s)...);
     }
 
     template <typename... T>
+    static inline
     void printLine(int indent, T... s)
     {
         printLine(Print::Verbose, indent, std::forward<T>(s)...);
