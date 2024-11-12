@@ -346,7 +346,7 @@ size_t toojpeg_save(const char* filename, const Surface& surface)
 #define WUFFS_CONFIG__MODULE__BASE
 #define WUFFS_CONFIG__MODULE__JPEG
 
-#include "../png_benchmark/wuffs/wuffs-unsupported-snapshot.c"
+#include "../png_benchmark/wuffs/wuffs-v0.4.c"
 
 class WuffsCallbacks : public wuffs_aux::DecodeImageCallbacks
 {

@@ -563,7 +563,7 @@ size_t save_fpnge(const Bitmap& bitmap)
 #define WUFFS_CONFIG__MODULE__PNG
 #define WUFFS_CONFIG__MODULE__ZLIB
 
-#include "wuffs/wuffs-unsupported-snapshot.c"
+#include "wuffs/wuffs-v0.4.c"
 
 class WuffsCallbacks : public wuffs_aux::DecodeImageCallbacks
 {
