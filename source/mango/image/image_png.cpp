@@ -3108,8 +3108,6 @@ namespace
     {
         ImageDecodeStatus status;
 
-        m_decode_target = dest;
-
         m_idat.clear();
         m_idot_index = 0;
 
@@ -3150,19 +3148,19 @@ namespace
 
         // default decoding target
         Surface target(dest);
+        m_decode_target = dest;
 
         status.direct = target.width >= m_width &&
                         target.height >= m_height &&
                         target.format == m_header.format;
 
         std::unique_ptr<Bitmap> temp;
-        std::unique_ptr<Bitmap> animation;
 
         if (m_number_of_frames > 0)
         {
-            animation = std::make_unique<Bitmap>(m_frame.width, m_frame.height, m_header.format);
-            target = *animation;
-            m_decode_target = *animation;
+            temp = std::make_unique<Bitmap>(m_frame.width, m_frame.height, m_header.format);
+            target = *temp;
+            m_decode_target = *temp;
 
             // compute frame indices (for external users)
             m_current_frame_index = m_next_frame_index++;
@@ -3629,13 +3627,13 @@ namespace
 
         if (m_number_of_frames > 0)
         {
-            TemporaryBitmap bitmap(dest, animation->format);
-            Surface area(bitmap, m_frame.xoffset, m_frame.yoffset, m_frame.width, m_frame.height);
-            blend(area, *animation, ptr_palette);
+            Surface area(dest, m_frame.xoffset, m_frame.yoffset, m_frame.width, m_frame.height);
+            TemporaryBitmap bitmap(area, m_header.format);
+            blend(bitmap, *temp, ptr_palette);
 
-            if (dest.format != animation->format)
+            if (dest.format != bitmap.format)
             {
-                dest.blit(0, 0, bitmap);
+                dest.blit(m_frame.xoffset, m_frame.yoffset, bitmap);
             }
         }
 
