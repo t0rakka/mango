@@ -2299,7 +2299,7 @@ namespace mango::image::jpeg
                             process_and_clip(dest, stride, data, width, height);
                         }
 
-                        p = seekMarker(decodeState.buffer.ptr, decodeState.buffer.end);
+                        p = seekMarker(state.buffer.ptr, state.buffer.end);
                         if (isRestartMarker(p))
                         {
                             p += 2;
