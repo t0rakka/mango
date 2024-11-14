@@ -3521,7 +3521,7 @@ namespace
                         continue;
                     }
 
-                    stream.avail_in = compressed.size();
+                    stream.avail_in = uInt(compressed.size());
                     stream.next_in = const_cast<u8*>(compressed.data());
 
                     if (m_interface->cancelled)
@@ -3532,7 +3532,7 @@ namespace
 
                     do
                     {
-                        stream.avail_out = buffer.size - stream.total_out;
+                        stream.avail_out = uInt(buffer.size - stream.total_out);
                         stream.next_out = buffer.address + stream.total_out;
 
                         ret = inflate(&stream, Z_NO_FLUSH);
@@ -3547,7 +3547,7 @@ namespace
 
                     if (!m_interlace)
                     {
-                        int y1 = stream.total_out / bytes_per_line;
+                        int y1 = int(stream.total_out / bytes_per_line);
                         process_range(target, buffer.address + bytes_per_line * y0, y0, y1);
                         y0 = y1;
                     }
