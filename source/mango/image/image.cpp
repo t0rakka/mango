@@ -322,7 +322,7 @@ namespace mango::image
         return status;
     }
 
-    std::future<ImageDecodeStatus> ImageDecoder::launch(ImageDecodeCallback callback, const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
+    ImageDecodeFuture ImageDecoder::launch(ImageDecodeCallback callback, const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
     {
         if (m_interface)
         {

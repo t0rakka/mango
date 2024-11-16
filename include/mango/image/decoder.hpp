@@ -98,6 +98,7 @@ namespace mango::image
     };
 
     using ImageDecodeCallback = std::function<void(const ImageDecodeRect& rect)>;
+    using ImageDecodeFuture = std::future<ImageDecodeStatus>;
 
     class ImageDecodeInterface : protected NonCopyable
     {
@@ -128,7 +129,7 @@ namespace mango::image
 
         ImageHeader header();
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
-        std::future<ImageDecodeStatus> launch(ImageDecodeCallback callback, const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
+        ImageDecodeFuture launch(ImageDecodeCallback callback, const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
         void cancel();
 
         ConstMemory memory(int level, int depth, int face);
