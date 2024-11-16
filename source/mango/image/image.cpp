@@ -342,6 +342,19 @@ namespace mango::image
             {
                 Trace trace("ImageDecoder", interface->name);
                 status = interface->decode(dest, options, level, depth, face);
+
+                if (!interface->async)
+                {
+                    ImageDecodeRect rect;
+
+                    rect.x = 0;
+                    rect.y = 0;
+                    rect.width = interface->header.width;
+                    rect.height = interface->header.height;
+                    rect.progress = 1.0f;
+
+                    interface->callback(rect);
+                }
             }
             else
             {
