@@ -382,7 +382,7 @@ namespace mango
 
                 task();
 
-                std::unique_lock<std::mutex> wait_lock(m_wait_mutex);
+                std::lock_guard<std::mutex> wait_lock(m_wait_mutex);
                 --m_task_counter;
             }
             else
@@ -395,7 +395,7 @@ namespace mango
 
     void SerialQueue::cancel()
     {
-        std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
+        std::lock_guard<std::mutex> queue_lock(m_queue_mutex);
         m_task_counter -= u32(m_task_queue.size());
         m_task_queue.clear();
     }
@@ -494,7 +494,7 @@ namespace mango
                 task->func();
             }
 
-            std::unique_lock<std::mutex> wait_lock(m_wait_mutex);
+            std::lock_guard<std::mutex> wait_lock(m_wait_mutex);
             if (!--m_ticket_counter)
             {
                 m_wait_condition.notify_one();
@@ -508,7 +508,7 @@ namespace mango
 
     TicketQueue::Ticket TicketQueue::acquire()
     {
-        std::unique_lock<std::mutex> wait_lock(m_wait_mutex);
+        std::lock_guard<std::mutex> wait_lock(m_wait_mutex);
         ++m_ticket_counter;
         Ticket ticket;
         m_queue->tasks.enqueue(ticket.task);
