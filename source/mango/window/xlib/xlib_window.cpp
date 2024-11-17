@@ -779,7 +779,7 @@ namespace mango
         Pixmap mask_pixmap = XCreatePixmapFromBitmapData(display, window,
             reinterpret_cast<char*>(alphaMask.image), width, height, 1, 0, 1);
 
-        // NOTE: This doesn't work with GNOME the icon must be set at window creation
+        // NOTE: This doesn't work with GNOME :(
         XWMHints* hints = XAllocWMHints();
         hints->flags       = IconPixmapHint | IconMaskHint;
         hints->icon_pixmap = icon_pixmap;
