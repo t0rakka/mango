@@ -4,6 +4,7 @@
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
+#include <mango/core/system.hpp> // printLine
 #include <mango/core/timer.hpp>
 #include "xlib_handle.hpp"
 
@@ -729,33 +730,35 @@ namespace mango
         const int width = std::min(256, surface.width);
         const int height = std::min(256, surface.height);
 
-        Bitmap bitmap(surface, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
+        TemporaryBitmap temp(surface, width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
 
-        int screen = DefaultScreen(m_handle->native.display);
-        int depth = DefaultDepth(m_handle->native.display, screen);
+        auto display = m_handle->native.display;
+        auto window = m_handle->native.window;
+        int screen = DefaultScreen(display);
+        int depth = DefaultDepth(display, screen);
 
-        XImage* icon = XCreateImage(m_handle->native.display, m_handle->x11_visual, depth, ZPixmap, 0,
-            reinterpret_cast<char*>(bitmap.image), width, height, 32, 0);
+        XImage* icon = XCreateImage(display, m_handle->x11_visual, depth, ZPixmap, 0,
+            reinterpret_cast<char*>(temp.image), width, height, 32, 0);
         if (!icon)
         {
             MANGO_EXCEPTION("[Window] XCreateImage() failed.");
         }
 
-        Pixmap icon_pixmap = XCreatePixmap(m_handle->native.display, RootWindow(m_handle->native.display, screen), width, height, depth);
+        Pixmap icon_pixmap = XCreatePixmap(display, RootWindow(display, screen), width, height, depth);
         if (!icon_pixmap)
         {
             MANGO_EXCEPTION("[Window] XCreatePixmap() failed.");
         }
 
         XGCValues values;
-        GC gc = XCreateGC(m_handle->native.display, icon_pixmap, 0, &values);
+        GC gc = XCreateGC(display, icon_pixmap, 0, &values);
         if (!gc)
         {
             MANGO_EXCEPTION("[Window] XCreateGC() failed.");
         }
 
-        XPutImage(m_handle->native.display, icon_pixmap, gc, icon, 0, 0, 0, 0, width, height);
-        XFreeGC(m_handle->native.display, gc);
+        XPutImage(display, icon_pixmap, gc, icon, 0, 0, 0, 0, width, height);
+        XFreeGC(display, gc);
 
         // convert alpha channel to mask
         size_t stride = (width + 7) / 8; // round to next multiple of 8
@@ -763,7 +766,7 @@ namespace mango
 
         for (int y = 0; y < height; ++y)
         {
-            u8* alpha = bitmap.image + y * bitmap.stride + 3;
+            u8* alpha = temp.image + y * temp.stride + 3;
             u8* dest = alphaMask.image + y * stride;
 
             for (int x = 0; x < width; ++x)
@@ -773,17 +776,18 @@ namespace mango
             }
         }
 
-        Pixmap mask_pixmap = XCreatePixmapFromBitmapData(m_handle->native.display, m_handle->native.window,
+        Pixmap mask_pixmap = XCreatePixmapFromBitmapData(display, window,
             reinterpret_cast<char*>(alphaMask.image), width, height, 1, 0, 1);
 
+        // NOTE: This doesn't work with GNOME the icon must be set at window creation
         XWMHints* hints = XAllocWMHints();
         hints->flags       = IconPixmapHint | IconMaskHint;
         hints->icon_pixmap = icon_pixmap;
         hints->icon_mask   = mask_pixmap;
-        XSetWMHints(m_handle->native.display, m_handle->native.window, hints);
+        XSetWMHints(display, window, hints);
         XFree(hints);
 
-        XFlush(m_handle->native.display);
+        XFlush(display);
 
         if (m_handle->x11_icon)
         {
