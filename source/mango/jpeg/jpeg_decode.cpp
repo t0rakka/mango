@@ -217,6 +217,13 @@ namespace mango::image::jpeg
             }
             else if (p[1])
             {
+                if (p[1] == 0xff)
+                {
+                    // workaround for ancient encoder using 0xff, 0xff as padding
+                    p += 2;
+                    continue;
+                }
+
                 // found a marker
                 return p;
             }
@@ -2236,7 +2243,8 @@ namespace mango::image::jpeg
             // standard jpeg with DRI marker present
             // ---------------------------------------------------------------
 
-            if (restartInterval < xmcu || restartInterval % xmcu)
+            //if (restartInterval < xmcu || restartInterval % xmcu)
+            if (restartInterval != xmcu)
             {
                 // restart markers are in middle of MCU scan which is against the specification
                 // we can still handle this in sequential code
@@ -2331,7 +2339,6 @@ namespace mango::image::jpeg
                     {
                         p += 2;
                     }
-
                 }
 
                 if (p >= decodeState.buffer.end)
