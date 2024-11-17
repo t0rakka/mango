@@ -344,7 +344,7 @@ namespace mango
         : tid(getThreadID())
         , name(name)
     {
-        std::unique_lock<std::mutex> lock(g_context.tracer.mutex);
+        std::lock_guard<std::mutex> lock(g_context.tracer.mutex);
         g_context.tracer.threads.push_back(*this);
     }
 
@@ -378,7 +378,7 @@ namespace mango
 
     void Tracer::start(Stream* stream)
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        std::lock_guard<std::mutex> lock(mutex);
 
         if (output)
         {
@@ -400,7 +400,7 @@ namespace mango
 
     void Tracer::stop()
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        std::lock_guard<std::mutex> lock(mutex);
 
         if (!output)
         {
@@ -440,7 +440,7 @@ namespace mango
 
     void Tracer::append(const Trace& trace)
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        std::lock_guard<std::mutex> lock(mutex);
         if (output)
         {
             traces.push_back(trace.data);

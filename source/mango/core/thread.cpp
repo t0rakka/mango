@@ -201,12 +201,12 @@ namespace mango
             {
                 auto time1 = high_resolution_clock::now();
                 auto elapsed = time1 - time0;
-                if (elapsed >= milliseconds(120))
+                if (elapsed >= milliseconds(60))
                 {
                     std::unique_lock<std::mutex> lock(m_queue_mutex);
-                    m_condition.wait_for(lock, milliseconds(120));
+                    m_condition.wait_for(lock, milliseconds(60));
                 }
-                else if (elapsed >= microseconds(3))
+                else if (elapsed >= microseconds(24))
                 {
                     std::this_thread::yield();
                 }
@@ -289,24 +289,32 @@ namespace mango
         : m_pool(ThreadPool::getInstance())
         , m_queue(&m_pool, "")
     {
+        // wake up one thread to be available instantly
+        m_pool.m_condition.notify_one();
     }
 
     ConcurrentQueue::ConcurrentQueue(const std::string& name)
         : m_pool(ThreadPool::getInstance())
         , m_queue(&m_pool, name)
     {
+        // wake up one thread to be available instantly
+        m_pool.m_condition.notify_one();
     }
 
     ConcurrentQueue::ConcurrentQueue(ThreadPool& pool)
         : m_pool(pool)
         , m_queue(&m_pool, "")
     {
+        // wake up one thread to be available instantly
+        m_pool.m_condition.notify_one();
     }
 
     ConcurrentQueue::ConcurrentQueue(ThreadPool& pool, const std::string& name)
         : m_pool(pool)
         , m_queue(&m_pool, name)
     {
+        // wake up one thread to be available instantly
+        m_pool.m_condition.notify_one();
     }
 
     ConcurrentQueue::~ConcurrentQueue()
@@ -374,7 +382,7 @@ namespace mango
 
                 task();
 
-                std::unique_lock<std::mutex> wait_lock(m_wait_mutex);
+                std::lock_guard<std::mutex> wait_lock(m_wait_mutex);
                 --m_task_counter;
             }
             else
@@ -387,7 +395,7 @@ namespace mango
 
     void SerialQueue::cancel()
     {
-        std::unique_lock<std::mutex> queue_lock(m_queue_mutex);
+        std::lock_guard<std::mutex> queue_lock(m_queue_mutex);
         m_task_counter -= u32(m_task_queue.size());
         m_task_queue.clear();
     }
@@ -486,7 +494,7 @@ namespace mango
                 task->func();
             }
 
-            std::unique_lock<std::mutex> wait_lock(m_wait_mutex);
+            std::lock_guard<std::mutex> wait_lock(m_wait_mutex);
             if (!--m_ticket_counter)
             {
                 m_wait_condition.notify_one();
@@ -500,7 +508,7 @@ namespace mango
 
     TicketQueue::Ticket TicketQueue::acquire()
     {
-        std::unique_lock<std::mutex> wait_lock(m_wait_mutex);
+        std::lock_guard<std::mutex> wait_lock(m_wait_mutex);
         ++m_ticket_counter;
         Ticket ticket;
         m_queue->tasks.enqueue(ticket.task);

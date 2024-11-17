@@ -252,7 +252,7 @@ namespace
     // ImageDecoderQOI
     // ------------------------------------------------------------
 
-    struct ImageDecoderQOI : ImageDecoderInterface
+    struct ImageDecoderQOI : ImageDecodeInterface
     {
         ConstMemory m_memory;
 
@@ -347,9 +347,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* create_decoder_qoi(ConstMemory memory)
+    ImageDecodeInterface* create_decoder_qoi(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new ImageDecoderQOI(memory);
+        ImageDecodeInterface* x = new ImageDecoderQOI(memory);
         return x;
     }
 
@@ -399,7 +399,7 @@ namespace
     static constexpr u32 TOI_HEADER_MAGIC = u32_mask('t', 'o', 'i', 'f');
     static constexpr u32 TOI_HEADER_SIZE = 16;
 
-    struct ImageDecoderTOI : ImageDecoderInterface
+    struct ImageDecoderTOI : ImageDecodeInterface
     {
         ConstMemory m_memory;
         u32 m_xtile;
@@ -509,9 +509,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* create_decoder_toi(ConstMemory memory)
+    ImageDecodeInterface* create_decoder_toi(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new ImageDecoderTOI(memory);
+        ImageDecodeInterface* x = new ImageDecoderTOI(memory);
         return x;
     }
 

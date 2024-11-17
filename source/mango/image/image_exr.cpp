@@ -2828,7 +2828,7 @@ namespace
     // ImageDecoderEXR
     // ------------------------------------------------------------
 
-    struct ImageDecoderEXR : ImageDecoderInterface
+    struct ImageDecoderEXR : ImageDecodeInterface
     {
         ContextEXR m_context;
 
@@ -2853,9 +2853,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecodeInterface* createInterface(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new ImageDecoderEXR(memory);
+        ImageDecodeInterface* x = new ImageDecoderEXR(memory);
         return x;
     }
 

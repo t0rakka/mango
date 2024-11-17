@@ -116,7 +116,7 @@ namespace
     // ImageDecoder
     // ------------------------------------------------------------
 
-    struct Interface : ImageDecoderInterface
+    struct Interface : ImageDecodeInterface
     {
         HeaderPKM m_pkm_header;
         ConstMemory m_data;
@@ -168,9 +168,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecodeInterface* createInterface(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new Interface(memory);
+        ImageDecodeInterface* x = new Interface(memory);
         return x;
     }
 

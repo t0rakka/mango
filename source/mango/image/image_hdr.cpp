@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <string_view>
@@ -8,6 +8,7 @@
 #include <mango/core/buffer.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
+#include <mango/math/vector.hpp>
 
 namespace
 {
@@ -210,9 +211,20 @@ namespace
 
         int width = 0;
         int height = 0;
-        float exposure = 1.0f;
         bool xflip = false;
         bool yflip = false;
+
+        float exposure = 1.0f;
+        float gamma = 1.0f;
+
+        struct Chromaticity
+        {
+            math::float32x2 red;
+            math::float32x2 green;
+            math::float32x2 blue;
+            math::float32x2 white;
+            bool enable = false;
+        } chromaticity;
 
         ImageHeader header;
 
@@ -222,9 +234,9 @@ namespace
             const u8* end = memory.end();
 
             std::string_view id = readline(data, end);
-            if (id != "#?RADIANCE")
+            if (id != "#?RADIANCE" && id != "#?RGBE")
             {
-                header.setError("[ImageDecoder.HDR] Incorrect radiance header.");
+                header.setError("[ImageDecoder.HDR] Incorrect radiance header ({}).", id);
                 return nullptr;
             }
 
@@ -258,6 +270,34 @@ namespace
                     }
 
                     exposure = float(std::atof(tokens[1].data()));
+                }
+                else if (tokens[1] == "GAMMA")
+                {
+                    if (tokens.size() != 2)
+                    {
+                        header.setError("[ImageDecoder.HDR] Incorrect radiance header (gamma).");
+                        return nullptr;
+                    }
+
+                    gamma = float(std::atof(tokens[1].data()));
+                }
+                else if (tokens[1] == "PRIMARIES")
+                {
+                    if (tokens.size() != 9)
+                    {
+                        header.setError("[ImageDecoder.HDR] Incorrect radiance header (primaries).");
+                        return nullptr;
+                    }
+
+                    chromaticity.red.x   = float(std::atof(tokens[1].data()));
+                    chromaticity.red.y   = float(std::atof(tokens[2].data()));
+                    chromaticity.green.x = float(std::atof(tokens[3].data()));
+                    chromaticity.green.y = float(std::atof(tokens[4].data()));
+                    chromaticity.blue.x  = float(std::atof(tokens[5].data()));
+                    chromaticity.blue.y  = float(std::atof(tokens[6].data()));
+                    chromaticity.white.x = float(std::atof(tokens[7].data()));
+                    chromaticity.white.y = float(std::atof(tokens[8].data()));
+                    chromaticity.enable  = true;
                 }
             }
 
@@ -406,7 +446,7 @@ namespace
     // ImageDecoder
     // ------------------------------------------------------------
 
-    struct Interface : ImageDecoderInterface
+    struct Interface : ImageDecodeInterface
     {
         HeaderRAD m_rad_header;
         const u8* m_data;
@@ -458,9 +498,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecodeInterface* createInterface(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new Interface(memory);
+        ImageDecodeInterface* x = new Interface(memory);
         return x;
     }
 

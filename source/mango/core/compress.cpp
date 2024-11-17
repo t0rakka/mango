@@ -1308,6 +1308,8 @@ namespace isal
         CompressionStatus status;
 
         int s = isal_deflate_stateless(&stream);
+
+        const char* error = nullptr;
         switch (s)
         {
             case COMP_OK:
@@ -1315,12 +1317,25 @@ namespace isal
                 break;
 
             case INVALID_FLUSH:
-            case ISAL_INVALID_LEVEL:
-            case ISAL_INVALID_LEVEL_BUF:
-            case STATELESS_OVERFLOW:
-            default:
-                status.setError("[isal] compression failed.");
+                error = "INVALID_FLUSH.";
                 break;
+            case ISAL_INVALID_LEVEL:
+                error = "ISAL_INVALID_LEVEL.";
+                break;
+            case ISAL_INVALID_LEVEL_BUF:
+                error = "ISAL_INVALID_LEVEL_BUF.";
+                break;
+            case STATELESS_OVERFLOW:
+                error = "STATELESS_OVERFLOW.";
+                break;
+            default:
+                error = "UNDEFINED.";
+                break;
+        }
+
+        if (error)
+        {
+            status.setError(error);
         }
 
         return status;
@@ -1340,6 +1355,8 @@ namespace isal
         CompressionStatus status;
 
         int s = isal_inflate_stateless(&state);
+
+        const char* error = nullptr;
         switch (s)
         {
             case ISAL_DECOMP_OK:
@@ -1347,17 +1364,40 @@ namespace isal
                 break;
 
             case ISAL_END_INPUT:
-            case ISAL_NEED_DICT:
-            case ISAL_OUT_OVERFLOW:
-            case ISAL_INVALID_BLOCK:
-            case ISAL_INVALID_SYMBOL:
-            case ISAL_INVALID_LOOKBACK:
-            case ISAL_INVALID_WRAPPER:
-            case ISAL_UNSUPPORTED_METHOD:
-            case ISAL_INCORRECT_CHECKSUM:
-            default:
-                status.setError("[isal] compression failed.");
+                error = "ISAL_END_INPUT.";
                 break;
+            case ISAL_NEED_DICT:
+                error = "ISAL_NEED_DICT.";
+                break;
+            case ISAL_OUT_OVERFLOW:
+                error = "ISAL_OUT_OVERFLOW.";
+                break;
+            case ISAL_INVALID_BLOCK:
+                error = "ISAL_INVALID_BLOCK.";
+                break;
+            case ISAL_INVALID_SYMBOL:
+                error = "ISAL_INVALID_SYMBOL.";
+                break;
+            case ISAL_INVALID_LOOKBACK:
+                error = "ISAL_INVALID_LOOKBACK.";
+                break;
+            case ISAL_INVALID_WRAPPER:
+                error = "ISAL_INVALID_WRAPPER.";
+                break;
+            case ISAL_UNSUPPORTED_METHOD:
+                error = "ISAL_UNSUPPORTED_METHOD.";
+                break;
+            case ISAL_INCORRECT_CHECKSUM:
+                error = "ISAL_INCORRECT_CHECKSUM.";
+                break;
+            default:
+                error = "UNDEFINED.";
+                break;
+        }
+
+        if (error)
+        {
+            status.setError(error);
         }
 
         return status;

@@ -5,6 +5,10 @@
 #pragma once
 
 #include <string>
+#include <thread>
+#include <atomic>
+#include <memory>
+#include <future>
 #include <mango/core/memory.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/image/format.hpp>
@@ -59,7 +63,7 @@ namespace mango::image
 
     struct ImageDecodeStatus : Status
     {
-        bool direct = false;
+        bool direct = false; // decoding doesn't use temporary storage
 
         // animation information
         // NOTE: we would love to simply return number of animation frames in the ImageHeader
@@ -82,19 +86,33 @@ namespace mango::image
 
         bool simd = true;
         bool multithread = true;
-        bool icc = false; // apply ICC profile
     };
 
-    class ImageDecoderInterface : protected NonCopyable
+    struct ImageDecodeRect
+    {
+        int x;
+        int y;
+        int width;
+        int height;
+        float progress;
+    };
+
+    using ImageDecodeCallback = std::function<void(const ImageDecodeRect& rect)>;
+    using ImageDecodeFuture = std::future<ImageDecodeStatus>;
+
+    class ImageDecodeInterface : protected NonCopyable
     {
     public:
+        bool async = false;
+        ImageDecodeCallback callback;
+        std::atomic<bool> cancelled { false };
         std::string name;
         ImageHeader header;
         ConstMemory icc;
         ConstMemory exif;
 
-        ImageDecoderInterface() = default;
-        virtual ~ImageDecoderInterface() = default;
+        ImageDecodeInterface() = default;
+        virtual ~ImageDecodeInterface() = default;
 
         virtual ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) = 0;
         virtual ConstMemory memory(int level, int depth, int face);
@@ -107,20 +125,24 @@ namespace mango::image
         ~ImageDecoder();
 
         bool isDecoder() const;
+        bool isAsyncDecoder() const;
+
         ImageHeader header();
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
+        ImageDecodeFuture launch(ImageDecodeCallback callback, const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
+        void cancel();
 
         ConstMemory memory(int level, int depth, int face);
         ConstMemory icc();
         ConstMemory exif();
 
-        using CreateDecoderFunc = ImageDecoderInterface* (*)(ConstMemory memory);
+        using CreateDecodeFunc = ImageDecodeInterface* (*)(ConstMemory memory);
 
     protected:
-        std::unique_ptr<ImageDecoderInterface> m_interface;
+        std::shared_ptr<ImageDecodeInterface> m_interface;
     };
 
-    void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension);
+    void registerImageDecoder(ImageDecoder::CreateDecodeFunc func, const std::string& extension);
     bool isImageDecoder(const std::string& extension);
 
 } // namespace mango::image

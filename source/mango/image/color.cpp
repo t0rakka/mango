@@ -62,25 +62,16 @@ namespace mango::image
             INTENT_PERCEPTUAL, cmsFLAGS_BLACKPOINTCOMPENSATION);
 
         const Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        TemporaryBitmap temp(target, format);
 
-        if (target.format == format)
+        for (int y = 0; y < temp.height; ++y)
         {
-            for (int y = 0; y < target.height; ++y)
-            {
-                u8* image = target.address<u8>(0, y);
-                cmsDoTransform(transform, image, image, target.width);
-            }
+            u8* image = temp.address<u8>(0, y);
+            cmsDoTransform(transform, image, image, temp.width);
         }
-        else
+
+        if (temp.image != target.image)
         {
-            Bitmap temp(target, format);
-
-            for (int y = 0; y < target.height; ++y)
-            {
-                u8* image = temp.address<u8>(0, y);
-                cmsDoTransform(transform, image, image, target.width);
-            }
-
             target.blit(0, 0, temp);
         }
     }

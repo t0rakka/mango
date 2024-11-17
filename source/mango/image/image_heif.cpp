@@ -18,7 +18,7 @@ namespace
     // ImageDecoder
     // ------------------------------------------------------------
 
-    struct Interface : ImageDecoderInterface
+    struct Interface : ImageDecodeInterface
     {
         heif_context* m_context = nullptr;
         heif_image_handle* m_image_handle = nullptr;
@@ -178,9 +178,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecodeInterface* createInterface(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new Interface(memory);
+        ImageDecodeInterface* x = new Interface(memory);
         return x;
     }
 

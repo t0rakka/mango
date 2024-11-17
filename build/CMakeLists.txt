@@ -6,7 +6,7 @@ PROJECT(mango CXX C ASM)
 # ------------------------------------------------------------------------------
 
 set(MANGO_VERSION_MAJOR 1)
-set(MANGO_VERSION_MINOR 4)
+set(MANGO_VERSION_MINOR 5)
 set(MANGO_VERSION_PATCH 0)
 set(MANGO_VERSION_STRING ${MANGO_VERSION_MAJOR}.${MANGO_VERSION_MINOR}.${MANGO_VERSION_PATCH})
 

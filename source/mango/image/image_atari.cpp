@@ -20,7 +20,7 @@ namespace
     // ImageDecoder
     // ------------------------------------------------------------
 
-    struct Interface : ImageDecoderInterface
+    struct Interface : ImageDecodeInterface
     {
         ConstMemory m_memory;
 
@@ -299,9 +299,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDEGAS(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceDEGAS(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceDEGAS(memory);
+        ImageDecodeInterface* x = new InterfaceDEGAS(memory);
         return x;
     }
 
@@ -456,9 +456,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceNEO(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceNEO(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceNEO(memory);
+        ImageDecodeInterface* x = new InterfaceNEO(memory);
         return x;
     }
 
@@ -724,9 +724,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceSPU(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceSPU(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceSPU(memory);
+        ImageDecodeInterface* x = new InterfaceSPU(memory);
         return x;
     }
 
@@ -1051,9 +1051,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceCA(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceCA(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceCA(memory);
+        ImageDecodeInterface* x = new InterfaceCA(memory);
         return x;
     }
 

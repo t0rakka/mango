@@ -140,7 +140,7 @@ namespace mango::image
     class ImageServer
     {
     protected:
-        std::map<std::string, ImageDecoder::CreateDecoderFunc> m_decoders;
+        std::map<std::string, ImageDecoder::CreateDecodeFunc> m_decoders;
         std::map<std::string, ImageEncoder::EncodeFunc> m_encoders;
 
     public:
@@ -193,7 +193,7 @@ namespace mango::image
         {
         }
 
-        void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension)
+        void registerImageDecoder(ImageDecoder::CreateDecodeFunc func, const std::string& extension)
         {
             m_decoders[toLower(extension)] = func;
         }
@@ -203,7 +203,7 @@ namespace mango::image
             m_encoders[toLower(extension)] = func;
         }
 
-        ImageDecoder::CreateDecoderFunc getImageDecoder(const std::string& extension) const
+        ImageDecoder::CreateDecodeFunc getImageDecoder(const std::string& extension) const
         {
             auto i = m_decoders.find(extension);
             return i != m_decoders.end() ? i->second : nullptr;
@@ -216,7 +216,7 @@ namespace mango::image
         }
     } g_imageServer;
 
-    void registerImageDecoder(ImageDecoder::CreateDecoderFunc func, const std::string& extension)
+    void registerImageDecoder(ImageDecoder::CreateDecodeFunc func, const std::string& extension)
     {
         g_imageServer.registerImageDecoder(func, extension);
     }
@@ -241,10 +241,10 @@ namespace mango::image
     }
 
     // ----------------------------------------------------------------------------
-    // ImageDecoderInterface
+    // ImageDecodeInterface
     // ----------------------------------------------------------------------------
 
-    ConstMemory ImageDecoderInterface::memory(int level, int depth, int face)
+    ConstMemory ImageDecodeInterface::memory(int level, int depth, int face)
     {
         MANGO_UNREFERENCED(level);
         MANGO_UNREFERENCED(depth);
@@ -266,10 +266,10 @@ namespace mango::image
             extension = getLowerCaseExtension(filename);
         }
 
-        ImageDecoder::CreateDecoderFunc create = g_imageServer.getImageDecoder(extension);
+        ImageDecoder::CreateDecodeFunc create = g_imageServer.getImageDecoder(extension);
         if (create)
         {
-            ImageDecoderInterface* x = create(memory);
+            ImageDecodeInterface* x = create(memory);
             x->name = fmt::format("ImageDecoder:{}", filesystem::removePath(filename));
             m_interface.reset(x);
         }
@@ -284,6 +284,11 @@ namespace mango::image
         return m_interface != nullptr;
     }
 
+    bool ImageDecoder::isAsyncDecoder() const
+    {
+        return m_interface ? m_interface->async : false;
+    }
+
     ImageHeader ImageDecoder::header()
     {
         ImageHeader header;
@@ -294,7 +299,7 @@ namespace mango::image
         }
         else
         {
-            header.setError("[WARNING] ImageDecoder::header() is not supported for this extension.");
+            header.setError("[WARNING] header() is not supported for this extension.");
         }
 
         return header;
@@ -308,17 +313,64 @@ namespace mango::image
         {
             Trace trace("ImageDecoder", m_interface->name);
             status = m_interface->decode(dest, options, level, depth, face);
-            if (!status)
-            {
-                printLine(Print::Info, status.info);
-            }
         }
         else
         {
-            status.setError("[WARNING] ImageDecoder::decode() is not supported for this extension.");
+            status.setError("[WARNING] decode() is not supported for this extension.");
         }
 
         return status;
+    }
+
+    ImageDecodeFuture ImageDecoder::launch(ImageDecodeCallback callback, const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
+    {
+        if (m_interface)
+        {
+            if (m_interface.use_count() > 1)
+            {
+                MANGO_EXCEPTION("[ImageDecoder] async decoding already in progress.");
+            }
+
+            m_interface->callback = std::move(callback);
+        }
+
+        return std::async(std::launch::async, [=] (std::shared_ptr<ImageDecodeInterface> interface)
+        {
+            ImageDecodeStatus status;
+
+            if (interface)
+            {
+                Trace trace("ImageDecoder", interface->name);
+                status = interface->decode(dest, options, level, depth, face);
+
+                if (!interface->async)
+                {
+                    ImageDecodeRect rect;
+
+                    rect.x = 0;
+                    rect.y = 0;
+                    rect.width = interface->header.width;
+                    rect.height = interface->header.height;
+                    rect.progress = 1.0f;
+
+                    interface->callback(rect);
+                }
+            }
+            else
+            {
+                status.setError("[WARNING] decode() is not supported for this extension.");
+            }
+
+            return status;
+        }, m_interface);
+    }
+
+    void ImageDecoder::cancel()
+    {
+        if (m_interface)
+        {
+            m_interface->cancelled = true;
+        }
     }
 
     ConstMemory ImageDecoder::memory(int level, int depth, int face)

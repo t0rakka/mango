@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cstring>
 #include <mango/core/core.hpp>
@@ -2006,13 +2006,14 @@ namespace
         ConstMemory m_memory;
         ImageHeader m_header;
 
+        ImageDecodeInterface* m_interface;
+
         const u8* m_pointer = nullptr;
         const u8* m_end = nullptr;
         const char* m_error = nullptr;
 
-        Buffer m_compressed;
-
         ColorState m_color_state;
+        Surface m_decode_target;
 
         // IHDR
         int m_width;
@@ -2023,6 +2024,9 @@ namespace
         int m_interlace;
 
         int m_channels;
+
+        // IDAT
+        std::vector<ConstMemory> m_idat;
 
         // CgBI
         bool m_iphoneOptimized = false; // Apple's proprietary iphone optimized pngcrush
@@ -2057,7 +2061,7 @@ namespace
 
         // iDOT
         const u8* m_idot_address = nullptr;
-        size_t m_idot_offset = 0;
+        size_t m_idot_index = 0;
         u32 m_first_half_height = 0;
         u32 m_second_half_height = 0;
 
@@ -2085,15 +2089,14 @@ namespace
 
         void blend_ia8      (u8* dest, const u8* src, int width);
         void blend_ia16     (u8* dest, const u8* src, int width);
-        void blend_bgra8    (u8* dest, const u8* src, int width);
+        void blend_rgba8    (u8* dest, const u8* src, int width);
         void blend_rgba16   (u8* dest, const u8* src, int width);
         void blend_indexed  (u8* dest, const u8* src, int width);
 
-        void deinterlace1to4(u8* output, int width, int height, size_t stride, u8* buffer);
-        void deinterlace8(u8* output, int width, int height, size_t stride, u8* buffer);
+        void deinterlace(u8* output, int width, int height, size_t stride, u8* buffer);
         void filter(u8* buffer, int bytes, int height);
-        void process_range(u8* image, u8* buffer, size_t stride, int width, const FilterDispatcher& filter, int y0, int y1);
-        void process(u8* dest, int width, int height, size_t stride, u8* buffer, bool multithread);
+        void process_range(const Surface& target, u8* buffer, int y0, int y1);
+        void process_image(const Surface& target, u8* buffer, bool multithread);
 
         void blend(Surface& d, Surface& s, Palette* palette);
 
@@ -2109,124 +2112,134 @@ namespace
             m_header.success = false;
         }
 
-        size_t getImageBufferSize(int width, int height) const;
-
     public:
-        ParserPNG(ConstMemory memory);
-        ~ParserPNG();
-
-        const ImageHeader& getHeader();
-        ImageDecodeStatus decode(const Surface& dest, bool multithread, bool use_icc, Palette* palette);
-        ConstMemory icc() const;
-    };
-
-    // ------------------------------------------------------------
-    // ParserPNG
-    // ------------------------------------------------------------
-
-    ParserPNG::ParserPNG(ConstMemory memory)
-        : m_memory(memory)
-        , m_end(memory.address + memory.size)
-    {
-        BigEndianConstPointer p = memory.address;
-
-        // read header magic
-        const u64 magic = p.read64();
-        if (magic != PNG_HEADER_MAGIC)
+        ParserPNG(ConstMemory memory, ImageDecodeInterface* interface)
+            : m_memory(memory)
+            , m_interface(interface)
+            , m_end(memory.address + memory.size)
         {
-            setError("Incorrect header magic.");
-            return;
-        }
+            BigEndianConstPointer p = memory.address;
 
-        // read first chunk; in standard it is IHDR, but apple has CgBI+IHDR
-        u32 size = p.read32();
-        u32 id = p.read32();
+            // read header magic
+            const u64 magic = p.read64();
+            if (magic != PNG_HEADER_MAGIC)
+            {
+                setError("Incorrect header magic.");
+                return;
+            }
 
-        if (id == u32_mask_rev('C', 'g', 'B', 'I'))
-        {
-            printLine(Print::Info, "CgBI: reading PNG as iphone optimized");
+            // read first chunk; in standard it is IHDR, but apple has CgBI+IHDR
+            u32 size = p.read32();
+            u32 id = p.read32();
 
-            m_iphoneOptimized = true;
+            if (id == u32_mask_rev('C', 'g', 'B', 'I'))
+            {
+                printLine(Print::Info, "CgBI: reading PNG as iphone optimized");
+
+                m_iphoneOptimized = true;
+                p += size; // skip chunk data
+                p += sizeof(u32); // skip crc
+
+                // next chunk
+                size = p.read32();
+                id = p.read32();
+            }
+
+            if (id != u32_mask_rev('I', 'H', 'D', 'R'))
+            {
+                setError("Incorrect file; the IHDR chunk must come first.");
+                return;
+            }
+
+            read_IHDR(p, size);
             p += size; // skip chunk data
             p += sizeof(u32); // skip crc
 
-            // next chunk
-            size = p.read32();
-            id = p.read32();
+            // keep track of parsing position
+            m_pointer = p;
         }
 
-        if (id != u32_mask_rev('I', 'H', 'D', 'R'))
+        ~ParserPNG()
         {
-            setError("Incorrect file; the IHDR chunk must come first.");
-            return;
         }
 
-        read_IHDR(p, size);
-        p += size; // skip chunk data
-        p += sizeof(u32); // skip crc
-
-        // keep track of parsing position
-        m_pointer = p;
-    }
-
-    ParserPNG::~ParserPNG()
-    {
-    }
-
-    const ImageHeader& ParserPNG::getHeader()
-    {
-        if (m_header.success)
+        const ImageHeader& getHeader()
         {
-            m_header.width   = m_width;
-            m_header.height  = m_height;
-            m_header.depth   = 0;
-            m_header.levels  = 0;
-            m_header.faces   = 0;
-            m_header.palette = false;
-            m_header.compression = TextureCompression::NONE;
-
-            u16 flags = 0;
-
-            // apple pngcrush premultiplies alpha
-            if (m_iphoneOptimized)
+            if (m_header.success)
             {
-                m_header.premultiplied = true;
-                flags = Format::PREMULT;
+                m_header.width   = m_width;
+                m_header.height  = m_height;
+                m_header.depth   = 0;
+                m_header.levels  = 0;
+                m_header.faces   = 0;
+                m_header.palette = false;
+                m_header.compression = TextureCompression::NONE;
+
+                u16 flags = 0;
+
+                // apple pngcrush premultiplies alpha
+                if (m_iphoneOptimized)
+                {
+                    m_header.premultiplied = true;
+                    flags = Format::PREMULT;
+                }
+
+                // force alpha channel on when transparency is enabled
+                int color_type = m_color_type;
+                if (m_color_state.transparent_enable && color_type != COLOR_TYPE_PALETTE)
+                {
+                    color_type |= 4;
+                }
+
+                // select decoding format
+                int bits = m_color_state.bits <= 8 ? 8 : 16;
+                switch (color_type)
+                {
+                    case COLOR_TYPE_I:
+                        m_header.format = LuminanceFormat(bits, Format::UNORM, bits, 0, flags);
+                        break;
+
+                    case COLOR_TYPE_IA:
+                        m_header.format = LuminanceFormat(bits * 2, Format::UNORM, bits, bits, flags);
+                        break;
+
+                    case COLOR_TYPE_PALETTE:
+                        m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8, flags);
+                        m_header.palette = true;
+                        break;
+
+                    case COLOR_TYPE_RGB:
+                    case COLOR_TYPE_RGBA:
+                        m_header.format = Format(bits * 4, Format::UNORM,
+                            m_iphoneOptimized ? Format::BGRA : Format::RGBA,
+                            bits, bits, bits, bits, flags);
+                        break;
+                }
             }
 
-            // force alpha channel on when transparency is enabled
-            int color_type = m_color_type;
-            if (m_color_state.transparent_enable && color_type != COLOR_TYPE_PALETTE)
-            {
-                color_type |= 4;
-            }
-
-            // select decoding format
-            int bits = m_color_state.bits <= 8 ? 8 : 16;
-            switch (color_type)
-            {
-                case COLOR_TYPE_I:
-                    m_header.format = LuminanceFormat(bits, Format::UNORM, bits, 0, flags);
-                    break;
-
-                case COLOR_TYPE_IA:
-                    m_header.format = LuminanceFormat(bits * 2, Format::UNORM, bits, bits, flags);
-                    break;
-
-                case COLOR_TYPE_PALETTE:
-                    m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8, flags);
-                    m_header.palette = true;
-                    break;
-
-                case COLOR_TYPE_RGB:
-                case COLOR_TYPE_RGBA:
-                    m_header.format = Format(bits * 4, Format::UNORM, m_iphoneOptimized ? Format::BGRA : Format::RGBA, bits, bits, bits, bits, flags);
-                    break;
-            }
+            return m_header;
         }
 
-        return m_header;
-    }
+        size_t getInterlacedPassSize(int pass, int width, int height) const
+        {
+            size_t bytes = 0;
+
+            AdamInterleave adam(pass, width, height);
+            if (adam.w && adam.h)
+            {
+                bytes = (PNG_FILTER_BYTE + getBytesPerLine(adam.w)) * adam.h;
+            }
+
+            return bytes;
+        }
+
+        ConstMemory icc() const
+        {
+            return m_icc;
+        }
+
+        ImageDecodeStatus decode(const Surface& dest, bool multithread, Palette* palette);
+    };
 
     void ParserPNG::read_IHDR(BigEndianConstPointer p, u32 size)
     {
@@ -2341,10 +2354,10 @@ namespace
         {
             if (p == m_idot_address)
             {
-                m_idot_offset = m_compressed.size();
+                m_idot_index = m_idat.size();
             }
 
-            m_compressed.append(p, size);
+            m_idat.emplace_back(p, size);
         }
     }
 
@@ -2518,7 +2531,8 @@ namespace
         printLine(Print::Info, "  Sequence: {}", sequence_number);
         MANGO_UNREFERENCED(sequence_number);
 
-        m_compressed.append(p, size);
+        // we can simply treat fdat like idat
+        m_idat.emplace_back(p, size);
     }
 
     void ParserPNG::read_iCCP(BigEndianConstPointer p, u32 size)
@@ -2529,7 +2543,7 @@ namespace
         Compression method: 1 byte (0=deflate)
         Compressed profile: n bytes
         */
-        const char* name = (const char*)&p[0];
+        const char* name = reinterpret_cast<const char*>(&p[0]);
         size_t name_len = png_strnlen(name, size);
         if (name_len == size)
         {
@@ -2765,7 +2779,7 @@ namespace
         }
     }
 
-    void ParserPNG::blend_bgra8(u8* dest, const u8* src, int width)
+    void ParserPNG::blend_rgba8(u8* dest, const u8* src, int width)
     {
         for (int x = 0; x < width; ++x)
         {
@@ -2841,7 +2855,7 @@ namespace
                             blend_ia16(dest, src, width);
                             break;
                         case 32:
-                            blend_bgra8(dest, src, width);
+                            blend_rgba8(dest, src, width);
                             break;
                         case 64:
                             blend_rgba16(dest, src, width);
@@ -2854,106 +2868,84 @@ namespace
         }
     }
 
-    size_t ParserPNG::getImageBufferSize(int width, int height) const
+    void ParserPNG::deinterlace(u8* output, int width, int height, size_t stride, u8* buffer)
     {
-        size_t buffer_size = 0;
-
-        if (m_interlace)
+        if (m_color_state.bits < 8)
         {
-            // NOTE: brute-force loop to resolve memory consumption
+            const int samples = 8 / m_color_state.bits;
+            const int mask = samples - 1;
+            const int shift = u32_log2(samples);
+            const int valueShift = u32_log2(m_color_state.bits);
+            const int valueMask = (1 << m_color_state.bits) - 1;
+
             for (int pass = 0; pass < 7; ++pass)
             {
                 AdamInterleave adam(pass, width, height);
+                printLine(Print::Info, "  pass: {} ({} x {})", pass, adam.w, adam.h);
+
+                const int bw = PNG_FILTER_BYTE + ((adam.w + mask) >> shift);
+                filter(buffer, bw, adam.h);
+
                 if (adam.w && adam.h)
                 {
-                    buffer_size += (PNG_FILTER_BYTE + getBytesPerLine(adam.w)) * adam.h;
+                    for (int y = 0; y < adam.h; ++y)
+                    {
+                        const int yoffset = (y << adam.yspc) + adam.yorig;
+                        u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
+                        u8* src = buffer + y * bw + PNG_FILTER_BYTE;
+
+                        for (int x = 0; x < adam.w; ++x)
+                        {
+                            const int xoffset = (x << adam.xspc) + adam.xorig;
+                            u8 v = src[x >> shift];
+                            int a = (mask - (x & mask)) << valueShift;
+                            int b = (mask - (xoffset & mask)) << valueShift;
+                            v = ((v >> a) & valueMask) << b;
+                            dest[xoffset >> shift] |= v;
+                        }
+                    }
+
+                    // next pass
+                    buffer += bw * adam.h;
                 }
             }
         }
         else
         {
-            buffer_size = (PNG_FILTER_BYTE + getBytesPerLine(width)) * height;
-        }
+            const int components = m_channels * (m_color_state.bits / 8);
 
-        return buffer_size;
-    }
-
-    void ParserPNG::deinterlace1to4(u8* output, int width, int height, size_t stride, u8* buffer)
-    {
-        const int samples = 8 / m_color_state.bits;
-        const int mask = samples - 1;
-        const int shift = u32_log2(samples);
-        const int valueShift = u32_log2(m_color_state.bits);
-        const int valueMask = (1 << m_color_state.bits) - 1;
-
-        for (int pass = 0; pass < 7; ++pass)
-        {
-            AdamInterleave adam(pass, width, height);
-            printLine(Print::Info, "  pass: {} ({} x {})", pass, adam.w, adam.h);
-
-            const int bw = PNG_FILTER_BYTE + ((adam.w + mask) >> shift);
-            filter(buffer, bw, adam.h);
-
-            if (adam.w && adam.h)
+            for (int pass = 0; pass < 7; ++pass)
             {
-                for (int y = 0; y < adam.h; ++y)
+                AdamInterleave adam(pass, width, height);
+                printLine(Print::Info, "  pass: {} ({} x {})", pass, adam.w, adam.h);
+
+                const int bw = PNG_FILTER_BYTE + adam.w * components;
+                filter(buffer, bw, adam.h);
+
+                if (adam.w && adam.h)
                 {
-                    const int yoffset = (y << adam.yspc) + adam.yorig;
-                    u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
-                    u8* src = buffer + y * bw + PNG_FILTER_BYTE;
+                    const int ps = adam.w * components + PNG_FILTER_BYTE;
 
-                    for (int x = 0; x < adam.w; ++x)
+                    for (int y = 0; y < adam.h; ++y)
                     {
-                        const int xoffset = (x << adam.xspc) + adam.xorig;
-                        u8 v = src[x >> shift];
-                        int a = (mask - (x & mask)) << valueShift;
-                        int b = (mask - (xoffset & mask)) << valueShift;
-                        v = ((v >> a) & valueMask) << b;
-                        dest[xoffset >> shift] |= v;
+                        const int yoffset = (y << adam.yspc) + adam.yorig;
+                        u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
+                        u8* src = buffer + y * ps + PNG_FILTER_BYTE;
+
+                        dest += adam.xorig * components;
+                        const int xmax = (adam.w * components) << adam.xspc;
+                        const int xstep = components << adam.xspc;
+
+                        for (int x = 0; x < xmax; x += xstep)
+                        {
+                            std::memcpy(dest + x, src, components);
+                            src += components;
+                        }
                     }
+
+                    // next pass
+                    buffer += bw * adam.h;
                 }
-
-                // next pass
-                buffer += bw * adam.h;
-            }
-        }
-    }
-
-    void ParserPNG::deinterlace8(u8* output, int width, int height, size_t stride, u8* buffer)
-    {
-        const int components = m_channels * (m_color_state.bits / 8);
-
-        for (int pass = 0; pass < 7; ++pass)
-        {
-            AdamInterleave adam(pass, width, height);
-            printLine(Print::Info, "  pass: {} ({} x {})", pass, adam.w, adam.h);
-
-            const int bw = PNG_FILTER_BYTE + adam.w * components;
-            filter(buffer, bw, adam.h);
-
-            if (adam.w && adam.h)
-            {
-                const int ps = adam.w * components + PNG_FILTER_BYTE;
-
-                for (int y = 0; y < adam.h; ++y)
-                {
-                    const int yoffset = (y << adam.yspc) + adam.yorig;
-                    u8* dest = output + yoffset * stride + PNG_FILTER_BYTE;
-                    u8* src = buffer + y * ps + PNG_FILTER_BYTE;
-
-                    dest += adam.xorig * components;
-                    const int xmax = (adam.w * components) << adam.xspc;
-                    const int xstep = components << adam.xspc;
-
-                    for (int x = 0; x < xmax; x += xstep)
-                    {
-                        std::memcpy(dest + x, src, components);
-                        src += components;
-                    }
-                }
-
-                // next pass
-                buffer += bw * adam.h;
             }
         }
     }
@@ -2978,13 +2970,15 @@ namespace
         }
     }
 
-    void ParserPNG::process_range(u8* image, u8* buffer, size_t stride, int width, const FilterDispatcher& filter, int y0, int y1)
+    void ParserPNG::process_range(const Surface& target, u8* buffer, int y0, int y1)
     {
-        const size_t bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
+        const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
+        FilterDispatcher filter(bpp);
+
+        const size_t bytes_per_line = getBytesPerLine(target.width) + PNG_FILTER_BYTE;
         ColorState::Function convert = getColorFunction(m_color_state, m_color_type, m_color_state.bits);
 
-        buffer += y0 * bytes_per_line;
-        image += y0 * stride;
+        u8* image = target.image + y0 * target.stride;
 
         for (int y = y0; y < y1; ++y)
         {
@@ -2992,47 +2986,81 @@ namespace
             filter(buffer, buffer - bytes_per_line, int(bytes_per_line));
 
             // color conversion
-            convert(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
+            convert(m_color_state, target.width, image, buffer + PNG_FILTER_BYTE);
 
             buffer += bytes_per_line;
-            image += stride;
+            image += target.stride;
+        }
+
+        ImageDecodeRect rect;
+
+        rect.x = 0;
+        rect.y = y0;
+        rect.width = target.width;
+        rect.height = y1 - y0;
+        rect.progress = float(rect.height) / target.height;
+
+        if (m_decode_target.image != target.image)
+        {
+            u8* image = target.image + y0 * target.stride;
+            Surface source(rect.width, rect.height, target.format, target.stride, image);
+            m_decode_target.blit(rect.x, rect.y, source);
+        }
+
+        if (m_interface->callback)
+        {
+            m_interface->callback(rect);
         }
     }
 
-    void ParserPNG::process(u8* image, int width, int height, size_t stride, u8* buffer, bool multithread)
+    void ParserPNG::process_image(const Surface& target, u8* buffer, bool multithread)
     {
         if (m_error)
         {
             return;
         }
 
-        const size_t bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
+        u8* image = target.image;
+
+        const size_t bytes_per_line = getBytesPerLine(target.width) + PNG_FILTER_BYTE;
 
         ColorState::Function convert = getColorFunction(m_color_state, m_color_type, m_color_state.bits);
 
         if (m_interlace)
         {
-            Buffer temp(height * bytes_per_line, 0);
+            Buffer temp(target.height * bytes_per_line, 0);
 
             // deinterlace does filter for each pass
-            if (m_color_state.bits < 8)
-            {
-                deinterlace1to4(temp, width, height, bytes_per_line, buffer);
-            }
-            else
-            {
-                deinterlace8(temp, width, height, bytes_per_line, buffer);
-            }
+            deinterlace(temp, target.width, target.height, bytes_per_line, buffer);
 
             // use de-interlaced temp buffer as processing source
             buffer = temp;
 
             // color conversion
-            for (int y = 0; y < height; ++y)
+            for (int y = 0; y < target.height; ++y)
             {
-                convert(m_color_state, width, image, buffer + PNG_FILTER_BYTE);
-                image += stride;
+                convert(m_color_state, target.width, image, buffer + PNG_FILTER_BYTE);
+                image += target.stride;
                 buffer += bytes_per_line;
+            }
+
+            ImageDecodeRect rect;
+
+            rect.x = 0;
+            rect.y = 0;
+            rect.width = target.width;
+            rect.height = target.height;
+            rect.progress = 1.0f;
+
+            if (m_decode_target.image != target.image)
+            {
+                Surface source(rect.width, rect.height, target.format, target.stride, target.image);
+                m_decode_target.blit(rect.x, rect.y, source);
+            }
+
+            if (m_interface->callback)
+            {
+                m_interface->callback(rect);
             }
         }
         else
@@ -3041,15 +3069,13 @@ namespace
             if (bpp > 8)
                 return;
 
-            FilterDispatcher filter(bpp);
-
             int y0 = 0;
 
             if (multithread)
             {
                 ConcurrentQueue q("png:process");
 
-                for (int y = 0; y < height; ++y)
+                for (int y = 0; y < target.height; ++y)
                 {
                     u8 f = buffer[bytes_per_line * y]; // extract filter byte
                     if (f <= 1)
@@ -3060,7 +3086,7 @@ namespace
                             // enqueue current range
                             q.enqueue([=] ()
                             {
-                                process_range(image, buffer, stride, width, filter, y0, y);
+                                process_range(target, buffer + bytes_per_line * y0, y0, y);
                             });
 
                             // start a new range
@@ -3074,19 +3100,20 @@ namespace
                 }
             }
 
-            process_range(image, buffer, stride, width, filter, y0, height);
+            process_range(target, buffer + bytes_per_line * y0, y0, target.height);
         }
     }
 
-    ImageDecodeStatus ParserPNG::decode(const Surface& dest, bool multithread, bool use_icc, Palette* ptr_palette)
+    ImageDecodeStatus ParserPNG::decode(const Surface& dest, bool multithread, Palette* ptr_palette)
     {
         ImageDecodeStatus status;
 
-        m_compressed.reset();
+        m_idat.clear();
+        m_idot_index = 0;
 
         parse();
 
-        if (!m_compressed.size() && m_parallel_segments.empty())
+        if (m_idat.empty() && m_parallel_segments.empty())
         {
             status.setError("No compressed data.");
             return status;
@@ -3098,36 +3125,42 @@ namespace
             return status;
         }
 
-        if (ptr_palette)
+        if (m_header.palette)
         {
-            // caller requests palette; give it and decode u8 indices
-            *ptr_palette = m_palette;
-            m_color_state.palette = nullptr;
+            if (ptr_palette)
+            {
+                if (dest.format.isIndexed())
+                {
+                    status.setError("Decoding target must be indexed.");
+                    return status;
+                }
+
+                // caller requests palette; give it and decode u8 indices
+                *ptr_palette = m_palette;
+                m_color_state.palette = nullptr;
+            }
+            else
+            {
+                // caller doesn't want palette; lookup RGBA colors from palette
+                m_color_state.palette = m_palette.color;
+            }
         }
-        else
-        {
-            // caller doesn't want palette; lookup RGBA colors from palette
-            m_color_state.palette = m_palette.color;
-        }
 
-        // default: main image from "IHDR" chunk
-        int width = m_width;
-        int height = m_height;
-        size_t stride = dest.stride;
-        u8* image = dest.image;
+        // default decoding target
+        Surface target(dest);
+        m_decode_target = dest;
 
-        std::unique_ptr<u8[]> framebuffer;
+        status.direct = target.width >= m_width &&
+                        target.height >= m_height &&
+                        target.format == m_header.format;
 
-        // override with animation frame
+        std::unique_ptr<Bitmap> temp;
+
         if (m_number_of_frames > 0)
         {
-            width = m_frame.width;
-            height = m_frame.height;
-            stride = width * dest.format.bytes();
-
-            // decode frame into temporary buffer (for composition)
-            image = new u8[stride * height];
-            framebuffer.reset(image);
+            temp = std::make_unique<Bitmap>(m_frame.width, m_frame.height, m_header.format);
+            target = *temp;
+            m_decode_target = *temp;
 
             // compute frame indices (for external users)
             m_current_frame_index = m_next_frame_index++;
@@ -3136,22 +3169,28 @@ namespace
                 m_next_frame_index = 0;
             }
         }
+        else
+        {
+            if (!status.direct)
+            {
+                temp = std::make_unique<Bitmap>(m_width, m_height, m_header.format);
+                target = *temp;
+            }
+        }
 
-        const size_t bytes_per_line = getBytesPerLine(width) + PNG_FILTER_BYTE;
-        const size_t buffer_size = getImageBufferSize(width, height);
+        Buffer buffer;
 
-        // allocate output buffer
-        Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
-        printLine(Print::Info, "  buffer bytes: {}", buffer_size);
+        if (m_interface->cancelled)
+        {
+            return status;
+        }
 
-        // zero scanline for filters at the beginning
-        std::memset(temp, 0, bytes_per_line);
+        const size_t bytes_per_line = getBytesPerLine(target.width) + PNG_FILTER_BYTE;
 
-        Memory buffer(temp + bytes_per_line, buffer_size);
+        // The first scanline of segment does not require previous scanline from other segment
+        bool plld = m_parallel_height && (m_parallel_flags & 1) != 0;
 
-        bool is_inline_process = false;
-
-        if (m_parallel_height)
+        if (plld)
         {
             // ----------------------------------------------------------------------
             // pLLD decoding
@@ -3159,55 +3198,111 @@ namespace
 
             ConcurrentQueue q("png:decode");
 
-            const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
-
-            if ((m_parallel_flags & 1) && !m_interlace && bpp <= 8)
-            {
-                is_inline_process = true;
-            }
-
             u32 y = 0;
-            auto decompress = deflate_zlib::decompress;
 
-#ifdef MANGO_ENABLE_ISAL__disabled // faster but decoding failures :(
-            auto compressor = getCompressor(Compressor::ISAL);
-            decompress = compressor.decompress;
+            // skip zlib header
+            size_t first = 2;
+
+#ifdef MANGO_ENABLE_ISAL__disabled_the_deflate_is_slightly_faster
+            auto decompress = getCompressor(Compressor::ISAL).decompress;
+#else
+            auto decompress = getCompressor(Compressor::DEFLATE).decompress;
 #endif
 
             for (ConstMemory memory : m_parallel_segments)
             {
-                int h = std::min(m_parallel_height, m_height - y);
+                if (m_interface->cancelled)
+                {
+                    q.cancel();
+                    break;
+                }
 
-                Memory output;
-                output.address = buffer.address + bytes_per_line * y;
-                output.size = bytes_per_line * h;
+                memory = memory.slice(first, memory.size - first);
+                first = 0;
+
+                int h = std::min(m_parallel_height, m_height - y);
 
                 q.enqueue([=]
                 {
-                    CompressionStatus result = decompress(output, memory);
+                    if (m_interface->cancelled)
+                    {
+                        return;
+                    }
+
+                    const size_t extra = bytes_per_line + PNG_SIMD_PADDING;
+                    Buffer temp(bytes_per_line * h + extra);
+
+                    // zero scanline for filters at the beginning
+                    std::memset(temp, 0, bytes_per_line);
+
+                    Memory buffer = temp;
+                    buffer.address += bytes_per_line;
+                    buffer.size -= bytes_per_line;
+
+                    CompressionStatus result = decompress(buffer, memory);
                     if (!result)
                     {
-                        // NOTE: libdeflate will report "Bad Data", zlib works but slower
-                        //printLine(Print::Error, "  {}", result.info);
+                        // NOTE: decompressors complain here that out of data
+                        //printLine(Print::Error, "  {} y: {}", result.info, y);
                     }
 
-                    if (is_inline_process)
+                    if (m_interface->cancelled)
                     {
-                        FilterDispatcher filter(bpp);
-                        process_range(image, buffer, stride, width, filter, y, y + h);
+                        return;
                     }
+
+                    process_range(target, buffer, y, y + h);
                 });
 
-                decompress = deflate::decompress;
                 y += m_parallel_height;
             }
-
-            q.wait();
         }
         else if (m_idot_address && multithread)
         {
             // ----------------------------------------------------------------------
             // Apple iDOT decoding
+            // ----------------------------------------------------------------------
+
+            size_t buffer_size = 0;
+
+            if (m_interlace)
+            {
+                for (int pass = 0; pass < 7; ++pass)
+                {
+                    buffer_size += getInterlacedPassSize(pass, target.width, target.height);
+                }
+            }
+            else
+            {
+                buffer_size = (PNG_FILTER_BYTE + getBytesPerLine(target.width)) * target.height;
+            }
+
+            printLine(Print::Info, "  buffer bytes: {}", buffer_size);
+
+            // allocate output buffer
+            Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
+
+            // zero scanline for filters at the beginning
+            std::memset(temp, 0, bytes_per_line);
+
+            Memory buffer(temp + bytes_per_line, buffer_size);
+
+            // ----------------------------------------------------------------------
+
+            // TODO: decompress IDAT at a time and do updates progressively
+            Buffer compressed_top;
+            Buffer compressed_bottom;
+
+            for (size_t i = 0; i < m_idot_index; ++i)
+            {
+                compressed_top.append(m_idat[i]);
+            }
+
+            for (size_t i = m_idot_index; i < m_idat.size(); ++i)
+            {
+                compressed_bottom.append(m_idat[i]);
+            }
+
             // ----------------------------------------------------------------------
 
             size_t top_size = bytes_per_line * m_first_half_height;
@@ -3216,41 +3311,40 @@ namespace
             top_buffer.address = buffer.address;
             top_buffer.size = top_size;
 
-            ConstMemory top_memory;
-            top_memory.address = m_compressed.data();
-            top_memory.size = m_idot_offset;
-
             Memory bottom_buffer;
             bottom_buffer.address = buffer.address + top_size;
             bottom_buffer.size = buffer.size - top_size;
 
-            ConstMemory bottom_memory;
-            bottom_memory.address = m_compressed.data() + m_idot_offset;
-            bottom_memory.size = m_compressed.size() - m_idot_offset;
+            ConstMemory top_memory = compressed_top;
+            ConstMemory bottom_memory = compressed_bottom;
 
-            // enqueue task into the threadpool
-            FutureTask<size_t> task([=] () -> size_t
+            auto future = std::async(std::launch::async, [=]
             {
                 // Apple uses raw deflate format for iDOT extended IDAT chunks
                 CompressionStatus result = deflate::decompress(bottom_buffer, bottom_memory);
                 return result.size;
             });
 
-            // Apple uses raw deflate format
-            // png standard uses zlib frame format
-            auto decompress = m_iphoneOptimized ?
-                deflate::decompress :
-                deflate_zlib::decompress;
+            if (!m_iphoneOptimized)
+            {
+                // skip zlib header
+                top_memory = top_memory.slice(2, top_memory.size - 2);
+            }
+
+            auto decompress = deflate::decompress;
 
             CompressionStatus result = decompress(top_buffer, top_memory);
 
             size_t bytes_out_top = result.size;
-            size_t bytes_out_bottom = task.get(); // synchronize
+            size_t bytes_out_bottom = future.get();
 
             printLine(Print::Info, "  output top bytes:     {}", bytes_out_top);
             printLine(Print::Info, "  output bottom bytes:  {}", bytes_out_bottom);
             MANGO_UNREFERENCED(bytes_out_top);
             MANGO_UNREFERENCED(bytes_out_bottom);
+
+            // process image
+            process_image(target, buffer, multithread);
         }
         else
         {
@@ -3258,53 +3352,295 @@ namespace
             // Default decoding
             // ----------------------------------------------------------------------
 
-            // Apple uses raw deflate format
-            // png standard uses zlib frame format
-            auto decompress = m_iphoneOptimized ?
-                deflate::decompress :
-                deflate_zlib::decompress;
+            size_t buffer_size = 0;
 
-            CompressionStatus result = decompress(buffer, m_compressed);
-            if (!result)
+            if (m_interlace)
             {
-                //printLine(Print::Info, "  {}", result.info);
-                status.setError(result.info);
-                return status;
+                for (int pass = 0; pass < 7; ++pass)
+                {
+                    buffer_size += getInterlacedPassSize(pass, target.width, target.height);
+                }
+            }
+            else
+            {
+                buffer_size = (PNG_FILTER_BYTE + getBytesPerLine(target.width)) * target.height;
             }
 
-            printLine(Print::Info, "  output bytes: {}", result.size);
+            printLine(Print::Info, "  buffer bytes: {}", buffer_size);
+
+            // allocate output buffer
+            Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
+
+            // zero scanline for filters at the beginning
+            std::memset(temp, 0, bytes_per_line);
+
+            Memory buffer(temp + bytes_per_line, buffer_size);
+
+            // ----------------------------------------------------------------------
+
+            if (m_interface->callback)
+            {
+#ifdef MANGO_ENABLE_ISAL
+
+                inflate_state state;
+                isal_inflate_init(&state);
+
+                // skip zlib header
+                size_t first = 2;
+
+                Buffer compressed;
+
+                const size_t lastIndex = m_idat.size() - 1;
+                const size_t packetSize = 0x20000;
+
+                int y0 = 0;
+
+                for (size_t i = 0; i < m_idat.size(); ++i)
+                {
+                    compressed.append(m_idat[i]);
+
+                    // decompress only when enough data or last IDAT
+                    if (compressed.size() < packetSize && i < lastIndex)
+                    {
+                        continue;
+                    }
+
+                    state.next_in = const_cast<u8*>(compressed.data() + first);
+                    state.avail_in = u32(compressed.size() - first);
+                    first = 0;
+
+                    if (m_interface->cancelled)
+                    {
+                        // TODO: cleanup
+                        return status;
+                    }
+
+                    state.next_out = buffer.address + state.total_out;
+                    state.avail_out = u32(buffer.size - state.total_out);
+
+                    int s = isal_inflate(&state);
+
+                    const char* error = nullptr;
+                    switch (s)
+                    {
+                        case ISAL_DECOMP_OK:
+                            break;
+                        case ISAL_END_INPUT:
+                            error = "ISAL_END_INPUT.";
+                            break;
+                        case ISAL_NEED_DICT:
+                            error = "ISAL_NEED_DICT.";
+                            break;
+                        case ISAL_OUT_OVERFLOW:
+                            error = "ISAL_OUT_OVERFLOW.";
+                            break;
+                        case ISAL_INVALID_BLOCK:
+                            error = "ISAL_INVALID_BLOCK.";
+                            break;
+                        case ISAL_INVALID_SYMBOL:
+                            error = "ISAL_INVALID_SYMBOL.";
+                            break;
+                        case ISAL_INVALID_LOOKBACK:
+                            error = "ISAL_INVALID_LOOKBACK.";
+                            break;
+                        case ISAL_INVALID_WRAPPER:
+                            error = "ISAL_INVALID_WRAPPER.";
+                            break;
+                        case ISAL_UNSUPPORTED_METHOD:
+                            error = "ISAL_UNSUPPORTED_METHOD.";
+                            break;
+                        case ISAL_INCORRECT_CHECKSUM:
+                            error = "ISAL_INCORRECT_CHECKSUM.";
+                            break;
+                        default:
+                            error = "UNDEFINED.";
+                            break;
+                    }
+
+                    if (error)
+                    {
+                        status.setError(error);
+                        return status;
+                    }
+
+                    if (!m_interlace)
+                    {
+                        int y1 = state.total_out / bytes_per_line;
+                        process_range(target, buffer.address + bytes_per_line * y0, y0, y1);
+                        y0 = y1;
+                    }
+
+                    compressed.resize(0);
+                }
+   
+
+                printLine(Print::Info, "  output bytes: {}", state.total_out);
+
+                if (m_interface->cancelled)
+                {
+                    return status;
+                }
+
+                // process image
+                if (m_interlace)
+                {
+                    process_image(target, buffer, multithread);
+                }
+
+#else
+
+                z_stream stream;
+
+                stream.zalloc = Z_NULL;
+                stream.zfree = Z_NULL;
+                stream.opaque = Z_NULL;
+                stream.avail_in = 0;
+                stream.next_in = Z_NULL;
+
+                int ret = inflateInit(&stream);
+                if (ret != Z_OK)
+                {
+                    status.setError("inflateInit failed.");
+                    return status;
+                }
+
+                Buffer compressed;
+
+                const size_t lastIndex = m_idat.size() - 1;
+                const size_t packetSize = 0x20000;
+
+                int y0 = 0;
+
+                for (size_t i = 0; i < m_idat.size(); ++i)
+                {
+                    compressed.append(m_idat[i]);
+
+                    // decompress only when enough data or last IDAT
+                    if (compressed.size() < packetSize && i < lastIndex)
+                    {
+                        continue;
+                    }
+
+                    stream.avail_in = uInt(compressed.size());
+                    stream.next_in = const_cast<u8*>(compressed.data());
+
+                    if (m_interface->cancelled)
+                    {
+                        ret = inflateEnd(&stream);
+                        return status;
+                    }
+
+                    do
+                    {
+                        stream.avail_out = uInt(buffer.size - stream.total_out);
+                        stream.next_out = buffer.address + stream.total_out;
+
+                        ret = inflate(&stream, Z_NO_FLUSH);
+                        if (ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR || ret == Z_MEM_ERROR)
+                        {
+                            inflateEnd(&stream);
+                            status.setError("inflate failed.");
+                            return status;
+                        }
+                    }
+                    while (stream.avail_in > 0);
+
+                    if (!m_interlace)
+                    {
+                        int y1 = int(stream.total_out / bytes_per_line);
+                        process_range(target, buffer.address + bytes_per_line * y0, y0, y1);
+                        y0 = y1;
+                    }
+
+                    compressed.resize(0);
+                }
+
+                ret = inflateEnd(&stream);
+                if (ret != Z_OK && ret != Z_STREAM_END)
+                {
+                    status.setError("inflateEnd failed.");
+                    return status;
+                }
+
+                printLine(Print::Info, "  output bytes: {}", stream.total_out);
+
+                if (m_interface->cancelled)
+                {
+                    return status;
+                }
+
+                // process image
+                if (m_interlace)
+                {
+                    process_image(target, buffer, multithread);
+                }
+#endif
+            }
+            else
+            {
+                Buffer compressed;
+
+                for (auto data : m_idat)
+                {
+                    compressed.append(data);
+                }
+
+                if (m_interface->cancelled)
+                {
+                    return status;
+                }
+
+                ConstMemory memory = compressed;
+
+                if (!m_iphoneOptimized)
+                {
+                    // skip zlib header
+                    memory = memory.slice(2, memory.size - 2);
+                }
+
+                auto decompress = deflate::decompress;
+
+                CompressionStatus result = decompress(buffer, memory);
+                if (!result)
+                {
+                    //printLine(Print::Info, "  {}", result.info);
+                    status.setError(result.info);
+                    return status;
+                }
+
+                printLine(Print::Info, "  output bytes: {}", result.size);
+
+                if (m_interface->cancelled)
+                {
+                    return status;
+                }
+
+                // process image
+                process_image(target, buffer, multithread);
+            }
         }
 
-        // process image
-        if (!is_inline_process)
+        if (m_interface->cancelled)
         {
-            process(image, width, height, stride, buffer, multithread);
-        }
-
-        if (m_icc.size() > 0 && use_icc)
-        {
-            image::ColorManager manager;
-            image::ColorProfile profile = manager.create(ConstMemory(m_icc.data(), m_icc.size()));
-            image::ColorProfile display = manager.createSRGB();
-            manager.transform(dest, display, profile);
+            return status;
         }
 
         if (m_number_of_frames > 0)
         {
-            Surface d(dest, m_frame.xoffset, m_frame.yoffset, width, height);
-            Surface s(width, height, dest.format, stride, image);
-            blend(d, s, ptr_palette);
+            Surface area(dest, m_frame.xoffset, m_frame.yoffset, m_frame.width, m_frame.height);
+            TemporaryBitmap bitmap(area, m_header.format);
+            blend(bitmap, *temp, ptr_palette);
+
+            if (dest.format != bitmap.format)
+            {
+                dest.blit(m_frame.xoffset, m_frame.yoffset, bitmap);
+            }
         }
 
         status.current_frame_index = m_current_frame_index;
         status.next_frame_index = m_next_frame_index;
 
         return status;
-    }
-
-    ConstMemory ParserPNG::icc() const
-    {
-        return m_icc;
     }
 
     // ------------------------------------------------------------
@@ -3809,7 +4145,11 @@ namespace
 
         if (encoding_failure)
         {
+#ifdef MANGO_ENABLE_ISAL
+            status.setError("ISAL encoding failure.");
+#else
             status.setError("ZLib encoding failure.");
+#endif
         }
     }
 
@@ -3881,13 +4221,14 @@ namespace
     // ImageDecoder
     // ------------------------------------------------------------
 
-    struct Interface : ImageDecoderInterface
+    struct Interface : ImageDecodeInterface
     {
         ParserPNG m_parser;
 
         Interface(ConstMemory memory)
-            : m_parser(memory)
+            : m_parser(memory, this)
         {
+            async = true;
             header = m_parser.getHeader();
             icc = m_parser.icc();
         }
@@ -3910,42 +4251,22 @@ namespace
                 return status;
             }
 
-            bool direct = dest.format == header.format &&
-                          dest.width >= header.width &&
-                          dest.height >= header.height &&
-                          options.palette == nullptr;
-
-            if (direct)
+            if (options.palette && header.palette)
             {
-                // direct decoding
-                status = m_parser.decode(dest, options.multithread, options.icc, nullptr);
+                status = m_parser.decode(dest, options.multithread, nullptr);
             }
             else
             {
-                if (options.palette && header.palette)
-                {
-                    // direct decoding with palette
-                    status = m_parser.decode(dest, options.multithread, options.icc, options.palette);
-                    direct = true;
-                }
-                else
-                {
-                    // indirect
-                    Bitmap temp(header.width, header.height, header.format);
-                    status = m_parser.decode(temp, options.multithread, options.icc, nullptr);
-                    dest.blit(0, 0, temp);
-                }
+                status = m_parser.decode(dest, options.multithread, options.palette);
             }
-
-            status.direct = direct;
 
             return status;
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecodeInterface* createInterface(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new Interface(memory);
+        ImageDecodeInterface* x = new Interface(memory);
         return x;
     }
 

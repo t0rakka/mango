@@ -442,7 +442,7 @@ namespace
     // ImageDecoder
     // ------------------------------------------------------------
 
-    struct Interface : ImageDecoderInterface
+    struct Interface : ImageDecodeInterface
     {
         ConstMemory m_memory;
 
@@ -539,9 +539,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceMPIC(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceMPIC(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceMPIC(memory);
+        ImageDecodeInterface* x = new InterfaceMPIC(memory);
         return x;
     }
 
@@ -563,9 +563,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceAFL(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceAFL(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceAFL(memory);
+        ImageDecodeInterface* x = new InterfaceAFL(memory);
         return x;
     }
 
@@ -617,9 +617,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceAMI(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceAMI(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceAMI(memory);
+        ImageDecodeInterface* x = new InterfaceAMI(memory);
         return x;
     }
 
@@ -641,9 +641,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceART(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceART(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceART(memory);
+        ImageDecodeInterface* x = new InterfaceART(memory);
         return x;
     }
 
@@ -665,9 +665,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceA64(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceA64(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceA64(memory);
+        ImageDecodeInterface* x = new InterfaceA64(memory);
         return x;
     }
 
@@ -689,9 +689,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceBLP(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceBLP(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceBLP(memory);
+        ImageDecodeInterface* x = new InterfaceBLP(memory);
         return x;
     }
 
@@ -713,9 +713,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceCDU(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceCDU(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceCDU(memory);
+        ImageDecodeInterface* x = new InterfaceCDU(memory);
         return x;
     }
 
@@ -737,9 +737,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDOL(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceDOL(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceDOL(memory);
+        ImageDecodeInterface* x = new InterfaceDOL(memory);
         return x;
     }
 
@@ -761,9 +761,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDD(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceDD(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceDD(memory);
+        ImageDecodeInterface* x = new InterfaceDD(memory);
         return x;
     }
 
@@ -837,9 +837,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDRL(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceDRL(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceDRL(memory);
+        ImageDecodeInterface* x = new InterfaceDRL(memory);
         return x;
     }
 
@@ -908,9 +908,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceDRZ(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceDRZ(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceDRZ(memory);
+        ImageDecodeInterface* x = new InterfaceDRZ(memory);
         return x;
     }
 
@@ -974,9 +974,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceECI(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceECI(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceECI(memory);
+        ImageDecodeInterface* x = new InterfaceECI(memory);
         return x;
     }
 
@@ -998,9 +998,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceFPT(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceFPT(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceFPT(memory);
+        ImageDecodeInterface* x = new InterfaceFPT(memory);
         return x;
     }
 
@@ -1022,9 +1022,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceFD2(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceFD2(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceFD2(memory);
+        ImageDecodeInterface* x = new InterfaceFD2(memory);
         return x;
     }
 
@@ -1098,9 +1098,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceFPR(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceFPR(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceFPR(memory);
+        ImageDecodeInterface* x = new InterfaceFPR(memory);
         return x;
     }
 
@@ -1200,9 +1200,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceFUN(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceFUN(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceFUN(memory);
+        ImageDecodeInterface* x = new InterfaceFUN(memory);
         return x;
     }
 
@@ -1247,9 +1247,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceGUN(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceGUN(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceGUN(memory);
+        ImageDecodeInterface* x = new InterfaceGUN(memory);
         return x;
     }
 
@@ -1342,9 +1342,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceHCB(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceHCB(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceHCB(memory);
+        ImageDecodeInterface* x = new InterfaceHCB(memory);
         return x;
     }
 
@@ -1366,9 +1366,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceHFC(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceHFC(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceHFC(memory);
+        ImageDecodeInterface* x = new InterfaceHFC(memory);
         return x;
     }
 
@@ -1478,9 +1478,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceHIM(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceHIM(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceHIM(memory);
+        ImageDecodeInterface* x = new InterfaceHIM(memory);
         return x;
     }
 
@@ -1515,9 +1515,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceKOA(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceKOA(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceKOA(memory);
+        ImageDecodeInterface* x = new InterfaceKOA(memory);
         return x;
     }
 
@@ -1549,9 +1549,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfacePMG(ConstMemory memory)
+    ImageDecodeInterface* createInterfacePMG(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfacePMG(memory);
+        ImageDecodeInterface* x = new InterfacePMG(memory);
         return x;
     }
 
@@ -1653,9 +1653,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfacePP(ConstMemory memory)
+    ImageDecodeInterface* createInterfacePP(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfacePP(memory);
+        ImageDecodeInterface* x = new InterfacePP(memory);
         return x;
     }
 
@@ -1677,9 +1677,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceRPM(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceRPM(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceRPM(memory);
+        ImageDecodeInterface* x = new InterfaceRPM(memory);
         return x;
     }
 
@@ -1701,9 +1701,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceSAR(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceSAR(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceSAR(memory);
+        ImageDecodeInterface* x = new InterfaceSAR(memory);
         return x;
     }
 
@@ -1834,9 +1834,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceSHF(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceSHF(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceSHF(memory);
+        ImageDecodeInterface* x = new InterfaceSHF(memory);
         return x;
     }
 
@@ -1930,9 +1930,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceSHFXL(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceSHFXL(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceSHFXL(memory);
+        ImageDecodeInterface* x = new InterfaceSHFXL(memory);
         return x;
     }
 
@@ -2116,9 +2116,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceMCI(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceMCI(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceMCI(memory);
+        ImageDecodeInterface* x = new InterfaceMCI(memory);
         return x;
     }
 
@@ -2258,9 +2258,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceUFLI(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceUFLI(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceUFLI(memory);
+        ImageDecodeInterface* x = new InterfaceUFLI(memory);
         return x;
     }
 
@@ -2444,9 +2444,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceUIFLI(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceUIFLI(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceUIFLI(memory);
+        ImageDecodeInterface* x = new InterfaceUIFLI(memory);
         return x;
     }
 
@@ -2468,9 +2468,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterfaceVID(ConstMemory memory)
+    ImageDecodeInterface* createInterfaceVID(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new InterfaceVID(memory);
+        ImageDecodeInterface* x = new InterfaceVID(memory);
         return x;
     }
 

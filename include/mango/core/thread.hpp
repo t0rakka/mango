@@ -196,7 +196,7 @@ namespace mango
         template <class F, class... Args>
         void enqueue(F&& f, Args&&... args)
         {
-            std::unique_lock<std::mutex> lock(m_queue_mutex);
+            std::lock_guard<std::mutex> lock(m_queue_mutex);
             m_task_queue.emplace_back(f, (args)...);
             ++m_task_counter;
             m_task_condition.notify_one();

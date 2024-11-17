@@ -61,6 +61,7 @@ namespace mango::image
     public:
         Bitmap(int width, int height, const Format& format, size_t stride = 0);
         Bitmap(const Surface& source, const Format& format);
+        Bitmap(const ImageHeader& header);
 
         Bitmap(ConstMemory memory, const std::string& extension, const ImageDecodeOptions& options = ImageDecodeOptions());
         Bitmap(ConstMemory memory, const std::string& extension, const Format& format, const ImageDecodeOptions& options = ImageDecodeOptions());
@@ -93,7 +94,8 @@ namespace mango::image
         LuminanceBitmap(const Surface& source, bool alpha = false, bool force_linear = true);
     };
 
-    // HACK: need a proper API (32 bit rgba in-place conversion)
+    // NOTE: These must be 32 bit RGBA surfaces as the conversion is done in-place
+    void transform(const Surface& surface, ConstMemory icc);
     void srgbToLinear(const Surface& surface);
     void linearToSRGB(const Surface& surface);
 

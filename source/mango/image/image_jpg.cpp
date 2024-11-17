@@ -16,13 +16,14 @@ namespace
     // ImageDecoder
     // ------------------------------------------------------------
 
-    struct Interface : ImageDecoderInterface
+    struct Interface : ImageDecodeInterface
     {
         jpeg::Parser m_parser;
 
         Interface(ConstMemory memory)
-            : m_parser(memory)
+            : m_parser(memory, this)
         {
+            async = true;
             header = m_parser.header;
             icc = m_parser.icc_buffer;
             exif = m_parser.exif_memory;
@@ -43,9 +44,9 @@ namespace
         }
     };
 
-    ImageDecoderInterface* createInterface(ConstMemory memory)
+    ImageDecodeInterface* createInterface(ConstMemory memory)
     {
-        ImageDecoderInterface* x = new Interface(memory);
+        ImageDecodeInterface* x = new Interface(memory);
         return x;
     }
 

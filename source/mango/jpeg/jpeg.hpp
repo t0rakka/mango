@@ -359,7 +359,7 @@ namespace mango::image::jpeg
     {
     protected:
         ConstMemory memory;
-
+        ImageDecodeInterface* m_interface;
         QuantTable quantTable[JPEG_MAX_COMPS_IN_SCAN];
 
         AlignedStorage<s16> quantTableVector;
@@ -384,12 +384,17 @@ namespace mango::image::jpeg
         std::string m_idct_name;
         std::string m_ycbcr_name;
 
-        const Surface* m_surface = nullptr;
+        ImageDecodeStatus m_decode_status;
 
-        int width;  // Image width, does include alignment
-        int height; // Image height, does include alignment
-        int xsize;  // Image width, does NOT include alignment
-        int ysize;  // Image height, does NOT include alignment
+        const Surface* m_target = nullptr;  // caller surface
+        const Surface* m_surface = nullptr; // temporary color conversion/clipping surface
+        bool m_request_blitting = false;
+
+        int aligned_width;
+        int aligned_height;
+        int width;
+        int height;
+
         int precision; // 8 or 12 bits
         int components; // 1..4
 
@@ -447,6 +452,7 @@ namespace mango::image::jpeg
 
         void process_range(int y0, int y1, const s16* data);
         void process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height);
+        void blit_and_update(const ImageDecodeRect& rect, bool force_blit = false);
 
         int getTaskSize(int count) const;
         void configureCPU(SampleType sample, const ImageDecodeOptions& options);
@@ -458,7 +464,7 @@ namespace mango::image::jpeg
         ConstMemory scan_memory; // Scan block
         Buffer icc_buffer; // ICC color profile block, if one is present
 
-        Parser(ConstMemory memory);
+        Parser(ConstMemory memory, ImageDecodeInterface* interface);
         ~Parser();
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);

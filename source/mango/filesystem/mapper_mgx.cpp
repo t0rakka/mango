@@ -324,7 +324,7 @@ namespace mango::filesystem
 
                         std::shared_ptr<Buffer> buffer;
 
-                        std::unique_lock<std::mutex> cache_lock(m_cache_mutex);
+                        std::lock_guard<std::mutex> cache_lock(m_cache_mutex);
 
                         auto value = m_cache.get(blockIndex);
                         if (value)

@@ -7,7 +7,7 @@
 project(
     'mango', 'c', 'cpp',
     meson_version: '>= 0.50.0',
-    version: '1.4.0',
+    version: '1.5.0',
     default_options : [
         'c_std=c11',
         'cpp_std=c++17',
@@ -583,6 +583,16 @@ external_deflate_sources = files(
     '../source/external/libdeflate/lib/zlib_decompress.c',
 )
 
+if is_arm
+    external_deflate_sources += files(
+        '../source/external/libdeflate/lib/arm/cpu_features.c'
+    )
+elif is_x86
+    external_deflate_sources += files(
+        '../source/external/libdeflate/lib/x86/cpu_features.c',
+    )
+endif
+
 external_zlib_headers = files(
     '../source/external/zlib/crc32.h',
     '../source/external/zlib/inffast.h',
@@ -609,16 +619,6 @@ external_zlib_sources = files(
     '../source/external/zlib/inftrees.c',
     '../source/external/zlib/uncompr.c',
 )
-
-if is_arm
-    external_deflate_sources += files(
-        '../source/external/libdeflate/lib/arm/cpu_features.c'
-    )
-elif is_x86
-    external_deflate_sources += files(
-        '../source/external/libdeflate/lib/x86/cpu_features.c',
-    )
-endif
 
 external_unrar_headers = files(
     '../source/external/unrar/rarvm.hpp',
