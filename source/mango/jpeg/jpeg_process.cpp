@@ -104,21 +104,22 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
     int xsize = (width + 7) / 8;
     int ysize = (height + 7) / 8;
 
-    int cb_offset = state->frame[1].offset * 64;
-    int cb_xshift = state->frame[1].hsf;
-    int cb_yshift = state->frame[1].vsf;
+    int y_xshift = state->frame[0].hsf;
+    int y_yshift = state->frame[0].vsf;
 
-    int cr_offset = state->frame[2].offset * 64;
-    int cr_xshift = state->frame[2].hsf;
-    int cr_yshift = state->frame[2].vsf;
+    int b_xshift = state->frame[1].hsf;
+    int b_yshift = state->frame[1].vsf;
 
-    int ck_offset = state->frame[3].offset * 64;
-    int ck_xshift = state->frame[3].hsf;
-    int ck_yshift = state->frame[3].vsf;
+    int r_xshift = state->frame[2].hsf;
+    int r_yshift = state->frame[2].vsf;
 
-    u8* cb_data = result + cb_offset;
-    u8* cr_data = result + cr_offset;
-    u8* ck_data = result + ck_offset;
+    int k_xshift = state->frame[3].hsf;
+    int k_yshift = state->frame[3].vsf;
+
+    u8* y_data = result + state->frame[0].offset * 64;
+    u8* b_data = result + state->frame[1].offset * 64;
+    u8* r_data = result + state->frame[2].offset * 64;
+    u8* k_data = result + state->frame[3].offset * 64;
 
     const ColorSpace colorspace = state->colorspace;
 
@@ -131,10 +132,21 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
         for (int xb = 0; xb < xsize; ++xb)
         {
             u8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(u32);
-            u8* y_block = result + (yb * xsize + xb) * 64;
-            u8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
-            u8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
-            u8* ck_block = ck_data + yb * (8 >> ck_yshift) * 8 + xb * (8 >> ck_xshift);
+
+            u8* y_block = y_data + (xb >> y_xshift) * 64 + (yb >> y_yshift) * 64 * ysize;
+            u8* b_block = b_data + (xb >> b_xshift) * 64 + (yb >> b_yshift) * 64 * ysize;
+            u8* r_block = r_data + (xb >> r_xshift) * 64 + (yb >> r_yshift) * 64 * ysize;
+            u8* k_block = k_data + (xb >> k_xshift) * 64 + (yb >> k_yshift) * 64 * ysize;
+
+            if (y_xshift) y_block += xb * (8 >> y_xshift);
+            if (b_xshift) b_block += xb * (8 >> b_xshift);
+            if (r_xshift) r_block += xb * (8 >> r_xshift);
+            if (k_xshift) k_block += xb * (8 >> k_xshift);
+
+            if (y_yshift) y_block += yb * (8 >> y_xshift) * 8;
+            if (b_yshift) b_block += yb * (8 >> b_xshift) * 8;
+            if (r_yshift) r_block += yb * (8 >> r_xshift) * 8;
+            if (k_yshift) k_block += yb * (8 >> k_xshift) * 8;
 
             // horizontal clipping limit for current block
             const int xmax = std::min(8, width - xb * 8);
@@ -144,16 +156,17 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
             {
                 u32* d = reinterpret_cast<u32*>(dest_block);
 
-                u8* cb_scan = cb_block + (y >> cb_yshift) * 8;
-                u8* cr_scan = cr_block + (y >> cr_yshift) * 8;
-                u8* ck_scan = ck_block + (y >> ck_yshift) * 8;
+                u8* y_scan = y_block + (y >> y_yshift) * 8;
+                u8* b_scan = b_block + (y >> b_yshift) * 8;
+                u8* r_scan = r_block + (y >> r_yshift) * 8;
+                u8* k_scan = k_block + (y >> k_yshift) * 8;
 
                 for (int x = 0; x < xmax; ++x)
                 {
-                    u8 y0 = y_block[x];
-                    u8 cb = cb_scan[x >> cb_xshift];
-                    u8 cr = cr_scan[x >> cr_xshift];
-                    u8 ck = ck_scan[x >> ck_xshift];
+                    u8 y0 = y_scan[x >> y_xshift];
+                    u8 cb = b_scan[x >> b_xshift];
+                    u8 cr = r_scan[x >> r_xshift];
+                    u8 ck = k_scan[x >> k_xshift];
 
                     int C;
                     int M;
@@ -193,8 +206,8 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
                     b = byteclamp(b);
                     d[x] = image::makeRGBA(r, g, b, 0xff);
                 }
+
                 dest_block += stride;
-                y_block += 8;
             }
         }
     }
