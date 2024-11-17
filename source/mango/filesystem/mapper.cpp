@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -132,6 +132,23 @@ namespace mango::filesystem
                 files.emplace_back(name + "/", 0, flags | FileInfo::DIRECTORY | FileInfo::CONTAINER);
             }
         }
+    }
+
+    void FileIndex::emplace(const std::string& name)
+    {
+        int flags = 0;
+
+        if (Mapper::isCustomMapper(name))
+        {
+            flags |= FileInfo::CONTAINER;
+        }
+        else if (name.back() == '/')
+        {
+            flags |= FileInfo::DIRECTORY;
+        }
+
+        u64 size = 0; // not required
+        files.emplace_back(name, size, flags);
     }
 
     // -----------------------------------------------------------------

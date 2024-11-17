@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -42,6 +42,7 @@ namespace mango::filesystem
         std::vector<FileInfo> files;
 
         void emplace(const std::string& name, u64 size, u32 flags);
+        void emplace(const std::string& name);
 
         size_t size() const
         {
