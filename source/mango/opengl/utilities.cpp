@@ -11,6 +11,45 @@
 namespace mango::opengl
 {
 
+    /*
+    void checkError(const char* name)
+    {
+        GLenum status = glGetError();
+        if (status != GL_NO_ERROR)
+        {
+            const char* s = "UNDEFINED.";
+            switch (status)
+            {
+                case GL_INVALID_ENUM: s = "GL_INVALID_ENUM"; break;
+                case GL_INVALID_VALUE: s = "GL_INVALID_VALUE"; break;
+                case GL_INVALID_OPERATION: s = "GL_INVALID_OPERATION"; break;
+                case GL_INVALID_FRAMEBUFFER_OPERATION: s = "GL_INVALID_FRAMEBUFFER_OPERATION"; break;
+                case GL_OUT_OF_MEMORY: s = "GL_OUT_OF_MEMORY"; break;
+            }
+
+            printf("Error @ %s: %s\n", name, s);
+        }
+    }
+
+    std::string getShadingLanguageVersionString()
+    {
+        std::string s = "#version 110\n"; // default for OpenGL 2.0
+
+        const char* version = reinterpret_cast<const char*>(glGetString(GL_SHADING_LANGUAGE_VERSION));
+        if (version)
+        {
+            int major;
+            int minor;
+            std::sscanf(version, "%d.%d", &major, &minor);
+            char buffer[80];
+            snprintf(buffer, 80, "#version %d%d\n", major, minor);
+            s = buffer;
+        }
+
+        return s;
+    }
+    */
+
     GLint getCompileStatus(GLuint shader)
     {
         GLint success;
