@@ -184,54 +184,6 @@ namespace mango::image::jpeg
         }
     }
 
-    static
-    void huff_decode_ac_block(s16* output, const HuffmanTable* ac, BitBuffer& buffer)
-    {
-        for (int i = 1; i < 64; )
-        {
-            buffer.ensure();
-
-            int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
-            int size = ac->lookupSize[index];
-
-            int symbol;
-
-            if (size <= JPEG_HUFF_LOOKUP_BITS)
-            {
-                symbol = ac->lookupValue[index];
-            }
-            else
-            {
-                HuffmanType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
-                while (x > ac->maxcode[size])
-                {
-                    ++size;
-                }
-
-                HuffmanType offset = (x >> (JPEG_REGISTER_BITS - size)) + ac->valueOffset[size];
-                symbol = ac->value[offset];
-            }
-
-            buffer.remain -= size;
-
-            int s = symbol;
-            int x = s & 15;
-
-            if (x)
-            {
-                i += (s >> 4);
-                s = buffer.receive(x);
-                output[zigzagTable[i++]] = s16(s);
-            }
-            else
-            {
-                if (s < 16)
-                    break;
-                i += 16;
-            }
-        }
-    }
-
     void huff_decode_mcu(s16* output, DecodeState* state)
     {
         HuffmanDecoder& huffman = state->huffman;
@@ -259,7 +211,49 @@ namespace mango::image::jpeg
             output[0] = s16(s);
 
             // AC
-            huff_decode_ac_block(output, ac, buffer);
+            for (int i = 1; i < 64; )
+            {
+                buffer.ensure();
+
+                int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
+                int size = ac->lookupSize[index];
+
+                int symbol;
+
+                if (size <= JPEG_HUFF_LOOKUP_BITS)
+                {
+                    symbol = ac->lookupValue[index];
+                }
+                else
+                {
+                    HuffmanType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
+                    while (x > ac->maxcode[size])
+                    {
+                        ++size;
+                    }
+
+                    HuffmanType offset = (x >> (JPEG_REGISTER_BITS - size)) + ac->valueOffset[size];
+                    symbol = ac->value[offset];
+                }
+
+                buffer.remain -= size;
+
+                int s = symbol;
+                int x = s & 15;
+
+                if (x)
+                {
+                    i += (s >> 4);
+                    s = buffer.receive(x);
+                    output[zigzagTable[i++]] = s16(s);
+                }
+                else
+                {
+                    if (s < 16)
+                        break;
+                    i += 16;
+                }
+            }
 
             output += 64;
         }

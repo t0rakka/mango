@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #ifdef FUNCTION_GENERIC
@@ -17,8 +17,8 @@ void FUNCTION_GENERIC(u8* dest, size_t stride, const s16* data, ProcessState* st
     }
 
     // MCU size in blocks
-    int xsize = (width + 7) / 8;
-    int ysize = (height + 7) / 8;
+    int xsize = div_ceil(width, 8);
+    int ysize = div_ceil(height, 8);
 
     int cb_offset = state->frame[1].offset * 64;
     int cb_xshift = state->frame[1].hsf;
@@ -27,6 +27,14 @@ void FUNCTION_GENERIC(u8* dest, size_t stride, const s16* data, ProcessState* st
     int cr_offset = state->frame[2].offset * 64;
     int cr_xshift = state->frame[2].hsf;
     int cr_yshift = state->frame[2].vsf;
+
+    int hmax = std::max(std::max(state->frame[0].hsf, state->frame[1].hsf), state->frame[2].hsf);
+    int vmax = std::max(std::max(state->frame[0].vsf, state->frame[1].vsf), state->frame[2].vsf);
+
+    cb_xshift = u32_log2(hmax / cb_xshift);
+    cr_xshift = u32_log2(hmax / cr_xshift);
+    cb_yshift = u32_log2(vmax / cb_yshift);
+    cr_yshift = u32_log2(vmax / cr_yshift);
 
     u8* cb_data = result + cb_offset;
     u8* cr_data = result + cr_offset;

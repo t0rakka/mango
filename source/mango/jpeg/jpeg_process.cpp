@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include "jpeg.hpp"
 
@@ -101,20 +101,31 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
     }
 
     // MCU size in blocks
-    int xsize = (width + 7) / 8;
-    int ysize = (height + 7) / 8;
+    int xsize = div_ceil(width, 8);
+    int ysize = div_ceil(height, 8);
 
     int y_xshift = state->frame[0].hsf;
-    int y_yshift = state->frame[0].vsf;
-
     int b_xshift = state->frame[1].hsf;
-    int b_yshift = state->frame[1].vsf;
-
     int r_xshift = state->frame[2].hsf;
-    int r_yshift = state->frame[2].vsf;
-
     int k_xshift = state->frame[3].hsf;
+
+    int y_yshift = state->frame[0].vsf;
+    int b_yshift = state->frame[1].vsf;
+    int r_yshift = state->frame[2].vsf;
     int k_yshift = state->frame[3].vsf;
+
+    int hmax = std::max(std::max(state->frame[0].hsf, state->frame[1].hsf), state->frame[2].hsf);
+    int vmax = std::max(std::max(state->frame[0].vsf, state->frame[1].vsf), state->frame[2].vsf);
+
+    y_xshift = u32_log2(hmax / y_xshift);
+    b_xshift = u32_log2(hmax / b_xshift);
+    r_xshift = u32_log2(hmax / r_xshift);
+    k_xshift = u32_log2(hmax / k_xshift);
+
+    y_yshift = u32_log2(vmax / y_yshift);
+    b_yshift = u32_log2(vmax / b_yshift);
+    r_yshift = u32_log2(vmax / r_yshift);
+    k_yshift = u32_log2(vmax / k_yshift);
 
     u8* y_data = result + state->frame[0].offset * 64;
     u8* b_data = result + state->frame[1].offset * 64;
@@ -143,10 +154,10 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
             if (r_xshift) r_block += xb * (8 >> r_xshift);
             if (k_xshift) k_block += xb * (8 >> k_xshift);
 
-            if (y_yshift) y_block += yb * (8 >> y_xshift) * 8;
-            if (b_yshift) b_block += yb * (8 >> b_xshift) * 8;
-            if (r_yshift) r_block += yb * (8 >> r_xshift) * 8;
-            if (k_yshift) k_block += yb * (8 >> k_xshift) * 8;
+            if (y_yshift) y_block += yb * (8 >> y_yshift) * 8;
+            if (b_yshift) b_block += yb * (8 >> b_yshift) * 8;
+            if (r_yshift) r_block += yb * (8 >> r_yshift) * 8;
+            if (k_yshift) k_block += yb * (8 >> k_yshift) * 8;
 
             // horizontal clipping limit for current block
             const int xmax = std::min(8, width - xb * 8);
