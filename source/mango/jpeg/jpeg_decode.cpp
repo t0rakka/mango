@@ -639,6 +639,7 @@ namespace mango::image::jpeg
                 header.setError("Incorrect sampling factors ({} x {})", frame.hsf, frame.vsf);
                 return;
             }
+
             frame.hsf = u32_log2(Hmax / frame.hsf);
             frame.vsf = u32_log2(Vmax / frame.vsf);
         }
@@ -1465,8 +1466,6 @@ namespace mango::image::jpeg
 
     void Parser::configureCPU(SampleType sample, const ImageDecodeOptions& options)
     {
-        const char* simd = "";
-
         u64 flags = options.simd ? getCPUFlags() : 0;
         MANGO_UNREFERENCED(flags);
 
@@ -1500,52 +1499,64 @@ namespace mango::image::jpeg
 
         // configure block processing
 
+        using ProcessFunc = void (*)(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+
+        ProcessFunc process_y           = nullptr;
+        ProcessFunc process_cmyk        = process_cmyk_rgba;
+        ProcessFunc process_ycbcr       = nullptr;
+        ProcessFunc process_ycbcr_8x8   = nullptr;
+        ProcessFunc process_ycbcr_8x16  = nullptr;
+        ProcessFunc process_ycbcr_16x8  = nullptr;
+        ProcessFunc process_ycbcr_16x16 = nullptr;
+
         switch (sample)
         {
             case JPEG_U8_Y:
-                processState.process_y           = process_y_8bit;
-                processState.process_ycbcr       = process_ycbcr_8bit;
-                processState.process_ycbcr_8x8   = nullptr;
-                processState.process_ycbcr_8x16  = nullptr;
-                processState.process_ycbcr_16x8  = nullptr;
-                processState.process_ycbcr_16x16 = nullptr;
+                process_y           = process_y_8bit;
+                process_ycbcr       = process_ycbcr_8bit;
+                process_ycbcr_8x8   = nullptr;
+                process_ycbcr_8x16  = nullptr;
+                process_ycbcr_16x8  = nullptr;
+                process_ycbcr_16x16 = nullptr;
                 break;
             case JPEG_U8_BGR:
-                processState.process_y           = process_y_24bit;
-                processState.process_ycbcr       = process_ycbcr_bgr;
-                processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8;
-                processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16;
-                processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8;
-                processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16;
+                process_y           = process_y_24bit;
+                process_ycbcr       = process_ycbcr_bgr;
+                process_ycbcr_8x8   = process_ycbcr_bgr_8x8;
+                process_ycbcr_8x16  = process_ycbcr_bgr_8x16;
+                process_ycbcr_16x8  = process_ycbcr_bgr_16x8;
+                process_ycbcr_16x16 = process_ycbcr_bgr_16x16;
                 break;
             case JPEG_U8_RGB:
-                processState.process_y           = process_y_24bit;
-                processState.process_ycbcr       = process_ycbcr_rgb;
-                processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8;
-                processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16;
-                processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8;
-                processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16;
+                process_y           = process_y_24bit;
+                process_ycbcr       = process_ycbcr_rgb;
+                process_ycbcr_8x8   = process_ycbcr_rgb_8x8;
+                process_ycbcr_8x16  = process_ycbcr_rgb_8x16;
+                process_ycbcr_16x8  = process_ycbcr_rgb_16x8;
+                process_ycbcr_16x16 = process_ycbcr_rgb_16x16;
                 break;
             case JPEG_U8_BGRA:
-                processState.process_y           = process_y_32bit;
-                processState.process_ycbcr       = process_ycbcr_bgra;
-                processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8;
-                processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16;
-                processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8;
-                processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16;
+                process_y           = process_y_32bit;
+                process_ycbcr       = process_ycbcr_bgra;
+                process_ycbcr_8x8   = process_ycbcr_bgra_8x8;
+                process_ycbcr_8x16  = process_ycbcr_bgra_8x16;
+                process_ycbcr_16x8  = process_ycbcr_bgra_16x8;
+                process_ycbcr_16x16 = process_ycbcr_bgra_16x16;
                 break;
             case JPEG_U8_RGBA:
-                processState.process_y           = process_y_32bit;
-                processState.process_ycbcr       = process_ycbcr_rgba;
-                processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8;
-                processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16;
-                processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8;
-                processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16;
+                process_y           = process_y_32bit;
+                process_ycbcr       = process_ycbcr_rgba;
+                process_ycbcr_8x8   = process_ycbcr_rgba_8x8;
+                process_ycbcr_8x16  = process_ycbcr_rgba_8x16;
+                process_ycbcr_16x8  = process_ycbcr_rgba_16x8;
+                process_ycbcr_16x16 = process_ycbcr_rgba_16x16;
                 break;
         }
 
-        // CMYK / YCCK
-        processState.process_cmyk = process_cmyk_rgba;
+        const char* simd_8x8   = "";
+        const char* simd_8x16  = "";
+        const char* simd_16x8  = "";
+        const char* simd_16x16 = "";
 
 #if defined(MANGO_ENABLE_NEON)
 
@@ -1556,32 +1567,44 @@ namespace mango::image::jpeg
                 case JPEG_U8_Y:
                     break;
                 case JPEG_U8_BGR:
-                    processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8_neon;
-                    processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_neon;
-                    processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_neon;
-                    processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_neon;
-                    simd = "NEON";
+                    process_ycbcr_8x8   = process_ycbcr_bgr_8x8_neon;
+                    process_ycbcr_8x16  = process_ycbcr_bgr_8x16_neon;
+                    process_ycbcr_16x8  = process_ycbcr_bgr_16x8_neon;
+                    process_ycbcr_16x16 = process_ycbcr_bgr_16x16_neon;
+                    simd_8x8   = "NEON";
+                    simd_8x16  = "NEON";
+                    simd_16x8  = "NEON";
+                    simd_16x16 = "NEON";
                     break;
                 case JPEG_U8_RGB:
-                    processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_neon;
-                    processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_neon;
-                    processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_neon;
-                    processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_neon;
-                    simd = "NEON";
+                    process_ycbcr_8x8   = process_ycbcr_rgb_8x8_neon;
+                    process_ycbcr_8x16  = process_ycbcr_rgb_8x16_neon;
+                    process_ycbcr_16x8  = process_ycbcr_rgb_16x8_neon;
+                    process_ycbcr_16x16 = process_ycbcr_rgb_16x16_neon;
+                    simd_8x8   = "NEON";
+                    simd_8x16  = "NEON";
+                    simd_16x8  = "NEON";
+                    simd_16x16 = "NEON";
                     break;
                 case JPEG_U8_BGRA:
-                    processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8_neon;
-                    processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16_neon;
-                    processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8_neon;
-                    processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16_neon;
-                    simd = "NEON";
+                    process_ycbcr_8x8   = process_ycbcr_bgra_8x8_neon;
+                    process_ycbcr_8x16  = process_ycbcr_bgra_8x16_neon;
+                    process_ycbcr_16x8  = process_ycbcr_bgra_16x8_neon;
+                    process_ycbcr_16x16 = process_ycbcr_bgra_16x16_neon;
+                    simd_8x8   = "NEON";
+                    simd_8x16  = "NEON";
+                    simd_16x8  = "NEON";
+                    simd_16x16 = "NEON";
                     break;
                 case JPEG_U8_RGBA:
-                    processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_neon;
-                    processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16_neon;
-                    processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8_neon;
-                    processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16_neon;
-                    simd = "NEON";
+                    process_ycbcr_8x8   = process_ycbcr_rgba_8x8_neon;
+                    process_ycbcr_8x16  = process_ycbcr_rgba_8x16_neon;
+                    process_ycbcr_16x8  = process_ycbcr_rgba_16x8_neon;
+                    process_ycbcr_16x16 = process_ycbcr_rgba_16x16_neon;
+                    simd_8x8   = "NEON";
+                    simd_8x16  = "NEON";
+                    simd_16x8  = "NEON";
+                    simd_16x16 = "NEON";
                     break;
             }
         }
@@ -1601,18 +1624,24 @@ namespace mango::image::jpeg
                 case JPEG_U8_RGB:
                     break;
                 case JPEG_U8_BGRA:
-                    processState.process_ycbcr_8x8   = process_ycbcr_bgra_8x8_sse2;
-                    processState.process_ycbcr_8x16  = process_ycbcr_bgra_8x16_sse2;
-                    processState.process_ycbcr_16x8  = process_ycbcr_bgra_16x8_sse2;
-                    processState.process_ycbcr_16x16 = process_ycbcr_bgra_16x16_sse2;
-                    simd = "SSE2";
+                    process_ycbcr_8x8   = process_ycbcr_bgra_8x8_sse2;
+                    process_ycbcr_8x16  = process_ycbcr_bgra_8x16_sse2;
+                    process_ycbcr_16x8  = process_ycbcr_bgra_16x8_sse2;
+                    process_ycbcr_16x16 = process_ycbcr_bgra_16x16_sse2;
+                    simd_8x8   = "SSE2";
+                    simd_8x16  = "SSE2";
+                    simd_16x8  = "SSE2";
+                    simd_16x16 = "SSE2";
                     break;
                 case JPEG_U8_RGBA:
-                    processState.process_ycbcr_8x8   = process_ycbcr_rgba_8x8_sse2;
-                    processState.process_ycbcr_8x16  = process_ycbcr_rgba_8x16_sse2;
-                    processState.process_ycbcr_16x8  = process_ycbcr_rgba_16x8_sse2;
-                    processState.process_ycbcr_16x16 = process_ycbcr_rgba_16x16_sse2;
-                    simd = "SSE2";
+                    process_ycbcr_8x8   = process_ycbcr_rgba_8x8_sse2;
+                    process_ycbcr_8x16  = process_ycbcr_rgba_8x16_sse2;
+                    process_ycbcr_16x8  = process_ycbcr_rgba_16x8_sse2;
+                    process_ycbcr_16x16 = process_ycbcr_rgba_16x16_sse2;
+                    simd_8x8   = "SSE2";
+                    simd_8x16  = "SSE2";
+                    simd_16x8  = "SSE2";
+                    simd_16x16 = "SSE2";
                     break;
             }
         }
@@ -1628,18 +1657,24 @@ namespace mango::image::jpeg
                 case JPEG_U8_Y:
                     break;
                 case JPEG_U8_BGR:
-                    processState.process_ycbcr_8x8   = process_ycbcr_bgr_8x8_sse41;
-                    processState.process_ycbcr_8x16  = process_ycbcr_bgr_8x16_sse41;
-                    processState.process_ycbcr_16x8  = process_ycbcr_bgr_16x8_sse41;
-                    processState.process_ycbcr_16x16 = process_ycbcr_bgr_16x16_sse41;
-                    simd = "SSE4.1";
+                    process_ycbcr_8x8   = process_ycbcr_bgr_8x8_sse41;
+                    process_ycbcr_8x16  = process_ycbcr_bgr_8x16_sse41;
+                    process_ycbcr_16x8  = process_ycbcr_bgr_16x8_sse41;
+                    process_ycbcr_16x16 = process_ycbcr_bgr_16x16_sse41;
+                    simd_8x8   = "SSE4.1";
+                    simd_8x16  = "SSE4.1";
+                    simd_16x8  = "SSE4.1";
+                    simd_16x16 = "SSE4.1";
                     break;
                 case JPEG_U8_RGB:
-                    processState.process_ycbcr_8x8   = process_ycbcr_rgb_8x8_sse41;
-                    processState.process_ycbcr_8x16  = process_ycbcr_rgb_8x16_sse41;
-                    processState.process_ycbcr_16x8  = process_ycbcr_rgb_16x8_sse41;
-                    processState.process_ycbcr_16x16 = process_ycbcr_rgb_16x16_sse41;
-                    simd = "SSE4.1";
+                    process_ycbcr_8x8   = process_ycbcr_rgb_8x8_sse41;
+                    process_ycbcr_8x16  = process_ycbcr_rgb_8x16_sse41;
+                    process_ycbcr_16x8  = process_ycbcr_rgb_16x8_sse41;
+                    process_ycbcr_16x16 = process_ycbcr_rgb_16x16_sse41;
+                    simd_8x8   = "SSE4.1";
+                    simd_8x16  = "SSE4.1";
+                    simd_16x8  = "SSE4.1";
+                    simd_16x16 = "SSE4.1";
                     break;
                 case JPEG_U8_BGRA:
                     break;
@@ -1665,8 +1700,8 @@ namespace mango::image::jpeg
                 case JPEG_U8_BGRA:
                     break;
                 case JPEG_U8_RGBA:
-                    processState.process_ycbcr_8x8 = process_ycbcr_rgba_8x8_avx2;
-                    simd = "AVX2";
+                    process_ycbcr_8x8 = process_ycbcr_rgba_8x8_avx2;
+                    simd_8x8   = "AVX2";
                     break;
             }
         }
@@ -1679,12 +1714,12 @@ namespace mango::image::jpeg
         switch (components)
         {
             case 1:
-                processState.process = processState.process_y;
+                processState.process = process_y;
                 id = "Y";
                 break;
 
             case 3:
-                processState.process = processState.process_ycbcr;
+                processState.process = process_ycbcr;
                 id = "YCbCr";
 
                 // detect optimized cases
@@ -1692,44 +1727,44 @@ namespace mango::image::jpeg
                 {
                     if (xblock == 8 && yblock == 8)
                     {
-                        if (processState.process_ycbcr_8x8)
+                        if (process_ycbcr_8x8)
                         {
-                            processState.process = processState.process_ycbcr_8x8;
-                            id = fmt::format("YCbCr 8x8 {}", simd);
+                            processState.process = process_ycbcr_8x8;
+                            id = fmt::format("YCbCr 8x8 {}", simd_8x8);
                         }
                     }
 
                     if (xblock == 8 && yblock == 16)
                     {
-                        if (processState.process_ycbcr_8x16)
+                        if (process_ycbcr_8x16)
                         {
-                            processState.process = processState.process_ycbcr_8x16;
-                            id = fmt::format("YCbCr 8x16 {}", simd);
+                            processState.process = process_ycbcr_8x16;
+                            id = fmt::format("YCbCr 8x16 {}", simd_8x16);
                         }
                     }
 
                     if (xblock == 16 && yblock == 8)
                     {
-                        if (processState.process_ycbcr_16x8)
+                        if (process_ycbcr_16x8)
                         {
-                            processState.process = processState.process_ycbcr_16x8;
-                            id = fmt::format("YCbCr 16x8 {}", simd);
+                            processState.process = process_ycbcr_16x8;
+                            id = fmt::format("YCbCr 16x8 {}", simd_16x8);
                         }
                     }
 
                     if (xblock == 16 && yblock == 16)
                     {
-                        if (processState.process_ycbcr_16x16)
+                        if (process_ycbcr_16x16)
                         {
-                            processState.process = processState.process_ycbcr_16x16;
-                            id = fmt::format("YCbCr 16x16 {}", simd);
+                            processState.process = process_ycbcr_16x16;
+                            id = fmt::format("YCbCr 16x16 {}", simd_16x16);
                         }
                     }
                 }
                 break;
 
             case 4:
-                processState.process = processState.process_cmyk;
+                processState.process = process_cmyk;
                 id = "CMYK";
                 break;
         }
