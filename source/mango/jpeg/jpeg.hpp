@@ -129,6 +129,8 @@ namespace mango::image::jpeg
 
 #endif
 
+    //#define JPEG_ENABLE_IGJ_HUFFMAN
+
     static constexpr int JPEG_MAX_BLOCKS_IN_MCU  = 10;  // Maximum # of blocks per MCU in the JPEG specification
     static constexpr int JPEG_MAX_SAMPLES_IN_MCU = 64 * JPEG_MAX_BLOCKS_IN_MCU;
     static constexpr int JPEG_MAX_COMPS_IN_SCAN  = 4;   // JPEG limit on # of components in one scan
@@ -229,10 +231,16 @@ namespace mango::image::jpeg
         u8 value[256];
 
         // acceleration tables
+#if defined(JPEG_ENABLE_IGJ_HUFFMAN)
+        int maxcode[18];
+        int valoffset[18];
+        int lookup[JPEG_HUFF_LOOKUP_SIZE];
+#else
         HuffmanType maxcode[18];
         HuffmanType valueOffset[19];
         u8 lookupSize[JPEG_HUFF_LOOKUP_SIZE];
         u8 lookupValue[JPEG_HUFF_LOOKUP_SIZE];
+#endif
 
         bool configure();
         int decode(BitBuffer& buffer) const;

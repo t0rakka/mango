@@ -28,6 +28,95 @@ namespace mango::image::jpeg
 
     bool HuffmanTable::configure()
     {
+#if defined(JPEG_ENABLE_IGJ_HUFFMAN)
+        int p, i, l, si;
+        int lookbits, ctr;
+        char huffsize[257];
+        unsigned int huffcode[257];
+        unsigned int code;
+
+        /* Figure C.1: make table of Huffman code length for each symbol */
+        p = 0;
+        for (l = 1; l <= 16; l++) {
+        i = size[l];
+        while (i--)
+            huffsize[p++] = (char)l;
+        }
+        huffsize[p] = 0;
+
+        /* Figure C.2: generate the codes themselves */
+        /* We also validate that the counts represent a legal Huffman code tree. */
+
+        code = 0;
+        si = huffsize[0];
+        p = 0;
+        while (huffsize[p]) {
+        while (((int)huffsize[p]) == si) {
+            huffcode[p++] = code;
+            code++;
+        }
+        code <<= 1;
+        si++;
+        }
+
+        /* Figure F.15: generate decoding tables for bit-sequential decoding */
+
+        p = 0;
+        for (l = 1; l <= 16; l++) {
+        if (size[l]) {
+            valoffset[l] = (int)p - (int)huffcode[p];
+            p += size[l];
+            maxcode[l] = huffcode[p - 1]; /* maximum code of length l */
+        } else {
+            maxcode[l] = -1;    /* -1 if no codes of this length */
+        }
+        }
+        valoffset[17] = 0;
+        maxcode[17] = 0xFFFFFL; /* ensures jpeg_huff_decode terminates */
+
+        /* Compute lookahead tables to speed up decoding.
+        * First we set all the table entries to 0, indicating "too long";
+        * then we iterate through the Huffman codes that are short enough and
+        * fill in all the entries that correspond to bit sequences starting
+        * with that code.
+        */
+
+        for (i = 0; i < JPEG_HUFF_LOOKUP_SIZE; i++)
+        lookup[i] = (JPEG_HUFF_LOOKUP_BITS + 1) << JPEG_HUFF_LOOKUP_BITS;
+
+        p = 0;
+        for (l = 1; l <= JPEG_HUFF_LOOKUP_BITS; l++) {
+        for (i = 1; i <= (int)size[l]; i++, p++) {
+            /* l = current code's length, p = its index in huffcode[] & huffval[]. */
+            /* Generate left-justified code followed by all possible bit sequences */
+            lookbits = huffcode[p] << (JPEG_HUFF_LOOKUP_BITS - l);
+            for (ctr = 1 << (JPEG_HUFF_LOOKUP_BITS - l); ctr > 0; ctr--) {
+            lookup[lookbits] = (l << JPEG_HUFF_LOOKUP_BITS) | value[p];
+            lookbits++;
+            }
+        }
+        }
+
+        /* Validate symbols as being reasonable.
+        * For AC tables, we make no check, but accept all byte values 0..255.
+        * For DC tables, we require the symbols to be in range 0..15 in lossy mode
+        * and 0..16 in lossless mode.  (Tighter bounds could be applied depending on
+        * the data depth and mode, but this is sufficient to ensure safe decoding.)
+        */
+        /*
+        if (isDC) {
+        for (i = 0; i < numsymbols; i++)
+        {
+            int sym = htbl->huffval[i];
+            if (sym < 0 || sym > (cinfo->master->lossless ? 16 : 15))
+            ERREXIT(cinfo, JERR_BAD_HUFF_TABLE);
+        }
+        */
+
+        return true;
+
+#else
+
         u8 huffsize[257];
         u32 huffcode[257];
 
@@ -123,10 +212,37 @@ namespace mango::image::jpeg
         }
 
         return true;
+#endif
     }
 
     int HuffmanTable::decode(BitBuffer& buffer) const
     {
+#if defined(JPEG_ENABLE_IGJ_HUFFMAN)
+        int s;
+
+        buffer.ensure();
+        s = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
+        s = lookup[s];
+        int nb = s >> JPEG_HUFF_LOOKUP_BITS;
+        buffer.remain -= nb;
+        s = s & (JPEG_HUFF_LOOKUP_SIZE - 1);
+        if (nb > JPEG_HUFF_LOOKUP_BITS)
+        {
+            s = (buffer.data >> buffer.remain) & ((1 << (nb)) - 1);
+            while (s > maxcode[nb])
+            {
+                s <<= 1;
+                s |= buffer.getBits(1);
+                nb++;
+            }
+            if (nb > 16)
+                s = 0;
+            else
+                s = value[(s + valoffset[nb]) & 0xff];
+        }
+
+        return s;
+#else
         buffer.ensure();
 
         int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
@@ -157,6 +273,7 @@ namespace mango::image::jpeg
         buffer.remain -= size;
 
         return symbol;
+#endif
     }
 
     // ----------------------------------------------------------------------------
@@ -213,6 +330,31 @@ namespace mango::image::jpeg
             // AC
             for (int i = 1; i < 64; )
             {
+                //int symbol = ac->decode(buffer);
+#if defined(JPEG_ENABLE_IGJ_HUFFMAN)
+                int symbol;
+
+                buffer.ensure();
+                symbol = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
+                symbol = ac->lookup[symbol];
+                int nb = symbol >> JPEG_HUFF_LOOKUP_BITS;
+                buffer.remain -= nb;
+                symbol &= (JPEG_HUFF_LOOKUP_SIZE - 1);
+                if (nb > JPEG_HUFF_LOOKUP_BITS)
+                {
+                    symbol = (buffer.data >> buffer.remain) & ((1 << (nb)) - 1);
+                    while (symbol > ac->maxcode[nb])
+                    {
+                        symbol <<= 1;
+                        symbol |= buffer.getBits(1);
+                        nb++;
+                    }
+                    if (nb > 16)
+                        symbol = 0; // invalid symbol
+                    else
+                        symbol = ac->value[(s + ac->valoffset[nb]) & 0xff];
+                }
+#else
                 buffer.ensure();
 
                 int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
@@ -237,6 +379,7 @@ namespace mango::image::jpeg
                 }
 
                 buffer.remain -= size;
+#endif
 
                 int s = symbol;
                 int x = s & 15;
@@ -361,7 +504,7 @@ namespace mango::image::jpeg
 
         if (!huffman.eob_run)
         {
-            for (; k <= end; k++)
+            for ( ; k <= end; ++k)
             {
                 int s = ac->decode(buffer);
                 int r = s >> 4;
@@ -409,10 +552,10 @@ namespace mango::image::jpeg
                             break;
                     }
 
-                    k++;
+                    ++k;
                 } while (k <= end);
 
-                if ((s) && (k < 64))
+                if (s && (k < 64))
                 {
                     output[zigzagTable[k]] = s16(s);
                 }
@@ -421,7 +564,7 @@ namespace mango::image::jpeg
 
         if (huffman.eob_run > 0)
         {
-            for ( ; k <= end; k++)
+            for ( ; k <= end; ++k)
             {
                 s16* coef = output + zigzagTable[k];
 
