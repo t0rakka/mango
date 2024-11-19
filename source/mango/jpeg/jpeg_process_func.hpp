@@ -23,18 +23,18 @@ void FUNCTION_GENERIC(u8* dest, size_t stride, const s16* data, ProcessState* st
     u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 3];
 
     // first pass: expand channel data
-    for (int i = 0; i < 3; ++i)
+    for (int channel = 0; channel < 3; ++channel)
     {
-        int offset = state->frame[i].offset * 64;
-        int hsf = state->frame[i].hsf;
-        int vsf = state->frame[i].vsf;
+        int offset = state->frame[channel].offset * 64;
+        int hsf = state->frame[channel].hsf;
+        int vsf = state->frame[channel].vsf;
 
         for (int yblock = 0; yblock < vsf; ++yblock)
         {
             for (int xblock = 0; xblock < hsf; ++xblock)
             {
                 u8* source = result + offset + (yblock * hsf + xblock) * 64;
-                u8* dest = temp + i * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
+                u8* dest = temp + channel * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
 
                 if (hmax != hsf || vmax != vsf)
                 {
