@@ -108,20 +108,20 @@ namespace mango::image::jpeg
         {
             const u8* x = ptr;
 
-            int a = ptr < end ? *ptr++ : 0;
-            if (a == 0xff)
+            int value = ptr < end ? *ptr++ : 0;
+            if (value == 0xff)
             {
                 int b = ptr < end ? *ptr++ : 0;
                 if (b)
                 {
                     // Found a marker; keep returning zero until it has been processed
                     ptr = x;
-                    a = 0;
+                    value = 0;
                 }
             }
 
             remain += 8;
-            data = (data << 8) | a;
+            data = (data << 8) | value;
         }
     }
 
@@ -629,21 +629,6 @@ namespace mango::image::jpeg
 
         processState.blocks = offset;
 
-        // Compute frame sampling factors against maximum sampling factor,
-        // then convert them into power-of-two presentation.
-        for (int i = 0; i < components; ++i)
-        {
-            Frame& frame = processState.frame[i];
-            if (!frame.hsf || !frame.vsf)
-            {
-                header.setError("Incorrect sampling factors ({} x {})", frame.hsf, frame.vsf);
-                return;
-            }
-
-            frame.hsf = u32_log2(Hmax / frame.hsf);
-            frame.vsf = u32_log2(Vmax / frame.vsf);
-        }
-
         xblock = 8 * Hmax;
         yblock = 8 * Vmax;
 
@@ -653,8 +638,8 @@ namespace mango::image::jpeg
             return;
         }
 
-        printLine(Print::Info, "  Blocks per MCU: {}", blocks_in_mcu);
-        printLine(Print::Info, "  MCU size: {} x {}", xblock, yblock);
+        printLine(Print::Info, "  Blocks in MCU: {}", blocks_in_mcu);
+        printLine(Print::Info, "  MCU: {} x {}", xblock, yblock);
 
         // Align to next MCU boundary
         int xmask = xblock - 1;
@@ -2548,18 +2533,16 @@ namespace mango::image::jpeg
         {
             s16* data = blockVector;
 
-            const int hsf = u32_log2(scanFrame->hsf);
-            const int vsf = u32_log2(scanFrame->vsf);
-            const int hsize = (Hmax >> hsf) * 8;
-            const int vsize = (Vmax >> vsf) * 8;
+            const int hsf = scanFrame->hsf;
+            const int vsf = scanFrame->vsf;
+            const int hsize = (Hmax / hsf) * 8;
+            const int vsize = (Vmax / vsf) * 8;
 
-            printLine(Print::Info, "    hf: {} x {}, log2: {} x {}", 1 << hsf, 1 << vsf, hsf, vsf);
-            printLine(Print::Info, "    bs: {} x {}  scanSize: {}", hsize, vsize, decodeState.blocks);
+            printLine(Print::Info, "    hsf: {}, vsf: {}, blocks: {}", hsf, vsf, decodeState.blocks);
 
             const int scan_offset = scanFrame->offset;
-
-            const int xs = ((width  + hsize - 1) / hsize);
-            const int ys = ((height + vsize - 1) / vsize);
+            const int xs = div_ceil(width, hsize);
+            const int ys = div_ceil(height, vsize);
             const int cnt = xs * ys;
 
             printLine(Print::Info, "    blocks: {} x {} ({} x {})", xs, ys, xs * hsize, ys * vsize);
@@ -2568,9 +2551,6 @@ namespace mango::image::jpeg
             MANGO_UNREFERENCED(ys);
             MANGO_UNREFERENCED(hsize);
             MANGO_UNREFERENCED(vsize);
-
-            const int HMask = (1 << hsf) - 1;
-            const int VMask = (1 << vsf) - 1;
 
             ConcurrentQueue queue("jpeg:progressive.ac");
 
@@ -2597,14 +2577,14 @@ namespace mango::image::jpeg
                         int x = n % xmcu;
                         int y = n / xmcu;
 
-                        int mcu_yoffset = (y >> vsf) * xmcu;
-                        int block_yoffset = ((y & VMask) << hsf) + scan_offset;
+                        int mcu_yoffset = (y / vsf) * xmcu;
+                        int block_yoffset = ((y % vsf) * hsf) + scan_offset;
 
-                        int mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
-                        int block_offset = (x & HMask) + block_yoffset;
-                        s16* dest = data + (block_offset + mcu_offset) * 64;
+                        int mcu_offset = (mcu_yoffset + (x / hsf)) * blocks_in_mcu;
+                        int block_offset = (x % hsf) + block_yoffset;
+                        s16* mcudata = data + (block_offset + mcu_offset) * 64;
 
-                        state.decode(dest, &state);
+                        state.decode(mcudata, &state);
                     }
                 });
 
@@ -2621,23 +2601,18 @@ namespace mango::image::jpeg
         {
             s16* data = blockVector;
 
-            const int hsf = u32_log2(scanFrame->hsf);
-            const int vsf = u32_log2(scanFrame->vsf);
-            const int hsize = (Hmax >> hsf) * 8;
-            const int vsize = (Vmax >> vsf) * 8;
+            const int hsf = scanFrame->hsf;
+            const int vsf = scanFrame->vsf;
+            const int hsize = (Hmax / hsf) * 8;
+            const int vsize = (Vmax / vsf) * 8;
 
-            printLine(Print::Info, "    hf: {} x {}, log2: {} x {}", 1 << hsf, 1 << vsf, hsf, vsf);
-            printLine(Print::Info, "    bs: {} x {}  scanSize: {}", hsize, vsize, decodeState.blocks);
+            printLine(Print::Info, "    hsf: {}, vsf: {}, blocks: {}", hsf, vsf, decodeState.blocks);
 
             const int scan_offset = scanFrame->offset;
-
-            const int xs = ((width  + hsize - 1) / hsize);
-            const int ys = ((height + vsize - 1) / vsize);
+            const int xs = div_ceil(width, hsize);
+            const int ys = div_ceil(height, vsize);
 
             printLine(Print::Info, "    blocks: {} x {} ({} x {})", xs, ys, xs * hsize, ys * vsize);
-
-            const int HMask = (1 << hsf) - 1;
-            const int VMask = (1 << vsf) - 1;
 
             for (int y = 0; y < ys; ++y)
             {
@@ -2646,13 +2621,13 @@ namespace mango::image::jpeg
                     break;
                 }
 
-                int mcu_yoffset = (y >> vsf) * xmcu;
-                int block_yoffset = ((y & VMask) << hsf) + scan_offset;
+                int mcu_yoffset = (y / vsf) * xmcu;
+                int block_yoffset = ((y % vsf) * hsf) + scan_offset;
 
                 for (int x = 0; x < xs; ++x)
                 {
-                    int mcu_offset = (mcu_yoffset + (x >> hsf)) * blocks_in_mcu;
-                    int block_offset = (x & HMask) + block_yoffset;
+                    int mcu_offset = (mcu_yoffset + (x / hsf)) * blocks_in_mcu;
+                    int block_offset = (x % hsf) + block_yoffset;
                     s16* mcudata = data + (block_offset + mcu_offset) * 64;
 
                     decodeState.decode(mcudata, &decodeState);

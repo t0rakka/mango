@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include "jpeg.hpp"
 
@@ -100,115 +100,116 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
         data += 64;
     }
 
-    // MCU size in blocks
-    int xsize = (width + 7) / 8;
-    int ysize = (height + 7) / 8;
+    // MCU dimension in blocks
+    int hmax = std::max(std::max(state->frame[0].hsf, state->frame[1].hsf), state->frame[2].hsf);
+    int vmax = std::max(std::max(state->frame[0].vsf, state->frame[1].vsf), state->frame[2].vsf);
 
-    int y_xshift = state->frame[0].hsf;
-    int y_yshift = state->frame[0].vsf;
+    u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 4];
 
-    int b_xshift = state->frame[1].hsf;
-    int b_yshift = state->frame[1].vsf;
+    // first pass: expand channel data
+    for (int channel = 0; channel < 4; ++channel)
+    {
+        int offset = state->frame[channel].offset * 64;
+        int hsf = state->frame[channel].hsf;
+        int vsf = state->frame[channel].vsf;
 
-    int r_xshift = state->frame[2].hsf;
-    int r_yshift = state->frame[2].vsf;
+        for (int yblock = 0; yblock < vsf; ++yblock)
+        {
+            for (int xblock = 0; xblock < hsf; ++xblock)
+            {
+                u8* source = result + offset + (yblock * hsf + xblock) * 64;
+                u8* dest = temp + channel * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
 
-    int k_xshift = state->frame[3].hsf;
-    int k_yshift = state->frame[3].vsf;
+                if (hmax != hsf || vmax != vsf)
+                {
+                    int xscale = hmax / hsf;
+                    int yscale = vmax / vsf;
 
-    u8* y_data = result + state->frame[0].offset * 64;
-    u8* b_data = result + state->frame[1].offset * 64;
-    u8* r_data = result + state->frame[2].offset * 64;
-    u8* k_data = result + state->frame[3].offset * 64;
+                    for (int y = 0; y < 8; ++y)
+                    {
+                        for (int x = 0; x < 8; ++x)
+                        {
+                            u8 sample = *source++;
+                            std::memset(dest + x * xscale, sample, xscale);
+                        }
+
+                        dest += hmax * 8;
+
+                        for (int s = 1; s < yscale; ++s)
+                        {
+                            std::memcpy(dest, dest - hmax * 8, xscale * 8);
+                            dest += hmax * 8;
+                        }
+                    }
+                }
+                else
+                {
+                    for (int y = 0; y < 8; ++y)
+                    {
+                        std::memcpy(dest, source, 8);
+                        source += 8;
+                        dest += hmax * 8;
+                    }
+                }
+            }
+        }
+    }
 
     const ColorSpace colorspace = state->colorspace;
 
-    // process MCU
-    for (int yb = 0; yb < ysize; ++yb)
+    // second pass: resolve color
+    for (int y = 0; y < height; ++y)
     {
-        // vertical clipping limit for current block
-        const int ymax = std::min(8, height - yb * 8);
+        u8* source0 = temp + 0 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+        u8* source1 = temp + 1 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+        u8* source2 = temp + 2 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+        u8* source3 = temp + 3 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+        u32* d = reinterpret_cast<u32*>(dest + y * stride);
 
-        for (int xb = 0; xb < xsize; ++xb)
+        for (int x = 0; x < width; ++x)
         {
-            u8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(u32);
+            u8 y0 = source0[x];
+            u8 cb = source1[x];
+            u8 cr = source2[x];
+            u8 ck = source3[x];
 
-            u8* y_block = y_data + (xb >> y_xshift) * 64 + (yb >> y_yshift) * 64 * ysize;
-            u8* b_block = b_data + (xb >> b_xshift) * 64 + (yb >> b_yshift) * 64 * ysize;
-            u8* r_block = r_data + (xb >> r_xshift) * 64 + (yb >> r_yshift) * 64 * ysize;
-            u8* k_block = k_data + (xb >> k_xshift) * 64 + (yb >> k_yshift) * 64 * ysize;
+            int C;
+            int M;
+            int Y;
+            int K;
 
-            if (y_xshift) y_block += xb * (8 >> y_xshift);
-            if (b_xshift) b_block += xb * (8 >> b_xshift);
-            if (r_xshift) r_block += xb * (8 >> r_xshift);
-            if (k_xshift) k_block += xb * (8 >> k_xshift);
-
-            if (y_yshift) y_block += yb * (8 >> y_xshift) * 8;
-            if (b_yshift) b_block += yb * (8 >> b_xshift) * 8;
-            if (r_yshift) r_block += yb * (8 >> r_xshift) * 8;
-            if (k_yshift) k_block += yb * (8 >> k_xshift) * 8;
-
-            // horizontal clipping limit for current block
-            const int xmax = std::min(8, width - xb * 8);
-
-            // process 8x8 block
-            for (int y = 0; y < ymax; ++y)
+            switch (colorspace)
             {
-                u32* d = reinterpret_cast<u32*>(dest_block);
-
-                u8* y_scan = y_block + (y >> y_yshift) * 8;
-                u8* b_scan = b_block + (y >> b_yshift) * 8;
-                u8* r_scan = r_block + (y >> r_yshift) * 8;
-                u8* k_scan = k_block + (y >> k_yshift) * 8;
-
-                for (int x = 0; x < xmax; ++x)
-                {
-                    u8 y0 = y_scan[x >> y_xshift];
-                    u8 cb = b_scan[x >> b_xshift];
-                    u8 cr = r_scan[x >> r_xshift];
-                    u8 ck = k_scan[x >> k_xshift];
-
-                    int C;
-                    int M;
-                    int Y;
-                    int K;
-
-                    switch (colorspace)
-                    {
-                        case ColorSpace::CMYK:
-                            C = y0;
-                            M = cb;
-                            Y = cr;
-                            K = ck;
-                            break;
-                        case ColorSpace::YCCK:
-                            // convert YCCK to CMYK
-                            C = 255 - (y0 + ((5734 * cr - 735052) >> 12));
-                            M = 255 - (y0 + ((-1410 * cb - 2925 * cr + 554844) >> 12));
-                            Y = 255 - (y0 + ((7258 * cb - 929038) >> 12));
-                            K = ck;
-                            break;
-                        default:
-                        case ColorSpace::YCBCR:
-                            C = 0;
-                            M = 0;
-                            Y = 0;
-                            K = 0;
-                            break;
-                    }
-
-                    int r = (C * K) / 255;
-                    int g = (M * K) / 255;
-                    int b = (Y * K) / 255;
-
-                    r = byteclamp(r);
-                    g = byteclamp(g);
-                    b = byteclamp(b);
-                    d[x] = image::makeRGBA(r, g, b, 0xff);
-                }
-
-                dest_block += stride;
+                case ColorSpace::CMYK:
+                    C = y0;
+                    M = cb;
+                    Y = cr;
+                    K = ck;
+                    break;
+                case ColorSpace::YCCK:
+                    // convert YCCK to CMYK
+                    C = 255 - (y0 + ((5734 * cr - 735052) >> 12));
+                    M = 255 - (y0 + ((-1410 * cb - 2925 * cr + 554844) >> 12));
+                    Y = 255 - (y0 + ((7258 * cb - 929038) >> 12));
+                    K = ck;
+                    break;
+                default:
+                case ColorSpace::YCBCR:
+                    C = 0;
+                    M = 0;
+                    Y = 0;
+                    K = 0;
+                    break;
             }
+
+            int r = (C * K) / 255;
+            int g = (M * K) / 255;
+            int b = (Y * K) / 255;
+
+            r = byteclamp(r);
+            g = byteclamp(g);
+            b = byteclamp(b);
+            d[x] = image::makeRGBA(r, g, b, 0xff);
         }
     }
 }
