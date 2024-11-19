@@ -16,66 +16,78 @@ void FUNCTION_GENERIC(u8* dest, size_t stride, const s16* data, ProcessState* st
         data += 64;
     }
 
-    // MCU size in blocks
-    int xsize = div_ceil(width, 8);
-    int ysize = div_ceil(height, 8);
-
-    int cb_offset = state->frame[1].offset * 64;
-    int cb_xshift = state->frame[1].hsf;
-    int cb_yshift = state->frame[1].vsf;
-
-    int cr_offset = state->frame[2].offset * 64;
-    int cr_xshift = state->frame[2].hsf;
-    int cr_yshift = state->frame[2].vsf;
-
+    // MCU dimension in blocks
     int hmax = std::max(std::max(state->frame[0].hsf, state->frame[1].hsf), state->frame[2].hsf);
     int vmax = std::max(std::max(state->frame[0].vsf, state->frame[1].vsf), state->frame[2].vsf);
 
-    cb_xshift = u32_log2(hmax / cb_xshift);
-    cr_xshift = u32_log2(hmax / cr_xshift);
-    cb_yshift = u32_log2(vmax / cb_yshift);
-    cr_yshift = u32_log2(vmax / cr_yshift);
+    u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 3];
 
-    u8* cb_data = result + cb_offset;
-    u8* cr_data = result + cr_offset;
-
-    // process MCU
-    for (int yb = 0; yb < ysize; ++yb)
+    // first pass: expand channel data
+    for (int i = 0; i < 3; ++i)
     {
-        // vertical clipping limit for current block
-        const int ymax = std::min(8, height - yb * 8);
+        int offset = state->frame[i].offset * 64;
+        int hsf = state->frame[i].hsf;
+        int vsf = state->frame[i].vsf;
 
-        for (int xb = 0; xb < xsize; ++xb)
+        for (int yblock = 0; yblock < vsf; ++yblock)
         {
-            u8* dest_block = dest + yb * 8 * stride + xb * 8 * XSTEP;
-            u8* y_block = result + (yb * xsize + xb) * 64;
-            u8* cb_block = cb_data + yb * (8 >> cb_yshift) * 8 + xb * (8 >> cb_xshift);
-            u8* cr_block = cr_data + yb * (8 >> cr_yshift) * 8 + xb * (8 >> cr_xshift);
-
-            // horizontal clipping limit for current block
-            const int xmax = std::min(8, width - xb * 8);
-
-            // process 8x8 block
-            for (int y = 0; y < ymax; ++y)
+            for (int xblock = 0; xblock < hsf; ++xblock)
             {
-                u8* d = dest_block;
-                u8* cb_scan = cb_block + (y >> cb_yshift) * 8;
-                u8* cr_scan = cr_block + (y >> cr_yshift) * 8;
+                u8* source = result + offset + (yblock * hsf + xblock) * 64;
+                u8* dest = temp + i * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
 
-                for (int x = 0; x < xmax; ++x)
+                if (hmax != hsf || vmax != vsf)
                 {
-                    u8 y0 = y_block[x];
-                    u8 cb = cb_scan[x >> cb_xshift];
-                    u8 cr = cr_scan[x >> cr_xshift];
-                    int r, g, b;
-                    COMPUTE_CBCR(cb, cr);
-                    WRITE_COLOR(d, y0, r, g, b);
-                    d += XSTEP;
-                }
+                    int xscale = hmax / hsf;
+                    int yscale = vmax / vsf;
 
-                dest_block += stride;
-                y_block += 8;
+                    for (int y = 0; y < 8; ++y)
+                    {
+                        for (int x = 0; x < 8; ++x)
+                        {
+                            u8 sample = *source++;
+                            std::memset(dest + x * xscale, sample, xscale);
+                        }
+
+                        dest += hmax * 8;
+
+                        for (int s = 1; s < yscale; ++s)
+                        {
+                            std::memcpy(dest, dest - hmax * 8, xscale * 8);
+                            dest += hmax * 8;
+                        }
+                    }
+                }
+                else
+                {
+                    for (int y = 0; y < 8; ++y)
+                    {
+                        std::memcpy(dest, source, 8);
+                        source += 8;
+                        dest += hmax * 8;
+                    }
+                }
             }
+        }
+    }
+
+    // second pass: resolve color
+    for (int y = 0; y < height; ++y)
+    {
+        u8* source0 = temp + 0 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+        u8* source1 = temp + 1 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+        u8* source2 = temp + 2 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+        u8* d = dest + y * stride;
+
+        for (int x = 0; x < width; ++x)
+        {
+            u8 y0 = source0[x];
+            u8 cb = source1[x];
+            u8 cr = source2[x];
+            int r, g, b;
+            COMPUTE_CBCR(cb, cr);
+            WRITE_COLOR(d, y0, r, g, b);
+            d += XSTEP;
         }
     }
 }
