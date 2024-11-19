@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -32,8 +32,8 @@ namespace mango::image
         u32         StripOffsets;
         u32         RowsPerStrip;
         u32         StripByteCounts;
-        //case EXIF(JPEGInterchangeFormat, );
-        //case EXIF(JPEGInterchangeFormatLength, );
+        u32         JPEGInterchangeFormat;
+        u32         JPEGInterchangeFormatLength;
 
         // image data characteristics
         u16         TransferFunction;
@@ -58,7 +58,6 @@ namespace mango::image
         u16         ISOSpeedRatings;
         std::string DateTimeOriginal;
         std::string DateTimeDigitized;
-        //ComponentsConfiguration       = 0x9101, // Specific to compressed data; specifies the channels and complements PhotometricInterpretation
         float       CompressedBitsPerPixel;
         float       ShutterSpeedValue;
         float       ApertureValue;
@@ -70,28 +69,17 @@ namespace mango::image
         u16         LightSource;
         u16         Flash;
         float       FocalLength;
-        //SubjectArea               = 0x9214, // Indicates the location and area of the main subject in the overall scene.
-        //MakerNote                 = 0x927C, // Manufacturer specific information.
-        //UserComment               = 0x9286, // Keywords or comments on the image; complements ImageDescription.
-        //SubsecTime                = 0x9290, // A tag used to record fractions of seconds for the DateTime tag.
-        //SubsecTimeOriginal        = 0x9291, // A tag used to record fractions of seconds for the DateTimeOriginal tag.
-        //SubsecTimeDigitized       = 0x9292, // A tag used to record fractions of seconds for the DateTimeDigitized tag.
-        //FlashpixVersion           = 0xA000, // The Flashpix format version supported by a FPXR file.
+        std::string MakerNote;
+        std::string UserComment;
         u16         ColorSpace;
         u32         PixelXDimension;
         u32         PixelYDimension;
-        //RelatedSoundFile          = 0xA004, // Used to record the name of an audio file related to the image data.
         float       FlashEnergy;
-        //SpatialFrequencyResponse  = 0xA20C,
         float       FocalPlaneXResolution;
         float       FocalPlaneYResolution;
         u16         FocalPlaneResolutionUnit;
-        //SubjectLocation           = 0xA214, // Indicates the location of the main subject in the scene.
         float       ExposureIndex;
         u16         SensingMethod;
-        //FileSource                = 0xA300, // Indicates the image source.
-        //SceneType                 = 0xA301, // Indicates the type of scene.
-        //CFAPattern                = 0xA302, // is used.
         u16         CustomRendered;
         u16         ExposureMode;
         u16         WhiteBalance;
@@ -102,7 +90,6 @@ namespace mango::image
         u16         Contrast;
         u16         Saturation;
         u16         Sharpness;
-        //DeviceSettingDescription  = 0xA40B, // This tag indicates information on the picture-taking conditions of a particular camera model.
         u16         SubjectDistanceRange;
         std::string ImageUniqueID;
 
