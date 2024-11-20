@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cassert>
 #include <algorithm>
+#include <type_traits>
 #include <mango/core/configure.hpp>
 #include <mango/core/half.hpp>
 
@@ -295,24 +296,26 @@ namespace mango
     }
 
     static constexpr
-    int div_floor(int value, int multiple)
+    u32 div_floor(u32 value, u32 multiple)
     {
         // plain division
         return value / multiple;
     }
 
     static constexpr
-    int div_ceil(int value, int multiple)
+    u32 div_ceil(u32 value, u32 multiple)
     {
         // round to next multiple
         return (value + multiple - 1) / multiple;
     }
 
+    template <typename T>
     static constexpr
-    int modulo(int value, int range)
+    T modulo(T value, T range)
     {
-        const int remainder = value % range;
-        return remainder < 0 ? remainder + range : remainder;
+        using S = std::make_signed_t<T>;
+        const S remainder = S(value) % S(range);
+        return T(remainder < 0 ? remainder + S(range) : remainder);
     }
 
     static inline
