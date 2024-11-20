@@ -330,11 +330,11 @@ namespace mango
 
         m_version = major * 100 + minor * 10;
 
-        // parse extension string
+        // query OpenGL extensions
         const GLubyte* extensions = glGetString(GL_EXTENSIONS);
         if (extensions)
         {
-            // parse extensions
+            // parse extension string
             for (const GLubyte* s = extensions; *s; ++s)
             {
                 if (*s == ' ')
@@ -347,6 +347,17 @@ namespace mango
 
                     extensions = s + 1;
                 }
+            }
+        }
+        else
+        {
+            GLint numExtensions = 0;
+            glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+
+            for (GLuint i = 0; i < numExtensions; ++i)
+            {
+                const char* extension = reinterpret_cast<const char*>(glGetStringi(GL_EXTENSIONS, i));
+                m_extensions.emplace(extension);
             }
         }
 
