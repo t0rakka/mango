@@ -60,8 +60,10 @@ namespace mango::image
     {
     public:
         Bitmap(int width, int height, const Format& format, size_t stride = 0);
+        Bitmap(const Surface& source);
         Bitmap(const Surface& source, const Format& format);
         Bitmap(const ImageHeader& header);
+        Bitmap(const ImageHeader& header, const Format& format);
 
         Bitmap(ConstMemory memory, const std::string& extension, const ImageDecodeOptions& options = ImageDecodeOptions());
         Bitmap(ConstMemory memory, const std::string& extension, const Format& format, const ImageDecodeOptions& options = ImageDecodeOptions());

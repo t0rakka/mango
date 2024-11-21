@@ -933,8 +933,8 @@ namespace mango::image
     // Bitmap
     // ----------------------------------------------------------------------------
 
-    Bitmap::Bitmap(int w, int h, const Format& f, size_t s)
-        : Surface(w, h, f, s, nullptr)
+    Bitmap::Bitmap(int width_, int height_, const Format& format_, size_t stride_)
+        : Surface(width_, height_, format_, stride_, nullptr)
     {
         if (!stride)
         {
@@ -942,6 +942,14 @@ namespace mango::image
         }
 
         image = new u8[stride * height];
+    }
+
+    Bitmap::Bitmap(const Surface& source)
+        : Surface(source.width, source.height, source.format, 0, nullptr)
+    {
+        stride = width * format.bytes();
+        image = new u8[stride * height];
+        blit(0, 0, source);
     }
 
     Bitmap::Bitmap(const Surface& source, const Format& format)
@@ -954,6 +962,13 @@ namespace mango::image
 
     Bitmap::Bitmap(const ImageHeader& header)
         : Surface(header.width, header.height, header.format, 0, nullptr)
+    {
+        stride = width * format.bytes();
+        image = new u8[stride * height];
+    }
+
+    Bitmap::Bitmap(const ImageHeader& header, const Format& format)
+        : Surface(header.width, header.height, format, 0, nullptr)
     {
         stride = width * format.bytes();
         image = new u8[stride * height];
