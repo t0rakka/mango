@@ -96,9 +96,38 @@ namespace mango
     void printEnable(Print target, bool enable);
     bool isEnable(Print target);
 
+#if defined(MANGO_PLATFORM_WINDOWS)
+
+    // NOTE: fmt::print() crashes on Windows when there is no console and we don't want custom output sink for this
+
     template <typename... T>
     static inline
-    void printLine(Print target, T... s)
+        void printLine(Print target, T... s)
+    {
+        if (isEnable(target))
+        {
+            std::printf("%s", fmt::format(std::forward<T>(s)...).c_str());
+            std::printf("\n");
+        }
+    }
+
+    template <typename... T>
+    static inline
+        void printLine(Print target, int indent, T... s)
+    {
+        if (isEnable(target))
+        {
+            std::printf("%s", fmt::format("{:{}}", "", indent).c_str());
+            std::printf("%s", fmt::format(std::forward<T>(s)...).c_str());
+            std::printf("\n");
+        }
+    }
+
+#else
+
+    template <typename... T>
+    static inline
+        void printLine(Print target, T... s)
     {
         if (isEnable(target))
         {
@@ -109,7 +138,7 @@ namespace mango
 
     template <typename... T>
     static inline
-    void printLine(Print target, int indent, T... s)
+        void printLine(Print target, int indent, T... s)
     {
         if (isEnable(target))
         {
@@ -118,6 +147,8 @@ namespace mango
             fmt::print("\n");
         }
     }
+
+#endif
 
     template <typename... T>
     static inline
