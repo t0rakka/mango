@@ -3950,7 +3950,8 @@ namespace
             {
                 filter_range(source.address, surface, y, y + h);
 
-#ifdef MANGO_ENABLE_ISAL
+#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
+
                 constexpr size_t TEMP_SIZE = 128 * 1024;
                 Buffer temp(TEMP_SIZE);
 
@@ -4054,6 +4055,7 @@ namespace
 
                 u32 segment_adler = adler32(1, source);
                 u32 segment_length = u32(source.size);
+
 #else
 
                 constexpr size_t TEMP_SIZE = 128 * 1024;
@@ -4110,6 +4112,7 @@ namespace
 
                 u32 segment_adler = strm.adler;
                 u32 segment_length = u32(source.size);
+
 #endif
 
                 ticket.consume([=, &cumulative_adler, &stream]
@@ -4207,6 +4210,7 @@ namespace
             compress_parallel(stream, status, surface, segment_height, options);
         }
         else
+
         {
             compress_serial(stream, status, surface, options);
         }
