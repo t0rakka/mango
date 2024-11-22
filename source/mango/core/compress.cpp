@@ -39,7 +39,7 @@
 
 #include "../../external/lzav/lzav.h"
 
-#ifdef MANGO_ENABLE_ISAL
+#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
 #include <isa-l.h>
 #endif
 
@@ -1249,7 +1249,7 @@ namespace lzav
 namespace isal
 {
 
-#ifdef MANGO_ENABLE_ISAL
+#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
 
     size_t bound(size_t size)
     {
@@ -1429,7 +1429,7 @@ namespace isal
         { Compressor::DEFLATE,      "deflate",      deflate::bound,      deflate::compress,      deflate::decompress },
         { Compressor::DEFLATE_ZLIB, "deflate.zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },
         { Compressor::DEFLATE_GZIP, "deflate.gzip", deflate_gzip::bound, deflate_gzip::compress, deflate_gzip::decompress },
-#ifdef MANGO_ENABLE_ISAL
+#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
         { Compressor::ISAL,    "isal",  isal::bound,  isal::compress,  isal::decompress },
 #endif
     };
