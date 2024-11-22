@@ -4,7 +4,7 @@
 #
 # ----------------------------------------------------------------------
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(mango-examples)
 
 # build options
@@ -45,9 +45,7 @@ if (APPLE)
     if (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm)")
         # fix brew paths on M1 silicon
         include_directories("/opt/homebrew/include")
-        include_directories("/opt/homebrew/opt/jpeg-turbo/include ")
         link_directories("/opt/homebrew/lib")
-        link_directories("/opt/homebrew/opt/jpeg-turbo/lib")
     endif ()
 else ()
     link_libraries(dl)
