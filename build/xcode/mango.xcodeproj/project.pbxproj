@@ -2915,7 +2915,7 @@
 				);
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
-				VALID_ARCHS = x86_64;
+				VALID_ARCHS = "x86_64 arm64";
 			};
 			name = Debug;
 		};
@@ -2971,7 +2971,7 @@
 				);
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
-				VALID_ARCHS = x86_64;
+				VALID_ARCHS = "x86_64 arm64";
 			};
 			name = Release;
 		};
@@ -2982,7 +2982,8 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_COMMA = NO;
-				CLANG_X86_VECTOR_INSTRUCTIONS = avx;
+				CLANG_X86_VECTOR_INSTRUCTIONS = default;
+				"CLANG_X86_VECTOR_INSTRUCTIONS[arch=x86_64]" = avx2;
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(HOME)/Library/Frameworks";
 				DEAD_CODE_STRIPPING = YES;
@@ -3004,7 +3005,8 @@
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				ONLY_ACTIVE_ARCH = NO;
-				OTHER_CPLUSPLUSFLAGS = (
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
+				"OTHER_CPLUSPLUSFLAGS[arch=x86_64]" = (
 					"$(OTHER_CFLAGS)",
 					"-maes",
 					"-mpclmul",
@@ -3025,7 +3027,8 @@
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_COMMA = NO;
-				CLANG_X86_VECTOR_INSTRUCTIONS = avx;
+				CLANG_X86_VECTOR_INSTRUCTIONS = default;
+				"CLANG_X86_VECTOR_INSTRUCTIONS[arch=x86_64]" = avx2;
 				COMBINE_HIDPI_IMAGES = YES;
 				CONFIGURATION_BUILD_DIR = "$(HOME)/Library/Frameworks";
 				DEAD_CODE_STRIPPING = YES;
@@ -3048,7 +3051,8 @@
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				ONLY_ACTIVE_ARCH = NO;
-				OTHER_CPLUSPLUSFLAGS = (
+				OTHER_CPLUSPLUSFLAGS = "$(OTHER_CFLAGS)";
+				"OTHER_CPLUSPLUSFLAGS[arch=x86_64]" = (
 					"$(OTHER_CFLAGS)",
 					"-maes",
 					"-mpclmul",
