@@ -251,7 +251,7 @@ namespace mango::filesystem
         std::string m_password;
 
         // block cache
-        LRUCache<u32, std::shared_ptr<Buffer>, 6> m_cache;
+        LRUCache<u32, std::shared_ptr<Buffer>> m_cache { 6 };
         std::mutex m_cache_mutex;
 
     public:
