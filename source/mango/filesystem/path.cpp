@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <algorithm>
 #include <mango/filesystem/path.hpp>
@@ -38,11 +38,6 @@ namespace mango::filesystem
             m_mapper->getIndex(m_index, m_mapper->basepath());
             m_index_is_dirty = false;
         }
-    }
-
-    Mapper& Path::getMapper() const
-    {
-        return *m_mapper.get();
     }
 
     // -----------------------------------------------------------------
