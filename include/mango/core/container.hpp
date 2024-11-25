@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <optional>
 #include <list>
+#include <utility>
 
 namespace mango
 {
@@ -22,10 +23,23 @@ namespace mango
     public:
         void insert(const Key& key, const Value& value)
         {
+            auto it = index.find(key);
+            if (it != index.end())
+            {
+                // the key already exists, update the value
+                it->second->second = value;
+
+                // make the value most recently used
+                values.splice(values.begin(), values, it->second);
+
+                return;
+            }
+
             if (values.size() == Capacity)
             {
-                // delete the least-recently-used value
-                index.erase(values.back().first);
+                // evict the least recently used value
+                const auto& evicted = values.back();
+                index.erase(evicted.first);
                 values.pop_back();
             }
 
@@ -41,7 +55,7 @@ namespace mango
                 return {};
             }
 
-            // make the value most-recently-used
+            // make the value most recently used
             values.splice(values.begin(), values, it->second);
 
             return it->second->second;
@@ -56,6 +70,9 @@ namespace mango
                 index.erase(it);
             }
         }
+
+        auto begin() { return values.begin(); }
+        auto end() { return values.end(); }
     };
 
 } // namespace mango
