@@ -3815,6 +3815,47 @@ namespace
         write_chunk(stream, u32_mask_rev('p', 'L', 'L', 'D'), buffer);
     }
 
+#ifdef MANGO_LITTLE_ENDIAN
+
+    static
+    void byteswap_scanline(u8* buffer, int count)
+    {
+        u16* data = reinterpret_cast<u16*>(buffer);
+
+#if defined(MANGO_ENABLE_SIMD)
+
+        while (count >= 8)
+        {
+            math::uint16x8 value = math::uint16x8::uload(data);
+            math::uint16x8 low   = value >> 8;
+            math::uint16x8 high  = value << 8;
+            math::uint16x8::ustore(data, high | low);
+            data += 8;
+            count -= 8;
+        }
+
+#else
+
+        while (count >= 4)
+        {
+            data[0] = byteswap(data[0]);
+            data[1] = byteswap(data[1]);
+            data[2] = byteswap(data[2]);
+            data[3] = byteswap(data[3]);
+            data += 4;
+            count -= 4;
+        }
+
+#endif
+
+        for (int x = 0; x < count; ++x)
+        {
+            data[x] = byteswap(data[x]);
+        }
+    }
+
+#endif // MANGO_LITTLE_ENDIAN
+
     static
     void filter_range(u8* buffer, const Surface& surface, int color_bits, int y0, int y1)
     {
@@ -3829,16 +3870,9 @@ namespace
             write_filter_sub(buffer, image, bpp, bytes_per_scan);
 
 #ifdef MANGO_LITTLE_ENDIAN
-            // TODO: write SIMD 16 bit endian swap loops for x86 and arm
             if (color_bits == 16)
             {
-                // png stores pixels in big-endian format
-                u16* data = reinterpret_cast<u16*>(buffer);
-                int count = bytes_per_scan >> 1;
-                for (int x = 0; x < count; ++x)
-                {
-                    data[x] = byteswap(data[x]);
-                }
+                byteswap_scanline(buffer, bytes_per_scan >> 1);
             }
 #endif
 
