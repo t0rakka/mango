@@ -26,12 +26,8 @@ namespace mango
             auto it = index.find(key);
             if (it != index.end())
             {
-                // the key already exists, update the value
-                it->second->second = value;
-
-                // make the value most recently used
-                values.splice(values.begin(), values, it->second);
-
+                it->second->second = value; // the key already exists, update the value
+                values.splice(values.begin(), values, it->second); // make the value most recently used
                 return;
             }
 
@@ -69,6 +65,12 @@ namespace mango
                 values.erase(it->second);
                 index.erase(it);
             }
+        }
+
+        void clear()
+        {
+            index.clear();
+            values.clear();
         }
 
         auto begin() { return values.begin(); }
