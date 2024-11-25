@@ -65,6 +65,59 @@ namespace mango
             //config.blue
             //config.alpha
 
+            /*
+
+            #ifndef EGL_EXT_pixel_format_float
+                #define EGL_COLOR_COMPONENT_TYPE_EXT      0x3339
+                #define EGL_COLOR_COMPONENT_TYPE_FIXED_EXT 0x333A
+                #define EGL_COLOR_COMPONENT_TYPE_FLOAT_EXT 0x333B
+            #endif
+
+            #ifndef EGL_KHR_gl_colorspace
+                #define EGL_GL_COLORSPACE_KHR             0x309D
+                #define EGL_GL_COLORSPACE_SRGB_KHR        0x3089
+                #define EGL_GL_COLORSPACE_LINEAR_KHR      0x308A
+            #endif
+
+            #ifndef EGL_EXT_gl_colorspace_bt2020_linear
+                #define EGL_GL_COLORSPACE_BT2020_LINEAR_EXT 0x333F
+            #endif
+
+            #ifndef EGL_EXT_gl_colorspace_bt2020_pq
+                #define EGL_GL_COLORSPACE_BT2020_PQ_EXT   0x3340
+            #endif
+
+            #ifndef EGL_EXT_gl_colorspace_display_p3
+                #define EGL_GL_COLORSPACE_DISPLAY_P3_EXT  0x3363
+            #endif
+
+            #ifndef EGL_EXT_gl_colorspace_display_p3_linear
+                #define EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT 0x3362
+            #endif
+
+            #ifndef EGL_EXT_gl_colorspace_display_p3_passthrough
+                #define EGL_GL_COLORSPACE_DISPLAY_P3_PASSTHROUGH_EXT 0x3490
+            #endif
+
+            #ifndef EGL_EXT_gl_colorspace_scrgb
+                #define EGL_GL_COLORSPACE_SCRGB_EXT       0x3351
+            #endif
+
+            #ifndef EGL_EXT_gl_colorspace_scrgb_linear
+                #define EGL_GL_COLORSPACE_SCRGB_LINEAR_EXT 0x3350
+            #endif
+
+            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+            EGL_RED_SIZE, 16,
+            EGL_GREEN_SIZE, 16,
+            EGL_BLUE_SIZE, 16,
+            EGL_ALPHA_SIZE, 16,
+            EGL_COLOR_COMPONENT_TYPE_EXT, EGL_COLOR_COMPONENT_TYPE_FLOAT_EXT,
+            EGL_GL_COLORSPACE, EGL_GL_COLORSPACE_DISPLAY_P3_EXT,
+
+            */
+
             configAttribs.push_back(EGL_BUFFER_SIZE);
             configAttribs.push_back(8);
 

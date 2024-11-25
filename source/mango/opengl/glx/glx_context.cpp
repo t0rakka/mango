@@ -59,6 +59,26 @@ namespace mango
 
             std::vector<int> visualAttribs;
 
+            /*
+
+            #ifndef GLX_ARB_fbconfig_float
+                #define GLX_RGBA_FLOAT_TYPE_ARB           0x20B9
+                #define GLX_RGBA_FLOAT_BIT_ARB            0x00000004
+            #endif
+
+            #ifndef GLX_ARB_framebuffer_sRGB
+                #define GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB  0x20B2
+            #endif
+
+            GLX_RENDER_TYPE, GLX_RGBA_FLOAT_BIT_ARB,
+            GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
+            GLX_RED_SIZE, 16,
+            GLX_GREEN_SIZE, 16,
+            GLX_BLUE_SIZE, 16,
+            GLX_ALPHA_SIZE, 16,
+
+            */
+
             visualAttribs.push_back(GLX_X_RENDERABLE);
             visualAttribs.push_back(True);
 
