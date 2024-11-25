@@ -15,8 +15,6 @@ namespace mango::filesystem
     class Path : protected NonCopyable
     {
     protected:
-        friend class File;
-
         std::shared_ptr<Mapper> m_mapper;
 
         mutable FileIndex m_index;
@@ -29,6 +27,11 @@ namespace mango::filesystem
         Path(const Path& path, const std::string& filename, const std::string& password = "");
         Path(ConstMemory memory, const std::string& extension, const std::string& password = "");
         ~Path();
+
+        operator Mapper& () const
+        {
+            return *m_mapper;
+        }
 
         bool isFile(const std::string& filename) const
         {

@@ -24,7 +24,7 @@ namespace mango::filesystem
 
         // create a internal path
         m_path = std::make_unique<Path>(filepath);
-        initMemory(*m_path->m_mapper);
+        initMemory(*m_path);
     }
 
     File::File(const Path& path, const std::string& s)
@@ -38,7 +38,7 @@ namespace mango::filesystem
 
         // create a internal path
         m_path = std::make_unique<Path>(path, filepath);
-        initMemory(*m_path->m_mapper);
+        initMemory(*m_path);
     }
 
     File::File(ConstMemory memory, const std::string& extension, const std::string& s)
@@ -56,7 +56,7 @@ namespace mango::filesystem
 
         // create a internal path
         m_path = std::make_unique<Path>(path, filepath);
-        initMemory(*m_path->m_mapper);
+        initMemory(*m_path);
     }
 
     File::~File()
