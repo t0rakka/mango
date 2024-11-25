@@ -3816,7 +3816,7 @@ namespace
     }
 
     static
-    void filter_range(u8* buffer, const Surface& surface, int y0, int y1)
+    void filter_range(u8* buffer, const Surface& surface, int color_bits, int y0, int y1)
     {
         const int bpp = surface.format.bytes();
         const int bytes_per_scan = surface.width * bpp;
@@ -3827,13 +3827,28 @@ namespace
         {
             *buffer++ = FILTER_SUB;
             write_filter_sub(buffer, image, bpp, bytes_per_scan);
+
+#ifdef MANGO_LITTLE_ENDIAN
+            // TODO: write SIMD 16 bit endian swap loops for x86 and arm
+            if (color_bits == 16)
+            {
+                // png stores pixels in big-endian format
+                u16* data = reinterpret_cast<u16*>(buffer);
+                int count = bytes_per_scan >> 1;
+                for (int x = 0; x < count; ++x)
+                {
+                    data[x] = byteswap(data[x]);
+                }
+            }
+#endif
+
             buffer += bytes_per_scan;
             image += surface.stride;
         }
     }
 
     static
-    void compress_serial(Stream& stream, ImageEncodeStatus& status, const Surface& surface, const ImageEncodeOptions& options)
+    void compress_serial(Stream& stream, ImageEncodeStatus& status, const Surface& surface, int color_bits, const ImageEncodeOptions& options)
     {
         const int bpp = surface.format.bytes();
         const int bytes_per_scan = surface.width * bpp + 1;
@@ -3841,7 +3856,7 @@ namespace
         Buffer buffer(bytes_per_scan * surface.height);
 
         // filtering
-        filter_range(buffer, surface, 0, surface.height);
+        filter_range(buffer, surface, color_bits, 0, surface.height);
 
         // compute fpng scaling factor
         int factor = 0; // default: not supported
@@ -3915,10 +3930,10 @@ namespace
     }
 
     static
-    void compress_parallel(Stream& stream, ImageEncodeStatus& status, const Surface& surface, int segment_height, const ImageEncodeOptions& options)
+    void compress_parallel(Stream& stream, ImageEncodeStatus& status, const Surface& surface, int segment_height, int color_bits, const ImageEncodeOptions& options)
     {
         const size_t bpp = surface.format.bytes();
-        const size_t bytes_per_scan = size_t(surface.width) * bpp + 1;
+        const size_t bytes_per_scan = size_t(surface.width) * bpp + PNG_FILTER_BYTE;
 
         Buffer buffer(bytes_per_scan * surface.height);
 
@@ -3948,7 +3963,7 @@ namespace
 
             q.enqueue([=, &encoding_failure, &surface, &stream, &cumulative_adler]
             {
-                filter_range(source.address, surface, y, y + h);
+                filter_range(source.address, surface, color_bits, y, y + h);
 
 #if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
 
@@ -4148,7 +4163,7 @@ namespace
 
         if (encoding_failure)
         {
-#ifdef MANGO_ENABLE_ISAL
+#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
             status.setError("ISAL encoding failure.");
 #else
             status.setError("ZLib encoding failure.");
@@ -4207,12 +4222,11 @@ namespace
         if (segment_height)
         {
             write_pLLD(stream, segment_height);
-            compress_parallel(stream, status, surface, segment_height, options);
+            compress_parallel(stream, status, surface, segment_height, color_bits, options);
         }
         else
-
         {
-            compress_serial(stream, status, surface, options);
+            compress_serial(stream, status, surface, color_bits, options);
         }
 
         // write IEND
