@@ -261,7 +261,7 @@ namespace
                         format = rad_rle_rgbe;
                     }
                 }
-                else if (tokens[1] == "EXPOSURE")
+                else if (tokens[0] == "EXPOSURE")
                 {
                     if (tokens.size() != 2)
                     {
@@ -271,7 +271,7 @@ namespace
 
                     exposure = float(std::atof(tokens[1].data()));
                 }
-                else if (tokens[1] == "GAMMA")
+                else if (tokens[0] == "GAMMA")
                 {
                     if (tokens.size() != 2)
                     {
@@ -281,7 +281,7 @@ namespace
 
                     gamma = float(std::atof(tokens[1].data()));
                 }
-                else if (tokens[1] == "PRIMARIES")
+                else if (tokens[0] == "PRIMARIES")
                 {
                     if (tokens.size() != 9)
                     {
