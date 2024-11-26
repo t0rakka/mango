@@ -132,6 +132,8 @@ int main(int argc, const char* argv[])
         }
     }
 
+    printEnable(Print::Info, true);
+
     TestWindow window(config);
     window.enterEventLoop();
 }

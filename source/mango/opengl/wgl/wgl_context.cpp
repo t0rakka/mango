@@ -4,6 +4,7 @@
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
+#include <mango/core/system.hpp>
 #include <mango/opengl/opengl.hpp>
 
 // -----------------------------------------------------------------------
@@ -122,8 +123,12 @@ namespace mango
             // Create ARB extended context
             if (wglCreateContextAttribsARB && wglExtensions.find("WGL_ARB_create_context") != std::string::npos)
             {
+                printLine(Print::Info, "[OpenGLContext] WGL_ARB_create_context : ENABLE");
+
                 if (wglChoosePixelFormatARB && wglExtensions.find("WGL_ARB_pixel_format") != std::string::npos)
                 {
+                    printLine(Print::Info, "[OpenGLContext] WGL_ARB_pixel_format : ENABLE");
+
                     std::vector<int> formatAttribs;
 
                     formatAttribs.push_back(WGL_DRAW_TO_WINDOW_ARB);
@@ -140,12 +145,14 @@ namespace mango
                         if (config.hdr)
                         {
                             // HDR
+                            printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : HDR");
                             formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                             formatAttribs.push_back(WGL_TYPE_RGBA_FLOAT_ARB);
                         }
                         else
                         {
                             // SDR
+                            printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : SDR");
                             formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                             formatAttribs.push_back(WGL_TYPE_RGBA_ARB);
                         }
@@ -153,6 +160,7 @@ namespace mango
                     else
                     {
                         // SDR
+                        printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : SDR");
                         formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                         formatAttribs.push_back(WGL_TYPE_RGBA_ARB);
                     }
@@ -182,6 +190,7 @@ namespace mango
                     {
                         if (config.samples > 1)
                         {
+                            printLine(Print::Info, "[OpenGLContext] WGL_ARB_multisample : {}", config.samples);
                             formatAttribs.push_back(WGL_SAMPLE_BUFFERS_ARB);
                             formatAttribs.push_back(GL_TRUE);
 
@@ -194,6 +203,7 @@ namespace mango
                     {
                         if (config.srgb)
                         {
+                            printLine(Print::Info, "[OpenGLContext] WGL_ARB_framebuffer_sRGB : ENABLE");
                             formatAttribs.push_back(WGL_FRAMEBUFFER_SRGB_CAPABLE_EXT);
                         }
                     }
@@ -237,7 +247,7 @@ namespace mango
             }
             else
             {
-                // "WGL_ARB_create_context" not supported; keep the current context
+                printLine(Print::Info, "[OpenGLContext] WGL_ARB_create_context : DISABLE");
             }
 
             if (shared)
