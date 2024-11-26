@@ -144,23 +144,20 @@ namespace mango
                     {
                         if (config.hdr)
                         {
-                            // HDR
-                            printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : HDR");
+                            printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : FLOAT");
                             formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                             formatAttribs.push_back(WGL_TYPE_RGBA_FLOAT_ARB);
                         }
                         else
                         {
-                            // SDR
-                            printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : SDR");
+                            printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : UNORM");
                             formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                             formatAttribs.push_back(WGL_TYPE_RGBA_ARB);
                         }
                     }
                     else
                     {
-                        // SDR
-                        printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : SDR");
+                        printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : UNORM");
                         formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                         formatAttribs.push_back(WGL_TYPE_RGBA_ARB);
                     }
