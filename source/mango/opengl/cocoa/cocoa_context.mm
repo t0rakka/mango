@@ -110,7 +110,7 @@ namespace mango
 
         WindowHandle* window;
 
-        OpenGLContextCocoa(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
+        OpenGLContextCocoa(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* theShared)
             : window(*theContext)
         {
             [NSApplication sharedApplication];
@@ -168,11 +168,18 @@ namespace mango
 
             // configure attributes
             OpenGLContext::Config config;
-            if (configPtr)
+            if (pConfig)
             {
                 // override defaults
-                config = *configPtr;
+                config = *pConfig;
             }
+
+            // force color bits to defaults
+            // - there is no reason to want float buffer on macOS OpenGL
+            config.red   = 8;
+            config.green = 8;
+            config.blue  = 8;
+            config.alpha = 8;
 
             std::vector<NSOpenGLPixelFormatAttribute> attribs;
 
