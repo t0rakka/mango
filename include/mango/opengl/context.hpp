@@ -148,7 +148,7 @@ namespace mango
     public:
         enum Flags : u32
         {
-            EGL     = 0x00010000,
+            EGL = 0x00010000,
         };
 
         struct Config
@@ -161,8 +161,6 @@ namespace mango
             u32 depth    = 24;
             u32 stencil  = 8;
             u32 samples  = 1;
-            bool srgb    = false;
-            bool hdr     = false;
         };
 
         struct InternalFormat

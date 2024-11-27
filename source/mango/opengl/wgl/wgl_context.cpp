@@ -142,24 +142,28 @@ namespace mango
 
                     if (wglExtensions.find("WGL_ARB_pixel_format_float") != std::string::npos)
                     {
-                        if (config.hdr)
+                        if (config.red > 8 || config.green > 8 || config.blue > 8)
                         {
-                            printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : FLOAT");
+                            printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : RGBA_FLOAT");
                             formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                             formatAttribs.push_back(WGL_TYPE_RGBA_FLOAT_ARB);
                         }
                         else
                         {
-                            printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : UNORM");
+                            printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : RGBA");
                             formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                             formatAttribs.push_back(WGL_TYPE_RGBA_ARB);
                         }
                     }
                     else
                     {
-                        printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : UNORM");
+                        printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : RGBA");
                         formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                         formatAttribs.push_back(WGL_TYPE_RGBA_ARB);
+                        config.red   = std::min(config.red,   8);
+                        config.green = std::min(config.green, 8);
+                        config.blue  = std::min(config.blue,  8);
+                        config.alpha = std::min(config.alpha, 8);
                     }
 
                     formatAttribs.push_back(WGL_RED_BITS_ARB);
@@ -198,11 +202,8 @@ namespace mango
 
                     if (wglExtensions.find("WGL_ARB_framebuffer_sRGB") != std::string::npos)
                     {
-                        if (config.srgb)
-                        {
-                            printLine(Print::Info, "[OpenGLContext] WGL_ARB_framebuffer_sRGB : ENABLE");
-                            formatAttribs.push_back(WGL_FRAMEBUFFER_SRGB_CAPABLE_EXT);
-                        }
+                        printLine(Print::Info, "[OpenGLContext] WGL_ARB_framebuffer_sRGB : ENABLE");
+                        formatAttribs.push_back(WGL_FRAMEBUFFER_SRGB_CAPABLE_EXT);
                     }
 
                     formatAttribs.push_back(0);

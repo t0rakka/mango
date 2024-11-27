@@ -40,10 +40,10 @@ protected:
     GLuint m_vbo = 0;
 
 public:
-    TestWindow(const OpenGLContext::Config& config)
+    TestWindow(const OpenGLContext::Config& config, bool sRGB)
         : OpenGLContext(1280, 800, 0, &config)
     {
-        if (config.srgb)
+        if (sRGB)
         {
             glEnable(GL_FRAMEBUFFER_SRGB);
         }
@@ -114,6 +114,8 @@ int main(int argc, const char* argv[])
 {
     OpenGLContext::Config config;
 
+    bool sRGB = false;
+
     if (argc == 2)
     {
         std::string_view p1 = argv[1];
@@ -124,16 +126,15 @@ int main(int argc, const char* argv[])
             config.green = 16;
             config.blue = 16;
             config.alpha = 16;
-            config.hdr = true;
         }
         else if (p1 == "--srgb")
         {
-            config.srgb = true;
+            sRGB = true;
         }
     }
 
     printEnable(Print::Info, true);
 
-    TestWindow window(config);
+    TestWindow window(config, sRGB);
     window.enterEventLoop();
 }
