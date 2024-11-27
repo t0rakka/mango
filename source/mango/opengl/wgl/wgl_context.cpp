@@ -70,6 +70,15 @@ namespace mango
                 config = *configPtr;
             }
 
+            if (config.red >= 16 || config.green >= 16 || config.blue >= 16 || config.alpha >= 16)
+            {
+                // WGL on Windows 11 gives HDR only with 16 bit configuration so we never choose 32 bits
+                config.red   = 16;
+                config.green = 16;
+                config.blue  = 16;
+                config.alpha = 16;
+            }
+
             u32 colorBits = config.red + config.green + config.blue + config.alpha;
 
             // Configure pixel format
