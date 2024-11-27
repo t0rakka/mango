@@ -55,38 +55,37 @@ namespace mango
                 config = *configPtr;
             }
 
+            // Create GLX extension set
+            std::set<std::string> glxExtensions;
+
+            // Get the default screen's GLX extension list
+            const char* extensions = glXQueryExtensionsString(window->native.display, DefaultScreen(window->native.display));
+            if (extensions)
+            {
+                // parse extensions
+                for (const char* s = extensions; *s; ++s)
+                {
+                    if (*s == ' ')
+                    {
+                        const std::ptrdiff_t length = s - extensions;
+                        if (length > 0)
+                        {
+                            glxExtensions.emplace(extensions, length);
+                        }
+
+                        extensions = s + 1;
+                    }
+                }
+            }
+
             // Configure attributes
-
             std::vector<int> visualAttribs;
-
-            /*
-
-            #ifndef GLX_ARB_fbconfig_float
-                #define GLX_RGBA_FLOAT_TYPE_ARB           0x20B9
-                #define GLX_RGBA_FLOAT_BIT_ARB            0x00000004
-            #endif
-
-            #ifndef GLX_ARB_framebuffer_sRGB
-                #define GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB  0x20B2
-            #endif
-
-            GLX_RENDER_TYPE, GLX_RGBA_FLOAT_BIT_ARB,
-            GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
-            GLX_RED_SIZE, 16,
-            GLX_GREEN_SIZE, 16,
-            GLX_BLUE_SIZE, 16,
-            GLX_ALPHA_SIZE, 16,
-
-            */
 
             visualAttribs.push_back(GLX_X_RENDERABLE);
             visualAttribs.push_back(True);
 
             visualAttribs.push_back(GLX_DRAWABLE_TYPE);
             visualAttribs.push_back(GLX_WINDOW_BIT);
-
-            visualAttribs.push_back(GLX_RENDER_TYPE);
-            visualAttribs.push_back(GLX_RGBA_BIT);
 
             visualAttribs.push_back(GLX_X_VISUAL_TYPE);
             visualAttribs.push_back(GLX_TRUE_COLOR);
@@ -112,14 +111,52 @@ namespace mango
             visualAttribs.push_back(GLX_STENCIL_SIZE);
             visualAttribs.push_back(config.stencil);
 
-            if (config.samples > 1)
+            /*
+            if (glxExtensions.find("GLX_ARB_fbconfig_float") != glxExtensions.end())
             {
-                visualAttribs.push_back(GLX_SAMPLE_BUFFERS);
-                visualAttribs.push_back(1);
-
-                visualAttribs.push_back(GLX_SAMPLES);
-                visualAttribs.push_back(config.samples);
+                if (config.hdr)
+                {
+                    printLine(Print::Info, "[OpenGLContext] GLX_RENDER_TYPE : FLOAT");
+                    visualAttribs.push_back(GLX_RENDER_TYPE);
+                    visualAttribs.push_back(GLX_RGBA_FLOAT_BIT_ARB);
+                }
+                else
+                {
+                    printLine(Print::Info, "[OpenGLContext] GLX_RENDER_TYPE : UNORM");
+                    visualAttribs.push_back(GLX_RENDER_TYPE);
+                    visualAttribs.push_back(GLX_RGBA_BIT);
+                }
             }
+            else
+            {
+                printLine(Print::Info, "[OpenGLContext] GLX_RENDER_TYPE : UNORM");
+                visualAttribs.push_back(GLX_RENDER_TYPE);
+                visualAttribs.push_back(GLX_RGBA_BIT);
+            }
+
+            if (glxExtensions.find("GLX_ARB_multisample") != glxExtensions.end())
+            {
+                if (config.samples > 1)
+                {
+                    printLine(Print::Info, "[OpenGLContext] multisample : {}", config.samples);
+
+                    visualAttribs.push_back(GLX_SAMPLE_BUFFERS_ARB);
+                    visualAttribs.push_back(1);
+
+                    visualAttribs.push_back(GLX_SAMPLES_ARB);
+                    visualAttribs.push_back(config.samples);
+                }
+            }
+
+            if (glxExtensions.find("GLX_ARB_framebuffer_sRGB") != glxExtensions.end())
+            {
+                if (config.srgb)
+                {
+                    printLine(Print::Info, "[OpenGLContext] GLX_ARB_framebuffer_sRGB : ENABLE");
+                    visualAttribs.push_back(GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT);
+                }
+            }
+            */
 
             visualAttribs.push_back(None);
 
@@ -132,7 +169,7 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextGLX] glXQueryVersion() failed.");
             }
 
-            printLine(Print::Info, "GLX version: {}.{}", glx_major, glx_minor);
+            printLine(Print::Info, "[OpenGLContext] GLX version: {}.{}", glx_major, glx_minor);
 
             if ((glx_major == 1 && glx_minor < 3) || glx_major < 1)
             {
@@ -148,6 +185,51 @@ namespace mango
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContextGLX] glXChooseFBConfig() failed.");
             }
+
+            /*
+            for (int i = 0; i < fbcount; ++i)
+            {
+                auto getAttrib = [=] (int attribute) -> int
+                {
+                    int value;
+                    glXGetFBConfigAttrib(window->native.display, fbc[i], attribute, &value);
+                    return value;
+                };
+
+                int buffer_size = getAttrib(GL_BUFFER_SIZE);
+                int red_size = getAttrib(GLX_RED_SIZE);
+                int green_size = getAttrib(GLX_GREEN_SIZE);
+                int blue_size = getAttrib(GLX_BLUE_SIZE);
+                int alpha_size = getAttrib(GLX_ALPHA_SIZE);
+                int depth_size = getAttrib(GLX_DEPTH_SIZE);
+                int stencil_size = getAttrib(GLX_STENCIL_SIZE);
+                int render_type = getAttrib(GLX_RENDER_TYPE);
+
+                printLine("#{}, buffer: {}, color: {} {} {} {}, depth: {}, stencil: {}, RT: {}",
+                    i, buffer_size, red_size, green_size, blue_size, alpha_size,
+                    depth_size, stencil_size, render_type
+                );
+            }
+            */
+
+            /*
+
+            #ifndef GLX_ARB_fbconfig_float
+                #define GLX_RGBA_FLOAT_TYPE_ARB           0x20B9
+                #define GLX_RGBA_FLOAT_BIT_ARB            0x00000004
+            #endif
+
+            GLX_RENDER_TYPE, GLX_RGBA_FLOAT_BIT_ARB,
+            GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
+            GLX_RED_SIZE, 16,
+            GLX_GREEN_SIZE, 16,
+            GLX_BLUE_SIZE, 16,
+            GLX_ALPHA_SIZE, 16,
+
+            */
+            /*
+            GLX_RGBA_FLOAT_TYPE                     0x20B9
+            */
 
             // Pick the FB config/visual with the samples closest to attrib.samples
             int best_fbc = 0;
@@ -198,29 +280,6 @@ namespace mango
             }
 
             XFree(vi);
-
-            // Get the default screen's GLX extension list
-            const char* extensions = glXQueryExtensionsString(window->native.display, DefaultScreen(window->native.display));
-
-            // Create GLX extension set
-            std::set<std::string> glxExtensions;
-            if (extensions)
-            {
-                // parse extensions
-                for (const char* s = extensions; *s; ++s)
-                {
-                    if (*s == ' ')
-                    {
-                        const std::ptrdiff_t length = s - extensions;
-                        if (length > 0)
-                        {
-                            glxExtensions.emplace(extensions, length);
-                        }
-
-                        extensions = s + 1;
-                    }
-                }
-            }
 
             // NOTE: It is not necessary to create or make current to a context before calling glXGetProcAddressARB
             PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB =
@@ -295,11 +354,11 @@ namespace mango
             // Verifying that context is a direct context
             if (!glXIsDirect(window->native.display, context))
             {
-                printLine(Print::Info, "Indirect GLX rendering context obtained.");
+                printLine(Print::Info, "[OpenGLContext] Indirect GLX rendering context.");
             }
             else
             {
-                printLine(Print::Info, "Direct GLX rendering context obtained.");
+                printLine(Print::Info, "[OpenGLContext] Direct GLX rendering context.");
             }
 
             // MANGO TODO: configuration selection API
