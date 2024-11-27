@@ -160,10 +160,11 @@ namespace mango
                         printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : RGBA");
                         formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                         formatAttribs.push_back(WGL_TYPE_RGBA_ARB);
-                        config.red   = std::min(config.red,   8);
-                        config.green = std::min(config.green, 8);
-                        config.blue  = std::min(config.blue,  8);
-                        config.alpha = std::min(config.alpha, 8);
+
+                        config.red   = std::min(config.red,   8u);
+                        config.green = std::min(config.green, 8u);
+                        config.blue  = std::min(config.blue,  8u);
+                        config.alpha = std::min(config.alpha, 8u);
                     }
 
                     formatAttribs.push_back(WGL_RED_BITS_ARB);
