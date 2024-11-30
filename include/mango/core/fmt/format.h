@@ -52,7 +52,8 @@
 #  include <bit>  // std::bit_cast
 #endif
 
-#include "base.h"
+// NOTE: XCode is cranky when using ""'s for framework include
+#include <mango/core/fmt/base.h>
 
 // libc++ supports string_view in pre-c++17.
 #if FMT_HAS_INCLUDE(<string_view>) && \

@@ -8,7 +8,8 @@
 #ifndef FMT_COLOR_H_
 #define FMT_COLOR_H_
 
-#include "format.h"
+// NOTE: XCode is cranky when using ""'s for framework include
+#include <mango/core/fmt/format.h>
 
 FMT_BEGIN_NAMESPACE
 FMT_BEGIN_EXPORT

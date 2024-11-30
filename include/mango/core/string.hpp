@@ -9,8 +9,8 @@
 #include <vector>
 #include <cstdarg>
 #include <mango/core/configure.hpp>
-#include "fmt/format.h"
-#include "fmt/color.h"
+#include <mango/core/fmt/format.h>
+#include <mango/core/fmt/color.h>
 
 namespace mango
 {
