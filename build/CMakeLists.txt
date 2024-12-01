@@ -323,6 +323,8 @@ endif ()
 FILE(GLOB_RECURSE EXTERNAL_WEBP
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/sharpyuv/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/sharpyuv/*.c"
 )
 FILE(GLOB EXTERNAL_ZPNG
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.h"
