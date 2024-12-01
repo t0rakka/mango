@@ -48,6 +48,22 @@
 		A00559DA1C93337C00A6D963 /* core in Headers */ = {isa = PBXBuildFile; fileRef = A00559D91C93337C00A6D963 /* core */; settings = {ATTRIBUTES = (Public, ); }; };
 		A00559DE1C9333F100A6D963 /* filesystem in Headers */ = {isa = PBXBuildFile; fileRef = A00559DD1C9333F100A6D963 /* filesystem */; settings = {ATTRIBUTES = (Public, ); }; };
 		A00559E21C93340600A6D963 /* image in Headers */ = {isa = PBXBuildFile; fileRef = A00559E11C93340600A6D963 /* image */; settings = {ATTRIBUTES = (Public, ); }; };
+		A013571E2CFC804500145B7A /* zstd_preSplit.c in Sources */ = {isa = PBXBuildFile; fileRef = A013571D2CFC804500145B7A /* zstd_preSplit.c */; };
+		A074E5982CFBE64D0025518C /* cpu.h in Headers */ = {isa = PBXBuildFile; fileRef = A074E5972CFBE64D0025518C /* cpu.h */; };
+		A074E59B2CFBE66A0025518C /* palette.c in Sources */ = {isa = PBXBuildFile; fileRef = A074E59A2CFBE66A0025518C /* palette.c */; };
+		A074E59C2CFBE66A0025518C /* palette.h in Headers */ = {isa = PBXBuildFile; fileRef = A074E5992CFBE66A0025518C /* palette.h */; };
+		A074E5B12CFBE7250025518C /* sharpyuv.c in Sources */ = {isa = PBXBuildFile; fileRef = A074E5A52CFBE7250025518C /* sharpyuv.c */; };
+		A074E5B22CFBE7250025518C /* sharpyuv_cpu.c in Sources */ = {isa = PBXBuildFile; fileRef = A074E5A72CFBE7250025518C /* sharpyuv_cpu.c */; };
+		A074E5B32CFBE7250025518C /* sharpyuv_gamma.c in Sources */ = {isa = PBXBuildFile; fileRef = A074E5AD2CFBE7250025518C /* sharpyuv_gamma.c */; };
+		A074E5B42CFBE7250025518C /* sharpyuv_csp.c in Sources */ = {isa = PBXBuildFile; fileRef = A074E5A92CFBE7250025518C /* sharpyuv_csp.c */; };
+		A074E5B52CFBE7250025518C /* sharpyuv_dsp.c in Sources */ = {isa = PBXBuildFile; fileRef = A074E5AB2CFBE7250025518C /* sharpyuv_dsp.c */; };
+		A074E5B62CFBE7250025518C /* sharpyuv_neon.c in Sources */ = {isa = PBXBuildFile; fileRef = A074E5AE2CFBE7250025518C /* sharpyuv_neon.c */; };
+		A074E5B72CFBE7250025518C /* sharpyuv_sse2.c in Sources */ = {isa = PBXBuildFile; fileRef = A074E5AF2CFBE7250025518C /* sharpyuv_sse2.c */; };
+		A074E5B82CFBE7250025518C /* sharpyuv_csp.h in Headers */ = {isa = PBXBuildFile; fileRef = A074E5A82CFBE7250025518C /* sharpyuv_csp.h */; };
+		A074E5B92CFBE7250025518C /* sharpyuv_cpu.h in Headers */ = {isa = PBXBuildFile; fileRef = A074E5A62CFBE7250025518C /* sharpyuv_cpu.h */; };
+		A074E5BA2CFBE7250025518C /* sharpyuv_gamma.h in Headers */ = {isa = PBXBuildFile; fileRef = A074E5AC2CFBE7250025518C /* sharpyuv_gamma.h */; };
+		A074E5BB2CFBE7250025518C /* sharpyuv.h in Headers */ = {isa = PBXBuildFile; fileRef = A074E5A42CFBE7250025518C /* sharpyuv.h */; };
+		A074E5BC2CFBE7250025518C /* sharpyuv_dsp.h in Headers */ = {isa = PBXBuildFile; fileRef = A074E5AA2CFBE7250025518C /* sharpyuv_dsp.h */; };
 		A0B1452419198C1300912118 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A0B1452319198C1300912118 /* AppKit.framework */; };
 		A0B1452619198C1D00912118 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A0B1452519198C1D00912118 /* OpenGL.framework */; };
 		A0F21ED11CA05EA30084302D /* dynamic_library.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A0F21ECD1CA05EA30084302D /* dynamic_library.cpp */; };
@@ -623,6 +639,22 @@
 		A00559D91C93337C00A6D963 /* core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = core; path = mango/core; sourceTree = "<group>"; };
 		A00559DD1C9333F100A6D963 /* filesystem */ = {isa = PBXFileReference; lastKnownFileType = folder; name = filesystem; path = mango/filesystem; sourceTree = "<group>"; };
 		A00559E11C93340600A6D963 /* image */ = {isa = PBXFileReference; lastKnownFileType = folder; name = image; path = mango/image; sourceTree = "<group>"; };
+		A013571D2CFC804500145B7A /* zstd_preSplit.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = zstd_preSplit.c; path = external/zstd/compress/zstd_preSplit.c; sourceTree = "<group>"; };
+		A074E5972CFBE64D0025518C /* cpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = cpu.h; path = external/libwebp/src/dsp/cpu.h; sourceTree = "<group>"; };
+		A074E5992CFBE66A0025518C /* palette.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = palette.h; path = external/libwebp/src/utils/palette.h; sourceTree = "<group>"; };
+		A074E59A2CFBE66A0025518C /* palette.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = palette.c; path = external/libwebp/src/utils/palette.c; sourceTree = "<group>"; };
+		A074E5A42CFBE7250025518C /* sharpyuv.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sharpyuv.h; sourceTree = "<group>"; };
+		A074E5A52CFBE7250025518C /* sharpyuv.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sharpyuv.c; sourceTree = "<group>"; };
+		A074E5A62CFBE7250025518C /* sharpyuv_cpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sharpyuv_cpu.h; sourceTree = "<group>"; };
+		A074E5A72CFBE7250025518C /* sharpyuv_cpu.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sharpyuv_cpu.c; sourceTree = "<group>"; };
+		A074E5A82CFBE7250025518C /* sharpyuv_csp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sharpyuv_csp.h; sourceTree = "<group>"; };
+		A074E5A92CFBE7250025518C /* sharpyuv_csp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sharpyuv_csp.c; sourceTree = "<group>"; };
+		A074E5AA2CFBE7250025518C /* sharpyuv_dsp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sharpyuv_dsp.h; sourceTree = "<group>"; };
+		A074E5AB2CFBE7250025518C /* sharpyuv_dsp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sharpyuv_dsp.c; sourceTree = "<group>"; };
+		A074E5AC2CFBE7250025518C /* sharpyuv_gamma.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sharpyuv_gamma.h; sourceTree = "<group>"; };
+		A074E5AD2CFBE7250025518C /* sharpyuv_gamma.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sharpyuv_gamma.c; sourceTree = "<group>"; };
+		A074E5AE2CFBE7250025518C /* sharpyuv_neon.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sharpyuv_neon.c; sourceTree = "<group>"; };
+		A074E5AF2CFBE7250025518C /* sharpyuv_sse2.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sharpyuv_sse2.c; sourceTree = "<group>"; };
 		A0B1452319198C1300912118 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		A0B1452519198C1D00912118 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		A0F21ECD1CA05EA30084302D /* dynamic_library.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dynamic_library.cpp; path = core/unix/dynamic_library.cpp; sourceTree = "<group>"; };
@@ -1287,6 +1319,26 @@
 			name = opengl;
 			sourceTree = "<group>";
 		};
+		A074E5B02CFBE7250025518C /* sharpyuv */ = {
+			isa = PBXGroup;
+			children = (
+				A074E5A42CFBE7250025518C /* sharpyuv.h */,
+				A074E5A52CFBE7250025518C /* sharpyuv.c */,
+				A074E5A62CFBE7250025518C /* sharpyuv_cpu.h */,
+				A074E5A72CFBE7250025518C /* sharpyuv_cpu.c */,
+				A074E5A82CFBE7250025518C /* sharpyuv_csp.h */,
+				A074E5A92CFBE7250025518C /* sharpyuv_csp.c */,
+				A074E5AA2CFBE7250025518C /* sharpyuv_dsp.h */,
+				A074E5AB2CFBE7250025518C /* sharpyuv_dsp.c */,
+				A074E5AC2CFBE7250025518C /* sharpyuv_gamma.h */,
+				A074E5AD2CFBE7250025518C /* sharpyuv_gamma.c */,
+				A074E5AE2CFBE7250025518C /* sharpyuv_neon.c */,
+				A074E5AF2CFBE7250025518C /* sharpyuv_sse2.c */,
+			);
+			name = sharpyuv;
+			path = /Users/t0rakka/work/git/mango/source/external/libwebp/sharpyuv;
+			sourceTree = "<absolute>";
+		};
 		A08710A315B9E95F0033B09C /* source */ = {
 			isa = PBXGroup;
 			children = (
@@ -1900,6 +1952,7 @@
 		A6EC3E67230D7B5200B17F21 /* libwebp */ = {
 			isa = PBXGroup;
 			children = (
+				A074E5B02CFBE7250025518C /* sharpyuv */,
 				A6EC3E8E230D7BF000B17F21 /* webp */,
 				A6EC3E8D230D7BEA00B17F21 /* utils */,
 				A6EC3E8C230D7BDE00B17F21 /* dsp */,
@@ -2007,6 +2060,7 @@
 				A6EC3E98230D7C1100B17F21 /* cost_sse2.c */,
 				A6EC3E9B230D7C1200B17F21 /* cost.c */,
 				A6EC3E9A230D7C1100B17F21 /* cpu.c */,
+				A074E5972CFBE64D0025518C /* cpu.h */,
 				A6EC3E97230D7C1100B17F21 /* dec_clip_tables.c */,
 				A6EC3EC5230D7C1400B17F21 /* dec_mips_dsp_r2.c */,
 				A6EC3ED9230D7C1500B17F21 /* dec_mips32.c */,
@@ -2089,6 +2143,8 @@
 				A6EC3F69230D7C4C00B17F21 /* huffman_encode_utils.h */,
 				A6EC3F76230D7C4C00B17F21 /* huffman_utils.c */,
 				A6EC3F6C230D7C4C00B17F21 /* huffman_utils.h */,
+				A074E5992CFBE66A0025518C /* palette.h */,
+				A074E59A2CFBE66A0025518C /* palette.c */,
 				A6EC3F7D230D7C4D00B17F21 /* quant_levels_dec_utils.c */,
 				A6EC3F6D230D7C4C00B17F21 /* quant_levels_dec_utils.h */,
 				A6EC3F6B230D7C4C00B17F21 /* quant_levels_utils.c */,
@@ -2165,6 +2221,7 @@
 		A6FCC3A01E8122F30037C15F /* compress */ = {
 			isa = PBXGroup;
 			children = (
+				A013571D2CFC804500145B7A /* zstd_preSplit.c */,
 				A6DD288723FF09680085E6EE /* zstd_compress_superblock.c */,
 				A6DD288823FF09680085E6EE /* zstd_compress_superblock.h */,
 				A6F0A5A0237247370015944D /* zstd_cwksp.h */,
@@ -2306,6 +2363,7 @@
 				A63DD79A1E706F5400D4D499 /* minilzo.h in Headers */,
 				A6D78CD5290987A200304D88 /* astcenc_vecmathlib_common_4.h in Headers */,
 				A60BD6472A1E808F00F86B1C /* lcms2_internal.h in Headers */,
+				A074E59C2CFBE66A0025518C /* palette.h in Headers */,
 				A642439521852AEF0044B763 /* LzHash.h in Headers */,
 				A6EC3EDE230D7C1500B17F21 /* common_sse2.h in Headers */,
 				A650BE8621F21C180066B9B5 /* CustomOpenGLView.h in Headers */,
@@ -2351,6 +2409,11 @@
 				A645DD7E2141551200EC714B /* zstdmt_compress.h in Headers */,
 				A601B0A9276E1B9D003B3A28 /* inffast.h in Headers */,
 				A63F720A2B4F68BF00137C36 /* decimal_to_binary.h in Headers */,
+				A074E5B82CFBE7250025518C /* sharpyuv_csp.h in Headers */,
+				A074E5B92CFBE7250025518C /* sharpyuv_cpu.h in Headers */,
+				A074E5BA2CFBE7250025518C /* sharpyuv_gamma.h in Headers */,
+				A074E5BB2CFBE7250025518C /* sharpyuv.h in Headers */,
+				A074E5BC2CFBE7250025518C /* sharpyuv_dsp.h in Headers */,
 				A601B0A5276E1B9D003B3A28 /* inffixed.h in Headers */,
 				A6EC3F5A230D7C2E00B17F21 /* histogram_enc.h in Headers */,
 				A672D9132026633600947D7E /* bc_aes.h in Headers */,
@@ -2387,6 +2450,7 @@
 				A6EC3E81230D7BB800B17F21 /* common_dec.h in Headers */,
 				A63F72212B4F690F00137C36 /* tools.hpp in Headers */,
 				A63DD7741E706EF100D4D499 /* lzfse_fse.h in Headers */,
+				A074E5982CFBE64D0025518C /* cpu.h in Headers */,
 				A6EC3E84230D7BB800B17F21 /* alphai_dec.h in Headers */,
 				A63DD77E1E706F1200D4D499 /* concurrentqueue.h in Headers */,
 				A69B9DFB285ABF7E00E7BEDC /* adler32_impl.h in Headers */,
@@ -2580,6 +2644,7 @@
 				A6EC3EE2230D7C1500B17F21 /* yuv.c in Sources */,
 				A645DD702141551200EC714B /* zstd_double_fast.c in Sources */,
 				A6D78CCF290987A200304D88 /* astcenc_diagnostic_trace.cpp in Sources */,
+				A013571E2CFC804500145B7A /* zstd_preSplit.c in Sources */,
 				A69B9DDD285ABF4200E7BEDC /* gzip_decompress.c in Sources */,
 				A63DD75D1E706EB200D4D499 /* unpack.cpp in Sources */,
 				A63DD7501E706EB200D4D499 /* getbits.cpp in Sources */,
@@ -2597,6 +2662,13 @@
 				A642437221852AEF0044B763 /* Ppmd8Dec.c in Sources */,
 				A6EC3F51230D7C2E00B17F21 /* quant_enc.c in Sources */,
 				A6EC3E7C230D7BB800B17F21 /* webp_dec.c in Sources */,
+				A074E5B12CFBE7250025518C /* sharpyuv.c in Sources */,
+				A074E5B22CFBE7250025518C /* sharpyuv_cpu.c in Sources */,
+				A074E5B32CFBE7250025518C /* sharpyuv_gamma.c in Sources */,
+				A074E5B42CFBE7250025518C /* sharpyuv_csp.c in Sources */,
+				A074E5B52CFBE7250025518C /* sharpyuv_dsp.c in Sources */,
+				A074E5B62CFBE7250025518C /* sharpyuv_neon.c in Sources */,
+				A074E5B72CFBE7250025518C /* sharpyuv_sse2.c in Sources */,
 				A00559CA1C93329A00A6D963 /* image_hdr.cpp in Sources */,
 				A00559991C93324E00A6D963 /* string.cpp in Sources */,
 				A60BD6592A1E808F00F86B1C /* cmsopt.c in Sources */,
@@ -2654,6 +2726,7 @@
 				A6EC3F4B230D7C2E00B17F21 /* picture_rescale_enc.c in Sources */,
 				A6EC3F66230D7C3D00B17F21 /* muxedit.c in Sources */,
 				A60BD6562A1E808F00F86B1C /* cmscgats.c in Sources */,
+				A074E59B2CFBE66A0025518C /* palette.c in Sources */,
 				A645DD822141551D00EC714B /* huf_decompress.c in Sources */,
 				A69BEDC92B4F6C6E00B5010F /* mesh.cpp in Sources */,
 				A672D9152026634B00947D7E /* aes.cpp in Sources */,

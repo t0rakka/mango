@@ -20,8 +20,17 @@
 #include "src/utils/utils.h"
 #include "src/webp/decode.h"
 #include "src/webp/demux.h"
+#include "src/webp/types.h"
 
 #define NUM_CHANNELS 4
+
+// Channel extraction from a uint32_t representation of a uint8_t RGBA/BGRA
+// buffer.
+#ifdef WORDS_BIGENDIAN
+#define CHANNEL_SHIFT(i) (24 - (i) * 8)
+#else
+#define CHANNEL_SHIFT(i) ((i) * 8)
+#endif
 
 typedef void (*BlendRowFunc)(uint32_t* const, const uint32_t* const, int);
 static void BlendPixelRowNonPremult(uint32_t* const src,
@@ -60,8 +69,9 @@ int WebPAnimDecoderOptionsInitInternal(WebPAnimDecoderOptions* dec_options,
   return 1;
 }
 
-static int ApplyDecoderOptions(const WebPAnimDecoderOptions* const dec_options,
-                               WebPAnimDecoder* const dec) {
+WEBP_NODISCARD static int ApplyDecoderOptions(
+    const WebPAnimDecoderOptions* const dec_options,
+    WebPAnimDecoder* const dec) {
   WEBP_CSP_MODE mode;
   WebPDecoderConfig* config = &dec->config_;
   assert(dec_options != NULL);
@@ -74,7 +84,9 @@ static int ApplyDecoderOptions(const WebPAnimDecoderOptions* const dec_options,
   dec->blend_func_ = (mode == MODE_RGBA || mode == MODE_BGRA)
                          ? &BlendPixelRowNonPremult
                          : &BlendPixelRowPremult;
-  WebPInitDecoderConfig(config);
+  if (!WebPInitDecoderConfig(config)) {
+    return 0;
+  }
   config->output.colorspace = mode;
   config->output.is_external_memory = 1;
   config->options.use_threads = dec_options->use_threads;
@@ -149,8 +161,8 @@ static int IsFullFrame(int width, int height, int canvas_width,
 }
 
 // Clear the canvas to transparent.
-static int ZeroFillCanvas(uint8_t* buf, uint32_t canvas_width,
-                          uint32_t canvas_height) {
+WEBP_NODISCARD static int ZeroFillCanvas(uint8_t* buf, uint32_t canvas_width,
+                                         uint32_t canvas_height) {
   const uint64_t size =
       (uint64_t)canvas_width * canvas_height * NUM_CHANNELS * sizeof(*buf);
   if (!CheckSizeOverflow(size)) return 0;
@@ -171,8 +183,8 @@ static void ZeroFillFrameRect(uint8_t* buf, int buf_stride, int x_offset,
 }
 
 // Copy width * height pixels from 'src' to 'dst'.
-static int CopyCanvas(const uint8_t* src, uint8_t* dst,
-                      uint32_t width, uint32_t height) {
+WEBP_NODISCARD static int CopyCanvas(const uint8_t* src, uint8_t* dst,
+                                     uint32_t width, uint32_t height) {
   const uint64_t size = (uint64_t)width * height * NUM_CHANNELS;
   if (!CheckSizeOverflow(size)) return 0;
   assert(src != NULL && dst != NULL);
@@ -209,35 +221,35 @@ static uint8_t BlendChannelNonPremult(uint32_t src, uint8_t src_a,
   const uint8_t dst_channel = (dst >> shift) & 0xff;
   const uint32_t blend_unscaled = src_channel * src_a + dst_channel * dst_a;
   assert(blend_unscaled < (1ULL << 32) / scale);
-  return (blend_unscaled * scale) >> 24;
+  return (blend_unscaled * scale) >> CHANNEL_SHIFT(3);
 }
 
 // Blend 'src' over 'dst' assuming they are NOT pre-multiplied by alpha.
 static uint32_t BlendPixelNonPremult(uint32_t src, uint32_t dst) {
-  const uint8_t src_a = (src >> 24) & 0xff;
+  const uint8_t src_a = (src >> CHANNEL_SHIFT(3)) & 0xff;
 
   if (src_a == 0) {
     return dst;
   } else {
-    const uint8_t dst_a = (dst >> 24) & 0xff;
+    const uint8_t dst_a = (dst >> CHANNEL_SHIFT(3)) & 0xff;
     // This is the approximate integer arithmetic for the actual formula:
     // dst_factor_a = (dst_a * (255 - src_a)) / 255.
     const uint8_t dst_factor_a = (dst_a * (256 - src_a)) >> 8;
     const uint8_t blend_a = src_a + dst_factor_a;
     const uint32_t scale = (1UL << 24) / blend_a;
 
-    const uint8_t blend_r =
-        BlendChannelNonPremult(src, src_a, dst, dst_factor_a, scale, 0);
-    const uint8_t blend_g =
-        BlendChannelNonPremult(src, src_a, dst, dst_factor_a, scale, 8);
-    const uint8_t blend_b =
-        BlendChannelNonPremult(src, src_a, dst, dst_factor_a, scale, 16);
+    const uint8_t blend_r = BlendChannelNonPremult(
+        src, src_a, dst, dst_factor_a, scale, CHANNEL_SHIFT(0));
+    const uint8_t blend_g = BlendChannelNonPremult(
+        src, src_a, dst, dst_factor_a, scale, CHANNEL_SHIFT(1));
+    const uint8_t blend_b = BlendChannelNonPremult(
+        src, src_a, dst, dst_factor_a, scale, CHANNEL_SHIFT(2));
     assert(src_a + dst_factor_a < 256);
 
-    return (blend_r << 0) |
-           (blend_g << 8) |
-           (blend_b << 16) |
-           ((uint32_t)blend_a << 24);
+    return ((uint32_t)blend_r << CHANNEL_SHIFT(0)) |
+           ((uint32_t)blend_g << CHANNEL_SHIFT(1)) |
+           ((uint32_t)blend_b << CHANNEL_SHIFT(2)) |
+           ((uint32_t)blend_a << CHANNEL_SHIFT(3));
   }
 }
 
@@ -247,7 +259,7 @@ static void BlendPixelRowNonPremult(uint32_t* const src,
                                     const uint32_t* const dst, int num_pixels) {
   int i;
   for (i = 0; i < num_pixels; ++i) {
-    const uint8_t src_alpha = (src[i] >> 24) & 0xff;
+    const uint8_t src_alpha = (src[i] >> CHANNEL_SHIFT(3)) & 0xff;
     if (src_alpha != 0xff) {
       src[i] = BlendPixelNonPremult(src[i], dst[i]);
     }
@@ -264,7 +276,7 @@ static WEBP_INLINE uint32_t ChannelwiseMultiply(uint32_t pix, uint32_t scale) {
 
 // Blend 'src' over 'dst' assuming they are pre-multiplied by alpha.
 static uint32_t BlendPixelPremult(uint32_t src, uint32_t dst) {
-  const uint8_t src_a = (src >> 24) & 0xff;
+  const uint8_t src_a = (src >> CHANNEL_SHIFT(3)) & 0xff;
   return src + ChannelwiseMultiply(dst, 256 - src_a);
 }
 
@@ -274,7 +286,7 @@ static void BlendPixelRowPremult(uint32_t* const src, const uint32_t* const dst,
                                  int num_pixels) {
   int i;
   for (i = 0; i < num_pixels; ++i) {
-    const uint8_t src_alpha = (src[i] >> 24) & 0xff;
+    const uint8_t src_alpha = (src[i] >> CHANNEL_SHIFT(3)) & 0xff;
     if (src_alpha != 0xff) {
       src[i] = BlendPixelPremult(src[i], dst[i]);
     }
@@ -416,7 +428,9 @@ int WebPAnimDecoderGetNext(WebPAnimDecoder* dec,
   WebPDemuxReleaseIterator(&dec->prev_iter_);
   dec->prev_iter_ = iter;
   dec->prev_frame_was_keyframe_ = is_key_frame;
-  CopyCanvas(dec->curr_frame_, dec->prev_frame_disposed_, width, height);
+  if (!CopyCanvas(dec->curr_frame_, dec->prev_frame_disposed_, width, height)) {
+    goto Error;
+  }
   if (dec->prev_iter_.dispose_method == WEBP_MUX_DISPOSE_BACKGROUND) {
     ZeroFillFrameRect(dec->prev_frame_disposed_, width * NUM_CHANNELS,
                       dec->prev_iter_.x_offset, dec->prev_iter_.y_offset,

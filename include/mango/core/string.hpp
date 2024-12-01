@@ -9,6 +9,10 @@
 #include <vector>
 #include <cstdarg>
 #include <mango/core/configure.hpp>
+
+#ifdef _MSC_VER
+#define FMT_UNICODE 0
+#endif
 #include <mango/core/fmt/format.h>
 #include <mango/core/fmt/color.h>
 

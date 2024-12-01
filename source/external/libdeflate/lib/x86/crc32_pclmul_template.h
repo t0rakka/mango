@@ -34,17 +34,13 @@
  * ATTRIBUTES:
  *	Target function attributes to use.  Must satisfy the dependencies of the
  *	other parameters as follows:
- *	   VL=16 && USE_SSE4_1=0 && USE_AVX512=0: at least pclmul
- *	   VL=16 && USE_SSE4_1=1 && USE_AVX512=0: at least pclmul,sse4.1
- *	   VL=32 && USE_SSE4_1=1 && USE_AVX512=0: at least vpclmulqdq,pclmul,avx2
- *	   VL=32 && USE_SSE4_1=1 && USE_AVX512=1: at least vpclmulqdq,pclmul,avx512bw,avx512vl
- *	   VL=64 && USE_SSE4_1=1 && USE_AVX512=1: at least vpclmulqdq,pclmul,avx512bw,avx512vl
+ *	   VL=16 && USE_AVX512=0: at least pclmul,sse4.1
+ *	   VL=32 && USE_AVX512=0: at least vpclmulqdq,pclmul,avx2
+ *	   VL=32 && USE_AVX512=1: at least vpclmulqdq,pclmul,avx512bw,avx512vl
+ *	   VL=64 && USE_AVX512=1: at least vpclmulqdq,pclmul,avx512bw,avx512vl
  *	   (Other combinations are not useful and have not been tested.)
  * VL:
  *	Vector length in bytes.  Must be 16, 32, or 64.
- * USE_SSE4_1:
- *	If 1, take advantage of SSE4.1 instructions such as pblendvb.
- *	If 0, assume that the CPU might not support SSE4.1.
  * USE_AVX512:
  *	If 1, take advantage of AVX-512 features such as masking and the
  *	vpternlog instruction.  This doesn't enable the use of 512-bit vectors;
@@ -55,7 +51,10 @@
  * instructions.  Note that the x86 crc32 instruction cannot be used, as it is
  * for a different polynomial, not the gzip one.  For an explanation of CRC
  * folding with carryless multiplication instructions, see
- * scripts/gen_crc32_multipliers.c and the following paper:
+ * scripts/gen-crc32-consts.py and the following blog posts and papers:
+ *
+ *	"An alternative exposition of crc32_4k_pclmulqdq"
+ *	https://www.corsix.org/content/alternative-exposition-crc32_4k_pclmulqdq
  *
  *	"Fast CRC Computation for Generic Polynomials Using PCLMULQDQ Instruction"
  *	https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/fast-crc-computation-generic-polynomials-pclmulqdq-paper.pdf
@@ -81,7 +80,7 @@
 #  define fold_vec		fold_vec256
 #  define VLOADU(p)		_mm256_loadu_si256((const void *)(p))
 #  define VXOR(a, b)		_mm256_xor_si256((a), (b))
-#  define M128I_TO_VEC(a)	_mm256_castsi128_si256(a)
+#  define M128I_TO_VEC(a)	_mm256_zextsi128_si256(a)
 #  define MULTS(a, b)		_mm256_set_epi64x(a, b, a, b)
 #  define MULTS_8V		MULTS(CRC32_X2015_MODG, CRC32_X2079_MODG)
 #  define MULTS_4V		MULTS(CRC32_X991_MODG, CRC32_X1055_MODG)
@@ -92,7 +91,7 @@
 #  define fold_vec		fold_vec512
 #  define VLOADU(p)		_mm512_loadu_si512((const void *)(p))
 #  define VXOR(a, b)		_mm512_xor_si512((a), (b))
-#  define M128I_TO_VEC(a)	_mm512_castsi128_si512(a)
+#  define M128I_TO_VEC(a)	_mm512_zextsi128_si512(a)
 #  define MULTS(a, b)		_mm512_set_epi64(a, b, a, b, a, b, a, b)
 #  define MULTS_8V		MULTS(CRC32_X4063_MODG, CRC32_X4127_MODG)
 #  define MULTS_4V		MULTS(CRC32_X2015_MODG, CRC32_X2079_MODG)
@@ -149,7 +148,6 @@ ADD_SUFFIX(fold_vec512)(__m512i src, __m512i dst, __m512i /* __v8du */ mults)
 #define fold_vec512	ADD_SUFFIX(fold_vec512)
 #endif /* VL >= 64 */
 
-#if USE_SSE4_1
 /*
  * Given 'x' containing a 16-byte polynomial, and a pointer 'p' that points to
  * the next '1 <= len <= 15' data bytes, rearrange the concatenation of 'x' and
@@ -181,7 +179,6 @@ ADD_SUFFIX(fold_lessthan16bytes)(__m128i x, const u8 *p, size_t len,
 	return fold_vec128(x0, x1, mults_128b);
 }
 #define fold_lessthan16bytes	ADD_SUFFIX(fold_lessthan16bytes)
-#endif /* USE_SSE4_1 */
 
 static ATTRIBUTES u32
 ADD_SUFFIX(crc32_x86)(u32 crc, const u8 *p, size_t len)
@@ -192,17 +189,16 @@ ADD_SUFFIX(crc32_x86)(u32 crc, const u8 *p, size_t len)
 	 * folding across 128 bits.  mults_128b differs from mults_1v when
 	 * VL != 16.  All multipliers are 64-bit, to match what pclmulqdq needs,
 	 * but since this is for CRC-32 only their low 32 bits are nonzero.
-	 * For more details, see scripts/gen_crc32_multipliers.c.
+	 * For more details, see scripts/gen-crc32-consts.py.
 	 */
 	const vec_t mults_8v = MULTS_8V;
 	const vec_t mults_4v = MULTS_4V;
 	const vec_t mults_2v = MULTS_2V;
 	const vec_t mults_1v = MULTS_1V;
 	const __m128i mults_128b = _mm_set_epi64x(CRC32_X95_MODG, CRC32_X159_MODG);
-	const __m128i final_mult = _mm_set_epi64x(0, CRC32_X63_MODG);
-	const __m128i mask32 = _mm_set_epi32(0, 0, 0, 0xFFFFFFFF);
 	const __m128i barrett_reduction_constants =
 		_mm_set_epi64x(CRC32_BARRETT_CONSTANT_2, CRC32_BARRETT_CONSTANT_1);
+	const __m128i mask32 = _mm_set_epi32(0, 0xFFFFFFFF, 0, 0);
 	vec_t v0, v1, v2, v3, v4, v5, v6, v7;
 	__m128i x0 = _mm_cvtsi32_si128(crc);
 	__m128i x1;
@@ -273,7 +269,6 @@ ADD_SUFFIX(crc32_x86)(u32 crc, const u8 *p, size_t len)
 			size_t align = -(uintptr_t)p & (VL-1);
 
 			len -= align;
-		#if USE_SSE4_1
 			x0 = _mm_xor_si128(_mm_loadu_si128((const void *)p), x0);
 			p += 16;
 			if (align & 15) {
@@ -296,11 +291,6 @@ ADD_SUFFIX(crc32_x86)(u32 crc, const u8 *p, size_t len)
 			v0 = _mm512_inserti64x4(v0, *(const __m256i *)(p + 16), 1);
 		#  endif
 			p -= 16;
-		#else
-			crc = crc32_slice1(crc, p, align);
-			p += align;
-			v0 = VXOR(VLOADU(p), M128I_TO_VEC(_mm_cvtsi32_si128(crc)));
-		#endif
 		} else {
 			v0 = VXOR(VLOADU(p), M128I_TO_VEC(x0));
 		}
@@ -395,86 +385,69 @@ less_than_vl_remaining:
 less_than_16_remaining:
 	len &= 15;
 
-	/*
-	 * If fold_lessthan16bytes() is available, handle any remainder
-	 * of 1 to 15 bytes now, before reducing to 32 bits.
-	 */
-#if USE_SSE4_1
+	/* Handle any remainder of 1 to 15 bytes. */
 	if (len)
 		x0 = fold_lessthan16bytes(x0, p, len, mults_128b);
-#endif
 #if USE_AVX512
 reduce_x0:
 #endif
+	/*
+	 * Generate the final n-bit CRC from the 128-bit x0 = A as follows:
+	 *
+	 *	crc = x^n * A mod G
+	 *	    = x^n * (x^64*A_H + A_L) mod G
+	 *	    = x^n * (x^(64-n)*(x^n*A_H mod G) + A_L) mod G
+	 *
+	 * I.e.:
+	 *	crc := 0
+	 *	crc := x^n * (x^(64-n)*crc + A_H) mod G
+	 *	crc := x^n * (x^(64-n)*crc + A_L) mod G
+	 *
+	 * A_H and A_L denote the high and low 64 polynomial coefficients in A.
+	 *
+	 * Using Barrett reduction to do the 'mod G', this becomes:
+	 *
+	 *	crc := floor((A_H * floor(x^(m+n) / G)) / x^m) * G mod x^n
+	 *	A_L := x^(64-n)*crc + A_L
+	 *	crc := floor((A_L * floor(x^(m+n) / G)) / x^m) * G mod x^n
+	 *
+	 * For the gzip crc, n = 32 and the bit order is LSB (least significant
+	 * bit) first.  'm' must be an integer >= 63 (the max degree of A_L and
+	 * A_H) for sufficient precision to be carried through the calculation.
+	 * As the gzip crc is LSB-first we use m == 63, which results in
+	 * floor(x^(m+n) / G) being 64-bit which is the most pclmulqdq can
+	 * accept.  The multiplication with floor(x^(63+n) / G) then produces a
+	 * 127-bit product, and the floored division by x^63 just takes the
+	 * first qword.
+	 */
+
+	/* tmp := floor((A_H * floor(x^(63+n) / G)) / x^63) */
+	x1 = _mm_clmulepi64_si128(x0, barrett_reduction_constants, 0x00);
+	/* tmp is in bits [0:64) of x1. */
+
+	/* crc := tmp * G mod x^n */
+	x1 = _mm_clmulepi64_si128(x1, barrett_reduction_constants, 0x10);
+	/* crc is in bits [64:64+n) of x1. */
 
 	/*
-	 * Fold 128 => 96 bits.  This also implicitly appends 32 zero bits,
-	 * which is equivalent to multiplying by x^32.  This is needed because
-	 * the CRC is defined as M(x)*x^32 mod G(x), not just M(x) mod G(x).
+	 * A_L := x^(64-n)*crc + A_L
+	 * crc is already aligned to add (XOR) it directly to A_L, after
+	 * selecting it using a mask.
 	 */
-	x0 = _mm_xor_si128(_mm_srli_si128(x0, 8),
-			   _mm_clmulepi64_si128(x0, mults_128b, 0x10));
-
-	/* Fold 96 => 64 bits. */
-	x0 = _mm_xor_si128(_mm_srli_si128(x0, 4),
-			   _mm_clmulepi64_si128(_mm_and_si128(x0, mask32),
-						final_mult, 0x00));
-
-	/*
-	 * Reduce 64 => 32 bits using Barrett reduction.
-	 *
-	 * Let M(x) = A(x)*x^32 + B(x) be the remaining message.  The goal is to
-	 * compute R(x) = M(x) mod G(x).  Since degree(B(x)) < degree(G(x)):
-	 *
-	 *	R(x) = (A(x)*x^32 + B(x)) mod G(x)
-	 *	     = (A(x)*x^32) mod G(x) + B(x)
-	 *
-	 * Then, by the Division Algorithm there exists a unique q(x) such that:
-	 *
-	 *	A(x)*x^32 mod G(x) = A(x)*x^32 - q(x)*G(x)
-	 *
-	 * Since the left-hand side is of maximum degree 31, the right-hand side
-	 * must be too.  This implies that we can apply 'mod x^32' to the
-	 * right-hand side without changing its value:
-	 *
-	 *	(A(x)*x^32 - q(x)*G(x)) mod x^32 = q(x)*G(x) mod x^32
-	 *
-	 * Note that '+' is equivalent to '-' in polynomials over GF(2).
-	 *
-	 * We also know that:
-	 *
-	 *	              / A(x)*x^32 \
-	 *	q(x) = floor (  ---------  )
-	 *	              \    G(x)   /
-	 *
-	 * To compute this efficiently, we can multiply the top and bottom by
-	 * x^32 and move the division by G(x) to the top:
-	 *
-	 *	              / A(x) * floor(x^64 / G(x)) \
-	 *	q(x) = floor (  -------------------------  )
-	 *	              \           x^32            /
-	 *
-	 * Note that floor(x^64 / G(x)) is a constant.
-	 *
-	 * So finally we have:
-	 *
-	 *	                          / A(x) * floor(x^64 / G(x)) \
-	 *	R(x) = B(x) + G(x)*floor (  -------------------------  )
-	 *	                          \           x^32            /
-	 */
-	x1 = _mm_clmulepi64_si128(_mm_and_si128(x0, mask32),
-				  barrett_reduction_constants, 0x00);
-	x1 = _mm_clmulepi64_si128(_mm_and_si128(x1, mask32),
-				  barrett_reduction_constants, 0x10);
-	x0 = _mm_xor_si128(x0, x1);
-#if USE_SSE4_1
-	crc = _mm_extract_epi32(x0, 1);
+#if USE_AVX512
+	x0 = _mm_ternarylogic_epi32(x0, x1, mask32, 0x78);
 #else
-	crc = _mm_cvtsi128_si32(_mm_shuffle_epi32(x0, 0x01));
-	/* Process up to 15 bytes left over at the end. */
-	crc = crc32_slice1(crc, p, len);
+	x0 = _mm_xor_si128(x0, _mm_and_si128(x1, mask32));
 #endif
-	return crc;
+	/*
+	 * crc := floor((A_L * floor(x^(m+n) / G)) / x^m) * G mod x^n
+	 * Same as previous but uses the low-order 64 coefficients of A.
+	 */
+	x0 = _mm_clmulepi64_si128(x0, barrett_reduction_constants, 0x01);
+	x0 = _mm_clmulepi64_si128(x0, barrett_reduction_constants, 0x10);
+
+	/* Extract the CRC from bits [64:64+n) of x0. */
+	return _mm_extract_epi32(x0, 2);
 }
 
 #undef vec_t
@@ -491,5 +464,4 @@ reduce_x0:
 #undef SUFFIX
 #undef ATTRIBUTES
 #undef VL
-#undef USE_SSE4_1
 #undef USE_AVX512

@@ -677,6 +677,7 @@ external_zstd_headers = files(
     '../source/external/zstd/compress/zstd_ldm.h',
     '../source/external/zstd/compress/zstdmt_compress.h',
     '../source/external/zstd/compress/zstd_opt.h',
+    '../source/external/zstd/compress/zstd_preSplit.h',
     '../source/external/zstd/decompress/zstd_ddict.h',
     '../source/external/zstd/decompress/zstd_decompress_block.h',
     '../source/external/zstd/decompress/zstd_decompress_internal.h',
@@ -698,6 +699,7 @@ external_zstd_sources = files(
     '../source/external/zstd/compress/huf_compress.c',
     '../source/external/zstd/compress/zstd_compress_superblock.c',
     '../source/external/zstd/compress/zstd_opt.c',
+    '../source/external/zstd/compress/zstd_preSplit.c',
     '../source/external/zstd/compress/hist.c',
     '../source/external/zstd/compress/zstd_ldm.c',
     '../source/external/zstd/compress/fse_compress.c',
@@ -726,6 +728,7 @@ external_webp_headers = files(
     '../source/external/libwebp/src/dsp/lossless.h',
     '../source/external/libwebp/src/dsp/lossless_common.h',
     '../source/external/libwebp/src/dsp/common_sse41.h',
+    '../source/external/libwebp/src/dsp/cpu.h',
     '../source/external/libwebp/src/dsp/dsp.h',
     '../source/external/libwebp/src/dsp/common_sse2.h',
     '../source/external/libwebp/src/dsp/neon.h',
@@ -752,12 +755,18 @@ external_webp_headers = files(
     '../source/external/libwebp/src/utils/quant_levels_utils.h',
     '../source/external/libwebp/src/utils/bit_writer_utils.h',
     '../source/external/libwebp/src/utils/huffman_utils.h',
+    '../source/external/libwebp/src/utils/palette.h',
     '../source/external/libwebp/src/utils/bit_reader_inl_utils.h',
     '../source/external/libwebp/src/utils/bit_reader_utils.h',
     '../source/external/libwebp/src/utils/huffman_encode_utils.h',
     '../source/external/libwebp/src/utils/thread_utils.h',
     '../source/external/libwebp/src/utils/rescaler_utils.h',
-    '../source/external/libwebp/src/utils/filters_utils.h'
+    '../source/external/libwebp/src/utils/filters_utils.h',
+    '../source/external/libwebp/sharpyuv/sharpyuv.h',
+    '../source/external/libwebp/sharpyuv/sharpyuv_csp.h',
+    '../source/external/libwebp/sharpyuv/sharpyuv_gamma.h',
+    '../source/external/libwebp/sharpyuv/sharpyuv_cpu.h',
+    '../source/external/libwebp/sharpyuv/sharpyuv_dsp.h'
 )
 
 external_webp_sources = files(
@@ -867,6 +876,7 @@ external_webp_sources = files(
     '../source/external/libwebp/src/utils/quant_levels_dec_utils.c',
     '../source/external/libwebp/src/utils/bit_writer_utils.c',
     '../source/external/libwebp/src/utils/huffman_utils.c',
+    '../source/external/libwebp/src/utils/palette.c',
     '../source/external/libwebp/src/utils/color_cache_utils.c',
     '../source/external/libwebp/src/utils/rescaler_utils.c',
     '../source/external/libwebp/src/utils/filters_utils.c',
@@ -875,7 +885,14 @@ external_webp_sources = files(
     '../source/external/libwebp/src/utils/utils.c',
     '../source/external/libwebp/src/utils/thread_utils.c',
     '../source/external/libwebp/src/utils/bit_reader_utils.c',
-    '../source/external/libwebp/src/utils/random_utils.c'
+    '../source/external/libwebp/src/utils/random_utils.c',
+    '../source/external/libwebp/sharpyuv/sharpyuv.c',
+    '../source/external/libwebp/sharpyuv/sharpyuv_csp.c',
+    '../source/external/libwebp/sharpyuv/sharpyuv_gamma.c',
+    '../source/external/libwebp/sharpyuv/sharpyuv_sse2.c',
+    '../source/external/libwebp/sharpyuv/sharpyuv_cpu.c',
+    '../source/external/libwebp/sharpyuv/sharpyuv_dsp.c',
+    '../source/external/libwebp/sharpyuv/sharpyuv_neon.c'
 )
 
 external_zpng_sources = files(

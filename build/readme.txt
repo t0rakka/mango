@@ -65,7 +65,9 @@ Load the xcode project and build for release; mango.framework will be generated.
 * ANDROID!!?
 ------------------------------------------------------------------------------------------------
 
-1. cd build/android/
+0. You should be in the build/ folder
+
+1. cd android/
 2. ndk-build -j20
 
 Then use the resulting library files in your cool/awesome Android projects.

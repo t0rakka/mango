@@ -263,6 +263,11 @@
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\decompress_impl.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\x86\matchfinder_impl.h" />
     <ClInclude Include="..\..\..\source\external\libdeflate\lib\zlib_constants.h" />
+    <ClInclude Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv.h" />
+    <ClInclude Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_cpu.h" />
+    <ClInclude Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_csp.h" />
+    <ClInclude Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_dsp.h" />
+    <ClInclude Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_gamma.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\dec\alphai_dec.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\dec\common_dec.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\dec\vp8i_dec.h" />
@@ -271,6 +276,7 @@
     <ClInclude Include="..\..\..\source\external\libwebp\src\dec\webpi_dec.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\dsp\common_sse2.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\dsp\common_sse41.h" />
+    <ClInclude Include="..\..\..\source\external\libwebp\src\dsp\cpu.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\dsp\dsp.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\dsp\lossless.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\dsp\lossless_common.h" />
@@ -294,6 +300,7 @@
     <ClInclude Include="..\..\..\source\external\libwebp\src\utils\filters_utils.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\utils\huffman_encode_utils.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\utils\huffman_utils.h" />
+    <ClInclude Include="..\..\..\source\external\libwebp\src\utils\palette.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\utils\quant_levels_dec_utils.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\utils\quant_levels_utils.h" />
     <ClInclude Include="..\..\..\source\external\libwebp\src\utils\random_utils.h" />
@@ -393,6 +400,7 @@
     <ClInclude Include="..\..\..\source\external\zstd\compress\zstd_ldm.h" />
     <ClInclude Include="..\..\..\source\external\zstd\compress\zstd_ldm_geartab.h" />
     <ClInclude Include="..\..\..\source\external\zstd\compress\zstd_opt.h" />
+    <ClInclude Include="..\..\..\source\external\zstd\compress\zstd_preSplit.h" />
     <ClInclude Include="..\..\..\source\external\zstd\decompress\zstd_ddict.h" />
     <ClInclude Include="..\..\..\source\external\zstd\decompress\zstd_decompress_block.h" />
     <ClInclude Include="..\..\..\source\external\zstd\decompress\zstd_decompress_internal.h" />
@@ -506,6 +514,13 @@
     </ClCompile>
     <ClCompile Include="..\..\..\source\external\libdeflate\lib\zlib_compress.c" />
     <ClCompile Include="..\..\..\source\external\libdeflate\lib\zlib_decompress.c" />
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv.c" />
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_cpu.c" />
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_csp.c" />
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_dsp.c" />
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_gamma.c" />
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_neon.c" />
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_sse2.c" />
     <ClCompile Include="..\..\..\source\external\libwebp\src\dec\alpha_dec.c" />
     <ClCompile Include="..\..\..\source\external\libwebp\src\dec\buffer_dec.c" />
     <ClCompile Include="..\..\..\source\external\libwebp\src\dec\frame_dec.c" />
@@ -615,6 +630,7 @@
     <ClCompile Include="..\..\..\source\external\libwebp\src\utils\filters_utils.c" />
     <ClCompile Include="..\..\..\source\external\libwebp\src\utils\huffman_encode_utils.c" />
     <ClCompile Include="..\..\..\source\external\libwebp\src\utils\huffman_utils.c" />
+    <ClCompile Include="..\..\..\source\external\libwebp\src\utils\palette.c" />
     <ClCompile Include="..\..\..\source\external\libwebp\src\utils\quant_levels_dec_utils.c" />
     <ClCompile Include="..\..\..\source\external\libwebp\src\utils\quant_levels_utils.c" />
     <ClCompile Include="..\..\..\source\external\libwebp\src\utils\random_utils.c" />
@@ -710,6 +726,7 @@
     <ClCompile Include="..\..\..\source\external\zstd\compress\zstd_lazy.c" />
     <ClCompile Include="..\..\..\source\external\zstd\compress\zstd_ldm.c" />
     <ClCompile Include="..\..\..\source\external\zstd\compress\zstd_opt.c" />
+    <ClCompile Include="..\..\..\source\external\zstd\compress\zstd_preSplit.c" />
     <ClCompile Include="..\..\..\source\external\zstd\decompress\huf_decompress.c" />
     <ClCompile Include="..\..\..\source\external\zstd\decompress\zstd_ddict.c" />
     <ClCompile Include="..\..\..\source\external\zstd\decompress\zstd_decompress.c" />
@@ -885,6 +902,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ObjectFileName>$(IntDir)</ObjectFileName>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -909,6 +927,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>None</DebugInformationFormat>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -935,6 +954,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>None</DebugInformationFormat>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

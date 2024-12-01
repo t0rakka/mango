@@ -1510,6 +1510,7 @@ GLEXT_PROC(PFNGLTEXTUREPAGECOMMITMENTMEMNVPROC, glTexturePageCommitmentMemNV);
 
 // GL_OVR_multiview
 GLEXT_PROC(PFNGLFRAMEBUFFERTEXTUREMULTIVIEWOVRPROC, glFramebufferTextureMultiviewOVR);
+GLEXT_PROC(PFNGLNAMEDFRAMEBUFFERTEXTUREMULTIVIEWOVRPROC, glNamedFramebufferTextureMultiviewOVR);
 
 // ---------------------------------------------------------------------------------
 // KHR
