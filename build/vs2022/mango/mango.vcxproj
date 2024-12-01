@@ -400,6 +400,7 @@
     <ClInclude Include="..\..\..\source\external\zstd\compress\zstd_ldm.h" />
     <ClInclude Include="..\..\..\source\external\zstd\compress\zstd_ldm_geartab.h" />
     <ClInclude Include="..\..\..\source\external\zstd\compress\zstd_opt.h" />
+    <ClInclude Include="..\..\..\source\external\zstd\compress\zstd_preSplit.h" />
     <ClInclude Include="..\..\..\source\external\zstd\decompress\zstd_ddict.h" />
     <ClInclude Include="..\..\..\source\external\zstd\decompress\zstd_decompress_block.h" />
     <ClInclude Include="..\..\..\source\external\zstd\decompress\zstd_decompress_internal.h" />
@@ -725,6 +726,7 @@
     <ClCompile Include="..\..\..\source\external\zstd\compress\zstd_lazy.c" />
     <ClCompile Include="..\..\..\source\external\zstd\compress\zstd_ldm.c" />
     <ClCompile Include="..\..\..\source\external\zstd\compress\zstd_opt.c" />
+    <ClCompile Include="..\..\..\source\external\zstd\compress\zstd_preSplit.c" />
     <ClCompile Include="..\..\..\source\external\zstd\decompress\huf_decompress.c" />
     <ClCompile Include="..\..\..\source\external\zstd\decompress\zstd_ddict.c" />
     <ClCompile Include="..\..\..\source\external\zstd\decompress\zstd_decompress.c" />

@@ -1404,6 +1404,9 @@
     <ClInclude Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_gamma.h">
       <Filter>external\webp\sharpyuv</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\source\external\zstd\compress\zstd_preSplit.h">
+      <Filter>external\zstd\compress</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp">
@@ -2479,6 +2482,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_sse2.c">
       <Filter>external\webp\sharpyuv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\zstd\compress\zstd_preSplit.c">
+      <Filter>external\zstd\compress</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
