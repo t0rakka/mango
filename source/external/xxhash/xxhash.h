@@ -1688,8 +1688,7 @@ struct XXH64_state_s {
 #ifndef XXH_NO_XXH3
 
 #if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) /* >= C11 */
-#  include <stdalign.h>
-#  define XXH_ALIGN(n)      alignas(n)
+#  define XXH_ALIGN(n)      _Alignas(n)
 #elif defined(__cplusplus) && (__cplusplus >= 201103L) /* >= C++11 */
 /* In C++ alignas() is a keyword */
 #  define XXH_ALIGN(n)      alignas(n)
@@ -2747,6 +2746,9 @@ static int XXH_isLittleEndian(void)
                                && XXH_HAS_BUILTIN(__builtin_rotateleft64)
 #  define XXH_rotl32 __builtin_rotateleft32
 #  define XXH_rotl64 __builtin_rotateleft64
+#elif XXH_HAS_BUILTIN(__builtin_stdc_rotate_left)
+#  define XXH_rotl32 __builtin_stdc_rotate_left
+#  define XXH_rotl64 __builtin_stdc_rotate_left
 /* Note: although _rotl exists for minGW (GCC under windows), performance seems poor */
 #elif defined(_MSC_VER)
 #  define XXH_rotl32(x,r) _rotl(x,r)
