@@ -48,6 +48,7 @@
 		A00559DA1C93337C00A6D963 /* core in Headers */ = {isa = PBXBuildFile; fileRef = A00559D91C93337C00A6D963 /* core */; settings = {ATTRIBUTES = (Public, ); }; };
 		A00559DE1C9333F100A6D963 /* filesystem in Headers */ = {isa = PBXBuildFile; fileRef = A00559DD1C9333F100A6D963 /* filesystem */; settings = {ATTRIBUTES = (Public, ); }; };
 		A00559E21C93340600A6D963 /* image in Headers */ = {isa = PBXBuildFile; fileRef = A00559E11C93340600A6D963 /* image */; settings = {ATTRIBUTES = (Public, ); }; };
+		A013571E2CFC804500145B7A /* zstd_preSplit.c in Sources */ = {isa = PBXBuildFile; fileRef = A013571D2CFC804500145B7A /* zstd_preSplit.c */; };
 		A074E5982CFBE64D0025518C /* cpu.h in Headers */ = {isa = PBXBuildFile; fileRef = A074E5972CFBE64D0025518C /* cpu.h */; };
 		A074E59B2CFBE66A0025518C /* palette.c in Sources */ = {isa = PBXBuildFile; fileRef = A074E59A2CFBE66A0025518C /* palette.c */; };
 		A074E59C2CFBE66A0025518C /* palette.h in Headers */ = {isa = PBXBuildFile; fileRef = A074E5992CFBE66A0025518C /* palette.h */; };
@@ -638,6 +639,7 @@
 		A00559D91C93337C00A6D963 /* core */ = {isa = PBXFileReference; lastKnownFileType = folder; name = core; path = mango/core; sourceTree = "<group>"; };
 		A00559DD1C9333F100A6D963 /* filesystem */ = {isa = PBXFileReference; lastKnownFileType = folder; name = filesystem; path = mango/filesystem; sourceTree = "<group>"; };
 		A00559E11C93340600A6D963 /* image */ = {isa = PBXFileReference; lastKnownFileType = folder; name = image; path = mango/image; sourceTree = "<group>"; };
+		A013571D2CFC804500145B7A /* zstd_preSplit.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = zstd_preSplit.c; path = external/zstd/compress/zstd_preSplit.c; sourceTree = "<group>"; };
 		A074E5972CFBE64D0025518C /* cpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = cpu.h; path = external/libwebp/src/dsp/cpu.h; sourceTree = "<group>"; };
 		A074E5992CFBE66A0025518C /* palette.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = palette.h; path = external/libwebp/src/utils/palette.h; sourceTree = "<group>"; };
 		A074E59A2CFBE66A0025518C /* palette.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = palette.c; path = external/libwebp/src/utils/palette.c; sourceTree = "<group>"; };
@@ -2219,6 +2221,7 @@
 		A6FCC3A01E8122F30037C15F /* compress */ = {
 			isa = PBXGroup;
 			children = (
+				A013571D2CFC804500145B7A /* zstd_preSplit.c */,
 				A6DD288723FF09680085E6EE /* zstd_compress_superblock.c */,
 				A6DD288823FF09680085E6EE /* zstd_compress_superblock.h */,
 				A6F0A5A0237247370015944D /* zstd_cwksp.h */,
@@ -2641,6 +2644,7 @@
 				A6EC3EE2230D7C1500B17F21 /* yuv.c in Sources */,
 				A645DD702141551200EC714B /* zstd_double_fast.c in Sources */,
 				A6D78CCF290987A200304D88 /* astcenc_diagnostic_trace.cpp in Sources */,
+				A013571E2CFC804500145B7A /* zstd_preSplit.c in Sources */,
 				A69B9DDD285ABF4200E7BEDC /* gzip_decompress.c in Sources */,
 				A63DD75D1E706EB200D4D499 /* unpack.cpp in Sources */,
 				A63DD7501E706EB200D4D499 /* getbits.cpp in Sources */,

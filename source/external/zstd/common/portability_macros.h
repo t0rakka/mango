@@ -68,6 +68,8 @@
 /* Mark the internal assembly functions as hidden  */
 #ifdef __ELF__
 # define ZSTD_HIDE_ASM_FUNCTION(func) .hidden func
+#elif defined(__APPLE__)
+# define ZSTD_HIDE_ASM_FUNCTION(func) .private_extern func
 #else
 # define ZSTD_HIDE_ASM_FUNCTION(func)
 #endif
@@ -88,7 +90,7 @@
 #endif
 
 /**
- * Only enable assembly for GNUC compatible compilers,
+ * Only enable assembly for GNU C compatible compilers,
  * because other platforms may not support GAS assembly syntax.
  *
  * Only enable assembly for Linux / MacOS, other platforms may
