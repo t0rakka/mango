@@ -125,7 +125,7 @@ size_t save_jpeg(const char* filename, const Surface& surface)
     FILE* outfile;
     if ((outfile = fopen(filename, "wb")) == NULL)
     {
-        printLine(stderr, "can't open {}", filename);
+        printLine("can't open {}", filename);
         exit(1);
     }
     jpeg_stdio_dest(&cinfo, outfile);
@@ -467,7 +467,7 @@ int main(int argc, const char* argv[])
     size = save_jpeg("output-libjpeg.jpg", s);
 
     time2 = Time::us();
-    print("libjpeg: ", time1 - time0, time2 - time1, size);
+    ::print("libjpeg: ", time1 - time0, time2 - time1, size);
 
 #endif
 
@@ -482,7 +482,7 @@ int main(int argc, const char* argv[])
     size = stb_save_jpeg("output-stb.jpg", s_stb);
 
     time2 = Time::us();
-    print("stb:     ", time1 - time0, time2 - time1, size);
+    ::print("stb:     ", time1 - time0, time2 - time1, size);
 
 #endif
 
@@ -497,7 +497,7 @@ int main(int argc, const char* argv[])
     size = jpge_save("output-jpge.jpg", s_jpgd);
 
     time2 = Time::us();
-    print("jpgd:    ", time1 - time0, time2 - time1, size);
+    ::print("jpgd:    ", time1 - time0, time2 - time1, size);
 
 #endif
 
@@ -512,7 +512,7 @@ int main(int argc, const char* argv[])
     size = jpegdec_save("output-jpegdec.jpg", s_jpegdec);
 
     time2 = Time::us();
-    print("jpgdec:  ", time1 - time0, NOT_AVAILABLE, size);
+    ::print("jpgdec:  ", time1 - time0, NOT_AVAILABLE, size);
 
 #endif
 
@@ -527,7 +527,7 @@ int main(int argc, const char* argv[])
     size = toojpeg_save("output-toojpeg.jpg", toojpeg_bitmap);
 
     time2 = Time::us();
-    print("toojpeg: ", NOT_AVAILABLE, time2 - time1, size);
+    ::print("toojpeg: ", NOT_AVAILABLE, time2 - time1, size);
 
 #endif
 
@@ -539,7 +539,7 @@ int main(int argc, const char* argv[])
     load_wuffs(filename);
 
     time1 = Time::us();
-    print("wuffs:   ", time1 - time0, NOT_AVAILABLE, 0);
+    ::print("wuffs:   ", time1 - time0, NOT_AVAILABLE, 0);
 
 #endif
 
@@ -577,7 +577,7 @@ int main(int argc, const char* argv[])
     size = get_file_size("output-mango.jpg");
 
     time2 = Time::us();
-    print("mango:   ", time1 - time0, time2 - time1, size);
+    ::print("mango:   ", time1 - time0, time2 - time1, size);
 
     // ------------------------------------------------------------------
 
@@ -604,12 +604,12 @@ int main(int argc, const char* argv[])
             save_total += save;
             load_lowest = std::min(load_lowest, load);
             save_lowest = std::min(save_lowest, save);
-            print("         ", load, save, size);
+            ::print("         ", load, save, size);
         }
 
         printLine("----------------------------------------------");
-        print("average: ", load_total / (test_count + 1), save_total / (test_count + 1), size);
-        print("lowest : ", load_lowest, save_lowest, size);
+        ::print("average: ", load_total / (test_count + 1), save_total / (test_count + 1), size);
+        ::print("lowest : ", load_lowest, save_lowest, size);
         printLine("----------------------------------------------");
     }
 
