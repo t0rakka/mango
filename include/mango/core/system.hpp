@@ -102,6 +102,27 @@ namespace mango
 
     template <typename... T>
     static inline
+    void print(Print target, T... s)
+    {
+        if (isEnable(target))
+        {
+            std::printf("%s", fmt::format(std::forward<T>(s)...).c_str());
+        }
+    }
+
+    template <typename... T>
+    static inline
+    void print(Print target, int indent, T... s)
+    {
+        if (isEnable(target))
+        {
+            std::printf("%s", fmt::format("{:{}}", "", indent).c_str());
+            std::printf("%s", fmt::format(std::forward<T>(s)...).c_str());
+        }
+    }
+
+    template <typename... T>
+    static inline
         void printLine(Print target, T... s)
     {
         if (isEnable(target))
@@ -127,7 +148,28 @@ namespace mango
 
     template <typename... T>
     static inline
-        void printLine(Print target, T... s)
+    void print(Print target, T... s)
+    {
+        if (isEnable(target))
+        {
+            fmt::print(std::forward<T>(s)...);
+        }
+    }
+
+    template <typename... T>
+    static inline
+    void print(Print target, int indent, T... s)
+    {
+        if (isEnable(target))
+        {
+            fmt::print("{:{}}", "", indent);
+            fmt::print(std::forward<T>(s)...);
+        }
+    }
+
+    template <typename... T>
+    static inline
+    void printLine(Print target, T... s)
     {
         if (isEnable(target))
         {
@@ -138,7 +180,7 @@ namespace mango
 
     template <typename... T>
     static inline
-        void printLine(Print target, int indent, T... s)
+    void printLine(Print target, int indent, T... s)
     {
         if (isEnable(target))
         {
@@ -149,6 +191,20 @@ namespace mango
     }
 
 #endif
+
+    template <typename... T>
+    static inline
+    void print(T... s)
+    {
+        print(Print::Verbose, std::forward<T>(s)...);
+    }
+
+    template <typename... T>
+    static inline
+    void print(int indent, T... s)
+    {
+        print(Print::Verbose, indent, std::forward<T>(s)...);
+    }
 
     template <typename... T>
     static inline
