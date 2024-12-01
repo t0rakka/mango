@@ -20,7 +20,8 @@ SOURCE_WEBP = external/libwebp/src/dec \
               external/libwebp/src/dsp \
               external/libwebp/src/demux \
               external/libwebp/src/mux \
-              external/libwebp/src/utils
+              external/libwebp/src/utils \
+              external/libwebp/sharpyuv
 
 SOURCE_DIRS := mango/core \
                mango/core/unix \
