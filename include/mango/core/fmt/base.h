@@ -443,6 +443,12 @@ enum { use_utf8 = !FMT_WIN32 || is_utf8_enabled };
 #  define FMT_UNICODE 1
 #endif
 
+// MANGO HACK (the code won't compile on msvc)
+#ifdef FMT_UNICODE
+#undef FMT_UNICODE
+#define FMT_UNICODE 0
+#endif
+
 static_assert(!FMT_UNICODE || use_utf8,
               "Unicode support requires compiling with /utf-8");
 

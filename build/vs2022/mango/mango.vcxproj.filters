@@ -214,6 +214,9 @@
     <Filter Include="external\libdeflate\lib\riscv">
       <UniqueIdentifier>{3ac467c0-32f6-4367-b23e-23c8ff71b837}</UniqueIdentifier>
     </Filter>
+    <Filter Include="external\webp\sharpyuv">
+      <UniqueIdentifier>{f755d265-6d7f-4717-8994-9d24ce0005ea}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\mango\core\bits.hpp">
@@ -1380,6 +1383,27 @@
     <ClInclude Include="..\..\..\source\external\astc\astcenc_vecmathlib_sve_8.h">
       <Filter>external\astc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libwebp\src\dsp\cpu.h">
+      <Filter>external\webp\dsp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libwebp\src\utils\palette.h">
+      <Filter>external\webp\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv.h">
+      <Filter>external\webp\sharpyuv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_cpu.h">
+      <Filter>external\webp\sharpyuv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_csp.h">
+      <Filter>external\webp\sharpyuv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_dsp.h">
+      <Filter>external\webp\sharpyuv</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_gamma.h">
+      <Filter>external\webp\sharpyuv</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\mango\math\simd.cpp">
@@ -2431,6 +2455,30 @@
     </ClCompile>
     <ClCompile Include="..\..\..\source\external\fastgltf\src\io.cpp">
       <Filter>external\fastgltf\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libwebp\src\utils\palette.c">
+      <Filter>external\webp\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv.c">
+      <Filter>external\webp\sharpyuv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_cpu.c">
+      <Filter>external\webp\sharpyuv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_csp.c">
+      <Filter>external\webp\sharpyuv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_dsp.c">
+      <Filter>external\webp\sharpyuv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_gamma.c">
+      <Filter>external\webp\sharpyuv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_neon.c">
+      <Filter>external\webp\sharpyuv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\external\libwebp\sharpyuv\sharpyuv_sse2.c">
+      <Filter>external\webp\sharpyuv</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
