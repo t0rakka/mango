@@ -3101,6 +3101,7 @@ GLEXT_PROC(PFNGLGETSEMAPHOREPARAMETERIVNVPROC, glGetSemaphoreParameterivNV);
 
 // GL_OVR_multiview
 GLEXT_PROC(PFNGLFRAMEBUFFERTEXTUREMULTIVIEWOVRPROC, glFramebufferTextureMultiviewOVR);
+GLEXT_PROC(PFNGLNAMEDFRAMEBUFFERTEXTUREMULTIVIEWOVRPROC, glNamedFramebufferTextureMultiviewOVR);
 
 // ---------------------------------------------------------------------------------
 // PGI
