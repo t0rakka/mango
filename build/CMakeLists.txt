@@ -504,6 +504,7 @@ if (EMSCRIPTEN)
 elseif (COMPILER_MSVC)
 
     target_compile_options(mango PUBLIC "/DUNICODE")
+    target_compile_options(mango PUBLIC "/utf-8")
     target_compile_options(mango PUBLIC "/MP")
 
     if (ENABLE_AVX512)
