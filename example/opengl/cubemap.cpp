@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -201,63 +201,6 @@ void glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, cons
     glUniformMatrix4fv(location, count, transpose, value[0].data());
 }
 
-GLint getCompileStatus(GLuint shader)
-{
-    GLint success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        GLchar infoLog[1024];
-        glGetShaderInfoLog(shader, sizeof(infoLog), NULL, infoLog);
-        printLine(infoLog);
-    }
-
-    return success;
-}
-
-GLint getLinkStatus(GLuint program)
-{
-    GLint success;
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        GLchar infoLog[1024];
-        glGetProgramInfoLog(program, sizeof(infoLog), NULL, infoLog);
-        printLine(infoLog);
-    }
-
-    return success;
-}
-
-GLuint createShader(GLenum type, const char* source)
-{
-    GLuint shader = glCreateShader(type);
-    glShaderSource(shader, 1, &source, NULL);
-    glCompileShader(shader);
-
-    getCompileStatus(shader);
-
-    return shader;
-}
-
-GLuint createProgram(const char* vertexShaderSource, const char* fragmentShaderSource)
-{
-    GLuint vertex = createShader(GL_VERTEX_SHADER, vertexShaderSource);
-    GLuint fragment = createShader(GL_FRAGMENT_SHADER, fragmentShaderSource);
-
-    GLuint program = glCreateProgram();
-    glAttachShader(program, vertex);
-    glAttachShader(program, fragment);
-    glLinkProgram(program);
-
-    getLinkStatus(program);
-
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-
-    return program;
-}
-
 GLuint createTexture2D(const std::string& filename, bool mipmap)
 {
     GLuint texture = 0;
@@ -423,7 +366,7 @@ public:
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
         meshTexture = createTexture2D("data/hanselun.png", true);
-        meshProgram = createProgram(vs_mesh, fs_mesh);
+        meshProgram = opengl::createProgram(vs_mesh, fs_mesh);
 
         // select between cubemap and latlong texture
         bool cubemap = true;
@@ -431,13 +374,13 @@ public:
         if (cubemap)
         {
             skyboxTexture = createTextureCube("data/KernerEnvCube.exr");
-            skyboxProgram = createProgram(vs_skybox, fs_skybox_cubemap);
+            skyboxProgram = opengl::createProgram(vs_skybox, fs_skybox_cubemap);
             skyboxSamplerType = GL_TEXTURE_CUBE_MAP;
         }
         else
         {
             skyboxTexture = createTexture2D("data/KernerEnvLatLong.exr", false);
-            skyboxProgram = createProgram(vs_skybox, fs_skybox_latlong);
+            skyboxProgram = opengl::createProgram(vs_skybox, fs_skybox_latlong);
             skyboxSamplerType = GL_TEXTURE_2D;
         }
 
