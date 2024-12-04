@@ -416,30 +416,47 @@ namespace mango
             glXMakeCurrent(window->native.display, 0, 0);
             window->busy = true;
 
-            XEvent xevent;
-            std::memset(&xevent, 0, sizeof(xevent));
+            XEvent event;
+            std::memset(&event, 0, sizeof(event));
 
-            xevent.type = ClientMessage;
-            xevent.xclient.window = window->native.window;
-            xevent.xclient.message_type = window->atom_state;
-            xevent.xclient.format = 32;
-            xevent.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
-            xevent.xclient.data.l[1] = window->atom_fullscreen;
-            xevent.xclient.data.l[2] = 0; // no second property to toggle
-            xevent.xclient.data.l[3] = 1; // source indication: application
-            xevent.xclient.data.l[4] = 0; // unused
+            event.type = ClientMessage;
+            event.xclient.window = window->native.window;
+            event.xclient.message_type = window->atom_state;
+            event.xclient.format = 32;
+            event.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
+            event.xclient.data.l[1] = window->atom_fullscreen;
+            event.xclient.data.l[2] = 0; // no second property to toggle
+            event.xclient.data.l[3] = 1; // source indication: application
+            event.xclient.data.l[4] = 0; // unused
 
             XMapWindow(window->native.display, window->native.window);
 
             // send the event to the root window
             XSendEvent(window->native.display, DefaultRootWindow(window->native.display),
-                False, SubstructureRedirectMask | SubstructureNotifyMask, &xevent);
+                False, SubstructureRedirectMask | SubstructureNotifyMask, &event);
 
             XFlush(window->native.display);
 
             // Enable rendering now that all the tricks are done
             window->busy = false;
             glXMakeCurrent(window->native.display, window->native.window, context);
+
+            // Get window dimensions
+            XWindowAttributes attributes;
+            XGetWindowAttributes(window->native.display, window->native.window, &attributes);
+
+            std::memset(&event, 0, sizeof(event));
+
+            event.type = Expose;
+            event.xexpose.window = window->native.window;
+            event.xexpose.x = 0;
+            event.xexpose.y = 0;
+            event.xexpose.width = attributes.width;
+            event.xexpose.height = attributes.height;
+            event.xexpose.count = 0;
+
+            // Send Expose event (generates Window::onDraw callback)
+            XSendEvent(window->native.display, window->native.window, False, NoEventMask, &event);
 
             fullscreen = !fullscreen;
         }

@@ -1031,7 +1031,7 @@ namespace mango
                             else
                             {
                                 // pick from list of three
-                                m_handle->atom_xdnd_req = PickTargetFromAtoms(m_handle->native.display, 
+                                m_handle->atom_xdnd_req = PickTargetFromAtoms(m_handle->native.display,
                                     e.xclient.data.l[2], e.xclient.data.l[3], e.xclient.data.l[4]);
                             }
                         }
