@@ -89,13 +89,21 @@ namespace mango::math
         {
         }
 
-        explicit Matrix(Vector<ScalarType, 2> v0, Vector<ScalarType, 2> v1)
+        explicit Matrix(Vector<ScalarType, 2> v0,
+                        Vector<ScalarType, 2> v1)
         {
             m[0] = v0;
             m[1] = v1;
         }
 
-        explicit Matrix(ScalarType s0, ScalarType s1, ScalarType s2, ScalarType s3)
+        explicit Matrix(ScalarType s)
+        {
+            m[0] = Vector<ScalarType, 2>(s, 0);
+            m[1] = Vector<ScalarType, 2>(0, s);
+        }
+
+        explicit Matrix(ScalarType s0, ScalarType s1,
+                        ScalarType s2, ScalarType s3)
         {
             m[0] = Vector<ScalarType, 2>(s0, s1);
             m[1] = Vector<ScalarType, 2>(s2, s3);
@@ -145,14 +153,25 @@ namespace mango::math
         {
         }
 
-        explicit Matrix(Vector<ScalarType, 3> v0, Vector<ScalarType, 3> v1, Vector<ScalarType, 3> v2)
+        explicit Matrix(Vector<ScalarType, 3> v0,
+                        Vector<ScalarType, 3> v1,
+                        Vector<ScalarType, 3> v2)
         {
             m[0] = v0;
             m[1] = v1;
             m[2] = v2;
         }
 
-        explicit Matrix(ScalarType s0, ScalarType s1, ScalarType s2, ScalarType s3, ScalarType s4, ScalarType s5, ScalarType s6, ScalarType s7, ScalarType s8)
+        explicit Matrix(ScalarType s)
+        {
+            m[0] = Vector<ScalarType, 3>(s, 0, 0);
+            m[1] = Vector<ScalarType, 3>(0, s, 0);
+            m[2] = Vector<ScalarType, 3>(0, 0, s);
+        }
+
+        explicit Matrix(ScalarType s0, ScalarType s1, ScalarType s2,
+                        ScalarType s3, ScalarType s4, ScalarType s5,
+                        ScalarType s6, ScalarType s7, ScalarType s8)
         {
             m[0] = Vector<ScalarType, 3>(s0, s1, s2);
             m[1] = Vector<ScalarType, 3>(s3, s4, s5);

@@ -69,14 +69,22 @@ namespace mango::math
             m[2] = v.m[2];
         }
 
-        explicit Matrix(
-            const Vector<float, 3>& v0,
-            const Vector<float, 3>& v1,
-            const Vector<float, 3>& v2)
+        explicit Matrix(const Vector<float, 3>& v0,
+                        const Vector<float, 3>& v1,
+                        const Vector<float, 3>& v2)
         {
             m[0] = v0;
             m[1] = v1;
             m[2] = v2;
+        }
+
+        explicit Matrix(float s0, float s1, float s2,
+                        float s3, float s4, float s5,
+                        float s6, float s7, float s8)
+        {
+            m[0] = Vector<float, 3>(s0, s1, s2);
+            m[1] = Vector<float, 3>(s3, s4, s5);
+            m[2] = Vector<float, 3>(s6, s7, s8);
         }
 
         Matrix(const Quaternion& rotation)
