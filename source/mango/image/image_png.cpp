@@ -3652,8 +3652,9 @@ namespace
             }
         }
 
-        printLine(Print::Info, "filter: {}.{} ms", m_filter_time / 1000, m_filter_time % 1000);
-        printLine(Print::Info, "color: {}.{} ms", m_color_time / 1000, m_color_time % 1000);
+        // These are not wall times; it is cumulative time from all concurrent tasks
+        printLine(Print::Info, "  filter: {}.{} ms", m_filter_time / 1000, m_filter_time % 1000);
+        printLine(Print::Info, "  color: {}.{} ms", m_color_time / 1000, m_color_time % 1000);
 
         if (m_interface->cancelled)
         {
