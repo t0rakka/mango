@@ -1163,9 +1163,12 @@ namespace
                     break;
                 case 3:
 #if defined(MANGO_ENABLE_SSE2)
-                    sub = filter1_sub_24bit_sse2;
-                    average = filter3_average_24bit_sse2;
-                    paeth = filter4_paeth_24bit_sse2;
+                    if (features & INTEL_SSE2)
+                    {
+                        sub = filter1_sub_24bit_sse2;
+                        average = filter3_average_24bit_sse2;
+                        paeth = filter4_paeth_24bit_sse2;
+                    }
 #endif
 #if defined(MANGO_ENABLE_SSE4_1)
                     if (features & INTEL_SSE4_1)
@@ -1184,9 +1187,12 @@ namespace
                     break;
                 case 4:
 #if defined(MANGO_ENABLE_SSE2)
-                    sub = filter1_sub_32bit_sse2;
-                    average = filter3_average_32bit_sse2;
-                    paeth = filter4_paeth_32bit_sse2;
+                    if (features & INTEL_SSE2)
+                    {
+                        sub = filter1_sub_32bit_sse2;
+                        average = filter3_average_32bit_sse2;
+                        paeth = filter4_paeth_32bit_sse2;
+                    }
 #endif
 #if defined(MANGO_ENABLE_NEON)
                     if (features & ARM_NEON)
@@ -1199,8 +1205,13 @@ namespace
                     break;
             }
 
+            // NOTE: up filter is selected here as it is same for all bit depths
+
 #if defined(MANGO_ENABLE_SSE2)
-            up = filter2_up_sse2;
+            if (features & INTEL_SSE2)
+            {
+                up = filter2_up_sse2;
+            }
 #endif
 #if defined(MANGO_ENABLE_NEON)
             if (features & ARM_NEON)
@@ -2014,6 +2025,9 @@ namespace
 
         ColorState m_color_state;
         Surface m_decode_target;
+
+        u64 m_filter_time = 0;
+        u64 m_color_time = 0;
 
         // IHDR
         int m_width;
@@ -2962,12 +2976,17 @@ namespace
         Buffer zeros(bytes, 0);
         const u8* prev = zeros.data();
 
+        u64 time0 = Time::us();
+
         for (int y = 0; y < height; ++y)
         {
             filter(buffer, prev, bytes);
             prev = buffer;
             buffer += bytes;
         }
+
+        u64 time1 = Time::us();
+        m_filter_time += (time1 - time0);
     }
 
     void ParserPNG::process_range(const Surface& target, u8* buffer, int y0, int y1)
@@ -2982,11 +3001,19 @@ namespace
 
         for (int y = y0; y < y1; ++y)
         {
+            u64 time0 = Time::us();
+
             // filtering
             filter(buffer, buffer - bytes_per_line, int(bytes_per_line));
 
+            u64 time1 = Time::us();
+            m_filter_time += (time1 - time0);
+
             // color conversion
             convert(m_color_state, target.width, image, buffer + PNG_FILTER_BYTE);
+
+            u64 time2 = Time::us();
+            m_color_time += (time2 - time1);
 
             buffer += bytes_per_line;
             image += target.stride;
@@ -3036,6 +3063,8 @@ namespace
             // use de-interlaced temp buffer as processing source
             buffer = temp;
 
+            u64 time0 = Time::us();
+
             // color conversion
             for (int y = 0; y < target.height; ++y)
             {
@@ -3043,6 +3072,9 @@ namespace
                 image += target.stride;
                 buffer += bytes_per_line;
             }
+
+            u64 time1 = Time::us();
+            m_color_time += (time1 - time0);
 
             ImageDecodeRect rect;
 
@@ -3619,6 +3651,9 @@ namespace
                 process_image(target, buffer, multithread);
             }
         }
+
+        printLine(Print::Info, "filter: {}.{} ms", m_filter_time / 1000, m_filter_time % 1000);
+        printLine(Print::Info, "color: {}.{} ms", m_color_time / 1000, m_color_time % 1000);
 
         if (m_interface->cancelled)
         {
