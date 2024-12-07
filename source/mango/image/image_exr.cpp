@@ -20,6 +20,16 @@ namespace
     // MANGO TODO: multi-part support
     // MANGO TODO: more flexible color resolver (more formats)
 
+    /*
+    // exr half/float to uint8 conversion:
+    u8 gamma(float x)
+    {
+        x = max(0.0f, x);
+        x = pow (5.5555f x, 0.4545f) * 84.66f;
+        return u8(clamp(x, 0.0f, 255.0f));
+    }
+    */
+
 // --------------------------------------------------------------------------------------
 //
 // Copyright (c) Contributors to the OpenEXR Project. All rights reserved.
@@ -1551,9 +1561,9 @@ struct ContextEXR
 
     void report()
     {
-        printLine(Print::Info, "  decoding: {} ms", int(m_time_decompress / 1000));
-        printLine(Print::Info, "  blitting: {} ms", int(m_time_blit / 1000));
-        printLine(Print::Info, "  decode: {} ms", int(m_time_decode / 1000));
+        printLine(Print::Info, "  decompress: {}.{} ms (cpu time)", m_time_decompress / 1000, m_time_decompress % 1000);
+        printLine(Print::Info, "  blit: {}.{} ms (cpu time)", m_time_blit / 1000, m_time_blit % 1000);
+        printLine(Print::Info, "  decode: {}.{} ms", m_time_decode / 1000, m_time_decode % 1000);
     }
 };
 
