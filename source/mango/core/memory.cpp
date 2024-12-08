@@ -106,7 +106,7 @@ namespace mango
             count -= 8;
         }
 
-        for (int i = 0; i < count; ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             data[i] = byteswap(data[i]);
         }
@@ -126,7 +126,7 @@ namespace mango
             count -= 4;
         }
 
-        for (int i = 0; i < count; ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             data[i] = byteswap(data[i]);
         }
@@ -150,7 +150,7 @@ namespace mango
             count -= 4;
         }
 
-        for (int i = 0; i < count; ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             data[i] = byteswap(data[i]);
         }
@@ -170,7 +170,7 @@ namespace mango
             count -= 2;
         }
 
-        for (int i = 0; i < count; ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             data[i] = byteswap(data[i]);
         }
@@ -192,7 +192,7 @@ namespace mango
             count -= 2;
         }
 
-        for (int i = 0; i < count; ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             data[i] = byteswap(data[i]);
         }
@@ -202,7 +202,7 @@ namespace mango
     {
         const uint8x8_t table = { 7, 6, 5, 4, 3, 2, 1, 0 };
 
-        for (int i = 0; i < count; ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             u8* ptr = reinterpret_cast<u8*>(data);
             uint8x8_t v = vld1_u8(ptr);
@@ -226,7 +226,7 @@ namespace mango
             count -= 4;
         }
 
-        for (int i = 0; i < count; ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             data[i] = byteswap(data[i]);
         }
@@ -234,7 +234,7 @@ namespace mango
 
     void byteswap(u64* data, size_t count)
     {
-        for (int i = 0; i < count; ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             data[i] = byteswap(data[i]);
         }
