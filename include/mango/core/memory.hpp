@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -252,5 +252,14 @@ namespace mango
             return data() + m_size;
         }
     };
+
+    // -----------------------------------------------------------------------
+    // byteswap()
+    // -----------------------------------------------------------------------
+
+    void byteswap(u16* data, size_t count);
+    void byteswap(u32* data, size_t count);
+    void byteswap(u64* data, size_t count);
+    void byteswap(Memory memory, int bits);
 
 } // namespace mango

@@ -414,7 +414,9 @@ namespace
                             std::memcpy(dest, src, bytes_per_scan);
                         }
 
+#ifdef MANGO_LITTLE_ENDIAN
                         byteswap(buffer, m_bits);
+#endif
                         resolve(temp.image + y * temp.stride, buffer, width, channels);
                     }
 
@@ -443,7 +445,9 @@ namespace
                             }
                         }
 
+#ifdef MANGO_LITTLE_ENDIAN
                         byteswap(buffer, m_bits);
+#endif
                         resolve(temp.image + y * temp.stride, buffer, width, channels);
                     }
 
@@ -711,34 +715,6 @@ namespace
                 ++src;
                 dest += 4;
             }
-        }
-
-        template <typename T>
-        void byteswap(Memory memory)
-        {
-            T* data = reinterpret_cast<T*>(memory.address);
-            size_t count = memory.size / sizeof(T);
-            for (size_t i = 0; i < count; ++i)
-            {
-                data[i] = mango::byteswap(data[i]);
-            }
-        }
-
-        void byteswap(Memory memory, int bits)
-        {
-#if defined(MANGO_LITTLE_ENDIAN)
-            if (bits == 16)
-            {
-                byteswap<u16>(memory);
-            }
-            else if (bits == 32)
-            {
-                byteswap<u32>(memory);
-            }
-#else
-            MANGO_UNREFERENCED(memory);
-            MANGO_UNREFERENCED(bits);
-#endif
         }
     };
 
