@@ -32,8 +32,12 @@ namespace mango
             auto it = m_index.find(key);
             if (it != m_index.end())
             {
-                it->second->second = value; // the key already exists, update the value
-                m_values.splice(m_values.begin(), m_values, it->second); // make the value most recently used
+                // the key already exists, update the value
+                it->second->second = value;
+
+                // make the value most recently used
+                m_values.splice(m_values.begin(), m_values, it->second);
+
                 return;
             }
 

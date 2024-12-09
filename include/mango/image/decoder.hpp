@@ -79,9 +79,10 @@ namespace mango::image
 
     struct ImageDecodeOptions
     {
-        // request indexed decoding
-        // - palette is resolved into the provided palette object
+        // request indexed decoding; palette is resolved into the provided palette object
+        // 
         // - decode() destination surface must be indexed
+        // - ImageHeader must have palette available
         Palette* palette = nullptr; // enable indexed decoding by pointing to a palette
 
         bool simd = true;
