@@ -249,7 +249,6 @@ bool test4()
     std::atomic<int> overlaps { 0 };
 
     std::vector<int> result;
-    std::mutex mutex;
 
     for (u64 i = 0; i < 10; ++i)
     {

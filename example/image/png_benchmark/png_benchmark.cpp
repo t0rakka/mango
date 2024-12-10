@@ -425,7 +425,7 @@ size_t save_spng(const Bitmap& bitmap)
 // rpng
 // ----------------------------------------------------------------------
 
-#if defined(ENABLE_FPNG)
+#if defined(ENABLE_RPNG)
 
 #define RPNG_IMPLEMENTATION
 #define RPNG_DEFLATE_IMPLEMENTATION
