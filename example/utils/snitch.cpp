@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cinttypes>
 #include <algorithm>
@@ -15,13 +15,11 @@ namespace
 {
 
     // unit helpers
-
     constexpr u64 KB = 1 << 10;
     constexpr u64 MB = 1 << 20;
     constexpr u64 GB = 1 << 30;
 
     // configuration
-
     constexpr u64 large_block_size = 4 * MB;
     constexpr u64 small_file_max_size = 512 * KB;
     constexpr u64 small_block_size = 2 * MB;
@@ -78,12 +76,6 @@ struct State
     std::vector<FileInfo> folders;
 };
 
-void tabs(int depth)
-{
-    while (depth-- > 0)
-        printf("  ");
-}
-
 bool isContainer(const std::string& filename, u64 size)
 {
     // NOTE: we can add more filter criteria through this wrapper
@@ -110,8 +102,7 @@ void enumerate(const Path& path, const std::string& prefix, State& state, int de
             {
                 if (state.verbose)
                 {
-                    tabs(depth);
-                    printf("+ %s\n", node.name.c_str());
+                    printLine(depth * 2, "+ {}", node.name);
                 }
 
                 enumerate(Path(path, node.name), prefix, state, depth + 1);
@@ -121,15 +112,18 @@ void enumerate(const Path& path, const std::string& prefix, State& state, int de
             {
                 if (state.verbose)
                 {
-                    tabs(depth);
-                    printf("- %s\n", node.name.c_str());
+                    printLine(depth * 2, "- {}", node.name);
                 }
 
                 bool is_container = isContainer(node.name, node.size);
                 if (is_container)
+                {
                     state.containers.emplace_back(filename, node.size, 0);
+                }
                 else
+                {
                     state.files.emplace_back(filename, node.size, 0);
+                }
 
                 state.total_bytes += node.size;
             }
@@ -201,14 +195,11 @@ struct BlockManager
     }
 };
 
-void compress(const std::string& folder, const std::string& archive, const std::string& compression, int level, size_t store_threshold)
+void compress(State& state, const std::string& folder, const std::string& archive, const std::string& compression, int level, size_t store_threshold)
 {
     Compressor compressor = getCompressor(compression);
 
-    printf("Scanning files to compress...\n");
-
-    State state;
-    state.verbose = false;
+    printLine("Scanning files to compress...");
 
     Path path(folder);
     enumerate(path, folder, state, 0);
@@ -216,15 +207,15 @@ void compress(const std::string& folder, const std::string& archive, const std::
     u64 total_files = state.files.size() + state.containers.size();
     if (!total_files)
     {
-        printf("[WARNING] Did not find anything to compress.\n");
+        printLine("[WARNING] Did not find anything to compress.");
         return;
     }
 
-    printf("\n");
-    printf("Compressing %" PRIu64 " files (%.1f MB) \n", 
+    printLine("");
+    printLine("Compressing {} files ({}.{} MB)", 
         total_files, 
-        state.total_bytes / double(MB));
-    printf("\n");
+        state.total_bytes / MB, (state.total_bytes * 10 / MB) % 10);
+    printLine("");
 
     // sort files by size
     std::sort(state.files.begin(), state.files.end(),
@@ -299,8 +290,7 @@ void compress(const std::string& folder, const std::string& archive, const std::
     ConcurrentQueue q; // compression queue
     std::mutex mutex; // write serialization mutex
 
-    Timer timer;
-    u64 time0 = timer.ms();
+    u64 time0 = Time::ms();
 
     for (auto &block : manager.blocks)
     {
@@ -352,7 +342,7 @@ void compress(const std::string& folder, const std::string& archive, const std::
                 block.compressed = compressed.size;
                 block.method = Compressor::NONE;
 
-                printf("s");
+                print("s");
             }
             else
             {
@@ -360,7 +350,7 @@ void compress(const std::string& folder, const std::string& archive, const std::
                 block.compressed = compressed.size;
                 block.method = compressor.method;
 
-                printf(".");
+                print(".");
             }
 
             fflush(stdout);
@@ -370,7 +360,7 @@ void compress(const std::string& folder, const std::string& archive, const std::
             block.offset = output.offset();
             output.write(compressed.address, compressed.size);
 
-            printf("+");
+            print("+");
             fflush(stdout);
         });
     }
@@ -404,7 +394,7 @@ void compress(const std::string& folder, const std::string& archive, const std::
 #else
             output.write(file.data() + offset, size);
 #endif
-            printf("s");
+            print("s");
             fflush(stdout);
         }
 
@@ -428,20 +418,21 @@ void compress(const std::string& folder, const std::string& archive, const std::
 
     manager.flush(block);
 
-    u64 time1 = timer.ms();
-    u64 dt = std::max(u64(1), time1 - time0);
+    u64 time1 = Time::ms();
+    u64 dt = time1 - time0;
 
     u64 total_compressed_bytes = output.offset();
 
-    printf("\n\n");
-    printf("Compressed: %.1f MB --> %.1f MB (%.1f%%) in %.1f seconds (%s-%d, %" PRIu64 " MB/s)\n",
+    printLine("");
+    printLine("");
+    printLine("Compressed: {:0.1f} MB --> {:0.1f} MB ({:0.1f}%) in {:0.2f} seconds ({}-{}, {} MB/s)",
         state.total_bytes / double(MB),
         total_compressed_bytes / double(MB),
         total_compressed_bytes * 100.0 / state.total_bytes,
-        dt / 1000.0,
-        compressor.name.c_str(),
+        double(dt / 1000.0),
+        compressor.name,
         level,
-        state.total_bytes / (dt * 1048));
+        state.total_bytes / (dt * 1024));
 
     /*
 
@@ -565,60 +556,91 @@ void compress(const std::string& folder, const std::string& archive, const std::
     str.write64(file_data_offset);
 }
 
+using CommandLine = std::vector<std::string_view>;
+
+void printHelp(const CommandLine& commands)
+{
+    std::string program = removePath(std::string(commands[0]));
+
+    printLine("");
+    printLine("MGX/SNITCH Compression Tool version 0.5.3");
+    printLine("Copyright (C) 2018-2024 Fapware, inc. All rights reserved.");
+    printLine("");
+    printLine("Usage: {} [input folder] [compression] [level:0..10] (options)", program);
+    printLine("");
+
+    printLine("Compression methods: ");
+    print("  ");
+    const char* separator = "";
+    auto compressors = getCompressors();
+    for (auto compressor : compressors)
+    {
+        print("{}{}", separator, compressor.name);
+        separator = " ";
+    }
+    printLine("");
+
+    printLine("");
+    printLine("Options:");
+    printLine("  -output <filename>");
+    printLine("  --store");
+    printLine("  --verbose");
+    printLine("");
+}
+
 // ------------------------------------------------------------------------------------------
 // main
 // ------------------------------------------------------------------------------------------
 
 int main(int argc, char* argv[])
 {
-    if (argc < 4)
+    CommandLine commands(argv + 0, argv + argc);
+
+    if (commands.size() < 4)
     {
-        std::string program_name = removePath(argv[0]);
-
-        printf("\n");
-        printf("MGX/SNITCH Compression Tool version 0.5.2 \n");
-        printf("Copyright (C) 2018-2023 Fapware, inc. All rights reserved.\n");
-        printf("Usage: %s [input folder] [compression] [level:0..10]\n", program_name.c_str());
-        printf("\n");
-
-        printf("Compression methods: ");
-        const char* separator = "";
-        auto compressors = getCompressors();
-        for (auto compressor : compressors)
-        {
-            printf("%s%s", separator, compressor.name.c_str());
-            separator = ", ";
-        }
-        printf("\n\n");
-
+        printHelp(commands);
         return 0;
     }
 
-    // MANGO TODO: configure archive name (-output result.snitch)
-    // MANGO TODO: compression: "--store" (no compression to any of the files)
-    // MANGO TODO: compression: "--extreme" (try ALL compressors to find the best)
+    State state;
 
-    std::string folder = argv[1];
-    std::string archive = "result.snitch";//argv[2];
-    std::string compression = argv[2];
-    int level = std::atoi(argv[3]);
+    std::string folder = std::string(commands[1]);
+    std::string output = "result.snitch";
+    std::string compression = std::string(commands[2]);
+
+    int level = std::stoi(commands[3].data());
     size_t store_threshold = store_threshold_default;
 
-    for (int i = 4; i < argc; ++i)
+    for (size_t i = 4; i < commands.size(); ++i)
     {
-        std::string c = argv[i];
-        if (c == "--store")
+        if (commands[i] == "--store")
         {
             store_threshold = 0;
+        }
+        else if (commands[i] == "--verbose")
+        {
+            state.verbose = true;
+        }
+        else if (commands[i] == "-output")
+        {
+            if (++i < commands.size())
+            {
+                output = std::string(commands[i]);
+            }
+            else
+            {
+                printLine("Output filename missing.");
+                return 0;
+            }
         }
     }
 
     try
     {
-        compress(folder, archive, compression, level, store_threshold);
+        compress(state, folder, output, compression, level, store_threshold);
     }
     catch (Exception& e)
     {
-        printf("Exception: %s\n", e.what());
+        printLine("{}", e.what());
     }
 }

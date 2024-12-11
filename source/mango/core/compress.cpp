@@ -1454,7 +1454,7 @@ namespace isal
         }
         else
         {
-            MANGO_EXCEPTION("[WARNING] Incorrect compressor ({}).", int(method));
+            MANGO_EXCEPTION("[WARNING] Incorrect compressor (\"{}\").", int(method));
         }
 
         return compressor;
@@ -1475,7 +1475,7 @@ namespace isal
         }
         else
         {
-            MANGO_EXCEPTION("[WARNING] Incorrect compressor ({}).", name);
+            MANGO_EXCEPTION("[WARNING] Incorrect compressor (\"{}\").", name);
         }
 
         return compressor;
