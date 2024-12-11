@@ -432,7 +432,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
         double(dt / 1000.0),
         compressor.name,
         level,
-        state.total_bytes / (dt * 1024));
+        state.total_bytes / (std::max(u64(1), dt) * 1024));
 
     /*
 
