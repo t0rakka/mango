@@ -78,13 +78,14 @@ struct State
 
 bool isContainer(const std::string& filename, u64 size)
 {
-    // NOTE: we can add more filter criteria through this wrapper
+    // NOTE: This just means we STORE these files without compression
     bool is = Mapper::isCustomMapper(filename) || (size > 2 * GB);
     if (!is)
     {
         std::string extension = getExtension(filename);
-        if (extension == ".jpg" || extension == ".jpeg")
+        if (extension == ".jpg" || extension == ".jpeg" || extension == ".png")
         {
+            // JPEG and PNG are never compressed
             is = true;
         }
     }
