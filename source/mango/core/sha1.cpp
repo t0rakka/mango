@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/hash.hpp>
 #include <mango/core/exception.hpp>
@@ -207,27 +207,27 @@ namespace
 #elif defined(MANGO_LICENSE_ENABLE_BSD) && defined(__SHA__)
 
     /*******************************************************************************
-    * Copyright (c) 2013, Intel Corporation 
-    * 
-    * All rights reserved. 
-    * 
+    * Copyright (c) 2013, Intel Corporation
+    *
+    * All rights reserved.
+    *
     * Redistribution and use in source and binary forms, with or without
     * modification, are permitted provided that the following conditions are
-    * met: 
-    * 
+    * met:
+    *
     * * Redistributions of source code must retain the above copyright
-    *   notice, this list of conditions and the following disclaimer.  
-    * 
+    *   notice, this list of conditions and the following disclaimer.
+    *
     * * Redistributions in binary form must reproduce the above copyright
     *   notice, this list of conditions and the following disclaimer in the
     *   documentation and/or other materials provided with the
-    *   distribution. 
-    * 
+    *   distribution.
+    *
     * * Neither the name of the Intel Corporation nor the names of its
     *   contributors may be used to endorse or promote products derived from
-    *   this software without specific prior written permission. 
-    * 
-    * 
+    *   this software without specific prior written permission.
+    *
+    *
     * THIS SOFTWARE IS PROVIDED BY INTEL CORPORATION ""AS IS"" AND ANY
     * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
     * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -241,18 +241,18 @@ namespace
     * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     ********************************************************************************
     *
-    * Intel SHA Extensions optimized implementation of a SHA-1 update function 
-    * 
-    * The function takes a pointer to the current hash values, a pointer to the 
-    * input data, and a number of 64 byte blocks to process.  Once all blocks have 
+    * Intel SHA Extensions optimized implementation of a SHA-1 update function
+    *
+    * The function takes a pointer to the current hash values, a pointer to the
+    * input data, and a number of 64 byte blocks to process.  Once all blocks have
     * been processed, the digest pointer is  updated with the resulting hash value.
-    * The function only processes complete blocks, there is no functionality to 
+    * The function only processes complete blocks, there is no functionality to
     * store partial blocks.  All message padding and hash value initialization must
-    * be done outside the update function.  
-    * 
+    * be done outside the update function.
+    *
     * The indented lines in the loop are instructions related to rounds processing.
     * The non-indented lines are instructions related to the message schedule.
-    * 
+    *
     * Author: Sean Gulley <sean.m.gulley@intel.com>
     * Date:   July 2013
     *
@@ -423,7 +423,7 @@ namespace
         }
 
         abcd = _mm_shuffle_epi32(abcd, 0x1b);
-        _mm_store_si128(reinterpret_cast<__m128i*>(digest), abcd);
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(digest), abcd);
         digest[4] = _mm_extract_epi32(e0, 3);
     }
 
@@ -472,7 +472,7 @@ namespace
             u32 c = digest[2];
             u32 d = digest[3];
             u32 e = digest[4];
-            
+
             u32 schedule[16];
             u32 temp;
 
