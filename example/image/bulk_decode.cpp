@@ -9,53 +9,16 @@ using namespace mango::filesystem;
 using namespace mango::image;
 
 // -----------------------------------------------------------------
-// pipelined jpeg reader
+// pipelined image reader
 // -----------------------------------------------------------------
-
-static inline
-bool isJPEG(const FileInfo& node)
-{
-    std::string ext = mango::toLower(filesystem::getExtension(node.name));
-    return !node.isDirectory() && (ext == ".jpg" || ext == ".jpeg");
-}
-
-static
-void scan(const Path& path, FileIndex& index)
-{
-    for (auto node : path)
-    {
-        if (node.isDirectory() && !node.isContainer())
-        {
-            Path child(path, node.name);
-            scan(child, index);
-        }
-        else
-        {
-            if (isJPEG(node))
-            {
-                FileInfo info;
-
-                info.size = node.size;
-                info.flags = node.flags;
-                info.name = path.pathname() + node.name;
-
-                index.files.push_back(info);
-            }
-        }
-    }
-
-    // sort files by size; the largest decoding tasks should start first
-    std::sort(index.begin(), index.end(), [] (const FileInfo& a, const FileInfo& b)
-    {
-        return a.size > b.size;
-    });
-}
 
 struct State
 {
     std::atomic<size_t> total_input_files { 0 };
     std::atomic<size_t> total_input_bytes { 0 };
     std::atomic<size_t> total_image_bytes { 0 };
+
+    FileIndex index;
 
     ConcurrentQueue queue;
     Trace trace { "", "batch image reading" };
@@ -93,8 +56,45 @@ struct State
         printLine("Decoded: \"{}\" ({} KB -> {} KB).", filename, input_bytes >> 10, image_bytes >> 10);
     }
 
-    void process(const FileIndex& index, bool mmap, bool multithread)
+    bool isImageFormat(const FileInfo& node, const std::string& format) const
     {
+        std::string ext = mango::toLower(filesystem::getExtension(node.name));
+        return !node.isDirectory() && (ext == format);
+    }
+
+    void scan(const Path& path, const std::string& format)
+    {
+        for (auto node : path)
+        {
+            if (node.isDirectory() && !node.isContainer())
+            {
+                Path child(path, node.name);
+                scan(child, format);
+            }
+            else
+            {
+                if (isImageFormat(node, format))
+                {
+                    FileInfo info;
+
+                    info.size = node.size;
+                    info.flags = node.flags;
+                    info.name = path.pathname() + node.name;
+
+                    index.files.push_back(info);
+                }
+            }
+        }
+    }
+
+    void process(bool mmap, bool multithread)
+    {
+        // sort files by size; the largest decoding tasks should start first
+        std::sort(index.begin(), index.end(), [] (const FileInfo& a, const FileInfo& b)
+        {
+            return a.size > b.size;
+        });
+
         for (auto node : index)
         {
             const std::string& filename = node.name;
@@ -129,28 +129,34 @@ struct State
     }
 };
 
-void test_jpeg(const std::string& folder, bool mmap, bool multithread)
+void test(const std::string& folder, const std::string& format, bool mmap, bool multithread)
 {
-    u64 time0 = Time::ms();
-
-    Path path(folder);
-
-    FileIndex index;
-    scan(path, index);
-
-    State state;
-    state.process(index, mmap, multithread);
-    state.wait();
-
-    u64 time1 = Time::ms();
-
-    printLine("\n{}", getSystemInfo());
+    printLine("");
+    printLine("{}", getSystemInfo());
     printLine("MMAP: {}", mmap ? "ENABLED" : "DISABLED");
     printLine("MT: {}", multithread ? "ENABLED" : "DISABLED");
     printLine("");
+
+    u64 time0 = Time::ms();
+
+    State state;
+
+    Path path(folder);
+    state.scan(path, format);
+
+    u64 time1 = Time::ms();
+    printLine("Scanning: {} ms", time1 - time0);
+    printLine("");
+
+    state.process(mmap, multithread);
+    state.wait();
+
+    u64 time2 = Time::ms();
+
+    printLine("");
     printLine("Decoded {} files in {} ms ({} MB -> {} MB).",
         size_t(state.total_input_files),
-        time1 - time0,
+        time2 - time1,
         state.total_input_bytes >> 20,
         state.total_image_bytes >> 20);
 }
@@ -163,12 +169,14 @@ int main(int argc, const char* argv[])
 {
     if (argc < 2)
     {
-        printLine("Too few arguments. Usage: {} <folder>", argv[0]);
+        printLine("Too few arguments. Usage: {} <folder> --format <extension>", argv[0]);
         return 1;
     }
 
     std::string pathname = argv[1];
 
+    // defaults
+    std::string format = ".jpg";
     bool mmap = false;
     bool multithread = false;
     bool tracing = false;
@@ -191,6 +199,19 @@ int main(int argc, const char* argv[])
         {
             tracing = true;
         }
+        else if (!strcmp(argv[i], "-format"))
+        {
+            ++i;
+            if (i < argc)
+            {
+                format = argv[i];
+            }
+            else
+            {
+                printLine("ERROR: missing extension parameter.");
+                return 0;
+            }
+        }
     }
 
     std::unique_ptr<filesystem::OutputFileStream> output;
@@ -201,7 +222,7 @@ int main(int argc, const char* argv[])
         startTrace(output.get());
     }
 
-    test_jpeg(pathname, mmap, multithread);
+    test(pathname, format, mmap, multithread);
 
     if (tracing)
     {
