@@ -758,14 +758,13 @@ void scan(const Path& path, FileIndex& index)
     }
 }
 
-using LoadFunction = void (*)(Memory);
+using DecodeFunction = void (*)(Memory);
 
 struct TestCodec
 {
-    LoadFunction load;
+    DecodeFunction decode;
     const char* name;
     u64 time = 0;
-    u64 samples = 0;
 };
 
 void test_folder(Path& path)
@@ -798,42 +797,44 @@ void test_folder(Path& path)
 #endif
     };
 
-    for (auto& codec : codecs)
+    printLine("Decoding {} images.", index.size());
+
+    u64 samples = 0;
+
+    for (auto node : index)
     {
-        print("Decoding {}: ", codec.name);
+        File file(node.name);
+        Buffer buffer(file);
 
-        for (auto node : index)
+        ImageDecoder decoder(buffer, node.name);
+        ImageHeader header = decoder.header();
+
+        samples += header.width * header.height;
+
+        for (auto& codec : codecs)
         {
-            File file(node.name);
-            Buffer buffer(file);
-
-            ImageDecoder decoder(buffer, node.name);
-            ImageHeader header = decoder.header();
-
             u64 time0 = Time::ms();
 
-            codec.load(buffer);
+            codec.decode(buffer);
+
             u64 time1 = Time::ms();
-
-            codec.samples += header.width * header.height;
             codec.time += (time1 - time0);
-
-            print(".");
-            fflush(stdout);
         }
 
-        printLine("");
+        print(".");
+        fflush(stdout);
     }
 
     printLine("");
+    printLine("");
     printLine("---------------------------------------------");
-    printLine("decoder   time (sec)     MP/sec              ");
+    printLine("decoder      time(s)       MP/s              ");
     printLine("---------------------------------------------");
 
-    for (auto codec : codecs)
+    for (const auto& codec : codecs)
     {
         double time = codec.time / 1000.0;
-        double mps = codec.samples / 1000000.0 / time;
+        double mps = samples / 1000.0 / codec.time;
         printLine("{:<8} {:>10.3f}    {:>8.1f}", codec.name, time, mps);
     }
 }
