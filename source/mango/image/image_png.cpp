@@ -3042,6 +3042,8 @@ namespace
 
     void ParserPNG::process_image(const Surface& target, u8* buffer, bool multithread)
     {
+        MANGO_UNREFERENCED(multithread);
+
         if (m_error)
         {
             return;
@@ -3097,42 +3099,13 @@ namespace
         }
         else
         {
-            const int bpp = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
-            if (bpp > 8)
+            const int bytes_per_pixel = (m_color_state.bits < 8) ? 1 : m_channels * m_color_state.bits / 8;
+            if (bytes_per_pixel > 8)
                 return;
 
-            int y0 = 0;
-
-            if (multithread)
-            {
-                ConcurrentQueue q("png:process");
-
-                for (int y = 0; y < target.height; ++y)
-                {
-                    u8 f = buffer[bytes_per_line * y]; // extract filter byte
-                    if (f <= 1)
-                    {
-                        // does not use previous scanline -> may start a new range
-                        if ((y - y0) > 32)
-                        {
-                            // enqueue current range
-                            q.enqueue([=] ()
-                            {
-                                process_range(target, buffer + bytes_per_line * y0, y0, y);
-                            });
-
-                            // start a new range
-                            y0 = y;
-                        }
-                    }
-                    else
-                    {
-                        // uses previous scanline -> must continue current range
-                    }
-                }
-            }
-
-            process_range(target, buffer + bytes_per_line * y0, y0, target.height);
+            const int y0 = 0;
+            const int y1 = target.height;
+            process_range(target, buffer + bytes_per_line * y0, y0, y1);
         }
     }
 
