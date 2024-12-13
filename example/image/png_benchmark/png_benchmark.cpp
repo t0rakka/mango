@@ -14,17 +14,18 @@ using namespace mango::image;
 #define ENABLE_LODEPNG
 #define ENABLE_STB
 #define ENABLE_SPNG
-//#define ENABLE_RPNG
 #define ENABLE_WUFFS
 #define ENABLE_MANGO
 
+//#define ENABLE_RPNG /* crashes on too many input files -> difficult to benchmark */
+
 #include "fpnge/fpnge.h"
 #ifdef CAN_COMPILE_FPNGE
-#define ENABLE_FPNGE
+    #define ENABLE_FPNGE /* Requires x86_64 SIMD with specific compiler flags */
 #endif
 
 #ifdef MANGO_CPU_INTEL
-#define ENABLE_FPNG
+    #define ENABLE_FPNG /* Requires x86 */
 #endif
 
 // ----------------------------------------------------------------------
@@ -803,7 +804,7 @@ void test_folder(Path& path)
 
     for (auto node : index)
     {
-        File file(node.name);
+        InputFileStream file(node.name);
         Buffer buffer(file);
 
         ImageDecoder decoder(buffer, node.name);
@@ -834,7 +835,7 @@ void test_folder(Path& path)
     for (const auto& codec : codecs)
     {
         double time = codec.time / 1000.0;
-        double mps = samples / 1000.0 / codec.time;
+        double mps = codec.time ? samples / 1000.0 / codec.time : 0;
         printLine("{:<8} {:>10.3f}    {:>8.1f}", codec.name, time, mps);
     }
 }
