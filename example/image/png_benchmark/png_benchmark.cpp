@@ -99,6 +99,11 @@ struct png_source
     int offset;
 };
 
+void suppress_png_warnings(png_structp png_ptr, png_const_charp warning_msg)
+{
+    // Do nothing, suppressing the warning
+}
+
 static void png_read_callback(png_structp png_ptr, png_bytep data, png_size_t length)
 {
     png_source* source = (png_source*) png_get_io_ptr(png_ptr);
@@ -108,7 +113,7 @@ static void png_read_callback(png_structp png_ptr, png_bytep data, png_size_t le
 
 void load_libpng(Memory memory)
 {
-    png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, suppress_png_warnings);
     png_infop info_ptr = png_create_info_struct(png_ptr);
 
     png_source source;
@@ -666,41 +671,11 @@ size_t save_mango(const Bitmap& bitmap)
 #endif
 
 // ----------------------------------------------------------------------
-// main()
+// test_file
 // ----------------------------------------------------------------------
 
-int main(int argc, const char* argv[])
+void test_file(const std::string& filename)
 {
-    if (argc < 2)
-    {
-        printLine("Too few arguments. usage: <filename.png>");
-        exit(1);
-    }
-
-    printLine(getSystemInfo());
-
-    const char* filename = argv[1];
-
-    for (int i = 2; i < argc; ++i)
-    {
-        if (!strcmp(argv[i], "--nomt"))
-        {
-            g_option_multithread = false;
-        }
-        else if (!strcmp(argv[i], "-compression") && i <= (argc - 2))
-        {
-            g_option_compression = std::atoi(argv[++i]);
-        }
-        else if (!strcmp(argv[i], "--debug"))
-        {
-            printEnable(Print::Info, true);
-        }
-        else if (!strcmp(argv[i], "--trace"))
-        {
-            g_option_tracing = true;
-        }
-    }
-
     Bitmap bitmap(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
     File file(filename);
@@ -746,5 +721,174 @@ int main(int argc, const char* argv[])
 #if defined(ENABLE_MANGO)
     test("mango:   ", load_mango, save_mango, buffer, bitmap);
 #endif
+}
 
+// ----------------------------------------------------------------------
+// test_folder
+// ----------------------------------------------------------------------
+
+bool isImageFormatPNG(const FileInfo& node)
+{
+    std::string ext = mango::toLower(filesystem::getExtension(node.name));
+    return !node.isDirectory() && (ext == ".png");
+}
+
+void scan(const Path& path, FileIndex& index)
+{
+    for (auto node : path)
+    {
+        if (node.isDirectory() && !node.isContainer())
+        {
+            Path child(path, node.name);
+            scan(child, index);
+        }
+        else
+        {
+            if (isImageFormatPNG(node))
+            {
+                FileInfo info;
+
+                info.size = node.size;
+                info.flags = node.flags;
+                info.name = path.pathname() + node.name;
+
+                index.files.push_back(info);
+            }
+        }
+    }
+}
+
+using LoadFunction = void (*)(Memory);
+
+struct TestCodec
+{
+    LoadFunction load;
+    const char* name;
+    u64 time = 0;
+    u64 samples = 0;
+};
+
+void test_folder(Path& path)
+{
+    FileIndex index;
+    scan(path, index);
+
+    std::vector<TestCodec> codecs =
+    {
+#if defined ENABLE_LIBPNG
+        { load_libpng, "libpng" },
+#endif
+#if defined ENABLE_LODEPNG
+        { load_lodepng, "lodepng" },
+#endif
+#if defined(ENABLE_STB)
+        { load_stb, "stb" },
+#endif
+#if defined(ENABLE_SPNG)
+        { load_spng, "spng" },
+#endif
+#if defined(ENABLE_RPNG)
+        { load_rpng, "rpng" },
+#endif
+#if defined(ENABLE_WUFFS)
+        { load_wuffs, "wuffs" },
+#endif
+#if defined(ENABLE_MANGO)
+        { load_mango, "mango" },
+#endif
+    };
+
+    for (auto& codec : codecs)
+    {
+        print("Decoding {}: ", codec.name);
+
+        for (auto node : index)
+        {
+            File file(node.name);
+            Buffer buffer(file);
+
+            ImageDecoder decoder(buffer, node.name);
+            ImageHeader header = decoder.header();
+
+            u64 time0 = Time::ms();
+
+            codec.load(buffer);
+            u64 time1 = Time::ms();
+
+            codec.samples += header.width * header.height;
+            codec.time += (time1 - time0);
+
+            print(".");
+            fflush(stdout);
+        }
+
+        printLine("");
+    }
+
+    printLine("");
+    printLine("---------------------------------------------");
+    printLine("decoder   time (sec)     MP/sec              ");
+    printLine("---------------------------------------------");
+
+    for (auto codec : codecs)
+    {
+        double time = codec.time / 1000.0;
+        double mps = codec.samples / 1000000.0 / time;
+        printLine("{:<8} {:>10.3f}    {:>8.1f}", codec.name, time, mps);
+    }
+}
+
+// ----------------------------------------------------------------------
+// main()
+// ----------------------------------------------------------------------
+
+int main(int argc, const char* argv[])
+{
+    if (argc < 2)
+    {
+        printLine("Too few arguments. Usage: <filename.png>");
+        printLine("                   Usage: <pathname>");
+        return 0;
+    }
+
+    printLine(getSystemInfo());
+
+    std::string filename = argv[1];
+    if (filename.empty())
+    {
+        // Impossible since then it can't be argv[1] now can it...
+        // ...but we check anyway because we are too cool to fail
+        return 0;
+    }
+
+    for (int i = 2; i < argc; ++i)
+    {
+        if (!strcmp(argv[i], "--nomt"))
+        {
+            g_option_multithread = false;
+        }
+        else if (!strcmp(argv[i], "-compression") && i <= (argc - 2))
+        {
+            g_option_compression = std::atoi(argv[++i]);
+        }
+        else if (!strcmp(argv[i], "--debug"))
+        {
+            printEnable(Print::Info, true);
+        }
+        else if (!strcmp(argv[i], "--trace"))
+        {
+            g_option_tracing = true;
+        }
+    }
+
+    // high-tech logic to determine which test to run
+    if (filename.back() == '/')
+    {
+        Path path(filename);
+        test_folder(path);
+    }
+    else
+    {
+        test_file(filename);
+    }
 }
