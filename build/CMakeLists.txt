@@ -482,7 +482,7 @@ endif ()
 # add "-lpthread" linker option when platform has support
 find_package(Threads)
 if (CMAKE_THREAD_LIBS_INIT)
-    target_link_libraries(mango "${CMAKE_THREAD_LIBS_INIT}")
+    target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
 
 # ------------------------------------------------------------------------------
@@ -496,7 +496,7 @@ if (BUILD_SHARED_LIBS AND WIN32)
 
     if (OPENGL_FOUND)
         message(STATUS "Enable: OpenGL")
-        target_link_libraries(mango ${OPENGL_gl_LIBRARY})
+        target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
     endif()
 
 else ()
@@ -507,12 +507,53 @@ else ()
     if (OPENGL_FOUND)
         message(STATUS "Enable: OpenGL")
         message(STATUS "Enable: XLIB")
-        target_link_libraries(mango ${OPENGL_gl_LIBRARY})
-        target_link_libraries(mango ${OPENGL_glx_LIBRARY})
         target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_XLIB")
+        target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
+        target_link_libraries(mango PUBLIC ${OPENGL_glx_LIBRARY})
     endif()
 
 endif ()
+
+if (FALSE)
+
+find_package(Jxl 0.8.2 QUIET)
+find_package(JxlThreads 0.7 QUIET)
+if (Jxl_FOUND AND JxlThreads)
+    message(STATUS "Enable: Jxl")
+    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_JXL")
+    target_link_libraries(mango PRIVATE ${JXL_LIBRARIES})
+    target_link_libraries(mango PRIVATE ${JXL_THREADS_LIBRARIES})
+endif ()
+
+find_package(OpenJPEG 2.4.0 QUIET)
+if (OpenJPEG_FOUND)
+    message(STATUS "Enable: OpenJPEG")
+    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_JP2")
+    target_link_libraries(mango PRIVATE OpenJPEG::OpenJPEG)
+endif ()
+
+find_package(AVIF 0.11.1 QUIET)
+if (AVIF_FOUND)
+    message(STATUS "Enable: AVIF")
+    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_AVIF")
+    target_link_libraries(mango PRIVATE AVIF::AVIF)
+endif ()
+
+find_package(HEIF 1.13.0 QUIET)
+if (HEIF_FOUND)
+    message(STATUS "Enable: HEIF")
+    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_HEIF")
+    target_link_libraries(mango PRIVATE HEIF::HEIF)
+endif ()
+
+find_package(ISAL 2.30.0 QUIET)
+if (ISAL_FOUND)
+    message(STATUS "Enable: ISAL")
+    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_ISAL")
+    target_link_libraries(mango PRIVATE ISAL::ISAL)
+endif ()
+
+endif () # FALSE
 
 # ------------------------------------------------------------------------------
 # configuration
