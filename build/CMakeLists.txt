@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 PROJECT(mango CXX C ASM)
 
 # ------------------------------------------------------------------------------
@@ -76,16 +76,38 @@ message(STATUS "Build: ${CMAKE_BUILD_TYPE}")
 
 OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    ON)
 
+OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
+
 OPTION(ENABLE_SSE2          "Enable SSE2 instructions"                  OFF)
 OPTION(ENABLE_SSE4          "Enable SSE4.1 and SSE4.2 instructions"     ON)
 OPTION(ENABLE_AVX           "Enable AVX instructions"                   OFF)
 OPTION(ENABLE_AVX2          "Enable AVX2 instructions"                  OFF)
 OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
-OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
+
+OPTION(ENABLE_AES           "Enable AES"                                OFF)
+OPTION(ENABLE_PCLMUL        "Enable PCLMUL"                             OFF)
+OPTION(ENABLE_POPCNT        "Enable POPCNT"                             OFF)
 OPTION(ENABLE_F16C          "Enable F16C conversion instructions"       OFF)
-OPTION(ENABLE_BMI           "Enable BMI"                                OFF)
+OPTION(ENABLE_BMI           "Enable BMI + LZCNT"                        OFF)
 OPTION(ENABLE_BMI2          "Enable BMI2"                               OFF)
 OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
+OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
+
+# Option to enable every Intel ISA extension
+option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"           OFF)
+
+if (INTEL_DELUXE)  
+    set(ENABLE_AVX2    ON)
+    set(ENABLE_AES     ON)
+    set(ENABLE_PCLMUL  ON)
+    set(ENABLE_POPCNT  ON)
+    set(ENABLE_F16C    ON)
+    set(ENABLE_BMI     ON)
+    set(ENABLE_BMI2    ON)
+    set(ENABLE_AES     ON)
+    set(ENABLE_FMA     ON)
+    set(ENABLE_SHA     ON)
+endif()
 
 # ------------------------------------------------------------------------------
 # source directories
@@ -460,7 +482,7 @@ endif ()
 # add "-lpthread" linker option when platform has support
 find_package(Threads)
 if (CMAKE_THREAD_LIBS_INIT)
-    target_link_libraries(mango "${CMAKE_THREAD_LIBS_INIT}")
+    target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
 
 # ------------------------------------------------------------------------------
@@ -474,7 +496,7 @@ if (BUILD_SHARED_LIBS AND WIN32)
 
     if (OPENGL_FOUND)
         message(STATUS "Enable: OpenGL")
-        target_link_libraries(mango ${OPENGL_gl_LIBRARY})
+        target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
     endif()
 
 else ()
@@ -485,12 +507,57 @@ else ()
     if (OPENGL_FOUND)
         message(STATUS "Enable: OpenGL")
         message(STATUS "Enable: XLIB")
-        target_link_libraries(mango ${OPENGL_gl_LIBRARY})
-        target_link_libraries(mango ${OPENGL_glx_LIBRARY})
         target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_XLIB")
+        target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
+        target_link_libraries(mango PUBLIC ${OPENGL_glx_LIBRARY})
     endif()
 
 endif ()
+
+# ------------------------------------------------------------------------------
+# TODO
+# ------------------------------------------------------------------------------
+
+if (FALSE)
+
+find_package(Jxl 0.8.2 REQUIRED)
+find_package(JxlThreads 0.7 QUIET)
+if (Jxl_FOUND AND JxlThreads)
+    message(STATUS "Enable: Jxl")
+    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_JXL")
+    target_link_libraries(mango PRIVATE ${JXL_LIBRARIES})
+    target_link_libraries(mango PRIVATE ${JXL_THREADS_LIBRARIES})
+endif ()
+
+find_package(OpenJPEG 2.4.0 QUIET)
+if (OpenJPEG_FOUND)
+    message(STATUS "Enable: OpenJPEG")
+    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_JP2")
+    target_link_libraries(mango PRIVATE OpenJPEG::OpenJPEG)
+endif ()
+
+find_package(AVIF 0.11.1 QUIET)
+if (AVIF_FOUND)
+    message(STATUS "Enable: AVIF")
+    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_AVIF")
+    target_link_libraries(mango PRIVATE AVIF::AVIF)
+endif ()
+
+find_package(HEIF 1.13.0 QUIET)
+if (HEIF_FOUND)
+    message(STATUS "Enable: HEIF")
+    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_HEIF")
+    target_link_libraries(mango PRIVATE HEIF::HEIF)
+endif ()
+
+find_package(ISAL 2.30.0 QUIET)
+if (ISAL_FOUND)
+    message(STATUS "Enable: ISAL")
+    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_ISAL")
+    target_link_libraries(mango PRIVATE ISAL::ISAL)
+endif ()
+
+endif () # FALSE
 
 # ------------------------------------------------------------------------------
 # configuration
@@ -506,6 +573,54 @@ elseif (COMPILER_MSVC)
     target_compile_options(mango PUBLIC "/DUNICODE")
     target_compile_options(mango PUBLIC "/utf-8")
     target_compile_options(mango PUBLIC "/MP")
+
+    # enable AES (2008)
+    if (ENABLE_AES)
+        message(STATUS "Enable: AES (2008)")
+        target_compile_definitions(mango PUBLIC "-D__AES__")
+    endif ()
+
+    # enable CLMUL (2008)
+    if (ENABLE_PCLMUL)
+        message(STATUS "Enable: PCLMUL (2008)")
+        target_compile_definitions(mango PUBLIC "-D__PCLMUL__")
+    endif ()
+
+    # popcnt
+    if (ENABLE_POPCNT)
+        message(STATUS "Enable: POPCNT (2008)")
+        target_compile_definitions(mango PUBLIC "-D__POPCNT__")
+    endif ()
+
+    # half conversion instructions
+    if (ENABLE_F16C)
+        message(STATUS "Enable: F16C (2012)")
+        target_compile_definitions(mango PUBLIC "-D__F16C__")
+    endif ()
+
+    # bit manipulation instruction set 1
+    if (ENABLE_BMI)
+        message(STATUS "Enable: BMI+LZCNT (2013)")
+        target_compile_definitions(mango PUBLIC "-D__BMI__" "-D__LZCNT__")
+    endif ()
+
+    # bit manipulation instruction set 2
+    if (ENABLE_BMI2)
+        message(STATUS "Enable: BMI2 (2013)")
+        target_compile_definitions(mango PUBLIC "-D__BMI2__")
+    endif ()
+
+    # fused multiply-add
+    if (ENABLE_FMA)
+        message(STATUS "Enable: FMA (2013)")
+        target_compile_definitions(mango PUBLIC "-D__FMA__")
+    endif ()
+
+    # sha
+    if (ENABLE_SHA)
+        message(STATUS "Enable: SHA (2013)")
+        target_compile_definitions(mango PUBLIC "-D__SHA__")
+    endif ()
 
     if (ENABLE_AVX512)
         message(STATUS "SIMD: AVX-512 (2015)")
@@ -556,35 +671,54 @@ else ()
     endif ()
 
     if (X86 OR X86_64)
-        # enable AES (2008) by default
-        target_compile_options(mango PUBLIC "-maes")
 
-        # enable CLMUL (2008) by default
-        target_compile_options(mango PUBLIC "-mpclmul")
+        # enable AES (2008)
+        if (ENABLE_AES)
+            message(STATUS "Enable: AES (2008)")
+            target_compile_options(mango PUBLIC "-maes")
+        endif ()
+
+        # enable CLMUL (2008)
+        if (ENABLE_PCLMUL)
+            message(STATUS "Enable: PCLMUL (2008)")
+            target_compile_options(mango PUBLIC "-mpclmul")
+        endif ()
+
+        # popcnt
+        if (ENABLE_POPCNT)
+            message(STATUS "Enable: POPCNT (2008)")
+            target_compile_options(mango PUBLIC "-mpopcnt")
+        endif ()
 
         # half conversion instructions
         if (ENABLE_F16C)
-            message(STATUS "F16C: half conversion enabled (2012)")
+            message(STATUS "Enable: F16C (2012)")
             target_compile_options(mango PUBLIC "-mf16c")
         endif ()
 
         # bit manipulation instruction set 1
         if (ENABLE_BMI)
-            message(STATUS "BMI+LZCNT: enabled (2013)")
+            message(STATUS "Enable: BMI+LZCNT (2013)")
             target_compile_options(mango PUBLIC "-mbmi")
             target_compile_options(mango PUBLIC "-mlzcnt")
         endif ()
 
         # bit manipulation instruction set 2
         if (ENABLE_BMI2)
-            message(STATUS "BMI2: enabled (2013)")
+            message(STATUS "Enable: BMI2 (2013)")
             target_compile_options(mango PUBLIC "-mbmi2")
         endif ()
 
         # fused multiply-add
         if (ENABLE_FMA)
-            message(STATUS "FMA: enabled (2013)")
+            message(STATUS "Enable: FMA (2013)")
             target_compile_options(mango PUBLIC "-mfma")
+        endif ()
+
+        # sha
+        if (ENABLE_SHA)
+            message(STATUS "Enable: SHA (2013)")
+            target_compile_options(mango PUBLIC "-msha")
         endif ()
 
         # enable only one (the most recent) SIMD extension
@@ -628,6 +762,12 @@ target_include_directories(mango-import3d
     "${PROJECT_SOURCE_DIR}/../source/external/simdjson"
 )
 
+install(
+    DIRECTORY ${PROJECT_SOURCE_DIR}/../include/
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.h*"
+)
+
 install(TARGETS mango
     EXPORT "mango-config"
     LIBRARY DESTINATION "lib"
@@ -636,24 +776,30 @@ install(TARGETS mango
 )
 
 install(TARGETS mango-opengl
+    EXPORT "mango-opengl-config"
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin"
 )
 
 install(TARGETS mango-import3d
+    EXPORT "mango-import3d-config"
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin"
 )
 
 install(
-    DIRECTORY ${PROJECT_SOURCE_DIR}/../include/
-    DESTINATION include
-    FILES_MATCHING PATTERN "*.h*"
+    EXPORT "mango-config"
+    DESTINATION "lib/cmake/mango"
 )
 
 install(
-    EXPORT "mango-config"
-    DESTINATION "lib/cmake/mango"
+    EXPORT "mango-opengl-config"
+    DESTINATION "lib/cmake/mango-opengl"
+)
+
+install(
+    EXPORT "mango-import3d-config"
+    DESTINATION "lib/cmake/mango-import3d"
 )

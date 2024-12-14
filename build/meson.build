@@ -29,25 +29,47 @@ endif
 disable_simd     = get_option('disable_simd')
 enable_simd      = not disable_simd
 
+enable_neon      = enable_simd and get_option('enable_neon')
+
 enable_sse2      = enable_simd and get_option('enable_sse2')
 enable_sse4      = enable_simd and get_option('enable_sse4')
 enable_avx       = enable_simd and get_option('enable_avx')
 enable_avx2      = enable_simd and get_option('enable_avx2')
 enable_avx512    = enable_simd and get_option('enable_avx512')
-enable_neon      = enable_simd and get_option('enable_neon')
+
+enable_aes       = get_option('enable_aes')
+enable_pclmul    = get_option('enable_pclmul')
+enable_popcnt    = get_option('enable_popcnt')
 enable_f16c      = get_option('enable_f16c')
 enable_bmi       = get_option('enable_bmi')
 enable_bmi2      = get_option('enable_bmi2')
 enable_fma       = get_option('enable_fma')
 enable_sha       = get_option('enable_sha')
 
+if get_option('intel_deluxe')
+    enable_avx2      = true
+
+    enable_aes       = true
+    enable_pclmul    = true
+    enable_popcnt    = true
+    enable_f16c      = true
+    enable_bmi       = true
+    enable_bmi2      = true
+    enable_fma       = true
+    enable_sha       = true
+endif
+
+# 32 bit mode can't support these ISA extensions
 if host_machine.cpu_family() == 'x86'
     enable_sse2      = enable_sse2 or enable_sse4 or enable_avx or enable_avx2 or enable_avx512
     enable_sse4      = false
     enable_avx       = false
     enable_avx2      = false
     enable_avx512    = false
-    enable_neon      = false
+
+    enable_aes       = false
+    enable_pclmul    = false
+    enable_popcnt    = false
     enable_f16c      = false
     enable_bmi       = false
     enable_bmi2      = false
@@ -1090,11 +1112,24 @@ else
     endif
 
     if host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
-        # enable AES (2008) by default
-        add_project_arguments('-maes', language: ['c', 'cpp'])
 
-        # enable CLMUL (2008) by default
-        add_project_arguments('-mpclmul', language: ['c', 'cpp'])
+        # aes
+        if enable_aes
+            message('AES: enabled (2008)')
+            add_project_arguments('-maes', language: ['c', 'cpp'])
+        endif
+
+        # pclmul
+        if enable_pclmul
+            message('PCLMUL: enabled (2008)')
+            add_project_arguments('-mpclmul', language: ['c', 'cpp'])
+        endif
+
+        # popcnt
+        if enable_popcnt
+            message('POPCNT: enabled (2008)')
+            add_project_arguments('-mpopcnt', language: ['c', 'cpp'])
+        endif
 
         # half conversion instructions
         if enable_f16c
@@ -1173,11 +1208,6 @@ if is_linux
     mango_public_deps += [ m_dep ]
 endif
 
-if is_darwin
-    apple_frameworks = dependency('appleframeworks', modules : ['OpenGL','Cocoa'], required : false)
-    mango_opengl_deps += [ apple_frameworks ]
-endif
-
 egl_dep = dependency('egl', version: '>=1.4', required: false)
 if egl_dep.found()
     add_project_arguments('-DMANGO_ENABLE_EGL', language: ['cpp'])
@@ -1186,7 +1216,13 @@ endif
 
 opengl_dep = dependency('gl', required: false)
 if opengl_dep.found()
-    mango_opengl_deps += opengl_dep
+
+    if is_darwin
+        apple_frameworks = dependency('appleframeworks', modules : ['OpenGL','Cocoa'], required : true)
+        mango_opengl_deps += [ apple_frameworks ]
+    else
+        mango_opengl_deps += opengl_dep
+    endif
 
     display_library = get_option('display_library')
     if display_library == 'xlib'
@@ -1201,6 +1237,7 @@ if opengl_dep.found()
     elif display_library == 'wayland'
         # TODO: WAYLAND
     endif
+
 endif
 
 # ------------------------------------------------------------------------------
@@ -1352,6 +1389,7 @@ if opengl_dep.found()
 
     mango_opengl_dep = declare_dependency(
         link_with           : mango_opengl,
+        dependencies        : mango_opengl_deps,
         include_directories : mango_inc,
         compile_args        : mango_public_cpp_args + mango_interface_cpp_args
     )
@@ -1389,6 +1427,7 @@ mango_import3d = shared_library('mango-import3d',
 
 mango_import3d_dep = declare_dependency(
     link_with           : mango_import3d,
+    dependencies        : mango_import3d_deps,
     include_directories : mango_inc,
     compile_args        : mango_public_cpp_args + mango_interface_cpp_args
 )
