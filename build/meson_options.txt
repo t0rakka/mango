@@ -22,3 +22,4 @@ option('enable_sha',          type : 'boolean', value : true,  description : 'En
 # Miscallaneous Options
 option('disable_simd',        type : 'boolean', value : false, description : 'Disable SIMD' )
 option('display_library',     type : 'combo', choices: ['xlib', 'xcb', 'wayland'], value : 'xlib', description: 'Library for communicating with the display system')
+option('intel_deluxe',        type: 'boolean', value : false, description : 'Enable ALL Intel ISA extensions' )

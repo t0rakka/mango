@@ -46,6 +46,19 @@ enable_bmi2      = get_option('enable_bmi2')
 enable_fma       = get_option('enable_fma')
 enable_sha       = get_option('enable_sha')
 
+if get_option('intel_deluxe')
+    enable_avx2      = true
+
+    enable_aes       = true
+    enable_pclmul    = true
+    enable_popcnt    = true
+    enable_f16c      = true
+    enable_bmi       = true
+    enable_bmi2      = true
+    enable_fma       = true
+    enable_sha       = true
+endif
+
 # 32 bit mode can't support these ISA extensions
 if host_machine.cpu_family() == 'x86'
     enable_sse2      = enable_sse2 or enable_sse4 or enable_avx or enable_avx2 or enable_avx512
