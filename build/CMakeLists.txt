@@ -93,6 +93,22 @@ OPTION(ENABLE_BMI2          "Enable BMI2"                               OFF)
 OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
 OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
 
+# Option to enable every Intel ISA extension
+option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"           OFF)
+
+if (INTEL_DELUXE)  
+    set(ENABLE_AVX2   ON CACHE BOOL "")
+    set(ENABLE_AES    ON CACHE BOOL "")
+    set(ENABLE_PCLMUL ON CACHE BOOL "")
+    set(ENABLE_POPCNT ON CACHE BOOL "")
+    set(ENABLE_F16C   ON CACHE BOOL "")
+    set(ENABLE_BMI    ON CACHE BOOL "")
+    set(ENABLE_BMI2   ON CACHE BOOL "")
+    set(ENABLE_AES    ON CACHE BOOL "")
+    set(ENABLE_FMA    ON CACHE BOOL "")
+    set(ENABLE_SHA    ON CACHE BOOL "")
+endif()
+
 # ------------------------------------------------------------------------------
 # source directories
 # ------------------------------------------------------------------------------
@@ -701,6 +717,12 @@ target_include_directories(mango-import3d
     "${PROJECT_SOURCE_DIR}/../source/external/simdjson"
 )
 
+install(
+    DIRECTORY ${PROJECT_SOURCE_DIR}/../include/
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.h*"
+)
+
 install(TARGETS mango
     EXPORT "mango-config"
     LIBRARY DESTINATION "lib"
@@ -709,24 +731,30 @@ install(TARGETS mango
 )
 
 install(TARGETS mango-opengl
+    EXPORT "mango-opengl-config"
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin"
 )
 
 install(TARGETS mango-import3d
+    EXPORT "mango-import3d-config"
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin"
 )
 
 install(
-    DIRECTORY ${PROJECT_SOURCE_DIR}/../include/
-    DESTINATION include
-    FILES_MATCHING PATTERN "*.h*"
+    EXPORT "mango-config"
+    DESTINATION "lib/cmake/mango"
 )
 
 install(
-    EXPORT "mango-config"
-    DESTINATION "lib/cmake/mango"
+    EXPORT "mango-opengl-config"
+    DESTINATION "lib/cmake/mango-opengl"
+)
+
+install(
+    EXPORT "mango-import3d-config"
+    DESTINATION "lib/cmake/mango-import3d"
 )

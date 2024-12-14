@@ -1195,11 +1195,6 @@ if is_linux
     mango_public_deps += [ m_dep ]
 endif
 
-if is_darwin
-    apple_frameworks = dependency('appleframeworks', modules : ['OpenGL','Cocoa'], required : false)
-    mango_opengl_deps += [ apple_frameworks ]
-endif
-
 egl_dep = dependency('egl', version: '>=1.4', required: false)
 if egl_dep.found()
     add_project_arguments('-DMANGO_ENABLE_EGL', language: ['cpp'])
@@ -1208,7 +1203,13 @@ endif
 
 opengl_dep = dependency('gl', required: false)
 if opengl_dep.found()
-    mango_opengl_deps += opengl_dep
+
+    if is_darwin
+        apple_frameworks = dependency('appleframeworks', modules : ['OpenGL','Cocoa'], required : true)
+        mango_opengl_deps += [ apple_frameworks ]
+    else
+        mango_opengl_deps += opengl_dep
+    endif
 
     display_library = get_option('display_library')
     if display_library == 'xlib'
@@ -1223,6 +1224,7 @@ if opengl_dep.found()
     elif display_library == 'wayland'
         # TODO: WAYLAND
     endif
+
 endif
 
 # ------------------------------------------------------------------------------
@@ -1374,6 +1376,7 @@ if opengl_dep.found()
 
     mango_opengl_dep = declare_dependency(
         link_with           : mango_opengl,
+        dependencies        : mango_opengl_deps,
         include_directories : mango_inc,
         compile_args        : mango_public_cpp_args + mango_interface_cpp_args
     )
@@ -1411,6 +1414,7 @@ mango_import3d = shared_library('mango-import3d',
 
 mango_import3d_dep = declare_dependency(
     link_with           : mango_import3d,
+    dependencies        : mango_import3d_deps,
     include_directories : mango_inc,
     compile_args        : mango_public_cpp_args + mango_interface_cpp_args
 )
