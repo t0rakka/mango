@@ -399,15 +399,39 @@
         #endif
     #endif
 
+    #if defined(MANGO_MSVC_F16C) && !defined(__F16C__)
+    #define __F16C__
+    #endif
+
+    #if defined(MANGO_MSVC_FMA) && !defined(__FMA__)
+    #define __FMA__
+    #endif
+
+    #if defined(MANGO_MSVC_PCLMUL) && !defined(__PCLMUL__)
+    #define __PCLMUL__
+    #endif
+
+    #if defined(MANGO_MSVC_SHA) && !defined(__SHA__)
+    #define __SHA__
+    #endif
+
+    #if defined(__AVX2__)
+
+        #ifndef __FMA__
+        #define __FMA__
+        #endif
+
+        #ifndef __PCLMUL__
+        #define __PCLMUL__
+        #endif
+
+    #endif
+
     // AVX and AVX2 include support for these
     #if defined(__AVX__) || defined(__AVX2__)
 
         #ifndef __SSE2__
         #define __SSE2__
-        #endif
-
-        #ifndef __F16C__
-        #define __F16C__
         #endif
 
         // 32 bit x86 target has limited / broken SSE3..SSE4 support :(
@@ -436,28 +460,25 @@
     #if defined(MANGO_CPU_INTEL) && defined(MANGO_CPU_64BIT) && (_MSC_VER >= 1920)
         // 1920: Visual Studio 2019 (14.20)
 
-        #ifndef __AES__
+        #if defined(MANGO_MSVC_AES) && !defined(__AES__)
         #define __AES__
         #endif
 
-        #ifndef __LZCNT__
+        #if defined(MANGO_MSVC_LZCNT) && !defined(__LZCNT__)
         #define __LZCNT__
         #endif
 
-        #ifndef __BMI__
+        #if defined(MANGO_MSVC_BMI) && !defined(__BMI__)
         #define __BMI__
         #endif
 
-        #ifndef __BMI2__
+        #if defined(MANGO_MSVC_BMI2) && !defined(__BMI2__)
         #define __BMI2__
         #endif
 
-        #ifndef __POPCNT__
+        #if defined(MANGO_MSVC_POPCNT) && !defined(__POPCNT__)
         #define __POPCNT__
         #endif
-
-        #include <immintrin.h>
-        #include <wmmintrin.h>
 
     #endif
 
@@ -504,17 +525,17 @@
             #include <immintrin.h>
         #endif
 
-        #ifdef __AVX2__
+        #if defined(__AVX2__)
             #define MANGO_ENABLE_AVX2
             #include <immintrin.h>
         #endif
 
-        #ifdef __AVX__
+        #if defined(__AVX__)
             #define MANGO_ENABLE_AVX
             #include <immintrin.h>
         #endif
 
-        #ifdef __SSE4_2__
+        #if defined(__SSE4_2__)
             #define MANGO_ENABLE_SSE4_2
             #include <nmmintrin.h>
         #endif
@@ -543,7 +564,7 @@
         #define MANGO_ENABLE_SSE
         #include <xmmintrin.h>
 
-    #endif // MANGO_NO_SIMD
+    #endif // !defined(MANGO_NO_SIMD)
 
     #ifdef __XOP__
         #if defined(MANGO_COMPILER_MICROSOFT)
@@ -557,34 +578,21 @@
         #endif
     #endif
 
-    #ifdef __F16C__
+    #if defined(__F16C__) || defined(__LZCNT__)
+        #include <immintrin.h>
+    #endif
+
+    #if defined(__BMI__) || defined(__BMI2__)
+        // NOTE: slow on AMD Zen architecture (emulated in microcode)
         #include <immintrin.h>
     #endif
 
     #ifdef __POPCNT__
-        #include <immintrin.h>
+        #include <nmmintrin.h>
     #endif
 
-    #ifdef __BMI__
-        // NOTE: slow on AMD Zen architecture (emulated in microcode)
-        #include <immintrin.h>
-    #endif
-
-    #ifdef __BMI2__
-        // NOTE: slow on AMD Zen architecture (emulated in microcode)
-        #include <immintrin.h>
-    #endif
-
-    #ifdef __LZCNT__
-        #include <immintrin.h>
-    #endif
-
-    #ifdef __AES__
+    #if defined(__AES__) || defined(__PCLMUL__) || defined(__SHA__)
         #include <wmmintrin.h>
-    #endif
-
-    #ifdef __SHA__
-        #include <immintrin.h>
     #endif
 
     #if defined(__FMA__) && !defined(MANGO_ENABLE_FMA3)

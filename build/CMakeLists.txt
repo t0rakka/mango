@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
 PROJECT(mango CXX C ASM)
 
 # ------------------------------------------------------------------------------
@@ -76,16 +76,22 @@ message(STATUS "Build: ${CMAKE_BUILD_TYPE}")
 
 OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    ON)
 
+OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
+
 OPTION(ENABLE_SSE2          "Enable SSE2 instructions"                  OFF)
 OPTION(ENABLE_SSE4          "Enable SSE4.1 and SSE4.2 instructions"     ON)
 OPTION(ENABLE_AVX           "Enable AVX instructions"                   OFF)
 OPTION(ENABLE_AVX2          "Enable AVX2 instructions"                  OFF)
 OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
-OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
+
+OPTION(ENABLE_AES           "Enable AES"                                OFF)
+OPTION(ENABLE_PCLMUL        "Enable PCLMUL"                             OFF)
 OPTION(ENABLE_F16C          "Enable F16C conversion instructions"       OFF)
-OPTION(ENABLE_BMI           "Enable BMI"                                OFF)
+OPTION(ENABLE_BMI           "Enable BMI + LZCNT"                        OFF)
 OPTION(ENABLE_BMI2          "Enable BMI2"                               OFF)
 OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
+OPTION(ENABLE_POPCNT        "Enable POPCNT"                             OFF)
+OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
 
 # ------------------------------------------------------------------------------
 # source directories
@@ -507,6 +513,55 @@ elseif (COMPILER_MSVC)
     target_compile_options(mango PUBLIC "/utf-8")
     target_compile_options(mango PUBLIC "/MP")
 
+    # enable AES (2008)
+    if (ENABLE_AES)
+        message(STATUS "AES: aes encryption enabled (2008)")
+        target_compile_options(mango PUBLIC "/DMANGO_MSVC_AES")
+    endif ()
+
+    # enable CLMUL (2008)
+    if (ENABLE_PCLMUL)
+        message(STATUS "PCLMUL: pclmul enabled (2008)")
+        target_compile_options(mango PUBLIC "/DMANGO_MSVC_PCLMUL")
+    endif ()
+
+    # half conversion instructions
+    if (ENABLE_F16C)
+        message(STATUS "F16C: half conversion enabled (2012)")
+        target_compile_options(mango PUBLIC "/DMANGO_MSVC_F16C")
+    endif ()
+
+    # bit manipulation instruction set 1
+    if (ENABLE_BMI)
+        message(STATUS "BMI+LZCNT: enabled (2013)")
+        target_compile_options(mango PUBLIC "/DMANGO_MSVC_BMI")
+        target_compile_options(mango PUBLIC "/DMANGO_MSVC_LZCNT")
+    endif ()
+
+    # bit manipulation instruction set 2
+    if (ENABLE_BMI2)
+        message(STATUS "BMI2: enabled (2013)")
+        target_compile_options(mango PUBLIC "/DMANGO_MSVC_BMI2")
+    endif ()
+
+    # fused multiply-add
+    if (ENABLE_FMA)
+        message(STATUS "FMA: enabled (2013)")
+        target_compile_options(mango PUBLIC "/DMANGO_MSVC_FMA")
+    endif ()
+
+    # popcnt
+    if (ENABLE_POPCNT)
+        message(STATUS "POPCNT: enabled (2008)")
+        target_compile_options(mango PUBLIC "/DMANGO_MSVC_POPCNT")
+    endif ()
+
+    # sha
+    if (ENABLE_SHA)
+        message(STATUS "SHA: enabled (2013)")
+        target_compile_options(mango PUBLIC "/DMANGO_MSVC_SHA")
+    endif ()
+
     if (ENABLE_AVX512)
         message(STATUS "SIMD: AVX-512 (2015)")
         target_compile_definitions(mango PUBLIC "-D__AVX512F__" "-D__AVX512DQ__")
@@ -556,11 +611,18 @@ else ()
     endif ()
 
     if (X86 OR X86_64)
-        # enable AES (2008) by default
-        target_compile_options(mango PUBLIC "-maes")
 
-        # enable CLMUL (2008) by default
-        target_compile_options(mango PUBLIC "-mpclmul")
+        # enable AES (2008)
+        if (ENABLE_AES)
+            message(STATUS "AES: aes encryption enabled (2008)")
+            target_compile_options(mango PUBLIC "-maes")
+        endif ()
+
+        # enable CLMUL (2008)
+        if (ENABLE_PCLMUL)
+            message(STATUS "PCLMUL: pclmul enabled (2008)")
+            target_compile_options(mango PUBLIC "-mpclmul")
+        endif ()
 
         # half conversion instructions
         if (ENABLE_F16C)
@@ -585,6 +647,18 @@ else ()
         if (ENABLE_FMA)
             message(STATUS "FMA: enabled (2013)")
             target_compile_options(mango PUBLIC "-mfma")
+        endif ()
+
+        # popcnt
+        if (ENABLE_POPCNT)
+            message(STATUS "POPCNT: enabled (2008)")
+            target_compile_options(mango PUBLIC "-mpopcnt")
+        endif ()
+
+        # sha
+        if (ENABLE_SHA)
+            message(STATUS "SHA: enabled (2013)")
+            target_compile_options(mango PUBLIC "-msha")
         endif ()
 
         # enable only one (the most recent) SIMD extension
