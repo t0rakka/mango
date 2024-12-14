@@ -606,9 +606,9 @@ ASTCENC_SIMD_INLINE vint4 max(vint4 a, vint4 b)
  */
 ASTCENC_SIMD_INLINE vint4 hmin(vint4 a)
 {
-	a = min(a, vint4(_mm_shuffle_epi32(a.m, _MM_SHUFFLE(0, 0, 3, 2))));
-	a = min(a, vint4(_mm_shuffle_epi32(a.m, _MM_SHUFFLE(0, 0, 0, 1))));
-	return vint4(_mm_shuffle_epi32(a.m, _MM_SHUFFLE(0, 0, 0, 0)));
+	a = min(a, vint4(_mm_shuffle_epi32(a.m, _MM_SHUFFLE(2, 3, 0, 1))));
+	a = min(a, vint4(_mm_shuffle_epi32(a.m, _MM_SHUFFLE(1, 0, 3, 2))));
+	return a;
 }
 
 /*
@@ -616,25 +616,9 @@ ASTCENC_SIMD_INLINE vint4 hmin(vint4 a)
  */
 ASTCENC_SIMD_INLINE vint4 hmax(vint4 a)
 {
-	a = max(a, vint4(_mm_shuffle_epi32(a.m, _MM_SHUFFLE(0, 0, 3, 2))));
-	a = max(a, vint4(_mm_shuffle_epi32(a.m, _MM_SHUFFLE(0, 0, 0, 1))));
-	return vint4(_mm_shuffle_epi32(a.m, _MM_SHUFFLE(0, 0, 0, 0)));
-}
-
-/**
- * @brief Return the horizontal sum of a vector as a scalar.
- */
-ASTCENC_SIMD_INLINE int hadd_s(vint4 a)
-{
-	// Add top and bottom halves, lane 1/0
-	__m128i fold = _mm_castps_si128(_mm_movehl_ps(_mm_castsi128_ps(a.m),
-	                                              _mm_castsi128_ps(a.m)));
-	__m128i t = _mm_add_epi32(a.m, fold);
-
-	// Add top and bottom halves, lane 0 (_mm_hadd_ps exists but slow)
-	t = _mm_add_epi32(t, _mm_shuffle_epi32(t, 0x55));
-
-	return _mm_cvtsi128_si32(t);
+	a = max(a, vint4(_mm_shuffle_epi32(a.m, _MM_SHUFFLE(2, 3, 0, 1))));
+	a = max(a, vint4(_mm_shuffle_epi32(a.m, _MM_SHUFFLE(1, 0, 3, 2))));
+	return a;
 }
 
 /**
@@ -900,13 +884,30 @@ ASTCENC_SIMD_INLINE vfloat4 select(vfloat4 a, vfloat4 b, vmask4 cond)
  */
 ASTCENC_SIMD_INLINE vfloat4 gatherf(const float* base, vint4 indices)
 {
-#if ASTCENC_AVX >= 2
+#if ASTCENC_AVX >= 2 && ASTCENC_X86_GATHERS != 0
 	return vfloat4(_mm_i32gather_ps(base, indices.m, 4));
 #else
 	alignas(16) int idx[4];
 	storea(indices, idx);
 	return vfloat4(base[idx[0]], base[idx[1]], base[idx[2]], base[idx[3]]);
 #endif
+}
+
+/**
+ * @brief Load a vector of gathered results from an array using byte indices from memory
+ */
+template<>
+ASTCENC_SIMD_INLINE vfloat4 gatherf_byte_inds<vfloat4>(const float* base, const uint8_t* indices)
+{
+	// Experimentally, in this particular use case (byte indices in memory),
+	// using 4 separate scalar loads is appreciably faster than using gathers
+	// even if they're available, on every x86 uArch tried, so always do the
+	// separate loads even when ASTCENC_X86_GATHERS is enabled.
+	//
+	// Tested on:
+	//   - Intel Skylake-X, Coffee Lake, Crestmont, Redwood Cove
+	//   - AMD Zen 2, Zen 4
+	return vfloat4(base[indices[0]], base[indices[1]], base[indices[2]], base[indices[3]]);
 }
 
 /**

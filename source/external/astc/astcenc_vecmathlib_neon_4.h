@@ -194,10 +194,15 @@ struct vint4
 	 */
 	ASTCENC_SIMD_INLINE explicit vint4(const uint8_t *p)
 	{
-		// Cast is safe - NEON loads are allowed to be unaligned
-		uint32x2_t t8 = vld1_dup_u32(reinterpret_cast<const uint32_t*>(p));
-		uint16x4_t t16 = vget_low_u16(vmovl_u8(vreinterpret_u8_u32(t8)));
-		m = vreinterpretq_s32_u32(vmovl_u16(t16));
+#if ASTCENC_SVE == 0
+	// Cast is safe - NEON loads are allowed to be unaligned
+	uint32x2_t t8 = vld1_dup_u32(reinterpret_cast<const uint32_t*>(p));
+	uint16x4_t t16 = vget_low_u16(vmovl_u8(vreinterpret_u8_u32(t8)));
+	m = vreinterpretq_s32_u32(vmovl_u16(t16));
+#else
+	svint32_t data = svld1ub_s32(svptrue_pat_b32(SV_VL4), p);
+	m = svget_neonq(data);
+#endif
 	}
 
 	/**
@@ -578,15 +583,6 @@ ASTCENC_SIMD_INLINE vint4 hmax(vint4 a)
 }
 
 /**
- * @brief Return the horizontal sum of a vector.
- */
-ASTCENC_SIMD_INLINE int hadd_s(vint4 a)
-{
-	int32x2_t t = vadd_s32(vget_high_s32(a.m), vget_low_s32(a.m));
-	return vget_lane_s32(vpadd_s32(t, t), 0);
-}
-
-/**
  * @brief Store a vector to a 16B aligned memory address.
  */
 ASTCENC_SIMD_INLINE void storea(vint4 a, int* p)
@@ -828,6 +824,25 @@ ASTCENC_SIMD_INLINE vfloat4 gatherf(const float* base, vint4 indices)
 #endif
 }
 
+/**
+ * @brief Load a vector of gathered results from an array using byte indices from memory
+ */
+template<>
+ASTCENC_SIMD_INLINE vfloat4 gatherf_byte_inds<vfloat4>(const float* base, const uint8_t* indices)
+{
+#if ASTCENC_SVE == 0
+	alignas(16) float vals[4];
+	vals[0] = base[indices[0]];
+	vals[1] = base[indices[1]];
+	vals[2] = base[indices[2]];
+	vals[3] = base[indices[3]];
+	return vfloat4(vals);
+#else
+	svint32_t offsets = svld1ub_s32(svptrue_pat_b32(SV_VL4), indices);
+	svfloat32_t data = svld1_gather_s32index_f32(svptrue_pat_b32(SV_VL4), base, offsets);
+	return vfloat4(svget_neonq_f32(data));
+#endif
+}
 /**
  * @brief Store a vector to an unaligned memory address.
  */

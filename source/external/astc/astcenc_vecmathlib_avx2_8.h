@@ -458,13 +458,12 @@ ASTCENC_SIMD_INLINE vint8 max(vint8 a, vint8 b)
  */
 ASTCENC_SIMD_INLINE vint8 hmin(vint8 a)
 {
-	__m128i m = _mm_min_epi32(_mm256_extracti128_si256(a.m, 0), _mm256_extracti128_si256(a.m, 1));
-	m = _mm_min_epi32(m, _mm_shuffle_epi32(m, _MM_SHUFFLE(0,0,3,2)));
-	m = _mm_min_epi32(m, _mm_shuffle_epi32(m, _MM_SHUFFLE(0,0,0,1)));
-	m = _mm_shuffle_epi32(m, _MM_SHUFFLE(0,0,0,0));
+	// Build min within groups of 2, then 4, then 8
+	__m256i m = _mm256_min_epi32(a.m, _mm256_shuffle_epi32(a.m, _MM_SHUFFLE(2, 3, 0, 1)));
+	m = _mm256_min_epi32(m, _mm256_shuffle_epi32(m, _MM_SHUFFLE(1, 0, 3, 2)));
+	m = _mm256_min_epi32(m, _mm256_permute2x128_si256(m, m, 0x01));
 
-	__m256i r = astcenc_mm256_set_m128i(m, m);
-	vint8 vmin(r);
+	vint8 vmin(m);
 	return vmin;
 }
 
@@ -481,13 +480,12 @@ ASTCENC_SIMD_INLINE int hmin_s(vint8 a)
  */
 ASTCENC_SIMD_INLINE vint8 hmax(vint8 a)
 {
-	__m128i m = _mm_max_epi32(_mm256_extracti128_si256(a.m, 0), _mm256_extracti128_si256(a.m, 1));
-	m = _mm_max_epi32(m, _mm_shuffle_epi32(m, _MM_SHUFFLE(0,0,3,2)));
-	m = _mm_max_epi32(m, _mm_shuffle_epi32(m, _MM_SHUFFLE(0,0,0,1)));
-	m = _mm_shuffle_epi32(m, _MM_SHUFFLE(0,0,0,0));
+	// Build max within groups of 2, then 4, then 8
+	__m256i m = _mm256_max_epi32(a.m, _mm256_shuffle_epi32(a.m, _MM_SHUFFLE(2, 3, 0, 1)));
+	m = _mm256_max_epi32(m, _mm256_shuffle_epi32(m, _MM_SHUFFLE(1, 0, 3, 2)));
+	m = _mm256_max_epi32(m, _mm256_permute2x128_si256(m, m, 0x01));
 
-	__m256i r = astcenc_mm256_set_m128i(m, m);
-	vint8 vmax(r);
+	vint8 vmax(m);
 	return vmax;
 }
 
@@ -903,6 +901,33 @@ ASTCENC_SIMD_INLINE vfloat8 sqrt(vfloat8 a)
 ASTCENC_SIMD_INLINE vfloat8 gatherf(const float* base, vint8 indices)
 {
 	return vfloat8(_mm256_i32gather_ps(base, indices.m, 4));
+}
+
+/**
+ * @brief Load a vector of gathered results from an array using byte indices from memory
+ */
+template<>
+ASTCENC_SIMD_INLINE vfloat8 gatherf_byte_inds<vfloat8>(const float* base, const uint8_t* indices)
+{
+#if ASTCENC_X86_GATHERS == 0
+	// Perform manual gather using scalar loads in two separate dependency chains,
+	// then merge late. MSVC translates this 1:1, which is OK. Clang turns it
+	// into a bunch of memory-operand inserts on 128-bit halves then merges late,
+	// which performs significantly worse in tests.
+	__m256 m0 = _mm256_broadcast_ss(base + indices[0]);
+	__m256 m1 = _mm256_broadcast_ss(base + indices[1]);
+	m0 = _mm256_blend_ps(m0, _mm256_broadcast_ss(base + indices[2]), 1 << 2);
+	m1 = _mm256_blend_ps(m1, _mm256_broadcast_ss(base + indices[3]), 1 << 3);
+	m0 = _mm256_blend_ps(m0, _mm256_broadcast_ss(base + indices[4]), 1 << 4);
+	m1 = _mm256_blend_ps(m1, _mm256_broadcast_ss(base + indices[5]), 1 << 5);
+	m0 = _mm256_blend_ps(m0, _mm256_broadcast_ss(base + indices[6]), 1 << 6);
+	m1 = _mm256_blend_ps(m1, _mm256_broadcast_ss(base + indices[7]), 1 << 7);
+
+	return vfloat8(_mm256_blend_ps(m0, m1, 0xaa));
+#else
+	vint8 inds(indices);
+	return gatherf(base, inds);
+#endif
 }
 
 /**
