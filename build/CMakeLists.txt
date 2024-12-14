@@ -97,16 +97,16 @@ OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
 option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"           OFF)
 
 if (INTEL_DELUXE)  
-    set(ENABLE_AVX2   ON CACHE BOOL "")
-    set(ENABLE_AES    ON CACHE BOOL "")
-    set(ENABLE_PCLMUL ON CACHE BOOL "")
-    set(ENABLE_POPCNT ON CACHE BOOL "")
-    set(ENABLE_F16C   ON CACHE BOOL "")
-    set(ENABLE_BMI    ON CACHE BOOL "")
-    set(ENABLE_BMI2   ON CACHE BOOL "")
-    set(ENABLE_AES    ON CACHE BOOL "")
-    set(ENABLE_FMA    ON CACHE BOOL "")
-    set(ENABLE_SHA    ON CACHE BOOL "")
+    set(ENABLE_AVX2    ON)
+    set(ENABLE_AES     ON)
+    set(ENABLE_PCLMUL  ON)
+    set(ENABLE_POPCNT  ON)
+    set(ENABLE_F16C    ON)
+    set(ENABLE_BMI     ON)
+    set(ENABLE_BMI2    ON)
+    set(ENABLE_AES     ON)
+    set(ENABLE_FMA     ON)
+    set(ENABLE_SHA     ON)
 endif()
 
 # ------------------------------------------------------------------------------
@@ -514,9 +514,13 @@ else ()
 
 endif ()
 
+# ------------------------------------------------------------------------------
+# TODO
+# ------------------------------------------------------------------------------
+
 if (FALSE)
 
-find_package(Jxl 0.8.2 QUIET)
+find_package(Jxl 0.8.2 REQUIRED)
 find_package(JxlThreads 0.7 QUIET)
 if (Jxl_FOUND AND JxlThreads)
     message(STATUS "Enable: Jxl")
@@ -572,49 +576,49 @@ elseif (COMPILER_MSVC)
 
     # enable AES (2008)
     if (ENABLE_AES)
-        message(STATUS "AES: aes encryption enabled (2008)")
+        message(STATUS "Enable: AES (2008)")
         target_compile_definitions(mango PUBLIC "-D__AES__")
     endif ()
 
     # enable CLMUL (2008)
     if (ENABLE_PCLMUL)
-        message(STATUS "PCLMUL: pclmul enabled (2008)")
+        message(STATUS "Enable: PCLMUL (2008)")
         target_compile_definitions(mango PUBLIC "-D__PCLMUL__")
     endif ()
 
     # popcnt
     if (ENABLE_POPCNT)
-        message(STATUS "POPCNT: enabled (2008)")
+        message(STATUS "Enable: POPCNT (2008)")
         target_compile_definitions(mango PUBLIC "-D__POPCNT__")
     endif ()
 
     # half conversion instructions
     if (ENABLE_F16C)
-        message(STATUS "F16C: half conversion enabled (2012)")
+        message(STATUS "Enable: F16C (2012)")
         target_compile_definitions(mango PUBLIC "-D__F16C__")
     endif ()
 
     # bit manipulation instruction set 1
     if (ENABLE_BMI)
-        message(STATUS "BMI+LZCNT: enabled (2013)")
+        message(STATUS "Enable: BMI+LZCNT (2013)")
         target_compile_definitions(mango PUBLIC "-D__BMI__" "-D__LZCNT__")
     endif ()
 
     # bit manipulation instruction set 2
     if (ENABLE_BMI2)
-        message(STATUS "BMI2: enabled (2013)")
+        message(STATUS "Enable: BMI2 (2013)")
         target_compile_definitions(mango PUBLIC "-D__BMI2__")
     endif ()
 
     # fused multiply-add
     if (ENABLE_FMA)
-        message(STATUS "FMA: enabled (2013)")
+        message(STATUS "Enable: FMA (2013)")
         target_compile_definitions(mango PUBLIC "-D__FMA__")
     endif ()
 
     # sha
     if (ENABLE_SHA)
-        message(STATUS "SHA: enabled (2013)")
+        message(STATUS "Enable: SHA (2013)")
         target_compile_definitions(mango PUBLIC "-D__SHA__")
     endif ()
 
@@ -670,50 +674,50 @@ else ()
 
         # enable AES (2008)
         if (ENABLE_AES)
-            message(STATUS "AES: aes encryption enabled (2008)")
+            message(STATUS "Enable: AES (2008)")
             target_compile_options(mango PUBLIC "-maes")
         endif ()
 
         # enable CLMUL (2008)
         if (ENABLE_PCLMUL)
-            message(STATUS "PCLMUL: pclmul enabled (2008)")
+            message(STATUS "Enable: PCLMUL (2008)")
             target_compile_options(mango PUBLIC "-mpclmul")
         endif ()
 
         # popcnt
         if (ENABLE_POPCNT)
-            message(STATUS "POPCNT: enabled (2008)")
+            message(STATUS "Enable: POPCNT (2008)")
             target_compile_options(mango PUBLIC "-mpopcnt")
         endif ()
 
         # half conversion instructions
         if (ENABLE_F16C)
-            message(STATUS "F16C: half conversion enabled (2012)")
+            message(STATUS "Enable: F16C (2012)")
             target_compile_options(mango PUBLIC "-mf16c")
         endif ()
 
         # bit manipulation instruction set 1
         if (ENABLE_BMI)
-            message(STATUS "BMI+LZCNT: enabled (2013)")
+            message(STATUS "Enable: BMI+LZCNT (2013)")
             target_compile_options(mango PUBLIC "-mbmi")
             target_compile_options(mango PUBLIC "-mlzcnt")
         endif ()
 
         # bit manipulation instruction set 2
         if (ENABLE_BMI2)
-            message(STATUS "BMI2: enabled (2013)")
+            message(STATUS "Enable: BMI2 (2013)")
             target_compile_options(mango PUBLIC "-mbmi2")
         endif ()
 
         # fused multiply-add
         if (ENABLE_FMA)
-            message(STATUS "FMA: enabled (2013)")
+            message(STATUS "Enable: FMA (2013)")
             target_compile_options(mango PUBLIC "-mfma")
         endif ()
 
         # sha
         if (ENABLE_SHA)
-            message(STATUS "SHA: enabled (2013)")
+            message(STATUS "Enable: SHA (2013)")
             target_compile_options(mango PUBLIC "-msha")
         endif ()
 

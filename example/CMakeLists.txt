@@ -25,7 +25,7 @@ elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm)")
     set(CMAKE_CXX_FLAGS "-fpermissive -Wno-psabi")
 endif ()
 
-find_package(mango REQUIRED)
+#find_package(mango REQUIRED)
 link_libraries(mango)
 
 # add "-lpthread" linker option when platform has support
