@@ -30,35 +30,38 @@ disable_simd     = get_option('disable_simd')
 enable_simd      = not disable_simd
 
 enable_neon      = enable_simd and get_option('enable_neon')
+
 enable_sse2      = enable_simd and get_option('enable_sse2')
 enable_sse4      = enable_simd and get_option('enable_sse4')
 enable_avx       = enable_simd and get_option('enable_avx')
 enable_avx2      = enable_simd and get_option('enable_avx2')
 enable_avx512    = enable_simd and get_option('enable_avx512')
+
+enable_aes       = get_option('enable_aes')
+enable_pclmul    = get_option('enable_pclmul')
+enable_popcnt    = get_option('enable_popcnt')
 enable_f16c      = get_option('enable_f16c')
 enable_bmi       = get_option('enable_bmi')
 enable_bmi2      = get_option('enable_bmi2')
 enable_fma       = get_option('enable_fma')
 enable_sha       = get_option('enable_sha')
-enable_aes       = get_option('enable_aes')
-enable_pclmul    = get_option('enable_pclmul')
-enable_popcnt    = get_option('enable_popcnt')
 
+# 32 bit mode can't support these ISA extensions
 if host_machine.cpu_family() == 'x86'
-    enable_neon      = false
     enable_sse2      = enable_sse2 or enable_sse4 or enable_avx or enable_avx2 or enable_avx512
     enable_sse4      = false
     enable_avx       = false
     enable_avx2      = false
     enable_avx512    = false
+
+    enable_aes       = false
+    enable_pclmul    = false
+    enable_popcnt    = false
     enable_f16c      = false
     enable_bmi       = false
     enable_bmi2      = false
     enable_fma       = false
     enable_sha       = false
-    enable_aes       = false
-    enable_pclmul    = false
-    enable_popcnt    = false
 endif
 
 is_arm = host_machine.cpu_family() == 'arm' or host_machine.cpu_family() == 'aarch64'
@@ -1096,11 +1099,24 @@ else
     endif
 
     if host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
-        # enable AES (2008) by default
-        add_project_arguments('-maes', language: ['c', 'cpp'])
 
-        # enable CLMUL (2008) by default
-        add_project_arguments('-mpclmul', language: ['c', 'cpp'])
+        # aes
+        if enable_aes
+            message('AES: enabled (2008)')
+            add_project_arguments('-maes', language: ['c', 'cpp'])
+        endif
+
+        # pclmul
+        if enable_pclmul
+            message('PCLMUL: enabled (2008)')
+            add_project_arguments('-mpclmul', language: ['c', 'cpp'])
+        endif
+
+        # popcnt
+        if enable_popcnt
+            message('POPCNT: enabled (2008)')
+            add_project_arguments('-mpopcnt', language: ['c', 'cpp'])
+        endif
 
         # half conversion instructions
         if enable_f16c
@@ -1131,24 +1147,6 @@ else
         if enable_sha
             message('SHA: enabled (2013)')
             add_project_arguments('-msha', language: ['c', 'cpp'])
-        endif
-
-        # aes
-        if enable_aes
-            message('SHA: enabled (2008)')
-            add_project_arguments('-maes', language: ['c', 'cpp'])
-        endif
-
-        # pclmul
-        if enable_pclmul
-            message('SHA: enabled (2008)')
-            add_project_arguments('-mpclmul', language: ['c', 'cpp'])
-        endif
-
-        # popcnt
-        if enable_popcnt
-            message('SHA: enabled (2008)')
-            add_project_arguments('-mpopcnt', language: ['c', 'cpp'])
         endif
 
         # enable only one (the most recent) SIMD extension

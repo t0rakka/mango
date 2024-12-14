@@ -10,14 +10,14 @@ option('enable_avx2',         type : 'boolean', value : false, description : 'En
 option('enable_avx512',       type : 'boolean', value : false, description : 'Enable AVX-512 instructions'  )
 
 # Intel ISA Extensions
+option('enable_aes',          type : 'boolean', value : true,  description : 'Enable AES'    )
+option('enable_pclmul',       type : 'boolean', value : true,  description : 'Enable PCLMUL' )
+option('enable_popcnt',       type : 'boolean', value : true,  description : 'Enable POPCNT' )
+option('enable_f16c',         type : 'boolean', value : true,  description : 'Enable F16C'   )
 option('enable_bmi',          type : 'boolean', value : false, description : 'Enable BMI'    )
 option('enable_bmi2',         type : 'boolean', value : false, description : 'Enable BMI2 '  )
-option('enable_sha',          type : 'boolean', value : true,  description : 'Enable SHA'    )
-option('enable_f16c',         type : 'boolean', value : true,  description : 'Enable F16C'   )
 option('enable_fma',          type : 'boolean', value : false, description : 'Enable FMA'    )
-option('enable_aes',          type : 'boolean', value : false, description : 'Enable AES'    )
-option('enable_pclmul',       type : 'boolean', value : false, description : 'Enable PCLMUL' )
-option('enable_popcnt',       type : 'boolean', value : false, description : 'Enable POPCNT' )
+option('enable_sha',          type : 'boolean', value : true,  description : 'Enable SHA'    )
 
 # Miscallaneous Options
 option('disable_simd',        type : 'boolean', value : false, description : 'Disable SIMD' )
