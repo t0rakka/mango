@@ -399,22 +399,6 @@
         #endif
     #endif
 
-    #if defined(MANGO_MSVC_F16C) && !defined(__F16C__)
-    #define __F16C__
-    #endif
-
-    #if defined(MANGO_MSVC_FMA) && !defined(__FMA__)
-    #define __FMA__
-    #endif
-
-    #if defined(MANGO_MSVC_PCLMUL) && !defined(__PCLMUL__)
-    #define __PCLMUL__
-    #endif
-
-    #if defined(MANGO_MSVC_SHA) && !defined(__SHA__)
-    #define __SHA__
-    #endif
-
     #if defined(__AVX2__)
 
         #ifndef __FMA__
@@ -434,7 +418,7 @@
         #define __SSE2__
         #endif
 
-        // 32 bit x86 target has limited / broken SSE3..SSE4 support :(
+        // 32 bit x86 target has limited support for these
         #if defined(MANGO_CPU_64BIT)
 
             #ifndef __SSE3__
@@ -457,27 +441,29 @@
 
     #endif
 
-    #if defined(MANGO_CPU_INTEL) && defined(MANGO_CPU_64BIT) && (_MSC_VER >= 1920)
-        // 1920: Visual Studio 2019 (14.20)
+    #if !defined(MANGO_CPU_64BIT) || (_MSC_VER < 1920)
 
-        #if defined(MANGO_MSVC_AES) && !defined(__AES__)
-        #define __AES__
+        // _MSC_VER 1920 is Visual Studio 2019 (14.20),
+        // which does not have support for these ISA extensions.
+
+        #ifdef __AES__
+        #undef __AES__
         #endif
 
-        #if defined(MANGO_MSVC_LZCNT) && !defined(__LZCNT__)
-        #define __LZCNT__
+        #ifdef __LZCNT__
+        #undef __LZCNT__
         #endif
 
-        #if defined(MANGO_MSVC_BMI) && !defined(__BMI__)
-        #define __BMI__
+        #ifdef __BMI__
+        #undef __BMI__
         #endif
 
-        #if defined(MANGO_MSVC_BMI2) && !defined(__BMI2__)
-        #define __BMI2__
+        #ifdef __BMI2__
+        #undef __BMI2__
         #endif
 
-        #if defined(MANGO_MSVC_POPCNT) && !defined(__POPCNT__)
-        #define __POPCNT__
+        #ifdef __POPCNT__
+        #undef __POPCNT__
         #endif
 
     #endif
@@ -587,7 +573,7 @@
         #include <immintrin.h>
     #endif
 
-    #ifdef __POPCNT__
+    #if defined(__POPCNT__)
         #include <nmmintrin.h>
     #endif
 

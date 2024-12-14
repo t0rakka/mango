@@ -86,11 +86,11 @@ OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
 
 OPTION(ENABLE_AES           "Enable AES"                                OFF)
 OPTION(ENABLE_PCLMUL        "Enable PCLMUL"                             OFF)
+OPTION(ENABLE_POPCNT        "Enable POPCNT"                             OFF)
 OPTION(ENABLE_F16C          "Enable F16C conversion instructions"       OFF)
 OPTION(ENABLE_BMI           "Enable BMI + LZCNT"                        OFF)
 OPTION(ENABLE_BMI2          "Enable BMI2"                               OFF)
 OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
-OPTION(ENABLE_POPCNT        "Enable POPCNT"                             OFF)
 OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
 
 # ------------------------------------------------------------------------------
@@ -516,50 +516,49 @@ elseif (COMPILER_MSVC)
     # enable AES (2008)
     if (ENABLE_AES)
         message(STATUS "AES: aes encryption enabled (2008)")
-        target_compile_options(mango PUBLIC "/DMANGO_MSVC_AES")
+        target_compile_definitions(mango PUBLIC "-D__AES__")
     endif ()
 
     # enable CLMUL (2008)
     if (ENABLE_PCLMUL)
         message(STATUS "PCLMUL: pclmul enabled (2008)")
-        target_compile_options(mango PUBLIC "/DMANGO_MSVC_PCLMUL")
-    endif ()
-
-    # half conversion instructions
-    if (ENABLE_F16C)
-        message(STATUS "F16C: half conversion enabled (2012)")
-        target_compile_options(mango PUBLIC "/DMANGO_MSVC_F16C")
-    endif ()
-
-    # bit manipulation instruction set 1
-    if (ENABLE_BMI)
-        message(STATUS "BMI+LZCNT: enabled (2013)")
-        target_compile_options(mango PUBLIC "/DMANGO_MSVC_BMI")
-        target_compile_options(mango PUBLIC "/DMANGO_MSVC_LZCNT")
-    endif ()
-
-    # bit manipulation instruction set 2
-    if (ENABLE_BMI2)
-        message(STATUS "BMI2: enabled (2013)")
-        target_compile_options(mango PUBLIC "/DMANGO_MSVC_BMI2")
-    endif ()
-
-    # fused multiply-add
-    if (ENABLE_FMA)
-        message(STATUS "FMA: enabled (2013)")
-        target_compile_options(mango PUBLIC "/DMANGO_MSVC_FMA")
+        target_compile_definitions(mango PUBLIC "-D__PCLMUL__")
     endif ()
 
     # popcnt
     if (ENABLE_POPCNT)
         message(STATUS "POPCNT: enabled (2008)")
-        target_compile_options(mango PUBLIC "/DMANGO_MSVC_POPCNT")
+        target_compile_definitions(mango PUBLIC "-D__POPCNT__")
+    endif ()
+
+    # half conversion instructions
+    if (ENABLE_F16C)
+        message(STATUS "F16C: half conversion enabled (2012)")
+        target_compile_definitions(mango PUBLIC "-D__F16C__")
+    endif ()
+
+    # bit manipulation instruction set 1
+    if (ENABLE_BMI)
+        message(STATUS "BMI+LZCNT: enabled (2013)")
+        target_compile_definitions(mango PUBLIC "-D__BMI__" "-D__LZCNT__")
+    endif ()
+
+    # bit manipulation instruction set 2
+    if (ENABLE_BMI2)
+        message(STATUS "BMI2: enabled (2013)")
+        target_compile_definitions(mango PUBLIC "-D__BMI2__")
+    endif ()
+
+    # fused multiply-add
+    if (ENABLE_FMA)
+        message(STATUS "FMA: enabled (2013)")
+        target_compile_definitions(mango PUBLIC "-D__FMA__")
     endif ()
 
     # sha
     if (ENABLE_SHA)
         message(STATUS "SHA: enabled (2013)")
-        target_compile_options(mango PUBLIC "/DMANGO_MSVC_SHA")
+        target_compile_definitions(mango PUBLIC "-D__SHA__")
     endif ()
 
     if (ENABLE_AVX512)
@@ -624,6 +623,12 @@ else ()
             target_compile_options(mango PUBLIC "-mpclmul")
         endif ()
 
+        # popcnt
+        if (ENABLE_POPCNT)
+            message(STATUS "POPCNT: enabled (2008)")
+            target_compile_options(mango PUBLIC "-mpopcnt")
+        endif ()
+
         # half conversion instructions
         if (ENABLE_F16C)
             message(STATUS "F16C: half conversion enabled (2012)")
@@ -647,12 +652,6 @@ else ()
         if (ENABLE_FMA)
             message(STATUS "FMA: enabled (2013)")
             target_compile_options(mango PUBLIC "-mfma")
-        endif ()
-
-        # popcnt
-        if (ENABLE_POPCNT)
-            message(STATUS "POPCNT: enabled (2008)")
-            target_compile_options(mango PUBLIC "-mpopcnt")
         endif ()
 
         # sha
