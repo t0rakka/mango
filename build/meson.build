@@ -1438,7 +1438,7 @@ pkg = import('pkgconfig')
 
 pkg.generate(mango,
     libraries_private : [ mango_deps ],
-    description : 'A multi-platform low-level development framework for graphics programmers - Core'
+    description : 'A multi-platform development framework for graphics programmers - Core'
 )
 
 if opengl_dep.found()
@@ -1446,7 +1446,7 @@ if opengl_dep.found()
     pkg.generate(mango_opengl,
         name: 'mango-opengl',
         libraries_private : [ mango_opengl_deps ],
-        description : 'A multi-platform low-level development framework for graphics programmers - OpenGL'
+        description : 'A multi-platform development framework for graphics programmers - OpenGL'
     )
 
 endif
@@ -1454,5 +1454,5 @@ endif
 pkg.generate(mango_import3d,
     name: 'mango-import3d',
     libraries_private : [ mango_import3d_deps ],
-    description : 'A multi-platform low-level development framework for graphics programmers - Import3D'
+    description : 'A multi-platform development framework for graphics programmers - Import3D'
 )
