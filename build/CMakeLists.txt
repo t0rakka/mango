@@ -516,9 +516,8 @@ find_package(PkgConfig QUIET)
 if (PkgConfig_FOUND)
     message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
 
-    if (APPLE AND (ARM OR AARCH64))
+    if (APPLE AND ARM)
         # brew installs libraries to /opt/homebrew/lib on Apple Silicon
-        # Of course, Apple Silicon identifies as ARM not AARCH64
         target_link_options(mango PRIVATE "-L/opt/homebrew/lib")
     endif ()
 
