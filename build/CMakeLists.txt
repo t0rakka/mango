@@ -88,7 +88,7 @@ OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
 # Option to enable every Intel ISA extension
 option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"           OFF)
 
-if (INTEL_DELUXE)  
+if (INTEL_DELUXE)
     set(ENABLE_AVX2    ON)
     set(ENABLE_AES     ON)
     set(ENABLE_PCLMUL  ON)
