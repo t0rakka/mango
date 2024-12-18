@@ -471,15 +471,17 @@ if (APPLE)
     target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.15")
 endif ()
 
-# add "-lpthread" linker option when platform has support
+# ------------------------------------------------------------------------------
+# find_package
+# ------------------------------------------------------------------------------
+
+message(STATUS "find_package:")
+
 find_package(Threads)
 if (CMAKE_THREAD_LIBS_INIT)
+    message("   + Threads")
     target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
-
-# ------------------------------------------------------------------------------
-# external libraries
-# ------------------------------------------------------------------------------
 
 if (BUILD_SHARED_LIBS AND WIN32)
 
@@ -487,7 +489,7 @@ if (BUILD_SHARED_LIBS AND WIN32)
     find_package(OpenGL REQUIRED)
 
     if (OPENGL_FOUND)
-        message(STATUS "Enable: OpenGL")
+        message("   + OpenGL")
         target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
     endif()
 
@@ -497,8 +499,8 @@ else ()
     find_package(OpenGL)
 
     if (OPENGL_FOUND)
-        message(STATUS "Enable: OpenGL")
-        message(STATUS "Enable: XLIB")
+        message("   + OpenGL")
+        message("   + XLIB")
         target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_XLIB")
         target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
         target_link_libraries(mango PUBLIC ${OPENGL_glx_LIBRARY})
@@ -507,49 +509,61 @@ else ()
 endif ()
 
 # ------------------------------------------------------------------------------
-# TODO
+# PkgConfig
 # ------------------------------------------------------------------------------
 
-if (FALSE)
+find_package(PkgConfig QUIET)
+if (PkgConfig_FOUND)
+    message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
 
-find_package(Jxl 0.8.2 REQUIRED)
-find_package(JxlThreads 0.7 QUIET)
-if (Jxl_FOUND AND JxlThreads)
-    message(STATUS "Enable: Jxl")
-    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_JXL")
-    target_link_libraries(mango PRIVATE ${JXL_LIBRARIES})
-    target_link_libraries(mango PRIVATE ${JXL_THREADS_LIBRARIES})
+    if (APPLE AND (ARM OR AARCH64))
+        # brew installs libraries to /opt/homebrew/lib on Apple Silicon
+        # Of course, Apple Silicon identifies as ARM not AARCH64
+        target_link_options(mango PRIVATE "-L/opt/homebrew/lib")
+    endif ()
+
+    pkg_check_modules(JXL QUIET libjxl>=0.8.2)
+    pkg_check_modules(JXL_THREADS QUIET libjxl_threads>=0.7)
+    if (JXL_FOUND AND JXL_THREADS_FOUND)
+        message("   + JXL: " ${JXL_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_JXL")
+        target_include_directories(mango PRIVATE "${JXL_INCLUDE_DIRS}")
+        target_link_libraries(mango PRIVATE ${JXL_LIBRARIES} ${JXL_THREADS_LIBRARIES})
+    endif ()
+
+    pkg_check_modules(JP2 QUIET libopenjp2>=2.4.0)
+    if (JP2_FOUND)
+        message("   + JP2: " ${JP2_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_JP2")
+        target_include_directories(mango PRIVATE "${JP2_INCLUDE_DIRS}")
+        target_link_libraries(mango PRIVATE ${JP2_LIBRARIES})
+    endif ()
+
+    pkg_check_modules(AVIF QUIET libavif>=0.11.1)
+    if (AVIF_FOUND)
+        message("   + AVIF: " ${AVIF_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_AVIF")
+        target_include_directories(mango PRIVATE "${AVIF_INCLUDE_DIRS}")
+        target_link_libraries(mango PRIVATE ${AVIF_LIBRARIES})
+    endif ()
+
+    pkg_check_modules(HEIF QUIET libheif>=1.13.0)
+    if (HEIF_FOUND)
+        message("   + HEIF: " ${HEIF_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_HEIF")
+        target_include_directories(mango PRIVATE "${HEIF_INCLUDE_DIRS}")
+        target_link_libraries(mango PRIVATE ${HEIF_LIBRARIES})
+    endif ()
+
+    pkg_check_modules(ISAL QUIET libisal>=2.30.0)
+    if (ISAL_FOUND)
+        message("   + ISAL: " ${ISAL_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_ISAL")
+        target_include_directories(mango PRIVATE "${ISAL_INCLUDE_DIRS}")
+        target_link_libraries(mango PRIVATE ${ISAL_LIBRARIES})
+    endif ()
+
 endif ()
-
-find_package(OpenJPEG 2.4.0 QUIET)
-if (OpenJPEG_FOUND)
-    message(STATUS "Enable: OpenJPEG")
-    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_JP2")
-    target_link_libraries(mango PRIVATE OpenJPEG::OpenJPEG)
-endif ()
-
-find_package(AVIF 0.11.1 QUIET)
-if (AVIF_FOUND)
-    message(STATUS "Enable: AVIF")
-    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_AVIF")
-    target_link_libraries(mango PRIVATE AVIF::AVIF)
-endif ()
-
-find_package(HEIF 1.13.0 QUIET)
-if (HEIF_FOUND)
-    message(STATUS "Enable: HEIF")
-    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_HEIF")
-    target_link_libraries(mango PRIVATE HEIF::HEIF)
-endif ()
-
-find_package(ISAL 2.30.0 QUIET)
-if (ISAL_FOUND)
-    message(STATUS "Enable: ISAL")
-    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_ISAL")
-    target_link_libraries(mango PRIVATE ISAL::ISAL)
-endif ()
-
-endif () # FALSE
 
 # ------------------------------------------------------------------------------
 # configuration
@@ -636,7 +650,7 @@ else ()
 
     set(CMAKE_CXX_FLAGS "-Wall")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
-    #set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
     target_compile_definitions(mango PUBLIC $<$<PLATFORM_ID:Windows>:UNICODE>)
 
