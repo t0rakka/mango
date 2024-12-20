@@ -321,7 +321,9 @@ FILE(GLOB EXTERNAL_UNRAR
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp"
 )
 
-if (X86_64)
+if (X86_64 AND (COMPILER_GCC OR COMPILER_CLANG OR COMPILER_INTEL))
+    # MSVC "optimizes" object file with no symbols and then cannot find it when linking
+    # .. but the way the code checks if it is to be compiled is presence of above compilers
     FILE(GLOB_RECURSE EXTERNAL_ZSTD
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
@@ -360,28 +362,25 @@ FILE(GLOB EXTERNAL_IMPORT3D
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/fastgltf/src/*.cpp"
 )
 
-SOURCE_GROUP("external" FILES
-    ${EXTERNAL_LZMA}
-    ${EXTERNAL_AES}
-    ${EXTERNAL_BC}
-    ${EXTERNAL_BZIP2}
-    ${EXTERNAL_CONCURRENT_QUEUE}
-    ${EXTERNAL_ASTC}
-    ${EXTERNAL_GOOGLE}
-    ${EXTERNAL_LZ4}
-    ${EXTERNAL_LZFSE}
-    ${EXTERNAL_LZO}
-    ${EXTERNAL_DEFLATE}
-    ${EXTERNAL_ZLIB}
-    ${EXTERNAL_LCMS}
-    ${EXTERNAL_UNRAR}
-    ${EXTERNAL_ZSTD}
-    ${EXTERNAL_WEBP}
-    ${EXTERNAL_ZPNG}
-    ${EXTERNAL_BASISU}
-    ${EXTERNAL_FMT}
-    ${EXTERNAL_IMPORT3D}
-)
+SOURCE_GROUP("external/lzma"        FILES ${EXTERNAL_LZMA})
+SOURCE_GROUP("external/aes"         FILES ${EXTERNAL_AES})
+SOURCE_GROUP("external/bc"          FILES ${EXTERNAL_BC})
+SOURCE_GROUP("external/bzip2"       FILES ${EXTERNAL_BZIP2})
+SOURCE_GROUP("external/concurrent"  FILES ${EXTERNAL_CONCURRENT_QUEUE})
+SOURCE_GROUP("external/astc"        FILES ${EXTERNAL_ASTC})
+SOURCE_GROUP("external/google"      FILES ${EXTERNAL_GOOGLE})
+SOURCE_GROUP("external/lz4"         FILES ${EXTERNAL_LZ4})
+SOURCE_GROUP("external/lzfse"       FILES ${EXTERNAL_LZFSE})
+SOURCE_GROUP("external/lzo"         FILES ${EXTERNAL_LZO})
+SOURCE_GROUP("external/deflate"     FILES ${EXTERNAL_DEFLATE})
+SOURCE_GROUP("external/zlib"        FILES ${EXTERNAL_ZLIB})
+SOURCE_GROUP("external/lcms"        FILES ${EXTERNAL_LCMS})
+SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
+SOURCE_GROUP("external/zstd"        FILES ${EXTERNAL_ZSTD})
+SOURCE_GROUP("external/webp"        FILES ${EXTERNAL_WEBP})
+SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
+SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
+SOURCE_GROUP("external/fmt"         FILES ${EXTERNAL_FMT})
 
 # ------------------------------------------------------------------------------
 # libraries
@@ -390,6 +389,10 @@ SOURCE_GROUP("external" FILES
 if (BUILD_SHARED_LIBS AND COMPILER_MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif ()
+
+# ------------------------------------------------------------------------------
+# library: mango
+# ------------------------------------------------------------------------------
 
 add_library(mango
     ${MAIN_HEADER}
@@ -433,6 +436,10 @@ set_target_properties(mango PROPERTIES
     CXX_STANDARD_REQUIRED ON
 )
 
+# ------------------------------------------------------------------------------
+# library: mango-opengl
+# ------------------------------------------------------------------------------
+
 add_library(mango-opengl
     ${WINDOW_SOURCES}
     ${OPENGL_SOURCES}
@@ -446,6 +453,19 @@ set_target_properties(mango-opengl PROPERTIES
 )
 
 target_link_libraries(mango-opengl PUBLIC mango)
+
+if (APPLE)
+    if (BUILD_SHARED_LIBS)
+        target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
+    endif ()
+
+    target_compile_options(mango PUBLIC "-mmacosx-version-min=10.15")
+    target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.15")
+endif ()
+
+# ------------------------------------------------------------------------------
+# library: mango-import3d
+# ------------------------------------------------------------------------------
 
 add_library(mango-import3d
     ${IMPORT3D_HEADERS}
@@ -461,15 +481,6 @@ set_target_properties(mango-import3d PROPERTIES
 )
 
 target_link_libraries(mango-import3d PUBLIC mango)
-
-if (APPLE)
-    if (BUILD_SHARED_LIBS)
-        target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
-    endif ()
-
-    target_compile_options(mango PUBLIC "-mmacosx-version-min=10.15")
-    target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.15")
-endif ()
 
 # ------------------------------------------------------------------------------
 # find_package
