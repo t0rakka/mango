@@ -321,19 +321,18 @@ FILE(GLOB EXTERNAL_UNRAR
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp"
 )
 
+FILE(GLOB_RECURSE EXTERNAL_ZSTD
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
+)
+
 if (X86_64 AND (COMPILER_GCC OR COMPILER_CLANG OR COMPILER_INTEL))
     # MSVC "optimizes" object file with no symbols and then cannot find it when linking
     # .. but the way the code checks if it is to be compiled is presence of above compilers
-    FILE(GLOB_RECURSE EXTERNAL_ZSTD
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
+    FILE(GLOB_RECURSE EXTERNAL_ZSTD_ASSEMBLY
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.S"
     )
-else ()
-    FILE(GLOB_RECURSE EXTERNAL_ZSTD
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
-    )
+    LIST(APPEND EXTERNAL_ZSTD ${EXTERNAL_ZSTD_ASSEMBLY})
 endif ()
 
 FILE(GLOB_RECURSE EXTERNAL_WEBP
