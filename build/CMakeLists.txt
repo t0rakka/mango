@@ -485,6 +485,8 @@ target_link_libraries(mango-import3d PUBLIC mango)
 # dependencies
 # ------------------------------------------------------------------------------
 
+message(STATUS "Libraries:")
+
 find_package(Threads)
 if (CMAKE_THREAD_LIBS_INIT)
     message("   + Threads")
@@ -508,10 +510,15 @@ else ()
 
     if (OPENGL_FOUND)
         message("   + OpenGL")
-        message("   + XLIB")
-        target_compile_definitions(mango-opengl PUBLIC "-DMANGO_ENABLE_XLIB")
         target_link_libraries(mango-opengl PUBLIC ${OPENGL_gl_LIBRARY})
-        target_link_libraries(mango-opengl PUBLIC ${OPENGL_glx_LIBRARY})
+
+        if (APPLE)
+            target_link_libraries(mango-opengl PUBLIC "-framework Cocoa")
+        else ()
+            message("   + XLIB")
+            target_compile_definitions(mango-opengl PUBLIC "-DMANGO_ENABLE_XLIB")
+            target_link_libraries(mango-opengl PUBLIC ${OPENGL_glx_LIBRARY})
+        endif ()
     endif()
 
 endif ()
@@ -520,11 +527,9 @@ endif ()
 # external libraries
 # ------------------------------------------------------------------------------
 
-message(STATUS "Libraries:")
-
 find_package(PkgConfig QUIET)
 if (PkgConfig_FOUND)
-    message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
+    #message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
 
     # brew installs libraries to /opt/homebrew/lib on Apple Silicon
     if (APPLE AND ARM)

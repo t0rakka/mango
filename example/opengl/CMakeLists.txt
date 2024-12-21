@@ -14,16 +14,14 @@ if (NOT APPLE)
     )
 endif ()
 
-#find_package(mango-opengl REQUIRED)
-link_libraries(mango-opengl)
-
 foreach(example IN LISTS EXAMPLES)
     add_executable(${example} ${example}.cpp)
+    target_link_libraries(${example} PRIVATE mango-opengl)
 
     if (APPLE)
-        target_link_libraries(${example} "-framework OpenGL -framework Cocoa")
+        target_link_libraries(${example} PRIVATE "-framework OpenGL -framework Cocoa")
     elseif (UNIX)
-        target_link_libraries(${example} X11 GL)
+        target_link_libraries(${example} PRIVATE X11 GL)
     endif ()
 endforeach()
 
