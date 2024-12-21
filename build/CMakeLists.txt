@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 project(mango
         VERSION 1.5.2
         DESCRIPTION "A multi-platform development framework for graphics programmers"
@@ -482,10 +482,8 @@ set_target_properties(mango-import3d PROPERTIES
 target_link_libraries(mango-import3d PUBLIC mango)
 
 # ------------------------------------------------------------------------------
-# find_package
+# dependencies
 # ------------------------------------------------------------------------------
-
-message(STATUS "find_package:")
 
 find_package(Threads)
 if (CMAKE_THREAD_LIBS_INIT)
@@ -519,18 +517,21 @@ else ()
 endif ()
 
 # ------------------------------------------------------------------------------
-# PkgConfig
+# external libraries
 # ------------------------------------------------------------------------------
+
+message(STATUS "Libraries:")
 
 find_package(PkgConfig QUIET)
 if (PkgConfig_FOUND)
     message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
 
+    # brew installs libraries to /opt/homebrew/lib on Apple Silicon
     if (APPLE AND ARM)
-        # brew installs libraries to /opt/homebrew/lib on Apple Silicon
         target_link_options(mango PRIVATE "-L/opt/homebrew/lib")
     endif ()
 
+    # vcpkg: libjxl
     pkg_check_modules(JXL QUIET libjxl>=0.8.2)
     pkg_check_modules(JXL_THREADS QUIET libjxl_threads>=0.7)
     if (JXL_FOUND AND JXL_THREADS_FOUND)
@@ -540,6 +541,7 @@ if (PkgConfig_FOUND)
         target_link_libraries(mango PRIVATE ${JXL_LIBRARIES} ${JXL_THREADS_LIBRARIES})
     endif ()
 
+    # vcpkg: openjpeg
     pkg_check_modules(JP2 QUIET libopenjp2>=2.4.0)
     if (JP2_FOUND)
         message("   + JP2: " ${JP2_VERSION})
@@ -548,6 +550,7 @@ if (PkgConfig_FOUND)
         target_link_libraries(mango PRIVATE ${JP2_LIBRARIES})
     endif ()
 
+    # vcpkg: libavif
     pkg_check_modules(AVIF QUIET libavif>=0.11.1)
     if (AVIF_FOUND)
         message("   + AVIF: " ${AVIF_VERSION})
@@ -556,6 +559,7 @@ if (PkgConfig_FOUND)
         target_link_libraries(mango PRIVATE ${AVIF_LIBRARIES})
     endif ()
 
+    # vcpkg: libheif
     pkg_check_modules(HEIF QUIET libheif>=1.13.0)
     if (HEIF_FOUND)
         message("   + HEIF: " ${HEIF_VERSION})
@@ -564,6 +568,7 @@ if (PkgConfig_FOUND)
         target_link_libraries(mango PRIVATE ${HEIF_LIBRARIES})
     endif ()
 
+    # vcpkg: isal
     pkg_check_modules(ISAL QUIET libisal>=2.30.0)
     if (ISAL_FOUND)
         message("   + ISAL: " ${ISAL_VERSION})
@@ -572,6 +577,46 @@ if (PkgConfig_FOUND)
         target_link_libraries(mango PRIVATE ${ISAL_LIBRARIES})
     endif ()
 
+endif()
+
+# vcpkg: openjpeg
+if (NOT JP2_FOUND)
+    find_package(OpenJPEG CONFIG)
+    if (OpenJPEG_FOUND)
+        message("   + JP2: " ${OpenJPEG_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_JP2")
+        target_link_libraries(mango PRIVATE openjp2)
+    endif ()
+endif ()
+
+# vcpkg: libavif
+if (NOT AVIF_FOUND)
+    find_package(libavif CONFIG)
+    if (libavif_FOUND)
+        message("   + AVIF: " ${libavif_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_AVIF")
+        target_link_libraries(mango PRIVATE avif)
+    endif ()
+endif ()
+
+# vcpkg: libheif
+if (NOT HEIF_FOUND)
+    find_package(libheif CONFIG)
+    if (libheif_FOUND)
+        message("   + HEIF: " ${libheif_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_HEIF")
+        target_link_libraries(mango PRIVATE heif)
+    endif ()
+endif ()
+
+# vcpkg: isal
+if (NOT ISAL_FOUND)
+    find_package(unofficial-isal CONFIG)
+    if (unofficial-isal_FOUND)
+        message("   + ISAL: UNOFFICIAL")
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_ISAL")
+        target_link_libraries(mango PRIVATE unofficial::isal::isal)
+    endif ()
 endif ()
 
 # ------------------------------------------------------------------------------
