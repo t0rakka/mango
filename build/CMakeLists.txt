@@ -40,7 +40,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
     set(X86_64 1)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|AMD64.*")
     set(X86 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64)")
     set(AARCH64 1)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
     set(ARM 1)
@@ -532,7 +532,7 @@ if (PkgConfig_FOUND)
     #message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
 
     # brew installs libraries to /opt/homebrew/lib on Apple Silicon
-    if (APPLE AND ARM)
+    if (APPLE AND AARCH64)
         target_link_options(mango PRIVATE "-L/opt/homebrew/lib")
     endif ()
 
