@@ -40,7 +40,11 @@
 #include "../../external/lzav/lzav.h"
 
 #if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
-#include <isa-l.h>
+    #ifdef MANGO_COMPILER_MICROSOFT
+        #include <isal/igzip_lib.h>
+    #else
+        #include <isa-l.h>
+    #endif
 #endif
 
 namespace mango
@@ -1302,7 +1306,7 @@ namespace isal
 
         Buffer temp(level_buffer_size);
 
-        stream.level_buf_size = temp.size();
+        stream.level_buf_size = static_cast<uint32_t>(temp.size());
         stream.level_buf = temp.data();
 
         CompressionStatus status;

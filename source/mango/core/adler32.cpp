@@ -118,7 +118,7 @@ namespace mango
                 n = blocks;
             blocks -= n;
 
-            s2 += s1 * n * BLOCK_SIZE;
+            s2 += u32(s1 * n * BLOCK_SIZE);
 
             __m256i v1 = _mm256_setzero_si256();
             __m256i v2 = _mm256_setzero_si256();

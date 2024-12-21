@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 project(mango
         VERSION 1.5.2
         DESCRIPTION "A multi-platform development framework for graphics programmers"
@@ -40,7 +40,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
     set(X86_64 1)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|AMD64.*")
     set(X86 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*)")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)")
     set(AARCH64 1)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
     set(ARM 1)
@@ -88,7 +88,7 @@ OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
 # Option to enable every Intel ISA extension
 option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"           OFF)
 
-if (INTEL_DELUXE)  
+if (INTEL_DELUXE)
     set(ENABLE_AVX2    ON)
     set(ENABLE_AES     ON)
     set(ENABLE_PCLMUL  ON)
@@ -321,17 +321,18 @@ FILE(GLOB EXTERNAL_UNRAR
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp"
 )
 
-if (X86_64)
-    FILE(GLOB_RECURSE EXTERNAL_ZSTD
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
+FILE(GLOB_RECURSE EXTERNAL_ZSTD
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
+)
+
+if (X86_64 AND (COMPILER_GCC OR COMPILER_CLANG OR COMPILER_INTEL))
+    # MSVC "optimizes" object file with no symbols and then cannot find it when linking
+    # .. but the way the code checks if it is to be compiled is presence of above compilers
+    FILE(GLOB_RECURSE EXTERNAL_ZSTD_ASSEMBLY
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.S"
     )
-else ()
-    FILE(GLOB_RECURSE EXTERNAL_ZSTD
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
-    )
+    LIST(APPEND EXTERNAL_ZSTD ${EXTERNAL_ZSTD_ASSEMBLY})
 endif ()
 
 FILE(GLOB_RECURSE EXTERNAL_WEBP
@@ -360,28 +361,25 @@ FILE(GLOB EXTERNAL_IMPORT3D
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/fastgltf/src/*.cpp"
 )
 
-SOURCE_GROUP("external" FILES
-    ${EXTERNAL_LZMA}
-    ${EXTERNAL_AES}
-    ${EXTERNAL_BC}
-    ${EXTERNAL_BZIP2}
-    ${EXTERNAL_CONCURRENT_QUEUE}
-    ${EXTERNAL_ASTC}
-    ${EXTERNAL_GOOGLE}
-    ${EXTERNAL_LZ4}
-    ${EXTERNAL_LZFSE}
-    ${EXTERNAL_LZO}
-    ${EXTERNAL_DEFLATE}
-    ${EXTERNAL_ZLIB}
-    ${EXTERNAL_LCMS}
-    ${EXTERNAL_UNRAR}
-    ${EXTERNAL_ZSTD}
-    ${EXTERNAL_WEBP}
-    ${EXTERNAL_ZPNG}
-    ${EXTERNAL_BASISU}
-    ${EXTERNAL_FMT}
-    ${EXTERNAL_IMPORT3D}
-)
+SOURCE_GROUP("external/lzma"        FILES ${EXTERNAL_LZMA})
+SOURCE_GROUP("external/aes"         FILES ${EXTERNAL_AES})
+SOURCE_GROUP("external/bc"          FILES ${EXTERNAL_BC})
+SOURCE_GROUP("external/bzip2"       FILES ${EXTERNAL_BZIP2})
+SOURCE_GROUP("external/concurrent"  FILES ${EXTERNAL_CONCURRENT_QUEUE})
+SOURCE_GROUP("external/astc"        FILES ${EXTERNAL_ASTC})
+SOURCE_GROUP("external/google"      FILES ${EXTERNAL_GOOGLE})
+SOURCE_GROUP("external/lz4"         FILES ${EXTERNAL_LZ4})
+SOURCE_GROUP("external/lzfse"       FILES ${EXTERNAL_LZFSE})
+SOURCE_GROUP("external/lzo"         FILES ${EXTERNAL_LZO})
+SOURCE_GROUP("external/deflate"     FILES ${EXTERNAL_DEFLATE})
+SOURCE_GROUP("external/zlib"        FILES ${EXTERNAL_ZLIB})
+SOURCE_GROUP("external/lcms"        FILES ${EXTERNAL_LCMS})
+SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
+SOURCE_GROUP("external/zstd"        FILES ${EXTERNAL_ZSTD})
+SOURCE_GROUP("external/webp"        FILES ${EXTERNAL_WEBP})
+SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
+SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
+SOURCE_GROUP("external/fmt"         FILES ${EXTERNAL_FMT})
 
 # ------------------------------------------------------------------------------
 # libraries
@@ -390,6 +388,10 @@ SOURCE_GROUP("external" FILES
 if (BUILD_SHARED_LIBS AND COMPILER_MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif ()
+
+# ------------------------------------------------------------------------------
+# library: mango
+# ------------------------------------------------------------------------------
 
 add_library(mango
     ${MAIN_HEADER}
@@ -433,6 +435,10 @@ set_target_properties(mango PROPERTIES
     CXX_STANDARD_REQUIRED ON
 )
 
+# ------------------------------------------------------------------------------
+# library: mango-opengl
+# ------------------------------------------------------------------------------
+
 add_library(mango-opengl
     ${WINDOW_SOURCES}
     ${OPENGL_SOURCES}
@@ -446,6 +452,19 @@ set_target_properties(mango-opengl PROPERTIES
 )
 
 target_link_libraries(mango-opengl PUBLIC mango)
+
+if (APPLE)
+    if (BUILD_SHARED_LIBS)
+        target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
+    endif ()
+
+    target_compile_options(mango PUBLIC "-mmacosx-version-min=10.15")
+    target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.15")
+endif ()
+
+# ------------------------------------------------------------------------------
+# library: mango-import3d
+# ------------------------------------------------------------------------------
 
 add_library(mango-import3d
     ${IMPORT3D_HEADERS}
@@ -462,24 +481,17 @@ set_target_properties(mango-import3d PROPERTIES
 
 target_link_libraries(mango-import3d PUBLIC mango)
 
-if (APPLE)
-    if (BUILD_SHARED_LIBS)
-        target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
-    endif ()
+# ------------------------------------------------------------------------------
+# dependencies
+# ------------------------------------------------------------------------------
 
-    target_compile_options(mango PUBLIC "-mmacosx-version-min=10.15")
-    target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.15")
-endif ()
+message(STATUS "Libraries:")
 
-# add "-lpthread" linker option when platform has support
 find_package(Threads)
 if (CMAKE_THREAD_LIBS_INIT)
+    message("   + Threads")
     target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
-
-# ------------------------------------------------------------------------------
-# external libraries
-# ------------------------------------------------------------------------------
 
 if (BUILD_SHARED_LIBS AND WIN32)
 
@@ -487,8 +499,8 @@ if (BUILD_SHARED_LIBS AND WIN32)
     find_package(OpenGL REQUIRED)
 
     if (OPENGL_FOUND)
-        message(STATUS "Enable: OpenGL")
-        target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
+        message("   + OpenGL")
+        target_link_libraries(mango-opengl PUBLIC ${OPENGL_gl_LIBRARY})
     endif()
 
 else ()
@@ -497,59 +509,122 @@ else ()
     find_package(OpenGL)
 
     if (OPENGL_FOUND)
-        message(STATUS "Enable: OpenGL")
-        message(STATUS "Enable: XLIB")
-        target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_XLIB")
-        target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
-        target_link_libraries(mango PUBLIC ${OPENGL_glx_LIBRARY})
+        message("   + OpenGL")
+        target_link_libraries(mango-opengl PUBLIC ${OPENGL_gl_LIBRARY})
+
+        if (APPLE)
+            target_link_libraries(mango-opengl PUBLIC "-framework Cocoa")
+        else ()
+            message("   + XLIB")
+            target_compile_definitions(mango-opengl PUBLIC "-DMANGO_ENABLE_XLIB")
+            target_link_libraries(mango-opengl PUBLIC ${OPENGL_glx_LIBRARY})
+        endif ()
     endif()
 
 endif ()
 
 # ------------------------------------------------------------------------------
-# TODO
+# external libraries
 # ------------------------------------------------------------------------------
 
-if (FALSE)
+find_package(PkgConfig QUIET)
+if (PkgConfig_FOUND)
+    #message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
 
-find_package(Jxl 0.8.2 REQUIRED)
-find_package(JxlThreads 0.7 QUIET)
-if (Jxl_FOUND AND JxlThreads)
-    message(STATUS "Enable: Jxl")
-    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_JXL")
-    target_link_libraries(mango PRIVATE ${JXL_LIBRARIES})
-    target_link_libraries(mango PRIVATE ${JXL_THREADS_LIBRARIES})
+    # brew installs libraries to /opt/homebrew/lib on Apple Silicon
+    if (APPLE AND AARCH64)
+        target_link_options(mango PRIVATE "-L/opt/homebrew/lib")
+    endif ()
+
+    # vcpkg: libjxl
+    pkg_check_modules(JXL QUIET libjxl>=0.8.2)
+    pkg_check_modules(JXL_THREADS QUIET libjxl_threads>=0.7)
+    if (JXL_FOUND AND JXL_THREADS_FOUND)
+        message("   + JXL: " ${JXL_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_JXL")
+        target_include_directories(mango PRIVATE "${JXL_INCLUDE_DIRS}")
+        target_link_libraries(mango PRIVATE ${JXL_LIBRARIES} ${JXL_THREADS_LIBRARIES})
+    endif ()
+
+    # vcpkg: openjpeg
+    pkg_check_modules(JP2 QUIET libopenjp2>=2.4.0)
+    if (JP2_FOUND)
+        message("   + JP2: " ${JP2_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_JP2")
+        target_include_directories(mango PRIVATE "${JP2_INCLUDE_DIRS}")
+        target_link_libraries(mango PRIVATE ${JP2_LIBRARIES})
+    endif ()
+
+    # vcpkg: libavif
+    pkg_check_modules(AVIF QUIET libavif>=0.11.1)
+    if (AVIF_FOUND)
+        message("   + AVIF: " ${AVIF_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_AVIF")
+        target_include_directories(mango PRIVATE "${AVIF_INCLUDE_DIRS}")
+        target_link_libraries(mango PRIVATE ${AVIF_LIBRARIES})
+    endif ()
+
+    # vcpkg: libheif
+    pkg_check_modules(HEIF QUIET libheif>=1.13.0)
+    if (HEIF_FOUND)
+        message("   + HEIF: " ${HEIF_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_HEIF")
+        target_include_directories(mango PRIVATE "${HEIF_INCLUDE_DIRS}")
+        target_link_libraries(mango PRIVATE ${HEIF_LIBRARIES})
+    endif ()
+
+    # vcpkg: isal
+    pkg_check_modules(ISAL QUIET libisal>=2.30.0)
+    if (ISAL_FOUND)
+        message("   + ISAL: " ${ISAL_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_ISAL")
+        target_include_directories(mango PRIVATE "${ISAL_INCLUDE_DIRS}")
+        target_link_libraries(mango PRIVATE ${ISAL_LIBRARIES})
+    endif ()
+
+endif()
+
+message(STATUS "find_package:")
+
+# vcpkg: openjpeg
+if (NOT JP2_FOUND)
+    find_package(OpenJPEG CONFIG)
+    if (OpenJPEG_FOUND)
+        message("   + JP2: " ${OpenJPEG_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_JP2")
+        target_link_libraries(mango PRIVATE openjp2)
+    endif ()
 endif ()
 
-find_package(OpenJPEG 2.4.0 QUIET)
-if (OpenJPEG_FOUND)
-    message(STATUS "Enable: OpenJPEG")
-    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_JP2")
-    target_link_libraries(mango PRIVATE OpenJPEG::OpenJPEG)
+# vcpkg: libavif
+if (NOT AVIF_FOUND)
+    find_package(libavif CONFIG)
+    if (libavif_FOUND)
+        message("   + AVIF: " ${libavif_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_AVIF")
+        target_link_libraries(mango PRIVATE avif)
+    endif ()
 endif ()
 
-find_package(AVIF 0.11.1 QUIET)
-if (AVIF_FOUND)
-    message(STATUS "Enable: AVIF")
-    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_AVIF")
-    target_link_libraries(mango PRIVATE AVIF::AVIF)
+# vcpkg: libheif
+if (NOT HEIF_FOUND)
+    find_package(libheif CONFIG)
+    if (libheif_FOUND)
+        message("   + HEIF: " ${libheif_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_HEIF")
+        target_link_libraries(mango PRIVATE heif)
+    endif ()
 endif ()
 
-find_package(HEIF 1.13.0 QUIET)
-if (HEIF_FOUND)
-    message(STATUS "Enable: HEIF")
-    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_HEIF")
-    target_link_libraries(mango PRIVATE HEIF::HEIF)
+# vcpkg: isal
+if (NOT ISAL_FOUND)
+    find_package(unofficial-isal CONFIG)
+    if (unofficial-isal_FOUND)
+        message("   + ISAL: UNOFFICIAL")
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_ISAL")
+        target_link_libraries(mango PRIVATE unofficial::isal::isal)
+    endif ()
 endif ()
-
-find_package(ISAL 2.30.0 QUIET)
-if (ISAL_FOUND)
-    message(STATUS "Enable: ISAL")
-    target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_ISAL")
-    target_link_libraries(mango PRIVATE ISAL::ISAL)
-endif ()
-
-endif () # FALSE
 
 # ------------------------------------------------------------------------------
 # configuration
@@ -636,7 +711,7 @@ else ()
 
     set(CMAKE_CXX_FLAGS "-Wall")
     set(CMAKE_CXX_FLAGS_DEBUG "-g")
-    #set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
     target_compile_definitions(mango PUBLIC $<$<PLATFORM_ID:Windows>:UNICODE>)
 

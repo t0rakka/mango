@@ -12,7 +12,9 @@
 #ifndef WEBP_SHARPYUV_SHARPYUV_GAMMA_H_
 #define WEBP_SHARPYUV_SHARPYUV_GAMMA_H_
 
-#include "sharpyuv/sharpyuv.h"
+// MANGO HACK: fix the include path
+//#include "sharpyuv/sharpyuv.h"
+#include "sharpyuv.h"
 #include "src/webp/types.h"
 
 #ifdef __cplusplus

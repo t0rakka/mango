@@ -11,7 +11,9 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include "sharpyuv/sharpyuv.h"
+// MANGO HACK: fix the include path
+//#include "sharpyuv/sharpyuv.h"
+#include "sharpyuv.h"
 
 #include <assert.h>
 #include <limits.h>
@@ -20,9 +22,13 @@
 #include <string.h>
 
 #include "src/webp/types.h"
-#include "sharpyuv/sharpyuv_cpu.h"
-#include "sharpyuv/sharpyuv_dsp.h"
-#include "sharpyuv/sharpyuv_gamma.h"
+// MANGO HACK: fix the include path
+//#include "sharpyuv/sharpyuv_cpu.h"
+//#include "sharpyuv/sharpyuv_dsp.h"
+//#include "sharpyuv/sharpyuv_gamma.h"
+#include "sharpyuv_cpu.h"
+#include "sharpyuv_dsp.h"
+#include "sharpyuv_gamma.h"
 
 //------------------------------------------------------------------------------
 
