@@ -536,6 +536,7 @@ if (PkgConfig_FOUND)
         target_link_options(mango PRIVATE "-L/opt/homebrew/lib")
     endif ()
 
+    # brew: jpeg-xl
     # vcpkg: libjxl
     pkg_check_modules(JXL QUIET libjxl>=0.8.2)
     pkg_check_modules(JXL_THREADS QUIET libjxl_threads>=0.7)
@@ -546,6 +547,7 @@ if (PkgConfig_FOUND)
         target_link_libraries(mango PRIVATE ${JXL_LIBRARIES} ${JXL_THREADS_LIBRARIES})
     endif ()
 
+    # brew: openjpeg
     # vcpkg: openjpeg
     pkg_check_modules(JP2 QUIET libopenjp2>=2.4.0)
     if (JP2_FOUND)
@@ -555,6 +557,7 @@ if (PkgConfig_FOUND)
         target_link_libraries(mango PRIVATE ${JP2_LIBRARIES})
     endif ()
 
+    # brew: libavif
     # vcpkg: libavif
     pkg_check_modules(AVIF QUIET libavif>=0.11.1)
     if (AVIF_FOUND)
@@ -564,6 +567,7 @@ if (PkgConfig_FOUND)
         target_link_libraries(mango PRIVATE ${AVIF_LIBRARIES})
     endif ()
 
+    # brew: libheif
     # vcpkg: libheif
     pkg_check_modules(HEIF QUIET libheif>=1.13.0)
     if (HEIF_FOUND)
@@ -573,6 +577,7 @@ if (PkgConfig_FOUND)
         target_link_libraries(mango PRIVATE ${HEIF_LIBRARIES})
     endif ()
 
+    # brew: isa-l
     # vcpkg: isal
     pkg_check_modules(ISAL QUIET libisal>=2.30.0)
     if (ISAL_FOUND)
@@ -586,6 +591,7 @@ endif()
 
 message(STATUS "find_package:")
 
+# brew: openjpeg
 # vcpkg: openjpeg
 if (NOT JP2_FOUND)
     find_package(OpenJPEG CONFIG)
@@ -596,6 +602,7 @@ if (NOT JP2_FOUND)
     endif ()
 endif ()
 
+# brew: libavif
 # vcpkg: libavif
 if (NOT AVIF_FOUND)
     find_package(libavif CONFIG)
@@ -606,6 +613,7 @@ if (NOT AVIF_FOUND)
     endif ()
 endif ()
 
+# brew libheif
 # vcpkg: libheif
 if (NOT HEIF_FOUND)
     find_package(libheif CONFIG)
@@ -616,6 +624,7 @@ if (NOT HEIF_FOUND)
     endif ()
 endif ()
 
+# brew: isa-l
 # vcpkg: isal
 if (NOT ISAL_FOUND)
     find_package(unofficial-isal CONFIG)
