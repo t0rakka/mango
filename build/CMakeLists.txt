@@ -498,7 +498,7 @@ if (BUILD_SHARED_LIBS AND WIN32)
 
     if (OPENGL_FOUND)
         message("   + OpenGL")
-        target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
+        target_link_libraries(mango-opengl PUBLIC ${OPENGL_gl_LIBRARY})
     endif()
 
 else ()
@@ -509,9 +509,9 @@ else ()
     if (OPENGL_FOUND)
         message("   + OpenGL")
         message("   + XLIB")
-        target_compile_definitions(mango PUBLIC "-DMANGO_ENABLE_XLIB")
-        target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
-        target_link_libraries(mango PUBLIC ${OPENGL_glx_LIBRARY})
+        target_compile_definitions(mango-opengl PUBLIC "-DMANGO_ENABLE_XLIB")
+        target_link_libraries(mango-opengl PUBLIC ${OPENGL_gl_LIBRARY})
+        target_link_libraries(mango-opengl PUBLIC ${OPENGL_glx_LIBRARY})
     endif()
 
 endif ()
@@ -578,6 +578,8 @@ if (PkgConfig_FOUND)
     endif ()
 
 endif()
+
+message(STATUS "find_package:")
 
 # vcpkg: openjpeg
 if (NOT JP2_FOUND)
