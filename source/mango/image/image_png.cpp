@@ -10,7 +10,11 @@
 #include "../../external/zlib/zlib.h"
 
 #ifdef MANGO_ENABLE_ISAL
-#include <isa-l.h>
+    #ifdef MANGO_COMPILER_MICROSOFT
+        #include <isal/igzip_lib.h>
+    #else
+        #include <isa-l.h>
+    #endif
 #endif
 
 // https://www.w3.org/TR/2003/REC-PNG-20031110/
@@ -3470,7 +3474,7 @@ namespace
 
                     if (!m_interlace)
                     {
-                        int y1 = state.total_out / bytes_per_line;
+                        int y1 = int(state.total_out / bytes_per_line);
                         process_range(target, buffer.address + bytes_per_line * y0, y0, y1);
                         y0 = y1;
                     }
@@ -4013,7 +4017,7 @@ namespace
 
                 Buffer level_buffer(level_buffer_size);
 
-                zstream.level_buf_size = level_buffer.size();
+                zstream.level_buf_size = static_cast<uint32_t>(level_buffer.size());
                 zstream.level_buf = level_buffer.data();
 
                 zstream.end_of_stream = 0;

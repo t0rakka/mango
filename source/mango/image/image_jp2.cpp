@@ -674,7 +674,7 @@ namespace
             CallbackManager callback(m_codec, 0);
 
             size_t num_thread = std::max(std::thread::hardware_concurrency(), 1u);
-            opj_codec_set_threads(m_codec, num_thread);
+            opj_codec_set_threads(m_codec, int(num_thread));
 
             if (!opj_read_header(m_stream, m_codec, &m_image))
             {
@@ -969,7 +969,7 @@ namespace
         // ICC color profile
         if (options.icc.size > 0)
         {
-            image->icc_profile_len = options.icc.size;
+            image->icc_profile_len = static_cast<OPJ_UINT32>(options.icc.size);
             image->icc_profile_buf = const_cast<u8*>(options.icc.address);
         }
 
@@ -994,7 +994,7 @@ namespace
         if (options.multithread)
         {
             size_t num_thread = std::max(std::thread::hardware_concurrency(), 1u);
-            opj_codec_set_threads(codec, num_thread);
+            opj_codec_set_threads(codec, int(num_thread));
         }
 
         opj_setup_encoder(codec, &parameters, image);
