@@ -275,40 +275,6 @@ namespace mango::simd
 
     // compare
 
-#if defined(MANGO_ENABLE_XOP)
-
-    static inline umask8x16 compare_eq(u8x16 a, u8x16 b)
-    {
-        return _mm_comeq_epu8(a, b);
-    }
-
-    static inline umask8x16 compare_gt(u8x16 a, u8x16 b)
-    {
-        return _mm_comgt_epu8(a, b);
-    }
-
-    static inline umask8x16 compare_neq(u8x16 a, u8x16 b)
-    {
-        return _mm_comneq_epu8(a, b);
-    }
-
-    static inline umask8x16 compare_lt(u8x16 a, u8x16 b)
-    {
-        return _mm_comlt_epu8(a, b);
-    }
-
-    static inline umask8x16 compare_le(u8x16 a, u8x16 b)
-    {
-        return _mm_comle_epu8(a, b);
-    }
-
-    static inline umask8x16 compare_ge(u8x16 a, u8x16 b)
-    {
-        return _mm_comge_epu8(a, b);
-    }
-
-#else
-
     static inline mask8x16 compare_eq(u8x16 a, u8x16 b)
     {
         return _mm_cmpeq_epi8(a, b);
@@ -338,8 +304,6 @@ namespace mango::simd
     {
         return _mm_cmpeq_epi8(_mm_min_epu8(a, b), b);
     }
-
-#endif
 
     static inline u8x16 select(mask8x16 mask, u8x16 a, u8x16 b)
     {
@@ -478,40 +442,6 @@ namespace mango::simd
 
     // compare
 
-#if defined(MANGO_ENABLE_XOP)
-
-    static inline mask16x8 compare_neq(u16x8 a, u16x8 b)
-    {
-        return _mm_comneq_epu16(a, b);
-    }
-
-    static inline mask16x8 compare_lt(u16x8 a, u16x8 b)
-    {
-        return _mm_comlt_epu16(a, b);
-    }
-
-    static inline mask16x8 compare_le(u16x8 a, u16x8 b)
-    {
-        return _mm_comle_epu16(a, b);
-    }
-
-    static inline mask16x8 compare_ge(u16x8 a, u16x8 b)
-    {
-        return _mm_comge_epu16(a, b);
-    }
-
-    static inline mask16x8 compare_eq(u16x8 a, u16x8 b)
-    {
-        return _mm_comeq_epu16(a, b);
-    }
-
-    static inline mask16x8 compare_gt(u16x8 a, u16x8 b)
-    {
-        return _mm_comgt_epu16(a, b);
-    }
-
-#else
-
     static inline mask16x8 compare_eq(u16x8 a, u16x8 b)
     {
         return _mm_cmpeq_epi16(a, b);
@@ -566,8 +496,6 @@ namespace mango::simd
     {
         return compare_gt(b, a);
     }
-
-#endif // MANGO_ENABLE_XOP
 
     static inline u16x8 select(mask16x8 mask, u16x8 a, u16x8 b)
     {
@@ -859,40 +787,6 @@ namespace mango::simd
 
     // compare
 
-#if defined(MANGO_ENABLE_XOP)
-
-    static inline mask32x4 compare_eq(u32x4 a, u32x4 b)
-    {
-        return _mm_comeq_epu32(a, b);
-    }
-
-    static inline mask32x4 compare_gt(u32x4 a, u32x4 b)
-    {
-        return _mm_comgt_epu32(a, b);
-    }
-
-    static inline mask32x4 compare_neq(u32x4 a, u32x4 b)
-    {
-        return _mm_comneq_epu32(a, b);
-    }
-
-    static inline mask32x4 compare_lt(u32x4 a, u32x4 b)
-    {
-        return _mm_comlt_epu32(a, b);
-    }
-
-    static inline mask32x4 compare_le(u32x4 a, u32x4 b)
-    {
-        return _mm_comle_epu32(a, b);
-    }
-
-    static inline mask32x4 compare_ge(u32x4 a, u32x4 b)
-    {
-        return _mm_comge_epu32(a, b);
-    }
-
-#else
-
     static inline mask32x4 compare_eq(u32x4 a, u32x4 b)
     {
         return _mm_cmpeq_epi32(a, b);
@@ -947,8 +841,6 @@ namespace mango::simd
     {
         return compare_gt(b, a);
     }
-
-#endif // MANGO_ENABLE_XOP
 
     static inline u32x4 select(mask32x4 mask, u32x4 a, u32x4 b)
     {
@@ -1471,40 +1363,6 @@ namespace mango::simd
 
     // compare
 
-#if defined(MANGO_ENABLE_XOP)
-
-    static inline mask8x16 compare_eq(s8x16 a, s8x16 b)
-    {
-        return _mm_comeq_epi8(a, b);
-    }
-
-    static inline mask8x16 compare_gt(s8x16 a, s8x16 b)
-    {
-        return _mm_comgt_epi8(a, b);
-    }
-
-    static inline mask8x16 compare_neq(s8x16 a, s8x16 b)
-    {
-        return _mm_comneq_epi8(a, b);
-    }
-
-    static inline mask8x16 compare_lt(s8x16 a, s8x16 b)
-    {
-        return _mm_comlt_epi8(a, b);
-    }
-
-    static inline mask8x16 compare_le(s8x16 a, s8x16 b)
-    {
-        return _mm_comle_epi8(a, b);
-    }
-
-    static inline mask8x16 compare_ge(s8x16 a, s8x16 b)
-    {
-        return _mm_comge_epi8(a, b);
-    }
-
-#else
-
     static inline mask8x16 compare_eq(s8x16 a, s8x16 b)
     {
         return _mm_cmpeq_epi8(a, b);
@@ -1535,8 +1393,6 @@ namespace mango::simd
         return _mm_or_si128(_mm_cmpeq_epi8(a, b), _mm_cmpgt_epi8(a, b));
     }
 
-#endif
-
     static inline s8x16 select(mask8x16 mask, s8x16 a, s8x16 b)
     {
         return detail::simd128_select_si128(mask, a, b);
@@ -1566,7 +1422,7 @@ namespace mango::simd
         return detail::simd128_select_si128(_mm_cmpgt_epi8(a, b), a, b);
     }
 
-#endif
+#endif // defined(MANGO_ENABLE_SSE4_1)
 
     // -----------------------------------------------------------------
     // s16x8
@@ -1783,40 +1639,6 @@ namespace mango::simd
 
     // compare
 
-#if defined(MANGO_ENABLE_XOP)
-
-    static inline mask16x8 compare_eq(s16x8 a, s16x8 b)
-    {
-        return _mm_comeq_epi16(a, b);
-    }
-
-    static inline mask16x8 compare_gt(s16x8 a, s16x8 b)
-    {
-        return _mm_comgt_epi16(a, b);
-    }
-
-    static inline mask16x8 compare_neq(s16x8 a, s16x8 b)
-    {
-        return _mm_comneq_epi16(a, b);
-    }
-
-    static inline mask16x8 compare_lt(s16x8 a, s16x8 b)
-    {
-        return _mm_comlt_epi16(a, b);
-    }
-
-    static inline mask16x8 compare_le(s16x8 a, s16x8 b)
-    {
-        return _mm_comle_epi16(a, b);
-    }
-
-    static inline mask16x8 compare_ge(s16x8 a, s16x8 b)
-    {
-        return _mm_comge_epi16(a, b);
-    }
-
-#else
-
     static inline mask16x8 compare_eq(s16x8 a, s16x8 b)
     {
         return _mm_cmpeq_epi16(a, b);
@@ -1846,8 +1668,6 @@ namespace mango::simd
     {
         return _mm_or_si128(_mm_cmpeq_epi16(a, b), _mm_cmpgt_epi16(a, b));
     }
-
-#endif
 
     static inline s16x8 select(mask16x8 mask, s16x8 a, s16x8 b)
     {
@@ -2185,40 +2005,6 @@ namespace mango::simd
 
     // compare
 
-#if defined(MANGO_ENABLE_XOP)
-
-    static inline mask32x4 compare_eq(s32x4 a, s32x4 b)
-    {
-        return _mm_comeq_epi32(a, b);
-    }
-
-    static inline mask32x4 compare_gt(s32x4 a, s32x4 b)
-    {
-        return _mm_comgt_epi32(a, b);
-    }
-
-    static inline mask32x4 compare_neq(s32x4 a, s32x4 b)
-    {
-        return _mm_comneq_epi32(a, b);
-    }
-
-    static inline mask32x4 compare_lt(s32x4 a, s32x4 b)
-    {
-        return _mm_comlt_epi32(a, b);
-    }
-
-    static inline mask32x4 compare_le(s32x4 a, s32x4 b)
-    {
-        return _mm_comle_epi32(a, b);
-    }
-
-    static inline mask32x4 compare_ge(s32x4 a, s32x4 b)
-    {
-        return _mm_comge_epi32(a, b);
-    }
-
-#else
-
     static inline mask32x4 compare_eq(s32x4 a, s32x4 b)
     {
         return _mm_cmpeq_epi32(a, b);
@@ -2248,8 +2034,6 @@ namespace mango::simd
     {
         return _mm_or_si128(_mm_cmpeq_epi32(a, b), _mm_cmpgt_epi32(a, b));
     }
-
-#endif // MANGO_ENABLE_XOP
 
     static inline s32x4 select(mask32x4 mask, s32x4 a, s32x4 b)
     {

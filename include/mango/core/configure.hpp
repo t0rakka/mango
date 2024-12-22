@@ -552,18 +552,6 @@
 
     #endif // !defined(MANGO_NO_SIMD)
 
-    #ifdef __XOP__
-        #if defined(MANGO_COMPILER_MICROSOFT)
-            #define MANGO_ENABLE_XOP
-            #define MANGO_ENABLE_FMA4
-            #include <ammintrin.h>
-        #elif defined(MANGO_COMPILER_GCC) || defined(MANGO_COMPILER_CLANG)
-            #define MANGO_ENABLE_XOP
-            #define MANGO_ENABLE_FMA4
-            #include <x86intrin.h>
-        #endif
-    #endif
-
     #if defined(__F16C__) || defined(__LZCNT__)
         #include <immintrin.h>
     #endif

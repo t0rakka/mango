@@ -100,7 +100,6 @@ namespace mango
 
         info << "CPU Features:";
         if (!flags) info << " N/A";
-        if (flags & INTEL_XOP) info << " XOP";
         if (flags & INTEL_AES) info << " AES";
         if (flags & INTEL_CLMUL) info << " CLMUL";
         if (flags & INTEL_FMA3) info << " FMA3";
@@ -123,10 +122,6 @@ namespace mango
         info << std::endl;
 
         info << "SIMD Features:";
-        if (flags & INTEL_3DNOW) info << " 3DNOW";
-        if (flags & INTEL_3DNOW_EXT) info << " 3DNOW+";
-        if (flags & INTEL_MMX) info << " MMX";
-        if (flags & INTEL_MMX_PLUS) info << " MMX+";
         if (flags & INTEL_SSE) info << " SSE";
         if (flags & INTEL_SSE2) info << " SSE2";
         if (flags & INTEL_SSE3) info << " SSE3";
@@ -192,10 +187,6 @@ namespace mango
 
     #if defined(MANGO_ENABLE_AVX512)
         info << " AVX512";
-    #endif
-
-    #if defined(MANGO_ENABLE_XOP)
-        info << " XOP";
     #endif
 
     #if defined(MANGO_ENABLE_FMA4)
