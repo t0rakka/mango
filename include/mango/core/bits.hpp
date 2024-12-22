@@ -636,7 +636,7 @@ namespace mango
         return __clz(value);
     }
 
-#elif defined(MANGO_GCC_BUILTINS)
+#elif defined(__GNUC__)
 
     static inline
     int u32_tzcnt(u32 value)
@@ -735,7 +735,7 @@ namespace mango
         return int(__clz(value));
     }
 
-#elif defined(MANGO_GCC_BUILTINS)
+#elif defined(__GNUC__)
 
     static inline
     u32 u32_mask_msb(u32 value)
@@ -858,7 +858,7 @@ namespace mango
         return _mm_popcnt_u32(value);
     }
 
-#elif defined(MANGO_GCC_BUILTINS)
+#elif defined(__GNUC__)
 
     static inline
     int u32_popcnt(u32 value)
@@ -1169,7 +1169,7 @@ namespace mango
         return __clzll(value);
     }
 
-#elif defined(MANGO_GCC_BUILTINS)
+#elif defined(__GNUC__)
 
     static inline
     int u64_tzcnt(u64 value)
@@ -1270,7 +1270,7 @@ namespace mango
         return int(__clzll(value));
     }
 
-#elif defined(MANGO_GCC_BUILTINS)
+#elif defined(__GNUC__)
 
     static inline
     u64 u64_mask_msb(u64 value)
@@ -1409,7 +1409,7 @@ namespace mango
     #endif
     }
 
-#elif defined(MANGO_GCC_BUILTINS)
+#elif defined(__GNUC__)
 
     static inline
     int u64_popcnt(u64 value)
