@@ -527,6 +527,15 @@ endif ()
 # external libraries
 # ------------------------------------------------------------------------------
 
+function (enable_pkg_if_found NAME)
+    if (${NAME}_FOUND)
+        message("   + " ${NAME} ": " ${${NAME}_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_${NAME}")
+        target_include_directories(mango PRIVATE ${${NAME}_INCLUDE_DIRS})
+        target_link_libraries(mango PRIVATE ${${NAME}_LIBRARIES})
+    endif ()
+endfunction ()
+
 find_package(PkgConfig QUIET)
 if (PkgConfig_FOUND)
     #message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
@@ -540,52 +549,28 @@ if (PkgConfig_FOUND)
     # vcpkg: libjxl
     pkg_check_modules(JXL QUIET libjxl>=0.8.2)
     pkg_check_modules(JXL_THREADS QUIET libjxl_threads>=0.7)
-    if (JXL_FOUND AND JXL_THREADS_FOUND)
-        message("   + JXL: " ${JXL_VERSION})
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_JXL")
-        target_include_directories(mango PRIVATE "${JXL_INCLUDE_DIRS}")
-        target_link_libraries(mango PRIVATE ${JXL_LIBRARIES} ${JXL_THREADS_LIBRARIES})
-    endif ()
+    enable_pkg_if_found(JXL)
+    enable_pkg_if_found(JXL_THREADS)
 
     # brew: openjpeg
     # vcpkg: openjpeg
     pkg_check_modules(JP2 QUIET libopenjp2>=2.4.0)
-    if (JP2_FOUND)
-        message("   + JP2: " ${JP2_VERSION})
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_JP2")
-        target_include_directories(mango PRIVATE "${JP2_INCLUDE_DIRS}")
-        target_link_libraries(mango PRIVATE ${JP2_LIBRARIES})
-    endif ()
+    enable_pkg_if_found(JP2)
 
     # brew: libavif
     # vcpkg: libavif
     pkg_check_modules(AVIF QUIET libavif>=0.11.1)
-    if (AVIF_FOUND)
-        message("   + AVIF: " ${AVIF_VERSION})
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_AVIF")
-        target_include_directories(mango PRIVATE "${AVIF_INCLUDE_DIRS}")
-        target_link_libraries(mango PRIVATE ${AVIF_LIBRARIES})
-    endif ()
+    enable_pkg_if_found(AVIF)
 
     # brew: libheif
     # vcpkg: libheif
     pkg_check_modules(HEIF QUIET libheif>=1.13.0)
-    if (HEIF_FOUND)
-        message("   + HEIF: " ${HEIF_VERSION})
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_HEIF")
-        target_include_directories(mango PRIVATE "${HEIF_INCLUDE_DIRS}")
-        target_link_libraries(mango PRIVATE ${HEIF_LIBRARIES})
-    endif ()
+    enable_pkg_if_found(HEIF)
 
     # brew: isa-l
     # vcpkg: isal
     pkg_check_modules(ISAL QUIET libisal>=2.30.0)
-    if (ISAL_FOUND)
-        message("   + ISAL: " ${ISAL_VERSION})
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_ISAL")
-        target_include_directories(mango PRIVATE "${ISAL_INCLUDE_DIRS}")
-        target_link_libraries(mango PRIVATE ${ISAL_LIBRARIES})
-    endif ()
+    enable_pkg_if_found(ISAL)
 
 endif()
 
@@ -708,7 +693,7 @@ elseif (COMPILER_MSVC)
         message(STATUS "SIMD: AVX (2008)")
         target_compile_options(mango PUBLIC "/arch:AVX")
     elseif (ENABLE_SSE2 OR ENABLE_SSE4)
-        # MSVC does not have SSE4 compiler switch; at least enable SSE2
+        # MSVC does not have SSE4 option; at least enable SSE2
         message(STATUS "SIMD: SSE2 (2001)")
         if (NOT X86_64)
             # MSVC enables SSE2 by default on X86_64
