@@ -8,8 +8,10 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#include "../../external/libwebp/src/webp/decode.h"
-#include "../../external/libwebp/src/webp/encode.h"
+#if defined(MANGO_ENABLE_WEBP) && defined(MANGO_LICENSE_ENABLE_BSD)
+
+#include <webp/decode.h>
+#include <webp/encode.h>
 
 // https://developers.google.com/speed/webp/docs/api
 
@@ -221,3 +223,5 @@ namespace mango::image
     }
 
 } // namespace mango::image
+
+#endif // MANGO_ENABLE_WEBP

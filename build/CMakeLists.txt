@@ -335,12 +335,6 @@ if (X86_64 AND (COMPILER_GCC OR COMPILER_CLANG OR COMPILER_INTEL))
     LIST(APPEND EXTERNAL_ZSTD ${EXTERNAL_ZSTD_ASSEMBLY})
 endif ()
 
-FILE(GLOB_RECURSE EXTERNAL_WEBP
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/sharpyuv/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/sharpyuv/*.c"
-)
 FILE(GLOB EXTERNAL_ZPNG
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.cpp"
@@ -376,7 +370,6 @@ SOURCE_GROUP("external/zlib"        FILES ${EXTERNAL_ZLIB})
 SOURCE_GROUP("external/lcms"        FILES ${EXTERNAL_LCMS})
 SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
 SOURCE_GROUP("external/zstd"        FILES ${EXTERNAL_ZSTD})
-SOURCE_GROUP("external/webp"        FILES ${EXTERNAL_WEBP})
 SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
 SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
 SOURCE_GROUP("external/fmt"         FILES ${EXTERNAL_FMT})
@@ -422,7 +415,6 @@ add_library(mango
     ${EXTERNAL_LCMS}
     ${EXTERNAL_UNRAR}
     ${EXTERNAL_ZSTD}
-    ${EXTERNAL_WEBP}
     ${EXTERNAL_ZPNG}
     ${EXTERNAL_BASISU}
     ${EXTERNAL_FMT}
@@ -566,6 +558,11 @@ if (PkgConfig_FOUND)
     # vcpkg: libheif
     pkg_check_modules(HEIF QUIET libheif>=1.13.0)
     enable_pkg_if_found(HEIF)
+
+    # brew: webp
+    # vcpkg: 
+    pkg_check_modules(WEBP QUIET libwebp>=1.4.0)
+    enable_pkg_if_found(WEBP)
 
     # brew: isa-l
     # vcpkg: isal
@@ -809,18 +806,16 @@ endif ()
 # ------------------------------------------------------------------------------
 
 target_include_directories(mango
-  PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include/>
-  INTERFACE
-    $<INSTALL_INTERFACE:include/mango/>
-  PRIVATE
-    "${PROJECT_SOURCE_DIR}/../source/external/libwebp"
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include/>
+    INTERFACE
+        $<INSTALL_INTERFACE:include/mango/>
 )
 
 target_include_directories(mango-import3d
-  PRIVATE
-    "${PROJECT_SOURCE_DIR}/../source/external/fastgltf/include"
-    "${PROJECT_SOURCE_DIR}/../source/external/simdjson"
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/../source/external/fastgltf/include"
+        "${PROJECT_SOURCE_DIR}/../source/external/simdjson"
 )
 
 install(
