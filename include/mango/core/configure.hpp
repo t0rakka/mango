@@ -757,7 +757,7 @@ namespace mango
 // BSD license is ALWAYS mandatory with MANGO as important core components require it.
 #ifndef MANGO_LICENSE_DISABLE_BSD
     #define MANGO_LICENSE_ENABLE_BSD
-    // components: concurrentqueue, zstd, zpng, xxHash, lzfse, lz4, webp, exr, adler32, intel sha, jp2, jxl
+    // components: concurrentqueue, zstd, zpng, xxHash, lzfse, lz4, webp, exr, adler32, intel-sha, jp2, jxl
 #endif
 
 // NOTE: MIT license is not compile-time checked
@@ -773,7 +773,7 @@ namespace mango
 
 #ifndef MANGO_LICENSE_DISABLE_APACHE
     #define MANGO_LICENSE_ENABLE_APACHE
-    // components: etc, astcenc, basisu, arm sha, avif
+    // components: etc, astcenc, basisu, arm-sha, avif
 #endif
 
 #ifndef MANGO_LICENSE_DISABLE_GPL
