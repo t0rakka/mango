@@ -135,7 +135,7 @@ void example11()
     code to be more user-friendly. This abstracts all of the platform specific
     minute details into it's own neat compartment for easier maintenance. This also
     allows to add more platforms easier; we already have quite a few targets:
-    - Intel (SSE, SSE2, SSE3, SSE 4.1, AVX, AVX2)
+    - Intel (SSE, SSE2, SSE 4.1, AVX, AVX2)
     - ARM neon
     - PPC Altivec / SPU
 

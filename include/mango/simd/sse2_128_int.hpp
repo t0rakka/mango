@@ -1321,7 +1321,7 @@ namespace mango::simd
 
     static inline s8x16 abs(s8x16 a)
     {
-#if defined(MANGO_ENABLE_SSSE3)
+#if defined(MANGO_ENABLE_SSE4_1)
         return _mm_abs_epi8(a);
 #else
         const __m128i negative = _mm_cmplt_epi16(a, _mm_setzero_si128());
@@ -1507,7 +1507,7 @@ namespace mango::simd
         return _mm_subs_epi16(a, b);
     }
 
-#if defined(MANGO_ENABLE_SSSE3)
+#if defined(MANGO_ENABLE_SSE4_1)
 
     static inline s16x8 hadd(s16x8 a, s16x8 b)
     {
@@ -1597,7 +1597,7 @@ namespace mango::simd
 
     static inline s16x8 abs(s16x8 a)
     {
-#if defined(MANGO_ENABLE_SSSE3)
+#if defined(MANGO_ENABLE_SSE4_1)
         return _mm_abs_epi16(a);
 #else
         __m128i mask = _mm_srai_epi16(a, 15);
@@ -1868,7 +1868,7 @@ namespace mango::simd
 
     static inline s32x4 abs(s32x4 a)
     {
-#if defined(MANGO_ENABLE_SSSE3)
+#if defined(MANGO_ENABLE_SSE4_1)
         return _mm_abs_epi32(a);
 #else
         __m128i mask = _mm_srai_epi32(a, 31);
@@ -1909,7 +1909,7 @@ namespace mango::simd
         return detail::simd128_select_si128(_mm_cmpgt_epi32(_mm_setzero_si128(), temp), a, v);
     }
 
-#if defined(MANGO_ENABLE_SSSE3)
+#if defined(MANGO_ENABLE_SSE4_1)
 
     static inline s32x4 hadd(s32x4 a, s32x4 b)
     {

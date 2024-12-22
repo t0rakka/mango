@@ -124,8 +124,6 @@ namespace mango
         info << "SIMD Features:";
         if (flags & INTEL_SSE) info << " SSE";
         if (flags & INTEL_SSE2) info << " SSE2";
-        if (flags & INTEL_SSE3) info << " SSE3";
-        if (flags & INTEL_SSSE3) info << " SSSE3";
         if (flags & INTEL_SSE4_1) info << " SSE4.1";
         if (flags & INTEL_SSE4_2) info << " SSE4.2";
         if (flags & INTEL_SSE4A) info << " SSE4A";
@@ -159,14 +157,6 @@ namespace mango
 
     #if defined(MANGO_ENABLE_SSE2)
         info << " SSE2";
-    #endif
-
-    #if defined(MANGO_ENABLE_SSE3)
-        info << " SSE3";
-    #endif
-
-    #if defined(MANGO_ENABLE_SSSE3)
-        info << " SSSE3";
     #endif
 
     #if defined(MANGO_ENABLE_SSE4_1)

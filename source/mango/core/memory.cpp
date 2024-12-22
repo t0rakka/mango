@@ -134,7 +134,7 @@ namespace mango
 
 #endif
 
-#if defined(MANGO_ENABLE_SSSE3)
+#if defined(MANGO_ENABLE_SSE4_1)
 
     void byteswap(u32* data, size_t count)
     {

@@ -247,7 +247,7 @@ namespace mango::simd
         return _mm_div_ps(a, _mm_set1_ps(b));
     }
 
-#if defined(MANGO_ENABLE_SSE3)
+#if defined(MANGO_ENABLE_SSE4_1)
 
     static inline f32x4 hadd(f32x4 a, f32x4 b)
     {
@@ -416,10 +416,6 @@ namespace mango::simd
         f32x4 s;
 #if defined(MANGO_ENABLE_SSE4_1)
         s = _mm_dp_ps(a, b, 0xff);
-#elif defined(MANGO_ENABLE_SSE3)
-        s = _mm_mul_ps(a, b);
-        s = _mm_hadd_ps(s, s);
-        s = _mm_hadd_ps(s, s);
 #else
         s = _mm_mul_ps(a, b);
         s = _mm_add_ps(s, shuffle<2, 3, 0, 1>(s));
@@ -750,7 +746,7 @@ namespace mango::simd
         return _mm_div_pd(a, _mm_set1_pd(b));
     }
 
-#if defined(MANGO_ENABLE_SSE3)
+#if defined(MANGO_ENABLE_SSE4_1)
 
     static inline f64x2 hadd(f64x2 a, f64x2 b)
     {

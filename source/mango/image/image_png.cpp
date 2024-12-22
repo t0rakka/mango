@@ -1464,7 +1464,7 @@ namespace
 
     void process_rgb8(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        // SIMD: SSSE3, NEON
+        // SIMD: SSE4.1, NEON
         MANGO_UNREFERENCED(state);
 
         u32* dest = reinterpret_cast<u32*>(dst);
@@ -1565,7 +1565,7 @@ namespace
 
     void process_rgba16(const ColorState& state, int width, u8* dst, const u8* src)
     {
-        // SIMD: SSE2, SSSE3, NEON
+        // SIMD: SSE2, SSE4.1, NEON
         MANGO_UNREFERENCED(state);
 
         u16* dest = reinterpret_cast<u16*>(dst);
@@ -1619,9 +1619,9 @@ namespace
 
 #endif // MANGO_ENABLE_SSE2
 
-#if defined(MANGO_ENABLE_SSSE3)
+#if defined(MANGO_ENABLE_SSE4_1)
 
-    void process_rgba16_ssse3(const ColorState& state, int width, u8* dst, const u8* src)
+    void process_rgba16_sse41(const ColorState& state, int width, u8* dst, const u8* src)
     {
         MANGO_UNREFERENCED(state);
 
@@ -1653,7 +1653,7 @@ namespace
         }
     }
 
-    void process_rgb8_ssse3(const ColorState& state, int width, u8* dst, const u8* src)
+    void process_rgb8_sse41(const ColorState& state, int width, u8* dst, const u8* src)
     {
         MANGO_UNREFERENCED(state);
 
@@ -1691,7 +1691,7 @@ namespace
         }
     }
 
-#endif // MANGO_ENABLE_SSSE3
+#endif // MANGO_ENABLE_SSE4_1
 
 #if defined(MANGO_ENABLE_NEON)
 
@@ -1863,10 +1863,10 @@ namespace
                 else
                 {
                     function = process_rgb8;
-#if defined(MANGO_ENABLE_SSSE3)
-                    if (features & INTEL_SSSE3)
+#if defined(MANGO_ENABLE_SSE4_1)
+                    if (features & INTEL_SSE4_1)
                     {
-                        function = process_rgb8_ssse3;
+                        function = process_rgb8_sse41;
                     }
 #endif
 #if defined(MANGO_ENABLE_NEON)
@@ -1910,10 +1910,10 @@ namespace
                     function = process_rgba16_sse2;
                 }
 #endif
-#if defined(MANGO_ENABLE_SSSE3)
-                if (features & INTEL_SSSE3)
+#if defined(MANGO_ENABLE_SSE4_1)
+                if (features & INTEL_SSE4_1)
                 {
-                    function = process_rgba16_ssse3;
+                    function = process_rgba16_sse41;
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)

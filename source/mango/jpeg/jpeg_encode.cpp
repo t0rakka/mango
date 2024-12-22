@@ -1157,7 +1157,7 @@ namespace
 #if defined(MANGO_ENABLE_SSE4_1)
 
     // ----------------------------------------------------------------------------
-    // encode_block_ssse3
+    // encode_block_sse41
     // ----------------------------------------------------------------------------
 
     constexpr s8 lane(s8 v, s8 offset)
@@ -1176,7 +1176,7 @@ namespace
         return int16x8(_mm_shuffle_epi8(v, s));
     }
 
-    u64 zigzag_ssse3(s16* out, const s16* in)
+    u64 zigzag_sse41(s16* out, const s16* in)
     {
         const __m128i* src = reinterpret_cast<const __m128i *>(in);
 
@@ -1355,13 +1355,13 @@ namespace
     }
 
     static
-    u8* encode_block_ssse3(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
+    u8* encode_block_sse41(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
     {
         s16 block[64];
         encoder.fdct(block, input, channel.qtable);
 
         s16 temp[64];
-        u64 zeromask = zigzag_ssse3(temp, block);
+        u64 zeromask = zigzag_sse41(temp, block);
 
         p = encode_dc(encoder, p, temp[0], channel);
         zeromask >>= 1;
@@ -2137,7 +2137,7 @@ namespace
 #if defined(MANGO_ENABLE_SSE4_1)
 
     static
-    void read_bgr_format_ssse3(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_bgr_format_sse41(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -2170,7 +2170,7 @@ namespace
     }
 
     static
-    void read_rgb_format_ssse3(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_rgb_format_sse41(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -2407,10 +2407,10 @@ namespace
 
             case JPEG_U8_BGR:
 #if defined(MANGO_ENABLE_SSE4_1)
-                if (flags & INTEL_SSSE3)
+                if (flags & INTEL_SSE4_1)
                 {
-                    read_8x8 = read_bgr_format_ssse3;
-                    sampler_name = "BGR 8x8 SSSE3";
+                    read_8x8 = read_bgr_format_sse41;
+                    sampler_name = "BGR 8x8 SSE4.1";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
@@ -2427,10 +2427,10 @@ namespace
 
             case JPEG_U8_RGB:
 #if defined(MANGO_ENABLE_SSE4_1)
-                if (flags & INTEL_SSSE3)
+                if (flags & INTEL_SSE4_1)
                 {
-                    read_8x8 = read_rgb_format_ssse3;
-                    sampler_name = "RGB 8x8 SSSE3";
+                    read_8x8 = read_rgb_format_sse41;
+                    sampler_name = "RGB 8x8 SSE4.1";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
@@ -2526,10 +2526,10 @@ namespace
         const char* encode_name = "Scalar";
 
 #if defined(MANGO_ENABLE_SSE4_1)
-        if (flags & INTEL_SSSE3)
+        if (flags & INTEL_SSE4_1)
         {
-            encode = encode_block_ssse3;
-            encode_name = "SSSE3";
+            encode = encode_block_sse41;
+            encode_name = "SSE4.1";
         }
 #endif
 

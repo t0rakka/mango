@@ -421,14 +421,6 @@
         // 32 bit x86 target has limited support for these
         #if defined(MANGO_CPU_64BIT)
 
-            #ifndef __SSE3__
-            #define __SSE3__
-            #endif
-
-            #ifndef __SSSE3__
-            #define __SSSE3__
-            #endif
-
             #ifndef __SSE4_1__
             #define __SSE4_1__
             #endif
@@ -528,17 +520,9 @@
 
         #ifdef __SSE4_1__
             #define MANGO_ENABLE_SSE4_1
-            #include <smmintrin.h>
-        #endif
-
-        #ifdef __SSSE3__
-            #define MANGO_ENABLE_SSSE3
-            #include <tmmintrin.h>
-        #endif
-
-        #ifdef __SSE3__
-            #define MANGO_ENABLE_SSE3
             #include <pmmintrin.h>
+            #include <tmmintrin.h>
+            #include <smmintrin.h>
         #endif
 
         #ifdef __SSE2__

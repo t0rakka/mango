@@ -144,10 +144,10 @@ namespace mango
         return adler32_remainder(s1, s2, buffer, length);
     }
 
-#elif defined(MANGO_ENABLE_SSSE3)
+#elif defined(MANGO_ENABLE_SSE4_1)
 
     // ----------------------------------------------------------------------------------------
-    // Intel SSSE3 adler32
+    // Intel SSE4.1 adler32
     // ----------------------------------------------------------------------------------------
 
     u32 adler32(u32 adler, ConstMemory memory)
