@@ -114,14 +114,13 @@ namespace mango::image
     void registerImageCodecPNM();
     void registerImageCodecATARI();
     void registerImageCodecC64();
-    void registerImageCodecWEBP();
     void registerImageCodecEXR();
     void registerImageCodecQOI();
     void registerImageCodecPIC();
     void registerImageCodecPSD();
     void registerImageCodecRAW();
 
-#if defined(MANGO_ENABLE_JXL) && defined(MANGO_LICENSE_ENABLE_BSD)
+#if defined(MANGO_ENABLE_JXL) && defined(MANGO_ENABLE_JXL_THREADS) && defined(MANGO_LICENSE_ENABLE_BSD)
     void registerImageCodecJXL();
 #endif
 
@@ -135,6 +134,10 @@ namespace mango::image
 
 #if defined(MANGO_ENABLE_AVIF) && defined(MANGO_LICENSE_ENABLE_APACHE)
     void registerImageCodecAVIF();
+#endif
+
+#if defined(MANGO_ENABLE_WEBP) && defined(MANGO_LICENSE_ENABLE_BSD)
+    void registerImageCodecWEBP();
 #endif
 
     class ImageServer
@@ -165,14 +168,13 @@ namespace mango::image
             registerImageCodecPNM();
             registerImageCodecATARI();
             registerImageCodecC64();
-            registerImageCodecWEBP();
             registerImageCodecEXR();
             registerImageCodecQOI();
             registerImageCodecPIC();
             registerImageCodecPSD();
             registerImageCodecRAW();
 
-#if defined(MANGO_ENABLE_JXL) && defined(MANGO_LICENSE_ENABLE_BSD)
+#if defined(MANGO_ENABLE_JXL) && defined(MANGO_ENABLE_JXL_THREADS) && defined(MANGO_LICENSE_ENABLE_BSD)
             registerImageCodecJXL();
 #endif
 
@@ -187,6 +189,11 @@ namespace mango::image
 #if defined(MANGO_ENABLE_AVIF) && defined(MANGO_LICENSE_ENABLE_APACHE)
             registerImageCodecAVIF();
 #endif
+
+#if defined(MANGO_ENABLE_WEBP) && defined(MANGO_LICENSE_ENABLE_BSD)
+            registerImageCodecWEBP();
+#endif
+
         }
 
         ~ImageServer()

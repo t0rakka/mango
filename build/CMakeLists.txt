@@ -18,17 +18,17 @@ set(MANGO_IMPORT3D_VERSION 0.1.4)
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 
-if("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
     set(COMPILER_MSVC 1)
-elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     set(COMPILER_CLANG 1)
-elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
+elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
     set(COMPILER_INTEL 1)
-elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
     set(COMPILER_GCC 1)
-else()
+else ()
     message(STATUS "Compiler is not supported!")
-endif()
+endif ()
 
 # ------------------------------------------------------------------------------
 # processor
@@ -36,31 +36,21 @@ endif()
 
 message(STATUS "Processor: ${CMAKE_SYSTEM_PROCESSOR}")
 
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
     set(X86_64 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|AMD64.*")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*|amd64.*|AMD64.*")
     set(X86 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)")
     set(AARCH64 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
     set(ARM 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "PPC64*|ppc64*|powerpc64*")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "PPC64*|ppc64*|powerpc64*")
     set(PPC64 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "PPC*|ppc*|powerpc*")
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "PPC*|ppc*|powerpc*")
     set(PPC 1)
-else()
+else ()
     message(STATUS "Processor is not supported!")
-endif()
-
-# ------------------------------------------------------------------------------
-# build
-# ------------------------------------------------------------------------------
-
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-endif()
-
-message(STATUS "Build: ${CMAKE_BUILD_TYPE}")
+endif ()
 
 # ------------------------------------------------------------------------------
 # options
@@ -69,7 +59,6 @@ message(STATUS "Build: ${CMAKE_BUILD_TYPE}")
 OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    ON)
 
 OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
-
 OPTION(ENABLE_SSE2          "Enable SSE2 instructions"                  OFF)
 OPTION(ENABLE_SSE4          "Enable SSE4.1 and SSE4.2 instructions"     ON)
 OPTION(ENABLE_AVX           "Enable AVX instructions"                   OFF)
@@ -99,7 +88,24 @@ if (INTEL_DELUXE)
     set(ENABLE_AES     ON)
     set(ENABLE_FMA     ON)
     set(ENABLE_SHA     ON)
-endif()
+endif ()
+
+# ------------------------------------------------------------------------------
+
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif ()
+
+if (BUILD_SHARED_LIBS AND COMPILER_MSVC)
+    set(BUILD_SHARED_LIBS OFF)
+    #set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif ()
+
+if (BUILD_SHARED_LIBS)
+    message(STATUS "Build: " ${CMAKE_BUILD_TYPE} ", Shared")
+else ()
+    message(STATUS "Build: " ${CMAKE_BUILD_TYPE} ", Static")
+endif ()
 
 # ------------------------------------------------------------------------------
 # source directories
@@ -191,7 +197,7 @@ elseif (EMSCRIPTEN)
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
     )
 
-else()
+else ()
 
     FILE(GLOB CORE_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp"
@@ -222,7 +228,7 @@ else()
         "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/glx/*.cpp"
     )
 
-endif()
+endif ()
 
 SET(MAIN_HEADER             "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/mango.hpp")
 FILE(GLOB IMAGE_HEADERS     "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/image/*.hpp")
@@ -237,26 +243,26 @@ FILE(GLOB MATH_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/math/*.
 FILE(GLOB SIMD_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/simd/*.cpp")
 FILE(GLOB IMPORT3D_SOURCES  "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/import3d/*.cpp")
 
-SOURCE_GROUP("include"            FILES ${MAIN_HEADER})
-SOURCE_GROUP("include/core"       FILES ${CORE_HEADERS})
-SOURCE_GROUP("include/filesystem" FILES ${FILESYSTEM_HEADERS})
-SOURCE_GROUP("include/image"      FILES ${IMAGE_HEADERS})
-SOURCE_GROUP("include/jpeg"       FILES ${JPEG_HEADERS})
-SOURCE_GROUP("include/math"       FILES ${MATH_HEADERS})
-SOURCE_GROUP("include/simd"       FILES ${SIMD_HEADERS})
-SOURCE_GROUP("include/window"     FILES ${WINDOW_HEADERS})
-SOURCE_GROUP("include/opengl"     FILES ${OPENGL_HEADERS})
-SOURCE_GROUP("include/import3d"   FILES ${IMPORT3D_HEADERS})
+SOURCE_GROUP("include"              FILES ${MAIN_HEADER})
+SOURCE_GROUP("include/core"         FILES ${CORE_HEADERS})
+SOURCE_GROUP("include/filesystem"   FILES ${FILESYSTEM_HEADERS})
+SOURCE_GROUP("include/image"        FILES ${IMAGE_HEADERS})
+SOURCE_GROUP("include/jpeg"         FILES ${JPEG_HEADERS})
+SOURCE_GROUP("include/math"         FILES ${MATH_HEADERS})
+SOURCE_GROUP("include/simd"         FILES ${SIMD_HEADERS})
+SOURCE_GROUP("include/window"       FILES ${WINDOW_HEADERS})
+SOURCE_GROUP("include/opengl"       FILES ${OPENGL_HEADERS})
+SOURCE_GROUP("include/import3d"     FILES ${IMPORT3D_HEADERS})
 
-SOURCE_GROUP("source/core"        FILES ${CORE_SOURCES})
-SOURCE_GROUP("source/filesystem"  FILES ${FILESYSTEM_SOURCES})
-SOURCE_GROUP("source/image"       FILES ${IMAGE_SOURCES})
-SOURCE_GROUP("source/jpeg"        FILES ${JPEG_SOURCES})
-SOURCE_GROUP("source/math"        FILES ${MATH_SOURCES})
-SOURCE_GROUP("source/simd"        FILES ${SIMD_SOURCES})
-SOURCE_GROUP("source/window"      FILES ${WINDOW_SOURCES})
-SOURCE_GROUP("source/opengl"      FILES ${OPENGL_SOURCES})
-SOURCE_GROUP("source/import3d"    FILES ${IMPORT3D_SOURCES})
+SOURCE_GROUP("source/core"          FILES ${CORE_SOURCES})
+SOURCE_GROUP("source/filesystem"    FILES ${FILESYSTEM_SOURCES})
+SOURCE_GROUP("source/image"         FILES ${IMAGE_SOURCES})
+SOURCE_GROUP("source/jpeg"          FILES ${JPEG_SOURCES})
+SOURCE_GROUP("source/math"          FILES ${MATH_SOURCES})
+SOURCE_GROUP("source/simd"          FILES ${SIMD_SOURCES})
+SOURCE_GROUP("source/window"        FILES ${WINDOW_SOURCES})
+SOURCE_GROUP("source/opengl"        FILES ${OPENGL_SOURCES})
+SOURCE_GROUP("source/import3d"      FILES ${IMPORT3D_SOURCES})
 
 FILE(GLOB EXTERNAL_LZMA
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzma/*.h"
@@ -335,12 +341,6 @@ if (X86_64 AND (COMPILER_GCC OR COMPILER_CLANG OR COMPILER_INTEL))
     LIST(APPEND EXTERNAL_ZSTD ${EXTERNAL_ZSTD_ASSEMBLY})
 endif ()
 
-FILE(GLOB_RECURSE EXTERNAL_WEBP
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/src/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/sharpyuv/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libwebp/sharpyuv/*.c"
-)
 FILE(GLOB EXTERNAL_ZPNG
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.cpp"
@@ -376,18 +376,9 @@ SOURCE_GROUP("external/zlib"        FILES ${EXTERNAL_ZLIB})
 SOURCE_GROUP("external/lcms"        FILES ${EXTERNAL_LCMS})
 SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
 SOURCE_GROUP("external/zstd"        FILES ${EXTERNAL_ZSTD})
-SOURCE_GROUP("external/webp"        FILES ${EXTERNAL_WEBP})
 SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
 SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
 SOURCE_GROUP("external/fmt"         FILES ${EXTERNAL_FMT})
-
-# ------------------------------------------------------------------------------
-# libraries
-# ------------------------------------------------------------------------------
-
-if (BUILD_SHARED_LIBS AND COMPILER_MSVC)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-endif ()
 
 # ------------------------------------------------------------------------------
 # library: mango
@@ -422,7 +413,6 @@ add_library(mango
     ${EXTERNAL_LCMS}
     ${EXTERNAL_UNRAR}
     ${EXTERNAL_ZSTD}
-    ${EXTERNAL_WEBP}
     ${EXTERNAL_ZPNG}
     ${EXTERNAL_BASISU}
     ${EXTERNAL_FMT}
@@ -442,6 +432,7 @@ set_target_properties(mango PROPERTIES
 add_library(mango-opengl
     ${WINDOW_SOURCES}
     ${OPENGL_SOURCES}
+    ${OPENGL_HEADERS}
 )
 
 set_target_properties(mango-opengl PROPERTIES
@@ -493,7 +484,7 @@ if (CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
 
-if (BUILD_SHARED_LIBS AND WIN32)
+if (WIN32)
 
     set(OpenGL_GL_PREFERENCE LEGACY)
     find_package(OpenGL REQUIRED)
@@ -516,7 +507,7 @@ else ()
             target_link_libraries(mango-opengl PUBLIC "-framework Cocoa")
         else ()
             message("   + XLIB")
-            target_compile_definitions(mango-opengl PUBLIC "-DMANGO_ENABLE_XLIB")
+            target_compile_definitions(mango-opengl PUBLIC "MANGO_ENABLE_XLIB")
             target_link_libraries(mango-opengl PUBLIC ${OPENGL_glx_LIBRARY})
         endif ()
     endif()
@@ -567,6 +558,11 @@ if (PkgConfig_FOUND)
     pkg_check_modules(HEIF QUIET libheif>=1.13.0)
     enable_pkg_if_found(HEIF)
 
+    # brew: webp
+    # vcpkg: libwebp
+    pkg_check_modules(WEBP QUIET libwebp>=1.4.0)
+    enable_pkg_if_found(WEBP)
+
     # brew: isa-l
     # vcpkg: isal
     pkg_check_modules(ISAL QUIET libisal>=2.30.0)
@@ -574,12 +570,12 @@ if (PkgConfig_FOUND)
 
 endif()
 
-message(STATUS "find_package:")
+message(STATUS "Packages:")
 
 # brew: openjpeg
 # vcpkg: openjpeg
 if (NOT JP2_FOUND)
-    find_package(OpenJPEG CONFIG)
+    find_package(OpenJPEG CONFIG QUIET)
     if (OpenJPEG_FOUND)
         message("   + JP2: " ${OpenJPEG_VERSION})
         target_compile_definitions(mango PUBLIC "MANGO_ENABLE_JP2")
@@ -590,7 +586,7 @@ endif ()
 # brew: libavif
 # vcpkg: libavif
 if (NOT AVIF_FOUND)
-    find_package(libavif CONFIG)
+    find_package(libavif CONFIG QUIET)
     if (libavif_FOUND)
         message("   + AVIF: " ${libavif_VERSION})
         target_compile_definitions(mango PUBLIC "MANGO_ENABLE_AVIF")
@@ -601,7 +597,7 @@ endif ()
 # brew libheif
 # vcpkg: libheif
 if (NOT HEIF_FOUND)
-    find_package(libheif CONFIG)
+    find_package(libheif CONFIG QUIET)
     if (libheif_FOUND)
         message("   + HEIF: " ${libheif_VERSION})
         target_compile_definitions(mango PUBLIC "MANGO_ENABLE_HEIF")
@@ -609,10 +605,21 @@ if (NOT HEIF_FOUND)
     endif ()
 endif ()
 
+# brew: webp
+# vcpkg: libwebp
+if (NOT WEBP_FOUND)
+    find_package(WebP CONFIG QUIET)
+    if (WebP_FOUND)
+        message("   + WEBP: " ${WebP_VERSION})
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_WEBP")
+        target_link_libraries(mango PRIVATE WebP::webp)
+    endif ()
+endif ()
+
 # brew: isa-l
 # vcpkg: isal
 if (NOT ISAL_FOUND)
-    find_package(unofficial-isal CONFIG)
+    find_package(unofficial-isal CONFIG QUIET)
     if (unofficial-isal_FOUND)
         message("   + ISAL: UNOFFICIAL")
         target_compile_definitions(mango PUBLIC "MANGO_ENABLE_ISAL")
@@ -638,54 +645,54 @@ elseif (COMPILER_MSVC)
     # enable AES (2008)
     if (ENABLE_AES)
         message(STATUS "Enable: AES (2008)")
-        target_compile_definitions(mango PUBLIC "-D__AES__")
+        target_compile_definitions(mango PUBLIC "__AES__")
     endif ()
 
     # enable CLMUL (2008)
     if (ENABLE_PCLMUL)
         message(STATUS "Enable: PCLMUL (2008)")
-        target_compile_definitions(mango PUBLIC "-D__PCLMUL__")
+        target_compile_definitions(mango PUBLIC "__PCLMUL__")
     endif ()
 
     # popcnt
     if (ENABLE_POPCNT)
         message(STATUS "Enable: POPCNT (2008)")
-        target_compile_definitions(mango PUBLIC "-D__POPCNT__")
+        target_compile_definitions(mango PUBLIC "__POPCNT__")
     endif ()
 
     # half conversion instructions
     if (ENABLE_F16C)
         message(STATUS "Enable: F16C (2012)")
-        target_compile_definitions(mango PUBLIC "-D__F16C__")
+        target_compile_definitions(mango PUBLIC "__F16C__")
     endif ()
 
     # bit manipulation instruction set 1
     if (ENABLE_BMI)
         message(STATUS "Enable: BMI+LZCNT (2013)")
-        target_compile_definitions(mango PUBLIC "-D__BMI__" "-D__LZCNT__")
+        target_compile_definitions(mango PUBLIC "__BMI__" "__LZCNT__")
     endif ()
 
     # bit manipulation instruction set 2
     if (ENABLE_BMI2)
         message(STATUS "Enable: BMI2 (2013)")
-        target_compile_definitions(mango PUBLIC "-D__BMI2__")
+        target_compile_definitions(mango PUBLIC "__BMI2__")
     endif ()
 
     # fused multiply-add
     if (ENABLE_FMA)
         message(STATUS "Enable: FMA (2013)")
-        target_compile_definitions(mango PUBLIC "-D__FMA__")
+        target_compile_definitions(mango PUBLIC "__FMA__")
     endif ()
 
     # sha
     if (ENABLE_SHA)
         message(STATUS "Enable: SHA (2013)")
-        target_compile_definitions(mango PUBLIC "-D__SHA__")
+        target_compile_definitions(mango PUBLIC "__SHA__")
     endif ()
 
     if (ENABLE_AVX512)
         message(STATUS "SIMD: AVX-512 (2015)")
-        target_compile_definitions(mango PUBLIC "-D__AVX512F__" "-D__AVX512DQ__")
+        target_compile_definitions(mango PUBLIC "__AVX512F__" "__AVX512DQ__")
     elseif (ENABLE_AVX2)
         message(STATUS "SIMD: AVX2 (2013)")
         target_compile_options(mango PUBLIC "/arch:AVX2")
@@ -805,22 +812,39 @@ else ()
 endif ()
 
 # ------------------------------------------------------------------------------
+# vcpkg install target
+# ------------------------------------------------------------------------------
+
+if (DEFINED ENV{VCPKG_ROOT})
+
+    if (DEFINED ENV{VCPKG_TARGET_TRIPLET})
+        set(DEFAULT_INSTALL_PATH "$ENV{VCPKG_ROOT}/installed/$ENV{VCPKG_TARGET_TRIPLET}")
+    elseif (DEFINED ENV{VCPKG_DEFAULT_TRIPLET})
+        set(DEFAULT_INSTALL_PATH "$ENV{VCPKG_ROOT}/installed/$ENV{VCPKG_DEFAULT_TRIPLET}")
+    else ()
+        set(DEFAULT_INSTALL_PATH "${CMAKE_BINARY_DIR}/install")
+    endif ()
+
+    set(CMAKE_INSTALL_PREFIX "${DEFAULT_INSTALL_PATH}" CACHE PATH "Install path prefix" FORCE)
+    message(STATUS "Installation path: ${CMAKE_INSTALL_PREFIX}")
+
+endif ()
+
+# ------------------------------------------------------------------------------
 # install
 # ------------------------------------------------------------------------------
 
 target_include_directories(mango
-  PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include/>
-  INTERFACE
-    $<INSTALL_INTERFACE:include/mango/>
-  PRIVATE
-    "${PROJECT_SOURCE_DIR}/../source/external/libwebp"
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include/>
+    INTERFACE
+        $<INSTALL_INTERFACE:include/mango/>
 )
 
 target_include_directories(mango-import3d
-  PRIVATE
-    "${PROJECT_SOURCE_DIR}/../source/external/fastgltf/include"
-    "${PROJECT_SOURCE_DIR}/../source/external/simdjson"
+    PRIVATE
+        "${PROJECT_SOURCE_DIR}/../source/external/fastgltf/include"
+        "${PROJECT_SOURCE_DIR}/../source/external/simdjson"
 )
 
 install(
