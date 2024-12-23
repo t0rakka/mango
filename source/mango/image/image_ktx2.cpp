@@ -884,6 +884,8 @@ namespace
         }
     };
 
+#ifdef MANGO_LICENSE_ENABLE_APACHE
+
     static
     std::mutex g_basis_mutex;
 
@@ -896,6 +898,8 @@ namespace
         std::lock_guard guard(g_basis_mutex);
         basist::basisu_transcoder_init();
     }
+
+#endif // MANGO_LICENSE_ENABLE_APACHE
 
     // ------------------------------------------------------------
     // ImageDecoder
