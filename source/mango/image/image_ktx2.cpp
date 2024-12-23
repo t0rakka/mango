@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -8,8 +8,9 @@
 #include <mango/core/compress.hpp>
 #include <mango/image/image.hpp>
 #include <mango/image/compression.hpp>
-#include "../../external/basisu/transcoder/basisu_transcoder.h"
+
 #include <map>
+#include "../../external/basisu/transcoder/basisu_transcoder.h"
 
 // MANGO TODO: more input validation so that fuzzing tests pass :)
 // MANGO TODO: supercompression transcoding API to ImageDecoder interface.
@@ -887,18 +888,14 @@ namespace
     std::mutex g_basis_mutex;
 
     static
-    void initialize_basis()
+    void initialize_basisu_only_once()
     {
-        g_basis_mutex.lock();
-
         // This should only be called once but it does have initialization
         // flag internally so we just want to make sure there are no concurrent
         // callers entering the initialization while it may be running.
+        std::lock_guard guard(g_basis_mutex);
         basist::basisu_transcoder_init();
-
-        g_basis_mutex.unlock();
     }
-
 
     // ------------------------------------------------------------
     // ImageDecoder
@@ -1238,7 +1235,7 @@ namespace
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
                 //printLine(Print::Info, "memory: {} bytes", memory.size);
 
-                initialize_basis();
+                initialize_basisu_only_once();
                 basist::basisu_lowlevel_etc1s_transcoder transcoder;
 
                 transcoder.decode_palettes(
@@ -1272,7 +1269,7 @@ namespace
 
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
-                initialize_basis();
+                initialize_basisu_only_once();
                 basist::basisu_lowlevel_uastc_transcoder transcoder;
 
                 int xblocks = std::max(1, width / 4);
