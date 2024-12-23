@@ -14,15 +14,6 @@ MANGO_SOURCE := $(LOCAL_PATH)/source
 
 INCLUDE_FASTGLTF := $(LOCAL_PATH)/source/external/fastgltf/include $(LOCAL_PATH)/source/external/simdjson
 
-INCLUDE_WEBP = $(LOCAL_PATH)/source/external/libwebp
-SOURCE_WEBP = external/libwebp/src/dec \
-              external/libwebp/src/enc \
-              external/libwebp/src/dsp \
-              external/libwebp/src/demux \
-              external/libwebp/src/mux \
-              external/libwebp/src/utils \
-              external/libwebp/sharpyuv
-
 SOURCE_DIRS := mango/core \
                mango/core/unix \
                mango/filesystem \
@@ -55,8 +46,7 @@ SOURCE_DIRS := mango/core \
                external/fmt/src \
                external/simdjson \
                external/fastgltf/src \
-               external/mikktspace \
-               $(SOURCE_WEBP)
+               external/mikktspace
 
 SOURCES := $(foreach dir,$(SOURCE_DIRS), \
                          $(wildcard $(MANGO_SOURCE)/$(dir)/*.cpp) \
@@ -108,7 +98,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := mango_shared
 
 LOCAL_SRC_FILES := $(mango_sources)
-LOCAL_C_INCLUDES := $(MANGO_INCLUDE) $(INCLUDE_WEBP) $(INCLUDE_FASTGLTF)
+LOCAL_C_INCLUDES := $(MANGO_INCLUDE) $(INCLUDE_FASTGLTF)
 LOCAL_EXPORT_C_INCLUDES := $(MANGO_INCLUDE)
 LOCAL_CPP_FEATURES += exceptions
 LOCAL_CPPFLAGS := $(OPTIONS) -Wno-extern-c-compat -Wno-\#pragma-messages -Wno-unused-variable
