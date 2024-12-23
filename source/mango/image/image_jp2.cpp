@@ -5,7 +5,7 @@
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 
-#if defined(MANGO_ENABLE_JP2) && defined(MANGO_LICENSE_ENABLE_BSD)
+#if defined(MANGO_ENABLE_JP2)
 
 #include <openjpeg.h>
 

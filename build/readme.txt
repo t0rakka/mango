@@ -1,18 +1,10 @@
 ------------------------------------------------------------------------------------------------
 
 MANGO! Compiling instructions.
-The library does come with many ways to compile itself; hopefully one of them works for you.
 
-------------------------------------------------------------------------------------------------
-* MESON!
-------------------------------------------------------------------------------------------------
-
-0. You should be in the build/ folder
-
-1. meson setup temp
-2. cd temp
-3. ninja
-4. sudo ninja install
+The library is mainly configured through cmake and has all essential external libraries
+included as source code for maximum comfort. Optional libraries can be installed through
+platform-specific means but on Windows it is recommended to use VCPKG for easier integration.
 
 ------------------------------------------------------------------------------------------------
 * CMAKE!
@@ -57,9 +49,10 @@ Load the xcode project and build for release; mango.framework will be generated.
 * VISUAL STUDIO!!!
 ------------------------------------------------------------------------------------------------
 
-1. Load the solution file.
-2. Select configuration (the Release / x64 is a very nice one).
-3. Build!
+Install and configure VCPKG. Generate Visual Studio project files with cmake.
+After compiling the generated project the resulting headers and libraries can be installed,
+the installation targets are configured with cmake and vcpkg. Better instructions are needed
+but if the user is familiar with the workflow with these it should be business as usual.
 
 ------------------------------------------------------------------------------------------------
 * ANDROID!!?

@@ -5,7 +5,7 @@
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 
-#if defined(MANGO_ENABLE_HEIF) && defined(MANGO_LICENSE_ENABLE_GPL)
+#if defined(MANGO_ENABLE_HEIF)
 
 #include <libheif/heif.h>
 

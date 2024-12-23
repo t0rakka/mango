@@ -74,6 +74,12 @@ OPTION(ENABLE_BMI2          "Enable BMI2"                               OFF)
 OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
 OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
 
+OPTION(LICENSE_BSD          "Allow BSD license (required)"              ON)
+OPTION(LICENSE_MIT          "Allow MIT license (required)"              ON)
+OPTION(LICENSE_ZLIB         "Allow ZLIB license (required)"             ON)
+OPTION(LICENSE_APACHE       "Allow APACHE license"                      ON)
+OPTION(LICENSE_GPL          "Allow GPL license"                         ON)
+
 # Option to enable every Intel ISA extension
 option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"           OFF)
 
@@ -473,6 +479,44 @@ set_target_properties(mango-import3d PROPERTIES
 target_link_libraries(mango-import3d PUBLIC mango)
 
 # ------------------------------------------------------------------------------
+# licenses
+# ------------------------------------------------------------------------------
+
+if (LICENSE_BSD)
+    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_ENABLE_BSD")
+    # concurrentqueue, zstd, zpng, xxHash, lzfse, lz4, webp, exr, adler32, intel-sha, jp2, jxl, isal
+else ()
+    message(STATUS "BSD license cannot be disabled")
+    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_ENABLE_BSD")
+endif ()
+
+if (LICENSE_MIT)
+    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_ENABLE_MIT")
+    # libdeflate, lcms, bc, lzav
+else ()
+    message(STATUS "MIT license cannot be disabled")
+    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_ENABLE_MIT")
+endif ()
+
+if (LICENSE_ZLIB)
+    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_ENABLE_ZLIB")
+    # zlib, bzip2, png
+else ()
+    message(STATUS "ZLIB license cannot be disabled")
+    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_ENABLE_ZLIB")
+endif ()
+
+if (LICENSE_APACHE)
+    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_ENABLE_APACHE")
+    # etc, astcenc, basisu, arm-sha, avif
+endif ()
+
+if (LICENSE_GPL)
+    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_ENABLE_GPL")
+    # lzo, heif
+endif ()
+
+# ------------------------------------------------------------------------------
 # platform libraries
 # ------------------------------------------------------------------------------
 
@@ -551,35 +595,47 @@ function (find_module_with_cmake name module libname)
     endif ()
 endfunction ()
 
-# brew: jpeg-xl
-# vcpkg: libjxl
-find_module_with_pkg(JXL libjxl>=0.8.2)
-find_module_with_pkg(JXL_THREADS libjxl_threads>=0.7)
+if (LICENSE_BSD)
 
-# brew: openjpeg
-# vcpkg: openjpeg
-find_module_with_pkg(JP2 libopenjp2>=2.4.0)
-find_module_with_cmake(JP2 OpenJPEG openjp2)
+    # brew: jpeg-xl
+    # vcpkg: libjxl
+    find_module_with_pkg(JXL libjxl>=0.8.2)
+    find_module_with_pkg(JXL_THREADS libjxl_threads>=0.7)
 
-# brew: libavif
-# vcpkg: libavif
-find_module_with_pkg(AVIF libavif>=0.11.1)
-find_module_with_cmake(AVIF libavif avif)
+    # brew: openjpeg
+    # vcpkg: openjpeg
+    find_module_with_pkg(JP2 libopenjp2>=2.4.0)
+    find_module_with_cmake(JP2 OpenJPEG openjp2)
 
-# brew: libheif
-# vcpkg: libheif
-find_module_with_pkg(HEIF libheif>=1.13.0)
-find_module_with_cmake(HEIF libheif heif)
+    # brew: webp
+    # vcpkg: libwebp
+    find_module_with_pkg(WEBP libwebp>=1.4.0)
+    find_module_with_cmake(WEBP WebP WebP::webp)
 
-# brew: webp
-# vcpkg: libwebp
-find_module_with_pkg(WEBP libwebp>=1.4.0)
-find_module_with_cmake(WEBP WebP WebP::webp)
+    # brew: isa-l
+    # vcpkg: isal
+    find_module_with_pkg(ISAL libisal>=2.30.0)
+    find_module_with_cmake(ISAL unofficial-isal unofficial::isal::isal)
 
-# brew: isa-l
-# vcpkg: isal
-find_module_with_pkg(ISAL libisal>=2.30.0)
-find_module_with_cmake(ISAL unofficial-isal unofficial::isal::isal)
+endif ()
+
+if (LICENSE_APACHE)
+
+    # brew: libavif
+    # vcpkg: libavif
+    find_module_with_pkg(AVIF libavif>=0.11.1)
+    find_module_with_cmake(AVIF libavif avif)
+
+endif ()
+
+if (LICENSE_GPL)
+
+    # brew: libheif
+    # vcpkg: libheif
+    find_module_with_pkg(HEIF libheif>=1.13.0)
+    find_module_with_cmake(HEIF libheif heif)
+
+endif ()
 
 # ------------------------------------------------------------------------------
 # configuration

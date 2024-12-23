@@ -5,7 +5,7 @@
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 
-#if defined(MANGO_ENABLE_AVIF) && defined(MANGO_LICENSE_ENABLE_APACHE)
+#if defined(MANGO_ENABLE_AVIF)
 
 #include <avif/avif.h>
 

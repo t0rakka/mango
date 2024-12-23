@@ -5,7 +5,7 @@
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 
-#if defined(MANGO_ENABLE_JXL) && defined(MANGO_ENABLE_JXL_THREADS) && defined(MANGO_LICENSE_ENABLE_BSD)
+#if defined(MANGO_ENABLE_JXL) && defined(MANGO_ENABLE_JXL_THREADS)
 
 #include "jxl/decode.h"
 #include "jxl/decode_cxx.h"
@@ -337,4 +337,4 @@ namespace mango::image
 
 } // namespace mango::image
 
-#endif // MANGO_ENABLE_JXL
+#endif // defined(MANGO_ENABLE_JXL) && defined(MANGO_ENABLE_JXL_THREADS)

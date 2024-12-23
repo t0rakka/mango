@@ -8,7 +8,7 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#if defined(MANGO_ENABLE_WEBP) && defined(MANGO_LICENSE_ENABLE_BSD)
+#if defined(MANGO_ENABLE_WEBP)
 
 #include <webp/decode.h>
 #include <webp/encode.h>
@@ -224,4 +224,4 @@ namespace mango::image
 
 } // namespace mango::image
 
-#endif // MANGO_ENABLE_WEBP
+#endif // defined(MANGO_ENABLE_WEBP)
