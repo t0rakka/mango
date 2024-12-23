@@ -575,7 +575,7 @@ message(STATUS "Packages:")
 # brew: openjpeg
 # vcpkg: openjpeg
 if (NOT JP2_FOUND)
-    find_package(OpenJPEG CONFIG)
+    find_package(OpenJPEG CONFIG QUIET)
     if (OpenJPEG_FOUND)
         message("   + JP2: " ${OpenJPEG_VERSION})
         target_compile_definitions(mango PUBLIC "MANGO_ENABLE_JP2")
@@ -586,7 +586,7 @@ endif ()
 # brew: libavif
 # vcpkg: libavif
 if (NOT AVIF_FOUND)
-    find_package(libavif CONFIG)
+    find_package(libavif CONFIG QUIET)
     if (libavif_FOUND)
         message("   + AVIF: " ${libavif_VERSION})
         target_compile_definitions(mango PUBLIC "MANGO_ENABLE_AVIF")
@@ -597,7 +597,7 @@ endif ()
 # brew libheif
 # vcpkg: libheif
 if (NOT HEIF_FOUND)
-    find_package(libheif CONFIG)
+    find_package(libheif CONFIG QUIET)
     if (libheif_FOUND)
         message("   + HEIF: " ${libheif_VERSION})
         target_compile_definitions(mango PUBLIC "MANGO_ENABLE_HEIF")
@@ -608,7 +608,7 @@ endif ()
 # brew: webp
 # vcpkg: libwebp
 if (NOT WEBP_FOUND)
-    find_package(WebP CONFIG)
+    find_package(WebP CONFIG QUIET)
     if (WebP_FOUND)
         message("   + WEBP: " ${WebP_VERSION})
         target_compile_definitions(mango PUBLIC "MANGO_ENABLE_WEBP")
@@ -619,7 +619,7 @@ endif ()
 # brew: isa-l
 # vcpkg: isal
 if (NOT ISAL_FOUND)
-    find_package(unofficial-isal CONFIG)
+    find_package(unofficial-isal CONFIG QUIET)
     if (unofficial-isal_FOUND)
         message("   + ISAL: UNOFFICIAL")
         target_compile_definitions(mango PUBLIC "MANGO_ENABLE_ISAL")
