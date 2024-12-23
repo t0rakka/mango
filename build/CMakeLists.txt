@@ -507,7 +507,7 @@ else ()
             target_link_libraries(mango-opengl PUBLIC "-framework Cocoa")
         else ()
             message("   + XLIB")
-            target_compile_definitions(mango-opengl PUBLIC "-DMANGO_ENABLE_XLIB")
+            target_compile_definitions(mango-opengl PUBLIC "MANGO_ENABLE_XLIB")
             target_link_libraries(mango-opengl PUBLIC ${OPENGL_glx_LIBRARY})
         endif ()
     endif()
@@ -645,54 +645,54 @@ elseif (COMPILER_MSVC)
     # enable AES (2008)
     if (ENABLE_AES)
         message(STATUS "Enable: AES (2008)")
-        target_compile_definitions(mango PUBLIC "-D__AES__")
+        target_compile_definitions(mango PUBLIC "__AES__")
     endif ()
 
     # enable CLMUL (2008)
     if (ENABLE_PCLMUL)
         message(STATUS "Enable: PCLMUL (2008)")
-        target_compile_definitions(mango PUBLIC "-D__PCLMUL__")
+        target_compile_definitions(mango PUBLIC "__PCLMUL__")
     endif ()
 
     # popcnt
     if (ENABLE_POPCNT)
         message(STATUS "Enable: POPCNT (2008)")
-        target_compile_definitions(mango PUBLIC "-D__POPCNT__")
+        target_compile_definitions(mango PUBLIC "__POPCNT__")
     endif ()
 
     # half conversion instructions
     if (ENABLE_F16C)
         message(STATUS "Enable: F16C (2012)")
-        target_compile_definitions(mango PUBLIC "-D__F16C__")
+        target_compile_definitions(mango PUBLIC "__F16C__")
     endif ()
 
     # bit manipulation instruction set 1
     if (ENABLE_BMI)
         message(STATUS "Enable: BMI+LZCNT (2013)")
-        target_compile_definitions(mango PUBLIC "-D__BMI__" "-D__LZCNT__")
+        target_compile_definitions(mango PUBLIC "__BMI__" "__LZCNT__")
     endif ()
 
     # bit manipulation instruction set 2
     if (ENABLE_BMI2)
         message(STATUS "Enable: BMI2 (2013)")
-        target_compile_definitions(mango PUBLIC "-D__BMI2__")
+        target_compile_definitions(mango PUBLIC "__BMI2__")
     endif ()
 
     # fused multiply-add
     if (ENABLE_FMA)
         message(STATUS "Enable: FMA (2013)")
-        target_compile_definitions(mango PUBLIC "-D__FMA__")
+        target_compile_definitions(mango PUBLIC "__FMA__")
     endif ()
 
     # sha
     if (ENABLE_SHA)
         message(STATUS "Enable: SHA (2013)")
-        target_compile_definitions(mango PUBLIC "-D__SHA__")
+        target_compile_definitions(mango PUBLIC "__SHA__")
     endif ()
 
     if (ENABLE_AVX512)
         message(STATUS "SIMD: AVX-512 (2015)")
-        target_compile_definitions(mango PUBLIC "-D__AVX512F__" "-D__AVX512DQ__")
+        target_compile_definitions(mango PUBLIC "__AVX512F__" "__AVX512DQ__")
     elseif (ENABLE_AVX2)
         message(STATUS "SIMD: AVX2 (2013)")
         target_compile_options(mango PUBLIC "/arch:AVX2")
