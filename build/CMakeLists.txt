@@ -473,7 +473,7 @@ set_target_properties(mango-import3d PROPERTIES
 target_link_libraries(mango-import3d PUBLIC mango)
 
 # ------------------------------------------------------------------------------
-# dependencies
+# platform libraries
 # ------------------------------------------------------------------------------
 
 message(STATUS "Libraries:")
@@ -518,114 +518,68 @@ endif ()
 # external libraries
 # ------------------------------------------------------------------------------
 
-function (enable_pkg_if_found NAME)
-    if (${NAME}_FOUND)
-        message("   + " ${NAME} ": " ${${NAME}_VERSION})
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_${NAME}")
-        target_include_directories(mango PRIVATE ${${NAME}_INCLUDE_DIRS})
-        target_link_libraries(mango PRIVATE ${${NAME}_LIBRARIES})
-    endif ()
-endfunction ()
-
 find_package(PkgConfig QUIET)
 if (PkgConfig_FOUND)
     #message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
+endif ()
 
-    # brew installs libraries to /opt/homebrew/lib on Apple Silicon
-    if (APPLE AND AARCH64)
-        target_link_options(mango PRIVATE "-L/opt/homebrew/lib")
+# brew installs libraries to /opt/homebrew/lib on Apple Silicon
+if (APPLE AND AARCH64)
+    target_link_options(mango PRIVATE "-L/opt/homebrew/lib")
+endif ()
+
+function (find_module_with_pkg name module)
+    if (PkgConfig_FOUND)
+        pkg_check_modules(${name} QUIET ${module})
+        if (${name}_FOUND)
+            message("   + " ${name} ": " ${${name}_VERSION})
+            target_compile_definitions(mango PUBLIC "MANGO_ENABLE_${name}")
+            target_include_directories(mango PRIVATE ${${name}_INCLUDE_DIRS})
+            target_link_libraries(mango PRIVATE ${${name}_LIBRARIES})
+        endif ()
     endif ()
+endfunction ()
 
-    # brew: jpeg-xl
-    # vcpkg: libjxl
-    pkg_check_modules(JXL QUIET libjxl>=0.8.2)
-    pkg_check_modules(JXL_THREADS QUIET libjxl_threads>=0.7)
-    enable_pkg_if_found(JXL)
-    enable_pkg_if_found(JXL_THREADS)
+function (find_module_with_cmake name module libname)
+    if (NOT ${name}_FOUND)
+        find_package(${module} CONFIG QUIET)
+        if (${module}_FOUND)
+            message("   + JP2: " ${${module}_VERSION})
+            target_compile_definitions(mango PUBLIC "MANGO_ENABLE_${name}")
+            target_link_libraries(mango PRIVATE ${libname})
+        endif ()
+    endif ()
+endfunction ()
 
-    # brew: openjpeg
-    # vcpkg: openjpeg
-    pkg_check_modules(JP2 QUIET libopenjp2>=2.4.0)
-    enable_pkg_if_found(JP2)
-
-    # brew: libavif
-    # vcpkg: libavif
-    pkg_check_modules(AVIF QUIET libavif>=0.11.1)
-    enable_pkg_if_found(AVIF)
-
-    # brew: libheif
-    # vcpkg: libheif
-    pkg_check_modules(HEIF QUIET libheif>=1.13.0)
-    enable_pkg_if_found(HEIF)
-
-    # brew: webp
-    # vcpkg: libwebp
-    pkg_check_modules(WEBP QUIET libwebp>=1.4.0)
-    enable_pkg_if_found(WEBP)
-
-    # brew: isa-l
-    # vcpkg: isal
-    pkg_check_modules(ISAL QUIET libisal>=2.30.0)
-    enable_pkg_if_found(ISAL)
-
-endif()
-
-message(STATUS "Packages:")
+# brew: jpeg-xl
+# vcpkg: libjxl
+find_module_with_pkg(JXL libjxl>=0.8.2)
+find_module_with_pkg(JXL_THREADS libjxl_threads>=0.7)
 
 # brew: openjpeg
 # vcpkg: openjpeg
-if (NOT JP2_FOUND)
-    find_package(OpenJPEG CONFIG QUIET)
-    if (OpenJPEG_FOUND)
-        message("   + JP2: " ${OpenJPEG_VERSION})
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_JP2")
-        target_link_libraries(mango PRIVATE openjp2)
-    endif ()
-endif ()
+find_module_with_pkg(JP2 libopenjp2>=2.4.0)
+find_module_with_cmake(JP2 OpenJPEG openjp2)
 
 # brew: libavif
 # vcpkg: libavif
-if (NOT AVIF_FOUND)
-    find_package(libavif CONFIG QUIET)
-    if (libavif_FOUND)
-        message("   + AVIF: " ${libavif_VERSION})
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_AVIF")
-        target_link_libraries(mango PRIVATE avif)
-    endif ()
-endif ()
+find_module_with_pkg(AVIF libavif>=0.11.1)
+find_module_with_cmake(AVIF libavif avif)
 
-# brew libheif
+# brew: libheif
 # vcpkg: libheif
-if (NOT HEIF_FOUND)
-    find_package(libheif CONFIG QUIET)
-    if (libheif_FOUND)
-        message("   + HEIF: " ${libheif_VERSION})
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_HEIF")
-        target_link_libraries(mango PRIVATE heif)
-    endif ()
-endif ()
+find_module_with_pkg(HEIF libheif>=1.13.0)
+find_module_with_cmake(HEIF libheif heif)
 
 # brew: webp
 # vcpkg: libwebp
-if (NOT WEBP_FOUND)
-    find_package(WebP CONFIG QUIET)
-    if (WebP_FOUND)
-        message("   + WEBP: " ${WebP_VERSION})
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_WEBP")
-        target_link_libraries(mango PRIVATE WebP::webp)
-    endif ()
-endif ()
+find_module_with_pkg(WEBP libwebp>=1.4.0)
+find_module_with_cmake(WEBP WebP WebP::webp)
 
 # brew: isa-l
 # vcpkg: isal
-if (NOT ISAL_FOUND)
-    find_package(unofficial-isal CONFIG QUIET)
-    if (unofficial-isal_FOUND)
-        message("   + ISAL: UNOFFICIAL")
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_ISAL")
-        target_link_libraries(mango PRIVATE unofficial::isal::isal)
-    endif ()
-endif ()
+find_module_with_pkg(ISAL libisal>=2.30.0)
+find_module_with_cmake(ISAL unofficial-isal unofficial::isal::isal)
 
 # ------------------------------------------------------------------------------
 # configuration
