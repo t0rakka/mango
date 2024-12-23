@@ -21,14 +21,14 @@
     #define MANGO_OPENGL_CONTEXT_WGL
     #define MANGO_OPENGL_FRAMEBUFFER
 
-    #define GLEXT_PROC(proc, name) extern proc name
-
     #include <GL/gl.h>
     #include <mango/opengl/khronos/GL/glext.h>
-    #include <mango/opengl/func/glext.hpp>
-
     #include <mango/opengl/khronos/GL/wgl.h>
     #include <mango/opengl/khronos/GL/wglext.h>
+
+    #define GLEXT_PROC(proc, name) extern proc name
+
+    #include <mango/opengl/func/glext.hpp>
     #include <mango/opengl/func/wglext.hpp>
 
     #undef GLEXT_PROC
