@@ -1,0 +1,1287 @@
+# ---------------------------------------------------------------------------
+# mango meson.build
+#
+# Copyright (C) 2012-2024 Twilight 3D Finland Oy Ltd.
+# ---------------------------------------------------------------------------
+
+project(
+    'mango', 'c', 'cpp',
+    meson_version: '>= 0.50.0',
+    version: '1.5.2',
+    default_options : [
+        'c_std=c11',
+        'cpp_std=c++17',
+        'objcpp_args=-std=c++17 -Wno-deprecated',
+        'default_library=static',
+        'buildtype=release',
+        'libdir=lib'
+    ]
+)
+
+mango_version = meson.project_version()
+mango_opengl_version = '0.8.3'
+mango_import3d_version = '0.1.4'
+
+if host_machine.system() == 'darwin'
+    add_languages('objcpp')
+endif
+
+disable_simd     = get_option('disable_simd')
+enable_simd      = not disable_simd
+
+enable_neon      = enable_simd and get_option('enable_neon')
+
+enable_sse2      = enable_simd and get_option('enable_sse2')
+enable_sse4      = enable_simd and get_option('enable_sse4')
+enable_avx       = enable_simd and get_option('enable_avx')
+enable_avx2      = enable_simd and get_option('enable_avx2')
+enable_avx512    = enable_simd and get_option('enable_avx512')
+
+enable_aes       = get_option('enable_aes')
+enable_pclmul    = get_option('enable_pclmul')
+enable_popcnt    = get_option('enable_popcnt')
+enable_f16c      = get_option('enable_f16c')
+enable_bmi       = get_option('enable_bmi')
+enable_bmi2      = get_option('enable_bmi2')
+enable_fma       = get_option('enable_fma')
+enable_sha       = get_option('enable_sha')
+
+if get_option('intel_deluxe')
+    enable_avx2      = true
+
+    enable_aes       = true
+    enable_pclmul    = true
+    enable_popcnt    = true
+    enable_f16c      = true
+    enable_bmi       = true
+    enable_bmi2      = true
+    enable_fma       = true
+    enable_sha       = true
+endif
+
+# 32 bit mode can't support these ISA extensions
+if host_machine.cpu_family() == 'x86'
+    enable_sse2      = enable_sse2 or enable_sse4 or enable_avx or enable_avx2 or enable_avx512
+    enable_sse4      = false
+    enable_avx       = false
+    enable_avx2      = false
+    enable_avx512    = false
+
+    enable_aes       = false
+    enable_pclmul    = false
+    enable_popcnt    = false
+    enable_f16c      = false
+    enable_bmi       = false
+    enable_bmi2      = false
+    enable_fma       = false
+    enable_sha       = false
+endif
+
+is_arm = host_machine.cpu_family() == 'arm' or host_machine.cpu_family() == 'aarch64'
+is_x86 = host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
+
+is_windows = host_machine.system() == 'windows'
+is_darwin = host_machine.system() == 'darwin'
+is_linux = host_machine.system() == 'linux'
+
+mango_public_cpp_args = []
+mango_interface_cpp_args = []
+
+# ------------------------------------------------------------------------------
+# mango headers
+# ------------------------------------------------------------------------------
+
+mango_headers = files(
+    '../include/mango/mango.hpp',
+    '../include/mango/window/window.hpp',
+)
+
+mango_core_headers = files(
+    '../include/mango/core/aes.hpp',
+    '../include/mango/core/atomic.hpp',
+    '../include/mango/core/bits.hpp',
+    '../include/mango/core/buffer.hpp',
+    '../include/mango/core/container.hpp',
+    '../include/mango/core/compress.hpp',
+    '../include/mango/core/configure.hpp',
+    '../include/mango/core/core.hpp',
+    '../include/mango/core/cpuinfo.hpp',
+    '../include/mango/core/adler32.hpp',
+    '../include/mango/core/crc32.hpp',
+    '../include/mango/core/dynamic_library.hpp',
+    '../include/mango/core/endian.hpp',
+    '../include/mango/core/exception.hpp',
+    '../include/mango/core/half.hpp',
+    '../include/mango/core/hash.hpp',
+    '../include/mango/core/memory.hpp',
+    '../include/mango/core/pointer.hpp',
+    '../include/mango/core/stream.hpp',
+    '../include/mango/core/string.hpp',
+    '../include/mango/core/system.hpp',
+    '../include/mango/core/thread.hpp',
+    '../include/mango/core/timer.hpp',
+)
+
+mango_core_fmt_headers = files(
+    '../include/mango/core/fmt/args.h',
+    '../include/mango/core/fmt/base.h',
+    '../include/mango/core/fmt/chrono.h',
+    '../include/mango/core/fmt/color.h',
+    '../include/mango/core/fmt/compile.h',
+    '../include/mango/core/fmt/core.h',
+    '../include/mango/core/fmt/format-inl.h',
+    '../include/mango/core/fmt/format.h',
+    '../include/mango/core/fmt/os.h',
+    '../include/mango/core/fmt/ostream.h',
+    '../include/mango/core/fmt/printf.h',
+    '../include/mango/core/fmt/ranges.h',
+    '../include/mango/core/fmt/std.h',
+    '../include/mango/core/fmt/xchar.h',
+)
+
+mango_filesystem_headers = files(
+    '../include/mango/filesystem/file.hpp',
+    '../include/mango/filesystem/fileobserver.hpp',
+    '../include/mango/filesystem/filesystem.hpp',
+    '../include/mango/filesystem/mapper.hpp',
+    '../include/mango/filesystem/path.hpp',
+)
+
+mango_image_headers = files(
+    '../include/mango/image/blitter.hpp',
+    '../include/mango/image/color.hpp',
+    '../include/mango/image/compression.hpp',
+    '../include/mango/image/decoder.hpp',
+    '../include/mango/image/encoder.hpp',
+    '../include/mango/image/exif.hpp',
+    '../include/mango/image/format.hpp',
+    '../include/mango/image/fourcc.hpp',
+    '../include/mango/image/image.hpp',
+    '../include/mango/image/quantize.hpp',
+    '../include/mango/image/surface.hpp',
+)
+
+mango_math_headers = files(
+    '../include/mango/math/accessor.hpp',
+    '../include/mango/math/geometry.hpp',
+    '../include/mango/math/math.hpp',
+    '../include/mango/math/matrix4x4.hpp',
+    '../include/mango/math/matrix.hpp',
+    '../include/mango/math/quaternion.hpp',
+    '../include/mango/math/spline.hpp',
+    '../include/mango/math/srgb.hpp',
+    '../include/mango/math/vector_float16x4.hpp',
+    '../include/mango/math/vector_float32x16.hpp',
+    '../include/mango/math/vector_float32x2.hpp',
+    '../include/mango/math/vector_float32x3.hpp',
+    '../include/mango/math/vector_float32x4.hpp',
+    '../include/mango/math/vector_float32x8.hpp',
+    '../include/mango/math/vector_float64x2.hpp',
+    '../include/mango/math/vector_float64x4.hpp',
+    '../include/mango/math/vector_float64x8.hpp',
+    '../include/mango/math/vector_gather.hpp',
+    '../include/mango/math/vector.hpp',
+    '../include/mango/math/vector_simd.hpp',
+    '../include/mango/math/vector128_int16x8.hpp',
+    '../include/mango/math/vector128_int32x4.hpp',
+    '../include/mango/math/vector128_int64x2.hpp',
+    '../include/mango/math/vector128_int8x16.hpp',
+    '../include/mango/math/vector128_uint16x8.hpp',
+    '../include/mango/math/vector128_uint32x4.hpp',
+    '../include/mango/math/vector128_uint64x2.hpp',
+    '../include/mango/math/vector128_uint8x16.hpp',
+    '../include/mango/math/vector256_int16x16.hpp',
+    '../include/mango/math/vector256_int32x8.hpp',
+    '../include/mango/math/vector256_int64x4.hpp',
+    '../include/mango/math/vector256_int8x32.hpp',
+    '../include/mango/math/vector256_uint16x16.hpp',
+    '../include/mango/math/vector256_uint32x8.hpp',
+    '../include/mango/math/vector256_uint64x4.hpp',
+    '../include/mango/math/vector256_uint8x32.hpp',
+    '../include/mango/math/vector512_int16x32.hpp',
+    '../include/mango/math/vector512_int32x16.hpp',
+    '../include/mango/math/vector512_int64x8.hpp',
+    '../include/mango/math/vector512_int8x64.hpp',
+    '../include/mango/math/vector512_uint16x32.hpp',
+    '../include/mango/math/vector512_uint32x16.hpp',
+    '../include/mango/math/vector512_uint64x8.hpp',
+    '../include/mango/math/vector512_uint8x64.hpp',
+)
+
+mango_simd_headers = files(
+    '../include/mango/simd/altivec_convert.hpp',
+    '../include/mango/simd/altivec_128_float.hpp',
+    '../include/mango/simd/altivec_128_int.hpp',
+    '../include/mango/simd/avx_convert.hpp',
+    '../include/mango/simd/avx_256_float.hpp',
+    '../include/mango/simd/avx_256_int.hpp',
+    '../include/mango/simd/avx2_gather.hpp',
+    '../include/mango/simd/avx2_256_int.hpp',
+    '../include/mango/simd/avx512_convert.hpp',
+    '../include/mango/simd/avx512_gather.hpp',
+    '../include/mango/simd/avx512_128_float.hpp',
+    '../include/mango/simd/avx512_128_int.hpp',
+    '../include/mango/simd/avx512_256_float.hpp',
+    '../include/mango/simd/avx512_256_int.hpp',
+    '../include/mango/simd/avx512_512_float.hpp',
+    '../include/mango/simd/avx512_512_int.hpp',
+    '../include/mango/simd/common_gather.hpp',
+    '../include/mango/simd/common_mask.hpp',
+    '../include/mango/simd/common.hpp',
+    '../include/mango/simd/composite_256_float.hpp',
+    '../include/mango/simd/composite_256_int.hpp',
+    '../include/mango/simd/composite_512_float.hpp',
+    '../include/mango/simd/composite_512_int.hpp',
+    '../include/mango/simd/msa_convert.hpp',
+    '../include/mango/simd/msa_128_float.hpp',
+    '../include/mango/simd/msa_128_int.hpp',
+    '../include/mango/simd/neon_convert.hpp',
+    '../include/mango/simd/neon_128_float.hpp',
+    '../include/mango/simd/neon_128_int.hpp',
+    '../include/mango/simd/scalar_convert.hpp',
+    '../include/mango/simd/scalar_detail.hpp',
+    '../include/mango/simd/scalar_64_float.hpp',
+    '../include/mango/simd/scalar_64_int.hpp',
+    '../include/mango/simd/scalar_128_float.hpp',
+    '../include/mango/simd/scalar_128_int.hpp',
+    '../include/mango/simd/simd.hpp',
+    '../include/mango/simd/sse2_convert.hpp',
+    '../include/mango/simd/sse2_128_float.hpp',
+    '../include/mango/simd/sse2_128_int.hpp',
+    '../include/mango/simd/wasm_convert.hpp',
+    '../include/mango/simd/wasm_128_float.hpp',
+    '../include/mango/simd/wasm_128_int.hpp',
+)
+
+mango_opengl_headers = files(
+    '../include/mango/opengl/opengl.hpp',
+    '../include/mango/opengl/context.hpp',
+    '../include/mango/opengl/utilities.hpp',
+    '../include/mango/opengl/framebuffer.hpp',
+    '../include/mango/opengl/func/glcorearb.hpp',
+    '../include/mango/opengl/func/glext.hpp',
+    '../include/mango/opengl/func/glxext.hpp',
+    '../include/mango/opengl/func/wglext.hpp',
+    '../include/mango/opengl/khronos/EGL/egl.h',
+    '../include/mango/opengl/khronos/EGL/eglext.h',
+    '../include/mango/opengl/khronos/EGL/eglplatform.h',
+    '../include/mango/opengl/khronos/GL/glcorearb.h',
+    '../include/mango/opengl/khronos/GL/glext.h',
+    '../include/mango/opengl/khronos/GL/glxext.h',
+    '../include/mango/opengl/khronos/GL/wgl.h',
+    '../include/mango/opengl/khronos/GL/wglext.h',
+    '../include/mango/opengl/khronos/GLES/egl.h',
+    '../include/mango/opengl/khronos/GLES/gl.h',
+    '../include/mango/opengl/khronos/GLES/glext.h',
+    '../include/mango/opengl/khronos/GLES/glplatform.h',
+    '../include/mango/opengl/khronos/GLES2/gl2.h',
+    '../include/mango/opengl/khronos/GLES2/gl2ext.h',
+    '../include/mango/opengl/khronos/GLES2/gl2platform.h',
+    '../include/mango/opengl/khronos/GLES3/gl3.h',
+    '../include/mango/opengl/khronos/GLES3/gl31.h',
+    '../include/mango/opengl/khronos/GLES3/gl32.h',
+    '../include/mango/opengl/khronos/GLES3/gl3platform.h',
+    '../include/mango/opengl/khronos/KHR/khrplatform.h',
+)
+
+mango_import3d_headers = files(
+    '../include/mango/import3d/import3d.hpp',
+    '../include/mango/import3d/mesh.hpp',
+    '../include/mango/import3d/import_obj.hpp',
+    '../include/mango/import3d/import_3ds.hpp',
+    '../include/mango/import3d/import_lwo.hpp',
+    '../include/mango/import3d/import_fbx.hpp',
+    '../include/mango/import3d/import_gltf.hpp',
+)
+
+# ------------------------------------------------------------------------------
+# mango sources
+# ------------------------------------------------------------------------------
+
+mango_core_sources = files(
+    '../source/mango/core/aes.cpp',
+    '../source/mango/core/buffer.cpp',
+    '../source/mango/core/compress.cpp',
+    '../source/mango/core/cpuinfo.cpp',
+    '../source/mango/core/adler32.cpp',
+    '../source/mango/core/crc32.cpp',
+    '../source/mango/core/hash.cpp',
+    '../source/mango/core/md5.cpp',
+    '../source/mango/core/memory.cpp',
+    '../source/mango/core/sha1.cpp',
+    '../source/mango/core/sha2.cpp',
+    '../source/mango/core/string.cpp',
+    '../source/mango/core/system.cpp',
+    '../source/mango/core/thread.cpp',
+    '../source/mango/core/timer.cpp'
+)
+
+mango_image_sources = files(
+    '../source/mango/image/blitter.cpp',
+    '../source/mango/image/block.cpp',
+    '../source/mango/image/block_astc.cpp',
+    '../source/mango/image/block_dxt.cpp',
+    '../source/mango/image/block_fxt1.cpp',
+    '../source/mango/image/block_pvrtc.cpp',
+    '../source/mango/image/block_yuv.cpp',
+    '../source/mango/image/color.cpp',
+    '../source/mango/image/exif.cpp',
+    '../source/mango/image/format.cpp',
+    '../source/mango/image/image_astc.cpp',
+    '../source/mango/image/image_atari.cpp',
+    '../source/mango/image/image_bmp.cpp',
+    '../source/mango/image/image_c64.cpp',
+    '../source/mango/image/image.cpp',
+    '../source/mango/image/image_dds.cpp',
+    '../source/mango/image/image_gif.cpp',
+    '../source/mango/image/image_hdr.cpp',
+    '../source/mango/image/image_iff.cpp',
+    '../source/mango/image/image_jpg.cpp',
+    '../source/mango/image/image_jxl.cpp',
+    '../source/mango/image/image_jp2.cpp',
+    '../source/mango/image/image_heif.cpp',
+    '../source/mango/image/image_avif.cpp',
+    '../source/mango/image/image_ktx.cpp',
+    '../source/mango/image/image_ktx2.cpp',
+    '../source/mango/image/image_pcx.cpp',
+    '../source/mango/image/image_pkm.cpp',
+    '../source/mango/image/image_png.cpp',
+    '../source/mango/image/image_pnm.cpp',
+    '../source/mango/image/image_pvr.cpp',
+    '../source/mango/image/image_sgi.cpp',
+    '../source/mango/image/image_tga.cpp',
+    '../source/mango/image/image_webp.cpp',
+    '../source/mango/image/image_exr.cpp',
+    '../source/mango/image/image_zpng.cpp',
+    '../source/mango/image/image_qoi.cpp',
+    '../source/mango/image/image_pic.cpp',
+    '../source/mango/image/image_psd.cpp',
+    '../source/mango/image/image_raw.cpp',
+    '../source/mango/image/quantize.cpp',
+    '../source/mango/image/surface.cpp'
+)
+
+mango_jpeg_sources = files(
+    '../source/mango/jpeg/jpeg_arithmetic.cpp',
+    '../source/mango/jpeg/jpeg_decode.cpp',
+    '../source/mango/jpeg/jpeg_encode.cpp',
+    '../source/mango/jpeg/jpeg_huffman.cpp',
+    '../source/mango/jpeg/jpeg_idct.cpp',
+    '../source/mango/jpeg/jpeg_process.cpp'
+)
+
+mango_math_sources = files(
+    '../source/mango/math/geometry.cpp',
+    '../source/mango/math/math.cpp',
+    '../source/mango/math/simd.cpp'
+)
+
+if is_windows
+    mango_core_sources += files(
+        '../source/mango/core/win32/dynamic_library.cpp'
+    )
+else
+    mango_core_sources += files(
+        '../source/mango/core/unix/dynamic_library.cpp'
+    )
+endif
+
+mango_filesystem_sources = files(
+    '../source/mango/filesystem/file.cpp',
+    '../source/mango/filesystem/mapper.cpp',
+    '../source/mango/filesystem/mapper_mgx.cpp',
+    '../source/mango/filesystem/mapper_rar.cpp',
+    '../source/mango/filesystem/mapper_zip.cpp',
+    '../source/mango/filesystem/path.cpp'
+)
+
+if is_windows
+    mango_filesystem_sources += files(
+        '../source/mango/filesystem/win32/file_observer.cpp',
+        '../source/mango/filesystem/win32/file_stream.cpp',
+        '../source/mango/filesystem/win32/mapper_file.cpp'
+    )
+else
+    mango_filesystem_sources += files(
+        '../source/mango/filesystem/unix/file_observer.cpp',
+        '../source/mango/filesystem/unix/file_stream.cpp',
+        '../source/mango/filesystem/unix/mapper_file.cpp'
+    )
+endif
+
+mango_opengl_sources = files(
+    '../source/mango/opengl/context.cpp',
+    '../source/mango/opengl/utilities.cpp',
+    '../source/mango/opengl/framebuffer.cpp'
+)
+
+if is_windows
+    mango_window_sources = files(
+        '../source/mango/window/win32/win32_window.cpp'
+    )
+    mango_opengl_sources += files(
+        '../source/mango/opengl/wgl/wgl_context.cpp'
+    )
+elif is_darwin
+    mango_window_sources = files(
+        '../source/mango/window/cocoa/cocoa_window.mm'
+    )
+    mango_opengl_sources += files(
+        '../source/mango/opengl/cocoa/cocoa_context.mm',
+        '../source/mango/opengl/cocoa/CustomOpenGLView.mm'
+    )
+else
+    mango_window_sources = files(
+        '../source/mango/window/xlib/xlib_window.cpp'
+    )
+    mango_opengl_sources += files(
+        '../source/mango/opengl/glx/glx_context.cpp',
+        '../source/mango/opengl/egl/egl_context.cpp'
+    )
+endif
+
+mango_import3d_sources = files(
+    '../source/mango/import3d/mesh.cpp',
+    '../source/mango/import3d/import_obj.cpp',
+    '../source/mango/import3d/import_3ds.cpp',
+    '../source/mango/import3d/import_lwo.cpp',
+    '../source/mango/import3d/import_fbx.cpp',
+    '../source/mango/import3d/import_gltf.cpp',
+)
+
+# ------------------------------------------------------------------------------
+# external sources + headers
+# ------------------------------------------------------------------------------
+
+external_headers = files(
+    '../source/external/aes/bc_aes.h',
+    '../source/external/bc/BC.h',
+    '../source/external/zpng/zpng.h',
+    '../source/external/bzip2/bzlib_private.h',
+    '../source/external/bzip2/bzlib.h',
+    '../source/external/lz4/lz4hc.h',
+    '../source/external/lz4/lz4.h',
+    '../source/external/lzo/lzoconf.h',
+    '../source/external/lzo/minilzo.h',
+    '../source/external/lzo/lzodefs.h',
+    '../source/external/concurrentqueue/atomicops.h',
+    '../source/external/concurrentqueue/concurrentqueue.h',
+    '../source/external/concurrentqueue/readerwriterqueue.h'
+)
+
+external_lzma_headers = files(
+    '../source/external/lzma/7zTypes.h',
+    '../source/external/lzma/Alloc.h',
+    '../source/external/lzma/Compiler.h',
+    '../source/external/lzma/CpuArch.h',
+    '../source/external/lzma/LzFind.h',
+    '../source/external/lzma/LzFindMt.h',
+    '../source/external/lzma/LzHash.h',
+    '../source/external/lzma/Lzma2Dec.h',
+    '../source/external/lzma/Lzma2Enc.h',
+    '../source/external/lzma/LzmaDec.h',
+    '../source/external/lzma/LzmaEnc.h',
+    '../source/external/lzma/LzmaLib.h',
+    '../source/external/lzma/Ppmd.h',
+    '../source/external/lzma/Ppmd7.h',
+    '../source/external/lzma/Ppmd8.h',
+    '../source/external/lzma/Precomp.h',
+    '../source/external/lzma/Threads.h'
+)
+
+external_lzma_sources = files(
+    '../source/external/lzma/Alloc.c',
+    '../source/external/lzma/CpuArch.c',
+    '../source/external/lzma/LzFind.c',
+    '../source/external/lzma/LzFindMt.c',
+    '../source/external/lzma/LzFindOpt.c',
+    '../source/external/lzma/Lzma2Dec.c',
+    '../source/external/lzma/Lzma2Enc.c',
+    '../source/external/lzma/LzmaDec.c',
+    '../source/external/lzma/LzmaEnc.c',
+    '../source/external/lzma/LzmaLib.c',
+    '../source/external/lzma/Ppmd7.c',
+    '../source/external/lzma/Ppmd7Dec.c',
+    '../source/external/lzma/Ppmd7Enc.c',
+    '../source/external/lzma/Ppmd8.c',
+    '../source/external/lzma/Ppmd8Dec.c',
+    '../source/external/lzma/Ppmd8Enc.c',
+    '../source/external/lzma/Threads.c'
+)
+
+external_aes_sources = files(
+    '../source/external/aes/bc_aes.cpp'
+)
+
+external_bc_sources = files(
+    '../source/external/bc/BC4BC5.cpp',
+    '../source/external/bc/BC6HBC7.cpp',
+    '../source/external/bc/BC.cpp'
+)
+
+external_bzip2_sources = files(
+    '../source/external/bzip2/bz_blocksort.c',
+    '../source/external/bzip2/bz_compress.c',
+    '../source/external/bzip2/bz_crctable.c',
+    '../source/external/bzip2/bz_decompress.c',
+    '../source/external/bzip2/bz_huffman.c',
+    '../source/external/bzip2/bzlib.c',
+    '../source/external/bzip2/bz_randtable.c'
+)
+
+external_google_sources = files(
+    '../source/external/google/etc1.cpp',
+    '../source/external/google/etc.cpp'
+)
+
+external_lz4_sources = files(
+    '../source/external/lz4/lz4.c',
+    '../source/external/lz4/lz4hc.c'
+)
+
+external_lzfse_headers = files(
+    '../source/external/lzfse/lzfse_fse.h',
+    '../source/external/lzfse/lzfse.h',
+    '../source/external/lzfse/lzfse_internal.h',
+    '../source/external/lzfse/lzvn_encode_base.h',
+    '../source/external/lzfse/lzvn_decode_base.h',
+    '../source/external/lzfse/lzfse_tunables.h',
+    '../source/external/lzfse/lzfse_encode_tables.h'
+)
+
+external_lzfse_sources = files(
+    '../source/external/lzfse/lzfse_decode_base.c',
+    '../source/external/lzfse/lzfse_decode.c',
+    '../source/external/lzfse/lzfse_encode_base.c',
+    '../source/external/lzfse/lzfse_encode.c',
+    '../source/external/lzfse/lzfse_fse.c',
+    '../source/external/lzfse/lzvn_decode_base.c',
+    '../source/external/lzfse/lzvn_encode_base.c',
+)
+
+external_lzo_sources = files(
+    '../source/external/lzo/minilzo.c'
+)
+
+external_deflate_headers = files(
+    '../source/external/libdeflate/libdeflate.h',
+    '../source/external/libdeflate/common_defs.h',
+    '../source/external/libdeflate/lib/arm/adler32_impl.h',
+    '../source/external/libdeflate/lib/arm/cpu_features.h',
+    '../source/external/libdeflate/lib/arm/crc32_impl.h',
+    '../source/external/libdeflate/lib/arm/crc32_pmull_helpers.h',
+    '../source/external/libdeflate/lib/arm/crc32_pmull_wide.h',
+    '../source/external/libdeflate/lib/arm/matchfinder_impl.h',
+    '../source/external/libdeflate/lib/x86/adler32_impl.h',
+    '../source/external/libdeflate/lib/x86/cpu_features.h',
+    '../source/external/libdeflate/lib/x86/crc32_impl.h',
+    '../source/external/libdeflate/lib/x86/crc32_pclmul_template.h',
+    '../source/external/libdeflate/lib/x86/decompress_impl.h',
+    '../source/external/libdeflate/lib/x86/matchfinder_impl.h',
+    '../source/external/libdeflate/lib/bt_matchfinder.h',
+    '../source/external/libdeflate/lib/cpu_features_common.h',
+    '../source/external/libdeflate/lib/crc32_multipliers.h',
+    '../source/external/libdeflate/lib/crc32_tables.h',
+    '../source/external/libdeflate/lib/decompress_template.h',
+    '../source/external/libdeflate/lib/deflate_compress.h',
+    '../source/external/libdeflate/lib/deflate_constants.h',
+    '../source/external/libdeflate/lib/gzip_constants.h',
+    '../source/external/libdeflate/lib/hc_matchfinder.h',
+    '../source/external/libdeflate/lib/ht_matchfinder.h',
+    '../source/external/libdeflate/lib/lib_common.h',
+    '../source/external/libdeflate/lib/matchfinder_common.h',
+    '../source/external/libdeflate/lib/zlib_constants.h'
+)
+
+external_deflate_sources = files(
+    '../source/external/libdeflate/lib/deflate_compress.c',
+    '../source/external/libdeflate/lib/deflate_decompress.c',
+    '../source/external/libdeflate/lib/gzip_compress.c',
+    '../source/external/libdeflate/lib/gzip_decompress.c',
+    '../source/external/libdeflate/lib/adler32.c',
+    '../source/external/libdeflate/lib/crc32.c',
+    '../source/external/libdeflate/lib/utils.c',
+    '../source/external/libdeflate/lib/zlib_compress.c',
+    '../source/external/libdeflate/lib/zlib_decompress.c',
+)
+
+if is_arm
+    external_deflate_sources += files(
+        '../source/external/libdeflate/lib/arm/cpu_features.c'
+    )
+elif is_x86
+    external_deflate_sources += files(
+        '../source/external/libdeflate/lib/x86/cpu_features.c',
+    )
+endif
+
+external_zlib_headers = files(
+    '../source/external/zlib/crc32.h',
+    '../source/external/zlib/inffast.h',
+    '../source/external/zlib/inflate.h',
+    '../source/external/zlib/trees.h',
+    '../source/external/zlib/zlib.h',
+    '../source/external/zlib/deflate.h',
+    '../source/external/zlib/inffixed.h',
+    '../source/external/zlib/inftrees.h',
+    '../source/external/zlib/zconf.h',
+    '../source/external/zlib/zutil.h'
+)
+
+external_zlib_sources = files(
+    '../source/external/zlib/adler32.c',
+    '../source/external/zlib/crc32.c',
+    '../source/external/zlib/infback.c',
+    '../source/external/zlib/inflate.c',
+    '../source/external/zlib/trees.c',
+    '../source/external/zlib/zutil.c',
+    '../source/external/zlib/compress.c',
+    '../source/external/zlib/deflate.c',
+    '../source/external/zlib/inffast.c',
+    '../source/external/zlib/inftrees.c',
+    '../source/external/zlib/uncompr.c',
+)
+
+external_unrar_headers = files(
+    '../source/external/unrar/rarvm.hpp',
+    '../source/external/unrar/suballoc.hpp',
+    '../source/external/unrar/array.hpp',
+    '../source/external/unrar/crypt.hpp',
+    '../source/external/unrar/compress.hpp',
+    '../source/external/unrar/rdwrfn.hpp',
+    '../source/external/unrar/model.hpp',
+    '../source/external/unrar/unpack.hpp',
+    '../source/external/unrar/crc.hpp',
+    '../source/external/unrar/rar.hpp',
+    '../source/external/unrar/getbits.hpp',
+    '../source/external/unrar/rijndael.hpp'
+)
+
+external_unrar_sources = files(
+    '../source/external/unrar/crc.cpp',
+    '../source/external/unrar/crypt.cpp',
+    '../source/external/unrar/getbits.cpp',
+    '../source/external/unrar/rarvm.cpp',
+    '../source/external/unrar/rdwrfn.cpp',
+    '../source/external/unrar/rijndael.cpp',
+    '../source/external/unrar/unpack.cpp'
+)
+
+external_zstd_headers = files(
+    '../source/external/zstd/common/allocations.h',
+    '../source/external/zstd/common/bits.h',
+    '../source/external/zstd/common/bitstream.h',
+    '../source/external/zstd/common/compiler.h',
+    '../source/external/zstd/common/cpu.h',
+    '../source/external/zstd/common/debug.h',
+    '../source/external/zstd/common/error_private.h',
+    '../source/external/zstd/common/fse.h',
+    '../source/external/zstd/common/huf.h',
+    '../source/external/zstd/common/mem.h',
+    '../source/external/zstd/common/pool.h',
+    '../source/external/zstd/common/portability_macros.h',
+    '../source/external/zstd/common/threading.h',
+    '../source/external/zstd/common/xxhash.h',
+    '../source/external/zstd/common/zstd_deps.h',
+    '../source/external/zstd/common/zstd_internal.h',
+    '../source/external/zstd/common/zstd_trace.h',
+    '../source/external/zstd/compress/clevels.h',
+    '../source/external/zstd/compress/hist.h',
+    '../source/external/zstd/compress/zstd_compress_internal.h',
+    '../source/external/zstd/compress/zstd_compress_literals.h',
+    '../source/external/zstd/compress/zstd_compress_sequences.h',
+    '../source/external/zstd/compress/zstd_compress_superblock.h',
+    '../source/external/zstd/compress/zstd_cwksp.h',
+    '../source/external/zstd/compress/zstd_double_fast.h',
+    '../source/external/zstd/compress/zstd_fast.h',
+    '../source/external/zstd/compress/zstd_lazy.h',
+    '../source/external/zstd/compress/zstd_ldm_geartab.h',
+    '../source/external/zstd/compress/zstd_ldm.h',
+    '../source/external/zstd/compress/zstdmt_compress.h',
+    '../source/external/zstd/compress/zstd_opt.h',
+    '../source/external/zstd/compress/zstd_preSplit.h',
+    '../source/external/zstd/decompress/zstd_ddict.h',
+    '../source/external/zstd/decompress/zstd_decompress_block.h',
+    '../source/external/zstd/decompress/zstd_decompress_internal.h',
+    '../source/external/zstd/zstd.h',
+    '../source/external/zstd/zstd_errors.h'
+)
+
+external_zstd_sources = files(
+    '../source/external/zstd/common/zstd_common.c',
+    '../source/external/zstd/common/fse_decompress.c',
+    '../source/external/zstd/common/pool.c',
+    '../source/external/zstd/common/error_private.c',
+    '../source/external/zstd/common/threading.c',
+    '../source/external/zstd/common/entropy_common.c',
+    '../source/external/zstd/common/debug.c',
+    '../source/external/zstd/common/xxhash.c',
+    '../source/external/zstd/compress/zstd_fast.c',
+    '../source/external/zstd/compress/zstd_compress_literals.c',
+    '../source/external/zstd/compress/huf_compress.c',
+    '../source/external/zstd/compress/zstd_compress_superblock.c',
+    '../source/external/zstd/compress/zstd_opt.c',
+    '../source/external/zstd/compress/zstd_preSplit.c',
+    '../source/external/zstd/compress/hist.c',
+    '../source/external/zstd/compress/zstd_ldm.c',
+    '../source/external/zstd/compress/fse_compress.c',
+    '../source/external/zstd/compress/zstd_compress.c',
+    '../source/external/zstd/compress/zstd_compress_sequences.c',
+    '../source/external/zstd/compress/zstd_double_fast.c',
+    '../source/external/zstd/compress/zstdmt_compress.c',
+    '../source/external/zstd/compress/zstd_lazy.c',
+    '../source/external/zstd/decompress/huf_decompress_amd64.S',
+    '../source/external/zstd/decompress/huf_decompress.c',
+    '../source/external/zstd/decompress/zstd_decompress.c',
+    '../source/external/zstd/decompress/zstd_decompress_block.c',
+    '../source/external/zstd/decompress/zstd_ddict.c'
+)
+
+external_zpng_sources = files(
+    '../source/external/zpng/zpng.cpp'
+)
+
+external_basisu_headers = files(
+    '../source/external/basisu/transcoder/basisu.h',
+    '../source/external/basisu/transcoder/basisu_containers.h',
+    '../source/external/basisu/transcoder/basisu_containers_impl.h',
+    '../source/external/basisu/transcoder/basisu_file_headers.h',
+    '../source/external/basisu/transcoder/basisu_transcoder.h',
+    '../source/external/basisu/transcoder/basisu_transcoder_internal.h',
+    '../source/external/basisu/transcoder/basisu_transcoder_uastc.h'
+)
+
+external_basisu_sources = files(
+    '../source/external/basisu/transcoder/basisu_transcoder.cpp'
+)
+
+external_astc_headers = files(
+    '../source/external/astc/astcenc.h',
+    '../source/external/astc/astcenc_diagnostic_trace.h',
+    '../source/external/astc/astcenc_internal_entry.h',
+    '../source/external/astc/astcenc_internal.h',
+    '../source/external/astc/astcenc_mathlib.h',
+    '../source/external/astc/astcenc_vecmathlib.h',
+    '../source/external/astc/astcenc_vecmathlib_avx2_8.h',
+    '../source/external/astc/astcenc_vecmathlib_common_4.h',
+    '../source/external/astc/astcenc_vecmathlib_neon_4.h',
+    '../source/external/astc/astcenc_vecmathlib_none_4.h',
+    '../source/external/astc/astcenc_vecmathlib_sse_4.h',
+    '../source/external/astc/astcenc_vecmathlib_sve_8.h'
+)
+
+external_astc_sources = files(
+    '../source/external/astc/astcenc_averages_and_directions.cpp',
+    '../source/external/astc/astcenc_block_sizes.cpp',
+    '../source/external/astc/astcenc_color_quantize.cpp',
+    '../source/external/astc/astcenc_color_unquantize.cpp',
+    '../source/external/astc/astcenc_compress_symbolic.cpp',
+    '../source/external/astc/astcenc_compute_variance.cpp',
+    '../source/external/astc/astcenc_decompress_symbolic.cpp',
+    '../source/external/astc/astcenc_diagnostic_trace.cpp',
+    '../source/external/astc/astcenc_entry.cpp',
+    '../source/external/astc/astcenc_find_best_partitioning.cpp',
+    '../source/external/astc/astcenc_ideal_endpoints_and_weights.cpp',
+    '../source/external/astc/astcenc_image.cpp',
+    '../source/external/astc/astcenc_integer_sequence.cpp',
+    '../source/external/astc/astcenc_mathlib.cpp',
+    '../source/external/astc/astcenc_mathlib_softfloat.cpp',
+    '../source/external/astc/astcenc_partition_tables.cpp',
+    '../source/external/astc/astcenc_percentile_tables.cpp',
+    '../source/external/astc/astcenc_pick_best_endpoint_format.cpp',
+    '../source/external/astc/astcenc_quantization.cpp',
+    '../source/external/astc/astcenc_symbolic_physical.cpp',
+    '../source/external/astc/astcenc_weight_align.cpp',
+    '../source/external/astc/astcenc_weight_quant_xfer_tables.cpp'
+)
+
+external_lcms_headers = files(
+    '../source/external/lcms/lcms2.h',
+    '../source/external/lcms/lcms2_plugin.h',
+    '../source/external/lcms/lcms2_internal.h'
+)
+
+external_lcms_sources = files(
+    '../source/external/lcms/cmsalpha.c',
+    '../source/external/lcms/cmscnvrt.c',
+    '../source/external/lcms/cmsgmt.c',
+    '../source/external/lcms/cmsio0.c',
+    '../source/external/lcms/cmsmd5.c',
+    '../source/external/lcms/cmsopt.c',
+    '../source/external/lcms/cmsplugin.c',
+    '../source/external/lcms/cmssm.c',
+    '../source/external/lcms/cmswtpnt.c',
+    '../source/external/lcms/cmscam02.c',
+    '../source/external/lcms/cmserr.c',
+    '../source/external/lcms/cmshalf.c',
+    '../source/external/lcms/cmsio1.c',
+    '../source/external/lcms/cmsmtrx.c',
+    '../source/external/lcms/cmspack.c',
+    '../source/external/lcms/cmsps2.c',
+    '../source/external/lcms/cmstypes.c',
+    '../source/external/lcms/cmsxform.c',
+    '../source/external/lcms/cmscgats.c',
+    '../source/external/lcms/cmsgamma.c',
+    '../source/external/lcms/cmsintrp.c',
+    '../source/external/lcms/cmslut.c',
+    '../source/external/lcms/cmsnamed.c',
+    '../source/external/lcms/cmspcs.c',
+    '../source/external/lcms/cmssamp.c',
+    '../source/external/lcms/cmsvirt.c'
+)
+
+external_fmt_sources = files(
+    '../source/external/fmt/src/format.cc',
+)
+
+external_mikktspace_headers = files(
+    '../source/external/mikktspace/mikktspace.h'
+)
+
+external_mikktspace_sources = files(
+    '../source/external/mikktspace/mikktspace.c'
+)
+
+external_simdjson_headers = files(
+    '../source/external/simdjson/simdjson.h'
+)
+
+external_simdjson_sources = files(
+    '../source/external/simdjson/simdjson.cpp'
+)
+
+external_fastgltf_headers = files(
+    '../source/external/fastgltf/include/fastgltf/base64.hpp',
+    '../source/external/fastgltf/include/fastgltf/tools.hpp',
+    '../source/external/fastgltf/include/fastgltf/types.hpp',
+    '../source/external/fastgltf/include/fastgltf/math.hpp',
+    '../source/external/fastgltf/include/fastgltf/util.hpp',
+)
+
+external_fastgltf_sources = files(
+    '../source/external/fastgltf/src/base64.cpp',
+    '../source/external/fastgltf/src/fastgltf.cpp',
+    '../source/external/fastgltf/src/io.cpp',
+)
+
+# ------------------------------------------------------------------------------
+# compiler settings
+# ------------------------------------------------------------------------------
+
+cpp = meson.get_compiler('cpp')
+buildtype = get_option('buildtype')
+
+message('Compiler: @0@'.format(cpp.get_id()))
+
+if buildtype == 'release'
+    mango_public_cpp_args += ['-DNDEBUG']
+endif
+
+if cpp.get_id() != 'msvc'
+    # fastgltf uses #pragma region
+    add_project_arguments('-Wno-unknown-pragmas', language: ['c', 'cpp'])
+endif
+
+if is_windows
+    add_project_arguments('-DUNICODE', '-D_UNICODE', language: ['c', 'cpp'])
+endif
+
+if disable_simd
+    message('SIMD: DISABLE')
+    add_project_arguments('-DMANGO_NO_SIMD', language: ['c', 'cpp'])
+endif
+
+if cpp.get_id() == 'msvc'
+
+    if enable_avx512
+        message('SIMD: AVX-512 (2015)')
+        add_project_arguments('/D__AVX512F__', '/D__AVX512DQ__', language: ['c', 'cpp'])
+    elif enable_avx2
+        message('SIMD: AVX2 (2013)')
+        add_project_arguments('/arch:AVX2', language: ['c', 'cpp'])
+    elif enable_avx
+        message('SIMD: AVX (2008)')
+        add_project_arguments('/arch:AVX', language: ['c', 'cpp'])
+    endif
+
+else
+
+    if cpp.get_id() == 'gcc'
+        add_project_arguments('-ftree-vectorize', language: ['c', 'cpp'])
+    endif
+
+    if host_machine.cpu_family() == 'arm' and enable_neon
+        message('SIMD: NEON')
+        add_project_arguments('-mfpu=neon',
+                              '-mfloat-abi=hard',
+                              language: ['c', 'cpp'])
+        add_project_arguments('-fpermissive',
+                              '-Wno-psabi',
+                              language: ['c', 'cpp'])
+    elif host_machine.cpu_family() == 'aarch64'
+        message('SIMD: NEON64')
+        if is_darwin
+            # Apple M1
+            # NOTE: we get this warning '++crc' is not a recognized feature for this target (ignoring feature)
+            #       but the fastgltf does not compile without +crc compiler flag
+            add_project_arguments('-fpermissive',
+                                  '-Wno-unknown-attributes',
+                                  '-Wno-unused-lambda-capture',
+                                  '-march=armv8.2-a+crypto+dotprod+crc', language: ['c', 'cpp'])
+        endif
+    endif
+
+    if host_machine.cpu_family() == 'x86' or host_machine.cpu_family() == 'x86_64'
+
+        # aes
+        if enable_aes
+            message('AES: enabled (2008)')
+            add_project_arguments('-maes', language: ['c', 'cpp'])
+        endif
+
+        # pclmul
+        if enable_pclmul
+            message('PCLMUL: enabled (2008)')
+            add_project_arguments('-mpclmul', language: ['c', 'cpp'])
+        endif
+
+        # popcnt
+        if enable_popcnt
+            message('POPCNT: enabled (2008)')
+            add_project_arguments('-mpopcnt', language: ['c', 'cpp'])
+        endif
+
+        # half conversion instructions
+        if enable_f16c
+            message('F16C: enabled (2012)')
+            add_project_arguments('-mf16c', language: ['c', 'cpp'])
+        endif
+
+        # bit manipulation instruction set 1
+        if enable_bmi
+            message('BMI+LZCNT: enabled (2013)')
+            add_project_arguments('-mbmi', language: ['c', 'cpp'])
+            add_project_arguments('-mlzcnt', language: ['c', 'cpp'])
+        endif
+
+        # bit manipulation instruction set 2
+        if enable_bmi2
+            message('BMI2: enabled (2013)')
+            add_project_arguments('-mbmi2', language: ['c', 'cpp'])
+        endif
+
+        # fused multiply-add
+        if enable_fma
+            message('FMA: enabled (2013)')
+            add_project_arguments('-mfma', language: ['c', 'cpp'])
+        endif
+
+        # sha crypto
+        if enable_sha
+            message('SHA: enabled (2013)')
+            add_project_arguments('-msha', language: ['c', 'cpp'])
+        endif
+
+        # enable only one (the most recent) SIMD extension
+        if enable_avx512
+            message('SIMD: AVX-512 (2015)')
+            add_project_arguments('-mavx512dq', language: ['c', 'cpp'])
+            add_project_arguments('-mavx512vl', language: ['c', 'cpp'])
+            add_project_arguments('-mavx512bw', language: ['c', 'cpp'])
+        elif enable_avx2
+            message('SIMD: AVX2 (2013)')
+            add_project_arguments('-mavx2', language: ['c', 'cpp'])
+        elif enable_avx
+            message('SIMD: AVX (2008)')
+            add_project_arguments('-mavx', language: ['c', 'cpp'])
+        elif enable_sse4
+            message('SIMD: SSE4.2 (2006)')
+            add_project_arguments('-msse4', language: ['c', 'cpp'])
+        elif enable_sse2
+            message('SIMD: SSE2 (2001)')
+            add_project_arguments('-msse2', language: ['c', 'cpp'])
+        endif
+
+    endif
+
+endif
+
+# ------------------------------------------------------------------------------
+# dependencies
+# ------------------------------------------------------------------------------
+
+threads_dep = dependency('threads')
+
+mango_deps             = [ threads_dep ]
+mango_public_deps      = [ ]
+mango_opengl_deps      = [ ]
+mango_import3d_deps    = [ ]
+
+if not is_windows
+    dl_dep = cpp.find_library('dl', required : false)
+    mango_deps += [ dl_dep ]
+endif
+
+if is_linux
+    m_dep = cpp.find_library('m', required : true)
+    mango_deps += [ m_dep ]
+    mango_public_deps += [ m_dep ]
+endif
+
+egl_dep = dependency('egl', version: '>=1.4', required: false)
+if egl_dep.found()
+    add_project_arguments('-DMANGO_ENABLE_EGL', language: ['cpp'])
+    mango_opengl_deps += egl_dep
+endif
+
+opengl_dep = dependency('gl', required: false)
+if opengl_dep.found()
+
+    if is_darwin
+        apple_frameworks = dependency('appleframeworks', modules : ['OpenGL','Cocoa'], required : true)
+        mango_opengl_deps += [ apple_frameworks ]
+    else
+        mango_opengl_deps += opengl_dep
+    endif
+
+    display_library = get_option('display_library')
+    if display_library == 'xlib'
+        x11_dep = cpp.find_library('X11', required : false)
+        if x11_dep.found()
+            mango_opengl_deps += [ x11_dep ]
+            add_project_arguments('-DMANGO_ENABLE_XLIB', language: ['cpp'])
+            message('XLIB: enabled')
+        endif
+    elif display_library == 'xcb'
+        # TODO: XCB
+    elif display_library == 'wayland'
+        # TODO: WAYLAND
+    endif
+
+endif
+
+# ------------------------------------------------------------------------------
+# external libraries
+# ------------------------------------------------------------------------------
+
+#
+# jpeg-xl
+#
+
+libjxl_dep = dependency('libjxl', version: '>=0.8.2', required: false)
+libjxl_threads_dep = dependency('libjxl_threads', version: '>=0.7', required: false)
+enable_jxl = libjxl_dep.found() and libjxl_threads_dep.found()
+if enable_jxl
+    add_project_arguments('-DMANGO_ENABLE_JXL', language: ['cpp'])
+    add_project_arguments('-DMANGO_ENABLE_JXL_THREADS', language: ['cpp'])
+    mango_deps += libjxl_dep
+    mango_deps += libjxl_threads_dep
+endif
+
+#
+# openjp2
+#
+
+libopenjp2_dep = dependency('libopenjp2', version: '>=2.4.0', required: false)
+if libopenjp2_dep.found()
+    add_project_arguments('-DMANGO_ENABLE_JP2', language: ['cpp'])
+    mango_deps += libopenjp2_dep
+endif
+
+#
+# libavif
+#
+
+libavif_dep = dependency('libavif', version: '>=0.11.1', required: false)
+if libavif_dep.found()
+    add_project_arguments('-DMANGO_ENABLE_AVIF', language: ['cpp'])
+    mango_deps += libavif_dep
+endif
+
+#
+# libheif
+#
+
+libheif_dep = dependency('libheif', version: '>=1.13.0', required: false)
+if libheif_dep.found()
+    add_project_arguments('-DMANGO_ENABLE_HEIF', language: ['cpp'])
+    mango_deps += libheif_dep
+endif
+
+#
+# webp
+#
+
+libwebp_dep = dependency('libwebp', version: '>=1.3.0', required: false)
+if libwebp_dep.found()
+    add_project_arguments('-DMANGO_ENABLE_WEBP', language: ['cpp'])
+    mango_deps += libwebp_dep
+endif
+
+#
+# libisal
+#
+
+libisal_dep = dependency('libisal', version: '>=2.30.0', required: false)
+if libisal_dep.found()
+    add_project_arguments('-DMANGO_ENABLE_ISAL', language: ['cpp'])
+    mango_deps += libisal_dep
+endif
+
+# ------------------------------------------------------------------------------
+# sources
+# ------------------------------------------------------------------------------
+
+mango_inc = include_directories('../include')
+
+#
+# mango
+#
+
+mango = shared_library('mango',
+    version: mango_version,
+    soversion: mango_version,
+    extra_files : [
+        mango_headers,
+        mango_core_headers,
+        mango_core_fmt_headers,
+        mango_filesystem_headers,
+        mango_image_headers,
+        mango_math_headers,
+        mango_simd_headers,
+        mango_opengl_headers,
+        mango_import3d_headers,
+        external_lzma_headers,
+        external_lzfse_headers,
+        external_deflate_headers,
+        external_zlib_headers,
+        external_zstd_headers,
+        external_unrar_headers,
+        external_basisu_headers,
+        external_astc_headers,
+        external_lcms_headers,
+        external_headers
+    ],
+    sources : [
+        mango_core_sources,
+        mango_filesystem_sources,
+        mango_image_sources,
+        mango_jpeg_sources,
+        mango_math_sources,
+        external_lzma_sources,
+        external_aes_sources,
+        external_bc_sources,
+        external_bzip2_sources,
+        external_google_sources,
+        external_lz4_sources,
+        external_lzfse_sources,
+        external_lzo_sources,
+        external_deflate_sources,
+        external_zlib_sources,
+        external_unrar_sources,
+        external_zstd_sources,
+        external_zpng_sources,
+        external_basisu_sources,
+        external_astc_sources,
+        external_lcms_sources,
+        external_fmt_sources,
+    ],
+    include_directories : [ mango_inc ],
+    dependencies        : mango_deps,
+    cpp_args            : mango_public_cpp_args,
+    install             : true
+)
+
+mango_dep = declare_dependency(
+    link_with           : mango,
+    include_directories : mango_inc,
+    dependencies        : mango_public_deps,
+    compile_args        : mango_public_cpp_args + mango_interface_cpp_args
+)
+
+#
+# mango-opengl
+#
+
+if opengl_dep.found()
+
+    mango_opengl = shared_library('mango-opengl',
+        version             : mango_opengl_version,
+        soversion           : mango_opengl_version,
+        sources             : mango_window_sources + mango_opengl_sources,
+        link_with           : mango,
+        dependencies        : mango_opengl_deps,
+        include_directories : mango_inc,
+        cpp_args            : mango_public_cpp_args,
+        install             : true
+    )
+
+    mango_opengl_dep = declare_dependency(
+        link_with           : mango_opengl,
+        dependencies        : mango_opengl_deps,
+        include_directories : mango_inc,
+        compile_args        : mango_public_cpp_args + mango_interface_cpp_args
+    )
+
+endif
+
+#
+# mango-import3d
+#
+
+mango_import3d = shared_library('mango-import3d',
+    version             : mango_import3d_version,
+    soversion           : mango_import3d_version,
+    extra_files : [
+        external_mikktspace_headers,
+        external_simdjson_headers,
+        external_fastgltf_headers,
+    ],
+    sources : [
+        mango_import3d_sources,
+        external_mikktspace_sources,
+        external_simdjson_sources,
+        external_fastgltf_sources,
+    ],
+    link_with           : mango,
+    dependencies        : mango_deps,
+    include_directories : [
+        mango_inc,
+        '../source/external/fastgltf/include',
+        '../source/external/simdjson',
+    ],
+    cpp_args            : mango_public_cpp_args,
+    install             : true
+)
+
+mango_import3d_dep = declare_dependency(
+    link_with           : mango_import3d,
+    dependencies        : mango_import3d_deps,
+    include_directories : mango_inc,
+    compile_args        : mango_public_cpp_args + mango_interface_cpp_args
+)
+
+install_subdir('../include/mango', install_dir : 'include')
+
+pkg = import('pkgconfig')
+
+pkg.generate(mango,
+    libraries_private : [ mango_deps ],
+    description : 'A multi-platform development framework for graphics programmers - Core'
+)
+
+if opengl_dep.found()
+
+    pkg.generate(mango_opengl,
+        name: 'mango-opengl',
+        libraries_private : [ mango_opengl_deps ],
+        description : 'A multi-platform development framework for graphics programmers - OpenGL'
+    )
+
+endif
+
+pkg.generate(mango_import3d,
+    name: 'mango-import3d',
+    libraries_private : [ mango_import3d_deps ],
+    description : 'A multi-platform development framework for graphics programmers - Import3D'
+)
