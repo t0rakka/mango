@@ -16,7 +16,7 @@
 #include "../../external/lz4/lz4.h"
 #include "../../external/lz4/lz4hc.h"
 
-#ifdef MANGO_LICENSE_ENABLE_GPL
+#if defined(MANGO_LICENSE_ENABLE_GPL)
 #include "../../external/lzo/minilzo.h"
 #endif
 
@@ -265,7 +265,7 @@ namespace lz4
 
 } // namespace lz4
 
-#ifdef MANGO_LICENSE_ENABLE_GPL
+#if defined(MANGO_LICENSE_ENABLE_GPL)
 
 // ----------------------------------------------------------------------------
 // lzo
@@ -319,7 +319,7 @@ namespace lzo
 
 } // namespace lzo
 
-#endif // MANGO_LICENSE_ENABLE_GPL
+#endif // defined(MANGO_LICENSE_ENABLE_GPL)
 
 // ----------------------------------------------------------------------------
 // zstd
@@ -477,8 +477,6 @@ namespace zstd
     }
 
 } // namespace zstd
-
-#ifdef MANGO_LICENSE_ENABLE_ZLIB
 
 // ----------------------------------------------------------------------------
 // bzip2
@@ -662,8 +660,6 @@ namespace zlib
     }
 
 } // namespace zlib
-
-#endif // MANGO_LICENSE_ENABLE_ZLIB
 
 // ----------------------------------------------------------------------------
 // lzfse
@@ -1414,11 +1410,9 @@ namespace isal
     const std::vector<Compressor> g_compressors =
     {
         { Compressor::NONE,    "none",  nocompress::bound, nocompress::compress, nocompress::decompress },
-#ifdef MANGO_LICENSE_ENABLE_ZLIB
         { Compressor::BZIP2,   "bzip2", bzip2::bound, bzip2::compress, bzip2::decompress },
-#endif
         { Compressor::LZ4,     "lz4",   lz4::bound,   lz4::compress,   lz4::decompress },
-#ifdef MANGO_LICENSE_ENABLE_GPL
+#if defined(MANGO_LICENSE_ENABLE_GPL)
         { Compressor::LZO,     "lzo",   lzo::bound,   lzo::compress,   lzo::decompress },
 #endif
         { Compressor::ZSTD,    "zstd",  zstd::bound,  zstd::compress,  zstd::decompress },
@@ -1426,9 +1420,7 @@ namespace isal
         { Compressor::LZMA,    "lzma",  lzma::bound,  lzma::compress,  lzma::decompress },
         { Compressor::LZMA2,   "lzma2", lzma2::bound, lzma2::compress, lzma2::decompress },
         { Compressor::PPMD8,   "ppmd8", ppmd8::bound, ppmd8::compress, ppmd8::decompress },
-#ifdef MANGO_LICENSE_ENABLE_ZLIB
         { Compressor::ZLIB,    "zlib",  zlib::bound,  zlib::compress,  zlib::decompress },
-#endif
         { Compressor::LZAV,    "lzav",  lzav::bound,  lzav::compress,  lzav::decompress },
         { Compressor::DEFLATE,      "deflate",      deflate::bound,      deflate::compress,      deflate::decompress },
         { Compressor::DEFLATE_ZLIB, "deflate.zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },

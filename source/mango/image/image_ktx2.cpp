@@ -1359,11 +1359,9 @@ namespace
                             case SUPERCOMPRESSION_ZSTANDARD:
                                 status = zstd::decompress(dest, level.memory);
                                 break;
-#ifdef MANGO_LICENSE_ENABLE_ZLIB
                             case SUPERCOMPRESSION_ZLIB:
                                 status = zlib::decompress(dest, level.memory);
                                 break;
-#endif
                         }
 
                         if (status)

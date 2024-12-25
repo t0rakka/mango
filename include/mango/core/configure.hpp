@@ -732,6 +732,27 @@
 #endif
 
 // -----------------------------------------------------------------------
+// licenses
+// -----------------------------------------------------------------------
+
+// BSD: zstd, zpng, xxHash, concurrentqueue, lzfse, lz4, webp, exr, adler32, intel-sha, jp2, jxl, isal
+// MIT: libdeflate, lcms, bc, lzav
+// ZLIB: zlib, bzip2, png
+// APACHE: etc1, etc2, astcenc, basisu, arm-sha, avif
+// GPL: lzo, heif
+
+// Required licenses
+#define MANGO_LICENSE_ENABLE_BSD
+#define MANGO_LICENSE_ENABLE_MIT
+#define MANGO_LICENSE_ENABLE_ZLIB
+#define MANGO_LICENSE_ENABLE_APACHE
+
+// GPL license is optional
+#if !defined(MANGO_LICENSE_ENABLE_GPL) && !defined(MANGO_LICENSE_DISABLE_GPL)
+    #define MANGO_LICENSE_ENABLE_GPL
+#endif
+
+// -----------------------------------------------------------------------
 // typedefs
 // -----------------------------------------------------------------------
 
@@ -749,21 +770,3 @@ namespace mango
     using u64 = std::uint64_t;
 
 } // namespace mango
-
-// -----------------------------------------------------------------------
-// licenses
-// -----------------------------------------------------------------------
-
-// These licenses are required by various mango core components.
-
-#ifndef MANGO_LICENSE_ENABLE_BSD
-#define MANGO_LICENSE_ENABLE_BSD
-#endif
-
-#ifndef MANGO_LICENSE_ENABLE_MIT
-#define MANGO_LICENSE_ENABLE_MIT
-#endif
-
-#ifndef MANGO_LICENSE_ENABLE_ZLIB
-#define MANGO_LICENSE_ENABLE_ZLIB
-#endif

@@ -102,7 +102,7 @@ namespace mango
         CompressionStatus decompress(Memory dest, ConstMemory source);
     }
 
-#ifdef MANGO_LICENSE_ENABLE_GPL
+#if defined(MANGO_LICENSE_ENABLE_GPL)
 
     namespace lzo
     {
@@ -111,7 +111,7 @@ namespace mango
         CompressionStatus decompress(Memory dest, ConstMemory source);
     }
 
-#endif // MANGO_LICENSE_ENABLE_GPL
+#endif // defined(MANGO_LICENSE_ENABLE_GPL)
 
     namespace zstd
     {
@@ -119,8 +119,6 @@ namespace mango
         CompressionStatus compress(Memory dest, ConstMemory source, int level = 6);
         CompressionStatus decompress(Memory dest, ConstMemory source);
     }
-
-#ifdef MANGO_LICENSE_ENABLE_ZLIB
 
     namespace zlib
     {
@@ -135,8 +133,6 @@ namespace mango
         CompressionStatus compress(Memory dest, ConstMemory source, int level = 6);
         CompressionStatus decompress(Memory dest, ConstMemory source);
     }
-
-#endif // MANGO_LICENSE_ENABLE_ZLIB
 
     namespace lzfse
     {
