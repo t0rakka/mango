@@ -55,6 +55,12 @@ the installation targets are configured with cmake and vcpkg. Better instruction
 but if the user is familiar with the workflow with these it should be business as usual.
 
 ------------------------------------------------------------------------------------------------
+* MESON
+------------------------------------------------------------------------------------------------
+
+The meson build is left as convenience mostly; the cmake is the preferred build generator.
+
+------------------------------------------------------------------------------------------------
 * ANDROID!!?
 ------------------------------------------------------------------------------------------------
 
