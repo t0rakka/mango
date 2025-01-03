@@ -106,10 +106,6 @@ else ()
     message(STATUS "Build: " ${CMAKE_BUILD_TYPE} ", Static")
 endif ()
 
-if (NOT LICENSE_GPL)
-    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_DISABLE_GPL")
-endif ()
-
 # ------------------------------------------------------------------------------
 # source directories
 # ------------------------------------------------------------------------------
@@ -585,6 +581,10 @@ if (LICENSE_GPL)
     # vcpkg: libheif
     find_module_with_pkg(HEIF libheif>=1.13.0)
     find_module_with_cmake(HEIF libheif heif)
+
+else ()
+
+    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_DISABLE_GPL")
 
 endif ()
 
