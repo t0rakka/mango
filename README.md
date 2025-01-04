@@ -71,6 +71,6 @@ mango:         3.2 ms       4.3 ms        699
 -- randy408
 
 
-### Discord Server
+### discord
 
 https://discord.gg/zJmtAavY
