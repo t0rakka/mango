@@ -539,9 +539,9 @@ function (find_module_with_pkg name module)
     endif ()
 endfunction ()
 
-function (find_module_with_cmake name module libname)
+function (find_module_with_cmake name module libname version)
     if (NOT ${name}_FOUND)
-        find_package(${module} CONFIG QUIET)
+        find_package(${module} ${version} CONFIG QUIET)
         if (${module}_FOUND)
             message("   + " ${name} ": " ${${module}_VERSION})
             target_compile_definitions(mango PUBLIC "MANGO_ENABLE_${name}")
@@ -558,29 +558,29 @@ find_module_with_pkg(JXL_THREADS libjxl_threads>=0.7)
 # brew: openjpeg
 # vcpkg: openjpeg
 find_module_with_pkg(JP2 libopenjp2>=2.4.0)
-find_module_with_cmake(JP2 OpenJPEG openjp2)
+find_module_with_cmake(JP2 OpenJPEG openjp2 2.4.0)
 
 # brew: webp
 # vcpkg: libwebp
 find_module_with_pkg(WEBP libwebp>=1.4.0)
-find_module_with_cmake(WEBP WebP WebP::webp)
+find_module_with_cmake(WEBP WebP WebP::webp 1.4.0)
 
 # brew: isa-l
 # vcpkg: isal
 find_module_with_pkg(ISAL libisal>=2.30.0)
-find_module_with_cmake(ISAL unofficial-isal unofficial::isal::isal)
+find_module_with_cmake(ISAL unofficial-isal unofficial::isal::isal 2.30.0)
 
 # brew: libavif
 # vcpkg: libavif
 find_module_with_pkg(AVIF libavif>=0.11.1)
-find_module_with_cmake(AVIF libavif avif)
+find_module_with_cmake(AVIF libavif avif 0.11.1)
 
 if (LICENSE_GPL)
 
     # brew: libheif
     # vcpkg: libheif
     find_module_with_pkg(HEIF libheif>=1.13.0)
-    find_module_with_cmake(HEIF libheif heif)
+    find_module_with_cmake(HEIF libheif heif 1.13.0)
 
 else ()
 
@@ -689,13 +689,14 @@ else ()
     if ((ARM AND ENABLE_NEON) OR AARCH64)
         message(STATUS "SIMD: NEON")
         if (ARM)
-            if (NOT APPLE)
-                # The compiler for Apple Mx CPUs don't recognize these
+            if (APPLE)
+                # fastgltf doesn't compile without this on Apple Silicon
+                set(CMAKE_CXX_FLAGS "-Wno-unknown-attributes")
+            else ()
+                # The compiler for Apple Silicon does not recognize these
                 add_definitions (-mfpu=neon -mfloat-abi=hard)
-            endif()
+            endif ()
             set(CMAKE_CXX_FLAGS "-fpermissive -Wno-psabi")
-            # fastgltf doesn't compile without this on M1
-            set(CMAKE_CXX_FLAGS "-Wno-unknown-attributes")
         endif ()
     endif ()
 
@@ -773,9 +774,10 @@ else ()
 endif ()
 
 # ------------------------------------------------------------------------------
-# vcpkg install target
+# install target
 # ------------------------------------------------------------------------------
 
+# vcpkg
 if (DEFINED ENV{VCPKG_ROOT})
 
     if (DEFINED ENV{VCPKG_TARGET_TRIPLET})
@@ -787,9 +789,10 @@ if (DEFINED ENV{VCPKG_ROOT})
     endif ()
 
     set(CMAKE_INSTALL_PREFIX "${DEFAULT_INSTALL_PATH}" CACHE PATH "Install path prefix" FORCE)
-    message(STATUS "Installation path: ${CMAKE_INSTALL_PREFIX}")
 
 endif ()
+
+message(STATUS "Installation path: ${CMAKE_INSTALL_PREFIX}")
 
 # ------------------------------------------------------------------------------
 # install

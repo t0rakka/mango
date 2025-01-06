@@ -91,12 +91,26 @@ Solution:
   Install OpenGL headers. On Linux distributions you get these with "mesa":
   apt-get install mesa-common-dev
 
--------------
+------------------------------------------------------------------------------------------------
 
 Error:
   /usr/bin/ld: cannot find -lGL
 
 Solution:
   apt install libgl1-mesa-dev
+
+------------------------------------------------------------------------------------------------
+
+Error:
+  WSL picks up Windows VCPKG packages with find_package and then they cannot be linked.
+
+Solution:
+
+  Edit /etc/wsl.conf to include these lines:
+    [interop]
+    appendWindowsPath = false
+
+  This means Windows PATH is not added to your shell path when wsl starts and incorrect VCPKGs cannot be found.
+  Dont't forget to restart wsl; "wsl --shutdown" and start a new session.
 
 ------------------------------------------------------------------------------------------------
