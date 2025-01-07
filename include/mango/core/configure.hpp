@@ -716,18 +716,19 @@
 
 #ifdef MANGO_PLATFORM_WINDOWS
 
-    #define MANGO_IMPORT __declspec(dllimport)
-    #define MANGO_EXPORT __declspec(dllexport)
+    #ifdef MANGO_API_EXPORT
+        #define MANGO_API __declspec(dllexport)
+    #else
+        #define MANGO_API __declspec(dllimport)
+    #endif
 
 #elif __GNUC__ >= 4
 
-    #define MANGO_IMPORT __attribute__ ((__visibility__ ("default")))
-    #define MANGO_EXPORT __attribute__ ((__visibility__ ("default")))
+    #define MANGO_API __attribute__ ((__visibility__ ("default")))
 
 #else
 
-    #define MANGO_IMPORT
-    #define MANGO_EXPORT
+    #define MANGO_API
 
 #endif
 
