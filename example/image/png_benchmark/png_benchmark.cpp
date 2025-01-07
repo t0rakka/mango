@@ -16,16 +16,12 @@ using namespace mango::image;
 #define ENABLE_SPNG
 #define ENABLE_WUFFS
 #define ENABLE_MANGO
-
+#define ENABLE_FPNG
 //#define ENABLE_RPNG /* crashes on too many input files -> difficult to benchmark */
 
 #include "fpnge/fpnge.h"
 #ifdef CAN_COMPILE_FPNGE
     #define ENABLE_FPNGE /* Requires x86_64 SIMD with specific compiler flags */
-#endif
-
-#ifdef MANGO_CPU_INTEL
-    #define ENABLE_FPNG /* Requires x86 */
 #endif
 
 // ----------------------------------------------------------------------

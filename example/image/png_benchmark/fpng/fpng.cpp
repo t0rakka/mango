@@ -13,9 +13,6 @@
 // With gcc/clang on x86, compile with -msse4.1 -mpclmul -fno-strict-aliasing
 // Only tested with -fno-strict-aliasing (which the Linux kernel uses, and MSVC's default).
 //
-
-#if !defined(__arm__) && !defined(__aarch64__)
-
 #include "fpng.h"
 #include <assert.h>
 #include <string.h>
@@ -43,9 +40,7 @@
 	#include <xmmintrin.h>		// SSE
 	#include <emmintrin.h>		// SSE2
 	#include <smmintrin.h>		// SSE4.1
-	#if defined(__PCLMUL__)
-		#include <wmmintrin.h>		// pclmul
-	#endif
+	#include <wmmintrin.h>		// pclmul
 #endif
 
 #ifndef FPNG_NO_STDIO
@@ -114,14 +109,10 @@ namespace fpng
 	template <typename S> static inline S maximum(S a, S b) { return (a > b) ? a : b; }
 	template <typename S> static inline S minimum(S a, S b) { return (a < b) ? a : b; }
 
-#if __BYTE_ORDER == __BIG_ENDIAN
-#if !defined(__GNUC__) && !defined(__clang__)
-	static inline uint32_t simple_swap32(uint32_t x) { return (x >> 24) | ((x >> 8) & 0x0000FF00) | ((x << 8) & 0x00FF0000) | (x << 24); }
-#endif
-	static inline uint64_t simple_swap64(uint64_t x) { return (((uint64_t)simple_swap32((uint32_t)x)) << 32U) | simple_swap32((uint32_t)(x >> 32U)); }
-#endif
+	[[maybe_unused]] static inline uint32_t simple_swap32(uint32_t x) { return (x >> 24) | ((x >> 8) & 0x0000FF00) | ((x << 8) & 0x00FF0000) | (x << 24); }
+	[[maybe_unused]] static inline uint64_t simple_swap64(uint64_t x) { return (((uint64_t)simple_swap32((uint32_t)x)) << 32U) | simple_swap32((uint32_t)(x >> 32U)); }
 
-	static inline uint32_t swap32(uint32_t x)
+	[[maybe_unused]] static inline uint32_t swap32(uint32_t x)
 	{
 #if defined(__GNUC__) || defined(__clang__)
 		return __builtin_bswap32(x);
@@ -130,8 +121,7 @@ namespace fpng
 #endif
 	}
 
-#if __BYTE_ORDER == __BIG_ENDIAN
-	static inline uint64_t swap64(uint64_t x)
+	[[maybe_unused]] static inline uint64_t swap64(uint64_t x)
 	{
 #if defined(__GNUC__) || defined(__clang__)
 		return __builtin_bswap64(x);
@@ -139,7 +129,6 @@ namespace fpng
 		return simple_swap64(x);
 #endif
 	}
-#endif
 
 #if FPNG_USE_UNALIGNED_LOADS
 	#if __BYTE_ORDER == __BIG_ENDIAN
@@ -259,7 +248,7 @@ namespace fpng
 		return ~crc;
 	}
 
-#if FPNG_X86_OR_X64_CPU && !FPNG_NO_SSE && defined(__PCLMUL__)
+#if FPNG_X86_OR_X64_CPU && !FPNG_NO_SSE 
 	// See Fast CRC Computation for Generic Polynomials Using PCLMULQDQ Instruction":
 	// https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/fast-crc-computation-generic-polynomials-pclmulqdq-paper.pdf
 	// Requires PCLMUL and SSE 4.1. This function skips Step 1 (fold by 4) for simplicity/less code.
@@ -403,7 +392,7 @@ namespace fpng
 
 	uint32_t fpng_crc32(const void* pData, size_t size, uint32_t prev_crc32)
 	{
-#if FPNG_X86_OR_X64_CPU && !FPNG_NO_SSE && defined(__PCLMUL__)
+#if FPNG_X86_OR_X64_CPU && !FPNG_NO_SSE 
 		if (g_cpu_info.can_use_pclmul())
 			return crc32_sse41_simd(static_cast<const uint8_t *>(pData), size, prev_crc32);
 #endif
@@ -3008,7 +2997,7 @@ do_literals:
 			const png_chunk_prefix* pChunk = reinterpret_cast<const png_chunk_prefix*>(pImage_u8);
 
 			const uint32_t chunk_len = READ_BE32(&pChunk->m_length);
-			if ((src_ofs + sizeof(uint32_t) + chunk_len + sizeof(uint32_t)) > image_size)
+			if ((src_ofs + sizeof(uint32_t) * 2 + (uint64_t)chunk_len + sizeof(uint32_t)) > image_size)
 				return FPNG_DECODE_FAILED_CHUNK_PARSING;
 
 			for (uint32_t i = 0; i < 4; i++)
@@ -3231,5 +3220,3 @@ do_literals:
 	Richard Geldreich, Jr.
 	12/30/2021
 */
-
-#endif // __arm__
