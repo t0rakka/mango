@@ -86,7 +86,6 @@ if (INTEL_DELUXE)
     set(ENABLE_F16C    ON)
     set(ENABLE_BMI     ON)
     set(ENABLE_BMI2    ON)
-    set(ENABLE_AES     ON)
     set(ENABLE_FMA     ON)
     set(ENABLE_SHA     ON)
 endif ()
@@ -491,7 +490,7 @@ if (WIN32)
     if (OPENGL_FOUND)
         message("   + OpenGL")
         target_link_libraries(mango-opengl PUBLIC ${OPENGL_gl_LIBRARY})
-    endif()
+    endif ()
 
 else ()
 
@@ -509,7 +508,7 @@ else ()
             target_compile_definitions(mango-opengl PUBLIC "MANGO_ENABLE_XLIB")
             target_link_libraries(mango-opengl PUBLIC ${OPENGL_glx_LIBRARY})
         endif ()
-    endif()
+    endif ()
 
 endif ()
 
@@ -541,7 +540,12 @@ endfunction ()
 
 function (find_module_with_cmake name module libname version)
     if (NOT ${name}_FOUND)
-        find_package(${module} ${version} CONFIG QUIET)
+        if (version STREQUAL "0")
+            find_package(${module} CONFIG QUIET)
+        else ()
+            find_package(${module} ${version} CONFIG QUIET)
+        endif ()
+
         if (${module}_FOUND)
             message("   + " ${name} ": " ${${module}_VERSION})
             target_compile_definitions(mango PUBLIC "MANGO_ENABLE_${name}")
@@ -568,19 +572,19 @@ find_module_with_cmake(WEBP WebP WebP::webp 1.4.0)
 # brew: isa-l
 # vcpkg: isal
 find_module_with_pkg(ISAL libisal>=2.30.0)
-find_module_with_cmake(ISAL unofficial-isal unofficial::isal::isal 2.30.0)
+find_module_with_cmake(ISAL unofficial-isal unofficial::isal::isal 0)
 
 # brew: libavif
 # vcpkg: libavif
-find_module_with_pkg(AVIF libavif>=0.11.1)
-find_module_with_cmake(AVIF libavif avif 0.11.1)
+find_module_with_pkg(AVIF libavif>=1.0.0)
+find_module_with_cmake(AVIF libavif avif 1.0.0)
 
 if (LICENSE_GPL)
 
     # brew: libheif
     # vcpkg: libheif
     find_module_with_pkg(HEIF libheif>=1.13.0)
-    find_module_with_cmake(HEIF libheif heif 1.13.0)
+    find_module_with_cmake(HEIF libheif heif 0)
 
 else ()
 
