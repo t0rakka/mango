@@ -59,6 +59,13 @@ endif ()
 OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    ON)
 OPTION(LICENSE_GPL          "Allow GPL license"                         ON)
 
+OPTION(LIBRARY_JXL          "Enable jpeg-xl image codec support"        ON)
+OPTION(LIBRARY_JP2          "Enable jpeg2000 image codec support"       ON)
+OPTION(LIBRARY_WEBP         "Enable WebP image codec support"           ON)
+OPTION(LIBRARY_AVIF         "Enable avif image codec support"           ON)
+OPTION(LIBRARY_HEIF         "Enable heif image codec support"           ON)
+OPTION(LIBRARY_ISAL         "Enable Intel ISA-L compression support"    ON)
+
 OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
 OPTION(ENABLE_SSE2          "Enable SSE2 instructions"                  OFF)
 OPTION(ENABLE_SSE4          "Enable SSE4.1 and SSE4.2 instructions"     ON)
@@ -75,9 +82,23 @@ OPTION(ENABLE_BMI2          "Enable BMI2"                               OFF)
 OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
 OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
 
+# Option to disable every optional library
+option(LIBRARY_DISABLE,     "Disable ALL optional libraries"            OFF)
+if (LIBRARY_DISABLE)
+    set(LIBRARY_JXL    OFF)
+    set(LIBRARY_JP2    OFF)
+    set(LIBRARY_WEBP   OFF)
+    set(LIBRARY_AVIF   OFF)
+    set(LIBRARY_HEIF   OFF)
+    set(LIBRARY_ISAL   OFF)
+endif ()
+
+if (NOT LICENSE_GPL)
+    set(LIBRARY_HEIF   OFF)
+endif ()
+
 # Option to enable every Intel ISA extension
 option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"           OFF)
-
 if (INTEL_DELUXE)
     set(ENABLE_AVX2    ON)
     set(ENABLE_AES     ON)
@@ -424,6 +445,14 @@ set_target_properties(mango PROPERTIES
 )
 
 # ------------------------------------------------------------------------------
+# licenses
+# ------------------------------------------------------------------------------
+
+if (NOT LICENSE_GPL)
+    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_DISABLE_GPL")
+endif ()
+
+# ------------------------------------------------------------------------------
 # library: mango-opengl
 # ------------------------------------------------------------------------------
 
@@ -554,42 +583,46 @@ function (find_module_with_cmake name module libname version)
     endif ()
 endfunction ()
 
-# brew: jpeg-xl
-# vcpkg: libjxl
-find_module_with_pkg(JXL libjxl>=0.8.2)
-find_module_with_pkg(JXL_THREADS libjxl_threads>=0.7)
+if (LIBRARY_JXL)
+    # brew: jpeg-xl
+    # vcpkg: libjxl
+    find_module_with_pkg(JXL libjxl>=0.8.2)
+    find_module_with_pkg(JXL_THREADS libjxl_threads>=0.7)
+endif ()
 
-# brew: openjpeg
-# vcpkg: openjpeg
-find_module_with_pkg(JP2 libopenjp2>=2.4.0)
-find_module_with_cmake(JP2 OpenJPEG openjp2 2.4.0)
+if (LIBRARY_JP2)
+    # brew: openjpeg
+    # vcpkg: openjpeg
+    find_module_with_pkg(JP2 libopenjp2>=2.4.0)
+    find_module_with_cmake(JP2 OpenJPEG openjp2 2.4.0)
+endif ()
 
-# brew: webp
-# vcpkg: libwebp
-find_module_with_pkg(WEBP libwebp>=1.4.0)
-find_module_with_cmake(WEBP WebP WebP::webp 1.4.0)
+if (LIBRARY_WEBP)
+    # brew: webp
+    # vcpkg: libwebp
+    find_module_with_pkg(WEBP libwebp>=1.4.0)
+    find_module_with_cmake(WEBP WebP WebP::webp 1.4.0)
+endif ()
 
-# brew: isa-l
-# vcpkg: isal
-find_module_with_pkg(ISAL libisal>=2.30.0)
-find_module_with_cmake(ISAL unofficial-isal unofficial::isal::isal 0)
+if (LIBRARY_AVIF)
+    # brew: libavif
+    # vcpkg: libavif
+    find_module_with_pkg(AVIF libavif>=1.0.0)
+    find_module_with_cmake(AVIF libavif avif 1.0.0)
+endif ()
 
-# brew: libavif
-# vcpkg: libavif
-find_module_with_pkg(AVIF libavif>=1.0.0)
-find_module_with_cmake(AVIF libavif avif 1.0.0)
-
-if (LICENSE_GPL)
-
+if (LIBRARY_HEIF)
     # brew: libheif
     # vcpkg: libheif
     find_module_with_pkg(HEIF libheif>=1.13.0)
     find_module_with_cmake(HEIF libheif heif 0)
+endif ()
 
-else ()
-
-    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_DISABLE_GPL")
-
+if (LIBRARY_ISAL)
+    # brew: isa-l
+    # vcpkg: isal
+    find_module_with_pkg(ISAL libisal>=2.30.0)
+    find_module_with_cmake(ISAL unofficial-isal unofficial::isal::isal 0)
 endif ()
 
 # ------------------------------------------------------------------------------
