@@ -627,16 +627,16 @@ endif ()
 # configuration
 # ------------------------------------------------------------------------------
 
+if (BUILD_SHARED_LIBS)
+    target_compile_definitions(mango PUBLIC "MANGO_API_EXPORT")
+endif ()
+
 if (EMSCRIPTEN)
 
     message(STATUS "SIMD: WASM")
     target_compile_options(mango PUBLIC "-msimd128")
 
 elseif (COMPILER_MSVC)
-
-    if (BUILD_SHARED_LIBS)
-        target_compile_definitions(mango PUBLIC "MANGO_API_EXPORT")
-    endif ()
 
     target_compile_options(mango PUBLIC "/DUNICODE")
     target_compile_options(mango PUBLIC "/utf-8")
@@ -718,10 +718,6 @@ else ()
 
     if (CYGWIN)
         target_compile_options(mango PUBLIC "-municode")
-
-        if (BUILD_SHARED_LIBS)
-            target_compile_definitions(mango PUBLIC "MANGO_API_EXPORT")
-        endif ()
     endif ()
 
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
