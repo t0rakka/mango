@@ -26,7 +26,7 @@
     #include <mango/opengl/khronos/GL/wgl.h>
     #include <mango/opengl/khronos/GL/wglext.h>
 
-    #define GLEXT_PROC(proc, name) extern proc name
+    #define GLEXT_PROC(proc, name) MANGO_API extern proc name
 
     #include <mango/opengl/func/glext.hpp>
     #include <mango/opengl/func/wglext.hpp>

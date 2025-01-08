@@ -116,8 +116,8 @@ if (NOT CMAKE_BUILD_TYPE)
 endif ()
 
 if (BUILD_SHARED_LIBS AND COMPILER_MSVC)
-    set(BUILD_SHARED_LIBS OFF)
-    #set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    #set(BUILD_SHARED_LIBS OFF)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif ()
 
 if (BUILD_SHARED_LIBS)
@@ -636,6 +636,11 @@ if (EMSCRIPTEN)
 
 elseif (COMPILER_MSVC)
 
+    if (BUILD_SHARED_LIBS)
+        set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+        target_compile_definitions(mango PUBLIC "MANGO_API_EXPORT")
+    endif ()
+
     target_compile_options(mango PUBLIC "/DUNICODE")
     target_compile_options(mango PUBLIC "/utf-8")
     target_compile_options(mango PUBLIC "/MP")
@@ -716,6 +721,11 @@ else ()
 
     if (CYGWIN)
         target_compile_options(mango PUBLIC "-municode")
+
+        if (BUILD_SHARED_LIBS)
+            set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+            target_compile_definitions(mango PUBLIC "MANGO_API_EXPORT")
+        endif ()
     endif ()
 
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")

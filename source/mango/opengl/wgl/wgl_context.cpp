@@ -12,7 +12,7 @@
 // -----------------------------------------------------------------------
 
 // extension function pointers
-#define GLEXT_PROC(proc, name) proc name = nullptr
+#define GLEXT_PROC(proc, name) MANGO_API proc name = nullptr
 
 #include <mango/opengl/func/wglext.hpp>
 #include <mango/opengl/func/glext.hpp>
