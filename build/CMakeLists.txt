@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 project(mango
-        VERSION 1.5.2
+        VERSION 1.6.0
         DESCRIPTION "A multi-platform development framework for graphics programmers"
         LANGUAGES CXX C ASM)
 
