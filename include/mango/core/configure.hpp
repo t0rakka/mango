@@ -733,21 +733,6 @@
 #endif
 
 // -----------------------------------------------------------------------
-// licenses
-// -----------------------------------------------------------------------
-
-// BSD: zstd, zpng, xxHash, concurrentqueue, lzfse, lz4, webp, exr, adler32, intel-sha, jp2, jxl, isal
-// MIT: libdeflate, lcms, bc, lzav, heif
-// ZLIB: zlib, bzip2, png
-// APACHE: etc1, etc2, astcenc, basisu, arm-sha, avif
-
-// Required licenses
-#define MANGO_LICENSE_ENABLE_BSD
-#define MANGO_LICENSE_ENABLE_MIT
-#define MANGO_LICENSE_ENABLE_ZLIB
-#define MANGO_LICENSE_ENABLE_APACHE
-
-// -----------------------------------------------------------------------
 // typedefs
 // -----------------------------------------------------------------------
 

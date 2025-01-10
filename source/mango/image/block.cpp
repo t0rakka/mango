@@ -486,8 +486,6 @@ namespace
             decode_surface_pvrtc, nullptr
         ),
 
-#ifdef MANGO_LICENSE_ENABLE_APACHE
-
         // OES_compressed_ETC1_RGB8_texture
 
         TextureCompression(
@@ -1025,8 +1023,6 @@ namespace
             nullptr, nullptr,
             decode_surface_astc, encode_surface_astc
         ),
-
-#endif // MANGO_LICENSE_ENABLE_APACHE
 
         // OES_texture_compression_astc
 

@@ -17,7 +17,7 @@ namespace
     #define K3 0x8F1BBCDC
     #define K4 0xCA62C1D6
 
-#if defined(MANGO_LICENSE_ENABLE_APACHE) && defined(__ARM_FEATURE_CRYPTO)
+#if defined(__ARM_FEATURE_CRYPTO)
 
     // ----------------------------------------------------------------------------------------
     // ARM Crypto SHA1
@@ -204,7 +204,7 @@ namespace
         state[4] = E0;
     }
 
-#elif defined(MANGO_LICENSE_ENABLE_BSD) && defined(__SHA__)
+#elif defined(__SHA__)
 
     /*******************************************************************************
     * Copyright (c) 2013, Intel Corporation
@@ -585,12 +585,12 @@ namespace mango
         // select implementation
         auto transform = generic_sha1_transform;
 
-#if defined(MANGO_LICENSE_ENABLE_APACHE) && defined(__ARM_FEATURE_CRYPTO)
+#if defined(__ARM_FEATURE_CRYPTO)
         if ((getCPUFlags() & ARM_SHA1) != 0)
         {
             transform = arm_sha1_transform;
         }
-#elif defined(MANGO_LICENSE_ENABLE_BSD) && defined(__SHA__)
+#elif defined(__SHA__)
         if ((getCPUFlags() & INTEL_SHA) != 0)
         {
             transform = intel_sha1_transform;

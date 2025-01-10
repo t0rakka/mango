@@ -7,8 +7,6 @@
 #include <mango/image/surface.hpp>
 #include <mango/image/color.hpp>
 
-#ifdef MANGO_LICENSE_ENABLE_APACHE
-
 #include "../../external/astc/astcenc.h"
 
 namespace mango::image
@@ -184,5 +182,3 @@ namespace mango::image
     }
 
 } // namespace mango::image
-
-#endif // MANGO_LICENSE_ENABLE_APACHE
