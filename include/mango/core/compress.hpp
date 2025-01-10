@@ -102,17 +102,6 @@ namespace mango
         CompressionStatus decompress(Memory dest, ConstMemory source);
     }
 
-#if defined(MANGO_LICENSE_ENABLE_GPL)
-
-    namespace lzo
-    {
-        size_t bound(size_t size);
-        CompressionStatus compress(Memory dest, ConstMemory source, int level = 6);
-        CompressionStatus decompress(Memory dest, ConstMemory source);
-    }
-
-#endif // defined(MANGO_LICENSE_ENABLE_GPL)
-
     namespace zstd
     {
         size_t bound(size_t size);
@@ -199,19 +188,17 @@ namespace mango
 
     struct Compressor
     {
-        // NOTE: some might not be available due to blocked license
         enum Method
         {
             NONE = 0,
-            BZIP2, // license: ZLIB
+            BZIP2,
             LZ4,
-            LZO, // license: GPL
             ZSTD,
             LZFSE,
             LZMA,
             LZMA2,
             PPMD8,
-            ZLIB, // license: ZLIB
+            ZLIB,
             DEFLATE,
             DEFLATE_ZLIB,
             DEFLATE_GZIP,

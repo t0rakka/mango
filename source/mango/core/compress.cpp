@@ -16,10 +16,6 @@
 #include "../../external/lz4/lz4.h"
 #include "../../external/lz4/lz4hc.h"
 
-#if defined(MANGO_LICENSE_ENABLE_GPL)
-#include "../../external/lzo/minilzo.h"
-#endif
-
 #define ZSTD_DISABLE_DEPRECATE_WARNINGS
 #include "../../external/zstd/zstd.h"
 
@@ -264,62 +260,6 @@ namespace lz4
     }
 
 } // namespace lz4
-
-#if defined(MANGO_LICENSE_ENABLE_GPL)
-
-// ----------------------------------------------------------------------------
-// lzo
-// ----------------------------------------------------------------------------
-
-namespace lzo
-{
-
-    size_t bound(size_t size)
-    {
-        return size + (size / 16) + 128;
-    }
-
-    CompressionStatus compress(Memory dest, ConstMemory source, int level)
-    {
-        MANGO_UNREFERENCED(level);
-
-        Buffer work(LZO1X_MEM_COMPRESS);
-
-        lzo_uint dst_len = (lzo_uint)dest.size;
-        int x = lzo1x_1_compress(source.address, lzo_uint(source.size),
-            dest.address, &dst_len, work);
-
-        CompressionStatus status;
-
-        if (x != LZO_E_OK)
-        {
-            status.setError("[lzo] compression failed.");
-        }
-
-        status.size = size_t(dst_len);
-        return status;
-	}
-
-    CompressionStatus decompress(Memory dest, ConstMemory source)
-    {
-        lzo_uint dst_len = (lzo_uint)dest.size;
-        int x = lzo1x_decompress(source.address, lzo_uint(source.size),
-            dest.address, &dst_len, nullptr);
-
-        CompressionStatus status;
-
-        if (x != LZO_E_OK)
-        {
-            status.setError("[lzo] decompression failed.");
-        }
-
-        status.size = dest.size;
-        return status;
-    }
-
-} // namespace lzo
-
-#endif // defined(MANGO_LICENSE_ENABLE_GPL)
 
 // ----------------------------------------------------------------------------
 // zstd
@@ -1412,9 +1352,6 @@ namespace isal
         { Compressor::NONE,    "none",  nocompress::bound, nocompress::compress, nocompress::decompress },
         { Compressor::BZIP2,   "bzip2", bzip2::bound, bzip2::compress, bzip2::decompress },
         { Compressor::LZ4,     "lz4",   lz4::bound,   lz4::compress,   lz4::decompress },
-#if defined(MANGO_LICENSE_ENABLE_GPL)
-        { Compressor::LZO,     "lzo",   lzo::bound,   lzo::compress,   lzo::decompress },
-#endif
         { Compressor::ZSTD,    "zstd",  zstd::bound,  zstd::compress,  zstd::decompress },
         { Compressor::LZFSE,   "lzfse", lzfse::bound, lzfse::compress, lzfse::decompress },
         { Compressor::LZMA,    "lzma",  lzma::bound,  lzma::compress,  lzma::decompress },

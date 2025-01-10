@@ -57,7 +57,6 @@ endif ()
 # ------------------------------------------------------------------------------
 
 OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    ON)
-OPTION(LICENSE_GPL          "Allow GPL license"                         ON)
 
 OPTION(LIBRARY_JXL          "Enable jpeg-xl image codec support"        ON)
 OPTION(LIBRARY_JP2          "Enable jpeg2000 image codec support"       ON)
@@ -91,10 +90,6 @@ if (LIBRARY_DISABLE)
     set(LIBRARY_AVIF   OFF)
     set(LIBRARY_HEIF   OFF)
     set(LIBRARY_ISAL   OFF)
-endif ()
-
-if (NOT LICENSE_GPL)
-    set(LIBRARY_HEIF   OFF)
 endif ()
 
 # Option to enable every Intel ISA extension
@@ -441,14 +436,6 @@ set_target_properties(mango PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
 )
-
-# ------------------------------------------------------------------------------
-# licenses
-# ------------------------------------------------------------------------------
-
-if (NOT LICENSE_GPL)
-    target_compile_definitions(mango PUBLIC "MANGO_LICENSE_DISABLE_GPL")
-endif ()
 
 # ------------------------------------------------------------------------------
 # library: mango-opengl
