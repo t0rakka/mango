@@ -165,10 +165,6 @@
 		A63DD78F1E706F3400D4D499 /* bzlib_private.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7861E706F3400D4D499 /* bzlib_private.h */; };
 		A63DD7901E706F3400D4D499 /* bzlib.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7871E706F3400D4D499 /* bzlib.c */; };
 		A63DD7911E706F3400D4D499 /* bzlib.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7881E706F3400D4D499 /* bzlib.h */; };
-		A63DD7971E706F5400D4D499 /* lzoconf.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7931E706F5400D4D499 /* lzoconf.h */; };
-		A63DD7981E706F5400D4D499 /* lzodefs.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7941E706F5400D4D499 /* lzodefs.h */; };
-		A63DD7991E706F5400D4D499 /* minilzo.c in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7951E706F5400D4D499 /* minilzo.c */; };
-		A63DD79A1E706F5400D4D499 /* minilzo.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7961E706F5400D4D499 /* minilzo.h */; };
 		A63DD7A31E706F8800D4D499 /* BC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD79F1E706F8800D4D499 /* BC.cpp */; };
 		A63DD7A41E706F8800D4D499 /* BC.h in Headers */ = {isa = PBXBuildFile; fileRef = A63DD7A01E706F8800D4D499 /* BC.h */; };
 		A63DD7A51E706F8800D4D499 /* BC4BC5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A63DD7A11E706F8800D4D499 /* BC4BC5.cpp */; };
@@ -584,10 +580,6 @@
 		A63DD7861E706F3400D4D499 /* bzlib_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bzlib_private.h; path = external/bzip2/bzlib_private.h; sourceTree = "<group>"; };
 		A63DD7871E706F3400D4D499 /* bzlib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bzlib.c; path = external/bzip2/bzlib.c; sourceTree = "<group>"; };
 		A63DD7881E706F3400D4D499 /* bzlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bzlib.h; path = external/bzip2/bzlib.h; sourceTree = "<group>"; };
-		A63DD7931E706F5400D4D499 /* lzoconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lzoconf.h; path = external/lzo/lzoconf.h; sourceTree = "<group>"; };
-		A63DD7941E706F5400D4D499 /* lzodefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lzodefs.h; path = external/lzo/lzodefs.h; sourceTree = "<group>"; };
-		A63DD7951E706F5400D4D499 /* minilzo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = minilzo.c; path = external/lzo/minilzo.c; sourceTree = "<group>"; };
-		A63DD7961E706F5400D4D499 /* minilzo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = minilzo.h; path = external/lzo/minilzo.h; sourceTree = "<group>"; };
 		A63DD79F1E706F8800D4D499 /* BC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BC.cpp; path = external/bc/BC.cpp; sourceTree = "<group>"; };
 		A63DD7A01E706F8800D4D499 /* BC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BC.h; path = external/bc/BC.h; sourceTree = "<group>"; };
 		A63DD7A11E706F8800D4D499 /* BC4BC5.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BC4BC5.cpp; path = external/bc/BC4BC5.cpp; sourceTree = "<group>"; };
@@ -1145,7 +1137,6 @@
 				A6FCC3781E8122C80037C15F /* zstd */,
 				A63DD7A71E706F9300D4D499 /* google */,
 				A63DD79E1E706F7B00D4D499 /* bc */,
-				A63DD7921E706F4300D4D499 /* lzo */,
 				A63DD77F1E706F2000D4D499 /* bzip2 */,
 				A63DD77C1E706EFF00D4D499 /* concurrentqueue */,
 				A63DD75F1E706EDF00D4D499 /* lzfse */,
@@ -1224,17 +1215,6 @@
 				A63DD7881E706F3400D4D499 /* bzlib.h */,
 			);
 			name = bzip2;
-			sourceTree = "<group>";
-		};
-		A63DD7921E706F4300D4D499 /* lzo */ = {
-			isa = PBXGroup;
-			children = (
-				A63DD7931E706F5400D4D499 /* lzoconf.h */,
-				A63DD7941E706F5400D4D499 /* lzodefs.h */,
-				A63DD7951E706F5400D4D499 /* minilzo.c */,
-				A63DD7961E706F5400D4D499 /* minilzo.h */,
-			);
-			name = lzo;
 			sourceTree = "<group>";
 		};
 		A63DD79E1E706F7B00D4D499 /* bc */ = {
@@ -1721,7 +1701,6 @@
 				A00559E21C93340600A6D963 /* image in Headers */,
 				A63F720B2B4F68BF00137C36 /* parse_number.h in Headers */,
 				A6E7DF422651D07E006A912E /* zstd_trace.h in Headers */,
-				A63DD7971E706F5400D4D499 /* lzoconf.h in Headers */,
 				A63DD7551E706EB200D4D499 /* rarvm.hpp in Headers */,
 				A650BE9521F8D4290066B9B5 /* cocoa_window.h in Headers */,
 				A6E7DF382651D07E006A912E /* pool.h in Headers */,
@@ -1748,7 +1727,6 @@
 				A63F72112B4F68BF00137C36 /* float_common.h in Headers */,
 				A69B9DFA285ABF7E00E7BEDC /* crc32_impl.h in Headers */,
 				A003D308192B9998009FED25 /* math in Headers */,
-				A63DD79A1E706F5400D4D499 /* minilzo.h in Headers */,
 				A6D78CD5290987A200304D88 /* astcenc_vecmathlib_common_4.h in Headers */,
 				A60BD6472A1E808F00F86B1C /* lcms2_internal.h in Headers */,
 				A642439521852AEF0044B763 /* LzHash.h in Headers */,
@@ -1838,7 +1816,6 @@
 				A6D78CCB290987A200304D88 /* astcenc_vecmathlib_none_4.h in Headers */,
 				A642437421852AEF0044B763 /* 7zTypes.h in Headers */,
 				A6E7DF482651D07E006A912E /* compiler.h in Headers */,
-				A63DD7981E706F5400D4D499 /* lzodefs.h in Headers */,
 				A642436B21852AEF0044B763 /* Precomp.h in Headers */,
 				A63DD74A1E706EB200D4D499 /* array.hpp in Headers */,
 				A6984DEA29E90217002021FE /* allocations.h in Headers */,
@@ -2106,7 +2083,6 @@
 				A60BD6532A1E808F00F86B1C /* cmsvirt.c in Sources */,
 				A63089601E00BA2900252BC4 /* block_pvrtc.cpp in Sources */,
 				A00559D31C93329A00A6D963 /* image.cpp in Sources */,
-				A63DD7991E706F5400D4D499 /* minilzo.c in Sources */,
 				A601B0AF276E1B9D003B3A28 /* zutil.c in Sources */,
 				A686FD1E27A37E3C00EDC399 /* basisu_transcoder.cpp in Sources */,
 				A00559D11C93329A00A6D963 /* image_pvr.cpp in Sources */,
