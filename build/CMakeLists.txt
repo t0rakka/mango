@@ -312,10 +312,6 @@ FILE(GLOB EXTERNAL_LZFSE
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzfse/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzfse/*.c"
 )
-FILE(GLOB EXTERNAL_LZO
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzo/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzo/*.c"
-)
 FILE(GLOB EXTERNAL_DEFLATE
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/common/*.h"
@@ -382,7 +378,6 @@ SOURCE_GROUP("external/astc"        FILES ${EXTERNAL_ASTC})
 SOURCE_GROUP("external/google"      FILES ${EXTERNAL_GOOGLE})
 SOURCE_GROUP("external/lz4"         FILES ${EXTERNAL_LZ4})
 SOURCE_GROUP("external/lzfse"       FILES ${EXTERNAL_LZFSE})
-SOURCE_GROUP("external/lzo"         FILES ${EXTERNAL_LZO})
 SOURCE_GROUP("external/deflate"     FILES ${EXTERNAL_DEFLATE})
 SOURCE_GROUP("external/zlib"        FILES ${EXTERNAL_ZLIB})
 SOURCE_GROUP("external/lcms"        FILES ${EXTERNAL_LCMS})
@@ -419,7 +414,6 @@ add_library(mango
     ${EXTERNAL_GOOGLE}
     ${EXTERNAL_LZ4}
     ${EXTERNAL_LZFSE}
-    ${EXTERNAL_LZO}
     ${EXTERNAL_DEFLATE}
     ${EXTERNAL_ZLIB}
     ${EXTERNAL_LCMS}
