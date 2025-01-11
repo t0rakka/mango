@@ -461,9 +461,6 @@ external_headers = files(
     '../source/external/bzip2/bzlib.h',
     '../source/external/lz4/lz4hc.h',
     '../source/external/lz4/lz4.h',
-    '../source/external/lzo/lzoconf.h',
-    '../source/external/lzo/minilzo.h',
-    '../source/external/lzo/lzodefs.h',
     '../source/external/concurrentqueue/atomicops.h',
     '../source/external/concurrentqueue/concurrentqueue.h',
     '../source/external/concurrentqueue/readerwriterqueue.h'
@@ -557,10 +554,6 @@ external_lzfse_sources = files(
     '../source/external/lzfse/lzfse_fse.c',
     '../source/external/lzfse/lzvn_decode_base.c',
     '../source/external/lzfse/lzvn_encode_base.c',
-)
-
-external_lzo_sources = files(
-    '../source/external/lzo/minilzo.c'
 )
 
 external_deflate_headers = files(
@@ -1175,7 +1168,6 @@ mango = shared_library('mango',
         external_google_sources,
         external_lz4_sources,
         external_lzfse_sources,
-        external_lzo_sources,
         external_deflate_sources,
         external_zlib_sources,
         external_unrar_sources,

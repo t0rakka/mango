@@ -38,7 +38,6 @@ SOURCE_DIRS := mango/core \
                external/zlib \
                external/lcms \
                external/lz4 \
-               external/lzo \
                external/bzip2 \
                external/aes \
                external/lzma \
