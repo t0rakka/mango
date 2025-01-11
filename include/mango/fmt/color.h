@@ -9,7 +9,7 @@
 #define FMT_COLOR_H_
 
 // MANGO NOTE: XCode is cranky when using "" for framework include
-#include <mango/core/fmt/format.h>
+#include <mango/fmt/format.h>
 
 FMT_BEGIN_NAMESPACE
 FMT_BEGIN_EXPORT

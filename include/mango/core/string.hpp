@@ -13,8 +13,8 @@
 #ifdef _MSC_VER
 #define FMT_UNICODE 0
 #endif
-#include <mango/core/fmt/format.h>
-#include <mango/core/fmt/color.h>
+#include <mango/fmt/format.h>
+#include <mango/fmt/color.h>
 
 namespace mango
 {

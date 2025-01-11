@@ -39,7 +39,7 @@
 #endif
 
 // MANGO NOTE: XCode is cranky when using "" for framework include
-#include <mango/core/fmt/base.h>
+#include <mango/fmt/base.h>
 
 #ifndef FMT_MODULE
 #  include <cmath>    // std::signbit
