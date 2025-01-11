@@ -224,4 +224,15 @@ namespace mango::image
 
 } // namespace mango::image
 
+#else
+
+namespace mango::image
+{
+
+    void registerImageCodecWEBP()
+    {
+    }
+
+} // namespace mango::image
+
 #endif // defined(MANGO_ENABLE_WEBP)

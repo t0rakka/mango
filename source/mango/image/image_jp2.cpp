@@ -1054,4 +1054,15 @@ namespace mango::image
 
 } // namespace mango::image
 
+#else
+
+namespace mango::image
+{
+
+    void registerImageCodecJP2()
+    {
+    }
+
+} // namespace mango::image
+
 #endif // defined(MANGO_ENABLE_JP2)

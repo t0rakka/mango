@@ -119,26 +119,11 @@ namespace mango::image
     void registerImageCodecPIC();
     void registerImageCodecPSD();
     void registerImageCodecRAW();
-
-#if defined(MANGO_ENABLE_JXL) && defined(MANGO_ENABLE_JXL_THREADS)
     void registerImageCodecJXL();
-#endif
-
-#if defined(MANGO_ENABLE_JP2)
     void registerImageCodecJP2();
-#endif
-
-#if defined(MANGO_ENABLE_HEIF)
     void registerImageCodecHEIF();
-#endif
-
-#if defined(MANGO_ENABLE_AVIF)
     void registerImageCodecAVIF();
-#endif
-
-#if defined(MANGO_ENABLE_WEBP)
     void registerImageCodecWEBP();
-#endif
 
     class ImageServer
     {
@@ -173,27 +158,11 @@ namespace mango::image
             registerImageCodecPIC();
             registerImageCodecPSD();
             registerImageCodecRAW();
-
-#if defined(MANGO_ENABLE_JXL) && defined(MANGO_ENABLE_JXL_THREADS)
             registerImageCodecJXL();
-#endif
-
-#if defined(MANGO_ENABLE_JP2)
             registerImageCodecJP2();
-#endif
-
-#if defined(MANGO_ENABLE_HEIF)
             registerImageCodecHEIF();
-#endif
-
-#if defined(MANGO_ENABLE_AVIF)
             registerImageCodecAVIF();
-#endif
-
-#if defined(MANGO_ENABLE_WEBP)
             registerImageCodecWEBP();
-#endif
-
         }
 
         ~ImageServer()

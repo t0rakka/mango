@@ -337,4 +337,15 @@ namespace mango::image
 
 } // namespace mango::image
 
+#else
+
+namespace mango::image
+{
+
+    void registerImageCodecJXL()
+    {
+    }
+
+} // namespace mango::image
+
 #endif // defined(MANGO_ENABLE_JXL) && defined(MANGO_ENABLE_JXL_THREADS)

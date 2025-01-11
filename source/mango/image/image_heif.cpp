@@ -316,4 +316,15 @@ namespace mango::image
 
 } // namespace mango::image
 
+#else
+
+namespace mango::image
+{
+
+    void registerImageCodecHEIF()
+    {
+    }
+
+} // namespace mango::image
+
 #endif // defined(MANGO_ENABLE_HEIF)
