@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
+cmake_policy(SET CMP0091 NEW)
 project(mango
         VERSION 1.6.0
         DESCRIPTION "A multi-platform development framework for graphics programmers"
@@ -579,8 +580,8 @@ endif ()
 if (LIBRARY_WEBP)
     # brew: webp
     # vcpkg: libwebp
-    find_module_with_pkg(WEBP libwebp>=1.4.0)
-    find_module_with_cmake(WEBP WebP WebP::webp 1.4.0)
+    find_module_with_pkg(WEBP libwebp>=1.3.2)
+    find_module_with_cmake(WEBP WebP WebP::webp 1.3.2)
 endif ()
 
 if (LIBRARY_AVIF)
@@ -831,6 +832,7 @@ target_include_directories(mango-import3d
         "${PROJECT_SOURCE_DIR}/../source/external/simdjson"
 )
 
+# install mango headers
 install(
     DIRECTORY ${PROJECT_SOURCE_DIR}/../include/
     DESTINATION include
