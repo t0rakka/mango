@@ -111,8 +111,13 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
 
+if (WIN32 OR CYGWIN)
+    # disable shared library build on windows
+    set(BUILD_SHARED_LIBS OFF)
+endif ()
+
 if (BUILD_SHARED_LIBS)
-    if (COMPILER_MSVC OR CYGWIN)
+    if (WIN32 OR CYGWIN)
         set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     endif ()
     message(STATUS "Build: " ${CMAKE_BUILD_TYPE} ", Shared")
