@@ -214,31 +214,31 @@ namespace mango
     static constexpr
     u8 u8_mask(u8 c0, u8 c1, u8 c2, u8 c3) noexcept
     {
-        return (c3 << 6) | (c2 << 4) | (c1 << 2) | c0;
+        return u8((c3 << 6) | (c2 << 4) | (c1 << 2) | c0);
     }
 
     static constexpr
     u16 u16_mask(char c0, char c1) noexcept
     {
-        return (c1 << 8) | c0;
+        return u16((c1 << 8) | c0);
     }
 
     static constexpr
     u16 u16_mask_rev(char c0, char c1) noexcept
     {
-        return (c0 << 8) | c1;
+        return u16((c0 << 8) | c1);
     }
 
     static constexpr
     u32 u32_mask(char c0, char c1, char c2, char c3) noexcept
     {
-        return (c3 << 24) | (c2 << 16) | (c1 << 8) | c0;
+        return u32((c3 << 24) | (c2 << 16) | (c1 << 8) | c0);
     }
 
     static constexpr
     u32 u32_mask_rev(char c0, char c1, char c2, char c3) noexcept
     {
-        return (c0 << 24) | (c1 << 16) | (c2 << 8) | c3;
+        return u32((c0 << 24) | (c1 << 16) | (c2 << 8) | c3);
     }
 
     // ----------------------------------------------------------------------------
@@ -259,7 +259,7 @@ namespace mango
     static inline
     u32 byteclamp(s32 value)
     {
-        return std::max(0, std::min(255, value));
+        return u32(std::max(0, std::min(255, value)));
     }
 
 #elif defined(MANGO_COMPILER_GCC)
@@ -267,7 +267,7 @@ namespace mango
     static inline
     u32 byteclamp(s32 value)
     {
-        return std::clamp(value, 0, 255);
+        return u32(std::clamp(value, 0, 255));
     }
 
 #else
@@ -397,7 +397,7 @@ namespace mango
     u16 u16_scale(u16 value, int from, int to)
     {
         // scale value "from" bits "to" bits
-        return value * ((1 << to) - 1) / ((1 << from) - 1);
+        return u16(value * ((1 << to) - 1) / ((1 << from) - 1));
     }
 
     static constexpr
@@ -418,7 +418,7 @@ namespace mango
     u16 u16_extend(u16 value, int from, int to)
     {
         // bit-pattern replicating scaling (can at most double the bits)
-        return (value << (to - from)) | (value >> (from * 2 - to));
+        return u16((value << (to - from)) | (value >> (from * 2 - to)));
     }
 
     static constexpr
@@ -439,7 +439,7 @@ namespace mango
     s16 s16_extend(s16 value, int bits)
     {
         // sign-extend to 16 bits
-        u16 mask = 1 << (bits - 1);
+        u16 mask = u16(1 << (bits - 1));
         return (value ^ mask) - mask;
     }
 
@@ -448,7 +448,7 @@ namespace mango
     {
         // sign-extend to 32 bits
         u32 mask = 1u << (bits - 1);
-        return (value ^ mask) - mask;
+        return s32((value ^ mask) - mask);
     }
 
     static constexpr
@@ -456,7 +456,7 @@ namespace mango
     {
         // sign-extend to 64 bits
         u64 mask = 1ull << (bits - 1);
-        return (value ^ mask) - mask;
+        return s64((value ^ mask) - mask);
     }
 
     // ----------------------------------------------------------------------------
@@ -466,9 +466,9 @@ namespace mango
     static inline
     u8 u8_reverse_bits(u8 value)
     {
-        value = ((value >> 1) & 0x55) | ((value << 1) & 0xaa);
-        value = ((value >> 2) & 0x33) | ((value << 2) & 0xcc);
-        value = (value >> 4) | (value << 4);
+        value = u8(((value >> 1) & 0x55) | ((value << 1) & 0xaa));
+        value = u8(((value >> 2) & 0x33) | ((value << 2) & 0xcc));
+        value = u8((value >> 4) | (value << 4));
         return value;
     }
 
@@ -480,16 +480,16 @@ namespace mango
     u16 u16_select(u16 mask, u16 a, u16 b)
     {
         // bitwise mask ? a : b
-        return (mask & (a ^ b)) ^ b;
+        return u16((mask & (a ^ b)) ^ b);
     }
 
     static inline
     u16 u16_reverse_bits(u16 value)
     {
-        value = ((value >> 1) & 0x5555) | ((value << 1) & 0xaaaa);
-        value = ((value >> 2) & 0x3333) | ((value << 2) & 0xcccc);
-        value = ((value >> 4) & 0x0f0f) | ((value << 4) & 0xf0f0);
-        value = (value >> 8) | (value << 8);
+        value = u16(((value >> 1) & 0x5555) | ((value << 1) & 0xaaaa));
+        value = u16(((value >> 2) & 0x3333) | ((value << 2) & 0xcccc));
+        value = u16(((value >> 4) & 0x0f0f) | ((value << 4) & 0xf0f0));
+        value = u16((value >> 8) | (value << 8));
         return value;
     }
 
@@ -624,7 +624,7 @@ namespace mango
     static inline
     int u32_tzcnt(u32 value)
     {
-        return _tzcnt_u32(value);
+        return int(_tzcnt_u32(value));
     }
 
 #elif defined(__aarch64__) && !defined(MANGO_COMPILER_GCC)
@@ -891,7 +891,7 @@ namespace mango
 #if defined(__BMI__)
 
     static inline
-    u32 u32_extract_bits(u32 value, int offset, int size)
+    u32 u32_extract_bits(u32 value, u32 offset, u32 size)
     {
         return _bextr_u32(value, offset, size);
     }
@@ -899,7 +899,7 @@ namespace mango
 #else
 
     static constexpr
-    u32 u32_extract_bits(u32 value, int offset, int size)
+    u32 u32_extract_bits(u32 value, u32 offset, u32 size)
     {
         return (value >> offset) & ((1 << size) - 1);
     }
@@ -912,7 +912,7 @@ namespace mango
         value ^= value >> 16;
         value ^= value >> 8;
         value ^= value >> 4;
-        return (0b0110100110010110 >> (value & 0xf)) & 1;
+        return u32((0b0110100110010110 >> (value & 0xf)) & 1);
     }
 
     // ----------------------------------------------------------------------------
@@ -1443,7 +1443,7 @@ namespace mango
 #if defined(__BMI__) && defined(MANGO_CPU_64BIT)
 
     static inline
-    u64 u64_extract_bits(u64 value, int offset, int size)
+    u64 u64_extract_bits(u64 value, u32 offset, u32 size)
     {
         return _bextr_u64(value, offset, size);
     }
@@ -1465,7 +1465,7 @@ namespace mango
         value ^= value >> 16;
         value ^= value >> 8;
         value ^= value >> 4;
-        return (0b0110100110010110 >> (value & 0xf)) & 1;
+        return u64((0b0110100110010110 >> (value & 0xf)) & 1);
     }
 
     // ----------------------------------------------------------------------------

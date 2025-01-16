@@ -20,6 +20,8 @@ namespace mango::filesystem
 
     static void processNotify(FileObserver* observer, BYTE* buffer, DWORD bytes, u32 flags0)
     {
+        MANGO_UNREFERENCED(bytes);
+
         for (; buffer;)
         {
             FILE_NOTIFY_INFORMATION* notify = (FILE_NOTIFY_INFORMATION*)(buffer);

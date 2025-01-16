@@ -57,9 +57,9 @@ namespace
 
         // Get CPU information
         cpuid(cpuInfo, 0);
-        unsigned int nIds = cpuInfo[0];
+        int nIds = cpuInfo[0];
 
-        for (unsigned int i = 0; i <= nIds; ++i)
+        for (int i = 0; i <= nIds; ++i)
         {
             cpuid(cpuInfo, i);
 
@@ -108,9 +108,9 @@ namespace
 
         // Get extended CPU information
         cpuid(cpuInfo, 0x80000000);
-        unsigned int nExtIds = cpuInfo[0];
+        int nExtIds = cpuInfo[0];
 
-        for (unsigned int i = 0x80000000; i <= nExtIds; ++i)
+        for (int i = 0x80000000; i <= nExtIds; ++i)
         {
             if (i == 0x80000001)
             {

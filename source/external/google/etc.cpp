@@ -24,11 +24,11 @@
     The original source code has been modified for integration.
 */
 
-#include "../../../include/mango/core/configure.hpp"
-#include "../../../include/mango/core/bits.hpp"
-#include "../../../include/mango/core/endian.hpp"
-#include "../../../include/mango/math/vector.hpp"
-#include "../../../include/mango/image/compression.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/core/bits.hpp>
+#include <mango/core/endian.hpp>
+#include <mango/math/vector.hpp>
+#include <mango/image/compression.hpp>
 
 #define ETC_ENABLE_SIMD
 

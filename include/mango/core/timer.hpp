@@ -31,19 +31,19 @@ namespace mango
         u64 ms() const
         {
             // time age in milliseconds
-            return std::chrono::duration_cast<std::chrono::milliseconds>(now() - m_start).count();
+            return u64(std::chrono::duration_cast<std::chrono::milliseconds>(now() - m_start).count());
         }
 
         u64 us() const
         {
             // timer age in microseconds
-            return std::chrono::duration_cast<std::chrono::microseconds>(now() - m_start).count();
+            return u64(std::chrono::duration_cast<std::chrono::microseconds>(now() - m_start).count());
         }
 
         u64 ns() const
         {
             // timer age in nanoseconds
-            return std::chrono::duration_cast<std::chrono::nanoseconds>(now() - m_start).count();
+            return u64(std::chrono::duration_cast<std::chrono::nanoseconds>(now() - m_start).count());
         }
 
         Time now() const
@@ -72,13 +72,13 @@ namespace mango
 
     struct LocalTime
     {
-        u16  year;   // [....]
-        u16  month;  // [1, 12]
-        u16  day;    // [1, 31]
-        u16  wday;   // [0, 6]
-        u16  hour;   // [0, 23]
-        u16  minute; // [0, 59]
-        u16  second; // [0, 60]
+        int  year;   // [....]
+        int  month;  // [1, 12]
+        int  day;    // [1, 31]
+        int  wday;   // [0, 6]
+        int  hour;   // [0, 23]
+        int  minute; // [0, 59]
+        int  second; // [0, 60]
     };
 
     LocalTime getLocalTime();

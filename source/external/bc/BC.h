@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <float.h>
 #include <stdint.h>
-#include "../../../include/mango/mango.hpp"
+#include <mango/mango.hpp>
 
 namespace DirectX
 {

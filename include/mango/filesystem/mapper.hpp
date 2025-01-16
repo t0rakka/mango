@@ -59,12 +59,12 @@ namespace mango::filesystem
             files.clear();
         }
 
-        FileInfo& operator [] (int index)
+        FileInfo& operator [] (size_t index)
         {
             return files[index];
         }
 
-        const FileInfo& operator [] (int index) const
+        const FileInfo& operator [] (size_t index) const
         {
             return files[index];
         }

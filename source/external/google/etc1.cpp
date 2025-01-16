@@ -16,8 +16,8 @@
 */
 
 #include <string.h>
-#include "../../../include/mango/core/configure.hpp"
-#include "../../../include/mango/image/compression.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/image/compression.hpp>
 
 /* From http://www.khronos.org/registry/gles/extensions/OES/OES_compressed_ETC1_RGB8_texture.txt
 
