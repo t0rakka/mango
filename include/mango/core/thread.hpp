@@ -93,22 +93,21 @@ namespace mango
         ConcurrentQueue is API to submit work into the ThreadPool. The tasks have no
         dependency to each other and can be executed in any order. Any number of queues
         can be created from any thread in the program. The ThreadPool is shared between
-        queues. The queues can be configuted to different priorities to control which tasks
-        are more time critical.
+        queues.
 
         Usage example:
 
-        // create queue
-        ConcurrentQueue q;
+            // create queue
+            ConcurrentQueue q;
 
-        // submit work into the queue
-        q.enqueue([]
-        {
-            // your stuff here..
-        });
+            // submit work into the queue
+            q.enqueue([]
+            {
+                // your stuff here..
+            });
 
-        // wait until the queue is drained
-        q.wait(); // cooperative, blocking (helps pool until all tasks are complete)
+            // wait until the queue is drained
+            q.wait(); // cooperative, blocking (helps pool until all tasks are complete)
 
     */
 
@@ -155,17 +154,17 @@ namespace mango
 
         Usage example:
 
-        // create queue
-        SerialQueue s;
+            // create queue
+            SerialQueue s;
 
-        // submit work into the queue
-        s.enqueue([]
-        {
-            // your stuff here..
-        });
+            // submit work into the queue
+            s.enqueue([]
+            {
+                // your stuff here..
+            });
 
-        // wait until the queue is drained
-        s.wait(); // non-cooperative, blocking (CPU sleeps until queue is drained)
+            // wait until the queue is drained
+            s.wait(); // non-cooperative, blocking (CPU sleeps until queue is drained)
 
     */
 
@@ -217,30 +216,30 @@ namespace mango
 
         Usage example:
 
-        ConcurrentQueue q;
-        TicketQueue tk;
+            ConcurrentQueue q;
+            TicketQueue tk;
 
-        for (int i = 0; i < 10; ++i)
-        {
-            auto ticket = tk.acquire();
-
-            q.enqueue([ticket]
+            for (int i = 0; i < 10; ++i)
             {
-                // do your heavy calculation here..
+                auto ticket = tk.acquire();
 
-                ticket.consume([]
+                q.enqueue([ticket]
                 {
-                    // this work is serialized and executed in the order the tickets were acquired
+                    // do your heavy calculation here..
+
+                    ticket.consume([]
+                    {
+                        // this work is serialized and executed in the order the tickets were acquired
+                    });
                 });
-            });
-        }
+            }
 
-        // wait until the queue is drained
-        q.wait();
+            // wait until the queue is drained
+            q.wait();
 
-        // we know all workers have completed -> no more tickets will be consumed
-        // now we wait until ticket queue is finished
-        tk.wait();
+            // we know all workers have completed -> no more tickets will be consumed
+            // now we wait until ticket queue is finished
+            tk.wait();
 
     */
 
@@ -314,13 +313,14 @@ namespace mango
 
         Usage example:
 
-        // enqueue a simple task into the ThreadPool
-        FutureTask<int> task([] () -> int {
-            return 7;
-        });
+            // enqueue a simple task into the ThreadPool
+            FutureTask<int> task([] () -> int
+            {
+                return 7;
+            });
 
-        // this will block until the task has been completed
-        int x = task.get();
+            // this will block until the task has been completed
+            int x = task.get();
 
     */
 
