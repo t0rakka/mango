@@ -228,7 +228,7 @@ namespace mango::image
     {
     }
 
-    LuminanceFormat::LuminanceFormat(int bits, Type type, u8 luminanceBits, u8 alphaBits, u16 flags)
+    LuminanceFormat::LuminanceFormat(int bits, Type type, u32 luminanceBits, u32 alphaBits, u16 flags)
         : Format(bits, type, Color(luminanceBits, luminanceBits, luminanceBits, alphaBits), Color(0, 0, 0, luminanceBits), flags | LUMINANCE)
     {
     }

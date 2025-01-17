@@ -384,6 +384,11 @@ namespace
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
+            MANGO_UNREFERENCED(face);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(options);
+
             ImageDecodeStatus status;
 
             const u8* p = m_memory.address;
@@ -505,6 +510,8 @@ namespace
 
         void resolveBitmap(u8* dest, const u8* src, int width, int channels)
         {
+            MANGO_UNREFERENCED(channels);
+
             u8 mask = 0;
             u8 data = 0;
 

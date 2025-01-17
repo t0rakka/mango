@@ -164,7 +164,7 @@ namespace mango::image
     struct LuminanceFormat : Format
     {
         explicit LuminanceFormat(int bits, u32 luminanceMask, u32 alphaMask, u16 flags = 0);
-        explicit LuminanceFormat(int bits, Type type, u8 luminanceBits, u8 alphaBits, u16 flags = 0);
+        explicit LuminanceFormat(int bits, Type type, u32 luminanceBits, u32 alphaBits, u16 flags = 0);
     };
 
     struct IndexedFormat : Format

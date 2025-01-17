@@ -47,7 +47,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     filesystem::File file(path, filename);
 
-    fastgltf::GltfDataBuffer data = *fastgltf::GltfDataBuffer::FromBytes(
+    fastgltf::GltfDataBuffer dataBuffer = *fastgltf::GltfDataBuffer::FromBytes(
         reinterpret_cast<const std::byte*>(file.data()), file.size());
         
     // --------------------------------------------------------------------------
@@ -79,7 +79,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     fastgltf::Parser parser(extensions);
 
-    auto type = fastgltf::determineGltfFileType(data);
+    auto type = fastgltf::determineGltfFileType(dataBuffer);
     switch (type)
     {
         case fastgltf::GltfType::glTF:
@@ -103,7 +103,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     //options |= fastgltf::Options::LoadExternalImages;
     //options |= fastgltf::Options::LoadExternalImages;
 
-    auto expected_asset = parser.loadGltf(data, "", options);
+    auto expected_asset = parser.loadGltf(dataBuffer, "", options);
     if (expected_asset.error() != fastgltf::Error::None)
     {
         printLine(Print::Error, "  ERROR: {}", fastgltf::getErrorMessage(expected_asset.error()).data());
@@ -128,6 +128,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             [] (const auto& arg)
             {
                 printLine(Print::Verbose, "  Unknown");
+                MANGO_UNREFERENCED(arg);
             },
             [&] (const fastgltf::sources::URI& source)
             {
@@ -160,6 +161,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 // [ ] binary
                 // [ ] embedded
                 printLine(Print::Verbose, "  BufferView:");
+                MANGO_UNREFERENCED(source);
             },
             [&](const fastgltf::sources::Array& array)
             {
@@ -205,6 +207,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         {
             [] (const auto& arg)
             {
+                MANGO_UNREFERENCED(arg);
             },
             [&] (const fastgltf::sources::URI& source)
             {
@@ -263,6 +266,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 {
                     [] (auto& arg)
                     {
+                        MANGO_UNREFERENCED(arg);
                     },
                     [&](fastgltf::sources::Array& vector)
                     {
@@ -285,6 +289,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             [&] (const fastgltf::sources::CustomBuffer& source)
             {
                 printLine(Print::Verbose, "  CustomBuffer: TODO");
+                MANGO_UNREFERENCED(source);
             },
         }, current.data);
 
@@ -887,20 +892,20 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         continue;
                 }
 
-                u64 time0 = Time::us();
+                u64 b_time0 = Time::us();
 
                 if (needTangent)
                 {
                     trimesh.computeTangents();
                 }
 
-                u64 time1 = Time::us();
+                u64 b_time1 = Time::us();
 
                 mesh.append(trimesh, u32(materialIndex));
 
-                u64 time2 = Time::us();
-                u64 delta0 = time1 - time0;
-                u64 delta1 = time2 - time1;
+                u64 b_time2 = Time::us();
+                u64 delta0 = b_time1 - b_time0;
+                u64 delta1 = b_time2 - b_time1;
 
                 printLine(Print::Verbose, "    Computing tangents: {}.{} ms", delta0 / 1000, delta0 % 1000);
                 printLine(Print::Verbose, "    Mesh Indexing: {}.{} ms", delta1 / 1000, delta1 % 1000);

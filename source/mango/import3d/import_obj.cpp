@@ -194,12 +194,12 @@ namespace mango::import3d
                 u32 d = u32(*s) - '0';
                 if (d > 9)
                 {
-                    return result;
+                    // return result
+                    break;
                 }
                 result = result * 10 + d;
             }
 
-            //  unreachable
             return result;
         }
 
@@ -578,6 +578,8 @@ namespace mango::import3d
 
     void ReaderOBJ::parse_s(const std::string_view* tokens, size_t count)
     {
+        MANGO_UNREFERENCED(tokens);
+
         if (count != 1)
         {
             // error

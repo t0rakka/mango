@@ -280,6 +280,12 @@ namespace mango
 
 #endif
 
+    static inline
+    u8 u8_clamp(s32 value)
+    {
+        return u8(byteclamp(value));
+    }
+
     static constexpr
     int mul8bit(int a, int b)
     {

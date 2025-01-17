@@ -573,8 +573,8 @@ namespace mango::import3d
         params.scale *= 0.5f;
         params.thickness *= params.scale;
 
-        const float uscale = params.uscale / params.facets;
-        const float vscale = params.vscale / params.steps;
+        const float uscale = params.uscale / float(params.facets);
+        const float vscale = params.vscale / float(params.steps);
 
         auto ptr = std::make_unique<IndexedMesh>();
         IndexedMesh& mesh = *ptr;
