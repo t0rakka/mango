@@ -132,6 +132,7 @@
 #pragma warning(push)
 #pragma warning(disable : 5030) // attribute 'x' is not recognized
 #pragma warning(disable : 4514) // unreferenced inline function has been removed
+#pragma warning(disable : 5045 5246) // mango customization
 #endif
 
 namespace fastgltf {
