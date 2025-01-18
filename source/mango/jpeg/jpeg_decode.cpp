@@ -142,15 +142,6 @@ namespace mango::image::jpeg
         }
 
         m_surface = nullptr;
-
-        if (isJPEG(m_memory))
-        {
-            parse(m_memory, false);
-        }
-        else
-        {
-            header.setError("Incorrect SOI marker.");
-        }
     }
 
     Parser::~Parser()
@@ -160,6 +151,15 @@ namespace mango::image::jpeg
     void Parser::setInterface(ImageDecodeInterface* interface)
     {
         m_interface = interface;
+
+        if (isJPEG(m_memory))
+        {
+            parse(m_memory, false);
+        }
+        else
+        {
+            header.setError("Incorrect SOI marker.");
+        }
     }
 
     bool Parser::isJPEG(ConstMemory memory) const
