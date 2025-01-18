@@ -203,8 +203,8 @@ namespace
         code = byteswap(code);
         for (int i = 0; i < count; ++i)
         {
-            u32 value = code & 0xff;
-            u32 is_stuff_byte = value == 0xff;
+            u8 value = u8(code & 0xff);
+            u8 is_stuff_byte = value == 0xff;
             code >>= 8;
             output[0] = value;
             output[1] = 0;

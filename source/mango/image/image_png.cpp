@@ -96,7 +96,9 @@ namespace fpng
     {12,2047},{0,0},{6,9},{0,0},{0,0},{0,0},{8,147},{0,0},{0,0},{7,53},{0,0},{9,379},{0,0},{9,251},{10,911},{10,79},{11,767},{10,591},{10,335},{10,847},{10,207},{10,719},{11,1791},{11,511},{9,507},{11,1535},{11,1023},{12,4095},{5,14},{0,0},{0,0},{0,0}
     };
 
-#define PUT_BITS(bb, ll) do { uint32_t b = bb, l = ll; assert((l) >= 0 && (l) <= 16); assert((b) < (1ULL << (l))); bit_buf |= (((uint64_t)(b)) << bit_buf_size); bit_buf_size += (l); assert(bit_buf_size <= 64); } while(0)
+// compiler warning: always evaluates true (one of the asserts)
+//#define PUT_BITS(bb, ll) do { uint32_t b = bb, l = ll; assert((l) >= 0 && (l) <= 16); assert((b) < (1ULL << (l))); bit_buf |= (((uint64_t)(b)) << bit_buf_size); bit_buf_size += (l); assert(bit_buf_size <= 64); } while(0)
+#define PUT_BITS(bb, ll) do { uint32_t b = bb, l = ll; bit_buf |= (((uint64_t)(b)) << bit_buf_size); bit_buf_size += (l); } while(0)
 #define PUT_BITS_CZ(bb, ll) do { uint32_t b = bb, l = ll; assert((l) >= 1 && (l) <= 16); assert((b) < (1ULL << (l))); bit_buf |= (((uint64_t)(b)) << bit_buf_size); bit_buf_size += (l); assert(bit_buf_size <= 64); } while(0)
 
 #define PUT_BITS_FLUSH do { \
@@ -1297,7 +1299,7 @@ namespace
             }
 
             u32 index = (data >> offset) & mask;
-            dst[x] = index;
+            dst[x] = u8(index);
             offset -= bits;
         }
     }
@@ -1944,8 +1946,6 @@ namespace
 
         AdamInterleave(u32 pass, u32 width, u32 height)
         {
-            assert(pass >=0 && pass < 7);
-
             const u32 orig = 0x01020400 >> (pass * 4);
             const u32 spc = 0x01122333 >> (pass * 4);
 
@@ -2021,7 +2021,7 @@ namespace
         ConstMemory m_memory;
         ImageHeader m_header;
 
-        ImageDecodeInterface* m_interface;
+        ImageDecodeInterface* m_interface = nullptr;
 
         const u8* m_pointer = nullptr;
         const u8* m_end = nullptr;
@@ -2062,7 +2062,7 @@ namespace
         u8 m_scale_bits[4];
 
         // sRGB
-        u8 m_srgb_render_intent = -1;
+        u8 m_srgb_render_intent = 0xff;
 
         // acTL
         u32 m_number_of_frames = 0;
@@ -2131,9 +2131,8 @@ namespace
         }
 
     public:
-        ParserPNG(ConstMemory memory, ImageDecodeInterface* interface)
+        ParserPNG(ConstMemory memory)
             : m_memory(memory)
-            , m_interface(interface)
             , m_end(memory.address + memory.size)
         {
             BigEndianConstPointer p = memory.address;
@@ -2238,6 +2237,11 @@ namespace
             return m_header;
         }
 
+        void setInterface(ImageDecodeInterface* interface)
+        {
+            m_interface = interface;
+        }
+
         size_t getInterlacedPassSize(int pass, int width, int height) const
         {
             size_t bytes = 0;
@@ -2293,7 +2297,7 @@ namespace
         p += 4; // skip crc
         for ( ; p < m_end - 8; )
         {
-            const u32 size = p.read32();
+            const u32 chunk_size = p.read32();
             const u32 id = p.read32();
             switch (id)
             {
@@ -2305,7 +2309,7 @@ namespace
                     }
                     break;
             }
-            p += (size + 4);
+            p += (chunk_size + 4);
         }
 
         // bit-depth range defaults
@@ -2352,7 +2356,7 @@ namespace
         // load default scaling values (override from sBIT chunk)
         for (int i = 0; i < m_channels; ++i)
         {
-            m_scale_bits[i] = m_color_state.bits;
+            m_scale_bits[i] = u8(m_color_state.bits);
         }
 
         printLine(Print::Info, "  Image: ({} x {}), {} bits", m_width, m_height, m_color_state.bits);
@@ -3033,8 +3037,8 @@ namespace
 
         if (m_decode_target.image != target.image)
         {
-            u8* image = target.image + y0 * target.stride;
-            Surface source(rect.width, rect.height, target.format, target.stride, image);
+            u8* dest = target.image + y0 * target.stride;
+            Surface source(rect.width, rect.height, target.format, target.stride, dest);
             m_decode_target.blit(rect.x, rect.y, source);
         }
 
@@ -3289,12 +3293,12 @@ namespace
             printLine(Print::Info, "  buffer bytes: {}", buffer_size);
 
             // allocate output buffer
-            Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
+            Buffer temp_buffer(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
 
             // zero scanline for filters at the beginning
-            std::memset(temp, 0, bytes_per_line);
+            std::memset(temp_buffer, 0, bytes_per_line);
 
-            Memory buffer(temp + bytes_per_line, buffer_size);
+            Memory memory_buffer(temp_buffer + bytes_per_line, buffer_size);
 
             // ----------------------------------------------------------------------
 
@@ -3317,12 +3321,12 @@ namespace
             size_t top_size = bytes_per_line * m_first_half_height;
 
             Memory top_buffer;
-            top_buffer.address = buffer.address;
+            top_buffer.address = memory_buffer.address;
             top_buffer.size = top_size;
 
             Memory bottom_buffer;
-            bottom_buffer.address = buffer.address + top_size;
-            bottom_buffer.size = buffer.size - top_size;
+            bottom_buffer.address = memory_buffer.address + top_size;
+            bottom_buffer.size = memory_buffer.size - top_size;
 
             ConstMemory top_memory = compressed_top;
             ConstMemory bottom_memory = compressed_bottom;
@@ -3353,7 +3357,7 @@ namespace
             MANGO_UNREFERENCED(bytes_out_bottom);
 
             // process image
-            process_image(target, buffer, multithread);
+            process_image(target, memory_buffer, multithread);
         }
         else
         {
@@ -3378,12 +3382,12 @@ namespace
             printLine(Print::Info, "  buffer bytes: {}", buffer_size);
 
             // allocate output buffer
-            Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
+            Buffer temp_buffer(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
 
             // zero scanline for filters at the beginning
-            std::memset(temp, 0, bytes_per_line);
+            std::memset(temp_buffer, 0, bytes_per_line);
 
-            Memory buffer(temp + bytes_per_line, buffer_size);
+            Memory temp_memory(temp_buffer + bytes_per_line, buffer_size);
 
             // ----------------------------------------------------------------------
 
@@ -3424,8 +3428,8 @@ namespace
                         return status;
                     }
 
-                    state.next_out = buffer.address + state.total_out;
-                    state.avail_out = u32(buffer.size - state.total_out);
+                    state.next_out = temp_memory.address + state.total_out;
+                    state.avail_out = u32(temp_memory.size - state.total_out);
 
                     int s = isal_inflate(&state);
 
@@ -3475,7 +3479,7 @@ namespace
                     if (!m_interlace)
                     {
                         int y1 = int(state.total_out / bytes_per_line);
-                        process_range(target, buffer.address + bytes_per_line * y0, y0, y1);
+                        process_range(target, temp_memory.address + bytes_per_line * y0, y0, y1);
                         y0 = y1;
                     }
 
@@ -3493,7 +3497,7 @@ namespace
                 // process image
                 if (m_interlace)
                 {
-                    process_image(target, buffer, multithread);
+                    process_image(target, temp_memory, multithread);
                 }
 
 #else
@@ -3541,8 +3545,8 @@ namespace
 
                     do
                     {
-                        stream.avail_out = uInt(buffer.size - stream.total_out);
-                        stream.next_out = buffer.address + stream.total_out;
+                        stream.avail_out = uInt(temp_memory.size - stream.total_out);
+                        stream.next_out = temp_memory.address + stream.total_out;
 
                         ret = inflate(&stream, Z_NO_FLUSH);
                         if (ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR || ret == Z_MEM_ERROR)
@@ -3557,7 +3561,7 @@ namespace
                     if (!m_interlace)
                     {
                         int y1 = int(stream.total_out / bytes_per_line);
-                        process_range(target, buffer.address + bytes_per_line * y0, y0, y1);
+                        process_range(target, temp_memory.address + bytes_per_line * y0, y0, y1);
                         y0 = y1;
                     }
 
@@ -3581,7 +3585,7 @@ namespace
                 // process image
                 if (m_interlace)
                 {
-                    process_image(target, buffer, multithread);
+                    process_image(target, temp_memory, multithread);
                 }
 #endif
             }
@@ -3625,7 +3629,7 @@ namespace
                 }
 
                 // process image
-                process_image(target, buffer, multithread);
+                process_image(target, temp_memory, multithread);
             }
         }
 
@@ -4247,8 +4251,9 @@ namespace
         ParserPNG m_parser;
 
         Interface(ConstMemory memory)
-            : m_parser(memory, this)
+            : m_parser(memory)
         {
+            m_parser.setInterface(this);
             async = true;
             header = m_parser.getHeader();
             icc = m_parser.icc();

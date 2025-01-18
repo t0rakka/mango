@@ -358,7 +358,7 @@ namespace mango::image::jpeg
     class Parser
     {
     protected:
-        ConstMemory memory;
+        ConstMemory m_memory;
         ImageDecodeInterface* m_interface;
         QuantTable quantTable[JPEG_MAX_COMPS_IN_SCAN];
 
@@ -390,13 +390,13 @@ namespace mango::image::jpeg
         const Surface* m_surface = nullptr; // temporary color conversion/clipping surface
         bool m_request_blitting = false;
 
-        int aligned_width;
-        int aligned_height;
-        int width;
-        int height;
+        int m_aligned_width;
+        int m_aligned_height;
+        int m_width;
+        int m_height;
 
-        int precision; // 8 or 12 bits
-        int components; // 1..4
+        int m_precision; // 8 or 12 bits
+        int m_components; // 1..4
 
         bool is_baseline = true;
         bool is_progressive = false;
