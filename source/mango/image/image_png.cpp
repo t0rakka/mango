@@ -2135,45 +2135,6 @@ namespace
             : m_memory(memory)
             , m_end(memory.address + memory.size)
         {
-            BigEndianConstPointer p = memory.address;
-
-            // read header magic
-            const u64 magic = p.read64();
-            if (magic != PNG_HEADER_MAGIC)
-            {
-                setError("Incorrect header magic.");
-                return;
-            }
-
-            // read first chunk; in standard it is IHDR, but apple has CgBI+IHDR
-            u32 size = p.read32();
-            u32 id = p.read32();
-
-            if (id == u32_mask_rev('C', 'g', 'B', 'I'))
-            {
-                printLine(Print::Info, "CgBI: reading PNG as iphone optimized");
-
-                m_iphoneOptimized = true;
-                p += size; // skip chunk data
-                p += sizeof(u32); // skip crc
-
-                // next chunk
-                size = p.read32();
-                id = p.read32();
-            }
-
-            if (id != u32_mask_rev('I', 'H', 'D', 'R'))
-            {
-                setError("Incorrect file; the IHDR chunk must come first.");
-                return;
-            }
-
-            read_IHDR(p, size);
-            p += size; // skip chunk data
-            p += sizeof(u32); // skip crc
-
-            // keep track of parsing position
-            m_pointer = p;
         }
 
         ~ParserPNG()
@@ -2240,6 +2201,46 @@ namespace
         void setInterface(ImageDecodeInterface* interface)
         {
             m_interface = interface;
+
+            BigEndianConstPointer p = m_memory.address;
+
+            // read header magic
+            const u64 magic = p.read64();
+            if (magic != PNG_HEADER_MAGIC)
+            {
+                setError("Incorrect header magic.");
+                return;
+            }
+
+            // read first chunk; in standard it is IHDR, but apple has CgBI+IHDR
+            u32 size = p.read32();
+            u32 id = p.read32();
+
+            if (id == u32_mask_rev('C', 'g', 'B', 'I'))
+            {
+                printLine(Print::Info, "CgBI: reading PNG as iphone optimized");
+
+                m_iphoneOptimized = true;
+                p += size; // skip chunk data
+                p += sizeof(u32); // skip crc
+
+                // next chunk
+                size = p.read32();
+                id = p.read32();
+            }
+
+            if (id != u32_mask_rev('I', 'H', 'D', 'R'))
+            {
+                setError("Incorrect file; the IHDR chunk must come first.");
+                return;
+            }
+
+            read_IHDR(p, size);
+            p += size; // skip chunk data
+            p += sizeof(u32); // skip crc
+
+            // keep track of parsing position
+            m_pointer = p;
         }
 
         size_t getInterlacedPassSize(int pass, int width, int height) const
@@ -4254,6 +4255,7 @@ namespace
             : m_parser(memory)
         {
             m_parser.setInterface(this);
+
             async = true;
             header = m_parser.getHeader();
             icc = m_parser.icc();
