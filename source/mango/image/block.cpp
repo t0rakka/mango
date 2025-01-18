@@ -1588,27 +1588,27 @@ namespace mango::image
         return (compression & SRGB) == 0;
     }
 
-    int TextureCompression::getBlocksX(int width) const
+    int TextureCompression::getBlocksX(int c_width) const
     {
-        return div_ceil(width, this->width);
+        return div_ceil(c_width, width);
     }
 
-    int TextureCompression::getBlocksY(int height) const
+    int TextureCompression::getBlocksY(int c_height) const
     {
-        return div_ceil(height, this->height);
+        return div_ceil(c_height, height);
     }
 
-    int TextureCompression::getBlockCount(int width, int height) const
+    int TextureCompression::getBlockCount(int c_width, int c_height) const
     {
-        int xblocks = getBlocksX(width);
-        int yblocks = getBlocksY(height);
+        int xblocks = getBlocksX(c_width);
+        int yblocks = getBlocksY(c_height);
         return xblocks * yblocks;
     }
 
-    u64 TextureCompression::getBlockBytes(int width, int height) const
+    u64 TextureCompression::getBlockBytes(int c_width, int c_height) const
     {
-        int xblocks = getBlocksX(width);
-        int yblocks = getBlocksY(height);
+        int xblocks = getBlocksX(c_width);
+        int yblocks = getBlocksY(c_height);
         return xblocks * yblocks * bytes;
     }
 

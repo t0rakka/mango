@@ -145,7 +145,7 @@ namespace
 
         for (int i = 0; i < code_clear; ++i)
         {
-            const u8 initcode = i;
+            const u8 initcode = u8(i);
             codes[i].prefix = -1;
             codes[i].first = initcode;
             codes[i].suffix = initcode;
@@ -178,7 +178,8 @@ namespace
                     if (src + length >= src_end)
                     {
                         // overflow
-                        return nullptr;
+                        src = nullptr;
+                        break;
                     }
                 }
 
@@ -220,7 +221,8 @@ namespace
                         if (available >= MAX_STACK_SIZE)
                         {
                             // too many codes
-                            return nullptr;
+                            src = nullptr;
+                            break;
                         }
 
                         p->prefix = s16(oldcode);
@@ -230,7 +232,8 @@ namespace
                     else if (code == available)
                     {
                         // illegal code
-                        return nullptr;
+                        src = nullptr;
+                        break;
                     }
 
                     oldcode = code;
@@ -265,7 +268,8 @@ namespace
                 else
                 {
                     // illegal code
-                    return nullptr;
+                    src = nullptr;
+                    break;
                 }
             }
         }
@@ -422,9 +426,9 @@ namespace
         Surface rect(surface, x, y, width, height);
         u8* src = bits.get();
 
-        for (int y = 0; y < rect.height; ++y)
+        for (int sy = 0; sy < rect.height; ++sy)
         {
-            u8* dest = rect.address<u8>(0, y);
+            u8* dest = rect.address<u8>(0, sy);
             func(dest, src, rect.width, palette, transparent);
             src += width;
         }

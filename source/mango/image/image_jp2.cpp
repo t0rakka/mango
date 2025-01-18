@@ -671,7 +671,7 @@ namespace
                 return;
             }
 
-            CallbackManager callback(m_codec, 0);
+            CallbackManager callback_manager(m_codec, 0);
 
             size_t num_thread = std::max(std::thread::hardware_concurrency(), 1u);
             opj_codec_set_threads(m_codec, int(num_thread));

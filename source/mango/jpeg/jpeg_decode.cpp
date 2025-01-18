@@ -129,9 +129,8 @@ namespace mango::image::jpeg
     // Parser
     // ----------------------------------------------------------------------------
 
-    Parser::Parser(ConstMemory memory, ImageDecodeInterface* interface)
+    Parser::Parser(ConstMemory memory)
         : m_memory(memory)
-        , m_interface(interface)
         , quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
     {
         restartInterval = 0;
@@ -156,6 +155,11 @@ namespace mango::image::jpeg
 
     Parser::~Parser()
     {
+    }
+
+    void Parser::setInterface(ImageDecodeInterface* interface)
+    {
+        m_interface = interface;
     }
 
     bool Parser::isJPEG(ConstMemory memory) const

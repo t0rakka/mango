@@ -127,7 +127,7 @@ namespace
 
         if (code < 0x80)
         {
-            *ptr++ = code;
+            *ptr++ = char(code);
         }
         else if (code < 0x800)
         {
@@ -241,7 +241,7 @@ namespace mango
                 // encode into temporary buffer
                 if (code <= 0xffff)
                 {
-                    *sb.ptr++ = code;
+                    *sb.ptr++ = char16_t(code);
                 }
                 else
                 {
@@ -327,7 +327,7 @@ namespace mango
 
             if (c < 0x80)
             {
-                s.push_back(c);
+                s.push_back(char(c));
             }
             else if (c < 0x800)
             {
@@ -370,7 +370,7 @@ namespace mango
                 if (code <= 0xffff)
                 {
                     sb.ensure();
-                    *sb.ptr++ = code;
+                    *sb.ptr++ = wchar_t(code);
                 }
             }
         }
@@ -426,7 +426,7 @@ namespace mango
             }
             else
             {
-                s.push_back(d);
+                s.push_back(wchar_t(d));
             }
         }
 
@@ -440,13 +440,21 @@ namespace mango
 
     std::string toLower(std::string s)
     {
-        std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+        std::transform(s.begin(), s.end(), s.begin(), [] (unsigned char c)
+        {
+            return char(std::tolower(c));
+        });
+
         return s;
     }
 
     std::string toUpper(std::string s)
     {
-        std::transform(s.begin(), s.end(), s.begin(), ::toupper);
+        std::transform(s.begin(), s.end(), s.begin(), [] (unsigned char c)
+        {
+            return char(std::toupper(c));
+        });
+
         return s;
     }
 

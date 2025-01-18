@@ -421,6 +421,13 @@ namespace mango
     }
 
     static constexpr
+    u8 u8_extend(u32 value, int from, int to)
+    {
+        // bit-pattern replicating scaling (can at most double the bits)
+        return u8((value << (to - from)) | (value >> (from * 2 - to)));
+    }
+
+    static constexpr
     u16 u16_extend(u16 value, int from, int to)
     {
         // bit-pattern replicating scaling (can at most double the bits)

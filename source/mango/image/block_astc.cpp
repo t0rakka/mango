@@ -85,8 +85,8 @@ namespace mango::image
         else
         {
             u32 thread_index = 0;
-            auto status = astcenc_compress_image(context, &image, &swizzle, output, output_bytes, thread_index);
-            if (status != ASTCENC_SUCCESS)
+            auto status2 = astcenc_compress_image(context, &image, &swizzle, output, output_bytes, thread_index);
+            if (status2 != ASTCENC_SUCCESS)
             {
                 printLine(Print::Error, "[ASTC] astcenc_compress_image: {}", astcenc_get_error_string(status));
             }

@@ -2637,12 +2637,12 @@ void D3DX_BC7::Decode(u8* output, size_t stride) const noexcept
         {
             for (size_t i = 0; i < uNumEndPts; i++)
             {
-                size_t pi = i * ms_aInfo[uMode].uPBits / uNumEndPts;
+                size_t xpi = i * ms_aInfo[uMode].uPBits / uNumEndPts;
                 for (uint8_t ch = 0; ch < BC7_NUM_CHANNELS; ch++)
                 {
                     if (RGBAPrec[ch] != RGBAPrecWithP[ch])
                     {
-                        c[i][ch] = static_cast<uint8_t>((unsigned(c[i][ch]) << 1) | P[pi]);
+                        c[i][ch] = static_cast<uint8_t>((unsigned(c[i][ch]) << 1) | P[xpi]);
                     }
                 }
             }

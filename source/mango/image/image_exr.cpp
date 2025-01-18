@@ -613,36 +613,36 @@ void hufFreeDecTable(HufDec *hdecod)
 //
 
 #define getChar(c, lc, in) \
-{ \
+{                                 \
     c = (c << 8) | *(u8 *)(in++); \
-    lc += 8; \
+    lc += 8;                      \
 }
 
 #define getCode(po, rlc, c, lc, in, out, ob, oe) \
-{ \
-    if (po == rlc) \
-    { \
-        if (lc < 8) \
+{                               \
+    if (po == rlc)              \
+    {                           \
+        if (lc < 8)             \
             getChar(c, lc, in); \
-        \
-        lc -= 8; \
-        \
-        u8 cs = (c >> lc); \
-        \
-        /*if (out + cs > oe) \
-            ; \
-        else if (out - 1 < ob) \
-            ;*/ \
-        \
-        u16 s = out[-1]; \
-        \
-        while (cs-- > 0) \
-            *out++ = s; \
-    } \
-    else if (out < oe) \
-    { \
-        *out++ = po; \
-    } \
+                                \
+        lc -= 8;                \
+                                \
+        u8 cs = (c >> lc);      \
+                                \
+        /*if (out + cs > oe)    \
+            ;                   \
+        else if (out - 1 < ob)  \
+            ;*/                 \
+                                \
+        u16 s = out[-1];        \
+                                \
+        while (cs-- > 0)        \
+            *out++ = s;         \
+    }                           \
+    else if (out < oe)          \
+    {                           \
+        *out++ = u16(po);       \
+    }                           \
 }
 
 //
@@ -860,7 +860,7 @@ u16 reverseLutFromBitmap(const u8 bitmap[BITMAP_SIZE], u16 lut[USHORT_RANGE])
         lut[k] = 0;
     }
 
-    return n; // maximum k where lut[k] is non-zero
+    return u16(n); // maximum k where lut[k] is non-zero
 }
 
 static
@@ -1418,10 +1418,12 @@ struct AttributeTable
     Text        view;
 
     // Multi-Part Data Header Attributes
+    /*
     String      name;
     String      type;
     u32         version;
     u32         chunkCount;
+    */
 
     // Deep Data Header Attributes
     u32         maxSamplesPerPixel;
@@ -1433,6 +1435,9 @@ struct AttributeTable
 
     void parse(const std::string& name, const std::string& type, LittleEndianConstPointer p, u32 size)
     {
+        MANGO_UNREFERENCED(type);
+        MANGO_UNREFERENCED(size);
+
         if (name == "channels")
         {
             readAttribute(chlist, p);
@@ -1532,7 +1537,7 @@ struct ContextEXR
         for (u32 i = 0; i < 0x10000; ++i)
         {
             float16 hf;
-            hf.u = i;
+            hf.u = u16(i);
 
             u16 value = 0;
 
@@ -1713,6 +1718,7 @@ ContextEXR::~ContextEXR()
 
 const u8* ContextEXR::decompress_none(Memory dest, ConstMemory source)
 {
+    MANGO_UNREFERENCED(dest);
     return source.address;
 }
 
@@ -2803,6 +2809,9 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
 
 ImageDecodeStatus ContextEXR::decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
 {
+    MANGO_UNREFERENCED(level);
+    MANGO_UNREFERENCED(depth);
+
     ImageDecodeStatus status;
 
     if (!m_pointer)
@@ -2854,6 +2863,9 @@ namespace
 
         ConstMemory memory(int level, int depth, int face) override
         {
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
             return ConstMemory();
         }
 

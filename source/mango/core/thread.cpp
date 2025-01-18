@@ -112,9 +112,10 @@ namespace mango
     ThreadPool::ThreadPool(size_t size)
         : m_queue(nullptr)
         , m_threads(size)
-        , m_static_queue(this, "static")
+        , m_static_queue(nullptr, "static")
     {
         m_queue = new TaskQueue;
+        m_static_queue.pool = this;
 
         // NOTE: let OS scheduler shuffle tasks as it sees fit
         //       this gives better performance overall UNTIL we have some practical

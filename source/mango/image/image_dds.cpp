@@ -1107,7 +1107,7 @@ namespace
             return ysize * pitch;
         }
 
-        ConstMemory getMemory(int level, int depth, int face) const
+        ConstMemory getMemory(int c_level, int c_depth, int c_face) const
         {
             const int maxFace = getFaceCount();
             const int maxLevel = getMipmapCount();
@@ -1120,7 +1120,7 @@ namespace
             {
                 for (int iFace = 0; iFace < maxFace; ++iFace)
                 {
-                    bool isDepthFace = (depth == iDepth) && (face == iFace);
+                    bool isDepthFace = (c_depth == iDepth) && (c_face == iFace);
 
                     for (int iLevel = 0; iLevel < maxLevel; ++iLevel)
                     {
@@ -1128,7 +1128,7 @@ namespace
                         const int ysize = std::max(1, int(height) >> iLevel);
                         const int bytes = getLevelSize(xsize, ysize);
 
-                        if (isDepthFace && iLevel == level)
+                        if (isDepthFace && iLevel == c_level)
                         {
                             // Store selected address
                             selected = ConstMemory(image, bytes);

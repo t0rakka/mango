@@ -154,6 +154,8 @@ namespace
 
     void decode_chroma(u8* out, size_t stride, const BlockCHROMA& block, u8 alphaMask)
     {
+        MANGO_UNREFERENCED(alphaMask);
+
         u32 b0 = expand5to8(block.blue0);
         u32 g0 = expand5to8(block.green0);
         u32 r0 = expand5to8(block.red0);

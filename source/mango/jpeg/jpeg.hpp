@@ -359,7 +359,7 @@ namespace mango::image::jpeg
     {
     protected:
         ConstMemory m_memory;
-        ImageDecodeInterface* m_interface;
+        ImageDecodeInterface* m_interface = nullptr;
         QuantTable quantTable[JPEG_MAX_COMPS_IN_SCAN];
 
         AlignedStorage<s16> quantTableVector;
@@ -464,8 +464,10 @@ namespace mango::image::jpeg
         ConstMemory scan_memory; // Scan block
         Buffer icc_buffer; // ICC color profile block, if one is present
 
-        Parser(ConstMemory memory, ImageDecodeInterface* interface);
+        Parser(ConstMemory memory);
         ~Parser();
+
+        void setInterface(ImageDecodeInterface* interface);
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
     };

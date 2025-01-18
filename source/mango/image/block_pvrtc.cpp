@@ -224,7 +224,7 @@ namespace
                     const int s = y & 1;
                     for (int x = 0; x < 4; x++)
                     {
-                        dest[1 - s] = WordModMode;
+                        dest[1 - s] = u8(WordModMode);
                         dest[0 + s] = modulation_table[ModulationBits & 3];
                         dest += 2;
                         ModulationBits >>= 2;
@@ -560,29 +560,31 @@ namespace
 
             if (opacity)
             {
-                a.b = pvrtc2_extend((packed >>  1) & 0x0f, 4, 8);
-                a.g = pvrtc2_extend((packed >>  5) & 0x1f, 5, 8);
-                a.r = pvrtc2_extend((packed >> 10) & 0x1f, 5, 8);
-                a.a = 0xff;
+                u32 b0 = pvrtc2_extend((packed >>  1) & 0x0f, 4, 8);
+                u32 g0 = pvrtc2_extend((packed >>  5) & 0x1f, 5, 8);
+                u32 r0 = pvrtc2_extend((packed >> 10) & 0x1f, 5, 8);
+                a = Color(r0, g0, b0, 0xff);
 
-                b.b = pvrtc2_extend((packed >> 16) & 0x1f, 5, 8);
-                b.g = pvrtc2_extend((packed >> 21) & 0x1f, 5, 8);
-                b.r = pvrtc2_extend((packed >> 26) & 0x1f, 5, 8);
-                b.a = 0xff;
+                u32 b1 = pvrtc2_extend((packed >> 16) & 0x1f, 5, 8);
+                u32 g1 = pvrtc2_extend((packed >> 21) & 0x1f, 5, 8);
+                u32 r1 = pvrtc2_extend((packed >> 26) & 0x1f, 5, 8);
+                b = Color(r1, g1, b1, 0xff);
             }
             else
             {
-                a.b = pvrtc2_extend((packed >>  1) & 0x07, 3, 8);
-                a.g = pvrtc2_extend((packed >>  4) & 0x0f, 4, 8);
-                a.r = pvrtc2_extend((packed >>  8) & 0x0f, 4, 8);
-                //a.a = pvrtc2_alpha1((packed >> 12) & 0x07);
-                a.a = pvrtc2_extend((packed >> 12) & 0x07, 3, 8);
+                u32 b0 = pvrtc2_extend((packed >>  1) & 0x07, 3, 8);
+                u32 g0 = pvrtc2_extend((packed >>  4) & 0x0f, 4, 8);
+                u32 r0 = pvrtc2_extend((packed >>  8) & 0x0f, 4, 8);
+                //u32 a0 = pvrtc2_alpha1((packed >> 12) & 0x07);
+                u32 a0 = pvrtc2_extend((packed >> 12) & 0x07, 3, 8);
+                a = Color(r0, g0, b0, a0);
 
-                b.b = pvrtc2_extend((packed >> 16) & 0xf, 4, 8);
-                b.g = pvrtc2_extend((packed >> 20) & 0xf, 4, 8);
-                b.r = pvrtc2_extend((packed >> 24) & 0xf, 4, 8);
-                //b.a = pvrtc2_alpha0((packed >> 28) & 0x7);
-                b.a = pvrtc2_extend((packed >> 28) & 0x7, 3, 8);
+                u32 b1 = pvrtc2_extend((packed >> 16) & 0xf, 4, 8);
+                u32 g1 = pvrtc2_extend((packed >> 20) & 0xf, 4, 8);
+                u32 r1 = pvrtc2_extend((packed >> 24) & 0xf, 4, 8);
+                //u32 a1 = pvrtc2_alpha0((packed >> 28) & 0x7);
+                u32 a1 = pvrtc2_extend((packed >> 28) & 0x7, 3, 8);
+                b = Color(r1, g1, b1, a1);
             }
         }
 

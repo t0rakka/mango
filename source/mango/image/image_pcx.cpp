@@ -140,7 +140,7 @@ namespace
                 if (src[sn * 1] & mask) index |= 2;
                 if (src[sn * 2] & mask) index |= 4;
                 if (src[sn * 3] & mask) index |= 8;
-                image[x] = index;
+                image[x] = u8(index);
             }
 
             buffer += scansize;

@@ -125,10 +125,10 @@ namespace
 
         for (int y = 0; y < 4; ++y)
         {
-            dest[0]  = u32_extend((data >>  0) & 0xf, 4, 8);
-            dest[4]  = u32_extend((data >>  4) & 0xf, 4, 8);
-            dest[8]  = u32_extend((data >>  8) & 0xf, 4, 8);
-            dest[12] = u32_extend((data >> 12) & 0xf, 4, 8);
+            dest[0]  = u8_extend((data >>  0) & 0xf, 4, 8);
+            dest[4]  = u8_extend((data >>  4) & 0xf, 4, 8);
+            dest[8]  = u8_extend((data >>  8) & 0xf, 4, 8);
+            dest[12] = u8_extend((data >> 12) & 0xf, 4, 8);
             data >>= 16;
             dest += stride;
         }
@@ -160,10 +160,10 @@ namespace
         for (int y = 0; y < 4; ++y)
         {
             u32 data = littleEndian::uload16(&alphaBlock->data[y]);
-            dest[0]  = u32_extend((data >>  0) & 0xf, 4, 8);
-            dest[4]  = u32_extend((data >>  4) & 0xf, 4, 8);
-            dest[8]  = u32_extend((data >>  8) & 0xf, 4, 8);
-            dest[12] = u32_extend((data >> 12) & 0xf, 4, 8);
+            dest[0]  = u8_extend((data >>  0) & 0xf, 4, 8);
+            dest[4]  = u8_extend((data >>  4) & 0xf, 4, 8);
+            dest[8]  = u8_extend((data >>  8) & 0xf, 4, 8);
+            dest[12] = u8_extend((data >> 12) & 0xf, 4, 8);
             dest += stride;
         }
     }
@@ -210,14 +210,14 @@ namespace
             color[ 2] = 0;
             color[ 3] = 0xff;
 
-            color[ 8] = u32_extend((a >>  0) & 0x1f, 5, 8);
-            color[ 9] = u32_extend((a >>  5) & 0x1f, 5, 8);
-            color[10] = u32_extend((a >> 10) & 0x1f, 5, 8);
+            color[ 8] = u8_extend((a >>  0) & 0x1f, 5, 8);
+            color[ 9] = u8_extend((a >>  5) & 0x1f, 5, 8);
+            color[10] = u8_extend((a >> 10) & 0x1f, 5, 8);
             color[11] = 0xff;
 
-            color[12] = u32_extend((b >>  0) & 0x1f, 5, 8);
-            color[13] = u32_extend((b >>  5) & 0x3f, 6, 8);
-            color[14] = u32_extend((b >> 11) & 0x1f, 5, 8);
+            color[12] = u8_extend((b >>  0) & 0x1f, 5, 8);
+            color[13] = u8_extend((b >>  5) & 0x3f, 6, 8);
+            color[14] = u8_extend((b >> 11) & 0x1f, 5, 8);
             color[15] = 0xff;
 
             color[ 4] = color[ 8] - color[12] / 4;
@@ -227,14 +227,14 @@ namespace
         }
         else
         {
-            color[ 0] = u32_extend((a >>  0) & 0x1f, 5, 8);
-            color[ 1] = u32_extend((a >>  5) & 0x1f, 5, 8);
-            color[ 2] = u32_extend((a >> 10) & 0x1f, 5, 8);
+            color[ 0] = u8_extend((a >>  0) & 0x1f, 5, 8);
+            color[ 1] = u8_extend((a >>  5) & 0x1f, 5, 8);
+            color[ 2] = u8_extend((a >> 10) & 0x1f, 5, 8);
             color[ 3] = 0xff;
 
-            color[12] = u32_extend((b >>  0) & 0x1f, 5, 8);
-            color[13] = u32_extend((b >>  5) & 0x3f, 6, 8);
-            color[14] = u32_extend((b >> 11) & 0x1f, 5, 8);
+            color[12] = u8_extend((b >>  0) & 0x1f, 5, 8);
+            color[13] = u8_extend((b >>  5) & 0x3f, 6, 8);
+            color[14] = u8_extend((b >> 11) & 0x1f, 5, 8);
             color[15] = 0xff;
 
             color[ 4] = (2 * color[0] + color[12]) / 3;

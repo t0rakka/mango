@@ -359,6 +359,8 @@ namespace mango
 
     void ConstMemoryStream::write(const void* data, u64 size)
     {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(size);
         MANGO_EXCEPTION("[ConstMemoryStream] Writing into read-only memory.");
     }
 

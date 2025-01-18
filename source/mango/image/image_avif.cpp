@@ -86,6 +86,7 @@ namespace
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
+            MANGO_UNREFERENCED(options);
             MANGO_UNREFERENCED(level);
             MANGO_UNREFERENCED(depth);
             MANGO_UNREFERENCED(face);
@@ -175,6 +176,8 @@ namespace
 
     ImageEncodeStatus imageEncode(Stream& output, const Surface& surface, const ImageEncodeOptions& options)
     {
+        MANGO_UNREFERENCED(options);
+
         ImageEncodeStatus status;
 
         int width = surface.width;

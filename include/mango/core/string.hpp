@@ -11,7 +11,8 @@
 #include <mango/core/configure.hpp>
 
 #ifdef _MSC_VER
-#define FMT_UNICODE 0
+    #define FMT_UNICODE 0
+    #pragma warning(disable : 5045)
 #endif
 #include <mango/fmt/format.h>
 #include <mango/fmt/color.h>
