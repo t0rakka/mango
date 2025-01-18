@@ -38,6 +38,13 @@
 #include <vector>
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 5030) // attribute 'x' is not recognized
+#pragma warning(disable : 4514) // unreferenced inline function has been removed
+#pragma warning(disable : 4668 4582 5267 5263) // mango customization
+#endif
+
 // Utils header already includes some headers, which we'll try and avoid including twice.
 #include <fastgltf/util.hpp>
 #include <fastgltf/math.hpp>
@@ -87,13 +94,6 @@
 #if !defined(FASTGLTF_USE_STD_MODULE) || !FASTGLTF_USE_STD_MODULE
 #include <span>
 #endif
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 5030) // attribute 'x' is not recognized
-#pragma warning(disable : 4514) // unreferenced inline function has been removed
-#pragma warning(disable : 5267) // mango customization
 #endif
 
 #define FASTGLTF_QUOTE_Q(x) #x

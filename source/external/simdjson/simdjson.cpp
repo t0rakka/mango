@@ -8,6 +8,11 @@
 #ifndef SIMDJSON_SRC_BASE_H
 #define SIMDJSON_SRC_BASE_H
 
+// mango customization
+#ifdef _MSC_VER
+#pragma warning(disable : 4514 5045 4505 5264 4868 4127 4365 4800 4626 4668 5027 4100 4820 4623 4625 5026)
+#endif
+
 /* including simdjson/base.h: #include <simdjson/base.h> */
 /* begin file simdjson/base.h */
 /**

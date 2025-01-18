@@ -24,6 +24,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+// mango customization
+#ifdef _MSC_VER
+#pragma warning(disable : 4061 4365 4668 4800 4100 5026 5027 5263 5039 4626 4820 4625 4623)
+#endif
+
 #include <simdjson.h>
 
 #include <fastgltf/core.hpp>

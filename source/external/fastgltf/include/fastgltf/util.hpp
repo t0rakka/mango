@@ -38,6 +38,11 @@
 #include <type_traits>
 #endif
 
+// mango customization
+#ifdef _MSC_VER
+#pragma warning(disable : 5027 4626 4623)
+#endif
+
 #ifndef FASTGLTF_EXPORT
 #define FASTGLTF_EXPORT
 #endif

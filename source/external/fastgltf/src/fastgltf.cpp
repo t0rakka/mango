@@ -38,7 +38,7 @@
 #pragma warning(disable : 5030) // attribute 'x' is not recognized
 #pragma warning(disable : 4514) // unreferenced inline function has been removed
 #pragma warning(disable : 4710) // function not inlined
-#pragma warning(disable : 5045 4365) // mango customization
+#pragma warning(disable : 4100 4623 4626 4946 4668 4820 4826 4625 4061 5045 4365 4800 5026 5027) // mango customization
 #endif
 
 #include <simdjson.h>
