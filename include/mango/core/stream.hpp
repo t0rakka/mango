@@ -45,27 +45,6 @@ namespace mango
     };
 
     // --------------------------------------------------------------
-    // ConstMemoryStream
-    // --------------------------------------------------------------
-
-    class ConstMemoryStream : public Stream
-    {
-    protected:
-        ConstMemory m_memory;
-        u64 m_offset;
-
-    public:
-        ConstMemoryStream(ConstMemory memory);
-        ~ConstMemoryStream();
-
-        u64 size() const;
-        u64 offset() const;
-        void seek(s64 distance, SeekMode mode);;
-        void read(void* dest, u64 bytes);
-        void write(const void* data, u64 size);
-    };
-
-    // --------------------------------------------------------------
     // SameEndianStream
     // --------------------------------------------------------------
 

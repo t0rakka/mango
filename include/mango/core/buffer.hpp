@@ -59,17 +59,17 @@ namespace mango
         u8* allocate(size_t bytes) const;
     };
 
-    class BufferStream : public Stream
+    class MemoryStream : public Stream
     {
     private:
         Buffer m_buffer;
         u64 m_offset;
 
     public:
-        BufferStream();
-        BufferStream(const u8* source, u64 bytes);
-        BufferStream(ConstMemory memory);
-        ~BufferStream();
+        MemoryStream();
+        MemoryStream(const u8* source, u64 bytes);
+        MemoryStream(ConstMemory memory);
+        ~MemoryStream();
 
         operator ConstMemory () const;
         operator Memory () const;
@@ -82,12 +82,24 @@ namespace mango
         void read(void* dest, u64 bytes) override;
         void write(const void* source, u64 bytes) override;
 
-        void write(ConstMemory memory)
-        {
-            Stream::write(memory);
-        }
+        void write(ConstMemory memory);
     };
 
-    using MemoryStream = BufferStream;
+    class ConstMemoryStream : public Stream
+    {
+    protected:
+        ConstMemory m_memory;
+        u64 m_offset;
+
+    public:
+        ConstMemoryStream(ConstMemory memory);
+        ~ConstMemoryStream();
+
+        u64 size() const override;
+        u64 offset() const override;
+        void seek(s64 distance, SeekMode mode) override;
+        void read(void* dest, u64 bytes) override;
+        void write(const void* data, u64 size) override;
+    };
 
 } // namespace mango
