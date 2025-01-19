@@ -577,10 +577,10 @@ namespace mango
             p += 16;
         }
 
-        for (size_t i = 0; i < count; ++i)
+        for (size_t index = 0; index < count; ++index)
         {
-            if (p[i] == value)
-                return p + i;
+            if (p[index] == value)
+                return p + index;
         }
 
         return nullptr;
@@ -595,6 +595,31 @@ namespace mango
     }
 
 #endif
+
+    // ----------------------------------------------------------------------------
+    // stringLength()
+    // ----------------------------------------------------------------------------
+
+    // strnlen, strnlen_s and others are not well supported by all compiler and is
+    // generally a hassle to choose which one to use with different tool-chains.
+    //
+    // Let's just re-invent the wheel and forget this ever happened.
+
+    size_t stringLength(const char* s, size_t maxlen)
+    {
+        if (!s)
+        {
+            return 0;
+        }
+
+        for (size_t i = 0; i < maxlen ; ++i)
+        {
+            if (s[i] == 0)
+                return i;
+        }
+
+        return maxlen;
+    }
 
     float parseFloat(std::string_view s)
     {

@@ -330,24 +330,6 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // png_strnlen
-    // ------------------------------------------------------------
-
-    // Long story short; the strnlen() is not part of std and not available
-    // on all platforms or tool-chains so we have to wrap it like this. :(
-
-    static inline
-    size_t png_strnlen(const char* s, size_t maxlen)
-    {
-        for (size_t i = 0; i < maxlen ; ++i)
-        {
-            if (s[i] == 0)
-                return i;
-        }
-        return maxlen;
-    }
-
-    // ------------------------------------------------------------
     // Filter
     // ------------------------------------------------------------
 
@@ -2572,7 +2554,7 @@ namespace
         Compressed profile: n bytes
         */
         const char* name = reinterpret_cast<const char*>(&p[0]);
-        size_t name_len = png_strnlen(name, size);
+        size_t name_len = stringLength(name, size);
         if (name_len == size)
         {
             printLine(Print::Info, "iCCP: profile name not terminated");
