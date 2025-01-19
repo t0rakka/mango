@@ -2399,6 +2399,7 @@ namespace
         }
 
         m_palette.size = size / 3;
+
         for (u32 i = 0; i < m_palette.size; ++i)
         {
             m_palette[i] = Color(p[0], p[1], p[2], 0xff);
@@ -3614,7 +3615,7 @@ namespace
 
                 auto decompress = deflate::decompress;
 
-                CompressionStatus result = decompress(buffer, memory);
+                CompressionStatus result = decompress(temp_memory, memory);
                 if (!result)
                 {
                     //printLine(Print::Info, "  {}", result.info);
@@ -3765,7 +3766,7 @@ namespace
     static
     void write_IHDR(Stream& stream, const Surface& surface, u8 color_bits, ColorType color_type)
     {
-        BufferStream buffer;
+        MemoryStream buffer;
         BigEndianStream s(buffer);
 
         s.write32(surface.width);
@@ -3782,7 +3783,7 @@ namespace
     static
     void write_PLTE(Stream& stream, const Palette& palette)
     {
-        BufferStream buffer;
+        MemoryStream buffer;
         BigEndianStream s(buffer);
 
         for (int i = 0; i < 256; ++i)
@@ -3804,7 +3805,7 @@ namespace
             return;
         }
 
-        BufferStream buffer;
+        MemoryStream buffer;
         BigEndianStream s(buffer);
 
         s.write8('-'); // profile name is 1-79 char according to spec. we dont have/need name
@@ -3824,7 +3825,7 @@ namespace
     static
     void write_pLLD(Stream& stream, int segment_height)
     {
-        BufferStream buffer;
+        MemoryStream buffer;
         BigEndianStream s(buffer);
 
         s.write32(segment_height);
