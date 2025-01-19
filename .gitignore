@@ -53,3 +53,6 @@ CMakeCache.txt
 install_manifest.txt
 Makefile
 example/x
+.ninja_deps
+.ninja_log
+build.ninja
