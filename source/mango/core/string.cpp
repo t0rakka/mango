@@ -612,13 +612,9 @@ namespace mango
             return 0;
         }
 
-        for (size_t i = 0; i < maxlen ; ++i)
-        {
-            if (s[i] == 0)
-                return i;
-        }
-
-        return maxlen;
+        const u8* p0 = reinterpret_cast<const u8*>(s);
+        const u8* p1 = memchr(p0, 0, maxlen);
+        return p1 ? p1 - p0 : maxlen;
     }
 
     float parseFloat(std::string_view s)
