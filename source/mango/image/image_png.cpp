@@ -3208,12 +3208,12 @@ namespace
         printLine(Print::Info, "  buffer bytes: {}", buffer_size);
 
         // allocate output buffer
-        Buffer temp_buffer(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
+        Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
 
         // zero scanline for filters at the beginning
-        std::memset(temp_buffer, 0, bytes_per_line);
+        std::memset(temp, 0, bytes_per_line);
 
-        Memory memory_buffer(temp_buffer + bytes_per_line, buffer_size);
+        Memory buffer(temp + bytes_per_line, buffer_size);
 
         // ----------------------------------------------------------------------
 
@@ -3236,12 +3236,12 @@ namespace
         size_t top_size = bytes_per_line * m_first_half_height;
 
         Memory top_buffer;
-        top_buffer.address = memory_buffer.address;
+        top_buffer.address = buffer.address;
         top_buffer.size = top_size;
 
         Memory bottom_buffer;
-        bottom_buffer.address = memory_buffer.address + top_size;
-        bottom_buffer.size = memory_buffer.size - top_size;
+        bottom_buffer.address = buffer.address + top_size;
+        bottom_buffer.size = buffer.size - top_size;
 
         ConstMemory top_memory = compressed_top;
         ConstMemory bottom_memory = compressed_bottom;
@@ -3272,7 +3272,7 @@ namespace
         MANGO_UNREFERENCED(bytes_out_bottom);
 
         // process image
-        process_image(target, memory_buffer);
+        process_image(target, buffer);
     }
 
     bool ParserPNG::decode_std(const Surface& target, ImageDecodeStatus& status)
@@ -3296,12 +3296,12 @@ namespace
         printLine(Print::Info, "  buffer bytes: {}", buffer_size);
 
         // allocate output buffer
-        Buffer temp_buffer(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
+        Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
 
         // zero scanline for filters at the beginning
-        std::memset(temp_buffer, 0, bytes_per_line);
+        std::memset(temp, 0, bytes_per_line);
 
-        Memory temp_memory(temp_buffer + bytes_per_line, buffer_size);
+        Memory buffer(temp + bytes_per_line, buffer_size);
 
         // ----------------------------------------------------------------------
 
@@ -3342,8 +3342,8 @@ namespace
                     return false;
                 }
 
-                state.next_out = temp_memory.address + state.total_out;
-                state.avail_out = u32(temp_memory.size - state.total_out);
+                state.next_out = buffer.address + state.total_out;
+                state.avail_out = u32(buffer.size - state.total_out);
 
                 int s = isal_inflate(&state);
 
@@ -3393,7 +3393,7 @@ namespace
                 if (!m_interlace)
                 {
                     int y1 = int(state.total_out / bytes_per_line);
-                    process_range(target, temp_memory.address + bytes_per_line * y0, y0, y1);
+                    process_range(target, buffer.address + bytes_per_line * y0, y0, y1);
                     y0 = y1;
                 }
 
@@ -3411,7 +3411,7 @@ namespace
             // process image
             if (m_interlace)
             {
-                process_image(target, temp_memory);
+                process_image(target, buffer);
             }
 
 #else
@@ -3459,8 +3459,8 @@ namespace
 
                 do
                 {
-                    stream.avail_out = uInt(temp_memory.size - stream.total_out);
-                    stream.next_out = temp_memory.address + stream.total_out;
+                    stream.avail_out = uInt(buffer.size - stream.total_out);
+                    stream.next_out = buffer.address + stream.total_out;
 
                     ret = inflate(&stream, Z_NO_FLUSH);
                     if (ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR || ret == Z_MEM_ERROR)
@@ -3475,7 +3475,7 @@ namespace
                 if (!m_interlace)
                 {
                     int y1 = int(stream.total_out / bytes_per_line);
-                    process_range(target, temp_memory.address + bytes_per_line * y0, y0, y1);
+                    process_range(target, buffer.address + bytes_per_line * y0, y0, y1);
                     y0 = y1;
                 }
 
@@ -3499,7 +3499,7 @@ namespace
             // process image
             if (m_interlace)
             {
-                process_image(target, temp_memory);
+                process_image(target, buffer);
             }
 #endif
         }
@@ -3527,7 +3527,7 @@ namespace
 
             auto decompress = deflate::decompress;
 
-            CompressionStatus result = decompress(temp_memory, memory);
+            CompressionStatus result = decompress(buffer, memory);
             if (!result)
             {
                 //printLine(Print::Info, "  {}", result.info);
@@ -3543,7 +3543,7 @@ namespace
             }
 
             // process image
-            process_image(target, temp_memory);
+            process_image(target, buffer);
         }
 
         return true;
