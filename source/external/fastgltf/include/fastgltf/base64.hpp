@@ -38,6 +38,7 @@
 #ifdef _MSC_VER
 #pragma warning(push) // attribute 'x' is not recognized
 #pragma warning(disable : 5030)
+#pragma warning(disable : 5045) // mango customization
 #endif
 
 namespace fastgltf::base64 {

@@ -290,6 +290,7 @@ namespace
 
         ::EnumDisplayMonitors(NULL, NULL, [] (HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM data) -> BOOL
         {
+            MANGO_UNREFERENCED(hdc);
             std::vector<ScreenInfo>& screens = *reinterpret_cast<std::vector<ScreenInfo>*>(data);
 
             int width = rect->right - rect->left;

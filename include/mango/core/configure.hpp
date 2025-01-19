@@ -12,6 +12,19 @@
 #include <new>
 
 // -----------------------------------------------------------------------
+// warnings
+// -----------------------------------------------------------------------
+
+#if defined(_MSC_VER) || defined(_WIN32) || defined(_WINDOWS_) || defined(__MINGW32__) || defined(__MINGW64__)
+
+    // These warnings must be disabled BEFORE including any windows headers
+    #pragma warning(disable : 4146 4996 4201 4244 4623 4710 4711 4820 26812 26495)
+    #pragma warning(disable : 4625 4626 4627 5026 5027 4464 4324 5039 5045 4582 4365 4800 4061 5219 5246 4668 5267)
+    #pragma warning(disable : 4191 5039)
+
+#endif
+
+// -----------------------------------------------------------------------
 // platform
 // -----------------------------------------------------------------------
 
@@ -390,10 +403,7 @@
         #ifndef __SSE2__
         #define __SSE2__
         #endif
-    #endif
-
-    // SSE2 enabled with /arch:SSE2 is visible like this
-    #if _M_IX86_FP == 2
+    #elif _M_IX86_FP == 2
         #ifndef __SSE2__
         #define __SSE2__
         #endif
@@ -459,8 +469,6 @@
         #endif
 
     #endif
-
-    #pragma warning(disable : 4146 4996 4201 4244 26812 26495)
 
 #elif defined(__llvm__) || defined(__clang__)
 

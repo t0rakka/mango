@@ -266,7 +266,7 @@ namespace
         // Load initial hash values
         __m128i abcd = _mm_loadu_si128(reinterpret_cast<__m128i*>(digest));
         __m128i e0   = _mm_setzero_si128();
-        e0   = _mm_insert_epi32(e0, digest[4], 3);
+        e0   = _mm_insert_epi32(e0, int(digest[4]), 3);
         abcd = _mm_shuffle_epi32(abcd, 0x1b);
         e0   = _mm_and_si128(e0, e_mask);
 
@@ -424,7 +424,7 @@ namespace
 
         abcd = _mm_shuffle_epi32(abcd, 0x1b);
         _mm_storeu_si128(reinterpret_cast<__m128i*>(digest), abcd);
-        digest[4] = _mm_extract_epi32(e0, 3);
+        digest[4] = u32(_mm_extract_epi32(e0, 3));
     }
 
 #endif
@@ -600,7 +600,7 @@ namespace mango
         u32 size = u32(memory.size);
         const u8* data = memory.address;
 
-        const int block_count = size / 64;
+        const int block_count = int(size / 64);
         transform(hash.data, data, block_count);
         data += block_count * 64;
         size -= block_count * 64;

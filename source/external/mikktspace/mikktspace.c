@@ -30,6 +30,11 @@
 
 #include "mikktspace.h"
 
+// mango customization
+#if defined(_MSC_VER)
+	#pragma warning(disable : 4820 4201 4456 5045)
+#endif
+
 #define TFALSE		0
 #define TTRUE		1
 

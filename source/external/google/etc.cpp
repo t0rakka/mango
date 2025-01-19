@@ -24,11 +24,11 @@
     The original source code has been modified for integration.
 */
 
-#include "../../../include/mango/core/configure.hpp"
-#include "../../../include/mango/core/bits.hpp"
-#include "../../../include/mango/core/endian.hpp"
-#include "../../../include/mango/math/vector.hpp"
-#include "../../../include/mango/image/compression.hpp"
+#include <mango/core/configure.hpp>
+#include <mango/core/bits.hpp>
+#include <mango/core/endian.hpp>
+#include <mango/math/vector.hpp>
+#include <mango/image/compression.hpp>
 
 #define ETC_ENABLE_SIMD
 
@@ -42,7 +42,7 @@ namespace
         return u32(u64_extract_bits(src, offset, count));
     }
 
-    inline u8 extend5Delta3To8 (int base5, int delta3)
+    inline u32 extend5Delta3To8 (int base5, int delta3)
     {
         const int t = base5 + s32_extend(delta3, 3);
         return u32_extend(t, 5, 8);
@@ -206,9 +206,9 @@ namespace
             const int flipBit  = getBits(src, 32, 1);
             const u32 table[2] = { getBits(src, 37, 3), getBits(src, 34, 3) };
 
-            u8 baseR[2];
-            u8 baseG[2];
-            u8 baseB[2];
+            u32 baseR[2];
+            u32 baseG[2];
+            u32 baseB[2];
 
             if (mode == MODE_INDIVIDUAL)
             {
@@ -317,20 +317,20 @@ namespace
             // T and H modes have some steps in common, handle them here.
             static const int distTable[8] = { 3, 6, 11, 16, 23, 32, 41, 64 };
 
-            u8 paintR[4];
-            u8 paintG[4];
-            u8 paintB[4];
+            u32 paintR[4];
+            u32 paintG[4];
+            u32 paintB[4];
 
             if (mode == MODE_T)
             {
                 // T mode, calculate paint values.
-                const u8  R1a     = getBits(src, 59, 2);
-                const u8  R1b     = getBits(src, 56, 2);
-                const u8  G1      = getBits(src, 52, 4);
-                const u8  B1      = getBits(src, 48, 4);
-                const u8  R2      = getBits(src, 44, 4);
-                const u8  G2      = getBits(src, 40, 4);
-                const u8  B2      = getBits(src, 36, 4);
+                const u32  R1a     = getBits(src, 59, 2);
+                const u32  R1b     = getBits(src, 56, 2);
+                const u32  G1      = getBits(src, 52, 4);
+                const u32  B1      = getBits(src, 48, 4);
+                const u32  R2      = getBits(src, 44, 4);
+                const u32  G2      = getBits(src, 40, 4);
+                const u32  B2      = getBits(src, 36, 4);
                 const u32 distNdx = (getBits(src, 34, 2) << 1) | getBits(src, 32, 1);
                 const int dist    = distTable[distNdx];
 
@@ -340,24 +340,24 @@ namespace
                 paintR[2] = u32_extend(R2, 4, 8);
                 paintG[2] = u32_extend(G2, 4, 8);
                 paintB[2] = u32_extend(B2, 4, 8);
-                paintR[1] = byteclamp(paintR[2] + dist);
-                paintG[1] = byteclamp(paintG[2] + dist);
-                paintB[1] = byteclamp(paintB[2] + dist);
-                paintR[3] = byteclamp(paintR[2] - dist);
-                paintG[3] = byteclamp(paintG[2] - dist);
-                paintB[3] = byteclamp(paintB[2] - dist);
+                paintR[1] = u8_clamp(paintR[2] + dist);
+                paintG[1] = u8_clamp(paintG[2] + dist);
+                paintB[1] = u8_clamp(paintB[2] + dist);
+                paintR[3] = u8_clamp(paintR[2] - dist);
+                paintG[3] = u8_clamp(paintG[2] - dist);
+                paintB[3] = u8_clamp(paintB[2] - dist);
             }
             else
             {
                 // H mode, calculate paint values.
-                const u8 R1	  = getBits(src, 59, 4);
-                const u8 G1a  = getBits(src, 56, 3);
-                const u8 G1b  = getBits(src, 52, 1);
-                const u8 B1a  = getBits(src, 51, 1);
-                const u8 B1b  = getBits(src, 47, 3);
-                const u8 R2	  = getBits(src, 43, 4);
-                const u8 G2	  = getBits(src, 39, 4);
-                const u8 B2	  = getBits(src, 35, 4);
+                const u32 R1   = getBits(src, 59, 4);
+                const u32 G1a  = getBits(src, 56, 3);
+                const u32 G1b  = getBits(src, 52, 1);
+                const u32 B1a  = getBits(src, 51, 1);
+                const u32 B1b  = getBits(src, 47, 3);
+                const u32 R2   = getBits(src, 43, 4);
+                const u32 G2   = getBits(src, 39, 4);
+                const u32 B2   = getBits(src, 35, 4);
 
                 int baseR[2];
                 int	baseG[2];
@@ -377,18 +377,18 @@ namespace
                 distNdx       = (getBits(src, 34, 1) << 2) | (getBits(src, 32, 1) << 1) | (baseValue[0] >= baseValue[1]);
                 dist          = distTable[distNdx];
 
-                paintR[0] = byteclamp(baseR[0] + dist);
-                paintG[0] = byteclamp(baseG[0] + dist);
-                paintB[0] = byteclamp(baseB[0] + dist);
-                paintR[1] = byteclamp(baseR[0] - dist);
-                paintG[1] = byteclamp(baseG[0] - dist);
-                paintB[1] = byteclamp(baseB[0] - dist);
-                paintR[2] = byteclamp(baseR[1] + dist);
-                paintG[2] = byteclamp(baseG[1] + dist);
-                paintB[2] = byteclamp(baseB[1] + dist);
-                paintR[3] = byteclamp(baseR[1] - dist);
-                paintG[3] = byteclamp(baseG[1] - dist);
-                paintB[3] = byteclamp(baseB[1] - dist);
+                paintR[0] = u8_clamp(baseR[0] + dist);
+                paintG[0] = u8_clamp(baseG[0] + dist);
+                paintB[0] = u8_clamp(baseB[0] + dist);
+                paintR[1] = u8_clamp(baseR[0] - dist);
+                paintG[1] = u8_clamp(baseG[0] - dist);
+                paintB[1] = u8_clamp(baseB[0] - dist);
+                paintR[2] = u8_clamp(baseR[1] + dist);
+                paintG[2] = u8_clamp(baseG[1] + dist);
+                paintB[2] = u8_clamp(baseB[1] + dist);
+                paintR[3] = u8_clamp(baseR[1] - dist);
+                paintG[3] = u8_clamp(baseG[1] - dist);
+                paintB[3] = u8_clamp(baseB[1] - dist);
             }
 
             const u32 paint[] =
@@ -424,13 +424,13 @@ namespace
         else
         {
             // Planar mode.
-            const u8 GO1 = getBits(src, 56, 1);
-            const u8 GO2 = getBits(src, 49, 6);
-            const u8 BO1 = getBits(src, 48, 1);
-            const u8 BO2 = getBits(src, 43, 2);
-            const u8 BO3 = getBits(src, 39, 3);
-            const u8 RH1 = getBits(src, 34, 5);
-            const u8 RH2 = getBits(src, 32, 1);
+            const u32 GO1 = getBits(src, 56, 1);
+            const u32 GO2 = getBits(src, 49, 6);
+            const u32 BO1 = getBits(src, 48, 1);
+            const u32 BO2 = getBits(src, 43, 2);
+            const u32 BO3 = getBits(src, 39, 3);
+            const u32 RH1 = getBits(src, 34, 5);
+            const u32 RH2 = getBits(src, 32, 1);
 
             const int RO = u32_extend(getBits(src, 57, 6), 6, 8);
             const int GO = u32_extend((GO1 << 6) | GO2, 7, 8);
@@ -531,7 +531,7 @@ namespace
                 const u32 modifierNdx = getBits(src, pixelBitNdx, 3);
                 const int modifier    = modifierTable[tableNdx][modifierNdx];
 
-                dest[3] = byteclamp(baseCodeword + multiplier * modifier);
+                dest[3] = u8_clamp(baseCodeword + multiplier * modifier);
                 dest += 4;
             }
         }

@@ -546,9 +546,9 @@ namespace
         {
             switch (size)
             {
-                case 4: d[3] = color[3];
-                case 3: d[2] = color[2];
-                case 2: d[1] = color[1];
+                case 4: d[3] = color[3]; [[fallthrough]];
+                case 3: d[2] = color[2]; [[fallthrough]];
+                case 2: d[1] = color[1]; [[fallthrough]];
                 case 1: d[0] = color[0];
             }
             d += size;

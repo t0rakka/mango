@@ -58,8 +58,18 @@ struct State
 
     bool isImageFormat(const FileInfo& node, const std::string& format) const
     {
-        std::string ext = mango::toLower(filesystem::getExtension(node.name));
-        return !node.isDirectory() && (ext == format);
+        std::string extension = mango::toLower(filesystem::getExtension(node.name));
+        if (isImageDecoder(extension))
+        {
+            if (node.isDirectory())
+            {
+                return false;
+            }
+
+            return format.empty() ? true : extension == format;
+        }
+
+        return false;
     }
 
     void scan(const Path& path, const std::string& format)
@@ -131,12 +141,6 @@ struct State
 
 void test(const std::string& folder, const std::string& format, bool mmap, bool multithread)
 {
-    printLine("");
-    printLine("{}", getSystemInfo());
-    printLine("MMAP: {}", mmap ? "ENABLED" : "DISABLED");
-    printLine("MT: {}", multithread ? "ENABLED" : "DISABLED");
-    printLine("");
-
     u64 time0 = Time::ms();
 
     State state;
@@ -154,11 +158,17 @@ void test(const std::string& folder, const std::string& format, bool mmap, bool 
     u64 time2 = Time::ms();
 
     printLine("");
+    printLine("{}", getSystemInfo());
+    printLine("MMAP: {}", mmap);
+    printLine("MT:   {}", multithread);
+    printLine("");
+
     printLine("Decoded {} files in {} ms ({} MB -> {} MB).",
         size_t(state.total_input_files),
         time2 - time1,
         state.total_input_bytes >> 20,
         state.total_image_bytes >> 20);
+    printLine("");
 }
 
 // -----------------------------------------------------------------
@@ -169,14 +179,20 @@ int main(int argc, const char* argv[])
 {
     if (argc < 2)
     {
-        printLine("Too few arguments. Usage: {} <folder> --format <extension>", argv[0]);
+        printLine("Usage: {} <folder>", argv[0]);
+        printLine("Options:");
+        printLine("    -format <extension>  : select specific format");
+        printLine("    --trace              : enable tracing");
+        printLine("    --debug              : enable debug info");
+        printLine("    --mmap               : enable memory mapping");
+        printLine("    --mt                 : enable multi-threaded decoding");
         return 1;
     }
 
     std::string pathname = argv[1];
 
     // defaults
-    std::string format = ".jpg";
+    std::string format;
     bool mmap = false;
     bool multithread = false;
     bool tracing = false;

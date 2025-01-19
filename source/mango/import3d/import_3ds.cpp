@@ -141,9 +141,9 @@ namespace
         std::string read_string(LittleEndianConstPointer& p) const
         {
             const u8* ptr = p;
-            const char* text = reinterpret_cast<const char*>(ptr);
-            p += strlen(text) + 1;
-            return text;
+            const char* txt = reinterpret_cast<const char*>(ptr);
+            p += strlen(txt) + 1;
+            return txt;
         }
 
         float32x3 read_vec3(LittleEndianConstPointer& p) const
@@ -218,6 +218,7 @@ namespace
         void chunk_main(LittleEndianConstPointer& p)
         {
             printLine(Print::Verbose, level * 2, "[main]");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_version(LittleEndianConstPointer& p)
@@ -236,6 +237,7 @@ namespace
         void chunk_editor(LittleEndianConstPointer& p)
         {
             printLine(Print::Verbose, level * 2, "[editor]");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_mesh_version(LittleEndianConstPointer& p)
@@ -251,6 +253,7 @@ namespace
             printLine(Print::Verbose, level * 2, "[material]");
 
             materials.emplace_back();
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_material_name(LittleEndianConstPointer& p)
@@ -331,6 +334,7 @@ namespace
             Material3DS& material = getCurrentMaterial();
             material.twosided = true;
             printLine(Print::Verbose, level * 2, "+ twosided");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_material_additive(LittleEndianConstPointer& p)
@@ -338,6 +342,7 @@ namespace
             Material3DS& material = getCurrentMaterial();
             material.additive = true;
             printLine(Print::Verbose, level * 2, "+ additive");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_material_self_illum_pct(LittleEndianConstPointer& p)
@@ -351,6 +356,7 @@ namespace
             Material3DS& material = getCurrentMaterial();
             material.wireframe = true;
             printLine(Print::Verbose, level * 2, "+ wireframe");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_material_wireframe_size(LittleEndianConstPointer& p)
@@ -378,6 +384,7 @@ namespace
             printLine(Print::Verbose, level * 2, "[texture:map1]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_map1;
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_texture_map2(LittleEndianConstPointer& p)
@@ -385,6 +392,7 @@ namespace
             printLine(Print::Verbose, level * 2, "[texture:map2]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_map2;
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_texture_opacity(LittleEndianConstPointer& p)
@@ -392,6 +400,7 @@ namespace
             printLine(Print::Verbose, level * 2, "[texture:opacity]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_opacity;
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_texture_bump(LittleEndianConstPointer& p)
@@ -399,6 +408,7 @@ namespace
             printLine(Print::Verbose, level * 2, "[texture:bump]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_bump;
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_texture_specular(LittleEndianConstPointer& p)
@@ -406,6 +416,7 @@ namespace
             printLine(Print::Verbose, level * 2, "[texture:specular]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_specular;
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_texture_shininess(LittleEndianConstPointer& p)
@@ -413,6 +424,7 @@ namespace
             printLine(Print::Verbose, level * 2, "[texture:shininess]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_shininess;
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_texture_self_illum(LittleEndianConstPointer& p)
@@ -420,6 +432,7 @@ namespace
             printLine(Print::Verbose, level * 2, "[texture:self-illum]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_self_illum;
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_texture_reflection(LittleEndianConstPointer& p)
@@ -427,6 +440,7 @@ namespace
             printLine(Print::Verbose, level * 2, "[texture:reflection]");
             Material3DS& material = getCurrentMaterial();
             texture = &material.texture_reflection;
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_texture_map_name(LittleEndianConstPointer& p)
@@ -496,6 +510,7 @@ namespace
         {
             printLine(Print::Verbose, level * 2, "[mesh]");
             meshes.emplace_back();
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_mesh_vertex_list(LittleEndianConstPointer& p)
@@ -671,6 +686,7 @@ namespace
         void chunk_light_off(LittleEndianConstPointer& p)
         {
             // enable = false
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_light_spot_roll(LittleEndianConstPointer& p)
@@ -703,47 +719,55 @@ namespace
         void chunk_keyframer(LittleEndianConstPointer& p)
         {
             //printLine(Print::Verbose, level * 2, "[keyframer]");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_key_ambient(LittleEndianConstPointer& p)
         {
             // TODO
             //printLine(Print::Verbose, level * 2, "[key.ambient]");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_key_object(LittleEndianConstPointer& p)
         {
             //printLine(Print::Verbose, level * 2, "[key.object]");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_key_camera(LittleEndianConstPointer& p)
         {
             // TODO
             //printLine(Print::Verbose, level * 2, "[key.camera]");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_key_camera_target(LittleEndianConstPointer& p)
         {
             // TODO
             //printLine(Print::Verbose, level * 2, "[key.camera.target]");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_key_light(LittleEndianConstPointer& p)
         {
             // TODO
             //printLine(Print::Verbose, level * 2, "[key.light]");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_key_light_target(LittleEndianConstPointer& p)
         {
             // TODO
             //printLine(Print::Verbose, level * 2, "[key.light.target]");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_key_spotlight(LittleEndianConstPointer& p)
         {
             // TODO
             //printLine(Print::Verbose, level * 2, "[key.spotlight]");
+            MANGO_UNREFERENCED(p);
         }
 
         void chunk_key_segment(LittleEndianConstPointer& p)

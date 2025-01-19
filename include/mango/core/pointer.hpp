@@ -204,26 +204,30 @@ namespace mango::detail
             p += memory.size;
         }
 
-        void write8(u8 value)
+        template <typename T>
+        void write8(T value)
         {
-            *p++ = value;
+            *p++ = u8(value);
         }
 
-        void write16(u16 value)
+        template <typename T>
+        void write16(T value)
         {
-            ustore16(p, value);
+            ustore16(p, u16(value));
             p += 2;
         }
 
-        void write32(u32 value)
+        template <typename T>
+        void write32(T value)
         {
-            ustore32(p, value);
+            ustore32(p, u32(value));
             p += 4;
         }
 
-        void write64(u64 value)
+        template <typename T>
+        void write64(T value)
         {
-            ustore64(p, value);
+            ustore64(p, u64(value));
             p += 8;
         }
 
@@ -366,50 +370,48 @@ namespace mango::detail
             p += memory.size;
         }
 
-        void write8(u8 value)
+        template <typename T>
+        void write8(T value)
         {
-            *p++ = value;
+            *p++ = u8(value);
         }
 
-        void write16(u16 value)
+        template <typename T>
+        void write16(T value)
         {
-            value = byteswap(value);
-            ustore16(p, value);
+            ustore16(p, byteswap(u16(value)));
             p += 2;
         }
 
-        void write32(u32 value)
+        template <typename T>
+        void write32(T value)
         {
-            value = byteswap(value);
-            ustore32(p, value);
+            ustore32(p, byteswap(u32(value)));
             p += 4;
         }
 
-        void write64(u64 value)
+        template <typename T>
+        void write64(T value)
         {
-            value = byteswap(value);
-            ustore64(p, value);
+            ustore64(p, byteswap(u64(value)));
             p += 8;
         }
 
         void write16f(float16 value)
         {
-            value = byteswap(value);
-            ustore16f(p, value);
+            ustore16f(p, byteswap(value));
             p += 2;
         }
 
         void write32f(float32 value)
         {
-            value = byteswap(value);
-            ustore32f(p, value);
+            ustore32f(p, byteswap(value));
             p += 4;
         }
 
         void write64f(float64 value)
         {
-            value = byteswap(value);
-            ustore64f(p, value);
+            ustore64f(p, byteswap(value));
             p += 8;
         }
     };

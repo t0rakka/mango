@@ -62,7 +62,7 @@ struct SEE2_CONTEXT
   uint getMean()
   {
     uint RetVal=GET_SHORT16(Summ) >> Shift;
-    Summ -= RetVal;
+    Summ = ushort(Summ - RetVal);
     return RetVal+(RetVal == 0);
   }
   void update()

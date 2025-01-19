@@ -73,11 +73,19 @@ namespace
 
         ConstMemory memory(int level, int depth, int face) override
         {
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
             return ConstMemory();
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
+            MANGO_UNREFERENCED(options);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
             ImageDecodeStatus status;
 
             const u8* end = m_data.end();
@@ -141,22 +149,22 @@ namespace
 
             for (int y = 0; y < height; ++y)
             {
-                u8* dest = temp.address<u8>(0, y);
+                u8* dst = temp.address<u8>(0, y);
 
                 for (const Packet& packet : packets)
                 {
                     switch (packet.type)
                     {
                         case 0:
-                            p = decode_uncompressed(dest, p, width, packet.mask);
+                            p = decode_uncompressed(dst, p, width, packet.mask);
                             break;
 
                         case 1:
-                            p = decode_runlength(dest, p, width, packet.mask);
+                            p = decode_runlength(dst, p, width, packet.mask);
                             break;
 
                         case 2:
-                            p = decode_mixed(dest, p, width, packet.mask);
+                            p = decode_mixed(dst, p, width, packet.mask);
                             break;
                     }
                 }

@@ -34,7 +34,7 @@ void FUNCTION_GENERIC(u8* dest, size_t stride, const s16* data, ProcessState* st
             for (int xblock = 0; xblock < hsf; ++xblock)
             {
                 u8* source = result + offset + (yblock * hsf + xblock) * 64;
-                u8* dest = temp + channel * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
+                u8* d = temp + channel * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
 
                 if (hmax != hsf || vmax != vsf)
                 {
@@ -46,15 +46,15 @@ void FUNCTION_GENERIC(u8* dest, size_t stride, const s16* data, ProcessState* st
                         for (int x = 0; x < 8; ++x)
                         {
                             u8 sample = *source++;
-                            std::memset(dest + x * xscale, sample, xscale);
+                            std::memset(d + x * xscale, sample, xscale);
                         }
 
-                        dest += hmax * 8;
+                        d += hmax * 8;
 
                         for (int s = 1; s < yscale; ++s)
                         {
-                            std::memcpy(dest, dest - hmax * 8, xscale * 8);
-                            dest += hmax * 8;
+                            std::memcpy(d, d - hmax * 8, xscale * 8);
+                            d += hmax * 8;
                         }
                     }
                 }
@@ -62,9 +62,9 @@ void FUNCTION_GENERIC(u8* dest, size_t stride, const s16* data, ProcessState* st
                 {
                     for (int y = 0; y < 8; ++y)
                     {
-                        std::memcpy(dest, source, 8);
+                        std::memcpy(d, source, 8);
                         source += 8;
-                        dest += hmax * 8;
+                        d += hmax * 8;
                     }
                 }
             }

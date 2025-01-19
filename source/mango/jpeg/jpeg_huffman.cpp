@@ -246,23 +246,23 @@ namespace mango::image::jpeg
         buffer.ensure();
 
         int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
-        int size = lookupSize[index];
+        int c_size = lookupSize[index];
 
         int symbol;
 
-        if (size <= JPEG_HUFF_LOOKUP_BITS)
+        if (c_size <= JPEG_HUFF_LOOKUP_BITS)
         {
             symbol = lookupValue[index];
         }
         else
         {
             HuffmanType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
-            while (x > maxcode[size])
+            while (x > maxcode[c_size])
             {
-                ++size;
+                ++c_size;
             }
 
-            HuffmanType offset = (x >> (JPEG_REGISTER_BITS - size)) + valueOffset[size];
+            HuffmanType offset = (x >> (JPEG_REGISTER_BITS - c_size)) + valueOffset[c_size];
 #if 0
             if (offset > 255)
                 return 0; // decoding error
@@ -270,7 +270,7 @@ namespace mango::image::jpeg
             symbol = value[offset];
         }
 
-        buffer.remain -= size;
+        buffer.remain -= c_size;
 
         return symbol;
 #endif
@@ -297,7 +297,7 @@ namespace mango::image::jpeg
             }
 
             s += huffman.last_dc_value[block->pred];
-            output[j] = s;
+            output[j] = s16(s);
         }
     }
 
@@ -381,18 +381,16 @@ namespace mango::image::jpeg
                 buffer.remain -= size;
 #endif
 
-                int s = symbol;
-                int x = s & 15;
-
+                int x = symbol & 15;
                 if (x)
                 {
-                    i += (s >> 4);
-                    s = buffer.receive(x);
-                    output[zigzagTable[i++]] = s16(s);
+                    i += (symbol >> 4);
+                    symbol = buffer.receive(x);
+                    output[zigzagTable[i++]] = s16(symbol);
                 }
                 else
                 {
-                    if (s < 16)
+                    if (symbol < 16)
                         break;
                     i += 16;
                 }

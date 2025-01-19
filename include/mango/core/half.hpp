@@ -304,13 +304,13 @@ namespace mango
         Half& operator = (float s)
         {
             __m128i temp = _mm_cvtps_ph(_mm_set1_ps(s), _MM_FROUND_TO_NEAREST_INT);
-            u = _mm_extract_epi64(temp, 0) & 0xffff;
+            u = u16(_mm_extract_epi64(temp, 0) & 0xffff);
             return *this;
         }
 
         operator float () const
         {
-            __m128 temp = _mm_cvtph_ps(_mm_set1_epi64x(u64(u)));
+            __m128 temp = _mm_cvtph_ps(_mm_set1_epi64x(s64(u)));
             return _mm_cvtss_f32(temp);
         }
 
@@ -368,7 +368,7 @@ namespace mango
 
         operator u32 () const
         {
-            u32 v = (data[2] << 16) | (data[1] << 8) | data[0];
+            u32 v = u32((data[2] << 16) | (data[1] << 8) | data[0]);
             return v;
         }
 

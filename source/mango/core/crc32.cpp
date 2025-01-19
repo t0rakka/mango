@@ -1259,7 +1259,7 @@ namespace
     inline
     u32 multmodp(u32 a, u32 b, u32 polynomial)
     {
-        u32 m = 1 << 31;
+        u32 m = u32(1 << 31);
         u32 p = 0;
 
         for ( ;; )
@@ -1283,7 +1283,7 @@ namespace
         const u32 polynomial = table[5];
 
         u32 k = 3;
-        u32 p = 1 << 31;
+        u32 p = u32(1 << 31);
 
         while (length > 0)
         {

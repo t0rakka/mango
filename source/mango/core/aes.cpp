@@ -863,7 +863,7 @@ void aesni_key192_expand(__m128i* schedule, const u8* key)
 {
     // encryption schedule
     __m128i temp1 = _mm_loadu_si128(reinterpret_cast<const __m128i *> (key + 0));
-    __m128i temp2 = _mm_set_epi64x(0, *reinterpret_cast<const u64 *> (key + 16));
+    __m128i temp2 = _mm_set_epi64x(0, *reinterpret_cast<const s64 *> (key + 16));
 
     schedule[0] = temp1;
     schedule[1] = temp2;
@@ -1786,7 +1786,7 @@ void AES::ccm_block_encrypt(Memory output, ConstMemory input, ConstMemory associ
     aes_encrypt_ccm(input.address, aes_u32(input.size),
                     associated.address, u16(associated.size),
                     nonce.address, u16(nonce.size),
-                    output.address, &cipher_length, mac_length,
+                    output.address, &cipher_length, aes_u32(mac_length),
                     m_schedule->schedule, m_bits);
 }
 
@@ -1803,7 +1803,7 @@ void AES::ccm_block_decrypt(Memory output, ConstMemory input, ConstMemory associ
                     associated.address, u16(associated.size),
                     nonce.address, u16(nonce.size),
                     output.address, &plaintext_length,
-                    mac_length, &mac_authorized,
+                    aes_u32(mac_length), &mac_authorized,
                     m_schedule->schedule, m_bits);
 }
 

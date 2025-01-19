@@ -21,6 +21,8 @@ namespace
     static
     void xyz_to_h(float x, float y, float z, float& h)
     {
+        MANGO_UNREFERENCED(y);
+
         if (x == 0.0f && z == 0.0f)
         {
             h = 0.0f;

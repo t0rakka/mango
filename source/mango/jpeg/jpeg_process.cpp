@@ -118,7 +118,7 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
             for (int xblock = 0; xblock < hsf; ++xblock)
             {
                 u8* source = result + offset + (yblock * hsf + xblock) * 64;
-                u8* dest = temp + channel * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
+                u8* d = temp + channel * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
 
                 if (hmax != hsf || vmax != vsf)
                 {
@@ -130,15 +130,15 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
                         for (int x = 0; x < 8; ++x)
                         {
                             u8 sample = *source++;
-                            std::memset(dest + x * xscale, sample, xscale);
+                            std::memset(d + x * xscale, sample, xscale);
                         }
 
-                        dest += hmax * 8;
+                        d += hmax * 8;
 
                         for (int s = 1; s < yscale; ++s)
                         {
-                            std::memcpy(dest, dest - hmax * 8, xscale * 8);
-                            dest += hmax * 8;
+                            std::memcpy(d, d - hmax * 8, xscale * 8);
+                            d += hmax * 8;
                         }
                     }
                 }
@@ -146,9 +146,9 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
                 {
                     for (int y = 0; y < 8; ++y)
                     {
-                        std::memcpy(dest, source, 8);
+                        std::memcpy(d, source, 8);
                         source += 8;
-                        dest += hmax * 8;
+                        d += hmax * 8;
                     }
                 }
             }
@@ -258,35 +258,35 @@ void process_ycbcr_8bit(u8* dest, size_t stride, const s16* data, ProcessState* 
 static inline
 void write_color_bgra(u8* dest, int y, int r, int g, int b)
 {
-    dest[0] = byteclamp(b + y);
-    dest[1] = byteclamp(g + y);
-    dest[2] = byteclamp(r + y);
+    dest[0] = u8_clamp(b + y);
+    dest[1] = u8_clamp(g + y);
+    dest[2] = u8_clamp(r + y);
     dest[3] = 0xff;
 }
 
 static inline
 void write_color_rgba(u8* dest, int y, int r, int g, int b)
 {
-    dest[0] = byteclamp(r + y);
-    dest[1] = byteclamp(g + y);
-    dest[2] = byteclamp(b + y);
+    dest[0] = u8_clamp(r + y);
+    dest[1] = u8_clamp(g + y);
+    dest[2] = u8_clamp(b + y);
     dest[3] = 0xff;
 }
 
 static inline
 void write_color_bgr(u8* dest, int y, int r, int g, int b)
 {
-    dest[0] = byteclamp(b + y);
-    dest[1] = byteclamp(g + y);
-    dest[2] = byteclamp(r + y);
+    dest[0] = u8_clamp(b + y);
+    dest[1] = u8_clamp(g + y);
+    dest[2] = u8_clamp(r + y);
 }
 
 static inline
 void write_color_rgb(u8* dest, int y, int r, int g, int b)
 {
-    dest[0] = byteclamp(r + y);
-    dest[1] = byteclamp(g + y);
-    dest[2] = byteclamp(b + y);
+    dest[0] = u8_clamp(r + y);
+    dest[1] = u8_clamp(g + y);
+    dest[2] = u8_clamp(b + y);
 }
 
 // Generate YCBCR to BGRA functions
@@ -515,8 +515,8 @@ void convert_ycbcr_rgb_8x1_neon(u8* dest, int16x8_t y, int16x8_t cb, int16x8_t c
 // [License]
 // Public Domain <unlicense.org>
 
-static constexpr int JPEG_PREC = 12;
-static constexpr int JPEG_FIXED(double x) { return int((x * double(1 << JPEG_PREC) + 0.5)); }
+static constexpr s16 JPEG_PREC = 12;
+static constexpr s16 JPEG_FIXED(double x) { return s16((x * double(1 << JPEG_PREC) + 0.5)); }
 
 #define JPEG_CONST_SSE2(x, y)  _mm_setr_epi16(x, y, x, y, x, y, x, y)
 

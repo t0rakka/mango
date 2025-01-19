@@ -305,6 +305,9 @@ namespace
 
         ConstMemory memory(int level, int depth, int face) override
         {
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(face);
+            MANGO_UNREFERENCED(depth);
             return ConstMemory();
         }
 
@@ -341,7 +344,7 @@ namespace
                 }
 
                 u16 id = p.read16();
-                std::string name = parse_string(p, 2);
+                std::string c_name = parse_string(p, 2);
                 u32 length = p.read32();
 
                 bool supported = true;
@@ -384,6 +387,11 @@ namespace
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
+            MANGO_UNREFERENCED(face);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(options);
+
             ImageDecodeStatus status;
 
             const u8* p = m_memory.address;
@@ -410,8 +418,8 @@ namespace
                         for (int channel = 0; channel < channels; ++channel)
                         {
                             const u8* src = p + channel * bytes_per_channel + y * bytes_per_scan;
-                            u8* dest = buffer + channel * bytes_per_scan;
-                            std::memcpy(dest, src, bytes_per_scan);
+                            u8* dst = buffer + channel * bytes_per_scan;
+                            std::memcpy(dst, src, bytes_per_scan);
                         }
 
 #ifdef MANGO_LITTLE_ENDIAN
@@ -436,8 +444,8 @@ namespace
                             const u8* src = p + packbits.offsets[channel];
                             packbits.offsets[channel] += bytes;
 
-                            u8* dest = buffer + channel * bytes_per_scan;
-                            bool result = packbits.decompress(dest, src, bytes_per_scan, bytes);
+                            u8* dst = buffer + channel * bytes_per_scan;
+                            bool result = packbits.decompress(dst, src, bytes_per_scan, bytes);
                             if (!result)
                             {
                                 status.setError("[ImageDecoder.PSD] packbits decompression failed.");
@@ -505,6 +513,8 @@ namespace
 
         void resolveBitmap(u8* dest, const u8* src, int width, int channels)
         {
+            MANGO_UNREFERENCED(channels);
+
             u8 mask = 0;
             u8 data = 0;
 
@@ -529,6 +539,8 @@ namespace
 
         void resolveGrayscale(u8* dest, const u8* src, int width, int channels)
         {
+            MANGO_UNREFERENCED(channels);
+
             switch (m_bits)
             {
                 case 8:
@@ -545,6 +557,8 @@ namespace
 
         void resolveIndexed(u8* dest, const u8* src, int width, int channels)
         {
+            MANGO_UNREFERENCED(channels);
+
             if (m_bits == 8 && m_palette)
             {
                 for (int i = 0; i < width; ++i)
@@ -586,6 +600,8 @@ namespace
 
         void resolveCMYK(u8* dest, const u8* src, int width, int channels)
         {
+            MANGO_UNREFERENCED(channels);
+
             // MANGO TODO: 16, 32 bits
             // MANGO TODO: different nr of channels
             if (m_bits == 8)
@@ -608,6 +624,8 @@ namespace
 
         void resolveLab(u8* dest, const u8* src, int width, int channels)
         {
+            MANGO_UNREFERENCED(channels);
+
             if (m_bits == 8)
             {
                 for (int i = 0; i < width; ++i)

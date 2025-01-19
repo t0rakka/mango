@@ -45,27 +45,6 @@ namespace mango
     };
 
     // --------------------------------------------------------------
-    // ConstMemoryStream
-    // --------------------------------------------------------------
-
-    class ConstMemoryStream : public Stream
-    {
-    protected:
-        ConstMemory m_memory;
-        u64 m_offset;
-
-    public:
-        ConstMemoryStream(ConstMemory memory);
-        ~ConstMemoryStream();
-
-        u64 size() const;
-        u64 offset() const;
-        void seek(s64 distance, SeekMode mode);;
-        void read(void* dest, u64 bytes);
-        void write(const void* data, u64 size);
-    };
-
-    // --------------------------------------------------------------
     // SameEndianStream
     // --------------------------------------------------------------
 
@@ -168,25 +147,32 @@ namespace mango
             s.write(memory);
         }
 
-        void write8(u8 value)
+        template <typename T>
+        void write8(T value)
         {
-            s.write(&value, sizeof(u8));
-
+            u8 temp = u8(value);
+            s.write(&temp, sizeof(temp));
         }
 
-        void write16(u16 value)
+        template <typename T>
+        void write16(T value)
         {
-            s.write(&value, sizeof(u16));
+            u16 temp = u16(value);
+            s.write(&temp, sizeof(temp));
         }
 
-        void write32(u32 value)
+        template <typename T>
+        void write32(T value)
         {
-            s.write(&value, sizeof(u32));
+            u32 temp = u32(value);
+            s.write(&temp, sizeof(temp));
         }
 
-        void write64(u64 value)
+        template <typename T>
+        void write64(T value)
         {
-            s.write(&value, sizeof(u64));
+            u64 temp = u64(value);
+            s.write(&temp, sizeof(temp));
         }
 
         void write16f(Half value)
@@ -311,27 +297,35 @@ namespace mango
             s.write(memory);
         }
 
-        void write8(u8 value)
+        template <typename T>
+        void write8(T value)
         {
-            s.write(&value, 1);
+            u8 temp = u8(value);
+            s.write(&temp, sizeof(temp));
         }
 
-        void write16(u16 value)
+        template <typename T>
+        void write16(T value)
         {
-            value = byteswap(value);
-            s.write(&value, 2);
+            u16 temp = u16(value);
+            temp = byteswap(temp);
+            s.write(&temp, sizeof(temp));
         }
 
-        void write32(u32 value)
+        template <typename T>
+        void write32(T value)
         {
-            value = byteswap(value);
-            s.write(&value, 4);
+            u32 temp = u32(value);
+            temp = byteswap(temp);
+            s.write(&temp, sizeof(temp));
         }
 
-        void write64(u64 value)
+        template <typename T>
+        void write64(T value)
         {
-            value = byteswap(value);
-            s.write(&value, 8);
+            u64 temp = u64(value);
+            temp = byteswap(temp);
+            s.write(&temp, sizeof(temp));
         }
 
         void write16f(Half value)

@@ -19,7 +19,7 @@ namespace
         u32 getMode() const
         {
             // mode is stored in the 3 last bits of FXT block
-            return data[15] >> 5;
+            return u32(data[15] >> 5);
         }
     };
 
@@ -154,6 +154,8 @@ namespace
 
     void decode_chroma(u8* out, size_t stride, const BlockCHROMA& block, u8 alphaMask)
     {
+        MANGO_UNREFERENCED(alphaMask);
+
         u32 b0 = expand5to8(block.blue0);
         u32 g0 = expand5to8(block.green0);
         u32 r0 = expand5to8(block.red0);
@@ -277,8 +279,8 @@ namespace
 
         if (!block.alpha)
         {
-            u32 bit01 = (block.indices[0] >> 1) & 1;
-            u32 bit33 = (block.indices[4] >> 1) & 1;
+            u32 bit01 = u32((block.indices[0] >> 1) & 1);
+            u32 bit33 = u32((block.indices[4] >> 1) & 1);
 
             u32 b0 = expand5to8(block.blue0);
             u32 g0 = expand5to8(u32(block.green0 << 1) | u32(block.lsb1 ^ bit01));

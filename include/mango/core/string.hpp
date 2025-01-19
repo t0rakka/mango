@@ -11,7 +11,8 @@
 #include <mango/core/configure.hpp>
 
 #ifdef _MSC_VER
-#define FMT_UNICODE 0
+    #define FMT_UNICODE 0
+    #pragma warning(disable : 5045)
 #endif
 #include <mango/fmt/format.h>
 #include <mango/fmt/color.h>
@@ -42,6 +43,7 @@ namespace mango
     std::vector<std::string> split(const std::string& s, const std::string& delimiter);
     std::vector<std::string_view> split(std::string_view s, std::string_view delimiter);
     const u8* memchr(const u8* p, u8 value, size_t count);
+    size_t stringLength(const char* s, size_t maxlen);
     float parseFloat(std::string_view str);
     int parseInt(std::string_view str);
 

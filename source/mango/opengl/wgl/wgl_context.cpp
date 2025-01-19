@@ -46,21 +46,22 @@ namespace mango
 
     struct OpenGLContextWGL : OpenGLContextHandle
     {
-        HDC hdc { NULL };
-        HGLRC hrc { NULL };
-        RECT rect;
-        bool fullscreen { false };
+        HDC m_hdc { NULL };
+        HGLRC m_hrc { NULL };
+        RECT m_rect;
+        bool m_fullscreen { false };
 
         HWND hwnd;
 
         OpenGLContextWGL(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
             : hwnd(*theContext)
         {
+            MANGO_UNREFERENCED(flags);
             OpenGLContextWGL* shared = reinterpret_cast<OpenGLContextWGL*>(theShared);
 
             theContext->setWindowSize(width, height);
 
-            hdc = ::GetDC(hwnd);
+            m_hdc = ::GetDC(hwnd);
 
             // Configure attributes
             OpenGLContext::Config config;
@@ -111,12 +112,12 @@ namespace mango
             pfd.dwDamageMask = 0;
 
             // Select pixel format with the configuration
-            GLuint format = ::ChoosePixelFormat(hdc, &pfd);
-            ::SetPixelFormat(hdc, format, &pfd);
+            GLuint format = ::ChoosePixelFormat(m_hdc, &pfd);
+            ::SetPixelFormat(m_hdc, format, &pfd);
 
             // Create temporary context
-            hrc = wglCreateContext(hdc);
-            wglMakeCurrent(hdc, hrc);
+            m_hrc = wglCreateContext(m_hdc);
+            wglMakeCurrent(m_hdc, m_hrc);
 
             // Initialize extension function pointers
             init_wgl_extensions();
@@ -126,7 +127,7 @@ namespace mango
 
             if (wglGetExtensionsStringARB)
             {
-                wglExtensions = wglGetExtensionsStringARB(hdc);
+                wglExtensions = wglGetExtensionsStringARB(m_hdc);
             }
 
             // Create ARB extended context
@@ -220,13 +221,13 @@ namespace mango
 
                     int pixelFormat;
                     UINT numFormats;
-                    wglChoosePixelFormatARB(hdc, formatAttribs.data(), NULL, 1, &pixelFormat, &numFormats);
-                    ::SetPixelFormat(hdc, format, &pfd);
+                    wglChoosePixelFormatARB(m_hdc, formatAttribs.data(), NULL, 1, &pixelFormat, &numFormats);
+                    ::SetPixelFormat(m_hdc, format, &pfd);
                 }
                 else
                 {
-                    int pixelFormat = ::ChoosePixelFormat(hdc, &pfd);
-                    ::SetPixelFormat(hdc, format, &pfd);
+                    int pixelFormat = ::ChoosePixelFormat(m_hdc, &pfd);
+                    ::SetPixelFormat(m_hdc, format, &pfd);
                     MANGO_UNREFERENCED(pixelFormat);
                 }
 
@@ -239,13 +240,13 @@ namespace mango
                     0, 0
                 };
 
-                HGLRC old_hrc = hrc;
-                HGLRC shared_hrc = shared ? shared->hrc : 0;
+                HGLRC old_hrc = m_hrc;
+                HGLRC shared_hrc = shared ? shared->m_hrc : 0;
 
                 shared = nullptr; // indicate we don't want to call wglShareLists()
                 
-                hrc = wglCreateContextAttribsARB(hdc, shared_hrc, contextAttribs);
-                ::wglMakeCurrent(hdc, hrc);
+                m_hrc = wglCreateContextAttribsARB(m_hdc, shared_hrc, contextAttribs);
+                ::wglMakeCurrent(m_hdc, m_hrc);
 
                 // Initialize extension function pointers (for the ARB extended context)
                 init_wgl_extensions();
@@ -260,7 +261,7 @@ namespace mango
 
             if (shared)
             {
-                ::wglShareLists(hrc, shared->hrc);
+                ::wglShareLists(m_hrc, shared->m_hrc);
             }
 
             init_glext_extensions();
@@ -270,25 +271,25 @@ namespace mango
         {
             ::wglMakeCurrent(NULL, NULL);
 
-            if (hrc)
+            if (m_hrc)
             {
-                wglDeleteContext(hrc);
+                wglDeleteContext(m_hrc);
             }
 
-            if (hdc)
+            if (m_hdc)
             {
-                ::ReleaseDC(hwnd, hdc);
+                ::ReleaseDC(hwnd, m_hdc);
             }
         }
 
         void makeCurrent()
         {
-            ::wglMakeCurrent(hdc, hrc);
+            ::wglMakeCurrent(m_hdc, m_hrc);
         }
 
         void swapBuffers()
         {
-            ::SwapBuffers(hdc);
+            ::SwapBuffers(m_hdc);
         }
 
         void swapInterval(int interval)
@@ -301,9 +302,9 @@ namespace mango
 
         void toggleFullscreen()
         {
-            if (!fullscreen)
+            if (!m_fullscreen)
             {
-                GetWindowRect(hwnd, &rect);
+                GetWindowRect(hwnd, &m_rect);
 
                 DEVMODE dm;
                 dm.dmSize = sizeof(DEVMODE);
@@ -315,15 +316,15 @@ namespace mango
             else
             {
                 ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
-                ::SetWindowPos(hwnd, HWND_TOP, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, 0);
+                ::SetWindowPos(hwnd, HWND_TOP, m_rect.left, m_rect.top, m_rect.right - m_rect.left, m_rect.bottom - m_rect.top, 0);
             }
 
-            fullscreen = !fullscreen;
+            m_fullscreen = !m_fullscreen;
         }
 
         bool isFullscreen() const
         {
-            return fullscreen;
+            return m_fullscreen;
         }
 
         int32x2 getWindowSize() const

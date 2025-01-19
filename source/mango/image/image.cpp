@@ -171,12 +171,14 @@ namespace mango::image
 
         void registerImageDecoder(ImageDecoder::CreateDecodeFunc func, const std::string& extension)
         {
-            m_decoders[toLower(extension)] = func;
+            std::string s = toLower(extension);
+            m_decoders[s] = func;
         }
 
         void registerImageEncoder(ImageEncoder::EncodeFunc func, const std::string& extension)
         {
-            m_encoders[toLower(extension)] = func;
+            std::string s = toLower(extension);
+            m_encoders[s] = func;
         }
 
         ImageDecoder::CreateDecodeFunc getImageDecoder(const std::string& extension) const

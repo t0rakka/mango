@@ -284,12 +284,12 @@ namespace
                     case 0x9901:
                     {
                         // AES header
-                        u16 version = e.read16();
-                        u16 magic = e.read16(); // must be 'AE' (0x41, 0x45)
+                        u16 aes_version = e.read16();
+                        u16 aes_magic = e.read16(); // must be 'AE' (0x41, 0x45)
                         u8 mode = e.read8();
                         compression = e.read8(); // override compression algorithm
 
-                        if (version < 1 || version > 2 || magic != 0x4541)
+                        if (aes_version < 1 || aes_version > 2 || aes_magic != 0x4541)
                         {
                             MANGO_EXCEPTION("[mapper.zip] Incorrect AES header.");
                         }

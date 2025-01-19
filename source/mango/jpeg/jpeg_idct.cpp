@@ -106,14 +106,14 @@ namespace
             idct.x1 += bias;
             idct.x2 += bias;
             idct.x3 += bias;
-            dest[0] = byteclamp((idct.x0 + idct.y3) >> shift);
-            dest[1] = byteclamp((idct.x1 + idct.y2) >> shift);
-            dest[2] = byteclamp((idct.x2 + idct.y1) >> shift);
-            dest[3] = byteclamp((idct.x3 + idct.y0) >> shift);
-            dest[4] = byteclamp((idct.x3 - idct.y0) >> shift);
-            dest[5] = byteclamp((idct.x2 - idct.y1) >> shift);
-            dest[6] = byteclamp((idct.x1 - idct.y2) >> shift);
-            dest[7] = byteclamp((idct.x0 - idct.y3) >> shift);
+            dest[0] = u8_clamp((idct.x0 + idct.y3) >> shift);
+            dest[1] = u8_clamp((idct.x1 + idct.y2) >> shift);
+            dest[2] = u8_clamp((idct.x2 + idct.y1) >> shift);
+            dest[3] = u8_clamp((idct.x3 + idct.y0) >> shift);
+            dest[4] = u8_clamp((idct.x3 - idct.y0) >> shift);
+            dest[5] = u8_clamp((idct.x2 - idct.y1) >> shift);
+            dest[6] = u8_clamp((idct.x1 - idct.y2) >> shift);
+            dest[7] = u8_clamp((idct.x0 - idct.y3) >> shift);
             dest += 8;
         }
     }

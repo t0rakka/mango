@@ -247,7 +247,7 @@ namespace
             printLine(Print::Info, "  profile data: {}, size: {}", profileData, profileSize);
         }
 
-        void OS2BitmapHeader1(LittleEndianConstPointer& p, int headerSize)
+        void OS2BitmapHeader1(LittleEndianConstPointer& p)
         {
             printLine(Print::Info, "[OS2BitmapHeader1]");
 
@@ -305,7 +305,7 @@ namespace
             {
                 case 12:
                 {
-                    OS2BitmapHeader1(p, headerSize);
+                    OS2BitmapHeader1(p);
                     paletteComponents = 3;
                     os2 = true;
                     break;
@@ -313,7 +313,7 @@ namespace
 
                 case 16:
                 {
-                    OS2BitmapHeader1(p, headerSize);
+                    OS2BitmapHeader1(p);
                     OS2BitmapHeader2(p);
                     paletteComponents = 4;
                     os2 = true;
@@ -1072,8 +1072,8 @@ namespace
                 p += 4;
             }
 
-            int size = p.read32();
-            int offset = p.read32();
+            int c_size = p.read32();
+            int c_offset = p.read32();
 
             if (!width)
             {
@@ -1096,8 +1096,8 @@ namespace
             if (score > bestScore)
             {
                 bestScore = score;
-                bestOffset = offset;
-                bestSize = size;
+                bestOffset = c_offset;
+                bestSize = c_size;
                 bestColors = colors;
             }
         }
@@ -1118,21 +1118,21 @@ namespace
         {
             case 0x28:
             {
-                BitmapHeader header(block, true);
-                if (!header)
+                BitmapHeader bitmap_header(block, true);
+                if (!bitmap_header)
                 {
                     return "[ImageDecoder.BMP] Incorrect ICO/CUR header.";
                 }
 
                 if (imageHeader)
                 {
-                    imageHeader->width   = header.width;
-                    imageHeader->height  = header.height;
+                    imageHeader->width   = bitmap_header.width;
+                    imageHeader->height  = bitmap_header.height;
                     imageHeader->depth   = 0;
                     imageHeader->levels  = 0;
                     imageHeader->faces   = 0;
                     imageHeader->palette = false;
-                    imageHeader->format  = header.format;
+                    imageHeader->format  = bitmap_header.format;
                     imageHeader->compression = TextureCompression::NONE;
                 }
 

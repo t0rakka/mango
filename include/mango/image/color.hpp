@@ -42,7 +42,7 @@ namespace mango::image
             littleEndian::ustore32(this, 0);
         }
 
-        Color(u8 red, u8 green, u8 blue, u8 alpha)
+        Color(u32 red, u32 green, u32 blue, u32 alpha)
         {
             littleEndian::ustore32(this, makeRGBA(red, green, blue, alpha));
         }

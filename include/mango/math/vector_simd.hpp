@@ -57,6 +57,8 @@ namespace mango::math
     {
         VectorType m;
 
+        ScalarAccessor(const ScalarAccessor& accessor) = default;
+
         operator ScalarType () const
         {
             return simd::get_component<Index>(m);

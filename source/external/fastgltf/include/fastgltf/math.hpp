@@ -33,6 +33,10 @@
 #include <tuple>
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(disable : 5246) // mango customization
+#endif
+
 #include <fastgltf/util.hpp>
 
 /**

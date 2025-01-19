@@ -282,8 +282,8 @@ namespace
         {
             for (int j = 0; j < 3; ++j)
             {
-                constexpr int bias = 1 << (netbiasshift - 1);
-                network[i][j] = math::clamp((network[i][j] + bias) >> netbiasshift, 0, 255);
+                constexpr int c_bias = 1 << (netbiasshift - 1);
+                network[i][j] = math::clamp((network[i][j] + c_bias) >> netbiasshift, 0, 255);
             }
 
             network[i][3] = i;
@@ -313,10 +313,10 @@ namespace mango::image
 
         for (int i = 0; i < NETSIZE; ++i)
         {
-            m_palette.color[i].r = nq.network[i][0];
-            m_palette.color[i].g = nq.network[i][1];
-            m_palette.color[i].b = nq.network[i][2];
-            m_palette.color[i].a = 0xff;
+            int r = nq.network[i][0];
+            int g = nq.network[i][1];
+            int b = nq.network[i][2];
+            m_palette.color[i] = Color(r, g, b, 0xff);
 
             m_network[i][0] = nq.network[i][0];
             m_network[i][1] = nq.network[i][1];
@@ -385,8 +385,8 @@ namespace mango::image
                 int r = s[x].r;
                 int g = s[x].g;
                 int b = s[x].b;
-                u8 index = getIndex(r, g, b);
-                d[x] = index;
+                int index = getIndex(r, g, b);
+                d[x] = u8(index);
 
                 if (dithering)
                 {
@@ -397,9 +397,10 @@ namespace mango::image
 
                     const auto distribute = [] (Color& color, int r, int g, int b, int scale)
                     {
-                        color.r = math::clamp(color.r + (r * scale / 16), 0, 255);
-                        color.g = math::clamp(color.g + (g * scale / 16), 0, 255);
-                        color.b = math::clamp(color.b + (b * scale / 16), 0, 255);
+                        r = math::clamp(color.r + (r * scale / 16), 0, 255);
+                        g = math::clamp(color.g + (g * scale / 16), 0, 255);
+                        b = math::clamp(color.b + (b * scale / 16), 0, 255);
+                        color = Color(r, g, b, color.a);
                     };
 
                     // distribute the error to neighbouring pixels with Floyd-Steinberg weights

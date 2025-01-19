@@ -129,9 +129,8 @@ namespace mango::image::jpeg
     // Parser
     // ----------------------------------------------------------------------------
 
-    Parser::Parser(ConstMemory memory, ImageDecodeInterface* interface)
-        : memory(memory)
-        , m_interface(interface)
+    Parser::Parser(ConstMemory memory)
+        : m_memory(memory)
         , quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
     {
         restartInterval = 0;
@@ -143,19 +142,24 @@ namespace mango::image::jpeg
         }
 
         m_surface = nullptr;
+    }
 
-        if (isJPEG(memory))
+    Parser::~Parser()
+    {
+    }
+
+    void Parser::setInterface(ImageDecodeInterface* interface)
+    {
+        m_interface = interface;
+
+        if (isJPEG(m_memory))
         {
-            parse(memory, false);
+            parse(m_memory, false);
         }
         else
         {
             header.setError("Incorrect SOI marker.");
         }
-    }
-
-    Parser::~Parser()
-    {
     }
 
     bool Parser::isJPEG(ConstMemory memory) const
@@ -448,33 +452,33 @@ namespace mango::image::jpeg
         is_differential = false;
 
         u16 length = bigEndian::uload16(p + 0);
-        precision = p[2];
-        height = bigEndian::uload16(p + 3);
-        width  = bigEndian::uload16(p + 5);
-        components = p[7];
+        m_precision = p[2];
+        m_height = bigEndian::uload16(p + 3);
+        m_width  = bigEndian::uload16(p + 5);
+        m_components = p[7];
         p += 8;
 
-        printLine(Print::Info, "  Image: {} x {} x {}", width, height, precision);
+        printLine(Print::Info, "  Image: {} x {} x {}", m_width, m_height, m_precision);
 
-        u16 correct_length = 8 + 3 * components;
+        u16 correct_length = 8 + 3 * m_components;
         if (length != correct_length)
         {
             header.setError("Incorrect chunk length ({}, should be {}).", length, correct_length);
             return;
         }
 
-        if (width <= 0 || height <= 0 || width > 65535 || height > 65535)
+        if (m_width <= 0 || m_height <= 0 || m_width > 65535 || m_height > 65535)
         {
             // NOTE: ysize of 0 is allowed in the specs but we won't
-            header.setError("Incorrect dimensions ({} x {})", width, height);
+            header.setError("Incorrect dimensions ({} x {})", m_width, m_height);
             return;
         }
 
-        if (components < 1 || components > 4)
+        if (m_components < 1 || m_components > 4)
         {
             // NOTE: only progressive is required to have 1..4 components,
             //       other modes allow 1..255 but we are extra strict here :)
-            header.setError("Incorrect number of components ({})", components);
+            header.setError("Incorrect number of components ({})", m_components);
             return;
         }
 
@@ -519,7 +523,7 @@ namespace mango::image::jpeg
             case MARKER_SOF7:
             case MARKER_SOF15:
                 is_differential = true;
-                // fall-through
+                [[fallthrough]];
             case MARKER_SOF3:
             case MARKER_SOF11:
                 is_lossless = true;
@@ -528,25 +532,25 @@ namespace mango::image::jpeg
 
         if (is_baseline)
         {
-            if (precision != 8)
+            if (m_precision != 8)
             {
-                header.setError("Incorrect precision ({}, allowed: 8)", precision);
+                header.setError("Incorrect precision ({}, allowed: 8)", m_precision);
                 return;
             }
         }
         else if (is_lossless)
         {
-            if (precision < 2 || precision > 16)
+            if (m_precision < 2 || m_precision > 16)
             {
-                header.setError("Incorrect precision ({}, allowed: 2..16)", precision);
+                header.setError("Incorrect precision ({}, allowed: 2..16)", m_precision);
                 return;
             }
         }
         else
         {
-            if (precision != 8 && precision != 12)
+            if (m_precision != 8 && m_precision != 12)
             {
-                header.setError("Incorrect precision ({}, allowed: 8, 12)", precision);
+                header.setError("Incorrect precision ({}, allowed: 8, 12)", m_precision);
                 return;
             }
         }
@@ -556,9 +560,9 @@ namespace mango::image::jpeg
         blocks_in_mcu = 0;
         int offset = 0;
 
-        processState.frames = components;
+        processState.frames = m_components;
 
-        for (int i = 0; i < components; ++i)
+        for (int i = 0; i < m_components; ++i)
         {
             if (offset >= JPEG_MAX_BLOCKS_IN_MCU)
             {
@@ -569,9 +573,9 @@ namespace mango::image::jpeg
             Frame& frame = processState.frame[i];
 
             frame.compid = p[0];
-            u8 x = p[1];
-            frame.hsf = (x >> 4) & 0xf;
-            frame.vsf = (x >> 0) & 0xf;
+            u8 hv = p[1];
+            frame.hsf = (hv >> 4) & 0xf;
+            frame.vsf = (hv >> 0) & 0xf;
             frame.tq = p[2];
             frame.offset = offset;
             p += 3;
@@ -583,7 +587,7 @@ namespace mango::image::jpeg
                 return;
             }
 
-            if (components == 1)
+            if (m_components == 1)
             {
                 // Optimization: force block size to 8x8 with grayscale images
                 frame.hsf = 1;
@@ -644,22 +648,22 @@ namespace mango::image::jpeg
         // Align to next MCU boundary
         int xmask = xblock - 1;
         int ymask = yblock - 1;
-        aligned_width  = (width  + xmask) & ~xmask;
-        aligned_height = (height + ymask) & ~ymask;
+        m_aligned_width  = (m_width  + xmask) & ~xmask;
+        m_aligned_height = (m_height + ymask) & ~ymask;
 
         // MCU resolution
-        xmcu = aligned_width  / xblock;
-        ymcu = aligned_height / yblock;
+        xmcu = m_aligned_width  / xblock;
+        ymcu = m_aligned_height / yblock;
         mcus = xmcu * ymcu;
 
         printLine(Print::Info, "  {} MCUs ({} x {}) -> ({} x {})", mcus, xmcu, ymcu, xmcu * xblock, ymcu * yblock);
-        printLine(Print::Info, "  Image: {} x {}", width, height);
+        printLine(Print::Info, "  Image: {} x {}", m_width, m_height);
 
         // configure header
-        header.width  = width;
-        header.height = height;
-        header.format = components > 1 ? Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
-                                       : LuminanceFormat(8, Format::UNORM, 8, 0);
+        header.width  = m_width;
+        header.height = m_height;
+        header.format = m_components > 1 ? Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
+                                         : LuminanceFormat(8, Format::UNORM, 8, 0);
 
         MANGO_UNREFERENCED(length);
     }
@@ -1474,7 +1478,7 @@ namespace mango::image::jpeg
         }
 #endif
 
-        if (precision == 12)
+        if (m_precision == 12)
         {
             // Force 12 bit idct
             // This will round down to 8 bit precision until we have a 12 bit capable color conversion
@@ -1696,7 +1700,7 @@ namespace mango::image::jpeg
         std::string id;
 
         // determine jpeg type -> select innerloops
-        switch (components)
+        switch (m_components)
         {
             case 1:
                 processState.process = process_y;
@@ -1791,7 +1795,7 @@ namespace mango::image::jpeg
         if (is_lossless)
         {
             // lossless only supports L8 and RGBA
-            if (components == 1)
+            if (m_components == 1)
             {
                 sf.sample = JPEG_U8_Y;
                 sf.format = LuminanceFormat(8, Format::UNORM, 8, 0);
@@ -1802,7 +1806,7 @@ namespace mango::image::jpeg
                 sf.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
         }
-        else if (components == 4)
+        else if (m_components == 4)
         {
             // CMYK / YCCK is in the slow-path anyway so force RGBA
             sf.sample = JPEG_U8_RGBA;
@@ -1811,7 +1815,7 @@ namespace mango::image::jpeg
 
         m_decode_status.direct = true;
 
-        if (target.width < width || target.height < height)
+        if (target.width < m_width || target.height < m_height)
         {
             m_decode_status.direct = false;
         }
@@ -1831,7 +1835,7 @@ namespace mango::image::jpeg
         if (!m_decode_status.direct)
         {
             // create a temporary decoding target
-            temp = std::make_unique<Bitmap>(aligned_width, aligned_height, sf.format);
+            temp = std::make_unique<Bitmap>(m_aligned_width, m_aligned_height, sf.format);
             m_surface = temp.get();
         }
 
@@ -1863,8 +1867,8 @@ namespace mango::image::jpeg
 
             rect.x = 0;
             rect.y = 0;
-            rect.width = width;
-            rect.height = height;
+            rect.width = m_width;
+            rect.height = m_height;
             rect.progress = 1.0f;
 
             blit_and_update(rect, true);
@@ -1929,23 +1933,23 @@ namespace mango::image::jpeg
             previousDC = decodeState.arithmetic.last_dc_value;
         }
 
-        const int width  = m_surface->width;
-        const int height = m_surface->height;
-        const int xlast = width - 1;
-        const int components = decodeState.comps_in_scan;
+        const int xsize = m_surface->width;
+        const int ysize = m_surface->height;
+        const int xlast = xsize - 1;
+        const int n_components = decodeState.comps_in_scan;
 
-        int initPredictor = 1 << (precision - pointTransform - 1);
+        int initPredictor = 1 << (m_precision - pointTransform - 1);
 
         std::vector<int> scanLineCache[JPEG_MAX_BLOCKS_IN_MCU];
 
-        for (int i = 0; i < components; ++i)
+        for (int i = 0; i < n_components; ++i)
         {
-            scanLineCache[i] = std::vector<int>(width + 1, 0);
+            scanLineCache[i] = std::vector<int>(xsize + 1, 0);
         }
 
         bool first = true;
 
-        for (int y = 0; y < height; ++y)
+        for (int y = 0; y < ysize; ++y)
         {
             if (m_interface->cancelled)
             {
@@ -1954,7 +1958,7 @@ namespace mango::image::jpeg
 
             u8* image = m_surface->address<u8>(0, y);
 
-            for (int x = 0; x < width; ++x)
+            for (int x = 0; x < xsize; ++x)
             {
                 s16 data[JPEG_MAX_BLOCKS_IN_MCU];
 
@@ -1963,7 +1967,7 @@ namespace mango::image::jpeg
                 bool init = restarted | first;
                 first = false;
 
-                for (int currentComponent = 0; currentComponent < components; ++currentComponent)
+                for (int currentComponent = 0; currentComponent < n_components; ++currentComponent)
                 {
                     // predictors
                     int* cache = scanLineCache[currentComponent].data();
@@ -1999,19 +2003,19 @@ namespace mango::image::jpeg
                     previousDC[currentComponent] = s;
 
                     cache[x] = data[currentComponent];
-                    data[currentComponent] = data[currentComponent] >> (precision - 8);
+                    data[currentComponent] = data[currentComponent] >> (m_precision - 8);
                 }
 
-                if (components == 1)
+                if (n_components == 1)
                 {
-                    image[0] = byteclamp(data[0] + 128);
+                    image[0] = u8_clamp(data[0] + 128);
                     image += 1;
                 }
                 else
                 {
-                    image[0] = byteclamp(data[0] + 128); // red
-                    image[1] = byteclamp(data[1] + 128); // green
-                    image[2] = byteclamp(data[2] + 128); // blue
+                    image[0] = u8_clamp(data[0] + 128); // red
+                    image[1] = u8_clamp(data[1] + 128); // green
+                    image[2] = u8_clamp(data[2] + 128); // blue
                     image[3] = 0xff;
                     image += 4;
                 }
@@ -2067,8 +2071,8 @@ namespace mango::image::jpeg
                     const int xmcu_last = xmcu - 1;
                     const int ymcu_last = ymcu - 1;
 
-                    const int xclip = width  % xblock;
-                    const int yclip = height % yblock;
+                    const int xclip = m_width  % xblock;
+                    const int yclip = m_height % yblock;
                     const int xblock_last = xclip ? xclip : xblock;
                     const int yblock_last = yclip ? yclip : yblock;
 
@@ -2078,10 +2082,10 @@ namespace mango::image::jpeg
                     {
                         decodeState.decode(data, &decodeState);
 
-                        int width  = x == xmcu_last ? xblock_last : xblock;
-                        int height = y == ymcu_last ? yblock_last : yblock;
+                        int xsize = x == xmcu_last ? xblock_last : xblock;
+                        int ysize = y == ymcu_last ? yblock_last : yblock;
 
-                        process_and_clip(dest, stride, data, width, height);
+                        process_and_clip(dest, stride, data, xsize, ysize);
                         dest += xstride;
 
                         if (++restart_counter == restartInterval)
@@ -2111,9 +2115,9 @@ namespace mango::image::jpeg
 
                 rect.x = 0;
                 rect.y = y0 * yblock;
-                rect.width = width;
-                rect.height = std::min(height, y1 * yblock) - y0 * yblock;
-                rect.progress = float(rect.height) / height;
+                rect.width = m_width;
+                rect.height = std::min(m_height, y1 * yblock) - y0 * yblock;
+                rect.progress = float(rect.height) / m_height;
 
                 blit_and_update(rect);
             }
@@ -2206,8 +2210,8 @@ namespace mango::image::jpeg
 
                     const int xmcu_last = xmcu - 1;
                     const int ymcu_last = ymcu - 1;
-                    const int xclip = width  % xblock;
-                    const int yclip = height % yblock;
+                    const int xclip = m_width  % xblock;
+                    const int yclip = m_height % yblock;
                     const int xblock_last = xclip ? xclip : xblock;
                     const int yblock_last = yclip ? yclip : yblock;
 
@@ -2222,7 +2226,7 @@ namespace mango::image::jpeg
 
                         DecodeState state = decodeState;
                         state.buffer.ptr = ptr;
-                        ptr = memory.address + offsets[i];
+                        ptr = m_memory.address + offsets[i];
 
                         u8* dest = image + i * ystride;
                         int height = (i == ymcu_last) ? yblock_last : yblock;
@@ -2243,15 +2247,15 @@ namespace mango::image::jpeg
 
                     rect.x = 0;
                     rect.y = y0 * yblock;
-                    rect.width = width;
-                    rect.height = std::min(height, y1 * yblock) - y0 * yblock;
-                    rect.progress = float(rect.height) / height;
+                    rect.width = m_width;
+                    rect.height = std::min(m_height, y1 * yblock) - y0 * yblock;
+                    rect.progress = float(rect.height) / m_height;
 
                     blit_and_update(rect);
                 });
 
                 // use last offset in the range
-                p = memory.address + offsets[y1 - 1];
+                p = m_memory.address + offsets[y1 - 1];
             }
 
             // update parser pointer
@@ -2310,8 +2314,8 @@ namespace mango::image::jpeg
                         const int xmcu_last = xmcu - 1;
                         const int ymcu_last = ymcu - 1;
 
-                        const int xclip = width  % xblock;
-                        const int yclip = height % yblock;
+                        const int xclip = m_width  % xblock;
+                        const int yclip = m_height % yblock;
                         const int xblock_last = xclip ? xclip : xblock;
                         const int yblock_last = yclip ? yclip : yblock;
 
@@ -2344,9 +2348,9 @@ namespace mango::image::jpeg
 
                     rect.x = 0;
                     rect.y = y0 * yblock;
-                    rect.width = width;
-                    rect.height = std::min(height, y1 * yblock) - y0 * yblock;
-                    rect.progress = float(rect.height) / height;
+                    rect.width = m_width;
+                    rect.height = std::min(m_height, y1 * yblock) - y0 * yblock;
+                    rect.progress = float(rect.height) / m_height;
 
                     blit_and_update(rect);
                 }, p);
@@ -2541,8 +2545,8 @@ namespace mango::image::jpeg
             printLine(Print::Info, "    hsf: {}, vsf: {}, blocks: {}", hsf, vsf, decodeState.blocks);
 
             const int scan_offset = scanFrame->offset;
-            const int xs = div_ceil(width, hsize);
-            const int ys = div_ceil(height, vsize);
+            const int xs = div_ceil(m_width, hsize);
+            const int ys = div_ceil(m_height, vsize);
             const int cnt = xs * ys;
 
             printLine(Print::Info, "    blocks: {} x {} ({} x {})", xs, ys, xs * hsize, ys * vsize);
@@ -2609,8 +2613,8 @@ namespace mango::image::jpeg
             printLine(Print::Info, "    hsf: {}, vsf: {}, blocks: {}", hsf, vsf, decodeState.blocks);
 
             const int scan_offset = scanFrame->offset;
-            const int xs = div_ceil(width, hsize);
-            const int ys = div_ceil(height, vsize);
+            const int xs = div_ceil(m_width, hsize);
+            const int ys = div_ceil(m_height, vsize);
 
             printLine(Print::Info, "    blocks: {} x {} ({} x {})", xs, ys, xs * hsize, ys * vsize);
 
@@ -2688,8 +2692,8 @@ namespace mango::image::jpeg
         const int xmcu_last = xmcu - 1;
         const int ymcu_last = ymcu - 1;
 
-        const int xclip = width  % xblock;
-        const int yclip = height % yblock;
+        const int xclip = m_width  % xblock;
+        const int yclip = m_height % yblock;
         const int xblock_last = xclip ? xclip : xblock;
         const int yblock_last = yclip ? yclip : yblock;
 
@@ -2701,17 +2705,17 @@ namespace mango::image::jpeg
             }
 
             u8* dest = image + y * ystride;
-            int height = y == ymcu_last ? yblock_last : yblock;
+            int ysize = y == ymcu_last ? yblock_last : yblock;
 
             for (int x = 0; x < xmcu_last; ++x)
             {
-                process_and_clip(dest, stride, data, xblock, height);
+                process_and_clip(dest, stride, data, xblock, ysize);
                 data += mcu_data_size;
                 dest += xstride;
             }
 
             // last column
-            process_and_clip(dest, stride, data, xblock_last, height);
+            process_and_clip(dest, stride, data, xblock_last, ysize);
             data += mcu_data_size;
             dest += xstride;
         }
@@ -2720,9 +2724,9 @@ namespace mango::image::jpeg
 
         rect.x = 0;
         rect.y = y0 * yblock;
-        rect.width = width;
-        rect.height = std::min(height, y1 * yblock) - y0 * yblock;
-        rect.progress = float(rect.height) / height;
+        rect.width = m_width;
+        rect.height = std::min(m_height, y1 * yblock) - y0 * yblock;
+        rect.progress = float(rect.height) / m_height;
 
         blit_and_update(rect);
     }

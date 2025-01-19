@@ -38,6 +38,7 @@
 #pragma warning(push)
 #pragma warning(disable : 5030) // attribute 'x' is not recognized
 #pragma warning(disable : 4514) // unreferenced inline function has been removed
+#pragma warning(disable : 4668 5267 4365 5246 4800 5045) // mango customization
 #endif
 
 // fwd

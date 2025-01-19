@@ -957,7 +957,7 @@ namespace ppmd8
             int c = Ppmd8_DecodeSymbol(&ppmd);
             if (c < 0 || offset >= dest.size)
                 break;
-            dest.address[offset++] = c;
+            dest.address[offset++] = u8(c);
         }
 
         CompressionStatus status;

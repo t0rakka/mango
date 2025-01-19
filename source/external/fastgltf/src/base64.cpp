@@ -28,6 +28,13 @@
 #error "fastgltf requires C++17"
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 5030) // attribute 'x' is not recognized
+#pragma warning(disable : 4710) // function not inlined
+#pragma warning(disable : 5045 5246 4514 4365 4800 5263 4820 4625 4626 4668 4623 4061 4100 5027 5026) // mango customization
+#endif
+
 #include <array>
 #include <cmath>
 #include <functional>
@@ -51,12 +58,6 @@
 #endif
 #elif defined(FASTGLTF_IS_A64)
 #include <arm_neon.h> // Includes arm64_neon.h on MSVC
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 5030) // attribute 'x' is not recognized
-#pragma warning(disable : 4710) // function not inlined
 #endif
 
 namespace fg = fastgltf;

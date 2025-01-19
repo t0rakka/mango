@@ -73,7 +73,7 @@ namespace mango::filesystem
             return m_index.empty();
         }
 
-        const FileInfo& operator [] (int index) const
+        const FileInfo& operator [] (size_t index) const
         {
             updateIndex();
             return m_index[index];

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     RAR decompression code: Alexander L. Roshal / unRAR library.
@@ -258,7 +258,7 @@ namespace
 
             if (flags & 0x8000 && type != FILE_HEAD)
             {
-                size += p.read32();
+                size = u16(size + p.read32());
             }
 
             switch (type)
@@ -618,8 +618,8 @@ namespace mango::filesystem
             file.packed_size = compressed_data.size;
             file.unpacked_size = unpacked_size;
             file.crc = crc;
-            file.version = algorithm;
-            file.method  = method;
+            file.version = u8(algorithm);
+            file.method  = u8(method);
             file.is_rar5 = true;
 
             file.folder = is_directory;

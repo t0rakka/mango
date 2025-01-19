@@ -179,7 +179,7 @@ namespace
 
     void qoi_decode(u8* image, const u8* data, size_t size, int width, int height, size_t stride)
     {
-        Color color(0, 0, 0, 255);
+        Color color(0, 0, 0, 0xff);
         Color cache[64] = { 0 };
 
         const u8* end = data + size;
@@ -229,9 +229,9 @@ namespace
                     {
                         int b2 = *data++;
                         int vg = (b1 & 0x3f) - 32;
-                        color.r += vg - 8 + ((b2 >> 4) & 0x0f);
-                        color.g += vg;
-                        color.b += vg - 8 +  (b2       & 0x0f);
+                        color.r = u8(color.r + vg - 8 + ((b2 >> 4) & 0x0f));
+                        color.g = u8(color.r + vg);
+                        color.b = u8(color.b + vg - 8 +  (b2       & 0x0f));
                     }
                     else if ((b1 & QOI_MASK_2) == QOI_OP_RUN)
                     {

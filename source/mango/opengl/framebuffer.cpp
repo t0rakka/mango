@@ -442,7 +442,7 @@ namespace mango
 
             glUniform1i(p.texture, 0);
             glUniform4f(p.transform, translate.x, -translate.y, scale.x, scale.y);
-            glUniform2f(p.scale, 1.0f / m_width, 1.0f / m_height);
+            glUniform2f(p.scale, 1.0f / float(m_width), 1.0f / float(m_height));
 
             if (p.position != -1)
             {

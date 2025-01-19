@@ -55,7 +55,7 @@ namespace
 
             if (index >= 0)
             {
-                offset[index] = bits;
+                offset[index] = u8(bits);
                 size[index] = cc_size[i];
                 bits += cc_size[i];
             }
@@ -285,8 +285,8 @@ namespace
                 case 0x0A: // (V,Y1,U,Y0)
                     compression = TextureCompression::YUY2;
                     break;
-                    compression = TextureCompression::UYVY;
                 case 0x0B: // (Y1,V,Y0,U)
+                    compression = TextureCompression::UYVY;
                     break;
                 case 0x0C: // PVRTC2
                     compression = TextureCompression::PVRTC_RGBA_2BPP;
