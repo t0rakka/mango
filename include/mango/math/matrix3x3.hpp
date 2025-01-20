@@ -120,6 +120,16 @@ namespace mango::math
         const Matrix3x3& operator = (const AngleAxis& rotation);
         const Matrix3x3& operator = (const EulerAngles& rotation);
 
+        const float* data() const
+        {
+            return reinterpret_cast<const float*>(this);
+        }
+
+        float* data()
+        {
+            return reinterpret_cast<float*>(this);
+        }
+
         operator float32x3* ()
         {
             return m;

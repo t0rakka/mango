@@ -519,7 +519,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     for (auto &file : manager.files)
     {
         std::string filename = removePrefix(file.filename, folder);
-        u32 length = filename.length();
+        u32 length = u32(filename.length());
 
         le.write32(length);
         le.write(filename.c_str(), length);

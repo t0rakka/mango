@@ -629,9 +629,9 @@ bool writeJpeg(WRITE_ONE_BYTE output, const void* pixels_, unsigned short width,
             auto downRight = pixelPos + columnStep + rowStep;
 
             // note: cast from 8 bits to >8 bits to avoid overflows when adding
-            auto r = short(pixels[pixelPos    ]) + pixels[right    ] + pixels[down    ] + pixels[downRight    ];
-            auto g = short(pixels[pixelPos + 1]) + pixels[right + 1] + pixels[down + 1] + pixels[downRight + 1];
-            auto b = short(pixels[pixelPos + 2]) + pixels[right + 2] + pixels[down + 2] + pixels[downRight + 2];
+            float r = float(short(pixels[pixelPos    ]) + pixels[right    ] + pixels[down    ] + pixels[downRight    ]);
+            float g = float(short(pixels[pixelPos + 1]) + pixels[right + 1] + pixels[down + 1] + pixels[downRight + 1]);
+            float b = float(short(pixels[pixelPos + 2]) + pixels[right + 2] + pixels[down + 2] + pixels[downRight + 2]);
 
             // convert to Cb and Cr
             Cb[deltaY][deltaX] = rgb2cb(r, g, b) / 4; // I still have to divide r,g,b by 4 to get their average values

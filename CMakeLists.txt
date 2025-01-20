@@ -132,134 +132,134 @@ endif ()
 if (WIN32 OR CYGWIN)
 
     FILE(GLOB CORE_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/core/*.hpp"
     )
     FILE(GLOB FILESYSTEM_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/filesystem/*.hpp"
     )
     FILE(GLOB WINDOW_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/window/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/window/*.hpp"
     )
     FILE(GLOB OPENGL_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/opengl/*.hpp"
     )
 
     FILE(GLOB CORE_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/win32/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/win32/*.cpp"
     )
     FILE(GLOB FILESYSTEM_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/win32/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/win32/*.cpp"
     )
     FILE(GLOB WINDOW_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/win32/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/window/win32/*.cpp"
     )
     FILE(GLOB OPENGL_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/wgl/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/wgl/*.cpp"
     )
 
 elseif (APPLE)
 
     FILE(GLOB CORE_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/core/*.hpp"
     )
     FILE(GLOB FILESYSTEM_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/filesystem/*.hpp"
     )
     FILE(GLOB WINDOW_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/window/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/window/*.hpp"
     )
     FILE(GLOB OPENGL_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/opengl/*.hpp"
     )
 
     FILE(GLOB CORE_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/unix/*.cpp"
     )
     FILE(GLOB FILESYSTEM_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/unix/*.cpp"
     )
     FILE(GLOB WINDOW_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/cocoa/*.mm"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/window/cocoa/*.mm"
     )
     FILE(GLOB OPENGL_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/cocoa/*.mm"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/cocoa/*.mm"
     )
 
 elseif (EMSCRIPTEN)
 
     FILE(GLOB CORE_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/core/*.hpp"
     )
     FILE(GLOB FILESYSTEM_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/filesystem/*.hpp"
     )
     FILE(GLOB OPENGL_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/opengl/*.hpp"
     )
 
     FILE(GLOB CORE_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/unix/*.cpp"
     )
     FILE(GLOB FILESYSTEM_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/unix/*.cpp"
     )
     FILE(GLOB OPENGL_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/*.cpp"
     )
 
 else ()
 
     FILE(GLOB CORE_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/core/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/core/*.hpp"
     )
     FILE(GLOB FILESYSTEM_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/filesystem/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/filesystem/*.hpp"
     )
     FILE(GLOB WINDOW_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/window/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/window/*.hpp"
     )
     FILE(GLOB OPENGL_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/opengl/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/opengl/*.hpp"
     )
 
     FILE(GLOB CORE_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/core/unix/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/unix/*.cpp"
     )
     FILE(GLOB FILESYSTEM_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/filesystem/unix/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/unix/*.cpp"
     )
     FILE(GLOB WINDOW_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/window/xlib/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/window/xlib/*.cpp"
     )
     FILE(GLOB OPENGL_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/opengl/glx/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/glx/*.cpp"
     )
 
 endif ()
 
-SET(MAIN_HEADER             "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/mango.hpp")
-FILE(GLOB IMAGE_HEADERS     "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/image/*.hpp")
-FILE(GLOB JPEG_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.hpp")
-FILE(GLOB MATH_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/math/*.hpp")
-FILE(GLOB SIMD_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/simd/*.hpp")
-FILE(GLOB IMPORT3D_HEADERS  "${CMAKE_CURRENT_SOURCE_DIR}/../include/mango/import3d/*.hpp")
+SET(MAIN_HEADER             "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/mango.hpp")
+FILE(GLOB IMAGE_HEADERS     "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/image/*.hpp")
+FILE(GLOB JPEG_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/jpeg/*.hpp")
+FILE(GLOB MATH_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/math/*.hpp")
+FILE(GLOB SIMD_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/simd/*.hpp")
+FILE(GLOB IMPORT3D_HEADERS  "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/import3d/*.hpp")
 
-FILE(GLOB IMAGE_SOURCES     "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/image/*.cpp")
-FILE(GLOB JPEG_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/jpeg/*.cpp")
-FILE(GLOB MATH_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/math/*.cpp")
-FILE(GLOB SIMD_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/simd/*.cpp")
-FILE(GLOB IMPORT3D_SOURCES  "${CMAKE_CURRENT_SOURCE_DIR}/../source/mango/import3d/*.cpp")
+FILE(GLOB IMAGE_SOURCES     "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/image/*.cpp")
+FILE(GLOB JPEG_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/jpeg/*.cpp")
+FILE(GLOB MATH_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/math/*.cpp")
+FILE(GLOB SIMD_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/simd/*.cpp")
+FILE(GLOB IMPORT3D_SOURCES  "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/import3d/*.cpp")
 
 SOURCE_GROUP("include"              FILES ${MAIN_HEADER})
 SOURCE_GROUP("include/core"         FILES ${CORE_HEADERS})
@@ -283,96 +283,96 @@ SOURCE_GROUP("source/opengl"        FILES ${OPENGL_SOURCES})
 SOURCE_GROUP("source/import3d"      FILES ${IMPORT3D_SOURCES})
 
 FILE(GLOB EXTERNAL_LZMA
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzma/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzma/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lzma/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lzma/*.c"
 )
 FILE(GLOB EXTERNAL_AES
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/aes/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/aes/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/aes/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/aes/*.cpp"
 )
 FILE(GLOB EXTERNAL_BC
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bc/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bc/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/bc/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/bc/*.cpp"
 )
 FILE(GLOB EXTERNAL_BZIP2
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bzip2/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/bzip2/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/bzip2/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/bzip2/*.c"
 )
 FILE(GLOB EXTERNAL_CONCURRENT_QUEUE
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/concurrentqueue/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/concurrentqueue/*.h"
 )
 FILE(GLOB EXTERNAL_ASTC
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/astc/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/astc/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/astc/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/astc/*.h"
 )
 FILE(GLOB EXTERNAL_GOOGLE
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/google/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/google/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/google/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/google/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/google/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/google/*.h"
 )
 FILE(GLOB EXTERNAL_LZ4
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lz4/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lz4/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lz4/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lz4/*.c"
 )
 FILE(GLOB EXTERNAL_LZFSE
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzfse/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lzfse/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lzfse/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lzfse/*.c"
 )
 FILE(GLOB EXTERNAL_DEFLATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/common/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/x86/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/x86/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/arm/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/libdeflate/lib/arm/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/common/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/x86/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/x86/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/arm/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/arm/*.c"
 )
 FILE(GLOB EXTERNAL_ZLIB
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zlib/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zlib/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zlib/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zlib/*.c"
 )
 FILE(GLOB EXTERNAL_LCMS
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lcms/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/lcms/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lcms/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lcms/*.c"
 )
 FILE(GLOB EXTERNAL_UNRAR
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/unrar/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/unrar/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/unrar/*.cpp"
 )
 
 FILE(GLOB_RECURSE EXTERNAL_ZSTD
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zstd/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zstd/*.c"
 )
 
 if (X86_64 AND (COMPILER_GCC OR COMPILER_CLANG OR COMPILER_INTEL))
     # MSVC "optimizes" object file with no symbols and then cannot find it when linking
     # .. but the way the code checks if it is to be compiled is presence of above compilers
     FILE(GLOB_RECURSE EXTERNAL_ZSTD_ASSEMBLY
-        "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zstd/*.S"
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zstd/*.S"
     )
     LIST(APPEND EXTERNAL_ZSTD ${EXTERNAL_ZSTD_ASSEMBLY})
 endif ()
 
 FILE(GLOB EXTERNAL_ZPNG
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/zpng/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zpng/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zpng/*.cpp"
 )
 FILE(GLOB EXTERNAL_BASISU
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/basisu/transcoder/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/basisu/transcoder/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/basisu/transcoder/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/basisu/transcoder/*.cpp"
 )
 FILE(GLOB EXTERNAL_FMT
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/fmt/src/*.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/fmt/src/*.cc"
 )
 FILE(GLOB EXTERNAL_IMPORT3D
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/mikktspace/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/mikktspace/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/simdjson/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/simdjson/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/fastgltf/include/fastgltf/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../source/external/fastgltf/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/mikktspace/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/mikktspace/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/simdjson/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/simdjson/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/fastgltf/include/fastgltf/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/fastgltf/src/*.cpp"
 )
 
 SOURCE_GROUP("external/lzma"        FILES ${EXTERNAL_LZMA})
@@ -626,6 +626,8 @@ if (EMSCRIPTEN)
 elseif (COMPILER_MSVC)
 
     #target_compile_options(mango PUBLIC "/Wall")
+    #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O3")
+    #set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O3")
     target_compile_options(mango PUBLIC "/DUNICODE")
     target_compile_options(mango PUBLIC "/utf-8")
     target_compile_options(mango PUBLIC "/MP")
@@ -827,20 +829,20 @@ message(STATUS "Installation path: ${CMAKE_INSTALL_PREFIX}")
 
 target_include_directories(mango
     PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/../include/>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
     INTERFACE
         $<INSTALL_INTERFACE:include/mango/>
 )
 
 target_include_directories(mango-import3d
     PRIVATE
-        "${PROJECT_SOURCE_DIR}/../source/external/fastgltf/include"
-        "${PROJECT_SOURCE_DIR}/../source/external/simdjson"
+        "${PROJECT_SOURCE_DIR}/source/external/fastgltf/include"
+        "${PROJECT_SOURCE_DIR}/source/external/simdjson"
 )
 
 # install mango headers
 install(
-    DIRECTORY ${PROJECT_SOURCE_DIR}/../include/
+    DIRECTORY ${PROJECT_SOURCE_DIR}/include/
     DESTINATION include
     FILES_MATCHING PATTERN "*.h*"
 )

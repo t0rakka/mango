@@ -175,8 +175,8 @@ namespace method3
 
         void transform()
         {
-            const int count = xpositions.size();
-            for (int i = 0; i < count; ++i)
+            const size_t count = xpositions.size();
+            for (size_t i = 0; i < count; ++i)
             {
                 xpositions[i] += xvelocities[i];
                 ypositions[i] += yvelocities[i];
@@ -200,7 +200,7 @@ namespace method4
     // 3-dimensional vector of VectorType
     using PackedVector = Vector<VectorType, 3>;
 
-    constexpr int N = VectorType::VectorSize;
+    constexpr size_t N = VectorType::VectorSize;
 
     VectorType vrandom()
     {
@@ -220,7 +220,7 @@ namespace method4
         std::vector<float> radiuses;
         std::vector<float> rotations;
 
-        Scene(int count)
+        Scene(size_t count)
             : positions(count / N)
             , velocities(count / N)
             , colors(count)
@@ -228,7 +228,7 @@ namespace method4
             , rotations(count)
         {
             count /= N;
-            for (int i = 0; i < count; ++i)
+            for (size_t i = 0; i < count; ++i)
             {
                 positions[i].x = vrandom();
                 positions[i].y = vrandom();
@@ -241,8 +241,8 @@ namespace method4
 
         void transform()
         {
-            const int count = positions.size();
-            for (int i = 0; i < count; ++i)
+            const size_t count = positions.size();
+            for (size_t i = 0; i < count; ++i)
             {
                 positions[i].x += velocities[i].x;
                 positions[i].y += velocities[i].y;

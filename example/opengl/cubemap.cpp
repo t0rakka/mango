@@ -195,12 +195,6 @@ const float skyboxVertices [] =
 
 } // namespace
 
-static inline
-void glUniformMatrix4fv(GLint location, GLsizei count, GLboolean transpose, const Matrix4x4& value)
-{
-    glUniformMatrix4fv(location, count, transpose, value[0].data());
-}
-
 GLuint createTexture2D(const std::string& filename, bool mipmap)
 {
     GLuint texture = 0;
@@ -464,9 +458,9 @@ public:
 
         glUseProgram(meshProgram);
 
-        glUniformMatrix4fv(glGetUniformLocation(meshProgram, "model"), 1, GL_FALSE, model);
-        glUniformMatrix4fv(glGetUniformLocation(meshProgram, "view"), 1, GL_FALSE, view);
-        glUniformMatrix4fv(glGetUniformLocation(meshProgram, "projection"), 1, GL_FALSE, projection);
+        glUniformMatrix4fv(glGetUniformLocation(meshProgram, "model"), 1, GL_FALSE, model.data());
+        glUniformMatrix4fv(glGetUniformLocation(meshProgram, "view"), 1, GL_FALSE, view.data());
+        glUniformMatrix4fv(glGetUniformLocation(meshProgram, "projection"), 1, GL_FALSE, projection.data());
 
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
@@ -483,8 +477,8 @@ public:
         glUseProgram(skyboxProgram);
 
         view[3] = float32x4(0.0f, 0.0f, 0.0f, 1.0f);
-        glUniformMatrix4fv(glGetUniformLocation(skyboxProgram, "view"), 1, GL_FALSE, view);
-        glUniformMatrix4fv(glGetUniformLocation(skyboxProgram, "projection"), 1, GL_FALSE, projection);
+        glUniformMatrix4fv(glGetUniformLocation(skyboxProgram, "view"), 1, GL_FALSE, view.data());
+        glUniformMatrix4fv(glGetUniformLocation(skyboxProgram, "projection"), 1, GL_FALSE, projection.data());
 
         glBindVertexArray(skyboxVAO);
         glActiveTexture(GL_TEXTURE0);
