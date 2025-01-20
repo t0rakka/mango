@@ -105,7 +105,7 @@ static void png_read_callback(png_structp png_ptr, png_bytep data, png_size_t le
 {
     png_source* source = (png_source*) png_get_io_ptr(png_ptr);
     std::memcpy(data, source->data + source->offset, length);
-    source->offset += length;
+    source->offset += int(length);
 }
 
 void load_libpng(Memory memory)
@@ -115,7 +115,7 @@ void load_libpng(Memory memory)
 
     png_source source;
     source.data = memory.address + 8;
-    source.size = memory.size;
+    source.size = int(memory.size);
     source.offset = 0;
     png_set_read_fn(png_ptr, &source, png_read_callback);
 
@@ -131,7 +131,7 @@ void load_libpng(Memory memory)
     (void) number_of_passes;
     png_read_update_info(png_ptr, info_ptr);
 
-    int stride = png_get_rowbytes(png_ptr, info_ptr);
+    size_t stride = png_get_rowbytes(png_ptr, info_ptr);
     u8* image = (u8*)malloc(stride * height);
     png_bytep *row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * height);
 
@@ -253,7 +253,7 @@ size_t save_lodepng(const Bitmap& bitmap)
 void load_stb(Memory memory)
 {
     int width, height, bpp;
-    u8* image = stbi_load_from_memory(memory.address, memory.size, &width, &height, &bpp, 4);
+    u8* image = stbi_load_from_memory(memory.address, int(memory.size), &width, &height, &bpp, 4);
     free(image);
 }
 

@@ -181,7 +181,7 @@ int main(int argc, const char* argv[])
     {
         printLine("Usage: {} <folder>", argv[0]);
         printLine("Options:");
-        printLine("    -format <extension>  : select specific format");
+        printLine("    --format <extension> : select specific format");
         printLine("    --trace              : enable tracing");
         printLine("    --debug              : enable debug info");
         printLine("    --mmap               : enable memory mapping");
@@ -215,7 +215,7 @@ int main(int argc, const char* argv[])
         {
             tracing = true;
         }
-        else if (!strcmp(argv[i], "-format"))
+        else if (!strcmp(argv[i], "--format"))
         {
             ++i;
             if (i < argc)
