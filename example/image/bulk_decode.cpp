@@ -183,7 +183,7 @@ int main(int argc, const char* argv[])
         printLine("Options:");
         printLine("    --format <extension> : select specific format");
         printLine("    --trace              : enable tracing");
-        printLine("    --debug              : enable debug info");
+        printLine("    --info               : enable decoding diagnostic information");
         printLine("    --mmap               : enable memory mapping");
         printLine("    --mt                 : enable multi-threaded decoding");
         return 1;
@@ -207,7 +207,7 @@ int main(int argc, const char* argv[])
         {
             multithread = true;
         }
-        else if (!strcmp(argv[i], "--debug"))
+        else if (!strcmp(argv[i], "--info"))
         {
             printEnable(Print::Info, true);
         }
