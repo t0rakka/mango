@@ -131,12 +131,6 @@ endif ()
 
 if (WIN32 OR CYGWIN)
 
-    FILE(GLOB CORE_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/core/*.hpp"
-    )
-    FILE(GLOB FILESYSTEM_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/filesystem/*.hpp"
-    )
     FILE(GLOB WINDOW_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/window/*.hpp"
     )
@@ -162,12 +156,6 @@ if (WIN32 OR CYGWIN)
 
 elseif (APPLE)
 
-    FILE(GLOB CORE_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/core/*.hpp"
-    )
-    FILE(GLOB FILESYSTEM_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/filesystem/*.hpp"
-    )
     FILE(GLOB WINDOW_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/window/*.hpp"
     )
@@ -193,12 +181,6 @@ elseif (APPLE)
 
 elseif (EMSCRIPTEN)
 
-    FILE(GLOB CORE_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/core/*.hpp"
-    )
-    FILE(GLOB FILESYSTEM_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/filesystem/*.hpp"
-    )
     FILE(GLOB OPENGL_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/opengl/*.hpp"
     )
@@ -217,12 +199,6 @@ elseif (EMSCRIPTEN)
 
 else ()
 
-    FILE(GLOB CORE_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/core/*.hpp"
-    )
-    FILE(GLOB FILESYSTEM_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/filesystem/*.hpp"
-    )
     FILE(GLOB WINDOW_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/window/*.hpp"
     )
@@ -248,18 +224,20 @@ else ()
 
 endif ()
 
-SET(MAIN_HEADER             "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/mango.hpp")
-FILE(GLOB IMAGE_HEADERS     "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/image/*.hpp")
-FILE(GLOB JPEG_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/jpeg/*.hpp")
-FILE(GLOB MATH_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/math/*.hpp")
-FILE(GLOB SIMD_HEADERS      "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/simd/*.hpp")
-FILE(GLOB IMPORT3D_HEADERS  "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/import3d/*.hpp")
+SET(MAIN_HEADER               "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/mango.hpp")
+FILE(GLOB CORE_HEADERS        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/core/*.hpp")
+FILE(GLOB FILESYSTEM_HEADERS  "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/filesystem/*.hpp")
+FILE(GLOB IMAGE_HEADERS       "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/image/*.hpp")
+FILE(GLOB JPEG_HEADERS        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/jpeg/*.hpp")
+FILE(GLOB MATH_HEADERS        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/math/*.hpp")
+FILE(GLOB SIMD_HEADERS        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/simd/*.hpp")
+FILE(GLOB IMPORT3D_HEADERS    "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/import3d/*.hpp")
 
-FILE(GLOB IMAGE_SOURCES     "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/image/*.cpp")
-FILE(GLOB JPEG_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/jpeg/*.cpp")
-FILE(GLOB MATH_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/math/*.cpp")
-FILE(GLOB SIMD_SOURCES      "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/simd/*.cpp")
-FILE(GLOB IMPORT3D_SOURCES  "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/import3d/*.cpp")
+FILE(GLOB IMAGE_SOURCES       "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/image/*.cpp")
+FILE(GLOB JPEG_SOURCES        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/jpeg/*.cpp")
+FILE(GLOB MATH_SOURCES        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/math/*.cpp")
+FILE(GLOB SIMD_SOURCES        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/simd/*.cpp")
+FILE(GLOB IMPORT3D_SOURCES    "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/import3d/*.cpp")
 
 SOURCE_GROUP("include"              FILES ${MAIN_HEADER})
 SOURCE_GROUP("include/core"         FILES ${CORE_HEADERS})
