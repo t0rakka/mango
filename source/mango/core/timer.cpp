@@ -69,12 +69,12 @@ namespace mango
 
     void Sleep::ms(s32 count)
     {
-        preciseSleep(count / 1000.0f);
+        preciseSleep(count / 1000.0);
     }
 
     void Sleep::us(s32 count)
     {
-        preciseSleep(count / 1000000.0f);
+        preciseSleep(count / 1000000.0);
     }
 
 #else
