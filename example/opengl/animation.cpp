@@ -71,7 +71,7 @@ public:
         u32 time = m_timer.ms();
         if (time < m_target_time)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(m_target_time - time));
+            Sleep::ms(m_target_time - time);
         }
 
         Surface s = lock();

@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <mango/core/timer.hpp>
 #include "cocoa_window.h"
 
 #if defined(MANGO_WINDOW_SYSTEM_COCOA)
@@ -211,7 +212,7 @@ namespace mango
             }
 
             // avoid saturating cpu
-            std::this_thread::sleep_for(std::chrono::microseconds(100));
+            Sleep::us(100);
         }
     }
 

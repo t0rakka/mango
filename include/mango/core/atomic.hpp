@@ -5,6 +5,7 @@
 #pragma once
 
 #include <atomic>
+#include <thread>
 #include <mango/core/configure.hpp>
 
 namespace mango
@@ -28,7 +29,7 @@ namespace mango
 #elif defined(MANGO_CPU_MIPS)
         __asm__ __volatile__("pause");
 #else
-        // NOTE: Processor yield/pause is not supported :(
+        std::this_thread::yield();
 #endif
     }
 

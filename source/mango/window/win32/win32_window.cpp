@@ -1,12 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <string>
 #include <sstream>
 #include <chrono>
 #include <thread>
 #include <mango/core/string.hpp>
+#include <mango/core/timer.hpp>
 #include <mango/window/window.hpp>
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
@@ -821,7 +822,7 @@ namespace mango
             onIdle();
 
             // avoid saturating cpu
-            std::this_thread::sleep_for(std::chrono::microseconds(100));
+            Sleep::us(100);
         }
 
         m_handle->is_looping = false;

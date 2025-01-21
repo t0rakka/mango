@@ -80,20 +80,20 @@ bool test1()
     {
         q.enqueue([&]
         {
-            std::this_thread::sleep_for(std::chrono::microseconds(100));
+            Sleep::us(100);
             print(".");
 
             a.enqueue([&]
             {
                 ++counter;
-                std::this_thread::sleep_for(std::chrono::microseconds(7));
+                Sleep::us(7);
                 print("1");
             });
 
             b.enqueue([&]
             {
                 ++counter;
-                std::this_thread::sleep_for(std::chrono::microseconds(2));
+                Sleep::us(2);
                 print("2");
             });
 
@@ -378,7 +378,7 @@ bool test7()
     {
         q.enqueue([]
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            Sleep::ms(1);
         });
     }
 
