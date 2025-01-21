@@ -822,7 +822,7 @@ namespace mango
             onIdle();
 
             // avoid saturating cpu
-            Sleep::us(100);
+            Sleep::ms(1);
         }
 
         m_handle->is_looping = false;
