@@ -22,6 +22,8 @@ foreach(example IN LISTS EXAMPLES)
         target_link_libraries(${example} PRIVATE "-framework OpenGL -framework Cocoa")
     elseif (UNIX)
         target_link_libraries(${example} PRIVATE X11 GL)
+    elseif (WIN32)
+        target_link_libraries(${example} PRIVATE opengl32)
     endif ()
 endforeach()
 
