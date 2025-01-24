@@ -583,7 +583,7 @@ void printHelp(const CommandLine& commands)
 
     printLine("");
     printLine("Options:");
-    printLine("  -output <filename>");
+    printLine("  --output <filename>");
     printLine("  --store");
     printLine("  --verbose");
     printLine("");
@@ -622,7 +622,7 @@ int main(int argc, char* argv[])
         {
             state.verbose = true;
         }
-        else if (commands[i] == "-output")
+        else if (commands[i] == "--output")
         {
             if (++i < commands.size())
             {

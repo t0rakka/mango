@@ -31,7 +31,10 @@ elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm)")
 endif ()
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
-    add_compile_options(/Ox)
+    #add_compile_options(/Ox)
+    add_compile_options(""
+        "$<$<CONFIG:Release>:/Ox>"
+    )
 else ()
     add_compile_options(-Wall -O3)
     #set(CMAKE_CXX_FLAGS_RELEASE "-O3")
