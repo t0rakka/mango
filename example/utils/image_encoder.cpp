@@ -11,10 +11,10 @@ void printHelp(std::string_view program)
 {
     printLine("Usage: {} <options> <inputs>", program);
     printLine("  Options:");
-    printLine("    -format <.extension>");
-    printLine("    -astc <width> <height>");
-    printLine("    -output <filename>");
-    printLine("    -compression <level:0..10>");
+    printLine("    --format <.extension>");
+    printLine("    --astc <width> <height>");
+    printLine("    --output <filename>");
+    printLine("    --compression <level:0..10>");
     printLine("    --luminance");
     printLine("    --linear");
     printLine("    --info");
@@ -45,7 +45,7 @@ int main(int argc, const char* argv[])
 
     while (index < argc)
     {
-        if (std::string_view(argv[index]) == "-output")
+        if (std::string_view(argv[index]) == "--output")
         {
             if (++index < argc)
             {
@@ -57,7 +57,7 @@ int main(int argc, const char* argv[])
                 return 0;
             }
         }
-        else if (std::string_view(argv[index]) == "-format")
+        else if (std::string_view(argv[index]) == "--format")
         {
             if (++index < argc)
             {
@@ -78,7 +78,7 @@ int main(int argc, const char* argv[])
                 return 0;
             }
         }
-        else if (std::string_view(argv[index]) == "-compression")
+        else if (std::string_view(argv[index]) == "--compression")
         {
             if (++index < argc)
             {
@@ -91,7 +91,7 @@ int main(int argc, const char* argv[])
                 return 0;
             }
         }
-        else if (std::string_view(argv[index]) == "-astc")
+        else if (std::string_view(argv[index]) == "--astc")
         {
             ++index;
 

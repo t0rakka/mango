@@ -20,7 +20,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
-    #add_compile_options(-mavx)
+    #add_compile_options(-mavx2)
     #add_compile_options(-mavx2 -mpclmul)
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm)")
     if (!APPLE)

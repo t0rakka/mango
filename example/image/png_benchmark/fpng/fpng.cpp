@@ -17,6 +17,8 @@
 #include <assert.h>
 #include <string.h>
 
+#if defined(__PCLMUL__)
+
 #ifdef _MSC_VER
 	#pragma warning (disable:4127) // conditional expression is constant
 #endif
@@ -3190,6 +3192,8 @@ do_literals:
 #endif
 
 } // namespace fpng
+
+#endif // defined(__PCLMUL__)
 
 /*
 	This is free and unencumbered software released into the public domain.

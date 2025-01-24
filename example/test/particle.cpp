@@ -205,7 +205,7 @@ namespace method4
     VectorType vrandom()
     {
         VectorType v;
-        for (int i = 0; i < N; ++i)
+        for (size_t i = 0; i < N; ++i)
         {
             v[i] = dist(mt);
         }

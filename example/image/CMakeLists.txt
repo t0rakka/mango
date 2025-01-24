@@ -18,6 +18,9 @@ if (UNIX)
         png_benchmark/fpng/fpng.cpp
         png_benchmark/fpnge/fpnge.cpp
     )
+    if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
+        target_compile_options(png_benchmark PRIVATE -mavx2 -mpclmul)
+    endif ()
 endif ()
 
 if (UNIX)

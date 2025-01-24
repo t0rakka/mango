@@ -16,12 +16,14 @@ using namespace mango::image;
 #define ENABLE_SPNG
 #define ENABLE_WUFFS
 #define ENABLE_MANGO
-#define ENABLE_FPNG
-//#define ENABLE_RPNG /* crashes on too many input files -> difficult to benchmark */
+
+#if defined(__PCLMUL__)
+    #define ENABLE_FPNG
+#endif
 
 #include "fpnge/fpnge.h"
 #ifdef CAN_COMPILE_FPNGE
-    #define ENABLE_FPNGE /* Requires x86_64 SIMD with specific compiler flags */
+    #define ENABLE_FPNGE
 #endif
 
 // ----------------------------------------------------------------------
@@ -424,41 +426,6 @@ size_t save_spng(const Bitmap& bitmap)
 #endif
 
 // ----------------------------------------------------------------------
-// rpng
-// ----------------------------------------------------------------------
-
-#if defined(ENABLE_RPNG)
-
-#define RPNG_IMPLEMENTATION
-#define RPNG_DEFLATE_IMPLEMENTATION
-#include "rpng/rpng.h"
-
-void load_rpng(Memory memory)
-{
-    int width = 0;
-    int height = 0;
-    int channels = 0;
-    int depth = 0;
-
-    const char* buffer = reinterpret_cast<const char*>(memory.address);
-    char* image = rpng_load_image_from_memory(buffer, &width, &height, &channels, &depth);
-    if (image)
-    {
-        free(image);
-    }
-}
-
-size_t save_rpng(const Bitmap& bitmap)
-{
-    const char* filename = "output-rpng.png";
-    const char* image = reinterpret_cast<const char*>(bitmap.image);
-    rpng_save_image(filename, image, bitmap.width, bitmap.height, 4, 8);
-    return get_file_size(filename);
-}
-
-#endif
-
-// ----------------------------------------------------------------------
 // FPNG
 // ----------------------------------------------------------------------
 
@@ -699,10 +666,6 @@ void test_file(const std::string& filename)
     test("spng:    ", load_spng, save_spng, buffer, bitmap);
 #endif
 
-#if defined(ENABLE_RPNG)
-    test("rpng:    ", load_rpng, save_rpng, buffer, bitmap);
-#endif
-
 #if defined(ENABLE_FPNG)
     test("fpng:    ", load_none, save_fpng, buffer, bitmap);
 #endif
@@ -782,9 +745,6 @@ void test_folder(Path& path)
 #endif
 #if defined(ENABLE_SPNG)
         { load_spng, "spng" },
-#endif
-#if defined(ENABLE_RPNG)
-        { load_rpng, "rpng" },
 #endif
 #if defined(ENABLE_WUFFS)
         { load_wuffs, "wuffs" },
