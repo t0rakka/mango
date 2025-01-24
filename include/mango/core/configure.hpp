@@ -125,7 +125,7 @@
     #else
 
         // Apple macOS
-        #define MANGO_PLATFORM_OSX
+        #define MANGO_PLATFORM_MACOS
         #define MANGO_PLATFORM_UNIX
         #define MANGO_PLATFORM_NAME "macOS"
 

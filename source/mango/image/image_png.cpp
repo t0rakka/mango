@@ -10,10 +10,10 @@
 #include "../../external/zlib/zlib.h"
 
 #ifdef MANGO_ENABLE_ISAL
-    #ifdef MANGO_COMPILER_MICROSOFT
+    #if defined(MANGO_PLATFORM_WINDOWS)
         #include <isal/igzip_lib.h>
     #else
-        #include <isa-l.h>
+        #include <isa-l/igzip_lib.h>
     #endif
 #endif
 
