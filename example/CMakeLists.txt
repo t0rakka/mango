@@ -43,12 +43,12 @@ link_libraries(mango)
 
 # add "-lpthread" linker option when platform has support
 if (UNIX)
-    set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-    find_package(Threads REQUIRED)
-    if (CMAKE_USE_PTHREADS_INIT)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-    endif ()
-    link_libraries("${CMAKE_THREAD_LIBS_INIT}")
+    #set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+    #find_package(Threads REQUIRED)
+    #if (CMAKE_USE_PTHREADS_INIT)
+    #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+    #endif ()
+    #link_libraries("${CMAKE_THREAD_LIBS_INIT}")
 endif ()
 
 if (APPLE)
@@ -62,7 +62,7 @@ if (APPLE)
         link_directories("/opt/homebrew/lib")
     endif ()
 elseif (UNIX)
-    link_libraries(dl)
+    #link_libraries(dl)
 endif ()
 
 # ----------------------------------------------------------------------
