@@ -40,19 +40,8 @@ else ()
     #set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif ()
 
-
 #find_package(mango REQUIRED)
 link_libraries(mango)
-
-# add "-lpthread" linker option when platform has support
-if (UNIX)
-    #set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-    #find_package(Threads REQUIRED)
-    #if (CMAKE_USE_PTHREADS_INIT)
-    #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-    #endif ()
-    #link_libraries("${CMAKE_THREAD_LIBS_INIT}")
-endif ()
 
 if (APPLE)
     # fix wrapped compiler dropping /usr/local
@@ -64,8 +53,6 @@ if (APPLE)
         include_directories("/opt/homebrew/include")
         link_directories("/opt/homebrew/lib")
     endif ()
-elseif (UNIX)
-    #link_libraries(dl)
 endif ()
 
 # ----------------------------------------------------------------------
@@ -83,10 +70,4 @@ add_subdirectory(utils)
 
 if (BUILD_OPENGL)
     add_subdirectory(opengl)
-
-    # TODO: link to mango-opengl
-    if (WIN32)
-        #link_libraries(opengl32)
-    endif ()
-
 endif ()
