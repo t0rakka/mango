@@ -513,20 +513,20 @@ if (PkgConfig_FOUND)
     #message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
 endif ()
 
-function (find_module_with_pkg name module)
+function (find_module_with_pkg target name module)
     if (PkgConfig_FOUND)
         pkg_check_modules(${name} QUIET ${module})
         if (${name}_FOUND)
             message("   + " ${name} ": " ${${name}_VERSION})
-            target_compile_definitions(mango PUBLIC "MANGO_ENABLE_${name}")
-            target_include_directories(mango PRIVATE ${${name}_INCLUDE_DIRS})
-            target_link_directories(mango PRIVATE ${${name}_LIBRARY_DIRS})
-            target_link_libraries(mango PRIVATE ${${name}_LIBRARIES})
+            target_compile_definitions(${target} PUBLIC "MANGO_ENABLE_${name}")
+            target_include_directories(${target} PRIVATE ${${name}_INCLUDE_DIRS})
+            target_link_directories(${target} PRIVATE ${${name}_LIBRARY_DIRS})
+            target_link_libraries(${target} PRIVATE ${${name}_LIBRARIES})
         endif ()
     endif ()
 endfunction ()
 
-function (find_module_with_cmake name module libname version)
+function (find_module_with_cmake target name module libname version)
     if (NOT ${name}_FOUND)
         if (version STREQUAL "0")
             find_package(${module} CONFIG QUIET)
@@ -536,8 +536,8 @@ function (find_module_with_cmake name module libname version)
 
         if (${module}_FOUND)
             message("   + " ${name} ": " ${${module}_VERSION})
-            target_compile_definitions(mango PUBLIC "MANGO_ENABLE_${name}")
-            target_link_libraries(mango PRIVATE ${libname})
+            target_compile_definitions(${target} PUBLIC "MANGO_ENABLE_${name}")
+            target_link_libraries(${target} PRIVATE ${libname})
         endif ()
     endif ()
 endfunction ()
@@ -549,43 +549,43 @@ endfunction ()
 if (LIBRARY_JXL)
     # brew: jpeg-xl
     # vcpkg: libjxl
-    find_module_with_pkg(JXL libjxl>=0.8.2)
-    find_module_with_pkg(JXL_THREADS libjxl_threads>=0.7)
+    find_module_with_pkg(mango JXL libjxl>=0.8.2)
+    find_module_with_pkg(mango JXL_THREADS libjxl_threads>=0.7)
 endif ()
 
 if (LIBRARY_JP2)
     # brew: openjpeg
     # vcpkg: openjpeg
-    find_module_with_pkg(JP2 libopenjp2>=2.4.0)
-    find_module_with_cmake(JP2 OpenJPEG openjp2 2.4.0)
+    find_module_with_pkg(mango JP2 libopenjp2>=2.4.0)
+    find_module_with_cmake(mango JP2 OpenJPEG openjp2 2.4.0)
 endif ()
 
 if (LIBRARY_WEBP)
     # brew: webp
     # vcpkg: libwebp
-    find_module_with_pkg(WEBP libwebp>=1.3.2)
-    find_module_with_cmake(WEBP WebP WebP::webp 1.3.2)
+    find_module_with_pkg(mango WEBP libwebp>=1.3.2)
+    find_module_with_cmake(mango WEBP WebP WebP::webp 1.3.2)
 endif ()
 
 if (LIBRARY_AVIF)
     # brew: libavif
     # vcpkg: libavif
-    find_module_with_pkg(AVIF libavif>=1.0.0)
-    find_module_with_cmake(AVIF libavif avif 1.0.0)
+    find_module_with_pkg(mango AVIF libavif>=1.0.0)
+    find_module_with_cmake(mango AVIF libavif avif 1.0.0)
 endif ()
 
 if (LIBRARY_HEIF)
     # brew: libheif
     # vcpkg: libheif
-    find_module_with_pkg(HEIF libheif>=1.13.0)
-    find_module_with_cmake(HEIF libheif heif 0)
+    find_module_with_pkg(mango HEIF libheif>=1.13.0)
+    find_module_with_cmake(mango HEIF libheif heif 0)
 endif ()
 
 if (LIBRARY_ISAL)
     # brew: isa-l
     # vcpkg: isal
-    find_module_with_pkg(ISAL libisal>=2.30.0)
-    find_module_with_cmake(ISAL unofficial-isal unofficial::isal::isal 0)
+    find_module_with_pkg(mango ISAL libisal>=2.30.0)
+    find_module_with_cmake(mango ISAL unofficial-isal unofficial::isal::isal 0)
 endif ()
 
 # ------------------------------------------------------------------------------
