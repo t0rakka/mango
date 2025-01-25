@@ -19,16 +19,12 @@ set(MANGO_IMPORT3D_VERSION 0.1.4)
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
-    set(COMPILER_MSVC 1)
-elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    set(COMPILER_CLANG 1)
-elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Intel")
-    set(COMPILER_INTEL 1)
-elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
-    set(COMPILER_GCC 1)
-else ()
-    message(STATUS "Compiler is not supported!")
+if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    # msvc is set by cmake
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(CLANG 1)
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Intel")
+    set(GCC 1)
 endif ()
 
 # ------------------------------------------------------------------------------
@@ -324,7 +320,7 @@ FILE(GLOB_RECURSE EXTERNAL_ZSTD
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zstd/*.c"
 )
 
-if (X86_64 AND (COMPILER_GCC OR COMPILER_CLANG OR COMPILER_INTEL))
+if (X86_64 AND (NOT MSVC))
     # MSVC "optimizes" object file with no symbols and then cannot find it when linking
     # .. but the way the code checks if it is to be compiled is presence of above compilers
     FILE(GLOB_RECURSE EXTERNAL_ZSTD_ASSEMBLY
@@ -601,7 +597,7 @@ if (EMSCRIPTEN)
     message(STATUS "SIMD: WASM")
     target_compile_options(mango PUBLIC "-msimd128")
 
-elseif (COMPILER_MSVC)
+elseif (MSVC)
 
     #target_compile_options(mango PUBLIC "/Wall")
     #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox")
