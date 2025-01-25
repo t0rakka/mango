@@ -513,8 +513,8 @@ function (find_module_with_pkg target name module)
     if (PkgConfig_FOUND)
         pkg_check_modules(${name} QUIET ${module})
         if (${name}_FOUND)
-            message("   + " ${name} ": " ${${name}_VERSION})
-            target_compile_definitions(${target} PUBLIC "MANGO_ENABLE_${name}")
+            message("   + " ${name} ": " ${${name}_VERSION} " [pkgconfig]")
+            target_compile_definitions(${target} PRIVATE "MANGO_ENABLE_${name}")
             target_include_directories(${target} PRIVATE ${${name}_INCLUDE_DIRS})
             target_link_directories(${target} PRIVATE ${${name}_LIBRARY_DIRS})
             target_link_libraries(${target} PRIVATE ${${name}_LIBRARIES})
@@ -531,8 +531,8 @@ function (find_module_with_cmake target name module libname version)
         endif ()
 
         if (${module}_FOUND)
-            message("   + " ${name} ": " ${${module}_VERSION})
-            target_compile_definitions(${target} PUBLIC "MANGO_ENABLE_${name}")
+            message("   + " ${name} ": " ${${module}_VERSION} " [cmake]")
+            target_compile_definitions(${target} PRIVATE "MANGO_ENABLE_${name}")
             target_link_libraries(${target} PRIVATE ${libname})
         endif ()
     endif ()
@@ -801,18 +801,13 @@ message(STATUS "Installation path: ${CMAKE_INSTALL_PREFIX}")
 # install
 # ------------------------------------------------------------------------------
 
-target_include_directories(mango
-    PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
-    INTERFACE
-        $<INSTALL_INTERFACE:include/mango/>
-)
-
 target_include_directories(mango-import3d
     PRIVATE
         "${PROJECT_SOURCE_DIR}/source/external/fastgltf/include"
         "${PROJECT_SOURCE_DIR}/source/external/simdjson"
 )
+
+set_target_properties(mango PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
 # install mango headers
 install(
@@ -826,6 +821,7 @@ install(TARGETS mango
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin"
+    INCLUDES DESTINATION include
 )
 
 install(TARGETS mango-opengl
