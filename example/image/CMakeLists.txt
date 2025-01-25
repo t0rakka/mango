@@ -30,13 +30,13 @@ if (UNIX)
 
     #find_package(ZLIB REQUIRED)
     #target_link_libraries(png_benchmark PRIVATE ZLIB::ZLIB)
-    #find_module_with_pkg(ZLIB zlib)
-    #find_module_with_cmake(ZLIB ZLIB ZLIB::ZLIB 0)
+    #find_module_with_pkg(png_benchmark ZLIB zlib)
+    #find_module_with_cmake(png_benchmark ZLIB ZLIB ZLIB::ZLIB 0)
 
-    find_package(PNG REQUIRED)
-    target_link_libraries(png_benchmark PNG::PNG)
-    #find_module_with_pkg(PNG libpng)
-    find_module_with_cmake(PNG PNG PNG::PNG 0)
+    #find_package(PNG REQUIRED)
+    #target_link_libraries(png_benchmark PNG::PNG)
+    find_module_with_pkg(png_benchmark PNG libpng)
+    find_module_with_cmake(png_benchmark PNG PNG PNG::PNG 0)
 endif ()
 
 if (UNIX)
@@ -59,5 +59,5 @@ add_executable(jpeg_benchmark
 
 #find_package(JPEG REQUIRED)
 #target_link_libraries(jpeg_benchmark JPEG::JPEG)
-find_module_with_pkg(jpeg libjpeg)
-find_module_with_cmake(jpeg jpeg jpeg 0)
+find_module_with_pkg(jpeg_benchmark jpeg libjpeg)
+find_module_with_cmake(jpeg_benchmark jpeg jpeg jpeg 0)
