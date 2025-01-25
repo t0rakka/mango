@@ -9,6 +9,10 @@ add_executable(async_decode async_decode.cpp)
 file(COPY icc/DisplayP3-v2-micro.icc DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY blitter/conquer.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+# ----------------------------------------------------------------------
+# png_benchmark
+# ----------------------------------------------------------------------
+
 # TODO: fix Windows build
 if (UNIX)
     add_executable(png_benchmark
@@ -18,23 +22,32 @@ if (UNIX)
         png_benchmark/fpng/fpng.cpp
         png_benchmark/fpnge/fpnge.cpp
     )
-    if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
+    if ((CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)") AND (NOT WIN32))
         target_compile_options(png_benchmark PRIVATE -mavx2 -mpclmul)
     endif ()
+
+    target_compile_definitions(png_benchmark PRIVATE "SPNG_STATIC")
+
+    #find_package(ZLIB REQUIRED)
+    #target_link_libraries(png_benchmark PRIVATE ZLIB::ZLIB)
+    #find_module_with_pkg(ZLIB zlib)
+    #find_module_with_cmake(ZLIB ZLIB ZLIB::ZLIB 0)
+
+    find_package(PNG REQUIRED)
+    target_link_libraries(png_benchmark PNG::PNG)
+    #find_module_with_pkg(PNG libpng)
+    find_module_with_cmake(PNG PNG PNG::PNG 0)
 endif ()
 
 if (UNIX)
     #target_link_libraries(png_benchmark png z)
 else ()
     #target_link_libraries(png_benchmark libpng16)
-    #target_compile_options(png_benchmark PRIVATE "/DSPNG_STATIC")
 endif ()
 
-#find_package(ZLIB REQUIRED)
-#target_link_libraries(png_benchmark PRIVATE ZLIB::ZLIB)
-
-find_package(PNG REQUIRED)
-target_link_libraries(png_benchmark PNG::PNG)
+# ----------------------------------------------------------------------
+# jpeg_benchmark
+# ----------------------------------------------------------------------
 
 add_executable(jpeg_benchmark
     jpeg_benchmark/jpeg_benchmark.cpp
@@ -44,5 +57,7 @@ add_executable(jpeg_benchmark
 )
 #target_link_libraries(jpeg_benchmark jpeg)
 
-find_package(JPEG REQUIRED)
-target_link_libraries(jpeg_benchmark JPEG::JPEG)
+#find_package(JPEG REQUIRED)
+#target_link_libraries(jpeg_benchmark JPEG::JPEG)
+find_module_with_pkg(jpeg libjpeg)
+find_module_with_cmake(jpeg jpeg jpeg 0)

@@ -505,8 +505,13 @@ else ()
 endif ()
 
 # ------------------------------------------------------------------------------
-# external libraries
+# package finding
 # ------------------------------------------------------------------------------
+
+find_package(PkgConfig QUIET)
+if (PkgConfig_FOUND)
+    #message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
+endif ()
 
 function (find_module_with_pkg name module)
     if (PkgConfig_FOUND)
@@ -536,6 +541,10 @@ function (find_module_with_cmake name module libname version)
         endif ()
     endif ()
 endfunction ()
+
+# ------------------------------------------------------------------------------
+# external libraries
+# ------------------------------------------------------------------------------
 
 if (LIBRARY_JXL)
     # brew: jpeg-xl

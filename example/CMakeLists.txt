@@ -55,6 +55,44 @@ if (APPLE)
     endif ()
 endif ()
 
+# ------------------------------------------------------------------------------
+# package finding
+# ------------------------------------------------------------------------------
+
+find_package(PkgConfig QUIET)
+if (PkgConfig_FOUND)
+    #message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
+endif ()
+
+function (find_module_with_pkg name module)
+    if (PkgConfig_FOUND)
+        pkg_check_modules(${name} QUIET ${module})
+        if (${name}_FOUND)
+            message("   + " ${name} ": " ${${name}_VERSION})
+            target_compile_definitions(mango PUBLIC "MANGO_ENABLE_${name}")
+            target_include_directories(mango PRIVATE ${${name}_INCLUDE_DIRS})
+            target_link_directories(mango PRIVATE ${${name}_LIBRARY_DIRS})
+            target_link_libraries(mango PRIVATE ${${name}_LIBRARIES})
+        endif ()
+    endif ()
+endfunction ()
+
+function (find_module_with_cmake name module libname version)
+    if (NOT ${name}_FOUND)
+        if (version STREQUAL "0")
+            find_package(${module} CONFIG QUIET)
+        else ()
+            find_package(${module} ${version} CONFIG QUIET)
+        endif ()
+
+        if (${module}_FOUND)
+            message("   + " ${name} ": " ${${module}_VERSION})
+            target_compile_definitions(mango PUBLIC "MANGO_ENABLE_${name}")
+            target_link_libraries(mango PRIVATE ${libname})
+        endif ()
+    endif ()
+endfunction ()
+
 # ----------------------------------------------------------------------
 # build examples + utilities
 # ----------------------------------------------------------------------
