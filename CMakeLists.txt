@@ -508,16 +508,6 @@ endif ()
 # external libraries
 # ------------------------------------------------------------------------------
 
-find_package(PkgConfig QUIET)
-if (PkgConfig_FOUND)
-    #message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
-endif ()
-
-# brew installs libraries to /opt/homebrew/lib on Apple Silicon
-if (APPLE AND AARCH64)
-    target_link_options(mango PRIVATE "-L/opt/homebrew/lib")
-endif ()
-
 function (find_module_with_pkg name module)
     if (PkgConfig_FOUND)
         pkg_check_modules(${name} QUIET ${module})
@@ -605,8 +595,8 @@ if (EMSCRIPTEN)
 elseif (COMPILER_MSVC)
 
     #target_compile_options(mango PUBLIC "/Wall")
-    #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O3")
-    #set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O3")
+    #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox")
+    #set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /Ox")
     target_compile_options(mango PUBLIC "/DUNICODE")
     target_compile_options(mango PUBLIC "/utf-8")
     target_compile_options(mango PUBLIC "/MP")

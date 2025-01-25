@@ -24,7 +24,7 @@ if (UNIX)
 endif ()
 
 if (UNIX)
-    target_link_libraries(png_benchmark png z)
+    #target_link_libraries(png_benchmark png z)
 else ()
     #target_link_libraries(png_benchmark libpng16)
     #target_compile_options(png_benchmark PRIVATE "/DSPNG_STATIC")
@@ -33,8 +33,8 @@ endif ()
 #find_package(ZLIB REQUIRED)
 #target_link_libraries(png_benchmark PRIVATE ZLIB::ZLIB)
 
-#find_package(PNG REQUIRED)
-#target_link_libraries(png_benchmark PRIVATE PNG::PNG)
+find_package(PNG REQUIRED)
+target_link_libraries(png_benchmark PNG::PNG)
 
 add_executable(jpeg_benchmark
     jpeg_benchmark/jpeg_benchmark.cpp
@@ -42,4 +42,7 @@ add_executable(jpeg_benchmark
     jpeg_benchmark/jpeg-compressor/jpge.cpp
     jpeg_benchmark/toojpeg/toojpeg.cpp
 )
-target_link_libraries(jpeg_benchmark jpeg)
+#target_link_libraries(jpeg_benchmark jpeg)
+
+find_package(JPEG REQUIRED)
+target_link_libraries(jpeg_benchmark JPEG::JPEG)

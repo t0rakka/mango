@@ -49,9 +49,9 @@ if (APPLE)
     link_directories(/usr/local/lib)
 
     if (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm)")
-        # fix brew paths on M1 silicon (when libraries were compiled with meson)
-        include_directories("/opt/homebrew/include")
-        link_directories("/opt/homebrew/lib")
+        # fix brew paths on Apple Silicon
+        #include_directories("/opt/homebrew/include")
+        #link_directories("/opt/homebrew/lib")
     endif ()
 endif ()
 
