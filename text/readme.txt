@@ -61,9 +61,11 @@ sudo ninja install
 # Windows
 cmake -S . -B build -DINTEL_DELUXE=ON
 cd build
+cmake --build . --config Release
 cmake --build . --config Release --target install
 
-
+# Windows + VCPKG
+cmake -S . -B build -DINTEL_DELUXE=ON -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake"
 
 
 

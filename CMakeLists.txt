@@ -496,16 +496,10 @@ endfunction ()
 
 message(STATUS "Libraries:")
 
-if (NOT DEFINED ENV{VCPKG_ROOT})
-
-    # vcpkg integration finds these libraries automatically and the find_package() fails
-
-    find_package(ZLIB REQUIRED)
-    if (ZLIB_FOUND)
-        message("   + ZLIB")
-        target_link_libraries(mango PRIVATE ZLIB::ZLIB)
-    endif ()
-
+find_package(ZLIB REQUIRED)
+if (ZLIB_FOUND)
+    message("   + ZLIB")
+    target_link_libraries(mango PRIVATE ZLIB::ZLIB)
 endif ()
 
 # ------------------------------------------------------------------------------
