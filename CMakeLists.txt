@@ -805,7 +805,6 @@ message(STATUS "Installation path: ${CMAKE_INSTALL_PREFIX}")
 # install
 # ------------------------------------------------------------------------------
 
-
 target_include_directories(mango
     PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
