@@ -30,8 +30,7 @@
 #include "../../external/lzma/Ppmd8.h"
 
 #include <zlib.h>
-
-#include "../../external/libdeflate/libdeflate.h"
+#include <libdeflate.h>
 
 #include "../../external/lzav/lzav.h"
 

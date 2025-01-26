@@ -292,16 +292,6 @@ FILE(GLOB EXTERNAL_LZFSE
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lzfse/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lzfse/*.c"
 )
-FILE(GLOB EXTERNAL_DEFLATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/common/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/x86/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/x86/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/arm/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/arm/*.c"
-)
 FILE(GLOB EXTERNAL_LCMS
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lcms/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lcms/*.c"
@@ -354,7 +344,6 @@ SOURCE_GROUP("external/astc"        FILES ${EXTERNAL_ASTC})
 SOURCE_GROUP("external/google"      FILES ${EXTERNAL_GOOGLE})
 SOURCE_GROUP("external/lz4"         FILES ${EXTERNAL_LZ4})
 SOURCE_GROUP("external/lzfse"       FILES ${EXTERNAL_LZFSE})
-SOURCE_GROUP("external/deflate"     FILES ${EXTERNAL_DEFLATE})
 SOURCE_GROUP("external/lcms"        FILES ${EXTERNAL_LCMS})
 SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
 SOURCE_GROUP("external/zstd"        FILES ${EXTERNAL_ZSTD})
@@ -389,7 +378,6 @@ add_library(mango
     ${EXTERNAL_GOOGLE}
     ${EXTERNAL_LZ4}
     ${EXTERNAL_LZFSE}
-    ${EXTERNAL_DEFLATE}
     ${EXTERNAL_LCMS}
     ${EXTERNAL_UNRAR}
     ${EXTERNAL_ZSTD}
@@ -547,6 +535,10 @@ endfunction()
 find_module_with_pkg(mango ZLIB zlib)
 find_module_with_cmake(mango ZLIB ZLIB ZLIB::ZLIB 0)
 check_required_package(ZLIB)
+
+find_module_with_pkg(mango LIBDEFLATE libdeflate)
+find_module_with_cmake(mango LIBDEFLATE libdeflate libdeflate::libdeflate_shared 0)
+check_required_package(LIBDEFLATE)
 
 # ------------------------------------------------------------------------------
 # optional libraries
