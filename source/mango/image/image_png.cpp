@@ -7,7 +7,7 @@
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
 
-#include "../../external/zlib/zlib.h"
+#include <zlib.h>
 
 #ifdef MANGO_ENABLE_ISAL
     #if defined(MANGO_PLATFORM_WINDOWS)

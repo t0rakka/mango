@@ -1974,7 +1974,7 @@ namespace mango::simd
     // mask8x64
     // -----------------------------------------------------------------
 
-#if !defined(MANGO_COMPILER_MICROSOFT)
+#if !defined(MANGO_COMPILER_MSVC)
 
     static inline mask8x64 operator & (mask8x64 a, mask8x64 b)
     {
@@ -2022,7 +2022,7 @@ namespace mango::simd
     // mask16x32
     // -----------------------------------------------------------------
 
-#if !defined(MANGO_COMPILER_MICROSOFT)
+#if !defined(MANGO_COMPILER_MSVC)
 
     static inline mask16x32 operator & (mask16x32 a, mask16x32 b)
     {
@@ -2070,7 +2070,7 @@ namespace mango::simd
     // mask32x16
     // -----------------------------------------------------------------
 
-#if !defined(MANGO_COMPILER_MICROSOFT)
+#if !defined(MANGO_COMPILER_MSVC)
 
     static inline mask32x16 operator & (mask32x16 a, mask32x16 b)
     {
@@ -2118,7 +2118,7 @@ namespace mango::simd
     // mask64x8
     // -----------------------------------------------------------------
 
-#if !defined(MANGO_COMPILER_MICROSOFT)
+#if !defined(MANGO_COMPILER_MSVC)
 
     static inline mask64x8 operator & (mask64x8 a, mask64x8 b)
     {

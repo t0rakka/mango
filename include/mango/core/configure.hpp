@@ -381,12 +381,12 @@
 #if defined(__INTEL_COMPILER) || defined(__ICL) || defined(__ICC)
 
     // Intel C/C++ Compiler
-    #define MANGO_COMPILER_INTEL
+    #define MANGO_COMPILER_ICC
 
 #elif defined(_MSC_VER)
 
     // Microsoft Visual C++
-    #define MANGO_COMPILER_MICROSOFT
+    #define MANGO_COMPILER_MSVC
 
     // noexcept specifier support was added in Visual Studio 2015
     #if _MSC_VER < 1900
@@ -567,7 +567,7 @@
     #endif
 
     #if defined(__FMA4__) && !defined(MANGO_ENABLE_FMA4)
-        #if defined(MANGO_COMPILER_MICROSOFT)
+        #if defined(MANGO_COMPILER_MSVC)
             #define MANGO_ENABLE_FMA4
             #include <intrin.h>
         #elif defined(MANGO_COMPILER_GCC) || defined(MANGO_COMPILER_CLANG)

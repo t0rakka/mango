@@ -14,8 +14,13 @@ using namespace mango::image;
 #define ENABLE_LODEPNG
 #define ENABLE_STB
 #define ENABLE_SPNG
-#define ENABLE_WUFFS
 #define ENABLE_MANGO
+
+#if !(defined(MANGO_COMPILER_MSVC) && defined(__AVX2__))
+    // ICE (Internal Compiler Error) when compiling wuffs(png) with msvc (avx2)
+    // "error MSB6006: "CL.exe" exited with code -529706956."
+    #define ENABLE_WUFFS
+#endif
 
 #if defined(__PCLMUL__)
     #define ENABLE_FPNG
@@ -23,6 +28,7 @@ using namespace mango::image;
 
 #include "fpnge/fpnge.h"
 #ifdef CAN_COMPILE_FPNGE
+    // FPGNE is very strict how it is compiled: clang (avx2 + pclmul)
     #define ENABLE_FPNGE
 #endif
 
@@ -369,7 +375,6 @@ void load_spng(Memory memory)
 {
     struct spng_ihdr ihdr;
     size_t img_spng_size;
-
     u8* image = getimage_libspng(memory.address, memory.size, &img_spng_size, SPNG_FMT_RGBA8, 0, &ihdr);
     free(image);
 }
@@ -415,11 +420,14 @@ size_t save_spng(const Bitmap& bitmap)
         printLine("spng_get_png_buffer() error: {}", spng_strerror(r));
     }
 
-    OutputFileStream file(filename);
-    file.write(png_buf, png_size);
+    {
+        OutputFileStream file(filename);
+        file.write(png_buf, png_size);
+    }
 
     free(png_buf);
     spng_ctx_free(enc);
+
     return get_file_size(filename);
 }
 

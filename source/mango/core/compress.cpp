@@ -29,7 +29,7 @@
 #include "../../external/lzma/Lzma2Enc.h"
 #include "../../external/lzma/Ppmd8.h"
 
-#include "../../external/zlib/zlib.h"
+#include <zlib.h>
 
 #include "../../external/libdeflate/libdeflate.h"
 

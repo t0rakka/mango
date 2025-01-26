@@ -302,10 +302,6 @@ FILE(GLOB EXTERNAL_DEFLATE
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/arm/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/libdeflate/lib/arm/*.c"
 )
-FILE(GLOB EXTERNAL_ZLIB
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zlib/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zlib/*.c"
-)
 FILE(GLOB EXTERNAL_LCMS
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lcms/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lcms/*.c"
@@ -359,7 +355,6 @@ SOURCE_GROUP("external/google"      FILES ${EXTERNAL_GOOGLE})
 SOURCE_GROUP("external/lz4"         FILES ${EXTERNAL_LZ4})
 SOURCE_GROUP("external/lzfse"       FILES ${EXTERNAL_LZFSE})
 SOURCE_GROUP("external/deflate"     FILES ${EXTERNAL_DEFLATE})
-SOURCE_GROUP("external/zlib"        FILES ${EXTERNAL_ZLIB})
 SOURCE_GROUP("external/lcms"        FILES ${EXTERNAL_LCMS})
 SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
 SOURCE_GROUP("external/zstd"        FILES ${EXTERNAL_ZSTD})
@@ -395,7 +390,6 @@ add_library(mango
     ${EXTERNAL_LZ4}
     ${EXTERNAL_LZFSE}
     ${EXTERNAL_DEFLATE}
-    ${EXTERNAL_ZLIB}
     ${EXTERNAL_LCMS}
     ${EXTERNAL_UNRAR}
     ${EXTERNAL_ZSTD}
@@ -459,10 +453,20 @@ set_target_properties(mango-import3d PROPERTIES
 target_link_libraries(mango-import3d PUBLIC mango)
 
 # ------------------------------------------------------------------------------
-# platform libraries
+# required libraries
 # ------------------------------------------------------------------------------
 
 message(STATUS "Libraries:")
+
+find_package(ZLIB REQUIRED)
+if (ZLIB_FOUND)
+    message("   + ZLIB")
+    target_link_libraries(mango PRIVATE ZLIB::ZLIB)
+endif ()
+
+# ------------------------------------------------------------------------------
+# platform libraries
+# ------------------------------------------------------------------------------
 
 find_package(Threads)
 if (CMAKE_THREAD_LIBS_INIT)
@@ -539,7 +543,7 @@ function (find_module_with_cmake target name module libname version)
 endfunction ()
 
 # ------------------------------------------------------------------------------
-# external libraries
+# optional libraries
 # ------------------------------------------------------------------------------
 
 if (LIBRARY_JXL)

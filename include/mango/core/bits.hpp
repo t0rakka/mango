@@ -42,7 +42,7 @@ namespace mango
         return std::byteswap(v);
     }
 
-#elif defined(MANGO_COMPILER_MICROSOFT)
+#elif defined(MANGO_COMPILER_MSVC)
 
     static inline
     u16 byteswap(u16 v)
@@ -62,7 +62,7 @@ namespace mango
         return _byteswap_uint64(v);
     }
 
-#elif defined(MANGO_COMPILER_GCC) || defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_INTEL)
+#elif defined(MANGO_COMPILER_GCC) || defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_ICC)
 
     // GCC / CLANG intrinsics
 
@@ -254,7 +254,7 @@ namespace mango
         return dest;
     }
 
-#if defined(MANGO_COMPILER_MICROSOFT) || defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_INTEL)
+#if defined(MANGO_COMPILER_MSVC) || defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_ICC)
 
     static inline
     u32 byteclamp(s32 value)

@@ -13,38 +13,31 @@ file(COPY blitter/conquer.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 # png_benchmark
 # ----------------------------------------------------------------------
 
-# TODO: fix Windows build
-if (NOT WIN32)
-    add_executable(png_benchmark
-        png_benchmark/png_benchmark.cpp
-        png_benchmark/lodepng/lodepng.cpp
-        png_benchmark/spng/spng.c
-        png_benchmark/fpng/fpng.cpp
-        png_benchmark/fpnge/fpnge.cpp
-    )
-    if ((CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)") AND (NOT MSVC))
-        # TODO: fix these options for MSVC build (these are needed by two png codecs in the test)
+add_executable(png_benchmark
+    png_benchmark/png_benchmark.cpp
+    png_benchmark/lodepng/lodepng.cpp
+    png_benchmark/spng/spng.c
+    png_benchmark/fpng/fpng.cpp
+    png_benchmark/fpnge/fpnge.cpp
+)
+
+if (MSVC)
+
+    target_compile_definitions(png_benchmark PUBLIC "__PCLMUL__")
+    target_compile_options(png_benchmark PRIVATE "/arch:AVX2")
+
+else ()
+
+    if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
         target_compile_options(png_benchmark PRIVATE -mavx2 -mpclmul)
     endif ()
 
-    target_compile_definitions(png_benchmark PRIVATE "SPNG_STATIC")
+    find_module_with_pkg(png_benchmark PNG libpng)
+    find_module_with_cmake(png_benchmark PNG PNG PNG::PNG 0)
 
-    #find_package(ZLIB REQUIRED)
-    #target_link_libraries(png_benchmark PRIVATE ZLIB::ZLIB)
-    #find_module_with_pkg(png_benchmark ZLIB zlib)
-    #find_module_with_cmake(png_benchmark ZLIB ZLIB ZLIB::ZLIB 0)
-
-    #find_package(PNG REQUIRED)
-    #target_link_libraries(png_benchmark PNG::PNG)
-
-    #target_link_options(png_benchmark PRIVATE /NODEFAULTLIB:ALL)
-    #target_link_options(png_benchmark PRIVATE /NODEFAULTLIB:zlib1.lib)
-
-    if (NOT MSVC)
-        find_module_with_pkg(png_benchmark PNG libpng)
-        find_module_with_cmake(png_benchmark PNG PNG PNG::PNG 0)
-    endif ()
 endif ()
+
+target_compile_definitions(png_benchmark PRIVATE "SPNG_STATIC")
 
 # ----------------------------------------------------------------------
 # jpeg_benchmark
@@ -57,7 +50,9 @@ add_executable(jpeg_benchmark
     jpeg_benchmark/toojpeg/toojpeg.cpp
 )
 
-#find_package(JPEG REQUIRED)
-#target_link_libraries(jpeg_benchmark JPEG::JPEG)
+if (MSVC)
+    target_compile_options(jpeg_benchmark PRIVATE "/arch:AVX2")
+endif ()
+
 find_module_with_pkg(jpeg_benchmark jpeg libjpeg)
 find_module_with_cmake(jpeg_benchmark jpeg jpeg jpeg 0)
