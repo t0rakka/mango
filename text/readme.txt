@@ -52,15 +52,16 @@ notes for README.md....
 
 
 
-
+# Linux
 cmake -S . -B build -G "Ninja" -DINTEL_DELUXE=ON
 cd build
 ninja
 sudo ninja install
 
-
-
-
+# Windows
+cmake -S . -B build -DINTEL_DELUXE=ON
+cd build
+cmake --build . --config Release --target install
 
 
 

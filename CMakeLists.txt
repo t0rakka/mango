@@ -453,15 +453,59 @@ set_target_properties(mango-import3d PROPERTIES
 target_link_libraries(mango-import3d PUBLIC mango)
 
 # ------------------------------------------------------------------------------
+# package finding
+# ------------------------------------------------------------------------------
+
+find_package(PkgConfig QUIET)
+if (PkgConfig_FOUND)
+    message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
+endif ()
+
+function (find_module_with_pkg target name module)
+    if (PkgConfig_FOUND)
+        pkg_check_modules(${name} QUIET ${module})
+        if (${name}_FOUND)
+            message("   + " ${name} ": " ${${name}_VERSION} " [pkgconfig]")
+            target_compile_definitions(${target} PRIVATE "MANGO_ENABLE_${name}")
+            target_include_directories(${target} PRIVATE ${${name}_INCLUDE_DIRS})
+            target_link_directories(${target} PRIVATE ${${name}_LIBRARY_DIRS})
+            target_link_libraries(${target} PRIVATE ${${name}_LIBRARIES})
+        endif ()
+    endif ()
+endfunction ()
+
+function (find_module_with_cmake target name module libname version)
+    if (NOT ${name}_FOUND)
+        if (version STREQUAL "0")
+            find_package(${module} CONFIG QUIET)
+        else ()
+            find_package(${module} ${version} CONFIG QUIET)
+        endif ()
+
+        if (${module}_FOUND)
+            message("   + " ${name} ": " ${${module}_VERSION} " [cmake]")
+            target_compile_definitions(${target} PRIVATE "MANGO_ENABLE_${name}")
+            target_link_libraries(${target} PRIVATE ${libname})
+        endif ()
+    endif ()
+endfunction ()
+
+# ------------------------------------------------------------------------------
 # required libraries
 # ------------------------------------------------------------------------------
 
 message(STATUS "Libraries:")
 
-find_package(ZLIB REQUIRED)
-if (ZLIB_FOUND)
-    message("   + ZLIB")
-    target_link_libraries(mango PRIVATE ZLIB::ZLIB)
+if (NOT DEFINED ENV{VCPKG_ROOT})
+
+    # vcpkg integration finds these libraries automatically and the find_package() fails
+
+    find_package(ZLIB REQUIRED)
+    if (ZLIB_FOUND)
+        message("   + ZLIB")
+        target_link_libraries(mango PRIVATE ZLIB::ZLIB)
+    endif ()
+
 endif ()
 
 # ------------------------------------------------------------------------------
@@ -503,44 +547,6 @@ else ()
     endif ()
 
 endif ()
-
-# ------------------------------------------------------------------------------
-# package finding
-# ------------------------------------------------------------------------------
-
-find_package(PkgConfig QUIET)
-if (PkgConfig_FOUND)
-    #message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
-endif ()
-
-function (find_module_with_pkg target name module)
-    if (PkgConfig_FOUND)
-        pkg_check_modules(${name} QUIET ${module})
-        if (${name}_FOUND)
-            message("   + " ${name} ": " ${${name}_VERSION} " [pkgconfig]")
-            target_compile_definitions(${target} PRIVATE "MANGO_ENABLE_${name}")
-            target_include_directories(${target} PRIVATE ${${name}_INCLUDE_DIRS})
-            target_link_directories(${target} PRIVATE ${${name}_LIBRARY_DIRS})
-            target_link_libraries(${target} PRIVATE ${${name}_LIBRARIES})
-        endif ()
-    endif ()
-endfunction ()
-
-function (find_module_with_cmake target name module libname version)
-    if (NOT ${name}_FOUND)
-        if (version STREQUAL "0")
-            find_package(${module} CONFIG QUIET)
-        else ()
-            find_package(${module} ${version} CONFIG QUIET)
-        endif ()
-
-        if (${module}_FOUND)
-            message("   + " ${name} ": " ${${module}_VERSION} " [cmake]")
-            target_compile_definitions(${target} PRIVATE "MANGO_ENABLE_${name}")
-            target_link_libraries(${target} PRIVATE ${libname})
-        endif ()
-    endif ()
-endfunction ()
 
 # ------------------------------------------------------------------------------
 # optional libraries
