@@ -1,3 +1,74 @@
+
+notes for README.md....
+
+# install dependencies
+
+    # Linux (ubuntu, mint)
+        sudo apt-get install
+
+        mesa-common-dev
+        libgl1-mesa-dev
+        zlib1g-dev
+
+        libjxl-dev
+        libopenjp2-7-dev
+        libwebp-dev
+        libavif-dev
+        libheif-dev
+        libisal-dev
+
+        libjpeg-dev
+        libpng-dev
+
+    # macOS
+        brew install
+
+        zlib
+
+        jpeg-xl
+        openjpeg
+        webp
+        libavif
+        libheif
+        isa-l
+
+        libjpeg-turbo
+        libpng
+
+    # Windows
+        vcpkg install
+
+        zlib
+
+        libjxl
+        openjpeg
+        libwebp
+        libavif
+        libheif
+        isal
+
+        libjpeg-turbo
+        libpng
+
+
+
+
+cmake -S . -B build -G "Ninja" -DINTEL_DELUXE=ON
+cd build
+ninja
+sudo ninja install
+
+
+
+
+
+
+
+
+
+
+old version....
+
 ------------------------------------------------------------------------------------------------
 
 MANGO! Compiling instructions.
