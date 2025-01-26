@@ -805,6 +805,14 @@ message(STATUS "Installation path: ${CMAKE_INSTALL_PREFIX}")
 # install
 # ------------------------------------------------------------------------------
 
+
+target_include_directories(mango
+    PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
+    INTERFACE
+        $<INSTALL_INTERFACE:include/mango/>
+)
+
 target_include_directories(mango-import3d
     PRIVATE
         "${PROJECT_SOURCE_DIR}/source/external/fastgltf/include"
@@ -825,7 +833,6 @@ install(TARGETS mango
     LIBRARY DESTINATION "lib"
     ARCHIVE DESTINATION "lib"
     RUNTIME DESTINATION "bin"
-    INCLUDES DESTINATION include
 )
 
 install(TARGETS mango-opengl
