@@ -14,7 +14,7 @@ file(COPY blitter/conquer.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 # ----------------------------------------------------------------------
 
 # TODO: fix Windows build
-if (UNIX)
+if (NOT WIN32)
     add_executable(png_benchmark
         png_benchmark/png_benchmark.cpp
         png_benchmark/lodepng/lodepng.cpp
@@ -22,7 +22,7 @@ if (UNIX)
         png_benchmark/fpng/fpng.cpp
         png_benchmark/fpnge/fpnge.cpp
     )
-    if ((CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)") AND (NOT WIN32))
+    if ((CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)") AND (NOT MSVC))
         # TODO: fix these options for MSVC build (these are needed by two png codecs in the test)
         target_compile_options(png_benchmark PRIVATE -mavx2 -mpclmul)
     endif ()
@@ -36,8 +36,14 @@ if (UNIX)
 
     #find_package(PNG REQUIRED)
     #target_link_libraries(png_benchmark PNG::PNG)
-    find_module_with_pkg(png_benchmark PNG libpng)
-    find_module_with_cmake(png_benchmark PNG PNG PNG::PNG 0)
+
+    #target_link_options(png_benchmark PRIVATE /NODEFAULTLIB:ALL)
+    #target_link_options(png_benchmark PRIVATE /NODEFAULTLIB:zlib1.lib)
+
+    if (NOT MSVC)
+        find_module_with_pkg(png_benchmark PNG libpng)
+        find_module_with_cmake(png_benchmark PNG PNG PNG::PNG 0)
+    endif ()
 endif ()
 
 # ----------------------------------------------------------------------
