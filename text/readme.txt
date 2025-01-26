@@ -38,6 +38,12 @@ notes for README.md....
     # Windows
         vcpkg install
 
+        VCPKG_DEFAULT_TRIPLET   x64-windows
+        VCPKG_ROOT              <vcpkg_root>
+        path: <vcpkg_root>\installed\x64-windows\bin
+              <vcpkg_root>
+
+        pkgconf
         zlib
 
         libjxl
@@ -49,7 +55,6 @@ notes for README.md....
 
         libjpeg-turbo
         libpng
-
 
 
 # Linux
