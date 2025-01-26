@@ -17,7 +17,7 @@
 #include "../../external/lz4/lz4hc.h"
 
 #define ZSTD_DISABLE_DEPRECATE_WARNINGS
-#include "../../external/zstd/zstd.h"
+#include <zstd.h>
 
 #include "../../external/bzip2/bzlib.h"
 #include "../../external/lzfse/lzfse.h"

@@ -301,20 +301,6 @@ FILE(GLOB EXTERNAL_UNRAR
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/unrar/*.cpp"
 )
 
-FILE(GLOB_RECURSE EXTERNAL_ZSTD
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zstd/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zstd/*.c"
-)
-
-if (X86_64 AND (NOT MSVC))
-    # MSVC "optimizes" object file with no symbols and then cannot find it when linking
-    # .. but the way the code checks if it is to be compiled is presence of above compilers
-    FILE(GLOB_RECURSE EXTERNAL_ZSTD_ASSEMBLY
-        "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zstd/*.S"
-    )
-    LIST(APPEND EXTERNAL_ZSTD ${EXTERNAL_ZSTD_ASSEMBLY})
-endif ()
-
 FILE(GLOB EXTERNAL_ZPNG
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zpng/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/zpng/*.cpp"
@@ -346,7 +332,6 @@ SOURCE_GROUP("external/lz4"         FILES ${EXTERNAL_LZ4})
 SOURCE_GROUP("external/lzfse"       FILES ${EXTERNAL_LZFSE})
 SOURCE_GROUP("external/lcms"        FILES ${EXTERNAL_LCMS})
 SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
-SOURCE_GROUP("external/zstd"        FILES ${EXTERNAL_ZSTD})
 SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
 SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
 SOURCE_GROUP("external/fmt"         FILES ${EXTERNAL_FMT})
@@ -380,7 +365,6 @@ add_library(mango
     ${EXTERNAL_LZFSE}
     ${EXTERNAL_LCMS}
     ${EXTERNAL_UNRAR}
-    ${EXTERNAL_ZSTD}
     ${EXTERNAL_ZPNG}
     ${EXTERNAL_BASISU}
     ${EXTERNAL_FMT}
@@ -539,6 +523,10 @@ check_required_package(ZLIB)
 find_module_with_pkg(mango LIBDEFLATE libdeflate)
 find_module_with_cmake(mango LIBDEFLATE libdeflate libdeflate::libdeflate_shared 0)
 check_required_package(LIBDEFLATE)
+
+find_module_with_pkg(mango ZSTD libzstd)
+find_module_with_cmake(mango ZSTD zstd zstd::libzstd 0)
+check_required_package(ZSTD)
 
 # ------------------------------------------------------------------------------
 # optional libraries

@@ -9,6 +9,8 @@ notes for README.md....
         mesa-common-dev
         libgl1-mesa-dev
         zlib1g-dev
+        libdeflate-dev
+        -- libzstd-dev
 
         libjxl-dev
         libopenjp2-7-dev
@@ -24,6 +26,8 @@ notes for README.md....
         brew install
 
         zlib
+        -- deflate
+        -- zstd
 
         jpeg-xl
         openjpeg
@@ -45,6 +49,8 @@ notes for README.md....
 
         pkgconf
         zlib
+        libdeflate
+        zstd
 
         libjxl
         openjpeg
