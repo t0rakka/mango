@@ -453,7 +453,7 @@ set_target_properties(mango-import3d PROPERTIES
 target_link_libraries(mango-import3d PUBLIC mango)
 
 # ------------------------------------------------------------------------------
-# package finding
+# platform libraries
 # ------------------------------------------------------------------------------
 
 find_package(PkgConfig QUIET)
@@ -461,50 +461,7 @@ if (PkgConfig_FOUND)
     message(STATUS "PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
 endif ()
 
-function (find_module_with_pkg target name module)
-    if (PkgConfig_FOUND)
-        pkg_check_modules(${name} QUIET ${module})
-        if (${name}_FOUND)
-            message("   + " ${name} ": " ${${name}_VERSION} " [pkgconfig]")
-            target_compile_definitions(${target} PRIVATE "MANGO_ENABLE_${name}")
-            target_include_directories(${target} PRIVATE ${${name}_INCLUDE_DIRS})
-            target_link_directories(${target} PRIVATE ${${name}_LIBRARY_DIRS})
-            target_link_libraries(${target} PRIVATE ${${name}_LIBRARIES})
-        endif ()
-    endif ()
-endfunction ()
-
-function (find_module_with_cmake target name module libname version)
-    if (NOT ${name}_FOUND)
-        if (version STREQUAL "0")
-            find_package(${module} CONFIG QUIET)
-        else ()
-            find_package(${module} ${version} CONFIG QUIET)
-        endif ()
-
-        if (${module}_FOUND)
-            message("   + " ${name} ": " ${${module}_VERSION} " [cmake]")
-            target_compile_definitions(${target} PRIVATE "MANGO_ENABLE_${name}")
-            target_link_libraries(${target} PRIVATE ${libname})
-        endif ()
-    endif ()
-endfunction ()
-
-# ------------------------------------------------------------------------------
-# required libraries
-# ------------------------------------------------------------------------------
-
 message(STATUS "Libraries:")
-
-find_package(ZLIB REQUIRED)
-if (ZLIB_FOUND)
-    message("   + ZLIB")
-    target_link_libraries(mango PRIVATE ZLIB::ZLIB)
-endif ()
-
-# ------------------------------------------------------------------------------
-# platform libraries
-# ------------------------------------------------------------------------------
 
 find_package(Threads)
 if (CMAKE_THREAD_LIBS_INIT)
@@ -541,6 +498,55 @@ else ()
     endif ()
 
 endif ()
+
+# ------------------------------------------------------------------------------
+# package finding
+# ------------------------------------------------------------------------------
+
+function (find_module_with_pkg Target Prefix ItemAndVersion)
+    if (PkgConfig_FOUND)
+        pkg_check_modules(${Prefix} QUIET ${ItemAndVersion})
+        if (${Prefix}_FOUND)
+            set(${Prefix}_ENABLE 1 PARENT_SCOPE)
+            message("   + " ${Prefix} ": " ${${Prefix}_VERSION} " [pkgconfig]")
+            target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
+            target_include_directories(${Target} PRIVATE ${${Prefix}_INCLUDE_DIRS})
+            target_link_directories(${Target} PRIVATE ${${Prefix}_LIBRARY_DIRS})
+            target_link_libraries(${Target} PRIVATE ${${Prefix}_LIBRARIES})
+        endif ()
+    endif ()
+endfunction ()
+
+function (find_module_with_cmake Target Prefix PackageName ItemName Version)
+    if (NOT ${Prefix}_ENABLE)
+        if (Version STREQUAL "0")
+            find_package(${PackageName} QUIET)
+        else ()
+            find_package(${PackageName} ${Version} QUIET)
+        endif ()
+
+        if (${PackageName}_FOUND)
+            set(${Prefix}_ENABLE 1 PARENT_SCOPE)
+            message("   + " ${Prefix} ": " ${${PackageName}_VERSION} " [cmake]")
+            target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
+            target_link_libraries(${Target} PRIVATE ${ItemName})
+        endif ()
+    endif ()
+endfunction ()
+
+function (check_required_package Prefix)
+    if (NOT ${Prefix}_ENABLE)
+        message(FATAL_ERROR "Failed to locate REQUIRED package: " ${Prefix})
+        endif ()
+endfunction()
+
+# ------------------------------------------------------------------------------
+# required libraries
+# ------------------------------------------------------------------------------
+
+find_module_with_pkg(mango ZLIB zlib)
+find_module_with_cmake(mango ZLIB ZLIB ZLIB::ZLIB 0)
+check_required_package(ZLIB)
 
 # ------------------------------------------------------------------------------
 # optional libraries
