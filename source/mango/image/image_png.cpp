@@ -10,14 +10,11 @@
 #include <zlib.h>
 
 #ifdef MANGO_ENABLE_ISAL
-    #include <isa-l.h>
-    /*
     #if defined(MANGO_PLATFORM_WINDOWS)
         #include <isal/igzip_lib.h>
     #else
         #include <isa-l/igzip_lib.h>
     #endif
-    */
 #endif
 
 // https://www.w3.org/TR/2003/REC-PNG-20031110/
