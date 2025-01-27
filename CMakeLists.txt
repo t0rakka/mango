@@ -288,10 +288,6 @@ FILE(GLOB EXTERNAL_LZFSE
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lzfse/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lzfse/*.c"
 )
-FILE(GLOB EXTERNAL_LCMS
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lcms/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/lcms/*.c"
-)
 FILE(GLOB EXTERNAL_UNRAR
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/unrar/*.hpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/unrar/*.cpp"
@@ -325,7 +321,6 @@ SOURCE_GROUP("external/concurrent"  FILES ${EXTERNAL_CONCURRENT_QUEUE})
 SOURCE_GROUP("external/astc"        FILES ${EXTERNAL_ASTC})
 SOURCE_GROUP("external/google"      FILES ${EXTERNAL_GOOGLE})
 SOURCE_GROUP("external/lzfse"       FILES ${EXTERNAL_LZFSE})
-SOURCE_GROUP("external/lcms"        FILES ${EXTERNAL_LCMS})
 SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
 SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
 SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
@@ -357,7 +352,6 @@ add_library(mango
     ${EXTERNAL_ASTC}
     ${EXTERNAL_GOOGLE}
     ${EXTERNAL_LZFSE}
-    ${EXTERNAL_LCMS}
     ${EXTERNAL_UNRAR}
     ${EXTERNAL_ZPNG}
     ${EXTERNAL_BASISU}
@@ -525,6 +519,10 @@ check_required_package(ZSTD)
 find_module_with_pkg(mango LZ4 liblz4)
 find_module_with_cmake(mango LZ4 lz4 lz4::lz4 0)
 check_required_package(ZSTD)
+
+find_module_with_pkg(mango LCMS2 lcms2)
+find_module_with_cmake(mango LCMS2 lcms2 lcms2::lcms2 0)
+check_required_package(LCMS2)
 
 # ------------------------------------------------------------------------------
 # optional libraries
