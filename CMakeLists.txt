@@ -533,43 +533,31 @@ check_required_package(ZSTD)
 # ------------------------------------------------------------------------------
 
 if (LIBRARY_JXL)
-    # brew: jpeg-xl
-    # vcpkg: libjxl
     find_module_with_pkg(mango JXL libjxl>=0.8.2)
     find_module_with_pkg(mango JXL_THREADS libjxl_threads>=0.7)
 endif ()
 
 if (LIBRARY_JP2)
-    # brew: openjpeg
-    # vcpkg: openjpeg
     find_module_with_pkg(mango JP2 libopenjp2>=2.4.0)
     find_module_with_cmake(mango JP2 OpenJPEG openjp2 2.4.0)
 endif ()
 
 if (LIBRARY_WEBP)
-    # brew: webp
-    # vcpkg: libwebp
     find_module_with_pkg(mango WEBP libwebp>=1.3.2)
     find_module_with_cmake(mango WEBP WebP WebP::webp 1.3.2)
 endif ()
 
 if (LIBRARY_AVIF)
-    # brew: libavif
-    # vcpkg: libavif
     find_module_with_pkg(mango AVIF libavif>=1.0.0)
     find_module_with_cmake(mango AVIF libavif avif 1.0.0)
 endif ()
 
 if (LIBRARY_HEIF)
-    # brew: libheif
-    # vcpkg: libheif
     find_module_with_pkg(mango HEIF libheif>=1.13.0)
     find_module_with_cmake(mango HEIF libheif heif 0)
 endif ()
 
 if (LIBRARY_ISAL)
-    # brew: isa-l
-    # vcpkg: isal
     find_module_with_pkg(mango ISAL libisal>=2.30.0)
     find_module_with_cmake(mango ISAL unofficial-isal unofficial::isal::isal 0)
 endif ()

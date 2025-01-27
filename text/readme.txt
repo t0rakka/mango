@@ -10,7 +10,7 @@ notes for README.md....
         libgl1-mesa-dev
         zlib1g-dev
         libdeflate-dev
-        -- libzstd-dev
+        libzstd-dev
 
         libjxl-dev
         libopenjp2-7-dev
@@ -26,8 +26,8 @@ notes for README.md....
         brew install
 
         zlib
-        -- deflate
-        -- zstd
+        libdeflate
+        zstd
 
         jpeg-xl
         openjpeg
