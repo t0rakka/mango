@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cstring>
 #include <mango/core/core.hpp>
@@ -10,11 +10,14 @@
 #include <zlib.h>
 
 #ifdef MANGO_ENABLE_ISAL
+    #include <isa-l.h>
+    /*
     #if defined(MANGO_PLATFORM_WINDOWS)
         #include <isal/igzip_lib.h>
     #else
         #include <isa-l/igzip_lib.h>
     #endif
+    */
 #endif
 
 // https://www.w3.org/TR/2003/REC-PNG-20031110/

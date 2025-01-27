@@ -556,7 +556,7 @@ if (LIBRARY_HEIF)
 endif ()
 
 if (LIBRARY_ISAL)
-    find_module_with_pkg(mango ISAL libisal>=2.30.0)
+    find_module_with_pkg(mango ISAL libisal)
     find_module_with_cmake(mango ISAL unofficial-isal unofficial::isal::isal 0)
 endif ()
 
