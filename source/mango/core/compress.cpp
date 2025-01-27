@@ -13,8 +13,8 @@
 #include <mango/core/pointer.hpp>
 #include <mango/math/math.hpp>
 
-#include "../../external/lz4/lz4.h"
-#include "../../external/lz4/lz4hc.h"
+#include <lz4.h>
+#include <lz4hc.h>
 
 #define ZSTD_DISABLE_DEPRECATE_WARNINGS
 #include <zstd.h>

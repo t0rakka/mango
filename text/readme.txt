@@ -11,6 +11,7 @@ notes for README.md....
         zlib1g-dev
         libdeflate-dev
         libzstd-dev
+        liblz4-dev
 
         libjxl-dev
         libopenjp2-7-dev
@@ -35,6 +36,7 @@ notes for README.md....
         libavif
         libheif
         isa-l
+        --lz4
 
         libjpeg-turbo
         libpng
@@ -51,6 +53,7 @@ notes for README.md....
         zlib
         libdeflate
         zstd
+        lz4
 
         libjxl
         openjpeg
