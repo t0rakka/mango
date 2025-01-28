@@ -116,9 +116,9 @@ if (BUILD_SHARED_LIBS)
     if (WIN32 OR CYGWIN)
         set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     endif ()
-    message(STATUS "Build: " ${CMAKE_BUILD_TYPE} ", Shared")
+    message(STATUS "Build: Shared, " ${CMAKE_BUILD_TYPE})
 else ()
-    message(STATUS "Build: " ${CMAKE_BUILD_TYPE} ", Static")
+    message(STATUS "Build: Static, " ${CMAKE_BUILD_TYPE})
 endif ()
 
 # ------------------------------------------------------------------------------
