@@ -29,14 +29,12 @@ There are different package managers but our examples use apt-get (Ubuntu, Mint,
 
 Building on Linux is fairly straightforward; generate build system scripts, run them, install.
 
-    cmake -S . -B build
+    cmake -S . -B build -G "Ninja"
     cd build
     ninja
     sudo ninja install
 
-You're ready to go. The default generator is "make" as cmake users are familiar, but ninja is a very good alternative. Here is example how to configure the build to use ninja and as extra bonus enable all optional Intel ISA instructions, it is just cmake option that enables other options.
-
-    cmake -S . -B build -G "Ninja" -DINTEL_DELUXE=ON
+Above uses ninja as build system, cmake users know what time it is. If you want to use the default (make) just omit the -G "Ninja" parameter. You're ready to go. 
 
 
 ## macOS
