@@ -1,10 +1,13 @@
-# mango
+# MANGO
 Library for C++ masochists. It does short vector math, SIMD, encodes and decodes images, virtual filesystem and other tricks.
 
 "We wasted our time so that you don't have to waste yours."
 
 
-### png library comparison
+## [Installation Guide](docs/setup.md)
+
+
+## PNG library comparison
 ```
 CPU: 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz
 Image: 2560 x 1600 (3531 KB)
@@ -36,7 +39,7 @@ mango:          53.7       287.0      33598
 ```
 
 
-### jpeg library comparison
+## JPEG library comparison
 
 ```
 CPU: Intel Core i9 8950HK @ 2.90GHz
@@ -65,12 +68,10 @@ mango:         3.2 ms       4.3 ms        699
 ```
 
 
-### testimonials
+## Testimonials
 
 "I'm skeptical of those benchmarks."
 -- randy408
 
 
-### discord
-
-https://discord.gg/zJmtAavY
+## [Discord](https://discord.gg/zJmtAavY)
