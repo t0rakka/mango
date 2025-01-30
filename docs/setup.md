@@ -83,7 +83,7 @@ Here are the environment variables that are needed, the x64-windows is just exam
 
 Here's the part where VCPKG_ROOT environment variable comes in handy; you don't need to manually type the path where VCPKG is installed on your system. The first cmake call generates the Visual Studio solution files into the build\ directory. Once you go into the directory you can open the mango.sln file or keep using the command line to compile and install the library.
 
-    cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" -DINTEL_DELUXE=ON
+    cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake"
     cd build
     cmake --build . --config Release
     cmake --build . --config Release --target install
@@ -92,4 +92,7 @@ If you are not sure where the MANGO was installed, you can write "cmake .." in t
 
 Windows build generator is so-called "multi generator" where there are different configurations and it is recommended you use --config parameter to choose one you want to build. It works a bit differently than UNIX builds where the selection mechanism is different.
 
-The INTEL_DELUXE option configures the build to use all available special instructions the library supports. The ISA extensions can also be configured individually, for example, 32-bit build often doesn't want everything included but cherry pick only instructions the developer wants to use.
+
+## Conan2
+
+Conan2 would make configuration super easy but unfortunately enabling this is slightly tricky; in a nut shell not all libraries we want to use are available, at least for all targets we want to support (example: ISA-L is available only for Intel architectures through Conan). The good news is that Conan2 be be integrated on top of the existing configuration as alternative mechanism for installing the dependencies.
