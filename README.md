@@ -1,4 +1,5 @@
-# MANGO
+<h1><img src="docs/mango-logo.png" alt="logo" width="120"/> MANGO</h1>
+
 Library for C++ masochists. It does short vector math, SIMD, encodes and decodes images, virtual filesystem and other tricks.
 
 "We wasted our time so that you don't have to waste yours."
