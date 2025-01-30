@@ -1,15 +1,15 @@
-
-# MANGO Installation Guide
+<h1><img src="mango-logo.png" alt="logo" width="80"/> MANGO Installation Guide</h1>
 
 
 ## Background
 
-A long time ago MANGO was self-contained source tree where all external libraries were vendored, which means the source code was included. You clone the repo and compile. This not the way anymore because it means a lot of maintenance work encumbers the developer. The external libraries will be installed by package managers and this varies between platforms, the methods we document below are not the only ones but should get you going.
+A long time ago MANGO was self-contained source tree where all external libraries were vendored, which means the source code was included. You clone the repo and compile. This is not the way anymore because it means a lot of maintenance work encumbers the developer. The external libraries will be installed by package managers and this varies between platforms, the methods we document below are not the only ones but should get you going.
 
 The external libraries are divided into three categories: REQUIRED libraries MUST be installed. OPTIONAL libraries can be disabled by the build script options and they are also disabled if the libraries cannot be found. The EXAMPLE libraries must be installed if examples are going to be compiled (image codec benchmarks specifically).
 
 
-## Linux
+<h2><img src="logo-linux.png" alt="logo" width="80"/> Linux</h2>
+
 
 There are different package managers but our examples use apt-get (Ubuntu, Mint, etc.).
 
@@ -37,7 +37,8 @@ Building on Linux is fairly straightforward; generate build system scripts, run 
 Above uses ninja as build system, cmake users know what time it is. If you want to use the default (make) just omit the -G "Ninja" parameter. You're ready to go. 
 
 
-## macOS
+<h2><img src="logo-apple.png" alt="logo" width="80"/> macOS</h2>
+
 
 ### REQUIRED Libraries
 
@@ -56,7 +57,8 @@ Above uses ninja as build system, cmake users know what time it is. If you want 
 On macOS the building is exactly same as it is on Linux.
 
 
-## Windows
+<h2><img src="logo-windows.png" alt="logo" width="80"/> Windows</h2>
+
 
 Windows is different and long story short the vcpkg is the supported method to get the libraries. If you are new to vcpkg just install it using Microsoft's official installation instructions. It is recommended that VCPKG_DEFAULT_TRIPLET environment variable is set, while not necessary this way you avoid having to type it all the time everywhere.
 
@@ -95,4 +97,4 @@ Windows build generator is so-called "multi generator" where there are different
 
 ## Conan2
 
-Conan2 would make configuration super easy but unfortunately enabling this is slightly tricky; in a nut shell not all libraries we want to use are available, at least for all targets we want to support (example: ISA-L is available only for Intel architectures through Conan). The good news is that Conan2 be be integrated on top of the existing configuration as alternative mechanism for installing the dependencies.
+Conan2 would make configuration super easy but unfortunately enabling this is slightly tricky; in a nut shell not all libraries we want to use are available, at least for all targets we want to support (example: ISA-L is available only for Intel architectures through Conan). The good news is that Conan2 can be integrated on top of the existing configuration as alternative mechanism for installing the dependencies.

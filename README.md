@@ -1,4 +1,4 @@
-<h1><img src="docs/mango-logo.png" alt="logo" width="120"/> MANGO</h1>
+<h1><img src="docs/mango-logo.png" alt="logo" width="80"/> MANGO C++ Developer's Framework</h1>
 
 Library for C++ masochists. It does short vector math, SIMD, encodes and decodes images, virtual filesystem and other tricks.
 
