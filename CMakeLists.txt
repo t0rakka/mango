@@ -504,22 +504,6 @@ endfunction()
 # required libraries
 # ------------------------------------------------------------------------------
 
-#
-# These libraries are vendored in our source tree
-#
-# lzma:   ppmd8 isn't included and pulls a lot of 7z sourcecode in that is shared with lzma
-# aes:    not packaged, there are alternatives -> re-implement
-# astc:   not packaged
-# unrar:  not packaged
-# zpng:   not packaged
-# basisu: not available in apt-get
-# bc:     modified
-# bzip2:  not available through all channels
-# lzfse:  not available through all channels
-# google: modifications, very small footprint
-# fmt:    header-only, hassle to export the headers just keep them in our tree
-# concurrent: header-only, keep using
-
 find_module_with_pkg(mango ZLIB zlib)
 find_module_with_cmake(mango ZLIB ZLIB ZLIB::ZLIB 0)
 check_required_package(ZLIB)

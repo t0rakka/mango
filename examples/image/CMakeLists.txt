@@ -54,8 +54,12 @@ add_executable(jpeg_benchmark
 )
 
 if (MSVC)
-    target_compile_options(jpeg_benchmark PRIVATE "/arch:AVX2")
-endif ()
 
-find_module_with_pkg(jpeg_benchmark jpeg libjpeg)
-find_module_with_cmake(jpeg_benchmark jpeg jpeg jpeg 0)
+    target_compile_options(jpeg_benchmark PRIVATE "/arch:AVX2")
+
+else ()
+
+    find_module_with_pkg(jpeg_benchmark jpeg libjpeg)
+    find_module_with_cmake(jpeg_benchmark jpeg jpeg jpeg 0)
+
+endif ()
