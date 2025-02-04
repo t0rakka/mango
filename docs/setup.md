@@ -93,8 +93,3 @@ Here's the part where VCPKG_ROOT environment variable comes in handy; you don't 
 If you are not sure where the MANGO was installed, you can write "cmake .." in the build directory and the target directory will be printed into the console.
 
 Windows build generator is so-called "multi generator" where there are different configurations and it is recommended you use --config parameter to choose one you want to build. It works a bit differently than UNIX builds where the selection mechanism is different.
-
-
-## Conan2
-
-Conan2 would make configuration super easy but unfortunately enabling this is slightly tricky; in a nut shell not all libraries we want to use are available, at least for all targets we want to support (example: ISA-L is available only for Intel architectures through Conan). The good news is that Conan2 can be integrated on top of the existing configuration as alternative mechanism for installing the dependencies.
