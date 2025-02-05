@@ -96,7 +96,7 @@ Windows build generator is so-called "multi generator" where there are different
 
 ### WSL
 
-If you are compiling on Windows on WSL there is an issue with cmake find_package() not working correctly when VCPKG packages are installed. This is because the WSL adds windows PATH to it's path on startup. This can be mitigated by adding the following lines into /etc/wsl.conf file:
+If you are compiling on Windows WSL there is an issue with cmake find_package() not working correctly when VCPKG packages are installed. This is because the WSL adds windows PATH to it's path on startup. This can be mitigated by adding the following lines into /etc/wsl.conf file:
 
     [interop]
     appendWindowsPath = false
