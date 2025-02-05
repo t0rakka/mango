@@ -3,7 +3,7 @@
 
 ## Background
 
-A long time ago MANGO was self-contained source tree where all external libraries were vendored, which means the source code was included. You clone the repo and compile. This is not the way anymore because it means a lot of maintenance work encumbers the developer. The external libraries will be installed by package managers and this varies between platforms, the methods we document below are not the only ones but should get you going.
+A long time ago MANGO was self-contained source tree where all external libraries were included for maximum comfort. You clone the repo and compile. This is not the way anymore because it means a lot of maintenance work encumbers the developer. The external libraries will be installed by package managers and this varies between platforms, the methods we document below are not the only ones but should get you going.
 
 The external libraries are divided into three categories: REQUIRED libraries MUST be installed. OPTIONAL libraries can be disabled by the build script options and they are also disabled if the libraries cannot be found. The EXAMPLE libraries must be installed if examples are going to be compiled (image codec benchmarks specifically).
 
@@ -93,3 +93,12 @@ Here's the part where VCPKG_ROOT environment variable comes in handy; you don't 
 If you are not sure where the MANGO was installed, you can write "cmake .." in the build directory and the target directory will be printed into the console.
 
 Windows build generator is so-called "multi generator" where there are different configurations and it is recommended you use --config parameter to choose one you want to build. It works a bit differently than UNIX builds where the selection mechanism is different.
+
+### WSL
+
+If you are compiling on Windows on WSL there is an issue with cmake find_package() not working correctly when VCPKG packages are installed. This is because the WSL adds windows PATH to it's path on startup. This can be mitigated by adding the following lines into /etc/wsl.conf file:
+
+    [interop]
+    appendWindowsPath = false
+
+Don't forget to restart the WSL; "wsl --shutdown" for the setting to take effect.
