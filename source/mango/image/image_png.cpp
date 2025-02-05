@@ -10,6 +10,7 @@
 #include <zlib.h>
 
 #ifdef MANGO_ENABLE_ISAL
+    // WHy you have to be like that.. on Windows we assume VCPKG packaging for others BREW/APT
     #if defined(MANGO_PLATFORM_WINDOWS)
         #include <isal/igzip_lib.h>
     #else
@@ -3779,14 +3780,15 @@ namespace
     static
     void write_PLTE(Stream& stream, const Palette& palette)
     {
-        MemoryStream buffer;
-        BigEndianStream s(buffer);
+        constexpr size_t count = 256;
 
-        for (int i = 0; i < 256; ++i)
+        Buffer buffer(count * 3);
+
+        for (size_t i = 0; i < count; ++i)
         {
-            s.write8(palette[i].r);
-            s.write8(palette[i].g);
-            s.write8(palette[i].b);
+            buffer[i * 3 + 0] = palette[i].r;
+            buffer[i * 3 + 1] = palette[i].g;
+            buffer[i * 3 + 2] = palette[i].b;
         }
 
         write_chunk(stream, u32_mask_rev('P', 'L', 'T', 'E'), buffer);
