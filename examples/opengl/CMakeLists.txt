@@ -16,7 +16,6 @@ endif ()
 
 foreach(example IN LISTS EXAMPLES)
     add_executable(${example} ${example}.cpp)
-    target_link_libraries(${example} PRIVATE mango-opengl)
 
     if (APPLE)
         target_link_libraries(${example} PRIVATE "-framework OpenGL -framework Cocoa")
@@ -25,6 +24,7 @@ foreach(example IN LISTS EXAMPLES)
     elseif (WIN32)
         target_link_libraries(${example} PRIVATE opengl32)
     endif ()
+
 endforeach()
 
 file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
