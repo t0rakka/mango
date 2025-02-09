@@ -1,17 +1,9 @@
 cmake_minimum_required(VERSION 3.14)
 cmake_policy(SET CMP0091 NEW)
 project(mango
-        VERSION 1.6.0
+        VERSION 1.7.0
         DESCRIPTION "A multi-platform development framework for graphics programmers"
         LANGUAGES CXX C ASM)
-
-# ------------------------------------------------------------------------------
-# version
-# ------------------------------------------------------------------------------
-
-set(MANGO_CORE_VERSION ${PROJECT_VERSION})
-set(MANGO_OPENGL_VERSION 0.8.3)
-set(MANGO_IMPORT3D_VERSION 0.1.4)
 
 # ------------------------------------------------------------------------------
 # compiler
@@ -54,6 +46,9 @@ endif ()
 # ------------------------------------------------------------------------------
 
 OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    ON)
+
+OPTION(BUILD_OPENGL         "Build OpenGL library"                      ON)
+OPTION(BUILD_IMPORT3D       "Build Import3D library"                    ON)
 
 OPTION(LIBRARY_JXL          "Enable jpeg-xl image codec support"        ON)
 OPTION(LIBRARY_JP2          "Enable jpeg2000 image codec support"       ON)
@@ -125,97 +120,104 @@ endif ()
 # source directories
 # ------------------------------------------------------------------------------
 
-if (WIN32 OR CYGWIN)
+if (NOT EMSCRIPTEN)
 
     FILE(GLOB WINDOW_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/window/*.hpp"
     )
+
+    FILE(GLOB WINDOW_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/window/cocoa/*.mm"
+    )
+
+endif ()
+
+if (BUILD_OPENGL)
+
     FILE(GLOB OPENGL_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/opengl/*.hpp"
     )
+
+    if (WIN32 OR CYGWIN)
+
+        FILE(GLOB OPENGL_SOURCES
+            "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/*.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/wgl/*.cpp"
+        )
+
+    elseif (APPLE)
+
+        FILE(GLOB OPENGL_SOURCES
+            "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/*.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/cocoa/*.mm"
+        )
+
+    elseif (EMSCRIPTEN)
+
+        FILE(GLOB OPENGL_SOURCES
+            "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/*.cpp"
+        )
+
+    else ()
+
+        FILE(GLOB OPENGL_SOURCES
+            "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/*.cpp"
+            "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/glx/*.cpp"
+        )
+
+    endif ()
+
+    SOURCE_GROUP("include/opengl"       FILES ${OPENGL_HEADERS})
+    SOURCE_GROUP("source/opengl"        FILES ${OPENGL_SOURCES})
+
+endif ()
+
+if (WIN32 OR CYGWIN)
 
     FILE(GLOB CORE_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/win32/*.cpp"
     )
+
     FILE(GLOB FILESYSTEM_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/win32/*.cpp"
     )
-    FILE(GLOB WINDOW_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/window/win32/*.cpp"
-    )
-    FILE(GLOB OPENGL_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/wgl/*.cpp"
-    )
 
 elseif (APPLE)
-
-    FILE(GLOB WINDOW_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/window/*.hpp"
-    )
-    FILE(GLOB OPENGL_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/opengl/*.hpp"
-    )
 
     FILE(GLOB CORE_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/unix/*.cpp"
     )
+
     FILE(GLOB FILESYSTEM_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/unix/*.cpp"
-    )
-    FILE(GLOB WINDOW_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/window/cocoa/*.mm"
-    )
-    FILE(GLOB OPENGL_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/cocoa/*.mm"
     )
 
 elseif (EMSCRIPTEN)
 
-    FILE(GLOB OPENGL_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/opengl/*.hpp"
-    )
-
     FILE(GLOB CORE_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/unix/*.cpp"
     )
+
     FILE(GLOB FILESYSTEM_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/unix/*.cpp"
-    )
-    FILE(GLOB OPENGL_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/*.cpp"
     )
 
 else ()
 
-    FILE(GLOB WINDOW_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/window/*.hpp"
-    )
-    FILE(GLOB OPENGL_HEADERS
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/mango/opengl/*.hpp"
-    )
-
     FILE(GLOB CORE_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/core/unix/*.cpp"
     )
+
     FILE(GLOB FILESYSTEM_SOURCES
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/filesystem/unix/*.cpp"
-    )
-    FILE(GLOB WINDOW_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/window/xlib/*.cpp"
-    )
-    FILE(GLOB OPENGL_SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/source/mango/opengl/glx/*.cpp"
     )
 
 endif ()
@@ -243,7 +245,6 @@ SOURCE_GROUP("include/jpeg"         FILES ${JPEG_HEADERS})
 SOURCE_GROUP("include/math"         FILES ${MATH_HEADERS})
 SOURCE_GROUP("include/simd"         FILES ${SIMD_HEADERS})
 SOURCE_GROUP("include/window"       FILES ${WINDOW_HEADERS})
-SOURCE_GROUP("include/opengl"       FILES ${OPENGL_HEADERS})
 SOURCE_GROUP("include/import3d"     FILES ${IMPORT3D_HEADERS})
 
 SOURCE_GROUP("source/core"          FILES ${CORE_SOURCES})
@@ -253,7 +254,6 @@ SOURCE_GROUP("source/jpeg"          FILES ${JPEG_SOURCES})
 SOURCE_GROUP("source/math"          FILES ${MATH_SOURCES})
 SOURCE_GROUP("source/simd"          FILES ${SIMD_SOURCES})
 SOURCE_GROUP("source/window"        FILES ${WINDOW_SOURCES})
-SOURCE_GROUP("source/opengl"        FILES ${OPENGL_SOURCES})
 SOURCE_GROUP("source/import3d"      FILES ${IMPORT3D_SOURCES})
 
 FILE(GLOB EXTERNAL_LZMA
@@ -330,19 +330,12 @@ SOURCE_GROUP("external/fmt"         FILES ${EXTERNAL_FMT})
 # library: mango
 # ------------------------------------------------------------------------------
 
-add_library(mango
-    ${MAIN_HEADER}
-    ${CORE_HEADERS}
+set(MANGO_SOURCES
     ${CORE_SOURCES}
-    ${FILESYSTEM_HEADERS}
     ${FILESYSTEM_SOURCES}
-    ${IMAGE_HEADERS}
     ${IMAGE_SOURCES}
-    ${JPEG_HEADERS}
     ${JPEG_SOURCES}
-    ${MATH_HEADERS}
     ${MATH_SOURCES}
-    ${SIMD_HEADERS}
     ${SIMD_SOURCES}
     ${EXTERNAL_LZMA}
     ${EXTERNAL_AES}
@@ -358,59 +351,36 @@ add_library(mango
     ${EXTERNAL_FMT}
 )
 
+if (BUILD_OPENGL)
+    list(APPEND MANGO_SOURCES
+        ${WINDOW_SOURCES}
+        ${OPENGL_SOURCES}
+    )
+endif ()
+
+if (BUILD_IMPORT3D)
+    list(APPEND MANGO_SOURCES
+        ${IMPORT3D_SOURCES}
+        ${EXTERNAL_IMPORT3D}
+    )
+endif ()
+
+add_library(mango ${MANGO_SOURCES})
+
 set_target_properties(mango PROPERTIES
-    VERSION ${MANGO_CORE_VERSION}
-    SOVERSION ${MANGO_CORE_VERSION}
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION}
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
 )
-
-# ------------------------------------------------------------------------------
-# library: mango-opengl
-# ------------------------------------------------------------------------------
-
-add_library(mango-opengl
-    ${WINDOW_SOURCES}
-    ${OPENGL_SOURCES}
-    ${OPENGL_HEADERS}
-)
-
-set_target_properties(mango-opengl PROPERTIES
-    VERSION ${MANGO_OPENGL_VERSION}
-    SOVERSION ${MANGO_OPENGL_VERSION}
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON
-)
-
-target_link_libraries(mango-opengl PUBLIC mango)
 
 if (APPLE)
-    if (BUILD_SHARED_LIBS)
-        target_link_libraries(mango-opengl PUBLIC "-framework Cocoa" "-framework OpenGL")
+    if (BUILD_OPENGL AND BUILD_SHARED_LIBS)
+        target_link_libraries(mango PUBLIC "-framework Cocoa" "-framework OpenGL")
     endif ()
 
     target_compile_options(mango PUBLIC "-mmacosx-version-min=10.15")
-    target_compile_options(mango-opengl PUBLIC "-mmacosx-version-min=10.15")
 endif ()
-
-# ------------------------------------------------------------------------------
-# library: mango-import3d
-# ------------------------------------------------------------------------------
-
-add_library(mango-import3d
-    ${IMPORT3D_HEADERS}
-    ${IMPORT3D_SOURCES}
-    ${EXTERNAL_IMPORT3D}
-)
-
-set_target_properties(mango-import3d PROPERTIES
-    VERSION ${MANGO_IMPORT3D_VERSION}
-    SOVERSION ${MANGO_IMPORT3D_VERSION}
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON
-)
-
-target_link_libraries(mango-import3d PUBLIC mango)
 
 # ------------------------------------------------------------------------------
 # platform libraries
@@ -429,32 +399,36 @@ if (CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
 
-if (WIN32)
+if (BUILD_OPENG)
 
-    set(OpenGL_GL_PREFERENCE LEGACY)
-    find_package(OpenGL REQUIRED)
+    if (WIN32)
 
-    if (OPENGL_FOUND)
-        message("   + OpenGL")
-        target_link_libraries(mango-opengl PUBLIC ${OPENGL_gl_LIBRARY})
-    endif ()
+        set(OpenGL_GL_PREFERENCE LEGACY)
+        find_package(OpenGL REQUIRED)
 
-else ()
-
-    set(OpenGL_GL_PREFERENCE GLVND)
-    find_package(OpenGL)
-
-    if (OPENGL_FOUND)
-        message("   + OpenGL")
-        target_link_libraries(mango-opengl PUBLIC ${OPENGL_gl_LIBRARY})
-
-        if (APPLE)
-            target_link_libraries(mango-opengl PUBLIC "-framework Cocoa")
-        else ()
-            message("   + XLIB")
-            target_compile_definitions(mango-opengl PUBLIC "MANGO_ENABLE_XLIB")
-            target_link_libraries(mango-opengl PUBLIC ${OPENGL_glx_LIBRARY})
+        if (OPENGL_FOUND)
+            message("   + OpenGL")
+            target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
         endif ()
+
+    else ()
+
+        set(OpenGL_GL_PREFERENCE GLVND)
+        find_package(OpenGL)
+
+        if (OPENGL_FOUND)
+            message("   + OpenGL")
+            target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
+
+            if (APPLE)
+                target_link_libraries(mango PUBLIC "-framework Cocoa")
+            else ()
+                message("   + XLIB")
+                target_compile_definitions(mango PUBLIC "MANGO_ENABLE_XLIB")
+                target_link_libraries(mango PUBLIC ${OPENGL_glx_LIBRARY})
+            endif ()
+        endif ()
+
     endif ()
 
 endif ()
@@ -750,6 +724,9 @@ else ()
     endif ()
 endif ()
 
+message(STATUS "OPENGL: " ${BUILD_OPENGL})
+message(STATUS "IMPORT3D: " ${BUILD_IMPORT3D})
+
 # ------------------------------------------------------------------------------
 # install target
 # ------------------------------------------------------------------------------
@@ -782,7 +759,7 @@ target_include_directories(mango
         $<INSTALL_INTERFACE:include/mango/>
 )
 
-target_include_directories(mango-import3d
+target_include_directories(mango
     PRIVATE
         "${PROJECT_SOURCE_DIR}/source/external/fastgltf/include"
         "${PROJECT_SOURCE_DIR}/source/external/simdjson"
@@ -804,31 +781,7 @@ install(TARGETS mango
     RUNTIME DESTINATION "bin"
 )
 
-install(TARGETS mango-opengl
-    EXPORT "mango-opengl-config"
-    LIBRARY DESTINATION "lib"
-    ARCHIVE DESTINATION "lib"
-    RUNTIME DESTINATION "bin"
-)
-
-install(TARGETS mango-import3d
-    EXPORT "mango-import3d-config"
-    LIBRARY DESTINATION "lib"
-    ARCHIVE DESTINATION "lib"
-    RUNTIME DESTINATION "bin"
-)
-
 install(
     EXPORT "mango-config"
     DESTINATION "lib/cmake/mango"
-)
-
-install(
-    EXPORT "mango-opengl-config"
-    DESTINATION "lib/cmake/mango-opengl"
-)
-
-install(
-    EXPORT "mango-import3d-config"
-    DESTINATION "lib/cmake/mango-import3d"
 )
