@@ -232,8 +232,8 @@ namespace mango::math
         void extend(const float32x3& point);
         void extend(const Box& box);
         bool inside(const float32x3& point) const;
-        float32x3 vertex(int index) const;
-        void vertices(float32x3 vertex[]) const;
+        float32x3 vertex(size_t index) const;
+        void vertices(float32x3 vertex[8]) const;
     };
 
     // ------------------------------------------------------------------

@@ -135,7 +135,7 @@ namespace mango::math
                corner[0].z <= point.z && corner[1].z > point.z;
     }
 
-    float32x3 Box::vertex(int index) const
+    float32x3 Box::vertex(size_t index) const
     {
         assert(index >= 0 && index < 8);
         float x = corner[(index >> 0) & 1].x;
@@ -144,7 +144,7 @@ namespace mango::math
         return float32x3(x, y, z);
     }
 
-    void Box::vertices(float32x3 vertex[]) const
+    void Box::vertices(float32x3 vertex[8]) const
     {
         vertex[0] = float32x3(corner[0].x, corner[0].y, corner[0].z);
         vertex[1] = float32x3(corner[1].x, corner[0].y, corner[0].z);
