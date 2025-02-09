@@ -151,12 +151,12 @@ namespace mango::math
             return Vector<float, 4>(x, y, z, w);
         }
 
-        float operator [] (int index) const
+        float operator [] (size_t index) const
         {
             return data[index];
         }
 
-        float& operator [] (int index)
+        float& operator [] (size_t index)
         {
             return data[index];
         }
