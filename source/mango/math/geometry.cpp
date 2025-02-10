@@ -582,7 +582,7 @@ namespace mango::math
         return true;
     }
 
-    bool intersect(float32x3&& result, const Plane& plane0, const Plane& plane1, const Plane& plane2)
+    bool intersect(float32x3& result, const Plane& plane0, const Plane& plane1, const Plane& plane2)
     {
         // Determinant
         float32x3 cp01 = cross(plane0.normal, plane1.normal);
