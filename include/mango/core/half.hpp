@@ -178,34 +178,26 @@ namespace mango
         template <u32 Sign, u32 Exponent, u32 Mantissa>
         static float unpack(u32 sign, u32 exponent, u32 mantissa)
         {
-            Float result;
-
             if (!exponent)
             {
                 // Zero / Denormal
                 const Float magic(0, BIAS - 1, 0);
-                result.u = magic.u + mantissa;
-                result.f -= magic.f;
+                const Float temp(magic.u + mantissa);
+                return temp.f - magic.f;
+            }
+
+            if (exponent == (1 << Exponent) - 1)
+            {
+                // Inf / NaN
+                exponent = (1 << EXPONENT) - 1;
             }
             else
             {
-                result.mantissa = mantissa << (MANTISSA - Mantissa);
-
-                if (exponent == (1 << Exponent) - 1)
-                {
-                    // Inf / NaN
-                    result.exponent = (1 << EXPONENT) - 1;
-                }
-                else
-                {
-                    const int bias = (1 << (Exponent - 1)) - 1;
-                    result.exponent = BIAS - bias + exponent;
-                }
+                const int bias = (1 << (Exponent - 1)) - 1;
+                exponent = BIAS - bias + exponent;
             }
 
-            result.sign = sign & SIGN;
-
-            return result;
+            return Float(sign & SIGN, exponent, mantissa << (MANTISSA - Mantissa));
         }
     };
 

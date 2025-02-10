@@ -169,12 +169,10 @@ namespace mango::math
     static inline
     Matrix3x3 operator * (const Matrix3x3& a, const Matrix3x3& b)
     {
-        Matrix3x3 result;
-        result[0] = a[0] * b;
-        result[1] = a[1] * b;
-        result[2] = a[2] * b;
-        result[3] = a[3] * b;
-        return result;
+        return Matrix3x3(
+            a[0] * b,
+            a[1] * b,
+            a[2] * b);
     }
 
     // ------------------------------------------------------------------
