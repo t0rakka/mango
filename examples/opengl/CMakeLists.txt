@@ -9,9 +9,8 @@ list(APPEND EXAMPLES
 )
 
 if (NOT APPLE)
-    list(APPEND EXAMPLES
-        compute
-    )
+    # OpenGL on macOS is 4.1 and does not support computer shaders
+    list(APPEND EXAMPLES compute)
 endif ()
 
 foreach(example IN LISTS EXAMPLES)
