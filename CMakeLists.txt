@@ -433,7 +433,7 @@ if (CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
 
-if (BUILD_OPENG)
+if (BUILD_OPENGL)
 
     if (WIN32)
 
@@ -452,14 +452,14 @@ if (BUILD_OPENG)
 
         if (OPENGL_FOUND)
             message("   + OpenGL")
-            target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
+            target_link_libraries(mango PUBLIC GL ${OPENGL_gl_LIBRARY})
 
             if (APPLE)
-                target_link_libraries(mango PUBLIC "-framework Cocoa")
+                target_link_libraries(mango PUBLIC "-framework Cocoa -framework OpenGL")
             else ()
                 message("   + XLIB")
                 target_compile_definitions(mango PUBLIC "MANGO_ENABLE_XLIB")
-                target_link_libraries(mango PUBLIC ${OPENGL_glx_LIBRARY})
+                target_link_libraries(mango PUBLIC X11 ${OPENGL_glx_LIBRARY})
             endif ()
         endif ()
 
