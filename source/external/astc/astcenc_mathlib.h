@@ -56,7 +56,7 @@
 #endif
 
 #ifndef ASTCENC_AVX
-  #if defined(__AVX2__)
+  #if defined(__AVX2__) || defined(__AVX512F__) // MANGO FIX: This allows AVX512 to compile
     #define ASTCENC_AVX 2
     #define ASTCENC_X86_GATHERS 1
   #elif defined(__AVX__)
