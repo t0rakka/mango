@@ -452,15 +452,14 @@ if (BUILD_OPENGL)
 
         if (OPENGL_FOUND)
             message("   + OpenGL")
-            target_link_libraries(mango PUBLIC GL ${OPENGL_gl_LIBRARY})
-
             if (APPLE)
                 target_link_libraries(mango PUBLIC "-framework Cocoa -framework OpenGL")
             else ()
                 message("   + XLIB")
                 target_compile_definitions(mango PUBLIC "MANGO_ENABLE_XLIB")
-                target_link_libraries(mango PUBLIC X11 ${OPENGL_glx_LIBRARY})
-            endif ()
+                target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY} ${OPENGL_glx_LIBRARY})
+                #target_link_libraries(mango PUBLIC X11 GL ${OPENGL_gl_LIBRARY} ${OPENGL_glx_LIBRARY})
+                endif ()
         endif ()
 
     endif ()
