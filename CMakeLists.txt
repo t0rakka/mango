@@ -391,7 +391,7 @@ if (BUILD_IMPORT3D)
     )
 endif ()
 
-add_library(mango ${MANGO_SOURCES})
+add_library(mango SHARED ${MANGO_SOURCES})
 
 set_target_properties(mango PROPERTIES
     VERSION ${PROJECT_VERSION}
