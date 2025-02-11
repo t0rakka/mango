@@ -102,7 +102,7 @@ The INTEL_DELUXE option uses all the latest ISA extensions except AVX-512. It do
 
 The examples won't either find the mango.dll, or use a previously installed one unless the install build command is executed before the examples. Windows aims to please by being different; just get used to it.
 
-### WSL
+#### WSL
 
 If you are compiling on Windows WSL there is an issue with cmake find_package() not working correctly when VCPKG packages are installed. This is because the WSL adds windows PATH to it's path on startup. This can be mitigated by adding the following lines into /etc/wsl.conf file:
 
