@@ -46,8 +46,6 @@ endif ()
 # options
 # ------------------------------------------------------------------------------
 
-OPTION(BUILD_SHARED_LIBS    "Build as shared library (so/dll/dylib)"    ON)
-
 OPTION(BUILD_OPENGL         "Build OpenGL library"                      ON)
 OPTION(BUILD_IMPORT3D       "Build Import3D library"                    ON)
 OPTION(BUILD_EXAMPLES       "Build examples"                            ON)
@@ -105,18 +103,10 @@ if (NOT CMAKE_BUILD_TYPE)
 endif ()
 
 if (WIN32 OR CYGWIN)
-    # disable shared library build on windows
-    set(BUILD_SHARED_LIBS OFF)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif ()
 
-if (BUILD_SHARED_LIBS)
-    if (WIN32 OR CYGWIN)
-        set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-    endif ()
-    message("Build: Shared, " ${CMAKE_BUILD_TYPE})
-else ()
-    message("Build: Static, " ${CMAKE_BUILD_TYPE})
-endif ()
+message("Build: " ${CMAKE_BUILD_TYPE})
 
 # ------------------------------------------------------------------------------
 # sources: mango
@@ -411,7 +401,7 @@ set_target_properties(mango PROPERTIES
 )
 
 if (APPLE)
-    if (BUILD_OPENGL AND BUILD_SHARED_LIBS)
+    if (BUILD_OPENGL)
         target_link_libraries(mango PUBLIC "-framework Cocoa" "-framework OpenGL")
     endif ()
 
@@ -445,13 +435,13 @@ if (BUILD_OPENGL)
     if (OPENGL_FOUND)
         message("  + OpenGL")
         if (APPLE)
-            target_link_libraries(mango PUBLIC "-framework Cocoa -framework OpenGL")
+            target_link_libraries(mango PRIVATE "-framework Cocoa -framework OpenGL")
         elseif (WIN32)
-            target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
+            target_link_libraries(mango PRIVATE ${OPENGL_gl_LIBRARY})
         else ()
             message("  + XLIB")
-            target_compile_definitions(mango PUBLIC "MANGO_ENABLE_XLIB")
-            target_link_libraries(mango PUBLIC X11 GL ${OPENGL_glx_LIBRARY})
+            target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
+            target_link_libraries(mango PRIVATE X11 GL ${OPENGL_glx_LIBRARY})
             endif ()
     endif ()
 
@@ -560,9 +550,7 @@ endif ()
 # configuration
 # ------------------------------------------------------------------------------
 
-if (BUILD_SHARED_LIBS)
-    target_compile_definitions(mango PUBLIC "MANGO_API_EXPORT")
-endif ()
+target_compile_definitions(mango PRIVATE "MANGO_API_EXPORT")
 
 if (EMSCRIPTEN)
 

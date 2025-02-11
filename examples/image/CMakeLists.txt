@@ -41,13 +41,13 @@ else ()
         target_compile_options(png_benchmark PRIVATE -mavx2 -mpclmul)
     endif ()
 
-    find_module_with_pkg(png_benchmark ZLIB zlib)
-    find_module_with_cmake(png_benchmark ZLIB ZLIB ZLIB::ZLIB 0)
-
-    find_module_with_pkg(png_benchmark PNG libpng)
-    find_module_with_cmake(png_benchmark PNG PNG PNG::PNG 0)
-
 endif ()
+
+find_module_with_pkg(png_benchmark ZLIB zlib)
+find_module_with_cmake(png_benchmark ZLIB ZLIB ZLIB::ZLIB 0)
+
+find_module_with_pkg(png_benchmark PNG libpng)
+find_module_with_cmake(png_benchmark PNG PNG PNG::PNG 0)
 
 target_compile_definitions(png_benchmark PRIVATE "SPNG_STATIC")
 
@@ -68,9 +68,7 @@ if (MSVC)
 
     target_compile_options(jpeg_benchmark PRIVATE "/arch:AVX2")
 
-else ()
-
-    find_module_with_pkg(jpeg_benchmark jpeg libjpeg)
-    find_module_with_cmake(jpeg_benchmark jpeg jpeg jpeg 0)
-
 endif ()
+
+find_module_with_pkg(jpeg_benchmark jpeg libjpeg)
+find_module_with_cmake(jpeg_benchmark jpeg jpeg jpeg 0)
