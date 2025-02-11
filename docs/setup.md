@@ -85,14 +85,22 @@ Here are the environment variables that are needed, the x64-windows is just exam
 
 Here's the part where VCPKG_ROOT environment variable comes in handy; you don't need to manually type the path where VCPKG is installed on your system. The first cmake call generates the Visual Studio solution files into the build\ directory. Once you go into the directory you can open the mango.sln file or keep using the command line to compile and install the library.
 
-    cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake"
+    cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" -DINTEL_DELUXE=ON
     cd build
-    cmake --build . --config Release
+    cmake --build . --config Release --parallel
     cmake --install .
 
 If you are not sure where the MANGO was installed, you can write "cmake .." in the build directory and the target directory will be printed into the console.
 
 Windows build generator is so-called "multi generator" where there are different configurations and it is recommended you use --config parameter to choose one you want to build. It works a bit differently than UNIX builds where the selection mechanism is different.
+
+#### INTEL_DELUXE
+
+The INTEL_DELUXE option uses all the latest ISA extensions except AVX-512. It does no harm giving it on ARM or other platform build, but does break backward compatiblity with older processors as it might use instructions in generated code that the CPU cannot support.
+
+#### Examples
+
+The examples won't either find the mango.dll, or use a previously installed one unless the install build command is executed before the examples. Windows aims to please by being different; just get used to it.
 
 ### WSL
 
