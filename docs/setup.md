@@ -88,7 +88,7 @@ Here's the part where VCPKG_ROOT environment variable comes in handy; you don't 
     cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake"
     cd build
     cmake --build . --config Release
-    cmake --build . --config Release --target install
+    cmake --install .
 
 If you are not sure where the MANGO was installed, you can write "cmake .." in the build directory and the target directory will be printed into the console.
 
