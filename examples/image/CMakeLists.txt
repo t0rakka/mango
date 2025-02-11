@@ -6,6 +6,13 @@ add_executable(blitter blitter/blitter.cpp)
 add_executable(palette palette.cpp)
 add_executable(async_decode async_decode.cpp)
 
+set_target_properties(webp_test PROPERTIES FOLDER "examples/image")
+set_target_properties(bulk_decode PROPERTIES FOLDER "examples/image")
+set_target_properties(icc_p3_test PROPERTIES FOLDER "examples/image")
+set_target_properties(blitter PROPERTIES FOLDER "examples/image")
+set_target_properties(palette PROPERTIES FOLDER "examples/image")
+set_target_properties(async_decode PROPERTIES FOLDER "examples/image")
+
 file(COPY icc/DisplayP3-v2-micro.icc DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY blitter/conquer.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -20,6 +27,8 @@ add_executable(png_benchmark
     png_benchmark/fpng/fpng.cpp
     png_benchmark/fpnge/fpnge.cpp
 )
+
+set_target_properties(png_benchmark PROPERTIES FOLDER "examples/image")
 
 if (MSVC)
 
@@ -52,6 +61,8 @@ add_executable(jpeg_benchmark
     jpeg_benchmark/jpeg-compressor/jpge.cpp
     jpeg_benchmark/toojpeg/toojpeg.cpp
 )
+
+set_target_properties(jpeg_benchmark PROPERTIES FOLDER "examples/image")
 
 if (MSVC)
 

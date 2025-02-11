@@ -15,6 +15,8 @@ endif ()
 
 foreach(example IN LISTS EXAMPLES)
     add_executable(${example} ${example}.cpp)
+    set_target_properties(${example} PROPERTIES FOLDER "examples/opengl")
+    source_group("" FILES ${example}.cpp)
 
     if (APPLE)
         target_link_libraries(${example} PRIVATE "-framework OpenGL -framework Cocoa")

@@ -19,6 +19,8 @@ endif ()
 
 link_libraries(mango)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 add_subdirectory(test)
 add_subdirectory(misc)
 add_subdirectory(image)

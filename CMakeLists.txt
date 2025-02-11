@@ -774,6 +774,16 @@ endif ()
 message("Installation path: ${CMAKE_INSTALL_PREFIX}")
 
 # ------------------------------------------------------------------------------
+# examples
+# ------------------------------------------------------------------------------
+
+list(POP_BACK CMAKE_MESSAGE_INDENT)
+
+if (BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif ()
+
+# ------------------------------------------------------------------------------
 # install
 # ------------------------------------------------------------------------------
 
@@ -810,9 +820,3 @@ install(
     EXPORT "mango-config"
     DESTINATION "lib/cmake/mango"
 )
-
-list(POP_BACK CMAKE_MESSAGE_INDENT)
-
-if (BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif ()
