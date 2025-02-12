@@ -2,45 +2,8 @@ cmake_minimum_required(VERSION 3.14)
 cmake_policy(SET CMP0091 NEW)
 project(mango
         VERSION 1.7.0
-        DESCRIPTION "A multi-platform development framework for graphics programmers"
+        DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C ASM)
-
-# ------------------------------------------------------------------------------
-# compiler
-# ------------------------------------------------------------------------------
-
-message("[ ${PROJECT_NAME} ]")
-list(APPEND CMAKE_MESSAGE_INDENT "    ")
-
-message("Compiler: ${CMAKE_CXX_COMPILER_ID}")
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    # msvc is set by cmake
-elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CLANG 1)
-elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Intel")
-    set(GCC 1)
-endif ()
-
-# ------------------------------------------------------------------------------
-# processor
-# ------------------------------------------------------------------------------
-
-message("Processor: ${CMAKE_SYSTEM_PROCESSOR}")
-
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
-    set(X86_64 1)
-elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*")
-    set(X86 1)
-elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)")
-    set(AARCH64 1)
-elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
-    set(ARM 1)
-elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "PPC64*|ppc64*|powerpc64*")
-    set(PPC64 1)
-elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "PPC*|ppc*|powerpc*")
-    set(PPC 1)
-endif ()
 
 # ------------------------------------------------------------------------------
 # options
@@ -98,12 +61,60 @@ if (INTEL_DELUXE)
     set(ENABLE_SHA     ON)
 endif ()
 
+# ------------------------------------------------------------------------------
+# build settings
+# ------------------------------------------------------------------------------
+
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
 
 if (WIN32 OR CYGWIN)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif ()
+
+find_package(Threads)
+
+if (BUILD_OPENGL)
+    if (WIN32)
+        set(OpenGL_GL_PREFERENCE LEGACY)
+    else ()
+        set(OpenGL_GL_PREFERENCE GLVND)
+    endif ()
+
+    find_package(OpenGL QUIET)
+    if (NOT OPENGL_FOUND)
+        set(BUILD_OPENGL OFF)
+    endif ()
+endif ()
+
+message("[ ${PROJECT_NAME} ]")
+list(APPEND CMAKE_MESSAGE_INDENT "    ")
+
+message("Processor: ${CMAKE_SYSTEM_PROCESSOR}")
+
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
+    set(X86_64 1)
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*")
+    set(X86 1)
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)")
+    set(AARCH64 1)
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
+    set(ARM 1)
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "PPC64*|ppc64*|powerpc64*")
+    set(PPC64 1)
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "PPC*|ppc*|powerpc*")
+    set(PPC 1)
+endif ()
+
+message("Compiler: ${CMAKE_CXX_COMPILER_ID}")
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    # msvc is set by cmake
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(CLANG 1)
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Intel")
+    set(GCC 1)
 endif ()
 
 message("Build: " ${CMAKE_BUILD_TYPE})
@@ -401,55 +412,17 @@ set_target_properties(mango PROPERTIES
 )
 
 if (APPLE)
-    if (BUILD_OPENGL)
-        target_link_libraries(mango PUBLIC "-framework Cocoa" "-framework OpenGL")
-    endif ()
-
     target_compile_options(mango PUBLIC "-mmacosx-version-min=10.15")
 endif ()
 
 # ------------------------------------------------------------------------------
-# platform libraries
+# package finding
 # ------------------------------------------------------------------------------
 
 find_package(PkgConfig QUIET)
 if (PkgConfig_FOUND)
     message("PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
 endif ()
-
-find_package(Threads)
-if (CMAKE_THREAD_LIBS_INIT)
-    message("   + Threads")
-    target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
-endif ()
-
-if (BUILD_OPENGL)
-
-    if (WIN32)
-        set(OpenGL_GL_PREFERENCE LEGACY)
-    else ()
-        set(OpenGL_GL_PREFERENCE GLVND)
-    endif ()
-
-    find_package(OpenGL REQUIRED)
-    if (OPENGL_FOUND)
-        message("  + OpenGL")
-        if (APPLE)
-            target_link_libraries(mango PRIVATE "-framework Cocoa -framework OpenGL")
-        elseif (WIN32)
-            target_link_libraries(mango PRIVATE ${OPENGL_gl_LIBRARY})
-        else ()
-            message("  + XLIB")
-            target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
-            target_link_libraries(mango PRIVATE X11 GL ${OPENGL_glx_LIBRARY})
-            endif ()
-    endif ()
-
-endif ()
-
-# ------------------------------------------------------------------------------
-# package finding
-# ------------------------------------------------------------------------------
 
 function (find_module_with_pkg Target Prefix ItemAndVersion)
     if (NOT ${Prefix}_ENABLE)
@@ -474,7 +447,6 @@ function (find_module_with_cmake Target Prefix PackageName ItemName Version)
         else ()
             find_package(${PackageName} ${Version} QUIET)
         endif ()
-
         if (${PackageName}_FOUND)
             set(${Prefix}_ENABLE 1 PARENT_SCOPE)
             message("  + " ${Prefix} ": " ${${PackageName}_VERSION} " [cmake]")
@@ -489,6 +461,30 @@ function (check_required_package Prefix)
         message(FATAL_ERROR "Failed to locate REQUIRED package: " ${Prefix})
         endif ()
 endfunction()
+
+# ------------------------------------------------------------------------------
+# platform libraries
+# ------------------------------------------------------------------------------
+
+if (CMAKE_THREAD_LIBS_INIT)
+    message("   + Threads")
+    target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
+endif ()
+
+if (BUILD_OPENGL)
+    if (OPENGL_FOUND)
+        message("  + OpenGL")
+        if (APPLE)
+            target_link_libraries(mango PRIVATE "-framework Cocoa -framework OpenGL")
+        elseif (WIN32)
+            target_link_libraries(mango PRIVATE ${OPENGL_gl_LIBRARY})
+        else ()
+            message("  + XLIB")
+            target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
+            target_link_libraries(mango PRIVATE X11 GL ${OPENGL_glx_LIBRARY})
+        endif ()
+    endif ()
+endif ()
 
 # ------------------------------------------------------------------------------
 # required libraries
