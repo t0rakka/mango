@@ -503,6 +503,7 @@ find_module_with_pkg(mango LIBDEFLATE libdeflate)
 check_required_package(LIBDEFLATE)
 
 if (APPLE)
+    # brew target is 'zstd::libzstd'
     find_module_with_cmake(mango ZSTD zstd zstd::libzstd 0)
 else ()
     find_module_with_cmake(mango ZSTD zstd zstd 0)
@@ -512,7 +513,7 @@ check_required_package(ZSTD)
 
 find_module_with_cmake(mango LZ4 lz4 lz4::lz4 0)
 find_module_with_pkg(mango LZ4 liblz4)
-check_required_package(ZSTD)
+check_required_package(LZ4)
 
 find_module_with_cmake(mango LCMS2 lcms2 lcms2::lcms2 0)
 find_module_with_pkg(mango LCMS2 lcms2)
