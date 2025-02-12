@@ -502,7 +502,11 @@ find_module_with_cmake(mango LIBDEFLATE libdeflate libdeflate::libdeflate_shared
 find_module_with_pkg(mango LIBDEFLATE libdeflate)
 check_required_package(LIBDEFLATE)
 
-find_module_with_cmake(mango ZSTD zstd zstd::libzstd 0)
+if (APPLE)
+    find_module_with_cmake(mango ZSTD zstd zstd::libzstd 0)
+else ()
+    find_module_with_cmake(mango ZSTD zstd zstd 0)
+endif ()
 find_module_with_pkg(mango ZSTD libzstd)
 check_required_package(ZSTD)
 
