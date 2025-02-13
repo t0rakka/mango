@@ -35,7 +35,7 @@
 #include "../../external/lzav/lzav.h"
 
 #if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
-    // WHy you have to be like that.. on Windows we assume VCPKG packaging for others BREW/APT
+    // Why you have to be like that.. on Windows we assume VCPKG packaging for others BREW/APT
     #if defined(MANGO_PLATFORM_WINDOWS)
         #include <isal/igzip_lib.h>
     #else
