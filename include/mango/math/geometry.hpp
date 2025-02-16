@@ -357,7 +357,7 @@ namespace mango::math
 
     struct RayFrustum
     {
-        //  points at znear plane seem from origin (camera):
+        //  points at znear plane seen from origin (camera):
         //  0----1
         //  |    |
         //  |    |
