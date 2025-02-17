@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.19)
-#cmake_policy(SET CMP0091 NEW)
 project(mango
         VERSION 1.7.0
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
@@ -118,6 +117,8 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Intel")
 endif ()
 
 message("Build: " ${CMAKE_BUILD_TYPE})
+
+include_directories(BEFORE ${PROJECT_SOURCE_DIR}/include)
 
 # ------------------------------------------------------------------------------
 # sources: mango
