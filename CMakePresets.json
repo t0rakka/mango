@@ -44,6 +44,16 @@
             "configurePreset": "windows-x64",
             "configuration": "Debug",
             "jobs": 0
+        },
+        {
+            "name": "linux-x64-release",
+            "configurePreset": "linux-x64-release",
+            "jobs": 0
+        },
+        {
+            "name": "linux-x64-debug",
+            "configurePreset": "linux-x64-debug",
+            "jobs": 0
         }
     ]
 }
