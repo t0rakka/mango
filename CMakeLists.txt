@@ -287,11 +287,6 @@ FILE(GLOB EXTERNAL_BC
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/bc/*.cpp"
 )
 
-#FILE(GLOB EXTERNAL_BZIP2
-#    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/bzip2/*.h"
-#    "${CMAKE_CURRENT_SOURCE_DIR}/source/external/bzip2/*.c"
-#)
-
 FILE(GLOB EXTERNAL_CONCURRENT_QUEUE
     "${CMAKE_CURRENT_SOURCE_DIR}/source/external/concurrentqueue/*.h"
 )
@@ -343,7 +338,6 @@ FILE(GLOB EXTERNAL_IMPORT3D
 SOURCE_GROUP("external/lzma"        FILES ${EXTERNAL_LZMA})
 SOURCE_GROUP("external/aes"         FILES ${EXTERNAL_AES})
 SOURCE_GROUP("external/bc"          FILES ${EXTERNAL_BC})
-#SOURCE_GROUP("external/bzip2"       FILES ${EXTERNAL_BZIP2})
 SOURCE_GROUP("external/concurrent"  FILES ${EXTERNAL_CONCURRENT_QUEUE})
 SOURCE_GROUP("external/astc"        FILES ${EXTERNAL_ASTC})
 SOURCE_GROUP("external/google"      FILES ${EXTERNAL_GOOGLE})
@@ -375,7 +369,6 @@ set(MANGO_SOURCES
     ${EXTERNAL_LZMA}
     ${EXTERNAL_AES}
     ${EXTERNAL_BC}
-    #${EXTERNAL_BZIP2}
     ${EXTERNAL_CONCURRENT_QUEUE}
     ${EXTERNAL_ASTC}
     ${EXTERNAL_GOOGLE}
@@ -503,6 +496,7 @@ if (APPLE)
     # brew target is 'zstd::libzstd'
     find_module_with_cmake(mango ZSTD zstd zstd::libzstd 0)
 else ()
+    # vcpkg/apt target is 'zstd'
     find_module_with_cmake(mango ZSTD zstd zstd 0)
 endif ()
 find_module_with_pkg(mango ZSTD libzstd)
@@ -513,7 +507,6 @@ find_module_with_pkg(mango LZ4 liblz4)
 check_required_package(LZ4)
 
 find_module_with_cmake(mango BZIP2 BZip2 BZip2::BZip2 0)
-#find_module_with_pkg(mango BZIP2 libbzip2)
 check_required_package(BZIP2)
 
 find_module_with_cmake(mango LCMS2 lcms2 lcms2::lcms2 0)
