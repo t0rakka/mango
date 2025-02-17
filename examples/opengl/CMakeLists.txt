@@ -9,7 +9,7 @@ list(APPEND EXAMPLES
 )
 
 if (NOT APPLE)
-    # OpenGL on macOS is 4.1 and does not support computer shaders
+    # OpenGL on macOS is 4.1 and does not support compute shaders
     list(APPEND EXAMPLES compute)
 endif ()
 
