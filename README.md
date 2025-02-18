@@ -75,4 +75,4 @@ mango:         3.2 ms       4.3 ms        699
 -- randy408
 
 
-## [Discord](https://discord.gg/zJmtAavY)
+## [Discord](https://discord.gg/E2xuXbK9Kf)
