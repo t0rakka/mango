@@ -67,7 +67,6 @@ namespace mango
     {
         static void ms(s32 count);
         static void us(s32 count);
-        static void ns(s32 count);
     };
 
     struct LocalTime

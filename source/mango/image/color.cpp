@@ -1,11 +1,9 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/image/image.hpp>
-
-#define CMS_NO_REGISTER_KEYWORD
-#include "../../external/lcms/lcms2.h"
+#include <lcms2.h>
 
 namespace mango::image
 {

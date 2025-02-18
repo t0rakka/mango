@@ -21,12 +21,12 @@ namespace mango
     // Hash - generic hashing function return type
     // -----------------------------------------------------------------------
 
-    template <typename T, int S>
+    template <typename T, size_t S>
     struct Hash
     {
         T data[S];
 
-        T operator [] (int index) const
+        T operator [] (size_t index) const
         {
             return data[index];
         }

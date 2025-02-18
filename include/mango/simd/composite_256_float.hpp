@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -16,78 +16,69 @@ namespace mango::simd
 #define SIMD_COMPOSITE_FUNC1(R, A, FUNC) \
     static inline R FUNC(A a) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0]); \
-        result.data[1] = FUNC(a.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0]); \
+        auto hi = FUNC(a.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_FUNC2(R, AB, FUNC) \
     static inline R FUNC(AB a, AB b) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], b.data[0]); \
-        result.data[1] = FUNC(a.data[1], b.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], b.data[0]); \
+        auto hi = FUNC(a.data[1], b.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_FUNC3(R, ABC, FUNC) \
     static inline R FUNC(ABC a, ABC b, ABC c) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], b.data[0], c.data[0]); \
-        result.data[1] = FUNC(a.data[1], b.data[1], c.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], b.data[0], c.data[0]); \
+        auto hi = FUNC(a.data[1], b.data[1], c.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_ZEROMASK_FUNC2(R, AB, MASK, FUNC) \
     static inline R FUNC(AB a, AB b, MASK mask) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], b.data[0], mask.data[0]); \
-        result.data[1] = FUNC(a.data[1], b.data[1], mask.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], b.data[0], mask.data[0]); \
+        auto hi = FUNC(a.data[1], b.data[1], mask.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_MASK_FUNC2(R, AB, MASK, FUNC) \
     static inline R FUNC(AB a, AB b, MASK mask, AB value) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], b.data[0], mask.data[0], value.data[0]); \
-        result.data[1] = FUNC(a.data[1], b.data[1], mask.data[1], value.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], b.data[0], mask.data[0], value.data[0]); \
+        auto hi = FUNC(a.data[1], b.data[1], mask.data[1], value.data[1]); \
+        return { lo, hi }; \
     }
 
     static inline f32x8 f32x8_zero()
     {
-        f32x8 result;
-        result.data[0] = f32x4_zero();
-        result.data[1] = f32x4_zero();
-        return result;
+        auto lo = f32x4_zero();
+        auto hi = f32x4_zero();
+        return { lo, hi };
     }
 
     static inline f32x8 f32x8_set(f32 s)
     {
-        f32x8 result;
-        result.data[0] = f32x4_set(s);
-        result.data[1] = f32x4_set(s);
-        return result;
+        auto lo = f32x4_set(s);
+        auto hi = f32x4_set(s);
+        return { lo, hi };
     }
 
     static inline f32x8 f32x8_set(f32 s0, f32 s1, f32 s2, f32 s3, f32 s4, f32 s5, f32 s6, f32 s7)
     {
-        f32x8 result;
-        result.data[0] = f32x4_set(s0, s1, s2, s3);
-        result.data[1] = f32x4_set(s4, s5, s6, s7);
-        return result;
+        auto lo = f32x4_set(s0, s1, s2, s3);
+        auto hi = f32x4_set(s4, s5, s6, s7);
+        return { lo, hi };
     }
 
     static inline f32x8 f32x8_uload(const void* source)
     {
-        f32x8 result;
-        result.data[0] = f32x4_uload(reinterpret_cast<const f32*>(source) + 0);
-        result.data[1] = f32x4_uload(reinterpret_cast<const f32*>(source) + 4);
-        return result;
+        auto lo = f32x4_uload(reinterpret_cast<const f32*>(source) + 0);
+        auto hi = f32x4_uload(reinterpret_cast<const f32*>(source) + 4);
+        return { lo, hi };
     }
 
     static inline void f32x8_ustore(void* dest, f32x8 a)
@@ -128,10 +119,9 @@ namespace mango::simd
 
     static inline f32x8 div(f32x8 a, f32 b)
     {
-        f32x8 result;
-        result.data[0] = div(a.data[0], b);
-        result.data[1] = div(a.data[1], b);
-        return result;
+        auto lo = div(a.data[0], b);
+        auto hi = div(a.data[1], b);
+        return { lo, hi };
     }
 
     SIMD_COMPOSITE_FUNC2(f32x8, f32x8, hadd)
@@ -156,10 +146,9 @@ namespace mango::simd
 
     static inline f32x8 select(mask32x8 mask, f32x8 a, f32x8 b)
     {
-        f32x8 result;
-        result.data[0] = select(mask.data[0], a.data[0], b.data[0]);
-        result.data[1] = select(mask.data[1], a.data[1], b.data[1]);
-        return result;
+        auto lo = select(mask.data[0], a.data[0], b.data[0]);
+        auto hi = select(mask.data[1], a.data[1], b.data[1]);
+        return { lo, hi };
     }
 
     // rounding
@@ -183,46 +172,41 @@ namespace mango::simd
 #define SIMD_COMPOSITE_FUNC1(R, A, FUNC) \
     static inline R FUNC(A a) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0]); \
-        result.data[1] = FUNC(a.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0]); \
+        auto hi = FUNC(a.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_FUNC2(R, AB, FUNC) \
     static inline R FUNC(AB a, AB b) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], b.data[0]); \
-        result.data[1] = FUNC(a.data[1], b.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], b.data[0]); \
+        auto hi = FUNC(a.data[1], b.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_FUNC3(R, ABC, FUNC) \
     static inline R FUNC(ABC a, ABC b, ABC c) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], b.data[0], c.data[0]); \
-        result.data[1] = FUNC(a.data[1], b.data[1], c.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], b.data[0], c.data[0]); \
+        auto hi = FUNC(a.data[1], b.data[1], c.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_ZEROMASK_FUNC2(R, AB, MASK, FUNC) \
     static inline R FUNC(AB a, AB b, MASK mask) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], b.data[0], mask.data[0]); \
-        result.data[1] = FUNC(a.data[1], b.data[1], mask.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], b.data[0], mask.data[0]); \
+        auto hi = FUNC(a.data[1], b.data[1], mask.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_MASK_FUNC2(R, AB, MASK, FUNC) \
     static inline R FUNC(AB a, AB b, MASK mask, AB value) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], b.data[0], mask.data[0], value.data[0]); \
-        result.data[1] = FUNC(a.data[1], b.data[1], mask.data[1], value.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], b.data[0], mask.data[0], value.data[0]); \
+        auto hi = FUNC(a.data[1], b.data[1], mask.data[1], value.data[1]); \
+        return { lo, hi }; \
     }
 
     // shuffle
@@ -235,10 +219,9 @@ namespace mango::simd
         const f64x2 v2 = z & 2 ? v.data[1] : v.data[0];
         const f64x2 v3 = w & 2 ? v.data[1] : v.data[0];
 
-        f64x4 result;
-        result.data[0] = shuffle<x & 1, y & 1>(v0, v1);
-        result.data[1] = shuffle<z & 1, w & 1>(v2, v3);
-        return result;
+        auto lo = shuffle<x & 1, y & 1>(v0, v1);
+        auto hi = shuffle<z & 1, w & 1>(v2, v3);
+        return { lo, hi };
     }
 
     template <>
@@ -253,10 +236,7 @@ namespace mango::simd
     {
         // .xxxx
         const f64x2 xx = shuffle<0, 0>(v.data[0]);
-        f64x4 result;
-        result.data[0] = xx;
-        result.data[1] = xx;
-        return result;
+        return { xx, xx };
     }
 
     template <>
@@ -264,10 +244,7 @@ namespace mango::simd
     {
         // .yyyy
         const f64x2 yy = shuffle<1, 1>(v.data[0]);
-        f64x4 result;
-        result.data[0] = yy;
-        result.data[1] = yy;
-        return result;
+        return { yy, yy };
     }
 
     template <>
@@ -275,10 +252,7 @@ namespace mango::simd
     {
         // .zzzz
         const f64x2 zz = shuffle<0, 0>(v.data[1]);
-        f64x4 result;
-        result.data[0] = zz;
-        result.data[1] = zz;
-        return result;
+        return { zz, zz };
     }
 
     template <>
@@ -286,10 +260,7 @@ namespace mango::simd
     {
         // .wwww
         const f64x2 ww = shuffle<1, 1>(v.data[1]);
-        f64x4 result;
-        result.data[0] = ww;
-        result.data[1] = ww;
-        return result;
+        return { ww, ww };
     }
 
     // set component
@@ -327,34 +298,30 @@ namespace mango::simd
 
     static inline f64x4 f64x4_zero()
     {
-        f64x4 result;
-        result.data[0] = f64x2_zero();
-        result.data[1] = f64x2_zero();
-        return result;
+        auto lo = f64x2_zero();
+        auto hi = f64x2_zero();
+        return { lo, hi };
     }
 
     static inline f64x4 f64x4_set(f64 s)
     {
-        f64x4 result;
-        result.data[0] = f64x2_set(s);
-        result.data[1] = f64x2_set(s);
-        return result;
+        auto lo = f64x2_set(s);
+        auto hi = f64x2_set(s);
+        return { lo, hi };
     }
 
     static inline f64x4 f64x4_set(f64 x, f64 y, f64 z, f64 w)
     {
-        f64x4 result;
-        result.data[0] = f64x2_set(x, y);
-        result.data[1] = f64x2_set(z, w);
-        return result;
+        auto lo = f64x2_set(x, y);
+        auto hi = f64x2_set(z, w);
+        return { lo, hi };
     }
 
     static inline f64x4 f64x4_uload(const void* source)
     {
-        f64x4 result;
-        result.data[0] = f64x2_uload(reinterpret_cast<const f64*>(source) + 0);
-        result.data[1] = f64x2_uload(reinterpret_cast<const f64*>(source) + 2);
-        return result;
+        auto lo = f64x2_uload(reinterpret_cast<const f64*>(source) + 0);
+        auto hi = f64x2_uload(reinterpret_cast<const f64*>(source) + 2);
+        return { lo, hi };
     }
 
     static inline void f64x4_ustore(void* dest, f64x4 a)
@@ -365,18 +332,16 @@ namespace mango::simd
 
     static inline f64x4 movelh(f64x4 a, f64x4 b)
     {
-        f64x4 result;
-        result.data[0] = a.data[0];
-        result.data[1] = b.data[0];
-        return result;
+        auto lo = a.data[0];
+        auto hi = b.data[0];
+        return { lo, hi };
     }
 
     static inline f64x4 movehl(f64x4 a, f64x4 b)
     {
-        f64x4 result;
-        result.data[0] = b.data[1];
-        result.data[1] = a.data[1];
-        return result;
+        auto lo = b.data[1];
+        auto hi = a.data[1];
+        return { lo, hi };
     }
 
     SIMD_COMPOSITE_FUNC2(f64x4, f64x4, unpackhi)
@@ -394,10 +359,7 @@ namespace mango::simd
         const f64x2 xy = min(a.data[0], shuffle<1, 0>(a.data[0]));
         const f64x2 zw = min(a.data[1], shuffle<1, 0>(a.data[1]));
         const f64x2 s = min(xy, zw);
-        f64x4 result;
-        result.data[0] = s;
-        result.data[1] = s;
-        return result;
+        return { s, s };
     }
 
     static inline f64x4 hmax(f64x4 a)
@@ -405,10 +367,7 @@ namespace mango::simd
         const f64x2 xy = max(a.data[0], shuffle<1, 0>(a.data[0]));
         const f64x2 zw = max(a.data[1], shuffle<1, 0>(a.data[1]));
         const f64x2 s = max(xy, zw);
-        f64x4 result;
-        result.data[0] = s;
-        result.data[1] = s;
-        return result;
+        return { s, s };
     }
 
     SIMD_COMPOSITE_FUNC1(f64x4, f64x4, abs)
@@ -434,10 +393,9 @@ namespace mango::simd
 
     static inline f64x4 div(f64x4 a, f64 b)
     {
-        f64x4 result;
-        result.data[0] = div(a.data[0], b);
-        result.data[1] = div(a.data[1], b);
-        return result;
+        auto lo = div(a.data[0], b);
+        auto hi = div(a.data[1], b);
+        return { lo, hi };
     }
 
     SIMD_COMPOSITE_FUNC2(f64x4, f64x4, hadd)
@@ -469,10 +427,9 @@ namespace mango::simd
 
     static inline f64x4 select(mask64x4 mask, f64x4 a, f64x4 b)
     {
-        f64x4 result;
-        result.data[0] = select(mask.data[0], a.data[0], b.data[0]);
-        result.data[1] = select(mask.data[1], a.data[1], b.data[1]);
-        return result;
+        auto lo = select(mask.data[0], a.data[0], b.data[0]);
+        auto hi = select(mask.data[1], a.data[1], b.data[1]);
+        return { lo, hi };
     }
 
     // rounding

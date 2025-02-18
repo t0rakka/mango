@@ -137,6 +137,16 @@ namespace mango::math
         const Matrix4x4& operator = (const AngleAxis& rotation);
         const Matrix4x4& operator = (const EulerAngles& rotation);
 
+        const float* data() const
+        {
+            return reinterpret_cast<const float*>(this);
+        }
+
+        float* data()
+        {
+            return reinterpret_cast<float*>(this);
+        }
+
         operator float32x4* ()
         {
             return m;
@@ -211,12 +221,11 @@ namespace mango::math
     static inline
     Matrix4x4 operator * (const Matrix4x4& a, const Matrix4x4& b)
     {
-        Matrix4x4 result;
-        result[0] = a[0] * b;
-        result[1] = a[1] * b;
-        result[2] = a[2] * b;
-        result[3] = a[3] * b;
-        return result;
+        return Matrix4x4(
+            a[0] * b,
+            a[1] * b,
+            a[2] * b,
+            a[3] * b);
     }
 
     // ------------------------------------------------------------------
@@ -414,11 +423,11 @@ namespace mango::math
     // Matrix inversion performance
     // CPU: 2.9 GHz Intel Core i9 (compiled for AVX)
     //
-    // transpose:        500,000,000 / sec  ( 6 clocks)
-    // inverseTR:        200,000,000 / sec  (15 clocks)
-    // inverseTRS:        91,000,000 / sec  (32 clocks)
-    // inverseTranspose:  67,000,000 / sec  (44 clocks)
-    // inverse:           59,000,000 / sec  (50 clocks)
+    // transpose:        500,000,000 / sec  ( 6 clock cycles)
+    // inverseTR:        200,000,000 / sec  (15 clock cycles)
+    // inverseTRS:        91,000,000 / sec  (32 clock cycles)
+    // inverseTranspose:  67,000,000 / sec  (44 clock cycles)
+    // inverse:           59,000,000 / sec  (50 clock cycles)
 
     static inline
     Matrix4x4 transpose(const Matrix4x4& m)

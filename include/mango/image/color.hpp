@@ -57,12 +57,12 @@ namespace mango::image
             return littleEndian::uload32(this);
         }
 
-        u8& operator [] (int index)
+        u8& operator [] (size_t index)
         {
             return component[index];
         }
 
-        u8 operator [] (int index) const
+        u8 operator [] (size_t index) const
         {
             return component[index];
         }
@@ -87,12 +87,12 @@ namespace mango::image
         {
         }
 
-        Color& operator [] (int index)
+        Color& operator [] (size_t index)
         {
             return color[index];
         }
 
-        Color operator [] (int index) const
+        Color operator [] (size_t index) const
         {
             return color[index];
         }

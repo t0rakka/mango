@@ -20,7 +20,7 @@ namespace
     // configure
     // ----------------------------------------------------------------------------
 
-#if defined(MANGO_COMPILER_MICROSOFT)
+#if defined(MANGO_COMPILER_MSVC)
 
     // The compiler optimizes the scalar loops really well with ICC/CLANG/GCC so these custom
     // conversions are only enabled for MSVC, where the speed up varies between 2x and 4x.

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -12,64 +12,57 @@ namespace mango::simd
 #define SIMD_COMPOSITE_FUNC1(R, A, FUNC) \
     static inline R FUNC(A a) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0]); \
-        result.data[1] = FUNC(a.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0]); \
+        auto hi = FUNC(a.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_FUNC2(R, AB, FUNC) \
     static inline R FUNC(AB a, AB b) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], b.data[0]); \
-        result.data[1] = FUNC(a.data[1], b.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], b.data[0]); \
+        auto hi = FUNC(a.data[1], b.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_ZEROMASK_FUNC1(R, A, MASK, FUNC) \
     static inline R FUNC(A a, MASK mask) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], mask.data[0]); \
-        result.data[1] = FUNC(a.data[1], mask.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], mask.data[0]); \
+        auto hi = FUNC(a.data[1], mask.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_MASK_FUNC1(R, A, MASK, FUNC) \
     static inline R FUNC(A a, MASK mask, R value) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], mask.data[0], value.data[0]); \
-        result.data[1] = FUNC(a.data[1], mask.data[1], value.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], mask.data[0], value.data[0]); \
+        auto hi = FUNC(a.data[1], mask.data[1], value.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_ZEROMASK_FUNC2(R, AB, MASK, FUNC) \
     static inline R FUNC(AB a, AB b, MASK mask) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], b.data[0], mask.data[0]); \
-        result.data[1] = FUNC(a.data[1], b.data[1], mask.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], b.data[0], mask.data[0]); \
+        auto hi = FUNC(a.data[1], b.data[1], mask.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_MASK_FUNC2(R, AB, MASK, FUNC) \
     static inline R FUNC(AB a, AB b, MASK mask, R value) \
     { \
-        R result; \
-        result.data[0] = FUNC(a.data[0], b.data[0], mask.data[0], value.data[0]); \
-        result.data[1] = FUNC(a.data[1], b.data[1], mask.data[1], value.data[1]); \
-        return result; \
+        auto lo = FUNC(a.data[0], b.data[0], mask.data[0], value.data[0]); \
+        auto hi = FUNC(a.data[1], b.data[1], mask.data[1], value.data[1]); \
+        return { lo, hi }; \
     }
 
 #define SIMD_COMPOSITE_SELECT(MASK, AB, FUNC) \
     static inline AB select(MASK mask, AB a, AB b) \
     { \
-        AB result; \
-        result.data[0] = select(mask.data[0], a.data[0], b.data[0]); \
-        result.data[1] = select(mask.data[1], a.data[1], b.data[1]); \
-        return result; \
+        auto lo = select(mask.data[0], a.data[0], b.data[0]); \
+        auto hi = select(mask.data[1], a.data[1], b.data[1]); \
+        return { lo, hi }; \
     }
 
     // -----------------------------------------------------------------
@@ -78,18 +71,14 @@ namespace mango::simd
 
     static inline u8x64 u8x64_zero()
     {
-        u8x64 result;
-        result.data[0] = u8x32_zero();
-        result.data[1] = u8x32_zero();
-        return result;
+        auto value = u8x32_zero();
+        return { value, value };
     }
 
     static inline u8x64 u8x64_set(u8 s)
     {
-        u8x64 result;
-        result.data[0] = u8x32_set(s);
-        result.data[1] = u8x32_set(s);
-        return result;
+        auto value = u8x32_set(s);
+        return { value, value };
     }
 
     static inline u8x64 u8x64_set(
@@ -102,24 +91,22 @@ namespace mango::simd
         u8 v48, u8 v49, u8 v50, u8 v51, u8 v52, u8 v53, u8 v54, u8 v55,
         u8 v56, u8 v57, u8 v58, u8 v59, u8 v60, u8 v61, u8 v62, u8 v63)
     {
-        u8x64 result;
-        result.data[0] = u8x32_set(v00, v01, v02, v03, v04, v05, v06, v07,
-                                   v08, v09, v10, v11, v12, v13, v14, v15,
-                                   v16, v17, v18, v19, v20, v21, v22, v23,
-                                   v24, v25, v26, v27, v28, v29, v30, v31);
-        result.data[1] = u8x32_set(v32, v33, v34, v35, v36, v37, v38, v39,
-                                   v40, v41, v42, v43, v44, v45, v46, v47,
-                                   v48, v49, v50, v51, v52, v53, v54, v55,
-                                   v56, v57, v58, v59, v60, v61, v62, v63);
-        return result;
+        auto lo = u8x32_set(v00, v01, v02, v03, v04, v05, v06, v07,
+                            v08, v09, v10, v11, v12, v13, v14, v15,
+                            v16, v17, v18, v19, v20, v21, v22, v23,
+                            v24, v25, v26, v27, v28, v29, v30, v31);
+        auto hi = u8x32_set(v32, v33, v34, v35, v36, v37, v38, v39,
+                            v40, v41, v42, v43, v44, v45, v46, v47,
+                            v48, v49, v50, v51, v52, v53, v54, v55,
+                            v56, v57, v58, v59, v60, v61, v62, v63);
+        return { lo, hi };
     }
 
     static inline u8x64 u8x64_uload(const void* source)
     {
-        u8x64 result;
-        result.data[0] = u8x32_uload(reinterpret_cast<const u8*>(source) +  0);
-        result.data[1] = u8x32_uload(reinterpret_cast<const u8*>(source) + 32);
-        return result;
+        auto lo = u8x32_uload(reinterpret_cast<const u8*>(source) +  0);
+        auto hi = u8x32_uload(reinterpret_cast<const u8*>(source) + 32);
+        return { lo, hi };
     }
 
     static inline void u8x64_ustore(void* dest, u8x64 a)
@@ -172,18 +159,16 @@ namespace mango::simd
 
     static inline u16x32 u16x32_zero()
     {
-        u16x32 result;
-        result.data[0] = u16x16_zero();
-        result.data[1] = u16x16_zero();
-        return result;
+        auto lo = u16x16_zero();
+        auto hi = u16x16_zero();
+        return { lo, hi };
     }
 
     static inline u16x32 u16x32_set(u16 s)
     {
-        u16x32 result;
-        result.data[0] = u16x16_set(s);
-        result.data[1] = u16x16_set(s);
-        return result;
+        auto lo = u16x16_set(s);
+        auto hi = u16x16_set(s);
+        return { lo, hi };
     }
 
     static inline u16x32 u16x32_set(
@@ -192,20 +177,18 @@ namespace mango::simd
         u16 v16, u16 v17, u16 v18, u16 v19, u16 v20, u16 v21, u16 v22, u16 v23,
         u16 v24, u16 v25, u16 v26, u16 v27, u16 v28, u16 v29, u16 v30, u16 v31)
     {
-        u16x32 result;
-        result.data[0] = u16x16_set(v00, v01, v02, v03, v04, v05, v06, v07,
-                                    v08, v09, v10, v11, v12, v13, v14, v15);
-        result.data[1] = u16x16_set(v16, v17, v18, v19, v20, v21, v22, v23,
-                                    v24, v25, v26, v27, v28, v29, v30, v31);
-        return result;
+        auto lo = u16x16_set(v00, v01, v02, v03, v04, v05, v06, v07,
+                             v08, v09, v10, v11, v12, v13, v14, v15);
+        auto hi = u16x16_set(v16, v17, v18, v19, v20, v21, v22, v23,
+                             v24, v25, v26, v27, v28, v29, v30, v31);
+        return { lo, hi };
     }
 
     static inline u16x32 u16x32_uload(const void* source)
     {
-        u16x32 result;
-        result.data[0] = u16x16_uload(reinterpret_cast<const u16*>(source) +  0);
-        result.data[1] = u16x16_uload(reinterpret_cast<const u16*>(source) + 16);
-        return result;
+        auto lo = u16x16_uload(reinterpret_cast<const u16*>(source) +  0);
+        auto hi = u16x16_uload(reinterpret_cast<const u16*>(source) + 16);
+        return { lo, hi };
     }
 
     static inline void u16x32_ustore(void* dest, u16x32 a)
@@ -258,54 +241,48 @@ namespace mango::simd
     template <int Count>
     static inline u16x32 slli(u16x32 a)
     {
-        u16x32 result;
-        result.data[0] = slli<Count>(a.data[0]);
-        result.data[1] = slli<Count>(a.data[1]);
-        return result;
+        auto lo = slli<Count>(a.data[0]);
+        auto hi = slli<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     template <int Count>
     static inline u16x32 srli(u16x32 a)
     {
-        u16x32 result;
-        result.data[0] = srli<Count>(a.data[0]);
-        result.data[1] = srli<Count>(a.data[1]);
-        return result;
+        auto lo = srli<Count>(a.data[0]);
+        auto hi = srli<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     template <int Count>
     static inline u16x32 srai(u16x32 a)
     {
-        u16x32 result;
-        result.data[0] = srai<Count>(a.data[0]);
-        result.data[1] = srai<Count>(a.data[1]);
-        return result;
+        auto lo = srai<Count>(a.data[0]);
+        auto hi = srai<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     // shift by scalar
 
     static inline u16x32 sll(u16x32 a, int count)
     {
-        u16x32 result;
-        result.data[0] = sll(a.data[0], count);
-        result.data[1] = sll(a.data[1], count);
-        return result;
+        auto lo = sll(a.data[0], count);
+        auto hi = sll(a.data[1], count);
+        return { lo, hi };
     }
 
     static inline u16x32 srl(u16x32 a, int count)
     {
-        u16x32 result;
-        result.data[0] = srl(a.data[0], count);
-        result.data[1] = srl(a.data[1], count);
-        return result;
+        auto lo = srl(a.data[0], count);
+        auto hi = srl(a.data[1], count);
+        return { lo, hi };
     }
 
     static inline u16x32 sra(u16x32 a, int count)
     {
-        u16x32 result;
-        result.data[0] = sra(a.data[0], count);
-        result.data[1] = sra(a.data[1], count);
-        return result;
+        auto lo = sra(a.data[0], count);
+        auto hi = sra(a.data[1], count);
+        return { lo, hi };
     }
 
     // -----------------------------------------------------------------
@@ -314,36 +291,32 @@ namespace mango::simd
 
     static inline u32x16 u32x16_zero()
     {
-        u32x16 result;
-        result.data[0] = u32x8_zero();
-        result.data[1] = u32x8_zero();
-        return result;
+        auto lo = u32x8_zero();
+        auto hi = u32x8_zero();
+        return { lo, hi };
     }
 
     static inline u32x16 u32x16_set(u32 s)
     {
-        u32x16 result;
-        result.data[0] = u32x8_set(s);
-        result.data[1] = u32x8_set(s);
-        return result;
+        auto lo = u32x8_set(s);
+        auto hi = u32x8_set(s);
+        return { lo, hi };
     }
 
     static inline u32x16 u32x16_set(
         u32 v00, u32 v01, u32 v02, u32 v03, u32 v04, u32 v05, u32 v06, u32 v07,
         u32 v08, u32 v09, u32 v10, u32 v11, u32 v12, u32 v13, u32 v14, u32 v15)
     {
-        u32x16 result;
-        result.data[0] = u32x8_set(v00, v01, v02, v03, v04, v05, v06, v07);
-        result.data[1] = u32x8_set(v08, v09, v10, v11, v12, v13, v14, v15);
-        return result;
+        auto lo = u32x8_set(v00, v01, v02, v03, v04, v05, v06, v07);
+        auto hi = u32x8_set(v08, v09, v10, v11, v12, v13, v14, v15);
+        return { lo, hi };
     }
 
     static inline u32x16 u32x16_uload(const void* source)
     {
-        u32x16 result;
-        result.data[0] = u32x8_uload(reinterpret_cast<const u32*>(source) + 0);
-        result.data[1] = u32x8_uload(reinterpret_cast<const u32*>(source) + 8);
-        return result;
+        auto lo = u32x8_uload(reinterpret_cast<const u32*>(source) + 0);
+        auto hi = u32x8_uload(reinterpret_cast<const u32*>(source) + 8);
+        return { lo, hi };
     }
 
     static inline void u32x16_ustore(void* dest, u32x16 a)
@@ -396,54 +369,48 @@ namespace mango::simd
     template <int Count>
     static inline u32x16 slli(u32x16 a)
     {
-        u32x16 result;
-        result.data[0] = slli<Count>(a.data[0]);
-        result.data[1] = slli<Count>(a.data[1]);
-        return result;
+        auto lo = slli<Count>(a.data[0]);
+        auto hi = slli<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     template <int Count>
     static inline u32x16 srli(u32x16 a)
     {
-        u32x16 result;
-        result.data[0] = srli<Count>(a.data[0]);
-        result.data[1] = srli<Count>(a.data[1]);
-        return result;
+        auto lo = srli<Count>(a.data[0]);
+        auto hi = srli<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     template <int Count>
     static inline u32x16 srai(u32x16 a)
     {
-        u32x16 result;
-        result.data[0] = srai<Count>(a.data[0]);
-        result.data[1] = srai<Count>(a.data[1]);
-        return result;
+        auto lo = srai<Count>(a.data[0]);
+        auto hi = srai<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     // shift by scalar
 
     static inline u32x16 sll(u32x16 a, int count)
     {
-        u32x16 result;
-        result.data[0] = sll(a.data[0], count);
-        result.data[1] = sll(a.data[1], count);
-        return result;
+        auto lo = sll(a.data[0], count);
+        auto hi = sll(a.data[1], count);
+        return { lo, hi };
     }
 
     static inline u32x16 srl(u32x16 a, int count)
     {
-        u32x16 result;
-        result.data[0] = srl(a.data[0], count);
-        result.data[1] = srl(a.data[1], count);
-        return result;
+        auto lo = srl(a.data[0], count);
+        auto hi = srl(a.data[1], count);
+        return { lo, hi };
     }
 
     static inline u32x16 sra(u32x16 a, int count)
     {
-        u32x16 result;
-        result.data[0] = sra(a.data[0], count);
-        result.data[1] = sra(a.data[1], count);
-        return result;
+        auto lo = sra(a.data[0], count);
+        auto hi = sra(a.data[1], count);
+        return { lo, hi };
     }
 
     // shift by vector
@@ -475,34 +442,30 @@ namespace mango::simd
 
     static inline u64x8 u64x8_zero()
     {
-        u64x8 result;
-        result.data[0] = u64x4_zero();
-        result.data[1] = u64x4_zero();
-        return result;
+        auto lo = u64x4_zero();
+        auto hi = u64x4_zero();
+        return { lo, hi };
     }
 
     static inline u64x8 u64x8_set(u64 s)
     {
-        u64x8 result;
-        result.data[0] = u64x4_set(s);
-        result.data[1] = u64x4_set(s);
-        return result;
+        auto lo = u64x4_set(s);
+        auto hi = u64x4_set(s);
+        return { lo, hi };
     }
 
     static inline u64x8 u64x8_set(u64 v0, u64 v1, u64 v2, u64 v3, u64 v4, u64 v5, u64 v6, u64 v7)
     {
-        u64x8 result;
-        result.data[0] = u64x4_set(v0, v1, v2, v3);
-        result.data[1] = u64x4_set(v4, v5, v6, v7);
-        return result;
+        auto lo = u64x4_set(v0, v1, v2, v3);
+        auto hi = u64x4_set(v4, v5, v6, v7);
+        return { lo, hi };
     }
 
     static inline u64x8 u64x8_uload(const void* source)
     {
-        u64x8 result;
-        result.data[0] = u64x4_uload(reinterpret_cast<const u64*>(source) + 0);
-        result.data[1] = u64x4_uload(reinterpret_cast<const u64*>(source) + 4);
-        return result;
+        auto lo = u64x4_uload(reinterpret_cast<const u64*>(source) + 0);
+        auto hi = u64x4_uload(reinterpret_cast<const u64*>(source) + 4);
+        return { lo, hi };
     }
 
     static inline void u64x8_ustore(void* dest, u64x8 a)
@@ -547,37 +510,33 @@ namespace mango::simd
     template <int Count>
     static inline u64x8 slli(u64x8 a)
     {
-        u64x8 result;
-        result.data[0] = slli<Count>(a.data[0]);
-        result.data[1] = slli<Count>(a.data[1]);
-        return result;
+        auto lo = slli<Count>(a.data[0]);
+        auto hi = slli<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     template <int Count>
     static inline u64x8 srli(u64x8 a)
     {
-        u64x8 result;
-        result.data[0] = srli<Count>(a.data[0]);
-        result.data[1] = srli<Count>(a.data[1]);
-        return result;
+        auto lo = srli<Count>(a.data[0]);
+        auto hi = srli<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     // shift by scalar
 
     static inline u64x8 sll(u64x8 a, int count)
     {
-        u64x8 result;
-        result.data[0] = sll(a.data[0], count);
-        result.data[1] = sll(a.data[1], count);
-        return result;
+        auto lo = sll(a.data[0], count);
+        auto hi = sll(a.data[1], count);
+        return { lo, hi };
     }
 
     static inline u64x8 srl(u64x8 a, int count)
     {
-        u64x8 result;
-        result.data[0] = srl(a.data[0], count);
-        result.data[1] = srl(a.data[1], count);
-        return result;
+        auto lo = srl(a.data[0], count);
+        auto hi = srl(a.data[1], count);
+        return { lo, hi };
     }
 
     // -----------------------------------------------------------------
@@ -586,18 +545,16 @@ namespace mango::simd
 
     static inline s8x64 s8x64_zero()
     {
-        s8x64 result;
-        result.data[0] = s8x32_zero();
-        result.data[1] = s8x32_zero();
-        return result;
+        auto lo = s8x32_zero();
+        auto hi = s8x32_zero();
+        return { lo, hi };
     }
 
     static inline s8x64 s8x64_set(s8 s)
     {
-        s8x64 result;
-        result.data[0] = s8x32_set(s);
-        result.data[1] = s8x32_set(s);
-        return result;
+        auto lo = s8x32_set(s);
+        auto hi = s8x32_set(s);
+        return { lo, hi };
     }
 
     static inline s8x64 s8x64_set(
@@ -610,24 +567,22 @@ namespace mango::simd
         s8 v48, s8 v49, s8 v50, s8 v51, s8 v52, s8 v53, s8 v54, s8 v55,
         s8 v56, s8 v57, s8 v58, s8 v59, s8 v60, s8 v61, s8 v62, s8 v63)
     {
-        s8x64 result;
-        result.data[0] = s8x32_set(v00, v01, v02, v03, v04, v05, v06, v07,
-                                   v08, v09, v10, v11, v12, v13, v14, v15,
-                                   v16, v17, v18, v19, v20, v21, v22, v23,
-                                   v24, v25, v26, v27, v28, v29, v30, v31);
-        result.data[1] = s8x32_set(v32, v33, v34, v35, v36, v37, v38, v39,
-                                   v40, v41, v42, v43, v44, v45, v46, v47,
-                                   v48, v49, v50, v51, v52, v53, v54, v55,
-                                   v56, v57, v58, v59, v60, v61, v62, v63);
-        return result;
+        auto lo = s8x32_set(v00, v01, v02, v03, v04, v05, v06, v07,
+                            v08, v09, v10, v11, v12, v13, v14, v15,
+                            v16, v17, v18, v19, v20, v21, v22, v23,
+                            v24, v25, v26, v27, v28, v29, v30, v31);
+        auto hi = s8x32_set(v32, v33, v34, v35, v36, v37, v38, v39,
+                            v40, v41, v42, v43, v44, v45, v46, v47,
+                            v48, v49, v50, v51, v52, v53, v54, v55,
+                            v56, v57, v58, v59, v60, v61, v62, v63);
+        return { lo, hi };
     }
 
     static inline s8x64 s8x64_uload(const void* source)
     {
-        s8x64 result;
-        result.data[0] = s8x32_uload(reinterpret_cast<const s8*>(source) +  0);
-        result.data[1] = s8x32_uload(reinterpret_cast<const s8*>(source) + 32);
-        return result;
+        auto lo = s8x32_uload(reinterpret_cast<const s8*>(source) +  0);
+        auto hi = s8x32_uload(reinterpret_cast<const s8*>(source) + 32);
+        return { lo, hi };
     }
 
     static inline void s8x64_ustore(void* dest, s8x64 a)
@@ -684,18 +639,16 @@ namespace mango::simd
 
     static inline s16x32 s16x32_zero()
     {
-        s16x32 result;
-        result.data[0] = s16x16_zero();
-        result.data[1] = s16x16_zero();
-        return result;
+        auto lo = s16x16_zero();
+        auto hi = s16x16_zero();
+        return { lo, hi };
     }
 
     static inline s16x32 s16x32_set(s16 s)
     {
-        s16x32 result;
-        result.data[0] = s16x16_set(s);
-        result.data[1] = s16x16_set(s);
-        return result;
+        auto lo = s16x16_set(s);
+        auto hi = s16x16_set(s);
+        return { lo, hi };
     }
 
     static inline s16x32 s16x32_set(
@@ -704,20 +657,18 @@ namespace mango::simd
         s16 v16, s16 v17, s16 v18, s16 v19, s16 v20, s16 v21, s16 v22, s16 v23,
         s16 v24, s16 v25, s16 v26, s16 v27, s16 v28, s16 v29, s16 v30, s16 v31)
     {
-        s16x32 result;
-        result.data[0] = s16x16_set(v00, v01, v02, v03, v04, v05, v06, v07,
-                                    v08, v09, v10, v11, v12, v13, v14, v15);
-        result.data[1] = s16x16_set(v16, v17, v18, v19, v20, v21, v22, v23,
-                                    v24, v25, v26, v27, v28, v29, v30, v31);
-        return result;
+        auto lo = s16x16_set(v00, v01, v02, v03, v04, v05, v06, v07,
+                             v08, v09, v10, v11, v12, v13, v14, v15);
+        auto hi = s16x16_set(v16, v17, v18, v19, v20, v21, v22, v23,
+                             v24, v25, v26, v27, v28, v29, v30, v31);
+        return { lo, hi };
     }
 
     static inline s16x32 s16x32_uload(const void* source)
     {
-        s16x32 result;
-        result.data[0] = s16x16_uload(reinterpret_cast<const s16*>(source) +  0);
-        result.data[1] = s16x16_uload(reinterpret_cast<const s16*>(source) + 16);
-        return result;
+        auto lo = s16x16_uload(reinterpret_cast<const s16*>(source) +  0);
+        auto hi = s16x16_uload(reinterpret_cast<const s16*>(source) + 16);
+        return { lo, hi };
     }
 
     static inline void s16x32_ustore(void* dest, s16x32 a)
@@ -777,54 +728,48 @@ namespace mango::simd
     template <int Count>
     static inline s16x32 slli(s16x32 a)
     {
-        s16x32 result;
-        result.data[0] = slli<Count>(a.data[0]);
-        result.data[1] = slli<Count>(a.data[1]);
-        return result;
+        auto lo = slli<Count>(a.data[0]);
+        auto hi = slli<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     template <int Count>
     static inline s16x32 srli(s16x32 a)
     {
-        s16x32 result;
-        result.data[0] = srli<Count>(a.data[0]);
-        result.data[1] = srli<Count>(a.data[1]);
-        return result;
+        auto lo = srli<Count>(a.data[0]);
+        auto hi = srli<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     template <int Count>
     static inline s16x32 srai(s16x32 a)
     {
-        s16x32 result;
-        result.data[0] = srai<Count>(a.data[0]);
-        result.data[1] = srai<Count>(a.data[1]);
-        return result;
+        auto lo = srai<Count>(a.data[0]);
+        auto hi = srai<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     // shift by scalar
 
     static inline s16x32 sll(s16x32 a, int count)
     {
-        s16x32 result;
-        result.data[0] = sll(a.data[0], count);
-        result.data[1] = sll(a.data[1], count);
-        return result;
+        auto lo = sll(a.data[0], count);
+        auto hi = sll(a.data[1], count);
+        return { lo, hi };
     }
 
     static inline s16x32 srl(s16x32 a, int count)
     {
-        s16x32 result;
-        result.data[0] = srl(a.data[0], count);
-        result.data[1] = srl(a.data[1], count);
-        return result;
+        auto lo = srl(a.data[0], count);
+        auto hi = srl(a.data[1], count);
+        return { lo, hi };
     }
 
     static inline s16x32 sra(s16x32 a, int count)
     {
-        s16x32 result;
-        result.data[0] = sra(a.data[0], count);
-        result.data[1] = sra(a.data[1], count);
-        return result;
+        auto lo = sra(a.data[0], count);
+        auto hi = sra(a.data[1], count);
+        return { lo, hi };
     }
 
     // -----------------------------------------------------------------
@@ -833,36 +778,32 @@ namespace mango::simd
 
     static inline s32x16 s32x16_zero()
     {
-        s32x16 result;
-        result.data[0] = s32x8_zero();
-        result.data[1] = s32x8_zero();
-        return result;
+        auto lo = s32x8_zero();
+        auto hi = s32x8_zero();
+        return { lo, hi };
     }
 
     static inline s32x16 s32x16_set(s32 s)
     {
-        s32x16 result;
-        result.data[0] = s32x8_set(s);
-        result.data[1] = s32x8_set(s);
-        return result;
+        auto lo = s32x8_set(s);
+        auto hi = s32x8_set(s);
+        return { lo, hi };
     }
 
     static inline s32x16 s32x16_set(
         s32 v00, s32 v01, s32 v02, s32 v03, s32 v04, s32 v05, s32 v06, s32 v07,
         s32 v08, s32 v09, s32 v10, s32 v11, s32 v12, s32 v13, s32 v14, s32 v15)
     {
-        s32x16 result;
-        result.data[0] = s32x8_set(v00, v01, v02, v03, v04, v05, v06, v07);
-        result.data[1] = s32x8_set(v08, v09, v10, v11, v12, v13, v14, v15);
-        return result;
+        auto lo = s32x8_set(v00, v01, v02, v03, v04, v05, v06, v07);
+        auto hi = s32x8_set(v08, v09, v10, v11, v12, v13, v14, v15);
+        return { lo, hi };
     }
 
     static inline s32x16 s32x16_uload(const void* source)
     {
-        s32x16 result;
-        result.data[0] = s32x8_uload(reinterpret_cast<const s32*>(source) + 0);
-        result.data[1] = s32x8_uload(reinterpret_cast<const s32*>(source) + 8);
-        return result;
+        auto lo = s32x8_uload(reinterpret_cast<const s32*>(source) + 0);
+        auto hi = s32x8_uload(reinterpret_cast<const s32*>(source) + 8);
+        return { lo, hi };
     }
 
     static inline void s32x16_ustore(void* dest, s32x16 a)
@@ -919,54 +860,48 @@ namespace mango::simd
     template <int Count>
     static inline s32x16 slli(s32x16 a)
     {
-        s32x16 result;
-        result.data[0] = slli<Count>(a.data[0]);
-        result.data[1] = slli<Count>(a.data[1]);
-        return result;
+        auto lo = slli<Count>(a.data[0]);
+        auto hi = slli<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     template <int Count>
     static inline s32x16 srli(s32x16 a)
     {
-        s32x16 result;
-        result.data[0] = srli<Count>(a.data[0]);
-        result.data[1] = srli<Count>(a.data[1]);
-        return result;
+        auto lo = srli<Count>(a.data[0]);
+        auto hi = srli<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     template <int Count>
     static inline s32x16 srai(s32x16 a)
     {
-        s32x16 result;
-        result.data[0] = srai<Count>(a.data[0]);
-        result.data[1] = srai<Count>(a.data[1]);
-        return result;
+        auto lo = srai<Count>(a.data[0]);
+        auto hi = srai<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     // shify by scalar
 
     static inline s32x16 sll(s32x16 a, int count)
     {
-        s32x16 result;
-        result.data[0] = sll(a.data[0], count);
-        result.data[1] = sll(a.data[1], count);
-        return result;
+        auto lo = sll(a.data[0], count);
+        auto hi = sll(a.data[1], count);
+        return { lo, hi };
     }
 
     static inline s32x16 srl(s32x16 a, int count)
     {
-        s32x16 result;
-        result.data[0] = srl(a.data[0], count);
-        result.data[1] = srl(a.data[1], count);
-        return result;
+        auto lo = srl(a.data[0], count);
+        auto hi = srl(a.data[1], count);
+        return { lo, hi };
     }
 
     static inline s32x16 sra(s32x16 a, int count)
     {
-        s32x16 result;
-        result.data[0] = sra(a.data[0], count);
-        result.data[1] = sra(a.data[1], count);
-        return result;
+        auto lo = sra(a.data[0], count);
+        auto hi = sra(a.data[1], count);
+        return { lo, hi };
     }
 
     // shift by vector
@@ -998,34 +933,30 @@ namespace mango::simd
 
     static inline s64x8 s64x8_zero()
     {
-        s64x8 result;
-        result.data[0] = s64x4_zero();
-        result.data[1] = s64x4_zero();
-        return result;
+        auto lo = s64x4_zero();
+        auto hi = s64x4_zero();
+        return { lo, hi };
     }
 
     static inline s64x8 s64x8_set(s64 s)
     {
-        s64x8 result;
-        result.data[0] = s64x4_set(s);
-        result.data[1] = s64x4_set(s);
-        return result;
+        auto lo = s64x4_set(s);
+        auto hi = s64x4_set(s);
+        return { lo, hi };
     }
 
     static inline s64x8 s64x8_set(s64 v0, s64 v1, s64 v2, s64 v3, s64 v4, s64 v5, s64 v6, s64 v7)
     {
-        s64x8 result;
-        result.data[0] = s64x4_set(v0, v1, v2, v3);
-        result.data[1] = s64x4_set(v4, v5, v6, v7);
-        return result;
+        auto lo = s64x4_set(v0, v1, v2, v3);
+        auto hi = s64x4_set(v4, v5, v6, v7);
+        return { lo, hi };
     }
 
     static inline s64x8 s64x8_uload(const void* source)
     {
-        s64x8 result;
-        result.data[0] = s64x4_uload(reinterpret_cast<const s64*>(source) + 0);
-        result.data[1] = s64x4_uload(reinterpret_cast<const s64*>(source) + 4);
-        return result;
+        auto lo = s64x4_uload(reinterpret_cast<const s64*>(source) + 0);
+        auto hi = s64x4_uload(reinterpret_cast<const s64*>(source) + 4);
+        return { lo, hi };
     }
 
     static inline void s64x8_ustore(void* dest, s64x8 a)
@@ -1071,37 +1002,33 @@ namespace mango::simd
     template <int Count>
     static inline s64x8 slli(s64x8 a)
     {
-        s64x8 result;
-        result.data[0] = slli<Count>(a.data[0]);
-        result.data[1] = slli<Count>(a.data[1]);
-        return result;
+        auto lo = slli<Count>(a.data[0]);
+        auto hi = slli<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     template <int Count>
     static inline s64x8 srli(s64x8 a)
     {
-        s64x8 result;
-        result.data[0] = srli<Count>(a.data[0]);
-        result.data[1] = srli<Count>(a.data[1]);
-        return result;
+        auto lo = srli<Count>(a.data[0]);
+        auto hi = srli<Count>(a.data[1]);
+        return { lo, hi };
     }
 
     // shift by scalar
 
     static inline s64x8 sll(s64x8 a, int count)
     {
-        s64x8 result;
-        result.data[0] = sll(a.data[0], count);
-        result.data[1] = sll(a.data[1], count);
-        return result;
+        auto lo = sll(a.data[0], count);
+        auto hi = sll(a.data[1], count);
+        return { lo, hi };
     }
 
     static inline s64x8 srl(s64x8 a, int count)
     {
-        s64x8 result;
-        result.data[0] = srl(a.data[0], count);
-        result.data[1] = srl(a.data[1], count);
-        return result;
+        auto lo = srl(a.data[0], count);
+        auto hi = srl(a.data[1], count);
+        return { lo, hi };
     }
 
     // -----------------------------------------------------------------
@@ -1110,34 +1037,30 @@ namespace mango::simd
 
     static inline mask8x64 operator & (mask8x64 a, mask8x64 b)
     {
-        mask8x64 result;
-        result.data[0] = a.data[0] & b.data[0];
-        result.data[1] = a.data[1] & b.data[1];
-        return result;
+        auto lo = a.data[0] & b.data[0];
+        auto hi = a.data[1] & b.data[1];
+        return { lo, hi };
     }
 
     static inline mask8x64 operator | (mask8x64 a, mask8x64 b)
     {
-        mask8x64 result;
-        result.data[0] = a.data[0] | b.data[0];
-        result.data[1] = a.data[1] | b.data[1];
-        return result;
+        auto lo = a.data[0] | b.data[0];
+        auto hi = a.data[1] | b.data[1];
+        return { lo, hi };
     }
 
     static inline mask8x64 operator ^ (mask8x64 a, mask8x64 b)
     {
-        mask8x64 result;
-        result.data[0] = a.data[0] ^ b.data[0];
-        result.data[1] = a.data[1] ^ b.data[1];
-        return result;
+        auto lo = a.data[0] ^ b.data[0];
+        auto hi = a.data[1] ^ b.data[1];
+        return { lo, hi };
     }
 
     static inline mask8x64 operator ! (mask8x64 a)
     {
-        mask8x64 result;
-        result.data[0] = !a.data[0];
-        result.data[1] = !a.data[1];
-        return result;
+        auto lo = !a.data[0];
+        auto hi = !a.data[1];
+        return { lo, hi };
     }
 
     static inline u64 get_mask(mask8x64 a)
@@ -1167,34 +1090,30 @@ namespace mango::simd
 
     static inline mask16x32 operator & (mask16x32 a, mask16x32 b)
     {
-        mask16x32 result;
-        result.data[0] = a.data[0] & b.data[0];
-        result.data[1] = a.data[1] & b.data[1];
-        return result;
+        auto lo = a.data[0] & b.data[0];
+        auto hi = a.data[1] & b.data[1];
+        return { lo, hi };
     }
 
     static inline mask16x32 operator | (mask16x32 a, mask16x32 b)
     {
-        mask16x32 result;
-        result.data[0] = a.data[0] | b.data[0];
-        result.data[1] = a.data[1] | b.data[1];
-        return result;
+        auto lo = a.data[0] | b.data[0];
+        auto hi = a.data[1] | b.data[1];
+        return { lo, hi };
     }
 
     static inline mask16x32 operator ^ (mask16x32 a, mask16x32 b)
     {
-        mask16x32 result;
-        result.data[0] = a.data[0] ^ b.data[0];
-        result.data[1] = a.data[1] ^ b.data[1];
-        return result;
+        auto lo = a.data[0] ^ b.data[0];
+        auto hi = a.data[1] ^ b.data[1];
+        return { lo, hi };
     }
 
     static inline mask16x32 operator ! (mask16x32 a)
     {
-        mask16x32 result;
-        result.data[0] = !a.data[0];
-        result.data[1] = !a.data[1];
-        return result;
+        auto lo = !a.data[0];
+        auto hi = !a.data[1];
+        return { lo, hi };
     }
 
     static inline u32 get_mask(mask16x32 a)
@@ -1224,34 +1143,30 @@ namespace mango::simd
 
     static inline mask32x16 operator & (mask32x16 a, mask32x16 b)
     {
-        mask32x16 result;
-        result.data[0] = a.data[0] & b.data[0];
-        result.data[1] = a.data[1] & b.data[1];
-        return result;
+        auto lo = a.data[0] & b.data[0];
+        auto hi = a.data[1] & b.data[1];
+        return { lo, hi };
     }
 
     static inline mask32x16 operator | (mask32x16 a, mask32x16 b)
     {
-        mask32x16 result;
-        result.data[0] = a.data[0] | b.data[0];
-        result.data[1] = a.data[1] | b.data[1];
-        return result;
+        auto lo = a.data[0] | b.data[0];
+        auto hi = a.data[1] | b.data[1];
+        return { lo, hi };
     }
 
     static inline mask32x16 operator ^ (mask32x16 a, mask32x16 b)
     {
-        mask32x16 result;
-        result.data[0] = a.data[0] ^ b.data[0];
-        result.data[1] = a.data[1] ^ b.data[1];
-        return result;
+        auto lo = a.data[0] ^ b.data[0];
+        auto hi = a.data[1] ^ b.data[1];
+        return { lo, hi };
     }
 
     static inline mask32x16 operator ! (mask32x16 a)
     {
-        mask32x16 result;
-        result.data[0] = !a.data[0];
-        result.data[1] = !a.data[1];
-        return result;
+        auto lo = !a.data[0];
+        auto hi = !a.data[1];
+        return { lo, hi };
     }
 
     static inline u32 get_mask(mask32x16 a)
@@ -1281,34 +1196,30 @@ namespace mango::simd
 
     static inline mask64x8 operator & (mask64x8 a, mask64x8 b)
     {
-        mask64x8 result;
-        result.data[0] = a.data[0] & b.data[0];
-        result.data[1] = a.data[1] & b.data[1];
-        return result;
+        auto lo = a.data[0] & b.data[0];
+        auto hi = a.data[1] & b.data[1];
+        return { lo, hi };
     }
 
     static inline mask64x8 operator | (mask64x8 a, mask64x8 b)
     {
-        mask64x8 result;
-        result.data[0] = a.data[0] | b.data[0];
-        result.data[1] = a.data[1] | b.data[1];
-        return result;
+        auto lo = a.data[0] | b.data[0];
+        auto hi = a.data[1] | b.data[1];
+        return { lo, hi };
     }
 
     static inline mask64x8 operator ^ (mask64x8 a, mask64x8 b)
     {
-        mask64x8 result;
-        result.data[0] = a.data[0] ^ b.data[0];
-        result.data[1] = a.data[1] ^ b.data[1];
-        return result;
+        auto lo = a.data[0] ^ b.data[0];
+        auto hi = a.data[1] ^ b.data[1];
+        return { lo, hi };
     }
 
     static inline mask64x8 operator ! (mask64x8 a)
     {
-        mask64x8 result;
-        result.data[0] = !a.data[0];
-        result.data[1] = !a.data[1];
-        return result;
+        auto lo = !a.data[0];
+        auto hi = !a.data[1];
+        return { lo, hi };
     }
 
     static inline u32 get_mask(mask64x8 a)

@@ -30,7 +30,7 @@ namespace mango
     // aligned malloc/free
     // -----------------------------------------------------------------------
 
-#if defined(MANGO_COMPILER_MICROSOFT)
+#if defined(MANGO_COMPILER_MSVC)
 
     void* aligned_malloc(size_t bytes, size_t alignment)
     {

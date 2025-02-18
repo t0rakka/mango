@@ -171,7 +171,7 @@ namespace
             return is;
         }
 
-#if defined(MANGO_PLATFORM_OSX) || defined(MANGO_PLATFORM_IOS) || defined(MANGO_PLATFORM_BSD)
+#if defined(MANGO_PLATFORM_MACOS) || defined(MANGO_PLATFORM_IOS) || defined(MANGO_PLATFORM_BSD)
 
     #if defined(__ppc__)
         // PPC system headers have this subtle difference that fails to compile

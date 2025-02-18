@@ -1,0 +1,59 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": { "major": 3, "minor": 19 },
+    "configurePresets": [
+        {
+            "name": "windows",
+            "description": "Windows build using vcpkg toolchain",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "INTEL_DELUXE": "ON"
+            }
+        },
+        {
+            "name": "posix-release",
+            "description": "POSIX compatible build (Linux, macOS)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "INTEL_DELUXE": "ON"
+            }
+        },
+        {
+            "name": "posix-debug",
+            "description": "POSIX compatible build (Linux, macOS)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "INTEL_DELUXE": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "windows-release",
+            "configurePreset": "windows",
+            "configuration": "Release",
+            "jobs": 0
+        },
+        {
+            "name": "windows-debug",
+            "configurePreset": "windows",
+            "configuration": "Debug",
+            "jobs": 0
+        },
+        {
+            "name": "posix-release",
+            "configurePreset": "posix-release",
+            "jobs": 0
+        },
+        {
+            "name": "posix-debug",
+            "configurePreset": "posix-debug",
+            "jobs": 0
+        }
+    ]
+}

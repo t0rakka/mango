@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <vector>
@@ -13,11 +13,11 @@
 #include <mango/core/pointer.hpp>
 #include <mango/math/math.hpp>
 
-#include "../../external/lz4/lz4.h"
-#include "../../external/lz4/lz4hc.h"
+#include <lz4.h>
+#include <lz4hc.h>
 
 #define ZSTD_DISABLE_DEPRECATE_WARNINGS
-#include "../../external/zstd/zstd.h"
+#include <zstd.h>
 
 #include "../../external/bzip2/bzlib.h"
 #include "../../external/lzfse/lzfse.h"
@@ -29,17 +29,17 @@
 #include "../../external/lzma/Lzma2Enc.h"
 #include "../../external/lzma/Ppmd8.h"
 
-#include "../../external/zlib/zlib.h"
-
-#include "../../external/libdeflate/libdeflate.h"
+#include <zlib.h>
+#include <libdeflate.h>
 
 #include "../../external/lzav/lzav.h"
 
 #if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
-    #ifdef MANGO_COMPILER_MICROSOFT
+    // Why you have to be like that.. on Windows we assume VCPKG packaging for others BREW/APT
+    #if defined(MANGO_PLATFORM_WINDOWS)
         #include <isal/igzip_lib.h>
     #else
-        #include <isa-l.h>
+        #include <isa-l/igzip_lib.h>
     #endif
 #endif
 
@@ -1349,22 +1349,22 @@ namespace isal
 
     const std::vector<Compressor> g_compressors =
     {
-        { Compressor::NONE,    "none",  nocompress::bound, nocompress::compress, nocompress::decompress },
-        { Compressor::BZIP2,   "bzip2", bzip2::bound, bzip2::compress, bzip2::decompress },
-        { Compressor::LZ4,     "lz4",   lz4::bound,   lz4::compress,   lz4::decompress },
-        { Compressor::ZSTD,    "zstd",  zstd::bound,  zstd::compress,  zstd::decompress },
-        { Compressor::LZFSE,   "lzfse", lzfse::bound, lzfse::compress, lzfse::decompress },
-        { Compressor::LZMA,    "lzma",  lzma::bound,  lzma::compress,  lzma::decompress },
-        { Compressor::LZMA2,   "lzma2", lzma2::bound, lzma2::compress, lzma2::decompress },
-        { Compressor::PPMD8,   "ppmd8", ppmd8::bound, ppmd8::compress, ppmd8::decompress },
-        { Compressor::ZLIB,    "zlib",  zlib::bound,  zlib::compress,  zlib::decompress },
-        { Compressor::LZAV,    "lzav",  lzav::bound,  lzav::compress,  lzav::decompress },
+        { Compressor::NONE,         "none",         nocompress::bound,   nocompress::compress,   nocompress::decompress },
+        { Compressor::LZ4,          "lz4",          lz4::bound,          lz4::compress,          lz4::decompress },
+        { Compressor::LZAV,         "lzav",         lzav::bound,         lzav::compress,         lzav::decompress },
+#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
+        { Compressor::ISAL,          "isal",        isal::bound,         isal::compress,         isal::decompress },
+#endif
+        { Compressor::LZFSE,        "lzfse",        lzfse::bound,        lzfse::compress,        lzfse::decompress },
+        { Compressor::ZLIB,         "zlib",         zlib::bound,         zlib::compress,         zlib::decompress },
         { Compressor::DEFLATE,      "deflate",      deflate::bound,      deflate::compress,      deflate::decompress },
         { Compressor::DEFLATE_ZLIB, "deflate.zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },
         { Compressor::DEFLATE_GZIP, "deflate.gzip", deflate_gzip::bound, deflate_gzip::compress, deflate_gzip::decompress },
-#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
-        { Compressor::ISAL,    "isal",  isal::bound,  isal::compress,  isal::decompress },
-#endif
+        { Compressor::ZSTD,         "zstd",         zstd::bound,         zstd::compress,         zstd::decompress },
+        { Compressor::LZMA,         "lzma",         lzma::bound,         lzma::compress,         lzma::decompress },
+        { Compressor::LZMA2,        "lzma2",        lzma2::bound,        lzma2::compress,        lzma2::decompress },
+        { Compressor::PPMD8,        "ppmd8",        ppmd8::bound,        ppmd8::compress,        ppmd8::decompress },
+        { Compressor::BZIP2,        "bzip2",        bzip2::bound,        bzip2::compress,        bzip2::decompress },
     };
 
     std::vector<Compressor> getCompressors()

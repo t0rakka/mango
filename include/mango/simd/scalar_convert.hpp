@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -425,46 +425,41 @@ namespace mango::simd
     template <>
     inline s32x8 convert<s32x8>(f32x8 s)
     {
-        s32x8 result;
-        result.data[0] = convert<s32x4>(s.data[0]);
-        result.data[1] = convert<s32x4>(s.data[1]);
-        return result;
+        auto lo = convert<s32x4>(s.data[0]);
+        auto hi = convert<s32x4>(s.data[1]);
+        return { lo, hi };
     }
 
     template <>
     inline f32x8 convert<f32x8>(s32x8 s)
     {
-        f32x8 result;
-        result.data[0] = convert<f32x4>(s.data[0]);
-        result.data[1] = convert<f32x4>(s.data[1]);
-        return result;
+        auto lo = convert<f32x4>(s.data[0]);
+        auto hi = convert<f32x4>(s.data[1]);
+        return { lo, hi };
     }
 
     template <>
     inline u32x8 convert<u32x8>(f32x8 s)
     {
-        u32x8 result;
-        result.data[0] = convert<u32x4>(s.data[0]);
-        result.data[1] = convert<u32x4>(s.data[1]);
-        return result;
+        auto lo = convert<u32x4>(s.data[0]);
+        auto hi = convert<u32x4>(s.data[1]);
+        return { lo, hi };
     }
 
     template <>
     inline f32x8 convert<f32x8>(u32x8 s)
     {
-        f32x8 result;
-        result.data[0] = convert<f32x4>(s.data[0]);
-        result.data[1] = convert<f32x4>(s.data[1]);
-        return result;
+        auto lo = convert<f32x4>(s.data[0]);
+        auto hi = convert<f32x4>(s.data[1]);
+        return { lo, hi };
     }
 
     template <>
     inline s32x8 truncate<s32x8>(f32x8 s)
     {
-        s32x8 result;
-        result.data[0] = truncate<s32x4>(s.data[0]);
-        result.data[1] = truncate<s32x4>(s.data[1]);
-        return result;
+        auto lo = truncate<s32x4>(s.data[0]);
+        auto hi = truncate<s32x4>(s.data[1]);
+        return { lo, hi };
     }
 
     // 512 bit convert
@@ -472,46 +467,41 @@ namespace mango::simd
     template <>
     inline s32x16 convert<s32x16>(f32x16 s)
     {
-        s32x16 result;
-        result.data[0] = convert<s32x8>(s.data[0]);
-        result.data[1] = convert<s32x8>(s.data[1]);
-        return result;
+        auto lo = convert<s32x8>(s.data[0]);
+        auto hi = convert<s32x8>(s.data[1]);
+        return { lo, hi };
     }
 
     template <>
     inline f32x16 convert<f32x16>(s32x16 s)
     {
-        f32x16 result;
-        result.data[0] = convert<f32x8>(s.data[0]);
-        result.data[1] = convert<f32x8>(s.data[1]);
-        return result;
+        auto lo = convert<f32x8>(s.data[0]);
+        auto hi = convert<f32x8>(s.data[1]);
+        return { lo, hi };
     }
 
     template <>
     inline u32x16 convert<u32x16>(f32x16 s)
     {
-        u32x16 result;
-        result.data[0] = convert<u32x8>(s.data[0]);
-        result.data[1] = convert<u32x8>(s.data[1]);
-        return result;
+        auto lo = convert<u32x8>(s.data[0]);
+        auto hi = convert<u32x8>(s.data[1]);
+        return { lo, hi };
     }
 
     template <>
     inline f32x16 convert<f32x16>(u32x16 s)
     {
-        f32x16 result;
-        result.data[0] = convert<f32x8>(s.data[0]);
-        result.data[1] = convert<f32x8>(s.data[1]);
-        return result;
+        auto lo = convert<f32x8>(s.data[0]);
+        auto hi = convert<f32x8>(s.data[1]);
+        return { lo, hi };
     }
 
     template <>
     inline s32x16 truncate<s32x16>(f32x16 s)
     {
-        s32x16 result;
-        result.data[0] = truncate<s32x8>(s.data[0]);
-        result.data[1] = truncate<s32x8>(s.data[1]);
-        return result;
+        auto lo = truncate<s32x8>(s.data[0]);
+        auto hi = truncate<s32x8>(s.data[1]);
+        return { lo, hi };
     }
 
     // -----------------------------------------------------------------

@@ -190,7 +190,7 @@ namespace mango::filesystem
 
 } // namespace mango::filesystem
 
-#elif defined(MANGO_PLATFORM_BSD) || defined(MANGO_PLATFORM_OSX) || defined(MANGO_PLATFORM_IOS)
+#elif defined(MANGO_PLATFORM_BSD) || defined(MANGO_PLATFORM_MACOS) || defined(MANGO_PLATFORM_IOS)
 
 // -----------------------------------------------------------------
 // FileObserver: BSD, macOS and iOS implementation

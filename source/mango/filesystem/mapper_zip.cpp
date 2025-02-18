@@ -10,8 +10,6 @@
 #include <mango/filesystem/path.hpp>
 #include "indexer.hpp"
 
-#include "../../external/libdeflate/libdeflate.h"
-
 /*
 https://courses.cs.ut.ee/MTAT.07.022/2015_fall/uploads/Main/dmitri-report-f15-16.pdf
 

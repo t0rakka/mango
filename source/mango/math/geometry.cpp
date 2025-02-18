@@ -135,7 +135,7 @@ namespace mango::math
                corner[0].z <= point.z && corner[1].z > point.z;
     }
 
-    float32x3 Box::vertex(int index) const
+    float32x3 Box::vertex(size_t index) const
     {
         assert(index >= 0 && index < 8);
         float x = corner[(index >> 0) & 1].x;
@@ -144,7 +144,7 @@ namespace mango::math
         return float32x3(x, y, z);
     }
 
-    void Box::vertices(float32x3 vertex[]) const
+    void Box::vertices(float32x3 vertex[8]) const
     {
         vertex[0] = float32x3(corner[0].x, corner[0].y, corner[0].z);
         vertex[1] = float32x3(corner[1].x, corner[0].y, corner[0].z);
@@ -254,35 +254,73 @@ namespace mango::math
     // Frustum
     // ------------------------------------------------------------------
 
-    Frustum::Frustum(const Matrix4x4& tm)
+    Frustum::Frustum(const Matrix4x4& viewProject)
     {
-        const Matrix4x4 m = transpose(tm);
+        const Matrix4x4 m = transpose(viewProject);
 
-        const float32x3 nx = float32x4(m[3] + m[0]).xyz;
-        const float32x3 px = float32x4(m[3] - m[0]).xyz;
-        const float32x3 ny = float32x4(m[3] + m[1]).xyz;
-        const float32x3 py = float32x4(m[3] - m[1]).xyz;
+        clip[0] = m[3] + m[0];
+        clip[1] = m[3] - m[0];
+        clip[2] = m[3] + m[1];
+        clip[3] = m[3] - m[1];
+        clip[4] = m[3] + m[2];
+        clip[5] = m[3] - m[2];
+    }
+
+    bool Frustum::isVisible(const Box& box) const
+    {
+        for (int i = 0; i < 6; ++i)
+        {
+            float32x4 position;
+
+            position.x = clip[i].x > 0 ? box.corner[1].x : box.corner[0].x;
+            position.y = clip[i].y > 0 ? box.corner[1].y : box.corner[0].y;
+            position.z = clip[i].z > 0 ? box.corner[1].z : box.corner[0].z;
+            position.w = 1.0f;
+
+            float32x4 s = dot(position, clip[i]);
+            if (s.x < 0)
+                return false;
+        }
+        
+        return true;
+    }
+
+    RayFrustum::RayFrustum(const Matrix4x4& viewProject)
+    {
+        const Matrix4x4 m = transpose(viewProject);
+
+        float32x4 clip[4];
+
+        clip[0] = m[3] + m[0];
+        clip[1] = m[3] - m[0];
+        clip[2] = m[3] + m[1];
+        clip[3] = m[3] - m[1];
+
+        const float32x3 v0 = clip[0].xyz;
+        const float32x3 v1 = clip[1].xyz;
+        const float32x3 v2 = clip[2].xyz;
+        const float32x3 v3 = clip[3].xyz;
+
+        point[0] = cross(v0, v3);
+        point[1] = cross(v3, v1);
+        point[2] = cross(v2, v0);
+        point[3] = cross(v1, v2);
+
+        const float s = -1.0f / dot(v0, point[1]);
+        const float32x3 temp = cross(v1, v0);
 
         const float d0 = m[3][3] - m[0][3];
         const float d1 = m[3][3] + m[0][3];
         const float d2 = m[3][3] - m[1][3];
 
-        point[0] = cross(nx, py);
-        point[1] = cross(py, px);
-        point[2] = cross(ny, nx);
-        point[3] = cross(px, ny);
-
-        const float s = -1.0f / dot(nx, point[1]);
-        const float32x3 temp = cross(px, nx);
-
         origin = (point[0] * d0 + point[1] * d1 + temp * d2) * s;
     }
 
-    Ray Frustum::ray(float x, float y) const
+    Ray RayFrustum::ray(float x, float y) const
     {
-        const float32x3 left = lerp(point[0], point[2], y);
-        const float32x3 right = lerp(point[1], point[3], y);
-        const float32x3 p = lerp(left, right, x);
+        const float32x3 x0 = lerp(point[0], point[2], y);
+        const float32x3 x1 = lerp(point[1], point[3], y);
+        const float32x3 p = lerp(x0, x1, x);
         return Ray(origin, normalize(p - origin));
     }
 
@@ -582,7 +620,7 @@ namespace mango::math
         return true;
     }
 
-    bool intersect(float32x3&& result, const Plane& plane0, const Plane& plane1, const Plane& plane2)
+    bool intersect(float32x3& result, const Plane& plane0, const Plane& plane1, const Plane& plane2)
     {
         // Determinant
         float32x3 cp01 = cross(plane0.normal, plane1.normal);

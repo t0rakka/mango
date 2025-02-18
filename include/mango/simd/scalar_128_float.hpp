@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -443,12 +443,11 @@ namespace mango::simd
 
     static inline f32x4 select(mask32x4 mask, f32x4 a, f32x4 b)
     {
-        f32x4 result;
-        result[0] = mask.mask & (1 << 0) ? a[0] : b[0];
-        result[1] = mask.mask & (1 << 1) ? a[1] : b[1];
-        result[2] = mask.mask & (1 << 2) ? a[2] : b[2];
-        result[3] = mask.mask & (1 << 3) ? a[3] : b[3];
-        return result;
+        float x = mask.mask & (1 << 0) ? a[0] : b[0];
+        float y = mask.mask & (1 << 1) ? a[1] : b[1];
+        float z = mask.mask & (1 << 2) ? a[2] : b[2];
+        float w = mask.mask & (1 << 3) ? a[3] : b[3];
+        return { x, y, z, w };
     }
 
     // rounding
@@ -824,10 +823,9 @@ namespace mango::simd
 
     static inline f64x2 select(mask64x2 mask, f64x2 a, f64x2 b)
     {
-        f64x2 result;
-        result[0] = mask.mask & (1 << 0) ? a[0] : b[0];
-        result[1] = mask.mask & (1 << 1) ? a[1] : b[1];
-        return result;
+        double x = mask.mask & (1 << 0) ? a[0] : b[0];
+        double y = mask.mask & (1 << 1) ? a[1] : b[1];
+        return { x, y };
     }
 
     // rounding

@@ -24,9 +24,19 @@ namespace mango::math
             return reinterpret_cast<const float*>(this);
         }
 
-        operator float* ()
+        operator ScalarType* ()
         {
-            return reinterpret_cast<float*>(this);
+            return reinterpret_cast<ScalarType*>(this);
+        }
+
+        const ScalarType* data() const
+        {
+            return reinterpret_cast<const ScalarType*>(this);
+        }
+
+        ScalarType* data()
+        {
+            return reinterpret_cast<ScalarType*>(this);
         }
 
         const VectorType& operator [] (int y) const

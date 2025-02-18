@@ -222,12 +222,12 @@ namespace mango
             return m_size;
         }
 
-        T& operator [] (int index)
+        T& operator [] (size_t index)
         {
             return data()[index];
         }
 
-        const T& operator [] (int index) const
+        const T& operator [] (size_t index) const
         {
             return data()[index];
         }

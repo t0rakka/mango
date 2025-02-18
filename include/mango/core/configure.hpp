@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -125,7 +125,7 @@
     #else
 
         // Apple macOS
-        #define MANGO_PLATFORM_OSX
+        #define MANGO_PLATFORM_MACOS
         #define MANGO_PLATFORM_UNIX
         #define MANGO_PLATFORM_NAME "macOS"
 
@@ -381,12 +381,12 @@
 #if defined(__INTEL_COMPILER) || defined(__ICL) || defined(__ICC)
 
     // Intel C/C++ Compiler
-    #define MANGO_COMPILER_INTEL
+    #define MANGO_COMPILER_ICC
 
 #elif defined(_MSC_VER)
 
     // Microsoft Visual C++
-    #define MANGO_COMPILER_MICROSOFT
+    #define MANGO_COMPILER_MSVC
 
     // noexcept specifier support was added in Visual Studio 2015
     #if _MSC_VER < 1900
@@ -567,7 +567,7 @@
     #endif
 
     #if defined(__FMA4__) && !defined(MANGO_ENABLE_FMA4)
-        #if defined(MANGO_COMPILER_MICROSOFT)
+        #if defined(MANGO_COMPILER_MSVC)
             #define MANGO_ENABLE_FMA4
             #include <intrin.h>
         #elif defined(MANGO_COMPILER_GCC) || defined(MANGO_COMPILER_CLANG)
@@ -726,10 +726,8 @@
 
     #if defined(MANGO_API_EXPORT)
         #define MANGO_API __declspec(dllexport)
-    #elif defined(MANGO_API_IMPORT)
-        #define MANGO_API __declspec(dllimport)
     #else
-        #define MANGO_API
+        #define MANGO_API __declspec(dllimport)
     #endif
 
 #elif __GNUC__ >= 4

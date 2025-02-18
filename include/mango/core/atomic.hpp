@@ -5,6 +5,7 @@
 #pragma once
 
 #include <atomic>
+#include <thread>
 #include <mango/core/configure.hpp>
 
 namespace mango
@@ -18,7 +19,7 @@ namespace mango
     void pause()
     {
 #if defined(MANGO_CPU_INTEL)
-    #if defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_MICROSOFT)
+    #if defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_MSVC)
         _mm_pause();
     #else
         __builtin_ia32_pause();
@@ -28,7 +29,7 @@ namespace mango
 #elif defined(MANGO_CPU_MIPS)
         __asm__ __volatile__("pause");
 #else
-        // NOTE: Processor yield/pause is not supported :(
+        std::this_thread::yield();
 #endif
     }
 

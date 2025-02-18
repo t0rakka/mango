@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -232,8 +232,8 @@ namespace mango::math
         void extend(const float32x3& point);
         void extend(const Box& box);
         bool inside(const float32x3& point) const;
-        float32x3 vertex(int index) const;
-        void vertices(float32x3 vertex[]) const;
+        float32x3 vertex(size_t index) const;
+        void vertices(float32x3 vertex[8]) const;
     };
 
     // ------------------------------------------------------------------
@@ -341,12 +341,33 @@ namespace mango::math
 
     struct Frustum
     {
-        float32x3 point[4]; // 0: top_left, 1: top_right, 2: bottom_left, 3: bottom_right
-        float32x3 origin;
+        // Homogeneous clip equations
+        float32x4 clip[6];
 
         Frustum() = default;
-        Frustum(const Matrix4x4& m);
+        Frustum(const Matrix4x4& viewProject);
         ~Frustum() = default;
+
+        bool isVisible(const Box& box) const;
+    };
+
+    // ------------------------------------------------------------------
+    // RayFrustum
+    // ------------------------------------------------------------------
+
+    struct RayFrustum
+    {
+        //  points at znear plane seen from origin (camera):
+        //  0----1
+        //  |    |
+        //  |    |
+        //  2----3
+        float32x3 point[4];
+        float32x3 origin;
+
+        RayFrustum() = default;
+        RayFrustum(const Matrix4x4& viewProject);
+        ~RayFrustum() = default;
 
         Ray ray(float x, float y) const;
     };
