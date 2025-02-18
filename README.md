@@ -73,4 +73,4 @@ mango:         3.2 ms       4.3 ms        699
 
 ### discord
 
-https://discord.gg/zJmtAavY
+https://discord.gg/E2xuXbK9Kf
