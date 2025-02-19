@@ -232,8 +232,8 @@ void test17()
     Path path("data/");
     print(path, "data/");
 
-    File file(path, "foo/test.txt");
-    print(file, "data/foo/test.txt", 0x569510f1);
+    File file(path, "foo/test.data");
+    print(file, "data/foo/test.data", 0x149cd379);
 }
 
 void test18()
@@ -260,12 +260,12 @@ void test19()
 
 void test20()
 {
-    File file("data/foo/test.txt");
-    print(file, "data/foo/test.txt", 0x569510f1);
+    File file("data/foo/test.data");
+    print(file, "data/foo/test.data", 0x149cd379);
 
     ConstMemory memory = file;
-    Path path(memory, ".txt");
-    print(path, ""); // the mapping should fail as ".txt" is not a container
+    Path path(memory, ".data");
+    print(path, ""); // the mapping should fail as ".data" is not a container
 }
 
 void test21()
@@ -358,11 +358,11 @@ void test29()
     Path path("data/bad.xxx/");
     print(path, "data/bad.xxx/");
 
-    File file1(path, "dummy.txt");
-    print(file1, "data/bad.xxx/dummy.txt", 0xc96fd51e);
+    File file1(path, "dummy.data");
+    print(file1, "data/bad.xxx/dummy.data", 0xd0746829);
 
-    File file2("data/bad.xxx/dummy.txt");
-    print(file2, "data/bad.xxx/dummy.txt", 0xc96fd51e);
+    File file2("data/bad.xxx/dummy.data");
+    print(file2, "data/bad.xxx/dummy.data", 0xd0746829);
 }
 
 void test30()
@@ -372,11 +372,11 @@ void test30()
     Path path("data/bad.zip/");
     print(path, "data/bad.zip/");
 
-    File file1(path, "dummy.txt");
-    print(file1, "data/bad.zip/dummy.txt", 0xfd887d87);
+    File file1(path, "dummy.data");
+    print(file1, "data/bad.zip/dummy.data", 0xd0746829);
 
-    File file2("data/bad.zip/dummy.txt");
-    print(file2, "data/bad.zip/dummy.txt", 0xfd887d87);
+    File file2("data/bad.zip/dummy.data");
+    print(file2, "data/bad.zip/dummy.data", 0xd0746829);
 }
 
 void test31()
