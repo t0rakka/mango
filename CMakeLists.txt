@@ -462,13 +462,13 @@ if (BUILD_OPENGL)
     if (OPENGL_FOUND)
         message("  + OpenGL")
         if (APPLE)
-            target_link_libraries(mango PRIVATE "-framework Cocoa -framework OpenGL")
+            target_link_libraries(mango PUBLIC "-framework Cocoa -framework OpenGL")
         elseif (WIN32)
-            target_link_libraries(mango PRIVATE ${OPENGL_gl_LIBRARY})
+            target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
         else ()
             message("  + XLIB")
             target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
-            target_link_libraries(mango PRIVATE X11 GL ${OPENGL_glx_LIBRARY})
+            target_link_libraries(mango PUBLIC X11 GL ${OPENGL_glx_LIBRARY})
         endif ()
     endif ()
 endif ()
@@ -486,10 +486,10 @@ find_module_with_pkg(mango LIBDEFLATE libdeflate)
 check_required_package(LIBDEFLATE)
 
 if (APPLE)
-    # brew target is 'zstd::libzstd'
+    # brew imported target is 'zstd::libzstd'
     find_module_with_cmake(mango ZSTD zstd zstd::libzstd 0)
 else ()
-    # vcpkg/apt target is 'zstd'
+    # vcpkg/apt imported target is 'zstd'
     find_module_with_cmake(mango ZSTD zstd zstd 0)
 endif ()
 find_module_with_pkg(mango ZSTD libzstd)
@@ -782,7 +782,8 @@ target_include_directories(mango
         "${PROJECT_SOURCE_DIR}/source/external/simdjson"
 )
 
-set_target_properties(mango PROPERTIES INTERFACE_LINK_LIBRARIES "")
+#set_target_properties(mango PROPERTIES INTERFACE_LINK_LIBRARIES "")
+add_library(mango::mango ALIAS mango)
 
 # install mango headers
 install(
@@ -800,5 +801,6 @@ install(TARGETS mango
 
 install(
     EXPORT "mango-config"
+    NAMESPACE mango::
     DESTINATION "lib/cmake/mango"
 )

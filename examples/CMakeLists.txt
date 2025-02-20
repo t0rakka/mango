@@ -11,7 +11,7 @@ else ()
     add_compile_options(-Wall)
 endif ()
 
-link_libraries(mango)
+link_libraries(mango::mango)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
