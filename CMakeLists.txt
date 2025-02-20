@@ -587,9 +587,7 @@ if (EMSCRIPTEN)
 
 elseif (MSVC)
 
-    #target_compile_options(mango PUBLIC "/Wall")
-    #add_compile_options($<$<CONFIG:Release>:/Ox>)
-    target_compile_options(mango PRIVATE $<$<CONFIG:Release>:/Ox>)
+    target_compile_options(mango PUBLIC $<$<CONFIG:Release>:/Ox>)
     target_compile_options(mango PUBLIC "/utf-8")
     target_compile_options(mango PUBLIC "/MP")
 
