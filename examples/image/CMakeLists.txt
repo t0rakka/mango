@@ -43,9 +43,6 @@ else ()
 
 endif ()
 
-find_module_with_cmake(png_benchmark ZLIB ZLIB ZLIB::ZLIB 0)
-find_module_with_pkg(png_benchmark ZLIB zlib)
-
 find_module_with_cmake(png_benchmark PNG PNG PNG::PNG 0)
 find_module_with_pkg(png_benchmark PNG libpng)
 

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.19)
 project(mango
         VERSION 1.7.0
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
-        LANGUAGES CXX C ASM)
+        LANGUAGES CXX C)
 
 # ------------------------------------------------------------------------------
 # options
@@ -26,11 +26,12 @@ OPTION(ENABLE_AVX           "Enable AVX instructions"                   OFF)
 OPTION(ENABLE_AVX2          "Enable AVX2 instructions"                  OFF)
 OPTION(ENABLE_AVX512        "Enable AVX-512 instructions"               OFF)
 
-OPTION(ENABLE_AES           "Enable AES"                                OFF)
 OPTION(ENABLE_PCLMUL        "Enable PCLMUL"                             OFF)
 OPTION(ENABLE_POPCNT        "Enable POPCNT"                             OFF)
+OPTION(ENABLE_AES           "Enable AES"                                OFF)
 OPTION(ENABLE_F16C          "Enable F16C conversion instructions"       OFF)
-OPTION(ENABLE_BMI           "Enable BMI + LZCNT"                        OFF)
+OPTION(ENABLE_LZCNT         "Enable LZCNT"                              OFF)
+OPTION(ENABLE_BMI           "Enable BMI"                                OFF)
 OPTION(ENABLE_BMI2          "Enable BMI2"                               OFF)
 OPTION(ENABLE_FMA           "Enable FMA"                                OFF)
 OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
@@ -50,10 +51,11 @@ endif ()
 option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"           OFF)
 if (INTEL_DELUXE)
     set(ENABLE_AVX2    ON)
-    set(ENABLE_AES     ON)
     set(ENABLE_PCLMUL  ON)
     set(ENABLE_POPCNT  ON)
+    set(ENABLE_AES     ON)
     set(ENABLE_F16C    ON)
+    set(ENABLE_LZCNT   ON)
     set(ENABLE_BMI     ON)
     set(ENABLE_BMI2    ON)
     set(ENABLE_FMA     ON)
@@ -97,7 +99,7 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "amd64.*|x86_64.*|AMD64.*")
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "i686.*|i386.*|x86.*")
     set(X86 1)
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64.*|AARCH64.*|arm64.*)")
-    set(AARCH64 1)
+    set(ARM64 1)
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm.*|ARM.*)")
     set(ARM 1)
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "PPC64*|ppc64*|powerpc64*")
@@ -119,6 +121,27 @@ endif ()
 message("Build: " ${CMAKE_BUILD_TYPE})
 
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/include)
+
+# ------------------------------------------------------------------------------
+# install prefix
+# ------------------------------------------------------------------------------
+
+# vcpkg
+if (DEFINED ENV{VCPKG_ROOT})
+
+    if (DEFINED ENV{VCPKG_TARGET_TRIPLET})
+        set(DEFAULT_INSTALL_PATH "$ENV{VCPKG_ROOT}/installed/$ENV{VCPKG_TARGET_TRIPLET}")
+    elseif (DEFINED ENV{VCPKG_DEFAULT_TRIPLET})
+        set(DEFAULT_INSTALL_PATH "$ENV{VCPKG_ROOT}/installed/$ENV{VCPKG_DEFAULT_TRIPLET}")
+    else ()
+        set(DEFAULT_INSTALL_PATH "${CMAKE_BINARY_DIR}/install")
+    endif ()
+
+    set(CMAKE_INSTALL_PREFIX "${DEFAULT_INSTALL_PATH}" CACHE PATH "Install path prefix" FORCE)
+
+endif ()
+
+message("Installation Directory: ${CMAKE_INSTALL_PREFIX}")
 
 # ------------------------------------------------------------------------------
 # sources: mango
@@ -387,6 +410,10 @@ if (BUILD_IMPORT3D)
         ${IMPORT3D_SOURCES}
         ${EXTERNAL_IMPORT3D}
     )
+    include_directories(BEFORE
+        "${EXTERNAL_SOURCE_DIR}/fastgltf/include"
+        "${EXTERNAL_SOURCE_DIR}/simdjson"
+    )
 endif ()
 
 add_library(mango SHARED ${MANGO_SOURCES})
@@ -417,7 +444,7 @@ function (find_module_with_pkg Target Prefix ItemAndVersion)
             pkg_check_modules(${Prefix} QUIET ${ItemAndVersion})
             if (${Prefix}_FOUND)
                 set(${Prefix}_ENABLE 1 PARENT_SCOPE)
-                message("  + " ${Prefix} ": " ${${Prefix}_VERSION} " [pkgconfig]")
+                message("    " ${Prefix} ": " ${${Prefix}_VERSION} " [pkgconfig]")
                 target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
                 target_include_directories(${Target} PRIVATE ${${Prefix}_INCLUDE_DIRS})
                 target_link_directories(${Target} PRIVATE ${${Prefix}_LIBRARY_DIRS})
@@ -436,7 +463,7 @@ function (find_module_with_cmake Target Prefix PackageName ItemName Version)
         endif ()
         if (${PackageName}_FOUND)
             set(${Prefix}_ENABLE 1 PARENT_SCOPE)
-            message("  + " ${Prefix} ": " ${${PackageName}_VERSION} " [cmake]")
+            message("    " ${Prefix} ": " ${${PackageName}_VERSION} " [cmake]")
             target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
             target_link_libraries(${Target} PRIVATE ${ItemName})
         endif ()
@@ -446,27 +473,28 @@ endfunction ()
 function (check_required_package Prefix)
     if (NOT ${Prefix}_ENABLE)
         message(FATAL_ERROR "Failed to locate REQUIRED package: " ${Prefix})
-        endif ()
+    endif ()
 endfunction()
 
 # ------------------------------------------------------------------------------
 # platform libraries
 # ------------------------------------------------------------------------------
 
+message("[Libraries]")
+
 if (CMAKE_THREAD_LIBS_INIT)
-    message("   + Threads")
     target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
 
 if (BUILD_OPENGL)
     if (OPENGL_FOUND)
-        message("  + OpenGL")
+        message("    OpenGL")
         if (APPLE)
             target_link_libraries(mango PUBLIC "-framework Cocoa -framework OpenGL")
         elseif (WIN32)
             target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
         else ()
-            message("  + XLIB")
+            message("    XLIB")
             target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
             target_link_libraries(mango PUBLIC X11 GL ${OPENGL_glx_LIBRARY})
         endif ()
@@ -544,95 +572,93 @@ endif ()
 # configuration
 # ------------------------------------------------------------------------------
 
+set(SIMD "NONE")
+
 target_compile_definitions(mango PRIVATE "MANGO_API_EXPORT")
+
+if (WIN32)
+    target_compile_definitions(mango PUBLIC UNICODE)
+endif ()
+
+if ((ARM AND ENABLE_NEON) OR ARM64)
+    set(SIMD "NEON")
+endif ()
 
 if (EMSCRIPTEN)
 
-    message("SIMD: WASM")
+    set(SIMD "WASM")
     target_compile_options(mango PUBLIC "-msimd128")
 
 elseif (MSVC)
 
-    #target_compile_options(mango PUBLIC "/Wall")
-    #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ox")
-    #set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /Ox")
-    target_compile_options(mango PUBLIC "/DUNICODE")
+    target_compile_options(mango PUBLIC $<$<CONFIG:Release>:/Ox>)
     target_compile_options(mango PUBLIC "/utf-8")
     target_compile_options(mango PUBLIC "/MP")
 
-    # enable AES (2010)
-    if (ENABLE_AES)
-        message("Enable: AES (2010)")
-        target_compile_definitions(mango PUBLIC "__AES__")
-    endif ()
+    if (X86 OR X86_64)
 
-    # enable CLMUL (2008)
-    if (ENABLE_PCLMUL)
-        message("Enable: PCLMUL (2008)")
-        target_compile_definitions(mango PUBLIC "__PCLMUL__")
-    endif ()
-
-    # popcnt
-    if (ENABLE_POPCNT)
-        message("Enable: POPCNT (2008)")
-        target_compile_definitions(mango PUBLIC "__POPCNT__")
-    endif ()
-
-    # half conversion instructions
-    if (ENABLE_F16C)
-        message("Enable: F16C (2012)")
-        target_compile_definitions(mango PUBLIC "__F16C__")
-    endif ()
-
-    # bit manipulation instruction set 1
-    if (ENABLE_BMI)
-        message("Enable: BMI+LZCNT (2013)")
-        target_compile_definitions(mango PUBLIC "__BMI__" "__LZCNT__")
-    endif ()
-
-    # bit manipulation instruction set 2
-    if (ENABLE_BMI2)
-        message("Enable: BMI2 (2013)")
-        target_compile_definitions(mango PUBLIC "__BMI2__")
-    endif ()
-
-    # fused multiply-add
-    if (ENABLE_FMA)
-        message("Enable: FMA (2013)")
-        target_compile_definitions(mango PUBLIC "__FMA__")
-    endif ()
-
-    # sha
-    if (ENABLE_SHA)
-        message("Enable: SHA (2013)")
-        target_compile_definitions(mango PUBLIC "__SHA__")
-    endif ()
-
-    if (ENABLE_AVX512)
-        message("SIMD: AVX-512 (2015)")
-        target_compile_definitions(mango PUBLIC "__AVX512F__" "__AVX512DQ__")
-    elseif (ENABLE_AVX2)
-        message("SIMD: AVX2 (2013)")
-        target_compile_options(mango PUBLIC "/arch:AVX2")
-    elseif (ENABLE_AVX)
-        message("SIMD: AVX (2008)")
-        target_compile_options(mango PUBLIC "/arch:AVX")
-    elseif (ENABLE_SSE2 OR ENABLE_SSE4)
-        # MSVC does not have SSE4 option; at least enable SSE2
-        message("SIMD: SSE2 (2001)")
-        if (NOT X86_64)
-            # MSVC enables SSE2 by default on X86_64
-            target_compile_options(mango PUBLIC "/arch:SSE2")
+        if (ENABLE_PCLMUL)
+            target_compile_definitions(mango PUBLIC "__PCLMUL__")
         endif ()
+
+        if (ENABLE_POPCNT)
+            target_compile_definitions(mango PUBLIC "__POPCNT__")
+        endif ()
+
+        if (ENABLE_AES)
+            target_compile_definitions(mango PUBLIC "__AES__")
+        endif ()
+
+        if (ENABLE_F16C)
+            target_compile_definitions(mango PUBLIC "__F16C__")
+        endif ()
+
+        if (ENABLE_LZCNT)
+            target_compile_definitions(mango PUBLIC "__LZCNT__")
+        endif ()
+
+        if (ENABLE_BMI)
+            target_compile_definitions(mango PUBLIC "__BMI__")
+        endif ()
+
+        if (ENABLE_BMI2)
+            target_compile_definitions(mango PUBLIC "__BMI2__")
+        endif ()
+
+        if (ENABLE_FMA)
+            target_compile_definitions(mango PUBLIC "__FMA__")
+        endif ()
+
+        if (ENABLE_SHA)
+            target_compile_definitions(mango PUBLIC "__SHA__")
+        endif ()
+
+        # enable only one (the most recent) SIMD extension
+        if (ENABLE_AVX512)
+            set(SIMD "AVX-512 (2015)")
+            target_compile_options(mango PUBLIC "/arch:AVX512")
+            target_compile_definitions(mango PUBLIC "__AVX512F__" "__AVX512DQ__")
+        elseif (ENABLE_AVX2)
+            set(SIMD "AVX2 (2013)")
+            target_compile_options(mango PUBLIC "/arch:AVX2")
+        elseif (ENABLE_AVX)
+            set(SIMD "AVX (2008)")
+            target_compile_options(mango PUBLIC "/arch:AVX")
+        elseif (ENABLE_SSE2 OR ENABLE_SSE4)
+            # MSVC does not have SSE4 option; at least enable SSE2
+            set(SIMD "SSE2 (2001)")
+            if (NOT X86_64)
+                # MSVC enables SSE2 by default on X86_64
+                target_compile_options(mango PUBLIC "/arch:SSE2")
+            endif ()
+        endif ()
+
     endif ()
 
 else ()
 
-    set(CMAKE_CXX_FLAGS "-Wall")
-    set(CMAKE_CXX_FLAGS_DEBUG "-g")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
-
-    target_compile_definitions(mango PUBLIC $<$<PLATFORM_ID:Windows>:UNICODE>)
+    add_compile_options(-Wall)
+    target_compile_options(mango PRIVATE $<$<CONFIG:Release>:-O3>)
 
     if (CYGWIN)
         target_compile_options(mango PUBLIC "-municode")
@@ -643,117 +669,120 @@ else ()
         set(CMAKE_CXX_FLAGS "-Wno-psabi")
     endif ()
 
-    if ((ARM AND ENABLE_NEON) OR AARCH64)
-        message("SIMD: NEON")
-        if (ARM)
-            if (APPLE)
-                # fastgltf doesn't compile without this on Apple Silicon
-                set(CMAKE_CXX_FLAGS "-Wno-unknown-attributes")
-            else ()
-                # The compiler for Apple Silicon does not recognize these
-                add_definitions (-mfpu=neon -mfloat-abi=hard)
-            endif ()
-            set(CMAKE_CXX_FLAGS "-fpermissive -Wno-psabi")
-        endif ()
+    if (ARM AND (NOT APPLE))
+        # The compiler for Apple Silicon does not recognize these
+        add_definitions (-mfpu=neon -mfloat-abi=hard)
     endif ()
 
     if (X86 OR X86_64)
 
-        # enable AES (2010)
-        if (ENABLE_AES)
-            message("Enable: AES (2010)")
-            target_compile_options(mango PUBLIC "-maes")
-        endif ()
-
-        # enable CLMUL (2008)
         if (ENABLE_PCLMUL)
-            message("Enable: PCLMUL (2008)")
             target_compile_options(mango PUBLIC "-mpclmul")
         endif ()
 
-        # popcnt
         if (ENABLE_POPCNT)
-            message("Enable: POPCNT (2008)")
             target_compile_options(mango PUBLIC "-mpopcnt")
         endif ()
 
-        # half conversion instructions
+        if (ENABLE_AES)
+            target_compile_options(mango PUBLIC "-maes")
+        endif ()
+
         if (ENABLE_F16C)
-            message("Enable: F16C (2012)")
             target_compile_options(mango PUBLIC "-mf16c")
         endif ()
 
-        # bit manipulation instruction set 1
-        if (ENABLE_BMI)
-            message("Enable: BMI+LZCNT (2013)")
-            target_compile_options(mango PUBLIC "-mbmi")
+        if (ENABLE_LZCNT)
             target_compile_options(mango PUBLIC "-mlzcnt")
         endif ()
 
-        # bit manipulation instruction set 2
+        if (ENABLE_BMI)
+            target_compile_options(mango PUBLIC "-mbmi")
+        endif ()
+
         if (ENABLE_BMI2)
-            message("Enable: BMI2 (2013)")
             target_compile_options(mango PUBLIC "-mbmi2")
         endif ()
 
-        # fused multiply-add
         if (ENABLE_FMA)
-            message("Enable: FMA (2013)")
             target_compile_options(mango PUBLIC "-mfma")
         endif ()
 
-        # sha
         if (ENABLE_SHA)
-            message("Enable: SHA (2013)")
             target_compile_options(mango PUBLIC "-msha")
         endif ()
 
         # enable only one (the most recent) SIMD extension
         if (ENABLE_AVX512)
-            message("SIMD: AVX-512 (2015)")
+            set(SIMD "AVX-512 (2015)")
             target_compile_options(mango PUBLIC "-mavx512dq")
             target_compile_options(mango PUBLIC "-mavx512vl")
             target_compile_options(mango PUBLIC "-mavx512bw")
         elseif (ENABLE_AVX2)
-            message("SIMD: AVX2 (2013)")
+            set(SIMD "AVX2 (2013)")
             target_compile_options(mango PUBLIC "-mavx2")
         elseif (ENABLE_AVX)
-            message("SIMD: AVX (2008)")
+            set(SIMD "AVX (2008)")
             target_compile_options(mango PUBLIC "-mavx")
         elseif (ENABLE_SSE4)
-            message("SIMD: SSE4.2 (2006)")
+            set(SIMD "SSE4.2 (2006)")
             target_compile_options(mango PUBLIC "-msse4")
         elseif (ENABLE_SSE2)
-            message("SIMD: SSE2 (2001)")
+            set(SIMD "SSE2 (2001)")
             target_compile_options(mango PUBLIC "-msse2")
         endif ()
+
     endif ()
 endif ()
 
-message("OPENGL: " ${BUILD_OPENGL})
-message("IMPORT3D: " ${BUILD_IMPORT3D})
-message("EXAMPLES: " ${BUILD_EXAMPLES})
+message("[ISA Extensions]")
 
-# ------------------------------------------------------------------------------
-# install target
-# ------------------------------------------------------------------------------
+if (X86 OR X86_64)
 
-# vcpkg
-if (DEFINED ENV{VCPKG_ROOT})
-
-    if (DEFINED ENV{VCPKG_TARGET_TRIPLET})
-        set(DEFAULT_INSTALL_PATH "$ENV{VCPKG_ROOT}/installed/$ENV{VCPKG_TARGET_TRIPLET}")
-    elseif (DEFINED ENV{VCPKG_DEFAULT_TRIPLET})
-        set(DEFAULT_INSTALL_PATH "$ENV{VCPKG_ROOT}/installed/$ENV{VCPKG_DEFAULT_TRIPLET}")
-    else ()
-        set(DEFAULT_INSTALL_PATH "${CMAKE_BINARY_DIR}/install")
+    if (ENABLE_PCLMUL)
+        message("    PCLMUL (2008)")
     endif ()
 
-    set(CMAKE_INSTALL_PREFIX "${DEFAULT_INSTALL_PATH}" CACHE PATH "Install path prefix" FORCE)
+    if (ENABLE_POPCNT)
+        message("    POPCNT (2008)")
+    endif ()
 
-endif ()
+    if (ENABLE_AES)
+        message("    AES (2010)")
+    endif ()
 
-message("Installation path: ${CMAKE_INSTALL_PREFIX}")
+    if (ENABLE_F16C)
+        message("    F16C (2012)")
+    endif ()
+
+    if (ENABLE_LZCNT)
+        message("    LZCNT (2013)")
+    endif ()
+
+    if (ENABLE_BMI)
+        message("    BMI (2013)")
+    endif ()
+
+    if (ENABLE_BMI2)
+        message("    BMI2 (2013)")
+    endif ()
+
+    if (ENABLE_FMA)
+        message("    FMA (2013)")
+    endif ()
+
+    if (ENABLE_SHA)
+        message("    SHA (2013)")
+    endif ()
+
+endif()
+
+message("    SIMD: " ${SIMD})
+
+message("[Options]")
+message("    BUILD_OPENGL:   " ${BUILD_OPENGL})
+message("    BUILD_IMPORT3D: " ${BUILD_IMPORT3D})
+message("    BUILD_EXAMPLES: " ${BUILD_EXAMPLES})
 
 # ------------------------------------------------------------------------------
 # examples
@@ -776,13 +805,6 @@ target_include_directories(mango
         $<INSTALL_INTERFACE:include/mango/>
 )
 
-target_include_directories(mango
-    PRIVATE
-        "${PROJECT_SOURCE_DIR}/source/external/fastgltf/include"
-        "${PROJECT_SOURCE_DIR}/source/external/simdjson"
-)
-
-#set_target_properties(mango PROPERTIES INTERFACE_LINK_LIBRARIES "")
 add_library(mango::mango ALIAS mango)
 
 # install mango headers
