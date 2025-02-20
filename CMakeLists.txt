@@ -654,11 +654,6 @@ elseif (MSVC)
 else ()
 
     add_compile_options(-Wall)
-    #set(CMAKE_CXX_FLAGS_DEBUG "-g")
-    #add_compile_options($<$<CONFIG:Debug>:-g>)
-    #target_compile_options(mango PRIVATE $<$<CONFIG:Debug>:-g>) # <--
-    #set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
-    #add_compile_options($<$<CONFIG:Release>:-O3>)
     target_compile_options(mango PRIVATE $<$<CONFIG:Release>:-O3>)
 
     if (CYGWIN)
