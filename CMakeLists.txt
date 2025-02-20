@@ -669,15 +669,9 @@ else ()
         set(CMAKE_CXX_FLAGS "-Wno-psabi")
     endif ()
 
-    if (ARM)
-        if (APPLE)
-            # fastgltf doesn't compile without this on Apple Silicon
-            #set(CMAKE_CXX_FLAGS "-Wno-unknown-attributes")
-        else ()
-            # The compiler for Apple Silicon does not recognize these
-            add_definitions (-mfpu=neon -mfloat-abi=hard)
-        endif ()
-        #set(CMAKE_CXX_FLAGS "-fpermissive -Wno-psabi")
+    if (ARM AND (NOT APPLE))
+        # The compiler for Apple Silicon does not recognize these
+        add_definitions (-mfpu=neon -mfloat-abi=hard)
     endif ()
 
     if (X86 OR X86_64)
