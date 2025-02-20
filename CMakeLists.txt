@@ -410,6 +410,10 @@ if (BUILD_IMPORT3D)
         ${IMPORT3D_SOURCES}
         ${EXTERNAL_IMPORT3D}
     )
+    include_directories(BEFORE
+        "${EXTERNAL_SOURCE_DIR}/fastgltf/include"
+        "${EXTERNAL_SOURCE_DIR}/simdjson"
+    )
 endif ()
 
 add_library(mango SHARED ${MANGO_SOURCES})
@@ -807,13 +811,6 @@ target_include_directories(mango
         $<INSTALL_INTERFACE:include/mango/>
 )
 
-target_include_directories(mango
-    PRIVATE
-        "${PROJECT_SOURCE_DIR}/source/external/fastgltf/include"
-        "${PROJECT_SOURCE_DIR}/source/external/simdjson"
-)
-
-#set_target_properties(mango PROPERTIES INTERFACE_LINK_LIBRARIES "")
 add_library(mango::mango ALIAS mango)
 
 # install mango headers
