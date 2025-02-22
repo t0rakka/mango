@@ -125,6 +125,8 @@ int custom_main(int argc, const char* argv[])
         TestWindow window(bitmap);
         window.enterEventLoop();
     }
+
+    return 0;
 }
 
 #ifdef _WIN32
