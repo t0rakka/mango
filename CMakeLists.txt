@@ -785,18 +785,10 @@ message("    BUILD_IMPORT3D: " ${BUILD_IMPORT3D})
 message("    BUILD_EXAMPLES: " ${BUILD_EXAMPLES})
 
 # ------------------------------------------------------------------------------
-# examples
-# ------------------------------------------------------------------------------
-
-list(POP_BACK CMAKE_MESSAGE_INDENT)
-
-if (BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif ()
-
-# ------------------------------------------------------------------------------
 # install
 # ------------------------------------------------------------------------------
+
+add_library(mango::mango ALIAS mango)
 
 target_include_directories(mango
     PUBLIC
@@ -804,8 +796,6 @@ target_include_directories(mango
     INTERFACE
         $<INSTALL_INTERFACE:include/mango/>
 )
-
-add_library(mango::mango ALIAS mango)
 
 # install mango headers
 install(
@@ -826,3 +816,26 @@ install(
     NAMESPACE mango::
     DESTINATION "lib/cmake/mango"
 )
+
+# ------------------------------------------------------------------------------
+# examples
+# ------------------------------------------------------------------------------
+
+list(POP_BACK CMAKE_MESSAGE_INDENT)
+
+if (BUILD_EXAMPLES)
+
+    add_subdirectory(examples)
+
+    if (WIN32)
+        foreach (x ${EXAMPLE_BINARY_FOLDERS})
+            set(source_file $<TARGET_FILE:mango>)
+            set(destination_file ${x}/${CMAKE_CFG_INTDIR})
+            add_custom_command(TARGET mango POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E echo "Copying: ${source_file}  -->  ${destination_file}"
+                COMMAND ${CMAKE_COMMAND} -E copy "${source_file}" "${destination_file}"
+            )
+        endforeach ()
+    endif ()
+
+endif ()

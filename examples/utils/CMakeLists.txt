@@ -1,12 +1,12 @@
 
-list(APPEND binaries
+list(APPEND examples
     snitch
     unsnitch
     image_encoder
 )
 
-foreach(binary IN LISTS binaries)
-    add_executable(${binary} ${binary}.cpp)
-    set_target_properties(${binary} PROPERTIES FOLDER "examples/utils")
-    source_group("" FILES ${binary}.cpp)
+foreach(example IN LISTS examples)
+    add_executable(${example} ${example}.cpp)
+    set_target_properties(${example} PROPERTIES FOLDER "examples/utils")
+    source_group("" FILES ${example}.cpp)
 endforeach()
