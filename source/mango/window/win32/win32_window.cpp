@@ -719,13 +719,7 @@ namespace mango
 
     void Window::setWindowSize(int width, int height)
     {
-        RECT rect;
-
-        rect.left = 0;
-        rect.top = 0;
-        rect.right = width - 1;
-        rect.bottom = height - 1;
-
+        RECT rect { 0, 0, width - 1, height - 1 };
         ::AdjustWindowRect(&rect, (DWORD)GWL_STYLE, FALSE);
 
         width = rect.right - rect.left + 1;
@@ -753,10 +747,10 @@ namespace mango
                 ::DestroyIcon(m_handle->icon);
                 m_handle->icon = hicon;
             }
-            SendMessage(m_handle->hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hicon);
-            SendMessage(m_handle->hwnd, WM_SETICON, ICON_BIG, (LPARAM)hicon);
-            SendMessage(GetWindow(m_handle->hwnd, GW_OWNER), WM_SETICON, ICON_SMALL, (LPARAM)hicon);
-            SendMessage(GetWindow(m_handle->hwnd, GW_OWNER), WM_SETICON, ICON_BIG, (LPARAM)hicon);
+            ::SendMessage(m_handle->hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hicon);
+            ::SendMessage(m_handle->hwnd, WM_SETICON, ICON_BIG, (LPARAM)hicon);
+            ::SendMessage(::GetWindow(m_handle->hwnd, GW_OWNER), WM_SETICON, ICON_SMALL, (LPARAM)hicon);
+            ::SendMessage(::GetWindow(m_handle->hwnd, GW_OWNER), WM_SETICON, ICON_BIG, (LPARAM)hicon);
         }
     }
 
@@ -776,8 +770,8 @@ namespace mango
     int32x2 Window::getCursorPosition() const
     {
         POINT p;
-        GetCursorPos(&p);
-        ScreenToClient(m_handle->hwnd, &p);
+        ::GetCursorPos(&p);
+        ::ScreenToClient(m_handle->hwnd, &p);
         return int32x2(int(p.x), int(p.y));
     }
 
