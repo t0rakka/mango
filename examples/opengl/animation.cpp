@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -86,7 +86,7 @@ public:
     }
 };
 
-int main(int argc, const char* argv[])
+int custom_main(int argc, const char* argv[])
 {
     if (argc < 2)
     {
@@ -99,4 +99,23 @@ int main(int argc, const char* argv[])
     ImageAnimation animation(filename);
     DemoWindow demo(animation);
     demo.enterEventLoop();
+
+    return 0;
 }
+
+#ifdef _WIN32
+    int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+    {
+        const char* argv[] =
+        {
+            "",
+            "data/dude.gif"
+        };
+        custom_main(sizeof(argv), argv);
+    }
+#else
+    int main(int argc, const char* argv[])
+    {
+        custom_main(argc, argv);
+    }
+#endif

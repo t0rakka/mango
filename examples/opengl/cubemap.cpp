@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -492,8 +492,16 @@ public:
     }
 };
 
-int main()
-{
-    DemoWindow window;
-    window.enterEventLoop();
-}
+#ifdef _WIN32
+    int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+    {
+        DemoWindow window;
+        window.enterEventLoop();
+    }
+#else
+    int main()
+    {
+        DemoWindow window;
+        window.enterEventLoop();
+    }
+#endif

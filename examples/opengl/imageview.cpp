@@ -103,7 +103,7 @@ public:
     }
 };
 
-int main(int argc, const char* argv[])
+int custom_main(int argc, const char* argv[])
 {
     std::string filename = "data/hanselun.png";
     if (argc == 2)
@@ -126,3 +126,19 @@ int main(int argc, const char* argv[])
         window.enterEventLoop();
     }
 }
+
+#ifdef _WIN32
+    int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+    {
+        const char* argv[] =
+        {
+            "",
+        };
+        custom_main(sizeof(argv), argv);
+    }
+#else
+    int main(int argc, const char* argv[])
+    {
+        custom_main(argc, argv);
+    }
+#endif
