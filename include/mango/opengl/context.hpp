@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -148,6 +148,7 @@ namespace mango
     public:
         enum Flags : u32
         {
+            // NOTE: shares bits with Window flags (16 LSB)
             EGL = 0x00010000,
         };
 
@@ -215,9 +216,9 @@ namespace mango
             u32 texture_compression_dxt3 : 1;
             u32 texture_compression_dxt5 : 1;
             u32 texture_compression_etc2 : 1;
-            u32 texture_compression_eac : 1;
+            u32 texture_compression_eac  : 1;
             u32 texture_compression_latc : 1;
-            u32 texture_compression_atc : 1;
+            u32 texture_compression_atc  : 1;
             u32 texture_compression_astc_ldr : 1;
             u32 texture_compression_astc_hdr : 1;
         } core;

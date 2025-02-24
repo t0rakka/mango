@@ -50,6 +50,8 @@ namespace mango
         Program m_bilinear;
         Program m_bicubic;
 
+        void adjustWindowSizeToContent(int screen = 0);
+
     public:
         enum BufferMode
         {
@@ -69,9 +71,10 @@ namespace mango
         OpenGLFramebuffer(int width, int height, BufferMode buffermode = RGBA_DIRECT);
         ~OpenGLFramebuffer();
 
+        void setPalette(const u32* palette);
+
         image::Surface lock();
         void unlock();
-        void setPalette(const u32* palette);
         void present(Filter filter = FILTER_NEAREST);
     };
 

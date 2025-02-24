@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
@@ -22,41 +22,12 @@ public:
     {
         setTitle("OpenGLFramebuffer");
 
-        // compute window size
-        int32x2 screen = getScreenSize();
-        int32x2 window(bitmap.width, bitmap.height);
-
-        if (window.x > screen.x)
-        {
-            // fit horizontally
-            int scale = div_ceil(window.x, screen.x);
-            window.x = window.x / scale;
-            window.y = window.y / scale;
-        }
-
-        if (window.y > screen.y)
-        {
-            // fit vertically
-            int scale = div_ceil(window.y, screen.y);
-            window.x = window.x / scale;
-            window.y = window.y / scale;
-        }
-
-        if (window.y < screen.y)
-        {
-            // enlarge tiny windows
-            int scale = std::max(1, (screen.y / std::max(1, window.y)) / 2);
-            window.x *= scale;
-            window.y *= scale;
-        }
-
-        setWindowSize(window.x, window.y);
-
         // upload image into the framebuffer
         Surface s = lock();
         s.blit(0, 0, m_bitmap);
         unlock();
 
+        int32x2 screen = getScreenSize();
         printLine("screen: {} x {}", screen.x, screen.y);
         printLine("Image: {} x {}", bitmap.width, bitmap.height);
     }

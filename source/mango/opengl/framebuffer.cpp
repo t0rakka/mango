@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <mango/opengl/opengl.hpp>
@@ -150,6 +150,7 @@ namespace mango
         , m_width(width)
         , m_height(height)
     {
+        adjustWindowSizeToContent();
 
         switch (buffermode)
         {
@@ -313,6 +314,48 @@ namespace mango
         }
     }
 
+    void OpenGLFramebuffer::adjustWindowSizeToContent(int screenIndex)
+    {
+        // compute window size
+        int32x2 screen = OpenGLContext::getScreenSize(screenIndex);
+        int32x2 content(m_width, m_height);
+
+        if (content.x > screen.x)
+        {
+            // fit horizontally
+            int scale = div_ceil(content.x, screen.x);
+            content.x = content.x / scale;
+            content.y = content.y / scale;
+        }
+
+        if (content.y > screen.y)
+        {
+            // fit vertically
+            int scale = div_ceil(content.y, screen.y);
+            content.x = content.x / scale;
+            content.y = content.y / scale;
+        }
+
+        if (content.y < screen.y)
+        {
+            // enlarge tiny windows
+            int scale = std::max(1, (screen.y / std::max(1, content.y)) / 2);
+            content.x *= scale;
+            content.y *= scale;
+        }
+
+        setWindowSize(content.x, content.y);
+    }
+
+    void OpenGLFramebuffer::setPalette(const u32* palette)
+    {
+        if (m_is_palette)
+        {
+            GLint location = glGetUniformLocation(m_index_program, "u_Palette");
+            glProgramUniform1uiv(m_index_program, location, 256, palette);
+        }
+    }
+
     Surface OpenGLFramebuffer::lock()
     {
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
@@ -339,15 +382,6 @@ namespace mango
         }
 
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-    }
-
-    void OpenGLFramebuffer::setPalette(const u32* palette)
-    {
-        if (m_is_palette)
-        {
-            GLint location = glGetUniformLocation(m_index_program, "u_Palette");
-            glProgramUniform1uiv(m_index_program, location, 256, palette);
-        }
     }
 
     void OpenGLFramebuffer::present(Filter filter)
