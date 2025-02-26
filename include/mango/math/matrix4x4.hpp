@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -20,38 +20,38 @@ namespace mango::math
     /*
     offsets: [memory layout]
 
-    [ 0  1  2  3]  <- simd float32x4 #0
-    [ 4  5  6  7]  <- simd float32x4 #1
-    [ 8  9 10 11]  <- simd float32x4 #2
-    [12 13 14 15]  <- simd float32x4 #3
+        [ 0  1  2  3]  <-- simd float32x4 #0
+        [ 4  5  6  7]  <-- simd float32x4 #1
+        [ 8  9 10 11]  <-- simd float32x4 #2
+        [12 13 14 15]  <-- simd float32x4 #3
 
     indices: [operator (y,x)]
 
-    [(0,0) (0,1) (0,2) (0,3)]
-    [(1,0) (1,1) (1,2) (1,3)]
-    [(2,0) (2,1) (2,2) (2,3)]
-    [(3,0) (3,1) (3,2) (3,3)]
+        [(0,0) (0,1) (0,2) (0,3)]
+        [(1,0) (1,1) (1,2) (1,3)]
+        [(2,0) (2,1) (2,2) (2,3)]
+        [(3,0) (3,1) (3,2) (3,3)]
 
     scaling: [sx, sy, sz]
 
-    [sx -- -- --]
-    [-- sy -- --]
-    [-- -- sz --]
-    [-- -- -- --]
+        [sx -- -- --]
+        [-- sy -- --]
+        [-- -- sz --]
+        [-- -- -- --]
 
     translation: [tx, ty, tz]
 
-    [-- -- -- --]
-    [-- -- -- --]
-    [-- -- -- --]
-    [tx ty tz --]
+        [-- -- -- --]
+        [-- -- -- --]
+        [-- -- -- --]
+        [tx ty tz --]
 
     rotation: [axis vectors]
 
-    [xx xy xz --]  <- x-axis
-    [yx yy yz --]  <- y-axis
-    [zx zy zz --]  <- z-axis
-    [-- -- -- --]
+        [xx xy xz --]  <-- x-axis
+        [yx yy yz --]  <-- y-axis
+        [zx zy zz --]  <-- z-axis
+        [-- -- -- --]
     */
 
     template <>
