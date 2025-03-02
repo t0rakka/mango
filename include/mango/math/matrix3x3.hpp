@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -20,27 +20,27 @@ namespace mango::math
     /*
     offsets: [memory layout]
 
-    [0 1 2]
-    [3 4 5]
-    [6 7 8]
+        [0 1 2]
+        [3 4 5]
+        [6 7 8]
 
     indices: [operator (y,x)]
 
-    [(0,0) (0,1) (0,2)]
-    [(1,0) (1,1) (1,2)]
-    [(2,0) (2,1) (2,2)]
+        [(0,0) (0,1) (0,2)]
+        [(1,0) (1,1) (1,2)]
+        [(2,0) (2,1) (2,2)]
 
     scaling: [sx, sy, sz]
 
-    [sx -- --]
-    [-- sy --]
-    [-- -- sz]
+        [sx -- --]
+        [-- sy --]
+        [-- -- sz]
 
     rotation: [axis vectors]
 
-    [xx xy xz]  <- x-axis
-    [yx yy yz]  <- y-axis
-    [zx zy zz]  <- z-axis
+        [xx xy xz]  <- x-axis
+        [yx yy yz]  <- y-axis
+        [zx zy zz]  <- z-axis
     */
 
     template <>
