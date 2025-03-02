@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -134,6 +134,11 @@ namespace mango::math
     static inline Vector<s32, 8> hsub(Vector<s32, 8> a, Vector<s32, 8> b)
     {
         return simd::hsub(a, b);
+    }
+
+    static inline Vector<s32, 8> mullo(Vector<s32, 8> a, Vector<s32, 8> b)
+    {
+        return simd::mullo(a, b);
     }
 
     MATH_SIMD_BITWISE_FUNCTIONS(s32, 8);

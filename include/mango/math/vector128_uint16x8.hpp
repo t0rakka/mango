@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -134,6 +134,11 @@ namespace mango::math
 
     MATH_SIMD_INTEGER_FUNCTIONS(u16, 8, mask16x8);
     MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(u16, 8, mask16x8);
+
+    static inline Vector<u16, 8> mullo(Vector<u16, 8> a, Vector<u16, 8> b)
+    {
+        return simd::mullo(a, b);
+    }
 
     MATH_SIMD_BITWISE_FUNCTIONS(u16, 8);
     MATH_SIMD_COMPARE_FUNCTIONS(u16, 8, mask16x8);

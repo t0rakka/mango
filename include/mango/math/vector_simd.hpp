@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -120,7 +120,7 @@ namespace mango::math
     ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b)
     {
-        // a + a
+        // a + b
         return ScalarType(a) + ScalarType(b);
     }
 
@@ -165,7 +165,7 @@ namespace mango::math
     ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b)
     {
-        // a - a
+        // a - b
         return ScalarType(a) - ScalarType(b);
     }
 
@@ -203,7 +203,7 @@ namespace mango::math
     ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b)
     {
-        // a * a
+        // a * b
         return ScalarType(a) * ScalarType(b);
     }
 
@@ -241,7 +241,7 @@ namespace mango::math
     ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b)
     {
-        // a / a
+        // a / b
         return ScalarType(a) / ScalarType(b);
     }
 
