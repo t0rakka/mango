@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 1.7.2
+        VERSION 1.7.3
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
@@ -830,10 +830,11 @@ if (BUILD_EXAMPLES)
     if (WIN32)
         foreach (x ${EXAMPLE_BINARY_FOLDERS})
             set(source_file $<TARGET_FILE:mango>)
-            set(destination_file ${x}/${CMAKE_CFG_INTDIR})
+            set(destination_folder ${x}/${CMAKE_CFG_INTDIR})
             add_custom_command(TARGET mango POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E echo "Copying: ${source_file}  -->  ${destination_file}"
-                COMMAND ${CMAKE_COMMAND} -E copy "${source_file}" "${destination_file}"
+                COMMAND ${CMAKE_COMMAND} -E echo "Copying: ${source_file}  -->  ${destination_folder}"
+                COMMAND ${CMAKE_COMMAND} -E make_directory "${destination_folder}"
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${source_file}" "${destination_folder}"
             )
         endforeach ()
     endif ()
