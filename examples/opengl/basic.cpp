@@ -83,7 +83,7 @@ public:
             breakEventLoop();
             break;
 
-        case KEYCODE_F11:
+        case KEYCODE_F:
             toggleFullscreen();
             break;
 

@@ -304,14 +304,20 @@ namespace mango
         {
             if (!m_fullscreen)
             {
-                GetWindowRect(hwnd, &m_rect);
+                ::GetWindowRect(hwnd, &m_rect);
 
-                DEVMODE dm;
-                dm.dmSize = sizeof(DEVMODE);
-                EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &dm);
+                int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+                int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
+#if 1
+                ::ShowWindow(hwnd, SW_HIDE);
+                ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+                ::MoveWindow(hwnd, 0, 0, screenWidth, screenHeight, TRUE);
+                ::ShowWindow(hwnd, SW_SHOW);
+#else
                 ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
-                ::MoveWindow(hwnd, 0, 0, dm.dmPelsWidth, dm.dmPelsHeight, TRUE);
+                ::MoveWindow(hwnd, 0, 0, screenWidth, screenHeight, TRUE);
+#endif
             }
             else
             {
