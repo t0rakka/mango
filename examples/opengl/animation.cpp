@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#define MANGO_IMPLEMENT_MAIN
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
 
@@ -86,15 +87,20 @@ public:
     }
 };
 
-int custom_main(int argc, const char* argv[])
+int mangoMain(const mango::CommandLine& commands)
 {
-    if (argc < 2)
-    {
-        printLine("Too few arguments. Usage: {} <filename>", argv[0]);
-        return 1;
-    }
+    std::string filename = "data/dude.gif"; // default filename
 
-    std::string filename = argv[1];
+    if (commands.size() < 2)
+    {
+        printLine("Too few arguments. Usage: {} <filename>", commands[0]);
+        printLine("We play the default animation for convenience.");
+    }
+    else
+    {
+        // overide from command line
+        filename = commands[1];
+    }
 
     ImageAnimation animation(filename);
     DemoWindow demo(animation);
@@ -102,20 +108,3 @@ int custom_main(int argc, const char* argv[])
 
     return 0;
 }
-
-#ifdef _WIN32
-    int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-    {
-        const char* argv[] =
-        {
-            "",
-            "data/dude.gif"
-        };
-        custom_main(sizeof(argv), argv);
-    }
-#else
-    int main(int argc, const char* argv[])
-    {
-        custom_main(argc, argv);
-    }
-#endif

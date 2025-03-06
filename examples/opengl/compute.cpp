@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#define MANGO_IMPLEMENT_MAIN
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
 
@@ -238,16 +239,9 @@ public:
     }
 };
 
-#ifdef _WIN32
-    int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-    {
-        DemoWindow window;
-        window.enterEventLoop();
-    }
-#else
-    int main()
-    {
-        DemoWindow window;
-        window.enterEventLoop();
-    }
-#endif
+int mangoMain(const mango::CommandLine& commands)
+{
+    DemoWindow window;
+    window.enterEventLoop();
+    return 0;
+}

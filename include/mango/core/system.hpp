@@ -1,10 +1,11 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <mango/core/configure.hpp>
 #include <mango/core/thread.hpp>
 #include <mango/core/timer.hpp>
@@ -174,4 +175,43 @@ namespace mango
         printLine(Print::Verbose, indent, fmt, std::forward<T>(args)...);
     }
 
+    // ----------------------------------------------------------------------------------
+    // CommandLine
+    // ----------------------------------------------------------------------------------
+
+    using CommandLine = std::vector<std::string_view>;
+
 } // namespace mango
+
+// ----------------------------------------------------------------------------------
+// mangoMain()
+// ----------------------------------------------------------------------------------
+
+#if defined(MANGO_IMPLEMENT_MAIN)
+
+    // This will be called from platform specific main function below
+    int mangoMain(const mango::CommandLine& commands);
+
+    #if defined(WIN32)
+
+        int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+        {
+            MANGO_UNREFERENCED(hInstance);
+            MANGO_UNREFERENCED(hPrevInstance);
+            MANGO_UNREFERENCED(lpCmdLine);
+            MANGO_UNREFERENCED(nCmdShow);
+            mango::CommandLine commands(__argv + 0, __argv + __argc);
+            return mangoMain(commands);
+        }
+
+    #else
+
+        int main(int argc, const char** argv)
+        {
+            mango::CommandLine commands(argv + 0, argv + argc);
+            return mangoMain(commands);
+        }
+
+    #endif
+
+#endif

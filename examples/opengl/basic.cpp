@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#define MANGO_IMPLEMENT_MAIN
 #include <mango/mango.hpp>
 #include <mango/opengl/opengl.hpp>
 
@@ -110,15 +111,15 @@ public:
     }
 };
 
-int custom_main(int argc, const char* argv[])
+int mangoMain(const mango::CommandLine& commands)
 {
     OpenGLContext::Config config;
 
     bool sRGB = false;
 
-    if (argc == 2)
+    if (commands.size() == 2)
     {
-        std::string_view p1 = argv[1];
+        std::string_view p1 = commands[1];
 
         if (p1 == "--hdr")
         {
@@ -137,22 +138,5 @@ int custom_main(int argc, const char* argv[])
 
     TestWindow window(config, sRGB);
     window.enterEventLoop();
-
     return 0;
 }
-
-#ifdef _WIN32
-    int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-    {
-        const char* argv[] =
-        {
-            "",
-        };
-        custom_main(sizeof(argv), argv);
-    }
-#else
-    int main(int argc, const char* argv[])
-    {
-        custom_main(argc, argv);
-    }
-#endif

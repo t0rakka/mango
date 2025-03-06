@@ -557,8 +557,6 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     str.write64(file_data_offset);
 }
 
-using CommandLine = std::vector<std::string_view>;
-
 void printHelp(const CommandLine& commands)
 {
     std::string program = removePath(std::string(commands[0]));
