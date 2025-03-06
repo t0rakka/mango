@@ -309,6 +309,10 @@ namespace mango
             {
                 ::GetWindowRect(hwnd, &m_rect);
 
+                // Make the fullscreen window one extra pixel higher to disable exclusive fullscreen mode "optimization"
+                // It just causes headaches and problems; for example some time the DWM goes insane and starts stuttering at 5 fps.
+                const int ANTI_EXCLUSIVE_MODE_PIXEL = 1;
+
                 HMONITOR monitor = ::MonitorFromRect(&m_rect, MONITOR_DEFAULTTONEAREST);
                 MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
                 if (GetMonitorInfo(monitor, &monitorInfo))
@@ -318,7 +322,7 @@ namespace mango
                         monitorInfo.rcMonitor.left,
                         monitorInfo.rcMonitor.top,
                         monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
-                        monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+                        monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top + ANTI_EXCLUSIVE_MODE_PIXEL,
                         TRUE);
                 }
                 else
@@ -326,7 +330,7 @@ namespace mango
                     int screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
                     int screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
                     ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-                    ::MoveWindow(hwnd, 0, 0, screenWidth, screenHeight, TRUE);
+                    ::MoveWindow(hwnd, 0, 0, screenWidth, screenHeight + ANTI_EXCLUSIVE_MODE_PIXEL, TRUE);
                 }
             }
             else
