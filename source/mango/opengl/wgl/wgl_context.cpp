@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
@@ -302,22 +302,32 @@ namespace mango
 
         void toggleFullscreen()
         {
-            if (!m_fullscreen)
+            m_fullscreen = !m_fullscreen;
+            ::ShowWindow(hwnd, SW_HIDE);
+
+            if (m_fullscreen)
             {
                 ::GetWindowRect(hwnd, &m_rect);
 
-                int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-                int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-
-#if 1
-                ::ShowWindow(hwnd, SW_HIDE);
-                ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-                ::MoveWindow(hwnd, 0, 0, screenWidth, screenHeight, TRUE);
-                ::ShowWindow(hwnd, SW_SHOW);
-#else
-                ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
-                ::MoveWindow(hwnd, 0, 0, screenWidth, screenHeight, TRUE);
-#endif
+                HMONITOR monitor = ::MonitorFromRect(&m_rect, MONITOR_DEFAULTTONEAREST);
+                MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
+                if (GetMonitorInfo(monitor, &monitorInfo))
+                {
+                    ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+                    ::MoveWindow(hwnd,
+                        monitorInfo.rcMonitor.left,
+                        monitorInfo.rcMonitor.top,
+                        monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
+                        monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+                        TRUE);
+                }
+                else
+                {
+                    int screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
+                    int screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
+                    ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+                    ::MoveWindow(hwnd, 0, 0, screenWidth, screenHeight, TRUE);
+                }
             }
             else
             {
@@ -325,7 +335,7 @@ namespace mango
                 ::SetWindowPos(hwnd, HWND_TOP, m_rect.left, m_rect.top, m_rect.right - m_rect.left, m_rect.bottom - m_rect.top, 0);
             }
 
-            m_fullscreen = !m_fullscreen;
+            ::ShowWindow(hwnd, SW_SHOW);
         }
 
         bool isFullscreen() const
