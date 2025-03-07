@@ -302,12 +302,14 @@ namespace mango
 
         void toggleFullscreen()
         {
-            m_fullscreen = !m_fullscreen;
-            ::ShowWindow(hwnd, SW_HIDE);
-
-            if (m_fullscreen)
+            if (!m_fullscreen)
             {
                 ::GetWindowRect(hwnd, &m_rect);
+
+                int x = 0;
+                int y = 0;
+                int screenWidth = 0;
+                int screenHeight = 0;
 
                 // Make the fullscreen window one extra pixel higher to disable exclusive fullscreen mode "optimization"
                 // It just causes headaches and problems; for example some time the DWM goes insane and starts stuttering at 5 fps.
@@ -315,23 +317,25 @@ namespace mango
 
                 HMONITOR monitor = ::MonitorFromRect(&m_rect, MONITOR_DEFAULTTONEAREST);
                 MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
-                if (GetMonitorInfo(monitor, &monitorInfo))
+                if (::GetMonitorInfo(monitor, &monitorInfo))
                 {
-                    ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-                    ::MoveWindow(hwnd,
-                        monitorInfo.rcMonitor.left,
-                        monitorInfo.rcMonitor.top,
-                        monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
-                        monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top + ANTI_EXCLUSIVE_MODE_PIXEL,
-                        TRUE);
+                    // Screen dimensions for monitor that window rectangle overlaps the most
+                    x = monitorInfo.rcMonitor.left;
+                    y = monitorInfo.rcMonitor.top;
+                    screenWidth = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
+                    screenHeight = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
                 }
                 else
                 {
-                    int screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
-                    int screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
-                    ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
-                    ::MoveWindow(hwnd, 0, 0, screenWidth, screenHeight + ANTI_EXCLUSIVE_MODE_PIXEL, TRUE);
+                    // Screen dimensions for the primary monitor
+                    x = 0;
+                    y = 0;
+                    screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
+                    screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
                 }
+
+                ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
+                ::MoveWindow(hwnd, x, y, screenWidth, screenHeight + ANTI_EXCLUSIVE_MODE_PIXEL, TRUE);
             }
             else
             {
@@ -339,7 +343,7 @@ namespace mango
                 ::SetWindowPos(hwnd, HWND_TOP, m_rect.left, m_rect.top, m_rect.right - m_rect.left, m_rect.bottom - m_rect.top, 0);
             }
 
-            ::ShowWindow(hwnd, SW_SHOW);
+            m_fullscreen = !m_fullscreen;
         }
 
         bool isFullscreen() const

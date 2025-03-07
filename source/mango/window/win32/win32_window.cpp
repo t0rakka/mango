@@ -272,7 +272,7 @@ namespace
         if (hFile != INVALID_HANDLE_VALUE)
         {
             BOOL bSuccess = ::GetFileSizeEx(hFile, &nLargeInteger);
-            CloseHandle(hFile);
+            ::CloseHandle(hFile);
             (void)bSuccess;
         }
 
@@ -383,6 +383,28 @@ namespace
         {
             int width = LOWORD(lparam);
             int height = HIWORD(lparam);
+
+            int screenHeight = 0;
+            RECT rect;
+            ::GetWindowRect(hwnd, &rect);
+            HMONITOR monitor = ::MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
+            MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
+            if (::GetMonitorInfo(monitor, &monitorInfo))
+            {
+                // Screen height for monitor that window rectangle overlaps the most
+                screenHeight = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
+            }
+            else
+            {
+                // screen height for the primary monitor
+                screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
+            }
+
+            // This reports "correct" window dimensions to the client (see WGL context for the reason)
+            if (height == screenHeight + 1)
+            {
+                height = screenHeight;
+            }
 
             window->onResize(width, height);
 
@@ -502,7 +524,7 @@ namespace
             case WM_RBUTTONUP:
             case WM_MBUTTONUP:
             case WM_XBUTTONUP:
-                ReleaseCapture();
+                ::ReleaseCapture();
                 count = 0;
                 break;
 
@@ -510,7 +532,7 @@ namespace
             case WM_RBUTTONDOWN:
             case WM_MBUTTONDOWN:
             case WM_XBUTTONDOWN:
-                SetCapture(hwnd);
+                ::SetCapture(hwnd);
                 count = 1;
                 break;
 
