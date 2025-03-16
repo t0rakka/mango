@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -14,3 +14,4 @@
 #include <mango/image/blitter.hpp>
 #include <mango/image/surface.hpp>
 #include <mango/image/quantize.hpp>
+#include <mango/image/bicubic.hpp>

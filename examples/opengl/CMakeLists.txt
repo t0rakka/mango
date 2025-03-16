@@ -2,6 +2,7 @@
 list(APPEND EXAMPLES
     basic
     imageview
+    bicubic
     animation
     mandelbrot
     srgb
