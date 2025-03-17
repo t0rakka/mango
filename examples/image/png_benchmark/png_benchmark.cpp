@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
@@ -9,6 +9,10 @@
 using namespace mango;
 using namespace mango::filesystem;
 using namespace mango::image;
+
+#ifdef MANGO_ENABLE_BLEND2D
+    #define ENABLE_BLEND2D
+#endif
 
 #define ENABLE_LIBPNG
 #define ENABLE_LODEPNG
@@ -434,6 +438,25 @@ size_t save_spng(const Bitmap& bitmap)
 #endif
 
 // ----------------------------------------------------------------------
+// Blend2D
+// ----------------------------------------------------------------------
+
+#if defined(ENABLE_BLEND2D)
+
+#include <blend2d.h>
+
+void load_blend2d(Memory memory)
+{
+    BLImage img;
+    BLResult result = img.readFromData(memory.address, memory.size);
+    if (result != BL_SUCCESS)
+    {
+    }
+}
+
+#endif
+
+// ----------------------------------------------------------------------
 // FPNG
 // ----------------------------------------------------------------------
 
@@ -674,6 +697,10 @@ void test_file(const std::string& filename)
     test("spng:    ", load_spng, save_spng, buffer, bitmap);
 #endif
 
+#if defined(ENABLE_BLEND2D)
+    test("blend2d: ", load_blend2d, save_none, buffer, bitmap);
+#endif
+
 #if defined(ENABLE_FPNG)
     test("fpng:    ", load_none, save_fpng, buffer, bitmap);
 #endif
@@ -753,6 +780,9 @@ void test_folder(Path& path)
 #endif
 #if defined(ENABLE_SPNG)
         { load_spng, "spng" },
+#endif
+#if defined(ENABLE_BLEND2D)
+        { load_blend2d, "blend2d" },
 #endif
 #if defined(ENABLE_WUFFS)
         { load_wuffs, "wuffs" },

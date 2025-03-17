@@ -43,6 +43,7 @@ else ()
 
 endif ()
 
+find_module_with_cmake(png_benchmark BLEND2D blend2d blend2d::blend2d 0)
 find_module_with_cmake(png_benchmark PNG PNG PNG::PNG 0)
 find_module_with_pkg(png_benchmark PNG libpng)
 
