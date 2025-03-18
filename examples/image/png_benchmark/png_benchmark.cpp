@@ -10,7 +10,7 @@ using namespace mango;
 using namespace mango::filesystem;
 using namespace mango::image;
 
-#ifdef MANGO_ENABLE_BLEND2D
+#ifdef MANGO_ENABLE_BLEND2DA
     #define ENABLE_BLEND2D
 #endif
 

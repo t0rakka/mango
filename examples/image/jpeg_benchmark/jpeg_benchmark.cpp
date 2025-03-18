@@ -1,12 +1,16 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
 using namespace mango;
 using namespace mango::filesystem;
 using namespace mango::image;
+
+#ifdef MANGO_ENABLE_BLEND2DB
+    #define TEST_BLEND2D
+#endif
 
 #define TEST_LIBJPEG
 #define TEST_STB
@@ -271,6 +275,28 @@ size_t toojpeg_save(const char* filename, const Surface& surface)
 #endif
 
 // ----------------------------------------------------------------------
+// Blend2D
+// ----------------------------------------------------------------------
+
+#if defined(TEST_BLEND2D)
+
+#include <blend2d.h>
+
+void blend2d_load(const char* filename)
+{
+    File file(filename);
+    ConstMemory memory = file;
+
+    BLImage img;
+    BLResult result = img.readFromData(memory.address, memory.size);
+    if (result != BL_SUCCESS)
+    {
+    }
+}
+
+#endif
+
+// ----------------------------------------------------------------------
 // wuffs
 // ----------------------------------------------------------------------
 
@@ -451,6 +477,18 @@ int main(int argc, const char* argv[])
 
     time2 = Time::us();
     ::print("toojpeg: ", NOT_AVAILABLE, time2 - time1, size);
+
+#endif
+
+    // ------------------------------------------------------------------
+
+#ifdef TEST_BLEND2D
+
+    time0 = Time::us();
+    blend2d_load(filename);
+
+    time1 = Time::us();
+    ::print("blend2d: ", time1 - time0, NOT_AVAILABLE, 0);
 
 #endif
 
