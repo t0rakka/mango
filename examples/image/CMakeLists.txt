@@ -43,7 +43,7 @@ else ()
 
 endif ()
 
-find_module_with_cmake(png_benchmark BLEND2DA blend2d blend2d::blend2d 0)
+find_module_with_cmake(png_benchmark BLEND2D blend2d blend2d::blend2d 0)
 find_module_with_cmake(png_benchmark PNG PNG PNG::PNG 0)
 find_module_with_pkg(png_benchmark PNG libpng)
 
@@ -68,6 +68,6 @@ if (MSVC)
 
 endif ()
 
-find_module_with_cmake(jpeg_benchmark BLEND2DB blend2d blend2d::blend2d 0)
+find_module_with_cmake(jpeg_benchmark BLEND2D blend2d blend2d::blend2d 0)
 find_module_with_cmake(jpeg_benchmark JPEG JPEG JPEG::JPEG 0)
 find_module_with_pkg(jpeg_benchmark JPEG libjpeg)
