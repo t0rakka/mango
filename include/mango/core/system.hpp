@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <string_view>
 #include <mango/core/configure.hpp>
 #include <mango/core/thread.hpp>
