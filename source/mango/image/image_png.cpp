@@ -3290,7 +3290,7 @@ namespace
 
         if (m_interface->callback)
         {
-#ifdef MANGO_ENABLE_ISAL
+#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM) // ISAL on ARM is slower than zlib
 
             inflate_state state;
             isal_inflate_init(&state);
@@ -3972,7 +3972,7 @@ namespace
             {
                 filter_range(source.address, surface, color_bits, y, y + h);
 
-#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
+#if defined(MANGO_ENABLE_ISAL)
 
                 constexpr size_t TEMP_SIZE = 128 * 1024;
                 Buffer temp(TEMP_SIZE);
@@ -4170,7 +4170,7 @@ namespace
 
         if (encoding_failure)
         {
-#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
+#if defined(MANGO_ENABLE_ISAL)
             status.setError("ISAL encoding failure.");
 #else
             status.setError("ZLib encoding failure.");
