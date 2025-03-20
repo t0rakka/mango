@@ -34,7 +34,7 @@
 
 #include "../../external/lzav/lzav.h"
 
-#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
+#if defined(MANGO_ENABLE_ISAL)
     // Why you have to be like that.. on Windows we assume VCPKG packaging for others BREW/APT
     #if defined(MANGO_PLATFORM_WINDOWS)
         #include <isal/igzip_lib.h>
@@ -1189,7 +1189,7 @@ namespace lzav
 namespace isal
 {
 
-#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
+#if defined(MANGO_ENABLE_ISAL)
 
     size_t bound(size_t size)
     {
@@ -1352,7 +1352,7 @@ namespace isal
         { Compressor::NONE,         "none",         nocompress::bound,   nocompress::compress,   nocompress::decompress },
         { Compressor::LZ4,          "lz4",          lz4::bound,          lz4::compress,          lz4::decompress },
         { Compressor::LZAV,         "lzav",         lzav::bound,         lzav::compress,         lzav::decompress },
-#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM)
+#if defined(MANGO_ENABLE_ISAL)
         { Compressor::ISAL,          "isal",        isal::bound,         isal::compress,         isal::decompress },
 #endif
         { Compressor::LZFSE,        "lzfse",        lzfse::bound,        lzfse::compress,        lzfse::decompress },
