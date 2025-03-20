@@ -263,10 +263,8 @@ namespace mango::image::jpeg
             }
 
             HuffmanType offset = (x >> (JPEG_REGISTER_BITS - c_size)) + valueOffset[c_size];
-#if 0
             if (offset > 255)
                 return 0; // decoding error
-#endif
             symbol = value[offset];
         }
 
