@@ -12,6 +12,10 @@ OPTION(BUILD_OPENGL         "Build OpenGL library"                      ON)
 OPTION(BUILD_IMPORT3D       "Build Import3D library"                    ON)
 OPTION(BUILD_EXAMPLES       "Build examples"                            ON)
 
+# Window system selection
+set(WINDOW_SYSTEM "xlib" CACHE STRING "Window system to use (xlib, xcb, wayland)")
+set_property(CACHE WINDOW_SYSTEM PROPERTY STRINGS xlib xcb wayland)
+
 OPTION(LIBRARY_JXL          "Enable jpeg-xl image codec support"        ON)
 OPTION(LIBRARY_JP2          "Enable jpeg2000 image codec support"       ON)
 OPTION(LIBRARY_WEBP         "Enable WebP image codec support"           ON)
@@ -194,11 +198,19 @@ if (BUILD_OPENGL)
 
     else ()
 
-        FILE(GLOB WINDOW_SOURCES
-            "${MANGO_SOURCE_DIR}/window/xlib/*.cpp"
-            "${MANGO_SOURCE_DIR}/window/xcb/*.cpp"
-            "${MANGO_SOURCE_DIR}/window/wayland/*.cpp"
-        )
+        # Select window system based on WINDOW_SYSTEM option
+        if(WINDOW_SYSTEM STREQUAL "xlib")
+            FILE(GLOB WINDOW_SOURCES "${MANGO_SOURCE_DIR}/window/xlib/*.cpp")
+            #add_definitions(-DMANGO_WINDOW_SYSTEM_XLIB)
+        elseif(WINDOW_SYSTEM STREQUAL "xcb")
+            FILE(GLOB WINDOW_SOURCES "${MANGO_SOURCE_DIR}/window/xcb/*.cpp")
+            #add_definitions(-DMANGO_WINDOW_SYSTEM_XCB)
+        elseif(WINDOW_SYSTEM STREQUAL "wayland")
+            FILE(GLOB WINDOW_SOURCES "${MANGO_SOURCE_DIR}/window/wayland/*.cpp")
+            #add_definitions(-DMANGO_WINDOW_SYSTEM_WAYLAND)
+        else()
+            message(FATAL_ERROR "Unsupported window system: ${WINDOW_SYSTEM}")
+        endif()
 
         FILE(GLOB OPENGL_SOURCES
             "${MANGO_SOURCE_DIR}/opengl/*.cpp"
@@ -502,9 +514,19 @@ if (BUILD_OPENGL)
         elseif (WIN32)
             target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
         else ()
-            message("    XLIB")
-            target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
-            target_link_libraries(mango PUBLIC X11 GL ${OPENGL_glx_LIBRARY})
+            if(WINDOW_SYSTEM STREQUAL "xlib")
+                message("    XLIB")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
+                target_link_libraries(mango PUBLIC X11 GL ${OPENGL_glx_LIBRARY})
+            elseif(WINDOW_SYSTEM STREQUAL "xcb")
+                message("    XCB")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XCB")
+                target_link_libraries(mango PUBLIC xcb xcb-xkb xcb-keysyms xcb-icccm xkbcommon xcb-glx GL ${OPENGL_glx_LIBRARY})
+            elseif(WINDOW_SYSTEM STREQUAL "wayland")
+                message("    Wayland")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_WAYLAND")
+                # TODO: Add Wayland libraries when implemented
+            endif()
         endif ()
     endif ()
 endif ()

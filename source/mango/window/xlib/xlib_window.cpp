@@ -1,14 +1,15 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
-#include <mango/core/system.hpp> // printLine
+#include <mango/core/system.hpp>
 #include <mango/core/timer.hpp>
-#include "xlib_handle.hpp"
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
+
+#include "xlib_handle.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>

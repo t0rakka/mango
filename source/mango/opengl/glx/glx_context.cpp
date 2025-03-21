@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
@@ -14,8 +14,361 @@
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
 
-    // TODO: for future reference, if ever need XCB GLX:
-    // https://xcb.freedesktop.org/opengl/
+#define explicit explicit_
+#include <xcb/xcb.h>
+#include <xcb/xproto.h>
+#include <xcb/xcb_icccm.h>
+#include <GL/glx.h>
+#include <X11/Xlib.h>
+#include "../../window/xcb/xcb_handle.hpp"
+#undef explicit
+
+namespace mango
+{
+    using namespace math;
+
+    // -----------------------------------------------------------------------
+    // OpenGLContextXCB
+    // -----------------------------------------------------------------------
+
+    struct OpenGLContextXCB : OpenGLContextHandle
+    {
+        GLXContext context { 0 };
+        bool fullscreen { false };
+        WindowHandle* window;
+        Display* display { nullptr };
+
+        OpenGLContextXCB(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* shared)
+            : window(*theContext)
+        {
+            // resolve configuration
+            OpenGLContext::Config config;
+            if (pConfig)
+            {
+                config = *pConfig;
+            }
+
+            // Open X display
+            display = XOpenDisplay(nullptr);
+            if (!display)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContext] Failed to open X display.");
+            }
+
+            int screen = DefaultScreen(display);
+
+            // Get GLX version
+            int version_major, version_minor;
+            if (!glXQueryVersion(display, &version_major, &version_minor))
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContext] Failed to query GLX version.");
+            }
+
+            // Configure visual attributes
+            std::vector<int> visualAttribs;
+            visualAttribs.push_back(GLX_X_RENDERABLE);
+            visualAttribs.push_back(True);
+
+            visualAttribs.push_back(GLX_DRAWABLE_TYPE);
+            visualAttribs.push_back(GLX_WINDOW_BIT);
+
+            visualAttribs.push_back(GLX_X_VISUAL_TYPE);
+            visualAttribs.push_back(GLX_TRUE_COLOR);
+
+            visualAttribs.push_back(GLX_DOUBLEBUFFER);
+            visualAttribs.push_back(True);
+
+            visualAttribs.push_back(GLX_DEPTH_SIZE);
+            visualAttribs.push_back(config.depth);
+
+            visualAttribs.push_back(GLX_STENCIL_SIZE);
+            visualAttribs.push_back(config.stencil);
+
+            visualAttribs.push_back(GLX_RED_SIZE);
+            visualAttribs.push_back(config.red);
+
+            visualAttribs.push_back(GLX_GREEN_SIZE);
+            visualAttribs.push_back(config.green);
+
+            visualAttribs.push_back(GLX_BLUE_SIZE);
+            visualAttribs.push_back(config.blue);
+
+            visualAttribs.push_back(GLX_ALPHA_SIZE);
+            visualAttribs.push_back(config.alpha);
+
+            if (config.samples > 1)
+            {
+                visualAttribs.push_back(GLX_SAMPLE_BUFFERS);
+                visualAttribs.push_back(1);
+
+                visualAttribs.push_back(GLX_SAMPLES);
+                visualAttribs.push_back(config.samples);
+            }
+
+            visualAttribs.push_back(None);
+
+            // Choose FBConfig
+            int num_fb_configs = 0;
+            GLXFBConfig* fbconfigs = glXChooseFBConfig(display, screen, visualAttribs.data(), &num_fb_configs);
+            if (!fbconfigs || num_fb_configs == 0)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContext] Failed to get FBConfigs.");
+            }
+
+            // Select the first FBConfig
+            GLXFBConfig fbconfig = fbconfigs[0];
+
+            // Get visual info
+            XVisualInfo* vi = glXGetVisualFromFBConfig(display, fbconfig);
+            if (!vi)
+            {
+                XFree(fbconfigs);
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContext] Failed to get visual info.");
+            }
+
+            // Store the visual ID
+            window->visualid = vi->visualid;
+
+            // Get the screen from the XCB connection
+            const xcb_setup_t* setup = xcb_get_setup(window->native.connection);
+            xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
+            xcb_screen_t* xcb_screen = iter.data;
+            if (!xcb_screen)
+            {
+                XFree(vi);
+                XFree(fbconfigs);
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContext] Failed to get XCB screen.");
+            }
+
+            // Create colormap with the GLX visual
+            window->colormap = xcb_generate_id(window->native.connection);
+            xcb_create_colormap(window->native.connection, 
+                              XCB_COLORMAP_ALLOC_NONE,
+                              window->colormap,
+                              xcb_screen->root,
+                              window->visualid);
+
+            // Set window attributes
+            uint32_t value_mask = XCB_CW_BACK_PIXEL | XCB_CW_BORDER_PIXEL | XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
+            uint32_t value_list[4] = {
+                xcb_screen->black_pixel,
+                xcb_screen->black_pixel,
+                XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
+                XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION |
+                XCB_EVENT_MASK_STRUCTURE_NOTIFY,
+                window->colormap
+            };
+
+            // Create window with the GLX visual
+            window->native.window = xcb_generate_id(window->native.connection);
+            xcb_create_window(window->native.connection,
+                            vi->depth,
+                            window->native.window,
+                            xcb_screen->root,
+                            0, 0, width, height,
+                            0,
+                            XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                            window->visualid,
+                            value_mask,
+                            value_list);
+
+            XFree(vi);
+
+            // Create context
+            GLXContext shared_context = 0;
+            if (shared)
+            {
+                shared_context = reinterpret_cast<OpenGLContextXCB*>(shared)->context;
+            }
+
+            // Get the GLX_ARB_create_context extension
+            PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB =
+                (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
+
+            if (glXCreateContextAttribsARB)
+            {
+                std::vector<int> contextAttribs;
+                contextAttribs.push_back(GLX_CONTEXT_MAJOR_VERSION_ARB);
+                contextAttribs.push_back(3);
+                contextAttribs.push_back(GLX_CONTEXT_MINOR_VERSION_ARB);
+                contextAttribs.push_back(3);
+                contextAttribs.push_back(GLX_CONTEXT_FLAGS_ARB);
+                contextAttribs.push_back(GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB);
+                contextAttribs.push_back(0); // End of attributes
+
+                context = glXCreateContextAttribsARB(display, fbconfig, shared_context, True, contextAttribs.data());
+            }
+            else
+            {
+                context = glXCreateNewContext(display, fbconfig, GLX_RGBA_TYPE, shared_context, True);
+            }
+
+            XFree(fbconfigs);
+
+            if (!context)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContext] Failed to create OpenGL context.");
+            }
+
+            // Map the window
+            xcb_map_window(window->native.connection, window->native.window);
+            xcb_flush(window->native.connection);
+
+            // Get X11 window ID from XCB window
+            ::Window xwindow = static_cast<::Window>(window->native.window);
+
+            // Make context current
+            if (!glXMakeCurrent(display, xwindow, context))
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContext] Failed to make context current.");
+            }
+        }
+
+        ~OpenGLContextXCB()
+        {
+            shutdown();
+        }
+
+        void shutdown()
+        {
+            if (display)
+            {
+                glXMakeCurrent(display, 0, 0);
+                if (context)
+                {
+                    glXDestroyContext(display, context);
+                    context = 0;
+                }
+                XCloseDisplay(display);
+                display = nullptr;
+            }
+        }
+
+        void makeCurrent() override
+        {
+            if (display)
+            {
+                ::Window xwindow = static_cast<::Window>(window->native.window);
+                if (xwindow)
+                {
+                    glXMakeCurrent(display, xwindow, context);
+                }
+            }
+        }
+
+        void swapBuffers() override
+        {
+            if (display)
+            {
+                ::Window xwindow = static_cast<::Window>(window->native.window);
+                if (xwindow)
+                {
+                    glXSwapBuffers(display, xwindow);
+                }
+            }
+        }
+
+        void swapInterval(int interval) override
+        {
+            if (display)
+            {
+                ::Window xwindow = static_cast<::Window>(window->native.window);
+                if (xwindow)
+                {
+                    glXSwapIntervalEXT(display, xwindow, interval);
+                }
+            }
+        }
+
+        void toggleFullscreen() override
+        {
+            if (!display) return;
+
+            // Disable rendering while switching fullscreen mode
+            glXMakeCurrent(display, 0, 0);
+            window->busy = true;
+
+            ::Window xwindow = static_cast<::Window>(window->native.window);
+            if (!xwindow) return;
+
+            XEvent event;
+            std::memset(&event, 0, sizeof(event));
+
+            event.type = ClientMessage;
+            event.xclient.window = xwindow;
+            event.xclient.message_type = window->atom_state;
+            event.xclient.format = 32;
+            event.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
+            event.xclient.data.l[1] = window->atom_fullscreen;
+            event.xclient.data.l[2] = 0;
+            event.xclient.data.l[3] = 1;
+            event.xclient.data.l[4] = 0;
+
+            XMapWindow(display, xwindow);
+
+            // send the event to the root window
+            XSendEvent(display, DefaultRootWindow(display),
+                False, SubstructureRedirectMask | SubstructureNotifyMask, &event);
+
+            XFlush(display);
+
+            // Enable rendering now that all the tricks are done
+            window->busy = false;
+            glXMakeCurrent(display, xwindow, context);
+
+            // Get window dimensions
+            XWindowAttributes attributes;
+            XGetWindowAttributes(display, xwindow, &attributes);
+
+            std::memset(&event, 0, sizeof(event));
+
+            event.type = Expose;
+            event.xexpose.window = xwindow;
+            event.xexpose.x = 0;
+            event.xexpose.y = 0;
+            event.xexpose.width = attributes.width;
+            event.xexpose.height = attributes.height;
+            event.xexpose.count = 0;
+
+            // Send Expose event (generates Window::onDraw callback)
+            XSendEvent(display, xwindow, False, NoEventMask, &event);
+
+            fullscreen = !fullscreen;
+        }
+
+        bool isFullscreen() const override
+        {
+            return fullscreen;
+        }
+
+        int32x2 getWindowSize() const override
+        {
+            if (!display) return int32x2(0, 0);
+
+            ::Window xwindow = static_cast<::Window>(window->native.window);
+            if (!xwindow) return int32x2(0, 0);
+
+            XWindowAttributes attributes;
+            XGetWindowAttributes(display, xwindow, &attributes);
+
+            return int32x2(attributes.width, attributes.height);
+        }
+    };
+
+    OpenGLContextHandle* createOpenGLContextGLX(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
+    {
+        auto* context = new OpenGLContextXCB(parent, width, height, flags, configPtr, shared);
+        return context;
+    }
+
+} // namespace mango
 
 #endif // defined(MANGO_WINDOW_SYSTEM_XCB)
 
