@@ -326,48 +326,6 @@ namespace mango
             MANGO_EXCEPTION("[Window] Failed to allocate key symbols.");
         }
 
-        const xcb_setup_t* setup = xcb_get_setup(native.connection);
-        xcb_screen_iterator_t screen_iterator = xcb_setup_roots_iterator(setup);
-
-        while (screen_index-- > 0)
-        {
-            xcb_screen_next(&screen_iterator);
-        }
-
-        xcb_screen_t* screen = screen_iterator.data;
-        native.window = xcb_generate_id(native.connection);
-
-        // Create colormap
-        colormap = xcb_generate_id(native.connection);
-        xcb_create_colormap(native.connection, XCB_COLORMAP_ALLOC_NONE, colormap, screen->root, screen->root_visual);
-
-        // Create window
-        uint32_t value_list[] =
-        {
-            screen->white_pixel,
-            XCB_EVENT_MASK_EXPOSURE |
-            XCB_EVENT_MASK_KEY_PRESS |
-            XCB_EVENT_MASK_KEY_RELEASE |
-            XCB_EVENT_MASK_BUTTON_PRESS |
-            XCB_EVENT_MASK_BUTTON_RELEASE |
-            XCB_EVENT_MASK_POINTER_MOTION |
-            XCB_EVENT_MASK_STRUCTURE_NOTIFY,
-            colormap
-        };
-
-        xcb_create_window(
-            native.connection,
-            XCB_COPY_FROM_PARENT,
-            native.window,
-            screen->root,
-            20, 20,
-            width, height,
-            0,
-            XCB_WINDOW_CLASS_INPUT_OUTPUT,
-            screen->root_visual,
-            XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK | XCB_CW_COLORMAP,
-            value_list);
-
         // Intern atoms
         xcb_intern_atom_cookie_t protocols_cookie = xcb_intern_atom(native.connection, 1, 12, "WM_PROTOCOLS");
         xcb_intern_atom_cookie_t delete_cookie = xcb_intern_atom(native.connection, 0, 16, "WM_DELETE_WINDOW");
@@ -442,21 +400,6 @@ namespace mango
         free(xdnd_selection_reply);
         free(xdnd_leave_reply);
 
-        // Set window protocols
-        xcb_change_property(native.connection, XCB_PROP_MODE_REPLACE, native.window, atom_protocols, XCB_ATOM_ATOM, 32, 1, &atom_delete);
-
-        // Set XDnD version
-        uint32_t xdnd_version = 5;
-        xcb_change_property(native.connection, XCB_PROP_MODE_REPLACE, native.window, atom_xdnd_Aware, XCB_ATOM_ATOM, 32, 1, &xdnd_version);
-
-        // Set window title
-        const char* title = "XCB Window";
-        xcb_change_property(native.connection, XCB_PROP_MODE_REPLACE, native.window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title), title);
-
-        // Map window
-        xcb_map_window(native.connection, native.window);
-        xcb_flush(native.connection);
-
         // Initialize mouse time array
         for (int i = 0; i < 6; ++i)
         {
@@ -501,6 +444,65 @@ namespace mango
             xcb_disconnect(native.connection);
             native.connection = nullptr;
         }
+    }
+
+    bool WindowHandle::createXWindow(int screen, int depth, xcb_visualid_t visual, int width, int height, const char* title)
+    {
+        const xcb_setup_t* setup = xcb_get_setup(native.connection);
+        xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
+        xcb_screen_t* xcb_screen = iter.data;
+        if (!xcb_screen)
+        {
+            return false;
+        }
+
+        // Create colormap with the specified visual
+        colormap = xcb_generate_id(native.connection);
+        xcb_create_colormap(native.connection, 
+                          XCB_COLORMAP_ALLOC_NONE,
+                          colormap,
+                          xcb_screen->root,
+                          visual);
+
+        // Create window with the specified visual
+        native.window = xcb_generate_id(native.connection);
+        uint32_t value_mask = XCB_CW_BACK_PIXEL | XCB_CW_BORDER_PIXEL | XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
+        uint32_t value_list[4] = {
+            xcb_screen->black_pixel,
+            xcb_screen->black_pixel,
+            XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
+            XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION |
+            XCB_EVENT_MASK_STRUCTURE_NOTIFY,
+            colormap
+        };
+
+        xcb_create_window(native.connection,
+                         depth,
+                         native.window,
+                         xcb_screen->root,
+                         20, 20,
+                         width, height,
+                         0,
+                         XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                         visual,
+                         value_mask,
+                         value_list);
+
+        // Set window protocols
+        xcb_change_property(native.connection, XCB_PROP_MODE_REPLACE, native.window, atom_protocols, XCB_ATOM_ATOM, 32, 1, &atom_delete);
+
+        // Set XDnD version
+        uint32_t xdnd_version = 5;
+        xcb_change_property(native.connection, XCB_PROP_MODE_REPLACE, native.window, atom_xdnd_Aware, XCB_ATOM_ATOM, 32, 1, &xdnd_version);
+
+        // Set window title
+        xcb_change_property(native.connection, XCB_PROP_MODE_REPLACE, native.window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title), title);
+
+        // Map the window
+        xcb_map_window(native.connection, native.window);
+        xcb_flush(native.connection);
+
+        return true;
     }
 
     // -----------------------------------------------------------------------
@@ -577,8 +579,7 @@ namespace mango
         auto connection = m_handle->native.connection;
         auto window = m_handle->native.window;
 
-        xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8,
-            title.length(), title.c_str());
+        xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title.c_str()), title.c_str());
         xcb_flush(connection);
     }
 
@@ -870,11 +871,34 @@ namespace mango
                         xcb_configure_notify_event_t* configure = (xcb_configure_notify_event_t*)event;
                         if (configure->width != m_handle->size[0] || configure->height != m_handle->size[1])
                         {
+                            // Set busy flag to prevent multiple resize callbacks
+                            m_handle->busy = true;
+                            
+                            // Update size
                             m_handle->size[0] = configure->width;
                             m_handle->size[1] = configure->height;
-                            if (!m_handle->busy)
+                            
+                            // Small delay to batch resize events
+                            usleep(10000); // 10ms delay
+                            
+                            // Check if we have more configure events pending
+                            xcb_generic_event_t* next_event = xcb_poll_for_event(m_handle->native.connection);
+                            bool has_more = false;
+                            
+                            if (next_event)
+                            {
+                                if (next_event->response_type == XCB_CONFIGURE_NOTIFY)
+                                {
+                                    has_more = true;
+                                }
+                                free(next_event);
+                            }
+                            
+                            // Only process resize if no more configure events are pending
+                            if (!has_more)
                             {
                                 onResize(configure->width, configure->height);
+                                m_handle->busy = false;
                             }
                         }
                         break;

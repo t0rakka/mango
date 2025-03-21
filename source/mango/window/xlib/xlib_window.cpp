@@ -984,11 +984,30 @@ namespace mango
                         int height = e.xconfigure.height;
                         if (width != m_handle->size[0] || height != m_handle->size[1])
                         {
+                            // Set busy flag to prevent multiple resize callbacks
+                            m_handle->busy = true;
+                            
+                            // Update size
                             m_handle->size[0] = width;
                             m_handle->size[1] = height;
-                            if (!m_handle->busy)
+                            
+                            // Small delay to batch resize events
+                            usleep(10000); // 10ms delay
+                            
+                            // Check if we have more configure events pending
+                            XEvent next_event;
+                            bool has_more = false;
+                            
+                            if (XCheckTypedEvent(m_handle->native.display, ConfigureNotify, &next_event))
+                            {
+                                has_more = true;
+                            }
+                            
+                            // Only process resize if no more configure events are pending
+                            if (!has_more)
                             {
                                 onResize(width, height);
+                                m_handle->busy = false;
                             }
                         }
                         break;

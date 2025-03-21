@@ -130,55 +130,6 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContext] Failed to get visual info.");
             }
 
-            // Store the visual ID
-            window->visualid = vi->visualid;
-
-            // Get the screen from the XCB connection
-            const xcb_setup_t* setup = xcb_get_setup(window->native.connection);
-            xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
-            xcb_screen_t* xcb_screen = iter.data;
-            if (!xcb_screen)
-            {
-                XFree(vi);
-                XFree(fbconfigs);
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] Failed to get XCB screen.");
-            }
-
-            // Create colormap with the GLX visual
-            window->colormap = xcb_generate_id(window->native.connection);
-            xcb_create_colormap(window->native.connection, 
-                              XCB_COLORMAP_ALLOC_NONE,
-                              window->colormap,
-                              xcb_screen->root,
-                              window->visualid);
-
-            // Set window attributes
-            uint32_t value_mask = XCB_CW_BACK_PIXEL | XCB_CW_BORDER_PIXEL | XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
-            uint32_t value_list[4] = {
-                xcb_screen->black_pixel,
-                xcb_screen->black_pixel,
-                XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
-                XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION |
-                XCB_EVENT_MASK_STRUCTURE_NOTIFY,
-                window->colormap
-            };
-
-            // Create window with the GLX visual
-            window->native.window = xcb_generate_id(window->native.connection);
-            xcb_create_window(window->native.connection,
-                            vi->depth,
-                            window->native.window,
-                            xcb_screen->root,
-                            0, 0, width, height,
-                            0,
-                            XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                            window->visualid,
-                            value_mask,
-                            value_list);
-
-            XFree(vi);
-
             // Create context
             GLXContext shared_context = 0;
             if (shared)
@@ -194,14 +145,24 @@ namespace mango
             {
                 std::vector<int> contextAttribs;
                 contextAttribs.push_back(GLX_CONTEXT_MAJOR_VERSION_ARB);
-                contextAttribs.push_back(3);
+                contextAttribs.push_back(4);
                 contextAttribs.push_back(GLX_CONTEXT_MINOR_VERSION_ARB);
-                contextAttribs.push_back(3);
+                contextAttribs.push_back(6);
+                contextAttribs.push_back(GLX_CONTEXT_PROFILE_MASK_ARB);
+                contextAttribs.push_back(GLX_CONTEXT_CORE_PROFILE_BIT_ARB);
                 contextAttribs.push_back(GLX_CONTEXT_FLAGS_ARB);
                 contextAttribs.push_back(GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB);
                 contextAttribs.push_back(0); // End of attributes
 
                 context = glXCreateContextAttribsARB(display, fbconfig, shared_context, True, contextAttribs.data());
+
+                // If 4.6 is not available, try 3.3
+                if (!context)
+                {
+                    contextAttribs[1] = 3; // major version
+                    contextAttribs[3] = 3; // minor version
+                    context = glXCreateContextAttribsARB(display, fbconfig, shared_context, True, contextAttribs.data());
+                }
             }
             else
             {
@@ -212,18 +173,23 @@ namespace mango
 
             if (!context)
             {
+                XFree(vi);
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContext] Failed to create OpenGL context.");
             }
 
-            // Map the window
-            xcb_map_window(window->native.connection, window->native.window);
-            xcb_flush(window->native.connection);
+            // Create the XCB window with the GLX visual
+            if (!window->createXWindow(vi->screen, vi->depth, vi->visualid, width, height, "OpenGL"))
+            {
+                XFree(vi);
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContext] Failed to create X window.");
+            }
 
-            // Get X11 window ID from XCB window
-            ::Window xwindow = static_cast<::Window>(window->native.window);
+            XFree(vi);
 
             // Make context current
+            ::Window xwindow = static_cast<::Window>(window->native.window);
             if (!glXMakeCurrent(display, xwindow, context))
             {
                 shutdown();
@@ -298,25 +264,27 @@ namespace mango
             ::Window xwindow = static_cast<::Window>(window->native.window);
             if (!xwindow) return;
 
-            XEvent event;
-            std::memset(&event, 0, sizeof(event));
+            // Get the root window
+            ::Window root = DefaultRootWindow(display);
 
+            // Create client message event
+            XEvent event = { 0 };
             event.type = ClientMessage;
             event.xclient.window = xwindow;
-            event.xclient.message_type = window->atom_state;
+            event.xclient.message_type = XInternAtom(display, "_NET_WM_STATE", False);
             event.xclient.format = 32;
             event.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
-            event.xclient.data.l[1] = window->atom_fullscreen;
+            event.xclient.data.l[1] = XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", False);
             event.xclient.data.l[2] = 0;
             event.xclient.data.l[3] = 1;
             event.xclient.data.l[4] = 0;
 
+            // Send the event to the root window
+            XSendEvent(display, root, False,
+                SubstructureRedirectMask | SubstructureNotifyMask, &event);
+
+            // Map window to ensure it's visible
             XMapWindow(display, xwindow);
-
-            // send the event to the root window
-            XSendEvent(display, DefaultRootWindow(display),
-                False, SubstructureRedirectMask | SubstructureNotifyMask, &event);
-
             XFlush(display);
 
             // Enable rendering now that all the tricks are done
@@ -327,18 +295,18 @@ namespace mango
             XWindowAttributes attributes;
             XGetWindowAttributes(display, xwindow, &attributes);
 
-            std::memset(&event, 0, sizeof(event));
-
-            event.type = Expose;
-            event.xexpose.window = xwindow;
-            event.xexpose.x = 0;
-            event.xexpose.y = 0;
-            event.xexpose.width = attributes.width;
-            event.xexpose.height = attributes.height;
-            event.xexpose.count = 0;
-
             // Send Expose event (generates Window::onDraw callback)
-            XSendEvent(display, xwindow, False, NoEventMask, &event);
+            XEvent expose = { 0 };
+            expose.type = Expose;
+            expose.xexpose.window = xwindow;
+            expose.xexpose.x = 0;
+            expose.xexpose.y = 0;
+            expose.xexpose.width = attributes.width;
+            expose.xexpose.height = attributes.height;
+            expose.xexpose.count = 0;
+
+            XSendEvent(display, xwindow, False, NoEventMask, &expose);
+            XFlush(display);
 
             fullscreen = !fullscreen;
         }
@@ -664,17 +632,12 @@ namespace mango
 
                 context = glXCreateContextAttribsARB(display, selected, shared_context, True, contextAttribs.data());
 
-                // Sync to ensure any errors generated are processed.
-                XSync(display, False);
-
-                if (context)
+                // If 4.6 is not available, try 3.3
+                if (!context)
                 {
-                    //printLine(Print::Info, "Created GL 3.0 context");
-                }
-                else
-                {
-                    //printLine(Print::Error, "Failed to create GL 3.0 context ... using old-style GLX context");
-                    context = glXCreateContextAttribsARB(display, selected, 0, True, NULL);
+                    contextAttribs[1] = 3; // major version
+                    contextAttribs[3] = 3; // minor version
+                    context = glXCreateContextAttribsARB(display, selected, shared_context, True, contextAttribs.data());
                 }
             }
             else
@@ -765,51 +728,58 @@ namespace mango
 
         void toggleFullscreen() override
         {
+            if (!display) return;
+
             // Disable rendering while switching fullscreen mode
-            glXMakeCurrent(window->native.display, 0, 0);
+            glXMakeCurrent(display, 0, 0);
             window->busy = true;
 
-            XEvent event;
-            std::memset(&event, 0, sizeof(event));
+            ::Window xwindow = static_cast<::Window>(window->native.window);
+            if (!xwindow) return;
 
+            // Get the root window
+            ::Window root = DefaultRootWindow(display);
+
+            // Create client message event
+            XEvent event = { 0 };
             event.type = ClientMessage;
-            event.xclient.window = window->native.window;
-            event.xclient.message_type = window->atom_state;
+            event.xclient.window = xwindow;
+            event.xclient.message_type = XInternAtom(display, "_NET_WM_STATE", False);
             event.xclient.format = 32;
             event.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
-            event.xclient.data.l[1] = window->atom_fullscreen;
-            event.xclient.data.l[2] = 0; // no second property to toggle
-            event.xclient.data.l[3] = 1; // source indication: application
-            event.xclient.data.l[4] = 0; // unused
+            event.xclient.data.l[1] = XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", False);
+            event.xclient.data.l[2] = 0;
+            event.xclient.data.l[3] = 1;
+            event.xclient.data.l[4] = 0;
 
-            XMapWindow(window->native.display, window->native.window);
+            // Send the event to the root window
+            XSendEvent(display, root, False,
+                SubstructureRedirectMask | SubstructureNotifyMask, &event);
 
-            // send the event to the root window
-            XSendEvent(window->native.display, DefaultRootWindow(window->native.display),
-                False, SubstructureRedirectMask | SubstructureNotifyMask, &event);
-
-            XFlush(window->native.display);
+            // Map window to ensure it's visible
+            XMapWindow(display, xwindow);
+            XFlush(display);
 
             // Enable rendering now that all the tricks are done
             window->busy = false;
-            glXMakeCurrent(window->native.display, window->native.window, context);
+            glXMakeCurrent(display, xwindow, context);
 
             // Get window dimensions
             XWindowAttributes attributes;
-            XGetWindowAttributes(window->native.display, window->native.window, &attributes);
-
-            std::memset(&event, 0, sizeof(event));
-
-            event.type = Expose;
-            event.xexpose.window = window->native.window;
-            event.xexpose.x = 0;
-            event.xexpose.y = 0;
-            event.xexpose.width = attributes.width;
-            event.xexpose.height = attributes.height;
-            event.xexpose.count = 0;
+            XGetWindowAttributes(display, xwindow, &attributes);
 
             // Send Expose event (generates Window::onDraw callback)
-            XSendEvent(window->native.display, window->native.window, False, NoEventMask, &event);
+            XEvent expose = { 0 };
+            expose.type = Expose;
+            expose.xexpose.window = xwindow;
+            expose.xexpose.x = 0;
+            expose.xexpose.y = 0;
+            expose.xexpose.width = attributes.width;
+            expose.xexpose.height = attributes.height;
+            expose.xexpose.count = 0;
+
+            XSendEvent(display, xwindow, False, NoEventMask, &expose);
+            XFlush(display);
 
             fullscreen = !fullscreen;
         }
