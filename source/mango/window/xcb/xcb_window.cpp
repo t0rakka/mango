@@ -496,6 +496,22 @@ namespace mango
         // Set window title
         xcb_change_property(native.connection, XCB_PROP_MODE_REPLACE, native.window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title), title);
 
+        // Set window manager hints for better resize behavior
+        xcb_icccm_wm_hints_t hints = { 0 };
+        hints.flags = XCB_ICCCM_WM_HINT_INPUT | XCB_ICCCM_WM_HINT_STATE;
+        hints.input = 1;  // Window accepts input
+        hints.initial_state = XCB_ICCCM_WM_STATE_NORMAL;
+        xcb_icccm_set_wm_hints(native.connection, native.window, &hints);
+
+        // Set window size hints
+        xcb_size_hints_t size_hints = { 0 };
+        size_hints.flags = XCB_ICCCM_SIZE_HINT_P_MIN_SIZE | XCB_ICCCM_SIZE_HINT_P_RESIZE_INC;
+        size_hints.min_width = 1;
+        size_hints.min_height = 1;
+        size_hints.width_inc = 1;
+        size_hints.height_inc = 1;
+        xcb_icccm_set_wm_size_hints(native.connection, native.window, XCB_ATOM_WM_NORMAL_HINTS, &size_hints);
+
         // Map the window
         xcb_map_window(native.connection, native.window);
         xcb_flush(native.connection);
@@ -902,8 +918,9 @@ namespace mango
                                 expose.height = configure->height;
                                 expose.count = 0;
                                 
+                                // Use XCB_EVENT_MASK_NO_EVENT to prevent event loop from processing this immediately
                                 xcb_send_event(m_handle->native.connection, 0, m_handle->native.window,
-                                    XCB_EVENT_MASK_EXPOSURE, (char*)&expose);
+                                    XCB_EVENT_MASK_NO_EVENT, (char*)&expose);
                                 xcb_flush(m_handle->native.connection);
                                 
                                 onResize(configure->width, configure->height);
