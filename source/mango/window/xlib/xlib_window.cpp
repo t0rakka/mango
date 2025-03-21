@@ -991,9 +991,6 @@ namespace mango
                             m_handle->size[0] = width;
                             m_handle->size[1] = height;
                             
-                            // Small delay to batch resize events
-                            usleep(10000); // 10ms delay
-                            
                             // Check if we have more configure events pending
                             XEvent next_event;
                             bool has_more = false;
@@ -1006,6 +1003,20 @@ namespace mango
                             // Only process resize if no more configure events are pending
                             if (!has_more)
                             {
+                                // Send Expose event to ensure redraw
+                                XEvent expose = { 0 };
+                                expose.type = Expose;
+                                expose.xexpose.window = m_handle->native.window;
+                                expose.xexpose.x = 0;
+                                expose.xexpose.y = 0;
+                                expose.xexpose.width = width;
+                                expose.xexpose.height = height;
+                                expose.xexpose.count = 0;
+                                
+                                XSendEvent(m_handle->native.display, m_handle->native.window, False,
+                                    ExposureMask, &expose);
+                                XFlush(m_handle->native.display);
+                                
                                 onResize(width, height);
                                 m_handle->busy = false;
                             }

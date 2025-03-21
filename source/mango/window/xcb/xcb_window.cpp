@@ -466,10 +466,8 @@ namespace mango
 
         // Create window with the specified visual
         native.window = xcb_generate_id(native.connection);
-        uint32_t value_mask = XCB_CW_BACK_PIXEL | XCB_CW_BORDER_PIXEL | XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
-        uint32_t value_list[4] = {
-            xcb_screen->black_pixel,
-            xcb_screen->black_pixel,
+        uint32_t value_mask = XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
+        uint32_t value_list[2] = {
             XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
             XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION |
             XCB_EVENT_MASK_STRUCTURE_NOTIFY,
@@ -878,9 +876,6 @@ namespace mango
                             m_handle->size[0] = configure->width;
                             m_handle->size[1] = configure->height;
                             
-                            // Small delay to batch resize events
-                            usleep(10000); // 10ms delay
-                            
                             // Check if we have more configure events pending
                             xcb_generic_event_t* next_event = xcb_poll_for_event(m_handle->native.connection);
                             bool has_more = false;
@@ -897,6 +892,20 @@ namespace mango
                             // Only process resize if no more configure events are pending
                             if (!has_more)
                             {
+                                // Send Expose event to ensure redraw
+                                xcb_expose_event_t expose = { 0 };
+                                expose.response_type = XCB_EXPOSE;
+                                expose.window = m_handle->native.window;
+                                expose.x = 0;
+                                expose.y = 0;
+                                expose.width = configure->width;
+                                expose.height = configure->height;
+                                expose.count = 0;
+                                
+                                xcb_send_event(m_handle->native.connection, 0, m_handle->native.window,
+                                    XCB_EVENT_MASK_EXPOSURE, (char*)&expose);
+                                xcb_flush(m_handle->native.connection);
+                                
                                 onResize(configure->width, configure->height);
                                 m_handle->busy = false;
                             }
