@@ -4,12 +4,11 @@
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
-#include <mango/core/system.hpp>
+#include <mango/core/system.hpp> // printLine
 #include <mango/core/timer.hpp>
+#include "xlib_handle.hpp"
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
-
-#include "xlib_handle.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -984,41 +983,11 @@ namespace mango
                         int height = e.xconfigure.height;
                         if (width != m_handle->size[0] || height != m_handle->size[1])
                         {
-                            // Set busy flag to prevent multiple resize callbacks
-                            m_handle->busy = true;
-                            
-                            // Update size
                             m_handle->size[0] = width;
                             m_handle->size[1] = height;
-                            
-                            // Check if we have more configure events pending
-                            XEvent next_event;
-                            bool has_more = false;
-                            
-                            if (XCheckTypedEvent(m_handle->native.display, ConfigureNotify, &next_event))
+                            if (!m_handle->busy)
                             {
-                                has_more = true;
-                            }
-                            
-                            // Only process resize if no more configure events are pending
-                            if (!has_more)
-                            {
-                                // Send Expose event to ensure redraw
-                                XEvent expose = { 0 };
-                                expose.type = Expose;
-                                expose.xexpose.window = m_handle->native.window;
-                                expose.xexpose.x = 0;
-                                expose.xexpose.y = 0;
-                                expose.xexpose.width = width;
-                                expose.xexpose.height = height;
-                                expose.xexpose.count = 0;
-                                
-                                XSendEvent(m_handle->native.display, m_handle->native.window, False,
-                                    ExposureMask, &expose);
-                                XFlush(m_handle->native.display);
-                                
                                 onResize(width, height);
-                                m_handle->busy = false;
                             }
                         }
                         break;
