@@ -9,7 +9,9 @@
 
 #if defined(MANGO_OPENGL_CONTEXT_EGL)
 
-#include "../../window/xlib/xlib_handle.hpp"
+// TODO: make this work with different window systems: XLIB, XCB, WAYLAND (WIN32)
+
+#include "../../window/xlib/xlib_window.hpp"
 #include <EGL/egl.h>
 
 namespace mango

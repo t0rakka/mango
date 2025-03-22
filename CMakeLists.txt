@@ -200,14 +200,20 @@ if (BUILD_OPENGL)
 
         # Select window system based on WINDOW_SYSTEM option
         if(WINDOW_SYSTEM STREQUAL "xlib")
-            FILE(GLOB WINDOW_SOURCES "${MANGO_SOURCE_DIR}/window/xlib/*.cpp")
-            #add_definitions(-DMANGO_WINDOW_SYSTEM_XLIB)
+            set(WINDOW_SOURCES
+                ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.hpp
+                ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.cpp
+            )
         elseif(WINDOW_SYSTEM STREQUAL "xcb")
-            FILE(GLOB WINDOW_SOURCES "${MANGO_SOURCE_DIR}/window/xcb/*.cpp")
-            #add_definitions(-DMANGO_WINDOW_SYSTEM_XCB)
+            set(WINDOW_SOURCES
+                ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.hpp
+                ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.cpp
+            )
         elseif(WINDOW_SYSTEM STREQUAL "wayland")
-            FILE(GLOB WINDOW_SOURCES "${MANGO_SOURCE_DIR}/window/wayland/*.cpp")
-            #add_definitions(-DMANGO_WINDOW_SYSTEM_WAYLAND)
+            set(WINDOW_SOURCES
+                ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
+                ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
+            )
         else()
             message(FATAL_ERROR "Unsupported window system: ${WINDOW_SYSTEM}")
         endif()

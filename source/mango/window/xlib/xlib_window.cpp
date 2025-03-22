@@ -6,10 +6,10 @@
 #include <mango/core/string.hpp>
 #include <mango/core/system.hpp> // printLine
 #include <mango/core/timer.hpp>
-#include "xlib_handle.hpp"
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
+#include "xlib_window.hpp"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
