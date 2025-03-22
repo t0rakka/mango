@@ -9,6 +9,7 @@
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
 
 #include <unistd.h>
+
 #define explicit explicit_
 #include <xcb/xcb.h>
 #include <xcb/xproto.h>
@@ -17,7 +18,8 @@
 #include <xcb/xcb_keysyms.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 #undef explicit
-#include "xcb_handle.hpp"
+
+#include "xcb_window.hpp"
 
 namespace
 {
