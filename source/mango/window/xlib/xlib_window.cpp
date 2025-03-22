@@ -4,12 +4,13 @@
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
-#include <mango/core/system.hpp> // printLine
+#include <mango/core/system.hpp>
 #include <mango/core/timer.hpp>
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
 #include "xlib_window.hpp"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -983,11 +984,30 @@ namespace mango
                         int height = e.xconfigure.height;
                         if (width != m_handle->size[0] || height != m_handle->size[1])
                         {
+                            // Set busy flag to prevent multiple resize callbacks
+                            m_handle->busy = true;
+                            
+                            // Update size
                             m_handle->size[0] = width;
                             m_handle->size[1] = height;
-                            if (!m_handle->busy)
+                            
+                            // Small delay to batch resize events
+                            usleep(10000); // 10ms delay
+                            
+                            // Check if we have more configure events pending
+                            XEvent next_event;
+                            bool has_more = false;
+                            
+                            if (XCheckTypedEvent(m_handle->native.display, ConfigureNotify, &next_event))
+                            {
+                                has_more = true;
+                            }
+                            
+                            // Only process resize if no more configure events are pending
+                            if (!has_more)
                             {
                                 onResize(width, height);
+                                m_handle->busy = false;
                             }
                         }
                         break;
