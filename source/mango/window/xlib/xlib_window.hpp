@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <mango/math/math.hpp>
+
 #include <X11/Xatom.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
@@ -63,6 +65,8 @@ namespace mango
 
         WindowHandle(int width, int height, u32 flags);
         ~WindowHandle();
+
+        math::int32x2 getWindowSize() const;
 
         bool createXWindow(int screen, int depth, Visual* visual, int width, int height, const char* title);
     };

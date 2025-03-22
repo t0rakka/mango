@@ -565,6 +565,13 @@ namespace mango
         }
     }
 
+    math::int32x2 WindowHandle::getWindowSize() const
+    {
+        XWindowAttributes attributes;
+        XGetWindowAttributes(native.display, native.window, &attributes);
+        return int32x2(attributes.width, attributes.height);
+    }
+
     bool WindowHandle::createXWindow(int screen, int depth, Visual* visual, int width, int height, const char* title)
     {
         if (!native.display)
@@ -813,9 +820,7 @@ namespace mango
 
     int32x2 Window::getWindowSize() const
     {
-        XWindowAttributes attributes;
-        XGetWindowAttributes(m_handle->native.display, m_handle->native.window, &attributes);
-        return int32x2(attributes.width, attributes.height);
+        return m_handle->getWindowSize();
     }
 
     int32x2 Window::getCursorPosition() const
@@ -984,30 +989,12 @@ namespace mango
                         int height = e.xconfigure.height;
                         if (width != m_handle->size[0] || height != m_handle->size[1])
                         {
-                            // Set busy flag to prevent multiple resize callbacks
-                            m_handle->busy = true;
-                            
-                            // Update size
                             m_handle->size[0] = width;
                             m_handle->size[1] = height;
-                            
-                            // Small delay to batch resize events
-                            usleep(10000); // 10ms delay
-                            
-                            // Check if we have more configure events pending
-                            XEvent next_event;
-                            bool has_more = false;
-                            
-                            if (XCheckTypedEvent(m_handle->native.display, ConfigureNotify, &next_event))
-                            {
-                                has_more = true;
-                            }
-                            
-                            // Only process resize if no more configure events are pending
-                            if (!has_more)
+
+                            if (!m_handle->busy)
                             {
                                 onResize(width, height);
-                                m_handle->busy = false;
                             }
                         }
                         break;

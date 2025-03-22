@@ -448,6 +448,27 @@ namespace mango
         }
     }
 
+    math::int32x2 WindowHandle::getWindowSize() const
+    {
+        auto connection = native.connection;
+        auto window = native.window;
+
+        xcb_get_geometry_cookie_t cookie = xcb_get_geometry(connection, window);
+        xcb_get_geometry_reply_t* reply = xcb_get_geometry_reply(connection, cookie, nullptr);
+
+        int width = 0;
+        int height = 0;
+
+        if (reply)
+        {
+            width = reply->width;
+            height = reply->height;
+            free(reply);
+        }
+
+        return int32x2(width, height);
+    }
+
     bool WindowHandle::createXWindow(int screen, int depth, xcb_visualid_t visual, int width, int height, const char* title)
     {
         const xcb_setup_t* setup = xcb_get_setup(native.connection);
@@ -601,65 +622,7 @@ namespace mango
 
     void Window::setIcon(const Surface& surface)
     {
-        /*
-        // Clamp icon size to 256 x 256
-        const int width = std::min(256, surface.width);
-        const int height = std::min(256, surface.height);
-
-        TemporaryBitmap temp(surface, width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
-
-        auto connection = m_handle->native.connection;
-        auto window = m_handle->native.window;
-
-        // Create icon pixmap
-        m_handle->icon_pixmap = xcb_generate_id(connection);
-        xcb_create_pixmap(connection, 32, m_handle->icon_pixmap, window, width, height);
-
-        // Create icon mask
-        m_handle->icon_mask = xcb_generate_id(connection);
-        xcb_create_pixmap(connection, 1, m_handle->icon_mask, window, width, height);
-
-        // Create graphics context for icon
-        xcb_gc_t gc = xcb_generate_id(connection);
-        uint32_t gc_values[] = { 0 };
-        xcb_create_gc(connection, gc, m_handle->icon_pixmap, XCB_GC_FOREGROUND, gc_values);
-
-        // Put image data
-        xcb_put_image(connection, XCB_IMAGE_FORMAT_Z_PIXMAP, m_handle->icon_pixmap, gc, width, height, 0, 0, 0, 32,
-            reinterpret_cast<uint8_t*>(temp.image));
-
-        // Create alpha mask
-        size_t stride = (width + 7) / 8; // round to next multiple of 8
-        Bitmap alphaMask(stride, height, Format(8, Format::UNORM, Format::A, 8));
-
-        for (int y = 0; y < height; ++y)
-        {
-            u8* alpha = temp.image + y * temp.stride + 3;
-            u8* dest = alphaMask.image + y * stride;
-
-            for (int x = 0; x < width; ++x)
-            {
-                int s = alpha[x * 4] > 0 ? 1 : 0;
-                dest[x / 8] |= (s << (x & 7));
-            }
-        }
-
-        // Put mask data
-        xcb_put_image(connection, XCB_IMAGE_FORMAT_XY_BITMAP, m_handle->icon_mask, gc, width, height, 0, 0, 0, 1,
-            reinterpret_cast<uint8_t*>(alphaMask.image));
-
-        // Free graphics context
-        xcb_free_gc(connection, gc);
-
-        // Set window hints
-        xcb_icccm_wm_hints_t hints = { 0 };
-        hints.flags = XCB_ICCCM_WM_HINT_ICON_PIXMAP | XCB_ICCCM_WM_HINT_ICON_MASK;
-        hints.icon_pixmap = m_handle->icon_pixmap;
-        hints.icon_mask = m_handle->icon_mask;
-        xcb_icccm_set_wm_hints(connection, window, &hints);
-
-        xcb_flush(connection);
-        */
+        // TODO
     }
 
     void Window::setVisible(bool enable)
@@ -683,23 +646,7 @@ namespace mango
 
     int32x2 Window::getWindowSize() const
     {
-        auto connection = m_handle->native.connection;
-        auto window = m_handle->native.window;
-
-        xcb_get_geometry_cookie_t cookie = xcb_get_geometry(connection, window);
-        xcb_get_geometry_reply_t* reply = xcb_get_geometry_reply(connection, cookie, nullptr);
-
-        int width = 0;
-        int height = 0;
-
-        if (reply)
-        {
-            width = reply->width;
-            height = reply->height;
-            free(reply);
-        }
-
-        return int32x2(width, height);
+        return m_handle->getWindowSize();
     }
 
     int32x2 Window::getCursorPosition() const

@@ -62,9 +62,10 @@
 
     #if defined(MANGO_ENABLE_EGL)
         #define MANGO_OPENGL_CONTEXT_EGL
+    #else
+        #define MANGO_OPENGL_CONTEXT_GLX
     #endif
 
-    #define MANGO_OPENGL_CONTEXT_GLX
     #define MANGO_OPENGL_FRAMEBUFFER
 
     #define GL_GLEXT_PROTOTYPES
@@ -90,6 +91,7 @@
 
     #if defined(MANGO_ENABLE_EGL)
         #define MANGO_OPENGL_CONTEXT_EGL
+        #define MANGO_OPENGL_FRAMEBUFFER
     #else
         #define MANGO_OPENGL_CONTEXT_NONE
     #endif

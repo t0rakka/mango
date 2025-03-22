@@ -49,8 +49,8 @@ namespace mango
                 config = *pConfig;
             }
 
-            int screen = DefaultScreen(window->native.display);
             Display* display = window->native.display;
+            int screen = DefaultScreen(display);
 
             // Create GLX extension set
             std::set<std::string_view> glxExtensions;
@@ -406,8 +406,10 @@ namespace mango
 
         void toggleFullscreen() override
         {
+            Display* display = window->native.display;
+
             // Disable rendering while switching fullscreen mode
-            glXMakeCurrent(window->native.display, 0, 0);
+            glXMakeCurrent(display, 0, 0);
             window->busy = true;
 
             XEvent event;
@@ -423,21 +425,21 @@ namespace mango
             event.xclient.data.l[3] = 1; // source indication: application
             event.xclient.data.l[4] = 0; // unused
 
-            XMapWindow(window->native.display, window->native.window);
+            XMapWindow(display, window->native.window);
 
             // send the event to the root window
-            XSendEvent(window->native.display, DefaultRootWindow(window->native.display),
+            XSendEvent(display, DefaultRootWindow(display),
                 False, SubstructureRedirectMask | SubstructureNotifyMask, &event);
 
-            XFlush(window->native.display);
+            XFlush(display);
 
             // Enable rendering now that all the tricks are done
             window->busy = false;
-            glXMakeCurrent(window->native.display, window->native.window, context);
+            glXMakeCurrent(display, window->native.window, context);
 
             // Get window dimensions
             XWindowAttributes attributes;
-            XGetWindowAttributes(window->native.display, window->native.window, &attributes);
+            XGetWindowAttributes(display, window->native.window, &attributes);
 
             std::memset(&event, 0, sizeof(event));
 
@@ -450,7 +452,7 @@ namespace mango
             event.xexpose.count = 0;
 
             // Send Expose event (generates Window::onDraw callback)
-            XSendEvent(window->native.display, window->native.window, False, NoEventMask, &event);
+            XSendEvent(display, window->native.window, False, NoEventMask, &event);
 
             fullscreen = !fullscreen;
         }
@@ -462,9 +464,7 @@ namespace mango
 
         int32x2 getWindowSize() const override
         {
-            XWindowAttributes attributes;
-            XGetWindowAttributes(window->native.display, window->native.window, &attributes);
-            return int32x2(attributes.width, attributes.height);
+            return window->getWindowSize();
         }
     };
 

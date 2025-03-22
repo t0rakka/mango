@@ -221,6 +221,7 @@ if (BUILD_OPENGL)
         FILE(GLOB OPENGL_SOURCES
             "${MANGO_SOURCE_DIR}/opengl/*.cpp"
             "${MANGO_SOURCE_DIR}/opengl/glx/*.cpp"
+            "${MANGO_SOURCE_DIR}/opengl/egl/*.cpp"
         )
 
     endif ()
@@ -531,7 +532,11 @@ if (BUILD_OPENGL)
             elseif(WINDOW_SYSTEM STREQUAL "wayland")
                 message("    Wayland")
                 target_compile_definitions(mango PRIVATE "MANGO_ENABLE_WAYLAND")
-                # TODO: Add Wayland libraries when implemented
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_EGL")
+                find_package(PkgConfig REQUIRED)
+                pkg_check_modules(WAYLAND REQUIRED wayland-client)
+                pkg_check_modules(XKB REQUIRED xkbcommon)
+                target_link_libraries(mango PUBLIC EGL GL wayland-client xkbcommon)
             endif()
         endif ()
     endif ()

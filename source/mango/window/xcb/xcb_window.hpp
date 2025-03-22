@@ -5,6 +5,8 @@
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
 
 #include <unistd.h>
+#include <mango/math/math.hpp>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <xcb/xproto.h>
@@ -63,6 +65,8 @@ namespace mango
 
         WindowHandle(int width, int height, u32 flags);
         ~WindowHandle();
+
+        math::int32x2 getWindowSize() const;
 
         bool createXWindow(int screen, int depth, xcb_visualid_t visual, int width, int height, const char* title);
     };

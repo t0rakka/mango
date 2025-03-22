@@ -314,15 +314,7 @@ namespace mango
 
         int32x2 getWindowSize() const override
         {
-            if (!display) return int32x2(0, 0);
-
-            ::Window xwindow = static_cast<::Window>(window->native.window);
-            if (!xwindow) return int32x2(0, 0);
-
-            XWindowAttributes attributes;
-            XGetWindowAttributes(display, xwindow, &attributes);
-
-            return int32x2(attributes.width, attributes.height);
+            return window->getWindowSize();
         }
     };
 

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
@@ -9,9 +9,20 @@
 
 #if defined(MANGO_OPENGL_CONTEXT_EGL)
 
-// TODO: make this work with different window systems: XLIB, XCB, WAYLAND (WIN32)
+// TODO: make this work with different window systems: XLIB, XCB, WAYLAND, WIN32
 
+#if defined(MANGO_WINDOW_SYSTEM_XLIB)
 #include "../../window/xlib/xlib_window.hpp"
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_XCB)
+#include "../../window/xcb/xcb_window.hpp"
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+#include "../../window/wayland/wayland_window.hpp"
+#endif
+
 #include <EGL/egl.h>
 
 namespace mango
@@ -172,6 +183,8 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateContext() failed.");
             }
 
+#if defined(MANGO_WINDOW_SYSTEM_XLIB)
+
             if (!window->createXWindow(0, 0, nullptr, width, height, "OpenGL"))
             {
                 shutdown();
@@ -184,6 +197,21 @@ namespace mango
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
             }
+
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_XCB)
+
+            // TODO
+
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+
+            // TODO
+
+#endif
+
 
             if (!eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context))
             {
@@ -230,6 +258,8 @@ namespace mango
             eglSwapInterval(egl_display, interval);
         }
 
+#if defined(MANGO_WINDOW_SYSTEM_XLIB)
+
         void toggleFullscreen() override
         {
             // Disable rendering while switching fullscreen mode
@@ -264,6 +294,28 @@ namespace mango
             fullscreen = !fullscreen;
         }
 
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_XCB)
+
+        void toggleFullscreen() override
+        {
+            // TODO
+            fullscreen = !fullscreen;
+        }
+
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+
+    void toggleFullscreen() override
+    {
+        // TODO
+        fullscreen = !fullscreen;
+    }
+
+#endif
+
         bool isFullscreen() const override
         {
             return fullscreen;
@@ -271,9 +323,7 @@ namespace mango
 
         int32x2 getWindowSize() const override
         {
-            XWindowAttributes attributes;
-            XGetWindowAttributes(window->native.display, window->native.window, &attributes);
-            return int32x2(attributes.width, attributes.height);
+            return window->getWindowSize();
         }
     };
 
