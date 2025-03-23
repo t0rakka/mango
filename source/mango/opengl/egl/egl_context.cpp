@@ -183,6 +183,8 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateContext() failed.");
             }
 
+            printLine("[EGL] eglCreateContext() : OK");
+
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
             if (!window->createXWindow(0, 0, nullptr, width, height, "OpenGL"))
