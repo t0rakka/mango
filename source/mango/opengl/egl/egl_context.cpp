@@ -204,7 +204,36 @@ namespace mango
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
 
-            // TODO
+            // Get the default screen and its depth
+            const xcb_setup_t* setup = xcb_get_setup(window->connection);
+            xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
+            xcb_screen_t* screen = iter.data;
+            if (!screen)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] Failed to get default screen.");
+            }
+
+            // Get visual info from EGL config
+            EGLint visual_id;
+            if (!eglGetConfigAttrib(egl_display, eglConfig[0], EGL_NATIVE_VISUAL_ID, &visual_id))
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] Failed to get visual ID from EGL config.");
+            }
+
+            if (!window->createXWindow(screen->root_depth, screen->root_depth, visual_id, width, height, "OpenGL"))
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
+            }
+
+            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], window->window, NULL);
+            if (egl_surface == EGL_NO_SURFACE)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
+            }
 
 #endif
 
