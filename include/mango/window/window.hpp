@@ -80,9 +80,9 @@ namespace mango
 
     struct NativeWindowHandle
     {
-        xcb_connection_t* connection;
-        xcb_window_t window;
-        xcb_visualid_t visualid;
+        xcb_connection_t* connection { nullptr };
+        xcb_window_t window { 0 };
+        xcb_visualid_t visualid { 0 };
     };
 
 } // namespace mango
@@ -103,8 +103,8 @@ namespace mango
 
     struct NativeWindowHandle
     {
-        wl_display* display;
-        wl_surface* surface;
+        wl_display* display { nullptr };
+        wl_surface* surface { nullptr };
     };
 
 } // namespace mango
