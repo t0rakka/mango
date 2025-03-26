@@ -48,7 +48,7 @@ public:
         , m_animation(animation)
     {
         setVisible(true);
-        setTitle("[DemoWindow]");
+        setTitle(fmt::format("[ {} ]", filesystem::removePath(m_animation.m_file.filename())));
         m_target_time = m_timer.ms();
     }
 
@@ -94,7 +94,7 @@ int mangoMain(const mango::CommandLine& commands)
     if (commands.size() < 2)
     {
         printLine("Too few arguments. Usage: {} <filename>", commands[0]);
-        printLine("We play the default animation for convenience.");
+        printLine("We play the default animation for your convenience.");
     }
     else
     {
