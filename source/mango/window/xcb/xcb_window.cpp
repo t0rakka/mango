@@ -43,7 +43,6 @@ namespace
 
             int width = screen_iter.data->width_in_pixels;
             int height = screen_iter.data->height_in_pixels;
-            printf("screen %d: %d x %d\n", screen_iter.index, width, height);
 
             ScreenInfo info;
             info.screen = screen;
@@ -308,63 +307,63 @@ namespace mango
         , key_symbols(nullptr)
     {
         int screen_index;
-        native.connection = xcb_connect(nullptr, &screen_index);
-        if (!native.connection)
+        connection = xcb_connect(nullptr, &screen_index);
+        if (!connection)
         {
             MANGO_EXCEPTION("[Window] xcb_connect() failed.");
         }
 
         // Initialize XKB
-        const xcb_query_extension_reply_t* xkb_reply = xcb_get_extension_data(native.connection, &xcb_xkb_id);
+        const xcb_query_extension_reply_t* xkb_reply = xcb_get_extension_data(connection, &xcb_xkb_id);
         if (!xkb_reply || !xkb_reply->present)
         {
             MANGO_EXCEPTION("[Window] XKB extension not available.");
         }
 
         // Initialize key symbols
-        key_symbols = xcb_key_symbols_alloc(native.connection);
+        key_symbols = xcb_key_symbols_alloc(connection);
         if (!key_symbols)
         {
             MANGO_EXCEPTION("[Window] Failed to allocate key symbols.");
         }
 
         // Intern atoms
-        xcb_intern_atom_cookie_t protocols_cookie = xcb_intern_atom(native.connection, 1, 12, "WM_PROTOCOLS");
-        xcb_intern_atom_cookie_t delete_cookie = xcb_intern_atom(native.connection, 0, 16, "WM_DELETE_WINDOW");
-        xcb_intern_atom_cookie_t state_cookie = xcb_intern_atom(native.connection, 0, 13, "_NET_WM_STATE");
-        xcb_intern_atom_cookie_t fullscreen_cookie = xcb_intern_atom(native.connection, 0, 20, "_NET_WM_STATE_FULLSCREEN");
-        xcb_intern_atom_cookie_t primary_cookie = xcb_intern_atom(native.connection, 0, 7, "PRIMARY");
+        xcb_intern_atom_cookie_t protocols_cookie = xcb_intern_atom(connection, 1, 12, "WM_PROTOCOLS");
+        xcb_intern_atom_cookie_t delete_cookie = xcb_intern_atom(connection, 0, 16, "WM_DELETE_WINDOW");
+        xcb_intern_atom_cookie_t state_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_STATE");
+        xcb_intern_atom_cookie_t fullscreen_cookie = xcb_intern_atom(connection, 0, 24, "_NET_WM_STATE_FULLSCREEN");
+        xcb_intern_atom_cookie_t primary_cookie = xcb_intern_atom(connection, 0, 7, "PRIMARY");
 
         // XDnD atoms
-        xcb_intern_atom_cookie_t xdnd_aware_cookie = xcb_intern_atom(native.connection, 0, 8, "XdndAware");
-        xcb_intern_atom_cookie_t xdnd_enter_cookie = xcb_intern_atom(native.connection, 0, 9, "XdndEnter");
-        xcb_intern_atom_cookie_t xdnd_position_cookie = xcb_intern_atom(native.connection, 0, 11, "XdndPosition");
-        xcb_intern_atom_cookie_t xdnd_status_cookie = xcb_intern_atom(native.connection, 0, 10, "XdndStatus");
-        xcb_intern_atom_cookie_t xdnd_typelist_cookie = xcb_intern_atom(native.connection, 0, 10, "XdndTypeList");
-        xcb_intern_atom_cookie_t xdnd_actioncopy_cookie = xcb_intern_atom(native.connection, 0, 12, "XdndActionCopy");
-        xcb_intern_atom_cookie_t xdnd_drop_cookie = xcb_intern_atom(native.connection, 0, 8, "XdndDrop");
-        xcb_intern_atom_cookie_t xdnd_finished_cookie = xcb_intern_atom(native.connection, 0, 11, "XdndFinished");
-        xcb_intern_atom_cookie_t xdnd_selection_cookie = xcb_intern_atom(native.connection, 0, 11, "XdndSelection");
-        xcb_intern_atom_cookie_t xdnd_leave_cookie = xcb_intern_atom(native.connection, 0, 9, "XdndLeave");
+        xcb_intern_atom_cookie_t xdnd_aware_cookie = xcb_intern_atom(connection, 0, 8, "XdndAware");
+        xcb_intern_atom_cookie_t xdnd_enter_cookie = xcb_intern_atom(connection, 0, 9, "XdndEnter");
+        xcb_intern_atom_cookie_t xdnd_position_cookie = xcb_intern_atom(connection, 0, 11, "XdndPosition");
+        xcb_intern_atom_cookie_t xdnd_status_cookie = xcb_intern_atom(connection, 0, 10, "XdndStatus");
+        xcb_intern_atom_cookie_t xdnd_typelist_cookie = xcb_intern_atom(connection, 0, 10, "XdndTypeList");
+        xcb_intern_atom_cookie_t xdnd_actioncopy_cookie = xcb_intern_atom(connection, 0, 12, "XdndActionCopy");
+        xcb_intern_atom_cookie_t xdnd_drop_cookie = xcb_intern_atom(connection, 0, 8, "XdndDrop");
+        xcb_intern_atom_cookie_t xdnd_finished_cookie = xcb_intern_atom(connection, 0, 11, "XdndFinished");
+        xcb_intern_atom_cookie_t xdnd_selection_cookie = xcb_intern_atom(connection, 0, 11, "XdndSelection");
+        xcb_intern_atom_cookie_t xdnd_leave_cookie = xcb_intern_atom(connection, 0, 9, "XdndLeave");
 
         // Get atom replies
-        xcb_intern_atom_reply_t* protocols_reply = xcb_intern_atom_reply(native.connection, protocols_cookie, nullptr);
-        xcb_intern_atom_reply_t* delete_reply = xcb_intern_atom_reply(native.connection, delete_cookie, nullptr);
-        xcb_intern_atom_reply_t* state_reply = xcb_intern_atom_reply(native.connection, state_cookie, nullptr);
-        xcb_intern_atom_reply_t* fullscreen_reply = xcb_intern_atom_reply(native.connection, fullscreen_cookie, nullptr);
-        xcb_intern_atom_reply_t* primary_reply = xcb_intern_atom_reply(native.connection, primary_cookie, nullptr);
+        xcb_intern_atom_reply_t* protocols_reply = xcb_intern_atom_reply(connection, protocols_cookie, nullptr);
+        xcb_intern_atom_reply_t* delete_reply = xcb_intern_atom_reply(connection, delete_cookie, nullptr);
+        xcb_intern_atom_reply_t* state_reply = xcb_intern_atom_reply(connection, state_cookie, nullptr);
+        xcb_intern_atom_reply_t* fullscreen_reply = xcb_intern_atom_reply(connection, fullscreen_cookie, nullptr);
+        xcb_intern_atom_reply_t* primary_reply = xcb_intern_atom_reply(connection, primary_cookie, nullptr);
 
         // XDnD atom replies
-        xcb_intern_atom_reply_t* xdnd_aware_reply = xcb_intern_atom_reply(native.connection, xdnd_aware_cookie, nullptr);
-        xcb_intern_atom_reply_t* xdnd_enter_reply = xcb_intern_atom_reply(native.connection, xdnd_enter_cookie, nullptr);
-        xcb_intern_atom_reply_t* xdnd_position_reply = xcb_intern_atom_reply(native.connection, xdnd_position_cookie, nullptr);
-        xcb_intern_atom_reply_t* xdnd_status_reply = xcb_intern_atom_reply(native.connection, xdnd_status_cookie, nullptr);
-        xcb_intern_atom_reply_t* xdnd_typelist_reply = xcb_intern_atom_reply(native.connection, xdnd_typelist_cookie, nullptr);
-        xcb_intern_atom_reply_t* xdnd_actioncopy_reply = xcb_intern_atom_reply(native.connection, xdnd_actioncopy_cookie, nullptr);
-        xcb_intern_atom_reply_t* xdnd_drop_reply = xcb_intern_atom_reply(native.connection, xdnd_drop_cookie, nullptr);
-        xcb_intern_atom_reply_t* xdnd_finished_reply = xcb_intern_atom_reply(native.connection, xdnd_finished_cookie, nullptr);
-        xcb_intern_atom_reply_t* xdnd_selection_reply = xcb_intern_atom_reply(native.connection, xdnd_selection_cookie, nullptr);
-        xcb_intern_atom_reply_t* xdnd_leave_reply = xcb_intern_atom_reply(native.connection, xdnd_leave_cookie, nullptr);
+        xcb_intern_atom_reply_t* xdnd_aware_reply = xcb_intern_atom_reply(connection, xdnd_aware_cookie, nullptr);
+        xcb_intern_atom_reply_t* xdnd_enter_reply = xcb_intern_atom_reply(connection, xdnd_enter_cookie, nullptr);
+        xcb_intern_atom_reply_t* xdnd_position_reply = xcb_intern_atom_reply(connection, xdnd_position_cookie, nullptr);
+        xcb_intern_atom_reply_t* xdnd_status_reply = xcb_intern_atom_reply(connection, xdnd_status_cookie, nullptr);
+        xcb_intern_atom_reply_t* xdnd_typelist_reply = xcb_intern_atom_reply(connection, xdnd_typelist_cookie, nullptr);
+        xcb_intern_atom_reply_t* xdnd_actioncopy_reply = xcb_intern_atom_reply(connection, xdnd_actioncopy_cookie, nullptr);
+        xcb_intern_atom_reply_t* xdnd_drop_reply = xcb_intern_atom_reply(connection, xdnd_drop_cookie, nullptr);
+        xcb_intern_atom_reply_t* xdnd_finished_reply = xcb_intern_atom_reply(connection, xdnd_finished_cookie, nullptr);
+        xcb_intern_atom_reply_t* xdnd_selection_reply = xcb_intern_atom_reply(connection, xdnd_selection_cookie, nullptr);
+        xcb_intern_atom_reply_t* xdnd_leave_reply = xcb_intern_atom_reply(connection, xdnd_leave_cookie, nullptr);
 
         // Store atoms
         atom_protocols = protocols_reply->atom;
@@ -411,29 +410,29 @@ namespace mango
 
     WindowHandle::~WindowHandle()
     {
-        if (native.connection)
+        if (connection)
         {
-            if (native.window)
+            if (window)
             {
-                xcb_destroy_window(native.connection, native.window);
-                native.window = 0;
+                xcb_destroy_window(connection, window);
+                window = 0;
             }
 
             if (colormap)
             {
-                xcb_free_colormap(native.connection, colormap);
+                xcb_free_colormap(connection, colormap);
                 colormap = 0;
             }
 
             if (icon_pixmap)
             {
-                xcb_free_pixmap(native.connection, icon_pixmap);
+                xcb_free_pixmap(connection, icon_pixmap);
                 icon_pixmap = 0;
             }
 
             if (icon_mask)
             {
-                xcb_free_pixmap(native.connection, icon_mask);
+                xcb_free_pixmap(connection, icon_mask);
                 icon_mask = 0;
             }
 
@@ -443,16 +442,13 @@ namespace mango
                 key_symbols = nullptr;
             }
 
-            xcb_disconnect(native.connection);
-            native.connection = nullptr;
+            xcb_disconnect(connection);
+            connection = nullptr;
         }
     }
 
     math::int32x2 WindowHandle::getWindowSize() const
     {
-        auto connection = native.connection;
-        auto window = native.window;
-
         xcb_get_geometry_cookie_t cookie = xcb_get_geometry(connection, window);
         xcb_get_geometry_reply_t* reply = xcb_get_geometry_reply(connection, cookie, nullptr);
 
@@ -471,7 +467,7 @@ namespace mango
 
     bool WindowHandle::createXWindow(int screen, int depth, xcb_visualid_t visual, int width, int height, const char* title)
     {
-        const xcb_setup_t* setup = xcb_get_setup(native.connection);
+        const xcb_setup_t* setup = xcb_get_setup(connection);
         xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
         xcb_screen_t* xcb_screen = iter.data;
         if (!xcb_screen)
@@ -480,15 +476,15 @@ namespace mango
         }
 
         // Create colormap with the specified visual
-        colormap = xcb_generate_id(native.connection);
-        xcb_create_colormap(native.connection, 
+        colormap = xcb_generate_id(connection);
+        xcb_create_colormap(connection, 
                           XCB_COLORMAP_ALLOC_NONE,
                           colormap,
                           xcb_screen->root,
                           visual);
 
         // Create window with the specified visual
-        native.window = xcb_generate_id(native.connection);
+        window = xcb_generate_id(connection);
         uint32_t value_mask = XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
         uint32_t value_list[2] = {
             XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
@@ -497,9 +493,9 @@ namespace mango
             colormap
         };
 
-        xcb_create_window(native.connection,
+        xcb_create_window(connection,
                          depth,
-                         native.window,
+                         window,
                          xcb_screen->root,
                          20, 20,
                          width, height,
@@ -510,21 +506,22 @@ namespace mango
                          value_list);
 
         // Set window protocols
-        xcb_change_property(native.connection, XCB_PROP_MODE_REPLACE, native.window, atom_protocols, XCB_ATOM_ATOM, 32, 1, &atom_delete);
+        xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_protocols, XCB_ATOM_ATOM, 32, 1, &atom_delete);
 
         // Set XDnD version
         uint32_t xdnd_version = 5;
-        xcb_change_property(native.connection, XCB_PROP_MODE_REPLACE, native.window, atom_xdnd_Aware, XCB_ATOM_ATOM, 32, 1, &xdnd_version);
+        xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_xdnd_Aware, XCB_ATOM_ATOM, 32, 1, &xdnd_version);
 
         // Set window title
-        xcb_change_property(native.connection, XCB_PROP_MODE_REPLACE, native.window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title), title);
+        xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title), title);
 
         // Set window manager hints for better resize behavior
         xcb_icccm_wm_hints_t hints = { 0 };
-        hints.flags = XCB_ICCCM_WM_HINT_INPUT | XCB_ICCCM_WM_HINT_STATE;
+        hints.flags = XCB_ICCCM_WM_HINT_INPUT | XCB_ICCCM_WM_HINT_STATE | XCB_ICCCM_WM_HINT_WINDOW_GROUP;
         hints.input = 1;  // Window accepts input
         hints.initial_state = XCB_ICCCM_WM_STATE_NORMAL;
-        xcb_icccm_set_wm_hints(native.connection, native.window, &hints);
+        hints.window_group = window;  // Set window group to itself
+        xcb_icccm_set_wm_hints(connection, window, &hints);
 
         // Set window size hints
         xcb_size_hints_t size_hints = { 0 };
@@ -533,11 +530,37 @@ namespace mango
         size_hints.min_height = 1;
         size_hints.width_inc = 1;
         size_hints.height_inc = 1;
-        xcb_icccm_set_wm_size_hints(native.connection, native.window, XCB_ATOM_WM_NORMAL_HINTS, &size_hints);
+        xcb_icccm_set_wm_size_hints(connection, window, XCB_ATOM_WM_NORMAL_HINTS, &size_hints);
+
+        // Set window type hint
+        xcb_intern_atom_cookie_t window_type_cookie = xcb_intern_atom(connection, 0, 16, "_NET_WM_WINDOW_TYPE");
+        xcb_intern_atom_cookie_t window_type_normal_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_WINDOW_TYPE_NORMAL");
+        xcb_intern_atom_cookie_t wm_state_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_STATE");
+        xcb_intern_atom_cookie_t wm_state_normal_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_STATE_NORMAL");
+
+        xcb_intern_atom_reply_t* window_type_reply = xcb_intern_atom_reply(connection, window_type_cookie, nullptr);
+        xcb_intern_atom_reply_t* window_type_normal_reply = xcb_intern_atom_reply(connection, window_type_normal_cookie, nullptr);
+        xcb_intern_atom_reply_t* wm_state_reply = xcb_intern_atom_reply(connection, wm_state_cookie, nullptr);
+        xcb_intern_atom_reply_t* wm_state_normal_reply = xcb_intern_atom_reply(connection, wm_state_normal_cookie, nullptr);
+
+        if (window_type_reply && window_type_normal_reply)
+        {
+            xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, window_type_reply->atom, XCB_ATOM_ATOM, 32, 1, &window_type_normal_reply->atom);
+        }
+
+        if (wm_state_reply && wm_state_normal_reply)
+        {
+            xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, wm_state_reply->atom, XCB_ATOM_ATOM, 32, 1, &wm_state_normal_reply->atom);
+        }
+
+        free(window_type_reply);
+        free(window_type_normal_reply);
+        free(wm_state_reply);
+        free(wm_state_normal_reply);
 
         // Map the window
-        xcb_map_window(native.connection, native.window);
-        xcb_flush(native.connection);
+        xcb_map_window(connection, window);
+        xcb_flush(connection);
 
         return true;
     }
@@ -583,8 +606,8 @@ namespace mango
 
     Window::Window(int width, int height, u32 flags)
     {
+        MANGO_UNREFERENCED(flags);
         m_handle = std::make_unique<WindowHandle>(width, height, flags);
-        MANGO_UNREFERENCED(flags); // MANGO TODO
     }
 
     Window::~Window()
@@ -593,8 +616,8 @@ namespace mango
 
     void Window::setWindowPosition(int x, int y)
     {
-        auto connection = m_handle->native.connection;
-        auto window = m_handle->native.window;
+        auto connection = m_handle->connection;
+        auto window = m_handle->window;
 
         uint32_t values[] = { uint32_t(x), uint32_t(y) };
         xcb_configure_window(connection, window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
@@ -603,8 +626,8 @@ namespace mango
 
     void Window::setWindowSize(int width, int height)
     {
-        auto connection = m_handle->native.connection;
-        auto window = m_handle->native.window;
+        auto connection = m_handle->connection;
+        auto window = m_handle->window;
 
         uint32_t values[] = { uint32_t(width), uint32_t(height) };
         xcb_configure_window(connection, window, XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, values);
@@ -613,8 +636,8 @@ namespace mango
 
     void Window::setTitle(const std::string& title)
     {
-        auto connection = m_handle->native.connection;
-        auto window = m_handle->native.window;
+        auto connection = m_handle->connection;
+        auto window = m_handle->window;
 
         xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title.c_str()), title.c_str());
         xcb_flush(connection);
@@ -627,8 +650,8 @@ namespace mango
 
     void Window::setVisible(bool enable)
     {
-        auto connection = m_handle->native.connection;
-        auto window = m_handle->native.window;
+        auto connection = m_handle->connection;
+        auto window = m_handle->window;
 
         if (enable)
         {
@@ -651,8 +674,8 @@ namespace mango
 
     int32x2 Window::getCursorPosition() const
     {
-        auto connection = m_handle->native.connection;
-        auto window = m_handle->native.window;
+        auto connection = m_handle->connection;
+        auto window = m_handle->window;
 
         xcb_query_pointer_cookie_t cookie = xcb_query_pointer(connection, window);
         xcb_query_pointer_reply_t* reply = xcb_query_pointer_reply(connection, cookie, nullptr);
@@ -687,14 +710,14 @@ namespace mango
         bool pressed = false;
 
         // Get window with input focus
-        xcb_get_input_focus_cookie_t focus_cookie = xcb_get_input_focus(m_handle->native.connection);
-        xcb_get_input_focus_reply_t* focus_reply = xcb_get_input_focus_reply(m_handle->native.connection, focus_cookie, nullptr);
+        xcb_get_input_focus_cookie_t focus_cookie = xcb_get_input_focus(m_handle->connection);
+        xcb_get_input_focus_reply_t* focus_reply = xcb_get_input_focus_reply(m_handle->connection, focus_cookie, nullptr);
 
-        if (focus_reply && focus_reply->focus == m_handle->native.window)
+        if (focus_reply && focus_reply->focus == m_handle->window)
         {
             // Get keyboard state
-            xcb_query_keymap_cookie_t keymap_cookie = xcb_query_keymap(m_handle->native.connection);
-            xcb_query_keymap_reply_t* keymap_reply = xcb_query_keymap_reply(m_handle->native.connection, keymap_cookie, nullptr);
+            xcb_query_keymap_cookie_t keymap_cookie = xcb_query_keymap(m_handle->connection);
+            xcb_query_keymap_reply_t* keymap_reply = xcb_query_keymap_reply(m_handle->connection, keymap_cookie, nullptr);
 
             if (keymap_reply)
             {
@@ -717,7 +740,7 @@ namespace mango
 
     Window::operator NativeWindowHandle () const
     {
-        return m_handle->native;
+        return *m_handle;
     }
 
     Window::operator WindowHandle* () const
@@ -731,7 +754,7 @@ namespace mango
 
         for (; m_handle->is_looping;)
         {
-            xcb_generic_event_t* event = xcb_poll_for_event(m_handle->native.connection);
+            xcb_generic_event_t* event = xcb_poll_for_event(m_handle->connection);
             if (event)
             {
                 switch (event->response_type & 0x7f)
@@ -807,7 +830,7 @@ namespace mango
                             bool is_repeat = false;
 
                             // Check for key repeat
-                            xcb_generic_event_t* next_event = xcb_poll_for_event(m_handle->native.connection);
+                            xcb_generic_event_t* next_event = xcb_poll_for_event(m_handle->connection);
                             if (next_event)
                             {
                                 if ((next_event->response_type & 0x7f) == XCB_KEY_PRESS)
@@ -842,7 +865,7 @@ namespace mango
                             m_handle->size[1] = configure->height;
                             
                             // Check if we have more configure events pending
-                            xcb_generic_event_t* next_event = xcb_poll_for_event(m_handle->native.connection);
+                            xcb_generic_event_t* next_event = xcb_poll_for_event(m_handle->connection);
                             bool has_more = false;
                             
                             if (next_event)
@@ -860,7 +883,7 @@ namespace mango
                                 // Send Expose event to ensure redraw
                                 xcb_expose_event_t expose = { 0 };
                                 expose.response_type = XCB_EXPOSE;
-                                expose.window = m_handle->native.window;
+                                expose.window = m_handle->window;
                                 expose.x = 0;
                                 expose.y = 0;
                                 expose.width = configure->width;
@@ -868,9 +891,9 @@ namespace mango
                                 expose.count = 0;
                                 
                                 // Use XCB_EVENT_MASK_NO_EVENT to prevent event loop from processing this immediately
-                                xcb_send_event(m_handle->native.connection, 0, m_handle->native.window,
+                                xcb_send_event(m_handle->connection, 0, m_handle->window,
                                     XCB_EVENT_MASK_NO_EVENT, (char*)&expose);
-                                xcb_flush(m_handle->native.connection);
+                                xcb_flush(m_handle->connection);
                                 
                                 onResize(configure->width, configure->height);
                                 m_handle->busy = false;
@@ -906,9 +929,9 @@ namespace mango
                             if (use_list)
                             {
                                 // Fetch conversion targets
-                                xcb_get_property_cookie_t cookie = xcb_get_property(m_handle->native.connection, 0,
+                                xcb_get_property_cookie_t cookie = xcb_get_property(m_handle->connection, 0,
                                     m_handle->xdnd_source, m_handle->atom_xdnd_TypeList, XCB_ATOM_ATOM, 0, 0x8000000L);
-                                xcb_get_property_reply_t* reply = xcb_get_property_reply(m_handle->native.connection, cookie, nullptr);
+                                xcb_get_property_reply_t* reply = xcb_get_property_reply(m_handle->connection, cookie, nullptr);
                                 if (reply)
                                 {
                                     xcb_atom_t* atoms = (xcb_atom_t*)xcb_get_property_value(reply);
@@ -930,15 +953,15 @@ namespace mango
                             reply.format = 32;
                             reply.window = client_message->data.data32[0];
                             reply.type = m_handle->atom_xdnd_Status;
-                            reply.data.data32[0] = m_handle->native.window;
+                            reply.data.data32[0] = m_handle->window;
                             reply.data.data32[1] = (m_handle->atom_xdnd_req != 0);
                             reply.data.data32[2] = 0; // empty rectangle
                             reply.data.data32[3] = 0;
                             reply.data.data32[4] = m_handle->atom_xdnd_ActionCopy;
 
-                            xcb_send_event(m_handle->native.connection, 0, client_message->data.data32[0],
+                            xcb_send_event(m_handle->connection, 0, client_message->data.data32[0],
                                 XCB_EVENT_MASK_NO_EVENT, (char*)&reply);
-                            xcb_flush(m_handle->native.connection);
+                            xcb_flush(m_handle->connection);
                         }
                         else if (client_message->type == m_handle->atom_xdnd_Drop)
                         {
@@ -950,17 +973,17 @@ namespace mango
                                 reply.format = 32;
                                 reply.window = client_message->data.data32[0];
                                 reply.type = m_handle->atom_xdnd_Finished;
-                                reply.data.data32[0] = m_handle->native.window;
+                                reply.data.data32[0] = m_handle->window;
                                 reply.data.data32[1] = 0;
                                 reply.data.data32[2] = 0; // failed
 
-                                xcb_send_event(m_handle->native.connection, 0, client_message->data.data32[0],
+                                xcb_send_event(m_handle->connection, 0, client_message->data.data32[0],
                                     XCB_EVENT_MASK_NO_EVENT, (char*)&reply);
                             }
                             else
                             {
                                 // Convert selection
-                                xcb_convert_selection(m_handle->native.connection, m_handle->native.window,
+                                xcb_convert_selection(m_handle->connection, m_handle->window,
                                     m_handle->atom_xdnd_Selection, m_handle->atom_xdnd_req,
                                     m_handle->atom_primary, client_message->data.data32[2]);
                             }
@@ -974,9 +997,9 @@ namespace mango
                         if (selection->target == m_handle->atom_xdnd_req)
                         {
                             // Read data
-                            xcb_get_property_cookie_t cookie = xcb_get_property(m_handle->native.connection, 0,
-                                m_handle->native.window, m_handle->atom_primary, XCB_ATOM_STRING, 0, 0x8000000L);
-                            xcb_get_property_reply_t* reply = xcb_get_property_reply(m_handle->native.connection, cookie, nullptr);
+                            xcb_get_property_cookie_t cookie = xcb_get_property(m_handle->connection, 0,
+                                m_handle->window, m_handle->atom_primary, XCB_ATOM_STRING, 0, 0x8000000L);
+                            xcb_get_property_reply_t* reply = xcb_get_property_reply(m_handle->connection, cookie, nullptr);
                             if (reply)
                             {
                                 // TODO: Process dropped files
@@ -989,13 +1012,13 @@ namespace mango
                             client_message.format = 32;
                             client_message.window = m_handle->xdnd_source;
                             client_message.type = m_handle->atom_xdnd_Finished;
-                            client_message.data.data32[0] = m_handle->native.window;
+                            client_message.data.data32[0] = m_handle->window;
                             client_message.data.data32[1] = 1;
                             client_message.data.data32[2] = m_handle->atom_xdnd_ActionCopy;
 
-                            xcb_send_event(m_handle->native.connection, 0, m_handle->xdnd_source,
+                            xcb_send_event(m_handle->connection, 0, m_handle->xdnd_source,
                                 XCB_EVENT_MASK_NO_EVENT, (char*)&client_message);
-                            xcb_flush(m_handle->native.connection);
+                            xcb_flush(m_handle->connection);
                         }
                         break;
                     }

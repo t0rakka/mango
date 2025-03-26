@@ -9,8 +9,6 @@
 
 #if defined(MANGO_OPENGL_CONTEXT_EGL)
 
-// TODO: make this work with different window systems: XLIB, XCB, WAYLAND, WIN32
-
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 #include "../../window/xlib/xlib_window.hpp"
 #endif
@@ -183,6 +181,8 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateContext() failed.");
             }
 
+            printLine("[EGL] eglCreateContext() : OK");
+
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
             if (!window->createXWindow(0, 0, nullptr, width, height, "OpenGL"))
@@ -202,7 +202,36 @@ namespace mango
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
 
-            // TODO
+            // Get the default screen and its depth
+            const xcb_setup_t* setup = xcb_get_setup(window->connection);
+            xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
+            xcb_screen_t* screen = iter.data;
+            if (!screen)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] Failed to get default screen.");
+            }
+
+            // Get visual info from EGL config
+            EGLint visual_id;
+            if (!eglGetConfigAttrib(egl_display, eglConfig[0], EGL_NATIVE_VISUAL_ID, &visual_id))
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] Failed to get visual ID from EGL config.");
+            }
+
+            if (!window->createXWindow(screen->root_depth, screen->root_depth, visual_id, width, height, "OpenGL"))
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
+            }
+
+            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], window->window, NULL);
+            if (egl_surface == EGL_NO_SURFACE)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
+            }
 
 #endif
 
@@ -211,7 +240,6 @@ namespace mango
             // TODO
 
 #endif
-
 
             if (!eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context))
             {
@@ -300,7 +328,34 @@ namespace mango
 
         void toggleFullscreen() override
         {
-            // TODO
+            xcb_connection_t* connection = window->connection;
+            xcb_screen_t* screen = xcb_setup_roots_iterator(xcb_get_setup(connection)).data;
+            xcb_window_t root_window = screen->root;
+
+            eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+            window->busy = true;
+
+            xcb_client_message_event_t xevent = {0};
+
+            xevent.response_type = XCB_CLIENT_MESSAGE;
+            xevent.window = window->window;
+            xevent.type = window->atom_state;
+            xevent.format = 32;
+            xevent.data.data32[0] = 2;  // NET_WM_STATE_TOGGLE
+            xevent.data.data32[1] = window->atom_fullscreen;
+            xevent.data.data32[2] = 0;  // No second property to toggle
+            xevent.data.data32[3] = 1;  // Source indication: application
+            xevent.data.data32[4] = 0;  // Unused field
+
+            // Send the event to the root window
+            xcb_send_event(connection, 0, screen->root,
+                           XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT,
+                           reinterpret_cast<const char*>(&xevent));
+            xcb_flush(connection);
+
+            window->busy = false;
+            eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
+
             fullscreen = !fullscreen;
         }
 

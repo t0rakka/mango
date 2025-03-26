@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <mango/math/math.hpp>
 
+#define explicit explicit_
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <xcb/xproto.h>
@@ -15,15 +16,13 @@
 #include <xcb/xcb_icccm.h>
 #include <xcb/xcb_keysyms.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
+#undef explicit
 
 namespace mango
 {
-    struct WindowHandle
+    struct WindowHandle : NativeWindowHandle
     {
-        NativeWindowHandle native;
-
         // window data
-        xcb_visualid_t visualid { 0 };
         xcb_colormap_t colormap { 0 };
         xcb_pixmap_t icon_pixmap { 0 };
         xcb_pixmap_t icon_mask { 0 };

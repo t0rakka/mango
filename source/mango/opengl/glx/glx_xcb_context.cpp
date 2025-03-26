@@ -6,7 +6,6 @@
 #include <mango/core/system.hpp>
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
-//#include "../../window/xlib/xlib_window.hpp"
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
 
@@ -185,7 +184,7 @@ namespace mango
             XFree(vi);
 
             // Make context current
-            ::Window xwindow = static_cast<::Window>(window->native.window);
+            ::Window xwindow = static_cast<::Window>(window->window);
             if (!glXMakeCurrent(display, xwindow, context))
             {
                 shutdown();
@@ -217,7 +216,7 @@ namespace mango
         {
             if (display)
             {
-                ::Window xwindow = static_cast<::Window>(window->native.window);
+                ::Window xwindow = static_cast<::Window>(window->window);
                 if (xwindow)
                 {
                     glXMakeCurrent(display, xwindow, context);
@@ -229,7 +228,7 @@ namespace mango
         {
             if (display)
             {
-                ::Window xwindow = static_cast<::Window>(window->native.window);
+                ::Window xwindow = static_cast<::Window>(window->window);
                 if (xwindow)
                 {
                     glXSwapBuffers(display, xwindow);
@@ -241,7 +240,7 @@ namespace mango
         {
             if (display)
             {
-                ::Window xwindow = static_cast<::Window>(window->native.window);
+                ::Window xwindow = static_cast<::Window>(window->window);
                 if (xwindow)
                 {
                     glXSwapIntervalEXT(display, xwindow, interval);
@@ -257,7 +256,7 @@ namespace mango
             glXMakeCurrent(display, 0, 0);
             window->busy = true;
 
-            ::Window xwindow = static_cast<::Window>(window->native.window);
+            ::Window xwindow = static_cast<::Window>(window->window);
             if (!xwindow) return;
 
             // Get the root window
