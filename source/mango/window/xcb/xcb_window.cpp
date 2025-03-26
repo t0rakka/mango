@@ -43,7 +43,6 @@ namespace
 
             int width = screen_iter.data->width_in_pixels;
             int height = screen_iter.data->height_in_pixels;
-            printf("screen %d: %d x %d\n", screen_iter.index, width, height);
 
             ScreenInfo info;
             info.screen = screen;
@@ -332,7 +331,7 @@ namespace mango
         xcb_intern_atom_cookie_t protocols_cookie = xcb_intern_atom(connection, 1, 12, "WM_PROTOCOLS");
         xcb_intern_atom_cookie_t delete_cookie = xcb_intern_atom(connection, 0, 16, "WM_DELETE_WINDOW");
         xcb_intern_atom_cookie_t state_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_STATE");
-        xcb_intern_atom_cookie_t fullscreen_cookie = xcb_intern_atom(connection, 0, 20, "_NET_WM_STATE_FULLSCREEN");
+        xcb_intern_atom_cookie_t fullscreen_cookie = xcb_intern_atom(connection, 0, 24, "_NET_WM_STATE_FULLSCREEN");
         xcb_intern_atom_cookie_t primary_cookie = xcb_intern_atom(connection, 0, 7, "PRIMARY");
 
         // XDnD atoms
@@ -518,9 +517,10 @@ namespace mango
 
         // Set window manager hints for better resize behavior
         xcb_icccm_wm_hints_t hints = { 0 };
-        hints.flags = XCB_ICCCM_WM_HINT_INPUT | XCB_ICCCM_WM_HINT_STATE;
+        hints.flags = XCB_ICCCM_WM_HINT_INPUT | XCB_ICCCM_WM_HINT_STATE | XCB_ICCCM_WM_HINT_WINDOW_GROUP;
         hints.input = 1;  // Window accepts input
         hints.initial_state = XCB_ICCCM_WM_STATE_NORMAL;
+        hints.window_group = window;  // Set window group to itself
         xcb_icccm_set_wm_hints(connection, window, &hints);
 
         // Set window size hints
@@ -531,6 +531,32 @@ namespace mango
         size_hints.width_inc = 1;
         size_hints.height_inc = 1;
         xcb_icccm_set_wm_size_hints(connection, window, XCB_ATOM_WM_NORMAL_HINTS, &size_hints);
+
+        // Set window type hint
+        xcb_intern_atom_cookie_t window_type_cookie = xcb_intern_atom(connection, 0, 16, "_NET_WM_WINDOW_TYPE");
+        xcb_intern_atom_cookie_t window_type_normal_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_WINDOW_TYPE_NORMAL");
+        xcb_intern_atom_cookie_t wm_state_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_STATE");
+        xcb_intern_atom_cookie_t wm_state_normal_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_STATE_NORMAL");
+
+        xcb_intern_atom_reply_t* window_type_reply = xcb_intern_atom_reply(connection, window_type_cookie, nullptr);
+        xcb_intern_atom_reply_t* window_type_normal_reply = xcb_intern_atom_reply(connection, window_type_normal_cookie, nullptr);
+        xcb_intern_atom_reply_t* wm_state_reply = xcb_intern_atom_reply(connection, wm_state_cookie, nullptr);
+        xcb_intern_atom_reply_t* wm_state_normal_reply = xcb_intern_atom_reply(connection, wm_state_normal_cookie, nullptr);
+
+        if (window_type_reply && window_type_normal_reply)
+        {
+            xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, window_type_reply->atom, XCB_ATOM_ATOM, 32, 1, &window_type_normal_reply->atom);
+        }
+
+        if (wm_state_reply && wm_state_normal_reply)
+        {
+            xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, wm_state_reply->atom, XCB_ATOM_ATOM, 32, 1, &wm_state_normal_reply->atom);
+        }
+
+        free(window_type_reply);
+        free(window_type_normal_reply);
+        free(wm_state_reply);
+        free(wm_state_normal_reply);
 
         // Map the window
         xcb_map_window(connection, window);
@@ -580,8 +606,8 @@ namespace mango
 
     Window::Window(int width, int height, u32 flags)
     {
+        MANGO_UNREFERENCED(flags);
         m_handle = std::make_unique<WindowHandle>(width, height, flags);
-        MANGO_UNREFERENCED(flags); // MANGO TODO
     }
 
     Window::~Window()
