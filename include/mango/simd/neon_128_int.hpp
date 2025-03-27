@@ -74,14 +74,14 @@ namespace mango::simd
 
 #endif
 
-    static inline u8x16 u8x16_load_low(const u8* source)
+    static inline u8x16 u8x16_load_low(const u8* source) noexcept
     {
         const uint8x8_t low = vld1_u8(source);
         const uint8x8_t high = vdup_n_u8(0);
         return vcombine_u8(low, high);
     }
 
-    static inline void u8x16_store_low(u8* dest, u8x16 a)
+    static inline void u8x16_store_low(u8* dest, u8x16 a) noexcept
     {
         vst1_u8(dest, vget_low_u8(a));
     }
@@ -257,14 +257,14 @@ namespace mango::simd
 
 #endif
 
-    static inline u16x8 u16x8_load_low(const u16* source)
+    static inline u16x8 u16x8_load_low(const u16* source) noexcept
     {
         const uint16x4_t low = vld1_u16(source);
         const uint16x4_t high = vdup_n_u16(0);
         return vcombine_u16(low, high);
     }
 
-    static inline void u16x8_store_low(u16* dest, u16x8 a)
+    static inline void u16x8_store_low(u16* dest, u16x8 a) noexcept
     {
         vst1_u16(dest, vget_low_u16(a));
     }
@@ -503,14 +503,14 @@ namespace mango::simd
 
 #endif
 
-    static inline u32x4 u32x4_load_low(const u32* source)
+    static inline u32x4 u32x4_load_low(const u32* source) noexcept
     {
         const uint32x2_t low = vld1_u32(source);
         const uint32x2_t high = vdup_n_u32(0);
         return vcombine_u32(low, high);
     }
 
-    static inline void u32x4_store_low(u32* dest, u32x4 a)
+    static inline void u32x4_store_low(u32* dest, u32x4 a) noexcept
     {
         vst1_u32(dest, vget_low_u32(a));
     }
@@ -992,14 +992,14 @@ namespace mango::simd
 
 #endif
 
-    static inline s8x16 s8x16_load_low(const s8* source)
+    static inline s8x16 s8x16_load_low(const s8* source) noexcept
     {
         const int8x8_t low = vld1_s8(source);
         const int8x8_t high = vdup_n_s8(0);
         return vcombine_s8(low, high);
     }
 
-    static inline void s8x16_store_low(s8* dest, s8x16 a)
+    static inline void s8x16_store_low(s8* dest, s8x16 a) noexcept
     {
         vst1_s8(dest, vget_low_s8(a));
     }
@@ -1185,14 +1185,14 @@ namespace mango::simd
 
 #endif
 
-    static inline s16x8 s16x8_load_low(const s16* source)
+    static inline s16x8 s16x8_load_low(const s16* source) noexcept
     {
         const int16x4_t low = vld1_s16(source);
         const int16x4_t high = vdup_n_s16(0);
         return vcombine_s16(low, high);
     }
 
-    static inline void s16x8_store_low(s16* dest, s16x8 a)
+    static inline void s16x8_store_low(s16* dest, s16x8 a) noexcept
     {
         vst1_s16(dest, vget_low_s16(a));
     }
@@ -1512,14 +1512,14 @@ namespace mango::simd
 
 #endif
 
-    static inline s32x4 s32x4_load_low(const s32* source)
+    static inline s32x4 s32x4_load_low(const s32* source) noexcept
     {
         const int32x2_t low = vld1_s32(source);
         const int32x2_t high = vdup_n_s32(0);
         return vcombine_s32(low, high);
     }
 
-    static inline void s32x4_store_low(s32* dest, s32x4 a)
+    static inline void s32x4_store_low(s32* dest, s32x4 a) noexcept
     {
         vst1_s32(dest, vget_low_s32(a));
     }

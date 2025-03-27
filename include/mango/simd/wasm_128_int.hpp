@@ -55,12 +55,12 @@ namespace mango::simd
         wasm_v128_store(dest, a);
     }
 
-    static inline u8x16 u8x16_load_low(const u8* source)
+    static inline u8x16 u8x16_load_low(const u8* source) noexcept
     {
         return wasm_v128_load64_zero(source);
     }
 
-    static inline void u8x16_store_low(u8* dest, u8x16 a)
+    static inline void u8x16_store_low(u8* dest, u8x16 a) noexcept
     {
         wasm_v128_store64_lane(dest, a, 0);
     }
@@ -221,12 +221,12 @@ namespace mango::simd
         wasm_v128_store(dest, a);
     }
 
-    static inline u16x8 u16x8_load_low(const u16* source)
+    static inline u16x8 u16x8_load_low(const u16* source) noexcept
     {
         return wasm_v128_load64_zero(source);
     }
 
-    static inline void u16x8_store_low(u16* dest, u16x8 a)
+    static inline void u16x8_store_low(u16* dest, u16x8 a) noexcept
     {
         wasm_v128_store64_lane(dest, a, 0);
     }
@@ -447,12 +447,12 @@ namespace mango::simd
         wasm_v128_store(dest, a);
     }
 
-    static inline u32x4 u32x4_load_low(const u32* source)
+    static inline u32x4 u32x4_load_low(const u32* source) noexcept
     {
         return wasm_v128_load64_zero(source);
     }
 
-    static inline void u32x4_store_low(u32* dest, u32x4 a)
+    static inline void u32x4_store_low(u32* dest, u32x4 a) noexcept
     {
         wasm_v128_store64_lane(dest, a, 0);
     }
@@ -891,12 +891,12 @@ namespace mango::simd
         wasm_v128_store(dest, a);
     }
 
-    static inline s8x16 s8x16_load_low(const s8* source)
+    static inline s8x16 s8x16_load_low(const s8* source) noexcept
     {
         return wasm_v128_load64_zero(source);
     }
 
-    static inline void s8x16_store_low(s8* dest, s8x16 a)
+    static inline void s8x16_store_low(s8* dest, s8x16 a) noexcept
     {
         wasm_v128_store64_lane(dest, a, 0);
     }
@@ -1066,12 +1066,12 @@ namespace mango::simd
         wasm_v128_store(dest, a);
     }
 
-    static inline s16x8 s16x8_load_low(const s16* source)
+    static inline s16x8 s16x8_load_low(const s16* source) noexcept
     {
         return wasm_v128_load64_zero(source);
     }
 
-    static inline void s16x8_store_low(s16* dest, s16x8 a)
+    static inline void s16x8_store_low(s16* dest, s16x8 a) noexcept
     {
         wasm_v128_store64_lane(dest, a, 0);
     }
@@ -1345,12 +1345,12 @@ namespace mango::simd
         wasm_v128_store(dest, a);
     }
 
-    static inline s32x4 s32x4_load_low(const s32* source)
+    static inline s32x4 s32x4_load_low(const s32* source) noexcept
     {
         return wasm_v128_load64_zero(source);
     }
 
-    static inline void s32x4_store_low(s32* dest, s32x4 a)
+    static inline void s32x4_store_low(s32* dest, s32x4 a) noexcept
     {
         wasm_v128_store64_lane(dest, a, 0);
     }

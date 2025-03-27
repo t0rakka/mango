@@ -154,12 +154,12 @@ namespace mango::math
     }
 
     template <>
-    inline Vector<s32, 4> load_low<s32, 4>(const s32 *source)
+    inline Vector<s32, 4> load_low<s32, 4>(const s32 *source) noexcept
     {
         return simd::s32x4_load_low(source);
     }
 
-    static inline void store_low(s32 *dest, Vector<s32, 4> v)
+    static inline void store_low(s32 *dest, Vector<s32, 4> v) noexcept
     {
         simd::s32x4_store_low(dest, v);
     }
