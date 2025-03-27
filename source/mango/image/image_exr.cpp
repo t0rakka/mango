@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -2739,7 +2739,7 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
                 return;
             }
 
-            auto task = [=]
+            auto task = [=, this]
             {
                 ConstMemory memory(ptr, size);
                 decodeBlock(m_surface, memory, x0, y0, x1, y1);
@@ -2782,7 +2782,7 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
 
             //printLine(Print::Info, "  y:{}, size: {} bytes", y0, size);
 
-            auto task = [=]
+            auto task = [=, this]
             {
                 ConstMemory memory(ptr, size);
                 decodeBlock(m_surface, memory, x0, y0, x1, y1);

@@ -3134,7 +3134,7 @@ namespace
 
             int h = std::min(m_parallel_height, m_height - y);
 
-            q.enqueue([=]
+            q.enqueue([=, this]
             {
                 if (m_interface->cancelled)
                 {

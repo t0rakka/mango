@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/core.hpp>
@@ -1556,7 +1556,7 @@ namespace mango::image
 
             for (int y = 0; y < yblocks; ++y)
             {
-                queue.enqueue([=]
+                queue.enqueue([=, this]
                 {
                     Bitmap temp(compressed_width, height, format);
 

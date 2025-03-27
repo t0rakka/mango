@@ -102,6 +102,24 @@ namespace mango
     // print
     // ----------------------------------------------------------------------------------
 
+    static inline
+    void print(Print target, const std::string& text)
+    {
+        if (isEnable(target))
+        {
+            std::printf("%s", text.c_str());
+        }
+    }
+
+    static inline
+    void print(Print target, int indent, const std::string& text)
+    {
+        if (isEnable(target))
+        {
+            std::printf("%*s%s", indent, "",  text.c_str());
+        }
+    }
+
     template <typename... T>
     static inline
     void print(Print target, fmt::format_string<T...> fmt, T&&... args)
@@ -123,6 +141,18 @@ namespace mango
         }
     }
 
+    static inline
+    void print(const std::string& text)
+    {
+        print(Print::Verbose, text);
+    }
+
+    static inline
+    void print(int indent, const std::string& text)
+    {
+        print(Print::Verbose, indent, text);
+    }
+
     template <typename... T>
     static inline
     void print(fmt::format_string<T...> fmt, T&&... args)
@@ -140,6 +170,24 @@ namespace mango
     // ----------------------------------------------------------------------------------
     // printLine
     // ----------------------------------------------------------------------------------
+
+    static inline
+    void printLine(Print target, const std::string& text)
+    {
+        if (isEnable(target))
+        {
+            std::printf("%s\n", text.c_str());
+        }
+    }
+
+    static inline
+    void printLine(Print target, int indent, const std::string& text)
+    {
+        if (isEnable(target))
+        {
+            std::printf("%*s%s\n", indent, "", text.c_str());
+        }
+    }
 
     template <typename... T>
     static inline
@@ -160,6 +208,18 @@ namespace mango
             std::printf("%*s%s\n", indent, "", 
                 fmt::vformat(fmt.str, fmt::vargs<T...>{{args...}}).c_str());
         }
+    }
+
+    static inline
+    void printLine(const std::string& text)
+    {
+        printLine(Print::Verbose, text);
+    }
+
+    static inline
+    void printLine(int indent, const std::string& text)
+    {
+        printLine(Print::Verbose, indent, text);
     }
 
     template <typename... T>

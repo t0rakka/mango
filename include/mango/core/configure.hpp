@@ -712,6 +712,10 @@
 
 #endif
 
+#if MANGO_CPP_VERSION < 20
+    #error "MANGO requires C++20 or later; this is better than cryptic error messages."
+#endif
+
 // -----------------------------------------------------------------------
 // macros
 // -----------------------------------------------------------------------

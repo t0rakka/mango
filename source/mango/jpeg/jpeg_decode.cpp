@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/endian.hpp>
@@ -2204,7 +2204,7 @@ namespace mango::image::jpeg
                 int y1 = std::min(y + N, ymcu);
 
                 // enqueue task
-                queue.enqueue([=]
+                queue.enqueue([=, this]
                 {
                     AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
 
@@ -2297,7 +2297,7 @@ namespace mango::image::jpeg
                 int y1 = std::min(y + N, ymcu);
 
                 // enqueue task
-                queue.enqueue([=] (const u8* p)
+                queue.enqueue([=, this] (const u8* p)
                 {
                     for (int y = y0; y < y1; ++y)
                     {
@@ -2406,7 +2406,7 @@ namespace mango::image::jpeg
                 }
 
                 // enqueue task
-                queue.enqueue([=]
+                queue.enqueue([=, this]
                 {
                     if (!m_interface->cancelled)
                     {
@@ -2490,7 +2490,7 @@ namespace mango::image::jpeg
                 }
 
                 // enqueue task
-                queue.enqueue([=]
+                queue.enqueue([=, this]
                 {
                     DecodeState state = decodeState;
                     state.buffer.ptr = p;
@@ -2569,7 +2569,7 @@ namespace mango::image::jpeg
                 }
 
                 // enqueue task
-                queue.enqueue([=]
+                queue.enqueue([=, this]
                 {
                     DecodeState state = decodeState;
                     state.buffer.ptr = p;
@@ -2665,7 +2665,7 @@ namespace mango::image::jpeg
                 printLine(Print::Info, "  Process: [{}, {}] --> ThreadPool.", y0, y1 - 1);
 
                 // enqueue task
-                queue.enqueue([=]
+                queue.enqueue([=, this]
                 {
                     process_range(y0, y1, data);
                 });

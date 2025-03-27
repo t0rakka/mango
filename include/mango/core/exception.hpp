@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -27,10 +27,22 @@ namespace mango
             return success;
         }
 
-        template <typename... T>
-        void setError(T... s)
+        void setError(const char* s) noexcept
         {
-            info = fmt::format(s...);
+            info = s;
+            success = false;
+        }
+
+        void setError(std::string s) noexcept
+        {
+            info = std::move(s);
+            success = false;
+        }
+
+        template <typename... T>
+        void setError(fmt::format_string<T...> fmt, T&&... args) noexcept
+        {
+            info = fmt::format(fmt, std::forward<T>(args)...);
             success = false;
         }
     };
