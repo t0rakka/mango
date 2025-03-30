@@ -197,9 +197,9 @@ namespace
                     const u32* scan1 = source.address<u32>(0, ny1);
                     const u32* scan2 = source.address<u32>(0, ny2);
                     const u32* scan3 = source.address<u32>(0, ny3);
-    
+
                     u32* buffer = dest.address<u32>(0, y);
-    
+
                     float fx = xpos;
 
                     for (int x = 0; x < dest.width; ++x)
@@ -223,9 +223,9 @@ namespace
                             float xfactor = inv_area;
                             if (i == ix0) xfactor -= fx0 * inv_area;
                             if (i == ix1) xfactor -= fx1 * inv_area;
-            
+
                             const float32x4 xxxx(xfactor);
-            
+
                             v0 = madd(v0, unpack(scan0, i), xxxx);
                             v1 = madd(v1, unpack(scan1, i), xxxx);
                             v2 = madd(v2, unpack(scan2, i), xxxx);
@@ -236,7 +236,7 @@ namespace
                         s = madd(s, v1, yscale.yyyy);
                         s = madd(s, v2, yscale.zzzz);
                         s = madd(s, v3, yscale.wwww);
-            
+
                         buffer[x] = pack(s);
                     }
                 }
@@ -278,7 +278,7 @@ namespace
 
                     const int iy0 = py0 >> 8;
                     const int iy1 = std::min(ymax, py1 >> 8);
-            
+
                     u32* buffer = dest.address<u32>(0, y);
 
                     for (int x = 0; x < dest.width; ++x)
@@ -286,38 +286,38 @@ namespace
                         int px = int((xpos + x * dx) * 256.0f);
                         const float32x4 xscale = table.cubicfv(px);
                         const int ix = px >> 8;
-            
+
                         const int nx0 = std::max(0, ix - 1);
                         const int nx1 = ix;
                         const int nx2 = std::min(xmax, ix + 1);
                         const int nx3 = std::min(xmax, ix + 2);
-            
+
                         float32x4 v0 = 0.0f;
                         float32x4 v1 = 0.0f;
                         float32x4 v2 = 0.0f;
                         float32x4 v3 = 0.0f;
-            
+
                         for (int j = iy0; j <= iy1; ++j)
                         {
                             u32* scan = source.address<u32>(0, j);
-            
+
                             float yfactor = inv_area;
                             if (j == iy0) yfactor -= fy0;
                             if (j == iy1) yfactor -= fy1;
-            
+
                             const float32x4 xxxx(yfactor);
-            
+
                             v0 = madd(v0, unpack(scan, nx0), xxxx);
                             v1 = madd(v1, unpack(scan, nx1), xxxx);
                             v2 = madd(v2, unpack(scan, nx2), xxxx);
                             v3 = madd(v3, unpack(scan, nx3), xxxx);
                         }
-            
+
                         float32x4 s = v0 * xscale.xxxx;
                         s = madd(s, v1, xscale.yyyy);
                         s = madd(s, v2, xscale.zzzz);
                         s = madd(s, v3, xscale.wwww);
-            
+
                         buffer[x] = pack(s);
                     }
                 }

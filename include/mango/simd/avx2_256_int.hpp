@@ -1668,22 +1668,22 @@ namespace mango::simd
     // mask8x32
     // -----------------------------------------------------------------
 
-    static inline mask8x32 operator & (mask8x32 a, mask8x32 b)
+    static inline mask8x32 mask_and(mask8x32 a, mask8x32 b)
     {
         return _mm256_and_si256(a, b);
     }
 
-    static inline mask8x32 operator | (mask8x32 a, mask8x32 b)
+    static inline mask8x32 mask_or(mask8x32 a, mask8x32 b)
     {
         return _mm256_or_si256(a, b);
     }
 
-    static inline mask8x32 operator ^ (mask8x32 a, mask8x32 b)
+    static inline mask8x32 mask_xor(mask8x32 a, mask8x32 b)
     {
         return _mm256_xor_si256(a, b);
     }
 
-    static inline mask8x32 operator ! (mask8x32 a)
+    static inline mask8x32 mask_not(mask8x32 a)
     {
         return detail::simd256_not_si256(a);
     }
@@ -1712,22 +1712,22 @@ namespace mango::simd
     // mask16x16
     // -----------------------------------------------------------------
 
-    static inline mask16x16 operator & (mask16x16 a, mask16x16 b)
+    static inline mask16x16 mask_and(mask16x16 a, mask16x16 b)
     {
         return _mm256_and_si256(a, b);
     }
 
-    static inline mask16x16 operator | (mask16x16 a, mask16x16 b)
+    static inline mask16x16 mask_or(mask16x16 a, mask16x16 b)
     {
         return _mm256_or_si256(a, b);
     }
 
-    static inline mask16x16 operator ^ (mask16x16 a, mask16x16 b)
+    static inline mask16x16 mask_xor(mask16x16 a, mask16x16 b)
     {
         return _mm256_xor_si256(a, b);
     }
 
-    static inline mask16x16 operator ! (mask16x16 a)
+    static inline mask16x16 mask_not(mask16x16 a)
     {
         return detail::simd256_not_si256(a);
     }
@@ -1757,22 +1757,22 @@ namespace mango::simd
     // mask32x8
     // -----------------------------------------------------------------
 
-    static inline mask32x8 operator & (mask32x8 a, mask32x8 b)
+    static inline mask32x8 mask_and(mask32x8 a, mask32x8 b)
     {
         return _mm256_and_si256(a, b);
     }
 
-    static inline mask32x8 operator | (mask32x8 a, mask32x8 b)
+    static inline mask32x8 mask_or(mask32x8 a, mask32x8 b)
     {
         return _mm256_or_si256(a, b);
     }
 
-    static inline mask32x8 operator ^ (mask32x8 a, mask32x8 b)
+    static inline mask32x8 mask_xor(mask32x8 a, mask32x8 b)
     {
         return _mm256_xor_si256(a, b);
     }
 
-    static inline mask32x8 operator ! (mask32x8 a)
+    static inline mask32x8 mask_not(mask32x8 a)
     {
         return detail::simd256_not_si256(a);
     }
@@ -1801,22 +1801,22 @@ namespace mango::simd
     // mask64x4
     // -----------------------------------------------------------------
 
-    static inline mask64x4 operator & (mask64x4 a, mask64x4 b)
+    static inline mask64x4 mask_and(mask64x4 a, mask64x4 b)
     {
         return _mm256_and_si256(a, b);
     }
 
-    static inline mask64x4 operator | (mask64x4 a, mask64x4 b)
+    static inline mask64x4 mask_or(mask64x4 a, mask64x4 b)
     {
         return _mm256_or_si256(a, b);
     }
 
-    static inline mask64x4 operator ^ (mask64x4 a, mask64x4 b)
+    static inline mask64x4 mask_xor(mask64x4 a, mask64x4 b)
     {
         return _mm256_xor_si256(a, b);
     }
 
-    static inline mask64x4 operator ! (mask64x4 a)
+    static inline mask64x4 mask_not(mask64x4 a)
     {
         return detail::simd256_not_si256(a);
     }

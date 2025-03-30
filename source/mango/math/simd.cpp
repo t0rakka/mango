@@ -79,18 +79,18 @@ namespace fp32
     template <typename F, typename I>
     inline F ldexp(F x, I q)
     {
-        I m = simd::srai(q, 31);
-        m = simd::slli(simd::srai(m + q, 6) - m, 4);
-        q = q - simd::slli(m, 2);
+        I m = srai(q, 31);
+        m = slli(srai(m + q, 6) - m, 4);
+        q = q - slli(m, 2);
         m = m + 0x7f;
 
         m = max(m, I(0));
         m = min(m, I(0xff));
 
         F u;
-        u = reinterpret<F>(simd::slli(m, 23));
+        u = reinterpret<F>(slli(m, 23));
         x = x * u * u * u * u;
-        u = reinterpret<F>(simd::slli(q + 0x7f, 23));
+        u = reinterpret<F>(slli(q + 0x7f, 23));
         return x * u;
     }
 
@@ -302,7 +302,7 @@ namespace fp32
     template <typename F, typename I>
     F exp2(F v)
     {
-        const F fx = v + reinterpret<F>(nand(simd::srai(convert<I>(v), 31), 0x3f7fffff));
+        const F fx = v + reinterpret<F>(nand(srai(convert<I>(v), 31), 0x3f7fffff));
         const I ix = truncate<I>(fx);
         F f = (convert<F>(ix) - v) * 0.69314718055994530942f;
         F hi = madd(0.0013298820f, f, F(-0.0001413161f));
@@ -314,7 +314,7 @@ namespace fp32
         F f2 = f * f;
         F a = f2 * f2 * hi + lo;
         I xxx = select(ix > -128, I(0xffffffff), I(0));
-        F b = reinterpret<F>(simd::slli((ix + 127), 23) & xxx);
+        F b = reinterpret<F>(slli((ix + 127), 23) & xxx);
         I mask = select(ix > 128, I(0x7fffffff), I(0));
         return (a * b) | reinterpret<F>(mask);
     }
@@ -322,8 +322,8 @@ namespace fp32
     template <typename F, typename I>
     F log2(F v)
     {
-        const I exponent = simd::srli(reinterpret<I>(v) & 0x7fffffff, 23) - 127;
-        const F x = reinterpret<F>(reinterpret<I>(v) - simd::slli(exponent, 23)) - 1.0f;
+        const I exponent = srli(reinterpret<I>(v) & 0x7fffffff, 23) - 127;
+        const F x = reinterpret<F>(reinterpret<I>(v) - slli(exponent, 23)) - 1.0f;
         const F x2 = x * x;
         const F x4 = x2 * x2;
         F hi(-0.00931049621349f);
@@ -457,17 +457,17 @@ namespace fp64
     inline F ldexp(F x, I q)
     {
         I m = srai64(q, 31);
-        m = simd::slli(srai64(m + q, 9) - m, 7);
-        q = q - simd::slli(m, 2);
+        m = slli(srai64(m + q, 9) - m, 7);
+        q = q - slli(m, 2);
         m = m + 0x3ff;
 
         m = max(m, I(0));
         m = min(m, I(0x7ff));
 
         F u;
-        u = reinterpret<F>(simd::slli(m, 20));
+        u = reinterpret<F>(slli(m, 20));
         x = x * u * u * u * u;
-        u = reinterpret<F>(simd::slli(q + 0x3ff, 20));
+        u = reinterpret<F>(slli(q + 0x3ff, 20));
         return x * u;
     }
     */
@@ -729,7 +729,7 @@ namespace fp64
         F f2 = f * f;
         F a = f2 * f2 * hi + lo;
         I xxx = select(ix > -128, I(0xffffffff), I(0));
-        F b = reinterpret<F>(simd::slli((ix + 127), 23) & xxx);
+        F b = reinterpret<F>(slli((ix + 127), 23) & xxx);
         I mask = select(ix > 128, I(0x7fffffff), I(0));
         return (a * b) | reinterpret<F>(mask);
     }
@@ -737,8 +737,8 @@ namespace fp64
     template <typename F, typename I>
     F log2(F v)
     {
-        const I exponent = simd::srli(reinterpret<I>(v) & 0x7fffffff, 23) - 127;
-        const F x = reinterpret<F>(reinterpret<I>(v) - simd::slli(exponent, 23)) - 1.0f;
+        const I exponent = srli(reinterpret<I>(v) & 0x7fffffff, 23) - 127;
+        const F x = reinterpret<F>(reinterpret<I>(v) - slli(exponent, 23)) - 1.0f;
         const F x2 = x * x;
         const F x4 = x2 * x2;
         F hi(-0.00931049621349);

@@ -19,8 +19,8 @@ void example1()
 
 float32x4 example2(const float32x4& a, const float32x4& b)
 {
-    float32x4 ab = a.xxyy * 2.0f - b * b.wwww;
-    return ab / ab.x;
+    float32x4 c = a.xxyy * 2.0f - b * b.wwww;
+    return c / c.x;
 }
 
 float32x4 example3(const float32x4& a, const float32x4& b)

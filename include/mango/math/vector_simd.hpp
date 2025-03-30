@@ -408,28 +408,46 @@ namespace mango::math
     };
 
     // ------------------------------------------------------------------
-    // ShuffleAccessor2
+    // ShuffleAccessor
     // ------------------------------------------------------------------
 
-    template <typename ScalarType, typename VectorType, int X, int Y>
-    struct ShuffleAccessor2
+    template <typename VectorType, typename StorageType, int... Indices>
+    struct ShuffleAccessor
     {
-        VectorType m;
+        using ScalarType = typename VectorType::ScalarType;
+        static constexpr int VectorSize = VectorType::VectorSize;
 
-        constexpr operator Vector<ScalarType, 2> () const noexcept
+        StorageType m;
+
+        // implemented in specializations
+        constexpr operator VectorType () const noexcept;
+    };
+
+    // vec2 -> vec2 shuffle
+    template <typename VectorType, typename StorageType, int X, int Y>
+        requires (VectorType::VectorSize == 2)
+    struct ShuffleAccessor<VectorType, StorageType, X, Y>
+    {
+        using ScalarType = typename VectorType::ScalarType;
+        static constexpr int VectorSize = 2;
+
+        StorageType m;
+
+        constexpr operator VectorType () const noexcept
         {
             return simd::shuffle<X, Y>(m);
         }
     };
 
-    // ------------------------------------------------------------------
-    // ShuffleAccessor4x2
-    // ------------------------------------------------------------------
-
-    template <typename ScalarType, typename VectorType, int X, int Y>
-    struct ShuffleAccessor4x2
+    // vec3 -> vec2 shuffle
+    template <typename VectorType, typename StorageType, int X, int Y>
+        requires (VectorType::VectorSize == 3)
+    struct ShuffleAccessor<VectorType, StorageType, X, Y>
     {
-        VectorType m;
+        using ScalarType = typename VectorType::ScalarType;
+        static constexpr int VectorSize = 2;
+
+        StorageType m;
 
         constexpr operator Vector<ScalarType, 2> () const noexcept
         {
@@ -439,14 +457,52 @@ namespace mango::math
         }
     };
 
-    // ------------------------------------------------------------------
-    // ShuffleAccessor4x3
-    // ------------------------------------------------------------------
-
-    template <typename ScalarType, typename VectorType, int X, int Y, int Z>
-    struct ShuffleAccessor4x3
+    // vec3 -> vec3 shuffle
+    template <typename VectorType, typename StorageType, int X, int Y, int Z>
+        requires (VectorType::VectorSize == 3)
+    struct ShuffleAccessor<VectorType, StorageType, X, Y, Z>
     {
-        VectorType m;
+        using ScalarType = typename VectorType::ScalarType;
+        static constexpr int VectorSize = 3;
+
+        StorageType m;
+
+        constexpr operator VectorType () const noexcept
+        {
+            const ScalarType x = simd::get_component<X>(m);
+            const ScalarType y = simd::get_component<Y>(m);
+            const ScalarType z = simd::get_component<Z>(m);
+            return VectorType(x, y, z);
+        }
+    };
+
+    // vec4 -> vec2 shuffle
+    template <typename VectorType, typename StorageType, int X, int Y>
+        requires (VectorType::VectorSize == 4)
+    struct ShuffleAccessor<VectorType, StorageType, X, Y>
+    {
+        using ScalarType = typename VectorType::ScalarType;
+        static constexpr int VectorSize = 2;
+
+        StorageType m;
+
+        constexpr operator Vector<ScalarType, 2> () const noexcept
+        {
+            const ScalarType x = simd::get_component<X>(m);
+            const ScalarType y = simd::get_component<Y>(m);
+            return Vector<ScalarType, 2>(x, y);
+        }
+    };
+
+    // vec4 -> vec3 shuffle
+    template <typename VectorType, typename StorageType, int X, int Y, int Z>
+        requires (VectorType::VectorSize == 4)
+    struct ShuffleAccessor<VectorType, StorageType, X, Y, Z>
+    {
+        using ScalarType = typename VectorType::ScalarType;
+        static constexpr int VectorSize = 3;
+
+        StorageType m;
 
         constexpr operator Vector<ScalarType, 3> () const noexcept
         {
@@ -457,40 +513,65 @@ namespace mango::math
         }
     };
 
-    // ------------------------------------------------------------------
-    // ShuffleAccessor4
-    // ------------------------------------------------------------------
-
-    template <typename ScalarType, typename VectorType, int X, int Y, int Z, int W>
-    struct ShuffleAccessor4
+    // vec4 -> vec4 shuffle
+    template <typename VectorType, typename StorageType, int X, int Y, int Z, int W>
+        requires (VectorType::VectorSize == 4)
+    struct ShuffleAccessor<VectorType, StorageType, X, Y, Z, W>
     {
-        VectorType m;
+        using ScalarType = typename VectorType::ScalarType;
+        static constexpr int VectorSize = 4;
 
-        constexpr operator Vector<ScalarType, 4> () const noexcept
+        StorageType m;
+
+        constexpr operator VectorType () const noexcept
         {
             return simd::shuffle<X, Y, Z, W>(m);
         }
-
-#if 0
-        constexpr ShuffleAccessor4& operator = (VectorType v) noexcept
-        {
-            m = simd::shuffle<X, Y, Z, W>(v);
-            return *this;
-        }
-
-        template <int A, int B, int C, int D>
-        constexpr ShuffleAccessor4& operator = (const ShuffleAccessor4<ScalarType, VectorType, A, B, C, D>& v) noexcept
-        {
-            constexpr u32 mask = (D << 6) | (C << 4) | (B << 2) | A;
-            constexpr u32 s0 = (mask >> (X * 2)) & 3;
-            constexpr u32 s1 = (mask >> (Y * 2)) & 3;
-            constexpr u32 s2 = (mask >> (Z * 2)) & 3;
-            constexpr u32 s3 = (mask >> (W * 2)) & 3;
-            m = simd::shuffle<s0, s1, s2, s3>(v.m);
-            return *this;
-        }
-#endif
     };
+
+    // Scalar operators for ShuffleAccessor
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    constexpr auto operator * (const ShuffleAccessor<VectorType, StorageType, Indices...>& a, typename VectorType::ScalarType s) noexcept
+    {
+        return VectorType(a) * s;
+    }
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    constexpr auto operator * (typename VectorType::ScalarType s, const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
+    {
+        return s * VectorType(a);
+    }
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    constexpr auto operator / (const ShuffleAccessor<VectorType, StorageType, Indices...>& a, typename VectorType::ScalarType s) noexcept
+    {
+        return VectorType(a) / s;
+    }
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    constexpr auto operator + (const ShuffleAccessor<VectorType, StorageType, Indices...>& a, typename VectorType::ScalarType s) noexcept
+    {
+        return VectorType(a) + s;
+    }
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    constexpr auto operator + (typename VectorType::ScalarType s, const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
+    {
+        return s + VectorType(a);
+    }
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    constexpr auto operator - (const ShuffleAccessor<VectorType, StorageType, Indices...>& a, typename VectorType::ScalarType s) noexcept
+    {
+        return VectorType(a) - s;
+    }
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    constexpr auto operator - (typename VectorType::ScalarType s, const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
+    {
+        return s - VectorType(a);
+    }
 
     // ------------------------------------------------------------------
     // unaligned load / store
@@ -628,543 +709,1295 @@ namespace mango::math
     }
 
     // ------------------------------------------------------------------
-    // simd operator / function wrappers
+    // experimental
     // ------------------------------------------------------------------
 
-#define MATH_SIMD_FLOAT_OPERATORS(T, N, SIMD) \
-    \
-    static inline Vector<T, N> operator + (Vector<T, N> a) \
-    { \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N> operator - (Vector<T, N> a) \
-    { \
-        return simd::neg(a); \
-    } \
-    \
-    static inline Vector<T, N>& operator += (Vector<T, N>& a, Vector<T, N> b) \
-    { \
-        a = simd::add(a, b); \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N>& operator += (Vector<T, N>& a, T b) \
-    { \
-        a = simd::add(a, simd::SIMD##_set(b)); \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N>& operator -= (Vector<T, N>& a, Vector<T, N> b) \
-    { \
-        a = simd::sub(a, b); \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N>& operator -= (Vector<T, N>& a, T b) \
-    { \
-        a = simd::sub(a, simd::SIMD##_set(b)); \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N>& operator *= (Vector<T, N>& a, Vector<T, N> b) \
-    { \
-        a = simd::mul(a, b); \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N>& operator *= (Vector<T, N>& a, T b) \
-    { \
-        a = simd::mul(a, simd::SIMD##_set(b)); \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N>& operator /= (Vector<T, N>& a, Vector<T, N> b) \
-    { \
-        a = simd::div(a, b); \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N>& operator /= (Vector<T, N>& a, T b) \
-    { \
-        a = simd::div(a, b); \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N> operator + (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::add(a, b); \
-    } \
-    \
-    static inline Vector<T, N> operator + (Vector<T, N> a, T b) \
-    { \
-        return simd::add(a, simd::SIMD##_set(b)); \
-    } \
-    \
-    static inline Vector<T, N> operator + (T a, Vector<T, N> b) \
-    { \
-        return simd::add(simd::SIMD##_set(a), b); \
-    } \
-    \
-    static inline Vector<T, N> operator - (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::sub(a, b); \
-    } \
-    \
-    static inline Vector<T, N> operator - (Vector<T, N> a, T b) \
-    { \
-        return simd::sub(a, simd::SIMD##_set(b)); \
-    } \
-    \
-    static inline Vector<T, N> operator - (T a, Vector<T, N> b) \
-    { \
-        return simd::sub(simd::SIMD##_set(a), b); \
-    } \
-    \
-    static inline Vector<T, N> operator * (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::mul(a, b); \
-    } \
-    \
-    static inline Vector<T, N> operator / (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::div(a, b); \
-    } \
-    \
-    static inline Vector<T, N> operator / (Vector<T, N> a, T b) \
-    { \
-        return simd::div(a, b); \
+    template <typename T>
+    concept is_scalar = std::is_scalar_v<T>;
+
+    template <typename T>
+    struct is_shuffle_accessor : std::false_type {};
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    struct is_shuffle_accessor<ShuffleAccessor<VectorType, StorageType, Indices...>> : std::true_type {};
+
+    /*
+    template <typename T>
+    struct shuffle_traits
+    {
+        static constexpr bool is_shuffle = false;
+        using vector_type = T;
+    };
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    struct shuffle_traits<ShuffleAccessor<VectorType, StorageType, Indices...>>
+    {
+        static constexpr bool is_shuffle = true;
+        using vector_type = VectorType;
+    };
+    */
+
+    template <typename T>
+    concept is_vector = requires(T v)
+    {
+        { T::VectorSize };
+        typename T::ScalarType;
+        { v[0] } -> std::convertible_to<typename T::ScalarType>;
+    };
+
+    template <typename T>
+    concept is_vector_or_scalar = is_vector<T> || is_scalar<T>;
+
+    template <typename T>
+    concept is_simd_vector = requires(T v)
+    {
+        typename T::VectorType;
+        { T::VectorSize };
+        requires !std::same_as<typename T::VectorType, void>;
+        //requires simd::is_vector<typename T::VectorType>;
+    };
+
+    template <typename T>
+    concept is_simd_vector_or_scalar = is_simd_vector<T> || is_scalar<T>;
+
+    template <typename T>
+    concept IsSignedVector = is_vector<T> && std::is_signed_v<typename T::ScalarType>;
+
+    template <typename T>
+    concept IsFloatVector = std::is_floating_point_v<typename T::ScalarType>;
+
+    template <typename T>
+    struct get_vector_type
+    {
+        using type = T;
+    };
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    struct get_vector_type<ShuffleAccessor<VectorType, StorageType, Indices...>>
+    {
+        using type = VectorType;
+    };
+
+    // has_vector
+
+#if 1
+
+    template <typename... Args>
+    concept has_vector = (is_vector<Args> || ...) &&
+        ((is_vector_or_scalar<Args> || 
+        is_shuffle_accessor<std::remove_cvref_t<Args>>::value) && ...);
+
+    template <typename... Args>
+    struct first_vector_type;
+
+    template <typename T, typename... Args>
+    struct first_vector_type<T, Args...>
+    {
+        using type = std::conditional_t<
+            is_vector<T> || is_shuffle_accessor<std::remove_cvref_t<T>>::value,
+            typename get_vector_type<T>::type,
+            typename first_vector_type<Args...>::type>;
+    };
+
+#else
+
+    template <typename... Args>
+    concept has_vector = (is_vector<Args> || ...) &&
+                         (is_vector_or_scalar<Args> && ...);
+
+    template <typename... Args>
+    struct first_vector_type;
+
+    template <typename T, typename... Args>
+    struct first_vector_type<T, Args...>
+    {
+        using type = std::conditional_t<is_vector<T>, T,
+            typename first_vector_type<Args...>::type>;
+    };
+#endif
+
+    template <typename T>
+    struct first_vector_type<T>
+    {
+        using type = T;
+    };
+
+    template <typename... Args>
+    using first_vector_t = typename first_vector_type<Args...>::type;
+
+    // has_simd_vector
+
+    template <typename... Args>
+    concept has_simd_vector = (is_simd_vector<Args> || ...) &&
+                              (is_simd_vector_or_scalar<Args> && ...);
+
+    template <typename... Args>
+    struct first_simd_vector_type;
+
+    template <typename T, typename... Args>
+    struct first_simd_vector_type<T, Args...>
+    {
+        using type = std::conditional_t<is_simd_vector<T>, T,
+            typename first_simd_vector_type<Args...>::type>;
+    };
+
+    template <typename T>
+    struct first_simd_vector_type<T>
+    {
+        using type = T;
+    };
+
+    template <typename... Args>
+    using first_simd_vector_t = typename first_simd_vector_type<Args...>::type;
+
+    // vector_ops
+
+    template <typename T>
+    struct vector_ops
+    {
+        using ScalarType = typename T::ScalarType;
+
+        static T abs(const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = abs(a[i]);
+            }
+            return temp;
+        }
+
+        static T neg(const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = -a[i];
+            }
+            return temp;
+        }
+
+        static T sub(const T& a, const T& b)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = a[i] - b[i];
+            }
+            return temp;
+        }
+
+        static T add(const T& a, const T& b)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = a[i] + b[i];
+            }
+            return temp;
+        }
+
+        static T mul(const T& a, const T& b)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = a[i] * b[i];
+            }
+            return temp;
+        }
+
+        static T div(const T& a, const T& b)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = a[i] / b[i];
+            }
+            return temp;
+        }
+
+        static T madd(const T& a, const T& b, const T& c)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] =  a[i] + b[i] * c[i];
+            }
+            return temp;
+        }
+
+        static T msub(const T& a, const T& b, const T& c)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = b[i] * c[i] - a[i];
+            }
+            return temp;
+        }
+
+        static T nmadd(const T& a, const T& b, const T& c)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = a[i] - b[i] * c[i];
+            }
+            return temp;
+        }
+
+        static T nmsub(const T& a, const T& b, const T& c)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = -(a[i] + b[i] * c[i]);
+            }
+            return temp;
+        }
+
+        static T min(const T& a, const T& b)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = std::min(a[i], b[i]);
+            }
+            return temp;
+        }
+
+        static T max(const T& a, const T& b)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = std::max(a[i], b[i]);
+            }
+            return temp;
+        }
+
+        static T sign(const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = sign(a[i]);
+            }
+            return temp;
+        }
+
+        static T clamp(const T& a, const T& low, const T& high)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = std::max(low[i], std::min(high[i], a[i]));
+            }
+            return temp;
+        }
+
+        static T lerp(const T& a, const T& b, ScalarType factor)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = a[i] + (b[i] - a[i]) * factor;
+            }
+            return temp;
+        }
+
+        static T radians(const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = radians(a[i]);
+            }
+            return temp;
+        }
+
+        static T degrees(const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = degrees(a[i]);
+            }
+            return temp;
+        }
+
+        static T rcp(const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = ScalarType(1.0) / a[i];
+            }
+            return temp;
+        }
+
+        static T sqrt(const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = std::sqrt(a[i]);
+            }
+            return temp;
+        }
+
+        static T rsqrt(const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = ScalarType(1.0) / std::sqrt(a[i]);
+            }
+            return temp;
+        }
+
+        static T round(const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = std::round(a[i]);
+            }
+            return temp;
+        }
+
+        static T floor(const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = std::floor(a[i]);
+            }
+            return temp;
+        }
+
+        static T ceil(const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = std::ceil(a[i]);
+            }
+            return temp;
+        }
+
+        static T fract(const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = a[i] - std::floor(a[i]);
+            }
+            return temp;
+        }
+
+        static T mod(const T& a, const T& b)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = a[i] - b[i] * std::floor(a[i] / b[i]);
+            }
+            return temp;
+        }
+    };
+
+    // simd vector_ops
+
+    template <typename T>
+        requires is_simd_vector<T>
+    struct vector_ops<T>
+    {
+        using ScalarType = typename T::ScalarType;
+
+        static T abs(T a)
+        {
+            return simd::abs(a);
+        }
+
+        static T neg(T a)
+        {
+            return simd::neg(a);
+        }
+
+        static T sub(T a, T b)
+        {
+            return simd::sub(a, b);
+        }
+
+        static T add(T a, T b)
+        {
+            return simd::add(a, b);
+        }
+
+        static T mul(T a, T b)
+        {
+            return simd::mul(a, b);
+        }
+
+        static T div(T a, T b)
+        {
+            return simd::div(a, b);
+        }
+
+        static T madd(T a, T b, T c)
+        {
+            return simd::madd(a, b, c);
+        }
+
+        static T msub(T a, T b, T c)
+        {
+            return simd::msub(a, b, c);
+        }
+
+        static T nmadd(T a, T b, T c)
+        {
+            return simd::nmadd(a, b, c);
+        }
+
+        static T nmsub(T a, T b, T c)
+        {
+            return simd::nmsub(a, b, c);
+        }
+
+        static T min(T a, T b)
+        {
+            return simd::min(a, b);
+        }
+
+        static T max(T a, T b)
+        {
+            return simd::max(a, b);
+        }
+
+        static T sign(T a)
+        {
+            return simd::sign(a);
+        }
+
+        static T clamp(T a, T low,T high)
+        {
+            return simd::max(low, simd::min(high, a));
+        }
+
+        static T lerp(T a, T b, ScalarType factor)
+        {
+            return simd::lerp(a, b, T(factor));
+        }
+
+        static T radians(T a)
+        {
+            return simd::mul(a, T(0.01745329251));
+        }
+
+        static T degrees(T a)
+        {
+            return simd::mul(a, T(57.2957795131));
+        }
+
+        static T rcp(T a)
+        {
+            return simd::rcp(a);
+        }
+
+        static T sqrt(T a)
+        {
+            return simd::sqrt(a);
+        }
+
+        static T rsqrt(T a)
+        {
+            return simd::rsqrt(a);
+        }
+
+        static T round(T a)
+        {
+            return simd::round(a);
+        }
+
+        static T floor(T a)
+        {
+            return simd::floor(a);
+        }
+
+        static T ceil(T a)
+        {
+            return simd::ceil(a);
+        }
+
+        static T trunc(T a)
+        {
+            return simd::trunc(a);
+        }
+
+        static T fract(T a)
+        {
+            return simd::fract(a);
+        }
+
+        static T mod(T a, T b)
+        {
+            return simd::sub(a, simd::mul(b, simd::floor(simd::div(a, b))));
+        }
+    };
+
+    // operator -
+
+    template <typename T>
+        requires IsSignedVector<T>
+    static inline T operator - (T a)
+    {
+        return vector_ops<T>::neg(a);
     }
 
-#define MATH_SIMD_FLOAT_FUNCTIONS(T, N, SIMD, MASK) \
-    \
-    static inline Vector<T, N> add(Vector<T, N> a, Vector<T, N> b, MASK mask) \
-    { \
-        return simd::add(a, b, mask); \
-    } \
-    \
-    static inline Vector<T, N> add(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::add(a, b, mask, value); \
-    } \
-    \
-    static inline Vector<T, N> sub(Vector<T, N> a, Vector<T, N> b, MASK mask) \
-    { \
-        return simd::sub(a, b, mask); \
-    } \
-    \
-    static inline Vector<T, N> sub(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::sub(a, b, mask, value); \
-    } \
-    \
-    static inline Vector<T, N> mul(Vector<T, N> a, Vector<T, N> b, MASK mask) \
-    { \
-        return simd::mul(a, b, mask); \
-    } \
-    \
-    static inline Vector<T, N> mul(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::mul(a, b, mask, value); \
-    } \
-    \
-    static inline Vector<T, N> div(Vector<T, N> a, Vector<T, N> b, MASK mask) \
-    { \
-        return simd::div(a, b, mask); \
-    } \
-    \
-    static inline Vector<T, N> div(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::div(a, b, mask, value); \
-    } \
-    \
-    static inline Vector<T, N> abs(Vector<T, N> a) \
-    { \
-        return simd::abs(a); \
-    } \
-    \
-    static inline Vector<T, N> round(Vector<T, N> a) \
-    { \
-        return simd::round(a); \
-    } \
-    \
-    static inline Vector<T, N> floor(Vector<T, N> a) \
-    { \
-        return simd::floor(a); \
-    } \
-    \
-    static inline Vector<T, N> ceil(Vector<T, N> a) \
-    { \
-        return simd::ceil(a); \
-    } \
-    \
-    static inline Vector<T, N> trunc(Vector<T, N> a) \
-    { \
-        return simd::trunc(a); \
-    } \
-    \
-    static inline Vector<T, N> fract(Vector<T, N> a) \
-    { \
-        return simd::fract(a); \
-    } \
-    \
-    static inline Vector<T, N> mod(Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::sub(a, simd::mul(b, simd::floor(simd::div(a, b)))); \
-    } \
-    \
-    static inline Vector<T, N> sign(Vector<T, N> a) \
-    { \
-        return simd::sign(a); \
-    } \
-    \
-    static inline Vector<T, N> radians(Vector<T, N> a) \
-    { \
-        return simd::mul(a, simd::SIMD##_set(T(0.01745329251))); \
-    } \
-    \
-    static inline Vector<T, N> degrees(Vector<T, N> a) \
-    { \
-        return simd::mul(a, simd::SIMD##_set(T(57.2957795131))); \
-    } \
-    \
-    static inline Vector<T, N> sqrt(Vector<T, N> a) \
-    { \
-        return simd::sqrt(a); \
-    } \
-    \
-    static inline Vector<T, N> rsqrt(Vector<T, N> a) \
-    { \
-        return simd::rsqrt(a); \
-    } \
-    \
-    static inline Vector<T, N> rcp(Vector<T, N> a) \
-    { \
-        return simd::rcp(a); \
-    } \
-    \
-    static inline Vector<T, N> unpacklo(Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::unpacklo(a, b); \
-    } \
-    \
-    static inline Vector<T, N> unpackhi(Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::unpackhi(a, b); \
-    } \
-    \
-    static inline Vector<T, N> min(Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::min(a, b); \
-    } \
-    \
-    static inline Vector<T, N> min(Vector<T, N> a, Vector<T, N> b, MASK mask) \
-    { \
-        return simd::min(a, b, mask); \
-    } \
-    \
-    static inline Vector<T, N> min(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::min(a, b, mask, value); \
-    } \
-    \
-    static inline Vector<T, N> max(Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::max(a, b); \
-    } \
-    \
-    static inline Vector<T, N> max(Vector<T, N> a, Vector<T, N> b, MASK mask) \
-    { \
-        return simd::max(a, b, mask); \
-    } \
-    \
-    static inline Vector<T, N> max(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::max(a, b, mask, value); \
-    } \
-    \
-    static inline Vector<T, N> madd(Vector<T, N> a, Vector<T, N> b, Vector<T, N> c) \
-    { \
-        return simd::madd(a, b, c); \
-    } \
-    \
-    static inline Vector<T, N> msub(Vector<T, N> a, Vector<T, N> b, Vector<T, N> c) \
-    { \
-        return simd::msub(a, b, c); \
-    } \
-    \
-    static inline Vector<T, N> nmadd(Vector<T, N> a, Vector<T, N> b, Vector<T, N> c) \
-    { \
-        return simd::nmadd(a, b, c); \
-    } \
-    \
-    static inline Vector<T, N> nmsub(Vector<T, N> a, Vector<T, N> b, Vector<T, N> c) \
-    { \
-        return simd::nmsub(a, b, c); \
-    } \
-    \
-    static inline Vector<T, N> clamp(Vector<T, N> a, Vector<T, N> low, Vector<T, N> high) \
-    { \
-        return simd::min(high, simd::max(low, a)); \
-    } \
-    \
-    static inline Vector<T, N> lerp(Vector<T, N> a, Vector<T, N> b, float factor) \
-    { \
-        Vector<T, N> s(factor); \
-        return simd::lerp(a, b, s); \
-    } \
-    \
-    static inline Vector<T, N> lerp(Vector<T, N> a, Vector<T, N> b, Vector<T, N> factor) \
-    { \
-        return simd::lerp(a, b, factor); \
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator - (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return vector_ops<T>::sub(T(a), T(b));
     }
 
-#define MATH_SIMD_SIGNED_INTEGER_OPERATORS(T, N) \
-    \
-    static inline Vector<T, N> operator - (Vector<T, N> a) \
-    { \
-        return simd::neg(a); \
+    template <typename A, typename B>
+        requires is_vector<A> && is_vector_or_scalar<B>
+    static inline A& operator -= (A& a, B b)
+    {
+        a = vector_ops<A>::sub(a, A(b));
+        return a;
     }
 
-#define MATH_SIMD_UNSIGNED_INTEGER_OPERATORS(T, N) \
-    \
-    static inline Vector<T, N> operator + (Vector<T, N> a) \
-    { \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N>& operator += (Vector<T, N>& a, Vector<T, N> b) \
-    { \
-        a = simd::add(a, b); \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N>& operator += (Vector<T, N>& a, T b) \
-    { \
-        a = simd::add(a, simd::T##x##N##_set(b)); \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N>& operator -= (Vector<T, N>& a, Vector<T, N> b) \
-    { \
-        a = simd::sub(a, b); \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N>& operator -= (Vector<T, N>& a, T b) \
-    { \
-        a = simd::sub(a, simd::T##x##N##_set(b)); \
-        return a; \
-    } \
-    \
-    static inline Vector<T, N> operator + (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::add(a, b); \
-    } \
-    \
-    static inline Vector<T, N> operator + (Vector<T, N> a, T b) \
-    { \
-        return simd::add(a, simd::T##x##N##_set(b)); \
-    } \
-    \
-    static inline Vector<T, N> operator + (T a, Vector<T, N> b) \
-    { \
-        return simd::add(simd::T##x##N##_set(a), b); \
-    } \
-    \
-    static inline Vector<T, N> operator - (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::sub(a, b); \
-    } \
-    \
-    static inline Vector<T, N> operator - (Vector<T, N> a, T b) \
-    { \
-        return simd::sub(a, simd::T##x##N##_set(b)); \
-    } \
-    \
-    static inline Vector<T, N> operator - (T a, Vector<T, N> b) \
-    { \
-        return simd::sub(simd::T##x##N##_set(a), b); \
+    // operator +
+
+    template <typename T>
+        requires is_vector<T>
+    static inline T operator + (T a)
+    {
+        return a;
     }
 
-#define MATH_SIMD_INTEGER_FUNCTIONS(T, N, MASK) \
-    \
-    static inline Vector<T, N> unpacklo(Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::unpacklo(a, b); \
-    } \
-    \
-    static inline Vector<T, N> unpackhi(Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::unpackhi(a, b); \
-    } \
-    \
-    static inline Vector<T, N> add(Vector<T, N> a, Vector<T, N> b, MASK mask) \
-    { \
-        return simd::add(a, b, mask); \
-    } \
-    \
-    static inline Vector<T, N> add(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::add(a, b, mask, value); \
-    } \
-    \
-    static inline Vector<T, N> sub(Vector<T, N> a, Vector<T, N> b, MASK mask) \
-    { \
-        return simd::sub(a, b, mask); \
-    } \
-    \
-    static inline Vector<T, N> sub(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::sub(a, b, mask, value); \
-    } \
-    \
-    static inline Vector<T, N> min(Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::min(a, b); \
-    } \
-    \
-    static inline Vector<T, N> min(Vector<T, N> a, Vector<T, N> b, MASK mask) \
-    { \
-        return simd::min(a, b, mask); \
-    } \
-    \
-    static inline Vector<T, N> min(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::min(a, b, mask, value); \
-    } \
-    \
-    static inline Vector<T, N> max(Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::max(a, b); \
-    } \
-    \
-    static inline Vector<T, N> max(Vector<T, N> a, Vector<T, N> b, MASK mask) \
-    { \
-        return simd::max(a, b, mask); \
-    } \
-    \
-    static inline Vector<T, N> max(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::max(a, b, mask, value); \
-    } \
-    \
-    static inline Vector<T, N> clamp(Vector<T, N> a, Vector<T, N> low, Vector<T, N> high) \
-    { \
-        return simd::min(high, simd::max(low, a)); \
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator + (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return vector_ops<T>::add(T(a), T(b));
     }
 
-#define MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(T, N, MASK) \
-    \
-    static inline Vector<T, N> adds(Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::adds(a, b); \
-    } \
-    \
-    static inline Vector<T, N> adds(Vector<T, N> a, Vector<T, N> b, MASK mask) \
-    { \
-        return simd::adds(a, b, mask); \
-    } \
-    \
-    static inline Vector<T, N> adds(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::adds(a, b, mask, value); \
-    } \
-    \
-    static inline Vector<T, N> subs(Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::subs(a, b); \
-    } \
-    \
-    static inline Vector<T, N> subs(Vector<T, N> a, Vector<T, N> b, MASK mask) \
-    { \
-        return simd::subs(a, b, mask); \
-    } \
-    \
-    static inline Vector<T, N> subs(Vector<T, N> a, Vector<T, N> b, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::subs(a, b, mask, value); \
+    template <typename A, typename B>
+        requires is_vector<A> && is_vector_or_scalar<B>
+    static inline A& operator += (A& a, B b)
+    {
+        a = vector_ops<A>::add(a, A(b));
+        return a;
     }
 
-#define MATH_SIMD_ABS_INTEGER_FUNCTIONS(T, N, MASK) \
-    \
-    static inline Vector<T, N> abs(Vector<T, N> a) \
-    { \
-        return simd::abs(a); \
-    } \
-    \
-    static inline Vector<T, N> abs(Vector<T, N> a, MASK mask) \
-    { \
-        return simd::abs(a, mask); \
-    } \
-    \
-    static inline Vector<T, N> abs(Vector<T, N> a, MASK mask, Vector<T, N> value) \
-    { \
-        return simd::abs(a, mask, value); \
+    // operator *
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator * (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return vector_ops<T>::mul(T(a), T(b));
     }
 
-#define MATH_SIMD_BITWISE_FUNCTIONS(T, N) \
-    \
-    static inline Vector<T, N> nand(Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::bitwise_nand(a, b); \
-    } \
-    \
-    static inline Vector<T, N> operator & (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::bitwise_and(a, b); \
-    } \
-    \
-    static inline Vector<T, N> operator | (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::bitwise_or(a, b); \
-    } \
-    \
-    static inline Vector<T, N> operator ^ (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::bitwise_xor(a, b); \
-    } \
-    \
-    static inline Vector<T, N> operator ~ (Vector<T, N> a) \
-    { \
-        return simd::bitwise_not(a); \
+    template <typename A, typename B>
+        requires is_vector<A> && is_vector_or_scalar<B>
+    static inline A& operator *= (A& a, B b)
+    {
+        a = vector_ops<A>::mul(a, A(b));
+        return a;
     }
 
-#define MATH_SIMD_COMPARE_FUNCTIONS(T, N, MASK) \
-    \
-    static inline MASK operator > (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::compare_gt(a, b); \
-    } \
-    \
-    static inline MASK operator >= (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::compare_ge(a, b); \
-    } \
-    \
-    static inline MASK operator < (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::compare_lt(a, b); \
-    } \
-    \
-    static inline MASK operator <= (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::compare_le(a, b); \
-    } \
-    \
-    static inline MASK operator == (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::compare_eq(a, b); \
-    } \
-    \
-    static inline MASK operator != (Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::compare_neq(a, b); \
-    } \
-    \
-    static inline Vector<T, N> select(MASK mask, Vector<T, N> a, Vector<T, N> b) \
-    { \
-        return simd::select(mask, a, b); \
+    // operator /
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator / (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return vector_ops<T>::div(T(a), T(b));
     }
+
+    template <typename A, typename B>
+        requires is_vector<A> && is_vector_or_scalar<B>
+    static inline A& operator /= (A& a, B b)
+    {
+        a = vector_ops<A>::div(a, A(b));
+        return a;
+    }
+
+    // functions
+
+    template <typename T>
+        requires is_vector<T>
+    static inline T abs(T a)
+    {
+        return vector_ops<T>::abs(a);
+    }
+
+    template <typename A, typename B, typename C>
+        requires has_vector<A, B, C>
+    static inline auto madd(A a, B b, C c)
+    {
+        using T = first_vector_t<A, B, C>;
+        return vector_ops<T>::madd(T(a), T(b), T(c));
+    }
+
+    template <typename A, typename B, typename C>
+        requires has_vector<A, B, C>
+    static inline auto msub(A a, B b, C c)
+    {
+        using T = first_vector_t<A, B, C>;
+        return vector_ops<T>::msub(T(a), T(b), T(c));
+    }
+
+    template <typename A, typename B, typename C>
+        requires has_vector<A, B, C>
+    static inline auto nmadd(A a, B b, C c)
+    {
+        using T = first_vector_t<A, B, C>;
+        return vector_ops<T>::nmadd(T(a), T(b), T(c));
+    }
+
+    template <typename A, typename B, typename C>
+        requires has_vector<A, B, C>
+    static inline auto nmsub(A a, B b, C c)
+    {
+        using T = first_vector_t<A, B, C>;
+        return vector_ops<T>::nmsub(T(a), T(b), T(c));
+    }
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto min(A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return vector_ops<T>::min(T(a), T(b));
+    }
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto max(A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return vector_ops<T>::max(T(a), T(b));
+    }
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize >= 2 || T::VectorSize <= 4)
+    static inline auto sign(T a)
+    {
+        return vector_ops<T>::sign(a);
+    }
+
+    template <typename A, typename B, typename C>
+        requires has_vector<A, B, C>
+    static inline auto clamp(A a, B b, C c)
+    {
+        using T = first_vector_t<A, B, C>;
+        return vector_ops<T>::clamp(T(a), T(b), T(c));
+    }
+
+    template <typename T, typename S>
+        requires is_vector<T> && is_scalar<S>
+    static inline auto lerp(T a, T b, S s)
+    {
+        return vector_ops<T>::lerp(a, b, typename T::ScalarType(s));
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto radians(T a)
+    {
+        return vector_ops<T>::radians(a);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto degrees(T a)
+    {
+        return vector_ops<T>::degrees(a);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto rcp(T a)
+    {
+        return vector_ops<T>::rcp(a);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto sqrt(T a)
+    {
+        return vector_ops<T>::sqrt(a);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto rsqrt(T a)
+    {
+        return vector_ops<T>::rsqrt(a);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto round(T a)
+    {
+        return vector_ops<T>::round(a);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto floor(T a)
+    {
+        return vector_ops<T>::floor(a);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto ceil(T a)
+    {
+        return vector_ops<T>::ceil(a);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto trunc(T a)
+    {
+        return vector_ops<T>::trunc(a);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto fract(T a)
+    {
+        return vector_ops<T>::fract(a);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto mod(T a, T b)
+    {
+        return vector_ops<T>::mod(a, b);
+    }
+
+    // ------------------------------------------------------------------
+    // vector functions
+    // ------------------------------------------------------------------
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
+    static inline auto dot(const T& a, const T& b)
+    {
+        typename T::ScalarType temp(0);
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp += a[i] * b[i];
+        }
+        return temp;
+    }
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
+    static inline auto square(const T& a)
+    {
+        return dot(a, a);
+    }
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
+    static inline auto length(const T& a)
+    {
+        return std::sqrt(square(a));
+    }
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
+    static inline auto distance(const T& a, const T& b)
+    {
+        return length(a - b);
+    }
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
+    static inline auto normalize(const T& a)
+    {
+        using ScalarType = typename T::ScalarType;
+        return a * (ScalarType(1.0) / length(a));
+    }
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize == 2 || T::VectorSize == 3)
+    static inline auto project(const T& v, const T& normal)
+    {
+        return v - normal * (dot(v, normal) / dot(normal, normal));
+    }
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize == 2 || T::VectorSize == 3)
+    static inline auto reflect(const T& v, const T& normal)
+    {
+        using ScalarType = typename T::ScalarType;
+        return v - normal * (ScalarType(2.0) * dot(v, normal));
+    }
+
+    template <typename T, typename S>
+        requires is_vector<T> && (T::VectorSize == 2 || T::VectorSize == 3) &&
+                 is_scalar<S>
+    static inline auto refract(const T& v, const T& normal, S factor)
+    {
+        using ScalarType = typename T::ScalarType;
+        ScalarType f = ScalarType(factor);
+        ScalarType vdotn = dot(v, normal);
+        ScalarType p = ScalarType(1.0) - f * f * (ScalarType(1.0) - vdotn * vdotn);
+        if (p < 0)
+        {
+            return T(ScalarType(0.0));
+        }
+        return v * f - normal * (std::sqrt(p) + f * vdotn);
+    }
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize == 3)
+    static inline auto cross(const T& a, const T& b)
+    {
+        using ScalarType = typename T::ScalarType;
+        ScalarType x = a.y * b.z - a.z * b.y;
+        ScalarType y = a.z * b.x - a.x * b.z;
+        ScalarType z = a.x * b.y - a.y * b.x;
+        return T(x, y, z);
+    }
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize == 2)
+    static inline auto hmin(const T& a)
+    {
+        auto s = std::min(a.x, a.y);
+        return T(s);
+    }
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize == 2)
+    static inline auto hmax(const T& a)
+    {
+        auto s = std::max(a.x, a.y);
+        return T(s);
+    }
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize == 3)
+    static inline auto hmin(const T& a)
+    {
+        auto s = std::ranges::min({a.x, a.y, a.z});
+        return T(s);
+    }
+
+    template <typename T>
+        requires is_vector<T> && (T::VectorSize == 3)
+    static inline auto hmax(const T& a)
+    {
+        auto s = std::ranges::max({a.x, a.y, a.z});
+        return T(s);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto sin(const T& a)
+    {
+        T temp;
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp[i] = sin(a[i]);
+        }
+        return temp;
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto cos(const T& a)
+    {
+        T temp;
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp[i] = cos(a[i]);
+        }
+        return temp;
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto tan(const T& a)
+    {
+        T temp;
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp[i] = tan(a[i]);
+        }
+        return temp;
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto asin(const T& a)
+    {
+        T temp;
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp[i] = asin(a[i]);
+        }
+        return temp;
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto acos(const T& a)
+    {
+        T temp;
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp[i] = acos(a[i]);
+        }
+        return temp;
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto atan(const T& a)
+    {
+        T temp;
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp[i] = atan(a[i]);
+        }
+        return temp;
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto exp(const T& a)
+    {
+        T temp;
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp[i] = exp(a[i]);
+        }
+        return temp;
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto log(const T& a)
+    {
+        T temp;
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp[i] = log(a[i]);
+        }
+        return temp;
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto exp2(const T& a)
+    {
+        T temp;
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp[i] = exp2(a[i]);
+        }
+        return temp;
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto log2(const T& a)
+    {
+        T temp;
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp[i] = log2(a[i]);
+        }
+        return temp;
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto pow(const T& a, const T& b)
+    {
+        T temp;
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp[i] = pow(a[i], b[i]);
+        }
+        return temp;
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto atan2(const T& a, const T& b)
+    {
+        T temp;
+        for (int i = 0; i < T::VectorSize; ++i)
+        {
+            temp[i] = atan2(a[i], b[i]);
+        }
+        return temp;
+    }
+
+    // ------------------------------------------------------------------
+    // simd vector functions
+    // ------------------------------------------------------------------
+
+    template <typename T>
+        requires is_simd_vector<T>
+    static inline auto unpacklo(T a, T b) -> T
+    {
+        return simd::unpacklo(a, b);
+    }
+
+    template <typename T>
+        requires is_simd_vector<T>
+    static inline auto unpackhi(T a, T b) -> T
+    {
+        return simd::unpackhi(a, b);
+    }
+
+    // ------------------------------------------------------------------
+    // simd integer functions
+    // ------------------------------------------------------------------
+
+    template <typename T>
+    concept SaturatingIntegerVector = is_simd_vector<T> &&
+        std::is_integral_v<typename T::scalar> &&
+        (sizeof(typename T::scalar) == 1 ||
+         sizeof(typename T::scalar) == 2 ||
+         sizeof(typename T::scalar) == 4);
+
+    template <typename T>
+        requires SaturatingIntegerVector<T>
+    static inline auto adds(T a, T b) -> T
+    {
+        return simd::adds(a, b);
+    }
+
+    template <typename T>
+        requires SaturatingIntegerVector<T>
+    static inline auto subs(T a, T b) -> T
+    {
+        return simd::subs(a, b);
+    }
+
+    // ------------------------------------------------------------------
+    // masked simd functions
+    // ------------------------------------------------------------------
+
+    template <typename T, typename M>
+        requires is_simd_vector<T> && simd::is_mask<M>
+    static inline auto add(T a, T b, M mask) -> T
+    {
+        return simd::add(a, b, mask);
+    }
+
+    template <typename T, typename M>
+        requires is_simd_vector<T> && simd::is_mask<M>
+    static inline auto add(T a, T b, M mask, T value) -> T
+    {
+        return simd::add(a, b, mask, value);
+    }
+
+    template <typename T, typename M>
+        requires is_simd_vector<T> && simd::is_mask<M>
+    static inline auto sub(T a, T b, M mask) -> T
+    {
+        return simd::sub(a, b, mask);
+    }
+
+    template <typename T, typename M>
+        requires is_simd_vector<T> && simd::is_mask<M>
+    static inline auto sub(T a, T b, M mask, T value) -> T
+    {
+        return simd::sub(a, b, mask, value);
+    }
+
+    template <typename T, typename M>
+        requires is_simd_vector<T> && simd::is_mask<M>
+    static inline auto min(T a, T b, M mask) -> T
+    {
+        return simd::min(a, b, mask);
+    }
+
+    template <typename T, typename M>
+        requires is_simd_vector<T> && simd::is_mask<M>
+    static inline auto min(T a, T b, M mask, T value) -> T
+    {
+        return simd::min(a, b, mask, value);
+    }
+
+    template <typename T, typename M>
+        requires is_simd_vector<T> && simd::is_mask<M>
+    static inline auto max(T a, T b, M mask) -> T
+    {
+        return simd::max(a, b, mask);
+    }
+
+    template <typename T, typename M>
+        requires is_simd_vector<T> && simd::is_mask<M>
+    static inline auto max(T a, T b, M mask, T value) -> T
+    {
+        return simd::max(a, b, mask, value);
+    }
+
+    template <typename T, typename M>
+        requires is_simd_vector<T> && IsFloatVector<T> && simd::is_mask<M>
+    static inline auto mul(T a, T b, M mask) -> T
+    {
+        return simd::mul(a, b, mask);
+    }
+
+    template <typename T, typename M>
+        requires is_simd_vector<T> && IsFloatVector<T> && simd::is_mask<M>
+    static inline auto mul(T a, T b, M mask, T value) -> T
+    {
+        return simd::mul(a, b, mask, value);
+    }
+
+    template <typename T, typename M>
+        requires is_simd_vector<T> && IsFloatVector<T> && simd::is_mask<M>
+    static inline auto div(T a, T b, M mask) -> T
+    {
+        return simd::div(a, b, mask);
+    }
+
+    template <typename T, typename M>
+        requires is_simd_vector<T> && IsFloatVector<T> && simd::is_mask<M>
+    static inline auto div(T a, T b, M mask, T value) -> T
+    {
+        return simd::div(a, b, mask, value);
+    }
+
+    // ------------------------------------------------------------------
+    // bitwise operators
+    // ------------------------------------------------------------------
+
+    template <typename T>
+        requires is_vector<T>
+    static inline auto operator ~ (T a)
+    {
+        return T(simd::bitwise_not(a));
+    }
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator & (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return T(simd::bitwise_and(T(a), T(b)));
+    }
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator | (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return T(simd::bitwise_or(T(a), T(b)));
+    }
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator ^ (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return T(simd::bitwise_xor(T(a), T(b)));
+    }
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto nand(A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return T(simd::bitwise_nand(T(a), T(b)));
+    }
+
+    // ------------------------------------------------------------------
+    // compare operators
+    // ------------------------------------------------------------------
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator > (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return simd::compare_gt(T(a), T(b));
+    }
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator >= (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return simd::compare_ge(T(a), T(b));
+    }
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator < (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return simd::compare_lt(T(a), T(b));
+    }
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator <= (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return simd::compare_le(T(a), T(b));
+    }
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator == (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return simd::compare_eq(T(a), T(b));
+    }
+
+    template <typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto operator != (A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return simd::compare_neq(T(a), T(b));
+    }
+
+    template <typename M, typename A, typename B>
+        requires has_vector<A, B>
+    static inline auto select(M mask, A a, B b)
+    {
+        using T = first_vector_t<A, B>;
+        return T(simd::select(mask, T(a), T(b)));
+    }
+
+    // ------------------------------------------------------------------
+    // macros
+    // ------------------------------------------------------------------
+
+    // Hide the worst hacks here in the end. We desperately want to use
+    // API that allows to the "constant integer" parameter to be passed as-if
+    // the shift was a normal function. CLANG implementation for example does not
+    // accept anything else so we do this immoral macro sleight-of-hand to get
+    // what we want. The count still has to be a compile-time constant, of course.
+
+    #define slli(Value, Count) decltype(Value)(simd::slli<Count>(Value))
+    #define srli(Value, Count) decltype(Value)(simd::srli<Count>(Value))
+    #define srai(Value, Count) decltype(Value)(simd::srai<Count>(Value))
 
 } // namespace mango::math

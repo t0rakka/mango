@@ -1,11 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/math/vector.hpp>
-#include <mango/math/vector_simd.hpp>
 #include <mango/math/vector_float64x2.hpp>
 
 namespace mango::math
@@ -118,21 +117,6 @@ namespace mango::math
     };
 
     // ------------------------------------------------------------------
-    // operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_FLOAT_OPERATORS(double, 8, f64x8);
-
-    // ------------------------------------------------------------------
-    // functions
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_FLOAT_FUNCTIONS(double, 8, f64x8, mask64x8);
-
-    MATH_SIMD_BITWISE_FUNCTIONS(double, 8);
-    MATH_SIMD_COMPARE_FUNCTIONS(double, 8, mask64x8);
-
-    // ------------------------------------------------------------------
     // trigonometric functions
     // ------------------------------------------------------------------
 
@@ -143,14 +127,5 @@ namespace mango::math
     Vector<double, 8> acos(Vector<double, 8> a);
     Vector<double, 8> atan(Vector<double, 8> a);
     Vector<double, 8> atan2(Vector<double, 8> a, Vector<double, 8> b);
-
-    /* These are handled by vector template:
-
-    Vector<double, 8> exp(Vector<double, 8> a);
-    Vector<double, 8> exp2(Vector<double, 8> a);
-    Vector<double, 8> log(Vector<double, 8> a);
-    Vector<double, 8> log2(Vector<double, 8> a);
-    Vector<double, 8> pow(Vector<double, 8> a, Vector<double, 8> b);
-    */
 
 } // namespace mango::math

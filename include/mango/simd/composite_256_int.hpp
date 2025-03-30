@@ -1143,31 +1143,31 @@ namespace mango::simd
     // mask8x32
     // -----------------------------------------------------------------
 
-    static inline mask8x32 operator & (mask8x32 a, mask8x32 b)
+    static inline mask8x32 mask_and(mask8x32 a, mask8x32 b)
     {
-        auto lo = a.data[0] & b.data[0];
-        auto hi = a.data[1] & b.data[1];
+        auto lo = mask_and(a.data[0], b.data[0]);
+        auto hi = mask_and(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask8x32 operator | (mask8x32 a, mask8x32 b)
+    static inline mask8x32 mask_or(mask8x32 a, mask8x32 b)
     {
-        auto lo = a.data[0] | b.data[0];
-        auto hi = a.data[1] | b.data[1];
+        auto lo = mask_or(a.data[0], b.data[0]);
+        auto hi = mask_or(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask8x32 operator ^ (mask8x32 a, mask8x32 b)
+    static inline mask8x32 mask_xor(mask8x32 a, mask8x32 b)
     {
-        auto lo = a.data[0] ^ b.data[0];
-        auto hi = a.data[1] ^ b.data[1];
+        auto lo = mask_xor(a.data[0], b.data[0]);
+        auto hi = mask_xor(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask8x32 operator ! (mask8x32 a)
+    static inline mask8x32 mask_not(mask8x32 a)
     {
-        auto lo = !a.data[0];
-        auto hi = !a.data[1];
+        auto lo = mask_not(a.data[0]);
+        auto hi = mask_not(a.data[1]);
         return { lo, hi };
     }
 
@@ -1196,31 +1196,31 @@ namespace mango::simd
     // mask16x16
     // -----------------------------------------------------------------
 
-    static inline mask16x16 operator & (mask16x16 a, mask16x16 b)
+    static inline mask16x16 mask_and(mask16x16 a, mask16x16 b)
     {
-        auto lo = a.data[0] & b.data[0];
-        auto hi = a.data[1] & b.data[1];
+        auto lo = mask_and(a.data[0], b.data[0]);
+        auto hi = mask_and(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask16x16 operator | (mask16x16 a, mask16x16 b)
+    static inline mask16x16 mask_or(mask16x16 a, mask16x16 b)
     {
-        auto lo = a.data[0] | b.data[0];
-        auto hi = a.data[1] | b.data[1];
+        auto lo = mask_or(a.data[0], b.data[0]);
+        auto hi = mask_or(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask16x16 operator ^ (mask16x16 a, mask16x16 b)
+    static inline mask16x16 mask_xor(mask16x16 a, mask16x16 b)
     {
-        auto lo = a.data[0] ^ b.data[0];
-        auto hi = a.data[1] ^ b.data[1];
+        auto lo = mask_xor(a.data[0], b.data[0]);
+        auto hi = mask_xor(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask16x16 operator ! (mask16x16 a)
+    static inline mask16x16 mask_not(mask16x16 a)
     {
-        auto lo = !a.data[0];
-        auto hi = !a.data[1];
+        auto lo = mask_not(a.data[0]);
+        auto hi = mask_not(a.data[1]);
         return { lo, hi };
     }
 
@@ -1249,31 +1249,31 @@ namespace mango::simd
     // mask32x8
     // -----------------------------------------------------------------
 
-    static inline mask32x8 operator & (mask32x8 a, mask32x8 b)
+    static inline mask32x8 mask_and(mask32x8 a, mask32x8 b)
     {
-        auto lo = a.data[0] & b.data[0];
-        auto hi = a.data[1] & b.data[1];
+        auto lo = mask_and(a.data[0], b.data[0]);
+        auto hi = mask_and(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask32x8 operator | (mask32x8 a, mask32x8 b)
+    static inline mask32x8 mask_or(mask32x8 a, mask32x8 b)
     {
-        auto lo = a.data[0] | b.data[0];
-        auto hi = a.data[1] | b.data[1];
+        auto lo = mask_or(a.data[0], b.data[0]);
+        auto hi = mask_or(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask32x8 operator ^ (mask32x8 a, mask32x8 b)
+    static inline mask32x8 mask_xor(mask32x8 a, mask32x8 b)
     {
-        auto lo = a.data[0] ^ b.data[0];
-        auto hi = a.data[1] ^ b.data[1];
+        auto lo = mask_xor(a.data[0], b.data[0]);
+        auto hi = mask_xor(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask32x8 operator ! (mask32x8 a)
+    static inline mask32x8 mask_not(mask32x8 a)
     {
-        auto lo = !a.data[0];
-        auto hi = !a.data[1];
+        auto lo = mask_not(a.data[0]);
+        auto hi = mask_not(a.data[1]);
         return { lo, hi };
     }
 
@@ -1302,31 +1302,31 @@ namespace mango::simd
     // mask64x4
     // -----------------------------------------------------------------
 
-    static inline mask64x4 operator & (mask64x4 a, mask64x4 b)
+    static inline mask64x4 mask_and(mask64x4 a, mask64x4 b)
     {
-        auto lo = a.data[0] & b.data[0];
-        auto hi = a.data[1] & b.data[1];
+        auto lo = mask_and(a.data[0], b.data[0]);
+        auto hi = mask_and(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask64x4 operator | (mask64x4 a, mask64x4 b)
+    static inline mask64x4 mask_or(mask64x4 a, mask64x4 b)
     {
-        auto lo = a.data[0] | b.data[0];
-        auto hi = a.data[1] | b.data[1];
+        auto lo = mask_or(a.data[0], b.data[0]);
+        auto hi = mask_or(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask64x4 operator ^ (mask64x4 a, mask64x4 b)
+    static inline mask64x4 mask_xor(mask64x4 a, mask64x4 b)
     {
-        auto lo = a.data[0] ^ b.data[0];
-        auto hi = a.data[1] ^ b.data[1];
+        auto lo = mask_xor(a.data[0], b.data[0]);
+        auto hi = mask_xor(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask64x4 operator ! (mask64x4 a)
+    static inline mask64x4 mask_not(mask64x4 a)
     {
-        auto lo = !a.data[0];
-        auto hi = !a.data[1];
+        auto lo = mask_not(a.data[0]);
+        auto hi = mask_not(a.data[1]);
         return { lo, hi };
     }
 
