@@ -244,7 +244,7 @@ namespace mango
             bool is_sRGB = getAttrib(selected, GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT);
             bool is_float = getAttrib(selected, GLX_RENDER_TYPE) & GLX_RGBA_FLOAT_BIT_ARB;
 
-            printLine(Print::Info, "GLX FBConfig: [{} {} {} {}] D:{} S:{} sRGB:{} Float:{}",
+            printLine(Print::Info, "GLX FBConfig: [{} {} {} {}] D:{} S:{} sRGB:{} Float:{} [XLIB]",
                 getAttrib(selected, GLX_RED_SIZE),
                 getAttrib(selected, GLX_GREEN_SIZE),
                 getAttrib(selected, GLX_BLUE_SIZE),
