@@ -10,6 +10,7 @@
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
 #include "../../window/xlib/xlib_window.hpp"
+#include "glx_context.hpp"
 
 #ifndef GLX_CONTEXT_SHARE_CONTEXT_ARB
 #define GLX_CONTEXT_SHARE_CONTEXT_ARB        0x2090
@@ -41,205 +42,22 @@ namespace mango
         OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* shared)
             : window(*theContext)
         {
-            // resolve configuration
-            OpenGLContext::Config config;
-            if (pConfig)
-            {
-                // override defaults
-                config = *pConfig;
-            }
-
             Display* display = window->native.display;
             int screen = DefaultScreen(display);
 
-            // Create GLX extension set
-            std::set<std::string_view> glxExtensions;
+            GLXConfiguration glxConfiguration(display, screen, pConfig);
 
-            // Get GLX extensions
-            const char* extensions = glXQueryExtensionsString(display, screen);
-            if (extensions)
-            {
-                // parse extensions
-                for (const char* s = extensions; *s; ++s)
-                {
-                    if (*s == ' ')
-                    {
-                        const std::ptrdiff_t length = s - extensions;
-                        if (length > 0)
-                        {
-                            glxExtensions.emplace(extensions, length);
-                        }
+            // print selected fbconfig
 
-                        extensions = s + 1;
-                    }
-                }
-            }
+            auto selected = glxConfiguration.selected;
+            const auto& glxExtensions = glxConfiguration.extensions;
 
-            // Get GLX version
-            int version_major;
-            int version_minor;
-            if (!glXQueryVersion(display, &version_major, &version_minor))
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] glXQueryVersion() failed.");
-            }
-
-            printLine(Print::Info, "GLX version: {}.{}", version_major, version_minor);
-
-            if (version_major * 10 + version_minor < 13)
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] Invalid GLX version).");
-            }
-
-            // Configure attributes
-            std::vector<int> visualAttribs;
-
-            visualAttribs.push_back(GLX_X_RENDERABLE);
-            visualAttribs.push_back(True);
-
-            visualAttribs.push_back(GLX_DRAWABLE_TYPE);
-            visualAttribs.push_back(GLX_WINDOW_BIT);
-
-            visualAttribs.push_back(GLX_X_VISUAL_TYPE);
-            visualAttribs.push_back(GLX_TRUE_COLOR);
-
-            visualAttribs.push_back(GLX_DOUBLEBUFFER);
-            visualAttribs.push_back(True);
-
-            visualAttribs.push_back(GLX_DEPTH_SIZE);
-            visualAttribs.push_back(config.depth);
-
-            visualAttribs.push_back(GLX_STENCIL_SIZE);
-            visualAttribs.push_back(config.stencil);
-
-            // helper lambdas
-
-            auto chooseConfig = [=] (std::vector<int> attribs) -> std::vector<GLXFBConfig>
-            {
-                attribs.push_back(None);
-
-                int numFBConfigs = 0;
-                GLXFBConfig* fbconfigs = glXChooseFBConfig(display, screen, attribs.data(), &numFBConfigs);
-                std::vector<GLXFBConfig> configs(fbconfigs + 0, fbconfigs + numFBConfigs);
-                XFree(fbconfigs);
-
-                return configs;
-            };
-
-            auto getAttrib = [=] (auto fbconfig, int attribute) -> int
+            auto getAttrib = [=, this] (auto fbconfig, int attribute) -> int
             {
                 int value;
                 glXGetFBConfigAttrib(display, fbconfig, attribute, &value);
                 return value;
             };
-
-            // select first config that satisfies the basic requirements
-
-            auto fbconfigs = chooseConfig(visualAttribs);
-            if (fbconfigs.empty())
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] glXChooseFBConfig() failed.");
-            }
-
-            auto selected = fbconfigs[0];
-
-            // try config with float capabilities
-
-            bool float_buffer_selected = false;
-
-            if (config.red > 8 || config.green > 8 || config.blue > 8)
-            {
-                auto tempAttribs = visualAttribs;
-
-                tempAttribs.push_back(GLX_RED_SIZE);
-                tempAttribs.push_back(config.red);
-
-                tempAttribs.push_back(GLX_GREEN_SIZE);
-                tempAttribs.push_back(config.green);
-
-                tempAttribs.push_back(GLX_BLUE_SIZE);
-                tempAttribs.push_back(config.blue);
-
-                tempAttribs.push_back(GLX_ALPHA_SIZE);
-                tempAttribs.push_back(config.alpha);
-
-                tempAttribs.push_back(GLX_RENDER_TYPE);
-                tempAttribs.push_back(GLX_RGBA_FLOAT_TYPE_ARB);
-
-                auto temp = chooseConfig(tempAttribs);
-                if (!temp.empty())
-                {
-                    fbconfigs = temp;
-                    selected = fbconfigs[0];
-                    float_buffer_selected = true;
-                }
-                else
-                {
-                    // float config not found; use default values
-                    config.red = 8;
-                    config.green = 8;
-                    config.blue = 8;
-                    config.alpha = 8;
-                }
-            }
-
-            if (!float_buffer_selected)
-            {
-                visualAttribs.push_back(GLX_RED_SIZE);
-                visualAttribs.push_back(config.red);
-
-                visualAttribs.push_back(GLX_GREEN_SIZE);
-                visualAttribs.push_back(config.green);
-
-                visualAttribs.push_back(GLX_BLUE_SIZE);
-                visualAttribs.push_back(config.blue);
-
-                visualAttribs.push_back(GLX_ALPHA_SIZE);
-                visualAttribs.push_back(config.alpha);
-
-                auto temp = chooseConfig(visualAttribs);
-                if (!temp.empty())
-                {
-                    fbconfigs = temp;
-                    selected = fbconfigs[0];
-                }
-            }
-
-            if (glxExtensions.find("GLX_ARB_fbconfig_float") != glxExtensions.end())
-            {
-                //printLine(Print::Info, "GLX_ARB_fbconfig_float : ENABLE");
-            }
-
-            if (glxExtensions.find("GLX_ARB_framebuffer_sRGB") != glxExtensions.end())
-            {
-                //printLine(Print::Info, "GLX_ARB_framebuffer_sRGB : ENABLE");
-            }
-
-            if (glxExtensions.find("GLX_ARB_multisample") != glxExtensions.end())
-            {
-                if (config.samples > 1)
-                {
-                    auto tempAttribs = visualAttribs;
-
-                    tempAttribs.push_back(GLX_SAMPLE_BUFFERS_ARB);
-                    tempAttribs.push_back(1);
-
-                    tempAttribs.push_back(GLX_SAMPLES_ARB);
-                    tempAttribs.push_back(config.samples);
-
-                    auto temp = chooseConfig(tempAttribs);
-                    if (!temp.empty())
-                    {
-                        printLine(Print::Info, "GLX_ARB_multisample : ENABLE");
-                        fbconfigs = temp;
-                        selected = fbconfigs[0];
-                    }
-                }
-            }
-
-            // print selected fbconfig
 
             bool is_sRGB = getAttrib(selected, GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT);
             bool is_float = getAttrib(selected, GLX_RENDER_TYPE) & GLX_RGBA_FLOAT_BIT_ARB;
