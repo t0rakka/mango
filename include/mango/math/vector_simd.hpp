@@ -721,22 +721,6 @@ namespace mango::math
     template <typename VectorType, typename StorageType, int... Indices>
     struct is_shuffle_accessor<ShuffleAccessor<VectorType, StorageType, Indices...>> : std::true_type {};
 
-    /*
-    template <typename T>
-    struct shuffle_traits
-    {
-        static constexpr bool is_shuffle = false;
-        using vector_type = T;
-    };
-
-    template <typename VectorType, typename StorageType, int... Indices>
-    struct shuffle_traits<ShuffleAccessor<VectorType, StorageType, Indices...>>
-    {
-        static constexpr bool is_shuffle = true;
-        using vector_type = VectorType;
-    };
-    */
-
     template <typename T>
     concept is_vector = requires(T v)
     {
@@ -1107,132 +1091,132 @@ namespace mango::math
     {
         using ScalarType = typename T::ScalarType;
 
-        static T abs(T a)
+        static T abs(const T& a)
         {
             return simd::abs(a);
         }
 
-        static T neg(T a)
+        static T neg(const T& a)
         {
             return simd::neg(a);
         }
 
-        static T sub(T a, T b)
+        static T sub(const T& a, const T& b)
         {
             return simd::sub(a, b);
         }
 
-        static T add(T a, T b)
+        static T add(const T& a, const T& b)
         {
             return simd::add(a, b);
         }
 
-        static T mul(T a, T b)
+        static T mul(const T& a, const T& b)
         {
             return simd::mul(a, b);
         }
 
-        static T div(T a, T b)
+        static T div(const T& a, const T& b)
         {
             return simd::div(a, b);
         }
 
-        static T madd(T a, T b, T c)
+        static T madd(const T& a, const T& b, const T& c)
         {
             return simd::madd(a, b, c);
         }
 
-        static T msub(T a, T b, T c)
+        static T msub(const T& a, const T& b, const T& c)
         {
             return simd::msub(a, b, c);
         }
 
-        static T nmadd(T a, T b, T c)
+        static T nmadd(const T& a, const T& b, const T& c)
         {
             return simd::nmadd(a, b, c);
         }
 
-        static T nmsub(T a, T b, T c)
+        static T nmsub(const T& a, const T& b, const T& c)
         {
             return simd::nmsub(a, b, c);
         }
 
-        static T min(T a, T b)
+        static T min(const T& a, const T& b)
         {
             return simd::min(a, b);
         }
 
-        static T max(T a, T b)
+        static T max(const T& a, const T& b)
         {
             return simd::max(a, b);
         }
 
-        static T sign(T a)
+        static T sign(const T& a)
         {
             return simd::sign(a);
         }
 
-        static T clamp(T a, T low,T high)
+        static T clamp(const T& a, const T& low, const T& high)
         {
             return simd::max(low, simd::min(high, a));
         }
 
-        static T lerp(T a, T b, ScalarType factor)
+        static T lerp(const T& a, const T& b, ScalarType factor)
         {
             return simd::lerp(a, b, T(factor));
         }
 
-        static T radians(T a)
+        static T radians(const T& a)
         {
             return simd::mul(a, T(0.01745329251));
         }
 
-        static T degrees(T a)
+        static T degrees(const T& a)
         {
             return simd::mul(a, T(57.2957795131));
         }
 
-        static T rcp(T a)
+        static T rcp(const T& a)
         {
             return simd::rcp(a);
         }
 
-        static T sqrt(T a)
+        static T sqrt(const T& a)
         {
             return simd::sqrt(a);
         }
 
-        static T rsqrt(T a)
+        static T rsqrt(const T& a)
         {
             return simd::rsqrt(a);
         }
 
-        static T round(T a)
+        static T round(const T& a)
         {
             return simd::round(a);
         }
 
-        static T floor(T a)
+        static T floor(const T& a)
         {
             return simd::floor(a);
         }
 
-        static T ceil(T a)
+        static T ceil(const T& a)
         {
             return simd::ceil(a);
         }
 
-        static T trunc(T a)
+        static T trunc(const T& a)
         {
             return simd::trunc(a);
         }
 
-        static T fract(T a)
+        static T fract(const T& a)
         {
             return simd::fract(a);
         }
 
-        static T mod(T a, T b)
+        static T mod(const T& a, const T& b)
         {
             return simd::sub(a, simd::mul(b, simd::floor(simd::div(a, b))));
         }
@@ -1242,14 +1226,14 @@ namespace mango::math
 
     template <typename T>
         requires IsSignedVector<T>
-    static inline T operator - (T a)
+    static inline T operator - (const T& a)
     {
         return vector_ops<T>::neg(a);
     }
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto operator - (A a, B b)
+    static inline auto operator - (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return vector_ops<T>::sub(T(a), T(b));
@@ -1257,7 +1241,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires is_vector<A> && is_vector_or_scalar<B>
-    static inline A& operator -= (A& a, B b)
+    static inline A& operator -= (A& a, const B& b)
     {
         a = vector_ops<A>::sub(a, A(b));
         return a;
@@ -1267,14 +1251,14 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline T operator + (T a)
+    static inline T operator + (const T& a)
     {
         return a;
     }
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto operator + (A a, B b)
+    static inline auto operator + (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return vector_ops<T>::add(T(a), T(b));
@@ -1282,7 +1266,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires is_vector<A> && is_vector_or_scalar<B>
-    static inline A& operator += (A& a, B b)
+    static inline A& operator += (A& a, const B& b)
     {
         a = vector_ops<A>::add(a, A(b));
         return a;
@@ -1292,7 +1276,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B> && IsFloatVector<first_vector_t<A, B>>
-    static inline auto operator * (A a, B b)
+    static inline auto operator * (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return vector_ops<T>::mul(T(a), T(b));
@@ -1300,7 +1284,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires is_vector<A> && IsFloatVector<A> && is_vector_or_scalar<B>
-    static inline A& operator *= (A& a, B b)
+    static inline A& operator *= (A& a, const B& b)
     {
         a = vector_ops<A>::mul(a, A(b));
         return a;
@@ -1310,7 +1294,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B> && IsFloatVector<first_vector_t<A, B>>
-    static inline auto operator / (A a, B b)
+    static inline auto operator / (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return vector_ops<T>::div(T(a), T(b));
@@ -1318,7 +1302,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires is_vector<A> && IsFloatVector<A> && is_vector_or_scalar<B>
-    static inline A& operator /= (A& a, B b)
+    static inline A& operator /= (A& a, const B& b)
     {
         a = vector_ops<A>::div(a, A(b));
         return a;
@@ -1328,14 +1312,14 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline T abs(T a)
+    static inline T abs(const T& a)
     {
         return vector_ops<T>::abs(a);
     }
 
     template <typename A, typename B, typename C>
         requires has_vector<A, B, C>
-    static inline auto madd(A a, B b, C c)
+    static inline auto madd(const A& a, const B& b, const C& c)
     {
         using T = first_vector_t<A, B, C>;
         return vector_ops<T>::madd(T(a), T(b), T(c));
@@ -1343,7 +1327,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires has_vector<A, B, C>
-    static inline auto msub(A a, B b, C c)
+    static inline auto msub(const A& a, const B& b, const C& c)
     {
         using T = first_vector_t<A, B, C>;
         return vector_ops<T>::msub(T(a), T(b), T(c));
@@ -1351,7 +1335,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires has_vector<A, B, C>
-    static inline auto nmadd(A a, B b, C c)
+    static inline auto nmadd(const A& a, const B& b, const C& c)
     {
         using T = first_vector_t<A, B, C>;
         return vector_ops<T>::nmadd(T(a), T(b), T(c));
@@ -1359,7 +1343,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires has_vector<A, B, C>
-    static inline auto nmsub(A a, B b, C c)
+    static inline auto nmsub(const A& a, const B& b, const C& c)
     {
         using T = first_vector_t<A, B, C>;
         return vector_ops<T>::nmsub(T(a), T(b), T(c));
@@ -1367,7 +1351,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto min(A a, B b)
+    static inline auto min(const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return vector_ops<T>::min(T(a), T(b));
@@ -1375,7 +1359,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto max(A a, B b)
+    static inline auto max(const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return vector_ops<T>::max(T(a), T(b));
@@ -1383,14 +1367,14 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T> && (T::VectorSize >= 2 || T::VectorSize <= 4)
-    static inline auto sign(T a)
+    static inline auto sign(const T& a)
     {
         return vector_ops<T>::sign(a);
     }
 
     template <typename A, typename B, typename C>
         requires has_vector<A, B, C>
-    static inline auto clamp(A a, B b, C c)
+    static inline auto clamp(const A& a, const B& b, const C& c)
     {
         using T = first_vector_t<A, B, C>;
         return vector_ops<T>::clamp(T(a), T(b), T(c));
@@ -1398,84 +1382,84 @@ namespace mango::math
 
     template <typename T, typename S>
         requires is_vector<T> && is_scalar<S>
-    static inline auto lerp(T a, T b, S s)
+    static inline auto lerp(const T& a, const T& b, S s)
     {
         return vector_ops<T>::lerp(a, b, typename T::ScalarType(s));
     }
 
     template <typename T>
         requires is_vector<T>
-    static inline auto radians(T a)
+    static inline auto radians(const T& a)
     {
         return vector_ops<T>::radians(a);
     }
 
     template <typename T>
         requires is_vector<T>
-    static inline auto degrees(T a)
+    static inline auto degrees(const T& a)
     {
         return vector_ops<T>::degrees(a);
     }
 
     template <typename T>
         requires is_vector<T>
-    static inline auto rcp(T a)
+    static inline auto rcp(const T& a)
     {
         return vector_ops<T>::rcp(a);
     }
 
     template <typename T>
         requires is_vector<T>
-    static inline auto sqrt(T a)
+    static inline auto sqrt(const T& a)
     {
         return vector_ops<T>::sqrt(a);
     }
 
     template <typename T>
         requires is_vector<T>
-    static inline auto rsqrt(T a)
+    static inline auto rsqrt(const T& a)
     {
         return vector_ops<T>::rsqrt(a);
     }
 
     template <typename T>
         requires is_vector<T>
-    static inline auto round(T a)
+    static inline auto round(const T& a)
     {
         return vector_ops<T>::round(a);
     }
 
     template <typename T>
         requires is_vector<T>
-    static inline auto floor(T a)
+    static inline auto floor(const T& a)
     {
         return vector_ops<T>::floor(a);
     }
 
     template <typename T>
         requires is_vector<T>
-    static inline auto ceil(T a)
+    static inline auto ceil(const T& a)
     {
         return vector_ops<T>::ceil(a);
     }
 
     template <typename T>
         requires is_vector<T>
-    static inline auto trunc(T a)
+    static inline auto trunc(const T& a)
     {
         return vector_ops<T>::trunc(a);
     }
 
     template <typename T>
         requires is_vector<T>
-    static inline auto fract(T a)
+    static inline auto fract(const T& a)
     {
         return vector_ops<T>::fract(a);
     }
 
     template <typename T>
         requires is_vector<T>
-    static inline auto mod(T a, T b)
+    static inline auto mod(const T& a, const T& b)
     {
         return vector_ops<T>::mod(a, b);
     }
@@ -1752,14 +1736,14 @@ namespace mango::math
 
     template <typename T>
         requires is_simd_vector<T>
-    static inline auto unpacklo(T a, T b) -> T
+    static inline auto unpacklo(const T& a, const T& b) -> T
     {
         return simd::unpacklo(a, b);
     }
 
     template <typename T>
         requires is_simd_vector<T>
-    static inline auto unpackhi(T a, T b) -> T
+    static inline auto unpackhi(const T& a, const T& b) -> T
     {
         return simd::unpackhi(a, b);
     }
@@ -1777,14 +1761,14 @@ namespace mango::math
 
     template <typename T>
         requires SaturatingIntegerVector<T>
-    static inline auto adds(T a, T b) -> T
+    static inline auto adds(const T& a, const T& b) -> T
     {
         return simd::adds(a, b);
     }
 
     template <typename T>
         requires SaturatingIntegerVector<T>
-    static inline auto subs(T a, T b) -> T
+    static inline auto subs(const T& a, const T& b) -> T
     {
         return simd::subs(a, b);
     }
@@ -1797,7 +1781,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires MultiplyingIntegerVector<A, B>
-    static inline auto operator * (A a, B b)
+    static inline auto operator * (const A& a, const B& b)
     {
         using T = first_simd_vector_t<A, B>;
         return T(simd::mullo(T(a), T(b)));
@@ -1809,84 +1793,84 @@ namespace mango::math
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto add(T a, T b, M mask) -> T
+    static inline auto add(const T& a, const T& b, M mask) -> T
     {
         return simd::add(a, b, mask);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto add(T a, T b, M mask, T value) -> T
+    static inline auto add(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::add(a, b, mask, value);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto sub(T a, T b, M mask) -> T
+    static inline auto sub(const T& a, const T& b, M mask) -> T
     {
         return simd::sub(a, b, mask);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto sub(T a, T b, M mask, T value) -> T
+    static inline auto sub(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::sub(a, b, mask, value);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto min(T a, T b, M mask) -> T
+    static inline auto min(const T& a, const T& b, M mask) -> T
     {
         return simd::min(a, b, mask);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto min(T a, T b, M mask, T value) -> T
+    static inline auto min(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::min(a, b, mask, value);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto max(T a, T b, M mask) -> T
+    static inline auto max(const T& a, const T& b, M mask) -> T
     {
         return simd::max(a, b, mask);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto max(T a, T b, M mask, T value) -> T
+    static inline auto max(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::max(a, b, mask, value);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && IsFloatVector<T> && simd::is_mask<M>
-    static inline auto mul(T a, T b, M mask) -> T
+    static inline auto mul(const T& a, const T& b, M mask) -> T
     {
         return simd::mul(a, b, mask);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && IsFloatVector<T> && simd::is_mask<M>
-    static inline auto mul(T a, T b, M mask, T value) -> T
+    static inline auto mul(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::mul(a, b, mask, value);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && IsFloatVector<T> && simd::is_mask<M>
-    static inline auto div(T a, T b, M mask) -> T
+    static inline auto div(const T& a, const T& b, M mask) -> T
     {
         return simd::div(a, b, mask);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && IsFloatVector<T> && simd::is_mask<M>
-    static inline auto div(T a, T b, M mask, T value) -> T
+    static inline auto div(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::div(a, b, mask, value);
     }
@@ -1897,14 +1881,14 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto operator ~ (T a)
+    static inline auto operator ~ (const T& a) -> T
     {
-        return T(simd::bitwise_not(a));
+        return simd::bitwise_not(a);
     }
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto operator & (A a, B b)
+    static inline auto operator & (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return T(simd::bitwise_and(T(a), T(b)));
@@ -1912,7 +1896,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto operator | (A a, B b)
+    static inline auto operator | (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return T(simd::bitwise_or(T(a), T(b)));
@@ -1920,7 +1904,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto operator ^ (A a, B b)
+    static inline auto operator ^ (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return T(simd::bitwise_xor(T(a), T(b)));
@@ -1928,7 +1912,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto nand(A a, B b)
+    static inline auto nand(const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return T(simd::bitwise_nand(T(a), T(b)));
@@ -1940,7 +1924,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto operator > (A a, B b)
+    static inline auto operator > (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return simd::compare_gt(T(a), T(b));
@@ -1948,7 +1932,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto operator >= (A a, B b)
+    static inline auto operator >= (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return simd::compare_ge(T(a), T(b));
@@ -1956,7 +1940,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto operator < (A a, B b)
+    static inline auto operator < (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return simd::compare_lt(T(a), T(b));
@@ -1964,7 +1948,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto operator <= (A a, B b)
+    static inline auto operator <= (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return simd::compare_le(T(a), T(b));
@@ -1972,7 +1956,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto operator == (A a, B b)
+    static inline auto operator == (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return simd::compare_eq(T(a), T(b));
@@ -1980,7 +1964,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B>
-    static inline auto operator != (A a, B b)
+    static inline auto operator != (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return simd::compare_neq(T(a), T(b));
@@ -1988,7 +1972,7 @@ namespace mango::math
 
     template <typename M, typename A, typename B>
         requires has_vector<A, B>
-    static inline auto select(M mask, A a, B b)
+    static inline auto select(M mask, const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
         return T(simd::select(mask, T(a), T(b)));

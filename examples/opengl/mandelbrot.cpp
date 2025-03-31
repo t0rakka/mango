@@ -174,7 +174,7 @@ public:
                         zr = cr + zr2 - zi2;
                         zi = ci + zrzi + zrzi;
 
-                        math::mask64x4 mask = (zr2 + zi2) < four;
+                        auto mask = (zr2 + zi2) < four;
                         count = math::select(mask, count + one, count);
 
                         if (math::none_of(mask))
