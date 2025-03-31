@@ -708,12 +708,13 @@
 #else
 
     // Not supported
+    // Microsoft C++ compiler requires "/Zc:__cplusplus" option
     #define MANGO_CPP_VERSION 0
 
 #endif
 
-#if MANGO_CPP_VERSION < 20
-    #error "MANGO requires C++20 or later; this is better than cryptic error messages."
+#if (MANGO_CPP_VERSION > 0) && (MANGO_CPP_VERSION < 20)
+    #error "MANGO requires C++20 or later."
 #endif
 
 // -----------------------------------------------------------------------
