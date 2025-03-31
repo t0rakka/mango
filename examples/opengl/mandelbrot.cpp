@@ -103,7 +103,7 @@ public:
 
         for (int y = 0; y < height; ++y)
         {
-            q.enqueue([this, &s, width, y, u0, v0, dxdu, dxdv, dydu, dydv]
+            q.enqueue([&s, width, y, u0, v0, dxdu, dxdv, dydu, dydv]
             {
                 u32* scan = s.address<u32>(0, y);
 
