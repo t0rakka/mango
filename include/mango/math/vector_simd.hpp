@@ -780,8 +780,6 @@ namespace mango::math
 
     // has_vector
 
-#if 1
-
     template <typename... Args>
     concept has_vector = (is_vector<Args> || ...) &&
         ((is_vector_or_scalar<Args> || 
@@ -798,23 +796,6 @@ namespace mango::math
             typename get_vector_type<T>::type,
             typename first_vector_type<Args...>::type>;
     };
-
-#else
-
-    template <typename... Args>
-    concept has_vector = (is_vector<Args> || ...) &&
-                         (is_vector_or_scalar<Args> && ...);
-
-    template <typename... Args>
-    struct first_vector_type;
-
-    template <typename T, typename... Args>
-    struct first_vector_type<T, Args...>
-    {
-        using type = std::conditional_t<is_vector<T>, T,
-            typename first_vector_type<Args...>::type>;
-    };
-#endif
 
     template <typename T>
     struct first_vector_type<T>
@@ -1300,7 +1281,7 @@ namespace mango::math
     // operator *
 
     template <typename A, typename B>
-        requires has_vector<A, B>
+        requires has_vector<A, B> && IsFloatVector<first_vector_t<A, B>>
     static inline auto operator * (A a, B b)
     {
         using T = first_vector_t<A, B>;
@@ -1308,7 +1289,7 @@ namespace mango::math
     }
 
     template <typename A, typename B>
-        requires is_vector<A> && is_vector_or_scalar<B>
+        requires is_vector<A> && IsFloatVector<A> && is_vector_or_scalar<B>
     static inline A& operator *= (A& a, B b)
     {
         a = vector_ops<A>::mul(a, A(b));
@@ -1318,7 +1299,7 @@ namespace mango::math
     // operator /
 
     template <typename A, typename B>
-        requires has_vector<A, B>
+        requires has_vector<A, B> && IsFloatVector<first_vector_t<A, B>>
     static inline auto operator / (A a, B b)
     {
         using T = first_vector_t<A, B>;
@@ -1326,7 +1307,7 @@ namespace mango::math
     }
 
     template <typename A, typename B>
-        requires is_vector<A> && is_vector_or_scalar<B>
+        requires is_vector<A> && IsFloatVector<A> && is_vector_or_scalar<B>
     static inline A& operator /= (A& a, B b)
     {
         a = vector_ops<A>::div(a, A(b));
@@ -1777,9 +1758,9 @@ namespace mango::math
     template <typename T>
     concept SaturatingIntegerVector = is_simd_vector<T> &&
         std::is_integral_v<typename T::scalar> &&
-        (sizeof(typename T::scalar) == 1 ||
-         sizeof(typename T::scalar) == 2 ||
-         sizeof(typename T::scalar) == 4);
+        (sizeof(typename T::ScalarType) == 1 ||
+         sizeof(typename T::ScalarType) == 2 ||
+         sizeof(typename T::ScalarType) == 4);
 
     template <typename T>
         requires SaturatingIntegerVector<T>
@@ -1793,6 +1774,20 @@ namespace mango::math
     static inline auto subs(T a, T b) -> T
     {
         return simd::subs(a, b);
+    }
+
+    template <typename A, typename B>
+    concept MultiplyingIntegerVector = has_simd_vector<A, B> &&
+        std::is_integral_v<typename first_simd_vector_t<A, B>::ScalarType> &&
+        (sizeof(typename first_simd_vector_t<A, B>::ScalarType) == 2 ||
+         sizeof(typename first_simd_vector_t<A, B>::ScalarType) == 4);
+
+    template <typename A, typename B>
+        requires MultiplyingIntegerVector<A, B>
+    static inline auto operator * (A a, B b)
+    {
+        using T = first_simd_vector_t<A, B>;
+        return T(simd::mullo(T(a), T(b)));
     }
 
     // ------------------------------------------------------------------
