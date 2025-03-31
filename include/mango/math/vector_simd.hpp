@@ -831,6 +831,35 @@ namespace mango::math
     template <typename... Args>
     using first_simd_vector_t = typename first_simd_vector_type<Args...>::type;
 
+    namespace detail
+    {
+
+        template <typename T, typename F>
+            requires is_vector<T>
+        static inline auto unroll(F func, const T& a)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = func(a[i]);
+            }
+            return temp;
+        }
+
+        template <typename T, typename F>
+            requires is_vector<T>
+        static inline auto unroll(F func, const T& a, const T& b)
+        {
+            T temp;
+            for (int i = 0; i < T::VectorSize; ++i)
+            {
+                temp[i] = func(a[i], b[i]);
+            }
+            return temp;
+        }
+
+    } // namespace detail
+
     // vector_ops
 
     template <typename T>
@@ -840,132 +869,67 @@ namespace mango::math
 
         static T abs(const T& a)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = abs(a[i]);
-            }
-            return temp;
+            return detail::unroll(std::abs, a);
         }
 
         static T neg(const T& a)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = -a[i];
-            }
-            return temp;
+            return detail::unroll([](auto a) { return -a; }, a);
         }
 
         static T sub(const T& a, const T& b)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = a[i] - b[i];
-            }
-            return temp;
+            return detail::unroll([](auto a, auto b) { return a - b; }, a, b);
         }
 
         static T add(const T& a, const T& b)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = a[i] + b[i];
-            }
-            return temp;
+            return detail::unroll([](auto a, auto b) { return a + b; }, a, b);
         }
 
         static T mul(const T& a, const T& b)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = a[i] * b[i];
-            }
-            return temp;
+            return detail::unroll([](auto a, auto b) { return a * b; }, a, b);
         }
 
         static T div(const T& a, const T& b)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = a[i] / b[i];
-            }
-            return temp;
+            return detail::unroll([](auto a, auto b) { return a / b; }, a, b);
         }
 
         static T madd(const T& a, const T& b, const T& c)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] =  a[i] + b[i] * c[i];
-            }
-            return temp;
+            return detail::unroll([](auto a, auto b, auto c) { return a + b * c; }, a, b, c);
         }
 
         static T msub(const T& a, const T& b, const T& c)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = b[i] * c[i] - a[i];
-            }
-            return temp;
+            return detail::unroll([](auto a, auto b, auto c) { return b * c - a; }, a, b, c);
         }
 
         static T nmadd(const T& a, const T& b, const T& c)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = a[i] - b[i] * c[i];
-            }
-            return temp;
+            return detail::unroll([](auto a, auto b, auto c) { return a - b * c; }, a, b, c);
         }
 
         static T nmsub(const T& a, const T& b, const T& c)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = -(a[i] + b[i] * c[i]);
-            }
-            return temp;
+            return detail::unroll([](auto a, auto b, auto c) { return -(a + b * c); }, a, b, c);
         }
 
         static T min(const T& a, const T& b)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = std::min(a[i], b[i]);
-            }
-            return temp;
+            return detail::unroll([](ScalarType a, ScalarType b) { return std::min(a, b); }, a, b);
         }
 
         static T max(const T& a, const T& b)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = std::max(a[i], b[i]);
-            }
-            return temp;
+            return detail::unroll([](ScalarType a, ScalarType b) { return std::max(a, b); }, a, b);
         }
 
         static T sign(const T& a)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = sign(a[i]);
-            }
-            return temp;
+            return detail::unroll(sign, a);
         }
 
         static T clamp(const T& a, const T& low, const T& high)
@@ -990,102 +954,63 @@ namespace mango::math
 
         static T radians(const T& a)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = radians(a[i]);
-            }
-            return temp;
+            return detail::unroll(radians, a);
         }
 
         static T degrees(const T& a)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = degrees(a[i]);
-            }
-            return temp;
+            return detail::unroll(degrees, a);
         }
 
         static T rcp(const T& a)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
+            return detail::unroll([](ScalarType a)
             {
-                temp[i] = ScalarType(1.0) / a[i];
-            }
-            return temp;
+                return ScalarType(1.0) / a;
+            }, a);
         }
 
         static T sqrt(const T& a)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = std::sqrt(a[i]);
-            }
-            return temp;
+            return detail::unroll(std::sqrt, a);
         }
 
         static T rsqrt(const T& a)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
+            return detail::unroll([](ScalarType a)
             {
-                temp[i] = ScalarType(1.0) / std::sqrt(a[i]);
-            }
-            return temp;
+                return ScalarType(1.0) / std::sqrt(a);
+            }, a);
         }
 
         static T round(const T& a)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = std::round(a[i]);
-            }
-            return temp;
+            return detail::unroll(std::round, a);
         }
 
         static T floor(const T& a)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = std::floor(a[i]);
-            }
-            return temp;
+            return detail::unroll(std::floor, a);
         }
 
         static T ceil(const T& a)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = std::ceil(a[i]);
-            }
-            return temp;
+            return detail::unroll(std::ceil, a);
+        }
+
+        static T trunc(const T& a)
+        {
+            return detail::unroll(std::trunc, a);
         }
 
         static T fract(const T& a)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = a[i] - std::floor(a[i]);
-            }
-            return temp;
+            return detail::unroll([](auto a) { return a - std::floor(a); }, a);
         }
 
         static T mod(const T& a, const T& b)
         {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = a[i] - b[i] * std::floor(a[i] / b[i]);
-            }
-            return temp;
+            return detail::unroll([](auto a, auto b) { return a - b * std::floor(a / b); }, a, b);
         }
     };
 
@@ -1550,10 +1475,9 @@ namespace mango::math
         requires is_vector<T> && (T::VectorSize == 3)
     static inline auto cross(const T& a, const T& b)
     {
-        using ScalarType = typename T::ScalarType;
-        ScalarType x = a.y * b.z - a.z * b.y;
-        ScalarType y = a.z * b.x - a.x * b.z;
-        ScalarType z = a.x * b.y - a.y * b.x;
+        auto x = a.y * b.z - a.z * b.y;
+        auto y = a.z * b.x - a.x * b.z;
+        auto z = a.x * b.y - a.y * b.x;
         return T(x, y, z);
     }
 
@@ -1593,144 +1517,84 @@ namespace mango::math
         requires is_vector<T>
     static inline auto sin(const T& a)
     {
-        T temp;
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp[i] = sin(a[i]);
-        }
-        return temp;
+        return detail::unroll(sin, a);
     }
 
     template <typename T>
         requires is_vector<T>
     static inline auto cos(const T& a)
     {
-        T temp;
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp[i] = cos(a[i]);
-        }
-        return temp;
+        return detail::unroll(cos, a);
     }
 
     template <typename T>
         requires is_vector<T>
     static inline auto tan(const T& a)
     {
-        T temp;
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp[i] = tan(a[i]);
-        }
-        return temp;
+        return detail::unroll(tan, a);
     }
 
     template <typename T>
         requires is_vector<T>
     static inline auto asin(const T& a)
     {
-        T temp;
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp[i] = asin(a[i]);
-        }
-        return temp;
+        return detail::unroll(asin, a);
     }
 
     template <typename T>
         requires is_vector<T>
     static inline auto acos(const T& a)
     {
-        T temp;
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp[i] = acos(a[i]);
-        }
-        return temp;
+        return detail::unroll(acos, a);
     }
 
     template <typename T>
         requires is_vector<T>
     static inline auto atan(const T& a)
     {
-        T temp;
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp[i] = atan(a[i]);
-        }
-        return temp;
+        return detail::unroll(atan, a);
     }
 
     template <typename T>
         requires is_vector<T>
     static inline auto exp(const T& a)
     {
-        T temp;
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp[i] = exp(a[i]);
-        }
-        return temp;
+        return detail::unroll(exp, a);
     }
 
     template <typename T>
         requires is_vector<T>
     static inline auto log(const T& a)
     {
-        T temp;
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp[i] = log(a[i]);
-        }
-        return temp;
+        return detail::unroll(log, a);
     }
 
     template <typename T>
         requires is_vector<T>
     static inline auto exp2(const T& a)
     {
-        T temp;
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp[i] = exp2(a[i]);
-        }
-        return temp;
+        return detail::unroll(exp2, a);
     }
 
     template <typename T>
         requires is_vector<T>
     static inline auto log2(const T& a)
     {
-        T temp;
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp[i] = log2(a[i]);
-        }
-        return temp;
+        return detail::unroll(log2, a);
     }
 
     template <typename T>
         requires is_vector<T>
     static inline auto pow(const T& a, const T& b)
     {
-        T temp;
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp[i] = pow(a[i], b[i]);
-        }
-        return temp;
+        return detail::unroll(pow, a, b);
     }
 
     template <typename T>
         requires is_vector<T>
     static inline auto atan2(const T& a, const T& b)
     {
-        T temp;
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp[i] = atan2(a[i], b[i]);
-        }
-        return temp;
+        return detail::unroll(atan2, a, b);
     }
 
     // ------------------------------------------------------------------
