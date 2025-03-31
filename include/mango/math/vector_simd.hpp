@@ -1598,6 +1598,10 @@ namespace mango::math
         return T(s);
     }
 
+    // ------------------------------------------------------------------
+    // trigonometric functions
+    // ------------------------------------------------------------------
+
     template <typename T>
         requires is_vector<T>
     static inline auto sin(const T& a)
