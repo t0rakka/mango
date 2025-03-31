@@ -13,6 +13,8 @@ namespace mango
         std::set<std::string_view> extensions;
     
         GLXConfiguration(Display* display, int screen, const OpenGLContext::Config* pConfig);
+
+        GLXContext createContext(Display* display, GLXContext shared);
     };
     
 } // namespace mango

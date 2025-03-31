@@ -19,10 +19,6 @@
 #include "glx_context.hpp"
 #undef explicit
 
-#ifndef GLX_CONTEXT_SHARE_CONTEXT_ARB
-#define GLX_CONTEXT_SHARE_CONTEXT_ARB        0x2090
-#endif
-
 namespace mango
 {
     using namespace math;
@@ -93,70 +89,13 @@ namespace mango
 
             XFree(vi);
 
-            // NOTE: It is not necessary to create or make current to a context before calling glXGetProcAddressARB
-            PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB =
-                (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddressARB((const GLubyte *)"glXCreateContextAttribsARB");
-
-            // Detect extension.
-            bool isGLX_ARB_create_context = glxExtensions.find("GLX_ARB_create_context") != glxExtensions.end();
-
-            // Install an X error handler so the application won't exit if GL 3.0
-            // context allocation fails.
-            //
-            // Note this error handler is global.  All display connections in all threads
-            // of a process use the same error handler, so be sure to guard against other
-            // threads issuing X commands while this code is running.
-            int (*oldHandler)(Display*, XErrorEvent*) = XSetErrorHandler(&contextErrorHandler);
-
-            // Check for the GLX_ARB_create_context extension string and the function.
-            if (isGLX_ARB_create_context && glXCreateContextAttribsARB)
+            GLXContext shared_context = 0;
+            if (shared)
             {
-                std::vector<int> contextAttribs;
-
-                //contextAttribs.push_back(GLX_CONTEXT_PROFILE_MASK_ARB);
-                //contextAttribs.push_back(GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB);
-
-                contextAttribs.push_back(GLX_CONTEXT_FLAGS_ARB);
-                contextAttribs.push_back(GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB);
-
-                GLXContext shared_context = 0;
-                if (shared)
-                {
-                    shared_context = reinterpret_cast<OpenGLContextGLX*>(shared)->context;
-
-                    contextAttribs.push_back(GLX_CONTEXT_SHARE_CONTEXT_ARB);
-                    contextAttribs.push_back(intptr_t(shared_context));
-                }
-
-                contextAttribs.push_back(None);
-
-                context = glXCreateContextAttribsARB(display, selected, shared_context, True, contextAttribs.data());
-
-                // Sync to ensure any errors generated are processed.
-                XSync(display, False);
-
-                if (context)
-                {
-                    //printLine(Print::Info, "Created GL 3.0 context");
-                }
-                else
-                {
-                    //printLine(Print::Error, "Failed to create GL 3.0 context ... using old-style GLX context");
-                    context = glXCreateContextAttribsARB(display, selected, 0, True, NULL);
-                }
-            }
-            else
-            {
-                //printLine(Print::Warning, "glXCreateContextAttribsARB() not found ... using old-style GLX context");
-                context = glXCreateNewContext(display, selected, GLX_RGBA_TYPE, 0, True);
+                shared_context = reinterpret_cast<OpenGLContextGLX*>(shared)->context;
             }
 
-            // Sync to ensure any errors generated are processed.
-            XSync(display, False);
-
-            // Restore the original error handler
-            XSetErrorHandler(oldHandler);
-
+            context = glxConfiguration.createContext(display, shared_context);
             if (!context)
             {
                 shutdown();
