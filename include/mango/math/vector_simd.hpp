@@ -738,17 +738,16 @@ namespace mango::math
         typename T::VectorType;
         { T::VectorSize };
         requires !std::same_as<typename T::VectorType, void>;
-        //requires simd::is_vector<typename T::VectorType>;
     };
 
     template <typename T>
     concept is_simd_vector_or_scalar = is_simd_vector<T> || is_scalar<T>;
 
     template <typename T>
-    concept IsSignedVector = is_vector<T> && std::is_signed_v<typename T::ScalarType>;
+    concept is_signed_vector = is_vector<T> && std::is_signed_v<typename T::ScalarType>;
 
     template <typename T>
-    concept IsFloatVector = std::is_floating_point_v<typename T::ScalarType>;
+    concept is_float_vector = std::is_floating_point_v<typename T::ScalarType>;
 
     template <typename T>
     struct get_vector_type
@@ -1225,7 +1224,7 @@ namespace mango::math
     // operator -
 
     template <typename T>
-        requires IsSignedVector<T>
+        requires is_signed_vector<T>
     static inline T operator - (const T& a)
     {
         return vector_ops<T>::neg(a);
@@ -1275,7 +1274,7 @@ namespace mango::math
     // operator *
 
     template <typename A, typename B>
-        requires has_vector<A, B> && IsFloatVector<first_vector_t<A, B>>
+        requires has_vector<A, B> && is_float_vector<first_vector_t<A, B>>
     static inline auto operator * (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
@@ -1283,7 +1282,7 @@ namespace mango::math
     }
 
     template <typename A, typename B>
-        requires is_vector<A> && IsFloatVector<A> && is_vector_or_scalar<B>
+        requires is_vector<A> && is_float_vector<A> && is_vector_or_scalar<B>
     static inline A& operator *= (A& a, const B& b)
     {
         a = vector_ops<A>::mul(a, A(b));
@@ -1293,7 +1292,7 @@ namespace mango::math
     // operator /
 
     template <typename A, typename B>
-        requires has_vector<A, B> && IsFloatVector<first_vector_t<A, B>>
+        requires has_vector<A, B> && is_float_vector<first_vector_t<A, B>>
     static inline auto operator / (const A& a, const B& b)
     {
         using T = first_vector_t<A, B>;
@@ -1301,7 +1300,7 @@ namespace mango::math
     }
 
     template <typename A, typename B>
-        requires is_vector<A> && IsFloatVector<A> && is_vector_or_scalar<B>
+        requires is_vector<A> && is_float_vector<A> && is_vector_or_scalar<B>
     static inline A& operator /= (A& a, const B& b)
     {
         a = vector_ops<A>::div(a, A(b));
@@ -1753,34 +1752,34 @@ namespace mango::math
     // ------------------------------------------------------------------
 
     template <typename T>
-    concept SaturatingIntegerVector = is_simd_vector<T> &&
+    concept is_saturating_integer_vector = is_simd_vector<T> &&
         std::is_integral_v<typename T::scalar> &&
         (sizeof(typename T::ScalarType) == 1 ||
          sizeof(typename T::ScalarType) == 2 ||
          sizeof(typename T::ScalarType) == 4);
 
     template <typename T>
-        requires SaturatingIntegerVector<T>
+        requires is_saturating_integer_vector<T>
     static inline auto adds(const T& a, const T& b) -> T
     {
         return simd::adds(a, b);
     }
 
     template <typename T>
-        requires SaturatingIntegerVector<T>
+        requires is_saturating_integer_vector<T>
     static inline auto subs(const T& a, const T& b) -> T
     {
         return simd::subs(a, b);
     }
 
     template <typename A, typename B>
-    concept MultiplyingIntegerVector = has_simd_vector<A, B> &&
+    concept is_multiplying_integer_vector = has_simd_vector<A, B> &&
         std::is_integral_v<typename first_simd_vector_t<A, B>::ScalarType> &&
         (sizeof(typename first_simd_vector_t<A, B>::ScalarType) == 2 ||
          sizeof(typename first_simd_vector_t<A, B>::ScalarType) == 4);
 
     template <typename A, typename B>
-        requires MultiplyingIntegerVector<A, B>
+        requires is_multiplying_integer_vector<A, B>
     static inline auto operator * (const A& a, const B& b)
     {
         using T = first_simd_vector_t<A, B>;
@@ -1848,28 +1847,28 @@ namespace mango::math
     }
 
     template <typename T, typename M>
-        requires is_simd_vector<T> && IsFloatVector<T> && simd::is_mask<M>
+        requires is_simd_vector<T> && is_float_vector<T> && simd::is_mask<M>
     static inline auto mul(const T& a, const T& b, M mask) -> T
     {
         return simd::mul(a, b, mask);
     }
 
     template <typename T, typename M>
-        requires is_simd_vector<T> && IsFloatVector<T> && simd::is_mask<M>
+        requires is_simd_vector<T> && is_float_vector<T> && simd::is_mask<M>
     static inline auto mul(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::mul(a, b, mask, value);
     }
 
     template <typename T, typename M>
-        requires is_simd_vector<T> && IsFloatVector<T> && simd::is_mask<M>
+        requires is_simd_vector<T> && is_float_vector<T> && simd::is_mask<M>
     static inline auto div(const T& a, const T& b, M mask) -> T
     {
         return simd::div(a, b, mask);
     }
 
     template <typename T, typename M>
-        requires is_simd_vector<T> && IsFloatVector<T> && simd::is_mask<M>
+        requires is_simd_vector<T> && is_float_vector<T> && simd::is_mask<M>
     static inline auto div(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::div(a, b, mask, value);
