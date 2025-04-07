@@ -51,8 +51,12 @@ namespace mango::math
 
     */
 
+    // Accessor type detection
     template <typename T>
-    concept is_scalar = std::is_scalar_v<T>;
+    struct is_scalar_accessor : std::false_type {};
+
+    template <typename ScalarType, typename VectorType, int Index>
+    struct is_scalar_accessor<ScalarAccessor<ScalarType, VectorType, Index>> : std::true_type {};
 
     template <typename T>
     struct is_shuffle_accessor : std::false_type {};
@@ -60,16 +64,9 @@ namespace mango::math
     template <typename VectorType, typename StorageType, int... Indices>
     struct is_shuffle_accessor<ShuffleAccessor<VectorType, StorageType, Indices...>> : std::true_type {};
 
+#if 1
     template <typename T>
-    concept is_vector = requires(T v)
-    {
-        { T::VectorSize };
-        typename T::ScalarType;
-        { v[0] } -> std::convertible_to<typename T::ScalarType>;
-    };
-
-    template <typename T>
-    concept is_vector_or_scalar = is_vector<T> || is_scalar<T>;
+    concept is_scalar = std::is_scalar_v<T>;
 
     template <typename T>
     concept is_simd_vector = requires(T v)
@@ -80,7 +77,51 @@ namespace mango::math
     };
 
     template <typename T>
-    concept is_simd_vector_or_scalar = is_simd_vector<T> || is_scalar<T>;
+    concept is_vector = requires(T v)
+    {
+        { T::VectorSize };
+        typename T::ScalarType;
+        { v[0] } -> std::convertible_to<typename T::ScalarType>;
+    };
+#else
+    template <typename T>
+    concept is_scalar = 
+        std::is_scalar_v<T> || 
+        is_scalar_accessor<std::remove_cvref_t<T>>::value;
+
+    template <typename T>
+    concept is_simd_vector = requires(T v)
+    {
+        typename T::VectorType;
+        { T::VectorSize };
+        requires !std::same_as<typename T::VectorType, void>;
+    };
+
+    template <typename T>
+    concept is_vector = requires(T v)
+    {
+        { T::VectorSize };
+        typename T::ScalarType;
+        { v[0] } -> std::convertible_to<typename T::ScalarType>;
+    } || is_simd_vector<T> || is_shuffle_accessor<std::remove_cvref_t<T>>::value;
+#endif
+
+    template <typename T>
+    concept resolves_to_scalar = 
+        is_scalar<T> || 
+        is_scalar_accessor<std::remove_cvref_t<T>>::value;
+
+    template <typename T>
+    concept resolves_to_vector = 
+        is_vector<T> || 
+        is_simd_vector<T> ||
+        is_shuffle_accessor<std::remove_cvref_t<T>>::value;
+
+    template <typename T>
+    concept is_vector_or_scalar = resolves_to_vector<T> || resolves_to_scalar<T>;
+
+    template <typename T>
+    concept is_simd_vector_or_scalar = is_simd_vector<T> || resolves_to_scalar<T>;
 
     template <typename T>
     concept is_signed_vector = is_vector<T> && std::is_signed_v<typename T::ScalarType>;
