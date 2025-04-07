@@ -27,30 +27,6 @@ namespace mango::math
     // Core concepts and type traits
     // ------------------------------------------------------------------
 
-    /*
-    
-    vector * vector
-    vector * shuffle_accessor (vector)
-    vector * scalar_accesor (scalar)
-    vector * scalar
-
-    shuffle_accessor * vector
-    shuffle_accessor * shuffle_accessor (vector)
-    shuffle_accessor * scalar_accesor (scalar)
-    shuffle_accessor * scalar
-    
-    scalar_accesor * vector
-    scalar_accesor * shuffle_accessor (vector)
-    scalar_accesor * scalar_accesor (scalar)
-    scalar_accesor * scalar
-
-    scalar * vector
-    scalar * shuffle_accessor (vector)
-    scalar * scalar_accesor (scalar)
-    scalar * scalar   <-- use default scalar operators
-
-    */
-
     // Accessor type detection
     template <typename T>
     struct is_scalar_accessor : std::false_type {};
@@ -84,6 +60,7 @@ namespace mango::math
         { v[0] } -> std::convertible_to<typename T::ScalarType>;
     };
 #else
+    // TODO: migrate to this code (we want to reduce number of specializations)
     template <typename T>
     concept is_scalar = 
         std::is_scalar_v<T> || 
@@ -216,12 +193,6 @@ namespace mango::math
             return Vector<ScalarType, VectorSize>(simd::get_component<Index>(m));
         }
 
-        constexpr ScalarAccessor& operator = (const ScalarAccessor& accessor) noexcept
-        {
-            m = simd::set_component<Index>(m, accessor);
-            return *this;
-        }
-
         constexpr ScalarAccessor& operator = (ScalarType s) noexcept
         {
             m = simd::set_component<Index>(m, s);
@@ -253,13 +224,14 @@ namespace mango::math
         }
     };
 
-    // operator +
+    // ------------------------------------------------------------------
+    // ScalarAccessor operators
+    // ------------------------------------------------------------------
 
     template <typename ScalarType, typename VectorType, int Index>
     static constexpr
     ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a) noexcept
     {
-        // +a
         return ScalarType(a);
     }
 
@@ -268,31 +240,30 @@ namespace mango::math
     ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
     {
-        // a + b
         return ScalarType(a) + ScalarType(b);
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     static constexpr
-    ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
+    ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a,
+                           ScalarType b) noexcept
     {
-        // a + s
         return ScalarType(a) + b;
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     static constexpr
-    ScalarType operator + (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
+    ScalarType operator + (ScalarType a,
+                           const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
     {
-        // s + a
         return a + ScalarType(b);
     }
 
     template <typename ScalarType, typename VectorType, int Index, int N>
     static constexpr
-    Vector<ScalarType, N> operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b) noexcept
+    Vector<ScalarType, N> operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a,
+                                      Vector<ScalarType, N> b) noexcept
     {
-        // a + v
         return ScalarType(a) + b;
     }
 
@@ -300,17 +271,13 @@ namespace mango::math
     static constexpr
     Vector<ScalarType, N> operator + (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
     {
-        // v + a
         return a + ScalarType(b);
     }
-
-    // operator -
 
     template <typename ScalarType, typename VectorType, int Index>
     static constexpr
     ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a) noexcept
     {
-        // -a
         return -ScalarType(a);
     }
 
@@ -319,7 +286,6 @@ namespace mango::math
     ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
     {
-        // a - b
         return ScalarType(a) - ScalarType(b);
     }
 
@@ -327,7 +293,6 @@ namespace mango::math
     static constexpr
     ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
     {
-        // a - s
         return ScalarType(a) - b;
     }
 
@@ -335,7 +300,6 @@ namespace mango::math
     static constexpr
     ScalarType operator - (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
     {
-        // s - a
         return a - ScalarType(b);
     }
 
@@ -343,7 +307,6 @@ namespace mango::math
     static constexpr
     Vector<ScalarType, N> operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b) noexcept
     {
-        // a - v
         return ScalarType(a) - b;
     }
 
@@ -351,18 +314,14 @@ namespace mango::math
     static constexpr
     Vector<ScalarType, N> operator - (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
     {
-        // v - a
         return a - ScalarType(b);
     }
-
-    // operator *
 
     template <typename ScalarType, typename VectorType, int Index0, int Index1>
     static constexpr
     ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
     {
-        // a * b
         return ScalarType(a) * ScalarType(b);
     }
 
@@ -370,7 +329,6 @@ namespace mango::math
     static constexpr
     ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
     {
-        // a * s
         return ScalarType(a) * b;
     }
 
@@ -378,7 +336,6 @@ namespace mango::math
     static constexpr
     ScalarType operator * (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
     {
-        // s * a
         return a * ScalarType(b);
     }
 
@@ -386,7 +343,6 @@ namespace mango::math
     static constexpr
     Vector<ScalarType, N> operator * (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b) noexcept
     {
-        // a * v
         return ScalarType(a) * b;
     }
 
@@ -394,18 +350,14 @@ namespace mango::math
     static constexpr
     Vector<ScalarType, N> operator * (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
     {
-        // v * a
         return a * ScalarType(b);
     }
-
-    // operator /
 
     template <typename ScalarType, typename VectorType, int Index0, int Index1>
     static constexpr
     ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                            const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
     {
-        // a / b
         return ScalarType(a) / ScalarType(b);
     }
 
@@ -413,52 +365,31 @@ namespace mango::math
     static constexpr
     ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
     {
-        // a / s
         return ScalarType(a) / b;
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     static constexpr
-    ScalarType operator / (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
+    ScalarType operator / (ScalarType a,
+                          const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
     {
-        // s / a
         return a / ScalarType(b);
     }
 
     template <typename ScalarType, typename VectorType, int Index, int N>
     static constexpr
-    Vector<ScalarType, N> operator / (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b) noexcept
+    Vector<ScalarType, N> operator / (const ScalarAccessor<ScalarType, VectorType, Index>& a,
+                                      Vector<ScalarType, N> b) noexcept
     {
-        // a / v
         return ScalarType(a) / b;
     }
 
     template <typename ScalarType, typename VectorType, int Index, int N>
     static constexpr
-    Vector<ScalarType, N> operator / (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
+    Vector<ScalarType, N> operator / (Vector<ScalarType, N> a,
+                                      const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
     {
-        // v / a
         return a / ScalarType(b);
-    }
-
-    // operator *=
-
-    template <typename ScalarType, typename VectorType, int Index, int N>
-    static constexpr
-    Vector<ScalarType, N>& operator *= (Vector<ScalarType, N>& a, ScalarAccessor<ScalarType, VectorType, Index> b) noexcept
-    {
-        a = a * ScalarType(b);
-        return a;
-    }
-
-    // operator /=
-
-    template <typename ScalarType, typename VectorType, int Index, int N>
-    static constexpr
-    Vector<ScalarType, N>& operator /= (Vector<ScalarType, N>& a, ScalarAccessor<ScalarType, VectorType, Index> b) noexcept
-    {
-        a = a / ScalarType(b);
-        return a;
     }
 
     // compare
@@ -633,46 +564,70 @@ namespace mango::math
         }
     };
 
-    // Scalar operators for ShuffleAccessor
+    // ------------------------------------------------------------------
+    // ShuffleAccessor operators
+    // ------------------------------------------------------------------
 
     template <typename VectorType, typename StorageType, int... Indices>
-    constexpr auto operator * (const ShuffleAccessor<VectorType, StorageType, Indices...>& a, typename VectorType::ScalarType s) noexcept
+    static constexpr
+    auto operator * (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
+                     const ShuffleAccessor<VectorType, StorageType, Indices...>& b) noexcept
+    {
+        return VectorType(a) * VectorType(b);
+    }
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    static constexpr
+    auto operator * (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
+                     typename VectorType::ScalarType s) noexcept
     {
         return VectorType(a) * s;
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
-    constexpr auto operator * (typename VectorType::ScalarType s, const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
+    static constexpr
+    auto operator * (typename VectorType::ScalarType s,
+                     const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
     {
         return s * VectorType(a);
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
-    constexpr auto operator / (const ShuffleAccessor<VectorType, StorageType, Indices...>& a, typename VectorType::ScalarType s) noexcept
+    static constexpr
+    auto operator / (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
+                     typename VectorType::ScalarType s) noexcept
     {
         return VectorType(a) / s;
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
-    constexpr auto operator + (const ShuffleAccessor<VectorType, StorageType, Indices...>& a, typename VectorType::ScalarType s) noexcept
+    static constexpr
+    auto operator + (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
+                     typename VectorType::ScalarType s) noexcept
     {
         return VectorType(a) + s;
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
-    constexpr auto operator + (typename VectorType::ScalarType s, const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
+    static constexpr
+    auto operator + (typename VectorType::ScalarType s,
+                     const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
     {
         return s + VectorType(a);
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
-    constexpr auto operator - (const ShuffleAccessor<VectorType, StorageType, Indices...>& a, typename VectorType::ScalarType s) noexcept
+    static constexpr
+    auto operator - (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
+                     typename VectorType::ScalarType s) noexcept
     {
         return VectorType(a) - s;
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
-    constexpr auto operator - (typename VectorType::ScalarType s, const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
+    static constexpr
+    auto operator - (typename VectorType::ScalarType s,
+                     const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
     {
         return s - VectorType(a);
     }
