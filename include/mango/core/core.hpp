@@ -18,6 +18,7 @@
 #include <mango/core/aes.hpp>
 #include <mango/core/cpuinfo.hpp>
 #include <mango/core/system.hpp>
+#include <mango/core/print.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/core/stream.hpp>
 #include <mango/core/timer.hpp>

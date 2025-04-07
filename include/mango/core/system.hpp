@@ -12,18 +12,10 @@
 #include <mango/core/timer.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/stream.hpp>
+#include <mango/core/print.hpp>
 
 namespace mango
 {
-
-    enum class Print
-    {
-        Error,
-        Warning,
-        Info,
-        Debug,
-        Verbose
-    };
 
     struct TraceThread
     {
@@ -95,151 +87,6 @@ namespace mango
     void startTrace(Stream* stream);
     void stopTrace();
 
-    void printEnable(Print target, bool enable);
-    bool isEnable(Print target);
-
-    // ----------------------------------------------------------------------------------
-    // print
-    // ----------------------------------------------------------------------------------
-
-    static inline
-    void print(Print target, const std::string& text)
-    {
-        if (isEnable(target))
-        {
-            std::printf("%s", text.c_str());
-        }
-    }
-
-    static inline
-    void print(Print target, int indent, const std::string& text)
-    {
-        if (isEnable(target))
-        {
-            std::printf("%*s%s", indent, "",  text.c_str());
-        }
-    }
-
-    template <typename... T>
-    static inline
-    void print(Print target, fmt::format_string<T...> fmt, T&&... args)
-    {
-        if (isEnable(target))
-        {
-            std::printf("%s", fmt::vformat(fmt.str, fmt::vargs<T...>{{args...}}).c_str());
-        }
-    }
-
-    template <typename... T>
-    static inline
-    void print(Print target, int indent, fmt::format_string<T...> fmt, T&&... args)
-    {
-        if (isEnable(target))
-        {
-            std::printf("%*s%s", indent, "", 
-                fmt::vformat(fmt.str, fmt::vargs<T...>{{args...}}).c_str());
-        }
-    }
-
-    static inline
-    void print(const std::string& text)
-    {
-        print(Print::Verbose, text);
-    }
-
-    static inline
-    void print(int indent, const std::string& text)
-    {
-        print(Print::Verbose, indent, text);
-    }
-
-    template <typename... T>
-    static inline
-    void print(fmt::format_string<T...> fmt, T&&... args)
-    {
-        print(Print::Verbose, fmt, std::forward<T>(args)...);
-    }
-
-    template <typename... T>
-    static inline
-    void print(int indent, fmt::format_string<T...> fmt, T&&... args)
-    {
-        print(Print::Verbose, indent, fmt, std::forward<T>(args)...);
-    }
-
-    // ----------------------------------------------------------------------------------
-    // printLine
-    // ----------------------------------------------------------------------------------
-
-    static inline
-    void printLine(Print target, const std::string& text)
-    {
-        if (isEnable(target))
-        {
-            std::printf("%s\n", text.c_str());
-        }
-    }
-
-    static inline
-    void printLine(Print target, int indent, const std::string& text)
-    {
-        if (isEnable(target))
-        {
-            std::printf("%*s%s\n", indent, "", text.c_str());
-        }
-    }
-
-    template <typename... T>
-    static inline
-    void printLine(Print target, fmt::format_string<T...> fmt, T&&... args)
-    {
-        if (isEnable(target))
-        {
-            std::printf("%s\n", fmt::vformat(fmt.str, fmt::vargs<T...>{{args...}}).c_str());
-        }
-    }
-
-    template <typename... T>
-    static inline
-    void printLine(Print target, int indent, fmt::format_string<T...> fmt, T&&... args)
-    {
-        if (isEnable(target))
-        {
-            std::printf("%*s%s\n", indent, "", 
-                fmt::vformat(fmt.str, fmt::vargs<T...>{{args...}}).c_str());
-        }
-    }
-
-    static inline
-    void printLine(const std::string& text)
-    {
-        printLine(Print::Verbose, text);
-    }
-
-    static inline
-    void printLine(int indent, const std::string& text)
-    {
-        printLine(Print::Verbose, indent, text);
-    }
-
-    template <typename... T>
-    static inline
-    void printLine(fmt::format_string<T...> fmt, T&&... args)
-    {
-        printLine(Print::Verbose, fmt, std::forward<T>(args)...);
-    }
-
-    template <typename... T>
-    static inline
-    void printLine(int indent, fmt::format_string<T...> fmt, T&&... args)
-    {
-        printLine(Print::Verbose, indent, fmt, std::forward<T>(args)...);
-    }
-
-    // ----------------------------------------------------------------------------------
-    // CommandLine
-    // ----------------------------------------------------------------------------------
-
     using CommandLine = std::vector<std::string_view>;
 
 } // namespace mango
@@ -250,7 +97,8 @@ namespace mango
 
 #if defined(MANGO_IMPLEMENT_MAIN)
 
-    // This will be called from platform specific main function below
+    // This will be called from platform specific main function below;
+    // client must implement this function and return 0 on success
     int mangoMain(const mango::CommandLine& commands);
 
     #if defined(WIN32)
@@ -275,4 +123,4 @@ namespace mango
 
     #endif
 
-#endif
+#endif // defined(MANGO_IMPLEMENT_MAIN)
