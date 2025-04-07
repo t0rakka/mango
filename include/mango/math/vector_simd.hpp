@@ -130,34 +130,6 @@ namespace mango::math
     using first_simd_vector_t = typename first_simd_vector_type<Args...>::type;
 
     // ------------------------------------------------------------------
-    // reinterpret / convert
-    // ------------------------------------------------------------------
-
-    // The reinterpret and conversion casts forward the work to the simd abstraction.
-    // This is enforced by requiring "VectorType" declaration in the Vector specialization.
-
-    template <typename D, typename S>
-    static constexpr D reinterpret(S s) noexcept
-    {
-        typename S::VectorType temp = s;
-        return simd::reinterpret<typename D::VectorType>(temp);
-    }
-
-    template <typename D, typename S>
-    static constexpr D convert(S s) noexcept
-    {
-        typename S::VectorType temp = s;
-        return simd::convert<typename D::VectorType>(temp);
-    }
-
-    template <typename D, typename S>
-    static constexpr D truncate(S s) noexcept
-    {
-        typename S::VectorType temp = s;
-        return simd::truncate<typename D::VectorType>(temp);
-    }
-
-    // ------------------------------------------------------------------
     // ScalarAccessor
     // ------------------------------------------------------------------
 
@@ -683,157 +655,7 @@ namespace mango::math
     };
 
     // ------------------------------------------------------------------
-    // specializations:
-    //     load_low()
-    // ------------------------------------------------------------------
-
-    template <typename ScalarType, int VectorSize>
-    static constexpr
-    Vector<ScalarType, VectorSize> load_low(const ScalarType *source) noexcept
-    {
-        MANGO_UNREFERENCED(source);
-
-        // load_low() is not available by default
-        Vector<ScalarType, VectorSize>::undefined_operation();
-    }
-
-    // ------------------------------------------------------------------
-    // unaligned load / store
-    // ------------------------------------------------------------------
-
-#define MATH_LOAD_STORE_ALIAS(T) \
-    static constexpr auto T##_uload = simd::T##_uload; \
-    static constexpr auto T##_ustore = simd::T##_ustore
-
-    MATH_LOAD_STORE_ALIAS(s32x2);
-    MATH_LOAD_STORE_ALIAS(u32x2);
-
-    MATH_LOAD_STORE_ALIAS(s8x16);
-    MATH_LOAD_STORE_ALIAS(s16x8);
-    MATH_LOAD_STORE_ALIAS(s32x4);
-    MATH_LOAD_STORE_ALIAS(s64x2);
-    MATH_LOAD_STORE_ALIAS(u8x16);
-    MATH_LOAD_STORE_ALIAS(u16x8);
-    MATH_LOAD_STORE_ALIAS(u32x4);
-    MATH_LOAD_STORE_ALIAS(u64x2);
-
-    MATH_LOAD_STORE_ALIAS(s8x32);
-    MATH_LOAD_STORE_ALIAS(s16x16);
-    MATH_LOAD_STORE_ALIAS(s32x8);
-    MATH_LOAD_STORE_ALIAS(s64x4);
-    MATH_LOAD_STORE_ALIAS(u8x32);
-    MATH_LOAD_STORE_ALIAS(u16x16);
-    MATH_LOAD_STORE_ALIAS(u32x8);
-    MATH_LOAD_STORE_ALIAS(u64x4);
-
-    MATH_LOAD_STORE_ALIAS(s8x64);
-    MATH_LOAD_STORE_ALIAS(s16x32);
-    MATH_LOAD_STORE_ALIAS(s32x16);
-    MATH_LOAD_STORE_ALIAS(s64x8);
-    MATH_LOAD_STORE_ALIAS(u8x64);
-    MATH_LOAD_STORE_ALIAS(u16x32);
-    MATH_LOAD_STORE_ALIAS(u32x16);
-    MATH_LOAD_STORE_ALIAS(u64x8);
-
-    MATH_LOAD_STORE_ALIAS(f32x2);
-    MATH_LOAD_STORE_ALIAS(f32x4);
-    MATH_LOAD_STORE_ALIAS(f32x8);
-    MATH_LOAD_STORE_ALIAS(f32x16);
-
-    MATH_LOAD_STORE_ALIAS(f64x2);
-    MATH_LOAD_STORE_ALIAS(f64x4);
-    MATH_LOAD_STORE_ALIAS(f64x8);
-
-#undef MATH_LOAD_STORE_ALIAS
-
-    // ------------------------------------------------------------------
-    // maskToInt()
-    // ------------------------------------------------------------------
-
-    static inline u32 maskToInt(mask8x16 mask) noexcept
-    {
-        return simd::get_mask(mask);
-    }
-
-    static inline u32 maskToInt(mask16x8 mask) noexcept
-    {
-        return simd::get_mask(mask);
-    }
-
-    static inline u32 maskToInt(mask32x4 mask) noexcept
-    {
-        return simd::get_mask(mask);
-    }
-
-    static inline u32 maskToInt(mask64x2 mask) noexcept
-    {
-        return simd::get_mask(mask);
-    }
-
-    static inline u32 maskToInt(mask8x32 mask) noexcept
-    {
-        return simd::get_mask(mask);
-    }
-
-    static inline u32 maskToInt(mask16x16 mask) noexcept
-    {
-        return simd::get_mask(mask);
-    }
-
-    static inline u32 maskToInt(mask32x8 mask) noexcept
-    {
-        return simd::get_mask(mask);
-    }
-
-    static inline u32 maskToInt(mask64x4 mask) noexcept
-    {
-        return simd::get_mask(mask);
-    }
-
-    static inline u64 maskToInt(mask8x64 mask) noexcept
-    {
-        return simd::get_mask(mask);
-    }
-
-    static inline u32 maskToInt(mask16x32 mask) noexcept
-    {
-        return simd::get_mask(mask);
-    }
-
-    static inline u32 maskToInt(mask32x16 mask) noexcept
-    {
-        return simd::get_mask(mask);
-    }
-
-    static inline u32 maskToInt(mask64x8 mask) noexcept
-    {
-        return simd::get_mask(mask);
-    }
-
-    // ------------------------------------------------------------------
-    // mask reduction
-    // ------------------------------------------------------------------
-
-    template <typename T>
-    static inline bool none_of(T mask) noexcept
-    {
-        return simd::none_of(mask);
-    }
-
-    template <typename T>
-    static inline bool any_of(T mask) noexcept
-    {
-        return simd::any_of(mask);
-    }
-
-    template <typename T>
-    static inline bool all_of(T mask) noexcept
-    {
-        return simd::all_of(mask);
-    }
-
-    // ------------------------------------------------------------------
-    // experimental
+    // vector_ops
     // ------------------------------------------------------------------
 
     // vector_ops
@@ -1997,6 +1819,184 @@ namespace mango::math
     {
         using T = first_vector_t<A, B>;
         return T(simd::select(mask, T(a), T(b)));
+    }
+
+    // ------------------------------------------------------------------
+    // maskToInt()
+    // ------------------------------------------------------------------
+
+    static inline u32 maskToInt(mask8x16 mask) noexcept
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask16x8 mask) noexcept
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask32x4 mask) noexcept
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask64x2 mask) noexcept
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask8x32 mask) noexcept
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask16x16 mask) noexcept
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask32x8 mask) noexcept
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask64x4 mask) noexcept
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u64 maskToInt(mask8x64 mask) noexcept
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask16x32 mask) noexcept
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask32x16 mask) noexcept
+    {
+        return simd::get_mask(mask);
+    }
+
+    static inline u32 maskToInt(mask64x8 mask) noexcept
+    {
+        return simd::get_mask(mask);
+    }
+
+    // ------------------------------------------------------------------
+    // mask reduction
+    // ------------------------------------------------------------------
+
+    template <typename T>
+    static inline bool none_of(T mask) noexcept
+    {
+        return simd::none_of(mask);
+    }
+
+    template <typename T>
+    static inline bool any_of(T mask) noexcept
+    {
+        return simd::any_of(mask);
+    }
+
+    template <typename T>
+    static inline bool all_of(T mask) noexcept
+    {
+        return simd::all_of(mask);
+    }
+
+    // ------------------------------------------------------------------
+    // reinterpret / convert
+    // ------------------------------------------------------------------
+
+    // The reinterpret and conversion casts forward the work to the simd abstraction.
+    // This is enforced by requiring "VectorType" declaration in the Vector specialization.
+
+    template <typename D, typename S>
+    static constexpr D reinterpret(S s) noexcept
+    {
+        typename S::VectorType temp = s;
+        return simd::reinterpret<typename D::VectorType>(temp);
+    }
+
+    template <typename D, typename S>
+    static constexpr D convert(S s) noexcept
+    {
+        typename S::VectorType temp = s;
+        return simd::convert<typename D::VectorType>(temp);
+    }
+
+    template <typename D, typename S>
+    static constexpr D truncate(S s) noexcept
+    {
+        typename S::VectorType temp = s;
+        return simd::truncate<typename D::VectorType>(temp);
+    }
+
+    // ------------------------------------------------------------------
+    // unaligned load / store
+    // ------------------------------------------------------------------
+
+#define MATH_LOAD_STORE_ALIAS(T) \
+    static constexpr auto T##_uload = simd::T##_uload; \
+    static constexpr auto T##_ustore = simd::T##_ustore
+
+    MATH_LOAD_STORE_ALIAS(s32x2);
+    MATH_LOAD_STORE_ALIAS(u32x2);
+
+    MATH_LOAD_STORE_ALIAS(s8x16);
+    MATH_LOAD_STORE_ALIAS(s16x8);
+    MATH_LOAD_STORE_ALIAS(s32x4);
+    MATH_LOAD_STORE_ALIAS(s64x2);
+    MATH_LOAD_STORE_ALIAS(u8x16);
+    MATH_LOAD_STORE_ALIAS(u16x8);
+    MATH_LOAD_STORE_ALIAS(u32x4);
+    MATH_LOAD_STORE_ALIAS(u64x2);
+
+    MATH_LOAD_STORE_ALIAS(s8x32);
+    MATH_LOAD_STORE_ALIAS(s16x16);
+    MATH_LOAD_STORE_ALIAS(s32x8);
+    MATH_LOAD_STORE_ALIAS(s64x4);
+    MATH_LOAD_STORE_ALIAS(u8x32);
+    MATH_LOAD_STORE_ALIAS(u16x16);
+    MATH_LOAD_STORE_ALIAS(u32x8);
+    MATH_LOAD_STORE_ALIAS(u64x4);
+
+    MATH_LOAD_STORE_ALIAS(s8x64);
+    MATH_LOAD_STORE_ALIAS(s16x32);
+    MATH_LOAD_STORE_ALIAS(s32x16);
+    MATH_LOAD_STORE_ALIAS(s64x8);
+    MATH_LOAD_STORE_ALIAS(u8x64);
+    MATH_LOAD_STORE_ALIAS(u16x32);
+    MATH_LOAD_STORE_ALIAS(u32x16);
+    MATH_LOAD_STORE_ALIAS(u64x8);
+
+    MATH_LOAD_STORE_ALIAS(f32x2);
+    MATH_LOAD_STORE_ALIAS(f32x4);
+    MATH_LOAD_STORE_ALIAS(f32x8);
+    MATH_LOAD_STORE_ALIAS(f32x16);
+
+    MATH_LOAD_STORE_ALIAS(f64x2);
+    MATH_LOAD_STORE_ALIAS(f64x4);
+    MATH_LOAD_STORE_ALIAS(f64x8);
+
+#undef MATH_LOAD_STORE_ALIAS
+
+    // ------------------------------------------------------------------
+    // specializations:
+    //     load_low()
+    // ------------------------------------------------------------------
+
+    template <typename ScalarType, int VectorSize>
+    static constexpr
+    Vector<ScalarType, VectorSize> load_low(const ScalarType *source) noexcept
+    {
+        MANGO_UNREFERENCED(source);
+
+        // load_low() is not available by default
+        Vector<ScalarType, VectorSize>::undefined_operation();
     }
 
     // ------------------------------------------------------------------
