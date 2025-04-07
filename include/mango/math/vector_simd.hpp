@@ -8,6 +8,128 @@ namespace mango::math
 {
 
     // ------------------------------------------------------------------
+    // Forward declarations
+    // ------------------------------------------------------------------
+
+    template <typename ScalarType, typename VectorType, int Index>
+    struct ScalarAccessor;
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    struct ShuffleAccessor;
+
+    template <typename LowType, typename VectorType>
+    struct LowAccessor;
+
+    template <typename HighType, typename VectorType>
+    struct HighAccessor;
+
+    // ------------------------------------------------------------------
+    // Core concepts and type traits
+    // ------------------------------------------------------------------
+
+    template <typename T>
+    concept is_scalar = std::is_scalar_v<T>;
+
+    template <typename T>
+    struct is_shuffle_accessor : std::false_type {};
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    struct is_shuffle_accessor<ShuffleAccessor<VectorType, StorageType, Indices...>> : std::true_type {};
+
+    template <typename T>
+    concept is_vector = requires(T v)
+    {
+        { T::VectorSize };
+        typename T::ScalarType;
+        { v[0] } -> std::convertible_to<typename T::ScalarType>;
+    };
+
+    template <typename T>
+    concept is_vector_or_scalar = is_vector<T> || is_scalar<T>;
+
+    template <typename T>
+    concept is_simd_vector = requires(T v)
+    {
+        typename T::VectorType;
+        { T::VectorSize };
+        requires !std::same_as<typename T::VectorType, void>;
+    };
+
+    template <typename T>
+    concept is_simd_vector_or_scalar = is_simd_vector<T> || is_scalar<T>;
+
+    template <typename T>
+    concept is_signed_vector = is_vector<T> && std::is_signed_v<typename T::ScalarType>;
+
+    template <typename T>
+    concept is_float_vector = std::is_floating_point_v<typename T::ScalarType>;
+
+    template <typename T>
+    struct get_vector_type
+    {
+        using type = T;
+    };
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    struct get_vector_type<ShuffleAccessor<VectorType, StorageType, Indices...>>
+    {
+        using type = VectorType;
+    };
+
+    // has_vector
+
+    template <typename... Args>
+    concept has_vector = (is_vector<Args> || ...) &&
+        ((is_vector_or_scalar<Args> || 
+        is_shuffle_accessor<std::remove_cvref_t<Args>>::value) && ...);
+
+    template <typename... Args>
+    struct first_vector_type;
+
+    template <typename T, typename... Args>
+    struct first_vector_type<T, Args...>
+    {
+        using type = std::conditional_t<
+            is_vector<T> || is_shuffle_accessor<std::remove_cvref_t<T>>::value,
+            typename get_vector_type<T>::type,
+            typename first_vector_type<Args...>::type>;
+    };
+
+    template <typename T>
+    struct first_vector_type<T>
+    {
+        using type = T;
+    };
+
+    template <typename... Args>
+    using first_vector_t = typename first_vector_type<Args...>::type;
+
+    // has_simd_vector
+
+    template <typename... Args>
+    concept has_simd_vector = (is_simd_vector<Args> || ...) &&
+                              (is_simd_vector_or_scalar<Args> && ...);
+
+    template <typename... Args>
+    struct first_simd_vector_type;
+
+    template <typename T, typename... Args>
+    struct first_simd_vector_type<T, Args...>
+    {
+        using type = std::conditional_t<is_simd_vector<T>, T,
+            typename first_simd_vector_type<Args...>::type>;
+    };
+
+    template <typename T>
+    struct first_simd_vector_type<T>
+    {
+        using type = T;
+    };
+
+    template <typename... Args>
+    using first_simd_vector_t = typename first_simd_vector_type<Args...>::type;
+
+    // ------------------------------------------------------------------
     // reinterpret / convert
     // ------------------------------------------------------------------
 
@@ -33,19 +155,6 @@ namespace mango::math
     {
         typename S::VectorType temp = s;
         return simd::truncate<typename D::VectorType>(temp);
-    }
-
-    // ------------------------------------------------------------------
-    // specializations
-    // ------------------------------------------------------------------
-
-    template <typename ScalarType, int VectorSize>
-    static constexpr Vector<ScalarType, VectorSize> load_low(const ScalarType *source) noexcept
-    {
-        MANGO_UNREFERENCED(source);
-
-        // load_low() is not available by default
-        Vector<ScalarType, VectorSize>::undefined_operation();
     }
 
     // ------------------------------------------------------------------
@@ -366,48 +475,6 @@ namespace mango::math
     }
 
     // ------------------------------------------------------------------
-    // LowAccessor
-    // ------------------------------------------------------------------
-
-    template <typename LowType, typename VectorType>
-    struct LowAccessor
-    {
-        VectorType m;
-
-        constexpr operator LowType () const noexcept
-        {
-            return simd::get_low(m);
-        }
-
-        constexpr LowAccessor& operator = (LowType low) noexcept
-        {
-            m = simd::set_low(m, low);
-            return *this;
-        }
-    };
-
-    // ------------------------------------------------------------------
-    // HighAccessor
-    // ------------------------------------------------------------------
-
-    template <typename HighType, typename VectorType>
-    struct HighAccessor
-    {
-        VectorType m;
-
-        constexpr operator HighType () const noexcept
-        {
-            return simd::get_high(m);
-        }
-
-        constexpr HighAccessor& operator = (HighType high) noexcept
-        {
-            m = simd::set_high(m, high);
-            return *this;
-        }
-    };
-
-    // ------------------------------------------------------------------
     // ShuffleAccessor
     // ------------------------------------------------------------------
 
@@ -574,6 +641,63 @@ namespace mango::math
     }
 
     // ------------------------------------------------------------------
+    // LowAccessor
+    // ------------------------------------------------------------------
+
+    template <typename LowType, typename VectorType>
+    struct LowAccessor
+    {
+        VectorType m;
+
+        constexpr operator LowType () const noexcept
+        {
+            return simd::get_low(m);
+        }
+
+        constexpr LowAccessor& operator = (LowType low) noexcept
+        {
+            m = simd::set_low(m, low);
+            return *this;
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // HighAccessor
+    // ------------------------------------------------------------------
+
+    template <typename HighType, typename VectorType>
+    struct HighAccessor
+    {
+        VectorType m;
+
+        constexpr operator HighType () const noexcept
+        {
+            return simd::get_high(m);
+        }
+
+        constexpr HighAccessor& operator = (HighType high) noexcept
+        {
+            m = simd::set_high(m, high);
+            return *this;
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // specializations:
+    //     load_low()
+    // ------------------------------------------------------------------
+
+    template <typename ScalarType, int VectorSize>
+    static constexpr
+    Vector<ScalarType, VectorSize> load_low(const ScalarType *source) noexcept
+    {
+        MANGO_UNREFERENCED(source);
+
+        // load_low() is not available by default
+        Vector<ScalarType, VectorSize>::undefined_operation();
+    }
+
+    // ------------------------------------------------------------------
     // unaligned load / store
     // ------------------------------------------------------------------
 
@@ -711,108 +835,6 @@ namespace mango::math
     // ------------------------------------------------------------------
     // experimental
     // ------------------------------------------------------------------
-
-    template <typename T>
-    concept is_scalar = std::is_scalar_v<T>;
-
-    template <typename T>
-    struct is_shuffle_accessor : std::false_type {};
-
-    template <typename VectorType, typename StorageType, int... Indices>
-    struct is_shuffle_accessor<ShuffleAccessor<VectorType, StorageType, Indices...>> : std::true_type {};
-
-    template <typename T>
-    concept is_vector = requires(T v)
-    {
-        { T::VectorSize };
-        typename T::ScalarType;
-        { v[0] } -> std::convertible_to<typename T::ScalarType>;
-    };
-
-    template <typename T>
-    concept is_vector_or_scalar = is_vector<T> || is_scalar<T>;
-
-    template <typename T>
-    concept is_simd_vector = requires(T v)
-    {
-        typename T::VectorType;
-        { T::VectorSize };
-        requires !std::same_as<typename T::VectorType, void>;
-    };
-
-    template <typename T>
-    concept is_simd_vector_or_scalar = is_simd_vector<T> || is_scalar<T>;
-
-    template <typename T>
-    concept is_signed_vector = is_vector<T> && std::is_signed_v<typename T::ScalarType>;
-
-    template <typename T>
-    concept is_float_vector = std::is_floating_point_v<typename T::ScalarType>;
-
-    template <typename T>
-    struct get_vector_type
-    {
-        using type = T;
-    };
-
-    template <typename VectorType, typename StorageType, int... Indices>
-    struct get_vector_type<ShuffleAccessor<VectorType, StorageType, Indices...>>
-    {
-        using type = VectorType;
-    };
-
-    // has_vector
-
-    template <typename... Args>
-    concept has_vector = (is_vector<Args> || ...) &&
-        ((is_vector_or_scalar<Args> || 
-        is_shuffle_accessor<std::remove_cvref_t<Args>>::value) && ...);
-
-    template <typename... Args>
-    struct first_vector_type;
-
-    template <typename T, typename... Args>
-    struct first_vector_type<T, Args...>
-    {
-        using type = std::conditional_t<
-            is_vector<T> || is_shuffle_accessor<std::remove_cvref_t<T>>::value,
-            typename get_vector_type<T>::type,
-            typename first_vector_type<Args...>::type>;
-    };
-
-    template <typename T>
-    struct first_vector_type<T>
-    {
-        using type = T;
-    };
-
-    template <typename... Args>
-    using first_vector_t = typename first_vector_type<Args...>::type;
-
-    // has_simd_vector
-
-    template <typename... Args>
-    concept has_simd_vector = (is_simd_vector<Args> || ...) &&
-                              (is_simd_vector_or_scalar<Args> && ...);
-
-    template <typename... Args>
-    struct first_simd_vector_type;
-
-    template <typename T, typename... Args>
-    struct first_simd_vector_type<T, Args...>
-    {
-        using type = std::conditional_t<is_simd_vector<T>, T,
-            typename first_simd_vector_type<Args...>::type>;
-    };
-
-    template <typename T>
-    struct first_simd_vector_type<T>
-    {
-        using type = T;
-    };
-
-    template <typename... Args>
-    using first_simd_vector_t = typename first_simd_vector_type<Args...>::type;
 
     // vector_ops
 
