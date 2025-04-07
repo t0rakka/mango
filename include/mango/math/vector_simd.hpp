@@ -27,6 +27,30 @@ namespace mango::math
     // Core concepts and type traits
     // ------------------------------------------------------------------
 
+    /*
+    
+    vector * vector
+    vector * shuffle_accessor (vector)
+    vector * scalar_accesor (scalar)
+    vector * scalar
+
+    shuffle_accessor * vector
+    shuffle_accessor * shuffle_accessor (vector)
+    shuffle_accessor * scalar_accesor (scalar)
+    shuffle_accessor * scalar
+    
+    scalar_accesor * vector
+    scalar_accesor * shuffle_accessor (vector)
+    scalar_accesor * scalar_accesor (scalar)
+    scalar_accesor * scalar
+
+    scalar * vector
+    scalar * shuffle_accessor (vector)
+    scalar * scalar_accesor (scalar)
+    scalar * scalar   <-- use default scalar operators
+
+    */
+
     template <typename T>
     concept is_scalar = std::is_scalar_v<T>;
 
