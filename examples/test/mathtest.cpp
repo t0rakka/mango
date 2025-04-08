@@ -84,10 +84,17 @@ void test_multiply()
     v0 /= b.yzwx;
 
     v0.x = v1.y;
+    v0.x = -v1.y;
+    v0.x = +v1.y;
     v0.x += v1.y;
     v0.x -= v1.y;
     v0.x *= v1.y;
     v0.x /= v1.y;
+
+    int sum = 0;
+    sum += v0.x < v1.y;
+    sum += 1.0f < v1.y;
+    sum += v0.x < 1.0f;
 
     MANGO_UNREFERENCED(v0);
     MANGO_UNREFERENCED(v1);
@@ -105,6 +112,7 @@ void test_multiply()
     MANGO_UNREFERENCED(s5);
     MANGO_UNREFERENCED(s6);
     MANGO_UNREFERENCED(s7);
+    MANGO_UNREFERENCED(sum);
 }
 
 void test_float32x4()

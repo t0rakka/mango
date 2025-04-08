@@ -40,7 +40,6 @@ namespace mango::math
     template <typename VectorType, typename StorageType, int... Indices>
     struct is_shuffle_accessor<ShuffleAccessor<VectorType, StorageType, Indices...>> : std::true_type {};
 
-#if 1
     template <typename T>
     concept is_scalar = std::is_scalar_v<T>;
 
@@ -59,29 +58,6 @@ namespace mango::math
         typename T::ScalarType;
         { v[0] } -> std::convertible_to<typename T::ScalarType>;
     };
-#else
-    // TODO: migrate to this code (we want to reduce number of specializations)
-    template <typename T>
-    concept is_scalar = 
-        std::is_scalar_v<T> || 
-        is_scalar_accessor<std::remove_cvref_t<T>>::value;
-
-    template <typename T>
-    concept is_simd_vector = requires(T v)
-    {
-        typename T::VectorType;
-        { T::VectorSize };
-        requires !std::same_as<typename T::VectorType, void>;
-    };
-
-    template <typename T>
-    concept is_vector = requires(T v)
-    {
-        { T::VectorSize };
-        typename T::ScalarType;
-        { v[0] } -> std::convertible_to<typename T::ScalarType>;
-    } || is_simd_vector<T> || is_shuffle_accessor<std::remove_cvref_t<T>>::value;
-#endif
 
     template <typename T>
     concept resolves_to_scalar = 
@@ -171,6 +147,21 @@ namespace mango::math
     template <typename... Args>
     using first_simd_vector_t = typename first_simd_vector_type<Args...>::type;
 
+    // ...
+
+    template <typename A, typename B>
+    struct resolve_type
+    {
+        using type = std::conditional_t<
+            resolves_to_vector<A> || resolves_to_vector<B>,
+            typename first_vector_type<A, B>::type,  // vector case
+            std::remove_cvref_t<A>                   // scalar case (includes both raw scalars and scalar accessors)
+        >;
+    };
+
+    template <typename A, typename B>
+    using resolve_t = typename resolve_type<A, B>::type;
+
     // ------------------------------------------------------------------
     // ScalarAccessor
     // ------------------------------------------------------------------
@@ -228,6 +219,10 @@ namespace mango::math
     // ScalarAccessor operators
     // ------------------------------------------------------------------
 
+    // NOTE: These operators are not strictly necessary, since the type system below will
+    //       generate code but it will expand these to full vector types and generate less
+    //       efficient code. By providing scalar specialization we get scalar code directly.
+
     template <typename ScalarType, typename VectorType, int Index>
     static constexpr
     ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a) noexcept
@@ -259,21 +254,6 @@ namespace mango::math
         return a + ScalarType(b);
     }
 
-    template <typename ScalarType, typename VectorType, int Index, int N>
-    static constexpr
-    Vector<ScalarType, N> operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a,
-                                      Vector<ScalarType, N> b) noexcept
-    {
-        return ScalarType(a) + b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index, int N>
-    static constexpr
-    Vector<ScalarType, N> operator + (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a + ScalarType(b);
-    }
-
     template <typename ScalarType, typename VectorType, int Index>
     static constexpr
     ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a) noexcept
@@ -291,28 +271,16 @@ namespace mango::math
 
     template <typename ScalarType, typename VectorType, int Index>
     static constexpr
-    ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
+    ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a,
+                           ScalarType b) noexcept
     {
         return ScalarType(a) - b;
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     static constexpr
-    ScalarType operator - (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a - ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index, int N>
-    static constexpr
-    Vector<ScalarType, N> operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b) noexcept
-    {
-        return ScalarType(a) - b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index, int N>
-    static constexpr
-    Vector<ScalarType, N> operator - (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
+    ScalarType operator - (ScalarType a,
+                           const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
     {
         return a - ScalarType(b);
     }
@@ -327,28 +295,16 @@ namespace mango::math
 
     template <typename ScalarType, typename VectorType, int Index>
     static constexpr
-    ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
+    ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index>& a,
+                           ScalarType b) noexcept
     {
         return ScalarType(a) * b;
     }
 
     template <typename ScalarType, typename VectorType, int Index>
     static constexpr
-    ScalarType operator * (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a * ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index, int N>
-    static constexpr
-    Vector<ScalarType, N> operator * (const ScalarAccessor<ScalarType, VectorType, Index>& a, Vector<ScalarType, N> b) noexcept
-    {
-        return ScalarType(a) * b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index, int N>
-    static constexpr
-    Vector<ScalarType, N> operator * (Vector<ScalarType, N> a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
+    ScalarType operator * (ScalarType a,
+                           const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
     {
         return a * ScalarType(b);
     }
@@ -363,7 +319,8 @@ namespace mango::math
 
     template <typename ScalarType, typename VectorType, int Index>
     static constexpr
-    ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
+    ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index>& a,
+                           ScalarType b) noexcept
     {
         return ScalarType(a) / b;
     }
@@ -376,23 +333,11 @@ namespace mango::math
         return a / ScalarType(b);
     }
 
-    template <typename ScalarType, typename VectorType, int Index, int N>
-    static constexpr
-    Vector<ScalarType, N> operator / (const ScalarAccessor<ScalarType, VectorType, Index>& a,
-                                      Vector<ScalarType, N> b) noexcept
-    {
-        return ScalarType(a) / b;
-    }
+    // ------------------------------------------------------------------
+    // ScalarAccessor comparison operators
+    // ------------------------------------------------------------------
 
-    template <typename ScalarType, typename VectorType, int Index, int N>
-    static constexpr
-    Vector<ScalarType, N> operator / (Vector<ScalarType, N> a,
-                                      const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a / ScalarType(b);
-    }
-
-    // compare
+    // operator <
 
     template <typename ScalarType, typename VectorType, int Index0, int Index1>
     static constexpr
@@ -402,6 +347,22 @@ namespace mango::math
         return ScalarType(a) < ScalarType(b);
     }
 
+    template <typename ScalarType, typename VectorType, int Index>
+    static constexpr
+    bool operator < (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
+    {
+        return ScalarType(a) < b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    static constexpr
+    bool operator < (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
+    {
+        return a < ScalarType(b);
+    }
+
+    // operator >
+
     template <typename ScalarType, typename VectorType, int Index0, int Index1>
     static constexpr
     bool operator > (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
@@ -409,6 +370,22 @@ namespace mango::math
     {
         return ScalarType(a) > ScalarType(b);
     }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    static constexpr
+    bool operator > (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
+    {
+        return ScalarType(a) > b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    static constexpr
+    bool operator > (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
+    {
+        return a > ScalarType(b);
+    }
+
+    // operator <=
 
     template <typename ScalarType, typename VectorType, int Index0, int Index1>
     static constexpr
@@ -418,6 +395,22 @@ namespace mango::math
         return ScalarType(a) <= ScalarType(b);
     }
 
+    template <typename ScalarType, typename VectorType, int Index>
+    static constexpr
+    bool operator <= (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
+    {
+        return ScalarType(a) <= b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    static constexpr
+    bool operator <= (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
+    {
+        return a <= ScalarType(b);
+    }
+
+    // operator >=
+
     template <typename ScalarType, typename VectorType, int Index0, int Index1>
     static constexpr
     bool operator >= (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
@@ -425,6 +418,22 @@ namespace mango::math
     {
         return ScalarType(a) >= ScalarType(b);
     }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    static constexpr
+    bool operator >= (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
+    {
+        return ScalarType(a) >= b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    static constexpr
+    bool operator >= (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
+    {
+        return a >= ScalarType(b);
+    }
+
+    // operator ==
 
     template <typename ScalarType, typename VectorType, int Index0, int Index1>
     static constexpr
@@ -434,12 +443,42 @@ namespace mango::math
         return ScalarType(a) == ScalarType(b);
     }
 
+    template <typename ScalarType, typename VectorType, int Index>
+    static constexpr
+    bool operator == (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
+    {
+        return ScalarType(a) == b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    static constexpr
+    bool operator == (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
+    {
+        return a == ScalarType(b);
+    }
+
+    // operator !=
+
     template <typename ScalarType, typename VectorType, int Index0, int Index1>
     static constexpr
     bool operator != (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
                       const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
     {
         return ScalarType(a) != ScalarType(b);
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    static constexpr
+    bool operator != (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
+    {
+        return ScalarType(a) != b;
+    }
+
+    template <typename ScalarType, typename VectorType, int Index>
+    static constexpr
+    bool operator != (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
+    {
+        return a != ScalarType(b);
     }
 
     // ------------------------------------------------------------------
@@ -1095,10 +1134,10 @@ namespace mango::math
     }
 
     template <typename A, typename B>
-        requires has_vector<A, B>
+        requires (resolves_to_vector<A> || resolves_to_vector<B>)
     static inline auto operator - (const A& a, const B& b)
     {
-        using T = first_vector_t<A, B>;
+        using T = resolve_t<A, B>;
         return vector_ops<T>::sub(T(a), T(b));
     }
 
@@ -1120,10 +1159,10 @@ namespace mango::math
     }
 
     template <typename A, typename B>
-        requires has_vector<A, B>
+        requires (resolves_to_vector<A> || resolves_to_vector<B>)
     static inline auto operator + (const A& a, const B& b)
     {
-        using T = first_vector_t<A, B>;
+        using T = resolve_t<A, B>;
         return vector_ops<T>::add(T(a), T(b));
     }
 
@@ -1141,7 +1180,7 @@ namespace mango::math
         requires has_vector<A, B> && is_float_vector<first_vector_t<A, B>>
     static inline auto operator * (const A& a, const B& b)
     {
-        using T = first_vector_t<A, B>;
+        using T = resolve_t<A, B>;
         return vector_ops<T>::mul(T(a), T(b));
     }
 
@@ -1156,10 +1195,11 @@ namespace mango::math
     // operator /
 
     template <typename A, typename B>
-        requires has_vector<A, B> && is_float_vector<first_vector_t<A, B>>
+        requires (resolves_to_vector<A> || resolves_to_vector<B>) && 
+                 is_float_vector<first_vector_t<A, B>>
     static inline auto operator / (const A& a, const B& b)
     {
-        using T = first_vector_t<A, B>;
+        using T = resolve_t<A, B>;
         return vector_ops<T>::div(T(a), T(b));
     }
 
@@ -1173,11 +1213,12 @@ namespace mango::math
 
     // functions
 
-    template <typename T>
-        requires is_vector<T>
-    static inline T abs(const T& a)
+    template <typename A>
+        requires is_vector<A>
+    static inline auto abs(const A& a)
     {
-        return vector_ops<T>::abs(a);
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::abs(T(a));
     }
 
     template <typename A, typename B, typename C>
@@ -1236,10 +1277,10 @@ namespace mango::math
     }
 
     template <typename A, typename B, typename C>
-        requires has_vector<A, B, C>
+        requires (resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>)
     static inline auto clamp(const A& a, const B& b, const C& c)
     {
-        using T = first_vector_t<A, B, C>;
+        using T = resolve_t<A, resolve_t<B, C>>;
         return vector_ops<T>::clamp(T(a), T(b), T(c));
     }
 
@@ -1271,18 +1312,20 @@ namespace mango::math
         return vector_ops<T>::rcp(a);
     }
 
-    template <typename T>
-        requires is_vector<T>
-    static inline auto sqrt(const T& a)
+    template <typename A>
+        requires is_vector<A>
+    static inline auto sqrt(const A& a)
     {
-        return vector_ops<T>::sqrt(a);
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::sqrt(T(a));
     }
 
-    template <typename T>
-        requires is_vector<T>
-    static inline auto rsqrt(const T& a)
+    template <typename A>
+        requires is_vector<A>
+    static inline auto rsqrt(const A& a)
     {
-        return vector_ops<T>::rsqrt(a);
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::rsqrt(T(a));
     }
 
     template <typename T>
@@ -1320,11 +1363,12 @@ namespace mango::math
         return vector_ops<T>::fract(a);
     }
 
-    template <typename T>
-        requires is_vector<T>
-    static inline auto mod(const T& a, const T& b)
+    template <typename A, typename B>
+        requires (resolves_to_vector<A> || resolves_to_vector<B>)
+    static inline auto mod(const A& a, const B& b)
     {
-        return vector_ops<T>::mod(a, b);
+        using T = resolve_t<A, B>;
+        return vector_ops<T>::mod(T(a), T(b));
     }
 
     // ------------------------------------------------------------------
