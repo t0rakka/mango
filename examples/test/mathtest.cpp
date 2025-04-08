@@ -94,7 +94,147 @@ void test_multiply()
     int sum = 0;
     sum += v0.x < v1.y;
     sum += 1.0f < v1.y;
-    sum += v0.x < 1.0f;
+    sum += v0.x < 1.0f;                                                                                                                                                                                           
+
+    v0 = abs(v0);
+    v0 = abs(v0 + v1);
+    v0 = abs(v1.xzwx);
+    v0 = abs(v0.xxyy + v1.xzwx);
+
+    v0 = sign(v0);
+    v0 = sign(v0 + v1);
+    v0 = sign(v1.xzwx);
+    v0 = sign(v0.xxyy + v1.xzwx);
+
+    v0 = fract(v0);
+    v0 = fract(v0 + v1);
+    v0 = fract(v1.xzwx);
+    v0 = fract(v0.xxyy + v1.xzwx);
+
+    v0 = min(v0, v1);
+    v0 = min(v0, v1 + v2);
+    v0 = min(v0, v1.xzwx);
+    v0 = min(v0, v1.xxyy + v2.xzwx);
+    v0 = min(v0.xxyy + v1.xywz, v1.xywz + v2.xywz);
+    //v0 = min(v0.xyzz, 1.0f);
+
+    v0 = max(v0, v1);
+    v0 = max(v0, v1 + v2);
+    v0 = max(v0, v1.xzwx);
+    v0 = max(v0, v1.xxyy + v2.xzwx);
+    v0 = max(v0.xxyy + v1.xywz, v1.xywz + v2.xywz);
+
+    v0 = lerp(v0, v1, 0.5f);
+    v0 = lerp(v0, v1, v2.y);
+    v0 = lerp(v0.xxzz, v1.wyxz + v2, (v1.xxzz + v2.xywz).w);
+
+    v0 = ~v1;
+    v0 = ~v1.xwyz;
+    v0 = ~(v1 + v2);
+
+    v0 = v1 & v2;
+    v0 = v1 & v2.x;
+    v0 = v1.x & v2.xwwy;
+    v0 = v1.xwyz & v2.xwwy;
+
+    v0 = v1 | v2;
+    v0 = v1 | v2.x;
+    v0 = v1.x | v2.xwwy;
+    v0 = v1.xwyz | v2.xwwy;
+
+    v0 = v1 ^ v2;
+    v0 = v1 ^ v2.x;
+    v0 = v1.x ^ v2.xwwy;
+    v0 = v1.xwyz ^ v2.xwwy;
+
+    v0 = nand(v1, v2);
+    v0 = nand(v1, v2.x);
+    v0 = nand(v1.x, v2.xwwy);
+    v0 = nand(v1.xwyz, v2.xwwy);
+
+    auto m0 = v0 > v1;
+    m0 = v0 > v1 + v2;
+    m0 = v0 > v1.xzwx;
+    m0 = v0 > v1.xxyy + v2.xzwx;
+    m0 = v0 > v0.xxyy + v1.xywz;
+    m0 = v0 > v1.xywz + v2.xywz;
+    m0 = 1.0f > v0;
+    m0 = 1.0f > (v0 + v1);
+    m0 = 1.0f > v0.xzwx;
+    m0 = v0 > 1.0f;
+    m0 = (v0 + v1) > 1.0f;
+    m0 = v0.xxyy > 1.0f;
+    m0 = v0.x > (v0 + v1).xxzw;
+
+    auto m1 = v0 >= v1;
+    m1 = v0 >= v1 + v2;
+    m1 = v0 >= v1.xzwx;
+    m1 = v0 >= v1.xxyy + v2.xzwx;
+    m1 = v0 >= v0.xxyy + v1.xywz;
+    m1 = v0 >= v1.xywz + v2.xywz;
+    m1 = 1.0f >= v0;
+    m1 = 1.0f >= (v0 + v1);
+    m1 = 1.0f >= v0.xzwx;
+    m1 = v0 >= 1.0f;
+    m1 = (v0 + v1) >= 1.0f;
+    m1 = v0.xxyy >= 1.0f;
+    m1 = v0.x >= (v0 + v1).xxzw;
+
+    auto m2 = v0 < v1;
+    m2 = v0 < v1 + v2;
+    m2 = v0 < v1.xzwx;
+    m2 = v0 < v1.xxyy + v2.xzwx;
+    m2 = v0 < v0.xxyy + v1.xywz;
+    m2 = v0 < v1.xywz + v2.xywz;
+    m2 = 1.0f < v0;
+    m2 = 1.0f < (v0 + v1);
+    m2 = 1.0f < v0.xzwx;
+    m2 = v0 < 1.0f;
+    m2 = (v0 + v1) < 1.0f;
+    m2 = v0.xxyy < 1.0f;
+    m2 = v0.x < (v0 + v1).xxzw;
+
+    auto m3 = v0 <= v1;
+    m3 = v0 <= v1 + v2;
+    m3 = v0 <= v1.xzwx;
+    m3 = v0 <= v1.xxyy + v2.xzwx;
+    m3 = v0 <= v0.xxyy + v1.xywz;
+    m3 = v0 <= v1.xywz + v2.xywz;
+    m3 = 1.0f <= v0;
+    m3 = 1.0f <= (v0 + v1);
+    m3 = 1.0f <= v0.xzwx;
+    m3 = v0 <= 1.0f;
+    m3 = (v0 + v1) <= 1.0f;
+    m3 = v0.xxyy <= 1.0f;
+    m3 = v0.x <= (v0 + v1).xxzw;
+
+    auto m4 = v0 == v1;
+    m4 = v0 == v1 + v2;
+    m4 = v0 == v1.xzwx;
+    m4 = v0 == v1.xxyy + v2.xzwx;
+    m4 = v0 == v0.xxyy + v1.xywz;
+    m4 = v0 == v1.xywz + v2.xywz;
+    m4 = 1.0f == v0;
+    m4 = 1.0f == (v0 + v1);
+    m4 = 1.0f == v0.xzwx;
+    m4 = v0 == 1.0f;
+    m4 = (v0 + v1) == 1.0f;
+    m4 = v0.xxyy == 1.0f;
+    m4 = v0.x == (v0 + v1).xxzw;
+
+    auto m5 = v0 != v1;
+    m5 = v0 != v1 + v2;
+    m5 = v0 != v1.xzwx;
+    m5 = v0 != v1.xxyy + v2.xzwx;
+    m5 = v0 != v0.xxyy + v1.xywz;
+    m5 = v0 != v1.xywz + v2.xywz;
+    m5 = 1.0f != v0;
+    m5 = 1.0f != (v0 + v1);
+    m5 = 1.0f != v0.xzwx;
+    m5 = v0 != 1.0f;
+    m5 = (v0 + v1) != 1.0f;
+    m5 = v0.xxyy != 1.0f;
+    m5 = v0.x != (v0 + v1).xxzw;
 
     MANGO_UNREFERENCED(v0);
     MANGO_UNREFERENCED(v1);
@@ -113,6 +253,12 @@ void test_multiply()
     MANGO_UNREFERENCED(s6);
     MANGO_UNREFERENCED(s7);
     MANGO_UNREFERENCED(sum);
+    MANGO_UNREFERENCED(m0);
+    MANGO_UNREFERENCED(m1);
+    MANGO_UNREFERENCED(m2);
+    MANGO_UNREFERENCED(m3);
+    MANGO_UNREFERENCED(m4);
+    MANGO_UNREFERENCED(m5);
 }
 
 void test_float32x4()
