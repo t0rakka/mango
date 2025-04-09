@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/math/math.hpp>
 #include <mango/core/system.hpp>
@@ -9,24 +9,10 @@ using namespace mango;
 using namespace mango::math;
 
 // ----------------------------------------------------------------------
-// float32x4
+// permutations
 // ----------------------------------------------------------------------
 
-void print(float32x4 v)
-{
-    float x = v.x;
-    float y = v.y;
-    float z = v.z;
-    float w = v.w;
-    printLine("{} {} {} {}", x, y, z, w);
-}
-
-void test_multiply()
-{
-    float32x4 a(1.0f, 2.0f, 3.0f, 4.0f);
-    float32x4 b(5.0f, 6.0f, 7.0f, 8.0f);
-
-    /*
+/*
 
     vector * vector
     vector * shuffle_accessor (vector)
@@ -48,7 +34,47 @@ void test_multiply()
     scalar * scalar_accesor (scalar)
     scalar * scalar   <-- use default scalar operators
 
-    */
+*/
+
+template <typename ScalarType>
+void print(const Vector<ScalarType, 4>& v)
+{
+    float x = v.x;
+    float y = v.y;
+    float z = v.z;
+    float w = v.w;
+    printLine("{} {} {} {}", x, y, z, w);
+}
+
+template <typename ScalarType>
+void test_vec4()
+{
+    using VectorType = Vector<ScalarType, 4>;
+
+    VectorType a(ScalarType(1), ScalarType(2), ScalarType(3), ScalarType(4));
+    VectorType b(ScalarType(5), ScalarType(6), ScalarType(7), ScalarType(8));
+
+    VectorType v0 = a + b;
+    VectorType v1 = a + b.wzxy;
+    VectorType v2 = a + b.y;
+    VectorType v3 = a + ScalarType(2);
+
+    print(v0);
+    print(v1);
+    print(v2);
+    print(v3);
+}
+
+
+
+// ----------------------------------------------------------------------
+// float32x4
+// ----------------------------------------------------------------------
+
+void test_multiply()
+{
+    float32x4 a(1.0f, 2.0f, 3.0f, 4.0f);
+    float32x4 b(5.0f, 6.0f, 7.0f, 8.0f);
 
     float32x4 v0 = a * b;
     float32x4 v1 = a * b.xyzw;
@@ -321,4 +347,11 @@ int main()
     test_float32x3();
     test_vec2();
     test_multiply();
+
+    test_vec4<float>();
+    test_vec4<double>();
+    test_vec4<s32>();
+    test_vec4<u32>();
+    test_vec4<s64>();
+    test_vec4<u64>();
 }

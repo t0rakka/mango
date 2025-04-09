@@ -617,6 +617,27 @@ namespace mango::simd
     // u64x4
     // -----------------------------------------------------------------
 
+    template <u32 x, u32 y, u32 z, u32 w>
+    static inline u64x4 shuffle(u64x4 v)
+    {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
+
+        __m128i lane[2];
+        lane[0] = _mm256_extractf128_si256(v, 0); // [0, 1]
+        lane[1] = _mm256_extractf128_si256(v, 1); // [2, 3]
+
+        __m128i low = _mm_castpd_si128(_mm_shuffle_pd(
+            _mm_castsi128_pd(lane[x >> 1]), 
+            _mm_castsi128_pd(lane[y >> 1]),
+            ((y & 1) << 1) | (x & 1)));
+        __m128i high = _mm_castpd_si128(_mm_shuffle_pd(
+            _mm_castsi128_pd(lane[z >> 1]), 
+            _mm_castsi128_pd(lane[w >> 1]), 
+            ((w & 1) << 1) | (z & 1)));
+
+        return _mm256_insertf128_si256(_mm256_castsi128_si256(low), high, 1);
+    }
+
     template <unsigned int Index>
     static inline u64x4 set_component(u64x4 a, u64 b)
     {
@@ -1271,6 +1292,27 @@ namespace mango::simd
     // -----------------------------------------------------------------
     // s64x4
     // -----------------------------------------------------------------
+
+    template <u32 x, u32 y, u32 z, u32 w>
+    static inline s64x4 shuffle(s64x4 v)
+    {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
+
+        __m128i lane[2];
+        lane[0] = _mm256_extractf128_si256(v, 0); // [0, 1]
+        lane[1] = _mm256_extractf128_si256(v, 1); // [2, 3]
+
+        __m128i low = _mm_castpd_si128(_mm_shuffle_pd(
+            _mm_castsi128_pd(lane[x >> 1]), 
+            _mm_castsi128_pd(lane[y >> 1]),
+            ((y & 1) << 1) | (x & 1)));
+        __m128i high = _mm_castpd_si128(_mm_shuffle_pd(
+            _mm_castsi128_pd(lane[z >> 1]), 
+            _mm_castsi128_pd(lane[w >> 1]), 
+            ((w & 1) << 1) | (z & 1)));
+
+        return _mm256_insertf128_si256(_mm256_castsi128_si256(low), high, 1);
+    }
 
     template <unsigned int Index>
     static inline s64x4 set_component(s64x4 a, s64 b)

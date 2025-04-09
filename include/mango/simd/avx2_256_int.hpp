@@ -664,6 +664,13 @@ namespace mango::simd
     // u64x4
     // -----------------------------------------------------------------
 
+    template <u32 x, u32 y, u32 z, u32 w>
+    static inline u64x4 shuffle(u64x4 v)
+    {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
+        return _mm256_permute4x64_epi64(v, _MM_SHUFFLE(w, z, y, x));
+    }
+
     template <unsigned int Index>
     static inline u64x4 set_component(u64x4 a, u64 b)
     {
@@ -1499,6 +1506,13 @@ namespace mango::simd
     // -----------------------------------------------------------------
     // s64x4
     // -----------------------------------------------------------------
+
+    template <u32 x, u32 y, u32 z, u32 w>
+    static inline s64x4 shuffle(s64x4 v)
+    {
+        static_assert(x < 4 && y < 4 && z < 4 && w < 4, "Index out of range.");
+        return _mm256_permute4x64_epi64(v, _MM_SHUFFLE(w, z, y, x));
+    }
 
     template <unsigned int Index>
     static inline s64x4 set_component(s64x4 a, s64 b)

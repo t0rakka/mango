@@ -14,7 +14,7 @@ namespace mango::simd
     else               vec.data[1] = set_component<index & mask>(vec.data[1], value)
 
 #define SIMD_GET_COMPONENT(vec, mask, index) \
-        Index <= mask ? get_component<index & mask>(vec.data[0]) \
+        index <= mask ? get_component<index & mask>(vec.data[0]) \
                       : get_component<index & mask>(vec.data[1])
 
 #define SIMD_COMPOSITE_FUNC1(R, A, FUNC) \
@@ -480,6 +480,19 @@ namespace mango::simd
     // -----------------------------------------------------------------
     // u64x4
     // -----------------------------------------------------------------
+
+    template <u32 x_, u32 y_, u32 z_, u32 w_>
+    static inline u64x4 shuffle(u64x4 v)
+    {
+        static_assert(x_ < 4 && y_ < 4 && z_ < 4 && w_ < 4, "Index out of range.");
+        const u64 x = SIMD_GET_COMPONENT(v, 1, x_);
+        const u64 y = SIMD_GET_COMPONENT(v, 1, y_);
+        const u64 z = SIMD_GET_COMPONENT(v, 1, z_);
+        const u64 w = SIMD_GET_COMPONENT(v, 1, w_);
+        const u64x2 lo = u64x2_set(x, y);
+        const u64x2 hi = u64x2_set(z, w);
+        return { lo, hi };
+    }
 
     template <unsigned int Index>
     static inline u64x4 set_component(u64x4 a, u64 b)
@@ -1023,6 +1036,19 @@ namespace mango::simd
     // -----------------------------------------------------------------
     // s64x4
     // -----------------------------------------------------------------
+
+    template <u32 x_, u32 y_, u32 z_, u32 w_>
+    static inline s64x4 shuffle(s64x4 v)
+    {
+        static_assert(x_ < 4 && y_ < 4 && z_ < 4 && w_ < 4, "Index out of range.");
+        const s64 x = SIMD_GET_COMPONENT(v, 1, x_);
+        const s64 y = SIMD_GET_COMPONENT(v, 1, y_);
+        const s64 z = SIMD_GET_COMPONENT(v, 1, z_);
+        const s64 w = SIMD_GET_COMPONENT(v, 1, w_);
+        const s64x2 lo = s64x2_set(x, y);
+        const s64x2 hi = s64x2_set(z, w);
+        return { lo, hi };
+    }
 
     template <unsigned int Index>
     static inline s64x4 set_component(s64x4 a, s64 b)
