@@ -70,6 +70,8 @@ void test_multiply()
     float s6 = 1.5f * b.z;
     float s7 = 1.5f * 1.5f;
 
+    v7 = float32x4(b.xywz).xxyy * 1.2f * a.wxzz / b.z;
+
     v0 += 1.0f;
     v0 += b.x;
     v0 += b.xxyy;
@@ -127,6 +129,9 @@ void test_multiply()
     v0 = lerp(v0, v1, 0.5f);
     v0 = lerp(v0, v1, v2.y);
     v0 = lerp(v0.xxzz, v1.wyxz + v2, (v1.xxzz + v2.xywz).w);
+
+    v0 = unpacklo(v1, v2);
+    v0 = unpackhi(v1, v2);
 
     v0 = ~v1;
     v0 = ~v1.xwyz;
@@ -261,6 +266,22 @@ void test_multiply()
     MANGO_UNREFERENCED(m5);
 }
 
+void test_float32x3()
+{
+    float32x3 a(1.0f, 2.0f, 3.0f);
+    auto r0 = a.xxz;
+    auto r1 = a.xz;
+    MANGO_UNREFERENCED(r0);
+    MANGO_UNREFERENCED(r1);
+}
+
+void test_vec2()
+{
+    float32x2 a(1.0f, 2.0f);
+    float32x2 r0 = a.xx;
+    printLine("r0: {} {}", r0.x, r0.y);
+}
+
 void test_float32x4()
 {
     float32x4 a(1.0f, 2.0f, 3.0f, 4.0f);
@@ -297,5 +318,7 @@ void test_float32x4()
 int main()
 {
     test_float32x4();
+    test_float32x3();
+    test_vec2();
     test_multiply();
 }

@@ -495,9 +495,9 @@ namespace mango::math
         constexpr operator VectorType () const noexcept;
     };
 
-    // vec2 -> vec2 shuffle
+    // vec2 -> vec2 shuffle (simd)
     template <typename VectorType, typename StorageType, int X, int Y>
-        requires (VectorType::VectorSize == 2)
+        requires is_simd_vector<VectorType> && (VectorType::VectorSize == 2)
     struct ShuffleAccessor<VectorType, StorageType, X, Y>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -508,6 +508,24 @@ namespace mango::math
         constexpr operator VectorType () const noexcept
         {
             return simd::shuffle<X, Y>(m);
+        }
+    };
+
+    // vec2 -> vec2 shuffle (scalar)
+    template <typename VectorType, typename StorageType, int X, int Y>
+        requires (!is_simd_vector<VectorType>) && (VectorType::VectorSize == 2)
+    struct ShuffleAccessor<VectorType, StorageType, X, Y>
+    {
+        using ScalarType = typename VectorType::ScalarType;
+        static constexpr int VectorSize = 2;
+
+        StorageType m;
+
+        constexpr operator VectorType () const noexcept
+        {
+            const ScalarType x = m[X];
+            const ScalarType y = m[Y];
+            return Vector<ScalarType, 2>(x, y);
         }
     };
 
@@ -523,8 +541,8 @@ namespace mango::math
 
         constexpr operator Vector<ScalarType, 2> () const noexcept
         {
-            const ScalarType x = simd::get_component<X>(m);
-            const ScalarType y = simd::get_component<Y>(m);
+            const ScalarType x = m[X];
+            const ScalarType y = m[Y];
             return Vector<ScalarType, 2>(x, y);
         }
     };
@@ -541,9 +559,9 @@ namespace mango::math
 
         constexpr operator VectorType () const noexcept
         {
-            const ScalarType x = simd::get_component<X>(m);
-            const ScalarType y = simd::get_component<Y>(m);
-            const ScalarType z = simd::get_component<Z>(m);
+            const ScalarType x = m[X];
+            const ScalarType y = m[Y];
+            const ScalarType z = m[Z];
             return VectorType(x, y, z);
         }
     };

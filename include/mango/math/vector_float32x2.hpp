@@ -21,17 +21,6 @@ namespace mango::math
         using ScalarType = float;
         enum { VectorSize = 2 };
 
-        template <int X, int Y>
-        struct ShuffleAccessor2
-        {
-            float v[2];
-
-            operator Vector<float, 2> () const
-            {
-                return Vector<float, 2>(v[X], v[Y]);
-            }
-        };
-
         union
         {
             struct { float x, y; };
