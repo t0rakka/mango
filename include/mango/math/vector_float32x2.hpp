@@ -26,10 +26,10 @@ namespace mango::math
             struct { float x, y; };
 
             // generate 2 component accessors
-#define VECTOR2_SHUFFLE_ACCESSOR2(A, B, NAME) \
+#define VECTOR2_SHUFFLE2(A, B, NAME) \
             ShuffleAccessor<Vector<float, 2>, std::array<float, 2>, A, B> NAME
             #include <mango/math/accessor.hpp>
-#undef VECTOR2_SHUFFLE_ACCESSOR2
+#undef VECTOR2_SHUFFLE2
         };
 
         ScalarType& operator [] (size_t index)

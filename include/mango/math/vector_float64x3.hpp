@@ -27,16 +27,16 @@ namespace mango::math
             struct { double x, y, z; };
 
             // generate 2 component accessors
-#define VECTOR3_SHUFFLE_ACCESSOR2(A, B, NAME) \
+#define VECTOR3_SHUFFLE2(A, B, NAME) \
             ShuffleAccessor<Vector<double, 2>, std::array<double, 3>, A, B> NAME
             #include <mango/math/accessor.hpp>
-#undef VECTOR3_SHUFFLE_ACCESSOR2
+#undef VECTOR3_SHUFFLE2
 
             // generate 3 component accessors
-#define VECTOR3_SHUFFLE_ACCESSOR3(A, B, C, NAME) \
+#define VECTOR3_SHUFFLE3(A, B, C, NAME) \
             ShuffleAccessor<Vector<double, 3>, std::array<double, 3>, A, B, C> NAME
             #include <mango/math/accessor.hpp>
-#undef VECTOR3_SHUFFLE_ACCESSOR3
+#undef VECTOR3_SHUFFLE3
         };
 
         ScalarType& operator [] (size_t index)

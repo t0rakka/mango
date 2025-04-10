@@ -24,10 +24,10 @@ namespace mango::math
             ScalarAccessor<u64, simd::u64x2, 1> y;
 
             // generate 2 component accessors
-#define VECTOR2_SHUFFLE_ACCESSOR2(A, B, NAME) \
+#define VECTOR2_SHUFFLE2(A, B, NAME) \
             ShuffleAccessor<Vector<u64, 2>, simd::u64x2, A, B> NAME
             #include <mango/math/accessor.hpp>
-#undef VECTOR2_SHUFFLE_ACCESSOR2
+#undef VECTOR2_SHUFFLE2
         };
 
         ScalarType& operator [] (size_t index)

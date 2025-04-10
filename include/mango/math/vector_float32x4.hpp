@@ -35,22 +35,22 @@ namespace mango::math
             ScalarAccessor<float, simd::f32x4, 3> w;
 
             // generate 2 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR2(A, B, NAME) \
+#define VECTOR4_SHUFFLE2(A, B, NAME) \
             ShuffleAccessor<Vector<float, 4>, simd::f32x4, A, B> NAME
             #include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR2
+#undef VECTOR4_SHUFFLE2
 
             // generate 3 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR3(A, B, C, NAME) \
+#define VECTOR4_SHUFFLE3(A, B, C, NAME) \
             ShuffleAccessor<Vector<float, 4>, simd::f32x4, A, B, C> NAME
             #include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR3
+#undef VECTOR4_SHUFFLE3
 
             // generate 4 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR4(A, B, C, D, NAME) \
+#define VECTOR4_SHUFFLE4(A, B, C, D, NAME) \
             ShuffleAccessor<Vector<float, 4>, simd::f32x4, A, B, C, D> NAME
             #include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR4
+#undef VECTOR4_SHUFFLE4
         };
 
         ScalarType& operator [] (size_t index)
