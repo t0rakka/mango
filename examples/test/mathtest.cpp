@@ -46,6 +46,76 @@ void print(const Vector<ScalarType, 4>& v)
     printLine("{} {} {} {}", x, y, z, w);
 }
 
+// ----------------------------------------------------------------------
+// vec2, vec4
+// ----------------------------------------------------------------------
+
+void test_vec_size()
+{
+    /* These must be exact sizes, no padding allowed as they will be used as
+       storage for rendering APIs like D3D12 and Vulkan.
+    */
+
+    // half vectors
+    static_assert(sizeof(float16x4) == 8, "float16x4 size == 8");
+
+    // float vectors
+    static_assert(sizeof(float32x2)  ==  8, "float32x2 size == 8");
+    static_assert(sizeof(float32x3)  == 12, "float32x3 size == 12");
+    static_assert(sizeof(float32x4)  == 16, "float32x4 size == 16");
+    static_assert(sizeof(float32x8)  == 32, "float32x8 size == 32");
+    static_assert(sizeof(float32x16) == 64, "float32x16 size == 64");
+
+    // double vectors
+    static_assert(sizeof(float64x2) == 16, "float64x2 size == 16");
+    static_assert(sizeof(float64x3) == 24, "float64x3 size == 24");
+    static_assert(sizeof(float64x4) == 32, "float64x4 size == 32");
+    static_assert(sizeof(float64x8) == 64, "float64x8 size == 64");
+
+    // integer vectors
+    static_assert(sizeof(int32x2)  ==  8, "int32x2 size == 8");
+    static_assert(sizeof(int32x3)  == 12, "int32x3 size == 12");
+    static_assert(sizeof(uint32x2) ==  8, "uint32x2 size == 8");
+    static_assert(sizeof(uint32x3) == 12, "uint32x3 size == 12");
+
+    // 128 bit integer vectors
+    static_assert(sizeof(int8x16)  == 16, "int8x16 size == 16");
+    static_assert(sizeof(int16x8)  == 16, "int16x8 size == 16");
+    static_assert(sizeof(int32x4)  == 16, "int32x4 size == 16");
+    static_assert(sizeof(int64x2)  == 16, "int64x2 size == 16");
+    static_assert(sizeof(uint8x16) == 16, "uint8x16 size == 16");
+    static_assert(sizeof(uint16x8) == 16, "uint16x8 size == 16");
+    static_assert(sizeof(uint32x4) == 16, "uint32x4 size == 16");
+    static_assert(sizeof(uint64x2) == 16, "uint64x2 size == 16");
+
+    // 256 bit integer vectors
+    static_assert(sizeof(int8x32)   == 32, "int8x32 size == 32");
+    static_assert(sizeof(int16x16)  == 32, "int16x16 size == 32");
+    static_assert(sizeof(int32x8)   == 32, "int32x8 size == 32");
+    static_assert(sizeof(int64x4)   == 32, "int64x4 size == 32");
+    static_assert(sizeof(uint8x32)  == 32, "uint8x32 size == 32");
+    static_assert(sizeof(uint16x16) == 32, "uint16x16 size == 32"); 
+    static_assert(sizeof(uint32x8)  == 32, "uint32x8 size == 32");
+    static_assert(sizeof(uint64x4)  == 32, "uint64x4 size == 32");
+
+    // 512 bit integer vectors
+    static_assert(sizeof(int8x64)   == 64, "int8x64 size == 64");
+    static_assert(sizeof(int16x32)  == 64, "int16x32 size == 64");
+    static_assert(sizeof(int32x16)  == 64, "int32x16 size == 64");
+    static_assert(sizeof(int64x8)   == 64, "int64x8 size == 64"); 
+    static_assert(sizeof(uint8x64)  == 64, "uint8x64 size == 64");
+    static_assert(sizeof(uint16x32) == 64, "uint16x32 size == 64");
+    static_assert(sizeof(uint32x16) == 64, "uint32x16 size == 64");
+    static_assert(sizeof(uint64x8)  == 64, "uint64x8 size == 64"); 
+}
+
+void test_vec2()
+{
+    float32x2 a(1.0f, 2.0f);
+    float32x2 r0 = a.xx;
+    printLine("r0: {} {}", r0.x, r0.y);
+}
+
 template <typename ScalarType>
 void test_vec4()
 {
@@ -65,13 +135,20 @@ void test_vec4()
     print(v3);
 }
 
-
-
 // ----------------------------------------------------------------------
-// float32x4
+// float32x3, float32x4
 // ----------------------------------------------------------------------
 
-void test_multiply()
+void test_float32x3()
+{
+    float32x3 a(1.0f, 2.0f, 3.0f);
+    auto r0 = a.xxz;
+    auto r1 = a.xz;
+    MANGO_UNREFERENCED(r0);
+    MANGO_UNREFERENCED(r1);
+}
+
+void test_float32x4()
 {
     float32x4 a(1.0f, 2.0f, 3.0f, 4.0f);
     float32x4 b(5.0f, 6.0f, 7.0f, 8.0f);
@@ -292,22 +369,7 @@ void test_multiply()
     MANGO_UNREFERENCED(m5);
 }
 
-void test_float32x3()
-{
-    float32x3 a(1.0f, 2.0f, 3.0f);
-    auto r0 = a.xxz;
-    auto r1 = a.xz;
-    MANGO_UNREFERENCED(r0);
-    MANGO_UNREFERENCED(r1);
-}
-
-void test_vec2()
-{
-    float32x2 a(1.0f, 2.0f);
-    float32x2 r0 = a.xx;
-    printLine("r0: {} {}", r0.x, r0.y);
-}
-
+/*
 void test_float32x4()
 {
     float32x4 a(1.0f, 2.0f, 3.0f, 4.0f);
@@ -340,18 +402,18 @@ void test_float32x4()
         printLine("v3: {}", length(v3));
     }
 }
+*/
 
 int main()
 {
-    test_float32x4();
-    test_float32x3();
+    test_vec_size();
     test_vec2();
-    test_multiply();
-
     test_vec4<float>();
     test_vec4<double>();
     test_vec4<s32>();
     test_vec4<u32>();
     test_vec4<s64>();
     test_vec4<u64>();
+    test_float32x3();
+    test_float32x4();
 }

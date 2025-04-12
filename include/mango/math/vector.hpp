@@ -273,6 +273,8 @@ namespace mango::math
         }
     };
 
+    // Vector<ScalarType, 2>
+
     template <typename ScalarType__>
     struct Vector<ScalarType__, 2>
     {
@@ -352,6 +354,8 @@ namespace mango::math
             );
         }
     };
+
+    // Vector<ScalarType, 3>
 
     template <typename ScalarType__>
     struct Vector<ScalarType__, 3>
@@ -446,6 +450,8 @@ namespace mango::math
             );
         }
     };
+
+    // Vector<ScalarType, 4>
 
     template <typename ScalarType__>
     struct Vector<ScalarType__, 4>
@@ -560,6 +566,22 @@ namespace mango::math
     // named vector types
     // ------------------------------------------------------------------
 
+    // half vectors
+    using float16x4  = Vector<float16, 4>;
+
+    // float vectors
+    using float32x2  = Vector<float32, 2>;
+    using float32x3  = Vector<float32, 3>;
+    using float32x4  = Vector<float32, 4>;
+    using float32x8  = Vector<float32, 8>;
+    using float32x16 = Vector<float32, 16>;
+
+    // double vectors
+    using float64x2  = Vector<float64, 2>;
+    using float64x3  = Vector<float64, 3>;
+    using float64x4  = Vector<float64, 4>;
+    using float64x8  = Vector<float64, 8>;
+
     // integer vectors
     using int32x2  = Vector<s32, 2>;
     using int32x3  = Vector<s32, 3>;
@@ -595,22 +617,6 @@ namespace mango::math
     using uint16x32 = Vector<u16, 32>;
     using uint32x16 = Vector<u32, 16>;
     using uint64x8  = Vector<u64, 8>;
-
-    // half vectors
-    using float16x4  = Vector<float16, 4>;
-
-    // float vectors
-    using float32x2  = Vector<float32, 2>;
-    using float32x3  = Vector<float32, 3>;
-    using float32x4  = Vector<float32, 4>;
-    using float32x8  = Vector<float32, 8>;
-    using float32x16 = Vector<float32, 16>;
-
-    // double vectors
-    using float64x2  = Vector<float64, 2>;
-    using float64x3  = Vector<float64, 3>;
-    using float64x4  = Vector<float64, 4>;
-    using float64x8  = Vector<float64, 8>;
 
     // 128 bit vector masks
     using mask8x16   = simd::mask8x16;
