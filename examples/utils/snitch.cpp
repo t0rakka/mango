@@ -230,14 +230,9 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     for (auto node : state.files)
     {
-
-        // MANGO TODO: compute checksum
-#if 0
+        // compute checksum
         File file(path, node.name);
         u32 checksum = crc32c(0, file);
-#else
-        u32 checksum = 0;
-#endif
 
         manager.files.push_back({node.name, node.size, checksum});
 

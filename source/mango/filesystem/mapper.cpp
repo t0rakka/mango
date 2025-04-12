@@ -77,9 +77,10 @@ namespace mango::filesystem
     {
     }
 
-    FileInfo::FileInfo(const std::string& name, u64 size, u32 flags)
+    FileInfo::FileInfo(const std::string& name, u64 size, u32 flags, u32 checksum)
         : size(size)
         , flags(flags)
+        , checksum(checksum)
         , name(name)
     {
     }
@@ -117,11 +118,11 @@ namespace mango::filesystem
     // FileIndex
     // -----------------------------------------------------------------
 
-    void FileIndex::emplace(const std::string& name, u64 size, u32 flags)
+    void FileIndex::emplace(const std::string& name, u64 size, u32 flags, u32 checksum)
     {
         if (!name.empty())
         {
-            files.emplace_back(name, size, flags);
+            files.emplace_back(name, size, flags, checksum);
  
             const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
             const bool isContainer = (flags & FileInfo::CONTAINER) != 0;
@@ -132,6 +133,12 @@ namespace mango::filesystem
                 files.emplace_back(name + "/", 0, flags | FileInfo::DIRECTORY | FileInfo::CONTAINER);
             }
         }
+    }
+
+    void FileIndex::emplace(const std::string& name, u64 size, u32 flags)
+    {
+        u32 checksum = 0;
+        emplace(name, size, flags, checksum);
     }
 
     void FileIndex::emplace(const std::string& name)
