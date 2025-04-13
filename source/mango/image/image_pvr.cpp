@@ -349,7 +349,11 @@ namespace
                     format = LuminanceFormat(8, Format::UNORM, 4, 4);
                     break;
                 case 0x27: // LVU 655
+                    // MANGO TODO
+                    break;
                 case 0x28: // XLVU 8888
+                    // MANGO TODO
+                    break;
                 case 0x29: // QWVU 8888
                     // MANGO TODO
                     break;
