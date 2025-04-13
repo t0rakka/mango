@@ -192,20 +192,22 @@ namespace
         case VK_BACK:      code = KEYCODE_BACKSPACE; break;
         case VK_TAB:       code = KEYCODE_TAB; break;
         case VK_RETURN:    code = KEYCODE_RETURN; break;
-        //case VK_TODO:      code = KEYCODE_LEFT_ALT; break;
-        //case VK_TODO:      code = KEYCODE_RIGHT_ALT; break;
+        //case VK_TODO:      code = KEYCODE_ENTER; break; // uses sane value as VK_RETURN
+            // NOTE lParam & 0x1000000 means ENTER key, otherwise RETURN key
+        //case VK_TODO:      code = KEYCODE_LEFT_ALT; break; // should be VK_LMENU - must test
+        //case VK_TODO:      code = KEYCODE_RIGHT_ALT; break; // should be VK_RMENU - must test
         case VK_SPACE:     code = KEYCODE_SPACE; break;
-        //case VK_TODO:      code = KEYCODE_CAPS_LOCK; break;
+        //case VK_TODO:      code = KEYCODE_CAPS_LOCK; break; // should be VK_CAPITAL - must test
         case VK_SHIFT:     code = KEYCODE_SHIFT; break;
         case VK_LSHIFT:    code = KEYCODE_LEFT_SHIFT; break;
         case VK_RSHIFT:    code = KEYCODE_RIGHT_SHIFT; break;
         case VK_CONTROL:   code = KEYCODE_CONTROL; break;
         case VK_LCONTROL:  code = KEYCODE_LEFT_CONTROL; break;
         case VK_RCONTROL:  code = KEYCODE_RIGHT_CONTROL; break;
-        //case VK_TODO:      code = KEYCODE_LEFT_SUPER; break;
-        //case VK_TODO:      code = KEYCODE_RIGHT_SUPER; break;
-        //case VK_TODO:      code = KEYCODE_MENU; break;
-        //case VK_TODO:      code = KEYCODE_ALTGR; break;
+        //case VK_TODO:      code = KEYCODE_LEFT_SUPER; break; // should be VK_LWIN - must test 
+        //case VK_TODO:      code = KEYCODE_RIGHT_SUPER; break; // should be VK_RWIN - must test
+        //case VK_TODO:      code = KEYCODE_MENU; break; // should be VK_LMENU or VK_RMENU - must test
+        //case VK_TODO:      code = KEYCODE_ALTGR; break; // should be VK_MENU - must test
         case VK_PRIOR:     code = KEYCODE_PAGE_UP; break;
         case VK_NEXT:      code = KEYCODE_PAGE_DOWN; break;
         case VK_INSERT:    code = KEYCODE_INSERT; break;
@@ -218,7 +220,7 @@ namespace
         case VK_DOWN:      code = KEYCODE_DOWN; break;
         case VK_PRINT:     code = KEYCODE_PRINT_SCREEN; break;
         case VK_SCROLL:    code = KEYCODE_SCROLL_LOCK; break;
-        //case VK_TODO:      code = KEYCODE_PAUSE_BREAK; break;
+        //case VK_TODO:      code = KEYCODE_PAUSE_BREAK; break; // should be VK_PAUSE - must test
         case VK_NUMPAD0:   code = KEYCODE_NUMPAD0; break;
         case VK_NUMPAD1:   code = KEYCODE_NUMPAD1; break;
         case VK_NUMPAD2:   code = KEYCODE_NUMPAD2; break;
@@ -234,7 +236,6 @@ namespace
         case VK_MULTIPLY:  code = KEYCODE_MULTIPLY; break;
         case VK_SUBTRACT:  code = KEYCODE_SUBTRACT; break;
         case VK_ADD:       code = KEYCODE_ADDITION; break;
-        //case VK_TODO:      code = KEYCODE_ENTER; break;
         case VK_DECIMAL:   code = KEYCODE_DECIMAL; break;
         }
 
