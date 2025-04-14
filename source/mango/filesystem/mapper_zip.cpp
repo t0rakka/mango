@@ -493,17 +493,9 @@ namespace
         }
         else
         {
-            // NOTE: the CRC/password check should be same for version > 3.0
+            // NOTE: the CRC/password check should be same for version >= 3.0
             //       but some compression programs don't create compatible
             //       dcheader so the check would fail above.
-
-#if 0 // MANGO TODO: the condition is reversed here.. need more testing (check specs!)
-            if (keyfile[11] == (crc >> 24))
-            {
-                // incorrect password
-                return false;
-            }
-#endif
         }
 
         // read compressed data & decrypt
