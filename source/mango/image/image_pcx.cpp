@@ -434,9 +434,9 @@ namespace
 
                             // Extract CGA settings from EGA palette bytes
                             const int background_color = palette_data[0] >> 4;  // 0-15
-                            const int color_burst = (palette_data[3] & 0x80) >> 7;  // 0 or 1
-                            const int palette_select = (palette_data[3] & 0x40) >> 6;  // 0 or 1
-                            const int intensity = (palette_data[3] & 0x20) >> 5;  // 0 or 1
+                            const int color_burst = (palette_data[3] & 0x80) >> 7;  // 0: color or 1: monochrome
+                            const int palette_select = (palette_data[3] & 0x40) >> 6;  // 0: yellow or 1: white
+                            const int intensity = (palette_data[3] & 0x20) >> 5;  // 0: dim or 1: bright
                             //printLine("background: {}, color_burst: {}, palette_select: {}, intensity: {}", background_color, color_burst, palette_select, intensity);
 
                             // Configure the 4-color palette based on CGA settings
