@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
@@ -11,6 +11,56 @@ namespace
 {
     using namespace mango;
     using namespace mango::image;
+
+    // https://github.com/qb40/deluxe-paint-animation-kit/blob/master/PCX.TXT
+    // https://people.sc.fsu.edu/~jburkardt/txt/pcx_format.txt
+    // https://www.fileformat.info/format/pcx/egff.htm
+
+    // ------------------------------------------------------------
+    // CGA/EGA 16 color palette
+    // ------------------------------------------------------------
+
+#if 0
+    const Color g_cga_palette [] =
+    {
+        Color(0x00, 0x00, 0x00, 0xff), // black
+        Color(0x00, 0x00, 0xaa, 0xff), // low blue
+        Color(0x00, 0xaa, 0x00, 0xff), // low green
+        Color(0x00, 0xaa, 0xaa, 0xff), // low cyan
+        Color(0xaa, 0x00, 0x00, 0xff), // low red
+        Color(0xaa, 0x00, 0xaa, 0xff), // low magenta
+        Color(0xaa, 0x55, 0x00, 0xff), // brown
+        Color(0xaa, 0xaa, 0xaa, 0xff), // light gray
+        Color(0x55, 0x55, 0x55, 0xff), // dark gray
+        Color(0x55, 0x55, 0xff, 0xff), // high blue
+        Color(0x55, 0xff, 0x55, 0xff), // high green
+        Color(0x55, 0xff, 0xff, 0xff), // high cyan
+        Color(0xff, 0x55, 0x55, 0xff), // high red
+        Color(0xff, 0x55, 0xff, 0xff), // high magenta
+        Color(0xff, 0xff, 0x55, 0xff), // yellow
+        Color(0xff, 0xff, 0xff, 0xff), // white
+    };
+#endif
+
+    const Color g_ega_palette [] =
+    {
+        Color(0x00, 0x00, 0x00, 0xff), // black
+        Color(0x00, 0x00, 0xaa, 0xff), // blue
+        Color(0x00, 0xaa, 0x00, 0xff), // green
+        Color(0x00, 0xaa, 0xaa, 0xff), // cyan
+        Color(0xaa, 0x00, 0x00, 0xff), // red
+        Color(0xaa, 0x00, 0xaa, 0xff), // magenta
+        Color(0xaa, 0xaa, 0x00, 0xff), // brown/yellow
+        Color(0xaa, 0xaa, 0xaa, 0xff), // light gray
+        Color(0x55, 0x55, 0x55, 0xff), // dark gray
+        Color(0x55, 0x55, 0xff, 0xff), // bright blue
+        Color(0x55, 0xff, 0x55, 0xff), // bright green
+        Color(0x55, 0xff, 0xff, 0xff), // bright cyan
+        Color(0xff, 0x55, 0x55, 0xff), // bright red
+        Color(0xff, 0x55, 0xff, 0xff), // bright magenta
+        Color(0xff, 0xff, 0x55, 0xff), // yellow
+        Color(0xff, 0xff, 0xff, 0xff), // white
+    };
 
     // ------------------------------------------------------------
     // .pcx parser
@@ -80,6 +130,11 @@ namespace
                 return;
             }
 
+            //printLine("PCX.Version: {}", Version);
+            //printLine("PCX.BitsPerPixel: {}", BitsPerPixel);
+            //printLine("PCX.NPlanes: {}", NPlanes);
+            //printLine("PCX.isPaletteMarker: {}", isPaletteMarker);
+
             header.width   = int(Xmax - Xmin + 1);
             header.height  = int(Ymax - Ymin + 1);
             header.depth   = 0;
@@ -117,6 +172,29 @@ namespace
                 std::memset(dest, sample, count);
                 dest += count;
             }
+        }
+    }
+
+    void decode2(const Surface& s, u8* buffer, int scansize)
+    {
+        const int width = s.width;
+        const int height = s.height;
+        const size_t stride = s.stride;
+        u8* image = s.image;
+
+        for (int y = 0; y < height; ++y)
+        {
+            for (int x = 0; x < width; x += 4)
+            {
+                u8 data = buffer[x / 4];
+                image[x + 0] = ((data >> 7) & 0x01) | ((data >> 5) & 0x02);
+                image[x + 1] = ((data >> 5) & 0x01) | ((data >> 3) & 0x02);
+                image[x + 2] = ((data >> 3) & 0x01) | ((data >> 1) & 0x02);
+                image[x + 3] = ((data >> 1) & 0x01) | ((data << 1) & 0x02);
+            }
+
+            buffer += scansize;
+            image += stride;
         }
     }
 
@@ -297,6 +375,107 @@ namespace
                             {
                                 Bitmap indices(width, height, LuminanceFormat(8, Format::UNORM, 8, 0));
                                 decode4(indices, buffer, scansize);
+
+                                for (int y = 0; y < height; ++y)
+                                {
+                                    u32* d = temp.address<u32>(0, y);
+                                    u8* s = indices.address<u8>(0, y);
+                                    for (int x = 0; x < width; ++x)
+                                    {
+                                        d[x] = palette[s[x]];
+                                    }
+                                }
+                                dest.blit(0, 0, temp);
+                            }
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                    break;
+
+                case 2:
+                    switch (m_pcx_header.NPlanes)
+                    {
+                        case 1:
+                        {
+                            Palette palette;
+                            palette.size = 4;
+
+                            /*
+                            if (m_pcx_header.isPaletteMarker)
+                            {
+                                // read palette
+                                const u8* pal = m_memory.address + m_memory.size - 768;
+                                for (u32 i = 0; i < palette.size; ++i)
+                                {
+                                    palette[i] = Color(pal[0], pal[1], pal[2], 0xff);
+                                    pal += 3;
+                                }
+                            }
+                            else
+                            {
+                                // read palette
+                                const u8* pal = m_pcx_header.ColorMap;
+                                for (u32 i = 0; i < palette.size; ++i)
+                                {
+                                    palette[i] = Color(pal[0], pal[1], pal[2], 0xff);
+                                    pal += 3;
+                                }
+                            }
+                            */
+
+#if 1
+                            // NOTE: This is a hack to get the correct palette for the 2-bit mode
+                            //       The actual palette is stored in the EGA palette bytes
+                            //       We need to extract the CGA settings from the EGA palette bytes
+                            //       and then use the CGA palette to get the correct palette for the 2-bit mode
+                            const u8* palette_data = m_pcx_header.ColorMap;
+
+                            // Extract CGA settings from EGA palette bytes
+                            const int background_color = palette_data[0] >> 4;  // 0-15
+                            const int color_burst = (palette_data[3] & 0x80) >> 7;  // 0 or 1
+                            const int palette_select = (palette_data[3] & 0x40) >> 6;  // 0 or 1
+                            const int intensity = (palette_data[3] & 0x20) >> 5;  // 0 or 1
+                            //printLine("background: {}, color_burst: {}, palette_select: {}, intensity: {}", background_color, color_burst, palette_select, intensity);
+
+                            // Configure the 4-color palette based on CGA settings
+                            palette[3] = g_ega_palette[background_color];  // background
+
+                            if (color_burst == 1)  // color mode
+                            {
+                                if (palette_select == 0)  // yellow palette
+                                {
+                                    palette[1] = g_ega_palette[intensity ? 10 : 2];   // green
+                                    palette[2] = g_ega_palette[intensity ? 12 : 4];   // red
+                                    palette[0] = g_ega_palette[intensity ? 14 : 6];   // yellow/brown
+                                }
+                                else  // white palette
+                                {
+                                    palette[1] = g_ega_palette[intensity ? 11 : 3];   // cyan
+                                    palette[2] = g_ega_palette[intensity ? 13 : 5];   // magenta
+                                    palette[0] = g_ega_palette[intensity ? 15 : 7];   // white/light gray
+                                }
+                            }
+                            else  // monochrome mode
+                            {
+                                // In monochrome, we use intensity levels of the background color
+                                const int base_color = background_color & 7;
+                                palette[1] = g_ega_palette[base_color];
+                                palette[2] = g_ega_palette[base_color + 8];
+                                palette[0] = g_ega_palette[15];  // white
+                            }
+#endif
+
+                            if (options.palette)
+                            {
+                                *options.palette = palette;
+                                decode2(dest, buffer, scansize);
+                            }
+                            else
+                            {
+                                Bitmap indices(width, height, LuminanceFormat(8, Format::UNORM, 8, 0));
+                                decode2(indices, buffer, scansize);
 
                                 for (int y = 0; y < height; ++y)
                                 {
