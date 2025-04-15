@@ -810,6 +810,12 @@ namespace mango::math
             return Vector<ScalarType, VectorSize>(simd::get_component<Index>(m));
         }
 
+        constexpr ScalarAccessor& operator = (const ScalarAccessor& accessor) noexcept
+        {
+            m = simd::set_component<Index>(m, ScalarType(accessor));
+            return *this;
+        }
+
         constexpr ScalarAccessor& operator = (ScalarType s) noexcept
         {
             m = simd::set_component<Index>(m, s);
