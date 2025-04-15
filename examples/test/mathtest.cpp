@@ -36,6 +36,19 @@ using namespace mango::math;
 
 */
 
+bool eq(float a, float b)
+{
+    // "good enough"
+    return std::abs(a - b) < 0.00001f;
+}
+
+void print(const char* text, float32x4 v, float x, float y, float z, float w)
+{
+    bool identical = eq(v.x, x) && eq(v.y, y) && eq(v.z, z) && eq(v.w, w);
+    const char* status = identical ? "OK" : "FAILED";
+    printf("%s %f %f %f %f %s\n", text, float(v.x), float(v.y), float(v.z), float(v.w), status);
+}
+
 template <typename ScalarType>
 void print(const Vector<ScalarType, 4>& v)
 {
@@ -44,6 +57,77 @@ void print(const Vector<ScalarType, 4>& v)
     float z = v.z;
     float w = v.w;
     printLine("{} {} {} {}", x, y, z, w);
+}
+
+void test1(float32x4 a, float32x4 b)
+{
+    a = b.x;
+    print("[test1] a:", a, 0.2f, 0.2f, 0.2f, 0.2f);
+}
+
+void test2(float32x4 a, float32x4 b)
+{
+    a.x = b.x;
+    print("[test2] a:", a, 0.2f, 2.0f, 3.0f, 4.0f);
+}
+
+void test3(float32x4 a, float32x2 b)
+{
+    a.x = b.x;
+    print("[test3] a:", a, 7.0f, 2.0f, 3.0f, 4.0f);
+}
+
+void test4(float32x4 a, float32x3 b)
+{
+    a.y = b.z;
+    print("[test4] a:", a, 1.0f, 5.0f, 3.0f, 4.0f);
+}
+
+void test5(float32x4 a, float32x4 b)
+{
+    a = a * b.x;
+    print("[test5] a:", a, 0.2f, 0.4f, 0.6f, 0.8f);
+}
+
+void test6(float32x4 a, float32x4 b)
+{
+    a = a.xxyy * (b.w + 1.0f) + b.x * a.yywx / (b.xxzz + 2.0f);
+    print("[test6] a:", a, 1.981818f, 1.981818f, 3.907692f, 3.676923f);
+}
+
+void test7(float32x4 a, float32x4 b)
+{
+    a.x = b.x;
+    a.y += b.y;
+    a.z *= b.z;
+    a.w /= b.w;
+    print("[test7] a:", a, 0.2f, 2.4f, 1.8f, 5.0f);
+}
+
+void test8(float32x4 a, float32x4 b)
+{
+    float32x4 c;
+    c = a.xxzz + b * 2.0f * a.x;
+    c.x = b.x;
+    c = a.xxyy * (b.w + 1.0f) + b.x * a.yywx / (b.xxzz + 2.0f);
+    c = (a.x * b.y - 2.0f) * b.xxxx + a * min(a.xzzw, b.yywx) * std::clamp<float>(a.z, 1.0f, 2.0f);
+}
+
+void test()
+{
+    float32x4 a(1.00f, 2.00f, 3.00f, 4.00f);
+    float32x4 b(0.20f, 0.40f, 0.60f, 0.80f);
+    float32x2 c(7.0f);
+    float32x3 d(5.0f);
+
+    test1(a, b);
+    test2(a, b);
+    test3(a, c);
+    test4(a, d);
+    test5(a, b);
+    test6(a, b);
+    test7(a, b);
+    test8(a, b);
 }
 
 // ----------------------------------------------------------------------
@@ -113,7 +197,7 @@ void test_vec2()
 {
     float32x2 a(1.0f, 2.0f);
     float32x2 r0 = a.xx;
-    printLine("r0: {} {}", r0.x, r0.y);
+    MANGO_UNREFERENCED(r0);
 }
 
 template <typename ScalarType>
@@ -129,10 +213,10 @@ void test_vec4()
     VectorType v2 = a + b.y;
     VectorType v3 = a + ScalarType(2);
 
-    print(v0);
-    print(v1);
-    print(v2);
-    print(v3);
+    MANGO_UNREFERENCED(v0);
+    MANGO_UNREFERENCED(v1);
+    MANGO_UNREFERENCED(v2);
+    MANGO_UNREFERENCED(v3);
 }
 
 // ----------------------------------------------------------------------
@@ -406,6 +490,7 @@ void test_float32x4()
 
 int main()
 {
+    test();
     test_vec_size();
     test_vec2();
     test_vec4<float>();
