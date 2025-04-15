@@ -1012,7 +1012,7 @@ namespace mango::simd
         s32x4 mantissa = bitwise_and(u, s32x4_set(0x03ff));
 
         // NaN or Inf
-        s32x4 a = bitwise_or(s32x4_set(0x7f800000), slli(mantissa, 13));
+        s32x4 a = bitwise_or(s32x4_set(0x7f800000), slli<13>(mantissa));
 
         // Zero or Denormal
         const s32x4 magic = s32x4_set(0x3f000000);
@@ -1021,7 +1021,7 @@ namespace mango::simd
         b = reinterpret<s32x4>(sub(reinterpret<f32x4>(b), reinterpret<f32x4>(magic)));
 
         // Numeric Value
-        s32x4 c = add(s32x4_set(0x38000000), slli(no_sign, 13));
+        s32x4 c = add(s32x4_set(0x38000000), slli<13>(no_sign));
 
         // Select a, b, or c based on exponent
         mask32x4 mask;
@@ -1034,7 +1034,7 @@ namespace mango::simd
         result = select(mask, a, result);
 
         // Sign
-        result = bitwise_or(result, slli(sign, 16));
+        result = bitwise_or(result, slli<16>(sign));
 
         return reinterpret<f32x4>(result);
     }
@@ -1046,7 +1046,7 @@ namespace mango::simd
         const s32x4 vinf = s32x4_set(31 << 23);
 
         const s32x4 u = reinterpret<s32x4>(f);
-        const s32x4 sign = srli(bitwise_and(u, s32x4_set(0x80000000)), 16);
+        const s32x4 sign = srli<16>(bitwise_and(u, s32x4_set(0x80000000)));
 
         const s32x4 vexponent = s32x4_set(0x7f800000);
 
@@ -1054,7 +1054,7 @@ namespace mango::simd
         const mask32x4 s0 = compare_eq(bitwise_and(u, vexponent), vexponent);
         s32x4 mantissa = bitwise_and(u, s32x4_set(0x007fffff));
         mask32x4 x0 = compare_eq(mantissa, s32x4_zero());
-        mantissa = select(x0, s32x4_zero(), srai(mantissa, 13));
+        mantissa = select(x0, s32x4_zero(), srai<13>(mantissa));
         const s32x4 v0 = bitwise_or(s32x4_set(0x7c00), mantissa);
 
         s32x4 v1 = bitwise_and(u, s32x4_set(0x7ffff000));
@@ -1063,7 +1063,7 @@ namespace mango::simd
 
 #if defined(MANGO_ENABLE_SSE4_1) && defined(MANGO_CPU_64BIT)
         v1 = _mm_min_epi32(v1, vinf);
-        v1 = srai(v1, 13);
+        v1 = srai<13>(v1);
 
         s32x4 v = select(s0, v0, v1);
         v = bitwise_or(v, sign);
@@ -1072,7 +1072,7 @@ namespace mango::simd
         return _mm_extract_epi64(v, 0);
 #else
         v1 = select(compare_gt(v1, vinf), vinf, v1);
-        v1 = srai(v1, 13);
+        v1 = srai<13>(v1);
 
         s32x4 v = select(s0, v0, v1);
         v = bitwise_or(v, sign);
