@@ -9,6 +9,7 @@
 #include <mango/core/buffer.hpp>
 #include <mango/core/aes.hpp>
 #include <mango/core/hash.hpp>
+#include <mango/core/print.hpp>
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
 #include "indexer.hpp"
@@ -628,6 +629,7 @@ namespace
         // Compare the first 10 bytes of calculated HMAC with stored MAC
         if (std::memcmp(calculated_mac, data + data_size, mac_size) != 0)
         {
+            printLine("HMAC failed.");
             return false;  // Authentication failed
         }
 
@@ -737,7 +739,7 @@ namespace mango::filesystem
 
             u8* buffer = nullptr; // remember allocated memory
 
-            //printf("[ZIP] compression: %d, encryption: %d \n", header.compression, header.encryption);
+            //printLine("[ZIP] compression: {}, encryption: {}", int(header.compression), int(header.encryption));
 
             switch (header.encryption)
             {
@@ -776,6 +778,7 @@ namespace mango::filesystem
                     buffer = new u8[compressed_size];
 
                     const u8* salt = address;
+                    /*
                     address += salt_length;
                     compressed_size -= salt_length;
 
@@ -786,13 +789,14 @@ namespace mango::filesystem
                     const u8* hmac = address;
                     address += AES_MAC_SIZE;
                     compressed_size -= AES_MAC_SIZE;
+                    */
 
                     const u8* pass = reinterpret_cast<const u8*>(password.c_str());
                     bool status = decrypt_winzip_ae2(buffer, pass, password.length(), salt, salt_length, address, compressed_size);
                     if (!status)
                     {
                         delete[] buffer;
-                        MANGO_EXCEPTION("[mapper.zip] AESD decryption failed (probably incorrect password).");
+                        MANGO_EXCEPTION("[mapper.zip] AES decryption failed (probably incorrect password).");
                     }
 
                     address = buffer;
