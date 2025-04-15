@@ -1,11 +1,14 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/core/compress.hpp>
+#include <mango/core/buffer.hpp>
+#include <mango/core/aes.hpp>
+#include <mango/core/hash.hpp>
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
 #include "indexer.hpp"
@@ -31,7 +34,12 @@ namespace
     using namespace mango;
     using mango::filesystem::Indexer;
 
-    enum { DCKEYSIZE = 12 };
+    enum
+    {
+        DCKEYSIZE = 12,
+        AES_PWVERIFYSIZE = 2,  // Password verification value size
+        AES_MAC_SIZE = 10,     // Authentication tag size
+    };
 
     enum Encryption : u8
     {
@@ -504,6 +512,133 @@ namespace
         return true;
     }
 
+    void hmac_sha1(const u8* key, size_t key_len,
+                   const u8* data, size_t data_len, u8* mac)
+    {
+        const size_t block_size = 64;  // SHA1 block size
+        u8 k_pad[block_size] = { 0 };
+
+        // Prepare key
+        if (key_len > block_size)
+        {
+            // Hash long keys
+            auto hash = sha1(ConstMemory(key, key_len));
+            std::memcpy(k_pad, hash.data, 20);
+        }
+        else
+        {
+            std::memcpy(k_pad, key, key_len);
+        }
+
+        // Inner hash
+        u8 inner_pad[block_size];
+        u8 outer_pad[block_size];
+
+        for (size_t i = 0; i < block_size; ++i)
+        {
+            inner_pad[i] = k_pad[i] ^ 0x36;
+            outer_pad[i] = k_pad[i] ^ 0x5c;
+        }
+
+        // Inner hash = SHA1(inner_pad || data)
+        Buffer inner_data(block_size + data_len);
+        std::memcpy(inner_data.data(), inner_pad, block_size);
+        std::memcpy(inner_data.data() + block_size, data, data_len);
+        auto inner_hash = sha1(inner_data);
+        
+        // Outer hash = SHA1(outer_pad || inner_hash)
+        Buffer outer_data(block_size + 20);
+        std::memcpy(outer_data.data(), outer_pad, block_size);
+        std::memcpy(outer_data.data() + block_size, inner_hash.data, 20);
+        auto outer_hash = sha1(outer_data);
+        
+        // Copy result
+        std::memcpy(mac, outer_hash.data, 20);
+    }
+
+    // PBKDF2-HMAC-SHA1 implementation using the above HMAC-SHA1
+    void pbkdf2_hmac_sha1(const u8* password, size_t pass_len,
+                          const u8* salt, size_t salt_len,
+                          int iterations,
+                          u8* derived_key, size_t key_len)
+    {
+        u8 u1[20], u2[20];
+        Buffer salt_block(salt_len + 4);
+
+        std::memcpy(salt_block.data(), salt, salt_len);
+
+        for (size_t block = 1; block * 20 <= key_len; ++block)
+        {
+            // Add block index to salt
+            salt_block[salt_len + 0] = (block >> 24) & 0xFF;
+            salt_block[salt_len + 1] = (block >> 16) & 0xFF;
+            salt_block[salt_len + 2] = (block >> 8) & 0xFF;
+            salt_block[salt_len + 3] = block & 0xFF;
+
+            // First iteration
+            hmac_sha1(password, pass_len, 
+                    salt_block.data(), salt_block.size(),
+                    u1);
+            std::memcpy(u2, u1, 20);
+
+            // Remaining iterations
+            for (int i = 1; i < iterations; ++i)
+            {
+                hmac_sha1(password, pass_len, u1, 20, u1);
+                for (int j = 0; j < 20; ++j)
+                {
+                    u2[j] ^= u1[j];
+                }
+            }
+
+            // Copy block to output
+            size_t offset = (block - 1) * 20;
+            size_t remain = std::min(size_t(20), key_len - offset);
+            std::memcpy(derived_key + offset, u2, remain);
+        }
+    }
+
+    bool decrypt_winzip_ae2(u8* output, const u8* password, size_t pass_len,
+                            const u8* salt, size_t salt_len, const u8* data, size_t size)
+    {
+        // 1. Key derivation
+        const int keySize = salt_len * 2; // AES128: 16 bytes, AES192: 24 bytes, AES256: 32 bytes
+        u8 derived_key[64];    // For both encryption and authentication
+
+        pbkdf2_hmac_sha1(password, pass_len,
+                        salt, 16,  // Salt is always 16 bytes in WinZip
+                        1000,      // WinZip uses 1000 iterations
+                        derived_key, sizeof(derived_key));
+
+        // Split keys
+        u8 encryption_key[32];
+        u8 auth_key[32];
+        std::memcpy(encryption_key, derived_key, keySize);
+        std::memcpy(auth_key, derived_key + keySize, keySize);
+
+        // Verify authentication before decryption
+        const size_t mac_size = 10;
+        const size_t data_size = size - mac_size;
+
+        u8 calculated_mac[20];
+        hmac_sha1(auth_key, keySize, 
+                data, data_size,
+                calculated_mac);
+
+        // Compare the first 10 bytes of calculated HMAC with stored MAC
+        if (std::memcmp(calculated_mac, data + data_size, mac_size) != 0)
+        {
+            return false;  // Authentication failed
+        }
+
+        AES aes(encryption_key, keySize * 8);
+        u8 counter[16] = { 0 };  // Initial counter for CTR mode
+        
+        aes.ctr_block_decrypt(output, data, data_size, counter);
+
+        return true;
+    }
+
 } // namespace
 
 namespace mango::filesystem
@@ -636,12 +771,11 @@ namespace mango::filesystem
                 case ENCRYPTION_AES256:
                 {
                     u32 salt_length = getSaltLength(header.encryption);
-                    MANGO_UNREFERENCED(salt_length);
-                    MANGO_EXCEPTION("[mapper.zip] AES encryption is not supported.");
-#if 0                
-                    size_t compressed_size = size_t(header.compressedSize);
 
-                    const u8* saltvalue = address;
+                    size_t compressed_size = size_t(header.compressedSize);
+                    buffer = new u8[compressed_size];
+
+                    const u8* salt = address;
                     address += salt_length;
                     compressed_size -= salt_length;
 
@@ -650,14 +784,18 @@ namespace mango::filesystem
                     compressed_size -= AES_PWVERIFYSIZE;
 
                     const u8* hmac = address;
-                    address += HMAC_LENGTH;
-                    compressed_size -= HMAC_LENGTH;
+                    address += AES_MAC_SIZE;
+                    compressed_size -= AES_MAC_SIZE;
 
-                    //AES aes(encryption_key, keySize * 8);
+                    const u8* pass = reinterpret_cast<const u8*>(password.c_str());
+                    bool status = decrypt_winzip_ae2(buffer, pass, password.length(), salt, salt_length, address, compressed_size);
+                    if (!status)
+                    {
+                        delete[] buffer;
+                        MANGO_EXCEPTION("[mapper.zip] AESD decryption failed (probably incorrect password).");
+                    }
 
-                    // MANGO TODO: password + salt --> key
-                    // MANGO TODO: decrypt using the generated key
-#endif                
+                    address = buffer;
                     break;
                 }
             }
