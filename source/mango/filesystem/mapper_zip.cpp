@@ -639,18 +639,21 @@ namespace mango::filesystem
                     MANGO_UNREFERENCED(salt_length);
                     MANGO_EXCEPTION("[mapper.zip] AES encryption is not supported.");
 #if 0                
-                    u8* saltvalue = address;
-                    address += salt_length;
-
-                    u8* passverify = address;
-                    address += AES_PWVERIFYSIZE;
-
-                    address += HMAC_LENGTH;
-
                     size_t compressed_size = size_t(header.compressedSize);
+
+                    const u8* saltvalue = address;
+                    address += salt_length;
                     compressed_size -= salt_length;
+
+                    const u8* passverify = address;
+                    address += AES_PWVERIFYSIZE;
                     compressed_size -= AES_PWVERIFYSIZE;
+
+                    const u8* hmac = address;
+                    address += HMAC_LENGTH;
                     compressed_size -= HMAC_LENGTH;
+
+                    //AES aes(encryption_key, keySize * 8);
 
                     // MANGO TODO: password + salt --> key
                     // MANGO TODO: decrypt using the generated key
