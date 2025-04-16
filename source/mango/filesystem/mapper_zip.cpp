@@ -513,6 +513,7 @@ namespace
         return true;
     }
 
+#if 0
     void hmac_sha1(const u8* key, size_t key_len,
                    const u8* data, size_t data_len, u8* mac)
     {
@@ -629,7 +630,7 @@ namespace
         // Compare the first 10 bytes of calculated HMAC with stored MAC
         if (std::memcmp(calculated_mac, data + data_size, mac_size) != 0)
         {
-            printLine("HMAC failed.");
+            //printLine("HMAC failed.");
             return false;  // Authentication failed
         }
 
@@ -640,6 +641,7 @@ namespace
 
         return true;
     }
+#endif
 
 } // namespace
 
@@ -772,6 +774,8 @@ namespace mango::filesystem
                 case ENCRYPTION_AES192:
                 case ENCRYPTION_AES256:
                 {
+                    MANGO_EXCEPTION("[mapper.zip] AES decryption failed (not supported).");
+#if 0
                     u32 salt_length = getSaltLength(header.encryption);
 
                     size_t compressed_size = size_t(header.compressedSize);
@@ -800,6 +804,7 @@ namespace mango::filesystem
                     }
 
                     address = buffer;
+#endif
                     break;
                 }
             }
