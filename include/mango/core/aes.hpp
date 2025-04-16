@@ -66,6 +66,9 @@ namespace mango
 
         void ecb_encrypt(u8* output, const u8* input, size_t length);
         void ecb_decrypt(u8* output, const u8* input, size_t length);
+
+        void ctr_encrypt(u8* output, const u8* input, size_t length, const u8* iv);
+        void ctr_decrypt(u8* output, const u8* input, size_t length, const u8* iv);
     };
 
 } // namespace mango

@@ -1855,4 +1855,52 @@ void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
     }
 }
 
+void AES::ctr_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
+{
+    size_t blocks = length / 16;
+
+    if (blocks)
+    {
+        size_t bytes = blocks * 16;
+        ctr_block_encrypt(output, input, bytes, iv);
+        output += bytes;
+        input += bytes;
+        length -= bytes;
+    }
+
+    if (length)
+    {
+        u8 temp[16] = { 0 };
+        std::memcpy(temp, input, length);
+
+        u8 result[16];
+        ctr_block_encrypt(result, temp, 16, iv);
+        std::memcpy(output, result, length);
+    }
+}
+
+void AES::ctr_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
+{
+    size_t blocks = length / 16;
+
+    if (blocks)
+    {
+        size_t bytes = blocks * 16;
+        ctr_block_decrypt(output, input, bytes, iv);
+        output += bytes;
+        input += bytes;
+        length -= bytes;
+    }
+
+    if (length)
+    {
+        u8 temp[16] = { 0 };
+        std::memcpy(temp, input, length);
+
+        u8 result[16];
+        ctr_block_decrypt(result, temp, 16, iv);
+        std::memcpy(output, result, length);
+    }
+}
+
 } // namespace mango
