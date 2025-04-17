@@ -1257,10 +1257,10 @@ namespace mango::math
     // ShuffleAccessor operators
     // ------------------------------------------------------------------
 
-    template <typename VectorType, typename StorageType, int... Indices>
+    template <typename VectorType, typename StorageType, int... AIndices, int... BIndices>
     static constexpr
-    auto operator * (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
-                     const ShuffleAccessor<VectorType, StorageType, Indices...>& b) noexcept
+    auto operator * (const ShuffleAccessor<VectorType, StorageType, AIndices...>& a,
+                     const ShuffleAccessor<VectorType, StorageType, BIndices...>& b) noexcept
     {
         return VectorType(a) * VectorType(b);
     }

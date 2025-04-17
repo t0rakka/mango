@@ -242,18 +242,18 @@ void test_float32x4()
     float32x4 v2 = a * b.x;
     float32x4 v3 = a * 1.5f;
 
-    float32x4 v4 = b.xyzw * a;
-    float32x4 v5 = b.xyzw * b.xyzw;
-    float32x4 v6 = b.xyzw * b.y;
-    float32x4 v7 = b.xyzw * 1.5f;
+    float32x4 v4 = b.xyyw * a;
+    float32x4 v5 = a.xyww * b.xxzw + a * b.x;
+    float32x4 v6 = b.xyyw * b.y;
+    float32x4 v7 = b.xyxw * 1.5f;
 
     float32x4 s0 = a.y * b;
-    float32x4 s1 = a.y * b.xyzw;
+    float32x4 s1 = a.y * b.xyww;
     float s2 = a.y * b.z;
     float s3 = a.y * 1.5f;
 
     float32x4 s4 = 1.5f * b;
-    float32x4 s5 = 1.5f * b.xyzw;
+    float32x4 s5 = 1.5f * b.xyzx;
     float s6 = 1.5f * b.z;
     float s7 = 1.5f * 1.5f;
 
