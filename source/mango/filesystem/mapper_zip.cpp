@@ -37,8 +37,8 @@ namespace
 
     enum
     {
-        DCKEYSIZE = 12,
-        AES_PWVERIFYSIZE = 2,  // Password verification value size
+        DCKEY_SIZE = 12,
+        AES_PWVERIFY_SIZE = 2,  // Password verification value size
         AES_MAC_SIZE = 10,     // Authentication tag size
     };
 
@@ -109,7 +109,26 @@ namespace
                 length = 16;
                 break;
             default:
-                length = 0;
+                break;
+        }
+        return length;
+    }
+
+    u32 getKeyLength(Encryption encryption)
+    {
+        u32 length = 0;
+        switch (encryption)
+        {
+            case ENCRYPTION_AES128:
+                length = 16;
+                break;
+            case ENCRYPTION_AES192:
+                length = 24;
+                break;
+            case ENCRYPTION_AES256:
+                length = 32;
+                break;
+            default:
                 break;
         }
         return length;
@@ -128,6 +147,9 @@ namespace
         u64  uncompressedSize;  //
         u16  filenameLen;       // length of the filename field following this structure
         u16  extraFieldLen;     // length of the extra field following the filename field
+
+        u16 aes_vendor = 0;     // 0x4145 'AE'
+        u8 aes_strength = 0;    // 1 = AES-128, 2 = AES-192, 3 = AES-256
 
         LocalFileHeader(LittleEndianConstPointer p)
         {
@@ -175,6 +197,10 @@ namespace
                         case 0x9901:
                         {
                             // AES header
+                            e += 2; // skip version number (vendor specific)
+                            aes_vendor = e.read16();
+                            aes_strength = e.read8();
+                            compression = e.read16(); // actual compression method (AES encrypted files store 99 in local header)
                             break;
                         }
                     }
@@ -479,8 +505,8 @@ namespace
         zip_init_keys(keys, password.c_str());
 
         // decrypt the 12 byte encryption header
-        u8 keyfile[DCKEYSIZE];
-        zip_decrypt_buffer(keyfile, dcheader, DCKEYSIZE, keys);
+        u8 keyfile[DCKEY_SIZE];
+        zip_decrypt_buffer(keyfile, dcheader, DCKEY_SIZE, keys);
 
         // check that password is correct one
         if (version < 20)
@@ -514,8 +540,7 @@ namespace
     }
 
 #if 0
-    void hmac_sha1(const u8* key, size_t key_len,
-                   const u8* data, size_t data_len, u8* mac)
+    void hmac_sha1(const u8* key, size_t key_len, const u8* data, size_t data_len, u8* mac)
     {
         const size_t block_size = 64;  // SHA1 block size
         u8 k_pad[block_size] = { 0 };
@@ -601,16 +626,16 @@ namespace
     }
 
     bool decrypt_winzip_ae2(u8* output, const u8* password, size_t pass_len,
-                            const u8* salt, size_t salt_len, const u8* data, size_t size)
+                            const u8* salt, size_t salt_len, const u8* data, size_t size, const u8* hmac)
     {
         // 1. Key derivation
         const int keySize = salt_len * 2; // AES128: 16 bytes, AES192: 24 bytes, AES256: 32 bytes
         u8 derived_key[64];    // For both encryption and authentication
 
         pbkdf2_hmac_sha1(password, pass_len,
-                        salt, 16,  // Salt is always 16 bytes in WinZip
-                        1000,      // WinZip uses 1000 iterations
-                        derived_key, sizeof(derived_key));
+                         salt, 16*0 + salt_len,  // Salt is always 16 bytes in WinZip
+                         1000,      // WinZip uses 1000 iterations
+                         derived_key, sizeof(derived_key));
 
         // Split keys
         u8 encryption_key[32];
@@ -619,25 +644,22 @@ namespace
         std::memcpy(auth_key, derived_key + keySize, keySize);
 
         // Verify authentication before decryption
-        const size_t mac_size = 10;
-        const size_t data_size = size - mac_size;
-
         u8 calculated_mac[20];
         hmac_sha1(auth_key, keySize, 
-                data, data_size,
-                calculated_mac);
+                  data, size,
+                  calculated_mac);
 
         // Compare the first 10 bytes of calculated HMAC with stored MAC
-        if (std::memcmp(calculated_mac, data + data_size, mac_size) != 0)
+        if (std::memcmp(calculated_mac, hmac, 10) != 0)
         {
-            //printLine("HMAC failed.");
+            printLine("HMAC failed.");
             return false;  // Authentication failed
         }
 
         AES aes(encryption_key, keySize * 8);
         u8 counter[16] = { 0 };  // Initial counter for CTR mode
-        
-        aes.ctr_block_decrypt(output, data, data_size, counter);
+
+        aes.ctr_block_decrypt(output, data, size, counter);
 
         return true;
     }
@@ -752,7 +774,7 @@ namespace mango::filesystem
                 {
                     // decryption header
                     const u8* dcheader = address;
-                    address += DCKEYSIZE;
+                    address += DCKEY_SIZE;
 
                     // NOTE: decryption capability reduced on 32 bit platforms
                     const size_t compressed_size = size_t(header.compressedSize);
@@ -776,27 +798,36 @@ namespace mango::filesystem
                 {
                     MANGO_EXCEPTION("[mapper.zip] AES decryption failed (not supported).");
 #if 0
-                    u32 salt_length = getSaltLength(header.encryption);
+                    if (!(localHeader.flags & 0x01))
+                    {
+                        MANGO_EXCEPTION("[mapper.zip] AES encrypted file should have bit 0 set.");
+                    }
 
-                    size_t compressed_size = size_t(header.compressedSize);
-                    buffer = new u8[compressed_size];
-
-                    const u8* salt = address;
-                    /*
-                    address += salt_length;
-                    compressed_size -= salt_length;
-
-                    const u8* passverify = address;
-                    address += AES_PWVERIFYSIZE;
-                    compressed_size -= AES_PWVERIFYSIZE;
-
-                    const u8* hmac = address;
-                    address += AES_MAC_SIZE;
-                    compressed_size -= AES_MAC_SIZE;
-                    */
+                    if (password.empty())
+                    {
+                        MANGO_EXCEPTION("[mapper.zip] AES encrypted file requires a password.");
+                    }
 
                     const u8* pass = reinterpret_cast<const u8*>(password.c_str());
-                    bool status = decrypt_winzip_ae2(buffer, pass, password.length(), salt, salt_length, address, compressed_size);
+
+                    size_t encrypted_size = size_t(header.compressedSize);
+
+                    u32 salt_length = getSaltLength(header.encryption);
+
+                    const u8* salt = address;
+                    address += salt_length;
+                    encrypted_size -= salt_length;
+
+                    const u8* pass_verify = address;
+                    address += AES_PWVERIFY_SIZE;
+                    encrypted_size -= AES_PWVERIFY_SIZE;
+
+                    const u8* encrypted_data = address;
+                    const u8* hmac = address + encrypted_size - AES_MAC_SIZE;
+
+                    buffer = new u8[encrypted_size];
+
+                    bool status = decrypt_winzip_ae2(buffer, pass, password.length(), salt, salt_length, encrypted_data, encrypted_size, hmac);
                     if (!status)
                     {
                         delete[] buffer;
