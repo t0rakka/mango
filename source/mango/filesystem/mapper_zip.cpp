@@ -821,9 +821,10 @@ namespace mango::filesystem
                     const u8* pass_verify = address;
                     address += AES_PWVERIFY_SIZE;
                     encrypted_size -= AES_PWVERIFY_SIZE;
+                    encrypted_size -= AES_MAC_SIZE;
 
                     const u8* encrypted_data = address;
-                    const u8* hmac = address + encrypted_size - AES_MAC_SIZE;
+                    const u8* hmac = address + encrypted_size;
 
                     buffer = new u8[encrypted_size];
 
