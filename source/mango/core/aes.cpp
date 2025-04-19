@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/aes.hpp>
 #include <mango/core/endian.hpp>
@@ -1645,6 +1645,8 @@ AES::~AES()
 {
 }
 
+// ECB (block mode)
+
 void AES::ecb_block_encrypt(u8* output, const u8* input, size_t length)
 {
     if (length & 15)
@@ -1703,6 +1705,8 @@ void AES::ecb_block_decrypt(u8* output, const u8* input, size_t length)
     }
 }
 
+// CBC (block mode)
+
 void AES::cbc_block_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
 {
     if (length & 15)
@@ -1755,57 +1759,7 @@ void AES::cbc_block_decrypt(u8* output, const u8* input, size_t length, const u8
     }
 }
 
-void AES::ctr_block_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
-{
-    if (length & 15)
-    {
-        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
-    }
-
-    aes_encrypt_ctr(input, length, output, m_schedule->schedule, m_bits, iv);
-}
-
-void AES::ctr_block_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
-{
-    if (length & 15)
-    {
-        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
-    }
-
-    aes_decrypt_ctr(input, length, output, m_schedule->schedule, m_bits, iv);
-}
-
-void AES::ccm_block_encrypt(Memory output, ConstMemory input, ConstMemory associated, ConstMemory nonce, int mac_length)
-{
-    aes_u32 cipher_length = aes_u32(output.size);
-    if (cipher_length & 15)
-    {
-        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
-    }
-
-    aes_encrypt_ccm(input.address, aes_u32(input.size),
-                    associated.address, u16(associated.size),
-                    nonce.address, u16(nonce.size),
-                    output.address, &cipher_length, aes_u32(mac_length),
-                    m_schedule->schedule, m_bits);
-}
-
-void AES::ccm_block_decrypt(Memory output, ConstMemory input, ConstMemory associated, ConstMemory nonce, int mac_length)
-{
-    aes_u32 plaintext_length = aes_u32(output.size);
-    if (plaintext_length & 15)
-    {
-        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
-    }
-
-    int mac_authorized = 0;
-    aes_decrypt_ccm(input.address, aes_u32(input.size),
-                    associated.address, u16(associated.size),
-                    nonce.address, u16(nonce.size),
-                    output.address, &plaintext_length,
-                    aes_u32(mac_length), &mac_authorized,
-                    m_schedule->schedule, m_bits);
-}
+// ECB
 
 void AES::ecb_encrypt(u8* output, const u8* input, size_t length)
 {
@@ -1820,7 +1774,7 @@ void AES::ecb_encrypt(u8* output, const u8* input, size_t length)
         length -= bytes;
     }
 
-    if (length)
+    if (length > 0)
     {
         u8 temp[16] = { 0 };
         std::memcpy(temp, input, length);
@@ -1844,7 +1798,7 @@ void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
         length -= bytes;
     }
 
-    if (length)
+    if (length > 0)
     {
         u8 temp[16] = { 0 };
         std::memcpy(temp, input, length);
@@ -1855,52 +1809,39 @@ void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
     }
 }
 
-void AES::ctr_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
+// CTR
+
+void AES::ctr_encrypt(u8* output, const u8* input, size_t length, u8* iv)
 {
-    size_t blocks = length / 16;
+    u8 counter[16];
+    std::memcpy(counter, iv, 16);  // Copy initial IV
 
-    if (blocks)
+    for (size_t offset = 0; offset < length; offset += 16)
     {
-        size_t bytes = blocks * 16;
-        ctr_block_encrypt(output, input, bytes, iv);
-        output += bytes;
-        input += bytes;
-        length -= bytes;
+        // Encrypt the counter to get keystream
+        u8 keystream[16];
+        ecb_block_encrypt(keystream, counter, 16);
+
+        // XOR keystream with ciphertext to get plaintext
+        const size_t block_len = std::min((size_t)16, length - offset);
+        for (size_t i = 0; i < block_len; ++i)
+        {
+            output[offset + i] = input[offset + i] ^ keystream[i];
+        }
+
+        // Increment counter
+        u32 value = littleEndian::uload32(counter + 12);
+        ++value;
+        littleEndian::ustore32(counter + 12, value);
     }
 
-    if (length)
-    {
-        u8 temp[16] = { 0 };
-        std::memcpy(temp, input, length);
-
-        u8 result[16];
-        ctr_block_encrypt(result, temp, 16, iv);
-        std::memcpy(output, result, length);
-    }
+    std::memcpy(iv, counter, 16);
 }
 
-void AES::ctr_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
+void AES::ctr_decrypt(u8* output, const u8* input, size_t length, u8* iv)
 {
-    size_t blocks = length / 16;
-
-    if (blocks)
-    {
-        size_t bytes = blocks * 16;
-        ctr_block_decrypt(output, input, bytes, iv);
-        output += bytes;
-        input += bytes;
-        length -= bytes;
-    }
-
-    if (length)
-    {
-        u8 temp[16] = { 0 };
-        std::memcpy(temp, input, length);
-
-        u8 result[16];
-        ctr_block_decrypt(result, temp, 16, iv);
-        std::memcpy(output, result, length);
-    }
+    // CTR mode is symmetric, so we can use the same function for encryption and decryption
+    ctr_encrypt(output, input, length, iv);
 }
 
 } // namespace mango
