@@ -1813,14 +1813,11 @@ void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
 
 void AES::ctr_encrypt(u8* output, const u8* input, size_t length, u8* iv)
 {
-    u8 counter[16];
-    std::memcpy(counter, iv, 16);  // Copy initial IV
-
     for (size_t offset = 0; offset < length; offset += 16)
     {
         // Encrypt the counter to get keystream
         u8 keystream[16];
-        ecb_block_encrypt(keystream, counter, 16);
+        ecb_block_encrypt(keystream, iv, 16);
 
         // XOR keystream with ciphertext to get plaintext
         const size_t block_len = std::min((size_t)16, length - offset);
@@ -1830,12 +1827,10 @@ void AES::ctr_encrypt(u8* output, const u8* input, size_t length, u8* iv)
         }
 
         // Increment counter
-        u32 value = littleEndian::uload32(counter + 12);
+        u64 value = littleEndian::uload64(iv + 0);
         ++value;
-        littleEndian::ustore32(counter + 12, value);
+        littleEndian::ustore64(iv + 0, value);
     }
-
-    std::memcpy(iv, counter, 16);
 }
 
 void AES::ctr_decrypt(u8* output, const u8* input, size_t length, u8* iv)
