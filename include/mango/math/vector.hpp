@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <algorithm>
+#include <array>
 #include <mango/core/configure.hpp>
 #include <mango/simd/simd.hpp>
 
@@ -201,7 +202,7 @@ namespace mango::math
         using ScalarType = ScalarType__;
         enum { VectorSize = VectorSize__ };
 
-        ScalarType component[VectorSize];
+        std::array<ScalarType, VectorSize> component;
 
         ScalarType& operator [] (unsigned int index)
         {
@@ -215,9 +216,14 @@ namespace mango::math
             return component[index];
         }
 
+        ScalarType* data()
+        {
+            return component.data();
+        }
+
         const ScalarType* data() const
         {
-            return component;
+            return component.data();
         }
 
         explicit Vector()
@@ -283,7 +289,7 @@ namespace mango::math
         enum { VectorSize = 2 };
         union
         {
-            ScalarType component[VectorSize];
+            std::array<ScalarType, VectorSize> component;
             struct
             {
                 ScalarType x, y;
@@ -302,9 +308,14 @@ namespace mango::math
             return component[index];
         }
 
+        ScalarType* data()
+        {
+            return component.data();
+        }
+
         const ScalarType* data() const
         {
-            return component;
+            return component.data();
         }
 
         explicit Vector()
@@ -365,7 +376,7 @@ namespace mango::math
         enum { VectorSize = 3 };
         union
         {
-            ScalarType component[VectorSize];
+            std::array<ScalarType, VectorSize> component;
             struct
             {
                 ScalarType x, y, z;
@@ -384,9 +395,14 @@ namespace mango::math
             return component[index];
         }
 
+        ScalarType* data()
+        {
+            return component.data() ;
+        }
+
         const ScalarType* data() const
         {
-            return component;
+            return component.data();
         }
 
         explicit Vector()
@@ -461,7 +477,7 @@ namespace mango::math
         enum { VectorSize = 4 };
         union
         {
-            ScalarType component[VectorSize];
+            std::array<ScalarType, VectorSize> component;
             struct
             {
                 ScalarType x, y, z, w;
@@ -480,9 +496,14 @@ namespace mango::math
             return component[index];
         }
 
+        ScalarType* data()
+        {
+            return component.data();
+        }
+
         const ScalarType* data() const
         {
-            return component;
+            return component.data();
         }
 
         explicit Vector()

@@ -25,6 +25,7 @@ namespace mango::math
         union
         {
             struct { double x, y, z; };
+            std::array<double, 3> component;
 
             // generate 2 component accessors
 #define VECTOR3_SHUFFLE2(A, B, NAME) \
@@ -42,23 +43,23 @@ namespace mango::math
         ScalarType& operator [] (size_t index)
         {
             assert(index < VectorSize);
-            return data()[index];
+            return component[index];
         }
 
         ScalarType operator [] (size_t index) const
         {
             assert(index < VectorSize);
-            return data()[index];
+            return component[index];
         }
 
         ScalarType* data()
         {
-            return reinterpret_cast<ScalarType *>(this);
+            return component.data();
         }
 
         const ScalarType* data() const
         {
-            return reinterpret_cast<const ScalarType *>(this);
+            return component.data();
         }
 
         explicit Vector() {}
@@ -97,27 +98,6 @@ namespace mango::math
             y = v.y;
             z = v.z;
         }
-
-#if 0
-        template <int X, int Y, int Z>
-        Vector(const ShuffleAccessor3<X, Y, Z>& p)
-        {
-            const double* v = p.v;
-            x = v[X];
-            y = v[Y];
-            z = v[Z];
-        }
-
-        template <int X, int Y, int Z>
-        Vector& operator = (const ShuffleAccessor3<X, Y, Z>& p)
-        {
-            const double* v = p.v;
-            x = v[X];
-            y = v[Y];
-            z = v[Z];
-            return *this;
-        }
-#endif
 
         Vector& operator = (double s)
         {

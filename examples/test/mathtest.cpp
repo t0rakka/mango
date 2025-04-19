@@ -42,10 +42,17 @@ bool eq(float a, float b)
     return std::abs(a - b) < 0.00001f;
 }
 
+void print(const char* text, float32x3 v, float x, float y, float z)
+{
+    bool identical = eq(v.x, x) && eq(v.y, y) && eq(v.z, z);
+    const char* status = identical ? ": OK" : ": FAILED";
+    printf("%s %f %f %f %s\n", text, float(v.x), float(v.y), float(v.z), status);
+}
+
 void print(const char* text, float32x4 v, float x, float y, float z, float w)
 {
     bool identical = eq(v.x, x) && eq(v.y, y) && eq(v.z, z) && eq(v.w, w);
-    const char* status = identical ? "OK" : "FAILED";
+    const char* status = identical ? ": OK" : ": FAILED";
     printf("%s %f %f %f %f %s\n", text, float(v.x), float(v.y), float(v.z), float(v.w), status);
 }
 
@@ -111,6 +118,22 @@ void test8(float32x4 a, float32x4 b)
     c.x = b.x;
     c = a.xxyy * (b.w + 1.0f) + b.x * a.yywx / (b.xxzz + 2.0f);
     c = (a.x * b.y - 2.0f) * b.xxxx + a * min(a.xzzw, b.yywx) * std::clamp<float>(a.z, 1.0f, 2.0f);
+    print("[test8] c:", c, 0.48f, 1.28f, 4.48f, 1.28f);
+}
+
+void test9(float32x4 a, float32x4 b)
+{
+    float32x4 c(a.ywzx);
+    print("[test9] c:", c, 2.0f, 4.0f, 3.0f, 1.0f);
+}
+
+void test10(float32x4 a, float32x4 b)
+{
+    float32x3 c(a.xyz);
+    float32x3 d(c.zxy);
+    float32x3 e = c.zxy;
+    print("[test10] d:", d, 3.0f, 1.0f, 2.0f);
+    print("[test10] e:", e, 3.0f, 1.0f, 2.0f);
 }
 
 void test()
@@ -128,6 +151,8 @@ void test()
     test6(a, b);
     test7(a, b);
     test8(a, b);
+    test9(a, b);
+    test10(a, b);
 }
 
 // ----------------------------------------------------------------------
