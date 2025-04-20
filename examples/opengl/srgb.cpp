@@ -99,6 +99,14 @@ public:
             setTitle("[OpenGLFramebuffer] top: LINEAR, sRGB: DISABLE");
     }
 
+    u8 linearToNonLinear(u8 s) const
+    {
+        float linear = s / 255.0f;
+        float nonlinear = linear_to_srgb(linear);
+        s = u8(nonlinear * 255.0f);
+        return s;
+    }
+
     void gradient(const Surface& surface)
     {
         for (int y = 0; y < surface.height; ++y)
@@ -109,10 +117,9 @@ public:
                 u8 s = x;
                 if (y > surface.height / 2)
                 {
-                    float linear = s / 255.0f;
-                    float nonlinear = linear_to_srgb(linear);
-                    s = u8(nonlinear * 255.0f);
+                    s = linearToNonLinear(s);
                 }
+
                 dest[x] = Color(s, s, s, 0xff);
             }
         }

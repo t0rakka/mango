@@ -150,6 +150,8 @@ namespace mango
                     formatAttribs.push_back(WGL_DOUBLE_BUFFER_ARB);
                     formatAttribs.push_back(GL_TRUE);
 
+                    bool isHDR = false;
+
                     if (wglExtensions.find("WGL_ARB_pixel_format_float") != std::string::npos)
                     {
                         if (config.red > 8 || config.green > 8 || config.blue > 8)
@@ -157,6 +159,7 @@ namespace mango
                             printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : RGBA_FLOAT");
                             formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                             formatAttribs.push_back(WGL_TYPE_RGBA_FLOAT_ARB);
+                            isHDR = true;
                         }
                         else
                         {
@@ -211,10 +214,27 @@ namespace mango
                         }
                     }
 
-                    if (wglExtensions.find("WGL_ARB_framebuffer_sRGB") != std::string::npos)
+                    if (wglExtensions.find("WGL_EXT_colorspace") != std::string::npos)
                     {
-                        printLine(Print::Info, "[OpenGLContext] WGL_ARB_framebuffer_sRGB : ENABLE");
-                        formatAttribs.push_back(WGL_FRAMEBUFFER_SRGB_CAPABLE_EXT);
+                        printLine(Print::Info, "[OpenGLContext] WGL_EXT_colorspace : ENABLE");
+                        if (isHDR)
+                        {
+                            formatAttribs.push_back(WGL_COLORSPACE_EXT);
+                            formatAttribs.push_back(WGL_COLORSPACE_LINEAR_EXT);
+                        }
+                        else
+                        {
+                            formatAttribs.push_back(WGL_COLORSPACE_EXT);
+                            formatAttribs.push_back(WGL_COLORSPACE_SRGB_EXT);
+                        }
+                    }
+                    else
+                    {
+                        if (wglExtensions.find("WGL_ARB_framebuffer_sRGB") != std::string::npos)
+                        {
+                            printLine(Print::Info, "[OpenGLContext] WGL_ARB_framebuffer_sRGB : ENABLE");
+                            formatAttribs.push_back(WGL_FRAMEBUFFER_SRGB_CAPABLE_EXT);
+                        }
                     }
 
                     formatAttribs.push_back(0);
