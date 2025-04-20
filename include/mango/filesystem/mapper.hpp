@@ -24,10 +24,11 @@ namespace mango::filesystem
 
         u64 size;
         u32 flags;
+        u32 checksum;
         std::string name;
 
         FileInfo();
-        FileInfo(const std::string& name, u64 size, u32 flags = 0);
+        FileInfo(const std::string& name, u64 size, u32 flags = 0, u32 checksum = 0);
         ~FileInfo();
 
         bool isFile() const;
@@ -41,6 +42,7 @@ namespace mango::filesystem
     {
         std::vector<FileInfo> files;
 
+        void emplace(const std::string& name, u64 size, u32 flags, u32 checksum);
         void emplace(const std::string& name, u64 size, u32 flags);
         void emplace(const std::string& name);
 

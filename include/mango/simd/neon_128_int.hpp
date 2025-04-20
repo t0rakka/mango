@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -74,14 +74,14 @@ namespace mango::simd
 
 #endif
 
-    static inline u8x16 u8x16_load_low(const u8* source)
+    static inline u8x16 u8x16_load_low(const u8* source) noexcept
     {
         const uint8x8_t low = vld1_u8(source);
         const uint8x8_t high = vdup_n_u8(0);
         return vcombine_u8(low, high);
     }
 
-    static inline void u8x16_store_low(u8* dest, u8x16 a)
+    static inline void u8x16_store_low(u8* dest, u8x16 a) noexcept
     {
         vst1_u8(dest, vget_low_u8(a));
     }
@@ -257,14 +257,14 @@ namespace mango::simd
 
 #endif
 
-    static inline u16x8 u16x8_load_low(const u16* source)
+    static inline u16x8 u16x8_load_low(const u16* source) noexcept
     {
         const uint16x4_t low = vld1_u16(source);
         const uint16x4_t high = vdup_n_u16(0);
         return vcombine_u16(low, high);
     }
 
-    static inline void u16x8_store_low(u16* dest, u16x8 a)
+    static inline void u16x8_store_low(u16* dest, u16x8 a) noexcept
     {
         vst1_u16(dest, vget_low_u16(a));
     }
@@ -503,14 +503,14 @@ namespace mango::simd
 
 #endif
 
-    static inline u32x4 u32x4_load_low(const u32* source)
+    static inline u32x4 u32x4_load_low(const u32* source) noexcept
     {
         const uint32x2_t low = vld1_u32(source);
         const uint32x2_t high = vdup_n_u32(0);
         return vcombine_u32(low, high);
     }
 
-    static inline void u32x4_store_low(u32* dest, u32x4 a)
+    static inline void u32x4_store_low(u32* dest, u32x4 a) noexcept
     {
         vst1_u32(dest, vget_low_u32(a));
     }
@@ -992,14 +992,14 @@ namespace mango::simd
 
 #endif
 
-    static inline s8x16 s8x16_load_low(const s8* source)
+    static inline s8x16 s8x16_load_low(const s8* source) noexcept
     {
         const int8x8_t low = vld1_s8(source);
         const int8x8_t high = vdup_n_s8(0);
         return vcombine_s8(low, high);
     }
 
-    static inline void s8x16_store_low(s8* dest, s8x16 a)
+    static inline void s8x16_store_low(s8* dest, s8x16 a) noexcept
     {
         vst1_s8(dest, vget_low_s8(a));
     }
@@ -1185,14 +1185,14 @@ namespace mango::simd
 
 #endif
 
-    static inline s16x8 s16x8_load_low(const s16* source)
+    static inline s16x8 s16x8_load_low(const s16* source) noexcept
     {
         const int16x4_t low = vld1_s16(source);
         const int16x4_t high = vdup_n_s16(0);
         return vcombine_s16(low, high);
     }
 
-    static inline void s16x8_store_low(s16* dest, s16x8 a)
+    static inline void s16x8_store_low(s16* dest, s16x8 a) noexcept
     {
         vst1_s16(dest, vget_low_s16(a));
     }
@@ -1512,14 +1512,14 @@ namespace mango::simd
 
 #endif
 
-    static inline s32x4 s32x4_load_low(const s32* source)
+    static inline s32x4 s32x4_load_low(const s32* source) noexcept
     {
         const int32x2_t low = vld1_s32(source);
         const int32x2_t high = vdup_n_s32(0);
         return vcombine_s32(low, high);
     }
 
-    static inline void s32x4_store_low(s32* dest, s32x4 a)
+    static inline void s32x4_store_low(s32* dest, s32x4 a) noexcept
     {
         vst1_s32(dest, vget_low_s32(a));
     }
@@ -2006,22 +2006,22 @@ namespace mango::simd
     // mask8x16
     // -----------------------------------------------------------------
 
-    static inline mask8x16 operator & (mask8x16 a, mask8x16 b)
+    static inline mask8x16 mask_and(mask8x16 a, mask8x16 b)
     {
         return vandq_u8(a, b);
     }
 
-    static inline mask8x16 operator | (mask8x16 a, mask8x16 b)
+    static inline mask8x16 mask_or(mask8x16 a, mask8x16 b)
     {
         return vorrq_u8(a, b);
     }
 
-    static inline mask8x16 operator ^ (mask8x16 a, mask8x16 b)
+    static inline mask8x16 mask_xor(mask8x16 a, mask8x16 b)
     {
         return veorq_u8(a, b);
     }
 
-    static inline mask8x16 operator ! (mask8x16 a)
+    static inline mask8x16 mask_not(mask8x16 a)
     {
         return bitwise_not(u8x16(a)).data;
     }
@@ -2078,22 +2078,22 @@ namespace mango::simd
     // mask16x8
     // -----------------------------------------------------------------
 
-    static inline mask16x8 operator & (mask16x8 a, mask16x8 b)
+    static inline mask16x8 mask_and(mask16x8 a, mask16x8 b)
     {
         return vandq_u16(a, b);
     }
 
-    static inline mask16x8 operator | (mask16x8 a, mask16x8 b)
+    static inline mask16x8 mask_or(mask16x8 a, mask16x8 b)
     {
         return vorrq_u16(a, b);
     }
 
-    static inline mask16x8 operator ^ (mask16x8 a, mask16x8 b)
+    static inline mask16x8 mask_xor(mask16x8 a, mask16x8 b)
     {
         return veorq_u16(a, b);
     }
 
-    static inline mask16x8 operator ! (mask16x8 a)
+    static inline mask16x8 mask_not(mask16x8 a)
     {
         return bitwise_not(u16x8(a)).data;
     }
@@ -2154,22 +2154,22 @@ namespace mango::simd
     // mask32x4
     // -----------------------------------------------------------------
 
-    static inline mask32x4 operator & (mask32x4 a, mask32x4 b)
+    static inline mask32x4 mask_and(mask32x4 a, mask32x4 b)
     {
         return vandq_u32(a, b);
     }
 
-    static inline mask32x4 operator | (mask32x4 a, mask32x4 b)
+    static inline mask32x4 mask_or(mask32x4 a, mask32x4 b)
     {
         return vorrq_u32(a, b);
     }
 
-    static inline mask32x4 operator ^ (mask32x4 a, mask32x4 b)
+    static inline mask32x4 mask_xor(mask32x4 a, mask32x4 b)
     {
         return veorq_u32(a, b);
     }
 
-    static inline mask32x4 operator ! (mask32x4 a)
+    static inline mask32x4 mask_not(mask32x4 a)
     {
         return bitwise_not(u32x4(a)).data;
     }
@@ -2232,22 +2232,22 @@ namespace mango::simd
     // mask64x2
     // -----------------------------------------------------------------
 
-    static inline mask64x2 operator & (mask64x2 a, mask64x2 b)
+    static inline mask64x2 mask_and(mask64x2 a, mask64x2 b)
     {
         return vandq_u64(a, b);
     }
 
-    static inline mask64x2 operator | (mask64x2 a, mask64x2 b)
+    static inline mask64x2 mask_or(mask64x2 a, mask64x2 b)
     {
         return vorrq_u64(a, b);
     }
 
-    static inline mask64x2 operator ^ (mask64x2 a, mask64x2 b)
+    static inline mask64x2 mask_xor(mask64x2 a, mask64x2 b)
     {
         return veorq_u64(a, b);
     }
 
-    static inline mask64x2 operator ! (mask64x2 a)
+    static inline mask64x2 mask_not(mask64x2 a)
     {
         return bitwise_not(u64x2(a)).data;
     }

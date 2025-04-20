@@ -38,7 +38,9 @@ namespace
         T* end;
 
         StringBuilder(std::basic_string<T>& str)
-            : s(str), ptr(buffer), end(buffer + SIZE)
+            : s(str)
+            , ptr(buffer)
+            , end(buffer + SIZE)
         {
         }
 
@@ -289,8 +291,6 @@ namespace mango
 
     std::string u16_toBytes(const std::wstring& source)
     {
-        // MANGO TODO: validate against reference implementation
-#if 0
         std::string s;
         StringBuilder<char, 256, 4> sb(s);
 
@@ -298,140 +298,105 @@ namespace mango
 
         for (size_t i = 0; i < length; ++i)
         {
-            const u32 mask = 0x3f;
             const u32 code = source[i];
 
             sb.ensure();
 
             if (code < 0x80)
             {
-                *sb.ptr++ = code;
+                sb.ptr[0] = char(code);
+                sb.ptr += 1;
             }
-            else
+            else if (code < 0x800)
             {
                 sb.ptr[0] = 0xc0 | (code >> 6);
-                sb.ptr[1] = 0x80 | (code & mask);
+                sb.ptr[1] = 0x80 | (code & 0x3f);
                 sb.ptr += 2;
+            }
+            else if (code < 0x10000)
+            {
+                sb.ptr[0] = 0xe0 | (code >> 12);
+                sb.ptr[1] = 0x80 | ((code >> 6) & 0x3f);
+                sb.ptr[2] = 0x80 | (code & 0x3f);
+                sb.ptr += 3;
+            }
+            else if (code < 0x200000)
+            {
+                sb.ptr[0] = 0xf0 | (code >> 18);
+                sb.ptr[1] = 0x80 | ((code >> 12) & 0x3f);
+                sb.ptr[2] = 0x80 | ((code >> 6) & 0x3f);
+                sb.ptr[3] = 0x80 | (code & 0x3f);
+                sb.ptr += 4;
             }
         }
 
         sb.flush();
         return s;
-#else
-        const wchar_t* src = source.c_str();
-        std::string s;
-
-        while (*src)
-        {
-            u32 c = *src++;
-
-            if (c < 0x80)
-            {
-                s.push_back(char(c));
-            }
-            else if (c < 0x800)
-            {
-                s.push_back(0xc0 | (c >> 6));
-                s.push_back(0x80 | (c & 0x3f));
-            }
-            else if (c < 0x10000)
-            {
-                s.push_back(0xe0 | (c >> 12));
-                s.push_back(0x80 | ((c >> 6) & 0x3f));
-                s.push_back(0x80 | (c & 0x3f));
-            }
-            else if (c < 0x200000)
-            {
-                s.push_back(0xf0 | (c >> 18));
-                s.push_back(0x80 | ((c >> 12) & 0x3f));
-                s.push_back(0x80 | ((c >> 6) & 0x3f));
-                s.push_back(0x80 | (c & 0x3f));
-            }
-        }
-
-        return s;
-#endif
     }
 
     std::wstring u16_fromBytes(const std::string& source)
     {
-        // MANGO TODO: validate against reference implementation
-#if 0
         std::wstring s;
-        StringBuilder<wchar_t, 256, 1> sb(s);
+        StringBuilder<wchar_t, 256, 2> sb(s);
 
-        u32 state = 0;
-        u32 code = 0;
-
-        for (u8 c : source)
-        {
-            if (!utf8_decode(state, code, c))
-            {
-                if (code <= 0xffff)
-                {
-                    sb.ensure();
-                    *sb.ptr++ = wchar_t(code);
-                }
-            }
-        }
-
-        sb.flush() ;
-        return s;
-#else
         const char* src = source.c_str();
-        std::wstring s;
-
         while (*src)
         {
-            u32 c = static_cast<u8>(*src++);
-            u32 d;
+            u32 code = static_cast<u8>(*src++);
 
-            if (c < 0x80)
+            if (code >= 0x80)
             {
-                d = c;
-            }
-            else if ((c >> 5) == 6)
-            {
-                if ((*src & 0xc0) != 0x80)
-                    break;
-                d = ((c & 0x1f) << 6) | (*src & 0x3f);
-                src++;
-            }
-            else if ((c >> 4) == 14)
-            {
-                if ((src[0] & 0xc0) != 0x80 || (src[1] & 0xc0) != 0x80)
-                    break;
-                d = ((c & 0xf) << 12) | ((src[0] & 0x3f) << 6) | (src[1] & 0x3f);
-                src += 2;
-            }
-            else if ((c >> 3) == 30)
-            {
-                if ((src[0] & 0xc0) != 0x80 || (src[1] & 0xc0) != 0x80 || (src[2] & 0xc0) != 0x80)
-                    break;
-                d = ((c & 7) << 18) | ((src[0] & 0x3f) << 12) | ((src[1] & 0x3f) << 6) | (src[2] & 0x3f);
-                src += 3;
-            }
-            else
-            {
-                // Ignore bad characters
-                continue;
-            }
+                if ((code >> 5) == 6)
+                {
+                    if ((src[0] & 0xc0) != 0x80)
+                        break;
 
-            if (d > 0xffff)
-            {
-                if (d > 0x10ffff)
+                    code = ((code & 0x1f) << 6) | (*src & 0x3f);
+                    src += 1;
+                }
+                else if ((code >> 4) == 14)
+                {
+                    if ((src[0] & 0xc0) != 0x80 || (src[1] & 0xc0) != 0x80)
+                        break;
+
+                    code = ((code & 0xf) << 12) | ((src[0] & 0x3f) << 6) | (src[1] & 0x3f);
+                    src += 2;
+                }
+                else if ((code >> 3) == 30)
+                {
+                    if ((src[0] & 0xc0) != 0x80 || (src[1] & 0xc0) != 0x80 || (src[2] & 0xc0) != 0x80)
+                        break;
+
+                    code = ((code & 7) << 18) | ((src[0] & 0x3f) << 12) | ((src[1] & 0x3f) << 6) | (src[2] & 0x3f);
+                    src += 3;
+                }
+                else
+                {
+                    // Ignore bad characters
                     continue;
-                s.push_back(((d - 0x10000) >> 10) + 0xd800);
-                s.push_back((d & 0x3ff) + 0xdc00);
+                }
+            }
+
+            sb.ensure();
+
+            if (code > 0xffff)
+            {
+                if (code > 0x10ffff)
+                    continue;
+
+                sb.ptr[0] = wchar_t(((code - 0x10000) >> 10) + 0xd800);
+                sb.ptr[1] = wchar_t((code & 0x3ff) + 0xdc00);
+                sb.ptr += 2;
             }
             else
             {
-                s.push_back(wchar_t(d));
+                sb.ptr[0] = wchar_t(code);
+                sb.ptr += 1;
             }
         }
 
+        sb.flush();
         return s;
-#endif
     }
 
     // -----------------------------------------------------------------

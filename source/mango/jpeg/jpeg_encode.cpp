@@ -1064,32 +1064,6 @@ namespace
     // encode_block_scalar
     // ----------------------------------------------------------------------------
 
-    /* MANGO TODO: g++ -O3 vectorizes this; translate the code to intrinsics for every compiler
-#define SHF(idx, v0, v1, v2, v3, v4, v5, v6, v7) \
-    d[idx * 8 + 0] = s[v0]; \
-    d[idx * 8 + 1] = s[v1]; \
-    d[idx * 8 + 2] = s[v2]; \
-    d[idx * 8 + 3] = s[v3]; \
-    d[idx * 8 + 4] = s[v4]; \
-    d[idx * 8 + 5] = s[v5]; \
-    d[idx * 8 + 6] = s[v6]; \
-    d[idx * 8 + 7] = s[v7];
-
-    static
-    void zigzag_scalar(s16* __restrict d, const s16* __restrict s)
-    {
-        //     |<-- inverse zigzag table -->|
-        SHF(0,  0,  1,  8, 16,  9,  2,  3, 10);
-        SHF(1, 17, 24, 32, 25, 18, 11,  4,  5);
-        SHF(2, 12, 19, 26, 33, 40, 48, 41, 34);
-        SHF(3, 27, 20, 13,  6,  7, 14, 21, 28);
-        SHF(4, 35, 42, 49, 56, 57, 50, 43, 36);
-        SHF(5, 29, 22, 15, 23, 30, 37, 44, 51);
-        SHF(6, 58, 59, 52, 45, 38, 31, 39, 46);
-        SHF(7, 53, 60, 61, 54, 47, 55, 62, 63);
-    }
-    */
-
     static
     u8* encode_block_scalar(HuffmanEncoder& encoder, u8* p, const s16* input, const jpegEncoder::Channel& channel)
     {

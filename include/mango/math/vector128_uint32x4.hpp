@@ -5,7 +5,6 @@
 #pragma once
 
 #include <mango/math/vector.hpp>
-#include <mango/math/vector_simd.hpp>
 
 namespace mango::math
 {
@@ -27,22 +26,22 @@ namespace mango::math
             ScalarAccessor<u32, simd::u32x4, 3> w;
 
             // generate 2 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR2(A, B, NAME) \
-            ShuffleAccessor4x2<u32, simd::u32x4, A, B> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR2
+#define VECTOR4_SHUFFLE2(A, B, NAME) \
+            ShuffleAccessor<Vector<u32, 2>, simd::u32x4, A, B> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR4_SHUFFLE2
 
             // generate 3 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR3(A, B, C, NAME) \
-            ShuffleAccessor4x3<u32, simd::u32x4, A, B, C> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR3
+#define VECTOR4_SHUFFLE3(A, B, C, NAME) \
+            ShuffleAccessor<Vector<u32, 3>, simd::u32x4, A, B, C> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR4_SHUFFLE3
 
             // generate 4 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR4(A, B, C, D, NAME) \
-            ShuffleAccessor4<u32, simd::u32x4, A, B, C, D> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR4
+#define VECTOR4_SHUFFLE4(A, B, C, D, NAME) \
+            ShuffleAccessor<Vector<u32, 4>, simd::u32x4, A, B, C, D> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR4_SHUFFLE4
         };
 
         ScalarType& operator [] (size_t index)
@@ -149,36 +148,24 @@ namespace mango::math
     }
 
     template <>
-    inline Vector<u32, 4> load_low<u32, 4>(const u32 *source)
+    inline Vector<u32, 4> load_low<u32, 4>(const u32 *source) noexcept
     {
         return simd::u32x4_load_low(source);
     }
 
-    static inline void store_low(u32 *dest, Vector<u32, 4> v)
+    static inline void store_low(u32 *dest, Vector<u32, 4> v) noexcept
     {
         simd::u32x4_store_low(dest, v);
     }
 
     // ------------------------------------------------------------------
-    // operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_UNSIGNED_INTEGER_OPERATORS(u32, 4);
-
-    // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
-
-    MATH_SIMD_INTEGER_FUNCTIONS(u32, 4, mask32x4);
-    MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(u32, 4, mask32x4);
 
     static inline Vector<u32, 4> mullo(Vector<u32, 4> a, Vector<u32, 4> b)
     {
         return simd::mullo(a, b);
     }
-
-    MATH_SIMD_BITWISE_FUNCTIONS(u32, 4);
-    MATH_SIMD_COMPARE_FUNCTIONS(u32, 4, mask32x4);
 
     // ------------------------------------------------------------------
     // shift

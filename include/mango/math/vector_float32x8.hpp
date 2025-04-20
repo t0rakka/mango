@@ -1,11 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/math/vector.hpp>
-#include <mango/math/vector_simd.hpp>
 #include <mango/math/vector_float32x4.hpp>
 
 namespace mango::math
@@ -125,21 +124,6 @@ namespace mango::math
             return Vector(0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f);
         }
     };
-
-    // ------------------------------------------------------------------
-    // operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_FLOAT_OPERATORS(float, 8, f32x8);
-
-    // ------------------------------------------------------------------
-    // functions
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_FLOAT_FUNCTIONS(float, 8, f32x8, mask32x8);
-
-    MATH_SIMD_BITWISE_FUNCTIONS(float, 8);
-    MATH_SIMD_COMPARE_FUNCTIONS(float, 8, mask32x8);
 
     // ------------------------------------------------------------------
     // trigonometric functions

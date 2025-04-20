@@ -1,11 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/math/vector.hpp>
-#include <mango/math/vector_simd.hpp>
 #include <mango/math/vector_float32x2.hpp>
 #include <mango/math/vector_float32x3.hpp>
 
@@ -36,22 +35,22 @@ namespace mango::math
             ScalarAccessor<float, simd::f32x4, 3> w;
 
             // generate 2 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR2(A, B, NAME) \
-            ShuffleAccessor4x2<float, simd::f32x4, A, B> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR2
+#define VECTOR4_SHUFFLE2(A, B, NAME) \
+            ShuffleAccessor<Vector<float, 4>, simd::f32x4, A, B> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR4_SHUFFLE2
 
             // generate 3 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR3(A, B, C, NAME) \
-            ShuffleAccessor4x3<float, simd::f32x4, A, B, C> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR3
+#define VECTOR4_SHUFFLE3(A, B, C, NAME) \
+            ShuffleAccessor<Vector<float, 4>, simd::f32x4, A, B, C> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR4_SHUFFLE3
 
             // generate 4 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR4(A, B, C, D, NAME) \
-            ShuffleAccessor4<float, simd::f32x4, A, B, C, D> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR4
+#define VECTOR4_SHUFFLE4(A, B, C, D, NAME) \
+            ShuffleAccessor<Vector<float, 4>, simd::f32x4, A, B, C, D> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR4_SHUFFLE4
         };
 
         ScalarType& operator [] (size_t index)
@@ -189,70 +188,51 @@ namespace mango::math
     };
 
     // ------------------------------------------------------------------
-    // operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_FLOAT_OPERATORS(float, 4, f32x4);
-
-    // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
 
-    MATH_SIMD_FLOAT_FUNCTIONS(float, 4, f32x4, mask32x4);
-
-    static inline float square(Vector<float, 4> a)
-    {
-        return simd::dot4(a, a);
-    }
-
-    static inline float length(Vector<float, 4> a)
-    {
-        return float(std::sqrt(simd::dot4(a, a)));
-    }
-
-    static inline Vector<float, 4> normalize(Vector<float, 4> a)
-    {
-        return simd::mul(a, simd::rsqrt(simd::f32x4_set(simd::dot4(a, a))));
-    }
-
-    static inline float dot(Vector<float, 4> a, Vector<float, 4> b)
+    static inline
+    float dot(Vector<float, 4> a, Vector<float, 4> b)
     {
         return simd::dot4(a, b);
     }
 
-    static inline Vector<float, 4> cross(Vector<float, 4> a, Vector<float, 4> b)
+    static inline
+    Vector<float, 4> cross(Vector<float, 4> a, Vector<float, 4> b)
     {
         return simd::cross3(a, b);
     }
 
-    static inline Vector<float, 4> hmin(Vector<float, 4> v)
+    static inline
+    Vector<float, 4> hmin(Vector<float, 4> v)
     {
         return simd::hmin(v);
     }
 
-    static inline Vector<float, 4> hmax(Vector<float, 4> v)
+    static inline
+    Vector<float, 4> hmax(Vector<float, 4> v)
     {
         return simd::hmax(v);
     }
 
     template <int x, int y, int z, int w>
-    static inline Vector<float, 4> shuffle(Vector<float, 4> a, Vector<float, 4> b)
+    static inline
+    Vector<float, 4> shuffle(Vector<float, 4> a, Vector<float, 4> b)
     {
         return simd::shuffle<x, y, z, w>(a, b);
     }
 
-    static inline Vector<float, 4> movelh(Vector<float, 4> a, Vector<float, 4> b)
+    static inline
+    Vector<float, 4> movelh(Vector<float, 4> a, Vector<float, 4> b)
     {
         return simd::movelh(a, b);
     }
 
-    static inline Vector<float, 4> movehl(Vector<float, 4> a, Vector<float, 4> b)
+    static inline
+    Vector<float, 4> movehl(Vector<float, 4> a, Vector<float, 4> b)
     {
         return simd::movehl(a, b);
     }
-
-    MATH_SIMD_BITWISE_FUNCTIONS(float, 4);
-    MATH_SIMD_COMPARE_FUNCTIONS(float, 4, mask32x4);
 
     // ------------------------------------------------------------------
     // trigonometric functions

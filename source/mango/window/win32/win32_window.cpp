@@ -191,21 +191,20 @@ namespace
         case VK_F12:       code = KEYCODE_F12; break;
         case VK_BACK:      code = KEYCODE_BACKSPACE; break;
         case VK_TAB:       code = KEYCODE_TAB; break;
-        case VK_RETURN:    code = KEYCODE_RETURN; break;
-        //case VK_TODO:      code = KEYCODE_LEFT_ALT; break;
-        //case VK_TODO:      code = KEYCODE_RIGHT_ALT; break;
+        case VK_RETURN:    code = lparam & 0x1000000 ? KEYCODE_ENTER : KEYCODE_RETURN; break;
+        //case VK_LMENU:      code = KEYCODE_LEFT_ALT; break; // not supported
+        //case VK_RMENU:      code = KEYCODE_RIGHT_ALT; break; // not supported
         case VK_SPACE:     code = KEYCODE_SPACE; break;
-        //case VK_TODO:      code = KEYCODE_CAPS_LOCK; break;
+        case VK_CAPITAL:   code = KEYCODE_CAPS_LOCK; break;
         case VK_SHIFT:     code = KEYCODE_SHIFT; break;
         case VK_LSHIFT:    code = KEYCODE_LEFT_SHIFT; break;
         case VK_RSHIFT:    code = KEYCODE_RIGHT_SHIFT; break;
         case VK_CONTROL:   code = KEYCODE_CONTROL; break;
         case VK_LCONTROL:  code = KEYCODE_LEFT_CONTROL; break;
         case VK_RCONTROL:  code = KEYCODE_RIGHT_CONTROL; break;
-        //case VK_TODO:      code = KEYCODE_LEFT_SUPER; break;
-        //case VK_TODO:      code = KEYCODE_RIGHT_SUPER; break;
-        //case VK_TODO:      code = KEYCODE_MENU; break;
-        //case VK_TODO:      code = KEYCODE_ALTGR; break;
+        //case VK_LWIN:      code = KEYCODE_LEFT_SUPER; break; // not supported
+        //case VK_RWIN:      code = KEYCODE_RIGHT_SUPER; break; // not supported
+        //case VK_MENU:      code = KEYCODE_ALTGR; break; // not supported
         case VK_PRIOR:     code = KEYCODE_PAGE_UP; break;
         case VK_NEXT:      code = KEYCODE_PAGE_DOWN; break;
         case VK_INSERT:    code = KEYCODE_INSERT; break;
@@ -218,7 +217,7 @@ namespace
         case VK_DOWN:      code = KEYCODE_DOWN; break;
         case VK_PRINT:     code = KEYCODE_PRINT_SCREEN; break;
         case VK_SCROLL:    code = KEYCODE_SCROLL_LOCK; break;
-        //case VK_TODO:      code = KEYCODE_PAUSE_BREAK; break;
+        //case VK_PAUSE:     code = KEYCODE_PAUSE_BREAK; break; // not supported
         case VK_NUMPAD0:   code = KEYCODE_NUMPAD0; break;
         case VK_NUMPAD1:   code = KEYCODE_NUMPAD1; break;
         case VK_NUMPAD2:   code = KEYCODE_NUMPAD2; break;
@@ -234,7 +233,6 @@ namespace
         case VK_MULTIPLY:  code = KEYCODE_MULTIPLY; break;
         case VK_SUBTRACT:  code = KEYCODE_SUBTRACT; break;
         case VK_ADD:       code = KEYCODE_ADDITION; break;
-        //case VK_TODO:      code = KEYCODE_ENTER; break;
         case VK_DECIMAL:   code = KEYCODE_DECIMAL; break;
         }
 
@@ -245,11 +243,11 @@ namespace
     {
         u32 mask = 0;
         if (::GetKeyState(VK_CONTROL) & 0x8000) mask |= KEYMASK_CONTROL;
-        if (::GetKeyState(VK_SHIFT) & 0x8000) mask |= KEYMASK_SHIFT;
-        if (::GetKeyState(VK_LWIN) & 0x8000) mask |= KEYMASK_SUPER;
-        if (::GetKeyState(VK_RWIN) & 0x8000) mask |= KEYMASK_SUPER;
-        if (::GetKeyState(VK_LMENU) & 0x8000) mask |= KEYMASK_MENU;
-        if (::GetKeyState(VK_RMENU) & 0x8000) mask |= KEYMASK_MENU;
+        if (::GetKeyState(VK_SHIFT)   & 0x8000) mask |= KEYMASK_SHIFT;
+        if (::GetKeyState(VK_LWIN)    & 0x8000) mask |= KEYMASK_SUPER;
+        if (::GetKeyState(VK_RWIN)    & 0x8000) mask |= KEYMASK_SUPER;
+        if (::GetKeyState(VK_LMENU)   & 0x8000) mask |= KEYMASK_MENU;
+        if (::GetKeyState(VK_RMENU)   & 0x8000) mask |= KEYMASK_MENU;
         return mask;
     }
 

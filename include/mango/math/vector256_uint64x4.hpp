@@ -1,11 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/math/vector.hpp>
-#include <mango/math/vector_simd.hpp>
 
 namespace mango::math
 {
@@ -27,22 +26,22 @@ namespace mango::math
             ScalarAccessor<u64, simd::u64x4, 3> w;
 
             // generate 2 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR2(A, B, NAME) \
-            ShuffleAccessor4x2<u64, simd::u64x4, A, B> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR2
+#define VECTOR4_SHUFFLE2(A, B, NAME) \
+            ShuffleAccessor<Vector<u64, 2>, simd::u64x4, A, B> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR4_SHUFFLE2
 
             // generate 3 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR3(A, B, C, NAME) \
-            ShuffleAccessor4x3<u64, simd::u64x4, A, B, C> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR3
+#define VECTOR4_SHUFFLE3(A, B, C, NAME) \
+            ShuffleAccessor<Vector<u64, 3>, simd::u64x4, A, B, C> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR4_SHUFFLE3
 
             // generate 4 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR4(A, B, C, D, NAME) \
-            ShuffleAccessor4<u64, simd::u64x4, A, B, C, D> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR4
+#define VECTOR4_SHUFFLE4(A, B, C, D, NAME) \
+            ShuffleAccessor<Vector<u64, 4>, simd::u64x4, A, B, C, D> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR4_SHUFFLE4
         };
 
         ScalarType& operator [] (size_t index)
@@ -136,21 +135,6 @@ namespace mango::math
             return Vector(0, 1, 2, 3);
         }
     };
-
-    // ------------------------------------------------------------------
-    // operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_UNSIGNED_INTEGER_OPERATORS(u64, 4);
-
-    // ------------------------------------------------------------------
-    // functions
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_INTEGER_FUNCTIONS(u64, 4, mask64x4);
-
-    MATH_SIMD_BITWISE_FUNCTIONS(u64, 4);
-    MATH_SIMD_COMPARE_FUNCTIONS(u64, 4, mask64x4);
 
     // ------------------------------------------------------------------
     // shift

@@ -103,7 +103,7 @@ public:
 
         for (int y = 0; y < height; ++y)
         {
-            q.enqueue([this, &s, width, y, u0, v0, dxdu, dxdv, dydu, dydv]
+            q.enqueue([&s, width, y, u0, v0, dxdu, dxdv, dydu, dydv]
             {
                 u32* scan = s.address<u32>(0, y);
 
@@ -118,7 +118,7 @@ public:
                     double zr0 = zr;
                     double zi0 = zi;
 
-                    while (++n < nmax)
+                    for ( ; n < nmax; ++n)
                     {
                         double temp = zr * zr - zi * zi + zr0;
                         zi = (zr + zr) * zi + zi0;
@@ -143,39 +143,38 @@ public:
             {
                 u32* scan = s.address<u32>(0, y);
 
-                const math::float64x4 four(4);
-                const math::int64x4 one(1);
+                const int nmax = 255;
 
                 double u = u0 + dydu * y;
                 double v = v0 + dydv * y;
 
-                const math::float64x4 ascend = math::float64x4::ascend(); // [0, 1, 2, 3]
-                math::float64x4 cr = ascend * dxdu + u;
-                math::float64x4 ci = ascend * dxdv + v;
+#if 0
+                // NOTE: 128 bit wide vectors are supported as single hardware register with any SIMD ISA
 
-                const math::float64x4 ustep = dxdu * 4.0;
-                const math::float64x4 vstep = dxdv * 4.0;
+                const math::float64x2 ascend = math::float64x2::ascend(); // [0, 1]
+                math::float64x2 cr = ascend * dxdu + u;
+                math::float64x2 ci = ascend * dxdv + v;
 
-                for (int x = 0; x < width; x += 4)
+                const math::float64x2 ustep = dxdu * 2.0;
+                const math::float64x2 vstep = dxdv * 2.0;
+
+                for (int x = 0; x < width; x += 2)
                 {
-                    const int nmax = 255;
-                    int n = 0;
+                    math::float64x2 zr = cr;
+                    math::float64x2 zi = ci;
 
-                    math::float64x4 zr = cr;
-                    math::float64x4 zi = ci;
+                    math::int64x2 count(0);
 
-                    math::int64x4 count(n);
-
-                    while (++n < nmax)
+                    for (int n = 0; n < nmax; ++n)
                     {
-                        math::float64x4 zr2 = zr * zr;
-                        math::float64x4 zi2 = zi * zi;
-                        math::float64x4 zrzi = zr * zi;
+                        math::float64x2 zr2 = zr * zr;
+                        math::float64x2 zi2 = zi * zi;
+                        math::float64x2 zrzi = zr * zi;
                         zr = cr + zr2 - zi2;
                         zi = ci + zrzi + zrzi;
 
-                        math::mask64x4 mask = (zr2 + zi2) < four;
-                        count = math::select(mask, count + one, count);
+                        auto mask = (zr2 + zi2) < 4.0;
+                        count = math::select(mask, count + 1, count);
 
                         if (math::none_of(mask))
                             break;
@@ -186,9 +185,51 @@ public:
 
                     scan[x + 0] = nColor(count[0]);
                     scan[x + 1] = nColor(count[1]);
-                    scan[x + 2] = nColor(count[2]);
-                    scan[x + 3] = nColor(count[3]);
                 }
+#else
+                // NOTE: 256 bit wide integer vectors aren't supported as single hardware register unless targeting AVX2 or higher.
+                //       256 bit wide double vectors aren't supported as single hardware register unless targeting AVX or higher.
+
+                const math::float64x4 ascend = math::float64x4::ascend(); // [0, 1, 2, 3]
+                math::float64x4 cr = ascend * dxdu + u;
+                math::float64x4 ci = ascend * dxdv + v;
+
+                const math::float64x4 ustep = dxdu * 4.0;
+                const math::float64x4 vstep = dxdv * 4.0;
+
+                for (int x = 0; x < width; x += 4)
+                {
+                    math::float64x4 zr = cr;
+                    math::float64x4 zi = ci;
+
+                    math::float64x4 count(0.0);
+
+                    for (int n = 0; n < nmax; ++n)
+                    {
+                        math::float64x4 zr2 = zr * zr;
+                        math::float64x4 zi2 = zi * zi;
+                        math::float64x4 zrzi = zr * zi;
+                        zr = cr + zr2 - zi2;
+                        zi = ci + zrzi + zrzi;
+
+                        auto mask = (zr2 + zi2) < 4.0;
+                        count = math::select(mask, count + 1.0, count);
+
+                        if (math::none_of(mask))
+                            break;
+                    }
+
+                    cr += ustep;
+                    ci += vstep;
+
+                    math::int64x4 icount = math::convert<math::int64x4>(count);
+
+                    scan[x + 0] = nColor(icount[0]);
+                    scan[x + 1] = nColor(icount[1]);
+                    scan[x + 2] = nColor(icount[2]);
+                    scan[x + 3] = nColor(icount[3]);
+                }
+#endif
             });
         }
 

@@ -5,7 +5,6 @@
 #pragma once
 
 #include <mango/math/vector.hpp>
-#include <mango/math/vector_simd.hpp>
 
 namespace mango::math
 {
@@ -114,19 +113,8 @@ namespace mango::math
     };
 
     // ------------------------------------------------------------------
-    // operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_UNSIGNED_INTEGER_OPERATORS(s16, 16);
-    MATH_SIMD_SIGNED_INTEGER_OPERATORS(s16, 16);
-
-    // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
-
-    MATH_SIMD_INTEGER_FUNCTIONS(s16, 16, mask16x16);
-    MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(s16, 16, mask16x16);
-    MATH_SIMD_ABS_INTEGER_FUNCTIONS(s16, 16, mask16x16);
 
     static inline Vector<s16, 16> hadd(Vector<s16, 16> a, Vector<s16, 16> b)
     {
@@ -152,9 +140,6 @@ namespace mango::math
     {
         return simd::mullo(a, b);
     }
-
-    MATH_SIMD_BITWISE_FUNCTIONS(s16, 16);
-    MATH_SIMD_COMPARE_FUNCTIONS(s16, 16, mask16x16);
 
     // ------------------------------------------------------------------
     // shift

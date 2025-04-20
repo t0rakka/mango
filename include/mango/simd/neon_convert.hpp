@@ -5,7 +5,6 @@
 #pragma once
 
 #include <mango/simd/simd.hpp>
-#include <mango/simd/common.hpp>
 
 namespace mango::simd::detail
 {

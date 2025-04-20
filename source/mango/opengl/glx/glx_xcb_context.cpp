@@ -16,6 +16,7 @@
 #include <GL/glx.h>
 #include <X11/Xlib.h>
 #include "../../window/xcb/xcb_window.hpp"
+#include "glx_context.hpp"
 #undef explicit
 
 namespace mango
@@ -23,155 +24,60 @@ namespace mango
     using namespace math;
 
     // -----------------------------------------------------------------------
-    // OpenGLContextXCB
+    // OpenGLContextGLX
     // -----------------------------------------------------------------------
 
-    struct OpenGLContextXCB : OpenGLContextHandle
+    static
+    int contextErrorHandler(Display* display, XErrorEvent* event)
+    {
+        MANGO_UNREFERENCED(display);
+        MANGO_UNREFERENCED(event);
+        return 0;
+    }
+
+    struct OpenGLContextGLX : OpenGLContextHandle
     {
         GLXContext context { 0 };
         bool fullscreen { false };
+
         WindowHandle* window;
         Display* display { nullptr };
 
-        OpenGLContextXCB(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* shared)
+        OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* shared)
             : window(*theContext)
         {
-            // resolve configuration
-            OpenGLContext::Config config;
-            if (pConfig)
-            {
-                config = *pConfig;
-            }
-
-            // Open X display
-            display = XOpenDisplay(nullptr);
-            if (!display)
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] Failed to open X display.");
-            }
-
+            display = XOpenDisplay(NULL);
             int screen = DefaultScreen(display);
 
-            // Get GLX version
-            int version_major, version_minor;
-            if (!glXQueryVersion(display, &version_major, &version_minor))
+            GLXConfiguration glxConfiguration(display, screen, pConfig);
+
+            // print selected fbconfig
+
+            auto selected = glxConfiguration.selected;
+            const auto& glxExtensions = glxConfiguration.extensions;
+
+            auto getAttrib = [=, this] (auto fbconfig, int attribute) -> int
             {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] Failed to query GLX version.");
-            }
+                int value;
+                glXGetFBConfigAttrib(display, fbconfig, attribute, &value);
+                return value;
+            };
 
-            // Configure visual attributes
-            std::vector<int> visualAttribs;
-            visualAttribs.push_back(GLX_X_RENDERABLE);
-            visualAttribs.push_back(True);
+            bool is_sRGB = getAttrib(selected, GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT);
+            bool is_float = getAttrib(selected, GLX_RENDER_TYPE) & GLX_RGBA_FLOAT_BIT_ARB;
 
-            visualAttribs.push_back(GLX_DRAWABLE_TYPE);
-            visualAttribs.push_back(GLX_WINDOW_BIT);
+            printLine(Print::Info, "GLX FBConfig: [{} {} {} {}] D:{} S:{} sRGB:{} Float:{} [XCB]",
+                getAttrib(selected, GLX_RED_SIZE),
+                getAttrib(selected, GLX_GREEN_SIZE),
+                getAttrib(selected, GLX_BLUE_SIZE),
+                getAttrib(selected, GLX_ALPHA_SIZE),
+                getAttrib(selected, GLX_DEPTH_SIZE),
+                getAttrib(selected, GLX_STENCIL_SIZE),
+                is_sRGB, is_float);
 
-            visualAttribs.push_back(GLX_X_VISUAL_TYPE);
-            visualAttribs.push_back(GLX_TRUE_COLOR);
+            // ----------------------------------------------------------------------
 
-            visualAttribs.push_back(GLX_DOUBLEBUFFER);
-            visualAttribs.push_back(True);
-
-            visualAttribs.push_back(GLX_DEPTH_SIZE);
-            visualAttribs.push_back(config.depth);
-
-            visualAttribs.push_back(GLX_STENCIL_SIZE);
-            visualAttribs.push_back(config.stencil);
-
-            visualAttribs.push_back(GLX_RED_SIZE);
-            visualAttribs.push_back(config.red);
-
-            visualAttribs.push_back(GLX_GREEN_SIZE);
-            visualAttribs.push_back(config.green);
-
-            visualAttribs.push_back(GLX_BLUE_SIZE);
-            visualAttribs.push_back(config.blue);
-
-            visualAttribs.push_back(GLX_ALPHA_SIZE);
-            visualAttribs.push_back(config.alpha);
-
-            if (config.samples > 1)
-            {
-                visualAttribs.push_back(GLX_SAMPLE_BUFFERS);
-                visualAttribs.push_back(1);
-
-                visualAttribs.push_back(GLX_SAMPLES);
-                visualAttribs.push_back(config.samples);
-            }
-
-            visualAttribs.push_back(None);
-
-            // Choose FBConfig
-            int num_fb_configs = 0;
-            GLXFBConfig* fbconfigs = glXChooseFBConfig(display, screen, visualAttribs.data(), &num_fb_configs);
-            if (!fbconfigs || num_fb_configs == 0)
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] Failed to get FBConfigs.");
-            }
-
-            // Select the first FBConfig
-            GLXFBConfig fbconfig = fbconfigs[0];
-
-            // Get visual info
-            XVisualInfo* vi = glXGetVisualFromFBConfig(display, fbconfig);
-            if (!vi)
-            {
-                XFree(fbconfigs);
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] Failed to get visual info.");
-            }
-
-            // Create context
-            GLXContext shared_context = 0;
-            if (shared)
-            {
-                shared_context = reinterpret_cast<OpenGLContextXCB*>(shared)->context;
-            }
-
-            // Get the GLX_ARB_create_context extension
-            PFNGLXCREATECONTEXTATTRIBSARBPROC glXCreateContextAttribsARB =
-                (PFNGLXCREATECONTEXTATTRIBSARBPROC)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
-
-            if (glXCreateContextAttribsARB)
-            {
-                std::vector<int> contextAttribs;
-                contextAttribs.push_back(GLX_CONTEXT_MAJOR_VERSION_ARB);
-                contextAttribs.push_back(4);
-                contextAttribs.push_back(GLX_CONTEXT_MINOR_VERSION_ARB);
-                contextAttribs.push_back(6);
-                contextAttribs.push_back(GLX_CONTEXT_PROFILE_MASK_ARB);
-                contextAttribs.push_back(GLX_CONTEXT_CORE_PROFILE_BIT_ARB);
-                contextAttribs.push_back(GLX_CONTEXT_FLAGS_ARB);
-                contextAttribs.push_back(GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB);
-                contextAttribs.push_back(0); // End of attributes
-
-                context = glXCreateContextAttribsARB(display, fbconfig, shared_context, True, contextAttribs.data());
-
-                // If 4.6 is not available, try 3.3
-                if (!context)
-                {
-                    contextAttribs[1] = 3; // major version
-                    contextAttribs[3] = 3; // minor version
-                    context = glXCreateContextAttribsARB(display, fbconfig, shared_context, True, contextAttribs.data());
-                }
-            }
-            else
-            {
-                context = glXCreateNewContext(display, fbconfig, GLX_RGBA_TYPE, shared_context, True);
-            }
-
-            XFree(fbconfigs);
-
-            if (!context)
-            {
-                XFree(vi);
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] Failed to create OpenGL context.");
-            }
+            XVisualInfo* vi = glXGetVisualFromFBConfig(display, selected);
 
             // Create the XCB window with the GLX visual
             if (!window->createXWindow(vi->screen, vi->depth, vi->visualid, width, height, "OpenGL"))
@@ -183,16 +89,54 @@ namespace mango
 
             XFree(vi);
 
-            // Make context current
-            ::Window xwindow = static_cast<::Window>(window->window);
-            if (!glXMakeCurrent(display, xwindow, context))
+            GLXContext shared_context = 0;
+            if (shared)
+            {
+                shared_context = reinterpret_cast<OpenGLContextGLX*>(shared)->context;
+            }
+
+            context = glxConfiguration.createContext(display, shared_context);
+            if (!context)
             {
                 shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] Failed to make context current.");
+                MANGO_EXCEPTION("[OpenGLContext] OpenGL Context creation failed.");
             }
+
+            // Verifying that context is a direct context
+            if (glXIsDirect(display, context))
+            {
+                //printLine(Print::Info, "  glXIsDirect: ENABLE");
+            }
+
+            // MANGO TODO: configuration selection API
+            // MANGO TODO: initialize GLX extensions using GLEXT headers
+            glXMakeCurrent(display, window->window, context);
+
+#if 0
+            PFNGLGETSTRINGIPROC glGetStringi = (PFNGLGETSTRINGIPROC)glXGetProcAddress((const GLubyte*)"glGetStringi");
+
+            if (glGetStringi == NULL)
+            {
+                // Fall-back to the pre-3.0 method for querying extensions.
+                std::string extensionString = (const char*)glGetString(GL_EXTENSIONS);
+                m_extensions = tokenizeString(extensionString, " ");
+            }
+            else
+            {
+                // Use the post-3.0 method for querying extensions
+                GLint numExtensions = 0;
+                glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+
+                for (int i = 0; i < numExtensions; ++i)
+                {
+                    std::string ext = (const char*)glGetStringi(GL_EXTENSIONS, i);
+                    m_extensions.push_back(ext);
+                }
+            }
+#endif
         }
 
-        ~OpenGLContextXCB()
+        ~OpenGLContextGLX()
         {
             shutdown();
         }
@@ -250,8 +194,6 @@ namespace mango
 
         void toggleFullscreen() override
         {
-            if (!display) return;
-
             // Disable rendering while switching fullscreen mode
             glXMakeCurrent(display, 0, 0);
             window->busy = true;
@@ -319,7 +261,7 @@ namespace mango
 
     OpenGLContextHandle* createOpenGLContextGLX(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
     {
-        auto* context = new OpenGLContextXCB(parent, width, height, flags, configPtr, shared);
+        auto* context = new OpenGLContextGLX(parent, width, height, flags, configPtr, shared);
         return context;
     }
 

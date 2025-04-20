@@ -3134,7 +3134,7 @@ namespace
 
             int h = std::min(m_parallel_height, m_height - y);
 
-            q.enqueue([=]
+            q.enqueue([=, this]
             {
                 if (m_interface->cancelled)
                 {
@@ -3200,7 +3200,6 @@ namespace
 
         // ----------------------------------------------------------------------
 
-        // TODO: decompress IDAT at a time and do updates progressively
         Buffer compressed_top;
         Buffer compressed_bottom;
 
@@ -3321,7 +3320,6 @@ namespace
 
                 if (m_interface->cancelled)
                 {
-                    // TODO: cleanup
                     return false;
                 }
 

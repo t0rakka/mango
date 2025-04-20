@@ -56,12 +56,12 @@ namespace mango::simd
         std::memcpy(dest, &a, sizeof(a));
     }
 
-    static inline u8x16 u8x16_load_low(const u8* s)
+    static inline u8x16 u8x16_load_low(const u8* s) noexcept
     {
         return u8x16_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
-    static inline void u8x16_store_low(u8* dest, u8x16 a)
+    static inline void u8x16_store_low(u8* dest, u8x16 a) noexcept
     {
         for (int i = 0; i < 8; ++i)
         {
@@ -223,12 +223,12 @@ namespace mango::simd
         std::memcpy(dest, &a, sizeof(a));
     }
 
-    static inline u16x8 u16x8_load_low(const u16* s)
+    static inline u16x8 u16x8_load_low(const u16* s) noexcept
     {
         return u16x8_set(s[0], s[1], s[2], s[3], 0, 0, 0, 0);
     }
 
-    static inline void u16x8_store_low(u16* dest, u16x8 a)
+    static inline void u16x8_store_low(u16* dest, u16x8 a) noexcept
     {
         for (int i = 0; i < 4; ++i)
         {
@@ -450,12 +450,12 @@ namespace mango::simd
         std::memcpy(dest, &a, sizeof(a));
     }
 
-    static inline u32x4 u32x4_load_low(const u32* s)
+    static inline u32x4 u32x4_load_low(const u32* s) noexcept
     {
         return u32x4_set(s[0], s[1], 0, 0);
     }
 
-    static inline void u32x4_store_low(u32* dest, u32x4 a)
+    static inline void u32x4_store_low(u32* dest, u32x4 a) noexcept
     {
         dest[0] = a[0];
         dest[1] = a[1];
@@ -850,12 +850,12 @@ namespace mango::simd
         std::memcpy(dest, &a, sizeof(a));
     }
 
-    static inline s8x16 s8x16_load_low(const s8* s)
+    static inline s8x16 s8x16_load_low(const s8* s) noexcept
     {
         return s8x16_set(s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7], 0, 0, 0, 0, 0, 0, 0, 0);
     }
 
-    static inline void s8x16_store_low(s8* dest, s8x16 a)
+    static inline void s8x16_store_low(s8* dest, s8x16 a) noexcept
     {
         for (int i = 0; i < 8; ++i)
         {
@@ -1028,12 +1028,12 @@ namespace mango::simd
         std::memcpy(dest, &a, sizeof(a));
     }
 
-    static inline s16x8 s16x8_load_low(const s16* s)
+    static inline s16x8 s16x8_load_low(const s16* s) noexcept
     {
         return s16x8_set(s[0], s[1], s[2], s[3], 0, 0, 0, 0);
     }
 
-    static inline void s16x8_store_low(s16* dest, s16x8 a)
+    static inline void s16x8_store_low(s16* dest, s16x8 a) noexcept
     {
         dest[0] = a[0];
         dest[1] = a[1];
@@ -1332,12 +1332,12 @@ namespace mango::simd
         std::memcpy(dest, &a, sizeof(a));
     }
 
-    static inline s32x4 s32x4_load_low(const s32* s)
+    static inline s32x4 s32x4_load_low(const s32* s) noexcept
     {
         return s32x4_set(s[0], s[1], 0, 0);
     }
 
-    static inline void s32x4_store_low(s32* dest, s32x4 a)
+    static inline void s32x4_store_low(s32* dest, s32x4 a) noexcept
     {
         dest[0] = a[0];
         dest[1] = a[1];
@@ -1735,22 +1735,22 @@ namespace mango::simd
     // mask8x16
     // -----------------------------------------------------------------
 
-    static inline mask8x16 operator & (mask8x16 a, mask8x16 b)
+    static inline mask8x16 mask_and(mask8x16 a, mask8x16 b)
     {
         return a.mask & b.mask;
     }
 
-    static inline mask8x16 operator | (mask8x16 a, mask8x16 b)
+    static inline mask8x16 mask_or(mask8x16 a, mask8x16 b)
     {
         return a.mask | b.mask;
     }
 
-    static inline mask8x16 operator ^ (mask8x16 a, mask8x16 b)
+    static inline mask8x16 mask_xor(mask8x16 a, mask8x16 b)
     {
         return a.mask ^ b.mask;
     }
 
-    static inline mask8x16 operator ! (mask8x16 a)
+    static inline mask8x16 mask_not(mask8x16 a)
     {
         return ~a.mask;
     }
@@ -1779,22 +1779,22 @@ namespace mango::simd
     // mask16x8
     // -----------------------------------------------------------------
 
-    static inline mask16x8 operator & (mask16x8 a, mask16x8 b)
+    static inline mask16x8 mask_and(mask16x8 a, mask16x8 b)
     {
         return a.mask & b.mask;
     }
 
-    static inline mask16x8 operator | (mask16x8 a, mask16x8 b)
+    static inline mask16x8 mask_or(mask16x8 a, mask16x8 b)
     {
         return a.mask | b.mask;
     }
 
-    static inline mask16x8 operator ^ (mask16x8 a, mask16x8 b)
+    static inline mask16x8 mask_xor(mask16x8 a, mask16x8 b)
     {
         return a.mask ^ b.mask;
     }
 
-    static inline mask16x8 operator ! (mask16x8 a)
+    static inline mask16x8 mask_not(mask16x8 a)
     {
         return ~a.mask;
     }
@@ -1823,22 +1823,22 @@ namespace mango::simd
     // mask32x4
     // -----------------------------------------------------------------
 
-    static inline mask32x4 operator & (mask32x4 a, mask32x4 b)
+    static inline mask32x4 mask_and(mask32x4 a, mask32x4 b)
     {
         return a.mask & b.mask;
     }
 
-    static inline mask32x4 operator | (mask32x4 a, mask32x4 b)
+    static inline mask32x4 mask_or(mask32x4 a, mask32x4 b)
     {
         return a.mask | b.mask;
     }
 
-    static inline mask32x4 operator ^ (mask32x4 a, mask32x4 b)
+    static inline mask32x4 mask_xor(mask32x4 a, mask32x4 b)
     {
         return a.mask ^ b.mask;
     }
 
-    static inline mask32x4 operator ! (mask32x4 a)
+    static inline mask32x4 mask_not(mask32x4 a)
     {
         return ~a.mask;
     }
@@ -1867,22 +1867,22 @@ namespace mango::simd
     // mask64x2
     // -----------------------------------------------------------------
 
-    static inline mask64x2 operator & (mask64x2 a, mask64x2 b)
+    static inline mask64x2 mask_and(mask64x2 a, mask64x2 b)
     {
         return a.mask & b.mask;
     }
 
-    static inline mask64x2 operator | (mask64x2 a, mask64x2 b)
+    static inline mask64x2 mask_or(mask64x2 a, mask64x2 b)
     {
         return a.mask | b.mask;
     }
 
-    static inline mask64x2 operator ^ (mask64x2 a, mask64x2 b)
+    static inline mask64x2 mask_xor(mask64x2 a, mask64x2 b)
     {
         return a.mask ^ b.mask;
     }
 
-    static inline mask64x2 operator ! (mask64x2 a)
+    static inline mask64x2 mask_not(mask64x2 a)
     {
         return ~a.mask;
     }

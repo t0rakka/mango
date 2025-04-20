@@ -1976,22 +1976,22 @@ namespace mango::simd
 
 #if !defined(MANGO_COMPILER_MSVC)
 
-    static inline mask8x64 operator & (mask8x64 a, mask8x64 b)
+    static inline mask8x64 mask_and(mask8x64 a, mask8x64 b)
     {
         return _mm512_kand(a, b);
     }
 
-    static inline mask8x64 operator | (mask8x64 a, mask8x64 b)
+    static inline mask8x64 mask_or(mask8x64 a, mask8x64 b)
     {
         return _mm512_kor(a, b);
     }
 
-    static inline mask8x64 operator ^ (mask8x64 a, mask8x64 b)
+    static inline mask8x64 mask_xor(mask8x64 a, mask8x64 b)
     {
         return _mm512_kxor(a, b);
     }
 
-    static inline mask8x64 operator ! (mask8x64 a)
+    static inline mask8x64 mask_not(mask8x64 a)
     {
         return _mm512_knot(a);
     }
@@ -2024,22 +2024,22 @@ namespace mango::simd
 
 #if !defined(MANGO_COMPILER_MSVC)
 
-    static inline mask16x32 operator & (mask16x32 a, mask16x32 b)
+    static inline mask16x32 mask_and(mask16x32 a, mask16x32 b)
     {
         return _mm512_kand(a, b);
     }
 
-    static inline mask16x32 operator | (mask16x32 a, mask16x32 b)
+    static inline mask16x32 mask_or(mask16x32 a, mask16x32 b)
     {
         return _mm512_kor(a, b);
     }
 
-    static inline mask16x32 operator ^ (mask16x32 a, mask16x32 b)
+    static inline mask16x32 mask_xor(mask16x32 a, mask16x32 b)
     {
         return _mm512_kxor(a, b);
     }
 
-    static inline mask16x32 operator ! (mask16x32 a)
+    static inline mask16x32 mask_not(mask16x32 a)
     {
         return _mm512_knot(a);
     }
@@ -2072,22 +2072,22 @@ namespace mango::simd
 
 #if !defined(MANGO_COMPILER_MSVC)
 
-    static inline mask32x16 operator & (mask32x16 a, mask32x16 b)
+    static inline mask32x16 mask_and(mask32x16 a, mask32x16 b)
     {
         return _mm512_kand(a, b);
     }
 
-    static inline mask32x16 operator | (mask32x16 a, mask32x16 b)
+    static inline mask32x16 mask_or(mask32x16 a, mask32x16 b)
     {
         return _mm512_kor(a, b);
     }
 
-    static inline mask32x16 operator ^ (mask32x16 a, mask32x16 b)
+    static inline mask32x16 mask_xor(mask32x16 a, mask32x16 b)
     {
         return _mm512_kxor(a, b);
     }
 
-    static inline mask32x16 operator ! (mask32x16 a)
+    static inline mask32x16 mask_not(mask32x16 a)
     {
         return _mm512_knot(a);
     }
@@ -2120,22 +2120,22 @@ namespace mango::simd
 
 #if !defined(MANGO_COMPILER_MSVC)
 
-    static inline mask64x8 operator & (mask64x8 a, mask64x8 b)
+    static inline mask64x8 mask_and(mask64x8 a, mask64x8 b)
     {
         return _mm512_kand(a, b);
     }
 
-    static inline mask64x8 operator | (mask64x8 a, mask64x8 b)
+    static inline mask64x8 mask_or(mask64x8 a, mask64x8 b)
     {
         return _mm512_kor(a, b);
     }
 
-    static inline mask64x8 operator ^ (mask64x8 a, mask64x8 b)
+    static inline mask64x8 mask_xor(mask64x8 a, mask64x8 b)
     {
         return _mm512_kxor(a, b);
     }
 
-    static inline mask64x8 operator ! (mask64x8 a)
+    static inline mask64x8 mask_not(mask64x8 a)
     {
         return _mm512_knot(a);
     }

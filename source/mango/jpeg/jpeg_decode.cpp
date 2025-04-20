@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/endian.hpp>
@@ -301,13 +301,16 @@ namespace mango::image::jpeg
         {
             case MARKER_APP0:
             {
-                const u8 magicJFIF[] = { 0x4a, 0x46, 0x49, 0x46, 0 }; // 'JFIF', 0
-                const u8 magicJFXX[] = { 0x4a, 0x46, 0x58, 0x58, 0 }; // 'JFXX', 0
+                const u8 magicJFIF [] = { 0x4a, 0x46, 0x49, 0x46, 0 }; // 'JFIF', 0
+                const u8 magicJFXX [] = { 0x4a, 0x46, 0x58, 0x58, 0 }; // 'JFXX', 0
+                const size_t magicJFIF_length = 5;
 
-                if (!std::memcmp(p, magicJFIF, 5) || !std::memcmp(p, magicJFXX, 5))
+                if (size >= magicJFIF_length &&
+                    (!std::memcmp(p, magicJFIF, magicJFIF_length) || !std::memcmp(p, magicJFXX, magicJFIF_length)))
                 {
-                    p += 5;
-                    size -= 5;
+                    // Skip the identifier
+                    p += magicJFIF_length;
+                    size -= magicJFIF_length;
 
                     printLine(Print::Info, "  JFIF: {} bytes", size);
 
@@ -330,7 +333,7 @@ namespace mango::image::jpeg
                     printLine(Print::Info, "    density: {} x {} {}", Xdensity, Ydensity, unit_str);
                     printLine(Print::Info, "    thumbnail: {} x {}", Xthumbnail, Ythumbnail);
 
-                    // MANGO TODO: process thumbnail / store JFIF block
+                    // NOTE: This marker is parsed but JFIF is not supported
                     MANGO_UNREFERENCED(version);
                     MANGO_UNREFERENCED(Xdensity);
                     MANGO_UNREFERENCED(Ydensity);
@@ -344,18 +347,31 @@ namespace mango::image::jpeg
 
             case MARKER_APP1:
             {
-                const u8 magicExif0[] = { 0x45, 0x78, 0x69, 0x66, 0, 0 }; // 'Exif', 0, 0
-                const u8 magicExif255[] = { 0x45, 0x78, 0x69, 0x66, 0, 0xff }; // 'Exif', 0, 0xff
+                const u8 magicExif0 [] = { 0x45, 0x78, 0x69, 0x66, 0, 0 }; // 'Exif', 0, 0
+                const u8 magicExif255 [] = { 0x45, 0x78, 0x69, 0x66, 0, 0xff }; // 'Exif', 0, 0xff
+                const size_t magicExif_length = 6;
 
-                if (!std::memcmp(p, magicExif0, 6) || !std::memcmp(p, magicExif255, 6))
+                const char* xmp_id = "http://ns.adobe.com/xap/1.0/";
+                const size_t xmp_id_length = std::strlen(xmp_id) + 1; // +1 for null terminator
+
+                if (size >= magicExif_length &&
+                    (!std::memcmp(p, magicExif0, magicExif_length) || !std::memcmp(p, magicExif255, magicExif_length)))
                 {
-                    p += 6;
-                    size -= 6;
+                    // Skip the identifier
+                    p += magicExif_length;
+                    size -= magicExif_length;
+
                     exif_memory = ConstMemory(p, size);
                     printLine(Print::Info, "  EXIF: {} bytes", size);
                 }
-
-                // MANGO TODO: detect and support XMP
+                else if (size >= xmp_id_length && !std::memcmp(p, xmp_id, xmp_id_length))
+                {
+                    // Skip the identifier
+                    p += xmp_id_length;
+                    size -= xmp_id_length;
+                    printLine(Print::Info, "  XMP: {} bytes", size);
+                    // NOTE: We don't support XMP but this is where it would be processed
+                }
 
                 break;
             }
@@ -1210,7 +1226,9 @@ namespace mango::image::jpeg
 
         u16 Ld = bigEndian::uload16(p + 0); // Define number of lines segment length
         u16 NL = bigEndian::uload16(p + 2); // Number of lines
-        MANGO_UNREFERENCED(NL); // MANGO TODO: ysize = NL, no files to test with found yet..
+
+        // NOTE: ysize = NL, but cannot test this until find files that use this marker
+        MANGO_UNREFERENCED(NL);
         MANGO_UNREFERENCED(Ld);
     }
 
@@ -1232,8 +1250,35 @@ namespace mango::image::jpeg
     {
         printLine(Print::Info, "[ DHP ]");
 
-        // MANGO TODO: "Define Hierarchical Progression" marker
-        MANGO_UNREFERENCED(p);
+        // NOTE: This marker is parsed but not used
+
+        // Get length of DHP segment (includes the length bytes)
+        const int length = bigEndian::uload16(p) - 2;
+        p += 2;
+
+        // Get precision (usually 8 or 12 bits)
+        const int precision = *p++;
+
+        // Number of components in the frame
+        const int ncomponents = *p++;
+
+        printLine(Print::Info, "  Precision: {}", precision);
+        printLine(Print::Info, "  Components: {}", ncomponents);
+
+        // Parse component specifications
+        for (int i = 0; i < ncomponents; ++i)
+        {
+            const int id = *p++;
+            const int sampling = *p++;
+            const int h_sampling = (sampling >> 4) & 0x0F;  // horizontal sampling factor
+            const int v_sampling = sampling & 0x0F;         // vertical sampling factor
+            const int quant_table_selector = *p++;
+
+            printLine(Print::Info, "  Component[{}]:", i);
+            printLine(Print::Info, "    ID: {}", id);
+            printLine(Print::Info, "    Sampling: {}x{}", h_sampling, v_sampling);
+            printLine(Print::Info, "    Quant Table: {}", quant_table_selector);
+        }
     }
 
     void Parser::processEXP(const u8* p)
@@ -2204,7 +2249,7 @@ namespace mango::image::jpeg
                 int y1 = std::min(y + N, ymcu);
 
                 // enqueue task
-                queue.enqueue([=]
+                queue.enqueue([=, this]
                 {
                     AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
 
@@ -2297,7 +2342,7 @@ namespace mango::image::jpeg
                 int y1 = std::min(y + N, ymcu);
 
                 // enqueue task
-                queue.enqueue([=] (const u8* p)
+                queue.enqueue([=, this] (const u8* p)
                 {
                     for (int y = y0; y < y1; ++y)
                     {
@@ -2406,7 +2451,7 @@ namespace mango::image::jpeg
                 }
 
                 // enqueue task
-                queue.enqueue([=]
+                queue.enqueue([=, this]
                 {
                     if (!m_interface->cancelled)
                     {
@@ -2490,7 +2535,7 @@ namespace mango::image::jpeg
                 }
 
                 // enqueue task
-                queue.enqueue([=]
+                queue.enqueue([=, this]
                 {
                     DecodeState state = decodeState;
                     state.buffer.ptr = p;
@@ -2569,7 +2614,7 @@ namespace mango::image::jpeg
                 }
 
                 // enqueue task
-                queue.enqueue([=]
+                queue.enqueue([=, this]
                 {
                     DecodeState state = decodeState;
                     state.buffer.ptr = p;
@@ -2665,7 +2710,7 @@ namespace mango::image::jpeg
                 printLine(Print::Info, "  Process: [{}, {}] --> ThreadPool.", y0, y1 - 1);
 
                 // enqueue task
-                queue.enqueue([=]
+                queue.enqueue([=, this]
                 {
                     process_range(y0, y1, data);
                 });

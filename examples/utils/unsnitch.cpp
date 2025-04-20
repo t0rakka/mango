@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <filesystem>
 #include <mango/mango.hpp>
@@ -12,8 +12,8 @@ struct State
 {
     bool print_list { false };
     bool print_tree { false };
+    bool verify { false };
     bool decompress { false };
-
     u64 total_bytes_out = 0;
 };
 
@@ -68,6 +68,21 @@ void enumerate(const Path& path, State& state, std::string destination, std::str
                 printf("- %s\n", node.name.c_str());
             }
 
+            if (state.verify)
+            {
+                // NOTE: Stored files don't have a checksum (0), this is lame so it must be improved in the future
+                if (node.checksum)
+                {
+                    File file(path, node.name);
+                    u32 checksum = crc32c(0, file);
+
+                    if (checksum != node.checksum)
+                    {
+                        printf("ERROR: %s checksum: %08x, expected: %08x\n", filename.c_str(), checksum, node.checksum);
+                    }
+                }
+            }
+
             if (state.decompress)
             {
                 printf("Create: %s\n", filename.c_str());
@@ -96,11 +111,9 @@ int main(int argc, char* argv[])
         printf("Usage: %s [archive] [destination] \n", program_name.c_str());
         printf("       %s [archive] --list \n", program_name.c_str());
         printf("       %s [archive] --tree \n", program_name.c_str());
-        //printf("       %s [archive] --verify \n", program_name.c_str());
+        printf("       %s [archive] --verify \n", program_name.c_str());
         return 0;
     }
-
-    // MANGO TODO: proper parsing of command line
 
     std::string filename = argv[1];
     std::string destination = argv[2];
@@ -111,12 +124,11 @@ int main(int argc, char* argv[])
     {
         return 0;
     }
-#if 0
     else if (destination == "--verify")
     {
-        // MANGO TODO
+        state.verify = true;
+        destination = "";
     }
-#endif
     else if (destination == "--list")
     {
         state.print_list = true;

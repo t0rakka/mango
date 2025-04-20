@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/aes.hpp>
 #include <mango/core/endian.hpp>
@@ -780,6 +780,164 @@ void arm_cbc_decrypt(u8* output, const u8* input, size_t length, const u8* ivec,
             break;
         case 256:
             arm_cbc256_decrypt(output, input, length, iv, reinterpret_cast<const u8*>(keys));
+            break;
+        default:
+            break;
+    }
+}
+
+// CTR encrypt
+
+void arm_ctr128_encrypt(u8* output, const u8* input, size_t length, u8* iv, const u8* keys)
+{
+    const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
+    const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
+    const uint8x16_t k2 = vld1q_u8(keys + 16 * 2);
+    const uint8x16_t k3 = vld1q_u8(keys + 16 * 3);
+    const uint8x16_t k4 = vld1q_u8(keys + 16 * 4);
+    const uint8x16_t k5 = vld1q_u8(keys + 16 * 5);
+    const uint8x16_t k6 = vld1q_u8(keys + 16 * 6);
+    const uint8x16_t k7 = vld1q_u8(keys + 16 * 7);
+    const uint8x16_t k8 = vld1q_u8(keys + 16 * 8);
+    const uint8x16_t k9 = vld1q_u8(keys + 16 * 9);
+    const uint8x16_t k10 = vld1q_u8(keys + 16 * 10);
+
+    const uint64x2_t increment = { 1, 0 };
+    uint64x2_t counter = vld1q_u64(reinterpret_cast<u64*>(iv));
+
+    while (length >= 16)
+    {
+        uint8x16_t v = vreinterpretq_u8_u64(counter);
+        v = vaesmcq_u8(vaeseq_u8(v, k0));
+        v = vaesmcq_u8(vaeseq_u8(v, k1));
+        v = vaesmcq_u8(vaeseq_u8(v, k2));
+        v = vaesmcq_u8(vaeseq_u8(v, k3));
+        v = vaesmcq_u8(vaeseq_u8(v, k4));
+        v = vaesmcq_u8(vaeseq_u8(v, k5));
+        v = vaesmcq_u8(vaeseq_u8(v, k6));
+        v = vaesmcq_u8(vaeseq_u8(v, k7));
+        v = vaesmcq_u8(vaeseq_u8(v, k8));
+        v = veorq_u8(vaeseq_u8(v, k9), k10);
+        uint8x16_t data = vld1q_u8(input);
+        data = veorq_u8(data, v);
+        vst1q_u8(output, data);
+        counter = vaddq_u64(counter, increment);
+        input += 16;
+        output += 16;
+        length -= 16;
+    }
+
+    vst1q_u64(reinterpret_cast<u64*>(iv), counter);
+}
+
+void arm_ctr192_encrypt(u8* output, const u8* input, size_t length, u8* iv, const u8* keys)
+{
+    const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
+    const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
+    const uint8x16_t k2 = vld1q_u8(keys + 16 * 2);
+    const uint8x16_t k3 = vld1q_u8(keys + 16 * 3);
+    const uint8x16_t k4 = vld1q_u8(keys + 16 * 4);
+    const uint8x16_t k5 = vld1q_u8(keys + 16 * 5);
+    const uint8x16_t k6 = vld1q_u8(keys + 16 * 6);
+    const uint8x16_t k7 = vld1q_u8(keys + 16 * 7);
+    const uint8x16_t k8 = vld1q_u8(keys + 16 * 8);
+    const uint8x16_t k9 = vld1q_u8(keys + 16 * 9);
+    const uint8x16_t k10 = vld1q_u8(keys + 16 * 10);
+    const uint8x16_t k11 = vld1q_u8(keys + 16 * 11);
+    const uint8x16_t k12 = vld1q_u8(keys + 16 * 12);
+
+    const uint64x2_t increment = { 1, 0 };
+    uint64x2_t counter = vld1q_u64(reinterpret_cast<u64*>(iv));
+
+    while (length >= 16)
+    {
+        uint8x16_t v = vreinterpretq_u8_u64(counter);
+        v = vaesmcq_u8(vaeseq_u8(v, k0));
+        v = vaesmcq_u8(vaeseq_u8(v, k1));
+        v = vaesmcq_u8(vaeseq_u8(v, k2));
+        v = vaesmcq_u8(vaeseq_u8(v, k3));
+        v = vaesmcq_u8(vaeseq_u8(v, k4));
+        v = vaesmcq_u8(vaeseq_u8(v, k5));
+        v = vaesmcq_u8(vaeseq_u8(v, k6));
+        v = vaesmcq_u8(vaeseq_u8(v, k7));
+        v = vaesmcq_u8(vaeseq_u8(v, k8));
+        v = vaesmcq_u8(vaeseq_u8(v, k9));
+        v = vaesmcq_u8(vaeseq_u8(v, k10));
+        v = veorq_u8(vaeseq_u8(v, k11), k12);
+        uint8x16_t data = vld1q_u8(input);
+        data = veorq_u8(data, v);
+        vst1q_u8(output, data);
+        counter = vaddq_u64(counter, increment);
+        input += 16;
+        output += 16;
+        length -= 16;
+    }
+
+    vst1q_u64(reinterpret_cast<u64*>(iv), counter);
+}
+
+void arm_ctr256_encrypt(u8* output, const u8* input, size_t length, u8* iv, const u8* keys)
+{
+    const uint8x16_t k0 = vld1q_u8(keys + 16 * 0);
+    const uint8x16_t k1 = vld1q_u8(keys + 16 * 1);
+    const uint8x16_t k2 = vld1q_u8(keys + 16 * 2);
+    const uint8x16_t k3 = vld1q_u8(keys + 16 * 3);
+    const uint8x16_t k4 = vld1q_u8(keys + 16 * 4);
+    const uint8x16_t k5 = vld1q_u8(keys + 16 * 5);
+    const uint8x16_t k6 = vld1q_u8(keys + 16 * 6);
+    const uint8x16_t k7 = vld1q_u8(keys + 16 * 7);
+    const uint8x16_t k8 = vld1q_u8(keys + 16 * 8);
+    const uint8x16_t k9 = vld1q_u8(keys + 16 * 9);
+    const uint8x16_t k10 = vld1q_u8(keys + 16 * 10);
+    const uint8x16_t k11 = vld1q_u8(keys + 16 * 11);
+    const uint8x16_t k12 = vld1q_u8(keys + 16 * 12);
+    const uint8x16_t k13 = vld1q_u8(keys + 16 * 13);
+    const uint8x16_t k14 = vld1q_u8(keys + 16 * 14);
+
+    const uint64x2_t increment = { 1, 0 };
+    uint64x2_t counter = vld1q_u64(reinterpret_cast<u64*>(iv));
+
+    while (length >= 16)
+    {
+        uint8x16_t v = vreinterpretq_u8_u64(counter);
+        v = vaesmcq_u8(vaeseq_u8(v, k0));
+        v = vaesmcq_u8(vaeseq_u8(v, k1));
+        v = vaesmcq_u8(vaeseq_u8(v, k2));
+        v = vaesmcq_u8(vaeseq_u8(v, k3));
+        v = vaesmcq_u8(vaeseq_u8(v, k4));
+        v = vaesmcq_u8(vaeseq_u8(v, k5));
+        v = vaesmcq_u8(vaeseq_u8(v, k6));
+        v = vaesmcq_u8(vaeseq_u8(v, k7));
+        v = vaesmcq_u8(vaeseq_u8(v, k8));
+        v = vaesmcq_u8(vaeseq_u8(v, k9));
+        v = vaesmcq_u8(vaeseq_u8(v, k10));
+        v = vaesmcq_u8(vaeseq_u8(v, k11));
+        v = vaesmcq_u8(vaeseq_u8(v, k12));
+        v = veorq_u8(vaeseq_u8(v, k13), k14);
+        uint8x16_t data = vld1q_u8(input);
+        data = veorq_u8(data, v);
+        vst1q_u8(output, data);
+        counter = vaddq_u64(counter, increment);
+        input += 16;
+        output += 16;
+        length -= 16;
+    }
+
+    vst1q_u64(reinterpret_cast<u64*>(iv), counter);
+}
+
+void arm_ctr_encrypt(u8* output, const u8* input, size_t length, u8* iv, const u32* keys, int bits)
+{
+    switch (bits)
+    {
+        case 128:
+            arm_ctr128_encrypt(output, input, length, iv, reinterpret_cast<const u8*>(keys));
+            break;
+        case 192:
+            arm_ctr192_encrypt(output, input, length, iv, reinterpret_cast<const u8*>(keys));
+            break;
+        case 256:
+            arm_ctr256_encrypt(output, input, length, iv, reinterpret_cast<const u8*>(keys));
             break;
         default:
             break;
@@ -1586,6 +1744,167 @@ void aesni_cbc_decrypt(u8* output, const u8* input, size_t length, const u8* ive
     }
 }
 
+// CTR encrypt
+
+void aesni_ctr128_encrypt(u8* output, const u8* input, size_t length, u8* iv, const __m128i* schedule)
+{
+    const __m128i k0 = schedule[0];
+    const __m128i k1 = schedule[1];
+    const __m128i k2 = schedule[2];
+    const __m128i k3 = schedule[3];
+    const __m128i k4 = schedule[4];
+    const __m128i k5 = schedule[5];
+    const __m128i k6 = schedule[6];
+    const __m128i k7 = schedule[7];
+    const __m128i k8 = schedule[8];
+    const __m128i k9 = schedule[9];
+    const __m128i k10 = schedule[10];
+
+    const __m128i increment = _mm_set_epi64x(0, 1);
+    __m128i counter = _mm_loadu_si128(reinterpret_cast<const __m128i *>(iv));
+
+    while (length >= 16)
+    {
+        __m128i ciphertext = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input));
+        __m128i data = counter;
+        data = _mm_xor_si128(data, k0);
+        data = _mm_aesenc_si128(data, k1);
+        data = _mm_aesenc_si128(data, k2);
+        data = _mm_aesenc_si128(data, k3);
+        data = _mm_aesenc_si128(data, k4);
+        data = _mm_aesenc_si128(data, k5);
+        data = _mm_aesenc_si128(data, k6);
+        data = _mm_aesenc_si128(data, k7);
+        data = _mm_aesenc_si128(data, k8);
+        data = _mm_aesenc_si128(data, k9);
+        data = _mm_aesenclast_si128(data, k10);
+        data = _mm_xor_si128(data, ciphertext);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output), data);
+        counter = _mm_add_epi64(counter, increment);
+        output += 16;
+        input += 16;
+        length -= 16;
+    }
+
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(iv), counter);
+}
+
+void aesni_ctr192_encrypt(u8* output, const u8* input, size_t length, u8* iv, const __m128i* schedule)
+{
+    const __m128i k0 = schedule[0];
+    const __m128i k1 = schedule[1];
+    const __m128i k2 = schedule[2];
+    const __m128i k3 = schedule[3];
+    const __m128i k4 = schedule[4];
+    const __m128i k5 = schedule[5];
+    const __m128i k6 = schedule[6];
+    const __m128i k7 = schedule[7];
+    const __m128i k8 = schedule[8];
+    const __m128i k9 = schedule[9];
+    const __m128i k10 = schedule[10];
+    const __m128i k11 = schedule[11];
+    const __m128i k12 = schedule[12];
+
+    const __m128i increment = _mm_set_epi64x(0, 1);
+    __m128i counter = _mm_loadu_si128(reinterpret_cast<const __m128i *>(iv));
+
+    while (length >= 16)
+    {
+        __m128i ciphertext = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input));
+        __m128i data = counter;
+        data = _mm_xor_si128(data, k0);
+        data = _mm_aesenc_si128(data, k1);
+        data = _mm_aesenc_si128(data, k2);
+        data = _mm_aesenc_si128(data, k3);
+        data = _mm_aesenc_si128(data, k4);
+        data = _mm_aesenc_si128(data, k5);
+        data = _mm_aesenc_si128(data, k6);
+        data = _mm_aesenc_si128(data, k7);
+        data = _mm_aesenc_si128(data, k8);
+        data = _mm_aesenc_si128(data, k9);
+        data = _mm_aesenc_si128(data, k10);
+        data = _mm_aesenc_si128(data, k11);
+        data = _mm_aesenclast_si128(data, k12);
+        data = _mm_xor_si128(data, ciphertext);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output), data);
+        counter = _mm_add_epi64(counter, increment);
+        output += 16;
+        input += 16;
+        length -= 16;
+    }
+
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(iv), counter);
+}
+
+void aesni_ctr256_encrypt(u8* output, const u8* input, size_t length, u8* iv, const __m128i* schedule)
+{
+    const __m128i k0 = schedule[0];
+    const __m128i k1 = schedule[1];
+    const __m128i k2 = schedule[2];
+    const __m128i k3 = schedule[3];
+    const __m128i k4 = schedule[4];
+    const __m128i k5 = schedule[5];
+    const __m128i k6 = schedule[6];
+    const __m128i k7 = schedule[7];
+    const __m128i k8 = schedule[8];
+    const __m128i k9 = schedule[9];
+    const __m128i k10 = schedule[10];
+    const __m128i k11 = schedule[11];
+    const __m128i k12 = schedule[12];
+    const __m128i k13 = schedule[13];
+    const __m128i k14 = schedule[14];
+
+    const __m128i increment = _mm_set_epi64x(0, 1);
+    __m128i counter = _mm_loadu_si128(reinterpret_cast<const __m128i *>(iv));
+
+    while (length >= 16)
+    {
+        __m128i ciphertext = _mm_loadu_si128(reinterpret_cast<const __m128i *>(input));
+        __m128i data = counter;
+        data = _mm_xor_si128(data, k0);
+        data = _mm_aesenc_si128(data, k1);
+        data = _mm_aesenc_si128(data, k2);
+        data = _mm_aesenc_si128(data, k3);
+        data = _mm_aesenc_si128(data, k4);
+        data = _mm_aesenc_si128(data, k5);
+        data = _mm_aesenc_si128(data, k6);
+        data = _mm_aesenc_si128(data, k7);
+        data = _mm_aesenc_si128(data, k8);
+        data = _mm_aesenc_si128(data, k9);
+        data = _mm_aesenc_si128(data, k10);
+        data = _mm_aesenc_si128(data, k11);
+        data = _mm_aesenc_si128(data, k12);
+        data = _mm_aesenc_si128(data, k13);
+        data = _mm_aesenclast_si128(data, k14);
+        data = _mm_xor_si128(data, ciphertext);
+        _mm_storeu_si128(reinterpret_cast<__m128i *>(output), data);
+        counter = _mm_add_epi64(counter, increment);
+        output += 16;
+        input += 16;
+        length -= 16;
+    }
+
+    _mm_storeu_si128(reinterpret_cast<__m128i *>(iv), counter);
+}
+
+void aesni_ctr_encrypt(u8* output, const u8* input, size_t length, u8* iv, const __m128i* schedule, int keybits)
+{
+    switch (keybits)
+    {
+        case 128:
+            aesni_ctr128_encrypt(output, input, length, iv, schedule);
+            break;
+        case 192:
+            aesni_ctr192_encrypt(output, input, length, iv, schedule);
+            break;
+        case 256:
+            aesni_ctr256_encrypt(output, input, length, iv, schedule);
+            break;
+        default:
+            break;
+    }
+}
+
 #endif // defined(__AES__)
 
 } // namespace
@@ -1645,6 +1964,8 @@ AES::~AES()
 {
 }
 
+// ECB (block mode)
+
 void AES::ecb_block_encrypt(u8* output, const u8* input, size_t length)
 {
     if (length & 15)
@@ -1703,6 +2024,8 @@ void AES::ecb_block_decrypt(u8* output, const u8* input, size_t length)
     }
 }
 
+// CBC (block mode)
+
 void AES::cbc_block_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
 {
     if (length & 15)
@@ -1755,57 +2078,57 @@ void AES::cbc_block_decrypt(u8* output, const u8* input, size_t length, const u8
     }
 }
 
-void AES::ctr_block_encrypt(u8* output, const u8* input, size_t length, const u8* iv)
+// CTR (block mode)
+
+void AES::ctr_block_encrypt(u8* output, const u8* input, size_t length, u8* iv)
 {
     if (length & 15)
     {
         MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
     }
 
-    aes_encrypt_ctr(input, length, output, m_schedule->schedule, m_bits, iv);
-}
-
-void AES::ctr_block_decrypt(u8* output, const u8* input, size_t length, const u8* iv)
-{
-    if (length & 15)
+#if defined(__AES__)
+    if (m_schedule->aesni_supported)
     {
-        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
+        aesni_ctr_encrypt(output, input, length, iv, m_schedule->aesni_schedule, m_bits);
     }
-
-    aes_decrypt_ctr(input, length, output, m_schedule->schedule, m_bits, iv);
-}
-
-void AES::ccm_block_encrypt(Memory output, ConstMemory input, ConstMemory associated, ConstMemory nonce, int mac_length)
-{
-    aes_u32 cipher_length = aes_u32(output.size);
-    if (cipher_length & 15)
+    else
+#endif
+#if defined(__ARM_FEATURE_CRYPTO)
+    if (true)
     {
-        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
+        arm_ctr_encrypt(output, input, length, iv, m_schedule->arm_encode_schedule, m_bits);
     }
-
-    aes_encrypt_ccm(input.address, aes_u32(input.size),
-                    associated.address, u16(associated.size),
-                    nonce.address, u16(nonce.size),
-                    output.address, &cipher_length, aes_u32(mac_length),
-                    m_schedule->schedule, m_bits);
-}
-
-void AES::ccm_block_decrypt(Memory output, ConstMemory input, ConstMemory associated, ConstMemory nonce, int mac_length)
-{
-    aes_u32 plaintext_length = aes_u32(output.size);
-    if (plaintext_length & 15)
+    else
+#endif
     {
-        MANGO_EXCEPTION("[AES] The length must be multiple of 16 bytes.");
-    }
+        for (size_t offset = 0; offset < length; offset += 16)
+        {
+            // Encrypt the counter to get keystream
+            u8 keystream[16];
+            aes_encrypt(iv, keystream, m_schedule->schedule, m_bits);
 
-    int mac_authorized = 0;
-    aes_decrypt_ccm(input.address, aes_u32(input.size),
-                    associated.address, u16(associated.size),
-                    nonce.address, u16(nonce.size),
-                    output.address, &plaintext_length,
-                    aes_u32(mac_length), &mac_authorized,
-                    m_schedule->schedule, m_bits);
+            // XOR keystream with ciphertext to get plaintext
+            for (size_t i = 0; i < 16; ++i)
+            {
+                output[offset + i] = input[offset + i] ^ keystream[i];
+            }
+
+            // Increment counter
+            u64 value = littleEndian::uload64(iv + 0);
+            ++value;
+            littleEndian::ustore64(iv + 0, value);
+        }
+    }
 }
+
+void AES::ctr_block_decrypt(u8* output, const u8* input, size_t length, u8* iv)
+{
+    // CTR mode is symmetric, so we can use the same function for encryption and decryption
+    ctr_block_encrypt(output, input, length, iv);
+}
+
+// ECB
 
 void AES::ecb_encrypt(u8* output, const u8* input, size_t length)
 {
@@ -1820,7 +2143,7 @@ void AES::ecb_encrypt(u8* output, const u8* input, size_t length)
         length -= bytes;
     }
 
-    if (length)
+    if (length > 0)
     {
         u8 temp[16] = { 0 };
         std::memcpy(temp, input, length);
@@ -1844,7 +2167,7 @@ void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
         length -= bytes;
     }
 
-    if (length)
+    if (length > 0)
     {
         u8 temp[16] = { 0 };
         std::memcpy(temp, input, length);
@@ -1853,6 +2176,38 @@ void AES::ecb_decrypt(u8* output, const u8* input, size_t length)
         ecb_block_decrypt(result, temp, 16);
         std::memcpy(output, result, length);
     }
+}
+
+// CTR
+
+void AES::ctr_encrypt(u8* output, const u8* input, size_t length, u8* iv)
+{
+    size_t blocks = length / 16;
+
+    if (blocks)
+    {
+        size_t bytes = blocks * 16;
+        ctr_block_encrypt(output, input, bytes, iv);
+        output += bytes;
+        input += bytes;
+        length -= bytes;
+    }
+
+    if (length > 0)
+    {
+        u8 temp[16] = { 0 };
+        std::memcpy(temp, input, length);
+
+        u8 result[16];
+        ctr_block_encrypt(result, temp, 16, iv);
+        std::memcpy(output, result, length);
+    }
+}
+
+void AES::ctr_decrypt(u8* output, const u8* input, size_t length, u8* iv)
+{
+    // CTR mode is symmetric, so we can use the same function for encryption and decryption
+    ctr_encrypt(output, input, length, iv);
 }
 
 } // namespace mango

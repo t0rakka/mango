@@ -38,38 +38,38 @@ namespace mango::image::jpeg
         /* Figure C.1: make table of Huffman code length for each symbol */
         p = 0;
         for (l = 1; l <= 16; l++) {
-        i = size[l];
-        while (i--)
-            huffsize[p++] = (char)l;
-        }
-        huffsize[p] = 0;
+            i = size[l];
+            while (i--)
+                huffsize[p++] = (char)l;
+            }
+            huffsize[p] = 0;
 
-        /* Figure C.2: generate the codes themselves */
-        /* We also validate that the counts represent a legal Huffman code tree. */
+            /* Figure C.2: generate the codes themselves */
+            /* We also validate that the counts represent a legal Huffman code tree. */
 
-        code = 0;
-        si = huffsize[0];
-        p = 0;
-        while (huffsize[p]) {
-        while (((int)huffsize[p]) == si) {
-            huffcode[p++] = code;
-            code++;
-        }
-        code <<= 1;
-        si++;
-        }
+            code = 0;
+            si = huffsize[0];
+            p = 0;
+            while (huffsize[p]) {
+                while (((int)huffsize[p]) == si) {
+                    huffcode[p++] = code;
+                    code++;
+                }
+                code <<= 1;
+                si++;
+            }
 
-        /* Figure F.15: generate decoding tables for bit-sequential decoding */
+            /* Figure F.15: generate decoding tables for bit-sequential decoding */
 
-        p = 0;
-        for (l = 1; l <= 16; l++) {
-        if (size[l]) {
-            valoffset[l] = (int)p - (int)huffcode[p];
-            p += size[l];
-            maxcode[l] = huffcode[p - 1]; /* maximum code of length l */
-        } else {
-            maxcode[l] = -1;    /* -1 if no codes of this length */
-        }
+            p = 0;
+            for (l = 1; l <= 16; l++) {
+            if (size[l]) {
+                valoffset[l] = (int)p - (int)huffcode[p];
+                p += size[l];
+                maxcode[l] = huffcode[p - 1]; /* maximum code of length l */
+            } else {
+                maxcode[l] = -1;    /* -1 if no codes of this length */
+            }
         }
         valoffset[17] = 0;
         maxcode[17] = 0xFFFFFL; /* ensures jpeg_huff_decode terminates */
@@ -82,36 +82,20 @@ namespace mango::image::jpeg
         */
 
         for (i = 0; i < JPEG_HUFF_LOOKUP_SIZE; i++)
-        lookup[i] = (JPEG_HUFF_LOOKUP_BITS + 1) << JPEG_HUFF_LOOKUP_BITS;
+            lookup[i] = (JPEG_HUFF_LOOKUP_BITS + 1) << JPEG_HUFF_LOOKUP_BITS;
 
         p = 0;
         for (l = 1; l <= JPEG_HUFF_LOOKUP_BITS; l++) {
-        for (i = 1; i <= (int)size[l]; i++, p++) {
-            /* l = current code's length, p = its index in huffcode[] & huffval[]. */
-            /* Generate left-justified code followed by all possible bit sequences */
-            lookbits = huffcode[p] << (JPEG_HUFF_LOOKUP_BITS - l);
-            for (ctr = 1 << (JPEG_HUFF_LOOKUP_BITS - l); ctr > 0; ctr--) {
-            lookup[lookbits] = (l << JPEG_HUFF_LOOKUP_BITS) | value[p];
-            lookbits++;
+            for (i = 1; i <= (int)size[l]; i++, p++) {
+                /* l = current code's length, p = its index in huffcode[] & huffval[]. */
+                /* Generate left-justified code followed by all possible bit sequences */
+                lookbits = huffcode[p] << (JPEG_HUFF_LOOKUP_BITS - l);
+                for (ctr = 1 << (JPEG_HUFF_LOOKUP_BITS - l); ctr > 0; ctr--) {
+                    lookup[lookbits] = (l << JPEG_HUFF_LOOKUP_BITS) | value[p];
+                    lookbits++;
+                }
             }
         }
-        }
-
-        /* Validate symbols as being reasonable.
-        * For AC tables, we make no check, but accept all byte values 0..255.
-        * For DC tables, we require the symbols to be in range 0..15 in lossy mode
-        * and 0..16 in lossless mode.  (Tighter bounds could be applied depending on
-        * the data depth and mode, but this is sufficient to ensure safe decoding.)
-        */
-        /*
-        if (isDC) {
-        for (i = 0; i < numsymbols; i++)
-        {
-            int sym = htbl->huffval[i];
-            if (sym < 0 || sym > (cinfo->master->lossless ? 16 : 15))
-            ERREXIT(cinfo, JERR_BAD_HUFF_TABLE);
-        }
-        */
 
         return true;
 
@@ -161,11 +145,11 @@ namespace mango::image::jpeg
             }
             else
             {
-                maxcode[j] = 0; // MANGO TODO: should be -1 if no codes of this length
+                maxcode[j] = 0xfffff;
             }
         }
         valueOffset[18] = 0;
-        maxcode[17] = ~HuffmanType(0); //0xfffff; // ensures jpeg_huff_decode terminates
+        maxcode[17] = 0xfffff; // ensures jpeg_huff_decode terminates
 
         // Compute lookahead tables to speed up decoding.
         // First we set all the table entries to 0, indicating "too long";

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -980,3 +980,126 @@ namespace mango::simd
 #include <mango/simd/common_gather.hpp>
 
 #endif
+
+namespace mango::simd
+{
+
+    // --------------------------------------------------------------
+    // SIMD type traits
+    // --------------------------------------------------------------
+
+    // Default: not a mask type
+    template <typename T>
+    struct is_mask_type : std::false_type {};
+
+    // Hardware mask type
+    template <int ScalarBits, int VectorSize, typename MaskType>
+    struct is_mask_type<hardware_mask<ScalarBits, VectorSize, MaskType>> : std::true_type {};
+
+    // Scalar mask type
+    template <int ScalarBits, int VectorSize>
+    struct is_mask_type<scalar_mask<ScalarBits, VectorSize>> : std::true_type {};
+
+    // Composite mask type
+    template <typename MaskType>
+    struct is_mask_type<composite_mask<MaskType>> : std::true_type {};
+
+    template <typename T>
+    concept is_mask = is_mask_type<T>::value;
+
+    // Default: not a SIMD vector type
+    template <typename T>
+    struct is_vector_type : std::false_type {};
+
+    // Hardware vector type
+    template <typename ScalarType, int VectorSize, typename VectorType>
+    struct is_vector_type<hardware_vector<ScalarType, VectorSize, VectorType>> : std::true_type {};
+
+    // Scalar vector type
+    template <typename ScalarType, int VectorSize>
+    struct is_vector_type<scalar_vector<ScalarType, VectorSize>> : std::true_type {};
+
+    // Composite vector type
+    template <typename VectorType>
+    struct is_vector_type<composite_vector<VectorType>> : std::true_type {};
+
+    // Exception: f16x4 cannot do arithmetic operations
+    template <>
+    struct is_vector_type<f16x4> : std::false_type {};
+
+    // Concept using the type trait
+    template <typename T>
+    concept is_vector = is_vector_type<T>::value && !is_mask_type<T>::value;
+
+    // --------------------------------------------------------------
+    // SIMD operators
+    // --------------------------------------------------------------
+
+    // vector operations
+
+    template <typename T>
+        requires is_vector<T>
+    inline T nand(T a, T b)
+    {
+        return bitwise_nand(a, b);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    inline T operator & (T a, T b)
+    {
+        return bitwise_and(a, b);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    inline T operator | (T a, T b)
+    {
+        return bitwise_or(a, b);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    inline T operator ^ (T a, T b)
+    {
+        return bitwise_xor(a, b);
+    }
+
+    template <typename T>
+        requires is_vector<T>
+    inline T operator ~ (T a)
+    {
+        return bitwise_not(a);
+    }
+
+    // mask operations
+
+    template <typename T>
+        requires is_mask<T>
+    inline T operator & (T a, T b)
+    {
+        return mask_and(a, b);
+    }
+
+    template <typename T>
+        requires is_mask<T>
+    inline T operator | (T a, T b)
+    {
+        return mask_or(a, b);
+    }
+
+    template <typename T>
+        requires is_mask<T>
+    inline T operator ^ (T a, T b)
+    {
+        return mask_xor(a, b);
+    }
+
+    template <typename T>
+        requires is_mask<T>
+    inline T operator ~ (T a)
+    {
+        return mask_not(a);
+    }
+
+} // namespace mango::simd

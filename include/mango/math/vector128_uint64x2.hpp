@@ -1,11 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/math/vector.hpp>
-#include <mango/math/vector_simd.hpp>
 
 namespace mango::math
 {
@@ -25,10 +24,10 @@ namespace mango::math
             ScalarAccessor<u64, simd::u64x2, 1> y;
 
             // generate 2 component accessors
-#define VECTOR2_SHUFFLE_ACCESSOR2(A, B, NAME) \
-            ShuffleAccessor2<u64, simd::u64x2, A, B> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR2_SHUFFLE_ACCESSOR2
+#define VECTOR2_SHUFFLE2(A, B, NAME) \
+            ShuffleAccessor<Vector<u64, 2>, simd::u64x2, A, B> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR2_SHUFFLE2
         };
 
         ScalarType& operator [] (size_t index)
@@ -68,26 +67,6 @@ namespace mango::math
         Vector(simd::u64x2 v)
             : m(v)
         {
-        }
-
-        template <int X, int Y>
-        Vector(const ShuffleAccessor2<u64, simd::u64x2, X, Y>& p)
-        {
-            m = p;
-        }
-
-        template <int X, int Y>
-        Vector& operator = (const ShuffleAccessor2<u64, simd::u64x2, X, Y>& p)
-        {
-            m = p;
-            return *this;
-        }
-
-        template <typename T, int I>
-        Vector& operator = (const ScalarAccessor<ScalarType, T, I>& accessor)
-        {
-            *this = ScalarType(accessor);
-            return *this;
         }
 
         Vector(const Vector& v) = default;
@@ -135,21 +114,6 @@ namespace mango::math
             return Vector(0, 1);
         }
     };
-
-    // ------------------------------------------------------------------
-    // operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_UNSIGNED_INTEGER_OPERATORS(u64, 2);
-
-    // ------------------------------------------------------------------
-    // functions
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_INTEGER_FUNCTIONS(u64, 2, mask64x2);
-
-    MATH_SIMD_BITWISE_FUNCTIONS(u64, 2);
-    MATH_SIMD_COMPARE_FUNCTIONS(u64, 2, mask64x2);
 
     // ------------------------------------------------------------------
     // shift

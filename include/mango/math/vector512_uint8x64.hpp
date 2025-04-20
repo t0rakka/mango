@@ -1,11 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/math/vector.hpp>
-#include <mango/math/vector_simd.hpp>
 
 namespace mango::math
 {
@@ -125,21 +124,5 @@ namespace mango::math
                 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63);
         }
     };
-
-    // ------------------------------------------------------------------
-    // operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_UNSIGNED_INTEGER_OPERATORS(u8, 64);
-
-    // ------------------------------------------------------------------
-    // functions
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_INTEGER_FUNCTIONS(u8, 64, mask8x64);
-    MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(u8, 64, mask8x64);
-
-    MATH_SIMD_BITWISE_FUNCTIONS(u8, 64);
-    MATH_SIMD_COMPARE_FUNCTIONS(u8, 64, mask8x64);
 
 } // namespace mango::math

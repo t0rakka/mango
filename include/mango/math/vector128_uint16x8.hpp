@@ -5,7 +5,6 @@
 #pragma once
 
 #include <mango/math/vector.hpp>
-#include <mango/math/vector_simd.hpp>
 
 namespace mango::math
 {
@@ -112,36 +111,24 @@ namespace mango::math
     };
 
     template <>
-    inline Vector<u16, 8> load_low<u16, 8>(const u16 *source)
+    inline Vector<u16, 8> load_low<u16, 8>(const u16 *source) noexcept
     {
         return simd::u16x8_load_low(source);
     }
 
-    static inline void store_low(u16 *dest, Vector<u16, 8> v)
+    static inline void store_low(u16 *dest, Vector<u16, 8> v) noexcept
     {
         simd::u16x8_store_low(dest, v);
     }
 
     // ------------------------------------------------------------------
-    // operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_UNSIGNED_INTEGER_OPERATORS(u16, 8);
-
-    // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
-
-    MATH_SIMD_INTEGER_FUNCTIONS(u16, 8, mask16x8);
-    MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(u16, 8, mask16x8);
 
     static inline Vector<u16, 8> mullo(Vector<u16, 8> a, Vector<u16, 8> b)
     {
         return simd::mullo(a, b);
     }
-
-    MATH_SIMD_BITWISE_FUNCTIONS(u16, 8);
-    MATH_SIMD_COMPARE_FUNCTIONS(u16, 8, mask16x8);
 
     // ------------------------------------------------------------------
     // shift

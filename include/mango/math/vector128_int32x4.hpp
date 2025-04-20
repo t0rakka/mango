@@ -5,7 +5,6 @@
 #pragma once
 
 #include <mango/math/vector.hpp>
-#include <mango/math/vector_simd.hpp>
 
 namespace mango::math
 {
@@ -27,22 +26,22 @@ namespace mango::math
             ScalarAccessor<s32, simd::s32x4, 3> w;
 
             // generate 2 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR2(A, B, NAME) \
-            ShuffleAccessor4x2<s32, simd::s32x4, A, B> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR2
+#define VECTOR4_SHUFFLE2(A, B, NAME) \
+            ShuffleAccessor<Vector<s32, 2>, simd::s32x4, A, B> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR4_SHUFFLE2
 
             // generate 3 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR3(A, B, C, NAME) \
-            ShuffleAccessor4x3<s32, simd::s32x4, A, B, C> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR3
+#define VECTOR4_SHUFFLE3(A, B, C, NAME) \
+            ShuffleAccessor<Vector<s32, 3>, simd::s32x4, A, B, C> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR4_SHUFFLE3
 
             // generate 4 component accessors
-#define VECTOR4_SHUFFLE_ACCESSOR4(A, B, C, D, NAME) \
-            ShuffleAccessor4<s32, simd::s32x4, A, B, C, D> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR4_SHUFFLE_ACCESSOR4
+#define VECTOR4_SHUFFLE4(A, B, C, D, NAME) \
+            ShuffleAccessor<Vector<s32, 4>, simd::s32x4, A, B, C, D> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR4_SHUFFLE4
         };
 
         ScalarType& operator [] (size_t index)
@@ -154,30 +153,19 @@ namespace mango::math
     }
 
     template <>
-    inline Vector<s32, 4> load_low<s32, 4>(const s32 *source)
+    inline Vector<s32, 4> load_low<s32, 4>(const s32 *source) noexcept
     {
         return simd::s32x4_load_low(source);
     }
 
-    static inline void store_low(s32 *dest, Vector<s32, 4> v)
+    static inline void store_low(s32 *dest, Vector<s32, 4> v) noexcept
     {
         simd::s32x4_store_low(dest, v);
     }
 
     // ------------------------------------------------------------------
-    // operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_UNSIGNED_INTEGER_OPERATORS(s32, 4);
-    MATH_SIMD_SIGNED_INTEGER_OPERATORS(s32, 4);
-
-    // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
-
-    MATH_SIMD_INTEGER_FUNCTIONS(s32, 4, mask32x4);
-    MATH_SIMD_SATURATING_INTEGER_FUNCTIONS(s32, 4, mask32x4);
-    MATH_SIMD_ABS_INTEGER_FUNCTIONS(s32, 4, mask32x4);
 
     static inline Vector<s32, 4> hadd(Vector<s32, 4> a, Vector<s32, 4> b)
     {
@@ -193,9 +181,6 @@ namespace mango::math
     {
         return simd::mullo(a, b);
     }
-
-    MATH_SIMD_BITWISE_FUNCTIONS(s32, 4);
-    MATH_SIMD_COMPARE_FUNCTIONS(s32, 4, mask32x4);
 
     // ------------------------------------------------------------------
     // shift

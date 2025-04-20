@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 1.7.3
+        VERSION 1.8.0
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
@@ -72,6 +72,16 @@ endif ()
 # ------------------------------------------------------------------------------
 # build settings
 # ------------------------------------------------------------------------------
+
+# c++ standard
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if (MSVC)
+    # Microsoft compiler does not generate __cplusplus automatically
+    add_compile_options(/Zc:__cplusplus)
+endif ()
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
@@ -443,8 +453,6 @@ add_library(mango SHARED ${MANGO_SOURCES})
 set_target_properties(mango PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION}
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED ON
 )
 
 if (APPLE)
@@ -533,7 +541,7 @@ if (BUILD_OPENGL)
                     target_compile_definitions(mango PRIVATE "MANGO_ENABLE_EGL")
                     target_link_libraries(mango PUBLIC EGL)
                 else ()
-                    message("    OpenGL: GLX | XLIB|")
+                    message("    OpenGL: GLX | XLIB")
                 endif ()
             elseif (WINDOW_SYSTEM STREQUAL "xcb")
                 target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XCB")

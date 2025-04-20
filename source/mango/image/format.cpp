@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/bits.hpp>
@@ -135,7 +135,7 @@ namespace mango::image
 
     bool Format::isFloat() const
     {
-        return (type & TYPE_FLOAT) != 0;
+        return (u16(type) & TYPE_FLOAT) != 0;
     }
 
     bool Format::isLuminance() const

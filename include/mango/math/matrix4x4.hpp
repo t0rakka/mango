@@ -319,18 +319,18 @@ namespace mango::math
     static inline
     void inverseTranspose(float32x4* result, float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
+        const float32x4 m0yxxx = m0.yxxx;
         const float32x4 m0zwyz = m0.zwyz;
         const float32x4 m0wzwy = m0.wzwy;
+        const float32x4 m1yxxx = m1.yxxx;
         const float32x4 m1zwyz = m1.zwyz;
         const float32x4 m1wzwy = m1.wzwy;
+        const float32x4 m2yxxx = m2.yxxx;
         const float32x4 m2zwyz = m2.zwyz;
         const float32x4 m2wzwy = m2.wzwy;
+        const float32x4 m3yxxx = m3.yxxx;
         const float32x4 m3zwyz = m3.zwyz;
         const float32x4 m3wzwy = m3.wzwy;
-        const float32x4 m0yxxx = m0.yxxx;
-        const float32x4 m1yxxx = m1.yxxx;
-        const float32x4 m2yxxx = m2.yxxx;
-        const float32x4 m3yxxx = m3.yxxx;
 
         const float32x4 v0 = nmsub(m0wzwy * m1zwyz, m0zwyz, m1wzwy);
         const float32x4 v1 = nmsub(m0zwyz * m2wzwy, m0wzwy, m2zwyz);

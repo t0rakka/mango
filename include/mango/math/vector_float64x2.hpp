@@ -1,11 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/math/vector.hpp>
-#include <mango/math/vector_simd.hpp>
 
 namespace mango::math
 {
@@ -29,10 +28,10 @@ namespace mango::math
             ScalarAccessor<double, simd::f64x2, 1> y;
 
             // generate 2 component accessors
-#define VECTOR2_SHUFFLE_ACCESSOR2(A, B, NAME) \
-            ShuffleAccessor2<double, simd::f64x2, A, B> NAME
-#include <mango/math/accessor.hpp>
-#undef VECTOR2_SHUFFLE_ACCESSOR2
+#define VECTOR2_SHUFFLE2(A, B, NAME) \
+            ShuffleAccessor<Vector<double, 2>, simd::f64x2, A, B> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR2_SHUFFLE2
         };
 
         ScalarType& operator [] (size_t index)
@@ -72,26 +71,6 @@ namespace mango::math
         Vector(simd::f64x2 v)
             : m(v)
         {
-        }
-
-        template <int X, int Y>
-        Vector(const ShuffleAccessor2<double, simd::f64x2, X, Y>& p)
-        {
-            m = p;
-        }
-
-        template <int X, int Y>
-        Vector& operator = (const ShuffleAccessor2<double, simd::f64x2, X, Y>& p)
-        {
-            m = p;
-            return *this;
-        }
-
-        template <typename T, int I>
-        Vector& operator = (const ScalarAccessor<ScalarType, T, I>& accessor)
-        {
-            *this = ScalarType(accessor);
-            return *this;
         }
 
         Vector(const Vector& v) = default;
@@ -141,45 +120,21 @@ namespace mango::math
     };
 
     // ------------------------------------------------------------------
-    // operators
-    // ------------------------------------------------------------------
-
-    MATH_SIMD_FLOAT_OPERATORS(double, 2, f64x2);
-
-    // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
 
-    MATH_SIMD_FLOAT_FUNCTIONS(double, 2, f64x2, mask64x2);
-
-    static inline double square(Vector<double, 2> a)
-    {
-        return simd::dot2(a, a);
-    }
-
-    static inline double length(Vector<double, 2> a)
-    {
-        return std::sqrt(simd::dot2(a, a));
-    }
-
-    static inline Vector<double, 2> normalize(Vector<double, 2> a)
-    {
-        return simd::mul(a, simd::rsqrt(simd::f64x2_set(simd::dot2(a, a))));
-    }
-
-    static inline double dot(Vector<double, 2> a, Vector<double, 2> b)
+    static inline
+    double dot(Vector<double, 2> a, Vector<double, 2> b)
     {
         return simd::dot2(a, b);
     }
 
     template <int x, int y>
-    static inline Vector<double, 2> shuffle(Vector<double, 2> a, Vector<double, 2> b)
+    static inline
+    Vector<double, 2> shuffle(Vector<double, 2> a, Vector<double, 2> b)
     {
         return simd::shuffle<x, y>(a, b);
     }
-
-    MATH_SIMD_BITWISE_FUNCTIONS(double, 2);
-    MATH_SIMD_COMPARE_FUNCTIONS(double, 2, mask64x2);
 
     // ------------------------------------------------------------------
     // trigonometric functions
@@ -192,14 +147,5 @@ namespace mango::math
     Vector<double, 2> acos(Vector<double, 2> a);
     Vector<double, 2> atan(Vector<double, 2> a);
     Vector<double, 2> atan2(Vector<double, 2> a, Vector<double, 2> b);
-
-    /* These are handled by vector template:
-
-    Vector<double, 2> exp(Vector<double, 2> a);
-    Vector<double, 2> exp2(Vector<double, 2> a);
-    Vector<double, 2> log(Vector<double, 2> a);
-    Vector<double, 2> log2(Vector<double, 2> a);
-    Vector<double, 2> pow(Vector<double, 2> a, Vector<double, 2> b);
-    */
 
 } // namespace mango::math
