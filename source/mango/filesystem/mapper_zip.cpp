@@ -784,20 +784,21 @@ namespace mango::filesystem
 
                     const u8* pass = reinterpret_cast<const u8*>(password.c_str());
 
-                    // derived[0:32] = AES key
-                    // derived[32:64] = HMAC key
-                    // derived[64:66] = password verification
-                    u8 derived[66];
-                    pbkdf2_hmac_sha1(pass, password.length(), salt, salt_length, 1000, derived, 66);
+                    // key_length bytes: AES key
+                    // key_length bytes: HMAC key
+                    // 2 bytes: password verification
+                    constexpr size_t max_derived_size = 66; // 32 + 32 + 2
+                    u8 derived[max_derived_size];
+                    pbkdf2_hmac_sha1(pass, password.length(), salt, salt_length, 1000, derived, max_derived_size);
 
-                    if (std::memcmp(derived + 64, pass_verify, AES_PWVERIFY_SIZE))
+                    if (std::memcmp(derived + key_length * 2, pass_verify, AES_PWVERIFY_SIZE))
                     {
                         MANGO_EXCEPTION("[mapper.zip] Password verification failed.");
                     }
 
                     // Compute HMAC using the derived HMAC key
                     u8 calculated_mac[20];
-                    hmac_sha1(derived + 32, key_length, // HMAC key
+                    hmac_sha1(derived + key_length, key_length, // HMAC key
                               encrypted_data, encrypted_size, // message
                               calculated_mac);  // output
 
