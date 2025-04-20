@@ -44,6 +44,9 @@ namespace mango
         void cbc_block_encrypt(u8* output, const u8* input, size_t length, const u8* iv);
         void cbc_block_decrypt(u8* output, const u8* input, size_t length, const u8* iv);
 
+        void ctr_block_encrypt(u8* output, const u8* input, size_t length, u8* iv);
+        void ctr_block_decrypt(u8* output, const u8* input, size_t length, u8* iv);
+
         // aribtrary size buffer encryption
         // input can be any size but last block is automatically zero padded
 
