@@ -51,120 +51,157 @@ namespace mango::math
     // ------------------------------------------------------------------
 
     template <typename T>
+    concept is_scalar = std::is_scalar_v<T>;
+
+    template <typename T>
+        requires is_scalar<T>
     static inline T abs(const T& a)
     {
         return std::abs(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T sqrt(const T& a)
     {
         return std::sqrt(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T sin(const T& a)
     {
         return std::sin(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T cos(const T& a)
     {
         return std::cos(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T tan(const T& a)
     {
         return std::tan(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T asin(const T& a)
     {
         return std::asin(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T acos(const T& a)
     {
         return std::acos(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T atan(const T& a)
     {
         return std::atan(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T exp(const T& a)
     {
         return std::exp(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T log(const T& a)
     {
         return std::log(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T exp2(const T& a)
     {
         return std::exp2(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T log2(const T& a)
     {
         return std::log2(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T pow(const T& a, const T& b)
     {
         return std::pow(a, b);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T atan2(const T& a, const T& b)
     {
         return std::atan2(a, b);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T round(const T& a)
     {
         return std::round(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T floor(const T& a)
     {
         return std::floor(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T ceil(const T& a)
     {
         return std::ceil(a);
     }
 
     template <typename T>
+        requires is_scalar<T>
+    static inline T min(const T& a, const T& b)
+    {
+        return std::min(a, b);
+    }
+
+    template <typename T>
+        requires is_scalar<T>
+    static inline T max(const T& a, const T& b)
+    {
+        return std::max(a, b);
+    }
+
+    template <typename T>
+        requires is_scalar<T>
     static inline T clamp(const T& value, const T& low, const T& high)
     {
         return std::max(low, std::min(high, value));
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T lerp(const T& a, const T& b, const T& t)
     {
         return a + (b - a) * t;
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T smoothstep(const T& a, const T& b, const T& t)
     {
         t = clamp((t - a) / (b - a), T(0.0), T(1.0));
@@ -172,6 +209,7 @@ namespace mango::math
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T sign(const T& a)
     {
         if (a < 0) a = -T(1.0);
@@ -180,12 +218,14 @@ namespace mango::math
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T radians(const T& a)
     {
         return a * T(0.01745329251);
     }
 
     template <typename T>
+        requires is_scalar<T>
     static inline T degrees(const T& a)
     {
         return a * T(57.2957795131);
@@ -688,9 +728,6 @@ namespace mango::math
 
     template <typename VectorType, typename StorageType, int... Indices>
     struct is_shuffle_accessor<ShuffleAccessor<VectorType, StorageType, Indices...>> : std::true_type {};
-
-    template <typename T>
-    concept is_scalar = std::is_scalar_v<T>;
 
     template <typename T>
     concept is_simd_vector = requires(T v)
