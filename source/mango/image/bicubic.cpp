@@ -531,6 +531,9 @@ namespace
                         int16x8 b0001 = reinterpret<int16x8>(unpacklo(ba0, zero));
                         int16x8 b0203 = reinterpret<int16x8>(unpacklo(ba1, zero));
 
+                        int16x8 a0001 = reinterpret<int16x8>(unpackhi(ba0, zero));
+                        int16x8 a0203 = reinterpret<int16x8>(unpackhi(ba1, zero));
+
                         int32x4 r_0 = simd::madd(r0001, v_xscale);
                         int32x4 r_1 = simd::madd(r0203, v_xscale);
                         int32x4 r = mullo(hadd(r_0, r_1), v_yscale) >> 16;
@@ -543,8 +546,9 @@ namespace
                         int32x4 b_1 = simd::madd(b0203, v_xscale);
                         int32x4 b = mullo(hadd(b_0, b_1), v_yscale) >> 16;
 
-                        // NOTE: we might want to interpolate alpha as well for premultiplied alpha 
-                        int32x4 a(0xff);
+                        int32x4 a_0 = simd::madd(a0001, v_xscale);
+                        int32x4 a_1 = simd::madd(a0203, v_xscale);
+                        int32x4 a = mullo(hadd(a_0, a_1), v_yscale) >> 16;
 
                         int32x4 rb0 = unpacklo(r, b);
                         int32x4 rb1 = unpackhi(r, b);

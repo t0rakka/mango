@@ -11,7 +11,7 @@ namespace mango::image
 {
 
     // NOTE: Experimental function - name could change until this notice is removed.
-    // NOTE: The surfaces MUST be 32 bit UNORM RGBA or BGRA; alpha is currently set to maximum value and not scaled.
+    // NOTE: The surfaces MUST be 32 bit UNORM RGBA or BGRA
 
     void u32_bicubic_blit(const Surface& dest, const Surface& source, float x, float y, float xsize, float ysize);
 
