@@ -543,6 +543,7 @@ namespace
                         int32x4 b_1 = simd::madd(b0203, v_xscale);
                         int32x4 b = mullo(hadd(b_0, b_1), v_yscale) >> 16;
 
+                        // NOTE: we might want to interpolate alpha as well for premultiplied alpha 
                         int32x4 a(0xff);
 
                         int32x4 rb0 = unpacklo(r, b);
