@@ -44,9 +44,14 @@ namespace mango::filesystem
     // filename manipulation functions
     // -----------------------------------------------------------------
 
+    size_t getPathSeparatorIndex(std::string_view filename)
+    {
+        return filename.find_last_of("/\\:");
+    }
+
     std::string getPath(const std::string& filename)
     {
-        size_t n = filename.find_last_of("/\\:");
+        size_t n = getPathSeparatorIndex(filename);
         std::string s;
         if (n != std::string::npos)
             s = filename.substr(0, n + 1);
@@ -55,7 +60,7 @@ namespace mango::filesystem
 
     std::string removePath(const std::string& filename)
     {
-        size_t n = filename.find_last_of("/\\:");
+        size_t n = getPathSeparatorIndex(filename);
         std::string s;
         if (n != std::string::npos)
             s = filename.substr(n + 1);

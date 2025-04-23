@@ -16,7 +16,7 @@ namespace mango::filesystem
     File::File(const std::string& s)
     {
         // split s into pathname + filename
-        size_t n = s.find_last_of("/\\:");
+        size_t n = getPathSeparatorIndex(s);
         std::string filename = s.substr(n + 1);
         std::string filepath = s.substr(0, n + 1);
 
@@ -30,7 +30,7 @@ namespace mango::filesystem
     File::File(const Path& path, const std::string& s)
     {
         // split s into pathname + filename
-        size_t n = s.find_last_of("/\\:");
+        size_t n = getPathSeparatorIndex(s);
         std::string filename = s.substr(n + 1);
         std::string filepath = s.substr(0, n + 1);
 
@@ -48,7 +48,7 @@ namespace mango::filesystem
         Path path(memory, extension);
 
         // split s into pathname + filename
-        size_t n = s.find_last_of("/\\:");
+        size_t n = getPathSeparatorIndex(s);
         std::string filename = s.substr(n + 1);
         std::string filepath = s.substr(0, n + 1);
 
