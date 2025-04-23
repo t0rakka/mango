@@ -90,17 +90,19 @@ Here's the part where VCPKG_ROOT environment variable comes in handy; you don't 
     cmake --build . --config Release --parallel
     cmake --install .
 
+It is also possible to use the presets:
+
+    cmake --preset windows
+    cmake --build --preset windows-release
+    cmake --install build
+
 If you are not sure where the MANGO was installed, you can write "cmake .." in the build directory and the target directory will be printed into the console.
 
-Windows build generator is so-called "multi generator" where there are different configurations and it is recommended you use --config parameter to choose one you want to build. It works a bit differently than UNIX builds where the selection mechanism is different.
+Windows build generator is so-called "multi generator" where there are different configurations and it is recommended you use --config parameter to choose one you want to build. It works a bit differently than POSIX builds where the selection mechanism is different.
 
 #### INTEL_DELUXE
 
-The INTEL_DELUXE option uses all the latest ISA extensions except AVX-512. It does no harm giving it on ARM or other platform build, but does break backward compatiblity with older processors as it might use instructions in generated code that the CPU cannot support.
-
-#### Examples
-
-The examples won't either find the mango.dll, or use a previously installed one unless the install build command is executed before the examples. Windows aims to please by being different; just get used to it.
+The INTEL_DELUXE option uses all the latest ISA extensions except AVX-512. When targeting older processors it is recommended to cherry pick the extensions.
 
 #### WSL
 
