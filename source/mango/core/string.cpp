@@ -403,38 +403,34 @@ namespace mango
     // string utilities
     // -----------------------------------------------------------------
 
-    std::string toLower(std::string s)
+    std::string toLower(std::string_view s) noexcept
     {
-        std::transform(s.begin(), s.end(), s.begin(), [] (unsigned char c)
-        {
-            return char(std::tolower(c));
-        });
-
-        return s;
+        std::string result(s);
+        std::ranges::transform(result, result.begin(),
+            [] (unsigned char c) { return char(std::tolower(c)); });
+        return result;
     }
 
-    std::string toUpper(std::string s)
+    std::string toUpper(std::string_view s) noexcept
     {
-        std::transform(s.begin(), s.end(), s.begin(), [] (unsigned char c)
-        {
-            return char(std::toupper(c));
-        });
-
-        return s;
+        std::string result(s);
+        std::ranges::transform(result, result.begin(),
+            [] (unsigned char c) { return char(std::toupper(c)); });
+        return result;
     }
 
-    std::string removePrefix(std::string_view s, std::string_view prefix)
+    std::string removePrefix(std::string_view s, std::string_view prefix) noexcept
     {
-        size_t offset = s.find(prefix) != std::string_view::npos ? prefix.length() : 0;
-        return std::string(s.begin() + offset, s.end());
+        std::string_view prefixless = s.starts_with(prefix) ? s.substr(prefix.length()) : s;
+        return std::string(prefixless);
     }
 
-    bool isPrefix(std::string_view s, std::string_view prefix)
+    bool isPrefix(std::string_view s, std::string_view prefix) noexcept
     {
         return s.length() > prefix.length() && !s.find(prefix, 0);
     }
 
-    bool isMatch(std::string_view text, std::string_view pattern)
+    bool isMatch(std::string_view text, std::string_view pattern) noexcept
     {
         // Based on this article:
         // https://www.geeksforgeeks.org/wildcard-pattern-matching/
@@ -486,7 +482,7 @@ namespace mango
         return patternIndex == patternLength;
     }
 
-    void replace(std::string& s, std::string_view from, std::string_view to)
+    void replace(std::string& s, std::string_view from, std::string_view to) noexcept
     {
         if (from.empty())
             return;
@@ -499,22 +495,22 @@ namespace mango
         }
     }
 
-    std::vector<std::string> split(const std::string& s, char delimiter)
+    std::vector<std::string> split(const std::string& s, char delimiter) noexcept
     {
         return splitTemplate(s, delimiter);
     }
 
-    std::vector<std::string> split(const std::string& s, const char* delimiter)
+    std::vector<std::string> split(const std::string& s, const char* delimiter) noexcept
     {
         return splitTemplate(s, delimiter);
     }
 
-    std::vector<std::string> split(const std::string& s, const std::string& delimiter)
+    std::vector<std::string> split(const std::string& s, const std::string& delimiter) noexcept
     {
         return splitTemplate(s, delimiter);
     }
 
-    std::vector<std::string_view> split(std::string_view s, std::string_view delimiter)
+    std::vector<std::string_view> split(std::string_view s, std::string_view delimiter) noexcept
     {
         return splitTemplate(s, delimiter);
     }
@@ -525,7 +521,7 @@ namespace mango
 
 #if defined(MANGO_ENABLE_SSE2)
 
-    const u8* memchr(const u8* p, u8 value, size_t count)
+    const u8* memchr(const u8* p, u8 value, size_t count) noexcept
     {
         __m128i ref = _mm_set1_epi8(value);
         while (count >= 16)
@@ -553,7 +549,7 @@ namespace mango
 
 #else
 
-    const u8* memchr(const u8* p, u8 value, size_t count)
+    const u8* memchr(const u8* p, u8 value, size_t count) noexcept
     {
         p = reinterpret_cast<const u8 *>(std::memchr(p, value, count));
         return p;
@@ -570,7 +566,7 @@ namespace mango
     //
     // Let's just re-invent the wheel and forget this ever happened.
 
-    size_t stringLength(const char* s, size_t maxlen)
+    size_t stringLength(const char* s, size_t maxlen) noexcept
     {
         if (!s)
         {
@@ -582,14 +578,14 @@ namespace mango
         return p1 ? p1 - p0 : maxlen;
     }
 
-    float parseFloat(std::string_view s)
+    float parseFloat(std::string_view s) noexcept
     {
         float value = 0.0f;
         fast_float::from_chars(s.data(), s.data() + s.size(), value);
         return value;
     }
 
-    int parseInt(std::string_view str)
+    int parseInt(std::string_view str) noexcept
     {
         int value = 0;
         std::from_chars(str.data(), str.data() + str.size(), value);

@@ -32,19 +32,19 @@ namespace mango
     std::wstring u16_fromBytes(const std::string& source);
 
     // string utilities
-    std::string toLower(std::string s);
-    std::string toUpper(std::string s);
-    std::string removePrefix(std::string_view s, std::string_view prefix);
-    bool isPrefix(std::string_view s, std::string_view prefix);
-    bool isMatch(std::string_view s, std::string_view pattern);
-    void replace(std::string& s, std::string_view from, std::string_view to);
-    std::vector<std::string> split(const std::string& s, char delimiter);
-    std::vector<std::string> split(const std::string& s, const char* delimiter);
-    std::vector<std::string> split(const std::string& s, const std::string& delimiter);
-    std::vector<std::string_view> split(std::string_view s, std::string_view delimiter);
-    const u8* memchr(const u8* p, u8 value, size_t count);
-    size_t stringLength(const char* s, size_t maxlen);
-    float parseFloat(std::string_view str);
-    int parseInt(std::string_view str);
+    std::string toLower(std::string_view s) noexcept;
+    std::string toUpper(std::string_view s) noexcept;
+    std::string removePrefix(std::string_view s, std::string_view prefix) noexcept;
+    bool isPrefix(std::string_view s, std::string_view prefix) noexcept;
+    bool isMatch(std::string_view s, std::string_view pattern) noexcept;
+    void replace(std::string& s, std::string_view from, std::string_view to) noexcept;
+    std::vector<std::string> split(const std::string& s, char delimiter) noexcept;
+    std::vector<std::string> split(const std::string& s, const char* delimiter) noexcept;
+    std::vector<std::string> split(const std::string& s, const std::string& delimiter) noexcept;
+    std::vector<std::string_view> split(std::string_view s, std::string_view delimiter) noexcept;
+    const u8* memchr(const u8* p, u8 value, size_t count) noexcept;
+    size_t stringLength(const char* s, size_t maxlen) noexcept;
+    float parseFloat(std::string_view str) noexcept;
+    int parseInt(std::string_view str) noexcept;
 
 } // namespace mango
