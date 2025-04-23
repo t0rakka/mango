@@ -202,16 +202,16 @@ namespace mango::math
 
     template <typename T>
         requires is_scalar<T>
-    static inline T lerp(const T& a, const T& b, const T& t)
+    static inline T lerp(const T& a, const T& b, const T& time)
     {
-        return a + (b - a) * t;
+        return a + (b - a) * time;
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T smoothstep(const T& a, const T& b, const T& t)
+    static inline T smoothstep(const T& a, const T& b, const T& time)
     {
-        t = clamp((t - a) / (b - a), T(0.0), T(1.0));
+        T t = clamp((time - a) / (b - a), T(0.0), T(1.0));
         return t * t * (T(3.0) - T(2.0) * t);
     }
 
@@ -1625,11 +1625,11 @@ namespace mango::math
     }
 
     template <typename A, typename B, typename C>
-        requires (resolves_to_vector<A> || resolves_to_vector<B>) && resolves_to_scalar<C>
-    static inline auto lerp(const A& a, const B& b, C s)
+        requires resolves_to_vector<A> || resolves_to_vector<B>
+    static inline auto lerp(const A& a, const B& b, C time)
     {
         using T = resolve_t<A, B>;
-        return vector_ops<T>::lerp(T(a), T(b), typename T::ScalarType(s));
+        return vector_ops<T>::lerp(T(a), T(b), typename T::ScalarType(time));
     }
 
     template <typename A>
@@ -1861,12 +1861,12 @@ namespace mango::math
             return temp;
         }
 
-        static T lerp(const T& a, const T& b, ScalarType factor)
+        static T lerp(const T& a, const T& b, ScalarType time)
         {
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = a[i] + (b[i] - a[i]) * factor;
+                temp[i] = a[i] + (b[i] - a[i]) * time;
             }
             return temp;
         }
@@ -2055,9 +2055,9 @@ namespace mango::math
             return simd::sign(a);
         }
 
-        static T lerp(const T& a, const T& b, ScalarType factor)
+        static T lerp(const T& a, const T& b, ScalarType time)
         {
-            return simd::lerp(a, b, T(factor));
+            return simd::lerp(a, b, T(time));
         }
 
         static T radians(const T& a)
@@ -2177,19 +2177,15 @@ namespace mango::math
     }
 
     template <typename T, typename S>
-        requires is_vector<T> && (T::VectorSize == 2 || T::VectorSize == 3) &&
-                 is_scalar<S>
+        requires is_vector<T> && (T::VectorSize == 2 || T::VectorSize == 3)
     static inline auto refract(const T& v, const T& normal, S factor)
     {
         using ScalarType = typename T::ScalarType;
         ScalarType f = ScalarType(factor);
         ScalarType vdotn = dot(v, normal);
         ScalarType p = ScalarType(1.0) - f * f * (ScalarType(1.0) - vdotn * vdotn);
-        if (p < 0)
-        {
-            return T(ScalarType(0.0));
-        }
-        return v * f - normal * (math::sqrt(p) + f * vdotn);
+        ScalarType mask = select(p > ScalarType(0.0), ScalarType(1.0), ScalarType(0.0));
+        return (v * f - normal * (math::sqrt(p) + f * vdotn)) * mask; // NOTE: compound vectors don't have select
     }
 
     template <typename T>
@@ -2240,6 +2236,15 @@ namespace mango::math
     {
         using T = resolve_t<A, resolve_t<B, C>>;
         return math::max(T(low), math::min(T(high), T(a)));
+    }
+
+    template <typename A, typename B, typename C>
+        requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
+    static inline auto smoothstep(const A& a, const B& b, const C& time)
+    {
+        using T = resolve_t<A, resolve_t<B, C>>;
+        T t = clamp((T(time) - T(a)) / (T(b) - T(a)), T(0.0), T(1.0));
+        return t * t * (T(3.0) - T(2.0) * t);
     }
 
     // ------------------------------------------------------------------

@@ -495,13 +495,31 @@ namespace composite
         vec3 c = a + b;
         c = 2.0f * a;
         c = 4 * a;
+        c = 1.5f * a + b * 2.0f;
+        c = b.x * a + b * b.z;
         c = a * dot(a, c) + normalize(a * b.y);
         c = dot(a, c) * a + normalize(a.y * b);
         c = dot(a, b) * c;
         c = scalar(2.0f) * a;
+        c = clamp(c, 0.0f, 1.0f);
+        c = clamp(a, b, c.x);
+        c += 1.0f;
+        c += scalar(2.0f);
         scalar s = a.x * b.y;
+        vec3 d = sin(a.x) * cos(c);
+        d = sign(a.x) * sign(b);
+        d = floor(a.x) * ceil(b);
+        d = lerp(a, b, 0.5f);
+        d = lerp(a, b, c.x);
+        d = smoothstep(a, b, c.x);
+        d = cross(a, b);
+        d = normalize(a);
+        d = reflect(a, b);
+        d = refract(a, b, 1.0f);
+        d = refract(a, b, c.z);
 
         MANGO_UNREFERENCED(c);
+        MANGO_UNREFERENCED(d);
         MANGO_UNREFERENCED(s);
     }
 
