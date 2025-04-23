@@ -1444,6 +1444,259 @@ namespace mango::math
     };
 
     // ------------------------------------------------------------------
+    // vector operations
+    // ------------------------------------------------------------------
+
+    template <typename T>
+    struct vector_ops;
+
+    // unary operators
+
+    template <typename T>
+        requires is_vector<T>
+    static inline T operator + (const T& a)
+    {
+        return a;
+    }
+
+    template <typename T>
+        requires is_signed_vector<T>
+    static inline T operator - (const T& a)
+    {
+        return vector_ops<T>::neg(a);
+    }
+
+    // binary operators
+
+    template <typename A, typename B>
+        requires (resolves_to_vector<A> || resolves_to_vector<B>)
+    static inline auto operator + (const A& a, const B& b)
+    {
+        using T = resolve_t<A, B>;
+        return vector_ops<T>::add(T(a), T(b));
+    }
+
+    template <typename A, typename B>
+        requires (resolves_to_vector<A> || resolves_to_vector<B>)
+    static inline auto operator - (const A& a, const B& b)
+    {
+        using T = resolve_t<A, B>;
+        return vector_ops<T>::sub(T(a), T(b));
+    }
+
+    template <typename A, typename B>
+        requires has_vector<A, B> && is_float_vector<first_vector_t<A, B>>
+    static inline auto operator * (const A& a, const B& b)
+    {
+        using T = resolve_t<A, B>;
+        return vector_ops<T>::mul(T(a), T(b));
+    }
+
+    template <typename A, typename B>
+        requires (resolves_to_vector<A> || resolves_to_vector<B>) &&  is_float_vector<first_vector_t<A, B>>
+    static inline auto operator / (const A& a, const B& b)
+    {
+        using T = resolve_t<A, B>;
+        return vector_ops<T>::div(T(a), T(b));
+    }
+
+    // compound assignment operators
+
+    template <typename A, typename B>
+        requires is_vector<A> && is_vector_or_scalar<B>
+    static inline A& operator += (A& a, const B& b)
+    {
+        a = vector_ops<A>::add(a, A(b));
+        return a;
+    }
+
+    template <typename A, typename B>
+        requires is_vector<A> && is_vector_or_scalar<B>
+    static inline A& operator -= (A& a, const B& b)
+    {
+        a = vector_ops<A>::sub(a, A(b));
+        return a;
+    }
+
+    template <typename A, typename B>
+        requires is_vector<A> && is_float_vector<A> && is_vector_or_scalar<B>
+    static inline A& operator *= (A& a, const B& b)
+    {
+        a = vector_ops<A>::mul(a, A(b));
+        return a;
+    }
+
+    template <typename A, typename B>
+        requires is_vector<A> && is_float_vector<A> && is_vector_or_scalar<B>
+    static inline A& operator /= (A& a, const B& b)
+    {
+        a = vector_ops<A>::div(a, A(b));
+        return a;
+    }
+
+    // functions
+
+    template <typename A>
+        requires resolves_to_vector<A>
+    static inline auto abs(const A& a)
+    {
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::abs(T(a));
+    }
+
+    template <typename A, typename B, typename C>
+        requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
+    static inline auto madd(const A& a, const B& b, const C& c)
+    {
+        using T = resolve_t<A, resolve_t<B, C>>;
+        return vector_ops<T>::madd(T(a), T(b), T(c));
+    }
+
+    template <typename A, typename B, typename C>
+        requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
+    static inline auto msub(const A& a, const B& b, const C& c)
+    {
+        using T = resolve_t<A, resolve_t<B, C>>;
+        return vector_ops<T>::msub(T(a), T(b), T(c));
+    }
+
+    template <typename A, typename B, typename C>
+        requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
+    static inline auto nmadd(const A& a, const B& b, const C& c)
+    {
+        using T = resolve_t<A, resolve_t<B, C>>;
+        return vector_ops<T>::nmadd(T(a), T(b), T(c));
+    }
+
+    template <typename A, typename B, typename C>
+        requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
+    static inline auto nmsub(const A& a, const B& b, const C& c)
+    {
+        using T = resolve_t<A, resolve_t<B, C>>;
+        return vector_ops<T>::nmsub(T(a), T(b), T(c));
+    }
+
+    template <typename A, typename B>
+        requires resolves_to_vector<A> || resolves_to_vector<B>
+    static inline auto min(const A& a, const B& b)
+    {
+        using T = resolve_t<A, B>;
+        return vector_ops<T>::min(T(a), T(b));
+    }
+
+    template <typename A, typename B>
+        requires resolves_to_vector<A> || resolves_to_vector<B>
+    static inline auto max(const A& a, const B& b)
+    {
+        using T = resolve_t<A, B>;
+        return vector_ops<T>::max(T(a), T(b));
+    }
+
+    template <typename A>
+        requires resolves_to_vector<A> && (A::VectorSize >= 2 || A::VectorSize <= 4)
+    static inline auto sign(const A& a)
+    {
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::sign(T(a));
+    }
+
+    template <typename A, typename B, typename C>
+        requires (resolves_to_vector<A> || resolves_to_vector<B>) && resolves_to_scalar<C>
+    static inline auto lerp(const A& a, const B& b, C s)
+    {
+        using T = resolve_t<A, B>;
+        return vector_ops<T>::lerp(T(a), T(b), typename T::ScalarType(s));
+    }
+
+    template <typename A>
+        requires resolves_to_vector<A>
+    static inline auto radians(const A& a)
+    {
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::radians(T(a));
+    }
+
+    template <typename A>
+        requires resolves_to_vector<A>
+    static inline auto degrees(const A& a)
+    {
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::degrees(T(a));
+    }
+
+    template <typename A>
+        requires resolves_to_vector<A>
+    static inline auto rcp(const A& a)
+    {
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::rcp(T(a));
+    }
+
+    template <typename A>
+        requires resolves_to_vector<A>
+    static inline auto sqrt(const A& a)
+    {
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::sqrt(T(a));
+    }
+
+    template <typename A>
+        requires resolves_to_vector<A>
+    static inline auto rsqrt(const A& a)
+    {
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::rsqrt(T(a));
+    }
+
+    template <typename A>
+        requires resolves_to_vector<A>
+    static inline auto round(const A& a)
+    {
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::round(T(a));
+    }
+
+    template <typename A>
+        requires resolves_to_vector<A>
+    static inline auto floor(const A& a)
+    {
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::floor(T(a));
+    }
+
+    template <typename A>
+        requires resolves_to_vector<A>
+    static inline auto ceil(const A& a)
+    {
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::ceil(T(a));
+    }
+
+    template <typename A>
+        requires resolves_to_vector<A>
+    static inline auto trunc(const A& a)
+    {
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::trunc(T(a));
+    }
+
+    template <typename A>
+        requires resolves_to_vector<A>
+    static inline auto fract(const A& a)
+    {
+        using T = resolve_t<A, A>;
+        return vector_ops<T>::fract(T(a));
+    }
+
+    template <typename A, typename B>
+        requires (resolves_to_vector<A> || resolves_to_vector<B>)
+    static inline auto mod(const A& a, const B& b)
+    {
+        using T = resolve_t<A, B>;
+        return vector_ops<T>::mod(T(a), T(b));
+    }
+
+    // ------------------------------------------------------------------
     // vector_ops
     // ------------------------------------------------------------------
 
@@ -1580,16 +1833,6 @@ namespace mango::math
             for (int i = 0; i < T::VectorSize; ++i)
             {
                 temp[i] = math::sign(a[i]);
-            }
-            return temp;
-        }
-
-        static T clamp(const T& a, const T& low, const T& high)
-        {
-            T temp;
-            for (int i = 0; i < T::VectorSize; ++i)
-            {
-                temp[i] = math::max(low[i], math::min(high[i], a[i]));
             }
             return temp;
         }
@@ -1788,11 +2031,6 @@ namespace mango::math
             return simd::sign(a);
         }
 
-        static T clamp(const T& a, const T& low, const T& high)
-        {
-            return simd::max(low, simd::min(high, a));
-        }
-
         static T lerp(const T& a, const T& b, ScalarType factor)
         {
             return simd::lerp(a, b, T(factor));
@@ -1853,260 +2091,6 @@ namespace mango::math
             return simd::sub(a, simd::mul(b, simd::floor(simd::div(a, b))));
         }
     };
-
-    // unary operators
-
-    template <typename T>
-        requires is_vector<T>
-    static inline T operator + (const T& a)
-    {
-        return a;
-    }
-
-    template <typename T>
-        requires is_signed_vector<T>
-    static inline T operator - (const T& a)
-    {
-        return vector_ops<T>::neg(a);
-    }
-
-    // binary operators
-
-    template <typename A, typename B>
-        requires (resolves_to_vector<A> || resolves_to_vector<B>)
-    static inline auto operator + (const A& a, const B& b)
-    {
-        using T = resolve_t<A, B>;
-        return vector_ops<T>::add(T(a), T(b));
-    }
-
-    template <typename A, typename B>
-        requires (resolves_to_vector<A> || resolves_to_vector<B>)
-    static inline auto operator - (const A& a, const B& b)
-    {
-        using T = resolve_t<A, B>;
-        return vector_ops<T>::sub(T(a), T(b));
-    }
-
-    template <typename A, typename B>
-        requires has_vector<A, B> && is_float_vector<first_vector_t<A, B>>
-    static inline auto operator * (const A& a, const B& b)
-    {
-        using T = resolve_t<A, B>;
-        return vector_ops<T>::mul(T(a), T(b));
-    }
-
-    template <typename A, typename B>
-        requires (resolves_to_vector<A> || resolves_to_vector<B>) &&  is_float_vector<first_vector_t<A, B>>
-    static inline auto operator / (const A& a, const B& b)
-    {
-        using T = resolve_t<A, B>;
-        return vector_ops<T>::div(T(a), T(b));
-    }
-
-    // compound assignment operators
-
-    template <typename A, typename B>
-        requires is_vector<A> && is_vector_or_scalar<B>
-    static inline A& operator += (A& a, const B& b)
-    {
-        a = vector_ops<A>::add(a, A(b));
-        return a;
-    }
-
-    template <typename A, typename B>
-        requires is_vector<A> && is_vector_or_scalar<B>
-    static inline A& operator -= (A& a, const B& b)
-    {
-        a = vector_ops<A>::sub(a, A(b));
-        return a;
-    }
-
-    template <typename A, typename B>
-        requires is_vector<A> && is_float_vector<A> && is_vector_or_scalar<B>
-    static inline A& operator *= (A& a, const B& b)
-    {
-        a = vector_ops<A>::mul(a, A(b));
-        return a;
-    }
-
-    template <typename A, typename B>
-        requires is_vector<A> && is_float_vector<A> && is_vector_or_scalar<B>
-    static inline A& operator /= (A& a, const B& b)
-    {
-        a = vector_ops<A>::div(a, A(b));
-        return a;
-    }
-
-    // functions
-
-    template <typename A>
-        requires resolves_to_vector<A>
-    static inline auto abs(const A& a)
-    {
-        using T = resolve_t<A, A>;
-        return vector_ops<T>::abs(T(a));
-    }
-
-    template <typename A, typename B, typename C>
-        requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
-    static inline auto madd(const A& a, const B& b, const C& c)
-    {
-        using T = resolve_t<A, resolve_t<B, C>>;
-        return vector_ops<T>::madd(T(a), T(b), T(c));
-    }
-
-    template <typename A, typename B, typename C>
-        requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
-    static inline auto msub(const A& a, const B& b, const C& c)
-    {
-        using T = resolve_t<A, resolve_t<B, C>>;
-        return vector_ops<T>::msub(T(a), T(b), T(c));
-    }
-
-    template <typename A, typename B, typename C>
-        requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
-    static inline auto nmadd(const A& a, const B& b, const C& c)
-    {
-        using T = resolve_t<A, resolve_t<B, C>>;
-        return vector_ops<T>::nmadd(T(a), T(b), T(c));
-    }
-
-    template <typename A, typename B, typename C>
-        requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
-    static inline auto nmsub(const A& a, const B& b, const C& c)
-    {
-        using T = resolve_t<A, resolve_t<B, C>>;
-        return vector_ops<T>::nmsub(T(a), T(b), T(c));
-    }
-
-    template <typename A, typename B>
-        requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto min(const A& a, const B& b)
-    {
-        using T = resolve_t<A, B>;
-        return vector_ops<T>::min(T(a), T(b));
-    }
-
-    template <typename A, typename B>
-        requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto max(const A& a, const B& b)
-    {
-        using T = resolve_t<A, B>;
-        return vector_ops<T>::max(T(a), T(b));
-    }
-
-    template <typename A>
-        requires resolves_to_vector<A> && (A::VectorSize >= 2 || A::VectorSize <= 4)
-    static inline auto sign(const A& a)
-    {
-        using T = resolve_t<A, A>;
-        return vector_ops<T>::sign(T(a));
-    }
-
-    template <typename A, typename B, typename C>
-        requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
-    static inline auto clamp(const A& a, const B& b, const C& c)
-    {
-        using T = resolve_t<A, resolve_t<B, C>>;
-        return vector_ops<T>::clamp(T(a), T(b), T(c));
-    }
-
-    template <typename A, typename B, typename C>
-        requires (resolves_to_vector<A> || resolves_to_vector<B>) && resolves_to_scalar<C>
-    static inline auto lerp(const A& a, const B& b, C s)
-    {
-        using T = resolve_t<A, B>;
-        return vector_ops<T>::lerp(T(a), T(b), typename T::ScalarType(s));
-    }
-
-    template <typename A>
-        requires resolves_to_vector<A>
-    static inline auto radians(const A& a)
-    {
-        using T = resolve_t<A, A>;
-        return vector_ops<T>::radians(T(a));
-    }
-
-    template <typename A>
-        requires resolves_to_vector<A>
-    static inline auto degrees(const A& a)
-    {
-        using T = resolve_t<A, A>;
-        return vector_ops<T>::degrees(T(a));
-    }
-
-    template <typename A>
-        requires resolves_to_vector<A>
-    static inline auto rcp(const A& a)
-    {
-        using T = resolve_t<A, A>;
-        return vector_ops<T>::rcp(T(a));
-    }
-
-    template <typename A>
-        requires resolves_to_vector<A>
-    static inline auto sqrt(const A& a)
-    {
-        using T = resolve_t<A, A>;
-        return vector_ops<T>::sqrt(T(a));
-    }
-
-    template <typename A>
-        requires resolves_to_vector<A>
-    static inline auto rsqrt(const A& a)
-    {
-        using T = resolve_t<A, A>;
-        return vector_ops<T>::rsqrt(T(a));
-    }
-
-    template <typename A>
-        requires resolves_to_vector<A>
-    static inline auto round(const A& a)
-    {
-        using T = resolve_t<A, A>;
-        return vector_ops<T>::round(T(a));
-    }
-
-    template <typename A>
-        requires resolves_to_vector<A>
-    static inline auto floor(const A& a)
-    {
-        using T = resolve_t<A, A>;
-        return vector_ops<T>::floor(T(a));
-    }
-
-    template <typename A>
-        requires resolves_to_vector<A>
-    static inline auto ceil(const A& a)
-    {
-        using T = resolve_t<A, A>;
-        return vector_ops<T>::ceil(T(a));
-    }
-
-    template <typename A>
-        requires resolves_to_vector<A>
-    static inline auto trunc(const A& a)
-    {
-        using T = resolve_t<A, A>;
-        return vector_ops<T>::trunc(T(a));
-    }
-
-    template <typename A>
-        requires resolves_to_vector<A>
-    static inline auto fract(const A& a)
-    {
-        using T = resolve_t<A, A>;
-        return vector_ops<T>::fract(T(a));
-    }
-
-    template <typename A, typename B>
-        requires (resolves_to_vector<A> || resolves_to_vector<B>)
-    static inline auto mod(const A& a, const B& b)
-    {
-        using T = resolve_t<A, B>;
-        return vector_ops<T>::mod(T(a), T(b));
-    }
 
     // ------------------------------------------------------------------
     // vector functions
@@ -2224,6 +2208,14 @@ namespace mango::math
     {
         auto s = math::max(a.x, math::max(a.y, a.z));
         return T(s);
+    }
+
+    template <typename A, typename B, typename C>
+        requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
+    static inline auto clamp(const A& a, const B& low, const C& high)
+    {
+        using T = resolve_t<A, resolve_t<B, C>>;
+        return math::max(T(low), math::min(T(high), T(a)));
     }
 
     // ------------------------------------------------------------------
