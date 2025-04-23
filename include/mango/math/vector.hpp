@@ -857,12 +857,36 @@ namespace mango::math
 
     // resolve type
 
+    // The resolve type is used to resolve the type of two (potential) vectors.
+    // If one of the types is a vector, the other type is resolved to a vector.
+    // If both types are vectors, the "Higher Order" vector type is chosen.
+    // What constitutes a "Higher Order" vector type is the ScalarType, example: float < float32x4.
+
+    template <typename T>
+    struct has_vector_scalar_type : std::false_type {};
+
+    template <typename T>
+        requires is_vector<T> && is_vector<typename T::ScalarType>
+    struct has_vector_scalar_type<T> : std::true_type {};
+
     template <typename A, typename B>
     struct resolve_type
     {
-        using type = std::conditional_t<resolves_to_vector<A> || resolves_to_vector<B>,
-            typename first_vector_type<A, B>::type,  // vector case
-            std::remove_cvref_t<A>>;                 // scalar case (includes both raw scalars and scalar accessors)
+        using type_a = std::conditional_t<resolves_to_vector<A> || resolves_to_vector<B>,
+            typename first_vector_type<A, B>::type,
+            std::remove_cvref_t<A>>;
+
+        using type_b = std::conditional_t<resolves_to_vector<A> || resolves_to_vector<B>,
+            typename first_vector_type<B, A>::type,
+            std::remove_cvref_t<B>>;
+
+        using type = std::conditional_t<is_vector<type_a> && is_vector<type_b>,
+            std::conditional_t<has_vector_scalar_type<type_a>::value,
+                type_a,
+                type_b>,
+            std::conditional_t<is_vector<type_a>,
+                type_a,
+                type_b>>;
     };
 
     template <typename A, typename B>

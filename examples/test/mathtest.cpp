@@ -478,6 +478,36 @@ void test_float32x4()
     MANGO_UNREFERENCED(m5);
 }
 
+// ----------------------------------------------------------------------
+// composite vector
+// ----------------------------------------------------------------------
+
+namespace composite
+{
+    using scalar = float32x4;
+    using vec3 = Vector<scalar, 3>;
+
+    void test_vec3()
+    {
+        vec3 a(1.0f, 2.0f, 3.0f);
+        vec3 b(4.0f, 5.0f, 6.0f);
+
+        vec3 c = a + b;
+        c = 2.0f * a;
+        c = 4 * a;
+        c = a * dot(a, c) + normalize(a * b.y);
+        c = dot(a, c) * a + normalize(a.y * b);
+        c = dot(a, b) * c;
+        c = scalar(2.0f) * a;
+        scalar s = a.x * b.y;
+
+        MANGO_UNREFERENCED(c);
+        MANGO_UNREFERENCED(s);
+    }
+
+} // namespace composite
+
+
 /*
 void test_float32x4()
 {
@@ -526,4 +556,5 @@ int main()
     test_vec4<u64>();
     test_float32x3();
     test_float32x4();
+    composite::test_vec3();
 }
