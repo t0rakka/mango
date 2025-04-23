@@ -174,6 +174,13 @@ namespace mango::math
 
     template <typename T>
         requires is_scalar<T>
+    static inline T trunc(const T& a)
+    {
+        return std::trunc(a);
+    }
+
+    template <typename T>
+        requires is_scalar<T>
     static inline T min(const T& a, const T& b)
     {
         return std::min(a, b);
@@ -765,8 +772,23 @@ namespace mango::math
     template <typename T>
     concept is_signed_vector = is_vector<T> && std::is_signed_v<typename T::ScalarType>;
 
+    //template <typename T>
+    //concept is_float_vector = std::is_floating_point_v<typename T::ScalarType>;
+
     template <typename T>
-    concept is_float_vector = std::is_floating_point_v<typename T::ScalarType>;
+    struct has_float_scalar
+    {
+        static constexpr bool value = std::is_floating_point_v<typename T::ScalarType>;
+    };
+
+    template <typename T>
+        requires is_vector<typename T::ScalarType>
+    struct has_float_scalar<T> {
+        static constexpr bool value = has_float_scalar<typename T::ScalarType>::value;
+    };
+
+    template <typename T>
+    concept is_float_vector = has_float_scalar<T>::value;
 
     template <typename T>
     struct get_vector_type
@@ -1437,7 +1459,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = std::abs(a[i]);
+                temp[i] = math::abs(a[i]);
             }
             return temp;
         }
@@ -1537,7 +1559,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = std::min(a[i], b[i]);
+                temp[i] = math::min(a[i], b[i]);
             }
             return temp;
         }
@@ -1547,7 +1569,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = std::max(a[i], b[i]);
+                temp[i] = math::max(a[i], b[i]);
             }
             return temp;
         }
@@ -1557,7 +1579,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = sign(a[i]);
+                temp[i] = math::sign(a[i]);
             }
             return temp;
         }
@@ -1567,7 +1589,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = std::max(low[i], std::min(high[i], a[i]));
+                temp[i] = math::max(low[i], math::min(high[i], a[i]));
             }
             return temp;
         }
@@ -1587,7 +1609,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = radians(a[i]);
+                temp[i] = math::radians(a[i]);
             }
             return temp;
         }
@@ -1597,7 +1619,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = degrees(a[i]);
+                temp[i] = math::degrees(a[i]);
             }
             return temp;
         }
@@ -1617,7 +1639,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = std::sqrt(a[i]);
+                temp[i] = math::sqrt(a[i]);
             }
             return temp;
         }
@@ -1627,7 +1649,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = ScalarType(1.0) / std::sqrt(a[i]);
+                temp[i] = ScalarType(1.0) / math::sqrt(a[i]);
             }
             return temp;
         }
@@ -1637,7 +1659,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = std::round(a[i]);
+                temp[i] = math::round(a[i]);
             }
             return temp;
         }
@@ -1647,7 +1669,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = std::floor(a[i]);
+                temp[i] = math::floor(a[i]);
             }
             return temp;
         }
@@ -1657,7 +1679,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = std::ceil(a[i]);
+                temp[i] = math::ceil(a[i]);
             }
             return temp;
         }
@@ -1667,7 +1689,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = std::trunc(a[i]);
+                temp[i] = math::trunc(a[i]);
             }
             return temp;
         }
@@ -1677,7 +1699,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = a[i] - std::floor(a[i]);
+                temp[i] = a[i] - math::floor(a[i]);
             }
             return temp;
         }
@@ -1687,7 +1709,7 @@ namespace mango::math
             T temp;
             for (int i = 0; i < T::VectorSize; ++i)
             {
-                temp[i] = a[i] - b[i] * std::floor(a[i] / b[i]);
+                temp[i] = a[i] - b[i] * math::floor(a[i] / b[i]);
             }
             return temp;
         }
@@ -2113,7 +2135,7 @@ namespace mango::math
         requires is_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
     static inline auto length(const T& a)
     {
-        return std::sqrt(square(a));
+        return math::sqrt(square(a));
     }
 
     template <typename T>
@@ -2159,7 +2181,7 @@ namespace mango::math
         {
             return T(ScalarType(0.0));
         }
-        return v * f - normal * (std::sqrt(p) + f * vdotn);
+        return v * f - normal * (math::sqrt(p) + f * vdotn);
     }
 
     template <typename T>
@@ -2176,7 +2198,7 @@ namespace mango::math
         requires is_vector<T> && (T::VectorSize == 2)
     static inline auto hmin(const T& a)
     {
-        auto s = std::min(a.x, a.y);
+        auto s = math::min(a.x, a.y);
         return T(s);
     }
 
@@ -2184,7 +2206,7 @@ namespace mango::math
         requires is_vector<T> && (T::VectorSize == 2)
     static inline auto hmax(const T& a)
     {
-        auto s = std::max(a.x, a.y);
+        auto s = math::max(a.x, a.y);
         return T(s);
     }
 
@@ -2192,7 +2214,7 @@ namespace mango::math
         requires is_vector<T> && (T::VectorSize == 3)
     static inline auto hmin(const T& a)
     {
-        auto s = std::ranges::min({a.x, a.y, a.z});
+        auto s = math::min(a.x, math::min(a.y, a.z));
         return T(s);
     }
 
@@ -2200,7 +2222,7 @@ namespace mango::math
         requires is_vector<T> && (T::VectorSize == 3)
     static inline auto hmax(const T& a)
     {
-        auto s = std::ranges::max({a.x, a.y, a.z});
+        auto s = math::max(a.x, math::max(a.y, a.z));
         return T(s);
     }
 
@@ -2215,7 +2237,7 @@ namespace mango::math
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
         {
-            temp[i] = std::sin(a[i]);
+            temp[i] = math::sin(a[i]);
         }
         return temp;
     }
@@ -2227,7 +2249,7 @@ namespace mango::math
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
         {
-            temp[i] = std::cos(a[i]);
+            temp[i] = math::cos(a[i]);
         }
         return temp;
     }
@@ -2239,7 +2261,7 @@ namespace mango::math
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
         {
-            temp[i] = std::tan(a[i]);
+            temp[i] = math::tan(a[i]);
         }
         return temp;
     }
@@ -2251,7 +2273,7 @@ namespace mango::math
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
         {
-            temp[i] = std::asin(a[i]);
+            temp[i] = math::asin(a[i]);
         }
         return temp;
     }
@@ -2263,7 +2285,7 @@ namespace mango::math
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
         {
-            temp[i] = std::acos(a[i]);
+            temp[i] = math::acos(a[i]);
         }
         return temp;
     }
@@ -2275,7 +2297,7 @@ namespace mango::math
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
         {
-            temp[i] = std::atan(a[i]);
+            temp[i] = math::atan(a[i]);
         }
         return temp;
     }
@@ -2287,7 +2309,7 @@ namespace mango::math
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
         {
-            temp[i] = std::exp(a[i]);
+            temp[i] = math::exp(a[i]);
         }
         return temp;
     }
@@ -2299,7 +2321,7 @@ namespace mango::math
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
         {
-            temp[i] = std::log(a[i]);
+            temp[i] = math::log(a[i]);
         }
         return temp;
     }
@@ -2311,7 +2333,7 @@ namespace mango::math
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
         {
-            temp[i] = std::exp2(a[i]);
+            temp[i] = math::exp2(a[i]);
         }
         return temp;
     }
@@ -2323,7 +2345,7 @@ namespace mango::math
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
         {
-            temp[i] = std::log2(a[i]);
+            temp[i] = math::log2(a[i]);
         }
         return temp;
     }
@@ -2335,7 +2357,7 @@ namespace mango::math
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
         {
-            temp[i] = std::pow(a[i], b[i]);
+            temp[i] = math::pow(a[i], b[i]);
         }
         return temp;
     }
@@ -2347,7 +2369,7 @@ namespace mango::math
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
         {
-            temp[i] = std::atan2(a[i], b[i]);
+            temp[i] = math::atan2(a[i], b[i]);
         }
         return temp;
     }
