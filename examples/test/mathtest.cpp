@@ -42,64 +42,58 @@ bool eq(float a, float b)
     return std::abs(a - b) < 0.00001f;
 }
 
-void print(const char* text, float32x3 v, float x, float y, float z)
+void check(const char* text, float32x3 v, float x, float y, float z)
 {
     bool identical = eq(v.x, x) && eq(v.y, y) && eq(v.z, z);
     const char* status = identical ? ": OK" : ": FAILED";
     printf("%s %f %f %f %s\n", text, float(v.x), float(v.y), float(v.z), status);
 }
 
-void print(const char* text, float32x4 v, float x, float y, float z, float w)
+void check(const char* text, float32x4 v, float x, float y, float z, float w)
 {
     bool identical = eq(v.x, x) && eq(v.y, y) && eq(v.z, z) && eq(v.w, w);
     const char* status = identical ? ": OK" : ": FAILED";
     printf("%s %f %f %f %f %s\n", text, float(v.x), float(v.y), float(v.z), float(v.w), status);
 }
 
-template <typename ScalarType>
-void print(const Vector<ScalarType, 4>& v)
-{
-    float x = v.x;
-    float y = v.y;
-    float z = v.z;
-    float w = v.w;
-    printLine("{} {} {} {}", x, y, z, w);
-}
+// ----------------------------------------------------------------------
+// tests
+// ----------------------------------------------------------------------
 
 void test1(float32x4 a, float32x4 b)
 {
     a = b.x;
-    print("[test1] a:", a, 0.2f, 0.2f, 0.2f, 0.2f);
+    check("[test1] a:", a, 0.2f, 0.2f, 0.2f, 0.2f);
 }
 
 void test2(float32x4 a, float32x4 b)
 {
     a.x = b.x;
-    print("[test2] a:", a, 0.2f, 2.0f, 3.0f, 4.0f);
+    check("[test2] a:", a, 0.2f, 2.0f, 3.0f, 4.0f);
 }
 
 void test3(float32x4 a, float32x2 b)
 {
     a.x = b.x;
-    print("[test3] a:", a, 7.0f, 2.0f, 3.0f, 4.0f);
+    check("[test3] a:", a, 7.0f, 2.0f, 3.0f, 4.0f);
 }
 
 void test4(float32x4 a, float32x3 b)
 {
     a.y = b.z;
-    print("[test4] a:", a, 1.0f, 5.0f, 3.0f, 4.0f);
+    check("[test4] a:", a, 1.0f, 5.0f, 3.0f, 4.0f);
 }
 
 void test5(float32x4 a, float32x4 b)
 {
     a = a * b.x;
-    print("[test5] a:", a, 0.2f, 0.4f, 0.6f, 0.8f);
+    check("[test5] a:", a, 0.2f, 0.4f, 0.6f, 0.8f);
 }
 
 void test6(float32x4 a, float32x4 b)
 {
     a = a.xxyy * (b.w + 1.0f) + b.x * a.yywx / (b.xxzz + 2.0f);
-    print("[test6] a:", a, 1.981818f, 1.981818f, 3.907692f, 3.676923f);
+    check("[test6] a:", a, 1.981818f, 1.981818f, 3.907692f, 3.676923f);
 }
 
 void test7(float32x4 a, float32x4 b)
@@ -108,7 +102,7 @@ void test7(float32x4 a, float32x4 b)
     a.y += b.y;
     a.z *= b.z;
     a.w /= b.w;
-    print("[test7] a:", a, 0.2f, 2.4f, 1.8f, 5.0f);
+    check("[test7] a:", a, 0.2f, 2.4f, 1.8f, 5.0f);
 }
 
 void test8(float32x4 a, float32x4 b)
@@ -118,13 +112,13 @@ void test8(float32x4 a, float32x4 b)
     c.x = b.x;
     c = a.xxyy * (b.w + 1.0f) + b.x * a.yywx / (b.xxzz + 2.0f);
     c = (a.x * b.y - 2.0f) * b.xxxx + a * min(a.xzzw, b.yywx) * std::clamp<float>(a.z, 1.0f, 2.0f);
-    print("[test8] c:", c, 0.48f, 1.28f, 4.48f, 1.28f);
+    check("[test8] c:", c, 0.48f, 1.28f, 4.48f, 1.28f);
 }
 
 void test9(float32x4 a, float32x4 b)
 {
     float32x4 c(a.ywzx);
-    print("[test9] c:", c, 2.0f, 4.0f, 3.0f, 1.0f);
+    check("[test9] c:", c, 2.0f, 4.0f, 3.0f, 1.0f);
 }
 
 void test10(float32x4 a, float32x4 b)
@@ -132,8 +126,8 @@ void test10(float32x4 a, float32x4 b)
     float32x3 c(a.xyz);
     float32x3 d(c.zxy);
     float32x3 e = c.zxy;
-    print("[test10] d:", d, 3.0f, 1.0f, 2.0f);
-    print("[test10] e:", e, 3.0f, 1.0f, 2.0f);
+    check("[test10] d:", d, 3.0f, 1.0f, 2.0f);
+    check("[test10] e:", e, 3.0f, 1.0f, 2.0f);
 }
 
 void test()
@@ -525,41 +519,171 @@ namespace composite
 
 } // namespace composite
 
+// ----------------------------------------------------------------------
+// legacy tests
+// ----------------------------------------------------------------------
 
-/*
-void test_float32x4()
+float32x4 example1()
 {
     float32x4 a(1.0f, 2.0f, 3.0f, 4.0f);
-    float32x4 b(5.0f, 6.0f, 7.0f, 8.0f);
+    float32x4 b = sin(a);
+    float32x4 c = cross(a, b) * 1.5f - a * 2.0f * dot(a, b * 3.0f);
+    return c;
+}
 
-    float32x4 c = a + b + 1.0f;
-    c = 2.0f * a;
-    c = 4 * a;
+float32x4 example2(const float32x4& a, const float32x4& b)
+{
+    float32x4 c = a.xxyy * 2.0f - b * b.wwww;
+    return c / c.x;
+}
 
-    MANGO_UNREFERENCED(c);
+float32x4 example3(const float32x4& a, const float32x4& b)
+{
+    float32x4 result = select(a > b, sin(a), cos(b));
+    return result;
+}
 
+float32x4 example4(const float32x4& a, const float32x4& b)
+{
+    float32x4 result;
 
-    print(a * b);
-    print(a * b.xyzw);
-    print(a * 5.0f);
-    print(a * b.x);
-    print(b.x * a.xyzw);
-
-    a = a + b;
-    a /= b.x;
-    print(a);
-
-    a = a / b.x;
-    print(a);
-
+    // Same as example3 but using scalars instead of select()
+    for (int i = 0; i < 4; ++i)
     {
-        float32x4 v4(1.0f, 2.0f, 3.0f, 4.0f);
-        float32x3 v3(1.0f, 2.0f, 3.0f);
-        printLine("v4: {}", length(v4));
-        printLine("v3: {}", length(v3));
+        result[i] = a[i] > b[i] ? sin(a[i]) : cos(b[i]);
+    }
+
+    return result;
+}
+
+float32x4 example5(float32x4 a)
+{
+    float32x2 low = a.xy;
+    float32x2 high = a.zw;
+    return float32x4(high, low);
+}
+
+float32x3 example6(float32x3 a, float32x3 b, float32x3 c)
+{
+    // compute triangle normal given three vertices (a, b, c)
+    float32x3 normal = cross(a - b, a - c);
+    return normalize(normal);
+}
+
+void example7(float32x3 normal, float dist)
+{
+    Plane plane(normal, dist);
+    float32x3 p(20.0f, 0.0f, 0.0f);
+    float distanceToPlane = plane.distance(p);
+    if (distanceToPlane < 0)
+    {
+        // point p is behind the plane
     }
 }
-*/
+
+void example8(const Plane& plane, float32x3 point0, float32x3 point1)
+{
+    Ray ray(point0, point1);
+
+    Intersect is;
+    if (is.intersect(ray, plane))
+    {
+        // compute point of intersection
+        float32x3 p = ray.origin + ray.direction * is.t0;
+        MANGO_UNREFERENCED(p);
+    }
+}
+
+void example9(const Sphere& sphere, const Ray& ray)
+{
+    IntersectRange is;
+    if (is.intersect(ray, sphere))
+    {
+        // compute points where ray enters and leaves the sphere
+        float32x3 enter = ray.origin + ray.direction * is.t0;
+        float32x3 leave = ray.origin + ray.direction * is.t1;
+        MANGO_UNREFERENCED(enter);
+        MANGO_UNREFERENCED(leave);
+    }
+}
+
+void example10(const std::vector<Box>& boxes, const Ray& ray)
+{
+    FastRay fast(ray);
+
+    for (auto& box : boxes)
+    {
+        IntersectRange is;
+        if (is.intersect(fast, box))
+        {
+            float32x3 enter = ray.origin + ray.direction * is.t0;
+            float32x3 leave = ray.origin + ray.direction * is.t1;
+            MANGO_UNREFERENCED(enter);
+            MANGO_UNREFERENCED(leave);
+        }
+    }
+}
+
+void example11()
+{
+    float32x4 linear(1.0f, 0.5f, 0.5f, 1.0f);
+    float32x4 nonlinear = linear_to_srgb(linear);
+    linear = srgb_to_linear(nonlinear);
+}
+
+void example12()
+{
+    {
+        simd::f32x4 a = simd::f32x4_set(1.0f, 2.0f, 2.0f, 1.0f);
+        simd::f32x4 b = simd::f32x4_set(0.0f, 1.0f, 0.5f, 0.5f);
+        simd::f32x4 c = simd::add(a, b);
+        simd::f32x4 d = simd::mul(c, b);
+        simd::f32x4 e = simd::select(simd::compare_gt(a, b), d, c);
+        MANGO_UNREFERENCED(e);
+    }
+
+    {    
+        float32x4 a(1.0f, 2.0f, 2.0f, 1.0f);
+        float32x4 b(0.0f, 1.0f, 0.5f, 0.5f);
+        float32x4 c = a + b;
+        float32x4 d = c * b;
+        float32x4 e = select(a > b, d, c);
+        MANGO_UNREFERENCED(e);
+    }
+}
+
+void example()
+{
+    float32x4 a(1.0f, 2.0f, 3.0f, 4.0f);
+    float32x4 b(0.0f, 1.0f, 0.5f, 0.5f);
+    float32x4 c;
+
+    float32x3 v0(1.0f, 2.0f, 3.0f);
+    float32x3 v1(4.0f, 5.0f, 6.0f);
+    float32x3 v2(2.0f, 3.0f, 1.0f);
+
+    Plane plane(v0, 1.0f);
+    Ray ray(v1, v2);
+    Sphere sphere(v1, 1.0f);
+    std::vector<Box> boxes;
+
+    c = example1();
+    c = example2(a, b);
+    c = example3(a, b);
+    c = example4(a, b);
+    c = example5(a);
+    v0 = example6(v0, v1, v2);
+    example7(v0, 1.0f);
+    example8(plane, v1, v2);
+    example9(sphere, ray);
+    example10(boxes, ray);
+    example11();
+    example12();
+}
+
+// ----------------------------------------------------------------------
+// main
+// ----------------------------------------------------------------------
 
 int main()
 {
@@ -575,4 +699,5 @@ int main()
     test_float32x3();
     test_float32x4();
     composite::test_vec3();
+    example();
 }

@@ -4,7 +4,6 @@ list(APPEND EXAMPLES
     concurrency
     endian
     filesystem
-    math
     memory
 )
 
