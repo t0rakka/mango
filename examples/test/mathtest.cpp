@@ -324,7 +324,7 @@ void test_float32x4()
     v0 = min(v0, v1.xzwx);
     v0 = min(v0, v1.xxyy + v2.xzwx);
     v0 = min(v0.xxyy + v1.xywz, v1.xywz + v2.xywz);
-    //v0 = min(v0.xyzz, 1.0f);
+    v0 = min(v0.xyzz, 1.0f);
 
     v0 = max(v0, v1);
     v0 = max(v0, v1 + v2);
