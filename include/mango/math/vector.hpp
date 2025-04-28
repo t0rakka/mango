@@ -772,9 +772,6 @@ namespace mango::math
     template <typename T>
     concept is_signed_vector = is_vector<T> && std::is_signed_v<typename T::ScalarType>;
 
-    //template <typename T>
-    //concept is_float_vector = std::is_floating_point_v<typename T::ScalarType>;
-
     template <typename T>
     struct has_float_scalar
     {
@@ -2174,6 +2171,21 @@ namespace mango::math
     {
         using ScalarType = typename T::ScalarType;
         return v - normal * (ScalarType(2.0) * dot(v, normal));
+    }
+
+    template <typename T, typename S>
+        requires is_vector<T> && is_scalar<typename T::ScalarType> && (T::VectorSize == 2 || T::VectorSize == 3)
+    static inline auto refract(const T& v, const T& normal, S factor)
+    {
+        using ScalarType = typename T::ScalarType;
+        ScalarType f = ScalarType(factor);
+        ScalarType vdotn = dot(v, normal);
+        ScalarType p = ScalarType(1.0) - f * f * (ScalarType(1.0) - vdotn * vdotn);
+        if (p < ScalarType(0.0))
+        {
+            return T(0.0);
+        }
+        return v * f - normal * (math::sqrt(p) + f * vdotn);
     }
 
     template <typename T, typename S>
