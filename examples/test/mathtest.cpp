@@ -245,10 +245,20 @@ void test_vec4()
 void test_float32x3()
 {
     float32x3 a(1.0f, 2.0f, 3.0f);
+    float32x3 b(2.0f, 3.0f, 4.0f);
+    float32x3 c;
     auto r0 = a.xxz;
     auto r1 = a.xz;
+    float s = length(a);
+    s = length(a.xy);
+    c = project(a, b);
+    c = reflect(a, b);
+    c = refract(a, b, 1.5f);
+    c = cross(a, b);
     MANGO_UNREFERENCED(r0);
     MANGO_UNREFERENCED(r1);
+    MANGO_UNREFERENCED(s);
+    MANGO_UNREFERENCED(c);
 }
 
 void test_float32x4()
@@ -275,6 +285,30 @@ void test_float32x4()
     float32x4 s5 = 1.5f * b.xyzx;
     float s6 = 1.5f * b.z;
     float s7 = 1.5f * 1.5f;
+
+    //
+
+    v0 = a + b;
+    v1 = a + b.xyzw;
+    v2 = a + b.x;
+    v3 = a + 1.5f;
+
+    v4 = b.xyyw + a;
+    v5 = a.xyww + b.xxzw + a + b.x;
+    v6 = b.xyyw + b.y;
+    v7 = b.xyxw + 1.5f;
+
+    s0 = a.y + b;
+    s1 = a.y + b.xyww;
+    s2 = a.y + b.z;
+    s3 = a.y + 1.5f;
+
+    s4 = 1.5f + b;
+    s5 = 1.5f + b.xyzx;
+    s6 = 1.5f + b.z;
+    s7 = 1.5f + 1.5f;
+
+    //
 
     v7 = float32x4(b.xywz).xxyy * 1.2f * a.wxzz / b.z;
 
@@ -447,6 +481,17 @@ void test_float32x4()
     m5 = v0.xxyy != 1.0f;
     m5 = v0.x != (v0 + v1).xxzw;
 
+    float s;
+    s = dot(v0, v1);
+    s = dot(v0.yzwx, v1.yzwx);
+    s = length(v0);
+    s = length(v0.yzwx);
+    s = distance(v0, v1);
+    s = distance(v0.yzwx, v1);
+    s = distance(v0, v1.yzwx);
+    s = distance(v0.yzwx, v1.yzwx);
+    v0 = normalize(v0);
+    v0 = normalize(v0.yzwx);
     MANGO_UNREFERENCED(v0);
     MANGO_UNREFERENCED(v1);
     MANGO_UNREFERENCED(v2);
@@ -470,6 +515,7 @@ void test_float32x4()
     MANGO_UNREFERENCED(m3);
     MANGO_UNREFERENCED(m4);
     MANGO_UNREFERENCED(m5);
+    MANGO_UNREFERENCED(s);
 }
 
 // ----------------------------------------------------------------------

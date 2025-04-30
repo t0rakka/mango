@@ -1363,7 +1363,9 @@ namespace mango::math
     auto operator * (const ShuffleAccessor<VectorType, StorageType, AIndices...>& a,
                      const ShuffleAccessor<VectorType, StorageType, BIndices...>& b) noexcept
     {
-        return VectorType(a) * VectorType(b);
+        using ATargetType = Vector<typename VectorType::ScalarType, sizeof...(AIndices)>;
+        using BTargetType = Vector<typename VectorType::ScalarType, sizeof...(BIndices)>;
+        return ATargetType(a) * BTargetType(b);
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
@@ -1371,7 +1373,8 @@ namespace mango::math
     auto operator * (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
                      typename VectorType::ScalarType s) noexcept
     {
-        return VectorType(a) * s;
+        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        return TargetType(a) * s;
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
@@ -1379,7 +1382,8 @@ namespace mango::math
     auto operator * (typename VectorType::ScalarType s,
                      const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
     {
-        return s * VectorType(a);
+        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        return s * TargetType(a);
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
@@ -1387,7 +1391,8 @@ namespace mango::math
     auto operator / (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
                      typename VectorType::ScalarType s) noexcept
     {
-        return VectorType(a) / s;
+        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        return TargetType(a) / s;
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
@@ -1395,7 +1400,8 @@ namespace mango::math
     auto operator + (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
                      typename VectorType::ScalarType s) noexcept
     {
-        return VectorType(a) + s;
+        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        return TargetType(a) + s;
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
@@ -1403,7 +1409,8 @@ namespace mango::math
     auto operator + (typename VectorType::ScalarType s,
                      const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
     {
-        return s + VectorType(a);
+        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        return s + TargetType(a);
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
@@ -1411,7 +1418,8 @@ namespace mango::math
     auto operator - (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
                      typename VectorType::ScalarType s) noexcept
     {
-        return VectorType(a) - s;
+        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        return TargetType(a) - s;
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
@@ -1419,7 +1427,8 @@ namespace mango::math
     auto operator - (typename VectorType::ScalarType s,
                      const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
     {
-        return s - VectorType(a);
+        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        return s - TargetType(a);
     }
 
     // ------------------------------------------------------------------
@@ -1467,6 +1476,8 @@ namespace mango::math
     // ------------------------------------------------------------------
     // vector operations
     // ------------------------------------------------------------------
+
+    // These functions dispatch generic or SIMD vector implementation forward declared as vector_ops.
 
     template <typename T>
     struct vector_ops;
@@ -1721,7 +1732,7 @@ namespace mango::math
     // vector_ops
     // ------------------------------------------------------------------
 
-    // vector_ops
+    // vector_ops for generic vector types
 
     template <typename T>
     struct vector_ops
@@ -1979,7 +1990,7 @@ namespace mango::math
         }
     };
 
-    // simd vector_ops
+    // vector_ops for SIMD vector types
 
     template <typename T>
         requires is_simd_vector<T>
@@ -2118,55 +2129,75 @@ namespace mango::math
     // ------------------------------------------------------------------
 
     template <typename T>
-        requires is_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
-    static inline auto dot(const T& a, const T& b)
+        requires resolves_to_vector<T> && (T::VectorSize == 2)
+    static inline auto dot(const T& va, const T& vb)
     {
-        typename T::ScalarType temp(0);
-        for (int i = 0; i < T::VectorSize; ++i)
-        {
-            temp += a[i] * b[i];
-        }
-        return temp;
+        using VectorType = get_vector_type<T>::type;
+        VectorType a(va);
+        VectorType b(vb);
+        return a.x * b.x + a.y * b.y;
     }
 
     template <typename T>
-        requires is_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
+        requires resolves_to_vector<T> && (T::VectorSize == 3)
+    static inline auto dot(const T& va, const T& vb)
+    {
+        using VectorType = get_vector_type<T>::type;
+        VectorType a(va);
+        VectorType b(vb);
+        return a.x * b.x + a.y * b.y + a.z * b.z;
+    }
+
+    template <typename T>
+        requires resolves_to_vector<T> && (T::VectorSize == 4)
+    static inline auto dot(const T& va, const T& vb)
+    {
+        using VectorType = get_vector_type<T>::type;
+        VectorType a(va);
+        VectorType b(vb);
+        return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+    }
+
+    template <typename T>
+        requires resolves_to_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
     static inline auto square(const T& a)
     {
         return dot(a, a);
     }
 
     template <typename T>
-        requires is_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
+        requires resolves_to_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
     static inline auto length(const T& a)
     {
         return math::sqrt(square(a));
     }
 
-    template <typename T>
-        requires is_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
-    static inline auto distance(const T& a, const T& b)
+    template <typename A, typename B>
+        requires resolves_to_vector<A> && (A::VectorSize >= 2 && A::VectorSize <= 4) &&
+                 resolves_to_vector<B> && (A::VectorSize == B::VectorSize)
+    static inline auto distance(const A& a, const B& b)
     {
         return length(a - b);
     }
 
     template <typename T>
-        requires is_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
+        requires resolves_to_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
     static inline auto normalize(const T& a)
     {
         using ScalarType = typename T::ScalarType;
         return a * (ScalarType(1.0) / length(a));
     }
 
-    template <typename T>
-        requires is_vector<T> && (T::VectorSize == 2 || T::VectorSize == 3)
-    static inline auto project(const T& v, const T& normal)
+    template <typename A, typename B>
+        requires resolves_to_vector<A> && (A::VectorSize == 2 || A::VectorSize == 3) &&
+                 resolves_to_vector<B> && (A::VectorSize == B::VectorSize)
+    static inline auto project(const A& v, const B& normal)
     {
         return v - normal * (dot(v, normal) / dot(normal, normal));
     }
 
     template <typename T>
-        requires is_vector<T> && (T::VectorSize == 2 || T::VectorSize == 3)
+        requires resolves_to_vector<T> && (T::VectorSize == 2 || T::VectorSize == 3)
     static inline auto reflect(const T& v, const T& normal)
     {
         using ScalarType = typename T::ScalarType;
@@ -2174,13 +2205,14 @@ namespace mango::math
     }
 
     template <typename T, typename S>
-        requires is_vector<T> && is_scalar<typename T::ScalarType> && (T::VectorSize == 2 || T::VectorSize == 3)
+        requires resolves_to_vector<T> && is_scalar<typename T::ScalarType> && (T::VectorSize == 2 || T::VectorSize == 3)
     static inline auto refract(const T& v, const T& normal, S factor)
     {
         using ScalarType = typename T::ScalarType;
         ScalarType f = ScalarType(factor);
         ScalarType vdotn = dot(v, normal);
         ScalarType p = ScalarType(1.0) - f * f * (ScalarType(1.0) - vdotn * vdotn);
+        // NOTE: This must be scalar, simd vectors can't branch
         if (p < ScalarType(0.0))
         {
             return T(0.0);
@@ -2189,14 +2221,15 @@ namespace mango::math
     }
 
     template <typename T, typename S>
-        requires is_vector<T> && (T::VectorSize == 2 || T::VectorSize == 3)
+        requires resolves_to_vector<T> && (!is_scalar<typename T::ScalarType>) && (T::VectorSize == 2 || T::VectorSize == 3)
     static inline auto refract(const T& v, const T& normal, S factor)
     {
         using ScalarType = typename T::ScalarType;
         ScalarType f = ScalarType(factor);
         ScalarType vdotn = dot(v, normal);
         ScalarType p = ScalarType(1.0) - f * f * (ScalarType(1.0) - vdotn * vdotn);
-        ScalarType scale = select(p > ScalarType(0.0), ScalarType(1.0), ScalarType(0.0));
+        // NOTE: This must be simd vector, scalars can't select
+        ScalarType scale = simd::select(p > ScalarType(0.0), ScalarType(1.0), ScalarType(0.0));
         return (v * f - normal * (math::sqrt(p * scale) + f * vdotn)) * scale;
     }
 
@@ -2262,6 +2295,9 @@ namespace mango::math
     // ------------------------------------------------------------------
     // trigonometric functions
     // ------------------------------------------------------------------
+
+    // These are the generic versions of the trigonometric functions.
+    // The SIMD optimizations are done in the header for specific SIMD vector type.
 
     template <typename T>
         requires is_vector<T>
@@ -2468,6 +2504,9 @@ namespace mango::math
     // masked simd functions
     // ------------------------------------------------------------------
 
+    // These are native instructions only on AVX-512, other vector SIMD ISAs
+    // will emulate them with bitwise masking equivalent to select() operation.
+
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
     static inline auto add(const T& a, const T& b, M mask) -> T
@@ -2600,6 +2639,10 @@ namespace mango::math
     // compare operators
     // ------------------------------------------------------------------
 
+    // These will generate mask type specific to the SIMD ISA:
+    // - AVX-512 has native mask type where each lane is represented as single bit.
+    // - Other SIMD ISAs will emulate it with bitwise masking (compare generates lanes of all zeros or all ones).
+
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
     static inline auto operator > (const A& a, const B& b)
@@ -2659,6 +2702,8 @@ namespace mango::math
     // ------------------------------------------------------------------
     // maskToInt()
     // ------------------------------------------------------------------
+
+    // These will convert the SIMD specific mask type to ALU integer mask
 
     static inline u32 maskToInt(mask8x16 mask) noexcept
     {
@@ -2724,6 +2769,8 @@ namespace mango::math
     // mask reduction
     // ------------------------------------------------------------------
 
+    // These will reduce the SIMD mask to a single boolean value
+
     template <typename T>
     static inline bool none_of(T mask) noexcept
     {
@@ -2773,6 +2820,10 @@ namespace mango::math
     // ------------------------------------------------------------------
     // unaligned load / store
     // ------------------------------------------------------------------
+
+    // Example:
+    //     float32x4 value = f32x4_uload(ptr);
+    //     f32x4_ustore(ptr, value);
 
 #define MATH_LOAD_STORE_ALIAS(T) \
     static constexpr auto T##_uload = simd::T##_uload; \
@@ -2824,9 +2875,11 @@ namespace mango::math
     //     load_low()
     // ------------------------------------------------------------------
 
+    // Types which support load_low() will implement this in their specific header.
+
     template <typename ScalarType, int VectorSize>
     static constexpr
-    Vector<ScalarType, VectorSize> load_low(const ScalarType *source) noexcept
+    Vector<ScalarType, VectorSize> load_low(const ScalarType* source) noexcept
     {
         MANGO_UNREFERENCED(source);
 
