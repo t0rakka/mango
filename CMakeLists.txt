@@ -69,6 +69,10 @@ if (INTEL_DELUXE)
     set(ENABLE_SHA     ON)
 endif ()
 
+# Linker selection
+set(LINKER "default" CACHE STRING "Linker to use (default, mold)")
+set_property(CACHE LINKER PROPERTY STRINGS default mold)
+
 # ------------------------------------------------------------------------------
 # build settings
 # ------------------------------------------------------------------------------
@@ -134,6 +138,17 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Intel")
     set(GCC 1)
 endif ()
+
+# Configure linker
+if (LINKER STREQUAL "mold")
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=mold")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=mold")
+        set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=mold")
+    else()
+        message(WARNING "mold linker is only supported with GCC and Clang compilers")
+    endif()
+endif()
 
 message("Build: " ${CMAKE_BUILD_TYPE})
 
