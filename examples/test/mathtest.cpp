@@ -688,7 +688,7 @@ void example12()
         MANGO_UNREFERENCED(e);
     }
 
-    {    
+    {
         float32x4 a(1.0f, 2.0f, 2.0f, 1.0f);
         float32x4 b(0.0f, 1.0f, 0.5f, 0.5f);
         float32x4 c = a + b;
@@ -696,6 +696,25 @@ void example12()
         float32x4 e = select(a > b, d, c);
         MANGO_UNREFERENCED(e);
     }
+}
+
+void example13()
+{
+    float32x4 a(1.0f, 2.0f, 2.0f, 1.0f);
+    float s = 0.0f;
+    int i = 0;
+    s = clamp(s, 0.0f, 1.0f);
+    s = clamp(s, 0, 1);
+    s = clamp(s, 0.0, 1.0);
+    s = clamp(s, 0, 1.0);
+    s = clamp(a.x, 0.0f, 1.0f);
+    i = clamp(7, 0, 1);
+    s = abs(0.4f);
+    s = abs(a.x);
+    s = fract(0.5f);
+    s = fract(a.x);
+    MANGO_UNREFERENCED(s);
+    MANGO_UNREFERENCED(i);
 }
 
 void example()
@@ -725,6 +744,7 @@ void example()
     example10(boxes, ray);
     example11();
     example12();
+    example13();
 }
 
 // ----------------------------------------------------------------------

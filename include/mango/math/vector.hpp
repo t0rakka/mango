@@ -47,209 +47,230 @@ namespace mango::math
 {
 
     // ------------------------------------------------------------------
+    // scalar traits
+    // ------------------------------------------------------------------
+
+    template <typename T>
+    concept is_scalar = requires(T t)
+    {
+        requires std::is_arithmetic_v<decltype(static_cast<std::common_type_t<float, double, long double>>(t))>;
+    };
+
+    // ------------------------------------------------------------------
     // scalar functions
     // ------------------------------------------------------------------
 
     template <typename T>
-    concept is_scalar = std::is_scalar_v<T>;
-
-    template <typename T>
         requires is_scalar<T>
-    static inline T abs(const T& a)
+    static inline auto abs(const T& a)
     {
         return std::abs(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T sqrt(const T& a)
+    static inline auto sqrt(const T& a)
     {
         return std::sqrt(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T sin(const T& a)
+    static inline auto sin(const T& a)
     {
         return std::sin(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T cos(const T& a)
+    static inline auto cos(const T& a)
     {
         return std::cos(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T tan(const T& a)
+    static inline auto tan(const T& a)
     {
         return std::tan(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T asin(const T& a)
+    static inline auto asin(const T& a)
     {
         return std::asin(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T acos(const T& a)
+    static inline auto acos(const T& a)
     {
         return std::acos(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T atan(const T& a)
+    static inline auto atan(const T& a)
     {
         return std::atan(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T exp(const T& a)
+    static inline auto exp(const T& a)
     {
         return std::exp(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T log(const T& a)
+    static inline auto log(const T& a)
     {
         return std::log(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T exp2(const T& a)
+    static inline auto exp2(const T& a)
     {
         return std::exp2(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T log2(const T& a)
+    static inline auto log2(const T& a)
     {
         return std::log2(a);
     }
 
-    template <typename T>
-        requires is_scalar<T>
-    static inline T pow(const T& a, const T& b)
+    template <typename A, typename B>
+        requires is_scalar<A> && is_scalar<B>
+    static inline auto pow(const A& a, const B& b)
     {
-        return std::pow(a, b);
+        using ScalarType = std::common_type_t<A, B>;
+        return std::pow(ScalarType(a), ScalarType(b));
+    }
+
+    template <typename A, typename B>
+        requires is_scalar<A> && is_scalar<B>
+    static inline auto atan2(const A& a, const B& b)
+    {
+        using ScalarType = std::common_type_t<A, B>;
+        return std::atan2(ScalarType(a), ScalarType(b));
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T atan2(const T& a, const T& b)
-    {
-        return std::atan2(a, b);
-    }
-
-    template <typename T>
-        requires is_scalar<T>
-    static inline T round(const T& a)
+    static inline auto round(const T& a)
     {
         return std::round(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T floor(const T& a)
+    static inline auto floor(const T& a)
     {
         return std::floor(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T ceil(const T& a)
+    static inline auto ceil(const T& a)
     {
         return std::ceil(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T trunc(const T& a)
+    static inline auto trunc(const T& a)
     {
         return std::trunc(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T fract(const T& a)
+    static inline auto fract(const T& a)
     {
         return a - math::floor(a);
     }
 
-    template <typename T>
-        requires is_scalar<T>
-    static inline T mod(const T& a, const T& b)
+    template <typename A, typename B>
+        requires is_scalar<A> && is_scalar<B>
+    static inline auto mod(const A& a, const B& b)
     {
-        return a - b * math::floor(a / b);
+        using ScalarType = std::common_type_t<A, B>;
+        return ScalarType(a) - ScalarType(b) * math::floor(ScalarType(a) / ScalarType(b));
+    }
+
+    template <typename A, typename B>
+        requires is_scalar<A> && is_scalar<B>
+    static inline auto min(const A& a, const B& b)
+    {
+        using ScalarType = std::common_type_t<A, B>;
+        return std::min(ScalarType(a), ScalarType(b));
+    }
+
+    template <typename A, typename B>
+        requires is_scalar<A> && is_scalar<B>
+    static inline auto max(const A& a, const B& b)
+    {
+        using ScalarType = std::common_type_t<A, B>;
+        return std::max(ScalarType(a), ScalarType(b));
+    }
+
+    template <typename A, typename B, typename C>
+        requires is_scalar<A> && is_scalar<B> && is_scalar<C>
+    static inline auto clamp(const A& value, const B& low, const C& high)
+    {
+        using ScalarType = std::common_type_t<A, B, C>;
+        return std::max(ScalarType(low), std::min(ScalarType(high), ScalarType(value)));
+    }
+
+    template <typename A, typename B, typename C>
+        requires is_scalar<A> && is_scalar<B> && is_scalar<C>
+    static inline auto lerp(const A& a, const B& b, const C& factor)
+    {
+        using ScalarType = std::common_type_t<A, B, C>;
+        return ScalarType(a) + (ScalarType(b) - ScalarType(a)) * ScalarType(factor);
+    }
+
+    template <typename A, typename B, typename C>
+        requires is_scalar<A> && is_scalar<B> && is_scalar<C>
+    static inline auto smoothstep(const A& a, const B& b, const C& factor)
+    {
+        using ScalarType = std::common_type_t<A, B, C>;
+        ScalarType t = clamp((ScalarType(factor) - ScalarType(a)) / (ScalarType(b) - ScalarType(a)), ScalarType(0.0), ScalarType(1.0));
+        return t * t * (ScalarType(3.0) - ScalarType(2.0) * t);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T min(const T& a, const T& b)
+    static inline auto sign(T a)
     {
-        return std::min(a, b);
+        using ScalarType = std::common_type_t<T>;
+        ScalarType zero(0);
+        if (a < zero)
+            return ScalarType(-1.0);
+        else if (a > zero)
+            return ScalarType(1.0);
+        return zero;
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T max(const T& a, const T& b)
+    static inline auto radians(const T& a)
     {
-        return std::max(a, b);
+        using ScalarType = std::common_type_t<T>;
+        return a * ScalarType(0.01745329251);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline T clamp(const T& value, const T& low, const T& high)
+    static inline auto degrees(const T& a)
     {
-        return std::max(low, std::min(high, value));
-    }
-
-    template <typename T>
-        requires is_scalar<T>
-    static inline T lerp(const T& a, const T& b, const T& factor)
-    {
-        return a + (b - a) * factor;
-    }
-
-    template <typename T>
-        requires is_scalar<T>
-    static inline T smoothstep(const T& a, const T& b, const T& factor)
-    {
-        T t = clamp((factor - a) / (b - a), T(0.0), T(1.0));
-        return t * t * (T(3.0) - T(2.0) * t);
-    }
-
-    template <typename T>
-        requires is_scalar<T>
-    static inline T sign(T a)
-    {
-        if (a < 0) a = -T(1.0);
-        else if (a > 0) a = T(1.0);
-        return a;
-    }
-
-    template <typename T>
-        requires is_scalar<T>
-    static inline T radians(const T& a)
-    {
-        return a * T(0.01745329251);
-    }
-
-    template <typename T>
-        requires is_scalar<T>
-    static inline T degrees(const T& a)
-    {
-        return a * T(57.2957795131);
+        using ScalarType = std::common_type_t<T>;
+        return a * ScalarType(57.2957795131);
     }
 
     // ------------------------------------------------------------------
@@ -767,21 +788,16 @@ namespace mango::math
     };
 
     template <typename T>
-    concept resolves_to_scalar = 
-        is_scalar<T> || 
-        is_scalar_accessor<std::remove_cvref_t<T>>::value;
-
-    template <typename T>
     concept resolves_to_vector = 
         is_vector<T> || 
         is_simd_vector<T> ||
         is_shuffle_accessor<std::remove_cvref_t<T>>::value;
 
     template <typename T>
-    concept is_vector_or_scalar = resolves_to_vector<T> || resolves_to_scalar<T>;
+    concept is_vector_or_scalar = resolves_to_vector<T> || is_scalar<T>;
 
     template <typename T>
-    concept is_simd_vector_or_scalar = is_simd_vector<T> || resolves_to_scalar<T>;
+    concept is_simd_vector_or_scalar = is_simd_vector<T> || is_scalar<T>;
 
     template <typename T>
     concept is_signed_vector = is_vector<T> && std::is_signed_v<typename T::ScalarType>;
@@ -2150,31 +2166,34 @@ namespace mango::math
     // vector functions
     // ------------------------------------------------------------------
 
-    template <typename T>
-        requires resolves_to_vector<T> && (T::VectorSize == 2)
-    static inline auto dot(const T& va, const T& vb)
+    template <typename A, typename B>
+        requires resolves_to_vector<A> && (A::VectorSize == 2) && 
+                 resolves_to_vector<B> && (B::VectorSize == 2)
+    static inline auto dot(const A& va, const B& vb)
     {
-        using VectorType = get_vector_type<T>::type;
+        using VectorType = resolve_t<A, B>;
         VectorType a(va);
         VectorType b(vb);
         return a.x * b.x + a.y * b.y;
     }
 
-    template <typename T>
-        requires resolves_to_vector<T> && (T::VectorSize == 3)
-    static inline auto dot(const T& va, const T& vb)
+    template <typename A, typename B>
+        requires resolves_to_vector<A> && (A::VectorSize == 3) && 
+                 resolves_to_vector<B> && (B::VectorSize == 3)
+    static inline auto dot(const A& va, const B& vb)
     {
-        using VectorType = get_vector_type<T>::type;
+        using VectorType = resolve_t<A, B>;
         VectorType a(va);
         VectorType b(vb);
         return a.x * b.x + a.y * b.y + a.z * b.z;
     }
 
-    template <typename T>
-        requires resolves_to_vector<T> && (T::VectorSize == 4)
-    static inline auto dot(const T& va, const T& vb)
+    template <typename A, typename B>
+        requires resolves_to_vector<A> && (A::VectorSize == 4) && 
+                 resolves_to_vector<B> && (B::VectorSize == 4)
+    static inline auto dot(const A& va, const B& vb)
     {
-        using VectorType = get_vector_type<T>::type;
+        using VectorType = resolve_t<A, B>;
         VectorType a(va);
         VectorType b(vb);
         return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
@@ -2199,7 +2218,8 @@ namespace mango::math
                  resolves_to_vector<B> && (A::VectorSize == B::VectorSize)
     static inline auto distance(const A& a, const B& b)
     {
-        return length(a - b);
+        using VectorType = resolve_t<A, B>;
+        return length(VectorType(a) - VectorType(b));
     }
 
     template <typename T>
@@ -2213,56 +2233,77 @@ namespace mango::math
     template <typename A, typename B>
         requires resolves_to_vector<A> && (A::VectorSize == 2 || A::VectorSize == 3) &&
                  resolves_to_vector<B> && (A::VectorSize == B::VectorSize)
-    static inline auto project(const A& v, const B& normal)
+    static inline auto project(const A& v__, const B& normal__)
     {
+        using VectorType = resolve_t<A, B>;
+        VectorType v(v__);
+        VectorType normal(normal__);
         return v - normal * (dot(v, normal) / dot(normal, normal));
     }
 
-    template <typename T>
-        requires resolves_to_vector<T> && (T::VectorSize == 2 || T::VectorSize == 3)
-    static inline auto reflect(const T& v, const T& normal)
+    template <typename A, typename B>
+        requires resolves_to_vector<A> && (A::VectorSize == 2 || A::VectorSize == 3) &&
+                 resolves_to_vector<B> && (B::VectorSize == 2 || B::VectorSize == 3)
+    static inline auto reflect(const A& v__, const B& normal__)
     {
-        using ScalarType = typename T::ScalarType;
+        using VectorType = resolve_t<A, B>;
+        using ScalarType = typename VectorType::ScalarType;
+        VectorType v(v__);
+        VectorType normal(normal__);
         return v - normal * (ScalarType(2.0) * dot(v, normal));
     }
 
-    template <typename T, typename S>
-        requires resolves_to_vector<T> && is_scalar<typename T::ScalarType> && (T::VectorSize == 2 || T::VectorSize == 3)
-    static inline auto refract(const T& v, const T& normal, S factor)
+    template <typename A, typename B, typename S>
+        requires resolves_to_vector<A> && (A::VectorSize == 2 || A::VectorSize == 3) &&
+                 resolves_to_vector<B> && (B::VectorSize == 2 || B::VectorSize == 3) &&
+                 (is_scalar<typename A::ScalarType> || is_scalar<typename B::ScalarType>)
+    static inline auto refract(const A& v__, const B& normal__, S factor__)
     {
-        using ScalarType = typename T::ScalarType;
-        ScalarType f = ScalarType(factor);
+        using VectorType = resolve_t<A, B>;
+        using ScalarType = typename VectorType::ScalarType;
+        VectorType v(v__);
+        VectorType normal(normal__);
+        ScalarType factor = ScalarType(factor__);
         ScalarType vdotn = dot(v, normal);
-        ScalarType p = ScalarType(1.0) - f * f * (ScalarType(1.0) - vdotn * vdotn);
+        ScalarType p = ScalarType(1.0) - factor * factor * (ScalarType(1.0) - vdotn * vdotn);
         // NOTE: This must be scalar, simd vectors can't branch
         if (p < ScalarType(0.0))
         {
-            return T(0.0);
+            return VectorType(0.0);
         }
-        return v * f - normal * (math::sqrt(p) + f * vdotn);
+        return v * factor - normal * (math::sqrt(p) + factor * vdotn);
     }
 
-    template <typename T, typename S>
-        requires resolves_to_vector<T> && (!is_scalar<typename T::ScalarType>) && (T::VectorSize == 2 || T::VectorSize == 3)
-    static inline auto refract(const T& v, const T& normal, S factor)
+    template <typename A, typename B, typename S>
+        requires resolves_to_vector<A> && (A::VectorSize == 2 || A::VectorSize == 3) &&
+                 resolves_to_vector<B> && (B::VectorSize == 2 || B::VectorSize == 3) &&
+                 (!is_scalar<typename A::ScalarType> && !is_scalar<typename B::ScalarType>)
+    static inline auto refract(const A& v__, const B& normal__, S factor__)
     {
-        using ScalarType = typename T::ScalarType;
-        ScalarType f = ScalarType(factor);
+        using VectorType = resolve_t<A, B>;
+        using ScalarType = typename VectorType::ScalarType;
+        VectorType v(v__);
+        VectorType normal(normal__);
+        ScalarType factor = ScalarType(factor__);
         ScalarType vdotn = dot(v, normal);
-        ScalarType p = ScalarType(1.0) - f * f * (ScalarType(1.0) - vdotn * vdotn);
+        ScalarType p = ScalarType(1.0) - factor * factor * (ScalarType(1.0) - vdotn * vdotn);
         // NOTE: This must be simd vector, scalars can't select
         ScalarType scale = simd::select(p > ScalarType(0.0), ScalarType(1.0), ScalarType(0.0));
-        return (v * f - normal * (math::sqrt(p * scale) + f * vdotn)) * scale;
+        return v * factor - normal * (math::sqrt(p) + factor * vdotn);
     }
 
-    template <typename T>
-        requires is_vector<T> && (T::VectorSize == 3)
-    static inline auto cross(const T& a, const T& b)
+    template <typename A, typename B>
+        requires resolves_to_vector<A> && (A::VectorSize == 3) &&
+                 resolves_to_vector<B> && (B::VectorSize == 3)
+    static inline auto cross(const A& a__, const B& b__)
     {
+        using VectorType = resolve_t<A, B>;
+        VectorType a(a__);
+        VectorType b(b__);
         auto x = a.y * b.z - a.z * b.y;
         auto y = a.z * b.x - a.x * b.z;
         auto z = a.x * b.y - a.y * b.x;
-        return T(x, y, z);
+        return VectorType(x, y, z);
     }
 
     template <typename T>
