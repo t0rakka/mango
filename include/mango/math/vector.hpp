@@ -181,6 +181,20 @@ namespace mango::math
 
     template <typename T>
         requires is_scalar<T>
+    static inline T fract(const T& a)
+    {
+        return a - math::floor(a);
+    }
+
+    template <typename T>
+        requires is_scalar<T>
+    static inline T mod(const T& a, const T& b)
+    {
+        return a - b * math::floor(a / b);
+    }
+
+    template <typename T>
+        requires is_scalar<T>
     static inline T min(const T& a, const T& b)
     {
         return std::min(a, b);
@@ -217,7 +231,7 @@ namespace mango::math
 
     template <typename T>
         requires is_scalar<T>
-    static inline T sign(const T& a)
+    static inline T sign(T a)
     {
         if (a < 0) a = -T(1.0);
         else if (a > 0) a = T(1.0);
@@ -1411,6 +1425,14 @@ namespace mango::math
     {
         using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
         return s + TargetType(a);
+    }
+
+    template <typename VectorType, typename StorageType, int... Indices>
+    static constexpr
+    auto operator - (const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
+    {
+        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        return -TargetType(a);
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
