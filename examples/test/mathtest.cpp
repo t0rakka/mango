@@ -140,11 +140,15 @@ void test10(float32x4 a, float32x4 b)
 void test11(float32x4 a, float32x4 b)
 {
     float32x2 v2 = a.yx + b.xy + float32x2(0.0f, 1.0f);
-    //float32x3 v3 = v2.yxx;
-    //float32x4 v4 = v2.xxyy;
+    float32x3 v3 = v2.yxx;
+    float32x4 v4 = v2.xxyy;
+    v4.x += v3.y;
+    v4.y += 1;
+    v4.z -= 0.5;
+    v4.w *= 0.5;
     check("[test11] v2:", v2, 2.2f, 2.4f);
-    //check("[test11] v3:", v3, 3.0f, 1.0f, 2.0f);
-    //check("[test11] v4:", v4, 3.0f, 1.0f, 2.0f, 0.0f);
+    check("[test11] v3:", v3, 2.4f, 2.2f, 2.2f);
+    check("[test11] v4:", v4, 4.4f, 3.2f, 1.9f, 1.2f);
 }
 
 void test()

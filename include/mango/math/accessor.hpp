@@ -12,8 +12,6 @@
     VECTOR2_SHUFFLE2(1, 1, yy);
 #endif
 
-// TODO
-/*
 #if defined(VECTOR2_SHUFFLE3)
     VECTOR2_SHUFFLE3(0, 0, 0, xxx);
     VECTOR2_SHUFFLE3(1, 0, 0, yxx);
@@ -24,10 +22,7 @@
     VECTOR2_SHUFFLE3(0, 1, 1, xyy);
     VECTOR2_SHUFFLE3(1, 1, 1, yyy);
 #endif
-*/
 
-// TODO
-/*
 #if defined(VECTOR2_SHUFFLE4)
     VECTOR2_SHUFFLE4(0, 0, 0, 0, xxxx);
     VECTOR2_SHUFFLE4(1, 0, 0, 0, yxxx);
@@ -46,7 +41,6 @@
     VECTOR2_SHUFFLE4(0, 1, 1, 1, xyyy);
     VECTOR2_SHUFFLE4(1, 1, 1, 1, yyyy);
 #endif
-*/
 
 // 3 component accessors
 
@@ -92,8 +86,6 @@
     VECTOR3_SHUFFLE3(2, 2, 2, zzz);
 #endif
 
-// TODO
-/*
 #if defined(VECTOR3_SHUFFLE4)
     VECTOR3_SHUFFLE4(0, 0, 0, 0, xxxx);
     VECTOR3_SHUFFLE4(1, 0, 0, 0, yxxx);
@@ -177,7 +169,6 @@
     VECTOR3_SHUFFLE4(1, 2, 2, 2, yzzz);
     VECTOR3_SHUFFLE4(2, 2, 2, 2, zzzz);
 #endif
-*/
 
 // 4 component accessors
 

@@ -768,8 +768,8 @@ namespace mango::math
     template <typename T>
     struct is_shuffle_accessor : std::false_type {};
 
-    template <typename VectorType, typename StorageType, int... Indices>
-    struct is_shuffle_accessor<ShuffleAccessor<VectorType, StorageType, Indices...>> : std::true_type {};
+    template <typename ScalarType, typename StorageType, int... Indices>
+    struct is_shuffle_accessor<ShuffleAccessor<ScalarType, StorageType, Indices...>> : std::true_type {};
 
     template <typename T>
     concept is_simd_vector = requires(T v)
@@ -810,7 +810,8 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<typename T::ScalarType>
-    struct has_float_scalar<T> {
+    struct has_float_scalar<T>
+    {
         static constexpr bool value = has_float_scalar<typename T::ScalarType>::value;
     };
 
@@ -823,10 +824,10 @@ namespace mango::math
         using type = T;
     };
 
-    template <typename VectorType, typename StorageType, int... Indices>
-    struct get_vector_type<ShuffleAccessor<VectorType, StorageType, Indices...>>
+    template <typename ScalarType, typename StorageType, int... Indices>
+    struct get_vector_type<ShuffleAccessor<ScalarType, StorageType, Indices...>>
     {
-        using type = VectorType;
+        using type = Vector<ScalarType, sizeof...(Indices)>;
     };
 
     // has_vector
@@ -979,280 +980,15 @@ namespace mango::math
     };
 
     // ------------------------------------------------------------------
-    // ScalarAccessor operators
-    // ------------------------------------------------------------------
-
-    // NOTE: These operators are not strictly necessary, since the type system below will
-    //       generate code but it will expand these to full vector types and generate less
-    //       efficient code. By providing scalar specialization we get scalar code directly.
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a) noexcept
-    {
-        return ScalarType(a);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index0, int Index1>
-    static constexpr
-    ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
-                           const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
-    {
-        return ScalarType(a) + ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    ScalarType operator + (const ScalarAccessor<ScalarType, VectorType, Index>& a,
-                           ScalarType b) noexcept
-    {
-        return ScalarType(a) + b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    ScalarType operator + (ScalarType a,
-                           const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a + ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a) noexcept
-    {
-        return -ScalarType(a);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index0, int Index1>
-    static constexpr
-    ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
-                           const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
-    {
-        return ScalarType(a) - ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    ScalarType operator - (const ScalarAccessor<ScalarType, VectorType, Index>& a,
-                           ScalarType b) noexcept
-    {
-        return ScalarType(a) - b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    ScalarType operator - (ScalarType a,
-                           const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a - ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index0, int Index1>
-    static constexpr
-    ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
-                           const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
-    {
-        return ScalarType(a) * ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    ScalarType operator * (const ScalarAccessor<ScalarType, VectorType, Index>& a,
-                           ScalarType b) noexcept
-    {
-        return ScalarType(a) * b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    ScalarType operator * (ScalarType a,
-                           const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a * ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index0, int Index1>
-    static constexpr
-    ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
-                           const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
-    {
-        return ScalarType(a) / ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    ScalarType operator / (const ScalarAccessor<ScalarType, VectorType, Index>& a,
-                           ScalarType b) noexcept
-    {
-        return ScalarType(a) / b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    ScalarType operator / (ScalarType a,
-                          const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a / ScalarType(b);
-    }
-
-    // ------------------------------------------------------------------
-    // ScalarAccessor comparison operators
-    // ------------------------------------------------------------------
-
-    // operator <
-
-    template <typename ScalarType, typename VectorType, int Index0, int Index1>
-    static constexpr
-    bool operator < (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
-                     const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
-    {
-        return ScalarType(a) < ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    bool operator < (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
-    {
-        return ScalarType(a) < b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    bool operator < (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a < ScalarType(b);
-    }
-
-    // operator >
-
-    template <typename ScalarType, typename VectorType, int Index0, int Index1>
-    static constexpr
-    bool operator > (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
-                     const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
-    {
-        return ScalarType(a) > ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    bool operator > (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
-    {
-        return ScalarType(a) > b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    bool operator > (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a > ScalarType(b);
-    }
-
-    // operator <=
-
-    template <typename ScalarType, typename VectorType, int Index0, int Index1>
-    static constexpr
-    bool operator <= (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
-                      const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
-    {
-        return ScalarType(a) <= ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    bool operator <= (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
-    {
-        return ScalarType(a) <= b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    bool operator <= (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a <= ScalarType(b);
-    }
-
-    // operator >=
-
-    template <typename ScalarType, typename VectorType, int Index0, int Index1>
-    static constexpr
-    bool operator >= (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
-                      const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
-    {
-        return ScalarType(a) >= ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    bool operator >= (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
-    {
-        return ScalarType(a) >= b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    bool operator >= (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a >= ScalarType(b);
-    }
-
-    // operator ==
-
-    template <typename ScalarType, typename VectorType, int Index0, int Index1>
-    static constexpr
-    bool operator == (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
-                      const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
-    {
-        return ScalarType(a) == ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    bool operator == (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
-    {
-        return ScalarType(a) == b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    bool operator == (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a == ScalarType(b);
-    }
-
-    // operator !=
-
-    template <typename ScalarType, typename VectorType, int Index0, int Index1>
-    static constexpr
-    bool operator != (const ScalarAccessor<ScalarType, VectorType, Index0>& a,
-                      const ScalarAccessor<ScalarType, VectorType, Index1>& b) noexcept
-    {
-        return ScalarType(a) != ScalarType(b);
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    bool operator != (const ScalarAccessor<ScalarType, VectorType, Index>& a, ScalarType b) noexcept
-    {
-        return ScalarType(a) != b;
-    }
-
-    template <typename ScalarType, typename VectorType, int Index>
-    static constexpr
-    bool operator != (ScalarType a, const ScalarAccessor<ScalarType, VectorType, Index>& b) noexcept
-    {
-        return a != ScalarType(b);
-    }
-
-    // ------------------------------------------------------------------
     // ShuffleAccessor
     // ------------------------------------------------------------------
 
-    template <typename VectorType, typename StorageType, int... Indices>
+    template <typename ScalarType_, typename StorageType, int... Indices>
     struct ShuffleAccessor
     {
-        using ScalarType = typename VectorType::ScalarType;
-        static constexpr int VectorSize = VectorType::VectorSize;
+        using ScalarType = ScalarType_;
+        using VectorType = Vector<ScalarType, sizeof...(Indices)>;
+        static constexpr int VectorSize = sizeof...(Indices);
 
         StorageType m;
 
@@ -1262,11 +998,12 @@ namespace mango::math
 
     // scalar specializations
 
-    template <typename VectorType, typename StorageType, int X, int Y>
+    template <typename ScalarType_, typename StorageType, int X, int Y>
         requires (!simd::is_vector<StorageType>)
-    struct ShuffleAccessor<VectorType, StorageType, X, Y>
+    struct ShuffleAccessor<ScalarType_, StorageType, X, Y>
     {
-        using ScalarType = typename VectorType::ScalarType;
+        using ScalarType = ScalarType_;
+        using VectorType = Vector<ScalarType, 2>;
         static constexpr int VectorSize = 2;
 
         StorageType m;
@@ -1279,11 +1016,12 @@ namespace mango::math
         }
     };
 
-    template <typename VectorType, typename StorageType, int X, int Y, int Z>
+    template <typename ScalarType_, typename StorageType, int X, int Y, int Z>
         requires (!simd::is_vector<StorageType>)
-    struct ShuffleAccessor<VectorType, StorageType, X, Y, Z>
+    struct ShuffleAccessor<ScalarType_, StorageType, X, Y, Z>
     {
-        using ScalarType = typename VectorType::ScalarType;
+        using ScalarType = ScalarType_;
+        using VectorType = Vector<ScalarType, 3>;
         static constexpr int VectorSize = 3;
 
         StorageType m;
@@ -1297,11 +1035,12 @@ namespace mango::math
         }
     };
 
-    template <typename VectorType, typename StorageType, int X, int Y, int Z, int W>
+    template <typename ScalarType_, typename StorageType, int X, int Y, int Z, int W>
         requires (!simd::is_vector<StorageType>)
-    struct ShuffleAccessor<VectorType, StorageType, X, Y, Z, W>
+    struct ShuffleAccessor<ScalarType_, StorageType, X, Y, Z, W>
     {
-        using ScalarType = typename VectorType::ScalarType;
+        using ScalarType = ScalarType_;
+        using VectorType = Vector<ScalarType, 4>;
         static constexpr int VectorSize = 4;
 
         StorageType m;
@@ -1318,11 +1057,12 @@ namespace mango::math
 
     // simd specializations
 
-    template <typename VectorType, typename StorageType, int X, int Y>
+    template <typename ScalarType_, typename StorageType, int X, int Y>
         requires (simd::is_vector<StorageType>)
-    struct ShuffleAccessor<VectorType, StorageType, X, Y>
+    struct ShuffleAccessor<ScalarType_, StorageType, X, Y>
     {
-        using ScalarType = typename VectorType::ScalarType;
+        using ScalarType = ScalarType_;
+        using VectorType = Vector<ScalarType, 2>;
         static constexpr int VectorSize = 2;
 
         StorageType m;
@@ -1335,11 +1075,12 @@ namespace mango::math
         }
     };
 
-    template <typename VectorType, typename StorageType, int X, int Y, int Z>
+    template <typename ScalarType_, typename StorageType, int X, int Y, int Z>
         requires (simd::is_vector<StorageType>)
-    struct ShuffleAccessor<VectorType, StorageType, X, Y, Z>
+    struct ShuffleAccessor<ScalarType_, StorageType, X, Y, Z>
     {
-        using ScalarType = typename VectorType::ScalarType;
+        using ScalarType = ScalarType_;
+        using VectorType = Vector<ScalarType, 3>;
         static constexpr int VectorSize = 3;
 
         StorageType m;
@@ -1353,11 +1094,12 @@ namespace mango::math
         }
     };
 
-    template <typename VectorType, typename StorageType, int X, int Y, int Z, int W>
+    template <typename ScalarType_, typename StorageType, int X, int Y, int Z, int W>
         requires (simd::is_vector<StorageType>)
-    struct ShuffleAccessor<VectorType, StorageType, X, Y, Z, W>
+    struct ShuffleAccessor<ScalarType_, StorageType, X, Y, Z, W>
     {
-        using ScalarType = typename VectorType::ScalarType;
+        using ScalarType = ScalarType_;
+        using VectorType = Vector<ScalarType, 4>;
         static constexpr int VectorSize = 4;
 
         StorageType m;
@@ -1372,85 +1114,233 @@ namespace mango::math
     // ShuffleAccessor operators
     // ------------------------------------------------------------------
 
-    template <typename VectorType, typename StorageType, int... IndicesA, int... IndicesB>
+    template <typename ScalarType, typename StorageType, int... IndicesA, int... IndicesB>
     static constexpr
-    auto operator * (const ShuffleAccessor<VectorType, StorageType, IndicesA...>& a,
-                     const ShuffleAccessor<VectorType, StorageType, IndicesB...>& b) noexcept
+    auto operator * (const ShuffleAccessor<ScalarType, StorageType, IndicesA...>& a,
+                     const ShuffleAccessor<ScalarType, StorageType, IndicesB...>& b) noexcept
     {
-        using TargetTypeA = Vector<typename VectorType::ScalarType, sizeof...(IndicesA)>;
-        using TargetTypeB = Vector<typename VectorType::ScalarType, sizeof...(IndicesB)>;
+        using TargetTypeA = Vector<ScalarType, sizeof...(IndicesA)>;
+        using TargetTypeB = Vector<ScalarType, sizeof...(IndicesB)>;
         return TargetTypeA(a) * TargetTypeB(b);
     }
 
-    template <typename VectorType, typename StorageType, int... Indices>
+    template <typename ScalarType, typename StorageType, int... Indices>
     static constexpr
-    auto operator * (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
-                     typename VectorType::ScalarType s) noexcept
+    auto operator * (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
+                     ScalarType s) noexcept
     {
-        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
         return TargetType(a) * s;
     }
 
-    template <typename VectorType, typename StorageType, int... Indices>
+    template <typename ScalarType, typename StorageType, int... Indices>
     static constexpr
-    auto operator * (typename VectorType::ScalarType s,
-                     const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
+    auto operator * (ScalarType s,
+                     const ShuffleAccessor<ScalarType, StorageType, Indices...>& a) noexcept
     {
-        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
         return s * TargetType(a);
     }
 
-    template <typename VectorType, typename StorageType, int... Indices>
+    template <typename ScalarType, typename StorageType, int... Indices>
     static constexpr
-    auto operator / (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
-                     typename VectorType::ScalarType s) noexcept
+    auto operator / (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
+                     ScalarType s) noexcept
     {
-        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
         return TargetType(a) / s;
     }
 
-    template <typename VectorType, typename StorageType, int... Indices>
+    template <typename ScalarType, typename StorageType, int... Indices>
     static constexpr
-    auto operator + (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
-                     typename VectorType::ScalarType s) noexcept
+    auto operator + (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
+                     ScalarType s) noexcept
     {
-        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
         return TargetType(a) + s;
     }
 
-    template <typename VectorType, typename StorageType, int... Indices>
+    template <typename ScalarType, typename StorageType, int... Indices>
     static constexpr
-    auto operator + (typename VectorType::ScalarType s,
-                     const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
+    auto operator + (ScalarType s,
+                     const ShuffleAccessor<ScalarType, StorageType, Indices...>& a) noexcept
     {
-        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
         return s + TargetType(a);
     }
 
-    template <typename VectorType, typename StorageType, int... Indices>
+    template <typename ScalarType, typename StorageType, int... Indices>
     static constexpr
-    auto operator - (const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
+    auto operator - (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a) noexcept
     {
-        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
         return -TargetType(a);
     }
 
-    template <typename VectorType, typename StorageType, int... Indices>
+    template <typename ScalarType, typename StorageType, int... Indices>
     static constexpr
-    auto operator - (const ShuffleAccessor<VectorType, StorageType, Indices...>& a,
-                     typename VectorType::ScalarType s) noexcept
+    auto operator - (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
+                     ScalarType s) noexcept
     {
-        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
         return TargetType(a) - s;
     }
 
-    template <typename VectorType, typename StorageType, int... Indices>
+    template <typename ScalarType, typename StorageType, int... Indices>
     static constexpr
-    auto operator - (typename VectorType::ScalarType s,
-                     const ShuffleAccessor<VectorType, StorageType, Indices...>& a) noexcept
+    auto operator - (ScalarType s,
+                     const ShuffleAccessor<ScalarType, StorageType, Indices...>& a) noexcept
     {
-        using TargetType = Vector<typename VectorType::ScalarType, sizeof...(Indices)>;
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
         return s - TargetType(a);
+    }
+
+    // ScalarAccessor and ShuffleAccessor combinations
+
+    template <typename ScalarType, typename StorageType, int Index, int... Indices>
+    static constexpr
+    auto operator * (const ScalarAccessor<ScalarType, StorageType, Index>& a,
+                     const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(ScalarType(a)) * TargetType(b);
+    }
+
+    template <typename ScalarType, typename StorageType, int... Indices, int Index>
+    static constexpr
+    auto operator * (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
+                     const ScalarAccessor<ScalarType, StorageType, Index>& b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(a) * TargetType(ScalarType(b));
+    }
+
+    template <typename ScalarType, typename StorageType, int Index, int... Indices>
+    static constexpr
+    auto operator / (const ScalarAccessor<ScalarType, StorageType, Index>& a,
+                     const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(ScalarType(a)) / TargetType(b);
+    }
+
+    template <typename ScalarType, typename StorageType, int... Indices, int Index>
+    static constexpr
+    auto operator / (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
+                     const ScalarAccessor<ScalarType, StorageType, Index>& b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(a) / TargetType(ScalarType(b));
+    }
+
+    template <typename ScalarType, typename StorageType, int Index, int... Indices>
+    static constexpr
+    auto operator + (const ScalarAccessor<ScalarType, StorageType, Index>& a,
+                     const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(ScalarType(a)) + TargetType(b);
+    }
+
+    template <typename ScalarType, typename StorageType, int... Indices, int Index>
+    static constexpr
+    auto operator + (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
+                     const ScalarAccessor<ScalarType, StorageType, Index>& b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(a) + TargetType(ScalarType(b));
+    }
+
+    template <typename ScalarType, typename StorageType, int Index, int... Indices>
+    static constexpr
+    auto operator - (const ScalarAccessor<ScalarType, StorageType, Index>& a,
+                     const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(ScalarType(a)) - TargetType(b);
+    }
+
+    template <typename ScalarType, typename StorageType, int... Indices, int Index>
+    static constexpr
+    auto operator - (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
+                     const ScalarAccessor<ScalarType, StorageType, Index>& b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(a) - TargetType(ScalarType(b));
+    }
+
+    // Overloads for arithmetic types
+
+    template <typename T, typename ScalarType, typename StorageType, int... Indices>
+        requires std::is_arithmetic_v<T>
+    static constexpr
+    auto operator * (T a, const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(ScalarType(a)) * TargetType(b);
+    }
+
+    template <typename T, typename ScalarType, typename StorageType, int... Indices>
+        requires std::is_arithmetic_v<T>
+    static constexpr
+    auto operator * (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a, T b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(a) * TargetType(ScalarType(b));
+    }
+
+    template <typename T, typename ScalarType, typename StorageType, int... Indices>
+        requires std::is_arithmetic_v<T>
+    static constexpr
+    auto operator / (T a, const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(ScalarType(a)) / TargetType(b);
+    }
+
+    template <typename T, typename ScalarType, typename StorageType, int... Indices>
+        requires std::is_arithmetic_v<T>
+    static constexpr
+    auto operator / (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a, T b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(a) / TargetType(ScalarType(b));
+    }
+
+    template <typename T, typename ScalarType, typename StorageType, int... Indices>
+        requires std::is_arithmetic_v<T>
+    static constexpr
+    auto operator + (T a, const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(ScalarType(a)) + TargetType(b);
+    }
+
+    template <typename T, typename ScalarType, typename StorageType, int... Indices>
+        requires std::is_arithmetic_v<T>
+    static constexpr
+    auto operator + (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a, T b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(a) + TargetType(ScalarType(b));
+    }
+
+    template <typename T, typename ScalarType, typename StorageType, int... Indices>
+        requires std::is_arithmetic_v<T>
+    static constexpr
+    auto operator - (T a, const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(ScalarType(a)) - TargetType(b);
+    }
+
+    template <typename T, typename ScalarType, typename StorageType, int... Indices>
+        requires std::is_arithmetic_v<T>
+    static constexpr
+    auto operator - (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a, T b) noexcept
+    {
+        using TargetType = Vector<ScalarType, sizeof...(Indices)>;
+        return TargetType(a) - TargetType(ScalarType(b));
     }
 
     // ------------------------------------------------------------------

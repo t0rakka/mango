@@ -27,19 +27,19 @@ namespace mango::math
 
             // generate 2 component accessors
 #define VECTOR4_SHUFFLE2(A, B, NAME) \
-            ShuffleAccessor<Vector<u64, 2>, simd::u64x4, A, B> NAME
+            ShuffleAccessor<u64, simd::u64x4, A, B> NAME
             #include <mango/math/accessor.hpp>
 #undef VECTOR4_SHUFFLE2
 
             // generate 3 component accessors
 #define VECTOR4_SHUFFLE3(A, B, C, NAME) \
-            ShuffleAccessor<Vector<u64, 3>, simd::u64x4, A, B, C> NAME
+            ShuffleAccessor<u64, simd::u64x4, A, B, C> NAME
             #include <mango/math/accessor.hpp>
 #undef VECTOR4_SHUFFLE3
 
             // generate 4 component accessors
 #define VECTOR4_SHUFFLE4(A, B, C, D, NAME) \
-            ShuffleAccessor<Vector<u64, 4>, simd::u64x4, A, B, C, D> NAME
+            ShuffleAccessor<u64, simd::u64x4, A, B, C, D> NAME
             #include <mango/math/accessor.hpp>
 #undef VECTOR4_SHUFFLE4
         };
