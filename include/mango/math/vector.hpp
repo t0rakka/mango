@@ -1248,9 +1248,6 @@ namespace mango::math
     // ShuffleAccessor
     // ------------------------------------------------------------------
 
-    template <typename T, typename StorageType>
-    concept is_scalar_storage = !is_simd_vector<Vector<typename T::ScalarType, sizeof(StorageType) / sizeof(typename T::ScalarType)>>;
-
     template <typename VectorType, typename StorageType, int... Indices>
     struct ShuffleAccessor
     {
@@ -1263,10 +1260,10 @@ namespace mango::math
         constexpr operator VectorType () const noexcept;
     };
 
-    // scalar
+    // scalar specializations
 
     template <typename VectorType, typename StorageType, int X, int Y>
-        requires is_scalar_storage<VectorType, StorageType>
+        requires (!simd::is_vector<StorageType>)
     struct ShuffleAccessor<VectorType, StorageType, X, Y>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -1278,12 +1275,12 @@ namespace mango::math
         {
             const ScalarType x = m[X];
             const ScalarType y = m[Y];
-            return Vector<ScalarType, 2>(x, y);
+            return VectorType(x, y);
         }
     };
 
     template <typename VectorType, typename StorageType, int X, int Y, int Z>
-        requires is_scalar_storage<VectorType, StorageType>
+        requires (!simd::is_vector<StorageType>)
     struct ShuffleAccessor<VectorType, StorageType, X, Y, Z>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -1301,7 +1298,7 @@ namespace mango::math
     };
 
     template <typename VectorType, typename StorageType, int X, int Y, int Z, int W>
-        requires is_scalar_storage<VectorType, StorageType>
+        requires (!simd::is_vector<StorageType>)
     struct ShuffleAccessor<VectorType, StorageType, X, Y, Z, W>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -1315,14 +1312,14 @@ namespace mango::math
             const ScalarType y = m[Y];
             const ScalarType z = m[Z];
             const ScalarType w = m[W];
-            return Vector<ScalarType, 4>(x, y, z, w);
+            return VectorType(x, y, z, w);
         }
     };
 
-    // simd
+    // simd specializations
 
     template <typename VectorType, typename StorageType, int X, int Y>
-        requires (!is_scalar_storage<VectorType, StorageType>)
+        requires (simd::is_vector<StorageType>)
     struct ShuffleAccessor<VectorType, StorageType, X, Y>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -1330,16 +1327,16 @@ namespace mango::math
 
         StorageType m;
 
-        constexpr operator Vector<ScalarType, 2> () const noexcept
+        constexpr operator VectorType () const noexcept
         {
             const ScalarType x = simd::get_component<X>(m);
             const ScalarType y = simd::get_component<Y>(m);
-            return Vector<ScalarType, 2>(x, y);
+            return VectorType(x, y);
         }
     };
 
     template <typename VectorType, typename StorageType, int X, int Y, int Z>
-        requires (!is_scalar_storage<VectorType, StorageType>)
+        requires (simd::is_vector<StorageType>)
     struct ShuffleAccessor<VectorType, StorageType, X, Y, Z>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -1347,17 +1344,17 @@ namespace mango::math
 
         StorageType m;
 
-        constexpr operator Vector<ScalarType, 3> () const noexcept
+        constexpr operator VectorType () const noexcept
         {
             const ScalarType x = simd::get_component<X>(m);
             const ScalarType y = simd::get_component<Y>(m);
             const ScalarType z = simd::get_component<Z>(m);
-            return Vector<ScalarType, 3>(x, y, z);
+            return VectorType(x, y, z);
         }
     };
 
     template <typename VectorType, typename StorageType, int X, int Y, int Z, int W>
-        requires (!is_scalar_storage<VectorType, StorageType>)
+        requires (simd::is_vector<StorageType>)
     struct ShuffleAccessor<VectorType, StorageType, X, Y, Z, W>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -1365,7 +1362,7 @@ namespace mango::math
 
         StorageType m;
 
-        constexpr operator Vector<ScalarType, 4> () const noexcept
+        constexpr operator VectorType () const noexcept
         {
             return simd::shuffle<X, Y, Z, W>(m);
         }
