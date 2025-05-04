@@ -151,6 +151,28 @@ void test11(float32x4 a, float32x4 b)
     check("[test11] v4:", v4, 4.4f, 3.2f, 1.9f, 1.2f);
 }
 
+void test12(float32x4 a, float32x4 b)
+{
+    float32x2 a2 = a.xy;
+    float32x2 b2 = b.xy;
+    float32x3 a3 = a.xyz;
+    float32x3 b3 = b.xyz;
+    float32x4 a4 = a;
+    float32x4 b4 = b;
+    a2.xy = b.ww;
+    b2.yx = b.xy;
+    a3.yz = b.yx;
+    b3.yz = a.wz;
+    a4.wz = b.zy;
+    b4.xy = a.yx;
+    check("[test12] a2:", a2, 0.8f, 0.8f);
+    check("[test12] b2:", b2, 0.4f, 0.2f);
+    check("[test12] a3:", a3, 1.0f, 0.4f, 0.2f);
+    check("[test12] b3:", b3, 0.2f, 4.0f, 3.0f);
+    check("[test12] a4:", a4, 1.0f, 2.0f, 0.4f, 0.6f);
+    check("[test12] b4:", b4, 2.0f, 1.0f, 0.6f, 0.8f);
+}
+
 void test()
 {
     float32x4 a(1.00f, 2.00f, 3.00f, 4.00f);
@@ -169,6 +191,7 @@ void test()
     test9(a, b);
     test10(a, b);
     test11(a, b);
+    test12(a, b);
 }
 
 // ----------------------------------------------------------------------

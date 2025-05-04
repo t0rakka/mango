@@ -983,17 +983,30 @@ namespace mango::math
     // ShuffleAccessor
     // ------------------------------------------------------------------
 
+    template <int... Indices>
+    struct has_unique_indices : std::false_type {};
+
+    template <int I>
+    struct has_unique_indices<I> : std::true_type {};
+
+    template <int I, int... Rest>
+    struct has_unique_indices<I, Rest...> 
+        : std::bool_constant<((I != Rest) && ...) && has_unique_indices<Rest...>::value>
+    {};
+
     template <typename ScalarType_, typename StorageType, int... Indices>
     struct ShuffleAccessor
     {
         using ScalarType = ScalarType_;
         using VectorType = Vector<ScalarType, sizeof...(Indices)>;
         static constexpr int VectorSize = sizeof...(Indices);
+        static constexpr bool is_writable = false;
 
         StorageType m;
 
         // implemented in specializations
         constexpr operator VectorType () const noexcept;
+        constexpr ShuffleAccessor& operator = (const VectorType& v) noexcept;
     };
 
     // scalar specializations
@@ -1005,6 +1018,7 @@ namespace mango::math
         using ScalarType = ScalarType_;
         using VectorType = Vector<ScalarType, 2>;
         static constexpr int VectorSize = 2;
+        static constexpr bool is_writable = has_unique_indices<X, Y>::value;
 
         StorageType m;
 
@@ -1013,6 +1027,14 @@ namespace mango::math
             const ScalarType x = m[X];
             const ScalarType y = m[Y];
             return VectorType(x, y);
+        }
+
+        constexpr ShuffleAccessor& operator = (const VectorType& v) noexcept
+            requires is_writable
+        {
+            m[X] = v.x;
+            m[Y] = v.y;
+            return *this;
         }
     };
 
@@ -1023,6 +1045,7 @@ namespace mango::math
         using ScalarType = ScalarType_;
         using VectorType = Vector<ScalarType, 3>;
         static constexpr int VectorSize = 3;
+        static constexpr bool is_writable = has_unique_indices<X, Y, Z>::value;
 
         StorageType m;
 
@@ -1033,6 +1056,15 @@ namespace mango::math
             const ScalarType z = m[Z];
             return VectorType(x, y, z);
         }
+
+        constexpr ShuffleAccessor& operator = (const VectorType& v) noexcept
+            requires is_writable
+        {
+            m[X] = v.x;
+            m[Y] = v.y;
+            m[Z] = v.z;
+            return *this;
+        }
     };
 
     template <typename ScalarType_, typename StorageType, int X, int Y, int Z, int W>
@@ -1042,6 +1074,7 @@ namespace mango::math
         using ScalarType = ScalarType_;
         using VectorType = Vector<ScalarType, 4>;
         static constexpr int VectorSize = 4;
+        static constexpr bool is_writable = has_unique_indices<X, Y, Z, W>::value;
 
         StorageType m;
 
@@ -1052,6 +1085,16 @@ namespace mango::math
             const ScalarType z = m[Z];
             const ScalarType w = m[W];
             return VectorType(x, y, z, w);
+        }
+
+        constexpr ShuffleAccessor& operator = (const VectorType& v) noexcept
+            requires is_writable
+        {
+            m[X] = v.x;
+            m[Y] = v.y;
+            m[Z] = v.z;
+            m[W] = v.w;
+            return *this;
         }
     };
 
@@ -1064,6 +1107,7 @@ namespace mango::math
         using ScalarType = ScalarType_;
         using VectorType = Vector<ScalarType, 2>;
         static constexpr int VectorSize = 2;
+        static constexpr bool is_writable = has_unique_indices<X, Y>::value;
 
         StorageType m;
 
@@ -1072,6 +1116,14 @@ namespace mango::math
             const ScalarType x = simd::get_component<X>(m);
             const ScalarType y = simd::get_component<Y>(m);
             return VectorType(x, y);
+        }
+
+        constexpr ShuffleAccessor& operator = (const VectorType& v) noexcept
+            requires is_writable
+        {
+            m = simd::set_component<X>(m, v.x);
+            m = simd::set_component<Y>(m, v.y);
+            return *this;
         }
     };
 
@@ -1082,6 +1134,7 @@ namespace mango::math
         using ScalarType = ScalarType_;
         using VectorType = Vector<ScalarType, 3>;
         static constexpr int VectorSize = 3;
+        static constexpr bool is_writable = has_unique_indices<X, Y, Z>::value;
 
         StorageType m;
 
@@ -1092,6 +1145,15 @@ namespace mango::math
             const ScalarType z = simd::get_component<Z>(m);
             return VectorType(x, y, z);
         }
+
+        constexpr ShuffleAccessor& operator = (const VectorType& v) noexcept
+            requires is_writable
+        {
+            m = simd::set_component<X>(m, v.x);
+            m = simd::set_component<Y>(m, v.y);
+            m = simd::set_component<Z>(m, v.z);
+            return *this;
+        }
     };
 
     template <typename ScalarType_, typename StorageType, int X, int Y, int Z, int W>
@@ -1101,12 +1163,24 @@ namespace mango::math
         using ScalarType = ScalarType_;
         using VectorType = Vector<ScalarType, 4>;
         static constexpr int VectorSize = 4;
+        static constexpr bool is_writable = has_unique_indices<X, Y, Z, W>::value;
 
         StorageType m;
 
         constexpr operator VectorType () const noexcept
         {
             return simd::shuffle<X, Y, Z, W>(m);
+        }
+
+        constexpr ShuffleAccessor& operator = (const VectorType& v) noexcept
+            requires is_writable
+        {
+            // NOTE: We can optimize this into a shuffle when input is 4-lane simd vector.
+            m = simd::set_component<X>(m, v.x);
+            m = simd::set_component<Y>(m, v.y);
+            m = simd::set_component<Z>(m, v.z);
+            m = simd::set_component<W>(m, v.w);
+            return *this;
         }
     };
 
