@@ -7,10 +7,46 @@
 
 #if defined(VECTOR2_SHUFFLE2)
     VECTOR2_SHUFFLE2(0, 0, xx);
-    VECTOR2_SHUFFLE2(0, 1, xy);
     VECTOR2_SHUFFLE2(1, 0, yx);
+    VECTOR2_SHUFFLE2(0, 1, xy);
     VECTOR2_SHUFFLE2(1, 1, yy);
 #endif
+
+// TODO
+/*
+#if defined(VECTOR2_SHUFFLE3)
+    VECTOR2_SHUFFLE3(0, 0, 0, xxx);
+    VECTOR2_SHUFFLE3(1, 0, 0, yxx);
+    VECTOR2_SHUFFLE3(0, 1, 0, xyx);
+    VECTOR2_SHUFFLE3(1, 1, 0, yyx);
+    VECTOR2_SHUFFLE3(0, 0, 1, xxy);
+    VECTOR2_SHUFFLE3(1, 0, 1, yxy);
+    VECTOR2_SHUFFLE3(0, 1, 1, xyy);
+    VECTOR2_SHUFFLE3(1, 1, 1, yyy);
+#endif
+*/
+
+// TODO
+/*
+#if defined(VECTOR2_SHUFFLE4)
+    VECTOR2_SHUFFLE4(0, 0, 0, 0, xxxx);
+    VECTOR2_SHUFFLE4(1, 0, 0, 0, yxxx);
+    VECTOR2_SHUFFLE4(0, 1, 0, 0, xyxx);
+    VECTOR2_SHUFFLE4(1, 1, 0, 0, yyxx);
+    VECTOR2_SHUFFLE4(0, 0, 1, 0, xxyx);
+    VECTOR2_SHUFFLE4(1, 0, 1, 0, yxyx);
+    VECTOR2_SHUFFLE4(0, 1, 1, 0, xyyx);
+    VECTOR2_SHUFFLE4(1, 1, 1, 0, yyyx);
+    VECTOR2_SHUFFLE4(0, 0, 0, 1, xxxy);
+    VECTOR2_SHUFFLE4(1, 0, 0, 1, yxxy);
+    VECTOR2_SHUFFLE4(0, 1, 0, 1, xyxy);
+    VECTOR2_SHUFFLE4(1, 1, 0, 1, yyxy);
+    VECTOR2_SHUFFLE4(0, 0, 1, 1, xxyy);
+    VECTOR2_SHUFFLE4(1, 0, 1, 1, yxyy);
+    VECTOR2_SHUFFLE4(0, 1, 1, 1, xyyy);
+    VECTOR2_SHUFFLE4(1, 1, 1, 1, yyyy);
+#endif
+*/
 
 // 3 component accessors
 
@@ -55,6 +91,93 @@
     VECTOR3_SHUFFLE3(1, 2, 2, yzz);
     VECTOR3_SHUFFLE3(2, 2, 2, zzz);
 #endif
+
+// TODO
+/*
+#if defined(VECTOR3_SHUFFLE4)
+    VECTOR3_SHUFFLE4(0, 0, 0, 0, xxxx);
+    VECTOR3_SHUFFLE4(1, 0, 0, 0, yxxx);
+    VECTOR3_SHUFFLE4(2, 0, 0, 0, zxxx);
+    VECTOR3_SHUFFLE4(0, 1, 0, 0, xyxx);
+    VECTOR3_SHUFFLE4(1, 1, 0, 0, yyxx);
+    VECTOR3_SHUFFLE4(2, 1, 0, 0, zyxx);
+    VECTOR3_SHUFFLE4(0, 2, 0, 0, xzxx);
+    VECTOR3_SHUFFLE4(1, 2, 0, 0, yzxx);
+    VECTOR3_SHUFFLE4(2, 2, 0, 0, zzxx);
+    VECTOR3_SHUFFLE4(0, 0, 1, 0, xxyx);
+    VECTOR3_SHUFFLE4(1, 0, 1, 0, yxyx);
+    VECTOR3_SHUFFLE4(2, 0, 1, 0, zxyx);
+    VECTOR3_SHUFFLE4(0, 1, 1, 0, xyyx);
+    VECTOR3_SHUFFLE4(1, 1, 1, 0, yyyx);
+    VECTOR3_SHUFFLE4(2, 1, 1, 0, zyyx);
+    VECTOR3_SHUFFLE4(0, 2, 1, 0, xzyx);
+    VECTOR3_SHUFFLE4(1, 2, 1, 0, yzyx);
+    VECTOR3_SHUFFLE4(2, 2, 1, 0, zzyx);
+    VECTOR3_SHUFFLE4(0, 0, 2, 0, xxzx);
+    VECTOR3_SHUFFLE4(1, 0, 2, 0, yxzx);
+    VECTOR3_SHUFFLE4(2, 0, 2, 0, zxzx);
+    VECTOR3_SHUFFLE4(0, 1, 2, 0, xyzx);
+    VECTOR3_SHUFFLE4(1, 1, 2, 0, yyzx);
+    VECTOR3_SHUFFLE4(2, 1, 2, 0, zyzx);
+    VECTOR3_SHUFFLE4(0, 2, 2, 0, xzzx);
+    VECTOR3_SHUFFLE4(1, 2, 2, 0, yzzx);
+    VECTOR3_SHUFFLE4(2, 2, 2, 0, zzzx);
+    VECTOR3_SHUFFLE4(0, 0, 0, 1, xxxy);
+    VECTOR3_SHUFFLE4(1, 0, 0, 1, yxxy);
+    VECTOR3_SHUFFLE4(2, 0, 0, 1, zxxy);
+    VECTOR3_SHUFFLE4(0, 1, 0, 1, xyxy);
+    VECTOR3_SHUFFLE4(1, 1, 0, 1, yyxy);
+    VECTOR3_SHUFFLE4(2, 1, 0, 1, zyxy);
+    VECTOR3_SHUFFLE4(0, 2, 0, 1, xzxy);
+    VECTOR3_SHUFFLE4(1, 2, 0, 1, yzxy);
+    VECTOR3_SHUFFLE4(2, 2, 0, 1, zzxy);
+    VECTOR3_SHUFFLE4(0, 0, 1, 1, xxyy);
+    VECTOR3_SHUFFLE4(1, 0, 1, 1, yxyy);
+    VECTOR3_SHUFFLE4(2, 0, 1, 1, zxyy);
+    VECTOR3_SHUFFLE4(0, 1, 1, 1, xyyy);
+    VECTOR3_SHUFFLE4(1, 1, 1, 1, yyyy);
+    VECTOR3_SHUFFLE4(2, 1, 1, 1, zyyy);
+    VECTOR3_SHUFFLE4(0, 2, 1, 1, xzyy);
+    VECTOR3_SHUFFLE4(1, 2, 1, 1, yzyy);
+    VECTOR3_SHUFFLE4(2, 2, 1, 1, zzyy);
+    VECTOR3_SHUFFLE4(0, 0, 2, 1, xxzy);
+    VECTOR3_SHUFFLE4(1, 0, 2, 1, yxzy);
+    VECTOR3_SHUFFLE4(2, 0, 2, 1, zxzy);
+    VECTOR3_SHUFFLE4(0, 1, 2, 1, xyzy);
+    VECTOR3_SHUFFLE4(1, 1, 2, 1, yyzy);
+    VECTOR3_SHUFFLE4(2, 1, 2, 1, zyzy);
+    VECTOR3_SHUFFLE4(0, 2, 2, 1, xzzy);
+    VECTOR3_SHUFFLE4(1, 2, 2, 1, yzzy);
+    VECTOR3_SHUFFLE4(2, 2, 2, 1, zzzy);
+    VECTOR3_SHUFFLE4(0, 0, 0, 2, xxxz);
+    VECTOR3_SHUFFLE4(1, 0, 0, 2, yxxz);
+    VECTOR3_SHUFFLE4(2, 0, 0, 2, zxxz);
+    VECTOR3_SHUFFLE4(0, 1, 0, 2, xyxz);
+    VECTOR3_SHUFFLE4(1, 1, 0, 2, yyxz);
+    VECTOR3_SHUFFLE4(2, 1, 0, 2, zyxz);
+    VECTOR3_SHUFFLE4(0, 2, 0, 2, xzxz);
+    VECTOR3_SHUFFLE4(1, 2, 0, 2, yzxz);
+    VECTOR3_SHUFFLE4(2, 2, 0, 2, zzxz);
+    VECTOR3_SHUFFLE4(0, 0, 1, 2, xxyz);
+    VECTOR3_SHUFFLE4(1, 0, 1, 2, yxyz);
+    VECTOR3_SHUFFLE4(2, 0, 1, 2, zxyz);
+    VECTOR3_SHUFFLE4(0, 1, 1, 2, xyyz);
+    VECTOR3_SHUFFLE4(1, 1, 1, 2, yyyz);
+    VECTOR3_SHUFFLE4(2, 1, 1, 2, zyyz);
+    VECTOR3_SHUFFLE4(0, 2, 1, 2, xzyz);
+    VECTOR3_SHUFFLE4(1, 2, 1, 2, yzyz);
+    VECTOR3_SHUFFLE4(2, 2, 1, 2, zzyz);
+    VECTOR3_SHUFFLE4(0, 0, 2, 2, xxzz);
+    VECTOR3_SHUFFLE4(1, 0, 2, 2, yxzz);
+    VECTOR3_SHUFFLE4(2, 0, 2, 2, zxzz);
+    VECTOR3_SHUFFLE4(0, 1, 2, 2, xyzz);
+    VECTOR3_SHUFFLE4(1, 1, 2, 2, yyzz);
+    VECTOR3_SHUFFLE4(2, 1, 2, 2, zyzz);
+    VECTOR3_SHUFFLE4(0, 2, 2, 2, xzzz);
+    VECTOR3_SHUFFLE4(1, 2, 2, 2, yzzz);
+    VECTOR3_SHUFFLE4(2, 2, 2, 2, zzzz);
+#endif
+*/
 
 // 4 component accessors
 

@@ -1276,7 +1276,7 @@ namespace mango::math
         }
     };
 
-    // vec2 -> vec2 shuffle (scalar)
+    // vec2 -> vec2 shuffle
     template <typename VectorType, typename StorageType, int X, int Y>
         requires (!is_simd_vector<VectorType>) && (VectorType::VectorSize == 2)
     struct ShuffleAccessor<VectorType, StorageType, X, Y>
@@ -1293,6 +1293,47 @@ namespace mango::math
             return Vector<ScalarType, 2>(x, y);
         }
     };
+
+    /*
+    // vec2 -> vec3 shuffle
+    template <typename VectorType, typename StorageType, int X, int Y, int Z>
+        requires (!is_simd_vector<VectorType>) && (VectorType::VectorSize == 2)
+    struct ShuffleAccessor<VectorType, StorageType, X, Y, Z>
+    {
+        using ScalarType = typename VectorType::ScalarType;
+        static constexpr int VectorSize = 3;
+
+        StorageType m;
+
+        constexpr operator VectorType () const noexcept
+        {
+            const ScalarType x = m[X];
+            const ScalarType y = m[Y];
+            const ScalarType z = m[Z];
+            return Vector<ScalarType, 3>(x, y, z);
+        }
+    };
+
+    // vec2 -> vec4 shuffle
+    template <typename VectorType, typename StorageType, int X, int Y, int Z, int W>
+        requires (!is_simd_vector<VectorType>) && (VectorType::VectorSize == 2)
+    struct ShuffleAccessor<VectorType, StorageType, X, Y, Z, W>
+    {
+        using ScalarType = typename VectorType::ScalarType;
+        static constexpr int VectorSize = 4;
+
+        StorageType m;
+
+        constexpr operator VectorType () const noexcept
+        {
+            const ScalarType x = m[X];
+            const ScalarType y = m[Y];
+            const ScalarType z = m[Z];
+            const ScalarType w = m[W];
+            return Vector<ScalarType, 4>(x, y, z, w);
+        }
+    };
+    */
 
     // vec3 -> vec2 shuffle
     template <typename VectorType, typename StorageType, int X, int Y>
@@ -1330,6 +1371,28 @@ namespace mango::math
             return VectorType(x, y, z);
         }
     };
+
+    /*
+    // vec3 -> vec4 shuffle
+    template <typename VectorType, typename StorageType, int X, int Y, int Z, int W>
+        requires (VectorType::VectorSize == 3)
+    struct ShuffleAccessor<VectorType, StorageType, X, Y, Z, W>
+    {
+        using ScalarType = typename VectorType::ScalarType;
+        static constexpr int VectorSize = 4;
+
+        StorageType m;
+
+        constexpr operator VectorType () const noexcept
+        {
+            const ScalarType x = m[X];
+            const ScalarType y = m[Y];
+            const ScalarType z = m[Z];
+            const ScalarType w = m[W];
+            return VectorType(x, y, z, w);
+        }
+    };
+    */
 
     // vec4 -> vec2 shuffle
     template <typename VectorType, typename StorageType, int X, int Y>

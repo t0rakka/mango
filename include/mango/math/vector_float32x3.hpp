@@ -38,6 +38,14 @@ namespace mango::math
             ShuffleAccessor<Vector<float, 3>, std::array<float, 3>, A, B, C> NAME
             #include <mango/math/accessor.hpp>
 #undef VECTOR3_SHUFFLE3
+
+            /*
+            // generate 4 component accessors
+#define VECTOR3_SHUFFLE4(A, B, C, D, NAME) \
+            ShuffleAccessor<Vector<float, 4>, std::array<float, 3>, A, B, C, D> NAME
+            #include <mango/math/accessor.hpp>
+#undef VECTOR3_SHUFFLE4
+            */
         };
 
         ScalarType& operator [] (size_t index)
