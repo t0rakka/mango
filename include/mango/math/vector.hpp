@@ -1248,6 +1248,9 @@ namespace mango::math
     // ShuffleAccessor
     // ------------------------------------------------------------------
 
+    template <typename T, typename StorageType>
+    concept is_scalar_storage = !is_simd_vector<Vector<typename T::ScalarType, sizeof(StorageType) / sizeof(typename T::ScalarType)>>;
+
     template <typename VectorType, typename StorageType, int... Indices>
     struct ShuffleAccessor
     {
@@ -1260,25 +1263,10 @@ namespace mango::math
         constexpr operator VectorType () const noexcept;
     };
 
-    // vec2 -> vec2 shuffle (simd)
+    // scalar
+
     template <typename VectorType, typename StorageType, int X, int Y>
-        requires is_simd_vector<VectorType> && (VectorType::VectorSize == 2)
-    struct ShuffleAccessor<VectorType, StorageType, X, Y>
-    {
-        using ScalarType = typename VectorType::ScalarType;
-        static constexpr int VectorSize = 2;
-
-        StorageType m;
-
-        constexpr operator VectorType () const noexcept
-        {
-            return simd::shuffle<X, Y>(m);
-        }
-    };
-
-    // vec2 -> vec2 shuffle
-    template <typename VectorType, typename StorageType, int X, int Y>
-        requires (!is_simd_vector<VectorType>) && (VectorType::VectorSize == 2)
+        requires is_scalar_storage<VectorType, StorageType>
     struct ShuffleAccessor<VectorType, StorageType, X, Y>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -1294,68 +1282,8 @@ namespace mango::math
         }
     };
 
-    /*
-    // vec2 -> vec3 shuffle
     template <typename VectorType, typename StorageType, int X, int Y, int Z>
-        requires (!is_simd_vector<VectorType>) && (VectorType::VectorSize == 2)
-    struct ShuffleAccessor<VectorType, StorageType, X, Y, Z>
-    {
-        using ScalarType = typename VectorType::ScalarType;
-        static constexpr int VectorSize = 3;
-
-        StorageType m;
-
-        constexpr operator VectorType () const noexcept
-        {
-            const ScalarType x = m[X];
-            const ScalarType y = m[Y];
-            const ScalarType z = m[Z];
-            return Vector<ScalarType, 3>(x, y, z);
-        }
-    };
-
-    // vec2 -> vec4 shuffle
-    template <typename VectorType, typename StorageType, int X, int Y, int Z, int W>
-        requires (!is_simd_vector<VectorType>) && (VectorType::VectorSize == 2)
-    struct ShuffleAccessor<VectorType, StorageType, X, Y, Z, W>
-    {
-        using ScalarType = typename VectorType::ScalarType;
-        static constexpr int VectorSize = 4;
-
-        StorageType m;
-
-        constexpr operator VectorType () const noexcept
-        {
-            const ScalarType x = m[X];
-            const ScalarType y = m[Y];
-            const ScalarType z = m[Z];
-            const ScalarType w = m[W];
-            return Vector<ScalarType, 4>(x, y, z, w);
-        }
-    };
-    */
-
-    // vec3 -> vec2 shuffle
-    template <typename VectorType, typename StorageType, int X, int Y>
-        requires (VectorType::VectorSize == 3)
-    struct ShuffleAccessor<VectorType, StorageType, X, Y>
-    {
-        using ScalarType = typename VectorType::ScalarType;
-        static constexpr int VectorSize = 2;
-
-        StorageType m;
-
-        constexpr operator Vector<ScalarType, 2> () const noexcept
-        {
-            const ScalarType x = m[X];
-            const ScalarType y = m[Y];
-            return Vector<ScalarType, 2>(x, y);
-        }
-    };
-
-    // vec3 -> vec3 shuffle
-    template <typename VectorType, typename StorageType, int X, int Y, int Z>
-        requires (VectorType::VectorSize == 3)
+        requires is_scalar_storage<VectorType, StorageType>
     struct ShuffleAccessor<VectorType, StorageType, X, Y, Z>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -1372,10 +1300,8 @@ namespace mango::math
         }
     };
 
-    /*
-    // vec3 -> vec4 shuffle
     template <typename VectorType, typename StorageType, int X, int Y, int Z, int W>
-        requires (VectorType::VectorSize == 3)
+        requires is_scalar_storage<VectorType, StorageType>
     struct ShuffleAccessor<VectorType, StorageType, X, Y, Z, W>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -1389,14 +1315,14 @@ namespace mango::math
             const ScalarType y = m[Y];
             const ScalarType z = m[Z];
             const ScalarType w = m[W];
-            return VectorType(x, y, z, w);
+            return Vector<ScalarType, 4>(x, y, z, w);
         }
     };
-    */
 
-    // vec4 -> vec2 shuffle
+    // simd
+
     template <typename VectorType, typename StorageType, int X, int Y>
-        requires (VectorType::VectorSize == 4)
+        requires (!is_scalar_storage<VectorType, StorageType>)
     struct ShuffleAccessor<VectorType, StorageType, X, Y>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -1412,9 +1338,8 @@ namespace mango::math
         }
     };
 
-    // vec4 -> vec3 shuffle
     template <typename VectorType, typename StorageType, int X, int Y, int Z>
-        requires (VectorType::VectorSize == 4)
+        requires (!is_scalar_storage<VectorType, StorageType>)
     struct ShuffleAccessor<VectorType, StorageType, X, Y, Z>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -1431,9 +1356,8 @@ namespace mango::math
         }
     };
 
-    // vec4 -> vec4 shuffle
     template <typename VectorType, typename StorageType, int X, int Y, int Z, int W>
-        requires (VectorType::VectorSize == 4)
+        requires (!is_scalar_storage<VectorType, StorageType>)
     struct ShuffleAccessor<VectorType, StorageType, X, Y, Z, W>
     {
         using ScalarType = typename VectorType::ScalarType;
@@ -1441,7 +1365,7 @@ namespace mango::math
 
         StorageType m;
 
-        constexpr operator VectorType () const noexcept
+        constexpr operator Vector<ScalarType, 4> () const noexcept
         {
             return simd::shuffle<X, Y, Z, W>(m);
         }
@@ -1451,14 +1375,14 @@ namespace mango::math
     // ShuffleAccessor operators
     // ------------------------------------------------------------------
 
-    template <typename VectorType, typename StorageType, int... AIndices, int... BIndices>
+    template <typename VectorType, typename StorageType, int... IndicesA, int... IndicesB>
     static constexpr
-    auto operator * (const ShuffleAccessor<VectorType, StorageType, AIndices...>& a,
-                     const ShuffleAccessor<VectorType, StorageType, BIndices...>& b) noexcept
+    auto operator * (const ShuffleAccessor<VectorType, StorageType, IndicesA...>& a,
+                     const ShuffleAccessor<VectorType, StorageType, IndicesB...>& b) noexcept
     {
-        using ATargetType = Vector<typename VectorType::ScalarType, sizeof...(AIndices)>;
-        using BTargetType = Vector<typename VectorType::ScalarType, sizeof...(BIndices)>;
-        return ATargetType(a) * BTargetType(b);
+        using TargetTypeA = Vector<typename VectorType::ScalarType, sizeof...(IndicesA)>;
+        using TargetTypeB = Vector<typename VectorType::ScalarType, sizeof...(IndicesB)>;
+        return TargetTypeA(a) * TargetTypeB(b);
     }
 
     template <typename VectorType, typename StorageType, int... Indices>
