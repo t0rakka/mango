@@ -42,6 +42,13 @@ bool eq(float a, float b)
     return std::abs(a - b) < 0.00001f;
 }
 
+void check(const char* text, float32x2 v, float x, float y)
+{
+    bool identical = eq(v.x, x) && eq(v.y, y);
+    const char* status = identical ? ": OK" : ": FAILED";
+    printf("%s %f %f %s\n", text, float(v.x), float(v.y), status);
+}
+
 void check(const char* text, float32x3 v, float x, float y, float z)
 {
     bool identical = eq(v.x, x) && eq(v.y, y) && eq(v.z, z);
@@ -130,6 +137,16 @@ void test10(float32x4 a, float32x4 b)
     check("[test10] e:", e, 3.0f, 1.0f, 2.0f);
 }
 
+void test11(float32x4 a, float32x4 b)
+{
+    float32x2 v2 = a.yx + b.xy + float32x2(0.0f, 1.0f);
+    //float32x3 v3 = v2.yxx;
+    //float32x4 v4 = v2.xxyy;
+    check("[test11] v2:", v2, 2.2f, 2.4f);
+    //check("[test11] v3:", v3, 3.0f, 1.0f, 2.0f);
+    //check("[test11] v4:", v4, 3.0f, 1.0f, 2.0f, 0.0f);
+}
+
 void test()
 {
     float32x4 a(1.00f, 2.00f, 3.00f, 4.00f);
@@ -147,6 +164,7 @@ void test()
     test8(a, b);
     test9(a, b);
     test10(a, b);
+    test11(a, b);
 }
 
 // ----------------------------------------------------------------------
