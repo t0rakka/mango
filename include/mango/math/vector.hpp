@@ -2237,7 +2237,7 @@ namespace mango::math
         ScalarType p = ScalarType(1.0) - factor * factor * (ScalarType(1.0) - vdotn * vdotn);
         // NOTE: This must be simd vector, scalars can't select
         ScalarType scale = simd::select(p > ScalarType(0.0), ScalarType(1.0), ScalarType(0.0));
-        return v * factor - normal * (math::sqrt(p) + factor * vdotn);
+        return (v * factor - normal * (math::sqrt(p * scale) + factor * vdotn)) * scale;
     }
 
     template <typename A, typename B>
