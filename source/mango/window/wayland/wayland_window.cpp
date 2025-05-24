@@ -14,7 +14,7 @@
 
 // TODO: The build scripts must be able to build wayland window code w/o OpenGL build for Vulkan
 // TODO: The build scripts must switch to EGL mode when building OpenGL + Wayland
-// TODO: This implementaiton is not yet complete it is WIP with a lot of missing features
+// TODO: This implementation is not yet complete it is WIP with a lot of missing features
 
 // TODO: Need to generate and include xdg-shell protocol headers
 //#include "xdg-shell-client-protocol.h"
@@ -32,7 +32,8 @@ namespace
                                uint32_t edges, int32_t width, int32_t height)
     {
         WindowHandle* handle = static_cast<WindowHandle*>(data);
-        if (width > 0 && height > 0) {
+        if (width > 0 && height > 0)
+        {
             handle->size[0] = width;
             handle->size[1] = height;
         }
@@ -42,7 +43,8 @@ namespace
     {
     }
 
-    static const struct wl_shell_surface_listener shell_surface_listener = {
+    static const struct wl_shell_surface_listener shell_surface_listener 
+    {
         shell_surface_ping,
         shell_surface_configure,
         shell_surface_popup_done
@@ -50,19 +52,22 @@ namespace
 
     // Registry handling
     void registry_global(void* data, struct wl_registry* registry,
-                        uint32_t name, const char* interface, uint32_t version)
+                         uint32_t name, const char* interface, uint32_t version)
     {
         WindowHandle* handle = static_cast<WindowHandle*>(data);
 
-        if (strcmp(interface, "wl_compositor") == 0) {
+        if (strcmp(interface, "wl_compositor") == 0)
+        {
             handle->compositor = static_cast<struct wl_compositor*>(
                 wl_registry_bind(registry, name, &wl_compositor_interface, 1));
         }
-        else if (strcmp(interface, "wl_shell") == 0) {
+        else if (strcmp(interface, "wl_shell") == 0)
+        {
             handle->shell = static_cast<struct wl_shell*>(
                 wl_registry_bind(registry, name, &wl_shell_interface, 1));
         }
-        else if (strcmp(interface, "wl_seat") == 0) {
+        else if (strcmp(interface, "wl_seat") == 0)
+        {
             handle->seat = static_cast<struct wl_seat*>(
                 wl_registry_bind(registry, name, &wl_seat_interface, 1));
         }
@@ -111,7 +116,8 @@ namespace mango
 
         // Connect to Wayland display
         display = wl_display_connect(nullptr);
-        if (!display) {
+        if (!display)
+        {
             MANGO_EXCEPTION("[Window] Failed to connect to Wayland display.");
         }
 
@@ -120,7 +126,8 @@ namespace mango
 
         // Get registry
         registry = wl_display_get_registry(display);
-        if (!registry) {
+        if (!registry)
+        {
             MANGO_EXCEPTION("[Window] Failed to get Wayland registry.");
         }
 
@@ -131,12 +138,14 @@ namespace mango
         wl_display_roundtrip(display);
 
         // Create window
-        if (!createWaylandWindow(width, height, "Mango Window")) {
+        if (!createWaylandWindow(width, height, "Mango Window"))
+        {
             MANGO_EXCEPTION("[Window] Failed to create Wayland window.");
         }
 
         // Initialize mouse time array
-        for (int i = 0; i < 6; ++i) {
+        for (int i = 0; i < 6; ++i)
+        {
             mouse_time[i] = 0;
         }
     }
@@ -152,7 +161,8 @@ namespace mango
         if (seat) wl_seat_destroy(seat);
         if (output) wl_output_destroy(output);
         if (registry) wl_registry_destroy(registry);
-        if (display) {
+        if (display)
+        {
             wl_display_flush(display);
             wl_display_disconnect(display);
         }
@@ -180,7 +190,8 @@ namespace mango
 
         // Create shell surface
         shell_surface = wl_shell_get_shell_surface(shell, surface);
-        if (!shell_surface) {
+        if (!shell_surface)
+        {
             wl_surface_destroy(surface);
             return false;
         }
@@ -197,13 +208,15 @@ namespace mango
 
     void WindowHandle::processEvents()
     {
-        while (wl_display_prepare_read(display) != 0) {
+        while (wl_display_prepare_read(display) != 0)
+        {
             wl_display_dispatch_pending(display);
         }
         
         wl_display_flush(display);
         
-        if (wl_display_read_events(display) >= 0) {
+        if (wl_display_read_events(display) >= 0)
+        {
             wl_display_dispatch_pending(display);
         }
     }
