@@ -249,8 +249,6 @@ namespace mango::simd
         return madd(nmadd(a, a, s), b, s);
     }
 
-#if defined(MANGO_FAST_MATH)
-
     static inline f32x16 rcp(f32x16 a)
     {
         return _mm512_rcp14_ps(a);
@@ -260,20 +258,6 @@ namespace mango::simd
     {
         return _mm512_rsqrt14_ps(a);
     }
-
-#else
-
-    static inline f32x16 rcp(f32x16 a)
-    {
-        return _mm512_rcp28_ps(a);
-    }
-
-    static inline f32x16 rsqrt(f32x16 a)
-    {
-        return _mm512_rsqrt28_ps(a);
-    }
-
-#endif
 
     static inline f32x16 sqrt(f32x16 a)
     {
@@ -602,8 +586,6 @@ namespace mango::simd
         return madd(nmadd(a, a, s), b, s);
     }
 
-#if defined(MANGO_FAST_MATH)
-
     static inline f64x8 rcp(f64x8 a)
     {
         return _mm512_rcp14_pd(a);
@@ -613,20 +595,6 @@ namespace mango::simd
     {
         return _mm512_rsqrt14_pd(a);
     }
-
-#else
-
-    static inline f64x8 rcp(f64x8 a)
-    {
-        return _mm512_rcp28_pd(a);
-    }
-
-    static inline f64x8 rsqrt(f64x8 a)
-    {
-        return _mm512_rsqrt28_pd(a);
-    }
-
-#endif // MANGO_FAST_MATH
 
     static inline f64x8 sqrt(f64x8 a)
     {
