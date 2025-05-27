@@ -182,3 +182,26 @@ xxhash32:          19.7 ms ( 13010 MB/s )
 xxhash64:          19.0 ms ( 12805 MB/s ) 
 xx3hash64:          5.3 ms ( 48066 MB/s ) 
 xx3hash128:         5.1 ms ( 49892 MB/s ) 
+
+-----------------------------------------------------------------------------------
+AMD Ryzen 9 9950X3D (AMD Desktop, 2025)
+-----------------------------------------------------------------------------------
+
+aes128 encrypt:    89.8 ms ( 14247 MB/s )
+aes128 decrypt:    90.5 ms ( 14145 MB/s )
+aes192 encrypt:   100.7 ms ( 12716 MB/s )
+aes192 decrypt:   100.6 ms ( 12728 MB/s )
+aes256 encrypt:   123.0 ms ( 10403 MB/s )
+aes256 decrypt:   123.7 ms ( 10345 MB/s )
+
+crc32:              4.9 ms ( 52631 MB/s )
+crc32c:             4.2 ms ( 60420 MB/s )
+adler32:            6.4 ms ( 39950 MB/s )
+
+md5:              239.5 ms (  1069 MB/s ) 
+sha1:              90.2 ms (  2839 MB/s ) 
+sha2:              95.5 ms (  2680 MB/s ) 
+xxhash32:          16.7 ms ( 15340 MB/s ) 
+xxhash64:          16.7 ms ( 15300 MB/s ) 
+xx3hash64:          4.8 ms ( 53838 MB/s ) 
+xx3hash128:         4.8 ms ( 53781 MB/s ) 
