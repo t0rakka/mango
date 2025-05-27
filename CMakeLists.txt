@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 2.0.1
+        VERSION 2.0.2
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
@@ -56,7 +56,7 @@ endif ()
 
 # Option to enable every Intel ISA extension
 option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"           OFF)
-if (INTEL_DELUXE)
+if (INTEL_DELUXE OR ENABLE_AVX512)
     set(ENABLE_AVX2    ON)
     set(ENABLE_PCLMUL  ON)
     set(ENABLE_POPCNT  ON)
