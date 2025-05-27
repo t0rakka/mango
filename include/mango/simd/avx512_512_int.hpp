@@ -224,7 +224,7 @@ namespace mango::simd
 
     static inline u8x64 select(mask8x64 mask, u8x64 a, u8x64 b)
     {
-        return _mm512_mask_blend_epi8(mask, b, a);
+        return _mm512_mask_blend_epi8(mask, static_cast<__m512i>(b), static_cast<__m512i>(a));
     }
 
     static inline u8x64 min(u8x64 a, u8x64 b)
@@ -433,7 +433,7 @@ namespace mango::simd
 
     static inline u16x32 select(mask16x32 mask, u16x32 a, u16x32 b)
     {
-        return _mm512_mask_blend_epi16(mask, b, a);
+        return _mm512_mask_blend_epi16(mask, static_cast<__m512i>(b), static_cast<__m512i>(a));
     }
 
     static inline u16x32 min(u16x32 a, u16x32 b)
@@ -1159,7 +1159,7 @@ namespace mango::simd
 
     static inline s8x64 select(mask8x64 mask, s8x64 a, s8x64 b)
     {
-        return _mm512_mask_blend_epi8(mask, b, a);
+        return _mm512_mask_blend_epi8(mask, static_cast<__m512i>(b), static_cast<__m512i>(a));
     }
 
     static inline s8x64 min(s8x64 a, s8x64 b)
@@ -1406,7 +1406,7 @@ namespace mango::simd
 
     static inline s16x32 select(mask16x32 mask, s16x32 a, s16x32 b)
     {
-        return _mm512_mask_blend_epi16(mask, b, a);
+        return _mm512_mask_blend_epi16(mask, static_cast<__m512i>(b), static_cast<__m512i>(a));
     }
 
     static inline s16x32 min(s16x32 a, s16x32 b)
