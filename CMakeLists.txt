@@ -8,8 +8,9 @@ project(mango
 # options
 # ------------------------------------------------------------------------------
 
-OPTION(BUILD_OPENGL         "Build OpenGL library"                      ON)
-OPTION(BUILD_IMPORT3D       "Build Import3D library"                    ON)
+OPTION(BUILD_OPENGL         "Build OpenGL support"                      ON)
+OPTION(BUILD_VULKAN         "Build Vulkan support"                      OFF)
+OPTION(BUILD_IMPORT3D       "Build Import3D support"                    ON)
 OPTION(BUILD_EXAMPLES       "Build examples"                            ON)
 
 # Window system selection
@@ -107,6 +108,13 @@ if (BUILD_OPENGL)
     find_package(OpenGL QUIET)
     if (NOT OPENGL_FOUND)
         set(BUILD_OPENGL OFF)
+    endif ()
+endif ()
+
+if (BUILD_VULKAN)
+    find_package(Vulkan QUIET)
+    if (NOT VULKAN_FOUND)
+        set(BUILD_VULKAN OFF)
     endif ()
 endif ()
 
@@ -227,29 +235,87 @@ if (BUILD_OPENGL)
     else ()
 
         # Select window system based on WINDOW_SYSTEM option
-        if(WINDOW_SYSTEM STREQUAL "xlib")
+        if (WINDOW_SYSTEM STREQUAL "xlib")
             set(WINDOW_SOURCES
                 ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.hpp
                 ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.cpp
             )
-        elseif(WINDOW_SYSTEM STREQUAL "xcb")
+        elseif (WINDOW_SYSTEM STREQUAL "xcb")
             set(WINDOW_SOURCES
                 ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.hpp
                 ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.cpp
             )
-        elseif(WINDOW_SYSTEM STREQUAL "wayland")
+        elseif (WINDOW_SYSTEM STREQUAL "wayland")
             set(WINDOW_SOURCES
                 ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
                 ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
             )
-        else()
+        else ()
             message(FATAL_ERROR "Unsupported window system: ${WINDOW_SYSTEM}")
-        endif()
+        endif ()
 
         FILE(GLOB OPENGL_SOURCES
             "${MANGO_SOURCE_DIR}/opengl/*.cpp"
             "${MANGO_SOURCE_DIR}/opengl/glx/*.cpp"
             "${MANGO_SOURCE_DIR}/opengl/egl/*.cpp"
+        )
+
+    endif ()
+
+endif ()
+
+if (BUILD_VULKAN)
+
+    if (NOT (APPLE OR EMSCRIPTEN))
+
+        FILE(GLOB WINDOW_HEADERS
+            "${MANGO_INCLUDE_DIR}/window/*.hpp"
+        )
+
+    endif ()
+
+    FILE(GLOB VULKAN_HEADERS
+        "${MANGO_INCLUDE_DIR}/vulkan/*.hpp"
+    )
+
+    if (WIN32 OR CYGWIN)
+
+        FILE(GLOB WINDOW_SOURCES
+            "${MANGO_SOURCE_DIR}/window/win32/*.cpp"
+        )
+
+        FILE(GLOB VULKAN_SOURCES
+            "${MANGO_SOURCE_DIR}/vulkan/*.cpp"
+        )
+
+    elseif (APPLE OR EMSCRIPTEN)
+
+        # NOT SUPPORTED
+
+    else ()
+
+        # Select window system based on WINDOW_SYSTEM option
+        if (WINDOW_SYSTEM STREQUAL "xlib")
+            set(WINDOW_SOURCES
+                ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.hpp
+                ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.cpp
+            )
+        elseif (WINDOW_SYSTEM STREQUAL "xcb")
+            set(WINDOW_SOURCES
+                ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.hpp
+                ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.cpp
+            )
+        elseif (WINDOW_SYSTEM STREQUAL "wayland")
+            set(WINDOW_SOURCES
+                ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
+                ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
+            )
+        else ()
+            message(FATAL_ERROR "Unsupported window system: ${WINDOW_SYSTEM}")
+        endif ()
+
+        FILE(GLOB VULKAN_SOURCES
+            "${MANGO_SOURCE_DIR}/vulkan/*.cpp"
         )
 
     endif ()
@@ -861,6 +927,7 @@ message("    SIMD: " ${SIMD})
 
 message("[Options]")
 message("    BUILD_OPENGL:   " ${BUILD_OPENGL})
+message("    BUILD_VULKAN:   " ${BUILD_VULKAN})
 message("    BUILD_IMPORT3D: " ${BUILD_IMPORT3D})
 message("    BUILD_EXAMPLES: " ${BUILD_EXAMPLES})
 
