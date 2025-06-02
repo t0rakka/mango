@@ -525,12 +525,8 @@ namespace mango
     // WindowHandle
     // -----------------------------------------------------------------------
 
-    WindowHandle::WindowHandle(int width, int height, u32 flags)
-        : flags(flags)
+    WindowHandle::WindowHandle()
     {
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
-
         native.display = XOpenDisplay(NULL);
         if (!native.display)
         {
@@ -565,14 +561,7 @@ namespace mango
         }
     }
 
-    math::int32x2 WindowHandle::getWindowSize() const
-    {
-        XWindowAttributes attributes;
-        XGetWindowAttributes(native.display, native.window, &attributes);
-        return int32x2(attributes.width, attributes.height);
-    }
-
-    bool WindowHandle::createXWindow(int screen, int depth, Visual* visual, int width, int height, const char* title)
+    bool WindowHandle::init(int screen, int depth, Visual* visual, int width, int height, u32 flags, const char* title)
     {
         if (!native.display)
             return false;
@@ -665,9 +654,72 @@ namespace mango
         return true;
     }
 
+    void WindowHandle::toggleFullscreen()
+    {
+        XEvent event;
+        std::memset(&event, 0, sizeof(event));
+
+        event.type = ClientMessage;
+        event.xclient.window = native.window;
+        event.xclient.message_type = atom_state;
+        event.xclient.format = 32;
+        event.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
+        event.xclient.data.l[1] = atom_fullscreen;
+        event.xclient.data.l[2] = 0; // no second property to toggle
+        event.xclient.data.l[3] = 1; // source indication: application
+        event.xclient.data.l[4] = 0; // unused
+
+        XMapWindow(native.display, native.window);
+
+        // send the event to the root window
+        XSendEvent(native.display, DefaultRootWindow(native.display),
+            False, SubstructureRedirectMask | SubstructureNotifyMask, &event);
+
+        XFlush(native.display);
+
+        // Get window dimensions
+        XWindowAttributes attributes;
+        XGetWindowAttributes(native.display, native.window, &attributes);
+
+        XEvent expose_event;
+        std::memset(&expose_event, 0, sizeof(event));
+
+        expose_event.type = Expose;
+        expose_event.xexpose.window = native.window;
+        expose_event.xexpose.x = 0;
+        expose_event.xexpose.y = 0;
+        expose_event.xexpose.width = attributes.width;
+        expose_event.xexpose.height = attributes.height;
+        expose_event.xexpose.count = 0;
+
+        // Send Expose event (generates Window::onDraw callback)
+        XSendEvent(native.display, native.window, False, NoEventMask, &expose_event);
+    }
+
+    math::int32x2 WindowHandle::getWindowSize() const
+    {
+        XWindowAttributes attributes;
+        XGetWindowAttributes(native.display, native.window, &attributes);
+        return int32x2(attributes.width, attributes.height);
+    }
+
     // -----------------------------------------------------------------------
     // Window
     // -----------------------------------------------------------------------
+
+    Window::Window(int width, int height, u32 flags)
+    {
+        // XLIB implementation initializes window with WindowHandle::init() function
+        MANGO_UNREFERENCED(width);
+        MANGO_UNREFERENCED(height);
+        MANGO_UNREFERENCED(flags);
+
+        m_handle = std::make_unique<WindowHandle>();
+    }
+
+    Window::~Window()
+    {
+    }
 
     int Window::getScreenCount()
     {
@@ -705,15 +757,6 @@ namespace mango
         XCloseDisplay(display);
 
         return int32x2(width, height);
-    }
-
-    Window::Window(int width, int height, u32 flags)
-    {
-        m_handle = std::make_unique<WindowHandle>(width, height, flags);
-    }
-
-    Window::~Window()
-    {
     }
 
     void Window::setWindowPosition(int x, int y)

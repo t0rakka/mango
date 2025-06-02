@@ -1,3 +1,7 @@
+/*
+    MANGO Multimedia Development Platform
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+*/
 #pragma once
 
 #include <mango/window/window.hpp>
@@ -20,9 +24,11 @@
 
 namespace mango
 {
+
     struct WindowHandle : NativeWindowHandle
     {
         // window data
+        xcb_window_t root { 0 };
         xcb_colormap_t colormap { 0 };
         xcb_pixmap_t icon_pixmap { 0 };
         xcb_pixmap_t icon_mask { 0 };
@@ -58,16 +64,14 @@ namespace mango
         bool is_looping { false };
         bool busy { false };
 
-        u32 flags;
-
         xcb_key_symbols_t* key_symbols;
 
-        WindowHandle(int width, int height, u32 flags);
+        WindowHandle();
         ~WindowHandle();
 
+        bool init(int screen, int depth, xcb_visualid_t visual, int width, int height, u32 flags, const char* title);
+        void toggleFullscreen();
         math::int32x2 getWindowSize() const;
-
-        bool createXWindow(int screen, int depth, xcb_visualid_t visual, int width, int height, const char* title);
     };
 
 } // namespace mango

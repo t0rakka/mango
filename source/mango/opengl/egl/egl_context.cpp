@@ -185,7 +185,7 @@ namespace mango
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
-            if (!window->createXWindow(0, 0, nullptr, width, height, "OpenGL"))
+            if (!window->init(0, 0, nullptr, width, height, flags, "OpenGL|ES"))
             {
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
@@ -220,7 +220,7 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextEGL] Failed to get visual ID from EGL config.");
             }
 
-            if (!window->createXWindow(screen->root_depth, screen->root_depth, visual_id, width, height, "OpenGL"))
+            if (!window->init(screen->root_depth, screen->root_depth, visual_id, width, height, flags, "OpenGL|ES"))
             {
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
@@ -294,26 +294,7 @@ namespace mango
             eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
             window->busy = true;
 
-            XEvent xevent;
-            std::memset(&xevent, 0, sizeof(xevent));
-
-            xevent.type = ClientMessage;
-            xevent.xclient.window = window->native.window;
-            xevent.xclient.message_type = window->atom_state;
-            xevent.xclient.format = 32;
-            xevent.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
-            xevent.xclient.data.l[1] = window->atom_fullscreen;
-            xevent.xclient.data.l[2] = 0; // no second property to toggle
-            xevent.xclient.data.l[3] = 1; // source indication: application
-            xevent.xclient.data.l[4] = 0; // unused
-
-            XMapWindow(window->native.display, window->native.window);
-
-            // send the event to the root window
-            XSendEvent(window->native.display, DefaultRootWindow(window->native.display), False,
-                SubstructureRedirectMask | SubstructureNotifyMask, &xevent);
-
-            XFlush(window->native.display);
+            window->toggleFullscreen();
 
             // Enable rendering now that all the tricks are done
             window->busy = false;
@@ -326,38 +307,18 @@ namespace mango
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
 
-        void toggleFullscreen() override
-        {
-            xcb_connection_t* connection = window->connection;
-            xcb_screen_t* screen = xcb_setup_roots_iterator(xcb_get_setup(connection)).data;
-            xcb_window_t root_window = screen->root;
+    void toggleFullscreen() override
+    {
+        eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        window->busy = true;
 
-            eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-            window->busy = true;
+        window->toggleFullscreen();
 
-            xcb_client_message_event_t xevent = {0};
+        window->busy = false;
+        eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
 
-            xevent.response_type = XCB_CLIENT_MESSAGE;
-            xevent.window = window->window;
-            xevent.type = window->atom_state;
-            xevent.format = 32;
-            xevent.data.data32[0] = 2;  // NET_WM_STATE_TOGGLE
-            xevent.data.data32[1] = window->atom_fullscreen;
-            xevent.data.data32[2] = 0;  // No second property to toggle
-            xevent.data.data32[3] = 1;  // Source indication: application
-            xevent.data.data32[4] = 0;  // Unused field
-
-            // Send the event to the root window
-            xcb_send_event(connection, 0, screen->root,
-                           XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT,
-                           reinterpret_cast<const char*>(&xevent));
-            xcb_flush(connection);
-
-            window->busy = false;
-            eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
-
-            fullscreen = !fullscreen;
-        }
+        fullscreen = !fullscreen;
+    }
 
 #endif
 

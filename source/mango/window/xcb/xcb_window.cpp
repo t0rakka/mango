@@ -302,9 +302,8 @@ namespace mango
     // WindowHandle implementation
     // -----------------------------------------------------------------------
 
-    WindowHandle::WindowHandle(int width, int height, u32 flags)
-        : flags(flags)
-        , key_symbols(nullptr)
+    WindowHandle::WindowHandle()
+        : key_symbols(nullptr)
     {
         int screen_index;
         connection = xcb_connect(nullptr, &screen_index);
@@ -447,25 +446,7 @@ namespace mango
         }
     }
 
-    math::int32x2 WindowHandle::getWindowSize() const
-    {
-        xcb_get_geometry_cookie_t cookie = xcb_get_geometry(connection, window);
-        xcb_get_geometry_reply_t* reply = xcb_get_geometry_reply(connection, cookie, nullptr);
-
-        int width = 0;
-        int height = 0;
-
-        if (reply)
-        {
-            width = reply->width;
-            height = reply->height;
-            free(reply);
-        }
-
-        return int32x2(width, height);
-    }
-
-    bool WindowHandle::createXWindow(int screen, int depth, xcb_visualid_t visual, int width, int height, const char* title)
+    bool WindowHandle::init(int screen, int depth, xcb_visualid_t visual, int width, int height, u32 flags, const char* title)
     {
         const xcb_setup_t* setup = xcb_get_setup(connection);
         xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
@@ -475,12 +456,14 @@ namespace mango
             return false;
         }
 
+        root = xcb_screen->root;
+
         // Create colormap with the specified visual
         colormap = xcb_generate_id(connection);
         xcb_create_colormap(connection, 
                           XCB_COLORMAP_ALLOC_NONE,
                           colormap,
-                          xcb_screen->root,
+                          root,
                           visual);
 
         // Create window with the specified visual
@@ -493,10 +476,15 @@ namespace mango
             colormap
         };
 
+        if (flags & Window::DISABLE_RESIZE)
+        {
+            // TODO
+        }
+
         xcb_create_window(connection,
                          depth,
                          window,
-                         xcb_screen->root,
+                         root,
                          20, 20,
                          width, height,
                          0,
@@ -565,6 +553,73 @@ namespace mango
         return true;
     }
 
+    void WindowHandle::toggleFullscreen()
+    {
+        xcb_client_message_event_t xevent = {0};
+
+        xevent.response_type = XCB_CLIENT_MESSAGE;
+        xevent.window = window;
+        xevent.type = atom_state;
+        xevent.format = 32;
+        xevent.data.data32[0] = 2;  // NET_WM_STATE_TOGGLE
+        xevent.data.data32[1] = atom_fullscreen;
+        xevent.data.data32[2] = 0;  // No second property to toggle
+        xevent.data.data32[3] = 1;  // Source indication: application
+        xevent.data.data32[4] = 0;  // Unused field
+
+        // Send the event to the root window
+        xcb_send_event(connection, 0, root,
+                       XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT,
+                       reinterpret_cast<const char*>(&xevent));
+        xcb_flush(connection);
+
+        // Get window geometry
+        xcb_get_geometry_cookie_t geom_cookie = xcb_get_geometry(connection, window);
+        xcb_get_geometry_reply_t* geom = xcb_get_geometry_reply(connection, geom_cookie, nullptr);
+        if (!geom)
+        {
+            return;
+        }
+
+        // Prepare the Expose event
+        xcb_expose_event_t expose_event;
+        std::memset(&expose_event, 0, sizeof(expose_event));
+        expose_event.response_type = XCB_EXPOSE;
+        expose_event.window = window;
+        expose_event.x = 0;
+        expose_event.y = 0;
+        expose_event.width = geom->width;
+        expose_event.height = geom->height;
+        expose_event.count = 0;
+
+        // Send the event
+        xcb_send_event(connection, 0, window, XCB_EVENT_MASK_EXPOSURE,
+                    reinterpret_cast<const char*>(&expose_event));
+
+        // Flush the request
+        xcb_flush(connection);
+
+        free(geom);
+    }
+
+    math::int32x2 WindowHandle::getWindowSize() const
+    {
+        xcb_get_geometry_cookie_t cookie = xcb_get_geometry(connection, window);
+        xcb_get_geometry_reply_t* reply = xcb_get_geometry_reply(connection, cookie, nullptr);
+
+        int width = 0;
+        int height = 0;
+
+        if (reply)
+        {
+            width = reply->width;
+            height = reply->height;
+            free(reply);
+        }
+
+        return int32x2(width, height);
+    }
+
     // -----------------------------------------------------------------------
     // Window implementation
     // -----------------------------------------------------------------------
@@ -606,8 +661,12 @@ namespace mango
 
     Window::Window(int width, int height, u32 flags)
     {
+        // XCB implementation initializes window with WindowHandle::init() function
+        MANGO_UNREFERENCED(width);
+        MANGO_UNREFERENCED(height);
         MANGO_UNREFERENCED(flags);
-        m_handle = std::make_unique<WindowHandle>(width, height, flags);
+
+        m_handle = std::make_unique<WindowHandle>();
     }
 
     Window::~Window()

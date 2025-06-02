@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -61,14 +61,13 @@ namespace mango
         bool        is_looping { false };
         bool        busy { false };
 
-        u32         flags;
-
-        WindowHandle(int width, int height, u32 flags);
+        WindowHandle();
         ~WindowHandle();
 
+        bool init(int screen, int depth, Visual* visual, int width, int height, u32 flags, const char* title);
+        void toggleFullscreen();
         math::int32x2 getWindowSize() const;
 
-        bool createXWindow(int screen, int depth, Visual* visual, int width, int height, const char* title);
     };
 
 } // namespace mango
