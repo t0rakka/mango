@@ -384,6 +384,7 @@ SOURCE_GROUP("include/math"         FILES ${MATH_HEADERS})
 SOURCE_GROUP("include/simd"         FILES ${SIMD_HEADERS})
 SOURCE_GROUP("include/window"       FILES ${WINDOW_HEADERS})
 SOURCE_GROUP("include/opengl"       FILES ${OPENGL_HEADERS})
+SOURCE_GROUP("include/vulkan"       FILES ${VULKAN_HEADERS})
 SOURCE_GROUP("include/import3d"     FILES ${IMPORT3D_HEADERS})
 
 SOURCE_GROUP("source/core"          FILES ${CORE_SOURCES})
@@ -393,6 +394,7 @@ SOURCE_GROUP("source/jpeg"          FILES ${JPEG_SOURCES})
 SOURCE_GROUP("source/math"          FILES ${MATH_SOURCES})
 SOURCE_GROUP("source/window"        FILES ${WINDOW_SOURCES})
 SOURCE_GROUP("source/opengl"        FILES ${OPENGL_SOURCES})
+SOURCE_GROUP("source/vulkan"        FILES ${VULKAN_SOURCES})
 SOURCE_GROUP("source/import3d"      FILES ${IMPORT3D_SOURCES})
 
 # ------------------------------------------------------------------------------
@@ -514,6 +516,15 @@ if (BUILD_OPENGL)
         ${WINDOW_SOURCES}
         ${OPENGL_HEADERS}
         ${OPENGL_SOURCES}
+    )
+endif ()
+
+if (BUILD_VULKAN)
+    list(APPEND MANGO_SOURCES
+        ${WINDOW_HEADERS}
+        ${WINDOW_SOURCES}
+        ${VULKAN_HEADERS}
+        ${VULKAN_SOURCES}
     )
 endif ()
 
@@ -642,6 +653,32 @@ if (BUILD_OPENGL)
                 pkg_check_modules(WAYLAND REQUIRED wayland-client)
                 pkg_check_modules(XKB REQUIRED xkbcommon)
                 target_link_libraries(mango PUBLIC EGL GL wayland-client xkbcommon)
+            endif()
+        endif ()
+    endif ()
+endif ()
+
+if (BUILD_VULKAN)
+    if (VULKAN_FOUND)
+        if (WIN32)
+            # message("    Vulkan: WIN32")
+            # target_link_libraries(mango PUBLIC vulkan)
+        else ()
+            if (WINDOW_SYSTEM STREQUAL "xlib")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
+                target_link_libraries(mango PUBLIC X11 vulkan)
+                message("    Vulkan: XLIB")
+            elseif (WINDOW_SYSTEM STREQUAL "xcb")
+                # target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XCB")
+                # target_link_libraries(mango PUBLIC xcb xcb-xkb xcb-keysyms xcb-icccm xkbcommon)
+                # message("    Vulkan: XCB")
+            elseif (WINDOW_SYSTEM STREQUAL "wayland")
+                # message("    Vulkan: Wayland")
+                # target_compile_definitions(mango PRIVATE "MANGO_ENABLE_WAYLAND")
+                # find_package(PkgConfig REQUIRED)
+                # pkg_check_modules(WAYLAND REQUIRED wayland-client)
+                # pkg_check_modules(XKB REQUIRED xkbcommon)
+                # target_link_libraries(mango PUBLIC vulkan wayland-client xkbcommon)
             endif()
         endif ()
     endif ()
