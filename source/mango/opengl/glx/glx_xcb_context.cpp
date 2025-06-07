@@ -14,7 +14,6 @@
 #include <xcb/xproto.h>
 #include <xcb/xcb_icccm.h>
 #include <GL/glx.h>
-#include <X11/Xlib.h>
 #include "../../window/xcb/xcb_window.hpp"
 #include "glx_context.hpp"
 #undef explicit

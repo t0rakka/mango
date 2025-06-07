@@ -566,8 +566,18 @@ namespace mango
         if (!native.display)
             return false;
 
-        visual = visual ? visual
-                        : DefaultVisual(native.display, screen);
+        if (!visual)
+        {
+            XVisualInfo vinfo;
+            if (!XMatchVisualInfo(native.display, screen, 24, TrueColor, &vinfo))
+            {
+                //printLine("No suitable visual for Vulkan.");
+                return false;
+            }
+
+            visual = vinfo.visual;
+            depth = vinfo.depth;
+        }
 
         native.visualid = XVisualIDFromVisual(visual);
 
@@ -598,6 +608,7 @@ namespace mango
 
         if (!native.window)
         {
+            //printLine("xxx: XCreateWindow failed.");
             return false;
         }
 
