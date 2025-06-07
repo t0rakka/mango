@@ -23,6 +23,9 @@ namespace mango::vulkan
     public:
         VulkanWindow(int width, int height, u32 flags);
         ~VulkanWindow();
+
+        void toggleFullscreen();
+        bool isFullscreen() const;
     };
 
     const char* getString(VkResult result);

@@ -6,6 +6,8 @@
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
     // TODO
+    #define VK_USE_PLATFORM_WIN32_KHR
+    #include "../window/win32/win32_window.hpp"
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
@@ -14,13 +16,14 @@
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
-    // TODO
     #define VK_USE_PLATFORM_XCB_KHR
     #include "../window/xcb/xcb_window.hpp"
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
     // TODO
+    #define VK_USE_PLATFORM_WAYLAND_KHR
+    #include "../window/wayland/wayland_window.hpp"
 #endif
 
 #include <mango/vulkan/vulkan.hpp>
@@ -38,6 +41,11 @@ namespace mango::vulkan
         WindowHandle& handle = *m_handle;
 
         VkResult result = VK_SUCCESS;
+
+#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+        // TODO
+        // "VK_KHR_surface", "VK_KHR_win32_surface"
+#endif
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
         // create window
@@ -89,6 +97,28 @@ namespace mango::vulkan
             printLine("vkCreateInstance : {}", getString(result));
         }
 
+#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+        // TODO
+        /*
+        HINSTANCE hInstance = GetModuleHandle(NULL);
+
+        VkWin32SurfaceCreateInfoKHR surfaceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+            .pNext = nullptr,
+            .flags = 0,
+            .hinstance = hInstance,
+            .hwnd = hwnd
+        };
+
+        result = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
+        if (result != VK_SUCCESS)
+        {
+            printLine("vkCreateWin32SurfaceKHR : {}", getString(result));
+        }
+        */
+#endif
+
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
         VkXlibSurfaceCreateInfoKHR surfaceCreateInfo =
         {
@@ -126,6 +156,16 @@ namespace mango::vulkan
 
     VulkanWindow::~VulkanWindow()
     {
+    }
+
+    void VulkanWindow::toggleFullscreen()
+    {
+        m_handle->toggleFullscreen();
+    }
+
+    bool VulkanWindow::isFullscreen() const
+    {
+        return m_fullscreen;
     }
 
     // ------------------------------------------------------------------------------
