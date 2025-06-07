@@ -75,6 +75,10 @@ namespace mango::vulkan
         };
 #endif
 
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+        //"VK_KHR_wayland_surface"
+#endif
+
         VkApplicationInfo appInfo =
         {
             .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
@@ -151,6 +155,27 @@ namespace mango::vulkan
         {
             printLine("vkCreateXcbSurfaceKHR : {}", getString(result));
         }
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+
+        /*
+        VkWaylandSurfaceCreateInfoKHR surfaceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
+            .pNext = nullptr,
+            .flags = 0,
+            .display = display,
+            //.surface = surface,
+        };
+
+        result = vkCreateWaylandSurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
+        if (result != VK_SUCCESS)
+        {
+            printLine("vkCreateWaylandSurfaceKHR : {}", getString(result));
+        }
+        */
+
 #endif
     }
 
