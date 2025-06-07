@@ -527,8 +527,8 @@ namespace mango
 
     WindowHandle::WindowHandle()
     {
-        native.display = XOpenDisplay(NULL);
-        if (!native.display)
+        display = XOpenDisplay(NULL);
+        if (!display)
         {
             MANGO_EXCEPTION("[Window] XOpenDisplay() failed.");
         }
@@ -536,17 +536,17 @@ namespace mango
 
     WindowHandle::~WindowHandle()
     {
-        if (native.display)
+        if (display)
         {
-            if (native.window)
+            if (window)
             {
-                XDestroyWindow(native.display, native.window);
-                native.window = 0;
+                XDestroyWindow(display, window);
+                window = 0;
             }
 
             if (x11_colormap)
             {
-                XFreeColormap(native.display, x11_colormap);
+                XFreeColormap(display, x11_colormap);
                 x11_colormap = 0;
             }
 
@@ -556,20 +556,20 @@ namespace mango
                 x11_icon = NULL;
             }
 
-            XCloseDisplay(native.display);
-            native.display = NULL;
+            XCloseDisplay(display);
+            display = NULL;
         }
     }
 
     bool WindowHandle::init(int screen, int depth, Visual* visual, int width, int height, u32 flags, const char* title)
     {
-        if (!native.display)
+        if (!display)
             return false;
 
         if (!visual)
         {
             XVisualInfo vinfo;
-            if (!XMatchVisualInfo(native.display, screen, 24, TrueColor, &vinfo))
+            if (!XMatchVisualInfo(display, screen, 24, TrueColor, &vinfo))
             {
                 //printLine("No suitable visual for Vulkan.");
                 return false;
@@ -579,12 +579,12 @@ namespace mango
             depth = vinfo.depth;
         }
 
-        native.visualid = XVisualIDFromVisual(visual);
+        visualid = XVisualIDFromVisual(visual);
 
-        ::Window root = screen ? RootWindow(native.display, screen)
-                               : DefaultRootWindow(native.display);
+        ::Window root = screen ? RootWindow(display, screen)
+                               : DefaultRootWindow(display);
 
-        x11_colormap = XCreateColormap(native.display, root, visual, AllocNone);
+        x11_colormap = XCreateColormap(display, root, visual, AllocNone);
         x11_visual = visual;
 
         XSetWindowAttributes wa;
@@ -600,13 +600,13 @@ namespace mango
                                PointerMotionMask |
                                StructureNotifyMask;
 
-        native.window = XCreateWindow(native.display, root,
+        window = XCreateWindow(display, root,
             0, 0, width, height,
             0,
             depth, InputOutput, visual,
             CWBorderPixel | CWColormap | CWEventMask, &wa);
 
-        if (!native.window)
+        if (!window)
         {
             //printLine("xxx: XCreateWindow failed.");
             return false;
@@ -624,43 +624,43 @@ namespace mango
             hints.max_width = width;
             hints.min_height = height;
             hints.max_height = height;
-  	        XSetWMNormalHints(native.display, native.window, &hints);
-            XClearWindow(native.display, native.window);
-            XMapRaised(native.display, native.window);
-            XFlush(native.display);
+  	        XSetWMNormalHints(display, window, &hints);
+            XClearWindow(display, window);
+            XMapRaised(display, window);
+            XFlush(display);
         }
 
         // window close event atoms
-        atom_protocols = XInternAtom(native.display, "WM_PROTOCOLS", False);
-        atom_delete = XInternAtom(native.display, "WM_DELETE_WINDOW", False);
-        XSetWMProtocols(native.display, native.window, &atom_delete, 1);
+        atom_protocols = XInternAtom(display, "WM_PROTOCOLS", False);
+        atom_delete = XInternAtom(display, "WM_DELETE_WINDOW", False);
+        XSetWMProtocols(display, window, &atom_delete, 1);
 
         // fullscreen toggle atoms
-        atom_state = XInternAtom(native.display, "_NET_WM_STATE", False);
-        atom_fullscreen = XInternAtom(native.display, "_NET_WM_STATE_FULLSCREEN", False);
+        atom_state = XInternAtom(display, "_NET_WM_STATE", False);
+        atom_fullscreen = XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", False);
 
         // primary atom
-        atom_primary = XInternAtom(native.display, "PRIMARY", False);
+        atom_primary = XInternAtom(display, "PRIMARY", False);
 
         // xdnd atoms
-        atom_xdnd_Aware = XInternAtom(native.display, "XdndAware", False);
-        atom_xdnd_Enter = XInternAtom(native.display, "XdndEnter", False);
-        atom_xdnd_Position = XInternAtom(native.display, "XdndPosition", False);
-        atom_xdnd_Status = XInternAtom(native.display, "XdndStatus", False);
-        atom_xdnd_TypeList = XInternAtom(native.display, "XdndTypeList", False);
-        atom_xdnd_ActionCopy = XInternAtom(native.display, "XdndActionCopy", False);
-        atom_xdnd_Drop = XInternAtom(native.display, "XdndDrop", False);
-        atom_xdnd_Finished = XInternAtom(native.display, "XdndFinished", False);
-        atom_xdnd_Selection = XInternAtom(native.display, "XdndSelection", False);
-        atom_xdnd_Leave = XInternAtom(native.display, "XdndLeave", False);
+        atom_xdnd_Aware = XInternAtom(display, "XdndAware", False);
+        atom_xdnd_Enter = XInternAtom(display, "XdndEnter", False);
+        atom_xdnd_Position = XInternAtom(display, "XdndPosition", False);
+        atom_xdnd_Status = XInternAtom(display, "XdndStatus", False);
+        atom_xdnd_TypeList = XInternAtom(display, "XdndTypeList", False);
+        atom_xdnd_ActionCopy = XInternAtom(display, "XdndActionCopy", False);
+        atom_xdnd_Drop = XInternAtom(display, "XdndDrop", False);
+        atom_xdnd_Finished = XInternAtom(display, "XdndFinished", False);
+        atom_xdnd_Selection = XInternAtom(display, "XdndSelection", False);
+        atom_xdnd_Leave = XInternAtom(display, "XdndLeave", False);
 
         unsigned char xdnd_version = 5;
-        XChangeProperty(native.display, native.window, atom_xdnd_Aware, XA_ATOM, 32,
+        XChangeProperty(display, window, atom_xdnd_Aware, XA_ATOM, 32,
                         PropModeReplace, (unsigned char*)&xdnd_version, 1);
 
-        XFlush(native.display);
-        XStoreName(native.display, native.window, title);
-        XMapWindow(native.display, native.window);
+        XFlush(display);
+        XStoreName(display, window, title);
+        XMapWindow(display, window);
 
         return true;
     }
@@ -671,7 +671,7 @@ namespace mango
         std::memset(&event, 0, sizeof(event));
 
         event.type = ClientMessage;
-        event.xclient.window = native.window;
+        event.xclient.window = window;
         event.xclient.message_type = atom_state;
         event.xclient.format = 32;
         event.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
@@ -680,23 +680,23 @@ namespace mango
         event.xclient.data.l[3] = 1; // source indication: application
         event.xclient.data.l[4] = 0; // unused
 
-        XMapWindow(native.display, native.window);
+        XMapWindow(display, window);
 
         // send the event to the root window
-        XSendEvent(native.display, DefaultRootWindow(native.display),
+        XSendEvent(display, DefaultRootWindow(display),
             False, SubstructureRedirectMask | SubstructureNotifyMask, &event);
 
-        XFlush(native.display);
+        XFlush(display);
 
         // Get window dimensions
         XWindowAttributes attributes;
-        XGetWindowAttributes(native.display, native.window, &attributes);
+        XGetWindowAttributes(display, window, &attributes);
 
         XEvent expose_event;
         std::memset(&expose_event, 0, sizeof(event));
 
         expose_event.type = Expose;
-        expose_event.xexpose.window = native.window;
+        expose_event.xexpose.window = window;
         expose_event.xexpose.x = 0;
         expose_event.xexpose.y = 0;
         expose_event.xexpose.width = attributes.width;
@@ -704,13 +704,13 @@ namespace mango
         expose_event.xexpose.count = 0;
 
         // Send Expose event (generates Window::onDraw callback)
-        XSendEvent(native.display, native.window, False, NoEventMask, &expose_event);
+        XSendEvent(display, window, False, NoEventMask, &expose_event);
     }
 
     math::int32x2 WindowHandle::getWindowSize() const
     {
         XWindowAttributes attributes;
-        XGetWindowAttributes(native.display, native.window, &attributes);
+        XGetWindowAttributes(display, window, &attributes);
         return int32x2(attributes.width, attributes.height);
     }
 
@@ -772,18 +772,18 @@ namespace mango
 
     void Window::setWindowPosition(int x, int y)
     {
-        XMoveWindow(m_handle->native.display, m_handle->native.window, x, y);
+        XMoveWindow(m_handle->display, m_handle->window, x, y);
     }
 
     void Window::setWindowSize(int width, int height)
     {
-        XResizeWindow(m_handle->native.display, m_handle->native.window, width, height);
+        XResizeWindow(m_handle->display, m_handle->window, width, height);
     }
 
     void Window::setTitle(const std::string& title)
     {
-        XStoreName(m_handle->native.display, m_handle->native.window, title.c_str());
-        XMapWindow(m_handle->native.display, m_handle->native.window);
+        XStoreName(m_handle->display, m_handle->window, title.c_str());
+        XMapWindow(m_handle->display, m_handle->window);
     }
 
     void Window::setIcon(const Surface& surface)
@@ -794,8 +794,8 @@ namespace mango
 
         TemporaryBitmap temp(surface, width, height, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
 
-        auto display = m_handle->native.display;
-        auto window = m_handle->native.window;
+        auto display = m_handle->display;
+        auto window = m_handle->window;
         int screen = DefaultScreen(display);
         int depth = DefaultDepth(display, screen);
 
@@ -862,13 +862,13 @@ namespace mango
     {
         if (enable)
         {
-            XMapRaised(m_handle->native.display, m_handle->native.window);
-            XFlush(m_handle->native.display);
+            XMapRaised(m_handle->display, m_handle->window);
+            XFlush(m_handle->display);
         }
         else
         {
-            XUnmapWindow(m_handle->native.display, m_handle->native.window);
-            XFlush(m_handle->native.display);
+            XUnmapWindow(m_handle->display, m_handle->window);
+            XFlush(m_handle->display);
         }
     }
 
@@ -885,7 +885,7 @@ namespace mango
         int child_x, child_y;
         unsigned int mask;
 
-        XQueryPointer(m_handle->native.display, m_handle->native.window, &root, &child,
+        XQueryPointer(m_handle->display, m_handle->window, &root, &child,
                       &root_x, &root_y, &child_x, &child_y, &mask);
         return int32x2(child_x, child_y);
     }
@@ -909,16 +909,16 @@ namespace mango
         // get window with input focus
         ::Window focused;
         int temp;
-        XGetInputFocus(m_handle->native.display, &focused, &temp);
+        XGetInputFocus(m_handle->display, &focused, &temp);
 
         // only report keys for our window when it has input focus
-        if (m_handle->native.window == focused)
+        if (m_handle->window == focused)
         {
             char keys[32];
-            XQueryKeymap(m_handle->native.display, keys);
+            XQueryKeymap(m_handle->display, keys);
 
             KeySym symbol = translateKeycodeToSymbol(code);
-            int keyidx = XKeysymToKeycode(m_handle->native.display, symbol);
+            int keyidx = XKeysymToKeycode(m_handle->display, symbol);
 
             if (keyidx >=0 && keyidx < 255)
             {
@@ -931,7 +931,7 @@ namespace mango
 
     Window::operator NativeWindowHandle () const
     {
-        return m_handle->native;
+        return *m_handle;
     }
 
     Window::operator WindowHandle* () const
@@ -950,10 +950,10 @@ namespace mango
 
         for (; m_handle->is_looping;)
         {
-            for (; XPending(m_handle->native.display) > 0;)
+            for (; XPending(m_handle->display) > 0;)
             {
                 XEvent e;
-                XNextEvent(m_handle->native.display, &e);
+                XNextEvent(m_handle->display, &e);
 
                 switch (e.type)
                 {
@@ -1014,17 +1014,17 @@ namespace mango
                     {
                         bool is_repeat = false;
 
-                        if (XEventsQueued(m_handle->native.display, QueuedAfterReading))
+                        if (XEventsQueued(m_handle->display, QueuedAfterReading))
                         {
                             XEvent next;
-                            XPeekEvent(m_handle->native.display, &next);
+                            XPeekEvent(m_handle->display, &next);
 
                             if (next.type == KeyPress &&
                                 next.xkey.time == e.xkey.time &&
                                 next.xkey.keycode == e.xkey.keycode)
                             {
                                 // delete repeated KeyPress event
-                                XNextEvent(m_handle->native.display, &e);
+                                XNextEvent(m_handle->display, &e);
                                 is_repeat = true;
                             }
                         }
@@ -1070,7 +1070,7 @@ namespace mango
 
 #if 0
                         // debugging
-                        char* name = XGetAtomName(m_handle->native.display, type);
+                        char* name = XGetAtomName(m_handle->display, type);
                         printf("ClientMessage: %s\n", name);
                         XFree(name);
 #endif
@@ -1084,15 +1084,15 @@ namespace mango
                             {
                                 // fetch conversion targets
                                 x11Prop p;
-                                ReadProperty(&p, m_handle->native.display, m_handle->xdnd_source, m_handle->atom_xdnd_TypeList);
+                                ReadProperty(&p, m_handle->display, m_handle->xdnd_source, m_handle->atom_xdnd_TypeList);
                                 // pick one
-                                m_handle->atom_xdnd_req = PickTarget(m_handle->native.display, (Atom*)p.data, p.count);
+                                m_handle->atom_xdnd_req = PickTarget(m_handle->display, (Atom*)p.data, p.count);
                                 XFree(p.data);
                             }
                             else
                             {
                                 // pick from list of three
-                                m_handle->atom_xdnd_req = PickTargetFromAtoms(m_handle->native.display,
+                                m_handle->atom_xdnd_req = PickTargetFromAtoms(m_handle->display,
                                     e.xclient.data.l[2], e.xclient.data.l[3], e.xclient.data.l[4]);
                             }
                         }
@@ -1105,14 +1105,14 @@ namespace mango
                             m.window = e.xclient.data.l[0];
                             m.message_type = m_handle->atom_xdnd_Status;
                             m.format=32;
-                            m.data.l[0] = m_handle->native.window;
+                            m.data.l[0] = m_handle->window;
                             m.data.l[1] = (m_handle->atom_xdnd_req != None);
                             m.data.l[2] = 0; // specify an empty rectangle
                             m.data.l[3] = 0;
                             m.data.l[4] = m_handle->atom_xdnd_ActionCopy; // we only accept copying anyway
 
-                            XSendEvent(m_handle->native.display, e.xclient.data.l[0], False, NoEventMask, (XEvent*)&m);
-                            XFlush(m_handle->native.display);
+                            XSendEvent(m_handle->display, e.xclient.data.l[0], False, NoEventMask, (XEvent*)&m);
+                            XFlush(m_handle->display);
                         }
                         else if (type == m_handle->atom_xdnd_Status)
                         {
@@ -1135,10 +1135,10 @@ namespace mango
                                 m.window = e.xclient.data.l[0];
                                 m.message_type = m_handle->atom_xdnd_Finished;
                                 m.format = 32;
-                                m.data.l[0] = m_handle->native.window;
+                                m.data.l[0] = m_handle->window;
                                 m.data.l[1] = 0;
                                 m.data.l[2] = None; // failed
-                                XSendEvent(m_handle->native.display, e.xclient.data.l[0],
+                                XSendEvent(m_handle->display, e.xclient.data.l[0],
                                     False, NoEventMask, (XEvent*)&m);
                             }
                             else
@@ -1146,13 +1146,13 @@ namespace mango
                                 // convert
                                 if (m_handle->xdnd_version >= 1)
                                 {
-                                    XConvertSelection(m_handle->native.display, m_handle->atom_xdnd_Selection, m_handle->atom_xdnd_req, 
-                                                      m_handle->atom_primary, m_handle->native.window, e.xclient.data.l[2]);
+                                    XConvertSelection(m_handle->display, m_handle->atom_xdnd_Selection, m_handle->atom_xdnd_req, 
+                                                      m_handle->atom_primary, m_handle->window, e.xclient.data.l[2]);
                                 }
                                 else
                                 {
-                                    XConvertSelection(m_handle->native.display, m_handle->atom_xdnd_Selection, m_handle->atom_xdnd_req, 
-                                                      m_handle->atom_primary, m_handle->native.window, CurrentTime);
+                                    XConvertSelection(m_handle->display, m_handle->atom_xdnd_Selection, m_handle->atom_xdnd_req, 
+                                                      m_handle->atom_primary, m_handle->window, CurrentTime);
                                 }
                             }
                         }
@@ -1184,7 +1184,7 @@ namespace mango
                         {
                             // read data
                             x11Prop p;
-                            ReadProperty(&p, m_handle->native.display, m_handle->native.window, m_handle->atom_primary);
+                            ReadProperty(&p, m_handle->display, m_handle->window, m_handle->atom_primary);
 
                             if (p.format == 8)
                             {
@@ -1197,15 +1197,15 @@ namespace mango
                             XClientMessageEvent m = { 0 };
 
                             m.type = ClientMessage;
-                            m.display = m_handle->native.display;
+                            m.display = m_handle->display;
                             m.window = m_handle->xdnd_source;
                             m.message_type = m_handle->atom_xdnd_Finished;
                             m.format = 32;
-                            m.data.l[0] = m_handle->native.window;
+                            m.data.l[0] = m_handle->window;
                             m.data.l[1] = 1;
                             m.data.l[2] = m_handle->atom_xdnd_ActionCopy;
-                            XSendEvent(m_handle->native.display, m_handle->xdnd_source, False, NoEventMask, (XEvent*)&m);
-                            XSync(m_handle->native.display, False);
+                            XSendEvent(m_handle->display, m_handle->xdnd_source, False, NoEventMask, (XEvent*)&m);
+                            XSync(m_handle->display, False);
                         }
 
                         break;

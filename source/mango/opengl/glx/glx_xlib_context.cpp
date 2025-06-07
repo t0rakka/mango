@@ -42,7 +42,7 @@ namespace mango
         OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* shared)
             : window(*theContext)
         {
-            Display* display = window->native.display;
+            Display* display = window->display;
             int screen = DefaultScreen(display);
 
             GLXConfiguration glxConfiguration(display, screen, pConfig);
@@ -105,7 +105,7 @@ namespace mango
 
             // MANGO TODO: configuration selection API
             // MANGO TODO: initialize GLX extensions using GLEXT headers
-            glXMakeCurrent(display, window->native.window, context);
+            glXMakeCurrent(display, window->window, context);
 
 #if 0
             PFNGLGETSTRINGIPROC glGetStringi = (PFNGLGETSTRINGIPROC)glXGetProcAddress((const GLubyte*)"glGetStringi");
@@ -138,7 +138,7 @@ namespace mango
 
         void shutdown()
         {
-            Display* display = window->native.display;
+            Display* display = window->display;
             if (display)
             {
                 glXMakeCurrent(display, 0, 0);
@@ -152,22 +152,22 @@ namespace mango
 
         void makeCurrent() override
         {
-            glXMakeCurrent(window->native.display, window->native.window, context);
+            glXMakeCurrent(window->display, window->window, context);
         }
 
         void swapBuffers() override
         {
-            glXSwapBuffers(window->native.display, window->native.window);
+            glXSwapBuffers(window->display, window->window);
         }
 
         void swapInterval(int interval) override
         {
-            glXSwapIntervalEXT(window->native.display, window->native.window, interval);
+            glXSwapIntervalEXT(window->display, window->window, interval);
         }
 
         void toggleFullscreen() override
         {
-            Display* display = window->native.display;
+            Display* display = window->display;
 
             // Disable rendering while switching fullscreen mode
             glXMakeCurrent(display, 0, 0);
@@ -177,7 +177,7 @@ namespace mango
 
             // Enable rendering now that all the tricks are done
             window->busy = false;
-            glXMakeCurrent(display, window->native.window, context);
+            glXMakeCurrent(display, window->window, context);
 
             fullscreen = !fullscreen;
         }

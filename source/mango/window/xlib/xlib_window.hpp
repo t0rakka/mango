@@ -21,10 +21,8 @@
 namespace mango
 {
 
-    struct WindowHandle
+    struct WindowHandle : NativeWindowHandle
     {
-        NativeWindowHandle native;
-
         // window data
         ::Colormap  x11_colormap { 0 };
         ::Visual*   x11_visual { nullptr };

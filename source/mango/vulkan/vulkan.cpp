@@ -2,11 +2,28 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include <mango/vulkan/vulkan.hpp>
+#include <mango/core/configure.hpp>
+
+#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+    // TODO
+#endif
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
+    #define VK_USE_PLATFORM_XLIB_KHR
+    #include "../window/xlib/xlib_window.hpp"
+#endif
 
-#include "../window/xlib/xlib_window.hpp"
+#if defined(MANGO_WINDOW_SYSTEM_XCB)
+    // TODO
+    #define VK_USE_PLATFORM_XCB_KHR
+    #include "../window/xcb/xcb_window.hpp"
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+    // TODO
+#endif
+
+#include <mango/vulkan/vulkan.hpp>
 
 namespace mango::vulkan
 {
@@ -20,10 +37,11 @@ namespace mango::vulkan
     {
         WindowHandle& handle = *m_handle;
 
-        int screen = DefaultScreen(m_handle->native.display);
+        VkResult result = VK_SUCCESS;
 
+#if defined(MANGO_WINDOW_SYSTEM_XLIB)
         // create window
-        if (!handle.init(screen, 24, nullptr, width, height, flags, "Vulkan"))
+        if (!handle.init(DefaultScreen(handle.display), 24, nullptr, width, height, flags, "Vulkan"))
         {
             MANGO_EXCEPTION("[VulkanWindow] init failed.");
         }
@@ -31,8 +49,23 @@ namespace mango::vulkan
         std::vector<const char*> extensions =
         {
             "VK_KHR_surface",
-            "VK_KHR_xlib_surface" 
+            "VK_KHR_xlib_surface"
         };
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_XCB)
+        // create window
+        if (!handle.init(width, height, flags, "Vulkan"))
+        {
+            MANGO_EXCEPTION("[VulkanWindow] init failed.");
+        }
+
+        std::vector<const char*> extensions =
+        {
+            "VK_KHR_surface",
+            "VK_KHR_xcb_surface"
+        };
+#endif
 
         VkApplicationInfo appInfo =
         {
@@ -44,21 +77,51 @@ namespace mango::vulkan
         VkInstanceCreateInfo instanceCreateInfo =
         {
             .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+            .pNext = nullptr,
             .pApplicationInfo = &appInfo,
             .enabledExtensionCount = uint32_t(extensions.size()),
             .ppEnabledExtensionNames = extensions.data()
         };
 
-        vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
+        result = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
+        if (result != VK_SUCCESS)
+        {
+            printLine("vkCreateInstance : {}", getString(result));
+        }
 
+#if defined(MANGO_WINDOW_SYSTEM_XLIB)
         VkXlibSurfaceCreateInfoKHR surfaceCreateInfo =
         {
             .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
-            .dpy = m_handle->native.display,
-            .window = m_handle->native.window
+            .pNext = nullptr,
+            .flags = 0,
+            .dpy = m_handle->display,
+            .window = m_handle->window
         };
 
-        vkCreateXlibSurfaceKHR(m_instance, &surfaceCreateInfo, nullptr, &m_surface);
+        result = vkCreateXlibSurfaceKHR(m_instance, &surfaceCreateInfo, nullptr, &m_surface);
+        if (result != VK_SUCCESS)
+        {
+            printLine("vkCreateXlibSurfaceKHR : {}", getString(result));
+        }
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_XCB)
+        VkXcbSurfaceCreateInfoKHR surfaceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR,
+            .pNext = nullptr,
+            .flags = 0,
+            .connection = m_handle->connection,
+            .window = m_handle->window
+        };
+
+        result = vkCreateXcbSurfaceKHR(m_instance, &surfaceCreateInfo, nullptr, &m_surface);
+        if (result != VK_SUCCESS)
+        {
+            printLine("vkCreateXcbSurfaceKHR : {}", getString(result));
+        }
+#endif
     }
 
     VulkanWindow::~VulkanWindow()
@@ -70,7 +133,7 @@ namespace mango::vulkan
     // ------------------------------------------------------------------------------
 
     #define XCASE(x) \
-    case x: name = #x; break
+        case x: name = #x; break
 
     const char* getString(VkResult result)
     {
@@ -529,5 +592,3 @@ namespace mango::vulkan
     #undef XCASE
 
 } // namespace mango::vulkan
-
-#endif // MANGO_WINDOW_SYSTEM_XLIB

@@ -69,7 +69,7 @@ namespace mango
         WindowHandle();
         ~WindowHandle();
 
-        bool init(int screen, int depth, xcb_visualid_t visual, int width, int height, u32 flags, const char* title);
+        bool init(int width, int height, u32 flags, const char* title);
         void toggleFullscreen();
         math::int32x2 getWindowSize() const;
     };

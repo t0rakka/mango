@@ -7,7 +7,6 @@
 #include <mango/core/core.hpp>
 #include <mango/window/window.hpp>
 
-#define VK_USE_PLATFORM_XLIB_KHR
 #include <vulkan/vulkan.h>
 
 namespace mango::vulkan

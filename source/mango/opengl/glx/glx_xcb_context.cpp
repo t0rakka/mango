@@ -39,11 +39,11 @@ namespace mango
         GLXContext context { 0 };
         bool fullscreen { false };
 
-        WindowHandle* window;
+        WindowHandle* handle;
         Display* display { nullptr };
 
         OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* shared)
-            : window(*theContext)
+            : handle(*theContext)
         {
             display = XOpenDisplay(NULL);
             int screen = DefaultScreen(display);
@@ -76,17 +76,12 @@ namespace mango
 
             // ----------------------------------------------------------------------
 
-            XVisualInfo* vi = glXGetVisualFromFBConfig(display, selected);
-
             // Create the XCB window with the GLX visual
-            if (!window->init(vi->screen, vi->depth, vi->visualid, width, height, flags, "OpenGL"))
+            if (!handle->init(width, height, flags, "OpenGL"))
             {
-                XFree(vi);
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContext] Failed to create X window.");
             }
-
-            XFree(vi);
 
             GLXContext shared_context = 0;
             if (shared)
@@ -109,7 +104,7 @@ namespace mango
 
             // MANGO TODO: configuration selection API
             // MANGO TODO: initialize GLX extensions using GLEXT headers
-            glXMakeCurrent(display, window->window, context);
+            glXMakeCurrent(display, handle->window, context);
 
 #if 0
             PFNGLGETSTRINGIPROC glGetStringi = (PFNGLGETSTRINGIPROC)glXGetProcAddress((const GLubyte*)"glGetStringi");
@@ -159,7 +154,7 @@ namespace mango
         {
             if (display)
             {
-                ::Window xwindow = static_cast<::Window>(window->window);
+                ::Window xwindow = static_cast<::Window>(handle->window);
                 if (xwindow)
                 {
                     glXMakeCurrent(display, xwindow, context);
@@ -171,7 +166,7 @@ namespace mango
         {
             if (display)
             {
-                ::Window xwindow = static_cast<::Window>(window->window);
+                ::Window xwindow = static_cast<::Window>(handle->window);
                 if (xwindow)
                 {
                     glXSwapBuffers(display, xwindow);
@@ -183,7 +178,7 @@ namespace mango
         {
             if (display)
             {
-                ::Window xwindow = static_cast<::Window>(window->window);
+                ::Window xwindow = static_cast<::Window>(handle->window);
                 if (xwindow)
                 {
                     glXSwapIntervalEXT(display, xwindow, interval);
@@ -195,13 +190,13 @@ namespace mango
         {
             // Disable rendering while switching fullscreen mode
             glXMakeCurrent(display, 0, 0);
-            window->busy = true;
+            handle->busy = true;
 
-            window->toggleFullscreen();
+            handle->toggleFullscreen();
 
             // Enable rendering now that all the tricks are done
-            window->busy = false;
-            glXMakeCurrent(display, window->window, context);
+            handle->busy = false;
+            glXMakeCurrent(display, handle->window, context);
 
             fullscreen = !fullscreen;
         }
@@ -213,7 +208,7 @@ namespace mango
 
         int32x2 getWindowSize() const override
         {
-            return window->getWindowSize();
+            return handle->getWindowSize();
         }
     };
 

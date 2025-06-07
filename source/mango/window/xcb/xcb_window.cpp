@@ -305,8 +305,7 @@ namespace mango
     WindowHandle::WindowHandle()
         : key_symbols(nullptr)
     {
-        int screen_index;
-        connection = xcb_connect(nullptr, &screen_index);
+        connection = xcb_connect(nullptr, nullptr);
         if (!connection)
         {
             MANGO_EXCEPTION("[Window] xcb_connect() failed.");
@@ -446,34 +445,29 @@ namespace mango
         }
     }
 
-    bool WindowHandle::init(int screen, int depth, xcb_visualid_t visual, int width, int height, u32 flags, const char* title)
+    bool WindowHandle::init(int width, int height, u32 flags, const char* title)
     {
         const xcb_setup_t* setup = xcb_get_setup(connection);
         xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
-        xcb_screen_t* xcb_screen = iter.data;
-        if (!xcb_screen)
+        xcb_screen_t* screen = iter.data;
+        if (!screen)
         {
             return false;
         }
 
-        root = xcb_screen->root;
-
-        // Create colormap with the specified visual
-        colormap = xcb_generate_id(connection);
-        xcb_create_colormap(connection, 
-                          XCB_COLORMAP_ALLOC_NONE,
-                          colormap,
-                          root,
-                          visual);
-
-        // Create window with the specified visual
+        root = screen->root;
         window = xcb_generate_id(connection);
-        uint32_t value_mask = XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
-        uint32_t value_list[2] = {
-            XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
-            XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION |
-            XCB_EVENT_MASK_STRUCTURE_NOTIFY,
-            colormap
+
+        uint32_t value_mask = XCB_CW_EVENT_MASK;
+        uint32_t value_list [] =
+        {
+            XCB_EVENT_MASK_EXPOSURE |
+            XCB_EVENT_MASK_KEY_PRESS |
+            XCB_EVENT_MASK_KEY_RELEASE |
+            XCB_EVENT_MASK_BUTTON_PRESS |
+            XCB_EVENT_MASK_BUTTON_RELEASE |
+            XCB_EVENT_MASK_POINTER_MOTION |
+            XCB_EVENT_MASK_STRUCTURE_NOTIFY
         };
 
         if (flags & Window::DISABLE_RESIZE)
@@ -481,17 +475,11 @@ namespace mango
             // TODO
         }
 
-        xcb_create_window(connection,
-                         depth,
-                         window,
-                         root,
-                         20, 20,
-                         width, height,
-                         0,
-                         XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                         visual,
-                         value_mask,
-                         value_list);
+        xcb_create_window(connection, XCB_COPY_FROM_PARENT, window, root,
+                          0, 0, width, height, 0,
+                          XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                          screen->root_visual,
+                          value_mask, value_list);
 
         // Set window protocols
         xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_protocols, XCB_ATOM_ATOM, 32, 1, &atom_delete);
