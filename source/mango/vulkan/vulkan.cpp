@@ -34,6 +34,8 @@ namespace mango::vulkan
     // VulkanWindow
     // ------------------------------------------------------------------------------
 
+#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+
     VulkanWindow::VulkanWindow(int width, int height, u32 flags)
         : Window(width, height, flags)
     {
@@ -41,45 +43,11 @@ namespace mango::vulkan
 
         VkResult result = VK_SUCCESS;
 
-#if defined(MANGO_WINDOW_SYSTEM_WIN32)
         std::vector<const char*> extensions =
         {
             "VK_KHR_surface",
             "VK_KHR_win32_surface"
         };
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_XLIB)
-        // create window
-        if (!handle.init(DefaultScreen(handle.display), 24, nullptr, width, height, flags, "Vulkan"))
-        {
-            MANGO_EXCEPTION("[VulkanWindow] init failed.");
-        }
-
-        std::vector<const char*> extensions =
-        {
-            "VK_KHR_surface",
-            "VK_KHR_xlib_surface"
-        };
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_XCB)
-        // create window
-        if (!handle.init(width, height, flags, "Vulkan"))
-        {
-            MANGO_EXCEPTION("[VulkanWindow] init failed.");
-        }
-
-        std::vector<const char*> extensions =
-        {
-            "VK_KHR_surface",
-            "VK_KHR_xcb_surface"
-        };
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-        //"VK_KHR_wayland_surface"
-#endif
 
         VkApplicationInfo appInfo =
         {
@@ -103,7 +71,6 @@ namespace mango::vulkan
             printLine("vkCreateInstance : {}", getString(result));
         }
 
-#if defined(MANGO_WINDOW_SYSTEM_WIN32)
         HINSTANCE hInstance = GetModuleHandle(NULL);
 
         VkWin32SurfaceCreateInfoKHR surfaceCreateInfo =
@@ -120,9 +87,53 @@ namespace mango::vulkan
         {
             printLine("vkCreateWin32SurfaceKHR : {}", getString(result));
         }
+    }
+
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
+
+    VulkanWindow::VulkanWindow(int width, int height, u32 flags)
+        : Window(width, height, flags)
+    {
+        WindowHandle& handle = *m_handle;
+
+        VkResult result = VK_SUCCESS;
+
+        // create window
+        if (!handle.init(DefaultScreen(handle.display), 24, nullptr, width, height, flags, "Vulkan"))
+        {
+            MANGO_EXCEPTION("[VulkanWindow] init failed.");
+        }
+
+        std::vector<const char*> extensions =
+        {
+            "VK_KHR_surface",
+            "VK_KHR_xlib_surface"
+        };
+
+        VkApplicationInfo appInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+            .pApplicationName = "VK",
+            .apiVersion = VK_API_VERSION_1_0
+        };
+
+        VkInstanceCreateInfo instanceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+            .pNext = nullptr,
+            .pApplicationInfo = &appInfo,
+            .enabledExtensionCount = uint32_t(extensions.size()),
+            .ppEnabledExtensionNames = extensions.data()
+        };
+
+        result = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
+        if (result != VK_SUCCESS)
+        {
+            printLine("vkCreateInstance : {}", getString(result));
+        }
+
         VkXlibSurfaceCreateInfoKHR surfaceCreateInfo =
         {
             .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
@@ -137,9 +148,53 @@ namespace mango::vulkan
         {
             printLine("vkCreateXlibSurfaceKHR : {}", getString(result));
         }
+    }
+
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
+
+    VulkanWindow::VulkanWindow(int width, int height, u32 flags)
+        : Window(width, height, flags)
+    {
+        WindowHandle& handle = *m_handle;
+
+        VkResult result = VK_SUCCESS;
+
+        // create window
+        if (!handle.init(width, height, flags, "Vulkan"))
+        {
+            MANGO_EXCEPTION("[VulkanWindow] init failed.");
+        }
+
+        std::vector<const char*> extensions =
+        {
+            "VK_KHR_surface",
+            "VK_KHR_xcb_surface"
+        };
+
+        VkApplicationInfo appInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+            .pApplicationName = "VK",
+            .apiVersion = VK_API_VERSION_1_0
+        };
+
+        VkInstanceCreateInfo instanceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+            .pNext = nullptr,
+            .pApplicationInfo = &appInfo,
+            .enabledExtensionCount = uint32_t(extensions.size()),
+            .ppEnabledExtensionNames = extensions.data()
+        };
+
+        result = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
+        if (result != VK_SUCCESS)
+        {
+            printLine("vkCreateInstance : {}", getString(result));
+        }
+
         VkXcbSurfaceCreateInfoKHR surfaceCreateInfo =
         {
             .sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR,
@@ -154,9 +209,44 @@ namespace mango::vulkan
         {
             printLine("vkCreateXcbSurfaceKHR : {}", getString(result));
         }
+    }
+
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+
+    VulkanWindow::VulkanWindow(int width, int height, u32 flags)
+        : Window(width, height, flags)
+    {
+        WindowHandle& handle = *m_handle;
+
+        VkResult result = VK_SUCCESS;
+
+        /*
+        //"VK_KHR_wayland_surface"
+
+        VkApplicationInfo appInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+            .pApplicationName = "VK",
+            .apiVersion = VK_API_VERSION_1_0
+        };
+
+        VkInstanceCreateInfo instanceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+            .pNext = nullptr,
+            .pApplicationInfo = &appInfo,
+            .enabledExtensionCount = uint32_t(extensions.size()),
+            .ppEnabledExtensionNames = extensions.data()
+        };
+
+        result = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
+        if (result != VK_SUCCESS)
+        {
+            printLine("vkCreateInstance : {}", getString(result));
+        }
+        */
 
         /*
         VkWaylandSurfaceCreateInfoKHR surfaceCreateInfo =
@@ -174,9 +264,9 @@ namespace mango::vulkan
             printLine("vkCreateWaylandSurfaceKHR : {}", getString(result));
         }
         */
+    }
 
 #endif
-    }
 
     VulkanWindow::~VulkanWindow()
     {
