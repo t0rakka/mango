@@ -18,8 +18,6 @@ namespace mango::vulkan
         VkInstance m_instance { VK_NULL_HANDLE };
         VkSurfaceKHR m_surface { VK_NULL_HANDLE };
 
-        bool m_fullscreen { false };
-
     public:
         VulkanWindow(int width, int height, u32 flags);
         ~VulkanWindow();

@@ -9,6 +9,7 @@
 #include <mango/core/string.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/window/window.hpp>
+#include "win32_window.hpp"
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
 
@@ -627,17 +628,6 @@ namespace mango
     // WindowHandle
     // -----------------------------------------------------------------------
 
-    struct WindowHandle
-    {
-        WNDCLASSEX wndclass{ 0 };
-        HWND hwnd{ NULL };
-        HICON icon{ NULL };
-        bool is_looping{ false };
-
-        WindowHandle(int width, int height, u32 flags);
-        ~WindowHandle();
-    };
-
     WindowHandle::WindowHandle(int width, int height, u32 flags)
     {
         HINSTANCE hinstance = ::GetModuleHandle(NULL);
@@ -696,9 +686,68 @@ namespace mango
         }
     }
 
+    void WindowHandle::toggleFullscreen()
+    {
+        if (!fullscreen)
+        {
+            ::GetWindowRect(hwnd, &rect);
+
+            int x = 0;
+            int y = 0;
+            int screenWidth = 0;
+            int screenHeight = 0;
+
+            // Make the fullscreen window one extra pixel higher to disable exclusive fullscreen mode "optimization"
+            // It just causes headaches and problems; for example some time the DWM goes insane and starts stuttering at 5 fps.
+            const int ANTI_EXCLUSIVE_MODE_PIXEL = 1;
+
+            HMONITOR monitor = ::MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
+            MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
+            if (::GetMonitorInfo(monitor, &monitorInfo))
+            {
+                // Screen dimensions for monitor that window rectangle overlaps the most
+                x = monitorInfo.rcMonitor.left;
+                y = monitorInfo.rcMonitor.top;
+                screenWidth = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
+                screenHeight = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
+            }
+            else
+            {
+                // Screen dimensions for the primary monitor
+                x = 0;
+                y = 0;
+                screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
+                screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
+            }
+
+            ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
+            ::MoveWindow(hwnd, x, y, screenWidth, screenHeight + ANTI_EXCLUSIVE_MODE_PIXEL, TRUE);
+        }
+        else
+        {
+            ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+            ::SetWindowPos(hwnd, HWND_TOP, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, 0);
+        }
+
+        fullscreen = !fullscreen;
+    }
+
     // -----------------------------------------------------------------------
     // Window
     // -----------------------------------------------------------------------
+
+    Window::Window(int width, int height, u32 flags)
+    {
+        m_handle = std::make_unique<WindowHandle>(width, height, flags);
+
+        // register listener window
+        LONG_PTR userdata = reinterpret_cast<LONG_PTR>(this);
+        ::SetWindowLongPtr(m_handle->hwnd, GWLP_USERDATA, userdata);
+    }
+
+    Window::~Window()
+    {
+    }
 
     int Window::getScreenCount()
     {
@@ -717,19 +766,6 @@ namespace mango
         index = std::min(index, count - 1);
 
         return screens[index].resolution;
-    }
-
-    Window::Window(int width, int height, u32 flags)
-    {
-        m_handle = std::make_unique<WindowHandle>(width, height, flags);
-
-        // register listener window
-        LONG_PTR userdata = reinterpret_cast<LONG_PTR>(this);
-        ::SetWindowLongPtr(m_handle->hwnd, GWLP_USERDATA, userdata);
-    }
-
-    Window::~Window()
-    {
     }
 
     void Window::setWindowPosition(int x, int y)

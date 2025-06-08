@@ -5,7 +5,6 @@
 #include <mango/core/configure.hpp>
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
-    // TODO
     #define VK_USE_PLATFORM_WIN32_KHR
     #include "../window/win32/win32_window.hpp"
 #endif
@@ -43,8 +42,11 @@ namespace mango::vulkan
         VkResult result = VK_SUCCESS;
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
-        // TODO
-        // "VK_KHR_surface", "VK_KHR_win32_surface"
+        std::vector<const char*> extensions =
+        {
+            "VK_KHR_surface",
+            "VK_KHR_win32_surface"
+        };
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
@@ -102,8 +104,6 @@ namespace mango::vulkan
         }
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
-        // TODO
-        /*
         HINSTANCE hInstance = GetModuleHandle(NULL);
 
         VkWin32SurfaceCreateInfoKHR surfaceCreateInfo =
@@ -112,15 +112,14 @@ namespace mango::vulkan
             .pNext = nullptr,
             .flags = 0,
             .hinstance = hInstance,
-            .hwnd = hwnd
+            .hwnd = m_handle->hwnd
         };
 
-        result = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
+        result = vkCreateWin32SurfaceKHR(m_instance, &surfaceCreateInfo, NULL, &m_surface);
         if (result != VK_SUCCESS)
         {
             printLine("vkCreateWin32SurfaceKHR : {}", getString(result));
         }
-        */
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
@@ -190,7 +189,7 @@ namespace mango::vulkan
 
     bool VulkanWindow::isFullscreen() const
     {
-        return m_fullscreen;
+        return m_handle->fullscreen;
     }
 
     // ------------------------------------------------------------------------------
@@ -513,9 +512,11 @@ namespace mango::vulkan
             XCASE(VK_FORMAT_ASTC_12x10_SFLOAT_BLOCK);
             XCASE(VK_FORMAT_ASTC_12x12_SFLOAT_BLOCK);
 
+            /*
             // Provided by VK_VERSION_1_4
             XCASE(VK_FORMAT_A1B5G5R5_UNORM_PACK16);
             XCASE(VK_FORMAT_A8_UNORM);
+            */
 
             // Provided by VK_IMG_format_pvrtc
             XCASE(VK_FORMAT_PVRTC1_2BPP_UNORM_BLOCK_IMG);
