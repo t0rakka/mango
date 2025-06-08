@@ -30,7 +30,6 @@ public:
     DemoWindow(int width, int height)
         : OpenGLFramebuffer(width, height)
     {
-        setVisible(true);
         setTitle("[DemoWindow] Initializing...");
         prev_time = timer.us();
     }

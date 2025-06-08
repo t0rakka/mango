@@ -310,8 +310,6 @@ namespace mango
 
         m_context.reset(context);
 
-        setVisible(true);
-
         // initialize version
         const char* str_version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
 
