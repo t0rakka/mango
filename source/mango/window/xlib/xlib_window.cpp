@@ -705,6 +705,8 @@ namespace mango
 
         // Send Expose event (generates Window::onDraw callback)
         XSendEvent(display, window, False, NoEventMask, &expose_event);
+
+        fullscreen = !fullscreen;
     }
 
     math::int32x2 WindowHandle::getWindowSize() const

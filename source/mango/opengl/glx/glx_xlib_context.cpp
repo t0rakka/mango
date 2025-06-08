@@ -178,13 +178,11 @@ namespace mango
             // Enable rendering now that all the tricks are done
             window->busy = false;
             glXMakeCurrent(display, window->window, context);
-
-            fullscreen = !fullscreen;
         }
 
         bool isFullscreen() const override
         {
-            return fullscreen;
+            return window->fullscreen;
         }
 
         int32x2 getWindowSize() const override

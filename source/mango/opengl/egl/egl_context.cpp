@@ -37,8 +37,6 @@ namespace mango
         EGLContext egl_context = EGL_NO_CONTEXT;
         EGLSurface egl_surface = EGL_NO_SURFACE;
 
-        bool fullscreen { false };
-
         WindowHandle* handle;
 
         OpenGLContextEGL(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
@@ -299,8 +297,6 @@ namespace mango
             // Enable rendering now that all the tricks are done
             handle->busy = false;
             eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
-
-            fullscreen = !fullscreen;
         }
 
 #endif
@@ -316,8 +312,6 @@ namespace mango
 
         handle->busy = false;
         eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
-
-        fullscreen = !fullscreen;
     }
 
 #endif
@@ -327,14 +321,13 @@ namespace mango
     void toggleFullscreen() override
     {
         // TODO
-        fullscreen = !fullscreen;
     }
 
 #endif
 
         bool isFullscreen() const override
         {
-            return fullscreen;
+            return handle->fullscreen;
         }
 
         int32x2 getWindowSize() const override

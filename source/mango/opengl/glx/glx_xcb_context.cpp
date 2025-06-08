@@ -37,7 +37,6 @@ namespace mango
     struct OpenGLContextGLX : OpenGLContextHandle
     {
         GLXContext context { 0 };
-        bool fullscreen { false };
 
         WindowHandle* handle;
         Display* display { nullptr };
@@ -197,13 +196,11 @@ namespace mango
             // Enable rendering now that all the tricks are done
             handle->busy = false;
             glXMakeCurrent(display, handle->window, context);
-
-            fullscreen = !fullscreen;
         }
 
         bool isFullscreen() const override
         {
-            return fullscreen;
+            return handle->fullscreen;
         }
 
         int32x2 getWindowSize() const override

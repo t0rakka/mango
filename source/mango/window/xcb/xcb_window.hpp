@@ -63,6 +63,7 @@ namespace mango
         u64 mouse_time[6];
         bool is_looping { false };
         bool busy { false };
+        bool fullscreen { false };
 
         xcb_key_symbols_t* key_symbols;
 

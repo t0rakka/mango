@@ -588,6 +588,8 @@ namespace mango
         xcb_flush(connection);
 
         free(geom);
+
+        fullscreen = !fullscreen;
     }
 
     math::int32x2 WindowHandle::getWindowSize() const
