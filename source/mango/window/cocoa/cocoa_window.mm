@@ -52,6 +52,21 @@ namespace mango
     // Window
     // -----------------------------------------------------------------------
 
+    Window::Window(int width, int height, u32 flags)
+    {
+        // NOTE: Cocoa/OSX implementation only uses Window as interface and does NOT use the window
+        //       constructor for anything else except creating the internal state (m_handle).
+        MANGO_UNREFERENCED(width);
+        MANGO_UNREFERENCED(height);
+        MANGO_UNREFERENCED(flags);
+
+        m_handle = std::make_unique<WindowHandle>();
+    }
+
+    Window::~Window()
+    {
+    }
+
     int Window::getScreenCount()
     {
         // MANGO TODO: support more than default screen
@@ -73,21 +88,6 @@ namespace mango
         NSRect rect = [[NSScreen mainScreen] frame];
         return math::int32x2(rect.size.width, rect.size.height);
 #endif
-    }
-
-    Window::Window(int width, int height, u32 flags)
-    {
-        // NOTE: Cocoa/OSX implementation only uses Window as interface and does NOT use the window
-        //       constructor for anything else except creating the internal state (m_handle).
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
-        MANGO_UNREFERENCED(flags);
-
-        m_handle = std::make_unique<WindowHandle>();
-    }
-
-    Window::~Window()
-    {
     }
 
     void Window::setWindowPosition(int x, int y)
