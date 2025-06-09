@@ -242,6 +242,8 @@ namespace mango
         enum : u32
         {
             DISABLE_RESIZE  = 0x00000001,
+            API_OPENGL      = 0x00010000,
+            API_EGL         = 0x00020000,
         };
 
         static int getScreenCount();

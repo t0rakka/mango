@@ -300,7 +300,7 @@ namespace mango
     // -----------------------------------------------------------------------
 
     OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
-        : Window(width, height, flags)
+        : Window(width, height, flags | API_OPENGL)
     {
         OpenGLContextHandle* context = createOpenGLContext(this, width, height, flags, configPtr, shared);
         if (!context)

@@ -15,16 +15,19 @@ namespace mango::vulkan
     class VulkanWindow : public Window
     {
     protected:
-        VkInstance m_instance { VK_NULL_HANDLE };
-        VkSurfaceKHR m_surface { VK_NULL_HANDLE };
+        VkInstance m_instance;
+        VkSurfaceKHR m_surface;
 
     public:
-        VulkanWindow(int width, int height, u32 flags);
+        VulkanWindow(VkInstance instance, int width, int height, u32 flags);
         ~VulkanWindow();
 
         void toggleFullscreen();
         bool isFullscreen() const;
     };
+
+    std::vector<const char*> getSurfaceExtensions();
+    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle);
 
     const char* getString(VkResult result);
     const char* getString(VkPhysicalDeviceType deviceType);

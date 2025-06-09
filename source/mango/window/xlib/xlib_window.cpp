@@ -571,7 +571,6 @@ namespace mango
             XVisualInfo vinfo;
             if (!XMatchVisualInfo(display, screen, 24, TrueColor, &vinfo))
             {
-                //printLine("No suitable visual for Vulkan.");
                 return false;
             }
 
@@ -722,12 +721,21 @@ namespace mango
 
     Window::Window(int width, int height, u32 flags)
     {
-        // XLIB implementation initializes window with WindowHandle::init() function
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
-        MANGO_UNREFERENCED(flags);
-
         m_handle = std::make_unique<WindowHandle>();
+
+        if (flags & API_OPENGL)
+        {
+            // GLX and EGL must to choose a visual before creating the window
+        }
+        else
+        {
+            int screen = DefaultScreen(m_handle->display);
+            int depth = DefaultDepth(m_handle->display, screen);
+            if (!m_handle->init(screen, depth, nullptr, width, height, flags, "XLIB Window"))
+            {
+                MANGO_EXCEPTION("[Window] Creating window failed.");
+            }
+        }
     }
 
     Window::~Window()

@@ -34,242 +34,20 @@ namespace mango::vulkan
     // VulkanWindow
     // ------------------------------------------------------------------------------
 
-#if defined(MANGO_WINDOW_SYSTEM_WIN32)
-
-    VulkanWindow::VulkanWindow(int width, int height, u32 flags)
+    VulkanWindow::VulkanWindow(VkInstance instance, int width, int height, u32 flags)
         : Window(width, height, flags)
+        , m_instance(instance)
+        , m_surface(VK_NULL_HANDLE)
     {
-        WindowHandle& handle = *m_handle;
-
-        VkResult result = VK_SUCCESS;
-
-        std::vector<const char*> extensions =
-        {
-            "VK_KHR_surface",
-            "VK_KHR_win32_surface"
-        };
-
-        VkApplicationInfo appInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-            .pApplicationName = "VK",
-            .apiVersion = VK_API_VERSION_1_0
-        };
-
-        VkInstanceCreateInfo instanceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-            .pNext = nullptr,
-            .pApplicationInfo = &appInfo,
-            .enabledExtensionCount = uint32_t(extensions.size()),
-            .ppEnabledExtensionNames = extensions.data()
-        };
-
-        result = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
-        if (result != VK_SUCCESS)
-        {
-            printLine("vkCreateInstance : {}", getString(result));
-        }
-
-        HINSTANCE hInstance = GetModuleHandle(NULL);
-
-        VkWin32SurfaceCreateInfoKHR surfaceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
-            .pNext = nullptr,
-            .flags = 0,
-            .hinstance = hInstance,
-            .hwnd = m_handle->hwnd
-        };
-
-        result = vkCreateWin32SurfaceKHR(m_instance, &surfaceCreateInfo, NULL, &m_surface);
-        if (result != VK_SUCCESS)
-        {
-            printLine("vkCreateWin32SurfaceKHR : {}", getString(result));
-        }
+        m_surface = createSurface(m_instance, **this);
     }
-
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_XLIB)
-
-    VulkanWindow::VulkanWindow(int width, int height, u32 flags)
-        : Window(width, height, flags)
-    {
-        WindowHandle& handle = *m_handle;
-
-        VkResult result = VK_SUCCESS;
-
-        // create window
-        if (!handle.init(DefaultScreen(handle.display), 24, nullptr, width, height, flags, "Vulkan"))
-        {
-            MANGO_EXCEPTION("[VulkanWindow] init failed.");
-        }
-
-        std::vector<const char*> extensions =
-        {
-            "VK_KHR_surface",
-            "VK_KHR_xlib_surface"
-        };
-
-        VkApplicationInfo appInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-            .pApplicationName = "VK",
-            .apiVersion = VK_API_VERSION_1_0
-        };
-
-        VkInstanceCreateInfo instanceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-            .pNext = nullptr,
-            .pApplicationInfo = &appInfo,
-            .enabledExtensionCount = uint32_t(extensions.size()),
-            .ppEnabledExtensionNames = extensions.data()
-        };
-
-        result = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
-        if (result != VK_SUCCESS)
-        {
-            printLine("vkCreateInstance : {}", getString(result));
-        }
-
-        VkXlibSurfaceCreateInfoKHR surfaceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
-            .pNext = nullptr,
-            .flags = 0,
-            .dpy = m_handle->display,
-            .window = m_handle->window
-        };
-
-        result = vkCreateXlibSurfaceKHR(m_instance, &surfaceCreateInfo, nullptr, &m_surface);
-        if (result != VK_SUCCESS)
-        {
-            printLine("vkCreateXlibSurfaceKHR : {}", getString(result));
-        }
-    }
-
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_XCB)
-
-    VulkanWindow::VulkanWindow(int width, int height, u32 flags)
-        : Window(width, height, flags)
-    {
-        WindowHandle& handle = *m_handle;
-
-        VkResult result = VK_SUCCESS;
-
-        // create window
-        if (!handle.init(width, height, flags, "Vulkan"))
-        {
-            MANGO_EXCEPTION("[VulkanWindow] init failed.");
-        }
-
-        std::vector<const char*> extensions =
-        {
-            "VK_KHR_surface",
-            "VK_KHR_xcb_surface"
-        };
-
-        VkApplicationInfo appInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-            .pApplicationName = "VK",
-            .apiVersion = VK_API_VERSION_1_0
-        };
-
-        VkInstanceCreateInfo instanceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-            .pNext = nullptr,
-            .pApplicationInfo = &appInfo,
-            .enabledExtensionCount = uint32_t(extensions.size()),
-            .ppEnabledExtensionNames = extensions.data()
-        };
-
-        result = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
-        if (result != VK_SUCCESS)
-        {
-            printLine("vkCreateInstance : {}", getString(result));
-        }
-
-        VkXcbSurfaceCreateInfoKHR surfaceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR,
-            .pNext = nullptr,
-            .flags = 0,
-            .connection = m_handle->connection,
-            .window = m_handle->window
-        };
-
-        result = vkCreateXcbSurfaceKHR(m_instance, &surfaceCreateInfo, nullptr, &m_surface);
-        if (result != VK_SUCCESS)
-        {
-            printLine("vkCreateXcbSurfaceKHR : {}", getString(result));
-        }
-    }
-
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-
-    VulkanWindow::VulkanWindow(int width, int height, u32 flags)
-        : Window(width, height, flags)
-    {
-        WindowHandle& handle = *m_handle;
-
-        VkResult result = VK_SUCCESS;
-
-        /*
-        //"VK_KHR_wayland_surface"
-
-        VkApplicationInfo appInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-            .pApplicationName = "VK",
-            .apiVersion = VK_API_VERSION_1_0
-        };
-
-        VkInstanceCreateInfo instanceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-            .pNext = nullptr,
-            .pApplicationInfo = &appInfo,
-            .enabledExtensionCount = uint32_t(extensions.size()),
-            .ppEnabledExtensionNames = extensions.data()
-        };
-
-        result = vkCreateInstance(&instanceCreateInfo, nullptr, &m_instance);
-        if (result != VK_SUCCESS)
-        {
-            printLine("vkCreateInstance : {}", getString(result));
-        }
-        */
-
-        /*
-        VkWaylandSurfaceCreateInfoKHR surfaceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
-            .pNext = nullptr,
-            .flags = 0,
-            .display = display,
-            //.surface = surface,
-        };
-
-        result = vkCreateWaylandSurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
-        if (result != VK_SUCCESS)
-        {
-            printLine("vkCreateWaylandSurfaceKHR : {}", getString(result));
-        }
-        */
-    }
-
-#endif
 
     VulkanWindow::~VulkanWindow()
     {
+        if (m_surface != VK_NULL_HANDLE)
+        {
+            vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+        }
     }
 
     void VulkanWindow::toggleFullscreen()
@@ -283,7 +61,130 @@ namespace mango::vulkan
     }
 
     // ------------------------------------------------------------------------------
-    // functions
+    // getSurfaceExtensions()
+    // ------------------------------------------------------------------------------
+
+#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+
+    std::vector<const char*> getSurfaceExtensions()
+    {
+        return { "VK_KHR_surface", "VK_KHR_win32_surface" };
+    }
+
+    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
+    {
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+        VkWin32SurfaceCreateInfoKHR surfaceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+            .hinstance = ::GetModuleHandle(NULL),
+            .hwnd = handle.hwnd
+        };
+
+        VkResult result = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
+        if (result != VK_SUCCESS)
+        {
+            printLine("vkCreateWin32SurfaceKHR : {}", getString(result));
+        }
+
+        return surface;
+    }
+
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_XLIB)
+
+    std::vector<const char*> getSurfaceExtensions()
+    {
+        return { "VK_KHR_surface", "VK_KHR_xlib_surface" };
+    }
+
+    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
+    {
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+        VkXlibSurfaceCreateInfoKHR surfaceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
+            .dpy = handle.display,
+            .window = handle.window
+        };
+
+        VkResult result = vkCreateXlibSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
+        if (result != VK_SUCCESS)
+        {
+            printLine("vkCreateXlibSurfaceKHR : {}", getString(result));
+        }
+
+        return surface;
+    }
+
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_XCB)
+
+    std::vector<const char*> getSurfaceExtensions()
+    {
+        return { "VK_KHR_surface", "VK_KHR_xcb_surface" };
+    }
+
+    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
+    {
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+        VkXcbSurfaceCreateInfoKHR surfaceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR,
+            .connection = handle.connection,
+            .window = handle.window
+        };
+
+        VkResult result = vkCreateXcbSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
+        if (result != VK_SUCCESS)
+        {
+            printLine("vkCreateXcbSurfaceKHR : {}", getString(result));
+        }
+
+        return surface;
+    }
+
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+
+    std::vector<const char*> getSurfaceExtensions()
+    {
+        return { "VK_KHR_surface", "VK_KHR_wayland_surface" };
+    }
+
+    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
+    {
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+        // TODO
+        /*
+        VkWaylandSurfaceCreateInfoKHR surfaceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
+            .display = handle.display,
+            .surface = handle.surface,
+        };
+
+        VkResult result = vkCreateWaylandSurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
+        if (result != VK_SUCCESS)
+        {
+            printLine("vkCreateWaylandSurfaceKHR : {}", getString(result));
+        }
+        */
+
+        return surface;
+    }
+
+#endif
+
+    // ------------------------------------------------------------------------------
+    // getString()
     // ------------------------------------------------------------------------------
 
     #define XCASE(x) \

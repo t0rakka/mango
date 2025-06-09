@@ -171,6 +171,11 @@ namespace mango
         if (xkb_context) xkb_context_unref(xkb_context);
     }
 
+    void WindowHandle::toggleFullscreen()
+    {
+        // TODO
+    }
+
     math::int32x2 WindowHandle::getWindowSize() const
     {
         // TODO

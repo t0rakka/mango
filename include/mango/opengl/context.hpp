@@ -150,8 +150,7 @@ namespace mango
     public:
         enum Flags : u32
         {
-            // NOTE: shares bits with Window flags (16 LSB)
-            EGL = 0x00010000,
+            EGL = Window::API_EGL
         };
 
         struct Config

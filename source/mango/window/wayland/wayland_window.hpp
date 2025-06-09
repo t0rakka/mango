@@ -16,7 +16,7 @@ namespace mango
     struct WindowHandle
     {
         NativeWindowHandle native;
-        
+
         // Wayland core objects
         struct wl_display* display;
         struct wl_registry* registry;
@@ -24,28 +24,30 @@ namespace mango
         struct wl_surface* surface;
         struct wl_shell* shell;
         struct wl_shell_surface* shell_surface;
-        
+
         // Input handling
         struct wl_seat* seat;
         struct wl_pointer* pointer;
         struct wl_keyboard* keyboard;
         struct wl_output* output;
-        
+
         // XKB handling
         struct xkb_context* xkb_context;
         struct xkb_keymap* xkb_keymap;
         struct xkb_state* xkb_state;
-        
+
         // Window state
         bool is_looping;
         bool busy;
         bool configured;
         int32_t size[2];
         uint32_t mouse_time[6];
-        
+        bool fullscreen { false };
+
         WindowHandle(int width, int height, u32 flags);
         ~WindowHandle();
 
+        void toggleFullscreen();
         math::int32x2 getWindowSize() const;
 
         bool createWaylandWindow(int width, int height, const char* title);

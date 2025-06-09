@@ -614,6 +614,27 @@ namespace mango
     // Window implementation
     // -----------------------------------------------------------------------
 
+    Window::Window(int width, int height, u32 flags)
+    {
+        m_handle = std::make_unique<WindowHandle>();
+
+        if (flags & API_OPENGL)
+        {
+            // GLX and EGL must to choose a visual before creating the window
+        }
+        else
+        {
+            if (!m_handle->init(width, height, flags, "Vulkan"))
+            {
+                MANGO_EXCEPTION("[Window] Creating window failed.");
+            }
+        }
+    }
+
+    Window::~Window()
+    {
+    }
+
     int Window::getScreenCount()
     {
         xcb_connection_t* connection = xcb_connect(NULL, NULL);
@@ -647,20 +668,6 @@ namespace mango
         index = std::min(index, count - 1);
 
         return screens[index].resolution;
-    }
-
-    Window::Window(int width, int height, u32 flags)
-    {
-        // XCB implementation initializes window with WindowHandle::init() function
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
-        MANGO_UNREFERENCED(flags);
-
-        m_handle = std::make_unique<WindowHandle>();
-    }
-
-    Window::~Window()
-    {
     }
 
     void Window::setWindowPosition(int x, int y)
