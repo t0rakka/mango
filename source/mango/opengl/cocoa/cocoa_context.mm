@@ -139,7 +139,6 @@ namespace mango
             }
 
             handle->window = win;
-            theContext->setVisible(true);
 
             ((CustomNSWindow *)handle->window).window = theContext;
             [ (NSWindow*) win center];
@@ -251,6 +250,8 @@ namespace mango
 
             [ctx update];
             [view dispatchResize:frame];
+
+            theContext->setVisible(true);
         }
 
         ~OpenGLContextCocoa()
