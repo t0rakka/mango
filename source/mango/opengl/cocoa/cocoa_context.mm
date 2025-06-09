@@ -108,10 +108,10 @@ namespace mango
         id win;
         u32 modifiers;
 
-        WindowHandle* window;
+        WindowHandle* handle;
 
         OpenGLContextCocoa(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* theShared)
-            : window(*theContext)
+            : handle(*theContext)
         {
             [NSApplication sharedApplication];
 
@@ -138,11 +138,12 @@ namespace mango
                 return;
             }
 
-            window->window = win;
+            handle->window = win;
+            theContext->setVisible(true);
 
-            ((CustomNSWindow *)window->window).window = theContext;
+            ((CustomNSWindow *)handle->window).window = theContext;
             [ (NSWindow*) win center];
-            delegate = [[CustomNSWindowDelegate alloc] initWithCustomWindow:theContext andView:view andWindowHandle:window];
+            delegate = [[CustomNSWindowDelegate alloc] initWithCustomWindow:theContext andView:view andWindowHandle:handle];
             [win setDelegate:[delegate retain]];
             [win setAcceptsMouseMovedEvents:YES];
             [win setTitle:@"OpenGL"];

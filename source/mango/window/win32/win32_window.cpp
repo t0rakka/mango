@@ -671,7 +671,6 @@ namespace mango
         ::SetFocus(hwnd);
         ::DragAcceptFiles(hwnd, TRUE);
         ::ShowWindow(hwnd, SW_SHOWNORMAL);
-
     }
 
     WindowHandle::~WindowHandle()
