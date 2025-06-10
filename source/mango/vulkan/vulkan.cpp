@@ -61,7 +61,7 @@ namespace mango::vulkan
     }
 
     // ------------------------------------------------------------------------------
-    // getSurfaceExtensions()
+    // functions
     // ------------------------------------------------------------------------------
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
@@ -182,6 +182,54 @@ namespace mango::vulkan
     }
 
 #endif
+
+    std::vector<VkPhysicalDevice> enumeratePhysicalDevices(VkInstance instance)
+    {
+        VkResult result = VK_SUCCESS;
+        uint32_t count = 0;
+
+        result = vkEnumeratePhysicalDevices(instance, &count, nullptr);
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkEnumeratePhysicalDevices: {}", getString(result));
+            return {};
+        }
+
+        std::vector<VkPhysicalDevice> physicalDevices(count);
+
+        result = vkEnumeratePhysicalDevices(instance, &count, physicalDevices.data());
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkEnumeratePhysicalDevices: {}", getString(result));
+            return {};
+        }
+
+        return physicalDevices;
+    }
+
+    std::vector<VkExtensionProperties> enumerateInstanceExtensionProperties(const char* layerName)
+    {
+        VkResult result = VK_SUCCESS;
+        uint32_t count = 0;
+
+        result = vkEnumerateInstanceExtensionProperties(layerName, &count, nullptr);
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkEnumerateInstanceExtensionProperties: {}", getString(result));
+            return {};
+        }
+
+        std::vector<VkExtensionProperties> properties(count);
+
+        result = vkEnumerateInstanceExtensionProperties(layerName, &count, properties.data());
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkEnumerateInstanceExtensionProperties: {}", getString(result));
+            return {};
+        }
+
+        return properties;
+    }
 
     // ------------------------------------------------------------------------------
     // getString()

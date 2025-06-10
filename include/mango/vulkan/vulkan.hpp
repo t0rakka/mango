@@ -29,6 +29,9 @@ namespace mango::vulkan
     std::vector<const char*> getSurfaceExtensions();
     VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle);
 
+    std::vector<VkExtensionProperties> enumerateInstanceExtensionProperties(const char* layerName = nullptr);
+    std::vector<VkPhysicalDevice> enumeratePhysicalDevices(VkInstance instance);
+
     const char* getString(VkResult result);
     const char* getString(VkPhysicalDeviceType deviceType);
     const char* getString(VkFormat format);

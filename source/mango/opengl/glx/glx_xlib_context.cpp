@@ -37,12 +37,12 @@ namespace mango
         GLXContext context { 0 };
         bool fullscreen { false };
 
-        WindowHandle* window;
+        WindowHandle* handle;
 
         OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* shared)
-            : window(*theContext)
+            : handle(*theContext)
         {
-            Display* display = window->display;
+            Display* display = handle->display;
             int screen = DefaultScreen(display);
 
             GLXConfiguration glxConfiguration(display, screen, pConfig);
@@ -76,7 +76,7 @@ namespace mango
             XVisualInfo* vi = glXGetVisualFromFBConfig(display, selected);
 
             // create window
-            if (!window->init(vi->screen, vi->depth, vi->visual, width, height, flags, "OpenGL"))
+            if (!handle->init(vi->screen, vi->depth, vi->visual, width, height, flags, "OpenGL"))
             {
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContext] init failed.");
@@ -105,7 +105,7 @@ namespace mango
 
             // MANGO TODO: configuration selection API
             // MANGO TODO: initialize GLX extensions using GLEXT headers
-            glXMakeCurrent(display, window->window, context);
+            glXMakeCurrent(display, handle->window, context);
 
 #if 0
             PFNGLGETSTRINGIPROC glGetStringi = (PFNGLGETSTRINGIPROC)glXGetProcAddress((const GLubyte*)"glGetStringi");
@@ -138,7 +138,7 @@ namespace mango
 
         void shutdown()
         {
-            Display* display = window->display;
+            Display* display = handle->display;
             if (display)
             {
                 glXMakeCurrent(display, 0, 0);
@@ -152,42 +152,42 @@ namespace mango
 
         void makeCurrent() override
         {
-            glXMakeCurrent(window->display, window->window, context);
+            glXMakeCurrent(handle->display, handle->window, context);
         }
 
         void swapBuffers() override
         {
-            glXSwapBuffers(window->display, window->window);
+            glXSwapBuffers(handle->display, handle->window);
         }
 
         void swapInterval(int interval) override
         {
-            glXSwapIntervalEXT(window->display, window->window, interval);
+            glXSwapIntervalEXT(handle->display, handle->window, interval);
         }
 
         void toggleFullscreen() override
         {
-            Display* display = window->display;
+            Display* display = handle->display;
 
             // Disable rendering while switching fullscreen mode
             glXMakeCurrent(display, 0, 0);
-            window->busy = true;
+            handle->busy = true;
 
-            window->toggleFullscreen();
+            handle->toggleFullscreen();
 
             // Enable rendering now that all the tricks are done
-            window->busy = false;
-            glXMakeCurrent(display, window->window, context);
+            handle->busy = false;
+            glXMakeCurrent(display, handle->window, context);
         }
 
         bool isFullscreen() const override
         {
-            return window->fullscreen;
+            return handle->fullscreen;
         }
 
         int32x2 getWindowSize() const override
         {
-            return window->getWindowSize();
+            return handle->getWindowSize();
         }
     };
 
