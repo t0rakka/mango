@@ -475,10 +475,12 @@ namespace mango
             // TODO
         }
 
+        visualid = screen->root_visual;
+
         xcb_create_window(connection, XCB_COPY_FROM_PARENT, window, root,
                           0, 0, width, height, 0,
                           XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                          screen->root_visual,
+                          visualid,
                           value_mask, value_list);
 
         // Set window protocols

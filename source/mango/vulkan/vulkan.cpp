@@ -31,37 +31,7 @@ namespace mango::vulkan
 {
 
     // ------------------------------------------------------------------------------
-    // VulkanWindow
-    // ------------------------------------------------------------------------------
-
-    VulkanWindow::VulkanWindow(VkInstance instance, int width, int height, u32 flags)
-        : Window(width, height, flags)
-        , m_instance(instance)
-        , m_surface(VK_NULL_HANDLE)
-    {
-        m_surface = createSurface(m_instance, **this);
-    }
-
-    VulkanWindow::~VulkanWindow()
-    {
-        if (m_surface != VK_NULL_HANDLE)
-        {
-            vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-        }
-    }
-
-    void VulkanWindow::toggleFullscreen()
-    {
-        m_handle->toggleFullscreen();
-    }
-
-    bool VulkanWindow::isFullscreen() const
-    {
-        return m_handle->fullscreen;
-    }
-
-    // ------------------------------------------------------------------------------
-    // functions
+    // VkSurface functions
     // ------------------------------------------------------------------------------
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
@@ -71,6 +41,7 @@ namespace mango::vulkan
         return { "VK_KHR_surface", "VK_KHR_win32_surface" };
     }
 
+    static
     VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
     {
         VkSurfaceKHR surface = VK_NULL_HANDLE;
@@ -91,6 +62,13 @@ namespace mango::vulkan
         return surface;
     }
 
+    static
+    bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const WindowHandle& handle)
+    {
+        MANGO_UNREFERENCED(handle);
+        return vkGetPhysicalDeviceWin32PresentationSupportKHR(physicalDevice, queueFamilyIndex);
+    }
+
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
@@ -100,6 +78,7 @@ namespace mango::vulkan
         return { "VK_KHR_surface", "VK_KHR_xlib_surface" };
     }
 
+    static
     VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
     {
         VkSurfaceKHR surface = VK_NULL_HANDLE;
@@ -120,6 +99,12 @@ namespace mango::vulkan
         return surface;
     }
 
+    static
+    bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const WindowHandle& handle)
+    {
+        return vkGetPhysicalDeviceXlibPresentationSupportKHR(physicalDevice, queueFamilyIndex, handle.display, handle.visualid);
+    }
+
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
@@ -129,6 +114,7 @@ namespace mango::vulkan
         return { "VK_KHR_surface", "VK_KHR_xcb_surface" };
     }
 
+    static
     VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
     {
         VkSurfaceKHR surface = VK_NULL_HANDLE;
@@ -149,6 +135,12 @@ namespace mango::vulkan
         return surface;
     }
 
+    static
+    bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const WindowHandle& handle)
+    {
+        return vkGetPhysicalDeviceXcbPresentationSupportKHR(physicalDevice, queueFamilyIndex, handle.connection, handle.visualid);
+    }
+
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
@@ -158,6 +150,7 @@ namespace mango::vulkan
         return { "VK_KHR_surface", "VK_KHR_wayland_surface" };
     }
 
+    static
     VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
     {
         VkSurfaceKHR surface = VK_NULL_HANDLE;
@@ -181,7 +174,53 @@ namespace mango::vulkan
         return surface;
     }
 
+    static
+    bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const WindowHandle& handle)
+    {
+
+        return vkGetPhysicalDeviceWaylandPresentationSupportKHR(physicalDevice, queueFamilyIndex, handle.display);
+    }
+
 #endif
+
+    // ------------------------------------------------------------------------------
+    // VulkanWindow
+    // ------------------------------------------------------------------------------
+
+    VulkanWindow::VulkanWindow(VkInstance instance, int width, int height, u32 flags)
+        : Window(width, height, flags)
+        , m_instance(instance)
+        , m_surface(VK_NULL_HANDLE)
+    {
+        m_surface = createSurface(m_instance, **this);
+    }
+
+    VulkanWindow::~VulkanWindow()
+    {
+        if (m_surface != VK_NULL_HANDLE)
+        {
+            vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+        }
+    }
+
+    bool VulkanWindow::getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex) const
+    {
+        return vulkan::getPresentationSupport(physicalDevice, queueFamilyIndex, **this);
+    }
+
+    void VulkanWindow::toggleFullscreen()
+    {
+        m_handle->toggleFullscreen();
+    }
+
+    bool VulkanWindow::isFullscreen() const
+    {
+        return m_handle->fullscreen;
+    }
+
+    // ------------------------------------------------------------------------------
+    // functions
+    // ------------------------------------------------------------------------------
 
     std::vector<VkPhysicalDevice> enumeratePhysicalDevices(VkInstance instance)
     {

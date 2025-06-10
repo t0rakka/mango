@@ -82,6 +82,7 @@ namespace mango
     {
         xcb_connection_t* connection { nullptr };
         xcb_window_t window { 0 };
+        xcb_visualid_t visualid { 0 };
     };
 
 } // namespace mango

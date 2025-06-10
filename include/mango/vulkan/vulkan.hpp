@@ -22,12 +22,12 @@ namespace mango::vulkan
         VulkanWindow(VkInstance instance, int width, int height, u32 flags);
         ~VulkanWindow();
 
+        bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex) const;
         void toggleFullscreen();
         bool isFullscreen() const;
     };
 
     std::vector<const char*> getSurfaceExtensions();
-    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle);
 
     std::vector<VkExtensionProperties> enumerateInstanceExtensionProperties(const char* layerName = nullptr);
     std::vector<VkPhysicalDevice> enumeratePhysicalDevices(VkInstance instance);
