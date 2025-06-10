@@ -250,8 +250,6 @@ namespace mango
 
             [ctx update];
             [view dispatchResize:frame];
-
-            theContext->setVisible(true);
         }
 
         ~OpenGLContextCocoa()
