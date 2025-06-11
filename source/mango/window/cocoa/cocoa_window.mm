@@ -106,30 +106,6 @@ namespace mango
         [m_window_context->window setTitle:[NSString stringWithUTF8String:title.c_str()]];
     }
 
-    void Window::setIcon(const image::Surface& icon)
-    {
-        Bitmap bitmap(icon, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-
-        NSBitmapImageRep* bitmapImage = [[NSBitmapImageRep alloc]
-                                         initWithBitmapDataPlanes:&bitmap.image
-                                         pixelsWide:icon.width
-                                         pixelsHigh:icon.height
-                                         bitsPerSample:8
-                                         samplesPerPixel:4
-                                         hasAlpha:YES
-                                         isPlanar:NO
-                                         colorSpaceName:NSCalibratedRGBColorSpace
-                                         bytesPerRow:icon.width * 4
-                                         bitsPerPixel:32];
-
-        NSImage* iconImage = [[NSImage alloc] initWithSize:NSMakeSize(icon.width, icon.height)];
-        [iconImage addRepresentation:bitmapImage];
-
-        [[NSApplication sharedApplication] setApplicationIconImage:iconImage];
-        [bitmapImage release];
-        [iconImage release];
-    }
-
     void Window::setVisible(bool enable)
     {
         if (enable)
@@ -178,12 +154,12 @@ namespace mango
         return pressed;
     }
 
-    Window::operator NativeWindowHandle () const
+    Window::operator WindowHandle () const
     {
         return nullptr;
     }
 
-    Window::operator WindowHandle* () const
+    Window::operator WindowContext* () const
     {
         return m_window_context.get();
     }

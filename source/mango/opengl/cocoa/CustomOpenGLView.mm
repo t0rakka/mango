@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #ifndef MANGO_OPENGL_CONTEXT_NONE
 
@@ -185,11 +185,11 @@ namespace
 
             if (press)
             {
-                m_handle->keystate[keyIndex] |= keyMask;
+                m_window_context->keystate[keyIndex] |= keyMask;
             }
             else
             {
-                m_handle->keystate[keyIndex] &= ~keyMask;
+                m_window_context->keystate[keyIndex] &= ~keyMask;
             }
         }
     };

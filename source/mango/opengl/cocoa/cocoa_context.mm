@@ -18,12 +18,12 @@
 @interface CustomNSWindowDelegate : NSObject {
     mango::OpenGLContext *context;
     id view;
-    mango::WindowHandle *window_handle;
+    mango::WindowHandle window_handle;
 }
 
 - (id)initWithCustomWindow:(mango::OpenGLContext *)theContext 
       andView:(id)theView
-      andWindowHandle:(mango::WindowHandle *)theWindowHandle;
+      andWindowHandle:(mango::WindowHandle)theWindowHandle;
 @end
 
 // ...
@@ -32,7 +32,7 @@
 
 - (id)initWithCustomWindow:(mango::OpenGLContext *)theContext 
       andView:(id)theView
-      andWindowHandle:(mango::WindowHandle *)theWindowHandle;
+      andWindowHandle:(mango::WindowHandle)theWindowHandle;
 {
     if ((self = [super init]))
     {
@@ -65,7 +65,7 @@
 
 - (void)windowDidResize:(NSNotification *)notification
 {
-    //[handle->ctx update];
+    //[window->ctx update];
     NSRect frame = [[notification object] contentRectForFrameRect: [[notification object] frame]];
     [view dispatchResize:frame];
 }
@@ -73,7 +73,7 @@
 - (void)windowDidMove:(NSNotification *)notification
 {
     (void)notification;
-    //[handle->ctx update];
+    //[window->ctx update];
 }
 
 - (void)windowDidMiniaturize:(NSNotification *)notification
@@ -108,10 +108,10 @@ namespace mango
         id win;
         u32 modifiers;
 
-        WindowHandle* handle;
+        WindowContext* window;
 
         OpenGLContextCocoa(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* theShared)
-            : handle(*theContext)
+            : window(*theContext)
         {
             [NSApplication sharedApplication];
 
@@ -138,11 +138,11 @@ namespace mango
                 return;
             }
 
-            handle->window = win;
+            window->window = win;
 
-            ((CustomNSWindow *)handle->window).window = theContext;
+            ((CustomNSWindow *)window->window).window = theContext;
             [ (NSWindow*) win center];
-            delegate = [[CustomNSWindowDelegate alloc] initWithCustomWindow:theContext andView:view andWindowHandle:handle];
+            delegate = [[CustomNSWindowDelegate alloc] initWithCustomWindow:theContext andView:view andWindowHandle:window];
             [win setDelegate:[delegate retain]];
             [win setAcceptsMouseMovedEvents:YES];
             [win setTitle:@"OpenGL"];
