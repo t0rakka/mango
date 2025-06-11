@@ -652,8 +652,6 @@ namespace mango
         {
             mask &= ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
         }
-        int x = 80;
-        int y = 60;
 
         // adjust window rect
         RECT rect = { 0, 0, width - 1, height - 1 };
@@ -662,6 +660,8 @@ namespace mango
         height = rect.bottom - rect.top + 1;
 
         // create window
+        int x = 80;
+        int y = 80;
         HWND parent = NULL;
         hwnd = ::CreateWindowExW(0, wndclass.lpszClassName, L"", 
             mask, x, y, width, height, parent, NULL, hinstance, NULL);
@@ -675,11 +675,6 @@ namespace mango
 
     WindowContext::~WindowContext()
     {
-        if (icon)
-        {
-            ::DestroyIcon(icon);
-        }
-
         if (hwnd)
         {
             ::DestroyWindow(hwnd);
@@ -828,7 +823,7 @@ namespace mango
 
     Window::operator WindowHandle () const
     {
-        return m_window_context->hwnd;
+        return *m_window_context;
     }
 
     Window::operator WindowContext* () const

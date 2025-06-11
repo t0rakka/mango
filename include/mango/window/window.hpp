@@ -19,7 +19,10 @@
 namespace mango
 {
 
-    using WindowHandle = HWND;
+    struct WindowHandle
+    {
+        HWND hwnd;
+    };
 
 } // namespace mango
 

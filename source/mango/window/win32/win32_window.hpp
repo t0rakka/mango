@@ -11,13 +11,10 @@
 namespace mango
 {
 
-    struct WindowContext
+    struct WindowContext : WindowHandle
     {
         WNDCLASSEX wndclass{ 0 };
-        HWND hwnd { NULL };
-        HICON icon{  NULL };
         bool is_looping { false };
-
         bool fullscreen { false };
         RECT rect;
 

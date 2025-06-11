@@ -50,19 +50,17 @@ namespace mango
         HDC m_hdc { NULL };
         HGLRC m_hrc { NULL };
 
-        HWND hwnd;
-        WindowHandle* handle;
+        WindowContext* window;
 
         OpenGLContextWGL(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
-            : hwnd(*theContext)
-            , handle(*theContext)
+            : window(*theContext)
         {
             MANGO_UNREFERENCED(flags);
             OpenGLContextWGL* shared = reinterpret_cast<OpenGLContextWGL*>(theShared);
 
             theContext->setWindowSize(width, height);
 
-            m_hdc = ::GetDC(hwnd);
+            m_hdc = ::GetDC(window->hwnd);
 
             // Configure attributes
             OpenGLContext::Config config;
@@ -299,7 +297,7 @@ namespace mango
 
             if (m_hdc)
             {
-                ::ReleaseDC(hwnd, m_hdc);
+                ::ReleaseDC(window->hwnd, m_hdc);
             }
         }
 
@@ -323,18 +321,18 @@ namespace mango
 
         void toggleFullscreen()
         {
-            handle->toggleFullscreen();
+            window->toggleFullscreen();
         }
 
         bool isFullscreen() const
         {
-            return handle->fullscreen;
+            return window->fullscreen;
         }
 
         int32x2 getWindowSize() const
         {
             RECT rect;
-            ::GetClientRect(hwnd, &rect);
+            ::GetClientRect(window->hwnd, &rect);
             return int32x2(rect.right - rect.left, rect.bottom - rect.top);
         }
     };

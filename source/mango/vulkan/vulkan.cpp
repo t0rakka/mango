@@ -206,6 +206,7 @@ namespace mango::vulkan
     bool VulkanWindow::getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex) const
     {
         return vulkan::getPresentationSupport(physicalDevice, queueFamilyIndex, *m_window_context);
+        return false;
     }
 
     void VulkanWindow::toggleFullscreen()
