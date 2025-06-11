@@ -13,15 +13,14 @@
 
 namespace mango
 {
-    struct WindowHandle
+
+    struct WindowContext : WindowHandle
     {
-        NativeWindowHandle native;
+        WindowHandle handle;
 
         // Wayland core objects
-        struct wl_display* display;
         struct wl_registry* registry;
         struct wl_compositor* compositor;
-        struct wl_surface* surface;
         struct wl_shell* shell;
         struct wl_shell_surface* shell_surface;
 
@@ -44,8 +43,8 @@ namespace mango
         uint32_t mouse_time[6];
         bool fullscreen { false };
 
-        WindowHandle(int width, int height, u32 flags);
-        ~WindowHandle();
+        WindowContext(int width, int height, u32 flags);
+        ~WindowContext();
 
         void toggleFullscreen();
         math::int32x2 getWindowSize() const;

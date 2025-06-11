@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/timer.hpp>
 #include "cocoa_window.h"
@@ -54,13 +54,13 @@ namespace mango
 
     Window::Window(int width, int height, u32 flags)
     {
-        // NOTE: Cocoa/OSX implementation only uses Window as interface and does NOT use the window
-        //       constructor for anything else except creating the internal state (m_handle).
+        // NOTE: Cocoa/macOS implementation only uses Window as interface and does NOT use the window
+        //       constructor for anything else except creating the internal state (m_window_context).
         MANGO_UNREFERENCED(width);
         MANGO_UNREFERENCED(height);
         MANGO_UNREFERENCED(flags);
 
-        m_handle = std::make_unique<WindowHandle>();
+        m_window_context = std::make_unique<WindowContext>();
     }
 
     Window::~Window()
@@ -93,17 +93,17 @@ namespace mango
     void Window::setWindowPosition(int x, int y)
     {
         // NOTE: Retina conversion
-        [m_handle->window setFrameTopLeftPoint:NSMakePoint(x, y)];
+        [m_window_context->window setFrameTopLeftPoint:NSMakePoint(x, y)];
     }
 
     void Window::setWindowSize(int width, int height)
     {
-        [m_handle->window setContentSize:NSMakeSize(width, height)];
+        [m_window_context->window setContentSize:NSMakeSize(width, height)];
     }
 
     void Window::setTitle(const std::string& title)
     {
-        [m_handle->window setTitle:[NSString stringWithUTF8String:title.c_str()]];
+        [m_window_context->window setTitle:[NSString stringWithUTF8String:title.c_str()]];
     }
 
     void Window::setIcon(const image::Surface& icon)
@@ -134,26 +134,26 @@ namespace mango
     {
         if (enable)
         {
-            [m_handle->window makeKeyAndOrderFront:nil];
+            [m_window_context->window makeKeyAndOrderFront:nil];
         }
         else
         {
-            [m_handle->window orderOut:nil];
+            [m_window_context->window orderOut:nil];
         }
     }
 
     math::int32x2 Window::getWindowSize() const
     {
         // NOTE: Retina conversion
-        NSRect rect = [[m_handle->window contentView] frame];
-        rect = [[m_handle->window contentView] convertRectToBacking:rect];
+        NSRect rect = [[m_window_context->window contentView] frame];
+        rect = [[m_window_context->window contentView] convertRectToBacking:rect];
         return math::int32x2(rect.size.width, rect.size.height);
     }
 
     math::int32x2 Window::getCursorPosition() const
     {
-        NSRect rect = [[m_handle->window contentView] frame];
-        NSPoint point = [m_handle->window mouseLocationOutsideOfEventStream];
+        NSRect rect = [[m_window_context->window contentView] frame];
+        NSPoint point = [m_window_context->window mouseLocationOutsideOfEventStream];
         return math::int32x2(point.x, rect.size.height - point.y - 1);
     }
 
@@ -172,7 +172,7 @@ namespace mango
         }
 
         const int keyIndex = int(code);
-        u32 state = m_handle->keystate[keyIndex >> 5] & (1 << (keyIndex & 31));
+        u32 state = m_window_context->keystate[keyIndex >> 5] & (1 << (keyIndex & 31));
         bool pressed = state != 0;
 
         return pressed;
@@ -185,14 +185,14 @@ namespace mango
 
     Window::operator WindowHandle* () const
     {
-        return m_handle.get();
+        return m_window_context.get();
     }
 
     void Window::enterEventLoop()
     {
-        m_handle->is_looping = true;
+        m_window_context->is_looping = true;
 
-        while (m_handle->is_looping)
+        while (m_window_context->is_looping)
         {
             NSEvent* event = [NSApp nextEventMatchingMask: NSEventMaskAny
                               untilDate: nil
@@ -218,7 +218,7 @@ namespace mango
 
     void Window::breakEventLoop()
     {
-        m_handle->is_looping = false;
+        m_window_context->is_looping = false;
     }
 
     void Window::onIdle()

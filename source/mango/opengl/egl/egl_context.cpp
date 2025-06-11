@@ -37,13 +37,13 @@ namespace mango
         EGLContext egl_context = EGL_NO_CONTEXT;
         EGLSurface egl_surface = EGL_NO_SURFACE;
 
-        WindowHandle* handle;
+        WindowContext* window;
 
         OpenGLContextEGL(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
-            : handle(*theContext)
+            : window(*theContext)
         {
 
-            //egl_display = eglGetDisplay((EGLNativeDisplayType)handle->display);
+            //egl_display = eglGetDisplay((EGLNativeDisplayType)window->display);
             egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
             if (egl_display == EGL_NO_DISPLAY)
             {
@@ -183,13 +183,13 @@ namespace mango
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
-            if (!handle->init(0, 0, nullptr, width, height, flags, "OpenGL|ES"))
+            if (!window->init(0, 0, nullptr, width, height, flags, "OpenGL|ES"))
             {
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
             }
 
-            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], handle->window, NULL);
+            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], *window, NULL);
             if (egl_surface == EGL_NO_SURFACE)
             {
                 shutdown();
@@ -201,7 +201,7 @@ namespace mango
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
 
             // Get the default screen and its depth
-            const xcb_setup_t* setup = xcb_get_setup(handle->connection);
+            const xcb_setup_t* setup = xcb_get_setup(window->connection);
             xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
             xcb_screen_t* screen = iter.data;
             if (!screen)
@@ -218,13 +218,13 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextEGL] Failed to get visual ID from EGL config.");
             }
 
-            if (!handle->init(width, height, flags, "OpenGL|ES"))
+            if (!window->init(width, height, flags, "OpenGL|ES"))
             {
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
             }
 
-            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], handle->window, NULL);
+            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], *window, NULL);
             if (egl_surface == EGL_NO_SURFACE)
             {
                 shutdown();
@@ -290,12 +290,12 @@ namespace mango
         {
             // Disable rendering while switching fullscreen mode
             eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-            handle->busy = true;
+            window->busy = true;
 
-            handle->toggleFullscreen();
+            window->toggleFullscreen();
 
             // Enable rendering now that all the tricks are done
-            handle->busy = false;
+            window->busy = false;
             eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
         }
 
@@ -306,11 +306,11 @@ namespace mango
     void toggleFullscreen() override
     {
         eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        handle->busy = true;
+        window->busy = true;
 
-        handle->toggleFullscreen();
+        window->toggleFullscreen();
 
-        handle->busy = false;
+        window->busy = false;
         eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
     }
 
@@ -327,12 +327,12 @@ namespace mango
 
         bool isFullscreen() const override
         {
-            return handle->fullscreen;
+            return window->fullscreen;
         }
 
         int32x2 getWindowSize() const override
         {
-            return handle->getWindowSize();
+            return window->getWindowSize();
         }
     };
 

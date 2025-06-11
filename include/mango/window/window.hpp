@@ -19,7 +19,7 @@
 namespace mango
 {
 
-    using NativeWindowHandle = HWND;
+    using WindowHandle = HWND;
 
 } // namespace mango
 
@@ -34,7 +34,7 @@ namespace mango
 namespace mango
 {
 
-    using NativeWindowHandle = void*;
+    using WindowHandle = void*;
 
 } // namespace mango
 
@@ -56,7 +56,7 @@ namespace mango
 namespace mango
 {
 
-    struct NativeWindowHandle
+    struct WindowHandle
     {
         ::Display* display { nullptr };
         ::Window window { 0 };
@@ -78,7 +78,7 @@ namespace mango
 namespace mango
 {
 
-    struct NativeWindowHandle
+    struct WindowHandle
     {
         xcb_connection_t* connection { nullptr };
         xcb_window_t window { 0 };
@@ -101,7 +101,7 @@ namespace mango
 namespace mango
 {
 
-    struct NativeWindowHandle
+    struct WindowHandle
     {
         wl_display* display { nullptr };
         wl_surface* surface { nullptr };
@@ -237,7 +237,7 @@ namespace mango
     class Window : public NonCopyable
     {
     protected:
-        std::unique_ptr<struct WindowHandle> m_handle;
+        std::unique_ptr<struct WindowContext> m_window_context;
 
     public:
         enum : u32
@@ -247,24 +247,23 @@ namespace mango
             API_EGL         = 0x00020000,
         };
 
-        static int getScreenCount();
-        static math::int32x2 getScreenSize(int screen = 0);
-
         Window(int width, int height, u32 flags = 0);
         virtual ~Window();
+
+        static int getScreenCount();
+        static math::int32x2 getScreenSize(int screen = 0);
 
         void setWindowPosition(int x, int y);
         void setWindowSize(int width, int height);
         void setTitle(const std::string& title);
-        void setIcon(const image::Surface& icon);
         void setVisible(bool enable);
 
         virtual math::int32x2 getWindowSize() const;
         virtual math::int32x2 getCursorPosition() const;
         virtual bool isKeyPressed(Keycode code) const;
 
-        operator NativeWindowHandle () const;
-        operator struct WindowHandle* () const;
+        operator WindowHandle () const;
+        operator struct WindowContext* () const;
 
         void enterEventLoop();
         void breakEventLoop();

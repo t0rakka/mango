@@ -11,7 +11,7 @@
 namespace mango
 {
 
-    struct WindowHandle
+    struct WindowContext
     {
         WNDCLASSEX wndclass{ 0 };
         HWND hwnd { NULL };
@@ -21,8 +21,8 @@ namespace mango
         bool fullscreen { false };
         RECT rect;
 
-        WindowHandle(int width, int height, u32 flags);
-        ~WindowHandle();
+        WindowContext(int width, int height, u32 flags);
+        ~WindowContext();
 
         void toggleFullscreen();
     };

@@ -625,10 +625,10 @@ namespace mango
     using namespace mango::image;
 
     // -----------------------------------------------------------------------
-    // WindowHandle
+    // WindowContext
     // -----------------------------------------------------------------------
 
-    WindowHandle::WindowHandle(int width, int height, u32 flags)
+    WindowContext::WindowContext(int width, int height, u32 flags)
     {
         HINSTANCE hinstance = ::GetModuleHandle(NULL);
 
@@ -673,7 +673,7 @@ namespace mango
         ::ShowWindow(hwnd, SW_SHOWNORMAL);
     }
 
-    WindowHandle::~WindowHandle()
+    WindowContext::~WindowContext()
     {
         if (icon)
         {
@@ -687,7 +687,7 @@ namespace mango
         }
     }
 
-    void WindowHandle::toggleFullscreen()
+    void WindowContext::toggleFullscreen()
     {
         if (!fullscreen)
         {
@@ -739,11 +739,11 @@ namespace mango
 
     Window::Window(int width, int height, u32 flags)
     {
-        m_handle = std::make_unique<WindowHandle>(width, height, flags);
+        m_window_context = std::make_unique<WindowContext>(width, height, flags);
 
         // register listener window
         LONG_PTR userdata = reinterpret_cast<LONG_PTR>(this);
-        ::SetWindowLongPtr(m_handle->hwnd, GWLP_USERDATA, userdata);
+        ::SetWindowLongPtr(m_window_context->hwnd, GWLP_USERDATA, userdata);
     }
 
     Window::~Window()
@@ -771,7 +771,7 @@ namespace mango
 
     void Window::setWindowPosition(int x, int y)
     {
-        ::SetWindowPos(m_handle->hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        ::SetWindowPos(m_window_context->hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
     }
 
     void Window::setWindowSize(int width, int height)
@@ -782,45 +782,25 @@ namespace mango
         width = rect.right - rect.left + 1;
         height = rect.bottom - rect.top + 1;
 
-        ::SetWindowPos(m_handle->hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER);
+        ::SetWindowPos(m_window_context->hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER);
     }
 
     void Window::setTitle(const std::string& title)
     {
         std::wstring name = mango::u16_fromBytes(title);
-        ::SetWindowTextW(m_handle->hwnd, name.c_str());
-    }
-
-    void Window::setIcon(const Surface& icon)
-    {
-        TemporaryBitmap temp(icon, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
-
-        HINSTANCE hinstance = ::GetModuleHandle(NULL);
-        HICON hicon = ::CreateIcon(hinstance, icon.width, icon.height, 1, 32, NULL, temp.image);
-        if (hicon)
-        {
-            if (m_handle->icon)
-            {
-                ::DestroyIcon(m_handle->icon);
-                m_handle->icon = hicon;
-            }
-            ::SendMessage(m_handle->hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hicon);
-            ::SendMessage(m_handle->hwnd, WM_SETICON, ICON_BIG, (LPARAM)hicon);
-            ::SendMessage(::GetWindow(m_handle->hwnd, GW_OWNER), WM_SETICON, ICON_SMALL, (LPARAM)hicon);
-            ::SendMessage(::GetWindow(m_handle->hwnd, GW_OWNER), WM_SETICON, ICON_BIG, (LPARAM)hicon);
-        }
+        ::SetWindowTextW(m_window_context->hwnd, name.c_str());
     }
 
     void Window::setVisible(bool enable)
     {
         int command = enable ? SW_SHOWNORMAL : SW_HIDE;
-        ::ShowWindow(m_handle->hwnd, command);
+        ::ShowWindow(m_window_context->hwnd, command);
     }
 
     int32x2 Window::getWindowSize() const
     {
         RECT rect;
-        ::GetClientRect(m_handle->hwnd, &rect);
+        ::GetClientRect(m_window_context->hwnd, &rect);
         return int32x2(rect.right - rect.left, rect.bottom - rect.top);
     }
 
@@ -828,7 +808,7 @@ namespace mango
     {
         POINT p;
         ::GetCursorPos(&p);
-        ::ScreenToClient(m_handle->hwnd, &p);
+        ::ScreenToClient(m_window_context->hwnd, &p);
         return int32x2(int(p.x), int(p.y));
     }
 
@@ -837,7 +817,7 @@ namespace mango
         bool pressed = false;
 
         HWND active = ::GetActiveWindow();
-        if (m_handle->hwnd == active)
+        if (m_window_context->hwnd == active)
         {
             int v = enumToVirtual(code);
             pressed = (::GetAsyncKeyState(v) & 0x8000) != 0;
@@ -846,14 +826,14 @@ namespace mango
         return pressed;
     }
 
-    Window::operator NativeWindowHandle () const
+    Window::operator WindowHandle () const
     {
-        return m_handle->hwnd;
+        return m_window_context->hwnd;
     }
 
-    Window::operator WindowHandle* () const
+    Window::operator WindowContext* () const
     {
-        return m_handle.get();
+        return m_window_context.get();
     }
 
     void Window::enterEventLoop()
@@ -861,11 +841,11 @@ namespace mango
         MSG msg;
         ::ZeroMemory(&msg, sizeof(msg));
 
-        m_handle->is_looping = true;
+        m_window_context->is_looping = true;
 
-        for (; m_handle->is_looping && msg.message != WM_QUIT;)
+        for (; m_window_context->is_looping && msg.message != WM_QUIT;)
         {
-            while (::PeekMessage(&msg, m_handle->hwnd, 0, 0, PM_REMOVE))
+            while (::PeekMessage(&msg, m_window_context->hwnd, 0, 0, PM_REMOVE))
             {
                 ::TranslateMessage(&msg);
                 ::DispatchMessage(&msg);
@@ -877,13 +857,13 @@ namespace mango
             Sleep::ms(1);
         }
 
-        m_handle->is_looping = false;
+        m_window_context->is_looping = false;
     }
 
     void Window::breakEventLoop()
     {
         ::PostQuitMessage(0);
-        m_handle->is_looping = false;
+        m_window_context->is_looping = false;
     }
 
     void Window::onIdle()

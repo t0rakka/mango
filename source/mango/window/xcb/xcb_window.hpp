@@ -25,7 +25,7 @@
 namespace mango
 {
 
-    struct WindowHandle : NativeWindowHandle
+    struct WindowContext : WindowHandle
     {
         // window data
         xcb_window_t root { 0 };
@@ -67,8 +67,10 @@ namespace mango
 
         xcb_key_symbols_t* key_symbols;
 
-        WindowHandle();
-        ~WindowHandle();
+        WindowContext();
+        ~WindowContext();
+
+        operator xcb_window_t () const { return window; }
 
         bool init(int width, int height, u32 flags, const char* title);
         void toggleFullscreen();

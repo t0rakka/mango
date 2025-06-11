@@ -21,7 +21,7 @@
 namespace mango
 {
 
-    struct WindowHandle : NativeWindowHandle
+    struct WindowContext : WindowHandle
     {
         // window data
         ::Colormap  x11_colormap { 0 };
@@ -60,8 +60,10 @@ namespace mango
         bool        busy { false };
         bool        fullscreen  { false };
 
-        WindowHandle();
-        ~WindowHandle();
+        WindowContext();
+        ~WindowContext();
+
+        operator ::Window () const { return window; }
 
         bool init(int screen, int depth, Visual* visual, int width, int height, u32 flags, const char* title);
         void toggleFullscreen();

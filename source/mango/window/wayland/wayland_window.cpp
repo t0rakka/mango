@@ -31,11 +31,11 @@ namespace
     void shell_surface_configure(void* data, struct wl_shell_surface* shell_surface,
                                uint32_t edges, int32_t width, int32_t height)
     {
-        WindowHandle* handle = static_cast<WindowHandle*>(data);
+        WindowContext* window = static_cast<WindowContext*>(data);
         if (width > 0 && height > 0)
         {
-            handle->size[0] = width;
-            handle->size[1] = height;
+            window->size[0] = width;
+            window->size[1] = height;
         }
     }
 
@@ -54,21 +54,21 @@ namespace
     void registry_global(void* data, struct wl_registry* registry,
                          uint32_t name, const char* interface, uint32_t version)
     {
-        WindowHandle* handle = static_cast<WindowHandle*>(data);
+        WindowContext* window = static_cast<WindowContext*>(data);
 
-        if (strcmp(interface, "wl_compositor") == 0)
+        if (std::strcmp(interface, "wl_compositor") == 0)
         {
-            handle->compositor = static_cast<struct wl_compositor*>(
+            window->compositor = static_cast<struct wl_compositor*>(
                 wl_registry_bind(registry, name, &wl_compositor_interface, 1));
         }
-        else if (strcmp(interface, "wl_shell") == 0)
+        else if (std::strcmp(interface, "wl_shell") == 0)
         {
-            handle->shell = static_cast<struct wl_shell*>(
+            window->shell = static_cast<struct wl_shell*>(
                 wl_registry_bind(registry, name, &wl_shell_interface, 1));
         }
-        else if (strcmp(interface, "wl_seat") == 0)
+        else if (std::strcmp(interface, "wl_seat") == 0)
         {
-            handle->seat = static_cast<struct wl_seat*>(
+            window->seat = static_cast<struct wl_seat*>(
                 wl_registry_bind(registry, name, &wl_seat_interface, 1));
         }
     }
@@ -91,14 +91,12 @@ namespace mango
     using namespace mango::filesystem;
 
     // -----------------------------------------------------------------------
-    // WindowHandle
+    // WindowContext
     // -----------------------------------------------------------------------
 
-    WindowHandle::WindowHandle(int width, int height, u32 flags)
-        : display(nullptr)
-        , registry(nullptr)
+    WindowContext::WindowContext(int width, int height, u32 flags)
+        : registry(nullptr)
         , compositor(nullptr)
-        , surface(nullptr)
         , shell(nullptr)
         , shell_surface(nullptr)
         , seat(nullptr)
@@ -122,7 +120,7 @@ namespace mango
         }
 
         // Store native handle for EGL/Vulkan
-        native.display = display;
+        handle.display = display;
 
         // Get registry
         registry = wl_display_get_registry(display);
@@ -150,7 +148,7 @@ namespace mango
         }
     }
 
-    WindowHandle::~WindowHandle()
+    WindowContext::~WindowContext()
     {
         if (shell_surface) wl_shell_surface_destroy(shell_surface);
         if (surface) wl_surface_destroy(surface);
@@ -171,18 +169,18 @@ namespace mango
         if (xkb_context) xkb_context_unref(xkb_context);
     }
 
-    void WindowHandle::toggleFullscreen()
+    void WindowContext::toggleFullscreen()
     {
         // TODO
     }
 
-    math::int32x2 WindowHandle::getWindowSize() const
+    math::int32x2 WindowContext::getWindowSize() const
     {
         // TODO
         return int32x2(0, 0);
     }
 
-    bool WindowHandle::createWaylandWindow(int width, int height, const char* title)
+    bool WindowContext::createWaylandWindow(int width, int height, const char* title)
     {
         if (!compositor || !shell) return false;
 
@@ -191,7 +189,7 @@ namespace mango
         if (!surface) return false;
 
         // Store surface in native handle
-        native.surface = surface;
+        handle.surface = surface;
 
         // Create shell surface
         shell_surface = wl_shell_get_shell_surface(shell, surface);
@@ -211,7 +209,7 @@ namespace mango
         return true;
     }
 
-    void WindowHandle::processEvents()
+    void WindowContext::processEvents()
     {
         while (wl_display_prepare_read(display) != 0)
         {
@@ -244,7 +242,7 @@ namespace mango
 
     Window::Window(int width, int height, u32 flags)
     {
-        m_handle = std::make_unique<WindowHandle>(width, height, flags);
+        m_window_context = std::make_unique<WindowContext>(width, height, flags);
     }
 
     Window::~Window()
@@ -266,11 +264,6 @@ namespace mango
         // TODO
     }
 
-    void Window::setIcon(const Surface& surface)
-    {
-        // TODO
-    }
-
     void Window::setVisible(bool enable)
     {
         // TODO
@@ -278,7 +271,7 @@ namespace mango
 
     int32x2 Window::getWindowSize() const
     {
-        return m_handle->getWindowSize();
+        return m_window_context->getWindowSize();
     }
 
     int32x2 Window::getCursorPosition() const
@@ -293,14 +286,14 @@ namespace mango
         return false;
     }
 
-    Window::operator NativeWindowHandle () const
+    Window::operator WindowHandle () const
     {
-        return m_handle->native;
+        return m_window_context->handle;
     }
 
-    Window::operator WindowHandle* () const
+    Window::operator WindowContext* () const
     {
-        return m_handle.get();
+        return m_window_context.get();
     }
 
     void Window::enterEventLoop()

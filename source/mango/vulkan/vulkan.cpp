@@ -192,7 +192,7 @@ namespace mango::vulkan
         , m_instance(instance)
         , m_surface(VK_NULL_HANDLE)
     {
-        m_surface = createSurface(m_instance, *m_handle);
+        m_surface = createSurface(m_instance, *m_window_context);
     }
 
     VulkanWindow::~VulkanWindow()
@@ -205,17 +205,17 @@ namespace mango::vulkan
 
     bool VulkanWindow::getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex) const
     {
-        return vulkan::getPresentationSupport(physicalDevice, queueFamilyIndex, *m_handle);
+        return vulkan::getPresentationSupport(physicalDevice, queueFamilyIndex, *m_window_context);
     }
 
     void VulkanWindow::toggleFullscreen()
     {
-        m_handle->toggleFullscreen();
+        m_window_context->toggleFullscreen();
     }
 
     bool VulkanWindow::isFullscreen() const
     {
-        return m_handle->fullscreen;
+        return m_window_context->fullscreen;
     }
 
     // ------------------------------------------------------------------------------
