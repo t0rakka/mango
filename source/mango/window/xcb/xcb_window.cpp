@@ -672,6 +672,16 @@ namespace mango
         return screens[index].resolution;
     }
 
+    Window::operator WindowHandle () const
+    {
+        return *m_window_context;
+    }
+
+    Window::operator WindowContext* () const
+    {
+        return m_window_context.get();
+    }
+
     void Window::setWindowPosition(int x, int y)
     {
         auto connection = m_window_context->connection;
@@ -789,16 +799,6 @@ namespace mango
 
         free(focus_reply);
         return pressed;
-    }
-
-    Window::operator WindowHandle () const
-    {
-        return *m_window_context;
-    }
-
-    Window::operator WindowContext* () const
-    {
-        return m_window_context.get();
     }
 
     void Window::enterEventLoop()

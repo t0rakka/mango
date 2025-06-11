@@ -764,6 +764,16 @@ namespace mango
         return screens[index].resolution;
     }
 
+    Window::operator WindowHandle () const
+    {
+        return *m_window_context;
+    }
+
+    Window::operator WindowContext* () const
+    {
+        return m_window_context.get();
+    }
+
     void Window::setWindowPosition(int x, int y)
     {
         ::SetWindowPos(m_window_context->hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
@@ -819,16 +829,6 @@ namespace mango
         }
 
         return pressed;
-    }
-
-    Window::operator WindowHandle () const
-    {
-        return *m_window_context;
-    }
-
-    Window::operator WindowContext* () const
-    {
-        return m_window_context.get();
     }
 
     void Window::enterEventLoop()

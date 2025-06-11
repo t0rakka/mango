@@ -228,6 +228,15 @@ namespace mango
     // Window
     // -----------------------------------------------------------------------
 
+    Window::Window(int width, int height, u32 flags)
+    {
+        m_window_context = std::make_unique<WindowContext>(width, height, flags);
+    }
+
+    Window::~Window()
+    {
+    }
+
     int Window::getScreenCount()
     {
         // TODO
@@ -240,13 +249,14 @@ namespace mango
         return int32x2(0, 0);
     }
 
-    Window::Window(int width, int height, u32 flags)
+    Window::operator WindowHandle () const
     {
-        m_window_context = std::make_unique<WindowContext>(width, height, flags);
+        return m_window_context->handle;
     }
 
-    Window::~Window()
+    Window::operator WindowContext* () const
     {
+        return m_window_context.get();
     }
 
     void Window::setWindowPosition(int x, int y)
@@ -284,16 +294,6 @@ namespace mango
     {
         // TODO
         return false;
-    }
-
-    Window::operator WindowHandle () const
-    {
-        return m_window_context->handle;
-    }
-
-    Window::operator WindowContext* () const
-    {
-        return m_window_context.get();
     }
 
     void Window::enterEventLoop()

@@ -90,6 +90,16 @@ namespace mango
 #endif
     }
 
+    Window::operator WindowHandle () const
+    {
+        return nullptr;
+    }
+
+    Window::operator WindowContext* () const
+    {
+        return m_window_context.get();
+    }
+
     void Window::setWindowPosition(int x, int y)
     {
         // NOTE: Retina conversion
@@ -152,16 +162,6 @@ namespace mango
         bool pressed = state != 0;
 
         return pressed;
-    }
-
-    Window::operator WindowHandle () const
-    {
-        return nullptr;
-    }
-
-    Window::operator WindowContext* () const
-    {
-        return m_window_context.get();
     }
 
     void Window::enterEventLoop()

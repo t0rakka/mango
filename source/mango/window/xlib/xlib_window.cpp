@@ -752,6 +752,16 @@ namespace mango
         return int32x2(width, height);
     }
 
+    Window::operator WindowHandle () const
+    {
+        return *m_window_context;
+    }
+
+    Window::operator WindowContext* () const
+    {
+        return m_window_context.get();
+    }
+
     void Window::setWindowPosition(int x, int y)
     {
         XMoveWindow(m_window_context->display, m_window_context->window, x, y);
@@ -837,16 +847,6 @@ namespace mango
         }
 
         return pressed;
-    }
-
-    Window::operator WindowHandle () const
-    {
-        return *m_window_context;
-    }
-
-    Window::operator WindowContext* () const
-    {
-        return m_window_context.get();
     }
 
     void Window::enterEventLoop()

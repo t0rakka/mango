@@ -256,6 +256,9 @@ namespace mango
         static int getScreenCount();
         static math::int32x2 getScreenSize(int screen = 0);
 
+        operator WindowHandle () const;
+        operator struct WindowContext* () const;
+
         void setWindowPosition(int x, int y);
         void setWindowSize(int width, int height);
         void setTitle(const std::string& title);
@@ -264,9 +267,6 @@ namespace mango
         virtual math::int32x2 getWindowSize() const;
         virtual math::int32x2 getCursorPosition() const;
         virtual bool isKeyPressed(Keycode code) const;
-
-        operator WindowHandle () const;
-        operator struct WindowContext* () const;
 
         void enterEventLoop();
         void breakEventLoop();
