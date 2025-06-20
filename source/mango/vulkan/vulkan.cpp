@@ -184,6 +184,59 @@ namespace mango::vulkan
 #endif
 
     // ------------------------------------------------------------------------------
+    // Instance
+    // ------------------------------------------------------------------------------
+
+    Instance::Instance(const VkApplicationInfo& applicationInfo,
+                       const std::vector<const char*> layers,
+                       const std::vector<const char*> extensions)
+    {
+        VkInstanceCreateInfo instanceCreateInfo
+        {
+            .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+            .pApplicationInfo = &applicationInfo,
+            .enabledLayerCount = uint32_t(layers.size()),
+            .ppEnabledLayerNames = layers.data(),
+            .enabledExtensionCount = uint32_t(extensions.size()),
+            .ppEnabledExtensionNames = extensions.data()
+        };
+
+        VkResult result = vkCreateInstance(&instanceCreateInfo, nullptr, &m_handle);
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Info, "vkCreateInstance: {}", getString(result));
+            return;
+        }
+    }
+
+    Instance::~Instance()
+    {
+        if (m_handle != VK_NULL_HANDLE)
+        {
+            vkDestroyInstance(m_handle, nullptr);
+        }
+    }
+
+    // ------------------------------------------------------------------------------
+    // Device
+    // ------------------------------------------------------------------------------
+
+    Device::Device(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo& deviceCreateInfo)
+    {
+
+        VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &m_handle);
+    }
+
+    Device::~Device()
+    {
+        if (m_handle != VK_NULL_HANDLE)
+        {
+            vkDeviceWaitIdle(m_handle);
+            vkDestroyDevice(m_handle, nullptr);
+        }
+    }
+
+    // ------------------------------------------------------------------------------
     // VulkanWindow
     // ------------------------------------------------------------------------------
 
@@ -220,7 +273,46 @@ namespace mango::vulkan
     }
 
     // ------------------------------------------------------------------------------
-    // functions
+    // enumerateInstanceExtensionProperties()
+    // ------------------------------------------------------------------------------
+
+    std::vector<VkExtensionProperties> enumerateInstanceExtensionProperties(const char* layerName)
+    {
+        VkResult result = VK_SUCCESS;
+
+        uint32_t count = 0;
+
+        result = vkEnumerateInstanceExtensionProperties(layerName, &count, nullptr);
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkEnumerateInstanceExtensionProperties: {}", getString(result));
+            return {};
+        }
+
+        std::vector<VkExtensionProperties> extensionProperties(count);
+
+        result = vkEnumerateInstanceExtensionProperties(layerName, &count, extensionProperties.data());
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkEnumerateInstanceExtensionProperties: {}", getString(result));
+            return {};
+        }
+
+        printLine("InstanceExtensionProperties:");
+        printLine("");
+
+        for (auto property : extensionProperties)
+        {
+            printLine(Print::Info, "  {}", property.extensionName);
+        }
+
+        printLine("");
+
+        return extensionProperties;
+    }
+
+    // ------------------------------------------------------------------------------
+    // enumeratePhysicalDevices()
     // ------------------------------------------------------------------------------
 
     std::vector<VkPhysicalDevice> enumeratePhysicalDevices(VkInstance instance)
@@ -244,31 +336,288 @@ namespace mango::vulkan
             return {};
         }
 
+        // print device properties
+
+        printLine(Print::Info, "PhysicalDevices: {}", physicalDevices.size());
+
+        VkPhysicalDevice selectedPhysicalDevice = 0;
+        uint32_t selectedQueueFamilyIndex = 0;
+
+        for (auto physicalDevice : physicalDevices)
+        {
+            VkPhysicalDeviceProperties properties;
+            vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+            printLine(Print::Info, "");
+
+            printLine(Print::Info, "");
+            printLine(Print::Info, "  deviceName: \"{}\"", properties.deviceName);
+            printLine(Print::Info, "  deviceType: {}", getString(properties.deviceType));
+            printLine(Print::Info, "  apiVersion: {}.{}.{}",
+                VK_VERSION_MAJOR(properties.apiVersion),
+                VK_VERSION_MINOR(properties.apiVersion),
+                VK_VERSION_PATCH(properties.apiVersion));
+            printLine(Print::Info, "  driverVersion: {}.{}.{}",
+                VK_VERSION_MAJOR(properties.driverVersion),
+                VK_VERSION_MINOR(properties.driverVersion),
+                VK_VERSION_PATCH(properties.driverVersion));
+            printLine(Print::Info, "  vendorID: {:08x}", properties.vendorID);
+            printLine(Print::Info, "  deviceID: {:08x}", properties.deviceID);
+            //properties.limits;
+            //properties.sparseProperties;
+
+            //VkPhysicalDeviceFeatures features;
+            //vkGetPhysicalDeviceFeatures(physicalDevice, &features);
+
+            VkPhysicalDeviceMemoryProperties memoryProperties;
+            vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
+
+            printLine(Print::Info, "");
+            printLine(Print::Info, "  memoryHeapCount: {}", memoryProperties.memoryHeapCount);
+
+            for (uint32_t i = 0; i < memoryProperties.memoryHeapCount; ++i)
+            {
+                const VkMemoryHeap& memoryHeap = memoryProperties.memoryHeaps[i];
+
+                printLine(Print::Info, "");
+                printLine(Print::Info, "    size: {} MB", memoryHeap.size >> 20);
+                printLine(Print::Info, "    flags: {:08x}", memoryHeap.flags);
+
+                if (memoryHeap.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_HEAP_DEVICE_LOCAL_BIT");
+                }
+
+                if (memoryHeap.flags & VK_MEMORY_HEAP_MULTI_INSTANCE_BIT)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_HEAP_MULTI_INSTANCE_BIT");
+                }
+            }
+
+            printLine(Print::Info, "");
+            printLine(Print::Info, "  memoryTypeCount: {}", memoryProperties.memoryTypeCount);
+
+            for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i)
+            {
+                const VkMemoryType& memoryType = memoryProperties.memoryTypes[i];
+
+                printLine(Print::Info, "");
+                printLine(Print::Info, "    heapIndex: {}", memoryType.heapIndex);
+                printLine(Print::Info, "    propertyFlags: {:08x}", memoryType.propertyFlags);
+
+                if (memoryType.propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT");
+                }
+
+                if (memoryType.propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT");
+                }
+
+                if (memoryType.propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_PROPERTY_HOST_COHERENT_BIT");
+                }
+
+                if (memoryType.propertyFlags & VK_MEMORY_PROPERTY_HOST_CACHED_BIT)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_PROPERTY_HOST_CACHED_BIT");
+                }
+
+                if (memoryType.propertyFlags & VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT");
+                }
+
+                if (memoryType.propertyFlags & VK_MEMORY_PROPERTY_PROTECTED_BIT)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_PROPERTY_PROTECTED_BIT");
+                }
+
+                if (memoryType.propertyFlags & VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD");
+                }
+
+                if (memoryType.propertyFlags & VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_PROPERTY_DEVICE_UNCACHED_BIT_AMD");
+                }
+
+                if (memoryType.propertyFlags & VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV");
+                }
+            }
+
+            // GetPhysicalDeviceQueueFamilyProperties
+
+            uint32_t queueFamilyCount = 0;
+            vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+
+            std::vector<VkQueueFamilyProperties> queueFamilyProperties(queueFamilyCount);
+            vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProperties.data());
+
+            printLine(Print::Info, "");
+            printLine(Print::Info, "  queueFamilyProperties: {}", queueFamilyProperties.size());
+
+            for (uint32_t i = 0; i < queueFamilyCount; ++i)
+            {
+                const VkQueueFamilyProperties& properties = queueFamilyProperties[i];
+
+                printLine(Print::Info, "");
+                printLine(Print::Info, "    queueFlags: {:08x}", properties.queueFlags);
+
+                if (properties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                {
+                    printLine(Print::Info, "      + VK_QUEUE_GRAPHICS_BIT");
+                }
+
+                if (properties.queueFlags & VK_QUEUE_COMPUTE_BIT)
+                {
+                    printLine(Print::Info, "      + VK_QUEUE_COMPUTE_BIT");
+                }
+
+                if (properties.queueFlags & VK_QUEUE_TRANSFER_BIT)
+                {
+                    printLine(Print::Info, "      + VK_QUEUE_TRANSFER_BIT");
+                }
+
+                if (properties.queueFlags & VK_QUEUE_SPARSE_BINDING_BIT)
+                {
+                    printLine(Print::Info, "      + VK_QUEUE_SPARSE_BINDING_BIT");
+                }
+
+                if (properties.queueFlags & VK_QUEUE_PROTECTED_BIT)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV");
+                }
+
+                if (properties.queueFlags & VK_QUEUE_PROTECTED_BIT)
+                {
+                    printLine(Print::Info, "      + VK_MEMORY_PROPERTY_RDMA_CAPABLE_BIT_NV");
+                }
+
+#ifdef VK_ENABLE_BETA_EXTENSIONS
+                if (properties.queueFlags & VK_QUEUE_VIDEO_DECODE_BIT_KHR)
+                {
+                    printLine(Print::Info, "      + VK_QUEUE_VIDEO_DECODE_BIT_KHR");
+                }
+
+                if (properties.queueFlags & VK_QUEUE_VIDEO_ENCODE_BIT_KHR)
+                {
+                    printLine(Print::Info, "      + VK_QUEUE_VIDEO_ENCODE_BIT_KHR");
+                }
+#endif
+
+                const VkExtent3D& granularity = properties.minImageTransferGranularity;
+
+                printLine(Print::Info, "    queueCount: {}", properties.queueCount);
+                printLine(Print::Info, "    timestampValidBits: {}", properties.timestampValidBits);
+                printLine(Print::Info, "    minImageTransferGranularity: {} x {} x {}", granularity.width, granularity.height, granularity.depth);
+            }
+        }
+
+        printLine(Print::Info, "");
+
         return physicalDevices;
     }
 
-    std::vector<VkExtensionProperties> enumerateInstanceExtensionProperties(const char* layerName)
+    // ------------------------------------------------------------------------------
+    // selectPhysicalDevice()
+    // ------------------------------------------------------------------------------
+
+    struct PhysicalDeviceScore
     {
-        VkResult result = VK_SUCCESS;
+        VkPhysicalDevice device = VK_NULL_HANDLE;
+        u32 typeScore = 0;
+        u32 apiScore = 0;
+        u32 memoryScore = 0;
+
+        bool operator > (const PhysicalDeviceScore& other) const
+        {
+            if (typeScore != other.typeScore) return typeScore > other.typeScore;
+            if (apiScore != other.apiScore) return apiScore > other.apiScore;
+            return memoryScore > other.memoryScore;
+        }
+    };
+
+    VkPhysicalDevice selectPhysicalDevice(VkInstance instance)
+    {
+        std::vector<VkPhysicalDevice> physicalDevices = enumeratePhysicalDevices(instance);
+        std::vector<PhysicalDeviceScore> scores;
+
+        if (physicalDevices.empty())
+        {
+            printLine("[selectPhysicalDevice] No PhysicalDevices.");
+            return VK_NULL_HANDLE;
+        }
+
+        for (auto physicalDevice : physicalDevices)
+        {
+            VkPhysicalDeviceProperties properties;
+            vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+            VkPhysicalDeviceMemoryProperties memoryProperties;
+            vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
+
+            PhysicalDeviceScore score;
+
+            score.device = physicalDevice;
+
+            switch (properties.deviceType)
+            {
+                case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+                    score.typeScore = 4;
+                    break;
+                case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                    score.typeScore = 3;
+                    break;
+                case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+                    score.typeScore = 2;
+                    break;
+                case VK_PHYSICAL_DEVICE_TYPE_CPU:
+                    score.typeScore = 1;
+                    break;
+                case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+                default:
+                    break;
+            }
+
+            score.apiScore = VK_VERSION_MAJOR(properties.apiVersion) * 100 +
+                             VK_VERSION_MINOR(properties.apiVersion) * 10;
+
+            for (uint32_t i = 0; i < memoryProperties.memoryHeapCount; ++i)
+            {
+                const VkMemoryHeap& memoryHeap = memoryProperties.memoryHeaps[i];
+                if (memoryHeap.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+                {
+                    score.memoryScore += u32(memoryHeap.size >> 20);
+                }
+            }
+
+            scores.push_back(score);
+        }
+
+        std::sort(scores.begin(), scores.end(), std::greater<>());
+
+        return scores.front().device;
+    }
+
+    // ------------------------------------------------------------------------------
+    // getPhysicalDeviceQueueFamilyProperties()
+    // ------------------------------------------------------------------------------
+
+    std::vector<VkQueueFamilyProperties> getPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice)
+    {
         uint32_t count = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, nullptr);
 
-        result = vkEnumerateInstanceExtensionProperties(layerName, &count, nullptr);
-        if (result != VK_SUCCESS)
-        {
-            printLine(Print::Error, "vkEnumerateInstanceExtensionProperties: {}", getString(result));
-            return {};
-        }
+        std::vector<VkQueueFamilyProperties> queueFamilyProperties(count);
+        vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, queueFamilyProperties.data());
 
-        std::vector<VkExtensionProperties> properties(count);
-
-        result = vkEnumerateInstanceExtensionProperties(layerName, &count, properties.data());
-        if (result != VK_SUCCESS)
-        {
-            printLine(Print::Error, "vkEnumerateInstanceExtensionProperties: {}", getString(result));
-            return {};
-        }
-
-        return properties;
+        return queueFamilyProperties;
     }
 
     // ------------------------------------------------------------------------------

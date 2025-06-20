@@ -12,6 +12,36 @@
 namespace mango::vulkan
 {
 
+    template <typename T>
+    class VulkanHandle : public NonCopyable
+    {
+    protected:
+        T m_handle = VK_NULL_HANDLE;
+
+    public:
+        operator T () const
+        {
+            return m_handle;
+        }
+    };
+
+    class Instance : public VulkanHandle<VkInstance>
+    {
+    public:
+        Instance(const VkApplicationInfo& applicationInfo,
+                 const std::vector<const char*> layers,
+                 const std::vector<const char*> extensions);
+        ~Instance();
+
+    };
+
+    class Device : public VulkanHandle<VkDevice>
+    {
+    public:
+        Device(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo& deviceCreateInfo);
+        ~Device();
+    };
+
     class VulkanWindow : public Window
     {
     protected:
@@ -31,6 +61,8 @@ namespace mango::vulkan
 
     std::vector<VkExtensionProperties> enumerateInstanceExtensionProperties(const char* layerName = nullptr);
     std::vector<VkPhysicalDevice> enumeratePhysicalDevices(VkInstance instance);
+    VkPhysicalDevice selectPhysicalDevice(VkInstance instance);
+    std::vector<VkQueueFamilyProperties> getPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice);
 
     const char* getString(VkResult result);
     const char* getString(VkPhysicalDeviceType deviceType);
