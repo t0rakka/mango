@@ -118,12 +118,15 @@ namespace mango::vulkan
 
     void Swapchain::createSwapchain()
     {
+        VkSurfaceCapabilitiesKHR caps;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
+
         // create swapchain
         VkSwapchainCreateInfoKHR createInfo =
         {
             .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
             .surface = m_surface,
-            .minImageCount = 2,
+            .minImageCount = caps.minImageCount,
             .imageFormat = m_format,
             //.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
             .imageExtent = m_extent,

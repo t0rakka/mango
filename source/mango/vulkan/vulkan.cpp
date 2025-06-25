@@ -302,6 +302,44 @@ namespace mango::vulkan
     }
 
     // ------------------------------------------------------------------------------
+    // enumerateInstanceLayerProperties()
+    // ------------------------------------------------------------------------------
+
+    std::vector<VkLayerProperties> enumerateInstanceLayerProperties()
+    {
+        VkResult result = VK_SUCCESS;
+
+        uint32_t count = 0;
+
+        result = vkEnumerateInstanceLayerProperties(&count, nullptr);
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkEnumerateInstanceLayerProperties: {}", getString(result));
+            return {};
+        }
+
+        std::vector<VkLayerProperties> layerProperties(count);
+
+        result = vkEnumerateInstanceLayerProperties(&count, layerProperties.data());
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkEnumerateInstanceLayerProperties: {}", getString(result));
+            return {};
+        }
+
+        printLine("InstanceLayerProperties:");
+
+        for (const auto& property : layerProperties)
+        {
+            printLine("  - {}", property.layerName);
+        }
+
+        printLine("");
+
+        return layerProperties;
+    }
+
+    // ------------------------------------------------------------------------------
     // enumerateInstanceExtensionProperties()
     // ------------------------------------------------------------------------------
 
