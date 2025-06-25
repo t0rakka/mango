@@ -4,10 +4,11 @@
 */
 #pragma once
 
-#include <mango/core/core.hpp>
-#include <mango/window/window.hpp>
-
 #include <vulkan/vulkan.h>
+
+#include <mango/core/configure.hpp>
+#include <mango/window/window.hpp>
+#include <mango/vulkan/swapchain.hpp>
 
 namespace mango::vulkan
 {
@@ -42,6 +43,16 @@ namespace mango::vulkan
         ~Device();
     };
 
+    class CommandPool : public VulkanHandle<VkCommandPool>
+    {
+    protected:
+        VkDevice m_device = VK_NULL_HANDLE;
+
+    public:
+        CommandPool(VkDevice device, uint32_t graphicsQueueFamilyIndex);
+        ~CommandPool();
+    };
+
     class VulkanWindow : public Window
     {
     protected:
@@ -51,6 +62,11 @@ namespace mango::vulkan
     public:
         VulkanWindow(VkInstance instance, int width, int height, u32 flags);
         ~VulkanWindow();
+
+        operator VkInstance () const
+        {
+            return m_instance;
+        }
 
         bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex) const;
         void toggleFullscreen();

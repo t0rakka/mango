@@ -3,6 +3,7 @@
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/configure.hpp>
+#include <mango/core/print.hpp>
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
     #define VK_USE_PLATFORM_WIN32_KHR
@@ -225,6 +226,7 @@ namespace mango::vulkan
     {
 
         VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &m_handle);
+        MANGO_UNREFERENCED(result);
     }
 
     Device::~Device()
@@ -233,6 +235,33 @@ namespace mango::vulkan
         {
             vkDeviceWaitIdle(m_handle);
             vkDestroyDevice(m_handle, nullptr);
+        }
+    }
+
+    // ------------------------------------------------------------------------------
+    // CommandPool
+    // ------------------------------------------------------------------------------
+
+    CommandPool::CommandPool(VkDevice device, uint32_t graphicsQueueFamilyIndex)
+        : m_device(device)
+    {
+        VkCommandPoolCreateInfo poolInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            .queueFamilyIndex = graphicsQueueFamilyIndex,
+        };
+
+        VkResult result = vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_handle);
+        MANGO_UNREFERENCED(result);
+    }
+
+    CommandPool::~CommandPool()
+    {
+        if (m_handle != VK_NULL_HANDLE)
+        {
+            vkDeviceWaitIdle(m_device);
+            vkDestroyCommandPool(m_device, m_handle, nullptr);
         }
     }
 

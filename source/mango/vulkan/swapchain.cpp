@@ -1,0 +1,301 @@
+/*
+    MANGO Multimedia Development Platform
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+*/
+#include <mango/core/configure.hpp>
+#include <mango/core/print.hpp>
+#include <mango/vulkan/vulkan.hpp>
+
+namespace mango::vulkan
+{
+
+    // ------------------------------------------------------------------------------
+    // Swapchain
+    // ------------------------------------------------------------------------------
+
+    Swapchain::Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue graphicsQueue, VkQueue presentQueue)
+        : m_device(device)
+        , m_physicalDevice(physicalDevice)
+        , m_surface(surface)
+        , m_graphicsQueue(graphicsQueue)
+        , m_presentQueue(presentQueue)
+    {
+        configure();
+        createSwapchain();
+        createSyncObjects();
+    }
+
+    Swapchain::~Swapchain()
+    {
+        cleanup();
+    }
+
+    void Swapchain::cleanup()
+    {
+        for (auto semaphore : m_imageAvailableSemaphores)
+        {
+            vkDestroySemaphore(m_device, semaphore, nullptr);
+        }
+
+        for (auto semaphore : m_renderFinishedSemaphores)
+        {
+            vkDestroySemaphore(m_device, semaphore, nullptr);
+        }
+
+        for (auto fence : m_fences)
+        {
+            vkDestroyFence(m_device, fence, nullptr);
+        }
+
+        vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+    }
+
+    void Swapchain::configure()
+    {
+        //VkBool32 supported = VK_FALSE;
+        //vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, graphicsQueueFamilyIndex, m_surface, &supported);
+        //printLine("vkGetPhysicalDeviceSurfaceSupportKHR: {}", supported);
+
+        VkSurfaceCapabilitiesKHR caps;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
+        printLine("PhysicalDeviceSurface.Extent: {} x {}", caps.currentExtent.width, caps.currentExtent.height);
+
+        m_extent = caps.currentExtent;
+
+        uint32_t formatCount;
+        vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, nullptr);
+
+        if (formatCount == 0)
+        {
+            return;
+        }
+
+        printLine("PhysicalDeviceSurfaceFormats:");
+        printLine("");
+
+        std::vector<VkSurfaceFormatKHR> formats(formatCount);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, formats.data());
+
+        VkSurfaceFormatKHR selectedSurfaceFormat = formats[0];
+
+        for (const VkSurfaceFormatKHR& surfaceFormat : formats)
+        {
+            printLine("  {} | {}", getString(surfaceFormat.format), getString(surfaceFormat.colorSpace));
+
+            if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_UNORM)
+            {
+                selectedSurfaceFormat = surfaceFormat;
+            }
+        }
+
+        printLine("");
+        m_format = selectedSurfaceFormat.format;
+    }
+
+    void Swapchain::createSwapchain()
+    {
+        // create swapchain
+        VkSwapchainCreateInfoKHR createInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+            .surface = m_surface,
+            .minImageCount = 2,
+            .imageFormat = m_format,
+            //.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+            .imageExtent = m_extent,
+            //.imageArrayLayers = 1,
+            .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            //.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            //.queueFamilyIndexCount = 0,
+            //.pQueueFamilyIndices = nullptr,
+            //.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+            //.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+            .presentMode = VK_PRESENT_MODE_FIFO_KHR,
+            //.clipped = VK_TRUE,
+            //.oldSwapchain = VK_NULL_HANDLE,
+        };
+
+        VkResult result = vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &m_swapchain);
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkCreateSwapchainKHR: {}", getString(result));
+            return;
+        }
+
+        // get swapchain images
+        vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_imageCount, nullptr);
+        m_images.resize(m_imageCount);
+        vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_imageCount, m_images.data());
+        
+        // create image views
+        m_imageViews.resize(m_imageCount);
+
+        for (size_t i = 0; i < m_imageCount; ++i)
+        {
+            VkImageViewCreateInfo viewInfo =
+            {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                .image = m_images[i],
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .format = m_format,
+                .components =
+                { 
+                    VK_COMPONENT_SWIZZLE_IDENTITY, 
+                    VK_COMPONENT_SWIZZLE_IDENTITY, 
+                    VK_COMPONENT_SWIZZLE_IDENTITY, 
+                    VK_COMPONENT_SWIZZLE_IDENTITY 
+                },
+                .subresourceRange =
+                {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1,
+                }
+            };
+
+            result = vkCreateImageView(m_device, &viewInfo, nullptr, &m_imageViews[i]);
+            if (result != VK_SUCCESS)
+            {
+                printLine(Print::Error, "vkCreateImageView: {}", getString(result));
+                return;
+            }
+        }
+    }
+
+    void Swapchain::createSyncObjects()
+    {
+        m_imageAvailableSemaphores.resize(m_maxImagesInFlight);
+        m_renderFinishedSemaphores.resize(m_maxImagesInFlight);
+        m_fences.resize(m_maxImagesInFlight);
+        m_framesInFlight.resize(m_maxImagesInFlight, false);
+
+        VkSemaphoreCreateInfo semaphoreInfo = 
+        {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+        };
+
+        VkFenceCreateInfo fenceInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+            .flags = VK_FENCE_CREATE_SIGNALED_BIT
+        };
+
+        for (u32 i = 0; i < m_maxImagesInFlight; i++)
+        {
+            VkResult result;
+
+            result = vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_imageAvailableSemaphores[i]);
+            if (result != VK_SUCCESS)
+            {
+                printLine(Print::Error, "vkCreateSemaphore: {}", getString(result));
+                return;
+            }
+
+            result = vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i]);
+            if (result != VK_SUCCESS)
+            {
+                printLine(Print::Error, "vkCreateSemaphore: {}", getString(result));
+                return;
+            }
+
+            result = vkCreateFence(m_device, &fenceInfo, nullptr, &m_fences[i]);
+            if (result != VK_SUCCESS)
+            {
+                printLine(Print::Error, "vkCreateFence: {}", getString(result));
+                return;
+            }
+        }
+    }
+
+    u32 Swapchain::getImageCount() const
+    {
+        return m_imageCount;
+    }
+
+    VkFormat Swapchain::getImageFormat() const
+    {
+        return m_format;
+    }
+
+    VkExtent2D Swapchain::getExtent() const
+    {
+        return m_extent;
+    }
+
+    VkImageView Swapchain::getImageView(u32 imageIndex) const
+    {
+        return m_imageViews[imageIndex];
+    }
+
+    VkSemaphore Swapchain::getImageAvailableSemaphore() const
+    {
+        return m_imageAvailableSemaphores[m_currentFrame];
+    }
+
+    VkSemaphore Swapchain::getRenderFinishedSemaphore() const
+    {
+        return m_renderFinishedSemaphores[m_currentFrame];
+    }
+
+    void Swapchain::recreate(VkExtent2D extent)
+    {
+        vkDeviceWaitIdle(m_device);
+        cleanup();
+
+        m_extent = extent;
+
+        createSwapchain();
+        createSyncObjects();
+    }
+
+    VkResult Swapchain::acquireNextImage(u32& imageIndex)
+    {
+        // Wait for the fence of the current frame to be signaled (if it was previously used)
+        if (m_framesInFlight[m_currentFrame])
+        {
+            vkWaitForFences(m_device, 1, &m_fences[m_currentFrame], VK_TRUE, UINT64_MAX);
+        }
+        
+        VkSemaphore imageAvailableSemaphore = m_imageAvailableSemaphores[m_currentFrame];
+        VkResult result = vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+        
+        if (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR)
+        {
+            // Reset the fence for the current frame
+            vkResetFences(m_device, 1, &m_fences[m_currentFrame]);
+            m_framesInFlight[m_currentFrame] = true;
+        }
+        
+        return result;
+    }
+
+    VkResult Swapchain::present(u32 imageIndex)
+    {
+        VkSemaphore renderFinishedSemaphore = m_renderFinishedSemaphores[m_currentFrame];
+
+        VkPresentInfoKHR presentInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &renderFinishedSemaphore,
+            .swapchainCount = 1,
+            .pSwapchains = &m_swapchain,
+            .pImageIndices = &imageIndex,
+        };
+
+        VkResult result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
+        
+        if (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR)
+        {
+            // Mark current frame as no longer in flight
+            m_framesInFlight[m_currentFrame] = false;
+            // Advance to the next frame
+            m_currentFrame = (m_currentFrame + 1) % m_maxImagesInFlight;
+        }
+        
+        return result;
+    }
+
+} // namespace mango::vulkan
