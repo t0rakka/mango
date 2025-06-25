@@ -95,6 +95,23 @@ namespace mango
 // mangoMain()
 // ----------------------------------------------------------------------------------
 
+#if defined(WIN32)
+
+    class WindowsConsole
+    {
+    private:
+        bool m_attached = false;
+
+    public:
+        WindowsConsole();
+        ~WindowsConsole();
+
+        WindowsConsole(const WindowsConsole&) = delete;
+        WindowsConsole& operator=(const WindowsConsole&) = delete;
+    };
+
+#endif // WIN32
+
 #if defined(MANGO_IMPLEMENT_MAIN)
 
     // This will be called from platform specific main function below;
@@ -109,7 +126,9 @@ namespace mango
             MANGO_UNREFERENCED(hPrevInstance);
             MANGO_UNREFERENCED(lpCmdLine);
             MANGO_UNREFERENCED(nCmdShow);
+
             mango::CommandLine commands(__argv + 0, __argv + __argc);
+            WindowsConsole console;
             return mangoMain(commands);
         }
 
