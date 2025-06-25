@@ -328,11 +328,10 @@ namespace mango::vulkan
         }
 
         printLine("InstanceExtensionProperties:");
-        printLine("");
 
         for (auto property : extensionProperties)
         {
-            printLine(Print::Info, "  {}", property.extensionName);
+            printLine(Print::Info, "  - {}", property.extensionName);
         }
 
         printLine("");
@@ -376,8 +375,6 @@ namespace mango::vulkan
         {
             VkPhysicalDeviceProperties properties;
             vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-
-            printLine(Print::Info, "");
 
             printLine(Print::Info, "");
             printLine(Print::Info, "  deviceName: \"{}\"", properties.deviceName);
@@ -560,6 +557,8 @@ namespace mango::vulkan
     struct PhysicalDeviceScore
     {
         VkPhysicalDevice device = VK_NULL_HANDLE;
+        size_t deviceIndex = 0;
+
         u32 typeScore = 0;
         u32 apiScore = 0;
         u32 memoryScore = 0;
@@ -583,8 +582,10 @@ namespace mango::vulkan
             return VK_NULL_HANDLE;
         }
 
-        for (auto physicalDevice : physicalDevices)
+        for (size_t i = 0; i < physicalDevices.size(); ++i)
         {
+            VkPhysicalDevice physicalDevice = physicalDevices[i];
+
             VkPhysicalDeviceProperties properties;
             vkGetPhysicalDeviceProperties(physicalDevice, &properties);
 
@@ -594,6 +595,7 @@ namespace mango::vulkan
             PhysicalDeviceScore score;
 
             score.device = physicalDevice;
+            score.deviceIndex = i;
 
             switch (properties.deviceType)
             {
@@ -630,8 +632,11 @@ namespace mango::vulkan
         }
 
         std::sort(scores.begin(), scores.end(), std::greater<>());
+        PhysicalDeviceScore bestScore = scores.front();
 
-        return scores.front().device;
+        printLine(Print::Info, "selectedPhysicalDevice: {}", bestScore.deviceIndex);
+
+        return bestScore.device;
     }
 
     // ------------------------------------------------------------------------------

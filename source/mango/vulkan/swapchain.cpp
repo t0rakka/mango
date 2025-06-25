@@ -71,7 +71,6 @@ namespace mango::vulkan
         }
 
         printLine("PhysicalDeviceSurfaceFormats:");
-        printLine("");
 
         std::vector<VkSurfaceFormatKHR> formats(formatCount);
         vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, formats.data());
@@ -80,7 +79,7 @@ namespace mango::vulkan
 
         for (const VkSurfaceFormatKHR& surfaceFormat : formats)
         {
-            printLine("  {} | {}", getString(surfaceFormat.format), getString(surfaceFormat.colorSpace));
+            printLine("  - {} | {}", getString(surfaceFormat.format), getString(surfaceFormat.colorSpace));
 
             if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_UNORM)
             {
@@ -88,8 +87,10 @@ namespace mango::vulkan
             }
         }
 
-        printLine("");
         m_format = selectedSurfaceFormat.format;
+
+        printLine("");
+        printLine("selectedSurfaceFormat: {} | {}", getString(selectedSurfaceFormat.format), getString(selectedSurfaceFormat.colorSpace));
     }
 
     void Swapchain::createSwapchain()
@@ -245,6 +246,7 @@ namespace mango::vulkan
         cleanup();
 
         m_extent = extent;
+        m_currentFrame = 0;
 
         createSwapchain();
         createSyncObjects();
