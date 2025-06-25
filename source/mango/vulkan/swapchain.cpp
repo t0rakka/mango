@@ -75,22 +75,23 @@ namespace mango::vulkan
         std::vector<VkSurfaceFormatKHR> formats(formatCount);
         vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, formats.data());
 
-        VkSurfaceFormatKHR selectedSurfaceFormat = formats[0];
-
-        for (const VkSurfaceFormatKHR& surfaceFormat : formats)
+        size_t selectedFormatIndex = 0;
+        for (size_t i = 0; i < formats.size(); ++i)
         {
-            printLine("  - {} | {}", getString(surfaceFormat.format), getString(surfaceFormat.colorSpace));
-
-            if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_UNORM)
+            if (formats[i].format == VK_FORMAT_B8G8R8A8_UNORM)
             {
-                selectedSurfaceFormat = surfaceFormat;
+                selectedFormatIndex = i;
+                break;
             }
         }
 
-        m_format = selectedSurfaceFormat.format;
+        for (size_t i = 0; i < formats.size(); ++i)
+        {
+            std::string_view prefix = i == selectedFormatIndex ? ">" : " ";
+            printLine("  {} {} | {}", prefix, getString(formats[i].format), getString(formats[i].colorSpace));
+        }
 
-        printLine("");
-        printLine("selectedSurfaceFormat: {} | {}", getString(selectedSurfaceFormat.format), getString(selectedSurfaceFormat.colorSpace));
+        m_format = formats[selectedFormatIndex].format;
     }
 
     void Swapchain::createSwapchain()
@@ -104,16 +105,16 @@ namespace mango::vulkan
             .imageFormat = m_format,
             //.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
             .imageExtent = m_extent,
-            //.imageArrayLayers = 1,
+            .imageArrayLayers = 1,
             .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
             //.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
             //.queueFamilyIndexCount = 0,
             //.pQueueFamilyIndices = nullptr,
-            //.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-            //.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+            .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+            .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
             .presentMode = VK_PRESENT_MODE_FIFO_KHR,
-            //.clipped = VK_TRUE,
-            //.oldSwapchain = VK_NULL_HANDLE,
+            .clipped = VK_TRUE,
+            .oldSwapchain = VK_NULL_HANDLE,
         };
 
         VkResult result = vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &m_swapchain);
