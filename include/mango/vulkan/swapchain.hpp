@@ -52,7 +52,7 @@ namespace mango::vulkan
         VkSemaphore getImageAvailableSemaphore() const;
         VkSemaphore getRenderFinishedSemaphore() const;
 
-        void recreate(VkExtent2D extent);
+        VkExtent2D update();
         VkResult acquireNextImage(u32& imageIndex);
         VkResult present(u32 imageIndex);
     };

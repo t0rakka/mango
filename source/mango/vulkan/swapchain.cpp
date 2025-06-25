@@ -263,15 +263,27 @@ namespace mango::vulkan
         return m_renderFinishedSemaphores[m_currentFrame];
     }
 
-    void Swapchain::recreate(VkExtent2D extent)
+    VkExtent2D Swapchain::update()
     {
-        cleanup();
+        VkSurfaceCapabilitiesKHR caps;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
+
+        VkExtent2D extent = caps.currentExtent;
+
+        bool changed = extent.width != m_extent.width || extent.height != m_extent.height;
+        bool valid = extent.width > 0 && extent.height > 0;
 
         m_extent = extent;
-        m_currentFrame = 0;
 
-        createSwapchain();
-        createSyncObjects();
+        if (changed && valid)
+        {
+            cleanup();
+            createSwapchain();
+            createSyncObjects();
+            m_currentFrame = 0;
+        }
+
+        return m_extent;
     }
 
     VkResult Swapchain::acquireNextImage(u32& imageIndex)
