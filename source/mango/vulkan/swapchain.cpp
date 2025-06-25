@@ -30,26 +30,6 @@ namespace mango::vulkan
         cleanup();
     }
 
-    void Swapchain::cleanup()
-    {
-        for (auto semaphore : m_imageAvailableSemaphores)
-        {
-            vkDestroySemaphore(m_device, semaphore, nullptr);
-        }
-
-        for (auto semaphore : m_renderFinishedSemaphores)
-        {
-            vkDestroySemaphore(m_device, semaphore, nullptr);
-        }
-
-        for (auto fence : m_fences)
-        {
-            vkDestroyFence(m_device, fence, nullptr);
-        }
-
-        vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
-    }
-
     void Swapchain::configure()
     {
         //VkBool32 supported = VK_FALSE;
@@ -92,6 +72,48 @@ namespace mango::vulkan
         }
 
         m_format = formats[selectedFormatIndex].format;
+    }
+
+    void Swapchain::cleanup()
+    {
+        // Wait for device to be idle to ensure all operations are complete
+        vkDeviceWaitIdle(m_device);
+
+        // Wait for fences that are currently in use
+        for (u32 i = 0; i < m_maxImagesInFlight; ++i)
+        {
+            if (m_framesInFlight[i])
+            {
+                vkWaitForFences(m_device, 1, &m_fences[i], VK_TRUE, UINT64_MAX);
+            }
+        }
+
+        // Destroy fences
+        for (auto fence : m_fences)
+        {
+            vkDestroyFence(m_device, fence, nullptr);
+        }
+
+        // Destroy semaphores
+        for (auto semaphore : m_imageAvailableSemaphores)
+        {
+            vkDestroySemaphore(m_device, semaphore, nullptr);
+        }
+
+        for (auto semaphore : m_renderFinishedSemaphores)
+        {
+            vkDestroySemaphore(m_device, semaphore, nullptr);
+        }
+
+        // Destroy image views
+        for (auto imageView : m_imageViews)
+        {
+            vkDestroyImageView(m_device, imageView, nullptr);
+        }
+        //m_imageViews.clear();
+
+        // Destroy swapchain
+        vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
     }
 
     void Swapchain::createSwapchain()
@@ -243,7 +265,6 @@ namespace mango::vulkan
 
     void Swapchain::recreate(VkExtent2D extent)
     {
-        vkDeviceWaitIdle(m_device);
         cleanup();
 
         m_extent = extent;
