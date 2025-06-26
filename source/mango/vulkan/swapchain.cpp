@@ -294,7 +294,19 @@ namespace mango::vulkan
         // Wait for the fence of the current frame to be signaled (if it was previously used)
         if (m_framesInFlight[m_currentFrame])
         {
-            vkWaitForFences(m_device, 1, &m_fences[m_currentFrame], VK_TRUE, UINT64_MAX);
+            VkResult waitResult = vkWaitForFences(m_device, 1, &m_fences[m_currentFrame], VK_TRUE, 250000000); // 0.25 seconds timeout
+            if (waitResult == VK_TIMEOUT)
+            {
+                printLine(Print::Warning, "Fence wait timeout, resetting frame state");
+                // Reset the fence and mark frame as not in flight to recover
+                vkResetFences(m_device, 1, &m_fences[m_currentFrame]);
+                m_framesInFlight[m_currentFrame] = false;
+            }
+            else if (waitResult != VK_SUCCESS)
+            {
+                printLine(Print::Error, "vkWaitForFences failed: {}", getString(waitResult));
+                return waitResult;
+            }
         }
         
         VkSemaphore imageAvailableSemaphore = m_imageAvailableSemaphores[m_currentFrame];
@@ -305,6 +317,12 @@ namespace mango::vulkan
             // Reset the fence for the current frame
             vkResetFences(m_device, 1, &m_fences[m_currentFrame]);
             m_framesInFlight[m_currentFrame] = true;
+        }
+        else
+        {
+            // If acquire failed, don't mark the frame as in flight
+            // This prevents the fence from being waited on in future calls
+            printLine(Print::Warning, "vkAcquireNextImageKHR failed: {}", getString(result));
         }
         
         return result;
@@ -325,16 +343,51 @@ namespace mango::vulkan
         };
 
         VkResult result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
-        
-        if (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR)
+        if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
         {
-            // Mark current frame as no longer in flight
-            m_framesInFlight[m_currentFrame] = false;
-            // Advance to the next frame
-            m_currentFrame = (m_currentFrame + 1) % m_maxImagesInFlight;
+            printLine(Print::Error, "vkQueuePresentKHR failed: {}", getString(result));
         }
         
+        // Always mark the frame as not in flight and advance to the next frame
+        // This ensures we don't get stuck even if present fails
+        m_framesInFlight[m_currentFrame] = false;
+        m_currentFrame = (m_currentFrame + 1) % m_maxImagesInFlight;
+
         return result;
+    }
+
+    void Swapchain::skipFrame()
+    {
+        // If the current frame was marked as in flight but we're not going to submit work,
+        // we need to reset the fence and mark it as not in flight
+        if (m_framesInFlight[m_currentFrame])
+        {
+            vkResetFences(m_device, 1, &m_fences[m_currentFrame]);
+            m_framesInFlight[m_currentFrame] = false;
+        }
+        
+        // Advance to the next frame
+        m_currentFrame = (m_currentFrame + 1) % m_maxImagesInFlight;
+    }
+
+    void Swapchain::resetSyncState()
+    {
+        // Wait for all fences with timeout
+        for (u32 i = 0; i < m_maxImagesInFlight; ++i)
+        {
+            if (m_framesInFlight[i])
+            {
+                VkResult waitResult = vkWaitForFences(m_device, 1, &m_fences[i], VK_TRUE, 250000000);
+                if (waitResult == VK_TIMEOUT)
+                {
+                    printLine(Print::Warning, "Fence wait timeout during reset; forcing reset.");
+                    vkResetFences(m_device, 1, &m_fences[i]);
+                }
+                m_framesInFlight[i] = false;
+            }
+        }
+        
+        m_currentFrame = 0;
     }
 
 } // namespace mango::vulkan

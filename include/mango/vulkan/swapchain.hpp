@@ -55,6 +55,9 @@ namespace mango::vulkan
         VkExtent2D update();
         VkResult acquireNextImage(u32& imageIndex);
         VkResult present(u32 imageIndex);
+        
+        void skipFrame();
+        void resetSyncState();
     };
 
 } // namespace mango::vulkan
