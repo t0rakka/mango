@@ -270,7 +270,7 @@ namespace mango::vulkan
     // ------------------------------------------------------------------------------
 
     VulkanWindow::VulkanWindow(VkInstance instance, int width, int height, u32 flags)
-        : Window(width, height, flags)
+        : Window(width, height, flags | Window::API_VULKAN)
         , m_instance(instance)
         , m_surface(VK_NULL_HANDLE)
     {

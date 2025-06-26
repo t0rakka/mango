@@ -248,6 +248,7 @@ namespace mango
             DISABLE_RESIZE  = 0x00000001,
             API_OPENGL      = 0x00010000,
             API_EGL         = 0x00020000,
+            API_VULKAN      = 0x00040000,
         };
 
         Window(int width, int height, u32 flags = 0);

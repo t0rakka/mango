@@ -16,6 +16,7 @@ namespace mango
         WNDCLASSEX wndclass{ 0 };
         bool is_looping { false };
         bool fullscreen { false };
+        bool is_opengl { false };
         RECT rect;
 
         WindowContext(int width, int height, u32 flags);
