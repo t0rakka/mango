@@ -349,7 +349,6 @@ namespace mango::vulkan
         }
         
         // Always mark the frame as not in flight and advance to the next frame
-        // This ensures we don't get stuck even if present fails
         m_framesInFlight[m_currentFrame] = false;
         m_currentFrame = (m_currentFrame + 1) % m_maxImagesInFlight;
 
