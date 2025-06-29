@@ -697,11 +697,11 @@ find_module_with_cmake(mango LIBDEFLATE libdeflate libdeflate::libdeflate_shared
 find_module_with_pkg(mango LIBDEFLATE libdeflate)
 check_required_package(LIBDEFLATE)
 
-if (APPLE)
-    # brew imported target is 'zstd::libzstd'
+if (APPLE OR WIN32)
+    # brew/vcpkg imported target is 'zstd::libzstd'
     find_module_with_cmake(mango ZSTD zstd zstd::libzstd 0)
 else ()
-    # vcpkg/apt imported target is 'zstd'
+    # apt/pacman imported target is 'zstd'
     find_module_with_cmake(mango ZSTD zstd zstd 0)
 endif ()
 find_module_with_pkg(mango ZSTD libzstd)
