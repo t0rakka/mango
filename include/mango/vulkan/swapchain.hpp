@@ -4,6 +4,8 @@
 */
 #pragma once
 
+#if 0
+
 #include <vector>
 #include <mango/vulkan/vulkan.hpp>
 
@@ -61,3 +63,5 @@ namespace mango::vulkan
     };
 
 } // namespace mango::vulkan
+
+#endif // 0

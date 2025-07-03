@@ -6,6 +6,8 @@
 #include <mango/core/print.hpp>
 #include <mango/vulkan/vulkan.hpp>
 
+#if 0
+
 namespace mango::vulkan
 {
 
@@ -390,3 +392,5 @@ namespace mango::vulkan
     }
 
 } // namespace mango::vulkan
+
+#endif // 0
