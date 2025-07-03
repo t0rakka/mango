@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -57,11 +57,11 @@ namespace mango::filesystem
         u64 offset() const override;
         void seek(s64 distance, SeekMode mode) override;
         void read(void* dest, u64 size) override;
-        void write(const void* data, u64 size) override;
+        u64 write(const void* data, u64 size) override;
 
-        void write(ConstMemory memory)
+        u64 write(ConstMemory memory)
         {
-            Stream::write(memory);
+            return Stream::write(memory);
         }
     };
 

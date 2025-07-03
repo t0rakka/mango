@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -36,11 +36,11 @@ namespace mango
         virtual u64 offset() const = 0;
         virtual void seek(s64 distance, SeekMode mode) = 0;
         virtual void read(void* dest, u64 size) = 0;
-        virtual void write(const void* data, u64 size) = 0;
+        virtual u64 write(const void* data, u64 size) = 0;
 
-        void write(ConstMemory memory)
+        u64 write(ConstMemory memory)
         {
-            write(memory.address, memory.size);
+            return write(memory.address, memory.size);
         }
     };
 
@@ -137,57 +137,57 @@ namespace mango
 
         // write functions
 
-        void write(const void* data, u64 size)
+        u64 write(const void* data, u64 size)
         {
-            s.write(data, size);
+            return s.write(data, size);
         }
 
-        void write(ConstMemory memory)
+        u64 write(ConstMemory memory)
         {
-            s.write(memory);
+            return s.write(memory);
         }
 
         template <typename T>
-        void write8(T value)
+        u64 write8(T value)
         {
             u8 temp = u8(value);
-            s.write(&temp, sizeof(temp));
+            return s.write(&temp, sizeof(temp));
         }
 
         template <typename T>
-        void write16(T value)
+        u64 write16(T value)
         {
             u16 temp = u16(value);
-            s.write(&temp, sizeof(temp));
+            return s.write(&temp, sizeof(temp));
         }
 
         template <typename T>
-        void write32(T value)
+        u64 write32(T value)
         {
             u32 temp = u32(value);
-            s.write(&temp, sizeof(temp));
+            return s.write(&temp, sizeof(temp));
         }
 
         template <typename T>
-        void write64(T value)
+        u64 write64(T value)
         {
             u64 temp = u64(value);
-            s.write(&temp, sizeof(temp));
+            return s.write(&temp, sizeof(temp));
         }
 
-        void write16f(Half value)
+        u64 write16f(Half value)
         {
-            write16(value.u);
+            return write16(value.u);
         }
 
-        void write32f(Float value)
+        u64 write32f(Float value)
         {
-            write32(value.u);
+            return write32(value.u);
         }
 
-        void write64f(Double value)
+        u64 write64f(Double value)
         {
-            write64(value.u);
+            return write64(value.u);
         }
     };
 
@@ -287,60 +287,60 @@ namespace mango
 
         // write functions
 
-        void write(const void* data, u64 size)
+        u64 write(const void* data, u64 size)
         {
-            s.write(data, size);
+            return s.write(data, size);
         }
 
-        void write(ConstMemory memory)
+        u64 write(ConstMemory memory)
         {
-            s.write(memory);
+            return s.write(memory);
         }
 
         template <typename T>
-        void write8(T value)
+        u64 write8(T value)
         {
             u8 temp = u8(value);
-            s.write(&temp, sizeof(temp));
+            return s.write(&temp, sizeof(temp));
         }
 
         template <typename T>
-        void write16(T value)
+        u64 write16(T value)
         {
             u16 temp = u16(value);
             temp = byteswap(temp);
-            s.write(&temp, sizeof(temp));
+            return s.write(&temp, sizeof(temp));
         }
 
         template <typename T>
-        void write32(T value)
+        u64 write32(T value)
         {
             u32 temp = u32(value);
             temp = byteswap(temp);
-            s.write(&temp, sizeof(temp));
+            return s.write(&temp, sizeof(temp));
         }
 
         template <typename T>
-        void write64(T value)
+        u64 write64(T value)
         {
             u64 temp = u64(value);
             temp = byteswap(temp);
-            s.write(&temp, sizeof(temp));
+            return s.write(&temp, sizeof(temp));
         }
 
-        void write16f(Half value)
+        u64 write16f(Half value)
         {
-            write16(value.u);
+            return write16(value.u);
         }
 
-        void write32f(Float value)
+        u64 write32f(Float value)
         {
-            write32(value.u);
+            return write32(value.u);
         }
 
-        void write64f(Double value)
+        u64 write64f(Double value)
         {
-            write64(value.u);
+            return write64(value.u);
         }
     };
 

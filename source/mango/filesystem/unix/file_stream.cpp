@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #if __ANDROID_API__ < __ANDROID_API_N__
@@ -67,10 +67,11 @@ namespace mango::filesystem
             MANGO_UNREFERENCED(status);
         }
 
-        void write(const void* data, u64 size)
+        u64 write(const void* data, u64 size)
         {
             ssize_t status = ::write(m_file, data, size_t(size));
-            MANGO_UNREFERENCED(status);
+            u64 bytes_written = status < 0 ? 0 : u64(status);
+            return bytes_written;
         }
     };
 
@@ -147,9 +148,9 @@ namespace mango::filesystem
         m_handle->read(dest, size);
     }
 
-    void FileStream::write(const void* data, u64 size)
+    u64 FileStream::write(const void* data, u64 size)
     {
-        m_handle->write(data, size);
+        return m_handle->write(data, size);
     }
 
 } // namespace mango::filesystem
