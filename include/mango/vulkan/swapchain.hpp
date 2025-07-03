@@ -4,8 +4,6 @@
 */
 #pragma once
 
-#if 0
-
 #include <vector>
 #include <mango/vulkan/vulkan.hpp>
 
@@ -18,24 +16,21 @@ namespace mango::vulkan
         VkDevice m_device;
         VkPhysicalDevice m_physicalDevice;
         VkSurfaceKHR m_surface;
-        VkQueue m_graphicsQueue;
         VkQueue m_presentQueue;
 
         VkFormat m_format;
-        VkExtent2D m_extent;
+        VkColorSpaceKHR m_colorSpace;
+        VkExtent2D m_extent { 0, 0 };
         VkSwapchainKHR m_swapchain;
-
-        u32 m_imageCount = 0;
 
         std::vector<VkImage> m_images;
         std::vector<VkImageView> m_imageViews;
 
-        static constexpr u32 m_maxImagesInFlight = 2;
+        static constexpr u32 m_maxImagesInFlight = 5;
 
         std::vector<VkSemaphore> m_imageAvailableSemaphores;
         std::vector<VkSemaphore> m_renderFinishedSemaphores;
         std::vector<VkFence> m_fences;
-        std::vector<bool> m_framesInFlight;
         u32 m_currentFrame = 0;
 
         void cleanup();
@@ -44,24 +39,21 @@ namespace mango::vulkan
         void createSyncObjects();
 
     public:
-        Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue graphicsQueue, VkQueue presentQueue);
+        Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue presentQueue);
         ~Swapchain();
 
         u32 getImageCount() const;
-        VkFormat getImageFormat() const;
+        VkFormat getFormat() const;
+        VkColorSpaceKHR getColorSpace() const;
         VkExtent2D getExtent() const;
         VkImageView getImageView(u32 imageIndex) const;
         VkSemaphore getImageAvailableSemaphore() const;
         VkSemaphore getRenderFinishedSemaphore() const;
+        VkFence getFence() const;
 
-        VkExtent2D update();
+        bool update();
         VkResult acquireNextImage(u32& imageIndex);
         VkResult present(u32 imageIndex);
-        
-        void skipFrame();
-        void resetSyncState();
     };
 
 } // namespace mango::vulkan
-
-#endif // 0

@@ -6,8 +6,6 @@
 #include <mango/core/print.hpp>
 #include <mango/vulkan/vulkan.hpp>
 
-#if 0
-
 namespace mango::vulkan
 {
 
@@ -15,11 +13,10 @@ namespace mango::vulkan
     // Swapchain
     // ------------------------------------------------------------------------------
 
-    Swapchain::Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue graphicsQueue, VkQueue presentQueue)
+    Swapchain::Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue presentQueue)
         : m_device(device)
         , m_physicalDevice(physicalDevice)
         , m_surface(surface)
-        , m_graphicsQueue(graphicsQueue)
         , m_presentQueue(presentQueue)
     {
         configure();
@@ -38,11 +35,13 @@ namespace mango::vulkan
         //vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, graphicsQueueFamilyIndex, m_surface, &supported);
         //printLine("vkGetPhysicalDeviceSurfaceSupportKHR: {}", supported);
 
+        /*
         VkSurfaceCapabilitiesKHR caps;
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
         printLine("PhysicalDeviceSurface.Extent: {} x {}", caps.currentExtent.width, caps.currentExtent.height);
 
         m_extent = caps.currentExtent;
+        */
 
         uint32_t formatCount;
         vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, nullptr);
@@ -74,29 +73,18 @@ namespace mango::vulkan
         }
 
         m_format = formats[selectedFormatIndex].format;
+        m_colorSpace = formats[selectedFormatIndex].colorSpace;
     }
 
     void Swapchain::cleanup()
     {
-        // Wait for device to be idle to ensure all operations are complete
         vkDeviceWaitIdle(m_device);
 
-        // Wait for fences that are currently in use
-        for (u32 i = 0; i < m_maxImagesInFlight; ++i)
-        {
-            if (m_framesInFlight[i])
-            {
-                vkWaitForFences(m_device, 1, &m_fences[i], VK_TRUE, UINT64_MAX);
-            }
-        }
-
-        // Destroy fences
         for (auto fence : m_fences)
         {
             vkDestroyFence(m_device, fence, nullptr);
         }
 
-        // Destroy semaphores
         for (auto semaphore : m_imageAvailableSemaphores)
         {
             vkDestroySemaphore(m_device, semaphore, nullptr);
@@ -107,14 +95,11 @@ namespace mango::vulkan
             vkDestroySemaphore(m_device, semaphore, nullptr);
         }
 
-        // Destroy image views
         for (auto imageView : m_imageViews)
         {
             vkDestroyImageView(m_device, imageView, nullptr);
         }
-        //m_imageViews.clear();
 
-        // Destroy swapchain
         vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
     }
 
@@ -123,6 +108,10 @@ namespace mango::vulkan
         VkSurfaceCapabilitiesKHR caps;
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
 
+        m_extent = caps.currentExtent;
+        m_extent.width = std::max(m_extent.width, 1u);
+        m_extent.height = std::max(m_extent.height, 1u);
+
         // create swapchain
         VkSwapchainCreateInfoKHR createInfo =
         {
@@ -130,13 +119,13 @@ namespace mango::vulkan
             .surface = m_surface,
             .minImageCount = caps.minImageCount,
             .imageFormat = m_format,
-            //.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
+            .imageColorSpace = m_colorSpace,
             .imageExtent = m_extent,
             .imageArrayLayers = 1,
             .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-            //.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
-            //.queueFamilyIndexCount = 0,
-            //.pQueueFamilyIndices = nullptr,
+            .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .queueFamilyIndexCount = 0,
+            .pQueueFamilyIndices = nullptr,
             .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
             .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
             .presentMode = VK_PRESENT_MODE_FIFO_KHR,
@@ -152,14 +141,15 @@ namespace mango::vulkan
         }
 
         // get swapchain images
-        vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_imageCount, nullptr);
-        m_images.resize(m_imageCount);
-        vkGetSwapchainImagesKHR(m_device, m_swapchain, &m_imageCount, m_images.data());
-        
-        // create image views
-        m_imageViews.resize(m_imageCount);
+        u32 imageCount = 0;
+        vkGetSwapchainImagesKHR(m_device, m_swapchain, &imageCount, nullptr);
+        m_images.resize(imageCount);
+        vkGetSwapchainImagesKHR(m_device, m_swapchain, &imageCount, m_images.data());
 
-        for (size_t i = 0; i < m_imageCount; ++i)
+        // create image views
+        m_imageViews.resize(imageCount);
+
+        for (u32 i = 0; i < imageCount; ++i)
         {
             VkImageViewCreateInfo viewInfo =
             {
@@ -198,7 +188,6 @@ namespace mango::vulkan
         m_imageAvailableSemaphores.resize(m_maxImagesInFlight);
         m_renderFinishedSemaphores.resize(m_maxImagesInFlight);
         m_fences.resize(m_maxImagesInFlight);
-        m_framesInFlight.resize(m_maxImagesInFlight, false);
 
         VkSemaphoreCreateInfo semaphoreInfo = 
         {
@@ -240,12 +229,17 @@ namespace mango::vulkan
 
     u32 Swapchain::getImageCount() const
     {
-        return m_imageCount;
+        return u32(m_images.size());
     }
 
-    VkFormat Swapchain::getImageFormat() const
+    VkFormat Swapchain::getFormat() const
     {
         return m_format;
+    }
+
+    VkColorSpaceKHR Swapchain::getColorSpace() const
+    {
+        return m_colorSpace;
     }
 
     VkExtent2D Swapchain::getExtent() const
@@ -268,19 +262,22 @@ namespace mango::vulkan
         return m_renderFinishedSemaphores[m_currentFrame];
     }
 
-    VkExtent2D Swapchain::update()
+    VkFence Swapchain::getFence() const
+    {
+        return m_fences[m_currentFrame];
+    }
+
+    bool Swapchain::update()
     {
         VkSurfaceCapabilitiesKHR caps;
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
-
         VkExtent2D extent = caps.currentExtent;
 
         bool changed = extent.width != m_extent.width || extent.height != m_extent.height;
         bool valid = extent.width > 0 && extent.height > 0;
+        bool recreate_swapchain = changed && valid;
 
-        m_extent = extent;
-
-        if (changed && valid)
+        if (recreate_swapchain)
         {
             cleanup();
             createSwapchain();
@@ -288,45 +285,48 @@ namespace mango::vulkan
             m_currentFrame = 0;
         }
 
-        return m_extent;
+        return recreate_swapchain;
     }
 
     VkResult Swapchain::acquireNextImage(u32& imageIndex)
     {
-        // Wait for the fence of the current frame to be signaled (if it was previously used)
-        if (m_framesInFlight[m_currentFrame])
+        //*
+        VkFence fence = m_fences[m_currentFrame];
+
+        VkResult waitResult = vkWaitForFences(m_device, 1, &fence, VK_TRUE, 250000000); // 0.25 seconds timeout
+        if (waitResult == VK_TIMEOUT)
         {
-            VkResult waitResult = vkWaitForFences(m_device, 1, &m_fences[m_currentFrame], VK_TRUE, 250000000); // 0.25 seconds timeout
-            if (waitResult == VK_TIMEOUT)
-            {
-                printLine(Print::Warning, "Fence wait timeout, resetting frame state");
-                // Reset the fence and mark frame as not in flight to recover
-                vkResetFences(m_device, 1, &m_fences[m_currentFrame]);
-                m_framesInFlight[m_currentFrame] = false;
-            }
-            else if (waitResult != VK_SUCCESS)
-            {
-                printLine(Print::Error, "vkWaitForFences failed: {}", getString(waitResult));
-                return waitResult;
-            }
+            printLine(Print::Warning, "Fence wait timeout, resetting frame state");
+            vkResetFences(m_device, 1, &fence);
         }
-        
-        VkSemaphore imageAvailableSemaphore = m_imageAvailableSemaphores[m_currentFrame];
-        VkResult result = vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
-        
-        if (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR)
+        else if (waitResult != VK_SUCCESS)
         {
-            // Reset the fence for the current frame
-            vkResetFences(m_device, 1, &m_fences[m_currentFrame]);
-            m_framesInFlight[m_currentFrame] = true;
+            printLine(Print::Error, "vkWaitForFences failed: {}", getString(waitResult));
+            return waitResult;
+        }
+        //*/
+
+        VkSemaphore imageAvailableSemaphore = m_imageAvailableSemaphores[m_currentFrame];
+
+        VkResult result = vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            //update();
+        }
+        else if (result == VK_SUBOPTIMAL_KHR)
+        {
+            //update();
+        }
+        else if (result == VK_SUCCESS)
+        {
         }
         else
         {
-            // If acquire failed, don't mark the frame as in flight
-            // This prevents the fence from being waited on in future calls
             printLine(Print::Warning, "vkAcquireNextImageKHR failed: {}", getString(result));
         }
-        
+
+        //vkResetFences(m_device, 1, &fence);
+
         return result;
     }
 
@@ -350,47 +350,9 @@ namespace mango::vulkan
             printLine(Print::Error, "vkQueuePresentKHR failed: {}", getString(result));
         }
         
-        // Always mark the frame as not in flight and advance to the next frame
-        m_framesInFlight[m_currentFrame] = false;
         m_currentFrame = (m_currentFrame + 1) % m_maxImagesInFlight;
 
         return result;
     }
 
-    void Swapchain::skipFrame()
-    {
-        // If the current frame was marked as in flight but we're not going to submit work,
-        // we need to reset the fence and mark it as not in flight
-        if (m_framesInFlight[m_currentFrame])
-        {
-            vkResetFences(m_device, 1, &m_fences[m_currentFrame]);
-            m_framesInFlight[m_currentFrame] = false;
-        }
-        
-        // Advance to the next frame
-        m_currentFrame = (m_currentFrame + 1) % m_maxImagesInFlight;
-    }
-
-    void Swapchain::resetSyncState()
-    {
-        // Wait for all fences with timeout
-        for (u32 i = 0; i < m_maxImagesInFlight; ++i)
-        {
-            if (m_framesInFlight[i])
-            {
-                VkResult waitResult = vkWaitForFences(m_device, 1, &m_fences[i], VK_TRUE, 250000000);
-                if (waitResult == VK_TIMEOUT)
-                {
-                    printLine(Print::Warning, "Fence wait timeout during reset; forcing reset.");
-                    vkResetFences(m_device, 1, &m_fences[i]);
-                }
-                m_framesInFlight[i] = false;
-            }
-        }
-        
-        m_currentFrame = 0;
-    }
-
 } // namespace mango::vulkan
-
-#endif // 0
