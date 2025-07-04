@@ -20,13 +20,43 @@ namespace mango::vulkan
         , m_presentQueue(presentQueue)
     {
         configure();
-        createSwapchain();
-        createSyncObjects();
+        recreateSwapchain();
     }
 
     Swapchain::~Swapchain()
     {
         cleanup();
+    }
+
+    void Swapchain::cleanup()
+    {
+        vkDeviceWaitIdle(m_device);
+
+        for (auto fence : m_fences)
+        {
+            vkDestroyFence(m_device, fence, nullptr);
+        }
+
+        for (auto semaphore : m_imageAvailableSemaphores)
+        {
+            vkDestroySemaphore(m_device, semaphore, nullptr);
+        }
+
+        for (auto semaphore : m_renderFinishedSemaphores)
+        {
+            vkDestroySemaphore(m_device, semaphore, nullptr);
+        }
+
+        for (auto imageView : m_imageViews)
+        {
+            vkDestroyImageView(m_device, imageView, nullptr);
+        }
+
+        if (m_swapchain != VK_NULL_HANDLE)
+        {
+            vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
+            m_swapchain = VK_NULL_HANDLE;
+        }
     }
 
     void Swapchain::configure()
@@ -76,51 +106,17 @@ namespace mango::vulkan
         m_colorSpace = formats[selectedFormatIndex].colorSpace;
     }
 
-    void Swapchain::cleanup()
+    void Swapchain::createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities)
     {
-        vkDeviceWaitIdle(m_device);
-
-        for (auto fence : m_fences)
-        {
-            vkDestroyFence(m_device, fence, nullptr);
-        }
-
-        for (auto semaphore : m_imageAvailableSemaphores)
-        {
-            vkDestroySemaphore(m_device, semaphore, nullptr);
-        }
-
-        for (auto semaphore : m_renderFinishedSemaphores)
-        {
-            vkDestroySemaphore(m_device, semaphore, nullptr);
-        }
-
-        for (auto imageView : m_imageViews)
-        {
-            vkDestroyImageView(m_device, imageView, nullptr);
-        }
-
-        vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
-    }
-
-    void Swapchain::createSwapchain()
-    {
-        VkSurfaceCapabilitiesKHR caps;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
-
-        m_extent = caps.currentExtent;
-        m_extent.width = std::max(m_extent.width, 1u);
-        m_extent.height = std::max(m_extent.height, 1u);
-
         // create swapchain
         VkSwapchainCreateInfoKHR createInfo =
         {
             .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
             .surface = m_surface,
-            .minImageCount = caps.minImageCount,
+            .minImageCount = surfaceCapabilities.minImageCount,
             .imageFormat = m_format,
             .imageColorSpace = m_colorSpace,
-            .imageExtent = m_extent,
+            .imageExtent = surfaceCapabilities.currentExtent,
             .imageArrayLayers = 1,
             .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
             .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
@@ -267,25 +263,29 @@ namespace mango::vulkan
         return m_fences[m_currentFrame];
     }
 
-    bool Swapchain::update()
+    bool Swapchain::recreateSwapchain()
     {
-        VkSurfaceCapabilitiesKHR caps;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
-        VkExtent2D extent = caps.currentExtent;
+        bool recreate = false;
 
-        bool changed = extent.width != m_extent.width || extent.height != m_extent.height;
-        bool valid = extent.width > 0 && extent.height > 0;
-        bool recreate_swapchain = changed && valid;
+        VkSurfaceCapabilitiesKHR surfaceCapabilities;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities);
+        VkExtent2D extent = surfaceCapabilities.currentExtent;
 
-        if (recreate_swapchain)
+        if (extent.width > 0 && extent.height > 0)
         {
-            cleanup();
-            createSwapchain();
-            createSyncObjects();
-            m_currentFrame = 0;
+            if (extent.width != m_extent.width || extent.height != m_extent.height)
+            {
+                cleanup();
+                createSwapchain(surfaceCapabilities);
+                createSyncObjects();
+                m_currentFrame = 0;
+                recreate = true;
+            }
         }
 
-        return recreate_swapchain;
+        m_extent = extent;
+
+        return recreate;
     }
 
     VkResult Swapchain::acquireNextImage(u32& imageIndex)

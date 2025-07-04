@@ -35,7 +35,7 @@ namespace mango::vulkan
 
         void cleanup();
         void configure();
-        void createSwapchain();
+        void createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities);
         void createSyncObjects();
 
     public:
@@ -51,7 +51,7 @@ namespace mango::vulkan
         VkSemaphore getRenderFinishedSemaphore() const;
         VkFence getFence() const;
 
-        bool update();
+        bool recreateSwapchain();
         VkResult acquireNextImage(u32& imageIndex);
         VkResult present(u32 imageIndex);
     };
