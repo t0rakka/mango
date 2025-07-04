@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/string.hpp>
 #include <mango/core/exception.hpp>
@@ -66,12 +66,12 @@ namespace mango::filesystem
             MANGO_UNREFERENCED(bytes_read);
         }
 
-        void write(const void* data, u64 size)
+        u64 write(const void* data, u64 size)
         {
             DWORD bytes_written;
             BOOL status = WriteFile(m_handle, data, DWORD(size), &bytes_written, NULL);
             MANGO_UNREFERENCED(status);
-            MANGO_UNREFERENCED(bytes_written);
+            return bytes_written;
         }
     };
 
@@ -161,9 +161,9 @@ namespace mango::filesystem
         m_handle->read(dest, size);
     }
 
-    void FileStream::write(const void* data, u64 size)
+    u64 FileStream::write(const void* data, u64 size)
     {
-        m_handle->write(data, size);
+        return m_handle->write(data, size);
     }
 
 } // namespace mango::filesystem

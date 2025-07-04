@@ -9,6 +9,7 @@
 #include <mango/core/string.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/window/window.hpp>
+#include "win32_window.hpp"
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
 
@@ -28,101 +29,101 @@ namespace
 
         switch (code)
         {
-        case KEYCODE_ESC: v = VK_ESCAPE; break;
-        case KEYCODE_0: v = '0'; break;
-        case KEYCODE_1: v = '1'; break;
-        case KEYCODE_2: v = '2'; break;
-        case KEYCODE_3: v = '3'; break;
-        case KEYCODE_4: v = '4'; break;
-        case KEYCODE_5: v = '5'; break;
-        case KEYCODE_6: v = '6'; break;
-        case KEYCODE_7: v = '7'; break;
-        case KEYCODE_8: v = '8'; break;
-        case KEYCODE_9: v = '9'; break;
-        case KEYCODE_A: v = 'A'; break;
-        case KEYCODE_B: v = 'B'; break;
-        case KEYCODE_C: v = 'C'; break;
-        case KEYCODE_D: v = 'D'; break;
-        case KEYCODE_E: v = 'E'; break;
-        case KEYCODE_F: v = 'F'; break;
-        case KEYCODE_G: v = 'G'; break;
-        case KEYCODE_H: v = 'H'; break;
-        case KEYCODE_I: v = 'I'; break;
-        case KEYCODE_J: v = 'J'; break;
-        case KEYCODE_K: v = 'K'; break;
-        case KEYCODE_L: v = 'L'; break;
-        case KEYCODE_M: v = 'M'; break;
-        case KEYCODE_N: v = 'N'; break;
-        case KEYCODE_O: v = 'O'; break;
-        case KEYCODE_P: v = 'P'; break;
-        case KEYCODE_Q: v = 'Q'; break;
-        case KEYCODE_R: v = 'R'; break;
-        case KEYCODE_S: v = 'S'; break;
-        case KEYCODE_T: v = 'T'; break;
-        case KEYCODE_U: v = 'U'; break;
-        case KEYCODE_V: v = 'V'; break;
-        case KEYCODE_W: v = 'W'; break;
-        case KEYCODE_X: v = 'X'; break;
-        case KEYCODE_Y: v = 'Y'; break;
-        case KEYCODE_Z: v = 'Z'; break;
-        case KEYCODE_F1: v = VK_F1; break;
-        case KEYCODE_F2: v = VK_F2; break;
-        case KEYCODE_F3: v = VK_F3; break;
-        case KEYCODE_F4: v = VK_F4; break;
-        case KEYCODE_F5: v = VK_F5; break;
-        case KEYCODE_F6: v = VK_F6; break;
-        case KEYCODE_F7: v = VK_F7; break;
-        case KEYCODE_F8: v = VK_F8; break;
-        case KEYCODE_F9: v = VK_F9; break;
-        case KEYCODE_F10: v = VK_F10; break;
-        case KEYCODE_F11: v = VK_F11; break;
-        case KEYCODE_F12: v = VK_F12; break;
-        case KEYCODE_NUMPAD0: v = VK_NUMPAD0; break;
-        case KEYCODE_NUMPAD1: v = VK_NUMPAD1; break;
-        case KEYCODE_NUMPAD2: v = VK_NUMPAD2; break;
-        case KEYCODE_NUMPAD3: v = VK_NUMPAD3; break;
-        case KEYCODE_NUMPAD4: v = VK_NUMPAD4; break;
-        case KEYCODE_NUMPAD5: v = VK_NUMPAD5; break;
-        case KEYCODE_NUMPAD6: v = VK_NUMPAD6; break;
-        case KEYCODE_NUMPAD7: v = VK_NUMPAD7; break;
-        case KEYCODE_NUMPAD8: v = VK_NUMPAD8; break;
-        case KEYCODE_NUMPAD9: v = VK_NUMPAD9; break;
-        case KEYCODE_NUMLOCK: v = VK_NUMLOCK; break;
-        case KEYCODE_DIVIDE: v = VK_DIVIDE; break;
-        case KEYCODE_MULTIPLY: v = VK_MULTIPLY; break;
-        case KEYCODE_SUBTRACT: v = VK_SUBTRACT; break;
-        case KEYCODE_ADDITION: v = VK_ADD; break;
-        case KEYCODE_DECIMAL: v = VK_DECIMAL; break;
-        case KEYCODE_BACKSPACE: v = VK_BACK; break;
-        case KEYCODE_TAB: v = VK_TAB; break;
-        case KEYCODE_RETURN: v = VK_RETURN; break;
-        case KEYCODE_SPACE: v = VK_SPACE; break;
-        case KEYCODE_PRINT_SCREEN: v = VK_PRINT; break;
-        case KEYCODE_SCROLL_LOCK: v = VK_SCROLL; break;
-        case KEYCODE_PAGE_UP: v = VK_PRIOR; break;
-        case KEYCODE_PAGE_DOWN: v = VK_NEXT; break;
-        case KEYCODE_INSERT: v = VK_INSERT; break;
-        case KEYCODE_DELETE: v = VK_DELETE; break;
-        case KEYCODE_HOME: v = VK_HOME; break;
-        case KEYCODE_END: v = VK_END; break;
-        case KEYCODE_LEFT: v = VK_LEFT; break;
-        case KEYCODE_RIGHT: v = VK_RIGHT; break;
-        case KEYCODE_UP: v = VK_UP; break;
-        case KEYCODE_DOWN: v = VK_DOWN; break;
-        case KEYCODE_SHIFT: v = VK_SHIFT; break;
-        case KEYCODE_LEFT_SHIFT: v = VK_LSHIFT; break;
-        case KEYCODE_RIGHT_SHIFT: v = VK_RSHIFT; break;
-        case KEYCODE_CONTROL: v = VK_CONTROL; break;
-        case KEYCODE_LEFT_CONTROL: v = VK_LCONTROL; break;
-        case KEYCODE_RIGHT_CONTROL: v = VK_RCONTROL; break;
+            case KEYCODE_ESC: v = VK_ESCAPE; break;
+            case KEYCODE_0: v = '0'; break;
+            case KEYCODE_1: v = '1'; break;
+            case KEYCODE_2: v = '2'; break;
+            case KEYCODE_3: v = '3'; break;
+            case KEYCODE_4: v = '4'; break;
+            case KEYCODE_5: v = '5'; break;
+            case KEYCODE_6: v = '6'; break;
+            case KEYCODE_7: v = '7'; break;
+            case KEYCODE_8: v = '8'; break;
+            case KEYCODE_9: v = '9'; break;
+            case KEYCODE_A: v = 'A'; break;
+            case KEYCODE_B: v = 'B'; break;
+            case KEYCODE_C: v = 'C'; break;
+            case KEYCODE_D: v = 'D'; break;
+            case KEYCODE_E: v = 'E'; break;
+            case KEYCODE_F: v = 'F'; break;
+            case KEYCODE_G: v = 'G'; break;
+            case KEYCODE_H: v = 'H'; break;
+            case KEYCODE_I: v = 'I'; break;
+            case KEYCODE_J: v = 'J'; break;
+            case KEYCODE_K: v = 'K'; break;
+            case KEYCODE_L: v = 'L'; break;
+            case KEYCODE_M: v = 'M'; break;
+            case KEYCODE_N: v = 'N'; break;
+            case KEYCODE_O: v = 'O'; break;
+            case KEYCODE_P: v = 'P'; break;
+            case KEYCODE_Q: v = 'Q'; break;
+            case KEYCODE_R: v = 'R'; break;
+            case KEYCODE_S: v = 'S'; break;
+            case KEYCODE_T: v = 'T'; break;
+            case KEYCODE_U: v = 'U'; break;
+            case KEYCODE_V: v = 'V'; break;
+            case KEYCODE_W: v = 'W'; break;
+            case KEYCODE_X: v = 'X'; break;
+            case KEYCODE_Y: v = 'Y'; break;
+            case KEYCODE_Z: v = 'Z'; break;
+            case KEYCODE_F1: v = VK_F1; break;
+            case KEYCODE_F2: v = VK_F2; break;
+            case KEYCODE_F3: v = VK_F3; break;
+            case KEYCODE_F4: v = VK_F4; break;
+            case KEYCODE_F5: v = VK_F5; break;
+            case KEYCODE_F6: v = VK_F6; break;
+            case KEYCODE_F7: v = VK_F7; break;
+            case KEYCODE_F8: v = VK_F8; break;
+            case KEYCODE_F9: v = VK_F9; break;
+            case KEYCODE_F10: v = VK_F10; break;
+            case KEYCODE_F11: v = VK_F11; break;
+            case KEYCODE_F12: v = VK_F12; break;
+            case KEYCODE_NUMPAD0: v = VK_NUMPAD0; break;
+            case KEYCODE_NUMPAD1: v = VK_NUMPAD1; break;
+            case KEYCODE_NUMPAD2: v = VK_NUMPAD2; break;
+            case KEYCODE_NUMPAD3: v = VK_NUMPAD3; break;
+            case KEYCODE_NUMPAD4: v = VK_NUMPAD4; break;
+            case KEYCODE_NUMPAD5: v = VK_NUMPAD5; break;
+            case KEYCODE_NUMPAD6: v = VK_NUMPAD6; break;
+            case KEYCODE_NUMPAD7: v = VK_NUMPAD7; break;
+            case KEYCODE_NUMPAD8: v = VK_NUMPAD8; break;
+            case KEYCODE_NUMPAD9: v = VK_NUMPAD9; break;
+            case KEYCODE_NUMLOCK: v = VK_NUMLOCK; break;
+            case KEYCODE_DIVIDE: v = VK_DIVIDE; break;
+            case KEYCODE_MULTIPLY: v = VK_MULTIPLY; break;
+            case KEYCODE_SUBTRACT: v = VK_SUBTRACT; break;
+            case KEYCODE_ADDITION: v = VK_ADD; break;
+            case KEYCODE_DECIMAL: v = VK_DECIMAL; break;
+            case KEYCODE_BACKSPACE: v = VK_BACK; break;
+            case KEYCODE_TAB: v = VK_TAB; break;
+            case KEYCODE_RETURN: v = VK_RETURN; break;
+            case KEYCODE_SPACE: v = VK_SPACE; break;
+            case KEYCODE_PRINT_SCREEN: v = VK_PRINT; break;
+            case KEYCODE_SCROLL_LOCK: v = VK_SCROLL; break;
+            case KEYCODE_PAGE_UP: v = VK_PRIOR; break;
+            case KEYCODE_PAGE_DOWN: v = VK_NEXT; break;
+            case KEYCODE_INSERT: v = VK_INSERT; break;
+            case KEYCODE_DELETE: v = VK_DELETE; break;
+            case KEYCODE_HOME: v = VK_HOME; break;
+            case KEYCODE_END: v = VK_END; break;
+            case KEYCODE_LEFT: v = VK_LEFT; break;
+            case KEYCODE_RIGHT: v = VK_RIGHT; break;
+            case KEYCODE_UP: v = VK_UP; break;
+            case KEYCODE_DOWN: v = VK_DOWN; break;
+            case KEYCODE_SHIFT: v = VK_SHIFT; break;
+            case KEYCODE_LEFT_SHIFT: v = VK_LSHIFT; break;
+            case KEYCODE_RIGHT_SHIFT: v = VK_RSHIFT; break;
+            case KEYCODE_CONTROL: v = VK_CONTROL; break;
+            case KEYCODE_LEFT_CONTROL: v = VK_LCONTROL; break;
+            case KEYCODE_RIGHT_CONTROL: v = VK_RCONTROL; break;
 
-        // NOT HANDLED
-        case KEYCODE_LEFT_ALT:
-        case KEYCODE_RIGHT_ALT:
-        case KEYCODE_CAPS_LOCK:
-        case KEYCODE_ENTER:
-        case KEYCODE_NONE:
-            break;
+            // NOT HANDLED
+            case KEYCODE_LEFT_ALT:
+            case KEYCODE_RIGHT_ALT:
+            case KEYCODE_CAPS_LOCK:
+            case KEYCODE_ENTER:
+            case KEYCODE_NONE:
+                break;
         }
 
         return v;
@@ -140,100 +141,100 @@ namespace
 
         switch (wparam)
         {
-        case VK_ESCAPE:    code = KEYCODE_ESC; break;
-        case '0':          code = KEYCODE_0; break;
-        case '1':          code = KEYCODE_1; break;
-        case '2':          code = KEYCODE_2; break;
-        case '3':          code = KEYCODE_3; break;
-        case '4':          code = KEYCODE_4; break;
-        case '5':          code = KEYCODE_5; break;
-        case '6':          code = KEYCODE_6; break;
-        case '7':          code = KEYCODE_7; break;
-        case '8':          code = KEYCODE_8; break;
-        case '9':          code = KEYCODE_9; break;
-        case 'A':          code = KEYCODE_A; break;
-        case 'B':          code = KEYCODE_B; break;
-        case 'C':          code = KEYCODE_C; break;
-        case 'D':          code = KEYCODE_D; break;
-        case 'E':          code = KEYCODE_E; break;
-        case 'F':          code = KEYCODE_F; break;
-        case 'G':          code = KEYCODE_G; break;
-        case 'H':          code = KEYCODE_H; break;
-        case 'I':          code = KEYCODE_I; break;
-        case 'J':          code = KEYCODE_J; break;
-        case 'K':          code = KEYCODE_K; break;
-        case 'L':          code = KEYCODE_L; break;
-        case 'M':          code = KEYCODE_M; break;
-        case 'N':          code = KEYCODE_N; break;
-        case 'O':          code = KEYCODE_O; break;
-        case 'P':          code = KEYCODE_P; break;
-        case 'Q':          code = KEYCODE_Q; break;
-        case 'R':          code = KEYCODE_R; break;
-        case 'S':          code = KEYCODE_S; break;
-        case 'T':          code = KEYCODE_T; break;
-        case 'U':          code = KEYCODE_U; break;
-        case 'V':          code = KEYCODE_V; break;
-        case 'W':          code = KEYCODE_W; break;
-        case 'X':          code = KEYCODE_X; break;
-        case 'Y':          code = KEYCODE_Y; break;
-        case 'Z':          code = KEYCODE_Z; break;
-        case VK_F1:        code = KEYCODE_F1; break;
-        case VK_F2:        code = KEYCODE_F2; break;
-        case VK_F3:        code = KEYCODE_F3; break;
-        case VK_F4:        code = KEYCODE_F4; break;
-        case VK_F5:        code = KEYCODE_F5; break;
-        case VK_F6:        code = KEYCODE_F6; break;
-        case VK_F7:        code = KEYCODE_F7; break;
-        case VK_F8:        code = KEYCODE_F8; break;
-        case VK_F9:        code = KEYCODE_F9; break;
-        case VK_F10:       code = KEYCODE_F10; break;
-        case VK_F11:       code = KEYCODE_F11; break;
-        case VK_F12:       code = KEYCODE_F12; break;
-        case VK_BACK:      code = KEYCODE_BACKSPACE; break;
-        case VK_TAB:       code = KEYCODE_TAB; break;
-        case VK_RETURN:    code = lparam & 0x1000000 ? KEYCODE_ENTER : KEYCODE_RETURN; break;
-        //case VK_LMENU:      code = KEYCODE_LEFT_ALT; break; // not supported
-        //case VK_RMENU:      code = KEYCODE_RIGHT_ALT; break; // not supported
-        case VK_SPACE:     code = KEYCODE_SPACE; break;
-        case VK_CAPITAL:   code = KEYCODE_CAPS_LOCK; break;
-        case VK_SHIFT:     code = KEYCODE_SHIFT; break;
-        case VK_LSHIFT:    code = KEYCODE_LEFT_SHIFT; break;
-        case VK_RSHIFT:    code = KEYCODE_RIGHT_SHIFT; break;
-        case VK_CONTROL:   code = KEYCODE_CONTROL; break;
-        case VK_LCONTROL:  code = KEYCODE_LEFT_CONTROL; break;
-        case VK_RCONTROL:  code = KEYCODE_RIGHT_CONTROL; break;
-        //case VK_LWIN:      code = KEYCODE_LEFT_SUPER; break; // not supported
-        //case VK_RWIN:      code = KEYCODE_RIGHT_SUPER; break; // not supported
-        //case VK_MENU:      code = KEYCODE_ALTGR; break; // not supported
-        case VK_PRIOR:     code = KEYCODE_PAGE_UP; break;
-        case VK_NEXT:      code = KEYCODE_PAGE_DOWN; break;
-        case VK_INSERT:    code = KEYCODE_INSERT; break;
-        case VK_DELETE:    code = KEYCODE_DELETE; break;
-        case VK_HOME:      code = KEYCODE_HOME; break;
-        case VK_END:       code = KEYCODE_END; break;
-        case VK_LEFT:      code = KEYCODE_LEFT; break;
-        case VK_RIGHT:     code = KEYCODE_RIGHT; break;
-        case VK_UP:        code = KEYCODE_UP; break;
-        case VK_DOWN:      code = KEYCODE_DOWN; break;
-        case VK_PRINT:     code = KEYCODE_PRINT_SCREEN; break;
-        case VK_SCROLL:    code = KEYCODE_SCROLL_LOCK; break;
-        //case VK_PAUSE:     code = KEYCODE_PAUSE_BREAK; break; // not supported
-        case VK_NUMPAD0:   code = KEYCODE_NUMPAD0; break;
-        case VK_NUMPAD1:   code = KEYCODE_NUMPAD1; break;
-        case VK_NUMPAD2:   code = KEYCODE_NUMPAD2; break;
-        case VK_NUMPAD3:   code = KEYCODE_NUMPAD3; break;
-        case VK_NUMPAD4:   code = KEYCODE_NUMPAD4; break;
-        case VK_NUMPAD5:   code = KEYCODE_NUMPAD5; break;
-        case VK_NUMPAD6:   code = KEYCODE_NUMPAD6; break;
-        case VK_NUMPAD7:   code = KEYCODE_NUMPAD7; break;
-        case VK_NUMPAD8:   code = KEYCODE_NUMPAD8; break;
-        case VK_NUMPAD9:   code = KEYCODE_NUMPAD9; break;
-        case VK_NUMLOCK:   code = KEYCODE_NUMLOCK; break;
-        case VK_DIVIDE:    code = KEYCODE_DIVIDE; break;
-        case VK_MULTIPLY:  code = KEYCODE_MULTIPLY; break;
-        case VK_SUBTRACT:  code = KEYCODE_SUBTRACT; break;
-        case VK_ADD:       code = KEYCODE_ADDITION; break;
-        case VK_DECIMAL:   code = KEYCODE_DECIMAL; break;
+            case VK_ESCAPE:    code = KEYCODE_ESC; break;
+            case '0':          code = KEYCODE_0; break;
+            case '1':          code = KEYCODE_1; break;
+            case '2':          code = KEYCODE_2; break;
+            case '3':          code = KEYCODE_3; break;
+            case '4':          code = KEYCODE_4; break;
+            case '5':          code = KEYCODE_5; break;
+            case '6':          code = KEYCODE_6; break;
+            case '7':          code = KEYCODE_7; break;
+            case '8':          code = KEYCODE_8; break;
+            case '9':          code = KEYCODE_9; break;
+            case 'A':          code = KEYCODE_A; break;
+            case 'B':          code = KEYCODE_B; break;
+            case 'C':          code = KEYCODE_C; break;
+            case 'D':          code = KEYCODE_D; break;
+            case 'E':          code = KEYCODE_E; break;
+            case 'F':          code = KEYCODE_F; break;
+            case 'G':          code = KEYCODE_G; break;
+            case 'H':          code = KEYCODE_H; break;
+            case 'I':          code = KEYCODE_I; break;
+            case 'J':          code = KEYCODE_J; break;
+            case 'K':          code = KEYCODE_K; break;
+            case 'L':          code = KEYCODE_L; break;
+            case 'M':          code = KEYCODE_M; break;
+            case 'N':          code = KEYCODE_N; break;
+            case 'O':          code = KEYCODE_O; break;
+            case 'P':          code = KEYCODE_P; break;
+            case 'Q':          code = KEYCODE_Q; break;
+            case 'R':          code = KEYCODE_R; break;
+            case 'S':          code = KEYCODE_S; break;
+            case 'T':          code = KEYCODE_T; break;
+            case 'U':          code = KEYCODE_U; break;
+            case 'V':          code = KEYCODE_V; break;
+            case 'W':          code = KEYCODE_W; break;
+            case 'X':          code = KEYCODE_X; break;
+            case 'Y':          code = KEYCODE_Y; break;
+            case 'Z':          code = KEYCODE_Z; break;
+            case VK_F1:        code = KEYCODE_F1; break;
+            case VK_F2:        code = KEYCODE_F2; break;
+            case VK_F3:        code = KEYCODE_F3; break;
+            case VK_F4:        code = KEYCODE_F4; break;
+            case VK_F5:        code = KEYCODE_F5; break;
+            case VK_F6:        code = KEYCODE_F6; break;
+            case VK_F7:        code = KEYCODE_F7; break;
+            case VK_F8:        code = KEYCODE_F8; break;
+            case VK_F9:        code = KEYCODE_F9; break;
+            case VK_F10:       code = KEYCODE_F10; break;
+            case VK_F11:       code = KEYCODE_F11; break;
+            case VK_F12:       code = KEYCODE_F12; break;
+            case VK_BACK:      code = KEYCODE_BACKSPACE; break;
+            case VK_TAB:       code = KEYCODE_TAB; break;
+            case VK_RETURN:    code = lparam & 0x1000000 ? KEYCODE_ENTER : KEYCODE_RETURN; break;
+            //case VK_LMENU:      code = KEYCODE_LEFT_ALT; break; // not supported
+            //case VK_RMENU:      code = KEYCODE_RIGHT_ALT; break; // not supported
+            case VK_SPACE:     code = KEYCODE_SPACE; break;
+            case VK_CAPITAL:   code = KEYCODE_CAPS_LOCK; break;
+            case VK_SHIFT:     code = KEYCODE_SHIFT; break;
+            case VK_LSHIFT:    code = KEYCODE_LEFT_SHIFT; break;
+            case VK_RSHIFT:    code = KEYCODE_RIGHT_SHIFT; break;
+            case VK_CONTROL:   code = KEYCODE_CONTROL; break;
+            case VK_LCONTROL:  code = KEYCODE_LEFT_CONTROL; break;
+            case VK_RCONTROL:  code = KEYCODE_RIGHT_CONTROL; break;
+            //case VK_LWIN:      code = KEYCODE_LEFT_SUPER; break; // not supported
+            //case VK_RWIN:      code = KEYCODE_RIGHT_SUPER; break; // not supported
+            //case VK_MENU:      code = KEYCODE_ALTGR; break; // not supported
+            case VK_PRIOR:     code = KEYCODE_PAGE_UP; break;
+            case VK_NEXT:      code = KEYCODE_PAGE_DOWN; break;
+            case VK_INSERT:    code = KEYCODE_INSERT; break;
+            case VK_DELETE:    code = KEYCODE_DELETE; break;
+            case VK_HOME:      code = KEYCODE_HOME; break;
+            case VK_END:       code = KEYCODE_END; break;
+            case VK_LEFT:      code = KEYCODE_LEFT; break;
+            case VK_RIGHT:     code = KEYCODE_RIGHT; break;
+            case VK_UP:        code = KEYCODE_UP; break;
+            case VK_DOWN:      code = KEYCODE_DOWN; break;
+            case VK_PRINT:     code = KEYCODE_PRINT_SCREEN; break;
+            case VK_SCROLL:    code = KEYCODE_SCROLL_LOCK; break;
+            //case VK_PAUSE:     code = KEYCODE_PAUSE_BREAK; break; // not supported
+            case VK_NUMPAD0:   code = KEYCODE_NUMPAD0; break;
+            case VK_NUMPAD1:   code = KEYCODE_NUMPAD1; break;
+            case VK_NUMPAD2:   code = KEYCODE_NUMPAD2; break;
+            case VK_NUMPAD3:   code = KEYCODE_NUMPAD3; break;
+            case VK_NUMPAD4:   code = KEYCODE_NUMPAD4; break;
+            case VK_NUMPAD5:   code = KEYCODE_NUMPAD5; break;
+            case VK_NUMPAD6:   code = KEYCODE_NUMPAD6; break;
+            case VK_NUMPAD7:   code = KEYCODE_NUMPAD7; break;
+            case VK_NUMPAD8:   code = KEYCODE_NUMPAD8; break;
+            case VK_NUMPAD9:   code = KEYCODE_NUMPAD9; break;
+            case VK_NUMLOCK:   code = KEYCODE_NUMLOCK; break;
+            case VK_DIVIDE:    code = KEYCODE_DIVIDE; break;
+            case VK_MULTIPLY:  code = KEYCODE_MULTIPLY; break;
+            case VK_SUBTRACT:  code = KEYCODE_SUBTRACT; break;
+            case VK_ADD:       code = KEYCODE_ADDITION; break;
+            case VK_DECIMAL:   code = KEYCODE_DECIMAL; break;
         }
 
         return code;
@@ -624,23 +625,15 @@ namespace mango
     using namespace mango::image;
 
     // -----------------------------------------------------------------------
-    // WindowHandle
+    // WindowContext
     // -----------------------------------------------------------------------
 
-    struct WindowHandle
-    {
-        WNDCLASSEX wndclass{ 0 };
-        HWND hwnd{ NULL };
-        HICON icon{ NULL };
-        bool is_looping{ false };
-
-        WindowHandle(int width, int height, u32 flags);
-        ~WindowHandle();
-    };
-
-    WindowHandle::WindowHandle(int width, int height, u32 flags)
+    WindowContext::WindowContext(int width, int height, u32 flags)
     {
         HINSTANCE hinstance = ::GetModuleHandle(NULL);
+
+        // Disable Exclusive Fullscreen mode with OpenGL
+        is_opengl = (flags & Window::API_OPENGL) != 0;
 
         // register window class
         wndclass.cbSize = sizeof(wndclass);
@@ -662,8 +655,6 @@ namespace mango
         {
             mask &= ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
         }
-        int x = 80;
-        int y = 60;
 
         // adjust window rect
         RECT rect = { 0, 0, width - 1, height - 1 };
@@ -672,6 +663,8 @@ namespace mango
         height = rect.bottom - rect.top + 1;
 
         // create window
+        int x = 80;
+        int y = 80;
         HWND parent = NULL;
         hwnd = ::CreateWindowExW(0, wndclass.lpszClassName, L"", 
             mask, x, y, width, height, parent, NULL, hinstance, NULL);
@@ -680,15 +673,11 @@ namespace mango
         ::SetForegroundWindow(hwnd);
         ::SetFocus(hwnd);
         ::DragAcceptFiles(hwnd, TRUE);
+        ::ShowWindow(hwnd, SW_SHOWNORMAL);
     }
 
-    WindowHandle::~WindowHandle()
+    WindowContext::~WindowContext()
     {
-        if (icon)
-        {
-            ::DestroyIcon(icon);
-        }
-
         if (hwnd)
         {
             ::DestroyWindow(hwnd);
@@ -696,9 +685,68 @@ namespace mango
         }
     }
 
+    void WindowContext::toggleFullscreen()
+    {
+        if (!fullscreen)
+        {
+            ::GetWindowRect(hwnd, &rect);
+
+            int x = 0;
+            int y = 0;
+            int screenWidth = 0;
+            int screenHeight = 0;
+
+            // Make the fullscreen window one extra pixel higher to disable exclusive fullscreen mode "optimization"
+            // It just causes headaches and problems; for example some time the DWM goes insane and starts stuttering at 5 fps.
+            const int ANTI_EXCLUSIVE_MODE_PIXEL = is_opengl ? 1 : 0;
+
+            HMONITOR monitor = ::MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
+            MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
+            if (::GetMonitorInfo(monitor, &monitorInfo))
+            {
+                // Screen dimensions for monitor that window rectangle overlaps the most
+                x = monitorInfo.rcMonitor.left;
+                y = monitorInfo.rcMonitor.top;
+                screenWidth = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
+                screenHeight = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
+            }
+            else
+            {
+                // Screen dimensions for the primary monitor
+                x = 0;
+                y = 0;
+                screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
+                screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
+            }
+
+            ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
+            ::MoveWindow(hwnd, x, y, screenWidth, screenHeight + ANTI_EXCLUSIVE_MODE_PIXEL, TRUE);
+        }
+        else
+        {
+            ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+            ::SetWindowPos(hwnd, HWND_TOP, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, 0);
+        }
+
+        fullscreen = !fullscreen;
+    }
+
     // -----------------------------------------------------------------------
     // Window
     // -----------------------------------------------------------------------
+
+    Window::Window(int width, int height, u32 flags)
+    {
+        m_window_context = std::make_unique<WindowContext>(width, height, flags);
+
+        // register listener window
+        LONG_PTR userdata = reinterpret_cast<LONG_PTR>(this);
+        ::SetWindowLongPtr(m_window_context->hwnd, GWLP_USERDATA, userdata);
+    }
+
+    Window::~Window()
+    {
+    }
 
     int Window::getScreenCount()
     {
@@ -719,22 +767,19 @@ namespace mango
         return screens[index].resolution;
     }
 
-    Window::Window(int width, int height, u32 flags)
+    Window::operator WindowHandle () const
     {
-        m_handle = std::make_unique<WindowHandle>(width, height, flags);
-
-        // register listener window
-        LONG_PTR userdata = reinterpret_cast<LONG_PTR>(this);
-        ::SetWindowLongPtr(m_handle->hwnd, GWLP_USERDATA, userdata);
+        return *m_window_context;
     }
 
-    Window::~Window()
+    Window::operator WindowContext* () const
     {
+        return m_window_context.get();
     }
 
     void Window::setWindowPosition(int x, int y)
     {
-        ::SetWindowPos(m_handle->hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        ::SetWindowPos(m_window_context->hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
     }
 
     void Window::setWindowSize(int width, int height)
@@ -745,45 +790,25 @@ namespace mango
         width = rect.right - rect.left + 1;
         height = rect.bottom - rect.top + 1;
 
-        ::SetWindowPos(m_handle->hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER);
+        ::SetWindowPos(m_window_context->hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER);
     }
 
     void Window::setTitle(const std::string& title)
     {
         std::wstring name = mango::u16_fromBytes(title);
-        ::SetWindowTextW(m_handle->hwnd, name.c_str());
-    }
-
-    void Window::setIcon(const Surface& icon)
-    {
-        TemporaryBitmap temp(icon, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8));
-
-        HINSTANCE hinstance = ::GetModuleHandle(NULL);
-        HICON hicon = ::CreateIcon(hinstance, icon.width, icon.height, 1, 32, NULL, temp.image);
-        if (hicon)
-        {
-            if (m_handle->icon)
-            {
-                ::DestroyIcon(m_handle->icon);
-                m_handle->icon = hicon;
-            }
-            ::SendMessage(m_handle->hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hicon);
-            ::SendMessage(m_handle->hwnd, WM_SETICON, ICON_BIG, (LPARAM)hicon);
-            ::SendMessage(::GetWindow(m_handle->hwnd, GW_OWNER), WM_SETICON, ICON_SMALL, (LPARAM)hicon);
-            ::SendMessage(::GetWindow(m_handle->hwnd, GW_OWNER), WM_SETICON, ICON_BIG, (LPARAM)hicon);
-        }
+        ::SetWindowTextW(m_window_context->hwnd, name.c_str());
     }
 
     void Window::setVisible(bool enable)
     {
         int command = enable ? SW_SHOWNORMAL : SW_HIDE;
-        ::ShowWindow(m_handle->hwnd, command);
+        ::ShowWindow(m_window_context->hwnd, command);
     }
 
     int32x2 Window::getWindowSize() const
     {
         RECT rect;
-        ::GetClientRect(m_handle->hwnd, &rect);
+        ::GetClientRect(m_window_context->hwnd, &rect);
         return int32x2(rect.right - rect.left, rect.bottom - rect.top);
     }
 
@@ -791,7 +816,7 @@ namespace mango
     {
         POINT p;
         ::GetCursorPos(&p);
-        ::ScreenToClient(m_handle->hwnd, &p);
+        ::ScreenToClient(m_window_context->hwnd, &p);
         return int32x2(int(p.x), int(p.y));
     }
 
@@ -800,7 +825,7 @@ namespace mango
         bool pressed = false;
 
         HWND active = ::GetActiveWindow();
-        if (m_handle->hwnd == active)
+        if (m_window_context->hwnd == active)
         {
             int v = enumToVirtual(code);
             pressed = (::GetAsyncKeyState(v) & 0x8000) != 0;
@@ -809,26 +834,16 @@ namespace mango
         return pressed;
     }
 
-    Window::operator NativeWindowHandle () const
-    {
-        return m_handle->hwnd;
-    }
-
-    Window::operator WindowHandle* () const
-    {
-        return m_handle.get();
-    }
-
     void Window::enterEventLoop()
     {
         MSG msg;
         ::ZeroMemory(&msg, sizeof(msg));
 
-        m_handle->is_looping = true;
+        m_window_context->is_looping = true;
 
-        for (; m_handle->is_looping && msg.message != WM_QUIT;)
+        for (; m_window_context->is_looping && msg.message != WM_QUIT;)
         {
-            while (::PeekMessage(&msg, m_handle->hwnd, 0, 0, PM_REMOVE))
+            while (::PeekMessage(&msg, m_window_context->hwnd, 0, 0, PM_REMOVE))
             {
                 ::TranslateMessage(&msg);
                 ::DispatchMessage(&msg);
@@ -840,13 +855,13 @@ namespace mango
             Sleep::ms(1);
         }
 
-        m_handle->is_looping = false;
+        m_window_context->is_looping = false;
     }
 
     void Window::breakEventLoop()
     {
         ::PostQuitMessage(0);
-        m_handle->is_looping = false;
+        m_window_context->is_looping = false;
     }
 
     void Window::onIdle()

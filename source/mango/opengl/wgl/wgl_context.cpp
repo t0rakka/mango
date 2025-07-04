@@ -6,6 +6,7 @@
 #include <mango/core/string.hpp>
 #include <mango/core/system.hpp>
 #include <mango/opengl/opengl.hpp>
+#include "../../window/win32/win32_window.hpp"
 
 // -----------------------------------------------------------------------
 // Extensions
@@ -48,20 +49,18 @@ namespace mango
     {
         HDC m_hdc { NULL };
         HGLRC m_hrc { NULL };
-        RECT m_rect;
-        bool m_fullscreen { false };
 
-        HWND hwnd;
+        WindowContext* window;
 
         OpenGLContextWGL(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
-            : hwnd(*theContext)
+            : window(*theContext)
         {
             MANGO_UNREFERENCED(flags);
             OpenGLContextWGL* shared = reinterpret_cast<OpenGLContextWGL*>(theShared);
 
             theContext->setWindowSize(width, height);
 
-            m_hdc = ::GetDC(hwnd);
+            m_hdc = ::GetDC(window->hwnd);
 
             // Configure attributes
             OpenGLContext::Config config;
@@ -298,7 +297,7 @@ namespace mango
 
             if (m_hdc)
             {
-                ::ReleaseDC(hwnd, m_hdc);
+                ::ReleaseDC(window->hwnd, m_hdc);
             }
         }
 
@@ -322,59 +321,18 @@ namespace mango
 
         void toggleFullscreen()
         {
-            if (!m_fullscreen)
-            {
-                ::GetWindowRect(hwnd, &m_rect);
-
-                int x = 0;
-                int y = 0;
-                int screenWidth = 0;
-                int screenHeight = 0;
-
-                // Make the fullscreen window one extra pixel higher to disable exclusive fullscreen mode "optimization"
-                // It just causes headaches and problems; for example some time the DWM goes insane and starts stuttering at 5 fps.
-                const int ANTI_EXCLUSIVE_MODE_PIXEL = 1;
-
-                HMONITOR monitor = ::MonitorFromRect(&m_rect, MONITOR_DEFAULTTONEAREST);
-                MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
-                if (::GetMonitorInfo(monitor, &monitorInfo))
-                {
-                    // Screen dimensions for monitor that window rectangle overlaps the most
-                    x = monitorInfo.rcMonitor.left;
-                    y = monitorInfo.rcMonitor.top;
-                    screenWidth = monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left;
-                    screenHeight = monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top;
-                }
-                else
-                {
-                    // Screen dimensions for the primary monitor
-                    x = 0;
-                    y = 0;
-                    screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
-                    screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
-                }
-
-                ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE);
-                ::MoveWindow(hwnd, x, y, screenWidth, screenHeight + ANTI_EXCLUSIVE_MODE_PIXEL, TRUE);
-            }
-            else
-            {
-                ::SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
-                ::SetWindowPos(hwnd, HWND_TOP, m_rect.left, m_rect.top, m_rect.right - m_rect.left, m_rect.bottom - m_rect.top, 0);
-            }
-
-            m_fullscreen = !m_fullscreen;
+            window->toggleFullscreen();
         }
 
         bool isFullscreen() const
         {
-            return m_fullscreen;
+            return window->fullscreen;
         }
 
         int32x2 getWindowSize() const
         {
             RECT rect;
-            ::GetClientRect(hwnd, &rect);
+            ::GetClientRect(window->hwnd, &rect);
             return int32x2(rect.right - rect.left, rect.bottom - rect.top);
         }
     };

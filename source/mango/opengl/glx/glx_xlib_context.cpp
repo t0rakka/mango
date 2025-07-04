@@ -17,7 +17,7 @@ namespace mango
     using namespace math;
 
     // -----------------------------------------------------------------------
-    // OpenGLContextGLX
+    // helpers
     // -----------------------------------------------------------------------
 
     static
@@ -28,17 +28,21 @@ namespace mango
         return 0;
     }
 
+    // -----------------------------------------------------------------------
+    // OpenGLContextGLX
+    // -----------------------------------------------------------------------
+
     struct OpenGLContextGLX : OpenGLContextHandle
     {
         GLXContext context { 0 };
         bool fullscreen { false };
 
-        WindowHandle* window;
+        WindowContext* window;
 
         OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* shared)
             : window(*theContext)
         {
-            Display* display = window->native.display;
+            Display* display = window->display;
             int screen = DefaultScreen(display);
 
             GLXConfiguration glxConfiguration(display, screen, pConfig);
@@ -72,10 +76,10 @@ namespace mango
             XVisualInfo* vi = glXGetVisualFromFBConfig(display, selected);
 
             // create window
-            if (!window->createXWindow(vi->screen, vi->depth, vi->visual, width, height, "OpenGL"))
+            if (!window->init(vi->screen, vi->depth, vi->visual, width, height, flags, "OpenGL"))
             {
                 shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] createXWindow() failed.");
+                MANGO_EXCEPTION("[OpenGLContext] init failed.");
             }
 
             XFree(vi);
@@ -101,7 +105,7 @@ namespace mango
 
             // MANGO TODO: configuration selection API
             // MANGO TODO: initialize GLX extensions using GLEXT headers
-            glXMakeCurrent(display, window->native.window, context);
+            glXMakeCurrent(display, *window, context);
 
 #if 0
             PFNGLGETSTRINGIPROC glGetStringi = (PFNGLGETSTRINGIPROC)glXGetProcAddress((const GLubyte*)"glGetStringi");
@@ -134,7 +138,7 @@ namespace mango
 
         void shutdown()
         {
-            Display* display = window->native.display;
+            Display* display = window->display;
             if (display)
             {
                 glXMakeCurrent(display, 0, 0);
@@ -148,75 +152,37 @@ namespace mango
 
         void makeCurrent() override
         {
-            glXMakeCurrent(window->native.display, window->native.window, context);
+            glXMakeCurrent(window->display, *window, context);
         }
 
         void swapBuffers() override
         {
-            glXSwapBuffers(window->native.display, window->native.window);
+            glXSwapBuffers(window->display, *window);
         }
 
         void swapInterval(int interval) override
         {
-            glXSwapIntervalEXT(window->native.display, window->native.window, interval);
+            glXSwapIntervalEXT(window->display, *window, interval);
         }
 
         void toggleFullscreen() override
         {
-            Display* display = window->native.display;
+            Display* display = window->display;
 
             // Disable rendering while switching fullscreen mode
             glXMakeCurrent(display, 0, 0);
             window->busy = true;
 
-            XEvent event;
-            std::memset(&event, 0, sizeof(event));
-
-            event.type = ClientMessage;
-            event.xclient.window = window->native.window;
-            event.xclient.message_type = window->atom_state;
-            event.xclient.format = 32;
-            event.xclient.data.l[0] = 2; // NET_WM_STATE_TOGGLE
-            event.xclient.data.l[1] = window->atom_fullscreen;
-            event.xclient.data.l[2] = 0; // no second property to toggle
-            event.xclient.data.l[3] = 1; // source indication: application
-            event.xclient.data.l[4] = 0; // unused
-
-            XMapWindow(display, window->native.window);
-
-            // send the event to the root window
-            XSendEvent(display, DefaultRootWindow(display),
-                False, SubstructureRedirectMask | SubstructureNotifyMask, &event);
-
-            XFlush(display);
+            window->toggleFullscreen();
 
             // Enable rendering now that all the tricks are done
             window->busy = false;
-            glXMakeCurrent(display, window->native.window, context);
-
-            // Get window dimensions
-            XWindowAttributes attributes;
-            XGetWindowAttributes(display, window->native.window, &attributes);
-
-            std::memset(&event, 0, sizeof(event));
-
-            event.type = Expose;
-            event.xexpose.window = window->native.window;
-            event.xexpose.x = 0;
-            event.xexpose.y = 0;
-            event.xexpose.width = attributes.width;
-            event.xexpose.height = attributes.height;
-            event.xexpose.count = 0;
-
-            // Send Expose event (generates Window::onDraw callback)
-            XSendEvent(display, window->native.window, False, NoEventMask, &event);
-
-            fullscreen = !fullscreen;
+            glXMakeCurrent(display, *window, context);
         }
 
         bool isFullscreen() const override
         {
-            return fullscreen;
+            return window->fullscreen;
         }
 
         int32x2 getWindowSize() const override

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/window/window.hpp>
 
@@ -10,7 +10,7 @@
 
 namespace mango
 {
-    struct WindowHandle
+    struct WindowContext
     {
         // window state
         id      window;

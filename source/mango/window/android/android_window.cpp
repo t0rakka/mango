@@ -9,12 +9,12 @@
 namespace mango
 {
 
-    struct WindowHandle
+    struct WindowContext
     {
         ANativeWindow* window;
 
-        WindowHandle(int width, int height);
-        ~WindowHandle();
+        WindowContext(int width, int height);
+        ~WindowContext();
     };
 
 } // namespace mango

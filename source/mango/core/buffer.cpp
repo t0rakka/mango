@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/buffer.hpp>
 #include <mango/core/exception.hpp>
@@ -280,8 +280,10 @@ namespace mango
         m_offset += bytes;
     }
 
-    void MemoryStream::write(const void* source, u64 bytes)
+    u64 MemoryStream::write(const void* source, u64 bytes)
     {
+        u64 start_offset = m_offset;
+
         const u64 size = m_buffer.size();
         if (m_offset > size)
         {
@@ -298,11 +300,13 @@ namespace mango
             m_buffer.append(src + left, size_t(right));
         }
         m_offset += bytes;
+
+        return m_offset - start_offset;
     }
 
-    void MemoryStream::write(ConstMemory memory)
+    u64 MemoryStream::write(ConstMemory memory)
     {
-        Stream::write(memory);
+        return Stream::write(memory);
     }
 
     // ----------------------------------------------------------------------------
@@ -362,11 +366,12 @@ namespace mango
         m_offset += bytes;
     }
 
-    void ConstMemoryStream::write(const void* data, u64 size)
+    u64 ConstMemoryStream::write(const void* data, u64 size)
     {
         MANGO_UNREFERENCED(data);
         MANGO_UNREFERENCED(size);
         MANGO_EXCEPTION("[ConstMemoryStream] Writing into read-only memory.");
+        return 0;
     }
 
 } // namespace mango

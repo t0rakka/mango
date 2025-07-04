@@ -299,32 +299,30 @@ namespace mango
     using namespace mango::image;
 
     // -----------------------------------------------------------------------
-    // WindowHandle implementation
+    // WindowContext
     // -----------------------------------------------------------------------
 
-    WindowHandle::WindowHandle(int width, int height, u32 flags)
-        : flags(flags)
-        , key_symbols(nullptr)
+    WindowContext::WindowContext()
+        : key_symbols(nullptr)
     {
-        int screen_index;
-        connection = xcb_connect(nullptr, &screen_index);
+        connection = xcb_connect(nullptr, nullptr);
         if (!connection)
         {
-            MANGO_EXCEPTION("[Window] xcb_connect() failed.");
+            MANGO_EXCEPTION("[WindowContext] xcb_connect() failed.");
         }
 
         // Initialize XKB
         const xcb_query_extension_reply_t* xkb_reply = xcb_get_extension_data(connection, &xcb_xkb_id);
         if (!xkb_reply || !xkb_reply->present)
         {
-            MANGO_EXCEPTION("[Window] XKB extension not available.");
+            MANGO_EXCEPTION("[WindowContext] XKB extension not available.");
         }
 
         // Initialize key symbols
         key_symbols = xcb_key_symbols_alloc(connection);
         if (!key_symbols)
         {
-            MANGO_EXCEPTION("[Window] Failed to allocate key symbols.");
+            MANGO_EXCEPTION("[WindowContext] Failed to allocate key symbols.");
         }
 
         // Intern atoms
@@ -408,7 +406,7 @@ namespace mango
         }
     }
 
-    WindowHandle::~WindowHandle()
+    WindowContext::~WindowContext()
     {
         if (connection)
         {
@@ -447,63 +445,43 @@ namespace mango
         }
     }
 
-    math::int32x2 WindowHandle::getWindowSize() const
-    {
-        xcb_get_geometry_cookie_t cookie = xcb_get_geometry(connection, window);
-        xcb_get_geometry_reply_t* reply = xcb_get_geometry_reply(connection, cookie, nullptr);
-
-        int width = 0;
-        int height = 0;
-
-        if (reply)
-        {
-            width = reply->width;
-            height = reply->height;
-            free(reply);
-        }
-
-        return int32x2(width, height);
-    }
-
-    bool WindowHandle::createXWindow(int screen, int depth, xcb_visualid_t visual, int width, int height, const char* title)
+    bool WindowContext::init(int width, int height, u32 flags, const char* title)
     {
         const xcb_setup_t* setup = xcb_get_setup(connection);
         xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
-        xcb_screen_t* xcb_screen = iter.data;
-        if (!xcb_screen)
+        xcb_screen_t* screen = iter.data;
+        if (!screen)
         {
             return false;
         }
 
-        // Create colormap with the specified visual
-        colormap = xcb_generate_id(connection);
-        xcb_create_colormap(connection, 
-                          XCB_COLORMAP_ALLOC_NONE,
-                          colormap,
-                          xcb_screen->root,
-                          visual);
-
-        // Create window with the specified visual
+        root = screen->root;
         window = xcb_generate_id(connection);
-        uint32_t value_mask = XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
-        uint32_t value_list[2] = {
-            XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_KEY_RELEASE |
-            XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE | XCB_EVENT_MASK_POINTER_MOTION |
-            XCB_EVENT_MASK_STRUCTURE_NOTIFY,
-            colormap
+
+        uint32_t value_mask = XCB_CW_EVENT_MASK;
+        uint32_t value_list [] =
+        {
+            XCB_EVENT_MASK_EXPOSURE |
+            XCB_EVENT_MASK_KEY_PRESS |
+            XCB_EVENT_MASK_KEY_RELEASE |
+            XCB_EVENT_MASK_BUTTON_PRESS |
+            XCB_EVENT_MASK_BUTTON_RELEASE |
+            XCB_EVENT_MASK_POINTER_MOTION |
+            XCB_EVENT_MASK_STRUCTURE_NOTIFY
         };
 
-        xcb_create_window(connection,
-                         depth,
-                         window,
-                         xcb_screen->root,
-                         20, 20,
-                         width, height,
-                         0,
-                         XCB_WINDOW_CLASS_INPUT_OUTPUT,
-                         visual,
-                         value_mask,
-                         value_list);
+        if (flags & Window::DISABLE_RESIZE)
+        {
+            // TODO
+        }
+
+        visualid = screen->root_visual;
+
+        xcb_create_window(connection, XCB_COPY_FROM_PARENT, window, root,
+                          0, 0, width, height, 0,
+                          XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                          visualid,
+                          value_mask, value_list);
 
         // Set window protocols
         xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_protocols, XCB_ATOM_ATOM, 32, 1, &atom_delete);
@@ -565,9 +543,99 @@ namespace mango
         return true;
     }
 
+    void WindowContext::toggleFullscreen()
+    {
+        xcb_client_message_event_t xevent = {0};
+
+        xevent.response_type = XCB_CLIENT_MESSAGE;
+        xevent.window = window;
+        xevent.type = atom_state;
+        xevent.format = 32;
+        xevent.data.data32[0] = 2;  // NET_WM_STATE_TOGGLE
+        xevent.data.data32[1] = atom_fullscreen;
+        xevent.data.data32[2] = 0;  // No second property to toggle
+        xevent.data.data32[3] = 1;  // Source indication: application
+        xevent.data.data32[4] = 0;  // Unused field
+
+        // Send the event to the root window
+        xcb_send_event(connection, 0, root,
+                       XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT,
+                       reinterpret_cast<const char*>(&xevent));
+        xcb_flush(connection);
+
+        // Get window geometry
+        xcb_get_geometry_cookie_t geom_cookie = xcb_get_geometry(connection, window);
+        xcb_get_geometry_reply_t* geom = xcb_get_geometry_reply(connection, geom_cookie, nullptr);
+        if (!geom)
+        {
+            return;
+        }
+
+        // Prepare the Expose event
+        xcb_expose_event_t expose_event;
+        std::memset(&expose_event, 0, sizeof(expose_event));
+        expose_event.response_type = XCB_EXPOSE;
+        expose_event.window = window;
+        expose_event.x = 0;
+        expose_event.y = 0;
+        expose_event.width = geom->width;
+        expose_event.height = geom->height;
+        expose_event.count = 0;
+
+        // Send the event
+        xcb_send_event(connection, 0, window, XCB_EVENT_MASK_EXPOSURE,
+                    reinterpret_cast<const char*>(&expose_event));
+
+        // Flush the request
+        xcb_flush(connection);
+
+        free(geom);
+
+        fullscreen = !fullscreen;
+    }
+
+    math::int32x2 WindowContext::getWindowSize() const
+    {
+        xcb_get_geometry_cookie_t cookie = xcb_get_geometry(connection, window);
+        xcb_get_geometry_reply_t* reply = xcb_get_geometry_reply(connection, cookie, nullptr);
+
+        int width = 0;
+        int height = 0;
+
+        if (reply)
+        {
+            width = reply->width;
+            height = reply->height;
+            free(reply);
+        }
+
+        return int32x2(width, height);
+    }
+
     // -----------------------------------------------------------------------
-    // Window implementation
+    // Window
     // -----------------------------------------------------------------------
+
+    Window::Window(int width, int height, u32 flags)
+    {
+        m_window_context = std::make_unique<WindowContext>();
+
+        if (flags & API_OPENGL)
+        {
+            // GLX and EGL must to choose a visual before creating the window
+        }
+        else
+        {
+            if (!m_window_context->init(width, height, flags, "Vulkan"))
+            {
+                MANGO_EXCEPTION("[Window] Creating window failed.");
+            }
+        }
+    }
+
+    Window::~Window()
+    {
+    }
 
     int Window::getScreenCount()
     {
@@ -604,20 +672,20 @@ namespace mango
         return screens[index].resolution;
     }
 
-    Window::Window(int width, int height, u32 flags)
+    Window::operator WindowHandle () const
     {
-        MANGO_UNREFERENCED(flags);
-        m_handle = std::make_unique<WindowHandle>(width, height, flags);
+        return *m_window_context;
     }
 
-    Window::~Window()
+    Window::operator WindowContext* () const
     {
+        return m_window_context.get();
     }
 
     void Window::setWindowPosition(int x, int y)
     {
-        auto connection = m_handle->connection;
-        auto window = m_handle->window;
+        auto connection = m_window_context->connection;
+        auto window = m_window_context->window;
 
         uint32_t values[] = { uint32_t(x), uint32_t(y) };
         xcb_configure_window(connection, window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y, values);
@@ -626,8 +694,8 @@ namespace mango
 
     void Window::setWindowSize(int width, int height)
     {
-        auto connection = m_handle->connection;
-        auto window = m_handle->window;
+        auto connection = m_window_context->connection;
+        auto window = m_window_context->window;
 
         uint32_t values[] = { uint32_t(width), uint32_t(height) };
         xcb_configure_window(connection, window, XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, values);
@@ -636,22 +704,17 @@ namespace mango
 
     void Window::setTitle(const std::string& title)
     {
-        auto connection = m_handle->connection;
-        auto window = m_handle->window;
+        auto connection = m_window_context->connection;
+        auto window = m_window_context->window;
 
         xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title.c_str()), title.c_str());
         xcb_flush(connection);
     }
 
-    void Window::setIcon(const Surface& surface)
-    {
-        // TODO
-    }
-
     void Window::setVisible(bool enable)
     {
-        auto connection = m_handle->connection;
-        auto window = m_handle->window;
+        auto connection = m_window_context->connection;
+        auto window = m_window_context->window;
 
         if (enable)
         {
@@ -669,13 +732,13 @@ namespace mango
 
     int32x2 Window::getWindowSize() const
     {
-        return m_handle->getWindowSize();
+        return m_window_context->getWindowSize();
     }
 
     int32x2 Window::getCursorPosition() const
     {
-        auto connection = m_handle->connection;
-        auto window = m_handle->window;
+        auto connection = m_window_context->connection;
+        auto window = m_window_context->window;
 
         xcb_query_pointer_cookie_t cookie = xcb_query_pointer(connection, window);
         xcb_query_pointer_reply_t* reply = xcb_query_pointer_reply(connection, cookie, nullptr);
@@ -710,19 +773,19 @@ namespace mango
         bool pressed = false;
 
         // Get window with input focus
-        xcb_get_input_focus_cookie_t focus_cookie = xcb_get_input_focus(m_handle->connection);
-        xcb_get_input_focus_reply_t* focus_reply = xcb_get_input_focus_reply(m_handle->connection, focus_cookie, nullptr);
+        xcb_get_input_focus_cookie_t focus_cookie = xcb_get_input_focus(m_window_context->connection);
+        xcb_get_input_focus_reply_t* focus_reply = xcb_get_input_focus_reply(m_window_context->connection, focus_cookie, nullptr);
 
-        if (focus_reply && focus_reply->focus == m_handle->window)
+        if (focus_reply && focus_reply->focus == m_window_context->window)
         {
             // Get keyboard state
-            xcb_query_keymap_cookie_t keymap_cookie = xcb_query_keymap(m_handle->connection);
-            xcb_query_keymap_reply_t* keymap_reply = xcb_query_keymap_reply(m_handle->connection, keymap_cookie, nullptr);
+            xcb_query_keymap_cookie_t keymap_cookie = xcb_query_keymap(m_window_context->connection);
+            xcb_query_keymap_reply_t* keymap_reply = xcb_query_keymap_reply(m_window_context->connection, keymap_cookie, nullptr);
 
             if (keymap_reply)
             {
                 xcb_keysym_t symbol = translateKeycodeToSymbol(code);
-                xcb_keycode_t* keycodes = xcb_key_symbols_get_keycode(m_handle->key_symbols, symbol);
+                xcb_keycode_t* keycodes = xcb_key_symbols_get_keycode(m_window_context->key_symbols, symbol);
                 xcb_keycode_t keycode = keycodes ? keycodes[0] : 0;
 
                 if (keycode >= 0 && keycode < 255)
@@ -738,23 +801,13 @@ namespace mango
         return pressed;
     }
 
-    Window::operator NativeWindowHandle () const
-    {
-        return *m_handle;
-    }
-
-    Window::operator WindowHandle* () const
-    {
-        return m_handle.get();
-    }
-
     void Window::enterEventLoop()
     {
-        m_handle->is_looping = true;
+        m_window_context->is_looping = true;
 
-        for (; m_handle->is_looping;)
+        for (; m_window_context->is_looping;)
         {
-            xcb_generic_event_t* event = xcb_poll_for_event(m_handle->connection);
+            xcb_generic_event_t* event = xcb_poll_for_event(m_window_context->connection);
             if (event)
             {
                 switch (event->response_type & 0x7f)
@@ -773,11 +826,11 @@ namespace mango
                             {
                                 // Simulate double click
                                 u32 time = mango::Time::ms();
-                                if (time - m_handle->mouse_time[button] < 300)
+                                if (time - m_window_context->mouse_time[button] < 300)
                                 {
                                     count = 2;
                                 }
-                                m_handle->mouse_time[button] = time;
+                                m_window_context->mouse_time[button] = time;
                                 break;
                             }
 
@@ -812,7 +865,7 @@ namespace mango
                     case XCB_KEY_PRESS:
                     {
                         auto* key_press = reinterpret_cast<xcb_key_press_event_t*>(event);
-                        xcb_keysym_t keysym = xcb_key_symbols_get_keysym(m_handle->key_symbols, key_press->detail, 0);
+                        xcb_keysym_t keysym = xcb_key_symbols_get_keysym(m_window_context->key_symbols, key_press->detail, 0);
                         if (keysym != XKB_KEY_NoSymbol)
                         {
                             u32 mask = translateKeyMask(key_press->state);
@@ -824,13 +877,13 @@ namespace mango
                     case XCB_KEY_RELEASE:
                     {
                         auto* key_release = reinterpret_cast<xcb_key_release_event_t*>(event);
-                        xcb_keysym_t keysym = xcb_key_symbols_get_keysym(m_handle->key_symbols, key_release->detail, 0);
+                        xcb_keysym_t keysym = xcb_key_symbols_get_keysym(m_window_context->key_symbols, key_release->detail, 0);
                         if (keysym != XKB_KEY_NoSymbol)
                         {
                             bool is_repeat = false;
 
                             // Check for key repeat
-                            xcb_generic_event_t* next_event = xcb_poll_for_event(m_handle->connection);
+                            xcb_generic_event_t* next_event = xcb_poll_for_event(m_window_context->connection);
                             if (next_event)
                             {
                                 if ((next_event->response_type & 0x7f) == XCB_KEY_PRESS)
@@ -855,17 +908,17 @@ namespace mango
                     case XCB_CONFIGURE_NOTIFY:
                     {
                         xcb_configure_notify_event_t* configure = (xcb_configure_notify_event_t*)event;
-                        if (configure->width != m_handle->size[0] || configure->height != m_handle->size[1])
+                        if (configure->width != m_window_context->size[0] || configure->height != m_window_context->size[1])
                         {
                             // Set busy flag to prevent multiple resize callbacks
-                            m_handle->busy = true;
+                            m_window_context->busy = true;
                             
                             // Update size
-                            m_handle->size[0] = configure->width;
-                            m_handle->size[1] = configure->height;
+                            m_window_context->size[0] = configure->width;
+                            m_window_context->size[1] = configure->height;
                             
                             // Check if we have more configure events pending
-                            xcb_generic_event_t* next_event = xcb_poll_for_event(m_handle->connection);
+                            xcb_generic_event_t* next_event = xcb_poll_for_event(m_window_context->connection);
                             bool has_more = false;
                             
                             if (next_event)
@@ -883,7 +936,7 @@ namespace mango
                                 // Send Expose event to ensure redraw
                                 xcb_expose_event_t expose = { 0 };
                                 expose.response_type = XCB_EXPOSE;
-                                expose.window = m_handle->window;
+                                expose.window = m_window_context->window;
                                 expose.x = 0;
                                 expose.y = 0;
                                 expose.width = configure->width;
@@ -891,12 +944,12 @@ namespace mango
                                 expose.count = 0;
                                 
                                 // Use XCB_EVENT_MASK_NO_EVENT to prevent event loop from processing this immediately
-                                xcb_send_event(m_handle->connection, 0, m_handle->window,
+                                xcb_send_event(m_window_context->connection, 0, m_window_context->window,
                                     XCB_EVENT_MASK_NO_EVENT, (char*)&expose);
-                                xcb_flush(m_handle->connection);
+                                xcb_flush(m_window_context->connection);
                                 
                                 onResize(configure->width, configure->height);
-                                m_handle->busy = false;
+                                m_window_context->busy = false;
                             }
                         }
                         break;
@@ -904,7 +957,7 @@ namespace mango
 
                     case XCB_EXPOSE:
                     {
-                        if (!m_handle->busy)
+                        if (!m_window_context->busy)
                         {
                             onDraw();
                         }
@@ -914,24 +967,24 @@ namespace mango
                     case XCB_CLIENT_MESSAGE:
                     {
                         xcb_client_message_event_t* client_message = (xcb_client_message_event_t*)event;
-                        if (client_message->type == m_handle->atom_protocols)
+                        if (client_message->type == m_window_context->atom_protocols)
                         {
-                            if (client_message->data.data32[0] == m_handle->atom_delete)
+                            if (client_message->data.data32[0] == m_window_context->atom_delete)
                             {
                                 breakEventLoop();
                             }
                         }
-                        else if (client_message->type == m_handle->atom_xdnd_Enter)
+                        else if (client_message->type == m_window_context->atom_xdnd_Enter)
                         {
                             bool use_list = client_message->data.data32[1] & 1;
-                            m_handle->xdnd_source = client_message->data.data32[0];
-                            m_handle->xdnd_version = (client_message->data.data32[1] >> 24);
+                            m_window_context->xdnd_source = client_message->data.data32[0];
+                            m_window_context->xdnd_version = (client_message->data.data32[1] >> 24);
                             if (use_list)
                             {
                                 // Fetch conversion targets
-                                xcb_get_property_cookie_t cookie = xcb_get_property(m_handle->connection, 0,
-                                    m_handle->xdnd_source, m_handle->atom_xdnd_TypeList, XCB_ATOM_ATOM, 0, 0x8000000L);
-                                xcb_get_property_reply_t* reply = xcb_get_property_reply(m_handle->connection, cookie, nullptr);
+                                xcb_get_property_cookie_t cookie = xcb_get_property(m_window_context->connection, 0,
+                                    m_window_context->xdnd_source, m_window_context->atom_xdnd_TypeList, XCB_ATOM_ATOM, 0, 0x8000000L);
+                                xcb_get_property_reply_t* reply = xcb_get_property_reply(m_window_context->connection, cookie, nullptr);
                                 if (reply)
                                 {
                                     xcb_atom_t* atoms = (xcb_atom_t*)xcb_get_property_value(reply);
@@ -943,49 +996,49 @@ namespace mango
                             else
                             {
                                 // Pick from list of three
-                                m_handle->atom_xdnd_req = client_message->data.data32[2];
+                                m_window_context->atom_xdnd_req = client_message->data.data32[2];
                             }
                         }
-                        else if (client_message->type == m_handle->atom_xdnd_Position)
+                        else if (client_message->type == m_window_context->atom_xdnd_Position)
                         {
                             xcb_client_message_event_t reply = { 0 };
                             reply.response_type = XCB_CLIENT_MESSAGE;
                             reply.format = 32;
                             reply.window = client_message->data.data32[0];
-                            reply.type = m_handle->atom_xdnd_Status;
-                            reply.data.data32[0] = m_handle->window;
-                            reply.data.data32[1] = (m_handle->atom_xdnd_req != 0);
+                            reply.type = m_window_context->atom_xdnd_Status;
+                            reply.data.data32[0] = m_window_context->window;
+                            reply.data.data32[1] = (m_window_context->atom_xdnd_req != 0);
                             reply.data.data32[2] = 0; // empty rectangle
                             reply.data.data32[3] = 0;
-                            reply.data.data32[4] = m_handle->atom_xdnd_ActionCopy;
+                            reply.data.data32[4] = m_window_context->atom_xdnd_ActionCopy;
 
-                            xcb_send_event(m_handle->connection, 0, client_message->data.data32[0],
+                            xcb_send_event(m_window_context->connection, 0, client_message->data.data32[0],
                                 XCB_EVENT_MASK_NO_EVENT, (char*)&reply);
-                            xcb_flush(m_handle->connection);
+                            xcb_flush(m_window_context->connection);
                         }
-                        else if (client_message->type == m_handle->atom_xdnd_Drop)
+                        else if (client_message->type == m_window_context->atom_xdnd_Drop)
                         {
-                            if (m_handle->atom_xdnd_req == 0)
+                            if (m_window_context->atom_xdnd_req == 0)
                             {
                                 // Respond to empty request
                                 xcb_client_message_event_t reply = { 0 };
                                 reply.response_type = XCB_CLIENT_MESSAGE;
                                 reply.format = 32;
                                 reply.window = client_message->data.data32[0];
-                                reply.type = m_handle->atom_xdnd_Finished;
-                                reply.data.data32[0] = m_handle->window;
+                                reply.type = m_window_context->atom_xdnd_Finished;
+                                reply.data.data32[0] = m_window_context->window;
                                 reply.data.data32[1] = 0;
                                 reply.data.data32[2] = 0; // failed
 
-                                xcb_send_event(m_handle->connection, 0, client_message->data.data32[0],
+                                xcb_send_event(m_window_context->connection, 0, client_message->data.data32[0],
                                     XCB_EVENT_MASK_NO_EVENT, (char*)&reply);
                             }
                             else
                             {
                                 // Convert selection
-                                xcb_convert_selection(m_handle->connection, m_handle->window,
-                                    m_handle->atom_xdnd_Selection, m_handle->atom_xdnd_req,
-                                    m_handle->atom_primary, client_message->data.data32[2]);
+                                xcb_convert_selection(m_window_context->connection, m_window_context->window,
+                                    m_window_context->atom_xdnd_Selection, m_window_context->atom_xdnd_req,
+                                    m_window_context->atom_primary, client_message->data.data32[2]);
                             }
                         }
                         break;
@@ -994,12 +1047,12 @@ namespace mango
                     case XCB_SELECTION_NOTIFY:
                     {
                         xcb_selection_notify_event_t* selection = (xcb_selection_notify_event_t*)event;
-                        if (selection->target == m_handle->atom_xdnd_req)
+                        if (selection->target == m_window_context->atom_xdnd_req)
                         {
                             // Read data
-                            xcb_get_property_cookie_t cookie = xcb_get_property(m_handle->connection, 0,
-                                m_handle->window, m_handle->atom_primary, XCB_ATOM_STRING, 0, 0x8000000L);
-                            xcb_get_property_reply_t* reply = xcb_get_property_reply(m_handle->connection, cookie, nullptr);
+                            xcb_get_property_cookie_t cookie = xcb_get_property(m_window_context->connection, 0,
+                                m_window_context->window, m_window_context->atom_primary, XCB_ATOM_STRING, 0, 0x8000000L);
+                            xcb_get_property_reply_t* reply = xcb_get_property_reply(m_window_context->connection, cookie, nullptr);
                             if (reply)
                             {
                                 // TODO: Process dropped files
@@ -1010,15 +1063,15 @@ namespace mango
                             xcb_client_message_event_t client_message = { 0 };
                             client_message.response_type = XCB_CLIENT_MESSAGE;
                             client_message.format = 32;
-                            client_message.window = m_handle->xdnd_source;
-                            client_message.type = m_handle->atom_xdnd_Finished;
-                            client_message.data.data32[0] = m_handle->window;
+                            client_message.window = m_window_context->xdnd_source;
+                            client_message.type = m_window_context->atom_xdnd_Finished;
+                            client_message.data.data32[0] = m_window_context->window;
                             client_message.data.data32[1] = 1;
-                            client_message.data.data32[2] = m_handle->atom_xdnd_ActionCopy;
+                            client_message.data.data32[2] = m_window_context->atom_xdnd_ActionCopy;
 
-                            xcb_send_event(m_handle->connection, 0, m_handle->xdnd_source,
+                            xcb_send_event(m_window_context->connection, 0, m_window_context->xdnd_source,
                                 XCB_EVENT_MASK_NO_EVENT, (char*)&client_message);
-                            xcb_flush(m_handle->connection);
+                            xcb_flush(m_window_context->connection);
                         }
                         break;
                     }
@@ -1028,7 +1081,7 @@ namespace mango
             }
             else
             {
-                if (!m_handle->busy)
+                if (!m_window_context->busy)
                 {
                     onIdle();
                 }
@@ -1039,7 +1092,7 @@ namespace mango
 
     void Window::breakEventLoop()
     {
-        m_handle->is_looping = false;
+        m_window_context->is_looping = false;
     }
 
     void Window::onIdle()

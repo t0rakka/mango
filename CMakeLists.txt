@@ -8,8 +8,9 @@ project(mango
 # options
 # ------------------------------------------------------------------------------
 
-OPTION(BUILD_OPENGL         "Build OpenGL library"                      ON)
-OPTION(BUILD_IMPORT3D       "Build Import3D library"                    ON)
+OPTION(BUILD_OPENGL         "Build OpenGL support"                      ON)
+OPTION(BUILD_VULKAN         "Build Vulkan support"                      OFF)
+OPTION(BUILD_IMPORT3D       "Build Import3D support"                    ON)
 OPTION(BUILD_EXAMPLES       "Build examples"                            ON)
 
 # Window system selection
@@ -110,6 +111,13 @@ if (BUILD_OPENGL)
     endif ()
 endif ()
 
+if (BUILD_VULKAN)
+    find_package(Vulkan QUIET)
+    if (NOT VULKAN_FOUND)
+        set(BUILD_VULKAN OFF)
+    endif ()
+endif ()
+
 message("[ ${PROJECT_NAME} ]")
 list(APPEND CMAKE_MESSAGE_INDENT "    ")
 
@@ -169,6 +177,10 @@ if (DEFINED ENV{VCPKG_ROOT})
         set(DEFAULT_INSTALL_PATH "${CMAKE_BINARY_DIR}/install")
     endif ()
 
+    message("VCPKG_ROOT: " $ENV{VCPKG_ROOT})
+    message("VCPKG_TARGET_TRIPLET: " $ENV{VCPKG_TARGET_TRIPLET})
+    message("VCPKG_DEFAULT_TRIPLET: " $ENV{VCPKG_DEFAULT_TRIPLET})
+
     set(CMAKE_INSTALL_PREFIX "${DEFAULT_INSTALL_PATH}" CACHE PATH "Install path prefix" FORCE)
 
 endif ()
@@ -227,29 +239,87 @@ if (BUILD_OPENGL)
     else ()
 
         # Select window system based on WINDOW_SYSTEM option
-        if(WINDOW_SYSTEM STREQUAL "xlib")
+        if (WINDOW_SYSTEM STREQUAL "xlib")
             set(WINDOW_SOURCES
                 ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.hpp
                 ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.cpp
             )
-        elseif(WINDOW_SYSTEM STREQUAL "xcb")
+        elseif (WINDOW_SYSTEM STREQUAL "xcb")
             set(WINDOW_SOURCES
                 ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.hpp
                 ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.cpp
             )
-        elseif(WINDOW_SYSTEM STREQUAL "wayland")
+        elseif (WINDOW_SYSTEM STREQUAL "wayland")
             set(WINDOW_SOURCES
                 ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
                 ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
             )
-        else()
+        else ()
             message(FATAL_ERROR "Unsupported window system: ${WINDOW_SYSTEM}")
-        endif()
+        endif ()
 
         FILE(GLOB OPENGL_SOURCES
             "${MANGO_SOURCE_DIR}/opengl/*.cpp"
             "${MANGO_SOURCE_DIR}/opengl/glx/*.cpp"
             "${MANGO_SOURCE_DIR}/opengl/egl/*.cpp"
+        )
+
+    endif ()
+
+endif ()
+
+if (BUILD_VULKAN)
+
+    if (NOT (APPLE OR EMSCRIPTEN))
+
+        FILE(GLOB WINDOW_HEADERS
+            "${MANGO_INCLUDE_DIR}/window/*.hpp"
+        )
+
+    endif ()
+
+    FILE(GLOB VULKAN_HEADERS
+        "${MANGO_INCLUDE_DIR}/vulkan/*.hpp"
+    )
+
+    if (WIN32 OR CYGWIN)
+
+        FILE(GLOB WINDOW_SOURCES
+            "${MANGO_SOURCE_DIR}/window/win32/*.cpp"
+        )
+
+        FILE(GLOB VULKAN_SOURCES
+            "${MANGO_SOURCE_DIR}/vulkan/*.cpp"
+        )
+
+    elseif (APPLE OR EMSCRIPTEN)
+
+        # NOT SUPPORTED
+
+    else ()
+
+        # Select window system based on WINDOW_SYSTEM option
+        if (WINDOW_SYSTEM STREQUAL "xlib")
+            set(WINDOW_SOURCES
+                ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.hpp
+                ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.cpp
+            )
+        elseif (WINDOW_SYSTEM STREQUAL "xcb")
+            set(WINDOW_SOURCES
+                ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.hpp
+                ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.cpp
+            )
+        elseif (WINDOW_SYSTEM STREQUAL "wayland")
+            set(WINDOW_SOURCES
+                ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
+                ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
+            )
+        else ()
+            message(FATAL_ERROR "Unsupported window system: ${WINDOW_SYSTEM}")
+        endif ()
+
+        FILE(GLOB VULKAN_SOURCES
+            "${MANGO_SOURCE_DIR}/vulkan/*.cpp"
         )
 
     endif ()
@@ -318,6 +388,7 @@ SOURCE_GROUP("include/math"         FILES ${MATH_HEADERS})
 SOURCE_GROUP("include/simd"         FILES ${SIMD_HEADERS})
 SOURCE_GROUP("include/window"       FILES ${WINDOW_HEADERS})
 SOURCE_GROUP("include/opengl"       FILES ${OPENGL_HEADERS})
+SOURCE_GROUP("include/vulkan"       FILES ${VULKAN_HEADERS})
 SOURCE_GROUP("include/import3d"     FILES ${IMPORT3D_HEADERS})
 
 SOURCE_GROUP("source/core"          FILES ${CORE_SOURCES})
@@ -327,6 +398,7 @@ SOURCE_GROUP("source/jpeg"          FILES ${JPEG_SOURCES})
 SOURCE_GROUP("source/math"          FILES ${MATH_SOURCES})
 SOURCE_GROUP("source/window"        FILES ${WINDOW_SOURCES})
 SOURCE_GROUP("source/opengl"        FILES ${OPENGL_SOURCES})
+SOURCE_GROUP("source/vulkan"        FILES ${VULKAN_SOURCES})
 SOURCE_GROUP("source/import3d"      FILES ${IMPORT3D_SOURCES})
 
 # ------------------------------------------------------------------------------
@@ -448,6 +520,15 @@ if (BUILD_OPENGL)
         ${WINDOW_SOURCES}
         ${OPENGL_HEADERS}
         ${OPENGL_SOURCES}
+    )
+endif ()
+
+if (BUILD_VULKAN)
+    list(APPEND MANGO_SOURCES
+        ${WINDOW_HEADERS}
+        ${WINDOW_SOURCES}
+        ${VULKAN_HEADERS}
+        ${VULKAN_SOURCES}
     )
 endif ()
 
@@ -581,6 +662,33 @@ if (BUILD_OPENGL)
     endif ()
 endif ()
 
+if (BUILD_VULKAN)
+    if (VULKAN_FOUND)
+        if (WIN32)
+            message("    Vulkan: WIN32")
+            target_include_directories(mango PUBLIC ${Vulkan_INCLUDE_DIRS})
+            target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES})
+        else ()
+            if (WINDOW_SYSTEM STREQUAL "xlib")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
+                target_link_libraries(mango PUBLIC X11 vulkan)
+                message("    Vulkan: XLIB")
+            elseif (WINDOW_SYSTEM STREQUAL "xcb")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XCB")
+                target_link_libraries(mango PUBLIC vulkan xcb xcb-xkb xcb-keysyms xcb-icccm xkbcommon)
+                message("    Vulkan: XCB")
+            elseif (WINDOW_SYSTEM STREQUAL "wayland")
+                message("    Vulkan: Wayland")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_WAYLAND")
+                find_package(PkgConfig REQUIRED)
+                pkg_check_modules(WAYLAND REQUIRED wayland-client)
+                pkg_check_modules(XKB REQUIRED xkbcommon)
+                target_link_libraries(mango PUBLIC vulkan wayland-client xkbcommon)
+            endif()
+        endif ()
+    endif ()
+endif ()
+
 # ------------------------------------------------------------------------------
 # required libraries
 # ------------------------------------------------------------------------------
@@ -593,11 +701,11 @@ find_module_with_cmake(mango LIBDEFLATE libdeflate libdeflate::libdeflate_shared
 find_module_with_pkg(mango LIBDEFLATE libdeflate)
 check_required_package(LIBDEFLATE)
 
-if (APPLE)
-    # brew imported target is 'zstd::libzstd'
+if (APPLE OR WIN32)
+    # brew/vcpkg imported target is 'zstd::libzstd'
     find_module_with_cmake(mango ZSTD zstd zstd::libzstd 0)
 else ()
-    # vcpkg/apt imported target is 'zstd'
+    # apt/pacman imported target is 'zstd'
     find_module_with_cmake(mango ZSTD zstd zstd 0)
 endif ()
 find_module_with_pkg(mango ZSTD libzstd)
@@ -861,12 +969,15 @@ message("    SIMD: " ${SIMD})
 
 message("[Options]")
 message("    BUILD_OPENGL:   " ${BUILD_OPENGL})
+message("    BUILD_VULKAN:   " ${BUILD_VULKAN})
 message("    BUILD_IMPORT3D: " ${BUILD_IMPORT3D})
 message("    BUILD_EXAMPLES: " ${BUILD_EXAMPLES})
 
 # ------------------------------------------------------------------------------
 # install
 # ------------------------------------------------------------------------------
+
+include(GNUInstallDirs)
 
 add_library(mango::mango ALIAS mango)
 
@@ -880,21 +991,31 @@ target_include_directories(mango
 # install mango headers
 install(
     DIRECTORY ${PROJECT_SOURCE_DIR}/include/
-    DESTINATION include
+    #DESTINATION include
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     FILES_MATCHING PATTERN "*.h*"
 )
 
+# install mango library
 install(TARGETS mango
-    EXPORT "mango-config"
-    LIBRARY DESTINATION "lib"
-    ARCHIVE DESTINATION "lib"
-    RUNTIME DESTINATION "bin"
+    EXPORT mango-config
+    RUNTIME DESTINATION $<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_BINDIR},${CMAKE_INSTALL_BINDIR}>
+    LIBRARY DESTINATION $<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_LIBDIR},${CMAKE_INSTALL_LIBDIR}>
+    ARCHIVE DESTINATION $<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_LIBDIR},${CMAKE_INSTALL_LIBDIR}>
 )
 
+# install mango pdb files (only for windows)
+if (WIN32)
+    install(FILES $<TARGET_PDB_FILE:mango>
+        DESTINATION $<IF:$<CONFIG:Debug>,debug/bin,bin> OPTIONAL
+    )
+endif ()
+
+# install mango cmake config
 install(
     EXPORT "mango-config"
     NAMESPACE mango::
-    DESTINATION "lib/cmake/mango"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mango
 )
 
 # ------------------------------------------------------------------------------

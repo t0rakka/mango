@@ -19,6 +19,7 @@
 #endif
 
 // https://www.w3.org/TR/2003/REC-PNG-20031110/
+// https://www.w3.org/TR/png-3/
 // https://wiki.mozilla.org/APNG_Specification
 // https://datatracker.ietf.org/doc/html/rfc1951
 

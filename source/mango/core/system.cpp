@@ -9,6 +9,56 @@
 #include <mango/simd/simd.hpp>
 #include <sstream>
 
+#if defined(WIN32)
+
+    #include <stdio.h>
+    #include <io.h>
+    #include <fcntl.h>
+
+    WindowsConsole::WindowsConsole()
+    {
+        if (AttachConsole(ATTACH_PARENT_PROCESS))
+        {
+            FILE* fp;
+            freopen_s(&fp, "CONOUT$", "w", stdout);
+            freopen_s(&fp, "CONOUT$", "w", stderr);
+            freopen_s(&fp, "CONIN$", "r", stdin);
+            setvbuf(stdout, nullptr, _IONBF, 0);
+            setvbuf(stderr, nullptr, _IONBF, 0);
+            m_attached = true;
+        }
+    }
+
+    WindowsConsole::~WindowsConsole()
+    {
+        if (m_attached)
+        {
+            HANDLE hInput = GetStdHandle(STD_INPUT_HANDLE);
+            if (hInput == INVALID_HANDLE_VALUE)
+                return;
+
+            // Prepare a KEY_EVENT_RECORD for ENTER key
+            INPUT_RECORD ir[2] = {};
+
+            ir[0].EventType = KEY_EVENT;
+            ir[0].Event.KeyEvent.bKeyDown = TRUE;
+            ir[0].Event.KeyEvent.wVirtualKeyCode = VK_RETURN;
+            ir[0].Event.KeyEvent.wVirtualScanCode = MapVirtualKey(VK_RETURN, MAPVK_VK_TO_VSC);
+            ir[0].Event.KeyEvent.uChar.AsciiChar = '\r';
+            ir[0].Event.KeyEvent.dwControlKeyState = 0;
+
+            ir[1] = ir[0];
+            ir[1].Event.KeyEvent.bKeyDown = FALSE;
+
+            DWORD written = 0;
+            WriteConsoleInput(hInput, ir, 2, &written);
+
+            FreeConsole();
+        }
+    }
+
+#endif // WIN32
+
 namespace
 {
     using namespace mango;

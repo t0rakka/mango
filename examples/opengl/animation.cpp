@@ -47,7 +47,6 @@ public:
         : OpenGLFramebuffer(animation.m_bitmap.width, animation.m_bitmap.height)
         , m_animation(animation)
     {
-        setVisible(true);
         setTitle(fmt::format("[ {} ]", filesystem::removePath(m_animation.m_file.filename())));
         m_target_time = m_timer.ms();
     }
