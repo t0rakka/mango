@@ -177,6 +177,10 @@ if (DEFINED ENV{VCPKG_ROOT})
         set(DEFAULT_INSTALL_PATH "${CMAKE_BINARY_DIR}/install")
     endif ()
 
+    message("VCPKG_ROOT: " $ENV{VCPKG_ROOT})
+    message("VCPKG_TARGET_TRIPLET: " $ENV{VCPKG_TARGET_TRIPLET})
+    message("VCPKG_DEFAULT_TRIPLET: " $ENV{VCPKG_DEFAULT_TRIPLET})
+
     set(CMAKE_INSTALL_PREFIX "${DEFAULT_INSTALL_PATH}" CACHE PATH "Install path prefix" FORCE)
 
 endif ()
@@ -973,6 +977,8 @@ message("    BUILD_EXAMPLES: " ${BUILD_EXAMPLES})
 # install
 # ------------------------------------------------------------------------------
 
+include(GNUInstallDirs)
+
 add_library(mango::mango ALIAS mango)
 
 target_include_directories(mango
@@ -985,21 +991,31 @@ target_include_directories(mango
 # install mango headers
 install(
     DIRECTORY ${PROJECT_SOURCE_DIR}/include/
-    DESTINATION include
+    #DESTINATION include
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     FILES_MATCHING PATTERN "*.h*"
 )
 
+# install mango library
 install(TARGETS mango
-    EXPORT "mango-config"
-    LIBRARY DESTINATION "lib"
-    ARCHIVE DESTINATION "lib"
-    RUNTIME DESTINATION "bin"
+    EXPORT mango-config
+    RUNTIME DESTINATION $<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_BINDIR},${CMAKE_INSTALL_BINDIR}>
+    LIBRARY DESTINATION $<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_LIBDIR},${CMAKE_INSTALL_LIBDIR}>
+    ARCHIVE DESTINATION $<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_LIBDIR},${CMAKE_INSTALL_LIBDIR}>
 )
 
+# install mango pdb files (only for windows)
+if (WIN32)
+    install(FILES $<TARGET_PDB_FILE:mango>
+        DESTINATION $<IF:$<CONFIG:Debug>,debug/bin,bin> OPTIONAL
+    )
+endif ()
+
+# install mango cmake config
 install(
     EXPORT "mango-config"
     NAMESPACE mango::
-    DESTINATION "lib/cmake/mango"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mango
 )
 
 # ------------------------------------------------------------------------------
