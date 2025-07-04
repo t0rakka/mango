@@ -996,17 +996,7 @@ install(
     FILES_MATCHING PATTERN "*.h*"
 )
 
-# --
-
-#install(TARGETS mango
-#    EXPORT "mango-config"
-#    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-#    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-#    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-#)
-
-# --
-
+# install mango library
 install(TARGETS mango
     EXPORT mango-config
     RUNTIME DESTINATION $<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_BINDIR},${CMAKE_INSTALL_BINDIR}>
@@ -1014,38 +1004,17 @@ install(TARGETS mango
     ARCHIVE DESTINATION $<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_LIBDIR},${CMAKE_INSTALL_LIBDIR}>
 )
 
-# --
+# install mango pdb files (only for windows)
+if (WIN32)
+    install(FILES $<TARGET_PDB_FILE:mango>
+        DESTINATION $<IF:$<CONFIG:Debug>,debug/bin,bin> OPTIONAL
+    )
+endif ()
 
-#install(TARGETS mango
-#    EXPORT mango-config
-#    CONFIGURATIONS Debug
-#    RUNTIME DESTINATION debug/${CMAKE_INSTALL_BINDIR}
-#    LIBRARY DESTINATION debug/${CMAKE_INSTALL_LIBDIR}
-#    ARCHIVE DESTINATION debug/${CMAKE_INSTALL_LIBDIR}
-#)
-
-#install(TARGETS mango
-#    EXPORT mango-config
-#    CONFIGURATIONS Release
-#    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-#    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-#    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-#)
-
-# --
-
-#install(TARGETS mango
-#    EXPORT "mango-config"
-#    LIBRARY DESTINATION "lib"
-#    ARCHIVE DESTINATION "lib"
-#    RUNTIME DESTINATION "bin"
-#)
-
+# install mango cmake config
 install(
     EXPORT "mango-config"
     NAMESPACE mango::
-    #DESTINATION "lib/cmake/mango"
-    #DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mango
 )
 
