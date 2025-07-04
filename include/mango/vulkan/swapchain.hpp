@@ -21,7 +21,7 @@ namespace mango::vulkan
         VkFormat m_format;
         VkColorSpaceKHR m_colorSpace;
         VkExtent2D m_extent { 0, 0 };
-        VkSwapchainKHR m_swapchain;
+        VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
 
         std::vector<VkImage> m_images;
         std::vector<VkImageView> m_imageViews;
