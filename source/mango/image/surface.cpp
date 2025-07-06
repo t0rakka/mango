@@ -618,7 +618,7 @@ namespace
             surface.width  = header.width;
             surface.height = header.height;
             surface.stride = header.width * surface.format.bytes();
-            surface.image  = new u8[header.height * surface.stride];
+            surface.image  = new u8[header.height * surface.stride]; // NOTE: not leaking the image is assigned to Bitmap instance
 
             // decode
             ImageDecodeStatus status = decoder.decode(surface, options, 0, 0, 0);

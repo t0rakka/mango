@@ -30,6 +30,8 @@ namespace mango
         GLuint m_framebuffer = 0;
         GLuint m_index_texture = 0;
         GLuint m_index_program = 0;
+        GLint m_index_position = -1;
+        GLint m_index_texcoord = -1;
 
         GLuint m_texture = 0;
         GLuint m_buffer = 0;
@@ -45,6 +47,7 @@ namespace mango
             GLint texture = -1;
             GLint scale = -1;
             GLint position = -1;
+            GLint texcoord = -1;
         };
 
         Program m_bilinear;
@@ -71,7 +74,7 @@ namespace mango
         OpenGLFramebuffer(int width, int height, BufferMode buffermode = RGBA_DIRECT);
         ~OpenGLFramebuffer();
 
-        void setPalette(const u32* palette);
+        void setPalette(const image::Palette& palette);
 
         image::Surface lock();
         void unlock();
