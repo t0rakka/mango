@@ -341,9 +341,7 @@ namespace
         }
     }
 
-    const u8* read_image(const u8* data, const u8* end, 
-                         gif_state& state, 
-                         Surface& surface, Palette* ptr_palette)
+    const u8* read_image(const u8* data, const u8* end, gif_state& state, Surface& surface, Palette* ptr_palette)
     {
         gif_image_descriptor image_desc;
         data = image_desc.read(data, end);
@@ -597,7 +595,7 @@ namespace
                 return status;
             }
 
-            Format format = options.palette ? LuminanceFormat(8, Format::UNORM, 8, 0)
+            Format format = options.palette ? IndexedFormat(8)
                                             : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
             size_t stride = header.width * format.bytes();

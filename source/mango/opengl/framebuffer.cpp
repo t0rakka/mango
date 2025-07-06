@@ -20,12 +20,13 @@ namespace
         uniform vec4 u_Transform = vec4(0.0, 0.0, 1.0, 1.0);
 
         in vec2 a_Position;
+        in vec2 a_Texcoord;
 
         out vec2 texcoord;
 
         void main()
         {
-            texcoord = a_Position * vec2(0.5, -0.5) + vec2(0.5);
+            texcoord = a_Texcoord;
             gl_Position = vec4((a_Position + u_Transform.xy) * u_Transform.zw, 0.0, 1.0);
         }
     )";
@@ -51,12 +52,13 @@ namespace
         uniform vec4 u_Transform = vec4(0.0, 0.0, 1.0, 1.0);
 
         in vec2 a_Position;
+        in vec2 a_Texcoord;
 
         out vec2 texcoord;
 
         void main()
         {
-            texcoord = a_Position * vec2(0.5, -0.5) + vec2(0.5);
+            texcoord = a_Texcoord;
             gl_Position = vec4((a_Position + u_Transform.xy) * u_Transform.zw, 0.0, 1.0);
         }
     )";
@@ -134,6 +136,8 @@ namespace
 
 } // namespace
 
+#include <mango/core/print.hpp>
+
 namespace mango
 {
 
@@ -210,6 +214,8 @@ namespace mango
             glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, m_texture, 0);
 
             m_index_program = createProgram(vertex_shader_source, fragment_shader_source_index);
+            m_index_position = glGetAttribLocation(m_index_program, "a_Position");
+            m_index_texcoord = glGetAttribLocation(m_index_program, "a_Texcoord");
         }
 
         // create pixelbuffer
@@ -221,17 +227,23 @@ namespace mango
 
         // create vertex buffers
 
-        const GLfloat vertex_buffer_data[] =
+        const GLfloat vertex_buffer_data [] =
         {
-            -1.0f, -1.0f,
-             1.0f, -1.0f,
-            -1.0f,  1.0f,
-             1.0f,  1.0f
+            //  position     texcoord
+            -1.0f, -1.0f,  0.0f, 1.0f,
+             1.0f, -1.0f,  1.0f, 1.0f,
+            -1.0f,  1.0f,  0.0f, 0.0f,
+             1.0f,  1.0f,  1.0f, 0.0f,
+
+            -1.0f, -1.0f,  0.0f, 0.0f,
+             1.0f, -1.0f,  1.0f, 0.0f,
+            -1.0f,  1.0f,  0.0f, 1.0f,
+             1.0f,  1.0f,  1.0f, 1.0f,
         };
 
-        const GLushort element_buffer_data[] =
+        const GLushort element_buffer_data [] =
         {
-            0, 1, 2, 3
+            0, 1, 2, 3,
         };
 
         glGenVertexArrays(1, &m_vao);
@@ -251,6 +263,7 @@ namespace mango
         m_bilinear.transform = glGetUniformLocation(m_bilinear.program, "u_Transform");
         m_bilinear.texture = glGetUniformLocation(m_bilinear.program, "u_Texture");
         m_bilinear.position = glGetAttribLocation(m_bilinear.program, "a_Position");
+        m_bilinear.texcoord = glGetAttribLocation(m_bilinear.program, "a_Texcoord");
 
         // create bicubic program
 
@@ -259,6 +272,7 @@ namespace mango
         m_bicubic.texture = glGetUniformLocation(m_bicubic.program, "u_Texture");
         m_bicubic.scale = glGetUniformLocation(m_bicubic.program, "u_TexScale");
         m_bicubic.position = glGetAttribLocation(m_bicubic.program, "a_Position");
+        m_bicubic.texcoord = glGetAttribLocation(m_bicubic.program, "a_Texcoord");
     }
 
     OpenGLFramebuffer::~OpenGLFramebuffer()
@@ -347,12 +361,12 @@ namespace mango
         setWindowSize(content.x, content.y);
     }
 
-    void OpenGLFramebuffer::setPalette(const u32* palette)
+    void OpenGLFramebuffer::setPalette(const Palette& palette)
     {
         if (m_is_palette)
         {
             GLint location = glGetUniformLocation(m_index_program, "u_Palette");
-            glProgramUniform1uiv(m_index_program, location, 256, palette);
+            glProgramUniform1uiv(m_index_program, location, 256, reinterpret_cast<const u32*>(palette.color));
         }
     }
 
@@ -397,16 +411,30 @@ namespace mango
             glViewport(0, 0, m_width, m_height);
             glScissor(0, 0, m_width, m_height);
 
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
+
+            glDisable(GL_DEPTH_TEST);
+            glDisable(GL_CULL_FACE);
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, m_index_texture);
 
             glUseProgram(m_index_program);
 
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+            glVertexAttribPointer(m_index_position, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, reinterpret_cast<void*>(0));
+            glVertexAttribPointer(m_index_texcoord, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, reinterpret_cast<void*>(8));
+            glEnableVertexAttribArray(m_index_position);
+            glEnableVertexAttribArray(m_index_texcoord);
+
             glBindVertexArray(m_vao);
-            glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, nullptr);
+
+            const GLint baseVertex = 4;
+            glDrawElementsBaseVertex(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, nullptr, baseVertex);
+
             glBindVertexArray(0);
         }
 
@@ -478,11 +506,10 @@ namespace mango
             glUniform4f(p.transform, translate.x, -translate.y, scale.x, scale.y);
             glUniform2f(p.scale, 1.0f / float(m_width), 1.0f / float(m_height));
 
-            if (p.position != -1)
-            {
-                glVertexAttribPointer(p.position, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 2, nullptr);
-                glEnableVertexAttribArray(p.position);
-            }
+            glVertexAttribPointer(p.position, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, reinterpret_cast<void*>(0));
+            glVertexAttribPointer(p.texcoord, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, reinterpret_cast<void*>(8));
+            glEnableVertexAttribArray(p.position);
+            glEnableVertexAttribArray(p.texcoord);
         }
 
         if (m_is_rgba)

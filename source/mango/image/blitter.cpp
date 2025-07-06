@@ -3240,6 +3240,14 @@ namespace mango::image
         , scan_convert(nullptr)
         , rect_convert(nullptr)
     {
+        if (dest.isIndexed() && source.isIndexed())
+        {
+            // special case: indexed to indexed
+            scan_convert = find_scan_blitter(dest, source);
+            rect_convert = convert_custom;
+            return;
+        }
+
         if (dest.isIndexed() || source.isIndexed())
         {
             MANGO_EXCEPTION("[Blitter] Indexed formats are not supported.");
