@@ -136,8 +136,6 @@ namespace
 
 } // namespace
 
-#include <mango/core/print.hpp>
-
 namespace mango
 {
 
