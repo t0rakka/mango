@@ -81,7 +81,7 @@ namespace mango::vulkan
             return;
         }
 
-        printLine("PhysicalDeviceSurfaceFormats:");
+        printLine(Print::Info, "PhysicalDeviceSurfaceFormats:");
 
         std::vector<VkSurfaceFormatKHR> formats(formatCount);
         vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, formats.data());
@@ -99,7 +99,7 @@ namespace mango::vulkan
         for (size_t i = 0; i < formats.size(); ++i)
         {
             std::string_view prefix = i == selectedFormatIndex ? ">" : " ";
-            printLine("  {} {} | {}", prefix, getString(formats[i].format), getString(formats[i].colorSpace));
+            printLine(Print::Info, "  {} {} | {}", prefix, getString(formats[i].format), getString(formats[i].colorSpace));
         }
 
         m_format = formats[selectedFormatIndex].format;

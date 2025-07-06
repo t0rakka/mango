@@ -57,7 +57,7 @@ namespace mango::vulkan
         VkResult result = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
         if (result != VK_SUCCESS)
         {
-            printLine("vkCreateWin32SurfaceKHR : {}", getString(result));
+            printLine(Print::Error, "vkCreateWin32SurfaceKHR : {}", getString(result));
         }
 
         return surface;
@@ -94,7 +94,7 @@ namespace mango::vulkan
         VkResult result = vkCreateXlibSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
         if (result != VK_SUCCESS)
         {
-            printLine("vkCreateXlibSurfaceKHR : {}", getString(result));
+            printLine(Print::Error, "vkCreateXlibSurfaceKHR : {}", getString(result));
         }
 
         return surface;
@@ -130,7 +130,7 @@ namespace mango::vulkan
         VkResult result = vkCreateXcbSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
         if (result != VK_SUCCESS)
         {
-            printLine("vkCreateXcbSurfaceKHR : {}", getString(result));
+            printLine(Print::Error, "vkCreateXcbSurfaceKHR : {}", getString(result));
         }
 
         return surface;
@@ -168,7 +168,7 @@ namespace mango::vulkan
         VkResult result = vkCreateWaylandSurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
         if (result != VK_SUCCESS)
         {
-            printLine("vkCreateWaylandSurfaceKHR : {}", getString(result));
+            printLine(Print::Error, "vkCreateWaylandSurfaceKHR : {}", getString(result));
         }
         */
 
@@ -205,7 +205,7 @@ namespace mango::vulkan
         VkResult result = vkCreateInstance(&instanceCreateInfo, nullptr, &m_handle);
         if (result != VK_SUCCESS)
         {
-            printLine(Print::Info, "vkCreateInstance: {}", getString(result));
+            printLine(Print::Error, "vkCreateInstance: {}", getString(result));
             return;
         }
     }
@@ -327,14 +327,14 @@ namespace mango::vulkan
             return {};
         }
 
-        printLine("InstanceLayerProperties:");
+        printLine(Print::Info, "InstanceLayerProperties:");
 
         for (const auto& property : layerProperties)
         {
-            printLine("  - {}", property.layerName);
+            printLine(Print::Info, "  - {}", property.layerName);
         }
 
-        printLine("");
+        printLine(Print::Info, "");
 
         return layerProperties;
     }
@@ -365,14 +365,14 @@ namespace mango::vulkan
             return {};
         }
 
-        printLine("InstanceExtensionProperties:");
+        printLine(Print::Info, "InstanceExtensionProperties:");
 
         for (auto property : extensionProperties)
         {
             printLine(Print::Info, "  - {}", property.extensionName);
         }
 
-        printLine("");
+        printLine(Print::Info, "");
 
         return extensionProperties;
     }
@@ -616,7 +616,7 @@ namespace mango::vulkan
 
         if (physicalDevices.empty())
         {
-            printLine("[selectPhysicalDevice] No PhysicalDevices.");
+            printLine(Print::Warning, "[selectPhysicalDevice] No PhysicalDevices.");
             return VK_NULL_HANDLE;
         }
 
