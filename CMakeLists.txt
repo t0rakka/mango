@@ -991,7 +991,6 @@ target_include_directories(mango
 # install mango headers
 install(
     DIRECTORY ${PROJECT_SOURCE_DIR}/include/
-    #DESTINATION include
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     FILES_MATCHING PATTERN "*.h*"
 )

@@ -2166,6 +2166,8 @@ namespace
                         break;
 
                     case COLOR_TYPE_PALETTE:
+                        // NOTE: The preferred format is 32 bit RGBA even if image is indexed because we don't have
+                        //       blitter from indexed to other format types. User can always request indexed decoding.
                         m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8, flags);
                         m_header.palette = true;
                         break;
@@ -3552,11 +3554,13 @@ namespace
             return status;
         }
 
+        Format temp_format = m_header.format;
+
         if (m_header.palette)
         {
             if (ptr_palette)
             {
-                if (dest.format.isIndexed())
+                if (!dest.format.isIndexed())
                 {
                     status.setError("Decoding target must be indexed.");
                     return status;
@@ -3565,6 +3569,8 @@ namespace
                 // caller requests palette; give it and decode u8 indices
                 *ptr_palette = m_palette;
                 m_color_state.palette = nullptr;
+                temp_format = IndexedFormat(8);
+                printLine(Print::Info, "  Indexed decoding: ENABLE");
             }
             else
             {
@@ -3585,7 +3591,7 @@ namespace
 
         if (m_number_of_frames > 0)
         {
-            temp = std::make_unique<Bitmap>(m_frame.width, m_frame.height, m_header.format);
+            temp = std::make_unique<Bitmap>(m_frame.width, m_frame.height, temp_format);
             target = *temp;
             m_decode_target = *temp;
 
@@ -3600,7 +3606,7 @@ namespace
         {
             if (!status.direct)
             {
-                temp = std::make_unique<Bitmap>(m_width, m_height, m_header.format);
+                temp = std::make_unique<Bitmap>(m_width, m_height, temp_format);
                 target = *temp;
             }
         }
@@ -3643,7 +3649,7 @@ namespace
         if (m_number_of_frames > 0)
         {
             Surface area(dest, m_frame.xoffset, m_frame.yoffset, m_frame.width, m_frame.height);
-            TemporaryBitmap bitmap(area, m_header.format);
+            TemporaryBitmap bitmap(area, temp_format);
             blend(bitmap, *temp, ptr_palette);
 
             if (dest.format != bitmap.format)
@@ -4279,11 +4285,11 @@ namespace
 
             if (options.palette && header.palette)
             {
-                status = m_parser.decode(dest, options.multithread, nullptr);
+                status = m_parser.decode(dest, options.multithread, options.palette);
             }
             else
             {
-                status = m_parser.decode(dest, options.multithread, options.palette);
+                status = m_parser.decode(dest, options.multithread, nullptr);
             }
 
             return status;
