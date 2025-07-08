@@ -85,20 +85,6 @@ namespace
         return color;
     }
 
-    void resolve_palette(const Surface& s, int width, int height, const u8* image, const Palette& palette)
-    {
-        for (int y = 0; y < height; ++y)
-        {
-            Color* scan = s.address<Color>(0, y);
-            const u8* src = image + y * width;
-
-            for (int x = 0; x < width; ++x)
-            {
-                scan[x] = palette[src[x]];
-            }
-        }
-    }
-
     // ------------------------------------------------------------
     // ImageDecoder: Degas/Degas Elite
     // ------------------------------------------------------------
@@ -250,7 +236,8 @@ namespace
                 }
             }
 
-            resolve_palette(s, width, height, tempImage, palette);
+            Surface indices(width, height, IndexedFormat(8), width, tempImage);
+            resolve(s, indices, palette);
         }
     };
 
@@ -419,7 +406,8 @@ namespace
                 }
             }
 
-            resolve_palette(s, width, height, buffer, palette);
+            Surface indices(width, height, IndexedFormat(8), width, buffer);
+            resolve(s, indices, palette);
         }
 	};
 
@@ -1015,7 +1003,8 @@ namespace
                 }
             }
 
-            resolve_palette(s, width, height, image, palette);
+            Surface indices(width, height, IndexedFormat(8), width, image);
+            resolve(s, indices, palette);
         }
 	};
 

@@ -80,7 +80,7 @@ namespace mango::image
         Bitmap& operator = (Bitmap&& bitmap);
     };
 
-    class TemporaryBitmap : public Surface, private NonCopyable
+    class TemporaryBitmap : private NonCopyable, public Surface
     {
     protected:
         std::unique_ptr<Bitmap> m_bitmap;
@@ -96,7 +96,8 @@ namespace mango::image
         LuminanceBitmap(const Surface& source, bool alpha = false, bool force_linear = true);
     };
 
-    // NOTE: These must be 32 bit RGBA surfaces as the conversion is done in-place
+    // NOTE: The surface format must be 32 bit RGBA
+    void resolve(const Surface& surface, const Surface& indexed, const Palette& palette);
     void transform(const Surface& surface, ConstMemory icc);
     void srgbToLinear(const Surface& surface);
     void linearToSRGB(const Surface& surface);

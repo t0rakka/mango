@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     Commodore 64 decoders copyright (C) 2011 Toni Lönnberg. All rights reserved.
@@ -21,9 +21,9 @@ namespace
     // Commodore 64 utilities
     // ------------------------------------------------------------
 
-    static constexpr int g_c64_palette_size = 16;
+    static constexpr size_t g_c64_palette_size = 16;
 
-    const Color g_c64_palette[] =
+    const Color g_c64_palette_colors [] =
     { 
         0xFF000000,
         0xFFFFFFFF,
@@ -48,26 +48,13 @@ namespace
         PaletteC64()
         {
             size = g_c64_palette_size;
-            for (int i = 0; i < g_c64_palette_size; ++i)
+
+            for (size_t i = 0; i < g_c64_palette_size; ++i)
             {
-                color[i] = g_c64_palette[i];
+                color[i] = g_c64_palette_colors[i];
             }
         }
-    };
-
-    void resolve_palette(const Surface& s, u8* image, int width, int height, const Palette& palette)
-    {
-        for (int y = 0; y < height; ++y)
-        {
-            Color* scan = s.address<Color>(0, y);
-
-            for (int x = 0; x < width; ++x)
-            {
-                u8 index = *image++;
-                scan[x] = palette[index];
-            }
-        }
-    }
+    } g_c64_palette;
 
     void rle_ecb(u8* buffer, const u8* input, int scansize, const u8* input_end, u8 escape_char)
     {
@@ -201,7 +188,6 @@ namespace
                                u32 background_offset, u32 opcode_colors_offset, 
                                int background_mode, bool fli)
     {
-        PaletteC64 palette;
         Buffer temp(width * height, 0);
 
         convert_multicolor_bitmap(width, height, temp, 
@@ -209,7 +195,8 @@ namespace
                                   data + color_ram_offset, data + background_offset, data + opcode_colors_offset,
                                   background_mode, fli);
 
-        resolve_palette(s, temp, width, height, palette);
+        Surface indices(width, height, IndexedFormat(8), width, temp);
+        resolve(s, indices, g_c64_palette);
     }
 
     void multicolor_interlace_to_surface(const Surface& s, const u8 *data, int width, int height,
@@ -350,12 +337,12 @@ namespace
                           bool show_fli_bug = false,
                           u8 fli_bug_color = 0)
     {
-        PaletteC64 palette;
         Buffer temp(width * height, 0);
 
         convert_hires_bitmap(width, height, temp, data + bitmap_offset, data + video_ram_offset, fli, show_fli_bug, fli_bug_color);
 
-        resolve_palette(s, temp, width, height, palette);
+        Surface indices(width, height, IndexedFormat(8), width, temp);
+        resolve(s, indices, g_c64_palette);
     }
 
     void hires_interlace_to_surface(const Surface& s, const u8* data, int width, int height,
@@ -1045,8 +1032,6 @@ namespace
             u8 sprite_color2 = m_data[0x449];
             const u8 *sprite_colors = m_data + 0x280;
 
-            PaletteC64 palette;
-
             Buffer temp(header.width * header.height, 0);
             u8* image = temp;
 
@@ -1093,7 +1078,9 @@ namespace
                 }
             }
 
-            resolve_palette(s, temp, header.width, header.height, palette);
+            Surface indices(header.width, header.height, IndexedFormat(8), header.width, temp);
+            resolve(s, indices, g_c64_palette);
+
             return nullptr;
         }
     };
@@ -1271,8 +1258,6 @@ namespace
             const u8* color_ram = m_data;
             const u8* background = m_data + 0x2f40;
 
-            PaletteC64 palette;
-
             Buffer temp(header.width * header.height, 0);
             u8* image = temp;
 
@@ -1337,7 +1322,9 @@ namespace
                 }
             }
 
-            resolve_palette(s, temp, header.width, header.height, palette);
+            Surface indices(header.width, header.height, IndexedFormat(8), header.width, temp);
+            resolve(s, indices, g_c64_palette);
+
             return nullptr;
         }
     };
@@ -1534,9 +1521,7 @@ namespace
 
         const char* decodeImage(const Surface& s) override
         {
-            PaletteC64 palette;
             Buffer temp(header.width * header.height, 0);
-
             Buffer color_ram(1000, *(m_data + 0x1fb5));
 
             convert_multicolor_bitmap(header.width, header.height, temp.data(), 
@@ -1544,7 +1529,9 @@ namespace
                                       color_ram, m_data + 0x1fb2, NULL,
                                       1, false);
 
-            resolve_palette(s, temp, header.width, header.height, palette);
+            Surface indices(header.width, header.height, IndexedFormat(8), header.width, temp);
+            resolve(s, indices, g_c64_palette);
+
             return nullptr;
         }
     };
@@ -1754,8 +1741,6 @@ namespace
             u8 sprite_color1 = *(buffer + 0x3e8);
             u8 sprite_color2 = *(buffer + 0x3e9);
 
-            PaletteC64 palette;
-
             Buffer tempImage(header.width * header.height, 0);
             u8* image = tempImage;
 
@@ -1829,7 +1814,9 @@ namespace
                 }
             }
 
-            resolve_palette(s, tempImage, header.width, header.height, palette);
+            Surface indices(header.width, header.height, IndexedFormat(8), header.width, tempImage);
+            resolve(s, indices, g_c64_palette);
+
             return nullptr;
         }
     };
@@ -1866,8 +1853,6 @@ namespace
             const u8* bitmap_c64 = m_data + 0x2000;
             const u8* video_ram = m_data;
             u8 sprite_color = *(m_data + 0x3e9);
-
-            PaletteC64 palette;
 
             Buffer tempImage(header.width * header.height, 0);
             u8* image = tempImage;
@@ -1924,7 +1909,8 @@ namespace
                 }
             }
 
-            resolve_palette(s, tempImage, header.width, header.height, palette);
+            Surface indices(header.width, header.height, IndexedFormat(8), header.width, tempImage);
+            resolve(s, indices, g_c64_palette);
 
             return nullptr;
         }
@@ -2252,7 +2238,8 @@ namespace
                 }
             }
 
-            resolve_palette(s, tempImage, header.width, header.height, palette);
+            Surface indices(header.width, header.height, IndexedFormat(8), header.width, tempImage);
+            resolve(s, indices, g_c64_palette);
 
             return nullptr;
         }
@@ -2273,7 +2260,7 @@ namespace
         u8* buffer_end = buffer + scansize;
         const u8* input_end = input + insize;
 
-        for (; buffer < buffer_end && input < input_end;)
+        for ( ; buffer < buffer_end && input < input_end; )
         {
             u8 look_ahead1 = *(input + 2);
             u8 look_ahead2 = *(input + 3);
@@ -2430,8 +2417,8 @@ namespace
                         }
                     }
 
-                    Color color0 = g_c64_palette[index[0]]; 
-                    Color color1 = g_c64_palette[index[1]]; 
+                    Color color0 = g_c64_palette_colors[index[0]]; 
+                    Color color1 = g_c64_palette_colors[index[1]]; 
 
                     image[x].r = (color0.r >> 1) + (color1.r >> 1);
                     image[x].g = (color0.g >> 1) + (color1.g >> 1);

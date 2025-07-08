@@ -1095,6 +1095,36 @@ namespace mango::image
     // misc
     // ----------------------------------------------------------------------------
 
+    void resolve(const Surface& surface, const Surface& indexed, const Palette& palette)
+    {
+        if (surface.width != indexed.width || surface.height != indexed.height)
+        {
+            MANGO_EXCEPTION("Surface and indexed must have the same dimensions.");
+        }
+
+        if (surface.format != Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8))
+        {
+            MANGO_EXCEPTION("Destination format must be 32 bit RGBA.");
+        }
+
+        if (indexed.format != IndexedFormat(8))
+        {
+            MANGO_EXCEPTION("Source format must be indexed.");
+        }
+
+        for (int y = 0; y < surface.height; ++y)
+        {
+            Color* dest = surface.address<Color>(0, y);
+            const u8* source = indexed.address<u8>(0, y);
+
+            for (int x = 0; x < surface.width; ++x)
+            {
+                u8 index = source[x];
+                dest[x] = palette[index];
+            }
+        }
+    }
+
     void transform(const Surface& surface, ConstMemory icc)
     {
         image::ColorManager manager;
