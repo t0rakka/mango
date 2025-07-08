@@ -74,10 +74,7 @@ namespace mango::image
         Bitmap(const std::string& filename, const ImageDecodeOptions& options = ImageDecodeOptions());
         Bitmap(const std::string& filename, const Format& format, const ImageDecodeOptions& options = ImageDecodeOptions());
 
-        Bitmap(Bitmap&& bitmap);
         ~Bitmap();
-
-        Bitmap& operator = (Bitmap&& bitmap);
     };
 
     class TemporaryBitmap : private NonCopyable, public Surface

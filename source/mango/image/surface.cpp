@@ -1004,31 +1004,9 @@ namespace mango::image
     {
     }
 
-    Bitmap::Bitmap(Bitmap&& bitmap)
-        : Surface(bitmap)
-    {
-        // move image ownership
-        bitmap.image = nullptr;
-    }
-
     Bitmap::~Bitmap()
     {
         delete[] image;
-    }
-
-    Bitmap& Bitmap::operator = (Bitmap&& bitmap)
-    {
-        // copy surface
-        format = bitmap.format;
-        image = bitmap.image;
-        stride = bitmap.stride;
-        width = bitmap.width;
-        height = bitmap.height;
-
-        // move image ownership
-        bitmap.image = nullptr;
-
-        return *this;
     }
 
     // ----------------------------------------------------------------------------
