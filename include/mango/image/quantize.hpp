@@ -24,7 +24,7 @@ namespace mango::image
         ~ColorQuantizer();
 
         // get generated palette
-        Palette getPalette() const;
+        const Palette& getPalette() const;
 
         // quantize ANY image with the quantization network (the original color image is recommended)
         void quantize(const Surface& dest, const Surface& source, bool dithering = true);
@@ -44,7 +44,7 @@ namespace mango::image
         QuantizedBitmap(const Surface& source, const Palette& palette, bool dithering = true);
         ~QuantizedBitmap();
 
-        Palette getPalette() const;
+        const Palette& getPalette() const;
     };
 
 } // namespace mango::image

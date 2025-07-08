@@ -351,7 +351,7 @@ namespace mango::image
     {
     }
 
-    Palette ColorQuantizer::getPalette() const
+    const Palette& ColorQuantizer::getPalette() const
     {
         return m_palette;
     }
@@ -568,7 +568,7 @@ namespace mango::image
     {
     }
 
-    Palette QuantizedBitmap::getPalette() const
+    const Palette& QuantizedBitmap::getPalette() const
     {
         return m_palette;
     }
