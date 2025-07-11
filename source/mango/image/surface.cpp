@@ -604,21 +604,19 @@ namespace
                 surface.format = header.format;
             }
 
-            if (options.palette)
+            surface.width   = header.width;
+            surface.height  = header.height;
+            surface.stride  = header.width * surface.format.bytes();
+            surface.image   = new u8[header.height * surface.stride]; // NOTE: not leaking the image is assigned to Bitmap instance
+
+            if (surface.format.isIndexed())
             {
-                // the decoder will set palette if present
-                options.palette->size = 0;
-
-                if (header.palette)
-                {
-                    surface.format = IndexedFormat(8);
-                }
+                surface.palette = new Palette(256);
             }
-
-            surface.width  = header.width;
-            surface.height = header.height;
-            surface.stride = header.width * surface.format.bytes();
-            surface.image  = new u8[header.height * surface.stride]; // NOTE: not leaking the image is assigned to Bitmap instance
+            else
+            {
+                surface.palette = nullptr;
+            }
 
             // decode
             ImageDecodeStatus status = decoder.decode(surface, options, 0, 0, 0);
@@ -640,6 +638,7 @@ namespace mango::image
     Surface::Surface()
         : format()
         , image(nullptr)
+        , palette(nullptr)
         , stride(0)
         , width(0)
         , height(0)
@@ -649,6 +648,7 @@ namespace mango::image
     Surface::Surface(const Surface& surface, bool yflip)
         : format(surface.format)
         , image(surface.image)
+        , palette(surface.palette)
         , stride(surface.stride)
         , width(surface.width)
         , height(surface.height)
@@ -663,6 +663,7 @@ namespace mango::image
     Surface::Surface(int width, int height, const Format& format, size_t stride, const void* image)
         : format(format)
         , image(const_cast<u8*>(reinterpret_cast<const u8*>(image)))
+        , palette(nullptr)
         , stride(stride)
         , width(width)
         , height(height)
@@ -671,6 +672,7 @@ namespace mango::image
 
     Surface::Surface(const Surface& surface, int x, int y, int w, int h)
         : format(surface.format)
+        , palette(surface.palette)
         , stride(surface.stride)
     {
         if (x < 0)
@@ -707,10 +709,29 @@ namespace mango::image
     {
         format = surface.format;
         image = surface.image;
+        palette = surface.palette;
         stride = surface.stride;
         width = surface.width;
         height = surface.height;
         return *this;
+    }
+
+    Surface::operator const Palette& () const
+    {
+        if (!palette)
+        {
+            MANGO_EXCEPTION("[Surface] Requesting null palette.");
+        }
+        return *palette;
+    }
+
+    Surface::operator Palette& ()
+    {
+        if (!palette)
+        {
+            MANGO_EXCEPTION("[Surface] Requesting null palette.");
+        }
+        return *palette;
     }
 
     ImageEncodeStatus Surface::save(Stream& stream, const std::string& extension, const ImageEncodeOptions& options) const
@@ -833,9 +854,10 @@ namespace mango::image
             rect.source.address -= y * source.stride;
         }
 
-        Blitter blitter(dest.format, source.format);
+        Blitter blitter(dest.format, source.format, source.palette);
 
-#if 0 // enabling this creates a wind-tunnel for laptops
+#if 0
+        // enabling this creates a wind-tunnel for laptops
         const int slice = 128;
 
         if (ThreadPool::getHardwareConcurrency() > 2 && rect.height >= slice * 2)
@@ -942,6 +964,11 @@ namespace mango::image
         }
 
         image = new u8[stride * height];
+
+        if (format.isIndexed())
+        {
+            palette = new Palette(256);
+        }
     }
 
     Bitmap::Bitmap(const Surface& source)
@@ -950,6 +977,15 @@ namespace mango::image
         stride = width * format.bytes();
         image = new u8[stride * height];
         blit(0, 0, source);
+
+        if (format.isIndexed())
+        {
+            palette = new Palette(256);
+            if (source.palette)
+            {
+                *palette = *source.palette;
+            }
+        }
     }
 
     Bitmap::Bitmap(const Surface& source, const Format& format)
@@ -958,6 +994,17 @@ namespace mango::image
         stride = width * format.bytes();
         image = new u8[stride * height];
         blit(0, 0, source);
+
+        // NOTE: This is not supported  unless source format is also indexed
+        // NOTE: If format is indexed and source is not, we should quantize but we never do this automatically
+        if (format.isIndexed())
+        {
+            palette = new Palette(256);
+            if (source.palette)
+            {
+                *palette = *source.palette;
+            }
+        }
     }
 
     Bitmap::Bitmap(const ImageHeader& header)
@@ -965,6 +1012,11 @@ namespace mango::image
     {
         stride = width * format.bytes();
         image = new u8[stride * height];
+
+        if (format.isIndexed())
+        {
+            palette = new Palette(256);
+        }
     }
 
     Bitmap::Bitmap(const ImageHeader& header, const Format& format)
@@ -972,6 +1024,11 @@ namespace mango::image
     {
         stride = width * format.bytes();
         image = new u8[stride * height];
+
+        if (format.isIndexed())
+        {
+            palette = new Palette(256);
+        }
     }
 
     Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const ImageDecodeOptions& options)
@@ -1006,6 +1063,7 @@ namespace mango::image
 
     Bitmap::~Bitmap()
     {
+        delete palette;
         delete[] image;
     }
 
@@ -1047,6 +1105,126 @@ namespace mango::image
     }
 
     // ----------------------------------------------------------------------------
+    // DecodeTargetBitmap
+    // ----------------------------------------------------------------------------
+
+    DecodeTargetBitmap::DecodeTargetBitmap(const Surface& target, int width, int height, const Format& format, bool yflip)
+        : Surface(target)
+        , m_target(target)
+    {
+        if (target.format != format || target.width != width || target.height != height)
+        {
+            // Allocate temporary storage for decoder
+            m_bitmap = std::make_unique<Bitmap>(width, height, format);
+
+            // Make temporary storage visible
+            static_cast<Surface&>(*this) = *m_bitmap;
+        }
+
+        if (yflip)
+        {
+            image += (height - 1) * stride;
+            stride = 0 - stride;
+        }
+    }
+
+    DecodeTargetBitmap::~DecodeTargetBitmap()
+    {
+    }
+
+    bool DecodeTargetBitmap::isDirect() const
+    {
+        return m_bitmap == nullptr;
+    }
+
+    void DecodeTargetBitmap::resolve(int x, int y, int width, int height)
+    {
+        if (m_bitmap)
+        {
+            Surface source(*m_bitmap, x, y, width, height);
+            Surface target(m_target, x, y, width, height);
+
+            const bool isTargetIndexed = m_target.format.isIndexed();
+            const bool isBitmapIndexed = m_bitmap->format.isIndexed();
+
+            if (isBitmapIndexed)
+            {
+                if (isTargetIndexed)
+                {
+                    // index <- index (copy indices)
+                    target.blit(0, 0, source);
+
+                    // Blitter doesn't copy palette, do it manually
+                    if (m_target.palette && m_bitmap->palette)
+                    {
+                        *m_target.palette = *m_bitmap->palette;
+                    }
+                }
+                else
+                {
+                    // rgba <- index (resolve palette)
+                    image::resolve(target, source);
+                }
+            }
+            else if (isTargetIndexed)
+            {
+                // index <- rgba (quantization)
+                printLine(Print::Warning, "[DecodeTargetBitmap] Quantization is not supported.");
+                return;
+            }
+            else
+            {
+                // rgba <- rgba
+                target.blit(0, 0, source);
+            }
+        }
+    }
+
+    void DecodeTargetBitmap::resolve()
+    {
+        resolve(0, 0, m_target.width, m_target.height);
+
+        /*
+        if (m_bitmap)
+        {
+            const bool isTargetIndexed = m_target.format.isIndexed();
+            const bool isBitmapIndexed = m_bitmap->format.isIndexed();
+
+            if (isBitmapIndexed)
+            {
+                if (isTargetIndexed)
+                {
+                    // index <- index (copy indices)
+                    m_target.blit(0, 0, *m_bitmap);
+
+                    // Blitter doesn't copy palette, do it manually
+                    if (m_target.palette && m_bitmap->palette)
+                    {
+                        *m_target.palette = *m_bitmap->palette;
+                    }
+                }
+                else
+                {
+                    // rgba <- index (resolve palette)
+                    image::resolve(m_target, *m_bitmap);
+                }
+            }
+            else if (isTargetIndexed)
+            {
+                // index <- rgba (quantization)
+                printLine(Print::Warning, "[DecodeTargetBitmap] Quantization is not supported.");
+                return;
+            }
+            else
+            {
+                // rgba <- rgba
+                m_target.blit(0, 0, *m_bitmap);
+            }
+        }
+        */
+    }
+
+    // ----------------------------------------------------------------------------
     // LuminanceBitmap
     // ----------------------------------------------------------------------------
 
@@ -1073,7 +1251,7 @@ namespace mango::image
     // misc
     // ----------------------------------------------------------------------------
 
-    void resolve(const Surface& surface, const Surface& indexed, const Palette& palette)
+    void resolve(const Surface& surface, const Surface& indexed)
     {
         if (surface.width != indexed.width || surface.height != indexed.height)
         {
@@ -1089,6 +1267,8 @@ namespace mango::image
         {
             MANGO_EXCEPTION("Source format must be indexed.");
         }
+
+        const Palette& palette = indexed;
 
         for (int y = 0; y < surface.height; ++y)
         {

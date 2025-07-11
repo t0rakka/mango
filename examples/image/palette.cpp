@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -11,17 +11,16 @@ void encode_indexed(const Surface& surface, const std::string& filename)
 {
     u64 time0 = Time::ms();
 
-    printf("Quantizing: ");
+    printLine("{}", filename);
+
+    printf("  Quantizing: ");
     QuantizedBitmap temp(surface, 0.80f, true);
 
     u64 time1 = Time::ms();
     printf("%d ms\n", int(time1 - time0));
 
-    printf("Encoding: ");
-    ImageEncodeOptions options;
-    options.palette = temp.getPalette();
-
-    temp.save(filename, options);
+    printf("  Encoding: ");
+    temp.save(filename);
 
     u64 time2 = Time::ms();
     printf("%d ms\n", int(time2 - time1));

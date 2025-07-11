@@ -214,7 +214,6 @@ namespace
                     return;
             }
 
-            header.palette = false;
             header.format  = m_info.format;
             header.compression = m_info.compression;
         }

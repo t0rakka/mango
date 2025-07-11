@@ -1650,6 +1650,28 @@ namespace
         }
     }
 
+    void resolve_palette(const Blitter& blitter, const Blitter::Rect& rect)
+    {
+        Blitter::Scan source = rect.source;
+        Blitter::Scan dest = rect.dest;
+        const Palette& palette = *blitter.palette;
+
+        for (int y = 0; y < rect.height; ++y)
+        {
+            const u8* s = source.address;
+            u32* d = reinterpret_cast<u32*>(dest.address);
+
+            for (int x = 0; x < rect.width; ++x)
+            {
+                u8 index = s[x];
+                d[x] = palette[index];
+            }
+
+            source.address += source.stride;
+            dest.address += dest.stride;
+        }
+    }
+
     Blitter::RectFunc get_rect_convert(const Format& dest, const Format& source)
     {
         int destBits = modeBits(dest);
@@ -3234,23 +3256,43 @@ namespace mango::image
     // Blitter
     // ----------------------------------------------------------------------------
 
-    Blitter::Blitter(const Format& dest, const Format& source)
+    Blitter::Blitter(const Format& dest, const Format& source, Palette* palette)
         : destFormat(dest)
         , sourceFormat(source)
+        , palette(palette)
         , scan_convert(nullptr)
         , rect_convert(nullptr)
     {
-        if (dest.isIndexed() && source.isIndexed())
+        if (dest.isIndexed())
         {
-            // special case: indexed to indexed
-            scan_convert = find_scan_blitter(dest, source);
-            rect_convert = convert_custom;
-            return;
+            if (source.isIndexed())
+            {
+                // special case: indices are copied
+                scan_convert = find_scan_blitter(dest, source);
+                rect_convert = convert_custom;
+                return;
+            }
+            else
+            {
+                // special case: requires quantization
+                MANGO_EXCEPTION("[Blitter] Quantization is not supported.");
+            }
         }
-
-        if (dest.isIndexed() || source.isIndexed())
+        else if (source.isIndexed())
         {
-            MANGO_EXCEPTION("[Blitter] Indexed formats are not supported.");
+            if (!palette)
+            {
+                MANGO_EXCEPTION("[Blitter] Indexed source format does not have a palette.");
+            }
+
+            if (dest != Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8))
+            {
+                // NOTE: we could do color conversion for the palette into destination format but we won't
+                MANGO_EXCEPTION("[Blitter] Destination format must be 32 bit RGBA for resolving the palette.");
+            }
+
+            rect_convert = resolve_palette;
+            return;
         }
 
         if (!source.isLuminance() && dest.isLuminance())

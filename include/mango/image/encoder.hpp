@@ -23,8 +23,6 @@ namespace mango::image
 
     struct ImageEncodeOptions
     {
-        Palette palette;          // gif, png
-
         ConstMemory icc;          // jpg, png, jp2
 
         float quality = 0.90f;    // jpg, jp2, heif: [0.0, 1.0]

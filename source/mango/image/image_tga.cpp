@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/core/pointer.hpp>
@@ -189,12 +189,10 @@ namespace
                 case 8:
                     if (isPalette())
                     {
-                        // expand palette to 32 bits
-                        format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                        format = IndexedFormat(8);
                     }
                     else
                     {
-                        // keep grayscale at 8 bits
                         format = LuminanceFormat(8, Format::UNORM, 8,  0);
                     }
                     break;
@@ -316,7 +314,6 @@ namespace
                 header.depth   = 0;
                 header.levels  = 0;
                 header.faces   = 0;
-                header.palette = m_targa_header.isPalette();
                 header.format  = m_targa_header.getFormat();
                 header.compression = TextureCompression::NONE;
             }
@@ -414,87 +411,50 @@ namespace
                 }
             }
 
-            Format format = m_targa_header.getFormat();
-
             const int width = m_targa_header.width;
             const int height = m_targa_header.height;
             const int bpp = m_targa_header.getBytesPerPixel();
+            const bool yflip = (m_targa_header.descriptor & DESCRIPTOR_ORIGIN_Y) == 0;
+            const bool xflip = (m_targa_header.descriptor & DESCRIPTOR_ORIGIN_X) != 0;
 
-            Surface dest(surface, 0, 0, width, height);
+            Format format = m_targa_header.getFormat();
+            DecodeTargetBitmap target(surface, width, height, format, yflip);
 
-            if (m_targa_header.descriptor & DESCRIPTOR_ORIGIN_Y)
+            if (format.isIndexed())
             {
-                // image origin is at the top
-                dest.image = surface.image;
-                dest.stride = surface.stride;
-            }
-            else
-            {
-                // image origin is at the bottom
-                dest.image = surface.image + (height - 1) * surface.stride;
-                dest.stride = 0 - surface.stride;
+                *target.palette = palette;
             }
 
             const u8* data = p;
             const u8* end = m_memory.end();
 
-            std::unique_ptr<u8[]> temp;
+            const size_t bytes_per_scan = width * bpp;
+            const size_t bytes_per_image = height * bytes_per_scan;
 
             if (m_targa_header.isRLE())
             {
-                temp = std::make_unique<u8[]>(width * height * bpp);
-                if (!tga_decompress_RLE(temp.get(), p, end, width, height, bpp))
+                Buffer buffer(bytes_per_image);
+                if (!tga_decompress_RLE(buffer, p, end, width, height, bpp))
                 {
                     status.setError("[ImageDecoder.TGA] RLE decoding error.");
                     return status;
                 }
-                data = temp.get();
-            }
 
-            switch (m_targa_header.image_type)
+                target.blit(0, 0, Surface(width, height, format, bytes_per_scan, buffer));
+            }
+            else
             {
-                case IMAGETYPE_MONOCHROME:
-                case IMAGETYPE_RLE_MONOCHROME:
-                case IMAGETYPE_TRUECOLOR:
-                case IMAGETYPE_RLE_TRUECOLOR:
-                {
-                    dest.blit(0, 0, Surface(width, height, format, width * bpp, data));
-                    break;
-                }
-
-                case IMAGETYPE_PALETTE:
-                case IMAGETYPE_RLE_PALETTE:
-                {
-                    if (options.palette)
-                    {
-                        *options.palette = palette;
-                        dest.blit(0, 0, Surface(width, height, LuminanceFormat(8, Format::UNORM, 8, 0), width, data));
-                    }
-                    else
-                    {
-                        Bitmap bitmap(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-
-                        for (int y = 0; y < height; ++y)
-                        {
-                            Color* d = bitmap.address<Color>(0, y);
-                            const u8* s = data + y * width;
-                            for (int x = 0; x < width; ++x)
-                            {
-                                d[x] = palette[s[x]];
-                            }
-                        }
-
-                        dest.blit(0, 0, bitmap);
-                    }
-                    break;
-                }
+                target.blit(0, 0, Surface(width, height, format, bytes_per_scan, data));
             }
 
-            if (m_targa_header.descriptor & DESCRIPTOR_ORIGIN_X)
+            if (xflip)
             {
                 // image origin is at the right
-                dest.xflip();
+                target.xflip();
             }
+
+            target.resolve();
+            status.direct = target.isDirect();
 
             return status;
         }

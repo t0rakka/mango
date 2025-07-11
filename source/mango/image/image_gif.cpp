@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     The lzw_decode() function is based on Jean-Marc Lienher / STB decoder.
@@ -341,7 +341,7 @@ namespace
         }
     }
 
-    const u8* read_image(const u8* data, const u8* end, gif_state& state, Surface& surface, Palette* ptr_palette)
+    const u8* read_image(const u8* data, const u8* end, gif_state& state, Surface& target)
     {
         gif_image_descriptor image_desc;
         data = image_desc.read(data, end);
@@ -410,9 +410,9 @@ namespace
 
         void (*func)(u8*, const u8*, int , const Palette& , u8) = nullptr;
 
-        if (ptr_palette)
+        if (target.palette)
         {
-            *ptr_palette = palette;
+            *target.palette = palette;
             func = blend ? scanline_blend_indices : scanline_copy_indices;
         }
         else
@@ -421,7 +421,7 @@ namespace
         }
 
         // NOTE: clipping happens with some image files; don't be too clever and "optimize" this later :)
-        Surface rect(surface, x, y, width, height);
+        Surface rect(target, x, y, width, height);
         u8* src = bits.get();
 
         for (int sy = 0; sy < rect.height; ++sy)
@@ -509,7 +509,7 @@ namespace
         return data;
     }
 
-    const u8* read_chunks(const u8* data, const u8* end, gif_state& state, Surface& surface, Palette* ptr_palette)
+    const u8* read_chunks(const u8* data, const u8* end, gif_state& state, Surface& target)
     {
         while (data < end)
         {
@@ -522,7 +522,7 @@ namespace
                     break;
 
                 case GIF_IMAGE:
-                    data = read_image(data, end, state, surface, ptr_palette);
+                    data = read_image(data, end, state, target);
                     return data;
 
                 case GIF_TERMINATE:
@@ -542,7 +542,6 @@ namespace
         ConstMemory m_memory;
         gif_state m_state;
 
-        std::unique_ptr<u8[]> m_image;
         int m_frame_counter = 0;
 
         const u8* m_start;
@@ -551,7 +550,6 @@ namespace
 
         Interface(ConstMemory memory)
             : m_memory(memory)
-            , m_image(nullptr)
         {
             m_start = nullptr;
             m_end = m_memory.end();
@@ -569,11 +567,8 @@ namespace
                 header.depth   = 0;
                 header.levels  = 0;
                 header.faces   = 0;
-                header.palette = true;
-                header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.format  = IndexedFormat(8);
                 header.compression = TextureCompression::NONE;
-
-                m_image.reset(new u8[header.width * header.height * 4]);
             }
         }
 
@@ -595,22 +590,16 @@ namespace
                 return status;
             }
 
-            Format format = options.palette ? IndexedFormat(8)
-                                            : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-
-            size_t stride = header.width * format.bytes();
-            Surface target(header.width, header.height, format, stride, m_image.get());
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
 
             status.current_frame_index = m_frame_counter;
 
             if (m_data)
             {
                 m_state.first_frame = status.current_frame_index == 0;
-                m_data = read_chunks(m_data, m_end, m_state, target, options.palette);
+                m_data = read_chunks(m_data, m_end, m_state, target);
                 m_frame_counter += (m_data != nullptr);
             }
-
-            dest.blit(0, 0, target);
 
             if (!m_data)
             {
@@ -627,6 +616,10 @@ namespace
 
             status.frame_delay_numerator = m_state.delay;
             status.frame_delay_denominator = 100;
+
+            status.direct = target.isDirect();
+
+            target.resolve();
 
             return status;
         }
@@ -774,7 +767,7 @@ namespace
         s.write8(0); // image block terminator
     }
 
-    void gif_encode_file(Stream& stream, const Surface& surface, const Palette& palette)
+    void gif_encode_file(Stream& stream, const Surface& surface)
     {
         LittleEndianStream s = stream;
 
@@ -795,6 +788,8 @@ namespace
         s.write8(0); // aspect ratio
 
         // palette
+        const Palette& palette = surface;
+
         for (int i = 0; i < 256; ++i)
         {
             s.write8(palette[i].r);
@@ -802,8 +797,7 @@ namespace
             s.write8(palette[i].b);
         }
 
-        // NOTE: If we ever add support for encoding gif animations this is the section that
-        //       would write individual frames.
+        // NOTE: If we ever add support for encoding gif animations this is the section that would write the individual frames.
         {
             // image descriptor
             s.write8(GIF_IMAGE);
@@ -828,42 +822,34 @@ namespace
     {
         ImageEncodeStatus status;
 
-        if (options.palette.size > 0)
+        if (surface.format.isIndexed())
         {
-            if (options.palette.size != 256)
-            {
-                status.setError("[ImageEncoder.GIF] Incorrect palette size - must be 0 or 256 (size: {}).", options.palette.size);
-                return status;
-            }
-
-            if (!surface.format.isIndexed() || surface.format.bits != 8)
-            {
-                status.setError("[ImageEncoder.GIF] Incorrect format - must be 8 bit INDEXED (bits: {}).", surface.format.bits);
-                return status;
-            }
-
-            gif_encode_file(stream, surface, options.palette);
+            gif_encode_file(stream, surface);
         }
         else if (surface.format.isLuminance())
         {
+            // 8 bit luminance to avoid blitting into indexed format
             TemporaryBitmap temp(surface, LuminanceFormat(8, 0xff, 0));
 
-            Palette palette(256);
+            // Generate grayscale palette
+            Palette palette;
 
-            u32 color = 0xff000000;
+            palette.size = 256;
 
             for (int i = 0; i <256; ++i)
             {
-                palette[i] = color;
-                color += 0x00010101;
+                palette[i] = i * 0x00010101 | 0xff000000;
             }
 
-            gif_encode_file(stream, temp, palette);
+            // Make palette visible to the encoder
+            temp.palette = &palette;
+
+            gif_encode_file(stream, temp);
         }
         else
         {
             QuantizedBitmap temp(surface);
-            gif_encode_file(stream, temp, temp.getPalette());
+            gif_encode_file(stream, temp);
         }
 
         return status;

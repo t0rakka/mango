@@ -237,8 +237,8 @@ namespace mango::image
     // IndexedFormat
     // ----------------------------------------------------------------------------
 
-    IndexedFormat::IndexedFormat(int bits)
-        : Format(bits, Format::UINT, Color(bits, bits, bits, 0), Color(0, 0, 0, 0), INDEXED)
+    IndexedFormat::IndexedFormat(int bits, u16 flags)
+        : Format(bits, Format::UINT, Color(bits, bits, bits, 0), Color(0, 0, 0, 0), flags | INDEXED)
     {
     }
 
