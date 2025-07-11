@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -838,7 +838,7 @@ namespace
         dest.blit(0, 0, temp);
     }
 
-    mango::Status decodeBitmap(const Surface& surface, ConstMemory memory, size_t offset, bool isIcon, Palette* ptr_palette)
+    mango::Status decodeBitmap(const Surface& surface, ConstMemory memory, size_t offset, bool isIcon)
     {
         BitmapHeader header(memory, isIcon);
         if (!header)
@@ -847,6 +847,7 @@ namespace
         }
 
         Palette palette;
+        Palette* ptr_palette = nullptr; // not supported
 
         if (header.palette)
         {
@@ -1131,14 +1132,13 @@ namespace
                     imageHeader->depth   = 0;
                     imageHeader->levels  = 0;
                     imageHeader->faces   = 0;
-                    imageHeader->palette = false;
                     imageHeader->format  = bitmap_header.format;
                     imageHeader->compression = TextureCompression::NONE;
                 }
 
                 if (surface)
                 {
-                    mango::Status status = decodeBitmap(*surface, block, headersize + palettesize * 4, true, nullptr);
+                    mango::Status status = decodeBitmap(*surface, block, headersize + palettesize * 4, true);
                     if (!status)
                     {
                         return "[ImageDecoder.BMP] ICO/CUR decoding failed.";
@@ -1204,7 +1204,6 @@ namespace
                     header.depth   = 0;
                     header.levels  = 0;
                     header.faces   = 0;
-                    header.palette = bmp_header.isPalette();
                     header.format  = bmp_header.format;
                     header.compression = TextureCompression::NONE;
 
@@ -1324,7 +1323,7 @@ namespace
             }
 
             ConstMemory block = m_memory.slice(14);
-            mango::Status result = decodeBitmap(dest, block, m_file_header.offset - 14, false, options.palette);
+            mango::Status result = decodeBitmap(dest, block, m_file_header.offset - 14, false);
             if (!result)
             {
                 status.setError(result.info);

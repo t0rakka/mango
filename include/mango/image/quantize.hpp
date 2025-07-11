@@ -36,15 +36,10 @@ namespace mango::image
 
     class QuantizedBitmap : public Bitmap
     {
-    private:
-        Palette m_palette;
-
     public:
         QuantizedBitmap(const Surface& source, float quality = 0.90f, bool dithering = true);
         QuantizedBitmap(const Surface& source, const Palette& palette, bool dithering = true);
         ~QuantizedBitmap();
-
-        const Palette& getPalette() const;
     };
 
 } // namespace mango::image

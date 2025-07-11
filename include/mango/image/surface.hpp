@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,6 +10,7 @@
 #include <mango/core/memory.hpp>
 #include <mango/filesystem/file.hpp>
 #include <mango/image/format.hpp>
+#include <mango/image/color.hpp>
 #include <mango/image/decoder.hpp>
 #include <mango/image/encoder.hpp>
 
@@ -19,11 +20,12 @@ namespace mango::image
     class Surface
     {
     public:
-        Format  format;
-        u8*     image;
-        size_t  stride;
-        int     width;
-        int     height;
+        Format   format;
+        u8*      image;
+        Palette* palette;
+        size_t   stride;
+        int      width;
+        int      height;
 
         Surface();
         Surface(const Surface& surface, bool yflip = false);
@@ -45,6 +47,9 @@ namespace mango::image
             u8* ptr = address(x, y);
             return reinterpret_cast<SampleType*>(ptr);
         }
+
+        operator const Palette& () const;
+        operator Palette& ();
 
         ImageEncodeStatus save(Stream& stream, const std::string& extension, const ImageEncodeOptions& options = ImageEncodeOptions()) const;
         ImageEncodeStatus save(const std::string& filename, const ImageEncodeOptions& options = ImageEncodeOptions()) const;
@@ -77,6 +82,11 @@ namespace mango::image
         ~Bitmap();
     };
 
+    /*
+        TemporaryBitmap is convenient when source surface does not match what is needed; it creates a temporary
+        copy which is in correct format and dimensions. The temporary copy is ONLY created when surface format
+        and dimensions don't match.
+    */
     class TemporaryBitmap : private NonCopyable, public Surface
     {
     protected:
@@ -87,6 +97,26 @@ namespace mango::image
         TemporaryBitmap(const Surface& surface, int width, int height, const Format& format, bool yflip = false);
     };
 
+    /*
+        The DecodeTargetBitmap is used as temporary decoding target; it creates a temporary bitmap when
+        target format or dimensions don't match the decoded iamge. It does resolve the temporary bitmap
+        into the target surface in the destructor if direct decoding wasn't used (matcing dimensions and format).
+    */
+    class DecodeTargetBitmap : private NonCopyable, public Surface
+    {
+    protected:
+        std::unique_ptr<Bitmap> m_bitmap;
+        Surface m_target;
+
+    public:
+        DecodeTargetBitmap(const Surface& target, int width, int height, const Format& format, bool yflip = false);
+        ~DecodeTargetBitmap();
+
+        bool isDirect() const;
+        void resolve(int x, int y, int width, int height);
+        void resolve();
+    };
+
     class LuminanceBitmap : public Bitmap
     {
     public:
@@ -94,7 +124,7 @@ namespace mango::image
     };
 
     // NOTE: The surface format must be 32 bit RGBA
-    void resolve(const Surface& surface, const Surface& indexed, const Palette& palette);
+    void resolve(const Surface& surface, const Surface& indexed);
     void transform(const Surface& surface, ConstMemory icc);
     void srgbToLinear(const Surface& surface);
     void linearToSRGB(const Surface& surface);

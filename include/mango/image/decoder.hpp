@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -53,7 +53,6 @@ namespace mango::image
         int     depth = 0;   // depth
         int     levels = 0;  // mipmap levels
         int     faces = 0;   // cubemap faces
-        bool    palette = false; // palette is available
         bool    premultiplied = false; // alpha is premultiplied
         bool    linear = false; // linear colorspace (non-linear is sRGB)
         Format  format; // preferred format (fastest available "direct" decoding is possible)
@@ -79,12 +78,6 @@ namespace mango::image
 
     struct ImageDecodeOptions
     {
-        // request indexed decoding; palette is resolved into the provided palette object
-        // 
-        // - decode() destination surface must be indexed
-        // - ImageHeader must have palette available
-        Palette* palette = nullptr; // enable indexed decoding by pointing to a palette
-
         bool simd = true;
         bool multithread = true;
     };

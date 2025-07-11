@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/pointer.hpp>
@@ -47,7 +47,6 @@ namespace
             header.depth   = 0;
             header.levels  = 0;
             header.faces   = 0;
-            header.palette = false;
             header.format  = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
             header.compression = TextureCompression::NONE;
         }

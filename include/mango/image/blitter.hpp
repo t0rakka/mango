@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -32,11 +32,12 @@ namespace mango::image
 
         Format destFormat;
         Format sourceFormat;
+        Palette* palette = nullptr;
 
         ScanFunc scan_convert;
         RectFunc rect_convert;
 
-        Blitter(const Format& dest, const Format& source);
+        Blitter(const Format& dest, const Format& source, Palette* palette = nullptr);
         ~Blitter();
 
         void convert(const Rect& rect) const;

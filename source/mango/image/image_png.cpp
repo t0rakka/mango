@@ -1262,8 +1262,6 @@ namespace
         bool transparent_enable = false;
         u16 transparent_sample[3];
         Color transparent_color;
-
-        Color* palette = nullptr;
     };
 
     void process_pal1to4_indx(const ColorState& state, int width, u8* dst, const u8* src)
@@ -1288,51 +1286,11 @@ namespace
         }
     }
 
-    void process_pal1to4(const ColorState& state, int width, u8* dst, const u8* src)
-    {
-        MANGO_UNREFERENCED(state);
-
-        u32* dest = reinterpret_cast<u32*>(dst);
-
-        Color* palette = state.palette;
-
-        const int bits = state.bits;
-        const u32 mask = (1 << bits) - 1;
-
-        u32 data = 0;
-        int offset = -1;
-
-        for (int x = 0; x < width; ++x)
-        {
-            if (offset < 0)
-            {
-                offset = 8 - bits;
-                data = *src++;
-            }
-
-            u32 index = (data >> offset) & mask;
-            dest[x] = palette[index];
-            offset -= bits;
-        }
-    }
-
     void process_pal8_indx(const ColorState& state, int width, u8* dst, const u8* src)
     {
         MANGO_UNREFERENCED(state);
 
         std::memcpy(dst, src, width);
-    }
-
-    void process_pal8(const ColorState& state, int width, u8* dst, const u8* src)
-    {
-        u32* dest = reinterpret_cast<u32*>(dst);
-
-        Color* palette = state.palette;
-
-        for (int x = 0; x < width; ++x)
-        {
-            dest[x] = palette[src[x]];
-        }
     }
 
     void process_i1to4(const ColorState& state, int width, u8* dst, const u8* src)
@@ -1777,25 +1735,11 @@ namespace
         {
             if (bit_depth < 8)
             {
-                if (state.palette)
-                {
-                    function = process_pal1to4;
-                }
-                else
-                {
-                    function = process_pal1to4_indx;
-                }
+                function = process_pal1to4_indx;
             }
             else
             {
-                if (state.palette)
-                {
-                    function = process_pal8;
-                }
-                else
-                {
-                    function = process_pal8_indx;
-                }
+                function = process_pal8_indx;
             }
         }
         else if (color_type == COLOR_TYPE_I)
@@ -2012,7 +1956,7 @@ namespace
         const char* m_error = nullptr;
 
         ColorState m_color_state;
-        Surface m_decode_target;
+        DecodeTargetBitmap* m_decode_target = nullptr;
 
         u64 m_filter_time = 0;
         u64 m_color_time = 0;
@@ -2100,7 +2044,7 @@ namespace
         void process_range(const Surface& target, u8* buffer, int y0, int y1);
         void process_image(const Surface& target, u8* buffer);
 
-        void blend(Surface& d, Surface& s, Palette* palette);
+        void blend(Surface& d, Surface& s);
 
         size_t getBytesPerLine(int width) const
         {
@@ -2134,7 +2078,6 @@ namespace
                 m_header.depth   = 0;
                 m_header.levels  = 0;
                 m_header.faces   = 0;
-                m_header.palette = false;
                 m_header.compression = TextureCompression::NONE;
 
                 u16 flags = 0;
@@ -2166,10 +2109,7 @@ namespace
                         break;
 
                     case COLOR_TYPE_PALETTE:
-                        // NOTE: The preferred format is 32 bit RGBA even if image is indexed because we don't have
-                        //       blitter from indexed to other format types. User can always request indexed decoding.
-                        m_header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8, flags);
-                        m_header.palette = true;
+                        m_header.format = IndexedFormat(8, flags);
                         break;
 
                     case COLOR_TYPE_RGB:
@@ -2251,7 +2191,7 @@ namespace
         void decode_idot(const Surface& target);
         bool decode_std(const Surface& target, ImageDecodeStatus& status);
 
-        ImageDecodeStatus decode(const Surface& dest, bool multithread, Palette* palette);
+        ImageDecodeStatus decode(const Surface& dest, bool multithread);
     };
 
     void ParserPNG::read_IHDR(BigEndianConstPointer p, u32 size)
@@ -2838,28 +2778,37 @@ namespace
         }
     }
 
-    void ParserPNG::blend(Surface& d, Surface& s, Palette* palette)
+    void ParserPNG::blend(Surface& d, Surface& s)
     {
         int width = s.width;
         int height = s.height;
-        if (m_frame.blend == Frame::SOURCE || !s.format.isAlpha())
-        {
-            d.blit(0, 0, s);
-        }
-        else if (m_frame.blend == Frame::OVER)
-        {
-            for (int y = 0; y < height; ++y)
-            {
-                const u8* src = s.address(0, y);
-                u8* dest = d.address(0, y);
 
-                if (palette)
+        if (d.format.isIndexed())
+        {
+            if (s.format.isIndexed())
+            {
+                for (int y = 0; y < height; ++y)
                 {
-                    // palette extract mode: blend with the main image palette
+                    const u8* src = s.address(0, y);
+                    u8* dest = d.address(0, y);
+
                     blend_indexed(dest, src, width);
                 }
-                else
+            }
+        }
+        else
+        {
+            if (m_frame.blend == Frame::SOURCE || !s.format.isAlpha())
+            {
+                d.blit(0, 0, s);
+            }
+            else if (m_frame.blend == Frame::OVER)
+            {
+                for (int y = 0; y < height; ++y)
                 {
+                    const u8* src = s.address(0, y);
+                    u8* dest = d.address(0, y);
+
                     switch (s.format.bits)
                     {
                         case 8:
@@ -3027,11 +2976,12 @@ namespace
         rect.height = y1 - y0;
         rect.progress = float(rect.height) / target.height;
 
-        if (m_decode_target.image != target.image)
+        if (m_decode_target)
         {
-            u8* dest = target.image + y0 * target.stride;
-            Surface source(rect.width, rect.height, target.format, target.stride, dest);
-            m_decode_target.blit(rect.x, rect.y, source);
+            if (!m_decode_target->isDirect())
+            {
+                m_decode_target->resolve(rect.x, rect.y, rect.width, rect.height);
+            }
         }
 
         if (m_interface->callback)
@@ -3084,10 +3034,12 @@ namespace
             rect.height = target.height;
             rect.progress = 1.0f;
 
-            if (m_decode_target.image != target.image)
+            if (m_decode_target)
             {
-                Surface source(rect.width, rect.height, target.format, target.stride, target.image);
-                m_decode_target.blit(rect.x, rect.y, source);
+                if (!m_decode_target->isDirect())
+                {
+                    m_decode_target->resolve(rect.x, rect.y, rect.width, rect.height);
+                }
             }
 
             if (m_interface->callback)
@@ -3533,7 +3485,7 @@ namespace
         return true;
     }
 
-    ImageDecodeStatus ParserPNG::decode(const Surface& dest, bool multithread, Palette* ptr_palette)
+    ImageDecodeStatus ParserPNG::decode(const Surface& dest, bool multithread)
     {
         ImageDecodeStatus status;
 
@@ -3554,60 +3506,37 @@ namespace
             return status;
         }
 
-        Format temp_format = m_header.format;
+        //
+        // [dest.format]  <--  [m_header.format]
+        //
 
-        if (m_header.palette)
+        DecodeTargetBitmap decode_target(dest, m_width, m_height, m_header.format);
+
+        if (decode_target.palette)
         {
-            if (ptr_palette)
-            {
-                if (!dest.format.isIndexed())
-                {
-                    status.setError("Decoding target must be indexed.");
-                    return status;
-                }
-
-                // caller requests palette; give it and decode u8 indices
-                *ptr_palette = m_palette;
-                m_color_state.palette = nullptr;
-                temp_format = IndexedFormat(8);
-                printLine(Print::Info, "  Indexed decoding: ENABLE");
-            }
-            else
-            {
-                // caller doesn't want palette; lookup RGBA colors from palette
-                m_color_state.palette = m_palette.color;
-            }
+            *decode_target.palette = m_palette;
         }
 
-        // default decoding target
-        Surface target(dest);
-        m_decode_target = dest;
+        // Set asynchronous update target
+        m_decode_target = &decode_target;
 
-        status.direct = target.width >= m_width &&
-                        target.height >= m_height &&
-                        target.format == m_header.format;
+        // Target surface
+        Surface target = decode_target;
 
+        // Temporary animation decoding bitmap
         std::unique_ptr<Bitmap> temp;
 
         if (m_number_of_frames > 0)
         {
-            temp = std::make_unique<Bitmap>(m_frame.width, m_frame.height, temp_format);
+            temp = std::make_unique<Bitmap>(m_frame.width, m_frame.height, m_header.format);
             target = *temp;
-            m_decode_target = *temp;
+            m_decode_target = nullptr;
 
             // compute frame indices (for external users)
             m_current_frame_index = m_next_frame_index++;
             if (m_next_frame_index >= m_number_of_frames)
             {
                 m_next_frame_index = 0;
-            }
-        }
-        else
-        {
-            if (!status.direct)
-            {
-                temp = std::make_unique<Bitmap>(m_width, m_height, temp_format);
-                target = *temp;
             }
         }
 
@@ -3649,17 +3578,20 @@ namespace
         if (m_number_of_frames > 0)
         {
             Surface area(dest, m_frame.xoffset, m_frame.yoffset, m_frame.width, m_frame.height);
-            TemporaryBitmap bitmap(area, temp_format);
-            blend(bitmap, *temp, ptr_palette);
+            TemporaryBitmap bitmap(area, m_header.format);
+            blend(bitmap, *temp);
 
             if (dest.format != bitmap.format)
             {
+                bitmap.palette = &m_palette;
                 dest.blit(m_frame.xoffset, m_frame.yoffset, bitmap);
             }
         }
 
         status.current_frame_index = m_current_frame_index;
         status.next_frame_index = m_next_frame_index;
+
+        status.direct = decode_target.isDirect();
 
         return status;
     }
@@ -4225,9 +4157,9 @@ namespace
 
         int segment_height = configure_segment(surface, options);
 
-        if (options.palette.size > 0)
+        if (surface.format.isIndexed())
         {
-            write_PLTE(stream, options.palette);
+            write_PLTE(stream, *surface.palette);
             segment_height = 0; // parallel encoder only supports 24 and 32 bit color
         }
 
@@ -4283,14 +4215,7 @@ namespace
                 return status;
             }
 
-            if (options.palette && header.palette)
-            {
-                status = m_parser.decode(dest, options.multithread, options.palette);
-            }
-            else
-            {
-                status = m_parser.decode(dest, options.multithread, nullptr);
-            }
+            status = m_parser.decode(dest, options.multithread);
 
             return status;
         }
@@ -4310,17 +4235,13 @@ namespace
     {
         ImageEncodeStatus status;
 
-        if (options.palette.size > 0)
+        if (surface.format.isIndexed())
         {
-            if (options.palette.size != 256)
-            {
-                status.setError("[ImageEncoder.PNG] Incorrect palette size - must be 0 or 256 (size: {}).", options.palette.size);
-                return status;
-            }
+            const Palette& palette = surface;
 
-            if (!surface.format.isIndexed() || surface.format.bits != 8)
+            if (palette.size != 256)
             {
-                status.setError("[ImageEncoder.PNG] Incorrect format - must be Indexed 8 bit (bits: {}).", surface.format.bits);
+                status.setError("[ImageEncoder.PNG] Incorrect palette size - must be 0 or 256 (size: {}).", palette.size);
                 return status;
             }
 

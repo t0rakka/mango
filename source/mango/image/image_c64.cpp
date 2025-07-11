@@ -196,7 +196,8 @@ namespace
                                   background_mode, fli);
 
         Surface indices(width, height, IndexedFormat(8), width, temp);
-        resolve(s, indices, g_c64_palette);
+        indices.palette = &g_c64_palette;
+        resolve(s, indices);
     }
 
     void multicolor_interlace_to_surface(const Surface& s, const u8 *data, int width, int height,
@@ -342,7 +343,8 @@ namespace
         convert_hires_bitmap(width, height, temp, data + bitmap_offset, data + video_ram_offset, fli, show_fli_bug, fli_bug_color);
 
         Surface indices(width, height, IndexedFormat(8), width, temp);
-        resolve(s, indices, g_c64_palette);
+        indices.palette = &g_c64_palette;
+        resolve(s, indices);
     }
 
     void hires_interlace_to_surface(const Surface& s, const u8* data, int width, int height,
@@ -1079,7 +1081,8 @@ namespace
             }
 
             Surface indices(header.width, header.height, IndexedFormat(8), header.width, temp);
-            resolve(s, indices, g_c64_palette);
+            indices.palette = &g_c64_palette;
+            resolve(s, indices);
 
             return nullptr;
         }
@@ -1323,7 +1326,8 @@ namespace
             }
 
             Surface indices(header.width, header.height, IndexedFormat(8), header.width, temp);
-            resolve(s, indices, g_c64_palette);
+            indices.palette = &g_c64_palette;
+            resolve(s, indices);
 
             return nullptr;
         }
@@ -1530,7 +1534,8 @@ namespace
                                       1, false);
 
             Surface indices(header.width, header.height, IndexedFormat(8), header.width, temp);
-            resolve(s, indices, g_c64_palette);
+            indices.palette = &g_c64_palette;
+            resolve(s, indices);
 
             return nullptr;
         }
@@ -1815,7 +1820,8 @@ namespace
             }
 
             Surface indices(header.width, header.height, IndexedFormat(8), header.width, tempImage);
-            resolve(s, indices, g_c64_palette);
+            indices.palette = &g_c64_palette;
+            resolve(s, indices);
 
             return nullptr;
         }
@@ -1910,7 +1916,8 @@ namespace
             }
 
             Surface indices(header.width, header.height, IndexedFormat(8), header.width, tempImage);
-            resolve(s, indices, g_c64_palette);
+            indices.palette = &g_c64_palette;
+            resolve(s, indices);
 
             return nullptr;
         }
@@ -2239,7 +2246,8 @@ namespace
             }
 
             Surface indices(header.width, header.height, IndexedFormat(8), header.width, tempImage);
-            resolve(s, indices, g_c64_palette);
+            indices.palette = &g_c64_palette;
+            resolve(s, indices);
 
             return nullptr;
         }

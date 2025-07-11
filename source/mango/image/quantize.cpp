@@ -552,7 +552,7 @@ namespace mango::image
         ColorQuantizer qt(temp, quality);
         qt.quantize(*this, temp, dithering);
 
-        m_palette = qt.getPalette();
+        *this->palette = qt.getPalette();
     }
 
     QuantizedBitmap::QuantizedBitmap(const Surface& source, const Palette& palette, bool dithering)
@@ -561,16 +561,11 @@ namespace mango::image
         ColorQuantizer qt(palette);
         qt.quantize(*this, source, dithering);
 
-        m_palette = palette;
+        *this->palette = palette;
     }
 
     QuantizedBitmap::~QuantizedBitmap()
     {
-    }
-
-    const Palette& QuantizedBitmap::getPalette() const
-    {
-        return m_palette;
     }
 
 } // namespace mango::image

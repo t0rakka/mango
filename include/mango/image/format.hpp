@@ -169,7 +169,7 @@ namespace mango::image
 
     struct IndexedFormat : Format
     {
-        explicit IndexedFormat(int bits);
+        explicit IndexedFormat(int bits, u16 flags = 0);
     };
 
     // ----------------------------------------------------------------------------
