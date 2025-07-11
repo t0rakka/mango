@@ -2012,7 +2012,7 @@ namespace
         const char* m_error = nullptr;
 
         ColorState m_color_state;
-        Surface m_decode_target;
+        DecodeTargetBitmap* m_decode_target = nullptr;
 
         u64 m_filter_time = 0;
         u64 m_color_time = 0;
@@ -3032,12 +3032,12 @@ namespace
         rect.height = y1 - y0;
         rect.progress = float(rect.height) / target.height;
 
-        if (m_decode_target.image != target.image)
+        if (m_decode_target)
         {
-            u8* dest = target.image + y0 * target.stride;
-            Surface source(rect.width, rect.height, target.format, target.stride, dest);
-            source.palette = target.palette;
-            m_decode_target.blit(rect.x, rect.y, source);
+            if (!m_decode_target->isDirect())
+            {
+                m_decode_target->resolve(rect.x, rect.y, rect.width, rect.height);
+            }
         }
 
         if (m_interface->callback)
@@ -3090,11 +3090,12 @@ namespace
             rect.height = target.height;
             rect.progress = 1.0f;
 
-            if (m_decode_target.image != target.image)
+            if (m_decode_target)
             {
-                Surface source(rect.width, rect.height, target.format, target.stride, target.image);
-                source.palette = target.palette;
-                m_decode_target.blit(rect.x, rect.y, source);
+                if (!m_decode_target->isDirect())
+                {
+                    m_decode_target->resolve(rect.x, rect.y, rect.width, rect.height);
+                }
             }
 
             if (m_interface->callback)
@@ -3565,25 +3566,27 @@ namespace
         // [dest.format]  <--  [m_header.format]
         //
 
-        DecodeTargetBitmap target(dest, m_width, m_height, m_header.format);
+        DecodeTargetBitmap decode_target(dest, m_width, m_height, m_header.format);
 
-        if (target.palette)
+        if (decode_target.palette)
         {
-            *target.palette = m_palette;
+            *decode_target.palette = m_palette;
         }
 
         // Set asynchronous update target
-        m_decode_target = dest;
+        m_decode_target = &decode_target;
 
-        //std::unique_ptr<Bitmap> temp;
+        // Target surface
+        Surface target = decode_target;
+
+        // Temporary animation decoding bitmap
+        std::unique_ptr<Bitmap> temp;
 
         if (m_number_of_frames > 0)
         {
-            /*
             temp = std::make_unique<Bitmap>(m_frame.width, m_frame.height, m_header.format);
             target = *temp;
-            m_decode_target = *temp;
-            */
+            m_decode_target = nullptr;
 
             // compute frame indices (for external users)
             m_current_frame_index = m_next_frame_index++;
@@ -3630,22 +3633,21 @@ namespace
 
         if (m_number_of_frames > 0)
         {
-            /*
             Surface area(dest, m_frame.xoffset, m_frame.yoffset, m_frame.width, m_frame.height);
-            TemporaryBitmap bitmap(area, temp_format);
+            TemporaryBitmap bitmap(area, m_header.format);
             blend(bitmap, *temp);
 
             if (dest.format != bitmap.format)
             {
+                bitmap.palette = &m_palette;
                 dest.blit(m_frame.xoffset, m_frame.yoffset, bitmap);
             }
-            */
         }
 
         status.current_frame_index = m_current_frame_index;
         status.next_frame_index = m_next_frame_index;
 
-        status.direct = target.isDirect();
+        status.direct = decode_target.isDirect();
 
         return status;
     }
