@@ -1262,8 +1262,6 @@ namespace
         bool transparent_enable = false;
         u16 transparent_sample[3];
         Color transparent_color;
-
-        Color* palette = nullptr;
     };
 
     void process_pal1to4_indx(const ColorState& state, int width, u8* dst, const u8* src)
@@ -1288,51 +1286,11 @@ namespace
         }
     }
 
-    void process_pal1to4(const ColorState& state, int width, u8* dst, const u8* src)
-    {
-        MANGO_UNREFERENCED(state);
-
-        u32* dest = reinterpret_cast<u32*>(dst);
-
-        Color* palette = state.palette;
-
-        const int bits = state.bits;
-        const u32 mask = (1 << bits) - 1;
-
-        u32 data = 0;
-        int offset = -1;
-
-        for (int x = 0; x < width; ++x)
-        {
-            if (offset < 0)
-            {
-                offset = 8 - bits;
-                data = *src++;
-            }
-
-            u32 index = (data >> offset) & mask;
-            dest[x] = palette[index];
-            offset -= bits;
-        }
-    }
-
     void process_pal8_indx(const ColorState& state, int width, u8* dst, const u8* src)
     {
         MANGO_UNREFERENCED(state);
 
         std::memcpy(dst, src, width);
-    }
-
-    void process_pal8(const ColorState& state, int width, u8* dst, const u8* src)
-    {
-        u32* dest = reinterpret_cast<u32*>(dst);
-
-        Color* palette = state.palette;
-
-        for (int x = 0; x < width; ++x)
-        {
-            dest[x] = palette[src[x]];
-        }
     }
 
     void process_i1to4(const ColorState& state, int width, u8* dst, const u8* src)
@@ -1777,25 +1735,11 @@ namespace
         {
             if (bit_depth < 8)
             {
-                if (state.palette)
-                {
-                    function = process_pal1to4;
-                }
-                else
-                {
-                    function = process_pal1to4_indx;
-                }
+                function = process_pal1to4_indx;
             }
             else
             {
-                if (state.palette)
-                {
-                    function = process_pal8;
-                }
-                else
-                {
-                    function = process_pal8_indx;
-                }
+                function = process_pal8_indx;
             }
         }
         else if (color_type == COLOR_TYPE_I)
