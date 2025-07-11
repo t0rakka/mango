@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     ATARI decoders copyright (C) 2011 Toni Lönnberg. All rights reserved.
@@ -237,7 +237,8 @@ namespace
             }
 
             Surface indices(width, height, IndexedFormat(8), width, tempImage);
-            resolve(s, indices, palette);
+            indices.palette = &palette;
+            resolve(s, indices);
         }
     };
 
@@ -407,7 +408,8 @@ namespace
             }
 
             Surface indices(width, height, IndexedFormat(8), width, buffer);
-            resolve(s, indices, palette);
+            indices.palette = &palette;
+            resolve(s, indices);
         }
 	};
 
@@ -1004,7 +1006,8 @@ namespace
             }
 
             Surface indices(width, height, IndexedFormat(8), width, image);
-            resolve(s, indices, palette);
+            indices.palette = &palette;
+            resolve(s, indices);
         }
 	};
 

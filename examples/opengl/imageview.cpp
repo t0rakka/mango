@@ -17,8 +17,8 @@ protected:
     Filter m_filter = OpenGLFramebuffer::FILTER_NEAREST;
 
 public:
-    TestWindow(const Bitmap& bitmap, const Palette& palette)
-        : OpenGLFramebuffer(bitmap.width, bitmap.height, palette.size > 0 ? RGBA_PALETTE : RGBA_DIRECT)
+    TestWindow(const Bitmap& bitmap)
+        : OpenGLFramebuffer(bitmap.width, bitmap.height, bitmap.palette ? RGBA_PALETTE : RGBA_DIRECT)
         , m_bitmap(bitmap)
     {
         setTitle("OpenGLFramebuffer");
@@ -28,10 +28,9 @@ public:
         s.blit(0, 0, m_bitmap);
         unlock();
 
-        // set active palette
-        if (palette.size > 0)
+        if (bitmap.palette)
         {
-            setPalette(palette);
+            setPalette(*bitmap.palette);
         }
 
         int32x2 screen = getScreenSize();
@@ -93,30 +92,30 @@ int mangoMain(const mango::CommandLine& commands)
 
     u64 time0 = mango::Time::ms();
 
-    // The decoding below is more complicated than necessary because it is also testing indexed decoding
-    // with user requesting the palette (when available). In this mode the target format must be IndexedFormat(8).
+    // The decoding below is more complicated than necessary because it is also testing indexed images.
 
     std::unique_ptr<Bitmap> bitmap;
-    Palette palette;
 
     filesystem::File file(filename);
     ImageDecoder decoder(file, filename);
     if (decoder.isDecoder())
     {
         ImageHeader header = decoder.header();
-        if (header.palette)
+        if (header.format.isIndexed())
         {
-            ImageDecodeOptions options;
-            options.palette = &palette; // Request palette from the decoder
-
-            // The format will be u8 indices into the palette (constructor will determine the format from options)
-            bitmap = std::make_unique<Bitmap>(filename, options);
+            printLine("Decoding INDEXED image.");
+            bitmap = std::make_unique<Bitmap>(filename);
         }
         else
         {
-            // Force the format to be 32 bit RGBA so that it is compatible with the OpenGLFramebuffer
+            printLine("Decoding RGBA image.");
             bitmap = std::make_unique<Bitmap>(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
         }
+    }
+    else
+    {
+        printLine("Incorrect decoder.");
+        return 1;
     }
 
     u64 time1 = mango::Time::ms();
@@ -124,7 +123,7 @@ int mangoMain(const mango::CommandLine& commands)
 
     if (bitmap->width * bitmap->height > 0)
     {
-        TestWindow window(*bitmap, palette);
+        TestWindow window(*bitmap);
         window.enterEventLoop();
     }
 

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -497,7 +497,7 @@ namespace
 
             u8 nplanes = m_bmhd.nplanes;
 
-            header.palette = nplanes <= 8 && !m_ham;
+            //bool isPalette = nplanes <= 8 && !m_ham;
             header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
             if (m_ham)
@@ -570,7 +570,7 @@ namespace
 
             bool is_pbm = m_signature == SIGNATURE_PBM;
 
-            Palette* ptr_palette = options.palette; // palette request destination
+            Palette* ptr_palette = nullptr; // TODO: support indexed decoding
 
             std::unique_ptr<u8[]> allocation;
             const u8* buffer = nullptr;

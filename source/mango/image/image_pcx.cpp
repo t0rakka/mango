@@ -135,13 +135,15 @@ namespace
             //printLine("PCX.NPlanes: {}", NPlanes);
             //printLine("PCX.isPaletteMarker: {}", isPaletteMarker);
 
+            bool isPalette = isPaletteMarker || (BitsPerPixel == 1 && NPlanes == 4);
+
             header.width   = int(Xmax - Xmin + 1);
             header.height  = int(Ymax - Ymin + 1);
             header.depth   = 0;
             header.levels  = 0;
             header.faces   = 0;
-            header.palette = isPaletteMarker || (BitsPerPixel == 1 && NPlanes == 4);
-            header.format  = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            header.format  = isPalette ? IndexedFormat(8)
+                                       : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             header.compression = TextureCompression::NONE;
         }
 
@@ -154,25 +156,29 @@ namespace
     // scanline decoders
     // ------------------------------------------------------------
 
-    void scanRLE(u8* dest, int bytes, const u8* p)
+    bool scanRLE(u8* dest, int bytes, const u8* p, const u8* end)
     {
-        u8* end = dest + bytes;
-
-        while (dest < end)
+        while (bytes > 0)
         {
             u8 sample = *p++;
             if (sample < 0xc0)
             {
                 *dest++ = sample;
+                --bytes;
             }
             else
             {
                 int count = sample & 0x3f;
+                if (count > bytes)
+                    return false;
                 sample = *p++;
                 std::memset(dest, sample, count);
                 dest += count;
+                bytes -= count;
             }
         }
+
+        return true;
     }
 
     void decode2(const Surface& s, u8* buffer, int scansize)
@@ -337,16 +343,20 @@ namespace
             int height = header.height;
             Format format = header.format;
 
-            Bitmap temp(width, height, format);
+            DecodeTargetBitmap target(dest, width, height, format);
 
             // RLE scanline buffer
             int bytesPerLine = m_pcx_header.BytesPerLine ? m_pcx_header.BytesPerLine
-                                                     : width * div_ceil(m_pcx_header.BitsPerPixel, 8);
+                                                         : width * div_ceil(m_pcx_header.BitsPerPixel, 8);
             int scansize = m_pcx_header.NPlanes * bytesPerLine;
 
             Buffer buffer(scansize * height);
 
-            scanRLE(buffer, scansize * height, m_memory.address + 128);
+            if (!scanRLE(buffer, scansize * height, m_memory.address + 128, m_memory.address + m_memory.size))
+            {
+                status.setError("[ImageDecoderPCX] RLE decoding failure.");
+                return status;
+            }
 
             switch (m_pcx_header.BitsPerPixel)
             {
@@ -366,27 +376,9 @@ namespace
                                 pal += 3;
                             }
 
-                            if (options.palette)
-                            {
-                                *options.palette = palette;
-                                decode4(dest, buffer, scansize);
-                            }
-                            else
-                            {
-                                Bitmap indices(width, height, LuminanceFormat(8, Format::UNORM, 8, 0));
-                                decode4(indices, buffer, scansize);
+                            *target.palette = palette;
+                            decode4(target, buffer, scansize);
 
-                                for (int y = 0; y < height; ++y)
-                                {
-                                    u32* d = temp.address<u32>(0, y);
-                                    u8* s = indices.address<u8>(0, y);
-                                    for (int x = 0; x < width; ++x)
-                                    {
-                                        d[x] = palette[s[x]];
-                                    }
-                                }
-                                dest.blit(0, 0, temp);
-                            }
                             break;
                         }
                         default:
@@ -467,27 +459,9 @@ namespace
                             }
 #endif
 
-                            if (options.palette)
-                            {
-                                *options.palette = palette;
-                                decode2(dest, buffer, scansize);
-                            }
-                            else
-                            {
-                                Bitmap indices(width, height, LuminanceFormat(8, Format::UNORM, 8, 0));
-                                decode2(indices, buffer, scansize);
+                            *target.palette = palette;
+                            decode2(target, buffer, scansize);
 
-                                for (int y = 0; y < height; ++y)
-                                {
-                                    u32* d = temp.address<u32>(0, y);
-                                    u8* s = indices.address<u8>(0, y);
-                                    for (int x = 0; x < width; ++x)
-                                    {
-                                        d[x] = palette[s[x]];
-                                    }
-                                }
-                                dest.blit(0, 0, temp);
-                            }
                             break;
                         }
                         default:
@@ -526,41 +500,19 @@ namespace
                                     pal += 3;
                                 }
 
-                                if (options.palette)
-                                {
-                                    *options.palette = palette;
-                                    decode8(dest, buffer, scansize);
-                                }
-                                else
-                                {
-                                    Bitmap indices(width, height, LuminanceFormat(8, Format::UNORM, 8, 0));
-                                    decode8(indices, buffer, scansize);
-
-                                    for (int y = 0; y < height; ++y)
-                                    {
-                                        u32* d = temp.address<u32>(0, y);
-                                        u8* s = indices.address<u8>(0, y);
-                                        for (int x = 0; x < width; ++x)
-                                        {
-                                            d[x] = palette[s[x]];
-                                        }
-                                    }
-                                    dest.blit(0, 0, temp);
-                                }
+                                *target.palette = palette;
+                                decode8(target, buffer, scansize);
                             }
                             else
                             {
-                                decode8(temp, buffer, scansize);
-                                dest.blit(0, 0, temp);
+                                decode8(target, buffer, scansize);
                             }
                             break;
                         case 3:
-                            decode24(temp, buffer, scansize);
-                            dest.blit(0, 0, temp);
+                            decode24(target, buffer, scansize);
                             break;
                         case 4:
-                            decode32(temp, buffer, scansize);
-                            dest.blit(0, 0, temp);
+                            decode32(target, buffer, scansize);
                             break;
                         default:
                             break;
@@ -570,6 +522,9 @@ namespace
                 default:
                     break;
             }
+
+            target.resolve();
+            status.direct = target.isDirect();
 
             return status;
         }
