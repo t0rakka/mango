@@ -1143,8 +1143,8 @@ namespace mango::image
 
         if (this->palette)
         {
-            // If temporary storage is visible the palette is copied into target in resolve(),
-            // otherwise it is copied into temporary storage immediately.
+            // If temporary storage is visible the palette is copied into target surface in resolve(),
+            // otherwise it is copied into target surface immediately.
             *this->palette = palette;
         }
 
