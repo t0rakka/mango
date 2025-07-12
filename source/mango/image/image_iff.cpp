@@ -162,39 +162,45 @@ namespace
         }
     }
 
-    void p2c_raw(u8* image, const u8* temp, int xsize, int ysize, int nplanes, int masking)
+    static
+    void p2c_raw(const Surface& surface, const u8* buffer, int nplanes, int masking)
     {
         const int pixel_bytes = (nplanes + 7) >> 3;
-        const int plane_bytes = ((xsize + 15) & ~15) / 8;
+        const int plane_bytes = ((surface.width + 15) & ~15) / 8;
+        const int scan_bytes = surface.width * pixel_bytes;
 
+        // Select p2c function
         auto p2c = nplanes <= 8 ? p2c_byte : p2c_wide;
 
-        for (int y = 0; y < ysize; ++y)
+        u8* image = surface.image;
+
+        for (int y = 0; y < surface.height; ++y)
         {
-            std::memset(image, 0, xsize * pixel_bytes);
+            std::memset(image, 0, scan_bytes);
 
             for (int p = 0; p < nplanes; ++p)
             {
-                p2c(image, temp, xsize, p, pixel_bytes);
-                temp += plane_bytes;
+                p2c(image, buffer, surface.width, p, pixel_bytes);
+                buffer += plane_bytes;
             }
 
             if (masking == 1)
-                temp += plane_bytes;
+                buffer += plane_bytes;
 
-            image += xsize * pixel_bytes;
+            image += surface.stride;
         }
     }
 
-    void p2c_ham(u8* dest, const u8* workptr, int width, int height, int nplanes, const Palette& palette)
+    static
+    void p2c_ham(const Surface& surface, const u8* workptr, int nplanes, const Palette& palette)
     {
         bool hamcode2b = (nplanes == 6 || nplanes == 8);
         int ham_shift = 8 - (nplanes - (hamcode2b ? 2 : 1));
         //int ham_mask = (1 << ham_shift) - 1;
 
-        int lineskip = ((width + 15) >> 4) << 1;
+        int lineskip = ((surface.width + 15) >> 4) << 1;
 
-        for (int y = 0; y < height; ++y)
+        for (int y = 0; y < surface.height; ++y)
         {
             u32 r = palette[0].r;
             u32 g = palette[0].g;
@@ -203,7 +209,9 @@ namespace
             u32 bitmask = 0x80;
             const u8* workptr2 = workptr;
 
-            for (int x = 0; x < width; ++x)
+            u8* dest = surface.image + y * surface.stride;
+
+            for (int x = 0; x < surface.width; ++x)
             {
                 const u8* workptr3 = workptr2;
 
@@ -280,14 +288,13 @@ namespace
         }
     }
 
-    void expand_palette(u8* dest, const u8* src, int xsize, int ysize, const Palette& palette)
+    static
+    void copy(const Surface& surface, const u8* buffer)
     {
-        Color* image = reinterpret_cast<Color*>(dest);
-        int count = xsize * ysize;
-
-        for (int i = 0; i < count; ++i)
+        for (int y = 0; y < surface.height; ++y)
         {
-            image[i] = palette[src[i]];
+            std::memcpy(surface.image + y * surface.stride, buffer, surface.width);
+            buffer += surface.width;
         }
     }
 
@@ -606,47 +613,29 @@ namespace
                 }
             }
 
-            Bitmap temp(xsize, ysize, header.format);
+            DecodeTargetBitmap target(dest, xsize, ysize, header.format);
 
-            if (temp.palette)
+            if (target.palette)
             {
-                *temp.palette = m_palette;
+                *target.palette = m_palette;
             }
 
             if (m_ham)
             {
-                p2c_ham(temp.image, buffer, xsize, ysize, m_bmhd.nplanes, m_palette);
+                p2c_ham(target, buffer, m_bmhd.nplanes, m_palette);
             }
-            else if (m_bmhd.nplanes <= 8)
+            else if (is_pbm)
             {
-                if (is_pbm)
-                {
-                    std::memcpy(temp.image, buffer, temp.stride * ysize);
-                }
-                else
-                {
-                    // planar-to-chunky conversion
-                    Bitmap raw(xsize, ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
-                    p2c_raw(raw.image, buffer, xsize, ysize, m_bmhd.nplanes, m_bmhd.masking);
-                    std::memcpy(temp.image, raw.image, temp.stride * ysize);
-                }
+                copy(target, buffer);
             }
             else
             {
-                if (is_pbm)
-                {
-                    std::memcpy(temp.image, buffer, temp.stride * ysize);
-                }
-                else
-                {
-                    // planar-to-chunky conversion
-                    p2c_raw(temp.image, buffer, xsize, ysize, m_bmhd.nplanes, m_bmhd.masking);
-                }
+                // planar-to-chunky conversion
+                p2c_raw(target, buffer, m_bmhd.nplanes, m_bmhd.masking);
             }
 
-            dest.blit(0, 0, temp);
-
-            status.direct = false;
+            target.resolve();
+            status.direct = target.isDirect();
 
             return status;
         }
