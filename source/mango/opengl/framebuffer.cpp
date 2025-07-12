@@ -113,6 +113,33 @@ namespace
         }
     )";
 
+#ifdef __APPLE__
+    // APPLE SUCKS: Broken integer textures require this workaround shader
+    const char* fragment_shader_source_index = R"(
+        #version 330
+
+        uniform sampler2D u_Texture;
+        uniform uint u_Palette[256];
+
+        in vec2 texcoord;
+
+        out vec4 outFragment0;
+
+        void main()
+        {
+            // Apple's broken OpenGL 4.1 forces us to use normalized sampling and convert back
+            // This is what happens when you deprecate OpenGL but leave a broken implementation
+            uint index = uint(texture(u_Texture, texcoord).r * 255.0);
+            uint color = u_Palette[index];
+            float r = float((color >>  0) & 0xffu) / 255.0;
+            float g = float((color >>  8) & 0xffu) / 255.0;
+            float b = float((color >> 16) & 0xffu) / 255.0;
+            float a = float((color >> 24) & 0xffu) / 255.0;
+            outFragment0 = vec4(r, g, b, a);
+        }
+    )";
+#else
+    // Proper integer texture shader for platforms that actually support OpenGL properly
     const char* fragment_shader_source_index = R"(
         #version 330
 
@@ -125,14 +152,16 @@ namespace
 
         void main()
         {
-            uint color = u_Palette[texture(u_Texture, texcoord).r];
-            float r = ((color << 24) >> 24) / 255.0;
-            float g = ((color << 16) >> 24) / 255.0;
-            float b = ((color <<  8) >> 24) / 255.0;
-            float a = ((color <<  0) >> 24) / 255.0;
+            uint index = uint(texture(u_Texture, texcoord).r);
+            uint color = u_Palette[index];
+            float r = float((color >>  0) & 0xffu) / 255.0;
+            float g = float((color >>  8) & 0xffu) / 255.0;
+            float b = float((color >> 16) & 0xffu) / 255.0;
+            float a = float((color >> 24) & 0xffu) / 255.0;
             outFragment0 = vec4(r, g, b, a);
         }
     )";
+#endif
 
 } // namespace
 
@@ -200,7 +229,17 @@ namespace mango
         {
             glGenTextures(1, &m_index_texture);
             glBindTexture(GL_TEXTURE_2D, m_index_texture);
+            
+#ifdef __APPLE__
+            // APPLE SUCKS: Their OpenGL 4.1 implementation has broken integer textures
+            // Integer textures and isampler2D don't work properly on macOS due to Apple's
+            // half-assed OpenGL implementation. They deprecated OpenGL but left us with
+            // this broken mess. Thanks Apple, you absolute geniuses!
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+#else
+            // Proper integer texture format for platforms that actually support OpenGL properly
             glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
+#endif
 
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -385,7 +424,14 @@ namespace mango
         if (m_framebuffer)
         {
             glBindTexture(GL_TEXTURE_2D, m_index_texture);
+            
+#ifdef __APPLE__
+            // APPLE SUCKS: Same broken integer texture issue here
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, m_width, m_height, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+#else
+            // Proper integer texture upload for non-Apple platforms
             glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, m_width, m_height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
+#endif
         }
         else
         {
