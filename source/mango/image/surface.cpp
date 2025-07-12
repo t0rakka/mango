@@ -1208,45 +1208,6 @@ namespace mango::image
     void DecodeTargetBitmap::resolve()
     {
         resolve(0, 0, m_target.width, m_target.height);
-
-        /*
-        if (m_bitmap)
-        {
-            const bool isTargetIndexed = m_target.format.isIndexed();
-            const bool isBitmapIndexed = m_bitmap->format.isIndexed();
-
-            if (isBitmapIndexed)
-            {
-                if (isTargetIndexed)
-                {
-                    // index <- index (copy indices)
-                    m_target.blit(0, 0, *m_bitmap);
-
-                    // Blitter doesn't copy palette, do it manually
-                    if (m_target.palette && m_bitmap->palette)
-                    {
-                        *m_target.palette = *m_bitmap->palette;
-                    }
-                }
-                else
-                {
-                    // rgba <- index (resolve palette)
-                    image::resolve(m_target, *m_bitmap);
-                }
-            }
-            else if (isTargetIndexed)
-            {
-                // index <- rgba (quantization)
-                printLine(Print::Warning, "[DecodeTargetBitmap] Quantization is not supported.");
-                return;
-            }
-            else
-            {
-                // rgba <- rgba
-                m_target.blit(0, 0, *m_bitmap);
-            }
-        }
-        */
     }
 
     // ----------------------------------------------------------------------------
