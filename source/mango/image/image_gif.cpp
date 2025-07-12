@@ -832,9 +832,7 @@ namespace
             TemporaryBitmap temp(surface, LuminanceFormat(8, 0xff, 0));
 
             // Generate grayscale palette
-            Palette palette;
-
-            palette.size = 256;
+            Palette palette(256);
 
             for (int i = 0; i <256; ++i)
             {

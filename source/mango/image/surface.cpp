@@ -1128,6 +1128,31 @@ namespace mango::image
         }
     }
 
+    DecodeTargetBitmap::DecodeTargetBitmap(const Surface& target, int width, int height, const Format& format, const Palette& palette, bool yflip)
+        : Surface(target)
+        , m_target(target)
+    {
+        if (target.format != format || target.width != width || target.height != height)
+        {
+            // Allocate temporary storage for decoder
+            m_bitmap = std::make_unique<Bitmap>(width, height, format);
+
+            // Make temporary storage visible
+            static_cast<Surface&>(*this) = *m_bitmap;
+        }
+
+        if (this->palette)
+        {
+            *this->palette = palette;
+        }
+
+        if (yflip)
+        {
+            image += (height - 1) * stride;
+            stride = 0 - stride;
+        }
+    }
+
     DecodeTargetBitmap::~DecodeTargetBitmap()
     {
     }

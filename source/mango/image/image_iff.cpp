@@ -613,12 +613,7 @@ namespace
                 }
             }
 
-            DecodeTargetBitmap target(dest, xsize, ysize, header.format);
-
-            if (target.palette)
-            {
-                *target.palette = m_palette;
-            }
+            DecodeTargetBitmap target(dest, xsize, ysize, header.format, m_palette);
 
             if (m_ham)
             {

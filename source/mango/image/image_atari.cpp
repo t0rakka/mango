@@ -273,8 +273,7 @@ namespace
             BigEndianConstPointer p = m_data;
 
             // read palette
-            Palette palette;
-            palette.size = 1 << m_degas_header.bitplanes;
+            Palette palette(1 << m_degas_header.bitplanes);
 
             for (int i = 0; i < 16; ++i)
             {
@@ -358,8 +357,7 @@ namespace
             BigEndianConstPointer p = data;
 
             // read palette
-            Palette palette;
-            palette.size = 16;
+            Palette palette(16);
 
             for (int i = 0; i < 16; ++i)
             {
@@ -948,10 +946,9 @@ namespace
         {
             BigEndianConstPointer p = data;
 
-            Palette palette;
-            palette.size = 1 << bitplanes;
+            Palette palette(1 << bitplanes);
 
-            for (int i = 0; i < int(palette.size); ++i)
+            for (u32 i = 0; i < palette.size; ++i)
             {
                 u16 palette_color = p.read16();
                 palette[i] = convert_atari_color(palette_color);

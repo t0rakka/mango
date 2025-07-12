@@ -365,8 +365,7 @@ namespace
                     {
                         case 4:
                         {
-                            Palette palette;
-                            palette.size = 16;
+                            Palette palette(16);
 
                             // read palette
                             const u8* pal = m_pcx_header.ColorMap;
@@ -391,8 +390,7 @@ namespace
                     {
                         case 1:
                         {
-                            Palette palette;
-                            palette.size = 4;
+                            Palette palette(4);
 
                             /*
                             if (m_pcx_header.isPaletteMarker)
@@ -489,8 +487,7 @@ namespace
                         case 1:
                             if (m_pcx_header.isPaletteMarker)
                             {
-                                Palette palette;
-                                palette.size = 256;
+                                Palette palette(256);
 
                                 // read palette
                                 const u8* pal = m_memory.address + m_memory.size - 768;

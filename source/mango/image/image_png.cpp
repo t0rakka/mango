@@ -3510,12 +3510,7 @@ namespace
         // [dest.format]  <--  [m_header.format]
         //
 
-        DecodeTargetBitmap decode_target(dest, m_width, m_height, m_header.format);
-
-        if (decode_target.palette)
-        {
-            *decode_target.palette = m_palette;
-        }
+        DecodeTargetBitmap decode_target(dest, m_width, m_height, m_header.format, m_palette);
 
         // Set asynchronous update target
         m_decode_target = &decode_target;

@@ -418,12 +418,7 @@ namespace
             const bool xflip = (m_targa_header.descriptor & DESCRIPTOR_ORIGIN_X) != 0;
 
             Format format = m_targa_header.getFormat();
-            DecodeTargetBitmap target(surface, width, height, format, yflip);
-
-            if (format.isIndexed())
-            {
-                *target.palette = palette;
-            }
+            DecodeTargetBitmap target(surface, width, height, format, palette, yflip);
 
             const u8* data = p;
             const u8* end = m_memory.end();

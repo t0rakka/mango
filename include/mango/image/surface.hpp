@@ -110,6 +110,7 @@ namespace mango::image
 
     public:
         DecodeTargetBitmap(const Surface& target, int width, int height, const Format& format, bool yflip = false);
+        DecodeTargetBitmap(const Surface& target, int width, int height, const Format& format, const Palette& palette, bool yflip = false);
         ~DecodeTargetBitmap();
 
         bool isDirect() const;
