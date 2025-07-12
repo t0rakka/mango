@@ -495,23 +495,17 @@ namespace
                 }
             }
 
-            u8 nplanes = m_bmhd.nplanes;
-
-            //bool isPalette = nplanes <= 8 && !m_ham;
-            header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-
             if (m_ham)
             {
-                // keep 32 bit default RGBA
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
             else
             {
-                int bpp = (nplanes + 7) >> 3;
+                int bpp = (m_bmhd.nplanes + 7) >> 3;
                 switch (bpp)
                 {
                     case 1:
-                        // expand palette
-                        header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                        header.format = IndexedFormat(8);
                         break;
                     case 2:
                         header.format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5);
@@ -522,9 +516,11 @@ namespace
                     case 4:
                         header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                         break;
+                    default:
+                        header.setError("[ImageDecoder.IFF] Incorrect number of planes.");
+                        break;
                 }
             }
-
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -570,8 +566,6 @@ namespace
 
             bool is_pbm = m_signature == SIGNATURE_PBM;
 
-            Palette* ptr_palette = nullptr; // TODO: support indexed decoding
-
             std::unique_ptr<u8[]> allocation;
             const u8* buffer = nullptr;
 
@@ -612,26 +606,12 @@ namespace
                 }
             }
 
-            if (m_palette.size > 0 && ptr_palette && !m_ham)
-            {
-                // client requests for palette and the image has one
-                *ptr_palette = m_palette;
-
-                if (is_pbm)
-                {
-                    std::memcpy(dest.image, buffer, xsize * ysize);
-                }
-                else
-                {
-                    Bitmap raw(xsize, ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
-                    p2c_raw(raw.image, buffer, xsize, ysize, m_bmhd.nplanes, m_bmhd.masking);
-                    std::memcpy(dest.image, raw.image, xsize * ysize);
-                }
-
-                return status;
-            }
-
             Bitmap temp(xsize, ysize, header.format);
+
+            if (temp.palette)
+            {
+                *temp.palette = m_palette;
+            }
 
             if (m_ham)
             {
@@ -641,14 +621,14 @@ namespace
             {
                 if (is_pbm)
                 {
-                    expand_palette(temp.image, buffer, xsize, ysize, m_palette);
+                    std::memcpy(temp.image, buffer, temp.stride * ysize);
                 }
                 else
                 {
                     // planar-to-chunky conversion
                     Bitmap raw(xsize, ysize, LuminanceFormat(8, Format::UNORM, 8, 0));
                     p2c_raw(raw.image, buffer, xsize, ysize, m_bmhd.nplanes, m_bmhd.masking);
-                    expand_palette(temp.image, raw.image, xsize, ysize, m_palette);
+                    std::memcpy(temp.image, raw.image, temp.stride * ysize);
                 }
             }
             else
@@ -665,6 +645,8 @@ namespace
             }
 
             dest.blit(0, 0, temp);
+
+            status.direct = false;
 
             return status;
         }
