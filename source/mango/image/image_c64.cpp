@@ -453,37 +453,25 @@ namespace
 
             ImageDecodeStatus status;
 
-            status.direct = dest.format == header.format &&
-                            dest.width >= header.width &&
-                            dest.height >= header.height;
-            status.success = true;
-
-            const char* error = nullptr;
-
             if (!m_memory.address)
             {
                 status.setError("C64 ImageDecoder - no data.");
                 return status;
             }
 
-            if (status.direct)
-            {
-                error = decodeImage(dest);
-            }
-            else
-            {
-                Bitmap temp(header.width, header.height, header.format);
-                error = decodeImage(temp);
-                if (!error)
-                {
-                    dest.blit(0, 0, temp);
-                }
-            }
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
 
+            const char* error = decodeImage(target);
             if (error)
             {
                 status.setError(error);
             }
+            else
+            {
+                target.resolve();
+            }
+
+            status.direct = target.isDirect();
 
             return status;
         }
@@ -1856,9 +1844,11 @@ namespace
                 return "SHF-XL: invalid data.";
             }
 
-            const u8* bitmap_c64 = m_data + 0x2000;
-            const u8* video_ram = m_data;
-            u8 sprite_color = *(m_data + 0x3e9);
+            const u8* buffer = m_data;
+
+            const u8* bitmap_c64 = buffer + 0x2000;
+            const u8* video_ram = buffer;
+            u8 sprite_color = *(buffer + 0x3e9);
 
             Buffer tempImage(header.width * header.height, 0);
             u8* image = tempImage;
@@ -1884,7 +1874,7 @@ namespace
                     int sprite_nb = (x / 24) + 1;
                     int sprite_line = (y % 21);
                     int sprite_ram_bank = (y + 7) & 0x7;
-                    u8 sprite_pointer = m_data[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb];
+                    u8 sprite_pointer = buffer[sprite_ram_bank * 0x400 + 0x3f8 + sprite_nb];
                     int sprite_byte_offset = (sprite_pointer * 64) + (sprite_line * 3) + (x % 24) / 8;
 
                     if (sprite_byte_offset > 15360)
@@ -1892,7 +1882,7 @@ namespace
                         return "SHF-XL: invalid sprite pointer.";
                     }
 
-                    u8 sprite_byte = m_data[sprite_byte_offset];
+                    u8 sprite_byte = buffer[sprite_byte_offset];
                     int sprite_bit_pattern = (sprite_byte >> (7 - (x & 0x7))) & 0x1;
 
                     switch (bit_pattern)
