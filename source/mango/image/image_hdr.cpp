@@ -475,23 +475,15 @@ namespace
                 return status;
             }
 
-            status.direct = dest.format == header.format &&
-                            dest.width >= header.width &&
-                            dest.height >= header.height;
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
 
-            if (status.direct)
+            hdr_decode(status, target, m_data);
+            if (status)
             {
-                hdr_decode(status, dest, m_data);
+                target.resolve();
             }
-            else
-            {
-                Bitmap temp(header.width, header.height, header.format);
-                hdr_decode(status, temp, m_data);
-                if (status)
-                {
-                    dest.blit(0, 0, temp);
-                }
-            }
+
+            status.direct = target.isDirect();
 
             return status;
         }

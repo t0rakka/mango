@@ -125,34 +125,20 @@ namespace
             }
 
             WebPFormat wpformat = webpFindFormat(dest.format);
-            bool matching_formats = wpformat.format == dest.format;
-            bool matching_dimensions = header.width == dest.width &&
-                                       header.height == dest.height;
 
-            status.direct = matching_formats && matching_dimensions;
+            DecodeTargetBitmap target(dest, header.width, header.height, wpformat.format);
 
-            uint8_t* output = nullptr;
-
-            if (status.direct)
-            {
-                // Direct decoding
-                output = wpformat.decode(dest, m_memory);
-            }
-            else
-            {
-                // Color conversion decoding
-                Bitmap temp(header.width, header.height, wpformat.format);
-                output = wpformat.decode(temp, m_memory);
-                if (output)
-                {
-                    dest.blit(0, 0, temp);
-                }
-            }
-
+            uint8_t* output = wpformat.decode(target, m_memory);
             if (!output)
             {
                 status.setError("[ImageDecoder.WEBP] Decoding failed.");
             }
+            else
+            {
+                target.resolve();
+            }
+
+            status.direct = target.isDirect();
 
             return status;
         }

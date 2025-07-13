@@ -216,36 +216,20 @@ namespace
                 return status;
             }
 
-            status.direct = dest.format == header.format &&
-                            dest.width >= m_sgi_header.xsize &&
-                            dest.height >= m_sgi_header.ysize;
+            DecodeTargetBitmap target(dest, m_sgi_header.xsize, m_sgi_header.ysize, header.format);
 
-            if (status.direct)
+            switch (m_sgi_header.encoding)
             {
-                switch (m_sgi_header.encoding)
-                {
-                    case 0:
-                        decode_uncompressed(dest);
-                        break;
-                    case 1:
-                        decode_rle(dest);
-                        break;
-                }
+                case 0:
+                    decode_uncompressed(target);
+                    break;
+                case 1:
+                    decode_rle(target);
+                    break;
             }
-            else
-            {
-                Bitmap temp(m_sgi_header.xsize, m_sgi_header.ysize, header.format);
-                switch (m_sgi_header.encoding)
-                {
-                    case 0:
-                        decode_uncompressed(temp);
-                        break;
-                    case 1:
-                        decode_rle(temp);
-                        break;
-                }
-                dest.blit(0, 0, temp);
-            }
+
+            target.resolve();
+            status.direct = target.isDirect();
 
             return status;
         }

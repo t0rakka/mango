@@ -512,19 +512,14 @@ namespace
                 return status;
             }
 
-            status.direct = dest.format == header.format &&
-                            dest.width >= header.width &&
-                            dest.height >= header.height;
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
 
-            if (status.direct)
+            status.success = decode_matching(target);
+            status.direct = target.isDirect();
+
+            if (status.success)
             {
-                status.success = decode_matching(dest);
-            }
-            else
-            {
-                Bitmap temp(header.width, header.height, header.format);
-                status.success = decode_matching(temp);
-                dest.blit(0, 0, temp);
+                target.resolve();
             }
 
             return status;

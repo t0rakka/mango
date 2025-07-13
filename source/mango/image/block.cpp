@@ -1491,38 +1491,19 @@ namespace mango::image
         const int compressed_width = xblocks * width;
         const int compressed_height = yblocks * height;
 
-        const bool noclip = surface.width == compressed_width && surface.height == compressed_height;
-        const bool noconvert = surface.format == format;
-        const bool direct = noclip && noconvert;
+        DecodeTargetBitmap target(surface, compressed_width, compressed_height, format);
 
-        if (direct)
+        if (decodeSurface)
         {
-            if (decodeSurface)
-            {
-                decodeSurface(*this, surface, memory.address);
-            }
-            else
-            {
-                directBlockDecode(*this, surface, memory, xblocks, yblocks);
-            }
+            decodeSurface(*this, target, memory.address);
         }
         else
         {
-            Bitmap temp(compressed_width, compressed_height, format);
-
-            if (decodeSurface)
-            {
-                decodeSurface(*this, temp, memory.address);
-            }
-            else
-            {
-                directBlockDecode(*this, temp, memory, xblocks, yblocks);
-            }
-
-            surface.blit(0, 0, temp);
+            directBlockDecode(*this, target, memory, xblocks, yblocks);
         }
 
-        status.direct = direct;
+        target.resolve();
+        status.direct = target.isDirect();
 
         return status;
     }

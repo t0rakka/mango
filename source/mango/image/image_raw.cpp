@@ -70,11 +70,7 @@ namespace
                 return status;
             }
 
-            u32 width = header.width;
-            u32 height = header.height;
-            Format format = header.format;
-
-            Surface source(width, height, format, width * 4, m_memory.address + 12);
+            Surface source(header.width, header.height, header.format, header.width * 4, m_memory.address + 12);
             dest.blit(0, 0, source);
 
             status.direct = true;

@@ -326,21 +326,11 @@ namespace
                 return status;
             }
 
-            status.direct =
-                dest.format == header.format &&
-                dest.width >= header.width &&
-                dest.height >= header.height;
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
+            qoi_decode(target.image, m_memory.address, m_memory.size, header.width, header.height, target.stride);
+            target.resolve();
 
-            if (status.direct)
-            {
-                qoi_decode(dest.image, m_memory.address, m_memory.size, header.width, header.height, dest.stride);
-            }
-            else
-            {
-                Bitmap temp(header.width, header.height, header.format);
-                qoi_decode(temp.image, m_memory.address, m_memory.size, header.width, header.height, temp.stride);
-                dest.blit(0, 0, temp);
-            }
+            status.direct = target.isDirect();
 
             return status;
         }
@@ -452,25 +442,12 @@ namespace
             MANGO_UNREFERENCED(depth);
             MANGO_UNREFERENCED(face);
 
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
+            decodeTiles(target);
+            target.resolve();
+
             ImageDecodeStatus status;
-
-            Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-
-            status.direct = 
-                dest.format != format ||
-                dest.width != header.width ||
-                dest.height != header.height;
-
-            if (status.direct)
-            {
-                decodeTiles(dest);
-            }
-            else
-            {
-                Bitmap temp(header.width, header.height, format);
-                decodeTiles(temp);
-                dest.blit(0, 0, temp);
-            }
+            status.direct = target.isDirect();
 
             return status;
         }
