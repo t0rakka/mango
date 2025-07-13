@@ -48,20 +48,11 @@ namespace
                 return status;
             }
 
-            status.direct = dest.format == header.format &&
-                            dest.width >= header.width &&
-                            dest.height >= header.height;
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
+            decodeImage(target);
+            target.resolve();
 
-            if (status.direct)
-            {
-                decodeImage(dest);
-            }
-            else
-            {
-                Bitmap temp(header.width, header.height, header.format);
-                decodeImage(temp);
-                dest.blit(0, 0, temp);
-            }
+            status.direct = target.isDirect();
 
             return status;
         }
