@@ -29,7 +29,7 @@ namespace mango::image
 
         Surface();
         Surface(const Surface& surface, bool yflip = false);
-        Surface(int width, int height, const Format& format, size_t stride, const void* image);
+        Surface(int width, int height, const Format& format, size_t stride, const void* image, Palette* palette = nullptr);
         Surface(const Surface& source, int x, int y, int width, int height);
         ~Surface();
 

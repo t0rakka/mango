@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -577,10 +577,28 @@ namespace
     }
 
     // ----------------------------------------------------------------------------
-    // create_surface()
+    // init_bitmap
     // ----------------------------------------------------------------------------
 
-    Surface create_surface(ConstMemory memory, const std::string& filename, const Format* ptr_format, const ImageDecodeOptions& options)
+    Surface init_bitmap(int width, int height, const Format& format, size_t stride)
+    {
+        if (!stride)
+        {
+            stride = width * format.bytes();
+        }
+
+        u8* image = new u8[stride * height];
+
+        Palette* palette = nullptr;
+        if (format.isIndexed())
+        {
+            palette = new Palette(256);
+        }
+
+        return Surface(width, height, format, stride, image, palette);
+    }
+
+    Surface init_bitmap(ConstMemory memory, const std::string& filename, const Format* ptr_format, const ImageDecodeOptions& options)
     {
         Surface surface;
 
@@ -590,7 +608,7 @@ namespace
             ImageHeader header = decoder.header();
             if (!header)
             {
-                printLine(Print::Info, header.info);
+                printLine(Print::Warning, header.info);
                 return surface;
             }
 
@@ -660,10 +678,10 @@ namespace mango::image
         }
     }
 
-    Surface::Surface(int width, int height, const Format& format, size_t stride, const void* image)
+    Surface::Surface(int width, int height, const Format& format, size_t stride, const void* image, Palette* palette)
         : format(format)
         , image(const_cast<u8*>(reinterpret_cast<const u8*>(image)))
-        , palette(nullptr)
+        , palette(palette)
         , stride(stride)
         , width(width)
         , height(height)
@@ -956,108 +974,69 @@ namespace mango::image
     // ----------------------------------------------------------------------------
 
     Bitmap::Bitmap(int width_, int height_, const Format& format_, size_t stride_)
-        : Surface(width_, height_, format_, stride_, nullptr)
+        : Surface(init_bitmap(width_, height_, format_, stride_))
     {
-        if (!stride)
-        {
-            stride = width * format.bytes();
-        }
-
-        image = new u8[stride * height];
-
-        if (format.isIndexed())
-        {
-            palette = new Palette(256);
-        }
     }
 
     Bitmap::Bitmap(const Surface& source)
-        : Surface(source.width, source.height, source.format, 0, nullptr)
+        : Surface(init_bitmap(source.width, source.height, source.format, 0))
     {
-        stride = width * format.bytes();
-        image = new u8[stride * height];
         blit(0, 0, source);
 
-        if (format.isIndexed())
+        if (palette && source.palette)
         {
-            palette = new Palette(256);
-            if (source.palette)
-            {
-                *palette = *source.palette;
-            }
+            *palette = *source.palette;
         }
     }
 
     Bitmap::Bitmap(const Surface& source, const Format& format)
-        : Surface(source.width, source.height, format, 0, nullptr)
+        : Surface(init_bitmap(source.width, source.height, format, 0))
     {
-        stride = width * format.bytes();
-        image = new u8[stride * height];
         blit(0, 0, source);
 
-        // NOTE: This is not supported  unless source format is also indexed
-        // NOTE: If format is indexed and source is not, we should quantize but we never do this automatically
-        if (format.isIndexed())
+        if (palette && source.palette)
         {
-            palette = new Palette(256);
-            if (source.palette)
-            {
-                *palette = *source.palette;
-            }
+            *palette = *source.palette;
         }
     }
 
     Bitmap::Bitmap(const ImageHeader& header)
-        : Surface(header.width, header.height, header.format, 0, nullptr)
+        : Surface(init_bitmap(header.width, header.height, header.format, 0))
     {
-        stride = width * format.bytes();
-        image = new u8[stride * height];
-
-        if (format.isIndexed())
-        {
-            palette = new Palette(256);
-        }
     }
 
     Bitmap::Bitmap(const ImageHeader& header, const Format& format)
-        : Surface(header.width, header.height, format, 0, nullptr)
+        : Surface(init_bitmap(header.width, header.height, format, 0))
     {
-        stride = width * format.bytes();
-        image = new u8[stride * height];
-
-        if (format.isIndexed())
-        {
-            palette = new Palette(256);
-        }
     }
 
     Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const ImageDecodeOptions& options)
-        : Surface(create_surface(memory, extension, nullptr, options))
+        : Surface(init_bitmap(memory, extension, nullptr, options))
     {
     }
 
     Bitmap::Bitmap(ConstMemory memory, const std::string& extension, const Format& format, const ImageDecodeOptions& options)
-        : Surface(create_surface(memory, extension, &format, options))
+        : Surface(init_bitmap(memory, extension, &format, options))
     {
     }
 
     Bitmap::Bitmap(const filesystem::File& file, const ImageDecodeOptions& options)
-        : Surface(create_surface(file, file.filename(), nullptr, options))
+        : Surface(init_bitmap(file, file.filename(), nullptr, options))
     {
     }
 
     Bitmap::Bitmap(const filesystem::File& file, const Format& format, const ImageDecodeOptions& options)
-        : Surface(create_surface(file, file.filename(), &format, options))
+        : Surface(init_bitmap(file, file.filename(), &format, options))
     {
     }
 
     Bitmap::Bitmap(const std::string& filename, const ImageDecodeOptions& options)
-        : Surface(create_surface(filesystem::File(filename), filename, nullptr, options))
+        : Surface(init_bitmap(filesystem::File(filename), filename, nullptr, options))
     {
     }
 
     Bitmap::Bitmap(const std::string& filename, const Format& format, const ImageDecodeOptions& options)
-        : Surface(create_surface(filesystem::File(filename), filename, &format, options))
+        : Surface(init_bitmap(filesystem::File(filename), filename, &format, options))
     {
     }
 
