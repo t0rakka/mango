@@ -116,8 +116,8 @@ namespace mango::image
 
         enum Flag : u16
         {
-            LUMINANCE = 0x0001, // Blitter only supports luminance -> RGB
-            INDEXED   = 0x0002, // Not supported by blitter
+            LUMINANCE = 0x0001, // Blitter only supports luminance -> RGB(A)
+            INDEXED   = 0x0002, // Blitter only supports indexed -> 32 bit RGBA
             LINEAR    = 0x0004, // Ignored by blitter
             PREMULT   = 0x0008, // Ignored by blitter
             MASK      = 0x000c, // Mask for ignored by blitter
