@@ -164,6 +164,7 @@ namespace mango::filesystem
 
     // NOTE: WIN32 ReadFile and WriteFile are limited to 4 GB maximum read and write
     //       so we split larger operations into smaller chunks.
+    static constexpr u64 max_chunk_size = 0xffffffffull;
 
     s64 FileStream::read(void* dest, u64 bytes)
     {
@@ -174,7 +175,7 @@ namespace mango::filesystem
 
         while (bytes_left > 0)
         {
-            u64 commit = std::min(u64(bytes_left), 0xffffffffull);
+            u64 commit = std::min(u64(bytes_left), max_chunk_size);
             s64 result = read(output, u32(commit));
             if (result < 0)
             {
@@ -198,7 +199,7 @@ namespace mango::filesystem
 
         while (bytes_left > 0)
         {
-            u64 commit = std::min(u64(bytes_left), 0xffffffffull);
+            u64 commit = std::min(u64(bytes_left), max_chunk_size);
             s64 result = write(input, u32(commit));
             if (result < 0)
             {
