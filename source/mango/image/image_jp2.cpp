@@ -148,7 +148,7 @@ namespace
         OPJ_OFF_T stream_skip(OPJ_OFF_T bytes, void* data)
         {
             Stream& output = *reinterpret_cast<Stream*>(data);
-            output.seek(bytes, Stream::CURRENT);
+            output.seek(bytes, Stream::SeekMode::Current);
             return bytes;
         }
 
@@ -156,7 +156,7 @@ namespace
         OPJ_BOOL stream_seek(OPJ_OFF_T bytes, void* data)
         {
             Stream& output = *reinterpret_cast<Stream*>(data);
-            output.seek(bytes, Stream::BEGIN);
+            output.seek(bytes, Stream::SeekMode::Begin);
             return true;
         }
 

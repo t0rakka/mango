@@ -87,12 +87,12 @@ namespace mango::filesystem
 
         switch (mode)
         {
-            case READ:
+            case OpenMode::Read:
                 access = GENERIC_READ;
                 disposition = OPEN_EXISTING;
                 break;
 
-            case WRITE:
+            case OpenMode::Write:
                 access = GENERIC_WRITE;
                 disposition = CREATE_ALWAYS;
                 break;
@@ -137,15 +137,15 @@ namespace mango::filesystem
 
         switch (mode)
         {
-            case BEGIN:
+            case SeekMode::Begin:
                 method = FILE_BEGIN;
                 break;
 
-            case CURRENT:
+            case SeekMode::Current:
                 method = FILE_CURRENT;
                 break;
 
-            case END:
+            case SeekMode::End:
                 method = FILE_END;
                 break;
 

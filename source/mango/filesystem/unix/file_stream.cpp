@@ -84,11 +84,11 @@ namespace mango::filesystem
     {
        	switch (openmode)
         {
-            case READ:
+            case OpenMode::Read:
                 m_handle = new FileHandle(filename, O_RDONLY);
                 break;
 
-            case WRITE:
+            case OpenMode::Write:
                 m_handle = new FileHandle(filename, O_WRONLY | O_CREAT | O_TRUNC);
                 break;
 
@@ -124,15 +124,15 @@ namespace mango::filesystem
 
         switch (mode)
         {
-            case BEGIN:
+            case SeekMode::Begin:
                 method = SEEK_SET;
                 break;
 
-            case CURRENT:
+            case SeekMode::Current:
                 method = SEEK_CUR;
                 break;
 
-            case END:
+            case SeekMode::End:
                 method = SEEK_END;
                 break;
 

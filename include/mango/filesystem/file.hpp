@@ -69,7 +69,7 @@ namespace mango::filesystem
     {
     public:
         InputFileStream(const std::string& filename)
-            : FileStream(filename, Stream::READ)
+            : FileStream(filename, Stream::OpenMode::Read)
         {
         }
     };
@@ -78,7 +78,7 @@ namespace mango::filesystem
     {
     public:
         OutputFileStream(const std::string& filename)
-            : FileStream(filename, Stream::WRITE)
+            : FileStream(filename, Stream::OpenMode::Write)
         {
         }
     };

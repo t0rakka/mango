@@ -16,17 +16,17 @@ namespace mango
     class Stream : protected NonCopyable
     {
     public:
-        enum OpenMode
+        enum class OpenMode
         {
-            READ,
-            WRITE
+            Read,
+            Write,
         };
 
-        enum SeekMode
+        enum class SeekMode
         {
-            BEGIN,
-            CURRENT,
-            END
+            Begin,
+            Current,
+            End,
         };
 
         Stream() = default;

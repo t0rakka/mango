@@ -49,7 +49,7 @@ namespace mango
         : m_memory(allocate(size_t(stream.size())), size_t(stream.size()))
         , m_capacity(m_memory.size)
     {
-        stream.seek(0, Stream::BEGIN);
+        stream.seek(0, Stream::SeekMode::Begin);
         stream.read(m_memory.address, m_memory.size);
     }
 
@@ -252,15 +252,15 @@ namespace mango
 
         switch (mode)
         {
-            case BEGIN:
+            case SeekMode::Begin:
                 m_offset = distance;
                 break;
 
-            case CURRENT:
+            case SeekMode::Current:
                 m_offset += distance;
                 break;
 
-            case END:
+            case SeekMode::End:
                 m_offset = size + distance;
                 break;
         }
@@ -338,16 +338,16 @@ namespace mango
         const u64 size = u64(m_memory.size);
         switch (mode)
         {
-            case BEGIN:
+            case SeekMode::Begin:
                 distance = std::max(s64(0), distance);
                 m_offset = std::min(size, u64(distance));
                 break;
 
-            case CURRENT:
+            case SeekMode::Current:
                 m_offset = std::min(size, m_offset + distance);
                 break;
 
-            case END:
+            case SeekMode::End:
                 distance = std::min(s64(0), distance);
                 m_offset = u64(std::max(s64(0), s64(size + distance)));
                 break;

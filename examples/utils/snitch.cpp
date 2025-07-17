@@ -300,7 +300,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 #ifdef DISABLE_MMAP
                 std::string filename = path.pathname() + segment.filename;
                 InputFileStream file(filename);
-                file.seek(segment.offset, Stream::BEGIN);
+                file.seek(segment.offset, Stream::SeekMode::Begin);
                 file.read(ptr, segment.size);
                 ptr += segment.size;
 #else
