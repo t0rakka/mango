@@ -3,6 +3,7 @@
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/string.hpp>
+#include <mango/core/print.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/filesystem/file.hpp>
 
@@ -34,44 +35,52 @@ namespace mango::filesystem
             return m_filename;
         }
 
-        u64 size() const
+        s64 size() const
         {
-            LARGE_INTEGER integer;
-            BOOL status = GetFileSizeEx(m_handle, &integer);
-            return status ? u64(integer.QuadPart) : 0;
+            LARGE_INTEGER result = {};
+            BOOL status = GetFileSizeEx(m_handle, &result);
+            if (!status)
+                return -1ll;
+            return s64(result.QuadPart);
         }
 
-        u64 offset() const
+        s64 offset() const
         {
-            LARGE_INTEGER dist = { { 0, 0 } };
-            LARGE_INTEGER result = { { 0, 0 } };
+            LARGE_INTEGER dist = {};
+            LARGE_INTEGER result = {};
             BOOL status = SetFilePointerEx(m_handle, dist, &result, FILE_CURRENT);
-            MANGO_UNREFERENCED(status);
-            return result.QuadPart;
+            if (!status)
+                return -1ll;
+            return s64(result.QuadPart);
         }
 
-        void seek(s64 distance, DWORD method)
+        s64 seek(s64 distance, DWORD method)
         {
-            LARGE_INTEGER dist;
+            LARGE_INTEGER dist = {};
             dist.QuadPart = distance;
-            BOOL status = SetFilePointerEx(m_handle, dist, NULL, method);
-            MANGO_UNREFERENCED(status);
+            LARGE_INTEGER result = {};
+            BOOL status = SetFilePointerEx(m_handle, dist, &result, method);
+            if (!status)
+                return -1ll;
+            return s64(result.QuadPart);
         }
 
-        void read(void* dest, u64 size)
+        s64 read(void* dest, u32 size)
         {
-            DWORD bytes_read;
+            DWORD bytes_read = 0;
             BOOL status = ReadFile(m_handle, dest, DWORD(size), &bytes_read, NULL);
-            MANGO_UNREFERENCED(status);
-            MANGO_UNREFERENCED(bytes_read);
+            if (!status)
+                return -1ll;
+            return s64(bytes_read);
         }
 
-        u64 write(const void* data, u64 size)
+        s64 write(const void* data, u32 size)
         {
-            DWORD bytes_written;
+            DWORD bytes_written = 0;
             BOOL status = WriteFile(m_handle, data, DWORD(size), &bytes_written, NULL);
-            MANGO_UNREFERENCED(status);
-            return bytes_written;
+            if (!status)
+                return -1ll;
+            return s64(bytes_written);
         }
     };
 
@@ -121,19 +130,19 @@ namespace mango::filesystem
         return m_handle->filename();
     }
 
-    u64 FileStream::size() const
+    s64 FileStream::size() const
     {
         return m_handle->size();
     }
 
-    u64 FileStream::offset() const
+    s64 FileStream::offset() const
     {
         return m_handle->offset();
     }
 
-    void FileStream::seek(s64 distance, SeekMode mode)
+    s64 FileStream::seek(s64 distance, SeekMode mode)
     {
-        DWORD method;
+        DWORD method = 0;
 
         switch (mode)
         {
@@ -148,20 +157,17 @@ namespace mango::filesystem
             case SeekMode::End:
                 method = FILE_END;
                 break;
-
-            default:
-                MANGO_EXCEPTION("[FileStream] Invalid seek mode.");
         }
 
-        m_handle->seek(distance, method);
+        return m_handle->seek(distance, method);
     }
 
-    void FileStream::read(void* dest, u64 size)
+    s64 FileStream::read(void* dest, u32 size)
     {
-        m_handle->read(dest, size);
+        return m_handle->read(dest, size);
     }
 
-    u64 FileStream::write(const void* data, u64 size)
+    s64 FileStream::write(const void* data, u32 size)
     {
         return m_handle->write(data, size);
     }

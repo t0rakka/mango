@@ -44,34 +44,35 @@ namespace mango::filesystem
             return m_filename;
         }
 
-        u64 size() const
+        s64 size() const
         {
             struct stat sb;
-            ::fstat(m_file, &sb);
-            return sb.st_size;
+            int status = ::fstat(m_file, &sb);
+            if (status < 0)
+                return status;
+            return s64(sb.st_size);
         }
 
-        u64 offset() const
+        s64 offset() const
         {
-            return u64(::lseek(m_file, 0, SEEK_CUR));
+            return s64(::lseek(m_file, 0, SEEK_CUR));
         }
 
-        void seek(s64 distance, int method)
+        s64 seek(s64 distance, int method)
         {
-            ::lseek(m_file, distance, method);
+            return s64(::lseek(m_file, distance, method));
         }
 
-        void read(void* dest, u64 size)
+        s64 read(void* dest, u32 size)
         {
-            ssize_t status = ::read(m_file, dest, size_t(size));
-            MANGO_UNREFERENCED(status);
+            ssize_t bytes_read = ::read(m_file, dest, size_t(size));
+            return s64(bytes_read);
         }
 
-        u64 write(const void* data, u64 size)
+        s64 write(const void* data, u32 size)
         {
-            ssize_t status = ::write(m_file, data, size_t(size));
-            u64 bytes_written = status < 0 ? 0 : u64(status);
-            return bytes_written;
+            ssize_t bytes_written = ::write(m_file, data, size_t(size));
+            return s64(bytes_written);
         }
     };
 
@@ -108,19 +109,19 @@ namespace mango::filesystem
         return m_handle->filename();
     }
 
-    u64 FileStream::size() const
+    s64 FileStream::size() const
     {
         return m_handle->size();
     }
 
-    u64 FileStream::offset() const
+    s64 FileStream::offset() const
     {
         return m_handle->offset();
     }
 
-    void FileStream::seek(s64 distance, SeekMode mode)
+    s64 FileStream::seek(s64 distance, SeekMode mode)
     {
-        int method;
+        int method = 0;
 
         switch (mode)
         {
@@ -135,20 +136,17 @@ namespace mango::filesystem
             case SeekMode::End:
                 method = SEEK_END;
                 break;
-
-            default:
-                MANGO_EXCEPTION("[FileStream] Invalid seek mode.");
         }
 
-        m_handle->seek(distance, method);
+        return m_handle->seek(distance, method);
     }
 
-    void FileStream::read(void* dest, u64 size)
+    s64 FileStream::read(void* dest, u32 size)
     {
-        m_handle->read(dest, size);
+        return m_handle->read(dest, size);
     }
 
-    u64 FileStream::write(const void* data, u64 size)
+    s64 FileStream::write(const void* data, u32 size)
     {
         return m_handle->write(data, size);
     }

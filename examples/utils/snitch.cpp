@@ -394,9 +394,11 @@ void compress(State& state, const std::string& folder, const std::string& archiv
             fflush(stdout);
         }
 
-        manager.files.push_back({node.name, file.size()});
-        manager.segment(0, file.size());
-        block.append({node.name, 0, file.size()});
+        u64 size = file.size();
+
+        manager.files.push_back({node.name, size});
+        manager.segment(0, size);
+        block.append({node.name, 0, size});
 
         manager.flush(block);
     }

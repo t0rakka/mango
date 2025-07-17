@@ -32,15 +32,50 @@ namespace mango
         Stream() = default;
         virtual ~Stream() = default;
 
-        virtual u64 size() const = 0;
-        virtual u64 offset() const = 0;
-        virtual void seek(s64 distance, SeekMode mode) = 0;
-        virtual void read(void* dest, u64 size) = 0;
-        virtual u64 write(const void* data, u64 size) = 0;
+        // interface
 
-        u64 write(ConstMemory memory)
+        virtual s64 size() const = 0;
+        virtual s64 offset() const = 0;
+        virtual s64 seek(s64 distance, SeekMode mode) = 0;
+        virtual s64 read(void* dest, u32 size) = 0;
+        virtual s64 write(const void* data, u32 size) = 0;
+
+        // helper functions
+
+        s64 write(ConstMemory memory)
         {
-            return write(memory.address, memory.size);
+            s64 bytes_written = 0;
+
+            while (memory.size > 0)
+            {
+                s64 write_size = std::min(s64(memory.size), 0xffffffffll);
+                s64 result = write(memory.address, u32(write_size));
+                if (result < 0)
+                {
+                    return result;
+                }
+
+                memory.address += write_size;
+                memory.size -= write_size;
+                bytes_written += write_size;
+            }
+
+            return bytes_written;
+        }
+
+        s64 begin(s64 distance = 0)
+        {
+            return seek(distance, SeekMode::Begin);
+        }
+
+        s64 end(s64 distance = 0)
+        {
+            return seek(distance, SeekMode::End);
+        }
+
+        s64 skip(s64 distance)
+        {
+            return seek(distance, SeekMode::Current);
         }
     };
 
@@ -64,26 +99,26 @@ namespace mango
             return s;
         }
 
-        u64 size() const
+        s64 size() const
         {
             return s.size();
         }
 
-        u64 offset() const
+        s64 offset() const
         {
             return s.offset();
         }
 
-        void seek(s64 distance, Stream::SeekMode mode)
+        s64 seek(s64 distance, Stream::SeekMode mode)
         {
-            s.seek(distance, mode);
+            return s.seek(distance, mode);
         }
 
         // read functions
 
-        void read(void* dest, u64 size)
+        s64 read(void* dest, u32 size)
         {
-            s.read(dest, size);
+            return s.read(dest, size);
         }
 
         u8 read8()
@@ -137,12 +172,12 @@ namespace mango
 
         // write functions
 
-        u64 write(const void* data, u64 size)
+        s64 write(const void* data, u32 size)
         {
             return s.write(data, size);
         }
 
-        u64 write(ConstMemory memory)
+        s64 write(ConstMemory memory)
         {
             return s.write(memory);
         }
@@ -211,26 +246,26 @@ namespace mango
             return s;
         }
 
-        u64 size() const
+        s64 size() const
         {
             return s.size();
         }
 
-        u64 offset() const
+        s64 offset() const
         {
             return s.offset();
         }
 
-        void seek(s64 distance, Stream::SeekMode mode)
+        s64 seek(s64 distance, Stream::SeekMode mode)
         {
-            s.seek(distance, mode);
+            return s.seek(distance, mode);
         }
 
         // read functions
 
-        void read(void* dest, u64 size)
+        s64 read(void* dest, u32 size)
         {
-            s.read(dest, size);
+            return s.read(dest, size);
         }
 
         u8 read8()
@@ -287,12 +322,12 @@ namespace mango
 
         // write functions
 
-        u64 write(const void* data, u64 size)
+        s64 write(const void* data, u32 size)
         {
             return s.write(data, size);
         }
 
-        u64 write(ConstMemory memory)
+        s64 write(ConstMemory memory)
         {
             return s.write(memory);
         }

@@ -236,19 +236,19 @@ namespace mango
         return m_buffer.data();
     }
 
-    u64 MemoryStream::size() const
+    s64 MemoryStream::size() const
     {
-        return u64(m_buffer.size());
+        return s64(m_buffer.size());
     }
 
-    u64 MemoryStream::offset() const
+    s64 MemoryStream::offset() const
     {
         return m_offset;
     }
 
-    void MemoryStream::seek(s64 distance, SeekMode mode)
+    s64 MemoryStream::seek(s64 distance, SeekMode mode)
     {
-        const u64 size = m_buffer.size();
+        const s64 size = s64(m_buffer.size());
 
         switch (mode)
         {
@@ -265,12 +265,16 @@ namespace mango
                 break;
         }
 
-        m_offset = std::max(u64(0), m_offset);
+        m_offset = std::max(s64(0), m_offset);
+
+        return m_offset;
     }
 
-    void MemoryStream::read(void* dest, u64 bytes)
+    s64 MemoryStream::read(void* dest, u32 bytes_32bit)
     {
-        const u64 size = m_buffer.size();
+        const s64 bytes = s64(bytes_32bit);
+        const s64 size = s64(m_buffer.size());
+
         if (m_offset > size || (size - m_offset) < bytes)
         {
             MANGO_EXCEPTION("[MemoryStream] Reading past end of buffer.");
@@ -278,35 +282,34 @@ namespace mango
 
         std::memcpy(dest, m_buffer.data() + m_offset, size_t(bytes));
         m_offset += bytes;
+
+        return bytes;
     }
 
-    u64 MemoryStream::write(const void* source, u64 bytes)
+    s64 MemoryStream::write(const void* source, u32 bytes_32bit)
     {
-        u64 start_offset = m_offset;
+        const s64 bytes = s64(bytes_32bit);
+        const s64 start_offset = m_offset;
 
-        const u64 size = m_buffer.size();
+        const s64 size = s64(m_buffer.size());
         if (m_offset > size)
         {
             // offset is past end of the stream ; write as many zeros as needed
             m_buffer.append(m_offset - size, 0);
         }
 
-        const u64 left = std::min(bytes, m_buffer.size() - m_offset);
-        const u64 right = bytes - left;
+        const s64 left = std::min(bytes, s64(m_buffer.size()) - m_offset);
+        const s64 right = bytes - left;
         std::memcpy(m_buffer.data() + m_offset, source, size_t(left));
         if (right > 0)
         {
             const u8* src = reinterpret_cast<const u8*>(source);
             m_buffer.append(src + left, size_t(right));
         }
+
         m_offset += bytes;
 
         return m_offset - start_offset;
-    }
-
-    u64 MemoryStream::write(ConstMemory memory)
-    {
-        return Stream::write(memory);
     }
 
     // ----------------------------------------------------------------------------
@@ -323,24 +326,25 @@ namespace mango
     {
     }
 
-    u64 ConstMemoryStream::size() const
+    s64 ConstMemoryStream::size() const
     {
         return u64(m_memory.size);
     }
 
-    u64 ConstMemoryStream::offset() const
+    s64 ConstMemoryStream::offset() const
     {
         return m_offset;
     }
 
-    void ConstMemoryStream::seek(s64 distance, SeekMode mode)
+    s64 ConstMemoryStream::seek(s64 distance, SeekMode mode)
     {
-        const u64 size = u64(m_memory.size);
+        const s64 size = s64(m_memory.size);
+
         switch (mode)
         {
             case SeekMode::Begin:
-                distance = std::max(s64(0), distance);
-                m_offset = std::min(size, u64(distance));
+                distance = std::max(0ll, distance);
+                m_offset = std::min(size, distance);
                 break;
 
             case SeekMode::Current:
@@ -352,11 +356,14 @@ namespace mango
                 m_offset = u64(std::max(s64(0), s64(size + distance)));
                 break;
         }
+
+        return m_offset;
     }
 
-    void ConstMemoryStream::read(void* dest, u64 bytes)
+    s64 ConstMemoryStream::read(void* dest, u32 bytes_32bit)
     {
-        const u64 left = u64(m_memory.size) - m_offset;
+        const s64 bytes = s64(bytes_32bit);
+        const s64 left = s64(m_memory.size) - m_offset;
         if (left < bytes)
         {
             MANGO_EXCEPTION("[ConstMemoryStream] Reading past end of memory.");
@@ -364,12 +371,14 @@ namespace mango
 
         std::memcpy(dest, m_memory.address + m_offset, size_t(bytes));
         m_offset += bytes;
+
+        return bytes;
     }
 
-    u64 ConstMemoryStream::write(const void* data, u64 size)
+    s64 ConstMemoryStream::write(const void* data, u32 bytes_32bit)
     {
         MANGO_UNREFERENCED(data);
-        MANGO_UNREFERENCED(size);
+        MANGO_UNREFERENCED(bytes_32bit);
         MANGO_EXCEPTION("[ConstMemoryStream] Writing into read-only memory.");
         return 0;
     }
