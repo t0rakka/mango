@@ -341,7 +341,7 @@ namespace mango
         switch (mode)
         {
             case SeekMode::Begin:
-                distance = std::max(0ll, distance);
+                distance = std::max(s64(0), distance);
                 m_offset = std::min(size, distance);
                 break;
 
