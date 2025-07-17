@@ -168,20 +168,22 @@ namespace mango::filesystem
     s64 FileStream::read(void* dest, u64 bytes)
     {
         s64 total = 0;
+
+        s64 bytes_left = bytes;
         u8* output = reinterpret_cast<u8*>(dest);
 
-        while (bytes > 0)
+        while (bytes_left > 0)
         {
-            u64 commit = std::min(bytes, 0xffffffffull);
+            u64 commit = std::min(u64(bytes_left), 0xffffffffull);
             s64 result = read(output, u32(commit));
             if (result < 0)
             {
                 return result;
             }
 
-            output += commit;
-            bytes -= commit;
-            total += commit;
+            bytes_left -= result;
+            output += result;
+            total += result;
         }
 
         return total;
@@ -190,20 +192,22 @@ namespace mango::filesystem
     s64 FileStream::write(const void* data, u64 bytes)
     {
         s64 total = 0;
+
+        s64 bytes_left = bytes;
         const u8* input = reinterpret_cast<const u8*>(data);
 
-        while (bytes > 0)
+        while (bytes_left > 0)
         {
-            u64 commit = std::min(bytes, 0xffffffffull);
+            u64 commit = std::min(u64(bytes_left), 0xffffffffull);
             s64 result = write(input, u32(commit));
             if (result < 0)
             {
                 return result;
             }
 
-            input += commit;
-            bytes -= commit;
-            total += commit;
+            bytes_left -= result;
+            input += result;
+            total += result;
         }
 
         return total;
