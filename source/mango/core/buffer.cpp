@@ -383,4 +383,29 @@ namespace mango
         return 0;
     }
 
+    // ----------------------------------------------------------------------------
+    // Stream
+    // ----------------------------------------------------------------------------
+
+    s64 Stream::write(ConstMemory memory)
+    {
+        s64 bytes_written = 0;
+
+        while (memory.size > 0)
+        {
+            s64 write_size = std::min(s64(memory.size), 0xffffffffll);
+            s64 result = write(memory.address, u32(write_size));
+            if (result < 0)
+            {
+                return result;
+            }
+
+            memory.address += write_size;
+            memory.size -= write_size;
+            bytes_written += write_size;
+        }
+
+        return bytes_written;
+    }
+
 } // namespace mango
