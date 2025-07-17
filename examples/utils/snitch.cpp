@@ -381,7 +381,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
         block.uncompressed = file.size();
 
         // write the file in multiple parts
-        for (u64 offset = 0; offset < file.size(); offset += large_block_size)
+        for (s64 offset = 0; offset < file.size(); offset += large_block_size)
         {
             u64 size = std::min(large_block_size, file.size() - offset);
 #ifdef DISABLE_MMAP
