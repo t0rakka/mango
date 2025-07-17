@@ -2858,7 +2858,7 @@ namespace
         s.write16(MARKER_EOI);
 
         // patch restart offsets
-        s.seek(restart_offset, Stream::SeekMode::Begin);
+        s.seek(restart_offset, Stream::BEGIN);
 
         for (u32 offset : restart_offsets)
         {
