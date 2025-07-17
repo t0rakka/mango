@@ -55,11 +55,11 @@ namespace mango::image::jpeg
     static
     const SampleFormat g_format_table [] =
     {
-        { JPEG_U8_Y,    LuminanceFormat(8, Format::UNORM, 8, 0) },
-        { JPEG_U8_BGR,  Format(24, Format::UNORM, Format::BGR, 8, 8, 8) },
-        { JPEG_U8_RGB,  Format(24, Format::UNORM, Format::RGB, 8, 8, 8) },
-        { JPEG_U8_BGRA, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) },
-        { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
+        { SampleType::U8_Y,    LuminanceFormat(8, Format::UNORM, 8, 0) },
+        { SampleType::U8_BGR,  Format(24, Format::UNORM, Format::BGR, 8, 8, 8) },
+        { SampleType::U8_RGB,  Format(24, Format::UNORM, Format::RGB, 8, 8, 8) },
+        { SampleType::U8_BGRA, Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8) },
+        { SampleType::U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) },
     };
 
     SampleFormat getSampleFormat(const Format& format)
@@ -73,7 +73,7 @@ namespace mango::image::jpeg
         }
 
         // set default format
-        return { JPEG_U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) };
+        return { SampleType::U8_RGBA, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8) };
     }
 
     // ----------------------------------------------------------------------------
@@ -1545,7 +1545,7 @@ namespace mango::image::jpeg
 
         switch (sample)
         {
-            case JPEG_U8_Y:
+            case SampleType::U8_Y:
                 process_y           = process_y_8bit;
                 process_ycbcr       = process_ycbcr_8bit;
                 process_ycbcr_8x8   = nullptr;
@@ -1553,7 +1553,7 @@ namespace mango::image::jpeg
                 process_ycbcr_16x8  = nullptr;
                 process_ycbcr_16x16 = nullptr;
                 break;
-            case JPEG_U8_BGR:
+            case SampleType::U8_BGR:
                 process_y           = process_y_24bit;
                 process_ycbcr       = process_ycbcr_bgr;
                 process_ycbcr_8x8   = process_ycbcr_bgr_8x8;
@@ -1561,7 +1561,7 @@ namespace mango::image::jpeg
                 process_ycbcr_16x8  = process_ycbcr_bgr_16x8;
                 process_ycbcr_16x16 = process_ycbcr_bgr_16x16;
                 break;
-            case JPEG_U8_RGB:
+            case SampleType::U8_RGB:
                 process_y           = process_y_24bit;
                 process_ycbcr       = process_ycbcr_rgb;
                 process_ycbcr_8x8   = process_ycbcr_rgb_8x8;
@@ -1569,7 +1569,7 @@ namespace mango::image::jpeg
                 process_ycbcr_16x8  = process_ycbcr_rgb_16x8;
                 process_ycbcr_16x16 = process_ycbcr_rgb_16x16;
                 break;
-            case JPEG_U8_BGRA:
+            case SampleType::U8_BGRA:
                 process_y           = process_y_32bit;
                 process_ycbcr       = process_ycbcr_bgra;
                 process_ycbcr_8x8   = process_ycbcr_bgra_8x8;
@@ -1577,7 +1577,7 @@ namespace mango::image::jpeg
                 process_ycbcr_16x8  = process_ycbcr_bgra_16x8;
                 process_ycbcr_16x16 = process_ycbcr_bgra_16x16;
                 break;
-            case JPEG_U8_RGBA:
+            case SampleType::U8_RGBA:
                 process_y           = process_y_32bit;
                 process_ycbcr       = process_ycbcr_rgba;
                 process_ycbcr_8x8   = process_ycbcr_rgba_8x8;
@@ -1598,9 +1598,9 @@ namespace mango::image::jpeg
         {
             switch (sample)
             {
-                case JPEG_U8_Y:
+                case SampleType::U8_Y:
                     break;
-                case JPEG_U8_BGR:
+                case SampleType::U8_BGR:
                     process_ycbcr_8x8   = process_ycbcr_bgr_8x8_neon;
                     process_ycbcr_8x16  = process_ycbcr_bgr_8x16_neon;
                     process_ycbcr_16x8  = process_ycbcr_bgr_16x8_neon;
@@ -1610,7 +1610,7 @@ namespace mango::image::jpeg
                     simd_16x8  = "NEON";
                     simd_16x16 = "NEON";
                     break;
-                case JPEG_U8_RGB:
+                case SampleType::U8_RGB:
                     process_ycbcr_8x8   = process_ycbcr_rgb_8x8_neon;
                     process_ycbcr_8x16  = process_ycbcr_rgb_8x16_neon;
                     process_ycbcr_16x8  = process_ycbcr_rgb_16x8_neon;
@@ -1620,7 +1620,7 @@ namespace mango::image::jpeg
                     simd_16x8  = "NEON";
                     simd_16x16 = "NEON";
                     break;
-                case JPEG_U8_BGRA:
+                case SampleType::U8_BGRA:
                     process_ycbcr_8x8   = process_ycbcr_bgra_8x8_neon;
                     process_ycbcr_8x16  = process_ycbcr_bgra_8x16_neon;
                     process_ycbcr_16x8  = process_ycbcr_bgra_16x8_neon;
@@ -1630,7 +1630,7 @@ namespace mango::image::jpeg
                     simd_16x8  = "NEON";
                     simd_16x16 = "NEON";
                     break;
-                case JPEG_U8_RGBA:
+                case SampleType::U8_RGBA:
                     process_ycbcr_8x8   = process_ycbcr_rgba_8x8_neon;
                     process_ycbcr_8x16  = process_ycbcr_rgba_8x16_neon;
                     process_ycbcr_16x8  = process_ycbcr_rgba_16x8_neon;
@@ -1651,13 +1651,13 @@ namespace mango::image::jpeg
         {
             switch (sample)
             {
-                case JPEG_U8_Y:
+                case SampleType::U8_Y:
                     break;
-                case JPEG_U8_BGR:
+                case SampleType::U8_BGR:
                     break;
-                case JPEG_U8_RGB:
+                case SampleType::U8_RGB:
                     break;
-                case JPEG_U8_BGRA:
+                case SampleType::U8_BGRA:
                     process_ycbcr_8x8   = process_ycbcr_bgra_8x8_sse2;
                     process_ycbcr_8x16  = process_ycbcr_bgra_8x16_sse2;
                     process_ycbcr_16x8  = process_ycbcr_bgra_16x8_sse2;
@@ -1667,7 +1667,7 @@ namespace mango::image::jpeg
                     simd_16x8  = "SSE2";
                     simd_16x16 = "SSE2";
                     break;
-                case JPEG_U8_RGBA:
+                case SampleType::U8_RGBA:
                     process_ycbcr_8x8   = process_ycbcr_rgba_8x8_sse2;
                     process_ycbcr_8x16  = process_ycbcr_rgba_8x16_sse2;
                     process_ycbcr_16x8  = process_ycbcr_rgba_16x8_sse2;
@@ -1688,9 +1688,9 @@ namespace mango::image::jpeg
         {
             switch (sample)
             {
-                case JPEG_U8_Y:
+                case SampleType::U8_Y:
                     break;
-                case JPEG_U8_BGR:
+                case SampleType::U8_BGR:
                     process_ycbcr_8x8   = process_ycbcr_bgr_8x8_sse41;
                     process_ycbcr_8x16  = process_ycbcr_bgr_8x16_sse41;
                     process_ycbcr_16x8  = process_ycbcr_bgr_16x8_sse41;
@@ -1700,7 +1700,7 @@ namespace mango::image::jpeg
                     simd_16x8  = "SSE4.1";
                     simd_16x16 = "SSE4.1";
                     break;
-                case JPEG_U8_RGB:
+                case SampleType::U8_RGB:
                     process_ycbcr_8x8   = process_ycbcr_rgb_8x8_sse41;
                     process_ycbcr_8x16  = process_ycbcr_rgb_8x16_sse41;
                     process_ycbcr_16x8  = process_ycbcr_rgb_16x8_sse41;
@@ -1710,9 +1710,9 @@ namespace mango::image::jpeg
                     simd_16x8  = "SSE4.1";
                     simd_16x16 = "SSE4.1";
                     break;
-                case JPEG_U8_BGRA:
+                case SampleType::U8_BGRA:
                     break;
-                case JPEG_U8_RGBA:
+                case SampleType::U8_RGBA:
                     break;
             }
         }
@@ -1725,15 +1725,15 @@ namespace mango::image::jpeg
         {
             switch (sample)
             {
-                case JPEG_U8_Y:
+                case SampleType::U8_Y:
                     break;
-                case JPEG_U8_BGR:
+                case SampleType::U8_BGR:
                     break;
-                case JPEG_U8_RGB:
+                case SampleType::U8_RGB:
                     break;
-                case JPEG_U8_BGRA:
+                case SampleType::U8_BGRA:
                     break;
-                case JPEG_U8_RGBA:
+                case SampleType::U8_RGBA:
                     process_ycbcr_8x8 = process_ycbcr_rgba_8x8_avx2;
                     simd_8x8   = "AVX2";
                     break;
@@ -1842,19 +1842,19 @@ namespace mango::image::jpeg
             // lossless only supports L8 and RGBA
             if (m_components == 1)
             {
-                sf.sample = JPEG_U8_Y;
+                sf.sample = SampleType::U8_Y;
                 sf.format = LuminanceFormat(8, Format::UNORM, 8, 0);
             }
             else
             {
-                sf.sample = JPEG_U8_RGBA;
+                sf.sample = SampleType::U8_RGBA;
                 sf.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
         }
         else if (m_components == 4)
         {
             // CMYK / YCCK is in the slow-path anyway so force RGBA
-            sf.sample = JPEG_U8_RGBA;
+            sf.sample = SampleType::U8_RGBA;
             sf.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
         }
 

@@ -154,13 +154,13 @@ namespace mango::image::jpeg
     };
 
     // supported external data formats (encode from, decode to)
-    enum SampleType
+    enum class SampleType
     {
-        JPEG_U8_Y,
-        JPEG_U8_BGR,
-        JPEG_U8_RGB,
-        JPEG_U8_BGRA,
-        JPEG_U8_RGBA,
+        U8_Y,
+        U8_BGR,
+        U8_RGB,
+        U8_BGRA,
+        U8_RGBA,
     };
 
     enum class ColorSpace

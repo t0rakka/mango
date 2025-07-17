@@ -2359,7 +2359,7 @@ namespace
 
         switch (sample)
         {
-            case JPEG_U8_Y:
+            case SampleType::U8_Y:
 #if defined(MANGO_ENABLE_SSE2)
                 if (flags & INTEL_SSE2)
                 {
@@ -2379,7 +2379,7 @@ namespace
                 components = 1;
                 break;
 
-            case JPEG_U8_BGR:
+            case SampleType::U8_BGR:
 #if defined(MANGO_ENABLE_SSE4_1)
                 if (flags & INTEL_SSE4_1)
                 {
@@ -2399,7 +2399,7 @@ namespace
                 components = 3;
                 break;
 
-            case JPEG_U8_RGB:
+            case SampleType::U8_RGB:
 #if defined(MANGO_ENABLE_SSE4_1)
                 if (flags & INTEL_SSE4_1)
                 {
@@ -2419,7 +2419,7 @@ namespace
                 components = 3;
                 break;
 
-            case JPEG_U8_BGRA:
+            case SampleType::U8_BGRA:
 #if defined(MANGO_ENABLE_SSE2)
                 if (flags & INTEL_SSE2)
                 {
@@ -2439,7 +2439,7 @@ namespace
                 components = 3;
                 break;
 
-            case JPEG_U8_RGBA:
+            case SampleType::U8_RGBA:
 #if defined(MANGO_ENABLE_SSE2)
                 if (flags & INTEL_SSE2)
                 {
@@ -2648,14 +2648,14 @@ namespace
 
         switch (m_sample)
         {
-            case JPEG_U8_Y:
+            case SampleType::U8_Y:
                 number_of_components = 1;
                 break;
 
-            case JPEG_U8_RGB:
-            case JPEG_U8_BGR:
-            case JPEG_U8_BGRA:
-            case JPEG_U8_RGBA:
+            case SampleType::U8_RGB:
+            case SampleType::U8_BGR:
+            case SampleType::U8_BGRA:
+            case SampleType::U8_RGBA:
                 number_of_components = 3;
                 break;
         }
@@ -2858,7 +2858,7 @@ namespace
         s.write16(MARKER_EOI);
 
         // patch restart offsets
-        s.seek(restart_offset, Stream::BEGIN);
+        s.seek(restart_offset, Stream::SeekMode::Begin);
 
         for (u32 offset : restart_offsets)
         {
