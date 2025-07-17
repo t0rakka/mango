@@ -37,12 +37,15 @@ namespace mango
         virtual s64 size() const = 0;
         virtual s64 offset() const = 0;
         virtual s64 seek(s64 distance, SeekMode mode) = 0;
-        virtual s64 read(void* dest, u32 size) = 0;
-        virtual s64 write(const void* data, u32 size) = 0;
+        virtual s64 read(void* dest, u64 bytes) = 0;
+        virtual s64 write(const void* data, u64 bytes) = 0;
 
         // helper functions
 
-        s64 write(ConstMemory memory);
+        s64 write(ConstMemory memory)
+        {
+            return write(memory.address, memory.size);
+        }
 
         s64 begin(s64 distance = 0)
         {
@@ -97,9 +100,9 @@ namespace mango
 
         // read functions
 
-        s64 read(void* dest, u32 size)
+        s64 read(void* dest, u64 bytes)
         {
-            return s.read(dest, size);
+            return s.read(dest, bytes);
         }
 
         u8 read8()
@@ -153,9 +156,9 @@ namespace mango
 
         // write functions
 
-        s64 write(const void* data, u32 size)
+        s64 write(const void* data, u64 bytes)
         {
-            return s.write(data, size);
+            return s.write(data, bytes);
         }
 
         s64 write(ConstMemory memory)
@@ -244,9 +247,9 @@ namespace mango
 
         // read functions
 
-        s64 read(void* dest, u32 size)
+        s64 read(void* dest, u64 bytes)
         {
-            return s.read(dest, size);
+            return s.read(dest, bytes);
         }
 
         u8 read8()
@@ -303,9 +306,9 @@ namespace mango
 
         // write functions
 
-        s64 write(const void* data, u32 size)
+        s64 write(const void* data, u64 bytes)
         {
-            return s.write(data, size);
+            return s.write(data, bytes);
         }
 
         s64 write(ConstMemory memory)

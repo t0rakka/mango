@@ -63,13 +63,13 @@ namespace mango::filesystem
             return s64(::lseek(m_file, distance, method));
         }
 
-        s64 read(void* dest, u32 size)
+        s64 read(void* dest, u64 size)
         {
             ssize_t bytes_read = ::read(m_file, dest, size_t(size));
             return s64(bytes_read);
         }
 
-        s64 write(const void* data, u32 size)
+        s64 write(const void* data, u64 size)
         {
             ssize_t bytes_written = ::write(m_file, data, size_t(size));
             return s64(bytes_written);
@@ -141,14 +141,14 @@ namespace mango::filesystem
         return m_handle->seek(distance, method);
     }
 
-    s64 FileStream::read(void* dest, u32 size)
+    s64 FileStream::read(void* dest, u64 bytes)
     {
-        return m_handle->read(dest, size);
+        return m_handle->read(dest, bytes);
     }
 
-    s64 FileStream::write(const void* data, u32 size)
+    s64 FileStream::write(const void* data, u64 bytes)
     {
-        return m_handle->write(data, size);
+        return m_handle->write(data, bytes);
     }
 
 } // namespace mango::filesystem

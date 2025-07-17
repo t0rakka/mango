@@ -56,8 +56,8 @@ namespace mango::filesystem
         s64 size() const override;
         s64 offset() const override;
         s64 seek(s64 distance, SeekMode mode) override;
-        s64 read(void* dest, u32 size) override;
-        s64 write(const void* data, u32 size) override;
+        s64 read(void* dest, u64 size) override;
+        s64 write(const void* data, u64 size) override;
     };
 
     class InputFileStream : public FileStream

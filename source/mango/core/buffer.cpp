@@ -270,12 +270,11 @@ namespace mango
         return m_offset;
     }
 
-    s64 MemoryStream::read(void* dest, u32 bytes_32bit)
+    s64 MemoryStream::read(void* dest, u64 bytes)
     {
-        const s64 bytes = s64(bytes_32bit);
         const s64 size = s64(m_buffer.size());
 
-        if (m_offset > size || (size - m_offset) < bytes)
+        if (m_offset > size || (size - m_offset) < s64(bytes))
         {
             MANGO_EXCEPTION("[MemoryStream] Reading past end of buffer.");
         }
@@ -286,9 +285,8 @@ namespace mango
         return bytes;
     }
 
-    s64 MemoryStream::write(const void* source, u32 bytes_32bit)
+    s64 MemoryStream::write(const void* source, u64 bytes)
     {
-        const s64 bytes = s64(bytes_32bit);
         const s64 start_offset = m_offset;
 
         const s64 size = s64(m_buffer.size());
@@ -298,7 +296,7 @@ namespace mango
             m_buffer.append(m_offset - size, 0);
         }
 
-        const s64 left = std::min(bytes, s64(m_buffer.size()) - m_offset);
+        const s64 left = std::min(s64(bytes), s64(m_buffer.size()) - m_offset);
         const s64 right = bytes - left;
         std::memcpy(m_buffer.data() + m_offset, source, size_t(left));
         if (right > 0)
@@ -360,10 +358,9 @@ namespace mango
         return m_offset;
     }
 
-    s64 ConstMemoryStream::read(void* dest, u32 bytes_32bit)
+    s64 ConstMemoryStream::read(void* dest, u64 bytes)
     {
-        const s64 bytes = s64(bytes_32bit);
-        const s64 left = s64(m_memory.size) - m_offset;
+        const u64 left = m_memory.size - m_offset;
         if (left < bytes)
         {
             MANGO_EXCEPTION("[ConstMemoryStream] Reading past end of memory.");
@@ -375,37 +372,12 @@ namespace mango
         return bytes;
     }
 
-    s64 ConstMemoryStream::write(const void* data, u32 bytes_32bit)
+    s64 ConstMemoryStream::write(const void* data, u64 bytes)
     {
         MANGO_UNREFERENCED(data);
-        MANGO_UNREFERENCED(bytes_32bit);
+        MANGO_UNREFERENCED(bytes);
         MANGO_EXCEPTION("[ConstMemoryStream] Writing into read-only memory.");
         return 0;
-    }
-
-    // ----------------------------------------------------------------------------
-    // Stream
-    // ----------------------------------------------------------------------------
-
-    s64 Stream::write(ConstMemory memory)
-    {
-        s64 bytes_written = 0;
-
-        while (memory.size > 0)
-        {
-            s64 write_size = std::min(s64(memory.size), 0xffffffffll);
-            s64 result = write(memory.address, u32(write_size));
-            if (result < 0)
-            {
-                return result;
-            }
-
-            memory.address += write_size;
-            memory.size -= write_size;
-            bytes_written += write_size;
-        }
-
-        return bytes_written;
     }
 
 } // namespace mango
