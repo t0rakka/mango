@@ -464,7 +464,7 @@ namespace
                                 else
                                 {
                                     // folder
-                                    dropped.emplace(filename + "/", 0, FileInfo::DIRECTORY);
+                                    dropped.emplace(filename + "/", 0, FileInfo::Directory);
                                 }
                             }
 

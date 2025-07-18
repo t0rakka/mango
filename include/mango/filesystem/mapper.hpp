@@ -14,18 +14,18 @@ namespace mango::filesystem
 
     struct FileInfo
     {
-        enum Flags
+        enum Flags : u32
         {
-            DIRECTORY  = 0x01,
-            CONTAINER  = 0x02,
-            COMPRESSED = 0x04,
-            ENCRYPTED  = 0x08,
+            Directory  = 0x00000001,
+            Container  = 0x00000002,
+            Compressed = 0x00000004,
+            Encrypted  = 0x00000008,
         };
 
+        std::string name;
         u64 size;
         u32 flags;
         u32 checksum;
-        std::string name;
 
         FileInfo();
         FileInfo(const std::string& name, u64 size, u32 flags = 0, u32 checksum = 0);

@@ -442,7 +442,7 @@ namespace
             std::string s = [path UTF8String];
             if (isDirectory)
             {
-                dropped.emplace(s + "/", 0, mango::filesystem::FileInfo::DIRECTORY);
+                dropped.emplace(s + "/", 0, mango::filesystem::FileInfo::Directory);
             }
             else
             {

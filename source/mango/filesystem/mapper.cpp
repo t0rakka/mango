@@ -78,10 +78,10 @@ namespace mango::filesystem
     }
 
     FileInfo::FileInfo(const std::string& name, u64 size, u32 flags, u32 checksum)
-        : size(size)
+        : name(name)
+        , size(size)
         , flags(flags)
         , checksum(checksum)
-        , name(name)
     {
     }
 
@@ -91,27 +91,27 @@ namespace mango::filesystem
 
     bool FileInfo::isFile() const
     {
-        return (flags & DIRECTORY) == 0;
+        return (flags & Directory) == 0;
     }
 
     bool FileInfo::isDirectory() const
     {
-        return (flags & DIRECTORY) != 0;
+        return (flags & Directory) != 0;
     }
 
     bool FileInfo::isContainer() const
     {
-        return (flags & CONTAINER) != 0;
+        return (flags & Container) != 0;
     }
 
     bool FileInfo::isCompressed() const
     {
-        return (flags & COMPRESSED) != 0;
+        return (flags & Compressed) != 0;
     }
 
     bool FileInfo::isEncrypted() const
     {
-        return (flags & ENCRYPTED) != 0;
+        return (flags & Encrypted) != 0;
     }
 
     // -----------------------------------------------------------------
@@ -124,13 +124,13 @@ namespace mango::filesystem
         {
             files.emplace_back(name, size, flags, checksum);
  
-            const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
-            const bool isContainer = (flags & FileInfo::CONTAINER) != 0;
+            const bool isFile = (flags & FileInfo::Directory) == 0;
+            const bool isContainer = (flags & FileInfo::Container) != 0;
  
             if (isFile && !isContainer && name.back() != '/' && Mapper::isCustomMapper(name))
             {
                 // file is a container; add it into the index again
-                files.emplace_back(name + "/", 0, flags | FileInfo::DIRECTORY | FileInfo::CONTAINER);
+                files.emplace_back(name + "/", 0, flags | FileInfo::Directory | FileInfo::Container);
             }
         }
     }
@@ -147,11 +147,11 @@ namespace mango::filesystem
 
         if (Mapper::isCustomMapper(name))
         {
-            flags |= FileInfo::CONTAINER;
+            flags |= FileInfo::Container;
         }
         else if (name.back() == '/')
         {
-            flags |= FileInfo::DIRECTORY;
+            flags |= FileInfo::Directory;
         }
 
         u64 size = 0; // not required

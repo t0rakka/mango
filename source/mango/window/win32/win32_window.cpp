@@ -580,7 +580,7 @@ namespace
                     std::string s = mango::u16_toBytes(filename);
                     if (isDirectory(filename))
                     {
-                        dropped.emplace(s + "/", 0, filesystem::FileInfo::DIRECTORY);
+                        dropped.emplace(s + "/", 0, filesystem::FileInfo::Directory);
                     }
                     else
                     {

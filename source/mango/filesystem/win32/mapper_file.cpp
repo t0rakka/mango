@@ -186,7 +186,7 @@ namespace
                         }
                         else
                         {
-                            index.emplace(filename + "/", 0, FileInfo::DIRECTORY);
+                            index.emplace(filename + "/", 0, FileInfo::Directory);
                         }
                     }
 

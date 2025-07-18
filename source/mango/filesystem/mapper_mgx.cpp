@@ -284,12 +284,12 @@ namespace mango::filesystem
 
                     if (header.isFolder())
                     {
-                        flags |= FileInfo::DIRECTORY;
+                        flags |= FileInfo::Directory;
                     }
 
                     if (header.isCompressed())
                     {
-                        flags |= FileInfo::COMPRESSED;
+                        flags |= FileInfo::Compressed;
                     }
 
                     index.emplace(header.filename, header.size, flags, header.checksum);

@@ -721,18 +721,18 @@ namespace mango::filesystem
 
                     if (header.folder)
                     {
-                        flags |= FileInfo::DIRECTORY;
+                        flags |= FileInfo::Directory;
                         size = 0;
                     }
 
                     if (header.compressed())
                     {
-                        flags |= FileInfo::COMPRESSED;
+                        flags |= FileInfo::Compressed;
                     }
 
                     if (is_encrypted)
                     {
-                        flags |= FileInfo::ENCRYPTED;
+                        flags |= FileInfo::Encrypted;
                     }
 
                     index.emplace(header.filename, size, flags);
