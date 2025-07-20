@@ -176,7 +176,7 @@ namespace mango::filesystem
         while (bytes_left > 0)
         {
             u64 commit = std::min(u64(bytes_left), max_chunk_size);
-            s64 result = read(output, u32(commit));
+            s64 result = m_handle->read(output, u32(commit));
             if (result < 0)
             {
                 return 0;
@@ -200,7 +200,7 @@ namespace mango::filesystem
         while (bytes_left > 0)
         {
             u64 commit = std::min(u64(bytes_left), max_chunk_size);
-            s64 result = write(input, u32(commit));
+            s64 result = m_handle->write(input, u32(commit));
             if (result < 0)
             {
                 return 0;
