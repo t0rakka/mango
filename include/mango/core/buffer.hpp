@@ -63,7 +63,7 @@ namespace mango
     {
     private:
         Buffer m_buffer;
-        s64 m_offset;
+        u64 m_offset;
 
     public:
         MemoryStream();
@@ -76,28 +76,30 @@ namespace mango
         operator u8* () const;
         u8* data() const;
 
-        s64 size() const override;
-        s64 offset() const override;
-        s64 seek(s64 distance, SeekMode mode) override;
-        s64 read(void* dest, u64 bytes) override;
-        s64 write(const void* source, u64 bytes) override;
+        // interface
+        u64 size() const override;
+        u64 offset() const override;
+        u64 seek(s64 distance, SeekMode mode) override;
+        u64 read(void* dest, u64 bytes) override;
+        u64 write(const void* source, u64 bytes) override;
     };
 
     class ConstMemoryStream : public Stream
     {
     protected:
         ConstMemory m_memory;
-        s64 m_offset;
+        u64 m_offset;
 
     public:
         ConstMemoryStream(ConstMemory memory);
         ~ConstMemoryStream();
 
-        s64 size() const override;
-        s64 offset() const override;
-        s64 seek(s64 distance, SeekMode mode) override;
-        s64 read(void* dest, u64 bytes) override;
-        s64 write(const void* data, u64 bytes) override;
+        // interface
+        u64 size() const override;
+        u64 offset() const override;
+        u64 seek(s64 distance, SeekMode mode) override;
+        u64 read(void* dest, u64 bytes) override;
+        u64 write(const void* data, u64 bytes) override;
     };
 
 } // namespace mango

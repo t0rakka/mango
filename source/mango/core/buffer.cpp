@@ -236,41 +236,43 @@ namespace mango
         return m_buffer.data();
     }
 
-    s64 MemoryStream::size() const
+    u64 MemoryStream::size() const
     {
-        return s64(m_buffer.size());
+        return u64(m_buffer.size());
     }
 
-    s64 MemoryStream::offset() const
+    u64 MemoryStream::offset() const
     {
         return m_offset;
     }
 
-    s64 MemoryStream::seek(s64 distance, SeekMode mode)
+    u64 MemoryStream::seek(s64 distance, SeekMode mode)
     {
         const s64 size = s64(m_buffer.size());
+        s64 offset = s64(m_offset);
 
         switch (mode)
         {
             case SeekMode::Begin:
-                m_offset = distance;
+                offset = distance;
                 break;
 
             case SeekMode::Current:
-                m_offset += distance;
+                offset += distance;
                 break;
 
             case SeekMode::End:
-                m_offset = size + distance;
+                offset = size + distance;
                 break;
         }
 
-        m_offset = std::max(s64(0), m_offset);
+        // NOTE: seek is allowed to go past the end of the buffer, on write we pad the buffer with zeros
+        m_offset = u64(std::max(s64(0), offset));
 
         return m_offset;
     }
 
-    s64 MemoryStream::read(void* dest, u64 bytes)
+    u64 MemoryStream::read(void* dest, u64 bytes)
     {
         const s64 size = s64(m_buffer.size());
 
@@ -285,19 +287,19 @@ namespace mango
         return bytes;
     }
 
-    s64 MemoryStream::write(const void* source, u64 bytes)
+    u64 MemoryStream::write(const void* source, u64 bytes)
     {
-        const s64 start_offset = m_offset;
+        const u64 start_offset = m_offset;
 
-        const s64 size = s64(m_buffer.size());
+        const u64 size = u64(m_buffer.size());
         if (m_offset > size)
         {
             // offset is past end of the stream ; write as many zeros as needed
             m_buffer.append(m_offset - size, 0);
         }
 
-        const s64 left = std::min(s64(bytes), s64(m_buffer.size()) - m_offset);
-        const s64 right = bytes - left;
+        const u64 left = std::min(bytes, u64(m_buffer.size()) - m_offset);
+        const u64 right = bytes - left;
         std::memcpy(m_buffer.data() + m_offset, source, size_t(left));
         if (right > 0)
         {
@@ -324,41 +326,43 @@ namespace mango
     {
     }
 
-    s64 ConstMemoryStream::size() const
+    u64 ConstMemoryStream::size() const
     {
         return u64(m_memory.size);
     }
 
-    s64 ConstMemoryStream::offset() const
+    u64 ConstMemoryStream::offset() const
     {
         return m_offset;
     }
 
-    s64 ConstMemoryStream::seek(s64 distance, SeekMode mode)
+    u64 ConstMemoryStream::seek(s64 distance, SeekMode mode)
     {
         const s64 size = s64(m_memory.size);
+        s64 offset = s64(m_offset);
 
         switch (mode)
         {
             case SeekMode::Begin:
-                distance = std::max(s64(0), distance);
-                m_offset = std::min(size, distance);
+                offset = distance;
                 break;
 
             case SeekMode::Current:
-                m_offset = std::min(size, m_offset + distance);
+                offset += distance;
                 break;
 
             case SeekMode::End:
-                distance = std::min(s64(0), distance);
-                m_offset = u64(std::max(s64(0), s64(size + distance)));
+                offset = size + distance;
                 break;
         }
+
+        // NOTE: seek is allowed to go past the end of the buffer, on write we pad the buffer with zeros
+        m_offset = u64(std::max(s64(0), offset));
 
         return m_offset;
     }
 
-    s64 ConstMemoryStream::read(void* dest, u64 bytes)
+    u64 ConstMemoryStream::read(void* dest, u64 bytes)
     {
         const u64 left = m_memory.size - m_offset;
         if (left < bytes)
@@ -372,7 +376,7 @@ namespace mango
         return bytes;
     }
 
-    s64 ConstMemoryStream::write(const void* data, u64 bytes)
+    u64 ConstMemoryStream::write(const void* data, u64 bytes)
     {
         MANGO_UNREFERENCED(data);
         MANGO_UNREFERENCED(bytes);

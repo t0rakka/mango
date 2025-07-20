@@ -35,34 +35,34 @@ namespace mango::filesystem
             return m_filename;
         }
 
-        s64 size() const
+        u64 size() const
         {
             LARGE_INTEGER result = {};
             BOOL status = GetFileSizeEx(m_handle, &result);
             if (!status)
-                return -1ll;
-            return s64(result.QuadPart);
+                return 0;
+            return u64(result.QuadPart);
         }
 
-        s64 offset() const
+        u64 offset() const
         {
             LARGE_INTEGER dist = {};
             LARGE_INTEGER result = {};
             BOOL status = SetFilePointerEx(m_handle, dist, &result, FILE_CURRENT);
             if (!status)
-                return -1ll;
-            return s64(result.QuadPart);
+                return 0;
+            return u64(result.QuadPart);
         }
 
-        s64 seek(s64 distance, DWORD method)
+        u64 seek(s64 distance, DWORD method)
         {
             LARGE_INTEGER dist = {};
             dist.QuadPart = distance;
             LARGE_INTEGER result = {};
             BOOL status = SetFilePointerEx(m_handle, dist, &result, method);
             if (!status)
-                return -1ll;
-            return s64(result.QuadPart);
+                return 0;
+            return u64(result.QuadPart);
         }
 
         s64 read(void* dest, u32 size)
@@ -130,17 +130,17 @@ namespace mango::filesystem
         return m_handle->filename();
     }
 
-    s64 FileStream::size() const
+    u64 FileStream::size() const
     {
         return m_handle->size();
     }
 
-    s64 FileStream::offset() const
+    u64 FileStream::offset() const
     {
         return m_handle->offset();
     }
 
-    s64 FileStream::seek(s64 distance, SeekMode mode)
+    u64 FileStream::seek(s64 distance, SeekMode mode)
     {
         DWORD method = 0;
 
@@ -166,9 +166,9 @@ namespace mango::filesystem
     //       so we split larger operations into smaller chunks.
     static constexpr u64 max_chunk_size = 0xffffffffull;
 
-    s64 FileStream::read(void* dest, u64 bytes)
+    u64 FileStream::read(void* dest, u64 bytes)
     {
-        s64 total = 0;
+        u64 total = 0;
 
         s64 bytes_left = bytes;
         u8* output = reinterpret_cast<u8*>(dest);
@@ -179,7 +179,7 @@ namespace mango::filesystem
             s64 result = read(output, u32(commit));
             if (result < 0)
             {
-                return result;
+                return 0;
             }
 
             bytes_left -= result;
@@ -190,9 +190,9 @@ namespace mango::filesystem
         return total;
     }
 
-    s64 FileStream::write(const void* data, u64 bytes)
+    u64 FileStream::write(const void* data, u64 bytes)
     {
-        s64 total = 0;
+        u64 total = 0;
 
         s64 bytes_left = bytes;
         const u8* input = reinterpret_cast<const u8*>(data);
@@ -203,7 +203,7 @@ namespace mango::filesystem
             s64 result = write(input, u32(commit));
             if (result < 0)
             {
-                return result;
+                return 0;
             }
 
             bytes_left -= result;
