@@ -46,6 +46,8 @@ namespace mango::filesystem
         u64 size() const;
     };
 
+    u64 getFileSize(const std::string& filename);
+
     // -----------------------------------------------------------------------
     // FileStream
     // -----------------------------------------------------------------------
@@ -86,7 +88,5 @@ namespace mango::filesystem
         {
         }
     };
-
-    u64 getFileSize(const std::string& filename);
 
 } // namespace mango::filesystem
