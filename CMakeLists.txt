@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 2.2.0
+        VERSION 2.2.1
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
