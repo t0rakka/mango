@@ -98,6 +98,8 @@ namespace mango::filesystem
         AbstractMapper() = default;
         virtual ~AbstractMapper() = default;
 
+        // interface
+        virtual u64 getSize(const std::string& filename) const = 0;
         virtual bool isFile(const std::string& filename) const = 0;
         virtual void getIndex(FileIndex& index, const std::string& pathname) = 0;
         virtual std::unique_ptr<VirtualMemory> map(const std::string& filename) = 0;
@@ -128,6 +130,8 @@ namespace mango::filesystem
         const std::string& basepath() const;
         const std::string& pathname() const;
 
+        // interface
+        u64 getSize(const std::string& filename) const override;
         bool isFile(const std::string& filename) const override;
         void getIndex(FileIndex& index, const std::string& pathname) override;
         std::unique_ptr<VirtualMemory> map(const std::string& filename) override;

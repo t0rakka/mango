@@ -266,6 +266,14 @@ namespace mango::filesystem
         return m_pathname;
     }
 
+    u64 Mapper::getSize(const std::string& filename) const
+    {
+        if (!m_current_mapper)
+            return 0;
+
+        return m_current_mapper->getSize(filename);
+    }
+
     bool Mapper::isFile(const std::string& filename) const
     {
         if (!m_current_mapper)

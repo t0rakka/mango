@@ -261,6 +261,16 @@ namespace mango::filesystem
         {
         }
 
+        u64 getSize(const std::string& filename) const override
+        {
+            const FileHeader* header = m_header.m_folders.getHeader(filename);
+            if (header)
+            {
+                return header->size;
+            }
+            return 0;
+        }
+
         bool isFile(const std::string& filename) const override
         {
             const FileHeader* header = m_header.m_folders.getHeader(filename);

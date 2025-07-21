@@ -107,4 +107,12 @@ namespace mango::filesystem
         return m_memory.size;
     }
 
+    u64 getFileSize(const std::string& filename)
+    {
+        // Calls stat() to get the file size for raw files
+        // Gets the file size from container if not a raw file
+        Path path("./");
+        return path.getSize(filename);
+    }
+
 } // namespace mango::filesystem
