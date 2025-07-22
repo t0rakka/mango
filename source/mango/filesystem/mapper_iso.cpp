@@ -203,16 +203,16 @@ namespace
             
             if (filename_length == 0)
                 return "";
-                
+
             std::string name(reinterpret_cast<const char*>(data + 33), filename_length);
-            
+
             // Remove version suffix (;1, ;2, etc.)
             size_t pos = name.find(';');
             if (pos != std::string::npos)
             {
                 name = name.substr(0, pos);
             }
-            
+
             return name;
         }
 
@@ -221,21 +221,21 @@ namespace
             // Manual reading to avoid structure alignment issues
             const u8* data = reinterpret_cast<const u8*>(this);
             u8 filename_length = data[32];
-            
+
             if (filename_length == 0)
                 return "";
-                
+
             // Joliet uses UCS-2 (16-bit Unicode), but we'll read as UTF-8 for simplicity
             // In practice, most Joliet filenames are ASCII-compatible
             std::string name(reinterpret_cast<const char*>(data + 33), filename_length);
-            
+
             // Remove version suffix (;1, ;2, etc.)
             size_t pos = name.find(';');
             if (pos != std::string::npos)
             {
                 name = name.substr(0, pos);
             }
-            
+
             return name;
         }
 
@@ -245,14 +245,12 @@ namespace
             const u8* data = reinterpret_cast<const u8*>(this);
             u8 filename_length = data[32];
             u8 system_use_length = data[33 + filename_length];
-            
 
-            
             if (system_use_length == 0)
                 return "";
-                
+
             const u8* system_use = data + 33 + filename_length;
-            
+
             // Parse Rock Ridge System Use area
             for (u8 i = 0; i < system_use_length - 3; ++i)
             {
@@ -260,9 +258,7 @@ namespace
                 u8 signature2 = system_use[i + 1];
                 u8 length = system_use[i + 2];
                 u8 version = system_use[i + 3];
-                
 
-                
                 // Look for NM (Name) records - these are Rock Ridge extensions
                 if (signature1 == 'N' && signature2 == 'M')
                 {
@@ -271,30 +267,30 @@ namespace
                     {
                         u8 flags = system_use[i + 4];
                         u8 name_length = length - 5;
-                        
+
                         if (name_length > 0 && (i + 5 + name_length) <= system_use_length)
                         {
                             std::string name(reinterpret_cast<const char*>(system_use + i + 5), name_length);
-                            
+
                             // Check for continuation flag
                             if (flags & 0x01)
                             {
                                 // This is a continuation, look for more NM records
                                 // For now, just return the first part
                             }
-                            
+
                             return name;
                         }
                     }
                 }
-                
+
                 // Skip to next record
                 if (length > 0 && length <= system_use_length - i)
                     i += length - 1;
                 else
                     break; // Prevent infinite loop
             }
-            
+
             return "";
         }
     };
@@ -375,12 +371,12 @@ namespace
         u32 m_logical_block_size;
         u32 m_root_extent;
         u32 m_root_length;
-        
+
         // Joliet support
         bool m_has_joliet;
         u32 m_joliet_root_extent;
         u32 m_joliet_root_length;
-        
+
         mutable std::map<std::string, std::vector<FileEntry>> m_directory_cache;
 
         bool checkForRockRidge(const u8* dir_data, u32 data_length) const
@@ -407,11 +403,11 @@ namespace
                 const u8* data = ptr;
                 u8 filename_length = data[32];
                 u8 system_use_length = data[33 + filename_length];
-                
+
                 if (system_use_length > 0)
                 {
                     const u8* system_use = data + 33 + filename_length;
-                    
+
                     // Look for Rock Ridge signature "RR" or "SP"
                     for (u8 i = 0; i < system_use_length - 1; ++i)
                     {
@@ -461,21 +457,21 @@ namespace
                     const u8* root_record = pvd->root_directory_record;
                     m_root_extent = root_record[2] | (root_record[3] << 8) | (root_record[4] << 16) | (root_record[5] << 24);
                     m_root_length = root_record[10] | (root_record[11] << 8) | (root_record[12] << 16) | (root_record[13] << 24);
-                    
+
                     // Check ISO level from file structure version
                     iso_level = pvd->file_structure_version;
                 }
                 else if (header->type == SUPPLEMENTARY_VOLUME_DESCRIPTOR && header->isValid())
                 {
                     const SupplementaryVolumeDescriptor* svd = reinterpret_cast<const SupplementaryVolumeDescriptor*>(header);
-                    
+
                     // Check if this is a Joliet volume (system identifier should contain "JOLIET")
                     std::string system_id(svd->system_identifier, 32);
                     if (system_id.find("JOLIET") != std::string::npos)
                     {
                         has_joliet = true;
                         m_has_joliet = true;
-                        
+
                         // Extract Joliet root directory location and size
                         const u8* root_record = svd->root_directory_record;
                         m_joliet_root_extent = root_record[2] | (root_record[3] << 8) | (root_record[4] << 16) | (root_record[5] << 24);
@@ -506,8 +502,6 @@ namespace
             std::vector<FileEntry> entries;
             const u8* ptr = dir_data;
             const u8* end = dir_data + data_length;
-
-
 
             while (ptr < end)
             {
@@ -572,7 +566,7 @@ namespace
                 {
                     filename += "/";
                 }
-                
+
                 entries.emplace_back(extent_location, data_length, filename, is_directory);
                 ptr += record_length;
             }
@@ -597,7 +591,6 @@ namespace
                 recursion_count = 0;
                 return std::vector<FileEntry>();
             }
-
 
             std::vector<FileEntry> entries;
 
@@ -653,8 +646,6 @@ namespace
                         dir_name = pathname;
                     }
                 }
-                
-
 
                 // Remove trailing slash from dir_name for lookup
                 if (!dir_name.empty() && dir_name.back() == '/')
@@ -675,7 +666,7 @@ namespace
                     {
                         entry_name.pop_back();
                     }
-                    
+
                     if (entry_name == dir_name)
                     {
                         if (entry.is_directory)
@@ -713,7 +704,7 @@ namespace
             {
                 // Check for ISO signature
                 const u8* ptr = parent.address;
-                
+
                 if (parent.size >= 0x8000 + sizeof(VolumeDescriptorHeader))
                 {
                     const VolumeDescriptorHeader* header = reinterpret_cast<const VolumeDescriptorHeader*>(ptr + 0x8000);
@@ -778,7 +769,7 @@ namespace
         void getIndex(mango::filesystem::FileIndex& index, const std::string& pathname) override
         {
             auto entries = getDirectoryEntries(pathname);
-            
+
             for (const auto& entry : entries)
             {
                 u32 flags = 0;
