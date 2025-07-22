@@ -238,6 +238,65 @@ namespace
             
             return name;
         }
+
+        std::string getRockRidgeFileName() const
+        {
+            // Manual reading to avoid structure alignment issues
+            const u8* data = reinterpret_cast<const u8*>(this);
+            u8 filename_length = data[32];
+            u8 system_use_length = data[33 + filename_length];
+            
+
+            
+            if (system_use_length == 0)
+                return "";
+                
+            const u8* system_use = data + 33 + filename_length;
+            
+            // Parse Rock Ridge System Use area
+            for (u8 i = 0; i < system_use_length - 3; ++i)
+            {
+                u8 signature1 = system_use[i];
+                u8 signature2 = system_use[i + 1];
+                u8 length = system_use[i + 2];
+                u8 version = system_use[i + 3];
+                
+
+                
+                // Look for NM (Name) records - these are Rock Ridge extensions
+                if (signature1 == 'N' && signature2 == 'M')
+                {
+                    // NM record - Name field
+                    if (length >= 5 && version == 1)
+                    {
+                        u8 flags = system_use[i + 4];
+                        u8 name_length = length - 5;
+                        
+                        if (name_length > 0 && (i + 5 + name_length) <= system_use_length)
+                        {
+                            std::string name(reinterpret_cast<const char*>(system_use + i + 5), name_length);
+                            
+                            // Check for continuation flag
+                            if (flags & 0x01)
+                            {
+                                // This is a continuation, look for more NM records
+                                // For now, just return the first part
+                            }
+                            
+                            return name;
+                        }
+                    }
+                }
+                
+                // Skip to next record
+                if (length > 0 && length <= system_use_length - i)
+                    i += length - 1;
+                else
+                    break; // Prevent infinite loop
+            }
+            
+            return "";
+        }
     };
 
     // -----------------------------------------------------------------
@@ -324,6 +383,51 @@ namespace
         
         mutable std::map<std::string, std::vector<FileEntry>> m_directory_cache;
 
+        bool checkForRockRidge(const u8* dir_data, u32 data_length) const
+        {
+            const u8* ptr = dir_data;
+            const u8* end = dir_data + data_length;
+
+            while (ptr < end)
+            {
+                if (ptr + 1 > end)
+                    break;
+
+                u8 record_length = ptr[0];
+                if (record_length == 0)
+                {
+                    ptr = dir_data + ((ptr - dir_data + 2047) & ~2047);
+                    continue;
+                }
+
+                if (ptr + record_length > end)
+                    break;
+
+                // Check for Rock Ridge extensions in System Use area
+                const u8* data = ptr;
+                u8 filename_length = data[32];
+                u8 system_use_length = data[33 + filename_length];
+                
+                if (system_use_length > 0)
+                {
+                    const u8* system_use = data + 33 + filename_length;
+                    
+                    // Look for Rock Ridge signature "RR" or "SP"
+                    for (u8 i = 0; i < system_use_length - 1; ++i)
+                    {
+                        if ((system_use[i] == 'R' && system_use[i + 1] == 'R') ||
+                            (system_use[i] == 'S' && system_use[i + 1] == 'P'))
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                ptr += record_length;
+            }
+            return false;
+        }
+
         void parseVolumeDescriptors()
         {
             const u8* ptr = m_parent_memory.address;
@@ -333,6 +437,10 @@ namespace
             const u8* volume_start = ptr + 0x8000;
 
             m_has_joliet = false;
+            bool has_primary = false;
+            bool has_joliet = false;
+            bool has_rock_ridge = false;
+            int iso_level = 0;
 
             for (int i = 0; i < 100; ++i) // Limit to prevent infinite loop
             {
@@ -345,6 +453,7 @@ namespace
 
                 if (header->type == PRIMARY_VOLUME_DESCRIPTOR && header->isValid())
                 {
+                    has_primary = true;
                     const PrimaryVolumeDescriptor* pvd = reinterpret_cast<const PrimaryVolumeDescriptor*>(header);
                     m_logical_block_size = pvd->logical_block_size_lsb;
 
@@ -352,8 +461,9 @@ namespace
                     const u8* root_record = pvd->root_directory_record;
                     m_root_extent = root_record[2] | (root_record[3] << 8) | (root_record[4] << 16) | (root_record[5] << 24);
                     m_root_length = root_record[10] | (root_record[11] << 8) | (root_record[12] << 16) | (root_record[13] << 24);
-
-                    printLine(Print::Info, "[ISO] Root directory: extent={}, length={}", m_root_extent, m_root_length);
+                    
+                    // Check ISO level from file structure version
+                    iso_level = pvd->file_structure_version;
                 }
                 else if (header->type == SUPPLEMENTARY_VOLUME_DESCRIPTOR && header->isValid())
                 {
@@ -363,17 +473,32 @@ namespace
                     std::string system_id(svd->system_identifier, 32);
                     if (system_id.find("JOLIET") != std::string::npos)
                     {
+                        has_joliet = true;
                         m_has_joliet = true;
                         
                         // Extract Joliet root directory location and size
                         const u8* root_record = svd->root_directory_record;
                         m_joliet_root_extent = root_record[2] | (root_record[3] << 8) | (root_record[4] << 16) | (root_record[5] << 24);
                         m_joliet_root_length = root_record[10] | (root_record[11] << 8) | (root_record[12] << 16) | (root_record[13] << 24);
-
-                        printLine(Print::Info, "[ISO] Joliet root directory: extent={}, length={}", m_joliet_root_extent, m_joliet_root_length);
                     }
                 }
             }
+
+            // Check for Rock Ridge extensions by examining the root directory
+            if (has_primary)
+            {
+                const u8* root_dir_data = m_parent_memory.address + (m_root_extent * m_logical_block_size);
+                has_rock_ridge = checkForRockRidge(root_dir_data, m_root_length);
+            }
+
+            // Report ISO extensions
+#if 0
+            printLine("ISO Extensions detected:");
+            printLine("  - Primary Volume Descriptor: {}", has_primary ? "YES" : "NO");
+            printLine("  - ISO 9660 Level: {}", iso_level);
+            printLine("  - Joliet (Unicode filenames): {}", has_joliet ? "YES" : "NO");
+            printLine("  - Rock Ridge (Unix attributes): {}", has_rock_ridge ? "YES" : "NO");
+#endif
         }
 
         std::vector<FileEntry> parseDirectoryContents(const u8* dir_data, u32 data_length, bool use_joliet = false) const
@@ -412,7 +537,7 @@ namespace
                 u32 extent_location = record->getExtentLocation();
                 u32 data_length = record->getDataLength();
                 bool is_directory = record->isDirectory();
-                
+
                 std::string filename;
                 if (use_joliet)
                 {
@@ -420,7 +545,12 @@ namespace
                 }
                 else
                 {
-                    filename = record->getFileName();
+                    // Try Rock Ridge first, fall back to standard ISO filename
+                    filename = record->getRockRidgeFileName();
+                    if (filename.empty())
+                    {
+                        filename = record->getFileName();
+                    }
                 }
 
                 // Skip "." and ".." entries and empty/whitespace filenames
@@ -429,6 +559,12 @@ namespace
                 {
                     ptr += record_length;
                     continue;
+                }
+
+                // Safety check: if we can't advance, break to prevent infinite loop
+                if (record_length == 0)
+                {
+                    break;
                 }
 
                 // Add trailing slash to directory names to match filesystem convention
