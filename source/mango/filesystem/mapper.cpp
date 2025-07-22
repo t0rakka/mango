@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -19,6 +19,7 @@ namespace mango::filesystem
     AbstractMapper* createMapperZIP(ConstMemory parent, const std::string& password);
     AbstractMapper* createMapperRAR(ConstMemory parent, const std::string& password);
     AbstractMapper* createMapperMGX(ConstMemory parent, const std::string& password);
+    AbstractMapper* createMapperISO(ConstMemory parent, const std::string& password);
 
     using CreateMapperFunc = AbstractMapper* (*)(ConstMemory, const std::string&);
 
@@ -48,6 +49,7 @@ namespace mango::filesystem
         MapperExtension(createMapperMGX, ".snitch"),
         MapperExtension(createMapperRAR, ".rar"),
         MapperExtension(createMapperRAR, ".cbr"),
+        MapperExtension(createMapperISO, ".iso"),
     };
 
     static inline
