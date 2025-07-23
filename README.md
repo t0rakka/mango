@@ -6,6 +6,7 @@ Library for C++ masochists. It does short vector math, SIMD, encodes and decodes
 
 
 ## [Installation Guide](docs/installation/setup.md)
+## [Code Examples](docs/examples/examples.md)
 
 
 ## PNG library comparison
