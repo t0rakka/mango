@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -19,6 +19,7 @@ namespace mango::filesystem
     AbstractMapper* createMapperZIP(ConstMemory parent, const std::string& password);
     AbstractMapper* createMapperRAR(ConstMemory parent, const std::string& password);
     AbstractMapper* createMapperMGX(ConstMemory parent, const std::string& password);
+    AbstractMapper* createMapperISO(ConstMemory parent, const std::string& password);
 
     using CreateMapperFunc = AbstractMapper* (*)(ConstMemory, const std::string&);
 
@@ -48,6 +49,7 @@ namespace mango::filesystem
         MapperExtension(createMapperMGX, ".snitch"),
         MapperExtension(createMapperRAR, ".rar"),
         MapperExtension(createMapperRAR, ".cbr"),
+        MapperExtension(createMapperISO, ".iso"),
     };
 
     static inline
@@ -78,10 +80,10 @@ namespace mango::filesystem
     }
 
     FileInfo::FileInfo(const std::string& name, u64 size, u32 flags, u32 checksum)
-        : size(size)
+        : name(name)
+        , size(size)
         , flags(flags)
         , checksum(checksum)
-        , name(name)
     {
     }
 
@@ -91,27 +93,27 @@ namespace mango::filesystem
 
     bool FileInfo::isFile() const
     {
-        return (flags & DIRECTORY) == 0;
+        return (flags & Directory) == 0;
     }
 
     bool FileInfo::isDirectory() const
     {
-        return (flags & DIRECTORY) != 0;
+        return (flags & Directory) != 0;
     }
 
     bool FileInfo::isContainer() const
     {
-        return (flags & CONTAINER) != 0;
+        return (flags & Container) != 0;
     }
 
     bool FileInfo::isCompressed() const
     {
-        return (flags & COMPRESSED) != 0;
+        return (flags & Compressed) != 0;
     }
 
     bool FileInfo::isEncrypted() const
     {
-        return (flags & ENCRYPTED) != 0;
+        return (flags & Encrypted) != 0;
     }
 
     // -----------------------------------------------------------------
@@ -124,13 +126,13 @@ namespace mango::filesystem
         {
             files.emplace_back(name, size, flags, checksum);
  
-            const bool isFile = (flags & FileInfo::DIRECTORY) == 0;
-            const bool isContainer = (flags & FileInfo::CONTAINER) != 0;
+            const bool isFile = (flags & FileInfo::Directory) == 0;
+            const bool isContainer = (flags & FileInfo::Container) != 0;
  
             if (isFile && !isContainer && name.back() != '/' && Mapper::isCustomMapper(name))
             {
                 // file is a container; add it into the index again
-                files.emplace_back(name + "/", 0, flags | FileInfo::DIRECTORY | FileInfo::CONTAINER);
+                files.emplace_back(name + "/", 0, flags | FileInfo::Directory | FileInfo::Container);
             }
         }
     }
@@ -147,11 +149,11 @@ namespace mango::filesystem
 
         if (Mapper::isCustomMapper(name))
         {
-            flags |= FileInfo::CONTAINER;
+            flags |= FileInfo::Container;
         }
         else if (name.back() == '/')
         {
-            flags |= FileInfo::DIRECTORY;
+            flags |= FileInfo::Directory;
         }
 
         u64 size = 0; // not required
@@ -264,6 +266,14 @@ namespace mango::filesystem
     const std::string& Mapper::pathname() const
     {
         return m_pathname;
+    }
+
+    u64 Mapper::getSize(const std::string& filename) const
+    {
+        if (!m_current_mapper)
+            return 0;
+
+        return m_current_mapper->getSize(filename);
     }
 
     bool Mapper::isFile(const std::string& filename) const

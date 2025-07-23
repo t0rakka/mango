@@ -8,6 +8,7 @@ list(APPEND EXAMPLES
     pathtest
     particle
     mathtest
+    container
 )
 
 foreach(example IN LISTS EXAMPLES)

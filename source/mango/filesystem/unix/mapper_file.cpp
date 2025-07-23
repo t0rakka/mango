@@ -142,7 +142,7 @@ namespace
                 }
                 else
                 {
-                    index.emplace(filename + "/", 0, FileInfo::DIRECTORY);
+                    index.emplace(filename + "/", 0, FileInfo::Directory);
                 }
             }
         }
@@ -157,13 +157,27 @@ namespace
         {
         }
 
+        u64 getSize(const std::string& filename) const override
+        {
+            u64 size = 0;
+            std::string fullname = m_basepath + filename;
+
+            struct stat s;
+            if (::stat(fullname.c_str(), &s) == 0)
+            {
+                size = u64(s.st_size);
+            }
+
+            return size;
+        }
+
         bool isFile(const std::string& filename) const override
         {
             bool is = false;
-            std::string testname = m_basepath + filename;
+            std::string fullname = m_basepath + filename;
 
             struct stat s;
-            if (::stat(testname.c_str(), &s) == 0)
+            if (::stat(fullname.c_str(), &s) == 0)
             {
                 is = (s.st_mode & S_IFDIR) == 0;
             }
@@ -255,7 +269,8 @@ namespace
 
         std::unique_ptr<VirtualMemory> map(const std::string& filename) override
         {
-            return std::make_unique<FileMemory>(m_basepath + filename, 0, 0);
+            std::string fullname = m_basepath + filename;
+            return std::make_unique<FileMemory>(fullname, 0, 0);
         }
     };
 

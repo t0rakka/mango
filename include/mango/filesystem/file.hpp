@@ -15,6 +15,10 @@
 namespace mango::filesystem
 {
 
+    // -----------------------------------------------------------------------
+    // File
+    // -----------------------------------------------------------------------
+
     class File : protected NonCopyable
     {
     protected:
@@ -42,6 +46,12 @@ namespace mango::filesystem
         u64 size() const;
     };
 
+    u64 getFileSize(const std::string& filename);
+
+    // -----------------------------------------------------------------------
+    // FileStream
+    // -----------------------------------------------------------------------
+
     class FileStream : public Stream
     {
     protected:
@@ -53,23 +63,19 @@ namespace mango::filesystem
 
         const std::string& filename() const;
 
+        // interface
         u64 size() const override;
         u64 offset() const override;
-        void seek(s64 distance, SeekMode mode) override;
-        void read(void* dest, u64 size) override;
+        u64 seek(s64 distance, SeekMode mode) override;
+        u64 read(void* dest, u64 size) override;
         u64 write(const void* data, u64 size) override;
-
-        u64 write(ConstMemory memory)
-        {
-            return Stream::write(memory);
-        }
     };
 
     class InputFileStream : public FileStream
     {
     public:
         InputFileStream(const std::string& filename)
-            : FileStream(filename, Stream::READ)
+            : FileStream(filename, Stream::OpenMode::Read)
         {
         }
     };
@@ -78,7 +84,7 @@ namespace mango::filesystem
     {
     public:
         OutputFileStream(const std::string& filename)
-            : FileStream(filename, Stream::WRITE)
+            : FileStream(filename, Stream::OpenMode::Write)
         {
         }
     };

@@ -261,6 +261,16 @@ namespace mango::filesystem
         {
         }
 
+        u64 getSize(const std::string& filename) const override
+        {
+            const FileHeader* header = m_header.m_folders.getHeader(filename);
+            if (header)
+            {
+                return header->size;
+            }
+            return 0;
+        }
+
         bool isFile(const std::string& filename) const override
         {
             const FileHeader* header = m_header.m_folders.getHeader(filename);
@@ -284,12 +294,12 @@ namespace mango::filesystem
 
                     if (header.isFolder())
                     {
-                        flags |= FileInfo::DIRECTORY;
+                        flags |= FileInfo::Directory;
                     }
 
                     if (header.isCompressed())
                     {
-                        flags |= FileInfo::COMPRESSED;
+                        flags |= FileInfo::Compressed;
                     }
 
                     index.emplace(header.filename, header.size, flags, header.checksum);

@@ -48,12 +48,6 @@ int g_option_compression = 4;
 // utils
 // ----------------------------------------------------------------------
 
-size_t get_file_size(const char* filename)
-{
-    File file(filename);
-    return file.size();
-}
-
 void load_none(Memory memory)
 {
     MANGO_UNREFERENCED(memory);
@@ -214,7 +208,7 @@ size_t save_libpng(const Bitmap& bitmap)
 
     png_destroy_write_struct(&png, &info);
 
-    return get_file_size(filename);
+    return getFileSize(filename);
 }
 
 #endif
@@ -245,7 +239,7 @@ size_t save_lodepng(const Bitmap& bitmap)
     lodepng_encoder_settings_init(&settings);
 
     lodepng_encode32_file(filename, bitmap.image, bitmap.width, bitmap.height);
-    return get_file_size(filename);
+    return getFileSize(filename);
 }
 
 #endif
@@ -273,7 +267,7 @@ size_t save_stb(const Bitmap& bitmap)
 {
     const char* filename = "output-stb.png";
     stbi_write_png(filename, bitmap.width, bitmap.height, 4, bitmap.image, bitmap.width * 4);
-    return get_file_size(filename);
+    return getFileSize(filename);
 }
 
 #endif
@@ -432,7 +426,7 @@ size_t save_spng(const Bitmap& bitmap)
     free(png_buf);
     spng_ctx_free(enc);
 
-    return get_file_size(filename);
+    return getFileSize(filename);
 }
 
 #endif
@@ -518,7 +512,7 @@ size_t save_fpng(const Bitmap& bitmap)
 {
     const char* filename = "output-fpng.png";
     fpng::fpng_encode_image_to_file(filename, bitmap.image, bitmap.width, bitmap.height, 4, false);
-    return get_file_size(filename);
+    return getFileSize(filename);
 }
 
 #endif
@@ -660,7 +654,7 @@ size_t save_mango(const Bitmap& bitmap)
     options.compression = g_option_compression;
     bitmap.save(filename, options);
 
-    return get_file_size(filename);
+    return getFileSize(filename);
 }
 
 #endif

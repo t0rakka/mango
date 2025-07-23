@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 
@@ -53,7 +53,7 @@ void example4(Stream& stream)
     // The translator extends Stream interface to understand endianess..
     u32 a = s.read32();
     float b = s.read32f();
-    s.seek(20, Stream::CURRENT); // skip 20 bytes
+    s.seek(20, Stream::SeekMode::Current); // skip 20 bytes
 
     // read a block of memory
     u32 size = s.read32();

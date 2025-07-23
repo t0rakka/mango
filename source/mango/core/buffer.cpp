@@ -49,7 +49,7 @@ namespace mango
         : m_memory(allocate(size_t(stream.size())), size_t(stream.size()))
         , m_capacity(m_memory.size)
     {
-        stream.seek(0, Stream::BEGIN);
+        stream.seek(0, Stream::SeekMode::Begin);
         stream.read(m_memory.address, m_memory.size);
     }
 
@@ -246,52 +246,61 @@ namespace mango
         return m_offset;
     }
 
-    void MemoryStream::seek(s64 distance, SeekMode mode)
+    u64 MemoryStream::seek(s64 distance, SeekMode mode)
     {
-        const u64 size = m_buffer.size();
+        const s64 size = s64(m_buffer.size());
+        s64 offset = s64(m_offset);
 
         switch (mode)
         {
-            case BEGIN:
-                m_offset = distance;
+            case SeekMode::Begin:
+                offset = distance;
                 break;
 
-            case CURRENT:
-                m_offset += distance;
+            case SeekMode::Current:
+                offset += distance;
                 break;
 
-            case END:
-                m_offset = size + distance;
+            case SeekMode::End:
+                offset = size + distance;
                 break;
         }
 
-        m_offset = std::max(u64(0), m_offset);
+        // NOTE: seek is allowed to go past the end of the buffer
+        m_offset = u64(std::max(s64(0), offset));
+
+        return m_offset;
     }
 
-    void MemoryStream::read(void* dest, u64 bytes)
+    u64 MemoryStream::read(void* dest, u64 bytes)
     {
-        const u64 size = m_buffer.size();
-        if (m_offset > size || (size - m_offset) < bytes)
+        const u64 size = u64(m_buffer.size());
+
+        if (m_offset >= size)
         {
-            MANGO_EXCEPTION("[MemoryStream] Reading past end of buffer.");
+            return 0;
         }
+
+        bytes = std::min(size - m_offset, bytes);
 
         std::memcpy(dest, m_buffer.data() + m_offset, size_t(bytes));
         m_offset += bytes;
+
+        return bytes;
     }
 
     u64 MemoryStream::write(const void* source, u64 bytes)
     {
-        u64 start_offset = m_offset;
+        const u64 start_offset = m_offset;
 
-        const u64 size = m_buffer.size();
+        const u64 size = u64(m_buffer.size());
         if (m_offset > size)
         {
             // offset is past end of the stream ; write as many zeros as needed
             m_buffer.append(m_offset - size, 0);
         }
 
-        const u64 left = std::min(bytes, m_buffer.size() - m_offset);
+        const u64 left = std::min(bytes, u64(m_buffer.size()) - m_offset);
         const u64 right = bytes - left;
         std::memcpy(m_buffer.data() + m_offset, source, size_t(left));
         if (right > 0)
@@ -299,14 +308,10 @@ namespace mango
             const u8* src = reinterpret_cast<const u8*>(source);
             m_buffer.append(src + left, size_t(right));
         }
+
         m_offset += bytes;
 
         return m_offset - start_offset;
-    }
-
-    u64 MemoryStream::write(ConstMemory memory)
-    {
-        return Stream::write(memory);
     }
 
     // ----------------------------------------------------------------------------
@@ -333,43 +338,53 @@ namespace mango
         return m_offset;
     }
 
-    void ConstMemoryStream::seek(s64 distance, SeekMode mode)
+    u64 ConstMemoryStream::seek(s64 distance, SeekMode mode)
     {
-        const u64 size = u64(m_memory.size);
+        const s64 size = s64(m_memory.size);
+        s64 offset = s64(m_offset);
+
         switch (mode)
         {
-            case BEGIN:
-                distance = std::max(s64(0), distance);
-                m_offset = std::min(size, u64(distance));
+            case SeekMode::Begin:
+                offset = distance;
                 break;
 
-            case CURRENT:
-                m_offset = std::min(size, m_offset + distance);
+            case SeekMode::Current:
+                offset += distance;
                 break;
 
-            case END:
-                distance = std::min(s64(0), distance);
-                m_offset = u64(std::max(s64(0), s64(size + distance)));
+            case SeekMode::End:
+                offset = size + distance;
                 break;
         }
+
+        // NOTE: seek is allowed to go past the end of the buffer
+        m_offset = u64(std::max(s64(0), offset));
+
+        return m_offset;
     }
 
-    void ConstMemoryStream::read(void* dest, u64 bytes)
+    u64 ConstMemoryStream::read(void* dest, u64 bytes)
     {
-        const u64 left = u64(m_memory.size) - m_offset;
-        if (left < bytes)
+        const u64 size = m_memory.size;
+
+        if (m_offset >= size)
         {
-            MANGO_EXCEPTION("[ConstMemoryStream] Reading past end of memory.");
+            return 0;
         }
+
+        bytes = std::min(size - m_offset, bytes);
 
         std::memcpy(dest, m_memory.address + m_offset, size_t(bytes));
         m_offset += bytes;
+
+        return bytes;
     }
 
-    u64 ConstMemoryStream::write(const void* data, u64 size)
+    u64 ConstMemoryStream::write(const void* data, u64 bytes)
     {
         MANGO_UNREFERENCED(data);
-        MANGO_UNREFERENCED(size);
+        MANGO_UNREFERENCED(bytes);
         MANGO_EXCEPTION("[ConstMemoryStream] Writing into read-only memory.");
         return 0;
     }

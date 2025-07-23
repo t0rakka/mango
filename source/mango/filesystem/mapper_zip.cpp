@@ -935,6 +935,17 @@ namespace mango::filesystem
             return std::make_unique<VirtualMemoryZIP>(address, buffer, size_t(size));
         }
 
+        u64 getSize(const std::string& filename) const override
+        {
+            const FileHeader* ptrHeader = m_folders.getHeader(filename);
+            if (ptrHeader)
+            {
+                return ptrHeader->uncompressedSize;
+            }
+
+            return 0;
+        }
+
         bool isFile(const std::string& filename) const override
         {
             const FileHeader* ptrHeader = m_folders.getHeader(filename);
@@ -959,18 +970,18 @@ namespace mango::filesystem
 
                     if (header.is_folder)
                     {
-                        flags |= FileInfo::DIRECTORY;
+                        flags |= FileInfo::Directory;
                         size = 0;
                     }
 
                     if (header.compression > 0)
                     {
-                        flags |= FileInfo::COMPRESSED;
+                        flags |= FileInfo::Compressed;
                     }
 
                     if (header.encryption != ENCRYPTION_NONE)
                     {
-                        flags |= FileInfo::ENCRYPTED;
+                        flags |= FileInfo::Encrypted;
                     }
 
                     index.emplace(header.filename, size, flags);

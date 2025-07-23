@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -14,18 +14,18 @@ namespace mango::filesystem
 
     struct FileInfo
     {
-        enum Flags
+        enum Flags : u32
         {
-            DIRECTORY  = 0x01,
-            CONTAINER  = 0x02,
-            COMPRESSED = 0x04,
-            ENCRYPTED  = 0x08,
+            Directory  = 0x00000001,
+            Container  = 0x00000002,
+            Compressed = 0x00000004,
+            Encrypted  = 0x00000008,
         };
 
+        std::string name;
         u64 size;
         u32 flags;
         u32 checksum;
-        std::string name;
 
         FileInfo();
         FileInfo(const std::string& name, u64 size, u32 flags = 0, u32 checksum = 0);
@@ -98,6 +98,8 @@ namespace mango::filesystem
         AbstractMapper() = default;
         virtual ~AbstractMapper() = default;
 
+        // interface
+        virtual u64 getSize(const std::string& filename) const = 0;
         virtual bool isFile(const std::string& filename) const = 0;
         virtual void getIndex(FileIndex& index, const std::string& pathname) = 0;
         virtual std::unique_ptr<VirtualMemory> map(const std::string& filename) = 0;
@@ -128,6 +130,8 @@ namespace mango::filesystem
         const std::string& basepath() const;
         const std::string& pathname() const;
 
+        // interface
+        u64 getSize(const std::string& filename) const override;
         bool isFile(const std::string& filename) const override;
         void getIndex(FileIndex& index, const std::string& pathname) override;
         std::unique_ptr<VirtualMemory> map(const std::string& filename) override;

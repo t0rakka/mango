@@ -25,13 +25,6 @@ using namespace mango::image;
 static constexpr u64 NOT_AVAILABLE = ~0;
 
 static
-size_t get_file_size(const char* filename)
-{
-    File file(filename);
-    return file.size();
-}
-
-static
 std::string format_time(u64 time)
 {
     if (time != NOT_AVAILABLE)
@@ -165,7 +158,7 @@ size_t save_jpeg(const char* filename, const Surface& surface)
 
     delete[] surface.image;
 
-    return get_file_size(filename);
+    return getFileSize(filename);
 }
 
 #endif
@@ -198,7 +191,7 @@ size_t stb_save_jpeg(const char* filename, const Surface& surface)
 {
     stbi_write_jpg(filename, surface.width, surface.height, 3, surface.image, surface.width * 3);
     stbi_image_free(surface.image);
-    return get_file_size(filename);
+    return getFileSize(filename);
 }
 
 #endif
@@ -225,7 +218,7 @@ size_t jpge_save(const char* filename, const Surface& surface)
 {
     jpge::compress_image_to_jpeg_file(filename, surface.width, surface.height, 4, surface.image);
     free(surface.image);
-    return get_file_size(filename);
+    return getFileSize(filename);
 }
 
 #endif
@@ -535,7 +528,7 @@ int main(int argc, const char* argv[])
     encode_options.multithread = multithread;
 
     bitmap.save("output-mango.jpg", encode_options);
-    size = get_file_size("output-mango.jpg");
+    size = getFileSize("output-mango.jpg");
 
     time2 = Time::us();
     ::print("mango:   ", time1 - time0, time2 - time1, size);

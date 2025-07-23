@@ -137,13 +137,27 @@ namespace
         {
         }
 
+        u64 getSize(const std::string& filename) const override
+        {
+            u64 size = 0;
+            std::string fullname = m_basepath + filename;
+
+            struct __stat64 s;
+            if (_wstat64(u16_fromBytes(fullname).c_str(), &s) == 0)
+            {
+                size = u64(s.st_size);
+            }
+
+            return size;
+        }
+
         bool isFile(const std::string& filename) const override
         {
             bool is = false;
+            std::string fullname = m_basepath + filename;
 
             struct __stat64 s;
-
-            if (_wstat64(u16_fromBytes(m_basepath + filename).c_str(), &s) == 0)
+            if (_wstat64(u16_fromBytes(fullname).c_str(), &s) == 0)
             {
                 is = (s.st_mode & _S_IFDIR) == 0;
             }
@@ -163,7 +177,6 @@ namespace
             std::wstring filespec = u16_fromBytes(fullname + "*");
 
             _wfinddata64_t cfile;
-
             intptr_t hfile = ::_wfindfirst64(filespec.c_str(), &cfile);
 
             // find first file in current directory
@@ -186,7 +199,7 @@ namespace
                         }
                         else
                         {
-                            index.emplace(filename + "/", 0, FileInfo::DIRECTORY);
+                            index.emplace(filename + "/", 0, FileInfo::Directory);
                         }
                     }
 
@@ -200,7 +213,8 @@ namespace
 
         std::unique_ptr<VirtualMemory> map(const std::string& filename) override
         {
-            return std::make_unique<FileMemory>(m_basepath + filename, 0, 0);
+            std::string fullname = m_basepath + filename;
+            return std::make_unique<FileMemory>(fullname, 0, 0);
         }
     };
 

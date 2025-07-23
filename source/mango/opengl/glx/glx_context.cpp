@@ -96,29 +96,21 @@ namespace mango
         visualAttribs.push_back(GLX_STENCIL_SIZE);
         visualAttribs.push_back(config.stencil);
 
-        // helper lambdas
-
-        auto chooseConfig = [=, this] (std::vector<int> attribs) -> std::vector<GLXFBConfig>
-        {
-            attribs.push_back(None);
-
-            int numFBConfigs = 0;
-            GLXFBConfig* fbconfigs = glXChooseFBConfig(display, screen, attribs.data(), &numFBConfigs);
-            std::vector<GLXFBConfig> configs(fbconfigs + 0, fbconfigs + numFBConfigs);
-            XFree(fbconfigs);
-
-            return configs;
-        };
+        visualAttribs.push_back(None);
 
         // select first config that satisfies the basic requirements
 
-        auto fbconfigs = chooseConfig(visualAttribs);
-        if (fbconfigs.empty())
+        int numFBConfigs = 0;
+        GLXFBConfig* fbconfigs = glXChooseFBConfig(display, screen, visualAttribs.data(), &numFBConfigs);
+
+        if (!numFBConfigs || !fbconfigs)
         {
             MANGO_EXCEPTION("[OpenGLContext] glXChooseFBConfig() failed.");
         }
 
         selected = fbconfigs[0];
+
+        XFree(fbconfigs);
 
         // try config with float capabilities
 
@@ -143,10 +135,13 @@ namespace mango
             tempAttribs.push_back(GLX_RENDER_TYPE);
             tempAttribs.push_back(GLX_RGBA_FLOAT_TYPE_ARB);
 
-            auto temp = chooseConfig(tempAttribs);
-            if (!temp.empty())
+            tempAttribs.push_back(None);
+
+            int numFBConfigs = 0;
+            GLXFBConfig* fbconfigs = glXChooseFBConfig(display, screen, tempAttribs.data(), &numFBConfigs);
+
+            if (numFBConfigs && fbconfigs)
             {
-                fbconfigs = temp;
                 selected = fbconfigs[0];
                 float_buffer_selected = true;
             }
@@ -158,6 +153,8 @@ namespace mango
                 config.blue = 8;
                 config.alpha = 8;
             }
+
+            XFree(fbconfigs);
         }
 
         if (!float_buffer_selected)
@@ -174,12 +171,17 @@ namespace mango
             visualAttribs.push_back(GLX_ALPHA_SIZE);
             visualAttribs.push_back(config.alpha);
 
-            auto temp = chooseConfig(visualAttribs);
-            if (!temp.empty())
+            visualAttribs.push_back(None);
+
+            int numFBConfigs = 0;
+            GLXFBConfig* fbconfigs = glXChooseFBConfig(display, screen, visualAttribs.data(), &numFBConfigs);
+
+            if (numFBConfigs && fbconfigs)
             {
-                fbconfigs = temp;
                 selected = fbconfigs[0];
             }
+
+            XFree(fbconfigs);
         }
 
         if (extensions.find("GLX_ARB_fbconfig_float") != extensions.end())
@@ -204,13 +206,18 @@ namespace mango
                 tempAttribs.push_back(GLX_SAMPLES_ARB);
                 tempAttribs.push_back(config.samples);
 
-                auto temp = chooseConfig(tempAttribs);
-                if (!temp.empty())
+                tempAttribs.push_back(None);
+
+                int numFBConfigs = 0;
+                GLXFBConfig* fbconfigs = glXChooseFBConfig(display, screen, tempAttribs.data(), &numFBConfigs);
+
+                if (numFBConfigs && fbconfigs)
                 {
                     printLine(Print::Info, "GLX_ARB_multisample : ENABLE");
-                    fbconfigs = temp;
                     selected = fbconfigs[0];
                 }
+
+                XFree(fbconfigs);
             }
         }
     }
