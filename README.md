@@ -5,7 +5,7 @@ Library for C++ masochists. It does short vector math, SIMD, encodes and decodes
 "We wasted our time so that you don't have to waste yours."
 
 
-## [Installation Guide](docs/setup.md)
+## [Installation Guide](docs/installation/setup.md)
 
 
 ## PNG library comparison

@@ -1,4 +1,4 @@
-<h1><img src="mango-logo.png" alt="logo" width="80"/> MANGO Installation Guide</h1>
+<h1><img src="../mango-logo.png" alt="logo" width="80"/> MANGO Installation Guide</h1>
 
 
 ## Background
