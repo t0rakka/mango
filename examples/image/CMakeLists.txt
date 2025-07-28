@@ -45,7 +45,9 @@ endif ()
 
 find_module_with_cmake(png_benchmark BLEND2D blend2d blend2d::blend2d 0)
 find_module_with_cmake(png_benchmark PNG PNG PNG::PNG 0)
+find_module_with_cmake(png_benchmark ZLIB ZLIB ZLIB::ZLIB 0)
 find_module_with_pkg(png_benchmark PNG libpng)
+find_module_with_pkg(png_benchmark ZLIB zlib)
 
 target_compile_definitions(png_benchmark PRIVATE "SPNG_STATIC")
 
