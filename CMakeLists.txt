@@ -564,10 +564,16 @@ if (PkgConfig_FOUND)
     message("PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
 endif ()
 
-function (find_module_with_pkg Target Prefix ItemAndVersion)
+function (find_module_with_pkg Target Prefix ItemName Version)
     if (NOT ${Prefix}_ENABLE)
         if (PkgConfig_FOUND)
-            pkg_check_modules(${Prefix} QUIET ${ItemAndVersion})
+
+            if (Version STREQUAL "0")
+                pkg_check_modules(${Prefix} QUIET ${ItemName})
+            else ()
+                pkg_check_modules(${Prefix} QUIET ${ItemName}>=${Version})
+            endif ()
+
             if (${Prefix}_FOUND)
                 set(${Prefix}_ENABLE 1 PARENT_SCOPE)
                 message("    " ${Prefix} ": " ${${Prefix}_VERSION} " [pkgconfig]")
@@ -587,11 +593,13 @@ endfunction ()
 
 function (find_module_with_cmake Target Prefix PackageName ItemName Version)
     if (NOT ${Prefix}_ENABLE)
+
         if (Version STREQUAL "0")
             find_package(${PackageName} QUIET)
         else ()
             find_package(${PackageName} ${Version} QUIET)
         endif ()
+
         if (${PackageName}_FOUND)
             set(${Prefix}_ENABLE 1 PARENT_SCOPE)
             message("    " ${Prefix} ": " ${${PackageName}_VERSION} " [cmake]")
@@ -694,11 +702,11 @@ endif ()
 # ------------------------------------------------------------------------------
 
 find_module_with_cmake(mango ZLIB ZLIB ZLIB::ZLIB 0)
-find_module_with_pkg(mango ZLIB zlib)
+find_module_with_pkg(mango ZLIB zlib 0)
 check_required_package(ZLIB)
 
 find_module_with_cmake(mango LIBDEFLATE libdeflate libdeflate::libdeflate_shared 0)
-find_module_with_pkg(mango LIBDEFLATE libdeflate)
+find_module_with_pkg(mango LIBDEFLATE libdeflate 0)
 check_required_package(LIBDEFLATE)
 
 if (APPLE OR WIN32)
@@ -708,18 +716,18 @@ else ()
     # apt/pacman imported target is 'zstd'
     find_module_with_cmake(mango ZSTD zstd zstd 0)
 endif ()
-find_module_with_pkg(mango ZSTD libzstd)
+find_module_with_pkg(mango ZSTD libzstd 0)
 check_required_package(ZSTD)
 
 find_module_with_cmake(mango LZ4 lz4 lz4::lz4 0)
-find_module_with_pkg(mango LZ4 liblz4)
+find_module_with_pkg(mango LZ4 liblz4 0)
 check_required_package(LZ4)
 
 find_module_with_cmake(mango BZIP2 BZip2 BZip2::BZip2 0)
 check_required_package(BZIP2)
 
 find_module_with_cmake(mango LCMS2 lcms2 lcms2::lcms2 0)
-find_module_with_pkg(mango LCMS2 lcms2)
+find_module_with_pkg(mango LCMS2 lcms2 0)
 check_required_package(LCMS2)
 
 # ------------------------------------------------------------------------------
@@ -727,33 +735,33 @@ check_required_package(LCMS2)
 # ------------------------------------------------------------------------------
 
 if (LIBRARY_JXL)
-    find_module_with_pkg(mango JXL libjxl>=0.8.2)
-    find_module_with_pkg(mango JXL_THREADS libjxl_threads>=0.7)
+    find_module_with_pkg(mango JXL libjxl 0.8.2)
+    find_module_with_pkg(mango JXL_THREADS libjxl_threads 0.7)
 endif ()
 
 if (LIBRARY_JP2)
     find_module_with_cmake(mango JP2 OpenJPEG openjp2 2.4.0)
-    find_module_with_pkg(mango JP2 libopenjp2>=2.4.0)
+    find_module_with_pkg(mango JP2 libopenjp2 2.4.0)
 endif ()
 
 if (LIBRARY_WEBP)
     find_module_with_cmake(mango WEBP WebP WebP::webp 1.3.2)
-    find_module_with_pkg(mango WEBP libwebp>=1.3.2)
+    find_module_with_pkg(mango WEBP libwebp 1.3.2)
 endif ()
 
 if (LIBRARY_AVIF)
     find_module_with_cmake(mango AVIF libavif avif 1.0.0)
-    find_module_with_pkg(mango AVIF libavif>=1.0.0)
+    find_module_with_pkg(mango AVIF libavif 1.0.0)
 endif ()
 
 if (LIBRARY_HEIF)
     find_module_with_cmake(mango HEIF libheif heif 0)
-    find_module_with_pkg(mango HEIF libheif>=1.13.0)
+    find_module_with_pkg(mango HEIF libheif 1.13.0)
 endif ()
 
 if (LIBRARY_ISAL)
     find_module_with_cmake(mango ISAL unofficial-isal unofficial::isal::isal 0)
-    find_module_with_pkg(mango ISAL libisal)
+    find_module_with_pkg(mango ISAL libisal 0)
 endif ()
 
 # ------------------------------------------------------------------------------
