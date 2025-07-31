@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 2.2.1
+        VERSION 2.2.2
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
@@ -457,10 +457,6 @@ FILE(GLOB EXTERNAL_BASISU
     "${EXTERNAL_SOURCE_DIR}/basisu/transcoder/*.cpp"
 )
 
-FILE(GLOB EXTERNAL_FMT
-    "${EXTERNAL_SOURCE_DIR}/fmt/src/*.cc"
-)
-
 FILE(GLOB EXTERNAL_IMPORT3D
     "${EXTERNAL_SOURCE_DIR}/mikktspace/*.h"
     "${EXTERNAL_SOURCE_DIR}/mikktspace/*.c"
@@ -480,7 +476,6 @@ SOURCE_GROUP("external/lzfse"       FILES ${EXTERNAL_LZFSE})
 SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
 SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
 SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
-SOURCE_GROUP("external/fmt"         FILES ${EXTERNAL_FMT})
 SOURCE_GROUP("external/import3d"    FILES ${EXTERNAL_IMPORT3D})
 
 # ------------------------------------------------------------------------------
@@ -511,7 +506,6 @@ set(MANGO_SOURCES
     ${EXTERNAL_UNRAR}
     ${EXTERNAL_ZPNG}
     ${EXTERNAL_BASISU}
-    ${EXTERNAL_FMT}
 )
 
 if (BUILD_OPENGL)
@@ -556,13 +550,100 @@ if (APPLE)
 endif ()
 
 # ------------------------------------------------------------------------------
-# package finding
+# platform libraries
 # ------------------------------------------------------------------------------
 
 find_package(PkgConfig QUIET)
 if (PkgConfig_FOUND)
     message("PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
 endif ()
+
+if (CMAKE_THREAD_LIBS_INIT)
+    target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
+endif ()
+
+message("[Libraries]")
+
+# ------------------------------------------------------------------------------
+# OpenGL
+# ------------------------------------------------------------------------------
+
+if (BUILD_OPENGL)
+    if (OPENGL_FOUND)
+        if (APPLE)
+            message("    OpenGL: Cocoa")
+            target_link_libraries(mango PUBLIC "-framework Cocoa -framework OpenGL")
+        elseif (WIN32)
+            message("    OpenGL: WIN32")
+            target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
+        else ()
+            if (WINDOW_SYSTEM STREQUAL "xlib")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
+                target_link_libraries(mango PUBLIC X11 GL ${OPENGL_glx_LIBRARY})
+                if (ENABLE_EGL)
+                    message("    OpenGL: EGL | XLIB")
+                    target_compile_definitions(mango PRIVATE "MANGO_ENABLE_EGL")
+                    target_link_libraries(mango PUBLIC EGL)
+                else ()
+                    message("    OpenGL: GLX | XLIB")
+                endif ()
+            elseif (WINDOW_SYSTEM STREQUAL "xcb")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XCB")
+                target_link_libraries(mango PUBLIC xcb xcb-xkb xcb-keysyms xcb-icccm xkbcommon xcb-glx GL ${OPENGL_glx_LIBRARY})
+                if (ENABLE_EGL)
+                    message("    OpenGL: EGL | XCB")
+                    target_compile_definitions(mango PRIVATE "MANGO_ENABLE_EGL")
+                    target_link_libraries(mango PUBLIC EGL)
+                else ()
+                    message("    OpenGL: GLX | XCB")
+                endif ()
+            elseif (WINDOW_SYSTEM STREQUAL "wayland")
+                message("    OpenGL: EGL | Wayland")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_WAYLAND")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_EGL")
+                find_package(PkgConfig REQUIRED)
+                pkg_check_modules(WAYLAND REQUIRED wayland-client)
+                pkg_check_modules(XKB REQUIRED xkbcommon)
+                target_link_libraries(mango PUBLIC EGL GL wayland-client xkbcommon)
+            endif()
+        endif ()
+    endif ()
+endif ()
+
+# ------------------------------------------------------------------------------
+# Vulkan
+# ------------------------------------------------------------------------------
+
+if (BUILD_VULKAN)
+    if (VULKAN_FOUND)
+        if (WIN32)
+            message("    Vulkan: WIN32")
+            target_include_directories(mango PUBLIC ${Vulkan_INCLUDE_DIRS})
+            target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES})
+        else ()
+            if (WINDOW_SYSTEM STREQUAL "xlib")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
+                target_link_libraries(mango PUBLIC X11 vulkan)
+                message("    Vulkan: XLIB")
+            elseif (WINDOW_SYSTEM STREQUAL "xcb")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XCB")
+                target_link_libraries(mango PUBLIC vulkan xcb xcb-xkb xcb-keysyms xcb-icccm xkbcommon)
+                message("    Vulkan: XCB")
+            elseif (WINDOW_SYSTEM STREQUAL "wayland")
+                message("    Vulkan: Wayland")
+                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_WAYLAND")
+                find_package(PkgConfig REQUIRED)
+                pkg_check_modules(WAYLAND REQUIRED wayland-client)
+                pkg_check_modules(XKB REQUIRED xkbcommon)
+                target_link_libraries(mango PUBLIC vulkan wayland-client xkbcommon)
+            endif()
+        endif ()
+    endif ()
+endif ()
+
+# ------------------------------------------------------------------------------
+# package finding
+# ------------------------------------------------------------------------------
 
 function (find_module_with_pkg Target Prefix ItemName Version)
     if (NOT ${Prefix}_ENABLE)
@@ -619,87 +700,12 @@ function (check_required_package Prefix)
 endfunction()
 
 # ------------------------------------------------------------------------------
-# platform libraries
-# ------------------------------------------------------------------------------
-
-message("[Libraries]")
-
-if (CMAKE_THREAD_LIBS_INIT)
-    target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
-endif ()
-
-if (BUILD_OPENGL)
-    if (OPENGL_FOUND)
-        if (APPLE)
-            message("    OpenGL: Cocoa")
-            target_link_libraries(mango PUBLIC "-framework Cocoa -framework OpenGL")
-        elseif (WIN32)
-            message("    OpenGL: WIN32")
-            target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
-        else ()
-            if (WINDOW_SYSTEM STREQUAL "xlib")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
-                target_link_libraries(mango PUBLIC X11 GL ${OPENGL_glx_LIBRARY})
-                if (ENABLE_EGL)
-                    message("    OpenGL: EGL | XLIB")
-                    target_compile_definitions(mango PRIVATE "MANGO_ENABLE_EGL")
-                    target_link_libraries(mango PUBLIC EGL)
-                else ()
-                    message("    OpenGL: GLX | XLIB")
-                endif ()
-            elseif (WINDOW_SYSTEM STREQUAL "xcb")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XCB")
-                target_link_libraries(mango PUBLIC xcb xcb-xkb xcb-keysyms xcb-icccm xkbcommon xcb-glx GL ${OPENGL_glx_LIBRARY})
-                if (ENABLE_EGL)
-                    message("    OpenGL: EGL | XCB")
-                    target_compile_definitions(mango PRIVATE "MANGO_ENABLE_EGL")
-                    target_link_libraries(mango PUBLIC EGL)
-                else ()
-                    message("    OpenGL: GLX | XCB")
-                endif ()
-            elseif (WINDOW_SYSTEM STREQUAL "wayland")
-                message("    OpenGL: EGL | Wayland")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_WAYLAND")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_EGL")
-                find_package(PkgConfig REQUIRED)
-                pkg_check_modules(WAYLAND REQUIRED wayland-client)
-                pkg_check_modules(XKB REQUIRED xkbcommon)
-                target_link_libraries(mango PUBLIC EGL GL wayland-client xkbcommon)
-            endif()
-        endif ()
-    endif ()
-endif ()
-
-if (BUILD_VULKAN)
-    if (VULKAN_FOUND)
-        if (WIN32)
-            message("    Vulkan: WIN32")
-            target_include_directories(mango PUBLIC ${Vulkan_INCLUDE_DIRS})
-            target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES})
-        else ()
-            if (WINDOW_SYSTEM STREQUAL "xlib")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
-                target_link_libraries(mango PUBLIC X11 vulkan)
-                message("    Vulkan: XLIB")
-            elseif (WINDOW_SYSTEM STREQUAL "xcb")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XCB")
-                target_link_libraries(mango PUBLIC vulkan xcb xcb-xkb xcb-keysyms xcb-icccm xkbcommon)
-                message("    Vulkan: XCB")
-            elseif (WINDOW_SYSTEM STREQUAL "wayland")
-                message("    Vulkan: Wayland")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_WAYLAND")
-                find_package(PkgConfig REQUIRED)
-                pkg_check_modules(WAYLAND REQUIRED wayland-client)
-                pkg_check_modules(XKB REQUIRED xkbcommon)
-                target_link_libraries(mango PUBLIC vulkan wayland-client xkbcommon)
-            endif()
-        endif ()
-    endif ()
-endif ()
-
-# ------------------------------------------------------------------------------
 # required libraries
 # ------------------------------------------------------------------------------
+
+find_package(fmt CONFIG REQUIRED)
+message("    " FMT ": " ${fmt_VERSION} " [cmake]")
+target_link_libraries(mango PUBLIC fmt::fmt)
 
 find_module_with_cmake(mango ZLIB ZLIB ZLIB::ZLIB 0)
 find_module_with_pkg(mango ZLIB zlib 0)
@@ -1022,6 +1028,28 @@ endif ()
 install(
     EXPORT "mango-config"
     NAMESPACE mango::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mango
+    FILE "mango-targets.cmake"
+)
+
+# configure and install config file
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/mango-config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/mango-config.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mango
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/mango-config-version.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(
+    FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/mango-config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/mango-config-version.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mango
 )
 
