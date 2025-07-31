@@ -43,11 +43,9 @@ else ()
 
 endif ()
 
-find_module_with_cmake(png_benchmark BLEND2D blend2d blend2d::blend2d 0)
-find_module_with_cmake(png_benchmark PNG PNG PNG::PNG 0)
-find_module_with_cmake(png_benchmark ZLIB ZLIB ZLIB::ZLIB 0)
-find_module_with_pkg(png_benchmark PNG libpng 0)
-find_module_with_pkg(png_benchmark ZLIB zlib 0)
+find_module(png_benchmark BLEND2D PRIVATE OPTIONAL "" blend2d blend2d::blend2d 0)
+find_module(png_benchmark PNG PRIVATE REQUIRED libpng PNG PNG::PNG 0)
+find_module(png_benchmark ZLIB PRIVATE REQUIRED zlib ZLIB ZLIB::ZLIB 0)
 
 target_compile_definitions(png_benchmark PRIVATE "SPNG_STATIC")
 
@@ -70,6 +68,5 @@ if (MSVC)
 
 endif ()
 
-find_module_with_cmake(jpeg_benchmark BLEND2D blend2d blend2d::blend2d 0)
-find_module_with_cmake(jpeg_benchmark JPEG JPEG JPEG::JPEG 0)
-find_module_with_pkg(jpeg_benchmark JPEG libjpeg 0)
+find_module(jpeg_benchmark BLEND2D PRIVATE OPTIONAL "" blend2d blend2d::blend2d 0)
+find_module(jpeg_benchmark JPEG PRIVATE REQUIRED libjpeg JPEG JPEG::JPEG 0)
