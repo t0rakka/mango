@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -14,8 +14,8 @@
     #define FMT_UNICODE 0
     #pragma warning(disable : 5045)
 #endif
-#include <mango/fmt/format.h>
-#include <mango/fmt/color.h>
+#include <fmt/format.h>
+#include <fmt/color.h>
 
 namespace mango
 {

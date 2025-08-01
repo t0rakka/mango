@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 2.2.1
+        VERSION 2.3.0
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
@@ -457,10 +457,6 @@ FILE(GLOB EXTERNAL_BASISU
     "${EXTERNAL_SOURCE_DIR}/basisu/transcoder/*.cpp"
 )
 
-FILE(GLOB EXTERNAL_FMT
-    "${EXTERNAL_SOURCE_DIR}/fmt/src/*.cc"
-)
-
 FILE(GLOB EXTERNAL_IMPORT3D
     "${EXTERNAL_SOURCE_DIR}/mikktspace/*.h"
     "${EXTERNAL_SOURCE_DIR}/mikktspace/*.c"
@@ -480,7 +476,6 @@ SOURCE_GROUP("external/lzfse"       FILES ${EXTERNAL_LZFSE})
 SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
 SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
 SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
-SOURCE_GROUP("external/fmt"         FILES ${EXTERNAL_FMT})
 SOURCE_GROUP("external/import3d"    FILES ${EXTERNAL_IMPORT3D})
 
 # ------------------------------------------------------------------------------
@@ -511,7 +506,6 @@ set(MANGO_SOURCES
     ${EXTERNAL_UNRAR}
     ${EXTERNAL_ZPNG}
     ${EXTERNAL_BASISU}
-    ${EXTERNAL_FMT}
 )
 
 if (BUILD_OPENGL)
@@ -556,7 +550,7 @@ if (APPLE)
 endif ()
 
 # ------------------------------------------------------------------------------
-# package finding
+# platform libraries
 # ------------------------------------------------------------------------------
 
 find_package(PkgConfig QUIET)
@@ -564,69 +558,15 @@ if (PkgConfig_FOUND)
     message("PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
 endif ()
 
-function (find_module_with_pkg Target Prefix ItemName Version)
-    if (NOT ${Prefix}_ENABLE)
-        if (PkgConfig_FOUND)
-
-            if (Version STREQUAL "0")
-                pkg_check_modules(${Prefix} QUIET ${ItemName})
-            else ()
-                pkg_check_modules(${Prefix} QUIET ${ItemName}>=${Version})
-            endif ()
-
-            if (${Prefix}_FOUND)
-                set(${Prefix}_ENABLE 1 PARENT_SCOPE)
-                message("    " ${Prefix} ": " ${${Prefix}_VERSION} " [pkgconfig]")
-                target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
-                target_include_directories(${Target} PRIVATE ${${Prefix}_INCLUDE_DIRS})
-                target_link_directories(${Target} PRIVATE ${${Prefix}_LIBRARY_DIRS})
-                target_link_libraries(${Target} PRIVATE ${${Prefix}_LIBRARIES})
-            endif ()
-        endif ()
-    else ()
-        target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
-        target_include_directories(${Target} PRIVATE ${${Prefix}_INCLUDE_DIRS})
-        target_link_directories(${Target} PRIVATE ${${Prefix}_LIBRARY_DIRS})
-        target_link_libraries(${Target} PRIVATE ${${Prefix}_LIBRARIES})
-    endif ()
-endfunction ()
-
-function (find_module_with_cmake Target Prefix PackageName ItemName Version)
-    if (NOT ${Prefix}_ENABLE)
-
-        if (Version STREQUAL "0")
-            find_package(${PackageName} QUIET)
-        else ()
-            find_package(${PackageName} ${Version} QUIET)
-        endif ()
-
-        if (${PackageName}_FOUND)
-            set(${Prefix}_ENABLE 1 PARENT_SCOPE)
-            message("    " ${Prefix} ": " ${${PackageName}_VERSION} " [cmake]")
-            target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
-            target_link_libraries(${Target} PRIVATE ${ItemName})
-        endif ()
-    else ()
-        target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
-        target_link_libraries(${Target} PRIVATE ${ItemName})
-    endif ()
-endfunction ()
-
-function (check_required_package Prefix)
-    if (NOT ${Prefix}_ENABLE)
-        message(FATAL_ERROR "Failed to locate REQUIRED package: " ${Prefix})
-    endif ()
-endfunction()
-
-# ------------------------------------------------------------------------------
-# platform libraries
-# ------------------------------------------------------------------------------
-
-message("[Libraries]")
-
 if (CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
+
+message("[Libraries]")
+
+# ------------------------------------------------------------------------------
+# OpenGL
+# ------------------------------------------------------------------------------
 
 if (BUILD_OPENGL)
     if (OPENGL_FOUND)
@@ -670,6 +610,10 @@ if (BUILD_OPENGL)
     endif ()
 endif ()
 
+# ------------------------------------------------------------------------------
+# Vulkan
+# ------------------------------------------------------------------------------
+
 if (BUILD_VULKAN)
     if (VULKAN_FOUND)
         if (WIN32)
@@ -698,70 +642,102 @@ if (BUILD_VULKAN)
 endif ()
 
 # ------------------------------------------------------------------------------
+# find_module
+# ------------------------------------------------------------------------------
+
+function (find_module Target Prefix Interface Mode ModuleName PackageName ImportedTarget Version)
+
+    # find_package
+
+    if (NOT PackageName STREQUAL "")
+        if (Version STREQUAL "0")
+            find_package(${PackageName} QUIET)
+        else ()
+            find_package(${PackageName} ${Version} QUIET)
+        endif ()
+
+        if (${PackageName}_FOUND)
+            message("    " ${Prefix} ": " ${${PackageName}_VERSION} " [cmake]")
+            target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
+            target_link_libraries(${Target} ${Interface} ${ImportedTarget})
+            return ()
+        endif ()
+    endif ()
+
+    # pkg_check_modules
+
+    if (PkgConfig_FOUND AND NOT ModuleName STREQUAL "")
+        if (Version STREQUAL "0")
+            pkg_check_modules(${Prefix} QUIET ${ModuleName})
+        else ()
+            pkg_check_modules(${Prefix} QUIET ${ModuleName}>=${Version})
+        endif ()
+
+        if (${Prefix}_FOUND)
+            message("    " ${Prefix} ": " ${${Prefix}_VERSION} " [pkgconfig]")
+            target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
+            target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
+            target_link_directories(${Target} ${Interface} ${${Prefix}_LIBRARY_DIRS})
+            target_link_libraries(${Target} ${Interface} ${${Prefix}_LIBRARIES})
+            return ()
+        endif ()
+    endif ()
+
+    # check required
+
+    if (Mode STREQUAL "REQUIRED")
+        message(FATAL_ERROR "Failed to locate REQUIRED package: " ${Prefix})
+    endif ()
+
+endfunction()
+
+# ------------------------------------------------------------------------------
 # required libraries
 # ------------------------------------------------------------------------------
 
-find_module_with_cmake(mango ZLIB ZLIB ZLIB::ZLIB 0)
-find_module_with_pkg(mango ZLIB zlib 0)
-check_required_package(ZLIB)
-
-find_module_with_cmake(mango LIBDEFLATE libdeflate libdeflate::libdeflate_shared 0)
-find_module_with_pkg(mango LIBDEFLATE libdeflate 0)
-check_required_package(LIBDEFLATE)
+find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 10.1.1)
+find_module(mango ZLIB PRIVATE REQUIRED zlib ZLIB ZLIB::ZLIB 0)
+find_module(mango LIBDEFLATE PRIVATE REQUIRED libdeflate libdeflate libdeflate::libdeflate_shared 0)
 
 if (APPLE OR WIN32)
     # brew/vcpkg imported target is 'zstd::libzstd'
-    find_module_with_cmake(mango ZSTD zstd zstd::libzstd 0)
+    find_module(mango ZSTD PRIVATE REQUIRED libzstd zstd zstd::libzstd 0)
 else ()
     # apt/pacman imported target is 'zstd'
-    find_module_with_cmake(mango ZSTD zstd zstd 0)
+    find_module(mango ZSTD PRIVATE REQUIRED libzstd zstd zstd 0)
 endif ()
-find_module_with_pkg(mango ZSTD libzstd 0)
-check_required_package(ZSTD)
 
-find_module_with_cmake(mango LZ4 lz4 lz4::lz4 0)
-find_module_with_pkg(mango LZ4 liblz4 0)
-check_required_package(LZ4)
-
-find_module_with_cmake(mango BZIP2 BZip2 BZip2::BZip2 0)
-check_required_package(BZIP2)
-
-find_module_with_cmake(mango LCMS2 lcms2 lcms2::lcms2 0)
-find_module_with_pkg(mango LCMS2 lcms2 0)
-check_required_package(LCMS2)
+find_module(mango LZ4 PRIVATE REQUIRED liblz4 lz4 lz4::lz4 0)
+find_module(mango BZIP2 PRIVATE REQUIRED "" BZip2 BZip2::BZip2 0)
+find_module(mango LCMS2 PRIVATE REQUIRED lcms2 lcms2 lcms2::lcms2 0)
 
 # ------------------------------------------------------------------------------
 # optional libraries
 # ------------------------------------------------------------------------------
 
 if (LIBRARY_JXL)
-    find_module_with_pkg(mango JXL libjxl 0.8.2)
-    find_module_with_pkg(mango JXL_THREADS libjxl_threads 0.7)
+    find_module(mango JXL PRIVATE OPTIONAL libjxl "" "" 0.8.2)
+    find_module(mango JXL_THREADS PRIVATE OPTIONAL libjxl_threads "" "" 0.7)
 endif ()
 
 if (LIBRARY_JP2)
-    find_module_with_cmake(mango JP2 OpenJPEG openjp2 2.4.0)
-    find_module_with_pkg(mango JP2 libopenjp2 2.4.0)
+    find_module(mango JP2 PRIVATE OPTIONAL libopenjp2 OpenJPEG openjp2 2.4.0)
 endif ()
 
 if (LIBRARY_WEBP)
-    find_module_with_cmake(mango WEBP WebP WebP::webp 1.3.2)
-    find_module_with_pkg(mango WEBP libwebp 1.3.2)
+    find_module(mango WEBP PRIVATE OPTIONAL libwebp WebP WebP::webp 1.3.2)
 endif ()
 
 if (LIBRARY_AVIF)
-    find_module_with_cmake(mango AVIF libavif avif 1.0.0)
-    find_module_with_pkg(mango AVIF libavif 1.0.0)
+    find_module(mango AVIF PRIVATE OPTIONAL libavif libavif avif 1.0.0)
 endif ()
 
 if (LIBRARY_HEIF)
-    find_module_with_cmake(mango HEIF libheif heif 0)
-    find_module_with_pkg(mango HEIF libheif 1.13.0)
+    find_module(mango HEIF PRIVATE OPTIONAL libheif libheif heif 1.13.0)
 endif ()
 
 if (LIBRARY_ISAL)
-    find_module_with_cmake(mango ISAL unofficial-isal unofficial::isal::isal 0)
-    find_module_with_pkg(mango ISAL libisal 0)
+    find_module(mango ISAL PRIVATE OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
 endif ()
 
 # ------------------------------------------------------------------------------
@@ -1022,6 +998,28 @@ endif ()
 install(
     EXPORT "mango-config"
     NAMESPACE mango::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mango
+    FILE "mango-targets.cmake"
+)
+
+# configure and install config file
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/mango-config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/mango-config.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mango
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/mango-config-version.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(
+    FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/mango-config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/mango-config-version.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/mango
 )
 
