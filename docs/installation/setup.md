@@ -15,7 +15,7 @@ There are different package managers but our examples use apt-get (Ubuntu, Mint,
 
 ### REQUIRED Libraries
 
-    sudo apt-get install mesa-common-dev libgl1-mesa-dev zlib1g-dev libdeflate-dev libzstd-dev liblz4-dev libbz2-dev liblcms2-dev
+    sudo apt-get install mesa-common-dev libgl1-mesa-dev libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblz4-dev libbz2-dev liblcms2-dev
 
 ### OPTIONAL Libraries
 
@@ -42,11 +42,11 @@ Above uses ninja as build system, cmake users know what time it is. If you want 
 
 ### REQUIRED Libraries
 
-    brew install zlib libdeflate zstd
+    brew install fmt zlib libdeflate zstd lz4 bzip2 lcms2
 
 ### OPTIONAL Libraries
 
-    brew install jpeg-xl openjpeg webp libavif libheif isa-l lz4 bzip2 lcms2
+    brew install jpeg-xl openjpeg webp libavif libheif isa-l
 
 ### EXAMPLE Libraries
 
@@ -71,7 +71,7 @@ Here are the environment variables that are needed, the x64-windows is just exam
 
 ### REQUIRED Libraries
 
-    vcpkg install pkgconf zlib libdeflate zstd lz4 bzip2 lcms
+    vcpkg install pkgconf fmt zlib libdeflate zstd lz4 bzip2 lcms
 
 ### OPTIONAL Libraries
 
