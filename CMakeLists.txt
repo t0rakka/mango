@@ -966,10 +966,8 @@ include(GNUInstallDirs)
 add_library(mango::mango ALIAS mango)
 
 target_include_directories(mango
-    PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
-    INTERFACE
-        $<INSTALL_INTERFACE:include/>
+    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
+    INTERFACE $<INSTALL_INTERFACE:include/>
 )
 
 # install mango headers
@@ -980,15 +978,18 @@ install(
 )
 
 # install mango library
+set(MANGO_INSTALL_BINDIR "$<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_BINDIR},${CMAKE_INSTALL_BINDIR}>")
+set(MANGO_INSTALL_LIBDIR "$<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_LIBDIR},${CMAKE_INSTALL_LIBDIR}>")
+
 install(TARGETS mango
     EXPORT mango-config
-    RUNTIME DESTINATION $<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_BINDIR},${CMAKE_INSTALL_BINDIR}>
-    LIBRARY DESTINATION $<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_LIBDIR},${CMAKE_INSTALL_LIBDIR}>
-    ARCHIVE DESTINATION $<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_LIBDIR},${CMAKE_INSTALL_LIBDIR}>
+    RUNTIME DESTINATION ${MANGO_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${MANGO_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${MANGO_INSTALL_LIBDIR}
 )
 
 # install mango pdb files (only for windows)
-if (WIN32)
+if (WIN32 AND TARGET_PDB_FILE)
     install(FILES $<TARGET_PDB_FILE:mango>
         DESTINATION $<IF:$<CONFIG:Debug>,debug/bin,bin> OPTIONAL
     )
