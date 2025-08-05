@@ -19,7 +19,6 @@
 #define ZSTD_DISABLE_DEPRECATE_WARNINGS
 #include <zstd.h>
 
-#include "../../external/bzip2/bzlib.h"
 #include "../../external/lzfse/lzfse.h"
 
 #include "../../external/lzma/Alloc.h"
@@ -30,6 +29,7 @@
 #include "../../external/lzma/Ppmd8.h"
 
 #include <zlib.h>
+#include <bzlib.h>
 #include <libdeflate.h>
 
 #include "../../external/lzav/lzav.h"
