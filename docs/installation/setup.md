@@ -15,7 +15,15 @@ There are different package managers but our examples use apt-get (Ubuntu, Mint,
 
 ### REQUIRED Libraries
 
-    sudo apt-get install mesa-common-dev libgl1-mesa-dev libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblz4-dev libbz2-dev liblcms2-dev
+    sudo apt-get install libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblz4-dev libbz2-dev liblcms2-dev
+
+### OPTIONAL Libraries (OpenGL)
+
+    sudo apt-get install mesa-common-dev libgl1-mesa-dev
+
+### OPTIONAL Libraries (Vulkan)
+
+    sudo apt-get install glslang-dev
 
 ### OPTIONAL Libraries
 
@@ -72,6 +80,10 @@ Here are the environment variables that are needed, the x64-windows is just exam
 ### REQUIRED Libraries
 
     vcpkg install pkgconf fmt zlib libdeflate zstd lz4 bzip2 lcms
+
+### OPTIONAL Libraries (Vulkan)
+
+    vcpkg install glslang
 
 ### OPTIONAL Libraries
 

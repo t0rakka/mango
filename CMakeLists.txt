@@ -8,10 +8,10 @@ project(mango
 # options
 # ------------------------------------------------------------------------------
 
-OPTION(BUILD_OPENGL         "Build OpenGL support"                      ON)
+OPTION(BUILD_OPENGL         "Build OpenGL support"                      OFF)
 OPTION(BUILD_VULKAN         "Build Vulkan support"                      OFF)
-OPTION(BUILD_IMPORT3D       "Build Import3D support"                    ON)
-OPTION(BUILD_EXAMPLES       "Build examples"                            ON)
+OPTION(BUILD_IMPORT3D       "Build Import3D support"                    OFF)
+OPTION(BUILD_EXAMPLES       "Build examples"                            OFF)
 
 # Window system selection
 set(WINDOW_SYSTEM "xlib" CACHE STRING "Window system to use (xlib, xcb, wayland)")
@@ -113,7 +113,10 @@ endif ()
 
 if (BUILD_VULKAN)
     find_package(Vulkan QUIET)
-    if (NOT VULKAN_FOUND)
+    if (VULKAN_FOUND)
+        find_package(glslang CONFIG REQUIRED)
+        target_link_libraries(mango PRIVATE glslang::glslang)
+    else ()
         set(BUILD_VULKAN OFF)
     endif ()
 endif ()
