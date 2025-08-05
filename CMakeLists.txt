@@ -113,10 +113,7 @@ endif ()
 
 if (BUILD_VULKAN)
     find_package(Vulkan QUIET)
-    if (VULKAN_FOUND)
-        find_package(glslang CONFIG REQUIRED)
-        target_link_libraries(mango PRIVATE glslang::glslang)
-    else ()
+    if (NOT VULKAN_FOUND)
         set(BUILD_VULKAN OFF)
     endif ()
 endif ()
@@ -619,6 +616,10 @@ endif ()
 
 if (BUILD_VULKAN)
     if (VULKAN_FOUND)
+
+        find_package(glslang CONFIG REQUIRED)
+        target_link_libraries(mango PRIVATE glslang::glslang)
+
         if (WIN32)
             message("    Vulkan: WIN32")
             target_include_directories(mango PUBLIC ${Vulkan_INCLUDE_DIRS})
