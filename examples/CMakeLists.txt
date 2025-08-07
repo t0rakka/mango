@@ -31,6 +31,13 @@ if (BUILD_OPENGL)
     )
 endif ()
 
+if (BUILD_VULKAN)
+    add_subdirectory(vulkan)
+    list(APPEND EXAMPLE_BINARY_FOLDERS
+        "${CMAKE_CURRENT_BINARY_DIR}/vulkan"
+    )
+endif ()
+
 set(EXAMPLE_BINARY_FOLDERS ${EXAMPLE_BINARY_FOLDERS}
     CACHE STRING "Binary Directories for examples" FORCE
 )
