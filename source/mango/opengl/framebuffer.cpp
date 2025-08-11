@@ -172,17 +172,49 @@ namespace mango
     using namespace mango::image;
     using namespace mango::math;
 
+    static
+    math::int32x2 adjustWindowSizeToContent(int width, int height, int screenIndex)
+    {
+        // compute window size
+        int32x2 screen = OpenGLContext::getScreenSize(screenIndex);
+        int32x2 content(width, height);
+
+        if (content.x > screen.x)
+        {
+            // fit horizontally
+            int scale = div_ceil(content.x, screen.x);
+            content.x = content.x / scale;
+            content.y = content.y / scale;
+        }
+
+        if (content.y > screen.y)
+        {
+            // fit vertically
+            int scale = div_ceil(content.y, screen.y);
+            content.x = content.x / scale;
+            content.y = content.y / scale;
+        }
+
+        if (content.y < screen.y)
+        {
+            // enlarge tiny windows
+            int scale = std::max(1, (screen.y / std::max(1, content.y)) / 2);
+            content.x *= scale;
+            content.y *= scale;
+        }
+
+        return content;
+    }
+
     // -------------------------------------------------------------------
     // OpenGLFramebuffer
     // -------------------------------------------------------------------
 
     OpenGLFramebuffer::OpenGLFramebuffer(int width, int height, BufferMode buffermode)
-        : OpenGLContext(width, height, 0, nullptr)
+        : OpenGLContext(adjustWindowSizeToContent(width, height, 0), 0, nullptr)
         , m_width(width)
         , m_height(height)
     {
-        adjustWindowSizeToContent();
-
         switch (buffermode)
         {
             case RGBA_DIRECT:
@@ -363,39 +395,6 @@ namespace mango
         {
             glDeleteFramebuffers(1, &m_framebuffer);
         }
-    }
-
-    void OpenGLFramebuffer::adjustWindowSizeToContent(int screenIndex)
-    {
-        // compute window size
-        int32x2 screen = OpenGLContext::getScreenSize(screenIndex);
-        int32x2 content(m_width, m_height);
-
-        if (content.x > screen.x)
-        {
-            // fit horizontally
-            int scale = div_ceil(content.x, screen.x);
-            content.x = content.x / scale;
-            content.y = content.y / scale;
-        }
-
-        if (content.y > screen.y)
-        {
-            // fit vertically
-            int scale = div_ceil(content.y, screen.y);
-            content.x = content.x / scale;
-            content.y = content.y / scale;
-        }
-
-        if (content.y < screen.y)
-        {
-            // enlarge tiny windows
-            int scale = std::max(1, (screen.y / std::max(1, content.y)) / 2);
-            content.x *= scale;
-            content.y *= scale;
-        }
-
-        setWindowSize(content.x, content.y);
     }
 
     void OpenGLFramebuffer::setPalette(const Palette& palette)

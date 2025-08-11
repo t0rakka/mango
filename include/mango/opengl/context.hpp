@@ -7,6 +7,7 @@
 #include <set>
 #include <string>
 #include <mango/core/configure.hpp>
+#include <mango/math/math.hpp>
 
 // -----------------------------------------------------------------------
 // OpenGL Configuration
@@ -183,6 +184,7 @@ namespace mango
 
     public:
         OpenGLContext(int width, int height, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr);
+        OpenGLContext(math::int32x2 extent, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr);
         ~OpenGLContext();
 
         bool isExtension(const std::string& name) const;

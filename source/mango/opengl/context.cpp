@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <mango/core/exception.hpp>
@@ -302,6 +302,21 @@ namespace mango
     OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
         : Window(width, height, flags | API_OPENGL)
     {
+        initContext(width, height, flags, configPtr, shared);
+    }
+
+    OpenGLContext::OpenGLContext(math::int32x2 extent, u32 flags, const Config* configPtr, OpenGLContext* shared)
+        : Window(extent.x, extent.y, flags | API_OPENGL)
+    {
+        initContext(extent.x, extent.y, flags, configPtr, shared);
+    }
+
+    OpenGLContext::~OpenGLContext()
+    {
+    }
+
+    void OpenGLContext::initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
+    {
         OpenGLContextHandle* context = createOpenGLContext(this, width, height, flags, configPtr, shared);
         if (!context)
         {
@@ -371,10 +386,6 @@ namespace mango
         printLine("Vendor:   \"{}\"", reinterpret_cast<const char *>(s0));
         printLine("Renderer: \"{}\"", reinterpret_cast<const char *>(s1));
         printLine("Version:  \"{}\"", reinterpret_cast<const char *>(s2));
-    }
-
-    OpenGLContext::~OpenGLContext()
-    {
     }
 
     void OpenGLContext::makeCurrent()

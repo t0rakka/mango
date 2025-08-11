@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -52,8 +52,6 @@ namespace mango
 
         Program m_bilinear;
         Program m_bicubic;
-
-        void adjustWindowSizeToContent(int screen = 0);
 
     public:
         enum BufferMode
