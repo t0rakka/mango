@@ -249,12 +249,8 @@ namespace mango::math
     static inline auto sign(T a)
     {
         using ScalarType = std::common_type_t<T>;
-        ScalarType zero(0);
-        if (a < zero)
-            return ScalarType(-1.0);
-        else if (a > zero)
-            return ScalarType(1.0);
-        return zero;
+        const ScalarType zero(0);
+        return ScalarType((zero < a) - (a < zero));
     }
 
     template <typename T>

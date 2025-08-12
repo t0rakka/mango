@@ -201,10 +201,17 @@ namespace mango::simd
     static inline f32x4 sign(f32x4 a)
     {
         f32x4 v;
+#if 0
         v[0] = a[0] < 0 ? -1.0f : (a[0] > 0 ? 1.0f : 0.0f);
         v[1] = a[1] < 0 ? -1.0f : (a[1] > 0 ? 1.0f : 0.0f);
         v[2] = a[2] < 0 ? -1.0f : (a[2] > 0 ? 1.0f : 0.0f);
         v[3] = a[3] < 0 ? -1.0f : (a[3] > 0 ? 1.0f : 0.0f);
+#else
+        v[0] = float((0.0f < a[0]) - (a[0] < 0.0f));
+        v[1] = float((0.0f < a[1]) - (a[1] < 0.0f));
+        v[2] = float((0.0f < a[2]) - (a[2] < 0.0f));
+        v[3] = float((0.0f < a[3]) - (a[3] < 0.0f));
+#endif
         return v;
     }
 
@@ -638,8 +645,13 @@ namespace mango::simd
     static inline f64x2 sign(f64x2 a)
     {
         f64x2 v;
+#if 0
         v[0] = a[0] < 0 ? -1.0 : (a[0] > 0 ? 1.0 : 0.0);
         v[1] = a[1] < 0 ? -1.0 : (a[1] > 0 ? 1.0 : 0.0);
+#else
+        v[0] = double((0.0 < a[0]) - (a[0] < 0.0));
+        v[1] = double((0.0 < a[1]) - (a[1] < 0.0));
+#endif
         return v;
     }
 

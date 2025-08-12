@@ -179,8 +179,13 @@ namespace mango::simd
     static inline f32x2 sign(f32x2 a)
     {
         f32x2 v;
+#if 0
         v[0] = a[0] < 0 ? -1.0f : (a[0] > 0 ? 1.0f : 0.0f);
         v[1] = a[1] < 0 ? -1.0f : (a[1] > 0 ? 1.0f : 0.0f);
+#else
+        v[0] = float((0.0f < a[0]) - (a[0] < 0.0f));
+        v[1] = float((0.0f < a[1]) - (a[1] < 0.0f));
+#endif
         return v;
     }
 
