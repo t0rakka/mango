@@ -618,7 +618,23 @@ if (BUILD_VULKAN)
     if (VULKAN_FOUND)
 
         find_package(glslang CONFIG REQUIRED)
-        target_link_libraries(mango PRIVATE glslang::glslang)
+        target_link_libraries(mango PRIVATE
+            glslang::glslang
+            glslang::SPIRV
+            glslang::OSDependent
+            glslang::MachineIndependent
+            glslang::GenericCodeGen
+            #glslang::glslang-default-resource-limits
+        )
+
+        # Link default resource limits provider for GetDefaultResources()
+        if (TARGET glslang::glslang-default-resource-limits)
+            target_link_libraries(mango PRIVATE glslang::glslang-default-resource-limits)
+        elseif (TARGET glslang-default-resource-limits)
+            target_link_libraries(mango PRIVATE glslang-default-resource-limits)
+        elseif (TARGET glslang::ResourceLimits)
+            target_link_libraries(mango PRIVATE glslang::ResourceLimits)
+        endif ()
 
         if (WIN32)
             message("    Vulkan: WIN32")

@@ -1,6 +1,6 @@
 
 list(APPEND EXAMPLES
-    basic
+    vkbasic
 )
 
 foreach(example IN LISTS EXAMPLES)
@@ -8,5 +8,3 @@ foreach(example IN LISTS EXAMPLES)
     set_target_properties(${example} PROPERTIES FOLDER "examples/vulkan")
     source_group("" FILES ${example}.cpp)
 endforeach()
-
-#file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

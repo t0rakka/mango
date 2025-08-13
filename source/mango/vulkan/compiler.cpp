@@ -8,6 +8,121 @@
 
 #if 0
 
+#include <vector>
+#include <string>
+#include <iostream>
+
+#include <glslang/Public/ShaderLang.h>
+#include <glslang/Public/ResourceLimits.h>
+#include <glslang/SPIRV/GlslangToSpv.h>
+
+static EShLanguage shaderStageFromString(const std::string& stage)
+{
+	if (stage == "vert") return EShLangVertex;
+	if (stage == "frag") return EShLangFragment;
+	if (stage == "comp") return EShLangCompute;
+	if (stage == "geom") return EShLangGeometry;
+	if (stage == "tesc") return EShLangTessControl;
+	if (stage == "tese") return EShLangTessEvaluation;
+	if (stage == "rgen") return EShLangRayGen;
+	if (stage == "rint") return EShLangIntersect;
+	if (stage == "rahit") return EShLangAnyHit;
+	if (stage == "rchit") return EShLangClosestHit;
+	if (stage == "rmiss") return EShLangMiss;
+	if (stage == "rcall") return EShLangCallable;
+	return EShLangCount;
+}
+
+static bool compileGlslToSpirv(const std::string& glslSource,
+                               EShLanguage stage,
+                               std::vector<uint32_t>& spirvBinary,
+                               std::string& log)
+{
+	spirvBinary.clear();
+	log.clear();
+
+	glslang::InitializeProcess(); // TODO: just once
+
+	glslang::TShader shader(stage);
+	const char* src = glslSource.c_str();
+	shader.setStrings(&src, 1);
+	shader.setEntryPoint("main");
+
+	// Target Vulkan + SPIR-V (adjust versions if needed)
+	shader.setEnvInput(glslang::EShSourceGlsl, stage, glslang::EShClientVulkan, 100);
+	shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_2);
+	shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
+
+	EShMessages messages = static_cast<EShMessages>(EShMsgDefault | EShMsgSpvRules | EShMsgVulkanRules);
+
+	//const TBuiltInResource& resources = glslang::DefaultTBuiltInResource; // provided by glslang
+    const TBuiltInResource& resources = *GetDefaultResources();
+
+	if (!shader.parse(&resources, 450, ECoreProfile, false, false, messages))
+    {
+		log = std::string("Parse failed:\n") + shader.getInfoLog() + "\n" + shader.getInfoDebugLog();
+		glslang::FinalizeProcess();
+		return false;
+	}
+
+	glslang::TProgram program;
+	program.addShader(&shader);
+
+	if (!program.link(messages))
+    {
+		log = std::string("Link failed:\n") + program.getInfoLog() + "\n" + program.getInfoDebugLog();
+		glslang::FinalizeProcess();
+		return false;
+	}
+
+	const glslang::TIntermediate* intermediate = program.getIntermediate(stage);
+	if (!intermediate)
+    {
+		log = "No intermediate after linking.";
+		glslang::FinalizeProcess();
+		return false;
+	}
+
+	glslang::SpvOptions spvOptions{};
+	spvOptions.generateDebugInfo = false;
+	spvOptions.stripDebugInfo = true;
+	spvOptions.disableOptimizer = false;
+	spvOptions.optimizeSize = false;
+
+	std::vector<unsigned int> temp;
+	glslang::GlslangToSpv(*intermediate, temp, &spvOptions);
+	spirvBinary.assign(temp.begin(), temp.end());
+
+	glslang::FinalizeProcess(); // TODO: just once
+	return true;
+}
+
+int compile_glsl_to_spirv()
+{
+	const std::string vs = R"(#version 450
+        layout(location=0) in vec3 inPos;
+        void main() { gl_Position = vec4(inPos, 1.0); }
+    )";
+
+	std::vector<uint32_t> spirv;
+	std::string log;
+
+	if (compileGlslToSpirv(vs, EShLangVertex, spirv, log))
+    {
+		std::cout << "OK. SPIR-V words: " << spirv.size() << "\n";
+	}
+    else
+    {
+		std::cerr << log << "\n";
+	}
+	return 0;
+}
+
+#endif
+
+
+#if 0
+
 #include <glslang/Public/ShaderLang.h>
 #include <SPIRV/GlslangToSpv.h>
 
