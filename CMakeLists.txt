@@ -621,9 +621,9 @@ if (BUILD_VULKAN)
         target_link_libraries(mango PRIVATE
             glslang::glslang
             glslang::SPIRV
-            glslang::OSDependent
-            glslang::MachineIndependent
-            glslang::GenericCodeGen
+            #glslang::OSDependent
+            #glslang::MachineIndependent
+            #glslang::GenericCodeGen
             #glslang::glslang-default-resource-limits
         )
 
