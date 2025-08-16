@@ -46,13 +46,43 @@ namespace
 
     enum class Tag : u16
     {
+        //NewSubfileType = 254, // LONG
+        //SubfileType = 255, // SHORT
         ImageWidth = 256,
         ImageLength = 257,
         BitsPerSample = 258,
         Compression = 259,
         PhotometricInterpretation = 262,
-        //StripOffsets = 273,
-        //StripByteCounts = 279,
+        //Threshholding = 263, // SHORT
+        //CellWidth = 264, // SHORT
+        //CellLength = 265, // SHORT
+        //FillOrder = 266, // SHORT
+        Predictor = 269,
+        ImageDescription = 270,
+        //Make = 271, // ASCII
+        //Model = 272, // ASCII
+        StripOffsets = 273,
+        Orientation = 274,
+        SamplesPerPixel = 277,
+        RowsPerStrip = 278,
+        StripByteCounts = 279,
+        //MinSampleValue = 280, // SHORT
+        //MaxSampleValue = 281, // SHORT
+        XResolution = 282,
+        YResolution = 283,
+        PlanarConfiguration = 284,
+        //FreeOffsets = 288, // LONG
+        //FreeByteCounts = 289, // LONG
+        //GrayResponseUnit = 290, // SHORT
+        //GrayResponseCurve = 291, // SHORT
+        ResolutionUnit = 296,
+        Software = 305,
+        //DateTime = 306, // ASCII
+        //Artist = 315, // ASCII
+        //HostComputer = 316, // ASCII
+        ColorMap = 320,
+        //ExtraSamples = 338, // SHORT
+        //Copyright = 33432, // ASCII
     };
 
     enum class Compression
@@ -92,12 +122,19 @@ namespace
         u16 samples_per_pixel = 3;
         u16 compression = 1;
         u16 photometric = 2;
+        u16 resolution_unit = 0;
+        float x_resolution = 0;
+        float y_resolution = 0;
+        u32 orientation = 0;
+        u32 planar_configuration = 0;
 
-        /*
-        u16 m_photometric = 2;
-        std::vector<u32> m_strip_offsets;
-        std::vector<u32> m_strip_byte_counts;
-        */
+        u32 rows_per_strip = 0;
+        std::vector<u32> strip_offsets;
+        std::vector<u32> strip_byte_counts;
+
+        std::string image_description;
+        std::string software;
+        std::string predictor;
     };
 
     template <typename Pointer>
@@ -107,7 +144,7 @@ namespace
     }
 
     template <typename Pointer>
-    u32 getUnsigned(Pointer p, Type type)
+    u32 getUnsigned(Pointer& p, Type type)
     {
         u32 value = 0;
 
@@ -127,6 +164,25 @@ namespace
                 break;
         }
 
+        return value;
+    }
+
+    template <typename Pointer>
+    float getRational(Pointer p, ConstMemory memory, Type type)
+    {
+        Pointer temp = memory.address + getOffset(p);
+        u32 numerator = getUnsigned(temp, Type::LONG);
+        u32 denominator = getUnsigned(temp, Type::LONG);
+        //printLine(Print::Info, "      numerator: {}, denominator: {}", numerator, denominator);
+        float value = float(numerator) / denominator;
+        return value;
+    }
+
+    template <typename Pointer>
+    std::string getAscii(Pointer p, ConstMemory memory, Type type)
+    {
+        const char* temp = reinterpret_cast<const char*>(memory.address + getOffset(p));
+        std::string value = temp;
         return value;
     }
 
@@ -156,9 +212,9 @@ namespace
                 //       and sum all the vector elements using std::accumulate
                 if (count > 1)
                 {
+                    Pointer temp = memory.address + getOffset(p);
                     for (u32 i = 0; i < count; ++i)
                     {
-                        Pointer temp = memory.address + getOffset(p);
                         context.bits_per_sample += getUnsigned(temp, type);
                     }
                 }
@@ -183,85 +239,104 @@ namespace
                 // TODO: 0 - WhiteIsZero, 1 - BlackIsZero, 2 - RGB, ...
                 break;
 
-            default:
-                printLine(Print::Info, "    [Unknown: {}]", int(tag));
+            case Tag::Predictor:
+                context.predictor = getAscii(p, memory, type);
+                printLine(Print::Info, "    [Predictor]");
+                //printLine(Print::Info, "{}", context.predictor);
                 break;
-        }
 
-        u32 offset = getOffset(p);
-        printLine(Print::Info, "      type: {}, count: {}, offset: {}",
-            int(type), count, offset);
-    }
+            case Tag::ImageDescription:
+                context.image_description = getAscii(p, memory, type);
+                printLine(Print::Info, "    [ImageDescription]");
+                //printLine(Print::Info, "{}", context.image_description);
+                break;
 
-#if 0
-    void parseIFDEntry(const IFDEntry& entry)
-    {
-        switch (entry.tag)
-        {
-
-            /*
-
-            case 258: // BitsPerSample
-                if (entry.type == 3 && entry.count == 1) // SHORT, single value
+            case Tag::StripOffsets:
+                printLine(Print::Info, "    [StripOffsets]");
+                if (count > 1)
                 {
-                    m_bits_per_sample = u16(entry.value_offset & 0xFFFF);
-                }
-                else if (entry.count > 1)
-                {
-                    printLine(Print::Info, "    BitsPerSample: Multiple values at offset {}", entry.value_offset);
-                    m_bits_per_sample = 0;
-
-                    // Read the actual bits per sample array
-                    const u8* bits_data = m_memory.address + entry.value_offset;
-                    for (int i = 0; i < entry.count; i++)
+                    Pointer temp = memory.address + getOffset(p);
+                    for (u32 i = 0; i < count; ++i)
                     {
-                        // TODO: Handle big endian
-                        u16 value = littleEndian::uload16(bits_data + i * 2);
-                        printLine(Print::Info, "      value[{}] = {}", i, value);
-                        m_bits_per_sample += u16(value);
+                        u32 value = getUnsigned(temp, type);
+                        context.strip_offsets.push_back(value);
                     }
                 }
-                else
-                {
-                    printLine(Print::Info, "    BitsPerSample: Unexpected type {} count {}", entry.type, entry.count);
-                    m_bits_per_sample = 8; // Default fallback
-                }
-                printLine(Print::Info, "    BitsPerSample: {}", m_bits_per_sample);
                 break;
 
-            case 273: // StripOffsets
-                printLine(Print::Info, "    StripOffsets: {} (count: {})", entry.value_offset, entry.count);
-                // TODO: Handle multiple strip offsets
-                if (entry.count == 1)
+            case Tag::Orientation:
+                context.orientation = getUnsigned(p, type);
+                printLine(Print::Info, "    [Orientation]");
+                printLine(Print::Info, "      value: {}", context.orientation);
+                break;
+
+            case Tag::SamplesPerPixel:
+                context.samples_per_pixel = getUnsigned(p, type);
+                printLine(Print::Info, "    [SamplesPerPixel]");
+                printLine(Print::Info, "      value: {}", context.samples_per_pixel);
+                break;
+
+            case Tag::RowsPerStrip:
+                context.rows_per_strip = getUnsigned(p, type);
+                printLine(Print::Info, "    [RowsPerStrip]");
+                printLine(Print::Info, "      value: {}", context.rows_per_strip);
+                break;
+
+            case Tag::StripByteCounts:
+                printLine(Print::Info, "    [StripByteCounts]");
+                if (count > 1)
                 {
-                    m_strip_offsets.push_back(entry.value_offset);
+                    Pointer temp = memory.address + getOffset(p);
+                    for (u32 i = 0; i < count; ++i)
+                    {
+                        u32 value = getUnsigned(temp, type);
+                        context.strip_byte_counts.push_back(value);
+                    }
                 }
                 break;
 
-            case 277: // SamplesPerPixel
-                m_samples_per_pixel = u16(entry.value_offset);
-                printLine(Print::Info, "    SamplesPerPixel: {}", m_samples_per_pixel);
+            case Tag::ResolutionUnit:
+                context.resolution_unit = getUnsigned(p, type);
+                printLine(Print::Info, "    [ResolutionUnit]");
+                printLine(Print::Info, "      value: {}", context.resolution_unit);
                 break;
 
-            case 279: // StripByteCounts
-                printLine(Print::Info, "    StripByteCounts: {} (count: {})", entry.value_offset, entry.count);
-                // TODO: Handle multiple strip byte counts
-                if (entry.count == 1)
-                {
-                    m_strip_byte_counts.push_back(entry.value_offset);
-                }
+            case Tag::XResolution:
+                context.x_resolution = getRational(p, memory, type);
+                printLine(Print::Info, "    [XResolution]");
+                printLine(Print::Info, "      value: {}", context.x_resolution);
                 break;
-            */
+
+            case Tag::YResolution:
+                context.y_resolution = getRational(p, memory, type);
+                printLine(Print::Info, "    [YResolution]");
+                printLine(Print::Info, "      value: {}", context.y_resolution);
+                break;
+
+            case Tag::PlanarConfiguration:
+                context.planar_configuration = getUnsigned(p, type);
+                printLine(Print::Info, "    [PlanarConfiguration]");
+                printLine(Print::Info, "      value: {}", context.planar_configuration);
+                break;
+
+            case Tag::Software:
+                context.software = getAscii(p, memory, type);
+                printLine(Print::Info, "    [Software]");
+                //printLine(Print::Info, "{}", context.software);
+                break;
+
+            case Tag::ColorMap:
+                printLine(Print::Info, "    [ColorMap]");
+                // TODO: parse color map
+                break;
 
             default:
-                printLine(Print::Info, "    [Unknown: {}]", entry.tag);
+                printLine(Print::Info, "    [UNKNOWN: {}]", int(tag));
                 break;
         }
 
-        printLine(Print::Info, "      type: {}, count: {}, value_offset: {}",
-            int(entry.type), entry.count, entry.value_offset);
+        //printLine(Print::Info, "      type: {}, count: {}", int(type), count);
     }
-#endif
 
     struct TIFFHeader
     {
@@ -425,8 +500,10 @@ namespace
             header.depth = 0;
             header.levels = 0;
             header.faces = 0;
+            header.format = LuminanceFormat(8, Format::UNORM, 8, 0);
+            //header.format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8); // TODO: set format based on samples per pixel and bits per sample
             header.compression = TextureCompression::NONE;
-            
+
             // Determine format based on samples per pixel and bits per sample
             //setImageFormat();
 
@@ -498,7 +575,35 @@ namespace
             }
 
             // MANGO TODO: Implement actual TIFF decoding
-            status.setError("[ImageDecoder.TIFF] Decoding not yet implemented.");
+            //status.setError("[ImageDecoder.TIFF] Decoding not yet implemented.");
+
+#if 1
+            Bitmap bitmap(header.width, header.height, header.format);
+
+            u32 y = 0;
+
+            for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
+            {
+                u32 rows_to_read = std::min(m_context.rows_per_strip, header.height - y);
+
+                u32 y0 = y;
+                u32 y1 = y + rows_to_read;
+
+                const u8* src = m_memory.address + m_context.strip_offsets[i];
+                u32 src_size = m_context.strip_byte_counts[i];
+
+                //for (u32 y = y0; y < y1; ++y)
+                {
+                    u8* dest = bitmap.address(0, y0);
+                    std::memcpy(dest, src, src_size);
+                    //src += src_size;
+                }
+
+                y += rows_to_read;
+            }
+
+            dest.blit(0, 0, bitmap);
+#endif
 
             return status;
         }
