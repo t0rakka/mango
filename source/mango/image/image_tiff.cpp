@@ -8,6 +8,7 @@
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
 #include <vector>
+#include <numeric>
 
 namespace
 {
@@ -137,6 +138,41 @@ namespace
         std::string predictor;
     };
 
+    static inline
+    u32 getSize(Type type, u32 count)
+    {
+        u32 size = 0;
+
+        switch (type)
+        {
+            case Type::BYTE:
+            case Type::ASCII:
+            case Type::SBYTE:
+            case Type::UNDEFINED:
+                size = count;
+                break;
+
+            case Type::SHORT:
+            case Type::SSHORT:
+                size = count * 2;
+                break;
+
+            case Type::LONG:
+            case Type::SLONG:
+            case Type::FLOAT:
+                size = count * 4;
+                break;
+
+            case Type::RATIONAL:
+            case Type::SRATIONAL:
+            case Type::DOUBLE:
+                size = count * 8;
+                break;
+        }
+
+        return size;
+    }
+
     template <typename Pointer>
     u32 getOffset(Pointer p)
     {
@@ -165,6 +201,25 @@ namespace
         }
 
         return value;
+    }
+
+    template <typename Pointer>
+    std::vector<u32> getUnsignedArray(Pointer p, ConstMemory memory, Type type, u32 count)
+    {
+        std::vector<u32> values;
+
+        if (getSize(type, count) > 4)
+        {
+            p = memory.address + getOffset(p);
+        }
+
+        for (u32 i = 0; i < count; ++i)
+        {
+            u32 value = getUnsigned(p, type);
+            values.push_back(value);
+        }
+
+        return values;
     }
 
     template <typename Pointer>
@@ -208,23 +263,13 @@ namespace
                 break;
 
             case Tag::BitsPerSample:
-                // TODO: use utility function to return vector of values
-                //       and sum all the vector elements using std::accumulate
-                if (count > 1)
-                {
-                    Pointer temp = memory.address + getOffset(p);
-                    for (u32 i = 0; i < count; ++i)
-                    {
-                        context.bits_per_sample += getUnsigned(temp, type);
-                    }
-                }
-                else
-                {
-                    context.bits_per_sample = getUnsigned(p, type);
-                }
+            {
+                std::vector<u32> values = getUnsignedArray(p, memory, type, count);
+                context.bits_per_sample = std::accumulate(values.begin(), values.end(), 0);
                 printLine(Print::Info, "    [BitsPerSample]");
                 printLine(Print::Info, "      value: {}", context.bits_per_sample);
                 break;
+            }
 
             case Tag::Compression:
                 context.compression = getUnsigned(p, type);
@@ -252,17 +297,11 @@ namespace
                 break;
 
             case Tag::StripOffsets:
+            {
                 printLine(Print::Info, "    [StripOffsets]");
-                if (count > 1)
-                {
-                    Pointer temp = memory.address + getOffset(p);
-                    for (u32 i = 0; i < count; ++i)
-                    {
-                        u32 value = getUnsigned(temp, type);
-                        context.strip_offsets.push_back(value);
-                    }
-                }
+                context.strip_offsets = getUnsignedArray(p, memory, type, count);
                 break;
+            }
 
             case Tag::Orientation:
                 context.orientation = getUnsigned(p, type);
@@ -283,17 +322,11 @@ namespace
                 break;
 
             case Tag::StripByteCounts:
+            {
                 printLine(Print::Info, "    [StripByteCounts]");
-                if (count > 1)
-                {
-                    Pointer temp = memory.address + getOffset(p);
-                    for (u32 i = 0; i < count; ++i)
-                    {
-                        u32 value = getUnsigned(temp, type);
-                        context.strip_byte_counts.push_back(value);
-                    }
-                }
+                context.strip_byte_counts = getUnsignedArray(p, memory, type, count);
                 break;
+            }
 
             case Tag::ResolutionUnit:
                 context.resolution_unit = getUnsigned(p, type);
@@ -335,7 +368,7 @@ namespace
                 break;
         }
 
-        //printLine(Print::Info, "      type: {}, count: {}", int(type), count);
+        printLine(Print::Info, "      type: {}, count: {}", int(type), count);
     }
 
     struct TIFFHeader
