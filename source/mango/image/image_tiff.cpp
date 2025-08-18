@@ -403,13 +403,22 @@ namespace
     static
     bool lzw_decompress(Memory output, ConstMemory input)
     {
-        // String table using simple approach  
-        std::vector<std::vector<u8>> string_table(4096);
+        // Efficient LZW table structure (like the original!)
+        struct lzw_entry
+        {
+            s16 prefix;
+            u8 first;
+            u8 suffix;
+        } codes[4096];
+
+        u8 decode_stack[4096];
 
         // Initialize table with single characters
         for (int i = 0; i < 256; i++)
         {
-            string_table[i] = { static_cast<u8>(i) };
+            codes[i].prefix = -1;
+            codes[i].first = static_cast<u8>(i);
+            codes[i].suffix = static_cast<u8>(i);
         }
 
         const int ClearCode = 256;
@@ -430,19 +439,13 @@ namespace
 
         auto GetNextCode = [&]() -> int
         {
-            if (next_table_entry == 511 && codesize == 9)
+            // TIFF LZW transitions: 511->10bit, 1023->11bit, 2047->12bit
+            // Simple bit trick: these are all (1<<bits)-1, so we can check next_table_entry directly
+            if ((next_table_entry == 511 && codesize == 9) ||
+                (next_table_entry == 1023 && codesize == 10) ||
+                (next_table_entry == 2047 && codesize == 11))
             {
-                codesize = 10;
-                codemask = (1 << codesize) - 1;
-            }
-            else if (next_table_entry == 1023 && codesize == 10)
-            {
-                codesize = 11;
-                codemask = (1 << codesize) - 1;
-            }
-            else if (next_table_entry == 2047 && codesize == 11)
-            {
-                codesize = 12; 
+                codesize++;
                 codemask = (1 << codesize) - 1;
             }
 
@@ -462,32 +465,37 @@ namespace
             return code;
         };
 
-        auto WriteString = [&](const std::vector<u8>& str)
+        auto WriteString = [&](int code)
         {
-            if (dest_ptr + str.size() > dest_end)
+            u8* sp = decode_stack;
+            
+            // Build string by following prefix chain
+            while (code >= 0)
+            {
+                *sp++ = codes[code].suffix;
+                if (codes[code].prefix < 0)
+                    break;
+                code = codes[code].prefix;
+            }
+
+            // Output string in reverse order
+            if (dest_ptr + (sp - decode_stack) > dest_end)
                 return false;
-            for (u8 byte : str)
-                *dest_ptr++ = byte;
+
+            while (sp > decode_stack)
+                *dest_ptr++ = *--sp;
+
             return true;
         };
 
-        auto StringFromCode = [&](int code) -> std::vector<u8>
-        {
-            if (code < 0 || code >= next_table_entry)
-                return {};
-            return string_table[code];
-        };
-
-        auto FirstChar = [&](const std::vector<u8>& str) -> u8
-        {
-            return str.empty() ? 0 : str[0];
-        };
-
-        auto AddStringToTable = [&](const std::vector<u8>& str)
+        auto AddStringToTable = [&](int oldcode, u8 first_char)
         {
             if (next_table_entry < 4096)
             {
-                string_table[next_table_entry++] = str;
+                codes[next_table_entry].prefix = oldcode;
+                codes[next_table_entry].first = codes[oldcode].first;
+                codes[next_table_entry].suffix = first_char;
+                next_table_entry++;
             }
         };
 
@@ -509,37 +517,33 @@ namespace
                 codemask = (1 << codesize) - 1;
 
                 Code = GetNextCode();
-                if (Code == EoiCode)
+                if (Code < 0 || Code == EoiCode)
                     break;
-                if (Code < 0)
-                    break; // EOF
 
-                WriteString(StringFromCode(Code));
+                WriteString(Code);
                 OldCode = Code;
             }
             else
             {
-                // Not a clear code
                 if (Code < next_table_entry)
                 {
-                    // Code is in table (99.9% of the time)
-                    WriteString(StringFromCode(Code));
+                    // Critical Path: Code is in table (99.9% of the time)
+                    WriteString(Code);
                     if (OldCode >= 0)
                     {
-                        std::vector<u8> new_string = StringFromCode(OldCode);
-                        new_string.push_back(FirstChar(StringFromCode(Code)));
-                        AddStringToTable(new_string);
+                        AddStringToTable(OldCode, codes[Code].first);
                     }
                     OldCode = Code;
                 }
                 else
                 {
-                    // Code not in table - the "KwKwK" case
-                    std::vector<u8> OutString = StringFromCode(OldCode);
-                    OutString.push_back(FirstChar(StringFromCode(OldCode)));
-                    WriteString(OutString);
-                    AddStringToTable(OutString);
-                    OldCode = Code;
+                    // Code not in table - the "KwKwK" case (rare)
+                    if (OldCode >= 0)
+                    {
+                        AddStringToTable(OldCode, codes[OldCode].first);
+                        WriteString(Code); // Code now exists in table
+                        OldCode = Code;
+                    }
                 }
             }
         }
