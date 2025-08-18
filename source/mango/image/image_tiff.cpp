@@ -7,6 +7,7 @@
 #include <mango/core/buffer.hpp>
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
+#include <mango/core/compress.hpp>
 #include <vector>
 #include <numeric>
 
@@ -58,7 +59,7 @@ namespace
         //CellWidth = 264, // SHORT
         //CellLength = 265, // SHORT
         //FillOrder = 266, // SHORT
-        Predictor = 269,
+        DocumentName = 269,
         ImageDescription = 270,
         //Make = 271, // ASCII
         //Model = 272, // ASCII
@@ -81,12 +82,13 @@ namespace
         //DateTime = 306, // ASCII
         //Artist = 315, // ASCII
         //HostComputer = 316, // ASCII
+        Predictor = 317,
         ColorMap = 320,
         //ExtraSamples = 338, // SHORT
         //Copyright = 33432, // ASCII
     };
 
-    enum class Compression
+    enum class Compression : u16
     {
         NONE = 1,
         CCITT_RLE = 2,
@@ -94,9 +96,9 @@ namespace
         CCITT_FAX4 = 4,
         LZW = 5,
         JPEG = 6,
+        ZIP = 8,
         PACKBITS = 32773,
         DEFLATE = 32946,
-        ZIP = 8
     };
 
     enum class PhotometricInterpretation
@@ -128,14 +130,17 @@ namespace
         float y_resolution = 0;
         u32 orientation = 0;
         u32 planar_configuration = 0;
+        u32 predictor = 1;
 
         u32 rows_per_strip = 0;
         std::vector<u32> strip_offsets;
         std::vector<u32> strip_byte_counts;
 
+        Palette palette;
+
         std::string image_description;
         std::string software;
-        std::string predictor;
+        std::string document_name;
     };
 
     static inline
@@ -284,10 +289,10 @@ namespace
                 // TODO: 0 - WhiteIsZero, 1 - BlackIsZero, 2 - RGB, ...
                 break;
 
-            case Tag::Predictor:
-                context.predictor = getAscii(p, memory, type);
-                printLine(Print::Info, "    [Predictor]");
-                //printLine(Print::Info, "{}", context.predictor);
+            case Tag::DocumentName:
+                context.document_name = getAscii(p, memory, type);
+                printLine(Print::Info, "    [DocumentName]");
+                //printLine(Print::Info, "{}", context.document_name);
                 break;
 
             case Tag::ImageDescription:
@@ -352,6 +357,12 @@ namespace
                 printLine(Print::Info, "      value: {}", context.planar_configuration);
                 break;
 
+            case Tag::Predictor:
+                context.predictor = getUnsigned(p, type);
+                printLine(Print::Info, "    [Predictor]");
+                printLine(Print::Info, "      value: {}", context.predictor);
+                break;
+
             case Tag::Software:
                 context.software = getAscii(p, memory, type);
                 printLine(Print::Info, "    [Software]");
@@ -359,9 +370,27 @@ namespace
                 break;
 
             case Tag::ColorMap:
+            {
                 printLine(Print::Info, "    [ColorMap]");
-                // TODO: parse color map
+                u32 count = 1 << context.bits_per_sample;
+                if (count > 256)
+                {
+                    //header.setError("Incorrect ColorMap size: {}.", count);
+                    break;
+                }
+
+                context.palette.size = count;
+                std::vector<u32> values = getUnsignedArray(p, memory, type, count * 3);
+
+                for (u32 i = 0; i < count; ++i)
+                {
+                    u32 r = values[i + count * 0] >> 8;
+                    u32 g = values[i + count * 1] >> 8;
+                    u32 b = values[i + count * 2] >> 8;
+                    context.palette[i] = Color(r, g, b, 0xff);
+                }
                 break;
+            }
 
             default:
                 printLine(Print::Info, "    [UNKNOWN: {}]", int(tag));
@@ -369,6 +398,153 @@ namespace
         }
 
         printLine(Print::Info, "      type: {}, count: {}", int(type), count);
+    }
+
+    static
+    bool lzw_decompress(Memory output, ConstMemory input)
+    {
+        // String table using simple approach  
+        std::vector<std::vector<u8>> string_table(4096);
+
+        // Initialize table with single characters
+        for (int i = 0; i < 256; i++)
+        {
+            string_table[i] = { static_cast<u8>(i) };
+        }
+
+        const int ClearCode = 256;
+        const int EoiCode = 257;
+        int next_table_entry = 258;
+
+        // Calculate pointers from Memory objects
+        const u8* src_ptr = input.address;
+        const u8* src_end = input.address + input.size;
+        u8* dest_ptr = output.address;
+        u8* dest_end = output.address + output.size;
+
+        // Bit reading state
+        s32 data = 0;
+        s32 data_bits = 0;
+        s32 codesize = 9;  // Start with 9-bit codes
+        s32 codemask = (1 << codesize) - 1;
+
+        auto GetNextCode = [&]() -> int
+        {
+            if (next_table_entry == 511 && codesize == 9)
+            {
+                codesize = 10;
+                codemask = (1 << codesize) - 1;
+            }
+            else if (next_table_entry == 1023 && codesize == 10)
+            {
+                codesize = 11;
+                codemask = (1 << codesize) - 1;
+            }
+            else if (next_table_entry == 2047 && codesize == 11)
+            {
+                codesize = 12; 
+                codemask = (1 << codesize) - 1;
+            }
+
+            // Fill bit buffer
+            while (data_bits < codesize && src_ptr < src_end)
+            {
+                data = (data << 8) | s32(*src_ptr++);
+                data_bits += 8;
+            }
+
+            if (data_bits < codesize)
+                return -1; // EOF
+
+            // Extract code (MSB first)
+            int code = (data >> (data_bits - codesize)) & codemask;
+            data_bits -= codesize;
+            return code;
+        };
+
+        auto WriteString = [&](const std::vector<u8>& str)
+        {
+            if (dest_ptr + str.size() > dest_end)
+                return false;
+            for (u8 byte : str)
+                *dest_ptr++ = byte;
+            return true;
+        };
+
+        auto StringFromCode = [&](int code) -> std::vector<u8>
+        {
+            if (code < 0 || code >= next_table_entry)
+                return {};
+            return string_table[code];
+        };
+
+        auto FirstChar = [&](const std::vector<u8>& str) -> u8
+        {
+            return str.empty() ? 0 : str[0];
+        };
+
+        auto AddStringToTable = [&](const std::vector<u8>& str)
+        {
+            if (next_table_entry < 4096)
+            {
+                string_table[next_table_entry++] = str;
+            }
+        };
+
+        int OldCode = -1;
+
+        for (;;)
+        {
+            int Code = GetNextCode();
+            if (Code < 0 || Code == EoiCode)
+            {
+                break; // EOF
+            }
+
+            if (Code == ClearCode)
+            {
+                // Initialize table
+                next_table_entry = 258;
+                codesize = 9;
+                codemask = (1 << codesize) - 1;
+
+                Code = GetNextCode();
+                if (Code == EoiCode)
+                    break;
+                if (Code < 0)
+                    break; // EOF
+
+                WriteString(StringFromCode(Code));
+                OldCode = Code;
+            }
+            else
+            {
+                // Not a clear code
+                if (Code < next_table_entry)
+                {
+                    // Code is in table (99.9% of the time)
+                    WriteString(StringFromCode(Code));
+                    if (OldCode >= 0)
+                    {
+                        std::vector<u8> new_string = StringFromCode(OldCode);
+                        new_string.push_back(FirstChar(StringFromCode(Code)));
+                        AddStringToTable(new_string);
+                    }
+                    OldCode = Code;
+                }
+                else
+                {
+                    // Code not in table - the "KwKwK" case
+                    std::vector<u8> OutString = StringFromCode(OldCode);
+                    OutString.push_back(FirstChar(StringFromCode(OldCode)));
+                    WriteString(OutString);
+                    AddStringToTable(OutString);
+                    OldCode = Code;
+                }
+            }
+        }
+
+        return true;
     }
 
     struct TIFFHeader
@@ -533,56 +709,73 @@ namespace
             header.depth = 0;
             header.levels = 0;
             header.faces = 0;
-            header.format = LuminanceFormat(8, Format::UNORM, 8, 0);
-            //header.format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8); // TODO: set format based on samples per pixel and bits per sample
+            header.format = getImageFormat();
             header.compression = TextureCompression::NONE;
 
-            // Determine format based on samples per pixel and bits per sample
-            //setImageFormat();
-
-            printLine(Print::Info, "  Image: {} x {} ({} bpp, {} channels)", 
+            printLine(Print::Info, "  Tiff: {} x {} ({} bpp, {} channels)", 
                      m_context.width, m_context.height, m_context.bits_per_sample, m_context.samples_per_pixel);
         }
 
-        /*
-        void setImageFormat()
+        Format getImageFormat()
         {
-            // Determine format based on samples per pixel and bits per sample
-            switch (m_samples_per_pixel)
+            // TODO: handle other bit depths than 8
+            // TODO: better format selection logic
+
+            switch (PhotometricInterpretation(m_context.photometric))
             {
-                case 1: // Grayscale
-                    if (m_bits_per_sample == 8)
-                        header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    else if (m_bits_per_sample == 16)
-                        header.format = Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16);
-                    else
-                        header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    break;
+                case PhotometricInterpretation::WHITE_IS_ZERO:
+                    // TODO: handle inverse values
+                    return LuminanceFormat(8, Format::UNORM, 8, 0);
 
-                case 3: // RGB
-                    if (m_bits_per_sample == 8)
-                        header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    else if (m_bits_per_sample == 16)
-                        header.format = Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16);
-                    else
-                        header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    break;
+                case PhotometricInterpretation::BLACK_IS_ZERO:
+                {
+                    if (m_context.samples_per_pixel == 1)
+                    {
+                        return LuminanceFormat(8, Format::UNORM, 8, 0);
+                    }
+                    else if (m_context.samples_per_pixel == 2)
+                    {
+                        return LuminanceFormat(16, Format::UNORM, 8, 8);
+                    }
+                }
 
-                case 4: // RGBA
-                    if (m_bits_per_sample == 8)
-                        header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    else if (m_bits_per_sample == 16)
-                        header.format = Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16);
+                case PhotometricInterpretation::RGB:
+                {
+                    if (m_context.samples_per_pixel == 3)
+                    {
+                        return Format(24, Format::UNORM, Format::RGB, 8, 8, 8);
+                    }
+                    else if (m_context.samples_per_pixel == 4)
+                    {
+                        return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    }
                     else
-                        header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    break;
+                    {
+                        header.setError("Unsupported number of channels: {}", m_context.samples_per_pixel);
+                        return Format();
+                    }
+                }
+
+                case PhotometricInterpretation::PALETTE:
+                    return IndexedFormat(8);
+
+                case PhotometricInterpretation::TRANSPARENCY_MASK:
+                case PhotometricInterpretation::SEPARATED:
+                case PhotometricInterpretation::YCBCR:
+                case PhotometricInterpretation::CIELAB:
+                case PhotometricInterpretation::ICCLAB:
+                case PhotometricInterpretation::ITULAB:
+                case PhotometricInterpretation::CFA:
+                case PhotometricInterpretation::LINEAR_RAW:
+                    // TODO
+                    header.setError("Unsupported PhotometricInterpretation: {}", m_context.photometric);
+                    return Format();
 
                 default:
-                    header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    break;
+                    header.setError("Unknown PhotometricInterpretation: {}", m_context.photometric);
+                    return Format();
             }
         }
-        */
 
         ConstMemory memory(int level, int depth, int face) override
         {
@@ -610,35 +803,147 @@ namespace
             // MANGO TODO: Implement actual TIFF decoding
             //status.setError("[ImageDecoder.TIFF] Decoding not yet implemented.");
 
-#if 1
-            Bitmap bitmap(header.width, header.height, header.format);
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format, m_context.palette, false);
 
             u32 y = 0;
 
             for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
             {
-                u32 rows_to_read = std::min(m_context.rows_per_strip, header.height - y);
-
-                u32 y0 = y;
-                u32 y1 = y + rows_to_read;
+                u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
 
                 const u8* src = m_memory.address + m_context.strip_offsets[i];
-                u32 src_size = m_context.strip_byte_counts[i];
+                u32 bytes = m_context.strip_byte_counts[i];
 
-                //for (u32 y = y0; y < y1; ++y)
-                {
-                    u8* dest = bitmap.address(0, y0);
-                    std::memcpy(dest, src, src_size);
-                    //src += src_size;
-                }
+                Surface strip(target, 0, y, header.width, strip_height);
+                decodeStrip(strip, ConstMemory(src, bytes), header.width, strip_height);
 
-                y += rows_to_read;
+                y += strip_height;
             }
 
-            dest.blit(0, 0, bitmap);
-#endif
+            target.resolve();
 
             return status;
+        }
+
+        void decodeStrip(Surface target, ConstMemory memory, int width, int height)
+        {
+            //u32 bytes_per_row = (header.width * m_context.bits_per_sample * m_context.samples_per_pixel + 7) / 8;
+            u32 bytes_per_row = (header.width * m_context.bits_per_sample + 7) / 8;
+            u32 uncompressed_bytes = height * bytes_per_row;
+
+            //printLine(Print::Info, "    Strip height: {}", height);
+            //printLine(Print::Info, "    Bytes per row: {}", bytes_per_row);
+            //printLine(Print::Info, "    Uncompressed bytes: {}", uncompressed_bytes);
+            //printLine(Print::Info, "");
+
+            // TODO: only allocate if needed
+            Buffer buffer(uncompressed_bytes);
+
+            switch (Compression(m_context.compression))
+            {
+                case Compression::NONE:
+                    std::memcpy(buffer, memory.address, uncompressed_bytes);
+                    memory = buffer;
+                    break;
+
+                //case Compression::CCITT_RLE:
+                //    break;
+
+                //case Compression::CCITT_FAX3:
+                //    break;
+
+                // case Compression::CCITT_FAX4:
+                //     break;
+
+                case Compression::LZW:
+                {
+                    bool success = lzw_decompress(buffer, memory);
+                    if (!success)
+                    {
+                        printLine(Print::Error, "[LZW] Decompression failed");
+                        break;
+                    }
+
+                    memory = buffer;
+                    break;
+                }
+
+                //case Compression::JPEG:
+                //    break;
+
+                case Compression::ZIP:
+                    zlib::decompress(buffer, memory);
+                    memory = buffer;
+                    break;
+
+                case Compression::PACKBITS:
+                    packbits_decompress(buffer, memory);
+                    memory = buffer;
+                    break;
+
+                //case Compression::DEFLATE:
+                //    break;
+
+                default:
+                    printLine(Print::Info, "    Unknown compression: {}", m_context.compression);
+                    //status.setError("Unknown compression.");
+                    //return status;
+                    return;
+            }
+
+            for (u32 y = 0; y < height; ++y)
+            {
+                resolveScanline(target.image, memory.address, bytes_per_row, m_context.samples_per_pixel);
+                memory.address += bytes_per_row;
+                target.image += target.stride;
+            }
+        }
+
+        void resolveScanline(u8* dest, const u8* src, u32 bytes, u32 channels)
+        {
+            // PlanarConfiguration: 1 (chunky) or 2 (planar)
+            // Predictor: 1 (no prediction) or 2 (horizontal differencing)
+
+            //void byteswap(u16* data, size_t count);
+            // TODO: byteswap(src, bytes / 2);
+
+            if (m_context.planar_configuration == 1)
+            {
+                if (m_context.predictor == 1)
+                {
+                    // chunky, no prediction
+                    std::memcpy(dest, src, bytes);
+                }
+                else if (m_context.predictor == 2)
+                {
+                    // chunky, horizontal differencing
+
+                    // copy first sample
+                    std::memcpy(dest, src, channels);
+
+                    // apply horizontal differencing for each sample
+                    for (u32 x = channels; x < bytes; x += channels)
+                    {
+                        for (u32 c = 0; c < channels; ++c)
+                        {
+                            dest[x + c] = src[x + c] + dest[x - channels + c];
+                        }
+                    }
+                }
+            }
+            else if (m_context.planar_configuration == 2)
+            {
+                if (m_context.predictor == 1)
+                {
+                    // planar, no prediction
+                    // TODO: convert RRRRRR...GGGGGG....BBBBBB into RGBRGBRGB...
+                }
+                else if (m_context.predictor == 2)
+                {
+                    // planar, horizontal differencing
+                    // TODO: convert RRRRRR...GGGGGG....BBBBBB into RGBRGBRGB...
+                }
+            }
         }
     };
 
