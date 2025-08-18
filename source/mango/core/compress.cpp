@@ -1414,4 +1414,55 @@ namespace isal
         return compressor;
     }
 
+    // ----------------------------------------------------------------------------
+    // packbits
+    // ----------------------------------------------------------------------------
+
+    bool packbits_decompress(Memory output, ConstMemory input)
+    {
+        while (output.size > 0 && input.size > 0)
+        {
+            int code = s8(*input.address++);
+            --input.size;
+
+            if (code == 128)
+            {
+                continue;
+            }
+
+            if (code >= 0)
+            {
+                int length = 1 + code;
+
+                output.size -= length;
+                input.size -= length;
+                if (output.size < 0 || input.size < 0)
+                {
+                    return false;
+                }
+
+                std::memcpy(output.address, input.address, length);
+                output.address += length;
+                input.address += length;
+            }
+            else
+            {
+                int length = 1 - code;
+
+                output.size -= length;
+                input.size -= length;
+                if (output.size < 0 || input.size < 0)
+                {
+                    return false;
+                }
+
+                u8 value = *input.address++;
+                std::memset(output.address, value, length);
+                output.address += length;
+            }
+        }
+
+        return true;
+    }
+
 } // namespace mango

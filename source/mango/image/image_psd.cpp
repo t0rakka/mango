@@ -1,10 +1,11 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
 #include <mango/core/buffer.hpp>
+#include <mango/core/compress.hpp>
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
 
@@ -82,53 +83,6 @@ namespace
             }
 
             return p;
-        }
-
-        bool decompress(u8* output, const u8* input, int outbytes, int inbytes) const
-        {
-            while (outbytes > 0 && inbytes > 0)
-            {
-                int code = s8(*input++);
-                --inbytes;
-
-                if (code == 128)
-                {
-                    continue;
-                }
-
-                if (code >= 0)
-                {
-                    int length = 1 + code;
-
-                    outbytes -= length;
-                    inbytes -= length;
-                    if (outbytes < 0 || inbytes < 0)
-                    {
-                        return false;
-                    }
-
-                    std::memcpy(output, input, length);
-                    output += length;
-                    input += length;
-                }
-                else
-                {
-                    int length = 1 - code;
-
-                    outbytes -= length;
-                    --inbytes;
-                    if (outbytes < 0 || inbytes < 0)
-                    {
-                        return false;
-                    }
-
-                    u8 value = *input++;
-                    std::memset(output, value, length);
-                    output += length;
-                }
-            }
-
-            return true;
         }
     };
 
@@ -444,7 +398,11 @@ namespace
                             packbits.offsets[channel] += bytes;
 
                             u8* dst = buffer + channel * bytes_per_scan;
-                            bool result = packbits.decompress(dst, src, bytes_per_scan, bytes);
+
+                            Memory output(dst, bytes_per_scan);
+                            ConstMemory input(src, bytes);
+
+                            bool result = packbits_decompress(output, input);
                             if (!result)
                             {
                                 status.setError("[ImageDecoder.PSD] packbits decompression failed.");

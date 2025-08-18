@@ -216,4 +216,10 @@ namespace mango
     Compressor getCompressor(Compressor::Method method);
     Compressor getCompressor(const std::string& name);
 
+    // -----------------------------------------------------------------------
+    // packbits decompressor (old school)
+    // -----------------------------------------------------------------------
+
+    bool packbits_decompress(Memory output, ConstMemory input);
+
 } // namespace mango
