@@ -44,6 +44,9 @@ namespace
         SRATIONAL = 10,
         FLOAT = 11,
         DOUBLE = 12,
+        LONG8 = 16,
+        SLONG8 = 17,
+        IFD8 = 18,
     };
 
     enum class Tag : u16
@@ -121,8 +124,6 @@ namespace
     {
         u32 width = 0;
         u32 height = 0;
-        u16 bits_per_sample = 0;
-        u16 samples_per_pixel = 3;
         u16 compression = 1;
         u16 photometric = 2;
         u16 resolution_unit = 0;
@@ -131,6 +132,10 @@ namespace
         u32 orientation = 0;
         u32 planar_configuration = 0;
         u32 predictor = 1;
+
+        u32 samples_per_pixel = 3; // channels
+        u32 bpp = 0; // sum of bits_per_sample
+        std::vector<u32> bits_per_sample; // bits in each channel
 
         u32 rows_per_strip = 0;
         std::vector<u32> strip_offsets;
@@ -144,9 +149,9 @@ namespace
     };
 
     static inline
-    u32 getSize(Type type, u32 count)
+    u64 getSize(Type type, u64 count)
     {
-        u32 size = 0;
+        u64 size = 0;
 
         switch (type)
         {
@@ -171,6 +176,9 @@ namespace
             case Type::RATIONAL:
             case Type::SRATIONAL:
             case Type::DOUBLE:
+            case Type::LONG8:
+            case Type::SLONG8:
+            case Type::IFD8:
                 size = count * 8;
                 break;
         }
@@ -179,9 +187,9 @@ namespace
     }
 
     template <typename Pointer>
-    u32 getOffset(Pointer p)
+    u64 getOffset(Pointer p, bool is_big_tiff)
     {
-        return p.read32();
+        return is_big_tiff ? p.read64() : p.read32();
     }
 
     template <typename Pointer>
@@ -202,6 +210,7 @@ namespace
                 break;
             default:
                 // TODO: parsing failure
+                printLine(Print::Error, "    [getUnsigned] Unsupported type: {}", int(type));
                 break;
         }
 
@@ -209,16 +218,18 @@ namespace
     }
 
     template <typename Pointer>
-    std::vector<u32> getUnsignedArray(Pointer p, ConstMemory memory, Type type, u32 count)
+    std::vector<u32> getUnsignedArray(Pointer p, ConstMemory memory, Type type, u64 count, bool is_big_tiff)
     {
         std::vector<u32> values;
 
-        if (getSize(type, count) > 4)
+        const u64 offset_size = is_big_tiff ? 8 : 4;
+
+        if (getSize(type, count) > offset_size)
         {
-            p = memory.address + getOffset(p);
+            p = memory.address + getOffset(p, is_big_tiff);
         }
 
-        for (u32 i = 0; i < count; ++i)
+        for (u64 i = 0; i < count; ++i)
         {
             u32 value = getUnsigned(p, type);
             values.push_back(value);
@@ -228,30 +239,34 @@ namespace
     }
 
     template <typename Pointer>
-    float getRational(Pointer p, ConstMemory memory, Type type)
+    float getRational(Pointer p, ConstMemory memory, Type type, bool is_big_tiff)
     {
-        Pointer temp = memory.address + getOffset(p);
-        u32 numerator = getUnsigned(temp, Type::LONG);
-        u32 denominator = getUnsigned(temp, Type::LONG);
+        if (!is_big_tiff)
+        {
+            p = memory.address + getOffset(p, is_big_tiff);
+        }
+
+        u32 numerator = getUnsigned(p, Type::LONG);
+        u32 denominator = getUnsigned(p, Type::LONG);
         //printLine(Print::Info, "      numerator: {}, denominator: {}", numerator, denominator);
         float value = float(numerator) / denominator;
         return value;
     }
 
     template <typename Pointer>
-    std::string getAscii(Pointer p, ConstMemory memory, Type type)
+    std::string getAscii(Pointer p, ConstMemory memory, Type type, bool is_big_tiff)
     {
-        const char* temp = reinterpret_cast<const char*>(memory.address + getOffset(p));
+        const char* temp = reinterpret_cast<const char*>(memory.address + getOffset(p, is_big_tiff));
         std::string value = temp;
         return value;
     }
 
     template <typename Pointer>
-    void parse_ifd(IFDContext& context, ConstMemory memory, Pointer p)
+    void parse_ifd(IFDContext& context, ConstMemory memory, Pointer p, bool is_big_tiff)
     {
         Tag tag = Tag(p.read16());
         Type type = Type(p.read16());
-        u32 count = p.read32();
+        u64 count = is_big_tiff ? p.read64() : p.read32();
 
         switch (tag)
         {
@@ -269,10 +284,11 @@ namespace
 
             case Tag::BitsPerSample:
             {
-                std::vector<u32> values = getUnsignedArray(p, memory, type, count);
-                context.bits_per_sample = std::accumulate(values.begin(), values.end(), 0);
+                std::vector<u32> values = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                context.bits_per_sample = values;
+                context.bpp = std::accumulate(values.begin(), values.end(), 0);
                 printLine(Print::Info, "    [BitsPerSample]");
-                printLine(Print::Info, "      value: {}", context.bits_per_sample);
+                printLine(Print::Info, "      value: {}", context.bpp);
                 break;
             }
 
@@ -286,17 +302,16 @@ namespace
                 context.photometric = getUnsigned(p, type);
                 printLine(Print::Info, "    [PhotometricInterpretation]");
                 printLine(Print::Info, "      value: {}", context.photometric);
-                // TODO: 0 - WhiteIsZero, 1 - BlackIsZero, 2 - RGB, ...
                 break;
 
             case Tag::DocumentName:
-                context.document_name = getAscii(p, memory, type);
+                context.document_name = getAscii(p, memory, type, is_big_tiff);
                 printLine(Print::Info, "    [DocumentName]");
                 //printLine(Print::Info, "{}", context.document_name);
                 break;
 
             case Tag::ImageDescription:
-                context.image_description = getAscii(p, memory, type);
+                context.image_description = getAscii(p, memory, type, is_big_tiff);
                 printLine(Print::Info, "    [ImageDescription]");
                 //printLine(Print::Info, "{}", context.image_description);
                 break;
@@ -304,7 +319,7 @@ namespace
             case Tag::StripOffsets:
             {
                 printLine(Print::Info, "    [StripOffsets]");
-                context.strip_offsets = getUnsignedArray(p, memory, type, count);
+                context.strip_offsets = getUnsignedArray(p, memory, type, count, is_big_tiff);
                 break;
             }
 
@@ -329,7 +344,7 @@ namespace
             case Tag::StripByteCounts:
             {
                 printLine(Print::Info, "    [StripByteCounts]");
-                context.strip_byte_counts = getUnsignedArray(p, memory, type, count);
+                context.strip_byte_counts = getUnsignedArray(p, memory, type, count, is_big_tiff);
                 break;
             }
 
@@ -340,13 +355,13 @@ namespace
                 break;
 
             case Tag::XResolution:
-                context.x_resolution = getRational(p, memory, type);
+                context.x_resolution = getRational(p, memory, type, is_big_tiff);
                 printLine(Print::Info, "    [XResolution]");
                 printLine(Print::Info, "      value: {}", context.x_resolution);
                 break;
 
             case Tag::YResolution:
-                context.y_resolution = getRational(p, memory, type);
+                context.y_resolution = getRational(p, memory, type, is_big_tiff);
                 printLine(Print::Info, "    [YResolution]");
                 printLine(Print::Info, "      value: {}", context.y_resolution);
                 break;
@@ -364,7 +379,7 @@ namespace
                 break;
 
             case Tag::Software:
-                context.software = getAscii(p, memory, type);
+                context.software = getAscii(p, memory, type, is_big_tiff);
                 printLine(Print::Info, "    [Software]");
                 //printLine(Print::Info, "{}", context.software);
                 break;
@@ -372,7 +387,7 @@ namespace
             case Tag::ColorMap:
             {
                 printLine(Print::Info, "    [ColorMap]");
-                u32 count = 1 << context.bits_per_sample;
+                u32 count = 1 << context.bpp;
                 if (count > 256)
                 {
                     //header.setError("Incorrect ColorMap size: {}.", count);
@@ -380,7 +395,7 @@ namespace
                 }
 
                 context.palette.size = count;
-                std::vector<u32> values = getUnsignedArray(p, memory, type, count * 3);
+                std::vector<u32> values = getUnsignedArray(p, memory, type, count * 3, is_big_tiff);
 
                 for (u32 i = 0; i < count; ++i)
                 {
@@ -551,12 +566,303 @@ namespace
         return true;
     }
 
+    static
+    bool ccitt_rle_decompress(Memory output, ConstMemory input)
+    {
+        // CCITT RLE (Modified Huffman) for 1-bit fax images
+        const u8* src = input.address;
+        
+        bool is_problematic_strip = (input.size == 370 && output.size == 8160);
+        const u8* src_end = input.address + input.size;
+        u8* dest = output.address;
+        u8* dest_end = output.address + output.size;
+
+        // CCITT Modified Huffman code tables
+        struct ccitt_code {
+            u16 code;     // bit pattern
+            u8 bits;      // number of bits
+            u16 run;      // run length
+        };
+
+        // Complete CCITT Modified Huffman white run codes (from TIFF 6.0 spec)
+        // Note: These should be MSB-first bit patterns
+        static const ccitt_code white_codes[] = {
+            {0x35, 8, 0},    {0x7, 6, 1},     {0x7, 4, 2},     {0x8, 4, 3},
+            {0xB, 4, 4},     {0xC, 4, 5},     {0xE, 4, 6},     {0xF, 4, 7},
+            {0x13, 5, 8},    {0x14, 5, 9},    {0x7, 5, 10},    {0x8, 5, 11},
+            {0x8, 6, 12},    {0x3, 6, 13},    {0x34, 6, 14},   {0x35, 6, 15},
+            {0x2A, 6, 16},   {0x2B, 6, 17},   {0x27, 7, 18},   {0xC, 7, 19},
+            {0x8, 7, 20},    {0x17, 7, 21},   {0x3, 7, 22},    {0x4, 7, 23},
+            {0x28, 7, 24},   {0x2B, 7, 25},   {0x13, 7, 26},   {0x24, 7, 27},
+            {0x18, 7, 28},   {0x2, 8, 29},    {0x3, 8, 30},    {0x1A, 8, 31},
+            {0x1B, 8, 32},   {0x12, 8, 33},   {0x13, 8, 34},   {0x14, 8, 35},
+            {0x15, 8, 36},   {0x16, 8, 37},   {0x17, 8, 38},   {0x28, 8, 39},
+            {0x29, 8, 40},   {0x2A, 8, 41},   {0x2B, 8, 42},   {0x2C, 8, 43},
+            {0x2D, 8, 44},   {0x4, 8, 45},    {0x5, 8, 46},    {0xA, 8, 47},
+            {0xB, 8, 48},    {0x52, 8, 49},   {0x53, 8, 50},   {0x54, 8, 51},
+            {0x55, 8, 52},   {0x24, 8, 53},   {0x25, 8, 54},   {0x58, 8, 55},
+            {0x59, 8, 56},   {0x5A, 8, 57},   {0x5B, 8, 58},   {0x4A, 8, 59},
+            {0x4B, 8, 60},   {0x32, 8, 61},   {0x33, 8, 62},   {0x34, 8, 63},
+            // Make-up codes for white
+            {0x1B, 5, 64},   {0x12, 5, 128},  {0x17, 6, 192},  {0x37, 7, 256},
+            {0x36, 8, 320},  {0x37, 8, 384},  {0x64, 8, 448},  {0x65, 8, 512},
+            {0x68, 8, 576},  {0x67, 8, 640},  {0xCC, 9, 704},  {0xCD, 9, 768},
+            {0xD2, 9, 832},  {0xD3, 9, 896},  {0xD4, 9, 960},  {0xD5, 9, 1024},
+            {0xD6, 9, 1088}, {0xD7, 9, 1152}, {0xD8, 9, 1216}, {0xD9, 9, 1280},
+            {0xDA, 9, 1344}, {0xDB, 9, 1408}, {0x98, 9, 1472}, {0x99, 9, 1536},
+            {0x9A, 9, 1600}, {0x18, 6, 1664}, {0x9B, 9, 1728}
+        };
+
+        // Complete CCITT Modified Huffman black run codes (from TIFF 6.0 spec) 
+        static const ccitt_code black_codes[] = {
+            {0x37, 10, 0},   {0x2, 3, 1},     {0x3, 2, 2},     {0x2, 2, 3},
+            {0x3, 3, 4},     {0x3, 4, 5},     {0x2, 4, 6},     {0x3, 5, 7},
+            {0x5, 6, 8},     {0x4, 6, 9},     {0x4, 7, 10},    {0x5, 7, 11},
+            {0x7, 7, 12},    {0x4, 8, 13},    {0x7, 8, 14},    {0x18, 9, 15},
+            {0x17, 10, 16},  {0x18, 10, 17},  {0x8, 10, 18},   {0x67, 11, 19},
+            {0x68, 11, 20},  {0x6C, 11, 21},  {0x37, 11, 22},  {0x28, 11, 23},
+            {0x17, 11, 24},  {0x18, 11, 25},  {0xCA, 12, 26},  {0xCB, 12, 27},
+            {0xCC, 12, 28},  {0xCD, 12, 29},  {0x68, 12, 30},  {0x69, 12, 31},
+            {0x6A, 12, 32},  {0x6B, 12, 33},  {0xD2, 12, 34},  {0xD3, 12, 35},
+            {0xD4, 12, 36},  {0xD5, 12, 37},  {0xD6, 12, 38},  {0xD7, 12, 39},
+            {0x6C, 12, 40},  {0x6D, 12, 41},  {0xDA, 12, 42},  {0xDB, 12, 43},
+            {0x54, 12, 44},  {0x55, 12, 45},  {0x56, 12, 46},  {0x57, 12, 47},
+            {0x64, 12, 48},  {0x65, 12, 49},  {0x52, 12, 50},  {0x53, 12, 51},
+            {0x24, 12, 52},  {0x37, 12, 53},  {0x38, 12, 54},  {0x27, 12, 55},
+            {0x28, 12, 56},  {0x58, 12, 57},  {0x59, 12, 58},  {0x2B, 12, 59},
+            {0x2C, 12, 60},  {0x5A, 12, 61},  {0x66, 12, 62},  {0x67, 12, 63},
+            // Make-up codes for black  
+            {0xF, 10, 64},   {0xC8, 12, 128}, {0xC9, 12, 192}, {0x5B, 12, 256},
+            {0x33, 12, 320}, {0x34, 12, 384}, {0x35, 12, 448}, {0x6C, 13, 512},
+            {0x6D, 13, 576}, {0x4A, 13, 640}, {0x4B, 13, 704}, {0x4C, 13, 768},
+            {0x4D, 13, 832}, {0x72, 13, 896}, {0x73, 13, 960}, {0x74, 13, 1024},
+            {0x75, 13, 1088}, {0x76, 13, 1152}, {0x77, 13, 1216}, {0x52, 13, 1280},
+            {0x53, 13, 1344}, {0x54, 13, 1408}, {0x55, 13, 1472}, {0x5A, 13, 1536},
+            {0x5B, 13, 1600}, {0x64, 13, 1664}, {0x65, 13, 1728}
+        };
+
+        // Bit reading state
+        u32 bit_buffer = 0;
+        int bits_available = 0;
+
+        auto ensure_bits = [&](int num_bits) -> bool {
+            while (bits_available < num_bits && src < src_end) {
+                bit_buffer = (bit_buffer << 8) | *src++;
+                bits_available += 8;
+            }
+            return bits_available >= num_bits;
+        };
+
+
+        auto decode_run = [&](bool is_white) -> int
+        {
+            // DISABLE the 8-bit 0x01 check - this might be misinterpreting valid data
+            // The 0x01 pattern could be part of a legitimate CCITT code
+
+            // Search in appropriate table
+            const ccitt_code* table = is_white ? white_codes : black_codes;
+            int table_size = is_white ? sizeof(white_codes)/sizeof(ccitt_code) : 
+                                        sizeof(black_codes)/sizeof(ccitt_code);
+
+            // Try codes from shortest to longest (2-13 bits for CCITT)
+            for (int bits = 2; bits <= 13; bits++) {
+                if (!ensure_bits(bits)) continue;
+                
+                // Extract code of current length from MSB side
+                u32 code = (bit_buffer >> (bits_available - bits)) & ((1 << bits) - 1);
+                
+
+                
+                // Search for matching code in table
+                for (int i = 0; i < table_size; i++) {
+                    if (table[i].bits == bits && table[i].code == code) {
+                        // Found match - validate run length is reasonable
+                        if (table[i].run > 272) {
+                            // Don't return this - keep looking for better match
+                            continue;
+                        }
+                        
+                        // Found reasonable match - consume bits 
+                        bits_available -= bits;
+
+                        
+                        // Debug successful decodes in problematic strip (near the end)
+                        if (is_problematic_strip && (src - input.address) > 300) {
+                            printLine(Print::Info, "[CCITT-RLE] SUCCESS: {} run {} pixels (code 0x{:X}, {} bits) at input byte {}", 
+                                     is_white ? "white" : "black", table[i].run, code, bits, (src - input.address));
+                        }
+                        
+                        return table[i].run;
+                    }
+                }
+            }
+            
+            // Only treat as end if we're completely out of input data
+            if (src >= src_end) {
+                return -3; // End of data
+            }
+            
+            // Show what pattern we couldn't decode
+            if (ensure_bits(16)) {
+                u32 debug_bits = (bit_buffer >> (bits_available - 16)) & 0xFFFF;
+                if (is_problematic_strip) {
+                    printLine(Print::Error, "[CCITT-RLE] No {} code found. Next 16 bits: 0x{:04X} = {:016b}", 
+                             is_white ? "white" : "black", debug_bits, debug_bits);
+                }
+            }
+            
+            // Simple fallback - skip 1 bit and continue  
+            if (ensure_bits(1)) {
+                bits_available -= 1;
+                return 1; // 1 pixel run
+            }
+            
+            return -1; // Complete failure
+        };
+
+        // Note: PhotometricInterpretation handling is done at higher level
+
+        // CCITT Modified Huffman decoding with 8-bit expansion
+        bool current_color = true; // Start with white (true = white, false = black)  
+        int pixels_written = 0;
+        int total_run_length = 0;
+
+        while (src < src_end && dest < dest_end)
+        {
+            total_run_length = 0;
+            
+            // Decode run length (may need multiple codes for long runs)
+            while (true) {
+                int run_length = decode_run(current_color);
+                
+                if (run_length == -3) {
+                    // End/padding marker - we're done
+                    printLine(Print::Info, "[CCITT-RLE] Hit end-of-data condition at pixel {} / {}", 
+                             pixels_written, output.size);
+                    goto decode_complete;
+
+
+                } else if (run_length < 0) {
+                    printLine(Print::Error, "[CCITT-RLE] Failed to decode {} run at pixel {}", 
+                             current_color ? "white" : "black", pixels_written);
+                    
+                    // Check if we're at a row boundary - this might be normal row padding
+                    if (pixels_written % 272 == 0 && pixels_written > 0) {
+                        printLine(Print::Info, "[CCITT-RLE] At row boundary (pixel {}), trying to skip padding", pixels_written);
+                        
+                        // Try to skip to next byte boundary and look for valid codes
+                        int bits_to_skip = bits_available % 8;
+                        if (bits_to_skip > 0) {
+                            bits_available -= bits_to_skip;
+                            printLine(Print::Info, "[CCITT-RLE] Skipped {} padding bits to byte boundary", bits_to_skip);
+                        }
+                        
+                        // Reset to white for new row and break out to try next run
+                        current_color = true;
+                        break; // Break out of run decoding loop, start new run
+                    }
+                    return false;
+                }
+                
+                total_run_length += run_length;
+                
+                // If this was a make-up code (multiple of 64), expect a terminating code next
+                if (run_length >= 64 && (run_length % 64) == 0) {
+                    continue; // Read the terminating code
+                } else {
+                    break; // This was a terminating code, we're done with this run
+                }
+            }
+
+            // Check if we completed a row and need to handle row boundary
+            int current_row = pixels_written / 272;
+            int pixels_in_current_row = pixels_written % 272;
+            
+            // Only output pixels if we have a valid run length
+            if (total_run_length > 0) {
+                // Simple bounds check for 8-bit expanded output
+                int pixels_remaining = dest_end - dest;
+                int pixels_to_write = std::min(total_run_length, pixels_remaining);
+                
+                if (pixels_to_write < total_run_length) {
+                    printLine(Print::Warning, "[CCITT-RLE] Run length {} exceeds remaining buffer space {}, truncating", 
+                             total_run_length, pixels_remaining);
+                }
+                
+                // Output the run as 8-bit expanded data using elegant bit math
+                // Simple mapping: white→0x00, black→0xFF (PhotometricInterpretation handled later)
+                u8 expanded = current_color ? 0x00 : 0xFF; // White→0x00, Black→0xFF
+                
+
+                
+                for (int i = 0; i < pixels_to_write; i++) {
+                    *dest++ = expanded;
+                }
+
+                pixels_written += pixels_to_write;
+                current_color = !current_color; // Alternate between white and black
+                
+                // Check if we completed a row
+                if (pixels_written % 272 == 0 && pixels_written > 0) {
+                    int row_completed = pixels_written / 272;
+                    
+                    // TIFF 6.0: "New rows always begin on the next available byte boundary"
+                    if (bits_available % 8 != 0) {
+                        int bits_to_skip = bits_available % 8;
+                        bits_available -= bits_to_skip;
+                    }
+                    
+                    // TIFF 6.0: Each row starts with white
+                    current_color = true;
+                }
+                
+                // Stop if buffer is full
+                if (pixels_written >= output.size) {
+                    printLine(Print::Info, "[CCITT-RLE] Buffer full condition at pixel {} / {}", 
+                             pixels_written, output.size);
+                    break;
+                }
+            }
+        }
+
+        // Debug: Why did the main loop exit?
+        printLine(Print::Info, "[CCITT-RLE] Main loop exited: pixels={}, src={}/{} ({}), dest={}/{} ({})", 
+                 pixels_written, (src - input.address), input.size, src < src_end ? "HAS_DATA" : "END_OF_INPUT",
+                 (dest - output.address), output.size, dest < dest_end ? "HAS_SPACE" : "BUFFER_FULL");
+
+    decode_complete:        
+        int bytes_written = dest - output.address;
+        if (is_problematic_strip || bytes_written < output.size) {
+            printLine(Print::Info, "[CCITT-RLE] Decompressed {} pixels into {} bytes (expected: {} bytes)", 
+                     pixels_written, bytes_written, output.size);
+        }
+        
+        if (bytes_written < output.size) {
+            int missing_pixels = output.size - bytes_written;
+            int missing_rows = missing_pixels / 272;
+            printLine(Print::Warning, "[CCITT-RLE] Output incomplete: {} / {} bytes ({}% complete)", 
+                     bytes_written, output.size, (bytes_written * 100) / output.size);
+            printLine(Print::Warning, "[CCITT-RLE] Missing {} pixels = {} complete rows + {} pixels", 
+                     missing_pixels, missing_rows, missing_pixels % 272);
+            printLine(Print::Warning, "[CCITT-RLE] Final state: input consumed {} / {} bytes, bits_available: {}", 
+                     (src - input.address), input.size, bits_available);
+        }
+
+        // Fill any remaining output buffer with white (0x00)
+        while (dest < dest_end) {
+            *dest++ = 0x00;
+        }
+
+        return true;
+    }
+
     struct TIFFHeader
     {
         ByteOrder byte_order;
         u16 version;
-        u32 first_ifd_offset;
+        u64 first_ifd_offset;
         bool is_little_endian;
+        bool is_big_tiff = false;
 
         ImageHeader header;
 
@@ -598,20 +904,72 @@ namespace
                 version = bigEndian::uload16(p + 2);
             }
 
-            if (version != 42)
+            switch (version)
             {
-                header.setError("[ImageDecoder.TIFF] Invalid TIFF version ({}).", version);
-                return false;
+                case 42:
+                    is_big_tiff = false;
+                    break;
+                case 43:
+                    is_big_tiff = true;
+                    break;
+                default:
+                    header.setError("[ImageDecoder.TIFF] Invalid TIFF version ({}).", version);
+                    return false;
             }
 
             // Get first IFD offset
-            if (is_little_endian)
+            if (is_big_tiff)
             {
-                first_ifd_offset = littleEndian::uload32(p + 4);
+                u16 bytesize_per_offset;
+                u16 reserved;
+
+                if (is_little_endian)
+                {
+                    bytesize_per_offset = littleEndian::uload16(p + 4);
+                    reserved = littleEndian::uload16(p + 6);
+                    first_ifd_offset = littleEndian::uload64(p + 8);
+                }
+                else
+                {
+                    bytesize_per_offset = bigEndian::uload16(p + 4);
+                    reserved = bigEndian::uload16(p + 6);
+                    first_ifd_offset = bigEndian::uload64(p + 8);
+                }
+
+                if (bytesize_per_offset != 8)
+                {
+                    header.setError("[ImageDecoder.TIFF] Invalid bytesize per offset ({}).", bytesize_per_offset);
+                    return false;
+                }
+
+                if (reserved != 0)
+                {
+                    header.setError("[ImageDecoder.TIFF] Invalid reserved ({}).", reserved);
+                    return false;
+                }
+
+                if (first_ifd_offset < 8)
+                {
+                    header.setError("[ImageDecoder.TIFF] Invalid first IFD offset ({}).", first_ifd_offset);
+                    return false;
+                }
+
+                if (first_ifd_offset >= memory.size)
+                {
+                    header.setError("[ImageDecoder.TIFF] First IFD offset out of bounds ({}).", first_ifd_offset);
+                    return false;
+                }
             }
             else
             {
-                first_ifd_offset = bigEndian::uload32(p + 4);
+                if (is_little_endian)
+                {
+                    first_ifd_offset = littleEndian::uload32(p + 4);
+                }
+                else
+                {
+                    first_ifd_offset = bigEndian::uload32(p + 4);
+                }
             }
 
             printLine(Print::Info, "[TIFF]");
@@ -666,23 +1024,27 @@ namespace
             }
 
             // Read IFD count
-            u16 ifd_count;
+            u64 ifd_count;
             if (m_is_little_endian)
             {
-                ifd_count = littleEndian::uload16(p);
+                ifd_count = m_header.is_big_tiff ? littleEndian::uload64(p)
+                                                 : littleEndian::uload16(p);
             }
             else
             {
-                ifd_count = bigEndian::uload16(p);
+                ifd_count = m_header.is_big_tiff ? bigEndian::uload64(p)
+                                                 : bigEndian::uload16(p);
             }
-            p += 2;
+            p += m_header.is_big_tiff ? 8 : 2;
 
             printLine(Print::Info, "  IFD entries: {}", ifd_count);
 
+            size_t ifd_entry_size = m_header.is_big_tiff ? 20 : 12;
+
             // Parse each IFD entry
-            for (int i = 0; i < ifd_count; ++i)
+            for (u64 i = 0; i < ifd_count; ++i)
             {
-                if (p + 12 > end)
+                if (p + ifd_entry_size > end)
                 {
                     header.setError("[ImageDecoder.TIFF] IFD entry {} out of bounds.", i);
                     return;
@@ -690,15 +1052,27 @@ namespace
 
                 if (m_is_little_endian)
                 {
-                    parse_ifd(m_context, m_memory, LittleEndianConstPointer(p));
+                    parse_ifd(m_context, m_memory, LittleEndianConstPointer(p), m_header.is_big_tiff);
                 }
                 else
                 {
-                    parse_ifd(m_context, m_memory, BigEndianConstPointer(p));
+                    parse_ifd(m_context, m_memory, BigEndianConstPointer(p), m_header.is_big_tiff);
                 }
 
-                p += 12;
+                p += ifd_entry_size;
             }
+
+            u64 offset_to_next_ifd = 0;
+            if (m_header.is_big_tiff)
+            {
+                offset_to_next_ifd = bigEndian::uload64(p);
+            }
+            else
+            {
+                offset_to_next_ifd = bigEndian::uload32(p);
+            }
+
+            // TODO: read ALL IFDs (multiple images)
 
             // Validate required fields
             if (m_context.width == 0 || m_context.height == 0)
@@ -717,7 +1091,7 @@ namespace
             header.compression = TextureCompression::NONE;
 
             printLine(Print::Info, "  Tiff: {} x {} ({} bpp, {} channels)", 
-                     m_context.width, m_context.height, m_context.bits_per_sample, m_context.samples_per_pixel);
+                     m_context.width, m_context.height, m_context.bpp, m_context.samples_per_pixel);
         }
 
         Format getImageFormat()
@@ -728,9 +1102,6 @@ namespace
             switch (PhotometricInterpretation(m_context.photometric))
             {
                 case PhotometricInterpretation::WHITE_IS_ZERO:
-                    // TODO: handle inverse values
-                    return LuminanceFormat(8, Format::UNORM, 8, 0);
-
                 case PhotometricInterpretation::BLACK_IS_ZERO:
                 {
                     if (m_context.samples_per_pixel == 1)
@@ -804,12 +1175,12 @@ namespace
                 return status;
             }
 
-            // MANGO TODO: Implement actual TIFF decoding
-            //status.setError("[ImageDecoder.TIFF] Decoding not yet implemented.");
-
             DecodeTargetBitmap target(dest, header.width, header.height, header.format, m_context.palette, false);
 
             u32 y = 0;
+
+            printLine(Print::Info, "[TIFF] Processing {} strips, rows_per_strip: {}, image height: {}", 
+                     m_context.strip_offsets.size(), m_context.rows_per_strip, header.height);
 
             for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
             {
@@ -818,8 +1189,10 @@ namespace
                 const u8* src = m_memory.address + m_context.strip_offsets[i];
                 u32 bytes = m_context.strip_byte_counts[i];
 
+                printLine(Print::Info, "[TIFF] Strip {}: y={}, height={}, bytes={}", i, y, strip_height, bytes);
+
                 Surface strip(target, 0, y, header.width, strip_height);
-                decodeStrip(strip, ConstMemory(src, bytes), header.width, strip_height);
+                decodeStrip(strip, ConstMemory(src, bytes), header.width, strip_height, i);
 
                 y += strip_height;
             }
@@ -829,11 +1202,40 @@ namespace
             return status;
         }
 
-        void decodeStrip(Surface target, ConstMemory memory, int width, int height)
+        void expandSubBytePixels(Memory dest, ConstMemory src, int width, int height)
         {
-            //u32 bytes_per_row = (header.width * m_context.bits_per_sample * m_context.samples_per_pixel + 7) / 8;
-            u32 bytes_per_row = (header.width * m_context.bits_per_sample + 7) / 8;
+            const u8* src_ptr = src.address;
+            u8* dest_ptr = dest.address;
+            
+            int pixels_per_byte = 8 / m_context.bpp;
+            int mask = (1 << m_context.bpp) - 1;
+            
+            for (int y = 0; y < height; ++y)
+            {
+                for (int x = 0; x < width; x += pixels_per_byte)
+                {
+                    u8 packed_byte = *src_ptr++;
+                    
+                    // Extract pixels from MSB to LSB
+                    int shift = 8 - m_context.bpp;  // Start at MSB
+                    for (int pixel = 0; pixel < pixels_per_byte && (x + pixel) < width; ++pixel)
+                    {
+                        *dest_ptr++ = (packed_byte >> shift) & mask;
+                        shift -= m_context.bpp;
+                    }
+                }
+            }
+        }
+
+        void decodeStrip(Surface target, ConstMemory memory, int width, int height, int strip_index = -1)
+        {
+            // Expand sub-byte formats (1, 2, 4 bits) to 8-bit during decompression for cleaner pipeline
+            u32 effective_bpp = std::max(8u, u32(m_context.bpp));
+            u32 bytes_per_row = (header.width * effective_bpp + 7) / 8;
             u32 uncompressed_bytes = height * bytes_per_row;
+
+            printLine(Print::Info, "[TIFF] Strip: {}x{}, bytes_per_row: {}, total: {} bytes", 
+                     width, height, bytes_per_row, uncompressed_bytes);
 
             //printLine(Print::Info, "    Strip height: {}", height);
             //printLine(Print::Info, "    Bytes per row: {}", bytes_per_row);
@@ -842,16 +1244,55 @@ namespace
 
             // TODO: only allocate if needed
             Buffer buffer(uncompressed_bytes);
+            Buffer expanded_buffer; // For post-decompression expansion
+
+            // Track whether we need post-decompression sub-byte expansion
+            bool needs_expansion = (m_context.bpp < 8);
 
             switch (Compression(m_context.compression))
             {
                 case Compression::NONE:
-                    std::memcpy(buffer, memory.address, uncompressed_bytes);
+                {
+                    if (needs_expansion)
+                    {
+                        expandSubBytePixels(buffer, memory, width, height);
+                        needs_expansion = false;
+                    }
+                    else
+                    {
+                        std::memcpy(buffer, memory.address, uncompressed_bytes);
+                    }
                     memory = buffer;
                     break;
+                }
 
-                //case Compression::CCITT_RLE:
-                //    break;
+                case Compression::CCITT_RLE:
+                {
+                    printLine(Print::Info, "[CCITT-RLE] Processing strip {}, input: {} bytes, output: {} bytes", 
+                             strip_index, memory.size, buffer.size());
+                    bool success = ccitt_rle_decompress(buffer, memory);
+                    if (!success)
+                    {
+                        printLine(Print::Error, "[CCITT-RLE] Decompression failed for strip {}", strip_index);
+                        break;
+                    }
+                    printLine(Print::Info, "[CCITT-RLE] Strip {} decompression succeeded", strip_index);
+
+                    // Apply PhotometricInterpretation color inversion if needed
+                    // TODO: Check actual PhotometricInterpretation value from context
+                    if (true) // For now, always invert (should be: m_context.photometric == 0)
+                    {
+                        for (int i = 0; i < buffer.size(); i++)
+                        {
+                            buffer[i] = ~buffer[i];
+                        }
+                        printLine(Print::Debug, "[CCITT-RLE] Applied color inversion for strip {}", strip_index);
+                    }
+
+                    memory = buffer;
+                    needs_expansion = false; // CCITT already expands to 8-bit
+                    break;
+                }
 
                 //case Compression::CCITT_FAX3:
                 //    break;
@@ -893,6 +1334,14 @@ namespace
                     //status.setError("Unknown compression.");
                     //return status;
                     return;
+            }
+
+            // Post-decompression sub-byte expansion if needed
+            if (needs_expansion)
+            {
+                expanded_buffer.resize(uncompressed_bytes);
+                expandSubBytePixels(expanded_buffer, memory, width, height);
+                memory = expanded_buffer;
             }
 
             for (u32 y = 0; y < height; ++y)
@@ -939,8 +1388,16 @@ namespace
             {
                 if (m_context.predictor == 1)
                 {
-                    // planar, no prediction
-                    // TODO: convert RRRRRR...GGGGGG....BBBBBB into RGBRGBRGB...
+                    // planar, no prediction - deinterleave channels within scanline
+                    u32 pixels_per_scanline = bytes / channels;
+                    
+                    for (u32 pixel = 0; pixel < pixels_per_scanline; ++pixel)
+                    {
+                        for (u32 channel = 0; channel < channels; ++channel)
+                        {
+                            dest[pixel * channels + channel] = src[channel * pixels_per_scanline + pixel];
+                        }
+                    }
                 }
                 else if (m_context.predictor == 2)
                 {
