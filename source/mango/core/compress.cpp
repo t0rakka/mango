@@ -1450,7 +1450,7 @@ namespace isal
                 int length = 1 - code;
 
                 output.size -= length;
-                input.size -= length;
+                input.size -= 1;
                 if (output.size < 0 || input.size < 0)
                 {
                     return false;
