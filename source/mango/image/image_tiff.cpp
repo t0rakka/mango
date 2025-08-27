@@ -8,6 +8,7 @@
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
 #include <mango/core/compress.hpp>
+#include <mango/core/cpuinfo.hpp>
 #include <vector>
 #include <numeric>
 
@@ -137,6 +138,7 @@ namespace
         u32 samples_per_pixel = 3; // channels
         u32 bpp = 0; // sum of bits_per_sample
         std::vector<u32> bits_per_sample; // bits in each channel
+        u32 sample_bits = 8; // default to 8 bits per sample
 
         u32 rows_per_strip = 0;
         std::vector<u32> strip_offsets;
@@ -289,7 +291,15 @@ namespace
                 context.bits_per_sample = values;
                 context.bpp = std::accumulate(values.begin(), values.end(), 0);
                 printLine(Print::Info, "    [BitsPerSample]");
-                printLine(Print::Info, "      value: {}", context.bpp);
+
+                // Print individual channel values
+                std::string channels_str;
+                for (size_t i = 0; i < values.size(); ++i)
+                {
+                    if (i > 0) channels_str += ", ";
+                    channels_str += std::to_string(values[i]);
+                }
+                printLine(Print::Info, "      values: [{}] -> {} bits", channels_str, context.bpp);
                 break;
             }
 
@@ -1088,6 +1098,28 @@ namespace
                 return;
             }
 
+            if (m_context.bits_per_sample.empty())
+            {
+                header.setError("[ImageDecoder.TIFF] Missing required bits per sample.");
+                return;
+            }
+
+            // check channel sizes
+            u32 sample_bits = m_context.bits_per_sample[0];
+
+            // Yes, we check first sample twice to keep the code simple
+            for (auto bits : m_context.bits_per_sample)
+            {
+                if (bits != sample_bits)
+                {
+                    // We only support images with the same bit depth per channel
+                    header.setError("[ImageDecoder.TIFF] Unsupported channel configuration.");
+                    return;
+                }
+            }
+
+            m_context.sample_bits = sample_bits;
+
             // Set header info
             header.width = m_context.width;
             header.height = m_context.height;
@@ -1106,6 +1138,9 @@ namespace
             // TODO: handle other bit depths than 8
             // TODO: better format selection logic
 
+            // bit-packed formats resolve to at least 8 bits per channel
+            u32 bits = m_context.sample_bits >= 8 ? m_context.sample_bits : 8;
+
             switch (PhotometricInterpretation(m_context.photometric))
             {
                 case PhotometricInterpretation::WHITE_IS_ZERO:
@@ -1113,11 +1148,11 @@ namespace
                 {
                     if (m_context.samples_per_pixel == 1)
                     {
-                        return LuminanceFormat(8, Format::UNORM, 8, 0);
+                        return LuminanceFormat(bits * 1, Format::UNORM, bits, 0);
                     }
                     else if (m_context.samples_per_pixel == 2)
                     {
-                        return LuminanceFormat(16, Format::UNORM, 8, 8);
+                        return LuminanceFormat(bits * 2, Format::UNORM, bits, bits);
                     }
                 }
 
@@ -1125,11 +1160,11 @@ namespace
                 {
                     if (m_context.samples_per_pixel == 3)
                     {
-                        return Format(24, Format::UNORM, Format::RGB, 8, 8, 8);
+                        return Format(bits * 3, Format::UNORM, Format::RGB, bits, bits, bits, 0);
                     }
                     else if (m_context.samples_per_pixel == 4)
                     {
-                        return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                        return Format(bits * 4, Format::UNORM, Format::RGBA, bits, bits, bits, bits);
                     }
                     else
                     {
@@ -1393,6 +1428,15 @@ namespace
                 expanded_buffer.resize(uncompressed_bytes);
                 expandSubBytePixels(expanded_buffer, memory, width, height);
                 memory = expanded_buffer;
+            }
+
+            if (m_is_little_endian != isLittleEndianCPU())
+            {
+                if (m_context.sample_bits == 16)
+                {
+                    // Handle 16-bit endianness conversion
+                    byteswap(reinterpret_cast<u16*>(const_cast<u8*>(memory.address)), memory.size / 2);
+                }
             }
 
             // Apply PhotometricInterpretation color inversion for grayscale images
