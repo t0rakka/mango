@@ -1365,16 +1365,6 @@ namespace
                     }
                     printLine(Print::Info, "[CCITT-RLE] Strip {} decompression succeeded", strip_index);
 
-                    // Apply PhotometricInterpretation color inversion if needed
-                    if (m_context.photometric == 0) // WhiteIsZero
-                    {
-                        for (int i = 0; i < buffer.size(); i++)
-                        {
-                            buffer[i] = ~buffer[i];
-                        }
-                        printLine(Print::Debug, "[CCITT-RLE] Applied color inversion for WhiteIsZero", strip_index);
-                    }
-
                     memory = buffer;
                     needs_expansion = false; // CCITT already expands to 8-bit
                     break;
