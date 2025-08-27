@@ -584,11 +584,16 @@ namespace
     }
 
     static
-    bool ccitt_rle_decompress(Memory output, ConstMemory input)
+    bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width)
     {
-        // CCITT RLE (Modified Huffman) for 1-bit fax images
-        const u8* src = input.address;
+        // Clean, minimal CCITT Modified Huffman decoder
+        // Based on TIFF 6.0 specification requirements
         
+        constexpr u8 White = 0x00;  // Raw white value (before PhotometricInterpretation)
+        constexpr u8 Black = 0xFF;  // Raw black value (before PhotometricInterpretation)
+
+        const u8* src = input.address;
+
         bool is_problematic_strip = (input.size == 370 && output.size == 8160);
         const u8* src_end = input.address + input.size;
         u8* dest = output.address;
@@ -662,14 +667,15 @@ namespace
         u32 bit_buffer = 0;
         int bits_available = 0;
 
-        auto ensure_bits = [&](int num_bits) -> bool {
-            while (bits_available < num_bits && src < src_end) {
+        auto ensure_bits = [&](int num_bits) -> bool
+        {
+            while (bits_available < num_bits && src < src_end)
+            {
                 bit_buffer = (bit_buffer << 8) | *src++;
                 bits_available += 8;
             }
             return bits_available >= num_bits;
         };
-
 
         auto decode_run = [&](bool is_white) -> int
         {
@@ -682,192 +688,174 @@ namespace
                                         sizeof(black_codes)/sizeof(ccitt_code);
 
             // Try codes from shortest to longest (2-13 bits for CCITT)
-            for (int bits = 2; bits <= 13; bits++) {
+            for (int bits = 2; bits <= 13; bits++)
+            {
                 if (!ensure_bits(bits)) continue;
                 
                 // Extract code of current length from MSB side
                 u32 code = (bit_buffer >> (bits_available - bits)) & ((1 << bits) - 1);
                 
-
-                
                 // Search for matching code in table
-                for (int i = 0; i < table_size; i++) {
-                    if (table[i].bits == bits && table[i].code == code) {
+                for (int i = 0; i < table_size; i++)
+                {
+                    if (table[i].bits == bits && table[i].code == code)
+                    {
                         // Found match - validate run length is reasonable
-                        if (table[i].run > 272) {
+                        if (table[i].run > width)
+                        {
                             // Don't return this - keep looking for better match
                             continue;
                         }
-                        
+
                         // Found reasonable match - consume bits 
                         bits_available -= bits;
 
-                        
-                        // Debug successful decodes in problematic strip (near the end)
-                        if (is_problematic_strip && (src - input.address) > 300) {
-                            printLine(Print::Info, "[CCITT-RLE] SUCCESS: {} run {} pixels (code 0x{:X}, {} bits) at input byte {}", 
-                                     is_white ? "white" : "black", table[i].run, code, bits, (src - input.address));
-                        }
-                        
                         return table[i].run;
                     }
                 }
             }
-            
+
             // Only treat as end if we're completely out of input data
-            if (src >= src_end) {
+            if (src >= src_end)
+            {
                 return -3; // End of data
             }
-            
+
             // Show what pattern we couldn't decode
-            if (ensure_bits(16)) {
+            if (ensure_bits(16))
+            {
                 u32 debug_bits = (bit_buffer >> (bits_available - 16)) & 0xFFFF;
-                if (is_problematic_strip) {
-                    printLine(Print::Error, "[CCITT-RLE] No {} code found. Next 16 bits: 0x{:04X} = {:016b}", 
-                             is_white ? "white" : "black", debug_bits, debug_bits);
-                }
             }
-            
+
             // Simple fallback - skip 1 bit and continue  
-            if (ensure_bits(1)) {
+            if (ensure_bits(1))
+            {
                 bits_available -= 1;
                 return 1; // 1 pixel run
             }
-            
+
             return -1; // Complete failure
         };
 
-        // Note: PhotometricInterpretation handling is done at higher level
-
-        // CCITT Modified Huffman decoding with 8-bit expansion
-        bool current_color = true; // Start with white (true = white, false = black)  
+        // CCITT Modified Huffman decoding with direct u8 color values
+        u8 current_color = White; // Start with white (TIFF 6.0: all rows begin with white)  
         int pixels_written = 0;
         int total_run_length = 0;
 
         while (src < src_end && dest < dest_end)
         {
             total_run_length = 0;
-            
+
             // Decode run length (may need multiple codes for long runs)
-            while (true) {
-                int run_length = decode_run(current_color);
-                
-                if (run_length == -3) {
+            while (true)
+            {
+                int run_length = decode_run(current_color == White);
+
+                if (run_length == -3)
+                {
                     // End/padding marker - we're done
-                    printLine(Print::Info, "[CCITT-RLE] Hit end-of-data condition at pixel {} / {}", 
-                             pixels_written, output.size);
                     goto decode_complete;
 
-
-                } else if (run_length < 0) {
-                    printLine(Print::Error, "[CCITT-RLE] Failed to decode {} run at pixel {}", 
-                             current_color ? "white" : "black", pixels_written);
-                    
+                }
+                else if (run_length < 0)
+                {
                     // Check if we're at a row boundary - this might be normal row padding
-                    if (pixels_written % 272 == 0 && pixels_written > 0) {
-                        printLine(Print::Info, "[CCITT-RLE] At row boundary (pixel {}), trying to skip padding", pixels_written);
-                        
+                    if (pixels_written % width == 0 && pixels_written > 0)
+                    {
                         // Try to skip to next byte boundary and look for valid codes
                         int bits_to_skip = bits_available % 8;
-                        if (bits_to_skip > 0) {
+                        if (bits_to_skip > 0)
+                        {
                             bits_available -= bits_to_skip;
-                            printLine(Print::Info, "[CCITT-RLE] Skipped {} padding bits to byte boundary", bits_to_skip);
                         }
-                        
+
                         // Reset to white for new row and break out to try next run
-                        current_color = true;
+                        current_color = White;
                         break; // Break out of run decoding loop, start new run
                     }
                     return false;
                 }
-                
+
                 total_run_length += run_length;
-                
+
                 // If this was a make-up code (multiple of 64), expect a terminating code next
-                if (run_length >= 64 && (run_length % 64) == 0) {
+                if (run_length >= 64 && (run_length % 64) == 0)
+                {
                     continue; // Read the terminating code
-                } else {
+                }
+                else
+                {
                     break; // This was a terminating code, we're done with this run
                 }
             }
 
             // Check if we completed a row and need to handle row boundary
-            int current_row = pixels_written / 272;
-            int pixels_in_current_row = pixels_written % 272;
-            
+            int current_row = pixels_written / width;
+            int pixels_in_current_row = pixels_written % width;
+
+            // Handle zero-length runs (CRITICAL for black-edge images)
+            if (total_run_length == 0)
+            {
+                // Zero-length run: don't write pixels, but DO alternate color
+                current_color = ~current_color;
+                // Zero-length run handled
+                continue;
+            }
+
             // Only output pixels if we have a valid run length
-            if (total_run_length > 0) {
+            if (total_run_length > 0)
+            {
                 // Simple bounds check for 8-bit expanded output
                 int pixels_remaining = dest_end - dest;
                 int pixels_to_write = std::min(total_run_length, pixels_remaining);
-                
-                if (pixels_to_write < total_run_length) {
-                    printLine(Print::Warning, "[CCITT-RLE] Run length {} exceeds remaining buffer space {}, truncating", 
-                             total_run_length, pixels_remaining);
-                }
-                
-                // Output the run as 8-bit expanded data using elegant bit math
-                // Simple mapping: white→0x00, black→0xFF (PhotometricInterpretation handled later)
-                u8 expanded = current_color ? 0x00 : 0xFF; // White→0x00, Black→0xFF
-                
 
-                
-                for (int i = 0; i < pixels_to_write; i++) {
-                    *dest++ = expanded;
+                if (pixels_to_write < total_run_length)
+                {
+                    // Run length truncated to remaining buffer space
+                }
+
+                // Output the run directly using current_color (no expansion needed!)
+                for (int i = 0; i < pixels_to_write; i++)
+                {
+                    *dest++ = current_color;
                 }
 
                 pixels_written += pixels_to_write;
-                current_color = !current_color; // Alternate between white and black
-                
+                current_color = ~current_color; // Flip between 0xFF and 0x00
+
                 // Check if we completed a row
-                if (pixels_written % 272 == 0 && pixels_written > 0) {
-                    int row_completed = pixels_written / 272;
-                    
+                if (pixels_written % width == 0 && pixels_written > 0)
+                {
+                    int row_completed = pixels_written / width;
+
                     // TIFF 6.0: "New rows always begin on the next available byte boundary"
                     if (bits_available % 8 != 0) {
                         int bits_to_skip = bits_available % 8;
                         bits_available -= bits_to_skip;
                     }
-                    
+
                     // TIFF 6.0: Each row starts with white
-                    current_color = true;
+                    current_color = White;
                 }
-                
+
                 // Stop if buffer is full
-                if (pixels_written >= output.size) {
-                    printLine(Print::Info, "[CCITT-RLE] Buffer full condition at pixel {} / {}", 
-                             pixels_written, output.size);
+                if (pixels_written >= output.size)
+                {
+                    // Buffer full
                     break;
                 }
             }
         }
 
-        // Debug: Why did the main loop exit?
-        printLine(Print::Info, "[CCITT-RLE] Main loop exited: pixels={}, src={}/{} ({}), dest={}/{} ({})", 
-                 pixels_written, (src - input.address), input.size, src < src_end ? "HAS_DATA" : "END_OF_INPUT",
-                 (dest - output.address), output.size, dest < dest_end ? "HAS_SPACE" : "BUFFER_FULL");
+        // Main decoding loop completed
 
     decode_complete:        
         int bytes_written = dest - output.address;
-        if (is_problematic_strip || bytes_written < output.size) {
-            printLine(Print::Info, "[CCITT-RLE] Decompressed {} pixels into {} bytes (expected: {} bytes)", 
-                     pixels_written, bytes_written, output.size);
-        }
-        
-        if (bytes_written < output.size) {
-            int missing_pixels = output.size - bytes_written;
-            int missing_rows = missing_pixels / 272;
-            printLine(Print::Warning, "[CCITT-RLE] Output incomplete: {} / {} bytes ({}% complete)", 
-                     bytes_written, output.size, (bytes_written * 100) / output.size);
-            printLine(Print::Warning, "[CCITT-RLE] Missing {} pixels = {} complete rows + {} pixels", 
-                     missing_pixels, missing_rows, missing_pixels % 272);
-            printLine(Print::Warning, "[CCITT-RLE] Final state: input consumed {} / {} bytes, bits_available: {}", 
-                     (src - input.address), input.size, bits_available);
-        }
 
-        // Fill any remaining output buffer with white (0x00)
-        while (dest < dest_end) {
-            *dest++ = 0x00;
+        // Fill any remaining output buffer with white
+        while (dest < dest_end)
+        {
+            *dest++ = White;
         }
 
         return true;
@@ -1135,9 +1123,6 @@ namespace
 
         Format getImageFormat()
         {
-            // TODO: handle other bit depths than 8
-            // TODO: better format selection logic
-
             // bit-packed formats resolve to at least 8 bits per channel
             u32 bits = m_context.sample_bits >= 8 ? m_context.sample_bits : 8;
 
@@ -1219,9 +1204,6 @@ namespace
 
             DecodeTargetBitmap target(dest, header.width, header.height, header.format, m_context.palette, false);
 
-            printLine(Print::Info, "[TIFF] Processing {} strips, rows_per_strip: {}, image height: {}", 
-                     m_context.strip_offsets.size(), m_context.rows_per_strip, header.height);
-
             if (m_context.planar_configuration == 2)
             {
                 // Planar format: strips organized as channels, clear target buffer first
@@ -1242,9 +1224,6 @@ namespace
                         const u8* src = m_memory.address + m_context.strip_offsets[strip_index];
                         u32 bytes = m_context.strip_byte_counts[strip_index];
 
-                        printLine(Print::Info, "[TIFF] Strip {}: y={}, height={}, bytes={}, channel={}", 
-                                 strip_index, y, strip_height, bytes, channel);
-
                         Surface strip(target, 0, y, header.width, strip_height);
                         decodeStrip(strip, ConstMemory(src, bytes), header.width, strip_height, strip_index, channel);
                     }
@@ -1261,8 +1240,6 @@ namespace
 
                     const u8* src = m_memory.address + m_context.strip_offsets[i];
                     u32 bytes = m_context.strip_byte_counts[i];
-
-                    printLine(Print::Info, "[TIFF] Strip {}: y={}, height={}, bytes={}", i, y, strip_height, bytes);
 
                     Surface strip(target, 0, y, header.width, strip_height);
                     decodeStrip(strip, ConstMemory(src, bytes), header.width, strip_height, i);
@@ -1311,27 +1288,21 @@ namespace
         {
             // Expand sub-byte formats (1, 2, 4 bits) to 8-bit during decompression for cleaner pipeline
             u32 effective_bpp = std::max(8u, u32(m_context.bpp));
-            
+
             // For planar format, each strip contains one channel only
             u32 bytes_per_row;
-            if (m_context.planar_configuration == 2) {
+            if (m_context.planar_configuration == 2)
+            {
                 bytes_per_row = (header.width * effective_bpp / m_context.samples_per_pixel + 7) / 8;
-            } else {
+            } 
+            else
+            {
                 bytes_per_row = (header.width * effective_bpp + 7) / 8;
             }
             u32 uncompressed_bytes = height * bytes_per_row;
 
-            printLine(Print::Info, "[TIFF] Strip: {}x{}, bytes_per_row: {}, total: {} bytes", 
-                     width, height, bytes_per_row, uncompressed_bytes);
-
-            //printLine(Print::Info, "    Strip height: {}", height);
-            //printLine(Print::Info, "    Bytes per row: {}", bytes_per_row);
-            //printLine(Print::Info, "    Uncompressed bytes: {}", uncompressed_bytes);
-            //printLine(Print::Info, "");
-
-            // TODO: only allocate if needed
             Buffer buffer(uncompressed_bytes);
-            Buffer expanded_buffer; // For post-decompression expansion
+            Buffer expanded_buffer;
 
             // Track whether we need post-decompression sub-byte expansion
             bool needs_expansion = (m_context.bpp < 8);
@@ -1355,15 +1326,12 @@ namespace
 
                 case Compression::CCITT_RLE:
                 {
-                    printLine(Print::Info, "[CCITT-RLE] Processing strip {}, input: {} bytes, output: {} bytes", 
-                             strip_index, memory.size, buffer.size());
-                    bool success = ccitt_rle_decompress(buffer, memory);
+                    bool success = ccitt_rle_decompress(buffer, memory, width);
                     if (!success)
                     {
                         printLine(Print::Error, "[CCITT-RLE] Decompression failed for strip {}", strip_index);
                         break;
                     }
-                    printLine(Print::Info, "[CCITT-RLE] Strip {} decompression succeeded", strip_index);
 
                     memory = buffer;
                     needs_expansion = false; // CCITT already expands to 8-bit
