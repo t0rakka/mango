@@ -61,7 +61,7 @@ namespace
         //Threshholding = 263, // SHORT
         //CellWidth = 264, // SHORT
         //CellLength = 265, // SHORT
-        //FillOrder = 266, // SHORT
+        FillOrder = 266, // SHORT
         DocumentName = 269,
         ImageDescription = 270,
         //Make = 271, // ASCII
@@ -132,6 +132,7 @@ namespace
         u32 orientation = 0;
         u32 planar_configuration = 0;
         u32 predictor = 1;
+        u32 fill_order = 1;
 
         u32 samples_per_pixel = 3; // channels
         u32 bpp = 0; // sum of bits_per_sample
@@ -302,6 +303,12 @@ namespace
                 context.photometric = getUnsigned(p, type);
                 printLine(Print::Info, "    [PhotometricInterpretation]");
                 printLine(Print::Info, "      value: {}", context.photometric);
+                break;
+
+            case Tag::FillOrder:
+                context.fill_order = getUnsigned(p, type);
+                printLine(Print::Info, "    [FillOrder]");
+                printLine(Print::Info, "      value: {}", context.fill_order);
                 break;
 
             case Tag::DocumentName:
@@ -1177,24 +1184,56 @@ namespace
 
             DecodeTargetBitmap target(dest, header.width, header.height, header.format, m_context.palette, false);
 
-            u32 y = 0;
-
             printLine(Print::Info, "[TIFF] Processing {} strips, rows_per_strip: {}, image height: {}", 
                      m_context.strip_offsets.size(), m_context.rows_per_strip, header.height);
 
-            for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
+            if (m_context.planar_configuration == 2)
             {
-                u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
+                // Planar format: strips organized as channels, clear target buffer first
+                std::memset(target.image, 0, target.stride * header.height);
+                
+                // For planar: strips per spatial region = total_strips / samples_per_pixel
+                u32 strips_per_spatial_region = m_context.strip_offsets.size() / m_context.samples_per_pixel;
+                
+                for (size_t spatial_strip = 0; spatial_strip < strips_per_spatial_region; ++spatial_strip)
+                {
+                    u32 y = spatial_strip * m_context.rows_per_strip;
+                    u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
+                    
+                    for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
+                    {
+                        size_t strip_index = spatial_strip * m_context.samples_per_pixel + channel;
+                        
+                        const u8* src = m_memory.address + m_context.strip_offsets[strip_index];
+                        u32 bytes = m_context.strip_byte_counts[strip_index];
 
-                const u8* src = m_memory.address + m_context.strip_offsets[i];
-                u32 bytes = m_context.strip_byte_counts[i];
+                        printLine(Print::Info, "[TIFF] Strip {}: y={}, height={}, bytes={}, channel={}", 
+                                 strip_index, y, strip_height, bytes, channel);
 
-                printLine(Print::Info, "[TIFF] Strip {}: y={}, height={}, bytes={}", i, y, strip_height, bytes);
+                        Surface strip(target, 0, y, header.width, strip_height);
+                        decodeStrip(strip, ConstMemory(src, bytes), header.width, strip_height, strip_index, channel);
+                    }
+                }
+            }
+            else
+            {
+                // Chunky format: strips organized spatially
+                u32 y = 0;
+                
+                for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
+                {
+                    u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
 
-                Surface strip(target, 0, y, header.width, strip_height);
-                decodeStrip(strip, ConstMemory(src, bytes), header.width, strip_height, i);
+                    const u8* src = m_memory.address + m_context.strip_offsets[i];
+                    u32 bytes = m_context.strip_byte_counts[i];
 
-                y += strip_height;
+                    printLine(Print::Info, "[TIFF] Strip {}: y={}, height={}, bytes={}", i, y, strip_height, bytes);
+
+                    Surface strip(target, 0, y, header.width, strip_height);
+                    decodeStrip(strip, ConstMemory(src, bytes), header.width, strip_height, i);
+
+                    y += strip_height;
+                }
             }
 
             target.resolve();
@@ -1206,32 +1245,45 @@ namespace
         {
             const u8* src_ptr = src.address;
             u8* dest_ptr = dest.address;
-            
+
             int pixels_per_byte = 8 / m_context.bpp;
             int mask = (1 << m_context.bpp) - 1;
-            
+
+            // For palette images, keep raw indices (0-1, 0-3, 0-15)
+            // For sample images, scale to full 8-bit range (0-255)
+            bool is_palette = (m_context.photometric == 3); // PhotometricInterpretation::Palette
+            int scale = is_palette ? 1 : (255 / mask);
+
             for (int y = 0; y < height; ++y)
             {
                 for (int x = 0; x < width; x += pixels_per_byte)
                 {
                     u8 packed_byte = *src_ptr++;
-                    
+
                     // Extract pixels from MSB to LSB
                     int shift = 8 - m_context.bpp;  // Start at MSB
                     for (int pixel = 0; pixel < pixels_per_byte && (x + pixel) < width; ++pixel)
                     {
-                        *dest_ptr++ = (packed_byte >> shift) & mask;
+                        int pixel_value = (packed_byte >> shift) & mask;
+                        *dest_ptr++ = pixel_value * scale;
                         shift -= m_context.bpp;
                     }
                 }
             }
         }
 
-        void decodeStrip(Surface target, ConstMemory memory, int width, int height, int strip_index = -1)
+        void decodeStrip(Surface target, ConstMemory memory, int width, int height, int strip_index = -1, u32 channel_index = 0)
         {
             // Expand sub-byte formats (1, 2, 4 bits) to 8-bit during decompression for cleaner pipeline
             u32 effective_bpp = std::max(8u, u32(m_context.bpp));
-            u32 bytes_per_row = (header.width * effective_bpp + 7) / 8;
+            
+            // For planar format, each strip contains one channel only
+            u32 bytes_per_row;
+            if (m_context.planar_configuration == 2) {
+                bytes_per_row = (header.width * effective_bpp / m_context.samples_per_pixel + 7) / 8;
+            } else {
+                bytes_per_row = (header.width * effective_bpp + 7) / 8;
+            }
             u32 uncompressed_bytes = height * bytes_per_row;
 
             printLine(Print::Info, "[TIFF] Strip: {}x{}, bytes_per_row: {}, total: {} bytes", 
@@ -1279,14 +1331,13 @@ namespace
                     printLine(Print::Info, "[CCITT-RLE] Strip {} decompression succeeded", strip_index);
 
                     // Apply PhotometricInterpretation color inversion if needed
-                    // TODO: Check actual PhotometricInterpretation value from context
-                    if (true) // For now, always invert (should be: m_context.photometric == 0)
+                    if (m_context.photometric == 0) // WhiteIsZero
                     {
                         for (int i = 0; i < buffer.size(); i++)
                         {
                             buffer[i] = ~buffer[i];
                         }
-                        printLine(Print::Debug, "[CCITT-RLE] Applied color inversion for strip {}", strip_index);
+                        printLine(Print::Debug, "[CCITT-RLE] Applied color inversion for WhiteIsZero", strip_index);
                     }
 
                     memory = buffer;
@@ -1344,66 +1395,71 @@ namespace
                 memory = expanded_buffer;
             }
 
+            // Apply PhotometricInterpretation color inversion for grayscale images
+            if (m_context.photometric == 0 && m_context.samples_per_pixel == 1) // WhiteIsZero grayscale
+            {
+                u8* data = const_cast<u8*>(memory.address);
+                for (u32 i = 0; i < memory.size; ++i)
+                {
+                    data[i] = 255 - data[i];
+                }
+            }
+
             for (u32 y = 0; y < height; ++y)
             {
-                resolveScanline(target.image, memory.address, bytes_per_row, m_context.samples_per_pixel);
+                if (m_context.planar_configuration == 2)
+                {
+                    resolvePlanarScanline(target.image, memory.address, bytes_per_row, m_context.samples_per_pixel, channel_index);
+                }
+                else
+                {
+                    resolveChunkyScanline(target.image, memory.address, bytes_per_row, m_context.samples_per_pixel);
+                }
                 memory.address += bytes_per_row;
                 target.image += target.stride;
             }
         }
 
-        void resolveScanline(u8* dest, const u8* src, u32 bytes, u32 channels)
+        void resolveChunkyScanline(u8* dest, const u8* src, u32 bytes, u32 channels)
         {
-            // PlanarConfiguration: 1 (chunky) or 2 (planar)
-            // Predictor: 1 (no prediction) or 2 (horizontal differencing)
-
-            //void byteswap(u16* data, size_t count);
-            // TODO: byteswap(src, bytes / 2);
-
-            if (m_context.planar_configuration == 1)
+            if (m_context.predictor == 1)
             {
-                if (m_context.predictor == 1)
-                {
-                    // chunky, no prediction
-                    std::memcpy(dest, src, bytes);
-                }
-                else if (m_context.predictor == 2)
-                {
-                    // chunky, horizontal differencing
+                // chunky, no prediction
+                std::memcpy(dest, src, bytes);
+            }
+            else if (m_context.predictor == 2)
+            {
+                // chunky, horizontal differencing
+                std::memcpy(dest, src, channels); // copy first sample
 
-                    // copy first sample
-                    std::memcpy(dest, src, channels);
-
-                    // apply horizontal differencing for each sample
-                    for (u32 x = channels; x < bytes; x += channels)
+                // apply horizontal differencing for each sample
+                for (u32 x = channels; x < bytes; x += channels)
+                {
+                    for (u32 c = 0; c < channels; ++c)
                     {
-                        for (u32 c = 0; c < channels; ++c)
-                        {
-                            dest[x + c] = src[x + c] + dest[x - channels + c];
-                        }
+                        dest[x + c] = src[x + c] + dest[x - channels + c];
                     }
                 }
             }
-            else if (m_context.planar_configuration == 2)
+        }
+
+        void resolvePlanarScanline(u8* dest, const u8* src, u32 pixels, u32 channels, u32 channel_index)
+        {
+            if (m_context.predictor == 1)
             {
-                if (m_context.predictor == 1)
+                // planar, no prediction - write channel data to correct offset
+                u8* pixel_dest = dest + channel_index;
+
+                for (u32 pixel = 0; pixel < pixels; ++pixel)
                 {
-                    // planar, no prediction - deinterleave channels within scanline
-                    u32 pixels_per_scanline = bytes / channels;
-                    
-                    for (u32 pixel = 0; pixel < pixels_per_scanline; ++pixel)
-                    {
-                        for (u32 channel = 0; channel < channels; ++channel)
-                        {
-                            dest[pixel * channels + channel] = src[channel * pixels_per_scanline + pixel];
-                        }
-                    }
+                    *pixel_dest = src[pixel];
+                    pixel_dest += channels;
                 }
-                else if (m_context.predictor == 2)
-                {
-                    // planar, horizontal differencing
-                    // TODO: convert RRRRRR...GGGGGG....BBBBBB into RGBRGBRGB...
-                }
+            }
+            else if (m_context.predictor == 2)
+            {
+                // planar, horizontal differencing
+                // TODO: implement predictor for planar format
             }
         }
     };
