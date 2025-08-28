@@ -433,7 +433,7 @@ namespace
     }
 
     static
-    bool lzw_decompress(Memory output, ConstMemory input)
+    bool lzw_msb_decompress(Memory output, ConstMemory input)
     {
         // Efficient LZW table structure (like the original!)
         struct lzw_entry
@@ -581,6 +581,261 @@ namespace
         }
 
         return true;
+    }
+
+    static
+    bool detect_lzw_bit_order(ConstMemory input)
+    {
+        if (input.size < 2)
+            return true; // Default to MSB-first for short inputs
+
+        const u8* data = input.address;
+        u8 byte0 = data[0];
+        u8 byte1 = data[1];
+
+        // Try MSB-first: high bits of byte0, low bits of byte1
+        u32 msb_code = ((u32(byte0) << 1) | (u32(byte1) >> 7)) & 0x1FF; // 9-bit extraction
+
+        // Try LSB-first: pack bytes and extract from low bits
+        u32 lsb_data = u32(byte0) | (u32(byte1) << 8);
+        u32 lsb_code = lsb_data & 0x1FF; // 9-bit extraction
+
+        // Check which extraction yields ClearCode (256)
+        if (msb_code == 256)
+            return true; // MSB-first
+        else if (lsb_code == 256)
+            return false;  // LSB-first
+
+        // If neither yields ClearCode, default to MSB-first (standard)
+        return true;
+    }
+
+    static
+    bool lzw_lsb_decompress(Memory output, ConstMemory input)
+    {
+        // Efficient LZW table structure
+        struct lzw_entry
+        {
+            s16 prefix;
+            u8 first;
+            u8 suffix;
+        } codes[4096];
+
+        u8 decode_stack[4096];
+
+        // Initialize table with single characters
+        for (int i = 0; i < 256; i++)
+        {
+            codes[i].prefix = -1;
+            codes[i].first = static_cast<u8>(i);
+            codes[i].suffix = static_cast<u8>(i);
+        }
+
+        const int ClearCode = 256;
+        const int EoiCode = 257;
+        int next_table_entry = 258;
+
+        // Calculate pointers from Memory objects
+        const u8* src_ptr = input.address;
+        const u8* src_end = input.address + input.size;
+        u8* dest_ptr = output.address;
+        u8* dest_end = output.address + output.size;
+
+        // Bit reading state
+        s32 data = 0;
+        s32 data_bits = 0;
+        s32 codesize = 9;  // Start with 9-bit codes
+        s32 codemask = (1 << codesize) - 1;
+
+        auto GetNextCode = [&]() -> int
+        {
+            // Fill bit buffer (adaptive: MSB-first or LSB-first)
+            while (data_bits < codesize && src_ptr < src_end)
+            {
+                s32 byte_val = *src_ptr++;
+                data = data | (byte_val << data_bits);  // LSB-first: new bits at top
+                data_bits += 8;
+            }
+
+            if (data_bits < codesize)
+                return -1; // EOF
+
+            // Extract code (adaptive)
+            int code;
+            code = data & codemask;
+            data >>= codesize;
+            data_bits -= codesize;
+
+            return code;
+        };
+
+        auto WriteString = [&](int code) -> bool
+        {
+            if (code < 0 || code >= 4096)
+                return false;
+
+            u8* sp = decode_stack;
+            int chain_length = 0;
+            
+            // Build string by following prefix chain
+            while (code >= 0)
+            {
+                if (chain_length >= 4096)
+                    return false; // Infinite loop protection
+                
+                if (sp >= decode_stack + 4096)
+                    return false; // Stack overflow protection
+                
+                *sp++ = codes[code].suffix;
+                if (codes[code].prefix < 0)
+                    break;
+                code = codes[code].prefix;
+                chain_length++;
+            }
+
+            // Output string in reverse order
+            if (dest_ptr + (sp - decode_stack) > dest_end)
+                return false; // Buffer overflow protection
+
+            u8* original_dest = dest_ptr;
+            while (sp > decode_stack)
+                *dest_ptr++ = *--sp;
+
+
+
+            return true;
+        };
+
+        auto AddStringToTable = [&](int oldcode, u8 first_char)
+        {
+            if (next_table_entry < 4096)
+            {
+                if (oldcode < 0 || oldcode >= 4096)
+                    return;
+                
+                codes[next_table_entry].prefix = oldcode;
+                codes[next_table_entry].first = codes[oldcode].first;
+                codes[next_table_entry].suffix = first_char;
+                next_table_entry++;
+                
+                // Check for code size transitions after adding entry
+                if ((next_table_entry == 512 && codesize == 9) ||
+                    (next_table_entry == 1024 && codesize == 10) ||
+                    (next_table_entry == 2048 && codesize == 11))
+                {
+                    codesize++;
+                    codemask = (1 << codesize) - 1;
+
+                }
+            }
+        };
+
+        int OldCode = -1;
+        bool first_code = true;
+
+        int codes_processed = 0;
+        for (;;)
+        {
+            int Code = GetNextCode();
+            codes_processed++;
+            
+            if (Code < 0 || Code == EoiCode)
+            {
+                break; // EOF
+            }
+
+            // Handle non-compliant streams that don't start with Clear code
+            if (first_code && Code != ClearCode)
+            {
+                // Initialize as if we got a Clear code
+                next_table_entry = 258;
+                codesize = 9;
+                codemask = (1 << codesize) - 1;
+                
+                // Process this first code normally
+                if (!WriteString(Code))
+                {
+                    printLine(Print::Error, "[LZW] WriteString failed for first code {}", Code);
+                    return false;
+                }
+                OldCode = Code;
+                first_code = false;
+                continue;
+            }
+            first_code = false;
+
+            // Validate code is in valid range
+            if (Code >= next_table_entry + 1)
+            {
+                printLine(Print::Error, "[LZW] Invalid code {} (max {})", Code, next_table_entry);
+                return false;
+            }
+
+            if (Code == ClearCode)
+            {
+                // Initialize table
+                next_table_entry = 258;
+                codesize = 9;
+                codemask = (1 << codesize) - 1;
+
+                Code = GetNextCode();
+                if (Code < 0 || Code == EoiCode)
+                    break;
+
+                if (!WriteString(Code))
+                {
+                    printLine(Print::Error, "[LZW] WriteString failed for code {} after Clear", Code);
+                    return false;
+                }
+                OldCode = Code;
+            }
+            else
+            {
+                if (Code < next_table_entry)
+                {
+                    // Critical Path: Code is in table (99.9% of the time)
+                    if (!WriteString(Code))
+                    {
+                        printLine(Print::Error, "[LZW] WriteString failed for code {} (in table)", Code);
+                        return false;
+                    }
+                    if (OldCode >= 0)
+                    {
+                        AddStringToTable(OldCode, codes[Code].first);
+                    }
+                    OldCode = Code;
+                }
+                else
+                {
+                    // Code not in table - the "KwKwK" case (rare)
+                    if (OldCode >= 0)
+                    {
+                        AddStringToTable(OldCode, codes[OldCode].first);
+                        if (!WriteString(Code)) // Code now exists in table
+                        {
+                            printLine(Print::Error, "[LZW] WriteString failed for code {} (KwKwK case)", Code);
+                            return false;
+                        }
+                        OldCode = Code;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    static
+    bool lzw_decompress(Memory output, ConstMemory input)
+    {
+        if (detect_lzw_bit_order(input))
+        {
+            return lzw_msb_decompress(output, input);
+        }
+        else
+        {
+            return lzw_lsb_decompress(output, input);
+        }
     }
 
     static
