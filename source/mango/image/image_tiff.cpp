@@ -74,6 +74,8 @@ namespace
         StripByteCounts = 279,
         //MinSampleValue = 280, // SHORT
         //MaxSampleValue = 281, // SHORT
+        XPosition = 286,
+        YPosition = 287,
         XResolution = 282,
         YResolution = 283,
         PlanarConfiguration = 284,
@@ -90,6 +92,10 @@ namespace
         ColorMap = 320,
         //ExtraSamples = 338, // SHORT
         //Copyright = 33432, // ASCII
+        Matteing = 32995,
+        DataType = 32996,
+        ImageDepth = 32997,
+        TileDepth = 32998,
     };
 
     enum class Compression : u16
@@ -128,6 +134,8 @@ namespace
         u16 compression = 1;
         u16 photometric = 2;
         u16 resolution_unit = 0;
+        float x_position = 0;
+        float y_position = 0;
         float x_resolution = 0;
         float y_resolution = 0;
         u32 orientation = 0;
@@ -271,6 +279,8 @@ namespace
         Type type = Type(p.read16());
         u64 count = is_big_tiff ? p.read64() : p.read32();
 
+        bool suppress_info = false;
+
         switch (tag)
         {
             case Tag::ImageWidth:
@@ -371,6 +381,18 @@ namespace
                 printLine(Print::Info, "      value: {}", context.resolution_unit);
                 break;
 
+            case Tag::XPosition:
+                context.x_position = getRational(p, memory, type, is_big_tiff);
+                printLine(Print::Info, "    [XPosition]");
+                printLine(Print::Info, "      value: {}", context.x_position);
+                break;
+
+            case Tag::YPosition:
+                context.y_position = getRational(p, memory, type, is_big_tiff);
+                printLine(Print::Info, "    [YPosition]");
+                printLine(Print::Info, "      value: {}", context.y_position);
+                break;
+
             case Tag::XResolution:
                 context.x_resolution = getRational(p, memory, type, is_big_tiff);
                 printLine(Print::Info, "    [XResolution]");
@@ -424,12 +446,24 @@ namespace
                 break;
             }
 
+            case Tag::Matteing:
+            case Tag::DataType:
+            case Tag::ImageDepth:
+            case Tag::TileDepth:
+                // deprecated tags
+                suppress_info = true;
+                break;
+
             default:
                 printLine(Print::Info, "    [UNKNOWN: {}]", int(tag));
                 break;
         }
 
-        printLine(Print::Info, "      type: {}, count: {}", int(type), count);
+        if (!suppress_info)
+        {
+            printLine(Print::Info, "      type: {}, count: {}", int(type), count);
+
+        }
     }
 
     static
