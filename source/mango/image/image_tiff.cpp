@@ -52,8 +52,8 @@ namespace
 
     enum class Tag : u16
     {
-        //NewSubfileType = 254, // LONG
-        //SubfileType = 255, // SHORT
+        NewSubfileType = 254, // LONG
+        SubfileType = 255, // SHORT
         ImageWidth = 256,
         ImageLength = 257,
         BitsPerSample = 258,
@@ -84,13 +84,25 @@ namespace
         //GrayResponseUnit = 290, // SHORT
         //GrayResponseCurve = 291, // SHORT
         ResolutionUnit = 296,
+        PageNumber = 297,
         Software = 305,
-        //DateTime = 306, // ASCII
-        //Artist = 315, // ASCII
+        DateTime = 306, // ASCII
+        Artist = 315, // ASCII
         //HostComputer = 316, // ASCII
         Predictor = 317,
         ColorMap = 320,
         //ExtraSamples = 338, // SHORT
+        SampleFormat = 339,
+        JPEGProc = 512,
+        JPEGInterchangeFormat = 513,
+        JPEGInterchangeFormatLength = 514,
+        JPEGRestartInterval = 515,
+        JPEGLosslessPredictors = 517,
+        JPEGPointTransforms = 518,
+        JPEGQTables = 519,
+        JPEGDCTables = 520,
+        JPEGACTables = 521,
+        YCbCrSubSampling = 530,
         //Copyright = 33432, // ASCII
         Matteing = 32995,
         DataType = 32996,
@@ -109,6 +121,7 @@ namespace
         ZIP = 8,
         PACKBITS = 32773,
         DEFLATE = 32946,
+        SGILOG = 34676,
     };
 
     enum class PhotometricInterpretation
@@ -124,7 +137,8 @@ namespace
         ICCLAB = 9,
         ITULAB = 10,
         CFA = 32803,
-        LINEAR_RAW = 34892
+        LOGLUV = 32845,
+        LINEAR_RAW = 34892,
     };
 
     struct IFDContext
@@ -142,6 +156,22 @@ namespace
         u32 planar_configuration = 0;
         u32 predictor = 1;
         u32 fill_order = 1;
+        u32 sample_format = 1;
+        u32 page_number = 0;
+
+        u32 jpeg_proc = 0;
+        u32 jpeg_interchange_format = 0;
+        u32 jpeg_interchange_format_length = 0;
+        u32 jpeg_restart_interval = 0;
+        u32 jpeg_lossless_predictors = 0;
+        u32 jpeg_point_transforms = 0;
+        u32 jpeg_qt_tables = 0;
+        u32 jpeg_dc_tables = 0;
+        u32 jpeg_ac_tables = 0;
+        std::vector<u32> y_cb_cr_sub_sampling;
+
+        u32 new_subfile_type = 0;
+        u16 subfile_type = 0;
 
         u32 samples_per_pixel = 3; // channels
         u32 bpp = 0; // sum of bits_per_sample
@@ -272,6 +302,13 @@ namespace
         return value;
     }
 
+#define TIFF_CASE_UNSIGNED(name, value) \
+    case Tag::name: \
+        context.value = getUnsigned(p, type); \
+        printLine(Print::Info, "    [" #name "]"); \
+        printLine(Print::Info, "      value: {}", context.value); \
+        break
+
     template <typename Pointer>
     void parse_ifd(IFDContext& context, ConstMemory memory, Pointer p, bool is_big_tiff)
     {
@@ -279,21 +316,14 @@ namespace
         Type type = Type(p.read16());
         u64 count = is_big_tiff ? p.read64() : p.read32();
 
-        bool suppress_info = false;
+        bool suppress_info = true;
 
         switch (tag)
         {
-            case Tag::ImageWidth:
-                context.width = getUnsigned(p, type);
-                printLine(Print::Info, "    [ImageWidth]");
-                printLine(Print::Info, "      value: {}", context.width);
-                break;
-
-            case Tag::ImageLength:
-                context.height = getUnsigned(p, type);
-                printLine(Print::Info, "    [ImageLength]");
-                printLine(Print::Info, "      value: {}", context.height);
-                break;
+            TIFF_CASE_UNSIGNED(NewSubfileType, new_subfile_type);
+            TIFF_CASE_UNSIGNED(SubfileType, subfile_type);
+            TIFF_CASE_UNSIGNED(ImageWidth, width);
+            TIFF_CASE_UNSIGNED(ImageLength, height);
 
             case Tag::BitsPerSample:
             {
@@ -313,23 +343,9 @@ namespace
                 break;
             }
 
-            case Tag::Compression:
-                context.compression = getUnsigned(p, type);
-                printLine(Print::Info, "    [Compression]");
-                printLine(Print::Info, "      value: {}", context.compression);
-                break;
-
-            case Tag::PhotometricInterpretation:
-                context.photometric = getUnsigned(p, type);
-                printLine(Print::Info, "    [PhotometricInterpretation]");
-                printLine(Print::Info, "      value: {}", context.photometric);
-                break;
-
-            case Tag::FillOrder:
-                context.fill_order = getUnsigned(p, type);
-                printLine(Print::Info, "    [FillOrder]");
-                printLine(Print::Info, "      value: {}", context.fill_order);
-                break;
+            TIFF_CASE_UNSIGNED(Compression, compression);
+            TIFF_CASE_UNSIGNED(PhotometricInterpretation, photometric);
+            TIFF_CASE_UNSIGNED(FillOrder, fill_order);
 
             case Tag::DocumentName:
                 context.document_name = getAscii(p, memory, type, is_big_tiff);
@@ -347,39 +363,24 @@ namespace
             {
                 printLine(Print::Info, "    [StripOffsets]");
                 context.strip_offsets = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                suppress_info = false;
                 break;
             }
 
-            case Tag::Orientation:
-                context.orientation = getUnsigned(p, type);
-                printLine(Print::Info, "    [Orientation]");
-                printLine(Print::Info, "      value: {}", context.orientation);
-                break;
-
-            case Tag::SamplesPerPixel:
-                context.samples_per_pixel = getUnsigned(p, type);
-                printLine(Print::Info, "    [SamplesPerPixel]");
-                printLine(Print::Info, "      value: {}", context.samples_per_pixel);
-                break;
-
-            case Tag::RowsPerStrip:
-                context.rows_per_strip = getUnsigned(p, type);
-                printLine(Print::Info, "    [RowsPerStrip]");
-                printLine(Print::Info, "      value: {}", context.rows_per_strip);
-                break;
+            TIFF_CASE_UNSIGNED(Orientation, orientation);
+            TIFF_CASE_UNSIGNED(SamplesPerPixel, samples_per_pixel);
+            TIFF_CASE_UNSIGNED(RowsPerStrip, rows_per_strip);
 
             case Tag::StripByteCounts:
             {
                 printLine(Print::Info, "    [StripByteCounts]");
                 context.strip_byte_counts = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                suppress_info = false;
                 break;
             }
 
-            case Tag::ResolutionUnit:
-                context.resolution_unit = getUnsigned(p, type);
-                printLine(Print::Info, "    [ResolutionUnit]");
-                printLine(Print::Info, "      value: {}", context.resolution_unit);
-                break;
+            TIFF_CASE_UNSIGNED(ResolutionUnit, resolution_unit);
+            TIFF_CASE_UNSIGNED(PageNumber, page_number);
 
             case Tag::XPosition:
                 context.x_position = getRational(p, memory, type, is_big_tiff);
@@ -405,21 +406,12 @@ namespace
                 printLine(Print::Info, "      value: {}", context.y_resolution);
                 break;
 
-            case Tag::PlanarConfiguration:
-                context.planar_configuration = getUnsigned(p, type);
-                printLine(Print::Info, "    [PlanarConfiguration]");
-                printLine(Print::Info, "      value: {}", context.planar_configuration);
-                break;
-
-            case Tag::Predictor:
-                context.predictor = getUnsigned(p, type);
-                printLine(Print::Info, "    [Predictor]");
-                printLine(Print::Info, "      value: {}", context.predictor);
-                break;
+            TIFF_CASE_UNSIGNED(PlanarConfiguration, planar_configuration);
+            TIFF_CASE_UNSIGNED(Predictor, predictor);
 
             case Tag::Software:
                 context.software = getAscii(p, memory, type, is_big_tiff);
-                printLine(Print::Info, "    [Software]");
+                //printLine(Print::Info, "    [Software]");
                 //printLine(Print::Info, "{}", context.software);
                 break;
 
@@ -446,23 +438,54 @@ namespace
                 break;
             }
 
+            TIFF_CASE_UNSIGNED(SampleFormat, sample_format);
+            TIFF_CASE_UNSIGNED(JPEGProc, jpeg_proc);
+            TIFF_CASE_UNSIGNED(JPEGInterchangeFormat, jpeg_interchange_format);
+            TIFF_CASE_UNSIGNED(JPEGInterchangeFormatLength, jpeg_interchange_format_length);
+            TIFF_CASE_UNSIGNED(JPEGRestartInterval, jpeg_restart_interval);
+            TIFF_CASE_UNSIGNED(JPEGLosslessPredictors, jpeg_lossless_predictors);
+            TIFF_CASE_UNSIGNED(JPEGPointTransforms, jpeg_point_transforms);
+            TIFF_CASE_UNSIGNED(JPEGQTables, jpeg_qt_tables);
+            TIFF_CASE_UNSIGNED(JPEGDCTables, jpeg_dc_tables);
+            TIFF_CASE_UNSIGNED(JPEGACTables, jpeg_ac_tables);
+
+            case Tag::YCbCrSubSampling:
+            {
+                context.y_cb_cr_sub_sampling = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                printLine(Print::Info, "    [YCbCrSubSampling]");
+
+                // Print individual channel values
+                std::string channels_str;
+                for (size_t i = 0; i < context.y_cb_cr_sub_sampling.size(); ++i)
+                {
+                    if (i > 0) channels_str += ", ";
+                    channels_str += std::to_string(context.y_cb_cr_sub_sampling[i]);
+                }
+                printLine(Print::Info, "      values: [{}]", channels_str);
+                break;
+            }
+
+            case Tag::DateTime:
+            case Tag::Artist:
+                // ignored tags
+                break;
+    
             case Tag::Matteing:
             case Tag::DataType:
             case Tag::ImageDepth:
             case Tag::TileDepth:
                 // deprecated tags
-                suppress_info = true;
                 break;
 
             default:
                 printLine(Print::Info, "    [UNKNOWN: {}]", int(tag));
+                suppress_info = false;
                 break;
         }
 
         if (!suppress_info)
         {
             printLine(Print::Info, "      type: {}, count: {}", int(type), count);
-
         }
     }
 
@@ -1305,6 +1328,7 @@ namespace
                 case PhotometricInterpretation::ICCLAB:
                 case PhotometricInterpretation::ITULAB:
                 case PhotometricInterpretation::CFA:
+                case PhotometricInterpretation::LOGLUV:
                 case PhotometricInterpretation::LINEAR_RAW:
                     // TODO
                     header.setError("Unsupported PhotometricInterpretation: {}", m_context.photometric);
@@ -1494,8 +1518,9 @@ namespace
                     break;
                 }
 
-                //case Compression::JPEG:
-                //    break;
+                case Compression::JPEG:
+                    printLine(Print::Info, "    Unsupported compression: {}", m_context.compression);
+                    break;
 
                 case Compression::ZIP:
                     zlib::decompress(buffer, memory);
@@ -1507,8 +1532,10 @@ namespace
                     memory = buffer;
                     break;
 
-                //case Compression::DEFLATE:
-                //    break;
+                case Compression::DEFLATE:
+                case Compression::SGILOG:
+                    printLine(Print::Info, "    Unsupported compression: {}", m_context.compression);
+                    break;
 
                 default:
                     printLine(Print::Info, "    Unknown compression: {}", m_context.compression);
