@@ -165,22 +165,22 @@ namespace
         u32 jpeg_restart_interval = 0;
         u32 jpeg_lossless_predictors = 0;
         u32 jpeg_point_transforms = 0;
-        std::vector<u32> jpeg_qt_tables;
-        std::vector<u32> jpeg_dc_tables;
-        std::vector<u32> jpeg_ac_tables;
-        std::vector<u32> y_cb_cr_sub_sampling;
+        std::vector<u64> jpeg_qt_tables;
+        std::vector<u64> jpeg_dc_tables;
+        std::vector<u64> jpeg_ac_tables;
+        std::vector<u64> y_cb_cr_sub_sampling;
 
         u32 new_subfile_type = 0;
         u16 subfile_type = 0;
 
         u32 samples_per_pixel = 3; // channels
         u32 bpp = 0; // sum of bits_per_sample
-        std::vector<u32> bits_per_sample; // bits in each channel
+        std::vector<u64> bits_per_sample; // bits in each channel
         u32 sample_bits = 8; // default to 8 bits per sample
 
         u32 rows_per_strip = 0;
-        std::vector<u32> strip_offsets;
-        std::vector<u32> strip_byte_counts;
+        std::vector<u64> strip_offsets;
+        std::vector<u64> strip_byte_counts;
 
         Palette palette;
 
@@ -234,9 +234,9 @@ namespace
     }
 
     template <typename Pointer>
-    u32 getUnsigned(Pointer& p, Type type)
+    u64 getUnsigned(Pointer& p, Type type)
     {
-        u32 value = 0;
+        u64 value = 0;
 
         switch (type)
         {
@@ -249,6 +249,9 @@ namespace
             case Type::LONG:
                 value = p.read32();
                 break;
+            case Type::LONG8:
+                value = p.read64();
+                break;
             default:
                 // TODO: parsing failure
                 printLine(Print::Error, "    [getUnsigned] Unsupported type: {}", int(type));
@@ -259,9 +262,9 @@ namespace
     }
 
     template <typename Pointer>
-    std::vector<u32> getUnsignedArray(Pointer p, ConstMemory memory, Type type, u64 count, bool is_big_tiff)
+    std::vector<u64> getUnsignedArray(Pointer p, ConstMemory memory, Type type, u64 count, bool is_big_tiff)
     {
-        std::vector<u32> values;
+        std::vector<u64> values;
 
         const u64 offset_size = is_big_tiff ? 8 : 4;
 
@@ -272,7 +275,7 @@ namespace
 
         for (u64 i = 0; i < count; ++i)
         {
-            u32 value = getUnsigned(p, type);
+            u64 value = getUnsigned(p, type);
             values.push_back(value);
         }
 
@@ -327,7 +330,7 @@ namespace
 
             case Tag::BitsPerSample:
             {
-                std::vector<u32> values = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                std::vector<u64> values = getUnsignedArray(p, memory, type, count, is_big_tiff);
                 context.bits_per_sample = values;
                 context.bpp = std::accumulate(values.begin(), values.end(), 0);
                 printLine(Print::Info, "    [BitsPerSample]");
@@ -426,7 +429,7 @@ namespace
                 }
 
                 context.palette.size = count;
-                std::vector<u32> values = getUnsignedArray(p, memory, type, count * 3, is_big_tiff);
+                std::vector<u64> values = getUnsignedArray(p, memory, type, count * 3, is_big_tiff);
 
                 for (u32 i = 0; i < count; ++i)
                 {
@@ -445,6 +448,7 @@ namespace
             TIFF_CASE_UNSIGNED(JPEGRestartInterval, jpeg_restart_interval);
             TIFF_CASE_UNSIGNED(JPEGLosslessPredictors, jpeg_lossless_predictors);
             TIFF_CASE_UNSIGNED(JPEGPointTransforms, jpeg_point_transforms);
+
             case Tag::JPEGQTables:
             {
                 context.jpeg_qt_tables = getUnsignedArray(p, memory, type, count, is_big_tiff);
