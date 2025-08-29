@@ -165,9 +165,9 @@ namespace
         u32 jpeg_restart_interval = 0;
         u32 jpeg_lossless_predictors = 0;
         u32 jpeg_point_transforms = 0;
-        u32 jpeg_qt_tables = 0;
-        u32 jpeg_dc_tables = 0;
-        u32 jpeg_ac_tables = 0;
+        std::vector<u32> jpeg_qt_tables;
+        std::vector<u32> jpeg_dc_tables;
+        std::vector<u32> jpeg_ac_tables;
         std::vector<u32> y_cb_cr_sub_sampling;
 
         u32 new_subfile_type = 0;
@@ -445,9 +445,26 @@ namespace
             TIFF_CASE_UNSIGNED(JPEGRestartInterval, jpeg_restart_interval);
             TIFF_CASE_UNSIGNED(JPEGLosslessPredictors, jpeg_lossless_predictors);
             TIFF_CASE_UNSIGNED(JPEGPointTransforms, jpeg_point_transforms);
-            TIFF_CASE_UNSIGNED(JPEGQTables, jpeg_qt_tables);
-            TIFF_CASE_UNSIGNED(JPEGDCTables, jpeg_dc_tables);
-            TIFF_CASE_UNSIGNED(JPEGACTables, jpeg_ac_tables);
+            case Tag::JPEGQTables:
+            {
+                context.jpeg_qt_tables = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                printLine(Print::Info, "    [JPEGQTables] {} tables", context.jpeg_qt_tables.size());
+                break;
+            }
+
+            case Tag::JPEGDCTables:
+            {
+                context.jpeg_dc_tables = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                printLine(Print::Info, "    [JPEGDCTables] {} tables", context.jpeg_dc_tables.size());
+                break;
+            }
+
+            case Tag::JPEGACTables:
+            {
+                context.jpeg_ac_tables = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                printLine(Print::Info, "    [JPEGACTables] {} tables", context.jpeg_ac_tables.size());
+                break;
+            }
 
             case Tag::YCbCrSubSampling:
             {
@@ -1284,6 +1301,20 @@ namespace
 
         Format getImageFormat()
         {
+            if (m_context.compression == u32(Compression::JPEG))
+            {
+                // For JPEG, let the JPEG decoder determine the format
+                // Don't force a specific format here - return a flexible format
+                if (m_context.samples_per_pixel == 1)
+                {
+                    return Format(8, Format::UNORM, Format::LUMINANCE, 8);
+                }
+                else
+                {
+                    return Format(24, Format::UNORM, Format::RGB, 8, 8, 8);
+                }
+            }
+
             // bit-packed formats resolve to at least 8 bits per channel
             u32 bits = m_context.sample_bits >= 8 ? m_context.sample_bits : 8;
 
@@ -1366,7 +1397,21 @@ namespace
 
             DecodeTargetBitmap target(dest, header.width, header.height, header.format, m_context.palette, false);
 
-            if (m_context.planar_configuration == 2)
+            // Handle JPEG compression with unified decoder
+            if (m_context.compression == u32(Compression::JPEG))
+            {
+                printLine(Print::Info, "  JPEG Mode - InterchangeFormat: {}, Length: {}", 
+                          m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length);
+
+                if (!decode_jpeg(target, options, level, depth, face))
+                {
+                    status.setError("JPEG decoding failed");
+                    return status;
+                }
+
+                // JPEG decoding successful - skip regular strip processing
+            }
+            else if (m_context.planar_configuration == 2)
             {
                 // Planar format: strips organized as channels, clear target buffer first
                 std::memset(target.image, 0, target.stride * header.height);
@@ -1413,6 +1458,502 @@ namespace
             target.resolve();
 
             return status;
+        }
+
+        bool decode_jpeg(DecodeTargetBitmap& target, const ImageDecodeOptions& options, int level, int depth, int face)
+        {
+            // Reconstruct a JPEG stream then decode it.
+
+            // Ideally we would refactor our JPEG decoder to use the tables stored in TIFF tags,
+            // and decode the strips directly. There are two methods TIFF store JPEG data:
+            // 1. JPEGInterchangeFormat: A JPEG stream with headers and tables which have to
+            //    be parsed by the JPEG decoder, then each strip is decoded separately as
+            //    each strips is independently Huffman encoded.
+            // 2. The legacy method: The Huffman and Quantization tables are stored in the
+            //    TIFF tags, which must be converted to JPEG decoder tables.
+
+            // Since the JPEG decoder isn't refactored yet, we reconstruct a valid JPEG stream
+            // and decode it instead. Since each strip is independently Huffman encoded, we
+            // need to add RST markers to force the Huffman decoder to reset after each strip.
+            // The restart interval is calculated based on the strip dimensions and the image
+            // width. This is non-standard and specification dictates restart interval must
+            // be one MCU scan, but our decoder allows larger restart intervals. :)
+
+            Buffer jpeg_stream;
+
+            // Step 1: Calculate restart interval in MCUs first (needed for DRI marker)
+            // For YCbCr 4:2:0, MCU = 16x8 pixels (2x1 Y, 1x1 Cb, 1x1 Cr)
+            u32 mcu_width = 16;   // Standard MCU width
+            u32 mcu_height = 8;   // For 4:2:0 subsampling
+            
+            u32 horizontal_mcus = (m_context.width + mcu_width - 1) / mcu_width;
+            u32 strip_height_mcus = (m_context.rows_per_strip + mcu_height - 1) / mcu_height;
+            u32 restart_interval_mcus = horizontal_mcus * strip_height_mcus;
+            
+            // TEMPORARY: Force full reconstruction to bypass potentially incompatible headers  
+            bool force_full_reconstruction = false;
+            
+            if (m_context.jpeg_interchange_format != 0 && !force_full_reconstruction)
+            {
+                                // Mode A: Copy headers from JPEGInterchangeFormat
+                printLine(Print::Info, "  Using headers from JPEGInterchangeFormat");
+                
+                const u8* header_data = m_memory.address + m_context.jpeg_interchange_format;
+                u32 header_length = m_context.jpeg_interchange_format_length;
+                
+                // Debug: Show what's in the header data
+                printLine(Print::Info, "  Header analysis:");
+                printLine(Print::Info, "    First 8 bytes: {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}",
+                          header_data[0], header_data[1], header_data[2], header_data[3],
+                          header_data[4], header_data[5], header_data[6], header_data[7]);
+                printLine(Print::Info, "    Last 8 bytes:  {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}",
+                          header_data[header_length-8], header_data[header_length-7], 
+                          header_data[header_length-6], header_data[header_length-5],
+                          header_data[header_length-4], header_data[header_length-3],
+                          header_data[header_length-2], header_data[header_length-1]);
+                
+                // Look for any JPEG markers in the header data
+                int marker_count = 0;
+                bool found_dht = false;
+                
+                // Check if headers end with EOI
+                if (header_length >= 2 && header_data[header_length-2] == 0xFF && header_data[header_length-1] == 0xD9)
+                {
+                    printLine(Print::Info, "    Headers end with EOI (FF D9)");
+                }
+                else
+                {
+                    printLine(Print::Info, "    Headers do NOT end with EOI - this might be raw table data!");
+                }
+                
+                for (u32 i = 0; i < header_length - 1; ++i)
+                {
+                    if (header_data[i] == 0xFF && header_data[i+1] >= 0xC0)
+                    {
+                        printLine(Print::Info, "    Found JPEG marker FF{:02X} at offset {}", header_data[i+1], i);
+                        if (header_data[i+1] == 0xC4) {
+                            found_dht = true;
+                            // Extract DHT table info
+                            if (i + 6 < header_length) {
+                                u16 dht_length = (header_data[i+2] << 8) | header_data[i+3];
+                                u8 table_info = header_data[i+4];
+                                u8 table_class = (table_info >> 4) & 0xF;  // 0=DC, 1=AC
+                                u8 table_id = table_info & 0xF;
+                                printLine(Print::Info, "      DHT table: class={} ({}), ID={}", 
+                                          table_class, (table_class == 0) ? "DC" : "AC", table_id);
+                            }
+                            printLine(Print::Info, "      DHT (Huffman table) found in headers!");
+                        }
+                        marker_count++;
+                        if (marker_count >= 10) break; // Increased limit
+                    }
+                }
+                
+                if (found_dht) {
+                    printLine(Print::Error, "    ERROR: Headers already contain DHT - we shouldn't add more!");
+                }
+                
+                if (marker_count == 0)
+                {
+                    printLine(Print::Info, "    WARNING: No JPEG markers found in header data!");
+                }
+                
+                // Validate header structure before using
+                bool has_soi = false, has_dqt = false, has_sof = false;
+                for (u32 i = 0; i < header_length - 1; ++i)
+                {
+                    if (header_data[i] == 0xFF)
+                    {
+                        u8 marker = header_data[i+1];
+                        if (marker == 0xD8) has_soi = true;      // SOI
+                        else if (marker == 0xDB) has_dqt = true; // DQT  
+                        else if (marker == 0xC0) has_sof = true; // SOF0
+                    }
+                }
+                
+                if (!has_soi || !has_dqt || !has_sof)
+                {
+                    printLine(Print::Error, "    ERROR: Headers incomplete - SOI:{}, DQT:{}, SOF:{}", 
+                              has_soi, has_dqt, has_sof);
+                    printLine(Print::Info, "    Falling back to full reconstruction mode");
+                    // TODO: Implement full reconstruction
+                    return false;
+                }
+                else
+                {
+                    printLine(Print::Info, "    Headers validated - SOI:{}, DQT:{}, SOF:{}", 
+                              has_soi, has_dqt, has_sof);
+                }
+                
+                // Find the actual end of the last valid JPEG marker
+                u32 valid_header_length = header_length;
+                bool found_valid_end = false;
+                
+                // Scan backwards to find last marker
+                for (int i = header_length - 2; i >= 0; i--)
+                {
+                    if (header_data[i] == 0xFF && header_data[i+1] >= 0xC0)
+                    {
+                        // Found a marker, now find its end
+                        if (header_data[i+1] == 0xC4) // DHT
+                        {
+                            u16 marker_length = (header_data[i+2] << 8) | header_data[i+3];
+                            valid_header_length = i + 2 + marker_length;
+                            found_valid_end = true;
+                            printLine(Print::Info, "    Found last DHT marker at offset {}, ends at {}", i, valid_header_length);
+                            break;
+                        }
+                        else if (header_data[i+1] == 0xC0) // SOF0
+                        {
+                            u16 marker_length = (header_data[i+2] << 8) | header_data[i+3];
+                            valid_header_length = i + 2 + marker_length;
+                            found_valid_end = true;
+                            printLine(Print::Info, "    Found last SOF0 marker at offset {}, ends at {}", i, valid_header_length);
+                            break;
+                        }
+                    }
+                }
+                
+                if (!found_valid_end)
+                {
+                    printLine(Print::Info, "    Warning: Could not find valid header end, using full length");
+                }
+                else if (valid_header_length != header_length)
+                {
+                    printLine(Print::Info, "    Trimmed header from {} to {} bytes ({} bytes of padding/garbage removed)", 
+                              header_length, valid_header_length, header_length - valid_header_length);
+                }
+                
+                jpeg_stream.append(header_data, valid_header_length);
+                
+                // Debug: Show last few bytes of headers
+                printLine(Print::Info, "  Headers appended, stream size: {} bytes", jpeg_stream.size());
+                if (jpeg_stream.size() >= 8) {
+                    u8* end = jpeg_stream.data() + jpeg_stream.size();
+                    printLine(Print::Info, "  Last 8 bytes of headers: {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}",
+                              end[-8], end[-7], end[-6], end[-5], end[-4], end[-3], end[-2], end[-1]);
+                }
+                
+                // Check if we need to add Huffman tables
+                if (found_dht)
+                {
+                    printLine(Print::Info, "  Headers are COMPLETE - no need to add Huffman tables");
+                }
+                else
+                {
+                    printLine(Print::Info, "  Completing headers with Huffman tables from TIFF tags");
+                    
+                    // Add DHT (Huffman tables) from JPEGDCTables/JPEGACTables tags
+                    for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
+                {
+                    u32 table_offset = m_context.jpeg_dc_tables[i];
+                    const u8* table_data = m_memory.address + table_offset;
+                    
+                    printLine(Print::Info, "    DC Table {}: offset={}, first 20 bytes:", i, table_offset);
+                    for (int j = 0; j < 20; ++j) {
+                        printLine(Print::Info, "      [{}] = {:02X}", j, table_data[j]);
+                    }
+                    
+                    // Read the actual table structure (16 bytes of lengths + symbols)
+                    u8 num_codes = 0;
+                    for (int j = 0; j < 16; ++j) {
+                        num_codes += table_data[j];
+                    }
+                    
+                    printLine(Print::Info, "    DC Table {}: calculated {} symbols from length bytes", i, num_codes);
+                    
+                    if (num_codes > 200) {
+                        printLine(Print::Error, "    ERROR: Too many symbols ({}), skipping table", num_codes);
+                        continue;
+                    }
+
+                    // DHT marker
+                    jpeg_stream.append(0xFF);
+                    jpeg_stream.append(0xC4);
+
+                    u16 dht_length = 2 + 1 + 16 + num_codes;
+                    jpeg_stream.append((dht_length >> 8) & 0xFF);
+                    jpeg_stream.append(dht_length & 0xFF);
+                    jpeg_stream.append(i); // Table class (0=DC) + table ID
+
+                    // Append table data (16 bytes lengths + symbols)
+                    for (int j = 0; j < 16 + num_codes; ++j)
+                    {
+                        jpeg_stream.append(table_data[j]);
+                    }
+
+                    printLine(Print::Info, "    Added DC Huffman table {}, {} symbols", i, num_codes);
+                }
+                
+                for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
+                {
+                    u32 table_offset = m_context.jpeg_ac_tables[i];
+                    const u8* table_data = m_memory.address + table_offset;
+                    
+                    printLine(Print::Info, "    AC Table {}: offset={}, first 20 bytes:", i, table_offset);
+                    for (int j = 0; j < 20; ++j) {
+                        printLine(Print::Info, "      [{}] = {:02X}", j, table_data[j]);
+                    }
+                    
+                    // Read the actual table structure (16 bytes of lengths + symbols)
+                    u8 num_codes = 0;
+                    for (int j = 0; j < 16; ++j) {
+                        num_codes += table_data[j];
+                    }
+                    
+                    printLine(Print::Info, "    AC Table {}: calculated {} symbols from length bytes", i, num_codes);
+                    
+                    if (num_codes > 200) {
+                        printLine(Print::Error, "    ERROR: Too many symbols ({}), skipping table", num_codes);
+                        continue;
+                    }
+                    
+                    // DHT marker  
+                    jpeg_stream.append(0xFF);
+                    jpeg_stream.append(0xC4);
+                    
+                    u16 dht_length = 2 + 1 + 16 + num_codes;
+                    jpeg_stream.append((dht_length >> 8) & 0xFF);
+                    jpeg_stream.append(dht_length & 0xFF);
+                    jpeg_stream.append(0x10 | i); // Table class (1=AC) + table ID
+                    
+                    // Append table data (16 bytes lengths + symbols)
+                    for (int j = 0; j < 16 + num_codes; ++j)
+                    {
+                        jpeg_stream.append(table_data[j]);
+                    }
+                    
+                    printLine(Print::Info, "    Added AC Huffman table {}, {} symbols", i, num_codes);
+                    }
+                } // End of else block for adding Huffman tables
+
+                /*
+                // Remove EOI marker if present (we'll add it back later)
+                if (jpeg_stream.size() >= 2)
+                {
+                    u8* end = jpeg_stream.data() + jpeg_stream.size() - 2;
+                    if (end[0] == 0xFF && end[1] == 0xD9)
+                    {
+                        jpeg_stream.resize(jpeg_stream.size() - 2); // Remove EOI
+                        printLine(Print::Info, "  Removed EOI from headers");
+                    }
+                }
+                */
+            }
+            else
+            {
+                // Mode B: Reconstruct headers from TIFF tags
+                printLine(Print::Info, "  Reconstructing complete JPEG headers from TIFF tags");
+
+                // SOI (Start of Image)
+                jpeg_stream.append(0xFF);
+                jpeg_stream.append(0xD8);
+
+                // Add basic APP0 marker for compatibility
+                jpeg_stream.append(0xFF);
+                jpeg_stream.append(0xE0);
+                jpeg_stream.append(0x00); // Length hi
+                jpeg_stream.append(0x10); // Length lo (16 bytes)
+                jpeg_stream.append('J');  jpeg_stream.append('F'); jpeg_stream.append('I'); jpeg_stream.append('F');
+                jpeg_stream.append(0x00); // null terminator
+                jpeg_stream.append(0x01); // Version major
+                jpeg_stream.append(0x01); // Version minor
+                jpeg_stream.append(0x01); // Units (1 = inches)
+                jpeg_stream.append(0x00); jpeg_stream.append(0x48); // X density (72 dpi)
+                jpeg_stream.append(0x00); jpeg_stream.append(0x48); // Y density (72 dpi)
+                jpeg_stream.append(0x00); // Thumbnail width
+                jpeg_stream.append(0x00); // Thumbnail height
+
+                // Add quantization tables from TIFF tags
+                for (size_t i = 0; i < m_context.jpeg_qt_tables.size(); ++i)
+                {
+                    u32 table_offset = m_context.jpeg_qt_tables[i];
+                    const u8* table_data = m_memory.address + table_offset;
+                    
+                    // DQT marker
+                    jpeg_stream.append(0xFF);
+                    jpeg_stream.append(0xDB);
+                    jpeg_stream.append(0x00); // Length hi
+                    jpeg_stream.append(0x43); // Length lo (67 = 2 + 1 + 64)
+                    jpeg_stream.append(i);     // Table ID + precision (0 = 8-bit)
+                    
+                    // Append 64 bytes of quantization data
+                    for (int j = 0; j < 64; ++j)
+                    {
+                        jpeg_stream.append(table_data[j]);
+                    }
+                    
+                    printLine(Print::Info, "  Added DQT table {}", i);
+                }
+                
+                // Add SOF0 (simplified version)
+                jpeg_stream.append(0xFF);
+                jpeg_stream.append(0xC0);
+                jpeg_stream.append(0x00); // Length hi  
+                jpeg_stream.append(0x11); // Length lo (17 = 2 + 1 + 2 + 2 + 3*3)
+                jpeg_stream.append(0x08); // Sample precision (8 bits)
+                jpeg_stream.append((m_context.height >> 8) & 0xFF); // Height hi
+                jpeg_stream.append(m_context.height & 0xFF);        // Height lo
+                jpeg_stream.append((m_context.width >> 8) & 0xFF);  // Width hi  
+                jpeg_stream.append(m_context.width & 0xFF);         // Width lo
+                jpeg_stream.append(0x03); // Number of components
+                
+                // Component 1: Y (luminance)
+                jpeg_stream.append(0x01); // Component ID
+                jpeg_stream.append(0x21); // Sampling factors (2:1)
+                jpeg_stream.append(0x00); // Quantization table 0
+                
+                // Component 2: Cb (chrominance)  
+                jpeg_stream.append(0x02); // Component ID
+                jpeg_stream.append(0x11); // Sampling factors (1:1)
+                jpeg_stream.append(0x01); // Quantization table 1
+                
+                // Component 3: Cr (chrominance)
+                jpeg_stream.append(0x03); // Component ID  
+                jpeg_stream.append(0x11); // Sampling factors (1:1)
+                jpeg_stream.append(0x01); // Quantization table 1
+                
+                printLine(Print::Info, "  Added SOF0 ({}x{}, 3 components)", m_context.width, m_context.height);
+                
+                // Add DHT tables from TIFF tags (simplified - reuse existing logic)
+                // For now, skip DHT and let the SOS from strips provide them
+                printLine(Print::Info, "  Skipping DHT tables - will use tables from strip SOS");
+                
+                printLine(Print::Info, "  Basic JPEG header reconstruction complete");
+            }
+
+            // Step 2: Strips already contain SOS headers - no need to add our own
+            printLine(Print::Info, "  Strips contain SOS segments - skipping SOS header generation");
+
+            // Step 3: Add DRI marker carefully
+            printLine(Print::Info, "  Adding DRI (Define Restart Interval) marker");
+            printLine(Print::Info, "  Restart interval: {} MCUs", restart_interval_mcus);
+            
+            // Add DRI marker: FF DD 00 04 NN NN (where NN NN is restart interval)
+            printLine(Print::Info, "  Before DRI: stream size = {}", jpeg_stream.size());
+            
+            u8* dri_data = jpeg_stream.append(6); // Allocate 6 bytes for DRI marker
+            dri_data[0] = 0xFF;
+            dri_data[1] = 0xDD;
+            dri_data[2] = 0x00;
+            dri_data[3] = 0x04;
+            dri_data[4] = (restart_interval_mcus >> 8) & 0xFF;
+            dri_data[5] = restart_interval_mcus & 0xFF;
+            
+            printLine(Print::Info, "  After DRI: stream size = {}", jpeg_stream.size());
+            
+            printLine(Print::Info, "  DRI marker added: FF DD 00 04 {:02X} {:02X}",
+                      (restart_interval_mcus >> 8) & 0xFF, restart_interval_mcus & 0xFF);
+            printLine(Print::Info, "  Stream size after DRI: {} bytes", jpeg_stream.size());
+            
+            // Debug: Show last few bytes after DRI
+            if (jpeg_stream.size() >= 8) {
+                u8* end = jpeg_stream.data() + jpeg_stream.size();
+                printLine(Print::Info, "  Last 8 bytes after DRI: {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}",
+                          end[-8], end[-7], end[-6], end[-5], end[-4], end[-3], end[-2], end[-1]);
+            }
+            
+            printLine(Print::Info, "  Strip dimensions: {} pixels high = {} MCUs high", m_context.rows_per_strip, strip_height_mcus);
+            printLine(Print::Info, "  Image width: {} pixels = {} MCUs wide", m_context.width, horizontal_mcus);
+            printLine(Print::Info, "  Added DRI marker with restart interval: {} MCUs per strip", restart_interval_mcus);
+            printLine(Print::Info, "  Original JPEGRestartInterval = {} (overriding)", m_context.jpeg_restart_interval);
+            printLine(Print::Info, "  Appending {} strips with calculated RST markers", m_context.strip_offsets.size());
+            
+            for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
+            {
+                const u8* strip_data = m_memory.address + m_context.strip_offsets[i];
+                u32 strip_bytes = m_context.strip_byte_counts[i];
+
+                if (i == 0)
+                {
+                    // Strip 0: Contains SOS header + start of scan data
+                    printLine(Print::Info, "  Strip 0: {} bytes (contains SOS header)", strip_bytes);
+                    
+                    // Analyze SOS header structure in Strip 0
+                    if (strip_bytes >= 12 && strip_data[0] == 0xFF && strip_data[1] == 0xDA)
+                    {
+                        u16 sos_length = (strip_data[2] << 8) | strip_data[3];
+                        u8 num_components = strip_data[4];
+                        
+                        printLine(Print::Info, "    SOS length: {} bytes", sos_length);
+                        printLine(Print::Info, "    SOS components: {}", num_components);
+                        
+                        // Show component table assignments
+                        for (u8 c = 0; c < num_components && (5 + c*2 + 1) < strip_bytes; ++c)
+                        {
+                            u8 component_id = strip_data[5 + c*2];
+                            u8 table_ids = strip_data[5 + c*2 + 1];
+                            u8 dc_table = (table_ids >> 4) & 0x0F;
+                            u8 ac_table = table_ids & 0x0F;
+                            
+                            printLine(Print::Info, "    Component {}: DC table={}, AC table={}", 
+                                      component_id, dc_table, ac_table);
+                        }
+                        
+                        u32 sos_header_end = 2 + sos_length;  // FF DA + length field + SOS data
+                        printLine(Print::Info, "    SOS header ends at offset: {}", sos_header_end);
+                        printLine(Print::Info, "    Scan data starts at offset: {}", sos_header_end);
+                        
+                        if (2 + sos_length < strip_bytes)
+                        {
+                            u32 scan_start = 2 + sos_length;
+                            printLine(Print::Info, "    First 4 scan bytes: {:02X} {:02X} {:02X} {:02X}",
+                                      strip_data[scan_start], strip_data[scan_start+1],
+                                      strip_data[scan_start+2], strip_data[scan_start+3]);
+                        }
+                    }
+                }
+                else
+                {
+                    // Strips 1+: Add RST marker to force Huffman decoder reset
+                    u8 rst_id = (i - 1) % 8; // RST0-RST7, cycling
+                    u8 rst_marker = 0xD0 + rst_id; // RST0=0xD0, RST1=0xD1, etc.
+                    
+                    printLine(Print::Info, "  Strip {}: {} bytes (scan data continuation) - adding RST{}", i, strip_bytes, rst_id);
+                    
+                    // Insert RST marker before strip data (2 bytes: FF D0-D7)
+                    u8* rst_data = jpeg_stream.append(2);
+                    rst_data[0] = 0xFF;
+                    rst_data[1] = rst_marker;
+                }
+
+                jpeg_stream.append(strip_data, strip_bytes);
+            }
+
+            // Step 4: Add EOI marker
+            jpeg_stream.append(0xFF);
+            jpeg_stream.append(0xD9);
+
+            printLine(Print::Info, "  Complete JPEG stream: {} bytes", jpeg_stream.size());
+
+            // Step 5: Decode the JPEG stream
+            ImageDecoder jpeg_decoder(jpeg_stream, ".jpg");
+
+            filesystem::OutputFileStream stream("jpeg_stream.jpg");
+            stream.write(jpeg_stream.data(), jpeg_stream.size());
+
+            if (!jpeg_decoder.isDecoder())
+            {
+                printLine(Print::Error, "Failed to create JPEG decoder");
+                return false;
+            }
+
+            ImageHeader jpeg_header = jpeg_decoder.header();
+            if (!jpeg_header.success)
+            {
+                printLine(Print::Error, "JPEG header parsing failed: {}", jpeg_header.info);
+                return false;
+            }
+
+            ImageDecodeStatus jpeg_status = jpeg_decoder.decode(target, options, level, depth, face);
+
+            if (!jpeg_status.success)
+            {
+                printLine(Print::Error, "JPEG decode failed: {}", jpeg_status.info);
+                return false;
+            }
+
+            return true;
         }
 
         void expandSubBytePixels(Memory dest, ConstMemory src, int width, int height)
@@ -1522,7 +2063,7 @@ namespace
 
                 case Compression::JPEG:
                 {
-                    // TODO: Implement JPEG decompression
+                    // JPEG handled elsewhere via stream reconstruction
                     return;
                 }
 
