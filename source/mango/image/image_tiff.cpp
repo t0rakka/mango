@@ -1482,6 +1482,7 @@ namespace
                     {
                         std::memcpy(buffer, memory.address, uncompressed_bytes);
                     }
+
                     memory = buffer;
                     break;
                 }
@@ -1492,7 +1493,7 @@ namespace
                     if (!success)
                     {
                         printLine(Print::Error, "[CCITT-RLE] Decompression failed for strip {}", strip_index);
-                        break;
+                        return;
                     }
 
                     memory = buffer;
@@ -1512,7 +1513,7 @@ namespace
                     if (!success)
                     {
                         printLine(Print::Error, "[LZW] Decompression failed");
-                        break;
+                        return;
                     }
 
                     memory = buffer;
@@ -1520,8 +1521,10 @@ namespace
                 }
 
                 case Compression::JPEG:
-                    printLine(Print::Info, "    Unsupported compression: {}", m_context.compression);
-                    break;
+                {
+                    // TODO: Implement JPEG decompression
+                    return;
+                }
 
                 case Compression::ZIP:
                     zlib::decompress(buffer, memory);
@@ -1529,14 +1532,22 @@ namespace
                     break;
 
                 case Compression::PACKBITS:
-                    packbits_decompress(buffer, memory);
+                {
+                    bool success = packbits_decompress(buffer, memory);
+                    if (!success)
+                    {
+                        printLine(Print::Error, "[PackBits] Decompression failed");
+                        return;
+                    }
+
                     memory = buffer;
                     break;
+                }
 
                 case Compression::DEFLATE:
                 case Compression::SGILOG:
                     printLine(Print::Info, "    Unsupported compression: {}", m_context.compression);
-                    break;
+                    return;
 
                 default:
                     printLine(Print::Info, "    Unknown compression: {}", m_context.compression);
