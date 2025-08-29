@@ -1008,9 +1008,7 @@ namespace
         }
 
         // Main decoding loop completed
-
     decode_complete:        
-        int bytes_written = dest - output.address;
 
         // Fill any remaining output buffer with white
         while (dest < dest_end)
@@ -1277,8 +1275,11 @@ namespace
             header.format = getImageFormat();
             header.compression = TextureCompression::NONE;
 
-            printLine(Print::Info, "  Tiff: {} x {} ({} bpp, {} channels)", 
+            u32 data_size = std::accumulate(m_context.strip_byte_counts.begin(), m_context.strip_byte_counts.end(), 0u);
+
+            printLine(Print::Info, "  Image: {} x {} ({} bpp, {} channels)", 
                      m_context.width, m_context.height, m_context.bpp, m_context.samples_per_pixel);
+            printLine(Print::Info, "  Data: {} bytes", data_size);
         }
 
         Format getImageFormat()
