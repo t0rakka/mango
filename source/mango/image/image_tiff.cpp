@@ -79,6 +79,7 @@ namespace
         XResolution = 282,
         YResolution = 283,
         PlanarConfiguration = 284,
+        PageName = 285, // ASCII
         //FreeOffsets = 288, // LONG
         //FreeByteCounts = 289, // LONG
         //GrayResponseUnit = 290, // SHORT
@@ -91,6 +92,10 @@ namespace
         //HostComputer = 316, // ASCII
         Predictor = 317,
         ColorMap = 320,
+        InkSet = 332,
+        InkNames = 333, // ASCII
+        NumberOfInks = 334,
+        DotRange = 336,
         //ExtraSamples = 338, // SHORT
         SampleFormat = 339,
         JPEGProc = 512,
@@ -158,6 +163,12 @@ namespace
         u32 fill_order = 1;
         u32 sample_format = 1;
         u32 page_number = 0;
+        std::string page_name;
+
+        u32 ink_set = 1;
+        std::string ink_names;
+        u32 number_of_inks = 4;
+        u32 dot_range = 2;
 
         u32 jpeg_proc = 0;
         u32 jpeg_interchange_format = 0;
@@ -418,6 +429,10 @@ namespace
                 //printLine(Print::Info, "{}", context.software);
                 break;
 
+            case Tag::PageName:
+                context.page_name = getAscii(p, memory, type, is_big_tiff);
+                break;
+
             case Tag::ColorMap:
             {
                 printLine(Print::Info, "    [ColorMap]");
@@ -440,6 +455,14 @@ namespace
                 }
                 break;
             }
+
+            TIFF_CASE_UNSIGNED(InkSet, ink_set);
+            TIFF_CASE_UNSIGNED(NumberOfInks, number_of_inks);
+            TIFF_CASE_UNSIGNED(DotRange, dot_range);
+
+            case Tag::InkNames:
+                context.ink_names = getAscii(p, memory, type, is_big_tiff);
+                break;
 
             TIFF_CASE_UNSIGNED(SampleFormat, sample_format);
             TIFF_CASE_UNSIGNED(JPEGProc, jpeg_proc);
@@ -1357,8 +1380,10 @@ namespace
                 case PhotometricInterpretation::PALETTE:
                     return IndexedFormat(8);
 
-                case PhotometricInterpretation::TRANSPARENCY_MASK:
                 case PhotometricInterpretation::SEPARATED:
+                    return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+
+                case PhotometricInterpretation::TRANSPARENCY_MASK:
                 case PhotometricInterpretation::YCBCR:
                 case PhotometricInterpretation::CIELAB:
                 case PhotometricInterpretation::ICCLAB:
@@ -1844,6 +1869,23 @@ namespace
             }
         }
 
+        bool m_linear_to_srgb_table_initialized = false;
+        u8 m_linear_to_srgb_table[256];
+
+        const u8* getLinearToSRGBTable()
+        {
+            if (!m_linear_to_srgb_table_initialized)
+            {
+                m_linear_to_srgb_table_initialized = true;
+                for (int i = 0; i < 256; ++i)
+                {
+                    float value = linear_to_srgb(i / 255.0f) * 255.0f + 0.5f;
+                    m_linear_to_srgb_table[i] = u8(value);
+                }
+            }
+            return m_linear_to_srgb_table;
+        }
+
         void decodeStrip(Surface target, ConstMemory memory, int width, int height, int strip_index = -1, u32 channel_index = 0)
         {
             // Expand sub-byte formats (1, 2, 4 bits) to 8-bit during decompression for cleaner pipeline
@@ -1991,6 +2033,31 @@ namespace
                 {
                     resolveChunkyScanline(target.image, memory.address, bytes_per_row, m_context.samples_per_pixel);
                 }
+
+                if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED))
+                {
+                    // TODO: We decode as CMYK, the channel information is in the Ink tags
+
+                    const u8* lookup = getLinearToSRGBTable();
+
+                    for (int x = 0; x < width; ++x)
+                    {
+                        int C = 255 - target.image[x * 4 + 0];
+                        int M = 255 - target.image[x * 4 + 1];
+                        int Y = 255 - target.image[x * 4 + 2];
+                        int K = 255 - target.image[x * 4 + 3];
+
+                        int R = (C * K + 127) / 255;
+                        int G = (M * K + 127) / 255;
+                        int B = (Y * K + 127) / 255;
+
+                        target.image[x * 4 + 0] = lookup[R];
+                        target.image[x * 4 + 1] = lookup[G];
+                        target.image[x * 4 + 2] = lookup[B];
+                        target.image[x * 4 + 3] = 0xff;
+                    }
+                }
+
                 memory.address += bytes_per_row;
                 target.image += target.stride;
             }
