@@ -156,6 +156,7 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
     }
 
     const ColorSpace colorspace = state->colorspace;
+    const u8* lookup = math::get_linear_to_srgb_table();
 
     // second pass: resolve color
     for (int y = 0; y < height; ++y)
@@ -202,13 +203,16 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
                     break;
             }
 
-            int r = (C * K) / 255;
-            int g = (M * K) / 255;
-            int b = (Y * K) / 255;
+            int r = (C * K + 127) / 255;
+            int g = (M * K + 127) / 255;
+            int b = (Y * K + 127) / 255;
 
             r = byteclamp(r);
             g = byteclamp(g);
             b = byteclamp(b);
+            r = lookup[r];
+            g = lookup[g];
+            b = lookup[b];
             d[x] = image::makeRGBA(r, g, b, 0xff);
         }
     }
