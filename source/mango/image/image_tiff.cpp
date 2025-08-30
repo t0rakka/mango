@@ -1869,23 +1869,6 @@ namespace
             }
         }
 
-        bool m_linear_to_srgb_table_initialized = false;
-        u8 m_linear_to_srgb_table[256];
-
-        const u8* getLinearToSRGBTable()
-        {
-            if (!m_linear_to_srgb_table_initialized)
-            {
-                m_linear_to_srgb_table_initialized = true;
-                for (int i = 0; i < 256; ++i)
-                {
-                    float value = linear_to_srgb(i / 255.0f) * 255.0f + 0.5f;
-                    m_linear_to_srgb_table[i] = u8(value);
-                }
-            }
-            return m_linear_to_srgb_table;
-        }
-
         void decodeStrip(Surface target, ConstMemory memory, int width, int height, int strip_index = -1, u32 channel_index = 0)
         {
             // Expand sub-byte formats (1, 2, 4 bits) to 8-bit during decompression for cleaner pipeline
@@ -2038,7 +2021,7 @@ namespace
                 {
                     // TODO: We decode as CMYK, the channel information is in the Ink tags
 
-                    const u8* lookup = getLinearToSRGBTable();
+                    const u8* lookup = math::get_linear_to_srgb_table();
 
                     for (int x = 0; x < width; ++x)
                     {
