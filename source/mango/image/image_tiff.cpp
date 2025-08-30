@@ -108,6 +108,7 @@ namespace
         JPEGDCTables = 520,
         JPEGACTables = 521,
         YCbCrSubSampling = 530,
+        JPEGTables = 347,
         //Copyright = 33432, // ASCII
         Matteing = 32995,
         DataType = 32996,
@@ -122,7 +123,8 @@ namespace
         CCITT_FAX3 = 3,
         CCITT_FAX4 = 4,
         LZW = 5,
-        JPEG = 6,
+        JPEG_LEGACY = 6,
+        JPEG_MODERN = 7,
         ZIP = 8,
         PACKBITS = 32773,
         DEFLATE = 32946,
@@ -170,6 +172,7 @@ namespace
         u32 number_of_inks = 4;
         u32 dot_range = 2;
 
+        // JPEG_LEGACY
         u32 jpeg_proc = 0;
         u32 jpeg_interchange_format = 0;
         u32 jpeg_interchange_format_length = 0;
@@ -180,6 +183,10 @@ namespace
         std::vector<u64> jpeg_dc_tables;
         std::vector<u64> jpeg_ac_tables;
         std::vector<u64> y_cb_cr_sub_sampling;
+
+        // JPEG_MODERN
+        u64 jpeg_tables_offset = 0;
+        u32 jpeg_tables_length = 0;
 
         u32 new_subfile_type = 0;
         u16 subfile_type = 0;
@@ -506,6 +513,15 @@ namespace
                     channels_str += std::to_string(context.y_cb_cr_sub_sampling[i]);
                 }
                 printLine(Print::Info, "      values: [{}]", channels_str);
+                break;
+            }
+
+            case Tag::JPEGTables:
+            {
+                printLine(Print::Info, "    [JPEGTables]");
+                context.jpeg_tables_offset = getOffset(p, is_big_tiff);
+                context.jpeg_tables_length = count;
+                printLine(Print::Info, "      offset: {}, length: {} bytes", context.jpeg_tables_offset, context.jpeg_tables_length);
                 break;
             }
 
@@ -1328,7 +1344,8 @@ namespace
 
         Format getImageFormat()
         {
-            if (m_context.compression == u32(Compression::JPEG))
+            if (m_context.compression == u32(Compression::JPEG_LEGACY) ||
+                m_context.compression == u32(Compression::JPEG_MODERN))
             {
                 // For JPEG, let the JPEG decoder determine the format
                 // Don't force a specific format here - return a flexible format
@@ -1426,10 +1443,19 @@ namespace
 
             DecodeTargetBitmap target(dest, header.width, header.height, header.format, m_context.palette, false);
 
-            if (m_context.compression == u32(Compression::JPEG))
+            if (m_context.compression == u32(Compression::JPEG_LEGACY))
             {
                 // Handle JPEG compression with unified decoder
-                if (!decompress_jpeg(target, options, level, depth, face))
+                if (!decompress_legacy_jpeg(target, options, level, depth, face))
+                {
+                    status.setError("JPEG decoding failed");
+                    return status;
+                }
+            }
+            else if (m_context.compression == u32(Compression::JPEG_MODERN))
+            {
+                // Handle JPEG compression with unified decoder
+                if (!decompress_modern_jpeg(target, options, level, depth, face))
                 {
                     status.setError("JPEG decoding failed");
                     return status;
@@ -1484,7 +1510,7 @@ namespace
             return status;
         }
 
-        bool decompress_jpeg(DecodeTargetBitmap& target, const ImageDecodeOptions& options, int level, int depth, int face)
+        bool decompress_legacy_jpeg(DecodeTargetBitmap& target, const ImageDecodeOptions& options, int level, int depth, int face)
         {
             // Reconstruct a JPEG stream then decode it.
 
@@ -1675,19 +1701,6 @@ namespace
                         }
                     }
                 }
-
-                /*
-                // Remove EOI marker if present (we'll add it back later)
-                if (jpeg_stream.size() >= 2)
-                {
-                    u8* end = jpeg_stream.data() + jpeg_stream.size() - 2;
-                    if (end[0] == 0xFF && end[1] == 0xD9)
-                    {
-                        jpeg_stream.resize(jpeg_stream.size() - 2); // Remove EOI
-                        printLine(Print::Info, "  Removed EOI from headers");
-                    }
-                }
-                */
             }
             else
             {
@@ -1838,6 +1851,99 @@ namespace
             return true;
         }
 
+        bool decompress_modern_jpeg(DecodeTargetBitmap& target, const ImageDecodeOptions& options, int level, int depth, int face)
+        {
+            // JPEG Compression=7 with JPEGTables optimization:
+            // - JPEGTables contains shared DQT+DHT tables
+            // - Each strip contains: [SOI] + [SOF + SOS + entropy data + EOI]  
+            // - Combine: [SOI] + [JPEGTables] + [rest of strip] for complete JPEG
+            
+            if (m_context.jpeg_tables_offset == 0)
+            {
+                printLine(Print::Error, "JPEGTables not found for Compression=7");
+                return false;
+            }
+            
+            // Get JPEGTables data
+            const u8* jpeg_tables = m_memory.address + m_context.jpeg_tables_offset;
+            u32 tables_length = m_context.jpeg_tables_length;
+            
+            printLine(Print::Info, "  JPEGTables: {} bytes at offset {}", tables_length, m_context.jpeg_tables_offset);
+            
+            // Decode all strips to reconstruct full image
+            u32 y = 0;
+            
+            for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
+            {
+                u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
+                
+                const u8* strip_data = m_memory.address + m_context.strip_offsets[i];
+                u32 strip_bytes = m_context.strip_byte_counts[i];
+                
+                printLine(Print::Info, "  Strip {}: {} bytes, height: {}", i, strip_bytes, strip_height);
+                
+                // Reconstruct complete JPEG stream for this strip
+                Buffer jpeg_stream;
+                
+                // JPEGTables structure: [SOI] + [DQT] + [DHT] + ... + [EOI]
+                // Strip structure: [SOI] + [SOF] + [SOS] + [entropy data] + [EOI]
+                // Goal: [SOI] + [DQT+DHT from tables] + [SOF+SOS+data+EOI from strip]
+                
+                // Step 1: Copy SOI from strip
+                if (strip_bytes >= 2)
+                {
+                    jpeg_stream.append(strip_data, 2);
+                }
+                
+                // Step 2: Extract table data from JPEGTables (skip SOI and EOI)
+                // JPEGTables: [FF D8] + [table data] + [FF D9]
+                if (tables_length >= 4)  // At least SOI + EOI
+                {
+                    const u8* table_data = jpeg_tables + 2;  // Skip SOI
+                    u32 table_data_length = tables_length - 4;  // Skip SOI + EOI
+                    
+                    jpeg_stream.append(table_data, table_data_length);
+                }
+                
+                // Step 3: Append strip content after SOI (SOF + SOS + entropy data + EOI)
+                if (strip_bytes > 2)
+                {
+                    jpeg_stream.append(strip_data + 2, strip_bytes - 2);
+                }
+                
+                // Debug: Save first strip
+                if (i == 0)
+                {
+                    filesystem::OutputFileStream debug_stream("debug_modern_jpeg_strip0.jpg");
+                    debug_stream.write(jpeg_stream.data(), jpeg_stream.size());
+                    printLine(Print::Info, "  Complete JPEG strip 0: {} bytes", jpeg_stream.size());
+                }
+
+                // Decode this strip
+                ImageDecoder jpeg_decoder(jpeg_stream, ".jpg");
+                if (!jpeg_decoder.isDecoder())
+                {
+                    printLine(Print::Error, "Failed to create JPEG decoder for strip {}", i);
+                    return false;
+                }
+
+                // Create surface for this strip
+                Surface strip_surface(target, 0, y, header.width, strip_height);
+                
+                ImageDecodeStatus jpeg_status = jpeg_decoder.decode(strip_surface, options, 0, 0, 0);
+                if (!jpeg_status.success)
+                {
+                    printLine(Print::Error, "JPEG decode failed for strip {}: {}", i, jpeg_status.info);
+                    return false;
+                }
+                
+                y += strip_height;
+            }
+            
+            printLine(Print::Info, "  All {} strips decoded successfully!", m_context.strip_offsets.size());
+            return true;
+        }
+
         void expandSubBytePixels(Memory dest, ConstMemory src, int width, int height)
         {
             const u8* src_ptr = src.address;
@@ -1943,7 +2049,8 @@ namespace
                     break;
                 }
 
-                case Compression::JPEG:
+                case Compression::JPEG_LEGACY:
+                case Compression::JPEG_MODERN:
                 {
                     // JPEG handled elsewhere via stream reconstruction
                     return;
