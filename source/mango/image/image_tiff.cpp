@@ -2022,10 +2022,78 @@ namespace
             const u8* jpeg_tables = m_memory.address + m_context.jpeg_tables_offset;
             u32 tables_length = m_context.jpeg_tables_length;
 
-            // Decode all strips to reconstruct full image
-            u32 y = 0;
+            // Check if using tiles or strips
+            bool use_tiles = !m_context.tile_offsets.empty();
+            size_t num_data_blocks = use_tiles ? m_context.tile_offsets.size() : m_context.strip_offsets.size();
 
-            for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
+            printLine(Print::Info, "  Processing {} {}", num_data_blocks, use_tiles ? "tiles" : "strips");
+
+            if (use_tiles)
+            {
+                // Handle tiled image
+                u32 tiles_across = (header.width + m_context.tile_width - 1) / m_context.tile_width;
+                u32 tiles_down = (header.height + m_context.tile_length - 1) / m_context.tile_length;
+                
+                printLine(Print::Info, "  Tile grid: {}x{} ({}x{} pixels per tile)", tiles_across, tiles_down, m_context.tile_width, m_context.tile_length);
+
+                for (size_t i = 0; i < num_data_blocks; ++i)
+                {
+                    u32 tile_x = (i % tiles_across) * m_context.tile_width;
+                    u32 tile_y = (i / tiles_across) * m_context.tile_length;
+                    
+                    u32 tile_w = std::min(m_context.tile_width, header.width - tile_x);
+                    u32 tile_h = std::min(m_context.tile_length, header.height - tile_y);
+
+                    const u8* tile_data = m_memory.address + m_context.tile_offsets[i];
+                    u32 tile_bytes = m_context.tile_byte_counts[i];
+
+                    printLine(Print::Info, "    Tile {}: {}x{} at ({},{}) - {} bytes", i, tile_w, tile_h, tile_x, tile_y, tile_bytes);
+
+                    // Reconstruct complete JPEG stream for this tile
+                    Buffer jpeg_stream;
+
+                    // Copy SOI from tile data
+                    if (tile_bytes >= 2)
+                    {
+                        jpeg_stream.append(tile_data, 2);
+                    }
+
+                    // Extract table data from JPEGTables (skip SOI and EOI)
+                    if (tables_length >= 4)
+                    {
+                        const u8* table_data = jpeg_tables + 2;  // Skip SOI
+                        u32 table_data_length = tables_length - 4;  // Skip SOI + EOI
+                        
+                        jpeg_stream.append(table_data, table_data_length);
+                    }
+
+                    // Append tile content after SOI (SOF + SOS + entropy data + EOI)
+                    if (tile_bytes > 2)
+                    {
+                        jpeg_stream.append(tile_data + 2, tile_bytes - 2);
+                    }
+
+                    // Decode this tile
+                    ConstMemory jpeg_memory(jpeg_stream.data(), jpeg_stream.size());
+                    ImageDecoder jpeg_decoder(jpeg_memory, "");
+
+                    // Create surface for this tile positioned correctly in target
+                    Surface tile_surface(target, tile_x, tile_y, tile_w, tile_h);
+
+                    ImageDecodeStatus jpeg_status = jpeg_decoder.decode(tile_surface, options, 0, 0, 0);
+                    if (!jpeg_status.success)
+                    {
+                        printLine(Print::Error, "JPEG decode failed for tile {}: {}", i, jpeg_status.info);
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                // Handle strip-based image (original logic)
+                u32 y = 0;
+
+                for (size_t i = 0; i < num_data_blocks; ++i)
             {
                 u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
 
@@ -2080,6 +2148,7 @@ namespace
                 }
 
                 y += strip_height;
+                }
             }
 
             return true;
