@@ -395,6 +395,8 @@ namespace mango::image::jpeg
         int m_width;
         int m_height;
 
+        bool m_rgb_colorspace = false;
+
         int m_precision; // 8 or 12 bits
         int m_components; // 1..4
 
@@ -498,6 +500,11 @@ namespace mango::image::jpeg
     void process_y_32bit                (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_cmyk_rgba              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_8bit             (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+
+    void process_rgb_bgr               (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_rgb_rgb               (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_rgb_bgra              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void process_rgb_rgba              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
     void process_ycbcr_bgr              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_ycbcr_bgr_8x8          (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);

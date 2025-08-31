@@ -259,6 +259,128 @@ void process_ycbcr_8bit(u8* dest, size_t stride, const s16* data, ProcessState* 
     }
 }
 
+// ------------------------------------------------------------------------------------------------
+// RGB
+// ------------------------------------------------------------------------------------------------
+
+void process_rgb_bgr(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+{
+    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
+
+    for (int i = 0; i < state->blocks; ++i)
+    {
+        Block& block = state->block[i];
+        state->idct(result + i * 64, data, block.qt);
+        data += 64;
+    }
+
+    for (int y = 0; y < 8; ++y)
+    {
+        u8* d = dest + y * stride;
+        const u8* s = result + y * 8;
+
+        for (int x = 0; x < 8; ++x)
+        {
+            u8 r = s[x];
+            u8 g = s[x + 64];
+            u8 b = s[x + 128];
+            d[x * 3 + 0] = b;
+            d[x * 3 + 1] = g;
+            d[x * 3 + 2] = r;
+        }
+    }
+}
+
+void process_rgb_rgb(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+{
+    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
+
+    for (int i = 0; i < state->blocks; ++i)
+    {
+        Block& block = state->block[i];
+        state->idct(result + i * 64, data, block.qt);
+        data += 64;
+    }
+
+    for (int y = 0; y < 8; ++y)
+    {
+        u8* d = dest + y * stride;
+        const u8* s = result + y * 8;
+
+        for (int x = 0; x < 8; ++x)
+        {
+            u8 r = s[x];
+            u8 g = s[x + 64];
+            u8 b = s[x + 128];
+            d[x * 3 + 0] = r;
+            d[x * 3 + 1] = g;
+            d[x * 3 + 2] = b;
+        }
+    }
+}
+
+void process_rgb_bgra(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+{
+    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
+
+    for (int i = 0; i < state->blocks; ++i)
+    {
+        Block& block = state->block[i];
+        state->idct(result + i * 64, data, block.qt);
+        data += 64;
+    }
+
+    for (int y = 0; y < 8; ++y)
+    {
+        u8* d = dest + y * stride;
+        const u8* s = result + y * 8;
+
+        for (int x = 0; x < 8; ++x)
+        {
+            u8 r = s[x];
+            u8 g = s[x + 64];
+            u8 b = s[x + 128];
+            d[x * 4 + 0] = b;
+            d[x * 4 + 1] = g;
+            d[x * 4 + 2] = r;
+            d[x * 4 + 3] = 0xff;
+        }
+    }
+}
+
+void process_rgb_rgba(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+{
+    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
+
+    for (int i = 0; i < state->blocks; ++i)
+    {
+        Block& block = state->block[i];
+        state->idct(result + i * 64, data, block.qt);
+        data += 64;
+    }
+
+    for (int y = 0; y < 8; ++y)
+    {
+        u8* d = dest + y * stride;
+        const u8* s = result + y * 8;
+
+        for (int x = 0; x < 8; ++x)
+        {
+            u8 r = s[x];
+            u8 g = s[x + 64];
+            u8 b = s[x + 128];
+            d[x * 4 + 0] = r;
+            d[x * 4 + 1] = g;
+            d[x * 4 + 2] = b;
+            d[x * 4 + 3] = 0xff;
+        }
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+// YCbCr
+// ------------------------------------------------------------------------------------------------
+
 static inline
 void write_color_bgra(u8* dest, int y, int r, int g, int b)
 {
