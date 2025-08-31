@@ -74,24 +74,34 @@ namespace
         StripByteCounts = 279,
         //MinSampleValue = 280, // SHORT
         //MaxSampleValue = 281, // SHORT
-        XPosition = 286,
-        YPosition = 287,
         XResolution = 282,
         YResolution = 283,
         PlanarConfiguration = 284,
         PageName = 285, // ASCII
-        //FreeOffsets = 288, // LONG
-        //FreeByteCounts = 289, // LONG
-        //GrayResponseUnit = 290, // SHORT
-        //GrayResponseCurve = 291, // SHORT
+        XPosition = 286,
+        YPosition = 287,
+        FreeOffsets = 288,
+        FreeByteCounts = 289,
+        GrayResponseUnit = 290,
+        GrayResponseCurve = 291,
+        Group3Options = 292,
+        Group4Options = 293,
         ResolutionUnit = 296,
         PageNumber = 297,
+        TransferFunction = 301,
         Software = 305,
-        DateTime = 306, // ASCII
-        Artist = 315, // ASCII
-        //HostComputer = 316, // ASCII
+        DateTime = 306,
+        Artist = 315,
+        HostComputer = 316,
         Predictor = 317,
+        WhitePoint = 318,
+        PrimaryChromaticities = 319,
         ColorMap = 320,
+        HalftoneHints = 321,
+        TileWidth = 322,
+        TileLength = 323,
+        TileOffsets = 324,
+        TileByteCounts = 325,
         InkSet = 332,
         InkNames = 333, // ASCII
         NumberOfInks = 334,
@@ -108,6 +118,7 @@ namespace
         JPEGDCTables = 520,
         JPEGACTables = 521,
         YCbCrSubSampling = 530,
+        ReferenceBlackWhite = 532,
         JPEGTables = 347,
         //Copyright = 33432, // ASCII
         Matteing = 32995,
@@ -159,6 +170,7 @@ namespace
         float y_position = 0;
         float x_resolution = 0;
         float y_resolution = 0;
+        //float reference_black_white = 0;
         u32 orientation = 0;
         u32 planar_configuration = 0;
         u32 predictor = 1;
@@ -199,6 +211,12 @@ namespace
         u32 rows_per_strip = 0;
         std::vector<u64> strip_offsets;
         std::vector<u64> strip_byte_counts;
+        
+        // Tile support
+        u32 tile_width = 0;
+        u32 tile_length = 0;
+        std::vector<u64> tile_offsets;
+        std::vector<u64> tile_byte_counts;
 
         Palette palette;
 
@@ -353,7 +371,6 @@ namespace
                 context.bpp = std::accumulate(values.begin(), values.end(), 0);
                 printLine(Print::Info, "    [BitsPerSample]");
 
-                // Print individual channel values
                 std::string channels_str;
                 for (size_t i = 0; i < values.size(); ++i)
                 {
@@ -370,15 +387,38 @@ namespace
 
             case Tag::DocumentName:
                 context.document_name = getAscii(p, memory, type, is_big_tiff);
-                printLine(Print::Info, "    [DocumentName]");
-                //printLine(Print::Info, "{}", context.document_name);
                 break;
 
             case Tag::ImageDescription:
                 context.image_description = getAscii(p, memory, type, is_big_tiff);
-                printLine(Print::Info, "    [ImageDescription]");
-                //printLine(Print::Info, "{}", context.image_description);
                 break;
+
+            case Tag::PageName:
+                context.page_name = getAscii(p, memory, type, is_big_tiff);
+                break;
+
+            TIFF_CASE_UNSIGNED(Orientation, orientation);
+            TIFF_CASE_UNSIGNED(SamplesPerPixel, samples_per_pixel);
+            TIFF_CASE_UNSIGNED(RowsPerStrip, rows_per_strip);
+            
+            TIFF_CASE_UNSIGNED(TileWidth, tile_width);
+            TIFF_CASE_UNSIGNED(TileLength, tile_length);
+
+            case Tag::TileOffsets:
+            {
+                printLine(Print::Info, "    [TileOffsets]");
+                context.tile_offsets = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                suppress_info = false;
+                break;
+            }
+
+            case Tag::TileByteCounts:
+            {
+                printLine(Print::Info, "    [TileByteCounts]");
+                context.tile_byte_counts = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                suppress_info = false;
+                break;
+            }
 
             case Tag::StripOffsets:
             {
@@ -387,10 +427,6 @@ namespace
                 suppress_info = false;
                 break;
             }
-
-            TIFF_CASE_UNSIGNED(Orientation, orientation);
-            TIFF_CASE_UNSIGNED(SamplesPerPixel, samples_per_pixel);
-            TIFF_CASE_UNSIGNED(RowsPerStrip, rows_per_strip);
 
             case Tag::StripByteCounts:
             {
@@ -427,17 +463,17 @@ namespace
                 printLine(Print::Info, "      value: {}", context.y_resolution);
                 break;
 
+            case Tag::ReferenceBlackWhite:
+                //context.reference_black_white = getRational(p, memory, type, is_big_tiff);
+                //printLine(Print::Info, "    [ReferenceBlackWhite]");
+                //printLine(Print::Info, "      value: {}", context.reference_black_white);
+                break;
+
             TIFF_CASE_UNSIGNED(PlanarConfiguration, planar_configuration);
             TIFF_CASE_UNSIGNED(Predictor, predictor);
 
             case Tag::Software:
                 context.software = getAscii(p, memory, type, is_big_tiff);
-                //printLine(Print::Info, "    [Software]");
-                //printLine(Print::Info, "{}", context.software);
-                break;
-
-            case Tag::PageName:
-                context.page_name = getAscii(p, memory, type, is_big_tiff);
                 break;
 
             case Tag::ColorMap:
@@ -1336,6 +1372,7 @@ namespace
             header.compression = TextureCompression::NONE;
 
             u32 data_size = std::accumulate(m_context.strip_byte_counts.begin(), m_context.strip_byte_counts.end(), 0u);
+            data_size += std::accumulate(m_context.tile_byte_counts.begin(), m_context.tile_byte_counts.end(), 0u);
 
             printLine(Print::Info, "  Image: {} x {} ({} bpp, {} channels)", 
                      m_context.width, m_context.height, m_context.bpp, m_context.samples_per_pixel);
@@ -1622,6 +1659,7 @@ namespace
                 jpeg_stream.append(header_data, valid_header_length);
 
                 // Check if we need to add Huffman tables
+                printLine(Print::Info, "  JPEGInterchangeFormat DHT check: found_dht={}", found_dht);
                 if (!found_dht)
                 {
                     printLine(Print::Info, "  Completing headers with Huffman tables from TIFF tags");
@@ -1705,8 +1743,6 @@ namespace
             else
             {
                 // Mode B: Reconstruct headers from TIFF tags
-                printLine(Print::Info, "  Reconstructing complete JPEG headers from TIFF tags");
-
                 u8* p = nullptr;
 
                 // SOI (Start of Image)
@@ -1735,31 +1771,11 @@ namespace
                 p[16] = 0x00; // Thumbnail width
                 p[17] = 0x00; // Thumbnail height
 
-                // Add quantization tables from TIFF tags
-                for (size_t i = 0; i < m_context.jpeg_qt_tables.size(); ++i)
-                {
-                    u32 table_offset = m_context.jpeg_qt_tables[i];
-                    const u8* table_data = m_memory.address + table_offset;
-
-                    // DQT marker
-                    p = jpeg_stream.append(5);
-                    p[0] = 0xFF;
-                    p[1] = 0xDB;
-                    p[2] = 0x00; // Length hi
-                    p[3] = 0x43; // Length lo (67 = 2 + 1 + 64)
-                    p[4] = i;    // Table ID + precision (0 = 8-bit)
-
-                    // Append 64 bytes of quantization data
-                    for (int j = 0; j < 64; ++j)
-                    {
-                        jpeg_stream.append(table_data[j]);
-                    }                    
-                }
-
-                // Add SOF0 (simplified version)
+                // Add SOF1 (Extended sequential DCT) to support table IDs beyond 1
+                // MUST come BEFORE DHT tables so decoder knows it's not baseline!
                 p = jpeg_stream.append(10);
                 p[0] = 0xFF;
-                p[1] = 0xC0;
+                p[1] = 0xC1;
                 p[2] = 0x00; // Length hi  
                 p[3] = 0x11; // Length lo (17 = 2 + 1 + 2 + 2 + 3*3)
                 p[4] = 0x08; // Sample precision (8 bits)
@@ -1769,23 +1785,125 @@ namespace
                 p[8] = m_context.width & 0xFF;         // Width lo
                 p[9] = 0x03; // Number of components
 
-                // Component 1: Y (luminance)
+                // Component 1: Y (luminance) - full resolution
                 p = jpeg_stream.append(3);
                 p[0] = 0x01; // Component ID
-                p[1] = 0x21; // Sampling factors (2:1)
+                p[1] = 0x22; // Sampling factors (2:2) to match YCbCrSubSampling
                 p[2] = 0x00; // Quantization table 0
 
-                // Component 2: Cb (chrominance)  
+                // Component 2: Cb (chrominance) - subsampled by 2:2  
                 p = jpeg_stream.append(3);
                 p[0] = 0x02; // Component ID
-                p[1] = 0x11; // Sampling factors (1:1)
+                p[1] = 0x11; // Sampling factors (1:1) relative to Y
                 p[2] = 0x01; // Quantization table 1
 
-                // Component 3: Cr (chrominance)
+                // Component 3: Cr (chrominance) - subsampled by 2:2
                 p = jpeg_stream.append(3);
-                p[0] = 0x03; // Component ID  
-                p[1] = 0x11; // Sampling factors (1:1)
-                p[2] = 0x01; // Quantization table 1
+                p[0] = 0x03; // Component ID
+                p[1] = 0x11; // Sampling factors (1:1) relative to Y  
+                p[2] = 0x02; // Quantization table 2
+
+                // Add quantization tables from TIFF tags
+                for (size_t i = 0; i < m_context.jpeg_qt_tables.size(); ++i)
+                {
+                    u32 table_offset = m_context.jpeg_qt_tables[i];
+                    const u8* table_data = m_memory.address + table_offset;
+
+                    // Each DQT table gets its own complete marker
+                    u8* p = jpeg_stream.append(69); // Complete DQT: marker(2) + length(2) + precision+id(1) + data(64) = 69 bytes
+                    p[0] = 0xFF;
+                    p[1] = 0xDB;
+                    p[2] = 0x00; // Length hi
+                    p[3] = 0x43; // Length lo (67 = length(2) + precision+id(1) + data(64))
+                    p[4] = i;    // Table ID + precision (0 = 8-bit)
+
+                    // Copy 64 bytes of quantization data
+                    for (int j = 0; j < 64; ++j)
+                    {
+                        p[5 + j] = table_data[j];
+                    }                    
+                }
+
+                // Add DHT tables from TIFF tags
+                if (m_context.jpeg_dc_tables.empty() && m_context.jpeg_ac_tables.empty())
+                {
+                    printLine(Print::Error, "  WARNING: No JPEG Huffman tables found in TIFF tags!");
+                    printLine(Print::Error, "  This TIFF may not have proper JPEG table tags, trying to use standard JPEG tables...");
+                }
+                
+                for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
+                {
+                    u32 table_offset = m_context.jpeg_dc_tables[i];
+                    const u8* table_data = m_memory.address + table_offset;
+
+                    // Read the actual table structure (16 bytes of lengths + symbols)
+                    u8 num_codes = 0;
+                    for (int j = 0; j < 16; ++j)
+                    {
+                        num_codes += table_data[j];
+                    }
+
+                    if (num_codes > 200) 
+                    {
+                        continue; // Skip invalid tables
+                    }
+                    
+                    u8 table_id = i; // Use original table ID
+
+                    // Each DHT table gets its own complete marker
+                    u16 dht_length = 2 + 1 + 16 + num_codes; // length(2) + class_id(1) + lengths(16) + symbols(num_codes)
+                    u32 total_size = 2 + 2 + 1 + 16 + num_codes; // marker(2) + length(2) + class_id(1) + lengths(16) + symbols(num_codes)
+                    
+                    u8* p = jpeg_stream.append(total_size);
+                    p[0] = 0xFF;
+                    p[1] = 0xC4;
+                    p[2] = (dht_length >> 8) & 0xFF;
+                    p[3] = dht_length & 0xFF;
+                    p[4] = table_id; // Table class (0=DC) + table ID
+
+                    // Copy table data (16 bytes lengths + symbols)
+                    for (int j = 0; j < 16 + num_codes; ++j)
+                    {
+                        p[5 + j] = table_data[j];
+                    }
+                }
+
+                for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
+                {
+                    u32 table_offset = m_context.jpeg_ac_tables[i];
+                    const u8* table_data = m_memory.address + table_offset;
+
+                    // Read the actual table structure (16 bytes of lengths + symbols)
+                    u8 num_codes = 0;
+                    for (int j = 0; j < 16; ++j)
+                    {
+                        num_codes += table_data[j];
+                    }
+
+                    if (num_codes > 200) 
+                    {
+                        continue; // Skip invalid tables
+                    }
+
+                    u8 table_id = i; // Use original table ID
+
+                    // Each DHT table gets its own complete marker
+                    u16 dht_length = 2 + 1 + 16 + num_codes; // length(2) + class_id(1) + lengths(16) + symbols(num_codes)
+                    u32 total_size = 2 + 2 + 1 + 16 + num_codes; // marker(2) + length(2) + class_id(1) + lengths(16) + symbols(num_codes)
+                    
+                    u8* p = jpeg_stream.append(total_size);
+                    p[0] = 0xFF;
+                    p[1] = 0xC4;
+                    p[2] = (dht_length >> 8) & 0xFF;
+                    p[3] = dht_length & 0xFF;
+                    p[4] = 0x10 | table_id; // Table class (1=AC) + table ID
+
+                    // Copy table data (16 bytes lengths + symbols)
+                    for (int j = 0; j < 16 + num_codes; ++j)
+                    {
+                        p[5 + j] = table_data[j];
+                    }
+                }
             }
 
             u8* dri_data = jpeg_stream.append(6); // Allocate 6 bytes for DRI marker
@@ -1796,35 +1914,71 @@ namespace
             dri_data[4] = (restart_interval_mcus >> 8) & 0xFF;
             dri_data[5] = restart_interval_mcus & 0xFF;
 
-            for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
+            // Add SOS (Start of Scan) header
+            u8* sos_data = jpeg_stream.append(14); // Complete SOS header
+            sos_data[0] = 0xFF;
+            sos_data[1] = 0xDA;
+            sos_data[2] = 0x00;
+            sos_data[3] = 0x0C; // Length (12 bytes following this field)
+            sos_data[4] = 0x03; // Number of components
+            
+            // Component 1: Y  
+            sos_data[5] = 0x01; // Component ID
+            sos_data[6] = 0x00; // DC table 0, AC table 0
+            
+            // Component 2: Cb
+            sos_data[7] = 0x02; // Component ID  
+            sos_data[8] = 0x11; // DC table 1, AC table 1
+            
+            // Component 3: Cr
+            sos_data[9] = 0x03; // Component ID
+            sos_data[10] = 0x22; // DC table 2, AC table 2
+            
+            // Scan parameters
+            sos_data[11] = 0x00; // Spectral selection start (0)
+            sos_data[12] = 0x3F; // Spectral selection end (63)  
+            sos_data[13] = 0x00; // Successive approximation
+
+            // Use tiles if available, otherwise strips
+            bool is_tiled = !m_context.tile_offsets.empty();
+            const auto& offsets = is_tiled ? m_context.tile_offsets : m_context.strip_offsets;
+            const auto& byte_counts = is_tiled ? m_context.tile_byte_counts : m_context.strip_byte_counts;
+
+            if (offsets.empty())
             {
-                const u8* strip_data = m_memory.address + m_context.strip_offsets[i];
-                u32 strip_bytes = m_context.strip_byte_counts[i];
+                printLine(Print::Error, "  ERROR: No {} data found!", is_tiled ? "tile" : "strip");
+                printLine(Print::Error, "  JPEGInterchangeFormat: {}, JPEGInterchangeFormatLength: {}", 
+                         m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length);
+                printLine(Print::Error, "  This TIFF might use Mode A (JPEGInterchangeFormat) instead of Mode B (reconstructed headers)");
+                return Buffer();
+            }
+            
+            for (size_t i = 0; i < offsets.size(); ++i)
+            {
+                const u8* data = m_memory.address + offsets[i];
+                u32 data_bytes = byte_counts[i];
 
                 if (i > 0)
                 {
-                    // Strips 1+: Add RST marker to force Huffman decoder reset
+                    // Multiple tiles/strips: Add RST marker to force Huffman decoder reset
                     u8 rst_id = (i - 1) % 8; // RST0-RST7, cycling
                     u8 rst_marker = 0xD0 + rst_id; // RST0=0xD0, RST1=0xD1, etc.
-                    
-                    // Insert RST marker before strip data (2 bytes: FF D0-D7)
+
+                    // Insert RST marker before data (2 bytes: FF D0-D7)
                     u8* rst_data = jpeg_stream.append(2);
                     rst_data[0] = 0xFF;
                     rst_data[1] = rst_marker;
                 }
 
-                jpeg_stream.append(strip_data, strip_bytes);
+                jpeg_stream.append(data, data_bytes);
             }
 
             // Step 4: Add EOI marker
-            //jpeg_stream.append(0xFF);
-            //jpeg_stream.append(0xD9);
+            u8* eoi_data = jpeg_stream.append(2);
+            eoi_data[0] = 0xFF;
+            eoi_data[1] = 0xD9;
 
             printLine(Print::Info, "  Complete JPEG stream: {} bytes", jpeg_stream.size());
-
-            // TODO: for debugging, remove
-            filesystem::OutputFileStream stream("jpeg_stream.jpg");
-            stream.write(jpeg_stream.data(), jpeg_stream.size());
 
             // Step 5: Decode the JPEG stream
             ImageDecoder jpeg_decoder(jpeg_stream, ".jpg");
