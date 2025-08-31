@@ -482,21 +482,21 @@ namespace
             case Tag::JPEGQTables:
             {
                 context.jpeg_qt_tables = getUnsignedArray(p, memory, type, count, is_big_tiff);
-                printLine(Print::Info, "    [JPEGQTables]\n.     {} tables", context.jpeg_qt_tables.size());
+                printLine(Print::Info, "    [JPEGQTables]\n      {} tables", context.jpeg_qt_tables.size());
                 break;
             }
 
             case Tag::JPEGDCTables:
             {
                 context.jpeg_dc_tables = getUnsignedArray(p, memory, type, count, is_big_tiff);
-                printLine(Print::Info, "    [JPEGDCTables]\n.     {} tables", context.jpeg_dc_tables.size());
+                printLine(Print::Info, "    [JPEGDCTables]\n      {} tables", context.jpeg_dc_tables.size());
                 break;
             }
 
             case Tag::JPEGACTables:
             {
                 context.jpeg_ac_tables = getUnsignedArray(p, memory, type, count, is_big_tiff);
-                printLine(Print::Info, "    [JPEGACTables]\n.     {} tables", context.jpeg_ac_tables.size());
+                printLine(Print::Info, "    [JPEGACTables]\n      {} tables", context.jpeg_ac_tables.size());
                 break;
             }
 
