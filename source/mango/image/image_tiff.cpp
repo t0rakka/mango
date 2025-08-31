@@ -1857,44 +1857,40 @@ namespace
             // - JPEGTables contains shared DQT+DHT tables
             // - Each strip contains: [SOI] + [SOF + SOS + entropy data + EOI]  
             // - Combine: [SOI] + [JPEGTables] + [rest of strip] for complete JPEG
-            
+
             if (m_context.jpeg_tables_offset == 0)
             {
                 printLine(Print::Error, "JPEGTables not found for Compression=7");
                 return false;
             }
-            
+
             // Get JPEGTables data
             const u8* jpeg_tables = m_memory.address + m_context.jpeg_tables_offset;
             u32 tables_length = m_context.jpeg_tables_length;
-            
-            printLine(Print::Info, "  JPEGTables: {} bytes at offset {}", tables_length, m_context.jpeg_tables_offset);
-            
+
             // Decode all strips to reconstruct full image
             u32 y = 0;
-            
+
             for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
             {
                 u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
-                
+
                 const u8* strip_data = m_memory.address + m_context.strip_offsets[i];
                 u32 strip_bytes = m_context.strip_byte_counts[i];
-                
-                printLine(Print::Info, "  Strip {}: {} bytes, height: {}", i, strip_bytes, strip_height);
-                
+
                 // Reconstruct complete JPEG stream for this strip
                 Buffer jpeg_stream;
-                
+
                 // JPEGTables structure: [SOI] + [DQT] + [DHT] + ... + [EOI]
                 // Strip structure: [SOI] + [SOF] + [SOS] + [entropy data] + [EOI]
                 // Goal: [SOI] + [DQT+DHT from tables] + [SOF+SOS+data+EOI from strip]
-                
+
                 // Step 1: Copy SOI from strip
                 if (strip_bytes >= 2)
                 {
                     jpeg_stream.append(strip_data, 2);
                 }
-                
+
                 // Step 2: Extract table data from JPEGTables (skip SOI and EOI)
                 // JPEGTables: [FF D8] + [table data] + [FF D9]
                 if (tables_length >= 4)  // At least SOI + EOI
@@ -1904,19 +1900,11 @@ namespace
                     
                     jpeg_stream.append(table_data, table_data_length);
                 }
-                
+
                 // Step 3: Append strip content after SOI (SOF + SOS + entropy data + EOI)
                 if (strip_bytes > 2)
                 {
                     jpeg_stream.append(strip_data + 2, strip_bytes - 2);
-                }
-                
-                // Debug: Save first strip
-                if (i == 0)
-                {
-                    filesystem::OutputFileStream debug_stream("debug_modern_jpeg_strip0.jpg");
-                    debug_stream.write(jpeg_stream.data(), jpeg_stream.size());
-                    printLine(Print::Info, "  Complete JPEG strip 0: {} bytes", jpeg_stream.size());
                 }
 
                 // Decode this strip
@@ -1929,18 +1917,17 @@ namespace
 
                 // Create surface for this strip
                 Surface strip_surface(target, 0, y, header.width, strip_height);
-                
+
                 ImageDecodeStatus jpeg_status = jpeg_decoder.decode(strip_surface, options, 0, 0, 0);
                 if (!jpeg_status.success)
                 {
                     printLine(Print::Error, "JPEG decode failed for strip {}: {}", i, jpeg_status.info);
                     return false;
                 }
-                
+
                 y += strip_height;
             }
-            
-            printLine(Print::Info, "  All {} strips decoded successfully!", m_context.strip_offsets.size());
+
             return true;
         }
 
