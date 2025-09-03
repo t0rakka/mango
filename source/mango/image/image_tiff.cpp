@@ -2240,11 +2240,10 @@ namespace
                     break;
                 }
 
-                //case Compression::CCITT_FAX3:
-                //    break;
-
-                // case Compression::CCITT_FAX4:
-                //     break;
+                case Compression::CCITT_FAX3:
+                case Compression::CCITT_FAX4:
+                    printLine(Print::Info, "    Unsupported compression: {}", m_context.compression);
+                    return;
 
                 case Compression::LZW:
                 {
