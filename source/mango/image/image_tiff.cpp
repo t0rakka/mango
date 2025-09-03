@@ -565,7 +565,7 @@ namespace
             case Tag::Artist:
                 // ignored tags
                 break;
-    
+
             case Tag::Matteing:
             case Tag::DataType:
             case Tag::ImageDepth:
