@@ -1392,7 +1392,7 @@ namespace
                 }
                 else
                 {
-                    return Format(24, Format::UNORM, Format::RGB, 8, 8, 8);
+                    return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                 }
             }
 
