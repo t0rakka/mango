@@ -610,6 +610,21 @@ namespace mango::image::jpeg
                 frame.vsf = 1;
             }
 
+            if (m_components == 3)
+            {
+                // This is a bit weak logic to detect RGB colorspace
+                switch (frame.compid)
+                {
+                    case 'R':
+                    case 'G':
+                    case 'B':
+                        m_rgb_colorspace = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
             Hmax = std::max(Hmax, frame.hsf);
             Vmax = std::max(Vmax, frame.vsf);
             blocks_in_mcu += frame.hsf * frame.vsf;
@@ -1537,6 +1552,7 @@ namespace mango::image::jpeg
 
         ProcessFunc process_y           = nullptr;
         ProcessFunc process_cmyk        = process_cmyk_rgba;
+        ProcessFunc process_rgb         = nullptr;
         ProcessFunc process_ycbcr       = nullptr;
         ProcessFunc process_ycbcr_8x8   = nullptr;
         ProcessFunc process_ycbcr_8x16  = nullptr;
@@ -1547,6 +1563,7 @@ namespace mango::image::jpeg
         {
             case SampleType::U8_Y:
                 process_y           = process_y_8bit;
+                //process_rgb         = ;
                 process_ycbcr       = process_ycbcr_8bit;
                 process_ycbcr_8x8   = nullptr;
                 process_ycbcr_8x16  = nullptr;
@@ -1555,6 +1572,7 @@ namespace mango::image::jpeg
                 break;
             case SampleType::U8_BGR:
                 process_y           = process_y_24bit;
+                process_rgb         = process_rgb_bgr;
                 process_ycbcr       = process_ycbcr_bgr;
                 process_ycbcr_8x8   = process_ycbcr_bgr_8x8;
                 process_ycbcr_8x16  = process_ycbcr_bgr_8x16;
@@ -1563,6 +1581,7 @@ namespace mango::image::jpeg
                 break;
             case SampleType::U8_RGB:
                 process_y           = process_y_24bit;
+                process_rgb         = process_rgb_rgb;
                 process_ycbcr       = process_ycbcr_rgb;
                 process_ycbcr_8x8   = process_ycbcr_rgb_8x8;
                 process_ycbcr_8x16  = process_ycbcr_rgb_8x16;
@@ -1571,6 +1590,7 @@ namespace mango::image::jpeg
                 break;
             case SampleType::U8_BGRA:
                 process_y           = process_y_32bit;
+                process_rgb         = process_rgb_bgra;
                 process_ycbcr       = process_ycbcr_bgra;
                 process_ycbcr_8x8   = process_ycbcr_bgra_8x8;
                 process_ycbcr_8x16  = process_ycbcr_bgra_8x16;
@@ -1579,6 +1599,7 @@ namespace mango::image::jpeg
                 break;
             case SampleType::U8_RGBA:
                 process_y           = process_y_32bit;
+                process_rgb         = process_rgb_rgba;
                 process_ycbcr       = process_ycbcr_rgba;
                 process_ycbcr_8x8   = process_ycbcr_rgba_8x8;
                 process_ycbcr_8x16  = process_ycbcr_rgba_8x16;
@@ -1801,6 +1822,12 @@ namespace mango::image::jpeg
                 processState.process = process_cmyk;
                 id = "CMYK";
                 break;
+        }
+
+        if (m_rgb_colorspace)
+        {
+            processState.process = process_rgb;
+            id = "RGB";
         }
 
         m_ycbcr_name = id;

@@ -35,4 +35,11 @@ namespace mango::math
         return s * (s * (s * 0.305306011f + 0.682171111f) + 0.012522878f);
     }
 
+    // ------------------------------------------------------------------
+    // sRGB <-> linear conversion lookup tables
+    // ------------------------------------------------------------------
+
+    const u8* get_linear_to_srgb_table();
+    const u8* get_srgb_to_linear_table();
+
 } // namespace mango::math
