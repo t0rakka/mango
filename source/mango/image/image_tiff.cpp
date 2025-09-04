@@ -1478,7 +1478,19 @@ namespace
                 return status;
             }
 
-            DecodeTargetBitmap target(dest, header.width, header.height, header.format, m_context.palette, false);
+            // Calculate target width and height
+            int target_width = header.width;
+            int target_height = header.height;
+
+            // TIFF compresses complete tiles, even if they only partially overlap the image.
+            // This keeps the decoding loops simple as they don't have to clip.
+            if (m_context.tile_width > 0 && m_context.tile_length > 0)
+            {
+                target_width = div_ceil(header.width, m_context.tile_width) * m_context.tile_width;
+                target_height = div_ceil(header.height, m_context.tile_length) * m_context.tile_length;
+            }
+
+            DecodeTargetBitmap target(dest, target_width, target_height, header.format, m_context.palette, false);
 
             if (m_context.compression == u32(Compression::JPEG_LEGACY))
             {
@@ -1498,6 +1510,26 @@ namespace
                     return status;
                 }
             }
+            else if (m_context.tile_offsets.size() > 0)
+            {
+                // chunky format: tiles organized spatially
+
+                const u32 tile_width = m_context.tile_width;
+                const u32 tile_length = m_context.tile_length;
+                const u32 xtiles = div_ceil(header.width, tile_width);
+                const u32 ytiles = div_ceil(header.height, tile_length);
+
+                for (size_t i = 0; i < m_context.tile_offsets.size(); ++i)
+                {
+                    ConstMemory memory(m_memory.address + m_context.tile_offsets[i], m_context.tile_byte_counts[i]);
+
+                    u32 x = (i % xtiles) * tile_width;
+                    u32 y = (i / xtiles) * tile_length;
+
+                    Surface tile(target, x, y, tile_width, tile_length);
+                    decodeRect(tile, memory, tile_width, tile_length);
+                }
+            }
             else if (m_context.planar_configuration == 2)
             {
                 // Planar format: strips organized as channels, clear target buffer first
@@ -1514,12 +1546,12 @@ namespace
                     for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
                     {
                         size_t strip_index = spatial_strip * m_context.samples_per_pixel + channel;
-                        
+
                         const u8* src = m_memory.address + m_context.strip_offsets[strip_index];
                         u32 bytes = m_context.strip_byte_counts[strip_index];
 
                         Surface strip(target, 0, y, header.width, strip_height);
-                        decodeStrip(strip, ConstMemory(src, bytes), header.width, strip_height, strip_index, channel);
+                        decodeRect(strip, ConstMemory(src, bytes), header.width, strip_height, channel);
                     }
                 }
             }
@@ -1536,7 +1568,7 @@ namespace
                     u32 bytes = m_context.strip_byte_counts[i];
 
                     Surface strip(target, 0, y, header.width, strip_height);
-                    decodeStrip(strip, ConstMemory(src, bytes), header.width, strip_height, i);
+                    decodeRect(strip, ConstMemory(src, bytes), header.width, strip_height);
 
                     y += strip_height;
                 }
@@ -2185,7 +2217,7 @@ namespace
             }
         }
 
-        void decodeStrip(Surface target, ConstMemory memory, int width, int height, int strip_index = -1, u32 channel_index = 0)
+        void decodeRect(Surface target, ConstMemory memory, int width, int height, u32 channel_index = 0)
         {
             // Expand sub-byte formats (1, 2, 4 bits) to 8-bit during decompression for cleaner pipeline
             u32 effective_bpp = std::max(8u, u32(m_context.bpp));
@@ -2194,11 +2226,11 @@ namespace
             u32 bytes_per_row;
             if (m_context.planar_configuration == 2)
             {
-                bytes_per_row = (header.width * effective_bpp / m_context.samples_per_pixel + 7) / 8;
+                bytes_per_row = (width * effective_bpp / m_context.samples_per_pixel + 7) / 8;
             } 
             else
             {
-                bytes_per_row = (header.width * effective_bpp + 7) / 8;
+                bytes_per_row = (width * effective_bpp + 7) / 8;
             }
             u32 uncompressed_bytes = height * bytes_per_row;
 
@@ -2231,7 +2263,7 @@ namespace
                     bool success = ccitt_rle_decompress(buffer, memory, width);
                     if (!success)
                     {
-                        printLine(Print::Error, "[CCITT-RLE] Decompression failed for strip {}", strip_index);
+                        printLine(Print::Error, "[CCITT-RLE] Decompression failed");
                         return;
                     }
 
