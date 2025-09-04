@@ -50,83 +50,6 @@ namespace
         IFD8 = 18,
     };
 
-    enum class Tag : u16
-    {
-        NewSubfileType = 254, // LONG
-        SubfileType = 255, // SHORT
-        ImageWidth = 256,
-        ImageLength = 257,
-        BitsPerSample = 258,
-        Compression = 259,
-        PhotometricInterpretation = 262,
-        //Threshholding = 263, // SHORT
-        //CellWidth = 264, // SHORT
-        //CellLength = 265, // SHORT
-        FillOrder = 266, // SHORT
-        DocumentName = 269,
-        ImageDescription = 270,
-        //Make = 271, // ASCII
-        //Model = 272, // ASCII
-        StripOffsets = 273,
-        Orientation = 274,
-        SamplesPerPixel = 277,
-        RowsPerStrip = 278,
-        StripByteCounts = 279,
-        //MinSampleValue = 280, // SHORT
-        //MaxSampleValue = 281, // SHORT
-        XResolution = 282,
-        YResolution = 283,
-        PlanarConfiguration = 284,
-        PageName = 285, // ASCII
-        XPosition = 286,
-        YPosition = 287,
-        FreeOffsets = 288,
-        FreeByteCounts = 289,
-        GrayResponseUnit = 290,
-        GrayResponseCurve = 291,
-        Group3Options = 292,
-        Group4Options = 293,
-        ResolutionUnit = 296,
-        PageNumber = 297,
-        TransferFunction = 301,
-        Software = 305,
-        DateTime = 306,
-        Artist = 315,
-        HostComputer = 316,
-        Predictor = 317,
-        WhitePoint = 318,
-        PrimaryChromaticities = 319,
-        ColorMap = 320,
-        HalftoneHints = 321,
-        TileWidth = 322,
-        TileLength = 323,
-        TileOffsets = 324,
-        TileByteCounts = 325,
-        InkSet = 332,
-        InkNames = 333, // ASCII
-        NumberOfInks = 334,
-        DotRange = 336,
-        //ExtraSamples = 338, // SHORT
-        SampleFormat = 339,
-        JPEGProc = 512,
-        JPEGInterchangeFormat = 513,
-        JPEGInterchangeFormatLength = 514,
-        JPEGRestartInterval = 515,
-        JPEGLosslessPredictors = 517,
-        JPEGPointTransforms = 518,
-        JPEGQTables = 519,
-        JPEGDCTables = 520,
-        JPEGACTables = 521,
-        YCbCrSubSampling = 530,
-        ReferenceBlackWhite = 532,
-        JPEGTables = 347,
-        //Copyright = 33432, // ASCII
-        Matteing = 32995,
-        DataType = 32996,
-        ImageDepth = 32997,
-        TileDepth = 32998,
-    };
-
     enum class Compression : u16
     {
         NONE = 1,
@@ -223,6 +146,83 @@ namespace
         std::string image_description;
         std::string software;
         std::string document_name;
+    };
+
+    enum class Tag : u16
+    {
+        NewSubfileType = 254, // LONG
+        SubfileType = 255, // SHORT
+        ImageWidth = 256,
+        ImageLength = 257,
+        BitsPerSample = 258,
+        Compression = 259,
+        PhotometricInterpretation = 262,
+        //Threshholding = 263, // SHORT
+        //CellWidth = 264, // SHORT
+        //CellLength = 265, // SHORT
+        FillOrder = 266, // SHORT
+        DocumentName = 269,
+        ImageDescription = 270,
+        //Make = 271, // ASCII
+        //Model = 272, // ASCII
+        StripOffsets = 273,
+        Orientation = 274,
+        SamplesPerPixel = 277,
+        RowsPerStrip = 278,
+        StripByteCounts = 279,
+        //MinSampleValue = 280, // SHORT
+        //MaxSampleValue = 281, // SHORT
+        XResolution = 282,
+        YResolution = 283,
+        PlanarConfiguration = 284,
+        PageName = 285, // ASCII
+        XPosition = 286,
+        YPosition = 287,
+        FreeOffsets = 288,
+        FreeByteCounts = 289,
+        GrayResponseUnit = 290,
+        GrayResponseCurve = 291,
+        Group3Options = 292,
+        Group4Options = 293,
+        ResolutionUnit = 296,
+        PageNumber = 297,
+        TransferFunction = 301,
+        Software = 305,
+        DateTime = 306,
+        Artist = 315,
+        HostComputer = 316,
+        Predictor = 317,
+        WhitePoint = 318,
+        PrimaryChromaticities = 319,
+        ColorMap = 320,
+        HalftoneHints = 321,
+        TileWidth = 322,
+        TileLength = 323,
+        TileOffsets = 324,
+        TileByteCounts = 325,
+        InkSet = 332,
+        InkNames = 333, // ASCII
+        NumberOfInks = 334,
+        DotRange = 336,
+        //ExtraSamples = 338, // SHORT
+        SampleFormat = 339,
+        JPEGProc = 512,
+        JPEGInterchangeFormat = 513,
+        JPEGInterchangeFormatLength = 514,
+        JPEGRestartInterval = 515,
+        JPEGLosslessPredictors = 517,
+        JPEGPointTransforms = 518,
+        JPEGQTables = 519,
+        JPEGDCTables = 520,
+        JPEGACTables = 521,
+        YCbCrSubSampling = 530,
+        ReferenceBlackWhite = 532,
+        JPEGTables = 347,
+        //Copyright = 33432, // ASCII
+        Matteing = 32995,
+        DataType = 32996,
+        ImageDepth = 32997,
+        TileDepth = 32998,
     };
 
     static inline
