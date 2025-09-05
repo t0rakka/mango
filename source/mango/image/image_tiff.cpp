@@ -98,14 +98,23 @@ namespace
         u32 planar_configuration = 0;
         u32 predictor = 1;
         u32 fill_order = 1;
-        u32 sample_format = 1;
         u32 page_number = 0;
         std::string page_name;
+
+        std::vector<u64> sample_format;
+        std::vector<float> s_min_sample_value;
+        std::vector<float> s_max_sample_value;
 
         u32 ink_set = 1;
         std::string ink_names;
         u32 number_of_inks = 4;
         u32 dot_range = 2;
+
+        // Chromaticity support
+        float32x2 white_point;
+        float32x2 red_primary;
+        float32x2 green_primary;
+        float32x2 blue_primary;
 
         // JPEG_LEGACY
         u32 jpeg_proc = 0;
@@ -206,6 +215,8 @@ namespace
         DotRange = 336,
         //ExtraSamples = 338, // SHORT
         SampleFormat = 339,
+        SMinSampleValue = 340,
+        SMaxSampleValue = 341,
         JPEGProc = 512,
         JPEGInterchangeFormat = 513,
         JPEGInterchangeFormatLength = 514,
@@ -298,6 +309,13 @@ namespace
     }
 
     template <typename Pointer>
+    float getFloat(Pointer& p)
+    {
+        float value = p.read32f();
+        return value;
+    }
+
+    template <typename Pointer>
     std::vector<u64> getUnsignedArray(Pointer p, ConstMemory memory, Type type, u64 count, bool is_big_tiff)
     {
         std::vector<u64> values;
@@ -319,18 +337,63 @@ namespace
     }
 
     template <typename Pointer>
+    std::vector<float> getFloatArray(Pointer p, ConstMemory memory, Type type, u64 count, bool is_big_tiff)
+    {
+        std::vector<float> values;
+
+        const u64 offset_size = is_big_tiff ? 8 : 4;
+
+        if (getSize(type, count) > offset_size)
+        {
+            p = memory.address + getOffset(p, is_big_tiff);
+        }
+
+        for (u64 i = 0; i < count; ++i)
+        {
+            float value = getFloat(p);
+            values.push_back(value);
+        }
+
+        return values;
+    }
+
+    template <typename Pointer>
     float getRational(Pointer p, ConstMemory memory, Type type, bool is_big_tiff)
     {
-        if (!is_big_tiff)
+        const u64 offset_size = is_big_tiff ? 8 : 4;
+
+        if (getSize(type, 1) > offset_size)
         {
             p = memory.address + getOffset(p, is_big_tiff);
         }
 
         u32 numerator = getUnsigned(p, Type::LONG);
         u32 denominator = getUnsigned(p, Type::LONG);
-        //printLine(Print::Info, "      numerator: {}, denominator: {}", numerator, denominator);
         float value = float(numerator) / denominator;
         return value;
+    }
+
+    template <typename Pointer>
+    std::vector<float> getRationalArray(Pointer p, ConstMemory memory, Type type, u64 count, bool is_big_tiff)
+    {
+        std::vector<float> values;
+
+        const u64 offset_size = is_big_tiff ? 8 : 4;
+
+        if (getSize(type, count) > offset_size)
+        {
+            p = memory.address + getOffset(p, is_big_tiff);
+        }
+
+        for (u64 i = 0; i < count; ++i)
+        {
+            u32 numerator = getUnsigned(p, Type::LONG);
+            u32 denominator = getUnsigned(p, Type::LONG);
+            float value = float(numerator) / denominator;
+            values.push_back(value);
+        }
+
+        return values;
     }
 
     template <typename Pointer>
@@ -507,7 +570,68 @@ namespace
                 context.ink_names = getAscii(p, memory, type, is_big_tiff);
                 break;
 
-            TIFF_CASE_UNSIGNED(SampleFormat, sample_format);
+            case Tag::SampleFormat:
+            {
+                std::vector<u64> values = 
+                context.sample_format = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                printLine(Print::Info, "    [SampleFormat]");
+                print(Print::Info, "      values: ");
+                for (auto value : context.sample_format)
+                {
+                    print(Print::Info, "{} ", value);
+                }
+                printLine(Print::Info, "");
+                break;
+            }
+
+            case Tag::SMinSampleValue:
+            {
+                context.s_min_sample_value = getFloatArray(p, memory, type, count, is_big_tiff);
+                printLine(Print::Info, "    [SMinSampleValue]");
+                print(Print::Info, "      values: ");
+                for (auto value : context.s_min_sample_value)
+                {
+                    print(Print::Info, "{} ", value);
+                }
+                printLine(Print::Info, "");
+                break;
+            }
+
+            case Tag::SMaxSampleValue:
+            {
+                context.s_max_sample_value = getFloatArray(p, memory, type, count, is_big_tiff);
+                printLine(Print::Info, "    [SMaxSampleValue]");
+                print(Print::Info, "      values: ");
+                for (auto value : context.s_max_sample_value)
+                {
+                    print(Print::Info, "{} ", value);
+                }
+                printLine(Print::Info, "");
+                break;
+            }
+
+            case Tag::WhitePoint:
+            {
+                std::vector<float> values = getRationalArray(p, memory, type, count, is_big_tiff);
+                context.white_point = float32x2(values[0], values[1]);
+                printLine(Print::Info, "    [WhitePoint]");
+                printLine(Print::Info, "      white point: {}, {}", float(context.white_point.x), float(context.white_point.y));
+                break;
+            }
+
+            case Tag::PrimaryChromaticities:
+            {
+                std::vector<float> values = getRationalArray(p, memory, type, count, is_big_tiff);
+                context.red_primary = float32x2(values[0], values[1]);
+                context.green_primary = float32x2(values[2], values[3]);
+                context.blue_primary = float32x2(values[4], values[5]);
+                printLine(Print::Info, "    [PrimaryChromaticities]");
+                printLine(Print::Info, "      red primary: {}, {}", float(context.red_primary.x), float(context.red_primary.y));
+                printLine(Print::Info, "      green primary: {}, {}", float(context.green_primary.x), float(context.green_primary.y));
+                printLine(Print::Info, "      blue primary: {}, {}", float(context.blue_primary.x), float(context.blue_primary.y));
+                break;
+            }
+
             TIFF_CASE_UNSIGNED(JPEGProc, jpeg_proc);
             TIFF_CASE_UNSIGNED(JPEGInterchangeFormat, jpeg_interchange_format);
             TIFF_CASE_UNSIGNED(JPEGInterchangeFormatLength, jpeg_interchange_format_length);
