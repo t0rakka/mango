@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <chrono>
 #include <mango/core/system.hpp>
@@ -229,7 +229,25 @@ namespace mango
 
         thread_local moodycamel::ProducerToken token(m_queue->tasks);
         m_queue->tasks.enqueue(token, std::move(task));
-        //m_queue->tasks.enqueue(std::move(task));
+
+        m_condition.notify_one();
+    }
+
+    void ThreadPool::enqueue_bulk(Queue* queue, const std::vector<std::function<void()>>& functions)
+    {
+        size_t count = functions.size();
+        queue->task_counter += count;
+
+        std::vector<Task> tasks(count);
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            tasks[i].queue = queue;
+            tasks[i].func = std::move(functions[i]);
+        }
+
+        thread_local moodycamel::ProducerToken token(m_queue->tasks);
+        m_queue->tasks.enqueue_bulk(token, tasks.begin(), count);
 
         m_condition.notify_one();
     }
@@ -515,6 +533,22 @@ namespace mango
         m_queue->tasks.enqueue(ticket.task);
         m_consume_condition.notify_one();
         return ticket;
+    }
+
+    std::vector<TicketQueue::Ticket> TicketQueue::acquire(size_t count)
+    {
+        std::lock_guard<std::mutex> wait_lock(m_wait_mutex);
+        m_ticket_counter += count;
+        std::vector<TicketQueue::Ticket> tickets(count);
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            m_queue->tasks.enqueue(tickets[i].task);
+        }
+
+        m_consume_condition.notify_one();
+
+        return tickets;
     }
 
     void TicketQueue::wait()
