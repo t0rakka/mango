@@ -50,6 +50,14 @@ namespace
         IFD8 = 18,
     };
 
+    enum class SampleFormat : u16
+    {
+        UINT = 1,
+        SINT = 2,
+        FLOAT = 3,
+        UNDEFINED = 4,
+    };
+
     enum class Compression : u16
     {
         NONE = 1,
@@ -151,6 +159,7 @@ namespace
         std::vector<u64> tile_byte_counts;
 
         Palette palette;
+        ConstMemory icc_profile;
 
         std::string image_description;
         std::string software;
@@ -234,6 +243,8 @@ namespace
         DataType = 32996,
         ImageDepth = 32997,
         TileDepth = 32998,
+        //PhotoshopImageResources = 34377,
+        ICCProfile = 34675,
     };
 
     static inline
@@ -696,6 +707,15 @@ namespace
             case Tag::TileDepth:
                 // deprecated tags
                 break;
+
+            case Tag::ICCProfile:
+            {
+                u64 offset = getOffset(p, is_big_tiff);
+                context.icc_profile = ConstMemory(memory.address + offset, count);
+                printLine(Print::Info, "    [ICCProfile]");
+                printLine(Print::Info, "      offset: {}, length: {} bytes", offset, count);
+                break;
+            }
 
             default:
                 printLine(Print::Info, "    [UNKNOWN: {}]", int(tag));
@@ -1540,13 +1560,57 @@ namespace
 
                 case PhotometricInterpretation::RGB:
                 {
+                    Format::Type type = Format::UNORM;
+
+                    u64 sample_format = u64(SampleFormat::UINT);
+                    if (!m_context.sample_format.empty())
+                    {
+                        sample_format = m_context.sample_format[0];
+                    }
+
+                    switch (SampleFormat(sample_format))
+                    {
+                        case SampleFormat::UINT:
+                            type = Format::UNORM;
+                            break;
+
+                        case SampleFormat::SINT:
+                            type = Format::SNORM;
+                            break;
+
+                        case SampleFormat::FLOAT:
+                            if (bits == 16)
+                            {
+                                type = Format::FLOAT16;
+                            }
+                            else if (bits == 32)
+                            {
+                                type = Format::FLOAT32;
+                            }
+                            else if (bits == 64)
+                            {
+                                type = Format::FLOAT64;
+                            }
+                            else
+                            {
+                                header.setError("Unsupported float: {} bits", bits);
+                                return Format();
+                            }
+                            break;
+
+                        case SampleFormat::UNDEFINED:
+                        default:
+                            header.setError("Unsupported sample format: {}", sample_format);
+                            return Format();
+                    }
+
                     if (m_context.samples_per_pixel == 3)
                     {
-                        return Format(bits * 3, Format::UNORM, Format::RGB, bits, bits, bits, 0);
+                        return Format(bits * 3, type, Format::RGB, bits, bits, bits, 0);
                     }
                     else if (m_context.samples_per_pixel == 4)
                     {
-                        return Format(bits * 4, Format::UNORM, Format::RGBA, bits, bits, bits, bits);
+                        return Format(bits * 4, type, Format::RGBA, bits, bits, bits, bits);
                     }
                     else
                     {
@@ -1596,6 +1660,14 @@ namespace
 
             ImageDecodeStatus status;
 
+            // xxx
+            printLine(Print::Info, "    [decode]");
+            printLine(Print::Info, "      width: {}, height: {}", header.width, header.height);
+            printLine(Print::Info, "      compression: {}", m_context.compression);
+            printLine(Print::Info, "      tile_width: {}, tile_length: {}", m_context.tile_width, m_context.tile_length);
+            printLine(Print::Info, "      tile_offsets: {}, tile_byte_counts: {}", m_context.tile_offsets.size(), m_context.tile_byte_counts.size());
+            printLine(Print::Info, "      strip_offsets: {}, strip_byte_counts: {}", m_context.strip_offsets.size(), m_context.strip_byte_counts.size());
+
             if (!header.success)
             {
                 status.setError(header.info);
@@ -1618,7 +1690,7 @@ namespace
 
             if (m_context.compression == u32(Compression::JPEG_LEGACY))
             {
-                // Handle JPEG compression with unified decoder
+                // JPEG compression (legacy)
                 if (!decompress_legacy_jpeg(target, options, level, depth, face))
                 {
                     status.setError("JPEG decoding failed");
@@ -1627,7 +1699,7 @@ namespace
             }
             else if (m_context.compression == u32(Compression::JPEG_MODERN))
             {
-                // Handle JPEG compression with unified decoder
+                // JPEG compression (modern)
                 if (!decompress_modern_jpeg(target, options, level, depth, face))
                 {
                     status.setError("JPEG decoding failed");
@@ -1636,65 +1708,106 @@ namespace
             }
             else if (m_context.tile_offsets.size() > 0)
             {
-                // chunky format: tiles organized spatially
+                // tiles
 
                 const u32 tile_width = m_context.tile_width;
                 const u32 tile_length = m_context.tile_length;
                 const u32 xtiles = div_ceil(header.width, tile_width);
                 const u32 ytiles = div_ceil(header.height, tile_length);
 
-                for (size_t i = 0; i < m_context.tile_offsets.size(); ++i)
+                if (m_context.planar_configuration == 2)
                 {
-                    ConstMemory memory(m_memory.address + m_context.tile_offsets[i], m_context.tile_byte_counts[i]);
+                    // planar format
 
-                    u32 x = (i % xtiles) * tile_width;
-                    u32 y = (i / xtiles) * tile_length;
+                    // TODO: clear the target surface correctly
+                    std::memset(target.image, 0, target.stride * header.height);
 
-                    Surface tile(target, x, y, tile_width, tile_length);
-                    decodeRect(tile, memory, tile_width, tile_length);
-                }
-            }
-            else if (m_context.planar_configuration == 2)
-            {
-                // Planar format: strips organized as channels, clear target buffer first
-                std::memset(target.image, 0, target.stride * header.height);
-                
-                // For planar: strips per spatial region = total_strips / samples_per_pixel
-                u32 strips_per_spatial_region = m_context.strip_offsets.size() / m_context.samples_per_pixel;
-                
-                for (size_t spatial_strip = 0; spatial_strip < strips_per_spatial_region; ++spatial_strip)
-                {
-                    u32 y = spatial_strip * m_context.rows_per_strip;
-                    u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
-                    
-                    for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
+                    // TODO: verify count == m_context.tile_offsets.size()
+                    size_t count = xtiles * ytiles;
+
+                    for (size_t i = 0; i < count; ++i)
                     {
-                        size_t strip_index = spatial_strip * m_context.samples_per_pixel + channel;
+                        u32 x = (i % xtiles) * tile_width;
+                        u32 y = (i / xtiles) * tile_length;
 
-                        const u8* src = m_memory.address + m_context.strip_offsets[strip_index];
-                        u32 bytes = m_context.strip_byte_counts[strip_index];
+                        for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
+                        {
+                            size_t index = channel * count + i;
+                            ConstMemory memory(m_memory.address + m_context.tile_offsets[index], m_context.tile_byte_counts[index]);
 
-                        Surface strip(target, 0, y, header.width, strip_height);
-                        decodeRect(strip, ConstMemory(src, bytes), header.width, strip_height, channel);
+                            Surface tile(target, x, y, tile_width, tile_length);
+                            decodeRect(tile, memory, tile_width, tile_length, channel);
+                        }
+                    }
+                }
+                else
+                {
+                    // chunky format
+    
+                    for (size_t i = 0; i < m_context.tile_offsets.size(); ++i)
+                    {
+                        ConstMemory memory(m_memory.address + m_context.tile_offsets[i], m_context.tile_byte_counts[i]);
+    
+                        u32 x = (i % xtiles) * tile_width;
+                        u32 y = (i / xtiles) * tile_length;
+    
+                        // xxx
+                        printLine(Print::Info, "    [Tile] {}, {}", x, y);
+                        printLine(Print::Info, "      offset: {}, length: {} bytes", m_context.tile_offsets[i], m_context.tile_byte_counts[i]);
+    
+                        Surface tile(target, x, y, tile_width, tile_length);
+                        decodeRect(tile, memory, tile_width, tile_length);
                     }
                 }
             }
             else
             {
-                // Chunky format: strips organized spatially
-                u32 y = 0;
-                
-                for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
+                // strips
+
+                if (m_context.planar_configuration == 2)
                 {
-                    u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
+                    // planar format
 
-                    const u8* src = m_memory.address + m_context.strip_offsets[i];
-                    u32 bytes = m_context.strip_byte_counts[i];
+                    // TODO: clear the target surface correctly
+                    std::memset(target.image, 0, target.stride * header.height);
 
-                    Surface strip(target, 0, y, header.width, strip_height);
-                    decodeRect(strip, ConstMemory(src, bytes), header.width, strip_height);
+                    // For planar: strips per spatial region = total_strips / samples_per_pixel
+                    u32 strips_per_spatial_region = m_context.strip_offsets.size() / m_context.samples_per_pixel;
 
-                    y += strip_height;
+                    for (size_t spatial_strip = 0; spatial_strip < strips_per_spatial_region; ++spatial_strip)
+                    {
+                        u32 y = spatial_strip * m_context.rows_per_strip;
+                        u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
+
+                        for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
+                        {
+                            size_t strip_index = spatial_strip * m_context.samples_per_pixel + channel;
+
+                            const u8* src = m_memory.address + m_context.strip_offsets[strip_index];
+                            u32 bytes = m_context.strip_byte_counts[strip_index];
+
+                            Surface strip(target, 0, y, header.width, strip_height);
+                            decodeRect(strip, ConstMemory(src, bytes), header.width, strip_height, channel);
+                        }
+                    }
+                }
+                else
+                {
+                    // chunky format
+                    u32 y = 0;
+                
+                    for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
+                    {
+                        u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
+    
+                        const u8* src = m_memory.address + m_context.strip_offsets[i];
+                        u32 bytes = m_context.strip_byte_counts[i];
+    
+                        Surface strip(target, 0, y, header.width, strip_height);
+                        decodeRect(strip, ConstMemory(src, bytes), header.width, strip_height);
+    
+                        y += strip_height;
+                    }
                 }
             }
 
@@ -2528,6 +2641,8 @@ namespace
             else if (m_context.predictor == 2)
             {
                 // chunky, horizontal differencing
+
+                // TODO: initialize prev = 0, then add it to next sample
                 std::memcpy(dest, src, channels); // copy first sample
 
                 // apply horizontal differencing for each sample
@@ -2538,6 +2653,17 @@ namespace
                         dest[x + c] = src[x + c] + dest[x - channels + c];
                     }
                 }
+            }
+            else if (m_context.predictor == 3)
+            {
+                // planar, vertical differencing
+
+                /* TODO: implement, need test image
+                - need to know width and height
+                - better in separate function for rect, not scanline
+                - must support UNORM, HALF, FLOAT
+                - same goes for all predictors (2 and 3)
+                */
             }
         }
 
@@ -2557,7 +2683,28 @@ namespace
             else if (m_context.predictor == 2)
             {
                 // planar, horizontal differencing
-                // TODO: implement predictor for planar format
+                u8* pixel_dest = dest + channel_index;
+                u8 prev = 0;
+
+                for (u32 pixel = 0; pixel < pixels; ++pixel)
+                {
+                    *pixel_dest = src[pixel] + prev;
+                    prev = *pixel_dest;
+                    pixel_dest += channels;
+                }
+            }
+            else if (m_context.predictor == 3)
+            {
+                // planar, vertical differencing
+                /* TODO: implement, need test image
+                u8* pixel_dest = dest + channel_index;
+
+                for (u32 pixel = 0; pixel < pixels; ++pixel)
+                {
+                    *pixel_dest = src[pixel];
+                    pixel_dest += channels;
+                }
+                */
             }
         }
     };
