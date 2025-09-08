@@ -583,13 +583,13 @@ namespace mango
         auto transform = generic_sha2_transform;
 
 #if defined(__ARM_FEATURE_CRYPTO)
-        if ((getCPUFlags() & ARM_SHA2) != 0)
+        if ((cpu::getFlags() & ARM_SHA2) != 0)
         {
             transform = arm_sha2_transform;
         }
 #endif
 #if defined(__SHA__)
-        if ((getCPUFlags() & INTEL_SHA) != 0)
+        if ((cpu::getFlags() & INTEL_SHA) != 0)
         {
             transform = intel_sha2_transform;
         }

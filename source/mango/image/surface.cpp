@@ -452,7 +452,7 @@ namespace
             grayscale_srgb_alpha,
         };
 
-        u64 features = getCPUFlags();
+        u64 features = cpu::getFlags();
         MANGO_UNREFERENCED(features);
 
 #if defined(MANGO_ENABLE_SSE4_1)

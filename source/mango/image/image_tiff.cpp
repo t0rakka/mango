@@ -2572,7 +2572,7 @@ namespace
                 memory = expanded_buffer;
             }
 
-            if (m_is_little_endian != isLittleEndianCPU())
+            if (m_is_little_endian != cpu::isLittleEndian())
             {
                 if (m_context.sample_bits == 16)
                 {

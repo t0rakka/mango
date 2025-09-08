@@ -3197,7 +3197,7 @@ namespace
     // initialize map of custom conversion functions
     ScanConversionMap g_scan_func_map = []
     {
-        const u64 cpuFlags = getCPUFlags();
+        const u64 cpuFlags = cpu::getFlags();
 
         ScanConversionMap map;
 

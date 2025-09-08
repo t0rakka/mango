@@ -1945,7 +1945,7 @@ AES::AES(const u8* key, int bits)
     }
 
 #if defined(__AES__)
-    m_schedule->aesni_supported = (getCPUFlags() & INTEL_AES) != 0;
+    m_schedule->aesni_supported = (cpu::getFlags() & INTEL_AES) != 0;
     if (m_schedule->aesni_supported)
     {
         aesni_key_expand(m_schedule->aesni_schedule, key, bits);

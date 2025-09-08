@@ -10,7 +10,7 @@ namespace mango
 {
 
     // ----------------------------------------------------------------------------
-    // getCPUFlags()
+    // cpu::getFlags()
     // ----------------------------------------------------------------------------
 
     enum : u64
@@ -63,7 +63,11 @@ namespace mango
         ARM_PMULL         = 0x0040000000000000,
     };
 
-    u64 getCPUFlags();
-    bool isLittleEndianCPU();
+    namespace cpu
+    {
 
+        u64 getFlags();
+        bool isLittleEndian();
+
+    } // namespace cpu
 } // namespace mango

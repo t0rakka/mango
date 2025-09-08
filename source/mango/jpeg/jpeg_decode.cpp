@@ -1515,7 +1515,7 @@ namespace mango::image::jpeg
 
     void Parser::configureCPU(SampleType sample, const ImageDecodeOptions& options)
     {
-        u64 flags = options.simd ? getCPUFlags() : 0;
+        u64 flags = options.simd ? cpu::getFlags() : 0;
         MANGO_UNREFERENCED(flags);
 
         // configure idct

@@ -2350,7 +2350,7 @@ namespace
         int bytes_per_pixel = 0;
         read_8x8 = nullptr;
 
-        u64 flags = options.simd ? getCPUFlags() : 0;
+        u64 flags = options.simd ? cpu::getFlags() : 0;
         MANGO_UNREFERENCED(flags);
 
         // select sampler
