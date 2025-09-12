@@ -1519,7 +1519,7 @@ namespace
             data_size += std::accumulate(m_context.tile_byte_counts.begin(), m_context.tile_byte_counts.end(), 0u);
 
             printLine(Print::Info, "  Image: {} x {} ({} bpp, {} channels)", 
-                     m_context.width, m_context.height, m_context.bpp, m_context.samples_per_pixel);
+                     m_context.width, m_context.height, header.format.bits, m_context.samples_per_pixel);
             printLine(Print::Info, "  Data: {} bytes", data_size);
         }
 
@@ -1541,7 +1541,8 @@ namespace
             }
 
             // bit-packed formats resolve to at least 8 bits per channel
-            u32 bits = m_context.sample_bits >= 8 ? m_context.sample_bits : 8;
+            //u32 bits = m_context.sample_bits >= 8 ? m_context.sample_bits : 8;
+            u32 bits = round_ceil(m_context.sample_bits, 8);
 
             switch (PhotometricInterpretation(m_context.photometric))
             {
@@ -1662,8 +1663,9 @@ namespace
 
             // xxx
             printLine(Print::Info, "    [decode]");
-            printLine(Print::Info, "      width: {}, height: {}", header.width, header.height);
+            printLine(Print::Info, "      image: {} x {}", header.width, header.height);
             printLine(Print::Info, "      compression: {}", m_context.compression);
+            printLine(Print::Info, "      planar_configuration: {}", m_context.planar_configuration);
             printLine(Print::Info, "      tile: {} x {}", m_context.tile_width, m_context.tile_length);
             printLine(Print::Info, "      tile_offsets: {}, tile_byte_counts: {}", m_context.tile_offsets.size(), m_context.tile_byte_counts.size());
             printLine(Print::Info, "      strip: {} x {}", m_context.width, m_context.rows_per_strip);
@@ -2429,18 +2431,35 @@ namespace
         {
             assert(target_bits == 8 || target_bits == 16);
 
-            u32 max_source = (1 << source_bits) - 1;  // 1, 3, 15, 255, 4095, etc.
-            u32 max_target = (1 << target_bits) - 1;  // 255 or 65535
+            printLine(Print::Info, "  expandPixels()\n    source_bits: {}, target_bits: {}", source_bits, target_bits);
+
+            u32 max_source = (1 << source_bits) - 1;
+            u32 max_target = (1 << target_bits) - 1;
+
+            u32 channels = m_context.samples_per_pixel;
+
+            // Precompute bytes per scanline
+            u32 bits_per_scanline = width * source_bits * channels;
+            u32 bytes_per_scanline = div_ceil(bits_per_scanline, 8);
+
+            // Precompute destination stride
+            u32 dest_stride = width * channels * (target_bits / 8);
+
+            printLine(Print::Info, "    input stride: {}", bytes_per_scanline);
+            printLine(Print::Info, "    output stride: {}", dest_stride);
 
             u8* dest_ptr = (u8*)dest.address;
             u8* src_ptr = (u8*)src.address;
 
+            // TODO: optimize
+
             for (int y = 0; y < height; ++y)
             {
-                // Start fresh bit stream for each scanline
-                u32 bit_offset = 0;
+                u32 bit_offset = 0;  // Reset bit offset for each scanline
 
-                for (int x = 0; x < width; ++x)
+                const int x1 = width * channels;
+
+                for (int x = 0; x < x1; ++x)
                 {
                     // Read N bits from input
                     u32 sample = 0;
@@ -2456,46 +2475,58 @@ namespace
                     // Expand and write output
                     if (target_bits == 8)
                     {
-                        u8* dest8 = (u8*)dest_ptr;
-                        dest8[y * width + x] = (u8)(sample * max_target / max_source);
+                        u8 value = u8(sample * max_target / max_source);
+                        dest_ptr[x] = value;
                     }
                     else
                     {
-                        u16* dest16 = (u16*)dest_ptr;
-                        dest16[y * width + x] = (u16)(sample * max_target / max_source);
+                        u16 value = u16(sample * max_target / max_source);
+                        ustore16(dest_ptr + x * 2, value);
                     }
                 }
 
-                // Byte alignment: round up to next byte boundary
-                bit_offset = (bit_offset + 7) & ~7;
-                src_ptr += bit_offset / 8;
+                src_ptr += bytes_per_scanline;
+                dest_ptr += dest_stride;
             }
         }
 
         void decodeRect(Surface target, ConstMemory memory, int width, int height, u32 channel = 0)
         {
-            // Expand sub-byte formats (1, 2, 4 bits) to 8-bit during decompression for cleaner pipeline
-            u32 effective_bpp = std::max(8u, u32(m_context.bpp));
+            u32 sample_bits = m_context.sample_bits;
+            u32 expanded_sample_bits = round_ceil(m_context.sample_bits, 8); 
 
-            // For planar format, each strip contains one channel only
-            u32 bytes_per_row;
+            u32 bytes_per_row = 0;
+            u32 expanded_bytes_per_row = 0;
+
             if (m_context.planar_configuration == 1)
             {
-                bytes_per_row = (width * effective_bpp + 7) / 8;
+                // Chunky format contains all channels
+                bytes_per_row = (width * sample_bits * m_context.samples_per_pixel + 7) / 8;
+                expanded_bytes_per_row = (width * expanded_sample_bits * m_context.samples_per_pixel) / 8;
             } 
             else
             {
-                bytes_per_row = (width * effective_bpp / m_context.samples_per_pixel + 7) / 8;
+                // Planar format contains one channel
+                bytes_per_row = (width * sample_bits + 7) / 8;
+                expanded_bytes_per_row = (width * expanded_sample_bits) / 8;
             }
+
             u32 uncompressed_bytes = height * bytes_per_row;
-            printLine(Print::Info, "  bytes_per_row: {}, uncompressed_bytes: {}, mode: {}",
-                bytes_per_row, uncompressed_bytes, m_context.planar_configuration == 1 ? "chunky" : "planar");
+            u32 expanded_bytes = height * expanded_bytes_per_row;
+
+            printLine(Print::Info, "  bytes_per_row: {}, uncompressed_bytes: {}",
+                bytes_per_row, uncompressed_bytes);
+            printLine(Print::Info, "  expanded_bytes_per_row: {}, expanded_bytes: {}",
+                expanded_bytes_per_row, expanded_bytes);
 
             Buffer buffer(uncompressed_bytes);
             Buffer expanded_buffer;
 
-            // Track whether we need post-decompression sub-byte expansion
-            bool needs_expansion = (m_context.sample_bits < 8);
+            bool needs_expansion = sample_bits != expanded_sample_bits;
+            if (needs_expansion)
+            {
+                expanded_buffer.resize(expanded_bytes);
+            }
 
             switch (Compression(m_context.compression))
             {
@@ -2503,28 +2534,29 @@ namespace
                 {
                     if (needs_expansion)
                     {
-                        expandPixels(buffer, memory, width, height, m_context.sample_bits, 8);
+                        expandPixels(expanded_buffer, memory, width, height, sample_bits, expanded_sample_bits);
+                        memory = expanded_buffer;
                         needs_expansion = false;
                     }
                     else
                     {
                         std::memcpy(buffer, memory.address, uncompressed_bytes);
+                        memory = buffer;
                     }
 
-                    memory = buffer;
                     break;
                 }
 
                 case Compression::CCITT_RLE:
                 {
-                    bool success = ccitt_rle_decompress(buffer, memory, width);
+                    bool success = ccitt_rle_decompress(expanded_buffer, memory, width);
                     if (!success)
                     {
                         printLine(Print::Error, "[CCITT-RLE] Decompression failed");
                         return;
                     }
 
-                    memory = buffer;
+                    memory = expanded_buffer;
                     needs_expansion = false; // CCITT already expands to 8-bit
                     break;
                 }
@@ -2584,18 +2616,16 @@ namespace
                     return;
             }
 
-            // Post-decompression sub-byte expansion if needed
+            // Post-decompression expansion if needed
             if (needs_expansion)
             {
-                // TODO: calculate correct expanded buffer size
-                expanded_buffer.resize(uncompressed_bytes);
-                expandPixels(expanded_buffer, memory, width, height, m_context.sample_bits, 8);
+                expandPixels(expanded_buffer, memory, width, height, sample_bits, expanded_sample_bits);
                 memory = expanded_buffer;
             }
 
             if (m_is_little_endian != cpu::isLittleEndian())
             {
-                if (m_context.sample_bits == 16)
+                if (m_context.sample_bits == 16 && !needs_expansion)
                 {
                     // Handle 16-bit endianness conversion
                     byteswap(reinterpret_cast<u16*>(const_cast<u8*>(memory.address)), memory.size / 2);
@@ -2616,11 +2646,11 @@ namespace
             {
                 if (m_context.planar_configuration == 1)
                 {
-                    resolveChunkyScanline(target.image, memory.address, bytes_per_row, m_context.samples_per_pixel);
+                    resolveChunkyScanline(target.image, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel);
                 }
                 else
                 {
-                    resolvePlanarScanline(target.image, memory.address, bytes_per_row, m_context.samples_per_pixel, channel);
+                    resolvePlanarScanline(target.image, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel, channel);
                 }
 
                 if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED))
@@ -2647,7 +2677,7 @@ namespace
                     }
                 }
 
-                memory.address += bytes_per_row;
+                memory.address += expanded_bytes_per_row;
                 target.image += target.stride;
             }
         }
