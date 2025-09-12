@@ -1994,7 +1994,7 @@ namespace
                         p = jpeg_stream.append(2);
                         p[0] = 0xff;
                         p[1] = 0xc4;
-                        
+
                         u16 dht_length = 2 + 1 + 16 + num_codes;
                         p = jpeg_stream.append(3);
                         p[0] = (dht_length >> 8) & 0xFF;
@@ -2454,22 +2454,23 @@ namespace
             }
         }
 
-        void decodeRect(Surface target, ConstMemory memory, int width, int height, u32 channel_index = 0)
+        void decodeRect(Surface target, ConstMemory memory, int width, int height, u32 channel = 0)
         {
             // Expand sub-byte formats (1, 2, 4 bits) to 8-bit during decompression for cleaner pipeline
             u32 effective_bpp = std::max(8u, u32(m_context.bpp));
 
             // For planar format, each strip contains one channel only
             u32 bytes_per_row;
-            if (m_context.planar_configuration == 2)
+            if (m_context.planar_configuration == 1)
             {
-                bytes_per_row = (width * effective_bpp / m_context.samples_per_pixel + 7) / 8;
+                bytes_per_row = (width * effective_bpp + 7) / 8;
             } 
             else
             {
-                bytes_per_row = (width * effective_bpp + 7) / 8;
+                bytes_per_row = (width * effective_bpp / m_context.samples_per_pixel + 7) / 8;
             }
             u32 uncompressed_bytes = height * bytes_per_row;
+            //printLine(Print::Info, "bytes_per_row: {}, uncompressed_bytes: {}", bytes_per_row, uncompressed_bytes);
 
             Buffer buffer(uncompressed_bytes);
             Buffer expanded_buffer;
@@ -2595,7 +2596,7 @@ namespace
             {
                 if (m_context.planar_configuration == 2)
                 {
-                    resolvePlanarScanline(target.image, memory.address, bytes_per_row, m_context.samples_per_pixel, channel_index);
+                    resolvePlanarScanline(target.image, memory.address, bytes_per_row, m_context.samples_per_pixel, channel);
                 }
                 else
                 {
@@ -2631,48 +2632,93 @@ namespace
             }
         }
 
-        void resolveChunkyScanline(u8* dest, const u8* src, u32 bytes, u32 channels)
+        void resolveChunkyScanline(u8* output, const u8* input, u32 bytes, u32 channels)
         {
             if (m_context.predictor == 1)
             {
                 // chunky, no prediction
-                std::memcpy(dest, src, bytes);
+                std::memcpy(output, input, bytes);
             }
             else if (m_context.predictor == 2)
             {
                 // chunky, horizontal differencing
+                std::memcpy(output, input, channels); // copy first sample
 
-                // TODO: initialize prev = 0, then add it to next sample
-                std::memcpy(dest, src, channels); // copy first sample
-
-                // apply horizontal differencing for each sample
                 for (u32 x = channels; x < bytes; x += channels)
                 {
                     for (u32 c = 0; c < channels; ++c)
                     {
-                        dest[x + c] = src[x + c] + dest[x - channels + c];
+                        output[x + c] = input[x + c] + output[x - channels + c];
                     }
                 }
             }
             else if (m_context.predictor == 3)
             {
-                // planar, vertical differencing
+                // chunky, float differencing
 
-                /* TODO: implement, need test image
-                - need to know width and height
-                - better in separate function for rect, not scanline
-                - must support UNORM, HALF, FLOAT
-                - same goes for all predictors (2 and 3)
-                */
+                u32 bytesPerFloat = m_context.sample_bits / 8;
+                u32 bytesPerSample = channels * bytesPerFloat;
+                u32 width = bytes / bytesPerSample;
+
+                // undo byte difference on input
+                u8* data = const_cast<u8*>(input);
+                u32 offset = channels;
+
+                const u32 x1 = width * bytesPerFloat;
+
+                for (u32 x = 1; x < x1; ++x)
+                {
+                    for (u32 c = 0; c < channels; ++c)
+                    {
+                        data[offset] += data[offset - channels];
+                        ++offset;
+                    }
+                }
+
+                // reorder the semi-BigEndian bytes into the output buffer
+                u32 rowIncrement = width * channels;
+
+#ifdef MANGO_BIG_ENDIAN
+
+                for (u32 x = 0; x < rowIncrement; ++x)
+                {
+                    u32 offset = x;
+
+                    for (u32 BYTE = 0; BYTE < bytesPerFloat; ++BYTE)
+                    {
+                        output[BYTE] = input[offset];
+                        offset += rowIncrement;
+                    }
+
+                    output += bytesPerFloat;
+                }
+
+#else
+
+                for (u32 x = 0; x < rowIncrement; ++x)
+                {
+                    u32 offset = (bytesPerFloat - 1) * rowIncrement + x;
+
+                    for (u32 BYTE = 0; BYTE < bytesPerFloat; ++BYTE)
+                    {
+                        output[BYTE] = input[offset];
+                        offset -= rowIncrement;
+                    }
+
+                    output += bytesPerFloat;
+                }
+
+#endif
+
             }
         }
 
-        void resolvePlanarScanline(u8* dest, const u8* src, u32 pixels, u32 channels, u32 channel_index)
+        void resolvePlanarScanline(u8* dest, const u8* src, u32 pixels, u32 channels, u32 channel)
         {
             if (m_context.predictor == 1)
             {
-                // planar, no prediction - write channel data to correct offset
-                u8* pixel_dest = dest + channel_index;
+                // planar, no prediction
+                u8* pixel_dest = dest + channel;
 
                 for (u32 pixel = 0; pixel < pixels; ++pixel)
                 {
@@ -2683,7 +2729,7 @@ namespace
             else if (m_context.predictor == 2)
             {
                 // planar, horizontal differencing
-                u8* pixel_dest = dest + channel_index;
+                u8* pixel_dest = dest + channel;
                 u8 prev = 0;
 
                 for (u32 pixel = 0; pixel < pixels; ++pixel)
@@ -2695,15 +2741,9 @@ namespace
             }
             else if (m_context.predictor == 3)
             {
-                // planar, vertical differencing
-                /* TODO: implement, need test image
-                u8* pixel_dest = dest + channel_index;
+                // planar, float differencing
 
-                for (u32 pixel = 0; pixel < pixels; ++pixel)
-                {
-                    *pixel_dest = src[pixel];
-                    pixel_dest += channels;
-                }
+                /* TODO: implement, need test image
                 */
             }
         }
