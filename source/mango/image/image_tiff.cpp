@@ -102,7 +102,17 @@ namespace
         float x_resolution = 0;
         float y_resolution = 0;
         //float reference_black_white = 0;
-        u32 orientation = 0;
+        u32 orientation = 1; // default
+        /* same conversion as exif orientation:
+        1 =	Top-left            No rotation or mirroring.
+        2 =	Top-right	        Mirrored horizontally.
+        3 =	Bottom-right        Rotated 180 degrees.
+        4 =	Bottom-left         Mirrored vertically.
+        5 =	Left-top            Mirrored along the main diagonal.
+        6 =	Right-top           Rotated 90 degrees clockwise.
+        7 =	Right-bottom        Mirrored along the anti-diagonal.
+        8 =	Left-bottom         Rotated 90 degrees counterclockwise.        
+        */
         u32 planar_configuration = 1;
         u32 predictor = 1;
         u32 fill_order = 1;
@@ -2687,11 +2697,13 @@ namespace
             if (m_context.predictor == 1)
             {
                 // chunky, no prediction
+
                 std::memcpy(output, input, bytes);
             }
             else if (m_context.predictor == 2)
             {
                 // chunky, horizontal differencing
+
                 std::memcpy(output, input, channels); // copy first sample
 
                 for (u32 x = channels; x < bytes; x += channels)
@@ -2729,7 +2741,6 @@ namespace
                 u32 rowIncrement = width * channels;
 
 #ifdef MANGO_BIG_ENDIAN
-
                 for (u32 x = 0; x < rowIncrement; ++x)
                 {
                     u32 offset = x;
@@ -2742,9 +2753,7 @@ namespace
 
                     output += bytesPerFloat;
                 }
-
 #else
-
                 for (u32 x = 0; x < rowIncrement; ++x)
                 {
                     u32 offset = (bytesPerFloat - 1) * rowIncrement + x;
@@ -2757,36 +2766,53 @@ namespace
 
                     output += bytesPerFloat;
                 }
-
 #endif
-
             }
         }
 
-        void resolvePlanarScanline(u8* dest, const u8* src, u32 pixels, u32 channels, u32 channel)
+        void resolvePlanarScanline(u8* output, const u8* input, u32 bytes, u32 channels, u32 channel)
         {
+            // TODO: Planar and prediction requires prediction before expansion
+            //       Here non-predicted samples can be either 8 or 16 bits
+
             if (m_context.predictor == 1)
             {
                 // planar, no prediction
-                u8* pixel_dest = dest + channel;
 
-                for (u32 pixel = 0; pixel < pixels; ++pixel)
+                if (m_context.sample_bits == 8)
                 {
-                    *pixel_dest = src[pixel];
-                    pixel_dest += channels;
+                    u8* dest = output + channel;
+
+                    for (u32 i = 0; i < bytes; ++i)
+                    {
+                        dest[0] = input[i];
+                        dest += channels;
+                    }
+                }
+                else
+                {
+                    u8* dest = output + channel * 2;
+
+                    for (u32 i = 0; i < bytes; i += 2)
+                    {
+                        dest[0] = input[i + 0];
+                        dest[1] = input[i + 1];
+                        dest += channels * 2;
+                    }
                 }
             }
             else if (m_context.predictor == 2)
             {
                 // planar, horizontal differencing
-                u8* pixel_dest = dest + channel;
+
+                u8* dest = output + channel;
                 u8 prev = 0;
 
-                for (u32 pixel = 0; pixel < pixels; ++pixel)
+                for (u32 i = 0; i < bytes; ++i)
                 {
-                    *pixel_dest = src[pixel] + prev;
-                    prev = *pixel_dest;
-                    pixel_dest += channels;
+                    *dest = input[i] + prev;
+                    prev = *dest;
+                    dest += channels;
                 }
             }
             else if (m_context.predictor == 3)
