@@ -1538,11 +1538,9 @@ namespace
             if (m_context.compression == u32(Compression::JPEG_LEGACY) ||
                 m_context.compression == u32(Compression::JPEG_MODERN))
             {
-                // For JPEG, let the JPEG decoder determine the format
-                // Don't force a specific format here - return a flexible format
                 if (m_context.samples_per_pixel == 1)
                 {
-                    return Format(8, Format::UNORM, Format::LUMINANCE, 8);
+                    return LuminanceFormat(8, Format::UNORM, 8, 0);
                 }
                 else
                 {

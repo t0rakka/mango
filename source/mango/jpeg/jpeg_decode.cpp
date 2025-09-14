@@ -1563,7 +1563,7 @@ namespace mango::image::jpeg
         {
             case SampleType::U8_Y:
                 process_y           = process_y_8bit;
-                //process_rgb         = ;
+                process_rgb         = nullptr; // could support if compute luminance from RGB
                 process_ycbcr       = process_ycbcr_8bit;
                 process_ycbcr_8x8   = nullptr;
                 process_ycbcr_8x16  = nullptr;
