@@ -1874,15 +1874,17 @@ namespace
                 // Mode A: Copy headers from JPEGInterchangeFormat
                 printLine(Print::Info, "  Using headers from JPEGInterchangeFormat");
 
-                const u8* header_data_og = m_memory.address + m_context.jpeg_interchange_format;
+                const u8* header_data = m_memory.address + m_context.jpeg_interchange_format;
                 u32 header_length = m_context.jpeg_interchange_format_length;
                 printLine(Print::Info, "  Header length: {}", header_length);
 
+                /* TODO: enable patching
                 // Make a copy of the header data so that can patch it
                 Buffer header(header_data_og, header_length);
 
                 // Point to copy of header
                 u8* header_data = header.data();
+                */
 
                 // Look for any JPEG markers in the header data
                 int marker_count = 0;
@@ -1898,8 +1900,10 @@ namespace
                     {
                         if (header_data[i+1] == 0xC0)
                         {
+                            /* TODO: enable patching
                             // patch SOF0 to SOF1 (extended dct)
                             header_data[i+1] = 0xc1;
+                            */
                             has_sof = true;
                         }
 
