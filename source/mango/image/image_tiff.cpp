@@ -1864,7 +1864,7 @@ namespace
                 mcu_height = m_context.y_cb_cr_sub_sampling[1] * 8;
             }
 
-            // Step 1: Calculate restart interval in MCUs first (needed for DRI marker)
+            // Calculate restart interval in MCUs first (needed for DRI marker)
             u32 horizontal_mcus = (m_context.width + mcu_width - 1) / mcu_width;
             u32 strip_height_mcus = (m_context.rows_per_strip + mcu_height - 1) / mcu_height;
             u32 restart_interval_mcus = horizontal_mcus * strip_height_mcus;
@@ -1874,20 +1874,53 @@ namespace
                 // Mode A: Copy headers from JPEGInterchangeFormat
                 printLine(Print::Info, "  Using headers from JPEGInterchangeFormat");
 
-                const u8* header_data = m_memory.address + m_context.jpeg_interchange_format;
+                const u8* header_data_og = m_memory.address + m_context.jpeg_interchange_format;
                 u32 header_length = m_context.jpeg_interchange_format_length;
+                printLine(Print::Info, "  Header length: {}", header_length);
+
+                // Make a copy of the header data so that can patch it
+                Buffer header(header_data_og, header_length);
+
+                // Point to copy of header
+                u8* header_data = header.data();
 
                 // Look for any JPEG markers in the header data
                 int marker_count = 0;
                 bool found_dht = false;
 
+                bool has_soi = false;
+                bool has_dqt = false;
+                bool has_sof = false;
+
                 for (u32 i = 0; i < header_length - 1; ++i)
                 {
                     if (header_data[i] == 0xFF && header_data[i+1] >= 0xC0)
                     {
+                        if (header_data[i+1] == 0xC0)
+                        {
+                            // patch SOF0 to SOF1 (extended dct)
+                            header_data[i+1] = 0xc1;
+                            has_sof = true;
+                        }
+
                         if (header_data[i+1] == 0xC4)
                         {
                             found_dht = true;
+                        }
+
+                        if (header_data[i+1] == 0xd8)
+                        {
+                            has_soi = true;
+                        }
+
+                        if (header_data[i+1] == 0xdb)
+                        {
+                            has_dqt = true;
+                        }
+
+                        if (header_data[i+1] == 0xdd)
+                        {
+                            //printLine(Print::Info, "  >>>>>> Found DRI marker");
                         }
 
                         marker_count++;
@@ -1897,18 +1930,6 @@ namespace
                 }
 
                 // Validate header structure before using
-                bool has_soi = false, has_dqt = false, has_sof = false;
-                for (u32 i = 0; i < header_length - 1; ++i)
-                {
-                    if (header_data[i] == 0xFF)
-                    {
-                        u8 marker = header_data[i+1];
-                        if (marker == 0xD8) has_soi = true;      // SOI
-                        else if (marker == 0xDB) has_dqt = true; // DQT  
-                        else if (marker == 0xC0) has_sof = true; // SOF0
-                    }
-                }
-
                 if (!has_soi || !has_dqt || !has_sof)
                 {
                     printLine(Print::Error, "    ERROR: Headers incomplete - SOI:{}, DQT:{}, SOF:{}", has_soi, has_dqt, has_sof);
@@ -1917,6 +1938,7 @@ namespace
 
                 // Find the actual end of the last valid JPEG marker
                 u32 valid_header_length = header_length;
+                /*
                 bool found_valid_end = false;
 
                 // Scan backwards to find last marker
@@ -1932,7 +1954,7 @@ namespace
                             found_valid_end = true;
                             break;
                         }
-                        else if (header_data[i+1] == 0xC0) // SOF0
+                        else if (header_data[i+1] == 0xC1) // SOF1
                         {
                             u16 marker_length = (header_data[i+2] << 8) | header_data[i+3];
                             valid_header_length = i + 2 + marker_length;
@@ -1941,9 +1963,11 @@ namespace
                         }
                     }
                 }
+                */
 
                 jpeg_stream.append(header_data, valid_header_length);
 
+                /*
                 // Check if we need to add Huffman tables
                 printLine(Print::Info, "  JPEGInterchangeFormat DHT check: found_dht={}", found_dht);
                 if (!found_dht)
@@ -1987,7 +2011,7 @@ namespace
                             jpeg_stream.append(table_data[j]);
                         }
                     }
-                
+
                     for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
                     {
                         u32 table_offset = m_context.jpeg_ac_tables[i];
@@ -2025,6 +2049,7 @@ namespace
                         }
                     }
                 }
+                */
             }
             else
             {
@@ -2238,7 +2263,7 @@ namespace
                 printLine(Print::Error, "  This TIFF might use Mode A (JPEGInterchangeFormat) instead of Mode B (reconstructed headers)");
                 return Buffer();
             }
-            
+
             for (size_t i = 0; i < offsets.size(); ++i)
             {
                 const u8* data = m_memory.address + offsets[i];
@@ -2259,14 +2284,14 @@ namespace
                 jpeg_stream.append(data, data_bytes);
             }
 
-            // Step 4: Add EOI marker
+            // Add EOI marker
+            const u16 MARKER_EOI = 0xffd9;
             u8* eoi_data = jpeg_stream.append(2);
-            eoi_data[0] = 0xFF;
-            eoi_data[1] = 0xD9;
+            bigEndian::ustore16(eoi_data, MARKER_EOI);
 
             printLine(Print::Info, "  Complete JPEG stream: {} bytes", jpeg_stream.size());
 
-            // Step 5: Decode the JPEG stream
+            // Decode the JPEG stream
             ImageDecoder jpeg_decoder(jpeg_stream, ".jpg");
             if (!jpeg_decoder.isDecoder())
             {
@@ -2381,7 +2406,7 @@ namespace
             }
             else
             {
-                // Handle strip-based image (original logic)
+                // Handle strip image
                 u32 y = 0;
 
                 for (size_t i = 0; i < num_data_blocks; ++i)
@@ -2398,13 +2423,13 @@ namespace
                     // Strip structure: [SOI] + [SOF] + [SOS] + [entropy data] + [EOI]
                     // Goal: [SOI] + [DQT+DHT from tables] + [SOF+SOS+data+EOI from strip]
 
-                    // Step 1: Copy SOI from strip
+                    // Copy SOI from strip
                     if (strip_bytes >= 2)
                     {
                         jpeg_stream.append(strip_data, 2);
                     }
 
-                    // Step 2: Extract table data from JPEGTables (skip SOI and EOI)
+                    // Extract table data from JPEGTables (skip SOI and EOI)
                     // JPEGTables: [FF D8] + [table data] + [FF D9]
                     if (tables_length >= 4)  // At least SOI + EOI
                     {
@@ -2414,7 +2439,7 @@ namespace
                         jpeg_stream.append(table_data, table_data_length);
                     }
 
-                    // Step 3: Append strip content after SOI (SOF + SOS + entropy data + EOI)
+                    // Append strip content after SOI (SOF + SOS + entropy data + EOI)
                     if (strip_bytes > 2)
                     {
                         jpeg_stream.append(strip_data + 2, strip_bytes - 2);
