@@ -143,7 +143,7 @@ namespace mango::image
             registerImageCodecBMP();
             registerImageCodecPCX();
             registerImageCodecIFF();
-            //registerImageCodecTIFF();
+            registerImageCodecTIFF();
             registerImageCodecHDR();
             registerImageCodecGIF();
             registerImageCodecKTX();
