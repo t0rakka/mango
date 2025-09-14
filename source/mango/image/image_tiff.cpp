@@ -2061,7 +2061,7 @@ namespace
                 // MUST come BEFORE DHT tables so decoder knows it's not baseline!
                 p = jpeg_stream.append(10);
                 p[0] = 0xFF;
-                p[1] = 0xC1;
+                p[1] = 0xC1; // SOF1
                 p[2] = 0x00; // Length hi  
                 p[3] = 0x11; // Length lo (17 = 2 + 1 + 2 + 2 + 3*3)
                 p[4] = 0x08; // Sample precision (8 bits)
@@ -2491,10 +2491,13 @@ namespace
                     }
 
                     // Expand and write output
-                    if (target_bits == 8)
+                    if (PhotometricInterpretation(m_context.photometric) == PhotometricInterpretation::PALETTE)
                     {
-                        u8 value = u8(sample * max_target / max_source);
-                        dest_ptr[x] = value;
+                        dest_ptr[x] = u8(sample);
+                    }
+                    else if (target_bits == 8)
+                    {
+                        dest_ptr[x] = u8(sample * max_target / max_source);
                     }
                     else
                     {
