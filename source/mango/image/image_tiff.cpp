@@ -2455,6 +2455,10 @@ namespace
             u32 max_target = (1 << target_bits) - 1;
 
             u32 channels = m_context.samples_per_pixel;
+            if (m_context.planar_configuration == 2)
+            {
+                channels = 1;
+            }
 
             // Precompute bytes per scanline
             u32 bits_per_scanline = width * source_bits * channels;
@@ -2466,8 +2470,8 @@ namespace
             printLine(Print::Info, "    input stride: {}", bytes_per_scanline);
             printLine(Print::Info, "    output stride: {}", dest_stride);
 
-            u8* dest_ptr = (u8*)dest.address;
-            u8* src_ptr = (u8*)src.address;
+            u8* dest_ptr = dest.address;
+            const u8* src_ptr = src.address;
 
             // TODO: optimize
 
