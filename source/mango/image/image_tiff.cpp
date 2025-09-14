@@ -1830,7 +1830,7 @@ namespace
             return status;
         }
 
-        bool decompress_legacy_jpeg(DecodeTargetBitmap& target, const ImageDecodeOptions& options, int level, int depth, int face)
+        bool decompress_legacy_jpeg(DecodeTargetBitmap& target, ImageDecodeOptions options, int level, int depth, int face)
         {
             // Reconstruct a JPEG stream then decode it.
 
@@ -1848,6 +1848,11 @@ namespace
             // The restart interval is calculated based on the strip dimensions and the image
             // width. This is non-standard and specification dictates restart interval must
             // be one MCU scan, but our decoder allows larger restart intervals. :)
+
+            if (m_context.photometric == 2)
+            {
+                options.jpeg_colorspace_rgb = true;
+            }
 
             Buffer jpeg_stream;
 
@@ -2288,12 +2293,17 @@ namespace
             return true;
         }
 
-        bool decompress_modern_jpeg(DecodeTargetBitmap& target, const ImageDecodeOptions& options, int level, int depth, int face)
+        bool decompress_modern_jpeg(DecodeTargetBitmap& target, ImageDecodeOptions options, int level, int depth, int face)
         {
             // JPEG Compression=7 with JPEGTables optimization:
             // - JPEGTables contains shared DQT+DHT tables
             // - Each strip contains: [SOI] + [SOF + SOS + entropy data + EOI]  
             // - Combine: [SOI] + [JPEGTables] + [rest of strip] for complete JPEG
+
+            if (m_context.photometric == 2)
+            {
+                options.jpeg_colorspace_rgb = true;
+            }
 
             if (m_context.jpeg_tables_offset == 0)
             {
@@ -2377,60 +2387,60 @@ namespace
                 u32 y = 0;
 
                 for (size_t i = 0; i < num_data_blocks; ++i)
-            {
-                u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
-
-                const u8* strip_data = m_memory.address + m_context.strip_offsets[i];
-                u32 strip_bytes = m_context.strip_byte_counts[i];
-
-                // Reconstruct complete JPEG stream for this strip
-                Buffer jpeg_stream;
-
-                // JPEGTables structure: [SOI] + [DQT] + [DHT] + ... + [EOI]
-                // Strip structure: [SOI] + [SOF] + [SOS] + [entropy data] + [EOI]
-                // Goal: [SOI] + [DQT+DHT from tables] + [SOF+SOS+data+EOI from strip]
-
-                // Step 1: Copy SOI from strip
-                if (strip_bytes >= 2)
                 {
-                    jpeg_stream.append(strip_data, 2);
-                }
+                    u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
 
-                // Step 2: Extract table data from JPEGTables (skip SOI and EOI)
-                // JPEGTables: [FF D8] + [table data] + [FF D9]
-                if (tables_length >= 4)  // At least SOI + EOI
-                {
-                    const u8* table_data = jpeg_tables + 2;  // Skip SOI
-                    u32 table_data_length = tables_length - 4;  // Skip SOI + EOI
-                    
-                    jpeg_stream.append(table_data, table_data_length);
-                }
+                    const u8* strip_data = m_memory.address + m_context.strip_offsets[i];
+                    u32 strip_bytes = m_context.strip_byte_counts[i];
 
-                // Step 3: Append strip content after SOI (SOF + SOS + entropy data + EOI)
-                if (strip_bytes > 2)
-                {
-                    jpeg_stream.append(strip_data + 2, strip_bytes - 2);
-                }
+                    // Reconstruct complete JPEG stream for this strip
+                    Buffer jpeg_stream;
 
-                // Decode this strip
-                ImageDecoder jpeg_decoder(jpeg_stream, ".jpg");
-                if (!jpeg_decoder.isDecoder())
-                {
-                    printLine(Print::Error, "Failed to create JPEG decoder for strip {}", i);
-                    return false;
-                }
+                    // JPEGTables structure: [SOI] + [DQT] + [DHT] + ... + [EOI]
+                    // Strip structure: [SOI] + [SOF] + [SOS] + [entropy data] + [EOI]
+                    // Goal: [SOI] + [DQT+DHT from tables] + [SOF+SOS+data+EOI from strip]
 
-                // Create surface for this strip
-                Surface strip_surface(target, 0, y, header.width, strip_height);
+                    // Step 1: Copy SOI from strip
+                    if (strip_bytes >= 2)
+                    {
+                        jpeg_stream.append(strip_data, 2);
+                    }
 
-                ImageDecodeStatus jpeg_status = jpeg_decoder.decode(strip_surface, options, 0, 0, 0);
-                if (!jpeg_status.success)
-                {
-                    printLine(Print::Error, "JPEG decode failed for strip {}: {}", i, jpeg_status.info);
-                    return false;
-                }
+                    // Step 2: Extract table data from JPEGTables (skip SOI and EOI)
+                    // JPEGTables: [FF D8] + [table data] + [FF D9]
+                    if (tables_length >= 4)  // At least SOI + EOI
+                    {
+                        const u8* table_data = jpeg_tables + 2;  // Skip SOI
+                        u32 table_data_length = tables_length - 4;  // Skip SOI + EOI
+                        
+                        jpeg_stream.append(table_data, table_data_length);
+                    }
 
-                y += strip_height;
+                    // Step 3: Append strip content after SOI (SOF + SOS + entropy data + EOI)
+                    if (strip_bytes > 2)
+                    {
+                        jpeg_stream.append(strip_data + 2, strip_bytes - 2);
+                    }
+
+                    // Decode this strip
+                    ImageDecoder jpeg_decoder(jpeg_stream, ".jpg");
+                    if (!jpeg_decoder.isDecoder())
+                    {
+                        printLine(Print::Error, "Failed to create JPEG decoder for strip {}", i);
+                        return false;
+                    }
+
+                    // Create surface for this strip
+                    Surface strip_surface(target, 0, y, header.width, strip_height);
+
+                    ImageDecodeStatus jpeg_status = jpeg_decoder.decode(strip_surface, options, 0, 0, 0);
+                    if (!jpeg_status.success)
+                    {
+                        printLine(Print::Error, "JPEG decode failed for strip {}: {}", i, jpeg_status.info);
+                        return false;
+                    }
+
+                    y += strip_height;
                 }
             }
 
@@ -2524,10 +2534,12 @@ namespace
             u32 uncompressed_bytes = height * bytes_per_row;
             u32 expanded_bytes = height * expanded_bytes_per_row;
 
+            /*
             printLine(Print::Info, "  bytes_per_row: {}, uncompressed_bytes: {}",
                 bytes_per_row, uncompressed_bytes);
             printLine(Print::Info, "  expanded_bytes_per_row: {}, expanded_bytes: {}",
                 expanded_bytes_per_row, expanded_bytes);
+            */
 
             Buffer buffer(uncompressed_bytes);
             Buffer expanded_buffer;

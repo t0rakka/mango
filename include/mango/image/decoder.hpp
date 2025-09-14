@@ -80,6 +80,7 @@ namespace mango::image
     {
         bool simd = true;
         bool multithread = true;
+        bool jpeg_colorspace_rgb = false; // assumes channel data is RGB instead of YCbCr
     };
 
     struct ImageDecodeRect

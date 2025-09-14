@@ -1824,7 +1824,7 @@ namespace mango::image::jpeg
                 break;
         }
 
-        if (m_rgb_colorspace)
+        if (m_rgb_colorspace || options.jpeg_colorspace_rgb)
         {
             processState.process = process_rgb;
             id = "RGB";
