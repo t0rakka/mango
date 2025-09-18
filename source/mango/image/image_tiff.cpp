@@ -134,7 +134,7 @@ namespace
         float32x2 green_primary;
         float32x2 blue_primary;
 
-        // JPEG_LEGACY
+        // compression 6: JPEG_LEGACY
         u32 jpeg_proc = 0;
         u32 jpeg_interchange_format = 0;
         u32 jpeg_interchange_format_length = 0;
@@ -146,9 +146,8 @@ namespace
         std::vector<u64> jpeg_ac_tables;
         std::vector<u64> y_cb_cr_sub_sampling;
 
-        // JPEG_MODERN
-        u64 jpeg_tables_offset = 0;
-        u32 jpeg_tables_length = 0;
+        // compression 7: JPEG_MODERN
+        ConstMemory jpeg_tables;
 
         u32 new_subfile_type = 0;
         u16 subfile_type = 0;
@@ -700,9 +699,9 @@ namespace
             case Tag::JPEGTables:
             {
                 printLine(Print::Info, "    [JPEGTables]");
-                context.jpeg_tables_offset = getOffset(p, is_big_tiff);
-                context.jpeg_tables_length = count;
-                printLine(Print::Info, "      offset: {}, length: {} bytes", context.jpeg_tables_offset, context.jpeg_tables_length);
+                u64 offset = getOffset(p, is_big_tiff);
+                context.jpeg_tables = ConstMemory(memory.address + offset, count);
+                printLine(Print::Info, "      offset: {}, length: {} bytes", offset, count);
                 break;
             }
 
@@ -2332,21 +2331,49 @@ namespace
                 options.jpeg_colorspace_rgb = true;
             }
 
-            if (m_context.jpeg_tables_offset == 0)
+            if (m_context.jpeg_tables.size == 0)
             {
                 printLine(Print::Error, "JPEGTables not found for Compression=7");
                 return false;
             }
-
-            // Get JPEGTables data
-            const u8* jpeg_tables = m_memory.address + m_context.jpeg_tables_offset;
-            u32 tables_length = m_context.jpeg_tables_length;
 
             // Check if using tiles or strips
             bool use_tiles = !m_context.tile_offsets.empty();
             size_t num_data_blocks = use_tiles ? m_context.tile_offsets.size() : m_context.strip_offsets.size();
 
             printLine(Print::Info, "  Processing {} {}", num_data_blocks, use_tiles ? "tiles" : "strips");
+
+            auto decodeJPEG = [=, this] (ConstMemory memory, DecodeTargetBitmap& target, int x, int y, int width, int height) -> ImageDecodeStatus
+            {
+                Buffer buffer;
+
+                // Copy SOI
+                if (memory.size >= 2)
+                {
+                    buffer.append(memory.address, 2);
+                }
+
+                // Extract table data from JPEGTables
+                if (m_context.jpeg_tables.size >= 4)
+                {
+                    // Skip SOI + EOI
+                    buffer.append(m_context.jpeg_tables.address + 2, m_context.jpeg_tables.size - 4);
+                }
+
+                // Append tile content after SOI (SOF + SOS + entropy data + EOI)
+                if (memory.size > 2)
+                {
+                    buffer.append(memory.address + 2, memory.size - 2);
+                }
+
+                ConstMemory jpeg_memory(buffer.data(), buffer.size());
+                ImageDecoder decoder(jpeg_memory, "");
+
+                Surface surface(target, x, y, width, height);
+
+                ImageDecodeStatus status = decoder.decode(surface, options, 0, 0, 0);
+                return status;
+            };
 
             if (use_tiles)
             {
@@ -2369,41 +2396,10 @@ namespace
 
                     printLine(Print::Info, "    Tile {}: {}x{} at ({},{}) - {} bytes", i, tile_w, tile_h, tile_x, tile_y, tile_bytes);
 
-                    // Reconstruct complete JPEG stream for this tile
-                    Buffer jpeg_stream;
-
-                    // Copy SOI from tile data
-                    if (tile_bytes >= 2)
+                    ImageDecodeStatus status = decodeJPEG(ConstMemory(tile_data, tile_bytes), target, tile_x, tile_y, tile_w, tile_h);
+                    if (!status)
                     {
-                        jpeg_stream.append(tile_data, 2);
-                    }
-
-                    // Extract table data from JPEGTables (skip SOI and EOI)
-                    if (tables_length >= 4)
-                    {
-                        const u8* table_data = jpeg_tables + 2;  // Skip SOI
-                        u32 table_data_length = tables_length - 4;  // Skip SOI + EOI
-                        
-                        jpeg_stream.append(table_data, table_data_length);
-                    }
-
-                    // Append tile content after SOI (SOF + SOS + entropy data + EOI)
-                    if (tile_bytes > 2)
-                    {
-                        jpeg_stream.append(tile_data + 2, tile_bytes - 2);
-                    }
-
-                    // Decode this tile
-                    ConstMemory jpeg_memory(jpeg_stream.data(), jpeg_stream.size());
-                    ImageDecoder jpeg_decoder(jpeg_memory, "");
-
-                    // Create surface for this tile positioned correctly in target
-                    Surface tile_surface(target, tile_x, tile_y, tile_w, tile_h);
-
-                    ImageDecodeStatus jpeg_status = jpeg_decoder.decode(tile_surface, options, 0, 0, 0);
-                    if (!jpeg_status.success)
-                    {
-                        printLine(Print::Error, "JPEG decode failed for tile {}: {}", i, jpeg_status.info);
+                        printLine(Print::Error, "JPEG decode failed for tile {}: {}", i, status.info);
                         return false;
                     }
                 }
@@ -2420,50 +2416,10 @@ namespace
                     const u8* strip_data = m_memory.address + m_context.strip_offsets[i];
                     u32 strip_bytes = m_context.strip_byte_counts[i];
 
-                    // Reconstruct complete JPEG stream for this strip
-                    Buffer jpeg_stream;
-
-                    // JPEGTables structure: [SOI] + [DQT] + [DHT] + ... + [EOI]
-                    // Strip structure: [SOI] + [SOF] + [SOS] + [entropy data] + [EOI]
-                    // Goal: [SOI] + [DQT+DHT from tables] + [SOF+SOS+data+EOI from strip]
-
-                    // Copy SOI from strip
-                    if (strip_bytes >= 2)
+                    ImageDecodeStatus status = decodeJPEG(ConstMemory(strip_data, strip_bytes), target, 0, y, header.width, strip_height);
+                    if (!status)
                     {
-                        jpeg_stream.append(strip_data, 2);
-                    }
-
-                    // Extract table data from JPEGTables (skip SOI and EOI)
-                    // JPEGTables: [FF D8] + [table data] + [FF D9]
-                    if (tables_length >= 4)  // At least SOI + EOI
-                    {
-                        const u8* table_data = jpeg_tables + 2;  // Skip SOI
-                        u32 table_data_length = tables_length - 4;  // Skip SOI + EOI
-                        
-                        jpeg_stream.append(table_data, table_data_length);
-                    }
-
-                    // Append strip content after SOI (SOF + SOS + entropy data + EOI)
-                    if (strip_bytes > 2)
-                    {
-                        jpeg_stream.append(strip_data + 2, strip_bytes - 2);
-                    }
-
-                    // Decode this strip
-                    ImageDecoder jpeg_decoder(jpeg_stream, ".jpg");
-                    if (!jpeg_decoder.isDecoder())
-                    {
-                        printLine(Print::Error, "Failed to create JPEG decoder for strip {}", i);
-                        return false;
-                    }
-
-                    // Create surface for this strip
-                    Surface strip_surface(target, 0, y, header.width, strip_height);
-
-                    ImageDecodeStatus jpeg_status = jpeg_decoder.decode(strip_surface, options, 0, 0, 0);
-                    if (!jpeg_status.success)
-                    {
-                        printLine(Print::Error, "JPEG decode failed for strip {}: {}", i, jpeg_status.info);
+                        printLine(Print::Error, "JPEG decode failed for strip {}: {}", i, status.info);
                         return false;
                     }
 
