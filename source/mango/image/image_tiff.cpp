@@ -2346,14 +2346,14 @@ namespace
 
             auto decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
             {
-                // Parse jpeg tables
+                // Parse jpeg tables in tiff tags (DHT, DQT)
                 ImageDecodeInterface tempInterface;
                 jpeg::Parser parser(&tempInterface, m_context.jpeg_tables);
 
-                // Parse jpeg markers
+                // Parse embedded jpeg (SOF, SOS, etc.)
                 parser.setMemory(memory);
 
-                // Decode jpeg stream
+                // Decode jpeg stream (entropy data)
                 ImageDecodeStatus status = parser.decode(surface, options);
                 return status;
             };
