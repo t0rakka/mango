@@ -715,7 +715,7 @@ endfunction()
 # required libraries
 # ------------------------------------------------------------------------------
 
-find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 10.1.1)
+find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 9.1)
 find_module(mango ZLIB PRIVATE REQUIRED zlib ZLIB ZLIB::ZLIB 0)
 find_module(mango LIBDEFLATE PRIVATE REQUIRED libdeflate libdeflate libdeflate::libdeflate_shared 0)
 
