@@ -12,6 +12,8 @@
 #include <vector>
 #include <numeric>
 
+#include "../jpeg/jpeg.hpp"
+
 namespace
 {
     using namespace mango;
@@ -2321,10 +2323,9 @@ namespace
 
         bool decompress_modern_jpeg(DecodeTargetBitmap& target, ImageDecodeOptions options, int level, int depth, int face)
         {
-            // JPEG Compression=7 with JPEGTables optimization:
+            // JPEG Compression=7 with JPEGTables
             // - JPEGTables contains shared DQT+DHT tables
             // - Each strip contains: [SOI] + [SOF + SOS + entropy data + EOI]  
-            // - Combine: [SOI] + [JPEGTables] + [rest of strip] for complete JPEG
 
             if (m_context.photometric == 2)
             {
@@ -2343,35 +2344,17 @@ namespace
 
             printLine(Print::Info, "  Processing {} {}", num_data_blocks, use_tiles ? "tiles" : "strips");
 
-            auto decodeJPEG = [=, this] (ConstMemory memory, DecodeTargetBitmap& target, int x, int y, int width, int height) -> ImageDecodeStatus
+            auto decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
             {
-                Buffer buffer;
+                // Parse jpeg tables
+                ImageDecodeInterface tempInterface;
+                jpeg::Parser parser(&tempInterface, m_context.jpeg_tables);
 
-                // Copy SOI
-                if (memory.size >= 2)
-                {
-                    buffer.append(memory.address, 2);
-                }
+                // Parse jpeg markers
+                parser.setMemory(memory);
 
-                // Extract table data from JPEGTables
-                if (m_context.jpeg_tables.size >= 4)
-                {
-                    // Skip SOI + EOI
-                    buffer.append(m_context.jpeg_tables.address + 2, m_context.jpeg_tables.size - 4);
-                }
-
-                // Append tile content after SOI (SOF + SOS + entropy data + EOI)
-                if (memory.size > 2)
-                {
-                    buffer.append(memory.address + 2, memory.size - 2);
-                }
-
-                ConstMemory jpeg_memory(buffer.data(), buffer.size());
-                ImageDecoder decoder(jpeg_memory, "");
-
-                Surface surface(target, x, y, width, height);
-
-                ImageDecodeStatus status = decoder.decode(surface, options, 0, 0, 0);
+                // Decode jpeg stream
+                ImageDecodeStatus status = parser.decode(surface, options);
                 return status;
             };
 
@@ -2396,7 +2379,9 @@ namespace
 
                     printLine(Print::Info, "    Tile {}: {}x{} at ({},{}) - {} bytes", i, tile_w, tile_h, tile_x, tile_y, tile_bytes);
 
-                    ImageDecodeStatus status = decodeJPEG(ConstMemory(tile_data, tile_bytes), target, tile_x, tile_y, tile_w, tile_h);
+                    Surface surface(target, tile_x, tile_y, tile_w, tile_h);
+
+                    ImageDecodeStatus status = decodeJPEG(ConstMemory(tile_data, tile_bytes), surface);
                     if (!status)
                     {
                         printLine(Print::Error, "JPEG decode failed for tile {}: {}", i, status.info);
@@ -2416,7 +2401,9 @@ namespace
                     const u8* strip_data = m_memory.address + m_context.strip_offsets[i];
                     u32 strip_bytes = m_context.strip_byte_counts[i];
 
-                    ImageDecodeStatus status = decodeJPEG(ConstMemory(strip_data, strip_bytes), target, 0, y, header.width, strip_height);
+                    Surface surface(target, 0, y, header.width, strip_height);
+
+                    ImageDecodeStatus status = decodeJPEG(ConstMemory(strip_data, strip_bytes), surface);
                     if (!status)
                     {
                         printLine(Print::Error, "JPEG decode failed for strip {}: {}", i, status.info);
