@@ -109,7 +109,7 @@ namespace mango::image
         ImageDecodeInterface() = default;
         virtual ~ImageDecodeInterface() = default;
 
-        virtual ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) = 0;
+        virtual ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face);
         virtual ConstMemory memory(int level, int depth, int face);
     };
 

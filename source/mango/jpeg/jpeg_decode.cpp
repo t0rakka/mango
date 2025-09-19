@@ -129,8 +129,9 @@ namespace mango::image::jpeg
     // Parser
     // ----------------------------------------------------------------------------
 
-    Parser::Parser(ConstMemory memory)
-        : m_memory(memory)
+    Parser::Parser(ImageDecodeInterface* interface, ConstMemory memory)
+        : m_interface(interface)
+        , m_memory(memory)
         , quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
     {
         restartInterval = 0;
@@ -142,15 +143,6 @@ namespace mango::image::jpeg
         }
 
         m_surface = nullptr;
-    }
-
-    Parser::~Parser()
-    {
-    }
-
-    void Parser::setInterface(ImageDecodeInterface* interface)
-    {
-        m_interface = interface;
 
         if (isJPEG(m_memory))
         {
@@ -162,6 +154,16 @@ namespace mango::image::jpeg
         }
     }
 
+    Parser::~Parser()
+    {
+    }
+
+    void Parser::setMemory(ConstMemory memory)
+    {
+        m_memory = memory;
+        parse(m_memory, false);
+    }
+
     bool Parser::isJPEG(ConstMemory memory) const
     {
         if (!memory.address || memory.size < 4)
@@ -170,22 +172,7 @@ namespace mango::image::jpeg
         if (bigEndian::uload16(memory.address) != MARKER_SOI)
             return false;
 
-#if 0
-        // Scan for EOI marker
-        const u8* p = memory.address + memory.size - 2;
-        for (int i = 0; i < 32; ++i, --p)
-        {
-            u16 marker = bigEndian::uload16(p);
-            if (marker == MARKER_EOI)
-                return true;
-        }
-
-        return false;
-#else
-        // Let's not be so picky.. EOI marker is optional, right?
-        // (A lot of JPEG writers think so and we just have to deal with it :)
         return true;
-#endif
     }
 
     const u8* Parser::stepMarker(const u8* p, const u8* end) const

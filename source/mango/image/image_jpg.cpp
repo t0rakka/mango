@@ -21,10 +21,8 @@ namespace
         jpeg::Parser m_parser;
 
         Interface(ConstMemory memory)
-            : m_parser(memory)
+            : m_parser(this, memory)
         {
-            m_parser.setInterface(this);
-
             async = true;
             header = m_parser.header;
             icc = m_parser.icc_buffer;

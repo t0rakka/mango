@@ -466,10 +466,10 @@ namespace mango::image::jpeg
         ConstMemory scan_memory; // Scan block
         Buffer icc_buffer; // ICC color profile block, if one is present
 
-        Parser(ConstMemory memory);
+        Parser(ImageDecodeInterface* interface, ConstMemory memory);
         ~Parser();
 
-        void setInterface(ImageDecodeInterface* interface);
+        void setMemory(ConstMemory memory);
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
     };
