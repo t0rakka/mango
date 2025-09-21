@@ -1853,23 +1853,6 @@ namespace
                 options.jpeg_colorspace_rgb = true;
             }
 
-            Buffer jpeg_stream;
-
-            // Calculate MCU dimensions
-            u32 mcu_width = 8;
-            u32 mcu_height = 8;
-
-            if (m_context.y_cb_cr_sub_sampling.size() == 2)
-            {
-                mcu_width = m_context.y_cb_cr_sub_sampling[0] * 8;
-                mcu_height = m_context.y_cb_cr_sub_sampling[1] * 8;
-            }
-
-            // Calculate restart interval in MCUs first (needed for DRI marker)
-            u32 horizontal_mcus = (m_context.width + mcu_width - 1) / mcu_width;
-            u32 strip_height_mcus = (m_context.rows_per_strip + mcu_height - 1) / mcu_height;
-            u32 restart_interval_mcus = horizontal_mcus * strip_height_mcus;
-
             auto writeDHT = [] (Buffer& buffer, u8 id, const u8* table)
             {
                 u8 num_codes = 0;
@@ -2040,12 +2023,30 @@ namespace
                         y += strip_height;
                     }
                 }
-
-                return true;
             }
             else
             {
                 // Mode B: Reconstruct headers from TIFF tags
+
+                Buffer jpeg_stream;
+
+                // Calculate MCU dimensions
+                u32 mcu_width = 8;
+                u32 mcu_height = 8;
+    
+                if (m_context.y_cb_cr_sub_sampling.size() == 2)
+                {
+                    mcu_width = m_context.y_cb_cr_sub_sampling[0] * 8;
+                    mcu_height = m_context.y_cb_cr_sub_sampling[1] * 8;
+                }
+    
+                // Calculate restart interval in MCUs first (needed for DRI marker)
+                u32 horizontal_mcus = (m_context.width + mcu_width - 1) / mcu_width;
+                u32 strip_height_mcus = (m_context.rows_per_strip + mcu_height - 1) / mcu_height;
+                u32 restart_interval_mcus = horizontal_mcus * strip_height_mcus;
+    
+
+
                 u8* p = nullptr;
 
                 // SOI (Start of Image)
@@ -2103,96 +2104,97 @@ namespace
 
                     writeDHT(jpeg_stream, 0x10 | i, table);
                 }
-            }
 
-            u8* p = jpeg_stream.append(6);
-            bigEndian::ustore16(p + 0, jpeg::MARKER_DRI);
-            bigEndian::ustore16(p + 2, 0x04); // length
-            bigEndian::ustore16(p + 4, restart_interval_mcus);
-
-            // Add SOS (Start of Scan) header
-            p = jpeg_stream.append(14);
-            bigEndian::ustore16(p + 0, jpeg::MARKER_SOS);
-            bigEndian::ustore16(p + 2, 0x0c); // length
-            p[4] = 0x03; // Number of components
-
-            // Component 1: Y  
-            p[5] = 0x01; // Component ID
-            p[6] = 0x00; // DC table 0, AC table 0
-
-            // Component 2: Cb
-            p[7] = 0x02; // Component ID  
-            p[8] = 0x11; // DC table 1, AC table 1
-
-            // Component 3: Cr
-            p[9] = 0x03; // Component ID
-            p[10] = 0x22; // DC table 2, AC table 2
-
-            // Scan parameters
-            p[11] = 0x00; // Spectral selection start (0)
-            p[12] = 0x3f; // Spectral selection end (63)  
-            p[13] = 0x00; // Successive approximation
-
-            // Use tiles if available, otherwise strips
-            bool is_tiled = !m_context.tile_offsets.empty();
-            const auto& offsets = is_tiled ? m_context.tile_offsets : m_context.strip_offsets;
-            const auto& byte_counts = is_tiled ? m_context.tile_byte_counts : m_context.strip_byte_counts;
-
-            if (offsets.empty())
-            {
-                printLine(Print::Error, "  ERROR: No {} data found!", is_tiled ? "tile" : "strip");
-                printLine(Print::Error, "  JPEGInterchangeFormat: {}, JPEGInterchangeFormatLength: {}", 
-                         m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length);
-                printLine(Print::Error, "  This TIFF might use Mode A (JPEGInterchangeFormat) instead of Mode B (reconstructed headers)");
-                return Buffer();
-            }
-
-            for (size_t i = 0; i < offsets.size(); ++i)
-            {
-                const u8* data = m_memory.address + offsets[i];
-                u32 data_bytes = byte_counts[i];
-
-                if (i > 0)
+                p = jpeg_stream.append(6);
+                bigEndian::ustore16(p + 0, jpeg::MARKER_DRI);
+                bigEndian::ustore16(p + 2, 0x04); // length
+                bigEndian::ustore16(p + 4, restart_interval_mcus);
+    
+                // Add SOS (Start of Scan) header
+                p = jpeg_stream.append(14);
+                bigEndian::ustore16(p + 0, jpeg::MARKER_SOS);
+                bigEndian::ustore16(p + 2, 0x0c); // length
+                p[4] = 0x03; // Number of components
+    
+                // Component 1: Y  
+                p[5] = 0x01; // Component ID
+                p[6] = 0x00; // DC table 0, AC table 0
+    
+                // Component 2: Cb
+                p[7] = 0x02; // Component ID  
+                p[8] = 0x11; // DC table 1, AC table 1
+    
+                // Component 3: Cr
+                p[9] = 0x03; // Component ID
+                p[10] = 0x22; // DC table 2, AC table 2
+    
+                // Scan parameters
+                p[11] = 0x00; // Spectral selection start (0)
+                p[12] = 0x3f; // Spectral selection end (63)  
+                p[13] = 0x00; // Successive approximation
+    
+                // Use tiles if available, otherwise strips
+                bool is_tiled = !m_context.tile_offsets.empty();
+                const auto& offsets = is_tiled ? m_context.tile_offsets : m_context.strip_offsets;
+                const auto& byte_counts = is_tiled ? m_context.tile_byte_counts : m_context.strip_byte_counts;
+    
+                if (offsets.empty())
                 {
-                    // Multiple tiles/strips: Add RST marker to force Huffman decoder reset
-                    u8 rst_id = (i - 1) % 8; // RST0-RST7, cycling
-                    u8 rst_marker = 0xD0 + rst_id; // RST0=0xD0, RST1=0xD1, etc.
-
-                    // Insert RST marker before data (2 bytes: FF D0-D7)
-                    u8* rst_data = jpeg_stream.append(2);
-                    rst_data[0] = 0xff;
-                    rst_data[1] = rst_marker;
+                    printLine(Print::Error, "  ERROR: No {} data found!", is_tiled ? "tile" : "strip");
+                    printLine(Print::Error, "  JPEGInterchangeFormat: {}, JPEGInterchangeFormatLength: {}", 
+                             m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length);
+                    printLine(Print::Error, "  This TIFF might use Mode A (JPEGInterchangeFormat) instead of Mode B (reconstructed headers)");
+                    return Buffer();
                 }
-
-                jpeg_stream.append(data, data_bytes);
-            }
-
-            // Add EOI marker
-            u8* eoi_data = jpeg_stream.append(2);
-            bigEndian::ustore16(eoi_data, jpeg::MARKER_EOI);
-
-            printLine(Print::Info, "  Complete JPEG stream: {} bytes", jpeg_stream.size());
-
-            // Decode the JPEG stream
-            ImageDecoder jpeg_decoder(jpeg_stream, ".jpg");
-            if (!jpeg_decoder.isDecoder())
-            {
-                printLine(Print::Error, "Failed to create JPEG decoder");
-                return false;
-            }
-
-            ImageHeader jpeg_header = jpeg_decoder.header();
-            if (!jpeg_header.success)
-            {
-                printLine(Print::Error, "JPEG header parsing failed: {}", jpeg_header.info);
-                return false;
-            }
-
-            ImageDecodeStatus jpeg_status = jpeg_decoder.decode(target, options, level, depth, face);
-            if (!jpeg_status.success)
-            {
-                printLine(Print::Error, "JPEG decode failed: {}", jpeg_status.info);
-                return false;
+    
+                for (size_t i = 0; i < offsets.size(); ++i)
+                {
+                    const u8* data = m_memory.address + offsets[i];
+                    u32 data_bytes = byte_counts[i];
+    
+                    if (i > 0)
+                    {
+                        // Multiple tiles/strips: Add RST marker to force Huffman decoder reset
+                        u8 rst_id = (i - 1) % 8; // RST0-RST7, cycling
+                        u8 rst_marker = 0xD0 + rst_id; // RST0=0xD0, RST1=0xD1, etc.
+    
+                        // Insert RST marker before data (2 bytes: FF D0-D7)
+                        u8* rst_data = jpeg_stream.append(2);
+                        rst_data[0] = 0xff;
+                        rst_data[1] = rst_marker;
+                    }
+    
+                    jpeg_stream.append(data, data_bytes);
+                }
+    
+                // Add EOI marker
+                u8* eoi_data = jpeg_stream.append(2);
+                bigEndian::ustore16(eoi_data, jpeg::MARKER_EOI);
+    
+                printLine(Print::Info, "  Complete JPEG stream: {} bytes", jpeg_stream.size());
+    
+                // Decode the JPEG stream
+                ImageDecoder jpeg_decoder(jpeg_stream, ".jpg");
+                if (!jpeg_decoder.isDecoder())
+                {
+                    printLine(Print::Error, "Failed to create JPEG decoder");
+                    return false;
+                }
+    
+                ImageHeader jpeg_header = jpeg_decoder.header();
+                if (!jpeg_header.success)
+                {
+                    printLine(Print::Error, "JPEG header parsing failed: {}", jpeg_header.info);
+                    return false;
+                }
+    
+                ImageDecodeStatus jpeg_status = jpeg_decoder.decode(target, options, level, depth, face);
+                if (!jpeg_status.success)
+                {
+                    printLine(Print::Error, "JPEG decode failed: {}", jpeg_status.info);
+                    return false;
+                }
+    
             }
 
             return true;
