@@ -396,6 +396,7 @@ namespace mango::image::jpeg
         int m_height;
 
         bool m_rgb_colorspace = false;
+        bool m_relaxed_parser = false;
 
         int m_precision; // 8 or 12 bits
         int m_components; // 1..4
@@ -470,6 +471,7 @@ namespace mango::image::jpeg
         ~Parser();
 
         void setMemory(ConstMemory memory);
+        void setRelaxedParser(bool relaxed);
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
     };

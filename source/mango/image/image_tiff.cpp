@@ -1870,6 +1870,41 @@ namespace
             u32 strip_height_mcus = (m_context.rows_per_strip + mcu_height - 1) / mcu_height;
             u32 restart_interval_mcus = horizontal_mcus * strip_height_mcus;
 
+            auto writeDHT = [] (Buffer& buffer, u8 id, const u8* table)
+            {
+                u8 num_codes = 0;
+
+                for (int j = 0; j < 16; ++j)
+                {
+                    num_codes += table[j];
+                }
+
+                if (num_codes > 200) 
+                {
+                    // Skip invalid tables
+                    return;
+                }
+
+                u16 length = 3 + 16 + num_codes;
+
+                u8* p = buffer.append(2 + length);
+                bigEndian::ustore16(p + 0, jpeg::MARKER_DHT);
+                bigEndian::ustore16(p + 2, length);
+                p[4] = id;
+
+                std::memcpy(p + 5, table, 16 + num_codes);
+            };
+
+            auto writeDQT = [] (Buffer& buffer, u8 id, const u8* table)
+            {
+                u8* p = buffer.append(69);
+                bigEndian::ustore16(p + 0, jpeg::MARKER_DQT);
+                bigEndian::ustore16(p + 2, 0x43); // length
+                p[4] = id; // Table ID + precision (0 = 8-bit)
+
+                std::memcpy(p + 5, table, 64);
+            };
+
             if (m_context.jpeg_interchange_format != 0)
             {
                 // Mode A: Copy headers from JPEGInterchangeFormat
@@ -1879,182 +1914,134 @@ namespace
                 u32 header_length = m_context.jpeg_interchange_format_length;
                 printLine(Print::Info, "  Header length: {}", header_length);
 
-                /* TODO: enable patching
-                // Make a copy of the header data so that can patch it
-                Buffer header(header_data_og, header_length);
+                // Check if using tiles or strips
+                bool use_tiles = !m_context.tile_offsets.empty();
+                size_t num_data_blocks = use_tiles ? m_context.tile_offsets.size() : m_context.strip_offsets.size();
 
-                // Point to copy of header
-                u8* header_data = header.data();
-                */
+                printLine(Print::Info, "  Processing {} {}", num_data_blocks, use_tiles ? "tiles" : "strips");
 
-                // Look for any JPEG markers in the header data
-                int marker_count = 0;
-                bool found_dht = false;
-
-                bool has_soi = false;
-                bool has_dqt = false;
-                bool has_sof = false;
-
-                for (u32 i = 0; i < header_length - 1; ++i)
+                auto decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
                 {
-                    if (header_data[i] == 0xFF && header_data[i+1] >= 0xC0)
-                    {
-                        if (header_data[i+1] == 0xC0)
-                        {
-                            /* TODO: enable patching
-                            // patch SOF0 to SOF1 (extended dct)
-                            header_data[i+1] = 0xc1;
-                            */
-                            has_sof = true;
-                        }
+                    ConstMemory jpeg_interchange_format_memory(m_memory.address + m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length);
 
-                        if (header_data[i+1] == 0xC4)
-                        {
-                            found_dht = true;
-                        }
+                    ImageDecodeInterface tempInterface;
+                    jpeg::Parser parser(&tempInterface, jpeg_interchange_format_memory);
+                    parser.setRelaxedParser(true);
 
-                        if (header_data[i+1] == 0xd8)
-                        {
-                            has_soi = true;
-                        }
+                    Buffer buffer;
 
-                        if (header_data[i+1] == 0xdb)
-                        {
-                            has_dqt = true;
-                        }
-
-                        if (header_data[i+1] == 0xdd)
-                        {
-                            //printLine(Print::Info, "  >>>>>> Found DRI marker");
-                        }
-
-                        marker_count++;
-                        if (marker_count >= 10)
-                            break; // Increased limit
-                    }
-                }
-
-                // Validate header structure before using
-                if (!has_soi || !has_dqt || !has_sof)
-                {
-                    printLine(Print::Error, "    ERROR: Headers incomplete - SOI:{}, DQT:{}, SOF:{}", has_soi, has_dqt, has_sof);
-                    return false;
-                }
-
-                // Find the actual end of the last valid JPEG marker
-                u32 valid_header_length = header_length;
-                /*
-                bool found_valid_end = false;
-
-                // Scan backwards to find last marker
-                for (int i = header_length - 2; i >= 0; i--)
-                {
-                    if (header_data[i] == 0xFF && header_data[i+1] >= 0xC0)
-                    {
-                        // Found a marker, now find its end
-                        if (header_data[i+1] == 0xC4) // DHT
-                        {
-                            u16 marker_length = (header_data[i+2] << 8) | header_data[i+3];
-                            valid_header_length = i + 2 + marker_length;
-                            found_valid_end = true;
-                            break;
-                        }
-                        else if (header_data[i+1] == 0xC1) // SOF1
-                        {
-                            u16 marker_length = (header_data[i+2] << 8) | header_data[i+3];
-                            valid_header_length = i + 2 + marker_length;
-                            found_valid_end = true;
-                            break;
-                        }
-                    }
-                }
-                */
-
-                jpeg_stream.append(header_data, valid_header_length);
-
-                /*
-                // Check if we need to add Huffman tables
-                printLine(Print::Info, "  JPEGInterchangeFormat DHT check: found_dht={}", found_dht);
-                if (!found_dht)
-                {
-                    printLine(Print::Info, "  Completing headers with Huffman tables from TIFF tags");
-
-                    // Add DHT (Huffman tables) from JPEGDCTables/JPEGACTables tags
                     for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
                     {
-                        u32 table_offset = m_context.jpeg_dc_tables[i];
-                        const u8* table_data = m_memory.address + table_offset;
+                        u32 offset = m_context.jpeg_dc_tables[i];
+                        const u8* table = m_memory.address + offset;
 
-                        // Read the actual table structure (16 bytes of lengths + symbols)
-                        u8 num_codes = 0;
-                        for (int j = 0; j < 16; ++j)
-                        {
-                            num_codes += table_data[j];
-                        }
-
-                        if (num_codes > 200)
-                        {
-                            continue;
-                        }
-
-                        u8* p = nullptr;
-
-                        // DHT marker
-                        p = jpeg_stream.append(2);
-                        p[0] = 0xff;
-                        p[1] = 0xc4;
-
-                        u16 dht_length = 2 + 1 + 16 + num_codes;
-                        p = jpeg_stream.append(3);
-                        p[0] = (dht_length >> 8) & 0xFF;
-                        p[1] = dht_length & 0xFF;
-                        p[2] = i; // Table class (0=DC) + table ID
-
-                        // Append table data (16 bytes lengths + symbols)
-                        for (int j = 0; j < 16 + num_codes; ++j)
-                        {
-                            jpeg_stream.append(table_data[j]);
-                        }
+                        writeDHT(buffer, 0x00 | i, table);
                     }
-
+    
                     for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
                     {
-                        u32 table_offset = m_context.jpeg_ac_tables[i];
-                        const u8* table_data = m_memory.address + table_offset;
+                        u32 offset = m_context.jpeg_ac_tables[i];
+                        const u8* table = m_memory.address + offset;
 
-                        // Read the actual table structure (16 bytes of lengths + symbols)
-                        u8 num_codes = 0;
-                        for (int j = 0; j < 16; ++j)
+                        writeDHT(buffer, 0x10 | i, table);
+                    }
+
+                    // Add SOS marker
+                    u8* temp = buffer.append(2);
+                    bigEndian::ustore16(temp, jpeg::MARKER_SOS);
+
+                    u8* sos_data = buffer.append(12);
+                    sos_data[0] = 0x00;
+                    sos_data[1] = 0x0C; // Length (12 bytes following this field)
+                    sos_data[2] = 0x03; // Number of components
+
+                    // Component 1: Y  
+                    sos_data[3] = 0x01; // Component ID
+                    sos_data[4] = 0x00; // DC table 0, AC table 0
+
+                    // Component 2: Cb
+                    sos_data[5] = 0x02; // Component ID  
+                    sos_data[6] = 0x11; // DC table 1, AC table 1
+
+                    // Component 3: Cr
+                    sos_data[7] = 0x03; // Component ID
+                    sos_data[8] = 0x22; // DC table 2, AC table 2
+
+                    // Scan parameters
+                    sos_data[9] = 0x00; // Spectral selection start (0)
+                    sos_data[10] = 0x3F; // Spectral selection end (63)  
+                    sos_data[11] = 0x00; // Successive approximation
+        
+                    buffer.append(memory);
+
+                    // Add EOI marker
+                    //const u16 MARKER_EOI = 0xffd9;
+                    //u8* eoi_data = buffer.append(2);
+                    //bigEndian::ustore16(eoi_data, MARKER_EOI);
+
+                    parser.setMemory(buffer);
+    
+                    ImageDecodeStatus status = parser.decode(surface, options);
+                    return status;
+                };
+
+                if (use_tiles)
+                {
+                    // Handle tiled image
+                    u32 tiles_across = (header.width + m_context.tile_width - 1) / m_context.tile_width;
+                    u32 tiles_down = (header.height + m_context.tile_length - 1) / m_context.tile_length;
+                    
+                    printLine(Print::Info, "  Tile grid: {}x{} ({}x{} pixels per tile)", tiles_across, tiles_down, m_context.tile_width, m_context.tile_length);
+
+                    for (size_t i = 0; i < num_data_blocks; ++i)
+                    {
+                        u32 tile_x = (i % tiles_across) * m_context.tile_width;
+                        u32 tile_y = (i / tiles_across) * m_context.tile_length;
+                        
+                        u32 tile_w = std::min(m_context.tile_width, header.width - tile_x);
+                        u32 tile_h = std::min(m_context.tile_length, header.height - tile_y);
+
+                        const u8* tile_data = m_memory.address + m_context.tile_offsets[i];
+                        u32 tile_bytes = m_context.tile_byte_counts[i];
+
+                        printLine(Print::Info, "    Tile {}: {}x{} at ({},{}) - {} bytes", i, tile_w, tile_h, tile_x, tile_y, tile_bytes);
+
+                        Surface surface(target, tile_x, tile_y, tile_w, tile_h);
+
+                        ImageDecodeStatus status = decodeJPEG(ConstMemory(tile_data, tile_bytes), surface);
+                        if (!status)
                         {
-                            num_codes += table_data[j];
-                        }
-
-                        if (num_codes > 200)
-                        {
-                            continue;
-                        }
-
-                        u8* p = nullptr;
-
-                        // DHT marker  
-                        p = jpeg_stream.append(2);
-                        p[0] = 0xff;
-                        p[1] = 0xc4;
-
-                        u16 dht_length = 2 + 1 + 16 + num_codes;
-                        p = jpeg_stream.append(3);
-                        p[0] = (dht_length >> 8) & 0xFF;
-                        p[1] = dht_length & 0xFF;
-                        p[2] = 0x10 | i; // Table class (1=AC) + table ID
-
-                        // Append table data (16 bytes lengths + symbols)
-                        for (int j = 0; j < 16 + num_codes; ++j)
-                        {
-                            jpeg_stream.append(table_data[j]);
+                            printLine(Print::Error, "JPEG decode failed for tile {}: {}", i, status.info);
+                            return false;
                         }
                     }
                 }
-                */
+                else
+                {
+                    // Handle strip image
+                    u32 y = 0;
+
+                    for (size_t i = 0; i < num_data_blocks; ++i)
+                    {
+                        u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
+
+                        const u8* strip_data = m_memory.address + m_context.strip_offsets[i];
+                        u32 strip_bytes = m_context.strip_byte_counts[i];
+
+                        Surface surface(target, 0, y, header.width, strip_height);
+
+                        ImageDecodeStatus status = decodeJPEG(ConstMemory(strip_data, strip_bytes), surface);
+                        if (!status)
+                        {
+                            printLine(Print::Error, "JPEG decode failed for strip {}: {}", i, status.info);
+                            return false;
+                        }
+
+                        y += strip_height;
+                    }
+                }
+
+                return true;
             }
             else
             {
@@ -2063,42 +2050,15 @@ namespace
 
                 // SOI (Start of Image)
                 p = jpeg_stream.append(2);
-                p[0] = 0xff;
-                p[1] = 0xd8;
-
-                // Add basic APP0 marker for compatibility
-                p = jpeg_stream.append(18);
-                p[0] = 0xFF;
-                p[1] = 0xE0;
-                p[2] = 0x00; // Length hi
-                p[3] = 0x10; // Length lo (16 bytes)
-                p[4] = 'J'; 
-                p[5] = 'F';
-                p[6] = 'I';
-                p[7] = 'F';
-                p[8] = 0x00; // null terminator
-                p[9] = 0x01; // Version major
-                p[10] = 0x01; // Version minor
-                p[11] = 0x01; // Units (1 = inches)
-                p[12] = 0x00;
-                p[13] = 0x48; // X density (72 dpi)
-                p[14] = 0x00;
-                p[15] = 0x48; // Y density (72 dpi)
-                p[16] = 0x00; // Thumbnail width
-                p[17] = 0x00; // Thumbnail height
+                bigEndian::ustore16(p, jpeg::MARKER_SOI);
 
                 // Add SOF1 (Extended sequential DCT) to support table IDs beyond 1
-                // MUST come BEFORE DHT tables so decoder knows it's not baseline!
                 p = jpeg_stream.append(10);
-                p[0] = 0xFF;
-                p[1] = 0xC1; // SOF1
-                p[2] = 0x00; // Length hi  
-                p[3] = 0x11; // Length lo (17 = 2 + 1 + 2 + 2 + 3*3)
+                bigEndian::ustore16(p + 0, jpeg::MARKER_SOF1);
+                bigEndian::ustore16(p + 2, 0x11); // length
                 p[4] = 0x08; // Sample precision (8 bits)
-                p[5] = (m_context.height >> 8) & 0xFF; // Height hi
-                p[6] = m_context.height & 0xFF;        // Height lo
-                p[7] = (m_context.width >> 8) & 0xFF;  // Width hi  
-                p[8] = m_context.width & 0xFF;         // Width lo
+                bigEndian::ustore16(p + 5, m_context.height);
+                bigEndian::ustore16(p + 7, m_context.width);
                 p[9] = 0x03; // Number of components
 
                 // Component 1: Y (luminance) - full resolution
@@ -2122,138 +2082,56 @@ namespace
                 // Add quantization tables from TIFF tags
                 for (size_t i = 0; i < m_context.jpeg_qt_tables.size(); ++i)
                 {
-                    u32 table_offset = m_context.jpeg_qt_tables[i];
-                    const u8* table_data = m_memory.address + table_offset;
+                    u32 offset = m_context.jpeg_qt_tables[i];
+                    const u8* table = m_memory.address + offset;
 
-                    // Each DQT table gets its own complete marker
-                    u8* p = jpeg_stream.append(69); // Complete DQT: marker(2) + length(2) + precision+id(1) + data(64) = 69 bytes
-                    p[0] = 0xFF;
-                    p[1] = 0xDB;
-                    p[2] = 0x00; // Length hi
-                    p[3] = 0x43; // Length lo (67 = length(2) + precision+id(1) + data(64))
-                    p[4] = i;    // Table ID + precision (0 = 8-bit)
-
-                    // Copy 64 bytes of quantization data
-                    for (int j = 0; j < 64; ++j)
-                    {
-                        p[5 + j] = table_data[j];
-                    }                    
-                }
-
-                // Add DHT tables from TIFF tags
-                if (m_context.jpeg_dc_tables.empty() && m_context.jpeg_ac_tables.empty())
-                {
-                    printLine(Print::Error, "  WARNING: No JPEG Huffman tables found in TIFF tags!");
-                    printLine(Print::Error, "  This TIFF may not have proper JPEG table tags, trying to use standard JPEG tables...");
+                    writeDQT(jpeg_stream, i, table);
                 }
                 
                 for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
                 {
-                    u32 table_offset = m_context.jpeg_dc_tables[i];
-                    const u8* table_data = m_memory.address + table_offset;
+                    u32 offset = m_context.jpeg_dc_tables[i];
+                    const u8* table = m_memory.address + offset;
 
-                    // Read the actual table structure (16 bytes of lengths + symbols)
-                    u8 num_codes = 0;
-                    for (int j = 0; j < 16; ++j)
-                    {
-                        num_codes += table_data[j];
-                    }
-
-                    if (num_codes > 200) 
-                    {
-                        continue; // Skip invalid tables
-                    }
-                    
-                    u8 table_id = i; // Use original table ID
-
-                    // Each DHT table gets its own complete marker
-                    u16 dht_length = 2 + 1 + 16 + num_codes; // length(2) + class_id(1) + lengths(16) + symbols(num_codes)
-                    u32 total_size = 2 + 2 + 1 + 16 + num_codes; // marker(2) + length(2) + class_id(1) + lengths(16) + symbols(num_codes)
-                    
-                    u8* p = jpeg_stream.append(total_size);
-                    p[0] = 0xFF;
-                    p[1] = 0xC4;
-                    p[2] = (dht_length >> 8) & 0xFF;
-                    p[3] = dht_length & 0xFF;
-                    p[4] = table_id; // Table class (0=DC) + table ID
-
-                    // Copy table data (16 bytes lengths + symbols)
-                    for (int j = 0; j < 16 + num_codes; ++j)
-                    {
-                        p[5 + j] = table_data[j];
-                    }
+                    writeDHT(jpeg_stream, 0x00 | i, table);
                 }
 
                 for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
                 {
-                    u32 table_offset = m_context.jpeg_ac_tables[i];
-                    const u8* table_data = m_memory.address + table_offset;
+                    u32 offset = m_context.jpeg_ac_tables[i];
+                    const u8* table = m_memory.address + offset;
 
-                    // Read the actual table structure (16 bytes of lengths + symbols)
-                    u8 num_codes = 0;
-                    for (int j = 0; j < 16; ++j)
-                    {
-                        num_codes += table_data[j];
-                    }
-
-                    if (num_codes > 200) 
-                    {
-                        continue; // Skip invalid tables
-                    }
-
-                    u8 table_id = i; // Use original table ID
-
-                    // Each DHT table gets its own complete marker
-                    u16 dht_length = 2 + 1 + 16 + num_codes; // length(2) + class_id(1) + lengths(16) + symbols(num_codes)
-                    u32 total_size = 2 + 2 + 1 + 16 + num_codes; // marker(2) + length(2) + class_id(1) + lengths(16) + symbols(num_codes)
-                    
-                    u8* p = jpeg_stream.append(total_size);
-                    p[0] = 0xFF;
-                    p[1] = 0xC4;
-                    p[2] = (dht_length >> 8) & 0xFF;
-                    p[3] = dht_length & 0xFF;
-                    p[4] = 0x10 | table_id; // Table class (1=AC) + table ID
-
-                    // Copy table data (16 bytes lengths + symbols)
-                    for (int j = 0; j < 16 + num_codes; ++j)
-                    {
-                        p[5 + j] = table_data[j];
-                    }
+                    writeDHT(jpeg_stream, 0x10 | i, table);
                 }
             }
 
-            u8* dri_data = jpeg_stream.append(6); // Allocate 6 bytes for DRI marker
-            dri_data[0] = 0xFF;
-            dri_data[1] = 0xDD;
-            dri_data[2] = 0x00;
-            dri_data[3] = 0x04;
-            dri_data[4] = (restart_interval_mcus >> 8) & 0xFF;
-            dri_data[5] = restart_interval_mcus & 0xFF;
+            u8* p = jpeg_stream.append(6);
+            bigEndian::ustore16(p + 0, jpeg::MARKER_DRI);
+            bigEndian::ustore16(p + 2, 0x04); // length
+            bigEndian::ustore16(p + 4, restart_interval_mcus);
 
             // Add SOS (Start of Scan) header
-            u8* sos_data = jpeg_stream.append(14); // Complete SOS header
-            sos_data[0] = 0xFF;
-            sos_data[1] = 0xDA;
-            sos_data[2] = 0x00;
-            sos_data[3] = 0x0C; // Length (12 bytes following this field)
-            sos_data[4] = 0x03; // Number of components
-            
+            p = jpeg_stream.append(14);
+            bigEndian::ustore16(p + 0, jpeg::MARKER_SOS);
+            bigEndian::ustore16(p + 2, 0x0c); // length
+            p[4] = 0x03; // Number of components
+
             // Component 1: Y  
-            sos_data[5] = 0x01; // Component ID
-            sos_data[6] = 0x00; // DC table 0, AC table 0
-            
+            p[5] = 0x01; // Component ID
+            p[6] = 0x00; // DC table 0, AC table 0
+
             // Component 2: Cb
-            sos_data[7] = 0x02; // Component ID  
-            sos_data[8] = 0x11; // DC table 1, AC table 1
-            
+            p[7] = 0x02; // Component ID  
+            p[8] = 0x11; // DC table 1, AC table 1
+
             // Component 3: Cr
-            sos_data[9] = 0x03; // Component ID
-            sos_data[10] = 0x22; // DC table 2, AC table 2
-            
+            p[9] = 0x03; // Component ID
+            p[10] = 0x22; // DC table 2, AC table 2
+
             // Scan parameters
-            sos_data[11] = 0x00; // Spectral selection start (0)
-            sos_data[12] = 0x3F; // Spectral selection end (63)  
-            sos_data[13] = 0x00; // Successive approximation
+            p[11] = 0x00; // Spectral selection start (0)
+            p[12] = 0x3f; // Spectral selection end (63)  
+            p[13] = 0x00; // Successive approximation
 
             // Use tiles if available, otherwise strips
             bool is_tiled = !m_context.tile_offsets.empty();
@@ -2282,7 +2160,7 @@ namespace
 
                     // Insert RST marker before data (2 bytes: FF D0-D7)
                     u8* rst_data = jpeg_stream.append(2);
-                    rst_data[0] = 0xFF;
+                    rst_data[0] = 0xff;
                     rst_data[1] = rst_marker;
                 }
 
@@ -2290,9 +2168,8 @@ namespace
             }
 
             // Add EOI marker
-            const u16 MARKER_EOI = 0xffd9;
             u8* eoi_data = jpeg_stream.append(2);
-            bigEndian::ustore16(eoi_data, MARKER_EOI);
+            bigEndian::ustore16(eoi_data, jpeg::MARKER_EOI);
 
             printLine(Print::Info, "  Complete JPEG stream: {} bytes", jpeg_stream.size());
 
@@ -2349,6 +2226,7 @@ namespace
                 // Parse jpeg tables in tiff tags (DHT, DQT)
                 ImageDecodeInterface tempInterface;
                 jpeg::Parser parser(&tempInterface, m_context.jpeg_tables);
+                parser.setRelaxedParser(true);
 
                 // Parse embedded jpeg (SOF, SOS, etc.)
                 parser.setMemory(memory);

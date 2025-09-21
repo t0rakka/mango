@@ -164,6 +164,11 @@ namespace mango::image::jpeg
         parse(m_memory, false);
     }
 
+    void Parser::setRelaxedParser(bool relaxed)
+    {
+        m_relaxed_parser = relaxed;
+    }
+
     bool Parser::isJPEG(ConstMemory memory) const
     {
         if (!memory.address || memory.size < 4)
@@ -735,7 +740,7 @@ namespace mango::image::jpeg
             int max_dc = 3;
             int max_ac = 3;
 
-            if (is_baseline)
+            if (is_baseline && !m_relaxed_parser)
             {
                 max_dc = 1;
                 max_ac = 1;
@@ -1067,7 +1072,7 @@ namespace mango::image::jpeg
             u8 Th = (x >> 0) & 0xf; // Huffman table identifier
 
             u8 max_tc = is_lossless ? 0 : 1; 
-            u8 max_th = is_baseline ? 1 : 3;
+            u8 max_th = is_baseline && !m_relaxed_parser ? 1 : 3;
 
             if (Tc > max_tc)
             {
@@ -1464,6 +1469,12 @@ namespace mango::image::jpeg
                     if (decode)
                     {
                         p = processSOS(p, end);
+                    }
+                    else
+                    {
+                        // parse header mode (no decoding)
+                        scan_memory = ConstMemory(p - 2, end - p + 2);
+                        return;
                     }
                     break;
 
