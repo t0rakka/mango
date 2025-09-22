@@ -320,15 +320,15 @@ namespace
 
 } // namespace
 
-namespace mango
+namespace mango::cpu
 {
 
-    u64 getCPUFlags()
+    u64 getFlags()
     {
         return g_cpu_flags;
     }
 
-    bool isLittleEndianCPU()
+    bool isLittleEndian()
     {
         // This avoids using the macros :)
 #if defined(MANGO_LITTLE_ENDIAN)
@@ -338,4 +338,4 @@ namespace mango
 #endif
     }
 
-} // namespace mango
+} // namespace mango::cpu

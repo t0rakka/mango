@@ -224,11 +224,23 @@ namespace mango::image
     // ImageDecodeInterface
     // ----------------------------------------------------------------------------
 
+    ImageDecodeStatus ImageDecodeInterface::decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face)
+    {
+        MANGO_UNREFERENCED(dest);
+        MANGO_UNREFERENCED(options);
+        MANGO_UNREFERENCED(level);
+        MANGO_UNREFERENCED(depth);
+        MANGO_UNREFERENCED(face);
+
+        return ImageDecodeStatus();
+    }
+
     ConstMemory ImageDecodeInterface::memory(int level, int depth, int face)
     {
         MANGO_UNREFERENCED(level);
         MANGO_UNREFERENCED(depth);
         MANGO_UNREFERENCED(face);
+
         return ConstMemory();
     }
 

@@ -315,6 +315,13 @@ namespace mango
         return (value + multiple - 1) / multiple;
     }
 
+    static constexpr
+    u32 round_ceil(u32 value, u32 multiple)
+    {
+        // round to next multiple
+        return ((value + multiple - 1) / multiple) * multiple;
+    }
+
     template <typename T>
     static constexpr
     T modulo(T value, T range)

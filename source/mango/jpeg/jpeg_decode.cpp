@@ -129,8 +129,9 @@ namespace mango::image::jpeg
     // Parser
     // ----------------------------------------------------------------------------
 
-    Parser::Parser(ConstMemory memory)
-        : m_memory(memory)
+    Parser::Parser(ImageDecodeInterface* interface, ConstMemory memory)
+        : m_interface(interface)
+        , m_memory(memory)
         , quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
     {
         restartInterval = 0;
@@ -142,15 +143,6 @@ namespace mango::image::jpeg
         }
 
         m_surface = nullptr;
-    }
-
-    Parser::~Parser()
-    {
-    }
-
-    void Parser::setInterface(ImageDecodeInterface* interface)
-    {
-        m_interface = interface;
 
         if (isJPEG(m_memory))
         {
@@ -162,6 +154,21 @@ namespace mango::image::jpeg
         }
     }
 
+    Parser::~Parser()
+    {
+    }
+
+    void Parser::setMemory(ConstMemory memory)
+    {
+        m_memory = memory;
+        parse(m_memory, false);
+    }
+
+    void Parser::setRelaxedParser(bool relaxed)
+    {
+        m_relaxed_parser = relaxed;
+    }
+
     bool Parser::isJPEG(ConstMemory memory) const
     {
         if (!memory.address || memory.size < 4)
@@ -170,22 +177,7 @@ namespace mango::image::jpeg
         if (bigEndian::uload16(memory.address) != MARKER_SOI)
             return false;
 
-#if 0
-        // Scan for EOI marker
-        const u8* p = memory.address + memory.size - 2;
-        for (int i = 0; i < 32; ++i, --p)
-        {
-            u16 marker = bigEndian::uload16(p);
-            if (marker == MARKER_EOI)
-                return true;
-        }
-
-        return false;
-#else
-        // Let's not be so picky.. EOI marker is optional, right?
-        // (A lot of JPEG writers think so and we just have to deal with it :)
         return true;
-#endif
     }
 
     const u8* Parser::stepMarker(const u8* p, const u8* end) const
@@ -748,7 +740,7 @@ namespace mango::image::jpeg
             int max_dc = 3;
             int max_ac = 3;
 
-            if (is_baseline)
+            if (is_baseline && !m_relaxed_parser)
             {
                 max_dc = 1;
                 max_ac = 1;
@@ -1080,7 +1072,7 @@ namespace mango::image::jpeg
             u8 Th = (x >> 0) & 0xf; // Huffman table identifier
 
             u8 max_tc = is_lossless ? 0 : 1; 
-            u8 max_th = is_baseline ? 1 : 3;
+            u8 max_th = is_baseline && !m_relaxed_parser ? 1 : 3;
 
             if (Tc > max_tc)
             {
@@ -1478,6 +1470,12 @@ namespace mango::image::jpeg
                     {
                         p = processSOS(p, end);
                     }
+                    else
+                    {
+                        // parse header mode (no decoding)
+                        scan_memory = ConstMemory(p - 2, end - p + 2);
+                        return;
+                    }
                     break;
 
                 default:
@@ -1515,7 +1513,7 @@ namespace mango::image::jpeg
 
     void Parser::configureCPU(SampleType sample, const ImageDecodeOptions& options)
     {
-        u64 flags = options.simd ? getCPUFlags() : 0;
+        u64 flags = options.simd ? cpu::getFlags() : 0;
         MANGO_UNREFERENCED(flags);
 
         // configure idct
@@ -1563,7 +1561,7 @@ namespace mango::image::jpeg
         {
             case SampleType::U8_Y:
                 process_y           = process_y_8bit;
-                //process_rgb         = ;
+                process_rgb         = nullptr; // could support if compute luminance from RGB
                 process_ycbcr       = process_ycbcr_8bit;
                 process_ycbcr_8x8   = nullptr;
                 process_ycbcr_8x16  = nullptr;
@@ -1824,7 +1822,7 @@ namespace mango::image::jpeg
                 break;
         }
 
-        if (m_rgb_colorspace)
+        if (m_rgb_colorspace || options.jpeg_colorspace_rgb)
         {
             processState.process = process_rgb;
             id = "RGB";

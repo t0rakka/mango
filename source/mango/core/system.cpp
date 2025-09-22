@@ -134,7 +134,7 @@ namespace mango
         std::stringstream info;
         info << getPlatformInfo();
 
-        u64 flags = getCPUFlags();
+        u64 flags = cpu::getFlags();
 
         const u64 avx512_mask =
             INTEL_AVX512F |

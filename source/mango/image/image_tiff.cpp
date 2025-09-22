@@ -12,6 +12,8 @@
 #include <vector>
 #include <numeric>
 
+#include "../jpeg/jpeg.hpp"
+
 namespace
 {
     using namespace mango;
@@ -48,6 +50,131 @@ namespace
         LONG8 = 16,
         SLONG8 = 17,
         IFD8 = 18,
+    };
+
+    enum class SampleFormat : u16
+    {
+        UINT = 1,
+        SINT = 2,
+        FLOAT = 3,
+        UNDEFINED = 4,
+    };
+
+    enum class Compression : u16
+    {
+        NONE = 1,
+        CCITT_RLE = 2,
+        CCITT_FAX3 = 3,
+        CCITT_FAX4 = 4,
+        LZW = 5,
+        JPEG_LEGACY = 6,
+        JPEG_MODERN = 7,
+        ZIP = 8,
+        PACKBITS = 32773,
+        DEFLATE = 32946,
+        SGILOG = 34676,
+    };
+
+    enum class PhotometricInterpretation
+    {
+        WHITE_IS_ZERO = 0,
+        BLACK_IS_ZERO = 1,
+        RGB = 2,
+        PALETTE = 3,
+        TRANSPARENCY_MASK = 4,
+        SEPARATED = 5,
+        YCBCR = 6,
+        CIELAB = 8,
+        ICCLAB = 9,
+        ITULAB = 10,
+        CFA = 32803,
+        LOGLUV = 32845,
+        LINEAR_RAW = 34892,
+    };
+
+    struct IFDContext
+    {
+        u32 width = 0;
+        u32 height = 0;
+        u16 compression = 1;
+        u16 photometric = 2;
+        u16 resolution_unit = 0;
+        float x_position = 0;
+        float y_position = 0;
+        float x_resolution = 0;
+        float y_resolution = 0;
+        //float reference_black_white = 0;
+        u32 orientation = 1; // default
+        /* same conversion as exif orientation:
+        1 =	Top-left            No rotation or mirroring.
+        2 =	Top-right	        Mirrored horizontally.
+        3 =	Bottom-right        Rotated 180 degrees.
+        4 =	Bottom-left         Mirrored vertically.
+        5 =	Left-top            Mirrored along the main diagonal.
+        6 =	Right-top           Rotated 90 degrees clockwise.
+        7 =	Right-bottom        Mirrored along the anti-diagonal.
+        8 =	Left-bottom         Rotated 90 degrees counterclockwise.        
+        */
+        u32 planar_configuration = 1;
+        u32 predictor = 1;
+        u32 fill_order = 1;
+        u32 page_number = 0;
+        std::string page_name;
+
+        std::vector<u64> sample_format;
+        std::vector<float> s_min_sample_value;
+        std::vector<float> s_max_sample_value;
+
+        u32 ink_set = 1;
+        std::string ink_names;
+        u32 number_of_inks = 4;
+        u32 dot_range = 2;
+
+        // Chromaticity support
+        float32x2 white_point;
+        float32x2 red_primary;
+        float32x2 green_primary;
+        float32x2 blue_primary;
+
+        // compression 6: JPEG_LEGACY
+        u32 jpeg_proc = 0;
+        u32 jpeg_interchange_format = 0;
+        u32 jpeg_interchange_format_length = 0;
+        u32 jpeg_restart_interval = 0;
+        u32 jpeg_lossless_predictors = 0;
+        u32 jpeg_point_transforms = 0;
+        std::vector<u64> jpeg_qt_tables;
+        std::vector<u64> jpeg_dc_tables;
+        std::vector<u64> jpeg_ac_tables;
+        std::vector<u64> y_cb_cr_sub_sampling;
+
+        // compression 7: JPEG_MODERN
+        ConstMemory jpeg_tables;
+
+        u32 new_subfile_type = 0;
+        u16 subfile_type = 0;
+
+        u32 samples_per_pixel = 3; // channels
+        u32 bpp = 0; // sum of bits_per_sample
+        std::vector<u64> bits_per_sample; // bits in each channel
+        u32 sample_bits = 8; // default to 8 bits per sample
+
+        u32 rows_per_strip = 0;
+        std::vector<u64> strip_offsets;
+        std::vector<u64> strip_byte_counts;
+        
+        // Tile support
+        u32 tile_width = 0;
+        u32 tile_length = 0;
+        std::vector<u64> tile_offsets;
+        std::vector<u64> tile_byte_counts;
+
+        Palette palette;
+        ConstMemory icc_profile;
+
+        std::string image_description;
+        std::string software;
+        std::string document_name;
     };
 
     enum class Tag : u16
@@ -108,6 +235,8 @@ namespace
         DotRange = 336,
         //ExtraSamples = 338, // SHORT
         SampleFormat = 339,
+        SMinSampleValue = 340,
+        SMaxSampleValue = 341,
         JPEGProc = 512,
         JPEGInterchangeFormat = 513,
         JPEGInterchangeFormatLength = 514,
@@ -125,104 +254,8 @@ namespace
         DataType = 32996,
         ImageDepth = 32997,
         TileDepth = 32998,
-    };
-
-    enum class Compression : u16
-    {
-        NONE = 1,
-        CCITT_RLE = 2,
-        CCITT_FAX3 = 3,
-        CCITT_FAX4 = 4,
-        LZW = 5,
-        JPEG_LEGACY = 6,
-        JPEG_MODERN = 7,
-        ZIP = 8,
-        PACKBITS = 32773,
-        DEFLATE = 32946,
-        SGILOG = 34676,
-    };
-
-    enum class PhotometricInterpretation
-    {
-        WHITE_IS_ZERO = 0,
-        BLACK_IS_ZERO = 1,
-        RGB = 2,
-        PALETTE = 3,
-        TRANSPARENCY_MASK = 4,
-        SEPARATED = 5,
-        YCBCR = 6,
-        CIELAB = 8,
-        ICCLAB = 9,
-        ITULAB = 10,
-        CFA = 32803,
-        LOGLUV = 32845,
-        LINEAR_RAW = 34892,
-    };
-
-    struct IFDContext
-    {
-        u32 width = 0;
-        u32 height = 0;
-        u16 compression = 1;
-        u16 photometric = 2;
-        u16 resolution_unit = 0;
-        float x_position = 0;
-        float y_position = 0;
-        float x_resolution = 0;
-        float y_resolution = 0;
-        //float reference_black_white = 0;
-        u32 orientation = 0;
-        u32 planar_configuration = 0;
-        u32 predictor = 1;
-        u32 fill_order = 1;
-        u32 sample_format = 1;
-        u32 page_number = 0;
-        std::string page_name;
-
-        u32 ink_set = 1;
-        std::string ink_names;
-        u32 number_of_inks = 4;
-        u32 dot_range = 2;
-
-        // JPEG_LEGACY
-        u32 jpeg_proc = 0;
-        u32 jpeg_interchange_format = 0;
-        u32 jpeg_interchange_format_length = 0;
-        u32 jpeg_restart_interval = 0;
-        u32 jpeg_lossless_predictors = 0;
-        u32 jpeg_point_transforms = 0;
-        std::vector<u64> jpeg_qt_tables;
-        std::vector<u64> jpeg_dc_tables;
-        std::vector<u64> jpeg_ac_tables;
-        std::vector<u64> y_cb_cr_sub_sampling;
-
-        // JPEG_MODERN
-        u64 jpeg_tables_offset = 0;
-        u32 jpeg_tables_length = 0;
-
-        u32 new_subfile_type = 0;
-        u16 subfile_type = 0;
-
-        u32 samples_per_pixel = 3; // channels
-        u32 bpp = 0; // sum of bits_per_sample
-        std::vector<u64> bits_per_sample; // bits in each channel
-        u32 sample_bits = 8; // default to 8 bits per sample
-
-        u32 rows_per_strip = 0;
-        std::vector<u64> strip_offsets;
-        std::vector<u64> strip_byte_counts;
-        
-        // Tile support
-        u32 tile_width = 0;
-        u32 tile_length = 0;
-        std::vector<u64> tile_offsets;
-        std::vector<u64> tile_byte_counts;
-
-        Palette palette;
-
-        std::string image_description;
-        std::string software;
-        std::string document_name;
+        //PhotoshopImageResources = 34377,
+        ICCProfile = 34675,
     };
 
     static inline
@@ -298,6 +331,13 @@ namespace
     }
 
     template <typename Pointer>
+    float getFloat(Pointer& p)
+    {
+        float value = p.read32f();
+        return value;
+    }
+
+    template <typename Pointer>
     std::vector<u64> getUnsignedArray(Pointer p, ConstMemory memory, Type type, u64 count, bool is_big_tiff)
     {
         std::vector<u64> values;
@@ -319,18 +359,63 @@ namespace
     }
 
     template <typename Pointer>
+    std::vector<float> getFloatArray(Pointer p, ConstMemory memory, Type type, u64 count, bool is_big_tiff)
+    {
+        std::vector<float> values;
+
+        const u64 offset_size = is_big_tiff ? 8 : 4;
+
+        if (getSize(type, count) > offset_size)
+        {
+            p = memory.address + getOffset(p, is_big_tiff);
+        }
+
+        for (u64 i = 0; i < count; ++i)
+        {
+            float value = getFloat(p);
+            values.push_back(value);
+        }
+
+        return values;
+    }
+
+    template <typename Pointer>
     float getRational(Pointer p, ConstMemory memory, Type type, bool is_big_tiff)
     {
-        if (!is_big_tiff)
+        const u64 offset_size = is_big_tiff ? 8 : 4;
+
+        if (getSize(type, 1) > offset_size)
         {
             p = memory.address + getOffset(p, is_big_tiff);
         }
 
         u32 numerator = getUnsigned(p, Type::LONG);
         u32 denominator = getUnsigned(p, Type::LONG);
-        //printLine(Print::Info, "      numerator: {}, denominator: {}", numerator, denominator);
         float value = float(numerator) / denominator;
         return value;
+    }
+
+    template <typename Pointer>
+    std::vector<float> getRationalArray(Pointer p, ConstMemory memory, Type type, u64 count, bool is_big_tiff)
+    {
+        std::vector<float> values;
+
+        const u64 offset_size = is_big_tiff ? 8 : 4;
+
+        if (getSize(type, count) > offset_size)
+        {
+            p = memory.address + getOffset(p, is_big_tiff);
+        }
+
+        for (u64 i = 0; i < count; ++i)
+        {
+            u32 numerator = getUnsigned(p, Type::LONG);
+            u32 denominator = getUnsigned(p, Type::LONG);
+            float value = float(numerator) / denominator;
+            values.push_back(value);
+        }
+
+        return values;
     }
 
     template <typename Pointer>
@@ -507,7 +592,68 @@ namespace
                 context.ink_names = getAscii(p, memory, type, is_big_tiff);
                 break;
 
-            TIFF_CASE_UNSIGNED(SampleFormat, sample_format);
+            case Tag::SampleFormat:
+            {
+                std::vector<u64> values = 
+                context.sample_format = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                printLine(Print::Info, "    [SampleFormat]");
+                print(Print::Info, "      values: ");
+                for (auto value : context.sample_format)
+                {
+                    print(Print::Info, "{} ", value);
+                }
+                printLine(Print::Info, "");
+                break;
+            }
+
+            case Tag::SMinSampleValue:
+            {
+                context.s_min_sample_value = getFloatArray(p, memory, type, count, is_big_tiff);
+                printLine(Print::Info, "    [SMinSampleValue]");
+                print(Print::Info, "      values: ");
+                for (auto value : context.s_min_sample_value)
+                {
+                    print(Print::Info, "{} ", value);
+                }
+                printLine(Print::Info, "");
+                break;
+            }
+
+            case Tag::SMaxSampleValue:
+            {
+                context.s_max_sample_value = getFloatArray(p, memory, type, count, is_big_tiff);
+                printLine(Print::Info, "    [SMaxSampleValue]");
+                print(Print::Info, "      values: ");
+                for (auto value : context.s_max_sample_value)
+                {
+                    print(Print::Info, "{} ", value);
+                }
+                printLine(Print::Info, "");
+                break;
+            }
+
+            case Tag::WhitePoint:
+            {
+                std::vector<float> values = getRationalArray(p, memory, type, count, is_big_tiff);
+                context.white_point = float32x2(values[0], values[1]);
+                printLine(Print::Info, "    [WhitePoint]");
+                printLine(Print::Info, "      white point: {}, {}", float(context.white_point.x), float(context.white_point.y));
+                break;
+            }
+
+            case Tag::PrimaryChromaticities:
+            {
+                std::vector<float> values = getRationalArray(p, memory, type, count, is_big_tiff);
+                context.red_primary = float32x2(values[0], values[1]);
+                context.green_primary = float32x2(values[2], values[3]);
+                context.blue_primary = float32x2(values[4], values[5]);
+                printLine(Print::Info, "    [PrimaryChromaticities]");
+                printLine(Print::Info, "      red primary: {}, {}", float(context.red_primary.x), float(context.red_primary.y));
+                printLine(Print::Info, "      green primary: {}, {}", float(context.green_primary.x), float(context.green_primary.y));
+                printLine(Print::Info, "      blue primary: {}, {}", float(context.blue_primary.x), float(context.blue_primary.y));
+                break;
+            }
+
             TIFF_CASE_UNSIGNED(JPEGProc, jpeg_proc);
             TIFF_CASE_UNSIGNED(JPEGInterchangeFormat, jpeg_interchange_format);
             TIFF_CASE_UNSIGNED(JPEGInterchangeFormatLength, jpeg_interchange_format_length);
@@ -555,9 +701,9 @@ namespace
             case Tag::JPEGTables:
             {
                 printLine(Print::Info, "    [JPEGTables]");
-                context.jpeg_tables_offset = getOffset(p, is_big_tiff);
-                context.jpeg_tables_length = count;
-                printLine(Print::Info, "      offset: {}, length: {} bytes", context.jpeg_tables_offset, context.jpeg_tables_length);
+                u64 offset = getOffset(p, is_big_tiff);
+                context.jpeg_tables = ConstMemory(memory.address + offset, count);
+                printLine(Print::Info, "      offset: {}, length: {} bytes", offset, count);
                 break;
             }
 
@@ -572,6 +718,15 @@ namespace
             case Tag::TileDepth:
                 // deprecated tags
                 break;
+
+            case Tag::ICCProfile:
+            {
+                u64 offset = getOffset(p, is_big_tiff);
+                context.icc_profile = ConstMemory(memory.address + offset, count);
+                printLine(Print::Info, "    [ICCProfile]");
+                printLine(Print::Info, "      offset: {}, length: {} bytes", offset, count);
+                break;
+            }
 
             default:
                 printLine(Print::Info, "    [UNKNOWN: {}]", int(tag));
@@ -1375,7 +1530,7 @@ namespace
             data_size += std::accumulate(m_context.tile_byte_counts.begin(), m_context.tile_byte_counts.end(), 0u);
 
             printLine(Print::Info, "  Image: {} x {} ({} bpp, {} channels)", 
-                     m_context.width, m_context.height, m_context.bpp, m_context.samples_per_pixel);
+                     m_context.width, m_context.height, header.format.bits, m_context.samples_per_pixel);
             printLine(Print::Info, "  Data: {} bytes", data_size);
         }
 
@@ -1384,11 +1539,9 @@ namespace
             if (m_context.compression == u32(Compression::JPEG_LEGACY) ||
                 m_context.compression == u32(Compression::JPEG_MODERN))
             {
-                // For JPEG, let the JPEG decoder determine the format
-                // Don't force a specific format here - return a flexible format
                 if (m_context.samples_per_pixel == 1)
                 {
-                    return Format(8, Format::UNORM, Format::LUMINANCE, 8);
+                    return LuminanceFormat(8, Format::UNORM, 8, 0);
                 }
                 else
                 {
@@ -1397,7 +1550,8 @@ namespace
             }
 
             // bit-packed formats resolve to at least 8 bits per channel
-            u32 bits = m_context.sample_bits >= 8 ? m_context.sample_bits : 8;
+            //u32 bits = m_context.sample_bits >= 8 ? m_context.sample_bits : 8;
+            u32 bits = round_ceil(m_context.sample_bits, 8);
 
             switch (PhotometricInterpretation(m_context.photometric))
             {
@@ -1416,13 +1570,57 @@ namespace
 
                 case PhotometricInterpretation::RGB:
                 {
+                    Format::Type type = Format::UNORM;
+
+                    u64 sample_format = u64(SampleFormat::UINT);
+                    if (!m_context.sample_format.empty())
+                    {
+                        sample_format = m_context.sample_format[0];
+                    }
+
+                    switch (SampleFormat(sample_format))
+                    {
+                        case SampleFormat::UINT:
+                            type = Format::UNORM;
+                            break;
+
+                        case SampleFormat::SINT:
+                            type = Format::SNORM;
+                            break;
+
+                        case SampleFormat::FLOAT:
+                            if (bits == 16)
+                            {
+                                type = Format::FLOAT16;
+                            }
+                            else if (bits == 32)
+                            {
+                                type = Format::FLOAT32;
+                            }
+                            else if (bits == 64)
+                            {
+                                type = Format::FLOAT64;
+                            }
+                            else
+                            {
+                                header.setError("Unsupported float: {} bits", bits);
+                                return Format();
+                            }
+                            break;
+
+                        case SampleFormat::UNDEFINED:
+                        default:
+                            header.setError("Unsupported sample format: {}", sample_format);
+                            return Format();
+                    }
+
                     if (m_context.samples_per_pixel == 3)
                     {
-                        return Format(bits * 3, Format::UNORM, Format::RGB, bits, bits, bits, 0);
+                        return Format(bits * 3, type, Format::RGB, bits, bits, bits, 0);
                     }
                     else if (m_context.samples_per_pixel == 4)
                     {
-                        return Format(bits * 4, Format::UNORM, Format::RGBA, bits, bits, bits, bits);
+                        return Format(bits * 4, type, Format::RGBA, bits, bits, bits, bits);
                     }
                     else
                     {
@@ -1472,17 +1670,39 @@ namespace
 
             ImageDecodeStatus status;
 
+            // xxx
+            printLine(Print::Info, "    [decode]");
+            printLine(Print::Info, "      image: {} x {}", header.width, header.height);
+            printLine(Print::Info, "      compression: {}", m_context.compression);
+            printLine(Print::Info, "      planar_configuration: {}", m_context.planar_configuration);
+            printLine(Print::Info, "      tile: {} x {}", m_context.tile_width, m_context.tile_length);
+            printLine(Print::Info, "      tile_offsets: {}, tile_byte_counts: {}", m_context.tile_offsets.size(), m_context.tile_byte_counts.size());
+            printLine(Print::Info, "      strip: {} x {}", m_context.width, m_context.rows_per_strip);
+            printLine(Print::Info, "      strip_offsets: {}, strip_byte_counts: {}", m_context.strip_offsets.size(), m_context.strip_byte_counts.size());
+
             if (!header.success)
             {
                 status.setError(header.info);
                 return status;
             }
 
-            DecodeTargetBitmap target(dest, header.width, header.height, header.format, m_context.palette, false);
+            // Calculate target width and height
+            int target_width = header.width;
+            int target_height = header.height;
+
+            // TIFF compresses complete tiles, even if they only partially overlap the image.
+            // This keeps the decoding loops simple as they don't have to clip.
+            if (m_context.tile_width > 0 && m_context.tile_length > 0)
+            {
+                target_width = div_ceil(header.width, m_context.tile_width) * m_context.tile_width;
+                target_height = div_ceil(header.height, m_context.tile_length) * m_context.tile_length;
+            }
+
+            DecodeTargetBitmap target(dest, target_width, target_height, header.format, m_context.palette, false);
 
             if (m_context.compression == u32(Compression::JPEG_LEGACY))
             {
-                // Handle JPEG compression with unified decoder
+                // JPEG compression (legacy)
                 if (!decompress_legacy_jpeg(target, options, level, depth, face))
                 {
                     status.setError("JPEG decoding failed");
@@ -1491,54 +1711,115 @@ namespace
             }
             else if (m_context.compression == u32(Compression::JPEG_MODERN))
             {
-                // Handle JPEG compression with unified decoder
+                // JPEG compression (modern)
                 if (!decompress_modern_jpeg(target, options, level, depth, face))
                 {
                     status.setError("JPEG decoding failed");
                     return status;
                 }
             }
-            else if (m_context.planar_configuration == 2)
+            else if (m_context.tile_offsets.size() > 0)
             {
-                // Planar format: strips organized as channels, clear target buffer first
-                std::memset(target.image, 0, target.stride * header.height);
-                
-                // For planar: strips per spatial region = total_strips / samples_per_pixel
-                u32 strips_per_spatial_region = m_context.strip_offsets.size() / m_context.samples_per_pixel;
-                
-                for (size_t spatial_strip = 0; spatial_strip < strips_per_spatial_region; ++spatial_strip)
-                {
-                    u32 y = spatial_strip * m_context.rows_per_strip;
-                    u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
-                    
-                    for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
-                    {
-                        size_t strip_index = spatial_strip * m_context.samples_per_pixel + channel;
-                        
-                        const u8* src = m_memory.address + m_context.strip_offsets[strip_index];
-                        u32 bytes = m_context.strip_byte_counts[strip_index];
+                // tiles
 
-                        Surface strip(target, 0, y, header.width, strip_height);
-                        decodeStrip(strip, ConstMemory(src, bytes), header.width, strip_height, strip_index, channel);
+                const u32 tile_width = m_context.tile_width;
+                const u32 tile_length = m_context.tile_length;
+                const u32 xtiles = div_ceil(header.width, tile_width);
+                const u32 ytiles = div_ceil(header.height, tile_length);
+
+                if (m_context.planar_configuration == 1)
+                {
+                    // chunky format
+    
+                    for (size_t i = 0; i < m_context.tile_offsets.size(); ++i)
+                    {
+                        ConstMemory memory(m_memory.address + m_context.tile_offsets[i], m_context.tile_byte_counts[i]);
+    
+                        u32 x = (i % xtiles) * tile_width;
+                        u32 y = (i / xtiles) * tile_length;
+    
+                        printLine(Print::Info, "    [Tile] {}, {}", x, y);
+                        printLine(Print::Info, "      offset: {}, length: {} bytes", m_context.tile_offsets[i], m_context.tile_byte_counts[i]);
+    
+                        Surface tile(target, x, y, tile_width, tile_length);
+                        decodeRect(tile, memory, tile_width, tile_length);
+                    }
+                }
+                else
+                {
+                    // planar format
+
+                    // TODO: clear the target surface correctly
+                    std::memset(target.image, 0, target.stride * header.height);
+
+                    // TODO: verify count == m_context.tile_offsets.size()
+                    size_t count = xtiles * ytiles;
+
+                    for (size_t i = 0; i < count; ++i)
+                    {
+                        u32 x = (i % xtiles) * tile_width;
+                        u32 y = (i / xtiles) * tile_length;
+
+                        for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
+                        {
+                            size_t index = channel * count + i;
+                            ConstMemory memory(m_memory.address + m_context.tile_offsets[index], m_context.tile_byte_counts[index]);
+
+                            Surface tile(target, x, y, tile_width, tile_length);
+                            decodeRect(tile, memory, tile_width, tile_length, channel);
+                        }
                     }
                 }
             }
             else
             {
-                // Chunky format: strips organized spatially
-                u32 y = 0;
-                
-                for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
+                // strips
+
+                if (m_context.planar_configuration == 1)
                 {
-                    u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
+                    // chunky format
 
-                    const u8* src = m_memory.address + m_context.strip_offsets[i];
-                    u32 bytes = m_context.strip_byte_counts[i];
+                    u32 y = 0;
+                
+                    for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
+                    {
+                        u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
+    
+                        const u8* src = m_memory.address + m_context.strip_offsets[i];
+                        u32 bytes = m_context.strip_byte_counts[i];
+    
+                        Surface strip(target, 0, y, header.width, strip_height);
+                        decodeRect(strip, ConstMemory(src, bytes), header.width, strip_height);
+    
+                        y += strip_height;
+                    }
+                }
+                else
+                {
+                    // planar format
 
-                    Surface strip(target, 0, y, header.width, strip_height);
-                    decodeStrip(strip, ConstMemory(src, bytes), header.width, strip_height, i);
+                    // TODO: clear the target surface correctly
+                    std::memset(target.image, 0, target.stride * header.height);
 
-                    y += strip_height;
+                    // For planar: strips per spatial region = total_strips / samples_per_pixel
+                    u32 strips_per_spatial_region = m_context.strip_offsets.size() / m_context.samples_per_pixel;
+
+                    for (size_t spatial_strip = 0; spatial_strip < strips_per_spatial_region; ++spatial_strip)
+                    {
+                        u32 y = spatial_strip * m_context.rows_per_strip;
+                        u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
+
+                        for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
+                        {
+                            size_t strip_index = spatial_strip * m_context.samples_per_pixel + channel;
+
+                            const u8* src = m_memory.address + m_context.strip_offsets[strip_index];
+                            u32 bytes = m_context.strip_byte_counts[strip_index];
+
+                            Surface strip(target, 0, y, header.width, strip_height);
+                            decodeRect(strip, ConstMemory(src, bytes), header.width, strip_height, channel);
+                        }
+                    }
                 }
             }
 
@@ -1547,480 +1828,200 @@ namespace
             return status;
         }
 
-        bool decompress_legacy_jpeg(DecodeTargetBitmap& target, const ImageDecodeOptions& options, int level, int depth, int face)
+        bool decompress_legacy_jpeg(DecodeTargetBitmap& target, ImageDecodeOptions options, int level, int depth, int face)
         {
-            // Reconstruct a JPEG stream then decode it.
-
-            // Ideally we would refactor our JPEG decoder to use the tables stored in TIFF tags,
-            // and decode the strips directly. There are two methods TIFF store JPEG data:
-            // 1. JPEGInterchangeFormat: A JPEG stream with headers and tables which have to
-            //    be parsed by the JPEG decoder, then each strip is decoded separately as
-            //    each strips is independently Huffman encoded.
-            // 2. The legacy method: The Huffman and Quantization tables are stored in the
-            //    TIFF tags, which must be converted to JPEG decoder tables.
-
-            // Since the JPEG decoder isn't refactored yet, we reconstruct a valid JPEG stream
-            // and decode it instead. Since each strip is independently Huffman encoded, we
-            // need to add RST markers to force the Huffman decoder to reset after each strip.
-            // The restart interval is calculated based on the strip dimensions and the image
-            // width. This is non-standard and specification dictates restart interval must
-            // be one MCU scan, but our decoder allows larger restart intervals. :)
-
-            Buffer jpeg_stream;
-
-            // Calculate MCU dimensions
-            u32 mcu_width = 8;
-            u32 mcu_height = 8;
-
-            if (m_context.y_cb_cr_sub_sampling.size() == 2)
+            if (m_context.photometric == 2)
             {
-                mcu_width = m_context.y_cb_cr_sub_sampling[0] * 8;
-                mcu_height = m_context.y_cb_cr_sub_sampling[1] * 8;
+                options.jpeg_colorspace_rgb = true;
             }
 
-            // Step 1: Calculate restart interval in MCUs first (needed for DRI marker)
-            u32 horizontal_mcus = (m_context.width + mcu_width - 1) / mcu_width;
-            u32 strip_height_mcus = (m_context.rows_per_strip + mcu_height - 1) / mcu_height;
-            u32 restart_interval_mcus = horizontal_mcus * strip_height_mcus;
-
-            if (m_context.jpeg_interchange_format != 0)
+            auto writeDHT = [] (Buffer& buffer, u8 id, const u8* table)
             {
-                // Mode A: Copy headers from JPEGInterchangeFormat
-                printLine(Print::Info, "  Using headers from JPEGInterchangeFormat");
+                u8 num_codes = 0;
 
-                const u8* header_data = m_memory.address + m_context.jpeg_interchange_format;
-                u32 header_length = m_context.jpeg_interchange_format_length;
-
-                // Look for any JPEG markers in the header data
-                int marker_count = 0;
-                bool found_dht = false;
-
-                for (u32 i = 0; i < header_length - 1; ++i)
+                for (int j = 0; j < 16; ++j)
                 {
-                    if (header_data[i] == 0xFF && header_data[i+1] >= 0xC0)
-                    {
-                        if (header_data[i+1] == 0xC4)
-                        {
-                            found_dht = true;
-                        }
-
-                        marker_count++;
-                        if (marker_count >= 10)
-                            break; // Increased limit
-                    }
+                    num_codes += table[j];
                 }
 
-                // Validate header structure before using
-                bool has_soi = false, has_dqt = false, has_sof = false;
-                for (u32 i = 0; i < header_length - 1; ++i)
+                if (num_codes > 200) 
                 {
-                    if (header_data[i] == 0xFF)
-                    {
-                        u8 marker = header_data[i+1];
-                        if (marker == 0xD8) has_soi = true;      // SOI
-                        else if (marker == 0xDB) has_dqt = true; // DQT  
-                        else if (marker == 0xC0) has_sof = true; // SOF0
-                    }
+                    // Skip invalid tables
+                    return;
                 }
 
-                if (!has_soi || !has_dqt || !has_sof)
-                {
-                    printLine(Print::Error, "    ERROR: Headers incomplete - SOI:{}, DQT:{}, SOF:{}", has_soi, has_dqt, has_sof);
-                    return false;
-                }
+                u16 length = 3 + 16 + num_codes;
 
-                // Find the actual end of the last valid JPEG marker
-                u32 valid_header_length = header_length;
-                bool found_valid_end = false;
+                u8* p = buffer.append(2 + length);
+                bigEndian::ustore16(p + 0, jpeg::MARKER_DHT);
+                bigEndian::ustore16(p + 2, length);
+                p[4] = id;
 
-                // Scan backwards to find last marker
-                for (int i = header_length - 2; i >= 0; i--)
-                {
-                    if (header_data[i] == 0xFF && header_data[i+1] >= 0xC0)
-                    {
-                        // Found a marker, now find its end
-                        if (header_data[i+1] == 0xC4) // DHT
-                        {
-                            u16 marker_length = (header_data[i+2] << 8) | header_data[i+3];
-                            valid_header_length = i + 2 + marker_length;
-                            found_valid_end = true;
-                            break;
-                        }
-                        else if (header_data[i+1] == 0xC0) // SOF0
-                        {
-                            u16 marker_length = (header_data[i+2] << 8) | header_data[i+3];
-                            valid_header_length = i + 2 + marker_length;
-                            found_valid_end = true;
-                            break;
-                        }
-                    }
-                }
+                std::memcpy(p + 5, table, 16 + num_codes);
+            };
 
-                jpeg_stream.append(header_data, valid_header_length);
-
-                // Check if we need to add Huffman tables
-                printLine(Print::Info, "  JPEGInterchangeFormat DHT check: found_dht={}", found_dht);
-                if (!found_dht)
-                {
-                    printLine(Print::Info, "  Completing headers with Huffman tables from TIFF tags");
-
-                    // Add DHT (Huffman tables) from JPEGDCTables/JPEGACTables tags
-                    for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
-                    {
-                        u32 table_offset = m_context.jpeg_dc_tables[i];
-                        const u8* table_data = m_memory.address + table_offset;
-
-                        // Read the actual table structure (16 bytes of lengths + symbols)
-                        u8 num_codes = 0;
-                        for (int j = 0; j < 16; ++j)
-                        {
-                            num_codes += table_data[j];
-                        }
-
-                        if (num_codes > 200)
-                        {
-                            continue;
-                        }
-
-                        u8* p = nullptr;
-
-                        // DHT marker
-                        p = jpeg_stream.append(2);
-                        p[0] = 0xff;
-                        p[1] = 0xc4;
-
-                        u16 dht_length = 2 + 1 + 16 + num_codes;
-                        p = jpeg_stream.append(3);
-                        p[0] = (dht_length >> 8) & 0xFF;
-                        p[1] = dht_length & 0xFF;
-                        p[2] = i; // Table class (0=DC) + table ID
-
-                        // Append table data (16 bytes lengths + symbols)
-                        for (int j = 0; j < 16 + num_codes; ++j)
-                        {
-                            jpeg_stream.append(table_data[j]);
-                        }
-                    }
-                
-                    for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
-                    {
-                        u32 table_offset = m_context.jpeg_ac_tables[i];
-                        const u8* table_data = m_memory.address + table_offset;
-
-                        // Read the actual table structure (16 bytes of lengths + symbols)
-                        u8 num_codes = 0;
-                        for (int j = 0; j < 16; ++j)
-                        {
-                            num_codes += table_data[j];
-                        }
-
-                        if (num_codes > 200)
-                        {
-                            continue;
-                        }
-
-                        u8* p = nullptr;
-
-                        // DHT marker  
-                        p = jpeg_stream.append(2);
-                        p[0] = 0xff;
-                        p[1] = 0xc4;
-                        
-                        u16 dht_length = 2 + 1 + 16 + num_codes;
-                        p = jpeg_stream.append(3);
-                        p[0] = (dht_length >> 8) & 0xFF;
-                        p[1] = dht_length & 0xFF;
-                        p[2] = 0x10 | i; // Table class (1=AC) + table ID
-
-                        // Append table data (16 bytes lengths + symbols)
-                        for (int j = 0; j < 16 + num_codes; ++j)
-                        {
-                            jpeg_stream.append(table_data[j]);
-                        }
-                    }
-                }
-            }
-            else
+            auto writeDQT = [] (Buffer& buffer, u8 id, const u8* table)
             {
-                // Mode B: Reconstruct headers from TIFF tags
-                u8* p = nullptr;
+                u8* p = buffer.append(69);
+                bigEndian::ustore16(p + 0, jpeg::MARKER_DQT);
+                bigEndian::ustore16(p + 2, 0x43); // length
+                p[4] = id; // Table ID + precision (0 = 8-bit)
 
-                // SOI (Start of Image)
-                p = jpeg_stream.append(2);
-                p[0] = 0xff;
-                p[1] = 0xd8;
+                std::memcpy(p + 5, table, 64);
+            };
 
-                // Add basic APP0 marker for compatibility
-                p = jpeg_stream.append(18);
-                p[0] = 0xFF;
-                p[1] = 0xE0;
-                p[2] = 0x00; // Length hi
-                p[3] = 0x10; // Length lo (16 bytes)
-                p[4] = 'J'; 
-                p[5] = 'F';
-                p[6] = 'I';
-                p[7] = 'F';
-                p[8] = 0x00; // null terminator
-                p[9] = 0x01; // Version major
-                p[10] = 0x01; // Version minor
-                p[11] = 0x01; // Units (1 = inches)
-                p[12] = 0x00;
-                p[13] = 0x48; // X density (72 dpi)
-                p[14] = 0x00;
-                p[15] = 0x48; // Y density (72 dpi)
-                p[16] = 0x00; // Thumbnail width
-                p[17] = 0x00; // Thumbnail height
-
-                // Add SOF1 (Extended sequential DCT) to support table IDs beyond 1
-                // MUST come BEFORE DHT tables so decoder knows it's not baseline!
-                p = jpeg_stream.append(10);
-                p[0] = 0xFF;
-                p[1] = 0xC1;
-                p[2] = 0x00; // Length hi  
-                p[3] = 0x11; // Length lo (17 = 2 + 1 + 2 + 2 + 3*3)
+            auto writeSOF1 = [] (Buffer& buffer, int width, int height)
+            {
+                u8* p = buffer.append(10);
+                bigEndian::ustore16(p + 0, jpeg::MARKER_SOF1);
+                bigEndian::ustore16(p + 2, 0x11); // length
                 p[4] = 0x08; // Sample precision (8 bits)
-                p[5] = (m_context.height >> 8) & 0xFF; // Height hi
-                p[6] = m_context.height & 0xFF;        // Height lo
-                p[7] = (m_context.width >> 8) & 0xFF;  // Width hi  
-                p[8] = m_context.width & 0xFF;         // Width lo
+                bigEndian::ustore16(p + 5, height);
+                bigEndian::ustore16(p + 7, width);
                 p[9] = 0x03; // Number of components
 
                 // Component 1: Y (luminance) - full resolution
-                p = jpeg_stream.append(3);
+                p = buffer.append(3);
                 p[0] = 0x01; // Component ID
                 p[1] = 0x22; // Sampling factors (2:2) to match YCbCrSubSampling
                 p[2] = 0x00; // Quantization table 0
 
                 // Component 2: Cb (chrominance) - subsampled by 2:2  
-                p = jpeg_stream.append(3);
+                p = buffer.append(3);
                 p[0] = 0x02; // Component ID
                 p[1] = 0x11; // Sampling factors (1:1) relative to Y
                 p[2] = 0x01; // Quantization table 1
 
                 // Component 3: Cr (chrominance) - subsampled by 2:2
-                p = jpeg_stream.append(3);
+                p = buffer.append(3);
                 p[0] = 0x03; // Component ID
                 p[1] = 0x11; // Sampling factors (1:1) relative to Y  
                 p[2] = 0x02; // Quantization table 2
+            };
 
-                // Add quantization tables from TIFF tags
-                for (size_t i = 0; i < m_context.jpeg_qt_tables.size(); ++i)
+            auto writeSOS = [] (Buffer& buffer)
+            {
+                u8* p = buffer.append(14);
+                bigEndian::ustore16(p + 0, jpeg::MARKER_SOS);
+                bigEndian::ustore16(p + 2, 0x0c); // length
+                p[4] = 0x03; // Number of components
+
+                // Component 1: Y  
+                p[5] = 0x01; // Component ID
+                p[6] = 0x00; // DC table 0, AC table 0
+
+                // Component 2: Cb
+                p[7] = 0x02; // Component ID  
+                p[8] = 0x11; // DC table 1, AC table 1
+
+                // Component 3: Cr
+                p[9] = 0x03; // Component ID
+                p[10] = 0x22; // DC table 2, AC table 2
+
+                // Scan parameters
+                p[11] = 0x00; // Spectral selection start (0)
+                p[12] = 0x3f; // Spectral selection end (63)  
+                p[13] = 0x00; // Successive approximation
+            };
+
+            std::function<ImageDecodeStatus(ConstMemory, Surface)> decodeJPEG;
+
+            if (m_context.jpeg_interchange_format != 0)
+            {
+                //
+                // Mode A: Copy JPEG from JPEGInterchangeFormat
+                //
+                printLine(Print::Info, "  Using headers from JPEGInterchangeFormat");
+
+                const u8* header_data = m_memory.address + m_context.jpeg_interchange_format;
+                u32 header_length = m_context.jpeg_interchange_format_length;
+                printLine(Print::Info, "  Header length: {}", header_length);
+
+                decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
                 {
-                    u32 table_offset = m_context.jpeg_qt_tables[i];
-                    const u8* table_data = m_memory.address + table_offset;
+                    ConstMemory jpeg_interchange_format_memory(m_memory.address + m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length);
 
-                    // Each DQT table gets its own complete marker
-                    u8* p = jpeg_stream.append(69); // Complete DQT: marker(2) + length(2) + precision+id(1) + data(64) = 69 bytes
-                    p[0] = 0xFF;
-                    p[1] = 0xDB;
-                    p[2] = 0x00; // Length hi
-                    p[3] = 0x43; // Length lo (67 = length(2) + precision+id(1) + data(64))
-                    p[4] = i;    // Table ID + precision (0 = 8-bit)
+                    ImageDecodeInterface tempInterface;
+                    jpeg::Parser parser(&tempInterface, jpeg_interchange_format_memory);
+                    parser.setRelaxedParser(true);
 
-                    // Copy 64 bytes of quantization data
-                    for (int j = 0; j < 64; ++j)
+                    Buffer buffer;
+
+                    for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
                     {
-                        p[5 + j] = table_data[j];
-                    }                    
-                }
+                        u32 offset = m_context.jpeg_dc_tables[i];
+                        writeDHT(buffer, 0x00 | i, m_memory.address + offset);
+                    }
 
-                // Add DHT tables from TIFF tags
-                if (m_context.jpeg_dc_tables.empty() && m_context.jpeg_ac_tables.empty())
+                    for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
+                    {
+                        u32 offset = m_context.jpeg_ac_tables[i];
+                        writeDHT(buffer, 0x10 | i, m_memory.address + offset);
+                    }
+
+                    writeSOS(buffer);
+
+                    buffer.append(memory);
+
+                    parser.setMemory(buffer);
+
+                    ImageDecodeStatus status = parser.decode(surface, options);
+                    return status;
+                };
+            }
+            else
+            {
+                //
+                // Mode B: Reconstruct JPEG from TIFF tags
+                //
+
+                decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
                 {
-                    printLine(Print::Error, "  WARNING: No JPEG Huffman tables found in TIFF tags!");
-                    printLine(Print::Error, "  This TIFF may not have proper JPEG table tags, trying to use standard JPEG tables...");
-                }
-                
-                for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
-                {
-                    u32 table_offset = m_context.jpeg_dc_tables[i];
-                    const u8* table_data = m_memory.address + table_offset;
+                    Buffer buffer;
+                    u8* p = nullptr;
 
-                    // Read the actual table structure (16 bytes of lengths + symbols)
-                    u8 num_codes = 0;
-                    for (int j = 0; j < 16; ++j)
+                    // SOI
+                    p = buffer.append(2);
+                    bigEndian::ustore16(p, jpeg::MARKER_SOI);
+
+                    // SOF1 (Extended sequential DCT)
+                    writeSOF1(buffer, m_context.width, m_context.height);
+
+                    for (size_t i = 0; i < m_context.jpeg_qt_tables.size(); ++i)
                     {
-                        num_codes += table_data[j];
+                        u32 offset = m_context.jpeg_qt_tables[i];
+                        writeDQT(buffer, i, m_memory.address + offset);
                     }
 
-                    if (num_codes > 200) 
+                    for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
                     {
-                        continue; // Skip invalid tables
-                    }
-                    
-                    u8 table_id = i; // Use original table ID
-
-                    // Each DHT table gets its own complete marker
-                    u16 dht_length = 2 + 1 + 16 + num_codes; // length(2) + class_id(1) + lengths(16) + symbols(num_codes)
-                    u32 total_size = 2 + 2 + 1 + 16 + num_codes; // marker(2) + length(2) + class_id(1) + lengths(16) + symbols(num_codes)
-                    
-                    u8* p = jpeg_stream.append(total_size);
-                    p[0] = 0xFF;
-                    p[1] = 0xC4;
-                    p[2] = (dht_length >> 8) & 0xFF;
-                    p[3] = dht_length & 0xFF;
-                    p[4] = table_id; // Table class (0=DC) + table ID
-
-                    // Copy table data (16 bytes lengths + symbols)
-                    for (int j = 0; j < 16 + num_codes; ++j)
-                    {
-                        p[5 + j] = table_data[j];
-                    }
-                }
-
-                for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
-                {
-                    u32 table_offset = m_context.jpeg_ac_tables[i];
-                    const u8* table_data = m_memory.address + table_offset;
-
-                    // Read the actual table structure (16 bytes of lengths + symbols)
-                    u8 num_codes = 0;
-                    for (int j = 0; j < 16; ++j)
-                    {
-                        num_codes += table_data[j];
+                        u32 offset = m_context.jpeg_dc_tables[i];
+                        writeDHT(buffer, 0x00 | i, m_memory.address + offset);
                     }
 
-                    if (num_codes > 200) 
+                    for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
                     {
-                        continue; // Skip invalid tables
+                        u32 offset = m_context.jpeg_ac_tables[i];
+                        writeDHT(buffer, 0x10 | i, m_memory.address + offset);
                     }
 
-                    u8 table_id = i; // Use original table ID
+                    writeSOS(buffer);
 
-                    // Each DHT table gets its own complete marker
-                    u16 dht_length = 2 + 1 + 16 + num_codes; // length(2) + class_id(1) + lengths(16) + symbols(num_codes)
-                    u32 total_size = 2 + 2 + 1 + 16 + num_codes; // marker(2) + length(2) + class_id(1) + lengths(16) + symbols(num_codes)
-                    
-                    u8* p = jpeg_stream.append(total_size);
-                    p[0] = 0xFF;
-                    p[1] = 0xC4;
-                    p[2] = (dht_length >> 8) & 0xFF;
-                    p[3] = dht_length & 0xFF;
-                    p[4] = 0x10 | table_id; // Table class (1=AC) + table ID
+                    buffer.append(memory);
 
-                    // Copy table data (16 bytes lengths + symbols)
-                    for (int j = 0; j < 16 + num_codes; ++j)
-                    {
-                        p[5 + j] = table_data[j];
-                    }
-                }
+                    // EOI
+                    u8* eoi = buffer.append(2);
+                    bigEndian::ustore16(eoi, jpeg::MARKER_EOI);
+
+                    printLine(Print::Info, "  Complete JPEG stream: {} bytes", buffer.size());
+
+                    // Decode the JPEG stream
+                    ImageDecoder decoder(buffer, ".jpg");
+
+                    ImageDecodeStatus status = decoder.decode(surface, options, level, depth, face);
+                    return status;
+                };
             }
-
-            u8* dri_data = jpeg_stream.append(6); // Allocate 6 bytes for DRI marker
-            dri_data[0] = 0xFF;
-            dri_data[1] = 0xDD;
-            dri_data[2] = 0x00;
-            dri_data[3] = 0x04;
-            dri_data[4] = (restart_interval_mcus >> 8) & 0xFF;
-            dri_data[5] = restart_interval_mcus & 0xFF;
-
-            // Add SOS (Start of Scan) header
-            u8* sos_data = jpeg_stream.append(14); // Complete SOS header
-            sos_data[0] = 0xFF;
-            sos_data[1] = 0xDA;
-            sos_data[2] = 0x00;
-            sos_data[3] = 0x0C; // Length (12 bytes following this field)
-            sos_data[4] = 0x03; // Number of components
-            
-            // Component 1: Y  
-            sos_data[5] = 0x01; // Component ID
-            sos_data[6] = 0x00; // DC table 0, AC table 0
-            
-            // Component 2: Cb
-            sos_data[7] = 0x02; // Component ID  
-            sos_data[8] = 0x11; // DC table 1, AC table 1
-            
-            // Component 3: Cr
-            sos_data[9] = 0x03; // Component ID
-            sos_data[10] = 0x22; // DC table 2, AC table 2
-            
-            // Scan parameters
-            sos_data[11] = 0x00; // Spectral selection start (0)
-            sos_data[12] = 0x3F; // Spectral selection end (63)  
-            sos_data[13] = 0x00; // Successive approximation
-
-            // Use tiles if available, otherwise strips
-            bool is_tiled = !m_context.tile_offsets.empty();
-            const auto& offsets = is_tiled ? m_context.tile_offsets : m_context.strip_offsets;
-            const auto& byte_counts = is_tiled ? m_context.tile_byte_counts : m_context.strip_byte_counts;
-
-            if (offsets.empty())
-            {
-                printLine(Print::Error, "  ERROR: No {} data found!", is_tiled ? "tile" : "strip");
-                printLine(Print::Error, "  JPEGInterchangeFormat: {}, JPEGInterchangeFormatLength: {}", 
-                         m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length);
-                printLine(Print::Error, "  This TIFF might use Mode A (JPEGInterchangeFormat) instead of Mode B (reconstructed headers)");
-                return Buffer();
-            }
-            
-            for (size_t i = 0; i < offsets.size(); ++i)
-            {
-                const u8* data = m_memory.address + offsets[i];
-                u32 data_bytes = byte_counts[i];
-
-                if (i > 0)
-                {
-                    // Multiple tiles/strips: Add RST marker to force Huffman decoder reset
-                    u8 rst_id = (i - 1) % 8; // RST0-RST7, cycling
-                    u8 rst_marker = 0xD0 + rst_id; // RST0=0xD0, RST1=0xD1, etc.
-
-                    // Insert RST marker before data (2 bytes: FF D0-D7)
-                    u8* rst_data = jpeg_stream.append(2);
-                    rst_data[0] = 0xFF;
-                    rst_data[1] = rst_marker;
-                }
-
-                jpeg_stream.append(data, data_bytes);
-            }
-
-            // Step 4: Add EOI marker
-            u8* eoi_data = jpeg_stream.append(2);
-            eoi_data[0] = 0xFF;
-            eoi_data[1] = 0xD9;
-
-            printLine(Print::Info, "  Complete JPEG stream: {} bytes", jpeg_stream.size());
-
-            // Step 5: Decode the JPEG stream
-            ImageDecoder jpeg_decoder(jpeg_stream, ".jpg");
-            if (!jpeg_decoder.isDecoder())
-            {
-                printLine(Print::Error, "Failed to create JPEG decoder");
-                return false;
-            }
-
-            ImageHeader jpeg_header = jpeg_decoder.header();
-            if (!jpeg_header.success)
-            {
-                printLine(Print::Error, "JPEG header parsing failed: {}", jpeg_header.info);
-                return false;
-            }
-
-            ImageDecodeStatus jpeg_status = jpeg_decoder.decode(target, options, level, depth, face);
-            if (!jpeg_status.success)
-            {
-                printLine(Print::Error, "JPEG decode failed: {}", jpeg_status.info);
-                return false;
-            }
-
-            return true;
-        }
-
-        bool decompress_modern_jpeg(DecodeTargetBitmap& target, const ImageDecodeOptions& options, int level, int depth, int face)
-        {
-            // JPEG Compression=7 with JPEGTables optimization:
-            // - JPEGTables contains shared DQT+DHT tables
-            // - Each strip contains: [SOI] + [SOF + SOS + entropy data + EOI]  
-            // - Combine: [SOI] + [JPEGTables] + [rest of strip] for complete JPEG
-
-            if (m_context.jpeg_tables_offset == 0)
-            {
-                printLine(Print::Error, "JPEGTables not found for Compression=7");
-                return false;
-            }
-
-            // Get JPEGTables data
-            const u8* jpeg_tables = m_memory.address + m_context.jpeg_tables_offset;
-            u32 tables_length = m_context.jpeg_tables_length;
 
             // Check if using tiles or strips
             bool use_tiles = !m_context.tile_offsets.empty();
@@ -2049,164 +2050,255 @@ namespace
 
                     printLine(Print::Info, "    Tile {}: {}x{} at ({},{}) - {} bytes", i, tile_w, tile_h, tile_x, tile_y, tile_bytes);
 
-                    // Reconstruct complete JPEG stream for this tile
-                    Buffer jpeg_stream;
+                    Surface surface(target, tile_x, tile_y, tile_w, tile_h);
 
-                    // Copy SOI from tile data
-                    if (tile_bytes >= 2)
+                    ImageDecodeStatus status = decodeJPEG(ConstMemory(tile_data, tile_bytes), surface);
+                    if (!status)
                     {
-                        jpeg_stream.append(tile_data, 2);
-                    }
-
-                    // Extract table data from JPEGTables (skip SOI and EOI)
-                    if (tables_length >= 4)
-                    {
-                        const u8* table_data = jpeg_tables + 2;  // Skip SOI
-                        u32 table_data_length = tables_length - 4;  // Skip SOI + EOI
-                        
-                        jpeg_stream.append(table_data, table_data_length);
-                    }
-
-                    // Append tile content after SOI (SOF + SOS + entropy data + EOI)
-                    if (tile_bytes > 2)
-                    {
-                        jpeg_stream.append(tile_data + 2, tile_bytes - 2);
-                    }
-
-                    // Decode this tile
-                    ConstMemory jpeg_memory(jpeg_stream.data(), jpeg_stream.size());
-                    ImageDecoder jpeg_decoder(jpeg_memory, "");
-
-                    // Create surface for this tile positioned correctly in target
-                    Surface tile_surface(target, tile_x, tile_y, tile_w, tile_h);
-
-                    ImageDecodeStatus jpeg_status = jpeg_decoder.decode(tile_surface, options, 0, 0, 0);
-                    if (!jpeg_status.success)
-                    {
-                        printLine(Print::Error, "JPEG decode failed for tile {}: {}", i, jpeg_status.info);
+                        printLine(Print::Error, "JPEG decode failed for tile {}: {}", i, status.info);
                         return false;
                     }
                 }
             }
             else
             {
-                // Handle strip-based image (original logic)
+                // Handle strip image
                 u32 y = 0;
 
                 for (size_t i = 0; i < num_data_blocks; ++i)
-            {
-                u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
-
-                const u8* strip_data = m_memory.address + m_context.strip_offsets[i];
-                u32 strip_bytes = m_context.strip_byte_counts[i];
-
-                // Reconstruct complete JPEG stream for this strip
-                Buffer jpeg_stream;
-
-                // JPEGTables structure: [SOI] + [DQT] + [DHT] + ... + [EOI]
-                // Strip structure: [SOI] + [SOF] + [SOS] + [entropy data] + [EOI]
-                // Goal: [SOI] + [DQT+DHT from tables] + [SOF+SOS+data+EOI from strip]
-
-                // Step 1: Copy SOI from strip
-                if (strip_bytes >= 2)
                 {
-                    jpeg_stream.append(strip_data, 2);
-                }
+                    u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
+                    if (!m_context.rows_per_strip)
+                    {
+                        strip_height = header.height;// - y;
+                    }
 
-                // Step 2: Extract table data from JPEGTables (skip SOI and EOI)
-                // JPEGTables: [FF D8] + [table data] + [FF D9]
-                if (tables_length >= 4)  // At least SOI + EOI
-                {
-                    const u8* table_data = jpeg_tables + 2;  // Skip SOI
-                    u32 table_data_length = tables_length - 4;  // Skip SOI + EOI
-                    
-                    jpeg_stream.append(table_data, table_data_length);
-                }
+                    const u8* strip_data = m_memory.address + m_context.strip_offsets[i];
+                    u32 strip_bytes = m_context.strip_byte_counts[i];
 
-                // Step 3: Append strip content after SOI (SOF + SOS + entropy data + EOI)
-                if (strip_bytes > 2)
-                {
-                    jpeg_stream.append(strip_data + 2, strip_bytes - 2);
-                }
+                    printLine(Print::Info, "    Strip {}: {}x{} at ({},{}) - {} bytes", i, header.width, strip_height, 0, y, strip_bytes);
+                    Surface surface(target, 0, y, header.width, strip_height);
 
-                // Decode this strip
-                ImageDecoder jpeg_decoder(jpeg_stream, ".jpg");
-                if (!jpeg_decoder.isDecoder())
-                {
-                    printLine(Print::Error, "Failed to create JPEG decoder for strip {}", i);
-                    return false;
-                }
+                    ImageDecodeStatus status = decodeJPEG(ConstMemory(strip_data, strip_bytes), surface);
+                    if (!status)
+                    {
+                        printLine(Print::Error, "JPEG decode failed for strip {}: {}", i, status.info);
+                        return false;
+                    }
 
-                // Create surface for this strip
-                Surface strip_surface(target, 0, y, header.width, strip_height);
-
-                ImageDecodeStatus jpeg_status = jpeg_decoder.decode(strip_surface, options, 0, 0, 0);
-                if (!jpeg_status.success)
-                {
-                    printLine(Print::Error, "JPEG decode failed for strip {}: {}", i, jpeg_status.info);
-                    return false;
-                }
-
-                y += strip_height;
+                    y += strip_height;
                 }
             }
 
             return true;
         }
 
-        void expandSubBytePixels(Memory dest, ConstMemory src, int width, int height)
+        bool decompress_modern_jpeg(DecodeTargetBitmap& target, ImageDecodeOptions options, int level, int depth, int face)
         {
-            const u8* src_ptr = src.address;
-            u8* dest_ptr = dest.address;
+            // JPEG Compression=7 with JPEGTables
+            // - JPEGTables contains shared DQT+DHT tables
+            // - Each strip contains: [SOI] + [SOF + SOS + entropy data + EOI]  
 
-            int pixels_per_byte = 8 / m_context.bpp;
-            int mask = (1 << m_context.bpp) - 1;
-
-            // For palette images, keep raw indices (0-1, 0-3, 0-15)
-            // For sample images, scale to full 8-bit range (0-255)
-            bool is_palette = (m_context.photometric == 3); // PhotometricInterpretation::Palette
-            int scale = is_palette ? 1 : (255 / mask);
-
-            for (int y = 0; y < height; ++y)
+            if (m_context.photometric == 2)
             {
-                for (int x = 0; x < width; x += pixels_per_byte)
-                {
-                    u8 packed_byte = *src_ptr++;
+                options.jpeg_colorspace_rgb = true;
+            }
 
-                    // Extract pixels from MSB to LSB
-                    int shift = 8 - m_context.bpp;  // Start at MSB
-                    for (int pixel = 0; pixel < pixels_per_byte && (x + pixel) < width; ++pixel)
+            if (m_context.jpeg_tables.size == 0)
+            {
+                printLine(Print::Error, "JPEGTables not found for Compression=7");
+                return false;
+            }
+
+            // Check if using tiles or strips
+            bool use_tiles = !m_context.tile_offsets.empty();
+            size_t num_data_blocks = use_tiles ? m_context.tile_offsets.size() : m_context.strip_offsets.size();
+
+            printLine(Print::Info, "  Processing {} {}", num_data_blocks, use_tiles ? "tiles" : "strips");
+
+            auto decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+            {
+                // Parse jpeg tables in tiff tags (DHT, DQT)
+                ImageDecodeInterface tempInterface;
+                jpeg::Parser parser(&tempInterface, m_context.jpeg_tables);
+                parser.setRelaxedParser(true);
+
+                // Parse embedded jpeg (SOF, SOS, etc.)
+                parser.setMemory(memory);
+
+                // Decode jpeg stream (entropy data)
+                ImageDecodeStatus status = parser.decode(surface, options);
+                return status;
+            };
+
+            if (use_tiles)
+            {
+                // Handle tiled image
+                u32 tiles_across = (header.width + m_context.tile_width - 1) / m_context.tile_width;
+                u32 tiles_down = (header.height + m_context.tile_length - 1) / m_context.tile_length;
+                
+                printLine(Print::Info, "  Tile grid: {}x{} ({}x{} pixels per tile)", tiles_across, tiles_down, m_context.tile_width, m_context.tile_length);
+
+                for (size_t i = 0; i < num_data_blocks; ++i)
+                {
+                    u32 tile_x = (i % tiles_across) * m_context.tile_width;
+                    u32 tile_y = (i / tiles_across) * m_context.tile_length;
+                    
+                    u32 tile_w = std::min(m_context.tile_width, header.width - tile_x);
+                    u32 tile_h = std::min(m_context.tile_length, header.height - tile_y);
+
+                    const u8* tile_data = m_memory.address + m_context.tile_offsets[i];
+                    u32 tile_bytes = m_context.tile_byte_counts[i];
+
+                    printLine(Print::Info, "    Tile {}: {}x{} at ({},{}) - {} bytes", i, tile_w, tile_h, tile_x, tile_y, tile_bytes);
+
+                    Surface surface(target, tile_x, tile_y, tile_w, tile_h);
+
+                    ImageDecodeStatus status = decodeJPEG(ConstMemory(tile_data, tile_bytes), surface);
+                    if (!status)
                     {
-                        int pixel_value = (packed_byte >> shift) & mask;
-                        *dest_ptr++ = pixel_value * scale;
-                        shift -= m_context.bpp;
+                        printLine(Print::Error, "JPEG decode failed for tile {}: {}", i, status.info);
+                        return false;
                     }
                 }
             }
+            else
+            {
+                // Handle strip image
+                u32 y = 0;
+
+                for (size_t i = 0; i < num_data_blocks; ++i)
+                {
+                    u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
+
+                    const u8* strip_data = m_memory.address + m_context.strip_offsets[i];
+                    u32 strip_bytes = m_context.strip_byte_counts[i];
+
+                    Surface surface(target, 0, y, header.width, strip_height);
+
+                    ImageDecodeStatus status = decodeJPEG(ConstMemory(strip_data, strip_bytes), surface);
+                    if (!status)
+                    {
+                        printLine(Print::Error, "JPEG decode failed for strip {}: {}", i, status.info);
+                        return false;
+                    }
+
+                    y += strip_height;
+                }
+            }
+
+            return true;
         }
 
-        void decodeStrip(Surface target, ConstMemory memory, int width, int height, int strip_index = -1, u32 channel_index = 0)
+        void expandPixels(Memory dest, ConstMemory src, int width, int height, int source_bits, int target_bits)
         {
-            // Expand sub-byte formats (1, 2, 4 bits) to 8-bit during decompression for cleaner pipeline
-            u32 effective_bpp = std::max(8u, u32(m_context.bpp));
+            assert(target_bits == 8 || target_bits == 16);
 
-            // For planar format, each strip contains one channel only
-            u32 bytes_per_row;
+            printLine(Print::Info, "  expandPixels()\n    source_bits: {}, target_bits: {}", source_bits, target_bits);
+
+            u32 max_source = (1 << source_bits) - 1;
+            u32 max_target = (1 << target_bits) - 1;
+
+            u32 channels = m_context.samples_per_pixel;
             if (m_context.planar_configuration == 2)
             {
-                bytes_per_row = (header.width * effective_bpp / m_context.samples_per_pixel + 7) / 8;
+                channels = 1;
+            }
+
+            // Precompute bytes per scanline
+            u32 bits_per_scanline = width * source_bits * channels;
+            u32 bytes_per_scanline = div_ceil(bits_per_scanline, 8);
+
+            // Precompute destination stride
+            u32 dest_stride = width * channels * (target_bits / 8);
+
+            printLine(Print::Info, "    input stride: {}", bytes_per_scanline);
+            printLine(Print::Info, "    output stride: {}", dest_stride);
+
+            u8* dest_ptr = dest.address;
+            const u8* src_ptr = src.address;
+
+            // TODO: optimize
+
+            for (int y = 0; y < height; ++y)
+            {
+                u32 bit_offset = 0;  // Reset bit offset for each scanline
+
+                const int x1 = width * channels;
+
+                for (int x = 0; x < x1; ++x)
+                {
+                    // Read N bits from input
+                    u32 sample = 0;
+                    for (int bit = 0; bit < source_bits; ++bit)
+                    {
+                        u32 byte_index = bit_offset / 8;
+                        u32 bit_index = bit_offset % 8;
+                        u32 bit_value = (src_ptr[byte_index] >> (7 - bit_index)) & 1;
+                        sample |= (bit_value << (source_bits - 1 - bit));
+                        bit_offset++;
+                    }
+
+                    // Expand and write output
+                    if (PhotometricInterpretation(m_context.photometric) == PhotometricInterpretation::PALETTE)
+                    {
+                        dest_ptr[x] = u8(sample);
+                    }
+                    else if (target_bits == 8)
+                    {
+                        dest_ptr[x] = u8(sample * max_target / max_source);
+                    }
+                    else
+                    {
+                        u16 value = u16(sample * max_target / max_source);
+                        ustore16(dest_ptr + x * 2, value);
+                    }
+                }
+
+                src_ptr += bytes_per_scanline;
+                dest_ptr += dest_stride;
+            }
+        }
+
+        void decodeRect(Surface target, ConstMemory memory, int width, int height, u32 channel = 0)
+        {
+            u32 sample_bits = m_context.sample_bits;
+            u32 expanded_sample_bits = round_ceil(m_context.sample_bits, 8); 
+
+            u32 bytes_per_row = 0;
+            u32 expanded_bytes_per_row = 0;
+
+            if (m_context.planar_configuration == 1)
+            {
+                // Chunky format contains all channels
+                bytes_per_row = (width * sample_bits * m_context.samples_per_pixel + 7) / 8;
+                expanded_bytes_per_row = (width * expanded_sample_bits * m_context.samples_per_pixel) / 8;
             } 
             else
             {
-                bytes_per_row = (header.width * effective_bpp + 7) / 8;
+                // Planar format contains one channel
+                bytes_per_row = (width * sample_bits + 7) / 8;
+                expanded_bytes_per_row = (width * expanded_sample_bits) / 8;
             }
+
             u32 uncompressed_bytes = height * bytes_per_row;
+            u32 expanded_bytes = height * expanded_bytes_per_row;
+
+            /*
+            printLine(Print::Info, "  bytes_per_row: {}, uncompressed_bytes: {}",
+                bytes_per_row, uncompressed_bytes);
+            printLine(Print::Info, "  expanded_bytes_per_row: {}, expanded_bytes: {}",
+                expanded_bytes_per_row, expanded_bytes);
+            */
 
             Buffer buffer(uncompressed_bytes);
             Buffer expanded_buffer;
 
-            // Track whether we need post-decompression sub-byte expansion
-            bool needs_expansion = (m_context.bpp < 8);
+            bool needs_expansion = sample_bits != expanded_sample_bits;
+            if (needs_expansion)
+            {
+                expanded_buffer.resize(expanded_bytes);
+            }
 
             switch (Compression(m_context.compression))
             {
@@ -2214,28 +2306,29 @@ namespace
                 {
                     if (needs_expansion)
                     {
-                        expandSubBytePixels(buffer, memory, width, height);
+                        expandPixels(expanded_buffer, memory, width, height, sample_bits, expanded_sample_bits);
+                        memory = expanded_buffer;
                         needs_expansion = false;
                     }
                     else
                     {
                         std::memcpy(buffer, memory.address, uncompressed_bytes);
+                        memory = buffer;
                     }
 
-                    memory = buffer;
                     break;
                 }
 
                 case Compression::CCITT_RLE:
                 {
-                    bool success = ccitt_rle_decompress(buffer, memory, width);
+                    bool success = ccitt_rle_decompress(expanded_buffer, memory, width);
                     if (!success)
                     {
-                        printLine(Print::Error, "[CCITT-RLE] Decompression failed for strip {}", strip_index);
+                        printLine(Print::Error, "[CCITT-RLE] Decompression failed");
                         return;
                     }
 
-                    memory = buffer;
+                    memory = expanded_buffer;
                     needs_expansion = false; // CCITT already expands to 8-bit
                     break;
                 }
@@ -2295,17 +2388,16 @@ namespace
                     return;
             }
 
-            // Post-decompression sub-byte expansion if needed
+            // Post-decompression expansion if needed
             if (needs_expansion)
             {
-                expanded_buffer.resize(uncompressed_bytes);
-                expandSubBytePixels(expanded_buffer, memory, width, height);
+                expandPixels(expanded_buffer, memory, width, height, sample_bits, expanded_sample_bits);
                 memory = expanded_buffer;
             }
 
-            if (m_is_little_endian != isLittleEndianCPU())
+            if (m_is_little_endian != cpu::isLittleEndian())
             {
-                if (m_context.sample_bits == 16)
+                if (m_context.sample_bits == 16 && !needs_expansion)
                 {
                     // Handle 16-bit endianness conversion
                     byteswap(reinterpret_cast<u16*>(const_cast<u8*>(memory.address)), memory.size / 2);
@@ -2313,7 +2405,7 @@ namespace
             }
 
             // Apply PhotometricInterpretation color inversion for grayscale images
-            if (m_context.photometric == 0 && m_context.samples_per_pixel == 1) // WhiteIsZero grayscale
+            if (m_context.photometric == 0 && m_context.samples_per_pixel == 1)
             {
                 u8* data = const_cast<u8*>(memory.address);
                 for (u32 i = 0; i < memory.size; ++i)
@@ -2324,13 +2416,13 @@ namespace
 
             for (u32 y = 0; y < height; ++y)
             {
-                if (m_context.planar_configuration == 2)
+                if (m_context.planar_configuration == 1)
                 {
-                    resolvePlanarScanline(target.image, memory.address, bytes_per_row, m_context.samples_per_pixel, channel_index);
+                    resolveChunkyScanline(target.image, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel);
                 }
                 else
                 {
-                    resolveChunkyScanline(target.image, memory.address, bytes_per_row, m_context.samples_per_pixel);
+                    resolvePlanarScanline(target.image, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel, channel);
                 }
 
                 if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED))
@@ -2357,51 +2449,140 @@ namespace
                     }
                 }
 
-                memory.address += bytes_per_row;
+                memory.address += expanded_bytes_per_row;
                 target.image += target.stride;
             }
         }
 
-        void resolveChunkyScanline(u8* dest, const u8* src, u32 bytes, u32 channels)
+        void resolveChunkyScanline(u8* output, const u8* input, u32 bytes, u32 channels)
         {
             if (m_context.predictor == 1)
             {
                 // chunky, no prediction
-                std::memcpy(dest, src, bytes);
+
+                std::memcpy(output, input, bytes);
             }
             else if (m_context.predictor == 2)
             {
                 // chunky, horizontal differencing
-                std::memcpy(dest, src, channels); // copy first sample
 
-                // apply horizontal differencing for each sample
+                std::memcpy(output, input, channels); // copy first sample
+
                 for (u32 x = channels; x < bytes; x += channels)
                 {
                     for (u32 c = 0; c < channels; ++c)
                     {
-                        dest[x + c] = src[x + c] + dest[x - channels + c];
+                        output[x + c] = input[x + c] + output[x - channels + c];
                     }
                 }
             }
+            else if (m_context.predictor == 3)
+            {
+                // chunky, float differencing
+
+                u32 bytesPerFloat = m_context.sample_bits / 8;
+                u32 bytesPerSample = channels * bytesPerFloat;
+                u32 width = bytes / bytesPerSample;
+
+                // undo byte difference on input
+                u8* data = const_cast<u8*>(input);
+                u32 offset = channels;
+
+                const u32 x1 = width * bytesPerFloat;
+
+                for (u32 x = 1; x < x1; ++x)
+                {
+                    for (u32 c = 0; c < channels; ++c)
+                    {
+                        data[offset] += data[offset - channels];
+                        ++offset;
+                    }
+                }
+
+                // reorder the semi-BigEndian bytes into the output buffer
+                u32 rowIncrement = width * channels;
+
+#ifdef MANGO_BIG_ENDIAN
+                for (u32 x = 0; x < rowIncrement; ++x)
+                {
+                    u32 offset = x;
+
+                    for (u32 BYTE = 0; BYTE < bytesPerFloat; ++BYTE)
+                    {
+                        output[BYTE] = input[offset];
+                        offset += rowIncrement;
+                    }
+
+                    output += bytesPerFloat;
+                }
+#else
+                for (u32 x = 0; x < rowIncrement; ++x)
+                {
+                    u32 offset = (bytesPerFloat - 1) * rowIncrement + x;
+
+                    for (u32 BYTE = 0; BYTE < bytesPerFloat; ++BYTE)
+                    {
+                        output[BYTE] = input[offset];
+                        offset -= rowIncrement;
+                    }
+
+                    output += bytesPerFloat;
+                }
+#endif
+            }
         }
 
-        void resolvePlanarScanline(u8* dest, const u8* src, u32 pixels, u32 channels, u32 channel_index)
+        void resolvePlanarScanline(u8* output, const u8* input, u32 bytes, u32 channels, u32 channel)
         {
+            // TODO: Planar and prediction requires prediction before expansion
+            //       Here non-predicted samples can be either 8 or 16 bits
+
             if (m_context.predictor == 1)
             {
-                // planar, no prediction - write channel data to correct offset
-                u8* pixel_dest = dest + channel_index;
+                // planar, no prediction
 
-                for (u32 pixel = 0; pixel < pixels; ++pixel)
+                if (m_context.sample_bits == 8)
                 {
-                    *pixel_dest = src[pixel];
-                    pixel_dest += channels;
+                    u8* dest = output + channel;
+
+                    for (u32 i = 0; i < bytes; ++i)
+                    {
+                        dest[0] = input[i];
+                        dest += channels;
+                    }
+                }
+                else
+                {
+                    u8* dest = output + channel * 2;
+
+                    for (u32 i = 0; i < bytes; i += 2)
+                    {
+                        dest[0] = input[i + 0];
+                        dest[1] = input[i + 1];
+                        dest += channels * 2;
+                    }
                 }
             }
             else if (m_context.predictor == 2)
             {
                 // planar, horizontal differencing
-                // TODO: implement predictor for planar format
+
+                u8* dest = output + channel;
+                u8 prev = 0;
+
+                for (u32 i = 0; i < bytes; ++i)
+                {
+                    *dest = input[i] + prev;
+                    prev = *dest;
+                    dest += channels;
+                }
+            }
+            else if (m_context.predictor == 3)
+            {
+                // planar, float differencing
+
+                /* TODO: implement, need test image
+                */
             }
         }
     };

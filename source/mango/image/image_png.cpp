@@ -1144,7 +1144,7 @@ namespace
         FilterDispatcher(int bpp)
             : bpp(bpp)
         {
-            u64 features = getCPUFlags();
+            u64 features = cpu::getFlags();
 
             switch (bpp)
             {
@@ -1729,7 +1729,7 @@ namespace
     ColorState::Function getColorFunction(const ColorState& state, int color_type, int bit_depth)
     {
         ColorState::Function function = nullptr;
-        u64 features = getCPUFlags();
+        u64 features = cpu::getFlags();
 
         if (color_type == COLOR_TYPE_PALETTE)
         {

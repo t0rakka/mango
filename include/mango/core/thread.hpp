@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -63,12 +63,18 @@ namespace mango
             enqueue(&m_static_queue, std::move(func));
         }
 
+        void enqueue_bulk(const std::vector<std::function<void()>>& functions)
+        {
+            enqueue_bulk(&m_static_queue, functions);
+        }
+
     protected:
         struct Consumer;
 
         void thread(size_t threadID);
 
         void enqueue(Queue* queue, std::function<void()>&& func);
+        void enqueue_bulk(Queue* queue, const std::vector<std::function<void()>>& functions);
         void process(Task& task) const;
         bool dequeue_and_process();
         void cancel(Queue* queue);
@@ -128,6 +134,11 @@ namespace mango
         void enqueue(F&& f, Args&&... args)
         {
             m_pool.enqueue(&m_queue, std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+        }
+
+        void enqueue_bulk(const std::vector<std::function<void()>>& functions)
+        {
+            m_pool.enqueue_bulk(&m_queue, functions);
         }
 
         bool isCancelled() const
@@ -282,6 +293,7 @@ namespace mango
         ~TicketQueue();
 
         Ticket acquire();
+        std::vector<Ticket> acquire(size_t count);
         void wait();
 
     protected:
