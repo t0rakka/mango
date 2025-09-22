@@ -45,6 +45,34 @@ Building on Linux is fairly straightforward; generate build system scripts, run 
 Above uses ninja as build system, cmake users know what time it is. If you want to use the default (make) just omit the -G "Ninja" parameter. You're ready to go. 
 
 
+<h2><img src="logo-archlinux.png" alt="logo" width="80"/> Arch Linux</h2>
+
+
+### REQUIRED Libraries
+
+    sudo pacman -S fmt z libdeflate zstd lz4 bzip2 lcms2
+
+### OPTIONAL Libraries (OpenGL)
+
+    sudo pacman -S mesa
+
+### OPTIONAL Libraries (Vulkan)
+
+    sudo pacman -S glslang
+
+### OPTIONAL Libraries
+
+    sudo pacman -S libjxl openjpeg2 libwebp libavif libheif isa-l
+
+### EXAMPLE Libraries
+
+    sudo pacman -S libjpeg-turbo libpng
+
+### Building
+
+On Arch Linux the building is exactly same as it is on Linux Ubuntu/Mint.
+
+
 <h2><img src="logo-apple.png" alt="logo" width="80"/> macOS</h2>
 
 
