@@ -233,6 +233,7 @@ namespace mango
         m_condition.notify_one();
     }
 
+    /*
     void ThreadPool::enqueue_bulk(Queue* queue, const std::vector<std::function<void()>>& functions)
     {
         size_t count = functions.size();
@@ -251,6 +252,7 @@ namespace mango
 
         m_condition.notify_one();
     }
+    */
 
     void ThreadPool::process(Task& task) const
     {

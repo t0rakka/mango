@@ -63,10 +63,12 @@ namespace mango
             enqueue(&m_static_queue, std::move(func));
         }
 
+        /*
         void enqueue_bulk(const std::vector<std::function<void()>>& functions)
         {
             enqueue_bulk(&m_static_queue, functions);
         }
+        */
 
     protected:
         struct Consumer;
@@ -74,7 +76,7 @@ namespace mango
         void thread(size_t threadID);
 
         void enqueue(Queue* queue, std::function<void()>&& func);
-        void enqueue_bulk(Queue* queue, const std::vector<std::function<void()>>& functions);
+        //void enqueue_bulk(Queue* queue, const std::vector<std::function<void()>>& functions);
         void process(Task& task) const;
         bool dequeue_and_process();
         void cancel(Queue* queue);
@@ -136,10 +138,12 @@ namespace mango
             m_pool.enqueue(&m_queue, std::bind(std::forward<F>(f), std::forward<Args>(args)...));
         }
 
+        /*
         void enqueue_bulk(const std::vector<std::function<void()>>& functions)
         {
             m_pool.enqueue_bulk(&m_queue, functions);
         }
+        */
 
         bool isCancelled() const
         {
