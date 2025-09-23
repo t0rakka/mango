@@ -112,10 +112,8 @@ namespace mango
     ThreadPool::ThreadPool(size_t size)
         : m_queue(nullptr)
         , m_threads(size)
-        , m_static_queue(nullptr, "static")
     {
         m_queue = new TaskQueue;
-        m_static_queue.pool = this;
 
         // NOTE: let OS scheduler shuffle tasks as it sees fit
         //       this gives better performance overall UNTIL we have some practical
@@ -221,19 +219,18 @@ namespace mango
 
     void ThreadPool::enqueue(Queue* queue, std::function<void()>&& func)
     {
-        Task task;
-        task.queue = queue;
-        task.func = std::move(func);
+        Task task
+        {
+            .queue = queue,
+            .func = std::move(func)
+        };
 
         ++queue->task_counter;
 
-        thread_local moodycamel::ProducerToken token(m_queue->tasks);
-        m_queue->tasks.enqueue(token, std::move(task));
-
+        m_queue->tasks.enqueue(std::move(task));
         m_condition.notify_one();
     }
 
-    /*
     void ThreadPool::enqueue_bulk(Queue* queue, const std::vector<std::function<void()>>& functions)
     {
         size_t count = functions.size();
@@ -243,16 +240,16 @@ namespace mango
 
         for (size_t i = 0; i < count; ++i)
         {
-            tasks[i].queue = queue;
-            tasks[i].func = std::move(functions[i]);
+            tasks[i] =
+            {
+                .queue = queue,
+                .func = std::move(functions[i])
+            };
         }
 
-        thread_local moodycamel::ProducerToken token(m_queue->tasks);
-        m_queue->tasks.enqueue_bulk(token, tasks.begin(), count);
-
-        m_condition.notify_one();
+        m_queue->tasks.enqueue_bulk(tasks.data(), count);
+        m_condition.notify_all();
     }
-    */
 
     void ThreadPool::process(Task& task) const
     {

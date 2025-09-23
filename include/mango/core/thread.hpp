@@ -58,25 +58,13 @@ namespace mango
 
         int size() const;
 
-        void enqueue(std::function<void()>&& func)
-        {
-            enqueue(&m_static_queue, std::move(func));
-        }
-
-        /*
-        void enqueue_bulk(const std::vector<std::function<void()>>& functions)
-        {
-            enqueue_bulk(&m_static_queue, functions);
-        }
-        */
-
     protected:
         struct Consumer;
 
         void thread(size_t threadID);
 
         void enqueue(Queue* queue, std::function<void()>&& func);
-        //void enqueue_bulk(Queue* queue, const std::vector<std::function<void()>>& functions);
+        void enqueue_bulk(Queue* queue, const std::vector<std::function<void()>>& functions);
         void process(Task& task) const;
         bool dequeue_and_process();
         void cancel(Queue* queue);
@@ -90,7 +78,6 @@ namespace mango
         std::mutex m_queue_mutex;
         std::condition_variable m_condition;
         std::vector<std::thread> m_threads;
-        Queue m_static_queue;
     };
 
     // ----------------------------------------------------------------------------------
@@ -138,12 +125,10 @@ namespace mango
             m_pool.enqueue(&m_queue, std::bind(std::forward<F>(f), std::forward<Args>(args)...));
         }
 
-        /*
         void enqueue_bulk(const std::vector<std::function<void()>>& functions)
         {
             m_pool.enqueue_bulk(&m_queue, functions);
         }
-        */
 
         bool isCancelled() const
         {
@@ -315,105 +300,6 @@ namespace mango
         alignas(64) TaskQueue* m_queue;
 
         bool dequeue_and_process();
-    };
-
-    // ----------------------------------------------------------------------------------
-    // FutureTask
-    // ----------------------------------------------------------------------------------
-
-    /*
-        FutureTask is an asynchronous API to submit tasks into the ThreadPool.
-        The get() member function will block the current thread until the result is available
-        and does not consume any significant amount of CPU; the thread will yield/sleep
-        while waiting for the result.
-
-        Usage example:
-
-            // enqueue a simple task into the ThreadPool
-            FutureTask<int> task([] () -> int
-            {
-                return 7;
-            });
-
-            // this will block until the task has been completed
-            int x = task.get();
-
-    */
-
-    template <typename T>
-    class FutureTask
-    {
-    private:
-        using Future = std::future<T>;
-        using Promise = std::promise<T>;
-        using Function = std::function<T()>;
-
-        Promise m_promise;
-        Future m_future;
-
-    public:
-        template <class F, class... Args>
-        FutureTask(F&& f, Args&&... args)
-            : m_promise()
-            , m_future(m_promise.get_future())
-        {
-            Function func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
-            auto container = std::bind([this] (Function func) {
-                T value = func();
-                m_promise.set_value(value);
-            }, func);
-
-            ThreadPool& pool = ThreadPool::getInstance();
-            pool.enqueue(container);
-        }
-
-        T get()
-        {
-            return m_future.get();
-        }
-
-        void wait()
-        {
-            m_future.wait();
-        }
-    };
-
-    template <>
-    class FutureTask<void>
-    {
-    private:
-        using Future = std::future<void>;
-        using Promise = std::promise<void>;
-        using Function = std::function<void()>;
-
-        Promise m_promise;
-        Future m_future;
-
-    public:
-        template <class F, class... Args>
-        FutureTask(F&& f, Args&&... args)
-            : m_promise()
-            , m_future(m_promise.get_future())
-        {
-            Function func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
-            auto container = std::bind([this] (Function func) {
-                func();
-                m_promise.set_value();
-            }, func);
-
-            ThreadPool& pool = ThreadPool::getInstance();
-            pool.enqueue(container);
-        }
-
-        void get()
-        {
-            m_future.get();
-        }
-
-        void wait()
-        {
-            m_future.wait();
-        }
     };
 
 } // namespace mango

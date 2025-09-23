@@ -105,15 +105,6 @@ bool test1()
         });
     }
 
-    u64 time0 = Time::us();
-
-    FutureTask<int> xtask([] () -> int {
-        return 7;
-    });
-    int x = xtask.get();
-
-    u64 time1 = Time::us();
-
     print("x");
 
     q.wait(); // producer must be synchronized first
@@ -125,25 +116,10 @@ bool test1()
     b.wait();
     print("B");
 
-    u64 time2 = Time::us();
-
-    FutureTask<int> ytask([] () -> int
-    {
-        return 9;
-    });
-    int y = ytask.get();
-
-    u64 time3 = Time::us();
-
     bool success = counter == icount * 2;
 
     printf("\n\n");
     printf("counter: %d [%s]\n", counter.load(), success ? "Success" : "FAILED");
-    printf("load latency: %d us\n", int(time1 - time0));
-    printf("idle latency: %d us\n", int(time3 - time2));
-
-    MANGO_UNREFERENCED(x);
-    MANGO_UNREFERENCED(y);
 
     return success;
 }
