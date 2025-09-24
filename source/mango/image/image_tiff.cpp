@@ -1939,12 +1939,6 @@ namespace
 
                 decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
                 {
-                    ConstMemory jpeg_interchange_format_memory(m_memory.address + m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length);
-
-                    ImageDecodeInterface tempInterface;
-                    jpeg::Parser parser(&tempInterface, jpeg_interchange_format_memory);
-                    parser.setRelaxedParser(true);
-
                     Buffer buffer;
 
                     for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
@@ -1960,9 +1954,12 @@ namespace
                     }
 
                     writeSOS(buffer);
-
                     buffer.append(memory);
 
+                    ConstMemory jpeg_memory(m_memory.address + m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length);
+
+                    ImageDecodeInterface tempInterface;
+                    jpeg::Parser parser(&tempInterface, jpeg_memory, jpeg::Parser::RELAXED_PARSER);
                     parser.setMemory(buffer);
 
                     ImageDecodeStatus status = parser.decode(surface, options);
@@ -1978,11 +1975,10 @@ namespace
                 decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
                 {
                     Buffer buffer;
-                    u8* p = nullptr;
 
                     // SOI
-                    p = buffer.append(2);
-                    bigEndian::ustore16(p, jpeg::MARKER_SOI);
+                    u8* soi = buffer.append(2);
+                    bigEndian::ustore16(soi, jpeg::MARKER_SOI);
 
                     // SOF1 (Extended sequential DCT)
                     writeSOF1(buffer, m_context.width, m_context.height);
@@ -2013,12 +2009,10 @@ namespace
                     u8* eoi = buffer.append(2);
                     bigEndian::ustore16(eoi, jpeg::MARKER_EOI);
 
-                    printLine(Print::Info, "  Complete JPEG stream: {} bytes", buffer.size());
+                    ImageDecodeInterface tempInterface;
+                    jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
 
-                    // Decode the JPEG stream
-                    ImageDecoder decoder(buffer, ".jpg");
-
-                    ImageDecodeStatus status = decoder.decode(surface, options, level, depth, face);
+                    ImageDecodeStatus status = parser.decode(surface, options);
                     return status;
                 };
             }
@@ -2118,15 +2112,10 @@ namespace
 
             auto decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
             {
-                // Parse jpeg tables in tiff tags (DHT, DQT)
                 ImageDecodeInterface tempInterface;
-                jpeg::Parser parser(&tempInterface, m_context.jpeg_tables);
-                parser.setRelaxedParser(true);
-
-                // Parse embedded jpeg (SOF, SOS, etc.)
+                jpeg::Parser parser(&tempInterface, m_context.jpeg_tables, jpeg::Parser::RELAXED_PARSER);
                 parser.setMemory(memory);
 
-                // Decode jpeg stream (entropy data)
                 ImageDecodeStatus status = parser.decode(surface, options);
                 return status;
             };

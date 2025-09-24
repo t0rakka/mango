@@ -129,13 +129,18 @@ namespace mango::image::jpeg
     // Parser
     // ----------------------------------------------------------------------------
 
-    Parser::Parser(ImageDecodeInterface* interface, ConstMemory memory)
+    Parser::Parser(ImageDecodeInterface* interface, ConstMemory memory, u32 flags)
         : m_interface(interface)
         , m_memory(memory)
         , quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
     {
         restartInterval = 0;
         restartCounter = 0;
+
+        if (flags & Flags::RELAXED_PARSER)
+        {
+            m_relaxed_parser = true;
+        }
 
         for (int i = 0; i < JPEG_MAX_COMPS_IN_SCAN; ++i)
         {
@@ -162,11 +167,6 @@ namespace mango::image::jpeg
     {
         m_memory = memory;
         parse(m_memory, false);
-    }
-
-    void Parser::setRelaxedParser(bool relaxed)
-    {
-        m_relaxed_parser = relaxed;
     }
 
     bool Parser::isJPEG(ConstMemory memory) const

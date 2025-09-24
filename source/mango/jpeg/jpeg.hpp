@@ -467,11 +467,15 @@ namespace mango::image::jpeg
         ConstMemory scan_memory; // Scan block
         Buffer icc_buffer; // ICC color profile block, if one is present
 
-        Parser(ImageDecodeInterface* interface, ConstMemory memory);
+        enum Flags : u32
+        {
+            RELAXED_PARSER = 0x0001,
+        };
+
+        Parser(ImageDecodeInterface* interface, ConstMemory memory, u32 flags = 0);
         ~Parser();
 
         void setMemory(ConstMemory memory);
-        void setRelaxedParser(bool relaxed);
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
     };
