@@ -194,6 +194,30 @@ message("Installation Directory: ${CMAKE_INSTALL_PREFIX}")
 set(MANGO_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/mango")
 set(MANGO_SOURCE_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/source/mango")
 
+function(select_window_system_sources system)
+    if (${system} STREQUAL "xlib")
+        set(WINDOW_SOURCES
+            ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.hpp
+            ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.cpp
+            PARENT_SCOPE
+        )
+    elseif (${system} STREQUAL "xcb")
+        set(WINDOW_SOURCES
+            ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.hpp
+            ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.cpp
+            PARENT_SCOPE
+        )
+    elseif (${system} STREQUAL "wayland")
+        set(WINDOW_SOURCES
+            ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
+            ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
+            PARENT_SCOPE
+        )
+    else ()
+        message(FATAL_ERROR "Unsupported window system: ${system}")
+    endif ()
+endfunction()
+
 if (BUILD_OPENGL)
 
     if (NOT EMSCRIPTEN)
@@ -238,25 +262,7 @@ if (BUILD_OPENGL)
 
     else ()
 
-        # Select window system based on WINDOW_SYSTEM option
-        if (WINDOW_SYSTEM STREQUAL "xlib")
-            set(WINDOW_SOURCES
-                ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.hpp
-                ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.cpp
-            )
-        elseif (WINDOW_SYSTEM STREQUAL "xcb")
-            set(WINDOW_SOURCES
-                ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.hpp
-                ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.cpp
-            )
-        elseif (WINDOW_SYSTEM STREQUAL "wayland")
-            set(WINDOW_SOURCES
-                ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
-                ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
-            )
-        else ()
-            message(FATAL_ERROR "Unsupported window system: ${WINDOW_SYSTEM}")
-        endif ()
+        select_window_system_sources(${WINDOW_SYSTEM})
 
         FILE(GLOB OPENGL_SOURCES
             "${MANGO_SOURCE_DIR}/opengl/*.cpp"
@@ -298,25 +304,7 @@ if (BUILD_VULKAN)
 
     else ()
 
-        # Select window system based on WINDOW_SYSTEM option
-        if (WINDOW_SYSTEM STREQUAL "xlib")
-            set(WINDOW_SOURCES
-                ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.hpp
-                ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.cpp
-            )
-        elseif (WINDOW_SYSTEM STREQUAL "xcb")
-            set(WINDOW_SOURCES
-                ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.hpp
-                ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.cpp
-            )
-        elseif (WINDOW_SYSTEM STREQUAL "wayland")
-            set(WINDOW_SOURCES
-                ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
-                ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
-            )
-        else ()
-            message(FATAL_ERROR "Unsupported window system: ${WINDOW_SYSTEM}")
-        endif ()
+        select_window_system_sources(${WINDOW_SYSTEM})
 
         FILE(GLOB VULKAN_SOURCES
             "${MANGO_SOURCE_DIR}/vulkan/*.cpp"
