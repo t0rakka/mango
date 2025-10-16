@@ -13,6 +13,8 @@ OPTION(BUILD_VULKAN         "Build Vulkan support"                      OFF)
 OPTION(BUILD_IMPORT3D       "Build Import3D support"                    OFF)
 OPTION(BUILD_EXAMPLES       "Build examples"                            OFF)
 
+ option(BUILD_SHARED_LIBS    "Build shared libraries"                    ON)
+
 # Window system selection
 set(WINDOW_SYSTEM "xlib" CACHE STRING "Window system to use (xlib, xcb, wayland)")
 set_property(CACHE WINDOW_SYSTEM PROPERTY STRINGS xlib xcb wayland)
@@ -68,6 +70,11 @@ if (INTEL_DELUXE OR ENABLE_AVX512)
     set(ENABLE_BMI2    ON)
     set(ENABLE_FMA     ON)
     set(ENABLE_SHA     ON)
+endif ()
+
+# Force shared libraries on Windows
+if (WIN32)
+    set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries" FORCE)
 endif ()
 
 # Linker selection
@@ -158,7 +165,13 @@ if (LINKER STREQUAL "mold")
     endif()
 endif()
 
-message("Build: " ${CMAKE_BUILD_TYPE})
+if (BUILD_SHARED_LIBS)
+    message("Build: " ${CMAKE_BUILD_TYPE} " (shared)")
+    set(INTERFACE PRIVATE)
+else ()
+    message("Build: " ${CMAKE_BUILD_TYPE} " (static)")
+    set(INTERFACE PUBLIC)
+endif ()
 
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/include)
 
@@ -526,7 +539,7 @@ if (BUILD_IMPORT3D)
     )
 endif ()
 
-add_library(mango SHARED ${MANGO_SOURCES})
+add_library(mango ${MANGO_SOURCES})
 
 set_target_properties(mango PROPERTIES
     VERSION ${PROJECT_VERSION}
@@ -704,48 +717,53 @@ endfunction()
 # ------------------------------------------------------------------------------
 
 find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 9.1)
-find_module(mango ZLIB PRIVATE REQUIRED zlib ZLIB ZLIB::ZLIB 0)
-find_module(mango LIBDEFLATE PRIVATE REQUIRED libdeflate libdeflate libdeflate::libdeflate_shared 0)
+find_module(mango ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
+
+if (BUILD_SHARED_LIBS)
+    find_module(mango LIBDEFLATE ${INTERFACE} REQUIRED libdeflate libdeflate libdeflate::libdeflate_shared 0)
+else ()
+    find_module(mango LIBDEFLATE ${INTERFACE} REQUIRED libdeflate libdeflate libdeflate::libdeflate_static 0)
+endif ()
 
 if (APPLE OR WIN32)
     # brew/vcpkg imported target is 'zstd::libzstd'
-    find_module(mango ZSTD PRIVATE REQUIRED libzstd zstd zstd::libzstd 0)
+    find_module(mango ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd::libzstd 0)
 else ()
     # apt/pacman imported target is 'zstd'
-    find_module(mango ZSTD PRIVATE REQUIRED libzstd zstd zstd 0)
+    find_module(mango ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd 0)
 endif ()
 
-find_module(mango LZ4 PRIVATE REQUIRED liblz4 lz4 lz4::lz4 0)
-find_module(mango BZIP2 PRIVATE REQUIRED "" BZip2 BZip2::BZip2 0)
-find_module(mango LCMS2 PRIVATE REQUIRED lcms2 lcms2 lcms2::lcms2 0)
+find_module(mango LZ4 ${INTERFACE} REQUIRED liblz4 lz4 lz4::lz4 0)
+find_module(mango BZIP2 ${INTERFACE} REQUIRED "" BZip2 BZip2::BZip2 0)
+find_module(mango LCMS2 ${INTERFACE} REQUIRED lcms2 lcms2 lcms2::lcms2 0)
 
 # ------------------------------------------------------------------------------
 # optional libraries
 # ------------------------------------------------------------------------------
 
 if (LIBRARY_JXL)
-    find_module(mango JXL PRIVATE OPTIONAL libjxl "" "" 0.8.2)
-    find_module(mango JXL_THREADS PRIVATE OPTIONAL libjxl_threads "" "" 0.7)
+    find_module(mango JXL ${INTERFACE} OPTIONAL libjxl "" "" 0.8.2)
+    find_module(mango JXL_THREADS ${INTERFACE} OPTIONAL libjxl_threads "" "" 0.7)
 endif ()
 
 if (LIBRARY_JP2)
-    find_module(mango JP2 PRIVATE OPTIONAL libopenjp2 OpenJPEG openjp2 2.4.0)
+    find_module(mango JP2 ${INTERFACE} OPTIONAL libopenjp2 OpenJPEG openjp2 2.4.0)
 endif ()
 
 if (LIBRARY_WEBP)
-    find_module(mango WEBP PRIVATE OPTIONAL libwebp WebP WebP::webp 1.3.2)
+    find_module(mango WEBP ${INTERFACE} OPTIONAL libwebp WebP WebP::webp 1.3.2)
 endif ()
 
 if (LIBRARY_AVIF)
-    find_module(mango AVIF PRIVATE OPTIONAL libavif libavif avif 1.0.0)
+    find_module(mango AVIF ${INTERFACE} OPTIONAL libavif libavif avif 1.0.0)
 endif ()
 
 if (LIBRARY_HEIF)
-    find_module(mango HEIF PRIVATE OPTIONAL libheif libheif heif 1.13.0)
+    find_module(mango HEIF ${INTERFACE} OPTIONAL libheif libheif heif 1.13.0)
 endif ()
 
 if (LIBRARY_ISAL)
-    find_module(mango ISAL PRIVATE OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
+    find_module(mango ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
 endif ()
 
 # ------------------------------------------------------------------------------
