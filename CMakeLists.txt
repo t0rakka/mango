@@ -8,12 +8,12 @@ project(mango
 # options
 # ------------------------------------------------------------------------------
 
+OPTION(BUILD_SHARED_LIBS    "Build shared libraries"                     ON)
+
 OPTION(BUILD_OPENGL         "Build OpenGL support"                      OFF)
 OPTION(BUILD_VULKAN         "Build Vulkan support"                      OFF)
 OPTION(BUILD_IMPORT3D       "Build Import3D support"                    OFF)
 OPTION(BUILD_EXAMPLES       "Build examples"                            OFF)
-
- option(BUILD_SHARED_LIBS    "Build shared libraries"                    ON)
 
 # Window system selection
 set(WINDOW_SYSTEM "xlib" CACHE STRING "Window system to use (xlib, xcb, wayland)")
@@ -72,9 +72,9 @@ if (INTEL_DELUXE OR ENABLE_AVX512)
     set(ENABLE_SHA     ON)
 endif ()
 
-# Force shared libraries on Windows
-if (WIN32)
-    set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries" FORCE)
+# NOTE: OpenGL is not supported on Windows static build
+if (NOT BUILD_SHARED_LIBS AND WIN32)
+    set(BUILD_OPENGL OFF CACHE BOOL "Build OpenGL support" FORCE)
 endif ()
 
 # Linker selection
@@ -719,7 +719,7 @@ endfunction()
 find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 9.1)
 find_module(mango ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
 
-if (BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS OR WIN32)
     find_module(mango LIBDEFLATE ${INTERFACE} REQUIRED libdeflate libdeflate libdeflate::libdeflate_shared 0)
 else ()
     find_module(mango LIBDEFLATE ${INTERFACE} REQUIRED libdeflate libdeflate libdeflate::libdeflate_static 0)
