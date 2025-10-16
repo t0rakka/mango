@@ -72,11 +72,6 @@ if (INTEL_DELUXE OR ENABLE_AVX512)
     set(ENABLE_SHA     ON)
 endif ()
 
-# NOTE: OpenGL is not supported on Windows static build
-if (NOT BUILD_SHARED_LIBS AND WIN32)
-    set(BUILD_OPENGL OFF CACHE BOOL "Build OpenGL support" FORCE)
-endif ()
-
 # Linker selection
 set(LINKER "default" CACHE STRING "Linker to use (default, mold)")
 set_property(CACHE LINKER PROPERTY STRINGS default mold)
@@ -772,7 +767,10 @@ endif ()
 
 set(SIMD "NONE")
 
-target_compile_definitions(mango PRIVATE "MANGO_API_EXPORT")
+if (BUILD_SHARED_LIBS)
+    target_compile_definitions(mango PUBLIC "MANGO_SHARED")
+    target_compile_definitions(mango PRIVATE "MANGO_API_EXPORT")
+endif ()
 
 if (WIN32)
     target_compile_definitions(mango PUBLIC UNICODE)
