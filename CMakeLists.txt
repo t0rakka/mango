@@ -22,6 +22,11 @@ set_property(CACHE WINDOW_SYSTEM PROPERTY STRINGS xlib xcb wayland)
 # Select EGL for context management for OpenGL
 OPTION(ENABLE_EGL           "Use EGL for OpenGL context management"    OFF)
 
+OPTION(LIBRARY_BZIP2        "Enable BZIP2 compression support"          ON)
+OPTION(LIBRARY_LZ4          "Enable LZ4 compression support"            ON)
+OPTION(LIBRARY_LZMA         "Enable LZMA compression support"           ON)
+OPTION(LIBRARY_LZFSE        "Enable LZFSE compression support"          ON)
+
 OPTION(LIBRARY_JXL          "Enable jpeg-xl image codec support"        ON)
 OPTION(LIBRARY_JP2          "Enable jpeg2000 image codec support"       ON)
 OPTION(LIBRARY_WEBP         "Enable WebP image codec support"           ON)
@@ -403,11 +408,6 @@ SOURCE_GROUP("source/import3d"      FILES ${IMPORT3D_SOURCES})
 
 set(EXTERNAL_SOURCE_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/source/external")
 
-FILE(GLOB EXTERNAL_LZMA
-    "${EXTERNAL_SOURCE_DIR}/lzma/*.h"
-    "${EXTERNAL_SOURCE_DIR}/lzma/*.c"
-)
-
 FILE(GLOB EXTERNAL_AES
     "${EXTERNAL_SOURCE_DIR}/aes/*.h"
     "${EXTERNAL_SOURCE_DIR}/aes/*.cpp"
@@ -433,10 +433,19 @@ FILE(GLOB EXTERNAL_GOOGLE
     "${EXTERNAL_SOURCE_DIR}/google/*.h"
 )
 
-FILE(GLOB EXTERNAL_LZFSE
-    "${EXTERNAL_SOURCE_DIR}/lzfse/*.h"
-    "${EXTERNAL_SOURCE_DIR}/lzfse/*.c"
-)
+if (LIBRARY_LZMA)
+    FILE(GLOB EXTERNAL_LZMA
+        "${EXTERNAL_SOURCE_DIR}/lzma/*.h"
+        "${EXTERNAL_SOURCE_DIR}/lzma/*.c"
+    )
+endif ()
+
+if (LIBRARY_LZFSE)
+    FILE(GLOB EXTERNAL_LZFSE
+        "${EXTERNAL_SOURCE_DIR}/lzfse/*.h"
+        "${EXTERNAL_SOURCE_DIR}/lzfse/*.c"
+    )
+endif ()
 
 FILE(GLOB EXTERNAL_UNRAR
     "${EXTERNAL_SOURCE_DIR}/unrar/*.hpp"
@@ -462,13 +471,17 @@ FILE(GLOB EXTERNAL_IMPORT3D
     "${EXTERNAL_SOURCE_DIR}/fastgltf/src/*.cpp"
 )
 
-SOURCE_GROUP("external/lzma"        FILES ${EXTERNAL_LZMA})
 SOURCE_GROUP("external/aes"         FILES ${EXTERNAL_AES})
 SOURCE_GROUP("external/bc"          FILES ${EXTERNAL_BC})
 SOURCE_GROUP("external/concurrent"  FILES ${EXTERNAL_CONCURRENT_QUEUE})
 SOURCE_GROUP("external/astc"        FILES ${EXTERNAL_ASTC})
 SOURCE_GROUP("external/google"      FILES ${EXTERNAL_GOOGLE})
-SOURCE_GROUP("external/lzfse"       FILES ${EXTERNAL_LZFSE})
+if (LIBRARY_LZMA)
+    SOURCE_GROUP("external/lzma"    FILES ${EXTERNAL_LZMA})
+endif ()
+if (LIBRARY_LZFSE)
+    SOURCE_GROUP("external/lzfse"   FILES ${EXTERNAL_LZFSE})
+endif ()
 SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
 SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
 SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
@@ -492,17 +505,27 @@ set(MANGO_SOURCES
     ${MATH_SOURCES}
     ${SIMD_HEADERS}
     ${SIMD_SOURCES}
-    ${EXTERNAL_LZMA}
     ${EXTERNAL_AES}
     ${EXTERNAL_BC}
     ${EXTERNAL_CONCURRENT_QUEUE}
     ${EXTERNAL_ASTC}
     ${EXTERNAL_GOOGLE}
-    ${EXTERNAL_LZFSE}
     ${EXTERNAL_UNRAR}
-    ${EXTERNAL_ZPNG}
     ${EXTERNAL_BASISU}
+    ${EXTERNAL_ZPNG}
 )
+
+if (LIBRARY_LZMA)
+    list(APPEND MANGO_SOURCES
+        ${EXTERNAL_LZMA}
+    )
+endif ()
+
+if (LIBRARY_LZFSE)
+    list(APPEND MANGO_SOURCES
+        ${EXTERNAL_LZFSE}
+    )
+endif ()
 
 if (BUILD_OPENGL)
     list(APPEND MANGO_SOURCES
@@ -713,6 +736,7 @@ endfunction()
 
 find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 9.1)
 find_module(mango ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
+find_module(mango LCMS2 ${INTERFACE} REQUIRED lcms2 lcms2 lcms2::lcms2 0)
 
 if (BUILD_SHARED_LIBS OR WIN32)
     find_module(mango LIBDEFLATE ${INTERFACE} REQUIRED libdeflate libdeflate libdeflate::libdeflate_shared 0)
@@ -728,13 +752,21 @@ else ()
     find_module(mango ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd 0)
 endif ()
 
-find_module(mango LZ4 ${INTERFACE} REQUIRED liblz4 lz4 lz4::lz4 0)
-find_module(mango BZIP2 ${INTERFACE} REQUIRED "" BZip2 BZip2::BZip2 0)
-find_module(mango LCMS2 ${INTERFACE} REQUIRED lcms2 lcms2 lcms2::lcms2 0)
-
 # ------------------------------------------------------------------------------
 # optional libraries
 # ------------------------------------------------------------------------------
+
+if (LIBRARY_BZIP2)
+    find_module(mango BZIP2 ${INTERFACE} OPTIONAL "" BZip2 BZip2::BZip2 0)
+endif ()
+
+if (LIBRARY_LZ4)
+    find_module(mango LZ4 ${INTERFACE} OPTIONAL liblz4 lz4 lz4::lz4 0)
+endif ()
+
+if (LIBRARY_ISAL)
+    find_module(mango ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
+endif ()
 
 if (LIBRARY_JXL)
     find_module(mango JXL ${INTERFACE} OPTIONAL libjxl "" "" 0.8.2)
@@ -755,10 +787,6 @@ endif ()
 
 if (LIBRARY_HEIF)
     find_module(mango HEIF ${INTERFACE} OPTIONAL libheif libheif heif 1.13.0)
-endif ()
-
-if (LIBRARY_ISAL)
-    find_module(mango ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
 endif ()
 
 # ------------------------------------------------------------------------------

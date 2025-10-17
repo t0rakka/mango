@@ -13,26 +13,35 @@
 #include <mango/core/pointer.hpp>
 #include <mango/math/math.hpp>
 
-#include <lz4.h>
-#include <lz4hc.h>
+#include <zlib.h>
+#include <libdeflate.h>
+
+#include "../../external/lzav/lzav.h"
 
 #define ZSTD_DISABLE_DEPRECATE_WARNINGS
 #include <zstd.h>
 
-#include "../../external/lzfse/lzfse.h"
+#if defined(MANGO_ENABLE_LZ4)
+    #include <lz4.h>
+    #include <lz4hc.h>
+#endif
 
-#include "../../external/lzma/Alloc.h"
-#include "../../external/lzma/LzmaDec.h"
-#include "../../external/lzma/LzmaEnc.h"
-#include "../../external/lzma/Lzma2Dec.h"
-#include "../../external/lzma/Lzma2Enc.h"
-#include "../../external/lzma/Ppmd8.h"
+#if defined(MANGO_ENABLE_LZFSE)
+    #include "../../external/lzfse/lzfse.h"
+#endif
 
-#include <zlib.h>
-#include <bzlib.h>
-#include <libdeflate.h>
+#if defined(MANGO_ENABLE_LZMA)
+    #include "../../external/lzma/Alloc.h"
+    #include "../../external/lzma/LzmaDec.h"
+    #include "../../external/lzma/LzmaEnc.h"
+    #include "../../external/lzma/Lzma2Dec.h"
+    #include "../../external/lzma/Lzma2Enc.h"
+    #include "../../external/lzma/Ppmd8.h"
+#endif
 
-#include "../../external/lzav/lzav.h"
+#if defined(MANGO_ENABLE_BZIP2)
+    #include <bzlib.h>
+#endif
 
 #if defined(MANGO_ENABLE_ISAL)
     // Why you have to be like that.. on Windows we assume VCPKG packaging for others BREW/APT
@@ -83,6 +92,8 @@ namespace nocompress
 // ----------------------------------------------------------------------------
 // lz4
 // ----------------------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_LZ4)
 
 namespace lz4
 {
@@ -261,6 +272,8 @@ namespace lz4
 
 } // namespace lz4
 
+#endif
+
 // ----------------------------------------------------------------------------
 // zstd
 // ----------------------------------------------------------------------------
@@ -422,6 +435,8 @@ namespace zstd
 // bzip2
 // ----------------------------------------------------------------------------
 
+#if defined(MANGO_ENABLE_BZIP2)
+
 namespace bzip2
 {
 
@@ -520,6 +535,8 @@ namespace bzip2
 
 } // namespace bzip2
 
+#endif
+
 // ----------------------------------------------------------------------------
 // zlib
 // ----------------------------------------------------------------------------
@@ -605,6 +622,8 @@ namespace zlib
 // lzfse
 // ----------------------------------------------------------------------------
 
+#if defined(MANGO_ENABLE_LZFSE)
+
 namespace lzfse
 {
 
@@ -640,9 +659,13 @@ namespace lzfse
 
 } // namespace lzfse
 
+#endif
+
 // ----------------------------------------------------------------------------
 // lzma
 // ----------------------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_LZMA)
 
 namespace lzma
 {
@@ -742,9 +765,13 @@ namespace lzma
 
 } // namespace lzma
 
+#endif
+
 // ----------------------------------------------------------------------------
 // lzma2
 // ----------------------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_LZMA)
 
 namespace lzma2
 {
@@ -826,9 +853,13 @@ namespace lzma2
 
 } // namespace lzma2
 
+#endif
+
 // ----------------------------------------------------------------------------
 // ppmd8
 // ----------------------------------------------------------------------------
+
+#if defined(MANGO_ENABLE_LZMA)
 
 namespace ppmd8
 {
@@ -972,6 +1003,8 @@ namespace ppmd8
     }
 
 } // namespace ppmd
+
+#endif
 
 // ----------------------------------------------------------------------------
 // deflate
@@ -1350,21 +1383,31 @@ namespace isal
     const std::vector<Compressor> g_compressors =
     {
         { Compressor::NONE,         "none",         nocompress::bound,   nocompress::compress,   nocompress::decompress },
-        { Compressor::LZ4,          "lz4",          lz4::bound,          lz4::compress,          lz4::decompress },
-        { Compressor::LZAV,         "lzav",         lzav::bound,         lzav::compress,         lzav::decompress },
-#if defined(MANGO_ENABLE_ISAL)
-        { Compressor::ISAL,          "isal",        isal::bound,         isal::compress,         isal::decompress },
-#endif
-        { Compressor::LZFSE,        "lzfse",        lzfse::bound,        lzfse::compress,        lzfse::decompress },
+        // required
+        { Compressor::ZSTD,         "zstd",         zstd::bound,         zstd::compress,         zstd::decompress },
         { Compressor::ZLIB,         "zlib",         zlib::bound,         zlib::compress,         zlib::decompress },
         { Compressor::DEFLATE,      "deflate",      deflate::bound,      deflate::compress,      deflate::decompress },
         { Compressor::DEFLATE_ZLIB, "deflate.zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },
         { Compressor::DEFLATE_GZIP, "deflate.gzip", deflate_gzip::bound, deflate_gzip::compress, deflate_gzip::decompress },
-        { Compressor::ZSTD,         "zstd",         zstd::bound,         zstd::compress,         zstd::decompress },
+        { Compressor::LZAV,         "lzav",         lzav::bound,         lzav::compress,         lzav::decompress },
+        // optional
+#if defined(MANGO_ENABLE_BZIP2)
+        { Compressor::BZIP2,        "bzip2",        bzip2::bound,        bzip2::compress,        bzip2::decompress },
+#endif
+#if defined(MANGO_ENABLE_LZ4)
+        { Compressor::LZ4,          "lz4",          lz4::bound,          lz4::compress,          lz4::decompress },
+#endif
+#if defined(MANGO_ENABLE_LZFSE)
+        { Compressor::LZFSE,        "lzfse",        lzfse::bound,        lzfse::compress,        lzfse::decompress },
+#endif
+#if defined(MANGO_ENABLE_LZMA)
         { Compressor::LZMA,         "lzma",         lzma::bound,         lzma::compress,         lzma::decompress },
         { Compressor::LZMA2,        "lzma2",        lzma2::bound,        lzma2::compress,        lzma2::decompress },
         { Compressor::PPMD8,        "ppmd8",        ppmd8::bound,        ppmd8::compress,        ppmd8::decompress },
-        { Compressor::BZIP2,        "bzip2",        bzip2::bound,        bzip2::compress,        bzip2::decompress },
+#endif
+#if defined(MANGO_ENABLE_ISAL)
+        { Compressor::ISAL,          "isal",        isal::bound,         isal::compress,         isal::decompress },
+#endif
     };
 
     std::vector<Compressor> getCompressors()
