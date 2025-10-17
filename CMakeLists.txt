@@ -764,8 +764,6 @@ endif ()
 
 message("[Optional Libraries]")
 
-    find_module(mango NAKKI ${INTERFACE} OPTIONAL "" nakki nakki::nakki 1.0.0)
-
 if (LIBRARY_BZIP2)
     find_module(mango BZIP2 ${INTERFACE} OPTIONAL "" BZip2 BZip2::BZip2 0)
 endif ()
