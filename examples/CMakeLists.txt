@@ -1,5 +1,5 @@
 
-message("[ examples ]")
+message("[Examples]")
 
 if (MSVC)
     add_compile_options("$<$<CONFIG:Release>:/Ox>")

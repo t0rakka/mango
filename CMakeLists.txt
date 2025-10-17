@@ -569,7 +569,7 @@ if (APPLE)
 endif ()
 
 # ------------------------------------------------------------------------------
-# platform libraries
+# Platform Libraries
 # ------------------------------------------------------------------------------
 
 find_package(PkgConfig QUIET)
@@ -581,7 +581,9 @@ if (CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
 
-message("[Libraries]")
+if (BUILD_OPENGL OR BUILD_VULKAN)
+    message("[Platform Libraries]")
+endif ()
 
 # ------------------------------------------------------------------------------
 # OpenGL
@@ -681,7 +683,7 @@ if (BUILD_VULKAN)
 endif ()
 
 # ------------------------------------------------------------------------------
-# find_module
+# find_module()
 # ------------------------------------------------------------------------------
 
 function (find_module Target Prefix Interface Mode ModuleName PackageName ImportedTarget Version)
@@ -726,13 +728,17 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
 
     if (Mode STREQUAL "REQUIRED")
         message(FATAL_ERROR "Failed to locate REQUIRED package: " ${Prefix})
+    else ()
+        message("    " ${Prefix} ": " ${${PackageName}_VERSION} " [not found]")
     endif ()
 
 endfunction()
 
 # ------------------------------------------------------------------------------
-# required libraries
+# Required Libraries
 # ------------------------------------------------------------------------------
+
+message("[Required Libraries]")
 
 find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 9.1)
 find_module(mango ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
@@ -753,8 +759,12 @@ else ()
 endif ()
 
 # ------------------------------------------------------------------------------
-# optional libraries
+# Optional Libraries
 # ------------------------------------------------------------------------------
+
+message("[Optional Libraries]")
+
+    find_module(mango NAKKI ${INTERFACE} OPTIONAL "" nakki nakki::nakki 1.0.0)
 
 if (LIBRARY_BZIP2)
     find_module(mango BZIP2 ${INTERFACE} OPTIONAL "" BZip2 BZip2::BZip2 0)
@@ -959,6 +969,10 @@ else ()
     endif ()
 endif ()
 
+# ------------------------------------------------------------------------------
+# ISA Extensions
+# ------------------------------------------------------------------------------
+
 message("[ISA Extensions]")
 
 if (X86 OR X86_64)
@@ -1003,11 +1017,15 @@ endif()
 
 message("    SIMD: " ${SIMD})
 
-message("[Options]")
-message("    BUILD_OPENGL:   " ${BUILD_OPENGL})
-message("    BUILD_VULKAN:   " ${BUILD_VULKAN})
-message("    BUILD_IMPORT3D: " ${BUILD_IMPORT3D})
-message("    BUILD_EXAMPLES: " ${BUILD_EXAMPLES})
+# ------------------------------------------------------------------------------
+# Build Options
+# ------------------------------------------------------------------------------
+
+message("[Build Options]")
+message("    BUILD_OPENGL:    " ${BUILD_OPENGL})
+message("    BUILD_VULKAN:    " ${BUILD_VULKAN})
+message("    BUILD_IMPORT3D:  " ${BUILD_IMPORT3D})
+message("    BUILD_EXAMPLES:  " ${BUILD_EXAMPLES})
 
 # ------------------------------------------------------------------------------
 # install
