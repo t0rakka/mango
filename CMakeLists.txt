@@ -699,7 +699,6 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
     # manual override via variables
 
     if (DEFINED ${Prefix}_LIBRARIES AND DEFINED ${Prefix}_INCLUDE_DIRS)
-        set(${Prefix}_FOUND TRUE)
         resolve_version(package_version "no version")
         message("    " ${Prefix} ": " ${package_version} " [manual]")
         target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
@@ -800,7 +799,7 @@ if (LIBRARY_ISAL)
     find_module(mango ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
 endif ()
 
-if (LIBRARY_JXL AND ENABLE_LCMS2)
+if (LIBRARY_JXL)
     find_module(mango JXL ${INTERFACE} OPTIONAL libjxl "" "" 0.8.2)
     find_module(mango JXL_THREADS ${INTERFACE} OPTIONAL libjxl_threads "" "" 0.7)
 endif ()
