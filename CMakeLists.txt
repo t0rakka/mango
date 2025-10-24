@@ -1127,12 +1127,15 @@ if (BUILD_EXAMPLES)
 
     if (WIN32)
         foreach (x ${EXAMPLE_BINARY_FOLDERS})
-            set(source_file $<TARGET_FILE:mango>)
+            # Extract a safe target name from the folder path
+            get_filename_component(folder_name ${x} NAME)
             set(destination_folder ${x}/${CMAKE_CFG_INTDIR})
-            add_custom_command(TARGET mango POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E echo "Copying: ${source_file}  -->  ${destination_folder}"
+
+            add_custom_target(copy_mango_to_${folder_name} ALL
+                COMMAND ${CMAKE_COMMAND} -E echo "Copying: $<TARGET_FILE:mango>  -->  ${destination_folder}"
                 COMMAND ${CMAKE_COMMAND} -E make_directory "${destination_folder}"
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${source_file}" "${destination_folder}"
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:mango>" "${destination_folder}"
+                DEPENDS mango
             )
         endforeach ()
     endif ()
