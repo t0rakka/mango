@@ -700,7 +700,7 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
 
     if (DEFINED ${Prefix}_LIBRARIES AND DEFINED ${Prefix}_INCLUDE_DIRS)
         set(${Prefix}_FOUND TRUE)
-        resolve_version(package_version "manual override")
+        resolve_version(package_version "no version")
         message("    " ${Prefix} ": " ${package_version} " [manual]")
         target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
         target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
