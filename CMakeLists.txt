@@ -696,6 +696,19 @@ endfunction()
 
 function (find_module Target Prefix Interface Mode ModuleName PackageName ImportedTarget Version)
 
+    # manual override via variables
+
+    if (DEFINED ${Prefix}_LIBRARIES AND DEFINED ${Prefix}_INCLUDE_DIRS)
+        set(${Prefix}_FOUND TRUE)
+        resolve_version(package_version "manual override")
+        message("    " ${Prefix} ": " ${package_version} " [manual]")
+        target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
+        target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
+        target_link_directories(${Target} ${Interface} ${${Prefix}_LIBRARY_DIRS})
+        target_link_libraries(${Target} ${Interface} ${${Prefix}_LIBRARIES})
+        return ()
+    endif ()
+
     # find_package
 
     if (NOT PackageName STREQUAL "")
@@ -753,7 +766,7 @@ message("[Required Libraries]")
 
 find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 9.1)
 find_module(mango ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
-find_module(mango LCMS2 ${INTERFACE} REQUIRED lcms2 lcms2 lcms2::lcms2 0)
+find_module(mango LCMS2 PRIVATE REQUIRED lcms2 lcms2 lcms2::lcms2 0)
 
 if (BUILD_SHARED_LIBS OR WIN32)
     find_module(mango LIBDEFLATE ${INTERFACE} REQUIRED libdeflate libdeflate libdeflate::libdeflate_shared 0)
