@@ -686,6 +686,14 @@ endif ()
 # find_module()
 # ------------------------------------------------------------------------------
 
+function (resolve_version OutVar Value)
+    if ("${Value}" STREQUAL "")
+        set(${OutVar} "no version" PARENT_SCOPE)
+    else ()
+        set(${OutVar} "${Value}" PARENT_SCOPE)
+    endif ()
+endfunction()
+
 function (find_module Target Prefix Interface Mode ModuleName PackageName ImportedTarget Version)
 
     # find_package
@@ -698,7 +706,8 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
         endif ()
 
         if (${PackageName}_FOUND)
-            message("    " ${Prefix} ": " ${${PackageName}_VERSION} " [cmake]")
+            resolve_version(package_version "${${PackageName}_VERSION}")
+            message("    " ${Prefix} ": " ${package_version} " [cmake]")
             target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
             target_link_libraries(${Target} ${Interface} ${ImportedTarget})
             return ()
@@ -715,7 +724,8 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
         endif ()
 
         if (${Prefix}_FOUND)
-            message("    " ${Prefix} ": " ${${Prefix}_VERSION} " [pkgconfig]")
+            resolve_version(package_version "${${Prefix}_VERSION}")
+            message("    " ${Prefix} ": " ${package_version} " [pkgconfig]")
             target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
             target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
             target_link_directories(${Target} ${Interface} ${${Prefix}_LIBRARY_DIRS})
@@ -729,7 +739,8 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
     if (Mode STREQUAL "REQUIRED")
         message(FATAL_ERROR "Failed to locate REQUIRED package: " ${Prefix})
     else ()
-        message("    " ${Prefix} ": " ${${PackageName}_VERSION} " [not found]")
+        resolve_version(package_version "${${PackageName}_VERSION}")
+        message("    " ${Prefix} ": " ${package_version} " [not found]")
     endif ()
 
 endfunction()
