@@ -800,7 +800,7 @@ if (LIBRARY_ISAL)
     find_module(mango ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
 endif ()
 
-if (LIBRARY_JXL)
+if (LIBRARY_JXL AND ENABLE_LCMS2)
     find_module(mango JXL ${INTERFACE} OPTIONAL libjxl "" "" 0.8.2)
     find_module(mango JXL_THREADS ${INTERFACE} OPTIONAL libjxl_threads "" "" 0.7)
 endif ()
