@@ -696,18 +696,6 @@ endfunction()
 
 function (find_module Target Prefix Interface Mode ModuleName PackageName ImportedTarget Version)
 
-    # manual override via variables
-
-    if (DEFINED ${Prefix}_LIBRARIES AND DEFINED ${Prefix}_INCLUDE_DIRS)
-        resolve_version(package_version "no version")
-        message("    " ${Prefix} ": " ${package_version} " [manual]")
-        target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
-        target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
-        target_link_directories(${Target} ${Interface} ${${Prefix}_LIBRARY_DIRS})
-        target_link_libraries(${Target} ${Interface} ${${Prefix}_LIBRARIES})
-        return ()
-    endif ()
-
     # find_package
 
     if (NOT PackageName STREQUAL "")
@@ -744,6 +732,18 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
             target_link_libraries(${Target} ${Interface} ${${Prefix}_LIBRARIES})
             return ()
         endif ()
+    endif ()
+
+    # manual override via variables
+
+    if (DEFINED ${Prefix}_LIBRARIES AND DEFINED ${Prefix}_INCLUDE_DIRS)
+        resolve_version(package_version "no version")
+        message("    " ${Prefix} ": " ${package_version} " [manual]")
+        target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
+        target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
+        target_link_directories(${Target} ${Interface} ${${Prefix}_LIBRARY_DIRS})
+        target_link_libraries(${Target} ${Interface} ${${Prefix}_LIBRARIES})
+        return ()
     endif ()
 
     # check required
