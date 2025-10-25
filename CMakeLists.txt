@@ -694,6 +694,51 @@ function (resolve_version OutVar Value)
     endif ()
 endfunction()
 
+function (check_required Prefix PackageName)
+    if (Mode STREQUAL "REQUIRED")
+        message(FATAL_ERROR "Failed to locate REQUIRED package: " ${Prefix})
+    else ()
+        resolve_version(package_version "${${PackageName}_VERSION}")
+        message("    " ${Prefix} ": " ${package_version} " [not found]")
+    endif ()
+endfunction()
+
+function (apply_cmake_target Target Interface Prefix PackageName ImportedTarget)
+    resolve_version(package_version "${${PackageName}_VERSION}")
+    message("    " ${Prefix} ": " ${package_version} " [cmake]")
+
+    target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
+    target_link_libraries(${Target} ${Interface} ${ImportedTarget})
+endfunction()
+
+function (apply_pkgconfig_target Target Interface Prefix)
+    resolve_version(package_version "${${Prefix}_VERSION}")
+    message("    " ${Prefix} ": " ${package_version} " [pkgconfig]")
+
+    target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
+    target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
+    target_link_directories(${Target} ${Interface} ${${Prefix}_LIBRARY_DIRS})
+    target_link_libraries(${Target} ${Interface} ${${Prefix}_LIBRARIES})
+endfunction()
+
+function (apply_manual_target Target Interface Prefix)
+    resolve_version(package_version "no version")
+    message("    " ${Prefix} ": " ${package_version} " [manual]")
+
+    target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
+    target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
+    target_link_directories(${Target} ${Interface} ${${Prefix}_LIBRARY_DIRS})
+    target_link_libraries(${Target} ${Interface} ${${Prefix}_LIBRARIES})
+endfunction()
+
+function (check_manual_override Prefix Result)
+    if (DEFINED ${Prefix}_LIBRARIES AND DEFINED ${Prefix}_INCLUDE_DIRS)
+        set(${Result} TRUE PARENT_SCOPE)
+    else ()
+        set(${Result} FALSE PARENT_SCOPE)
+    endif ()
+endfunction()
+
 function (find_module Target Prefix Interface Mode ModuleName PackageName ImportedTarget Version)
 
     # find_package
@@ -706,10 +751,7 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
         endif ()
 
         if (${PackageName}_FOUND)
-            resolve_version(package_version "${${PackageName}_VERSION}")
-            message("    " ${Prefix} ": " ${package_version} " [cmake]")
-            target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
-            target_link_libraries(${Target} ${Interface} ${ImportedTarget})
+            apply_cmake_target(${Target} ${Interface} ${Prefix} ${PackageName} ${ImportedTarget})
             return ()
         endif ()
     endif ()
@@ -724,36 +766,73 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
         endif ()
 
         if (${Prefix}_FOUND)
-            resolve_version(package_version "${${Prefix}_VERSION}")
-            message("    " ${Prefix} ": " ${package_version} " [pkgconfig]")
-            target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
-            target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
-            target_link_directories(${Target} ${Interface} ${${Prefix}_LIBRARY_DIRS})
-            target_link_libraries(${Target} ${Interface} ${${Prefix}_LIBRARIES})
+            apply_pkgconfig_target(${Target} ${Interface} ${Prefix})
             return ()
         endif ()
     endif ()
 
-    # manual override via variables
+    # manual override
 
-    if (DEFINED ${Prefix}_LIBRARIES AND DEFINED ${Prefix}_INCLUDE_DIRS)
-        resolve_version(package_version "no version")
-        message("    " ${Prefix} ": " ${package_version} " [manual]")
-        target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
-        target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
-        target_link_directories(${Target} ${Interface} ${${Prefix}_LIBRARY_DIRS})
-        target_link_libraries(${Target} ${Interface} ${${Prefix}_LIBRARIES})
+    check_manual_override(${Prefix} MANUAL_OVERRIDE_FOUND)
+    if (MANUAL_OVERRIDE_FOUND)
+        apply_manual_target(${Target} ${Interface} ${Prefix})
         return ()
     endif ()
 
-    # check required
+    check_required(${Prefix} ${PackageName})
 
-    if (Mode STREQUAL "REQUIRED")
-        message(FATAL_ERROR "Failed to locate REQUIRED package: " ${Prefix})
+endfunction()
+
+function (find_libdeflate Target Interface Mode)
+    if (BUILD_SHARED_LIBS)
+        # For shared builds, prefer shared libraries
+        set(TARGET_NAMES 
+            "libdeflate::libdeflate_shared"    # Standard CMake target (Linux/macOS)
+            "libdeflate"                       # VCPKG target name (usually shared)
+            "libdeflate::libdeflate"           # Alternative VCPKG target
+            "libdeflate::libdeflate_static"    # Fallback to static if shared not available
+        )
     else ()
-        resolve_version(package_version "${${PackageName}_VERSION}")
-        message("    " ${Prefix} ": " ${package_version} " [not found]")
+        # For static builds, prefer static libraries
+        set(TARGET_NAMES 
+            "libdeflate::libdeflate_static"    # Standard CMake target (Linux/macOS)
+            "libdeflate"                       # VCPKG target name (usually static)
+            "libdeflate::libdeflate"           # Alternative VCPKG target
+            "libdeflate::libdeflate_shared"    # Fallback to shared if static not available
+        )
     endif ()
+
+    # find_package
+
+    find_package(libdeflate QUIET)
+    if (libdeflate_FOUND)
+        foreach(ImportedTarget ${TARGET_NAMES})
+            if (TARGET ${ImportedTarget})
+                apply_cmake_target(${Target} ${Interface} "LIBDEFLATE" "libdeflate" ${ImportedTarget})
+                return()
+            endif ()
+        endforeach ()
+    endif ()
+
+    # pkg_check_modules
+
+    if (PkgConfig_FOUND)
+        pkg_check_modules(LIBDEFLATE QUIET libdeflate)
+        if (LIBDEFLATE_FOUND)
+            apply_pkgconfig_target(${Target} ${Interface} LIBDEFLATE)
+            return()
+        endif ()
+    endif ()
+
+    # manual override
+
+    check_manual_override("LIBDEFLATE" MANUAL_OVERRIDE_FOUND)
+    if (MANUAL_OVERRIDE_FOUND)
+        apply_manual_target(${Target} ${Interface} "LIBDEFLATE")
+        return()
+    endif ()
+
+    check_required("LIBDEFLATE" "libdeflate")
 
 endfunction()
 
@@ -767,16 +846,7 @@ find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 9.1)
 find_module(mango ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
 find_module(mango LCMS2 PRIVATE REQUIRED lcms2 lcms2 lcms2::lcms2 0)
 
-if (BUILD_SHARED_LIBS)
-    find_module(mango LIBDEFLATE ${INTERFACE} REQUIRED libdeflate libdeflate libdeflate::libdeflate_shared 0)
-else ()
-    if (WIN32)
-        # Force pkg-config on Windows static to get "-ldeflate" (deflate.lib)
-        find_module(mango LIBDEFLATE ${INTERFACE} REQUIRED libdeflate "" "" 0)
-    else ()
-        find_module(mango LIBDEFLATE ${INTERFACE} REQUIRED libdeflate libdeflate libdeflate::libdeflate_static 0)
-    endif ()
-endif ()
+find_libdeflate(mango ${INTERFACE} REQUIRED)
 
 if (APPLE OR WIN32)
     # brew/vcpkg imported target is 'zstd::libzstd'
@@ -1132,7 +1202,7 @@ if (BUILD_EXAMPLES)
 
     if (WIN32)
         foreach (x ${EXAMPLE_BINARY_FOLDERS})
-            # Extract a safe target name from the folder path
+
             get_filename_component(folder_name ${x} NAME)
             set(destination_folder ${x}/${CMAKE_CFG_INTDIR})
 
