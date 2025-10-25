@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 2.4.0
+        VERSION 2.4.1
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
 # ------------------------------------------------------------------------------
 # options
 # ------------------------------------------------------------------------------
+
+OPTION(BUILD_SHARED_LIBS    "Build shared libraries"                     ON)
 
 OPTION(BUILD_OPENGL         "Build OpenGL support"                      OFF)
 OPTION(BUILD_VULKAN         "Build Vulkan support"                      OFF)
@@ -19,6 +21,11 @@ set_property(CACHE WINDOW_SYSTEM PROPERTY STRINGS xlib xcb wayland)
 
 # Select EGL for context management for OpenGL
 OPTION(ENABLE_EGL           "Use EGL for OpenGL context management"    OFF)
+
+OPTION(LIBRARY_BZIP2        "Enable BZIP2 compression support"          ON)
+OPTION(LIBRARY_LZ4          "Enable LZ4 compression support"            ON)
+OPTION(LIBRARY_LZMA         "Enable LZMA compression support"           ON)
+OPTION(LIBRARY_LZFSE        "Enable LZFSE compression support"          ON)
 
 OPTION(LIBRARY_JXL          "Enable jpeg-xl image codec support"        ON)
 OPTION(LIBRARY_JP2          "Enable jpeg2000 image codec support"       ON)
@@ -158,7 +165,13 @@ if (LINKER STREQUAL "mold")
     endif()
 endif()
 
-message("Build: " ${CMAKE_BUILD_TYPE})
+if (BUILD_SHARED_LIBS)
+    message("Build: " ${CMAKE_BUILD_TYPE} " (shared)")
+    set(INTERFACE PRIVATE)
+else ()
+    message("Build: " ${CMAKE_BUILD_TYPE} " (static)")
+    set(INTERFACE PUBLIC)
+endif ()
 
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/include)
 
@@ -395,11 +408,6 @@ SOURCE_GROUP("source/import3d"      FILES ${IMPORT3D_SOURCES})
 
 set(EXTERNAL_SOURCE_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/source/external")
 
-FILE(GLOB EXTERNAL_LZMA
-    "${EXTERNAL_SOURCE_DIR}/lzma/*.h"
-    "${EXTERNAL_SOURCE_DIR}/lzma/*.c"
-)
-
 FILE(GLOB EXTERNAL_AES
     "${EXTERNAL_SOURCE_DIR}/aes/*.h"
     "${EXTERNAL_SOURCE_DIR}/aes/*.cpp"
@@ -425,10 +433,19 @@ FILE(GLOB EXTERNAL_GOOGLE
     "${EXTERNAL_SOURCE_DIR}/google/*.h"
 )
 
-FILE(GLOB EXTERNAL_LZFSE
-    "${EXTERNAL_SOURCE_DIR}/lzfse/*.h"
-    "${EXTERNAL_SOURCE_DIR}/lzfse/*.c"
-)
+if (LIBRARY_LZMA)
+    FILE(GLOB EXTERNAL_LZMA
+        "${EXTERNAL_SOURCE_DIR}/lzma/*.h"
+        "${EXTERNAL_SOURCE_DIR}/lzma/*.c"
+    )
+endif ()
+
+if (LIBRARY_LZFSE)
+    FILE(GLOB EXTERNAL_LZFSE
+        "${EXTERNAL_SOURCE_DIR}/lzfse/*.h"
+        "${EXTERNAL_SOURCE_DIR}/lzfse/*.c"
+    )
+endif ()
 
 FILE(GLOB EXTERNAL_UNRAR
     "${EXTERNAL_SOURCE_DIR}/unrar/*.hpp"
@@ -454,13 +471,17 @@ FILE(GLOB EXTERNAL_IMPORT3D
     "${EXTERNAL_SOURCE_DIR}/fastgltf/src/*.cpp"
 )
 
-SOURCE_GROUP("external/lzma"        FILES ${EXTERNAL_LZMA})
 SOURCE_GROUP("external/aes"         FILES ${EXTERNAL_AES})
 SOURCE_GROUP("external/bc"          FILES ${EXTERNAL_BC})
 SOURCE_GROUP("external/concurrent"  FILES ${EXTERNAL_CONCURRENT_QUEUE})
 SOURCE_GROUP("external/astc"        FILES ${EXTERNAL_ASTC})
 SOURCE_GROUP("external/google"      FILES ${EXTERNAL_GOOGLE})
-SOURCE_GROUP("external/lzfse"       FILES ${EXTERNAL_LZFSE})
+if (LIBRARY_LZMA)
+    SOURCE_GROUP("external/lzma"    FILES ${EXTERNAL_LZMA})
+endif ()
+if (LIBRARY_LZFSE)
+    SOURCE_GROUP("external/lzfse"   FILES ${EXTERNAL_LZFSE})
+endif ()
 SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
 SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
 SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
@@ -484,17 +505,27 @@ set(MANGO_SOURCES
     ${MATH_SOURCES}
     ${SIMD_HEADERS}
     ${SIMD_SOURCES}
-    ${EXTERNAL_LZMA}
     ${EXTERNAL_AES}
     ${EXTERNAL_BC}
     ${EXTERNAL_CONCURRENT_QUEUE}
     ${EXTERNAL_ASTC}
     ${EXTERNAL_GOOGLE}
-    ${EXTERNAL_LZFSE}
     ${EXTERNAL_UNRAR}
-    ${EXTERNAL_ZPNG}
     ${EXTERNAL_BASISU}
+    ${EXTERNAL_ZPNG}
 )
+
+if (LIBRARY_LZMA)
+    list(APPEND MANGO_SOURCES
+        ${EXTERNAL_LZMA}
+    )
+endif ()
+
+if (LIBRARY_LZFSE)
+    list(APPEND MANGO_SOURCES
+        ${EXTERNAL_LZFSE}
+    )
+endif ()
 
 if (BUILD_OPENGL)
     list(APPEND MANGO_SOURCES
@@ -526,7 +557,7 @@ if (BUILD_IMPORT3D)
     )
 endif ()
 
-add_library(mango SHARED ${MANGO_SOURCES})
+add_library(mango ${MANGO_SOURCES})
 
 set_target_properties(mango PROPERTIES
     VERSION ${PROJECT_VERSION}
@@ -538,7 +569,7 @@ if (APPLE)
 endif ()
 
 # ------------------------------------------------------------------------------
-# platform libraries
+# Platform Libraries
 # ------------------------------------------------------------------------------
 
 find_package(PkgConfig QUIET)
@@ -550,7 +581,9 @@ if (CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
 
-message("[Libraries]")
+if (BUILD_OPENGL OR BUILD_VULKAN)
+    message("[Platform Libraries]")
+endif ()
 
 # ------------------------------------------------------------------------------
 # OpenGL
@@ -650,8 +683,61 @@ if (BUILD_VULKAN)
 endif ()
 
 # ------------------------------------------------------------------------------
-# find_module
+# find_module()
 # ------------------------------------------------------------------------------
+
+function (resolve_version OutVar Value)
+    if ("${Value}" STREQUAL "")
+        set(${OutVar} "no version" PARENT_SCOPE)
+    else ()
+        set(${OutVar} "${Value}" PARENT_SCOPE)
+    endif ()
+endfunction()
+
+function (check_required Prefix PackageName)
+    if (Mode STREQUAL "REQUIRED")
+        message(FATAL_ERROR "Failed to locate REQUIRED package: " ${Prefix})
+    else ()
+        resolve_version(package_version "${${PackageName}_VERSION}")
+        message("    " ${Prefix} ": " ${package_version} " [not found]")
+    endif ()
+endfunction()
+
+function (apply_cmake_target Target Interface Prefix PackageName ImportedTarget)
+    resolve_version(package_version "${${PackageName}_VERSION}")
+    message("    " ${Prefix} ": " ${package_version} " [cmake]")
+
+    target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
+    target_link_libraries(${Target} ${Interface} ${ImportedTarget})
+endfunction()
+
+function (apply_pkgconfig_target Target Interface Prefix)
+    resolve_version(package_version "${${Prefix}_VERSION}")
+    message("    " ${Prefix} ": " ${package_version} " [pkgconfig]")
+
+    target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
+    target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
+    target_link_directories(${Target} ${Interface} ${${Prefix}_LIBRARY_DIRS})
+    target_link_libraries(${Target} ${Interface} ${${Prefix}_LIBRARIES})
+endfunction()
+
+function (apply_manual_target Target Interface Prefix)
+    resolve_version(package_version "no version")
+    message("    " ${Prefix} ": " ${package_version} " [manual]")
+
+    target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
+    target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
+    target_link_directories(${Target} ${Interface} ${${Prefix}_LIBRARY_DIRS})
+    target_link_libraries(${Target} ${Interface} ${${Prefix}_LIBRARIES})
+endfunction()
+
+function (check_manual_override Prefix Result)
+    if (DEFINED ${Prefix}_LIBRARIES AND DEFINED ${Prefix}_INCLUDE_DIRS)
+        set(${Result} TRUE PARENT_SCOPE)
+    else ()
+        set(${Result} FALSE PARENT_SCOPE)
+    endif ()
+endfunction()
 
 function (find_module Target Prefix Interface Mode ModuleName PackageName ImportedTarget Version)
 
@@ -665,9 +751,7 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
         endif ()
 
         if (${PackageName}_FOUND)
-            message("    " ${Prefix} ": " ${${PackageName}_VERSION} " [cmake]")
-            target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
-            target_link_libraries(${Target} ${Interface} ${ImportedTarget})
+            apply_cmake_target(${Target} ${Interface} ${Prefix} ${PackageName} ${ImportedTarget})
             return ()
         endif ()
     endif ()
@@ -682,70 +766,133 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
         endif ()
 
         if (${Prefix}_FOUND)
-            message("    " ${Prefix} ": " ${${Prefix}_VERSION} " [pkgconfig]")
-            target_compile_definitions(${Target} PRIVATE "MANGO_ENABLE_${Prefix}")
-            target_include_directories(${Target} ${Interface} ${${Prefix}_INCLUDE_DIRS})
-            target_link_directories(${Target} ${Interface} ${${Prefix}_LIBRARY_DIRS})
-            target_link_libraries(${Target} ${Interface} ${${Prefix}_LIBRARIES})
+            apply_pkgconfig_target(${Target} ${Interface} ${Prefix})
             return ()
         endif ()
     endif ()
 
-    # check required
+    # manual override
 
-    if (Mode STREQUAL "REQUIRED")
-        message(FATAL_ERROR "Failed to locate REQUIRED package: " ${Prefix})
+    check_manual_override(${Prefix} MANUAL_OVERRIDE_FOUND)
+    if (MANUAL_OVERRIDE_FOUND)
+        apply_manual_target(${Target} ${Interface} ${Prefix})
+        return ()
     endif ()
+
+    check_required(${Prefix} ${PackageName})
+
+endfunction()
+
+function (find_libdeflate Target Interface Mode)
+    if (BUILD_SHARED_LIBS)
+        # For shared builds, prefer shared libraries
+        set(TARGET_NAMES 
+            "libdeflate::libdeflate_shared"    # Standard CMake target (Linux/macOS)
+            "libdeflate"                       # VCPKG target name (usually shared)
+            "libdeflate::libdeflate"           # Alternative VCPKG target
+            "libdeflate::libdeflate_static"    # Fallback to static if shared not available
+        )
+    else ()
+        # For static builds, prefer static libraries
+        set(TARGET_NAMES 
+            "libdeflate::libdeflate_static"    # Standard CMake target (Linux/macOS)
+            "libdeflate"                       # VCPKG target name (usually static)
+            "libdeflate::libdeflate"           # Alternative VCPKG target
+            "libdeflate::libdeflate_shared"    # Fallback to shared if static not available
+        )
+    endif ()
+
+    # find_package
+
+    find_package(libdeflate QUIET)
+    if (libdeflate_FOUND)
+        foreach(ImportedTarget ${TARGET_NAMES})
+            if (TARGET ${ImportedTarget})
+                apply_cmake_target(${Target} ${Interface} "LIBDEFLATE" "libdeflate" ${ImportedTarget})
+                return()
+            endif ()
+        endforeach ()
+    endif ()
+
+    # pkg_check_modules
+
+    if (PkgConfig_FOUND)
+        pkg_check_modules(LIBDEFLATE QUIET libdeflate)
+        if (LIBDEFLATE_FOUND)
+            apply_pkgconfig_target(${Target} ${Interface} LIBDEFLATE)
+            return()
+        endif ()
+    endif ()
+
+    # manual override
+
+    check_manual_override("LIBDEFLATE" MANUAL_OVERRIDE_FOUND)
+    if (MANUAL_OVERRIDE_FOUND)
+        apply_manual_target(${Target} ${Interface} "LIBDEFLATE")
+        return()
+    endif ()
+
+    check_required("LIBDEFLATE" "libdeflate")
 
 endfunction()
 
 # ------------------------------------------------------------------------------
-# required libraries
+# Required Libraries
 # ------------------------------------------------------------------------------
 
+message("[Required Libraries]")
+
 find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 9.1)
-find_module(mango ZLIB PRIVATE REQUIRED zlib ZLIB ZLIB::ZLIB 0)
-find_module(mango LIBDEFLATE PRIVATE REQUIRED libdeflate libdeflate libdeflate::libdeflate_shared 0)
+find_module(mango ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
+find_module(mango LCMS2 PRIVATE REQUIRED lcms2 lcms2 lcms2::lcms2 0)
+
+find_libdeflate(mango ${INTERFACE} REQUIRED)
 
 if (APPLE OR WIN32)
     # brew/vcpkg imported target is 'zstd::libzstd'
-    find_module(mango ZSTD PRIVATE REQUIRED libzstd zstd zstd::libzstd 0)
+    find_module(mango ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd::libzstd 0)
 else ()
     # apt/pacman imported target is 'zstd'
-    find_module(mango ZSTD PRIVATE REQUIRED libzstd zstd zstd 0)
+    find_module(mango ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd 0)
 endif ()
-
-find_module(mango LZ4 PRIVATE REQUIRED liblz4 lz4 lz4::lz4 0)
-find_module(mango BZIP2 PRIVATE REQUIRED "" BZip2 BZip2::BZip2 0)
-find_module(mango LCMS2 PRIVATE REQUIRED lcms2 lcms2 lcms2::lcms2 0)
 
 # ------------------------------------------------------------------------------
-# optional libraries
+# Optional Libraries
 # ------------------------------------------------------------------------------
 
-if (LIBRARY_JXL)
-    find_module(mango JXL PRIVATE OPTIONAL libjxl "" "" 0.8.2)
-    find_module(mango JXL_THREADS PRIVATE OPTIONAL libjxl_threads "" "" 0.7)
+message("[Optional Libraries]")
+
+if (LIBRARY_BZIP2)
+    find_module(mango BZIP2 ${INTERFACE} OPTIONAL "" BZip2 BZip2::BZip2 0)
 endif ()
 
-if (LIBRARY_JP2)
-    find_module(mango JP2 PRIVATE OPTIONAL libopenjp2 OpenJPEG openjp2 2.4.0)
-endif ()
-
-if (LIBRARY_WEBP)
-    find_module(mango WEBP PRIVATE OPTIONAL libwebp WebP WebP::webp 1.3.2)
-endif ()
-
-if (LIBRARY_AVIF)
-    find_module(mango AVIF PRIVATE OPTIONAL libavif libavif avif 1.0.0)
-endif ()
-
-if (LIBRARY_HEIF)
-    find_module(mango HEIF PRIVATE OPTIONAL libheif libheif heif 1.13.0)
+if (LIBRARY_LZ4)
+    find_module(mango LZ4 ${INTERFACE} OPTIONAL liblz4 lz4 lz4::lz4 0)
 endif ()
 
 if (LIBRARY_ISAL)
-    find_module(mango ISAL PRIVATE OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
+    find_module(mango ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
+endif ()
+
+if (LIBRARY_JXL)
+    find_module(mango JXL ${INTERFACE} OPTIONAL libjxl "" "" 0.8.2)
+    find_module(mango JXL_THREADS ${INTERFACE} OPTIONAL libjxl_threads "" "" 0.7)
+endif ()
+
+if (LIBRARY_JP2)
+    find_module(mango JP2 ${INTERFACE} OPTIONAL libopenjp2 OpenJPEG openjp2 2.4.0)
+endif ()
+
+if (LIBRARY_WEBP)
+    find_module(mango WEBP ${INTERFACE} OPTIONAL libwebp WebP WebP::webp 1.3.2)
+endif ()
+
+if (LIBRARY_AVIF)
+    find_module(mango AVIF ${INTERFACE} OPTIONAL libavif libavif avif 1.0.0)
+endif ()
+
+if (LIBRARY_HEIF)
+    find_module(mango HEIF ${INTERFACE} OPTIONAL libheif libheif heif 1.13.0)
 endif ()
 
 # ------------------------------------------------------------------------------
@@ -754,7 +901,10 @@ endif ()
 
 set(SIMD "NONE")
 
-target_compile_definitions(mango PRIVATE "MANGO_API_EXPORT")
+if (BUILD_SHARED_LIBS)
+    target_compile_definitions(mango PUBLIC "MANGO_SHARED")
+    target_compile_definitions(mango PRIVATE "MANGO_API_EXPORT")
+endif ()
 
 if (WIN32)
     target_compile_definitions(mango PUBLIC UNICODE)
@@ -915,6 +1065,10 @@ else ()
     endif ()
 endif ()
 
+# ------------------------------------------------------------------------------
+# ISA Extensions
+# ------------------------------------------------------------------------------
+
 message("[ISA Extensions]")
 
 if (X86 OR X86_64)
@@ -959,11 +1113,15 @@ endif()
 
 message("    SIMD: " ${SIMD})
 
-message("[Options]")
-message("    BUILD_OPENGL:   " ${BUILD_OPENGL})
-message("    BUILD_VULKAN:   " ${BUILD_VULKAN})
-message("    BUILD_IMPORT3D: " ${BUILD_IMPORT3D})
-message("    BUILD_EXAMPLES: " ${BUILD_EXAMPLES})
+# ------------------------------------------------------------------------------
+# Build Options
+# ------------------------------------------------------------------------------
+
+message("[Build Options]")
+message("    BUILD_OPENGL:    " ${BUILD_OPENGL})
+message("    BUILD_VULKAN:    " ${BUILD_VULKAN})
+message("    BUILD_IMPORT3D:  " ${BUILD_IMPORT3D})
+message("    BUILD_EXAMPLES:  " ${BUILD_EXAMPLES})
 
 # ------------------------------------------------------------------------------
 # install
@@ -1044,12 +1202,15 @@ if (BUILD_EXAMPLES)
 
     if (WIN32)
         foreach (x ${EXAMPLE_BINARY_FOLDERS})
-            set(source_file $<TARGET_FILE:mango>)
+
+            get_filename_component(folder_name ${x} NAME)
             set(destination_folder ${x}/${CMAKE_CFG_INTDIR})
-            add_custom_command(TARGET mango POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E echo "Copying: ${source_file}  -->  ${destination_folder}"
+
+            add_custom_target(copy_mango_to_${folder_name} ALL
+                COMMAND ${CMAKE_COMMAND} -E echo "Copying: $<TARGET_FILE:mango>  -->  ${destination_folder}"
                 COMMAND ${CMAKE_COMMAND} -E make_directory "${destination_folder}"
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${source_file}" "${destination_folder}"
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:mango>" "${destination_folder}"
+                DEPENDS mango
             )
         endforeach ()
     endif ()

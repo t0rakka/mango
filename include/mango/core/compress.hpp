@@ -191,19 +191,21 @@ namespace mango
         enum Method
         {
             NONE = 0,
-            BZIP2,
-            LZ4,
+            // required
             ZSTD,
-            LZFSE,
-            LZMA,
-            LZMA2,
-            PPMD8,
             ZLIB,
             DEFLATE,
             DEFLATE_ZLIB,
             DEFLATE_GZIP,
             LZAV,
-            ISAL, // optional
+            // optional
+            BZIP2,
+            LZ4,
+            LZFSE,
+            LZMA,
+            LZMA2,
+            PPMD8,
+            ISAL,
         } method = NONE;
         std::string name;
 

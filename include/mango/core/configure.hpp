@@ -729,10 +729,14 @@
 
 #ifdef MANGO_PLATFORM_WINDOWS
 
-    #if defined(MANGO_API_EXPORT)
-        #define MANGO_API __declspec(dllexport)
+    #if defined(MANGO_SHARED)
+        #if defined(MANGO_API_EXPORT)
+            #define MANGO_API __declspec(dllexport)
+        #else
+            #define MANGO_API __declspec(dllimport)
+        #endif
     #else
-        #define MANGO_API __declspec(dllimport)
+        #define MANGO_API
     #endif
 
 #elif __GNUC__ >= 4
