@@ -3,32 +3,60 @@
     "cmakeMinimumRequired": { "major": 3, "minor": 19 },
     "configurePresets": [
         {
+            "name": "options",
+            "description": "Common build options shared across presets",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "INTEL_DELUXE": "ON"
+            }
+        },
+        {
+            "name": "ninja",
+            "description": "Ninja configuration for cross-platform builds",
+            "generator": "Ninja"
+        },
+        {
+            "name": "vcpkg",
+            "description": "vcpkg toolchain setup for dependency resolution",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            }
+        },
+        {
             "name": "windows",
-            "description": "Windows build using vcpkg toolchain",
-            "binaryDir": "${sourceDir}/build",
+            "description": "Windows build using Visual Studio and vcpkg toolchain",
+            "inherits": ["options", "vcpkg"]
+        },
+        {
+            "name": "windows-ninja-release",
+            "description": "Windows Ninja Release build with vcpkg toolchain",
+            "inherits": ["options", "ninja", "vcpkg"],
             "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-                "INTEL_DELUXE": "ON"
+                "CMAKE_BUILD_TYPE": "Release"
             }
         },
         {
-            "name": "posix-release",
-            "description": "POSIX compatible build (Linux, macOS)",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build",
+            "name": "windows-ninja-debug",
+            "description": "Windows Ninja Debug build with vcpkg toolchain",
+            "inherits": ["options", "ninja", "vcpkg"],
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "INTEL_DELUXE": "ON"
+                "CMAKE_BUILD_TYPE": "Debug"
             }
         },
         {
-            "name": "posix-debug",
-            "description": "POSIX compatible build (Linux, macOS)",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build",
+            "name": "release",
+            "description": "Cross-platform Release build using Ninja",
+            "inherits": ["options", "ninja"],
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "INTEL_DELUXE": "ON"
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "debug",
+            "description": "Cross-platform Debug build using Ninja",
+            "inherits": ["options", "ninja"],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
             }
         }
     ],
@@ -46,13 +74,23 @@
             "jobs": 0
         },
         {
-            "name": "posix-release",
-            "configurePreset": "posix-release",
+            "name": "windows-ninja-release",
+            "configurePreset": "windows-ninja-release",
             "jobs": 0
         },
         {
-            "name": "posix-debug",
-            "configurePreset": "posix-debug",
+            "name": "windows-ninja-debug",
+            "configurePreset": "windows-ninja-debug",
+            "jobs": 0
+        },
+        {
+            "name": "release",
+            "configurePreset": "release",
+            "jobs": 0
+        },
+        {
+            "name": "debug",
+            "configurePreset": "debug",
             "jobs": 0
         }
     ]
