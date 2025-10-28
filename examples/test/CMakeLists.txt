@@ -18,4 +18,3 @@ foreach(example IN LISTS EXAMPLES)
 endforeach()
 
 file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(COPY pathtest.cpp DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
