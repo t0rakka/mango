@@ -739,6 +739,10 @@ function (check_manual_override Prefix Result)
     endif ()
 endfunction()
 
+# ------------------------------------------------------------------------------
+# find_module
+# ------------------------------------------------------------------------------
+
 function (find_module Target Prefix Interface Mode ModuleName PackageName ImportedTarget Version)
 
     # find_package
@@ -779,9 +783,15 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
         return ()
     endif ()
 
-    check_required(${Prefix} ${PackageName})
+    if (NOT PackageName STREQUAL "")
+        check_required(${Prefix} ${PackageName})
+    endif ()
 
 endfunction()
+
+# ------------------------------------------------------------------------------
+# find_libdeflate
+# ------------------------------------------------------------------------------
 
 function (find_libdeflate Target Interface Mode)
     if (BUILD_SHARED_LIBS)
@@ -875,7 +885,7 @@ if (LIBRARY_ISAL)
 endif ()
 
 if (LIBRARY_JXL)
-    find_module(mango JXL ${INTERFACE} OPTIONAL libjxl "" "" 0.8.2)
+    find_module(mango JXL ${INTERFACE} OPTIONAL libjxl "" "" 0.7)
     find_module(mango JXL_THREADS ${INTERFACE} OPTIONAL libjxl_threads "" "" 0.7)
 endif ()
 
