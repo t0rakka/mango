@@ -1270,6 +1270,630 @@ namespace
         return true;
     }
 
+    /*
+    static
+    bool ccitt_fax4_decompress(Memory output, ConstMemory input, u32 width)
+    {
+        constexpr u8 White = 0x00;
+        constexpr u8 Black = 0xFF;
+
+        if (width == 0)
+        {
+            return false;
+        }
+
+        if (width > 0x7fffffff)
+        {
+            return false;
+        }
+
+        if (output.size == 0)
+        {
+            return true;
+        }
+
+        if (!output.address)
+        {
+            return false;
+        }
+
+        if (output.size % width != 0)
+        {
+            return false;
+        }
+
+        if (!input.address)
+        {
+            return false;
+        }
+
+        if (input.size == 0)
+        {
+            std::memset(output.address, White, output.size);
+            return true;
+        }
+
+        const int line_width = int(width);
+        const int height = int(output.size / width);
+
+        if (height <= 0)
+        {
+            return false;
+        }
+
+        u64 bit_buffer = 0;
+        int bits_available = 0;
+
+        const u8* src = input.address;
+        const u8* src_end = input.address + input.size;
+
+        auto ensure_bits = [&](int bits) -> bool
+        {
+            while (bits_available < bits && src < src_end)
+            {
+                bit_buffer = (bit_buffer << 8) | *src++;
+                bits_available += 8;
+            }
+            return bits_available >= bits;
+        };
+
+        auto read_bit = [&]() -> int
+        {
+            if (!ensure_bits(1))
+            {
+                return -1;
+            }
+
+            bits_available -= 1;
+            return (bit_buffer >> bits_available) & 1;
+        };
+
+        struct ccitt_code
+        {
+            u16 code;
+            u8 bits;
+            u16 run;
+        };
+
+        static const ccitt_code white_codes[] = {
+            {0x35, 8, 0},    {0x7, 6, 1},     {0x7, 4, 2},     {0x8, 4, 3},
+            {0xB, 4, 4},     {0xC, 4, 5},     {0xE, 4, 6},     {0xF, 4, 7},
+            {0x13, 5, 8},    {0x14, 5, 9},    {0x7, 5, 10},    {0x8, 5, 11},
+            {0x8, 6, 12},    {0x3, 6, 13},    {0x34, 6, 14},   {0x35, 6, 15},
+            {0x2A, 6, 16},   {0x2B, 6, 17},   {0x27, 7, 18},   {0xC, 7, 19},
+            {0x8, 7, 20},    {0x17, 7, 21},   {0x3, 7, 22},    {0x4, 7, 23},
+            {0x28, 7, 24},   {0x2B, 7, 25},   {0x13, 7, 26},   {0x24, 7, 27},
+            {0x18, 7, 28},   {0x2, 8, 29},    {0x3, 8, 30},    {0x1A, 8, 31},
+            {0x1B, 8, 32},   {0x12, 8, 33},   {0x13, 8, 34},   {0x14, 8, 35},
+            {0x15, 8, 36},   {0x16, 8, 37},   {0x17, 8, 38},   {0x28, 8, 39},
+            {0x29, 8, 40},   {0x2A, 8, 41},   {0x2B, 8, 42},   {0x2C, 8, 43},
+            {0x2D, 8, 44},   {0x4, 8, 45},    {0x5, 8, 46},    {0xA, 8, 47},
+            {0xB, 8, 48},    {0x52, 8, 49},   {0x53, 8, 50},   {0x54, 8, 51},
+            {0x55, 8, 52},   {0x24, 8, 53},   {0x25, 8, 54},   {0x58, 8, 55},
+            {0x59, 8, 56},   {0x5A, 8, 57},   {0x5B, 8, 58},   {0x4A, 8, 59},
+            {0x4B, 8, 60},   {0x32, 8, 61},   {0x33, 8, 62},   {0x34, 8, 63},
+            {0x1B, 5, 64},   {0x12, 5, 128},  {0x17, 6, 192},  {0x37, 7, 256},
+            {0x36, 8, 320},  {0x37, 8, 384},  {0x64, 8, 448},  {0x65, 8, 512},
+            {0x68, 8, 576},  {0x67, 8, 640},  {0xCC, 9, 704},  {0xCD, 9, 768},
+            {0xD2, 9, 832},  {0xD3, 9, 896},  {0xD4, 9, 960},  {0xD5, 9, 1024},
+            {0xD6, 9, 1088}, {0xD7, 9, 1152}, {0xD8, 9, 1216}, {0xD9, 9, 1280},
+            {0xDA, 9, 1344}, {0xDB, 9, 1408}, {0x98, 9, 1472}, {0x99, 9, 1536},
+            {0x9A, 9, 1600}, {0x18, 6, 1664}, {0x9B, 9, 1728}
+        };
+
+        static const ccitt_code black_codes[] = {
+            {0x37, 10, 0},   {0x2, 3, 1},     {0x3, 2, 2},     {0x2, 2, 3},
+            {0x3, 3, 4},     {0x3, 4, 5},     {0x2, 4, 6},     {0x3, 5, 7},
+            {0x5, 6, 8},     {0x4, 6, 9},     {0x4, 7, 10},    {0x5, 7, 11},
+            {0x7, 7, 12},    {0x4, 8, 13},    {0x7, 8, 14},    {0x18, 9, 15},
+            {0x17, 10, 16},  {0x18, 10, 17},  {0x8, 10, 18},   {0x67, 11, 19},
+            {0x68, 11, 20},  {0x6C, 11, 21},  {0x37, 11, 22},  {0x28, 11, 23},
+            {0x17, 11, 24},  {0x18, 11, 25},  {0xCA, 12, 26},  {0xCB, 12, 27},
+            {0xCC, 12, 28},  {0xCD, 12, 29},  {0x68, 12, 30},  {0x69, 12, 31},
+            {0x6A, 12, 32},  {0x6B, 12, 33},  {0xD2, 12, 34},  {0xD3, 12, 35},
+            {0xD4, 12, 36},  {0xD5, 12, 37},  {0xD6, 12, 38},  {0xD7, 12, 39},
+            {0x6C, 13, 40},  {0x6D, 13, 41},  {0xDA, 13, 42},  {0xDB, 13, 43},
+            {0x54, 6, 44},   {0x55, 6, 45},   {0x56, 6, 46},   {0x57, 6, 47},
+            {0x64, 7, 48},   {0x65, 7, 49},   {0x52, 8, 50},   {0x53, 8, 51},
+            {0x24, 8, 52},   {0x37, 8, 53},   {0x38, 8, 54},   {0x27, 8, 55},
+            {0x28, 8, 56},   {0x58, 8, 57},   {0x59, 8, 58},   {0x2B, 8, 59},
+            {0x2C, 8, 60},   {0x5A, 8, 61},   {0x66, 8, 62},   {0x67, 8, 63},
+            {0xF, 8, 64},    {0xC8, 9, 128},  {0xC9, 9, 192},  {0x5B, 9, 256},
+            {0x33, 9, 320},  {0x34, 9, 384},  {0x35, 9, 448},  {0x6C, 9, 512},
+            {0x6D, 9, 576},  {0x4A, 9, 640},  {0x4B, 9, 704},  {0x4C, 9, 768},
+            {0x4D, 9, 832},  {0x72, 9, 896},  {0x73, 9, 960},  {0x74, 9, 1024},
+            {0x75, 9, 1088}, {0x76, 9, 1152}, {0x77, 9, 1216}, {0x52, 9, 1280},
+            {0x53, 9, 1344}, {0x54, 9, 1408}, {0x55, 9, 1472}, {0x24, 9, 1536},
+            {0x37, 9, 1600}, {0x38, 9, 1664}, {0x27, 9, 1728}
+        };
+
+        const int white_table_size = int(sizeof(white_codes) / sizeof(white_codes[0]));
+        const int black_table_size = int(sizeof(black_codes) / sizeof(black_codes[0]));
+
+        auto decode_run = [&](bool is_white) -> int
+        {
+            const ccitt_code* table = is_white ? white_codes : black_codes;
+            const int table_size = is_white ? white_table_size : black_table_size;
+
+            for (int bits = 2; bits <= 13; ++bits)
+            {
+                if (!ensure_bits(bits))
+                {
+                    continue;
+                }
+
+                u32 mask = (u32(1) << bits) - 1u;
+                u32 code = (bit_buffer >> (bits_available - bits)) & mask;
+
+                for (int i = 0; i < table_size; ++i)
+                {
+                    if (table[i].bits == bits && table[i].code == code)
+                    {
+                        if (table[i].run > width)
+                        {
+                            continue;
+                        }
+
+                        bits_available -= bits;
+                        return table[i].run;
+                    }
+                }
+            }
+
+            if (src >= src_end)
+            {
+                return -3;
+            }
+
+            if (ensure_bits(1))
+            {
+                bits_available -= 1;
+                return 1;
+            }
+
+            return -1;
+        };
+
+        auto write_run = [&](u8* row_ptr, int start, int end, u8 value) -> bool
+        {
+            if (end < start)
+            {
+                return false;
+            }
+
+            if (start < 0)
+            {
+                start = 0;
+            }
+
+            if (start >= line_width)
+            {
+                return true;
+            }
+
+            if (end > line_width)
+            {
+                end = line_width;
+            }
+
+            int count = end - start;
+            if (count <= 0)
+            {
+                return true;
+            }
+
+            std::memset(row_ptr + start, value, count);
+            return true;
+        };
+
+        auto decode_1d_line = [&](u8* row_ptr, std::vector<int>& changes, int& change_count) -> bool
+        {
+            if (changes.empty())
+            {
+                return false;
+            }
+
+            int current_pos = 0;
+            int current_color = 0; // 0 = white, 1 = black
+            change_count = 0;
+
+            while (current_pos < line_width)
+            {
+                int total_run = 0;
+
+                while (true)
+                {
+                    int run = decode_run(current_color == 0);
+                    if (run < 0)
+                    {
+                        if (run == -3 && current_pos >= line_width)
+                        {
+                            break;
+                        }
+
+                        return false;
+                    }
+
+                    total_run += run;
+
+                    if (run >= 64 && (run % 64) == 0)
+                    {
+                        continue;
+                    }
+
+                    break;
+                }
+
+                int next_pos = current_pos + total_run;
+                if (next_pos > line_width)
+                {
+                    next_pos = line_width;
+                }
+
+                if (!write_run(row_ptr, current_pos, next_pos, current_color == 0 ? White : Black))
+                {
+                    return false;
+                }
+
+                current_pos = next_pos;
+
+                if (current_pos < line_width || total_run == 0)
+                {
+                    if (change_count >= int(changes.size()))
+                    {
+                        return false;
+                    }
+
+                    changes[change_count++] = current_pos;
+                }
+
+                current_color ^= 1;
+            }
+
+            if (change_count >= int(changes.size()))
+            {
+                return false;
+            }
+
+            changes[change_count++] = line_width;
+            return true;
+        };
+
+        std::vector<int> reference_changes(line_width + 1);
+        std::vector<int> current_changes(line_width + 1);
+
+        int reference_count = 1;
+        int current_count = 0;
+
+        reference_changes[0] = line_width;
+
+        struct ModeResult
+        {
+            enum Type
+            {
+                Pass,
+                Horizontal,
+                Vertical,
+                EOFB,
+                Invalid
+            } type = Invalid;
+
+            int offset = 0;
+        };
+
+        auto decode_mode = [&]() -> ModeResult
+        {
+            ModeResult result;
+            u32 prefix = 0;
+
+            for (int bits = 1; bits <= 12; ++bits)
+            {
+                int bit = read_bit();
+                if (bit < 0)
+                {
+                    result.type = ModeResult::Invalid;
+                    return result;
+                }
+
+                prefix = (prefix << 1) | u32(bit);
+
+                switch (bits)
+                {
+                    case 1:
+                        if (prefix == 0b1)
+                        {
+                            result.type = ModeResult::Vertical;
+                            result.offset = 0;
+                            return result;
+                        }
+                        break;
+
+                    case 3:
+                        if (prefix == 0b011)
+                        {
+                            result.type = ModeResult::Vertical;
+                            result.offset = +1;
+                            return result;
+                        }
+                        if (prefix == 0b010)
+                        {
+                            result.type = ModeResult::Vertical;
+                            result.offset = -1;
+                            return result;
+                        }
+                        if (prefix == 0b001)
+                        {
+                            result.type = ModeResult::Horizontal;
+                            return result;
+                        }
+                        break;
+
+                    case 4:
+                        if (prefix == 0b0001)
+                        {
+                            result.type = ModeResult::Pass;
+                            return result;
+                        }
+                        break;
+
+                    case 6:
+                        if (prefix == 0b000011)
+                        {
+                            result.type = ModeResult::Vertical;
+                            result.offset = +2;
+                            return result;
+                        }
+                        if (prefix == 0b000010)
+                        {
+                            result.type = ModeResult::Vertical;
+                            result.offset = -2;
+                            return result;
+                        }
+                        break;
+
+                    case 7:
+                        if (prefix == 0b0000011)
+                        {
+                            result.type = ModeResult::Vertical;
+                            result.offset = +3;
+                            return result;
+                        }
+                        if (prefix == 0b0000010)
+                        {
+                            result.type = ModeResult::Vertical;
+                            result.offset = -3;
+                            return result;
+                        }
+                        if (prefix == 0b0000001)
+                        {
+                            result.type = ModeResult::Invalid;
+                            return result;
+                        }
+                        break;
+
+                    case 12:
+                        if (prefix == 0b000000000001)
+                        {
+                            result.type = ModeResult::EOFB;
+                            return result;
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
+            result.type = ModeResult::Invalid;
+            return result;
+        };
+
+        auto decode_2d_line = [&](u8* row_ptr, std::vector<int>& changes, int& change_count) -> bool
+        {
+            if (changes.empty())
+            {
+                return false;
+            }
+
+            int current_pos = 0;
+            int current_color = 0; // 0 = white, 1 = black
+            int b_index = 0;
+
+            change_count = 0;
+
+            auto advance_reference = [&](int position)
+            {
+                while (b_index < reference_count && reference_changes[b_index] <= position)
+                {
+                    ++b_index;
+                }
+            };
+
+            advance_reference(current_pos);
+
+            while (current_pos < line_width)
+            {
+                ModeResult mode = decode_mode();
+                if (mode.type == ModeResult::Invalid)
+                {
+                    return false;
+                }
+
+                if (mode.type == ModeResult::EOFB)
+                {
+                    if (current_pos >= line_width)
+                    {
+                        break;
+                    }
+
+                    return false;
+                }
+
+                if (mode.type == ModeResult::Pass)
+                {
+                    int b1 = (b_index < reference_count) ? reference_changes[b_index] : line_width;
+                    int b2 = (b_index + 1 < reference_count) ? reference_changes[b_index + 1] : line_width;
+
+                    if (b2 <= current_pos)
+                    {
+                        return false;
+                    }
+
+                    if (!write_run(row_ptr, current_pos, b2, current_color == 0 ? White : Black))
+                    {
+                        return false;
+                    }
+
+                    current_pos = b2;
+                    advance_reference(current_pos);
+                    continue;
+                }
+
+                if (mode.type == ModeResult::Horizontal)
+                {
+                    for (int i = 0; i < 2; ++i)
+                    {
+                        bool is_white = (current_color == 0);
+                        int total_run = 0;
+
+                        while (true)
+                        {
+                            int run = decode_run(is_white);
+                            if (run < 0)
+                            {
+                                return false;
+                            }
+
+                            total_run += run;
+
+                            if (run >= 64 && (run % 64) == 0)
+                            {
+                                continue;
+                            }
+
+                            break;
+                        }
+
+                        int next_pos = current_pos + total_run;
+                        if (next_pos > line_width)
+                        {
+                            next_pos = line_width;
+                        }
+
+                        if (!write_run(row_ptr, current_pos, next_pos, is_white ? White : Black))
+                        {
+                            return false;
+                        }
+
+                        current_pos = next_pos;
+
+                        if (current_pos < line_width || total_run == 0)
+                        {
+                            if (change_count >= int(changes.size()))
+                            {
+                                return false;
+                            }
+
+                            changes[change_count++] = current_pos;
+                        }
+
+                        current_color ^= 1;
+                    }
+
+                    advance_reference(current_pos);
+                    continue;
+                }
+
+                if (mode.type == ModeResult::Vertical)
+                {
+                    int b1 = (b_index < reference_count) ? reference_changes[b_index] : line_width;
+                    int next_pos = b1 + mode.offset;
+
+                    if (next_pos < 0)
+                    {
+                        next_pos = 0;
+                    }
+                    else if (next_pos > line_width)
+                    {
+                        next_pos = line_width;
+                    }
+
+                    if (next_pos < current_pos)
+                    {
+                        return false;
+                    }
+
+                    if (!write_run(row_ptr, current_pos, next_pos, current_color == 0 ? White : Black))
+                    {
+                        return false;
+                    }
+
+                    current_pos = next_pos;
+
+                    if (current_pos < line_width || mode.offset == 0)
+                    {
+                        if (change_count >= int(changes.size()))
+                        {
+                            return false;
+                        }
+
+                        changes[change_count++] = current_pos;
+                    }
+
+                    current_color ^= 1;
+                    advance_reference(current_pos);
+                }
+            }
+
+            if (current_pos < line_width)
+            {
+                if (!write_run(row_ptr, current_pos, line_width, current_color == 0 ? White : Black))
+                {
+                    return false;
+                }
+            }
+
+            if (change_count >= int(changes.size()))
+            {
+                return false;
+            }
+
+            changes[change_count++] = line_width;
+            return true;
+        };
+
+        u8* base = output.address;
+
+        if (!decode_1d_line(base, current_changes, current_count))
+        {
+            return false;
+        }
+
+        reference_count = current_count;
+        for (int i = 0; i < reference_count; ++i)
+        {
+            reference_changes[i] = current_changes[i];
+        }
+
+        for (int y = 1; y < height; ++y)
+        {
+            u8* row_ptr = base + y * line_width;
+            if (!decode_2d_line(row_ptr, current_changes, current_count))
+            {
+                return false;
+            }
+
+            reference_count = current_count;
+            for (int i = 0; i < reference_count; ++i)
+            {
+                reference_changes[i] = current_changes[i];
+            }
+        }
+
+        return true;
+    }
+    */
+
     struct TIFFHeader
     {
         ByteOrder byte_order;
@@ -2246,9 +2870,26 @@ namespace
                 }
 
                 case Compression::CCITT_FAX3:
-                case Compression::CCITT_FAX4:
                     printLine(Print::Info, "    Unsupported compression: {}", m_context.compression);
                     return;
+
+                case Compression::CCITT_FAX4:
+                {
+                    printLine(Print::Info, "    Unsupported compression: {}", m_context.compression);
+                    return;
+                    /* TODO
+                    bool success = ccitt_fax4_decompress(expanded_buffer, memory, width);
+                    if (!success)
+                    {
+                        printLine(Print::Error, "[CCITT-FAX4] Decompression failed");
+                        return;
+                    }
+
+                    memory = expanded_buffer;
+                    needs_expansion = false;
+                    break;
+                    */
+                }
 
                 case Compression::LZW:
                 {
