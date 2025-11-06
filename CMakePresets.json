@@ -44,19 +44,11 @@
             }
         },
         {
-            "name": "release",
+            "name": "default",
             "description": "Cross-platform Release build using Ninja",
             "inherits": ["options", "ninja"],
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
-            }
-        },
-        {
-            "name": "debug",
-            "description": "Cross-platform Debug build using Ninja",
-            "inherits": ["options", "ninja"],
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
             }
         }
     ],
@@ -84,13 +76,8 @@
             "jobs": 0
         },
         {
-            "name": "release",
-            "configurePreset": "release",
-            "jobs": 0
-        },
-        {
-            "name": "debug",
-            "configurePreset": "debug",
+            "name": "default",
+            "configurePreset": "default",
             "jobs": 0
         }
     ]
