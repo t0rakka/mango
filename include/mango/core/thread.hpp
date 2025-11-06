@@ -122,7 +122,8 @@ namespace mango
         template <class F, class... Args>
         void enqueue(F&& f, Args&&... args)
         {
-            m_pool.enqueue(&m_queue, std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+            auto func = std::bind_front(std::forward<F>(f), std::forward<Args>(args)...);
+            m_pool.enqueue(&m_queue, std::move(func));
         }
 
         void enqueue_bulk(const std::vector<std::function<void()>>& functions)
@@ -273,7 +274,7 @@ namespace mango
             template <class F, class... Args>
             void consume(F&& f, Args&&... args) const
             {
-                task->func = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
+                task->func = std::bind_front(std::forward<F>(f), std::forward<Args>(args)...);
                 task->promise.set_value();
             }
         };
