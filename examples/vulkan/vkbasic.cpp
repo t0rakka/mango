@@ -334,7 +334,7 @@ public:
             VkFramebuffer framebuffer = m_framebuffers[i];
             VkCommandBuffer commandBuffer = m_commandBuffers[i];
 
-            VkCommandBufferBeginInfo beginInfo = { 
+            VkCommandBufferBeginInfo beginInfo = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
                 .flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
             };
@@ -344,7 +344,7 @@ public:
 
             VkClearValue clearColor =
             {
-                .color = { 0.5f, 1.0f, 0.5f, 1.0f }
+                .color = {{ 0.5f, 1.0f, 0.5f, 1.0f }}
             };
 
             VkRenderPassBeginInfo renderPassInfo =

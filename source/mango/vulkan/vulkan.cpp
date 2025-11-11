@@ -742,6 +742,18 @@ namespace mango::vulkan
             XCASE(VK_THREAD_DONE_KHR);
             XCASE(VK_OPERATION_DEFERRED_KHR);
             XCASE(VK_OPERATION_NOT_DEFERRED_KHR);
+            XCASE(VK_ERROR_COMPRESSION_EXHAUSTED_EXT);
+            XCASE(VK_ERROR_INVALID_VIDEO_STD_PARAMETERS_KHR);
+            XCASE(VK_ERROR_VIDEO_STD_VERSION_NOT_SUPPORTED_KHR);
+            XCASE(VK_ERROR_VIDEO_PROFILE_CODEC_NOT_SUPPORTED_KHR);
+            XCASE(VK_ERROR_VIDEO_PROFILE_FORMAT_NOT_SUPPORTED_KHR);
+            XCASE(VK_ERROR_VIDEO_PROFILE_OPERATION_NOT_SUPPORTED_KHR);
+            XCASE(VK_ERROR_VIDEO_PICTURE_LAYOUT_NOT_SUPPORTED_KHR);
+            XCASE(VK_ERROR_IMAGE_USAGE_NOT_SUPPORTED_KHR);
+            XCASE(VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT);
+
+            default:
+                break;
         }
 
         return name;
@@ -757,6 +769,9 @@ namespace mango::vulkan
             XCASE(VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU);
             XCASE(VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU);
             XCASE(VK_PHYSICAL_DEVICE_TYPE_CPU);
+
+            default:
+                break;
         }
 
         return name;
@@ -1028,6 +1043,9 @@ namespace mango::vulkan
             XCASE(VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG);
             XCASE(VK_FORMAT_PVRTC2_4BPP_SRGB_BLOCK_IMG);
 
+            XCASE(VK_FORMAT_R16G16_S10_5_NV);
+            XCASE(VK_FORMAT_A1B5G5R5_UNORM_PACK16_KHR);
+            XCASE(VK_FORMAT_A8_UNORM_KHR);
             /*
             // Provided by VK_ARM_tensors
             XCASE(VK_FORMAT_R8_BOOL_ARM);
@@ -1120,6 +1138,9 @@ namespace mango::vulkan
             VK_FORMAT_A1B5G5R5_UNORM_PACK16_KHR = VK_FORMAT_A1B5G5R5_UNORM_PACK16,
             VK_FORMAT_A8_UNORM_KHR = VK_FORMAT_A8_UNORM,
             */
+
+            default:
+                break;
         }
 
         return name;
@@ -1150,6 +1171,9 @@ namespace mango::vulkan
 
             // Provided by VK_AMD_display_native_hdr
             XCASE(VK_COLOR_SPACE_DISPLAY_NATIVE_AMD);
+
+            default:
+                break;
         }
 
         return name;
