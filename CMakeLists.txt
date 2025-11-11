@@ -852,7 +852,7 @@ endfunction()
 
 message("[Required Libraries]")
 
-find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 9.1)
+find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 8.0)
 find_module(mango ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
 find_module(mango LCMS2 PRIVATE REQUIRED lcms2 lcms2 lcms2::lcms2 0)
 
