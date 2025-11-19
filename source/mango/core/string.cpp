@@ -430,6 +430,7 @@ namespace mango
         return s.length() > prefix.length() && !s.find(prefix, 0);
     }
 
+    /*
     bool isMatch(std::string_view text, std::string_view pattern) noexcept
     {
         // Based on this article:
@@ -479,6 +480,136 @@ namespace mango
         }
 
         // If we have reached the end of both the pattern and the text, the pattern matches the text.
+        return patternIndex == patternLength;
+    }
+    */
+
+    bool isMatch(std::string_view text, std::string_view pattern) noexcept
+    {
+        const size_t textLength = text.length();
+        const size_t patternLength = pattern.length();
+
+        size_t textIndex = 0;
+        size_t patternIndex = 0;
+        size_t startIndex = std::string_view::npos;
+        size_t matchIndex = 0;
+
+        auto skip = [] (std::string_view pattern, size_t& index, char c)
+        {
+            while (index < pattern.length() && pattern[index] == c)
+                ++index;
+        };
+
+        while (textIndex < textLength)
+        {
+            if (patternIndex < patternLength)
+            {
+                if (pattern[patternIndex] == '?')
+                {
+                    ++textIndex;
+                    ++patternIndex;
+                    continue;
+                }
+                else if (pattern[patternIndex] == '*')
+                {
+                    // skip consecutive '*'
+                    skip(pattern, patternIndex, '*');
+
+                    if (patternIndex == patternLength)
+                        return true; // trailing '*' matches all
+
+                    startIndex = patternIndex;
+                    matchIndex = textIndex;
+                    continue;
+                }
+                else if (pattern[patternIndex] == '[')
+                {
+                    ++patternIndex;
+
+                    char c = text[textIndex];
+
+                    bool negate = false;
+                    if (pattern[patternIndex] == '!')
+                    {
+                        negate = true;
+                        ++patternIndex;
+                    }
+
+                    bool matched = false;
+                    bool first = true;
+
+                    while (patternIndex < patternLength && pattern[patternIndex] != ']')
+                    {
+                        if (!first)
+                            ++patternIndex;
+                        first = false;
+
+                        if (patternIndex >= patternLength)
+                            break;
+
+                        if (patternIndex + 2 < patternLength && pattern[patternIndex + 1] == '-')
+                        {
+                            // range a-z
+                            char start = pattern[patternIndex];
+                            char end = pattern[patternIndex + 2];
+                            if (c >= start && c <= end)
+                                matched = true;
+                            patternIndex += 2;
+                        }
+                        else
+                        {
+                            if (pattern[patternIndex] == c)
+                                matched = true;
+                        }
+                    }
+
+                    // skip closing ']'
+                    skip(pattern, patternIndex, ']');
+
+                    if (negate)
+                    {
+                        matched = !matched;
+                    }
+
+                    if (matched)
+                    {
+                        ++textIndex;
+                        continue;
+                    }
+                }
+                else if (pattern[patternIndex] == '\\')
+                {
+                    ++patternIndex;
+                    if (patternIndex < patternLength && pattern[patternIndex] == text[textIndex])
+                    {
+                        ++textIndex;
+                        ++patternIndex;
+                        continue;
+                    }
+                }
+                else if (pattern[patternIndex] == text[textIndex])
+                {
+                    ++textIndex;
+                    ++patternIndex;
+                    continue;
+                }
+            }
+
+            // backtrack if we saw a '*' before
+            if (startIndex != std::string_view::npos)
+            {
+                patternIndex = startIndex;
+                ++matchIndex;
+                textIndex = matchIndex;
+                continue;
+            }
+
+            return false; // no match and no '*' to backtrack to
+        }
+
+        // skip trailing '*'
+        skip(pattern, patternIndex, '*');
+
         return patternIndex == patternLength;
     }
 
