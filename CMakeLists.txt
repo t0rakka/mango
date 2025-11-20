@@ -125,7 +125,7 @@ if (BUILD_VULKAN)
     endif ()
 endif ()
 
-message("[ ${PROJECT_NAME} ]")
+message("[${PROJECT_NAME}]")
 list(APPEND CMAKE_MESSAGE_INDENT "    ")
 
 message("Processor: ${CMAKE_SYSTEM_PROCESSOR}")
