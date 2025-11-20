@@ -17,19 +17,19 @@ There are different package managers but our examples use apt-get (Ubuntu, Mint,
 
     sudo apt-get install libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev
 
+### OPTIONAL Libraries
+
+    sudo apt-get install libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libisal-dev liblz4-dev libbz2-dev
+
 ### OPTIONAL Libraries (OpenGL)
 
-    sudo apt-get install mesa-common-dev libgl1-mesa-dev liblz4-dev libbz2-dev
+    sudo apt-get install mesa-common-dev libgl1-mesa-dev
 
 ### OPTIONAL Libraries (Vulkan)
 
     sudo apt-get install glslang-dev
 
-### OPTIONAL Libraries
-
-    sudo apt-get install libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libisal-dev
-
-### EXAMPLE Libraries
+### OPTIONAL Libraries (examples)
 
     sudo apt-get install libjpeg-dev libpng-dev
 
@@ -52,6 +52,10 @@ Above uses ninja as build system, cmake users know what time it is. If you want 
 
     sudo pacman -S fmt z libdeflate zstd lcms2
 
+### OPTIONAL Libraries
+
+    sudo pacman -S libjxl openjpeg2 libwebp libavif libheif isa-l lz4 bzip2
+
 ### OPTIONAL Libraries (OpenGL)
 
     sudo pacman -S mesa
@@ -60,11 +64,7 @@ Above uses ninja as build system, cmake users know what time it is. If you want 
 
     sudo pacman -S glslang
 
-### OPTIONAL Libraries
-
-    sudo pacman -S libjxl openjpeg2 libwebp libavif libheif isa-l lz4 bzip2
-
-### EXAMPLE Libraries
+### OPTIONAL Libraries (examples)
 
     sudo pacman -S libjpeg-turbo libpng
 
@@ -84,7 +84,7 @@ On Arch Linux the building is exactly same as it is on Linux Ubuntu/Mint.
 
     brew install jpeg-xl openjpeg webp libavif libheif isa-l lz4 bzip2
 
-### EXAMPLE Libraries
+### OPTIONAL Libraries (examples)
 
     brew install libjpeg-turbo libpng
 
@@ -109,15 +109,15 @@ Here are the environment variables that are needed, the x64-windows is just exam
 
     vcpkg install pkgconf fmt zlib libdeflate zstd lcms
 
-### OPTIONAL Libraries (Vulkan)
-
-    vcpkg install glslang
-
 ### OPTIONAL Libraries
 
     vcpkg install libjxl openjpeg libwebp libavif libheif isal lz4 bzip2
 
-### EXAMPLE Libraries
+### OPTIONAL Libraries (Vulkan)
+
+    vcpkg install glslang
+
+### OPTIONAL Libraries (examples)
 
     vcpkg install libjpeg-turbo libpng
 
