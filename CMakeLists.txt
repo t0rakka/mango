@@ -62,6 +62,15 @@ if (LIBRARY_DISABLE)
     set(LIBRARY_ISAL   OFF)
 endif ()
 
+# Option to build everything
+option(BUILD_ALL,           "Build everything"                          OFF)
+if (BUILD_ALL)
+    set(BUILD_OPENGL     ON)
+    set(BUILD_VULKAN     ON)
+    set(BUILD_IMPORT3D   ON)
+    set(BUILD_EXAMPLES   ON)
+endif ()
+
 # Option to enable every Intel ISA extension
 option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"           OFF)
 if (INTEL_DELUXE OR ENABLE_AVX512)
