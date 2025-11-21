@@ -760,7 +760,7 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
 
             if (${Prefix} STREQUAL "LZ4")
                 # Debian 13 on Raspberry Pi 5 uses 'LZ4::lz4'
-                if (TARGET LZ4::lz4)
+                if (TARGET LZ4::lz4 AND NOT TARGET lz4::lz4)
                     add_library(lz4::lz4 ALIAS LZ4::lz4)
                 endif ()
             endif ()
