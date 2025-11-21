@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2024 spnda
+ * Copyright (C) 2022 - 2025 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -24,7 +24,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef FASTGLTF_BASE_64_HPP
+#define FASTGLTF_BASE_64_HPP
 
 #if !defined(FASTGLTF_USE_STD_MODULE) || !FASTGLTF_USE_STD_MODULE
 #include <cassert>
@@ -48,7 +49,7 @@ namespace fastgltf::base64 {
      * points to the original string that has a size that is a multiple of 4 and is at least
      * 4 chars long.
      */
-    FASTGLTF_EXPORT [[gnu::always_inline]] constexpr std::size_t getPadding(std::string_view string) {
+    FASTGLTF_EXPORT [[gnu::always_inline]] constexpr std::size_t getPadding(const std::string_view string) {
         assert(string.size() >= 4 && string.size() % 4 == 0);
         const auto size = string.size();
         for (auto i = 1; i < 4; ++i)
@@ -61,7 +62,8 @@ namespace fastgltf::base64 {
      * Calculates the size of the decoded string based on the size of the base64 encoded string and
      * the amount of padding the encoded data contains.
      */
-    FASTGLTF_EXPORT [[gnu::always_inline]] constexpr std::size_t getOutputSize(std::size_t encodedSize, std::size_t padding) noexcept {
+    FASTGLTF_EXPORT [[gnu::always_inline]] constexpr std::size_t getOutputSize(
+            const std::size_t encodedSize, const std::size_t padding) noexcept {
         assert(encodedSize % 4 == 0);
         return (encodedSize / 4) * 3 - padding;
     }
@@ -85,4 +87,6 @@ namespace fastgltf::base64 {
 
 #ifdef _MSC_VER
 #pragma warning(pop)
+#endif
+
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2024 spnda
+ * Copyright (C) 2022 - 2025 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -79,13 +79,15 @@ fg::GltfDataBuffer::GltfDataBuffer(const fs::path& path) noexcept {
 	}
 }
 
-fg::GltfDataBuffer::GltfDataBuffer(const std::byte *bytes, std::size_t count) noexcept {
+fg::GltfDataBuffer::GltfDataBuffer(const std::byte *bytes, const std::size_t count) noexcept {
+	assert(bytes != nullptr && "Passing nullptr is not allowed.");
 	dataSize = count;
 	allocateAndCopy(bytes);
 }
 
 #if FASTGLTF_CPP_20
 fg::GltfDataBuffer::GltfDataBuffer(std::span<std::byte> span) noexcept {
+	assert(span.data() != nullptr && "Passing nullptr is not allowed");
 	dataSize = span.size_bytes();
 	allocateAndCopy(span.data());
 }
@@ -108,7 +110,7 @@ void fg::GltfDataBuffer::read(void *ptr, std::size_t count) {
 	idx += count;
 }
 
-fg::span<std::byte> fg::GltfDataBuffer::read(std::size_t count, std::size_t padding) {
+fg::span<std::byte> fg::GltfDataBuffer::read(std::size_t count, [[maybe_unused]] std::size_t padding) {
 	span<std::byte> sub(buffer.get() + idx, count);
 	idx += count;
 	return sub;
@@ -136,7 +138,7 @@ bool fg::GltfFileStream::isOpen() const {
 
 void fg::GltfFileStream::read(void *ptr, std::size_t count) {
 	fileStream.read(
-			reinterpret_cast<char*>(ptr),
+			static_cast<char*>(ptr),
 			static_cast<std::streamsize>(count));
 }
 
@@ -302,7 +304,7 @@ void fg::MappedGltfFile::read(void *ptr, std::size_t count) {
 	idx += count;
 }
 
-fg::span<std::byte> fg::MappedGltfFile::read(std::size_t count, std::size_t padding) {
+fg::span<std::byte> fg::MappedGltfFile::read(std::size_t count, [[maybe_unused]] std::size_t padding) {
 	span<std::byte> sub(static_cast<std::byte*>(mappedFile) + idx, count);
 	idx += count;
 	return sub;
@@ -458,7 +460,7 @@ fg::Expected<fg::DataSource> fg::Parser::loadFileFromUri(URIView& uri) const noe
 		auto info = config.mapCallback(static_cast<std::uint64_t>(length), config.userPointer);
 		if (info.mappedMemory != nullptr) {
 			const sources::CustomBuffer customBufferSource = { info.customId };
-			file.read(reinterpret_cast<char*>(info.mappedMemory), length);
+			file.read(static_cast<char*>(info.mappedMemory), length);
 			if (config.unmapCallback != nullptr) {
 				config.unmapCallback(&info, config.userPointer);
 			}

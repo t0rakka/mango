@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2024 spnda
+ * Copyright (C) 2022 - 2025 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -24,7 +24,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef FASTGLTF_MATH_HPP
+#define FASTGLTF_MATH_HPP
 
 #if !defined(FASTGLTF_USE_STD_MODULE) || !FASTGLTF_USE_STD_MODULE
 #include <cmath>
@@ -33,8 +34,9 @@
 #include <tuple>
 #endif
 
+// mango customization
 #ifdef _MSC_VER
-#pragma warning(disable : 5246) // mango customization
+#pragma warning(disable : 5246)
 #endif
 
 #include <fastgltf/util.hpp>
@@ -43,7 +45,7 @@
  * The fastgltf::math namespace contains all math functions and types which are needed for working with glTF assets.
  */
 namespace fastgltf::math {
-	FASTGLTF_EXPORT inline constexpr long double pi = 3.141592653589793116;
+	FASTGLTF_EXPORT inline constexpr long double pi = 3.1415926535897932385;
 
 	/** Value clamp using std::less */
 	FASTGLTF_EXPORT template <typename T>
@@ -97,11 +99,8 @@ namespace fastgltf::math {
 			return ret;
 		}
 
-		constexpr vec(const vec<T, N>& other) noexcept : _data(other._data) {}
-		constexpr vec<T, N>& operator=(const vec<T, N>& other) noexcept {
-			_data = other._data;
-			return *this;
-		}
+		constexpr vec(const vec&) noexcept = default;
+		constexpr vec& operator=(const vec& other) noexcept = default;
 
 		template <typename U, std::enable_if_t<!std::is_same_v<T, U>, bool> = true>
 		constexpr explicit vec(const vec<U, N>& other) noexcept {
@@ -398,6 +397,15 @@ namespace fastgltf::math {
 	FASTGLTF_EXPORT using u32vec3 = u32vec<3>;
 	FASTGLTF_EXPORT using u32vec4 = u32vec<4>;
 
+	FASTGLTF_EXPORT template <std::size_t N> using s64vec = vec<std::int64_t, N>;
+	FASTGLTF_EXPORT using s64vec2 = s64vec<2>;
+	FASTGLTF_EXPORT using s64vec3 = s64vec<3>;
+	FASTGLTF_EXPORT using s64vec4 = s64vec<4>;
+	FASTGLTF_EXPORT template <std::size_t N> using u64vec = vec<std::uint64_t, N>;
+	FASTGLTF_EXPORT using u64vec2 = u64vec<2>;
+	FASTGLTF_EXPORT using u64vec3 = u64vec<3>;
+	FASTGLTF_EXPORT using u64vec4 = u64vec<4>;
+
 	FASTGLTF_EXPORT template <std::size_t N> using ivec = vec<int, N>;
 	FASTGLTF_EXPORT using ivec2 = ivec<2>;
 	FASTGLTF_EXPORT using ivec3 = ivec<3>;
@@ -572,7 +580,7 @@ namespace fastgltf::math {
 
 		if (d < T(0)) {
 			a = -a;
-			b = -b;
+			d = -d;
 		}
 
 		if (d > T(0.9995)) // Simple linear interpolation when both quats are close to each other
@@ -647,6 +655,8 @@ namespace fastgltf::math {
 			copy_values(tuple, std::make_integer_sequence<std::size_t, sizeof...(Args)>());
 		}
 
+		constexpr mat(const mat& other) = default;
+
 		/** Truncates the matrix to a smaller one, discarding the additional rows and/or colums  */
 		template <std::size_t Q, std::size_t P, std::enable_if_t<N < Q && M < P, bool> = true>
 		constexpr explicit mat(const mat<T, Q, P>& other) noexcept {
@@ -660,6 +670,8 @@ namespace fastgltf::math {
 			for (std::size_t i = 0; i < other.columns(); ++i)
 				(*this).col(i) = vec<T, N>(other.col(i));
 		}
+
+		constexpr mat& operator=(const mat& other) = default;
 
 		[[nodiscard]] constexpr std::size_t columns() const noexcept {
 			return M;
@@ -757,6 +769,11 @@ namespace fastgltf::math {
 		}
 	};
 
+	static_assert(std::is_trivially_copyable_v<mat<float, 4, 4>>);
+	static_assert(std::is_trivially_copyable_v<vec<float, 4>>);
+	static_assert(std::is_trivially_copyable_v<std::array<vec<float, 4>, 4>>);
+	static_assert(std::is_trivially_copyable_v<std::array<float, 4>>);
+
 	/** Transposes the given matrix */
 	FASTGLTF_EXPORT template <typename T, std::size_t N, std::size_t M>
 	[[nodiscard]] auto transpose(const mat<T, N, M>& m) noexcept {
@@ -787,20 +804,39 @@ namespace fastgltf::math {
 		return dot(lrow, cofactors);
 	}
 
+	/** Computes the determinant of the 4x4 matrix */
+	FASTGLTF_EXPORT template <typename T>
+	[[nodiscard]] auto determinant(const mat<T, 4, 4>& m) noexcept {
+		const auto d = m.data();
+		T a00 = d[0], a10 = d[4], a20 = d[8],  a30 = d[12],
+		  a01 = d[1], a11 = d[5], a21 = d[9],  a31 = d[13],
+		  a02 = d[2], a12 = d[6], a22 = d[10], a32 = d[14],
+		  a03 = d[3], a13 = d[7], a23 = d[11], a33 = d[15];
+
+		T b00 = a00 * a11 - a01 * a10, b01 = a00 * a12 - a02 * a10, b02 = a00 * a13 - a03 * a10,
+		  b03 = a01 * a12 - a02 * a11, b04 = a01 * a13 - a03 * a11, b05 = a02 * a13 - a03 * a12,
+		  b06 = a20 * a31 - a21 * a30, b07 = a20 * a32 - a22 * a30, b08 = a20 * a33 - a23 * a30,
+		  b09 = a21 * a32 - a22 * a31, b10 = a21 * a33 - a23 * a31, b11 = a22 * a33 - a23 * a32;
+
+		return b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+	}
+
 	/** Computes the inverse of the 2x2 matrix */
 	FASTGLTF_EXPORT template <typename T>
 	[[nodiscard]] auto inverse(const mat<T, 2, 2>& m) noexcept {
-		return mat<T, 2, 2>(m.col(1).y(), -m.col(0).y(), -m.col(1).x(), m.col(0).x()) / determinant(m);
+		const auto inv_determinant = T(1) / determinant(m);
+		return mat<T, 2, 2>(m.col(1).y(), -m.col(0).y(), -m.col(1).x(), m.col(0).x()) * inv_determinant;
 	}
 
 	/** Computes the inverse of the 3x3 matrix */
 	FASTGLTF_EXPORT template <typename T>
 	[[nodiscard]] auto inverse(const mat<T, 3, 3>& m) noexcept {
+		const auto inv_determinant = T(1) / determinant(m);
 		auto inv = mat<T, 3, 3>(
 			m.col(1)[1] * m.col(2)[2] - m.col(2)[1] * m.col(1)[2], m.col(2)[1] * m.col(0)[2] - m.col(0)[1] * m.col(2)[2], m.col(0)[1] * m.col(1)[2] - m.col(1)[1] * m.col(0)[2],
 			m.col(2)[0] * m.col(1)[2] - m.col(1)[0] * m.col(2)[2], m.col(0)[0] * m.col(2)[2] - m.col(2)[0] * m.col(0)[2], m.col(1)[0] * m.col(0)[2] - m.col(0)[0] * m.col(1)[2],
 			m.col(1)[0] * m.col(2)[1] - m.col(2)[0] * m.col(1)[1], m.col(2)[0] * m.col(0)[1] - m.col(0)[0] * m.col(2)[1], m.col(0)[0] * m.col(1)[1] - m.col(1)[0] * m.col(0)[1]);
-		return inv / determinant(m);
+		return inv * inv_determinant;
 	}
 
 	/** Computes the affine inverse of a 4x4 matrix */
@@ -813,6 +849,34 @@ namespace fastgltf::math {
 			vec<T, 4>(inv.col(1).x(), inv.col(1).y(), inv.col(1).z(), 0.f),
 			vec<T, 4>(inv.col(2).x(), inv.col(2).y(), inv.col(2).z(), 0.f),
 			vec<T, 4>(l.x(), l.y(), l.z(), 1.f));
+	}
+
+	/** Computes the inverse of a 4x4 matrix */
+	FASTGLTF_EXPORT template <typename T>
+	[[nodiscard]] auto inverse(const mat<T, 4, 4>& m) noexcept {
+		const auto d = m.data();
+		T a00 = d[0], a10 = d[4], a20 = d[8],  a30 = d[12],
+		  a01 = d[1], a11 = d[5], a21 = d[9],  a31 = d[13],
+		  a02 = d[2], a12 = d[6], a22 = d[10], a32 = d[14],
+		  a03 = d[3], a13 = d[7], a23 = d[11], a33 = d[15];
+
+		T b00 = a00 * a11 - a01 * a10, b01 = a00 * a12 - a02 * a10, b02 = a00 * a13 - a03 * a10,
+		  b03 = a01 * a12 - a02 * a11, b04 = a01 * a13 - a03 * a11, b05 = a02 * a13 - a03 * a12,
+		  b06 = a20 * a31 - a21 * a30, b07 = a20 * a32 - a22 * a30, b08 = a20 * a33 - a23 * a30,
+		  b09 = a21 * a32 - a22 * a31, b10 = a21 * a33 - a23 * a31, b11 = a22 * a33 - a23 * a32;
+
+		// Calculate the determinant
+		T det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+
+		if (det == T(0))
+			return mat<T, 4, 4>();
+
+		const auto inv_determinant = T(1) / det;
+		return mat<T, 4, 4>(
+			a11 * b11 - a12 * b10 + a13 * b09, a02 * b10 - a01 * b11 - a03 * b09, a31 * b05 - a32 * b04 + a33 * b03, a22 * b04 - a21 * b05 - a23 * b03,
+			a12 * b08 - a10 * b11 - a13 * b07, a00 * b11 - a02 * b08 + a03 * b07, a32 * b02 - a30 * b05 - a33 * b01, a20 * b05 - a22 * b02 + a23 * b01,
+			a10 * b10 - a11 * b08 + a13 * b06, a01 * b08 - a00 * b10 - a03 * b06, a30 * b04 - a31 * b02 + a33 * b00, a21 * b02 - a20 * b04 - a23 * b00,
+			a11 * b07 - a10 * b09 - a12 * b06, a00 * b09 - a01 * b07 + a02 * b06, a31 * b01 - a30 * b03 - a32 * b00, a20 * b03 - a21 * b01 + a22 * b00) * inv_determinant;
 	}
 
 	/** Translates a given transform matrix by the world space translation vector */
@@ -894,3 +958,5 @@ namespace fastgltf::math {
 		rotation.z() = std::copysignf(rotation.z(), matrix[0][1] - matrix[1][0]);
 	}
 } // namespace fastgltf::math
+
+#endif

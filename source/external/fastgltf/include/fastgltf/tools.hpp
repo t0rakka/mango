@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2024 spnda
+ * Copyright (C) 2022 - 2025 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -24,7 +24,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef FASTGLTF_TOOLS_HPP
+#define FASTGLTF_TOOLS_HPP
 
 #if !defined(FASTGLTF_USE_STD_MODULE) || !FASTGLTF_USE_STD_MODULE
 #include <cstring>
@@ -438,10 +439,10 @@ inline bool findSparseIndex(ComponentType componentType, const std::byte* bytes,
 } // namespace internal
 
 FASTGLTF_EXPORT struct DefaultBufferDataAdapter {
-	auto operator()(const Asset& asset, std::size_t bufferViewIdx) const {
-		auto& bufferView = asset.bufferViews[bufferViewIdx];
+	auto operator()(const Asset& asset, const std::size_t bufferViewIdx) const {
+		const auto& bufferView = asset.bufferViews[bufferViewIdx];
 
-		auto data = std::visit(visitor {
+		const auto data = std::visit(visitor {
 			[](auto&) -> span<const std::byte> {
 				assert(false && "Tried accessing a buffer with no data, likely because no buffers were loaded. Perhaps you forgot to specify the LoadExternalBuffers option?");
 				return {};
@@ -451,10 +452,10 @@ FASTGLTF_EXPORT struct DefaultBufferDataAdapter {
 				return {};
 			},
 			[&](const sources::Array& array) -> span<const std::byte> {
-				return span(reinterpret_cast<const std::byte*>(array.bytes.data()), array.bytes.size_bytes());
+				return span(array.bytes.data(), array.bytes.size_bytes());
 			},
 			[&](const sources::Vector& vec) -> span<const std::byte> {
-				return span(reinterpret_cast<const std::byte*>(vec.bytes.data()), vec.bytes.size());
+				return span(vec.bytes.data(), vec.bytes.size());
 			},
 			[&](const sources::ByteView& bv) -> span<const std::byte> {
 				return bv.bytes;
@@ -892,17 +893,24 @@ void copyComponentsFromAccessor(const Asset& asset, const Accessor& accessor, vo
 }
 
 /**
+ * Returns the local transform matrix for a given node, computing it from TRS components if necessary
+ */
+FASTGLTF_EXPORT inline auto getLocalTransformMatrix(const Node& node) {
+	return visit_exhaustive(visitor {
+		[&](const math::fmat4x4& matrix) {
+			return matrix;
+		},
+		[&](const TRS& trs) {
+			return translate(rotate(scale(math::fmat4x4(), trs.scale), trs.rotation), trs.translation);
+		}
+	}, node.transform);
+}
+
+/**
  * Computes the transform matrix for a given node, and multiplies the given base with that matrix.
  */
 FASTGLTF_EXPORT inline auto getTransformMatrix(const Node& node, const math::fmat4x4& base = math::fmat4x4()) {
-	return std::visit(visitor {
-		[&](const math::fmat4x4& matrix) {
-			return base * matrix;
-		},
-		[&](const TRS& trs) {
-			return scale(rotate(translate(base, trs.translation), trs.rotation), trs.scale);
-		}
-	}, node.transform);
+	return base * getLocalTransformMatrix(node);
 }
 
 /**
@@ -935,3 +943,5 @@ void iterateSceneNodes(AssetType&& asset, std::size_t sceneIndex, math::fmat4x4 
 }
 
 } // namespace fastgltf
+
+#endif

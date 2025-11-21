@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2024 spnda
+ * Copyright (C) 2022 - 2025 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -24,25 +24,21 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#ifndef FASTGLTF_TYPES_HPP
+#define FASTGLTF_TYPES_HPP
 
 #if !defined(FASTGLTF_USE_STD_MODULE) || !FASTGLTF_USE_STD_MODULE
 #include <cassert>
-#include <cstddef>
-#include <cstring>
 #include <filesystem>
 #include <optional>
 #include <string>
 #include <utility>
-#include <variant>
 #include <vector>
 #endif
 
+// mango customization
 #ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 5030) // attribute 'x' is not recognized
-#pragma warning(disable : 4514) // unreferenced inline function has been removed
-#pragma warning(disable : 4668 4582 5267 5263) // mango customization
+#pragma warning(disable : 4668 4582 5267 5263)
 #endif
 
 // Utils header already includes some headers, which we'll try and avoid including twice.
@@ -96,11 +92,17 @@
 #endif
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 5030) // attribute 'x' is not recognized
+#pragma warning(disable : 4514) // unreferenced inline function has been removed
+#endif
+
 #define FASTGLTF_QUOTE_Q(x) #x
 #define FASTGLTF_QUOTE(x) FASTGLTF_QUOTE_Q(x)
 
 // fastgltf version string. Use FASTGLTF_QUOTE to stringify.
-#define FASTGLTF_VERSION 0.8.0
+#define FASTGLTF_VERSION 0.9.0
 
 namespace fastgltf {
 #if defined(FASTGLTF_USE_64BIT_FLOAT) && FASTGLTF_USE_64BIT_FLOAT
@@ -292,9 +294,27 @@ namespace fastgltf {
         Scenes      = 1 << 12,
         Asset       = 1 << 13,
 
-        All = ~(~0u << 14),
+#if FASTGLTF_ENABLE_KHR_IMPLICIT_SHAPES
+		Shapes		= 1 << 14,
+#endif
+
+#if FASTGLTF_ENABLE_KHR_PHYSICS_RIGID_BODIES
+		PhysicsMaterials	= 1 << 15,
+		CollisionFilters	= 1 << 16,
+		PhysicsJoints		= 1 << 17,
+#endif
+
+		All = ~0u,
+
         // Includes everything needed for rendering but animations
-        OnlyRenderable = All & ~(Animations) & ~(Skins),
+        OnlyRenderable = All & ~(Animations) & ~(Skins)
+#if FASTGLTF_ENABLE_KHR_IMPLICIT_SHAPES
+		& ~(Shapes)
+#endif
+#if FASTGLTF_ENABLE_KHR_PHYSICS_RIGID_BODIES
+		& ~(PhysicsMaterials) & ~(CollisionFilters) & ~(PhysicsJoints)
+#endif
+        ,
         OnlyAnimations = Animations | Accessors | BufferViews | Buffers,
     };
 
@@ -304,6 +324,28 @@ namespace fastgltf {
     FASTGLTF_ASSIGNMENT_OP_TEMPLATE_MACRO(Category, Category, &)
     FASTGLTF_UNARY_OP_TEMPLATE_MACRO(Category, ~)
     // clang-format on
+
+#if FASTGLTF_ENABLE_KHR_PHYSICS_RIGID_BODIES
+	FASTGLTF_EXPORT enum class CombineMode : std::uint8_t {
+        Average,
+		Minimum,
+		Maximum,
+		Multiply,
+		Invalid,
+    };
+
+	FASTGLTF_EXPORT enum class DriveType : std::uint8_t {
+	    Linear,
+		Angular,
+		Invalid
+	};
+
+	FASTGLTF_EXPORT enum class DriveMode : std::uint8_t {
+	    Force,
+		Acceleration,
+	    Invalid
+	};
+#endif
 #pragma endregion
 
 #pragma region ConversionFunctions
@@ -323,15 +365,15 @@ namespace fastgltf {
         switch (type) {
             case AccessorType::Mat2:
             case AccessorType::Vec2:
-                return std::size_t(2U);
+                return static_cast<std::size_t>(2U);
             case AccessorType::Mat3:
             case AccessorType::Vec3:
-                return std::size_t(3U);
+                return static_cast<std::size_t>(3U);
             case AccessorType::Mat4:
             case AccessorType::Vec4:
-                return std::size_t(4U);
+                return static_cast<std::size_t>(4U);
             default:
-                return std::size_t(1U);
+                return static_cast<std::size_t>(1U);
         }
     }
 
@@ -342,7 +384,7 @@ namespace fastgltf {
 	FASTGLTF_EXPORT constexpr auto getComponentByteSize(ComponentType componentType) noexcept {
 		static_assert(std::is_same_v<std::underlying_type_t<ComponentType>, std::uint16_t>);
 		if (componentType == ComponentType::Invalid)
-			return std::size_t(0U);
+			return static_cast<std::size_t>(0U);
 		return static_cast<std::size_t>(to_underlying(componentType) >> 13U) + 1;
 	}
 
@@ -482,6 +524,61 @@ namespace fastgltf {
 				return "";
 		}
 	}
+
+#if FASTGLTF_ENABLE_KHR_PHYSICS_RIGID_BODIES
+	[[nodiscard]] constexpr auto getCombineMode(const std::string_view name) noexcept {
+		assert(!name.empty());
+	    if(name[0] == 'a') {
+			return CombineMode::Average;
+	    }
+
+		switch(name[1]) {
+	    case 'i':
+			return CombineMode::Minimum;
+
+	    case 'a':
+			return CombineMode::Maximum;
+
+	    case 'u':
+			return CombineMode::Multiply;
+		}
+
+		return CombineMode::Invalid;
+	}
+
+	static constexpr std::array<std::string_view, 4> frictionCombineNames{
+        "average",
+        "minimum",
+        "maximum",
+        "multiply"
+	};
+
+	[[nodiscard]] constexpr std::string_view getFrictionCombineName(const CombineMode frictionCombine) noexcept {
+		static_assert(std::is_same_v<std::underlying_type_t<CombineMode>, std::uint8_t>);
+		const auto idx = to_underlying(frictionCombine) & 0x3;
+		return frictionCombineNames[idx];
+	}
+
+	[[nodiscard]] constexpr auto getDriveType(const std::string_view name) noexcept {
+		if (name[0] == 'l') {
+			return DriveType::Linear;
+		} else if (name[0] == 'a') {
+			return DriveType::Angular;
+		} else {
+			return DriveType::Invalid;
+		}
+	}
+
+	[[nodiscard]] constexpr auto getDriveMode(const std::string_view name) noexcept {
+	    if (name[0] == 'f') {
+			return DriveMode::Force;
+	    } else if (name[0] == 'a') {
+			return DriveMode::Acceleration;
+	    } else {
+			return DriveMode::Invalid;
+	    }
+	}
+#endif
 #pragma endregion
 
 #pragma region Containers
@@ -775,7 +872,7 @@ namespace fastgltf {
             }
 
             // We use geometric growth, similarly to std::vector.
-            newCapacity = std::size_t(1) << (std::numeric_limits<decltype(newCapacity)>::digits - clz(newCapacity));
+            newCapacity = static_cast<std::size_t>(1) << (std::numeric_limits<decltype(newCapacity)>::digits - clz(newCapacity));
 
 			T* alloc = allocator.allocate(newCapacity);
 
@@ -1189,7 +1286,7 @@ namespace fastgltf {
 
 		template <typename F>
 		[[nodiscard]] auto and_then(F&& func)& {
-			using U = std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<F, T&>>>;
+			using U = remove_cvref_t<std::invoke_result_t<F, T&>>;
 			if (!has_value())
 				return U(std::nullopt);
 			return std::invoke(std::forward<F>(func), **this);
@@ -1197,7 +1294,7 @@ namespace fastgltf {
 
 		template <typename F>
 		[[nodiscard]] auto and_then(F&& func) const& {
-			using U = std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<F, const T&>>>;
+			using U = remove_cvref_t<std::invoke_result_t<F, const T&>>;
 			if (!has_value())
 				return U(std::nullopt);
 			return std::invoke(std::forward<F>(func), **this);
@@ -1205,7 +1302,7 @@ namespace fastgltf {
 
 		template <typename F>
 		[[nodiscard]] auto and_then(F&& func)&& {
-			using U = std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<F, T>>>;
+			using U = remove_cvref_t<std::invoke_result_t<F, T>>;
 			if (!has_value())
 				return U(std::nullopt);
 			return std::invoke(std::forward<F>(func), std::move(**this));
@@ -1213,7 +1310,7 @@ namespace fastgltf {
 
 		template <typename F>
 		[[nodiscard]] auto and_then(F&& func) const&& {
-			using U = std::remove_cv_t<std::remove_reference_t<std::invoke_result_t<F, const T>>>;
+			using U = remove_cvref_t<std::invoke_result_t<F, const T>>;
 			if (!has_value())
 				return U(std::nullopt);
 			return std::invoke(std::forward<F>(func), std::move(**this));
@@ -1317,11 +1414,20 @@ namespace fastgltf {
 		const T&& operator*() const&& noexcept {
 			return std::move(_value);
 		}
+
+		operator std::optional<T>() const noexcept {
+			return has_value() ? std::optional<T>(_value) : std::nullopt;
+		}
+
+		operator std::optional<T>&&()&& noexcept {
+			return has_value() ? std::optional<T>(std::move(_value)) : std::nullopt;
+		}
 	};
 
 	FASTGLTF_EXPORT template <typename T, typename U>
 	bool operator==(const OptionalWithFlagValue<T>& lhs, const OptionalWithFlagValue<U>& rhs) {
-		return bool(lhs) == bool(rhs) && !bool(lhs) && *lhs == *rhs;
+		return static_cast<bool>(lhs) == static_cast<bool>(rhs) &&
+			(!static_cast<bool>(lhs) || *lhs == *rhs);
 	}
 
 	FASTGLTF_EXPORT template <typename T, typename U>
@@ -1472,90 +1578,281 @@ namespace fastgltf {
 		[[nodiscard]] bool valid() const noexcept;
 		[[nodiscard]] bool isLocalPath() const noexcept;
 		[[nodiscard]] bool isDataUri() const noexcept;
-    };
+	};
 
-    FASTGLTF_EXPORT inline constexpr std::size_t dynamic_extent = std::numeric_limits<std::size_t>::max();
+	/**
+	 * Represents the minimum and maximum bounds for glTF accessors in a better interface to avoid
+	 * heavy usage of std::variant, which can pollute the user's code needlessly.
+	 */
+	FASTGLTF_EXPORT class AccessorBoundsArray {
+	public:
+		enum class BoundsType {
+			int64,
+			float64,
+		};
 
-    /**
-     * Custom span class imitating C++20's std::span for referencing bytes without owning the
-     * allocation. Can also directly be converted to a std::span or used by itself.
-     */
-    FASTGLTF_EXPORT template <typename T, std::size_t Extent = dynamic_extent>
-    class span {
-        using element_type = T;
-        using value_type = std::remove_cv_t<T>;
-        using size_type = std::size_t;
-        using difference_type = std::ptrdiff_t;
-        using pointer = T*;
-        using const_pointer = const T*;
-        using reference = T&;
-        using const_reference = const T&;
+		template <typename T>
+		using is_valid_type = is_any_of<T, std::int64_t, double>;
+		template <typename T>
+		static constexpr auto is_valid_type_v = is_valid_type<T>::value;
 
-        pointer _ptr = nullptr;
-        size_type _size = 0;
+	private:
+		std::size_t len;
+		BoundsType dataType;
+		union {
+			std::unique_ptr<std::int64_t[]> int64_buffer;
+			std::unique_ptr<double[]> float64_buffer;
+		};
 
-    public:
-        constexpr span() noexcept = default;
+	public:
+		explicit AccessorBoundsArray(const std::size_t len, const BoundsType type) : len(len), dataType(type) {
+			switch (dataType) {
+				case BoundsType::int64:
+					new (&int64_buffer) std::unique_ptr<std::int64_t[]>(new std::int64_t[len]());
+					break;
+				case BoundsType::float64:
+					new (&float64_buffer) std::unique_ptr<double[]>(new double[len]());
+					break;
+				default:
+					FASTGLTF_UNREACHABLE
+			}
+		}
 
-        template <typename Iterator>
-        explicit constexpr span(Iterator first, size_type count) : _ptr(first), _size(count) {}
+		template <typename T, std::enable_if_t<is_valid_type_v<T>, bool> = true>
+		static AccessorBoundsArray ForType(const std::size_t len) {
+			if constexpr (std::is_same_v<T, std::int64_t>) {
+				return AccessorBoundsArray(len, BoundsType::int64);
+			} else if constexpr(std::is_same_v<T, double>) {
+				return AccessorBoundsArray(len, BoundsType::float64);
+			}
+			FASTGLTF_UNREACHABLE
+		}
+
+		~AccessorBoundsArray() {
+			switch (dataType) {
+				case BoundsType::int64:
+					std::destroy_at(&int64_buffer);
+					break;
+				case BoundsType::float64:
+					std::destroy_at(&float64_buffer);
+					break;
+				default:
+					FASTGLTF_UNREACHABLE
+			}
+		}
+
+		AccessorBoundsArray(const AccessorBoundsArray& other) = delete;
+		AccessorBoundsArray(AccessorBoundsArray&& other) noexcept
+			: len(other.len), dataType(other.dataType) {
+			switch (other.dataType) {
+				case BoundsType::int64:
+					new (&int64_buffer) std::unique_ptr(std::move(other.int64_buffer));
+					break;
+				case BoundsType::float64:
+					new (&float64_buffer) std::unique_ptr(std::move(other.float64_buffer));
+					break;
+				default:
+					FASTGLTF_UNREACHABLE
+			}
+		}
+
+		auto& operator=(const AccessorBoundsArray& other) = delete;
+		auto& operator=(AccessorBoundsArray&& other) noexcept {
+			len = other.len;
+			dataType = other.dataType;
+			switch (dataType) {
+				case BoundsType::int64:
+					std::destroy_at(&int64_buffer);
+					break;
+				case BoundsType::float64:
+					std::destroy_at(&float64_buffer);
+					break;
+				default:
+					FASTGLTF_UNREACHABLE
+			}
+			switch (other.dataType) {
+				case BoundsType::int64:
+					new (&int64_buffer) std::unique_ptr(std::move(other.int64_buffer));
+					break;
+				case BoundsType::float64:
+					new (&float64_buffer) std::unique_ptr(std::move(other.float64_buffer));
+					break;
+				default:
+					FASTGLTF_UNREACHABLE
+			}
+			return *this;
+		}
+
+		[[nodiscard]] BoundsType type() const noexcept {
+			return dataType;
+		}
+
+		template <typename T, std::enable_if_t<is_valid_type_v<T>, bool> = true>
+		[[nodiscard]] bool isType() const noexcept {
+			switch (dataType) {
+				case BoundsType::int64:
+					return std::is_same_v<T, std::int64_t>;
+				case BoundsType::float64:
+					return std::is_same_v<T, double>;
+				default:
+					return false;
+			}
+		}
+
+		[[nodiscard]] std::size_t size() const noexcept {
+			return len;
+		}
+
+		template <typename T, std::enable_if_t<is_valid_type_v<T>, bool> = true>
+		[[nodiscard]] auto* data() noexcept {
+			assert(isType<T>());
+			if constexpr (std::is_same_v<T, std::int64_t>) {
+				return int64_buffer.get();
+			} else if constexpr (std::is_same_v<T, double>) {
+				return float64_buffer.get();
+			}
+			FASTGLTF_UNREACHABLE
+		}
+
+		template <typename T, std::enable_if_t<is_valid_type_v<T>, bool> = true>
+		[[nodiscard]] const auto* data() const noexcept {
+			assert(isType<T>());
+			if constexpr (std::is_same_v<T, std::int64_t>) {
+				return int64_buffer.get();
+			} else if constexpr (std::is_same_v<T, double>) {
+				return float64_buffer.get();
+			}
+			FASTGLTF_UNREACHABLE
+		}
+
+		template <typename T, std::enable_if_t<is_valid_type_v<T>, bool> = true>
+		[[nodiscard]] T get(const std::size_t pos) const {
+			assert(pos < len && isType<T>());
+			return data<T>()[pos];
+		}
+
+		template <typename T, std::enable_if_t<is_valid_type_v<T>, bool> = true>
+		void set(const std::size_t pos, const T value) {
+			assert(pos < len && isType<T>());
+			data<T>()[pos] = value;
+		}
+	};
+
+	FASTGLTF_EXPORT inline constexpr std::size_t dynamic_extent = std::numeric_limits<std::size_t>::max();
+
+	/**
+	 * Custom span class imitating C++20's std::span for referencing bytes without owning the
+	 * allocation. Can also directly be converted to a std::span or used by itself.
+	 */
+	FASTGLTF_EXPORT template <typename T, std::size_t Extent = dynamic_extent>
+	class span {
+		using element_type = T;
+		using value_type = std::remove_cv_t<T>;
+		using size_type = std::size_t;
+		using difference_type = std::ptrdiff_t;
+		using pointer = T*;
+		using const_pointer = const T*;
+		using reference = T&;
+		using const_reference = const T&;
+
+		using iterator = pointer;
+		using reverse_iterator = std::reverse_iterator<iterator>;
+
+		pointer _ptr = nullptr;
+		size_type _size = 0;
+
+	public:
+		static constexpr std::size_t extent = Extent;
+
+		constexpr span() = default;
+
+		// std::span ctor (2)
+		template <typename Iterator>
+		explicit /*(Extent != dynamic_extent)*/ constexpr span(Iterator first, const size_type count) : _ptr(first), _size(count) {}
+
+		// std::span ctor (5)
+		template<typename U, std::size_t N>
+		constexpr span(std::array<U, N>& arr) noexcept : _ptr(arr.data()), _size(N) {}
+
+		// std::span ctor (6)
+		template<typename U, std::size_t N>
+		constexpr span(const std::array<U, N>& arr) noexcept : _ptr(arr.data()), _size(N) {}
 
 #if FASTGLTF_CPP_20
-        constexpr span(std::span<T> data) : _ptr(data.data()), _size(data.size()) {}
+		constexpr span(std::span<T> data) : _ptr(data.data()), _size(data.size()) {}
 #endif
 
-        constexpr span(const span& other) noexcept = default;
-        constexpr span& operator=(const span& other) noexcept = default;
+		constexpr span(const span& other) noexcept = default;
+		constexpr span& operator=(const span& other) = default;
 
-        [[nodiscard]] constexpr reference operator[](size_type idx) const {
-            return data()[idx];
-        }
+		[[nodiscard]] constexpr iterator begin() const noexcept {
+			return data();
+		}
+		[[nodiscard]] constexpr iterator end() const noexcept {
+			return data() + size();
+		}
+		[[nodiscard]] constexpr reverse_iterator rbegin() const noexcept {
+			return std::reverse_iterator(end());
+		}
+		[[nodiscard]] constexpr reverse_iterator rend() const noexcept {
+			return std::reverse_iterator(begin());
+		}
 
-		[[nodiscard]] constexpr reference at(size_type idx) const {
-			if (idx >= size()) {
-                raise<std::out_of_range>("Index is out of range for span");
-			}
+		[[nodiscard]] constexpr reference front() const { return *begin(); }
+		[[nodiscard]] constexpr reference back() const { return *(end() - 1); }
+
+		[[nodiscard]] constexpr reference operator[](size_type idx) const {
 			return data()[idx];
 		}
 
-        [[nodiscard]] constexpr pointer data() const noexcept {
-            return _ptr;
-        }
+		[[nodiscard]] constexpr reference at(size_type idx) const {
+			return data()[idx];
+		}
 
-        [[nodiscard]] constexpr size_type size() const noexcept {
-            return _size;
-        }
+		[[nodiscard]] constexpr pointer data() const {
+			return _ptr;
+		}
 
-        [[nodiscard]] constexpr size_type size_bytes() const noexcept {
-            return size() * sizeof(element_type);
-        }
+		[[nodiscard]] constexpr size_type size() const {
+			return _size;
+		}
 
-        [[nodiscard]] constexpr bool empty() const noexcept {
-            return size() == 0;
-        }
+		[[nodiscard]] constexpr size_type size_bytes() const {
+			return size() * sizeof(element_type);
+		}
 
-        [[nodiscard]] constexpr span<T, Extent> first(size_type count) const {
-            return span(_ptr, count);
-        }
+		[[nodiscard]] constexpr bool empty() const {
+			return size() == 0;
+		}
 
-        [[nodiscard]] constexpr span<T, Extent> last(size_type count) const {
-            return span(&data()[size() - count], count);
-        }
+		[[nodiscard]] constexpr span first(size_type count) const {
+			return span(_ptr, count);
+		}
 
-        [[nodiscard]] constexpr span<T, Extent> subspan(size_type offset, size_type count = dynamic_extent) const {
-            return span(&data()[offset], count == dynamic_extent ? size() - offset : count);
-        }
+		[[nodiscard]] constexpr span last(size_type count) const {
+			return span(&data()[size() - count], count);
+		}
+
+		[[nodiscard]] constexpr span subspan(size_type offset, size_type count = dynamic_extent) const {
+			return span(&data()[offset], count == dynamic_extent ? size() - offset : count);
+		}
 
 #if FASTGLTF_CPP_20
-        operator std::span<T>() const {
-            return std::span(data(), size());
-        }
+		operator std::span<T, Extent == dynamic_extent ? std::dynamic_extent : Extent>() const {
+			return std::span<T, Extent == dynamic_extent ? std::dynamic_extent : Extent>(data(), size());
+		}
 #endif
-    };
+	};
 
-	// Deduction guide for easily instantiating spans
+	FASTGLTF_EXPORT template <typename T>
+	span(T* data, std::size_t count) -> span<T>;
+
 	FASTGLTF_EXPORT template <typename T>
 	span(const T* data, std::size_t size) -> span<const T>;
+
+	// std::span deduction guide (4)
+	FASTGLTF_EXPORT template<class T, std::size_t N>
+	span(const std::array<T, N>&) -> span<const T, N>;
 
     FASTGLTF_EXPORT using CustomBufferId = std::uint64_t;
 
@@ -1692,6 +1989,262 @@ namespace fastgltf {
 		std::size_t accessorIndex;
 	};
 
+#if FASTGLTF_ENABLE_KHR_IMPLICIT_SHAPES
+	FASTGLTF_EXPORT struct SphereShape {
+		num radius = 0.5;
+	};
+
+	FASTGLTF_EXPORT struct BoxShape {
+		math::fvec3 size = { 1, 1, 1 };
+	};
+
+	FASTGLTF_EXPORT struct CapsuleShape {
+		num height = 0.5;
+
+		num radiusBottom = 0.25;
+
+		num radiusTop = 0.25;
+	};
+
+	FASTGLTF_EXPORT struct CylinderShape {
+		num height = 0.5;
+
+		num radiusBottom = 0.25;
+
+		num radiusTop = 0.25;
+	};
+
+	using Shape = std::variant<SphereShape, BoxShape, CapsuleShape, CylinderShape>;
+#endif
+
+#if FASTGLTF_ENABLE_KHR_PHYSICS_RIGID_BODIES
+    FASTGLTF_EXPORT struct Motion {
+        /**
+         * When true, treat the rigid body as having infinite mass. Its velocity will be constant during simulation
+         */
+        bool isKinematic = false;
+
+        /**
+         * The mass of the rigid body. Larger values imply the rigid body is harder to move
+         */
+        Optional<num> mass;
+
+		/**
+		 * Center of mass of the rigid body in node space
+		 */
+		math::fvec3 centerOfMass = { 0, 0, 0 };
+
+		/**
+		 * The principal moments of inertia. Larger values imply the rigid body is harder to rotate
+		 */
+		Optional<math::fvec3> inertialDiagonal;
+
+        /**
+         * The quaternion rotating from inertia major axis space to node space
+         */
+        Optional<math::fvec4> inertialOrientation;
+
+        /**
+         * Initial linear velocity of the rigid body in node space
+         */
+        math::fvec3 linearVelocity = {0, 0, 0};
+
+        /**
+         * Initial angular velocity of the rigid body in node space
+         */
+        math::fvec3 angularVelocity = {0, 0, 0};
+
+        /**
+         * A multiplier applied to the acceleration due to gravity
+         */
+        num gravityFactor = 1;
+	};
+
+	FASTGLTF_EXPORT struct Geometry {
+        /**
+         * The index of a top-level `KHR_implicit_shapes.shape`, providing an implicit representation of the geometry
+         */
+        Optional<size_t> shape;
+
+        /**
+         * The index of a glTF `node` which provides a mesh representation of the geometry
+         */
+        Optional<size_t> node;
+
+        /**
+         * Flag to indicate that the geometry should be a convex hull.
+         */
+        bool convexHull;
+	};
+
+	FASTGLTF_EXPORT struct PhysicsMaterial {
+		num staticFriction = 0.6f;
+
+		num dynamicFriction = 0.6f;
+
+		num restitution = 0.0f;
+
+		CombineMode frictionCombine;
+
+		CombineMode restitutionCombine;
+	};
+
+	FASTGLTF_EXPORT struct CollisionFilter {
+        /**
+         * An array of arbitrary strings indicating the "system" a node is a member of
+         */
+        FASTGLTF_FG_PMR_NS::MaybeSmallVector<FASTGLTF_STD_PMR_NS::string> collisionSystems;
+
+        /**
+         * An array of strings representing the systems which this node can _not_ collide with
+         */
+        FASTGLTF_FG_PMR_NS::MaybeSmallVector<FASTGLTF_STD_PMR_NS::string> notCollideWithSystems;
+
+        /**
+         * An array of strings representing the systems which this node can collide with
+         */
+        FASTGLTF_FG_PMR_NS::MaybeSmallVector<FASTGLTF_STD_PMR_NS::string> collideWithSystems;
+	};
+
+	FASTGLTF_EXPORT struct Collider {
+        /**
+         * An object describing the geometrical representation of this collider
+         */
+        Geometry geometry;
+
+        /**
+         * Indexes into the top-level `physicsMaterials` and describes how the collider should respond to collisions
+         */
+        Optional<std::size_t> physicsMaterial;
+
+        /**
+         * Indexes into the top-level `collisionFilters` and describes a filter which determines if this collider should perform collision detection against another collider
+         */
+        Optional<std::size_t> collisionFilter;
+	};
+
+	FASTGLTF_EXPORT struct GeometryTrigger {
+		/**
+		 * An object describing the geometrical representation of this collider
+		 */
+		Geometry geometry;
+
+		/**
+		 * Indexes into the top-level `collisionFilters` and describes a filter which determines if this collider should perform collision detection against another collider
+		 */
+		Optional<std::size_t> collisionFilter;
+	};
+
+	FASTGLTF_EXPORT struct NodeTrigger {
+
+		/**
+		 * For compound triggers, the set of descendant glTF nodes with a trigger property that make up this compound trigger
+		 */
+		FASTGLTF_FG_PMR_NS::MaybeSmallVector<std::size_t> nodes;
+	};
+
+	FASTGLTF_EXPORT struct JointLimit {
+		/**
+		 * The linear axes to constrain (0=X, 1=Y, 2=Z)
+		 */
+		FASTGLTF_FG_PMR_NS::SmallVector<uint8_t, 3> linearAxes;
+
+		/**
+		 * The angular axes to constrain (0=X, 1=Y, 2=Z)
+		 */
+		FASTGLTF_FG_PMR_NS::SmallVector<uint8_t, 3> angularAxes;
+
+		/**
+		 * The minimum allowed relative distance/angle
+		 */
+		Optional<num> min;
+
+		/**
+		 * The maximum allowed relative distance/angle
+		 */
+		Optional<num> max;
+
+		/**
+		 * Optional softness of the limits when beyond the limits
+		 */
+		Optional<num> stiffness;
+
+		/**
+		 * Optional spring damping applied when beyond the limits
+		 */
+		num damping = 0;
+	};
+
+	FASTGLTF_EXPORT struct JointDrive {
+        /**
+         * Determines if the drive affects is a `linear` or `angular` drive
+         */
+        DriveType type;
+
+        /**
+         * Determines if the drive is operating in `force` or `acceleration` mode
+         */
+        DriveMode mode;
+
+        /**
+         * The index of the axis which this drive affects
+         */
+        uint8_t axis;
+
+        /**
+         * The maximum force that the drive can apply
+         */
+        num maxForce;
+
+        /**
+         * The desired relative target between the pivot axes
+         */
+        num positionTarget;
+
+        /**
+         * The desired relative velocity of the pivot axes
+         */
+        num velocityTarget;
+
+        /**
+         * The drive's stiffness, used to achieve the position target
+         */
+        num stiffness = 0;
+
+        /**
+         * The damping factor applied to reach the velocity target
+         */
+        num damping = 0;
+	};
+
+	FASTGLTF_EXPORT struct PhysicsJoint {
+		FASTGLTF_FG_PMR_NS::MaybeSmallVector<JointLimit> limits;
+
+        /**
+         * Each drive specifies a force to apply along a single axis
+         */
+        FASTGLTF_FG_PMR_NS::MaybeSmallVector<JointDrive> drives;
+	};
+
+	FASTGLTF_EXPORT struct Joint {
+	    std::size_t connectedNode;
+
+		std::size_t joint;
+
+		bool enableCollision = false;
+	};
+
+    FASTGLTF_EXPORT struct PhysicsRigidBody {
+		Optional<Motion> motion;
+
+		Optional<Collider> collider;
+
+		Optional<std::variant<GeometryTrigger, NodeTrigger>> trigger;
+
+		Optional<Joint> joint;
+	};
+#endif
+
     FASTGLTF_EXPORT struct Node {
         Optional<std::size_t> meshIndex;
 	    Optional<std::size_t> skinIndex;
@@ -1719,7 +2272,15 @@ namespace fastgltf {
 
         FASTGLTF_STD_PMR_NS::string name;
 
-        [[nodiscard]] auto findInstancingAttribute(std::string_view attributeName) noexcept {
+#if FASTGLTF_ENABLE_KHR_PHYSICS_RIGID_BODIES
+		std::unique_ptr<PhysicsRigidBody> physicsRigidBody;
+#endif
+
+    	bool visible = true;
+    	bool selectable = true;
+    	bool hoverable = true;
+
+        [[nodiscard]] auto findInstancingAttribute(const std::string_view attributeName) noexcept {
             for (auto it = instancingAttributes.begin(); it != instancingAttributes.end(); ++it) {
                 if (it->name == attributeName)
                     return it;
@@ -1727,7 +2288,7 @@ namespace fastgltf {
             return instancingAttributes.end();
         }
 
-        [[nodiscard]] auto findInstancingAttribute(std::string_view attributeName) const noexcept {
+        [[nodiscard]] auto findInstancingAttribute(const std::string_view attributeName) const noexcept {
             for (auto it = instancingAttributes.cbegin(); it != instancingAttributes.cend(); ++it) {
                 if (it->name == attributeName)
                     return it;
@@ -1740,7 +2301,7 @@ namespace fastgltf {
 		std::size_t bufferView;
 		FASTGLTF_FG_PMR_NS::SmallVector<Attribute, 4> attributes;
 
-		[[nodiscard]] auto findAttribute(std::string_view name) noexcept {
+		[[nodiscard]] auto findAttribute(const std::string_view name) noexcept {
 			for (auto* it = attributes.begin(); it != attributes.end(); ++it) {
 				if (it->name == name)
 					return it;
@@ -1748,7 +2309,7 @@ namespace fastgltf {
 			return attributes.end();
 		}
 
-		[[nodiscard]] auto findAttribute(std::string_view name) const noexcept {
+		[[nodiscard]] auto findAttribute(const std::string_view name) const noexcept {
 			for (const auto* it = attributes.cbegin(); it != attributes.cend(); ++it) {
 				if (it->name == name)
 					return it;
@@ -1888,6 +2449,16 @@ namespace fastgltf {
 		Optional<TextureInfo> anisotropyTexture;
 	};
 
+	/**
+	 * Diffuse transmission information from KHR_materials_diffuse_transmission
+	 */
+	FASTGLTF_EXPORT struct MaterialDiffuseTransmission {
+		num diffuseTransmissionFactor = 0.0f;
+		Optional<TextureInfo> diffuseTransmissionTexture;
+		math::nvec3 diffuseTransmissionColorFactor = math::nvec3(1);
+		Optional<TextureInfo> diffuseTransmissionColorTexture;
+	};
+
     /**
      * Specular information from KHR_materials_specular.
      */
@@ -2018,6 +2589,11 @@ namespace fastgltf {
 
         std::unique_ptr<MaterialClearcoat> clearcoat;
 
+		/**
+		 * Diffuse transmission information from KHR_materials_diffuse_transmission.
+		 */
+		std::unique_ptr<MaterialDiffuseTransmission> diffuseTransmission;
+
         /**
          * Iridescence information from KHR_materials_iridescence.
          */
@@ -2104,23 +2680,68 @@ namespace fastgltf {
         ComponentType indexComponentType;
     };
 
-    FASTGLTF_EXPORT struct Accessor {
-        std::size_t byteOffset = 0;
-        std::size_t count;
-        AccessorType type;
-        ComponentType componentType;
-        bool normalized = false;
+	FASTGLTF_EXPORT struct Accessor {
+		std::size_t byteOffset = 0;
+		std::size_t count;
+		AccessorType type;
+		ComponentType componentType;
+		bool normalized = false;
 
-        std::variant<std::monostate, FASTGLTF_STD_PMR_NS::vector<double>, FASTGLTF_STD_PMR_NS::vector<std::int64_t>> max;
-        std::variant<std::monostate, FASTGLTF_STD_PMR_NS::vector<double>, FASTGLTF_STD_PMR_NS::vector<std::int64_t>> min;
+		std::optional<AccessorBoundsArray> max;
+		std::optional<AccessorBoundsArray> min;
 
-        // Could have no value for sparse morph targets
-        Optional<std::size_t> bufferViewIndex;
+		// Could have no value for sparse morph targets
+		Optional<std::size_t> bufferViewIndex;
 
-        Optional<SparseAccessor> sparse;
+		Optional<SparseAccessor> sparse;
 
-        FASTGLTF_STD_PMR_NS::string name;
-    };
+		FASTGLTF_STD_PMR_NS::string name;
+
+		/**
+		 * Helper function that updates the max/min variables dynamically.
+		 */
+		template <typename T, std::enable_if_t<AccessorBoundsArray::is_valid_type_v<T>, bool> = true>
+		void updateBoundsToInclude(T value) {
+			if (!max)
+				max = AccessorBoundsArray::ForType<T>(1);
+			if (!min)
+				min = AccessorBoundsArray::ForType<T>(1);
+
+			assert(max->isType<T>() && min->isType<T>());
+			assert(max->size() == 1 && min->size() == 1);
+
+			const auto cur_max = max->get<T>(0);
+			const auto cur_min = min->get<T>(0);
+			if (value > cur_max)
+				max->set<T>(0, value);
+			if (value < cur_min)
+				min->set<T>(0, value);
+		}
+
+		/**
+		 * Helper function that updates the max/min variables dynamically. Note that the value passed in
+		 * needs to be a vector with the same size as max/min
+		 */
+		template <typename T, std::size_t N, std::enable_if_t<AccessorBoundsArray::is_valid_type_v<T>, bool> = true>
+		void updateBoundsToInclude(math::vec<T, N> value) {
+			if (!max)
+				max = AccessorBoundsArray::ForType<T>(value.size());
+			if (!min)
+				min = AccessorBoundsArray::ForType<T>(value.size());
+
+			assert(max->isType<T>() && min->isType<T>());
+			assert(max->size() == value.size() && min->size() == value.size());
+
+			for (std::size_t i = 0; i < value.size(); ++i) {
+				const auto cur_max = max->get<T>(i);
+				const auto cur_min = min->get<T>(i);
+				if (value[i] > cur_max)
+					max->set<T>(i, value[i]);
+				if (value[i] < cur_min)
+					min->set<T>(i, value[i]);
+			}
+		}
+	};
 
     FASTGLTF_EXPORT struct CompressedBufferView {
         std::size_t bufferIndex;
@@ -2212,6 +2833,16 @@ namespace fastgltf {
 
 		std::vector<std::string> materialVariants;
 
+#if FASTGLTF_ENABLE_KHR_IMPLICIT_SHAPES
+		std::vector<Shape> shapes;
+#endif
+
+#if FASTGLTF_ENABLE_KHR_PHYSICS_RIGID_BODIES
+		std::vector<PhysicsMaterial> physicsMaterials;
+	    std::vector<PhysicsJoint> physicsJoints;
+		std::vector<CollisionFilter> collisionFilters;
+#endif
+
         // Keeps tracked of categories that were actually parsed.
         Category availableCategories = Category::None;
 
@@ -2240,7 +2871,15 @@ namespace fastgltf {
 				skins(std::move(other.skins)),
 				textures(std::move(other.textures)),
 				materialVariants(std::move(other.materialVariants)),
-				availableCategories(other.availableCategories) {}
+#if FASTGLTF_ENABLE_KHR_IMPLICIT_SHAPES
+			    shapes(std::move(other.shapes)),
+#endif
+#if FASTGLTF_ENABLE_KHR_PHYSICS_RIGID_BODIES
+			    physicsMaterials(std::move(other.physicsMaterials)),
+			    physicsJoints(std::move(other.physicsJoints)),
+			    collisionFilters(std::move(other.collisionFilters)),
+#endif
+	            availableCategories(other.availableCategories) {}
 
 		Asset& operator=(const Asset& other) = delete;
 		Asset& operator=(Asset&& other) noexcept {
@@ -2263,6 +2902,14 @@ namespace fastgltf {
 			skins = std::move(other.skins);
 			textures = std::move(other.textures);
 			materialVariants = std::move(other.materialVariants);
+#if FASTGLTF_ENABLE_KHR_IMPLICIT_SHAPES
+			shapes = std::move(other.shapes);
+#endif
+#if FASTGLTF_ENABLE_KHR_PHYSICS_RIGID_BODIES
+			physicsMaterials = std::move(other.physicsMaterials);
+			physicsJoints = std::move(other.physicsJoints);
+			collisionFilters = std::move(other.collisionFilters);
+#endif
 			availableCategories = other.availableCategories;
 #if !FASTGLTF_DISABLE_CUSTOM_MEMORY_POOL
 			// This needs to be last to not destroy the old memoryResource for the current data.
@@ -2276,4 +2923,6 @@ namespace fastgltf {
 
 #ifdef _MSC_VER
 #pragma warning(pop)
+#endif
+
 #endif

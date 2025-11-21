@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2024 spnda
+ * Copyright (C) 2022 - 2025 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -58,6 +58,12 @@
 #endif
 #elif defined(FASTGLTF_IS_A64)
 #include <arm_neon.h> // Includes arm64_neon.h on MSVC
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 5030) // attribute 'x' is not recognized
+#pragma warning(disable : 4710) // function not inlined
 #endif
 
 namespace fg = fastgltf;
