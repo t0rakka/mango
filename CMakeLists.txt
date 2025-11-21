@@ -914,7 +914,7 @@ if (LIBRARY_HEIF)
 endif ()
 
 if (BUILD_IMPORT3D)
-    find_module(mango SIMDJSON ${INTERFACE} OPTIONAL simdjson simdjson simdjson::simdjson 0)
+    find_module(mango SIMDJSON ${INTERFACE} REQUIRED simdjson simdjson simdjson::simdjson 0)
 endif ()
 
 # ------------------------------------------------------------------------------
