@@ -119,9 +119,14 @@ if (BUILD_OPENGL)
 endif ()
 
 if (BUILD_VULKAN)
-    find_package(Vulkan QUIET)
-    if (NOT VULKAN_FOUND)
+    if (APPLE)
+        # Vulkan package can be found on macOS, but MANGO does not support it yet
         set(BUILD_VULKAN OFF)
+    else ()
+        find_package(Vulkan QUIET)
+        if (NOT VULKAN_FOUND)
+            set(BUILD_VULKAN OFF)
+        endif ()
     endif ()
 endif ()
 
@@ -470,6 +475,7 @@ FILE(GLOB EXTERNAL_IMPORT3D
 )
 
 # This should be fixed in latest fastgltf >= 0.9
+# TODO: Remove this once fastgltf fix is tested
 if (ARM OR ARM64)
     set_source_files_properties(
         ${CMAKE_CURRENT_SOURCE_DIR}/source/external/fastgltf/src/base64.cpp
