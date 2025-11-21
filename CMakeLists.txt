@@ -469,6 +469,14 @@ FILE(GLOB EXTERNAL_IMPORT3D
     "${EXTERNAL_SOURCE_DIR}/fastgltf/src/*.cpp"
 )
 
+# This should be fixed in latest fastgltf >= 0.9
+if (ARM OR ARM64)
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/source/external/fastgltf/src/base64.cpp
+        PROPERTIES COMPILE_OPTIONS "-flax-vector-conversions"
+    )
+endif ()
+
 SOURCE_GROUP("external/aes"         FILES ${EXTERNAL_AES})
 SOURCE_GROUP("external/bc"          FILES ${EXTERNAL_BC})
 SOURCE_GROUP("external/concurrent"  FILES ${EXTERNAL_CONCURRENT_QUEUE})
