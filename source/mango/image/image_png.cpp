@@ -10,12 +10,21 @@
 #include <zlib.h>
 
 #ifdef MANGO_ENABLE_ISAL
-    // Why you have to be like that.. on Windows we assume VCPKG packaging for others BREW/APT
-    #if defined(MANGO_PLATFORM_WINDOWS)
-        #include <isal/igzip_lib.h>
-    #else
-        #include <isa-l/igzip_lib.h>
+
+    #if !defined(MANGO_CPU_ARM)
+        #define USE_ISAL_ENCODE /* ISAL encoder is corrupted on ARM */
+        #define USE_ISAL_DECODE /* ISAL decoder is slower than ZLIB on ARM */
     #endif
+
+    #if defined(USE_ISAL_ENCODE) || defined(USE_ISAL_DECODE)
+        // Why you have to be like that.. on Windows we assume VCPKG packaging for others BREW/APT
+        #if defined(MANGO_PLATFORM_WINDOWS)
+            #include <isal/igzip_lib.h>
+        #else
+            #include <isa-l/igzip_lib.h>
+        #endif
+    #endif
+
 #endif
 
 // https://www.w3.org/TR/2003/REC-PNG-20031110/
@@ -3060,7 +3069,7 @@ namespace
     }
 
     void ParserPNG::decode_plld(const Surface& target)
-    {    
+    {
         const size_t bytes_per_line = getBytesPerLine(target.width) + PNG_FILTER_BYTE;
 
         ConcurrentQueue q("png:decode");
@@ -3070,7 +3079,7 @@ namespace
         // skip zlib header
         size_t first = 2;
 
-#ifdef MANGO_ENABLE_ISAL__disabled_the_deflate_is_slightly_faster
+#ifdef USE_ISAL_DECODE
         auto decompress = getCompressor(Compressor::ISAL).decompress;
 #else
         auto decompress = getCompressor(Compressor::DEFLATE).decompress;
@@ -3244,7 +3253,7 @@ namespace
 
         if (m_interface->callback)
         {
-#if defined(MANGO_ENABLE_ISAL) && !defined(MANGO_CPU_ARM) // ISAL on ARM is slower than zlib
+#if defined(USE_ISAL_DECODE)
 
             inflate_state state;
             isal_inflate_init(&state);
@@ -3904,7 +3913,7 @@ namespace
             {
                 filter_range(source.address, surface, color_bits, y, y + h);
 
-#if defined(MANGO_ENABLE_ISAL)
+#if defined(USE_ISAL_ENCODE)
 
                 constexpr size_t TEMP_SIZE = 128 * 1024;
                 Buffer temp(TEMP_SIZE);
@@ -4102,7 +4111,7 @@ namespace
 
         if (encoding_failure)
         {
-#if defined(MANGO_ENABLE_ISAL)
+#if defined(USE_ISAL_ENCODE)
             status.setError("ISAL encoding failure.");
 #else
             status.setError("ZLib encoding failure.");

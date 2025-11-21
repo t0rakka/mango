@@ -330,7 +330,7 @@ namespace mango
     u32 adler32(u32 adler, ConstMemory memory)
     {
         constexpr size_t NMAX = 5552;
-        constexpr size_t BLOCK_SIZE = 16;
+        constexpr size_t BLOCK_SIZE = 32;
         constexpr size_t BLOCK_MASK = BLOCK_SIZE - 1;
 
         const u8* buffer = memory.address;

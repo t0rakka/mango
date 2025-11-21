@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 2.4.2
+        VERSION 2.4.3
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
@@ -125,7 +125,7 @@ if (BUILD_VULKAN)
     endif ()
 endif ()
 
-message("[ ${PROJECT_NAME} ]")
+message("[${PROJECT_NAME}]")
 list(APPEND CMAKE_MESSAGE_INDENT "    ")
 
 message("Processor: ${CMAKE_SYSTEM_PROCESSOR}")
@@ -465,11 +465,17 @@ FILE(GLOB EXTERNAL_BASISU
 FILE(GLOB EXTERNAL_IMPORT3D
     "${EXTERNAL_SOURCE_DIR}/mikktspace/*.h"
     "${EXTERNAL_SOURCE_DIR}/mikktspace/*.c"
-    "${EXTERNAL_SOURCE_DIR}/simdjson/*.h"
-    "${EXTERNAL_SOURCE_DIR}/simdjson/*.cpp"
     "${EXTERNAL_SOURCE_DIR}/fastgltf/include/fastgltf/*.hpp"
     "${EXTERNAL_SOURCE_DIR}/fastgltf/src/*.cpp"
 )
+
+# This should be fixed in latest fastgltf >= 0.9
+if (ARM OR ARM64)
+    set_source_files_properties(
+        ${CMAKE_CURRENT_SOURCE_DIR}/source/external/fastgltf/src/base64.cpp
+        PROPERTIES COMPILE_OPTIONS "-flax-vector-conversions"
+    )
+endif ()
 
 SOURCE_GROUP("external/aes"         FILES ${EXTERNAL_AES})
 SOURCE_GROUP("external/bc"          FILES ${EXTERNAL_BC})
@@ -553,7 +559,6 @@ if (BUILD_IMPORT3D)
     )
     include_directories(BEFORE
         "${EXTERNAL_SOURCE_DIR}/fastgltf/include"
-        "${EXTERNAL_SOURCE_DIR}/simdjson"
     )
 endif ()
 
@@ -755,6 +760,25 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
         endif ()
 
         if (${PackageName}_FOUND)
+
+            # Fix imported targets
+
+            if (${Prefix} STREQUAL "LZ4")
+                # Debian 13 on Raspberry Pi 5 uses 'LZ4::lz4'
+                if (TARGET LZ4::lz4 AND NOT TARGET lz4::lz4)
+                    add_library(lz4::lz4 ALIAS LZ4::lz4)
+                endif ()
+            endif ()
+
+            if (${Prefix} STREQUAL "ZSTD")
+                if (TARGET zstd::libzstd)
+                    # brew / vcpkg imported target is 'zstd::libzstd'
+                else ()
+                    # apt / pacman don't correctly export target but this works
+                    set(ImportedTarget "zstd")
+                endif ()
+            endif ()
+
             apply_cmake_target(${Target} ${Interface} ${Prefix} ${PackageName} ${ImportedTarget})
             return ()
         endif ()
@@ -796,7 +820,7 @@ endfunction()
 function (find_libdeflate Target Interface Mode)
     if (BUILD_SHARED_LIBS)
         # For shared builds, prefer shared libraries
-        set(TARGET_NAMES 
+        set(TARGET_NAMES
             "libdeflate::libdeflate_shared"    # Standard CMake target (Linux/macOS)
             "libdeflate"                       # VCPKG target name (usually shared)
             "libdeflate::libdeflate"           # Alternative VCPKG target
@@ -804,7 +828,7 @@ function (find_libdeflate Target Interface Mode)
         )
     else ()
         # For static builds, prefer static libraries
-        set(TARGET_NAMES 
+        set(TARGET_NAMES
             "libdeflate::libdeflate_static"    # Standard CMake target (Linux/macOS)
             "libdeflate"                       # VCPKG target name (usually static)
             "libdeflate::libdeflate"           # Alternative VCPKG target
@@ -855,16 +879,8 @@ message("[Required Libraries]")
 find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 8.0)
 find_module(mango ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
 find_module(mango LCMS2 PRIVATE REQUIRED lcms2 lcms2 lcms2::lcms2 0)
-
+find_module(mango ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd::libzstd 0)
 find_libdeflate(mango ${INTERFACE} REQUIRED)
-
-if (APPLE OR WIN32)
-    # brew/vcpkg imported target is 'zstd::libzstd'
-    find_module(mango ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd::libzstd 0)
-else ()
-    # apt/pacman imported target is 'zstd'
-    find_module(mango ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd 0)
-endif ()
 
 # ------------------------------------------------------------------------------
 # Optional Libraries
@@ -903,6 +919,10 @@ endif ()
 
 if (LIBRARY_HEIF)
     find_module(mango HEIF ${INTERFACE} OPTIONAL libheif libheif heif 1.13.0)
+endif ()
+
+if (BUILD_IMPORT3D)
+    find_module(mango SIMDJSON ${INTERFACE} REQUIRED simdjson simdjson simdjson::simdjson 0)
 endif ()
 
 # ------------------------------------------------------------------------------
