@@ -29,6 +29,10 @@ There are different package managers but our examples use apt-get (Ubuntu, Mint,
 
     sudo apt-get install glslang-dev
 
+### OPTIONAL Libraries (Import3D)
+
+    sudo apt-get install libsimdjson-dev
+
 ### OPTIONAL Libraries (examples)
 
     sudo apt-get install libjpeg-dev libpng-dev
@@ -64,6 +68,10 @@ Above uses ninja as build system, cmake users know what time it is. If you want 
 
     sudo pacman -S glslang
 
+### OPTIONAL Libraries (Import3D)
+
+    sudo pacman -S simdjson
+
 ### OPTIONAL Libraries (examples)
 
     sudo pacman -S libjpeg-turbo libpng
@@ -83,6 +91,10 @@ On Arch Linux the building is exactly same as it is on Linux Ubuntu/Mint.
 ### OPTIONAL Libraries
 
     brew install jpeg-xl openjpeg webp libavif libheif isa-l lz4 bzip2
+
+### OPTIONAL Libraries (Import3D)
+
+    brew install simdjson
 
 ### OPTIONAL Libraries (examples)
 
@@ -117,9 +129,13 @@ Here are the environment variables that are needed, the x64-windows is just exam
 
     vcpkg install glslang
 
+### OPTIONAL Libraries (Import3D)
+
+    vcpkg install simdjson
+
 ### OPTIONAL Libraries (examples)
 
-    vcpkg install libjpeg-turbo libpng
+    vcpkg install libjpeg-turbo libpng blend2d
 
 ### Building
 

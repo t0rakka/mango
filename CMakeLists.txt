@@ -465,8 +465,6 @@ FILE(GLOB EXTERNAL_BASISU
 FILE(GLOB EXTERNAL_IMPORT3D
     "${EXTERNAL_SOURCE_DIR}/mikktspace/*.h"
     "${EXTERNAL_SOURCE_DIR}/mikktspace/*.c"
-    "${EXTERNAL_SOURCE_DIR}/simdjson/*.h"
-    "${EXTERNAL_SOURCE_DIR}/simdjson/*.cpp"
     "${EXTERNAL_SOURCE_DIR}/fastgltf/include/fastgltf/*.hpp"
     "${EXTERNAL_SOURCE_DIR}/fastgltf/src/*.cpp"
 )
@@ -553,7 +551,6 @@ if (BUILD_IMPORT3D)
     )
     include_directories(BEFORE
         "${EXTERNAL_SOURCE_DIR}/fastgltf/include"
-        "${EXTERNAL_SOURCE_DIR}/simdjson"
     )
 endif ()
 
@@ -914,6 +911,10 @@ endif ()
 
 if (LIBRARY_HEIF)
     find_module(mango HEIF ${INTERFACE} OPTIONAL libheif libheif heif 1.13.0)
+endif ()
+
+if (BUILD_IMPORT3D)
+    find_module(mango SIMDJSON ${INTERFACE} OPTIONAL simdjson simdjson simdjson::simdjson 0)
 endif ()
 
 # ------------------------------------------------------------------------------
