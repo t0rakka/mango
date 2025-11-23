@@ -209,13 +209,15 @@
     #define MANGO_PLATFORM_NAME "SGI IRIX"
     #define MANGO_WINDOW_SYSTEM_XLIB
 
-#elif defined(EMSCRIPTEN)
+#elif defined(EMSCRIPTEN) || defined (__EMSCRIPTEN__)
 
     // Emscripten / WASM
     #define MANGO_PLATFORM_EMSCRIPTEN
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "EMSCRIPTEN"
     #define MANGO_WINDOW_SYSTEM_NONE
+
+    #include <emscripten.h>
 
 #else
 

@@ -38,7 +38,10 @@ if (MSVC)
 else ()
 
     if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
-        target_compile_options(png_benchmark PRIVATE -mavx2 -mpclmul)
+        target_compile_options(png_benchmark PRIVATE -mavx2)
+        if (NOT EMSCRIPTEN)
+            target_compile_options(png_benchmark PRIVATE -mpclmul)
+        endif ()
     endif ()
 
 endif ()

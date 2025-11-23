@@ -358,19 +358,17 @@ namespace
 
     struct DirEndRecord
     {
-        u32	signature;         // 0x06054b50
-        u16	thisDisk;          // number of this disk
-        u16	dirStartDisk;      // number of the disk containing the start of the central directory
-        u64	numEntriesOnDisk;  // # of entries in the central directory on this disk
-        u64	numEntriesTotal;   // total # of entries in the central directory
-        u64	dirSize;           // size of the central directory
-        u64	dirStartOffset;    // offset of the start of central directory on the disk
-        u16	commentLen;        // zip file comment length
+        u32	signature = 0;         // 0x06054b50
+        u16	thisDisk = 0;          // number of this disk
+        u16	dirStartDisk = 0;      // number of the disk containing the start of the central directory
+        u64	numEntriesOnDisk = 0;  // # of entries in the central directory on this disk
+        u64	numEntriesTotal = 0;   // total # of entries in the central directory
+        u64	dirSize = 0;           // size of the central directory
+        u64	dirStartOffset = 0;    // offset of the start of central directory on the disk
+        u16	commentLen = 0;        // zip file comment length
 
         DirEndRecord(ConstMemory memory)
         {
-            std::memset(this, 0, sizeof(DirEndRecord));
-
             // find central directory end record signature
             // by scanning backwards from the end of the file
             const u8* start = memory.address;

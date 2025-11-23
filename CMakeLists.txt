@@ -90,6 +90,19 @@ endif ()
 set(LINKER "default" CACHE STRING "Linker to use (default, mold)")
 set_property(CACHE LINKER PROPERTY STRINGS default mold)
 
+# Emscripten
+if (EMSCRIPTEN)
+    if (BUILD_OPENGL)
+        set(BUILD_OPENGL OFF)
+    endif ()
+    if (BUILD_VULKAN)
+        set(BUILD_VULKAN OFF)
+    endif ()
+    if (BUILD_IMPORT3D)
+        set(BUILD_IMPORT3D OFF)
+    endif ()
+endif ()
+
 # ------------------------------------------------------------------------------
 # build settings
 # ------------------------------------------------------------------------------
