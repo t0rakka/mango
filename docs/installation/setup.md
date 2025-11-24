@@ -105,6 +105,16 @@ On Arch Linux the building is exactly same as it is on Linux Ubuntu/Mint.
 On macOS the building is exactly same as it is on Linux.
 
 
+<h2><img src="logo-emscripten.png" alt="logo" width="80"/> Emscripten</h2>
+
+
+The Emscripten build is still work-in-progress but is partially working. The recommended way is to install dependencies using vcpkg, the preset builds examples so the libraries usually in examples are included in the required libraries below. The target is currently node and the cmake configuration builds specifically for node with native filesystem access enabled for testing purposes.
+
+### REQUIRED Libraries
+
+    vcpkg install --triplet wasm32-emscripten fmt zlib libdeflate zstd lcms libjpeg-turbo libpng
+
+
 <h2><img src="logo-windows.png" alt="logo" width="80"/> Windows</h2>
 
 
