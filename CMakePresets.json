@@ -44,6 +44,19 @@
             }
         },
         {
+            "name": "emscripten-ninja-release",
+            "description": "Emscripten Release build with Ninja and vcpkg chainload",
+            "inherits": ["options", "ninja", "vcpkg"],
+            "binaryDir": "${sourceDir}/build-emscripten",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+                "VCPKG_TARGET_TRIPLET": "wasm32-emscripten",
+                "BUILD_ALL": "ON",
+                "BUILD_SHARED_LIBS": "OFF"
+            }
+        },
+        {
             "name": "default",
             "description": "Cross-platform Release build using Ninja",
             "inherits": ["options", "ninja"],
@@ -73,6 +86,11 @@
         {
             "name": "windows-ninja-debug",
             "configurePreset": "windows-ninja-debug",
+            "jobs": 0
+        },
+        {
+            "name": "emscripten-release",
+            "configurePreset": "emscripten-ninja-release",
             "jobs": 0
         },
         {

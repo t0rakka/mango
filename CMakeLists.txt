@@ -101,6 +101,14 @@ if (EMSCRIPTEN)
     if (BUILD_IMPORT3D)
         set(BUILD_IMPORT3D OFF)
     endif ()
+
+    message(STATUS "Configuring for Emscripten with pthreads")
+
+    # Enable pthreads in compiler and linker
+    add_compile_options(-pthread)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread -sUSE_PTHREADS=1")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sPTHREAD_POOL_SIZE=4")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sALLOW_MEMORY_GROWTH=1")
 endif ()
 
 # ------------------------------------------------------------------------------
