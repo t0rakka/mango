@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -89,10 +89,13 @@ void validate(Buffer& message5)
 
 void print(const Buffer& buffer, const char* name, u64 time0, u64 time1, u32 value, u32 correct)
 {
-    u64 x = buffer.size() * 1000000; // buffer size in bytes * microseconds_in_second
+    u64 x = u64(buffer.size()) * 1000000; // buffer size in bytes * microseconds_in_second
     u32 delta = time1 - time0;
+    u32 delta_major = u32(delta/1000);
+    u32 delta_minor = u32(((delta + 50) / 100) % 10);
+    u32 rate = u32(x / (delta * MB));
     const char* status = (value == correct) ? "" : "FAILED";
-    printf("%s    %5d.%1d ms (%6d MB/s ) %s\n", name, u32(delta/1000), u32(((delta+50)/100)%10), u32(x / (delta * MB)), status);
+    printf("%s    %5d.%1d ms (%6d MB/s ) %s\n", name, delta_major, delta_minor, rate, status);
 }
 
 void test_md5(const Buffer& buffer)

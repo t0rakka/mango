@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -15,7 +15,7 @@ void print(u32 value, u32 reference)
 
 void print(ConstMemory buffer, const char* name, u64 time)
 {
-    u64 x = buffer.size * 1000000; // buffer size in bytes * microseconds_in_second
+    u64 x = u64(buffer.size) * 1000000; // buffer size in bytes * microseconds_in_second
     printLine("{} {:5}.{:1} ms ({:6} MB/s )", name,
         time / 1000,
         ((time + 50) / 100) % 10,

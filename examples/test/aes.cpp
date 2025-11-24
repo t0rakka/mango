@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 
@@ -11,7 +11,7 @@ constexpr int N = 10;
 
 void print(const Buffer& buffer, u64 time0, u64 time1)
 {
-    u64 x = N * buffer.size() * 1000000; // buffer size in bytes * microseconds_in_second
+    u64 x = N * u64(buffer.size()) * 1000000; // buffer size in bytes * microseconds_in_second
     u32 delta = time1 - time0;
     printf("%5d.%1d ms (%6d MB/s )\n",
         u32(delta / 1000),
