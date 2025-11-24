@@ -220,19 +220,29 @@ include_directories(BEFORE ${PROJECT_SOURCE_DIR}/include)
 # vcpkg
 if (DEFINED ENV{VCPKG_ROOT})
 
-    if (DEFINED ENV{VCPKG_TARGET_TRIPLET})
-        set(DEFAULT_INSTALL_PATH "$ENV{VCPKG_ROOT}/installed/$ENV{VCPKG_TARGET_TRIPLET}")
-    elseif (DEFINED ENV{VCPKG_DEFAULT_TRIPLET})
-        set(DEFAULT_INSTALL_PATH "$ENV{VCPKG_ROOT}/installed/$ENV{VCPKG_DEFAULT_TRIPLET}")
+    if (DEFINED VCPKG_TARGET_TRIPLET AND NOT VCPKG_TARGET_TRIPLET STREQUAL "")
+        # Prefer cache variable (from preset or CLI)
+        set(TRIPLET "${VCPKG_TARGET_TRIPLET}")
+    elseif (DEFINED ENV{VCPKG_TARGET_TRIPLET} AND NOT "$ENV{VCPKG_TARGET_TRIPLET}" STREQUAL "")
+        # Fallback to environment variable
+        set(TRIPLET "$ENV{VCPKG_TARGET_TRIPLET}")
+    elseif (DEFINED VCPKG_DEFAULT_TRIPLET AND NOT VCPKG_DEFAULT_TRIPLET STREQUAL "")
+        # Fallback to default triplet (cache)
+        set(TRIPLET "${VCPKG_DEFAULT_TRIPLET}")
+    elseif (DEFINED ENV{VCPKG_DEFAULT_TRIPLET} AND NOT "$ENV{VCPKG_DEFAULT_TRIPLET}" STREQUAL "")
+        # Fallback to default triplet (env)
+        set(TRIPLET "$ENV{VCPKG_DEFAULT_TRIPLET}")
     else ()
-        set(DEFAULT_INSTALL_PATH "${CMAKE_BINARY_DIR}/install")
+        # Last fallback
+        set(TRIPLET "")
+    endif ()
+
+    if (TRIPLET)
+        set(CMAKE_INSTALL_PREFIX "$ENV{VCPKG_ROOT}/installed/${TRIPLET}" CACHE PATH "Install path prefix" FORCE)
     endif ()
 
     message("VCPKG_ROOT: " $ENV{VCPKG_ROOT})
-    message("VCPKG_TARGET_TRIPLET: " $ENV{VCPKG_TARGET_TRIPLET})
-    message("VCPKG_DEFAULT_TRIPLET: " $ENV{VCPKG_DEFAULT_TRIPLET})
-
-    set(CMAKE_INSTALL_PREFIX "${DEFAULT_INSTALL_PATH}" CACHE PATH "Install path prefix" FORCE)
+    message("VCPKG_TARGET_TRIPLET: ${TRIPLET}")
 
 endif ()
 
