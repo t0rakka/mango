@@ -34,7 +34,7 @@ using namespace mango::image;
 
 #include "fpnge/fpnge.h"
 #ifdef CAN_COMPILE_FPNGE
-    // FPGNE is very strict how it is compiled: clang (avx2 + pclmul)
+    // FPNGE is very strict how it is compiled: clang (avx2 + pclmul)
     #define ENABLE_FPNGE
 #endif
 
