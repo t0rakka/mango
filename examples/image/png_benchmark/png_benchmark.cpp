@@ -14,7 +14,9 @@ using namespace mango::image;
     #define ENABLE_BLEND2D
 #endif
 
-#define ENABLE_LIBPNG
+#ifdef MANGO_ENABLE_PNG
+    #define ENABLE_LIBPNG
+#endif
 #define ENABLE_LODEPNG
 #define ENABLE_STB
 #define ENABLE_SPNG

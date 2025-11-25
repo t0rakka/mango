@@ -20,8 +20,6 @@ file(COPY blitter/conquer.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 # png_benchmark
 # ----------------------------------------------------------------------
 
-if (NOT EMSCRIPTEN)
-
 add_executable(png_benchmark
     png_benchmark/png_benchmark.cpp
     png_benchmark/lodepng/lodepng.cpp
@@ -48,13 +46,16 @@ else ()
 
 endif ()
 
+# emscripten workaround for libpng/vcpkg (disable)
+if (NOT EMSCRIPTEN)
+    find_module(png_benchmark PNG PRIVATE REQUIRED libpng PNG PNG::PNG 0)
+endif ()
+
 find_module(png_benchmark BLEND2D PRIVATE OPTIONAL "" blend2d blend2d::blend2d 0)
-find_module(png_benchmark PNG PRIVATE REQUIRED libpng PNG PNG::PNG 0)
 find_module(png_benchmark ZLIB PRIVATE REQUIRED zlib ZLIB ZLIB::ZLIB 0)
 
 target_compile_definitions(png_benchmark PRIVATE "SPNG_STATIC")
 
-endif ()
 
 # ----------------------------------------------------------------------
 # jpeg_benchmark
