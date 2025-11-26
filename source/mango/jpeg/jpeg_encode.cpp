@@ -2787,7 +2787,9 @@ namespace
         const u8* image = m_surface.image;
         size_t stride = m_surface.stride;
 
-        BigEndianStream s(stream);
+        // Emscripten workaround: use MemoryStream because small writes into FileStream are slow
+        MemoryStream temp;
+        BigEndianStream s(temp);
 
         // encode MCUs
         int N = 1; // number of MCU scans per restart interval
@@ -2864,6 +2866,9 @@ namespace
         {
             s.write32(offset);
         }
+
+        // flush temporary buffer
+        stream.write(temp);
 
         ImageEncodeStatus status;
         status.info = info;
