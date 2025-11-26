@@ -4167,12 +4167,14 @@ namespace
             segment_height = 0; // parallel encoder only supports 24 and 32 bit color
         }
 
+#if !defined(MANGO_PLATFORM_EMSCRIPTEN)
         if (segment_height)
         {
             write_pLLD(stream, segment_height);
             compress_parallel(stream, status, surface, segment_height, color_bits, options);
         }
         else
+#endif
         {
             compress_serial(stream, status, surface, color_bits, options);
         }
