@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 2.4.3
+        VERSION 2.4.4
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
@@ -918,6 +918,18 @@ function (find_libdeflate Target Interface Mode)
     check_required("LIBDEFLATE" "libdeflate")
 
 endfunction()
+
+# ------------------------------------------------------------------------------
+# Vendored Libraries
+# ------------------------------------------------------------------------------
+
+if (LIBRARY_LZMA)
+    target_compile_definitions(mango PRIVATE "MANGO_ENABLE_LZMA")
+endif ()
+
+if (LIBRARY_LZFSE)
+    target_compile_definitions(mango PRIVATE "MANGO_ENABLE_LZFSE")
+endif ()
 
 # ------------------------------------------------------------------------------
 # Required Libraries
