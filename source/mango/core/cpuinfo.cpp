@@ -9,7 +9,36 @@ namespace
 {
     using namespace mango;
 
-#if defined(MANGO_CPU_INTEL)
+#if defined(MANGO_PLATFORM_EMSCRIPTEN)
+
+    u64 getCPUFlagsInternal()
+    {
+        u64 flags = 0;
+
+        // Emsrcipten transcodes Intel intrinsics to WebAssembly SIMD intrinsics
+    #if defined(__SSE__)
+        flags |= INTEL_SSE;
+    #endif
+    #if defined(__SSE2__)
+        flags |= INTEL_SSE2;
+    #endif
+    #if defined(__SSE3__)
+        flags |= INTEL_SSE3;
+    #endif
+    #if defined(__SSSE3__)
+        flags |= INTEL_SSSE3;
+    #endif
+    #if defined(__SSE4_1__)
+        flags |= INTEL_SSE4_1;
+    #endif
+    #if defined(__SSE4_2__)
+        flags |= INTEL_SSE4_2;
+    #endif
+
+        return flags;
+    }
+
+#elif defined(MANGO_CPU_INTEL)
 
     // ----------------------------------------------------------------------------
     // cpuid()
@@ -17,7 +46,7 @@ namespace
 
 #if defined(MANGO_PLATFORM_WINDOWS)
 
-#include "intrin.h"
+    #include "intrin.h"
 
     void cpuid(int* info, int id)
     {
@@ -26,7 +55,7 @@ namespace
 
 #elif defined(MANGO_PLATFORM_UNIX)
 
-#include "cpuid.h"
+    #include "cpuid.h"
 
     void cpuid(int* info, int id)
     {
@@ -134,7 +163,7 @@ namespace
 
 #elif defined(MANGO_CPU_ARM) && defined(MANGO_PLATFORM_ANDROID)
 
-#include <cpu-features.h>
+    #include <cpu-features.h>
 
     u64 getCPUFlagsInternal()
     {
@@ -166,8 +195,8 @@ namespace
 
 #elif defined(MANGO_CPU_ARM) && defined(MANGO_PLATFORM_LINUX)
 
-#include <sys/auxv.h>
-#include <asm/hwcap.h>
+    #include <sys/auxv.h>
+    #include <asm/hwcap.h>
 
 #if defined(MANGO_CPU_64BIT)
 

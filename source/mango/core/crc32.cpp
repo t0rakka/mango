@@ -204,7 +204,7 @@ namespace
     // Intel SSE4.2 implementation
     // ----------------------------------------------------------------------------------------
 
-#if defined(MANGO_ENABLE_SSE4_2)
+#if defined(MANGO_ENABLE_SSE4_2) && !defined(MANGO_PLATFORM_EMSCRIPTEN)
 
     #define HARDWARE_CRC32C
 
@@ -419,13 +419,13 @@ namespace
         return ~crc;
     }
 
-#endif // defined(MANGO_ENABLE_SSE4_2)
+#endif // defined(MANGO_ENABLE_SSE4_2) && !defined(MANGO_PLATFORM_EMSCRIPTEN)
 
     // ----------------------------------------------------------------------------------------
     // Intel CLMUL implementation
     // ----------------------------------------------------------------------------------------
 
-#if defined(MANGO_ENABLE_SSE4_2) && defined(__PCLMUL__)
+#if defined(MANGO_ENABLE_SSE4_2) && !defined(MANGO_PLATFORM_EMSCRIPTEN) && defined(__PCLMUL__)
 
     // * Copyright 2017 The Chromium Authors. All rights reserved.
     // * Use of this source code is governed by a BSD-style license that can be
@@ -579,7 +579,7 @@ namespace
         return ~crc;
     }
 
-#endif // defined(MANGO_ENABLE_SSE4_2) && defined(__PCLMUL__)
+#endif // defined(MANGO_ENABLE_SSE4_2) !defined(MANGO_PLATFORM_EMSCRIPTEN) && defined(__PCLMUL__)
 
     // ----------------------------------------------------------------------------------------
     // slice-by-8 table implementation

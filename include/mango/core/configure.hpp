@@ -528,14 +528,14 @@
             #include <nmmintrin.h>
         #endif
 
-        #ifdef __SSE4_1__
+        #if defined(__SSE4_1__)
             #define MANGO_ENABLE_SSE4_1
             #include <pmmintrin.h>
             #include <tmmintrin.h>
             #include <smmintrin.h>
         #endif
 
-        #ifdef __SSE2__
+        #if defined(__SSE2__)
             #define MANGO_ENABLE_SSE2
             #include <emmintrin.h>
         #endif
@@ -678,6 +678,29 @@
 
         // WebAssembly portable SIMD
         #define MANGO_ENABLE_WASM
+
+        // Emscripten transcodes Intel intrinsics to WebAssembly SIMD intrinsics
+        #ifdef __SSE4_2__
+            #define MANGO_ENABLE_SSE4_2
+            #include <nmmintrin.h>
+        #endif
+
+        #ifdef __SSE4_1__
+            #define MANGO_ENABLE_SSE4_1
+            #include <pmmintrin.h>
+            #include <tmmintrin.h>
+            #include <smmintrin.h>
+        #endif
+
+        #ifdef __SSE2__
+            #define MANGO_ENABLE_SSE2
+            #include <emmintrin.h>
+        #endif
+
+        #ifdef __SSE__
+            #define MANGO_ENABLE_SSE
+            #include <xmmintrin.h>
+        #endif
 
     #endif // MANGO_NO_SIMD
 
