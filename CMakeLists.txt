@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 2.4.4
+        VERSION 2.4.5
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
@@ -524,15 +524,6 @@ FILE(GLOB EXTERNAL_IMPORT3D
     "${EXTERNAL_SOURCE_DIR}/fastgltf/include/fastgltf/*.hpp"
     "${EXTERNAL_SOURCE_DIR}/fastgltf/src/*.cpp"
 )
-
-# This should be fixed in latest fastgltf >= 0.9
-# TODO: Remove this once fastgltf fix is tested
-if (ARM OR ARM64)
-    set_source_files_properties(
-        ${CMAKE_CURRENT_SOURCE_DIR}/source/external/fastgltf/src/base64.cpp
-        PROPERTIES COMPILE_OPTIONS "-flax-vector-conversions"
-    )
-endif ()
 
 SOURCE_GROUP("external/aes"         FILES ${EXTERNAL_AES})
 SOURCE_GROUP("external/bc"          FILES ${EXTERNAL_BC})
