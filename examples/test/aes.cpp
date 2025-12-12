@@ -7,7 +7,9 @@
 using namespace mango;
 
 constexpr u64 MB = 1 << 20;
-constexpr int N = 10;
+constexpr int N = 80;
+constexpr u64 BUFFER_SIZE = 32 * MB;
+constexpr int BAR_WIDTH = 32;
 
 void print(const Buffer& buffer, u64 time0, u64 time1)
 {
@@ -17,6 +19,22 @@ void print(const Buffer& buffer, u64 time0, u64 time1)
         u32(delta / 1000),
         u32(((delta + 50) / 100)%10),
         u32(x / (delta * MB)));
+}
+
+void progress(int i)
+{
+    // fraction done
+    double fraction = double(i + 1) / N;
+    int filled = int(fraction * BAR_WIDTH);
+
+    // build bar
+    printf("\r[");
+    for (int j = 0; j < BAR_WIDTH; j++)
+    {
+        putchar(j < filled ? '=' : ' ');
+    }
+    printf("] %5.1f%%\r", fraction * 100.0);
+    fflush(stdout);
 }
 
 void test_fips()
@@ -64,7 +82,7 @@ void test_aes(int bits)
 
     AES aes(key, bits);
 
-    constexpr u64 size = 128 * MB;
+    constexpr u64 size = BUFFER_SIZE;
 
     Buffer buffer(size);
     Buffer output(size);
@@ -79,21 +97,26 @@ void test_aes(int bits)
 
     for (int i = 0; i < N; ++i)
     {
+        progress(i);
         aes.ecb_encrypt(temp, buffer, size);
     }
 
     u64 time1 = Time::us();
 
+    printf("\r\033[K"); // clear line
+    printf("aes%d encrypt: ", bits);
+    print(buffer, time0, time1);
+
+
     for (int i = 0; i < N; ++i)
     {
+        progress(i);
         aes.ecb_decrypt(output, temp, size);
     }
 
     u64 time2 = Time::us();
 
-    printf("aes%d encrypt: ", bits);
-    print(buffer, time0, time1);
-
+    printf("\r\033[K"); // clear line
     printf("aes%d decrypt: ", bits);
     print(buffer, time1, time2);
 
