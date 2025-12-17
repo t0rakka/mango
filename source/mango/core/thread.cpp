@@ -132,12 +132,17 @@ namespace mango
             });
 
 #if defined(MANGO_PLATFORM_WINDOWS)
-            if (getHardwareConcurrency() > 64)
+            constexpr u32 CPUsPerGroup = 64;
+
+            if (getHardwareConcurrency() > CPUsPerGroup)
             {
-                // HACK: work around Windows 64 logical processor per ProcessorGroup limitation
+                // Work around Windows 64 logical processor per ProcessorGroup limitation
+                WORD groupIndex = WORD(i / CPUsPerGroup);
+                KAFFINITY mask  = KAFFINITY(1ull << (i % CPUsPerGroup));
+
                 GROUP_AFFINITY group{};
-                group.Mask = KAFFINITY(~0);
-                group.Group = WORD(i & 1);
+                group.Group = groupIndex;
+                group.Mask  = mask;
 
                 auto handle = get_native_handle(m_threads[i]);
                 SetThreadGroupAffinity(handle, &group, nullptr);
