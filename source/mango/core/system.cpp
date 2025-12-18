@@ -344,11 +344,8 @@ namespace mango
     }
 
     // ----------------------------------------------------------------------------
-    // Trace
+    // Tracer helper functions
     // ----------------------------------------------------------------------------
-
-    static
-    constexpr u32 trace_pool_offset = 0x10000;
 
     static
     void write(Stream& output, const std::vector<Trace::Data>& traces, bool& comma)
@@ -357,19 +354,28 @@ namespace mango
 
         for (const auto& trace : traces)
         {
-            u32 offset = 0;
-            if (trace.category == "Task")
-                offset = trace_pool_offset;
-
             fmt::format_to(std::back_inserter(buffer),
                 "{}\n{{ \"cat\":\"{}\", \"pid\":1, \"tid\":{}, \"ts\":{}, \"dur\":{}, \"ph\":\"X\", \"name\":\"{}\" }}",
-                    comma ? "," : "", trace.category, trace.tid + offset, trace.time0, trace.time1 - trace.time0, trace.name);
-
+                    comma ? "," : "", trace.category, trace.tid, trace.time0, trace.time1 - trace.time0, trace.name);
             comma = true;
         }
 
         output.write(buffer.data(), buffer.size());
     }
+
+    void startTrace(Stream* stream)
+    {
+        g_context.tracer.start(stream);
+    }
+
+    void stopTrace()
+    {
+        g_context.tracer.stop();
+    }
+
+    // ----------------------------------------------------------------------------
+    // TraceThread
+    // ----------------------------------------------------------------------------
 
     TraceThread::TraceThread(const std::string& name)
         : tid(getThreadID())
@@ -378,6 +384,10 @@ namespace mango
         std::lock_guard<std::mutex> lock(g_context.tracer.mutex);
         g_context.tracer.threads.push_back(*this);
     }
+
+    // ----------------------------------------------------------------------------
+    // Trace
+    // ----------------------------------------------------------------------------
 
     Trace::Trace(const std::string& category, const std::string& name)
     {
@@ -394,9 +404,17 @@ namespace mango
 
     void Trace::stop()
     {
-        data.time1 = Time::us();
-        g_context.tracer.append(*this);
+        if (!stopped)
+        {
+            data.time1 = Time::us();
+            g_context.tracer.append(*this);
+            stopped = true;
+        }
     }
+
+    // ----------------------------------------------------------------------------
+    // Tracer
+    // ----------------------------------------------------------------------------
 
     Tracer::Tracer()
     {
@@ -448,12 +466,7 @@ namespace mango
             fmt::format_to(std::back_inserter(buffer),
                 "{}\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":1, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }}",
                     comma ? "," : "", th.tid, th.name);
-
             comma = true;
-
-            fmt::format_to(std::back_inserter(buffer),
-                "{}\n{{ \"name\":\"thread_name\", \"ph\":\"M\", \"pid\":1, \"tid\":{}, \"args\": {{\"name\":\"{}\" }} }}",
-                    comma ? "," : "", th.tid + trace_pool_offset, th.name + " tasks:");
         }
 
         threads.clear();
@@ -488,16 +501,6 @@ namespace mango
                 });
             }
         }
-    }
-
-    void startTrace(Stream* stream)
-    {
-        g_context.tracer.start(stream);
-    }
-
-    void stopTrace()
-    {
-        g_context.tracer.stop();
     }
 
     // ----------------------------------------------------------------------------

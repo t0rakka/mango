@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -21,7 +21,6 @@ struct State
     FileIndex index;
 
     ConcurrentQueue queue;
-    Trace trace { "", "batch image reading" };
 
     void decode(ConstMemory memory, const std::string& filename, bool multithread)
     {
@@ -52,7 +51,6 @@ struct State
         total_input_bytes += input_bytes;
         total_image_bytes += image_bytes;
 
-        Trace trace("", "print");
         printLine("Decoded: \"{}\" ({} KB -> {} KB).", filename, input_bytes >> 10, image_bytes >> 10);
     }
 
@@ -121,11 +119,8 @@ struct State
             {
                 queue.enqueue([this, filename, multithread]
                 {
-                    Trace trace("", fmt::format("load:{}", filesystem::removePath(filename)));
                     InputFileStream file(filename);
                     Buffer buffer(file);
-                    trace.stop();
-
                     decode(buffer, filename, multithread);
                 });
             }
@@ -135,7 +130,6 @@ struct State
     void wait()
     {
         queue.wait();
-        trace.stop();
     }
 };
 

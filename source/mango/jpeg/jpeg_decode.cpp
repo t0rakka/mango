@@ -2244,7 +2244,7 @@ namespace mango::image::jpeg
 
     void Parser::decodeSequentialMT(int N)
     {
-        ConcurrentQueue queue("jpeg:sequential");
+        ConcurrentQueue queue("jpeg.sequential");
 
         if (!m_restart_offsets.empty())
         {
@@ -2549,7 +2549,7 @@ namespace mango::image::jpeg
 
             const u8* p = decodeState.buffer.ptr;
 
-            ConcurrentQueue queue("jpeg:progressive.dc");
+            ConcurrentQueue queue("jpeg.progressive.dc");
 
             for (int i = 0; i < mcus; i += restartInterval)
             {
@@ -2626,7 +2626,7 @@ namespace mango::image::jpeg
             MANGO_UNREFERENCED(hsize);
             MANGO_UNREFERENCED(vsize);
 
-            ConcurrentQueue queue("jpeg:progressive.ac");
+            ConcurrentQueue queue("jpeg.progressive.ac");
 
             const u8* p = decodeState.buffer.ptr;
 
@@ -2715,7 +2715,7 @@ namespace mango::image::jpeg
         int n = getTaskSize(ymcu);
         if (n)
         {
-            ConcurrentQueue queue("jpeg:progressive.finish");
+            ConcurrentQueue queue("jpeg.progressive.finish");
 
             size_t mcu_stride = size_t(xmcu) * blocks_in_mcu * 64;
 

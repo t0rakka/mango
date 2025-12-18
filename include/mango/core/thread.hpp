@@ -7,6 +7,7 @@
 #include <queue>
 #include <vector>
 #include <memory>
+#include <string>
 #include <thread>
 #include <mutex>
 #include <functional>

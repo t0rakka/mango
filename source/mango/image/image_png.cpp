@@ -3072,7 +3072,9 @@ namespace
     {
         const size_t bytes_per_line = getBytesPerLine(target.width) + PNG_FILTER_BYTE;
 
-        ConcurrentQueue q("png:decode");
+        Trace trace1("decode", "enqueue");
+
+        ConcurrentQueue q("png.decode");
 
         u32 y = 0;
 
@@ -3132,11 +3134,17 @@ namespace
 
             y += m_parallel_height;
         }
+
+        trace1.stop();
+        Trace trace2("decode", "decompress");
+        q.wait();
     }
 
     void ParserPNG::decode_idot(const Surface& target)
     {
         const size_t bytes_per_line = getBytesPerLine(target.width) + PNG_FILTER_BYTE;
+
+        Trace trace1("decode", "decompress");
 
         size_t buffer_size = 0;
 
@@ -3217,6 +3225,9 @@ namespace
         MANGO_UNREFERENCED(bytes_out_top);
         MANGO_UNREFERENCED(bytes_out_bottom);
 
+        trace1.stop();
+        Trace trace2("decode", "process");
+
         // process image
         process_image(target, buffer);
     }
@@ -3224,6 +3235,8 @@ namespace
     bool ParserPNG::decode_std(const Surface& target, ImageDecodeStatus& status)
     {
         const size_t bytes_per_line = getBytesPerLine(target.width) + PNG_FILTER_BYTE;
+
+        Trace trace1("decode", "decompress");
 
         size_t buffer_size = 0;
 
@@ -3353,6 +3366,9 @@ namespace
                 return false;
             }
 
+            trace1.stop();
+            Trace trace2("decode", "process");
+
             // process image
             if (m_interlace)
             {
@@ -3441,6 +3457,9 @@ namespace
                 return false;
             }
 
+            trace1.stop();
+            Trace trace2("decode", "process");
+
             // process image
             if (m_interlace)
             {
@@ -3486,6 +3505,9 @@ namespace
             {
                 return false;
             }
+
+            trace1.stop();
+            Trace trace2("decode", "process");
 
             // process image
             process_image(target, buffer);
@@ -3890,7 +3912,7 @@ namespace
 
         u32 cumulative_adler = 1;
 
-        ConcurrentQueue q;
+        ConcurrentQueue q("png.compress");
         TicketQueue tk;
 
         std::atomic<bool> encoding_failure { false };

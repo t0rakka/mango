@@ -35,6 +35,7 @@ namespace mango
             std::string category;
             std::string name;
         } data;
+        bool stopped = false;
 
         Trace(const std::string& category, const std::string& name);
         ~Trace();
