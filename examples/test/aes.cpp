@@ -7,7 +7,7 @@
 using namespace mango;
 
 constexpr u64 MB = 1 << 20;
-constexpr int N = 80;
+constexpr int N = 40;
 constexpr u64 BUFFER_SIZE = 32 * MB;
 constexpr int BAR_WIDTH = 32;
 
