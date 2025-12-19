@@ -159,7 +159,7 @@ namespace mango
     ThreadPool::~ThreadPool()
     {
         m_stop = true;
-        m_condition.notify_all();
+        m_queue_condition.notify_all();
 
         for (auto& thread : m_threads)
         {
@@ -208,7 +208,7 @@ namespace mango
                 if (elapsed >= milliseconds(60))
                 {
                     std::unique_lock<std::mutex> lock(m_queue_mutex);
-                    m_condition.wait_for(lock, milliseconds(60));
+                    m_queue_condition.wait_for(lock, milliseconds(60));
                 }
                 else if (elapsed >= microseconds(24))
                 {
@@ -233,7 +233,7 @@ namespace mango
         ++queue->task_counter;
 
         m_queue->tasks.enqueue(std::move(task));
-        m_condition.notify_one();
+        m_queue_condition.notify_one();
     }
 
     void ThreadPool::enqueue_bulk(Queue* queue, const std::vector<std::function<void()>>& functions)
@@ -253,10 +253,10 @@ namespace mango
         }
 
         m_queue->tasks.enqueue_bulk(tasks.data(), count);
-        m_condition.notify_all();
+        m_queue_condition.notify_all();
     }
 
-    void ThreadPool::process(Task& task) const
+    void ThreadPool::process(Task& task)
     {
         Queue* queue = task.queue;
 
@@ -313,7 +313,7 @@ namespace mango
         , m_queue(&m_pool, "")
     {
         // wake up one thread to be available instantly
-        m_pool.m_condition.notify_one();
+        m_pool.m_queue_condition.notify_one();
     }
 
     ConcurrentQueue::ConcurrentQueue(const std::string& name)
@@ -321,7 +321,7 @@ namespace mango
         , m_queue(&m_pool, name)
     {
         // wake up one thread to be available instantly
-        m_pool.m_condition.notify_one();
+        m_pool.m_queue_condition.notify_one();
     }
 
     ConcurrentQueue::ConcurrentQueue(ThreadPool& pool)
@@ -329,7 +329,7 @@ namespace mango
         , m_queue(&m_pool, "")
     {
         // wake up one thread to be available instantly
-        m_pool.m_condition.notify_one();
+        m_pool.m_queue_condition.notify_one();
     }
 
     ConcurrentQueue::ConcurrentQueue(ThreadPool& pool, const std::string& name)
@@ -337,7 +337,7 @@ namespace mango
         , m_queue(&m_pool, name)
     {
         // wake up one thread to be available instantly
-        m_pool.m_condition.notify_one();
+        m_pool.m_queue_condition.notify_one();
     }
 
     ConcurrentQueue::~ConcurrentQueue()

@@ -66,7 +66,7 @@ namespace mango
 
         void enqueue(Queue* queue, std::function<void()>&& func);
         void enqueue_bulk(Queue* queue, const std::vector<std::function<void()>>& functions);
-        void process(Task& task) const;
+        void process(Task& task);
         bool dequeue_and_process();
         void cancel(Queue* queue);
         void wait(Queue* queue);
@@ -76,8 +76,10 @@ namespace mango
         alignas(64) TaskQueue* m_queue;
 
         alignas(64) std::atomic<bool> m_stop { false };
+
         std::mutex m_queue_mutex;
-        std::condition_variable m_condition;
+        std::condition_variable m_queue_condition;
+
         std::vector<std::thread> m_threads;
     };
 
