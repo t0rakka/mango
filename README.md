@@ -9,6 +9,9 @@ Library for C++ masochists. It does short vector math, SIMD, encodes and decodes
 ## [Code Examples](docs/examples/examples.md)
 
 
+## We load images!
+<h1><img src="docs/decoding.jpg"/></h1>
+
 ## PNG library comparison
 ```
 CPU: 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz
