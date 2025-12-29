@@ -12,12 +12,12 @@ Library for C++ masochists. It does short vector math, SIMD, encodes and decodes
 ## We load images!
 <h1><img src="docs/decoding.jpg"/></h1>
 
-## PNG library comparison
+### PNG library comparison
 ```
 CPU: 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz
 Image: 2560 x 1600 (3531 KB)
 ---------------------------------------------------
-          decode(ms)  encode(ms)   size(KB)
+           decode(ms)  encode(ms)   size(KB)
 ---------------------------------------------------
 libpng:         57.3       820.5       2843
 lodepng:       105.0       722.6       2624
@@ -32,7 +32,7 @@ mango:           3.2        57.2       3531
 CPU: 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz
 image: 4833 x 5875 (33598 KB)
 ---------------------------------------------------
-          decode(ms)  encode(ms)   size(KB)
+           decode(ms)  encode(ms)   size(KB)
 ---------------------------------------------------
 libpng:        379.5     14051.3      28180
 lodepng:       900.9      4953.5      26318
@@ -44,33 +44,67 @@ mango:          53.7       287.0      33598
 ```
 
 
-## JPEG library comparison
+### JPEG library comparison
 
 ```
 CPU: Intel Core i9 8950HK @ 2.90GHz
 image: 5184 x 3456 (12652 KB)
 -----------------------------------------------------
-           decode(ms)   encode(ms)   size(KB)        
+            decode(ms)    encode(ms)   size(KB)  
 -----------------------------------------------------
-libjpeg:     197.8 ms      70.1 ms       6677
-stb:         300.7 ms    1090.9 ms      16784
-toojpeg:          N/A     292.6 ms       5370
-wuffs:       185.9 ms          N/A          0
-mango:        23.3 ms      18.5 ms       6925
+libjpeg:        197.8          70.1       6677
+stb:            300.7        1090.9      16784
+toojpeg:          N/A         292.6       5370
+wuffs:          185.9           N/A          0
+mango:           23.3       18.5 ms       6925
 ```
 
 ```
 CPU: Intel Core i9 8950HK @ 2.90GHz
 image: 2560 x 1600 (683 KB)
 -----------------------------------------------------
-           decode(ms)   encode(ms)   size(KB)        
+            decode(ms)    encode(ms)   size(KB)   
 -----------------------------------------------------
-libjpeg:      32.9 ms      16.3 ms        678
-stb:          54.8 ms     118.9 ms       1607
-toojpeg:          N/A      64.2 ms        618
-wuffs:        29.4 ms          N/A          0
-mango:         3.2 ms       4.3 ms        699
+libjpeg:         32.9          16.3        678
+stb:             54.8         118.9       1607
+toojpeg:          N/A          64.2        618
+wuffs:           29.4           N/A          0
+mango:            3.2           4.3        699
 ```
+
+
+## We multitask!
+<h1><img src="docs/simd.jpg"/></h1>
+
+### Vector Math code generation
+
+    float32x4 test(float32x4 a, float32x4 b, float32x4 c)
+    {
+        return a.wwww * b.xxyy + (c.xxzz - a).zzzz * b.w;
+    }
+
+ARM64 GCC 15.2.0 generates the following instructions:
+
+    trn1    v2.4s, v2.4s, v2.4s
+    dup     v3.4s, v1.s[3]
+    zip1    v1.4s, v1.4s, v1.4s
+    fsub    v2.4s, v2.4s, v0.4s
+    fmul    v2.4s, v3.4s, v2.s[2]
+    fmla    v2.4s, v1.4s, v0.4s[3]
+    orr     v0.16b, v2.16b, v2.16b
+
+x86_64 clang 18.1.0 (SSE2):
+
+    shufps    xmm2, xmm2, 160
+    subps     xmm2, xmm0
+    shufps    xmm0, xmm0, 255
+    movaps    xmm3, xmm1
+    unpcklps  xmm3, xmm3
+    mulps     xmm0, xmm3
+    shufps    xmm2, xmm2, 170
+    shufps    xmm1, xmm1, 255
+    mulps     xmm1, xmm2
+    addps     xmm0, xmm1
 
 
 ## Testimonials
