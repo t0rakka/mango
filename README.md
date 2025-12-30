@@ -109,7 +109,7 @@ x86_64 clang 18.1.0 (SSE2):
     addps     xmm0, xmm1
 
 
-Easy to use Thread Pool
+### Easy to use Thread Pool
 ```
 ConcurrentQueue queue;
 queue.enqueue([]
@@ -117,12 +117,6 @@ queue.enqueue([]
     // your work here
 });
 ```
-
-
-## Compression
-<h1><img src="docs/compress.jpg"  width="384"/></h1>
-
-Unified interface for large number of supported compression methods.
 
 
 ## Filesystem Abstraction
@@ -143,7 +137,11 @@ File file(path, "image.png");
 The parent Path is the virtual filesystem mechanism where the path provides filesystem. If no path is given the default is native filesystem. It is also possible to provide memory as path which allows to use Windows Resource Files using the same interface as any other file (this is just example use case for the path backed by raw memory).
 
 
-## Encryption!
+<h1><img src="docs/compress.jpg"  width="384"/></h1>
+
+Unified interface for large number of supported compression methods.
+
+
 <h1><img src="docs/encrypt.jpg"  width="384"/></h1>
 
 Unified encryption API with hardware acceleration for Intel AES-NI and AMD Crypto instructions.
