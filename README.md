@@ -10,7 +10,7 @@ Library for C++ masochists. It does short vector math, SIMD, encodes and decodes
 
 
 ## We load images!
-<h1><img src="docs/decoding.jpg"/></h1>
+<h1><img src="docs/decoding.jpg" width="384"/></h1>
 
 ### PNG library comparison
 ```
@@ -74,9 +74,11 @@ mango:            3.2           4.3        699
 
 
 ## We multitask!
-<h1><img src="docs/simd.jpg"/></h1>
+<h1><img src="docs/simd.jpg"  width="384"/></h1>
 
-### Vector Math code generation
+### SIMD abstraction
+
+Portable vector programming abstraction that works seamlessly with native intrinsics.
 
     float32x4 test(float32x4 a, float32x4 b, float32x4 c)
     {
@@ -105,6 +107,46 @@ x86_64 clang 18.1.0 (SSE2):
     shufps    xmm1, xmm1, 255
     mulps     xmm1, xmm2
     addps     xmm0, xmm1
+
+
+Easy to use Thread Pool
+```
+ConcurrentQueue queue;
+queue.enqueue([]
+{
+    // your work here
+});
+```
+
+
+## Compression
+<h1><img src="docs/compress.jpg"  width="384"/></h1>
+
+Unified interface for large number of supported compression methods.
+
+
+## Filesystem Abstraction
+<h1><img src="docs/filesystem.jpg"  width="384"/></h1>
+
+The filesystem abstraction hides away details such as container format, compression and encryption. THere is a custom container format which is designed for modern multicore systems where large files are broken into blocks that can be processed in parallel, and small files are combined into blocks for higher compression ratio. The access to small files is through LRU cache so decompression cost is per block not per file (accessing two small files would otherwise cause decopression twice).
+
+```
+// accessing file from .iso container
+File file("test.iso/data/image.png");
+ConstMemory memory = file;
+
+// same as above but using parent path
+Path path("test.iso/data/");
+File file(path, "image.png");
+```
+
+The parent Path is the virtual filesystem mechanism where the path provides filesystem. If no path is given the default is native filesystem. It is also possible to provide memory as path which allows to use Windows Resource Files using the same interface as any other file (this is just example use case for the path backed by raw memory).
+
+
+## Encryption!
+<h1><img src="docs/encrypt.jpg"  width="384"/></h1>
+
+Unified encryption API with hardware acceleration for Intel AES-NI and AMD Crypto instructions.
 
 
 ## Testimonials
