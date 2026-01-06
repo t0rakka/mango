@@ -218,16 +218,26 @@ namespace
     static inline
     u8* flushStuffedBytes(u8* output, HuffmanType code)
     {
-        // check if any of the bytes is 0xff
-        if (code & 0x8080808080808080ull & ~(code + 0x0101010101010101ull))
+#if defined(MANGO_ENABLE_NEON)
+        uint8x8_t v = vcreate_u8(code);
+        uint8x8_t ones = vdup_n_u8(0xff);
+        uint8x8_t cmp = vceq_u8(v, ones);
+        u64 mask = vget_lane_u64(vreinterpret_u64_u8(cmp), 0);
+#else
+        u64 mask = code & 0x8080808080808080ull & ~(code + 0x0101010101010101ull);
+#endif
+        if (mask)
         {
+            // code has 0xff bytes - use slow path
             output = writeStuffedBytes(output, code, 8);
         }
         else
         {
+            // code does not have 0xff bytes - fast path
             bigEndian::ustore64(output, code);
             output += 8;
         }
+
         return output;
     }
 
