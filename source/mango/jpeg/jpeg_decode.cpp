@@ -102,6 +102,26 @@ namespace mango::image::jpeg
                 return;
             }
         }
+#elif defined(MANGO_CPU_64BIT) && defined(MANGO_ENABLE_NEON)
+        // NEON-optimized path for ARM64
+        if (ptr + 8 <= end)
+        {
+            uint8x8_t v = vld1_u8(ptr);
+            // Check if any byte is 0xff using NEON
+            uint8x8_t ones = vdup_n_u8(0xff);
+            uint8x8_t cmp = vceq_u8(v, ones);
+            // Reduce to single value: if any byte matches 0xff, result is non-zero
+            u64 mask = vget_lane_u64(vreinterpret_u64_u8(cmp), 0);
+            if (!mask)
+            {
+                // No 0xff bytes - fast path: load 8 bytes, byteswap, shift
+                u64 x = uload64(ptr);
+                data = (data << 48) | (byteswap(x) >> 16);
+                remain += 48;
+                ptr += 6;
+                return;
+            }
+        }
 #endif
 
         while (remain <= (JPEG_REGISTER_BITS - 8))
