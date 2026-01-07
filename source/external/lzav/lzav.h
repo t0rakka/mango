@@ -388,8 +388,11 @@
 
 #elif defined( __cplusplus ) && __cplusplus >= 202002L
 
-	#define LZAV_LIKELY( x ) ( x ) [[likely]]
-	#define LZAV_UNLIKELY( x ) ( x ) [[unlikely]]
+	// NOTE: Disabled for MANGO build, MSVC won't compile this
+	//#define LZAV_LIKELY( x ) ( x ) [[likely]]
+	//#define LZAV_UNLIKELY( x ) ( x ) [[unlikely]]
+	#define LZAV_LIKELY( x ) ( x )
+	#define LZAV_UNLIKELY( x ) ( x )
 
 #else // Likelihood macros
 
