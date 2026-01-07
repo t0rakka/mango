@@ -218,16 +218,26 @@ namespace
     static inline
     u8* flushStuffedBytes(u8* output, HuffmanType code)
     {
-        // check if any of the bytes is 0xff
-        if (code & 0x8080808080808080ull & ~(code + 0x0101010101010101ull))
+#if defined(MANGO_ENABLE_NEON)
+        uint8x8_t v = vcreate_u8(code);
+        uint8x8_t ones = vdup_n_u8(0xff);
+        uint8x8_t cmp = vceq_u8(v, ones);
+        u64 mask = vget_lane_u64(vreinterpret_u64_u8(cmp), 0);
+#else
+        u64 mask = code & 0x8080808080808080ull & ~(code + 0x0101010101010101ull);
+#endif
+        if (mask)
         {
+            // code has 0xff bytes - use slow path
             output = writeStuffedBytes(output, code, 8);
         }
         else
         {
+            // code does not have 0xff bytes - fast path
             bigEndian::ustore64(output, code);
             output += 8;
         }
+
         return output;
     }
 
@@ -1937,7 +1947,7 @@ namespace
 #if defined(MANGO_ENABLE_SSE2) || defined(MANGO_ENABLE_SSE4_1)
 
     static
-    void compute_ycbcr(s16* dest, __m128i r, __m128i g, __m128i b)
+    void compute_ycbcr_sse2(s16* dest, __m128i r, __m128i g, __m128i b)
     {
         const __m128i c076 = _mm_set1_epi16(76);
         const __m128i c151 = _mm_set1_epi16(151);
@@ -2064,7 +2074,7 @@ namespace
             __m128i g = _mm_packs_epi32(g0, g1);
             __m128i r = _mm_packs_epi32(r0, r1);
 
-            compute_ycbcr(block, r, g, b);
+            compute_ycbcr_sse2(block, r, g, b);
 
             block += 8;
             input += stride;
@@ -2099,7 +2109,7 @@ namespace
             __m128i g = _mm_packs_epi32(g0, g1);
             __m128i r = _mm_packs_epi32(r0, r1);
 
-            compute_ycbcr(block, r, g, b);
+            compute_ycbcr_sse2(block, r, g, b);
 
             block += 8;
             input += stride;
@@ -2136,7 +2146,7 @@ namespace
            __m128i g = _mm_or_si128(g0, g1);
            __m128i r = _mm_or_si128(r0, r1);
 
-            compute_ycbcr(block, r, g, b);
+            compute_ycbcr_sse2(block, r, g, b);
 
             block += 8;
             input += stride;
@@ -2169,7 +2179,7 @@ namespace
            __m128i g = _mm_or_si128(g0, g1);
            __m128i r = _mm_or_si128(r0, r1);
 
-            compute_ycbcr(block, r, g, b);
+            compute_ycbcr_sse2(block, r, g, b);
 
             block += 8;
             input += stride;
@@ -2181,7 +2191,7 @@ namespace
 #if defined(MANGO_ENABLE_NEON)
 
     static
-    void compute_ycbcr(s16* dest, int16x8_t r, int16x8_t g, int16x8_t b)
+    void compute_ycbcr_neon(s16* dest, int16x8_t r, int16x8_t g, int16x8_t b)
     {
         const int16x8_t c076 = vdupq_n_s16(76);
         const int16x8_t c151 = vdupq_n_s16(151);
@@ -2244,7 +2254,7 @@ namespace
             int16x8_t g = vreinterpretq_s16_u16(vmovl_u8(temp.val[1]));
             int16x8_t b = vreinterpretq_s16_u16(vmovl_u8(temp.val[0]));
 
-            compute_ycbcr(block, r, g, b);
+            compute_ycbcr_neon(block, r, g, b);
 
             input += stride;
             block += 8;
@@ -2264,7 +2274,7 @@ namespace
             int16x8_t g = vreinterpretq_s16_u16(vmovl_u8(temp.val[1]));
             int16x8_t b = vreinterpretq_s16_u16(vmovl_u8(temp.val[2]));
 
-            compute_ycbcr(block, r, g, b);
+            compute_ycbcr_neon(block, r, g, b);
 
             input += stride;
             block += 8;
@@ -2284,7 +2294,7 @@ namespace
             int16x8_t g = vreinterpretq_s16_u16(vmovl_u8(temp.val[1]));
             int16x8_t b = vreinterpretq_s16_u16(vmovl_u8(temp.val[0]));
 
-            compute_ycbcr(block, r, g, b);
+            compute_ycbcr_neon(block, r, g, b);
 
             input += stride;
             block += 8;
@@ -2304,7 +2314,7 @@ namespace
             int16x8_t g = vreinterpretq_s16_u16(vmovl_u8(temp.val[1]));
             int16x8_t b = vreinterpretq_s16_u16(vmovl_u8(temp.val[2]));
 
-            compute_ycbcr(block, r, g, b);
+            compute_ycbcr_neon(block, r, g, b);
 
             input += stride;
             block += 8;

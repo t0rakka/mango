@@ -102,6 +102,26 @@ namespace mango::image::jpeg
                 return;
             }
         }
+#elif defined(MANGO_CPU_64BIT) && defined(MANGO_ENABLE_NEON)
+        // NEON-optimized path for ARM64
+        if (ptr + 8 <= end)
+        {
+            uint8x8_t v = vld1_u8(ptr);
+            // Check if any byte is 0xff using NEON
+            uint8x8_t ones = vdup_n_u8(0xff);
+            uint8x8_t cmp = vceq_u8(v, ones);
+            // Reduce to single value: if any byte matches 0xff, result is non-zero
+            u64 mask = vget_lane_u64(vreinterpret_u64_u8(cmp), 0);
+            if (!mask)
+            {
+                // No 0xff bytes - fast path: load 8 bytes, byteswap, shift
+                u64 x = uload64(ptr);
+                data = (data << 48) | (byteswap(x) >> 16);
+                remain += 48;
+                ptr += 6;
+                return;
+            }
+        }
 #endif
 
         while (remain <= (JPEG_REGISTER_BITS - 8))
@@ -2262,6 +2282,14 @@ namespace mango::image::jpeg
 
             const u32* offsets = m_restart_offsets.data();
 
+            // Precompute constants
+            const int xmcu_last = xmcu - 1;
+            const int ymcu_last = ymcu - 1;
+            const int xclip = m_width  % xblock;
+            const int yclip = m_height % yblock;
+            const int xblock_last = xclip ? xclip : xblock;
+            const int yblock_last = yclip ? yclip : yblock;
+
             for (int y = 0; y < ymcu; y += N)
             {
                 if (m_interface->cancelled)
@@ -2278,13 +2306,6 @@ namespace mango::image::jpeg
                 {
                     AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
 
-                    const int xmcu_last = xmcu - 1;
-                    const int ymcu_last = ymcu - 1;
-                    const int xclip = m_width  % xblock;
-                    const int yclip = m_height % yblock;
-                    const int xblock_last = xclip ? xclip : xblock;
-                    const int yblock_last = yclip ? yclip : yblock;
-
                     const u8* ptr = p;
 
                     for (int i = y0; i < y1; ++i)
@@ -2299,7 +2320,7 @@ namespace mango::image::jpeg
                         ptr = m_memory.address + offsets[i];
 
                         u8* dest = image + i * ystride;
-                        int height = (i == ymcu_last) ? yblock_last : yblock;
+                        const int height = (i == ymcu_last) ? yblock_last : yblock;
 
                         for (int x = 0; x < xmcu_last; ++x)
                         {
@@ -2355,6 +2376,14 @@ namespace mango::image::jpeg
 
             u8* image = m_surface->image;
 
+            // Precompute constants
+            const int xmcu_last = xmcu - 1;
+            const int ymcu_last = ymcu - 1;
+            const int xclip = m_width  % xblock;
+            const int yclip = m_height % yblock;
+            const int xblock_last = xclip ? xclip : xblock;
+            const int yblock_last = yclip ? yclip : yblock;
+
             for (int y = 0; y < ymcu; y += N)
             {
                 if (m_interface->cancelled)
@@ -2367,8 +2396,11 @@ namespace mango::image::jpeg
                 int y1 = std::min(y + N, ymcu);
 
                 // enqueue task
-                queue.enqueue([=, this] (const u8* p)
+                queue.enqueue([=, this] (const u8* p_start)
                 {
+                    AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
+                    const u8* p = p_start;
+
                     for (int y = y0; y < y1; ++y)
                     {
                         if (m_interface->cancelled)
@@ -2376,30 +2408,22 @@ namespace mango::image::jpeg
                             return;
                         }
 
-                        AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
-
                         DecodeState state = decodeState;
                         state.buffer.ptr = p;
 
-                        const int xmcu_last = xmcu - 1;
-                        const int ymcu_last = ymcu - 1;
+                        u8* dest = image + y * ystride;
+                        const int height = (y == ymcu_last) ? yblock_last : yblock;
 
-                        const int xclip = m_width  % xblock;
-                        const int yclip = m_height % yblock;
-                        const int xblock_last = xclip ? xclip : xblock;
-                        const int yblock_last = yclip ? yclip : yblock;
-
-                        for (int x = 0; x < xmcu; ++x)
+                        for (int x = 0; x < xmcu_last; ++x)
                         {
                             state.decode(data, &state);
-
-                            u8* dest = image + y * ystride + x * xstride;
-
-                            int width  = x == xmcu_last ? xblock_last : xblock;
-                            int height = y == ymcu_last ? yblock_last : yblock;
-
-                            process_and_clip(dest, stride, data, width, height);
+                            process_and_clip(dest, stride, data, xblock, height);
+                            dest += xstride;
                         }
+
+                        // last column
+                        state.decode(data, &state);
+                        process_and_clip(dest, stride, data, xblock_last, height);
 
                         p = seekMarker(state.buffer.ptr, state.buffer.end);
                         if (isRestartMarker(p))
