@@ -42,16 +42,9 @@ namespace mango::detail
         {
         }
 
-        const Memory& operator = (std::span<T> s)
+        std::span<T> span() const
         {
-            address = s.data();
-            size = s.size();
-            return *this;
-        }
-
-        operator std::span<T> () const
-        {
-            return std::span<T>(address, address + size);
+            return std::span<T>(address, size);
         }
 
 #endif
