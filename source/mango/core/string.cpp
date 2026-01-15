@@ -1,8 +1,9 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cctype>
+#include <version>
 #include <algorithm>
 #include <locale>
 #include <cstring>
@@ -403,6 +404,8 @@ namespace mango
     // string utilities
     // -----------------------------------------------------------------
 
+#if defined(__cpp_lib_ranges) && __cpp_lib_ranges >= 201911L
+
     std::string toLower(std::string_view s) noexcept
     {
         std::string result(s);
@@ -418,6 +421,26 @@ namespace mango
             [] (unsigned char c) { return char(std::toupper(c)); });
         return result;
     }
+
+#else
+
+    std::string toLower(std::string_view s) noexcept
+    {
+        std::string result(s);
+        std::transform(result.begin(), result.end(), result.begin(),
+            [] (unsigned char c) { return char(std::tolower(c)); });
+        return result;
+    }
+
+    std::string toUpper(std::string_view s) noexcept
+    {
+        std::string result(s);
+        std::transform(result.begin(), result.end(), result.begin(),
+            [] (unsigned char c) { return char(std::toupper(c)); });
+        return result;
+    }
+
+#endif
 
     std::string removePrefix(std::string_view s, std::string_view prefix) noexcept
     {
