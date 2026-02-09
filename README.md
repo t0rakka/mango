@@ -122,7 +122,7 @@ queue.enqueue([]
 ## Filesystem Abstraction
 <h1><img src="docs/filesystem.jpg"  width="384"/></h1>
 
-The filesystem abstraction hides away details such as container format, compression and encryption. THere is a custom container format which is designed for modern multicore systems where large files are broken into blocks that can be processed in parallel, and small files are combined into blocks for higher compression ratio. The access to small files is through LRU cache so decompression cost is per block not per file (accessing two small files would otherwise cause decopression twice).
+The filesystem abstraction hides away details such as container format, compression and encryption. There is a custom container format which is designed for modern multicore systems where large files are broken into blocks that can be processed in parallel, and small files are combined into blocks for higher compression ratio. The access to small files is through LRU cache so decompression cost is per block not per file (accessing two small files would otherwise cause decopression twice).
 
 ```
 // accessing file from .iso container
