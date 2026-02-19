@@ -373,7 +373,12 @@ namespace mango::image::jpeg
                 else
                 {
                     if (symbol < 16)
+                    {
+                        // symbol is 0x00 (EOB; End of Block)
                         break;
+                    }
+
+                    // sixteen zeroes
                     i += 16;
                 }
             }
