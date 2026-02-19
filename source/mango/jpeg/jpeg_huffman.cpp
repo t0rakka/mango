@@ -363,23 +363,25 @@ namespace mango::image::jpeg
                 buffer.remain -= size;
 #endif
 
-                int x = symbol & 15;
-                if (x)
+                if (symbol)
                 {
-                    i += (symbol >> 4);
-                    symbol = buffer.receive(x);
-                    output[zigzagTable[i++]] = s16(symbol);
+                    int bits = symbol & 15;
+                    if (bits)
+                    {
+                        i += (symbol >> 4);
+                        symbol = buffer.receive(bits);
+                        output[zigzagTable[i++]] = s16(symbol);
+                    }
+                    else
+                    {
+                        // ZRL (sixteen zeroes)
+                        i += 16;
+                    }
                 }
                 else
                 {
-                    if (symbol < 16)
-                    {
-                        // symbol is 0x00 (EOB; End of Block)
-                        break;
-                    }
-
-                    // sixteen zeroes
-                    i += 16;
+                    // EOB (End of Block)
+                    break;
                 }
             }
 
