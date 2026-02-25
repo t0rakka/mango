@@ -73,6 +73,7 @@ namespace
         PACKBITS = 32773,
         DEFLATE = 32946,
         SGILOG = 34676,
+        WEBP = 50001,
     };
 
     enum class PhotometricInterpretation
@@ -992,6 +993,28 @@ namespace
         }
 
         return true;
+    }
+
+    static
+    void webp_decompress(ImageDecodeStatus& status, const Surface& target, ConstMemory input, u32 width, u32 height)
+    {
+        ImageDecoder imageDecoder(input, ".webp");
+
+        // Check that the decoder exist, mango could be configured without WEBP support
+        if (!imageDecoder.isDecoder())
+        {
+            status.setError("[WebP] ImageDecoder not found.");
+            return;
+        }
+
+        ImageDecodeStatus webp_status = imageDecoder.decode(target, ImageDecodeOptions(), 0, 0, 0);
+        if (!webp_status.success)
+        {
+            status.setError(webp_status.info);
+            return;
+        }
+
+        status.direct = webp_status.direct;
     }
 
     static
@@ -2358,7 +2381,7 @@ namespace
                         printLine(Print::Info, "      offset: {}, length: {} bytes", m_context.tile_offsets[i], m_context.tile_byte_counts[i]);
     
                         Surface tile(target, x, y, tile_width, tile_length);
-                        decodeRect(tile, memory, tile_width, tile_length);
+                        decodeRect(status, tile, memory, tile_width, tile_length);
                     }
                 }
                 else
@@ -2382,7 +2405,7 @@ namespace
                             ConstMemory memory(m_memory.address + m_context.tile_offsets[index], m_context.tile_byte_counts[index]);
 
                             Surface tile(target, x, y, tile_width, tile_length);
-                            decodeRect(tile, memory, tile_width, tile_length, channel);
+                            decodeRect(status, tile, memory, tile_width, tile_length, channel);
                         }
                     }
                 }
@@ -2405,7 +2428,7 @@ namespace
                         u32 bytes = m_context.strip_byte_counts[i];
     
                         Surface strip(target, 0, y, header.width, strip_height);
-                        decodeRect(strip, ConstMemory(src, bytes), header.width, strip_height);
+                        decodeRect(status, strip, ConstMemory(src, bytes), header.width, strip_height);
     
                         y += strip_height;
                     }
@@ -2433,7 +2456,7 @@ namespace
                             u32 bytes = m_context.strip_byte_counts[strip_index];
 
                             Surface strip(target, 0, y, header.width, strip_height);
-                            decodeRect(strip, ConstMemory(src, bytes), header.width, strip_height, channel);
+                            decodeRect(status, strip, ConstMemory(src, bytes), header.width, strip_height, channel);
                         }
                     }
                 }
@@ -2797,7 +2820,7 @@ namespace
             }
         }
 
-        void decodeRect(Surface target, ConstMemory memory, int width, int height, u32 channel = 0)
+        void decodeRect(ImageDecodeStatus& status, Surface target, ConstMemory memory, int width, int height, u32 channel = 0)
         {
             u32 sample_bits = m_context.sample_bits;
             u32 expanded_sample_bits = round_ceil(m_context.sample_bits, 8); 
@@ -2934,6 +2957,12 @@ namespace
                 case Compression::SGILOG:
                     printLine(Print::Info, "    Unsupported compression: {}", m_context.compression);
                     return;
+
+                case Compression::WEBP:
+                {
+                    webp_decompress(status, target, memory, width, height);
+                    return;
+                }
 
                 default:
                     printLine(Print::Info, "    Unknown compression: {}", m_context.compression);
