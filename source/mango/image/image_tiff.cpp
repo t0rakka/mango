@@ -996,11 +996,11 @@ namespace
     }
 
     static
-    void webp_decompress(ImageDecodeStatus& status, const Surface& target, ConstMemory input, u32 width, u32 height)
+    void webp_decompress(ImageDecodeStatus& status, const Surface& target, ConstMemory input)
     {
         ImageDecoder imageDecoder(input, ".webp");
 
-        // Check that the decoder exist, mango could be configured without WEBP support
+        // Check that the decoder exists; mango could be configured without WebP support
         if (!imageDecoder.isDecoder())
         {
             status.setError("[WebP] ImageDecoder not found.");
@@ -2960,7 +2960,7 @@ namespace
 
                 case Compression::WEBP:
                 {
-                    webp_decompress(status, target, memory, width, height);
+                    webp_decompress(status, target, memory);
                     return;
                 }
 
