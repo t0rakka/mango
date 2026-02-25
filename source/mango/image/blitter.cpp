@@ -1797,6 +1797,10 @@ namespace
                 case MAKE_MODEMASK(16, BITS_FP32): func = convert_template_unorm_fp<u16, float>; break;
                 case MAKE_MODEMASK(24, BITS_FP32): func = convert_template_unorm_fp<u24, float>; break;
                 case MAKE_MODEMASK(32, BITS_FP32): func = convert_template_unorm_fp<u32, float>; break;
+                case MAKE_MODEMASK( 8, BITS_FP64): func = convert_template_unorm_fp<u8, double>; break;
+                case MAKE_MODEMASK(16, BITS_FP64): func = convert_template_unorm_fp<u16, double>; break;
+                case MAKE_MODEMASK(24, BITS_FP64): func = convert_template_unorm_fp<u24, double>; break;
+                case MAKE_MODEMASK(32, BITS_FP64): func = convert_template_unorm_fp<u32, double>; break;
                 case MAKE_MODEMASK(BITS_FP16,  8): func = convert_template_fp_unorm<float16, u8>; break;
                 case MAKE_MODEMASK(BITS_FP16, 16): func = convert_template_fp_unorm<float16, u16>; break;
                 case MAKE_MODEMASK(BITS_FP16, 24): func = convert_template_fp_unorm<float16, u24>; break;
@@ -1805,6 +1809,12 @@ namespace
                 case MAKE_MODEMASK(BITS_FP32, 16): func = convert_template_fp_unorm<float, u16>; break;
                 case MAKE_MODEMASK(BITS_FP32, 24): func = convert_template_fp_unorm<float, u24>; break;
                 case MAKE_MODEMASK(BITS_FP32, 32): func = convert_template_fp_unorm<float, u32>; break;
+                /* NOTE: Disabled because upconverting UNORM to 64 bit float is sad.
+                case MAKE_MODEMASK(BITS_FP64,  8): func = convert_template_fp_unorm<double, u8>; break;
+                case MAKE_MODEMASK(BITS_FP64, 16): func = convert_template_fp_unorm<double, u16>; break;
+                case MAKE_MODEMASK(BITS_FP64, 24): func = convert_template_fp_unorm<double, u24>; break;
+                case MAKE_MODEMASK(BITS_FP64, 32): func = convert_template_fp_unorm<double, u32>; break;
+                */
                 case MAKE_MODEMASK(BITS_FP16, BITS_FP16): func = convert_template_fp_fp<float16, float16>; break;
                 case MAKE_MODEMASK(BITS_FP16, BITS_FP32): func = convert_template_fp_fp<float16, float32>; break;
                 case MAKE_MODEMASK(BITS_FP16, BITS_FP64): func = convert_template_fp_fp<float16, float64>; break;

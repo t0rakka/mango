@@ -525,7 +525,7 @@ namespace
         int size = 0;
 
         // make the parameters indexable
-        const float temp[] = { red, green, blue, alpha };
+        const FloatType temp[] = { FloatType(red), FloatType(green), FloatType(blue), FloatType(alpha) };
 
         for (int i = 0; i < 4; ++i)
         {
@@ -793,6 +793,19 @@ namespace mango::image
                 for (int y = 0; y < height; ++y)
                 {
                     clear_float_scan<float>(image + y * stride, width, color, size);
+                }
+
+                break;
+            }
+
+            case Format::FLOAT64:
+            {
+                double color[4];
+                int size = config_clear_color<double>(color, format, red, green, blue, alpha);
+
+                for (int y = 0; y < height; ++y)
+                {
+                    clear_float_scan<double>(image + y * stride, width, color, size);
                 }
 
                 break;
