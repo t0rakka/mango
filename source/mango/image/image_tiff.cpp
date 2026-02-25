@@ -999,7 +999,7 @@ namespace
     {
         // Clean, minimal CCITT Modified Huffman decoder
         // Based on TIFF 6.0 specification requirements
-        
+
         constexpr u8 White = 0x00;  // Raw white value (before PhotometricInterpretation)
         constexpr u8 Black = 0xFF;  // Raw black value (before PhotometricInterpretation)
 
@@ -2029,6 +2029,7 @@ namespace
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
+            //printEnable(Print::Info, true); // enable for debugging
             if (m_header.parse(memory))
             {
                 m_is_little_endian = m_header.is_little_endian;
@@ -2177,6 +2178,50 @@ namespace
             //u32 bits = m_context.sample_bits >= 8 ? m_context.sample_bits : 8;
             u32 bits = round_ceil(m_context.sample_bits, 8);
 
+            Format::Type type = Format::UNORM;
+
+            u64 sample_format = u64(SampleFormat::UINT);
+            if (!m_context.sample_format.empty())
+            {
+                sample_format = m_context.sample_format[0];
+            }
+
+            switch (SampleFormat(sample_format))
+            {
+                case SampleFormat::UINT:
+                    type = Format::UNORM;
+                    break;
+
+                case SampleFormat::SINT:
+                    type = Format::SNORM;
+                    break;
+
+                case SampleFormat::FLOAT:
+                    if (bits == 16)
+                    {
+                        type = Format::FLOAT16;
+                    }
+                    else if (bits == 32)
+                    {
+                        type = Format::FLOAT32;
+                    }
+                    else if (bits == 64)
+                    {
+                        type = Format::FLOAT64;
+                    }
+                    else
+                    {
+                        header.setError("Unsupported float: {} bits", bits);
+                        return Format();
+                    }
+                    break;
+
+                case SampleFormat::UNDEFINED:
+                default:
+                    header.setError("Unsupported sample format: {}", sample_format);
+                    return Format();
+            }
+
             switch (PhotometricInterpretation(m_context.photometric))
             {
                 case PhotometricInterpretation::WHITE_IS_ZERO:
@@ -2184,60 +2229,16 @@ namespace
                 {
                     if (m_context.samples_per_pixel == 1)
                     {
-                        return LuminanceFormat(bits * 1, Format::UNORM, bits, 0);
+                        return LuminanceFormat(bits * 1, type, bits, 0);
                     }
                     else if (m_context.samples_per_pixel == 2)
                     {
-                        return LuminanceFormat(bits * 2, Format::UNORM, bits, bits);
+                        return LuminanceFormat(bits * 2, type, bits, bits);
                     }
                 }
 
                 case PhotometricInterpretation::RGB:
                 {
-                    Format::Type type = Format::UNORM;
-
-                    u64 sample_format = u64(SampleFormat::UINT);
-                    if (!m_context.sample_format.empty())
-                    {
-                        sample_format = m_context.sample_format[0];
-                    }
-
-                    switch (SampleFormat(sample_format))
-                    {
-                        case SampleFormat::UINT:
-                            type = Format::UNORM;
-                            break;
-
-                        case SampleFormat::SINT:
-                            type = Format::SNORM;
-                            break;
-
-                        case SampleFormat::FLOAT:
-                            if (bits == 16)
-                            {
-                                type = Format::FLOAT16;
-                            }
-                            else if (bits == 32)
-                            {
-                                type = Format::FLOAT32;
-                            }
-                            else if (bits == 64)
-                            {
-                                type = Format::FLOAT64;
-                            }
-                            else
-                            {
-                                header.setError("Unsupported float: {} bits", bits);
-                                return Format();
-                            }
-                            break;
-
-                        case SampleFormat::UNDEFINED:
-                        default:
-                            header.setError("Unsupported sample format: {}", sample_format);
-                            return Format();
-                    }
-
                     if (m_context.samples_per_pixel == 3)
                     {
                         return Format(bits * 3, type, Format::RGB, bits, bits, bits, 0);
