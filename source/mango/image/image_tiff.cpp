@@ -76,6 +76,12 @@ namespace
         WEBP = 50001,
     };
 
+    enum class FillOrder : u16
+    {
+        MSB2LSB = 1,
+        LSB2MSB = 2,
+    };
+
     enum class PhotometricInterpretation
     {
         WHITE_IS_ZERO = 0,
@@ -118,7 +124,7 @@ namespace
         */
         u32 planar_configuration = 1;
         u32 predictor = 1;
-        u32 fill_order = 1;
+        u16 fill_order = 1;
         u32 page_number = 0;
         std::string page_name;
 
@@ -742,37 +748,10 @@ namespace
     }
 
     static
-    bool is_lzw_msb_first(ConstMemory input)
-    {
-        if (input.size < 2)
-            return true; // Default to MSB-first for short inputs
-
-        const u8* data = input.address;
-        u8 byte0 = data[0];
-        u8 byte1 = data[1];
-
-        // Try MSB-first: high bits of byte0, low bits of byte1
-        u32 msb_code = ((u32(byte0) << 1) | (u32(byte1) >> 7)) & 0x1FF; // 9-bit extraction
-
-        // Try LSB-first: pack bytes and extract from low bits
-        u32 lsb_data = u32(byte0) | (u32(byte1) << 8);
-        u32 lsb_code = lsb_data & 0x1FF; // 9-bit extraction
-
-        // Check which extraction yields ClearCode (256)
-        if (msb_code == 256)
-            return true;  // MSB-first (standard/default)
-        else if (lsb_code == 256)
-            return false; // LSB-first (non-standard)
-
-        // If neither yields ClearCode, default to MSB-first (standard)
-        return true;
-    }
-
-    static
-    bool lzw_decompress(Memory output, ConstMemory input)
+    bool lzw_decompress(Memory output, ConstMemory input, FillOrder fill_order)
     {
         // Auto-detect bit order by checking which yields ClearCode (256)
-        const bool is_msb_first = is_lzw_msb_first(input);
+        const bool is_msb_first = (fill_order == FillOrder::MSB2LSB);
 
         // Unified LZW decoder supporting both MSB-first and LSB-first bit orders
         struct lzw_entry
@@ -2917,7 +2896,7 @@ namespace
 
                 case Compression::LZW:
                 {
-                    bool success = lzw_decompress(buffer, memory);
+                    bool success = lzw_decompress(buffer, memory, FillOrder(m_context.fill_order));
                     if (!success)
                     {
                         printLine(Print::Error, "[LZW] Decompression failed");
