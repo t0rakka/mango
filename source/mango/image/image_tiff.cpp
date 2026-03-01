@@ -14,18 +14,24 @@
 
 #include "../jpeg/jpeg.hpp"
 
+using namespace mango;
+using namespace mango::image;
+using namespace mango::math;
+
+bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool msb2lsb, bool word_aligned);
+bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool msb2lsb, bool is_2d);
+bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool msb2lsb);
+
 namespace
 {
-    using namespace mango;
-    using namespace mango::image;
-    using namespace mango::math;
-
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
 
     // Specification:
     // https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf
+
+    const u32 StripHeightNoLimit = 0xffffffff;
 
     enum class ByteOrder : u16
     {
@@ -2297,9 +2303,8 @@ namespace
 
             ImageDecodeStatus status;
 
-            if (!m_context.rows_per_strip)
+            if (m_context.rows_per_strip == StripHeightNoLimit)
             {
-                // When RowsPerStrip tag is not present the default value is 0xffffffff (no limit).
                 m_context.rows_per_strip = header.height;
             }
 
