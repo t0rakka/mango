@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -577,12 +577,16 @@ namespace
             case Tag::ColorMap:
             {
                 printLine(Print::Info, "    [ColorMap]");
-                u32 count = 1 << context.bpp;
-                if (count > 256)
+
+                const int bitsPerSample = context.bits_per_sample[0];
+                if (bitsPerSample != 4 && bitsPerSample != 8)
                 {
-                    //header.setError("Incorrect ColorMap size: {}.", count);
+                    printLine(Print::Error, "      Incorrect bits per sample: {}.", bitsPerSample);
                     break;
                 }
+
+                const u32 count = 1 << bitsPerSample;
+                printLine(Print::Info, "      values: {}", count);
 
                 context.palette.size = count;
                 std::vector<u64> values = getUnsignedArray(p, memory, type, count * 3, is_big_tiff);
