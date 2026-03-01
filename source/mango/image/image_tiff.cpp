@@ -2297,6 +2297,12 @@ namespace
 
             ImageDecodeStatus status;
 
+            if (!m_context.rows_per_strip)
+            {
+                // When RowsPerStrip tag is not present the default value is 0xffffffff (no limit).
+                m_context.rows_per_strip = header.height;
+            }
+
             // xxx
             printLine(Print::Info, "    [decode]");
             printLine(Print::Info, "      image: {} x {}", header.width, header.height);
@@ -2306,6 +2312,13 @@ namespace
             printLine(Print::Info, "      tile_offsets: {}, tile_byte_counts: {}", m_context.tile_offsets.size(), m_context.tile_byte_counts.size());
             printLine(Print::Info, "      strip: {} x {}", m_context.width, m_context.rows_per_strip);
             printLine(Print::Info, "      strip_offsets: {}, strip_byte_counts: {}", m_context.strip_offsets.size(), m_context.strip_byte_counts.size());
+
+            /*
+            for (auto byte_count : m_context.strip_byte_counts)
+            {
+                printLine(Print::Info, "        strip: {} bytes", byte_count);
+            }
+            */
 
             if (!header.success)
             {
@@ -2733,7 +2746,7 @@ namespace
         {
             assert(target_bits == 8 || target_bits == 16);
 
-            printLine(Print::Info, "  expandPixels()\n    source_bits: {}, target_bits: {}", source_bits, target_bits);
+            //printLine(Print::Info, "  expandPixels()\n    source_bits: {}, target_bits: {}", source_bits, target_bits);
 
             u32 max_source = (1 << source_bits) - 1;
             u32 max_target = (1 << target_bits) - 1;
@@ -2751,8 +2764,8 @@ namespace
             // Precompute destination stride
             u32 dest_stride = width * channels * (target_bits / 8);
 
-            printLine(Print::Info, "    input stride: {}", bytes_per_scanline);
-            printLine(Print::Info, "    output stride: {}", dest_stride);
+            //printLine(Print::Info, "    input stride: {}", bytes_per_scanline);
+            //printLine(Print::Info, "    output stride: {}", dest_stride);
 
             u8* dest_ptr = dest.address;
             const u8* src_ptr = src.address;
@@ -2921,7 +2934,8 @@ namespace
 
                 case Compression::PACKBITS:
                 {
-                    bool success = packbits_decompress(buffer, memory);
+                    bool reverse = (m_context.fill_order != u16(FillOrder::MSB2LSB));
+                    bool success = packbits_decompress(buffer, memory, reverse);
                     if (!success)
                     {
                         printLine(Print::Error, "[PackBits] Decompression failed");
