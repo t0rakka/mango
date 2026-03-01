@@ -90,7 +90,7 @@ int mangoMain(const mango::CommandLine& commands)
 
     printEnable(Print::Info, true);
 
-    u64 time0 = mango::Time::ms();
+    u64 time0 = mango::Time::us();
 
     // The decoding below is more complicated than necessary because it is also testing indexed images.
 
@@ -118,8 +118,9 @@ int mangoMain(const mango::CommandLine& commands)
         return 1;
     }
 
-    u64 time1 = mango::Time::ms();
-    printLine("decode: {} ms", time1 - time0);
+    u64 time1 = mango::Time::us();
+    u64 time = time1 - time0;
+    printLine("decode: {}.{} ms", time / 1000, time % 1000);
 
     if (bitmap->width * bitmap->height > 0)
     {
