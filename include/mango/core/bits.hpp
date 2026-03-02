@@ -387,6 +387,14 @@ namespace mango
     }
 
     static inline
+    bool is_aligned(const void* p, size_t alignment)
+    {
+        assert(((alignment & (alignment - 1)) == 0) && "alignment must be a power of two");
+        const std::uintptr_t mask = alignment - 1;
+        return (reinterpret_cast<std::uintptr_t>(p) & mask) == 0;
+    }
+
+    static inline
     const u8* align_pointer(const u8* pointer, u32 alignment)
     {
         // alignment must be a power of two
