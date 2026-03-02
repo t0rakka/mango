@@ -222,6 +222,6 @@ namespace mango
     // packbits decompressor (old school)
     // -----------------------------------------------------------------------
 
-    bool packbits_decompress(Memory output, ConstMemory input, bool reverse = false);
+    bool packbits_decompress(Memory output, ConstMemory input);
 
 } // namespace mango

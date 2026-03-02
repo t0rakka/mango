@@ -1461,14 +1461,13 @@ namespace isal
     // packbits
     // ----------------------------------------------------------------------------
 
-    bool packbits_decompress(Memory output, ConstMemory input, bool reverse)
+    bool packbits_decompress(Memory output, ConstMemory input)
     {
         while (output.size > 0 && input.size > 0)
         {
-            u8 value = *input.address++;
+            int code = s8(*input.address++);
             --input.size;
 
-            int code = s8(reverse ? u8_reverse_bits(value) : value);
             if (code == 128)
             {
                 continue;
@@ -1485,17 +1484,7 @@ namespace isal
                     return false;
                 }
 
-                if (reverse)
-                {
-                    for (int i = 0; i < length; i++)
-                    {
-                        output.address[i] = u8_reverse_bits(input.address[i]);
-                    }
-                }
-                else
-                {
-                    std::memcpy(output.address, input.address, length);
-                }
+                std::memcpy(output.address, input.address, length);
 
                 output.address += length;
                 input.address += length;
@@ -1512,7 +1501,7 @@ namespace isal
                 }
 
                 u8 value = *input.address++;
-                std::memset(output.address, reverse ? u8_reverse_bits(value) : value, length);
+                std::memset(output.address, value, length);
                 output.address += length;
             }
         }

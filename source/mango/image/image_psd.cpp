@@ -402,7 +402,7 @@ namespace
                             Memory output(dst, bytes_per_scan);
                             ConstMemory input(src, bytes);
 
-                            bool result = packbits_decompress(output, input, false);
+                            bool result = packbits_decompress(output, input);
                             if (!result)
                             {
                                 status.setError("[ImageDecoder.PSD] packbits decompression failed.");
