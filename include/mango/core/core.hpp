@@ -26,4 +26,4 @@
 #include <mango/core/memory.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/thread.hpp>
-#include <mango/core/dynamic_library.hpp>
+#include <mango/core/library.hpp>

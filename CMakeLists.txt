@@ -387,7 +387,6 @@ if (WIN32 OR CYGWIN)
 
     FILE(GLOB CORE_SOURCES
         "${MANGO_SOURCE_DIR}/core/*.cpp"
-        "${MANGO_SOURCE_DIR}/core/win32/*.cpp"
     )
 
     FILE(GLOB FILESYSTEM_SOURCES
@@ -399,7 +398,6 @@ elseif (APPLE)
 
     FILE(GLOB CORE_SOURCES
         "${MANGO_SOURCE_DIR}/core/*.cpp"
-        "${MANGO_SOURCE_DIR}/core/unix/*.cpp"
     )
 
     FILE(GLOB FILESYSTEM_SOURCES
@@ -411,7 +409,6 @@ else ()
 
     FILE(GLOB CORE_SOURCES
         "${MANGO_SOURCE_DIR}/core/*.cpp"
-        "${MANGO_SOURCE_DIR}/core/unix/*.cpp"
     )
 
     FILE(GLOB FILESYSTEM_SOURCES
