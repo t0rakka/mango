@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -247,7 +247,21 @@ namespace mango
     };
 
     // -----------------------------------------------------------------------
-    // byteswap()
+    // reverse bits
+    // -----------------------------------------------------------------------
+
+    void reverse_bits(u8* output, const u8* input, size_t count);
+    void reverse_bits(u16* output, const u16* input, size_t count);
+    void reverse_bits(u32* output, const u32* input, size_t count);
+    void reverse_bits(u64* output, const u64* input, size_t count);
+
+    void u8_reverse_bits(Memory output, ConstMemory input);
+    void u16_reverse_bits(Memory output, ConstMemory input);
+    void u32_reverse_bits(Memory output, ConstMemory input);
+    void u64_reverse_bits(Memory output, ConstMemory input);
+
+    // -----------------------------------------------------------------------
+    // byteswap
     // -----------------------------------------------------------------------
 
     void byteswap(u16* data, size_t count);

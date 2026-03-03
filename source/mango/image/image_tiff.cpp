@@ -18,9 +18,9 @@ using namespace mango;
 using namespace mango::image;
 using namespace mango::math;
 
-bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool msb2lsb, bool word_aligned);
-bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool msb2lsb, bool is_2d);
-bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool msb2lsb);
+bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool word_aligned);
+bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool is_2d);
+bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height);
 
 namespace
 {
@@ -1012,32 +1012,6 @@ namespace
         status.direct = webp_status.direct;
     }
 
-    static
-    void u8_reverse_bits(Memory output, ConstMemory input)
-    {
-        size_t count = input.size;
-
-#if defined(MANGO_ENABLE_SIMD)
-        while (count >= 16)
-        {
-            auto value = uint16x8::uload(input.address);
-            value = ((value >> 1) & 0x5555) | ((value << 1) & 0xaaaa);
-            value = ((value >> 2) & 0x3333) | ((value << 2) & 0xcccc);
-            value = ((value >> 4) & 0x0f0f) | ((value << 4) & 0xf0f0);
-            uint16x8::ustore(output.address, value);
-
-            input.address += 16;
-            output.address += 16;
-            count -= 16;
-        }
-#endif
-
-        while (count-- > 0)
-        {
-            *output.address++ = mango::u8_reverse_bits(*input.address++);
-        }
-    }
-
     struct TIFFHeader
     {
         ByteOrder byte_order;
@@ -2012,22 +1986,24 @@ namespace
                     break;
                 }
 
-                case Compression::CCITT_RLE:
-                case Compression::CCITT_RLE_W:
-                case Compression::CCITT_GROUP3:
-                case Compression::CCITT_GROUP4:
-                {
-                    printLine(Print::Info, "    Unsupported compression: {}", m_context.compression);
-                    return;
-                }
-
-                /*
+#if 0
                 case Compression::CCITT_RLE:
                 case Compression::CCITT_RLE_W:
                 {
                     bool word_aligned = (Compression(m_context.compression) == Compression::CCITT_RLE_W);
-                    bool msb2lsb = (m_context.fill_order == u16(FillOrder::MSB2LSB));
-                    bool success = ccitt_rle_decompress(expanded_buffer, memory, width, height, msb2lsb, word_aligned);
+                    bool success = true;
+
+                    if (m_context.fill_order == u16(FillOrder::MSB2LSB))
+                    {
+                        Buffer temp(memory.size);
+                        u8_reverse_bits(temp, memory);
+                        success = ccitt_rle_decompress(expanded_buffer, temp, width, height, word_aligned);
+                    }
+                    else
+                    {
+                        success = ccitt_rle_decompress(expanded_buffer, memory, width, height, word_aligned);
+                    }
+
                     if (!success)
                     {
                         printLine(Print::Error, "[CCITT-RLE{}] Decompression failed", word_aligned ? "_W" : "");
@@ -2042,8 +2018,19 @@ namespace
                 case Compression::CCITT_GROUP3:
                 {
                     bool is_2d = (m_context.group3_options & 0x00000001) != 0;
-                    bool msb2lsb = (m_context.fill_order == u16(FillOrder::MSB2LSB));
-                    bool success = ccitt_group3_decompress(expanded_buffer, memory, width, height, msb2lsb, is_2d);
+                    bool success = true;
+
+                    if (m_context.fill_order == u16(FillOrder::MSB2LSB))
+                    {
+                        Buffer temp(memory.size);
+                        u8_reverse_bits(temp, memory);
+                        success = ccitt_group3_decompress(expanded_buffer, temp, width, height, is_2d);
+                    }
+                    else
+                    {
+                        success = ccitt_group3_decompress(expanded_buffer, memory, width, height, is_2d);
+                    }
+
                     if (!success)
                     {
                         printLine(Print::Error, "[CCITT_GROUP3] Decompression failed");
@@ -2057,8 +2044,19 @@ namespace
 
                 case Compression::CCITT_GROUP4:
                 {
-                    bool msb2lsb = (m_context.fill_order == u16(FillOrder::MSB2LSB));
-                    bool success = ccitt_group4_decompress(expanded_buffer, memory, width, height, msb2lsb);
+                    bool success = true;
+
+                    if (m_context.fill_order == u16(FillOrder::MSB2LSB))
+                    {
+                        Buffer temp(memory.size);
+                        u8_reverse_bits(temp, memory);
+                        success = ccitt_group4_decompress(expanded_buffer, temp, width, height);
+                    }
+                    else
+                    {
+                        success = ccitt_group4_decompress(expanded_buffer, memory, width, height);
+                    }
+
                     if (!success)
                     {
                         printLine(Print::Error, "[CCITT_GROUP4] Decompression failed");
@@ -2069,8 +2067,7 @@ namespace
                     needs_expansion = false;
                     break;
                 }
-                */
-
+#endif
                 case Compression::LZW:
                 {
                     bool success = lzw_decompress(buffer, memory, FillOrder(m_context.fill_order));

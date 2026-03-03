@@ -1,13 +1,15 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cassert>
 #include <mango/core/bits.hpp>
 #include <mango/core/memory.hpp>
+#include <mango/math/vector.hpp>
 
 namespace mango
 {
+    using namespace mango::math;
 
     // -----------------------------------------------------------------------
     // SharedMemory
@@ -89,7 +91,138 @@ namespace mango
 #endif
 
     // -----------------------------------------------------------------------
-    // byteswap()
+    // reverse bits
+    // -----------------------------------------------------------------------
+
+    void reverse_bits(u8* output, const u8* input, size_t count)
+    {
+#if MANGO_SIMD_VECTOR_SIZE >= 128
+        while (count >= 16)
+        {
+            auto value = uint16x8::uload(input);
+            value = ((value >> 1) & 0x5555) | ((value << 1) & 0xaaaa);
+            value = ((value >> 2) & 0x3333) | ((value << 2) & 0xcccc);
+            value = ((value >> 4) & 0x0f0f) | ((value << 4) & 0xf0f0);
+            uint16x8::ustore(output, value);
+
+            input += 16;
+            output += 16;
+            count -= 16;
+        }
+#endif
+
+        while (count-- > 0)
+        {
+            *output++ = mango::u8_reverse_bits(*input++);
+        }
+    }
+
+    void reverse_bits(u16* output, const u16* input, size_t count)
+    {
+#if MANGO_SIMD_VECTOR_SIZE >= 128
+        while (count >= 8)
+        {
+            auto value = uint16x8::uload(input);
+            value = ((value >> 1) & 0x5555) | ((value << 1) & 0xaaaa);
+            value = ((value >> 2) & 0x3333) | ((value << 2) & 0xcccc);
+            value = ((value >> 4) & 0x0f0f) | ((value << 4) & 0xf0f0);
+            value = (value >> 8) | (value << 8);
+            uint16x8::ustore(output, value);
+
+            input += 8;
+            output += 8;
+            count -= 8;
+        }
+#endif
+
+        while (count-- > 0)
+        {
+            *output++ = mango::u16_reverse_bits(*input++);
+        }
+    }
+
+    void reverse_bits(u32* output, const u32* input, size_t count)
+    {
+#if MANGO_SIMD_VECTOR_SIZE >= 128
+        while (count >= 4)
+        {
+            auto value = uint32x4::uload(input);
+            value = ((value >> 1) & 0x55555555) | ((value << 1) & 0xaaaaaaaa);
+            value = ((value >> 2) & 0x33333333) | ((value << 2) & 0xcccccccc);
+            value = ((value >> 4) & 0x0f0f0f0f) | ((value << 4) & 0xf0f0f0f0);
+            value = ((value >> 8) & 0x00ff00ff) | ((value << 8) & 0xff00ff00);
+            value = (value >> 16) | (value << 16);
+            uint32x4::ustore(output, value);
+
+            input += 4;
+            output += 4;
+            count -= 4;
+        }
+#endif
+
+        while (count-- > 0)
+        {
+            *output++ = mango::u32_reverse_bits(*input++);
+        }
+    }
+
+    void reverse_bits(u64* output, const u64* input, size_t count)
+    {
+#if MANGO_SIMD_VECTOR_SIZE >= 128
+        while (count >= 2)
+        {
+            auto value = uint64x2::uload(input);
+            value = ((value >>  1) & 0x5555555555555555) | ((value <<  1) & 0xaaaaaaaaaaaaaaaa);
+            value = ((value >>  2) & 0x3333333333333333) | ((value <<  2) & 0xcccccccccccccccc);
+            value = ((value >>  4) & 0x0f0f0f0f0f0f0f0f) | ((value <<  4) & 0xf0f0f0f0f0f0f0f0);
+            value = ((value >>  8) & 0x00ff00ff00ff00ff) | ((value <<  8) & 0xff00ff00ff00ff00);
+            value = ((value >> 16) & 0x0000ffff0000ffff) | ((value << 16) & 0xffff0000ffff0000);
+            value = ( value >> 32) | ( value << 32);
+            uint64x2::ustore(output, value);
+
+            input += 2;
+            output += 2;
+            count -= 2;
+        }
+#endif
+
+        while (count-- > 0)
+        {
+            *output++ = mango::u64_reverse_bits(*input++);
+        }
+    }
+
+    void u8_reverse_bits(Memory output, ConstMemory input)
+    {
+        reverse_bits(output.address, input.address, input.size);
+    }
+
+    void u16_reverse_bits(Memory output, ConstMemory input)
+    {
+        assert((input.size & 1) == 0);
+        size_t count = input.size >> 1;
+        reverse_bits(reinterpret_cast<u16*>(output.address),
+                     reinterpret_cast<const u16*>(input.address), count);
+    }
+
+    void u32_reverse_bits(Memory output, ConstMemory input)
+    {
+        assert((input.size & 3) == 0);
+        size_t count = input.size >> 2;
+        reverse_bits(reinterpret_cast<u32*>(output.address),
+                     reinterpret_cast<const u32*>(input.address), count);
+    }
+
+    void u64_reverse_bits(Memory output, ConstMemory input)
+    {
+        assert((input.size & 7) == 0);
+        size_t count = input.size >> 3;
+        reverse_bits(reinterpret_cast<u64*>(output.address),
+                     reinterpret_cast<const u64*>(input.address), count);
+    }
+
+    // -----------------------------------------------------------------------
+    // byteswap
     // -----------------------------------------------------------------------
 
 #if defined(MANGO_ENABLE_SIMD)
