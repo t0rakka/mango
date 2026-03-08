@@ -4,7 +4,10 @@
 */
 #include <mango/core/library.hpp>
 #include <mango/core/exception.hpp>
-#include <dlfcn.h>
+
+#if defined(MANGO_PLATFORM_UNIX)
+    #include <dlfcn.h>
+#endif
 
 namespace mango
 {
