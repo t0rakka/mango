@@ -142,6 +142,8 @@ namespace
         std::vector<float> s_max_sample_value;
 
         std::vector<u64> extra_samples;
+        bool associated_alpha = true;
+        size_t associated_alpha_index = 0;
 
         u32 ink_set = 1;
         std::string ink_names;
@@ -637,6 +639,19 @@ namespace
                     print(Print::Info, "{} ", value);
                 }
                 printLine(Print::Info, "");
+
+                for (size_t i = 0; i < context.extra_samples.size(); ++i)
+                {
+                    // ExtraSamples 0: unspecified
+                    //              1: associated alpha (premultiplied color)
+                    if (context.extra_samples[i] == 1)
+                    {
+                        // found associated alpha in extra samples
+                        context.associated_alpha = true;
+                        context.associated_alpha_index = i;
+                    }
+                }
+
                 break;
             }
 
@@ -1325,6 +1340,7 @@ namespace
             header.faces = 0;
             header.format = getImageFormat();
             header.compression = TextureCompression::NONE;
+            header.premultiplied = m_context.associated_alpha;
 
             u32 data_size = std::accumulate(m_context.strip_byte_counts.begin(), m_context.strip_byte_counts.end(), 0u);
             data_size += std::accumulate(m_context.tile_byte_counts.begin(), m_context.tile_byte_counts.end(), 0u);
@@ -2249,48 +2265,84 @@ namespace
                 }
             }
 
+            // RGB can be decoded directly, other formats need to be resolved.
+            bool is_direct = m_context.samples_per_pixel < 4;
+            Buffer scanline(expanded_bytes_per_row);
+
             for (u32 y = 0; y < height; ++y)
             {
+                u8* dest = is_direct ? target.image : scanline.data();
+
                 if (m_context.planar_configuration == 1)
                 {
-                    resolveChunkyScanline(target.image, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel);
+                    resolveChunkyScanline(dest, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel);
                 }
                 else
                 {
-                    resolvePlanarScanline(target.image, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel, channel);
+                    resolvePlanarScanline(dest, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel, channel);
                 }
 
-                if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED))
+                if (!is_direct)
                 {
-                    // TODO: We decode as CMYK, the channel information is in the Ink tags
-
-                    const u8* lookup = math::get_linear_to_srgb_table();
-
-                    for (int x = 0; x < width; ++x)
+                    if (m_context.photometric == u32(PhotometricInterpretation::RGB))
                     {
-                        int C = 255 - target.image[x * 4 + 0];
-                        int M = 255 - target.image[x * 4 + 1];
-                        int Y = 255 - target.image[x * 4 + 2];
-                        int K = 255 - target.image[x * 4 + 3];
+                        size_t base = 0;
+                        for (int x = 0; x < width; ++x)
+                        {
+                            int r = scanline[base + 0];
+                            int g = scanline[base + 1];
+                            int b = scanline[base + 2];
 
-                        int R = (C * K + 127) / 255;
-                        int G = (M * K + 127) / 255;
-                        int B = (Y * K + 127) / 255;
+                            int a = 0xff;
+                            if (m_context.associated_alpha)
+                            {
+                                a = scanline[base + m_context.associated_alpha_index];
+                            }
+        
+                            target.image[x * 4 + 0] = r;
+                            target.image[x * 4 + 1] = g;
+                            target.image[x * 4 + 2] = b;
+                            target.image[x * 4 + 3] = a;
 
-                        target.image[x * 4 + 0] = lookup[R];
-                        target.image[x * 4 + 1] = lookup[G];
-                        target.image[x * 4 + 2] = lookup[B];
-                        target.image[x * 4 + 3] = 0xff;
+                            base += m_context.samples_per_pixel;
+                        }
                     }
-                }
-                /*
-                else if (m_context.photometric == u32(PhotometricInterpretation::CIELAB))
-                {
-                    for (int x = 0; x < width; ++x)
+                    else if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED))
                     {
+                        // TODO: We decode as CMYK, the channel information is in the Ink tags
+    
+                        const u8* lookup = math::get_linear_to_srgb_table();
+
+                        size_t base = 0;
+
+                        for (int x = 0; x < width; ++x)
+                        {
+                            int C = 255 - scanline[base + 0];
+                            int M = 255 - scanline[base + 1];
+                            int Y = 255 - scanline[base + 2];
+                            int K = 255 - scanline[base + 3];
+    
+                            int R = (C * K + 127) / 255;
+                            int G = (M * K + 127) / 255;
+                            int B = (Y * K + 127) / 255;
+    
+                            target.image[x * 4 + 0] = lookup[R];
+                            target.image[x * 4 + 1] = lookup[G];
+                            target.image[x * 4 + 2] = lookup[B];
+                            target.image[x * 4 + 3] = 0xff;
+
+                            base += m_context.samples_per_pixel;
+                        }
                     }
+                    /*
+                    else if (m_context.photometric == u32(PhotometricInterpretation::CIELAB))
+                    {
+                        for (int x = 0; x < width; ++x)
+                        {
+                        }
+                    }
+                    */
                 }
-                */
 
                 memory.address += expanded_bytes_per_row;
                 target.image += target.stride;
