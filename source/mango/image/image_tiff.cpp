@@ -1434,13 +1434,9 @@ namespace
                     {
                         return Format(bits * 3, type, Format::RGB, bits, bits, bits, 0);
                     }
-                    else if (m_context.samples_per_pixel == 4)
+                    else if (m_context.samples_per_pixel >= 4)
                     {
                         return Format(bits * 4, type, Format::RGBA, bits, bits, bits, bits);
-                    }
-                    else if (m_context.samples_per_pixel > 4)
-                    {
-                        return Format(bits * 4, type, Format::RGB, bits, bits, bits, bits);
                     }
                     else
                     {
