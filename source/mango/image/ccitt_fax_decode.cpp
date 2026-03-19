@@ -159,6 +159,22 @@ struct State
         : sp(sp)
     {
         lastx = sp->rowpixels;
+
+        sp->bit = 0; // force initial read
+        sp->data = 0;
+        sp->EOLcnt = 0; // force initial scan for EOL
+        sp->eofReachedCount = 0;
+        sp->eolReachedCount = 0;
+        sp->unexpectedReachedCount = 0;
+        sp->curruns = sp->runs;
+        if (sp->refruns)
+        {
+            // init reference line to white
+            sp->refruns = sp->runs + sp->nruns;
+            sp->refruns[0] = (u32)sp->rowpixels;
+            sp->refruns[1] = 0;
+        }
+        sp->line = 0;
     }
 
     void cache()
@@ -676,25 +692,6 @@ struct State
         return Expand::Success;
     }
 
-    void Fax3PreDecode()
-    {
-        sp->bit = 0; // force initial read
-        sp->data = 0;
-        sp->EOLcnt = 0; // force initial scan for EOL
-        sp->eofReachedCount = 0;
-        sp->eolReachedCount = 0;
-        sp->unexpectedReachedCount = 0;
-        sp->curruns = sp->runs;
-        if (sp->refruns)
-        {
-            // init reference line to white
-            sp->refruns = sp->runs + sp->nruns;
-            sp->refruns[0] = (u32)sp->rowpixels;
-            sp->refruns[1] = 0;
-        }
-        sp->line = 0;
-    }
-
     Expand Fax3DecodeRLE(Memory output)
     {
         int mode = sp->mode;
@@ -1008,7 +1005,6 @@ bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width, u32 heigh
                            : FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
 
     State state(&sp);
-    state.Fax3PreDecode();
     auto result = state.Fax3DecodeRLE(output);
     if (result != Expand::Success)
     {
@@ -1046,7 +1042,6 @@ bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 he
     sp.mode = FAXMODE_NORTC |FAXMODE_BYTEALIGN;
 
     State state(&sp);
-    state.Fax3PreDecode();
 
     auto result = is_2d ? state.Fax3Decode2D(output) : state.Fax3Decode1D(output);
     if (result != Expand::Success)
@@ -1085,7 +1080,6 @@ bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 he
     sp.mode = FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
 
     State state(&sp);
-    state.Fax3PreDecode();
     auto result = state.Fax4Decode(output);
     if (result != Expand::Success)
     {
