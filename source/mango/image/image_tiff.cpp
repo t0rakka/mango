@@ -182,7 +182,7 @@ namespace
         u32 rows_per_strip = StripHeightNoLimit;
         std::vector<u64> strip_offsets;
         std::vector<u64> strip_byte_counts;
-        
+
         // Tile support
         u32 tile_width = 0;
         u32 tile_length = 0;
