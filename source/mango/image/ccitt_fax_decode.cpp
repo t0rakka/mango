@@ -800,7 +800,7 @@ struct State
         {
             a0 = 0;
             RunLength = 0;
-                pa = thisrun = sp.curruns;
+            pa = thisrun = sp.curruns;
 
             Expand result = sync_eol();
             switch (result)
