@@ -95,34 +95,21 @@ struct Fax3CodecState
 {
     ConstMemory input;
 
-    int mode;
-    size_t rowbytes;
-    u32 rowpixels;
+    int mode = 0;
+    size_t rowbytes = 0;
+    u32 rowpixels = 0;
 
-    /* Decoder state info */
-    AccumulatorType data;  /* bit accumulator */
-    int bit;                  /* number of valid bits in data (0 .. ACCUMULATOR_BITS) */
-    int EOLcnt;                  /* count of EOL codes recognized */
-    int eofReachedCount;         /* number of times decode has been called with
-                                    EOF already reached */
-    int eolReachedCount;         /* number of times decode has been called with
-                                    EOL already reached */
-    int unexpectedReachedCount;  /* number of times decode has been called with
-                                    "unexpedted" already reached */
-    u32 *runs;              /* b&w runs for current/previous row */
-    u32 nruns;              /* size of the refruns / curruns arrays */
-    u32 *refruns;           /* runs for reference line */
-    u32 *curruns;           /* runs for current line */
+    // Decoder state info
+    AccumulatorType data = 0;        // bit accumulator
+    int bit = 0;                     // number of valid bits in data (0 .. ACCUMULATOR_BITS)
+    int EOLcnt = 0;                  // count of EOL codes recognized
+    u32 *runs = nullptr;             // b&w runs for current/previous row
+    u32 nruns = 0;                   // size of the refruns / curruns arrays
+    u32 *refruns = nullptr;          // runs for reference line
+    u32 *curruns = nullptr;          // runs for current line
 
-    int line;
+    int line = 0;
 };
-
-
-#define unexpected(table, a0)                                                  \
-    do                                                                         \
-    {                                                                          \
-        ++sp->unexpectedReachedCount;                                          \
-    } while (0)
 
 
 // TODO: rename
@@ -136,11 +123,12 @@ enum class Expand
 
 struct State
  {
-    Fax3CodecState *sp;
-    int a0;           // reference element
-    int lastx;        // last element in row
+    Fax3CodecState sp;
+
+    int a0;                  // reference element
+    int lastx;               // last element in row
     AccumulatorType BitAcc;  // bit accumulator
-    int BitsAvail;               // number of valid bits in BitAcc (0 .. ACCUMULATOR_BITS)
+    int BitsAvail;           // number of valid bits in BitAcc (0 .. ACCUMULATOR_BITS)
     int RunLength;    // length of current run
     const u8 *cp;     // next byte of input data
     const u8 *ep;     // end of input data
@@ -155,44 +143,40 @@ struct State
 
     FillRunsFunction fill = Fax3fillruns_bytepattern;
 
-    State(Fax3CodecState* sp)
-        : sp(sp)
+    State()
     {
-        lastx = sp->rowpixels;
+    }
 
-        sp->bit = 0; // force initial read
-        sp->data = 0;
-        sp->EOLcnt = 0; // force initial scan for EOL
-        sp->eofReachedCount = 0;
-        sp->eolReachedCount = 0;
-        sp->unexpectedReachedCount = 0;
-        sp->curruns = sp->runs;
-        if (sp->refruns)
+    void init()
+    {
+        lastx = sp.rowpixels;
+
+        sp.curruns = sp.runs;
+        if (sp.refruns)
         {
             // init reference line to white
-            sp->refruns = sp->runs + sp->nruns;
-            sp->refruns[0] = (u32)sp->rowpixels;
-            sp->refruns[1] = 0;
+            sp.refruns = sp.runs + sp.nruns;
+            sp.refruns[0] = sp.rowpixels;
+            sp.refruns[1] = 0;
         }
-        sp->line = 0;
     }
 
     void cache()
     {
-        BitAcc = sp->data;
-        BitsAvail = sp->bit;
-        EOLcnt = sp->EOLcnt;
-        cp = sp->input.address;
-        ep = cp + sp->input.size;
+        BitAcc = sp.data;
+        BitsAvail = sp.bit;
+        EOLcnt = sp.EOLcnt;
+        cp = sp.input.address;
+        ep = cp + sp.input.size;
     }
 
     void uncache()
     {
-        sp->bit = BitsAvail;
-        sp->data = BitAcc;
-        sp->EOLcnt = EOLcnt;
-        sp->input.size -= (cp - sp->input.address);
-        sp->input.address = cp;
+        sp.bit = BitsAvail;
+        sp.data = BitAcc;
+        sp.EOLcnt = EOLcnt;
+        sp.input.size -= (cp - sp.input.address);
+        sp.input.address = cp;
     }
 
     u32 getBits(int n) const
@@ -265,7 +249,7 @@ struct State
     */
     bool setValue(int x)
     {
-        if (pa >= thisrun + sp->nruns)
+        if (pa >= thisrun + sp.nruns)
         {
             return false;
         }
@@ -281,7 +265,7 @@ struct State
         {
             while (b1 <= a0 && b1 < lastx)
             {
-                if (pb + 1 >= sp->refruns + sp->nruns)
+                if (pb + 1 >= sp.refruns + sp.nruns)
                 {
                     return Expand::Error;
                 }
@@ -305,7 +289,7 @@ struct State
     Expand sync_eol()
     {
         // skip EOL, if not present
-        if (!(sp->mode & FAXMODE_NOEOL))
+        if (!(sp.mode & FAXMODE_NOEOL))
         {
             if (EOLcnt == 0)
             {
@@ -338,7 +322,7 @@ struct State
         EOLcnt = 0; // reset EOL counter/flag
         return Expand::Success;      // existing EOL skipped
     noEOLFound:
-        sp->mode |= FAXMODE_NOEOL;
+        sp.mode |= FAXMODE_NOEOL;
         return Expand::Retry;
     }
 
@@ -357,7 +341,6 @@ struct State
 
         if (a0 != lastx)
         {
-            ++sp->eolReachedCount;
             while (a0 > lastx && pa > thisrun)
                 a0 -= *--pa;
         }
@@ -411,7 +394,6 @@ struct State
                         RunLength += TabEnt.run;
                         break;
                     default:
-                        unexpected("WhiteTable", a0);
                         goto done1d;
                 }
             }
@@ -441,7 +423,6 @@ struct State
                         RunLength += TabEnt.run;
                         break;
                     default:
-                        unexpected("BlackTable", a0);
                         goto done1d;
                 }
             }
@@ -454,7 +435,6 @@ struct State
         }
 
     eof1d:
-        ++sp->eofReachedCount;
         if (CLEANUP_RUNS() != Expand::Success)
             return Expand::Error;
         return Expand::EndOfFile;
@@ -469,7 +449,7 @@ struct State
     {
         while (a0 < lastx)
         {
-            if (pa >= thisrun + sp->nruns)
+            if (pa >= thisrun + sp.nruns)
             {
                 return Expand::Error;
             }
@@ -486,7 +466,7 @@ struct State
                     {
                         return Expand::Error;
                     }
-                    if (pb + 1 >= sp->refruns + sp->nruns)
+                    if (pb + 1 >= sp.refruns + sp.nruns)
                     {
                         return Expand::Error;
                     }
@@ -518,7 +498,7 @@ struct State
                                     RunLength += TabEnt.run;
                                     break;
                                 default:
-                                    goto badBlack2d;
+                                    goto eol2d;
                             }
                         }
 
@@ -542,7 +522,7 @@ struct State
                                     RunLength += TabEnt.run;
                                     break;
                                 default:
-                                    goto badWhite2d;
+                                    goto eol2d;
                             }
                         }
                     }
@@ -568,7 +548,7 @@ struct State
                                     RunLength += TabEnt.run;
                                     break;
                                 default:
-                                    goto badWhite2d;
+                                    goto eol2d;
                             }
                         }
 
@@ -592,7 +572,7 @@ struct State
                                     RunLength += TabEnt.run;
                                     break;
                                 default:
-                                    goto badBlack2d;
+                                    goto eol2d;
                             }
                         }
                     }
@@ -608,7 +588,7 @@ struct State
                     }
                     if (!setValue(b1 - a0))
                         return Expand::Error;
-                    if (pb >= sp->refruns + sp->nruns)
+                    if (pb >= sp.refruns + sp.nruns)
                     {
                         return Expand::Error;
                     }
@@ -621,7 +601,7 @@ struct State
                     }
                     if (!setValue(b1 - a0 + TabEnt.run))
                         return Expand::Error;
-                    if (pb >= sp->refruns + sp->nruns)
+                    if (pb >= sp.refruns + sp.nruns)
                     {
                         return Expand::Error;
                     }
@@ -632,9 +612,8 @@ struct State
                     {
                         return Expand::Error;
                     }
-                    if (b1 < (int)(a0 + TabEnt.run))
+                    if (b1 < int(a0 + TabEnt.run))
                     {
-                        unexpected("VL", a0);
                         goto eol2d;
                     }
                     if (!setValue(b1 - a0 - TabEnt.run))
@@ -648,23 +627,13 @@ struct State
                     *pa++ = lastx - a0;
                     if (!ensureBits(4))
                         goto eof2d;
-                    if (getBits(4))
-                        unexpected("EOL", a0);
+                    //if (getBits(4))
+                    //    ;
                     consumeBits(4);
                     EOLcnt = 1;
                     goto eol2d;
                 default:
-                badMain2d:
-                    unexpected("MainTable", a0);
-                    goto eol2d;
-                badBlack2d:
-                    unexpected("BlackTable", a0);
-                    goto eol2d;
-                badWhite2d:
-                    unexpected("WhiteTable", a0);
-                    goto eol2d;
                 eof2d:
-                    ++sp->eofReachedCount;
                     if (CLEANUP_RUNS() != Expand::Success)
                         return Expand::Error;
                     return Expand::EndOfFile;
@@ -679,7 +648,7 @@ struct State
                 if (!ensureBits(1))
                     goto eof2d;
                 if (!getBits(1))
-                    goto badMain2d;
+                    goto eol2d; // badMain2d
                 consumeBits(1);
             }
             if (!setValue(0))
@@ -694,9 +663,9 @@ struct State
 
     Expand Fax3DecodeRLE(Memory output)
     {
-        int mode = sp->mode;
+        int mode = sp.mode;
 
-        if (output.size % sp->rowbytes)
+        if (output.size % sp.rowbytes)
         {
             return Expand::Error;
         }
@@ -704,7 +673,7 @@ struct State
         Expand result = Expand::Success;
 
         cache();
-        thisrun = sp->curruns;
+        thisrun = sp.curruns;
 
         while (output.size > 0)
         {
@@ -742,9 +711,9 @@ struct State
                     cp++;
             }
 
-            output.address += sp->rowbytes;
-            output.size -= sp->rowbytes;
-            sp->line++;
+            output.address += sp.rowbytes;
+            output.size -= sp.rowbytes;
+            sp.line++;
         }
 
         uncache();
@@ -753,7 +722,7 @@ struct State
 
     Expand Fax3Decode1D(Memory output)
     {
-        if (output.size % sp->rowbytes)
+        if (output.size % sp.rowbytes)
         {
             return Expand::Error;
         }
@@ -762,7 +731,7 @@ struct State
 
       RETRY_WITHOUT_EOL_1D:
         cache();
-        thisrun = sp->curruns;
+        thisrun = sp.curruns;
         while (output.size > 0)
         {
             a0 = 0;
@@ -797,9 +766,9 @@ struct State
 
             fill(output.address, thisrun, pa, lastx);
 
-            output.address += sp->rowbytes;
-            output.size -= sp->rowbytes;
-            sp->line++;
+            output.address += sp.rowbytes;
+            output.size -= sp.rowbytes;
+            sp.line++;
         }
 
         uncache();
@@ -818,7 +787,7 @@ struct State
     {
         int is1D; // current line is 1d/2d-encoded
 
-        if (output.size % sp->rowbytes)
+        if (output.size % sp.rowbytes)
         {
             return Expand::Error;
         }
@@ -831,7 +800,7 @@ struct State
         {
             a0 = 0;
             RunLength = 0;
-            pa = thisrun = sp->curruns;
+                pa = thisrun = sp.curruns;
 
             Expand result = sync_eol();
             switch (result)
@@ -851,7 +820,7 @@ struct State
             is1D = getBits(1); // 1D/2D-encoding tag bit
             consumeBits(1);
 
-            pb = sp->refruns;
+            pb = sp.refruns;
             b1 = *pb++;
 
             if (is1D)
@@ -877,17 +846,17 @@ struct State
             }
 
             fill(output.address, thisrun, pa, lastx);
-            if (pa < thisrun + sp->nruns)
+            if (pa < thisrun + sp.nruns)
             {
                 // imaginary change for reference
                 if (!setValue(0))
                     return Expand::Error;
             }
-            std::swap(sp->curruns, sp->refruns);
+            std::swap(sp.curruns, sp.refruns);
 
-            output.address += sp->rowbytes;
-            output.size -= sp->rowbytes;
-            sp->line++;
+            output.address += sp.rowbytes;
+            output.size -= sp.rowbytes;
+            sp.line++;
         }
 
         uncache();
@@ -904,7 +873,7 @@ struct State
 
     Expand Fax4Decode(Memory output)
     {
-        if (output.size % sp->rowbytes)
+        if (output.size % sp.rowbytes)
         {
             return Expand::Error;
         }
@@ -912,14 +881,14 @@ struct State
         Expand result = Expand::Success;
 
         cache();
-        int start = sp->line;
+        int start = sp.line;
 
         while (output.size > 0)
         {
             a0 = 0;
             RunLength = 0;
-            pa = thisrun = sp->curruns;
-            pb = sp->refruns;
+            pa = thisrun = sp.curruns;
+            pb = sp.refruns;
             b1 = *pb++;
 
             result = expand2D();
@@ -946,11 +915,11 @@ struct State
             // imaginary change for reference
             if (!setValue(0))
                 return Expand::Error;
-            std::swap(sp->curruns, sp->refruns);
+            std::swap(sp.curruns, sp.refruns);
 
-            output.address += sp->rowbytes;
-            output.size -= sp->rowbytes;
-            sp->line++;
+            output.address += sp.rowbytes;
+            output.size -= sp.rowbytes;
+            sp.line++;
 
             continue;
 
@@ -970,7 +939,7 @@ struct State
             uncache();
 
             // don't error on badly-terminated strips
-            return (sp->line != start
+            return (sp.line != start
                         ? Expand::Success
                         : Expand::Error);
         }
@@ -982,109 +951,75 @@ struct State
 
 bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool word_aligned)
 {
-    Fax3CodecState sp;
-    std::memset(&sp, 0, sizeof(sp));
-    sp.input = input;
+    State state;
 
-    u32 rowpixels = width;
-    size_t rowbytes = width;//(width + 7) / 8;
+    state.sp.input = input;
 
-    sp.rowpixels = rowpixels;
-    sp.rowbytes = rowbytes;
+    state.sp.rowpixels = width;
+    state.sp.rowbytes = width; // (width + 7) / 8
 
-    sp.nruns = round_ceil(rowpixels + 1, 32);
+    state.sp.nruns = round_ceil(width + 1, 32);
 
-    std::vector<u32> temp_runs(sp.nruns * 2, 0);
+    std::vector<u32> temp_runs(state.sp.nruns * 2, 0);
 
-    sp.runs = temp_runs.data();
-    sp.curruns = sp.runs;
-    sp.refruns = nullptr;
+    state.sp.runs = temp_runs.data();
+    state.sp.curruns = state.sp.runs;
+    state.sp.refruns = nullptr;
 
     // TODO: resolve mode from group3_options
-    sp.mode = word_aligned ? FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_WORDALIGN
-                           : FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
+    state.sp.mode = word_aligned ? FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_WORDALIGN
+                                 : FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
 
-    State state(&sp);
+    state.init();
     auto result = state.Fax3DecodeRLE(output);
-    if (result != Expand::Success)
-    {
-        return false;
-    }
-
-    return true;
+    return result == Expand::Success;
 }
 
 bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool is_2d)
 {
-    Fax3CodecState sp;
-    std::memset(&sp, 0, sizeof(sp));
-    sp.input = input;
+    State state;
+    state.sp.input = input;
 
-    u32 rowpixels = width;
-    size_t rowbytes = width;//(width + 7) / 8;
+    state.sp.rowpixels = width;
+    state.sp.rowbytes = width; // (width + 7) / 8
 
-    sp.rowpixels = rowpixels;
-    sp.rowbytes = rowbytes;
+    state.sp.nruns = round_ceil(width + 1, 32) * 2;
 
-    int needsRefLine = 1;
+    std::vector<u32> temp_runs(state.sp.nruns * 2, 0);
 
-    sp.nruns = round_ceil(rowpixels + 1, 32);
-    if (needsRefLine)
-        sp.nruns = sp.nruns * 2;
-
-    std::vector<u32> temp_runs(sp.nruns * 2, 0);
-
-    sp.runs = temp_runs.data();
-    sp.curruns = sp.runs;
-    sp.refruns = (needsRefLine) ? (sp.runs + sp.nruns) : nullptr;
+    state.sp.runs = temp_runs.data();
+    state.sp.curruns = state.sp.runs;
+    state.sp.refruns = state.sp.runs + state.sp.nruns;
 
     // TODO: resolve mode from group3_options
-    sp.mode = FAXMODE_NORTC |FAXMODE_BYTEALIGN;
+    state.sp.mode = FAXMODE_NORTC |FAXMODE_BYTEALIGN;
 
-    State state(&sp);
-
+    state.init();
     auto result = is_2d ? state.Fax3Decode2D(output) : state.Fax3Decode1D(output);
-    if (result != Expand::Success)
-    {
-        return false;
-    }
-
-    return true;
+    return result == Expand::Success;
 }
 
 bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height)
 {
-    Fax3CodecState sp;
-    std::memset(&sp, 0, sizeof(sp));
-    sp.input = input;
+    State state;
 
-    u32 rowpixels = width;
-    size_t rowbytes = width;//(width + 7) / 8;
+    state.sp.input = input;
 
-    sp.rowpixels = rowpixels;
-    sp.rowbytes = rowbytes;
+    state.sp.rowpixels = width;
+    state.sp.rowbytes = width; // (width + 7) / 8
 
-    int needsRefLine = 1;
+    state.sp.nruns = round_ceil(width + 1, 32) * 2;
 
-    sp.nruns = round_ceil(rowpixels + 1, 32);
-    if (needsRefLine)
-        sp.nruns = sp.nruns * 2;
+    std::vector<u32> temp_runs(state.sp.nruns * 2, 0);
 
-    std::vector<u32> temp_runs(sp.nruns * 2, 0);
-
-    sp.runs = temp_runs.data();
-    sp.curruns = sp.runs;
-    sp.refruns = (needsRefLine) ? (sp.runs + sp.nruns) : nullptr;
+    state.sp.runs = temp_runs.data();
+    state.sp.curruns = state.sp.runs;
+    state.sp.refruns = state.sp.runs + state.sp.nruns;
 
     // TODO: resolve mode from group4_options
-    sp.mode = FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
+    state.sp.mode = FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
 
-    State state(&sp);
+    state.init();
     auto result = state.Fax4Decode(output);
-    if (result != Expand::Success)
-    {
-        return false;
-    }
-
-    return true;
+    return result == Expand::Success;
 }
