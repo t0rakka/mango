@@ -741,9 +741,7 @@ struct State
             return Expand::Error;
         }
 
-        Expand result = Expand::Success;
-
-      RETRY_WITHOUT_EOL_1D:
+    RETRY_WITHOUT_EOL_1D:
         cache();
         thisrun = sp.curruns;
         while (output.size > 0)
