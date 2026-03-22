@@ -374,13 +374,16 @@ struct State
 
     Expand expand1D()
     {
+        Expand result = Expand::Success;
+
         for (;;)
         {
             for (bool isWhiteDone = false; !isWhiteDone; )
             {
                 if (!lookup(12, g_FaxWhiteTable))
                 {
-                    goto eof1d;
+                    result = Expand::EndOfFile;
+                    goto done1d;
                 }
                 switch (TabEnt.symbol)
                 {
@@ -409,7 +412,8 @@ struct State
             {
                 if (!lookup(13, g_FaxBlackTable))
                 {
-                    goto eof1d;
+                    result = Expand::EndOfFile;
+                    goto done1d;
                 }
                 switch (TabEnt.symbol)
                 {
@@ -438,19 +442,16 @@ struct State
                 pa -= 2;
         }
 
-    eof1d:
-        if (cleanupRuns() != Expand::Success)
-            return Expand::Error;
-        return Expand::EndOfFile;
-
     done1d:
         if (cleanupRuns() != Expand::Success)
             return Expand::Error;
-        return Expand::Success;
+        return result;
     }
 
     Expand expand2D()
     {
+        Expand result = Expand::Success;
+
         while (a0 < lastx)
         {
             if (pa >= thisrun + sp.nruns)
@@ -460,7 +461,8 @@ struct State
 
             if (!lookup(7, g_FaxMainTable))
             {
-                goto eof2d;
+                result = Expand::EndOfFile;
+                goto eol2d;
             }
 
             switch (TabEnt.symbol)
@@ -487,7 +489,8 @@ struct State
                             // black first
                             if (!lookup(13, g_FaxBlackTable))
                             {
-                                goto eof2d;
+                                result = Expand::EndOfFile;
+                                goto eol2d;
                             }
                             switch (TabEnt.symbol)
                             {
@@ -511,7 +514,8 @@ struct State
                             // then white
                             if (!lookup(12, g_FaxWhiteTable))
                             {
-                                goto eof2d;
+                                result = Expand::EndOfFile;
+                                goto eol2d;
                             }
                             switch (TabEnt.symbol)
                             {
@@ -537,7 +541,8 @@ struct State
                             // white first
                             if (!lookup(12, g_FaxWhiteTable))
                             {
-                                goto eof2d;
+                                result = Expand::EndOfFile;
+                                goto eol2d;
                             }
                             switch (TabEnt.symbol)
                             {
@@ -561,7 +566,8 @@ struct State
                             // then black
                             if (!lookup(13, g_FaxBlackTable))
                             {
-                                goto eof2d;
+                                result = Expand::EndOfFile;
+                                goto eol2d;
                             }
                             switch (TabEnt.symbol)
                             {
@@ -630,16 +636,14 @@ struct State
                 case S_EOL:
                     *pa++ = lastx - a0;
                     if (!ensureBits(4))
-                        goto eof2d;
-                    //if (getBits(4))
-                    //    ;
+                    {
+                        result = Expand::EndOfFile;
+                        goto eol2d;
+                    }
                     consumeBits(4);
                     EOLcnt = 1;
                     goto eol2d;
                 default:
-                eof2d:
-                    if (cleanupRuns() != Expand::Success)
-                        return Expand::Error;
                     return Expand::EndOfFile;
             }
         }
@@ -650,11 +654,17 @@ struct State
             {
                 // expect a final V0
                 if (!ensureBits(1))
-                    goto eof2d;
+                {
+                    result = Expand::EndOfFile;
+                    goto eol2d;
+                }
                 if (!getBits(1))
-                    goto eol2d; // badMain2d
+                {
+                    goto eol2d;
+                }
                 consumeBits(1);
             }
+
             if (!setValue(0))
                 return Expand::Error;
         }
@@ -662,7 +672,7 @@ struct State
     eol2d:
         if (cleanupRuns() != Expand::Success)
             return Expand::Error;
-        return Expand::Success;
+        return result;
     }
 
     Expand Fax3DecodeRLE(Memory output)
