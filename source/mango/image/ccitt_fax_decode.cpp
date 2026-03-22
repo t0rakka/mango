@@ -51,7 +51,7 @@ using namespace mango;
 #include "ccitt_fax_tables.hpp"
 
 static
-void Fax3fillruns_bytepattern(u8 *buf, u32 *runs, u32 *erun, u32 lastx)
+void resolve_runs(u8 *buf, u32 *runs, u32 *erun, u32 lastx)
 {
     if ((erun - runs) & 1)
         *erun++ = 0;
@@ -78,8 +78,6 @@ void Fax3fillruns_bytepattern(u8 *buf, u32 *runs, u32 *erun, u32 lastx)
         }
     }
 }
-
-using FillRunsFunction = void (*)(u8 *buf, u32 *runs, u32 *erun, u32 lastx);
 
 #if defined(MANGO_CPU_64BIT)
     #define ACCUMULATOR_BITS 64
@@ -119,8 +117,7 @@ struct Fax3CodecState
     ConstMemory input;
 
     int mode = 0;
-    size_t rowbytes = 0;
-    u32 rowpixels = 0;
+    size_t stride = 0;
 
     // Decoder state info
     DataRegister dataRegister;
@@ -162,22 +159,21 @@ struct State
     int b1; // next change on prev line
     u32 *pb; // next run in reference line
 
-    FillRunsFunction fill = Fax3fillruns_bytepattern;
-
-    State()
+    State(ConstMemory input, u32 width)
+        : lastx(width)
     {
+        sp.input = input;
+        sp.stride = width; // (width + 7) / 8
     }
 
     void init()
     {
-        lastx = sp.rowpixels;
-
         sp.curruns = sp.runs;
         if (sp.refruns)
         {
             // init reference line to white
             sp.refruns = sp.runs + sp.nruns;
-            sp.refruns[0] = sp.rowpixels;
+            sp.refruns[0] = lastx;
             sp.refruns[1] = 0;
         }
     }
@@ -337,9 +333,9 @@ struct State
     /*
     Cleanup the array of runs after decoding a row.
     We adjust final runs to insure the user buffer is not
-    overwritten and/or undecoded area is white filled.
+    overwritten and/or undecoded area is white.
     */
-    Expand CLEANUP_RUNS()
+    Expand cleanupRuns()
     {
         if (RunLength)
         {
@@ -443,12 +439,12 @@ struct State
         }
 
     eof1d:
-        if (CLEANUP_RUNS() != Expand::Success)
+        if (cleanupRuns() != Expand::Success)
             return Expand::Error;
         return Expand::EndOfFile;
 
     done1d:
-        if (CLEANUP_RUNS() != Expand::Success)
+        if (cleanupRuns() != Expand::Success)
             return Expand::Error;
         return Expand::Success;
     }
@@ -642,7 +638,7 @@ struct State
                     goto eol2d;
                 default:
                 eof2d:
-                    if (CLEANUP_RUNS() != Expand::Success)
+                    if (cleanupRuns() != Expand::Success)
                         return Expand::Error;
                     return Expand::EndOfFile;
             }
@@ -664,7 +660,7 @@ struct State
         }
 
     eol2d:
-        if (CLEANUP_RUNS() != Expand::Success)
+        if (cleanupRuns() != Expand::Success)
             return Expand::Error;
         return Expand::Success;
     }
@@ -673,7 +669,7 @@ struct State
     {
         int mode = sp.mode;
 
-        if (output.size % sp.rowbytes)
+        if (output.size % sp.stride)
         {
             return Expand::Error;
         }
@@ -696,14 +692,14 @@ struct State
                 case Expand::Retry:
                     break;
                 case Expand::EndOfFile:
-                    fill(output.address, thisrun, pa, lastx);
+                    resolve_runs(output.address, thisrun, pa, lastx);
                     uncache();
                     [[fallthrough]];
                 case Expand::Error:
                     return Expand::Error;
             }
 
-            fill(output.address, thisrun, pa, lastx);
+            resolve_runs(output.address, thisrun, pa, lastx);
 
             // Cleanup at the end of the row.
             if (mode & FAXMODE_BYTEALIGN)
@@ -719,8 +715,8 @@ struct State
                     cp++;
             }
 
-            output.address += sp.rowbytes;
-            output.size -= sp.rowbytes;
+            output.address += sp.stride;
+            output.size -= sp.stride;
             sp.line++;
         }
 
@@ -730,7 +726,7 @@ struct State
 
     Expand Fax3Decode1D(Memory output)
     {
-        if (output.size % sp.rowbytes)
+        if (output.size % sp.stride)
         {
             return Expand::Error;
         }
@@ -765,17 +761,17 @@ struct State
                 case Expand::Retry:
                     break;
                 case Expand::EndOfFile:
-                    fill(output.address, thisrun, pa, lastx);
+                    resolve_runs(output.address, thisrun, pa, lastx);
                     uncache();
                     [[fallthrough]];
                 case Expand::Error:
                     return Expand::Error;
             }
 
-            fill(output.address, thisrun, pa, lastx);
+            resolve_runs(output.address, thisrun, pa, lastx);
 
-            output.address += sp.rowbytes;
-            output.size -= sp.rowbytes;
+            output.address += sp.stride;
+            output.size -= sp.stride;
             sp.line++;
         }
 
@@ -784,16 +780,16 @@ struct State
 
     EOF1D:
         // premature EOF (only reached via goto from SYNC_EOL)
-        if (CLEANUP_RUNS() != Expand::Success)
+        if (cleanupRuns() != Expand::Success)
             return Expand::Error;
-        fill(output.address, thisrun, pa, lastx);
+        resolve_runs(output.address, thisrun, pa, lastx);
         uncache();
         return Expand::Error;
     }
 
     Expand Fax3Decode2D(Memory output)
     {
-        if (output.size % sp.rowbytes)
+        if (output.size % sp.stride)
         {
             return Expand::Error;
         }
@@ -844,14 +840,14 @@ struct State
                 case Expand::Retry:
                     break;
                 case Expand::EndOfFile:
-                    fill(output.address, thisrun, pa, lastx);
+                    resolve_runs(output.address, thisrun, pa, lastx);
                     uncache();
                     [[fallthrough]];
                 case Expand::Error:
                     return Expand::Error;
             }
 
-            fill(output.address, thisrun, pa, lastx);
+            resolve_runs(output.address, thisrun, pa, lastx);
             if (pa < thisrun + sp.nruns)
             {
                 // imaginary change for reference
@@ -860,8 +856,8 @@ struct State
             }
             std::swap(sp.curruns, sp.refruns);
 
-            output.address += sp.rowbytes;
-            output.size -= sp.rowbytes;
+            output.address += sp.stride;
+            output.size -= sp.stride;
             sp.line++;
         }
 
@@ -870,16 +866,16 @@ struct State
 
     EOF2D:
         // premature EOF
-        if (CLEANUP_RUNS() != Expand::Success)
+        if (cleanupRuns() != Expand::Success)
             return Expand::Error;
-        fill(output.address, thisrun, pa, lastx);
+        resolve_runs(output.address, thisrun, pa, lastx);
         uncache();
         return Expand::Error;
     }
 
     Expand Fax4Decode(Memory output)
     {
-        if (output.size % sp.rowbytes)
+        if (output.size % sp.stride)
         {
             return Expand::Error;
         }
@@ -916,15 +912,15 @@ struct State
             {
                 return Expand::Error;
             }
-            fill(output.address, thisrun, pa, lastx);
+            resolve_runs(output.address, thisrun, pa, lastx);
 
             // imaginary change for reference
             if (!setValue(0))
                 return Expand::Error;
             std::swap(sp.curruns, sp.refruns);
 
-            output.address += sp.rowbytes;
-            output.size -= sp.rowbytes;
+            output.address += sp.stride;
+            output.size -= sp.stride;
             sp.line++;
 
             continue;
@@ -936,7 +932,7 @@ struct State
             {
                 return Expand::Error;
             }
-            fill(output.address, thisrun, pa, lastx);
+            resolve_runs(output.address, thisrun, pa, lastx);
 
             uncache();
 
@@ -953,12 +949,7 @@ struct State
 
 bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool word_aligned)
 {
-    State state;
-
-    state.sp.input = input;
-
-    state.sp.rowpixels = width;
-    state.sp.rowbytes = width; // (width + 7) / 8
+    State state(input, width);
 
     state.sp.nruns = round_ceil(width + 1, 32);
 
@@ -979,11 +970,7 @@ bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width, u32 heigh
 
 bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool is_2d)
 {
-    State state;
-    state.sp.input = input;
-
-    state.sp.rowpixels = width;
-    state.sp.rowbytes = width; // (width + 7) / 8
+    State state(input, width);
 
     state.sp.nruns = round_ceil(width + 1, 32) * 2;
 
@@ -1003,12 +990,7 @@ bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 he
 
 bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height)
 {
-    State state;
-
-    state.sp.input = input;
-
-    state.sp.rowpixels = width;
-    state.sp.rowbytes = width; // (width + 7) / 8
+    State state(input, width);
 
     state.sp.nruns = round_ceil(width + 1, 32) * 2;
 
