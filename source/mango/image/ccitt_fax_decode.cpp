@@ -50,16 +50,6 @@ using namespace mango;
 
 #include "ccitt_fax_tables.hpp"
 
-
-#if defined(MANGO_CPU_64BIT)
-    #define ACCUMULATOR_BITS 64
-    using AccumulatorType = u64;
-#else
-    #define ACCUMULATOR_BITS 32
-    using AccumulatorType = u32;
-#endif
-
-
 static
 void Fax3fillruns_bytepattern(u8 *buf, u32 *runs, u32 *erun, u32 lastx)
 {
@@ -91,6 +81,39 @@ void Fax3fillruns_bytepattern(u8 *buf, u32 *runs, u32 *erun, u32 lastx)
 
 using FillRunsFunction = void (*)(u8 *buf, u32 *runs, u32 *erun, u32 lastx);
 
+#if defined(MANGO_CPU_64BIT)
+    #define ACCUMULATOR_BITS 64
+    using AccumulatorType = u64;
+#else
+    #define ACCUMULATOR_BITS 32
+    using AccumulatorType = u32;
+#endif
+
+struct DataRegister
+{
+    AccumulatorType data = 0;
+    int bits = 0;
+
+    template <typename T>
+    void merge(T chunk, int nbits)
+    {
+        data |= AccumulatorType(chunk) << bits;
+        bits += nbits;
+    }
+
+    u32 getBits(int nbits) const
+    {
+        const AccumulatorType mask = (AccumulatorType(1) << nbits) - 1;
+        return u32(data & mask);
+    }
+
+    void consumeBits(int nbits)
+    {
+        bits -= nbits;
+        data >>= nbits;
+    }
+};
+
 struct Fax3CodecState
 {
     ConstMemory input;
@@ -100,8 +123,7 @@ struct Fax3CodecState
     u32 rowpixels = 0;
 
     // Decoder state info
-    AccumulatorType data = 0;        // bit accumulator
-    int bit = 0;                     // number of valid bits in data (0 .. ACCUMULATOR_BITS)
+    DataRegister dataRegister;
     int EOLcnt = 0;                  // count of EOL codes recognized
     u32 *runs = nullptr;             // b&w runs for current/previous row
     u32 nruns = 0;                   // size of the refruns / curruns arrays
@@ -124,11 +146,10 @@ enum class Expand
 struct State
  {
     Fax3CodecState sp;
+    DataRegister dataRegister;
 
-    int a0;                  // reference element
-    int lastx;               // last element in row
-    AccumulatorType BitAcc;  // bit accumulator
-    int BitsAvail;           // number of valid bits in BitAcc (0 .. ACCUMULATOR_BITS)
+    int a0;           // reference element
+    int lastx;        // last element in row
     int RunLength;    // length of current run
     const u8 *cp;     // next byte of input data
     const u8 *ep;     // end of input data
@@ -163,8 +184,7 @@ struct State
 
     void cache()
     {
-        BitAcc = sp.data;
-        BitsAvail = sp.bit;
+        dataRegister = sp.dataRegister;
         EOLcnt = sp.EOLcnt;
         cp = sp.input.address;
         ep = cp + sp.input.size;
@@ -172,35 +192,32 @@ struct State
 
     void uncache()
     {
-        sp.bit = BitsAvail;
-        sp.data = BitAcc;
+        sp.dataRegister = dataRegister;
         sp.EOLcnt = EOLcnt;
         sp.input.size -= (cp - sp.input.address);
         sp.input.address = cp;
     }
 
-    u32 getBits(int n) const
+    u32 getBits(int nbits) const
     {
-        const AccumulatorType mask = (AccumulatorType(1) << n) - 1;
-        return u32(BitAcc & mask);
+        return dataRegister.getBits(nbits);
     }
 
-    void consumeBits(int n)
+    void consumeBits(int nbits)
     {
-        BitsAvail -= n;
-        BitAcc >>= n;
+        dataRegister.consumeBits(nbits);
     }
 
-    bool ensureBits(int n)
+    bool ensureBits(int nbits)
     {
-        while (BitsAvail < n)
+        while (dataRegister.bits < nbits)
         {
             if (cp >= ep)
             {
                 // out of bytes to read
-                if (BitsAvail == 0)
+                if (dataRegister.bits == 0)
                     return false;
-                BitsAvail = n; // pad with zeros
+                dataRegister.bits = nbits; // pad with zeros
                 return true;
             }
 
@@ -208,36 +225,27 @@ struct State
             if (size_t(ep - cp) >= 8)
             {
                 // read 8 bytes, merge only bytes that fit in the accumulator
-                const int bytes_to_merge = (ACCUMULATOR_BITS - BitsAvail) / 8;
+                const int bytes_to_merge = (ACCUMULATOR_BITS - dataRegister.bits) / 8;
                 u64 chunk = mango::littleEndian::uload64(cp);
-                BitAcc |= AccumulatorType(chunk) << BitsAvail;
-                BitsAvail += bytes_to_merge * 8;
+                dataRegister.merge(chunk, bytes_to_merge * 8);
                 cp += bytes_to_merge;
                 return true;
             }
 #endif
 
             // read one byte
-            BitAcc |= AccumulatorType(*cp++) << BitsAvail;
-            BitsAvail += 8;
+            dataRegister.merge(*cp++, 8);
         }
 
         return true;
     }
 
-    bool lookup8(int wid, const FaxTabEntry* tab)
+    bool lookup(int wid, const FaxTabEntry* tab)
     {
         if (!ensureBits(wid))
+        {
             return false;
-        TabEnt = tab[getBits(wid)];
-        consumeBits(TabEnt.nbits);
-        return true;
-    }
-
-    bool lookup16(int wid, const FaxTabEntry* tab)
-    {
-        if (!ensureBits(wid))
-            return false;
+        }
         TabEnt = tab[getBits(wid)];
         consumeBits(TabEnt.nbits);
         return true;
@@ -374,7 +382,7 @@ struct State
         {
             for (bool isWhiteDone = false; !isWhiteDone; )
             {
-                if (!lookup16(12, g_FaxWhiteTable))
+                if (!lookup(12, g_FaxWhiteTable))
                 {
                     goto eof1d;
                 }
@@ -403,7 +411,7 @@ struct State
 
             for (bool isBlackDone = false; !isBlackDone; )
             {
-                if (!lookup16(13, g_FaxBlackTable))
+                if (!lookup(13, g_FaxBlackTable))
                 {
                     goto eof1d;
                 }
@@ -454,7 +462,7 @@ struct State
                 return Expand::Error;
             }
 
-            if (!lookup8(7, g_FaxMainTable))
+            if (!lookup(7, g_FaxMainTable))
             {
                 goto eof2d;
             }
@@ -481,7 +489,7 @@ struct State
                         for (bool isBlackDone = false; !isBlackDone; )
                         {
                             // black first
-                            if (!lookup16(13, g_FaxBlackTable))
+                            if (!lookup(13, g_FaxBlackTable))
                             {
                                 goto eof2d;
                             }
@@ -505,7 +513,7 @@ struct State
                         for (bool isWhiteDone = false; !isWhiteDone; )
                         {
                             // then white
-                            if (!lookup16(12, g_FaxWhiteTable))
+                            if (!lookup(12, g_FaxWhiteTable))
                             {
                                 goto eof2d;
                             }
@@ -531,7 +539,7 @@ struct State
                         for (bool isWhiteDone = false; !isWhiteDone; )
                         {
                             // white first
-                            if (!lookup16(12, g_FaxWhiteTable))
+                            if (!lookup(12, g_FaxWhiteTable))
                             {
                                 goto eof2d;
                             }
@@ -555,7 +563,7 @@ struct State
                         for (bool isBlackDone = false; !isBlackDone; )
                         {
                             // then black
-                            if (!lookup16(13, g_FaxBlackTable))
+                            if (!lookup(13, g_FaxBlackTable))
                             {
                                 goto eof2d;
                             }
@@ -700,14 +708,14 @@ struct State
             // Cleanup at the end of the row.
             if (mode & FAXMODE_BYTEALIGN)
             {
-                int n = BitsAvail & 7;
+                int n = dataRegister.bits & 7;
                 consumeBits(n);
             }
             else if (mode & FAXMODE_WORDALIGN)
             {
-                int n = BitsAvail & 15;
+                int n = dataRegister.bits & 15;
                 consumeBits(n);
-                if (BitsAvail == 0 && !is_aligned(cp, 2))
+                if (dataRegister.bits == 0 && !is_aligned(cp, 2))
                     cp++;
             }
 
@@ -785,8 +793,6 @@ struct State
 
     Expand Fax3Decode2D(Memory output)
     {
-        int is1D; // current line is 1d/2d-encoded
-
         if (output.size % sp.rowbytes)
         {
             return Expand::Error;
@@ -817,7 +823,7 @@ struct State
 
             if (!ensureBits(1))
                 goto EOF2D;
-            is1D = getBits(1); // 1D/2D-encoding tag bit
+            int is1D = getBits(1); // 1D/2D-encoding tag bit
             consumeBits(1);
 
             pb = sp.refruns;
@@ -924,11 +930,7 @@ struct State
             continue;
 
         EOFG4:
-            if (!ensureBits(13))
-            {
-                goto BADG4;
-            }
-        BADG4:
+            MANGO_UNREFERENCED(ensureBits(13));
             consumeBits(13);
             if (((lastx + 7) >> 3) > (int)output.size) // check for buffer overrun
             {
