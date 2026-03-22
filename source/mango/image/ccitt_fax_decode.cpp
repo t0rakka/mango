@@ -749,6 +749,7 @@ struct State
             a0 = 0;
             RunLength = 0;
             pa = thisrun;
+
             Expand result = sync_eol();
             switch (result)
             {
@@ -833,15 +834,7 @@ struct State
             pb = sp.refruns;
             b1 = *pb++;
 
-            if (is1D)
-            {
-                result = expand1D();
-            }
-            else
-            {
-                result = expand2D();
-            }
-
+            result = is1D ? expand1D() : expand2D();
             switch (result)
             {
                 case Expand::Success:
