@@ -93,7 +93,7 @@ struct DataRegister
     int bits = 0;
 
     template <typename T>
-    void merge(T chunk, int nbits)
+    void append(T chunk, int nbits)
     {
         data |= AccumulatorType(chunk) << bits;
         bits += nbits;
@@ -220,29 +220,29 @@ struct State
 #if ACCUMULATOR_BITS == 64
             if (size_t(ep - cp) >= 8)
             {
-                // read 8 bytes, merge only bytes that fit in the accumulator
-                const int bytes_to_merge = (ACCUMULATOR_BITS - dataRegister.bits) / 8;
+                // read 8 bytes, append only bytes that fit in the accumulator
+                const int bytes = (ACCUMULATOR_BITS - dataRegister.bits) / 8;
                 u64 chunk = mango::littleEndian::uload64(cp);
-                dataRegister.merge(chunk, bytes_to_merge * 8);
-                cp += bytes_to_merge;
+                dataRegister.append(chunk, bytes * 8);
+                cp += bytes;
                 return true;
             }
 #endif
 
             // read one byte
-            dataRegister.merge(*cp++, 8);
+            dataRegister.append(*cp++, 8);
         }
 
         return true;
     }
 
-    bool lookup(int wid, const FaxTabEntry* tab)
+    bool lookup(int nbits, const FaxTabEntry* table)
     {
-        if (!ensureBits(wid))
+        if (!ensureBits(nbits))
         {
             return false;
         }
-        TabEnt = tab[getBits(wid)];
+        TabEnt = table[getBits(nbits)];
         consumeBits(TabEnt.nbits);
         return true;
     }
