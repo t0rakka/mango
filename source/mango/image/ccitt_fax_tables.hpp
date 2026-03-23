@@ -9,7 +9,7 @@ struct FaxTabEntry
     u16 run;
 };
 
-// CCITT T.4/T.6 codeword classes
+// CCITT T.4 / T.6 codeword classes
 enum ccittSymbol : u8
 {
     S_Null    = 0, // NOP / Invalid Entry
@@ -24,7 +24,7 @@ enum ccittSymbol : u8
     S_MakeUpW = 9, // Makeup codes for long White runs
     S_MakeUpB = 10, // Makeup codes for long Black runs
     S_MakeUp  = 11, // Generic makeup code
-    S_EOL     = 12 // End of Line
+    S_EOL     = 12  // End of Line
 };
 
 const FaxTabEntry g_FaxMainTable[128] =
