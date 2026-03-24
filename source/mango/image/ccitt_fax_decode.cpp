@@ -462,14 +462,9 @@ struct State
                 case S_Pass:
                 {
                     if (check_b1() == Expand::Error)
-                    {
                         return Expand::Error;
-                    }
-
                     if (pb + 1 >= sp.refruns + sp.nruns)
-                    {
                         return Expand::Error;
-                    }
 
                     b1 += *pb++;
                     RunLength += b1 - a0;
@@ -514,9 +509,7 @@ struct State
                     }
 
                     if (check_b1() == Expand::Error)
-                    {
                         return Expand::Error;
-                    }
 
                     break;
                 }
@@ -524,19 +517,11 @@ struct State
                 case S_V0:
                 {
                     if (check_b1() == Expand::Error)
-                    {
                         return Expand::Error;
-                    }
-
                     if (!setValue(b1 - a0))
-                    {
                         return Expand::Error;
-                    }
-
                     if (pb >= sp.refruns + sp.nruns)
-                    {
                         return Expand::Error;
-                    }
 
                     b1 += *pb++;
 
@@ -546,19 +531,11 @@ struct State
                 case S_VR:
                 {
                     if (check_b1() == Expand::Error)
-                    {
                         return Expand::Error;
-                    }
-
                     if (!setValue(b1 - a0 + TabEnt.run))
-                    {
                         return Expand::Error;
-                    }
-
                     if (pb >= sp.refruns + sp.nruns)
-                    {
                         return Expand::Error;
-                    }
 
                     b1 += *pb++;
 
@@ -568,19 +545,11 @@ struct State
                 case S_VL:
                 {
                     if (check_b1() == Expand::Error)
-                    {
                         return Expand::Error;
-                    }
-
                     if (b1 < int(a0 + TabEnt.run))
-                    {
                         goto eol2d;
-                    }
-
                     if (!setValue(b1 - a0 - TabEnt.run))
-                    {
                         return Expand::Error;
-                    }
 
                     b1 -= *--pb;
 
