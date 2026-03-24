@@ -460,33 +460,43 @@ struct State
             switch (TabEnt.symbol)
             {
                 case S_Pass:
+                {
                     if (check_b1() == Expand::Error)
                     {
                         return Expand::Error;
                     }
+
                     if (pb + 1 >= sp.refruns + sp.nruns)
                     {
                         return Expand::Error;
                     }
+
                     b1 += *pb++;
                     RunLength += b1 - a0;
                     a0 = b1;
                     b1 += *pb++;
+
                     break;
+                }
+
                 case S_Horiz:
-                    if ((pa - thisrun) & 1)
+                {
+                    bool isBlack = (pa - thisrun) & 1;
+                    for (int i = 0; i < 2; ++i)
                     {
-                        for (bool isBlackDone = false; !isBlackDone; )
+                        for (bool isDone = false; !isDone; )
                         {
-                            // black first
-                            FaxTabEntry TabEnt2 = lookup(13, g_FaxBlackTable);
+                            FaxTabEntry TabEnt2 = isBlack ? lookup(13, g_FaxBlackTable)
+                                                          : lookup(12, g_FaxWhiteTable);
                             switch (TabEnt2.symbol)
                             {
+                                case S_TermW:
                                 case S_TermB:
                                     if (!setValue(TabEnt2.run))
                                         return Expand::Error;
-                                    isBlackDone = true;
+                                    isDone = true;
                                     break;
+                                case S_MakeUpW:
                                 case S_MakeUpB:
                                 case S_MakeUp:
                                     a0 += TabEnt2.run;
@@ -500,129 +510,93 @@ struct State
                             }
                         }
 
-                        for (bool isWhiteDone = false; !isWhiteDone; )
-                        {
-                            // then white
-                            FaxTabEntry TabEnt2 = lookup(12, g_FaxWhiteTable);
-                            switch (TabEnt2.symbol)
-                            {
-                                case S_TermW:
-                                    if (!setValue(TabEnt2.run))
-                                        return Expand::Error;
-                                    isWhiteDone = true;
-                                    break;
-                                case S_MakeUpW:
-                                case S_MakeUp:
-                                    a0 += TabEnt2.run;
-                                    RunLength += TabEnt2.run;
-                                    break;
-                                case S_Null:
-                                    result = Expand::EndOfFile;
-                                    [[fallthrough]];
-                                default:
-                                    goto eol2d;
-                            }
-                        }
+                        isBlack = !isBlack;
                     }
-                    else
-                    {
-                        for (bool isWhiteDone = false; !isWhiteDone; )
-                        {
-                            // white first
-                            FaxTabEntry TabEnt2 = lookup(12, g_FaxWhiteTable);
-                            switch (TabEnt2.symbol)
-                            {
-                                case S_TermW:
-                                    if (!setValue(TabEnt2.run))
-                                        return Expand::Error;
-                                    isWhiteDone = true;
-                                    break;
-                                case S_MakeUpW:
-                                case S_MakeUp:
-                                    a0 += TabEnt2.run;
-                                    RunLength += TabEnt2.run;
-                                    break;
-                                case S_Null:
-                                    result = Expand::EndOfFile;
-                                    [[fallthrough]];
-                                default:
-                                    goto eol2d;
-                            }
-                        }
 
-                        for (bool isBlackDone = false; !isBlackDone; )
-                        {
-                            // then black
-                            FaxTabEntry TabEnt2 = lookup(13, g_FaxBlackTable);
-                            switch (TabEnt2.symbol)
-                            {
-                                case S_TermB:
-                                    if (!setValue(TabEnt2.run))
-                                        return Expand::Error;
-                                    isBlackDone = true;
-                                    break;
-                                case S_MakeUpB:
-                                case S_MakeUp:
-                                    a0 += TabEnt2.run;
-                                    RunLength += TabEnt2.run;
-                                    break;
-                                case S_Null:
-                                    result = Expand::EndOfFile;
-                                    [[fallthrough]];
-                                default:
-                                    goto eol2d;
-                            }
-                        }
-                    }
                     if (check_b1() == Expand::Error)
                     {
                         return Expand::Error;
                     }
+
                     break;
+                }
+
                 case S_V0:
+                {
                     if (check_b1() == Expand::Error)
                     {
                         return Expand::Error;
                     }
+
                     if (!setValue(b1 - a0))
+                    {
                         return Expand::Error;
+                    }
+
                     if (pb >= sp.refruns + sp.nruns)
                     {
                         return Expand::Error;
                     }
+
                     b1 += *pb++;
+
                     break;
+                }
+
                 case S_VR:
+                {
                     if (check_b1() == Expand::Error)
                     {
                         return Expand::Error;
                     }
+
                     if (!setValue(b1 - a0 + TabEnt.run))
+                    {
                         return Expand::Error;
+                    }
+
                     if (pb >= sp.refruns + sp.nruns)
                     {
                         return Expand::Error;
                     }
+
                     b1 += *pb++;
+
                     break;
+                }
+
                 case S_VL:
+                {
                     if (check_b1() == Expand::Error)
                     {
                         return Expand::Error;
                     }
+
                     if (b1 < int(a0 + TabEnt.run))
                     {
                         goto eol2d;
                     }
+
                     if (!setValue(b1 - a0 - TabEnt.run))
+                    {
                         return Expand::Error;
+                    }
+
                     b1 -= *--pb;
+
                     break;
+                }
+
                 case S_Ext:
+                {
                     *pa++ = lastx - a0;
                     goto eol2d;
+                }
+
                 case S_EOL:
+                {
                     *pa++ = lastx - a0;
+
                     if (!ensureBits(4))
                     {
                         result = Expand::EndOfFile;
@@ -630,10 +604,14 @@ struct State
                     }
                     consumeBits(4);
                     EOLcnt = 1;
+
                     goto eol2d;
+                }
+
                 case S_Null:
                     result = Expand::EndOfFile;
                     goto eol2d;
+
                 default:
                     return Expand::EndOfFile;
             }
