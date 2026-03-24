@@ -141,7 +141,7 @@ enum class Expand
 };
 
 struct State
- {
+{
     Fax3CodecState sp;
     DataRegister dataRegister;
 
@@ -158,23 +158,23 @@ struct State
     int b1; // next change on prev line
     u32 *pb; // next run in reference line
 
-    State(ConstMemory input, u32 width)
+    std::vector<u32> run_buffer;
+
+    State(ConstMemory input, u32 width, u32 nruns)
         : lastx(width)
+        , run_buffer(nruns * 2, 0)
     {
         sp.input = input;
         sp.stride = width; // (width + 7) / 8
-    }
 
-    void init()
-    {
+        sp.nruns = nruns;
+        sp.runs = run_buffer.data();
         sp.curruns = sp.runs;
-        if (sp.refruns)
-        {
-            // init reference line to white
-            sp.refruns = sp.runs + sp.nruns;
-            sp.refruns[0] = lastx;
-            sp.refruns[1] = 0;
-        }
+
+        // init reference line to white
+        sp.refruns = sp.runs + sp.nruns;
+        sp.refruns[0] = lastx;
+        sp.refruns[1] = 0;
     }
 
     void cache()
@@ -888,61 +888,37 @@ struct State
 
 bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool word_aligned)
 {
-    State state(input, width);
-
-    state.sp.nruns = round_ceil(width + 1, 32);
-
-    std::vector<u32> temp_runs(state.sp.nruns * 2, 0);
-
-    state.sp.runs = temp_runs.data();
-    state.sp.curruns = state.sp.runs;
-    state.sp.refruns = nullptr;
+    const u32 nruns = round_ceil(width + 1, 32);
+    State state(input, width, nruns);
 
     // TODO: resolve mode from group3_options
     state.sp.mode = word_aligned ? FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_WORDALIGN
                                  : FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
 
-    state.init();
     auto result = state.Fax3DecodeRLE(output);
     return result == Expand::Success;
 }
 
 bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool is_2d)
 {
-    State state(input, width);
-
-    state.sp.nruns = round_ceil(width + 1, 32) * 2;
-
-    std::vector<u32> temp_runs(state.sp.nruns * 2, 0);
-
-    state.sp.runs = temp_runs.data();
-    state.sp.curruns = state.sp.runs;
-    state.sp.refruns = state.sp.runs + state.sp.nruns;
+    const u32 nruns = round_ceil(width + 1, 32);
+    State state(input, width, nruns);
 
     // TODO: resolve mode from group3_options
     state.sp.mode = FAXMODE_NORTC |FAXMODE_BYTEALIGN;
 
-    state.init();
     auto result = is_2d ? state.Fax3Decode2D(output) : state.Fax3Decode1D(output);
     return result == Expand::Success;
 }
 
 bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height)
 {
-    State state(input, width);
-
-    state.sp.nruns = round_ceil(width + 1, 32) * 2;
-
-    std::vector<u32> temp_runs(state.sp.nruns * 2, 0);
-
-    state.sp.runs = temp_runs.data();
-    state.sp.curruns = state.sp.runs;
-    state.sp.refruns = state.sp.runs + state.sp.nruns;
+    const u32 nruns = round_ceil(width + 1, 32);
+    State state(input, width, nruns);
 
     // TODO: resolve mode from group4_options
     state.sp.mode = FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
 
-    state.init();
     auto result = state.Fax4Decode(output);
     return result == Expand::Success;
 }
