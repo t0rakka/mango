@@ -1,6 +1,45 @@
 /*
+ * Copyright (c) 1990-1997 Sam Leffler
+ * Copyright (c) 1991-1997 Silicon Graphics, Inc.
+ *
+ * Permission to use, copy, modify, distribute, and sell this software and
+ * its documentation for any purpose is hereby granted without fee, provided
+ * that (i) the above copyright notices and this permission notice appear in
+ * all copies of the software and related documentation, and (ii) the names of
+ * Sam Leffler and Silicon Graphics may not be used in any advertising or
+ * publicity relating to the software without the specific, prior written
+ * permission of Sam Leffler and Silicon Graphics.
+ *
+ * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY
+ * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR
+ * ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
+ * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+ * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF
+ * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
+ * OF THIS SOFTWARE.
+ */
+ /*
+  * TIFF Library.
+  *
+  * CCITT Group 3 (T.4) and Group 4 (T.6) Compression Support.
+  *
+  * This file contains support for decoding and encoding TIFF
+  * compression algorithms 2, 3, 4, and 32771.
+  *
+  * Decoder support is derived, with permission, from the code
+  * in Frank Cringle's viewfax program;
+  *      Copyright (C) 1990, 1995  Frank D. Cringle.
+  */
+/*
+    The original libtiff and viewfax code has been modified to integrate into the mango framework.
 */
 #pragma once
+
+namespace mango::image
+{
 
 struct FaxTabEntry
 {
@@ -1590,3 +1629,5 @@ const FaxTabEntry g_FaxBlackTable[8192] =
     { S_TermB, 7, 12 }, { S_TermB, 2, 3 }, { S_TermB, 3, 1 }, { S_TermB, 2, 2 }, { S_TermB, 4, 6 }, { S_TermB, 2, 3 }, { S_TermB, 3, 4 }, { S_TermB, 2, 2 },
     { S_TermB, 5, 7 }, { S_TermB, 2, 3 }, { S_TermB, 3, 1 }, { S_TermB, 2, 2 }, { S_TermB, 4, 5 }, { S_TermB, 2, 3 }, { S_TermB, 3, 4 }, { S_TermB, 2, 2 }
 };
+
+} // namespace mango::image

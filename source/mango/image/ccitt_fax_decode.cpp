@@ -38,9 +38,11 @@
 */
 
 #include <vector>
-#include <mango/core/core.hpp>
+#include "ccitt_fax_decode.hpp"
+#include "ccitt_fax_tables.hpp"
 
 using namespace mango;
+using namespace mango::image;
 
 #define FAXMODE_CLASSIC 0x0000       /* default, include RTC */
 #define FAXMODE_NORTC 0x0001         /* no RTC at end of data */
@@ -48,7 +50,8 @@ using namespace mango;
 #define FAXMODE_BYTEALIGN 0x0004     /* byte align row */
 #define FAXMODE_WORDALIGN 0x0008     /* word align row */
 
-#include "ccitt_fax_tables.hpp"
+namespace
+{
 
 static
 void resolve_runs(u8 *buf, u32 *runs, u32 *erun, u32 lastx)
@@ -79,48 +82,13 @@ void resolve_runs(u8 *buf, u32 *runs, u32 *erun, u32 lastx)
     }
 }
 
-#if defined(MANGO_CPU_64BIT)
-    #define ACCUMULATOR_BITS 64
-    using AccumulatorType = u64;
-#else
-    #define ACCUMULATOR_BITS 32
-    using AccumulatorType = u32;
-#endif
-
-struct DataRegister
-{
-    AccumulatorType data = 0;
-    int bits = 0;
-
-    template <typename T>
-    void append(T chunk, int nbits)
-    {
-        data |= AccumulatorType(chunk) << bits;
-        bits += nbits;
-    }
-
-    u32 getBits(int nbits) const
-    {
-        const AccumulatorType mask = (AccumulatorType(1) << nbits) - 1;
-        return u32(data & mask);
-    }
-
-    void consumeBits(int nbits)
-    {
-        bits -= nbits;
-        data >>= nbits;
-    }
-};
 
 struct Fax3CodecState
 {
-    ConstMemory input;
-
     int mode = 0;
     size_t stride = 0;
 
     // Decoder state info
-    DataRegister dataRegister;
     int EOLcnt = 0;                  // count of EOL codes recognized
     u32 *runs = nullptr;             // b&w runs for current/previous row
     u32 nruns = 0;                   // size of the refruns / curruns arrays
@@ -143,13 +111,11 @@ enum class Expand
 struct State
 {
     Fax3CodecState sp;
-    DataRegister dataRegister;
+    image::DataRegister dataRegister;
 
     int a0;           // reference element
     int lastx;        // last element in row
     int RunLength;    // length of current run
-    const u8 *cp;     // next byte of input data
-    const u8 *ep;     // end of input data
     u32 *pa;          // place to stuff next run
     u32 *thisrun;     // current row's run array
     int EOLcnt;       // number of EOL codes recognized
@@ -161,10 +127,10 @@ struct State
     std::vector<u32> run_buffer;
 
     State(ConstMemory input, u32 width, u32 nruns)
-        : lastx(width)
+        : dataRegister(input)
+        , lastx(width)
         , run_buffer(nruns * 2, 0)
     {
-        sp.input = input;
         sp.stride = width; // (width + 7) / 8
 
         sp.nruns = nruns;
@@ -179,18 +145,12 @@ struct State
 
     void cache()
     {
-        dataRegister = sp.dataRegister;
         EOLcnt = sp.EOLcnt;
-        cp = sp.input.address;
-        ep = cp + sp.input.size;
     }
 
     void uncache()
     {
-        sp.dataRegister = dataRegister;
         sp.EOLcnt = EOLcnt;
-        sp.input.size -= (cp - sp.input.address);
-        sp.input.address = cp;
     }
 
     u32 getBits(int nbits) const
@@ -205,34 +165,7 @@ struct State
 
     bool ensureBits(int nbits)
     {
-        while (dataRegister.bits < nbits)
-        {
-            if (cp >= ep)
-            {
-                // out of bytes to read
-                if (dataRegister.bits == 0)
-                    return false;
-                dataRegister.bits = nbits; // pad with zeros
-                return true;
-            }
-
-#if defined(MANGO_CPU_64BIT)
-            if (size_t(ep - cp) >= 8)
-            {
-                // read 8 bytes, append only bytes that fit in the accumulator
-                const int bytes = (ACCUMULATOR_BITS - dataRegister.bits) / 8;
-                u64 chunk = mango::littleEndian::uload64(cp);
-                dataRegister.append(chunk, bytes * 8);
-                cp += bytes;
-                return true;
-            }
-#endif
-
-            // read one byte
-            dataRegister.append(*cp++, 8);
-        }
-
-        return true;
+        return dataRegister.ensureBits(nbits);
     }
 
     FaxTabEntry lookup(int nbits, const FaxTabEntry* table)
@@ -640,8 +573,8 @@ struct State
             {
                 int n = dataRegister.bits & 15;
                 consumeBits(n);
-                if (dataRegister.bits == 0 && !is_aligned(cp, 2))
-                    cp++;
+                if (dataRegister.bits == 0 && !is_aligned(dataRegister.ptr, 2))
+                    ++dataRegister.ptr;
             }
 
             output.address += sp.stride;
@@ -867,39 +800,46 @@ struct State
     }
 };
 
-bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool word_aligned)
+} // namespace
+
+namespace mango::image
 {
-    const u32 nruns = round_ceil(width + 1, 32);
-    State state(input, width, nruns);
 
-    // TODO: resolve mode from group3_options
-    state.sp.mode = word_aligned ? FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_WORDALIGN
-                                 : FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
+    bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool word_aligned)
+    {
+        const u32 nruns = round_ceil(width + 1, 32);
+        State state(input, width, nruns);
 
-    auto result = state.Fax3DecodeRLE(output);
-    return result == Expand::Success;
-}
+        // TODO: resolve mode from group3_options
+        state.sp.mode = word_aligned ? FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_WORDALIGN
+                                    : FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
 
-bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool is_2d)
-{
-    const u32 nruns = round_ceil(width + 1, 32);
-    State state(input, width, nruns);
+        auto result = state.Fax3DecodeRLE(output);
+        return result == Expand::Success;
+    }
 
-    // TODO: resolve mode from group3_options
-    state.sp.mode = FAXMODE_NORTC |FAXMODE_BYTEALIGN;
+    bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool is_2d)
+    {
+        const u32 nruns = round_ceil(width + 1, 32);
+        State state(input, width, nruns);
 
-    auto result = is_2d ? state.Fax3Decode2D(output) : state.Fax3Decode1D(output);
-    return result == Expand::Success;
-}
+        // TODO: resolve mode from group3_options
+        state.sp.mode = FAXMODE_NORTC |FAXMODE_BYTEALIGN;
 
-bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height)
-{
-    const u32 nruns = round_ceil(width + 1, 32);
-    State state(input, width, nruns);
+        auto result = is_2d ? state.Fax3Decode2D(output) : state.Fax3Decode1D(output);
+        return result == Expand::Success;
+    }
 
-    // TODO: resolve mode from group4_options
-    state.sp.mode = FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
+    bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height)
+    {
+        const u32 nruns = round_ceil(width + 1, 32);
+        State state(input, width, nruns);
 
-    auto result = state.Fax4Decode(output);
-    return result == Expand::Success;
-}
+        // TODO: resolve mode from group4_options
+        state.sp.mode = FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
+
+        auto result = state.Fax4Decode(output);
+        return result == Expand::Success;
+    }
+
+} // namespace mango::image

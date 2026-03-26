@@ -12,18 +12,16 @@
 #include <vector>
 #include <numeric>
 
+#include "ccitt_fax_decode.hpp"
 #include "../jpeg/jpeg.hpp"
 
 using namespace mango;
 using namespace mango::image;
 using namespace mango::math;
 
-bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool word_aligned);
-bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool is_2d);
-bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height);
-
 namespace
 {
+
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
@@ -1972,28 +1970,27 @@ namespace
             //printLine(Print::Info, "    input stride: {}", bytes_per_scanline);
             //printLine(Print::Info, "    output stride: {}", dest_stride);
 
-            u8* dest_ptr = dest.address;
-            const u8* src_ptr = src.address;
-
             // TODO: optimize
+            // - we reverse bits so that extraction loop is more efficient
+            // - The bits are extracted in reverse order, so we need to reverse them back to the original order
+            Buffer temp(src.size);
+            u8_reverse_bits(temp, src);
+            src = temp;
+
+            u8* dest_ptr = dest.address;
+
             const int x1 = width * channels;
 
             for (int y = 0; y < height; ++y)
             {
-                u32 bit_offset = 0;  // Reset bit offset for each scanline
+                DataRegister dataRegister(src);
 
                 for (int x = 0; x < x1; ++x)
                 {
-                    // Read N bits from input
-                    u32 sample = 0;
-                    for (int bit = 0; bit < source_bits; ++bit)
-                    {
-                        u32 byte_index = bit_offset / 8;
-                        u32 bit_index = bit_offset % 8;
-                        u32 bit_value = (src_ptr[byte_index] >> (7 - bit_index)) & 1;
-                        sample = (sample << 1) | bit_value;
-                        bit_offset++;
-                    }
+                    dataRegister.ensureBits(source_bits);
+                    u32 sample = dataRegister.getBits(source_bits);
+                    dataRegister.consumeBits(source_bits);
+                    sample = u32_reverse_bits(sample) >> (32 - source_bits);
 
                     // Expand and write output
                     if (PhotometricInterpretation(m_context.photometric) == PhotometricInterpretation::PALETTE)
@@ -2011,7 +2008,8 @@ namespace
                     }
                 }
 
-                src_ptr += bytes_per_scanline;
+                src.address += bytes_per_scanline;
+                src.size -= bytes_per_scanline;
                 dest_ptr += dest_stride;
             }
         }
