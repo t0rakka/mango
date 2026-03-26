@@ -1976,12 +1976,11 @@ namespace
             const u8* src_ptr = src.address;
 
             // TODO: optimize
+            const int x1 = width * channels;
 
             for (int y = 0; y < height; ++y)
             {
                 u32 bit_offset = 0;  // Reset bit offset for each scanline
-
-                const int x1 = width * channels;
 
                 for (int x = 0; x < x1; ++x)
                 {
@@ -1992,7 +1991,7 @@ namespace
                         u32 byte_index = bit_offset / 8;
                         u32 bit_index = bit_offset % 8;
                         u32 bit_value = (src_ptr[byte_index] >> (7 - bit_index)) & 1;
-                        sample |= (bit_value << (source_bits - 1 - bit));
+                        sample = (sample << 1) | bit_value;
                         bit_offset++;
                     }
 
