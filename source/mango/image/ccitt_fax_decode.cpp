@@ -216,7 +216,7 @@ struct State
                 return true;
             }
 
-#if ACCUMULATOR_BITS == 64
+#if defined(MANGO_CPU_64BIT)
             if (size_t(ep - cp) >= 8)
             {
                 // read 8 bytes, append only bytes that fit in the accumulator
