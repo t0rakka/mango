@@ -377,63 +377,42 @@ struct State
 
         for (;;)
         {
-            for (bool isWhiteDone = false; !isWhiteDone; )
+            for (int i = 0; i < 2; ++i)
             {
-                FaxTabEntry TabEnt = lookup(12, g_FaxWhiteTable);
-                switch (TabEnt.symbol)
+                for (bool isDone = false; !isDone; )
                 {
-                    case S_EOL:
-                        EOLcnt = 1;
-                        goto done1d;
-                    case S_TermW:
-                        if (!setValue(TabEnt.run))
-                            return Expand::Error;
-                        isWhiteDone = true;
-                        break;
-                    case S_MakeUpW:
-                    case S_MakeUp:
-                        a0 += TabEnt.run;
-                        RunLength += TabEnt.run;
-                        break;
-                    case S_Null:
-                        result = Expand::EndOfFile;
-                        [[fallthrough]];
-                    default:
-                        goto done1d;
+                    // Determine if the run is black (i is 1) or white (i is 0).
+                    const bool isBlack = (i > 0);
+                    FaxTabEntry TabEnt = isBlack ? lookup(13, g_FaxBlackTable)
+                                                 : lookup(12, g_FaxWhiteTable);
+                    switch (TabEnt.symbol)
+                    {
+                        case S_EOL:
+                            EOLcnt = 1;
+                            goto done1d;
+                        case S_TermW:
+                        case S_TermB:
+                            if (!setValue(TabEnt.run))
+                                return Expand::Error;
+                            isDone = true;
+                            break;
+                        case S_MakeUpW:
+                        case S_MakeUpB:
+                        case S_MakeUp:
+                            a0 += TabEnt.run;
+                            RunLength += TabEnt.run;
+                            break;
+                        case S_Null:
+                            result = Expand::EndOfFile;
+                            [[fallthrough]];
+                        default:
+                            goto done1d;
+                    }
                 }
+
+                if (a0 >= lastx)
+                    goto done1d;
             }
-
-            if (a0 >= lastx)
-                goto done1d;
-
-            for (bool isBlackDone = false; !isBlackDone; )
-            {
-                FaxTabEntry TabEnt = lookup(13, g_FaxBlackTable);
-                switch (TabEnt.symbol)
-                {
-                    case S_EOL:
-                        EOLcnt = 1;
-                        goto done1d;
-                    case S_TermB:
-                        if (!setValue(TabEnt.run))
-                            return Expand::Error;
-                        isBlackDone = true;
-                        break;
-                    case S_MakeUpB:
-                    case S_MakeUp:
-                        a0 += TabEnt.run;
-                        RunLength += TabEnt.run;
-                        break;
-                    case S_Null:
-                        result = Expand::EndOfFile;
-                        [[fallthrough]];
-                    default:
-                        goto done1d;
-                }
-            }
-
-            if (a0 >= lastx)
-                goto done1d;
 
             if (*(pa - 1) == 0 && *(pa - 2) == 0)
                 pa -= 2;
@@ -476,7 +455,9 @@ struct State
 
                 case S_Horiz:
                 {
+                    // Determine if the first run is black or white.
                     bool isBlack = (pa - thisrun) & 1;
+
                     for (int i = 0; i < 2; ++i)
                     {
                         for (bool isDone = false; !isDone; )
