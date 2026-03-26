@@ -141,6 +141,10 @@ namespace
         std::vector<float> s_min_sample_value;
         std::vector<float> s_max_sample_value;
 
+        std::vector<u64> extra_samples;
+        bool associated_alpha = true;
+        size_t associated_alpha_index = 0;
+
         u32 ink_set = 1;
         std::string ink_names;
         u32 number_of_inks = 4;
@@ -178,7 +182,7 @@ namespace
         u32 rows_per_strip = StripHeightNoLimit;
         std::vector<u64> strip_offsets;
         std::vector<u64> strip_byte_counts;
-        
+
         // Tile support
         u32 tile_width = 0;
         u32 tile_length = 0;
@@ -249,7 +253,7 @@ namespace
         InkNames = 333, // ASCII
         NumberOfInks = 334,
         DotRange = 336,
-        //ExtraSamples = 338, // SHORT
+        ExtraSamples = 338, // SHORT
         SampleFormat = 339,
         SMinSampleValue = 340,
         SMaxSampleValue = 341,
@@ -265,13 +269,23 @@ namespace
         YCbCrSubSampling = 530,
         ReferenceBlackWhite = 532,
         JPEGTables = 347,
+        XMP = 700,
         //Copyright = 33432, // ASCII
         Matteing = 32995,
         DataType = 32996,
         ImageDepth = 32997,
         TileDepth = 32998,
-        //PhotoshopImageResources = 34377,
+        PhotoshopImageResources = 34377,
+        EXIF = 34665,
         ICCProfile = 34675,
+
+        IPTC = 33723,
+        ImageSourceData = 37724, // Adobe
+        ModelPixelScaleTag = 33550,
+        ModelTiepointTag = 33922,
+        GeoKeyDirectoryTag = 34735,
+        GeoAsciiParamsTag = 34737,
+        GDAL_METADATA = 42113,
     };
 
     static inline
@@ -615,9 +629,34 @@ namespace
                 context.ink_names = getAscii(p, memory, type, is_big_tiff);
                 break;
 
+            case Tag::ExtraSamples:
+            {
+                context.extra_samples = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                printLine(Print::Info, "    [ExtraSamples]");
+                print(Print::Info, "      values: ");
+                for (auto value : context.extra_samples)
+                {
+                    print(Print::Info, "{} ", value);
+                }
+                printLine(Print::Info, "");
+
+                for (size_t i = 0; i < context.extra_samples.size(); ++i)
+                {
+                    // ExtraSamples 0: unspecified
+                    //              1: associated alpha (premultiplied color)
+                    if (context.extra_samples[i] == 1)
+                    {
+                        // found associated alpha in extra samples
+                        context.associated_alpha = true;
+                        context.associated_alpha_index = i;
+                    }
+                }
+
+                break;
+            }
+
             case Tag::SampleFormat:
             {
-                std::vector<u64> values = 
                 context.sample_format = getUnsignedArray(p, memory, type, count, is_big_tiff);
                 printLine(Print::Info, "    [SampleFormat]");
                 print(Print::Info, "      values: ");
@@ -732,6 +771,13 @@ namespace
 
             case Tag::DateTime:
             case Tag::Artist:
+            case Tag::ModelPixelScaleTag:
+            case Tag::ModelTiepointTag:
+            case Tag::GeoKeyDirectoryTag:
+            case Tag::GeoAsciiParamsTag:
+            case Tag::GDAL_METADATA:
+            case Tag::IPTC:
+            case Tag::ImageSourceData:
                 // ignored tags
                 break;
 
@@ -742,12 +788,39 @@ namespace
                 // deprecated tags
                 break;
 
+            case Tag::XMP:
+            {
+                u64 offset = getOffset(p, is_big_tiff);
+                //context.xmp = ConstMemory(memory.address + offset, count);
+                printLine(Print::Info, "    [XMP]");
+                printLine(Print::Info, "      length: {} bytes", offset, count);
+                break;
+            }
+
+            case Tag::EXIF:
+            {
+                u64 offset = getOffset(p, is_big_tiff);
+                //context.exif = ConstMemory(memory.address + offset, count);
+                printLine(Print::Info, "    [EXIF]");
+                printLine(Print::Info, "      length: {} bytes", offset, count);
+                break;
+            }
+
+            case Tag::PhotoshopImageResources:
+            {
+                u64 offset = getOffset(p, is_big_tiff);
+                //context.photoshop_image_resources = ConstMemory(memory.address + offset, count);
+                printLine(Print::Info, "    [PhotoshopImageResources]");
+                printLine(Print::Info, "      length: {} bytes", offset, count);
+                break;
+            }
+
             case Tag::ICCProfile:
             {
                 u64 offset = getOffset(p, is_big_tiff);
                 context.icc_profile = ConstMemory(memory.address + offset, count);
                 printLine(Print::Info, "    [ICCProfile]");
-                printLine(Print::Info, "      offset: {}, length: {} bytes", offset, count);
+                printLine(Print::Info, "      length: {} bytes", offset, count);
                 break;
             }
 
@@ -764,12 +837,31 @@ namespace
     }
 
     static
-    bool lzw_decompress(Memory output, ConstMemory input, FillOrder fill_order)
+    int read_first_lzw_code_9(ConstMemory input, bool msb_first)
     {
-        // Auto-detect bit order by checking which yields ClearCode (256)
-        const bool is_msb_first = (fill_order == FillOrder::MSB2LSB);
+        if (input.size < 2)
+            return -1;
+        const u8* p = input.address;
+        if (msb_first)
+            return ((p[0] << 1) | (p[1] >> 7)) & 0x1ff;
+        return (p[0] | ((p[1] & 1) << 8)) & 0x1ff;
+    }
 
-        // Unified LZW decoder supporting both MSB-first and LSB-first bit orders
+    static
+    bool lzw_decompress(Memory output, ConstMemory input)
+    {
+        const int ClearCode = 256;
+        const int EoiCode = 257;
+
+        // Auto-detect bit order: which interpretation yields ClearCode (256) as the first code
+        bool is_msb_first = true;
+        int code_msb = read_first_lzw_code_9(input, true);
+        int code_lsb = read_first_lzw_code_9(input, false);
+        if (code_msb == ClearCode)
+            is_msb_first = true;
+        else if (code_lsb == ClearCode)
+            is_msb_first = false;
+
         struct lzw_entry
         {
             s16 prefix;
@@ -779,7 +871,6 @@ namespace
 
         u8 decode_stack[4096];
 
-        // Initialize table with single characters
         for (int i = 0; i < 256; i++)
         {
             codes[i].prefix = -1;
@@ -787,20 +878,16 @@ namespace
             codes[i].suffix = static_cast<u8>(i);
         }
 
-        const int ClearCode = 256;
-        const int EoiCode = 257;
         int next_table_entry = 258;
 
-        // Calculate pointers from Memory objects
         const u8* src_ptr = input.address;
         const u8* src_end = input.address + input.size;
         u8* dest_ptr = output.address;
         u8* dest_end = output.address + output.size;
 
-        // Bit reading state
         s32 data = 0;
         s32 data_bits = 0;
-        s32 codesize = 9;  // Start with 9-bit codes
+        s32 codesize = 9;
         s32 codemask = (1 << codesize) - 1;
 
         auto GetNextCode = [&]() -> int
@@ -918,19 +1005,14 @@ namespace
         {
             int Code = GetNextCode();
             if (Code < 0 || Code == EoiCode)
-            {
-                break; // EOF
-            }
+                break;
 
             // Handle non-compliant streams that don't start with Clear code (LSB-first compatibility)
             if (!is_msb_first && first_code && Code != ClearCode)
             {
-                // Initialize as if we got a Clear code
                 next_table_entry = 258;
                 codesize = 9;
                 codemask = (1 << codesize) - 1;
-                
-                // Process this first code normally
                 if (!WriteString(Code))
                     return false;
                 OldCode = Code;
@@ -939,23 +1021,17 @@ namespace
             }
             first_code = false;
 
-            // Validate code is in valid range
             if (Code >= next_table_entry + 1)
-            {
                 return false;
-            }
 
             if (Code == ClearCode)
             {
-                // Initialize table
                 next_table_entry = 258;
                 codesize = 9;
                 codemask = (1 << codesize) - 1;
-
                 Code = GetNextCode();
                 if (Code < 0 || Code == EoiCode)
                     break;
-
                 if (!WriteString(Code))
                     return false;
                 OldCode = Code;
@@ -964,22 +1040,18 @@ namespace
             {
                 if (Code < next_table_entry)
                 {
-                    // Critical Path: Code is in table (99.9% of the time)
                     if (!WriteString(Code))
                         return false;
                     if (OldCode >= 0)
-                    {
                         AddStringToTable(OldCode, codes[Code].first);
-                    }
                     OldCode = Code;
                 }
                 else
                 {
-                    // Code not in table - the "KwKwK" case (rare)
                     if (OldCode >= 0)
                     {
                         AddStringToTable(OldCode, codes[OldCode].first);
-                        if (!WriteString(Code)) // Code now exists in table
+                        if (!WriteString(Code))
                             return false;
                         OldCode = Code;
                     }
@@ -1268,6 +1340,7 @@ namespace
             header.faces = 0;
             header.format = getImageFormat();
             header.compression = TextureCompression::NONE;
+            header.premultiplied = m_context.associated_alpha;
 
             u32 data_size = std::accumulate(m_context.strip_byte_counts.begin(), m_context.strip_byte_counts.end(), 0u);
             data_size += std::accumulate(m_context.tile_byte_counts.begin(), m_context.tile_byte_counts.end(), 0u);
@@ -1361,7 +1434,7 @@ namespace
                     {
                         return Format(bits * 3, type, Format::RGB, bits, bits, bits, 0);
                     }
-                    else if (m_context.samples_per_pixel == 4)
+                    else if (m_context.samples_per_pixel >= 4)
                     {
                         return Format(bits * 4, type, Format::RGBA, bits, bits, bits, bits);
                     }
@@ -1369,7 +1442,7 @@ namespace
                     {
                         header.setError("Unsupported number of channels: {}", m_context.samples_per_pixel);
                         return Format();
-                    }
+                    }   
                 }
 
                 case PhotometricInterpretation::PALETTE:
@@ -1378,9 +1451,10 @@ namespace
                 case PhotometricInterpretation::SEPARATED:
                     return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
+                case PhotometricInterpretation::CIELAB:
+                    //return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                 case PhotometricInterpretation::TRANSPARENCY_MASK:
                 case PhotometricInterpretation::YCBCR:
-                case PhotometricInterpretation::CIELAB:
                 case PhotometricInterpretation::ICCLAB:
                 case PhotometricInterpretation::ITULAB:
                 case PhotometricInterpretation::CFA:
@@ -1468,6 +1542,14 @@ namespace
             {
                 // tiles
 
+                if (m_context.tile_byte_counts.size() != m_context.tile_offsets.size() ||
+                    m_context.tile_byte_counts.empty())
+                {
+                    // We could try to infer the tiles from the remaining data in the file but we drop broken files.
+                    status.setError("Incorrect or missing tile data.");
+                    return status;
+                }
+
                 const u32 tile_width = m_context.tile_width;
                 const u32 tile_length = m_context.tile_length;
                 const u32 xtiles = div_ceil(header.width, tile_width);
@@ -1520,6 +1602,14 @@ namespace
             else
             {
                 // strips
+
+                if (m_context.strip_byte_counts.size() != m_context.strip_offsets.size() ||
+                    m_context.strip_byte_counts.empty())
+                {
+                    // We could try to infer the strips from the remaining data in the file but we drop broken files.
+                    status.setError("Incorrect or missing strip data.");
+                    return status;
+                }
 
                 if (m_context.planar_configuration == 1)
                 {
@@ -1986,7 +2076,6 @@ namespace
                     break;
                 }
 
-#if 0
                 case Compression::CCITT_RLE:
                 case Compression::CCITT_RLE_W:
                 {
@@ -2067,10 +2156,10 @@ namespace
                     needs_expansion = false;
                     break;
                 }
-#endif
+
                 case Compression::LZW:
                 {
-                    bool success = lzw_decompress(buffer, memory, FillOrder(m_context.fill_order));
+                    bool success = lzw_decompress(buffer, memory);
                     if (!success)
                     {
                         printLine(Print::Error, "[LZW] Decompression failed");
@@ -2145,10 +2234,20 @@ namespace
 
             if (m_is_little_endian != cpu::isLittleEndian())
             {
-                if (m_context.sample_bits == 16 && !needs_expansion)
+                if (!needs_expansion)
                 {
-                    // Handle 16-bit endianness conversion
-                    byteswap(reinterpret_cast<u16*>(const_cast<u8*>(memory.address)), memory.size / 2);
+                    switch (m_context.sample_bits)
+                    {
+                        case 16:
+                            byteswap(reinterpret_cast<u16*>(const_cast<u8*>(memory.address)), memory.size / 2);
+                            break;
+                        case 32:
+                            byteswap(reinterpret_cast<u32*>(const_cast<u8*>(memory.address)), memory.size / 4);
+                            break;
+                        case 64:
+                            byteswap(reinterpret_cast<u64*>(const_cast<u8*>(memory.address)), memory.size / 8);
+                            break;
+                    }
                 }
             }
 
@@ -2162,46 +2261,90 @@ namespace
                 }
             }
 
+            // RGB can be decoded directly, other formats need to be resolved.
+            bool is_direct = m_context.samples_per_pixel < 4;
+            Buffer scanline(expanded_bytes_per_row);
+
             for (u32 y = 0; y < height; ++y)
             {
+                u8* dest = is_direct ? target.image : scanline.data();
+
                 if (m_context.planar_configuration == 1)
                 {
-                    resolveChunkyScanline(target.image, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel);
+                    resolveChunkyScanline(dest, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel);
                 }
                 else
                 {
-                    resolvePlanarScanline(target.image, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel, channel);
+                    resolvePlanarScanline(dest, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel, channel);
                 }
 
-                if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED))
+                if (!is_direct)
                 {
-                    // TODO: We decode as CMYK, the channel information is in the Ink tags
-
-                    const u8* lookup = math::get_linear_to_srgb_table();
-
-                    for (int x = 0; x < width; ++x)
+                    if (m_context.photometric == u32(PhotometricInterpretation::RGB))
                     {
-                        int C = 255 - target.image[x * 4 + 0];
-                        int M = 255 - target.image[x * 4 + 1];
-                        int Y = 255 - target.image[x * 4 + 2];
-                        int K = 255 - target.image[x * 4 + 3];
+                        size_t base = 0;
+                        for (int x = 0; x < width; ++x)
+                        {
+                            int r = scanline[base + 0];
+                            int g = scanline[base + 1];
+                            int b = scanline[base + 2];
 
-                        int R = (C * K + 127) / 255;
-                        int G = (M * K + 127) / 255;
-                        int B = (Y * K + 127) / 255;
+                            int a = 0xff;
+                            if (m_context.associated_alpha)
+                            {
+                                a = scanline[base + m_context.associated_alpha_index];
+                            }
+        
+                            target.image[x * 4 + 0] = r;
+                            target.image[x * 4 + 1] = g;
+                            target.image[x * 4 + 2] = b;
+                            target.image[x * 4 + 3] = a;
 
-                        target.image[x * 4 + 0] = lookup[R];
-                        target.image[x * 4 + 1] = lookup[G];
-                        target.image[x * 4 + 2] = lookup[B];
-                        target.image[x * 4 + 3] = 0xff;
+                            base += m_context.samples_per_pixel;
+                        }
                     }
+                    else if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED))
+                    {
+                        // TODO: We decode as CMYK, the channel information is in the Ink tags
+    
+                        const u8* lookup = math::get_linear_to_srgb_table();
+
+                        size_t base = 0;
+
+                        for (int x = 0; x < width; ++x)
+                        {
+                            int C = 255 - scanline[base + 0];
+                            int M = 255 - scanline[base + 1];
+                            int Y = 255 - scanline[base + 2];
+                            int K = 255 - scanline[base + 3];
+    
+                            int R = (C * K + 127) / 255;
+                            int G = (M * K + 127) / 255;
+                            int B = (Y * K + 127) / 255;
+    
+                            target.image[x * 4 + 0] = lookup[R];
+                            target.image[x * 4 + 1] = lookup[G];
+                            target.image[x * 4 + 2] = lookup[B];
+                            target.image[x * 4 + 3] = 0xff;
+
+                            base += m_context.samples_per_pixel;
+                        }
+                    }
+                    /*
+                    else if (m_context.photometric == u32(PhotometricInterpretation::CIELAB))
+                    {
+                        for (int x = 0; x < width; ++x)
+                        {
+                        }
+                    }
+                    */
                 }
 
                 memory.address += expanded_bytes_per_row;
                 target.image += target.stride;
             }
         }
-
+        
         void resolveChunkyScanline(u8* output, const u8* input, u32 bytes, u32 channels)
         {
             if (m_context.predictor == 1)
