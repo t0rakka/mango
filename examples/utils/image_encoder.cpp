@@ -15,6 +15,7 @@ void printHelp(std::string_view program)
     printLine("    --astc <width> <height>");
     printLine("    --output <filename>");
     printLine("    --compression <level:0..10>");
+    printLine("    --quality <level:0..100>");
     printLine("    --luminance");
     printLine("    --linear");
     printLine("    --info");
@@ -84,6 +85,19 @@ int main(int argc, const char* argv[])
             {
                 int level = std::atoi(argv[index++]);
                 options.compression = level;
+            }
+            else
+            {
+                printHelp(program);
+                return 0;
+            }
+        }
+        else if (std::string_view(argv[index]) == "--quality")
+        {
+            if (++index < argc)
+            {
+                int quality = std::atoi(argv[index++]);
+                options.quality = quality / 100.0f;
             }
             else
             {
