@@ -279,6 +279,7 @@ namespace mango::image
 
     void registerImageCodecAVIF()
     {
+        // AVIF codec is disabled
     }
 
 } // namespace mango::image

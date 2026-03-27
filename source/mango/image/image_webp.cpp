@@ -216,6 +216,7 @@ namespace mango::image
 
     void registerImageCodecWEBP()
     {
+        // WEBP codec is disabled
     }
 
 } // namespace mango::image

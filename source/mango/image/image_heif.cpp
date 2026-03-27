@@ -323,6 +323,7 @@ namespace mango::image
 
     void registerImageCodecHEIF()
     {
+        // HEIF codec is disabled
     }
 
 } // namespace mango::image
