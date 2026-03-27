@@ -62,18 +62,31 @@ namespace
 
             ImageDecodeStatus status;
 
-            // TODO: optimize - only allocate temporary bitmap when required
-            Bitmap temp(header.width, header.height, header.format);
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
 
-            int s = WP2DecodeRgba8(m_memory.address, m_memory.size, header.width, header.height, temp.image, temp.stride);
+            // TODO: support more input formats, including HDR (floating point)
+            WP2::ArgbBuffer buffer(WP2_RGBA_32);
+
+            WP2Status s;
+            s = buffer.SetExternal(target.width, target.height, target.image, target.stride, false);
             if (s != WP2_STATUS_OK)
             {
-                const char* message = WP2GetStatusMessage(WP2Status(s));
-                status.setError("[ImageDecoder.WP2] WP2DecodeRgba8() -> {}", message);
+                status.setError("[ImageEncoder.WP2] WP2::ArgbBuffer::SetExternal() -> {}", WP2GetStatusMessage(s));
                 return status;
             }
 
-            dest.blit(0, 0, temp);
+            WP2::DecoderConfig config = WP2::DecoderConfig::kDefault;
+            config.thread_level = options.multithread ? std::thread::hardware_concurrency() : 0;
+
+            s = WP2::Decode(m_memory.address, m_memory.size, &buffer, config);
+            if (s != WP2_STATUS_OK)
+            {
+                const char* message = WP2GetStatusMessage(WP2Status(s));
+                status.setError("[ImageDecoder.WP2] WP2::Decode() -> {}", message);
+                return status;
+            }
+
+            target.resolve();
 
             return status;
         }
@@ -93,17 +106,16 @@ namespace
     {
         ImageEncodeStatus status;
 
-        // TODO: support more input formats, including HDR (floating point)
-
         // convert to correct format when required
         Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
         TemporaryBitmap temp(surface, format);
 
         WP2Status s;
 
-        WP2::ArgbBuffer input_buffer(WP2_RGBA_32);
+        // TODO: support more input formats, including HDR (floating point)
+        WP2::ArgbBuffer buffer(WP2_RGBA_32);
 
-        s = input_buffer.SetExternal(temp.width, temp.height, temp.image, temp.stride, false);
+        s = buffer.SetExternal(temp.width, temp.height, temp.image, temp.stride, false);
         if (s != WP2_STATUS_OK)
         {
             status.setError("[ImageEncoder.WP2] WP2::ArgbBuffer::SetExternal() -> {}", WP2GetStatusMessage(s));
@@ -124,7 +136,7 @@ namespace
 
         WP2::MemoryWriter writer;
 
-        s = WP2::Encode(input_buffer, &writer, config);
+        s = WP2::Encode(buffer, &writer, config);
         if (s != WP2_STATUS_OK)
         {
             status.setError("[ImageEncoder.WP2] WP2::Encodel() -> {}", WP2GetStatusMessage(s));
