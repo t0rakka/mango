@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 2.4.5
+        VERSION 2.4.6
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
@@ -30,6 +30,7 @@ OPTION(LIBRARY_LZFSE        "Enable LZFSE compression support"          ON)
 OPTION(LIBRARY_JXL          "Enable jpeg-xl image codec support"        ON)
 OPTION(LIBRARY_JP2          "Enable jpeg2000 image codec support"       ON)
 OPTION(LIBRARY_WEBP         "Enable WebP image codec support"           ON)
+OPTION(LIBRARY_WP2          "Enable WP2 image codec support"            ON)
 OPTION(LIBRARY_AVIF         "Enable avif image codec support"           ON)
 OPTION(LIBRARY_HEIF         "Enable heif image codec support"           ON)
 OPTION(LIBRARY_ISAL         "Enable Intel ISA-L compression support"    ON)
@@ -57,6 +58,7 @@ if (LIBRARY_DISABLE)
     set(LIBRARY_JXL    OFF)
     set(LIBRARY_JP2    OFF)
     set(LIBRARY_WEBP   OFF)
+    set(LIBRARY_WP2    OFF)
     set(LIBRARY_AVIF   OFF)
     set(LIBRARY_HEIF   OFF)
     set(LIBRARY_ISAL   OFF)
@@ -74,16 +76,16 @@ endif ()
 # Option to enable every Intel ISA extension
 option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"           OFF)
 if (INTEL_DELUXE OR ENABLE_AVX512)
-    set(ENABLE_AVX2    ON)
-    set(ENABLE_PCLMUL  ON)
-    set(ENABLE_POPCNT  ON)
-    set(ENABLE_AES     ON)
-    set(ENABLE_F16C    ON)
-    set(ENABLE_LZCNT   ON)
-    set(ENABLE_BMI     ON)
-    set(ENABLE_BMI2    ON)
-    set(ENABLE_FMA     ON)
-    set(ENABLE_SHA     ON)
+    set(ENABLE_AVX2     ON)
+    set(ENABLE_PCLMUL   ON)
+    set(ENABLE_POPCNT   ON)
+    set(ENABLE_AES      ON)
+    set(ENABLE_F16C     ON)
+    set(ENABLE_LZCNT    ON)
+    set(ENABLE_BMI      ON)
+    set(ENABLE_BMI2     ON)
+    set(ENABLE_FMA      ON)
+    set(ENABLE_SHA      ON)
 endif ()
 
 # Linker selection
@@ -968,6 +970,10 @@ endif ()
 
 if (LIBRARY_WEBP)
     find_module(mango WEBP ${INTERFACE} OPTIONAL libwebp WebP WebP::webp 1.3.2)
+endif ()
+
+if (LIBRARY_WP2)
+    find_module(mango WP2 ${INTERFACE} OPTIONAL wp2 wp2 webp2 0)
 endif ()
 
 if (LIBRARY_AVIF)

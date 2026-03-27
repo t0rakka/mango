@@ -25,11 +25,11 @@ namespace mango::image
     {
         ConstMemory icc;          // jpg, png, jp2
 
-        float quality = 0.90f;    // jpg, jp2, heif: [0.0, 1.0]
-        int compression = 5;      // png: [0, 10]
+        float quality = 0.90f;    // jpg, jp2, wp2, heif: [0.0, 1.0]
+        int compression = 5;      // png, wp2: [0, 10]
         bool parallel = true;     // png
         bool dithering = true;    // gif
-        bool lossless = false;    // webp, jp2, heif
+        bool lossless = false;    // webp, wp2, jp2, heif
 
         int astc_block_width = 4;
         int astc_block_height = 4;

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/system.hpp>
@@ -125,6 +125,7 @@ namespace mango::image
     void registerImageCodecHEIF();
     void registerImageCodecAVIF();
     void registerImageCodecWEBP();
+    void registerImageCodecWP2();
 
     class ImageServer
     {
@@ -165,6 +166,7 @@ namespace mango::image
             registerImageCodecHEIF();
             registerImageCodecAVIF();
             registerImageCodecWEBP();
+            registerImageCodecWP2();
         }
 
         ~ImageServer()
