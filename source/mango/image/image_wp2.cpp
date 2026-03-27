@@ -30,22 +30,21 @@ namespace
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
-            u32 width = 0;
-            u32 height = 0;
+            WP2::BitstreamFeatures features;
 
-            int s = WP2Parse(m_memory.address, m_memory.size, &width, &height);
+            WP2Status s = features.Read(m_memory.address, m_memory.size);
             if (s != WP2_STATUS_OK)
             {
-                const char* message = WP2GetStatusMessage(WP2Status(s));
+                const char* message = WP2GetStatusMessage(s);
                 header.setError("[ImageDecoder.WP2] WP2Parse() -> {}", message);
                 return;
             }
 
             // TODO: support more output formats, including HDR (floating point)
-            // TODO: support premult alpha flag
 
-            header.width = width;
-            header.height = height;
+            header.width = features.raw_width;
+            header.height = features.raw_height;
+            header.premultiplied = features.is_premultiplied;
             header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
         }
 
@@ -71,7 +70,8 @@ namespace
             s = buffer.SetExternal(target.width, target.height, target.image, target.stride, false);
             if (s != WP2_STATUS_OK)
             {
-                status.setError("[ImageEncoder.WP2] WP2::ArgbBuffer::SetExternal() -> {}", WP2GetStatusMessage(s));
+                const char* message = WP2GetStatusMessage(s);
+                status.setError("[ImageEncoder.WP2] WP2::ArgbBuffer::SetExternal() -> {}", message);
                 return status;
             }
 
@@ -81,7 +81,7 @@ namespace
             s = WP2::Decode(m_memory.address, m_memory.size, &buffer, config);
             if (s != WP2_STATUS_OK)
             {
-                const char* message = WP2GetStatusMessage(WP2Status(s));
+                const char* message = WP2GetStatusMessage(s);
                 status.setError("[ImageDecoder.WP2] WP2::Decode() -> {}", message);
                 return status;
             }
@@ -118,7 +118,8 @@ namespace
         s = buffer.SetExternal(temp.width, temp.height, temp.image, temp.stride, false);
         if (s != WP2_STATUS_OK)
         {
-            status.setError("[ImageEncoder.WP2] WP2::ArgbBuffer::SetExternal() -> {}", WP2GetStatusMessage(s));
+            const char* message = WP2GetStatusMessage(s);
+            status.setError("[ImageEncoder.WP2] WP2::ArgbBuffer::SetExternal() -> {}", message);
             return status;
         }
 
@@ -139,7 +140,8 @@ namespace
         s = WP2::Encode(buffer, &writer, config);
         if (s != WP2_STATUS_OK)
         {
-            status.setError("[ImageEncoder.WP2] WP2::Encodel() -> {}", WP2GetStatusMessage(s));
+            const char* message = WP2GetStatusMessage(s);
+            status.setError("[ImageEncoder.WP2] WP2::Encodel() -> {}", message);
             return status;
         }
 
