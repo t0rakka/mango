@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <algorithm>
@@ -1229,6 +1229,12 @@ namespace mango::image
 
     void transform(const Surface& surface, ConstMemory icc)
     {
+        if (!icc.size)
+        {
+            printLine(Print::Warning, "[transform] ICC profile not found.");
+            return;
+        }
+
         image::ColorManager manager;
         image::ColorProfile profile = manager.create(icc);
         image::ColorProfile display = manager.createSRGB();

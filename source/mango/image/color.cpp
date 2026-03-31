@@ -1,8 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
+#include <mango/core/print.hpp>
 #include <lcms2.h>
 
 namespace mango::image
@@ -19,7 +21,10 @@ namespace mango::image
 
     ColorProfile::~ColorProfile()
     {
-        cmsCloseProfile(m_profile);
+        if (m_profile)
+        {
+            cmsCloseProfile(reinterpret_cast<cmsHPROFILE>(m_profile));
+        }
     }
 
     ColorProfile::operator void* () const
@@ -42,6 +47,10 @@ namespace mango::image
     {
         cmsContext context = reinterpret_cast<cmsContext>(m_context);
         cmsHPROFILE profile = cmsOpenProfileFromMemTHR(context, icc.address, cmsUInt32Number(icc.size));
+        if (!profile)
+        {
+            MANGO_EXCEPTION("[ColorManager] Failed to open embedded ICC profile.");
+        }
         return ColorProfile(profile);
     }
 
@@ -54,24 +63,76 @@ namespace mango::image
 
     void ColorManager::transform(const Surface& target, const ColorProfile& output, const ColorProfile& input)
     {
+        const Format rgba_u8(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        const Format rgba_f32(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
+
+        cmsUInt32Number inType = 0;
+        cmsUInt32Number outType = 0;
+
+        if (target.format == rgba_u8)
+        {
+            inType = TYPE_RGBA_8;
+            outType = TYPE_RGBA_8;
+        }
+        else if (target.format == rgba_f32)
+        {
+            inType = TYPE_RGBA_FLT;
+            outType = TYPE_RGBA_FLT;
+        }
+        else
+        {
+            printLine(Print::Warning, "[ColorManager] transform() requires RGBA8 or RGBA float32 surface format.");
+            return;
+        }
+
+        if (!static_cast<cmsHPROFILE>(input) || !static_cast<cmsHPROFILE>(output))
+        {
+            MANGO_EXCEPTION("[ColorManager] transform() received a null profile handle.");
+        }
+
+        cmsUInt32Number flags;
+        cmsUInt32Number intent;
+
+        if (inType == TYPE_RGBA_FLT)
+        {
+            intent = INTENT_RELATIVE_COLORIMETRIC;
+            flags = cmsFLAGS_COPY_ALPHA;
+        }
+        else
+        {
+            intent = INTENT_PERCEPTUAL;
+            flags = cmsFLAGS_BLACKPOINTCOMPENSATION;
+        }
+
         cmsHTRANSFORM transform = cmsCreateTransform(
-            input, TYPE_RGBA_8,
-            output, TYPE_RGBA_8,
-            INTENT_PERCEPTUAL, cmsFLAGS_BLACKPOINTCOMPENSATION);
-
-        const Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-        TemporaryBitmap temp(target, format);
-
-        for (int y = 0; y < temp.height; ++y)
+            input, inType,
+            output, outType,
+            intent, flags);
+        if (!transform)
         {
-            u8* image = temp.address<u8>(0, y);
-            cmsDoTransform(transform, image, image, temp.width);
+            MANGO_EXCEPTION("[ColorManager] cmsCreateTransform() failed.");
         }
 
-        if (temp.image != target.image)
+        const cmsUInt32Number width = cmsUInt32Number(target.width);
+
+        if (inType == TYPE_RGBA_FLT)
         {
-            target.blit(0, 0, temp);
+            for (int y = 0; y < target.height; ++y)
+            {
+                float* row = target.address<float>(0, y);
+                cmsDoTransform(transform, row, row, width);
+            }
         }
+        else
+        {
+            for (int y = 0; y < target.height; ++y)
+            {
+                u8* row = target.address<u8>(0, y);
+                cmsDoTransform(transform, row, row, width);
+            }
+        }
+
+        cmsDeleteTransform(transform);
     }
 
 } // namespace mango::image
