@@ -818,7 +818,7 @@ namespace
                 u64 offset = getOffset(p, is_big_tiff);
                 context.icc_profile = ConstMemory(memory.address + offset, count);
                 printLine(Print::Info, "    [ICCProfile]");
-                printLine(Print::Info, "      length: {} bytes", offset, count);
+                printLine(Print::Info, "      length: {} bytes", count);
                 break;
             }
 
@@ -1372,6 +1372,8 @@ namespace
             u64 sample_format = u64(SampleFormat::UINT);
             if (!m_context.sample_format.empty())
             {
+                // assume all channels have the same sample format
+                // TODO: support different sample formats per channel
                 sample_format = m_context.sample_format[0];
             }
 
@@ -1494,7 +1496,12 @@ namespace
             printLine(Print::Info, "    [decode]");
             printLine(Print::Info, "      image: {} x {}", header.width, header.height);
             printLine(Print::Info, "      compression: {}", m_context.compression);
-            printLine(Print::Info, "      planar_configuration: {}", m_context.planar_configuration);
+            printLine(Print::Info, "      planar_configuration: {} ({})", m_context.planar_configuration,
+                m_context.planar_configuration == 1 ? "chunky" : "planar");
+            printLine(Print::Info, "      predictor: {} ({})", m_context.predictor,
+                m_context.predictor == 1 ? "no prediction" :
+                m_context.predictor == 2 ? "horizontal differencing" :
+                m_context.predictor == 3 ? "float differencing" : "unknown");
             printLine(Print::Info, "      tile: {} x {}", m_context.tile_width, m_context.tile_length);
             printLine(Print::Info, "      tile_offsets: {}, tile_byte_counts: {}", m_context.tile_offsets.size(), m_context.tile_byte_counts.size());
             printLine(Print::Info, "      strip: {} x {}", m_context.width, m_context.rows_per_strip);
@@ -1658,6 +1665,9 @@ namespace
             }
 
             target.resolve();
+
+            // Store ICC profile into the ImageDecodeInterface
+            icc = m_context.icc_profile;
 
             return status;
         }
@@ -2259,7 +2269,16 @@ namespace
             }
 
             // RGB can be decoded directly, other formats need to be resolved.
+            // RGBA (4 samples) used to force the u8 repack path below — wrong for float/half
+            // where scanline bytes must be copied as-is into the destination surface.
             bool is_direct = m_context.samples_per_pixel < 4;
+            if (m_context.planar_configuration == 1 &&
+                m_context.photometric == u32(PhotometricInterpretation::RGB) &&
+                !m_context.sample_format.empty() &&
+                SampleFormat(m_context.sample_format[0]) == SampleFormat::FLOAT)
+            {
+                is_direct = true; // chunky RGB/RGBA float: blit to target, not u8 repack
+            }
             Buffer scanline(expanded_bytes_per_row);
 
             for (u32 y = 0; y < height; ++y)
@@ -2439,7 +2458,7 @@ namespace
                         dest += channels;
                     }
                 }
-                else
+                else if (m_context.sample_bits == 16)
                 {
                     u8* dest = output + channel * 2;
 
@@ -2450,6 +2469,21 @@ namespace
                         dest += channels * 2;
                     }
                 }
+                /*
+                else if (m_context.sample_bits == 32)
+                {
+                    u8* dest = output + channel * 4;
+
+                    for (u32 i = 0; i < bytes; i += 4)
+                    {
+                        dest[0] = input[i + 0];
+                        dest[1] = input[i + 1];
+                        dest[2] = input[i + 2];
+                        dest[3] = input[i + 3];
+                        dest += channels * 4;
+                    }
+                }
+                */
             }
             else if (m_context.predictor == 2)
             {
