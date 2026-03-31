@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #define MANGO_IMPLEMENT_MAIN
 #include <mango/mango.hpp>
@@ -104,13 +104,16 @@ int mangoMain(const mango::CommandLine& commands)
         if (header.format.isIndexed())
         {
             printLine("Decoding INDEXED image.");
-            bitmap = std::make_unique<Bitmap>(filename);
         }
         else
         {
             printLine("Decoding RGBA image.");
-            bitmap = std::make_unique<Bitmap>(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+            printLine("  Format.bits: {}", bitmap->format.bits);
         }
+
+        bitmap = std::make_unique<Bitmap>(header);
+        ImageDecodeStatus status = decoder.decode(*bitmap, ImageDecodeOptions(), 0, 0, 0);
+        MANGO_UNREFERENCED(status);
     }
     else
     {
@@ -118,7 +121,23 @@ int mangoMain(const mango::CommandLine& commands)
         return 1;
     }
 
+    if (bitmap->palette)
+    {
+        printLine("  Palette size: {}", bitmap->palette->size);
+    }
+
     u64 time1 = mango::Time::us();
+
+    ConstMemory icc = decoder.icc();
+    if (icc.size)
+    {
+        transform(*bitmap, icc);
+
+        u64 time2 = mango::Time::us();
+        u64 time = time2 - time1;
+        printLine("icc transform: {}.{} ms", time / 1000, time % 1000);
+    }
+
     u64 time = time1 - time0;
     printLine("decode: {}.{} ms", time / 1000, time % 1000);
 
