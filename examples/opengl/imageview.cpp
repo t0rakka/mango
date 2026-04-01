@@ -108,7 +108,7 @@ int mangoMain(const mango::CommandLine& commands)
         else
         {
             printLine("Decoding RGBA image.");
-            printLine("  Format.bits: {}", bitmap->format.bits);
+            printLine("  Format.bits: {}", header.format.bits);
         }
 
         bitmap = std::make_unique<Bitmap>(header);

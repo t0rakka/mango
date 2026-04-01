@@ -1381,10 +1381,12 @@ namespace
             {
                 case SampleFormat::UINT:
                     type = Format::UNORM;
+                    bits = std::min(bits, 16u); // max 16 bits per channel
                     break;
 
                 case SampleFormat::SINT:
                     type = Format::SNORM;
+                    bits = std::min(bits, 16u); // max 16 bits per channel
                     break;
 
                 case SampleFormat::FLOAT:
@@ -1642,8 +1644,11 @@ namespace
                     // TODO: clear the target surface correctly
                     std::memset(target.image, 0, target.stride * header.height);
 
-                    // For planar: strips per spatial region = total_strips / samples_per_pixel
-                    u32 strips_per_spatial_region = m_context.strip_offsets.size() / m_context.samples_per_pixel;
+                    // Separate planes (PlanarConfiguration 2): all strips for component 0, then all
+                    // for component 1, etc. (TIFF 6 §PlanarConfiguration). Same ordering as tiles above
+                    // (channel * count + tile). Do not use spatial_strip * spp + channel — that
+                    // interleaves strips per region and pairs the wrong plane data with each channel.
+                    u32 strips_per_spatial_region = u32(m_context.strip_offsets.size() / m_context.samples_per_pixel);
 
                     for (size_t spatial_strip = 0; spatial_strip < strips_per_spatial_region; ++spatial_strip)
                     {
@@ -1652,7 +1657,7 @@ namespace
 
                         for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
                         {
-                            size_t strip_index = spatial_strip * m_context.samples_per_pixel + channel;
+                            size_t strip_index = channel * strips_per_spatial_region + spatial_strip;
 
                             const u8* src = m_memory.address + m_context.strip_offsets[strip_index];
                             u32 bytes = m_context.strip_byte_counts[strip_index];
@@ -1955,11 +1960,115 @@ namespace
             return true;
         }
 
+        void shrinkPixels(Memory dest, ConstMemory src, int width, int height, int source_bits, int target_bits)
+        {
+            assert(target_bits == 16);
+
+            u32 channels = m_context.samples_per_pixel;
+            if (m_context.planar_configuration == 2)
+            {
+                channels = 1;
+            }
+
+            // Precompute bytes per scanline (source)
+            u32 bits_per_scanline = width * source_bits * channels;
+            u32 bytes_per_scanline = div_ceil(bits_per_scanline, 8);
+
+            u32 dest_stride = width * channels * (target_bits / 8);
+
+            if (source_bits == 24)
+            {
+                // TIFF multi-byte samples use the file byte order (II / MM).
+                // Convert each 24-bit unsigned sample to 16-bit with the same scaling
+                // convention as expandPixels (full range 0..2^24-1 -> 0..65535).
+                const u64 max_src = (1u << 24) - 1;
+
+                for (int y = 0; y < height; ++y)
+                {
+                    const u8* s = src.address;
+                    u8* d = dest.address;
+
+                    for (int x = 0; x < width; ++x)
+                    {
+                        for (u32 c = 0; c < channels; ++c)
+                        {
+                            u32 v;
+                            if (m_is_little_endian)
+                            {
+                                v = u32(s[0]) | (u32(s[1]) << 8) | (u32(s[2]) << 16);
+                            }
+                            else
+                            {
+                                v = (u32(s[0]) << 16) | (u32(s[1]) << 8) | u32(s[2]);
+                            }
+
+                            u16 out = u16((u64(v) * 65535u) / max_src);
+                            mango::littleEndian::ustore16(d, out);
+                            s += 3;
+                            d += 2;
+                        }
+                    }
+
+                    src.address += bytes_per_scanline;
+                    src.size -= bytes_per_scanline;
+                    dest.address += dest_stride;
+                }
+
+                return;
+            }
+
+            if (source_bits == 32)
+            {
+                // Unsigned 32-bit sample in file byte order -> 16-bit (full range, matches expand inverse).
+                const u64 max_src = (1ull << 32) - 1;
+
+                for (int y = 0; y < height; ++y)
+                {
+                    const u8* s = src.address;
+                    u8* d = dest.address;
+
+                    for (int x = 0; x < width; ++x)
+                    {
+                        for (u32 c = 0; c < channels; ++c)
+                        {
+                            u32 v;
+                            if (m_is_little_endian)
+                            {
+                                v = u32(s[0]) | (u32(s[1]) << 8) | (u32(s[2]) << 16) | (u32(s[3]) << 24);
+                            }
+                            else
+                            {
+                                v = (u32(s[0]) << 24) | (u32(s[1]) << 16) | (u32(s[2]) << 8) | u32(s[3]);
+                            }
+
+                            u16 out = u16((u64(v) * 65535ull) / max_src);
+                            mango::littleEndian::ustore16(d, out);
+                            s += 4;
+                            d += 2;
+                        }
+                    }
+
+                    src.address += bytes_per_scanline;
+                    src.size -= bytes_per_scanline;
+                    dest.address += dest_stride;
+                }
+
+                return;
+            }
+
+            printLine(Print::Warning, "[TIFF] shrinkPixels: unsupported source_bits {} -> {}", source_bits, target_bits);
+        }
+
         void expandPixels(Memory dest, ConstMemory src, int width, int height, int source_bits, int target_bits)
         {
             assert(target_bits == 8 || target_bits == 16);
-
             //printLine(Print::Info, "  expandPixels()\n    source_bits: {}, target_bits: {}", source_bits, target_bits);
+
+            if (source_bits > target_bits)
+            {
+                shrinkPixels(dest, src, width, height, source_bits, target_bits);
+                return;
+            }
 
             u32 max_source = (1 << source_bits) - 1;
             u32 max_target = (1 << target_bits) - 1;
@@ -2028,6 +2137,13 @@ namespace
         {
             u32 sample_bits = m_context.sample_bits;
             u32 expanded_sample_bits = round_ceil(m_context.sample_bits, 8); 
+
+            if (!header.format.isFloat())
+            {
+                expanded_sample_bits = std::min(expanded_sample_bits, 16u); // max 16 bits per channel
+            }
+
+            //printLine(Print::Info, "  sample_bits: {}, expanded_sample_bits: {}", sample_bits, expanded_sample_bits);
 
             u32 bytes_per_row = 0;
             u32 expanded_bytes_per_row = 0;
@@ -2241,7 +2357,11 @@ namespace
 
             if (m_is_little_endian != cpu::isLittleEndian())
             {
-                if (!needs_expansion)
+                // shrinkPixels() / expand already emits host-endian u16 when narrowing (e.g. 24 or 32 -> 16).
+                // Do not run tag-depth u32/16 swap on narrowed buffers (would misinterpret width-16 data).
+                const bool packed_at_tag_bits = (sample_bits == expanded_sample_bits);
+
+                if (!needs_expansion && packed_at_tag_bits)
                 {
                     switch (m_context.sample_bits)
                     {
@@ -2448,7 +2568,7 @@ namespace
             {
                 // planar, no prediction
 
-                if (m_context.sample_bits == 8)
+                if (m_context.sample_bits <= 8)
                 {
                     u8* dest = output + channel;
 
@@ -2458,7 +2578,7 @@ namespace
                         dest += channels;
                     }
                 }
-                else if (m_context.sample_bits == 16)
+                else if (m_context.sample_bits >= 16)
                 {
                     u8* dest = output + channel * 2;
 
@@ -2469,21 +2589,6 @@ namespace
                         dest += channels * 2;
                     }
                 }
-                /*
-                else if (m_context.sample_bits == 32)
-                {
-                    u8* dest = output + channel * 4;
-
-                    for (u32 i = 0; i < bytes; i += 4)
-                    {
-                        dest[0] = input[i + 0];
-                        dest[1] = input[i + 1];
-                        dest[2] = input[i + 2];
-                        dest[3] = input[i + 3];
-                        dest += channels * 4;
-                    }
-                }
-                */
             }
             else if (m_context.predictor == 2)
             {
