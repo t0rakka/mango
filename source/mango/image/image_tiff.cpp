@@ -596,14 +596,22 @@ namespace
             {
                 printLine(Print::Info, "    [ColorMap]");
 
-                const int bitsPerSample = context.bits_per_sample[0];
-                if (bitsPerSample != 4 && bitsPerSample != 8)
+                if (context.bits_per_sample.empty())
                 {
-                    printLine(Print::Error, "      Incorrect bits per sample: {}.", bitsPerSample);
+                    printLine(Print::Warning, "      ColorMap before BitsPerSample; cannot size palette.");
                     break;
                 }
 
-                const u32 count = 1 << bitsPerSample;
+                const int bitsPerSample = int(context.bits_per_sample[0]);
+                // Palette index width: often 4 or 8 in spec examples; sub-byte (1–3 bit) and 16-bit
+                // would need wider ColorMap handling — allow 1..8 here to match expandPixels().
+                if (bitsPerSample < 1 || bitsPerSample > 8)
+                {
+                    printLine(Print::Error, "      Unsupported indexed BitsPerSample: {} (supported: 1..8).", bitsPerSample);
+                    break;
+                }
+
+                const u32 count = 1u << bitsPerSample;
                 printLine(Print::Info, "      values: {}", count);
 
                 context.palette.size = count;
