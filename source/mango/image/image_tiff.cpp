@@ -188,6 +188,10 @@ namespace
         std::vector<u64> tile_byte_counts;
 
         Palette palette;
+        /// Raw SHORT ColorMap in file byte order (RRR…, GGG…, BBB…). Used when index bits > 8.
+        ConstMemory colormap_in_file;
+        u32 colormap_entry_count = 0;
+
         ConstMemory icc_profile;
 
         std::string image_description;
@@ -462,7 +466,7 @@ namespace
         break
 
     template <typename Pointer>
-    void parse_ifd(IFDContext& context, ConstMemory memory, Pointer p, bool is_big_tiff)
+    void parse_ifd(IFDContext& context, ConstMemory memory, Pointer p, bool is_big_tiff, bool file_is_little_endian)
     {
         Tag tag = Tag(p.read16());
         Type type = Type(p.read16());
@@ -602,28 +606,94 @@ namespace
                     break;
                 }
 
-                const int bitsPerSample = int(context.bits_per_sample[0]);
-                // Palette index width: often 4 or 8 in spec examples; sub-byte (1–3 bit) and 16-bit
-                // would need wider ColorMap handling — allow 1..8 here to match expandPixels().
-                if (bitsPerSample < 1 || bitsPerSample > 8)
+                if (type != Type::SHORT && type != Type::SSHORT)
                 {
-                    printLine(Print::Error, "      Unsupported indexed BitsPerSample: {} (supported: 1..8).", bitsPerSample);
+                    printLine(Print::Warning, "      ColorMap type {} is not SHORT; ignored.", u32(type));
                     break;
                 }
 
-                const u32 count = 1u << bitsPerSample;
-                printLine(Print::Info, "      values: {}", count);
-
-                context.palette.size = count;
-                std::vector<u64> values = getUnsignedArray(p, memory, type, count * 3, is_big_tiff);
-
-                for (u32 i = 0; i < count; ++i)
+                const int bitsPerSample = int(context.bits_per_sample[0]);
+                if (bitsPerSample < 1 || bitsPerSample > 16)
                 {
-                    u32 r = values[i + count * 0] >> 8;
-                    u32 g = values[i + count * 1] >> 8;
-                    u32 b = values[i + count * 2] >> 8;
-                    context.palette[i] = Color(r, g, b, 0xff);
+                    printLine(Print::Error, "      Unsupported indexed BitsPerSample: {} (supported: 1..16).", bitsPerSample);
+                    break;
                 }
+
+                const u32 theoretical_entries = 1u << bitsPerSample;
+                const u64 expected_ifd_values = 3ull * u64(theoretical_entries);
+
+                if (count != expected_ifd_values)
+                {
+                    printLine(Print::Warning,
+                        "      ColorMap IFD count {} != expected {} for {}-bit indices; using available data.",
+                        count, expected_ifd_values, bitsPerSample);
+                }
+
+                const u64 offset_size = is_big_tiff ? 8 : 4;
+                const u64 cmap_byte_size = getSize(type, count);
+                if (cmap_byte_size < 6)
+                {
+                    printLine(Print::Error, "      ColorMap size too small.");
+                    break;
+                }
+
+                const u8* cmap_base = nullptr;
+                if (cmap_byte_size > offset_size)
+                {
+                    u64 off = getOffset(p, is_big_tiff);
+                    if (off >= memory.size || off + cmap_byte_size > memory.size)
+                    {
+                        printLine(Print::Error, "      ColorMap data out of bounds.");
+                        break;
+                    }
+                    cmap_base = memory.address + off;
+                }
+                else
+                {
+                    printLine(Print::Warning, "      Inline ColorMap not supported for this entry size.");
+                    break;
+                }
+
+                context.colormap_in_file = ConstMemory(cmap_base, size_t(cmap_byte_size));
+                context.colormap_entry_count = u32(std::min<u64>(theoretical_entries, count / 3));
+                if (!context.colormap_entry_count)
+                {
+                    context.colormap_in_file = ConstMemory();
+                    printLine(Print::Error, "      ColorMap has no entries.");
+                    break;
+                }
+
+                const u32 nstride = context.colormap_entry_count;
+
+                auto read_cmap_short = [cmap_base, file_is_little_endian](u32 index_in_plane, u32 plane, u32 plane_len) -> u16
+                {
+                    const u64 o = (u64(plane) * u64(plane_len) + u64(index_in_plane)) * 2;
+                    const u8* b = cmap_base + o;
+                    if (file_is_little_endian)
+                    {
+                        return u16(u16(b[0]) | (u16(b[1]) << 8));
+                    }
+                    return (u16(b[0]) << 8) | u16(b[1]);
+                };
+
+                if (bitsPerSample <= 8)
+                {
+                    context.palette.size = theoretical_entries;
+                    for (u32 i = 0; i < theoretical_entries; ++i)
+                    {
+                        const u32 ii = std::min(i, nstride > 0 ? nstride - 1 : 0u);
+                        u32 r = read_cmap_short(ii, 0, nstride) >> 8;
+                        u32 g = read_cmap_short(ii, 1, nstride) >> 8;
+                        u32 b = read_cmap_short(ii, 2, nstride) >> 8;
+                        context.palette[i] = Color(r, g, b, 0xff);
+                    }
+                }
+                else
+                {
+                    context.palette.size = 0;
+                }
+
+                printLine(Print::Info, "      palette entries used: {}", context.colormap_entry_count);
                 break;
             }
 
@@ -1287,11 +1357,11 @@ namespace
 
                 if (m_is_little_endian)
                 {
-                    parse_ifd(m_context, m_memory, LittleEndianConstPointer(p), m_header.is_big_tiff);
+                    parse_ifd(m_context, m_memory, LittleEndianConstPointer(p), m_header.is_big_tiff, m_is_little_endian);
                 }
                 else
                 {
-                    parse_ifd(m_context, m_memory, BigEndianConstPointer(p), m_header.is_big_tiff);
+                    parse_ifd(m_context, m_memory, BigEndianConstPointer(p), m_header.is_big_tiff, m_is_little_endian);
                 }
 
                 p += ifd_entry_size;
@@ -1337,6 +1407,24 @@ namespace
             }
 
             m_context.sample_bits = sample_bits;
+
+            if (m_context.photometric == u32(PhotometricInterpretation::PALETTE))
+            {
+                if (sample_bits > 8)
+                {
+                    const u64 need = u64(m_context.colormap_entry_count) * 6;
+                    if (!m_context.colormap_entry_count || m_context.colormap_in_file.size < need)
+                    {
+                        header.setError("[ImageDecoder.TIFF] Palette image with wide indices requires a valid ColorMap.");
+                        return;
+                    }
+                }
+                else if (m_context.palette.size == 0)
+                {
+                    header.setError("[ImageDecoder.TIFF] Indexed TIFF requires a ColorMap.");
+                    return;
+                }
+            }
 
             // Set header info
             header.width = m_context.width;
@@ -1456,6 +1544,10 @@ namespace
                 }
 
                 case PhotometricInterpretation::PALETTE:
+                    if (m_context.sample_bits > 8)
+                    {
+                        return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    }
                     return IndexedFormat(8);
 
                 case PhotometricInterpretation::SEPARATED:
@@ -2122,7 +2214,14 @@ namespace
                     // Expand and write output
                     if (PhotometricInterpretation(m_context.photometric) == PhotometricInterpretation::PALETTE)
                     {
-                        dest_ptr[x] = u8(sample);
+                        if (target_bits == 8)
+                        {
+                            dest_ptr[x] = u8(sample);
+                        }
+                        else
+                        {
+                            ustore16(dest_ptr + x * 2, u16(sample));
+                        }
                     }
                     else if (target_bits == 8)
                     {
@@ -2138,6 +2237,43 @@ namespace
                 src.address += bytes_per_scanline;
                 src.size -= bytes_per_scanline;
                 dest_ptr += dest_stride;
+            }
+        }
+
+        void resolve_wide_palette_chunky_row(u8* rgba_row, const u8* index_row, int width) const
+        {
+            const u32 nstride = m_context.colormap_entry_count;
+            const u8* cmap = m_context.colormap_in_file.address;
+            const size_t cmap_size = m_context.colormap_in_file.size;
+
+            auto read_cmap_short = [cmap, cmap_size, nstride](u32 plane, u32 idx, bool file_le) -> u16
+            {
+                const u64 o = (u64(plane) * u64(nstride) + u64(idx)) * 2;
+                if (o + 2 > cmap_size)
+                {
+                    return 0;
+                }
+
+                const u8* b = cmap + o;
+                if (file_le)
+                {
+                    return u16(u16(b[0]) | (u16(b[1]) << 8));
+                }
+                return (u16(b[0]) << 8) | u16(b[1]);
+            };
+
+            for (int x = 0; x < width; ++x)
+            {
+                u32 idx = u32(uload16(index_row + x * 2));
+                if (nstride)
+                {
+                    idx = std::min(idx, u32(nstride - 1));
+                }
+
+                rgba_row[x * 4 + 0] = u8(read_cmap_short(0, idx, m_is_little_endian) >> 8);
+                rgba_row[x * 4 + 1] = u8(read_cmap_short(1, idx, m_is_little_endian) >> 8);
+                rgba_row[x * 4 + 2] = u8(read_cmap_short(2, idx, m_is_little_endian) >> 8);
+                rgba_row[x * 4 + 3] = 0xff;
             }
         }
 
@@ -2407,6 +2543,13 @@ namespace
             {
                 is_direct = true; // chunky RGB/RGBA float: blit to target, not u8 repack
             }
+
+            if (m_context.photometric == u32(PhotometricInterpretation::PALETTE) && m_context.sample_bits > 8)
+            {
+                // Indices are wide (e.g. 16-bit); decode to scratch then resolve to RGBA8 in target.
+                is_direct = false;
+            }
+
             Buffer scanline(expanded_bytes_per_row);
 
             for (u32 y = 0; y < height; ++y)
@@ -2473,6 +2616,10 @@ namespace
 
                             base += m_context.samples_per_pixel;
                         }
+                    }
+                    else if (m_context.photometric == u32(PhotometricInterpretation::PALETTE) && m_context.sample_bits > 8)
+                    {
+                        resolve_wide_palette_chunky_row(target.image, scanline.data(), width);
                     }
                     /*
                     else if (m_context.photometric == u32(PhotometricInterpretation::CIELAB))
