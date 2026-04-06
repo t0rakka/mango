@@ -466,7 +466,7 @@ namespace
         break
 
     template <typename Pointer>
-    void parse_ifd(IFDContext& context, ConstMemory memory, Pointer p, bool is_big_tiff, bool file_is_little_endian)
+    void parse_ifd(IFDContext& context, ConstMemory memory, Pointer p, bool is_big_tiff, bool is_little_endian)
     {
         Tag tag = Tag(p.read16());
         Type type = Type(p.read16());
@@ -665,15 +665,11 @@ namespace
 
                 const u32 nstride = context.colormap_entry_count;
 
-                auto read_cmap_short = [cmap_base, file_is_little_endian](u32 index_in_plane, u32 plane, u32 plane_len) -> u16
+                auto read_cmap_short = [cmap_base, is_little_endian](u32 index_in_plane, u32 plane, u32 plane_len) -> u16
                 {
-                    const u64 o = (u64(plane) * u64(plane_len) + u64(index_in_plane)) * 2;
-                    const u8* b = cmap_base + o;
-                    if (file_is_little_endian)
-                    {
-                        return u16(u16(b[0]) | (u16(b[1]) << 8));
-                    }
-                    return (u16(b[0]) << 8) | u16(b[1]);
+                    const u64 offset = u64(plane) * u64(plane_len) + u64(index_in_plane);
+                    return is_little_endian ? littleEndian::uload16(cmap_base + offset * 2)
+                                            : bigEndian::uload16(cmap_base + offset * 2);
                 };
 
                 if (bitsPerSample <= 8)
@@ -681,10 +677,10 @@ namespace
                     context.palette.size = theoretical_entries;
                     for (u32 i = 0; i < theoretical_entries; ++i)
                     {
-                        const u32 ii = std::min(i, nstride > 0 ? nstride - 1 : 0u);
-                        u32 r = read_cmap_short(ii, 0, nstride) >> 8;
-                        u32 g = read_cmap_short(ii, 1, nstride) >> 8;
-                        u32 b = read_cmap_short(ii, 2, nstride) >> 8;
+                        const u32 index = std::min(i, nstride > 0 ? nstride - 1 : 0u);
+                        u32 r = read_cmap_short(index, 0, nstride) >> 8;
+                        u32 g = read_cmap_short(index, 1, nstride) >> 8;
+                        u32 b = read_cmap_short(index, 2, nstride) >> 8;
                         context.palette[i] = Color(r, g, b, 0xff);
                     }
                 }
@@ -2246,20 +2242,16 @@ namespace
             const u8* cmap = m_context.colormap_in_file.address;
             const size_t cmap_size = m_context.colormap_in_file.size;
 
-            auto read_cmap_short = [cmap, cmap_size, nstride](u32 plane, u32 idx, bool file_le) -> u16
+            auto read_cmap_short = [cmap, cmap_size, nstride](u32 plane, u32 idx, bool is_little_endian) -> u16
             {
-                const u64 o = (u64(plane) * u64(nstride) + u64(idx)) * 2;
-                if (o + 2 > cmap_size)
+                const u64 offset = u64(plane) * u64(nstride) + u64(idx);
+                if (offset * 2 + 2 > cmap_size)
                 {
                     return 0;
                 }
 
-                const u8* b = cmap + o;
-                if (file_le)
-                {
-                    return u16(u16(b[0]) | (u16(b[1]) << 8));
-                }
-                return (u16(b[0]) << 8) | u16(b[1]);
+                return is_little_endian ? littleEndian::uload16(cmap + offset * 2)
+                                        : bigEndian::uload16(cmap + offset * 2);
             };
 
             for (int x = 0; x < width; ++x)
