@@ -2592,7 +2592,7 @@ namespace
         }
     },
 
-    // rgba.u8 <- l.s8 (e.g. TIFF SampleFormat::SINT 8, PhotometricInterpretation min-is-black)
+    // rgba.u8 <- l.s8
 
     {
         Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
