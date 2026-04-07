@@ -11,6 +11,7 @@
 #include <mango/core/cpuinfo.hpp>
 #include <vector>
 #include <numeric>
+#include <memory>
 
 #include "ccitt_fax_decode.hpp"
 #include "../jpeg/jpeg.hpp"
@@ -1630,7 +1631,27 @@ namespace
                 target_height = div_ceil(header.height, m_context.tile_length) * m_context.tile_length;
             }
 
-            DecodeTargetBitmap target(dest, target_width, target_height, header.format, m_context.palette, false);
+            const bool separated_planar_wide_cmyk =
+                m_context.photometric == u32(PhotometricInterpretation::SEPARATED) &&
+                m_context.planar_configuration == 2 &&
+                m_context.samples_per_pixel == 4 &&
+                m_context.sample_bits > 8;
+
+            std::unique_ptr<Bitmap> wide_cmyk_buffer;
+            if (separated_planar_wide_cmyk)
+            {
+                wide_cmyk_buffer = std::make_unique<Bitmap>(
+                    target_width,
+                    target_height,
+                    Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16));
+            }
+
+            Surface& decode_surface = wide_cmyk_buffer
+                ? static_cast<Surface&>(*wide_cmyk_buffer)
+                : const_cast<Surface&>(dest);
+            const Format& decode_format = wide_cmyk_buffer ? wide_cmyk_buffer->format : header.format;
+
+            DecodeTargetBitmap target(decode_surface, target_width, target_height, decode_format, m_context.palette, false);
 
             if (m_context.compression == u32(Compression::JPEG_LEGACY) ||
                 m_context.compression == u32(Compression::JPEG_MODERN))
@@ -1765,12 +1786,92 @@ namespace
                 }
             }
 
+            if (separated_planar_wide_cmyk)
+            {
+                convertSeparatedPlanarCmyk16ToRgba(*wide_cmyk_buffer, const_cast<Surface&>(dest), header.width, header.height);
+            }
+            else if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED) &&
+                     m_context.planar_configuration == 2 &&
+                     m_context.samples_per_pixel == 4)
+            {
+                convertSeparatedPlanarCmykInBufferToRgba(target, header.width, header.height);
+            }
+
             target.resolve();
 
             // Store ICC profile into the ImageDecodeInterface
             icc = m_context.icc_profile;
 
             return status;
+        }
+
+        static void convertSeparatedPlanarCmykInBufferToRgba(Surface& surface, int width, int height)
+        {
+            const u8* lookup = math::get_linear_to_srgb_table();
+
+            for (int y = 0; y < height; ++y)
+            {
+                u8* row = surface.image + surface.stride * y;
+
+                for (int x = 0; x < width; ++x)
+                {
+                    u8* p = row + x * 4;
+
+                    const int C = 255 - p[0];
+                    const int M = 255 - p[1];
+                    const int Y = 255 - p[2];
+                    const int K = 255 - p[3];
+
+                    const int R = (C * K + 127) / 255;
+                    const int G = (M * K + 127) / 255;
+                    const int B = (Y * K + 127) / 255;
+
+                    p[0] = lookup[R];
+                    p[1] = lookup[G];
+                    p[2] = lookup[B];
+                    p[3] = 0xff;
+                }
+            }
+        }
+
+        static void convertSeparatedPlanarCmyk16ToRgba(const Surface& src, Surface& dst, int width, int height)
+        {
+            const u8* lookup = math::get_linear_to_srgb_table();
+
+            for (int y = 0; y < height; ++y)
+            {
+                const u8* srow = src.image + src.stride * y;
+                u8* drow = dst.image + dst.stride * y;
+
+                for (int x = 0; x < width; ++x)
+                {
+                    const u8* p = srow + x * 8;
+
+                    const u32 Cin = uload16(p + 0);
+                    const u32 Min = uload16(p + 2);
+                    const u32 Yin = uload16(p + 4);
+                    const u32 Kin = uload16(p + 6);
+
+                    const u32 C = 65535u - Cin;
+                    const u32 M = 65535u - Min;
+                    const u32 Y = 65535u - Yin;
+                    const u32 K = 65535u - Kin;
+
+                    const u32 R = u32((u64(C) * K + 32767u) / 65535u);
+                    const u32 G = u32((u64(M) * K + 32767u) / 65535u);
+                    const u32 B = u32((u64(Y) * K + 32767u) / 65535u);
+
+                    const u8 r8 = u8((R * 255u + 32767u) / 65535u);
+                    const u8 g8 = u8((G * 255u + 32767u) / 65535u);
+                    const u8 b8 = u8((B * 255u + 32767u) / 65535u);
+
+                    u8* d = drow + x * 4;
+                    d[0] = lookup[r8];
+                    d[1] = lookup[g8];
+                    d[2] = lookup[b8];
+                    d[3] = 0xff;
+                }
+            }
         }
 
         bool decompress_jpeg(DecodeTargetBitmap& target, ImageDecodeOptions options, int level, int depth, int face)
@@ -2542,6 +2643,14 @@ namespace
                 is_direct = false;
             }
 
+            // Planar SEPARATED (CMYK): each decodeRect pass is one plate. is_direct must be true so samples
+            // accumulate in the surface; CMYK→RGB runs once after all plates are decoded (see decode()).
+            if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED) &&
+                m_context.planar_configuration == 2)
+            {
+                is_direct = true;
+            }
+
             Buffer scanline(expanded_bytes_per_row);
 
             for (u32 y = 0; y < height; ++y)
@@ -2554,59 +2663,114 @@ namespace
                 }
                 else
                 {
-                    resolvePlanarScanline(dest, memory.address, expanded_bytes_per_row, m_context.samples_per_pixel, channel);
+                    resolvePlanarScanline(dest, memory.address, expanded_bytes_per_row,
+                        m_context.samples_per_pixel, channel, expanded_sample_bits);
                 }
 
                 if (!is_direct)
                 {
                     if (m_context.photometric == u32(PhotometricInterpretation::RGB))
                     {
+                        const u32 chunky_bpp_rgb = (m_context.samples_per_pixel * expanded_sample_bits) / 8;
                         size_t base = 0;
                         for (int x = 0; x < width; ++x)
                         {
-                            int r = scanline[base + 0];
-                            int g = scanline[base + 1];
-                            int b = scanline[base + 2];
-
+                            int r;
+                            int g;
+                            int b;
                             int a = 0xff;
-                            if (m_context.associated_alpha)
-                            {
-                                a = scanline[base + m_context.associated_alpha_index];
-                            }
-        
-                            target.image[x * 4 + 0] = r;
-                            target.image[x * 4 + 1] = g;
-                            target.image[x * 4 + 2] = b;
-                            target.image[x * 4 + 3] = a;
 
-                            base += m_context.samples_per_pixel;
+                            if (expanded_sample_bits <= 8)
+                            {
+                                r = scanline[base + 0];
+                                g = scanline[base + 1];
+                                b = scanline[base + 2];
+                                if (m_context.associated_alpha)
+                                {
+                                    a = scanline[base + m_context.associated_alpha_index];
+                                }
+                            }
+                            else
+                            {
+                                const u8* p = scanline.data() + base;
+                                r = u8(uload16(p + 0) >> 8);
+                                g = u8(uload16(p + 2) >> 8);
+                                b = u8(uload16(p + 4) >> 8);
+                                if (m_context.associated_alpha)
+                                {
+                                    a = u8(uload16(p + m_context.associated_alpha_index * 2) >> 8);
+                                }
+                            }
+
+                            target.image[x * 4 + 0] = u8(r);
+                            target.image[x * 4 + 1] = u8(g);
+                            target.image[x * 4 + 2] = u8(b);
+                            target.image[x * 4 + 3] = u8(a);
+
+                            base += chunky_bpp_rgb;
                         }
                     }
-                    else if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED))
+                    else if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED) &&
+                             m_context.planar_configuration == 1)
                     {
-                        // TODO: We decode as CMYK, the channel information is in the Ink tags
-
+                        // Chunky CMYK: full CMYK4 scanline (8 or 16 bits per sample after expand).
                         const u8* lookup = math::get_linear_to_srgb_table();
+                        const u32 chunky_bpp = (m_context.samples_per_pixel * expanded_sample_bits) / 8;
 
                         size_t base = 0;
 
-                        for (int x = 0; x < width; ++x)
+                        if (expanded_sample_bits <= 8)
                         {
-                            int C = 255 - scanline[base + 0];
-                            int M = 255 - scanline[base + 1];
-                            int Y = 255 - scanline[base + 2];
-                            int K = 255 - scanline[base + 3];
-    
-                            int R = (C * K + 127) / 255;
-                            int G = (M * K + 127) / 255;
-                            int B = (Y * K + 127) / 255;
-    
-                            target.image[x * 4 + 0] = lookup[R];
-                            target.image[x * 4 + 1] = lookup[G];
-                            target.image[x * 4 + 2] = lookup[B];
-                            target.image[x * 4 + 3] = 0xff;
+                            for (int x = 0; x < width; ++x)
+                            {
+                                int C = 255 - scanline[base + 0];
+                                int M = 255 - scanline[base + 1];
+                                int Y = 255 - scanline[base + 2];
+                                int K = 255 - scanline[base + 3];
 
-                            base += m_context.samples_per_pixel;
+                                int R = (C * K + 127) / 255;
+                                int G = (M * K + 127) / 255;
+                                int B = (Y * K + 127) / 255;
+
+                                target.image[x * 4 + 0] = lookup[R];
+                                target.image[x * 4 + 1] = lookup[G];
+                                target.image[x * 4 + 2] = lookup[B];
+                                target.image[x * 4 + 3] = 0xff;
+
+                                base += chunky_bpp;
+                            }
+                        }
+                        else
+                        {
+                            for (int x = 0; x < width; ++x)
+                            {
+                                const u8* p = scanline.data() + base;
+
+                                const u32 Cin = uload16(p + 0);
+                                const u32 Min = uload16(p + 2);
+                                const u32 Yin = uload16(p + 4);
+                                const u32 Kin = uload16(p + 6);
+
+                                const u32 C = 65535u - Cin;
+                                const u32 M = 65535u - Min;
+                                const u32 Y = 65535u - Yin;
+                                const u32 K = 65535u - Kin;
+
+                                const u32 R = u32((u64(C) * K + 32767u) / 65535u);
+                                const u32 G = u32((u64(M) * K + 32767u) / 65535u);
+                                const u32 B = u32((u64(Y) * K + 32767u) / 65535u);
+
+                                const u8 r8 = u8((R * 255u + 32767u) / 65535u);
+                                const u8 g8 = u8((G * 255u + 32767u) / 65535u);
+                                const u8 b8 = u8((B * 255u + 32767u) / 65535u);
+
+                                target.image[x * 4 + 0] = lookup[r8];
+                                target.image[x * 4 + 1] = lookup[g8];
+                                target.image[x * 4 + 2] = lookup[b8];
+                                target.image[x * 4 + 3] = 0xff;
+
+                                base += chunky_bpp;
+                            }
                         }
                     }
                     else if (m_context.photometric == u32(PhotometricInterpretation::PALETTE) && m_context.sample_bits > 8)
@@ -2706,16 +2870,18 @@ namespace
             }
         }
 
-        void resolvePlanarScanline(u8* output, const u8* input, u32 bytes, u32 channels, u32 channel)
+        void resolvePlanarScanline(u8* output, const u8* input, u32 bytes, u32 channels, u32 channel,
+            u32 storage_bits_per_sample)
         {
+            // `storage_bits_per_sample` is the width of each sample in `input` after expand/shrink (decodeRect's
+            // expanded_sample_bits). Tag BitsPerSample can be 10–14 while storage is 16 — use storage here.
             // TODO: Planar and prediction requires prediction before expansion
-            //       Here non-predicted samples can be either 8 or 16 bits
 
             if (m_context.predictor == 1)
             {
                 // planar, no prediction
 
-                if (m_context.sample_bits <= 8)
+                if (storage_bits_per_sample <= 8)
                 {
                     u8* dest = output + channel;
 
@@ -2725,7 +2891,7 @@ namespace
                         dest += channels;
                     }
                 }
-                else if (m_context.sample_bits >= 16)
+                else
                 {
                     u8* dest = output + channel * 2;
 

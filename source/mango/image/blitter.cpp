@@ -2592,6 +2592,40 @@ namespace
         }
     },
 
+    // rgba.u8 <- l.s8 (e.g. TIFF SampleFormat::SINT 8, PhotometricInterpretation min-is-black)
+
+    {
+        Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8),
+        LuminanceFormat(8, Format::SNORM, 8, 0),
+        0,
+        [] (u8* dest, const u8* src, int count) -> void
+        {
+            u32* d = reinterpret_cast<u32*>(dest);
+            const s8* s = reinterpret_cast<const s8*>(src);
+            for (int x = 0; x < count; ++x)
+            {
+                const u32 v = u32(int(s[x]) + 128);
+                d[x] = 0xff000000 | v * 0x010101;
+            }
+        }
+    },
+
+    {
+        Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
+        LuminanceFormat(8, Format::SNORM, 8, 0),
+        0,
+        [] (u8* dest, const u8* src, int count) -> void
+        {
+            u32* d = reinterpret_cast<u32*>(dest);
+            const s8* s = reinterpret_cast<const s8*>(src);
+            for (int x = 0; x < count; ++x)
+            {
+                const u32 v = u32(int(s[x]) + 128);
+                d[x] = 0xff000000 | v * 0x010101;
+            }
+        }
+    },
+
     // rgba.u8 <- l.u16
 
     {
