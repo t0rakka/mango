@@ -2585,7 +2585,7 @@ namespace
                     else if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED))
                     {
                         // TODO: We decode as CMYK, the channel information is in the Ink tags
-    
+
                         const u8* lookup = math::get_linear_to_srgb_table();
 
                         size_t base = 0;
