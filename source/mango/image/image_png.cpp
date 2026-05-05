@@ -2432,13 +2432,15 @@ namespace
 
     void ParserPNG::read_sBIT(BigEndianConstPointer p, u32 size)
     {
-        if (size > 4)
+        constexpr u32 scale_bits_size = 4;
+
+        if (size != scale_bits_size)
         {
             setError("Incorrect sBIT chunk size.");
             return;
         }
 
-        for (u32 i = 0; i < size; ++i)
+        for (u32 i = 0; i < scale_bits_size; ++i)
         {
             m_scale_bits[i] = p[i];
         }
