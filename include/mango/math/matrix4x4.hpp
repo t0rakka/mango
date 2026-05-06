@@ -81,15 +81,9 @@ namespace mango::math
             m[3] = v.m[3];
         }
 
-        explicit Matrix(const Vector<float, 4>& v0,
-                        const Vector<float, 4>& v1,
-                        const Vector<float, 4>& v2,
-                        const Vector<float, 4>& v3)
+        explicit Matrix(float32x4 v0, float32x4 v1, float32x4 v2, float32x4 v3)
+            : m { v0, v1, v2, v3 }
         {
-            m[0] = v0;
-            m[1] = v1;
-            m[2] = v2;
-            m[3] = v3;
         }
 
         explicit Matrix(float s00, float s01, float s02, float s03,
@@ -97,10 +91,10 @@ namespace mango::math
                         float s08, float s09, float s10, float s11,
                         float s12, float s13, float s14, float s15)
         {
-            m[0] = Vector<float, 4>(s00, s01, s02, s03);
-            m[1] = Vector<float, 4>(s04, s05, s06, s07);
-            m[2] = Vector<float, 4>(s08, s09, s10, s11);
-            m[3] = Vector<float, 4>(s12, s13, s14, s15);
+            m[0] = float32x4(s00, s01, s02, s03);
+            m[1] = float32x4(s04, s05, s06, s07);
+            m[2] = float32x4(s08, s09, s10, s11);
+            m[3] = float32x4(s12, s13, s14, s15);
         }
 
         Matrix(const Quaternion& rotation)
@@ -122,12 +116,12 @@ namespace mango::math
         {
         }
 
-        const Matrix4x4& operator = (const Matrix4x4& v)
+        const Matrix4x4& operator = (const Matrix4x4& b)
         {
-            m[0] = v.m[0];
-            m[1] = v.m[1];
-            m[2] = v.m[2];
-            m[3] = v.m[3];
+            m[0] = b.m[0];
+            m[1] = b.m[1];
+            m[2] = b.m[2];
+            m[3] = b.m[3];
             return *this;
         }
 
@@ -137,30 +131,30 @@ namespace mango::math
         const Matrix4x4& operator = (const AngleAxis& rotation);
         const Matrix4x4& operator = (const EulerAngles& rotation);
 
-        const float* data() const
+        const float* data() const noexcept
         {
             return reinterpret_cast<const float*>(this);
         }
 
-        float* data()
+        float* data() noexcept
         {
             return reinterpret_cast<float*>(this);
         }
 
-        operator float32x4* ()
+        operator float32x4* () noexcept
         {
             return m;
         }
 
-        operator const float32x4* () const
+        operator const float32x4* () const noexcept
         {
             return m;
         }
 
         template <u32 index>
-        float32x4 column() const
+        [[nodiscard]] float32x4 column() const noexcept
         {
-            static_assert(index <= 3, "Index out of range.");
+            static_assert(index < 4, "Index out of range.");
             float32x4 temp0 = index & 2 ? unpackhi(m[0], m[1]) : unpacklo(m[0], m[1]);
             float32x4 temp1 = index & 2 ? unpackhi(m[2], m[3]) : unpacklo(m[2], m[3]);
             return index & 1 ? movehl(temp1, temp0) : movelh(temp0, temp1);
@@ -200,16 +194,16 @@ namespace mango::math
     // ------------------------------------------------------------------
 
     static inline
-    Vector<float, 3> operator * (const Vector<float, 3>& v, const Matrix4x4& m)
+    float32x3 operator * (const float32x3& v, const Matrix4x4& m)
     {
         float x = v[0] * m(0, 0) + v[1] * m(1, 0) + v[2] * m(2, 0) + m(3, 0);
         float y = v[0] * m(0, 1) + v[1] * m(1, 1) + v[2] * m(2, 1) + m(3, 1);
         float z = v[0] * m(0, 2) + v[1] * m(1, 2) + v[2] * m(2, 2) + m(3, 2);
-        return Vector<float, 3>(x, y, z);
+        return float32x3(x, y, z);
     }
 
     static inline
-    Vector<float, 4> operator * (const Vector<float, 4>& v, const Matrix4x4& m)
+    float32x4 operator * (const float32x4& v, const Matrix4x4& m)
     {
         float32x4 temp = m[0] * v.xxxx;
         temp = madd(temp, m[1], v.yyyy);
@@ -419,15 +413,6 @@ namespace mango::math
         result[2] = m2;
         result[3] = m3;
     }
-
-    // Matrix inversion performance
-    // CPU: 2.9 GHz Intel Core i9 (compiled for AVX)
-    //
-    // transpose:        500,000,000 / sec  ( 6 clock cycles)
-    // inverseTR:        200,000,000 / sec  (15 clock cycles)
-    // inverseTRS:        91,000,000 / sec  (32 clock cycles)
-    // inverseTranspose:  67,000,000 / sec  (44 clock cycles)
-    // inverse:           59,000,000 / sec  (50 clock cycles)
 
     static inline
     Matrix4x4 transpose(const Matrix4x4& m)

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/math/math.hpp>
 #include <mango/core/system.hpp>
@@ -42,25 +42,30 @@ bool eq(float a, float b)
     return std::abs(a - b) < 0.00001f;
 }
 
+const char* get_status(bool identical)
+{
+    return identical ? ": OK" : ": FAILED";
+}
+
 void check(const char* text, float32x2 v, float x, float y)
 {
     bool identical = eq(v.x, x) && eq(v.y, y);
-    const char* status = identical ? ": OK" : ": FAILED";
-    printf("%s %f %f %s\n", text, float(v.x), float(v.y), status);
+    const char* status = get_status(identical);
+    printLine("  {} {:.6f} {:.6f}                   {}", text, float(v.x), float(v.y), status);
 }
 
 void check(const char* text, float32x3 v, float x, float y, float z)
 {
     bool identical = eq(v.x, x) && eq(v.y, y) && eq(v.z, z);
-    const char* status = identical ? ": OK" : ": FAILED";
-    printf("%s %f %f %f %s\n", text, float(v.x), float(v.y), float(v.z), status);
+    const char* status = get_status(identical);
+    printLine("  {} {:.6f} {:.6f} {:.6f}          {}", text, float(v.x), float(v.y), float(v.z), status);
 }
 
 void check(const char* text, float32x4 v, float x, float y, float z, float w)
 {
     bool identical = eq(v.x, x) && eq(v.y, y) && eq(v.z, z) && eq(v.w, w);
-    const char* status = identical ? ": OK" : ": FAILED";
-    printf("%s %f %f %f %f %s\n", text, float(v.x), float(v.y), float(v.z), float(v.w), status);
+    const char* status = get_status(identical);
+    printLine("  {} {:.6f} {:.6f} {:.6f} {:.6f} {}", text, float(v.x), float(v.y), float(v.z), float(v.w), status);
 }
 
 // ----------------------------------------------------------------------
@@ -70,37 +75,37 @@ void check(const char* text, float32x4 v, float x, float y, float z, float w)
 void test1(float32x4 a, float32x4 b)
 {
     a = b.x;
-    check("[test1] a:", a, 0.2f, 0.2f, 0.2f, 0.2f);
+    check("[test 01] a: ", a, 0.2f, 0.2f, 0.2f, 0.2f);
 }
 
 void test2(float32x4 a, float32x4 b)
 {
     a.x = b.x;
-    check("[test2] a:", a, 0.2f, 2.0f, 3.0f, 4.0f);
+    check("[test 02] a: ", a, 0.2f, 2.0f, 3.0f, 4.0f);
 }
 
 void test3(float32x4 a, float32x2 b)
 {
     a.x = b.x;
-    check("[test3] a:", a, 7.0f, 2.0f, 3.0f, 4.0f);
+    check("[test 03] a: ", a, 7.0f, 2.0f, 3.0f, 4.0f);
 }
 
 void test4(float32x4 a, float32x3 b)
 {
     a.y = b.z;
-    check("[test4] a:", a, 1.0f, 5.0f, 3.0f, 4.0f);
+    check("[test 04] a: ", a, 1.0f, 5.0f, 3.0f, 4.0f);
 }
 
 void test5(float32x4 a, float32x4 b)
 {
     a = a * b.x;
-    check("[test5] a:", a, 0.2f, 0.4f, 0.6f, 0.8f);
+    check("[test 05] a: ", a, 0.2f, 0.4f, 0.6f, 0.8f);
 }
 
 void test6(float32x4 a, float32x4 b)
 {
     a = a.xxyy * (b.w + 1.0f) + b.x * a.yywx / (b.xxzz + 2.0f);
-    check("[test6] a:", a, 1.981818f, 1.981818f, 3.907692f, 3.676923f);
+    check("[test 06] a: ", a, 1.981818f, 1.981818f, 3.907692f, 3.676923f);
 }
 
 void test7(float32x4 a, float32x4 b)
@@ -109,7 +114,7 @@ void test7(float32x4 a, float32x4 b)
     a.y += b.y;
     a.z *= b.z;
     a.w /= b.w;
-    check("[test7] a:", a, 0.2f, 2.4f, 1.8f, 5.0f);
+    check("[test 07] a: ", a, 0.2f, 2.4f, 1.8f, 5.0f);
 }
 
 void test8(float32x4 a, float32x4 b)
@@ -119,13 +124,13 @@ void test8(float32x4 a, float32x4 b)
     c.x = b.x;
     c = a.xxyy * (b.w + 1.0f) + b.x * a.yywx / (b.xxzz + 2.0f);
     c = (a.x * b.y - 2.0f) * b.xxxx + a * min(a.xzzw, b.yywx) * std::clamp<float>(a.z, 1.0f, 2.0f);
-    check("[test8] c:", c, 0.48f, 1.28f, 4.48f, 1.28f);
+    check("[test 08] c: ", c, 0.48f, 1.28f, 4.48f, 1.28f);
 }
 
 void test9(float32x4 a, float32x4 b)
 {
     float32x4 c(a.ywzx);
-    check("[test9] c:", c, 2.0f, 4.0f, 3.0f, 1.0f);
+    check("[test 09] c: ", c, 2.0f, 4.0f, 3.0f, 1.0f);
 }
 
 void test10(float32x4 a, float32x4 b)
@@ -133,8 +138,8 @@ void test10(float32x4 a, float32x4 b)
     float32x3 c(a.xyz);
     float32x3 d(c.zxy);
     float32x3 e = c.zxy;
-    check("[test10] d:", d, 3.0f, 1.0f, 2.0f);
-    check("[test10] e:", e, 3.0f, 1.0f, 2.0f);
+    check("[test 10] d: ", d, 3.0f, 1.0f, 2.0f);
+    check("[test 10] e: ", e, 3.0f, 1.0f, 2.0f);
 }
 
 void test11(float32x4 a, float32x4 b)
@@ -146,9 +151,9 @@ void test11(float32x4 a, float32x4 b)
     v4.y += 1;
     v4.z -= 0.5;
     v4.w *= 0.5;
-    check("[test11] v2:", v2, 2.2f, 2.4f);
-    check("[test11] v3:", v3, 2.4f, 2.2f, 2.2f);
-    check("[test11] v4:", v4, 4.4f, 3.2f, 1.9f, 1.2f);
+    check("[test 11] v2:", v2, 2.2f, 2.4f);
+    check("[test 11] v3:", v3, 2.4f, 2.2f, 2.2f);
+    check("[test 11] v4:", v4, 4.4f, 3.2f, 1.9f, 1.2f);
 }
 
 void test12(float32x4 a, float32x4 b)
@@ -165,12 +170,12 @@ void test12(float32x4 a, float32x4 b)
     b3.yz = a.wz;
     a4.wz = b.zy;
     b4.xy = a.yx;
-    check("[test12] a2:", a2, 0.8f, 0.8f);
-    check("[test12] b2:", b2, 0.4f, 0.2f);
-    check("[test12] a3:", a3, 1.0f, 0.4f, 0.2f);
-    check("[test12] b3:", b3, 0.2f, 4.0f, 3.0f);
-    check("[test12] a4:", a4, 1.0f, 2.0f, 0.4f, 0.6f);
-    check("[test12] b4:", b4, 2.0f, 1.0f, 0.6f, 0.8f);
+    check("[test 12] a2:", a2, 0.8f, 0.8f);
+    check("[test 12] b2:", b2, 0.4f, 0.2f);
+    check("[test 12] a3:", a3, 1.0f, 0.4f, 0.2f);
+    check("[test 12] b3:", b3, 0.2f, 4.0f, 3.0f);
+    check("[test 12] a4:", a4, 1.0f, 2.0f, 0.4f, 0.6f);
+    check("[test 12] b4:", b4, 2.0f, 1.0f, 0.6f, 0.8f);
 }
 
 void test()
@@ -792,13 +797,198 @@ void example()
     example13();
 }
 
+void benchmark()
+{
+    constexpr u64 mul_iterations = 10'000'000;
+    constexpr u64 inv_iterations = 1'000'000;
+
+    auto identity_error = [] (const Matrix4x4& m) -> float
+    {
+        float max_error = 0.0f;
+        for (int y = 0; y < 4; ++y)
+        {
+            for (int x = 0; x < 4; ++x)
+            {
+                const float expected = (x == y) ? 1.0f : 0.0f;
+                max_error = std::max(max_error, std::abs(m(y, x) - expected));
+            }
+        }
+        return max_error;
+    };
+
+    // ------------------------------------------------------------------
+    // matrix4x4 * matrix4x4
+    // ------------------------------------------------------------------
+
+    constexpr float eps = 0.00001f;
+
+    const Matrix4x4 mul_base_a(
+        1.1f, 2.2f, 3.3f, 4.4f,
+        5.5f, 6.6f, 7.7f, 8.8f,
+        9.9f, 1.2f, 2.3f, 3.4f,
+        4.5f, 5.6f, 6.7f, 7.8f);
+
+    const Matrix4x4 mul_base_b(
+        7.1f, 6.2f, 5.3f, 4.4f,
+        3.5f, 2.6f, 1.7f, 0.8f,
+        9.9f, 8.1f, 7.2f, 6.3f,
+        5.4f, 4.5f, 3.6f, 2.7f);
+    const float32x4 mul_delta_a0[2] = {
+        float32x4( eps, 0.0f, 0.0f, 0.0f),
+        float32x4(-eps, 0.0f, 0.0f, 0.0f)
+    };
+    const float32x4 mul_delta_a3[2] = {
+        float32x4(0.0f,  eps, 0.0f, 0.0f),
+        float32x4(0.0f, -eps, 0.0f, 0.0f)
+    };
+    const float32x4 mul_delta_b1[2] = {
+        float32x4(0.0f,  eps, 0.0f, 0.0f),
+        float32x4(0.0f, -eps, 0.0f, 0.0f)
+    };
+    const float32x4 mul_delta_b2[2] = {
+        float32x4( eps, 0.0f, 0.0f, 0.0f),
+        float32x4(-eps, 0.0f, 0.0f, 0.0f)
+    };
+
+    volatile float mul_sink = 0.0f;
+    const u64 mul_t0 = Time::us();
+
+    for (u64 i = 0; i < mul_iterations; ++i)
+    {
+        const u32 index = u32(i & 1);
+
+        Matrix4x4 mul_a = mul_base_a;
+        Matrix4x4 mul_b = mul_base_b;
+        mul_a[0] = mul_a[0] + mul_delta_a0[index];
+        mul_a[3] = mul_a[3] + mul_delta_a3[index];
+        mul_b[1] = mul_b[1] + mul_delta_b1[index];
+        mul_b[2] = mul_b[2] + mul_delta_b2[index];
+
+        Matrix4x4 c = mul_a * mul_b;
+        mul_sink += c[0].x + c[1].y + c[2].z + c[3].w;
+    }
+
+    const u64 mul_t1 = Time::us();
+    const double mul_elapsed_us = double(mul_t1 - mul_t0);
+    const double mul_per_sec = (double(mul_iterations) * 1000000.0) / mul_elapsed_us;
+
+    printLine("  matrix4x4 * matrix4x4");
+    printLine("    iterations : {}", static_cast<unsigned long long>(mul_iterations));
+    printLine("    elapsed    : {:.3f} ms", mul_elapsed_us / 1000.0);
+    printLine("    throughput : {:.3f} M mul/s", mul_per_sec / 1000000.0);
+    printLine("    sink       : {:.9f}", mul_sink);
+    printLine("");
+
+    // ------------------------------------------------------------------
+    // matrix4x4 inverse
+    // ------------------------------------------------------------------
+
+    const Matrix4x4 base_general(
+        1.1f, 0.3f, 0.2f, 0.0f,
+        0.4f, 0.9f, 0.5f, 0.0f,
+        0.2f, 0.7f, 1.3f, 0.0f,
+        3.0f, -2.0f, 5.0f, 1.0f);
+    const Matrix4x4 base_rot = Matrix4x4::rotateXYZ(0.27f, -0.43f, 0.19f);
+    const Matrix4x4 base_trs =
+        Matrix4x4::scale(1.2f, 0.8f, 1.4f) *
+        base_rot *
+        Matrix4x4::translate(3.0f, -2.0f, 5.0f);
+    const Matrix4x4 base_tr =
+        base_rot *
+        Matrix4x4::translate(3.0f, -2.0f, 5.0f);
+
+    volatile float inv_sink = 0.0f;
+
+    auto run_inverse_benchmark = [&](const char* name, Matrix4x4 (*fn)(const Matrix4x4&), auto make_matrix)
+    {
+        const u64 t0 = Time::us();
+        for (u64 i = 0; i < inv_iterations; ++i)
+        {
+            const Matrix4x4 matrix = make_matrix(i);
+            Matrix4x4 inv = fn(matrix);
+            inv_sink += inv[0].x + inv[1].y + inv[2].z + inv[3].w;
+        }
+        const u64 t1 = Time::us();
+        const double elapsed_us = double(t1 - t0);
+        const double inv_per_sec = (double(inv_iterations) * 1000000.0) / elapsed_us;
+        const Matrix4x4 matrix = make_matrix(inv_iterations + 17);
+        const Matrix4x4 inv = fn(matrix);
+        const float err = identity_error(matrix * inv);
+
+        printLine("    {}", name);
+        printLine("      throughput : {:.3f} M inv/s", inv_per_sec / 1000000.0);
+        printLine("      max error  : {:.9f}", err);
+    };
+
+    printLine("  matrix4x4 inverse");
+    printLine("    iterations : {}", static_cast<unsigned long long>(inv_iterations));
+
+    Matrix4x4 general_pos = base_general;
+    general_pos[0] = general_pos[0] + float32x4( eps, 0.0f, 0.0f, 0.0f);
+    general_pos[1] = general_pos[1] + float32x4(0.0f,  eps, 0.0f, 0.0f);
+    general_pos[3] = general_pos[3] + float32x4( eps, -eps,  eps, 0.0f);
+
+    Matrix4x4 general_neg = base_general;
+    general_neg[0] = general_neg[0] + float32x4(-eps, 0.0f, 0.0f, 0.0f);
+    general_neg[1] = general_neg[1] + float32x4(0.0f, -eps, 0.0f, 0.0f);
+    general_neg[3] = general_neg[3] + float32x4(-eps,  eps, -eps, 0.0f);
+
+    const Matrix4x4 general_matrix[2] = { general_pos, general_neg };
+
+    Matrix4x4 trs_pos = base_trs;
+    trs_pos[0] = trs_pos[0] + float32x4( eps, 0.0f, 0.0f, 0.0f);
+    trs_pos[1] = trs_pos[1] + float32x4(0.0f, -eps, 0.0f, 0.0f);
+    trs_pos[2] = trs_pos[2] + float32x4(0.0f, 0.0f,  eps, 0.0f);
+    trs_pos[3] = trs_pos[3] + float32x4( eps, -eps,  eps, 0.0f);
+
+    Matrix4x4 trs_neg = base_trs;
+    trs_neg[0] = trs_neg[0] + float32x4(-eps, 0.0f, 0.0f, 0.0f);
+    trs_neg[1] = trs_neg[1] + float32x4(0.0f,  eps, 0.0f, 0.0f);
+    trs_neg[2] = trs_neg[2] + float32x4(0.0f, 0.0f, -eps, 0.0f);
+    trs_neg[3] = trs_neg[3] + float32x4(-eps,  eps, -eps, 0.0f);
+
+    const Matrix4x4 trs_matrix[2] = { trs_pos, trs_neg };
+
+    Matrix4x4 tr_pos = base_tr;
+    tr_pos[3] = tr_pos[3] + float32x4( eps, -eps,  eps, 0.0f);
+
+    Matrix4x4 tr_neg = base_tr;
+    tr_neg[3] = tr_neg[3] + float32x4(-eps,  eps, -eps, 0.0f);
+
+    const Matrix4x4 tr_matrix[2] = { tr_pos, tr_neg };
+
+    run_inverse_benchmark("inverse (general)", inverse, [=](u64 i)
+    {
+        return general_matrix[i & 1];
+    });
+
+    run_inverse_benchmark("inverseTRS (TRS only)", inverseTRS, [=](u64 i)
+    {
+        return trs_matrix[i & 1];
+    });
+
+    run_inverse_benchmark("inverseTR (TR only)", inverseTR, [=](u64 i)
+    {
+        return tr_matrix[i & 1];
+    });
+
+    printLine("    sink       : {:.9f}", inv_sink);
+}
+
 // ----------------------------------------------------------------------
 // main
 // ----------------------------------------------------------------------
 
 int main()
 {
+    printLine("");
+    printLine("[validation]");
+    printLine("");
+
+    // validation
     test();
+
+    // regression testing
     test_vec_size();
     test_vec2();
     test_vec4<float>();
@@ -811,4 +1001,11 @@ int main()
     test_float32x4();
     composite::test_vec3();
     example();
+
+    printLine("");
+    printLine("[benchmark]");
+    printLine("");
+
+    // benchmarking
+    benchmark();
 }
