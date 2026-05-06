@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -215,11 +215,27 @@ namespace mango::math
     static inline
     Matrix4x4 operator * (const Matrix4x4& a, const Matrix4x4& b)
     {
-        return Matrix4x4(
-            a[0] * b,
-            a[1] * b,
-            a[2] * b,
-            a[3] * b);
+        float32x4 m0 = b[0] * a[0][0];
+        float32x4 m1 = b[0] * a[1][0];
+        float32x4 m2 = b[0] * a[2][0];
+        float32x4 m3 = b[0] * a[3][0];
+
+        m0 = madd(m0, b[1], a[0][1]);
+        m1 = madd(m1, b[1], a[1][1]);
+        m2 = madd(m2, b[1], a[2][1]);
+        m3 = madd(m3, b[1], a[3][1]);
+
+        m0 = madd(m0, b[2], a[0][2]);
+        m1 = madd(m1, b[2], a[1][2]);
+        m2 = madd(m2, b[2], a[2][2]);
+        m3 = madd(m3, b[2], a[3][2]);
+
+        m0 = madd(m0, b[3], a[0][3]);
+        m1 = madd(m1, b[3], a[1][3]);
+        m2 = madd(m2, b[3], a[2][3]);
+        m3 = madd(m3, b[3], a[3][3]);
+
+        return Matrix4x4(m0, m1, m2, m3);
     }
 
     // ------------------------------------------------------------------

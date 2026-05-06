@@ -810,7 +810,7 @@ void benchmark()
             for (int x = 0; x < 4; ++x)
             {
                 const float expected = (x == y) ? 1.0f : 0.0f;
-                max_error = std::max(max_error, std::abs(m(y, x) - expected));
+                max_error = std::max(max_error, std::abs(m[y][x] - expected));
             }
         }
         return max_error;
@@ -833,29 +833,54 @@ void benchmark()
         3.5f, 2.6f, 1.7f, 0.8f,
         9.9f, 8.1f, 7.2f, 6.3f,
         5.4f, 4.5f, 3.6f, 2.7f);
-    const float32x4 mul_delta_a0[2] = {
-        float32x4( eps, 0.0f, 0.0f, 0.0f),
-        float32x4(-eps, 0.0f, 0.0f, 0.0f)
+    constexpr u32 mul_variant_count = 8;
+    const float32x4 mul_delta_a0[mul_variant_count] = {
+        float32x4(-4.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4(-3.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4(-2.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4(-1.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4( 1.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4( 2.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4( 3.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4( 4.0f * eps, 0.0f, 0.0f, 0.0f),
     };
-    const float32x4 mul_delta_a3[2] = {
-        float32x4(0.0f,  eps, 0.0f, 0.0f),
-        float32x4(0.0f, -eps, 0.0f, 0.0f)
+    const float32x4 mul_delta_a3[mul_variant_count] = {
+        float32x4(0.0f, -4.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f, -3.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f, -2.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f, -1.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f,  1.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f,  2.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f,  3.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f,  4.0f * eps, 0.0f, 0.0f),
     };
-    const float32x4 mul_delta_b1[2] = {
-        float32x4(0.0f,  eps, 0.0f, 0.0f),
-        float32x4(0.0f, -eps, 0.0f, 0.0f)
+    const float32x4 mul_delta_b1[mul_variant_count] = {
+        float32x4(0.0f,  4.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f,  3.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f,  2.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f,  1.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f, -1.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f, -2.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f, -3.0f * eps, 0.0f, 0.0f),
+        float32x4(0.0f, -4.0f * eps, 0.0f, 0.0f),
     };
-    const float32x4 mul_delta_b2[2] = {
-        float32x4( eps, 0.0f, 0.0f, 0.0f),
-        float32x4(-eps, 0.0f, 0.0f, 0.0f)
+    const float32x4 mul_delta_b2[mul_variant_count] = {
+        float32x4( 2.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4(-1.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4( 3.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4(-2.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4( 4.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4(-3.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4( 1.0f * eps, 0.0f, 0.0f, 0.0f),
+        float32x4(-4.0f * eps, 0.0f, 0.0f, 0.0f),
     };
 
-    volatile float mul_sink = 0.0f;
+    float32x4 mul_sink_vec = float32x4(0.0f, 0.0f, 0.0f, 0.0f);
     const u64 mul_t0 = Time::us();
 
     for (u64 i = 0; i < mul_iterations; ++i)
     {
-        const u32 index = u32(i & 1);
+        const u32 index = u32(i & (mul_variant_count - 1));
 
         Matrix4x4 mul_a = mul_base_a;
         Matrix4x4 mul_b = mul_base_b;
@@ -865,8 +890,13 @@ void benchmark()
         mul_b[2] = mul_b[2] + mul_delta_b2[index];
 
         Matrix4x4 c = mul_a * mul_b;
-        mul_sink += c[0].x + c[1].y + c[2].z + c[3].w;
+        mul_sink_vec += c[0];
+        mul_sink_vec += c[1];
+        mul_sink_vec += c[2];
+        mul_sink_vec += c[3];
     }
+
+    float mul_sink = dot(mul_sink_vec, float32x4(1.0f, 1.0f, 1.0f, 1.0f));
 
     const u64 mul_t1 = Time::us();
     const double mul_elapsed_us = double(mul_t1 - mul_t0);

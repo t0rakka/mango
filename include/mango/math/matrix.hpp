@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -19,9 +19,9 @@ namespace mango::math
     {
         using VectorType = Vector<ScalarType, Width>;
 
-        operator const float* () const
+        operator const ScalarType* () const
         {
-            return reinterpret_cast<const float*>(this);
+            return reinterpret_cast<const ScalarType*>(this);
         }
 
         operator ScalarType* ()
@@ -51,18 +51,20 @@ namespace mango::math
             return reinterpret_cast<VectorType *>(this)[y];
         }
 
-        float operator () (int y, int x) const
+        ScalarType operator () (int y, int x) const
         {
             assert(x >= 0 && x < Width);
             assert(y >= 0 && y < Height);
-            return reinterpret_cast<const float *>(this)[y * Width + x];
+            const ScalarType* v = data();
+            return v[y * Width + x];
         }
 
-        float& operator () (int y, int x)
+        ScalarType& operator () (int y, int x)
         {
             assert(x >= 0 && x < Width);
             assert(y >= 0 && y < Height);
-            return reinterpret_cast<float *>(this)[y * Width + x];
+            ScalarType* v = data();
+            return v[y * Width + x];
         }
     };
 
@@ -99,24 +101,19 @@ namespace mango::math
         {
         }
 
-        explicit Matrix(Vector<ScalarType, 2> v0,
-                        Vector<ScalarType, 2> v1)
+        explicit Matrix(Vector<ScalarType, 2> v0, Vector<ScalarType, 2> v1)
+            : m { v0, v1 }
         {
-            m[0] = v0;
-            m[1] = v1;
         }
 
         explicit Matrix(ScalarType s)
+            : m { Vector<ScalarType, 2>(s, 0), Vector<ScalarType, 2>(0, s) }
         {
-            m[0] = Vector<ScalarType, 2>(s, 0);
-            m[1] = Vector<ScalarType, 2>(0, s);
         }
 
-        explicit Matrix(ScalarType s0, ScalarType s1,
-                        ScalarType s2, ScalarType s3)
+        explicit Matrix(ScalarType s0, ScalarType s1, ScalarType s2, ScalarType s3)
+            : m { Vector<ScalarType, 2>(s0, s1), Vector<ScalarType, 2>(s2, s3) }
         {
-            m[0] = Vector<ScalarType, 2>(s0, s1);
-            m[1] = Vector<ScalarType, 2>(s2, s3);
         }
 
         ~Matrix()
@@ -166,26 +163,24 @@ namespace mango::math
         explicit Matrix(Vector<ScalarType, 3> v0,
                         Vector<ScalarType, 3> v1,
                         Vector<ScalarType, 3> v2)
+            : m { v0, v1, v2 }
         {
-            m[0] = v0;
-            m[1] = v1;
-            m[2] = v2;
         }
 
         explicit Matrix(ScalarType s)
+            : m { Vector<ScalarType, 3>(s, 0, 0),
+                  Vector<ScalarType, 3>(0, s, 0),
+                  Vector<ScalarType, 3>(0, 0, s) }
         {
-            m[0] = Vector<ScalarType, 3>(s, 0, 0);
-            m[1] = Vector<ScalarType, 3>(0, s, 0);
-            m[2] = Vector<ScalarType, 3>(0, 0, s);
         }
 
         explicit Matrix(ScalarType s0, ScalarType s1, ScalarType s2,
                         ScalarType s3, ScalarType s4, ScalarType s5,
                         ScalarType s6, ScalarType s7, ScalarType s8)
+            : m { Vector<ScalarType, 3>(s0, s1, s2),
+                  Vector<ScalarType, 3>(s3, s4, s5),
+                  Vector<ScalarType, 3>(s6, s7, s8) }
         {
-            m[0] = Vector<ScalarType, 3>(s0, s1, s2);
-            m[1] = Vector<ScalarType, 3>(s3, s4, s5);
-            m[2] = Vector<ScalarType, 3>(s6, s7, s8);
         }
 
         ~Matrix()
@@ -204,7 +199,8 @@ namespace mango::math
     };
 
     template <typename ScalarType>
-    static inline Matrix<ScalarType, 3, 3> operator * (const Matrix<ScalarType, 3, 3>& m, ScalarType s)
+    static inline
+    Matrix<ScalarType, 3, 3> operator * (const Matrix<ScalarType, 3, 3>& m, ScalarType s)
     {
         return Matrix<ScalarType, 3, 3>(
             m[0] * s,
@@ -213,7 +209,8 @@ namespace mango::math
     }
 
     template <typename ScalarType>
-    static inline Vector<ScalarType, 3> operator * (const Vector<ScalarType, 3>& v, const Matrix<ScalarType, 3, 3>& m)
+    static inline
+    Vector<ScalarType, 3> operator * (const Vector<ScalarType, 3>& v, const Matrix<ScalarType, 3, 3>& m)
     {
         return Vector<ScalarType, 3>(
             v[0] * m(0, 0) + v[1] * m(1, 0) + v[2] * m(2, 0),

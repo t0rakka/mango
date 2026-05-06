@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #include <limits>
@@ -920,12 +920,12 @@ namespace mango::math
     Matrix4x4 obliqueGL(const Matrix4x4& proj, const float32x4& nearclip)
     {
         float32x4 s = sign(nearclip);
-        float xsign = s.x;
-        float ysign = s.y;
 
-        float32x4 q((xsign - proj(2,0)) / proj(0,0),
-                    (ysign - proj(2,1)) / proj(1,1),
-                    -1.0f, (1.0f + proj(2,2)) / proj(3,2));
+        float x = (s.x - proj(2,0)) / proj(0,0);
+        float y = (s.y - proj(2,1)) / proj(1,1);
+        float z = -1.0f;
+        float w = (1.0f + proj(2,2)) / proj(3,2);
+        float32x4 q(x, y, z, w);
 
         float32x4 c = nearclip * (2.0f / dot(nearclip, q));
         c += float32x4(0.0f, 0.0f, 1.0f, 0.0f);
@@ -967,13 +967,13 @@ namespace mango::math
     {
         float32x4 clip = nearclip;
         float32x4 s = sign(clip);
-        float xsign = s.x;
-        float ysign = s.y;
 
-        float32x4 q((xsign - proj(2,0)) / proj(0,0),
-                    (ysign - proj(2,1)) / proj(1,1),
-                    1.0f,
-                    (1.0f - proj(2,2)) / proj(3,2));
+        float x = (s.x - proj(2,0)) / proj(0,0);
+        float y = (s.y - proj(2,1)) / proj(1,1);
+        float z = 1.0f;
+        float w = (1.0f - proj(2,2)) / proj(3,2);
+        float32x4 q(x, y, z, w);
+
         float32x4 c = clip / dot(clip, q);
 
         Matrix4x4 p = proj;
