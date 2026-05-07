@@ -1996,7 +1996,7 @@ namespace
         float m_gamma = 0.0f;
 
         // sBIT
-        u8 m_scale_bits[4];
+        int m_scale_bits[4];
 
         // sRGB
         u8 m_srgb_render_intent = 0xff;
@@ -2296,7 +2296,7 @@ namespace
         // load default scaling values (override from sBIT chunk)
         for (int i = 0; i < m_channels; ++i)
         {
-            m_scale_bits[i] = u8(m_color_state.bits);
+            m_scale_bits[i] = m_color_state.bits;
         }
 
         printLine(Print::Info, "  Image: ({} x {}), {} bits", m_width, m_height, m_color_state.bits);
@@ -2438,12 +2438,7 @@ namespace
             return;
         }
 
-        // GCC 16.1 bounds checking failure:
-        // we must test i < 4 here to avoid the warning
-        // If we test size > 3 above, no warning, but we miss last entry at i == 3
-        // Correct code that generates the warning iscommented out:
-        //for (u32 i = 0; i < 4; ++i)
-        for (u32 i = 0; i < 4 && i < size; ++i)
+        for (u32 i = 0; i < size; ++i)
         {
             m_scale_bits[i] = p[i];
         }
