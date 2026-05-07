@@ -281,6 +281,18 @@ namespace mango::math
         return Matrix4x4(m0, m1, m2, m3);
     }
 
+    static inline
+    Matrix4x4 operator + (const Matrix4x4& a, const Matrix4x4& b)
+    {
+        return Matrix4x4(a[0] + b[0], a[1] + b[1], a[2] + b[2], a[3] + b[3]);
+    }
+
+    static inline
+    Matrix4x4 operator - (const Matrix4x4& a, const Matrix4x4& b)
+    {
+        return Matrix4x4(a[0] - b[0], a[1] - b[1], a[2] - b[2], a[3] - b[3]);
+    }
+
     // ------------------------------------------------------------------
     // functions
     // ------------------------------------------------------------------
