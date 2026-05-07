@@ -44,9 +44,12 @@ namespace mango::math
     */
 
     template <>
-    struct Matrix<float, 3, 3> : MatrixBase<float, 3, 3>
+    struct Matrix<float, 3, 3>
     {
-        float32x3 m[3];
+        using ScalarType = float;
+        using VectorType = Vector<float, 3>;
+
+        VectorType m[3];
 
         explicit Matrix()
         {
@@ -87,6 +90,66 @@ namespace mango::math
             m[2] = Vector<float, 3>(s6, s7, s8);
         }
 
+        // accessors
+
+        operator const ScalarType* () const
+        {
+            return m[0].data();
+        }
+
+        operator ScalarType* ()
+        {
+            return m[0].data();
+        }
+
+        operator VectorType* ()
+        {
+            return m;
+        }
+
+        operator const VectorType* () const
+        {
+            return m;
+        }
+
+        const ScalarType* data() const
+        {
+            return m[0].data();
+        }
+
+        ScalarType* data()
+        {
+            return m[0].data();
+        }
+
+        const VectorType& operator [] (size_t y) const
+        {
+            assert(y < 3);
+            return m[y];
+        }
+
+        VectorType& operator [] (size_t y)
+        {
+            assert(y < 3);
+            return m[y];
+        }
+
+        ScalarType operator () (size_t y, size_t x) const
+        {
+            assert(x < 3);
+            assert(y < 3);
+            return m[y][x];
+        }
+
+        ScalarType& operator () (size_t y, size_t x)
+        {
+            assert(x < 3);
+            assert(y < 3);
+            return m[y][x];
+        }
+
+        // functions
+
         Matrix(const Quaternion& rotation)
         {
             *this = rotation;
@@ -119,26 +182,6 @@ namespace mango::math
         const Matrix3x3& operator = (const Quaternion& rotation);
         const Matrix3x3& operator = (const AngleAxis& rotation);
         const Matrix3x3& operator = (const EulerAngles& rotation);
-
-        const float* data() const
-        {
-            return reinterpret_cast<const float*>(this);
-        }
-
-        float* data()
-        {
-            return reinterpret_cast<float*>(this);
-        }
-
-        operator float32x3* ()
-        {
-            return m;
-        }
-
-        operator const float32x3* () const
-        {
-            return m;
-        }
 
         float determinant2x2() const;
         float determinant3x3() const;
@@ -179,13 +222,47 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    Matrix4x4 scale(const Matrix4x4& matrix, float s);
-    Matrix4x4 scale(const Matrix4x4& matrix, float x, float y, float z);
-    Matrix4x4 rotate(const Matrix4x4& matrix, float angle, const float32x3& axis);
-    Matrix4x4 rotateX(const Matrix4x4& matrix, float angle);
-    Matrix4x4 rotateY(const Matrix4x4& matrix, float angle);
-    Matrix4x4 rotateZ(const Matrix4x4& matrix, float angle);
-    Matrix4x4 rotateXYZ(const Matrix4x4& matrix, float x, float y, float z);
-    Matrix4x4 normalize(const Matrix4x4& matrix);
+    Matrix3x3 scale(const Matrix3x3& matrix, float s);
+    Matrix3x3 scale(const Matrix3x3& matrix, float x, float y, float z);
+    Matrix3x3 rotate(const Matrix3x3& matrix, float angle, const float32x3& axis);
+    Matrix3x3 rotateX(const Matrix3x3& matrix, float angle);
+    Matrix3x3 rotateY(const Matrix3x3& matrix, float angle);
+    Matrix3x3 rotateZ(const Matrix3x3& matrix, float angle);
+    Matrix3x3 rotateXYZ(const Matrix3x3& matrix, float x, float y, float z);
+    Matrix3x3 normalize(const Matrix3x3& matrix);
+
+    static inline
+    Matrix3x3 transpose(const Matrix3x3& m)
+    {
+        return Matrix3x3(
+            m(0, 0), m(1, 0), m(2, 0),
+            m(0, 1), m(1, 1), m(2, 1),
+            m(0, 2), m(1, 2), m(2, 2));
+    }
+
+    static inline
+    Matrix3x3 inverse(const Matrix3x3& m)
+    {
+        float s = m.determinant3x3();
+        if (s)
+        {
+            s = 1.0f / s;
+        }
+
+        const float m00 = (m(1, 1) * m(2, 2) - m(2, 1) * m(1, 2)) * s;
+        const float m01 = (m(2, 0) * m(1, 2) - m(1, 0) * m(2, 2)) * s;
+        const float m02 = (m(1, 0) * m(2, 1) - m(2, 0) * m(1, 1)) * s;
+        const float m10 = (m(2, 1) * m(0, 2) - m(0, 1) * m(2, 2)) * s;
+        const float m11 = (m(0, 0) * m(2, 2) - m(2, 0) * m(0, 2)) * s;
+        const float m12 = (m(2, 0) * m(0, 1) - m(0, 0) * m(2, 1)) * s;
+        const float m20 = (m(0, 1) * m(1, 2) - m(1, 1) * m(0, 2)) * s;
+        const float m21 = (m(1, 0) * m(0, 2) - m(0, 0) * m(1, 2)) * s;
+        const float m22 = (m(0, 0) * m(1, 1) - m(1, 0) * m(0, 1)) * s;
+
+        return Matrix3x3(
+            m00, m01, m02,
+            m10, m11, m12,
+            m20, m21, m22);
+    }
 
 } // namespace mango::math

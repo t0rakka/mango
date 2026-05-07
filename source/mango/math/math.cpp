@@ -1043,7 +1043,7 @@ namespace mango::math
     // Quaternion
     // ------------------------------------------------------------------------
 
-    template <int Width, int Height>
+    template <size_t Width, size_t Height>
     static inline
     Quaternion matrixToQuaternion(const Matrix<float, Width, Height>& m)
     {

@@ -55,8 +55,11 @@ namespace mango::math
     */
 
     template <>
-    struct Matrix<float, 4, 4> : MatrixBase<float, 4, 4>
+    struct Matrix<float, 4, 4>
     {
+        using ScalarType = float;
+        using VectorType = Vector<float, 4>;
+
         float32x4 m[4];
 
         explicit Matrix()
@@ -131,27 +134,65 @@ namespace mango::math
         const Matrix4x4& operator = (const AngleAxis& rotation);
         const Matrix4x4& operator = (const EulerAngles& rotation);
 
-        const float* data() const noexcept
+        // accessors
+
+        operator const float* () const
         {
-            return reinterpret_cast<const float*>(this);
+            return m[0].data();
         }
 
-        float* data() noexcept
+        operator float* ()
         {
-            return reinterpret_cast<float*>(this);
+            return m[0].data();
         }
 
-        operator float32x4* () noexcept
-        {
-            return m;
-        }
-
-        operator const float32x4* () const noexcept
+        operator float32x4* ()
         {
             return m;
         }
 
-        template <u32 index>
+        operator const float32x4* () const
+        {
+            return m;
+        }
+
+        const float* data() const
+        {
+            return m[0].data();
+        }
+
+        float* data()
+        {
+            return m[0].data();
+        }
+
+        const float32x4& operator [] (size_t y) const
+        {
+            assert(y < 4);
+            return m[y];
+        }
+
+        float32x4& operator [] (size_t y)
+        {
+            assert(y < 4);
+            return m[y];
+        }
+
+        float operator () (size_t y, size_t x) const
+        {
+            assert(x < 4);
+            assert(y < 4);
+            return m[y][x];
+        }
+
+        float& operator () (size_t y, size_t x)
+        {
+            assert(x < 4);
+            assert(y < 4);
+            return m[y][x];
+        }
+
+        template <size_t index>
         [[nodiscard]] float32x4 column() const noexcept
         {
             static_assert(index < 4, "Index out of range.");
@@ -159,6 +200,8 @@ namespace mango::math
             float32x4 temp1 = index & 2 ? unpackhi(m[2], m[3]) : unpacklo(m[2], m[3]);
             return index & 1 ? movehl(temp1, temp0) : movelh(temp0, temp1);
         }
+
+        // functions
 
         bool isAffine() const;
         float determinant2x2() const;
