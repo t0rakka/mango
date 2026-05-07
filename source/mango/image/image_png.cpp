@@ -2432,15 +2432,18 @@ namespace
 
     void ParserPNG::read_sBIT(BigEndianConstPointer p, u32 size)
     {
-        constexpr u32 scale_bits_size = 4;
-
-        if (size != scale_bits_size)
+        if (size > 4)
         {
             setError("Incorrect sBIT chunk size.");
             return;
         }
 
-        for (u32 i = 0; i < scale_bits_size; ++i)
+        // GCC 16.1 bounds checking failure:
+        // we must test i < 4 here to avoid the warning
+        // If we test size > 3 above, no warning, but we miss last entry at i == 3
+        // Correct code that generates the warning iscommented out:
+        //for (u32 i = 0; i < 4; ++i)
+        for (u32 i = 0; i < 4 && i < size; ++i)
         {
             m_scale_bits[i] = p[i];
         }
