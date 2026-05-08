@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/endian.hpp>
@@ -380,7 +380,7 @@ namespace mango::image::jpeg
                 {
                     // Skip the identifier
                     p += xmp_id_length;
-                    size -= xmp_id_length;
+                    size -= int(xmp_id_length);
                     printLine(Print::Info, "  XMP: {} bytes", size);
                     // NOTE: We don't support XMP but this is where it would be processed
                 }

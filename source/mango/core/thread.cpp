@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <chrono>
 #include <mango/core/system.hpp>
@@ -419,7 +419,7 @@ namespace mango
     void SerialQueue::cancel()
     {
         std::lock_guard<std::mutex> queue_lock(m_queue_mutex);
-        m_task_counter -= u32(m_task_queue.size());
+        m_task_counter -= m_task_queue.size();
         m_task_queue.clear();
     }
 

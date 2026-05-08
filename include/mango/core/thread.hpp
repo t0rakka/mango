@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -34,7 +34,7 @@ namespace mango
             ThreadPool* pool;
             std::string name;
 
-            alignas(64) std::atomic<int> task_counter { 0 };
+            alignas(64) std::atomic<size_t> task_counter { 0 };
             alignas(64) std::atomic<bool> cancelled { false };
 
             Queue(ThreadPool* pool, const std::string& name)
@@ -181,7 +181,7 @@ namespace mango
         std::thread m_thread;
 
         alignas(64) std::atomic<bool> m_stop { false };
-        alignas(64) std::atomic<int> m_task_counter { 0 };
+        alignas(64) std::atomic<size_t> m_task_counter { 0 };
 
         std::deque<Task> m_task_queue;
         std::mutex m_queue_mutex;
@@ -293,7 +293,7 @@ namespace mango
         std::thread m_thread;
 
         alignas(64) std::atomic<bool> m_stop { false };
-        alignas(64) std::atomic<int> m_ticket_counter { 0 };
+        alignas(64) std::atomic<size_t> m_ticket_counter { 0 };
 
         std::mutex m_wait_mutex;
         std::mutex m_consume_mutex;

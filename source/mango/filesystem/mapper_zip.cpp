@@ -591,7 +591,7 @@ namespace
                           const u8* salt, size_t salt_len,
                           u32 iterations, u8* out, size_t dk_len)
     {
-        u32 block_count = (dk_len + 19) / 20; // SHA-1 outputs 20 bytes
+        u32 block_count = u32(dk_len + 19) / 20; // SHA-1 outputs 20 bytes
         u8 U[20], T[20];
         u8 salt_block[20]; // max 20 bytes
 
@@ -810,7 +810,7 @@ namespace mango::filesystem
                     buffer = new u8[encrypted_size];
 
                     // Initialize AES with just the first 32 bytes (AES key)
-                    AES aes(derived + 0, key_length * 8);
+                    AES aes(derived + 0, int(key_length * 8));
 
                     // Initial counter for CTR mode
                     u8 counter[16] = { 0 };

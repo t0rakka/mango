@@ -1686,9 +1686,9 @@ namespace
                     for (size_t i = 0; i < m_context.tile_offsets.size(); ++i)
                     {
                         ConstMemory memory(m_memory.address + m_context.tile_offsets[i], m_context.tile_byte_counts[i]);
-    
-                        u32 x = (i % xtiles) * tile_width;
-                        u32 y = (i / xtiles) * tile_length;
+
+                        u32 x = (u32(i) % xtiles) * tile_width;
+                        u32 y = (u32(i) / xtiles) * tile_length;
     
                         printLine(Print::Info, "    [Tile] {}, {}", x, y);
                         printLine(Print::Info, "      offset: {}, length: {} bytes", m_context.tile_offsets[i], m_context.tile_byte_counts[i]);
@@ -1709,8 +1709,8 @@ namespace
 
                     for (size_t i = 0; i < count; ++i)
                     {
-                        u32 x = (i % xtiles) * tile_width;
-                        u32 y = (i / xtiles) * tile_length;
+                        u32 x = (u32(i) % xtiles) * tile_width;
+                        u32 y = (u32(i) / xtiles) * tile_length;
 
                         for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
                         {
@@ -1769,7 +1769,7 @@ namespace
 
                     for (size_t spatial_strip = 0; spatial_strip < strips_per_spatial_region; ++spatial_strip)
                     {
-                        u32 y = spatial_strip * m_context.rows_per_strip;
+                        u32 y = u32(spatial_strip * m_context.rows_per_strip);
                         u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
 
                         for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
@@ -1994,13 +1994,13 @@ namespace
                         for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
                         {
                             u32 offset = m_context.jpeg_dc_tables[i];
-                            writeDHT(buffer, 0x00 | i, m_memory.address + offset);
+                            writeDHT(buffer, 0x00 | u8(i), m_memory.address + offset);
                         }
 
                         for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
                         {
                             u32 offset = m_context.jpeg_ac_tables[i];
-                            writeDHT(buffer, 0x10 | i, m_memory.address + offset);
+                            writeDHT(buffer, 0x10 | u8(i), m_memory.address + offset);
                         }
 
                         writeSOS(buffer);
@@ -2036,19 +2036,19 @@ namespace
                         for (size_t i = 0; i < m_context.jpeg_qt_tables.size(); ++i)
                         {
                             u32 offset = m_context.jpeg_qt_tables[i];
-                            writeDQT(buffer, i, m_memory.address + offset);
+                            writeDQT(buffer, u8(i), m_memory.address + offset);
                         }
 
                         for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
                         {
                             u32 offset = m_context.jpeg_dc_tables[i];
-                            writeDHT(buffer, 0x00 | i, m_memory.address + offset);
+                            writeDHT(buffer, 0x00 | u8(i), m_memory.address + offset);
                         }
 
                         for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
                         {
                             u32 offset = m_context.jpeg_ac_tables[i];
-                            writeDHT(buffer, 0x10 | i, m_memory.address + offset);
+                            writeDHT(buffer, 0x10 | u8(i), m_memory.address + offset);
                         }
 
                         writeSOS(buffer);
@@ -2103,8 +2103,8 @@ namespace
 
                 for (size_t i = 0; i < num_data_blocks; ++i)
                 {
-                    u32 tile_x = (i % tiles_across) * m_context.tile_width;
-                    u32 tile_y = (i / tiles_across) * m_context.tile_length;
+                    u32 tile_x = (u32(i) % tiles_across) * m_context.tile_width;
+                    u32 tile_y = (u32(i) / tiles_across) * m_context.tile_length;
                     
                     u32 tile_w = std::min(m_context.tile_width, header.width - tile_x);
                     u32 tile_h = std::min(m_context.tile_length, header.height - tile_y);
@@ -2653,7 +2653,7 @@ namespace
 
             Buffer scanline(expanded_bytes_per_row);
 
-            for (u32 y = 0; y < height; ++y)
+            for (int y = 0; y < height; ++y)
             {
                 u8* dest = is_direct ? target.image : scanline.data();
 
