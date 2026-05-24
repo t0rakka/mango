@@ -278,38 +278,38 @@ void test21()
 
 void test22()
 {
-    File file("data/case.snitch/bench/IMG_2177.JPG");
-    print(file, "data/case.snitch/bench/IMG_2177.JPG", 0x472da743);
+    File file("data/case.hbs/bench/IMG_2177.JPG");
+    print(file, "data/case.hbs/bench/IMG_2177.JPG", 0x472da743);
 }
 
 void test23()
 {
-    Path path("data/case.snitch/");
-    print(path, "data/case.snitch/");
+    Path path("data/case.hbs/");
+    print(path, "data/case.hbs/");
 
     File file(path, "bench/IMG_2177.JPG");
-    print(file, "data/case.snitch/bench/IMG_2177.JPG", 0x472da743);
+    print(file, "data/case.hbs/bench/IMG_2177.JPG", 0x472da743);
 }
 
 void test24()
 {
-    Path path("data/case.snitch/bench/");
-    print(path, "data/case.snitch/bench/");
+    Path path("data/case.hbs/bench/");
+    print(path, "data/case.hbs/bench/");
 
     File file(path, "IMG_2177.JPG");
-    print(file, "data/case.snitch/bench/IMG_2177.JPG", 0x472da743);
+    print(file, "data/case.hbs/bench/IMG_2177.JPG", 0x472da743);
 }
 
 void test25()
 {
-    Path path1("data/case.snitch/");
-    print(path1, "data/case.snitch/");
+    Path path1("data/case.hbs/");
+    print(path1, "data/case.hbs/");
 
     Path path2(path1, "bench/");
-    print(path2, "data/case.snitch/bench/");
+    print(path2, "data/case.hbs/bench/");
 
     File file(path2, "IMG_2177.JPG");
-    print(file, "data/case.snitch/bench/IMG_2177.JPG", 0x472da743);
+    print(file, "data/case.hbs/bench/IMG_2177.JPG", 0x472da743);
 }
 
 void test26()
@@ -317,14 +317,14 @@ void test26()
     Path path1("data/");
     print(path1, "data/");
 
-    Path path2(path1, "case.snitch/");
-    print(path2, "data/case.snitch/");
+    Path path2(path1, "case.hbs/");
+    print(path2, "data/case.hbs/");
 
     Path path3(path2, "bench/");
-    print(path3, "data/case.snitch/bench/");
+    print(path3, "data/case.hbs/bench/");
 
     File file(path3, "IMG_2177.JPG");
-    print(file, "data/case.snitch/bench/IMG_2177.JPG", 0x472da743);
+    print(file, "data/case.hbs/bench/IMG_2177.JPG", 0x472da743);
 }
 
 // memory mapped container
@@ -347,8 +347,8 @@ void test27()
 
 void test28()
 {
-    File file(Path("data/case.snitch/"), "bench/IMG_2177.JPG");
-    print(file, "data/case.snitch/bench/IMG_2177.JPG", 0x472da743);
+    File file(Path("data/case.hbs/"), "bench/IMG_2177.JPG");
+    print(file, "data/case.hbs/bench/IMG_2177.JPG", 0x472da743);
 }
 
 void test29()
@@ -400,8 +400,8 @@ void test32()
     Path path2("data/fake/random.rar/");
     print(path2, "data/fake/random.rar/");
 
-    Path path3("data/fake/random.snitch/");
-    print(path3, "data/fake/random.snitch/");
+    Path path3("data/fake/random.hbs/");
+    print(path3, "data/fake/random.hbs/");
 }
 
 // -----------------------------------------------------------------------------------
