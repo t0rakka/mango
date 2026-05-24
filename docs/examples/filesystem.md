@@ -72,7 +72,7 @@ File file(path, "test/flower.jpg");
 ### Advanced Features
 
 - **AES Decryption**: Supported for zip containers
-- **Custom Container Format**: The "mgx" format is optimized for multi-core CPUs
+- **Custom Container Format**: The "hbs" format is optimized for multi-core CPUs
   - Larger files are compressed as blocks for parallel processing
   - Small files are combined into macroblocks for efficiency
   - LRU caching prevents redundant decompression of macroblocks

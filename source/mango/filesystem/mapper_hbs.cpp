@@ -12,7 +12,7 @@ namespace
     using namespace mango;
     namespace fs = mango::filesystem;
 
-    static constexpr u64 mgx_header_size = 24;
+    static constexpr u64 hbs_header_size = 24;
 
     struct Segment
     {
@@ -59,18 +59,18 @@ namespace
         }
     };
 
-    struct HeaderMGX
+    struct HeaderHBS
     {
         ConstMemory m_memory;
         fs::Indexer<FileHeader> m_folders;
         std::vector<Block> m_blocks;
 
-        HeaderMGX(ConstMemory memory)
+        HeaderHBS(ConstMemory memory)
             : m_memory(memory)
         {
             if (!memory.address)
             {
-                // MANGO_EXCEPTION("[mapper.mgx] Parent container doesn't have memory");
+                // MANGO_EXCEPTION("[mapper.hbs] Parent container doesn't have memory");
                 return;
             }
 
@@ -78,17 +78,17 @@ namespace
             u32 magic0 = p.read32();
             if (magic0 != u32_mask('m', 'g', 'x', '0'))
             {
-                //MANGO_EXCEPTION("[mapper.mgx] Incorrect file identifier (%x)", magic0);
+                //MANGO_EXCEPTION("[mapper.hbs] Incorrect file identifier (%x)", magic0);
                 return;
             }
 
-            u64 header_offset = memory.size - mgx_header_size;
+            u64 header_offset = memory.size - hbs_header_size;
             p = memory.address + header_offset;
 
             u32 magic3 = p.read32();
             if (magic3 != u32_mask('m', 'g', 'x', '3'))
             {
-                //MANGO_EXCEPTION("[mapper.mgx] Incorrect header identifier (%x)", magic3);
+                //MANGO_EXCEPTION("[mapper.hbs] Incorrect header identifier (%x)", magic3);
                 return;
             }
 
@@ -102,7 +102,7 @@ namespace
             MANGO_UNREFERENCED(version);
         }
 
-        ~HeaderMGX()
+        ~HeaderHBS()
         {
         }
 
@@ -111,7 +111,7 @@ namespace
             u32 magic1 = p.read32();
             if (magic1 != u32_mask('m', 'g', 'x', '1'))
             {
-                MANGO_EXCEPTION("[mapper.mgx] Incorrect block identifier (:#x)", magic1);
+                MANGO_EXCEPTION("[mapper.hbs] Incorrect block identifier (:#x)", magic1);
             }
 
             u32 num_blocks = p.read32();
@@ -131,7 +131,7 @@ namespace
             u32 magic2 = p.read32();
             if (magic2 != u32_mask('m', 'g', 'x', '2'))
             {
-                MANGO_EXCEPTION("[mapper.mgx] Incorrect block terminator (:#x)", magic2);
+                MANGO_EXCEPTION("[mapper.hbs] Incorrect block terminator (:#x)", magic2);
             }
         }
 
@@ -140,7 +140,7 @@ namespace
             u32 magic2 = p.read32();
             if (magic2 != u32_mask('m', 'g', 'x', '2'))
             {
-                MANGO_EXCEPTION("[mapper.mgx] Incorrect block identifier (:#x)", magic2);
+                MANGO_EXCEPTION("[mapper.hbs] Incorrect block identifier (:#x)", magic2);
             }
 
             u64 compressed = p.read64();
@@ -152,7 +152,7 @@ namespace
             CompressionStatus status = zstd::decompress(temp, source);
             if (status.size != uncompressed)
             {
-                MANGO_EXCEPTION("[mapper.mgx] Incorrect compressed index");
+                MANGO_EXCEPTION("[mapper.hbs] Incorrect compressed index");
             }
 
             parseFileArray(temp.data());
@@ -161,7 +161,7 @@ namespace
             u32 magic3 = p.read32();
             if (magic3 != u32_mask('m', 'g', 'x', '3'))
             {
-                MANGO_EXCEPTION("[mapper.mgx] Incorrect block terminator (:#x)", magic3);
+                MANGO_EXCEPTION("[mapper.hbs] Incorrect block terminator (:#x)", magic3);
             }
         }
 
@@ -215,39 +215,39 @@ namespace mango::filesystem
 {
 
     // -----------------------------------------------------------------
-    // VirtualMemoryMGX
+    // VirtualMemoryHBS
     // -----------------------------------------------------------------
 
-    class VirtualMemoryMGX : public mango::VirtualMemory
+    class VirtualMemoryHBS : public mango::VirtualMemory
     {
     protected:
         std::shared_ptr<Buffer> m_buffer;
 
     public:
-        VirtualMemoryMGX(ConstMemory memory)
+        VirtualMemoryHBS(ConstMemory memory)
         {
             m_memory = memory;
         }
 
-        VirtualMemoryMGX(std::shared_ptr<Buffer> buffer, ConstMemory memory)
+        VirtualMemoryHBS(std::shared_ptr<Buffer> buffer, ConstMemory memory)
             : m_buffer(buffer)
         {
             m_memory = memory;
         }
 
-        ~VirtualMemoryMGX()
+        ~VirtualMemoryHBS()
         {
         }
     };
 
     // -----------------------------------------------------------------
-    // MapperMGX
+    // MapperHBS
     // -----------------------------------------------------------------
 
-    class MapperMGX : public AbstractMapper
+    class MapperHBS : public AbstractMapper
     {
     protected:
-        HeaderMGX m_header;
+        HeaderHBS m_header;
         std::string m_password;
 
         // block cache
@@ -255,7 +255,7 @@ namespace mango::filesystem
         std::mutex m_cache_mutex;
 
     public:
-        MapperMGX(ConstMemory parent, const std::string& password)
+        MapperHBS(ConstMemory parent, const std::string& password)
             : m_header(parent)
             , m_password(password)
         {
@@ -312,7 +312,7 @@ namespace mango::filesystem
             const FileHeader* ptrHeader = m_header.m_folders.getHeader(filename);
             if (!ptrHeader)
             {
-                MANGO_EXCEPTION("[mapper.mgx] File \"{}\" not found.", filename);
+                MANGO_EXCEPTION("[mapper.hbs] File \"{}\" not found.", filename);
             }
 
             const FileHeader& file = *ptrHeader;
@@ -351,7 +351,7 @@ namespace mango::filesystem
                         }
 
                         ConstMemory memory(*buffer + segment.offset, segment.size);
-                        return std::make_unique<VirtualMemoryMGX>(buffer, memory);
+                        return std::make_unique<VirtualMemoryHBS>(buffer, memory);
                     }
                     else
                     {
@@ -363,7 +363,7 @@ namespace mango::filesystem
                     // The file is encoded as a single, non-compressed block
                     // we can simply map it into parent's memory
                     ConstMemory memory(block.compressed.address + segment.offset, size_t(segment.size));
-                    return std::make_unique<VirtualMemoryMGX>(memory);
+                    return std::make_unique<VirtualMemoryHBS>(memory);
                 }
             }
 
@@ -372,7 +372,7 @@ namespace mango::filesystem
             std::shared_ptr<Buffer> buffer = std::make_shared<Buffer>(file.size);
             u8* x = *buffer;
 
-            ConcurrentQueue q("mgx.decompressor");
+            ConcurrentQueue q("hbs.decompressor");
 
             for (const auto& segment : file.segments)
             {
@@ -414,7 +414,7 @@ namespace mango::filesystem
             q.wait();
 
             ConstMemory memory = *buffer;
-            return std::make_unique<VirtualMemoryMGX>(buffer, memory);
+            return std::make_unique<VirtualMemoryHBS>(buffer, memory);
         }
     };
 
@@ -422,9 +422,9 @@ namespace mango::filesystem
     // functions
     // -----------------------------------------------------------------
 
-    AbstractMapper* createMapperMGX(ConstMemory parent, const std::string& password)
+    AbstractMapper* createMapperHBS(ConstMemory parent, const std::string& password)
     {
-        AbstractMapper* mapper = new MapperMGX(parent, password);
+        AbstractMapper* mapper = new MapperHBS(parent, password);
         return mapper;
     }
 

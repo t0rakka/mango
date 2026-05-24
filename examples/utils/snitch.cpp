@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cinttypes>
 #include <algorithm>
@@ -464,21 +464,21 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     --------------------------------------------------------------------------
 
     Compressed block data:
-        u32         magic: mgx0
+        u32         magic: hbs0
         u8[]        data     <-- written by the compressor, a raw binary blob w/o specific size or structure
 
     Block Info Array:
-        u32         magic: mgx1
+        u32         magic: hbs1
         block[]     blocks
 
     File Info Array:
-        u32         magic: mgx2
+        u32         magic: hbs2
         u64         compressed size (file array)
         u64         uncmpressed size (file array)
         File[]      files (compressed with zstd)
 
     Header:
-        u32         magic: mgx3
+        u32         magic: hbs3
         u32         version
         u64         offset to block info array
         u64         offset to file info array
@@ -489,7 +489,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     u64 block_data_offset = output.offset();
     u32 num_blocks = u32(manager.blocks.size());
 
-    str.write32(u32_mask('m', 'g', 'x', '1'));
+    str.write32(u32_mask('h', 'b', 's', '1'));
     str.write32(num_blocks);
 
     for (auto &block : manager.blocks)
@@ -504,7 +504,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     u64 file_data_offset = output.offset();
 
-    str.write32(u32_mask('m', 'g', 'x', '2'));
+    str.write32(u32_mask('h', 'b', 's', '2'));
 
     // write file data into temporary buffer
 
@@ -548,7 +548,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     // write header
 
-    str.write32(u32_mask('m', 'g', 'x', '3'));
+    str.write32(u32_mask('h', 'b', 's', '3'));
     str.write32(1);
     str.write64(block_data_offset);
     str.write64(file_data_offset);
@@ -559,8 +559,8 @@ void printHelp(const CommandLine& commands)
     std::string program = removePath(std::string(commands[0]));
 
     printLine("");
-    printLine("MGX/SNITCH Compression Tool version 0.5.3");
-    printLine("Copyright (C) 2018-2024 Fapware, inc. All rights reserved.");
+    printLine("HBS Compression Tool version 0.5.5");
+    printLine("Copyright (C) 2018-2026 Fapware, inc. All rights reserved.");
     printLine("");
     printLine("Usage: {} [input folder] [compression] [level:0..10] (options)", program);
     printLine("");
@@ -601,7 +601,7 @@ int main(int argc, char* argv[])
     State state;
 
     std::string folder = std::string(commands[1]);
-    std::string output = "result.snitch";
+    std::string output = "result.hbs";
     std::string compression = std::string(commands[2]);
 
     int level = std::stoi(commands[3].data());

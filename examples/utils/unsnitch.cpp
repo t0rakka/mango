@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <filesystem>
 #include <mango/mango.hpp>
@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
     {
         std::string program_name = removePath(argv[0]);
         printf("\n");
-        printf("MGX/SNITCH Decompression Tool version 0.2 \n");
+        printf("HBS Decompression Tool version 0.2 \n");
         printf("Copyright (C) 2018 Fapware, inc. All rights reserved.\n");
         printf("Usage: %s [archive] [destination] \n", program_name.c_str());
         printf("       %s [archive] --list \n", program_name.c_str());
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
 
     // Create a memory view of the container
     File file(filename);
-    Path path(file, ".snitch");
+    Path path(file, ".hbs");
 
     Timer timer;
     u64 time0 = timer.ms();
