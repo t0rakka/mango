@@ -279,7 +279,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     // write identifier
 
-    str.write32(u32_mask('m', 'g', 'x', '0'));
+    str.write32(filesystem::MAGIC_HBS0);
 
     // compress
 
@@ -489,7 +489,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     u64 block_data_offset = output.offset();
     u32 num_blocks = u32(manager.blocks.size());
 
-    str.write32(u32_mask('h', 'b', 's', '1'));
+    str.write32(filesystem::MAGIC_HBS1);
     str.write32(num_blocks);
 
     for (auto &block : manager.blocks)
@@ -504,7 +504,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     u64 file_data_offset = output.offset();
 
-    str.write32(u32_mask('h', 'b', 's', '2'));
+    str.write32(filesystem::MAGIC_HBS2);
 
     // write file data into temporary buffer
 
@@ -548,7 +548,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     // write header
 
-    str.write32(u32_mask('h', 'b', 's', '3'));
+    str.write32(filesystem::MAGIC_HBS3);
     str.write32(1);
     str.write64(block_data_offset);
     str.write64(file_data_offset);

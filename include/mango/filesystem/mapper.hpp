@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -8,9 +8,18 @@
 #include <vector>
 #include <mango/core/configure.hpp>
 #include <mango/core/memory.hpp>
+#include <mango/core/bits.hpp>
 
 namespace mango::filesystem
 {
+
+    enum : u32
+    {
+        MAGIC_HBS0 = u32_mask('h', 'b', 's', '0'),
+        MAGIC_HBS1 = u32_mask('h', 'b', 's', '1'),
+        MAGIC_HBS2 = u32_mask('h', 'b', 's', '2'),
+        MAGIC_HBS3 = u32_mask('h', 'b', 's', '3'),
+    };
 
     struct FileInfo
     {

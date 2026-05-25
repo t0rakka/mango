@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/filesystem/filesystem.hpp>
@@ -76,7 +76,7 @@ namespace
 
             LittleEndianConstPointer p = memory.address;
             u32 magic0 = p.read32();
-            if (magic0 != u32_mask('m', 'g', 'x', '0'))
+            if (magic0 != fs::MAGIC_HBS0)
             {
                 //MANGO_EXCEPTION("[mapper.hbs] Incorrect file identifier (%x)", magic0);
                 return;
@@ -86,7 +86,7 @@ namespace
             p = memory.address + header_offset;
 
             u32 magic3 = p.read32();
-            if (magic3 != u32_mask('m', 'g', 'x', '3'))
+            if (magic3 != fs::MAGIC_HBS3)
             {
                 //MANGO_EXCEPTION("[mapper.hbs] Incorrect header identifier (%x)", magic3);
                 return;
@@ -109,7 +109,7 @@ namespace
         void parseBlocks(LittleEndianConstPointer p)
         {
             u32 magic1 = p.read32();
-            if (magic1 != u32_mask('m', 'g', 'x', '1'))
+            if (magic1 != fs::MAGIC_HBS1)
             {
                 MANGO_EXCEPTION("[mapper.hbs] Incorrect block identifier (:#x)", magic1);
             }
@@ -129,7 +129,7 @@ namespace
             }
 
             u32 magic2 = p.read32();
-            if (magic2 != u32_mask('m', 'g', 'x', '2'))
+            if (magic2 != fs::MAGIC_HBS2)
             {
                 MANGO_EXCEPTION("[mapper.hbs] Incorrect block terminator (:#x)", magic2);
             }
@@ -138,7 +138,7 @@ namespace
         void parseFiles(LittleEndianConstPointer p)
         {
             u32 magic2 = p.read32();
-            if (magic2 != u32_mask('m', 'g', 'x', '2'))
+            if (magic2 != fs::MAGIC_HBS2)
             {
                 MANGO_EXCEPTION("[mapper.hbs] Incorrect block identifier (:#x)", magic2);
             }
@@ -159,7 +159,7 @@ namespace
             p += compressed;
 
             u32 magic3 = p.read32();
-            if (magic3 != u32_mask('m', 'g', 'x', '3'))
+            if (magic3 != fs::MAGIC_HBS3)
             {
                 MANGO_EXCEPTION("[mapper.hbs] Incorrect block terminator (:#x)", magic3);
             }
