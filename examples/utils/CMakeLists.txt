@@ -1,7 +1,7 @@
 
 list(APPEND examples
-    snitch
-    unsnitch
+    hcompress
+    hdecompress
     image_encoder
 )
 

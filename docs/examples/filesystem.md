@@ -87,9 +87,9 @@ File file(path, "test/flower.jpg");
 3.98 user 0.05s system 98% cpu 4.041 total
 ```
 
-**Mango snitch:**
+**Mango hbs:**
 ```bash
-> snitch silesia/ deflate.zlib 4
+> hcompress silesia/ deflate.zlib 4
 Compressed: 202.1 MB --> 66.3 MB (32.8%) in 0.12 seconds (deflate.zlib-4, 1710 MB/s)
 ```
 
