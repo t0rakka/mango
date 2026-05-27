@@ -63,6 +63,23 @@ sys:       18.7 s      4.9 s      2.3 s      1.7 s      3.6 s      3.7 s
 
 */
 
+static
+void progress(u64 i, u64 N, int width)
+{
+    // fraction done
+    double fraction = double(i + 1) / N;
+    int filled = int(fraction * width);
+
+    // build bar
+    printf("\r[");
+    for (int j = 0; j < width; j++)
+    {
+        putchar(j < filled ? '=' : ' ');
+    }
+    printf("] %5.1f%%\r", fraction * 100.0);
+    fflush(stdout);
+}
+
 // ------------------------------------------------------------------------------------------
 // indexing
 // ------------------------------------------------------------------------------------------
@@ -160,7 +177,7 @@ struct Block
     }
 };
 
-struct SegFile
+struct SegmentedFile
 {
     struct Segment
     {
@@ -178,7 +195,7 @@ struct SegFile
 struct BlockManager
 {
     std::vector<Block> blocks;
-    std::vector<SegFile> files;
+    std::vector<SegmentedFile> files;
 
     void flush(Block& block)
     {
@@ -193,6 +210,16 @@ struct BlockManager
     {
         const u32 block_index = u32(blocks.size());
         files.back().segments.push_back({block_index, offset, size});
+    }
+
+    u64 getTotalBytes() const
+    {
+        u64 total = 0;
+        for (auto node : files)
+        {
+            total += node.size;
+        }
+        return total;
     }
 };
 
@@ -212,29 +239,22 @@ void compress(State& state, const std::string& folder, const std::string& archiv
         return;
     }
 
-    printLine("");
-    printLine("Compressing {} files ({}.{} MB)", 
+    printLine("Detected {} files ({}.{} MB)              ", 
         total_files, 
         state.total_bytes / MB, (state.total_bytes * 10 / MB) % 10);
-    printLine("");
 
     // sort files by size
-    std::sort(state.files.begin(), state.files.end(),
-        [] (const FileInfo& a, const FileInfo& b)
-        {
-            return a.size > b.size;
-        });
+    std::sort(state.files.begin(), state.files.end(), [] (const FileInfo& a, const FileInfo& b)
+    {
+        return a.size > b.size;
+    });
 
     BlockManager manager;
     Block block;
 
     for (auto node : state.files)
     {
-        // compute checksum
-        File file(path, node.name);
-        u32 checksum = crc32c(0, file);
-
-        manager.files.push_back({node.name, node.size, checksum});
+        manager.files.push_back({node.name, node.size, 0});
 
         if (node.size > small_file_max_size)
         {
@@ -272,6 +292,38 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     manager.flush(block);
 
+    // compute checksums
+
+    printLine("Computing checksums...");
+
+    ConcurrentQueue q;
+
+    const u64 totalBytes = manager.getTotalBytes();
+    std::atomic<u64> counterBytes { 0 };
+
+    for (size_t i = 0; i < manager.files.size(); ++i)
+    {
+        q.enqueue([&, i] ()
+        {
+            auto& node = manager.files[i];
+            File file(path, node.filename);
+            node.checksum = crc32c(0, file);
+            counterBytes += node.size;
+        });
+    }
+
+    while (counterBytes < totalBytes)
+    {
+        progress(counterBytes, totalBytes, 52);
+        mango::Sleep::ms(120);
+    }
+
+    q.wait();
+
+    progress(counterBytes, totalBytes, 52);
+    printLine("");
+
+
     // create output stream
 
     OutputFileStream output(archive);
@@ -283,7 +335,6 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     // compress
 
-    ConcurrentQueue q; // compression queue
     std::mutex mutex; // write serialization mutex
 
     u64 time0 = Time::ms();
@@ -390,7 +441,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 #else
             output.write(file.data() + offset, size);
 #endif
-            print("s");
+            print("c");
             fflush(stdout);
         }
 
