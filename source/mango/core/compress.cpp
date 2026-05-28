@@ -1387,8 +1387,10 @@ namespace isal
         { Compressor::ZSTD,         "zstd",         zstd::bound,         zstd::compress,         zstd::decompress },
         { Compressor::ZLIB,         "zlib",         zlib::bound,         zlib::compress,         zlib::decompress },
         { Compressor::DEFLATE,      "deflate",      deflate::bound,      deflate::compress,      deflate::decompress },
+        /* These are not listed on purpose; they exist for zlib compatibility but not for public API usage
         { Compressor::DEFLATE_ZLIB, "deflate.zlib", deflate_zlib::bound, deflate_zlib::compress, deflate_zlib::decompress },
         { Compressor::DEFLATE_GZIP, "deflate.gzip", deflate_gzip::bound, deflate_gzip::compress, deflate_gzip::decompress },
+        */
         { Compressor::LZAV,         "lzav",         lzav::bound,         lzav::compress,         lzav::decompress },
         // optional
 #if defined(MANGO_ENABLE_BZIP2)

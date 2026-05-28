@@ -59,13 +59,13 @@ void enumerate(const Path& path, State& state, std::string destination, std::str
 
             if (state.print_list)
             {
-                printf("%12" PRIu64 "  %s  : 0x%08x\n", node.size, filename.c_str(), node.checksum);
+                printf("%12" PRIu64 "  0x%08x  %s\n", node.size, node.checksum, filename.c_str());
             }
 
             if (state.print_tree)
             {
                 tabs(depth);
-                printf("- %s  : 0x%08x\n", node.name.c_str(), node.checksum);
+                printf("- %s\n", node.name.c_str());
             }
 
             if (state.verify)
