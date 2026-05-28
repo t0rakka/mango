@@ -2,7 +2,6 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include <cinttypes>
 #include <algorithm>
 #include <mango/mango.hpp>
 
@@ -25,6 +24,7 @@ namespace
     constexpr u64 small_block_size = 2 * MB;
 
     constexpr size_t store_threshold_default = 95; // percent
+    static constexpr int status_line_width = 60;
 
 } // namespace
 
@@ -63,6 +63,13 @@ sys:       18.7 s      4.9 s      2.3 s      1.7 s      3.6 s      3.7 s
 
 */
 
+template <typename... T>
+static void replaceLine(fmt::format_string<T...> fmt, T&&... args)
+{
+    print("\r{:<{}}\n", fmt::format(fmt, std::forward<T>(args)...), status_line_width);
+    std::fflush(stdout);
+}
+
 static
 void progress(u64 i, u64 N, int width)
 {
@@ -70,14 +77,10 @@ void progress(u64 i, u64 N, int width)
     double fraction = double(i + 1) / N;
     int filled = int(fraction * width);
 
-    // build bar
-    printf("\r[");
-    for (int j = 0; j < width; j++)
-    {
-        putchar(j < filled ? '=' : ' ');
-    }
-    printf("] %5.1f%%\r", fraction * 100.0);
-    fflush(stdout);
+    // {:=>{}}  = '=' fill, right-aligned, dynamic width (filled)
+    // {: <{}}  = space fill, left-aligned, dynamic width (remainder)
+    print("\r[{:=>{}}{: <{}}] {:5.1f}%\r", "", filled, "", width - filled, fraction * 100.0);
+    std::fflush(stdout);
 }
 
 // ------------------------------------------------------------------------------------------
@@ -227,10 +230,15 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 {
     Compressor compressor = getCompressor(compression);
 
-    printLine("Scanning files to compress...");
+    print("Scanning files to compress...");
+    std::fflush(stdout);
+
+    u64 scan_time0 = Time::ms();
 
     Path path(folder);
     enumerate(path, folder, state, 0);
+
+    u64 scan_dt = Time::ms() - scan_time0;
 
     u64 total_files = state.files.size() + state.containers.size();
     if (!total_files)
@@ -239,9 +247,10 @@ void compress(State& state, const std::string& folder, const std::string& archiv
         return;
     }
 
-    printLine("Detected {} files ({}.{} MB)              ", 
-        total_files, 
-        state.total_bytes / MB, (state.total_bytes * 10 / MB) % 10);
+    replaceLine("Detected {} files ({:0.1f} MB) in {:0.2f} seconds",
+        total_files,
+        state.total_bytes / double(MB),
+        scan_dt / 1000.0);
 
     // sort files by size
     std::sort(state.files.begin(), state.files.end(), [] (const FileInfo& a, const FileInfo& b)
@@ -294,7 +303,10 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     // compute checksums
 
-    printLine("Computing checksums...");
+    print("Computing checksums...");
+    std::fflush(stdout);
+
+    u64 checksum_time0 = Time::ms();
 
     ConcurrentQueue q;
 
@@ -321,8 +333,14 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     q.wait();
 
     progress(counterBytes, totalBytes, 52);
-    printLine("");
 
+    u64 checksum_dt = Time::ms() - checksum_time0;
+
+    replaceLine("Calculated checksum for {:0.1f} MB in {:0.2f} seconds ({} MB/s)",
+        totalBytes / double(MB),
+        checksum_dt / 1000.0,
+        totalBytes / (std::max(u64(1), checksum_dt) * 1024));
+    printLine("");
 
     // create output stream
 

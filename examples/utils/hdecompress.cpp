@@ -17,12 +17,6 @@ struct State
     u64 total_bytes_out = 0;
 };
 
-void tabs(int depth)
-{
-    while (depth-- > 0)
-        printf("  ");
-}
-
 void enumerate(const Path& path, State& state, std::string destination, std::string prefix, int depth)
 {
     std::string pathname = removePrefix(path.pathname(), prefix);
@@ -30,7 +24,7 @@ void enumerate(const Path& path, State& state, std::string destination, std::str
 
     if (state.decompress)
     {
-        printf("Folder: %s\n", current.c_str());
+        printLine("Folder: {}", current);
 
         // create folder
         bool status = std::filesystem::create_directory(current);
@@ -45,8 +39,7 @@ void enumerate(const Path& path, State& state, std::string destination, std::str
             {
                 if (state.print_tree)
                 {
-                    tabs(depth);
-                    printf("+ %s\n", node.name.c_str());
+                    printLine(depth * 2, "+ {}", node.name);
                 }
 
                 Path temp(path, node.name);
@@ -59,13 +52,12 @@ void enumerate(const Path& path, State& state, std::string destination, std::str
 
             if (state.print_list)
             {
-                printf("%12" PRIu64 "  0x%08x  %s\n", node.size, node.checksum, filename.c_str());
+                printLine("{:12}  0x{:08x}  {}", node.size, node.checksum, filename);
             }
 
             if (state.print_tree)
             {
-                tabs(depth);
-                printf("- %s\n", node.name.c_str());
+                printLine(depth * 2, "- {}", node.name);
             }
 
             if (state.verify)
@@ -78,14 +70,14 @@ void enumerate(const Path& path, State& state, std::string destination, std::str
 
                     if (checksum != node.checksum)
                     {
-                        printf("ERROR: %s checksum: %08x, expected: %08x\n", filename.c_str(), checksum, node.checksum);
+                        printLine(Print::Error, "ERROR: {} checksum: {:08x}, expected: {:08x}", filename, checksum, node.checksum);
                     }
                 }
             }
 
             if (state.decompress)
             {
-                printf("Create: %s\n", filename.c_str());
+                printLine("Create: {}", filename);
 
                 File file(path, node.name);
                 ConstMemory memory = file;
@@ -105,13 +97,13 @@ int main(int argc, char* argv[])
     if (argc != 3)
     {
         std::string program_name = removePath(argv[0]);
-        printf("\n");
-        printf("HBS Decompression Tool version 0.2 \n");
-        printf("Copyright (C) 2018 Fapware, inc. All rights reserved.\n");
-        printf("Usage: %s [archive] [destination] \n", program_name.c_str());
-        printf("       %s [archive] --list \n", program_name.c_str());
-        printf("       %s [archive] --tree \n", program_name.c_str());
-        printf("       %s [archive] --verify \n", program_name.c_str());
+        printLine("");
+        printLine("HBS Decompression Tool version 0.2");
+        printLine("Copyright (C) 2018 Fapware, inc. All rights reserved.");
+        printLine("Usage: {} [archive] [destination]", program_name);
+        printLine("       {} [archive] --list", program_name);
+        printLine("       {} [archive] --tree", program_name);
+        printLine("       {} [archive] --verify", program_name);
         return 0;
     }
 
@@ -159,14 +151,14 @@ int main(int argc, char* argv[])
     MANGO_UNREFERENCED(time0);
     MANGO_UNREFERENCED(time1);
 
-    printf("\n");
+    printLine("");
 
     constexpr u64 KB = 1 << 10;
 
     u64 total_time = time1 - time0;
     u64 rate = total_time ? state.total_bytes_out / (total_time * KB) : 0;
 
-    printf("%12" PRIu64 " KB  %8" PRIu64 " ms     (%" PRIu64 " MB/s) \n",
+    printLine("{:12} KB  {:8} ms     ({} MB/s)",
         state.total_bytes_out / KB,
         total_time, rate);
 }
