@@ -98,8 +98,8 @@ int main(int argc, char* argv[])
     {
         std::string program_name = removePath(argv[0]);
         printLine("");
-        printLine("HBS Decompression Tool version 0.2");
-        printLine("Copyright (C) 2018 Fapware, inc. All rights reserved.");
+        printLine("HBS Decompression Tool version 0.3");
+        printLine("Copyright (C) 2026 Twilight 3D Finland, Oy. All rights reserved.");
         printLine("Usage: {} [archive] [destination]", program_name);
         printLine("       {} [archive] --list", program_name);
         printLine("       {} [archive] --tree", program_name);

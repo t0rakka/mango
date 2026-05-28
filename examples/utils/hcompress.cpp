@@ -3,7 +3,6 @@
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <algorithm>
-#include <limits>
 #include <mango/mango.hpp>
 
 using namespace mango;
@@ -179,8 +178,8 @@ struct SegmentedFile
     struct Segment
     {
         u32 block;
-        u32 offset;
-        u32 size;
+        u64 offset;
+        u64 size;
     };
 
     std::string filename;
@@ -203,13 +202,13 @@ struct BlockManager
         }
     }
 
-    void segment(size_t file_index, u32 offset, u32 size)
+    void segment(size_t file_index, u64 offset, u64 size)
     {
         const u32 block_index = u32(blocks.size());
         files[file_index].segments.push_back({ block_index, offset, size });
     }
 
-    void segment(u32 offset, u32 size)
+    void segment(u64 offset, u64 size)
     {
         segment(files.size() - 1, offset, size);
     }
@@ -226,17 +225,8 @@ struct BlockManager
 
     void appendStoreNoCompression(Block& block, const FileInfo& node)
     {
-        constexpr u64 max_segment_size = std::numeric_limits<u32>::max();
-
-        for (u64 offset = 0; offset < node.size; )
-        {
-            u64 size = std::min(node.size - offset, max_segment_size);
-
-            segment(u32(offset), u32(size));
-            block.append({ node.name, offset, size });
-
-            offset += size;
-        }
+        segment(0, node.size);
+        block.append({ node.name, 0, node.size });
 
         block.store = true;
         block.uncompressed = block.bytes;
@@ -353,7 +343,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
                 for (u64 offset = 0; offset < node.size; offset += large_block_size)
                 {
                     u64 size = std::min(large_block_size, node.size - offset);
-                    manager.segment(0, u32(size));
+                    manager.segment(0, size);
                     block.append({ node.name, offset, size });
                     manager.flush(block);
                 }
@@ -361,7 +351,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
             else
             {
                 // compress the file as one block
-                manager.segment(0, u32(node.size));
+                manager.segment(0, node.size);
                 block.append({ node.name, 0, node.size });
                 manager.flush(block);
             }
@@ -374,7 +364,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
                 manager.flush(block);
             }
 
-            manager.segment(u32(block.bytes), u32(node.size));
+            manager.segment(block.bytes, node.size);
             block.append({ node.name, 0, node.size });
         }
     }
@@ -430,7 +420,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     // write identifier
 
-    str.write32(filesystem::MAGIC_HBS0);
+    str.write32(filesystem::HBS_MAGIC0);
 
     // compress
 
@@ -540,7 +530,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
         for (size_t file_index : store_small_files)
         {
             const auto& file = manager.files[file_index];
-            manager.segment(file_index, u32(raw.bytes), u32(file.size));
+            manager.segment(file_index, raw.bytes, file.size);
             raw.append({ file.filename, 0, file.size });
         }
 
@@ -603,8 +593,8 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     Segment:
         u32         block_index
-        u32         offset
-        u32         size
+        u64         offset
+        u64         size
 
     File:
         char[]      filename
@@ -622,10 +612,12 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     Block Info Array:
         u32         magic: hbs1
+        u32         version
         block[]     blocks
 
     File Info Array:
         u32         magic: hbs2
+        u32         version
         u64         compressed size (file array)
         u64         uncmpressed size (file array)
         File[]      files (compressed with zstd)
@@ -642,7 +634,8 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     u64 block_data_offset = output.offset();
     u32 num_blocks = u32(manager.blocks.size());
 
-    str.write32(filesystem::MAGIC_HBS1);
+    str.write32(filesystem::HBS_MAGIC1);
+    str.write32(filesystem::HBS_VERSION);
     str.write32(num_blocks);
 
     for (auto &block : manager.blocks)
@@ -657,7 +650,8 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     u64 file_data_offset = output.offset();
 
-    str.write32(filesystem::MAGIC_HBS2);
+    str.write32(filesystem::HBS_MAGIC2);
+    str.write32(filesystem::HBS_VERSION);
 
     // write file data into temporary buffer
 
@@ -681,8 +675,8 @@ void compress(State& state, const std::string& folder, const std::string& archiv
         for (auto &segment : file.segments)
         {
             le.write32(segment.block);
-            le.write32(segment.offset);
-            le.write32(segment.size);
+            le.write64(segment.offset);
+            le.write64(segment.size);
         }
     }
 
@@ -701,8 +695,8 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     // write header
 
-    str.write32(filesystem::MAGIC_HBS3);
-    str.write32(1);
+    str.write32(filesystem::HBS_MAGIC3);
+    str.write32(filesystem::HBS_VERSION);
     str.write64(block_data_offset);
     str.write64(file_data_offset);
 }

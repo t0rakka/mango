@@ -17,8 +17,8 @@ namespace
     struct Segment
     {
         u32 block;
-        u32 offset;
-        u32 size;
+        u64 offset;
+        u64 size;
     };
 
     struct Block
@@ -64,6 +64,7 @@ namespace
         ConstMemory m_memory;
         fs::Indexer<FileHeader> m_folders;
         std::vector<Block> m_blocks;
+        u32 m_version { 0 };
 
         HeaderHBS(ConstMemory memory)
             : m_memory(memory)
@@ -76,7 +77,7 @@ namespace
 
             LittleEndianConstPointer p = memory.address;
             u32 magic0 = p.read32();
-            if (magic0 != fs::MAGIC_HBS0)
+            if (magic0 != fs::HBS_MAGIC0)
             {
                 //MANGO_EXCEPTION("[mapper.hbs] Incorrect file identifier (%x)", magic0);
                 return;
@@ -86,20 +87,18 @@ namespace
             p = memory.address + header_offset;
 
             u32 magic3 = p.read32();
-            if (magic3 != fs::MAGIC_HBS3)
+            if (magic3 != fs::HBS_MAGIC3)
             {
                 //MANGO_EXCEPTION("[mapper.hbs] Incorrect header identifier (%x)", magic3);
                 return;
             }
 
-            u32 version = p.read32();
+            m_version = p.read32();
             u64 block_offset = p.read64();
             u64 file_offset = p.read64();
 
             parseBlocks(memory.address + block_offset);
             parseFiles(memory.address + file_offset);
-
-            MANGO_UNREFERENCED(version);
         }
 
         ~HeaderHBS()
@@ -109,12 +108,22 @@ namespace
         void parseBlocks(LittleEndianConstPointer p)
         {
             u32 magic1 = p.read32();
-            if (magic1 != fs::MAGIC_HBS1)
+            if (magic1 != fs::HBS_MAGIC1)
             {
                 MANGO_EXCEPTION("[mapper.hbs] Incorrect block identifier (:#x)", magic1);
             }
 
-            u32 num_blocks = p.read32();
+            u32 tag = p.read32();
+            u32 num_blocks;
+
+            if (tag == fs::HBS_VERSION)
+            {
+                num_blocks = p.read32();
+            }
+            else
+            {
+                num_blocks = tag;
+            }
             for (u32 i = 0; i < num_blocks; ++i)
             {
                 Block block;
@@ -129,7 +138,7 @@ namespace
             }
 
             u32 magic2 = p.read32();
-            if (magic2 != fs::MAGIC_HBS2)
+            if (magic2 != fs::HBS_MAGIC2)
             {
                 MANGO_EXCEPTION("[mapper.hbs] Incorrect block terminator (:#x)", magic2);
             }
@@ -138,13 +147,25 @@ namespace
         void parseFiles(LittleEndianConstPointer p)
         {
             u32 magic2 = p.read32();
-            if (magic2 != fs::MAGIC_HBS2)
+            if (magic2 != fs::HBS_MAGIC2)
             {
                 MANGO_EXCEPTION("[mapper.hbs] Incorrect block identifier (:#x)", magic2);
             }
 
-            u64 compressed = p.read64();
-            u64 uncompressed = p.read64();
+            u32 tag = p.read32();
+            u64 compressed;
+            u64 uncompressed;
+
+            if (tag == fs::HBS_VERSION)
+            {
+                compressed = p.read64();
+                uncompressed = p.read64();
+            }
+            else
+            {
+                compressed = u64(tag) | (u64(p.read32()) << 32);
+                uncompressed = p.read64();
+            }
 
             ConstMemory source(p, compressed);
             Buffer temp(uncompressed);
@@ -159,7 +180,7 @@ namespace
             p += compressed;
 
             u32 magic3 = p.read32();
-            if (magic3 != fs::MAGIC_HBS3)
+            if (magic3 != fs::HBS_MAGIC3)
             {
                 MANGO_EXCEPTION("[mapper.hbs] Incorrect block terminator (:#x)", magic3);
             }
@@ -185,9 +206,10 @@ namespace
                 for (u32 j = 0; j < num_segment; ++j)
                 {
                     u32 block_idx = p.read32();
-                    u32 offset = p.read32();
-                    u32 size = p.read32();
-                    header.segments.push_back({block_idx, offset, size});
+
+                    u64 offset = p.read64();
+                    u64 size = p.read64();
+                    header.segments.push_back({ block_idx, offset, size });
 
                     // inspect block
                     Block& block = m_blocks[block_idx];
@@ -350,7 +372,7 @@ namespace mango::filesystem
                             m_cache.insert(blockIndex, buffer);
                         }
 
-                        ConstMemory memory(*buffer + segment.offset, segment.size);
+                        ConstMemory memory(*buffer + segment.offset, size_t(segment.size));
                         return std::make_unique<VirtualMemoryHBS>(buffer, memory);
                     }
                     else
@@ -385,7 +407,7 @@ namespace mango::filesystem
                         if (block.uncompressed == segment.size && segment.offset == 0)
                         {
                             // segment is full-block so we can decode directly w/o intermediate buffer
-                            Memory dest(x, size_t(block.uncompressed));
+                            Memory dest(x + segment.offset, size_t(segment.size));
                             block.decompress(dest);
                         }
                         else
@@ -395,7 +417,7 @@ namespace mango::filesystem
                             block.decompress(dest);
 
                             // copy the segment out from the temporary buffer
-                            std::memcpy(x, dest.data() + segment.offset, segment.size);
+                            std::memcpy(x + segment.offset, dest.data() + segment.offset, size_t(segment.size));
                         }
                     });
                 }
@@ -404,11 +426,11 @@ namespace mango::filesystem
                     q.enqueue([=, &block, &segment]
                     {
                         // no compression
-                        std::memcpy(x, block.compressed.address + segment.offset, segment.size);
+                        std::memcpy(x + segment.offset, block.compressed.address + segment.offset, size_t(segment.size));
                     });
                 }
 
-                x += segment.size;
+                x += size_t(segment.size);
             }
 
             q.wait();
