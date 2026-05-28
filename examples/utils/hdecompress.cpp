@@ -14,7 +14,8 @@ struct State
     bool print_tree { false };
     bool verify { false };
     bool decompress { false };
-    u64 total_bytes_out = 0;
+    u64 total_bytes = 0;
+    u64 file_count = 0;
 };
 
 void enumerate(const Path& path, State& state, std::string destination, std::string prefix, int depth)
@@ -87,7 +88,8 @@ void enumerate(const Path& path, State& state, std::string destination, std::str
                 outfile.write(memory.address, memory.size);
             }
 
-            state.total_bytes_out += node.size;
+            state.total_bytes += node.size;
+            ++state.file_count;
         }
     }
 }
@@ -147,18 +149,46 @@ int main(int argc, char* argv[])
     enumerate(path, state, destination, prefix, 0);
 
     u64 time1 = timer.ms();
-
-    MANGO_UNREFERENCED(time0);
-    MANGO_UNREFERENCED(time1);
+    u64 total_time = time1 - time0;
 
     printLine("");
 
-    constexpr u64 KB = 1 << 10;
+    constexpr u64 MB = 1 << 20;
 
-    u64 total_time = time1 - time0;
-    u64 rate = total_time ? state.total_bytes_out / (total_time * KB) : 0;
+    if (state.print_list)
+    {
+        printLine("Listed {} files ({:0.1f} MB) in {:0.2f} seconds",
+            state.file_count,
+            state.total_bytes / double(MB),
+            total_time / 1000.0);
+    }
+    else if (state.print_tree)
+    {
+        printLine("Tree: {} files ({:0.1f} MB) in {:0.2f} seconds",
+            state.file_count,
+            state.total_bytes / double(MB),
+            total_time / 1000.0);
+    }
+    else if (state.verify)
+    {
+        constexpr u64 KB = 1 << 10;
+        u64 rate = total_time ? state.total_bytes / (total_time * KB) : 0;
 
-    printLine("{:12} KB  {:8} ms     ({} MB/s)",
-        state.total_bytes_out / KB,
-        total_time, rate);
+        printLine("Verified {} files ({:0.1f} MB) in {:0.2f} seconds ({} MB/s)",
+            state.file_count,
+            state.total_bytes / double(MB),
+            total_time / 1000.0,
+            rate);
+    }
+    else if (state.decompress)
+    {
+        constexpr u64 KB = 1 << 10;
+        u64 rate = total_time ? state.total_bytes / (total_time * KB) : 0;
+
+        printLine("Extracted {} files ({:0.1f} MB) in {:0.2f} seconds ({} MB/s)",
+            state.file_count,
+            state.total_bytes / double(MB),
+            total_time / 1000.0,
+            rate);
+    }
 }

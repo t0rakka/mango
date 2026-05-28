@@ -400,9 +400,9 @@ namespace mango::filesystem
             {
                 const Block& block = m_header.m_blocks[segment.block];
 
-                if (block.method)
+                q.enqueue([=, &block, &segment]
                 {
-                    q.enqueue([=, &block, &segment]
+                    if (block.method)
                     {
                         if (block.uncompressed == segment.size && segment.offset == 0)
                         {
@@ -419,16 +419,13 @@ namespace mango::filesystem
                             // copy the segment out from the temporary buffer
                             std::memcpy(x + segment.offset, dest.data() + segment.offset, size_t(segment.size));
                         }
-                    });
-                }
-                else
-                {
-                    q.enqueue([=, &block, &segment]
+                    }
+                    else
                     {
                         // no compression
                         std::memcpy(x + segment.offset, block.compressed.address + segment.offset, size_t(segment.size));
-                    });
-                }
+                    }
+                });
 
                 x += size_t(segment.size);
             }
