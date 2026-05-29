@@ -113,17 +113,11 @@ namespace
                 MANGO_EXCEPTION("[mapper.hbs] Incorrect block identifier (:#x)", magic1);
             }
 
-            u32 tag = p.read32();
-            u32 num_blocks;
+            u32 version = p.read32();
+            MANGO_UNREFERENCED(version);
 
-            if (tag == fs::HBS_VERSION)
-            {
-                num_blocks = p.read32();
-            }
-            else
-            {
-                num_blocks = tag;
-            }
+            u32 num_blocks = p.read32();
+
             for (u32 i = 0; i < num_blocks; ++i)
             {
                 Block block;
@@ -152,20 +146,11 @@ namespace
                 MANGO_EXCEPTION("[mapper.hbs] Incorrect block identifier (:#x)", magic2);
             }
 
-            u32 tag = p.read32();
-            u64 compressed;
-            u64 uncompressed;
+            u32 version = p.read32();
+            MANGO_UNREFERENCED(version);
 
-            if (tag == fs::HBS_VERSION)
-            {
-                compressed = p.read64();
-                uncompressed = p.read64();
-            }
-            else
-            {
-                compressed = u64(tag) | (u64(p.read32()) << 32);
-                uncompressed = p.read64();
-            }
+            u64 compressed = p.read64();
+            u64 uncompressed = p.read64();
 
             ConstMemory source(p, compressed);
             Buffer temp(uncompressed);
