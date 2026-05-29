@@ -63,7 +63,6 @@ void enumerate(const Path& path, State& state, std::string destination, std::str
 
             if (state.verify)
             {
-                // NOTE: Stored files don't have a checksum (0), this is lame so it must be improved in the future
                 if (node.checksum)
                 {
                     File file(path, node.name);
