@@ -64,7 +64,7 @@ void collect(const Path& path, const std::string& prefix, std::vector<VerifyEntr
                 collect(Path(path, node.name), prefix, entries);
             }
         }
-        else if (node.size > 0)
+        else
         {
             std::string name = removePrefix(path.pathname() + node.name, prefix);
             entries.push_back({ name, node.size, node.checksum });

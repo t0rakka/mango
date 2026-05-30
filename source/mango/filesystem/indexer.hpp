@@ -28,7 +28,7 @@ namespace mango::filesystem
         {
             Header* ptr = &headers[filename];
             *ptr = header;
-            folders[foldername].headers.emplace(filename, ptr);
+            folders[foldername].headers[filename] = ptr;
         }
 
         const Folder* getFolder(const std::string& pathname) const

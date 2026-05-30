@@ -3,6 +3,7 @@
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <memory>
 #include <mutex>
@@ -256,6 +257,215 @@ void readBlockSource(const BlockMeta& work, const Path& path, Buffer& source)
 }
 
 static
+void printSmallFileBlockReport(const BlockManager& manager,
+    const std::vector<size_t>& store_small_files)
+{
+    printLine("");
+    printLine("=== Small file block layout (dev) ===");
+    printLine("  small file max:  {:0.1f} KB", double(small_file_max_size) / KB);
+    printLine("  merge block max: {:0.1f} MB", double(small_block_size) / MB);
+    printLine("");
+
+    size_t small_compressible_files = 0;
+    u64 small_compressible_bytes = 0;
+    u64 store_small_bytes = 0;
+
+    for (size_t i = 0; i < manager.files.size(); ++i)
+    {
+        const auto& file = manager.files[i];
+        if (file.size > small_file_max_size)
+        {
+            continue;
+        }
+
+        if (isCompressible(file.filename, file.size))
+        {
+            ++small_compressible_files;
+            small_compressible_bytes += file.size;
+        }
+    }
+
+    for (size_t file_index : store_small_files)
+    {
+        store_small_bytes += manager.files[file_index].size;
+    }
+
+    printLine("Small compressible files: {} ({:0.1f} MB)",
+        small_compressible_files,
+        small_compressible_bytes / double(MB));
+
+    printLine("Small store-raw files:    {} ({:0.1f} MB, merged into 1 block at compress)",
+        store_small_files.size(),
+        store_small_bytes / double(MB));
+
+    printLine("");
+
+    struct MergeBlockInfo
+    {
+        u32 index;
+        u64 bytes;
+        size_t file_count;
+        u64 min_file;
+        u64 max_file;
+    };
+
+    std::vector<MergeBlockInfo> merge_blocks;
+    size_t single_small_blocks = 0;
+    size_t large_single_blocks = 0;
+    size_t split_blocks = 0;
+    size_t store_blocks = 0;
+
+    std::array<size_t, 6> files_per_block_histogram {}; // 1, 2-4, 5-9, 10-19, 20-49, 50+
+
+    auto histogram_bucket = [] (size_t count) -> size_t
+    {
+        if (count <= 1) return 0;
+        if (count <= 4) return 1;
+        if (count <= 9) return 2;
+        if (count <= 19) return 3;
+        if (count <= 49) return 4;
+        return 5;
+    };
+
+    for (size_t i = 0; i < manager.meta.size(); ++i)
+    {
+        const BlockMeta& block = manager.meta[i];
+        const size_t count = block.sources.size();
+
+        if (block.part_count > 1)
+        {
+            ++split_blocks;
+            continue;
+        }
+
+        if (block.store)
+        {
+            ++store_blocks;
+            continue;
+        }
+
+        if (count > 1)
+        {
+            u64 min_file = ~u64(0);
+            u64 max_file = 0;
+
+            for (const auto& source : block.sources)
+            {
+                min_file = std::min(min_file, source.size);
+                max_file = std::max(max_file, source.size);
+            }
+
+            merge_blocks.push_back({
+                u32(i),
+                block.bytes,
+                count,
+                min_file,
+                max_file,
+            });
+
+            ++files_per_block_histogram[histogram_bucket(count)];
+        }
+        else if (count == 1)
+        {
+            const u64 size = block.sources[0].size;
+
+            if (size <= small_file_max_size && isCompressible(block.sources[0].filename, size))
+            {
+                ++single_small_blocks;
+                ++files_per_block_histogram[0];
+            }
+            else
+            {
+                ++large_single_blocks;
+            }
+        }
+    }
+
+    std::sort(merge_blocks.begin(), merge_blocks.end(), [] (const MergeBlockInfo& a, const MergeBlockInfo& b)
+    {
+        return a.file_count > b.file_count;
+    });
+
+    printLine("Blocks (pre-compress, pre store-small merge):");
+    printLine("  merged small-file blocks:  {}", merge_blocks.size());
+    printLine("  lone small-file blocks:    {}", single_small_blocks);
+    printLine("  large single-file blocks:  {}", large_single_blocks);
+    printLine("  split-file part blocks:    {}", split_blocks);
+    printLine("  other store-raw blocks:    {}", store_blocks);
+    printLine("");
+
+    printLine("Files per merged block:");
+    printLine("    1 file:   {}", files_per_block_histogram[0]);
+    printLine("    2-4:      {}", files_per_block_histogram[1]);
+    printLine("    5-9:      {}", files_per_block_histogram[2]);
+    printLine("   10-19:     {}", files_per_block_histogram[3]);
+    printLine("   20-49:     {}", files_per_block_histogram[4]);
+    printLine("   50+:       {}", files_per_block_histogram[5]);
+    printLine("");
+
+    if (!merge_blocks.empty())
+    {
+        u64 total_merge_bytes = 0;
+        size_t total_merge_files = 0;
+
+        for (const auto& info : merge_blocks)
+        {
+            total_merge_bytes += info.bytes;
+            total_merge_files += info.file_count;
+        }
+
+        printLine("Merged blocks: {:0.1f} MB total, {:.1f} files/block avg",
+            total_merge_bytes / double(MB),
+            double(total_merge_files) / merge_blocks.size());
+
+        printLine("");
+        printLine("  {:>5}  {:>8}  {:>5}  {:>8} - {:>8}  files",
+            "block", "size", "files", "min", "max");
+
+        const size_t show = std::min(merge_blocks.size(), size_t(32));
+
+        for (size_t i = 0; i < show; ++i)
+        {
+            const auto& info = merge_blocks[i];
+
+            printLine("  {:>5}  {:>7.1f}K  {:>5}  {:>7.1f}K - {:>7.1f}K",
+                info.index,
+                info.bytes / double(KB),
+                info.file_count,
+                info.min_file / double(KB),
+                info.max_file / double(KB));
+        }
+
+        if (merge_blocks.size() > show)
+        {
+            printLine("  ... {} more merged blocks", merge_blocks.size() - show);
+        }
+
+        printLine("");
+        printLine("Largest merged blocks (by file count):");
+
+        for (size_t i = 0; i < std::min(merge_blocks.size(), size_t(8)); ++i)
+        {
+            const auto& info = merge_blocks[i];
+            const BlockMeta& block = manager.meta[info.index];
+
+            printLine("");
+            printLine("  block {}: {:0.1f} KB, {} files",
+                info.index,
+                info.bytes / double(KB),
+                info.file_count);
+
+            for (const auto& source : block.sources)
+            {
+                printLine("    {:>7.1f}K  {}", source.size / double(KB), source.filename);
+            }
+        }
+    }
+
+    printLine("");
+}
+
+static
 void compactBlocks(BlockManager& manager)
 {
     std::vector<u32> remap(manager.blocks.size(), u32(-1));
@@ -300,7 +510,7 @@ void writeStoreNoCompression(const BlockMeta& work, const Path& path, Stream& ou
     }
 }
 
-void compress(State& state, const std::string& folder, const std::string& archive, const std::string& compression, int level, size_t store_threshold)
+void compress(State& state, const std::string& folder, const std::string& archive, const std::string& compression, int level, size_t store_threshold, bool developer)
 {
     Compressor compressor = getCompressor(compression);
 
@@ -349,16 +559,15 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
         if (!isCompressible(node.name, node.size))
         {
-            manager.flush(work);
-
             if (node.size > small_file_max_size)
             {
                 // one archive block per large file (mmap-friendly)
+                manager.flush(work);
                 manager.appendStoreNoCompression(work, node);
             }
             else
             {
-                // merge small store-raw files into one block after compression
+                // defer to merged store-raw block; do not interrupt small compressible merge
                 store_small_files.push_back(manager.files.size() - 1);
             }
 
@@ -415,6 +624,32 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     }
 
     manager.flush(work);
+
+    if (!store_small_files.empty())
+    {
+        BlockMeta raw;
+        raw.store = true;
+
+        const u32 block_index = u32(manager.blocks.size());
+        u64 offset = 0;
+
+        for (size_t file_index : store_small_files)
+        {
+            const auto& file = manager.files[file_index];
+            manager.files[file_index].segments.push_back({ block_index, offset, file.size });
+            raw.append({ file.filename, 0, file.size });
+            offset += file.size;
+        }
+
+        manager.blocks.push_back({});
+        manager.meta.push_back(raw);
+    }
+
+    if (developer)
+    {
+        printSmallFileBlockReport(manager, store_small_files);
+        return;
+    }
 
     // compute checksums
 
@@ -661,33 +896,6 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     // synchronize
     q.wait();
 
-    if (!store_small_files.empty())
-    {
-        BlockMeta raw;
-        raw.store = true;
-
-        for (size_t file_index : store_small_files)
-        {
-            const auto& file = manager.files[file_index];
-            manager.segment(file_index, raw.bytes, file.size);
-            raw.append({ file.filename, 0, file.size });
-        }
-
-        hbs::Block desc;
-        desc.offset = output.offset();
-        desc.uncompressed = raw.bytes;
-        desc.compressed = raw.bytes;
-        desc.method = Compressor::NONE;
-
-        writeStoreNoCompression(raw, path, output);
-        raw.written = true;
-        manager.blocks.push_back(desc);
-        manager.meta.push_back(raw);
-
-        print("s");
-        std::fflush(stdout);
-    }
-
     for (auto node : state.folders)
     {
         manager.files.push_back({ node.name, 0 });
@@ -763,6 +971,7 @@ void printHelp(const CommandLine& commands)
     printLine("  --output <filename>");
     printLine("  --store");
     printLine("  --verbose");
+    printLine("  --developer");
     printLine("");
 }
 
@@ -788,12 +997,17 @@ int main(int argc, char* argv[])
 
     int level = std::stoi(commands[3].data());
     size_t store_threshold = store_threshold_default;
+    bool developer = false;
 
     for (size_t i = 4; i < commands.size(); ++i)
     {
         if (commands[i] == "--store")
         {
             store_threshold = 0;
+        }
+        else if (commands[i] == "--developer")
+        {
+            developer = true;
         }
         else if (commands[i] == "--verbose")
         {
@@ -815,7 +1029,7 @@ int main(int argc, char* argv[])
 
     try
     {
-        compress(state, folder, output, compression, level, store_threshold);
+        compress(state, folder, output, compression, level, store_threshold, developer);
     }
     catch (Exception& e)
     {

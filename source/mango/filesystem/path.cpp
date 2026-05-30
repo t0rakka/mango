@@ -46,7 +46,32 @@ namespace mango::filesystem
 
     size_t getPathSeparatorIndex(std::string_view filename)
     {
-        return filename.find_last_of("/\\:");
+#if defined(MANGO_PLATFORM_WINDOWS)
+        // Split on directory separators. Do NOT treat ':' as a generic separator:
+        // archive/logical paths may contain ':' in filenames, and "C:\foo" already
+        // splits correctly on '\' or '/'.
+        size_t n = filename.find_last_of("/\\");
+        if (n != std::string::npos)
+        {
+            return n;
+        }
+
+        // DOS drive-relative path: "C:foo.txt" (no slash; current directory on drive C)
+        if (filename.length() >= 2)
+        {
+            char drive = filename[0];
+            if (filename[1] == ':' &&
+                ((drive >= 'A' && drive <= 'Z') || (drive >= 'a' && drive <= 'z')))
+            {
+                return 1;
+            }
+        }
+
+        return std::string::npos;
+#else
+        // NOTE: only '/' separates path components; ':' and '\\' are valid filename characters
+        return filename.find_last_of('/');
+#endif
     }
 
     std::string getPath(const std::string& filename)
