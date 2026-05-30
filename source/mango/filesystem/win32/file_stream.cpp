@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <algorithm>
 #include <mango/core/string.hpp>
 #include <mango/core/print.hpp>
 #include <mango/core/exception.hpp>
@@ -9,6 +10,9 @@
 
 namespace mango::filesystem
 {
+
+    // NOTE: split large I/O to stay below platform syscall limits.
+    static constexpr u64 max_io_chunk_size = 1ull << 28; // 256 MB
 
     // -----------------------------------------------------------------
     // FileHandle
@@ -65,22 +69,62 @@ namespace mango::filesystem
             return u64(result.QuadPart);
         }
 
-        s64 read(void* dest, u32 size)
+        u64 read(void* dest, u64 size)
         {
-            DWORD bytes_read = 0;
-            BOOL status = ReadFile(m_handle, dest, DWORD(size), &bytes_read, NULL);
-            if (!status)
-                return -1ll;
-            return s64(bytes_read);
+            u64 total = 0;
+            u8* output = reinterpret_cast<u8*>(dest);
+
+            while (size > 0)
+            {
+                u64 commit = std::min(size, max_io_chunk_size);
+                DWORD bytes_read = 0;
+                BOOL status = ReadFile(m_handle, output, DWORD(commit), &bytes_read, NULL);
+                if (!status)
+                {
+                    return 0;
+                }
+
+                if (bytes_read == 0)
+                {
+                    break;
+                }
+
+                u64 n = u64(bytes_read);
+                total += n;
+                output += n;
+                size -= n;
+            }
+
+            return total;
         }
 
-        s64 write(const void* data, u32 size)
+        u64 write(const void* data, u64 size)
         {
-            DWORD bytes_written = 0;
-            BOOL status = WriteFile(m_handle, data, DWORD(size), &bytes_written, NULL);
-            if (!status)
-                return -1ll;
-            return s64(bytes_written);
+            u64 total = 0;
+            const u8* input = reinterpret_cast<const u8*>(data);
+
+            while (size > 0)
+            {
+                u64 commit = std::min(size, max_io_chunk_size);
+                DWORD bytes_written = 0;
+                BOOL status = WriteFile(m_handle, input, DWORD(commit), &bytes_written, NULL);
+                if (!status)
+                {
+                    return 0;
+                }
+
+                if (bytes_written == 0)
+                {
+                    break;
+                }
+
+                u64 n = u64(bytes_written);
+                total += n;
+                input += n;
+                size -= n;
+            }
+
+            return total;
         }
     };
 
@@ -162,56 +206,14 @@ namespace mango::filesystem
         return m_handle->seek(distance, method);
     }
 
-    // NOTE: WIN32 ReadFile and WriteFile are limited to 4 GB maximum read and write
-    //       so we split larger operations into smaller chunks.
-    static constexpr u64 max_chunk_size = 0xffffffffull;
-
     u64 FileStream::read(void* dest, u64 bytes)
     {
-        u64 total = 0;
-
-        s64 bytes_left = bytes;
-        u8* output = reinterpret_cast<u8*>(dest);
-
-        while (bytes_left > 0)
-        {
-            u64 commit = std::min(u64(bytes_left), max_chunk_size);
-            s64 result = m_handle->read(output, u32(commit));
-            if (result < 0)
-            {
-                return 0;
-            }
-
-            bytes_left -= result;
-            output += result;
-            total += result;
-        }
-
-        return total;
+        return m_handle->read(dest, bytes);
     }
 
     u64 FileStream::write(const void* data, u64 bytes)
     {
-        u64 total = 0;
-
-        s64 bytes_left = bytes;
-        const u8* input = reinterpret_cast<const u8*>(data);
-
-        while (bytes_left > 0)
-        {
-            u64 commit = std::min(u64(bytes_left), max_chunk_size);
-            s64 result = m_handle->write(input, u32(commit));
-            if (result < 0)
-            {
-                return 0;
-            }
-
-            bytes_left -= result;
-            input += result;
-            total += result;
-        }
-
-        return total;
+        return m_handle->write(data, bytes);
     }
 
 } // namespace mango::filesystem

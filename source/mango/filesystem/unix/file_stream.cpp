@@ -7,6 +7,7 @@
 #define _FILE_OFFSET_BITS 64 /* LFS: 64 bit off_t */
 #endif
 
+#include <algorithm>
 #include <cstdio>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -18,6 +19,10 @@
 
 namespace mango::filesystem
 {
+
+    // NOTE: split large I/O to stay below platform syscall limits.
+    // macOS rejects read()/write() when nbyte > INT_MAX (EINVAL). Use a power-of-two chunk safely below that.
+    static constexpr u64 max_io_chunk_size = 1ull << 28; // 256 MB
 
     // -----------------------------------------------------------------
     // FileHandle
@@ -71,18 +76,58 @@ namespace mango::filesystem
 
         u64 read(void* dest, u64 size)
         {
-            ssize_t bytes_read = ::read(m_file, dest, size_t(size));
-            if (bytes_read < 0)
-                return 0;
-            return u64(bytes_read);
+            u64 total = 0;
+            u8* output = reinterpret_cast<u8*>(dest);
+
+            while (size > 0)
+            {
+                u64 commit = std::min(size, max_io_chunk_size);
+                ssize_t bytes_read = ::read(m_file, output, size_t(commit));
+                if (bytes_read < 0)
+                {
+                    return 0;
+                }
+
+                if (bytes_read == 0)
+                {
+                    break;
+                }
+
+                u64 n = u64(bytes_read);
+                total += n;
+                output += n;
+                size -= n;
+            }
+
+            return total;
         }
 
         u64 write(const void* data, u64 size)
         {
-            ssize_t bytes_written = ::write(m_file, data, size_t(size));
-            if (bytes_written < 0)
-                return 0;
-            return u64(bytes_written);
+            u64 total = 0;
+            const u8* input = reinterpret_cast<const u8*>(data);
+
+            while (size > 0)
+            {
+                u64 commit = std::min(size, max_io_chunk_size);
+                ssize_t bytes_written = ::write(m_file, input, size_t(commit));
+                if (bytes_written < 0)
+                {
+                    return 0;
+                }
+
+                if (bytes_written == 0)
+                {
+                    break;
+                }
+
+                u64 n = u64(bytes_written);
+                total += n;
+                input += n;
+                size -= n;
+            }
+
+            return total;
         }
     };
 
