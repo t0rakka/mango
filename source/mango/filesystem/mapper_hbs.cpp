@@ -14,6 +14,7 @@ namespace
     namespace fs = mango::filesystem;
 
     static constexpr u64 hbs_index_size = 24;
+    static constexpr u32 block_cache_size = 96;
 
     struct Segment
     {
@@ -203,7 +204,7 @@ namespace mango::filesystem
         std::string m_password;
 
         // block cache
-        LRUCache<u32, std::shared_ptr<Buffer>> m_cache { 6 };
+        LRUCache<u32, std::shared_ptr<Buffer>> m_cache { block_cache_size };
         std::mutex m_cache_mutex;
 
     public:

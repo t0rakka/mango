@@ -447,8 +447,6 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     q.wait();
 
-    progress(counterBytes, totalBytes, 42);
-
     u64 checksum_time1 = Time::ms();
     u64 checksum_dt = checksum_time1 - checksum_time0;
 

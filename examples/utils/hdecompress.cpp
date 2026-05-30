@@ -13,10 +13,9 @@ using namespace mango::filesystem;
 
 namespace
 {
-
     constexpr u64 KB = 1 << 10;
     constexpr u64 MB = 1 << 20;
-    static constexpr int status_line_width = 60;
+    static constexpr int status_line_width = 70;
 
     template <typename... T>
     void replaceLine(fmt::format_string<T...> fmt, T&&... args)
@@ -30,7 +29,7 @@ namespace
         double fraction = double(i + 1) / N;
         int filled = int(fraction * width);
 
-        print("\r[{:=>{}}{: <{}}] {:5.1f}%\r", "", filled, "", width - filled, fraction * 100.0);
+        print("\rVerifying: [{:=>{}}{: <{}}] {:5.1f}%\r", "", filled, "", width - filled, fraction * 100.0);
         std::fflush(stdout);
     }
 
@@ -73,16 +72,9 @@ void collect(const Path& path, const std::string& prefix, std::vector<VerifyEntr
     }
 }
 
-void verify(Path& path, std::vector<VerifyEntry>& entries, State& state, bool inspect_preamble)
+void verify(Path& path, std::vector<VerifyEntry>& entries, State& state)
 {
-    if (!inspect_preamble)
-    {
-        printLine("Verifying checksums...");
-    }
-
-    printLine("");
-
-    u64 verify_time0 = Time::ms();
+    u64 checksum_time0 = Time::ms();
 
     const u64 totalBytes = [&]
     {
@@ -92,11 +84,10 @@ void verify(Path& path, std::vector<VerifyEntry>& entries, State& state, bool in
             total += entry.size;
         }
         return total;
-    }();
+    } ();
 
     std::atomic<u64> counterBytes { 0 };
     std::atomic<u32> verify_errors { 0 };
-    std::mutex error_mutex;
 
     ConcurrentQueue q;
 
@@ -110,10 +101,6 @@ void verify(Path& path, std::vector<VerifyEntry>& entries, State& state, bool in
             if (entry.checksum && checksum != entry.checksum)
             {
                 ++verify_errors;
-
-                std::lock_guard<std::mutex> lock(error_mutex);
-                printLine(Print::Error, "ERROR: {} checksum: {:08x}, expected: {:08x}",
-                    entry.name, checksum, entry.checksum);
             }
 
             counterBytes += entry.size;
@@ -128,21 +115,18 @@ void verify(Path& path, std::vector<VerifyEntry>& entries, State& state, bool in
 
     q.wait();
 
-    progress(counterBytes, totalBytes, 42);
-
-    u64 verify_time1 = Time::ms();
-    u64 verify_dt = verify_time1 - verify_time0;
+    u64 checksum_time1 = Time::ms();
+    u64 checksum_dt = checksum_time1 - checksum_time0;
 
     state.file_count = entries.size();
     state.total_bytes = totalBytes;
     state.verify_errors = verify_errors;
 
-    printLine("");
     replaceLine("Verified {} files ({:0.1f} MB) in {:0.2f} seconds ({} MB/s)",
         state.file_count,
         totalBytes / double(MB),
-        verify_dt / 1000.0,
-        totalBytes / (std::max(u64(1), verify_dt) * 1024));
+        checksum_dt / 1000.0,
+        totalBytes / (std::max(u64(1), checksum_dt) * 1024));
 }
 
 void enumerate(const Path& path, State& state, std::string destination, std::string prefix, int depth)
@@ -304,8 +288,7 @@ int main(int argc, char* argv[])
     File file(filename);
     Path path(file, ".hbs");
 
-    Timer timer;
-    u64 time0 = timer.ms();
+    u64 time0 = Time::ms();
 
     try
     {
@@ -318,10 +301,11 @@ int main(int argc, char* argv[])
         else
         {
             std::vector<VerifyEntry> entries;
-            bool inspect_preamble = false;
 
             if (state.print_list)
             {
+                u64 time0 = Time::ms();
+
                 collect(path, prefix, entries);
                 printList(entries);
 
@@ -331,12 +315,31 @@ int main(int argc, char* argv[])
                     state.total_bytes += entry.size;
                 }
 
-                inspect_preamble = true;
+                u64 time1 = Time::ms();
+                u64 total_time = time1 - time0;
+
+                printLine("");
+                printLine("List: {} files ({:0.1f} MB) in {:0.2f} seconds",
+                    state.file_count,
+                    state.total_bytes / double(MB),
+                    total_time / 1000.0);
+                printLine("");
             }
             else if (state.print_tree)
             {
+                u64 time0 = Time::ms();
+
                 enumerate(path, state, destination, prefix, 0);
-                inspect_preamble = true;
+
+                u64 time1 = Time::ms();
+                u64 total_time = time1 - time0;
+
+                printLine("");
+                printLine("Tree: {} files ({:0.1f} MB) in {:0.2f} seconds",
+                    state.file_count,
+                    state.total_bytes / double(MB),
+                    total_time / 1000.0);
+                printLine("");
             }
 
             if (state.verify)
@@ -346,7 +349,7 @@ int main(int argc, char* argv[])
                     collect(path, prefix, entries);
                 }
 
-                verify(path, entries, state, inspect_preamble);
+                verify(path, entries, state);
             }
         }
     }
@@ -356,50 +359,25 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    u64 time1 = timer.ms();
+    u64 time1 = Time::ms();
     u64 total_time = time1 - time0;
-
-    if (state.print_list && !state.verify)
-    {
-        printLine("Listed {} files ({:0.1f} MB) in {:0.2f} seconds",
-            state.file_count,
-            state.total_bytes / double(MB),
-            total_time / 1000.0);
-    }
-
-    if (state.print_tree && !state.verify)
-    {
-        printLine("Tree: {} files ({:0.1f} MB) in {:0.2f} seconds",
-            state.file_count,
-            state.total_bytes / double(MB),
-            total_time / 1000.0);
-    }
-
-    if (state.verify && !state.decompress)
-    {
-        if (state.verify_errors)
-        {
-            printLine("Status: FAILED ({} error{})", state.verify_errors, state.verify_errors > 1 ? "s" : "");
-        }
-        else
-        {
-            printLine("Status: PASSED");
-        }
-    }
 
     if (state.decompress)
     {
         u64 rate = total_time ? state.total_bytes / (total_time * KB) : 0;
 
+        printLine("");
         printLine("Extracted {} files ({:0.1f} MB) in {:0.2f} seconds ({} MB/s)",
             state.file_count,
             state.total_bytes / double(MB),
             total_time / 1000.0,
             rate);
-
-        if (state.verify_errors)
+    }
+    else if (state.verify)
+    {
+        if (state.verify_errors > 0)
         {
-            printLine("Status: FAILED ({} error{})", state.verify_errors, state.verify_errors > 1 ? "s" : "");
+            printLine("Status: FAILED (count: {})", state.verify_errors);
         }
         else
         {
