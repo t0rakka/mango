@@ -72,4 +72,12 @@ namespace mango::filesystem::hbs
         output.write(compressed, status.size);
     }
 
+    void writeIndex(LittleEndianStream& output, u64 block_offset, u64 file_offset)
+    {
+        output.write32(filesystem::HBS_MAGIC3);
+        output.write32(filesystem::HBS_VERSION);
+        output.write64(block_offset);
+        output.write64(file_offset);
+    }
+
 } // namespace mango::filesystem::hbs

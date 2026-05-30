@@ -12,6 +12,60 @@
 namespace mango::filesystem
 {
 
+    /*
+
+    --------------------------------------------------------------------------
+    File Format Types:
+    --------------------------------------------------------------------------
+
+    Type[]:
+        u32         count
+        Type        data[count]
+
+    Block:
+        u64         offset
+        u64         compressed
+        u64         uncompressed
+        u32         compression method
+
+    Segment:
+        u32         block index
+        u64         offset
+        u64         size
+
+    File:
+        char[]      filename
+        u64         size
+        u32         checksum
+        Segment[]   segments
+
+    --------------------------------------------------------------------------
+    File Format Structure:
+    --------------------------------------------------------------------------
+
+    Compressed block data:
+        u32         magic: hbs0
+        u8[]        data     <-- written by the compressor, a raw binary blob w/o specific size or structure
+
+    Block Info Array:
+        u32         magic: hbs1
+        u32         version
+        block[]     blocks
+
+    File Info Array:
+        u32         magic: hbs2
+        u32         version
+        u64         compressed size (file array)
+        u64         uncmpressed size (file array)
+        File[]      files (compressed with zstd)
+
+    Index:
+        u32         magic: hbs3
+        u32         version
+        u64         offset to block info array
+        u64         offset to file info array
+    */
+
     // major = high byte, minor = low byte (1.0 -> 0x0100)
     constexpr u32 HBS_VERSION = 0x0100;
 
@@ -50,6 +104,7 @@ namespace mango::filesystem
 
         void writeBlockArray(LittleEndianStream& output, const std::vector<Block>& blocks);
         void writeFileArray(LittleEndianStream& output, const std::vector<File>& files);
+        void writeIndex(LittleEndianStream& output, u64 block_offset, u64 file_offset);
     }
 
 } // namespace mango::filesystem

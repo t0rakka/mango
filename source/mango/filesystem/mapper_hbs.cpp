@@ -12,7 +12,7 @@ namespace
     using namespace mango;
     namespace fs = mango::filesystem;
 
-    static constexpr u64 hbs_header_size = 24;
+    static constexpr u64 hbs_index_size = 24;
 
     struct Segment
     {
@@ -59,14 +59,14 @@ namespace
         }
     };
 
-    struct HeaderHBS
+    struct IndexHBS
     {
         ConstMemory m_memory;
         fs::Indexer<FileHeader> m_folders;
         std::vector<Block> m_blocks;
         u32 m_version { 0 };
 
-        HeaderHBS(ConstMemory memory)
+        IndexHBS(ConstMemory memory)
             : m_memory(memory)
         {
             if (!memory.address)
@@ -83,13 +83,13 @@ namespace
                 return;
             }
 
-            u64 header_offset = memory.size - hbs_header_size;
-            p = memory.address + header_offset;
+            u64 index_offset = memory.size - hbs_index_size;
+            p = memory.address + index_offset;
 
             u32 magic3 = p.read32();
             if (magic3 != fs::HBS_MAGIC3)
             {
-                //MANGO_EXCEPTION("[mapper.hbs] Incorrect header identifier (%x)", magic3);
+                //MANGO_EXCEPTION("[mapper.hbs] Incorrect index identifier (%x)", magic3);
                 return;
             }
 
@@ -101,7 +101,7 @@ namespace
             parseFiles(memory.address + file_offset);
         }
 
-        ~HeaderHBS()
+        ~IndexHBS()
         {
         }
 
@@ -254,7 +254,7 @@ namespace mango::filesystem
     class MapperHBS : public AbstractMapper
     {
     protected:
-        HeaderHBS m_header;
+        IndexHBS m_index;
         std::string m_password;
 
         // block cache
@@ -263,14 +263,14 @@ namespace mango::filesystem
 
     public:
         MapperHBS(ConstMemory parent, const std::string& password)
-            : m_header(parent)
+            : m_index(parent)
             , m_password(password)
         {
         }
 
         u64 getSize(const std::string& filename) const override
         {
-            const FileHeader* header = m_header.m_folders.getHeader(filename);
+            const FileHeader* header = m_index.m_folders.getHeader(filename);
             if (header)
             {
                 return header->size;
@@ -280,7 +280,7 @@ namespace mango::filesystem
 
         bool isFile(const std::string& filename) const override
         {
-            const FileHeader* header = m_header.m_folders.getHeader(filename);
+            const FileHeader* header = m_index.m_folders.getHeader(filename);
             if (header)
             {
                 return !header->isFolder();
@@ -290,7 +290,7 @@ namespace mango::filesystem
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            const fs::Indexer<FileHeader>::Folder* folder = m_header.m_folders.getFolder(pathname);
+            const fs::Indexer<FileHeader>::Folder* folder = m_index.m_folders.getFolder(pathname);
             if (folder)
             {
                 for (auto i : folder->headers)
@@ -316,7 +316,7 @@ namespace mango::filesystem
 
         std::unique_ptr<VirtualMemory> map(const std::string& filename) override
         {
-            const FileHeader* ptrHeader = m_header.m_folders.getHeader(filename);
+            const FileHeader* ptrHeader = m_index.m_folders.getHeader(filename);
             if (!ptrHeader)
             {
                 MANGO_EXCEPTION("[mapper.hbs] File \"{}\" not found.", filename);
@@ -339,7 +339,7 @@ namespace mango::filesystem
                 const Segment& segment = file.segments[0];
 
                 u32 blockIndex = segment.block;
-                const Block& block = m_header.m_blocks[blockIndex];
+                const Block& block = m_index.m_blocks[blockIndex];
 
                 assert(file.size == segment.size);
 
@@ -393,7 +393,7 @@ namespace mango::filesystem
 
             for (const auto& segment : file.segments)
             {
-                const Block& block = m_header.m_blocks[segment.block];
+                const Block& block = m_index.m_blocks[segment.block];
 
                 q.enqueue([=, &block, &segment]
                 {

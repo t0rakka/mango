@@ -293,10 +293,10 @@ void compactBlocks(BlockManager& manager)
 static
 void writeStoreNoCompression(const BlockMeta& work, const Path& path, Stream& output)
 {
-    for (auto segment : work.sources)
+    for (const auto& source : work.sources)
     {
-        File file(path, segment.filename);
-        output.write(file.data() + segment.offset, segment.size);
+        File file(path, source.filename);
+        output.write(file.data() + source.offset, source.size);
     }
 }
 
@@ -726,60 +726,6 @@ void compress(State& state, const std::string& folder, const std::string& archiv
         level,
         state.total_bytes / (std::max(u64(1), compress_dt) * 1024));
 
-    /*
-
-    --------------------------------------------------------------------------
-    File Format Types:
-    --------------------------------------------------------------------------
-
-    Type[]:
-        u32         count
-        Type        data[count]
-
-    Block:
-        u64         offset
-        u64         compressed
-        u64         uncompressed
-        u32         compression method
-
-    Segment:
-        u32         block_index
-        u64         offset
-        u64         size
-
-    File:
-        char[]      filename
-        u64         size
-        u32         checksum
-        Segment[]   segments
-
-    --------------------------------------------------------------------------
-    File Format Structure:
-    --------------------------------------------------------------------------
-
-    Compressed block data:
-        u32         magic: hbs0
-        u8[]        data     <-- written by the compressor, a raw binary blob w/o specific size or structure
-
-    Block Info Array:
-        u32         magic: hbs1
-        u32         version
-        block[]     blocks
-
-    File Info Array:
-        u32         magic: hbs2
-        u32         version
-        u64         compressed size (file array)
-        u64         uncmpressed size (file array)
-        File[]      files (compressed with zstd)
-
-    Header:
-        u32         magic: hbs3
-        u32         version
-        u64         offset to block info array
-        u64         offset to file info array
-    */
-
     // write block data
 
     u64 block_data_offset = output.offset();
@@ -790,12 +736,9 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     u64 file_data_offset = output.offset();
     hbs::writeFileArray(str, manager.files);
 
-    // write header
+    // write index
 
-    str.write32(filesystem::HBS_MAGIC3);
-    str.write32(filesystem::HBS_VERSION);
-    str.write64(block_data_offset);
-    str.write64(file_data_offset);
+    hbs::writeIndex(str, block_data_offset, file_data_offset);
 }
 
 void printHelp(const CommandLine& commands)
