@@ -4,6 +4,7 @@
 */
 #include <mango/core/core.hpp>
 #include <mango/filesystem/filesystem.hpp>
+#include <mango/filesystem/hbs.hpp>
 #include <mango/image/fourcc.hpp>
 #include "indexer.hpp"
 
@@ -97,107 +98,51 @@ namespace
             u64 block_offset = p.read64();
             u64 file_offset = p.read64();
 
-            parseBlocks(memory.address + block_offset);
-            parseFiles(memory.address + file_offset);
+            parseBlocks(memory.address,
+                ConstMemory(memory.address + block_offset, file_offset - block_offset));
+
+            parseFileArray(fs::hbs::readFileArray(
+                ConstMemory(memory.address + file_offset, index_offset - file_offset)));
         }
 
         ~IndexHBS()
         {
         }
 
-        void parseBlocks(LittleEndianConstPointer p)
+        void parseBlocks(const u8* base, ConstMemory memory)
         {
-            u32 magic1 = p.read32();
-            if (magic1 != fs::HBS_MAGIC1)
-            {
-                MANGO_EXCEPTION("[mapper.hbs] Incorrect block identifier (:#x)", magic1);
-            }
+            std::vector<fs::hbs::Block> blocks = fs::hbs::readBlockArray(memory);
 
-            u32 version = p.read32();
-            MANGO_UNREFERENCED(version);
+            m_blocks.reserve(blocks.size());
 
-            u32 num_blocks = p.read32();
-
-            for (u32 i = 0; i < num_blocks; ++i)
+            for (const auto& desc : blocks)
             {
                 Block block;
-
-                u64 offset = p.read64();
-                u64 compressed = p.read64();
-                block.compressed = ConstMemory(m_memory.address + offset, compressed);
-                block.uncompressed = p.read64();
-                block.method = p.read32();
-
+                block.compressed = ConstMemory(base + desc.offset, desc.compressed);
+                block.uncompressed = desc.uncompressed;
+                block.method = desc.method;
                 m_blocks.push_back(block);
             }
-
-            u32 magic2 = p.read32();
-            if (magic2 != fs::HBS_MAGIC2)
-            {
-                MANGO_EXCEPTION("[mapper.hbs] Incorrect block terminator (:#x)", magic2);
-            }
         }
 
-        void parseFiles(LittleEndianConstPointer p)
+        void parseFileArray(const std::vector<fs::hbs::File>& files)
         {
-            u32 magic2 = p.read32();
-            if (magic2 != fs::HBS_MAGIC2)
-            {
-                MANGO_EXCEPTION("[mapper.hbs] Incorrect block identifier (:#x)", magic2);
-            }
-
-            u32 version = p.read32();
-            MANGO_UNREFERENCED(version);
-
-            u64 compressed = p.read64();
-            u64 uncompressed = p.read64();
-
-            ConstMemory source(p, compressed);
-            Buffer temp(uncompressed);
-
-            CompressionStatus status = zstd::decompress(temp, source);
-            if (status.size != uncompressed)
-            {
-                MANGO_EXCEPTION("[mapper.hbs] Incorrect compressed index");
-            }
-
-            parseFileArray(temp.data());
-            p += compressed;
-
-            u32 magic3 = p.read32();
-            if (magic3 != fs::HBS_MAGIC3)
-            {
-                MANGO_EXCEPTION("[mapper.hbs] Incorrect block terminator (:#x)", magic3);
-            }
-        }
-
-        void parseFileArray(LittleEndianConstPointer p)
-        {
-            u32 num_files = p.read32();
-            for (u32 i = 0; i < num_files; ++i)
+            for (const auto& entry : files)
             {
                 FileHeader header;
 
-                u32 length = p.read32();
-                const u8* ptr = p;
-                std::string filename(reinterpret_cast<const char *>(ptr), length);
-                p += length;
+                const std::string& filename = entry.filename;
+                u32 length = u32(filename.length());
 
-                header.size = p.read64();
-                header.checksum = p.read32();
+                header.size = entry.size;
+                header.checksum = entry.checksum;
                 header.is_compressed = false;
 
-                u32 num_segment = p.read32();
-                for (u32 j = 0; j < num_segment; ++j)
+                for (const auto& segment : entry.segments)
                 {
-                    u32 block_idx = p.read32();
+                    header.segments.push_back({ segment.block, segment.offset, segment.size });
 
-                    u64 offset = p.read64();
-                    u64 size = p.read64();
-                    header.segments.push_back({ block_idx, offset, size });
-
-                    // inspect block
-                    Block& block = m_blocks[block_idx];
+                    Block& block = m_blocks[segment.block];
                     if (block.method > 0)
                     {
                         // if ANY of the blocks in the file segments is compressed

@@ -105,6 +105,9 @@ namespace mango::filesystem
         void writeBlockArray(LittleEndianStream& output, const std::vector<Block>& blocks);
         void writeFileArray(LittleEndianStream& output, const std::vector<File>& files);
         void writeIndex(LittleEndianStream& output, u64 block_offset, u64 file_offset);
+
+        std::vector<Block> readBlockArray(ConstMemory memory);
+        std::vector<File> readFileArray(ConstMemory memory);
     }
 
 } // namespace mango::filesystem

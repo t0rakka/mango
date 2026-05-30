@@ -8,6 +8,47 @@
 namespace mango::filesystem::hbs
 {
 
+    namespace
+    {
+        std::vector<File> readFileRecords(LittleEndianConstPointer p)
+        {
+            u32 count = p.read32();
+
+            std::vector<File> files;
+            files.reserve(count);
+
+            for (u32 i = 0; i < count; ++i)
+            {
+                File file;
+
+                u32 length = p.read32();
+                const u8* ptr = p;
+                file.filename.assign(reinterpret_cast<const char*>(ptr), length);
+                p += length;
+
+                file.size = p.read64();
+                file.checksum = p.read32();
+
+                u32 num_segments = p.read32();
+                file.segments.reserve(num_segments);
+
+                for (u32 j = 0; j < num_segments; ++j)
+                {
+                    File::Segment segment;
+                    segment.block = p.read32();
+                    segment.offset = p.read64();
+                    segment.size = p.read64();
+                    file.segments.push_back(segment);
+                }
+
+                files.push_back(std::move(file));
+            }
+
+            return files;
+        }
+
+    } // namespace
+
     void writeBlockArray(LittleEndianStream& output, const std::vector<Block>& blocks)
     {
         u32 count = u32(blocks.size());
@@ -78,6 +119,79 @@ namespace mango::filesystem::hbs
         output.write32(filesystem::HBS_VERSION);
         output.write64(block_offset);
         output.write64(file_offset);
+    }
+
+    std::vector<Block> readBlockArray(ConstMemory memory)
+    {
+        LittleEndianConstPointer start = memory.address;
+        LittleEndianConstPointer p = start;
+
+        u32 magic1 = p.read32();
+        if (magic1 != filesystem::HBS_MAGIC1)
+        {
+            MANGO_EXCEPTION("[hbs] Incorrect block identifier ({:#x}).", magic1);
+        }
+
+        u32 version = p.read32();
+        MANGO_UNREFERENCED(version);
+
+        u32 count = p.read32();
+
+        std::vector<Block> blocks;
+        blocks.reserve(count);
+
+        for (u32 i = 0; i < count; ++i)
+        {
+            Block block;
+            block.offset = p.read64();
+            block.compressed = p.read64();
+            block.uncompressed = p.read64();
+            block.method = p.read32();
+            blocks.push_back(block);
+        }
+
+        if (size_t(p - start) != memory.size)
+        {
+            MANGO_EXCEPTION("[hbs] Incorrect block array size.");
+        }
+
+        return blocks;
+    }
+
+    std::vector<File> readFileArray(ConstMemory memory)
+    {
+        LittleEndianConstPointer start = memory.address;
+        LittleEndianConstPointer p = start;
+
+        u32 magic2 = p.read32();
+        if (magic2 != filesystem::HBS_MAGIC2)
+        {
+            MANGO_EXCEPTION("[hbs] Incorrect file identifier ({:#x}).", magic2);
+        }
+
+        u32 version = p.read32();
+        MANGO_UNREFERENCED(version);
+
+        u64 compressed = p.read64();
+        u64 uncompressed = p.read64();
+
+        ConstMemory source(p, compressed);
+        Buffer temp(uncompressed);
+
+        CompressionStatus status = zstd::decompress(temp, source);
+        if (status.size != uncompressed)
+        {
+            MANGO_EXCEPTION("[hbs] Incorrect compressed file array.");
+        }
+
+        p += compressed;
+
+        if (size_t(p - start) != memory.size)
+        {
+            MANGO_EXCEPTION("[hbs] Incorrect file array size.");
+        }
+
+        return readFileRecords(temp.data());
     }
 
 } // namespace mango::filesystem::hbs
