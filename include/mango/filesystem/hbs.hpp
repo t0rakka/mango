@@ -4,7 +4,9 @@
 */
 #pragma once
 
+#include <vector>
 #include <mango/core/configure.hpp>
+#include <mango/core/stream.hpp>
 #include <mango/core/bits.hpp>
 
 namespace mango::filesystem
@@ -20,5 +22,34 @@ namespace mango::filesystem
         HBS_MAGIC2 = u32_mask('h', 'b', 's', '2'),
         HBS_MAGIC3 = u32_mask('h', 'b', 's', '3'),
     };
+
+    namespace hbs
+    {
+        struct Block
+        {
+            u64 offset;
+            u64 compressed;
+            u64 uncompressed;
+            u32 method;
+        };
+
+        struct File
+        {
+            struct Segment
+            {
+                u32 block;
+                u64 offset;
+                u64 size;
+            };
+
+            std::string filename;
+            u64 size;
+            u32 checksum;
+            std::vector<Segment> segments;
+        };    
+
+        void writeBlockArray(LittleEndianStream& output, const std::vector<Block>& blocks);
+        void writeFileArray(LittleEndianStream& output, const std::vector<File>& files);
+    }
 
 } // namespace mango::filesystem

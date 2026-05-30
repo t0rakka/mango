@@ -324,8 +324,18 @@ namespace mango::filesystem
 
             const FileHeader& file = *ptrHeader;
 
+            if (file.isFolder())
+            {
+                MANGO_EXCEPTION("[mapper.hbs] Cannot map directory \"{}\".", filename);
+            }
+
             if (!file.isMultiSegment())
             {
+                if (file.segments.empty())
+                {
+                    MANGO_EXCEPTION("[mapper.hbs] File \"{}\" has no data.", filename);
+                }
+
                 const Segment& segment = file.segments[0];
 
                 u32 blockIndex = segment.block;
@@ -374,10 +384,10 @@ namespace mango::filesystem
                 }
             }
 
-            // generic compression case
+            // generic multi-segment case
 
             std::shared_ptr<Buffer> buffer = std::make_shared<Buffer>(file.size);
-            u8* x = *buffer;
+            u8* base = buffer->data();
 
             ConcurrentQueue q("hbs.decompressor");
 
@@ -389,30 +399,25 @@ namespace mango::filesystem
                 {
                     if (block.method)
                     {
-                        if (block.uncompressed == segment.size && segment.offset == 0)
+                        if (block.uncompressed == segment.size)
                         {
-                            // segment is full-block so we can decode directly w/o intermediate buffer
-                            Memory dest(x + segment.offset, size_t(segment.size));
+                            // segment owns the whole block
+                            Memory dest(base + segment.offset, size_t(segment.size));
                             block.decompress(dest);
                         }
                         else
                         {
-                            // we must decompress the whole block so need a temporary buffer
+                            // small files sharing one block
                             Buffer dest(block.uncompressed);
                             block.decompress(dest);
-
-                            // copy the segment out from the temporary buffer
-                            std::memcpy(x + segment.offset, dest.data() + segment.offset, size_t(segment.size));
+                            std::memcpy(base + segment.offset, dest.data() + segment.offset, size_t(segment.size));
                         }
                     }
                     else
                     {
-                        // no compression
-                        std::memcpy(x + segment.offset, block.compressed.address + segment.offset, size_t(segment.size));
+                        std::memcpy(base + segment.offset, block.compressed.address, size_t(segment.size));
                     }
                 });
-
-                x += size_t(segment.size);
             }
 
             q.wait();

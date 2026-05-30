@@ -11,8 +11,6 @@
 using namespace mango;
 using namespace mango::filesystem;
 
-#define DISABLE_MMAP
-
 namespace
 {
 
@@ -154,9 +152,9 @@ void enumerate(const Path& path, const std::string& prefix, State& state, int de
 // compression
 // ------------------------------------------------------------------------------------------
 
-struct Block
+struct BlockMeta
 {
-    struct Segment
+    struct Source
     {
         std::string filename;
         u64 offset;
@@ -164,12 +162,7 @@ struct Block
     };
 
     u64 bytes { 0 };
-    std::vector<Segment> segments;
-
-    u64 offset;
-    u64 compressed;
-    u64 uncompressed;
-    u32 method;
+    std::vector<Source> sources;
 
     bool store { false }; // store raw data as is, no compression
     bool written { false };
@@ -178,39 +171,26 @@ struct Block
     u32 part_index { 0 };
     u32 part_count { 1 };
 
-    void append(const Segment& segment)
+    void append(const Source& source)
     {
-        segments.push_back(segment);
-        bytes += segment.size;
+        sources.push_back(source);
+        bytes += source.size;
     }
-};
-
-struct SegmentedFile
-{
-    struct Segment
-    {
-        u32 block;
-        u64 offset;
-        u64 size;
-    };
-
-    std::string filename;
-    u64 size;
-    u32 checksum;
-    std::vector<Segment> segments;
 };
 
 struct BlockManager
 {
-    std::vector<Block> blocks;
-    std::vector<SegmentedFile> files;
+    std::vector<hbs::Block> blocks;
+    std::vector<BlockMeta> meta;
+    std::vector<hbs::File> files;
 
-    void flush(Block& block)
+    void flush(BlockMeta& work)
     {
-        if (!block.segments.empty())
+        if (!work.sources.empty())
         {
-            blocks.push_back(block);
-            block = Block();
+            blocks.push_back({});
+            meta.push_back(work);
+            work = BlockMeta();
         }
     }
 
@@ -235,16 +215,19 @@ struct BlockManager
         return total;
     }
 
-    void appendStoreNoCompression(Block& block, const FileInfo& node)
+    void appendStoreNoCompression(BlockMeta& work, const FileInfo& node)
     {
         segment(0, node.size);
-        block.append({ node.name, 0, node.size });
+        work.append({ node.name, 0, node.size });
 
-        block.store = true;
-        block.uncompressed = block.bytes;
-        block.compressed = block.bytes;
-        block.method = Compressor::NONE;
-        flush(block);
+        work.store = true;
+        flush(work);
+
+        hbs::Block& desc = blocks.back();
+        const BlockMeta& stored = meta.back();
+        desc.uncompressed = stored.bytes;
+        desc.compressed = stored.bytes;
+        desc.method = Compressor::NONE;
     }
 };
 
@@ -259,24 +242,16 @@ struct FileGroup
 };
 
 static
-void readBlockSource(const Block& block, const Path& path, Buffer& source)
+void readBlockSource(const BlockMeta& work, const Path& path, Buffer& source)
 {
     u8* ptr = source.data();
 
-    for (auto segment : block.segments)
+    for (auto segment : work.sources)
     {
-#ifdef DISABLE_MMAP
-        std::string filename = path.pathname() + segment.filename;
-        InputFileStream file(filename);
-        file.seek(segment.offset, Stream::SeekMode::Begin);
-        file.read(ptr, segment.size);
-        ptr += segment.size;
-#else
         File file(path, segment.filename);
         ConstMemory memory = ConstMemory(file).slice(segment.offset, segment.size);
         std::memcpy(ptr, memory.address, memory.size);
         ptr += memory.size;
-#endif
     }
 }
 
@@ -284,17 +259,19 @@ static
 void compactBlocks(BlockManager& manager)
 {
     std::vector<u32> remap(manager.blocks.size(), u32(-1));
-    std::vector<Block> compact;
+    std::vector<hbs::Block> compact_blocks;
+    std::vector<BlockMeta> compact_meta;
 
     for (size_t i = 0; i < manager.blocks.size(); ++i)
     {
-        if (!manager.blocks[i].written)
+        if (!manager.meta[i].written)
         {
             continue;
         }
 
-        remap[i] = u32(compact.size());
-        compact.push_back(manager.blocks[i]);
+        remap[i] = u32(compact_blocks.size());
+        compact_blocks.push_back(manager.blocks[i]);
+        compact_meta.push_back(manager.meta[i]);
     }
 
     for (auto& file : manager.files)
@@ -309,44 +286,19 @@ void compactBlocks(BlockManager& manager)
         }
     }
 
-    manager.blocks = std::move(compact);
+    manager.blocks = std::move(compact_blocks);
+    manager.meta = std::move(compact_meta);
 }
 
-#ifdef DISABLE_MMAP
-
 static
-void writeStoreNoCompression(const Block& block, const Path& path, Stream& output)
+void writeStoreNoCompression(const BlockMeta& work, const Path& path, Stream& output)
 {
-    for (auto segment : block.segments)
-    {
-        std::string filename = path.pathname() + segment.filename;
-        InputFileStream file(filename);
-
-        Buffer buffer(large_block_size);
-
-        for (u64 offset = 0; offset < segment.size; offset += large_block_size)
-        {
-            u64 size = std::min(large_block_size, segment.size - offset);
-            file.seek(segment.offset + offset, Stream::SeekMode::Begin);
-            file.read(buffer.data(), size);
-            output.write(buffer.data(), size);
-        }
-    }
-}
-
-#else
-
-static
-void writeStoreNoCompression(const Block& block, const Path& path, Stream& output)
-{
-    for (auto segment : block.segments)
+    for (auto segment : work.sources)
     {
         File file(path, segment.filename);
         output.write(file.data() + segment.offset, segment.size);
     }
 }
-
-#endif
 
 void compress(State& state, const std::string& folder, const std::string& archive, const std::string& compression, int level, size_t store_threshold)
 {
@@ -386,7 +338,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     });
 
     BlockManager manager;
-    Block block;
+    BlockMeta work;
     std::vector<size_t> store_small_files;
     std::vector<std::unique_ptr<FileGroup>> file_groups;
 
@@ -397,12 +349,12 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
         if (!isCompressible(node.name, node.size))
         {
-            manager.flush(block);
+            manager.flush(work);
 
             if (node.size > small_file_max_size)
             {
                 // one archive block per large file (mmap-friendly)
-                manager.appendStoreNoCompression(block, node);
+                manager.appendStoreNoCompression(work, node);
             }
             else
             {
@@ -432,37 +384,37 @@ void compress(State& state, const std::string& folder, const std::string& archiv
                 {
                     u64 size = std::min(large_block_size, node.size - offset);
 
-                    block.file_index = file_index;
-                    block.part_index = part++;
-                    block.part_count = part_count;
+                    work.file_index = file_index;
+                    work.part_index = part++;
+                    work.part_count = part_count;
 
-                    manager.segment(0, size);
-                    block.append({ node.name, offset, size });
-                    manager.flush(block);
+                    manager.segment(offset, size);
+                    work.append({ node.name, offset, size });
+                    manager.flush(work);
                 }
             }
             else
             {
                 // compress the file as one block
                 manager.segment(0, node.size);
-                block.append({ node.name, 0, node.size });
-                manager.flush(block);
+                work.append({ node.name, 0, node.size });
+                manager.flush(work);
             }
         }
         else
         {
             // merge small files into one block
-            if (block.bytes >= small_block_size)
+            if (work.bytes >= small_block_size)
             {
-                manager.flush(block);
+                manager.flush(work);
             }
 
-            manager.segment(block.bytes, node.size);
-            block.append({ node.name, 0, node.size });
+            manager.segment(work.bytes, node.size);
+            work.append({ node.name, 0, node.size });
         }
     }
 
-    manager.flush(block);
+    manager.flush(work);
 
     // compute checksums
 
@@ -521,14 +473,17 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     u64 compress_time0 = Time::ms();
 
-    auto commit_block = [&](Block& block, const u8* data, u64 size, u32 method, char glyph)
+    auto commit_block = [&](size_t block_index, const u8* data, u64 size, u32 method, char glyph)
     {
         std::unique_lock<std::mutex> write_lock(mutex);
 
-        block.offset = output.offset();
-        block.uncompressed = block.bytes;
-        block.compressed = size;
-        block.method = method;
+        hbs::Block& desc = manager.blocks[block_index];
+        BlockMeta& block = manager.meta[block_index];
+
+        desc.offset = output.offset();
+        desc.uncompressed = block.bytes;
+        desc.compressed = size;
+        desc.method = method;
         output.write(data, size);
         block.written = true;
 
@@ -536,14 +491,17 @@ void compress(State& state, const std::string& folder, const std::string& archiv
         std::fflush(stdout);
     };
 
-    auto commit_stored_block = [&](Block& block, char glyph)
+    auto commit_stored_block = [&](size_t block_index, char glyph)
     {
         std::unique_lock<std::mutex> write_lock(mutex);
 
-        block.offset = output.offset();
-        block.uncompressed = block.bytes;
-        block.compressed = block.bytes;
-        block.method = Compressor::NONE;
+        hbs::Block& desc = manager.blocks[block_index];
+        BlockMeta& block = manager.meta[block_index];
+
+        desc.offset = output.offset();
+        desc.uncompressed = block.bytes;
+        desc.compressed = block.bytes;
+        desc.method = Compressor::NONE;
         writeStoreNoCompression(block, path, output);
         block.written = true;
 
@@ -560,38 +518,37 @@ void compress(State& state, const std::string& folder, const std::string& archiv
                 continue;
             }
 
-            Block& part = manager.blocks[group.first_block_index + i];
-            commit_stored_block(part, 's');
+            commit_stored_block(group.first_block_index + i, 's');
             group.pending_stored[i] = false;
         }
     };
 
     auto fuse_stored_file = [&](FileGroup& group, size_t file_index)
     {
-        Block& block = manager.blocks[group.first_block_index];
+        hbs::Block& desc = manager.blocks[group.first_block_index];
         const u64 file_size = manager.files[file_index].size;
 
         {
             std::unique_lock<std::mutex> write_lock(mutex);
 
-            block.offset = output.offset();
-            block.uncompressed = file_size;
-            block.compressed = file_size;
-            block.method = Compressor::NONE;
+            desc.offset = output.offset();
+            desc.uncompressed = file_size;
+            desc.compressed = file_size;
+            desc.method = Compressor::NONE;
 
             for (u32 i = 0; i < group.part_count; ++i)
             {
-                writeStoreNoCompression(manager.blocks[group.first_block_index + i], path, output);
+                writeStoreNoCompression(manager.meta[group.first_block_index + i], path, output);
                 print("s");
                 std::fflush(stdout);
             }
 
-            block.written = true;
+            manager.meta[group.first_block_index].written = true;
         }
 
         for (u32 i = 1; i < group.part_count; ++i)
         {
-            manager.blocks[group.first_block_index + i].written = false;
+            manager.meta[group.first_block_index + i].written = false;
             group.pending_stored[i] = false;
         }
 
@@ -605,16 +562,18 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     {
         q.enqueue([&, block_index] ()
         {
-            Block& block = manager.blocks[block_index];
+            BlockMeta& block = manager.meta[block_index];
 
             if (block.store)
             {
                 std::unique_lock<std::mutex> write_lock(mutex);
 
-                block.offset = output.offset();
-                block.uncompressed = block.bytes;
-                block.compressed = block.bytes;
-                block.method = Compressor::NONE;
+                hbs::Block& desc = manager.blocks[block_index];
+
+                desc.offset = output.offset();
+                desc.uncompressed = block.bytes;
+                desc.compressed = block.bytes;
+                desc.method = Compressor::NONE;
 
                 writeStoreNoCompression(block, path, output);
                 block.written = true;
@@ -656,11 +615,11 @@ void compress(State& state, const std::string& folder, const std::string& archiv
                 {
                     if (store)
                     {
-                        commit_stored_block(block, '+');
+                        commit_stored_block(block_index, '+');
                     }
                     else
                     {
-                        commit_block(block, compressed.address, compressed.size, compressor.method, '+');
+                        commit_block(block_index, compressed.address, compressed.size, compressor.method, '+');
                     }
                 }
                 else
@@ -679,7 +638,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
                             }
                         }
 
-                        commit_block(block, compressed.address, compressed.size, compressor.method, '+');
+                        commit_block(block_index, compressed.address, compressed.size, compressor.method, '+');
                     }
                     else
                     {
@@ -687,7 +646,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
                         if (group.any_compressed)
                         {
-                            commit_stored_block(block, '+');
+                            commit_stored_block(block_index, '+');
                         }
                         else
                         {
@@ -709,7 +668,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     if (!store_small_files.empty())
     {
-        Block raw;
+        BlockMeta raw;
         raw.store = true;
 
         for (size_t file_index : store_small_files)
@@ -719,32 +678,35 @@ void compress(State& state, const std::string& folder, const std::string& archiv
             raw.append({ file.filename, 0, file.size });
         }
 
-        raw.offset = output.offset();
-        raw.uncompressed = raw.bytes;
-        raw.compressed = raw.bytes;
-        raw.method = Compressor::NONE;
+        hbs::Block desc;
+        desc.offset = output.offset();
+        desc.uncompressed = raw.bytes;
+        desc.compressed = raw.bytes;
+        desc.method = Compressor::NONE;
 
         writeStoreNoCompression(raw, path, output);
         raw.written = true;
-        manager.blocks.push_back(raw);
+        manager.blocks.push_back(desc);
+        manager.meta.push_back(raw);
 
         print("s");
         std::fflush(stdout);
     }
 
-    block.method = Compressor::NONE;
-    block.offset = output.offset();
-    block.compressed = 0;
-    block.uncompressed = 0;
-
     for (auto node : state.folders)
     {
-        manager.files.push_back({node.name, 0});
-        block.append({node.name, 0, 0});
+        manager.files.push_back({ node.name, 0 });
+        work.append({ node.name, 0, 0 });
     }
 
-    block.written = true;
-    manager.flush(block);
+    work.written = true;
+    manager.flush(work);
+
+    hbs::Block& folder_desc = manager.blocks.back();
+    folder_desc.method = Compressor::NONE;
+    folder_desc.offset = output.offset();
+    folder_desc.compressed = 0;
+    folder_desc.uncompressed = 0;
 
     compactBlocks(manager);
 
@@ -821,66 +783,12 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     // write block data
 
     u64 block_data_offset = output.offset();
-    u32 num_blocks = u32(manager.blocks.size());
-
-    str.write32(filesystem::HBS_MAGIC1);
-    str.write32(filesystem::HBS_VERSION);
-    str.write32(num_blocks);
-
-    for (auto &block : manager.blocks)
-    {
-        str.write64(block.offset);
-        str.write64(block.compressed);
-        str.write64(block.uncompressed);
-        str.write32(block.method);
-    }
+    hbs::writeBlockArray(str, manager.blocks);
 
     // write file data
 
     u64 file_data_offset = output.offset();
-
-    str.write32(filesystem::HBS_MAGIC2);
-    str.write32(filesystem::HBS_VERSION);
-
-    // write file data into temporary buffer
-
-    MemoryStream temp;
-    LittleEndianStream le = temp; // LE adaptor for writing into the stream
-
-    le.write32(u32(manager.files.size()));
-
-    for (auto &file : manager.files)
-    {
-        const std::string& filename = file.filename;
-        u32 length = u32(filename.length());
-
-        le.write32(length);
-        le.write(filename.c_str(), length);
-
-        le.write64(file.size);
-        le.write32(file.checksum);
-        le.write32(u32(file.segments.size()));
-
-        for (auto &segment : file.segments)
-        {
-            le.write32(segment.block);
-            le.write64(segment.offset);
-            le.write64(segment.size);
-        }
-    }
-
-    // compress the temporary buffer
-
-    size_t bound = zstd::bound(temp.size());
-    Buffer compressed(bound);
-
-    CompressionStatus status = zstd::compress(compressed, temp, 10);
-
-    // write compressed buffer
-
-    str.write64(u64(status.size)); // compressed size
-    str.write64(u64(temp.size())); // uncompressed size
-    str.write(compressed, status.size);
+    hbs::writeFileArray(str, manager.files);
 
     // write header
 
