@@ -110,16 +110,26 @@ namespace
         {
         }
 
-        void parseBlocks(const u8* base, ConstMemory memory)
+        void parseBlocks(const u8* base, ConstMemory block_array)
         {
-            std::vector<fs::hbs::Block> blocks = fs::hbs::readBlockArray(memory);
+            std::vector<fs::hbs::Block> blocks = fs::hbs::readBlockArray(block_array);
 
             m_blocks.reserve(blocks.size());
 
+            const u8* archive_end = m_memory.address + m_memory.size;
+
             for (const auto& desc : blocks)
             {
+                const u8* block_address = base + desc.offset;
+                const u8* block_end = block_address + desc.compressed;
+
+                if (block_address < m_memory.address || block_end > archive_end)
+                {
+                    MANGO_EXCEPTION("[mapper.hbs] Block at offset {} exceeds archive bounds.", desc.offset);
+                }
+
                 Block block;
-                block.compressed = ConstMemory(base + desc.offset, desc.compressed);
+                block.compressed = ConstMemory(block_address, desc.compressed);
                 block.uncompressed = desc.uncompressed;
                 block.method = desc.method;
                 m_blocks.push_back(block);
@@ -141,6 +151,12 @@ namespace
 
                 for (const auto& segment : entry.segments)
                 {
+                    if (segment.block >= m_blocks.size())
+                    {
+                        MANGO_EXCEPTION("[mapper.hbs] File \"{}\" references block {} ({} blocks).",
+                            filename, segment.block, m_blocks.size());
+                    }
+
                     header.segments.push_back({ segment.block, segment.offset, segment.size });
 
                     Block& block = m_blocks[segment.block];
@@ -207,6 +223,44 @@ namespace mango::filesystem
         LRUCache<u32, std::shared_ptr<Buffer>> m_cache { block_cache_size };
         std::mutex m_cache_mutex;
 
+        void decompressSegment(u8* base, const Segment& segment, const std::string& filename) const
+        {
+            if (segment.block >= m_index.m_blocks.size())
+            {
+                MANGO_EXCEPTION("[mapper.hbs] File \"{}\" references block {} ({} blocks).",
+                    filename, segment.block, m_index.m_blocks.size());
+            }
+
+            const Block& block = m_index.m_blocks[segment.block];
+
+            if (block.method)
+            {
+                if (block.uncompressed == segment.size)
+                {
+                    // segment owns the whole block
+                    Memory dest(base + segment.offset, size_t(segment.size));
+                    block.decompress(dest);
+                }
+                else
+                {
+                    // small files sharing one block
+                    Buffer dest(block.uncompressed);
+                    block.decompress(dest);
+                    std::memcpy(base + segment.offset, dest.data() + segment.offset, size_t(segment.size));
+                }
+            }
+            else
+            {
+                if (segment.size > block.compressed.size)
+                {
+                    MANGO_EXCEPTION("[mapper.hbs] File \"{}\" segment exceeds stored block (size {}, block {}).",
+                        filename, segment.size, block.compressed.size);
+                }
+
+                std::memcpy(base + segment.offset, block.compressed.address, size_t(segment.size));
+            }
+        }
+
     public:
         MapperHBS(ConstMemory parent, const std::string& password)
             : m_index(parent)
@@ -260,6 +314,18 @@ namespace mango::filesystem
             }
         }
 
+        static
+        ConstMemory blockSlice(const Block& block, u64 offset, u64 size, const std::string& filename)
+        {
+            if (offset + size > block.compressed.size)
+            {
+                MANGO_EXCEPTION("[mapper.hbs] File \"{}\" segment exceeds stored block (offset {}, size {}, block {}).",
+                    filename, offset, size, block.compressed.size);
+            }
+
+            return block.compressed.slice(offset, size);
+        }
+
         std::unique_ptr<VirtualMemory> map(const std::string& filename) override
         {
             const FileHeader* ptrHeader = m_index.m_folders.getHeader(filename);
@@ -284,10 +350,20 @@ namespace mango::filesystem
 
                 const Segment& segment = file.segments[0];
 
+                if (segment.block >= m_index.m_blocks.size())
+                {
+                    MANGO_EXCEPTION("[mapper.hbs] File \"{}\" references block {} ({} blocks).",
+                        filename, segment.block, m_index.m_blocks.size());
+                }
+
                 u32 blockIndex = segment.block;
                 const Block& block = m_index.m_blocks[blockIndex];
 
-                assert(file.size == segment.size);
+                if (file.size != segment.size)
+                {
+                    MANGO_EXCEPTION("[mapper.hbs] File \"{}\" size mismatch ({} != {}).",
+                        filename, file.size, segment.size);
+                }
 
                 if (file.isCompressed())
                 {
@@ -313,7 +389,8 @@ namespace mango::filesystem
                             m_cache.insert(blockIndex, buffer);
                         }
 
-                        ConstMemory memory(*buffer + segment.offset, size_t(segment.size));
+                        ConstMemory block_memory = *buffer;
+                        ConstMemory memory = block_memory.slice(segment.offset, segment.size);
                         return std::make_unique<VirtualMemoryHBS>(buffer, memory);
                     }
                     else
@@ -325,48 +402,20 @@ namespace mango::filesystem
                 {
                     // The file is encoded as a single, non-compressed block
                     // we can simply map it into parent's memory
-                    ConstMemory memory(block.compressed.address + segment.offset, size_t(segment.size));
+                    ConstMemory memory = blockSlice(block, segment.offset, segment.size, filename);
                     return std::make_unique<VirtualMemoryHBS>(memory);
                 }
             }
 
-            // generic multi-segment case
+            // generic multi-segment case (also single-segment compressed blocks)
 
             std::shared_ptr<Buffer> buffer = std::make_shared<Buffer>(file.size);
             u8* base = buffer->data();
 
-            ConcurrentQueue q("hbs.decompressor");
-
             for (const auto& segment : file.segments)
             {
-                const Block& block = m_index.m_blocks[segment.block];
-
-                q.enqueue([=, &block, &segment]
-                {
-                    if (block.method)
-                    {
-                        if (block.uncompressed == segment.size)
-                        {
-                            // segment owns the whole block
-                            Memory dest(base + segment.offset, size_t(segment.size));
-                            block.decompress(dest);
-                        }
-                        else
-                        {
-                            // small files sharing one block
-                            Buffer dest(block.uncompressed);
-                            block.decompress(dest);
-                            std::memcpy(base + segment.offset, dest.data() + segment.offset, size_t(segment.size));
-                        }
-                    }
-                    else
-                    {
-                        std::memcpy(base + segment.offset, block.compressed.address, size_t(segment.size));
-                    }
-                });
+                decompressSegment(base, segment, filename);
             }
-
-            q.wait();
 
             ConstMemory memory = *buffer;
             return std::make_unique<VirtualMemoryHBS>(buffer, memory);

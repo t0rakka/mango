@@ -22,7 +22,7 @@ namespace
 
     // configuration
     constexpr u64 large_block_size = 4 * MB;
-    constexpr u64 small_file_max_size = 512 * KB;
+    constexpr u64 small_file_max_size = 64 * KB;
     constexpr u64 small_block_size = 2 * MB;
 
     constexpr size_t store_threshold_default = 95; // percent
@@ -489,10 +489,13 @@ void compactBlocks(BlockManager& manager)
         for (auto& segment : file.segments)
         {
             u32 block = segment.block;
-            if (block < remap.size() && remap[block] != u32(-1))
+            if (block >= remap.size() || remap[block] == u32(-1))
             {
-                segment.block = remap[block];
+                MANGO_EXCEPTION("[hcompress] File \"{}\" references unwritten block {}.",
+                    file.filename, block);
             }
+
+            segment.block = remap[block];
         }
     }
 
