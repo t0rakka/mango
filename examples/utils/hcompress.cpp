@@ -418,9 +418,6 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     // compute checksums
 
-    print("Computing checksums...");
-    std::fflush(stdout);
-
     u64 checksum_time0 = Time::ms();
 
     ConcurrentQueue q;
