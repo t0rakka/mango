@@ -851,7 +851,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     for (auto &file : manager.files)
     {
-        std::string filename = removePrefix(file.filename, folder);
+        const std::string& filename = file.filename;
         u32 length = u32(filename.length());
 
         le.write32(length);
@@ -871,7 +871,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     // compress the temporary buffer
 
-    size_t bound = compressor.bound(temp.size());
+    size_t bound = zstd::bound(temp.size());
     Buffer compressed(bound);
 
     CompressionStatus status = zstd::compress(compressed, temp, 10);
