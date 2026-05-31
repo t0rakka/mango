@@ -217,8 +217,6 @@ int main(int argc, char* argv[])
         printLine("       {} [archive] --list", program_name);
         printLine("       {} [archive] --tree", program_name);
         printLine("       {} [archive] --verify", program_name);
-        printLine("       {} [archive] --list --verify", program_name);
-        printLine("       {} [archive] --tree --verify", program_name);
         return 0;
     }
 
