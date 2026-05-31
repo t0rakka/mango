@@ -16,12 +16,7 @@ namespace
     static constexpr u64 hbs_index_size = 24;
     static constexpr u32 block_cache_size = 96;
 
-    struct Segment
-    {
-        u32 block;
-        u64 offset;
-        u64 size;
-    };
+    using Segment = fs::hbs::File::Segment;
 
     struct Block
     {
@@ -99,20 +94,23 @@ namespace
             u64 block_offset = p.read64();
             u64 file_offset = p.read64();
 
-            parseBlocks(memory.address,
-                ConstMemory(memory.address + block_offset, file_offset - block_offset));
+            u64 block_size = file_offset - block_offset;
+            u64 file_size = index_offset - file_offset;
 
-            parseFileArray(fs::hbs::readFileArray(
-                ConstMemory(memory.address + file_offset, index_offset - file_offset)));
+            ConstMemory block_memory = m_memory.slice(block_offset, block_size);
+            ConstMemory file_memory = m_memory.slice(file_offset, file_size);
+
+            parseBlocks(block_memory);
+            parseFileArray(file_memory);
         }
 
         ~IndexHBS()
         {
         }
 
-        void parseBlocks(const u8* base, ConstMemory block_array)
+        void parseBlocks(ConstMemory block_memory)
         {
-            std::vector<fs::hbs::Block> blocks = fs::hbs::readBlockArray(block_array);
+            std::vector<fs::hbs::Block> blocks = fs::hbs::readBlockArray(block_memory);
 
             m_blocks.reserve(blocks.size());
 
@@ -120,7 +118,7 @@ namespace
 
             for (const auto& desc : blocks)
             {
-                const u8* block_address = base + desc.offset;
+                const u8* block_address = m_memory.address + desc.offset;
                 const u8* block_end = block_address + desc.compressed;
 
                 if (block_address < m_memory.address || block_end > archive_end)
@@ -136,8 +134,10 @@ namespace
             }
         }
 
-        void parseFileArray(const std::vector<fs::hbs::File>& files)
+        void parseFileArray(ConstMemory file_memory)
         {
+            std::vector<fs::hbs::File> files = fs::hbs::readFileArray(file_memory);
+
             for (const auto& entry : files)
             {
                 FileHeader header;
