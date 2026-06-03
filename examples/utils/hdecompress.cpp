@@ -6,7 +6,6 @@
 #include <atomic>
 #include <filesystem>
 #include <deque>
-#include <functional>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -270,7 +269,7 @@ namespace
     {
         std::lock_guard<std::mutex> lock(multi.mutex);
 
-        if (check_checksums && !extract && expected_checksum)
+        if (check_checksums && expected_checksum)
         {
             u32 crc = crc32c(0, slice);
             multi.segment_crcs[segment_index] = { crc, slice.size };
@@ -475,14 +474,13 @@ namespace
             return;
         }
 
-        // 3. Decode blocks: main thread caps in-flight decompress buffers (~2× hardware concurrency).
+        // 3. Decode blocks: cap in-flight block tasks (~2× hardware concurrency).
         const size_t concurrency = ThreadPool::getHardwareConcurrency();
         const size_t max_in_flight = std::max(size_t(2), concurrency * 2);
 
         ConcurrentQueue q("hdecompress.blocks");
-        std::mutex schedule_mutex;
-        size_t schedule_pos = 0;
-        size_t decompress_slots_available = max_in_flight;
+        std::atomic<size_t> schedule_pos { 0 };
+        std::atomic<size_t> blocks_in_flight { 0 };
         std::atomic<u64> counter_bytes { 0 };
         std::atomic<u64> verified_bytes { 0 };
         std::atomic<size_t> blocks_decompressed { 0 };
@@ -533,9 +531,8 @@ namespace
                 }
                 else
                 {
-                    if (check_checksums && !extract && file.checksum)
+                    if (check_checksums && file.checksum)
                     {
-                        // CRC on main thread during verify; never from pool workers.
                         u32 crc = crc32c(0, slice);
                         single_segment_crcs[use.file_index] = { crc, slice.size };
 
@@ -576,39 +573,36 @@ namespace
             }
         };
 
-        std::function<void()> try_enqueue_blocks;
-        std::function<void(size_t)> release_decompress_slot;
-
-        release_decompress_slot = [&](size_t block_index)
+        auto pump_blocks = [&]()
         {
-            std::lock_guard<std::mutex> lock(schedule_mutex);
-
-            if (blocks[block_index].method != Compressor::NONE)
+            for (;;)
             {
-                ++decompress_slots_available;
-            }
-
-            try_enqueue_blocks();
-        };
-
-        try_enqueue_blocks = [&]()
-        {
-            while (schedule_pos < schedule.size())
-            {
-                size_t block_index = schedule[schedule_pos];
-                const hbs::Block& block = blocks[block_index];
-
-                if (block.method != Compressor::NONE && decompress_slots_available == 0)
+                size_t in_flight = blocks_in_flight.load(std::memory_order_relaxed);
+                if (in_flight >= max_in_flight)
                 {
                     break;
                 }
 
-                if (block.method != Compressor::NONE)
+                size_t pos = schedule_pos.load(std::memory_order_relaxed);
+                if (pos >= schedule.size())
                 {
-                    --decompress_slots_available;
+                    break;
                 }
 
-                ++schedule_pos;
+                if (!blocks_in_flight.compare_exchange_weak(in_flight, in_flight + 1,
+                        std::memory_order_acq_rel, std::memory_order_relaxed))
+                {
+                    continue;
+                }
+
+                if (!schedule_pos.compare_exchange_weak(pos, pos + 1,
+                        std::memory_order_acq_rel, std::memory_order_relaxed))
+                {
+                    blocks_in_flight.fetch_sub(1, std::memory_order_relaxed);
+                    continue;
+                }
+
+                size_t block_index = schedule[pos];
 
                 q.enqueue([&, block_index = block_index]()
                 {
@@ -639,23 +633,18 @@ namespace
                             Buffer::release(owned);
                         }
 
-                        release_decompress_slot(block_index);
                         blocks_extracted.fetch_add(1, std::memory_order_relaxed);
                     }
                     else
                     {
                         blocks_decompressed.fetch_add(1, std::memory_order_relaxed);
 
-                        {
-                            std::lock_guard<std::mutex> lock(completed_mutex);
-                            completed.push_back({ block_index, std::move(owned) });
-                            completed_count.fetch_add(1, std::memory_order_relaxed);
-                        }
-
-                        // Worker is done; release the decompress slot so more blocks can run.
-                        // Decompressed buffers stay in completed until the main thread drains them.
-                        release_decompress_slot(block_index);
+                        std::lock_guard<std::mutex> lock(completed_mutex);
+                        completed.push_back({ block_index, std::move(owned) });
+                        completed_count.fetch_add(1, std::memory_order_relaxed);
                     }
+
+                    blocks_in_flight.fetch_sub(1, std::memory_order_relaxed);
                 });
             }
         };
@@ -694,10 +683,7 @@ namespace
             return true;
         };
 
-        {
-            std::lock_guard<std::mutex> lock(schedule_mutex);
-            try_enqueue_blocks();
-        }
+        pump_blocks();
 
         show_progress();
 
@@ -707,6 +693,7 @@ namespace
             {
                 u64 bytes_before = counter_bytes.load(std::memory_order_relaxed);
 
+                pump_blocks();
                 q.steal();
                 show_progress();
 
@@ -725,6 +712,7 @@ namespace
             {
                 size_t decompressed_before = blocks_decompressed.load(std::memory_order_relaxed);
 
+                pump_blocks();
                 q.steal();
 
                 for (size_t i = 0; i < drain_batch; ++i)
