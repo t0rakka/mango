@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <atomic>
 #include <filesystem>
-#include <condition_variable>
 #include <deque>
+#include <functional>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -190,65 +190,6 @@ namespace
         return schedule;
     }
 
-    // Bounds in-flight block decompress buffers (~2× hardware concurrency).
-    class InflightSlots
-    {
-    public:
-        explicit InflightSlots(size_t count)
-            : m_available(count)
-        {
-        }
-
-        void acquire()
-        {
-            std::unique_lock<std::mutex> lock(m_mutex);
-            m_cv.wait(lock, [this] { return m_available > 0; });
-            --m_available;
-        }
-
-        void release()
-        {
-            {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                ++m_available;
-            }
-            m_cv.notify_one();
-        }
-
-    private:
-        std::mutex m_mutex;
-        std::condition_variable m_cv;
-        size_t m_available;
-    };
-
-    static
-    u32 crc32c_serial(u32 crc, ConstMemory memory)
-    {
-        // crc32c() parallelizes via the shared ThreadPool; never call that from pool workers.
-        constexpr size_t chunk_size = 256 * 1024;
-
-        if (memory.size <= chunk_size)
-        {
-            return crc32c(crc, memory);
-        }
-
-        size_t offset = 0;
-        size_t first = chunk_size;
-
-        crc = crc32c(crc, memory.slice(0, first));
-        offset = first;
-
-        while (offset < memory.size)
-        {
-            size_t bytes = std::min(chunk_size, memory.size - offset);
-            u32 part = crc32c(0, memory.slice(offset, bytes));
-            crc = crc32c_combine(crc, part, bytes);
-            offset += bytes;
-        }
-
-        return crc;
-    }
-
     static
     Memory copySlice(ConstMemory slice)
     {
@@ -325,14 +266,13 @@ namespace
         bool extract,
         bool check_checksums,
         u32 expected_checksum,
-        bool parallel_crc,
         std::atomic<u64>* extract_progress = nullptr)
     {
         std::lock_guard<std::mutex> lock(multi.mutex);
 
-        if (check_checksums && expected_checksum)
+        if (check_checksums && !extract && expected_checksum)
         {
-            u32 crc = parallel_crc ? crc32c(0, slice) : crc32c_serial(0, slice);
+            u32 crc = crc32c(0, slice);
             multi.segment_crcs[segment_index] = { crc, slice.size };
         }
 
@@ -535,12 +475,14 @@ namespace
             return;
         }
 
-        // 3. Decode blocks: enqueue full schedule; semaphore caps in-flight decompress buffers
+        // 3. Decode blocks: main thread caps in-flight decompress buffers (~2× hardware concurrency).
         const size_t concurrency = ThreadPool::getHardwareConcurrency();
         const size_t max_in_flight = std::max(size_t(2), concurrency * 2);
 
         ConcurrentQueue q("hdecompress.blocks");
-        InflightSlots inflight_slots(max_in_flight);
+        std::mutex schedule_mutex;
+        size_t schedule_pos = 0;
+        size_t decompress_slots_available = max_in_flight;
         std::atomic<u64> counter_bytes { 0 };
         std::atomic<u64> verified_bytes { 0 };
         std::atomic<size_t> blocks_decompressed { 0 };
@@ -572,7 +514,7 @@ namespace
             return bytes;
         };
 
-        auto dispatch_block = [&](size_t block_index, ConstMemory block_memory, bool parallel_crc)
+        auto dispatch_block = [&](size_t block_index, ConstMemory block_memory)
         {
             const auto& uses = block_uses[block_index];
             std::atomic<u64>* extract_progress = extract ? &counter_bytes : nullptr;
@@ -587,13 +529,14 @@ namespace
                 if (multi)
                 {
                     commitMultiSegment(*multi, use.segment_index, use.file_offset, slice,
-                        extract, check_checksums, file.checksum, parallel_crc, extract_progress);
+                        extract, check_checksums, file.checksum, extract_progress);
                 }
                 else
                 {
-                    if (check_checksums && file.checksum)
+                    if (check_checksums && !extract && file.checksum)
                     {
-                        u32 crc = parallel_crc ? crc32c(0, slice) : crc32c_serial(0, slice);
+                        // CRC on main thread during verify; never from pool workers.
+                        u32 crc = crc32c(0, slice);
                         single_segment_crcs[use.file_index] = { crc, slice.size };
 
                         if (single_segment_crcs[use.file_index].size != file.size ||
@@ -633,6 +576,90 @@ namespace
             }
         };
 
+        std::function<void()> try_enqueue_blocks;
+        std::function<void(size_t)> release_decompress_slot;
+
+        release_decompress_slot = [&](size_t block_index)
+        {
+            std::lock_guard<std::mutex> lock(schedule_mutex);
+
+            if (blocks[block_index].method != Compressor::NONE)
+            {
+                ++decompress_slots_available;
+            }
+
+            try_enqueue_blocks();
+        };
+
+        try_enqueue_blocks = [&]()
+        {
+            while (schedule_pos < schedule.size())
+            {
+                size_t block_index = schedule[schedule_pos];
+                const hbs::Block& block = blocks[block_index];
+
+                if (block.method != Compressor::NONE && decompress_slots_available == 0)
+                {
+                    break;
+                }
+
+                if (block.method != Compressor::NONE)
+                {
+                    --decompress_slots_available;
+                }
+
+                ++schedule_pos;
+
+                q.enqueue([&, block_index = block_index]()
+                {
+                    const hbs::Block& block = blocks[block_index];
+                    validateArchiveBlock(archive, block);
+
+                    Memory owned;
+
+                    if (block.method != Compressor::NONE)
+                    {
+                        ConstMemory compressed(archive.address + block.offset, block.compressed);
+                        Buffer buffer(block.uncompressed);
+                        Compressor compressor = getCompressor(Compressor::Method(block.method));
+                        compressor.decompress(buffer, compressed);
+                        owned = buffer.acquire();
+                    }
+
+                    if (extract)
+                    {
+                        ConstMemory payload = owned.address
+                            ? ConstMemory(owned)
+                            : ConstMemory(archive.address + block.offset, block.compressed);
+
+                        dispatch_block(block_index, payload);
+
+                        if (owned.address)
+                        {
+                            Buffer::release(owned);
+                        }
+
+                        release_decompress_slot(block_index);
+                        blocks_extracted.fetch_add(1, std::memory_order_relaxed);
+                    }
+                    else
+                    {
+                        blocks_decompressed.fetch_add(1, std::memory_order_relaxed);
+
+                        {
+                            std::lock_guard<std::mutex> lock(completed_mutex);
+                            completed.push_back({ block_index, std::move(owned) });
+                            completed_count.fetch_add(1, std::memory_order_relaxed);
+                        }
+
+                        // Worker is done; release the decompress slot so more blocks can run.
+                        // Decompressed buffers stay in completed until the main thread drains them.
+                        release_decompress_slot(block_index);
+                    }
+                });
+            }
+        };
+
         auto drain_one = [&]() -> bool
         {
             CompletedBlock item;
@@ -655,7 +682,7 @@ namespace
                 ? ConstMemory(item.owned)
                 : ConstMemory(archive.address + block.offset, block.compressed);
 
-            dispatch_block(item.block_index, payload, true);
+            dispatch_block(item.block_index, payload);
 
             if (item.owned.address)
             {
@@ -667,62 +694,9 @@ namespace
             return true;
         };
 
-        for (size_t block_index : schedule)
         {
-            q.enqueue([&, block_index = block_index]()
-            {
-                const hbs::Block& block = blocks[block_index];
-                validateArchiveBlock(archive, block);
-
-                Memory owned;
-
-                if (block.method != Compressor::NONE)
-                {
-                    inflight_slots.acquire();
-
-                    struct SlotRelease
-                    {
-                        InflightSlots& slots;
-
-                        ~SlotRelease()
-                        {
-                            slots.release();
-                        }
-                    };
-
-                    SlotRelease slot { inflight_slots };
-
-                    ConstMemory compressed(archive.address + block.offset, block.compressed);
-                    Buffer buffer(block.uncompressed);
-                    Compressor compressor = getCompressor(Compressor::Method(block.method));
-                    compressor.decompress(buffer, compressed);
-                    owned = buffer.acquire();
-                }
-
-                if (extract)
-                {
-                    ConstMemory payload = owned.address
-                        ? ConstMemory(owned)
-                        : ConstMemory(archive.address + block.offset, block.compressed);
-
-                    dispatch_block(block_index, payload, false);
-
-                    if (owned.address)
-                    {
-                        Buffer::release(owned);
-                    }
-
-                    blocks_extracted.fetch_add(1, std::memory_order_relaxed);
-                }
-                else
-                {
-                    blocks_decompressed.fetch_add(1, std::memory_order_relaxed);
-
-                    std::lock_guard<std::mutex> lock(completed_mutex);
-                    completed.push_back({ block_index, std::move(owned) });
-                    completed_count.fetch_add(1, std::memory_order_relaxed);
-                }
-            });
+            std::lock_guard<std::mutex> lock(schedule_mutex);
+            try_enqueue_blocks();
         }
 
         show_progress();
@@ -759,6 +733,8 @@ namespace
                     {
                         break;
                     }
+
+                    q.steal();
                 }
 
                 show_progress();
@@ -870,7 +846,7 @@ int main(int argc, char* argv[])
         printLine("Usage: {} [archive] [destination]", program_name);
         printLine("       {} [archive] --list", program_name);
         printLine("       {} [archive] --tree", program_name);
-        printLine("       {} [archive] --verify", program_name);
+        printLine("       {} [archive] [destination] [--verify]", program_name);
         return 0;
     }
 
@@ -989,17 +965,45 @@ int main(int argc, char* argv[])
 
         if (state.decompress || state.verify)
         {
-            state.file_count = 0;
-            state.total_bytes = 0;
-
-            processArchive(archive_file,
-                destination,
-                state.decompress,
-                state.verify || state.decompress,
-                state);
-
-            if (state.decompress)
+            if (state.verify)
             {
+                state.file_count = 0;
+                state.total_bytes = 0;
+
+                bool do_extract = false;
+                bool do_checksum = true;
+                processArchive(archive_file, destination, do_extract, do_checksum, state);
+
+                if (state.verify_errors > 0)
+                {
+                    printLine("Status: FAILED (count: {})", state.verify_errors);
+                }
+                else
+                {
+                    printLine("Status: PASSED");
+
+                    if (state.decompress)
+                    {
+                        printLine("");
+
+                        state.file_count = 0;
+                        state.total_bytes = 0;
+
+                        bool do_extract = true;
+                        bool do_checksum = false;
+                        processArchive(archive_file, destination, do_extract, do_checksum, state);
+                        printLine("");
+                    }
+                }
+            }
+            else
+            {
+                state.file_count = 0;
+                state.total_bytes = 0;
+
+                bool do_extract = true;
+                bool do_checksum = false;
+                processArchive(archive_file, destination, do_extract, do_checksum, state);
                 printLine("");
             }
         }
@@ -1012,13 +1016,7 @@ int main(int argc, char* argv[])
 
     if (state.verify_errors > 0)
     {
-        printLine("Status: FAILED (count: {})", state.verify_errors);
         return 1;
-    }
-
-    if (state.verify && !state.decompress)
-    {
-        printLine("Status: PASSED");
     }
 
     return 0;
