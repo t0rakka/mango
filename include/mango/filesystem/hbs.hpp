@@ -100,7 +100,7 @@ namespace mango::filesystem
             u64 size;
             u32 checksum;
             std::vector<Segment> segments;
-        };    
+        };
 
         void writeBlockArray(LittleEndianStream& output, const std::vector<Block>& blocks);
         void writeFileArray(LittleEndianStream& output, const std::vector<File>& files);
