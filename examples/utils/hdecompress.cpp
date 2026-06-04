@@ -977,6 +977,7 @@ int main(int argc, char* argv[])
                         state.file_count = 0;
                         state.total_bytes = 0;
 
+                        // Archive already verified on main; extract write-only.
                         bool do_extract = true;
                         bool do_checksum = false;
                         processArchive(archive_file, destination, do_extract, do_checksum, state);
@@ -990,7 +991,7 @@ int main(int argc, char* argv[])
                 state.total_bytes = 0;
 
                 bool do_extract = true;
-                bool do_checksum = false;
+                bool do_checksum = true;
                 processArchive(archive_file, destination, do_extract, do_checksum, state);
                 printLine("");
             }
