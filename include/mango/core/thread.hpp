@@ -66,6 +66,8 @@ namespace mango
         static size_t getHardwareConcurrency();
         static ThreadPool& getInstance();
 
+        static bool isWorker();
+
         int size() const;
 
     protected:
