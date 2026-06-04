@@ -76,7 +76,7 @@ static
 void progress(u64 i, u64 N, int width)
 {
     // fraction done
-    double fraction = N ? double(std::min(i, N)) / double(N) : 1.0;
+    double fraction = double(i + 1) / N;
     int filled = int(fraction * width);
 
     // {:=>{}}  = '=' fill, right-aligned, dynamic width (filled)
@@ -669,50 +669,15 @@ void compress(State& state, const std::string& folder, const std::string& archiv
         {
             auto& node = manager.files[i];
             File file(path, node.filename);
-            ConstMemory memory = ConstMemory(file);
-
-            u32 crc = 0;
-            u64 prefix = 0;
-
-            auto digest = [&](ConstMemory slice)
-            {
-                u32 part = crc32c(0, slice);
-                crc = prefix ? crc32c_combine(crc, part, prefix) : part;
-                prefix += slice.size;
-                counterBytes.fetch_add(slice.size, std::memory_order_relaxed);
-            };
-
-            if (node.segments.size() > 1)
-            {
-                // Large split file: one progress step per archive block (file offset).
-                for (const auto& segment : node.segments)
-                {
-                    digest(memory.slice(segment.offset, segment.size));
-                }
-            }
-            else
-            {
-                for (u64 offset = 0; offset < memory.size; offset += large_block_size)
-                {
-                    digest(memory.slice(offset, std::min(large_block_size, memory.size - offset)));
-                }
-            }
-
-            node.checksum = crc;
+            node.checksum = crc32c(0, file);
+            counterBytes += node.size;
         });
     }
 
-    while (counterBytes.load(std::memory_order_relaxed) < totalBytes)
+    while (counterBytes < totalBytes)
     {
-        u64 bytes_before = counterBytes.load(std::memory_order_relaxed);
-
-        progress(bytes_before, totalBytes, 42);
-        q.steal();
-
-        if (counterBytes.load(std::memory_order_relaxed) == bytes_before)
-        {
-            mango::Sleep::ms(1);
-        }
+        progress(counterBytes, totalBytes, 42);
+        mango::Sleep::ms(120);
     }
 
     q.wait();
