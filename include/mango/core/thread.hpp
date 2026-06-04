@@ -24,6 +24,15 @@ namespace mango
     // ThreadPool
     // ----------------------------------------------------------------------------------
 
+    /*
+        Bounded thread pool shared by all ConcurrentQueue instances. Worker count is
+        fixed; each running task occupies one slot until it returns.
+
+        The pool is for parallelizing independent work units, not for building flow
+        graphs where tasks wait on other tasks. An unbounded worker model would suit
+        the latter; this one does not.
+    */
+
     class ThreadPool : private NonCopyable
     {
     private:
@@ -56,6 +65,8 @@ namespace mango
 
         static size_t getHardwareConcurrency();
         static ThreadPool& getInstance();
+
+        static bool isWorker();
 
         int size() const;
 
@@ -92,6 +103,15 @@ namespace mango
         dependency to each other and can be executed in any order. Any number of queues
         can be created from any thread in the program. The ThreadPool is shared between
         queues.
+
+        The ThreadPool is bounded (fixed number of worker threads). Tasks must not
+        block or wait for any reason while they hold a worker slot: no sleeping, no
+        condition-variable waits, no queue.wait(), and no API that waits on the shared
+        pool (for example, parallel crc32/crc32c on large buffers). Do the work and
+        return so the slot is released. Brief mutex/lock scope is fine.
+
+        wait() and steal() are for the submitting thread (typically the main thread),
+        not from inside a pool task.
 
         Usage example:
 

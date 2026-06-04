@@ -184,6 +184,22 @@ namespace mango
         return int(m_threads.size());
     }
 
+    namespace
+    {
+        thread_local int g_thread_pool_depth { 0 };
+
+        struct ThreadPoolDepthGuard
+        {
+            ThreadPoolDepthGuard() { ++g_thread_pool_depth; }
+            ~ThreadPoolDepthGuard() { --g_thread_pool_depth; }
+        };
+    }
+
+    bool ThreadPool::isWorker()
+    {
+        return g_thread_pool_depth > 0;
+    }
+
     void ThreadPool::thread(size_t threadID)
     {
         std::string name = fmt::format("TP#{:03}", threadID + 1);
@@ -259,6 +275,8 @@ namespace mango
     void ThreadPool::process(Task& task)
     {
         Queue* queue = task.queue;
+
+        ThreadPoolDepthGuard guard;
 
         // check if the task is cancelled
         if (!queue->cancelled)

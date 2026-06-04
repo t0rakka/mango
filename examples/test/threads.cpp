@@ -350,6 +350,8 @@ bool test7()
     // This test should take approximately one second
     const size_t count = ThreadPool::getHardwareConcurrency() * 1000;
 
+    u64 time0 = Time::ms();
+
     for (size_t i = 0; i < count; ++i)
     {
         q.enqueue([]
@@ -358,7 +360,209 @@ bool test7()
         });
     }
 
+    q.wait();
+
+    u64 elapsed = Time::ms() - time0;
+
+    printf("  tasks: %zu (concurrency × 1000)\n", count);
+    printf("  elapsed: %d ms (expect ~1000 ms)\n", int(elapsed));
+
     return true;
+}
+
+bool test8()
+{
+    // ThreadPool::isWorker() — main thread vs pool worker identity
+
+    const bool main_is_worker = ThreadPool::isWorker();
+
+    std::atomic<bool> worker_is_worker { false };
+
+    ConcurrentQueue q;
+    q.enqueue([&]
+    {
+        worker_is_worker = ThreadPool::isWorker();
+    });
+    q.wait();
+
+    const bool success = !main_is_worker && worker_is_worker.load();
+
+    printf("  main isWorker:   %s\n", main_is_worker ? "true" : "false");
+    printf("  worker isWorker: %s\n", worker_is_worker.load() ? "true" : "false");
+    printf("  [%s]\n", success ? "Success" : "FAILED");
+
+    return success;
+}
+
+bool test9()
+{
+    // Nested queue.wait() from pool workers — must not deadlock (hdecompress failure mode)
+
+    const size_t concurrency = ThreadPool::getHardwareConcurrency();
+    const size_t tasks = std::max(size_t(4), concurrency * 2);
+    const size_t subtasks = 8;
+
+    ConcurrentQueue q;
+    std::atomic<size_t> counter { 0 };
+
+    u64 time0 = Time::ms();
+
+    for (size_t i = 0; i < tasks; ++i)
+    {
+        q.enqueue([&]
+        {
+            ConcurrentQueue nested;
+
+            for (size_t j = 0; j < subtasks; ++j)
+            {
+                nested.enqueue([&]
+                {
+                    counter.fetch_add(1, std::memory_order_relaxed);
+                });
+            }
+
+            nested.wait();
+        });
+    }
+
+    q.wait();
+
+    u64 elapsed = std::max(u64(1), Time::ms() - time0);
+
+    const size_t expected = tasks * subtasks;
+    const size_t got = counter.load();
+    const bool success = got == expected;
+
+    printf("  workers: %zu × %zu nested wait() calls\n", tasks, subtasks);
+    printf("  counter: %zu / %zu [%s]\n", got, expected, success ? "Success" : "FAILED");
+    printf("  elapsed: %d ms\n", int(elapsed));
+
+    return success;
+}
+
+bool test10()
+{
+    // crc32c throughput: parallel on main vs serial fallback on pool workers (isWorker)
+
+    constexpr size_t MB = 1024 * 1024;
+    constexpr size_t size = 64 * MB;
+
+    Buffer buffer(size);
+    std::memset(buffer.data(), 0xa5, size);
+
+    ConstMemory memory = buffer;
+
+    u64 main_time0 = Time::ms();
+    const u32 crc_main = crc32c(0, memory);
+    u64 main_ms = std::max(u64(1), Time::ms() - main_time0);
+
+    std::atomic<u32> crc_worker { 0 };
+    u64 worker_ms { 0 };
+
+    ConcurrentQueue q;
+    q.enqueue([&]
+    {
+        u64 time0 = Time::ms();
+        crc_worker = crc32c(0, memory);
+        worker_ms = std::max(u64(1), Time::ms() - time0);
+    });
+    q.wait();
+
+    const bool success = crc_main == crc_worker.load();
+    const double mb = size / double(MB);
+
+    printf("  buffer: %.0f MB\n", mb);
+    printf("  main:   crc=%08x  %.0f MB/s  (%d ms)  [parallel]\n",
+        crc_main, mb * 1000.0 / main_ms, int(main_ms));
+    printf("  worker: crc=%08x  %.0f MB/s  (%d ms)  [serial when isWorker]\n",
+        crc_worker.load(), mb * 1000.0 / worker_ms, int(worker_ms));
+    printf("  crc match: %s\n", success ? "yes" : "NO");
+
+    return success;
+}
+
+bool test11()
+{
+    // hdecompress-like: bounded in-flight + crc32c inside pool workers
+
+    const size_t concurrency = ThreadPool::getHardwareConcurrency();
+    const size_t max_in_flight = std::max(size_t(2), concurrency * 2);
+    const size_t block_count = std::max(size_t(64), concurrency * 8);
+    constexpr size_t block_size = 512 * 1024;
+
+    Buffer block(block_size);
+    std::memset(block.data(), 0x5a, block_size);
+    ConstMemory memory = block;
+
+    ConcurrentQueue q;
+    std::atomic<size_t> schedule_pos { 0 };
+    std::atomic<size_t> blocks_in_flight { 0 };
+    std::atomic<size_t> blocks_done { 0 };
+    std::atomic<u32> crc_accum { 0 };
+
+    auto pump = [&]()
+    {
+        for (;;)
+        {
+            size_t in_flight = blocks_in_flight.load(std::memory_order_relaxed);
+            if (in_flight >= max_in_flight)
+            {
+                break;
+            }
+
+            size_t pos = schedule_pos.load(std::memory_order_relaxed);
+            if (pos >= block_count)
+            {
+                break;
+            }
+
+            if (!blocks_in_flight.compare_exchange_weak(in_flight, in_flight + 1,
+                    std::memory_order_acq_rel, std::memory_order_relaxed))
+            {
+                continue;
+            }
+
+            if (!schedule_pos.compare_exchange_weak(pos, pos + 1,
+                    std::memory_order_acq_rel, std::memory_order_relaxed))
+            {
+                blocks_in_flight.fetch_sub(1, std::memory_order_relaxed);
+                continue;
+            }
+
+            q.enqueue([&]
+            {
+                u32 crc = crc32c(0, memory);
+                crc_accum.fetch_xor(crc, std::memory_order_relaxed);
+                blocks_done.fetch_add(1, std::memory_order_relaxed);
+                blocks_in_flight.fetch_sub(1, std::memory_order_relaxed);
+            });
+        }
+    };
+
+    u64 time0 = Time::ms();
+
+    pump();
+
+    while (blocks_done.load(std::memory_order_relaxed) < block_count)
+    {
+        pump();
+        q.steal();
+    }
+
+    q.wait();
+
+    u64 elapsed = std::max(u64(1), Time::ms() - time0);
+    const size_t done = blocks_done.load();
+    const bool success = done == block_count;
+    const double mb = double(block_count * block_size) / (1024.0 * 1024.0);
+
+    printf("  blocks: %zu × %.0f KB, in-flight cap: %zu\n",
+        block_count, block_size / 1024.0, max_in_flight);
+    printf("  done: %zu / %zu [%s]\n", done, block_count, success ? "Success" : "FAILED");
+    printf("  throughput: %.0f MB/s  (%d ms)\n", mb * 1000.0 / elapsed, int(elapsed));
+    printf("  crc xor: %08x\n", crc_accum.load());
+
+    return success;
 }
 
 int main(int argc, char* argv[])
@@ -371,37 +575,58 @@ int main(int argc, char* argv[])
 
     using Function = bool (*)(void);
 
-    Function tests [] =
+    struct Test
     {
-        test0,
-        test1,
-        test2,
-        test3,
-        test4,
-        test5,
-        test6,
-        test7,
+        const char* name;
+        const char* description;
+        Function func;
     };
+
+    Test tests [] =
+    {
+        { "test0",  "enqueue fan-out (front-end throughput)",           test0 },
+        { "test1",  "ConcurrentQueue + SerialQueue interleave",        test1 },
+        { "test2",  "nested ConcurrentQueue enqueue timing",          test2 },
+        { "test3",  "nested SerialQueue enqueue timing",              test3 },
+        { "test4",  "SerialQueue ordering (no overlap)",              test4 },
+        { "test5",  "nested ConcurrentQueue counter stress",           test5 },
+        { "test6",  "TicketQueue ordering",                             test6 },
+        { "test7",  "sleep task soak (~1 s)",                           test7 },
+        { "test8",  "ThreadPool::isWorker() identity",                test8 },
+        { "test9",  "nested wait() from workers (deadlock check)",    test9 },
+        { "test10", "crc32c main (parallel) vs worker (serial)",      test10 },
+        { "test11", "bounded in-flight + worker crc (hdecompress-like)", test11 },
+    };
+
+    int passed = 0;
 
     for (int i = 0; i < count; ++i)
     {
-        int index = 0;
-        for (auto func : tests)
+        for (const auto& test : tests)
         {
             printf("------------------------------------------------------------\n");
-            printf(" test%d\n", index++);
+            printf(" %s\n", test.name);
+            printf(" %s\n", test.description);
             printf("------------------------------------------------------------\n");
             printf("\n");
 
             u64 time0 = Time::ms();
-            bool success = func();
+            bool success = test.func();
             printf("\n <<<< complete: %d ms \n\n", int(Time::ms() - time0));
 
             if (!success)
             {
                 printf("Failed.\n");
-                return 0;
+                return 1;
             }
+
+            ++passed;
         }
     }
+
+    printf("============================================================\n");
+    printf(" All %d test(s) passed.\n", passed);
+    printf("============================================================\n");
+
+    return 0;
 }
