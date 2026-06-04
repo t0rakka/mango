@@ -3,6 +3,7 @@
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <chrono>
+#include <deque>
 #include <mango/core/system.hpp>
 #include <mango/core/thread.hpp>
 #include "../../external/concurrentqueue/concurrentqueue.h"
@@ -195,11 +196,6 @@ namespace mango
         };
     }
 
-    bool ThreadPool::isWorker()
-    {
-        return g_thread_pool_depth > 0;
-    }
-
     void ThreadPool::thread(size_t threadID)
     {
         std::string name = fmt::format("TP#{:03}", threadID + 1);
@@ -326,36 +322,113 @@ namespace mango
     // ConcurrentQueue
     // ------------------------------------------------------------
 
+    struct ConcurrentQueue::NestedQueue
+    {
+        std::deque<std::function<void()>> tasks;
+    };
+
+    void ConcurrentQueue::enqueue_task(std::function<void()>&& func)
+    {
+        if (m_nested)
+        {
+            m_nested->tasks.emplace_back(std::move(func));
+            ++m_queue.task_counter;
+            return;
+        }
+
+        m_pool.enqueue(&m_queue, std::move(func));
+    }
+
+    void ConcurrentQueue::enqueue_bulk(const std::vector<std::function<void()>>& functions)
+    {
+        if (m_nested)
+        {
+            size_t count = functions.size();
+            m_nested->tasks.insert(m_nested->tasks.end(), functions.begin(), functions.end());
+            m_queue.task_counter += count;
+            return;
+        }
+
+        m_pool.enqueue_bulk(&m_queue, functions);
+    }
+
+    void ConcurrentQueue::run_nested_task()
+    {
+        auto func = std::move(m_nested->tasks.front());
+        m_nested->tasks.pop_front();
+
+        ThreadPoolDepthGuard guard;
+
+        if (!m_queue.cancelled)
+        {
+            if (m_queue.name.empty())
+            {
+                func();
+            }
+            else
+            {
+                Trace trace("Task", m_queue.name);
+                func();
+            }
+        }
+
+        --m_queue.task_counter;
+    }
+
     ConcurrentQueue::ConcurrentQueue()
         : m_pool(ThreadPool::getInstance())
         , m_queue(&m_pool, "")
     {
-        // wake up one thread to be available instantly
-        m_pool.m_queue_condition.notify_one();
+        if (g_thread_pool_depth > 0)
+        {
+            m_nested = std::make_unique<NestedQueue>();
+        }
+        else
+        {
+            m_pool.m_queue_condition.notify_one();
+        }
     }
 
     ConcurrentQueue::ConcurrentQueue(const std::string& name)
         : m_pool(ThreadPool::getInstance())
         , m_queue(&m_pool, name)
     {
-        // wake up one thread to be available instantly
-        m_pool.m_queue_condition.notify_one();
+        if (g_thread_pool_depth > 0)
+        {
+            m_nested = std::make_unique<NestedQueue>();
+        }
+        else
+        {
+            m_pool.m_queue_condition.notify_one();
+        }
     }
 
     ConcurrentQueue::ConcurrentQueue(ThreadPool& pool)
         : m_pool(pool)
         , m_queue(&m_pool, "")
     {
-        // wake up one thread to be available instantly
-        m_pool.m_queue_condition.notify_one();
+        if (g_thread_pool_depth > 0)
+        {
+            m_nested = std::make_unique<NestedQueue>();
+        }
+        else
+        {
+            m_pool.m_queue_condition.notify_one();
+        }
     }
 
     ConcurrentQueue::ConcurrentQueue(ThreadPool& pool, const std::string& name)
         : m_pool(pool)
         , m_queue(&m_pool, name)
     {
-        // wake up one thread to be available instantly
-        m_pool.m_queue_condition.notify_one();
+        if (g_thread_pool_depth > 0)
+        {
+            m_nested = std::make_unique<NestedQueue>();
+        }
+        else
+        {
+            m_pool.m_queue_condition.notify_one();
+        }
     }
 
     ConcurrentQueue::~ConcurrentQueue()
@@ -365,16 +438,38 @@ namespace mango
 
     void ConcurrentQueue::steal()
     {
+        if (m_nested)
+        {
+            if (!m_nested->tasks.empty())
+            {
+                run_nested_task();
+            }
+
+            return;
+        }
+
         m_pool.dequeue_and_process();
     }
 
     void ConcurrentQueue::cancel()
     {
-        m_pool.cancel(&m_queue);
+        m_queue.cancelled = true;
+        wait();
+        m_queue.cancelled = false;
     }
 
     void ConcurrentQueue::wait()
     {
+        if (m_nested)
+        {
+            while (m_queue.task_counter > 0)
+            {
+                run_nested_task();
+            }
+
+            return;
+        }
+
         m_pool.wait(&m_queue);
     }
 

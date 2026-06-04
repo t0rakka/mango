@@ -1301,38 +1301,8 @@ namespace
     // ----------------------------------------------------------------------------------------
 
     template <typename Compute, typename Combine>
-    u32 SerialCRC(Compute compute, Combine combine, u32 crc, ConstMemory memory)
-    {
-        constexpr size_t chunk_size = 256 * 1024;
-
-        if (memory.size <= chunk_size)
-        {
-            return compute(crc, memory.address, memory.size);
-        }
-
-        size_t offset = chunk_size;
-
-        crc = compute(crc, memory.address, chunk_size);
-
-        while (offset < memory.size)
-        {
-            size_t bytes = std::min(chunk_size, memory.size - offset);
-            u32 part = compute(0, memory.address + offset, bytes);
-            crc = combine(crc, part, bytes);
-            offset += bytes;
-        }
-
-        return crc;
-    }
-
-    template <typename Compute, typename Combine>
     u32 ParallelCRC(Compute compute, Combine combine, u32 crc, ConstMemory memory)
     {
-        if (ThreadPool::isWorker())
-        {
-            return SerialCRC(compute, combine, crc, memory);
-        }
-
         constexpr size_t KB = 1 << 10;
         constexpr size_t MIN_BLOCK = 256 * KB;
 

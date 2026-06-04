@@ -66,8 +66,6 @@ namespace mango
         static size_t getHardwareConcurrency();
         static ThreadPool& getInstance();
 
-        static bool isWorker();
-
         int size() const;
 
     protected:
@@ -104,14 +102,13 @@ namespace mango
         can be created from any thread in the program. The ThreadPool is shared between
         queues.
 
-        The ThreadPool is bounded (fixed number of worker threads). Tasks must not
-        block or wait for any reason while they hold a worker slot: no sleeping, no
-        condition-variable waits, no queue.wait(), and no API that waits on the shared
-        pool (for example, parallel crc32/crc32c on large buffers). Do the work and
-        return so the slot is released. Brief mutex/lock scope is fine.
+        The ThreadPool is bounded (fixed number of worker threads). Tasks should do
+        work and return so the slot is released. Brief mutex/lock scope is fine.
 
-        wait() and steal() are for the submitting thread (typically the main thread),
-        not from inside a pool task.
+        When a ConcurrentQueue is created inside a pool task (nested context), it is
+        pinned to that worker: enqueue() appends to a local queue and wait() drains it
+        on the current thread without using the shared pool. This avoids pool deadlock
+        and thread explosion from nested parallel fan-out.
 
         Usage example:
 
@@ -135,6 +132,12 @@ namespace mango
         ThreadPool& m_pool;
         ThreadPool::Queue m_queue;
 
+        struct NestedQueue;
+        std::unique_ptr<NestedQueue> m_nested;
+
+        void enqueue_task(std::function<void()>&& func);
+        void run_nested_task();
+
     public:
         ConcurrentQueue();
         ConcurrentQueue(const std::string& name);
@@ -146,13 +149,10 @@ namespace mango
         void enqueue(F&& f, Args&&... args)
         {
             auto func = std::bind_front(std::forward<F>(f), std::forward<Args>(args)...);
-            m_pool.enqueue(&m_queue, std::move(func));
+            enqueue_task(std::move(func));
         }
 
-        void enqueue_bulk(const std::vector<std::function<void()>>& functions)
-        {
-            m_pool.enqueue_bulk(&m_queue, functions);
-        }
+        void enqueue_bulk(const std::vector<std::function<void()>>& functions);
 
         bool isCancelled() const
         {

@@ -372,24 +372,30 @@ bool test7()
 
 bool test8()
 {
-    // ThreadPool::isWorker() — main thread vs pool worker identity
+    // Nested ConcurrentQueue — pinned local drain on the pool worker
 
-    const bool main_is_worker = ThreadPool::isWorker();
-
-    std::atomic<bool> worker_is_worker { false };
+    std::atomic<int> counter { 0 };
 
     ConcurrentQueue q;
     q.enqueue([&]
     {
-        worker_is_worker = ThreadPool::isWorker();
+        ConcurrentQueue nested;
+
+        for (int i = 0; i < 8; ++i)
+        {
+            nested.enqueue([&]
+            {
+                counter.fetch_add(1, std::memory_order_relaxed);
+            });
+        }
+
+        nested.wait();
     });
     q.wait();
 
-    const bool success = !main_is_worker && worker_is_worker.load();
+    const bool success = counter.load() == 8;
 
-    printf("  main isWorker:   %s\n", main_is_worker ? "true" : "false");
-    printf("  worker isWorker: %s\n", worker_is_worker.load() ? "true" : "false");
-    printf("  [%s]\n", success ? "Success" : "FAILED");
+    printf("  nested tasks completed: %d / 8 [%s]\n", counter.load(), success ? "Success" : "FAILED");
 
     return success;
 }
@@ -442,7 +448,7 @@ bool test9()
 
 bool test10()
 {
-    // crc32c throughput: parallel on main vs serial fallback on pool workers (isWorker)
+    // crc32c throughput: parallel on main vs nested queue drain on pool workers
 
     constexpr size_t MB = 1024 * 1024;
     constexpr size_t size = 64 * MB;
@@ -474,7 +480,7 @@ bool test10()
     printf("  buffer: %.0f MB\n", mb);
     printf("  main:   crc=%08x  %.0f MB/s  (%d ms)  [parallel]\n",
         crc_main, mb * 1000.0 / main_ms, int(main_ms));
-    printf("  worker: crc=%08x  %.0f MB/s  (%d ms)  [serial when isWorker]\n",
+    printf("  worker: crc=%08x  %.0f MB/s  (%d ms)  [nested queue drain]\n",
         crc_worker.load(), mb * 1000.0 / worker_ms, int(worker_ms));
     printf("  crc match: %s\n", success ? "yes" : "NO");
 
@@ -592,9 +598,9 @@ int main(int argc, char* argv[])
         { "test5",  "nested ConcurrentQueue counter stress",           test5 },
         { "test6",  "TicketQueue ordering",                             test6 },
         { "test7",  "sleep task soak (~1 s)",                           test7 },
-        { "test8",  "ThreadPool::isWorker() identity",                test8 },
+        { "test8",  "nested ConcurrentQueue local drain",             test8 },
         { "test9",  "nested wait() from workers (deadlock check)",    test9 },
-        { "test10", "crc32c main (parallel) vs worker (serial)",      test10 },
+        { "test10", "crc32c main (parallel) vs worker (nested CQ)", test10 },
         { "test11", "bounded in-flight + worker crc (hdecompress-like)", test11 },
     };
 
