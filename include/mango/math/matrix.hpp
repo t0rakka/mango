@@ -270,13 +270,13 @@ namespace mango::math
 
         const VectorType& operator [] (size_t y) const
         {
-            assert(y < Height);
+            assert(y < 3);
             return m[y];
         }
 
         VectorType& operator [] (size_t y)
         {
-            assert(y < Height);
+            assert(y < 3);
             return m[y];
         }
 
