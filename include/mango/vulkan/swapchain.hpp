@@ -31,7 +31,9 @@ namespace mango::vulkan
         std::vector<VkSemaphore> m_imageAvailableSemaphores;
         std::vector<VkSemaphore> m_renderFinishedSemaphores;
         std::vector<VkFence> m_fences;
+        std::vector<VkFence> m_imagesInFlight;
         u32 m_currentFrame = 0;
+        u32 m_acquiredImageIndex = 0;
 
         void cleanup();
         void configure();

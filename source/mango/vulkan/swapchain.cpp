@@ -47,6 +47,11 @@ namespace mango::vulkan
             vkDestroySemaphore(m_device, semaphore, nullptr);
         }
 
+        m_fences.clear();
+        m_imageAvailableSemaphores.clear();
+        m_renderFinishedSemaphores.clear();
+        m_imagesInFlight.clear();
+
         for (auto imageView : m_imageViews)
         {
             vkDestroyImageView(m_device, imageView, nullptr);
@@ -181,11 +186,14 @@ namespace mango::vulkan
 
     void Swapchain::createSyncObjects()
     {
-        m_imageAvailableSemaphores.resize(m_maxImagesInFlight);
-        m_renderFinishedSemaphores.resize(m_maxImagesInFlight);
-        m_fences.resize(m_maxImagesInFlight);
+        const u32 imageCount = u32(m_images.size());
 
-        VkSemaphoreCreateInfo semaphoreInfo = 
+        m_imageAvailableSemaphores.resize(m_maxImagesInFlight);
+        m_fences.resize(m_maxImagesInFlight);
+        m_renderFinishedSemaphores.resize(imageCount);
+        m_imagesInFlight.assign(imageCount, VK_NULL_HANDLE);
+
+        VkSemaphoreCreateInfo semaphoreInfo =
         {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
         };
@@ -196,7 +204,7 @@ namespace mango::vulkan
             .flags = VK_FENCE_CREATE_SIGNALED_BIT
         };
 
-        for (u32 i = 0; i < m_maxImagesInFlight; i++)
+        for (u32 i = 0; i < m_maxImagesInFlight; ++i)
         {
             VkResult result;
 
@@ -207,17 +215,20 @@ namespace mango::vulkan
                 return;
             }
 
-            result = vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i]);
-            if (result != VK_SUCCESS)
-            {
-                printLine(Print::Error, "vkCreateSemaphore: {}", getString(result));
-                return;
-            }
-
             result = vkCreateFence(m_device, &fenceInfo, nullptr, &m_fences[i]);
             if (result != VK_SUCCESS)
             {
                 printLine(Print::Error, "vkCreateFence: {}", getString(result));
+                return;
+            }
+        }
+
+        for (u32 i = 0; i < imageCount; ++i)
+        {
+            VkResult result = vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i]);
+            if (result != VK_SUCCESS)
+            {
+                printLine(Print::Error, "vkCreateSemaphore: {}", getString(result));
                 return;
             }
         }
@@ -255,7 +266,7 @@ namespace mango::vulkan
 
     VkSemaphore Swapchain::getRenderFinishedSemaphore() const
     {
-        return m_renderFinishedSemaphores[m_currentFrame];
+        return m_renderFinishedSemaphores[m_acquiredImageIndex];
     }
 
     VkFence Swapchain::getFence() const
@@ -290,49 +301,48 @@ namespace mango::vulkan
 
     VkResult Swapchain::acquireNextImage(u32& imageIndex)
     {
-        //*
         VkFence fence = m_fences[m_currentFrame];
 
-        VkResult waitResult = vkWaitForFences(m_device, 1, &fence, VK_TRUE, 250000000); // 0.25 seconds timeout
-        if (waitResult == VK_TIMEOUT)
-        {
-            printLine(Print::Warning, "Fence wait timeout, resetting frame state");
-            vkResetFences(m_device, 1, &fence);
-        }
-        else if (waitResult != VK_SUCCESS)
+        VkResult waitResult = vkWaitForFences(m_device, 1, &fence, VK_TRUE, UINT64_MAX);
+        if (waitResult != VK_SUCCESS)
         {
             printLine(Print::Error, "vkWaitForFences failed: {}", getString(waitResult));
             return waitResult;
         }
-        //*/
 
         VkSemaphore imageAvailableSemaphore = m_imageAvailableSemaphores[m_currentFrame];
 
         VkResult result = vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
-        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
         {
-            //update();
-        }
-        else if (result == VK_SUBOPTIMAL_KHR)
-        {
-            //update();
-        }
-        else if (result == VK_SUCCESS)
-        {
-        }
-        else
-        {
-            printLine(Print::Warning, "vkAcquireNextImageKHR failed: {}", getString(result));
+            return result;
         }
 
-        //vkResetFences(m_device, 1, &fence);
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Warning, "vkAcquireNextImageKHR failed: {}", getString(result));
+            return result;
+        }
+
+        if (m_imagesInFlight[imageIndex] != VK_NULL_HANDLE)
+        {
+            waitResult = vkWaitForFences(m_device, 1, &m_imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+            if (waitResult != VK_SUCCESS)
+            {
+                printLine(Print::Error, "vkWaitForFences failed: {}", getString(waitResult));
+                return waitResult;
+            }
+        }
+
+        m_imagesInFlight[imageIndex] = fence;
+        m_acquiredImageIndex = imageIndex;
 
         return result;
     }
 
     VkResult Swapchain::present(u32 imageIndex)
     {
-        VkSemaphore renderFinishedSemaphore = m_renderFinishedSemaphores[m_currentFrame];
+        VkSemaphore renderFinishedSemaphore = m_renderFinishedSemaphores[imageIndex];
 
         VkPresentInfoKHR presentInfo =
         {
