@@ -264,9 +264,9 @@ namespace mango::vulkan
         return m_imageAvailableSemaphores[m_currentFrame];
     }
 
-    VkSemaphore Swapchain::getRenderFinishedSemaphore() const
+    VkSemaphore Swapchain::getRenderFinishedSemaphore(u32 imageIndex) const
     {
-        return m_renderFinishedSemaphores[m_acquiredImageIndex];
+        return m_renderFinishedSemaphores[imageIndex];
     }
 
     VkFence Swapchain::getFence() const
@@ -313,12 +313,12 @@ namespace mango::vulkan
         VkSemaphore imageAvailableSemaphore = m_imageAvailableSemaphores[m_currentFrame];
 
         VkResult result = vkAcquireNextImageKHR(m_device, m_swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
         {
             return result;
         }
 
-        if (result != VK_SUCCESS)
+        if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
         {
             printLine(Print::Warning, "vkAcquireNextImageKHR failed: {}", getString(result));
             return result;
@@ -335,7 +335,6 @@ namespace mango::vulkan
         }
 
         m_imagesInFlight[imageIndex] = fence;
-        m_acquiredImageIndex = imageIndex;
 
         return result;
     }

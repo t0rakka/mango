@@ -33,7 +33,6 @@ namespace mango::vulkan
         std::vector<VkFence> m_fences;
         std::vector<VkFence> m_imagesInFlight;
         u32 m_currentFrame = 0;
-        u32 m_acquiredImageIndex = 0;
 
         void cleanup();
         void configure();
@@ -50,7 +49,7 @@ namespace mango::vulkan
         VkExtent2D getExtent() const;
         VkImageView getImageView(u32 imageIndex) const;
         VkSemaphore getImageAvailableSemaphore() const;
-        VkSemaphore getRenderFinishedSemaphore() const;
+        VkSemaphore getRenderFinishedSemaphore(u32 imageIndex) const;
         VkFence getFence() const;
 
         bool recreateSwapchain();

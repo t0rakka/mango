@@ -421,7 +421,7 @@ public:
         }
 
         VkSemaphore imageAvailableSemaphore = m_swapchain->getImageAvailableSemaphore();
-        VkSemaphore renderFinishedSemaphore = m_swapchain->getRenderFinishedSemaphore();
+        VkSemaphore renderFinishedSemaphore = m_swapchain->getRenderFinishedSemaphore(imageIndex);
         VkFence fence = m_swapchain->getFence();
 
         VkCommandBuffer commandBuffer = m_commandBuffers[imageIndex];
