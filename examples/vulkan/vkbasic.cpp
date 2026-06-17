@@ -404,49 +404,14 @@ public:
 
     void render()
     {
-        VkExtent2D extent = m_swapchain->getExtent();
-        if (extent.width <= 1 || extent.height <= 1)
+        auto frame = m_swapchain->beginFrame();
+        if (!frame)
         {
             return;
         }
 
-        uint32_t imageIndex = 0;
-        VkResult result = m_swapchain->acquireNextImage(imageIndex);
-        if (result == VK_SUBOPTIMAL_KHR || result == VK_SUCCESS)
-        {
-        }
-        else
-        {
-            return;
-        }
-
-        VkSemaphore imageAvailableSemaphore = m_swapchain->getImageAvailableSemaphore();
-        VkSemaphore renderFinishedSemaphore = m_swapchain->getRenderFinishedSemaphore(imageIndex);
-        VkFence fence = m_swapchain->getFence();
-
-        VkCommandBuffer commandBuffer = m_commandBuffers[imageIndex];
-
-        VkPipelineStageFlags waitStages [] =
-        {
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-        };
-
-        VkSubmitInfo submitInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &imageAvailableSemaphore,
-            .pWaitDstStageMask = waitStages,
-            .commandBufferCount = 1,
-            .pCommandBuffers = &commandBuffer,
-            .signalSemaphoreCount = 1,
-            .pSignalSemaphores = &renderFinishedSemaphore,
-        };
-
-        vkResetFences(m_device, 1, &fence);
-        vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, fence);
-
-        m_swapchain->present(imageIndex);
+        VkCommandBuffer commandBuffer = m_commandBuffers[frame.imageIndex()];
+        frame.submitAndPresent(m_graphicsQueue, commandBuffer);
     }
 
     void onResize(int width, int height) override

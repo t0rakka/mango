@@ -259,19 +259,68 @@ namespace mango::vulkan
         return m_imageViews[imageIndex];
     }
 
-    VkSemaphore Swapchain::getImageAvailableSemaphore() const
+    Swapchain::Frame::Frame(Swapchain* swapchain, u32 imageIndex, VkResult acquireResult)
+        : m_swapchain(swapchain)
+        , m_imageIndex(imageIndex)
+        , m_acquireResult(acquireResult)
     {
-        return m_imageAvailableSemaphores[m_currentFrame];
     }
 
-    VkSemaphore Swapchain::getRenderFinishedSemaphore(u32 imageIndex) const
+    VkResult Swapchain::Frame::submitAndPresent(VkQueue graphicsQueue, VkCommandBuffer commandBuffer)
     {
-        return m_renderFinishedSemaphores[imageIndex];
+        if (!m_swapchain)
+        {
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        VkSemaphore imageAvailableSemaphore = m_swapchain->m_imageAvailableSemaphores[m_swapchain->m_currentFrame];
+        VkSemaphore renderFinishedSemaphore = m_swapchain->m_renderFinishedSemaphores[m_imageIndex];
+        VkFence fence = m_swapchain->m_fences[m_swapchain->m_currentFrame];
+
+        VkPipelineStageFlags waitStages [] =
+        {
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+        };
+
+        VkSubmitInfo submitInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &imageAvailableSemaphore,
+            .pWaitDstStageMask = waitStages,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &commandBuffer,
+            .signalSemaphoreCount = 1,
+            .pSignalSemaphores = &renderFinishedSemaphore,
+        };
+
+        vkResetFences(m_swapchain->m_device, 1, &fence);
+
+        VkResult result = vkQueueSubmit(graphicsQueue, 1, &submitInfo, fence);
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkQueueSubmit failed: {}", getString(result));
+            return result;
+        }
+
+        return m_swapchain->present(m_imageIndex);
     }
 
-    VkFence Swapchain::getFence() const
+    Swapchain::Frame Swapchain::beginFrame()
     {
-        return m_fences[m_currentFrame];
+        if (m_extent.width <= 1 || m_extent.height <= 1)
+        {
+            return Frame();
+        }
+
+        u32 imageIndex = 0;
+        VkResult result = acquireNextImage(imageIndex);
+        if (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR)
+        {
+            return Frame(this, imageIndex, result);
+        }
+
+        return Frame();
     }
 
     bool Swapchain::recreateSwapchain()
