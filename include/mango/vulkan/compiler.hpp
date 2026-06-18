@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -16,8 +16,19 @@ namespace mango::vulkan
     enum class ShaderStage
     {
         Vertex,
+        TessellationControl,
+        TessellationEvaluation,
+        Geometry,
         Fragment,
         Compute,
+        Task,
+        Mesh,
+        RayGen,
+        AnyHit,
+        ClosestHit,
+        Miss,
+        Intersection,
+        Callable,
     };
 
     enum class ShaderVariableKind
@@ -31,7 +42,8 @@ namespace mango::vulkan
     {
         ShaderVariableKind kind;
         std::string name;
-        std::string type;
+        s32 glType = 0;
+        std::string typeName;
         s32 set = -1;
         s32 binding = -1;
         s32 location = -1;
@@ -39,6 +51,7 @@ namespace mango::vulkan
 
     struct Shader
     {
+        VkShaderStageFlagBits stage = {};
         std::vector<u32> spirv;
         std::string log;
         std::vector<ShaderVariable> variables;
@@ -65,5 +78,15 @@ namespace mango::vulkan
 
         static VkShaderModule createShaderModule(VkDevice device, const Shader& shader);
     };
+
+    VkShaderStageFlagBits toVkShaderStage(ShaderStage stage);
+
+    std::string_view getString(ShaderStage stage);
+    std::string_view getString(VkShaderStageFlagBits stage);
+
+    std::string_view getString(ShaderVariableKind kind);
+    std::string_view getGlDefineTypeString(s32 glDefineType);
+
+    std::string_view getTypeString(const ShaderVariable& variable);
 
 } // namespace mango::vulkan

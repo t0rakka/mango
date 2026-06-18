@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cstdio>
 #include <vector>
@@ -268,9 +268,7 @@ protected:
         Shader vertexShader = compiler.compile(g_vertexShader, ShaderStage::Vertex);
         Shader fragmentShader = compiler.compile(g_fragmentShader, ShaderStage::Fragment);
 
-        printLine(Print::Info, "[vertex shader]");
         vertexShader.print();
-        printLine(Print::Info, "[fragment shader]");
         fragmentShader.print();
 
         if (!vertexShader.valid() || !fragmentShader.valid())
