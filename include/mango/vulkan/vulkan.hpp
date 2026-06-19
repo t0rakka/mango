@@ -9,6 +9,7 @@
 #include <mango/core/configure.hpp>
 #include <mango/window/window.hpp>
 #include <mango/vulkan/swapchain.hpp>
+#include <mango/vulkan/compiler.hpp>
 
 namespace mango::vulkan
 {
@@ -81,9 +82,9 @@ namespace mango::vulkan
     VkPhysicalDevice selectPhysicalDevice(VkInstance instance);
     std::vector<VkQueueFamilyProperties> getPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice);
 
-    const char* getString(VkResult result);
-    const char* getString(VkPhysicalDeviceType deviceType);
-    const char* getString(VkFormat format);
-    const char* getString(VkColorSpaceKHR colorSpace);
+    std::string_view getString(VkResult result);
+    std::string_view getString(VkPhysicalDeviceType deviceType);
+    std::string_view getString(VkFormat format);
+    std::string_view getString(VkColorSpaceKHR colorSpace);
 
 } // namespace mango::vulkan

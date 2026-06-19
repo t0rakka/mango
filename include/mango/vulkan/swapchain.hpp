@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -12,6 +12,39 @@ namespace mango::vulkan
 
     class Swapchain
     {
+    public:
+        class Frame
+        {
+        public:
+            Frame() = default;
+
+            u32 imageIndex() const
+            {
+                return m_imageIndex;
+            }
+
+            VkResult acquireResult() const
+            {
+                return m_acquireResult;
+            }
+
+            explicit operator bool() const
+            {
+                return m_swapchain != nullptr;
+            }
+
+            VkResult submitAndPresent(VkQueue graphicsQueue, VkCommandBuffer commandBuffer);
+
+        private:
+            friend class Swapchain;
+
+            Swapchain* m_swapchain = nullptr;
+            u32 m_imageIndex = 0;
+            VkResult m_acquireResult = VK_NOT_READY;
+
+            Frame(Swapchain* swapchain, u32 imageIndex, VkResult acquireResult);
+        };
+
     private:
         VkDevice m_device;
         VkPhysicalDevice m_physicalDevice;
@@ -31,12 +64,15 @@ namespace mango::vulkan
         std::vector<VkSemaphore> m_imageAvailableSemaphores;
         std::vector<VkSemaphore> m_renderFinishedSemaphores;
         std::vector<VkFence> m_fences;
+        std::vector<VkFence> m_imagesInFlight;
         u32 m_currentFrame = 0;
 
         void cleanup();
         void configure();
         void createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities);
         void createSyncObjects();
+        VkResult acquireNextImage(u32& imageIndex);
+        VkResult present(u32 imageIndex);
 
     public:
         Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue presentQueue);
@@ -47,13 +83,9 @@ namespace mango::vulkan
         VkColorSpaceKHR getColorSpace() const;
         VkExtent2D getExtent() const;
         VkImageView getImageView(u32 imageIndex) const;
-        VkSemaphore getImageAvailableSemaphore() const;
-        VkSemaphore getRenderFinishedSemaphore() const;
-        VkFence getFence() const;
 
         bool recreateSwapchain();
-        VkResult acquireNextImage(u32& imageIndex);
-        VkResult present(u32 imageIndex);
+        Frame beginFrame();
     };
 
 } // namespace mango::vulkan
