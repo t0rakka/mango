@@ -56,11 +56,7 @@ namespace mango::vulkan
         std::string log;
         std::vector<ShaderVariable> variables;
 
-        bool valid() const
-        {
-            return !spirv.empty();
-        }
-
+        bool valid() const;
         void print() const;
     };
 
@@ -74,8 +70,8 @@ namespace mango::vulkan
         Compiler& operator=(const Compiler&) = delete;
 
         Shader compile(std::string_view source, ShaderStage stage);
-        static Shader loadSPIRV(const u32* data, size_t wordCount);
 
+        static VkShaderModule createShaderModule(VkDevice device, const std::vector<u32>& spirv);
         static VkShaderModule createShaderModule(VkDevice device, const Shader& shader);
     };
 

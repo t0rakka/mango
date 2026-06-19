@@ -526,6 +526,11 @@ namespace mango::vulkan
     // Shader
     // ------------------------------------------------------------------------------
 
+    bool Shader::valid() const
+    {
+        return !spirv.empty();
+    }
+
     void Shader::print() const
     {
         printLine(Print::Info, "[{} shader]", getString(stage));
@@ -639,23 +644,9 @@ namespace mango::vulkan
         return shader;
     }
 
-    Shader Compiler::loadSPIRV(const u32* data, size_t wordCount)
+    VkShaderModule Compiler::createShaderModule(VkDevice device, const std::vector<u32>& spirv)
     {
-        Shader shader;
-
-        if (!data || wordCount == 0)
-        {
-            shader.log = "Empty SPIR-V input.";
-            return shader;
-        }
-
-        shader.spirv.assign(data, data + wordCount);
-        return shader;
-    }
-
-    VkShaderModule Compiler::createShaderModule(VkDevice device, const Shader& shader)
-    {
-        if (!shader.valid())
+        if (spirv.empty())
         {
             return VK_NULL_HANDLE;
         }
@@ -663,8 +654,8 @@ namespace mango::vulkan
         VkShaderModuleCreateInfo createInfo =
         {
             .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-            .codeSize = shader.spirv.size() * sizeof(u32),
-            .pCode = shader.spirv.data(),
+            .codeSize = spirv.size() * sizeof(u32),
+            .pCode = spirv.data(),
         };
 
         VkShaderModule module = VK_NULL_HANDLE;
@@ -676,6 +667,16 @@ namespace mango::vulkan
         }
 
         return module;
+    }
+
+    VkShaderModule Compiler::createShaderModule(VkDevice device, const Shader& shader)
+    {
+        if (!shader.valid())
+        {
+            return VK_NULL_HANDLE;
+        }
+
+        return createShaderModule(device, shader.spirv);
     }
 
 } // namespace mango::vulkan

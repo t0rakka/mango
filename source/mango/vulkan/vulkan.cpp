@@ -699,9 +699,9 @@ namespace mango::vulkan
     #define XCASE(x) \
         case x: name = #x; break
 
-    const char* getString(VkResult result)
+    std::string_view getString(VkResult result)
     {
-        const char* name = "UNDEFINED";
+        std::string_view name = "UNDEFINED";
         switch (result)
         {
             XCASE(VK_SUCCESS);
@@ -759,9 +759,9 @@ namespace mango::vulkan
         return name;
     }
 
-    const char* getString(VkPhysicalDeviceType deviceType)
+    std::string_view getString(VkPhysicalDeviceType deviceType)
     {
-        const char* name = "UNDEFINED";
+        std::string_view name = "UNDEFINED";
         switch (deviceType)
         {
             XCASE(VK_PHYSICAL_DEVICE_TYPE_OTHER);
@@ -777,9 +777,9 @@ namespace mango::vulkan
         return name;
     }
 
-    const char* getString(VkFormat format)
+    std::string_view getString(VkFormat format)
     {
-        const char* name = "UNDEFINED";
+        std::string_view name = "UNDEFINED";
         switch (format)
         {
             // Provided by VK_VERSION_1_0
@@ -1146,9 +1146,9 @@ namespace mango::vulkan
         return name;
     }
 
-    const char* getString(VkColorSpaceKHR colorSpace)
+    std::string_view getString(VkColorSpaceKHR colorSpace)
     {
-        const char* name = "UNDEFINED";
+        std::string_view name = "UNDEFINED";
         switch (colorSpace)
         {
             XCASE(VK_COLOR_SPACE_SRGB_NONLINEAR_KHR); // deprecated
