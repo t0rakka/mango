@@ -18,7 +18,7 @@ namespace mango
 
     class OpenGLFramebuffer : public OpenGLContext
     {
-    protected:
+    private:
         int m_width;
         int m_height;
         image::Format m_format;
