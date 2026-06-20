@@ -660,11 +660,33 @@ namespace mango::vulkan
                 printLine(Print::Info, "    timestampValidBits: {}", properties.timestampValidBits);
                 printLine(Print::Info, "    minImageTransferGranularity: {} x {} x {}", granularity.width, granularity.height, granularity.depth);
             }
+
+            std::vector<VkExtensionProperties> extensionProperties = enumerateDeviceExtensionProperties(physicalDevice);
+
+            printLine(Print::Info, "");
+            printLine(Print::Info, "  extensionProperties:");
+
+            for (const VkExtensionProperties& property : extensionProperties)
+            {
+                printLine(Print::Info, "    {}", property.extensionName);
+            }
         }
 
         printLine(Print::Info, "");
 
         return physicalDevices;
+    }
+
+    void printEnabledExtensions(std::string_view title, const std::vector<const char*>& extensions)
+    {
+        printLine(Print::Info, "{}:", title);
+
+        for (const char* extension : extensions)
+        {
+            printLine(Print::Info, "  + {}", extension);
+        }
+
+        printLine(Print::Info, "");
     }
 
     // ------------------------------------------------------------------------------
@@ -769,6 +791,49 @@ namespace mango::vulkan
         vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, queueFamilyProperties.data());
 
         return queueFamilyProperties;
+    }
+
+    // ------------------------------------------------------------------------------
+    // enumerateDeviceExtensionProperties()
+    // ------------------------------------------------------------------------------
+
+    std::vector<VkExtensionProperties> enumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice)
+    {
+        uint32_t count = 0;
+
+        VkResult result = vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &count, nullptr);
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkEnumerateDeviceExtensionProperties: {}", getString(result));
+            return {};
+        }
+
+        std::vector<VkExtensionProperties> extensionProperties(count);
+
+        result = vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &count, extensionProperties.data());
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkEnumerateDeviceExtensionProperties: {}", getString(result));
+            return {};
+        }
+
+        return extensionProperties;
+    }
+
+    std::vector<VkSurfaceFormatKHR> enumerateSurfaceFormats(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
+    {
+        uint32_t formatCount;
+        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);
+
+        if (formatCount == 0)
+        {
+            return {};
+        }
+
+        std::vector<VkSurfaceFormatKHR> formats(formatCount);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, formats.data());
+
+        return formats;
     }
 
     // ------------------------------------------------------------------------------

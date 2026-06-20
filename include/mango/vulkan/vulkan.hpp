@@ -83,6 +83,8 @@ namespace mango::vulkan
     std::vector<VkPhysicalDevice> enumeratePhysicalDevices(VkInstance instance);
     VkPhysicalDevice selectPhysicalDevice(VkInstance instance);
     std::vector<VkQueueFamilyProperties> getPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice);
+    std::vector<VkExtensionProperties> enumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice);
+    std::vector<VkSurfaceFormatKHR> enumerateSurfaceFormats(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
 
     std::string_view getString(VkResult result);
     std::string_view getString(VkPhysicalDeviceType deviceType);

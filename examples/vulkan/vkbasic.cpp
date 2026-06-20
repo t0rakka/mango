@@ -268,6 +268,7 @@ protected:
         Shader vertexShader = compiler.compile(g_vertexShader, ShaderStage::Vertex);
         Shader fragmentShader = compiler.compile(g_fragmentShader, ShaderStage::Fragment);
 
+        printLine(Print::Info, "");
         vertexShader.print();
         fragmentShader.print();
 
@@ -801,6 +802,7 @@ public:
         vkAllocateCommandBuffers(m_device, &commandBufferAllocateInfo, m_commandBuffers.data());
 
         VkExtent2D extent = m_swapchain->getExtent();
+
         createDepthResources(extent);
         createRenderPass();
         createShaders();

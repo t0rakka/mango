@@ -81,18 +81,7 @@ namespace mango::vulkan
         m_extent = caps.currentExtent;
         */
 
-        uint32_t formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, nullptr);
-
-        if (formatCount == 0)
-        {
-            return;
-        }
-
-        printLine(Print::Info, "PhysicalDeviceSurfaceFormats:");
-
-        std::vector<VkSurfaceFormatKHR> formats(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, formats.data());
+        std::vector<VkSurfaceFormatKHR> formats = enumerateSurfaceFormats(m_physicalDevice, m_surface);
 
         size_t selectedFormatIndex = 0;
         for (size_t i = 0; i < formats.size(); ++i)
@@ -103,6 +92,9 @@ namespace mango::vulkan
                 break;
             }
         }
+
+        printLine(Print::Info, "");
+        printLine(Print::Info, "PhysicalDeviceSurfaceFormats:");
 
         for (size_t i = 0; i < formats.size(); ++i)
         {
