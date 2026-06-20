@@ -162,8 +162,6 @@ namespace mango::vulkan
     {
         VkSurfaceKHR surface = VK_NULL_HANDLE;
 
-        // TODO
-        /*
         VkWaylandSurfaceCreateInfoKHR surfaceCreateInfo =
         {
             .sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
@@ -171,12 +169,11 @@ namespace mango::vulkan
             .surface = handle.surface,
         };
 
-        VkResult result = vkCreateWaylandSurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
+        VkResult result = vkCreateWaylandSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
         if (result != VK_SUCCESS)
         {
             printLine(Print::Error, "vkCreateWaylandSurfaceKHR : {}", getString(result));
         }
-        */
 
         return surface;
     }

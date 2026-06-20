@@ -11,37 +11,45 @@
 #include <wayland-client.h>
 #include <xkbcommon/xkbcommon.h>
 
+struct xdg_wm_base;
+struct xdg_surface;
+struct xdg_toplevel;
+
 namespace mango
 {
+
+    class Window;
 
     struct WindowContext : WindowHandle
     {
         WindowHandle handle;
+        Window* owner = nullptr;
 
         // Wayland core objects
-        struct wl_registry* registry;
-        struct wl_compositor* compositor;
-        struct wl_shell* shell;
-        struct wl_shell_surface* shell_surface;
+        struct wl_registry* registry = nullptr;
+        struct wl_compositor* compositor = nullptr;
+        struct xdg_wm_base* xdg_wm_base = nullptr;
+        struct xdg_surface* xdg_surface = nullptr;
+        struct xdg_toplevel* xdg_toplevel = nullptr;
 
         // Input handling
-        struct wl_seat* seat;
-        struct wl_pointer* pointer;
-        struct wl_keyboard* keyboard;
-        struct wl_output* output;
+        struct wl_seat* seat = nullptr;
+        struct wl_pointer* pointer = nullptr;
+        struct wl_keyboard* keyboard = nullptr;
 
         // XKB handling
-        struct xkb_context* xkb_context;
-        struct xkb_keymap* xkb_keymap;
-        struct xkb_state* xkb_state;
+        struct xkb_context* xkb_context = nullptr;
+        struct xkb_keymap* xkb_keymap = nullptr;
+        struct xkb_state* xkb_state = nullptr;
 
         // Window state
-        bool is_looping;
-        bool busy;
-        bool configured;
-        int32_t size[2];
-        uint32_t mouse_time[6];
-        bool fullscreen { false };
+        bool is_looping = false;
+        bool busy = false;
+        bool configured = false;
+        int32_t size[2] = { 0, 0 };
+        int32_t cursor[2] = { 0, 0 };
+        uint32_t mouse_time[6] = {};
+        bool fullscreen = false;
 
         WindowContext(int width, int height, u32 flags);
         ~WindowContext();
@@ -51,6 +59,7 @@ namespace mango
 
         bool createWaylandWindow(int width, int height, const char* title);
         void processEvents();
+        void dispatchPendingResize();
     };
 
 } // namespace mango

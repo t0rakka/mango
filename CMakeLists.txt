@@ -310,6 +310,28 @@ if (BUILD_OPENGL OR BUILD_VULKAN)
 
         select_window_system_sources(${WINDOW_SYSTEM})
 
+        if (WINDOW_SYSTEM STREQUAL "wayland")
+            find_package(PkgConfig REQUIRED)
+            pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
+            pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
+            find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
+
+            set(XDG_SHELL_XML "${WAYLAND_PROTOCOLS_DIR}/stable/xdg-shell/xdg-shell.xml")
+            set(XDG_SHELL_CLIENT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-client-protocol.h")
+            set(XDG_SHELL_PRIVATE_CODE "${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-protocol.c")
+
+            add_custom_command(
+                OUTPUT ${XDG_SHELL_CLIENT_HEADER} ${XDG_SHELL_PRIVATE_CODE}
+                COMMAND ${WAYLAND_SCANNER} client-header ${XDG_SHELL_XML} ${XDG_SHELL_CLIENT_HEADER}
+                COMMAND ${WAYLAND_SCANNER} private-code ${XDG_SHELL_XML} ${XDG_SHELL_PRIVATE_CODE}
+                DEPENDS ${XDG_SHELL_XML}
+                COMMENT "Generating xdg-shell Wayland protocol"
+                VERBATIM
+            )
+
+            list(APPEND WINDOW_SOURCES ${XDG_SHELL_PRIVATE_CODE})
+        endif()
+
     endif ()
 
 endif ()
@@ -680,6 +702,7 @@ if (BUILD_OPENGL)
                 find_package(PkgConfig REQUIRED)
                 pkg_check_modules(WAYLAND REQUIRED wayland-client)
                 pkg_check_modules(XKB REQUIRED xkbcommon)
+                target_include_directories(mango PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
                 target_link_libraries(mango PUBLIC EGL GL wayland-client xkbcommon)
             endif()
         endif ()
@@ -735,6 +758,7 @@ if (BUILD_VULKAN)
                 find_package(PkgConfig REQUIRED)
                 pkg_check_modules(WAYLAND REQUIRED wayland-client)
                 pkg_check_modules(XKB REQUIRED xkbcommon)
+                target_include_directories(mango PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
                 target_link_libraries(mango PUBLIC vulkan wayland-client xkbcommon)
             endif()
         endif ()
